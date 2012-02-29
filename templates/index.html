@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-XRDS-Location"
+        content="http://{{ host }}/.well-known/host-meta.xrds" />
+  <script type="text/javascript" src="/static/demo.js"></script>
+  <link href="/static/style.css" rel="stylesheet" type="text/css" />
+  <title>ActivityStreams for {{ domain }}</title>
+</head>
+
+<body onload="access_token_from_fragment(); render_form();">
+<div id="description">
+<h1>ActivityStreams for {{ domain }}</h1>
+
+<a href="http://activitystrea.ms/">
+  <img id="logo" src="/static/logo_and_name.png" /></a>
+
+<p>This is an unofficial
+  <a href="http://activitystrea.ms/">ActivityStreams</a> server
+for <a href="http://{{ domain }}/">{{ domain }}</a>. For more details, see the
+ActivityStreams
+<a href="http://activitystrea.ms/draft-spec.html">spec</a>,
+<a href="http://wiki.activitystrea.ms/">wiki</a>, and the
+<a href="https://github.com/snarfed/portablecontacts-unofficial">source for
+this site</a>.
+</p>
+
+<p>This is the API endpoint:</p>
+<ul>
+  <li><code>https://{{ host }}/poco/<a href="http://activitystrea.ms/draft-spec.html">...</a></code></li>
+</ul>
+
+<p>These are the
+ <a href="http://docs.oasis-open.org/xri/xrd/v1.0/xrd-1.0.html">XRD</a> and
+ <a href="http://hueniverse.com/drafts/draft-xrds-simple-01.html">XRDS-Simple</a>
+ (deprecated!) discovery endpoints:</p>
+<ul>
+  <li><code>https://{{ host }}/.well-known/host-meta</code></li>
+  <li><code>https://{{ host }}/.well-known/host-meta.xrds</code></li>
+</ul>
+
+{% block oauth_details %}
+{% endblock %}
+
+<p>Questions? Contact <a href="http://snarfed.org/about">Ryan</a> or the
+<a href="http://groups.google.com/group/portablecontacts">ActivityStreams
+mailing list</a>.</p>
+
+<hr />
+</div>
+
+<h2>Demo</h2>
+
+<form id="demo" method="get" target="results">
+<p><nobr><code>
+/ poco / @me /
+<select id="all_or_self" name="all_or_self" onchange="render_form()">
+  <option value="all">@all</input>
+  <option value="self">@self</input>
+</select>
+/
+<input id="userid" name="userid" type="text" value="user id (optional)" size="12"
+  onkeyup="render_form()" onfocus="render_form()" onblur="render_form()" />
+  <!-- onkeyup instead of onkeypress because onkeypress fires *before* the
+       browser adds the character to the input value-->
+{% block query_params %}
+{% endblock %}
+</code></nobr></p>
+
+<p>
+<input type="submit" value="GET" />
+<a href="{{ auth_url }}">Authenticate</a></p>
+</p>
+</form>
+
+<p><nobr><code id="url"></code></nobr></p>
+
+<iframe name="results">
+</iframe>
+
+</body>
+</html>

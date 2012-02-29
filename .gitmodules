@@ -1,0 +1,6 @@
+[submodule "tweepy_submodule"]
+	path = tweepy_submodule
+	url = git://github.com/tweepy/tweepy.git
+[submodule "webapp-improved"]
+	path = webapp-improved
+	url = git://github.com/moraes/webapp-improved.git

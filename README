@@ -1,0 +1,58 @@
+This is a stand-in, proxy ActivityStreams server for sites that don't implement
+it themselves. It currently has implementations for Facebook and Twitter, served
+at these endpoints:
+
+http://facebook-activitystreams.appspot.com/
+http://twitter-activitystreams.appspot.com/
+
+Feel free to add more!
+
+Background on ActivityStreams:
+http://activitystrea.ms/
+http://wiki.activitystrea.ms/
+
+Test client and validator:
+http://activitystreamstester.appspot.com/
+
+Source: https://github.com/snarfed/activitystreams-unofficial
+Contact: Ryan Barrett <activitystreams@ryanb.org>
+
+As precedent, Cliqset's FeedProxy used to do this, but unfortunately it and
+Cliqset died:
+http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php
+
+Facebook used to officially support ActivityStreams, but that's also dead:
+https://developers.facebook.com/blog/post/225/
+https://developers.facebook.com/blog/post/288/
+http://groups.google.com/group/activity-streams/browse_thread/thread/f9bd0b99e504c576
+
+Twitter and Facebook support OAuth, which you'll need if you want any non-public
+data. If you obtain an OAuth access token from Twitter or Facebook and include
+it in a request to this provider, it will be used to sign and authorize the
+underlying requests to those providers. See the demos on
+https://facebook-activitystreams.appspot.com/ and
+https://twitter-activitystreams.appspot.com/ for examples.
+
+I wish there was a Python server library for any of the components here,
+e.g. XRD/XRDS-Simple! I only found client libraries though:
+http://mrtopf.de/blog/data-portability/announcing-pydataportability-01-technical/
+https://github.com/gwachob/pydiscovery
+
+To use this in a ActivityStreams client, you'll need to hard-code exceptions
+for the facebook.com and twitter.com hosts and redirect ActivityStreams HTTP
+requests to the corresponding endpoint above.
+
+Note the app.yaml.* files, one for each App Engine app id. To work on or deploy
+a specific app id, symlink app.yaml to its app.yaml.xxx file. Likewise, if you
+add a new site, you'll need to add a corresponding app.yaml.xxx file.
+
+The tests require the App Engine SDK and python-mox.
+
+Deploy commands:
+rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
+  ~/google_appengine/appcfg.py update . && \
+rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
+  ~/google_appengine/appcfg.py update .
+
+TODO: unify the majority of the code with portablecontacts-unofficial and
+webfinger-unofficial.

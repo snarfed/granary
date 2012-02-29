@@ -1,0 +1,22 @@
+{% extends "index.html" %}
+
+{% block oauth_details %}
+Facebook
+<a href="https://developers.facebook.com/docs/authentication/">supports OAuth
+2.0</a>, which you'll need to use for everything
+except <code>/@me/@all/USER_ID</code> requests for only public data.</p>
+
+<p>For the demo below, just click the
+<a href="{{ auth_url }}">Authenticate</a> link. For programmatic access, if you
+include an
+<a href="https://developers.facebook.com/docs/authentication/#server-side-flow">access
+token</a> in a request to this provider, it will be passed through to Facebook.
+See the demo for an example.
+{% endblock %}
+
+{% block query_params %}
+<label id="access_token_label" for="access_token">? access_token =</label>
+<input id="access_token" name="access_token" type="text" size="10"
+       onkeyup="render_form()" onchange="render_form()"
+       value="{{ access_token }}" />
+{% endblock %}

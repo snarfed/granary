@@ -1,0 +1,21 @@
+/*
+ * Stylesheet for the front page, mostly the demo form.
+ */
+
+div#description {
+  max-width: 700px;
+}
+
+img#logo {
+  float: right;
+}
+
+select, input[type=text] {
+  border: 1px solid gray;
+}
+
+iframe {
+  width: 100%;
+  min-height: 40em;
+  border: 1px solid gray;
+}

@@ -1,0 +1,10 @@
+<XRDS xmlns="xri://$xrds">
+  <XRD xmlns:simple="http://xrds-simple.net/core/1.0"
+       xmlns="xri://$XRD*($v*2.0)" version="2.0">
+    <Type>xri://$xrds*simple</Type>
+    <Service>
+      <Type>http://activitystrea.ms/spec/1.0</Type>
+      <URI>https://{{ host }}/.well-known/host-meta.xrds</URI>
+    </Service>
+  </XRD>
+</XRDS>

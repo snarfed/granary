@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>  <!-- -*- xml -*- -->
+<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"
+     xmlns:hm="http://host-meta.net/xrd/1.0">
+ 
+  <hm:Host xmlns="http://host-meta.net/xrd/1.0">{{ domain }}</hm:Host>
+
+  <Link rel="http://activitystrea.ms/spec/1.0"
+        href="https://{{ host }}/poco/">
+    <Title>ActivityStreams API endpoint</Title>
+  </Link>
+</XRD>
