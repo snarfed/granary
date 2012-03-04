@@ -7,11 +7,16 @@ snarfed_org user id: 139199211
 
 http://groups.google.com/group/activity-streams/browse_thread/thread/5f88499fdd4a7911/1fa8b4eb39f28cd7
 
+this looks promising but is actually wrong in lots of ways. :(
+https://gist.github.com/645256
+
 example schema mapping:
 http://wiki.activitystrea.ms/w/page/1359317/Twitter%20Examples
 
 Python code to pretty-print JSON responses from Twitter REST API:
 
+pprint(json.loads(urllib.urlopen(
+  'https://api.twitter.com/1/statuses/show.json?id=172417043893731329&include_entities=1').read()))
 pprint(json.loads(urllib.urlopen(
   'https://api.twitter.com/1/users/lookup.json?screen_name=snarfed_org').read()))
 pprint(json.loads(urllib.urlopen(
@@ -121,57 +126,72 @@ class Twitter(source.Source):
     return super(Twitter, self).urlfetch(url, **kwargs)
 
   def to_activity(self, tw):
-    """Converts a Twitter user to a ActivityStreams activity.
-
+    """Converts a tweet to an activity.
+  
     Args:
-      tw: dict, a decoded JSON Twitter user
+      tw: dict, a decoded JSON tweet
+  
+    Returns:
+      an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    pc = collections.defaultdict(dict)
-    pc['accounts'] = [{'domain': self.DOMAIN}]
-
-    # tw should always have 'id' (it's an int)
-    if 'id' in tw:
-      pc['id'] = str(tw['id'])
-      pc['accounts'][0]['userid'] = str(tw['id'])
-
-    if 'screen_name' in tw:
-      pc['accounts'][0]['username'] = tw['screen_name']
-
-    # tw should always have 'name'
-    if 'name' in tw:
-      pc['displayName'] = tw['name']
-      pc['name']['formatted'] = tw['name']
-
+    a = collections.defaultdict(dict)
+    a['verb'] = 'post'
+  
+    # used in id tag URIs. overridden by created_at if it exists.
+    year = datetime.datetime.now()
+  
     if 'created_at' in tw:
       # created_at is formatted like 'Sun, 01 Jan 11:44:57 +0000 2012'.
       # remove the time zone, then parse the string, then reformat as ISO 8601.
       created_at = re.sub(' [+-][0-9]{4} ', ' ', tw['created_at'])
       created_at = datetime.datetime.strptime(created_at, '%a %b %d %H:%M:%S %Y')
-      pc['published'] = created_at.isoformat()
-
+      year = created_at.year
+      a['published'] = created_at.isoformat()
+  
+    username = ''
+    user = tw.get('user')
+    if 'screen_name' in user:
+      username = user['screen_name']
+      a['actor'][0]['username'] = 
+  
+    # tw should always have 'id' (it's an int)
+    id = tw.get('id')
+    if id:
+      tag_uri = 'tag:%s,%d:%s/%d' % (self.DOMAIN, year, username, id)
+      a['id'] = tag_uri
+      a['object']['id'] = tag_uri
+      a['object']['url'] = 'http://twitter.com/%s/status/%d' % (username, id)
+  
+    return dict(a)
+  
+    # tw should always have 'name'
+    if 'name' in tw:
+      a['displayName'] = tw['name']
+      a['name']['formatted'] = tw['name']
+  
     if 'profile_image_url' in tw:
-      pc['photos'] = [{'value': tw['profile_image_url'], 'primary': 'true'}]
-
+      a['photos'] = [{'value': tw['profile_image_url'], 'primary': 'true'}]
+  
     if 'url' in tw:
-      pc['urls'] = [{'value': tw['url'], 'type': 'home'}]
-
+      a['urls'] = [{'value': tw['url'], 'type': 'home'}]
+  
     if 'location' in tw:
-      pc['addresses'] = [{
+      a['addresses'] = [{
           'formatted': tw['location'],
           'type': 'home',
           }]
-
+  
     utc_offset = tw.get('utc_offset')
     if utc_offset is not None:
       # twitter's utc_offset field is seconds, oddly, not hours.
-      pc['utcOffset'] =  '%+03d:00' % (tw['utc_offset'] / 60 / 60)
-
+      a['utcOffset'] =  '%+03d:00' % (tw['utc_offset'] / 60 / 60)
+  
       # also note that twitter's time_zone field provides the user's
       # human-readable time zone, e.g. 'Pacific Time (US & Canada)'. i'd need to
       # include tzdb to parse that, though, and i don't need to since utc_offset
       # works fine.
-
+  
     if 'description' in tw:
-      pc['note'] = tw['description']
-
-    return dict(pc)
+      a['note'] = tw['description']
+  
+    return dict(a)
