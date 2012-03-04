@@ -4,6 +4,7 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import datetime
 try:
   import json
 except ImportError:
@@ -87,3 +88,12 @@ class Source(object):
       self.handler.response.headers.update(resp.headers)
       self.handler.response.out.write(resp.content)
       raise exc.status_map.get(resp.status_code)(resp.content)
+
+  def tag_uri(self, name):
+    """Returns a tag URI string for this source and the given string name.
+
+    Example return value: 'tag:twitter.com,2012:snarfed_org/172417043893731329'
+
+    Background on tag URIs: http://taguri.org/
+    """
+    return 'tag:%s,%d:%s' % (self.DOMAIN, datetime.datetime.now().year, name)

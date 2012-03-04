@@ -3,6 +3,8 @@
 
 Uses the REST API: https://dev.twitter.com/docs/api
 
+TODO STATE: add user's twitter account as collection as activity target?
+
 snarfed_org user id: 139199211
 
 http://groups.google.com/group/activity-streams/browse_thread/thread/5f88499fdd4a7911/1fa8b4eb39f28cd7
@@ -125,73 +127,109 @@ class Twitter(source.Source):
 
     return super(Twitter, self).urlfetch(url, **kwargs)
 
-  def to_activity(self, tw):
+  def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.
-  
+
     Args:
-      tw: dict, a decoded JSON tweet
-  
+      tweet: dict, a decoded JSON tweet
+
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    a = collections.defaultdict(dict)
-    a['verb'] = 'post'
-  
-    # used in id tag URIs. overridden by created_at if it exists.
-    year = datetime.datetime.now()
-  
-    if 'created_at' in tw:
-      # created_at is formatted like 'Sun, 01 Jan 11:44:57 +0000 2012'.
-      # remove the time zone, then parse the string, then reformat as ISO 8601.
-      created_at = re.sub(' [+-][0-9]{4} ', ' ', tw['created_at'])
-      created_at = datetime.datetime.strptime(created_at, '%a %b %d %H:%M:%S %Y')
-      year = created_at.year
-      a['published'] = created_at.isoformat()
-  
-    username = ''
-    user = tw.get('user')
-    if 'screen_name' in user:
-      username = user['screen_name']
-      a['actor'][0]['username'] = 
-  
-    # tw should always have 'id' (it's an int)
-    id = tw.get('id')
-    if id:
-      tag_uri = 'tag:%s,%d:%s/%d' % (self.DOMAIN, year, username, id)
-      a['id'] = tag_uri
-      a['object']['id'] = tag_uri
-      a['object']['url'] = 'http://twitter.com/%s/status/%d' % (username, id)
-  
-    return dict(a)
-  
-    # tw should always have 'name'
-    if 'name' in tw:
-      a['displayName'] = tw['name']
-      a['name']['formatted'] = tw['name']
-  
-    if 'profile_image_url' in tw:
-      a['photos'] = [{'value': tw['profile_image_url'], 'primary': 'true'}]
-  
-    if 'url' in tw:
-      a['urls'] = [{'value': tw['url'], 'type': 'home'}]
-  
-    if 'location' in tw:
-      a['addresses'] = [{
-          'formatted': tw['location'],
-          'type': 'home',
-          }]
-  
-    utc_offset = tw.get('utc_offset')
-    if utc_offset is not None:
-      # twitter's utc_offset field is seconds, oddly, not hours.
-      a['utcOffset'] =  '%+03d:00' % (tw['utc_offset'] / 60 / 60)
-  
-      # also note that twitter's time_zone field provides the user's
-      # human-readable time zone, e.g. 'Pacific Time (US & Canada)'. i'd need to
-      # include tzdb to parse that, though, and i don't need to since utc_offset
-      # works fine.
-  
-    if 'description' in tw:
-      a['note'] = tw['description']
-  
-    return dict(a)
+    object = self.tweet_to_object(tweet)
+    author = object.get('author')
+
+    return {
+      'verb': 'post',
+      'published': object.get('published'),
+      'id': object.get('id'),
+      'url': object.get('url'),
+      'actor': author,
+      'object': object,
+      }
+
+  def tweet_to_object(self, tweet):
+    """Converts a tweet to an object.
+
+    Args:
+      tweet: dict, a decoded JSON tweet
+
+    Returns:
+      an ActivityStreams object dict, ready to be JSON-encoded
+    """
+    object = {}
+
+    id = tweet.get('id')
+    if not id:
+      return {}
+
+    object = {
+      'objectType': 'note',
+      'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
+      'content': tweet.get('text'),
+      }
+
+    user = tweet.get('user')
+    if user:
+      object['author'] = self.user_to_actor(user)
+      username = object['author'].get('username')
+      if username:
+        object['id'] = self.tag_uri('%s/%d' % (username, id))
+        object['url'] = 'http://twitter.com/%s/status/%d' % (username, id)
+
+    media_url = tweet.get('entities', {}).get('media', [{}])[0].get('media_url')
+    if media_url:
+      object['image'] = {'url': media_url}
+
+    place = tweet.get('place')
+    if place:
+      object['location'] = {
+        'displayName': place.get('full_name'),
+        'id': place.get('id'),
+        'url': place.get('url'),
+        }
+
+    return object
+      
+
+  def user_to_actor(self, user):
+    """Converts a tweet to an activity.
+
+    Args:
+      user: dict, a decoded JSON Twitter user
+
+    Returns:
+      an ActivityStreams actor dict, ready to be JSON-encoded
+    """
+    username = user.get('screen_name')
+    if not username:
+      return {}
+
+    return {
+      'displayName': user.get('name'),
+      'image': {'url': user.get('profile_image_url')},
+      'id': self.tag_uri(username) if username else None,
+      'published': self.rfc2822_to_iso8601(user.get('created_at')),
+      'url': 'http://twitter.com/%s' % username,
+      'location': {'displayName': user.get('location')},
+      'username': username,
+      'description': user.get('description'),
+      }
+
+  @staticmethod
+  def rfc2822_to_iso8601(time_str):
+    """Converts a timestamp string from RFC 2822 format to ISO 8601.
+
+    Example RFC 2822 timestamp string generated by Twitter:
+      'Wed May 23 06:01:13 +0000 2007'
+
+    Resulting ISO 8610 timestamp string:
+      '2007-05-23T06:01:13'
+    """
+    if not time_str:
+      return None
+
+    without_timezone = re.sub(' [+-][0-9]{4} ', ' ', time_str)
+    dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y')
+    return dt.isoformat()
+
