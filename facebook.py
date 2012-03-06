@@ -144,122 +144,100 @@ class Facebook(source.Source):
 
     return super(Facebook, self).urlfetch(url, **kwargs)
 
-  def to_activity(self, fb):
-    """Converts a Facebook user to a ActivityStreams activity.
+  def tweet_to_activity(self, tweet):
+    """Converts a tweet to an activity.
 
     Args:
-      fb: dict, a decoded JSON Facebook user
+      tweet: dict, a decoded JSON tweet
+
+    Returns:
+      an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    pc = collections.defaultdict(dict)
+    object = self.tweet_to_object(tweet)
+    author = object.get('author')
 
-    # facebook friend relationships are always bidirectional
-    # TODO: remove this (or replace with something like "self"?) for the current
-    # user's activity
-    pc['connected'] = True
-    pc['relationships'] = ['friend']
+    return {
+      'verb': 'post',
+      'published': object.get('published'),
+      'id': object.get('id'),
+      'url': object.get('url'),
+      'actor': author,
+      'object': object,
+      }
 
-    pc['accounts'] = [{'domain': self.DOMAIN}]
+  def tweet_to_object(self, tweet):
+    """Converts a tweet to an object.
 
-    # fb should always have 'id'
-    if 'id' in fb:
-      pc['id'] = fb['id']
-      pc['accounts'][0]['userid'] = fb['id']
+    Args:
+      tweet: dict, a decoded JSON tweet
 
-    if 'username' in fb:
-      pc['accounts'][0]['username'] = fb['username']
+    Returns:
+      an ActivityStreams object dict, ready to be JSON-encoded
+    """
+    object = {}
 
-    # fb should always have 'name'
-    if 'name' in fb:
-      pc['displayName'] = fb['name']
-      pc['name']['formatted'] = fb['name']
+    id = tweet.get('id')
+    if not id:
+      return {}
 
-    if 'first_name' in fb:
-      pc['name']['givenName'] = fb['first_name']
+    object = {
+      'objectType': 'note',
+      'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
+      'content': tweet.get('text'),
+      }
 
-    if 'last_name' in fb:
-      pc['name']['familyName'] = fb['last_name']
+    user = tweet.get('user')
+    if user:
+      object['author'] = self.user_to_actor(user)
+      username = object['author'].get('username')
+      if username:
+        object['id'] = self.tag_uri('%s/%d' % (username, id))
+        object['url'] = 'http://facebook.com/%s/status/%d' % (username, id)
 
-    if 'birthday' in fb:
-      match = re.match(r'(\d{1,2})/(\d{1,2})/?(\d{4})?', fb['birthday'])
-      month, day, year = match.groups()
-      if not year:
-        year = '0000'
-      pc['birthday'] = '%s-%02d-%02d' % (year, int(month), int(day))
+    media_url = tweet.get('entities', {}).get('media', [{}])[0].get('media_url')
+    if media_url:
+      object['image'] = {'url': media_url}
 
-    if 'gender' in fb:
-      pc['gender'] = fb['gender']
+    place = tweet.get('place')
+    if place:
+      object['location'] = {
+        'displayName': place.get('full_name'),
+        'id': place.get('id'),
+        'url': place.get('url'),
+        }
 
-    if 'email' in fb:
-      pc['emails'] = [{'value': fb['email'], 'type': 'home', 'primary': 'true'}]
+    return object
 
-    if 'website' in fb:
-      pc['urls'] = [{'value': fb['website'], 'type': 'home'}]
+  def user_to_actor(self, user):
+    """Converts a tweet to an activity.
 
-    for work in fb.get('work', []):
-      org = {}
-      pc.setdefault('organizations', []).append(org)
-      if 'employer' in work:
-        org['name'] = work['employer'].get('name')
-      org['type'] = 'job'
-      if 'position' in work:
-        org['title'] = work['position']
+    Args:
+      user: dict, a decoded JSON Facebook user
 
-      projects = work.get('projects')
-      if 'projects' in work:
-        # TODO: convert these to proper xs:date (ISO 8601) format, e.g.
-        # 2008-01-23T04:56:22Z
-        org['startDate'] = min(p.get('start_date') for p in projects)
-        org['endDate'] = max(p.get('end_date') for p in projects)
+    Returns:
+      an ActivityStreams actor dict, ready to be JSON-encoded
+    """
+    id = user.get('id')
+    username = user.get('username')
+    handle = username or id
+    if not handle:
+      return {}
 
-    for school in fb.get('education', []):
-      org = {}
-      pc.setdefault('organizations', []).append(org)
-      if 'school' in school:
-        org['name'] = school['school'].get('name')
-      org['type'] = 'school'
+    # facebook implements this as a 302 redirect
+    image_url = 'http://graph.facebook.com/%s/picture?type=large' % handle
+    actor = {
+      'displayName': user.get('name'),
+      'image': {'url': image_url},
+      'id': self.tag_uri(handle),
+      'updated': user.get('updated_time'),
+      'url': user.get('link'),
+      'username': username,
+      'description': user.get('bio'),
+      }
 
-      year = school.get('year')
-      if isinstance(year, dict):
-        org['endDate'] = year.get('name')
-      elif isinstance(year, basestring):
-        org['endDate'] = year
+    location = user.get('location')
+    if location:
+      actor['location'] = {'id': location.get('id'),
+                           'displayName': location.get('name')}
 
-    if 'address' in fb:
-      addr = fb['address']
-      pc['addresses'] = [{
-          'streetAddress': addr['street'],
-          'locality': addr['city'],
-          'region': addr['state'],
-          'country': addr['country'],
-          'postalCode': addr['zip'],
-          'type': 'home',
-          }]
-    elif 'location' in fb:
-      pc['addresses'] = [{
-          'formatted': fb['location'].get('name'),
-          'type': 'home',
-          }]
-
-    if 'mobile_phone' in fb:
-      pc['phoneNumbers'] = [{
-          'value': fb['mobile_phone'],
-          'type': 'mobile',
-          }]
-
-    if 'timezone' in fb:
-      pc['utcOffset'] = '%+03d:00' % fb['timezone']
-
-    if 'updated_time' in fb:
-      pc['updated'] = fb['updated_time']
-
-    if 'bio' in fb:
-      pc['note'] = fb['bio']
-
-    # profile picture. facebook graph api provides a url that 302 redirects and
-    # takes either id or username.
-    handle = fb.get('id', fb.get('username'))
-    if handle:
-      url = 'http://graph.facebook.com/%s/picture?type=large' % handle
-      pc['photos'] = [{'value': url}]
-
-    return dict(pc)
+    return actor

@@ -88,24 +88,30 @@ class TwitterTest(testutil.HandlerTest):
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
 
+  def test_tweet_to_activity_minimal(self):
+    # just test that we don't crash
+    self.twitter.tweet_to_activity({'id': 123, 'text': 'asdf'})
+
+  def test_tweet_to_activity_empty(self):
+    # just test that we don't crash
+    self.twitter.tweet_to_activity({})
+
   def test_tweet_to_object_full(self):
     self.assert_equals(OBJECT, self.twitter.tweet_to_object(TWEET))
+
+  def test_tweet_to_object_minimal(self):
+    # just test that we don't crash
+    self.twitter.tweet_to_object({'id': 123, 'text': 'asdf'})
+
+  def test_tweet_to_object_empty(self):
+    self.assert_equals({}, self.twitter.tweet_to_object({}))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))
 
   def test_user_to_actor_minimal(self):
-    self.assert_equals({
-        'displayName': None,
-        'image': {'url': None},
-        'id': 'tag:twitter.com,2012:snarfed_org',
-        'published': None,
-        'url': 'http://twitter.com/snarfed_org',
-        'location': {'displayName': None},
-        'username': 'snarfed_org',
-        'description': None,
-        },
-        self.twitter.user_to_actor({'screen_name': 'snarfed_org'}))
+    # just test that we don't crash
+    self.twitter.user_to_actor({'screen_name': 'snarfed_org'})
 
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.twitter.user_to_actor({}))

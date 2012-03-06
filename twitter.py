@@ -3,7 +3,9 @@
 
 Uses the REST API: https://dev.twitter.com/docs/api
 
-TODO STATE: add user's twitter account as collection as activity target?
+TODO: collections for twitter accounts; use as activity target?
+TODO: reshare activities for retweets
+TODO: in-reply-to for @ mentions?
 
 snarfed_org user id: 139199211
 
