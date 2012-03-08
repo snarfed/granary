@@ -29,6 +29,7 @@ import urlparse
 
 import appengine_config
 import source
+import util
 
 OAUTH_SCOPES = ','.join((
     'email',
@@ -144,72 +145,76 @@ class Facebook(source.Source):
 
     return super(Facebook, self).urlfetch(url, **kwargs)
 
-  def tweet_to_activity(self, tweet):
-    """Converts a tweet to an activity.
+  def post_to_activity(self, post):
+    """Converts a post to an activity.
 
     Args:
-      tweet: dict, a decoded JSON tweet
+      post: dict, a decoded JSON post
 
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    object = self.tweet_to_object(tweet)
+    object = self.post_to_object(post)
     author = object.get('author')
 
-    return {
+    return util.trim_nulls({
       'verb': 'post',
       'published': object.get('published'),
       'id': object.get('id'),
       'url': object.get('url'),
       'actor': author,
       'object': object,
-      }
+      # TODO
+      'audience': self.user_to_actor(post.get('from'))
+      })
 
-  def tweet_to_object(self, tweet):
-    """Converts a tweet to an object.
+  def post_to_object(self, post):
+    """Converts a post to an object.
 
     Args:
-      tweet: dict, a decoded JSON tweet
+      post: dict, a decoded JSON post
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
     object = {}
 
-    id = tweet.get('id')
+    id = post.get('id')
     if not id:
       return {}
 
+    # TODO: fb posts also include my comments on other things. instead just
+    # search for status, photo, link, ...?
+    # assert post.get('type') in ('status', 'link', 'photo')
+
     object = {
+      'id': self.tag_uri(str(id)),
       'objectType': 'note',
-      'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
-      'content': tweet.get('text'),
+      'published': post.get('created_time'),
+      'updated': post.get('updated_time'),
+      'content': post.get('message'),
+      'author': self.user_to_actor(post.get('from')),
+      # FB post ids are of the form USERID_POSTID
+      'url': 'http://facebook.com/' + id.replace('_', '/posts/'),
+      'image': {'url': post.get('picture')},
       }
 
-    user = tweet.get('user')
-    if user:
-      object['author'] = self.user_to_actor(user)
-      username = object['author'].get('username')
-      if username:
-        object['id'] = self.tag_uri('%s/%d' % (username, id))
-        object['url'] = 'http://facebook.com/%s/status/%d' % (username, id)
-
-    media_url = tweet.get('entities', {}).get('media', [{}])[0].get('media_url')
-    if media_url:
-      object['image'] = {'url': media_url}
-
-    place = tweet.get('place')
+    place = post.get('place')
     if place:
       object['location'] = {
-        'displayName': place.get('full_name'),
+        'displayName': place.get('name'),
         'id': place.get('id'),
-        'url': place.get('url'),
         }
+      # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
+      lat = place.get('location', {}).get('latitude')
+      lon = place.get('location', {}).get('longitude')
+      if lat and lon:
+        object['location']['position'] = '%+f%+f/' % (lat, lon)
 
-    return object
+    return util.trim_nulls(object)
 
   def user_to_actor(self, user):
-    """Converts a tweet to an activity.
+    """Converts a user to an actor.
 
     Args:
       user: dict, a decoded JSON Facebook user
@@ -217,6 +222,9 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
+    if not user:
+      return {}
+
     id = user.get('id')
     username = user.get('username')
     handle = username or id
@@ -240,4 +248,4 @@ class Facebook(source.Source):
       actor['location'] = {'id': location.get('id'),
                            'displayName': location.get('name')}
 
-    return actor
+    return util.trim_nulls(actor)

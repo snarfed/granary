@@ -6,8 +6,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 
 def to_xml(value):
-  """Renders a dict (usually from JSON) as an XML snippet.
-  """
+  """Renders a dict (usually from JSON) as an XML snippet."""
   if isinstance(value, dict):
     elems = []
     for key, vals in value.iteritems():
@@ -19,3 +18,11 @@ def to_xml(value):
     if value is None:
       value = ''
     return unicode(value)
+
+
+def trim_nulls(value):
+  """Recursively removes dict elements with None or empty values."""
+  if isinstance(value, dict):
+    return dict((k, trim_nulls(v)) for k, v in value.items() if trim_nulls(v))
+  else:
+    return value

@@ -32,7 +32,7 @@ USER = {
 ACTOR = {
   'displayName': 'Ryan Barrett',
   'image': {'url': 'http://graph.facebook.com/snarfed.org/picture?type=large'},
-  'id': 'tag:facebook.com,2012:212038',
+  'id': 'tag:facebook.com,2012:snarfed.org',
   'updated': '2012-01-06T02:11:04+0000',
   'url': 'http://www.facebook.com/snarfed.org',
   'username': 'snarfed.org',
@@ -41,13 +41,13 @@ ACTOR = {
   }
 POST = {
   'id': '212038_10100176064482163',
-  'from': {
-    'name': 'Ryan Barrett',
-    'id': '212038'
-  },
+  'from': {'name': 'Ryan Barrett', 'id': '212038'},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
-  'link': 'https://www.facebook.com/photo.php?fbid=10100176064452223&set=a.725223993143.2289690.212038&type=1',
+  'link': 'http://snarfed.org/2012-02-22_portablecontacts_for_facebook_and_twitter',
+  'message': 'Checking another side project off my list. portablecontacts-unofficial is live!',
+  'name': 'PortableContacts for Facebook and Twitter',
+  'caption': 'snarfed.org',
   'icon': 'https://s-static.ak.facebook.com/rsrc.php/v1/yx/r/og8V99JVf8G.gif',
   'place': {
     'id': '113785468632283',
@@ -68,16 +68,21 @@ POST = {
 }
 OBJECT = {
   'objectType': 'note',
-  'author': {,
-  'content': 'portablecontacts-unofficial: PortableContacts for Facebook and Facebook! http://t.co/SuqMPgp3',
-  'id': 'tag:facebook.com,2012:snarfed_org/172417043893731329',
-  'published': '2012-02-22T20:26:41',
-  'url': 'http://facebook.com/snarfed_org/status/172417043893731329',
-  'image': {'url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
+  'author': {
+    'id': 'tag:facebook.com,2012:212038',
+    'displayName': 'Ryan Barrett',
+    'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+    },
+  'content': 'Checking another side project off my list. portablecontacts-unofficial is live!',
+  'id': 'tag:facebook.com,2012:212038_10100176064482163',
+  'published': '2012-03-04T18:20:37+0000',
+  'updated': '2012-03-04T19:08:16+0000',
+  'url': 'http://facebook.com/212038/posts/10100176064482163',
+  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg'},
   'location': {
-    'displayName': 'Carcassonne, Aude',
-    'id': '31cb9e7ed29dbe52',
-    'url': 'http://api.facebook.com/1/geo/id/31cb9e7ed29dbe52.json',
+    'displayName': 'Lake Merced',
+    'id': '113785468632283',
+    'position': '+37.728194-122.493364/',
     },
   }
 ACTIVITY = {
@@ -151,7 +156,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_post_to_object_minimal(self):
     # just test that we don't crash
-    self.facebook.post_to_object({'id': 123, 'text': 'asdf'})
+    self.facebook.post_to_object({'id': '123_456', 'text': 'asdf'})
 
   def test_post_to_object_empty(self):
     self.assert_equals({}, self.facebook.post_to_object({}))

@@ -43,6 +43,7 @@ import urlparse
 import appengine_config
 import source
 import tweepy
+import util
 
 API_FRIENDS_URL = 'https://api.twitter.com/1/friends/ids.json?user_id=%d'
 API_USERS_URL = 'https://api.twitter.com/1/users/lookup.json?user_id=%s'
@@ -141,14 +142,14 @@ class Twitter(source.Source):
     object = self.tweet_to_object(tweet)
     author = object.get('author')
 
-    return {
+    return util.trim_nulls({
       'verb': 'post',
       'published': object.get('published'),
       'id': object.get('id'),
       'url': object.get('url'),
       'actor': author,
       'object': object,
-      }
+      })
 
   def tweet_to_object(self, tweet):
     """Converts a tweet to an object.
@@ -191,7 +192,7 @@ class Twitter(source.Source):
         'url': place.get('url'),
         }
 
-    return object
+    return util.trim_nulls(object)
       
 
   def user_to_actor(self, user):
@@ -207,7 +208,7 @@ class Twitter(source.Source):
     if not username:
       return {}
 
-    return {
+    return util.trim_nulls({
       'displayName': user.get('name'),
       'image': {'url': user.get('profile_image_url')},
       'id': self.tag_uri(username) if username else None,
@@ -216,7 +217,7 @@ class Twitter(source.Source):
       'location': {'displayName': user.get('location')},
       'username': username,
       'description': user.get('description'),
-      }
+      })
 
   @staticmethod
   def rfc2822_to_iso8601(time_str):
