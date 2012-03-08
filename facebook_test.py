@@ -93,6 +93,10 @@ ACTIVITY = {
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'actor': OBJECT['author'],
   'object': OBJECT,
+  'generator': {
+    'displayName': 'Facebook for Android',
+    'id': 'tag:facebook.com,2012:350685531728',
+    }
   }
 
 

@@ -155,19 +155,26 @@ class Facebook(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     object = self.post_to_object(post)
-    author = object.get('author')
-
-    return util.trim_nulls({
+    activity = {
       'verb': 'post',
       'published': object.get('published'),
       'updated': object.get('updated'),
       'id': object.get('id'),
       'url': object.get('url'),
-      'actor': author,
+      'actor': object.get('author'),
       'object': object,
       # TODO
       # 'audience': [self.user_to_actor(to) for to in post.get('to')]
-      })
+      }
+
+    application = post.get('application')
+    if application:
+      activity['generator'] = {
+        'displayName': application.get('name'),
+        'id': self.tag_uri(application.get('id')),
+        }
+
+    return util.trim_nulls(activity)
 
   def post_to_object(self, post):
     """Converts a post to an object.

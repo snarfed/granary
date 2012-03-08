@@ -140,16 +140,23 @@ class Twitter(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     object = self.tweet_to_object(tweet)
-    author = object.get('author')
-
-    return util.trim_nulls({
+    activity = {
       'verb': 'post',
       'published': object.get('published'),
       'id': object.get('id'),
       'url': object.get('url'),
-      'actor': author,
+      'actor': object.get('author'),
       'object': object,
-      })
+      }
+
+    # yes, the source field has an embedded HTML link. bleh.
+    # https://dev.twitter.com/docs/api/1/get/statuses/show/
+    parsed = re.search('<a href="([^"]+)".*>(.+)</a>', tweet.get('source', ''))
+    if parsed:
+      url, name = parsed.groups()
+      activity['generator'] = {'displayName': name, 'url': url}
+
+    return util.trim_nulls(activity)
 
   def tweet_to_object(self, tweet):
     """Converts a tweet to an object.
@@ -180,6 +187,9 @@ class Twitter(source.Source):
         object['id'] = self.tag_uri('%s/%d' % (username, id))
         object['url'] = 'http://twitter.com/%s/status/%d' % (username, id)
 
+    # currently the media list will only have photos. if that changes, though,
+    # we'll need to make this conditional on media.type.
+    # https://dev.twitter.com/docs/tweet-entities
     media_url = tweet.get('entities', {}).get('media', [{}])[0].get('media_url')
     if media_url:
       object['image'] = {'url': media_url}

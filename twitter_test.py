@@ -47,6 +47,7 @@ TWEET = {
   'text': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3',
   'user': USER,
   'entities': {'media': [{'media_url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'}]},
+  'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   }
 OBJECT = {
   'objectType': 'note',
@@ -69,6 +70,7 @@ ACTIVITY = {
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
+  'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'}
   }
 
 

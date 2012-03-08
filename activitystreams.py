@@ -18,7 +18,7 @@ generally follows twitter global query params, e.g. cursor
 
 OpenSocial
 ===
-e.g. baseURL/serviceName/userID/selector?queryParameters
+e.g. baseURL/method/userID/selector?queryParameters
 
 !!! BEST !!!
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service 
