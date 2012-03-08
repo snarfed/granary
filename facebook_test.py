@@ -87,10 +87,11 @@ OBJECT = {
   }
 ACTIVITY = {
   'verb': 'post',
-  'published': '2012-02-22T20:26:41',
-  'id': 'tag:facebook.com,2012:snarfed_org/172417043893731329',
-  'url': 'http://facebook.com/snarfed_org/status/172417043893731329',
-  'actor': ACTOR,
+  'published': '2012-03-04T18:20:37+0000',
+  'updated': '2012-03-04T19:08:16+0000',
+  'id': 'tag:facebook.com,2012:212038_10100176064482163',
+  'url': 'http://facebook.com/212038/posts/10100176064482163',
+  'actor': OBJECT['author'],
   'object': OBJECT,
   }
 
@@ -101,62 +102,23 @@ class FacebookTest(testutil.HandlerTest):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook(self.handler)
 
-  # def test_get_activities(self):
-  #   batch_resp = json.dumps(
-  #     [None,
-  #      {'body': json.dumps({
-  #             '1': {'id': '1',
-  #                   'name': 'Mr. Foo',
-  #                   'link': 'https://www.facebook.com/mr_foo',
-  #                   },
-  #             '2': {'username': 'msbar',
-  #                   'name': 'Ms. Bar',
-  #                   'location': {'name': 'Hometown'},
-  #                   },
-  #             })}])
-  #   self.expect_urlfetch('https://graph.facebook.com/',
-  #                        batch_resp,
-  #                        method='POST',
-  #                        payload=DEFAULT_BATCH_REQUEST)
-  #   self.mox.ReplayAll()
+  def test_post_to_activity_full(self):
+    self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
 
-  #   self.assert_equals((
-  #       None,
-  #       [{'id': '1',
-  #         'displayName': 'Mr. Foo',
-  #         'name': {'formatted': 'Mr. Foo'},
-  #         'accounts': [{'domain': 'facebook.com', 'userid': '1'}],
-  #         'connected': True,
-  #         'relationships': ['friend'],
-  #         'photos': [{'value': 'http://graph.facebook.com/1/picture?type=large'}],
-  #         }, {
-  #         'displayName': 'Ms. Bar',
-  #         'name': {'formatted': 'Ms. Bar'},
-  #         'accounts': [{'domain': 'facebook.com', 'username': 'msbar'}],
-  #         'addresses': [{'formatted': 'Hometown', 'type': 'home'}],
-  #         'connected': True,
-  #         'relationships': ['friend'],
-  #         'photos': [{'value': 'http://graph.facebook.com/msbar/picture?type=large'}],
-  #         }]),
-  #     self.facebook.get_activities())
+  def test_post_to_activity_minimal(self):
+    # just test that we don't crash
+    self.facebook.post_to_activity({'id': '123_456', 'message': 'asdf'})
 
-  # def test_post_to_activity_full(self):
-  #   self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
-
-  # def test_post_to_activity_minimal(self):
-  #   # just test that we don't crash
-  #   self.facebook.post_to_activity({'id': 123, 'text': 'asdf'})
-
-  # def test_post_to_activity_empty(self):
-  #   # just test that we don't crash
-  #   self.facebook.post_to_activity({})
+  def test_post_to_activity_empty(self):
+    # just test that we don't crash
+    self.facebook.post_to_activity({})
 
   def test_post_to_object_full(self):
     self.assert_equals(OBJECT, self.facebook.post_to_object(POST))
 
   def test_post_to_object_minimal(self):
     # just test that we don't crash
-    self.facebook.post_to_object({'id': '123_456', 'text': 'asdf'})
+    self.facebook.post_to_object({'id': '123_456', 'message': 'asdf'})
 
   def test_post_to_object_empty(self):
     self.assert_equals({}, self.facebook.post_to_object({}))

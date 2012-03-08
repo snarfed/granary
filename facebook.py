@@ -160,12 +160,13 @@ class Facebook(source.Source):
     return util.trim_nulls({
       'verb': 'post',
       'published': object.get('published'),
+      'updated': object.get('updated'),
       'id': object.get('id'),
       'url': object.get('url'),
       'actor': author,
       'object': object,
       # TODO
-      'audience': self.user_to_actor(post.get('from'))
+      # 'audience': [self.user_to_actor(to) for to in post.get('to')]
       })
 
   def post_to_object(self, post):
@@ -205,10 +206,11 @@ class Facebook(source.Source):
         'displayName': place.get('name'),
         'id': place.get('id'),
         }
-      # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-      lat = place.get('location', {}).get('latitude')
-      lon = place.get('location', {}).get('longitude')
+      location = place.get('location', {})
+      lat = location.get('latitude')
+      lon = location.get('longitude')
       if lat and lon:
+        # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
         object['location']['position'] = '%+f%+f/' % (lat, lon)
 
     return util.trim_nulls(object)
