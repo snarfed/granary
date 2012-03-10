@@ -44,7 +44,7 @@ function render_form() {
   }
 
   // construct URL
-  var url = '/poco/@me/@' + all_or_self + '/';
+  var url = '/@me/@' + all_or_self + '/';
   if (!userid_elem.disabled && userid != USER_ID_BLURB)
     url += userid;
 

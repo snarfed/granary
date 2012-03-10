@@ -20,6 +20,6 @@ handlers:
   script: app.py
   secure: always
 
-- url: /activitystreams(/.*)?
+- url: /.+
   script: activitystreams.py
   secure: always

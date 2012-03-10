@@ -4,7 +4,7 @@
     <Type>xri://$xrds*simple</Type>
     <Service>
       <Type>http://activitystrea.ms/spec/1.0</Type>
-      <URI>https://{{ host }}/.well-known/host-meta.xrds</URI>
+      <URI>https://{{ host }}/</URI>
     </Service>
   </XRD>
 </XRDS>

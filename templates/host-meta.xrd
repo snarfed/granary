@@ -4,8 +4,7 @@
  
   <hm:Host xmlns="http://host-meta.net/xrd/1.0">{{ domain }}</hm:Host>
 
-  <Link rel="http://activitystrea.ms/spec/1.0"
-        href="https://{{ host }}/poco/">
+  <Link rel="http://activitystrea.ms/spec/1.0" href="https://{{ host }}/">
     <Title>ActivityStreams API endpoint</Title>
   </Link>
 </XRD>

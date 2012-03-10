@@ -102,7 +102,9 @@ try:
 except ImportError:
   import simplejson as json
 import logging
+import re
 import os
+import urllib
 import webapp2
 from webob import exc
 
@@ -147,7 +149,8 @@ class Handler(webapp2.RequestHandler):
       app: app id
       activities: activity id (or sequence)
     """
-    args = list(args)
+    args = urllib.unquote(self.request.path).strip('/').split('/')
+    logging.info('@as %r', args)
     if args and args[0] == source.ME:
       args[0] = self.source.get_current_user()
     paging_params = self.get_paging_params()
@@ -200,14 +203,8 @@ class Handler(webapp2.RequestHandler):
                                (param, val))
 
 
-application = webapp2.WSGIApplication(
-    # based on the activitystreams spec: http://activitystrea.ms/draft-spec.html#anchor11
-    [('/activitystreams/([^/]+)/?', Handler),
-     ('/activitystreams/([^/]+)/([^/]+)/?', Handler),
-     ('/activitystreams/([^/]+)/([^/]+)/([^/]+)/??', Handler),
-     ('/activitystreams/([^/]+)/([^/]+)/([^/]+)/([^/]+)/?', Handler),
-     ],
-    debug=appengine_config.DEBUG)
+application = webapp2.WSGIApplication([('.*', Handler)],
+                                      debug=appengine_config.DEBUG)
 
 def main():
   run_wsgi_app(application)

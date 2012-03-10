@@ -72,11 +72,9 @@ class Facebook(source.Source):
       start_index: int >= 0
       count: int >= 0
     """
-    if user == source.ME:
-      user = 'me'
-
+    import logging
+    logging.info('@fb %r %r %r %r', user, group, app, activity)
     activities = json.loads(self.urlfetch(API_FEED_URL % user)).get('data', [])
-
     # return None for total_count since we'd have to fetch and count all
     # friends, which doesn't scale.
     return None, [self.post_to_activity(a) for a in activities]
