@@ -4,6 +4,11 @@
 The REST API design follows the precedents of the ActivityStreams APIs below.
 
 
+DECIDED: use this
+http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service 
+
+
+
 StatusNet
 ===
 e.g. api/statuses/user_timeline/1.atom
@@ -103,6 +108,7 @@ from webob import exc
 
 import appengine_config
 import facebook
+import source
 import twitter
 import util
 
@@ -121,26 +127,31 @@ XML_TEMPLATE = """\
 ITEMS_PER_PAGE = 100
 
 
-class BaseHandler(webapp2.RequestHandler):
+class Handler(webapp2.RequestHandler):
   """Base class for ActivityStreams API handlers.
-
-  TODO: implement paging:
-  file:///home/ryanb/docs/activitystreams_spec.html#anchor14
 
   Attributes:
     source: Source subclass
   """
 
   def __init__(self, *args, **kwargs):
-    super(BaseHandler, self).__init__(*args, **kwargs)
+    super(Handler, self).__init__(*args, **kwargs)
     self.source = SOURCE(self)
 
-  def get(self, user_id=None):
-    """Args:
-      activities: list of ActivityStreams activity dicts
+  def get(self, *args):
+    """Handles an API GET.
+
+    Args:
+      users: user id (or sequence)
+      group: group id
+      app: app id
+      activities: activity id (or sequence)
     """
+    args = list(args)
+    if args and args[0] == source.ME:
+      args[0] = self.source.get_current_user()
     paging_params = self.get_paging_params()
-    total_results, activities = self.source.get_activities(user_id, **paging_params)
+    total_results, activities = self.source.get_activities(*args, **paging_params)
 
     response = {'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
@@ -155,11 +166,11 @@ class BaseHandler(webapp2.RequestHandler):
     if format == 'json':
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
-    elif format == 'xml':
+    elif format in ('atom', 'xml'):
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
     else:
-      raise exc.HTTPBadRequest('Invalid format: %s (should be json or xml)' %
+      raise exc.HTTPBadRequest('Invalid format: %s, expected json, atom, xml' %
                                format)
 
   def get_paging_params(self):
@@ -189,33 +200,12 @@ class BaseHandler(webapp2.RequestHandler):
                                (param, val))
 
 
-class AllHandler(BaseHandler):
-  """Returns all activities.
-  """
-  def get(self):
-    super(AllHandler, self).get()
-
-
-class SelfHandler(BaseHandler):
-  """Returns the currently authenticated user's activity.
-  """
-  def get(self):
-    super(SelfHandler, self).get(user_id=self.source.get_current_user())
-
-
-class UserIdHandler(BaseHandler):
-  """Returns a single user's activity.
-  """
-  def get(self, user_id):
-    super(UserIdHandler, self).get(user_id=int(user_id))
-
-
 application = webapp2.WSGIApplication(
     # based on the activitystreams spec: http://activitystrea.ms/draft-spec.html#anchor11
-    [('/activitystreams/?', AllHandler),
-     ('/activitystreams/@me/@all/?', AllHandler),
-     ('/activitystreams/@me/@all/([0-9]+)/?', UserIdHandler),
-     ('/activitystreams/@me/@self/?', SelfHandler),
+    [('/activitystreams/([^/]+)/?', Handler),
+     ('/activitystreams/([^/]+)/([^/]+)/?', Handler),
+     ('/activitystreams/([^/]+)/([^/]+)/([^/]+)/??', Handler),
+     ('/activitystreams/([^/]+)/([^/]+)/([^/]+)/([^/]+)/?', Handler),
      ],
     debug=appengine_config.DEBUG)
 

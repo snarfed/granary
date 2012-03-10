@@ -1,5 +1,12 @@
 #!/usr/bin/python
 """Source base class.
+
+STATE:
+finish get_activities(), do _test, then do activitystreams.py
+
+decided to use this REST API:
+http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service 
+only one method, get (activities), for now
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -40,7 +47,7 @@ class Source(object):
   def __init__(self, handler):
     self.handler = handler
 
-  def get_activities(self, users=ME, group=SELF, app=None, activities=None):
+  def get_activities(self, user=ME, group=SELF, app=None, activity=None):
     """Return a list and total count of ActivityStreams activities.
 
     If user_id is provided, only that user's activity(s) are included.
@@ -48,10 +55,10 @@ class Source(object):
     http://activitystrea.ms/draft-spec.html#anchor14
 
     Args:
-      users: int user id (or sequence)
-      group: int group id
-      app: int app id
-      activities: int activity id (or sequence)
+      user: user id
+      group: group id
+      app: app id
+      activity: activity id
 
     Returns:
       (total_results, activities) tuple

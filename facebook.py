@@ -31,41 +31,9 @@ import appengine_config
 import source
 import util
 
-OAUTH_SCOPES = ','.join((
-    'email',
-    'user_about_me',
-    'user_birthday',
-    'user_education_history',
-    'user_location',
-    'user_notes',
-    'user_website',
-    'user_work_history',
-    # see comment in file docstring
-    # 'user_address',
-    # 'user_mobile_phone',
-    ))
-
+OAUTH_SCOPES = 'read_stream'
 API_URL = 'https://graph.facebook.com/'
-API_USER_URL = 'https://graph.facebook.com/%s'
-
-# a single batch graph API request that returns all details for the current
-# user's friends. the first embedded request gets the current user's list of
-# friends; the second gets their details, using JSONPath syntax to depend on the
-# first.
-#
-# copied from
-# https://developers.facebook.com/docs/reference/api/batch/#operations
-#
-# also note that the docs only discuss including the access token inside the
-# batch JSON value, but including it in the query parameter of the POST URL
-# works fine too.
-# See "Specifying different access tokens for different operations" in
-# https://developers.facebook.com/docs/reference/api/batch/#operations
-API_FRIENDS_BATCH_REQUESTS = json.dumps([
-    {'method': 'GET', 'name': 'friends', 'relative_url':
-       'me/friends?offset=%(offset)d&limit=%(limit)d'},
-    {'method': 'GET', 'relative_url': '?ids={result=friends:$.data.*.id}'},
-    ])
+API_FEED_URL = 'https://graph.facebook.com/%s/feed'
 
 
 class Facebook(source.Source):
@@ -88,7 +56,8 @@ class Facebook(source.Source):
       'response_type=token',
       ))
 
-  def get_activities(self, user_id=None, start_index=0, count=0):
+  def get_activities(self, user=source.ME, group=source.SELF, app=None,
+                     activity=None, start_index=0, count=0):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
     If an OAuth access token is provided in the access_token query parameter, it
@@ -96,35 +65,21 @@ class Facebook(source.Source):
     activity details, based on their privacy settings.
 
     Args:
-      user_id: integer or string. if provided, only this user will be returned.
+      user: user id
+      group: group id
+      app: app id
+      activity: activity id
       start_index: int >= 0
       count: int >= 0
     """
-    if user_id is not None:
-      resp = self.urlfetch(API_USER_URL % user_id)
-      friends = [json.loads(resp)]
-    else:
-      if count == 0:
-        limit = self.ITEMS_PER_PAGE - start_index
-      else:
-        limit = min(count, self.ITEMS_PER_PAGE)
-      batch = urllib.urlencode({'batch': API_FRIENDS_BATCH_REQUESTS %
-                                {'offset': start_index, 'limit': limit}})
-      resp = self.urlfetch(API_URL, payload=batch, method='POST')
-      # the batch response is a list of responses to the individual batch
-      # requests, e.g.
-      #
-      # [null, {'body': "{'1': {...}, '2': {...}}"}]
-      #
-      # details: https://developers.facebook.com/docs/reference/api/batch/
-      #
-      # the first response will be null since the second depends on it
-      # and facebook omits responses to dependency requests.
-      friends = json.loads(json.loads(resp)[1]['body']).values()
+    if user == source.ME:
+      user = 'me'
+
+    activities = json.loads(self.urlfetch(API_FEED_URL % user)).get('data', [])
 
     # return None for total_count since we'd have to fetch and count all
     # friends, which doesn't scale.
-    return None, [self.to_activity(user) for user in friends]
+    return None, [self.post_to_activity(a) for a in activities]
 
   def get_current_user(self):
     """Returns 'me', which Facebook interprets as the current user.
@@ -163,8 +118,6 @@ class Facebook(source.Source):
       'url': object.get('url'),
       'actor': object.get('author'),
       'object': object,
-      # TODO
-      # 'audience': [self.user_to_actor(to) for to in post.get('to')]
       }
 
     application = post.get('application')

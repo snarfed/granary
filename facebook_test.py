@@ -16,9 +16,6 @@ import webapp2
 import facebook
 import testutil
 
-DEFAULT_BATCH_REQUEST = urllib.urlencode(
-  {'batch': facebook.API_FRIENDS_BATCH_REQUESTS % {'offset': 0, 'limit': 100}})
-
 # test data
 USER = {
   'id': '212038',
@@ -105,6 +102,48 @@ class FacebookTest(testutil.HandlerTest):
   def setUp(self):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook(self.handler)
+
+  def test_get_activities(self):
+    resp = json.dumps({'data': [
+          {'id': '1_2', 'message': 'foo'},
+          {'id': '3_4', 'message': 'bar'},
+          ]})
+    self.expect_urlfetch(facebook.API_FEED_URL % 'me', resp)
+    self.mox.ReplayAll()
+
+    self.assert_equals((
+        None,
+        [{'id': 'tag:facebook.com,2012:1_2',
+          'object': {'content': 'foo',
+                     'id': 'tag:facebook.com,2012:1_2',
+                     'objectType': 'note',
+                     'url': 'http://facebook.com/1/posts/2'},
+          'url': 'http://facebook.com/1/posts/2',
+          'verb': 'post'},
+         {'id': 'tag:facebook.com,2012:3_4',
+          'object': {'content': 'bar',
+                     'id': 'tag:facebook.com,2012:3_4',
+                     'objectType': 'note',
+                     'url': 'http://facebook.com/3/posts/4'},
+          'url': 'http://facebook.com/3/posts/4',
+          'verb': 'post'},
+         ]),
+      self.facebook.get_activities())
+
+  def test_get_activities_user_id(self):
+    self.expect_urlfetch('https://graph.facebook.com/123/feed', '{}')
+    self.mox.ReplayAll()
+    self.assert_equals([], self.facebook.get_activities(user=123)[1])
+
+  def test_get_activities_user_id_passes_through_access_token(self):
+    self.expect_urlfetch('https://graph.facebook.com/123/feed?access_token=asdf',
+                         '{"id": 123}')
+    self.mox.ReplayAll()
+
+    handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
+                                     webapp2.Response())
+    self.facebook = facebook.Facebook(handler)
+    self.facebook.get_activities(user=123)[1]
 
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
