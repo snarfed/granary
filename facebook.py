@@ -1,17 +1,5 @@
 #!/usr/bin/python
-"""Facebook source class.
-
-had open streams api which supported activitystreams, but looks like it died in favor of graph api:
-https://developers.facebook.com/blog/post/225/
-https://developers.facebook.com/blog/post/288/
-http://wiki.activitystrea.ms/w/page/1359259/Facebook%20Activity%20Streams
-
-old rest api can get stream in xml format but it's not activitystreams format:
-https://developers.facebook.com/docs/reference/rest/stream.get/
-e.g. https://api.facebook.com/method/stream.get?access_token=AAADpooqA1u0BALAzULCrcQUhrZA52gz98S7uZCyzJMFyHdyF8WhBZBC9uP0US6n9iYHsMdX11zS2J7DxtW85GvYoLKlvCEZD&format=atom
-
-activity feed plugin is similar but again not activitystreams format:
-https://developers.facebook.com/docs/reference/plugins/activity/
+"""Facebook source class. Uses the Graph API.
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']

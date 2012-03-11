@@ -40,7 +40,7 @@ class HandlerTest(testutil.HandlerTest):
         'startIndex': int(resp.request.get('startIndex', 0)),
         'itemsPerPage': len(expected_activities),
         'totalResults': len(activitystreams.SOURCE.activities),
-        'entry': expected_activities,
+        'items': expected_activities,
         'filtered': False,
         'sorted': False,
         'updatedSince': False,

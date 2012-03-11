@@ -159,7 +159,7 @@ class Handler(webapp2.RequestHandler):
     response = {'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
                 'totalResults': total_results,
-                'entry': activities,
+                'items': activities,
                 'filtered': False,
                 'sorted': False,
                 'updatedSince': False,
