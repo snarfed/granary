@@ -17,10 +17,10 @@ class FakeSource(source.Source):
 
   def get_activities(self, user=source.ME, group=source.SELF, app=None,
                      activity=None, start_index=0, count=0):
-    if user:
-      ret = [a for a in self.activities if a['id'] == user]
-    else:
-      ret = self.activities
+    # if user:
+    #   ret = [a for a in self.activities if a['id'] == user]
+    # else:
+    ret = self.activities
 
     return len(self.activities), ret[start_index:count + start_index]
 

@@ -11,10 +11,8 @@ import util
 
 class ToXmlTest(unittest.TestCase):
 
-  def test_empty(self):
-    self.assertEqual("""
-
-""", util.to_xml({}))
+  def test_no_values(self):
+    self.assertEqual('', util.to_xml({}))
 
   def test_flat(self):
     self.assertEqual("""
@@ -26,11 +24,17 @@ class ToXmlTest(unittest.TestCase):
 <a></a>
 """, util.to_xml({'a': None}))
 
-  def test_empty(self):
+  def test_empty_string(self):
     self.assertEqual("""
 <a></a>
 """
 , util.to_xml({'a': ''}))
+
+  def test_empty_dict(self):
+    self.assertEqual("""
+<a></a>
+"""
+, util.to_xml({'a': {}}))
 
   def test_zero(self):
     self.assertEqual("""

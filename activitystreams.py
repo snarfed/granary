@@ -150,7 +150,6 @@ class Handler(webapp2.RequestHandler):
       activities: activity id (or sequence)
     """
     args = urllib.unquote(self.request.path).strip('/').split('/')
-    logging.info('@as %r', args)
     if args and args[0] == source.ME:
       args[0] = self.source.get_current_user()
     paging_params = self.get_paging_params()
@@ -159,6 +158,10 @@ class Handler(webapp2.RequestHandler):
     response = {'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
                 'totalResults': total_results,
+                # TODO: this is just for compatibility with
+                # http://activitystreamstester.appspot.com/
+                # the OpenSocial spec says to use entry instead, so switch back
+                # to that eventually
                 'items': activities,
                 'filtered': False,
                 'sorted': False,
