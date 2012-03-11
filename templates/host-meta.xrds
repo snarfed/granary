@@ -2,6 +2,12 @@
   <XRD xmlns:simple="http://xrds-simple.net/core/1.0"
        xmlns="xri://$XRD*($v*2.0)" version="2.0">
     <Type>xri://$xrds*simple</Type>
+
+    <Service>
+      <Type>http://ns.opensocial.org/2008/opensocial/activitystreams</Type>
+      <URI>https://{{ host }}/</URI>
+    </Service>
+
     <Service>
       <Type>http://activitystrea.ms/spec/1.0</Type>
       <URI>https://{{ host }}/</URI>

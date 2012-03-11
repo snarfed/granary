@@ -134,10 +134,6 @@ class Facebook(source.Source):
     if not id:
       return {}
 
-    # TODO: fb posts also include my comments on other things. instead just
-    # search for status, photo, link, ...?
-    # assert post.get('type') in ('status', 'link', 'photo')
-
     object = {
       'id': self.tag_uri(str(id)),
       'objectType': 'note',
