@@ -35,7 +35,6 @@ class Facebook(source.Source):
   """
 
   DOMAIN = 'facebook.com'
-  ITEMS_PER_PAGE = 100
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
   AUTH_URL = '&'.join((
       ('http://localhost:8000/dialog/oauth/?'
@@ -54,9 +53,7 @@ class Facebook(source.Source):
                      start_index=0, count=0):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
-    If an OAuth access token is provided in the access_token query parameter, it
-    will be passed on to Facebook. This will be necessary for some people and
-    activity details, based on their privacy settings.
+    OAuth credentials must be provided in the access_token query parameter.
 
     Args:
       user: user id

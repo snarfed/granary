@@ -1,7 +1,5 @@
 #!/usr/bin/python
 """Unit tests for twitter.py.
-
-TODO: test for null values, e.g. for utc_offset
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -80,12 +78,19 @@ class TwitterTest(testutil.HandlerTest):
     super(TwitterTest, self).setUp()
     self.twitter = twitter.Twitter(self.handler)
 
-  def test_get_current_user(self):
-    self.expect_urlfetch(
-      'https://api.twitter.com/1/account/verify_credentials.json',
-      '{"id": 9, "friends_count": 5}')
+  def test_get_activities(self):
+    self.expect_urlfetch(twitter.API_TIMELINE_URL, json.dumps([TWEET, TWEET]))
     self.mox.ReplayAll()
-    self.assert_equals(9, self.twitter.get_current_user())
+    self.assert_equals((None, [ACTIVITY, ACTIVITY]),
+                       self.twitter.get_activities())
+
+  def test_get_current_user(self):
+    # self.expect_urlfetch(
+    #   'https://api.twitter.com/1/account/verify_credentials.json',
+    #   '{"id": 9, "friends_count": 5}')
+    # self.mox.ReplayAll()
+    # self.assert_equals(9, self.twitter.get_current_user())
+    self.assert_equals(None, self.twitter.get_current_user())
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
