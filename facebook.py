@@ -33,7 +33,13 @@ import util
 
 OAUTH_SCOPES = 'read_stream'
 API_URL = 'https://graph.facebook.com/'
-API_FEED_URL = 'https://graph.facebook.com/%s/feed'
+
+# this an old, out of date version of the actual news feed. sigh. :/
+# "Note: /me/home retrieves an outdated view of the News Feed. This is currently
+# a known issue and we don't have any near term plans to bring them back up into
+# parity."
+# https://developers.facebook.com/docs/reference/api/#searching
+API_FEED_URL = 'https://graph.facebook.com/%s/home'
 
 
 class Facebook(source.Source):
@@ -56,8 +62,8 @@ class Facebook(source.Source):
       'response_type=token',
       ))
 
-  def get_activities(self, user=source.ME, group=source.SELF, app=None,
-                     activity=None, start_index=0, count=0):
+  def get_activities(self, user=None, group=None, app=None, activity=None,
+                     start_index=0, count=0):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
     If an OAuth access token is provided in the access_token query parameter, it
@@ -72,8 +78,9 @@ class Facebook(source.Source):
       start_index: int >= 0
       count: int >= 0
     """
-    import logging
-    logging.info('@fb %r %r %r %r', user, group, app, activity)
+    if user is None:
+      user = 'me'
+
     activities = json.loads(self.urlfetch(API_FEED_URL % user)).get('data', [])
     # return None for total_count since we'd have to fetch and count all
     # friends, which doesn't scale.

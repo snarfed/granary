@@ -131,12 +131,12 @@ class FacebookTest(testutil.HandlerTest):
       self.facebook.get_activities())
 
   def test_get_activities_user_id(self):
-    self.expect_urlfetch('https://graph.facebook.com/123/feed', '{}')
+    self.expect_urlfetch('https://graph.facebook.com/123/home', '{}')
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities(user=123)[1])
 
   def test_get_activities_user_id_passes_through_access_token(self):
-    self.expect_urlfetch('https://graph.facebook.com/123/feed?access_token=asdf',
+    self.expect_urlfetch('https://graph.facebook.com/123/home?access_token=asdf',
                          '{"id": 123}')
     self.mox.ReplayAll()
 
