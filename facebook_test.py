@@ -14,6 +14,7 @@ import urlparse
 import webapp2
 
 import facebook
+import source
 import testutil
 
 # test data
@@ -103,7 +104,7 @@ class FacebookTest(testutil.HandlerTest):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook(self.handler)
 
-  def test_get_activities(self):
+  def test_get_activities_defaults(self):
     resp = json.dumps({'data': [
           {'id': '1_2', 'message': 'foo'},
           {'id': '3_4', 'message': 'bar'},
@@ -131,22 +132,23 @@ class FacebookTest(testutil.HandlerTest):
          ]),
       self.facebook.get_activities())
 
-  def test_get_activities_user_id(self):
+  def test_get_activities_self(self):
     self.expect_urlfetch(
-      'https://graph.facebook.com/123/home?offset=0&limit=0', '{}')
+      'https://graph.facebook.com/me/posts?offset=0&limit=0', '{}')
     self.mox.ReplayAll()
-    self.assert_equals([], self.facebook.get_activities(user_id='123')[1])
+    self.assert_equals((None, []),
+                       self.facebook.get_activities(group_id=source.SELF))
 
-  def test_get_activities_user_id_passes_through_access_token(self):
+  def test_get_activities_passes_through_access_token(self):
     self.expect_urlfetch(
-      'https://graph.facebook.com/123/home?offset=0&limit=0&access_token=asdf',
+      'https://graph.facebook.com/me/home?offset=0&limit=0&access_token=asdf',
       '{"id": 123}')
     self.mox.ReplayAll()
 
     handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
                                      webapp2.Response())
     self.facebook = facebook.Facebook(handler)
-    self.facebook.get_activities(user_id='123')[1]
+    self.facebook.get_activities()
 
   def test_get_activities_activity_id(self):
     self.expect_urlfetch('https://graph.facebook.com/000', json.dumps(POST))

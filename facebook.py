@@ -22,6 +22,7 @@ import util
 OAUTH_SCOPES = 'read_stream'
 
 API_POST_URL = 'https://graph.facebook.com/%s'
+API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
 # this an old, out of date version of the actual news feed. sigh. :/
 # "Note: /me/home retrieves an outdated view of the News Feed. This is currently
 # a known issue and we don't have any near term plans to bring them back up into
@@ -57,15 +58,17 @@ class Facebook(source.Source):
 
     OAuth credentials must be provided in the access_token query parameter.
     """
+    if user_id is None:
+      user_id = 'me'
+
     if activity_id:
       posts = [json.loads(self.urlfetch(API_POST_URL % activity_id))]
       if posts == [False]:  # FB returns false for "not found"
         posts = []
       total_count = len(posts)
     else:
-      if user_id is None:
-        user_id = 'me'
-      url = API_FEED_URL % (user_id, start_index, count)
+      url_template = API_SELF_POSTS_URL if group_id else API_FEED_URL
+      url = url_template % (user_id, start_index, count)
       posts = json.loads(self.urlfetch(url)).get('data', [])
       total_count = None
 
