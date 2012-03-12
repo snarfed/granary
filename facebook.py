@@ -20,14 +20,13 @@ import source
 import util
 
 OAUTH_SCOPES = 'read_stream'
-API_URL = 'https://graph.facebook.com/'
 
 # this an old, out of date version of the actual news feed. sigh. :/
 # "Note: /me/home retrieves an outdated view of the News Feed. This is currently
 # a known issue and we don't have any near term plans to bring them back up into
 # parity."
 # https://developers.facebook.com/docs/reference/api/#searching
-API_FEED_URL = 'https://graph.facebook.com/%s/home'
+API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d&limit=%d'
 
 
 class Facebook(source.Source):
@@ -60,7 +59,8 @@ class Facebook(source.Source):
     if user_id is None:
       user_id = 'me'
 
-    activities = json.loads(self.urlfetch(API_FEED_URL % user_id)).get('data', [])
+    url = API_FEED_URL % (user_id, start_index, count)
+    activities = json.loads(self.urlfetch(url)).get('data', [])
     # return None for total_count since we'd have to fetch and count all
     # friends, which doesn't scale.
     return None, [self.post_to_activity(a) for a in activities]

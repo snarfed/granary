@@ -79,10 +79,28 @@ class TwitterTest(testutil.HandlerTest):
     self.twitter = twitter.Twitter(self.handler)
 
   def test_get_activities(self):
-    self.expect_urlfetch(twitter.API_TIMELINE_URL, json.dumps([TWEET, TWEET]))
+    self.expect_urlfetch(
+      'https://api.twitter.com/1/statuses/home_timeline.json?'
+      'include_entities=true&count=0',
+      json.dumps([TWEET, TWEET]))
     self.mox.ReplayAll()
     self.assert_equals((None, [ACTIVITY, ACTIVITY]),
                        self.twitter.get_activities())
+
+  def test_get_activities_start_index_count(self):
+    tweet2 = dict(TWEET)
+    tweet2['user']['name'] = 'foo'
+    activity2 = dict(ACTIVITY)
+    activity2['actor']['displayName'] = 'foo'
+
+    self.expect_urlfetch(
+      'https://api.twitter.com/1/statuses/home_timeline.json?'
+      'include_entities=true&count=2',
+      json.dumps([TWEET, tweet2]))
+    self.mox.ReplayAll()
+
+    got = self.twitter.get_activities(start_index=1, count=1)
+    self.assert_equals((None, [activity2]), got)
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
