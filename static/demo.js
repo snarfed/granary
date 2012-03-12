@@ -37,8 +37,12 @@ function render_form() {
   }
 
   // construct URL
-  var url = '/@me/@' + group_id + '/@app/' + activity_id + '?';
-  for (i in oauth_inputs) {
+  var url = '/@me/@' + group_id + '/@app/';
+  if (!activity_id_elem.disabled && activity_id != ACTIVITY_ID_BLURB)
+    url += activity_id;
+
+  url += '?'
+   for (i in oauth_inputs) {
     if (oauth_inputs[i].value)
       url += oauth_inputs[i].name + '=' + oauth_inputs[i].value + '&';
   }
