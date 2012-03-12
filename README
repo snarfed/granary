@@ -11,6 +11,9 @@ Background on ActivityStreams:
 http://activitystrea.ms/
 http://wiki.activitystrea.ms/
 
+REST API based on OpenSocial's Activity Streams API:
+http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
+
 Test client and validator:
 http://activitystreamstester.appspot.com/
 

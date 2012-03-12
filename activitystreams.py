@@ -1,98 +1,13 @@
 #!/usr/bin/python
 """ActivityStreams API handler classes.
 
-The REST API design follows the precedents of the ActivityStreams APIs below.
+Implements the OpenSocial ActivityStreams REST API:
+http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
 
-
-DECIDED: use this
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service 
-
-
-
-StatusNet
-===
-e.g. api/statuses/user_timeline/1.atom
-
+Other relevant activity REST APIs:
 http://status.net/wiki/Twitter-compatible_API
 http://wiki.activitystrea.ms/w/page/25347165/StatusNet%20Mapping
-
-?callback=foo for JSONP callback
-
-generally follows twitter global query params, e.g. cursor
-
-
-OpenSocial
-===
-e.g. baseURL/method/userID/selector?queryParameters
-
-!!! BEST !!!
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service 
-
-http://docs.opensocial.org/display/OSD/OpenSocial+REST+Developer%27s+Guide+%28v0.9%29
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-API-Server.xml
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml
-
-@me, @self, @all, @friends
-
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-API-Server.xml#rfc.section.6
-
-count
-The number of items per page, for a paged collection. A social network may have a default value for this parameter.
-fields
-A comma-separated list of fields to include in the representation. A social network may have a default value for this parameter; if you want the complete set of fields included, then set fields to @all.
-filterBy
-The field to apply the filterOp and filterValue parameters to.
-filterOp
-The operation to use on the filterBy field when filtering. Defaults to contains. Valid values are contains, equals, startsWith, and present.
-filterValue
-The value to use with filterOp when filtering.
-format
-The data format to use, such as json (the default) or atom.
-indexBy
-Indicates that the specified field should be used as an index in the returned JSON mapping.
-networkDistance
-Indicates that the returned collection should include results for all friends up to this many links away.
-sortBy
-The field to use in sorting.
-sortOrder
-The order in which to sort entries: ascending (the default) or descending.
-startIndex
-The 1-based index of the first result to be retrieved (for paging).
-updatedSince
-The date to filter by; returns only items with an updated date equal to or more recent than the specified value.
-
-Google+
-===
-e.g. plus/v1/people/userId/activities/collection
-
 https://developers.google.com/+/api/latest/activities/list
-https://developers.google.com/+/api/
-
-collection 	string 	The collection of activities to list.
-
-Acceptable values are:
-
-    "public" - All public activities created by the specified user.
-
-userId 	string 	The ID of the user to get activities for. The special value "me" can be used to indicate the authenticated user.
-Optional Parameters
-alt 	string 	Specifies an alternative representation type.
-
-Acceptable values are:
-
-    "json" - Use JSON format (default)
-
-maxResults 	unsigned integer 	The maximum number of activities to include in the response, used for paging. For any response, the actual number returned may be less than the specified maxResults. Acceptable values are 1 to 100, inclusive. (Default: 20)
-pageToken 	string 	The continuation token, used to page through large
-result sets. To get the next page of results, set this parameter to the value of
-"nextPageToken" from the previous response. 
-
-callback 	string 	Specifies a JavaScript function that will be passed the response data for using the API with JSONP.
-fields 	string 	Selector specifying which fields to include in a partial response.
-key 	string 	API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
-access_token 	string 	OAuth 2.0 token for the current user. Learn more about OAuth.
-prettyPrint 	boolean 	If set to "true", data output will include line breaks and indentation to make it more readable. If set to "false", unnecessary whitespace is removed, reducing the size of the response. Defaults to "true".
-userIp 	string 	Identifies the IP address of the end user for whom the API call is being made. This allows per-user quotas to be enforced when calling the API from a server-side application. Learn more about Capping Usage. 
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -128,6 +43,10 @@ XML_TEMPLATE = """\
 """
 ITEMS_PER_PAGE = 100
 
+# default values for each part of the API request path, e.g. /@me/@self/@all/...
+PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
+MAX_PATH_LEN = len(PATH_DEFAULTS)
+
 
 class Handler(webapp2.RequestHandler):
   """Base class for ActivityStreams API handlers.
@@ -140,21 +59,32 @@ class Handler(webapp2.RequestHandler):
     super(Handler, self).__init__(*args, **kwargs)
     self.source = SOURCE(self)
 
-  def get(self, *args):
+  def get(self):
     """Handles an API GET.
 
-    Args:
-      users: user id (or sequence)
-      group: group id
-      app: app id
-      activities: activity id (or sequence)
+    Request path is of the form /user_id/group_id/app_id/activity_id , where
+    each element is an optional string object id.
     """
+    # parse path
     args = urllib.unquote(self.request.path).strip('/').split('/')
-    if args and args[0] == source.ME:
-      args[0] = self.source.get_current_user()
-    paging_params = self.get_paging_params()
-    total_results, activities = self.source.get_activities(*args, **paging_params)
+    if len(args) > MAX_PATH_LEN:
+      raise exc.HTTPNotFound()
+    elif args == ['']:
+      args = []
 
+    # handle default path elements
+    args = [None if a in defaults else a
+            for a, defaults in zip(args, PATH_DEFAULTS)]
+    paging_params = self.get_paging_params()
+
+    # extract format
+    format = self.request.get('format', 'json')
+    if format not in ('json', 'atom', 'xml'):
+      raise exc.HTTPBadRequest('Invalid format: %s, expected json, atom, xml' %
+                               format)
+
+    # get activities and build response
+    total_results, activities = self.source.get_activities(*args, **paging_params)
     response = {'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
                 'totalResults': total_results,
@@ -168,16 +98,13 @@ class Handler(webapp2.RequestHandler):
                 'updatedSince': False,
                 }
 
-    format = self.request.get('format', 'json')
+    # encode and write response
     if format == 'json':
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
-    elif format in ('atom', 'xml'):
+    else:
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
-    else:
-      raise exc.HTTPBadRequest('Invalid format: %s, expected json, atom, xml' %
-                               format)
 
   def get_paging_params(self):
     """Extracts, normalizes and returns the startIndex and count query params.

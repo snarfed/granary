@@ -15,17 +15,14 @@ class FakeSource(source.Source):
   activities = None
   user_id = 0
 
-  def get_activities(self, user=source.ME, group=source.SELF, app=None,
-                     activity=None, start_index=0, count=0):
-    # if user:
-    #   ret = [a for a in self.activities if a['id'] == user]
-    # else:
-    ret = self.activities
+  def get_activities(self, user_id=None, group_id=None, app_id=None,
+                     activity_id=None, start_index=0, count=0):
+    if user_id:
+      ret = [a for a in self.activities if a['id'] == user_id]
+    else:
+      ret = self.activities
 
     return len(self.activities), ret[start_index:count + start_index]
-
-  def get_current_user(self):
-    return self.user_id
 
 
 class SourceTest(testutil.HandlerTest):

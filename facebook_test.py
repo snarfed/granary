@@ -133,7 +133,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_user_id(self):
     self.expect_urlfetch('https://graph.facebook.com/123/home', '{}')
     self.mox.ReplayAll()
-    self.assert_equals([], self.facebook.get_activities(user=123)[1])
+    self.assert_equals([], self.facebook.get_activities(user_id='123')[1])
 
   def test_get_activities_user_id_passes_through_access_token(self):
     self.expect_urlfetch('https://graph.facebook.com/123/home?access_token=asdf',
@@ -143,7 +143,7 @@ class FacebookTest(testutil.HandlerTest):
     handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
                                      webapp2.Response())
     self.facebook = facebook.Facebook(handler)
-    self.facebook.get_activities(user=123)[1]
+    self.facebook.get_activities(user_id='123')[1]
 
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))

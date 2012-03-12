@@ -49,32 +49,21 @@ class Facebook(source.Source):
       'response_type=token',
       ))
 
-  def get_activities(self, user=None, group=None, app=None, activity=None,
-                     start_index=0, count=0):
+  def get_activities(self, user_id=None, group_id=None, app_id=None,
+                     activity_id=None, start_index=0, count=0):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
+    See method docstring in source.py for details.
+
     OAuth credentials must be provided in the access_token query parameter.
-
-    Args:
-      user: user id
-      group: group id
-      app: app id
-      activity: activity id
-      start_index: int >= 0
-      count: int >= 0
     """
-    if user is None:
-      user = 'me'
+    if user_id is None:
+      user_id = 'me'
 
-    activities = json.loads(self.urlfetch(API_FEED_URL % user)).get('data', [])
+    activities = json.loads(self.urlfetch(API_FEED_URL % user_id)).get('data', [])
     # return None for total_count since we'd have to fetch and count all
     # friends, which doesn't scale.
     return None, [self.post_to_activity(a) for a in activities]
-
-  def get_current_user(self):
-    """Returns 'me', which Facebook interprets as the current user.
-    """
-    return 'me'
 
   def urlfetch(self, url, **kwargs):
     """Wraps Source.urlfetch() and passes through the access_token query param.

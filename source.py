@@ -1,12 +1,8 @@
 #!/usr/bin/python
 """Source base class.
 
-STATE:
-finish get_activities(), do _test, then do activitystreams.py
-
-decided to use this REST API:
+Based on the OpenSocial ActivityStreams REST API:
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service 
-only one method, get (activities), for now
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -23,13 +19,15 @@ from google.appengine.api import urlfetch
 
 ME = '@me'
 SELF = '@self'
-
+ALL = '@all'
+FRIENDS = '@friends'
+APP = '@app'
 
 class Source(object):
   """Abstract base class for a source (e.g. Facebook, Twitter).
 
-  Concrete subclasses must override DOMAIN and implement get_activities() and
-  get_current_user().
+  Concrete subclasses must override the class constants below and implement
+  get_activities().
 
   OAuth credentials may be extracted from the current request's query parameters
   e.g. access_token_key and access_token_secret for Twitter (OAuth 1.0a) and
@@ -47,28 +45,32 @@ class Source(object):
   def __init__(self, handler):
     self.handler = handler
 
-  def get_activities(self, user=ME, group=SELF, app=None, activity=None):
-    """Return a list and total count of ActivityStreams activities.
+  def get_activities(self, user_id=None, group_id=None, app_id=None,
+                     activity_id=None, start_index=0, count=0):
+    """Return a total count and list of ActivityStreams activities.
 
     If user_id is provided, only that user's activity(s) are included.
     start_index and count determine paging, as described in the spec:
     http://activitystrea.ms/draft-spec.html#anchor14
 
+    app id is just object id
+    http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#appId
+
+    group id is string id of group or @self, @friends, @all
+    http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#Group-ID
+
     Args:
-      user: user id
-      group: group id
-      app: app id
-      activity: activity id
+      user_id: string object id, defaults to the currently authenticated user
+      group_id: string object id, defaults to the current user's friends
+      app_id: string object id
+      activity_id: string object id
+      start_index: int >= 0
+      count: int >= 0
 
     Returns:
       (total_results, activities) tuple
       total_results: int or None (e.g. if it can't be calculated efficiently)
       activities: list of activity dicts to be JSON-encoded
-    """
-    raise NotImplementedError()
-
-  def get_current_user(self):
-    """Returns the current (authed) user, either integer id or string username.
     """
     raise NotImplementedError()
 
