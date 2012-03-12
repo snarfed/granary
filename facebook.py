@@ -67,8 +67,8 @@ class Facebook(source.Source):
         posts = []
       total_count = len(posts)
     else:
-      url_template = API_SELF_POSTS_URL if group_id else API_FEED_URL
-      url = url_template % (user_id, start_index, count)
+      url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
+      url = url % (user_id, start_index, count)
       posts = json.loads(self.urlfetch(url)).get('data', [])
       total_count = None
 

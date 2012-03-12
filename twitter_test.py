@@ -9,6 +9,7 @@ try:
 except ImportError:
   import simplejson as json
 
+import source
 import testutil
 import twitter
 
@@ -114,6 +115,15 @@ class TwitterTest(testutil.HandlerTest):
       self.twitter.get_activities(
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
+
+  def test_get_activities_self(self):
+    self.expect_urlfetch('https://api.twitter.com/1/statuses/user_timeline.json?'
+                         'include_entities=true&count=0',
+                         '[]')
+    self.mox.ReplayAll()
+
+    self.assert_equals((None, []),
+                       self.twitter.get_activities(group_id=source.SELF))
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))

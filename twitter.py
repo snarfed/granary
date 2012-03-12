@@ -41,9 +41,10 @@ import util
 
 API_TIMELINE_URL = \
   'https://api.twitter.com/1/statuses/home_timeline.json?include_entities=true&count=%d'
+API_SELF_URL = \
+  'https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&count=%d'
 API_STATUS_URL = \
   'https://api.twitter.com/1/statuses/show.json?id=%s&include_entities=true'
-
 
 class Twitter(source.Source):
   """Implements the ActivityStreams API for Twitter.
@@ -66,8 +67,9 @@ class Twitter(source.Source):
       tweets = [json.loads(self.urlfetch(API_STATUS_URL % activity_id))]
       total_count = len(tweets)
     else:
+      url = API_SELF_URL if group_id == source.SELF else API_TIMELINE_URL
       twitter_count = count + start_index
-      tweets = json.loads(self.urlfetch(API_TIMELINE_URL % twitter_count))
+      tweets = json.loads(self.urlfetch(url % twitter_count))
       tweets = tweets[start_index:]
       total_count = None
 
