@@ -2,31 +2,24 @@
  * Utilities for the demo form on the front page.
  */
 
-var USER_ID_BLURB = 'user id (optional)';
+var ACTIVITY_ID_BLURB = 'activity id (optional)';
 var ACCESS_TOKEN_RE = new RegExp('access_token=([^&]+)');
 var OAUTH_INPUT_IDS = ['access_token', 'access_token_key', 'access_token_secret'];
 
 function render_form() {
-  // the user id field's style depends on whether it has a value, and whether it
+  // the activity id field's style depends on whether it has a value, and whether it
   // has focus, and whether @all or @self is selected.
-  var all_or_self = document.getElementById('all_or_self').value;
-  var userid_elem = document.getElementById('userid');
-  var userid = userid_elem.value;
+  var group_id = document.getElementById('group_id').value;
+  var activity_id_elem = document.getElementById('activity_id');
+  var activity_id = activity_id_elem.value;
 
-  if (all_or_self == 'self') {
-    userid_elem.disabled = true;
-    userid_elem.style.display = 'none';
-  } else {
-    userid_elem.disabled = false;
-    userid_elem.style.display = 'inline';
-    if (userid == '' || userid == USER_ID_BLURB) {
-      if (document.activeElement == userid_elem) {
-        userid_elem.value = '';
-        userid_elem.style.color = 'black';
-      } else {
-        userid_elem.value = USER_ID_BLURB;
-        userid_elem.style.color = 'gray';
-      }
+  if (activity_id == '' || activity_id == ACTIVITY_ID_BLURB) {
+    if (document.activeElement == activity_id_elem) {
+      activity_id_elem.value = '';
+      activity_id_elem.style.color = 'black';
+    } else {
+      activity_id_elem.value = ACTIVITY_ID_BLURB;
+      activity_id_elem.style.color = 'gray';
     }
   }
 
@@ -44,11 +37,7 @@ function render_form() {
   }
 
   // construct URL
-  var url = '/@me/@' + all_or_self + '/';
-  if (!userid_elem.disabled && userid != USER_ID_BLURB)
-    url += userid;
-
-  url += '?'
+  var url = '/@me/@' + group_id + '/@app/' + activity_id + '?';
   for (i in oauth_inputs) {
     if (oauth_inputs[i].value)
       url += oauth_inputs[i].name + '=' + oauth_inputs[i].value + '&';

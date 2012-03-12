@@ -57,15 +57,17 @@ mailing list</a>.</p>
 <form id="demo" method="get" target="results">
 <p><nobr><code>
 / @me /
-<select id="all_or_self" name="all_or_self" onchange="render_form()">
+<select id="group_id" name="group_id" onchange="render_form()">
   <option value="all">@all</input>
   <option value="self">@self</input>
+  <option value="friends">@friends</input>
 </select>
-/
-<input id="userid" name="userid" type="text" value="user id (optional)" size="12"
-  onkeyup="render_form()" onfocus="render_form()" onblur="render_form()" />
-  <!-- onkeyup instead of onkeypress because onkeypress fires *before* the
-       browser adds the character to the input value-->
+/ @app /
+<input id="activity_id" name="activity_id" type="text"
+       value="activity id (optional)" size="12"
+       onkeyup="render_form()" onfocus="render_form()" onblur="render_form()" />
+       <!-- onkeyup instead of onkeypress because onkeypress fires *before* the
+            browser adds the character to the input value -->
 {% block query_params %}
 {% endblock %}
 </code></nobr></p>
