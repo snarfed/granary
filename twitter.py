@@ -39,8 +39,10 @@ import source
 import tweepy
 import util
 
-API_TIMELINE_URL = ('https://api.twitter.com/1/statuses/home_timeline.json?'
-                    'include_entities=true&count=%d')
+API_TIMELINE_URL = \
+  'https://api.twitter.com/1/statuses/home_timeline.json?include_entities=true&count=%d'
+API_STATUS_URL = \
+  'https://api.twitter.com/1/statuses/show.json?id=%s&include_entities=true'
 
 
 class Twitter(source.Source):
@@ -60,9 +62,16 @@ class Twitter(source.Source):
     OAuth credentials must be provided in access_token_key and
     access_token_secret query parameters.
     """
-    twitter_count = count + start_index
-    tweets = json.loads(self.urlfetch(API_TIMELINE_URL % twitter_count))
-    return None, [self.tweet_to_activity(tweet) for tweet in tweets[start_index:]]
+    if activity_id:
+      tweets = [json.loads(self.urlfetch(API_STATUS_URL % activity_id))]
+      total_count = len(tweets)
+    else:
+      twitter_count = count + start_index
+      tweets = json.loads(self.urlfetch(API_TIMELINE_URL % twitter_count))
+      tweets = tweets[start_index:]
+      total_count = None
+
+    return total_count, [self.tweet_to_activity(t) for t in tweets]
 
   def urlfetch(self, url, **kwargs):
     """Wraps Source.urlfetch(), signing with OAuth if there's an access token.

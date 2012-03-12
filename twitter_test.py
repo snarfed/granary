@@ -102,6 +102,19 @@ class TwitterTest(testutil.HandlerTest):
     got = self.twitter.get_activities(start_index=1, count=1)
     self.assert_equals((None, [activity2]), got)
 
+  def test_get_activities_activity_id(self):
+    self.expect_urlfetch(
+      'https://api.twitter.com/1/statuses/show.json?id=000&include_entities=true',
+      json.dumps(TWEET))
+    self.mox.ReplayAll()
+
+    # activity id overrides user, group, app id and ignores startIndex and count
+    self.assert_equals(
+      (1, [ACTIVITY]),
+      self.twitter.get_activities(
+        user_id='123', group_id='456', app_id='789', activity_id='000',
+        start_index=3, count=6))
+
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
 
