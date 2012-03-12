@@ -8,9 +8,6 @@ Other relevant activity REST APIs:
 http://status.net/wiki/Twitter-compatible_API
 http://wiki.activitystrea.ms/w/page/25347165/StatusNet%20Mapping
 https://developers.google.com/+/api/latest/activities/list
-
-STATE TODO: implement @self, then narrow URLs to just @me and @app and
-optional activity id
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']

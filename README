@@ -7,18 +7,26 @@ http://twitter-activitystreams.appspot.com/
 
 Feel free to add more!
 
+Source: https://github.com/snarfed/activitystreams-unofficial
+Contact: Ryan Barrett <activitystreams@ryanb.org>
+
 Background on ActivityStreams:
 http://activitystrea.ms/
 http://wiki.activitystrea.ms/
 
-REST API based on OpenSocial's Activity Streams API:
+The REST API is based on OpenSocial's Activity Streams API:
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
+
+Request paths are of the form /user_id/group_id/app_id/activity_id, where
+each element is optional. user_id may be @me. group_id may be @all, @friends
+(currently identical to @all), or @self. app_id may be @app, but it doesn't
+matter, it's currently ignored.
+
+The supported query parameters are startIndex and count, which are handled as
+described in OpenSocial (above) and OpenSearch.
 
 Test client and validator:
 http://activitystreamstester.appspot.com/
-
-Source: https://github.com/snarfed/activitystreams-unofficial
-Contact: Ryan Barrett <activitystreams@ryanb.org>
 
 As precedent, Cliqset's FeedProxy used to do this, but unfortunately it and
 Cliqset died:
