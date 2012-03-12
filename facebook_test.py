@@ -148,6 +148,22 @@ class FacebookTest(testutil.HandlerTest):
     self.facebook = facebook.Facebook(handler)
     self.facebook.get_activities(user_id='123')[1]
 
+  def test_get_activities_activity_id(self):
+    self.expect_urlfetch('https://graph.facebook.com/000', json.dumps(POST))
+    self.mox.ReplayAll()
+
+    # activity id overrides user, group, app id and ignores startIndex and count
+    self.assert_equals(
+      (1, [ACTIVITY]),
+      self.facebook.get_activities(
+        user_id='123', group_id='456', app_id='789', activity_id='000',
+        start_index=3, count=6))
+
+  def test_get_activities_activity_id_not_found(self):
+    self.expect_urlfetch('https://graph.facebook.com/000', 'false')
+    self.mox.ReplayAll()
+    self.assert_equals((0, []), self.facebook.get_activities(activity_id='000'))
+
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
 
