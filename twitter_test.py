@@ -52,7 +52,7 @@ OBJECT = {
   'objectType': 'note',
   'author': ACTOR,
   'content': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3',
-  'id': 'tag:twitter.com,2012:snarfed_org/172417043893731329',
+  'id': 'tag:twitter.com,2012:172417043893731329',
   'published': '2012-02-22T20:26:41',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'image': {'url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
@@ -65,7 +65,7 @@ OBJECT = {
 ACTIVITY = {
   'verb': 'post',
   'published': '2012-02-22T20:26:41',
-  'id': 'tag:twitter.com,2012:snarfed_org/172417043893731329',
+  'id': 'tag:twitter.com,2012:172417043893731329',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,

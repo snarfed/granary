@@ -4,6 +4,14 @@
 Implements the OpenSocial ActivityStreams REST API:
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
 
+Request paths are of the form /user_id/group_id/app_id/activity_id, where
+each element is optional. user_id may be @me. group_id may be @all, @friends
+(currently identical to @all), or @self. app_id may be @app, but it doesn't
+matter, it's currently ignored.
+
+The supported query parameters are startIndex and count, which are handled as
+described in OpenSocial (above) and OpenSearch.
+
 Other relevant activity REST APIs:
 http://status.net/wiki/Twitter-compatible_API
 http://wiki.activitystrea.ms/w/page/25347165/StatusNet%20Mapping

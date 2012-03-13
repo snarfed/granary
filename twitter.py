@@ -156,7 +156,7 @@ class Twitter(source.Source):
       object['author'] = self.user_to_actor(user)
       username = object['author'].get('username')
       if username:
-        object['id'] = self.tag_uri('%s/%d' % (username, id))
+        object['id'] = self.tag_uri(id)
         object['url'] = 'http://twitter.com/%s/status/%d' % (username, id)
 
     # currently the media list will only have photos. if that changes, though,
