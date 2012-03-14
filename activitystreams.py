@@ -107,6 +107,7 @@ class Handler(webapp2.RequestHandler):
                 }
 
     # encode and write response
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'json':
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
