@@ -1,0 +1,8 @@
+{"links": [
+  {
+    "rel": "http://ns.opensocial.org/2008/opensocial/activitystreams",
+    "href": "https://{{ host }}/",
+    "titles": ["ActivityStreams API endpoint"]
+   }
+  ]
+}

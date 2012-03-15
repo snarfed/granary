@@ -16,6 +16,9 @@ Other relevant activity REST APIs:
 http://status.net/wiki/Twitter-compatible_API
 http://wiki.activitystrea.ms/w/page/25347165/StatusNet%20Mapping
 https://developers.google.com/+/api/latest/activities/list
+
+ActivityStreams specs:
+http://activitystrea.ms/specs/
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']

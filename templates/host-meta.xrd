@@ -8,9 +8,4 @@
         href="https://{{ host }}/">
     <Title>ActivityStreams API endpoint</Title>
   </Link>
-
-  <Link rel="http://activitystrea.ms/spec/1.0"
-        href="https://{{ host }}/">
-    <Title>ActivityStreams API endpoint</Title>
-  </Link>
 </XRD>
