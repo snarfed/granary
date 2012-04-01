@@ -62,3 +62,4 @@ rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
 
 TODO: unify the majority of the code with portablecontacts-unofficial and
 webfinger-unofficial.
+TODO: port the unit tests to webtest: http://webtest.pythonpaste.org/
