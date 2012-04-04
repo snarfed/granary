@@ -4,3 +4,6 @@
 [submodule "webapp-improved"]
 	path = webapp-improved
 	url = git://github.com/moraes/webapp-improved.git
+[submodule "webutil"]
+	path = webutil
+	url = git@github.com:snarfed/webutil.git
