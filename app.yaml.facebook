@@ -23,3 +23,13 @@ handlers:
 - url: /.+
   script: activitystreams.py
   secure: always
+
+skip_files:
+- ^(.*/)?.*\.py[co]
+- ^(.*/)?.*/RCS/.*
+- ^(.*/)?\..*
+- ^(.*/)?.*\.bak$
+# don't need anything in the tweepy or webapp-improved subdirs, especially since
+# webapp-improved/lib/ has over 1k files!
+- ^tweepy_submodule/(docs|examples|tools)/.*
+- ^webapp-improved/.*/.*
