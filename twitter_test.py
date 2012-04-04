@@ -10,7 +10,7 @@ except ImportError:
   import simplejson as json
 
 import source
-import testutil
+from webutil import testutil
 import twitter
 
 

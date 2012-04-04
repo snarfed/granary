@@ -15,7 +15,7 @@ import webapp2
 
 import facebook
 import source
-import testutil
+from webutil import testutil
 
 # test data
 USER = {

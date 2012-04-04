@@ -17,7 +17,7 @@ import urlparse
 
 import appengine_config
 import source
-import util
+from webutil import util
 
 OAUTH_SCOPES = 'read_stream'
 

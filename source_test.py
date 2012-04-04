@@ -7,7 +7,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 from webob import exc
 
 import source
-import testutil
+from webutil import testutil
 
 
 class FakeSource(source.Source):

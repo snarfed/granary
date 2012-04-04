@@ -37,7 +37,7 @@ import urlparse
 import appengine_config
 import source
 import tweepy
-import util
+from webutil import util
 
 API_TIMELINE_URL = \
   'https://api.twitter.com/1/statuses/home_timeline.json?include_entities=true&count=%d'

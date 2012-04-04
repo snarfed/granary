@@ -13,7 +13,7 @@ import mox
 import activitystreams
 import source
 import source_test
-import testutil
+from webutil import testutil
 
 
 class HandlerTest(testutil.HandlerTest):
