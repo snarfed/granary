@@ -8,20 +8,13 @@ http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import datetime
-try:
-  import json
-except ImportError:
-  import simplejson as json
-import logging
-from webob import exc
-
-from google.appengine.api import urlfetch
 
 ME = '@me'
 SELF = '@self'
 ALL = '@all'
 FRIENDS = '@friends'
 APP = '@app'
+
 
 class Source(object):
   """Abstract base class for a source (e.g. Facebook, Twitter).
@@ -73,30 +66,6 @@ class Source(object):
       activities: list of activity dicts to be JSON-encoded
     """
     raise NotImplementedError()
-
-  def urlfetch(self, url, **kwargs):
-    """Wraps urlfetch. Passes error responses through to the client.
-
-    ...by raising HTTPException.
-
-    Args:
-      url: str
-      kwargs: passed through to urlfetch.fetch()
-
-    Returns:
-      the HTTP response body
-    """
-    logging.debug('Fetching %s with kwargs %s', url, kwargs)
-    resp = urlfetch.fetch(url, deadline=999, **kwargs)
-
-    if resp.status_code == 200:
-      return resp.content
-    else:
-      logging.warning('GET %s returned %d:\n%s',
-                      url, resp.status_code, resp.content)
-      self.handler.response.headers.update(resp.headers)
-      self.handler.response.out.write(resp.content)
-      raise exc.status_map.get(resp.status_code)(resp.content)
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name.

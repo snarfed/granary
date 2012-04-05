@@ -11,7 +11,7 @@ except ImportError:
 import mox
 import urllib
 import urlparse
-import webapp2
+from webutil import webapp2
 
 import facebook
 import source

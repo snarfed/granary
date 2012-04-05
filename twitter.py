@@ -100,7 +100,7 @@ class Twitter(source.Source):
       logging.info('Populated Authorization header from access token: %s',
                    headers.get('Authorization'))
 
-    return super(Twitter, self).urlfetch(url, **kwargs)
+    return util.urlfetch(url, **kwargs)
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.

@@ -8,8 +8,8 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import logging
 import urllib
-import webapp2
 from webob import exc
+from webutil import webapp2
 
 import appengine_config
 import tweepy

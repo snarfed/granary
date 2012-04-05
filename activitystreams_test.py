@@ -16,27 +16,42 @@ import source_test
 from webutil import testutil
 
 
+class FakeSource(source.Source):
+  # {user id: {group id: {activity id, app id}}}
+  activities = None
+  user_id = 0
+
+  def get_activities(self, user_id=None, group_id=None, app_id=None,
+                     activity_id=None, start_index=0, count=0):
+    if user_id:
+      ret = [a for a in self.activities if a['id'] == user_id]
+    else:
+      ret = self.activities
+
+    return len(self.activities), ret[start_index:count + start_index]
+
+
 class HandlerTest(testutil.HandlerTest):
 
   def setUp(self):
-    super(HandlerTest, self).setUp(application=activitystreams.application)
+    super(HandlerTest, self).setUp()
     self.reset()
 
   def reset(self):
     self.mox.UnsetStubs()
     self.mox.ResetAll()
-    activitystreams.SOURCE = source_test.FakeSource
-    self.mox.StubOutWithMock(source_test.FakeSource, 'get_activities')
+    activitystreams.SOURCE = FakeSource
+    self.mox.StubOutWithMock(FakeSource, 'get_activities')
 
   def get_response(self, url, *args, **kwargs):
     kwargs.setdefault('start_index', 0)
     kwargs.setdefault('count', activitystreams.ITEMS_PER_PAGE)
 
-    source_test.FakeSource.get_activities(*args, **kwargs)\
-                          .AndReturn((9, [{'foo': 'bar'}]))
+    FakeSource.get_activities(*args, **kwargs)\
+        .AndReturn((9, [{'foo': 'bar'}]))
     self.mox.ReplayAll()
 
-    return self.application.get_response(url)
+    return activitystreams.application.get_response(url)
 
   def check_request(self, url, *args, **kwargs):
     resp = self.get_response(url, *args, **kwargs)
@@ -109,15 +124,15 @@ class HandlerTest(testutil.HandlerTest):
 """, resp.body)
 
   def test_unknown_format(self):
-    resp = self.application.get_response('?format=bad')
+    resp = activitystreams.application.get_response('?format=bad')
     self.assertEquals(400, resp.status_int)
 
   def test_bad_start_index(self):
-    resp = self.application.get_response('?startIndex=foo')
+    resp = activitystreams.application.get_response('?startIndex=foo')
     self.assertEquals(400, resp.status_int)
 
   def test_bad_count(self):
-    resp = self.application.get_response('?count=-1')
+    resp = activitystreams.application.get_response('?count=-1')
     self.assertEquals(400, resp.status_int)
 
   def test_start_index(self):

@@ -26,10 +26,7 @@ class FrontPageHandler(handlers.TemplateHandler):
 
 def main():
   application = webapp.WSGIApplication(
-      [('/', FrontPageHandler),
-       handlers.HOST_META_ROUTE,
-       handlers.HOST_META_XRDS_ROUTE,
-       ],
+      [('/', FrontPageHandler)] + handlers.HOST_META_ROUTES,
       debug=appengine_config.DEBUG)
   run_wsgi_app(application)
 

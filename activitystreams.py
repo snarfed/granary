@@ -31,8 +31,8 @@ import logging
 import re
 import os
 import urllib
-import webapp2
 from webob import exc
+from webutil import webapp2
 
 import appengine_config
 import facebook

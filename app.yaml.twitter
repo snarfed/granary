@@ -43,4 +43,4 @@ skip_files:
 # don't need anything in the tweepy or webapp-improved subdirs, especially since
 # webapp-improved/lib/ has over 1k files!
 - ^tweepy_submodule/(docs|examples|tools)/.*
-- ^webapp-improved/.*/.*
+- webapp-improved/.*/.*

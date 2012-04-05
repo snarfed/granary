@@ -86,7 +86,7 @@ class Facebook(source.Source):
       parsed[4] = urllib.urlencode(params)
       url = urlparse.urlunparse(parsed)
 
-    return super(Facebook, self).urlfetch(url, **kwargs)
+    return util.urlfetch(url, **kwargs)
 
   def post_to_activity(self, post):
     """Converts a post to an activity.
