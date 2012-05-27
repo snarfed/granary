@@ -56,6 +56,6 @@ The tests require the App Engine SDK and python-mox.
 
 Deploy commands:
 rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
-  ~/google_appengine/appcfg.py update . && \
+  ~/google_appengine/appcfg.py --oauth2 update . && \
 rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
-  ~/google_appengine/appcfg.py update .
+  ~/google_appengine/appcfg.py --oauth2 update .
