@@ -8,7 +8,6 @@ try:
   import json
 except ImportError:
   import simplejson as json
-import mox
 
 import activitystreams
 import source
