@@ -156,7 +156,7 @@ class Twitter(source.Source):
       object['author'] = self.user_to_actor(user)
       username = object['author'].get('username')
       if username:
-        object['id'] = self.tag_uri(id)
+        object['id'] = util.tag_uri(self.DOMAIN, id)
         object['url'] = 'http://twitter.com/%s/status/%d' % (username, id)
 
     # currently the media list will only have photos. if that changes, though,
@@ -193,7 +193,7 @@ class Twitter(source.Source):
     return util.trim_nulls({
       'displayName': user.get('name'),
       'image': {'url': user.get('profile_image_url')},
-      'id': self.tag_uri(username) if username else None,
+      'id': util.tag_uri(self.DOMAIN, username) if username else None,
       'published': self.rfc2822_to_iso8601(user.get('created_at')),
       'url': 'http://twitter.com/%s' % username,
       'location': {'displayName': user.get('location')},

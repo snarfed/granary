@@ -112,7 +112,7 @@ class Facebook(source.Source):
     if application:
       activity['generator'] = {
         'displayName': application.get('name'),
-        'id': self.tag_uri(application.get('id')),
+        'id': util.tag_uri(self.DOMAIN, application.get('id')),
         }
 
     return util.trim_nulls(activity)
@@ -133,7 +133,7 @@ class Facebook(source.Source):
       return {}
 
     object = {
-      'id': self.tag_uri(str(id)),
+      'id': util.tag_uri(self.DOMAIN, str(id)),
       'objectType': 'note',
       'published': post.get('created_time'),
       'updated': post.get('updated_time'),
@@ -182,7 +182,7 @@ class Facebook(source.Source):
     actor = {
       'displayName': user.get('name'),
       'image': {'url': image_url},
-      'id': self.tag_uri(handle),
+      'id': util.tag_uri(self.DOMAIN, handle),
       'updated': user.get('updated_time'),
       'url': user.get('link'),
       'username': username,

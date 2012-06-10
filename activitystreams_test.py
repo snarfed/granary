@@ -11,7 +11,6 @@ except ImportError:
 
 import activitystreams
 import source
-import source_test
 from webutil import testutil
 
 
