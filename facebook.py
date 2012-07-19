@@ -154,8 +154,12 @@ class Facebook(source.Source):
       lat = location.get('latitude')
       lon = location.get('longitude')
       if lat and lon:
-        # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-        object['location']['position'] = '%+f%+f/' % (lat, lon)
+        object['location'].update({
+          'latitude': lat,
+          'longitude': lon,
+          # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
+          'position': '%+f%+f/' % (lat, lon),
+          })
 
     return util.trim_nulls(object)
 

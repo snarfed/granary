@@ -80,6 +80,8 @@ OBJECT = {
   'location': {
     'displayName': 'Lake Merced',
     'id': '113785468632283',
+    'latitude': 37.728193717481,
+    'longitude': -122.49336423595,
     'position': '+37.728194-122.493364/',
     },
   }

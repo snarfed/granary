@@ -10,26 +10,18 @@ except ImportError:
   import simplejson as json
 
 import activitystreams
+import facebook_test
 import source
 from webutil import testutil
 
 
 class FakeSource(source.Source):
-  # {user id: {group id: {activity id, app id}}}
-  activities = None
-  user_id = 0
-
-  def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0):
-    if user_id:
-      ret = [a for a in self.activities if a['id'] == user_id]
-    else:
-      ret = self.activities
-
-    return len(self.activities), ret[start_index:count + start_index]
+  pass
 
 
 class HandlerTest(testutil.HandlerTest):
+
+  activities = [{'foo': 'bar'}]
 
   def setUp(self):
     super(HandlerTest, self).setUp()
@@ -46,7 +38,7 @@ class HandlerTest(testutil.HandlerTest):
     kwargs.setdefault('count', activitystreams.ITEMS_PER_PAGE)
 
     FakeSource.get_activities(*args, **kwargs)\
-        .AndReturn((9, [{'foo': 'bar'}]))
+        .AndReturn((9, self.activities))
     self.mox.ReplayAll()
 
     return activitystreams.application.get_response(url)
@@ -102,23 +94,79 @@ class HandlerTest(testutil.HandlerTest):
     self.check_request('/@me/?format=json', None)
 
   def test_xml_format(self):
-    for format in ('atom', 'xml'):
-      self.reset()
-      resp = self.get_response('?format=%s' % format)
-      self.assertEquals(200, resp.status_int)
-      self.assertEquals("""\
+    self.reset()
+    resp = self.get_response('?format=xml')
+    self.assertEquals(200, resp.status_int)
+    self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
+<updatedSince>False</updatedSince>
+<filtered>False</filtered>
+<startIndex>0</startIndex>
+<user></user>
+<sorted>False</sorted>
 <items>
 <foo>bar</foo>
 </items>
-<itemsPerPage>1</itemsPerPage>
-<updatedSince>False</updatedSince>
-<startIndex>0</startIndex>
-<sorted>False</sorted>
-<filtered>False</filtered>
 <totalResults>9</totalResults>
+<itemsPerPage>1</itemsPerPage>
 </response>
+""", resp.body)
+
+  def test_atom_format(self):
+    self.reset()
+    self.activities = [facebook_test.ACTIVITY]
+    resp = self.get_response('?format=atom')
+    self.assertEquals(200, resp.status_int)
+    self.assert_multiline_equals("""\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:ostatus="http://ostatus.org/schema/1.0">
+<generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
+  activitystreams-unofficial</generator>
+<id>{{ feed_uri }}</id>
+<title>User feed for Ryan Barrett</title>
+<subtitle>{{ subtitle }}</subtitle>
+<logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
+<updated>{{ updated }}</updated>
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://www.facebook.com/snarfed.org</uri>
+ <name>Ryan Barrett</name>
+ <link rel="alternate" type="text/html" href="http://www.facebook.com/snarfed.org" />
+ <link rel="avatar" href="http://graph.facebook.com/snarfed.org/picture?type=large" />
+</author>
+
+<link href="http://www.facebook.com/snarfed.org" rel="alternate" type="text/html" />
+<link href="{{ push_uri }}" rel="hub" />
+<link href="{{ salmon_uri }}" rel="salmon" />
+<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-replies" />
+<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" />
+<link href="{{ feed_uri }}" rel="self" type="application/atom+xml" />
+
+<entry>
+  <activity:object-type>
+    http://activitystrea.ms/schema/1.0/note
+  </activity:object-type>
+  <id>tag:facebook.com,2012:212038_10100176064482163</id>
+  <title>Checking another side project off my list. portablecontacts-unofficial is live!</title>
+  <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!</content>
+  <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
+  <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
+  <published>2012-03-04T18:20:37+0000</published>
+  <updated>2012-03-04T19:08:16+0000</updated>
+  <!-- <link rel="ostatus:conversation" href="" /> -->
+  <!-- http://www.georss.org/simple -->
+  <georss:point>
+    37.7281937175 -122.493364236
+  </georss:point>
+  <georss:featureName>Lake Merced</georss:featureName>
+  <link rel="self" type="application/atom+xml" href="http://facebook.com/212038/posts/10100176064482163" />
+</entry>
+
+</feed>
 """, resp.body)
 
   def test_unknown_format(self):

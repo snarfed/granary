@@ -40,6 +40,7 @@ import source
 import twitter
 from webutil import util
 
+from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 # maps app id to source class
@@ -52,6 +53,7 @@ XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>%s</response>
 """
+ATOM_TEMPLATE_FILE = 'templates/user_feed.atom'
 ITEMS_PER_PAGE = 100
 
 # default values for each part of the API request path, e.g. /@me/@self/@all/...
@@ -96,7 +98,8 @@ class Handler(webapp2.RequestHandler):
 
     # get activities and build response
     total_results, activities = self.source.get_activities(*args, **paging_params)
-    response = {'startIndex': paging_params['start_index'],
+    response = {'user': None, # TODO: get user profile and fill in
+                'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
                 'totalResults': total_results,
                 # TODO: this is just for compatibility with
@@ -116,7 +119,11 @@ class Handler(webapp2.RequestHandler):
       self.response.out.write(json.dumps(response, indent=2))
     else:
       self.response.headers['Content-Type'] = 'text/xml'
-      self.response.out.write(XML_TEMPLATE % util.to_xml(response))
+      if format == 'xml':
+        self.response.out.write(XML_TEMPLATE % util.to_xml(response))
+      else:
+        assert format == 'atom'
+        self.response.out.write(template.render(ATOM_TEMPLATE_FILE, response))
 
   def get_paging_params(self):
     """Extracts, normalizes and returns the startIndex and count query params.

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:ostatus="http://ostatus.org/schema/1.0">
+<generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
+  activitystreams-unofficial</generator>
+<id>{{ feed_uri }}</id>
+<title>User feed for {{ title }}</title>
+<subtitle>{{ subtitle }}</subtitle>
+<logo>{{ image }}</logo>
+<updated>{{ updated }}</updated>
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>{{ profile_uri }}</uri>
+ <name>{{ name }}</name>
+ <link rel="alternate" type="text/html" href="{{ profile_uri }}" />
+ <link rel="avatar" href="{{ image }}" />
+</author>
+
+<link href="{{ profile_uri }}" rel="alternate" type="text/html" />
+<link href="{{ push_uri }}" rel="hub" />
+<link href="{{ salmon_uri }}" rel="salmon" />
+<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-replies" />
+<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" />
+<link href="{{ feed_uri }}" rel="self" type="application/atom+xml" />
+
+{% for activity in items %}
+<entry>
+  <activity:object-type>
+    http://activitystrea.ms/schema/1.0/{{ activity.object.objectType }}
+  </activity:object-type>
+  <id>{{ activity.id }}</id>
+  <title>{{ activity.object.content }}</title>
+  <content type="text">{{ activity.object.content }}</content>
+  <link rel="alternate" type="text/html" href="{{ activity.url }}" />
+  <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
+  <published>{{ activity.object.published }}</published>
+  <updated>{{ activity.object.updated }}</updated>
+  <!-- <link rel="ostatus:conversation" href="" /> -->
+  <!-- http://www.georss.org/simple -->
+  <georss:point>
+    {{ activity.object.location.latitude }} {{ activity.object.location.longitude }}
+  </georss:point>
+  <georss:featureName>{{ activity.object.location.displayName }}</georss:featureName>
+  <link rel="self" type="application/atom+xml" href="{{ activity.url }}" />
+</entry>
+{% endfor %}
+</feed>
