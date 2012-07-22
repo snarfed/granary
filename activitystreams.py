@@ -113,9 +113,15 @@ class Handler(webapp2.RequestHandler):
                 }
 
     if format == 'atom':
+      # strip the access token from the request URL before returning
+      params = dict(self.request.GET.items())
+      if 'access_token' in params:
+        del params['access_token']
+      request_url = '%s?%s' % (self.request.path_url, urllib.urlencode(params))
+
       response.update({
           'user': self.source.get_current_user(),
-          'request_url': self.request.url,
+          'request_url': request_url,
           })
 
     # encode and write response

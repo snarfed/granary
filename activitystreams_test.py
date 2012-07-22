@@ -115,7 +115,9 @@ class HandlerTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(FakeSource, 'get_current_user')
     FakeSource.get_current_user().AndReturn(facebook_test.ACTOR)
     self.activities = [facebook_test.ACTIVITY]
-    resp = self.get_response('?format=atom')
+
+    # include access_token param to check that it gets stripped
+    resp = self.get_response('?format=atom&access_token=foo&a=b')
     self.assertEquals(200, resp.status_int)
     self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -125,7 +127,7 @@ class HandlerTest(testutil.HandlerTest):
       xmlns:ostatus="http://ostatus.org/schema/1.0">
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
-<id>http://localhost?format=atom</id>
+<id>http://localhost?a=b&format=atom</id>
 <title>User feed for Ryan Barrett</title>
 <subtitle>something about me</subtitle>
 <logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
@@ -139,7 +141,7 @@ class HandlerTest(testutil.HandlerTest):
 </author>
 
 <link href="http://www.facebook.com/snarfed.org" rel="alternate" type="text/html" />
-<link href="http://localhost?format=atom" rel="self" type="application/atom+xml" />
+<link href="http://localhost?a=b&format=atom" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
 <!-- <link href="" rel="salmon" /> -->
