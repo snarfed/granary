@@ -70,7 +70,11 @@ class Handler(webapp2.RequestHandler):
 
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)
-    self.source = SOURCE(self)
+    self.source = self.source_class()(self)
+
+  def source_class(self):
+    """Return the Source subclass to use. May be overridden by subclasses."""
+    return SOURCE
 
   def get(self):
     """Handles an API GET.
