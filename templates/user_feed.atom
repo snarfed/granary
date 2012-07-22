@@ -5,26 +5,26 @@
       xmlns:ostatus="http://ostatus.org/schema/1.0">
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
-<id>{{ feed_uri }}</id>
-<title>User feed for {{ title }}</title>
-<subtitle>{{ subtitle }}</subtitle>
-<logo>{{ image }}</logo>
-<updated>{{ updated }}</updated>
+<id>{{ request_url }}</id>
+<title>User feed for {{ user.displayName }}</title>
+<subtitle>{{ user.description }}</subtitle>
+<logo>{{ user.image.url }}</logo>
+<updated>{{ user.updated }}</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>{{ profile_uri }}</uri>
- <name>{{ name }}</name>
- <link rel="alternate" type="text/html" href="{{ profile_uri }}" />
- <link rel="avatar" href="{{ image }}" />
+ <uri>{{ user.url }}</uri>
+ <name>{{ user.displayName }}</name>
+ <link rel="alternate" type="text/html" href="{{ user.url }}" />
+ <link rel="avatar" href="{{ user.image.url }}" />
 </author>
 
-<link href="{{ profile_uri }}" rel="alternate" type="text/html" />
-<link href="{{ push_uri }}" rel="hub" />
-<link href="{{ salmon_uri }}" rel="salmon" />
-<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-replies" />
-<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" />
-<link href="{{ feed_uri }}" rel="self" type="application/atom+xml" />
-
+<link href="{{ user.url }}" rel="alternate" type="text/html" />
+<link href="{{ request_url }}" rel="self" type="application/atom+xml" />
+<!-- TODO -->
+<!-- <link href="{{ push_uri }}" rel="hub" /> -->
+<!-- <link href="{{ salmon_uri }}" rel="salmon" /> -->
+<!-- <link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
+<!-- <link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 {% for activity in items %}
 <entry>
   <activity:object-type>

@@ -47,7 +47,7 @@ POST = {
   'name': 'PortableContacts for Facebook and Twitter',
   'caption': 'snarfed.org',
   'icon': 'https://s-static.ak.facebook.com/rsrc.php/v1/yx/r/og8V99JVf8G.gif',
-  'place': {
+   'place': {
     'id': '113785468632283',
     'name': 'Lake Merced',
     'location': {
@@ -105,6 +105,11 @@ class FacebookTest(testutil.HandlerTest):
   def setUp(self):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook(self.handler)
+
+  def test_get_current_user(self):
+    self.expect_urlfetch('https://graph.facebook.com/me', json.dumps(USER))
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.facebook.get_current_user())
 
   def test_get_activities_defaults(self):
     resp = json.dumps({'data': [

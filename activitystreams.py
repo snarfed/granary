@@ -98,8 +98,8 @@ class Handler(webapp2.RequestHandler):
 
     # get activities and build response
     total_results, activities = self.source.get_activities(*args, **paging_params)
-    response = {'user': None, # TODO: get user profile and fill in
-                'startIndex': paging_params['start_index'],
+
+    response = {'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
                 'totalResults': total_results,
                 # TODO: this is just for compatibility with
@@ -111,6 +111,12 @@ class Handler(webapp2.RequestHandler):
                 'sorted': False,
                 'updatedSince': False,
                 }
+
+    if format == 'atom':
+      response.update({
+          'user': self.source.get_current_user(),
+          'request_url': self.request.url,
+          })
 
     # encode and write response
     self.response.headers['Access-Control-Allow-Origin'] = '*'

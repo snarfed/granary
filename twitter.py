@@ -54,6 +54,10 @@ class Twitter(source.Source):
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
   AUTH_URL = '/start_auth'
 
+  def get_current_user(self):
+    """Returns the current user as a JSON ActivitStreams actor dict."""
+    return self.user_to_actor(json.loads(self.urlfetch(API_SELF_URL)))
+
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.

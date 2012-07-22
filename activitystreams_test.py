@@ -94,27 +94,26 @@ class HandlerTest(testutil.HandlerTest):
     self.check_request('/@me/?format=json', None)
 
   def test_xml_format(self):
-    self.reset()
     resp = self.get_response('?format=xml')
     self.assertEquals(200, resp.status_int)
     self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
-<updatedSince>False</updatedSince>
-<filtered>False</filtered>
-<startIndex>0</startIndex>
-<user></user>
-<sorted>False</sorted>
 <items>
 <foo>bar</foo>
 </items>
-<totalResults>9</totalResults>
 <itemsPerPage>1</itemsPerPage>
+<updatedSince>False</updatedSince>
+<startIndex>0</startIndex>
+<sorted>False</sorted>
+<filtered>False</filtered>
+<totalResults>9</totalResults>
 </response>
 """, resp.body)
 
   def test_atom_format(self):
-    self.reset()
+    self.mox.StubOutWithMock(FakeSource, 'get_current_user')
+    FakeSource.get_current_user().AndReturn(facebook_test.ACTOR)
     self.activities = [facebook_test.ACTIVITY]
     resp = self.get_response('?format=atom')
     self.assertEquals(200, resp.status_int)
@@ -126,11 +125,11 @@ class HandlerTest(testutil.HandlerTest):
       xmlns:ostatus="http://ostatus.org/schema/1.0">
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
-<id>{{ feed_uri }}</id>
+<id>http://localhost?format=atom</id>
 <title>User feed for Ryan Barrett</title>
-<subtitle>{{ subtitle }}</subtitle>
+<subtitle>something about me</subtitle>
 <logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
-<updated>{{ updated }}</updated>
+<updated>2012-01-06T02:11:04+0000</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://www.facebook.com/snarfed.org</uri>
@@ -140,11 +139,12 @@ class HandlerTest(testutil.HandlerTest):
 </author>
 
 <link href="http://www.facebook.com/snarfed.org" rel="alternate" type="text/html" />
-<link href="{{ push_uri }}" rel="hub" />
-<link href="{{ salmon_uri }}" rel="salmon" />
-<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-replies" />
-<link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" />
-<link href="{{ feed_uri }}" rel="self" type="application/atom+xml" />
+<link href="http://localhost?format=atom" rel="self" type="application/atom+xml" />
+<!-- TODO -->
+<!-- <link href="" rel="hub" /> -->
+<!-- <link href="" rel="salmon" /> -->
+<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
+<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 
 <entry>
   <activity:object-type>

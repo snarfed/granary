@@ -38,6 +38,10 @@ class Source(object):
   def __init__(self, handler):
     self.handler = handler
 
+  def get_current_user(self):
+    """Returns the current user as a JSON ActivitStreams actor dict."""
+    raise NotImplementedError()
+
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
     """Return a total count and list of ActivityStreams activities.

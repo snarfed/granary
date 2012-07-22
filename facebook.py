@@ -21,7 +21,7 @@ from webutil import util
 
 OAUTH_SCOPES = 'read_stream'
 
-API_POST_URL = 'https://graph.facebook.com/%s'
+API_OBJECT_URL = 'https://graph.facebook.com/%s'
 API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
 # this an old, out of date version of the actual news feed. sigh. :/
 # "Note: /me/home retrieves an outdated view of the News Feed. This is currently
@@ -50,6 +50,10 @@ class Facebook(source.Source):
       'response_type=token',
       ))
 
+  def get_current_user(self):
+    """Returns the current user as a JSON ActivitStreams actor dict."""
+    return self.user_to_actor(json.loads(self.urlfetch(API_OBJECT_URL % 'me')))
+
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
@@ -62,7 +66,7 @@ class Facebook(source.Source):
       user_id = 'me'
 
     if activity_id:
-      posts = [json.loads(self.urlfetch(API_POST_URL % activity_id))]
+      posts = [json.loads(self.urlfetch(API_OBJECT_URL % activity_id))]
       if posts == [False]:  # FB returns false for "not found"
         posts = []
       total_count = len(posts)
