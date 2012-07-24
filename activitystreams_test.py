@@ -119,57 +119,9 @@ class HandlerTest(testutil.HandlerTest):
     # include access_token param to check that it gets stripped
     resp = self.get_response('?format=atom&access_token=foo&a=b')
     self.assertEquals(200, resp.status_int)
-    self.assert_multiline_equals("""\
-<?xml version="1.0" encoding="UTF-8"?>
-<feed xml:lang="en-US"
-      xmlns="http://www.w3.org/2005/Atom"
-      xmlns:activity="http://activitystrea.ms/spec/1.0/"
-      xmlns:ostatus="http://ostatus.org/schema/1.0">
-<generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
-  activitystreams-unofficial</generator>
-<id>http://localhost?a=b&format=atom</id>
-<title>User feed for Ryan Barrett</title>
-<subtitle>something about me</subtitle>
-<logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
-<updated>2012-01-06T02:11:04+0000</updated>
-<author>
- <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://www.facebook.com/snarfed.org</uri>
- <name>Ryan Barrett</name>
- <link rel="alternate" type="text/html" href="http://www.facebook.com/snarfed.org" />
- <link rel="avatar" href="http://graph.facebook.com/snarfed.org/picture?type=large" />
-</author>
-
-<link href="http://www.facebook.com/snarfed.org" rel="alternate" type="text/html" />
-<link href="http://localhost?a=b&format=atom" rel="self" type="application/atom+xml" />
-<!-- TODO -->
-<!-- <link href="" rel="hub" /> -->
-<!-- <link href="" rel="salmon" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
-
-<entry>
-  <activity:object-type>
-    http://activitystrea.ms/schema/1.0/note
-  </activity:object-type>
-  <id>tag:facebook.com,2012:212038_10100176064482163</id>
-  <title>Checking another side project off my list. portablecontacts-unofficial is live!</title>
-  <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!</content>
-  <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
-  <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
-  <published>2012-03-04T18:20:37+0000</published>
-  <updated>2012-03-04T19:08:16+0000</updated>
-  <!-- <link rel="ostatus:conversation" href="" /> -->
-  <!-- http://www.georss.org/simple -->
-  <georss:point>
-    37.7281937175 -122.493364236
-  </georss:point>
-  <georss:featureName>Lake Merced</georss:featureName>
-  <link rel="self" type="application/atom+xml" href="http://facebook.com/212038/posts/10100176064482163" />
-</entry>
-
-</feed>
-""", resp.body)
+    request_url = 'http://localhost?a=b&format=atom'
+    self.assert_multiline_equals(facebook_test.ATOM % {'request_url': request_url},
+                                 resp.body)
 
   def test_unknown_format(self):
     resp = activitystreams.application.get_response('?format=bad')
