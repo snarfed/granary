@@ -9,10 +9,10 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import logging
 import urllib
 from webob import exc
-from webutil import webapp2
 
 import appengine_config
 import tweepy
+from webutil import webapp2
 
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db

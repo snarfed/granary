@@ -32,13 +32,13 @@ import re
 import os
 import urllib
 from webob import exc
-from webutil import webapp2
 
 import appengine_config
 import facebook
 import source
 import twitter
 from webutil import util
+from webutil import webapp2
 
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
