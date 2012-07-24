@@ -41,10 +41,15 @@ from webutil import util
 
 API_TIMELINE_URL = \
   'https://api.twitter.com/1/statuses/home_timeline.json?include_entities=true&count=%d'
-API_SELF_URL = \
+API_SELF_TIMELINE_URL = \
   'https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&count=%d'
 API_STATUS_URL = \
   'https://api.twitter.com/1/statuses/show.json?id=%s&include_entities=true'
+API_USER_URL = \
+  'https://api.twitter.com/1/users/lookup.json?screen_name=%s'
+API_CURRENT_USER_URL = \
+  'https://api.twitter.com/1/account/verify_credentials.json'
+
 
 class Twitter(source.Source):
   """Implements the ActivityStreams API for Twitter.
@@ -54,9 +59,17 @@ class Twitter(source.Source):
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
   AUTH_URL = '/start_auth'
 
-  def get_current_user(self):
-    """Returns the current user as a JSON ActivitStreams actor dict."""
-    return self.user_to_actor(json.loads(self.urlfetch(API_SELF_URL)))
+  def get_actor(self, screen_name=None):
+    """Returns a user as a JSON ActivityStreams actor dict.
+
+    Args:
+      screen_name: string username. Defaults to the current user.
+    """
+    if screen_name is None:
+      url = API_CURRENT_USER_URL
+    else:
+      url = API_USER_URL % screen_name
+    return self.user_to_actor(json.loads(self.urlfetch(url)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
@@ -71,7 +84,7 @@ class Twitter(source.Source):
       tweets = [json.loads(self.urlfetch(API_STATUS_URL % activity_id))]
       total_count = len(tweets)
     else:
-      url = API_SELF_URL if group_id == source.SELF else API_TIMELINE_URL
+      url = API_SELF_TIMELINE_URL if group_id == source.SELF else API_TIMELINE_URL
       twitter_count = count + start_index
       tweets = json.loads(self.urlfetch(url % twitter_count))
       tweets = tweets[start_index:]

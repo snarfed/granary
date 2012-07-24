@@ -112,8 +112,8 @@ class HandlerTest(testutil.HandlerTest):
 """, resp.body)
 
   def test_atom_format(self):
-    self.mox.StubOutWithMock(FakeSource, 'get_current_user')
-    FakeSource.get_current_user().AndReturn(facebook_test.ACTOR)
+    self.mox.StubOutWithMock(FakeSource, 'get_actor')
+    FakeSource.get_actor(None).AndReturn(facebook_test.ACTOR)
     self.activities = [facebook_test.ACTIVITY]
 
     # include access_token param to check that it gets stripped

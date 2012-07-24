@@ -38,7 +38,7 @@ class Source(object):
   def __init__(self, handler):
     self.handler = handler
 
-  def get_current_user(self):
+  def get_actor(self):
     """Returns the current user as a JSON ActivitStreams actor dict."""
     raise NotImplementedError()
 

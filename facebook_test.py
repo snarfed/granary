@@ -106,10 +106,15 @@ class FacebookTest(testutil.HandlerTest):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook(self.handler)
 
-  def test_get_current_user(self):
+  def test_get_actor(self):
+    self.expect_urlfetch('https://graph.facebook.com/foo', json.dumps(USER))
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.facebook.get_actor('foo'))
+
+  def test_get_actor_default(self):
     self.expect_urlfetch('https://graph.facebook.com/me', json.dumps(USER))
     self.mox.ReplayAll()
-    self.assert_equals(ACTOR, self.facebook.get_current_user())
+    self.assert_equals(ACTOR, self.facebook.get_actor())
 
   def test_get_activities_defaults(self):
     resp = json.dumps({'data': [

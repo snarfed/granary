@@ -79,6 +79,20 @@ class TwitterTest(testutil.HandlerTest):
     super(TwitterTest, self).setUp()
     self.twitter = twitter.Twitter(self.handler)
 
+  def test_get_actor(self):
+    self.expect_urlfetch(
+      'https://api.twitter.com/1/users/lookup.json?screen_name=foo',
+      json.dumps(USER))
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.twitter.get_actor('foo'))
+
+  def test_get_actor_default(self):
+    self.expect_urlfetch(
+      'https://api.twitter.com/1/account/verify_credentials.json',
+      json.dumps(USER))
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.twitter.get_actor())
+
   def test_get_activities(self):
     self.expect_urlfetch(
       'https://api.twitter.com/1/statuses/home_timeline.json?'

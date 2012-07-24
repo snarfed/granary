@@ -68,10 +68,6 @@ class Handler(webapp2.RequestHandler):
     source: Source subclass
   """
 
-  def __init__(self, *args, **kwargs):
-    super(Handler, self).__init__(*args, **kwargs)
-    self.source = self.source_class()(self)
-
   def source_class(self):
     """Return the Source subclass to use. May be overridden by subclasses."""
     return SOURCE
@@ -82,6 +78,8 @@ class Handler(webapp2.RequestHandler):
     Request path is of the form /user_id/group_id/app_id/activity_id , where
     each element is an optional string object id.
     """
+    source = self.source_class()(self)
+
     # parse path
     args = urllib.unquote(self.request.path).strip('/').split('/')
     if len(args) > MAX_PATH_LEN:
@@ -92,6 +90,7 @@ class Handler(webapp2.RequestHandler):
     # handle default path elements
     args = [None if a in defaults else a
             for a, defaults in zip(args, PATH_DEFAULTS)]
+    user_id = args[0] if args else None
     paging_params = self.get_paging_params()
 
     # extract format
@@ -101,7 +100,7 @@ class Handler(webapp2.RequestHandler):
                                format)
 
     # get activities and build response
-    total_results, activities = self.source.get_activities(*args, **paging_params)
+    total_results, activities = source.get_activities(*args, **paging_params)
 
     response = {'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
@@ -124,7 +123,7 @@ class Handler(webapp2.RequestHandler):
       request_url = '%s?%s' % (self.request.path_url, urllib.urlencode(params))
 
       response.update({
-          'user': self.source.get_current_user(),
+          'user': source.get_actor(user_id),
           'request_url': request_url,
           })
 
