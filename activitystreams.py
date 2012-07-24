@@ -53,7 +53,7 @@ XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>%s</response>
 """
-ATOM_TEMPLATE_FILE = 'templates/user_feed.atom'
+ATOM_TEMPLATE_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'user_feed.atom')
 ITEMS_PER_PAGE = 100
 
 # default values for each part of the API request path, e.g. /@me/@self/@all/...
