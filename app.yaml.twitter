@@ -15,6 +15,10 @@ default_expiration: 1d
 #   self.readline = self.fp.readline
 runtime: python
 
+libraries:
+- name: django
+  version: "1.2"
+
 handlers:
 - url: /static
   static_dir: static
