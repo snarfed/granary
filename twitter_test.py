@@ -72,6 +72,58 @@ ACTIVITY = {
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'}
   }
 
+ATOM = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:ostatus="http://ostatus.org/schema/1.0">
+<generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
+  activitystreams-unofficial</generator>
+<id>%(request_url)s</id>
+<title>User feed for Ryan Barrett</title>
+<subtitle>my description</subtitle>
+<logo>http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg</logo>
+<updated></updated>
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://twitter.com/snarfed_org</uri>
+ <name>Ryan Barrett</name>
+ <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org" />
+ <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
+</author>
+
+<link href="http://twitter.com/snarfed_org" rel="alternate" type="text/html" />
+<link href="%(request_url)s" rel="self" type="application/atom+xml" />
+<!-- TODO -->
+<!-- <link href="" rel="hub" /> -->
+<!-- <link href="" rel="salmon" /> -->
+<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
+<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
+
+<entry>
+  <activity:object-type>
+    http://activitystrea.ms/schema/1.0/note
+  </activity:object-type>
+  <id>tag:twitter.com,2012:172417043893731329</id>
+  <title>portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3</title>
+  <content type="text">portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3</content>
+  <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
+  <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
+  <published>2012-02-22T20:26:41</published>
+  <updated></updated>
+  <!-- <link rel="ostatus:conversation" href="" /> -->
+  <!-- http://www.georss.org/simple -->
+  <georss:point>
+     
+  </georss:point>
+  <georss:featureName>Carcassonne, Aude</georss:featureName>
+  <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/172417043893731329" />
+</entry>
+
+</feed>
+"""
+
 
 class TwitterTest(testutil.HandlerTest):
 

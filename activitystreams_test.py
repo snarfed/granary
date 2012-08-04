@@ -11,6 +11,7 @@ except ImportError:
 
 import activitystreams
 import facebook_test
+import twitter_test
 import source
 from webutil import testutil
 
@@ -112,16 +113,18 @@ class HandlerTest(testutil.HandlerTest):
 """, resp.body)
 
   def test_atom_format(self):
-    self.mox.StubOutWithMock(FakeSource, 'get_actor')
-    FakeSource.get_actor(None).AndReturn(facebook_test.ACTOR)
-    self.activities = [facebook_test.ACTIVITY]
+    for test_module in facebook_test, twitter_test:
+      self.reset()
+      self.mox.StubOutWithMock(FakeSource, 'get_actor')
+      FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
+      self.activities = [test_module.ACTIVITY]
 
-    # include access_token param to check that it gets stripped
-    resp = self.get_response('?format=atom&access_token=foo&a=b')
-    self.assertEquals(200, resp.status_int)
-    request_url = 'http://localhost?a=b&format=atom'
-    self.assert_multiline_equals(facebook_test.ATOM % {'request_url': request_url},
-                                 resp.body)
+      # include access_token param to check that it gets stripped
+      resp = self.get_response('?format=atom&access_token=foo&a=b')
+      self.assertEquals(200, resp.status_int)
+      request_url = 'http://localhost?a=b&format=atom'
+      self.assert_multiline_equals(test_module.ATOM % {'request_url': request_url},
+                                   resp.body)
 
   def test_unknown_format(self):
     resp = activitystreams.application.get_response('?format=bad')
