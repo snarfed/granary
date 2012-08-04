@@ -47,6 +47,8 @@ TWEET = {
   'user': USER,
   'entities': {'media': [{'media_url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'}]},
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
+  'in_reply_to_screen_name': 'other_user',
+  'in_reply_to_status_id': 789,
   }
 OBJECT = {
   'objectType': 'note',
@@ -69,7 +71,14 @@ ACTIVITY = {
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
-  'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'}
+  'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
+  'context': {
+    'inReplyTo' : {
+      'objectType' : 'note',
+      'url' : 'http://twitter.com/other_user/status/789',
+      'id' : 'tag:twitter.com,2012:789',
+      }
+    },
   }
 
 ATOM = """\
@@ -77,7 +86,9 @@ ATOM = """\
 <feed xml:lang="en-US"
       xmlns="http://www.w3.org/2005/Atom"
       xmlns:activity="http://activitystrea.ms/spec/1.0/"
-      xmlns:ostatus="http://ostatus.org/schema/1.0">
+      xmlns:ostatus="http://ostatus.org/schema/1.0"
+      xmlns:thr="http://purl.org/syndication/thread/1.0"
+      >
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
 <id>%(request_url)s</id>
@@ -112,6 +123,11 @@ ATOM = """\
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
+  
+  <thr:in-reply-to ref="tag:twitter.com,2012:789"
+                   href="http://twitter.com/other_user/status/789"
+                   type="text/html" />
+  
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
   <georss:point>

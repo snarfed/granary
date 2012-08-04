@@ -5,7 +5,6 @@ Uses the REST API: https://dev.twitter.com/docs/api
 
 TODO: collections for twitter accounts; use as activity target?
 TODO: reshare activities for retweets
-TODO: in-reply-to for @ mentions?
 
 snarfed_org user id: 139199211
 
@@ -138,6 +137,17 @@ class Twitter(source.Source):
       'object': object,
       }
 
+    reply_to_screenname = tweet.get('in_reply_to_screen_name')
+    reply_to_id = tweet.get('in_reply_to_status_id')
+    if reply_to_id and reply_to_screenname:
+      activity['context'] = {
+        'inReplyTo': {
+          'objectType': 'note',
+          'id': util.tag_uri(self.DOMAIN, reply_to_id),
+          'url': self.status_url(reply_to_screenname, reply_to_id),
+          }
+        }
+
     # yes, the source field has an embedded HTML link. bleh.
     # https://dev.twitter.com/docs/api/1/get/statuses/show/
     parsed = re.search('<a href="([^"]+)".*>(.+)</a>', tweet.get('source', ''))
@@ -174,7 +184,7 @@ class Twitter(source.Source):
       username = object['author'].get('username')
       if username:
         object['id'] = util.tag_uri(self.DOMAIN, id)
-        object['url'] = 'http://twitter.com/%s/status/%d' % (username, id)
+        object['url'] = self.status_url(username, id)
 
     # currently the media list will only have photos. if that changes, though,
     # we'll need to make this conditional on media.type.
@@ -235,3 +245,7 @@ class Twitter(source.Source):
     dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y')
     return dt.isoformat()
 
+  @classmethod
+  def status_url(cls, username, id):
+    """Returns the Twitter URL for a tweet from a given user with a given id."""
+    return 'http://%s/%s/status/%d' % (cls.DOMAIN, username, id)
