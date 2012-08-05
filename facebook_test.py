@@ -40,6 +40,10 @@ ACTOR = {
 POST = {
   'id': '212038_10100176064482163',
   'from': {'name': 'Ryan Barrett', 'id': '212038'},
+  'to': {'data': [
+      {'name': 'Friend 1', 'id': '234'},
+      {'name': 'Friend 2', 'id': '345'},
+      ]},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
   'link': 'http://snarfed.org/2012-02-22_portablecontacts_for_facebook_and_twitter',
@@ -84,6 +88,18 @@ OBJECT = {
     'longitude': -122.49336423595,
     'position': '+37.728194-122.493364/',
     },
+  'tags': [{
+      'objectType': 'person',
+      'id': 'tag:facebook.com,2012:234',
+      'url': 'http://facebook.com/234',
+      'displayName': 'Friend 1',
+      },
+      {
+      'objectType': 'person',
+      'id': 'tag:facebook.com,2012:345',
+      'url': 'http://facebook.com/345',
+      'displayName': 'Friend 2',
+      }],
   }
 ACTIVITY = {
   'verb': 'post',
@@ -137,6 +153,18 @@ ATOM = """\
   <title>Checking another side project off my list. portablecontacts-unofficial is live!</title>
   <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!</content>
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
+  <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
+  
+    
+      <link rel="ostatus:attention" href="http://facebook.com/234" />
+      <link rel="mentioned" href="http://facebook.com/234" />
+    
+  
+    
+      <link rel="ostatus:attention" href="http://facebook.com/345" />
+      <link rel="mentioned" href="http://facebook.com/345" />
+    
+  
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-03-04T18:20:37+0000</published>
   <updated>2012-03-04T19:08:16+0000</updated>

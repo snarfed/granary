@@ -186,12 +186,24 @@ class Twitter(source.Source):
         object['id'] = util.tag_uri(self.DOMAIN, id)
         object['url'] = self.status_url(username, id)
 
+    entities = tweet.get('entities', {})
+
     # currently the media list will only have photos. if that changes, though,
     # we'll need to make this conditional on media.type.
     # https://dev.twitter.com/docs/tweet-entities
-    media_url = tweet.get('entities', {}).get('media', [{}])[0].get('media_url')
+    media_url = entities.get('media', [{}])[0].get('media_url')
     if media_url:
       object['image'] = {'url': media_url}
+
+    mentions = entities.get('user_mentions')
+    if mentions:
+      object['tags'] = [{
+          'objectType': 'person',
+          'id': util.tag_uri(self.DOMAIN, m.get('screen_name')),
+          'url': self.user_url(m.get('screen_name')),
+          'screen_name': m.get('screen_name'),
+          'displayName': m.get('name'),
+          } for m in mentions]
 
     place = tweet.get('place')
     if place:
@@ -199,7 +211,7 @@ class Twitter(source.Source):
         'displayName': place.get('full_name'),
         'id': place.get('id'),
         'url': place.get('url'),
-        }
+        }    
 
     return util.trim_nulls(object)
       
@@ -222,7 +234,7 @@ class Twitter(source.Source):
       'image': {'url': user.get('profile_image_url')},
       'id': util.tag_uri(self.DOMAIN, username) if username else None,
       'published': self.rfc2822_to_iso8601(user.get('created_at')),
-      'url': 'http://twitter.com/%s' % username,
+      'url': self.user_url(username),
       'location': {'displayName': user.get('location')},
       'username': username,
       'description': user.get('description'),
@@ -246,6 +258,11 @@ class Twitter(source.Source):
     return dt.isoformat()
 
   @classmethod
+  def user_url(cls, username):
+    """Returns the Twitter URL for a given user."""
+    return 'http://%s/%s' % (cls.DOMAIN, username)
+
+  @classmethod
   def status_url(cls, username, id):
     """Returns the Twitter URL for a tweet from a given user with a given id."""
-    return 'http://%s/%s/status/%d' % (cls.DOMAIN, username, id)
+    return '%s/status/%d' % (cls.user_url(username), id)

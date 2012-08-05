@@ -36,13 +36,20 @@
   <title>{{ activity.object.content }}</title>
   <content type="text">{{ activity.object.content }}</content>
   <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />
+  <link rel="ostatus:conversation" href="{{ activity.url|safe }}" />
+  {% for tag in activity.object.tags %}
+    {% ifequal tag.objectType 'person' %}
+      <link rel="ostatus:attention" href="{{ tag.url }}" />
+      <link rel="mentioned" href="{{ tag.url }}" />
+    {% endifequal %}
+  {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
   <published>{{ activity.object.published }}</published>
   <updated>{{ activity.object.updated }}</updated>
   {% if activity.context.inReplyTo %}
-  <thr:in-reply-to ref="{{ activity.context.inReplyTo.id }}"
-                   href="{{ activity.context.inReplyTo.url }}"
-                   type="text/html" />
+    <thr:in-reply-to ref="{{ activity.context.inReplyTo.id }}"
+                     href="{{ activity.context.inReplyTo.url }}"
+                     type="text/html" />
   {% endif %}
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->

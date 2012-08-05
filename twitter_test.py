@@ -45,7 +45,15 @@ TWEET = {
             },
   'text': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3',
   'user': USER,
-  'entities': {'media': [{'media_url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'}]},
+  'entities': {
+    'media': [{
+        'media_url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg',
+        }],
+    'user_mentions': [
+      {'name': 'Friend 1', 'screen_name': 'friend1'},
+      {'name': 'Friend 2', 'screen_name': 'friend2'},
+      ],
+    },
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
@@ -63,6 +71,20 @@ OBJECT = {
     'id': '31cb9e7ed29dbe52',
     'url': 'http://api.twitter.com/1/geo/id/31cb9e7ed29dbe52.json',
     },
+  'tags': [{
+      'objectType': 'person',
+      'id': 'tag:twitter.com,2012:friend1',
+      'url': 'http://twitter.com/friend1',
+      'screen_name': 'friend1',
+      'displayName': 'Friend 1',
+      },
+      {
+      'objectType': 'person',
+      'id': 'tag:twitter.com,2012:friend2',
+      'url': 'http://twitter.com/friend2',
+      'screen_name': 'friend2',
+      'displayName': 'Friend 2',
+      }],
   }
 ACTIVITY = {
   'verb': 'post',
@@ -120,13 +142,25 @@ ATOM = """\
   <title>portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3</title>
   <content type="text">portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3</content>
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
+  <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
+  
+    
+      <link rel="ostatus:attention" href="http://twitter.com/friend1" />
+      <link rel="mentioned" href="http://twitter.com/friend1" />
+    
+  
+    
+      <link rel="ostatus:attention" href="http://twitter.com/friend2" />
+      <link rel="mentioned" href="http://twitter.com/friend2" />
+    
+  
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
   
-  <thr:in-reply-to ref="tag:twitter.com,2012:789"
-                   href="http://twitter.com/other_user/status/789"
-                   type="text/html" />
+    <thr:in-reply-to ref="tag:twitter.com,2012:789"
+                     href="http://twitter.com/other_user/status/789"
+                     type="text/html" />
   
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->

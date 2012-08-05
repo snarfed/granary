@@ -154,6 +154,15 @@ class Facebook(source.Source):
       'image': {'url': post.get('picture')},
       }
 
+    to = post.get('to', {}).get('data')
+    if to:
+      object['tags'] = [{
+          'objectType': 'person',
+          'id': util.tag_uri(self.DOMAIN, t.get('id')),
+          'url': 'http://facebook.com/%s' % t.get('id'),
+          'displayName': t.get('name'),
+          } for t in to]
+
     place = post.get('place')
     if place:
       object['location'] = {
