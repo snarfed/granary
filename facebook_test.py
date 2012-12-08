@@ -1,5 +1,6 @@
 #!/usr/bin/python
 """Unit tests for facebook.py.
+STATE: with_tags
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -80,10 +81,34 @@ POST = {
       {'name': 'Friend 1', 'id': '234'},
       {'name': 'Friend 2', 'id': '345'},
       ]},
+  'with_tags': {'data': [
+      {'name': 'Friend 3', 'id': '456'},
+      {'name': 'Friend 4', 'id': '567'},
+      ]},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
+  'message': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M. background: http://portablecontacts.net/',
+  'message_tags': {
+    '84': [
+      {
+        'id': '283938455011303',
+        'name': 'Super Happy Block Party Hackathon',
+        'type': 'event',
+        'offset': 84,
+        'length': 33,
+        }
+      ],
+    '119': [
+      {
+        'id': '13307262',
+        'name': 'Daniel M',
+        'type': 'user',
+        'offset': 119,
+        'length': 8,
+        }
+      ],
+    },
   'link': 'http://snarfed.org/2012-02-22_portablecontacts_for_facebook_and_twitter',
-  'message': 'Checking another side project off my list. portablecontacts-unofficial is live!',
   'name': 'PortableContacts for Facebook and Twitter',
   'caption': 'snarfed.org',
   'icon': 'https://s-static.ak.facebook.com/rsrc.php/v1/yx/r/og8V99JVf8G.gif',
@@ -143,7 +168,7 @@ POST_OBJ = {
     'displayName': 'Ryan Barrett',
     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
     },
-  'content': 'Checking another side project off my list. portablecontacts-unofficial is live!',
+  'content': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc <a class="fb-mention" href="http://facebook.com/profile.php?id=283938455011303">Super Happy Block Party Hackathon</a>, <a class="fb-mention" href="http://facebook.com/profile.php?id=13307262">Daniel M</a>. background: <a href="http://portablecontacts.net/">http://portablecontacts.net/</a>',
   'id': 'tag:facebook.com,2012:212038_10100176064482163',
   'published': '2012-03-04T18:20:37+0000',
   'updated': '2012-03-04T19:08:16+0000',
@@ -222,8 +247,8 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>tag:facebook.com,2012:212038_10100176064482163</id>
-  <title>Checking another side project off my list. portablecontacts-unofficial is live!</title>
-  <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!</content>
+  <title>Checking another side project off my list. portablecontacts-unofficial is live!  cc &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=283938455011303&quot;&gt;Super Happy Block Party Hackathon&lt;/a&gt;, &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=13307262&quot;&gt;Daniel M&lt;/a&gt;. background: &lt;a href=&quot;http://portablecontacts.net/&quot;&gt;http://portablecontacts.net/&lt;/a&gt;</title>
+  <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!  cc &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=283938455011303&quot;&gt;Super Happy Block Party Hackathon&lt;/a&gt;, &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=13307262&quot;&gt;Daniel M&lt;/a&gt;. background: &lt;a href=&quot;http://portablecontacts.net/&quot;&gt;http://portablecontacts.net/&lt;/a&gt;</content>
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
   <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
   
