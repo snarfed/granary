@@ -37,6 +37,42 @@ ACTOR = {
   'description': 'something about me',
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
+COMMENTS = [
+  {
+    'id': '212038_547822715231468_6796480',
+    'from': {
+      'name': 'Ryan Barrett',
+      'id': '212038'
+      },
+    'message': 'cc Sam G, Michael M',
+    # 'message_tags': [
+    #   {
+    #     'id': '221330',
+    #     'name': 'Sam G',
+    #     'type': 'user',
+    #     'offset': 3,
+    #     'length': 5,
+    #     },
+    #   {
+    #     'id': '695687650',
+    #     'name': 'Michael Mandel',
+    #     'type': 'user',
+    #     'offset': 10,
+    #     'length': 9,
+    #     }
+    #   ],
+    'created_time': '2012-12-05T00:58:26+0000',
+    },
+  {
+    'id': '212038_124561947600007_672819',
+    'from': {
+      'name': 'Ron Ald',
+      'id': '513046677'
+      },
+    'message': 'Foo bar!',
+    'created_time': '2010-10-28T00:23:04+0000'
+    },
+  ]
 POST = {
   'id': '212038_10100176064482163',
   'from': {'name': 'Ryan Barrett', 'id': '212038'},
@@ -67,8 +103,40 @@ POST = {
   'application': {'name': 'Facebook for Android', 'id': '350685531728'},
   'created_time': '2012-03-04T18:20:37+0000',
   'updated_time': '2012-03-04T19:08:16+0000',
+  'comments': {
+    'data': COMMENTS,
+    'count': len(COMMENTS),
+    },
 }
-OBJECT = {
+COMMENT_OBJS = [
+  {
+    'objectType': 'comment',
+    'author': {
+      'id': 'tag:facebook.com,2012:212038',
+      'displayName': 'Ryan Barrett',
+      'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+      },
+    'content': 'cc Sam G, Michael M',
+    'id': 'tag:facebook.com,2012:212038_547822715231468_6796480',
+    'published': '2012-12-05T00:58:26+0000',
+    'url': 'http://facebook.com/212038/posts/547822715231468?comment_id=6796480',
+    'inReplyTo': {'id': 'tag:facebook.com,2012:212038_547822715231468'},
+    },
+  {
+    'objectType': 'comment',
+    'author': {
+      'id': 'tag:facebook.com,2012:513046677',
+      'displayName': 'Ron Ald',
+      'image': {'url': 'http://graph.facebook.com/513046677/picture?type=large'},
+      },
+    'content': 'Foo bar!',
+    'id': 'tag:facebook.com,2012:212038_124561947600007_672819',
+    'published': '2010-10-28T00:23:04+0000',
+    'url': 'http://facebook.com/212038/posts/124561947600007?comment_id=672819',
+    'inReplyTo': {'id': 'tag:facebook.com,2012:212038_124561947600007'},
+    },
+]
+POST_OBJ = {
   'objectType': 'note',
   'author': {
     'id': 'tag:facebook.com,2012:212038',
@@ -100,6 +168,10 @@ OBJECT = {
       'url': 'http://facebook.com/345',
       'displayName': 'Friend 2',
       }],
+  'replies': {
+    'items': COMMENT_OBJS,
+    'totalItems': len(COMMENT_OBJS),
+    }
   }
 ACTIVITY = {
   'verb': 'post',
@@ -107,8 +179,8 @@ ACTIVITY = {
   'updated': '2012-03-04T19:08:16+0000',
   'id': 'tag:facebook.com,2012:212038_10100176064482163',
   'url': 'http://facebook.com/212038/posts/10100176064482163',
-  'actor': OBJECT['author'],
-  'object': OBJECT,
+  'actor': POST_OBJ['author'],
+  'object': POST_OBJ,
   'generator': {
     'displayName': 'Facebook for Android',
     'id': 'tag:facebook.com,2012:350685531728',
@@ -271,7 +343,7 @@ class FacebookTest(testutil.HandlerTest):
     self.facebook.post_to_activity({})
 
   def test_post_to_object_full(self):
-    self.assert_equals(OBJECT, self.facebook.post_to_object(POST))
+    self.assert_equals(POST_OBJ, self.facebook.post_to_object(POST))
 
   def test_post_to_object_minimal(self):
     # just test that we don't crash
@@ -279,6 +351,17 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_post_to_object_empty(self):
     self.assert_equals({}, self.facebook.post_to_object({}))
+
+  def test_post_to_object_full(self):
+    for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
+      self.assert_equals(obj, self.facebook.comment_to_object(cmt))
+
+  def test_comment_to_object_minimal(self):
+    # just test that we don't crash
+    self.facebook.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
+
+  def test_comment_to_object_empty(self):
+    self.assert_equals({}, self.facebook.comment_to_object({}))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.facebook.user_to_actor(USER))

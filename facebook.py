@@ -180,7 +180,45 @@ class Facebook(source.Source):
           'position': '%+f%+f/' % (lat, lon),
           })
 
+    # comments go in the replies field, according to the "Responses for
+    # Activity Streams" extension spec:
+    # http://activitystrea.ms/specs/json/replies/1.0/
+    comments = post.get('comments', {}).get('data')
+    if comments:
+      items = [self.comment_to_object(c) for c in comments]
+      object['replies'] = {
+        'items': items,
+        'totalItems': len(items),
+        }
+
     return util.trim_nulls(object)
+
+
+  COMMENT_ID_RE = re.compile('(\d+)_(\d+)_(\d+)')
+
+  def comment_to_object(self, comment):
+    """Converts a comment to an object.
+
+    Args:
+      comment: dict, a decoded JSON comment
+
+    Returns:
+      an ActivityStreams object dict, ready to be JSON-encoded
+    """
+    object = self.post_to_object(comment)
+    if not object:
+      return object
+
+    object['objectType'] = 'comment'
+
+    match = self.COMMENT_ID_RE.match(comment.get('id', ''))
+    if match:
+      object['url'] = 'http://facebook.com/%s/posts/%s?comment_id=%s' % match.groups()
+      object['inReplyTo'] = {
+        'id': util.tag_uri(self.DOMAIN, '%s_%s' % match.group(1, 2)),
+        }
+
+    return object
 
   def user_to_actor(self, user):
     """Converts a user to an actor.
