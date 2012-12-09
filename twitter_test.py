@@ -43,6 +43,13 @@ TWEET = {
             'name': 'Carcassonne',
             'url': 'http://api.twitter.com/1/geo/id/31cb9e7ed29dbe52.json',
             },
+  'geo':  {
+    'type': 'Point',
+    'coordinates':  [
+      32.4004416,
+      -98.9852672,
+    ],
+  },
   'text': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3',
   'user': USER,
   'entities': {
@@ -69,7 +76,7 @@ OBJECT = {
   'location': {
     'displayName': 'Carcassonne, Aude',
     'id': '31cb9e7ed29dbe52',
-    'url': 'http://api.twitter.com/1/geo/id/31cb9e7ed29dbe52.json',
+    'url': 'https://maps.google.com/maps?q=32.4004416,-98.9852672',
     },
   'tags': [{
       'objectType': 'person',

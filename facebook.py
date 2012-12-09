@@ -213,9 +213,11 @@ class Facebook(source.Source):
     # location
     place = post.get('place')
     if place:
+      id = place.get('id')
       object['location'] = {
         'displayName': place.get('name'),
-        'id': place.get('id'),
+        'id': id,
+        'url': 'http://facebook.com/profile.php?id=' + id,
         }
       location = place.get('location', {})
       lat = location.get('latitude')

@@ -210,8 +210,14 @@ class Twitter(source.Source):
       object['location'] = {
         'displayName': place.get('full_name'),
         'id': place.get('id'),
-        'url': place.get('url'),
-        }    
+        }
+
+      # place['url'] is a JSON API url, not useful for end users. get the
+      # lat/lon from geo instead.
+      coords = tweet.get('geo', {}).get('coordinates')
+      if coords:
+        object['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
+                                     tuple(coords))
 
     return util.trim_nulls(object)
       
