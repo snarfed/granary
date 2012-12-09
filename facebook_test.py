@@ -45,22 +45,22 @@ COMMENTS = [
       'id': '212038'
       },
     'message': 'cc Sam G, Michael M',
-    # 'message_tags': [
-    #   {
-    #     'id': '221330',
-    #     'name': 'Sam G',
-    #     'type': 'user',
-    #     'offset': 3,
-    #     'length': 5,
-    #     },
-    #   {
-    #     'id': '695687650',
-    #     'name': 'Michael Mandel',
-    #     'type': 'user',
-    #     'offset': 10,
-    #     'length': 9,
-    #     }
-    #   ],
+    'message_tags': [
+      {
+        'id': '221330',
+        'name': 'Sam G',
+        'type': 'user',
+        'offset': 3,
+        'length': 5,
+        },
+      {
+        'id': '695687650',
+        'name': 'Michael Mandel',
+        'type': 'user',
+        'offset': 10,
+        'length': 9,
+        }
+      ],
     'created_time': '2012-12-05T00:58:26+0000',
     },
   {
@@ -140,7 +140,7 @@ COMMENT_OBJS = [
       'displayName': 'Ryan Barrett',
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       },
-    'content': 'cc Sam G, Michael M',
+    'content': 'cc <a class="fb-mention" href="http://facebook.com/profile.php?id=221330">Sam G</a>, <a class="fb-mention" href="http://facebook.com/profile.php?id=695687650">Michael M</a>',
     'id': 'tag:facebook.com,2012:212038_547822715231468_6796480',
     'published': '2012-12-05T00:58:26+0000',
     'url': 'http://facebook.com/212038/posts/547822715231468?comment_id=6796480',

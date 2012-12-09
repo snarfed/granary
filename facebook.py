@@ -168,15 +168,19 @@ class Facebook(source.Source):
       'image': {'url': post.get('picture')},
       }
 
-    # linkify mention tags in content
+    # linkify mention tags in content. note that the message_tags field is a
+    # dict in posts and a list in comments. see facebook_test.py for examples.
     content = post.get('message', '')
-    tags = sum((tags for tags in post.get('message_tags', {}).values()), [])
-    tags.sort(key=lambda x: x['offset'])
-    if tags:
+    mtags = post.get('message_tags', [])
+    if isinstance(mtags, dict):
+      mtags = sum(mtags.values(), [])  # sum joins the singleton lists together
+    mtags.sort(key=lambda t: t['offset'])
+
+    if mtags:
       last_end = 0
       orig = content
       content = ''
-      for tag in tags:
+      for tag in mtags:
         start = tag['offset']
         end = start + tag['length']
 
