@@ -61,7 +61,7 @@ TWEET = {
 OBJECT = {
   'objectType': 'note',
   'author': ACTOR,
-  'content': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3',
+  'content': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! <a href="http://t.co/SuqMPgp3">http://t.co/SuqMPgp3</a>',
   'id': 'tag:twitter.com,2012:172417043893731329',
   'published': '2012-02-22T20:26:41',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
@@ -139,8 +139,8 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>tag:twitter.com,2012:172417043893731329</id>
-  <title>portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3</title>
-  <content type="text">portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3</content>
+  <title>portablecontacts-unofficial: PortableContacts for Facebook and Twitter! &lt;a href=&quot;http://t.co/SuqMPgp3&quot;&gt;http://t.co/SuqMPgp3&lt;/a&gt;</title>
+  <content type="text">portablecontacts-unofficial: PortableContacts for Facebook and Twitter! &lt;a href=&quot;http://t.co/SuqMPgp3&quot;&gt;http://t.co/SuqMPgp3&lt;/a&gt;</content>
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   

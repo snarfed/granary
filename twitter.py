@@ -175,7 +175,7 @@ class Twitter(source.Source):
     object = {
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
-      'content': tweet.get('text'),
+      'content': util.linkify(tweet.get('text')),
       }
 
     user = tweet.get('user')
