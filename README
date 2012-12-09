@@ -1,6 +1,6 @@
-This is a stand-in, proxy ActivityStreams server for sites that don't implement
-it themselves. It currently has implementations for Facebook and Twitter, served
-at these endpoints:
+This is a conversion library and proxy ActivityStreams server for sites that
+don't support the ActivityStreams format and API themselves. It currently has
+implementations for Facebook and Twitter, served at these endpoints:
 
 http://facebook-activitystreams.appspot.com/
 http://twitter-activitystreams.appspot.com/

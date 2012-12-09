@@ -127,6 +127,21 @@ class Facebook(source.Source):
 
     return util.trim_nulls(activity)
 
+  # maps facebook graph api object types to ActivityStreams objectType.
+  OBJECT_TYPES = {
+    'application': 'application',
+    'checkin': 'note',
+    'event': 'event',
+    'group': 'group',
+    'link': 'note',
+    'location': 'place',
+    'page': 'page',
+    'photo': 'photo',
+    'post': 'note',
+    'status': 'note',
+    'user': 'person',
+    }
+
   def post_to_object(self, post):
     """Converts a post to an object.
 
@@ -144,7 +159,7 @@ class Facebook(source.Source):
 
     object = {
       'id': util.tag_uri(self.DOMAIN, str(id)),
-      'objectType': 'note',
+      'objectType': self.OBJECT_TYPES.get(post.get('type'), 'note'),
       'published': post.get('created_time'),
       'updated': post.get('updated_time'),
       'author': self.user_to_actor(post.get('from')),
@@ -175,15 +190,20 @@ class Facebook(source.Source):
     # linkify embedded links
     object['content'] = linkify(content)
 
-    # to tags
-    to = post.get('to', {}).get('data')
-    if to:
-      object['tags'] = [{
-          'objectType': 'person',
-          'id': util.tag_uri(self.DOMAIN, t.get('id')),
-          'url': 'http://facebook.com/%s' % t.get('id'),
-          'displayName': t.get('name'),
-          } for t in to]
+    # to and with tags. use a dict to uniquify by id.
+    tags = {}
+    for field in 'to', 'with_tags':
+      for tag in post.get(field, {}).get('data', []):
+        id = tag.get('id')
+        if id:
+          tags[id] = {
+            'objectType': 'person',
+            'id': util.tag_uri(self.DOMAIN, id),
+            'url': 'http://facebook.com/%s' % id,
+            'displayName': tag.get('name'),
+            }
+
+    object['tags'] = sorted(tags.values(), key=lambda t: t['id'])
 
     # location
     place = post.get('place')
@@ -215,7 +235,6 @@ class Facebook(source.Source):
         }
 
     return util.trim_nulls(object)
-
 
   COMMENT_ID_RE = re.compile('(\d+)_(\d+)_(\d+)')
 

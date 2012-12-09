@@ -1,6 +1,5 @@
 #!/usr/bin/python
 """Unit tests for facebook.py.
-STATE: with_tags
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -82,8 +81,8 @@ POST = {
       {'name': 'Friend 2', 'id': '345'},
       ]},
   'with_tags': {'data': [
+      {'name': 'Friend 2', 'id': '345'},
       {'name': 'Friend 3', 'id': '456'},
-      {'name': 'Friend 4', 'id': '567'},
       ]},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
@@ -162,7 +161,7 @@ COMMENT_OBJS = [
     },
 ]
 POST_OBJ = {
-  'objectType': 'note',
+  'objectType': 'photo',
   'author': {
     'id': 'tag:facebook.com,2012:212038',
     'displayName': 'Ryan Barrett',
@@ -192,6 +191,12 @@ POST_OBJ = {
       'id': 'tag:facebook.com,2012:345',
       'url': 'http://facebook.com/345',
       'displayName': 'Friend 2',
+      },
+      {
+      'objectType': 'person',
+      'id': 'tag:facebook.com,2012:456',
+      'url': 'http://facebook.com/456',
+      'displayName': 'Friend 3',
       }],
   'replies': {
     'items': COMMENT_OBJS,
@@ -244,7 +249,7 @@ ATOM = """\
 
 <entry>
   <activity:object-type>
-    http://activitystrea.ms/schema/1.0/note
+    http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
   <id>tag:facebook.com,2012:212038_10100176064482163</id>
   <title>Checking another side project off my list. portablecontacts-unofficial is live!  cc &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=283938455011303&quot;&gt;Super Happy Block Party Hackathon&lt;/a&gt;, &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=13307262&quot;&gt;Daniel M&lt;/a&gt;. background: &lt;a href=&quot;http://portablecontacts.net/&quot;&gt;http://portablecontacts.net/&lt;/a&gt;</title>
@@ -260,6 +265,11 @@ ATOM = """\
     
       <link rel="ostatus:attention" href="http://facebook.com/345" />
       <link rel="mentioned" href="http://facebook.com/345" />
+    
+  
+    
+      <link rel="ostatus:attention" href="http://facebook.com/456" />
+      <link rel="mentioned" href="http://facebook.com/456" />
     
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
