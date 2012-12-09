@@ -191,8 +191,9 @@ class Facebook(source.Source):
 
       content += orig[last_end:]
 
-    # linkify embedded links
-    object['content'] = linkify(content)
+    # linkify embedded links. ignore the "mention" tags that we added ourselves.
+    object['content'] = util.linkify(
+      content, ignore_prefix='http://facebook.com/profile.php?id=')
 
     # to and with tags. use a dict to uniquify by id.
     tags = {}
@@ -302,38 +303,5 @@ class Facebook(source.Source):
                            'displayName': location.get('name')}
 
     return util.trim_nulls(actor)
-
-
-def linkify(text):
-  """Adds HTML links to URLs in the given plain text.
-
-  For example: linkify("Hello http://tornadoweb.org!") would return
-  Hello <a href="http://tornadoweb.org">http://tornadoweb.org</a>!
-
-  Ignores URLs starting with 'http://facebook.com/profile.php?id=' since they
-  may have been added to "mention" tags in main().
-
-  Based on https://github.com/silas/huck/blob/master/huck/utils.py#L59
-  """
-  # I originally used the regex from
-  # http://daringfireball.net/2010/07/improved_regex_for_matching_urls
-  # but it gets all exponential on certain patterns (such as too many trailing
-  # dots), causing the regex matcher to never return. This regex should avoid
-  # those problems.
-  _URL_RE = re.compile(ur"""\b((?:([\w-]+):(/{1,3})|www[.])(?:(?:(?:[^\s&()]|&amp;|&quo
-t;)*(?:[^!"#$%&'()*+,.:;<=>?@\[\]^`{|}~\s]))|(?:\((?:[^\s&()]|&amp;|&quot;)*\)))+)""")
-
-  def make_link(m):
-    url = m.group(1)
-    if url.startswith('http://facebook.com/profile.php?id='):
-      # this is a "mention" tag that we added ourselves. leave it alone.
-      return url
-    proto = m.group(2)
-    href = m.group(1)
-    if not proto:
-      href = 'http://' + href
-    return u'<a href="%s">%s</a>' % (href, url)
- 
-  return _URL_RE.sub(make_link, text)
 
 
