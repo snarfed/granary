@@ -217,7 +217,7 @@ class Facebook(source.Source):
       object['location'] = {
         'displayName': place.get('name'),
         'id': id,
-        'url': 'http://facebook.com/profile.php?id=' + id,
+        'url': 'http://facebook.com/' + id,
         }
       location = place.get('location', {})
       lat = location.get('latitude')
@@ -287,6 +287,10 @@ class Facebook(source.Source):
     if not handle:
       return {}
 
+    url = user.get('link')
+    if not url:
+      url = 'http://facebook.com/' + handle
+
     # facebook implements this as a 302 redirect
     image_url = 'http://graph.facebook.com/%s/picture?type=large' % handle
     actor = {
@@ -294,7 +298,7 @@ class Facebook(source.Source):
       'image': {'url': image_url},
       'id': util.tag_uri(self.DOMAIN, handle),
       'updated': user.get('updated_time'),
-      'url': user.get('link'),
+      'url': url,
       'username': username,
       'description': user.get('bio'),
       }
