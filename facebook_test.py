@@ -107,9 +107,10 @@ POST = {
         }
       ],
     },
-  'link': 'http://snarfed.org/2012-02-22_portablecontacts_for_facebook_and_twitter',
-  'name': 'PortableContacts for Facebook and Twitter',
-  'caption': 'snarfed.org',
+  'link': 'http://my.link/',
+  'name': 'my link name',
+  'caption': 'my link caption',
+  'description': 'my link description',
   'icon': 'https://s-static.ak.facebook.com/rsrc.php/v1/yx/r/og8V99JVf8G.gif',
    'place': {
     'id': '113785468632283',
@@ -176,6 +177,13 @@ POST_OBJ = {
   'updated': '2012-03-04T19:08:16+0000',
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg'},
+  'attachments': [{
+      'objectType': 'article',
+      'url': 'http://my.link/',
+      'displayName': 'my link name',
+      'summary': 'my link caption',
+      'content': 'my link description',
+      }],
   'location': {
     'displayName': 'Lake Merced',
     'id': '113785468632283',

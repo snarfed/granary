@@ -133,7 +133,7 @@ class Facebook(source.Source):
     'checkin': 'note',
     'event': 'event',
     'group': 'group',
-    'link': 'note',
+    'link': 'article',
     'location': 'place',
     'page': 'page',
     'photo': 'photo',
@@ -209,6 +209,17 @@ class Facebook(source.Source):
             }
 
     object['tags'] = sorted(tags.values(), key=lambda t: t['id'])
+
+    # link
+    link = post.get('link')
+    if link:
+      object.setdefault('attachments', []).append({
+          'objectType': 'article',
+          'url': link,
+          'displayName': post.get('name'),
+          'summary': post.get('caption'),
+          'content': post.get('description'),
+        })
 
     # location
     place = post.get('place')
