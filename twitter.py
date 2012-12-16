@@ -175,7 +175,9 @@ class Twitter(source.Source):
     object = {
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
-      'content': util.linkify(tweet.get('text')),
+      # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
+      # url entities below to replace them with the real URLs, and then linkify.
+      'content': tweet.get('text'),
       }
 
     user = tweet.get('user')
@@ -195,16 +197,37 @@ class Twitter(source.Source):
     if media_url:
       object['image'] = {'url': media_url}
 
-    mentions = entities.get('user_mentions')
-    if mentions:
-      object['tags'] = [{
-          'objectType': 'person',
-          'id': util.tag_uri(self.DOMAIN, m.get('screen_name')),
-          'url': self.user_url(m.get('screen_name')),
-          'screen_name': m.get('screen_name'),
-          'displayName': m.get('name'),
-          } for m in mentions]
+    # tags
+    object['tags'] =[
+      {'objectType': 'person',
+       'id': util.tag_uri(self.DOMAIN, t.get('screen_name')),
+       'url': self.user_url(t.get('screen_name')),
+       'screen_name': t.get('screen_name'),
+       'displayName': t.get('name'),
+       'indices': t.get('indices')
+       } for t in entities.get('user_mentions', [])
+      ] + [
+      {'objectType': 'hashtag',
+       'content': '#' + t.get('text'),
+       'indices': t.get('indices'),
+       } for t in entities.get('hashtags', [])
+      ] + [
+      {'objectType': 'article',
+       'url': t.get('expanded_url'),
+       # TODO: elide full URL?
+       'indices': t.get('indices'),
+       } for t in entities.get('urls', [])
+      ]
+    for t in object['tags']:
+      indices = t.get('indices')
+      if indices:
+        t.update({
+            'startIndex': indices[0],
+            'length': indices[1] - indices[0],
+            })
+        del t['indices']
 
+    # location
     place = tweet.get('place')
     if place:
       object['location'] = {
