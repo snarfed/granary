@@ -202,13 +202,12 @@ class Twitter(source.Source):
       {'objectType': 'person',
        'id': util.tag_uri(self.DOMAIN, t.get('screen_name')),
        'url': self.user_url(t.get('screen_name')),
-       'screen_name': t.get('screen_name'),
        'displayName': t.get('name'),
        'indices': t.get('indices')
        } for t in entities.get('user_mentions', [])
       ] + [
       {'objectType': 'hashtag',
-       'content': '#' + t.get('text'),
+       'url': 'https://twitter.com/search?q=%23' + t.get('text'),
        'indices': t.get('indices'),
        } for t in entities.get('hashtags', [])
       ] + [

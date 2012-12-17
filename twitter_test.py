@@ -99,7 +99,6 @@ OBJECT = {
       'objectType': 'person',
       'id': 'tag:twitter.com,2012:twitter',
       'url': 'http://twitter.com/twitter',
-      'screen_name': 'twitter',
       'displayName': 'Twitter',
       'startIndex': 0,
       'length': 8,
@@ -107,13 +106,12 @@ OBJECT = {
       'objectType': 'person',
       'id': 'tag:twitter.com,2012:SeePicturely',
       'url': 'http://twitter.com/SeePicturely',
-      'screen_name': 'SeePicturely',
       'displayName': 'Picture.ly',
       'startIndex': 15,
       'length': 13,
       }, {
       'objectType': 'hashtag',
-      'content': '#tcdisrupt',
+      'url': 'https://twitter.com/search?q=%23tcdisrupt',
       'startIndex': 32,
       'length': 10,
       }, {
