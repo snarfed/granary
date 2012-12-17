@@ -37,33 +37,28 @@ ACTOR = {
   'description': 'something about me',
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
-COMMENTS = [
-  {
+COMMENTS = [{
     'id': '212038_547822715231468_6796480',
     'from': {
       'name': 'Ryan Barrett',
       'id': '212038'
       },
     'message': 'cc Sam G, Michael M',
-    'message_tags': [
-      {
+    'message_tags': [{
         'id': '221330',
         'name': 'Sam G',
         'type': 'user',
         'offset': 3,
         'length': 5,
-        },
-      {
+        }, {
         'id': '695687650',
         'name': 'Michael Mandel',
         'type': 'user',
         'offset': 10,
         'length': 9,
-        }
-      ],
+        }],
     'created_time': '2012-12-05T00:58:26+0000',
-    },
-  {
+    }, {
     'id': '212038_124561947600007_672819',
     'from': {
       'name': 'Ron Ald',
@@ -71,8 +66,7 @@ COMMENTS = [
       },
     'message': 'Foo bar!',
     'created_time': '2010-10-28T00:23:04+0000'
-    },
-  ]
+    }]
 POST = {
   'id': '212038_10100176064482163',
   'from': {'name': 'Ryan Barrett', 'id': '212038'},
@@ -88,31 +82,27 @@ POST = {
   'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
   'message': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M. background: http://portablecontacts.net/',
   'message_tags': {
-    '84': [
-      {
+    '84': [{
         'id': '283938455011303',
         'name': 'Super Happy Block Party Hackathon',
         'type': 'event',
         'offset': 84,
         'length': 33,
-        }
-      ],
-    '119': [
-      {
+        }],
+    '119': [{
         'id': '13307262',
         'name': 'Daniel M',
         'type': 'user',
         'offset': 119,
         'length': 8,
-        }
-      ],
+        }],
     },
   'link': 'http://my.link/',
   'name': 'my link name',
   'caption': 'my link caption',
   'description': 'my link description',
   'icon': 'https://s-static.ak.facebook.com/rsrc.php/v1/yx/r/og8V99JVf8G.gif',
-   'place': {
+  'place': {
     'id': '113785468632283',
     'name': 'Lake Merced',
     'location': {
@@ -142,11 +132,26 @@ COMMENT_OBJS = [
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       'url': 'http://facebook.com/212038',
       },
-    'content': 'cc <a class="fb-mention" href="http://facebook.com/profile.php?id=221330">Sam G</a>, <a class="fb-mention" href="http://facebook.com/profile.php?id=695687650">Michael M</a>',
+    'content': 'cc Sam G, Michael M',
     'id': 'tag:facebook.com,2012:212038_547822715231468_6796480',
     'published': '2012-12-05T00:58:26+0000',
     'url': 'http://facebook.com/212038/posts/547822715231468?comment_id=6796480',
     'inReplyTo': {'id': 'tag:facebook.com,2012:212038_547822715231468'},
+    'tags': [{
+        'objectType': 'person',
+        'id': 'tag:facebook.com,2012:221330',
+        'url': 'http://facebook.com/221330',
+        'displayName': 'Sam G',
+        'startIndex': 3,
+        'length': 5,
+        }, {
+        'objectType': 'person',
+        'id': 'tag:facebook.com,2012:695687650',
+        'url': 'http://facebook.com/695687650',
+        'displayName': 'Michael Mandel',
+        'startIndex': 10,
+        'length': 9,
+        }],
     },
   {
     'objectType': 'comment',
@@ -197,14 +202,12 @@ POST_OBJ = {
       'id': 'tag:facebook.com,2012:234',
       'url': 'http://facebook.com/234',
       'displayName': 'Friend 1',
-      },
-      {
+      }, {
       'objectType': 'person',
       'id': 'tag:facebook.com,2012:345',
       'url': 'http://facebook.com/345',
       'displayName': 'Friend 2',
-      },
-      {
+      }, {
       'objectType': 'person',
       'id': 'tag:facebook.com,2012:456',
       'url': 'http://facebook.com/456',
@@ -399,7 +402,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_post_to_object_empty(self):
     self.assert_equals({}, self.facebook.post_to_object({}))
 
-  def test_post_to_object_full(self):
+  def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.facebook.comment_to_object(cmt))
 

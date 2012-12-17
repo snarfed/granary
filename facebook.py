@@ -7,6 +7,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import cgi
 import collections
 import datetime
+import itertools
 try:
   import json
 except ImportError:
@@ -29,6 +30,20 @@ API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
 # parity."
 # https://developers.facebook.com/docs/reference/api/#searching
 API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d&limit=%d'
+
+# maps facebook graph api object types to ActivityStreams objectType. defaults
+# to 'note'.
+OBJECT_TYPES = collections.defaultdict(lambda: 'note', {
+  'application': 'application',
+  'event': 'event',
+  'group': 'group',
+  'link': 'article',
+  'location': 'place',
+  'page': 'page',
+  'photo': 'photo',
+  'post': 'note',
+  'user': 'person',
+  })
 
 
 class Facebook(source.Source):
@@ -127,21 +142,6 @@ class Facebook(source.Source):
 
     return util.trim_nulls(activity)
 
-  # maps facebook graph api object types to ActivityStreams objectType.
-  OBJECT_TYPES = {
-    'application': 'application',
-    'checkin': 'note',
-    'event': 'event',
-    'group': 'group',
-    'link': 'article',
-    'location': 'place',
-    'page': 'page',
-    'photo': 'photo',
-    'post': 'note',
-    'status': 'note',
-    'user': 'person',
-    }
-
   def post_to_object(self, post):
     """Converts a post to an object.
 
@@ -159,7 +159,7 @@ class Facebook(source.Source):
 
     object = {
       'id': util.tag_uri(self.DOMAIN, str(id)),
-      'objectType': self.OBJECT_TYPES.get(post.get('type'), 'note'),
+      'objectType': OBJECT_TYPES[post.get('type')],
       'published': post.get('created_time'),
       'updated': post.get('updated_time'),
       'author': self.user_to_actor(post.get('from')),
@@ -168,47 +168,18 @@ class Facebook(source.Source):
       'image': {'url': post.get('picture')},
       }
 
-    # linkify mention tags in content. note that the message_tags field is a
-    # dict in posts and a list in comments. see facebook_test.py for examples.
-    content = post.get('message', '')
-    mtags = post.get('message_tags', [])
-    if isinstance(mtags, dict):
-      mtags = sum(mtags.values(), [])  # sum joins the singleton lists together
-    mtags.sort(key=lambda t: t['offset'])
-
-    if mtags:
-      last_end = 0
-      orig = content
-      content = ''
-      for tag in mtags:
-        start = tag['offset']
-        end = start + tag['length']
-
-        content += orig[last_end:start]
-        content += '<a class="fb-mention" href="http://facebook.com/profile.php?id=%s">%s</a>' % (
-          tag['id'], orig[start:end])
-        last_end = end
-
-      content += orig[last_end:]
-
-    # linkify embedded links. ignore the "mention" tags that we added ourselves.
-    object['content'] = util.linkify(
-      content, ignore_prefix='http://facebook.com/profile.php?id=')
-
-    # to and with tags. use a dict to uniquify by id.
-    tags = {}
-    for field in 'to', 'with_tags':
-      for tag in post.get(field, {}).get('data', []):
-        id = tag.get('id')
-        if id:
-          tags[id] = {
-            'objectType': 'person',
-            'id': util.tag_uri(self.DOMAIN, id),
-            'url': 'http://facebook.com/%s' % id,
-            'displayName': tag.get('name'),
-            }
-
-    object['tags'] = sorted(tags.values(), key=lambda t: t['id'])
+    # tags
+    tags = itertools.chain(post.get('to', {}).get('data', []),
+                           post.get('with_tags', {}).get('data', []),
+                           *post.get('message_tags', {}).values())
+    object['tags'] = [{
+          'objectType': OBJECT_TYPES[t.get('type')],
+          'id': util.tag_uri(self.DOMAIN, t.get('id')),
+          'url': 'http://facebook.com/%s' % id,
+          'displayName': t.get('name'),
+          'startIndex': t.get('offset'),
+          'length': t.get('length'),
+          } for t in tags]
 
     # link
     link = post.get('link')
@@ -265,6 +236,12 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
+    # the message_tags field is different in comment vs post. in post, it's a
+    # dict of lists, in comment it's just a list. so, convert it to post style
+    # here before running post_to_object().
+    comment = dict(comment)
+    comment['message_tags'] = {'1': comment.get('message_tags', [])}
+
     object = self.post_to_object(comment)
     if not object:
       return object
