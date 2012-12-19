@@ -72,15 +72,15 @@ POST = {
   'from': {'name': 'Ryan Barrett', 'id': '212038'},
   'to': {'data': [
       {'name': 'Friend 1', 'id': '234'},
-      {'name': 'Friend 2', 'id': '345'},
+      {'name': 'Friend 2', 'id': '345'}, # overridden by Friend 2 in with_tags
       ]},
   'with_tags': {'data': [
       {'name': 'Friend 2', 'id': '345'},
-      {'name': 'Friend 3', 'id': '456'},
+      {'name': 'Friend 3', 'id': '456'}, # overridden by Daniel M in message_tags
       ]},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
-  'message': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M. background: http://portablecontacts.net/',
+  'message': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.',
   'message_tags': {
     '84': [{
         'id': '283938455011303',
@@ -90,7 +90,7 @@ POST = {
         'length': 33,
         }],
     '119': [{
-        'id': '13307262',
+        'id': '456',
         'name': 'Daniel M',
         'type': 'user',
         'offset': 119,
@@ -176,7 +176,7 @@ POST_OBJ = {
     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
     'url': 'http://facebook.com/212038',
     },
-  'content': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc <a class="fb-mention" href="http://facebook.com/profile.php?id=283938455011303">Super Happy Block Party Hackathon</a>, <a class="fb-mention" href="http://facebook.com/profile.php?id=13307262">Daniel M</a>. background: <a href="http://portablecontacts.net/">http://portablecontacts.net/</a>',
+  'content': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.',
   'id': 'tag:facebook.com,2012:212038_10100176064482163',
   'published': '2012-03-04T18:20:37+0000',
   'updated': '2012-03-04T19:08:16+0000',
@@ -211,8 +211,18 @@ POST_OBJ = {
       'objectType': 'person',
       'id': 'tag:facebook.com,2012:456',
       'url': 'http://facebook.com/456',
-      'displayName': 'Friend 3',
-      }],
+      'displayName': 'Daniel M',
+      'startIndex': 119,
+      'length': 8,
+      }, {
+      'objectType': 'event',
+      'id': 'tag:facebook.com,2012:283938455011303',
+      'url': 'http://facebook.com/283938455011303',
+      'displayName': 'Super Happy Block Party Hackathon',
+      'startIndex': 84,
+      'length': 33,
+      },
+    ],
   'replies': {
     'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
@@ -267,8 +277,8 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
   <id>tag:facebook.com,2012:212038_10100176064482163</id>
-  <title>Checking another side project off my list. portablecontacts-unofficial is live!  cc &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=283938455011303&quot;&gt;Super Happy Block Party Hackathon&lt;/a&gt;, &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=13307262&quot;&gt;Daniel M&lt;/a&gt;. background: &lt;a href=&quot;http://portablecontacts.net/&quot;&gt;http://portablecontacts.net/&lt;/a&gt;</title>
-  <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!  cc &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=283938455011303&quot;&gt;Super Happy Block Party Hackathon&lt;/a&gt;, &lt;a class=&quot;fb-mention&quot; href=&quot;http://facebook.com/profile.php?id=13307262&quot;&gt;Daniel M&lt;/a&gt;. background: &lt;a href=&quot;http://portablecontacts.net/&quot;&gt;http://portablecontacts.net/&lt;/a&gt;</content>
+  <title>Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</title>
+  <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</content>
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
   <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
   
@@ -285,6 +295,8 @@ ATOM = """\
     
       <link rel="ostatus:attention" href="http://facebook.com/456" />
       <link rel="mentioned" href="http://facebook.com/456" />
+    
+  
     
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>

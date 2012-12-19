@@ -5,7 +5,6 @@
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import cgi
-import collections
 import datetime
 import itertools
 try:
@@ -31,9 +30,8 @@ API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
 # https://developers.facebook.com/docs/reference/api/#searching
 API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d&limit=%d'
 
-# maps facebook graph api object types to ActivityStreams objectType. defaults
-# to 'note'.
-OBJECT_TYPES = collections.defaultdict(lambda: 'note', {
+# maps facebook graph api object types to ActivityStreams objectType.
+OBJECT_TYPES = {
   'application': 'application',
   'event': 'event',
   'group': 'group',
@@ -43,7 +41,7 @@ OBJECT_TYPES = collections.defaultdict(lambda: 'note', {
   'photo': 'photo',
   'post': 'note',
   'user': 'person',
-  })
+  }
 
 
 class Facebook(source.Source):
@@ -159,27 +157,34 @@ class Facebook(source.Source):
 
     object = {
       'id': util.tag_uri(self.DOMAIN, str(id)),
-      'objectType': OBJECT_TYPES[post.get('type')],
+      'objectType': OBJECT_TYPES.get(post.get('type'), 'note'),
       'published': post.get('created_time'),
       'updated': post.get('updated_time'),
       'author': self.user_to_actor(post.get('from')),
+      'content': post.get('message'),
       # FB post ids are of the form USERID_POSTID
       'url': 'http://facebook.com/' + id.replace('_', '/posts/'),
       'image': {'url': post.get('picture')},
       }
 
-    # tags
+    # tags. (do message_tags last so it's the final writer, since it includes
+    # offset and length.)
     tags = itertools.chain(post.get('to', {}).get('data', []),
                            post.get('with_tags', {}).get('data', []),
                            *post.get('message_tags', {}).values())
-    object['tags'] = [{
-          'objectType': OBJECT_TYPES[t.get('type')],
-          'id': util.tag_uri(self.DOMAIN, t.get('id')),
+    # uniquify tags by id
+    tags_by_id = {}
+    for t in tags:
+      id = t.get('id')
+      tags_by_id.setdefault(id, {}).update({
+          'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
+          'id': util.tag_uri(self.DOMAIN, id),
           'url': 'http://facebook.com/%s' % id,
           'displayName': t.get('name'),
           'startIndex': t.get('offset'),
           'length': t.get('length'),
-          } for t in tags]
+          })
+    object['tags'] = tags_by_id.values()
 
     # link
     link = post.get('link')
