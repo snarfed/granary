@@ -72,11 +72,11 @@ POST = {
   'from': {'name': 'Ryan Barrett', 'id': '212038'},
   'to': {'data': [
       {'name': 'Friend 1', 'id': '234'},
-      {'name': 'Friend 2', 'id': '345'}, # overridden by Friend 2 in with_tags
+      {'name': 'Friend 2', 'id': '345'},
       ]},
   'with_tags': {'data': [
-      {'name': 'Friend 2', 'id': '345'},
-      {'name': 'Friend 3', 'id': '456'}, # overridden by Daniel M in message_tags
+      {'name': 'Friend 2', 'id': '345'}, # same id, tags shouldn't be de-duped
+      {'name': 'Friend 3', 'id': '456'},
       ]},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
@@ -209,6 +209,16 @@ POST_OBJ = {
       'displayName': 'Friend 2',
       }, {
       'objectType': 'person',
+      'id': 'tag:facebook.com,2012:345',
+      'url': 'http://facebook.com/345',
+      'displayName': 'Friend 2',
+      }, {
+      'objectType': 'person',
+      'id': 'tag:facebook.com,2012:456',
+      'url': 'http://facebook.com/456',
+      'displayName': 'Friend 3',
+      }, {
+      'objectType': 'person',
       'id': 'tag:facebook.com,2012:456',
       'url': 'http://facebook.com/456',
       'displayName': 'Daniel M',
@@ -282,22 +292,23 @@ ATOM = """\
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
   <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
   
-    
-      <link rel="ostatus:attention" href="http://facebook.com/234" />
-      <link rel="mentioned" href="http://facebook.com/234" />
-    
+    <link rel="ostatus:attention" href="http://facebook.com/234" />
+    <link rel="mentioned" href="http://facebook.com/234" />
   
-    
-      <link rel="ostatus:attention" href="http://facebook.com/345" />
-      <link rel="mentioned" href="http://facebook.com/345" />
-    
+    <link rel="ostatus:attention" href="http://facebook.com/345" />
+    <link rel="mentioned" href="http://facebook.com/345" />
   
-    
-      <link rel="ostatus:attention" href="http://facebook.com/456" />
-      <link rel="mentioned" href="http://facebook.com/456" />
-    
+    <link rel="ostatus:attention" href="http://facebook.com/345" />
+    <link rel="mentioned" href="http://facebook.com/345" />
   
-    
+    <link rel="ostatus:attention" href="http://facebook.com/456" />
+    <link rel="mentioned" href="http://facebook.com/456" />
+  
+    <link rel="ostatus:attention" href="http://facebook.com/456" />
+    <link rel="mentioned" href="http://facebook.com/456" />
+  
+    <link rel="ostatus:attention" href="http://facebook.com/283938455011303" />
+    <link rel="mentioned" href="http://facebook.com/283938455011303" />
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-03-04T18:20:37+0000</published>

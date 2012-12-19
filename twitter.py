@@ -211,6 +211,9 @@ class Twitter(source.Source):
        'indices': t.get('indices'),
        } for t in entities.get('hashtags', [])
       ] + [
+      # TODO: should links be attachments instead of tags?
+      # file:///home/ryanb/docs/activitystreams_schema_spec_1.0.html#tags-property
+      # file:///home/ryanb/docs/activitystreams_json_spec_1.0.html#object
       {'objectType': 'article',
        'url': t.get('expanded_url'),
        # TODO: elide full URL?

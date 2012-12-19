@@ -66,18 +66,17 @@ TWEET = {
         'id_str': '783214',
         'id': 783214,
         'indices': [0, 8],
-        'screen_name': 'twitter'
+        'screen_name': 'foo'
       },
       {
         'name': 'Picture.ly',
         'id_str': '334715534',
         'id': 334715534,
         'indices': [15, 28],
-        'screen_name': 'SeePicturely'
+        'screen_name': 'foo'
       }],
   },
-  'text': '\
-@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'text': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
@@ -97,15 +96,15 @@ OBJECT = {
     },
   'tags': [{
       'objectType': 'person',
-      'id': 'tag:twitter.com,2012:twitter',
-      'url': 'http://twitter.com/twitter',
+      'id': 'tag:twitter.com,2012:foo',
+      'url': 'http://twitter.com/foo',
       'displayName': 'Twitter',
       'startIndex': 0,
       'length': 8,
       }, {
       'objectType': 'person',
-      'id': 'tag:twitter.com,2012:SeePicturely',
-      'url': 'http://twitter.com/SeePicturely',
+      'id': 'tag:twitter.com,2012:foo',  # same id as above, shouldn't de-dupe
+      'url': 'http://twitter.com/foo',
       'displayName': 'Picture.ly',
       'startIndex': 15,
       'length': 13,
@@ -179,19 +178,17 @@ ATOM = """\
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   
-    
-      <link rel="ostatus:attention" href="http://twitter.com/twitter" />
-      <link rel="mentioned" href="http://twitter.com/twitter" />
-    
+    <link rel="ostatus:attention" href="http://twitter.com/foo" />
+    <link rel="mentioned" href="http://twitter.com/foo" />
   
-    
-      <link rel="ostatus:attention" href="http://twitter.com/SeePicturely" />
-      <link rel="mentioned" href="http://twitter.com/SeePicturely" />
-    
+    <link rel="ostatus:attention" href="http://twitter.com/foo" />
+    <link rel="mentioned" href="http://twitter.com/foo" />
   
-    
+    <link rel="ostatus:attention" href="https://twitter.com/search?q=%%23tcdisrupt" />
+    <link rel="mentioned" href="https://twitter.com/search?q=%%23tcdisrupt" />
   
-    
+    <link rel="ostatus:attention" href="http://instagr.am/p/MuW67/" />
+    <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41</published>

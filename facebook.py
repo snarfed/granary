@@ -167,24 +167,18 @@ class Facebook(source.Source):
       'image': {'url': post.get('picture')},
       }
 
-    # tags. (do message_tags last so it's the final writer, since it includes
-    # offset and length.)
+    # tags
     tags = itertools.chain(post.get('to', {}).get('data', []),
                            post.get('with_tags', {}).get('data', []),
                            *post.get('message_tags', {}).values())
-    # uniquify tags by id
-    tags_by_id = {}
-    for t in tags:
-      id = t.get('id')
-      tags_by_id.setdefault(id, {}).update({
+    object['tags'] = [{
           'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
-          'id': util.tag_uri(self.DOMAIN, id),
-          'url': 'http://facebook.com/%s' % id,
+          'id': util.tag_uri(self.DOMAIN, t.get('id')),
+          'url': 'http://facebook.com/%s' % t.get('id'),
           'displayName': t.get('name'),
           'startIndex': t.get('offset'),
           'length': t.get('length'),
-          })
-    object['tags'] = tags_by_id.values()
+          } for t in tags]
 
     # link
     link = post.get('link')
