@@ -174,19 +174,23 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>tag:twitter.com,2012:172417043893731329</id>
-  <title>portablecontacts-unofficial: PortableContacts for Facebook and Twitter! &lt;a href=&quot;http://t.co/SuqMPgp3&quot;&gt;http://t.co/SuqMPgp3&lt;/a&gt;</title>
-  <content type="text">portablecontacts-unofficial: PortableContacts for Facebook and Twitter! &lt;a href=&quot;http://t.co/SuqMPgp3&quot;&gt;http://t.co/SuqMPgp3&lt;/a&gt;</content>
+  <title>@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
+  <content type="text">@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</content>
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   
     
-      <link rel="ostatus:attention" href="http://twitter.com/friend1" />
-      <link rel="mentioned" href="http://twitter.com/friend1" />
+      <link rel="ostatus:attention" href="http://twitter.com/twitter" />
+      <link rel="mentioned" href="http://twitter.com/twitter" />
     
   
     
-      <link rel="ostatus:attention" href="http://twitter.com/friend2" />
-      <link rel="mentioned" href="http://twitter.com/friend2" />
+      <link rel="ostatus:attention" href="http://twitter.com/SeePicturely" />
+      <link rel="mentioned" href="http://twitter.com/SeePicturely" />
+    
+  
+    
+  
     
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
