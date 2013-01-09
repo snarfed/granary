@@ -16,8 +16,13 @@ from webutil import webapp2
 import facebook
 import source
 from webutil import testutil
+from webutil import util
+
 
 # test data
+def tag_uri(name):
+  return util.tag_uri('facebook.com', name)
+
 USER = {
   'id': '212038',
   'name': 'Ryan Barrett',
@@ -30,7 +35,7 @@ USER = {
 ACTOR = {
   'displayName': 'Ryan Barrett',
   'image': {'url': 'http://graph.facebook.com/snarfed.org/picture?type=large'},
-  'id': 'tag:facebook.com,2012:snarfed.org',
+  'id': tag_uri('snarfed.org'),
   'updated': '2012-01-06T02:11:04+0000',
   'url': 'http://www.facebook.com/snarfed.org',
   'username': 'snarfed.org',
@@ -127,26 +132,26 @@ COMMENT_OBJS = [
   {
     'objectType': 'comment',
     'author': {
-      'id': 'tag:facebook.com,2012:212038',
+      'id': tag_uri('212038'),
       'displayName': 'Ryan Barrett',
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       'url': 'http://facebook.com/212038',
       },
     'content': 'cc Sam G, Michael M',
-    'id': 'tag:facebook.com,2012:212038_547822715231468_6796480',
+    'id': tag_uri('212038_547822715231468_6796480'),
     'published': '2012-12-05T00:58:26+0000',
     'url': 'http://facebook.com/212038/posts/547822715231468?comment_id=6796480',
-    'inReplyTo': {'id': 'tag:facebook.com,2012:212038_547822715231468'},
+    'inReplyTo': {'id': tag_uri('212038_547822715231468')},
     'tags': [{
         'objectType': 'person',
-        'id': 'tag:facebook.com,2012:221330',
+        'id': tag_uri('221330'),
         'url': 'http://facebook.com/221330',
         'displayName': 'Sam G',
         'startIndex': 3,
         'length': 5,
         }, {
         'objectType': 'person',
-        'id': 'tag:facebook.com,2012:695687650',
+        'id': tag_uri('695687650'),
         'url': 'http://facebook.com/695687650',
         'displayName': 'Michael Mandel',
         'startIndex': 10,
@@ -156,28 +161,28 @@ COMMENT_OBJS = [
   {
     'objectType': 'comment',
     'author': {
-      'id': 'tag:facebook.com,2012:513046677',
+      'id': tag_uri('513046677'),
       'displayName': 'Ron Ald',
       'image': {'url': 'http://graph.facebook.com/513046677/picture?type=large'},
       'url': 'http://facebook.com/513046677',
       },
     'content': 'Foo bar!',
-    'id': 'tag:facebook.com,2012:212038_124561947600007_672819',
+    'id': tag_uri('212038_124561947600007_672819'),
     'published': '2010-10-28T00:23:04+0000',
     'url': 'http://facebook.com/212038/posts/124561947600007?comment_id=672819',
-    'inReplyTo': {'id': 'tag:facebook.com,2012:212038_124561947600007'},
+    'inReplyTo': {'id': tag_uri('212038_124561947600007')},
     },
 ]
 POST_OBJ = {
   'objectType': 'photo',
   'author': {
-    'id': 'tag:facebook.com,2012:212038',
+    'id': tag_uri('212038'),
     'displayName': 'Ryan Barrett',
     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
     'url': 'http://facebook.com/212038',
     },
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.',
-  'id': 'tag:facebook.com,2012:212038_10100176064482163',
+  'id': tag_uri('212038_10100176064482163'),
   'published': '2012-03-04T18:20:37+0000',
   'updated': '2012-03-04T19:08:16+0000',
   'url': 'http://facebook.com/212038/posts/10100176064482163',
@@ -199,34 +204,34 @@ POST_OBJ = {
     },
   'tags': [{
       'objectType': 'person',
-      'id': 'tag:facebook.com,2012:234',
+      'id': tag_uri('234'),
       'url': 'http://facebook.com/234',
       'displayName': 'Friend 1',
       }, {
       'objectType': 'person',
-      'id': 'tag:facebook.com,2012:345',
+      'id': tag_uri('345'),
       'url': 'http://facebook.com/345',
       'displayName': 'Friend 2',
       }, {
       'objectType': 'person',
-      'id': 'tag:facebook.com,2012:345',
+      'id': tag_uri('345'),
       'url': 'http://facebook.com/345',
       'displayName': 'Friend 2',
       }, {
       'objectType': 'person',
-      'id': 'tag:facebook.com,2012:456',
+      'id': tag_uri('456'),
       'url': 'http://facebook.com/456',
       'displayName': 'Friend 3',
       }, {
       'objectType': 'person',
-      'id': 'tag:facebook.com,2012:456',
+      'id': tag_uri('456'),
       'url': 'http://facebook.com/456',
       'displayName': 'Daniel M',
       'startIndex': 119,
       'length': 8,
       }, {
       'objectType': 'event',
-      'id': 'tag:facebook.com,2012:283938455011303',
+      'id': tag_uri('283938455011303'),
       'url': 'http://facebook.com/283938455011303',
       'displayName': 'Super Happy Block Party Hackathon',
       'startIndex': 84,
@@ -242,13 +247,13 @@ ACTIVITY = {
   'verb': 'post',
   'published': '2012-03-04T18:20:37+0000',
   'updated': '2012-03-04T19:08:16+0000',
-  'id': 'tag:facebook.com,2012:212038_10100176064482163',
+  'id': tag_uri('212038_10100176064482163'),
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
   'generator': {
     'displayName': 'Facebook for Android',
-    'id': 'tag:facebook.com,2012:350685531728',
+    'id': tag_uri('350685531728'),
     }
   }
 ATOM = """\
@@ -286,7 +291,7 @@ ATOM = """\
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
-  <id>tag:facebook.com,2012:212038_10100176064482163</id>
+  <id>""" + tag_uri('212038_10100176064482163') + """</id>
   <title>Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</title>
   <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</content>
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
@@ -353,16 +358,16 @@ class FacebookTest(testutil.HandlerTest):
 
     self.assert_equals((
         None,
-        [{'id': 'tag:facebook.com,2012:1_2',
+        [{'id': tag_uri('1_2'),
           'object': {'content': 'foo',
-                     'id': 'tag:facebook.com,2012:1_2',
+                     'id': tag_uri('1_2'),
                      'objectType': 'note',
                      'url': 'http://facebook.com/1/posts/2'},
           'url': 'http://facebook.com/1/posts/2',
           'verb': 'post'},
-         {'id': 'tag:facebook.com,2012:3_4',
+         {'id': tag_uri('3_4'),
           'object': {'content': 'bar',
-                     'id': 'tag:facebook.com,2012:3_4',
+                     'id': tag_uri('3_4'),
                      'objectType': 'note',
                      'url': 'http://facebook.com/3/posts/4'},
           'url': 'http://facebook.com/3/posts/4',
@@ -441,7 +446,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_user_to_actor_minimal(self):
     actor = self.facebook.user_to_actor({'id': '212038'})
-    self.assert_equals('tag:facebook.com,2012:212038', actor['id'])
+    self.assert_equals(tag_uri('212038'), actor['id'])
     self.assert_equals('http://graph.facebook.com/212038/picture?type=large',
                        actor['image']['url'])
 

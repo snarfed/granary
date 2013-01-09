@@ -90,7 +90,6 @@ class Handler(webapp2.RequestHandler):
     # handle default path elements
     args = [None if a in defaults else a
             for a, defaults in zip(args, PATH_DEFAULTS)]
-    user_id = args[0] if args else None
     paging_params = self.get_paging_params()
 
     # extract format
@@ -99,9 +98,36 @@ class Handler(webapp2.RequestHandler):
       raise exc.HTTPBadRequest('Invalid format: %s, expected json, atom, xml' %
                                format)
 
-    # get activities and build response
-    total_results, activities = source.get_activities(*args, **paging_params)
+    # strip the access token from the request URL before including in response
+    params = dict(self.request.GET.items())
+    if 'access_token' in params:
+      del params['access_token']
+    request_url = '%s?%s' % (self.request.path_url, urllib.urlencode(params))
 
+    # fetch activities and write response
+    self.response.out.write(self.render(source, args, paging_params, format,
+                                        request_url))
+
+    # set headers
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Content-Type'] = (
+      'application/json' if format == 'json' else 'text/xml')
+
+  def render(self, source, args, paging_params, format,
+             request_url):
+    """Fetches a set of activities and renders them.
+
+    Args:
+      source: the Source object used to fetch activities
+      args: list of positional params passed to get_activities()
+      paging_params: dict with 'start_index' and 'count' keys mapped to integers
+      format: 'json', 'atom', or 'xml'
+      request_url: string, included in Atom responses
+
+    Returns:
+      string response body of rendered activities
+    """
+    total_results, activities = source.get_activities(*args, **paging_params)
     response = {'startIndex': paging_params['start_index'],
                 'itemsPerPage': len(activities),
                 'totalResults': total_results,
@@ -116,29 +142,20 @@ class Handler(webapp2.RequestHandler):
                 }
 
     if format == 'atom':
-      # strip the access token from the request URL before returning
-      params = dict(self.request.GET.items())
-      if 'access_token' in params:
-        del params['access_token']
-      request_url = '%s?%s' % (self.request.path_url, urllib.urlencode(params))
-
+      user_id = args[0] if args else None
       response.update({
           'user': source.get_actor(user_id),
           'request_url': request_url,
           })
 
     # encode and write response
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'json':
-      self.response.headers['Content-Type'] = 'application/json'
-      self.response.out.write(json.dumps(response, indent=2))
+      return json.dumps(response, indent=2)
+    elif format == 'xml':
+      return XML_TEMPLATE % util.to_xml(response)
     else:
-      self.response.headers['Content-Type'] = 'text/xml'
-      if format == 'xml':
-        self.response.out.write(XML_TEMPLATE % util.to_xml(response))
-      else:
-        assert format == 'atom'
-        self.response.out.write(template.render(ATOM_TEMPLATE_FILE, response))
+      assert format == 'atom'
+      return template.render(ATOM_TEMPLATE_FILE, response)
 
   def get_paging_params(self):
     """Extracts, normalizes and returns the startIndex and count query params.

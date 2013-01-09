@@ -10,11 +10,15 @@ except ImportError:
   import simplejson as json
 
 import source
-from webutil import testutil
 import twitter
+from webutil import testutil
+from webutil import util
 
 
 # test data
+def tag_uri(name):
+  return util.tag_uri('twitter.com', name)
+
 USER = {
   'created_at': 'Sat May 01 21:42:43 +0000 2010',
   'description': 'my description',
@@ -28,7 +32,7 @@ ACTOR = {
   'image': {
     'url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
     },
-  'id': 'tag:twitter.com,2012:snarfed_org',
+  'id': tag_uri('snarfed_org'),
   'published': '2010-05-01T21:42:43',
   'url': 'http://twitter.com/snarfed_org',
   'location': {'displayName': 'San Francisco'},
@@ -85,7 +89,7 @@ OBJECT = {
   'objectType': 'note',
   'author': ACTOR,
   'content': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
-  'id': 'tag:twitter.com,2012:172417043893731329',
+  'id': tag_uri('172417043893731329'),
   'published': '2012-02-22T20:26:41',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'image': {'url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
@@ -96,14 +100,14 @@ OBJECT = {
     },
   'tags': [{
       'objectType': 'person',
-      'id': 'tag:twitter.com,2012:foo',
+      'id': tag_uri('foo'),
       'url': 'http://twitter.com/foo',
       'displayName': 'Twitter',
       'startIndex': 0,
       'length': 8,
       }, {
       'objectType': 'person',
-      'id': 'tag:twitter.com,2012:foo',  # same id as above, shouldn't de-dupe
+      'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
       'url': 'http://twitter.com/foo',
       'displayName': 'Picture.ly',
       'startIndex': 15,
@@ -123,7 +127,7 @@ OBJECT = {
 ACTIVITY = {
   'verb': 'post',
   'published': '2012-02-22T20:26:41',
-  'id': 'tag:twitter.com,2012:172417043893731329',
+  'id': tag_uri('172417043893731329'),
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
@@ -132,7 +136,7 @@ ACTIVITY = {
     'inReplyTo' : {
       'objectType' : 'note',
       'url' : 'http://twitter.com/other_user/status/789',
-      'id' : 'tag:twitter.com,2012:789',
+      'id' : tag_uri('789'),
       }
     },
   }
@@ -172,7 +176,7 @@ ATOM = """\
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
-  <id>tag:twitter.com,2012:172417043893731329</id>
+  <id>""" + tag_uri('172417043893731329') + """</id>
   <title>@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
   <content type="text">@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</content>
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
@@ -194,7 +198,7 @@ ATOM = """\
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
   
-    <thr:in-reply-to ref="tag:twitter.com,2012:789"
+    <thr:in-reply-to ref=\"""" + tag_uri('789') + """\"
                      href="http://twitter.com/other_user/status/789"
                      type="text/html" />
   
