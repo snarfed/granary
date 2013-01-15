@@ -8,7 +8,7 @@
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
 <id>{{ request_url|safe }}</id>
-<title>User feed for {{ user.displayName }}</title>
+<title>{{ title }}</title>
 <subtitle>{{ user.description }}</subtitle>
 <logo>{{ user.image.url|safe }}</logo>
 <updated>{{ user.updated }}</updated>

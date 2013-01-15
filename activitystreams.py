@@ -90,7 +90,6 @@ class Handler(webapp2.RequestHandler):
     # handle default path elements
     args = [None if a in defaults else a
             for a, defaults in zip(args, PATH_DEFAULTS)]
-    user_id = args[0] if args else None
     paging_params = self.get_paging_params()
 
     # extract format
@@ -120,11 +119,13 @@ class Handler(webapp2.RequestHandler):
       params = dict(self.request.GET.items())
       if 'access_token' in params:
         del params['access_token']
-      request_url = '%s?%s' % (self.request.path_url, urllib.urlencode(params))
+      response['request_url'] = '%s?%s' % (self.request.path_url,
+                                           urllib.urlencode(params))
 
+      user = source.get_actor(args[0] if args else None)  # None is current user
       response.update({
-          'user': source.get_actor(user_id),
-          'request_url': request_url,
+          'user': user,
+          'title': 'User feed for ' + user.get('displayName', 'unknown'),
           })
 
     # encode and write response
