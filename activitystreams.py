@@ -126,6 +126,7 @@ class Handler(webapp2.RequestHandler):
       response.update({
           'user': user,
           'title': 'User feed for ' + user.get('displayName', 'unknown'),
+          'updated': user.get('updated', '')
           })
 
     # encode and write response

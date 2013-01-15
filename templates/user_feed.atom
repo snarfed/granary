@@ -11,7 +11,7 @@
 <title>{{ title }}</title>
 <subtitle>{{ user.description }}</subtitle>
 <logo>{{ user.image.url|safe }}</logo>
-<updated>{{ user.updated }}</updated>
+<updated>{{ updated }}</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>{{ user.url|safe }}</uri>
