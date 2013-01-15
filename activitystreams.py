@@ -122,11 +122,11 @@ class Handler(webapp2.RequestHandler):
       response['request_url'] = '%s?%s' % (self.request.path_url,
                                            urllib.urlencode(params))
 
-      user = source.get_actor(args[0] if args else None)  # None is current user
+      actor = source.get_actor(args[0] if args else None)  # None is current user
       response.update({
-          'user': user,
-          'title': 'User feed for ' + user.get('displayName', 'unknown'),
-          'updated': user.get('updated', '')
+          'actor': actor,
+          'title': 'User feed for ' + actor.get('displayName', 'unknown'),
+          'updated': actor.get('updated', '')
           })
 
     # encode and write response

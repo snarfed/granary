@@ -288,6 +288,14 @@ ATOM = """\
 <!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 
 <entry>
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://facebook.com/212038</uri>
+ <name>Ryan Barrett</name>
+ <link rel="alternate" type="text/html" href="http://facebook.com/212038" />
+ <link rel="avatar" href="http://graph.facebook.com/212038/picture?type=large" />
+</author>
+
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>

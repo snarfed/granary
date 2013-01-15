@@ -1,0 +1,7 @@
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>{{ actor.url|safe }}</uri>
+ <name>{{ actor.displayName }}</name>
+ <link rel="alternate" type="text/html" href="{{ actor.url|safe }}" />
+ <link rel="avatar" href="{{ actor.image.url|safe }}" />
+</author>
