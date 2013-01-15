@@ -22,7 +22,9 @@
 <!-- <link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 {% for activity in items %}
 <entry>
-{% include "author.atom" with actor=activity.actor %}
+{% with activity.actor as actor %}
+{% include "author.atom" %}
+{% endwith %}
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/{{ activity.object.objectType }}
   </activity:object-type>

@@ -173,6 +173,7 @@ ATOM = """\
 <!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 
 <entry>
+
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://twitter.com/snarfed_org</uri>
@@ -180,6 +181,7 @@ ATOM = """\
  <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org" />
  <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 </author>
+
 
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/note
