@@ -30,7 +30,26 @@
   </activity:object-type>
   <id>{{ activity.id }}</id>
   <title>{{ activity.object.content }}</title>
-  <content type="text">{{ activity.object.content }}</content>
+
+  <content type="text/html">
+{% if activity.object.actor %}
+  <div>
+  <p>{{ activity.annotation }}</p>
+  <img src="{{ activity.object.actor.image.url }}" />
+  <a href="{{ activity.object.actor.url }}">{{ activity.object.actor.displayName }}</a>
+  originally shared this post:
+  </div>
+{% endif %}
+{{ activity.object.content|safe }}
+{% for att in activity.object.attachments %}
+<p><a href='{{ att.url }}'>
+  <img style='float: left' src='{{ att.image.url }}' />
+  {{ att.displayName }}
+</a></p>
+<p>{{ att.content }}</p>
+{% endfor %}
+  </content>
+
   <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />
   <link rel="ostatus:conversation" href="{{ activity.url|safe }}" />
   {% for tag in activity.object.tags %}

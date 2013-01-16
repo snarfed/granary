@@ -155,16 +155,21 @@ class Facebook(source.Source):
     if not id:
       return {}
 
+    post_type = post.get('type')
+    status_type = post.get('status_type')
+    url = 'http://facebook.com/' + id.replace('_', '/posts/')
+    picture = post.get('picture')
+
     object = {
       'id': util.tag_uri(self.DOMAIN, str(id)),
-      'objectType': OBJECT_TYPES.get(post.get('type'), 'note'),
+      'objectType': OBJECT_TYPES.get(post_type, 'note'),
       'published': post.get('created_time'),
       'updated': post.get('updated_time'),
       'author': self.user_to_actor(post.get('from')),
       'content': post.get('message'),
       # FB post ids are of the form USERID_POSTID
-      'url': 'http://facebook.com/' + id.replace('_', '/posts/'),
-      'image': {'url': post.get('picture')},
+      'url': url,
+      'image': {'url': picture},
       }
 
     # tags
@@ -180,16 +185,28 @@ class Facebook(source.Source):
           'length': t.get('length'),
           } for t in tags]
 
-    # link
+    # is there an attachment? prefer to represent it as a picture (ie image
+    # object), but if not, fall back to a link.
     link = post.get('link')
-    if link:
-      object.setdefault('attachments', []).append({
-          'objectType': 'article',
-          'url': link,
-          'displayName': post.get('name'),
-          'summary': post.get('caption'),
-          'content': post.get('description'),
-        })
+    att = {
+        'url': link if link else url,
+        'image': {'url': picture},
+        'displayName': post.get('name'),
+        'summary': post.get('caption'),
+        'content': post.get('description'),
+        }
+
+    if (picture and picture.endswith('_s.jpg') and
+        (post_type == 'photo' or status_type == 'added_photos')):
+      # a picture the user posted. get a larger size.
+      att.update({
+          'objectType': 'image',
+          'image': {'url': picture[:-6] + '_o.jpg'},
+          })
+      object['attachments'] = [att]
+    elif link:
+      att['objectType'] = 'article'
+      object['attachments'] = [att]
 
     # location
     place = post.get('place')
@@ -296,5 +313,3 @@ class Facebook(source.Source):
                            'displayName': location.get('name')}
 
     return util.trim_nulls(actor)
-
-

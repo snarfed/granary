@@ -84,7 +84,7 @@ POST = {
       {'name': 'Friend 3', 'id': '456'},
       ]},
   'story': 'Ryan Barrett added a new photo.',
-  'picture': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg',
+  'picture': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg',
   'message': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.',
   'message_tags': {
     '84': [{
@@ -186,13 +186,14 @@ POST_OBJ = {
   'published': '2012-03-04T18:20:37+0000',
   'updated': '2012-03-04T19:08:16+0000',
   'url': 'http://facebook.com/212038/posts/10100176064482163',
-  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/hphotos-ak-ash4/420582_10100176064452223_212038_41571100_37729316_s.jpg'},
+  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
   'attachments': [{
-      'objectType': 'article',
+      'objectType': 'image',
       'url': 'http://my.link/',
       'displayName': 'my link name',
       'summary': 'my link caption',
       'content': 'my link description',
+      'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'}
       }],
   'location': {
     'displayName': 'Lake Merced',
