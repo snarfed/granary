@@ -188,7 +188,13 @@ ATOM = """\
   </activity:object-type>
   <id>""" + tag_uri('172417043893731329') + """</id>
   <title>@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
-  <content type="text">@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</content>
+
+  <content type="text/html">
+
+@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM
+
+  </content>
+
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   

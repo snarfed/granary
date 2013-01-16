@@ -304,7 +304,19 @@ ATOM = """\
   </activity:object-type>
   <id>""" + tag_uri('212038_10100176064482163') + """</id>
   <title>Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</title>
-  <content type="text">Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</content>
+
+  <content type="text/html">
+
+Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.
+
+<p><a href='http://my.link/'>
+  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' />
+  my link name
+</a></p>
+<p>my link description</p>
+
+  </content>
+
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
   <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
   
