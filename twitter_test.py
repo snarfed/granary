@@ -123,6 +123,10 @@ OBJECT = {
       'startIndex': 43,
       'length': 19,
       }],
+  'attachments': [{
+      'objectType': 'image',
+      'image': {'url': u'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
+      }],
   }
 ACTIVITY = {
   'verb': 'post',
@@ -192,6 +196,12 @@ ATOM = """\
   <content type="text/html">
 
 @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM
+
+<p><a href=''>
+  <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' />
+  
+</a></p>
+<p></p>
 
   </content>
 

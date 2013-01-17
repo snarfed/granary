@@ -178,6 +178,7 @@ class Twitter(source.Source):
       # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
       # url entities below to replace them with the real URLs, and then linkify.
       'content': tweet.get('text'),
+      'attachments': [],
       }
 
     user = tweet.get('user')
@@ -196,9 +197,13 @@ class Twitter(source.Source):
     media_url = entities.get('media', [{}])[0].get('media_url')
     if media_url:
       object['image'] = {'url': media_url}
+      object['attachments'].append({
+          'objectType': 'image',
+          'image': {'url': media_url},
+          })
 
     # tags
-    object['tags'] =[
+    object['tags'] = [
       {'objectType': 'person',
        'id': util.tag_uri(self.DOMAIN, t.get('screen_name')),
        'url': self.user_url(t.get('screen_name')),
@@ -211,7 +216,8 @@ class Twitter(source.Source):
        'indices': t.get('indices'),
        } for t in entities.get('hashtags', [])
       ] + [
-      # TODO: should links be attachments instead of tags?
+      # TODO: links are both tags and attachments right now. should they be one
+      # or the other?
       # file:///home/ryanb/docs/activitystreams_schema_spec_1.0.html#tags-property
       # file:///home/ryanb/docs/activitystreams_json_spec_1.0.html#object
       {'objectType': 'article',
@@ -247,7 +253,7 @@ class Twitter(source.Source):
                                        tuple(coords))
 
     return util.trim_nulls(object)
-      
+
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.
