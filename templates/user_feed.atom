@@ -29,7 +29,7 @@
     http://activitystrea.ms/schema/1.0/{{ activity.object.objectType }}
   </activity:object-type>
   <id>{{ activity.id }}</id>
-  <title>{{ activity.object.content }}</title>
+  <title>{{ activity.title }}</title>
 
   <content type="text/html">
 {% if activity.object.actor %}
