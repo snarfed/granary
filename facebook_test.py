@@ -304,7 +304,7 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
   <id>""" + tag_uri('212038_10100176064482163') + """</id>
-  <title>Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</title>
+  <title>Ryan Barrett: Checking another side project off my list. portablecontacts-...</title>
 
   <content type="text/html">
 
