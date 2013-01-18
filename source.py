@@ -15,6 +15,9 @@ ALL = '@all'
 FRIENDS = '@friends'
 APP = '@app'
 
+# use this many chars from the beginning of the content in the title field.
+TITLE_LENGTH = 60
+
 
 class Source(object):
   """Abstract base class for a source (e.g. Facebook, Twitter).
@@ -70,6 +73,22 @@ class Source(object):
       activities: list of activity dicts to be JSON-encoded
     """
     raise NotImplementedError()
+
+  def postprocess_activity(self, activity):
+    """Does source-independent post-processing of an activity, in place.
+
+    Right now just populates the title field.
+
+    Args:
+      activity: activity dict
+    """
+    content = activity['object'].get('content')
+    actor = activity.get('actor')
+    if content:
+      activity['title'] = '%s%s%s' % (
+        actor['displayName'] + ': ' if actor else '',
+        content[:TITLE_LENGTH],
+        '...' if len(content) > TITLE_LENGTH else '')
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name.

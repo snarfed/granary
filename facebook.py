@@ -138,6 +138,7 @@ class Facebook(source.Source):
         'id': util.tag_uri(self.DOMAIN, application.get('id')),
         }
 
+    self.postprocess_activity(activity)
     return util.trim_nulls(activity)
 
   def post_to_object(self, post):

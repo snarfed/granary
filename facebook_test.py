@@ -252,6 +252,7 @@ ACTIVITY = {
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
+  'title': 'Ryan Barrett: Checking another side project off my list. portablecontacts-...',
   'generator': {
     'displayName': 'Facebook for Android',
     'id': tag_uri('350685531728'),
@@ -386,6 +387,7 @@ class FacebookTest(testutil.HandlerTest):
                      'id': tag_uri('1_2'),
                      'objectType': 'note',
                      'url': 'http://facebook.com/1/posts/2'},
+          'title': 'foo',
           'url': 'http://facebook.com/1/posts/2',
           'verb': 'post'},
          {'id': tag_uri('3_4'),
@@ -393,6 +395,7 @@ class FacebookTest(testutil.HandlerTest):
                      'id': tag_uri('3_4'),
                      'objectType': 'note',
                      'url': 'http://facebook.com/3/posts/4'},
+          'title': 'bar',
           'url': 'http://facebook.com/3/posts/4',
           'verb': 'post'},
          ]),

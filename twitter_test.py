@@ -4,6 +4,7 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import copy
 try:
   import json
 except ImportError:
@@ -135,6 +136,7 @@ ACTIVITY = {
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
+  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2Eg...',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : {
@@ -271,10 +273,11 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.get_activities())
 
   def test_get_activities_start_index_count(self):
-    tweet2 = dict(TWEET)
+    tweet2 = copy.deepcopy(TWEET)
     tweet2['user']['name'] = 'foo'
-    activity2 = dict(ACTIVITY)
+    activity2 = copy.deepcopy(ACTIVITY)
     activity2['actor']['displayName'] = 'foo'
+    activity2['title'] = activity2['title'].replace('Ryan Barrett: ', 'foo: ')
 
     self.expect_urlfetch(
       'https://api.twitter.com/1/statuses/home_timeline.json?'

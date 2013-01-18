@@ -155,6 +155,7 @@ class Twitter(source.Source):
       url, name = parsed.groups()
       activity['generator'] = {'displayName': name, 'url': url}
 
+    self.postprocess_activity(activity)
     return util.trim_nulls(activity)
 
   def tweet_to_object(self, tweet):
