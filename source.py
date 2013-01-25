@@ -2,7 +2,7 @@
 """Source base class.
 
 Based on the OpenSocial ActivityStreams REST API:
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service 
+http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -16,7 +16,7 @@ FRIENDS = '@friends'
 APP = '@app'
 
 # use this many chars from the beginning of the content in the title field.
-TITLE_LENGTH = 60
+TITLE_LENGTH = 140
 
 
 class Source(object):
