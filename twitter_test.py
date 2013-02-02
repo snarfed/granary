@@ -136,7 +136,7 @@ ACTIVITY = {
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
-  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2Eg...',
+  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : {
@@ -161,7 +161,7 @@ ATOM = """\
 <title>User feed for Ryan Barrett</title>
 <subtitle>my description</subtitle>
 <logo>http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg</logo>
-<updated></updated>
+<updated>2012-02-22T20:26:41</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://twitter.com/snarfed_org</uri>
@@ -193,7 +193,7 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>""" + tag_uri('172417043893731329') + """</id>
-  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2Eg...</title>
+  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
 
   <content type="text/html">
 

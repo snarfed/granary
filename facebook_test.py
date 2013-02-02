@@ -252,7 +252,7 @@ ACTIVITY = {
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
-  'title': 'Ryan Barrett: Checking another side project off my list. portablecontacts-...',
+  'title': 'Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.',
   'generator': {
     'displayName': 'Facebook for Android',
     'id': tag_uri('350685531728'),
@@ -272,7 +272,7 @@ ATOM = """\
 <title>User feed for Ryan Barrett</title>
 <subtitle>something about me</subtitle>
 <logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
-<updated>2012-01-06T02:11:04+0000</updated>
+<updated>2012-03-04T18:20:37+0000</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://www.facebook.com/snarfed.org</uri>
@@ -304,7 +304,7 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
   <id>""" + tag_uri('212038_10100176064482163') + """</id>
-  <title>Ryan Barrett: Checking another side project off my list. portablecontacts-...</title>
+  <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</title>
 
   <content type="text/html">
 
