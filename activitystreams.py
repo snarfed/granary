@@ -170,7 +170,7 @@ class Handler(webapp2.RequestHandler):
                                (param, val))
 
 
-def render_html(obj, uploaded_image=None):
+def render_html(obj):
   """Adds HTML links to content based on tags and returns the result.
 
   Also adds links to embedded URLs.
@@ -181,7 +181,6 @@ def render_html(obj, uploaded_image=None):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
-    uploaded_image: optional wp.uploadFile response dict with 'file' and 'url' items
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
@@ -257,30 +256,21 @@ def render_html(obj, uploaded_image=None):
 
   # photo
 
-  # # TODO: put this file uploading code somewhere
-  # if (ptype == 'photo' or stype == 'added_photos') and image.endswith('_s.jpg'):
-  #   orig_image = image[:-6] + '_o.jpg'
-  #   logging.info('Downloading %s', orig_image)
-  #   resp = urllib2.urlopen(orig_image)
-  #   filename = os.path.basename(urlparse.urlparse(orig_image).path)
-  #   mime_type = resp.info().gettype()
-
-  #   logging.info('Uploading as %s', mime_type)
-  #   resp = xmlrpc.upload_file(filename, mime_type, resp.read())
-
   # TODO: ...?
   # Uploaded photos are scaled to this width in pixels. They're also linked to
   # the full size image.
   SCALED_IMG_WIDTH = 500
 
   # add image
-  if uploaded_image:
+  # TODO: multiple images (in attachments?)
+  image_url = obj.get('image', {}).get('url')
+  if image_url:
     content += ("""
 <p><a class="shutter" href="%(url)s">
   <img class="alignnone shadow" title="%(file)s" src="%(url)s" width='""" +
       str(SCALED_IMG_WIDTH) + """' />
 </a></p>
-""") % uploaded_image
+""") % image_url
 
   # "via Facebook"
   # TODO: parameterize source name
