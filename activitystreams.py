@@ -268,6 +268,11 @@ def render_html(obj, uploaded_image=None):
   #   logging.info('Uploading as %s', mime_type)
   #   resp = xmlrpc.upload_file(filename, mime_type, resp.read())
 
+  # TODO: ...?
+  # Uploaded photos are scaled to this width in pixels. They're also linked to
+  # the full size image.
+  SCALED_IMG_WIDTH = 500
+
   # add image
   if uploaded_image:
     content += ("""
