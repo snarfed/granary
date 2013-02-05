@@ -171,13 +171,15 @@ class Handler(webapp2.RequestHandler):
 
 
 def render_html(obj):
-  """Adds HTML links to content based on tags and returns the result.
+  """Renders an ActivityStreams object to HTML and returns the result.
 
-  Also adds links to embedded URLs.
+  Features:
+  - linkifies embedded tags and adds links for other tags
+  - linkifies embedded URLs
+  - adds links, summaries, and thumbnails for attachments and checkins
+  - adds a "via SOURCE" postscript 
 
   TODO: convert newlines to <br> or <p>
-
-  For example:
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
@@ -256,7 +258,7 @@ def render_html(obj):
 
   # photo
 
-  # TODO: ...?
+  # TODO: expose as option
   # Uploaded photos are scaled to this width in pixels. They're also linked to
   # the full size image.
   SCALED_IMG_WIDTH = 500
@@ -265,12 +267,11 @@ def render_html(obj):
   # TODO: multiple images (in attachments?)
   image_url = obj.get('image', {}).get('url')
   if image_url:
-    content += ("""
-<p><a class="shutter" href="%(url)s">
-  <img class="alignnone shadow" title="%(file)s" src="%(url)s" width='""" +
-      str(SCALED_IMG_WIDTH) + """' />
+    content += """
+<p><a class="shutter" href="%s">
+  <img class="alignnone shadow" src="%s" width="%s" />
 </a></p>
-""") % image_url
+""" % (image_url, image_url, str(SCALED_IMG_WIDTH))
 
   # "via Facebook"
   # TODO: parameterize source name
