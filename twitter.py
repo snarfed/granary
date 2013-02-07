@@ -58,8 +58,11 @@ class Twitter(source.Source):
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
   AUTH_URL = '/start_auth'
 
-  def get_actor(self, screen_name=None):
+  def get_actor(self, screen_name=None, **kwargs):
     """Returns a user as a JSON ActivityStreams actor dict.
+
+    Keyword args (e.g. access_token_key and access_token_secret) are passed to
+    urlfetch.
 
     Args:
       screen_name: string username. Defaults to the current user.
@@ -68,7 +71,7 @@ class Twitter(source.Source):
       url = API_CURRENT_USER_URL
     else:
       url = API_USER_URL % screen_name
-    return self.user_to_actor(json.loads(self.urlfetch(url)))
+    return self.user_to_actor(json.loads(self.urlfetch(url, **kwargs)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
@@ -91,14 +94,16 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlfetch(self, url, **kwargs):
+  def urlfetch(self, url, access_token_key=None, access_token_secret=None, **kwargs):
     """Wraps Source.urlfetch(), signing with OAuth if there's an access token.
 
     TODO: unit test this
     """
-    request = self.handler.request
-    access_token_key = request.get('access_token_key')
-    access_token_secret = request.get('access_token_secret')
+    if access_token_key is None:
+      access_token_key = self.handler.request.get('access_token_key')
+    if access_token_secret is None:
+      access_token_secret = self.handler.request.get('access_token_secret')
+
     if access_token_key and access_token_secret:
       logging.info('Found access token key %s and secret %s',
                    access_token_key, access_token_secret)
