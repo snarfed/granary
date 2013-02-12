@@ -177,7 +177,7 @@ def render_html(obj):
   - linkifies embedded tags and adds links for other tags
   - linkifies embedded URLs
   - adds links, summaries, and thumbnails for attachments and checkins
-  - adds a "via SOURCE" postscript 
+  - adds a "via SOURCE" postscript
 
   TODO: convert newlines to <br> or <p>
 
@@ -227,6 +227,7 @@ def render_html(obj):
     content = '<p>' + util.linkify(content) + '</p>\n'
 
   # attachments, e.g. links (aka articles)
+  # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   # TODO: non-article attachments
   for link in obj.get('attachments', []) + tags.pop('article', []):
     if link.get('objectType') == 'article':
