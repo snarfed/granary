@@ -58,8 +58,11 @@ class Twitter(source.Source):
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
   AUTH_URL = '/start_auth'
 
-  def get_actor(self, screen_name=None):
+  def get_actor(self, screen_name=None, **kwargs):
     """Returns a user as a JSON ActivityStreams actor dict.
+
+    Keyword args (e.g. access_token_key and access_token_secret) are passed to
+    urlfetch.
 
     Args:
       screen_name: string username. Defaults to the current user.
@@ -68,7 +71,7 @@ class Twitter(source.Source):
       url = API_CURRENT_USER_URL
     else:
       url = API_USER_URL % screen_name
-    return self.user_to_actor(json.loads(self.urlfetch(url)))
+    return self.user_to_actor(json.loads(self.urlfetch(url, **kwargs)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
@@ -91,14 +94,16 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlfetch(self, url, **kwargs):
+  def urlfetch(self, url, access_token_key=None, access_token_secret=None, **kwargs):
     """Wraps Source.urlfetch(), signing with OAuth if there's an access token.
 
     TODO: unit test this
     """
-    request = self.handler.request
-    access_token_key = request.get('access_token_key')
-    access_token_secret = request.get('access_token_secret')
+    if access_token_key is None:
+      access_token_key = self.handler.request.get('access_token_key')
+    if access_token_secret is None:
+      access_token_secret = self.handler.request.get('access_token_secret')
+
     if access_token_key and access_token_secret:
       logging.info('Found access token key %s and secret %s',
                    access_token_key, access_token_secret)
@@ -155,6 +160,7 @@ class Twitter(source.Source):
       url, name = parsed.groups()
       activity['generator'] = {'displayName': name, 'url': url}
 
+    self.postprocess_activity(activity)
     return util.trim_nulls(activity)
 
   def tweet_to_object(self, tweet):
@@ -175,7 +181,10 @@ class Twitter(source.Source):
     object = {
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
-      'content': util.linkify(tweet.get('text')),
+      # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
+      # url entities below to replace them with the real URLs, and then linkify.
+      'content': tweet.get('text'),
+      'attachments': [],
       }
 
     user = tweet.get('user')
@@ -194,17 +203,45 @@ class Twitter(source.Source):
     media_url = entities.get('media', [{}])[0].get('media_url')
     if media_url:
       object['image'] = {'url': media_url}
+      object['attachments'].append({
+          'objectType': 'image',
+          'image': {'url': media_url},
+          })
 
-    mentions = entities.get('user_mentions')
-    if mentions:
-      object['tags'] = [{
-          'objectType': 'person',
-          'id': util.tag_uri(self.DOMAIN, m.get('screen_name')),
-          'url': self.user_url(m.get('screen_name')),
-          'screen_name': m.get('screen_name'),
-          'displayName': m.get('name'),
-          } for m in mentions]
+    # tags
+    object['tags'] = [
+      {'objectType': 'person',
+       'id': util.tag_uri(self.DOMAIN, t.get('screen_name')),
+       'url': self.user_url(t.get('screen_name')),
+       'displayName': t.get('name'),
+       'indices': t.get('indices')
+       } for t in entities.get('user_mentions', [])
+      ] + [
+      {'objectType': 'hashtag',
+       'url': 'https://twitter.com/search?q=%23' + t.get('text'),
+       'indices': t.get('indices'),
+       } for t in entities.get('hashtags', [])
+      ] + [
+      # TODO: links are both tags and attachments right now. should they be one
+      # or the other?
+      # file:///home/ryanb/docs/activitystreams_schema_spec_1.0.html#tags-property
+      # file:///home/ryanb/docs/activitystreams_json_spec_1.0.html#object
+      {'objectType': 'article',
+       'url': t.get('expanded_url'),
+       # TODO: elide full URL?
+       'indices': t.get('indices'),
+       } for t in entities.get('urls', [])
+      ]
+    for t in object['tags']:
+      indices = t.get('indices')
+      if indices:
+        t.update({
+            'startIndex': indices[0],
+            'length': indices[1] - indices[0],
+            })
+        del t['indices']
 
+    # location
     place = tweet.get('place')
     if place:
       object['location'] = {
@@ -214,13 +251,15 @@ class Twitter(source.Source):
 
       # place['url'] is a JSON API url, not useful for end users. get the
       # lat/lon from geo instead.
-      coords = tweet.get('geo', {}).get('coordinates')
-      if coords:
-        object['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
-                                     tuple(coords))
+      geo = tweet.get('geo')
+      if geo:
+        coords = geo.get('coordinates')
+        if coords:
+          object['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
+                                       tuple(coords))
 
     return util.trim_nulls(object)
-      
+
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.

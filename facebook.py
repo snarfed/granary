@@ -5,8 +5,8 @@
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import cgi
-import collections
 import datetime
+import itertools
 try:
   import json
 except ImportError:
@@ -29,6 +29,19 @@ API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
 # parity."
 # https://developers.facebook.com/docs/reference/api/#searching
 API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d&limit=%d'
+
+# maps facebook graph api object types to ActivityStreams objectType.
+OBJECT_TYPES = {
+  'application': 'application',
+  'event': 'event',
+  'group': 'group',
+  'link': 'article',
+  'location': 'place',
+  'page': 'page',
+  'photo': 'photo',
+  'post': 'note',
+  'user': 'person',
+  }
 
 
 class Facebook(source.Source):
@@ -125,22 +138,8 @@ class Facebook(source.Source):
         'id': util.tag_uri(self.DOMAIN, application.get('id')),
         }
 
+    self.postprocess_activity(activity)
     return util.trim_nulls(activity)
-
-  # maps facebook graph api object types to ActivityStreams objectType.
-  OBJECT_TYPES = {
-    'application': 'application',
-    'checkin': 'note',
-    'event': 'event',
-    'group': 'group',
-    'link': 'note',
-    'location': 'place',
-    'page': 'page',
-    'photo': 'photo',
-    'post': 'note',
-    'status': 'note',
-    'user': 'person',
-    }
 
   def post_to_object(self, post):
     """Converts a post to an object.
@@ -157,58 +156,58 @@ class Facebook(source.Source):
     if not id:
       return {}
 
+    post_type = post.get('type')
+    status_type = post.get('status_type')
+    url = 'http://facebook.com/' + id.replace('_', '/posts/')
+    picture = post.get('picture')
+
     object = {
       'id': util.tag_uri(self.DOMAIN, str(id)),
-      'objectType': self.OBJECT_TYPES.get(post.get('type'), 'note'),
+      'objectType': OBJECT_TYPES.get(post_type, 'note'),
       'published': post.get('created_time'),
       'updated': post.get('updated_time'),
       'author': self.user_to_actor(post.get('from')),
+      'content': post.get('message'),
       # FB post ids are of the form USERID_POSTID
-      'url': 'http://facebook.com/' + id.replace('_', '/posts/'),
-      'image': {'url': post.get('picture')},
+      'url': url,
+      'image': {'url': picture},
       }
 
-    # linkify mention tags in content. note that the message_tags field is a
-    # dict in posts and a list in comments. see facebook_test.py for examples.
-    content = post.get('message', '')
-    mtags = post.get('message_tags', [])
-    if isinstance(mtags, dict):
-      mtags = sum(mtags.values(), [])  # sum joins the singleton lists together
-    mtags.sort(key=lambda t: t['offset'])
+    # tags
+    tags = itertools.chain(post.get('to', {}).get('data', []),
+                           post.get('with_tags', {}).get('data', []),
+                           *post.get('message_tags', {}).values())
+    object['tags'] = [{
+          'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
+          'id': util.tag_uri(self.DOMAIN, t.get('id')),
+          'url': 'http://facebook.com/%s' % t.get('id'),
+          'displayName': t.get('name'),
+          'startIndex': t.get('offset'),
+          'length': t.get('length'),
+          } for t in tags]
 
-    if mtags:
-      last_end = 0
-      orig = content
-      content = ''
-      for tag in mtags:
-        start = tag['offset']
-        end = start + tag['length']
+    # is there an attachment? prefer to represent it as a picture (ie image
+    # object), but if not, fall back to a link.
+    link = post.get('link')
+    att = {
+        'url': link if link else url,
+        'image': {'url': picture},
+        'displayName': post.get('name'),
+        'summary': post.get('caption'),
+        'content': post.get('description'),
+        }
 
-        content += orig[last_end:start]
-        content += '<a class="fb-mention" href="http://facebook.com/profile.php?id=%s">%s</a>' % (
-          tag['id'], orig[start:end])
-        last_end = end
-
-      content += orig[last_end:]
-
-    # linkify embedded links. ignore the "mention" tags that we added ourselves.
-    object['content'] = util.linkify(
-      content, ignore_prefix='http://facebook.com/profile.php?id=')
-
-    # to and with tags. use a dict to uniquify by id.
-    tags = {}
-    for field in 'to', 'with_tags':
-      for tag in post.get(field, {}).get('data', []):
-        id = tag.get('id')
-        if id:
-          tags[id] = {
-            'objectType': 'person',
-            'id': util.tag_uri(self.DOMAIN, id),
-            'url': 'http://facebook.com/%s' % id,
-            'displayName': tag.get('name'),
-            }
-
-    object['tags'] = sorted(tags.values(), key=lambda t: t['id'])
+    if (picture and picture.endswith('_s.jpg') and
+        (post_type == 'photo' or status_type == 'added_photos')):
+      # a picture the user posted. get a larger size.
+      att.update({
+          'objectType': 'image',
+          'image': {'url': picture[:-6] + '_o.jpg'},
+          })
+      object['attachments'] = [att]
+    elif link:
+      att['objectType'] = 'article'
+      object['attachments'] = [att]
 
     # location
     place = post.get('place')
@@ -254,6 +253,12 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
+    # the message_tags field is different in comment vs post. in post, it's a
+    # dict of lists, in comment it's just a list. so, convert it to post style
+    # here before running post_to_object().
+    comment = dict(comment)
+    comment['message_tags'] = {'1': comment.get('message_tags', [])}
+
     object = self.post_to_object(comment)
     if not object:
       return object
@@ -309,5 +314,3 @@ class Facebook(source.Source):
                            'displayName': location.get('name')}
 
     return util.trim_nulls(actor)
-
-

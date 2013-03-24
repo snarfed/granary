@@ -4,17 +4,22 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import copy
 try:
   import json
 except ImportError:
   import simplejson as json
 
 import source
-from webutil import testutil
 import twitter
+from webutil import testutil
+from webutil import util
 
 
 # test data
+def tag_uri(name):
+  return util.tag_uri('twitter.com', name)
+
 USER = {
   'created_at': 'Sat May 01 21:42:43 +0000 2010',
   'description': 'my description',
@@ -28,7 +33,7 @@ ACTOR = {
   'image': {
     'url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
     },
-  'id': 'tag:twitter.com,2012:snarfed_org',
+  'id': tag_uri('snarfed_org'),
   'published': '2010-05-01T21:42:43',
   'url': 'http://twitter.com/snarfed_org',
   'location': {'displayName': 'San Francisco'},
@@ -38,29 +43,45 @@ ACTOR = {
 TWEET = {
   'created_at': 'Wed Feb 22 20:26:41 +0000 2012',
   'id': 172417043893731329,
-  'place': {'full_name': 'Carcassonne, Aude',
-            'id': '31cb9e7ed29dbe52',
-            'name': 'Carcassonne',
-            'url': 'http://api.twitter.com/1/geo/id/31cb9e7ed29dbe52.json',
-            },
+  'place': {
+    'full_name': 'Carcassonne, Aude',
+    'id': '31cb9e7ed29dbe52',
+    'name': 'Carcassonne',
+    'url': 'http://api.twitter.com/1/geo/id/31cb9e7ed29dbe52.json',
+    },
   'geo':  {
     'type': 'Point',
-    'coordinates':  [
-      32.4004416,
-      -98.9852672,
-    ],
+    'coordinates':  [32.4004416, -98.9852672],
   },
-  'text': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! http://t.co/SuqMPgp3',
   'user': USER,
   'entities': {
-    'media': [{
-        'media_url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg',
-        }],
-    'user_mentions': [
-      {'name': 'Friend 1', 'screen_name': 'friend1'},
-      {'name': 'Friend 2', 'screen_name': 'friend2'},
-      ],
-    },
+    'media': [{'media_url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'}],
+    'urls': [{
+        'expanded_url': 'http://instagr.am/p/MuW67/',
+        'url': 'http://t.co/6J2EgYM',
+        'indices': [43, 62],
+        'display_url': 'instagr.am/p/MuW67/'
+      }],
+    'hashtags': [{
+        'text': 'tcdisrupt',
+        'indices': [32, 42]
+      }],
+    'user_mentions': [{
+        'name': 'Twitter',
+        'id_str': '783214',
+        'id': 783214,
+        'indices': [0, 8],
+        'screen_name': 'foo'
+      },
+      {
+        'name': 'Picture.ly',
+        'id_str': '334715534',
+        'id': 334715534,
+        'indices': [15, 28],
+        'screen_name': 'foo'
+      }],
+  },
+  'text': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
@@ -68,8 +89,8 @@ TWEET = {
 OBJECT = {
   'objectType': 'note',
   'author': ACTOR,
-  'content': 'portablecontacts-unofficial: PortableContacts for Facebook and Twitter! <a href="http://t.co/SuqMPgp3">http://t.co/SuqMPgp3</a>',
-  'id': 'tag:twitter.com,2012:172417043893731329',
+  'content': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'id': tag_uri('172417043893731329'),
   'published': '2012-02-22T20:26:41',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'image': {'url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
@@ -80,32 +101,48 @@ OBJECT = {
     },
   'tags': [{
       'objectType': 'person',
-      'id': 'tag:twitter.com,2012:friend1',
-      'url': 'http://twitter.com/friend1',
-      'screen_name': 'friend1',
-      'displayName': 'Friend 1',
-      },
-      {
+      'id': tag_uri('foo'),
+      'url': 'http://twitter.com/foo',
+      'displayName': 'Twitter',
+      'startIndex': 0,
+      'length': 8,
+      }, {
       'objectType': 'person',
-      'id': 'tag:twitter.com,2012:friend2',
-      'url': 'http://twitter.com/friend2',
-      'screen_name': 'friend2',
-      'displayName': 'Friend 2',
+      'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
+      'url': 'http://twitter.com/foo',
+      'displayName': 'Picture.ly',
+      'startIndex': 15,
+      'length': 13,
+      }, {
+      'objectType': 'hashtag',
+      'url': 'https://twitter.com/search?q=%23tcdisrupt',
+      'startIndex': 32,
+      'length': 10,
+      }, {
+      'objectType': 'article',
+      'url': 'http://instagr.am/p/MuW67/',
+      'startIndex': 43,
+      'length': 19,
+      }],
+  'attachments': [{
+      'objectType': 'image',
+      'image': {'url': u'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
       }],
   }
 ACTIVITY = {
   'verb': 'post',
   'published': '2012-02-22T20:26:41',
-  'id': 'tag:twitter.com,2012:172417043893731329',
+  'id': tag_uri('172417043893731329'),
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
+  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : {
       'objectType' : 'note',
       'url' : 'http://twitter.com/other_user/status/789',
-      'id' : 'tag:twitter.com,2012:789',
+      'id' : tag_uri('789'),
       }
     },
   }
@@ -124,7 +161,7 @@ ATOM = """\
 <title>User feed for Ryan Barrett</title>
 <subtitle>my description</subtitle>
 <logo>http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg</logo>
-<updated></updated>
+<updated>2012-02-22T20:26:41</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://twitter.com/snarfed_org</uri>
@@ -142,30 +179,54 @@ ATOM = """\
 <!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 
 <entry>
+
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://twitter.com/snarfed_org</uri>
+ <name>Ryan Barrett</name>
+ <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org" />
+ <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
+</author>
+
+
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
-  <id>tag:twitter.com,2012:172417043893731329</id>
-  <title>portablecontacts-unofficial: PortableContacts for Facebook and Twitter! &lt;a href=&quot;http://t.co/SuqMPgp3&quot;&gt;http://t.co/SuqMPgp3&lt;/a&gt;</title>
-  <content type="text">portablecontacts-unofficial: PortableContacts for Facebook and Twitter! &lt;a href=&quot;http://t.co/SuqMPgp3&quot;&gt;http://t.co/SuqMPgp3&lt;/a&gt;</content>
+  <id>""" + tag_uri('172417043893731329') + """</id>
+  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
+
+  <content type="text/html">
+
+@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM
+
+<p><a href=''>
+  <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' />
+  
+</a></p>
+<p></p>
+
+  </content>
+
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   
-    
-      <link rel="ostatus:attention" href="http://twitter.com/friend1" />
-      <link rel="mentioned" href="http://twitter.com/friend1" />
-    
+    <link rel="ostatus:attention" href="http://twitter.com/foo" />
+    <link rel="mentioned" href="http://twitter.com/foo" />
   
-    
-      <link rel="ostatus:attention" href="http://twitter.com/friend2" />
-      <link rel="mentioned" href="http://twitter.com/friend2" />
-    
+    <link rel="ostatus:attention" href="http://twitter.com/foo" />
+    <link rel="mentioned" href="http://twitter.com/foo" />
+  
+    <link rel="ostatus:attention" href="https://twitter.com/search?q=%%23tcdisrupt" />
+    <link rel="mentioned" href="https://twitter.com/search?q=%%23tcdisrupt" />
+  
+    <link rel="ostatus:attention" href="http://instagr.am/p/MuW67/" />
+    <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
   
-    <thr:in-reply-to ref="tag:twitter.com,2012:789"
+    <thr:in-reply-to ref=\"""" + tag_uri('789') + """\"
                      href="http://twitter.com/other_user/status/789"
                      type="text/html" />
   
@@ -212,10 +273,11 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.get_activities())
 
   def test_get_activities_start_index_count(self):
-    tweet2 = dict(TWEET)
+    tweet2 = copy.deepcopy(TWEET)
     tweet2['user']['name'] = 'foo'
-    activity2 = dict(ACTIVITY)
+    activity2 = copy.deepcopy(ACTIVITY)
     activity2['actor']['displayName'] = 'foo'
+    activity2['title'] = activity2['title'].replace('Ryan Barrett: ', 'foo: ')
 
     self.expect_urlfetch(
       'https://api.twitter.com/1/statuses/home_timeline.json?'

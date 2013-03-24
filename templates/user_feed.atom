@@ -9,19 +9,12 @@
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
 <id>{{ request_url|safe }}</id>
-<title>User feed for {{ user.displayName }}</title>
-<subtitle>{{ user.description }}</subtitle>
-<logo>{{ user.image.url|safe }}</logo>
-<updated>{{ user.updated }}</updated>
-<author>
- <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>{{ user.url|safe }}</uri>
- <name>{{ user.displayName }}</name>
- <link rel="alternate" type="text/html" href="{{ user.url|safe }}" />
- <link rel="avatar" href="{{ user.image.url|safe }}" />
-</author>
-
-<link href="{{ user.url|safe }}" rel="alternate" type="text/html" />
+<title>{{ title }}</title>
+<subtitle>{{ actor.description }}</subtitle>
+<logo>{{ actor.image.url|safe }}</logo>
+<updated>{{ updated }}</updated>
+{% include "author.atom" %}
+<link href="{{ actor.url|safe }}" rel="alternate" type="text/html" />
 <link href="{{ request_url|safe }}" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="{{ push_uri }}" rel="hub" /> -->
@@ -30,19 +23,39 @@
 <!-- <link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 {% for activity in items %}
 <entry>
+{% with activity.actor as actor %}
+{% include "author.atom" %}
+{% endwith %}
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/{{ activity.object.objectType }}
   </activity:object-type>
   <id>{{ activity.id }}</id>
-  <title>{{ activity.object.content }}</title>
-  <content type="text">{{ activity.object.content }}</content>
+  <title>{{ activity.title }}</title>
+
+  <content type="text/html">
+{% if activity.object.actor %}
+  <div>
+  <p>{{ activity.annotation }}</p>
+  <img src="{{ activity.object.actor.image.url }}" />
+  <a href="{{ activity.object.actor.url }}">{{ activity.object.actor.displayName }}</a>
+  originally shared this post:
+  </div>
+{% endif %}
+{{ activity.object.content|safe }}
+{% for att in activity.object.attachments %}
+<p><a href='{{ att.url }}'>
+  <img style='float: left' src='{{ att.image.url }}' />
+  {{ att.displayName }}
+</a></p>
+<p>{{ att.content }}</p>
+{% endfor %}
+  </content>
+
   <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />
   <link rel="ostatus:conversation" href="{{ activity.url|safe }}" />
   {% for tag in activity.object.tags %}
-    {% ifequal tag.objectType 'person' %}
-      <link rel="ostatus:attention" href="{{ tag.url }}" />
-      <link rel="mentioned" href="{{ tag.url }}" />
-    {% endifequal %}
+    <link rel="ostatus:attention" href="{{ tag.url }}" />
+    <link rel="mentioned" href="{{ tag.url }}" />
   {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
   <published>{{ activity.object.published }}</published>
