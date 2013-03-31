@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# -*- eval: (progn (make-local-variable 'before-save-hook) (remove-hook 'before-save-hook 'delete-trailing-whitespace-in-some-modes t)) -*-
+#
+# (the above line is an Emacs file local variable that says *not* to delete
+# trailing whitespace, since some of it in test data is meaningful.)
 """Unit tests for twitter.py.
 """
 
@@ -152,6 +156,7 @@ ATOM = """\
 <feed xml:lang="en-US"
       xmlns="http://www.w3.org/2005/Atom"
       xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
@@ -201,7 +206,7 @@ ATOM = """\
 
 <p><a href=''>
   <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' />
-  
+
 </a></p>
 <p></p>
 
@@ -221,19 +226,19 @@ ATOM = """\
   
     <link rel="ostatus:attention" href="http://instagr.am/p/MuW67/" />
     <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
-  
+
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
-  
+
     <thr:in-reply-to ref=\"""" + tag_uri('789') + """\"
                      href="http://twitter.com/other_user/status/789"
                      type="text/html" />
-  
+
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
   <georss:point>
-     
+
   </georss:point>
   <georss:featureName>Carcassonne, Aude</georss:featureName>
   <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/172417043893731329" />

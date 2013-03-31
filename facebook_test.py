@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# -*- eval: (progn (make-local-variable 'before-save-hook) (remove-hook 'before-save-hook 'delete-trailing-whitespace-in-some-modes t)) -*-
+#
+# (the above line is an Emacs file local variable that says *not* to delete
+# trailing whitespace, since some of it in test data is meaningful.)
 """Unit tests for facebook.py.
 """
 
@@ -263,6 +267,7 @@ ATOM = """\
 <feed xml:lang="en-US"
       xmlns="http://www.w3.org/2005/Atom"
       xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
@@ -338,11 +343,11 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
   
     <link rel="ostatus:attention" href="http://facebook.com/283938455011303" />
     <link rel="mentioned" href="http://facebook.com/283938455011303" />
-  
+
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-03-04T18:20:37+0000</published>
   <updated>2012-03-04T19:08:16+0000</updated>
-  
+
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
   <georss:point>
