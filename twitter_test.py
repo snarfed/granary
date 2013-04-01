@@ -206,7 +206,7 @@ ATOM = """\
 
 <p><a href=''>
   <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' />
-
+  
 </a></p>
 <p></p>
 
@@ -226,19 +226,19 @@ ATOM = """\
   
     <link rel="ostatus:attention" href="http://instagr.am/p/MuW67/" />
     <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
-
+  
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
-
+  
     <thr:in-reply-to ref=\"""" + tag_uri('789') + """\"
                      href="http://twitter.com/other_user/status/789"
                      type="text/html" />
-
+  
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
   <georss:point>
-
+     
   </georss:point>
   <georss:featureName>Carcassonne, Aude</georss:featureName>
   <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/172417043893731329" />

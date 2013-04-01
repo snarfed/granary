@@ -343,11 +343,11 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
   
     <link rel="ostatus:attention" href="http://facebook.com/283938455011303" />
     <link rel="mentioned" href="http://facebook.com/283938455011303" />
-
+  
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-03-04T18:20:37+0000</published>
   <updated>2012-03-04T19:08:16+0000</updated>
-
+  
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
   <georss:point>
