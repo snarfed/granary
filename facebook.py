@@ -218,16 +218,17 @@ class Facebook(source.Source):
         'id': id,
         'url': 'http://facebook.com/' + id,
         }
-      location = place.get('location', {})
-      lat = location.get('latitude')
-      lon = location.get('longitude')
-      if lat and lon:
-        object['location'].update({
-          'latitude': lat,
-          'longitude': lon,
-          # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-          'position': '%+f%+f/' % (lat, lon),
-          })
+      location = place.get('location', None)
+      if isinstance(location, dict):
+        lat = location.get('latitude')
+        lon = location.get('longitude')
+        if lat and lon:
+          object['location'].update({
+              'latitude': lat,
+              'longitude': lon,
+              # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
+              'position': '%+f%+f/' % (lat, lon),
+              })
 
     # comments go in the replies field, according to the "Responses for
     # Activity Streams" extension spec:
