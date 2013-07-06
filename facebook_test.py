@@ -347,10 +347,14 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
   
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
-  <georss:point>
-    37.7281937175 -122.493364236
-  </georss:point>
-  <georss:featureName>Lake Merced</georss:featureName>
+  
+  
+    <georss:point>37.7281937175 -122.493364236</georss:point>
+  
+  
+    <georss:featureName>Lake Merced</georss:featureName>
+  
+  
   <link rel="self" type="application/atom+xml" href="http://facebook.com/212038/posts/10100176064482163" />
 </entry>
 
