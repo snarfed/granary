@@ -27,7 +27,7 @@ from webutil import util
 def tag_uri(name):
   return util.tag_uri('facebook.com', name)
 
-USER = {
+USER = {  # Facebook
   'id': '212038',
   'name': 'Ryan Barrett',
   'link': 'http://www.facebook.com/snarfed.org',
@@ -36,17 +36,17 @@ USER = {
   'updated_time': '2012-01-06T02:11:04+0000',
   'bio': 'something about me',
   }
-ACTOR = {
+ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
   'image': {'url': 'http://graph.facebook.com/snarfed.org/picture?type=large'},
   'id': tag_uri('snarfed.org'),
-  'updated': '2012-01-06T02:11:04+0000',
+  'updated': '2012-01-06T02:11:04+00:00',
   'url': 'http://www.facebook.com/snarfed.org',
   'username': 'snarfed.org',
   'description': 'something about me',
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
-COMMENTS = [{
+COMMENTS = [{  # Facebook
     'id': '212038_547822715231468_6796480',
     'from': {
       'name': 'Ryan Barrett',
@@ -76,7 +76,7 @@ COMMENTS = [{
     'message': 'Foo bar!',
     'created_time': '2010-10-28T00:23:04+0000'
     }]
-POST = {
+POST = {  # Facebook
   'id': '212038_10100176064482163',
   'from': {'name': 'Ryan Barrett', 'id': '212038'},
   'to': {'data': [
@@ -132,7 +132,7 @@ POST = {
     'count': len(COMMENTS),
     },
 }
-COMMENT_OBJS = [
+COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
     'author': {
@@ -143,7 +143,7 @@ COMMENT_OBJS = [
       },
     'content': 'cc Sam G, Michael M',
     'id': tag_uri('212038_547822715231468_6796480'),
-    'published': '2012-12-05T00:58:26+0000',
+    'published': '2012-12-05T00:58:26+00:00',
     'url': 'http://facebook.com/212038/posts/547822715231468?comment_id=6796480',
     'inReplyTo': {'id': tag_uri('212038_547822715231468')},
     'tags': [{
@@ -172,12 +172,12 @@ COMMENT_OBJS = [
       },
     'content': 'Foo bar!',
     'id': tag_uri('212038_124561947600007_672819'),
-    'published': '2010-10-28T00:23:04+0000',
+    'published': '2010-10-28T00:23:04+00:00',
     'url': 'http://facebook.com/212038/posts/124561947600007?comment_id=672819',
     'inReplyTo': {'id': tag_uri('212038_124561947600007')},
     },
 ]
-POST_OBJ = {
+POST_OBJ = {  # ActivityStreams
   'objectType': 'photo',
   'author': {
     'id': tag_uri('212038'),
@@ -187,8 +187,8 @@ POST_OBJ = {
     },
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.',
   'id': tag_uri('212038_10100176064482163'),
-  'published': '2012-03-04T18:20:37+0000',
-  'updated': '2012-03-04T19:08:16+0000',
+  'published': '2012-03-04T18:20:37+00:00',
+  'updated': '2012-03-04T19:08:16+00:00',
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
   'attachments': [{
@@ -248,10 +248,10 @@ POST_OBJ = {
     'totalItems': len(COMMENT_OBJS),
     }
   }
-ACTIVITY = {
+ACTIVITY = {  # ActivityStreams
   'verb': 'post',
-  'published': '2012-03-04T18:20:37+0000',
-  'updated': '2012-03-04T19:08:16+0000',
+  'published': '2012-03-04T18:20:37+00:00',
+  'updated': '2012-03-04T19:08:16+00:00',
   'id': tag_uri('212038_10100176064482163'),
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
@@ -277,7 +277,7 @@ ATOM = """\
 <title>User feed for Ryan Barrett</title>
 <subtitle>something about me</subtitle>
 <logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
-<updated>2012-03-04T18:20:37+0000</updated>
+<updated>2012-03-04T18:20:37+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://www.facebook.com/snarfed.org</uri>
@@ -345,8 +345,8 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
     <link rel="mentioned" href="http://facebook.com/283938455011303" />
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
-  <published>2012-03-04T18:20:37+0000</published>
-  <updated>2012-03-04T19:08:16+0000</updated>
+  <published>2012-03-04T18:20:37+00:00</published>
+  <updated>2012-03-04T19:08:16+00:00</updated>
   
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
