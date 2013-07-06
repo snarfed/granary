@@ -282,11 +282,10 @@ ATOM = """\
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://www.facebook.com/snarfed.org</uri>
  <name>Ryan Barrett</name>
- <link rel="alternate" type="text/html" href="http://www.facebook.com/snarfed.org" />
- <link rel="avatar" href="http://graph.facebook.com/snarfed.org/picture?type=large" />
 </author>
 
 <link href="http://www.facebook.com/snarfed.org" rel="alternate" type="text/html" />
+<link rel="avatar" href="http://graph.facebook.com/snarfed.org/picture?type=large" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
@@ -300,8 +299,6 @@ ATOM = """\
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://facebook.com/212038</uri>
  <name>Ryan Barrett</name>
- <link rel="alternate" type="text/html" href="http://facebook.com/212038" />
- <link rel="avatar" href="http://graph.facebook.com/212038/picture?type=large" />
 </author>
 
 

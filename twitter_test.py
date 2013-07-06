@@ -171,11 +171,10 @@ ATOM = """\
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://twitter.com/snarfed_org</uri>
  <name>Ryan Barrett</name>
- <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org" />
- <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 </author>
 
 <link href="http://twitter.com/snarfed_org" rel="alternate" type="text/html" />
+<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
@@ -189,8 +188,6 @@ ATOM = """\
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://twitter.com/snarfed_org</uri>
  <name>Ryan Barrett</name>
- <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org" />
- <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 </author>
 
 
