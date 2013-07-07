@@ -89,6 +89,8 @@ class Source(object):
         actor['displayName'] + ': ' if actor else '',
         content[:TITLE_LENGTH],
         '...' if len(content) > TITLE_LENGTH else '')
+    if not activity.get('title'):
+      activity['title'] = 'Untitled'
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name.

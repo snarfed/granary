@@ -10,7 +10,9 @@
   activitystreams-unofficial</generator>
 <id>{{ request_url|safe }}</id>
 <title>{{ title }}</title>
+{% if actor.description %}
 <subtitle>{{ actor.description }}</subtitle>
+{% endif %}
 <logo>{{ actor.image.url|safe }}</logo>
 <updated>{{ updated }}</updated>
 {% include "author.atom" %}

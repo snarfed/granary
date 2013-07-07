@@ -275,7 +275,9 @@ ATOM = """\
   activitystreams-unofficial</generator>
 <id>%(request_url)s</id>
 <title>User feed for Ryan Barrett</title>
+
 <subtitle>something about me</subtitle>
+
 <logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
 <updated>2012-03-04T18:20:37+00:00</updated>
 <author>

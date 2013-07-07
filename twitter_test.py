@@ -164,7 +164,9 @@ ATOM = """\
   activitystreams-unofficial</generator>
 <id>%(request_url)s</id>
 <title>User feed for Ryan Barrett</title>
+
 <subtitle>my description</subtitle>
+
 <logo>http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg</logo>
 <updated>2012-02-22T20:26:41</updated>
 <author>
