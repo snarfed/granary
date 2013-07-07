@@ -10,11 +10,14 @@
   activitystreams-unofficial</generator>
 <id>{{ request_url|safe }}</id>
 <title>{{ title }}</title>
+{% if actor.description %}
 <subtitle>{{ actor.description }}</subtitle>
+{% endif %}
 <logo>{{ actor.image.url|safe }}</logo>
 <updated>{{ updated }}</updated>
 {% include "author.atom" %}
 <link href="{{ actor.url|safe }}" rel="alternate" type="text/html" />
+<link rel="avatar" href="{{ actor.image.url|safe }}" />
 <link href="{{ request_url|safe }}" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="{{ push_uri }}" rel="hub" /> -->
@@ -32,7 +35,8 @@
   <id>{{ activity.id }}</id>
   <title>{{ activity.title }}</title>
 
-  <content type="text/html">
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
 {% if activity.object.actor %}
   <div>
   <p>{{ activity.annotation }}</p>
@@ -49,6 +53,7 @@
 </a></p>
 <p>{{ att.content }}</p>
 {% endfor %}
+  </div>
   </content>
 
   <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />
@@ -67,10 +72,14 @@
   {% endif %}
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
-  <georss:point>
-    {{ activity.object.location.latitude }} {{ activity.object.location.longitude }}
-  </georss:point>
-  <georss:featureName>{{ activity.object.location.displayName }}</georss:featureName>
+  {% with activity.object.location as location %}
+  {% if location.latitude and location.longitude %}
+    <georss:point>{{ location.latitude }} {{location.longitude }}</georss:point>
+  {% endif %}
+  {% if location.displayName %}
+    <georss:featureName>{{ location.displayName }}</georss:featureName>
+  {% endif %}
+  {% endwith %}
   <link rel="self" type="application/atom+xml" href="{{ activity.url|safe }}" />
 </entry>
 {% endfor %}

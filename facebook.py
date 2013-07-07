@@ -164,8 +164,8 @@ class Facebook(source.Source):
     object = {
       'id': util.tag_uri(self.DOMAIN, str(id)),
       'objectType': OBJECT_TYPES.get(post_type, 'note'),
-      'published': post.get('created_time'),
-      'updated': post.get('updated_time'),
+      'published': util.maybe_iso8601_to_rfc3339(post.get('created_time')),
+      'updated': util.maybe_iso8601_to_rfc3339(post.get('updated_time')),
       'author': self.user_to_actor(post.get('from')),
       'content': post.get('message'),
       # FB post ids are of the form USERID_POSTID
@@ -218,16 +218,17 @@ class Facebook(source.Source):
         'id': id,
         'url': 'http://facebook.com/' + id,
         }
-      location = place.get('location', {})
-      lat = location.get('latitude')
-      lon = location.get('longitude')
-      if lat and lon:
-        object['location'].update({
-          'latitude': lat,
-          'longitude': lon,
-          # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-          'position': '%+f%+f/' % (lat, lon),
-          })
+      location = place.get('location', None)
+      if isinstance(location, dict):
+        lat = location.get('latitude')
+        lon = location.get('longitude')
+        if lat and lon:
+          object['location'].update({
+              'latitude': lat,
+              'longitude': lon,
+              # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
+              'position': '%+f%+f/' % (lat, lon),
+              })
 
     # comments go in the replies field, according to the "Responses for
     # Activity Streams" extension spec:
@@ -302,7 +303,7 @@ class Facebook(source.Source):
       'displayName': user.get('name'),
       'image': {'url': image_url},
       'id': util.tag_uri(self.DOMAIN, handle),
-      'updated': user.get('updated_time'),
+      'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'url': url,
       'username': username,
       'description': user.get('bio'),

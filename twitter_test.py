@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# -*- eval: (progn (make-local-variable 'before-save-hook) (remove-hook 'before-save-hook 'delete-trailing-whitespace-in-some-modes t)) -*-
+#
+# (the above line is an Emacs file local variable that says *not* to delete
+# trailing whitespace, since some of it in test data is meaningful.)
 """Unit tests for twitter.py.
 """
 
@@ -152,6 +156,7 @@ ATOM = """\
 <feed xml:lang="en-US"
       xmlns="http://www.w3.org/2005/Atom"
       xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
@@ -159,18 +164,19 @@ ATOM = """\
   activitystreams-unofficial</generator>
 <id>%(request_url)s</id>
 <title>User feed for Ryan Barrett</title>
+
 <subtitle>my description</subtitle>
+
 <logo>http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg</logo>
 <updated>2012-02-22T20:26:41</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://twitter.com/snarfed_org</uri>
  <name>Ryan Barrett</name>
- <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org" />
- <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 </author>
 
 <link href="http://twitter.com/snarfed_org" rel="alternate" type="text/html" />
+<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
@@ -184,8 +190,6 @@ ATOM = """\
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://twitter.com/snarfed_org</uri>
  <name>Ryan Barrett</name>
- <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org" />
- <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 </author>
 
 
@@ -195,7 +199,8 @@ ATOM = """\
   <id>""" + tag_uri('172417043893731329') + """</id>
   <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
 
-  <content type="text/html">
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
 
 @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM
 
@@ -205,6 +210,7 @@ ATOM = """\
 </a></p>
 <p></p>
 
+  </div>
   </content>
 
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
@@ -232,10 +238,12 @@ ATOM = """\
   
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
-  <georss:point>
-     
-  </georss:point>
-  <georss:featureName>Carcassonne, Aude</georss:featureName>
+  
+  
+  
+    <georss:featureName>Carcassonne, Aude</georss:featureName>
+  
+  
   <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/172417043893731329" />
 </entry>
 
