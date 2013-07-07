@@ -199,7 +199,8 @@ ATOM = """\
   <id>""" + tag_uri('172417043893731329') + """</id>
   <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
 
-  <content type="text/html">
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
 
 @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM
 
@@ -209,6 +210,7 @@ ATOM = """\
 </a></p>
 <p></p>
 
+  </div>
   </content>
 
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />

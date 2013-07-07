@@ -35,7 +35,8 @@
   <id>{{ activity.id }}</id>
   <title>{{ activity.title }}</title>
 
-  <content type="text/html">
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
 {% if activity.object.actor %}
   <div>
   <p>{{ activity.annotation }}</p>
@@ -52,6 +53,7 @@
 </a></p>
 <p>{{ att.content }}</p>
 {% endfor %}
+  </div>
   </content>
 
   <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />

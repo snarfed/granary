@@ -310,7 +310,8 @@ ATOM = """\
   <id>""" + tag_uri('212038_10100176064482163') + """</id>
   <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.</title>
 
-  <content type="text/html">
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
 
 Checking another side project off my list. portablecontacts-unofficial is live!  cc Super Happy Block Party Hackathon, Daniel M.
 
@@ -320,6 +321,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </a></p>
 <p>my link description</p>
 
+  </div>
   </content>
 
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
