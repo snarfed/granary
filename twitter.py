@@ -13,11 +13,11 @@ http://groups.google.com/group/activity-streams/browse_thread/thread/5f88499fdd4
 Python code to pretty-print JSON responses from Twitter REST API:
 
 pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1/statuses/show.json?id=172417043893731329&include_entities=1').read()))
+  'https://api.twitter.com/1.1/statuses/show.json?id=172417043893731329&include_entities=1').read()))
 pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1/users/lookup.json?screen_name=snarfed_org').read()))
+  'https://api.twitter.com/1.1/users/lookup.json?screen_name=snarfed_org').read()))
 pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1/followers/ids.json?screen_name=snarfed_org').read()))
+  'https://api.twitter.com/1.1/followers/ids.json?screen_name=snarfed_org').read()))
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -39,15 +39,15 @@ import tweepy
 from webutil import util
 
 API_TIMELINE_URL = \
-  'https://api.twitter.com/1/statuses/home_timeline.json?include_entities=true&count=%d'
+  'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=%d'
 API_SELF_TIMELINE_URL = \
-  'https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&count=%d'
+  'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%d'
 API_STATUS_URL = \
-  'https://api.twitter.com/1/statuses/show.json?id=%s&include_entities=true'
+  'https://api.twitter.com/1.1/statuses/show.json?id=%s&include_entities=true'
 API_USER_URL = \
-  'https://api.twitter.com/1/users/lookup.json?screen_name=%s'
+  'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
 API_CURRENT_USER_URL = \
-  'https://api.twitter.com/1/account/verify_credentials.json'
+  'https://api.twitter.com/1.1/account/verify_credentials.json'
 
 
 class Twitter(source.Source):
@@ -158,7 +158,7 @@ class Twitter(source.Source):
         }
 
     # yes, the source field has an embedded HTML link. bleh.
-    # https://dev.twitter.com/docs/api/1/get/statuses/show/
+    # https://dev.twitter.com/docs/api/1.1/get/statuses/show/
     parsed = re.search('<a href="([^"]+)".*>(.+)</a>', tweet.get('source', ''))
     if parsed:
       url, name = parsed.groups()
