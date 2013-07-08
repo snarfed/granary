@@ -94,7 +94,8 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlfetch(self, url, access_token_key=None, access_token_secret=None, **kwargs):
+  def urlfetch(self, url, access_token_key=None, access_token_secret=None,
+               app_key=None, app_secret=None, **kwargs):
     """Wraps Source.urlfetch(), signing with OAuth if there's an access token.
 
     TODO: unit test this
@@ -103,12 +104,15 @@ class Twitter(source.Source):
       access_token_key = self.handler.request.get('access_token_key')
     if access_token_secret is None:
       access_token_secret = self.handler.request.get('access_token_secret')
+    if app_key is None:
+      app_key = appengine_config.TWITTER_APP_KEY
+    if app_secret is None:
+      app_secret = appengine_config.TWITTER_APP_SECRET
 
     if access_token_key and access_token_secret:
       logging.info('Found access token key %s and secret %s',
                    access_token_key, access_token_secret)
-      auth = tweepy.OAuthHandler(appengine_config.TWITTER_APP_KEY,
-                                 appengine_config.TWITTER_APP_SECRET)
+      auth = tweepy.OAuthHandler(app_key, app_secret)
       auth.set_access_token(access_token_key, access_token_secret)
       method = kwargs.get('method', 'GET')
       headers = kwargs.setdefault('headers', {})
