@@ -85,7 +85,7 @@ TWEET = {
         'screen_name': 'foo'
       }],
   },
-  'text': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'text': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
@@ -93,7 +93,7 @@ TWEET = {
 OBJECT = {
   'objectType': 'note',
   'author': ACTOR,
-  'content': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'content': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
   'id': tag_uri('172417043893731329'),
   'published': '2012-02-22T20:26:41',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
@@ -140,7 +140,7 @@ ACTIVITY = {
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
-  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : {
@@ -197,12 +197,12 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>""" + tag_uri('172417043893731329') + """</id>
-  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
+  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM
+@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM
 
 <p><a href=''>
   <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' />
