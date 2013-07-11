@@ -5,7 +5,13 @@ implementations for Facebook and Twitter, served at these endpoints:
 http://facebook-activitystreams.appspot.com/
 http://twitter-activitystreams.appspot.com/
 
-Feel free to add more!
+It's part of a wider collection of OStatus and federated social web tools for
+Facebook, Twitter, and Google+:
+https://github.com/snarfed/activitystreams-unofficial
+https://github.com/snarfed/portablecontacts-unofficial
+https://github.com/snarfed/salmon-unofficial
+https://github.com/snarfed/webfinger-unofficial
+https://github.com/snarfed/ostatus-unofficial
 
 Source: https://github.com/snarfed/activitystreams-unofficial
 Contact: Ryan Barrett <activitystreams@ryanb.org>
