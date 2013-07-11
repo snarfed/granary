@@ -51,7 +51,7 @@ TWEET = {
     'full_name': 'Carcassonne, Aude',
     'id': '31cb9e7ed29dbe52',
     'name': 'Carcassonne',
-    'url': 'http://api.twitter.com/1/geo/id/31cb9e7ed29dbe52.json',
+    'url': 'http://api.twitter.com/1.1/geo/id/31cb9e7ed29dbe52.json',
     },
   'geo':  {
     'type': 'Point',
@@ -85,7 +85,7 @@ TWEET = {
         'screen_name': 'foo'
       }],
   },
-  'text': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'text': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
@@ -93,7 +93,7 @@ TWEET = {
 OBJECT = {
   'objectType': 'note',
   'author': ACTOR,
-  'content': '@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'content': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
   'id': tag_uri('172417043893731329'),
   'published': '2012-02-22T20:26:41',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
@@ -140,7 +140,7 @@ ACTIVITY = {
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
-  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM',
+  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : {
@@ -197,12 +197,12 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>""" + tag_uri('172417043893731329') + """</id>
-  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM</title>
+  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-@twitter meets @seepicturely at #tcdisrupt http://t.co/6J2EgYM
+@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM
 
 <p><a href=''>
   <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' />
@@ -259,21 +259,21 @@ class TwitterTest(testutil.HandlerTest):
 
   def test_get_actor(self):
     self.expect_urlfetch(
-      'https://api.twitter.com/1/users/lookup.json?screen_name=foo',
+      'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
       json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.twitter.get_actor('foo'))
 
   def test_get_actor_default(self):
     self.expect_urlfetch(
-      'https://api.twitter.com/1/account/verify_credentials.json',
+      'https://api.twitter.com/1.1/account/verify_credentials.json',
       json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.twitter.get_actor())
 
   def test_get_activities(self):
     self.expect_urlfetch(
-      'https://api.twitter.com/1/statuses/home_timeline.json?'
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?'
       'include_entities=true&count=0',
       json.dumps([TWEET, TWEET]))
     self.mox.ReplayAll()
@@ -288,7 +288,7 @@ class TwitterTest(testutil.HandlerTest):
     activity2['title'] = activity2['title'].replace('Ryan Barrett: ', 'foo: ')
 
     self.expect_urlfetch(
-      'https://api.twitter.com/1/statuses/home_timeline.json?'
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?'
       'include_entities=true&count=2',
       json.dumps([TWEET, tweet2]))
     self.mox.ReplayAll()
@@ -298,7 +298,7 @@ class TwitterTest(testutil.HandlerTest):
 
   def test_get_activities_activity_id(self):
     self.expect_urlfetch(
-      'https://api.twitter.com/1/statuses/show.json?id=000&include_entities=true',
+      'https://api.twitter.com/1.1/statuses/show.json?id=000&include_entities=true',
       json.dumps(TWEET))
     self.mox.ReplayAll()
 
@@ -310,7 +310,7 @@ class TwitterTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_self(self):
-    self.expect_urlfetch('https://api.twitter.com/1/statuses/user_timeline.json?'
+    self.expect_urlfetch('https://api.twitter.com/1.1/statuses/user_timeline.json?'
                          'include_entities=true&count=0',
                          '[]')
     self.mox.ReplayAll()

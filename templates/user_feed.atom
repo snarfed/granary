@@ -33,7 +33,7 @@
     http://activitystrea.ms/schema/1.0/{{ activity.object.objectType }}
   </activity:object-type>
   <id>{{ activity.id }}</id>
-  <title>{{ activity.title }}</title>
+  <title>{{ activity.title|escape }}</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
@@ -45,7 +45,7 @@
   originally shared this post:
   </div>
 {% endif %}
-{{ activity.object.content|safe }}
+{{ activity.object.content|escape }}
 {% for att in activity.object.attachments %}
 <p><a href='{{ att.url }}'>
   <img style='float: left' src='{{ att.image.url }}' />

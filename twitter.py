@@ -13,11 +13,11 @@ http://groups.google.com/group/activity-streams/browse_thread/thread/5f88499fdd4
 Python code to pretty-print JSON responses from Twitter REST API:
 
 pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1/statuses/show.json?id=172417043893731329&include_entities=1').read()))
+  'https://api.twitter.com/1.1/statuses/show.json?id=172417043893731329&include_entities=1').read()))
 pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1/users/lookup.json?screen_name=snarfed_org').read()))
+  'https://api.twitter.com/1.1/users/lookup.json?screen_name=snarfed_org').read()))
 pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1/followers/ids.json?screen_name=snarfed_org').read()))
+  'https://api.twitter.com/1.1/followers/ids.json?screen_name=snarfed_org').read()))
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -39,15 +39,15 @@ import tweepy
 from webutil import util
 
 API_TIMELINE_URL = \
-  'https://api.twitter.com/1/statuses/home_timeline.json?include_entities=true&count=%d'
+  'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=%d'
 API_SELF_TIMELINE_URL = \
-  'https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&count=%d'
+  'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%d'
 API_STATUS_URL = \
-  'https://api.twitter.com/1/statuses/show.json?id=%s&include_entities=true'
+  'https://api.twitter.com/1.1/statuses/show.json?id=%s&include_entities=true'
 API_USER_URL = \
-  'https://api.twitter.com/1/users/lookup.json?screen_name=%s'
+  'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
 API_CURRENT_USER_URL = \
-  'https://api.twitter.com/1/account/verify_credentials.json'
+  'https://api.twitter.com/1.1/account/verify_credentials.json'
 
 
 class Twitter(source.Source):
@@ -94,7 +94,8 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlfetch(self, url, access_token_key=None, access_token_secret=None, **kwargs):
+  def urlfetch(self, url, access_token_key=None, access_token_secret=None,
+               app_key=None, app_secret=None, **kwargs):
     """Wraps Source.urlfetch(), signing with OAuth if there's an access token.
 
     TODO: unit test this
@@ -103,12 +104,15 @@ class Twitter(source.Source):
       access_token_key = self.handler.request.get('access_token_key')
     if access_token_secret is None:
       access_token_secret = self.handler.request.get('access_token_secret')
+    if app_key is None:
+      app_key = appengine_config.TWITTER_APP_KEY
+    if app_secret is None:
+      app_secret = appengine_config.TWITTER_APP_SECRET
 
     if access_token_key and access_token_secret:
       logging.info('Found access token key %s and secret %s',
                    access_token_key, access_token_secret)
-      auth = tweepy.OAuthHandler(appengine_config.TWITTER_APP_KEY,
-                                 appengine_config.TWITTER_APP_SECRET)
+      auth = tweepy.OAuthHandler(app_key, app_secret)
       auth.set_access_token(access_token_key, access_token_secret)
       method = kwargs.get('method', 'GET')
       headers = kwargs.setdefault('headers', {})
@@ -154,7 +158,7 @@ class Twitter(source.Source):
         }
 
     # yes, the source field has an embedded HTML link. bleh.
-    # https://dev.twitter.com/docs/api/1/get/statuses/show/
+    # https://dev.twitter.com/docs/api/1.1/get/statuses/show/
     parsed = re.search('<a href="([^"]+)".*>(.+)</a>', tweet.get('source', ''))
     if parsed:
       url, name = parsed.groups()
