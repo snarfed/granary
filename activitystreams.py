@@ -124,7 +124,7 @@ class Handler(webapp2.RequestHandler):
       request_url = '%s?%s' % (self.request.path_url, urllib.urlencode(params))
       actor = source.get_actor(user_id)
       response.update({
-          'host_url': self.request.host_url,
+          'host_url': self.request.host_url + "/",
           'request_url': request_url,
           'title': 'User feed for ' + actor.get('displayName', 'unknown'),
           'updated': activities[0]['object'].get('published') if activities else '',
