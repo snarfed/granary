@@ -8,7 +8,7 @@
       >
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
-<id>{{ request_url|safe }}</id>
+<id>{{ host_url|safe }}</id>
 <title>{{ title }}</title>
 {% if actor.description %}
 <subtitle>{{ actor.description }}</subtitle>
