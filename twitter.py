@@ -113,7 +113,10 @@ class Twitter(source.Source):
       logging.info('Found access token key %s and secret %s',
                    access_token_key, access_token_secret)
       auth = tweepy.OAuthHandler(app_key, app_secret)
-      auth.set_access_token(access_token_key, access_token_secret)
+      # make sure token key and secret aren't unicode because python's hmac
+      # module (used by tweepy/oauth.py) expects strings.
+      # http://stackoverflow.com/questions/11396789
+      auth.set_access_token(str(access_token_key), str(access_token_secret))
       method = kwargs.get('method', 'GET')
       headers = kwargs.setdefault('headers', {})
 
