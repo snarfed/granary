@@ -4,3 +4,6 @@
 [submodule "webutil"]
 	path = webutil
 	url = git@github.com:snarfed/webutil.git
+[submodule "python-instagram"]
+	path = python-instagram
+	url = git@github.com:Instagram/python-instagram.git
