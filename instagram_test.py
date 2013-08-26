@@ -8,10 +8,7 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
 import mox
 import urllib
 import urlparse

@@ -13,9 +13,9 @@ import urllib
 import urlparse
 
 import appengine_config
+from python_instagram.client import InstagramAPI
 import source
 from webutil import util
-
 
 # maps instagram graph api object types to ActivityStreams objectType.
 OBJECT_TYPES = {
@@ -47,6 +47,13 @@ class Instagram(source.Source):
       'response_type=token',
       ))
 
+  def __init__(self, *args):
+    super(Instagram, self).__init__(*args)
+    self.api = InstagramAPI(
+      client_id=appengine_config.INSTAGRAM_CLIENT_ID,
+      client_secret=appengine_config.INSTAGRAM_CLIENT_SECRET,
+      access_token=self.handler.request.get('access_token'))
+
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
 
@@ -54,8 +61,8 @@ class Instagram(source.Source):
       user_id: string id or username. Defaults to 'me', ie the current user.
     """
     if user_id is None:
-      user_id = 'me'
-    return self.user_to_actor(json.loads(self.urlfetch(API_OBJECT_URL % user_id)))
+      user_id = 'self'
+    return self.user_to_actor(self.api.user(user_id))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
@@ -107,19 +114,19 @@ class Instagram(source.Source):
     object = self.post_to_object(post)
     activity = {
       'verb': 'post',
-      'published': object.get('published'),
-      'updated': object.get('updated'),
-      'id': object.get('id'),
-      'url': object.get('url'),
-      'actor': object.get('author'),
+      'published': object.published,
+      'updated': object.updated,
+      'id': object.id,
+      'url': object.url,
+      'actor': object.author,
       'object': object,
       }
 
-    application = post.get('application')
+    application = post.application
     if application:
       activity['generator'] = {
-        'displayName': application.get('name'),
-        'id': util.tag_uri(self.DOMAIN, application.get('id')),
+        'displayName': application.name,
+        'id': util.tag_uri(self.DOMAIN, application.id),
         }
 
     self.postprocess_activity(activity)
@@ -136,22 +143,22 @@ class Instagram(source.Source):
     """
     object = {}
 
-    id = post.get('id')
+    id = post.id
     if not id:
       return {}
 
-    post_type = post.get('type')
-    status_type = post.get('status_type')
+    post_type = post.type
+    status_type = post.status_type
     url = 'http://instagram.com/' + id.replace('_', '/posts/')
-    picture = post.get('picture')
+    picture = post.picture
 
     object = {
       'id': util.tag_uri(self.DOMAIN, str(id)),
       'objectType': OBJECT_TYPES.get(post_type, 'note'),
-      'published': util.maybe_iso8601_to_rfc3339(post.get('created_time')),
-      'updated': util.maybe_iso8601_to_rfc3339(post.get('updated_time')),
-      'author': self.user_to_actor(post.get('from')),
-      'content': post.get('message'),
+      'published': util.maybe_iso8601_to_rfc3339(post.created_time),
+      'updated': util.maybe_iso8601_to_rfc3339(post.updated_time),
+      'author': self.user_to_actor(post.xyzxfrom),
+      'content': post.message,
       # FB post ids are of the form USERID_POSTID
       'url': url,
       'image': {'url': picture},
@@ -162,23 +169,23 @@ class Instagram(source.Source):
                            post.get('with_tags', {}).get('data', []),
                            *post.get('message_tags', {}).values())
     object['tags'] = [{
-          'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
-          'id': util.tag_uri(self.DOMAIN, t.get('id')),
-          'url': 'http://instagram.com/%s' % t.get('id'),
-          'displayName': t.get('name'),
-          'startIndex': t.get('offset'),
-          'length': t.get('length'),
+          'objectType': OBJECT_TYPES.get(t.type, 'person'),
+          'id': util.tag_uri(self.DOMAIN, t.id),
+          'url': 'http://instagram.com/%s' % t.id,
+          'displayName': t.name,
+          'startIndex': t.offset,
+          'length': t.length,
           } for t in tags]
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
-    link = post.get('link')
+    link = post.link
     att = {
         'url': link if link else url,
         'image': {'url': picture},
-        'displayName': post.get('name'),
-        'summary': post.get('caption'),
-        'content': post.get('description'),
+        'displayName': post.name,
+        'summary': post.caption,
+        'content': post.description,
         }
 
     if (picture and picture.endswith('_s.jpg') and
@@ -194,18 +201,18 @@ class Instagram(source.Source):
       object['attachments'] = [att]
 
     # location
-    place = post.get('place')
+    place = post.place
     if place:
-      id = place.get('id')
+      id = place.id
       object['location'] = {
-        'displayName': place.get('name'),
+        'displayName': place.name,
         'id': id,
         'url': 'http://instagram.com/' + id,
         }
       location = place.get('location', None)
       if isinstance(location, dict):
-        lat = location.get('latitude')
-        lon = location.get('longitude')
+        lat = location.latitude
+        lon = location.longitude
         if lat and lon:
           object['location'].update({
               'latitude': lat,
@@ -217,7 +224,7 @@ class Instagram(source.Source):
     # comments go in the replies field, according to the "Responses for
     # Activity Streams" extension spec:
     # http://activitystrea.ms/specs/json/replies/1.0/
-    comments = post.get('comments', {}).get('data')
+    comments = post.get('comments', {}).data
     if comments:
       items = [self.comment_to_object(c) for c in comments]
       object['replies'] = {
@@ -250,7 +257,7 @@ class Instagram(source.Source):
 
     object['objectType'] = 'comment'
 
-    match = self.COMMENT_ID_RE.match(comment.get('id', ''))
+    match = self.COMMENT_ID_RE.match(comment.id)
     if match:
       object['url'] = 'http://instagram.com/%s/posts/%s?comment_id=%s' % match.groups()
       object['inReplyTo'] = {
@@ -271,31 +278,23 @@ class Instagram(source.Source):
     if not user:
       return {}
 
-    id = user.get('id')
-    username = user.get('username')
+    id = user.id
+    username = user.username
     handle = username or id
     if not handle:
       return {}
 
-    url = user.get('link')
+    url = user.website
     if not url:
       url = 'http://instagram.com/' + handle
 
-    # instagram implements this as a 302 redirect
-    image_url = 'http://graph.instagram.com/%s/picture?type=large' % handle
     actor = {
-      'displayName': user.get('name'),
-      'image': {'url': image_url},
+      'displayName': user.full_name,
+      'image': {'url': user.profile_picture},
       'id': util.tag_uri(self.DOMAIN, handle),
-      'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'url': url,
       'username': username,
-      'description': user.get('bio'),
+      'description': user.bio,
       }
-
-    location = user.get('location')
-    if location:
-      actor['location'] = {'id': location.get('id'),
-                           'displayName': location.get('name')}
 
     return util.trim_nulls(actor)
