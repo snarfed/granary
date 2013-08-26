@@ -36,6 +36,7 @@ from webob import exc
 
 import appengine_config
 import facebook
+import instagram
 import source
 import twitter
 from webutil import util
@@ -47,6 +48,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 # maps app id to source class
 SOURCE = {
   'facebook-activitystreams': facebook.Facebook,
+  'instagram-activitystreams': instagram.Instagram,
   'twitter-activitystreams': twitter.Twitter,
   }.get(appengine_config.APP_ID)
 
