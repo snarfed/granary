@@ -25,13 +25,17 @@ def tag_uri(name):
   return util.tag_uri('instagram.com', name)
 
 USER = {  # Instagram
-  'id': '212038',
-  'name': 'Ryan Barrett',
-  'link': 'http://www.instagram.com/snarfed.org',
-  'username': 'snarfed.org',
-  'location': {'id': '123', 'name': 'San Francisco, California'},
-  'updated_time': '2012-01-06T02:11:04+0000',
-  'bio': 'something about me',
+    "username": "snarfed",
+    "bio": "",
+    "website": "http:\/\/snarfed.org",
+    "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_420973239_75sq_1371423879.jpg",
+    "full_name": "Ryan B",
+    "counts": {
+      "media": 2,
+      "followed_by": 10,
+      "follows": 33
+    },
+    "id": "420973239"
   }
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
@@ -44,91 +48,86 @@ ACTOR = {  # ActivityStreams
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
 COMMENTS = [{  # Instagram
-    'id': '212038_547822715231468_6796480',
-    'from': {
-      'name': 'Ryan Barrett',
-      'id': '212038'
-      },
-    'message': 'cc Sam G, Michael M',
-    'message_tags': [{
-        'id': '221330',
-        'name': 'Sam G',
-        'type': 'user',
-        'offset': 3,
-        'length': 5,
-        }, {
-        'id': '695687650',
-        'name': 'Michael Mandel',
-        'type': 'user',
-        'offset': 10,
-        'length': 9,
-        }],
-    'created_time': '2012-12-05T00:58:26+0000',
-    }, {
-    'id': '212038_124561947600007_672819',
-    'from': {
-      'name': 'Ron Ald',
-      'id': '513046677'
-      },
-    'message': 'Foo bar!',
-    'created_time': '2010-10-28T00:23:04+0000'
-    }]
+            "created_time": "1349588757",
+            "text": "\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute",
+            "from": {
+              "username": "averygood",
+              "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_232927278_75sq_1349602693.jpg",
+              "id": "232927278",
+              "full_name": "\u5c0f\u6b63"
+            },
+            "id": "296694460841682444"
+          }
+        ]
 POST = {  # Instagram
-  'id': '212038_10100176064482163',
-  'from': {'name': 'Ryan Barrett', 'id': '212038'},
-  'to': {'data': [
-      {'name': 'Friend 1', 'id': '234'},
-      {'name': 'Friend 2', 'id': '345'},
-      ]},
-  'with_tags': {'data': [
-      {'name': 'Friend 2', 'id': '345'}, # same id, tags shouldn't be de-duped
-      {'name': 'Friend 3', 'id': '456'},
-      ]},
-  'story': 'Ryan Barrett added a new photo.',
-  'picture': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg',
-  'message': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
-  'message_tags': {
-    '84': [{
-        'id': '283938455011303',
-        'name': 'Super Happy Block Party Hackathon',
-        'type': 'event',
-        'offset': 84,
-        'length': 33,
-        }],
-    '122': [{
-        'id': '456',
-        'name': 'Daniel M',
-        'type': 'user',
-        'offset': 122,
-        'length': 8,
-        }],
-    },
-  'link': 'http://my.link/',
-  'name': 'my link name',
-  'caption': 'my link caption',
-  'description': 'my link description',
-  'icon': 'https://s-static.ak.instagram.com/rsrc.php/v1/yx/r/og8V99JVf8G.gif',
-  'place': {
-    'id': '113785468632283',
-    'name': 'Lake Merced',
-    'location': {
-      'city': 'San Francisco',
-      'state': 'CA',
-      'country': 'United States',
-      'latitude': 37.728193717481,
-      'longitude': -122.49336423595
+      "attribution": null,
+      "tags": [],
+      "type": "image",
+      "location": null,
+      "comments": {
+        "count": len(COMMENTS),
+        "data": COMMENTS,
+      },
+      "filter": "Normal",
+      "created_time": "1348291542",
+      "link": "http:\/\/instagram.com\/p\/P3aRPTy2Un\/",
+      "likes": {
+        "count": 3,
+        "data": [
+          {
+            "username": "kokomiwu",
+            "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_182594824_75sq_1345890199.jpg",
+            "id": "182594824",
+            "full_name": "kokomiwu"
+          },
+          {
+            "username": "ghooody",
+            "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_202203276_75sq_1374997384.jpg",
+            "id": "202203276",
+            "full_name": "Ghada"
+          }
+        ]
+      },
+      "images": {
+        "low_resolution": {
+          "url": "http:\/\/distilleryimage7.s3.amazonaws.com\/f4313bc8047511e2b1c522000a1de671_6.jpg",
+          "width": 306,
+          "height": 306
+        },
+        "thumbnail": {
+          "url": "http:\/\/distilleryimage7.s3.amazonaws.com\/f4313bc8047511e2b1c522000a1de671_5.jpg",
+          "width": 150,
+          "height": 150
+        },
+        "standard_resolution": {
+          "url": "http:\/\/distilleryimage7.s3.amazonaws.com\/f4313bc8047511e2b1c522000a1de671_7.jpg",
+          "width": 612,
+          "height": 612
+        }
+      },
+      "users_in_photo": [],
+      "caption": {
+        "created_time": "1348291558",
+        "text": "sunbath",
+        "from": {
+          "username": "kokomiwu",
+          "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_182594824_75sq_1345890199.jpg",
+          "id": "182594824",
+          "full_name": "kokomiwu"
+        },
+        "id": "285812769105340251"
+      },
+      "user_has_liked": false,
+      "id": "285812635239933223_182594824",
+      "user": {
+        "username": "kokomiwu",
+        "website": "",
+        "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_182594824_75sq_1345890199.jpg",
+        "full_name": "kokomiwu",
+        "bio": "",
+        "id": "182594824"
+      }
     }
-  },
-  'type': 'photo',
-  'object_id': '10100176064452223',
-  'application': {'name': 'Instagram for Android', 'id': '350685531728'},
-  'created_time': '2012-03-04T18:20:37+0000',
-  'updated_time': '2012-03-04T19:08:16+0000',
-  'comments': {
-    'data': COMMENTS,
-    'count': len(COMMENTS),
-    },
-}
 COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
