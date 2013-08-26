@@ -5,8 +5,7 @@ threadsafe: false
 api_version: 1
 default_expiration: 1d
 
-# ideally python27 but tweepy is incompatible. :/ details in app.yaml.twitter.
-runtime: python
+runtime: python27
 
 libraries:
 - name: django
