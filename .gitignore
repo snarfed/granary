@@ -8,5 +8,7 @@ facebook_app_id_local
 facebook_app_secret_local
 instagram_client_id
 instagram_client_secret
+instagram_client_id_local
+instagram_client_secret_local
 twitter_app_key
 twitter_app_secret
