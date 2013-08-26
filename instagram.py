@@ -7,10 +7,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import cgi
 import datetime
 import itertools
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
 import re
 import urllib
 import urlparse
@@ -19,16 +16,6 @@ import appengine_config
 import source
 from webutil import util
 
-OAUTH_SCOPES = 'read_stream'
-
-API_OBJECT_URL = 'https://graph.instagram.com/%s'
-API_SELF_POSTS_URL = 'https://graph.instagram.com/%s/posts?offset=%d&limit=%d'
-# this an old, out of date version of the actual news feed. sigh. :/
-# "Note: /me/home retrieves an outdated view of the News Feed. This is currently
-# a known issue and we don't have any near term plans to bring them back up into
-# parity."
-# https://developers.instagram.com/docs/reference/api/#searching
-API_FEED_URL = 'https://graph.instagram.com/%s/home?offset=%d&limit=%d'
 
 # maps instagram graph api object types to ActivityStreams objectType.
 OBJECT_TYPES = {
@@ -51,11 +38,8 @@ class Instagram(source.Source):
   DOMAIN = 'instagram.com'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
   AUTH_URL = '&'.join((
-      ('http://localhost:8000/dialog/oauth/?'
-       if appengine_config.MOCKINSTAGRAM else
-       'https://www.instagram.com/dialog/oauth/?'),
-      'scope=%s' % OAUTH_SCOPES,
-      'client_id=%s' % appengine_config.INSTAGRAM_APP_ID,
+      'https://api.instagram.com/oauth/authorize?',
+      'client_id=%s' % appengine_config.INSTAGRAM_CLIENT_ID,
       # firefox and chrome preserve the URL fragment on redirects (e.g. from
       # http to https), but IE (6 and 8) don't, so i can't just hard-code http
       # as the scheme here, i need to actually specify the right scheme.
