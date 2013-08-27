@@ -18,114 +18,115 @@ import instagram
 import source
 from webutil import testutil
 from webutil import util
+from webutil.util import Struct
 
 
-# test data
 def tag_uri(name):
   return util.tag_uri('instagram.com', name)
 
-USER = {  # Instagram
-    "username": "snarfed",
-    "bio": "",
-    "website": "http:\/\/snarfed.org",
-    "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_420973239_75sq_1371423879.jpg",
-    "full_name": "Ryan B",
-    "counts": {
-      "media": 2,
-      "followed_by": 10,
-      "follows": 33
+
+# Test data.
+# (The Instagram API returns objects with attributes, not JSON dicts.)
+USER = Struct(  # Instagram
+  username='snarfed',
+  bio='foo',
+  website='http://snarfed.org/',
+  profile_picture='http://images.ak.instagram.com/profiles/profile_420973239_75sq_1371423879.jpg',
+  full_name='Ryan B',
+  counts={
+    'media': 2,
+    'followed_by': 10,
+    'follows': 33,
     },
-    "id": "420973239"
-  }
+  id='420973239',
+  )
 ACTOR = {  # ActivityStreams
-  'displayName': 'Ryan Barrett',
-  'image': {'url': 'http://graph.instagram.com/snarfed.org/picture?type=large'},
-  'id': tag_uri('snarfed.org'),
-  'updated': '2012-01-06T02:11:04+00:00',
-  'url': 'http://www.instagram.com/snarfed.org',
-  'username': 'snarfed.org',
-  'description': 'something about me',
-  'location': {'id': '123', 'displayName': 'San Francisco, California'},
+  'displayName': 'Ryan B',
+  'image': {'url': 'http://images.ak.instagram.com/profiles/profile_420973239_75sq_1371423879.jpg'},
+  'id': tag_uri('snarfed'),
+  'url': 'http://snarfed.org/',
+  'username': 'snarfed',
+  'description': 'foo',
   }
 COMMENTS = [{  # Instagram
-            "created_time": "1349588757",
-            "text": "\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute",
-            "from": {
-              "username": "averygood",
-              "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_232927278_75sq_1349602693.jpg",
-              "id": "232927278",
-              "full_name": "\u5c0f\u6b63"
+            'created_time': '1349588757',
+            'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+            'from': {
+              'username': 'averygood',
+              'profile_picture': 'http://images.ak.instagram.com/profiles/profile_232927278_75sq_1349602693.jpg',
+              'id': '232927278',
+              'full_name': '\u5c0f\u6b63'
             },
-            "id": "296694460841682444"
+            'id': '296694460841682444'
           }
         ]
 POST = {  # Instagram
-      "attribution": null,
-      "tags": [],
-      "type": "image",
-      "location": null,
-      "comments": {
-        "count": len(COMMENTS),
-        "data": COMMENTS,
+      'attribution': None,
+      'tags': [],
+      'type': 'image',
+      'location': None,
+      'comments': {
+        'count': len(COMMENTS),
+        'data': COMMENTS,
       },
-      "filter": "Normal",
-      "created_time": "1348291542",
-      "link": "http:\/\/instagram.com\/p\/P3aRPTy2Un\/",
-      "likes": {
-        "count": 3,
-        "data": [
+      'filter': 'Normal',
+      'created_time': '1348291542',
+      'link': 'http://instagram.com/p/P3aRPTy2Un/',
+      'likes': {
+        'count': 3,
+        'data': [
           {
-            "username": "kokomiwu",
-            "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_182594824_75sq_1345890199.jpg",
-            "id": "182594824",
-            "full_name": "kokomiwu"
+            'username': 'kokomiwu',
+            'profile_picture': 'http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
+            'id': '182594824',
+            'full_name': 'kokomiwu'
           },
           {
-            "username": "ghooody",
-            "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_202203276_75sq_1374997384.jpg",
-            "id": "202203276",
-            "full_name": "Ghada"
+            'username': 'ghooody',
+            'profile_picture': 'http://images.ak.instagram.com/profiles/profile_202203276_75sq_1374997384.jpg',
+            'id': '202203276',
+            'full_name': 'Ghada'
           }
         ]
       },
-      "images": {
-        "low_resolution": {
-          "url": "http:\/\/distilleryimage7.s3.amazonaws.com\/f4313bc8047511e2b1c522000a1de671_6.jpg",
-          "width": 306,
-          "height": 306
+      'images': {
+        'low_resolution': {
+          'url': 'http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_6.jpg',
+          'width': 306,
+          'height': 306
         },
-        "thumbnail": {
-          "url": "http:\/\/distilleryimage7.s3.amazonaws.com\/f4313bc8047511e2b1c522000a1de671_5.jpg",
-          "width": 150,
-          "height": 150
+        'thumbnail': {
+          'url': 'http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_5.jpg',
+          'width': 150,
+          'height': 150
         },
-        "standard_resolution": {
-          "url": "http:\/\/distilleryimage7.s3.amazonaws.com\/f4313bc8047511e2b1c522000a1de671_7.jpg",
-          "width": 612,
-          "height": 612
+        'standard_resolution': {
+          'url': 'http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_7.jpg',
+          'width': 612,
+          'height': 612
         }
       },
-      "users_in_photo": [],
-      "caption": {
-        "created_time": "1348291558",
-        "text": "sunbath",
-        "from": {
-          "username": "kokomiwu",
-          "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_182594824_75sq_1345890199.jpg",
-          "id": "182594824",
-          "full_name": "kokomiwu"
+      'users_in_photo': [],
+      'caption': {
+        'created_time': '1348291558',
+        'text': 'sunbath',
+        'from': {
+          'username': 'kokomiwu',
+          'profile_picture': 'http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
+          'id': '182594824',
+          'full_name': 'kokomiwu'
         },
-        "id": "285812769105340251"
+        'id': '285812769105340251'
       },
-      "user_has_liked": false,
-      "id": "285812635239933223_182594824",
-      "user": {
-        "username": "kokomiwu",
-        "website": "",
-        "profile_picture": "http:\/\/images.ak.instagram.com\/profiles\/profile_182594824_75sq_1345890199.jpg",
-        "full_name": "kokomiwu",
-        "bio": "",
-        "id": "182594824"
+      'user_has_liked': False,
+      'id': '285812635239933223_182594824',
+      'user': {
+        'username': 'kokomiwu',
+        'website': '',
+        'profile_picture': 'http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
+        'full_name': 'kokomiwu',
+        'bio': '',
+        'id': '182594824'
       }
     }
 COMMENT_OBJS = [  # ActivityStreams
@@ -367,120 +368,117 @@ class InstagramTest(testutil.HandlerTest):
     super(InstagramTest, self).setUp()
     self.instagram = instagram.Instagram(self.handler)
 
-  def test_get_actor(self):
-    self.expect_urlfetch('https://graph.instagram.com/foo', json.dumps(USER))
-    self.mox.ReplayAll()
-    self.assert_equals(ACTOR, self.instagram.get_actor('foo'))
+  # def test_get_actor(self):
+  #   self.expect_urlfetch('https://graph.instagram.com/foo', json.dumps(USER))
+  #   self.mox.ReplayAll()
+  #   self.assert_equals(ACTOR, self.instagram.get_actor('foo'))
 
-  def test_get_actor_default(self):
-    self.expect_urlfetch('https://graph.instagram.com/me', json.dumps(USER))
-    self.mox.ReplayAll()
-    self.assert_equals(ACTOR, self.instagram.get_actor())
+  # def test_get_actor_default(self):
+  #   self.expect_urlfetch('https://graph.instagram.com/me', json.dumps(USER))
+  #   self.mox.ReplayAll()
+  #   self.assert_equals(ACTOR, self.instagram.get_actor())
 
-  def test_get_activities_defaults(self):
-    resp = json.dumps({'data': [
-          {'id': '1_2', 'message': 'foo'},
-          {'id': '3_4', 'message': 'bar'},
-          ]})
-    self.expect_urlfetch(
-      'https://graph.instagram.com/me/home?offset=0&limit=0', resp)
-    self.mox.ReplayAll()
+  # def test_get_activities_defaults(self):
+  #   resp = json.dumps({'data': [
+  #         {'id': '1_2', 'message': 'foo'},
+  #         {'id': '3_4', 'message': 'bar'},
+  #         ]})
+  #   self.expect_urlfetch(
+  #     'https://graph.instagram.com/me/home?offset=0&limit=0', resp)
+  #   self.mox.ReplayAll()
 
-    self.assert_equals((
-        None,
-        [{'id': tag_uri('1_2'),
-          'object': {'content': 'foo',
-                     'id': tag_uri('1_2'),
-                     'objectType': 'note',
-                     'url': 'http://instagram.com/1/posts/2'},
-          'title': 'foo',
-          'url': 'http://instagram.com/1/posts/2',
-          'verb': 'post'},
-         {'id': tag_uri('3_4'),
-          'object': {'content': 'bar',
-                     'id': tag_uri('3_4'),
-                     'objectType': 'note',
-                     'url': 'http://instagram.com/3/posts/4'},
-          'title': 'bar',
-          'url': 'http://instagram.com/3/posts/4',
-          'verb': 'post'},
-         ]),
-      self.instagram.get_activities())
+  #   self.assert_equals((
+  #       None,
+  #       [{'id': tag_uri('1_2'),
+  #         'object': {'content': 'foo',
+  #                    'id': tag_uri('1_2'),
+  #                    'objectType': 'note',
+  #                    'url': 'http://instagram.com/1/posts/2'},
+  #         'title': 'foo',
+  #         'url': 'http://instagram.com/1/posts/2',
+  #         'verb': 'post'},
+  #        {'id': tag_uri('3_4'),
+  #         'object': {'content': 'bar',
+  #                    'id': tag_uri('3_4'),
+  #                    'objectType': 'note',
+  #                    'url': 'http://instagram.com/3/posts/4'},
+  #         'title': 'bar',
+  #         'url': 'http://instagram.com/3/posts/4',
+  #         'verb': 'post'},
+  #        ]),
+  #     self.instagram.get_activities())
 
-  def test_get_activities_self(self):
-    self.expect_urlfetch(
-      'https://graph.instagram.com/me/posts?offset=0&limit=0', '{}')
-    self.mox.ReplayAll()
-    self.assert_equals((None, []),
-                       self.instagram.get_activities(group_id=source.SELF))
+  # def test_get_activities_self(self):
+  #   self.expect_urlfetch(
+  #     'https://graph.instagram.com/me/posts?offset=0&limit=0', '{}')
+  #   self.mox.ReplayAll()
+  #   self.assert_equals((None, []),
+  #                      self.instagram.get_activities(group_id=source.SELF))
 
-  def test_get_activities_passes_through_access_token(self):
-    self.expect_urlfetch(
-      'https://graph.instagram.com/me/home?offset=0&limit=0&access_token=asdf',
-      '{"id": 123}')
-    self.mox.ReplayAll()
+  # def test_get_activities_passes_through_access_token(self):
+  #   self.expect_urlfetch(
+  #     'https://graph.instagram.com/me/home?offset=0&limit=0&access_token=asdf',
+  #     '{"id": 123}')
+  #   self.mox.ReplayAll()
 
-    handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
-                                     webapp2.Response())
-    self.instagram = instagram.Instagram(handler)
-    self.instagram.get_activities()
+  #   handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
+  #                                    webapp2.Response())
+  #   self.instagram = instagram.Instagram(handler)
+  #   self.instagram.get_activities()
 
-  def test_get_activities_activity_id(self):
-    self.expect_urlfetch('https://graph.instagram.com/000', json.dumps(POST))
-    self.mox.ReplayAll()
+  # def test_get_activities_activity_id(self):
+  #   self.expect_urlfetch('https://graph.instagram.com/000', json.dumps(POST))
+  #   self.mox.ReplayAll()
 
-    # activity id overrides user, group, app id and ignores startIndex and count
-    self.assert_equals(
-      (1, [ACTIVITY]),
-      self.instagram.get_activities(
-        user_id='123', group_id='456', app_id='789', activity_id='000',
-        start_index=3, count=6))
+  #   # activity id overrides user, group, app id and ignores startIndex and count
+  #   self.assert_equals(
+  #     (1, [ACTIVITY]),
+  #     self.instagram.get_activities(
+  #       user_id='123', group_id='456', app_id='789', activity_id='000',
+  #       start_index=3, count=6))
 
-  def test_get_activities_activity_id_not_found(self):
-    self.expect_urlfetch('https://graph.instagram.com/000', 'false')
-    self.mox.ReplayAll()
-    self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
+  # def test_get_activities_activity_id_not_found(self):
+  #   self.expect_urlfetch('https://graph.instagram.com/000', 'false')
+  #   self.mox.ReplayAll()
+  #   self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
 
-  def test_post_to_activity_full(self):
-    self.assert_equals(ACTIVITY, self.instagram.post_to_activity(POST))
+  # def test_post_to_activity_full(self):
+  #   self.assert_equals(ACTIVITY, self.instagram.post_to_activity(POST))
 
-  def test_post_to_activity_minimal(self):
-    # just test that we don't crash
-    self.instagram.post_to_activity({'id': '123_456', 'message': 'asdf'})
+  # def test_post_to_activity_minimal(self):
+  #   # just test that we don't crash
+  #   self.instagram.post_to_activity({'id': '123_456', 'message': 'asdf'})
 
-  def test_post_to_activity_empty(self):
-    # just test that we don't crash
-    self.instagram.post_to_activity({})
+  # def test_post_to_activity_empty(self):
+  #   # just test that we don't crash
+  #   self.instagram.post_to_activity({})
 
-  def test_post_to_object_full(self):
-    self.assert_equals(POST_OBJ, self.instagram.post_to_object(POST))
+  # def test_post_to_object_full(self):
+  #   self.assert_equals(POST_OBJ, self.instagram.post_to_object(POST))
 
-  def test_post_to_object_minimal(self):
-    # just test that we don't crash
-    self.instagram.post_to_object({'id': '123_456', 'message': 'asdf'})
+  # def test_post_to_object_minimal(self):
+  #   # just test that we don't crash
+  #   self.instagram.post_to_object({'id': '123_456', 'message': 'asdf'})
 
-  def test_post_to_object_empty(self):
-    self.assert_equals({}, self.instagram.post_to_object({}))
+  # def test_post_to_object_empty(self):
+  #   self.assert_equals({}, self.instagram.post_to_object({}))
 
-  def test_comment_to_object_full(self):
-    for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
-      self.assert_equals(obj, self.instagram.comment_to_object(cmt))
+  # def test_comment_to_object_full(self):
+  #   for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
+  #     self.assert_equals(obj, self.instagram.comment_to_object(cmt))
 
-  def test_comment_to_object_minimal(self):
-    # just test that we don't crash
-    self.instagram.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
+  # def test_comment_to_object_minimal(self):
+  #   # just test that we don't crash
+  #   self.instagram.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
 
-  def test_comment_to_object_empty(self):
-    self.assert_equals({}, self.instagram.comment_to_object({}))
+  # def test_comment_to_object_empty(self):
+  #   self.assert_equals({}, self.instagram.comment_to_object({}))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.instagram.user_to_actor(USER))
 
   def test_user_to_actor_minimal(self):
-    actor = self.instagram.user_to_actor({'id': '212038'})
-    self.assert_equals(tag_uri('212038'), actor['id'])
-    self.assert_equals('http://graph.instagram.com/212038/picture?type=large',
-                       actor['image']['url'])
-
-  def test_user_to_actor_empty(self):
-    self.assert_equals({}, self.instagram.user_to_actor({}))
+    self.assert_equals({'id': tag_uri('420973239'), 'username': None},
+                       self.instagram.user_to_actor(Struct(id='420973239')))
+    self.assert_equals({'id': tag_uri('snarfed'), 'username': 'snarfed'},
+                       self.instagram.user_to_actor(Struct(username='snarfed')))

@@ -278,20 +278,20 @@ class Instagram(source.Source):
     if not user:
       return {}
 
-    id = user.id
-    username = user.username
-    handle = username or id
-    if not handle:
-      return {}
+    id = getattr(user, 'id', None)
+    username = getattr(user, 'username', None)
+    if not id or not username:
+      return {'id': util.tag_uri(self.DOMAIN, id or username),
+              'username': username}
 
     url = user.website
     if not url:
-      url = 'http://instagram.com/' + handle
+      url = 'http://instagram.com/' + username
 
     actor = {
       'displayName': user.full_name,
       'image': {'url': user.profile_picture},
-      'id': util.tag_uri(self.DOMAIN, handle),
+      'id': util.tag_uri(self.DOMAIN, username),
       'url': url,
       'username': username,
       'description': user.bio,
