@@ -289,15 +289,17 @@ class InstagramTest(testutil.HandlerTest):
     super(InstagramTest, self).setUp()
     self.instagram = instagram.Instagram(self.handler)
 
-  # def test_get_actor(self):
-  #   self.expect_urlfetch('https://graph.instagram.com/foo', json.dumps(USER))
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(ACTOR, self.instagram.get_actor('foo'))
+  def test_get_actor(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'user')
+    self.instagram.api.user('foo').AndReturn(USER)
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.instagram.get_actor('foo'))
 
-  # def test_get_actor_default(self):
-  #   self.expect_urlfetch('https://graph.instagram.com/me', json.dumps(USER))
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(ACTOR, self.instagram.get_actor())
+  def test_get_actor_default(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'user')
+    self.instagram.api.user('self').AndReturn(USER)
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.instagram.get_actor())
 
   # def test_get_activities_defaults(self):
   #   resp = json.dumps({'data': [
