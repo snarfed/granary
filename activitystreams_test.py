@@ -11,6 +11,7 @@ except ImportError:
 
 import activitystreams
 import facebook_test
+import instagram_test
 import twitter_test
 import source
 from webutil import testutil
@@ -123,7 +124,7 @@ class HandlerTest(testutil.HandlerTest):
 """, resp.body)
 
   def test_atom_format(self):
-    for test_module in facebook_test, twitter_test:
+    for test_module in facebook_test, instagram_test, twitter_test:
       self.reset()
       self.mox.StubOutWithMock(FakeSource, 'get_actor')
       FakeSource.get_actor(None).AndReturn(test_module.ACTOR)

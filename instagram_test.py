@@ -202,20 +202,20 @@ ATOM = """\
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
 <id>http://localhost/</id>
-<title>User feed for Ryan Barrett</title>
+<title>User feed for Ryan B</title>
 
-<subtitle>something about me</subtitle>
+<subtitle>foo</subtitle>
 
-<logo>http://graph.instagram.com/snarfed.org/picture?type=large</logo>
-<updated>2012-03-04T18:20:37+00:00</updated>
+<logo>http://picture/ryan</logo>
+<updated>2012-09-21T22:25:42</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://www.instagram.com/snarfed.org</uri>
- <name>Ryan Barrett</name>
+ <uri>http://snarfed.org/</uri>
+ <name>Ryan B</name>
 </author>
 
-<link href="http://www.instagram.com/snarfed.org" rel="alternate" type="text/html" />
-<link rel="avatar" href="http://graph.instagram.com/snarfed.org/picture?type=large" />
+<link href="http://snarfed.org/" rel="alternate" type="text/html" />
+<link rel="avatar" href="http://picture/ryan" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
@@ -227,67 +227,57 @@ ATOM = """\
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://instagram.com/212038</uri>
- <name>Ryan Barrett</name>
+ <uri>http://snarfed.org/</uri>
+ <name>Ryan B</name>
 </author>
 
 
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
-  <id>""" + tag_uri('212038_10100176064482163') + """</id>
-  <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.</title>
+  <id>""" + tag_uri('123_456') + """</id>
+  <title>Ryan B: this picture is xyz</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.
+this picture is xyz
 
-<p><a href='http://my.link/'>
-  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' />
-  my link name
+<p><a href=''>
+  <img style='float: left' src='http://attach/image/thumb' />
+  
 </a></p>
-<p>my link description</p>
+<p></p>
+
+<p><a href=''>
+  <img style='float: left' src='http://attach/image/small' />
+  
+</a></p>
+<p></p>
+
+<p><a href=''>
+  <img style='float: left' src='http://attach/image/big' />
+  
+</a></p>
+<p></p>
 
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="http://instagram.com/212038/posts/10100176064482163" />
-  <link rel="ostatus:conversation" href="http://instagram.com/212038/posts/10100176064482163" />
-  
-    <link rel="ostatus:attention" href="http://instagram.com/234" />
-    <link rel="mentioned" href="http://instagram.com/234" />
-  
-    <link rel="ostatus:attention" href="http://instagram.com/345" />
-    <link rel="mentioned" href="http://instagram.com/345" />
-  
-    <link rel="ostatus:attention" href="http://instagram.com/345" />
-    <link rel="mentioned" href="http://instagram.com/345" />
-  
-    <link rel="ostatus:attention" href="http://instagram.com/456" />
-    <link rel="mentioned" href="http://instagram.com/456" />
-  
-    <link rel="ostatus:attention" href="http://instagram.com/456" />
-    <link rel="mentioned" href="http://instagram.com/456" />
-  
-    <link rel="ostatus:attention" href="http://instagram.com/283938455011303" />
-    <link rel="mentioned" href="http://instagram.com/283938455011303" />
+  <link rel="alternate" type="text/html" href="http://instagram.com/p/ABC123/" />
+  <link rel="ostatus:conversation" href="http://instagram.com/p/ABC123/" />
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
-  <published>2012-03-04T18:20:37+00:00</published>
-  <updated>2012-03-04T19:08:16+00:00</updated>
+  <published>2012-09-21T22:25:42</published>
+  <updated></updated>
   
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
   
   
-    <georss:point>37.7281937175 -122.493364236</georss:point>
   
   
-    <georss:featureName>Lake Merced</georss:featureName>
-  
-  
-  <link rel="self" type="application/atom+xml" href="http://instagram.com/212038/posts/10100176064482163" />
+  <link rel="self" type="application/atom+xml" href="http://instagram.com/p/ABC123/" />
 </entry>
 
 </feed>
