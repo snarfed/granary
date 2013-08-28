@@ -88,23 +88,15 @@ class Instagram(source.Source):
     """
     # Instagram timestamps are evidently all PST.
     # http://stackoverflow.com/questions/10320607
-    object = self.media_to_object(post)
+    object = self.media_to_object(media)
     activity = {
       'verb': 'post',
-      'published': object.published,
-      'updated': object.updated,
-      'id': object.id,
-      'url': object.url,
-      'actor': object.author,
+      'published': object['published'],
+      'id': object['id'],
+      'url': object['url'],
+      'actor': object['author'],
       'object': object,
       }
-
-    application = post.application
-    if application:
-      activity['generator'] = {
-        'displayName': application.name,
-        'id': self.tag_uri(application.id),
-        }
 
     self.postprocess_activity(activity)
     return util.trim_nulls(activity)

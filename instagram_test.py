@@ -183,17 +183,12 @@ POST_OBJ = {  # ActivityStreams
   }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
-  'published': '2012-03-04T18:20:37+00:00',
-  'updated': '2012-03-04T19:08:16+00:00',
-  'id': tag_uri('212038_10100176064482163'),
-  'url': 'http://instagram.com/212038/posts/10100176064482163',
-  'actor': POST_OBJ['author'],
+  'published': '2012-09-21T22:25:42',
+  'id': tag_uri('123_456'),
+  'url': 'http://instagram.com/p/ABC123/',
+  'actor': ACTOR,
   'object': POST_OBJ,
-  'title': 'Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
-  'generator': {
-    'displayName': 'Instagram for Android',
-    'id': tag_uri('350685531728'),
-    }
+  'title': 'Ryan B: this picture is xyz',
   }
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -378,16 +373,8 @@ class InstagramTest(testutil.HandlerTest):
   #   self.mox.ReplayAll()
   #   self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
 
-  # def test_media_to_activity_full(self):
-  #   self.assert_equals(ACTIVITY, self.instagram.media_to_activity(POST))
-
-  # def test_media_to_activity_minimal(self):
-  #   # just test that we don't crash
-  #   self.instagram.media_to_activity({'id': '123_456', 'message': 'asdf'})
-
-  # def test_media_to_activity_empty(self):
-  #   # just test that we don't crash
-  #   self.instagram.media_to_activity({})
+  def test_media_to_activity(self):
+    self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
 
   def test_media_to_object(self):
     self.assert_equals(POST_OBJ, self.instagram.media_to_object(MEDIA))
