@@ -26,12 +26,12 @@ def tag_uri(name):
 
 
 # Test data.
-# (The Instagram API returns objects with attributes, not JSON dicts.)
+# The Instagram API returns objects with attributes, not JSON dicts.
 USER = Struct(  # Instagram
   username='snarfed',
   bio='foo',
   website='http://snarfed.org/',
-  profile_picture='http://images.ak.instagram.com/profiles/profile_420973239_75sq_1371423879.jpg',
+  profile_picture='http://picture/ryan',
   full_name='Ryan B',
   counts={
     'media': 2,
@@ -42,137 +42,140 @@ USER = Struct(  # Instagram
   )
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan B',
-  'image': {'url': 'http://images.ak.instagram.com/profiles/profile_420973239_75sq_1371423879.jpg'},
+  'image': {'url': 'http://picture/ryan'},
   'id': tag_uri('snarfed'),
   'url': 'http://snarfed.org/',
   'username': 'snarfed',
   'description': 'foo',
   }
-COMMENTS = [{  # Instagram
-            'created_time': '1349588757',
-            'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
-            'from': {
-              'username': 'averygood',
-              'profile_picture': 'http://images.ak.instagram.com/profiles/profile_232927278_75sq_1349602693.jpg',
-              'id': '232927278',
-              'full_name': '\u5c0f\u6b63'
-            },
-            'id': '296694460841682444'
-          }
-        ]
-POST = {  # Instagram
-      'attribution': None,
-      'tags': [],
-      'type': 'image',
-      'location': None,
-      'comments': {
-        'count': len(COMMENTS),
-        'data': COMMENTS,
-      },
-      'filter': 'Normal',
-      'created_time': '1348291542',
-      'link': 'http://instagram.com/p/P3aRPTy2Un/',
-      'likes': {
-        'count': 3,
-        'data': [
-          {
-            'username': 'kokomiwu',
-            'profile_picture': 'http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
-            'id': '182594824',
-            'full_name': 'kokomiwu'
-          },
-          {
-            'username': 'ghooody',
-            'profile_picture': 'http://images.ak.instagram.com/profiles/profile_202203276_75sq_1374997384.jpg',
-            'id': '202203276',
-            'full_name': 'Ghada'
-          }
-        ]
-      },
-      'images': {
-        'low_resolution': {
-          'url': 'http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_6.jpg',
-          'width': 306,
-          'height': 306
-        },
-        'thumbnail': {
-          'url': 'http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_5.jpg',
-          'width': 150,
-          'height': 150
-        },
-        'standard_resolution': {
-          'url': 'http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_7.jpg',
-          'width': 612,
-          'height': 612
-        }
-      },
-      'users_in_photo': [],
-      'caption': {
-        'created_time': '1348291558',
-        'text': 'sunbath',
-        'from': {
-          'username': 'kokomiwu',
-          'profile_picture': 'http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
-          'id': '182594824',
-          'full_name': 'kokomiwu'
-        },
-        'id': '285812769105340251'
-      },
-      'user_has_liked': False,
-      'id': '285812635239933223_182594824',
-      'user': {
-        'username': 'kokomiwu',
-        'website': '',
-        'profile_picture': 'http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
-        'full_name': 'kokomiwu',
-        'bio': '',
-        'id': '182594824'
-      }
-    }
+COMMENTS = [Struct(  # Instagram
+    created_at='1349588757',
+    text='\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+    user=Struct(
+      username='averygood',
+      profile_picture='http://picture/commenter',
+      id='232927278',
+      full_name='\u5c0f\u6b63'
+      ),
+    id='789'
+    )]
+# POST = {  # Instagram
+#       attribution=None,
+#       tags=[],
+#       type='image',
+#       location=None,
+#       comments={
+#         count=len(COMMENTS),
+#         data=COMMENTS,
+#       },
+#       filter='Normal',
+#       created_time='1348291542',
+#       link='http://instagram.com/p/ABC123/',
+#       likes={
+#         count=3,
+#         data=[
+#           {
+#             username='kokomiwu',
+#             profile_picture='http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
+#             id='182594824',
+#             full_name='kokomiwu'
+#           },
+#           {
+#             username='ghooody',
+#             profile_picture='http://images.ak.instagram.com/profiles/profile_202203276_75sq_1374997384.jpg',
+#             id='202203276',
+#             full_name='Ghada'
+#           }
+#         ]
+#       },
+#       images={
+#         low_resolution={
+#           url='http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_6.jpg',
+#           width=306,
+#           height=306
+#         },
+#         thumbnail={
+#           url='http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_5.jpg',
+#           width=150,
+#           height=150
+#         },
+#         standard_resolution={
+#           url='http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_7.jpg',
+#           width=612,
+#           height=612
+#         }
+#       },
+#       users_in_photo=[],
+#       caption={
+#         created_time='1348291558',
+#         text='sunbath',
+#         from={
+#           username='kokomiwu',
+#           profile_picture='http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
+#           id='182594824',
+#           full_name='kokomiwu'
+#         },
+#         id='285812769105340251'
+#       },
+#       user_has_liked=False,
+#       id='123_456',
+#       user={
+#         username='kokomiwu',
+#         website='',
+#         profile_picture='http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
+#         full_name='kokomiwu',
+#         bio='',
+#         id='182594824'
+#       }
+#     }
 COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
     'author': {
-      'id': tag_uri('212038'),
-      'displayName': 'Ryan Barrett',
-      'image': {'url': 'http://graph.instagram.com/212038/picture?type=large'},
-      'url': 'http://instagram.com/212038',
+      'id': tag_uri('averygood'),
+      'username': 'averygood',
+      'displayName': '\u5c0f\u6b63',
+      'image': {'url': 'http://picture/commenter'},
+      'url': 'http://instagram.com/averygood',
       },
-    'content': 'cc Sam G, Michael M',
-    'id': tag_uri('212038_547822715231468_6796480'),
-    'published': '2012-12-05T00:58:26+00:00',
-    'url': 'http://instagram.com/212038/posts/547822715231468?comment_id=6796480',
-    'inReplyTo': {'id': tag_uri('212038_547822715231468')},
-    'tags': [{
-        'objectType': 'person',
-        'id': tag_uri('221330'),
-        'url': 'http://instagram.com/221330',
-        'displayName': 'Sam G',
-        'startIndex': 3,
-        'length': 5,
-        }, {
-        'objectType': 'person',
-        'id': tag_uri('695687650'),
-        'url': 'http://instagram.com/695687650',
-        'displayName': 'Michael Mandel',
-        'startIndex': 10,
-        'length': 9,
-        }],
+    'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+    'id': tag_uri('789'),
+    'published': '2012-10-06T22:45:57',
+    'url': 'http://instagram.com/p/ABC123/',
+    'inReplyTo': {'id': tag_uri('123_456')},
+    # TODO: mentions, hashtags, person tags
+    # 'tags': [{
+    #     'objectType': 'person',
+    #     'id': tag_uri('221330'),
+    #     'url': 'http://instagram.com/221330',
+    #     'displayName': 'Sam G',
+    #     'startIndex': 3,
+    #     'length': 5,
+    #     }, {
+    #     'objectType': 'person',
+    #     'id': tag_uri('695687650'),
+    #     'url': 'http://instagram.com/695687650',
+    #     'displayName': 'Michael Mandel',
+    #     'startIndex': 10,
+    #     'length': 9,
+    #     }],
     },
-  {
-    'objectType': 'comment',
-    'author': {
-      'id': tag_uri('513046677'),
-      'displayName': 'Ron Ald',
-      'image': {'url': 'http://graph.instagram.com/513046677/picture?type=large'},
-      'url': 'http://instagram.com/513046677',
-      },
-    'content': 'Foo bar!',
-    'id': tag_uri('212038_124561947600007_672819'),
-    'published': '2010-10-28T00:23:04+00:00',
-    'url': 'http://instagram.com/212038/posts/124561947600007?comment_id=672819',
-    'inReplyTo': {'id': tag_uri('212038_124561947600007')},
-    },
+
+  # TODO
+  # {
+  #   'objectType': 'comment',
+  #   'author': {
+  #     'id': tag_uri('513046677'),
+  #     'displayName': 'Ron Ald',
+  #     'image': {'url': 'http://graph.instagram.com/513046677/picture?type=large'},
+  #     'url': 'http://instagram.com/513046677',
+  #     },
+  #   'content': 'Foo bar!',
+  #   'id': tag_uri('212038_124561947600007_672819'),
+  #   'published': '2010-10-28T00:23:04+00:00',
+  #   'url': 'http://instagram.com/212038/posts/124561947600007?comment_id=672819',
+  #   'inReplyTo': {'id': tag_uri('212038_124561947600007')},
+  #   },
 ]
 POST_OBJ = {  # ActivityStreams
   'objectType': 'photo',
@@ -463,16 +466,10 @@ class InstagramTest(testutil.HandlerTest):
   # def test_post_to_object_empty(self):
   #   self.assert_equals({}, self.instagram.post_to_object({}))
 
-  # def test_comment_to_object_full(self):
-  #   for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
-  #     self.assert_equals(obj, self.instagram.comment_to_object(cmt))
-
-  # def test_comment_to_object_minimal(self):
-  #   # just test that we don't crash
-  #   self.instagram.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
-
-  # def test_comment_to_object_empty(self):
-  #   self.assert_equals({}, self.instagram.comment_to_object({}))
+  def test_comment_to_object_full(self):
+    for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
+      self.assert_equals(obj, self.instagram.comment_to_object(
+          cmt, '123_456', 'http://instagram.com/p/ABC123/'))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.instagram.user_to_actor(USER))

@@ -54,6 +54,10 @@ class Instagram(source.Source):
       client_secret=appengine_config.INSTAGRAM_CLIENT_SECRET,
       access_token=self.handler.request.get('access_token'))
 
+  # @staticmethod
+  # def media_url(id):
+  #   return 'http://instagram.com/p/%s/' % id
+
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
 
@@ -111,6 +115,8 @@ class Instagram(source.Source):
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
+    # Instagram timestamps are evidently all PST.
+    # http://stackoverflow.com/questions/10320607
     object = self.post_to_object(post)
     activity = {
       'verb': 'post',
@@ -126,7 +132,7 @@ class Instagram(source.Source):
     if application:
       activity['generator'] = {
         'displayName': application.name,
-        'id': util.tag_uri(self.DOMAIN, application.id),
+        'id': self.tag_uri(application.id),
         }
 
     self.postprocess_activity(activity)
@@ -153,7 +159,7 @@ class Instagram(source.Source):
     picture = post.picture
 
     object = {
-      'id': util.tag_uri(self.DOMAIN, str(id)),
+      'id': self.tag_uri(str(id)),
       'objectType': OBJECT_TYPES.get(post_type, 'note'),
       'published': util.maybe_iso8601_to_rfc3339(post.created_time),
       'updated': util.maybe_iso8601_to_rfc3339(post.updated_time),
@@ -170,7 +176,7 @@ class Instagram(source.Source):
                            *post.get('message_tags', {}).values())
     object['tags'] = [{
           'objectType': OBJECT_TYPES.get(t.type, 'person'),
-          'id': util.tag_uri(self.DOMAIN, t.id),
+          'id': self.tag_uri(t.id),
           'url': 'http://instagram.com/%s' % t.id,
           'displayName': t.name,
           'startIndex': t.offset,
@@ -234,43 +240,33 @@ class Instagram(source.Source):
 
     return util.trim_nulls(object)
 
-  COMMENT_ID_RE = re.compile('(\d+)_(\d+)_(\d+)')
-
-  def comment_to_object(self, comment):
+  def comment_to_object(self, comment, media_id, media_url):
     """Converts a comment to an object.
 
     Args:
-      comment: dict, a decoded JSON comment
+      comment: python_instagram.models.Comment
+      media_id: string
+      media_url: string
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    # the message_tags field is different in comment vs post. in post, it's a
-    # dict of lists, in comment it's just a list. so, convert it to post style
-    # here before running post_to_object().
-    comment = dict(comment)
-    comment['message_tags'] = {'1': comment.get('message_tags', [])}
-
-    object = self.post_to_object(comment)
-    if not object:
-      return object
-
-    object['objectType'] = 'comment'
-
-    match = self.COMMENT_ID_RE.match(comment.id)
-    if match:
-      object['url'] = 'http://instagram.com/%s/posts/%s?comment_id=%s' % match.groups()
-      object['inReplyTo'] = {
-        'id': util.tag_uri(self.DOMAIN, '%s_%s' % match.group(1, 2)),
-        }
-
-    return object
+    return {
+      'objectType': 'comment',
+      'id': self.tag_uri(comment.id),
+      'inReplyTo': {'id': self.tag_uri(media_id)},
+      'url': media_url,
+      # TODO: add PST time zone
+      'published': util.maybe_timestamp_to_rfc3339(comment.created_at),
+      'content': comment.text,
+      'author': self.user_to_actor(comment.user),
+      }
 
   def user_to_actor(self, user):
     """Converts a user to an actor.
 
     Args:
-      user: dict, a decoded JSON Instagram user
+      user: python_instagram.models.Comment
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
@@ -281,20 +277,20 @@ class Instagram(source.Source):
     id = getattr(user, 'id', None)
     username = getattr(user, 'username', None)
     if not id or not username:
-      return {'id': util.tag_uri(self.DOMAIN, id or username),
+      return {'id': self.tag_uri(id or username),
               'username': username}
 
-    url = user.website
+    url = getattr(user, 'website', None)
     if not url:
       url = 'http://instagram.com/' + username
 
     actor = {
       'displayName': user.full_name,
       'image': {'url': user.profile_picture},
-      'id': util.tag_uri(self.DOMAIN, username),
+      'id': self.tag_uri(username),
       'url': url,
       'username': username,
-      'description': user.bio,
+      'description': getattr(user, 'bio', None)
       }
 
     return util.trim_nulls(actor)
