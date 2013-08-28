@@ -17,23 +17,12 @@ from python_instagram.client import InstagramAPI
 import source
 from webutil import util
 
-# maps instagram graph api object types to ActivityStreams objectType.
-OBJECT_TYPES = {
-  'application': 'application',
-  'event': 'event',
-  'group': 'group',
-  'link': 'article',
-  'location': 'place',
-  'page': 'page',
-  'photo': 'photo',
-  'post': 'note',
-  'user': 'person',
-  }
+# Maps Instagram media type to ActivityStreams objectType.
+OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
 
 
 class Instagram(source.Source):
-  """Implements the ActivityStreams API for Instagram.
-  """
+  """Implements the ActivityStreams API for Instagram."""
 
   DOMAIN = 'instagram.com'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
@@ -53,10 +42,6 @@ class Instagram(source.Source):
       client_id=appengine_config.INSTAGRAM_CLIENT_ID,
       client_secret=appengine_config.INSTAGRAM_CLIENT_SECRET,
       access_token=self.handler.request.get('access_token'))
-
-  # @staticmethod
-  # def media_url(id):
-  #   return 'http://instagram.com/p/%s/' % id
 
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -92,32 +77,18 @@ class Instagram(source.Source):
 
     return total_count, [self.post_to_activity(p) for p in posts]
 
-  def urlfetch(self, url, **kwargs):
-    """Wraps Source.urlfetch() and passes through the access_token query param.
-    """
-    access_token = self.handler.request.get('access_token')
-    if access_token:
-      parsed = list(urlparse.urlparse(url))
-      # query params are in index 4
-      # TODO: when this is on python 2.7, switch to urlparse.parse_qsl
-      params = cgi.parse_qsl(parsed[4]) + [('access_token', access_token)]
-      parsed[4] = urllib.urlencode(params)
-      url = urlparse.urlunparse(parsed)
-
-    return util.urlfetch(url, **kwargs)
-
-  def post_to_activity(self, post):
-    """Converts a post to an activity.
+  def media_to_activity(self, media):
+    """Converts a media to an activity.
 
     Args:
-      post: dict, a decoded JSON post
+      media: python_instagram.models.Media
 
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     # Instagram timestamps are evidently all PST.
     # http://stackoverflow.com/questions/10320607
-    object = self.post_to_object(post)
+    object = self.media_to_object(post)
     activity = {
       'verb': 'post',
       'published': object.published,
@@ -138,105 +109,82 @@ class Instagram(source.Source):
     self.postprocess_activity(activity)
     return util.trim_nulls(activity)
 
-  def post_to_object(self, post):
-    """Converts a post to an object.
+  def media_to_object(self, media):
+    """Converts a media to an object.
 
     Args:
-      post: dict, a decoded JSON post
+      media: python_instagram.models.Media
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    object = {}
-
-    id = post.id
-    if not id:
-      return {}
-
-    post_type = post.type
-    status_type = post.status_type
-    url = 'http://instagram.com/' + id.replace('_', '/posts/')
-    picture = post.picture
+    # TODO: location, hashtags, person tags, mentions
+    id = media.id
 
     object = {
-      'id': self.tag_uri(str(id)),
-      'objectType': OBJECT_TYPES.get(post_type, 'note'),
-      'published': util.maybe_iso8601_to_rfc3339(post.created_time),
-      'updated': util.maybe_iso8601_to_rfc3339(post.updated_time),
-      'author': self.user_to_actor(post.xyzxfrom),
-      'content': post.message,
-      # FB post ids are of the form USERID_POSTID
-      'url': url,
-      'image': {'url': picture},
+      'id': self.tag_uri(id),
+      'objectType': OBJECT_TYPES.get(media.type, 'photo'),
+      'published': util.maybe_timestamp_to_rfc3339(media.created_time),
+      'author': self.user_to_actor(media.user),
+      'content': media.caption.text if media.caption else None,
+      'url': media.link,
+      'attachments': [{
+          'objectType': 'image',
+          'image': {
+            'url': image.url,
+            'width': image.width,
+            'height': image.height,
+            }
+          } for image in media.images.values()],
+      # comments go in the replies field, according to the "Responses for
+      # Activity Streams" extension spec:
+      # http://activitystrea.ms/specs/json/replies/1.0/
+      'replies': {
+        'items': [self.comment_to_object(c, id, media.link)
+                  for c in media.comments],
+        'totalItems': media.comments_count,
+        }
       }
 
-    # tags
-    tags = itertools.chain(post.get('to', {}).get('data', []),
-                           post.get('with_tags', {}).get('data', []),
-                           *post.get('message_tags', {}).values())
-    object['tags'] = [{
-          'objectType': OBJECT_TYPES.get(t.type, 'person'),
-          'id': self.tag_uri(t.id),
-          'url': 'http://instagram.com/%s' % t.id,
-          'displayName': t.name,
-          'startIndex': t.offset,
-          'length': t.length,
-          } for t in tags]
+    for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
+      image = media.images.get(version)
+      if image:
+        object['image'] = {'url': image.url}
+        break
 
-    # is there an attachment? prefer to represent it as a picture (ie image
-    # object), but if not, fall back to a link.
-    link = post.link
-    att = {
-        'url': link if link else url,
-        'image': {'url': picture},
-        'displayName': post.name,
-        'summary': post.caption,
-        'content': post.description,
-        }
+    # # tags
+    # tags = itertools.chain(media.get('to', {}).get('data', []),
+    #                        media.get('with_tags', {}).get('data', []),
+    #                        *media.get('message_tags', {}).values())
+    # object['tags'] = [{
+    #       'objectType': OBJECT_TYPES.get(t.type, 'person'),
+    #       'id': self.tag_uri(t.id),
+    #       'url': 'http://instagram.com/%s' % t.id,
+    #       'displayName': t.name,
+    #       'startIndex': t.offset,
+    #       'length': t.length,
+    #       } for t in tags]
 
-    if (picture and picture.endswith('_s.jpg') and
-        (post_type == 'photo' or status_type == 'added_photos')):
-      # a picture the user posted. get a larger size.
-      att.update({
-          'objectType': 'image',
-          'image': {'url': picture[:-6] + '_o.jpg'},
-          })
-      object['attachments'] = [att]
-    elif link:
-      att['objectType'] = 'article'
-      object['attachments'] = [att]
-
-    # location
-    place = post.place
-    if place:
-      id = place.id
-      object['location'] = {
-        'displayName': place.name,
-        'id': id,
-        'url': 'http://instagram.com/' + id,
-        }
-      location = place.get('location', None)
-      if isinstance(location, dict):
-        lat = location.latitude
-        lon = location.longitude
-        if lat and lon:
-          object['location'].update({
-              'latitude': lat,
-              'longitude': lon,
-              # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-              'position': '%+f%+f/' % (lat, lon),
-              })
-
-    # comments go in the replies field, according to the "Responses for
-    # Activity Streams" extension spec:
-    # http://activitystrea.ms/specs/json/replies/1.0/
-    comments = post.get('comments', {}).data
-    if comments:
-      items = [self.comment_to_object(c) for c in comments]
-      object['replies'] = {
-        'items': items,
-        'totalItems': len(items),
-        }
+    # # location
+    # place = media.place
+    # if place:
+    #   id = place.id
+    #   object['location'] = {
+    #     'displayName': place.name,
+    #     'id': id,
+    #     'url': 'http://instagram.com/' + id,
+    #     }
+    #   location = place.get('location', None)
+    #   if isinstance(location, dict):
+    #     lat = location.latitude
+    #     lon = location.longitude
+    #     if lat and lon:
+    #       object['location'].update({
+    #           'latitude': lat,
+    #           'longitude': lon,
+    #           # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
+    #           'position': '%+f%+f/' % (lat, lon),
+    #           })
 
     return util.trim_nulls(object)
 

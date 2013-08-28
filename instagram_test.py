@@ -59,75 +59,44 @@ COMMENTS = [Struct(  # Instagram
       ),
     id='789'
     )]
-# POST = {  # Instagram
-#       attribution=None,
-#       tags=[],
-#       type='image',
-#       location=None,
-#       comments={
-#         count=len(COMMENTS),
-#         data=COMMENTS,
-#       },
-#       filter='Normal',
-#       created_time='1348291542',
-#       link='http://instagram.com/p/ABC123/',
-#       likes={
-#         count=3,
-#         data=[
-#           {
-#             username='kokomiwu',
-#             profile_picture='http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
-#             id='182594824',
-#             full_name='kokomiwu'
-#           },
-#           {
-#             username='ghooody',
-#             profile_picture='http://images.ak.instagram.com/profiles/profile_202203276_75sq_1374997384.jpg',
-#             id='202203276',
-#             full_name='Ghada'
-#           }
-#         ]
-#       },
-#       images={
-#         low_resolution={
-#           url='http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_6.jpg',
-#           width=306,
-#           height=306
-#         },
-#         thumbnail={
-#           url='http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_5.jpg',
-#           width=150,
-#           height=150
-#         },
-#         standard_resolution={
-#           url='http://distilleryimage7.s3.amazonaws.com/f4313bc8047511e2b1c522000a1de671_7.jpg',
-#           width=612,
-#           height=612
-#         }
-#       },
-#       users_in_photo=[],
-#       caption={
-#         created_time='1348291558',
-#         text='sunbath',
-#         from={
-#           username='kokomiwu',
-#           profile_picture='http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
-#           id='182594824',
-#           full_name='kokomiwu'
-#         },
-#         id='285812769105340251'
-#       },
-#       user_has_liked=False,
-#       id='123_456',
-#       user={
-#         username='kokomiwu',
-#         website='',
-#         profile_picture='http://images.ak.instagram.com/profiles/profile_182594824_75sq_1345890199.jpg',
-#         full_name='kokomiwu',
-#         bio='',
-#         id='182594824'
-#       }
-#     }
+MEDIA = Struct(  # Instagram
+  id='123_456',
+  filter='Normal',
+  created_time='1348291542',
+  link='http://instagram.com/p/ABC123/',
+  user_has_liked=False,
+  attribution=None,
+  tags=[],
+  type='image',
+  location=None,
+  user=USER,
+  comments=COMMENTS,
+  comments_count=len(COMMENTS),
+  images={
+    'low_resolution': Struct(
+      url='http://attach/image/small',
+      width=306,
+      height=306
+      ),
+    'thumbnail': Struct(
+      url='http://attach/image/thumb',
+      width=150,
+      height=150
+      ),
+    'standard_resolution': Struct(
+      url='http://attach/image/big',
+      width=612,
+      height=612
+      ),
+    },
+  users_in_photo=[],
+  caption=Struct(
+    created_time='1348291558',
+    text='this picture is xyz',
+    user={},
+    id='285812769105340251'
+    ),
+  )
 COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
@@ -179,70 +148,34 @@ COMMENT_OBJS = [  # ActivityStreams
 ]
 POST_OBJ = {  # ActivityStreams
   'objectType': 'photo',
-  'author': {
-    'id': tag_uri('212038'),
-    'displayName': 'Ryan Barrett',
-    'image': {'url': 'http://graph.instagram.com/212038/picture?type=large'},
-    'url': 'http://instagram.com/212038',
-    },
-  'content': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
-  'id': tag_uri('212038_10100176064482163'),
-  'published': '2012-03-04T18:20:37+00:00',
-  'updated': '2012-03-04T19:08:16+00:00',
-  'url': 'http://instagram.com/212038/posts/10100176064482163',
-  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
+  'author': ACTOR,
+  'content': 'this picture is xyz',
+  'id': tag_uri('123_456'),
+  'published': '2012-09-21T22:25:42',
+  'url': 'http://instagram.com/p/ABC123/',
+  'image': {'url': 'http://attach/image/big'},
   'attachments': [{
       'objectType': 'image',
-      'url': 'http://my.link/',
-      'displayName': 'my link name',
-      'summary': 'my link caption',
-      'content': 'my link description',
-      'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'}
+      'image': {
+        'url': 'http://attach/image/thumb',
+        'width': 150,
+        'height': 150,
+        }
+      }, {
+      'objectType': 'image',
+      'image': {
+        'url': 'http://attach/image/small',
+        'width': 306,
+        'height': 306,
+        }
+      }, {
+      'objectType': 'image',
+      'image': {
+        'url': 'http://attach/image/big',
+        'width': 612,
+        'height': 612,
+        }
       }],
-  'location': {
-    'displayName': 'Lake Merced',
-    'id': '113785468632283',
-    'url': 'http://instagram.com/113785468632283',
-    'latitude': 37.728193717481,
-    'longitude': -122.49336423595,
-    'position': '+37.728194-122.493364/',
-    },
-  'tags': [{
-      'objectType': 'person',
-      'id': tag_uri('234'),
-      'url': 'http://instagram.com/234',
-      'displayName': 'Friend 1',
-      }, {
-      'objectType': 'person',
-      'id': tag_uri('345'),
-      'url': 'http://instagram.com/345',
-      'displayName': 'Friend 2',
-      }, {
-      'objectType': 'person',
-      'id': tag_uri('345'),
-      'url': 'http://instagram.com/345',
-      'displayName': 'Friend 2',
-      }, {
-      'objectType': 'person',
-      'id': tag_uri('456'),
-      'url': 'http://instagram.com/456',
-      'displayName': 'Friend 3',
-      }, {
-      'objectType': 'person',
-      'id': tag_uri('456'),
-      'url': 'http://instagram.com/456',
-      'displayName': 'Daniel M',
-      'startIndex': 122,
-      'length': 8,
-      }, {
-      'objectType': 'event',
-      'id': tag_uri('283938455011303'),
-      'url': 'http://instagram.com/283938455011303',
-      'displayName': 'Super Happy Block Party Hackathon',
-      'startIndex': 84,
-      'length': 33,
-      },
-    ],
   'replies': {
     'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
@@ -445,28 +378,21 @@ class InstagramTest(testutil.HandlerTest):
   #   self.mox.ReplayAll()
   #   self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
 
-  # def test_post_to_activity_full(self):
-  #   self.assert_equals(ACTIVITY, self.instagram.post_to_activity(POST))
+  # def test_media_to_activity_full(self):
+  #   self.assert_equals(ACTIVITY, self.instagram.media_to_activity(POST))
 
-  # def test_post_to_activity_minimal(self):
+  # def test_media_to_activity_minimal(self):
   #   # just test that we don't crash
-  #   self.instagram.post_to_activity({'id': '123_456', 'message': 'asdf'})
+  #   self.instagram.media_to_activity({'id': '123_456', 'message': 'asdf'})
 
-  # def test_post_to_activity_empty(self):
+  # def test_media_to_activity_empty(self):
   #   # just test that we don't crash
-  #   self.instagram.post_to_activity({})
+  #   self.instagram.media_to_activity({})
 
-  # def test_post_to_object_full(self):
-  #   self.assert_equals(POST_OBJ, self.instagram.post_to_object(POST))
+  def test_media_to_object(self):
+    self.assert_equals(POST_OBJ, self.instagram.media_to_object(MEDIA))
 
-  # def test_post_to_object_minimal(self):
-  #   # just test that we don't crash
-  #   self.instagram.post_to_object({'id': '123_456', 'message': 'asdf'})
-
-  # def test_post_to_object_empty(self):
-  #   self.assert_equals({}, self.instagram.post_to_object({}))
-
-  def test_comment_to_object_full(self):
+  def test_comment_to_object(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.instagram.comment_to_object(
           cmt, '123_456', 'http://instagram.com/p/ABC123/'))
