@@ -9,6 +9,8 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import datetime
 
+from webutil import util
+
 ME = '@me'
 SELF = '@self'
 ALL = '@all'
@@ -93,10 +95,5 @@ class Source(object):
       activity['title'] = 'Untitled'
 
   def tag_uri(self, name):
-    """Returns a tag URI string for this source and the given string name.
-
-    Example return value: 'tag:twitter.com,2012:snarfed_org/172417043893731329'
-
-    Background on tag URIs: http://taguri.org/
-    """
-    return 'tag:%s,%d:%s' % (self.DOMAIN, datetime.datetime.now().year, name)
+    """Returns a tag URI string for this source and the given string name."""
+    return util.tag_uri(self.DOMAIN, name)

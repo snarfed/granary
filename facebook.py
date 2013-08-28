@@ -135,7 +135,7 @@ class Facebook(source.Source):
     if application:
       activity['generator'] = {
         'displayName': application.get('name'),
-        'id': util.tag_uri(self.DOMAIN, application.get('id')),
+        'id': self.tag_uri(application.get('id')),
         }
 
     self.postprocess_activity(activity)
@@ -162,7 +162,7 @@ class Facebook(source.Source):
     picture = post.get('picture')
 
     object = {
-      'id': util.tag_uri(self.DOMAIN, str(id)),
+      'id': self.tag_uri(str(id)),
       'objectType': OBJECT_TYPES.get(post_type, 'note'),
       'published': util.maybe_iso8601_to_rfc3339(post.get('created_time')),
       'updated': util.maybe_iso8601_to_rfc3339(post.get('updated_time')),
@@ -179,7 +179,7 @@ class Facebook(source.Source):
                            *post.get('message_tags', {}).values())
     object['tags'] = [{
           'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
-          'id': util.tag_uri(self.DOMAIN, t.get('id')),
+          'id': self.tag_uri(t.get('id')),
           'url': 'http://facebook.com/%s' % t.get('id'),
           'displayName': t.get('name'),
           'startIndex': t.get('offset'),
@@ -270,7 +270,7 @@ class Facebook(source.Source):
     if match:
       object['url'] = 'http://facebook.com/%s/posts/%s?comment_id=%s' % match.groups()
       object['inReplyTo'] = {
-        'id': util.tag_uri(self.DOMAIN, '%s_%s' % match.group(1, 2)),
+        'id': self.tag_uri('%s_%s' % match.group(1, 2)),
         }
 
     return object
@@ -302,7 +302,7 @@ class Facebook(source.Source):
     actor = {
       'displayName': user.get('name'),
       'image': {'url': image_url},
-      'id': util.tag_uri(self.DOMAIN, handle),
+      'id': self.tag_uri(handle),
       'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'url': url,
       'username': username,

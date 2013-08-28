@@ -155,7 +155,7 @@ class Twitter(source.Source):
       activity['context'] = {
         'inReplyTo': {
           'objectType': 'note',
-          'id': util.tag_uri(self.DOMAIN, reply_to_id),
+          'id': self.tag_uri(reply_to_id),
           'url': self.status_url(reply_to_screenname, reply_to_id),
           }
         }
@@ -199,7 +199,7 @@ class Twitter(source.Source):
       object['author'] = self.user_to_actor(user)
       username = object['author'].get('username')
       if username:
-        object['id'] = util.tag_uri(self.DOMAIN, id)
+        object['id'] = self.tag_uri(id)
         object['url'] = self.status_url(username, id)
 
     entities = tweet.get('entities', {})
@@ -218,7 +218,7 @@ class Twitter(source.Source):
     # tags
     object['tags'] = [
       {'objectType': 'person',
-       'id': util.tag_uri(self.DOMAIN, t.get('screen_name')),
+       'id': self.tag_uri(t.get('screen_name')),
        'url': self.user_url(t.get('screen_name')),
        'displayName': t.get('name'),
        'indices': t.get('indices')
@@ -284,7 +284,7 @@ class Twitter(source.Source):
     return util.trim_nulls({
       'displayName': user.get('name'),
       'image': {'url': user.get('profile_image_url')},
-      'id': util.tag_uri(self.DOMAIN, username) if username else None,
+      'id': self.tag_uri(username) if username else None,
       'published': self.rfc2822_to_iso8601(user.get('created_at')),
       'url': self.user_url(username),
       'location': {'displayName': user.get('location')},
