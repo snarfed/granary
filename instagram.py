@@ -8,11 +8,13 @@ import cgi
 import datetime
 import itertools
 import json
+import logging
 import re
 import urllib
 import urlparse
 
 import appengine_config
+from python_instagram.bind import InstagramAPIError
 from python_instagram.client import InstagramAPI
 import source
 from webutil import util
@@ -57,7 +59,7 @@ class Instagram(source.Source):
                      activity_id=None, start_index=0, count=0):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
-    See method docstring in source.py for details.
+    See method docstring in source.py for details. app_id is ignored.
 
     OAuth credentials must be provided in the access_token query parameter.
     """
@@ -67,28 +69,26 @@ class Instagram(source.Source):
       group_id = source.FRIENDS
 
     # TODO: paging
-    total_count = 0
     media = []
 
-    if group_id == source.SELF:
-      media, _ = self.api.user_recent_media(user_id)
-    elif group_id == source.ALL:
-      media, _ = self.api.media_popular()
-    elif group_id == source.FRIENDS:
-      media, _ = self.api.user_media_feed()
+    try:
+      if activity_id:
+        media = [self.api.media(activity_id)]
+      elif group_id == source.SELF:
+        media, _ = self.api.user_recent_media(user_id)
+      elif group_id == source.ALL:
+        media, _ = self.api.media_popular()
+      elif group_id == source.FRIENDS:
+        media, _ = self.api.user_media_feed()
+
+    except InstagramAPIError, e:
+      if e.status_code == 400:
+        logging.exception(e.error_message)
+        media = []
+      else:
+        raise
 
     return len(media), [self.media_to_activity(m) for m in media]
-
-    # if activity_id:
-    #   posts = [json.loads(self.urlfetch(API_OBJECT_URL % activity_id))]
-    #   if posts == [False]:  # FB returns false for "not found"
-    #     posts = []
-    #   total_count = len(posts)
-    # else:
-    #   url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
-    #   url = url % (user_id, start_index, count)
-    #   posts = json.loads(self.urlfetch(url)).get('data', [])
-    #   total_count = None
 
   def media_to_activity(self, media):
     """Converts a media to an activity.

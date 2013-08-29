@@ -16,6 +16,7 @@ import urlparse
 from webutil import webapp2
 
 import instagram
+from python_instagram.bind import InstagramAPIError
 import source
 from webutil import testutil
 from webutil import util
@@ -353,21 +354,23 @@ class InstagramTest(testutil.HandlerTest):
     self.instagram = instagram.Instagram(handler)
     self.instagram.get_activities()
 
-  # def test_get_activities_activity_id(self):
-  #   self.expect_urlfetch('https://graph.instagram.com/000', json.dumps(POST))
-  #   self.mox.ReplayAll()
+  def test_get_activities_activity_id(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('000').AndReturn(MEDIA)
+    self.mox.ReplayAll()
 
-  #   # activity id overrides user, group, app id and ignores startIndex and count
-  #   self.assert_equals(
-  #     (1, [ACTIVITY]),
-  #     self.instagram.get_activities(
-  #       user_id='123', group_id='456', app_id='789', activity_id='000',
-  #       start_index=3, count=6))
+    # activity id overrides user, group, app id and ignores startIndex and count
+    self.assert_equals(
+      (1, [ACTIVITY]),
+      self.instagram.get_activities(
+        user_id='123', group_id='456', app_id='789', activity_id='000',
+        start_index=3, count=6))
 
-  # def test_get_activities_activity_id_not_found(self):
-  #   self.expect_urlfetch('https://graph.instagram.com/000', 'false')
-  #   self.mox.ReplayAll()
-  #   self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
+  def test_get_activities_activity_id_not_found(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('000').AndRaise(InstagramAPIError(400, 'type', 'msg'))
+    self.mox.ReplayAll()
+    self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
 
   def test_media_to_activity(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
