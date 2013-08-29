@@ -303,36 +303,6 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.instagram.get_actor())
 
-  # def test_get_activities_defaults(self):
-  #   resp = json.dumps({'data': [
-  #         {'id': '1_2', 'message': 'foo'},
-  #         {'id': '3_4', 'message': 'bar'},
-  #         ]})
-  #   self.expect_urlfetch(
-  #     'https://graph.instagram.com/me/home?offset=0&limit=0', resp)
-  #   self.mox.ReplayAll()
-
-  #   self.assert_equals((
-  #       None,
-  #       [{'id': tag_uri('1_2'),
-  #         'object': {'content': 'foo',
-  #                    'id': tag_uri('1_2'),
-  #                    'objectType': 'note',
-  #                    'url': 'http://instagram.com/1/posts/2'},
-  #         'title': 'foo',
-  #         'url': 'http://instagram.com/1/posts/2',
-  #         'verb': 'post'},
-  #        {'id': tag_uri('3_4'),
-  #         'object': {'content': 'bar',
-  #                    'id': tag_uri('3_4'),
-  #                    'objectType': 'note',
-  #                    'url': 'http://instagram.com/3/posts/4'},
-  #         'title': 'bar',
-  #         'url': 'http://instagram.com/3/posts/4',
-  #         'verb': 'post'},
-  #        ]),
-  #     self.instagram.get_activities())
-
   def test_get_activities_self(self):
     self.mox.StubOutWithMock(self.instagram.api, 'user_recent_media')
     self.instagram.api.user_recent_media('self').AndReturn(([], {}))
