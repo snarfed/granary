@@ -8,6 +8,7 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import httplib2
 import json
 import mox
 import urllib
@@ -331,23 +332,26 @@ class InstagramTest(testutil.HandlerTest):
   #        ]),
   #     self.instagram.get_activities())
 
-  # def test_get_activities_self(self):
-  #   self.expect_urlfetch(
-  #     'https://graph.instagram.com/me/posts?offset=0&limit=0', '{}')
-  #   self.mox.ReplayAll()
-  #   self.assert_equals((None, []),
-  #                      self.instagram.get_activities(group_id=source.SELF))
+  def test_get_activities_self(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'user_recent_media')
+    self.instagram.api.user_recent_media('self').AndReturn(([], {}))
+    self.mox.ReplayAll()
+    self.assert_equals((0, []),
+                       self.instagram.get_activities(group_id=source.SELF))
 
-  # def test_get_activities_passes_through_access_token(self):
-  #   self.expect_urlfetch(
-  #     'https://graph.instagram.com/me/home?offset=0&limit=0&access_token=asdf',
-  #     '{"id": 123}')
-  #   self.mox.ReplayAll()
+  def test_get_activities_passes_through_access_token(self):
+    self.mox.StubOutWithMock(httplib2.Http, 'request')
+    httplib2.Http.request(
+      'https://api.instagram.com/v1/users/self/feed.json?access_token=asdf',
+      'GET', body=None, headers=mox.IgnoreArg()).AndReturn(
+      ({'status': '200'},
+       json.dumps({'meta': {'code': 200}, 'data': []})))
+    self.mox.ReplayAll()
 
-  #   handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
-  #                                    webapp2.Response())
-  #   self.instagram = instagram.Instagram(handler)
-  #   self.instagram.get_activities()
+    handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
+                                     webapp2.Response())
+    self.instagram = instagram.Instagram(handler)
+    self.instagram.get_activities()
 
   # def test_get_activities_activity_id(self):
   #   self.expect_urlfetch('https://graph.instagram.com/000', json.dumps(POST))

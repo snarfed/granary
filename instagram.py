@@ -47,7 +47,7 @@ class Instagram(source.Source):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Args:
-      user_id: string id or username. Defaults to 'me', ie the current user.
+      user_id: string id or username. Defaults to 'self', ie the current user.
     """
     if user_id is None:
       user_id = 'self'
@@ -62,20 +62,33 @@ class Instagram(source.Source):
     OAuth credentials must be provided in the access_token query parameter.
     """
     if user_id is None:
-      user_id = 'me'
+      user_id = 'self'
+    if group_id is None:
+      group_id = source.FRIENDS
 
-    if activity_id:
-      posts = [json.loads(self.urlfetch(API_OBJECT_URL % activity_id))]
-      if posts == [False]:  # FB returns false for "not found"
-        posts = []
-      total_count = len(posts)
-    else:
-      url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
-      url = url % (user_id, start_index, count)
-      posts = json.loads(self.urlfetch(url)).get('data', [])
-      total_count = None
+    # TODO: paging
+    total_count = 0
+    media = []
 
-    return total_count, [self.post_to_activity(p) for p in posts]
+    if group_id == source.SELF:
+      media, _ = self.api.user_recent_media(user_id)
+    elif group_id == source.ALL:
+      media, _ = self.api.media_popular()
+    elif group_id == source.FRIENDS:
+      media, _ = self.api.user_media_feed()
+
+    return len(media), [self.media_to_activity(m) for m in media]
+
+    # if activity_id:
+    #   posts = [json.loads(self.urlfetch(API_OBJECT_URL % activity_id))]
+    #   if posts == [False]:  # FB returns false for "not found"
+    #     posts = []
+    #   total_count = len(posts)
+    # else:
+    #   url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
+    #   url = url % (user_id, start_index, count)
+    #   posts = json.loads(self.urlfetch(url)).get('data', [])
+    #   total_count = None
 
   def media_to_activity(self, media):
     """Converts a media to an activity.
