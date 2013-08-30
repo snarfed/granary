@@ -69,7 +69,6 @@ MEDIA = Struct(  # Instagram
   link='http://instagram.com/p/ABC123/',
   user_has_liked=False,
   attribution=None,
-  tags=[],
   location=None,
   user=USER,
   comments=COMMENTS,
@@ -91,10 +90,11 @@ MEDIA = Struct(  # Instagram
       height=612
       ),
     },
+  tags=[Struct(name='abc'), Struct(name='xyz')],
   users_in_photo=[],
   caption=Struct(
     created_time='1348291558',
-    text='this picture is xyz',
+    text='this picture is #abc #xyz',
     user={},
     id='285812769105340251'
     ),
@@ -114,44 +114,12 @@ COMMENT_OBJS = [  # ActivityStreams
     'published': '2012-10-06T22:45:57',
     'url': 'http://instagram.com/p/ABC123/',
     'inReplyTo': {'id': tag_uri('123_456')},
-    # TODO: mentions, hashtags, person tags
-    # 'tags': [{
-    #     'objectType': 'person',
-    #     'id': tag_uri('221330'),
-    #     'url': 'http://instagram.com/221330',
-    #     'displayName': 'Sam G',
-    #     'startIndex': 3,
-    #     'length': 5,
-    #     }, {
-    #     'objectType': 'person',
-    #     'id': tag_uri('695687650'),
-    #     'url': 'http://instagram.com/695687650',
-    #     'displayName': 'Michael Mandel',
-    #     'startIndex': 10,
-    #     'length': 9,
-    #     }],
     },
-
-  # TODO
-  # {
-  #   'objectType': 'comment',
-  #   'author': {
-  #     'id': tag_uri('513046677'),
-  #     'displayName': 'Ron Ald',
-  #     'image': {'url': 'http://graph.instagram.com/513046677/picture?type=large'},
-  #     'url': 'http://instagram.com/513046677',
-  #     },
-  #   'content': 'Foo bar!',
-  #   'id': tag_uri('212038_124561947600007_672819'),
-  #   'published': '2010-10-28T00:23:04+00:00',
-  #   'url': 'http://instagram.com/212038/posts/124561947600007?comment_id=672819',
-  #   'inReplyTo': {'id': tag_uri('212038_124561947600007')},
-  #   },
 ]
 POST_OBJ = {  # ActivityStreams
   'objectType': 'photo',
   'author': ACTOR,
-  'content': 'this picture is xyz',
+  'content': 'this picture is #abc #xyz',
   'id': tag_uri('123_456'),
   'published': '2012-09-21T22:25:42',
   'url': 'http://instagram.com/p/ABC123/',
@@ -181,7 +149,32 @@ POST_OBJ = {  # ActivityStreams
   'replies': {
     'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
-    }
+    },
+  'tags': [{
+      # 'objectType': 'person',
+      # 'id': tag_uri('foo'),
+      # 'url': 'http://twitter.com/foo',
+      # 'displayName': 'Twitter',
+      # 'startIndex': 0,
+      # 'length': 8,
+      # }, {
+      # 'objectType': 'person',
+      # 'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
+      # 'url': 'http://twitter.com/foo',
+      # 'displayName': 'Picture.ly',
+      # 'startIndex': 15,
+      # 'length': 13,
+      # }, {
+      'objectType': 'hashtag',
+      'id': tag_uri('abc'),
+      'displayName': 'abc',
+      # 'startIndex': 32,
+      # 'length': 10,
+      }, {
+      'objectType': 'hashtag',
+      'id': tag_uri('xyz'),
+      'displayName': 'xyz',
+      }],
   }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
@@ -190,7 +183,7 @@ ACTIVITY = {  # ActivityStreams
   'url': 'http://instagram.com/p/ABC123/',
   'actor': ACTOR,
   'object': POST_OBJ,
-  'title': 'Ryan B: this picture is xyz',
+  'title': 'Ryan B: this picture is #abc #xyz',
   }
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -238,12 +231,12 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
   <id>""" + tag_uri('123_456') + """</id>
-  <title>Ryan B: this picture is xyz</title>
+  <title>Ryan B: this picture is #abc #xyz</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-this picture is xyz
+this picture is #abc #xyz
 
 <p><a href=''>
   <img style='float: left' src='http://attach/image/thumb' />
@@ -268,6 +261,12 @@ this picture is xyz
 
   <link rel="alternate" type="text/html" href="http://instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="http://instagram.com/p/ABC123/" />
+  
+    <link rel="ostatus:attention" href="" />
+    <link rel="mentioned" href="" />
+  
+    <link rel="ostatus:attention" href="" />
+    <link rel="mentioned" href="" />
   
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-09-21T22:25:42</published>

@@ -150,7 +150,13 @@ class Instagram(source.Source):
         'items': [self.comment_to_object(c, id, media.link)
                   for c in media.comments],
         'totalItems': media.comment_count,
-        }
+        },
+      'tags': [{
+          'objectType': 'hashtag',
+          'id': self.tag_uri(tag.name),
+          'displayName': tag.name,
+          # TODO: url
+          } for tag in media.tags],
       }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
