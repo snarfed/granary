@@ -156,7 +156,7 @@ class Instagram(source.Source):
           'id': self.tag_uri(tag.name),
           'displayName': tag.name,
           # TODO: url
-          } for tag in media.tags],
+          } for tag in getattr(media, 'tags', [])],
       }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
