@@ -7,3 +7,6 @@
 [submodule "python-instagram"]
 	path = python-instagram
 	url = git@github.com:snarfed/python-instagram.git
+[submodule "httplib2_module"]
+	path = httplib2_module
+	url = git@github.com:adamjmcgrath/httplib2.git
