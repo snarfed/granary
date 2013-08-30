@@ -8,6 +8,7 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import datetime
 import httplib2
 import json
 import mox
@@ -51,7 +52,7 @@ ACTOR = {  # ActivityStreams
   'description': 'foo',
   }
 COMMENTS = [Struct(  # Instagram
-    created_at='1349588757',
+    created_at=datetime.datetime.fromtimestamp(1349588757),
     text='\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     user=Struct(
       username='averygood',
@@ -64,16 +65,15 @@ COMMENTS = [Struct(  # Instagram
 MEDIA = Struct(  # Instagram
   id='123_456',
   filter='Normal',
-  created_time='1348291542',
+  created_time=datetime.datetime.fromtimestamp(1348291542),
   link='http://instagram.com/p/ABC123/',
   user_has_liked=False,
   attribution=None,
   tags=[],
-  type='image',
   location=None,
   user=USER,
   comments=COMMENTS,
-  comments_count=len(COMMENTS),
+  comment_count=len(COMMENTS),
   images={
     'low_resolution': Struct(
       url='http://attach/image/small',

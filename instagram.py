@@ -128,8 +128,10 @@ class Instagram(source.Source):
 
     object = {
       'id': self.tag_uri(id),
-      'objectType': OBJECT_TYPES.get(media.type, 'photo'),
-      'published': util.maybe_timestamp_to_rfc3339(media.created_time),
+      # TODO: detect videos. (the type field is in the JSON respose but not
+      # propagated into the Media object.)
+      'objectType': OBJECT_TYPES.get('image', 'photo'),
+      'published': media.created_time.isoformat('T'),
       'author': self.user_to_actor(media.user),
       'content': media.caption.text if media.caption else None,
       'url': media.link,
@@ -147,7 +149,7 @@ class Instagram(source.Source):
       'replies': {
         'items': [self.comment_to_object(c, id, media.link)
                   for c in media.comments],
-        'totalItems': media.comments_count,
+        'totalItems': media.comment_count,
         }
       }
 
@@ -210,7 +212,7 @@ class Instagram(source.Source):
       'inReplyTo': {'id': self.tag_uri(media_id)},
       'url': media_url,
       # TODO: add PST time zone
-      'published': util.maybe_timestamp_to_rfc3339(comment.created_at),
+      'published': comment.created_at.isoformat('T'),
       'content': comment.text,
       'author': self.user_to_actor(comment.user),
       }
