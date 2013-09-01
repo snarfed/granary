@@ -91,7 +91,7 @@ MEDIA = Struct(  # Instagram
       ),
     },
   tags=[Struct(name='abc'), Struct(name='xyz')],
-  users_in_photo=[],
+  users_in_photo=[Struct(user=USER, position=Struct(x=1, y=2))],
   caption=Struct(
     created_time='1348291558',
     text='this picture is #abc #xyz',
@@ -151,23 +151,16 @@ POST_OBJ = {  # ActivityStreams
     'totalItems': len(COMMENT_OBJS),
     },
   'tags': [{
-      # 'objectType': 'person',
-      # 'id': tag_uri('foo'),
-      # 'url': 'http://twitter.com/foo',
-      # 'displayName': 'Twitter',
-      # 'startIndex': 0,
-      # 'length': 8,
-      # }, {
-      # 'objectType': 'person',
-      # 'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
-      # 'url': 'http://twitter.com/foo',
-      # 'displayName': 'Picture.ly',
-      # 'startIndex': 15,
-      # 'length': 13,
-      # }, {
+      'objectType': 'person',
+      'id': tag_uri('snarfed'),
+      'url': 'http://instagram.com/snarfed',
+      'displayName': 'Ryan B',
+      'image': {'url': 'http://picture/ryan'},
+      }, {
       'objectType': 'hashtag',
       'id': tag_uri('abc'),
       'displayName': 'abc',
+      # TODO?
       # 'startIndex': 32,
       # 'length': 10,
       }, {
@@ -261,6 +254,9 @@ this picture is #abc #xyz
 
   <link rel="alternate" type="text/html" href="http://instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="http://instagram.com/p/ABC123/" />
+  
+    <link rel="ostatus:attention" href="http://instagram.com/snarfed" />
+    <link rel="mentioned" href="http://instagram.com/snarfed" />
   
     <link rel="ostatus:attention" href="" />
     <link rel="mentioned" href="" />

@@ -156,7 +156,14 @@ class Instagram(source.Source):
           'id': self.tag_uri(tag.name),
           'displayName': tag.name,
           # TODO: url
-          } for tag in getattr(media, 'tags', [])],
+          } for tag in getattr(media, 'tags', [])] +
+        [{
+          'objectType': 'person',
+          'id': self.tag_uri(user.user.username),
+          'displayName': user.user.full_name,
+          'url': 'http://instagram.com/' + user.user.username,
+          'image': {'url': user.user.profile_picture},
+          } for user in getattr(media, 'users_in_photo', [])],
       }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
