@@ -1,12 +1,13 @@
 activitystreams-unofficial ![ActivityStreams](https://raw.github.com/snarfed/activitystreams-unofficial/master/static/logo_small.png)
+===
 
-[About](#about)
-[Using](#using)
-[Using the REST API](#using-the-REST-API)
-[Using the library](#using-the-library)
-[History](#history)
-[Future work](#future-work)
-[Development](#development)
+  * [About](#about)
+  * [Using](#using)
+  * [Using the REST API](#using-the-REST-API)
+  * [Using the library](#using-the-library)
+  * [History](#history)
+  * [Future work](#future-work)
+  * [Development](#development)
 
 
 About
@@ -16,8 +17,8 @@ This is a library and REST API that converts Facebook, Twitter, and Instagram
 data to [ActivityStreams](http://activitystrea.ms/) format. You can try it out
 with these interactive demos:
 
-http://facebook-activitystreams.appspot.com/
-http://twitter-activitystreams.appspot.com/
+http://facebook-activitystreams.appspot.com/  
+http://twitter-activitystreams.appspot.com/  
 http://instagram-activitystreams.appspot.com/
 
 It's part of a suite of projects that implement the
@@ -48,7 +49,9 @@ tw.get_activities(group_id='@friends')
 
 is equivalent to this `HTTP GET` request:
 
-`https://twitter-activitystreams.appspot.com/@me/@friends/@app/?access_token_key=KEY&access_token_secret=SECRET`
+```
+https://twitter-activitystreams.appspot.com/@me/@friends/@app/?access_token_key=KEY&access_token_secret=SECRET
+```
 
 They return the authenticated user's Twitter stream, ie tweets from the people they
 follow. Here's the JSON output:
@@ -118,7 +121,9 @@ The [endpoints above](#about) all serve the
 [OpenSocial Activity Streams REST API](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
 Request paths are of the form:
 
-`/USER_ID/GROUP_ID/APP_ID/ACTIVITY_ID?startIndex=...&count=...&format=FORMAT&access_token=...`
+```
+/USER_ID/GROUP_ID/APP_ID/ACTIVITY_ID?startIndex=...&count=...&format=FORMAT&access_token=...
+```
 
 All query parameters are optional.
 `FORMAT` may be `json` (the default), `xml`, or `atom`, both of which return
