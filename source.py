@@ -28,8 +28,8 @@ class Source(object):
   get_activities().
 
   OAuth credentials may be extracted from the current request's query parameters
-  e.g. access_token_key and access_token_secret for Twitter (OAuth 1.0a) and
-  access_token for Facebook (OAuth 2.0).
+  e.g. access_token_key and access_token_secret for Twitter (OAuth 1.1a) and
+  access_token for Facebook and Instagram (OAuth 2.0).
 
   Attributes:
     handler: the current RequestHandler
@@ -49,7 +49,7 @@ class Source(object):
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
-    """Return a total count and list of ActivityStreams activities.
+    """Return a list and total count of ActivityStreams activities.
 
     If user_id is provided, only that user's activity(s) are included.
     start_index and count determine paging, as described in the spec:
