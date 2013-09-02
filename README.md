@@ -3,9 +3,8 @@ activitystreams-unofficial ![ActivityStreams](https://raw.github.com/snarfed/act
 
   * [About](#about)
   * [Using](#using)
-  * [Using the REST API](#using-the-REST-API)
-  * [Using the library](#using-the-library)
-  * [History](#history)
+    * [Using the REST API](#using-the-REST-API)
+    * [Using the library](#using-the-library)
   * [Future work](#future-work)
   * [Development](#development)
 
@@ -29,6 +28,18 @@ networks. The other projects include
 [webfinger-](https://github.com/snarfed/webfinger-unofficial), and
 [ostatus-unofficial](https://github.com/snarfed/ostatus-unofficial).
 
+There are many related projects.
+[sockethub](https://github.com/sockethub/sockethub) is a similar
+"polyglot" approach, but more focused on writing than reading.
+[Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
+used to do this kind of format translation, but unfortunately it and
+Cliqset died. Facebook [used to](https://developers.facebook.com/blog/post/225/)
+[officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
+[support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
+ctivityStreams, but that's also dead. On the bright side, the
+[Google+ API](https://developers.google.com/+/api/) currently formats its result
+data as ActivityStreams with only minor tweaks and extensions.
+
 License: This project is placed in the public domain.
 
 
@@ -38,7 +49,7 @@ Using
 The library and REST API are both based on the
 [OpenSocial Activity Streams service](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
 
-Let's start with an example. This method call in the library:
+Let's start with an example. This code using the library:
 
 ```python
 from activitystreams_unofficial import twitter
@@ -145,9 +156,9 @@ See the [example above](#using) for a quick start guide.
 
 Clone or download this repo into a directory named `activitystreams_unofficial`
 (note the underscore instead of dash). Each source works the same way. Import
-the module for the source you want to use, and instantiate its class by passing
-the HTTP handler object. It should have a `request` attribute for the current
-HTTP request.
+the module for the source you want to use, then instantiate its class by passing
+the HTTP handler object. The handler should have a `request` attribute for the
+current HTTP request.
 
 The useful methods are `get_activities()` and `get_actor()`, which returns the
 current authenticated user (if any). See the
@@ -156,20 +167,6 @@ for details. All return values are Python dicts of decoded ActivityStreams JSON.
 
 The `activitystreams.render_html()` function is also useful for rendering an
 ActivityStreams object as nicely formatted HTML.
-
-
-History
----
-
-[Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
-used to do this same kind of format translation, but unfortunately it and
-Cliqset died.
-
-Facebook
-[used to](https://developers.facebook.com/blog/post/225/)
-[officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
-[support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
-ctivityStreams, but that's also dead.
 
 
 Future work
