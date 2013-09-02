@@ -29,16 +29,16 @@ networks. The other projects include
 [ostatus-unofficial](https://github.com/snarfed/ostatus-unofficial).
 
 There are many related projects.
-[sockethub](https://github.com/sockethub/sockethub) is a similar
-"polyglot" approach, but more focused on writing than reading.
+[sockethub](https://github.com/sockethub/sockethub) is a similar "polyglot"
+approach, but more focused on writing than reading.
 [Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
-used to do this kind of format translation, but unfortunately it and
-Cliqset died. Facebook [used to](https://developers.facebook.com/blog/post/225/)
+used to do this kind of format translation, but unfortunately it and Cliqset
+died. Facebook [used to](https://developers.facebook.com/blog/post/225/)
 [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
 [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
-ctivityStreams, but that's also dead. On the bright side, the
-[Google+ API](https://developers.google.com/+/api/) currently formats its result
-data as ActivityStreams with only minor tweaks and extensions.
+ActivityStreams, but that's also dead. On the bright side, the
+[Google+ API](https://developers.google.com/+/api/) currently outputs
+ActivityStreams directly, with only minor tweaks and extensions.
 
 License: This project is placed in the public domain.
 
