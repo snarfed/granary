@@ -1,14 +1,23 @@
 activitystreams-unofficial ![ActivityStreams](https://raw.github.com/snarfed/activitystreams-unofficial/master/static/logo_small.png)
 
+[About](#about)
+[Using](#using)
+[Using the REST API](#using-the-REST-API)
+[Using the library](#using-the-library)
+[History](#history)
+[Future work](#future-work)
+[Development](#development)
+
+
 About
-===
+---
 
 This is a library and REST API that converts Facebook, Twitter, and Instagram
 data to [ActivityStreams](http://activitystrea.ms/) format. You can try it out
 with these interactive demos:
 
-http://facebook-activitystreams.appspot.com/  
-http://twitter-activitystreams.appspot.com/  
+http://facebook-activitystreams.appspot.com/
+http://twitter-activitystreams.appspot.com/
 http://instagram-activitystreams.appspot.com/
 
 It's part of a suite of projects that implement the
@@ -23,17 +32,19 @@ License: This project is placed in the public domain.
 
 
 Using
-===
+---
 
 The library and REST API are both based on the
 [OpenSocial Activity Streams service](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
 
 Let's start with an example. This method call in the library:
 
-    from activitystreams_unofficial import twitter
-    ...
-    tw = twitter.Twitter(handler)
-    tw.get_activities(group_id='@friends')
+```python
+from activitystreams_unofficial import twitter
+...
+tw = twitter.Twitter(handler)
+tw.get_activities(group_id='@friends')
+```
 
 is equivalent to this `HTTP GET` request:
 
@@ -42,32 +53,34 @@ is equivalent to this `HTTP GET` request:
 They return the authenticated user's Twitter stream, ie tweets from the people they
 follow. Here's the JSON output:
 
-    {
-      "itemsPerPage": 10,
-      "startIndex": 0,
-      "totalResults": 12
-      "items": [{
-          "verb": "post",
-          "id": "tag:twitter.com,2013:374272979578150912"
-          "url": "http://twitter.com/evanpro/status/374272979578150912",
-          "content": "Getting stuff for barbecue tomorrow. No ribs left! Got some nice tenderloin though. (@ Metro Plus Famille Lemay) http://t.co/b2PLgiLJwP",
-          "actor": {
-          "username": "evanpro",
-            "displayName": "Evan Prodromou",
-            "description": "Prospector.",
-            "url": "http://twitter.com/evanpro",
-          },
-          "object": {
-            "tags": [{
-                "url": "http://4sq.com/1cw5vf6",
-                "startIndex": 113,
-                "length": 22,
-                "objectType": "article"
-              }, ...],
-          },
-        }, ...]
-      ...
-    }
+```json
+{
+  "itemsPerPage": 10,
+  "startIndex": 0,
+  "totalResults": 12
+  "items": [{
+      "verb": "post",
+      "id": "tag:twitter.com,2013:374272979578150912"
+      "url": "http://twitter.com/evanpro/status/374272979578150912",
+      "content": "Getting stuff for barbecue tomorrow. No ribs left! Got some nice tenderloin though. (@ Metro Plus Famille Lemay) http://t.co/b2PLgiLJwP",
+      "actor": {
+      "username": "evanpro",
+        "displayName": "Evan Prodromou",
+        "description": "Prospector.",
+        "url": "http://twitter.com/evanpro",
+      },
+      "object": {
+        "tags": [{
+            "url": "http://4sq.com/1cw5vf6",
+            "startIndex": 113,
+            "length": 22,
+            "objectType": "article"
+          }, ...],
+      },
+    }, ...]
+  ...
+}
+```
 
 The request parameters are the same for both, all optional: `user_id` is a
 source-specific id or `@me` for the authenticated user. `group_id` may be
@@ -83,7 +96,9 @@ and
 Output data is
 [JSON Activity Streams 1.0](http://activitystrea.ms/specs/json/1.0/) objects
 wrapped in the
-[OpenSocial envelope]http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
+[OpenSocial envelope](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service),
+which puts the activities in the top-level `items` field as a list and adds the
+`itemsPerPage`, `totalCount`, etc. fields.
 
 Most requests will need an OAuth access token from the source provider. Here are
 their authentication docs:
@@ -93,13 +108,13 @@ their authentication docs:
 
 If you get an access token and pass it along, it will be used to sign and
 authorize the underlying requests to the sources providers. See the demos on the
-REST API [endpoints above](#About) for examples.
+REST API [endpoints above](#about) for examples.
 
 
 Using the REST API
-===
+---
 
-The [endpoints above](#About) all serve the
+The [endpoints above](#about) all serve the
 [OpenSocial Activity Streams REST API](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
 Request paths are of the form:
 
@@ -108,20 +123,20 @@ Request paths are of the form:
 All query parameters are optional.
 `FORMAT` may be `json` (the default), `xml`, or `atom`, both of which return
 [Atom](http://www.intertwingly.net/wiki/pie/FrontPage).
-The rest of the path elements and query params are [described above](#Using).
+The rest of the path elements and query params are [described above](#using).
 
 Errors are returned with the appropriate HTTP response code, e.g. 403 for
 Unauthorized, with details in the response body.
 
 To use the REST API in an existing ActivityStreams client, you'll need to
 hard-code exceptions for the domains you want to use e.g. `facebook.com`, and
-redirect HTTP requests to the corresponding [endpoint above](#About).
+redirect HTTP requests to the corresponding [endpoint above](#about).
 
 
 Using the library
-===
+---
 
-See the [example above](#Using) for a quick start guide.
+See the [example above](#using) for a quick start guide.
 
 Clone or download this repo into a directory named `activitystreams_unofficial`
 (note the underscore instead of dash). Each source works the same way. Import
@@ -139,7 +154,7 @@ ActivityStreams object as nicely formatted HTML.
 
 
 History
-===
+---
 
 [Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
 used to do this same kind of format translation, but unfortunately it and
@@ -153,7 +168,7 @@ ctivityStreams, but that's also dead.
 
 
 Future work
-===
+---
 
 The REST APIs are currently much more usable than the library. We need to make
 the library easier to use. Most of the hard work is already done; here's what remains.
@@ -178,12 +193,12 @@ by the end.
 
 
 Development
-===
+---
 
 Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with
 any questions.
 
-All dependencies are included as git submodules. Be sure to run `git submodule
+Most dependencies are included as git submodules. Be sure to run `git submodule
 init` after cloning this repo.
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is
@@ -199,9 +214,12 @@ a specific app id, `symlink app.yaml` to its `app.yaml.xxx` file. Likewise, if y
 add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
 
 To deploy:
-    rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
-      ~/google_appengine/appcfg.py --oauth2 update . && \
-    rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
-      ~/google_appengine/appcfg.py --oauth2 update . && \
-    rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
-      ~/google_appengine/appcfg.py --oauth2 update .
+
+```shell
+rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
+  ~/google_appengine/appcfg.py --oauth2 update . && \
+rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
+  ~/google_appengine/appcfg.py --oauth2 update . && \
+rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
+  ~/google_appengine/appcfg.py --oauth2 update .
+```
