@@ -139,7 +139,7 @@ Most dependencies are included as git submodules. Be sure to run `git submodule 
 
 You can run the unit tests with `./alltests.py`. They depend on the [App Engine SDK](https://developers.google.com/appengine/downloads) and [mox](http://code.google.com/p/pymox/), both of which you'll need to install yourself.
 
-Note the `app.yaml.*` files, one for each App Engine app id. To work on or deploy a specific app id, `symlink app.yaml` to its `app.yaml.xxx` file. Likewise, if you add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
+Note the `app.yaml.*` files, one for each App Engine app id. To work on or deploy a specific app id, symlink `app.yaml` to its `app.yaml.xxx` file. Likewise, if you add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
 
 To deploy:
 
