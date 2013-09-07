@@ -173,7 +173,7 @@ class Handler(webapp2.RequestHandler):
                                (param, val))
 
 
-def render_html(obj):
+def render_html(obj, source_name):
   """Renders an ActivityStreams object to HTML and returns the result.
 
   Features:
@@ -186,6 +186,7 @@ def render_html(obj):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
+    source_name: string, human-readable name of the source, e.g. 'Twitter'
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
@@ -277,10 +278,10 @@ def render_html(obj):
 </a></p>
 """ % (image_url, image_url, str(SCALED_IMG_WIDTH))
 
-  # "via Facebook"
-  # TODO: parameterize source name
+  # "via SOURCE"
   url = obj.get('url', '')
-  content += '<p class="freedom-via"><a href="%s">via Facebook</a></p>' % url
+  content += '<p class="freedom-via"><a href="%s">via %s</a></p>' % (
+    url, source_name)
 
   # TODO: for comments
   # # note that wordpress strips many html tags (e.g. br) and almost all

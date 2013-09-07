@@ -649,12 +649,13 @@ class RenderTest(testutil.HandlerTest):
 
   def test_render_no_tags(self):
     self.assert_equals("""<p>abc</p>
-<p class="freedom-via"><a href="">via Facebook</a></p>""",
-                       activitystreams.render_html({'content': 'abc'}))
+<p class="freedom-via"><a href="">via Source</a></p>""",
+                       activitystreams.render_html({'content': 'abc'}, 'Source'))
 
+    obj = {'content': 'abc', 'tags': [], 'url': 'li/nk'}
     self.assert_equals("""<p>abc</p>
-<p class="freedom-via"><a href="li/nk">via Facebook</a></p>""",
-                       activitystreams.render_html({'content': 'abc', 'tags': [], 'url': 'li/nk'}))
+<p class="freedom-via"><a href="li/nk">via Source</a></p>""",
+                       activitystreams.render_html(obj, 'Source'))
 
   def test_render_html(self):
     self.assert_equals(
@@ -666,7 +667,7 @@ class RenderTest(testutil.HandlerTest):
 </p>
 <p class="freedom-hashtags"><a href="j/kl">#jkl</a></p>
 <p class="freedom-tags"><a href="ryan/b">Ryan B</a>, <a href="d/ef">def</a>, <a href="ev/ent">my event</a></p>
-<p class="freedom-via"><a href="">via Facebook</a></p>""",
+<p class="freedom-via"><a href="">via My Source</a></p>""",
       activitystreams.render_html({
           'content': 'X @abc def #ghi Y',
           'tags': [{
@@ -708,4 +709,4 @@ class RenderTest(testutil.HandlerTest):
               'objectType': 'article',
               'url': 'm/no',
               }],
-          }))
+          }, 'My Source'))
