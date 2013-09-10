@@ -648,14 +648,13 @@ class RenderTest(testutil.HandlerTest):
 #         })
 
   def test_render_no_tags(self):
-    self.assert_equals("""<p>abc</p>
-<p class="freedom-via"><a href="">via Source</a></p>""",
-                       activitystreams.render_html({'content': 'abc'}, 'Source'))
+    self.assert_equals('<p>abc</p>\n',
+                       activitystreams.render_html({'content': 'abc'}))
 
     obj = {'content': 'abc', 'tags': [], 'url': 'li/nk'}
     self.assert_equals("""<p>abc</p>
-<p class="freedom-via"><a href="li/nk">via Source</a></p>""",
-                       activitystreams.render_html(obj, 'Source'))
+<p class="freedom-via"><a href="li/nk">original</a></p>""",
+                       activitystreams.render_html(obj))
 
   def test_render_html(self):
     self.assert_equals(
@@ -667,7 +666,7 @@ class RenderTest(testutil.HandlerTest):
 </p>
 <p class="freedom-hashtags"><a href="j/kl">#jkl</a></p>
 <p class="freedom-tags"><a href="ryan/b">Ryan B</a>, <a href="d/ef">def</a>, <a href="ev/ent">my event</a></p>
-<p class="freedom-via"><a href="">via My Source</a></p>""",
+<p class="freedom-via">via My Source</p>""",
       activitystreams.render_html({
           'content': 'X @abc def #ghi Y',
           'tags': [{
@@ -709,4 +708,23 @@ class RenderTest(testutil.HandlerTest):
               'objectType': 'article',
               'url': 'm/no',
               }],
-          }, 'My Source'))
+          }, source_name='My Source'))
+
+    self.assert_equals("""\
+<p>foo bar</p>
+<p class="freedom-checkin">at my house</p>
+<p class="freedom-via"><a href="http://the/url">original</a></p>""",
+      activitystreams.render_html({
+          'content': 'foo bar',
+          'location': {'displayName': 'my house'},
+          'url': 'http://the/url',
+          }))
+
+    self.assert_equals("""\
+<p>foo bar</p>
+<p class="freedom-checkin">at <a href="http://my/house">my house</a></p>
+<p class="freedom-via">via My Source</p>""",
+      activitystreams.render_html({
+          'content': 'foo bar',
+          'location': {'displayName': 'my house', 'url': 'http://my/house'},
+          }, source_name='My Source'))
