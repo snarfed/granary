@@ -316,9 +316,10 @@ ATOM = """\
 Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.
 
 <p><a href='http://my.link/'>
-  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' />
-  my link name
-</a></p>
+  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' /><br />
+  my link name</a><br />
+my link caption
+</p>
 <p>my link description</p>
 
   </div>

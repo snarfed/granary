@@ -205,9 +205,10 @@ ATOM = """\
 @twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM
 
 <p><a href=''>
-  <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' />
-  
-</a></p>
+  <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' /><br />
+  </a><br />
+
+</p>
 <p></p>
 
   </div>
