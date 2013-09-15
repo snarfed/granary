@@ -61,6 +61,9 @@ class Instagram(source.Source):
 
     See method docstring in source.py for details. app_id is ignored.
 
+    http://instagram.com/developer/endpoints/users/#get_users_feed
+    http://instagram.com/developer/endpoints/users/#get_users_media_recent
+
     OAuth credentials must be provided in the access_token query parameter.
     """
     if user_id is None:
@@ -93,6 +96,8 @@ class Instagram(source.Source):
   def media_to_activity(self, media):
     """Converts a media to an activity.
 
+    http://instagram.com/developer/endpoints/media/#get_media
+
     Args:
       media: python_instagram.models.Media
 
@@ -123,7 +128,8 @@ class Instagram(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    # TODO: location, hashtags, person tags, mentions
+    # TODO: location
+    # http://instagram.com/developer/endpoints/locations/
     id = media.id
 
     object = {
@@ -171,40 +177,6 @@ class Instagram(source.Source):
       if image:
         object['image'] = {'url': image.url}
         break
-
-    # # tags
-    # tags = itertools.chain(media.get('to', {}).get('data', []),
-    #                        media.get('with_tags', {}).get('data', []),
-    #                        *media.get('message_tags', {}).values())
-    # object['tags'] = [{
-    #       'objectType': OBJECT_TYPES.get(t.type, 'person'),
-    #       'id': self.tag_uri(t.id),
-    #       'url': 'http://instagram.com/%s' % t.id,
-    #       'displayName': t.name,
-    #       'startIndex': t.offset,
-    #       'length': t.length,
-    #       } for t in tags]
-
-    # # location
-    # place = media.place
-    # if place:
-    #   id = place.id
-    #   object['location'] = {
-    #     'displayName': place.name,
-    #     'id': id,
-    #     'url': 'http://instagram.com/' + id,
-    #     }
-    #   location = place.get('location', None)
-    #   if isinstance(location, dict):
-    #     lat = location.latitude
-    #     lon = location.longitude
-    #     if lat and lon:
-    #       object['location'].update({
-    #           'latitude': lat,
-    #           'longitude': lon,
-    #           # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-    #           'position': '%+f%+f/' % (lat, lon),
-    #           })
 
     return util.trim_nulls(object)
 
