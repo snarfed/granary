@@ -232,21 +232,24 @@ ATOM = """\
 this picture is #abc #xyz
 
 <p><a href=''>
-  <img style='float: left' src='http://attach/image/thumb' />
-  
-</a></p>
+  <img style='float: left' src='http://attach/image/thumb' /><br />
+  </a><br />
+
+</p>
 <p></p>
 
 <p><a href=''>
-  <img style='float: left' src='http://attach/image/small' />
-  
-</a></p>
+  <img style='float: left' src='http://attach/image/small' /><br />
+  </a><br />
+
+</p>
 <p></p>
 
 <p><a href=''>
-  <img style='float: left' src='http://attach/image/big' />
-  
-</a></p>
+  <img style='float: left' src='http://attach/image/big' /><br />
+  </a><br />
+
+</p>
 <p></p>
 
   </div>

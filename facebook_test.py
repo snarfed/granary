@@ -178,7 +178,7 @@ COMMENT_OBJS = [  # ActivityStreams
     },
 ]
 POST_OBJ = {  # ActivityStreams
-  'objectType': 'photo',
+  'objectType': 'image',
   'author': {
     'id': tag_uri('212038'),
     'displayName': 'Ryan Barrett',
@@ -305,7 +305,7 @@ ATOM = """\
 
 
   <activity:object-type>
-    http://activitystrea.ms/schema/1.0/photo
+    http://activitystrea.ms/schema/1.0/image
   </activity:object-type>
   <id>""" + tag_uri('212038_10100176064482163') + """</id>
   <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.</title>
@@ -316,9 +316,10 @@ ATOM = """\
 Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.
 
 <p><a href='http://my.link/'>
-  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' />
-  my link name
-</a></p>
+  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' /><br />
+  my link name</a><br />
+my link caption
+</p>
 <p>my link description</p>
 
   </div>
@@ -488,3 +489,15 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.facebook.user_to_actor({}))
+
+  def test_picture_without_message(self):
+    self.assert_equals({  # ActivityStreams
+        'objectType': 'image',
+        'id': tag_uri('445566'),
+        'url': 'http://facebook.com/445566',
+        'image': {'url': 'http://its/a/picture'},
+        }, self.facebook.post_to_object({  # Facebook
+          'id': '445566',
+          'picture': 'http://its/a/picture',
+          'source': 'https://from/a/source',
+          }))
