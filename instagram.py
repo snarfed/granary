@@ -40,10 +40,11 @@ class Instagram(source.Source):
 
   def __init__(self, *args):
     super(Instagram, self).__init__(*args)
+    token = self.handler.request.get('access_token') if self.handler else None
     self.api = InstagramAPI(
       client_id=appengine_config.INSTAGRAM_CLIENT_ID,
       client_secret=appengine_config.INSTAGRAM_CLIENT_SECRET,
-      access_token=self.handler.request.get('access_token'))
+      access_token=token)
 
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
