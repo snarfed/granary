@@ -19,7 +19,14 @@ import appengine_config
 import source
 from webutil import util
 
-OAUTH_SCOPES = 'read_stream'
+OAUTH_SCOPES = ','.join((
+    'friends_activities',
+    'friends_likes',
+    'read_requests',
+    'read_stream',
+    'user_activities',
+    'user_likes',
+    ))
 
 API_OBJECT_URL = 'https://graph.facebook.com/%s'
 API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
