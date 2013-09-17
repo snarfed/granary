@@ -39,6 +39,7 @@ OBJECT_TYPES = {
   'location': 'place',
   'page': 'page',
   'photo': 'image',
+  'instapp:photo': 'image',
   'post': 'note',
   'user': 'person',
   }
@@ -125,12 +126,20 @@ class Facebook(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     object = self.post_to_object(post)
+    id = post.get('id')
+    if id:
+      url = 'http://facebook.com/' + id.replace('_', '/posts/')
+      id = self.tag_uri(str(id))
+    else:
+      id = object.get('id')
+      url = object.get('url')
+
     activity = {
-      'verb': VERBS.get(object.get('type'), 'post'),
+      'verb': VERBS.get(post.get('type'), 'post'),
       'published': object.get('published'),
       'updated': object.get('updated'),
-      'id': object.get('id'),
-      'url': object.get('url'),
+      'id': id,
+      'url': url,
       'actor': object.get('author'),
       'object': object,
       }
@@ -141,9 +150,7 @@ class Facebook(source.Source):
         'displayName': application.get('name'),
         'id': self.tag_uri(application.get('id')),
         }
-
-    self.postprocess_activity(activity)
-    return util.trim_nulls(activity)
+    return self.postprocess_activity(activity)
 
   def post_to_object(self, post):
     """Converts a post to an object.
@@ -165,6 +172,13 @@ class Facebook(source.Source):
     url = 'http://facebook.com/' + id.replace('_', '/posts/')
     picture = post.get('picture')
     message = post.get('message')
+
+    if post_type == 'og.likes':
+      obj = post.get('data', {}).get('object')
+      if obj:
+        id = obj.get('id')
+        post_type = obj.get('type')
+        url = obj.get('url')
 
     object_type = OBJECT_TYPES.get(post_type)
     if not object_type:

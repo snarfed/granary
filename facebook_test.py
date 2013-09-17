@@ -501,3 +501,40 @@ class FacebookTest(testutil.HandlerTest):
           'picture': 'http://its/a/picture',
           'source': 'https://from/a/source',
           }))
+
+  def test_like(self):
+    activity = {
+        'id': tag_uri('10100747369806713'),
+        'verb': 'like',
+        'title': 'Unknown likes a photo.',
+        'url': 'http://facebook.com/10100747369806713',
+        'object': {
+          'objectType': 'image',
+          'id': tag_uri('214721692025931'),
+          'url': 'http://instagram.com/p/eJfUHYh-x8/',
+          }
+        }
+    post = {
+        'id': '10100747369806713',
+        'type': 'og.likes',
+        'data': {
+          'object': {
+            'id': '214721692025931',
+            'url': 'http://instagram.com/p/eJfUHYh-x8/',
+            'type': 'instapp:photo',
+            }
+          }
+        }
+    self.assert_equals(activity, self.facebook.post_to_activity(post))
+
+    activity.update({
+        'title': 'Ryan Barrett likes a photo on Instagram.',
+        'actor': ACTOR,
+        'generator': {'displayName': 'Instagram', 'id': tag_uri('12402457428')},
+        })
+    activity['object']['author'] = ACTOR
+    post.update({
+        'from': USER,
+        'application': {'name': 'Instagram', 'id': '12402457428'},
+        })
+    self.assert_equals(activity, self.facebook.post_to_activity(post))
