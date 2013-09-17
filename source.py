@@ -84,15 +84,30 @@ class Source(object):
     Args:
       activity: activity dict
     """
-    content = activity['object'].get('content')
-    actor = activity.get('actor')
+    # maps object type to human-readable name to use in title
+    TYPE_DISPLAY_NAMES = {'image': 'photo'}
+
+    activity = util.trim_nulls(activity)
+    content = activity.get('object', {}).get('content')
+    actor_name = activity.get('actor', {}).get('displayName')
     if content:
       activity['title'] = '%s%s%s' % (
-        actor['displayName'] + ': ' if actor else '',
+        actor_name + ': ' if actor_name else '',
         content[:TITLE_LENGTH],
         '...' if len(content) > TITLE_LENGTH else '')
-    if not activity.get('title'):
-      activity['title'] = 'Untitled'
+
+    if 'title' not in activity:
+      if activity['verb'] == 'like':
+        object = activity['object']
+        app = activity.get('generator', {}).get('displayName')
+        activity['title'] = '%s likes a %s%s.' % (
+          actor_name if actor_name else 'Unknown',
+          TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown'),
+          ' on %s' % app if app else '')
+      else:
+        activity['title'] = 'Untitled'
+
+    return activity
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""

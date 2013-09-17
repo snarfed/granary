@@ -178,7 +178,7 @@ COMMENT_OBJS = [  # ActivityStreams
     },
 ]
 POST_OBJ = {  # ActivityStreams
-  'objectType': 'photo',
+  'objectType': 'image',
   'author': {
     'id': tag_uri('212038'),
     'displayName': 'Ryan Barrett',
@@ -305,7 +305,7 @@ ATOM = """\
 
 
   <activity:object-type>
-    http://activitystrea.ms/schema/1.0/photo
+    http://activitystrea.ms/schema/1.0/image
   </activity:object-type>
   <id>""" + tag_uri('212038_10100176064482163') + """</id>
   <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.</title>
@@ -316,9 +316,10 @@ ATOM = """\
 Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.
 
 <p><a href='http://my.link/'>
-  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' />
-  my link name
-</a></p>
+  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' /><br />
+  my link name</a><br />
+my link caption
+</p>
 <p>my link description</p>
 
   </div>
@@ -488,3 +489,52 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.facebook.user_to_actor({}))
+
+  def test_picture_without_message(self):
+    self.assert_equals({  # ActivityStreams
+        'objectType': 'image',
+        'id': tag_uri('445566'),
+        'url': 'http://facebook.com/445566',
+        'image': {'url': 'http://its/a/picture'},
+        }, self.facebook.post_to_object({  # Facebook
+          'id': '445566',
+          'picture': 'http://its/a/picture',
+          'source': 'https://from/a/source',
+          }))
+
+  def test_like(self):
+    activity = {
+        'id': tag_uri('10100747369806713'),
+        'verb': 'like',
+        'title': 'Unknown likes a photo.',
+        'url': 'http://facebook.com/10100747369806713',
+        'object': {
+          'objectType': 'image',
+          'id': tag_uri('214721692025931'),
+          'url': 'http://instagram.com/p/eJfUHYh-x8/',
+          }
+        }
+    post = {
+        'id': '10100747369806713',
+        'type': 'og.likes',
+        'data': {
+          'object': {
+            'id': '214721692025931',
+            'url': 'http://instagram.com/p/eJfUHYh-x8/',
+            'type': 'instapp:photo',
+            }
+          }
+        }
+    self.assert_equals(activity, self.facebook.post_to_activity(post))
+
+    activity.update({
+        'title': 'Ryan Barrett likes a photo on Instagram.',
+        'actor': ACTOR,
+        'generator': {'displayName': 'Instagram', 'id': tag_uri('12402457428')},
+        })
+    activity['object']['author'] = ACTOR
+    post.update({
+        'from': USER,
+        'application': {'name': 'Instagram', 'id': '12402457428'},
+        })
+    self.assert_equals(activity, self.facebook.post_to_activity(post))

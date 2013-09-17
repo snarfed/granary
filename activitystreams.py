@@ -173,7 +173,7 @@ class Handler(webapp2.RequestHandler):
                                (param, val))
 
 
-def render_html(obj, source_name):
+def render_html(obj, source_name=None):
   """Renders an ActivityStreams object to HTML and returns the result.
 
   Features:
@@ -253,9 +253,12 @@ def render_html(obj, source_name):
 
   # checkin
   location = obj.get('location')
-  if location:
-    content += '<p class="freedom-checkin"> at <a href="%s">%s</a></p>\n' % (
-      location['url'], location['displayName'])
+  if location and 'displayName' in location:
+    place = location['displayName']
+    url = location.get('url')
+    if url:
+      place = '<a href="%s">%s</a>' % (url, place)
+    content += '<p class="freedom-checkin">at %s</p>\n' % place
 
   # other tags
   content += render_tags_html(tags.pop('hashtag', []), 'freedom-hashtags')
@@ -279,9 +282,12 @@ def render_html(obj, source_name):
 """ % (image_url, image_url, str(SCALED_IMG_WIDTH))
 
   # "via SOURCE"
-  url = obj.get('url', '')
-  content += '<p class="freedom-via"><a href="%s">via %s</a></p>' % (
-    url, source_name)
+  url = obj.get('url')
+  if source_name or url:
+    via = ('via %s' % source_name) if source_name else 'original'
+    if url:
+      via = '<a href="%s">%s</a>' % (url, via)
+    content += '<p class="freedom-via">%s</p>' % via
 
   # TODO: for comments
   # # note that wordpress strips many html tags (e.g. br) and almost all
