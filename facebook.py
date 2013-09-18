@@ -20,11 +20,22 @@ import source
 from webutil import util
 
 OAUTH_SCOPES = ','.join((
+    'friends_actions.music',
+    'friends_actions.news',
+    'friends_actions.video',
+    'friends_actions:instapp',
     'friends_activities',
+    'friends_games_activity',
     'friends_likes',
-    'read_requests',
+    'friends_notes',
+    'friends_photos',
+    'friends_relationships',
     'read_stream',
+    'user_actions.news',
+    'user_actions.video',
+    'user_actions:instapp',
     'user_activities',
+    'user_games_activity',
     'user_likes',
     ))
 
