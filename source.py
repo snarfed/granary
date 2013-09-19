@@ -85,11 +85,16 @@ class Source(object):
       activity: activity dict
     """
     # maps object type to human-readable name to use in title
-    TYPE_DISPLAY_NAMES = {'image': 'photo'}
+    TYPE_DISPLAY_NAMES = {'image': 'photo', 'product': 'gift'}
+
+    # maps verb to human-readable verb
+    DISPLAY_VERBS = {'like': 'likes', 'listen': 'listened to',
+                     'play': 'watched', 'read': 'read', 'give': 'gave'}
 
     activity = util.trim_nulls(activity)
     content = activity.get('object', {}).get('content')
     actor_name = self.actor_name(activity.get('actor'))
+    object = activity.get('object')
 
     if 'title' not in activity:
       if content:
@@ -97,14 +102,13 @@ class Source(object):
           actor_name + ': ' if actor_name else '',
           content[:TITLE_LENGTH],
           '...' if len(content) > TITLE_LENGTH else '')
-      elif activity['verb'] == 'like':
-        object = activity['object']
+      elif object:
         app = activity.get('generator', {}).get('displayName')
-        activity['title'] = '%s likes a %s%s.' % (
-          actor_name, TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown'),
+        activity['title'] = '%s %s a %s%s.' % (
+          actor_name,
+          DISPLAY_VERBS.get(activity['verb'], 'posted'),
+          TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown'),
           ' on %s' % app if app else '')
-      else:
-        activity['title'] = 'Untitled'
 
     return activity
 
