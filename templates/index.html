@@ -30,7 +30,7 @@ this site</a>.
 
 <p>This is the API endpoint:</p>
 <ul>
-  <li><code>https://{{ host }}/<a href="http://activitystrea.ms/draft-spec.html">...</a></code></li>
+  <li><code>https://{{ host }}/<a href="http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service">...</a></code></li>
 </ul>
 
 <p>These are the
@@ -68,8 +68,15 @@ mailing list</a>.</p>
        onkeyup="render_form()" onfocus="render_form()" onblur="render_form()" />
        <!-- onkeyup instead of onkeypress because onkeypress fires *before* the
             browser adds the character to the input value -->
+? format =
+<select id="format" name="format" onchange="render_form()">
+  <option value="json">json</input>
+  <option value="atom">atom</input>
+</select>
+&
 {% block query_params %}
 {% endblock %}
+<input type="hidden" name="plaintext" />
 </code></nobr></p>
 
 <p>

@@ -11,7 +11,7 @@ include an access token in a request to this provider, it will be passed through
 to Instagram. See the demo for an example. {% endblock %}
 
 {% block query_params %}
-<label id="access_token_label" for="access_token">? access_token =</label>
+<label id="access_token_label" for="access_token">access_token =</label>
 <input id="access_token" name="access_token" type="text" size="10"
        onkeyup="render_form()" onchange="render_form()"
        value="{{ access_token }}" />

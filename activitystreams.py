@@ -146,6 +146,10 @@ class Handler(webapp2.RequestHandler):
         assert format == 'atom'
         self.response.out.write(template.render(ATOM_TEMPLATE_FILE, response))
 
+    if 'plaintext' in self.request.params:
+      # override response content type
+      self.response.headers['Content-Type'] = 'text/plain'
+
   def get_paging_params(self):
     """Extracts, normalizes and returns the startIndex and count query params.
 

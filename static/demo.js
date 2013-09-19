@@ -12,6 +12,7 @@ function render_form() {
   var group_id = document.getElementById('group_id').value;
   var activity_id_elem = document.getElementById('activity_id');
   var activity_id = activity_id_elem.value;
+  var format = document.getElementById('format').value;
 
   if (activity_id == '' || activity_id == ACTIVITY_ID_BLURB) {
     if (document.activeElement == activity_id_elem) {
@@ -41,7 +42,7 @@ function render_form() {
   if (!activity_id_elem.disabled && activity_id != ACTIVITY_ID_BLURB)
     url += activity_id;
 
-  url += '?'
+  url += '?format=' + format + '&';
    for (i in oauth_inputs) {
     if (oauth_inputs[i].value)
       url += oauth_inputs[i].name + '=' + oauth_inputs[i].value + '&';
@@ -50,7 +51,6 @@ function render_form() {
   document.getElementById('url').innerHTML = url;
   document.getElementById('demo').action = url;
 }
-                   
 
 /* Only used for Facebook's client side OAuth flow, which returns the access
  * token in the URL fragment.
