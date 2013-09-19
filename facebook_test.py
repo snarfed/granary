@@ -398,7 +398,7 @@ class FacebookTest(testutil.HandlerTest):
                      'id': tag_uri('1_2'),
                      'objectType': 'note',
                      'url': 'http://facebook.com/1/posts/2'},
-          'title': 'foo',
+          'title': 'Unknown: foo',
           'url': 'http://facebook.com/1/posts/2',
           'verb': 'post'},
          {'id': tag_uri('3_4'),
@@ -406,7 +406,7 @@ class FacebookTest(testutil.HandlerTest):
                      'id': tag_uri('3_4'),
                      'objectType': 'note',
                      'url': 'http://facebook.com/3/posts/4'},
-          'title': 'bar',
+          'title': 'Unknown: bar',
           'url': 'http://facebook.com/3/posts/4',
           'verb': 'post'},
          ]),
@@ -548,4 +548,23 @@ class FacebookTest(testutil.HandlerTest):
       }, self.facebook.post_to_object({
         'id': '101007473698067',
         'story': 'Once upon a time.',
+        }))
+
+  def test_gift(self):
+    self.assert_equals({
+        'id': tag_uri('10100747'),
+        'actor': ACTOR,
+        'verb': 'give',
+        'title': 'Ryan Barrett gave a gift.',
+        'url': 'http://facebook.com/10100747',
+        'object': {
+          'id': tag_uri('10100747'),
+          'author': ACTOR,
+          'url': 'http://facebook.com/10100747',
+          'objectType': 'product',
+          },
+      }, self.facebook.post_to_activity({
+        'id': '10100747',
+        'from': USER,
+        'link': '/gifts/12345',
         }))

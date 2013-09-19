@@ -169,6 +169,10 @@ class Facebook(source.Source):
       'object': object,
       }
 
+    if object.get('objectType') == 'product':
+      activity['verb'] = 'give'
+      activity['title'] = '%s gave a gift.' % self.actor_name(activity['actor'])
+
     application = post.get('application')
     if application:
       activity['generator'] = {
@@ -208,6 +212,12 @@ class Facebook(source.Source):
         url = obj.get('url')
 
     object_type = OBJECT_TYPES.get(post_type)
+    author = self.user_to_actor(post.get('from'))
+    link = post.get('link', '')
+    if link.startswith('/gifts/'):
+      object_type = 'product'
+
+
     if not object_type:
       if picture and not message:
         object_type = 'image'
@@ -219,7 +229,7 @@ class Facebook(source.Source):
       'objectType': object_type,
       'published': util.maybe_iso8601_to_rfc3339(post.get('created_time')),
       'updated': util.maybe_iso8601_to_rfc3339(post.get('updated_time')),
-      'author': self.user_to_actor(post.get('from')),
+      'author': author,
       'content': message,
       # FB post ids are of the form USERID_POSTID
       'url': url,
@@ -241,7 +251,6 @@ class Facebook(source.Source):
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
-    link = post.get('link')
     att = {
         'url': link if link else url,
         'image': {'url': picture},
@@ -258,7 +267,7 @@ class Facebook(source.Source):
           'image': {'url': picture[:-6] + '_o.jpg'},
           })
       object['attachments'] = [att]
-    elif link:
+    elif link and not link.startswith('/gifts/'):
       att['objectType'] = 'article'
       object['attachments'] = [att]
 

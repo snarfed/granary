@@ -89,25 +89,30 @@ class Source(object):
 
     activity = util.trim_nulls(activity)
     content = activity.get('object', {}).get('content')
-    actor_name = activity.get('actor', {}).get('displayName')
-    if content:
-      activity['title'] = '%s%s%s' % (
-        actor_name + ': ' if actor_name else '',
-        content[:TITLE_LENGTH],
-        '...' if len(content) > TITLE_LENGTH else '')
+    actor_name = self.actor_name(activity.get('actor'))
 
     if 'title' not in activity:
-      if activity['verb'] == 'like':
+      if content:
+        activity['title'] = '%s%s%s' % (
+          actor_name + ': ' if actor_name else '',
+          content[:TITLE_LENGTH],
+          '...' if len(content) > TITLE_LENGTH else '')
+      elif activity['verb'] == 'like':
         object = activity['object']
         app = activity.get('generator', {}).get('displayName')
         activity['title'] = '%s likes a %s%s.' % (
-          actor_name if actor_name else 'Unknown',
-          TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown'),
+          actor_name, TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown'),
           ' on %s' % app if app else '')
       else:
         activity['title'] = 'Untitled'
 
     return activity
+
+  @staticmethod
+  def actor_name(actor):
+    """Returns the given actor's name if available, otherwise Unknown."""
+    return actor.get('displayName', 'Unknown') if actor else 'Unknown'
+
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
