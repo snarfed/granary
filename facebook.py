@@ -60,6 +60,7 @@ OBJECT_TYPES = {
   'instapp:photo': 'image',
   'post': 'note',
   'user': 'person',
+  'website': 'article',
   }
 
 # maps facebook graph api post type to ActivityStreams objectType.
