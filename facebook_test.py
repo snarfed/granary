@@ -538,3 +538,14 @@ class FacebookTest(testutil.HandlerTest):
         'application': {'name': 'Instagram', 'id': '12402457428'},
         })
     self.assert_equals(activity, self.facebook.post_to_activity(post))
+
+  def test_story(self):
+    self.assert_equals({
+        'id': tag_uri('101007473698067'),
+        'url': 'http://facebook.com/101007473698067',
+        'objectType': 'note',
+        'content': 'Once upon a time.',
+      }, self.facebook.post_to_object({
+        'id': '101007473698067',
+        'story': 'Once upon a time.',
+        }))

@@ -1,5 +1,11 @@
 #!/usr/bin/python
 """Facebook source class. Uses the Graph API.
+
+TODO:
+- friends' new friendships, ie "X is now friends with Y." Not currently
+available in /me/home. http://stackoverflow.com/questions/4358026
+- when someone likes multiple things (og.likes type), only the first is included
+in the data.objects array.
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -191,6 +197,8 @@ class Facebook(source.Source):
     url = 'http://facebook.com/' + id.replace('_', '/posts/')
     picture = post.get('picture')
     message = post.get('message')
+    if not message:
+      message = post.get('story')
 
     if post_type == 'og.likes':
       obj = post.get('data', {}).get('object')
