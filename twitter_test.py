@@ -259,21 +259,21 @@ class TwitterTest(testutil.HandlerTest):
     self.twitter = twitter.Twitter(self.handler)
 
   def test_get_actor(self):
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
       json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.twitter.get_actor('foo'))
 
   def test_get_actor_default(self):
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://api.twitter.com/1.1/account/verify_credentials.json',
       json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.twitter.get_actor())
 
   def test_get_activities(self):
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/home_timeline.json?'
       'include_entities=true&count=0',
       json.dumps([TWEET, TWEET]))
@@ -288,7 +288,7 @@ class TwitterTest(testutil.HandlerTest):
     activity2['actor']['displayName'] = 'foo'
     activity2['title'] = activity2['title'].replace('Ryan Barrett: ', 'foo: ')
 
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/home_timeline.json?'
       'include_entities=true&count=2',
       json.dumps([TWEET, tweet2]))
@@ -298,7 +298,7 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals((None, [activity2]), got)
 
   def test_get_activities_activity_id(self):
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/show.json?id=000&include_entities=true',
       json.dumps(TWEET))
     self.mox.ReplayAll()
@@ -311,7 +311,7 @@ class TwitterTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_self(self):
-    self.expect_urlfetch('https://api.twitter.com/1.1/statuses/user_timeline.json?'
+    self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
                          'include_entities=true&count=0',
                          '[]')
     self.mox.ReplayAll()

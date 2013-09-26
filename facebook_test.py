@@ -373,12 +373,12 @@ class FacebookTest(testutil.HandlerTest):
     self.facebook = facebook.Facebook(self.handler)
 
   def test_get_actor(self):
-    self.expect_urlfetch('https://graph.facebook.com/foo', json.dumps(USER))
+    self.expect_urlopen('https://graph.facebook.com/foo', json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.facebook.get_actor('foo'))
 
   def test_get_actor_default(self):
-    self.expect_urlfetch('https://graph.facebook.com/me', json.dumps(USER))
+    self.expect_urlopen('https://graph.facebook.com/me', json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.facebook.get_actor())
 
@@ -387,7 +387,7 @@ class FacebookTest(testutil.HandlerTest):
           {'id': '1_2', 'message': 'foo'},
           {'id': '3_4', 'message': 'bar'},
           ]})
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://graph.facebook.com/me/home?offset=0&limit=0', resp)
     self.mox.ReplayAll()
 
@@ -413,14 +413,14 @@ class FacebookTest(testutil.HandlerTest):
       self.facebook.get_activities())
 
   def test_get_activities_self(self):
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&limit=0', '{}')
     self.mox.ReplayAll()
     self.assert_equals((None, []),
                        self.facebook.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'https://graph.facebook.com/me/home?offset=0&limit=0&access_token=asdf',
       '{"id": 123}')
     self.mox.ReplayAll()
@@ -431,7 +431,7 @@ class FacebookTest(testutil.HandlerTest):
     self.facebook.get_activities()
 
   def test_get_activities_activity_id(self):
-    self.expect_urlfetch('https://graph.facebook.com/000', json.dumps(POST))
+    self.expect_urlopen('https://graph.facebook.com/000', json.dumps(POST))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -442,7 +442,7 @@ class FacebookTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_activity_id_not_found(self):
-    self.expect_urlfetch('https://graph.facebook.com/000', 'false')
+    self.expect_urlopen('https://graph.facebook.com/000', 'false')
     self.mox.ReplayAll()
     self.assert_equals((0, []), self.facebook.get_activities(activity_id='000'))
 

@@ -101,7 +101,7 @@ class Facebook(source.Source):
     """
     if user_id is None:
       user_id = 'me'
-    return self.user_to_actor(json.loads(self.urlfetch(API_OBJECT_URL % user_id)))
+    return self.user_to_actor(json.loads(self.urlread(API_OBJECT_URL % user_id)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
@@ -115,20 +115,20 @@ class Facebook(source.Source):
       user_id = 'me'
 
     if activity_id:
-      posts = [json.loads(self.urlfetch(API_OBJECT_URL % activity_id))]
+      posts = [json.loads(self.urlread(API_OBJECT_URL % activity_id))]
       if posts == [False]:  # FB returns false for "not found"
         posts = []
       total_count = len(posts)
     else:
       url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
       url = url % (user_id, start_index, count)
-      posts = json.loads(self.urlfetch(url)).get('data', [])
+      posts = json.loads(self.urlread(url)).get('data', [])
       total_count = None
 
     return total_count, [self.post_to_activity(p) for p in posts]
 
-  def urlfetch(self, url, **kwargs):
-    """Wraps Source.urlfetch() and passes through the access_token query param.
+  def urlread(self, url):
+    """Wraps util.urlread() and passes through the access_token query param.
     """
     access_token = self.handler.request.get('access_token')
     if access_token:
@@ -139,7 +139,7 @@ class Facebook(source.Source):
       parsed[4] = urllib.urlencode(params)
       url = urlparse.urlunparse(parsed)
 
-    return util.urlfetch(url, **kwargs)
+    return util.urlread(url)
 
   def post_to_activity(self, post):
     """Converts a post to an activity.

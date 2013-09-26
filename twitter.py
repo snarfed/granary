@@ -62,7 +62,7 @@ class Twitter(source.Source):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Keyword args (e.g. access_token_key and access_token_secret) are passed to
-    urlfetch.
+    urlread.
 
     Args:
       screen_name: string username. Defaults to the current user.
@@ -71,7 +71,7 @@ class Twitter(source.Source):
       url = API_CURRENT_USER_URL
     else:
       url = API_USER_URL % screen_name
-    return self.user_to_actor(json.loads(self.urlfetch(url, **kwargs)))
+    return self.user_to_actor(json.loads(self.urlread(url, **kwargs)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
@@ -83,20 +83,20 @@ class Twitter(source.Source):
     access_token_secret query parameters.
     """
     if activity_id:
-      tweets = [json.loads(self.urlfetch(API_STATUS_URL % activity_id))]
+      tweets = [json.loads(self.urlread(API_STATUS_URL % activity_id))]
       total_count = len(tweets)
     else:
       url = API_SELF_TIMELINE_URL if group_id == source.SELF else API_TIMELINE_URL
       twitter_count = count + start_index
-      tweets = json.loads(self.urlfetch(url % twitter_count))
+      tweets = json.loads(self.urlread(url % twitter_count))
       tweets = tweets[start_index:]
       total_count = None
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlfetch(self, url, access_token_key=None, access_token_secret=None,
-               app_key=None, app_secret=None, **kwargs):
-    """Wraps Source.urlfetch(), signing with OAuth if there's an access token.
+  def urlread(self, url, access_token_key=None, access_token_secret=None,
+              app_key=None, app_secret=None, **kwargs):
+    """Wraps Source.urlread(), signing with OAuth if there's an access token.
 
     TODO: unit test this
     """
@@ -128,7 +128,7 @@ class Twitter(source.Source):
       logging.info('Populated Authorization header from access token: %s',
                    headers.get('Authorization'))
 
-    return util.urlfetch(url, **kwargs)
+    return util.urlread(url, **kwargs)
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.
