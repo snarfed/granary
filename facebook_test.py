@@ -568,3 +568,43 @@ class FacebookTest(testutil.HandlerTest):
         'from': USER,
         'link': '/gifts/12345',
         }))
+
+  def test_music_listen(self):
+    post = {
+      'id': '101007473698067',
+      'type': 'music.listens',
+      'data': {
+        'song': {
+          'id': '10150734526790320',
+          'url': 'http://www.rdio.com/artist/The_Shins/album/Port_Of_Morrow_1/track/The_Rifle%27s_Spiral/',
+          'type': 'music.song',
+          'title': "The Rifle's Spiral"
+          }
+        },
+      }
+    activity = {
+        'id': tag_uri('10100747'),
+        'verb': 'listen',
+        'title': "Unknown listened to The Rifle's Spiral.",
+        'url': 'http://facebook.com/10100747',
+        'object': {
+          'id': tag_uri('10100747'),
+          'url': 'http://www.rdio.com/artist/The_Shins/album/Port_Of_Morrow_1/track/The_Rifle%27s_Spiral/',
+          'objectType': 'audio',
+          'content': "Unknown listened to The Rifle's Spiral."
+          },
+      }
+    self.assert_equals(activity, self.facebook.post_to_activity(post))
+
+    activity.update({
+        'title': "Unknown listened to The Rifle's Spiral on Rdio.",
+        'generator': {'displayName': 'Rdio', 'id': tag_uri('88888')},
+        })
+    activity['object'].update({
+        'title': "Unknown listened to The Rifle's Spiral on Rdio.",
+        'content': "Unknown listened to The Rifle's Spiral on Rdio.",
+        })
+    post.update({
+        'from': USER,
+        'application': {'name': 'Rdio', 'id': '88888'},
+        })

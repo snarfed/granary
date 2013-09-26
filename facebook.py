@@ -54,24 +54,31 @@ API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
 # https://developers.facebook.com/docs/reference/api/#searching
 API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d&limit=%d'
 
-# maps facebook graph api post type to ActivityStreams objectType.
+# Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
+# objectType.
 OBJECT_TYPES = {
   'application': 'application',
   'event': 'event',
   'group': 'group',
+  'instapp:photo': 'image',
   'link': 'article',
   'location': 'place',
+  'music.song': 'audio',
   'page': 'page',
   'photo': 'image',
-  'instapp:photo': 'image',
   'post': 'note',
   'user': 'person',
   'website': 'article',
   }
 
-# maps facebook graph api post type to ActivityStreams objectType.
+# Maps Facebook Graph API post type *and ActivityStreams objectType* to
+# ActivityStreams verb.
 VERBS = {
+  'books.reads': 'read',
+  'music.listens': 'listen',
   'og.likes': 'like',
+  'product': 'give',
+  'video.watches': 'play',
 }
 
 class Facebook(source.Source):
@@ -158,9 +165,10 @@ class Facebook(source.Source):
     else:
       id = object.get('id')
       url = object.get('url')
+    verb = VERBS.get(post.get('type', object.get('objectType')), 'post')
 
     activity = {
-      'verb': VERBS.get(post.get('type'), 'post'),
+      'verb': verb,
       'published': object.get('published'),
       'updated': object.get('updated'),
       'id': id,
@@ -168,10 +176,6 @@ class Facebook(source.Source):
       'actor': object.get('author'),
       'object': object,
       }
-
-    if object.get('objectType') == 'product':
-      activity['verb'] = 'give'
-      activity['title'] = '%s gave a gift.' % self.actor_name(activity['actor'])
 
     application = post.get('application')
     if application:
@@ -203,21 +207,22 @@ class Facebook(source.Source):
     message = post.get('message')
     if not message:
       message = post.get('story')
+    data = post.get('data', {})
 
-    if post_type == 'og.likes':
-      obj = post.get('data', {}).get('object')
+    for obj_field in ('object', 'song'):
+      obj = data.get(obj_field)
       if obj:
         id = obj.get('id')
         post_type = obj.get('type')
         url = obj.get('url')
+        # if obj_field
 
     object_type = OBJECT_TYPES.get(post_type)
     author = self.user_to_actor(post.get('from'))
     link = post.get('link', '')
+
     if link.startswith('/gifts/'):
       object_type = 'product'
-
-
     if not object_type:
       if picture and not message:
         object_type = 'image'
