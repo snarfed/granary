@@ -207,15 +207,16 @@ class Facebook(source.Source):
     message = post.get('message')
     if not message:
       message = post.get('story')
-    data = post.get('data', {})
+    display_name = None
 
-    for obj_field in ('object', 'song'):
-      obj = data.get(obj_field)
+    data = post.get('data', {})
+    for field in ('object', 'song'):
+      obj = data.get(field)
       if obj:
         id = obj.get('id')
         post_type = obj.get('type')
         url = obj.get('url')
-        # if obj_field
+        display_name = obj.get('title')
 
     object_type = OBJECT_TYPES.get(post_type)
     author = self.user_to_actor(post.get('from'))
@@ -239,6 +240,7 @@ class Facebook(source.Source):
       # FB post ids are of the form USERID_POSTID
       'url': url,
       'image': {'url': picture},
+      'displayName': display_name,
       }
 
     # tags

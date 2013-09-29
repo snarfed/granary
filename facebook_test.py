@@ -571,14 +571,14 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_music_listen(self):
     post = {
-      'id': '101007473698067',
+      'id': '10100747',
       'type': 'music.listens',
       'data': {
         'song': {
-          'id': '10150734526790320',
+          'id': '101507345',
           'url': 'http://www.rdio.com/artist/The_Shins/album/Port_Of_Morrow_1/track/The_Rifle%27s_Spiral/',
           'type': 'music.song',
-          'title': "The Rifle's Spiral"
+          'title': "The Rifle's Spiral",
           }
         },
       }
@@ -588,10 +588,10 @@ class FacebookTest(testutil.HandlerTest):
         'title': "Unknown listened to The Rifle's Spiral.",
         'url': 'http://facebook.com/10100747',
         'object': {
-          'id': tag_uri('10100747'),
+          'id': tag_uri('101507345'),
           'url': 'http://www.rdio.com/artist/The_Shins/album/Port_Of_Morrow_1/track/The_Rifle%27s_Spiral/',
           'objectType': 'audio',
-          'content': "Unknown listened to The Rifle's Spiral."
+          'displayName': "The Rifle's Spiral",
           },
       }
     self.assert_equals(activity, self.facebook.post_to_activity(post))

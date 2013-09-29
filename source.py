@@ -104,10 +104,12 @@ class Source(object):
           '...' if len(content) > TITLE_LENGTH else '')
       elif object:
         app = activity.get('generator', {}).get('displayName')
-        activity['title'] = '%s %s a %s%s.' % (
+        obj_name = object.get('displayName')
+        obj_type = TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown')
+        activity['title'] = '%s %s %s%s.' % (
           actor_name,
           DISPLAY_VERBS.get(activity['verb'], 'posted'),
-          TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown'),
+          obj_name if obj_name else 'a %s' % obj_type,
           ' on %s' % app if app else '')
 
     return activity
