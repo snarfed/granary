@@ -287,7 +287,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def setUp(self):
     super(InstagramTest, self).setUp()
-    self.instagram = instagram.Instagram(self.handler)
+    self.instagram = instagram.Instagram()
 
   def test_get_actor(self):
     self.mox.StubOutWithMock(self.instagram.api, 'user')
@@ -317,9 +317,7 @@ class InstagramTest(testutil.HandlerTest):
        json.dumps({'meta': {'code': 200}, 'data': []})))
     self.mox.ReplayAll()
 
-    handler = webapp2.RequestHandler(webapp2.Request.blank('/?access_token=asdf'),
-                                     webapp2.Response())
-    self.instagram = instagram.Instagram(handler)
+    self.instagram = instagram.Instagram(access_token='asdf')
     self.instagram.get_activities()
 
   def test_get_activities_activity_id(self):

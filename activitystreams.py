@@ -81,7 +81,10 @@ class Handler(webapp2.RequestHandler):
     Request path is of the form /user_id/group_id/app_id/activity_id , where
     each element is an optional string object id.
     """
-    source = self.source_class()(self)
+    args = {key: self.request.params[key]
+            for key in ('access_token', 'access_token_key', 'access_token_secret')
+            if key in self.request.params}
+    source = self.source_class()(**args)
 
     # parse path
     args = urllib.unquote(self.request.path).strip('/').split('/')

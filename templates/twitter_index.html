@@ -1,18 +1,18 @@
 {% extends "index.html" %}
 
 {% block oauth_details %}
-<p>Twitter
-<a href="https://dev.twitter.com/docs/auth/obtaining-access-tokens">supports
-OAuth 1.0a</a>, which you'll need to use for pretty much all requests.</p>
-
-<p>For the demo below, just click the
+<p>The Twitter v1.1 API
+<a href="https://dev.twitter.com/docs/auth/obtaining-access-tokens">requires
+OAuth 1.1a authentication</a>. For the demo below,
+just click the
 <a href="{{ auth_url }}">Authenticate</a> link. For programmatic access, if you
 include an
 <a href="https://dev.twitter.com/docs/auth/implementing-sign-twitter">access
 token</a> in a request to this provider in the
 <code>access_token_key</code> and <code>access_token_secret</code> query
-parameters, they'll be used to sign and authorize requests to Twitter. See the
-demo for an example.
+parameters, or pass them to the <code>Twitter</code> class constructor in the
+library, they'll be used to sign and authorize requests to Twitter. See the demo
+for an example.
 {% endblock %}
 
 {% block query_params %}

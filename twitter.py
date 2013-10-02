@@ -58,11 +58,21 @@ class Twitter(source.Source):
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
   AUTH_URL = '/start_auth'
 
+  def __init__(self, access_token_key, access_token_secret):
+    """Constructor.
+
+    Twitter now requires authentication in v1.1 of their API. You can get an
+    OAuth access token by creating an app here: https://dev.twitter.com/apps/new
+
+    Args:
+      access_token_key: string, OAuth access token key
+      access_token_secret: string, OAuth access token secret
+    """
+    self.access_token_key = access_token_key
+    self.access_token_secret = access_token_secret
+
   def get_actor(self, screen_name=None, **kwargs):
     """Returns a user as a JSON ActivityStreams actor dict.
-
-    Keyword args (e.g. access_token_key and access_token_secret) are passed to
-    urlread.
 
     Args:
       screen_name: string username. Defaults to the current user.
@@ -78,9 +88,6 @@ class Twitter(source.Source):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
     See method docstring in source.py for details.
-
-    OAuth credentials must be provided in access_token_key and
-    access_token_secret query parameters.
     """
     if activity_id:
       tweets = [json.loads(self.urlread(API_STATUS_URL % activity_id))]
@@ -94,39 +101,28 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlread(self, url, access_token_key=None, access_token_secret=None,
-              app_key=None, app_secret=None, **kwargs):
-    """Wraps Source.urlread(), signing with OAuth if there's an access token.
+  def urlread(self, url, app_key=None, app_secret=None, **kwargs):
+    """Wraps util.urlread() and adds an OAuth signature.
 
     TODO: unit test this
     """
-    if access_token_key is None:
-      access_token_key = self.handler.request.get('access_token_key')
-    if access_token_secret is None:
-      access_token_secret = self.handler.request.get('access_token_secret')
-    if app_key is None:
-      app_key = appengine_config.TWITTER_APP_KEY
-    if app_secret is None:
-      app_secret = appengine_config.TWITTER_APP_SECRET
+    auth = tweepy.OAuthHandler(appengine_config.TWITTER_APP_KEY,
+                               appengine_config.TWITTER_APP_SECRET)
+    # make sure token key and secret aren't unicode because python's hmac
+    # module (used by tweepy/oauth.py) expects strings.
+    # http://stackoverflow.com/questions/11396789
+    auth.set_access_token(str(self.access_token_key),
+                          str(self.access_token_secret))
 
-    if access_token_key and access_token_secret:
-      logging.info('Found access token key %s and secret %s',
-                   access_token_key, access_token_secret)
-      auth = tweepy.OAuthHandler(app_key, app_secret)
-      # make sure token key and secret aren't unicode because python's hmac
-      # module (used by tweepy/oauth.py) expects strings.
-      # http://stackoverflow.com/questions/11396789
-      auth.set_access_token(str(access_token_key), str(access_token_secret))
-      method = kwargs.get('method', 'GET')
-      headers = kwargs.setdefault('headers', {})
-
-      parsed = urlparse.urlparse(url)
-      url_without_query = urlparse.urlunparse(list(parsed[0:4]) + ['', ''])
-      auth.apply_auth(url_without_query, method, headers,
-                      # TODO: switch to urlparse.parse_qsl after python27 runtime
-                      dict(cgi.parse_qsl(parsed.query)))
-      logging.info('Populated Authorization header from access token: %s',
-                   headers.get('Authorization'))
+    method = kwargs.get('method', 'GET')
+    parsed = urlparse.urlparse(url)
+    url_without_query = urlparse.urlunparse(list(parsed[0:4]) + ['', ''])
+    headers = kwargs.setdefault('headers', {})
+    auth.apply_auth(url_without_query, method, headers,
+                    # TODO: switch to urlparse.parse_qsl after python27 runtime
+                    dict(cgi.parse_qsl(parsed.query)))
+    logging.info('Populated Authorization header from access token: %s',
+                 headers.get('Authorization'))
 
     return util.urlread(url, **kwargs)
 

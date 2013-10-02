@@ -13,6 +13,7 @@ try:
   import json
 except ImportError:
   import simplejson as json
+import mox
 
 import source
 import twitter
@@ -256,7 +257,7 @@ class TwitterTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
-    self.twitter = twitter.Twitter(self.handler)
+    self.twitter = twitter.Twitter('key', 'secret')
 
   def test_get_actor(self):
     self.expect_urlopen(
@@ -349,3 +350,18 @@ class TwitterTest(testutil.HandlerTest):
 
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.twitter.user_to_actor({}))
+
+  def test_oauth(self):
+    def check_headers(headers):
+      sig = dict(headers)['Authorization']
+      return (sig.startswith('OAuth ') and
+              'oauth_token="key"' in sig and
+              'oauth_signature=' in sig)
+
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
+      json.dumps(USER),
+      headers=mox.Func(check_headers))
+    self.mox.ReplayAll()
+
+    self.twitter.get_actor('foo')

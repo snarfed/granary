@@ -38,13 +38,21 @@ class Instagram(source.Source):
       'response_type=token',
       ))
 
-  def __init__(self, *args):
-    super(Instagram, self).__init__(*args)
-    token = self.handler.request.get('access_token') if self.handler else None
+  def __init__(self, access_token=None):
+    """Constructor.
+
+    If an OAuth access token is provided, it will be passed on to Instagram.
+    This will be necessary for some people and contact details, based on their
+    privacy settings.
+
+    Args:
+      access_token: string, optional OAuth access token
+    """
+    self.access_token = access_token
     self.api = InstagramAPI(
       client_id=appengine_config.INSTAGRAM_CLIENT_ID,
       client_secret=appengine_config.INSTAGRAM_CLIENT_SECRET,
-      access_token=token)
+      access_token=access_token)
 
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -64,8 +72,6 @@ class Instagram(source.Source):
 
     http://instagram.com/developer/endpoints/users/#get_users_feed
     http://instagram.com/developer/endpoints/users/#get_users_media_recent
-
-    OAuth credentials must be provided in the access_token query parameter.
     """
     if user_id is None:
       user_id = 'self'

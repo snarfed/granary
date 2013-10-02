@@ -28,7 +28,8 @@ filesystem.load_template_source = filesystem._loader.load_template_source
 
 
 class FakeSource(source.Source):
-  pass
+  def __init__(self, **kwargs):
+    pass
 
 
 class HandlerTest(testutil.HandlerTest):

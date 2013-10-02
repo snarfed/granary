@@ -27,21 +27,11 @@ class Source(object):
   Concrete subclasses must override the class constants below and implement
   get_activities().
 
-  OAuth credentials may be extracted from the current request's query parameters
-  e.g. access_token_key and access_token_secret for Twitter (OAuth 1.1a) and
-  access_token for Facebook and Instagram (OAuth 2.0).
-
-  Attributes:
-    handler: the current RequestHandler
-
   Class constants:
     DOMAIN: string, the source's domain
     FRONT_PAGE_TEMPLATE: string, the front page child template filename
     AUTH_URL = string, the url for the "Authenticate" front page link
   """
-
-  def __init__(self, handler):
-    self.handler = handler
 
   def get_actor(self, user_id=None):
     """Returns the current user as a JSON ActivityStreams actor dict."""

@@ -100,6 +100,18 @@ class Facebook(source.Source):
       'response_type=token',
       ))
 
+  def __init__(self, access_token=None):
+    """Constructor.
+
+    If an OAuth access token is provided, it will be passed on to Facebook. This
+    will be necessary for some people and contact details, based on their
+    privacy settings.
+
+    Args:
+      access_token: string, optional OAuth access token
+    """
+    self.access_token = access_token
+
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
 
@@ -115,8 +127,6 @@ class Facebook(source.Source):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
     See method docstring in source.py for details.
-
-    OAuth credentials must be provided in the access_token query parameter.
     """
     if user_id is None:
       user_id = 'me'
@@ -135,14 +145,13 @@ class Facebook(source.Source):
     return total_count, [self.post_to_activity(p) for p in posts]
 
   def urlread(self, url):
-    """Wraps util.urlread() and passes through the access_token query param.
+    """Wraps util.urlread() and passes through the access token.
     """
-    access_token = self.handler.request.get('access_token')
-    if access_token:
+    if self.access_token:
       parsed = list(urlparse.urlparse(url))
       # query params are in index 4
       # TODO: when this is on python 2.7, switch to urlparse.parse_qsl
-      params = cgi.parse_qsl(parsed[4]) + [('access_token', access_token)]
+      params = cgi.parse_qsl(parsed[4]) + [('access_token', self.access_token)]
       parsed[4] = urllib.urlencode(params)
       url = urlparse.urlunparse(parsed)
 
