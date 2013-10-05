@@ -6,9 +6,8 @@ __author__ = 'Ryan Barrett <activitystreams@ryanb.org>'
 
 import activitystreams
 import appengine_config
-from webutil import handlers
-
 import webapp2
+from webutil import handlers
 
 
 class FrontPageHandler(handlers.TemplateHandler):
