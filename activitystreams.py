@@ -37,10 +37,10 @@ import instagram
 import source
 import twitter
 from webutil import util
-from webutil import webapp2
 
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 # maps app id to source class
 SOURCE = {

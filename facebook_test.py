@@ -12,12 +12,12 @@ import json
 import mox
 import urllib
 import urlparse
-from webutil import webapp2
 
 import facebook
 import source
 from webutil import testutil
 from webutil import util
+import webapp2
 
 
 # test data

@@ -12,10 +12,10 @@ from webob import exc
 
 import appengine_config
 import tweepy
-from webutil import webapp2
 
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
+import webapp2
 
 OAUTH_CALLBACK = 'http://%s/oauth_callback' % appengine_config.HOST
 

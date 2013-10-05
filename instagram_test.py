@@ -14,7 +14,6 @@ import json
 import mox
 import urllib
 import urlparse
-from webutil import webapp2
 
 import instagram
 from python_instagram.bind import InstagramAPIError
@@ -22,6 +21,7 @@ import source
 from webutil import testutil
 from webutil import util
 from webutil.util import Struct
+import webapp2
 
 
 def tag_uri(name):
