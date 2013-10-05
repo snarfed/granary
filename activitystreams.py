@@ -36,6 +36,7 @@ import facebook
 import instagram
 import source
 import twitter
+from webutil import handlers
 from webutil import util
 
 from google.appengine.ext.webapp import template
@@ -66,6 +67,7 @@ class Handler(webapp2.RequestHandler):
   Attributes:
     source: Source subclass
   """
+  handle_exception = handlers.handle_exception
 
   def source_class(self):
     """Return the Source subclass to use. May be overridden by subclasses."""

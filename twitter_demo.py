@@ -12,6 +12,7 @@ from webob import exc
 
 import appengine_config
 import tweepy
+from webutil import handlers
 
 from google.appengine.ext import db
 import webapp2
@@ -32,6 +33,8 @@ class StartAuthHandler(webapp2.RequestHandler):
   Fetches an OAuth request token, then redirects to Twitter's auth page to
   request an access token.
   """
+  handle_exception = handlers.handle_exception
+
   def get(self):
     try:
       auth = tweepy.OAuthHandler(appengine_config.TWITTER_APP_KEY,
@@ -54,6 +57,7 @@ class StartAuthHandler(webapp2.RequestHandler):
 class CallbackHandler(webapp2.RequestHandler):
   """The OAuth callback. Fetches an access token and redirects to the front page.
   """
+  handle_exception = handlers.handle_exception
 
   def get(self):
     oauth_token = self.request.get('oauth_token', None)
