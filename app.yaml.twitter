@@ -20,15 +20,15 @@ handlers:
   upload: static/favicon.ico
 
 - url: /(.well-known/.*)?
-  script: app.py
+  script: app.application
   secure: always
 
 - url: /(start_auth|oauth_callback)
-  script: twitter_demo.py
+  script: twitter_demo.application
   secure: always
 
 - url: /.+
-  script: activitystreams.py
+  script: activitystreams.application
   secure: always
 
 skip_files:

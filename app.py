@@ -8,8 +8,7 @@ import activitystreams
 import appengine_config
 from webutil import handlers
 
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 
 class FrontPageHandler(handlers.TemplateHandler):
@@ -24,12 +23,6 @@ class FrontPageHandler(handlers.TemplateHandler):
             }
 
 
-def main():
-  application = webapp.WSGIApplication(
-      [('/', FrontPageHandler)] + handlers.HOST_META_ROUTES,
-      debug=appengine_config.DEBUG)
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()
+application = webapp2.WSGIApplication(
+  [('/', FrontPageHandler)] + handlers.HOST_META_ROUTES,
+  debug=appengine_config.DEBUG)

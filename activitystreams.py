@@ -39,7 +39,6 @@ import twitter
 from webutil import util
 
 from google.appengine.ext.webapp import template
-from google.appengine.ext.webapp.util import run_wsgi_app
 import webapp2
 
 # maps app id to source class
@@ -332,10 +331,3 @@ def render_tags_html(tags, css_class):
 
 application = webapp2.WSGIApplication([('.*', Handler)],
                                       debug=appengine_config.DEBUG)
-
-def main():
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()

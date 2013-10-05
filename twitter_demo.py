@@ -13,7 +13,6 @@ from webob import exc
 import appengine_config
 import tweepy
 
-from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 import webapp2
 
@@ -86,14 +85,8 @@ class CallbackHandler(webapp2.RequestHandler):
     self.redirect('/?%s' % urllib.urlencode(params))
 
 
-def main():
-  application = webapp2.WSGIApplication(
-      [('/start_auth', StartAuthHandler),
-       ('/oauth_callback', CallbackHandler),
-       ],
-      debug=appengine_config.DEBUG)
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()
+application = webapp2.WSGIApplication(
+  [('/start_auth', StartAuthHandler),
+   ('/oauth_callback', CallbackHandler),
+   ],
+  debug=appengine_config.DEBUG)
