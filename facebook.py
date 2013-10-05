@@ -10,15 +10,12 @@ in the data.objects array.
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-import cgi
 import datetime
 import itertools
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
 import re
 import urllib
+import urllib2
 import urlparse
 
 import appengine_config
@@ -145,17 +142,16 @@ class Facebook(source.Source):
     return total_count, [self.post_to_activity(p) for p in posts]
 
   def urlread(self, url):
-    """Wraps util.urlread() and passes through the access token.
+    """Wraps urllib2.urlopen() and passes through the access token.
     """
     if self.access_token:
       parsed = list(urlparse.urlparse(url))
       # query params are in index 4
-      # TODO: when this is on python 2.7, switch to urlparse.parse_qsl
-      params = cgi.parse_qsl(parsed[4]) + [('access_token', self.access_token)]
+      params = urlparse.parse_qsl(parsed[4]) + [('access_token', self.access_token)]
       parsed[4] = urllib.urlencode(params)
       url = urlparse.urlunparse(parsed)
 
-    return util.urlread(url)
+    return urllib2.urlopen(url).read()
 
   def post_to_activity(self, post):
     """Converts a post to an activity.

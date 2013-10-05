@@ -4,7 +4,6 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-import cgi
 import datetime
 import itertools
 import json

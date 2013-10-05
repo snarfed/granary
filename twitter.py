@@ -5,32 +5,16 @@ Uses the REST API: https://dev.twitter.com/docs/api
 
 TODO: collections for twitter accounts; use as activity target?
 TODO: reshare activities for retweets
-
-snarfed_org user id: 139199211
-
-http://groups.google.com/group/activity-streams/browse_thread/thread/5f88499fdd4a7911/1fa8b4eb39f28cd7
-
-Python code to pretty-print JSON responses from Twitter REST API:
-
-pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1.1/statuses/show.json?id=172417043893731329&include_entities=1').read()))
-pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1.1/users/lookup.json?screen_name=snarfed_org').read()))
-pprint(json.loads(urllib.urlopen(
-  'https://api.twitter.com/1.1/followers/ids.json?screen_name=snarfed_org').read()))
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-import cgi
 import collections
 import datetime
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
 import logging
 import re
+import urllib2
 import urlparse
 
 import appengine_config
@@ -71,7 +55,7 @@ class Twitter(source.Source):
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
 
-  def get_actor(self, screen_name=None, **kwargs):
+  def get_actor(self, screen_name=None):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Args:
@@ -81,7 +65,7 @@ class Twitter(source.Source):
       url = API_CURRENT_USER_URL
     else:
       url = API_USER_URL % screen_name
-    return self.user_to_actor(json.loads(self.urlread(url, **kwargs)))
+    return self.user_to_actor(json.loads(self.urlread(url)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
@@ -101,8 +85,8 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlread(self, url, app_key=None, app_secret=None, **kwargs):
-    """Wraps util.urlread() and adds an OAuth signature.
+  def urlread(self, url, app_key=None, app_secret=None):
+    """Wraps urllib2.urlopen() and adds an OAuth signature.
 
     TODO: unit test this
     """
@@ -114,17 +98,15 @@ class Twitter(source.Source):
     auth.set_access_token(str(self.access_token_key),
                           str(self.access_token_secret))
 
-    method = kwargs.get('method', 'GET')
     parsed = urlparse.urlparse(url)
     url_without_query = urlparse.urlunparse(list(parsed[0:4]) + ['', ''])
-    headers = kwargs.setdefault('headers', {})
-    auth.apply_auth(url_without_query, method, headers,
-                    # TODO: switch to urlparse.parse_qsl after python27 runtime
-                    dict(cgi.parse_qsl(parsed.query)))
+    headers = {}
+    auth.apply_auth(url_without_query, 'GET', headers,
+                    dict(urlparse.parse_qsl(parsed.query)))
     logging.info('Populated Authorization header from access token: %s',
                  headers.get('Authorization'))
 
-    return util.urlread(url, **kwargs)
+    return urllib2.urlopen(urllib2.Request(url, headers=headers)).read()
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.

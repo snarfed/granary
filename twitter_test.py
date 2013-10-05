@@ -9,10 +9,7 @@
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
 import mox
 
 import source

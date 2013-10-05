@@ -24,10 +24,7 @@ http://activitystrea.ms/specs/
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
 import logging
 import re
 import os
