@@ -57,7 +57,7 @@ class HandlerTest(testutil.HandlerTest):
     resp = self.get_response(url, *args, **kwargs)
     self.assertEquals(200, resp.status_int)
     self.assert_equals({
-        'startIndex': int(resp.request.get('startIndex', 0)),
+        'startIndex': int(kwargs.get('start_index', 0)),
         'itemsPerPage': 1,
         'totalResults': 9,
         'items': [{'foo': 'bar'}],
