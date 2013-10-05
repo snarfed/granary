@@ -13,17 +13,6 @@ import twitter_test
 import source
 from webutil import testutil
 
-# Monkey patch to fix template loader issue:
-#
-# File "/usr/local/google_appengine/lib/django-1.4/django/template/loader.py", line 101, in find_template_loader:
-# ImproperlyConfigured: Error importing template source loader django.template.loaders.filesystem.load_template_source: "'module' object has no attribute 'load_template_source'"
-#
-# Not sure why it happens here but not in other similar projects' tests (e.g.
-# webutil), but oh well.
-from django.template.loaders import filesystem
-filesystem.load_template_source = filesystem._loader.load_template_source
-
-
 class FakeSource(source.Source):
   def __init__(self, **kwargs):
     pass
