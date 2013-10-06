@@ -105,6 +105,7 @@ class Twitter(source.Source):
                     dict(urlparse.parse_qsl(parsed.query)))
     logging.info('Populated Authorization header from access token: %s',
                  headers.get('Authorization'))
+    logging.info('Fetching %s', url)
 
     return urllib2.urlopen(urllib2.Request(url, headers=headers)).read()
 

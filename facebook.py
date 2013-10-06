@@ -13,6 +13,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import datetime
 import itertools
 import json
+import logging
 import re
 import urllib
 import urllib2
@@ -151,6 +152,7 @@ class Facebook(source.Source):
       parsed[4] = urllib.urlencode(params)
       url = urlparse.urlunparse(parsed)
 
+    logging.info('Fetching %s', url)
     return urllib2.urlopen(url).read()
 
   def post_to_activity(self, post):
