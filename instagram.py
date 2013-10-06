@@ -58,6 +58,8 @@ class Instagram(source.Source):
 
     Args:
       user_id: string id or username. Defaults to 'self', ie the current user.
+
+    Raises: InstagramAPIError
     """
     if user_id is None:
       user_id = 'self'
@@ -71,6 +73,8 @@ class Instagram(source.Source):
 
     http://instagram.com/developer/endpoints/users/#get_users_feed
     http://instagram.com/developer/endpoints/users/#get_users_media_recent
+
+    Raises: InstagramAPIError
     """
     if user_id is None:
       user_id = 'self'
@@ -91,7 +95,7 @@ class Instagram(source.Source):
         media, _ = self.api.user_media_feed()
 
     except InstagramAPIError, e:
-      if e.status_code == 400:
+      if e.error_type == 'APINotFoundError':
         logging.exception(e.error_message)
         media = []
       else:

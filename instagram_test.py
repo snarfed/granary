@@ -334,9 +334,17 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_activity_id_not_found(self):
     self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('000').AndRaise(InstagramAPIError(400, 'type', 'msg'))
+    self.instagram.api.media('000').AndRaise(
+      InstagramAPIError(400, 'APINotFoundError', 'msg'))
     self.mox.ReplayAll()
     self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
+
+  def test_get_activities_other_400_error(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('000').AndRaise(InstagramAPIError(400, 'other', 'msg'))
+    self.mox.ReplayAll()
+    self.assertRaises(InstagramAPIError, self.instagram.get_activities,
+                      activity_id='000')
 
   def test_media_to_activity(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
