@@ -1,7 +1,6 @@
-#!/usr/bin/python
 """Twitter source class.
 
-Uses the REST API: https://dev.twitter.com/docs/api
+Uses the v1.1 REST API: https://dev.twitter.com/docs/api
 
 TODO: collections for twitter accounts; use as activity target?
 TODO: reshare activities for retweets
@@ -19,7 +18,7 @@ import urlparse
 
 import appengine_config
 import source
-import tweepy
+from oauth_dropins.twitter import TwitterAuth
 from webutil import util
 
 API_TIMELINE_URL = \
@@ -85,29 +84,11 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def urlread(self, url, app_key=None, app_secret=None):
+  def urlread(self, url):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
-
-    TODO: unit test this
     """
-    auth = tweepy.OAuthHandler(appengine_config.TWITTER_APP_KEY,
-                               appengine_config.TWITTER_APP_SECRET)
-    # make sure token key and secret aren't unicode because python's hmac
-    # module (used by tweepy/oauth.py) expects strings.
-    # http://stackoverflow.com/questions/11396789
-    auth.set_access_token(str(self.access_token_key),
-                          str(self.access_token_secret))
-
-    parsed = urlparse.urlparse(url)
-    url_without_query = urlparse.urlunparse(list(parsed[0:4]) + ['', ''])
-    headers = {}
-    auth.apply_auth(url_without_query, 'GET', headers,
-                    dict(urlparse.parse_qsl(parsed.query)))
-    logging.info('Populated Authorization header from access token: %s',
-                 headers.get('Authorization'))
-    logging.info('Fetching %s', url)
-
-    return urllib2.urlopen(urllib2.Request(url, headers=headers)).read()
+    return TwitterAuth.signed_urlopen(url, self.access_token_key,
+                                      self.access_token_secret).read()
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.
