@@ -85,18 +85,6 @@ class Facebook(source.Source):
 
   DOMAIN = 'facebook.com'
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
-  AUTH_URL = '&'.join((
-      ('http://localhost:8000/dialog/oauth/?'
-       if appengine_config.MOCKFACEBOOK else
-       'https://www.facebook.com/dialog/oauth/?'),
-      'scope=%s' % OAUTH_SCOPES,
-      'client_id=%s' % appengine_config.FACEBOOK_APP_ID,
-      # firefox and chrome preserve the URL fragment on redirects (e.g. from
-      # http to https), but IE (6 and 8) don't, so i can't just hard-code http
-      # as the scheme here, i need to actually specify the right scheme.
-      'redirect_uri=%s://%s/' % (appengine_config.SCHEME, appengine_config.HOST),
-      'response_type=token',
-      ))
 
   def __init__(self, access_token=None):
     """Constructor.

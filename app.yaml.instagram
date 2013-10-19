@@ -15,7 +15,7 @@ handlers:
   static_files: static/favicon.ico
   upload: static/favicon.ico
 
-- url: /(.well-known/.*)?
+- url: /(start_auth|oauth_callback|.well-known/.*)?
   script: app.application
   secure: always
 

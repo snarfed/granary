@@ -39,7 +39,6 @@ class Twitter(source.Source):
 
   DOMAIN = 'twitter.com'
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
-  AUTH_URL = '/start_auth'
 
   def __init__(self, access_token_key, access_token_secret):
     """Constructor.

@@ -13,8 +13,8 @@ import urllib
 import urlparse
 
 import appengine_config
-from python_instagram.bind import InstagramAPIError
-from python_instagram.client import InstagramAPI
+from oauth_dropins.python_instagram.bind import InstagramAPIError
+from oauth_dropins.python_instagram.client import InstagramAPI
 import source
 from webutil import util
 
@@ -22,20 +22,22 @@ from webutil import util
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
 
 
+def handle_exception(self, e, debug):
+  """HTTP request exception handler that translates Instagram errors.
+  """
+  if isinstance(e, InstagramAPIError):
+    logging.exception(e)
+    self.response.set_status(e.status_code)
+    self.response.write(str(e))
+  else:
+    return handlers.handle_exception(self, e, debug)
+
+
 class Instagram(source.Source):
   """Implements the ActivityStreams API for Instagram."""
 
   DOMAIN = 'instagram.com'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
-  AUTH_URL = '&'.join((
-      'https://api.instagram.com/oauth/authorize?',
-      'client_id=%s' % appengine_config.INSTAGRAM_CLIENT_ID,
-      # firefox and chrome preserve the URL fragment on redirects (e.g. from
-      # http to https), but IE (6 and 8) don't, so i can't just hard-code http
-      # as the scheme here, i need to actually specify the right scheme.
-      'redirect_uri=%s://%s/' % (appengine_config.SCHEME, appengine_config.HOST),
-      'response_type=token',
-      ))
 
   def __init__(self, access_token=None):
     """Constructor.
