@@ -34,10 +34,8 @@ from webob import exc
 import appengine_config
 import facebook
 import instagram
-from python_instagram.bind import InstagramAPIError
 import source
 import twitter
-from webutil import handlers
 from webutil import util
 
 from google.appengine.ext.webapp import template
@@ -68,13 +66,7 @@ class Handler(webapp2.RequestHandler):
   Attributes:
     source: Source subclass
   """
-  def handle_exception(self, e, debug):
-    if isinstance(e, InstagramAPIError):
-      logging.exception(e)
-      self.response.set_status(e.status_code)
-      self.response.write(str(e))
-    else:
-      return handlers.handle_exception(self, e, debug)
+  handle_exception = instagram.handle_exception
 
   def source_class(self):
     """Return the Source subclass to use. May be overridden by subclasses."""
