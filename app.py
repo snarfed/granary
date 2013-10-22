@@ -29,16 +29,9 @@ class FrontPageHandler(handlers.TemplateHandler):
     return {'domain': activitystreams.SOURCE.DOMAIN}
 
 
-class CallbackHandler(site_module.CallbackHandler):
-  def finish(self, auth_entity, state=None):
-    params = ('access_token', 'token_key', 'token_secret')
-    self.redirect('/?%s' % urllib.urlencode(
-        {k: getattr(auth_entity, k, '') for k in params}))
-
-
 application = webapp2.WSGIApplication([
     ('/', FrontPageHandler),
     ('/start_auth', site_module.StartHandler.to('/oauth_callback')),
-    ('/oauth_callback', CallbackHandler.to('/')),
+    ('/oauth_callback', site_module.CallbackHandler.to('/')),
     ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)
