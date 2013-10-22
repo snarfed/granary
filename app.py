@@ -32,6 +32,6 @@ class FrontPageHandler(handlers.TemplateHandler):
 application = webapp2.WSGIApplication([
     ('/', FrontPageHandler),
     ('/start_auth', site_module.StartHandler.to('/oauth_callback')),
-    ('/oauth_callback', site_module.CallbackHandler.to('/')),
+    ('/oauth_callback', CallbackHandler.to('/')),
     ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)
