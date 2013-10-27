@@ -99,8 +99,8 @@ class Handler(webapp2.RequestHandler):
     expected_formats = ('json', 'atom', 'xml', 'html')
     format = self.request.get('format', 'json')
     if format not in expected_formats:
-      raise exc.HTTPBadRequest('Invalid format: %s, expected one of %s' %
-                               expected_formats)
+      raise exc.HTTPBadRequest('Invalid format: %s, expected one of %r' %
+                               (format, expected_formats))
 
     # get activities and build response
     total_results, activities = source.get_activities(*args, **paging_params)
