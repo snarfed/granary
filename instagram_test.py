@@ -16,7 +16,7 @@ import urllib
 import urlparse
 
 import instagram
-from python_instagram.bind import InstagramAPIError
+from oauth_dropins.python_instagram.bind import InstagramAPIError
 import source
 from webutil import testutil
 from webutil import util
