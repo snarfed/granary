@@ -1,3 +1,4 @@
+
 {% extends "index.html" %}
 
 {% block oauth_details %}
@@ -19,9 +20,9 @@ for an example.
 <label id="access_token_key_label" for="access_token_key">access_token_key =</label>
 <input id="access_token_key" name="access_token_key" type="text" size="10"
        onkeyup="render_form()" onchange="render_form()"
-       value="{{ token_key }}" />
+       value="{{ access_token_key }}" />
 <label id="access_token_secret_label" for="access_token_secret">& access_token_secret =</label>
 <input id="access_token_secret" name="access_token_secret" type="text" size="10"
        onkeyup="render_form()" onchange="render_form()"
-       value="{{ token_secret }}" />
+       value="{{ access_token_secret }}" />
 {% endblock %}
