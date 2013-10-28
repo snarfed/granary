@@ -20,7 +20,9 @@ http://instagram-activitystreams.appspot.com/
 
 It's part of a suite of projects that implement the [OStatus](http://ostatus.org/) federation protocols for the major social networks. The other projects include [portablecontacts-](https://github.com/snarfed/portablecontacts-unofficial), [salmon-](https://github.com/snarfed/salmon-unofficial), [webfinger-](https://github.com/snarfed/webfinger-unofficial), and [ostatus-unofficial](https://github.com/snarfed/ostatus-unofficial).
 
-There are many related projects. [sockethub](https://github.com/sockethub/sockethub) is a similar "polyglot" approach, but more focused on writing than reading. [Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php) used to do this kind of format translation, but unfortunately it and Cliqset died. Facebook [used to](https://developers.facebook.com/blog/post/225/) [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/) [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY) ActivityStreams, but that's also dead. On the bright side, the [Google+ API](https://developers.google.com/+/api/) currently outputs ActivityStreams directly, with only minor tweaks and extensions.
+Google+ isn't included because the [Google+ API](https://developers.google.com/+/api/) already outputs ActivityStreams directly with only minor tweaks and extensions.
+
+There are many related projects. [sockethub](https://github.com/sockethub/sockethub) is a similar "polyglot" approach, but more focused on writing than reading. [Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php) used to do this kind of format translation, but unfortunately it and Cliqset died. Facebook [used to](https://developers.facebook.com/blog/post/225/) [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/) [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY) ActivityStreams, but that's also dead.
 
 License: This project is placed in the public domain.
 
@@ -35,14 +37,15 @@ Let's start with an example. This code using the library:
 ```python
 from activitystreams_unofficial import twitter
 ...
-tw = twitter.Twitter(handler)
+tw = twitter.Twitter(ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET)
 tw.get_activities(group_id='@friends')
 ```
 
 is equivalent to this `HTTP GET` request:
 
 ```
-https://twitter-activitystreams.appspot.com/@me/@friends/@app/ACTIVITY_ID?access_token_key=KEY&access_token_secret=SECRET
+https://twitter-activitystreams.appspot.com/@me/@friends/@app/ACTIVITY_ID
+  ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 ```
 
 They return the authenticated user's Twitter stream, ie tweets from the people they follow. Here's the JSON output:
@@ -82,7 +85,7 @@ Paging is supported via the `startIndex` and `count` parameters. They're self ex
 
 Output data is [JSON Activity Streams 1.0](http://activitystrea.ms/specs/json/1.0/) objects wrapped in the [OpenSocial envelope](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service), which puts the activities in the top-level `items` field as a list and adds the `itemsPerPage`, `totalCount`, etc. fields.
 
-Most requests will need an OAuth access token from the source provider. Here are their authentication docs: [Facebook](https://developers.facebook.com/docs/facebook-login/access-tokens/), [Twitter](https://dev.twitter.com/docs/auth/3-legged-authorization), [Instagram](http://instagram.com/developer/authentication/).
+Most Facebook requests and all Twiter and Instagram requests will need OAuth access tokens. If you're using Python on Google App Engine, [oauth-dropins](https://github.com/snarfed/oauth-dropins) is an easy way to add OAuth client flows for these sites. Otherwise, here are the sites' authentication docs: [Facebook](https://developers.facebook.com/docs/facebook-login/access-tokens/), [Twitter](https://dev.twitter.com/docs/auth/3-legged-authorization), [Instagram](http://instagram.com/developer/authentication/).
 
 If you get an access token and pass it along, it will be used to sign and authorize the underlying requests to the sources providers. See the demos on the REST API [endpoints above](#about) for examples.
 
