@@ -1,0 +1,13 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "name": ["blog post 123"],
+    "url": ["http://example.org/blog-post-123"],
+    "published": ["2012-02-22T20:26:41"],
+    "updated": ["2013-10-25T10:31:30+00:00"],
+    "content": [{
+        "html": "A blog post...",
+        "value": "A blog post..."
+      }]
+  }
+}

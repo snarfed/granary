@@ -1,0 +1,8 @@
+{
+  "type": ["h-card"],
+  "properties": {
+    "name": ["Martin Smith"],
+    "url": ["http://example.org/martin"],
+    "photo": ["http://example.org/martin/image"]
+  }
+}
