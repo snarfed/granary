@@ -1,11 +1,38 @@
 """Convert ActivityStreams to microformats2 HTML and JSON.
+
+Microformats2 specs: http://microformats.org/wiki/microformats2
 """
 
 from webutil import util
 
 
+def object_to_json(obj):
+  """Converts an ActivityStreams object to microformats2 JSON.
+
+  Args:
+    obj: dict, a decoded JSON ActivityStreams object
+
+  Returns: dict, decoded microformats2 JSON
+  """
+  types = {'note': 'h-entry'}
+
+  return {
+    'type': [types[obj['objectType']]],
+    'properties': {
+      'name': [obj.get('displayName')],
+      'url': [obj.get('url')],
+      'published': [obj.get('published')],
+      'updated':  [obj.get('updated')],
+      'content': [{
+          'html': obj.get('content'),
+          'value': obj.get('content'),
+          }],
+      },
+    }
+
+
 def object_to_html(obj, source_name=None):
-  """Renders an ActivityStreams object to HTML and returns the result.
+  """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
   - linkifies embedded tags and adds links for other tags
