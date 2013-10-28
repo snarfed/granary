@@ -8,6 +8,7 @@
     "content": [{
         "html": "A blog post...",
         "value": "A blog post..."
-      }]
+      }],
+    "photo": ["http://example.org/blog-post-123/image"]
   }
 }

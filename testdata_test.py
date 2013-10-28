@@ -29,9 +29,7 @@ class TestDataTest(testutil.HandlerTest):
     for src, dst in filepairs('as.json', 'uf2.json'):
       with open(src) as srcf, open(dst) as dstf:
         converters = {'object': microformats2.object_to_json,
-                      'actor': None,#microformats2.actor_to_json,
+                      'actor': microformats2.object_to_json,
                       }
         fn = converters[src.split('_')[0]]
-        if not fn:
-          continue
         self.assert_equals(json.loads(dstf.read()), fn(json.loads(srcf.read())))

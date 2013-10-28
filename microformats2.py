@@ -14,13 +14,20 @@ def object_to_json(obj):
 
   Returns: dict, decoded microformats2 JSON
   """
-  types = {'note': 'h-entry'}
+  types = {'note': 'h-entry',
+           'person': 'h-card',
+           }
 
-  return {
-    'type': [types[obj['objectType']]],
+  name = obj.get('displayName')
+  if not name:
+    name = obj.name('title')
+
+  return util.trim_nulls({
+    'type': [types.get(obj.get('objectType'))],
     'properties': {
-      'name': [obj.get('displayName')],
+      'name': [name],
       'url': [obj.get('url')],
+      'photo': [obj.get('image', {}).get('url')],
       'published': [obj.get('published')],
       'updated':  [obj.get('updated')],
       'content': [{
@@ -28,7 +35,7 @@ def object_to_json(obj):
           'value': obj.get('content'),
           }],
       },
-    }
+    })
 
 
 def object_to_html(obj, source_name=None):
