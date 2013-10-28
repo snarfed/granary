@@ -44,7 +44,7 @@ tw.get_activities(group_id='@friends')
 is equivalent to this `HTTP GET` request:
 
 ```
-https://twitter-activitystreams.appspot.com/@me/@friends/@app/ACTIVITY_ID
+https://twitter-activitystreams.appspot.com/@me/@friends/@app/
   ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 ```
 
