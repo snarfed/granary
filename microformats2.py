@@ -160,7 +160,7 @@ def object_to_html(obj, source_name=None):
   # TODO: multiple images (in attachments?)
   image_url = obj.get('image', {}).get('url')
   if image_url:
-    content += """
+    content += """\
 <p><a class="shutter" href="%s">
   <img class="alignnone shadow" src="%s" width="%s" />
 </a></p>
@@ -172,7 +172,7 @@ def object_to_html(obj, source_name=None):
     via = ('via %s' % source_name) if source_name else 'original'
     if url:
       via = '<a href="%s">%s</a>' % (url, via)
-    content += '<p class="freedom-via">%s</p>' % via
+    content += '<p class="freedom-via">%s</p>\n' % via
 
   # TODO: for comments
   # # note that wordpress strips many html tags (e.g. br) and almost all

@@ -37,7 +37,15 @@ def read_json(filename):
 
 class TestDataTest(testutil.HandlerTest):
   def test_activitystreams_to_uf2_json(self):
-    for src, dst in filepairs('as.json', 'uf2.json'):
-        self.assert_equals(read_json(dst),
-                           microformats2.object_to_json(read_json(src)),
-                           '%s => %s' % (src, dst))
+    # source extension, destination extention, conversion function
+    mappings = (('as.json', 'uf2.json', microformats2.object_to_json),
+                ('as.json', 'uf2.html', microformats2.object_to_html),
+                )
+
+    for src_ext, dst_ext, fn in mappings:
+      for src, dst in filepairs(src_ext, dst_ext):
+        if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):
+          expected = open(dst).read()
+        else:
+          expected = read_json(dst)
+        self.assert_equals(expected, fn(read_json(src)), '%s => %s' % (src, dst))
