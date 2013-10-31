@@ -21,6 +21,12 @@ def object_to_json(obj):
            'note': 'h-entry',
            'person': 'h-card',
            }
+  h_as = set(('article', 'note', 'collection', 'update'))
+
+  obj_type = obj.get('objectType')
+  type = [types.get(obj_type)]
+  if obj_type in h_as:
+    type.append('h-as-' + obj_type)
 
   name = obj.get('displayName')
   if not name:
@@ -31,9 +37,8 @@ def object_to_json(obj):
     author['objectType'] = 'person'
 
   # TODO: location
-  # TODO: h-as-*
   return util.trim_nulls({
-    'type': [types.get(obj.get('objectType'))],
+    'type': type,
     'properties': {
       'uid': [obj.get('id')],
       'name': [name],

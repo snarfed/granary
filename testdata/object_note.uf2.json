@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry"],
+  "type": ["h-entry", "h-as-note"],
   "properties": {
     "uid": ["tag:example.org,2011:blog-post-123"],
     "name": ["blog post 123"],
