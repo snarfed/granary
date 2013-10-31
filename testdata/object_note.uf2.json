@@ -9,6 +9,15 @@
         "html": "A blog post...",
         "value": "A blog post..."
       }],
-    "photo": ["http://example.org/blog-post-123/image"]
+    "photo": ["http://example.org/blog-post-123/image"],
+
+    "author": [{
+      "type": ["h-card"],
+      "properties": {
+        "name": ["Ryan Barrett"],
+        "url": ["http://example.org/ryan"],
+        "photo": ["http://example.org/ryan/image"]
+      }
+    }]
   }
 }

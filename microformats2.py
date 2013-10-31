@@ -14,6 +14,9 @@ def object_to_json(obj):
 
   Returns: dict, decoded microformats2 JSON
   """
+  if not obj:
+    return {}
+
   types = {'comment': 'h-entry',
            'note': 'h-entry',
            'person': 'h-card',
@@ -23,7 +26,13 @@ def object_to_json(obj):
   if not name:
     name = obj.get('title')
 
-  # TODO: author
+  author = obj.get('author')
+  if author and 'objectType' not in author:
+    author['objectType'] = 'person'
+
+  # TODO: location
+  # TODO: uid
+  # TODO: h-as-*
   return util.trim_nulls({
     'type': [types.get(obj.get('objectType'))],
     'properties': {
@@ -36,8 +45,9 @@ def object_to_json(obj):
           'html': obj.get('content'),
           'value': obj.get('content'),
           }],
-      'in-reply-to': [r.get('url') for r in obj.get('inReplyTo', [])]
-      },
+      'in-reply-to': [r.get('url') for r in obj.get('inReplyTo', [])],
+      'author': [object_to_json(author)],
+      }
     })
 
 

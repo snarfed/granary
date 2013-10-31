@@ -39,4 +39,5 @@ class TestDataTest(testutil.HandlerTest):
   def test_activitystreams_to_uf2_json(self):
     for src, dst in filepairs('as.json', 'uf2.json'):
         self.assert_equals(read_json(dst),
-                           microformats2.object_to_json(read_json(src)))
+                           microformats2.object_to_json(read_json(src)),
+                           '%s => %s' % (src, dst))
