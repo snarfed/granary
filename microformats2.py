@@ -17,10 +17,8 @@ def object_to_json(obj):
   if not obj:
     return {}
 
-  types = {'comment': 'h-entry',
-           'note': 'h-entry',
-           'person': 'h-card',
-           }
+  types = {'comment': 'h-entry', 'note': 'h-entry',
+           'person': 'h-card', 'place': 'h-card'}
   h_as = set(('article', 'note', 'collection', 'update'))
 
   obj_type = obj.get('objectType')
@@ -32,11 +30,14 @@ def object_to_json(obj):
   if not name:
     name = obj.get('title')
 
-  author = obj.get('author')
+  author = dict(obj.get('author', {}))
   if author and 'objectType' not in author:
     author['objectType'] = 'person'
 
-  # TODO: location
+  location = dict(obj.get('location', {}))
+  if location and 'objectType' not in location:
+    location['objectType'] = 'place'
+
   return util.trim_nulls({
     'type': type,
     'properties': {
@@ -52,6 +53,7 @@ def object_to_json(obj):
           }],
       'in-reply-to': [r.get('url') for r in obj.get('inReplyTo', [])],
       'author': [object_to_json(author)],
+      'location': [object_to_json(location)],
       }
     })
 
