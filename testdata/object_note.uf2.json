@@ -1,6 +1,7 @@
 {
   "type": ["h-entry"],
   "properties": {
+    "uid": ["tag:example.org,2011:blog-post-123"],
     "name": ["blog post 123"],
     "url": ["http://example.org/blog-post-123"],
     "published": ["2012-02-22T20:26:41"],
@@ -14,6 +15,7 @@
     "author": [{
       "type": ["h-card"],
       "properties": {
+        "uid": ["tag:example.org,2001:ryan"],
         "name": ["Ryan Barrett"],
         "url": ["http://example.org/ryan"],
         "photo": ["http://example.org/ryan/image"]

@@ -31,11 +31,11 @@ def object_to_json(obj):
     author['objectType'] = 'person'
 
   # TODO: location
-  # TODO: uid
   # TODO: h-as-*
   return util.trim_nulls({
     'type': [types.get(obj.get('objectType'))],
     'properties': {
+      'uid': [obj.get('id')],
       'name': [name],
       'url': [obj.get('url')],
       'photo': [obj.get('image', {}).get('url')],
