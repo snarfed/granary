@@ -3,14 +3,50 @@
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
 
+import string
+
 from webutil import util
 
+# TODO: comments
+HENTRY = string.Template("""\
+<article class="h-entry $h_as">
+  <span class="u-uid">$uid</span>
+  <a class="u-url u-name" href="$url">$name</a>
+  <time class="dt-published" datetime="$published">$published</time>
+  <time class="dt-updated" datetime="$updated">$updated</time>
 
-def object_to_json(obj):
+  <div class="h-card">
+    <a class="u-url" href="$author_url">
+      <img src="$author_image" />
+      <span class="p-name">$author_name</span>
+    </a>
+    <link class="u-uid" href="$author_uid" />
+  </div>
+
+  <div class="e-content">
+  $photo
+$content
+  </div>
+$location
+$in_reply_to
+</article>
+""")
+LOCATION = string.Template("""\
+  <div class="h-card p-location">
+    <a class="u-url u-name" href="$url">$name</a>
+    <span class="u-uid">$uid</span>
+  </div>
+""")
+IN_REPLY_TO = string.Template('<a class="u-in-reply-to" href="$url">')
+PHOTO = string.Template('<img class="u-photo" src="$url" />')
+
+
+def object_to_json(obj, trim_nulls=True):
   """Converts an ActivityStreams object to microformats2 JSON.
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
+    trim_nulls: boolean, whether to remove elements with null or empty values
 
   Returns: dict, decoded microformats2 JSON
   """
@@ -26,9 +62,7 @@ def object_to_json(obj):
   if obj_type in h_as:
     type.append('h-as-' + obj_type)
 
-  name = obj.get('displayName')
-  if not name:
-    name = obj.get('title')
+  name = obj.get('displayName', obj.get('title', ''))
 
   author = dict(obj.get('author', {}))
   if author and 'objectType' not in author:
@@ -38,27 +72,32 @@ def object_to_json(obj):
   if location and 'objectType' not in location:
     location['objectType'] = 'place'
 
-  return util.trim_nulls({
+  content = obj.get('content', '')
+
+  ret = {
     'type': type,
     'properties': {
-      'uid': [obj.get('id')],
+      'uid': [obj.get('id', '')],
       'name': [name],
-      'url': [obj.get('url')],
-      'photo': [obj.get('image', {}).get('url')],
-      'published': [obj.get('published')],
-      'updated':  [obj.get('updated')],
+      'url': [obj.get('url', '')],
+      'photo': [obj.get('image', {}).get('url', '')],
+      'published': [obj.get('published', '')],
+      'updated':  [obj.get('updated', '')],
       'content': [{
-          'html': obj.get('content'),
-          'value': obj.get('content'),
+          'value': content,
+          'html': render_content(obj),
           }],
-      'in-reply-to': [r.get('url') for r in obj.get('inReplyTo', [])],
+      'in-reply-to': [r.get('url', '') for r in obj.get('inReplyTo', [])],
       'author': [object_to_json(author)],
       'location': [object_to_json(location)],
       }
-    })
+    }
+  if trim_nulls:
+    ret = util.trim_nulls(ret)
+  return ret
 
 
-def object_to_html(obj, source_name=None):
+def object_to_html(obj):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
@@ -71,14 +110,40 @@ def object_to_html(obj, source_name=None):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
-    source_name: string, human-readable name of the source, e.g. 'Twitter'
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
-  content = obj.get('content', '')
+  props = object_to_json(object, trim_nulls=False)['properties']
+  # extract first values
+  props = {k: (v[0] if v else '') for k, v in props.items()}
 
+  # TODO: multiple images (in attachments?)
+  if props['photo']:
+    props['photo'] = PHOTO.substitute(url=props['photo'])
+
+  if props['location']:
+    props['location'] = LOCATION.substitute(props['location'])
+
+  if props['in-reply-to']:
+    props['in-reply-to'] = IN_REPLY_TO.substitute(url=props['in-reply-to'])
+
+  props['content'] = props['content']['html']
+
+  return HENTRY.substitute(props)
+
+
+def render_content(obj):
+  """Renders the content of an ActivityStreams object.
+
+  Includes tags, mentions, and attachments.
+
+  Args:
+    tags: decoded JSON ActivityStreams objects.
+
+  Returns: string, rendered HTML
+  """
   # extract tags. preserve order but de-dupe, ie don't include a tag more than
   # once.
   seen_ids = set()
@@ -96,6 +161,7 @@ def object_to_html(obj, source_name=None):
       tags.setdefault(t['objectType'], []).append(t)
 
   # linkify embedded mention tags inside content.
+  content = obj.get('content', '')
   if mentions:
     mentions.sort(key=lambda t: t['startIndex'])
     last_end = 0
@@ -105,7 +171,7 @@ def object_to_html(obj, source_name=None):
       start = tag['startIndex']
       end = start + tag['length']
       content += orig[last_end:start]
-      content += '<a class="freedom-mention" href="%s">%s</a>' % (
+      content += '<a class="mention" href="%s">%s</a>' % (
         tag['url'], orig[start:end])
       last_end = end
 
@@ -113,7 +179,7 @@ def object_to_html(obj, source_name=None):
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
   if content:
-    content = '<p>' + util.linkify(content) + '</p>\n'
+    content = util.linkify(content)
 
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
@@ -127,70 +193,18 @@ def object_to_html(obj, source_name=None):
         image = obj.get('image', {}).get('url', '')
 
       content += """\
-<p><a class="freedom-link" alt="%s" href="%s">
-<img class="freedom-link-thumbnail" src="%s" />
-<span class="freedom-link-name">%s</span>
+<p><a class="link" alt="%s" href="%s">
+<img class="link-thumbnail" src="%s" />
+<span class="link-name">%s</span>
 """ % (name, url, image, name)
       summary = link.get('summary')
       if summary:
-        content += '<span class="freedom-link-summary">%s</span>\n' % summary
+        content += '<span class="link-summary">%s</span>\n' % summary
       content += '</p>\n'
-
-  # checkin
-  location = obj.get('location')
-  if location and 'displayName' in location:
-    place = location['displayName']
-    url = location.get('url')
-    if url:
-      place = '<a href="%s">%s</a>' % (url, place)
-    content += '<p class="freedom-checkin">at %s</p>\n' % place
 
   # other tags
   content += tags_to_html(tags.pop('hashtag', []), 'freedom-hashtags')
   content += tags_to_html(sum(tags.values(), []), 'freedom-tags')
-
-  # photo
-
-  # TODO: expose as option
-  # Uploaded photos are scaled to this width in pixels. They're also linked to
-  # the full size image.
-  SCALED_IMG_WIDTH = 500
-
-  # add image
-  # TODO: multiple images (in attachments?)
-  image_url = obj.get('image', {}).get('url')
-  if image_url:
-    content += """\
-<p><a class="shutter" href="%s">
-  <img class="alignnone shadow" src="%s" width="%s" />
-</a></p>
-""" % (image_url, image_url, str(SCALED_IMG_WIDTH))
-
-  # "via SOURCE"
-  url = obj.get('url')
-  if source_name or url:
-    via = ('via %s' % source_name) if source_name else 'original'
-    if url:
-      via = '<a href="%s">%s</a>' % (url, via)
-    content += '<p class="freedom-via">%s</p>\n' % via
-
-  # TODO: for comments
-  # # note that wordpress strips many html tags (e.g. br) and almost all
-  # # attributes (e.g. class) from html tags in comment contents. so, convert
-  # # some of those tags to other tags that wordpress accepts.
-  # content = re.sub('<br */?>', '<p />', comment.content)
-
-  # # since available tags are limited (see above), i use a fairly unique tag
-  # # for the "via ..." link - cite - that site owners can use to style.
-  # #
-  # # example css on my site:
-  # #
-  # # .comment-content cite a {
-  # #     font-size: small;
-  # #     color: gray;
-  # # }
-  # content = '%s <cite><a href="%s">via %s</a></cite>' % (
-  #   content, comment.source_post_url, comment.source.type_display_name())
 
   return content
 

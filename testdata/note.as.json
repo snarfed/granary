@@ -42,9 +42,5 @@
     "url": "http://instagr.am/p/MuW67/",
     "startIndex": 43,
     "length": 19
-  }],
-  "attachments": [{
-    "objectType": "image",
-    "image": {"url": "http://example.org/blog-post-123/attached-image"}
   }]
 }
