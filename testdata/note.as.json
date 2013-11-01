@@ -18,6 +18,31 @@
     "id": "31cb9e7ed29dbe52",
     "url": "https://maps.google.com/maps?q=32.4004416,-98.9852672"
   },
+  "tags": [{
+    "objectType": "person",
+    "id": "foo",
+    "url": "http://twitter.com/foo",
+    "displayName": "Twitter",
+    "startIndex": 0,
+    "length": 8
+  }, {
+    "objectType": "person",
+    "id": "foo",
+    "url": "http://twitter.com/foo",
+    "displayName": "Picture.ly",
+    "startIndex": 15,
+    "length": 13
+  }, {
+    "objectType": "hashtag",
+    "url": "https://twitter.com/search?q=%23tcdisrupt",
+    "startIndex": 32,
+    "length": 10
+  }, {
+    "objectType": "article",
+    "url": "http://instagr.am/p/MuW67/",
+    "startIndex": 43,
+    "length": 19
+  }],
   "attachments": [{
     "objectType": "image",
     "image": {"url": "http://example.org/blog-post-123/attached-image"}
