@@ -22,7 +22,17 @@ It's part of a suite of projects that implement the [OStatus](http://ostatus.org
 
 Google+ isn't included because the [Google+ API](https://developers.google.com/+/api/) already outputs ActivityStreams directly with only minor tweaks and extensions.
 
-There are many related projects. [sockethub](https://github.com/sockethub/sockethub) is a similar "polyglot" approach, but more focused on writing than reading. [Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php) used to do this kind of format translation, but unfortunately it and Cliqset died. Facebook [used to](https://developers.facebook.com/blog/post/225/) [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/) [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY) ActivityStreams, but that's also dead.
+There are many related projects.
+[php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds
+[microformats2](http://microformats.org/wiki/microformats2) to Facebook and
+Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
+similar "polyglot" approach, but more focused on writing than reading.
+[Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
+used to do this kind of format translation, but unfortunately it and Cliqset
+died. Facebook [used to](https://developers.facebook.com/blog/post/225/)
+[officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
+[support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
+ActivityStreams, but that's also dead.
 
 License: This project is placed in the public domain.
 
