@@ -17,8 +17,8 @@ HENTRY = string.Template("""\
   <time class="dt-updated" datetime="$updated">$updated</time>
 $author
   <div class="e-content">
-  $photo
   $content
+  $photo
   </div>
 $location
 $in_reply_to
@@ -29,8 +29,7 @@ HCARD = string.Template("""\
     <a class="u-url p-name" href="$url">$name</a>
     $photo
     <span class="u-uid">$uid</span>
-  </div>
-""")
+  </div>""")
 IN_REPLY_TO = string.Template('<a class="u-in-reply-to" href="$url">')
 PHOTO = string.Template('<img class="u-photo" src="$url" />')
 
@@ -125,6 +124,7 @@ def object_to_html(obj):
                            types=' '.join(jsn['type']),
                            author=hcard_to_html(props['author'], ['p-author']),
                            location=hcard_to_html(props['location'], ['p-location']),
+                           photo=photo,
                            in_reply_to=in_reply_to,
                            content=props['content']['html'])
 
