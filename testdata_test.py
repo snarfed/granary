@@ -3,6 +3,7 @@
 
 import glob
 import json
+import logging
 import os
 import unittest
 
@@ -50,4 +51,8 @@ class TestDataTest(testutil.HandlerTest):
           expected = open(dst).read()
         else:
           expected = read_json(dst)
-        self.assert_equals(expected, fn(read_json(src)), '%s => %s' % (src, dst))
+        try:
+          self.assert_equals(expected, fn(read_json(src)))
+        except Exception, e:
+          logging.error('%s => %s', src, dst)
+          raise

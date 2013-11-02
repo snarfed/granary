@@ -3,37 +3,31 @@
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
 
+import logging
 import string
 
 from webutil import util
 
 # TODO: comments
 HENTRY = string.Template("""\
-<article class="h-entry $h_as">
+<article class="$types">
   <span class="u-uid">$uid</span>
-  <a class="u-url u-name" href="$url">$name</a>
+  <a class="u-url p-name" href="$url">$name</a>
   <time class="dt-published" datetime="$published">$published</time>
   <time class="dt-updated" datetime="$updated">$updated</time>
-
-  <div class="h-card">
-    <a class="u-url" href="$author_url">
-      <img src="$author_image" />
-      <span class="p-name">$author_name</span>
-    </a>
-    <link class="u-uid" href="$author_uid" />
-  </div>
-
+$author
   <div class="e-content">
   $photo
-$content
+  $content
   </div>
 $location
 $in_reply_to
 </article>
 """)
-LOCATION = string.Template("""\
-  <div class="h-card p-location">
-    <a class="u-url u-name" href="$url">$name</a>
+HCARD = string.Template("""\
+  <div class="$types">
+    <a class="u-url p-name" href="$url">$name</a>
+    $photo
     <span class="u-uid">$uid</span>
   </div>
 """)
@@ -74,6 +68,8 @@ def object_to_json(obj, trim_nulls=True):
 
   content = obj.get('content', '')
 
+  # TODO: comments. h-cite or h-entry?
+  # http://indiewebcamp.com/comment-presentation#How_to_markup
   ret = {
     'type': type,
     'properties': {
@@ -88,8 +84,8 @@ def object_to_json(obj, trim_nulls=True):
           'html': render_content(obj),
           }],
       'in-reply-to': [r.get('url', '') for r in obj.get('inReplyTo', [])],
-      'author': [object_to_json(author)],
-      'location': [object_to_json(location)],
+      'author': [object_to_json(author, trim_nulls=False)],
+      'location': [object_to_json(location, trim_nulls=False)],
       }
     }
   if trim_nulls:
@@ -115,23 +111,41 @@ def object_to_html(obj):
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
-  props = object_to_json(object, trim_nulls=False)['properties']
-  # extract first values
-  props = {k: (v[0] if v else '') for k, v in props.items()}
+  jsn = object_to_json(obj, trim_nulls=False)
+  props = jsn['properties']
+  # extract first value from multiply valued properties
+  props = {k: v[0] if v else '' for k, v in props.items()}
 
   # TODO: multiple images (in attachments?)
-  if props['photo']:
-    props['photo'] = PHOTO.substitute(url=props['photo'])
+  photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
+  in_reply_to = IN_REPLY_TO.substitute(url=props['in-reply-to']) \
+                 if props['in-reply-to'] else ''
 
-  if props['location']:
-    props['location'] = LOCATION.substitute(props['location'])
+  return HENTRY.substitute(props,
+                           types=' '.join(jsn['type']),
+                           author=hcard_to_html(props['author'], ['p-author']),
+                           location=hcard_to_html(props['location'], ['p-location']),
+                           in_reply_to=in_reply_to,
+                           content=props['content']['html'])
 
-  if props['in-reply-to']:
-    props['in-reply-to'] = IN_REPLY_TO.substitute(url=props['in-reply-to'])
 
-  props['content'] = props['content']['html']
+def hcard_to_html(hcard, types=[]):
+  """Renders an h-card as HTML.
 
-  return HENTRY.substitute(props)
+  Args:
+    hcard: dict, decoded JSON h-card
+    types: sequence of strings, additional types
+
+  Returns: string, rendered HTML
+  """
+  if not hcard:
+    return ''
+
+  types = ' '.join(hcard['type'] + types)
+  # extract first value from multiply valued properties
+  props = {k: v[0] if v else '' for k, v in hcard['properties'].items()}
+  photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
+  return HCARD.substitute(props, types=types, photo=photo)
 
 
 def render_content(obj):
