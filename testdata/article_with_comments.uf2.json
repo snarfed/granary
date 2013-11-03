@@ -11,11 +11,13 @@
           "type": ["h-card", "p-author"],
           "properties": {"name": ["Alice"], "url": ["http://example.com/alice"]}
         }],
+        "name": ["I concur."],
         "content": [{"value": "I concur.", "html": "I concur."}]
       }
     }, {
       "type": ["h-entry", "p-comment"],
       "properties": {
+        "name": ["second comment name"],
         "content": [{"value": "And I, as well, in addition. Too.",
                      "html": "And I, as well, in addition. Too."}],
         "in-reply-to": ["http://example.com/article-abc"]
