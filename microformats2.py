@@ -21,7 +21,7 @@ $author
   $photo
   </div>
 $location
-$in_reply_to
+  $in_reply_to
 </article>
 """)
 HCARD = string.Template("""\
@@ -31,7 +31,7 @@ HCARD = string.Template("""\
     <span class="u-uid">$uid</span>
   </div>
 """)
-IN_REPLY_TO = string.Template('<a class="u-in-reply-to" href="$url">')
+IN_REPLY_TO = string.Template('<a class="u-in-reply-to" href="$url" />')
 PHOTO = string.Template('<img class="u-photo" src="$url" />')
 
 
@@ -47,15 +47,13 @@ def object_to_json(obj, trim_nulls=True):
   if not obj:
     return {}
 
-  types = {'comment': 'h-entry', 'note': 'h-entry',
-           'person': 'h-card', 'place': 'h-card'}
-  h_as = set(('article', 'note', 'collection', 'update'))
-
-  obj_type = obj.get('objectType')
-  type = [types.get(obj_type)]
-  if obj_type in h_as:
-    type.append('h-as-' + obj_type)
-
+  types_map = {'article': ['h-entry', 'h-as-article'],
+               'comment': ['h-entry', 'p-comment'],
+               'note': ['h-entry', 'h-as-note'],
+               'person': ['h-card'],
+               'place': ['h-card', 'p-location'],
+               }
+  types = types_map.get(obj.get('objectType'))
   name = obj.get('displayName', obj.get('title', ''))
 
   author = dict(obj.get('author', {}))
@@ -71,7 +69,7 @@ def object_to_json(obj, trim_nulls=True):
   # TODO: comments. h-cite or h-entry?
   # http://indiewebcamp.com/comment-presentation#How_to_markup
   ret = {
-    'type': type,
+    'type': types,
     'properties': {
       'uid': [obj.get('id', '')],
       'name': [name],
@@ -112,8 +110,9 @@ def object_to_html(obj):
     the end.
   """
   jsn = object_to_json(obj, trim_nulls=False)
+  # TODO: handle when h-card isn't first
   if jsn['type'][0] == 'h-card':
-    return hcard_to_html(jsn)
+    return hcard_to_html(jsn, jsn['type'][1:])
 
   props = jsn['properties']
   # extract first value from multiply valued properties
@@ -127,7 +126,7 @@ def object_to_html(obj):
   return HENTRY.substitute(props,
                            types=' '.join(jsn['type']),
                            author=hcard_to_html(props['author'], ['p-author']),
-                           location=hcard_to_html(props['location'], ['p-location']),
+                           location=hcard_to_html(props['location']),
                            photo=photo,
                            in_reply_to=in_reply_to,
                            content=props['content']['html'])
