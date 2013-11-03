@@ -56,15 +56,13 @@ def object_to_json(obj, trim_nulls=True):
   types = types_map.get(obj.get('objectType'))
   name = obj.get('displayName', obj.get('title', ''))
 
-  author = dict(obj.get('author', {}))
-  if author and 'objectType' not in author:
-    author['objectType'] = 'person'
+  author = object_to_json(obj.get('author', {}), trim_nulls=False)
+  if author:
+    author['type'] = ['h-card', 'p-author']
 
-  location = dict(obj.get('location', {}))
-  if location and 'objectType' not in location:
-    location['objectType'] = 'place'
-
-  content = obj.get('content', '')
+  location = object_to_json(obj.get('location', {}), trim_nulls=False)
+  if location:
+    location['type'] = ['h-card', 'p-location']
 
   # TODO: comments. h-cite or h-entry?
   # http://indiewebcamp.com/comment-presentation#How_to_markup
@@ -78,12 +76,13 @@ def object_to_json(obj, trim_nulls=True):
       'published': [obj.get('published', '')],
       'updated':  [obj.get('updated', '')],
       'content': [{
-          'value': content,
+          'value': obj.get('content', ''),
           'html': render_content(obj),
           }],
-      'in-reply-to': [r.get('url', '') for r in obj.get('inReplyTo', [])],
-      'author': [object_to_json(author, trim_nulls=False)],
-      'location': [object_to_json(location, trim_nulls=False)],
+      'in-reply-to': [obj.get('inReplyTo', {}).get('url')],
+      'author': [author],
+      'location': [location],
+      'comment': [object_to_json(c) for c in obj.get('comments', [])]
       }
     }
   if trim_nulls:

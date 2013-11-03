@@ -13,7 +13,7 @@
     "photo": ["http://example.org/blog-post-123/image"],
 
     "author": [{
-      "type": ["h-card"],
+      "type": ["h-card", "p-author"],
       "properties": {
         "uid": ["tag:example.org,2001:ryan"],
         "name": ["Ryan Barrett"],
@@ -23,7 +23,7 @@
     }],
 
     "location": [{
-      "type": ["h-card"],
+      "type": ["h-card", "p-location"],
       "properties": {
         "uid": ["31cb9e7ed29dbe52"],
         "name": ["Carcassonne, Aude"],

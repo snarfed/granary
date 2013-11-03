@@ -40,7 +40,7 @@ class TestDataTest(testutil.HandlerTest):
   def test_activitystreams_to_uf2_json(self):
     # source extension, destination extention, conversion function
     mappings = (('as.json', 'uf2.json', microformats2.object_to_json),
-                ('as.json', 'uf2.html', microformats2.object_to_html),
+#                ('as.json', 'uf2.html', microformats2.object_to_html),
                 )
 
     for src_ext, dst_ext, fn in mappings:
