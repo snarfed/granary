@@ -2,16 +2,16 @@
   "objectType": "note",
   "displayName": "blog post 123",
   "content": "A blog post...",
-  "id": "tag:example.org,2011:blog-post-123",
+  "id": "tag:example.com,2011:blog-post-123",
   "published": "2012-02-22T20:26:41",
   "updated": "2013-10-25T10:31:30+00:00",
-  "url": "http://example.org/blog-post-123",
-  "image": {"url": "http://example.org/blog-post-123/image"},
+  "url": "http://example.com/blog-post-123",
+  "image": {"url": "http://example.com/blog-post-123/image"},
   "author": {
-    "id": "tag:example.org,2001:ryan",
+    "id": "tag:example.com,2001:ryan",
     "displayName": "Ryan Barrett",
-    "image": {"url": "http://example.org/ryan/image"},
-    "url": "http://example.org/ryan"
+    "image": {"url": "http://example.com/ryan/image"},
+    "url": "http://example.com/ryan"
   },
   "location": {
     "displayName": "Carcassonne, Aude",

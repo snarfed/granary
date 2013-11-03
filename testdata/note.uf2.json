@@ -1,24 +1,24 @@
 {
   "type": ["h-entry", "h-as-note"],
   "properties": {
-    "uid": ["tag:example.org,2011:blog-post-123"],
+    "uid": ["tag:example.com,2011:blog-post-123"],
     "name": ["blog post 123"],
-    "url": ["http://example.org/blog-post-123"],
+    "url": ["http://example.com/blog-post-123"],
     "published": ["2012-02-22T20:26:41"],
     "updated": ["2013-10-25T10:31:30+00:00"],
     "content": [{
         "html": "A blog post...",
         "value": "A blog post..."
       }],
-    "photo": ["http://example.org/blog-post-123/image"],
+    "photo": ["http://example.com/blog-post-123/image"],
 
     "author": [{
       "type": ["h-card", "p-author"],
       "properties": {
-        "uid": ["tag:example.org,2001:ryan"],
+        "uid": ["tag:example.com,2001:ryan"],
         "name": ["Ryan Barrett"],
-        "url": ["http://example.org/ryan"],
-        "photo": ["http://example.org/ryan/image"]
+        "url": ["http://example.com/ryan"],
+        "photo": ["http://example.com/ryan/image"]
       }
     }],
 

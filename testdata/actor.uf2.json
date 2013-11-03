@@ -1,9 +1,9 @@
 {
   "type": ["h-card"],
   "properties": {
-    "uid": ["tag:example.org,2011:martin"],
+    "uid": ["tag:example.com,2011:martin"],
     "name": ["Martin Smith"],
-    "url": ["http://example.org/martin"],
-    "photo": ["http://example.org/martin/image"]
+    "url": ["http://example.com/martin"],
+    "photo": ["http://example.com/martin/image"]
   }
 }
