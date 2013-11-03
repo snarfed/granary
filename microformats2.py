@@ -29,7 +29,8 @@ HCARD = string.Template("""\
     <a class="u-url p-name" href="$url">$name</a>
     $photo
     <span class="u-uid">$uid</span>
-  </div>""")
+  </div>
+""")
 IN_REPLY_TO = string.Template('<a class="u-in-reply-to" href="$url">')
 PHOTO = string.Template('<img class="u-photo" src="$url" />')
 
@@ -111,6 +112,9 @@ def object_to_html(obj):
     the end.
   """
   jsn = object_to_json(obj, trim_nulls=False)
+  if jsn['type'][0] == 'h-card':
+    return hcard_to_html(jsn)
+
   props = jsn['properties']
   # extract first value from multiply valued properties
   props = {k: v[0] if v else '' for k, v in props.items()}

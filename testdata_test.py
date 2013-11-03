@@ -39,13 +39,13 @@ def read_json(filename):
 class TestDataTest(testutil.HandlerTest):
   def test_activitystreams_to_uf2_json(self):
     # source extension, destination extention, conversion function
-    mappings = (#('as.json', 'uf2.json', microformats2.object_to_json),
+    mappings = (('as.json', 'uf2.json', microformats2.object_to_json),
                 ('as.json', 'uf2.html', microformats2.object_to_html),
                 )
 
     for src_ext, dst_ext, fn in mappings:
       for src, dst in filepairs(src_ext, dst_ext):
-        if not src.startswith('note'):
+        if src.startswith('comment'):
           continue
         if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):
           expected = open(dst).read()
