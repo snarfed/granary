@@ -45,8 +45,6 @@ class TestDataTest(testutil.HandlerTest):
 
     for src_ext, dst_ext, fn in mappings:
       for src, dst in filepairs(src_ext, dst_ext):
-        if src.startswith('comment'):
-          continue
         if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):
           expected = open(dst).read()
         else:
