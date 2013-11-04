@@ -33,6 +33,7 @@ from webob import exc
 import appengine_config
 import facebook
 import instagram
+import microformats2
 import source
 import twitter
 from webutil import util
@@ -96,7 +97,7 @@ class Handler(webapp2.RequestHandler):
     paging_params = self.get_paging_params()
 
     # extract format
-    expected_formats = ('json', 'atom', 'xml', 'html')
+    expected_formats = ('json', 'atom', 'xml', 'html', 'json-mf2')
     format = self.request.get('format', 'json')
     if format not in expected_formats:
       raise exc.HTTPBadRequest('Invalid format: %s, expected one of %r' %
@@ -147,9 +148,17 @@ class Handler(webapp2.RequestHandler):
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
     elif format == 'html':
       self.response.headers['Content-Type'] = 'text/html'
-      self.response.out.write('\n'.join(
-          microformats2.object_to_html(a['object'], source_name=source.DOMAIN)
-          for a in activities))
+      items = [microformats2.object_to_html(a['object']) for a in activities]
+      self.response.out.write("""\
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+%s
+<html xmlns="http://www.w3.org/1999/xhtml">
+""" % '\n'.join(items))
+    elif format == 'json-mf2':
+      self.response.headers['Content-Type'] = 'application/json'
+      items = [microformats2.object_to_json(a['object']) for a in activities]
+      self.response.out.write(json.dumps({'items': items}, indent=2))
 
     if 'plaintext' in self.request.params:
       # override response content type
