@@ -37,10 +37,10 @@ def read_json(filename):
 
 
 class TestDataTest(testutil.HandlerTest):
-  def test_activitystreams_to_uf2_json(self):
+  def test_testdata(self):
     # source extension, destination extention, conversion function
-    mappings = (('as.json', 'uf2.json', microformats2.object_to_json),
-                ('as.json', 'uf2.html', microformats2.object_to_html),
+    mappings = (('as.json', 'mf2.json', microformats2.object_to_json),
+                ('as.json', 'mf2.html', microformats2.object_to_html),
                 )
 
     for src_ext, dst_ext, fn in mappings:

@@ -10,7 +10,7 @@ from webutil import testutil
 
 
 class RenderTest(testutil.HandlerTest):
-
+  pass
   # xmlrpc = activitystreams.XmlRpc('http://abc/def.php', BLOG_ID, 'my_user', 'my_passwd')
 
   # def setUp(self):
@@ -465,85 +465,3 @@ class RenderTest(testutil.HandlerTest):
 #         'updated': '2010-12-05T05:00:18+0000',
 #         'url': 'http://facebook.com/212038/posts/725208279633',
 #         })
-
-  def test_object_to_html_no_tags(self):
-    self.assert_equals('<p>abc</p>\n',
-                       microformats2.object_to_html({'content': 'abc'}))
-
-    obj = {'content': 'abc', 'tags': [], 'url': 'li/nk'}
-    self.assert_equals("""<p>abc</p>
-<p class="freedom-via"><a href="li/nk">original</a></p>""",
-                       microformats2.object_to_html(obj))
-
-  def test_object_to_html(self):
-    self.assert_equals(
-      """\
-<p>X <a class="freedom-mention" href="a/bc">@abc</a> def <a class="freedom-mention" href="g/hi">#ghi</a> Y</p>
-<p><a class="freedom-link" alt="m/no" href="m/no">
-<img class="freedom-link-thumbnail" src="" />
-<span class="freedom-link-name">m/no</span>
-</p>
-<p class="freedom-hashtags"><a href="j/kl">#jkl</a></p>
-<p class="freedom-tags"><a href="ryan/b">Ryan B</a>, <a href="d/ef">def</a>, <a href="ev/ent">my event</a></p>
-<p class="freedom-via">via My Source</p>""",
-      microformats2.object_to_html({
-          'content': 'X @abc def #ghi Y',
-          'tags': [{
-              'id': 'ryanb',
-              'objectType': 'person',
-              'url': 'ryan/b',
-              'displayName': 'Ryan B',
-              }, {
-              'id': 'ghi',
-              'objectType': 'hashtag',
-              'url': 'g/hi',
-              'startIndex': 11,
-              'length': 4,
-              }, {
-              'id': 'abc',
-              'objectType': 'person',
-              'url': 'a/bc',
-              'startIndex': 2,
-              'length': 4,
-              }, {
-              'id': 'ryanb',
-              'objectType': 'event',
-              'url': 'should be overridden by Ryan B',
-              }, {
-              'id': 'my_event',
-              'displayName': 'my event',
-              'objectType': 'event',
-              'url': 'ev/ent',
-              # TODO: should hashtags and articles be attachments or tags?
-              }, {
-              'objectType': 'hashtag',
-              'displayName': '#jkl',
-              'url': 'j/kl',
-              }, {
-              'objectType': 'foo',
-              'url': 'd/ef',
-              'displayName': 'def',
-              }, {
-              'objectType': 'article',
-              'url': 'm/no',
-              }],
-          }, source_name='My Source'))
-
-    self.assert_equals("""\
-<p>foo bar</p>
-<p class="freedom-checkin">at my house</p>
-<p class="freedom-via"><a href="http://the/url">original</a></p>""",
-      microformats2.object_to_html({
-          'content': 'foo bar',
-          'location': {'displayName': 'my house'},
-          'url': 'http://the/url',
-          }))
-
-    self.assert_equals("""\
-<p>foo bar</p>
-<p class="freedom-checkin">at <a href="http://my/house">my house</a></p>
-<p class="freedom-via">via My Source</p>""",
-      microformats2.object_to_html({
-          'content': 'foo bar',
-          'location': {'displayName': 'my house', 'url': 'http://my/house'},
-          }, source_name='My Source'))
