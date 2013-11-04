@@ -54,7 +54,7 @@ def object_to_json(obj, trim_nulls=True):
                'person': ['h-card'],
                'place': ['h-card', 'p-location'],
                }
-  types = types_map.get(obj.get('objectType'))
+  types = types_map.get(obj.get('objectType'), ['h-entry'])
 
   content = obj.get('content', '')
   # TODO: extract snippet
