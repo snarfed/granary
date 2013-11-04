@@ -3,19 +3,20 @@
   "displayName": "article abc",
   "url": "http://example.com/article-abc",
 
-  "comments": [{
-    "objectType": "comment",
-    "author": {
-      "displayName": "Alice",
-      "url": "http://example.com/alice"
+  "replies": {
+    "items": [{
+      "objectType": "comment",
+      "author": {
+        "displayName": "Alice",
+        "url": "http://example.com/alice"
       },
-    "content": "I concur.",
-    "inReplyTo": {"id": "tag:example.com,2013:212038"}
-  }, {
-    "objectType": "comment",
-    "title": "second comment name",
-    "content": "And I, as well, in addition. Too.",
-    "inReplyTo": {"url": "http://example.com/article-abc"}
-    }
-  ]
+      "content": "I concur.",
+      "inReplyTo": {"id": "tag:example.com,2013:212038"}
+    }, {
+      "objectType": "comment",
+      "title": "second comment name",
+      "content": "And I, as well, in addition. Too.",
+      "inReplyTo": {"url": "http://example.com/article-abc"}
+    }]
+  }
 }

@@ -86,7 +86,7 @@ def object_to_json(obj, trim_nulls=True):
       'in-reply-to': [obj.get('inReplyTo', {}).get('url')],
       'author': [author],
       'location': [location],
-      'comment': [object_to_json(c) for c in obj.get('comments', [])]
+      'comment': [object_to_json(c) for c in obj.get('replies', {}).get('items', [])]
       }
     }
   if trim_nulls:
@@ -112,6 +112,9 @@ def object_to_html(obj):
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
+  if not obj:
+    return ''
+
   jsn = object_to_json(obj, trim_nulls=False)
   # TODO: handle when h-card isn't first
   if jsn['type'][0] == 'h-card':
@@ -126,7 +129,8 @@ def object_to_html(obj):
   in_reply_to = IN_REPLY_TO.substitute(url=props['in-reply-to']) \
                  if props['in-reply-to'] else ''
 
-  comments = '\n'.join(object_to_html(c) for c in obj.get('comments', []))
+  comments = obj.get('replies', {}).get('items', [])
+  comments_html = '\n'.join(object_to_html(c) for c in comments)
 
   return HENTRY.substitute(props,
                            types=' '.join(jsn['type']),
@@ -135,7 +139,7 @@ def object_to_html(obj):
                            photo=photo,
                            in_reply_to=in_reply_to,
                            content=props['content']['html'],
-                           comments=comments)
+                           comments=comments_html)
 
 
 def hcard_to_html(hcard):
