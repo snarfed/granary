@@ -136,7 +136,7 @@ class Facebook(source.Source):
     if self.access_token:
       url = util.add_query_params(url, [('access_token', self.access_token)])
     logging.info('Fetching %s', url)
-    return urllib2.urlopen(url).read()
+    return urllib2.urlopen(url, timeout=999).read()
 
   def post_to_activity(self, post):
     """Converts a post to an activity.
