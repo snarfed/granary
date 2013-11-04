@@ -203,8 +203,10 @@ def render_content(obj):
     content += orig[last_end:]
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
-  if content:
-    content = util.linkify(content)
+  # TODO: fix the bug in test_linkify_broken() in webutil/util_test.py, then
+  # uncomment this.
+  # if content:
+  #   content = util.linkify(content)
 
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
