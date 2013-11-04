@@ -164,3 +164,8 @@ rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
 rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
   ~/google_appengine/appcfg.py --oauth2 update .
 ```
+
+
+TODO
+---
+* convert most of the per-site tests to testdata tests
