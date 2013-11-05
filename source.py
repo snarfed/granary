@@ -29,6 +29,7 @@ class Source(object):
 
   Class constants:
     DOMAIN: string, the source's domain
+    NAME: string, the source's human-readable name
     FRONT_PAGE_TEMPLATE: string, the front page child template filename
     AUTH_URL = string, the url for the "Authenticate" front page link
   """

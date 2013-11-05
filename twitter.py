@@ -38,6 +38,7 @@ class Twitter(source.Source):
   """
 
   DOMAIN = 'twitter.com'
+  NAME = 'Twitter'
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
 
   def __init__(self, access_token_key, access_token_secret):

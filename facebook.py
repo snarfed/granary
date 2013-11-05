@@ -84,6 +84,7 @@ class Facebook(source.Source):
   """
 
   DOMAIN = 'facebook.com'
+  NAME = 'Facebook'
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
 
   def __init__(self, access_token=None):

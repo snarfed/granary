@@ -38,6 +38,7 @@ class Instagram(source.Source):
   """Implements the ActivityStreams API for Instagram."""
 
   DOMAIN = 'instagram.com'
+  NAME = 'Instagram'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
 
   def __init__(self, access_token=None):
