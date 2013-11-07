@@ -214,35 +214,35 @@ ATOM = """\
 
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
-  
+
     <link rel="ostatus:attention" href="http://twitter.com/foo" />
     <link rel="mentioned" href="http://twitter.com/foo" />
-  
+
     <link rel="ostatus:attention" href="http://twitter.com/foo" />
     <link rel="mentioned" href="http://twitter.com/foo" />
-  
+
     <link rel="ostatus:attention" href="https://twitter.com/search?q=%%23tcdisrupt" />
     <link rel="mentioned" href="https://twitter.com/search?q=%%23tcdisrupt" />
-  
+
     <link rel="ostatus:attention" href="http://instagr.am/p/MuW67/" />
     <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
-  
+
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
-  
+
     <thr:in-reply-to ref=\"""" + tag_uri('789') + """\"
                      href="http://twitter.com/other_user/status/789"
                      type="text/html" />
-  
+
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
-  
-  
-  
+
+
+
     <georss:featureName>Carcassonne, Aude</georss:featureName>
-  
-  
+
+
   <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/172417043893731329" />
 </entry>
 
@@ -255,6 +255,12 @@ class TwitterTest(testutil.HandlerTest):
   def setUp(self):
     super(TwitterTest, self).setUp()
     self.twitter = twitter.Twitter('key', 'secret')
+
+  def expect_urlopen(self, *args, **kwargs):
+    """Add timeout to the expected call.
+    """
+    super(TwitterTest, self).expect_urlopen(
+      *args, timeout=mox.IgnoreArg(), **kwargs)
 
   def test_get_actor(self):
     self.expect_urlopen(

@@ -257,26 +257,26 @@ this picture is #abc #xyz
 
   <link rel="alternate" type="text/html" href="http://instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="http://instagram.com/p/ABC123/" />
-  
+
     <link rel="ostatus:attention" href="http://instagram.com/snarfed" />
     <link rel="mentioned" href="http://instagram.com/snarfed" />
-  
+
     <link rel="ostatus:attention" href="" />
     <link rel="mentioned" href="" />
-  
+
     <link rel="ostatus:attention" href="" />
     <link rel="mentioned" href="" />
-  
+
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-09-21T22:25:42</published>
   <updated></updated>
-  
+
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
-  
-  
-  
-  
+
+
+
+
   <link rel="self" type="application/atom+xml" href="http://instagram.com/p/ABC123/" />
 </entry>
 

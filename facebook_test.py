@@ -324,39 +324,39 @@ my link caption
 
   <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
   <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
-  
+
     <link rel="ostatus:attention" href="http://facebook.com/234" />
     <link rel="mentioned" href="http://facebook.com/234" />
-  
+
     <link rel="ostatus:attention" href="http://facebook.com/345" />
     <link rel="mentioned" href="http://facebook.com/345" />
-  
+
     <link rel="ostatus:attention" href="http://facebook.com/345" />
     <link rel="mentioned" href="http://facebook.com/345" />
-  
+
     <link rel="ostatus:attention" href="http://facebook.com/456" />
     <link rel="mentioned" href="http://facebook.com/456" />
-  
+
     <link rel="ostatus:attention" href="http://facebook.com/456" />
     <link rel="mentioned" href="http://facebook.com/456" />
-  
+
     <link rel="ostatus:attention" href="http://facebook.com/283938455011303" />
     <link rel="mentioned" href="http://facebook.com/283938455011303" />
-  
+
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-03-04T18:20:37+00:00</published>
   <updated>2012-03-04T19:08:16+00:00</updated>
-  
+
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
-  
-  
+
+
     <georss:point>37.7281937175 -122.493364236</georss:point>
-  
-  
+
+
     <georss:featureName>Lake Merced</georss:featureName>
-  
-  
+
+
   <link rel="self" type="application/atom+xml" href="http://facebook.com/212038/posts/10100176064482163" />
 </entry>
 
@@ -368,6 +368,12 @@ class FacebookTest(testutil.HandlerTest):
   def setUp(self):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook()
+
+  def expect_urlopen(self, *args, **kwargs):
+    """Add timeout to the expected call.
+    """
+    super(FacebookTest, self).expect_urlopen(
+      *args, timeout=mox.IgnoreArg(), **kwargs)
 
   def test_get_actor(self):
     self.expect_urlopen('https://graph.facebook.com/foo', json.dumps(USER))
