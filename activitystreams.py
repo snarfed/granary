@@ -150,9 +150,8 @@ class Handler(webapp2.RequestHandler):
       self.response.headers['Content-Type'] = 'text/html'
       items = [microformats2.object_to_html(a['object']) for a in activities]
       self.response.out.write("""\
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 %s
 </html>
 """ % '\n'.join(items))
