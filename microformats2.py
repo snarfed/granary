@@ -70,6 +70,7 @@ def object_to_json(obj, trim_nulls=True):
 
   # TODO: comments. h-cite or h-entry?
   # http://indiewebcamp.com/comment-presentation#How_to_markup
+  # http://indiewebcamp.com/h-cite
   ret = {
     'type': types,
     'properties': {
