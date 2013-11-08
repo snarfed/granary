@@ -62,7 +62,7 @@ def object_to_json(obj, trim_nulls=True):
 
   author = object_to_json(obj.get('author', {}), trim_nulls=False)
   if author:
-    author['type'] = ['h-card', 'p-author']
+    author['type'] = ['h-card']
 
   location = object_to_json(obj.get('location', {}), trim_nulls=False)
   if location:
@@ -125,6 +125,10 @@ def object_to_html(obj):
   # extract first value from multiply valued properties
   props = {k: v[0] if v else '' for k, v in props.items()}
 
+  author = props['author']
+  if author:
+    author['type'].append('p-author')
+
   # TODO: multiple images (in attachments?)
   photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
   in_reply_to = IN_REPLY_TO.substitute(url=props['in-reply-to']) \
@@ -135,7 +139,7 @@ def object_to_html(obj):
 
   return HENTRY.substitute(props,
                            types=' '.join(jsn['type']),
-                           author=hcard_to_html(props['author']),
+                           author=hcard_to_html(author),
                            location=hcard_to_html(props['location']),
                            photo=photo,
                            in_reply_to=in_reply_to,

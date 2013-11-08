@@ -13,7 +13,7 @@
     "photo": ["http://example.com/blog-post-123/image"],
 
     "author": [{
-      "type": ["h-card", "p-author"],
+      "type": ["h-card"],
       "properties": {
         "uid": ["tag:example.com,2001:ryan"],
         "name": ["Ryan Barrett"],
