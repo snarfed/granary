@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- eval: (progn (make-local-variable 'before-save-hook) (remove-hook 'before-save-hook 'delete-trailing-whitespace-in-some-modes t)) -*-
-#
-# (the above line is an Emacs file local variable that says *not* to delete
-# trailing whitespace, since some of it in test data is meaningful.)
 """Unit tests for facebook.py.
 """
 
