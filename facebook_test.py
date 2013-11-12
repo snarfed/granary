@@ -365,12 +365,6 @@ class FacebookTest(testutil.HandlerTest):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook()
 
-  def expect_urlopen(self, *args, **kwargs):
-    """Add timeout to the expected call.
-    """
-    super(FacebookTest, self).expect_urlopen(
-      *args, timeout=mox.IgnoreArg(), **kwargs)
-
   def test_get_actor(self):
     self.expect_urlopen('https://graph.facebook.com/foo', json.dumps(USER))
     self.mox.ReplayAll()

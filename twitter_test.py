@@ -252,12 +252,6 @@ class TwitterTest(testutil.HandlerTest):
     super(TwitterTest, self).setUp()
     self.twitter = twitter.Twitter('key', 'secret')
 
-  def expect_urlopen(self, *args, **kwargs):
-    """Add timeout to the expected call.
-    """
-    super(TwitterTest, self).expect_urlopen(
-      *args, timeout=mox.IgnoreArg(), **kwargs)
-
   def test_get_actor(self):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
