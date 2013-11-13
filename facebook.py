@@ -111,7 +111,7 @@ class Facebook(source.Source):
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0):
-    """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
+    """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
     """
@@ -311,7 +311,7 @@ class Facebook(source.Source):
 
     return util.trim_nulls(object)
 
-  COMMENT_ID_RE = re.compile('(\d+)_(\d+)_(\d+)')
+  COMMENT_ID_RE = re.compile('(\d+_)?(\d+)_(\d+)')
 
   def comment_to_object(self, comment):
     """Converts a comment to an object.
@@ -336,10 +336,10 @@ class Facebook(source.Source):
 
     match = self.COMMENT_ID_RE.match(comment.get('id', ''))
     if match:
-      object['url'] = 'http://facebook.com/%s/posts/%s?comment_id=%s' % match.groups()
-      object['inReplyTo'] = {
-        'id': self.tag_uri('%s_%s' % match.group(1, 2)),
-        }
+      post_author, post_id, comment_id = match.groups()
+      object['url'] = 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+      object['inReplyTo'] = {'id': self.tag_uri(
+          '%s%s' % (post_author if post_author else '', post_id))}
 
     return object
 
