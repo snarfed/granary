@@ -131,6 +131,14 @@ class Facebook(source.Source):
 
     return total_count, [self.post_to_activity(p) for p in posts]
 
+  def get_comment(self, id):
+    """Returns an ActivityStreams comment object.
+
+    Args:
+      id: string object id
+    """
+    return self.comment_to_object(json.loads(self.urlread(API_OBJECT_URL % id)))
+
   def urlread(self, url):
     """Wraps urllib2.urlopen() and passes through the access token.
     """

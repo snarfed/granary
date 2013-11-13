@@ -437,6 +437,12 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals((0, []), self.facebook.get_activities(activity_id='000'))
 
+  def test_get_comment(self):
+    self.expect_urlopen('https://graph.facebook.com/123_456',
+                        json.dumps(COMMENTS[0]))
+    self.mox.ReplayAll()
+    self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456'))
+
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
 

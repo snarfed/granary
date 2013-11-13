@@ -67,6 +67,14 @@ class Source(object):
     """
     raise NotImplementedError()
 
+  def get_comment(self, id):
+    """Returns an ActivityStreams comment object.
+
+    Args:
+      id: string object id
+    """
+    raise NotImplementedError()
+
   def postprocess_activity(self, activity):
     """Does source-independent post-processing of an activity, in place.
 
