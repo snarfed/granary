@@ -170,7 +170,7 @@ def render_content(obj):
   Includes tags, mentions, and attachments.
 
   Args:
-    tags: decoded JSON ActivityStreams objects.
+    obj: decoded JSON ActivityStreams object
 
   Returns: string, rendered HTML
   """

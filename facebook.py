@@ -44,13 +44,13 @@ OAUTH_SCOPES = ','.join((
     ))
 
 API_OBJECT_URL = 'https://graph.facebook.com/%s'
-API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d&limit=%d'
+API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d'
 # this an old, out of date version of the actual news feed. sigh. :/
 # "Note: /me/home retrieves an outdated view of the News Feed. This is currently
 # a known issue and we don't have any near term plans to bring them back up into
 # parity."
 # https://developers.facebook.com/docs/reference/api/#searching
-API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d&limit=%d'
+API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -125,7 +125,9 @@ class Facebook(source.Source):
       total_count = len(posts)
     else:
       url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
-      url = url % (user_id, start_index, count)
+      url = url % (user_id, start_index)
+      if count:
+        url = util.add_query_params(url, {'limit': count})
       posts = json.loads(self.urlread(url)).get('data', [])
       total_count = None
 

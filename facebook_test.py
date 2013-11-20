@@ -381,7 +381,7 @@ class FacebookTest(testutil.HandlerTest):
           {'id': '3_4', 'message': 'bar'},
           ]})
     self.expect_urlopen(
-      'https://graph.facebook.com/me/home?offset=0&limit=0', resp)
+      'https://graph.facebook.com/me/home?offset=0', resp)
     self.mox.ReplayAll()
 
     self.assert_equals((
@@ -407,14 +407,14 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&limit=0', '{}')
+      'https://graph.facebook.com/me/posts?offset=0', '{}')
     self.mox.ReplayAll()
     self.assert_equals((None, []),
                        self.facebook.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/me/home?offset=0&limit=0&access_token=asdf',
+      'https://graph.facebook.com/me/home?offset=0&access_token=asdf',
       '{"id": 123}')
     self.mox.ReplayAll()
 
@@ -436,6 +436,12 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('https://graph.facebook.com/000', 'false')
     self.mox.ReplayAll()
     self.assert_equals((0, []), self.facebook.get_activities(activity_id='000'))
+
+  def test_get_activities_start_index_and_count(self):
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=3&limit=5', '{}')
+    self.mox.ReplayAll()
+    self.facebook.get_activities(group_id=source.SELF,start_index=3, count=5)
 
   def test_get_comment(self):
     self.expect_urlopen('https://graph.facebook.com/123_456',

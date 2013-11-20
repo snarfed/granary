@@ -9,7 +9,7 @@ import microformats2
 from webutil import testutil
 
 
-class RenderTest(testutil.HandlerTest):
+class Microformats2Test(testutil.HandlerTest):
   pass
   # xmlrpc = activitystreams.XmlRpc('http://abc/def.php', BLOG_ID, 'my_user', 'my_passwd')
 
