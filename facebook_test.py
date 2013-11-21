@@ -40,7 +40,7 @@ ACTOR = {  # ActivityStreams
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
 COMMENTS = [{  # Facebook
-    'id': '212038_547822715231468_6796480',
+    'id': '547822715231468_6796480',
     'from': {
       'name': 'Ryan Barrett',
       'id': '212038'
@@ -61,7 +61,7 @@ COMMENTS = [{  # Facebook
         }],
     'created_time': '2012-12-05T00:58:26+0000',
     }, {
-    'id': '212038_124561947600007_672819',
+    'id': '124561947600007_672819',
     'from': {
       'name': 'Ron Ald',
       'id': '513046677'
@@ -135,10 +135,10 @@ COMMENT_OBJS = [  # ActivityStreams
       'url': 'http://facebook.com/212038',
       },
     'content': 'cc Sam G, Michael M',
-    'id': tag_uri('212038_547822715231468_6796480'),
+    'id': tag_uri('547822715231468_6796480'),
     'published': '2012-12-05T00:58:26+00:00',
-    'url': 'http://facebook.com/212038/posts/547822715231468?comment_id=6796480',
-    'inReplyTo': {'id': tag_uri('212038_547822715231468')},
+    'url': 'http://facebook.com/547822715231468?comment_id=6796480',
+    'inReplyTo': {'id': tag_uri('547822715231468')},
     'tags': [{
         'objectType': 'person',
         'id': tag_uri('221330'),
@@ -164,10 +164,10 @@ COMMENT_OBJS = [  # ActivityStreams
       'url': 'http://facebook.com/513046677',
       },
     'content': 'Foo bar!',
-    'id': tag_uri('212038_124561947600007_672819'),
+    'id': tag_uri('124561947600007_672819'),
     'published': '2010-10-28T00:23:04+00:00',
-    'url': 'http://facebook.com/212038/posts/124561947600007?comment_id=672819',
-    'inReplyTo': {'id': tag_uri('212038_124561947600007')},
+    'url': 'http://facebook.com/124561947600007?comment_id=672819',
+    'inReplyTo': {'id': tag_uri('124561947600007')},
     },
 ]
 POST_OBJ = {  # ActivityStreams
@@ -179,10 +179,10 @@ POST_OBJ = {  # ActivityStreams
     'url': 'http://facebook.com/212038',
     },
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
-  'id': tag_uri('212038_10100176064482163'),
+  'id': tag_uri('10100176064482163'),
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
-  'url': 'http://facebook.com/212038/posts/10100176064482163',
+  'url': 'http://facebook.com/10100176064482163',
   'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
   'attachments': [{
       'objectType': 'image',
@@ -245,8 +245,8 @@ ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
-  'id': tag_uri('212038_10100176064482163'),
-  'url': 'http://facebook.com/212038/posts/10100176064482163',
+  'id': tag_uri('10100176064482163'),
+  'url': 'http://facebook.com/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
   'title': 'Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
@@ -300,7 +300,7 @@ ATOM = """\
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/image
   </activity:object-type>
-  <id>""" + tag_uri('212038_10100176064482163') + """</id>
+  <id>""" + tag_uri('10100176064482163') + """</id>
   <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.</title>
 
   <content type="xhtml">
@@ -318,8 +318,8 @@ my link caption
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
-  <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
+  <link rel="alternate" type="text/html" href="http://facebook.com/10100176064482163" />
+  <link rel="ostatus:conversation" href="http://facebook.com/10100176064482163" />
 
     <link rel="ostatus:attention" href="http://facebook.com/234" />
     <link rel="mentioned" href="http://facebook.com/234" />
@@ -353,7 +353,7 @@ my link caption
     <georss:featureName>Lake Merced</georss:featureName>
 
 
-  <link rel="self" type="application/atom+xml" href="http://facebook.com/212038/posts/10100176064482163" />
+  <link rel="self" type="application/atom+xml" href="http://facebook.com/10100176064482163" />
 </entry>
 
 </feed>
@@ -386,21 +386,21 @@ class FacebookTest(testutil.HandlerTest):
 
     self.assert_equals((
         None,
-        [{'id': tag_uri('1_2'),
+        [{'id': tag_uri('2'),
           'object': {'content': 'foo',
-                     'id': tag_uri('1_2'),
+                     'id': tag_uri('2'),
                      'objectType': 'note',
-                     'url': 'http://facebook.com/1/posts/2'},
+                     'url': 'http://facebook.com/2'},
           'title': 'Unknown: foo',
-          'url': 'http://facebook.com/1/posts/2',
+          'url': 'http://facebook.com/2',
           'verb': 'post'},
-         {'id': tag_uri('3_4'),
+         {'id': tag_uri('4'),
           'object': {'content': 'bar',
-                     'id': tag_uri('3_4'),
+                     'id': tag_uri('4'),
                      'objectType': 'note',
-                     'url': 'http://facebook.com/3/posts/4'},
+                     'url': 'http://facebook.com/4'},
           'title': 'Unknown: bar',
-          'url': 'http://facebook.com/3/posts/4',
+          'url': 'http://facebook.com/4',
           'verb': 'post'},
          ]),
       self.facebook.get_activities())

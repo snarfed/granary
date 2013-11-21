@@ -158,24 +158,21 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    object = self.post_to_object(post)
-    id = post.get('id')
-    if id:
-      url = 'http://facebook.com/' + id.replace('_', '/posts/')
-      id = self.tag_uri(str(id))
-    else:
-      id = object.get('id')
-      url = object.get('url')
-    verb = VERBS.get(post.get('type', object.get('objectType')), 'post')
+    id = None
+    if 'id' in post:
+      # strip USERID_ prefix if it's there
+      post['id'] = post['id'].split('_', 1)[-1]
+      id = post['id']
 
+    obj = self.post_to_object(post)
     activity = {
-      'verb': verb,
-      'published': object.get('published'),
-      'updated': object.get('updated'),
-      'id': id,
-      'url': url,
-      'actor': object.get('author'),
-      'object': object,
+      'verb': VERBS.get(post.get('type', obj.get('objectType')), 'post'),
+      'published': obj.get('published'),
+      'updated': obj.get('updated'),
+      'id': self.tag_uri(id) if id else None,
+      'url': ('http://facebook.com/%s' % id) if id else None,
+      'actor': obj.get('author'),
+      'object': obj,
       }
 
     application = post.get('application')
@@ -186,7 +183,7 @@ class Facebook(source.Source):
         }
     return self.postprocess_activity(activity)
 
-  def post_to_object(self, post):
+  def post_to_object(self, post, remove_id_prefix=False):
     """Converts a post to an object.
 
     Args:
@@ -195,15 +192,13 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    object = {}
-
     id = post.get('id')
     if not id:
       return {}
 
     post_type = post.get('type')
     status_type = post.get('status_type')
-    url = 'http://facebook.com/' + id.replace('_', '/posts/')
+    url = 'http://facebook.com/%s' % id
     picture = post.get('picture')
     message = post.get('message')
     if not message:
@@ -231,7 +226,7 @@ class Facebook(source.Source):
       else:
         object_type = 'note'
 
-    object = {
+    obj = {
       'id': self.tag_uri(str(id)),
       'objectType': object_type,
       'published': util.maybe_iso8601_to_rfc3339(post.get('created_time')),
@@ -248,14 +243,14 @@ class Facebook(source.Source):
     tags = itertools.chain(post.get('to', {}).get('data', []),
                            post.get('with_tags', {}).get('data', []),
                            *post.get('message_tags', {}).values())
-    object['tags'] = [{
-          'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
-          'id': self.tag_uri(t.get('id')),
-          'url': 'http://facebook.com/%s' % t.get('id'),
-          'displayName': t.get('name'),
-          'startIndex': t.get('offset'),
-          'length': t.get('length'),
-          } for t in tags]
+    obj['tags'] = [{
+        'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
+        'id': self.tag_uri(t.get('id')),
+        'url': 'http://facebook.com/%s' % t.get('id'),
+        'displayName': t.get('name'),
+        'startIndex': t.get('offset'),
+        'length': t.get('length'),
+        } for t in tags]
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
@@ -274,16 +269,16 @@ class Facebook(source.Source):
           'objectType': 'image',
           'image': {'url': picture[:-6] + '_o.jpg'},
           })
-      object['attachments'] = [att]
+      obj['attachments'] = [att]
     elif link and not link.startswith('/gifts/'):
       att['objectType'] = 'article'
-      object['attachments'] = [att]
+      obj['attachments'] = [att]
 
     # location
     place = post.get('place')
     if place:
       id = place.get('id')
-      object['location'] = {
+      obj['location'] = {
         'displayName': place.get('name'),
         'id': id,
         'url': 'http://facebook.com/' + id,
@@ -293,7 +288,7 @@ class Facebook(source.Source):
         lat = location.get('latitude')
         lon = location.get('longitude')
         if lat and lon:
-          object['location'].update({
+          obj['location'].update({
               'latitude': lat,
               'longitude': lon,
               # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
@@ -306,12 +301,12 @@ class Facebook(source.Source):
     comments = post.get('comments', {}).get('data')
     if comments:
       items = [self.comment_to_object(c) for c in comments]
-      object['replies'] = {
+      obj['replies'] = {
         'items': items,
         'totalItems': len(items),
         }
 
-    return util.trim_nulls(object)
+    return util.trim_nulls(obj)
 
   COMMENT_ID_RE = re.compile('(\d+_)?(\d+)_(\d+)')
 
@@ -330,20 +325,20 @@ class Facebook(source.Source):
     comment = dict(comment)
     comment['message_tags'] = {'1': comment.get('message_tags', [])}
 
-    object = self.post_to_object(comment)
-    if not object:
-      return object
+    obj = self.post_to_object(comment)
+    if not obj:
+      return obj
 
-    object['objectType'] = 'comment'
+    obj['objectType'] = 'comment'
 
     match = self.COMMENT_ID_RE.match(comment.get('id', ''))
     if match:
       post_author, post_id, comment_id = match.groups()
-      object['url'] = 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
-      object['inReplyTo'] = {'id': self.tag_uri(
+      obj['url'] = 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+      obj['inReplyTo'] = {'id': self.tag_uri(
           '%s%s' % (post_author if post_author else '', post_id))}
 
-    return object
+    return obj
 
   def user_to_actor(self, user):
     """Converts a user to an actor.
