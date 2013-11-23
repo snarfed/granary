@@ -422,7 +422,7 @@ class FacebookTest(testutil.HandlerTest):
     self.facebook.get_activities()
 
   def test_get_activities_activity_id(self):
-    self.expect_urlopen('https://graph.facebook.com/000', json.dumps(POST))
+    self.expect_urlopen('https://graph.facebook.com/123_000', json.dumps(POST))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -433,15 +433,25 @@ class FacebookTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_activity_id_not_found(self):
-    self.expect_urlopen('https://graph.facebook.com/000', 'false')
+    self.expect_urlopen('https://graph.facebook.com/0_0', 'false')
     self.mox.ReplayAll()
-    self.assert_equals((0, []), self.facebook.get_activities(activity_id='000'))
+    self.assert_equals((0, []), self.facebook.get_activities(activity_id='0_0'))
 
   def test_get_activities_start_index_and_count(self):
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=3&limit=5', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(group_id=source.SELF,start_index=3, count=5)
+
+  def test_get_activities_activity_id_with_user_id(self):
+    self.expect_urlopen('https://graph.facebook.com/12_34', '{}')
+    self.expect_urlopen('https://graph.facebook.com/12_34', '{}')
+    self.mox.ReplayAll()
+    self.facebook.get_activities(activity_id='34', user_id='12')
+    self.facebook.get_activities(activity_id='12_34', user_id='56')
+
+  def test_get_activities_activity_id_without_user_id_error(self):
+    self.assertRaises(ValueError, self.facebook.get_activities, activity_id='1')
 
   def test_get_comment(self):
     self.expect_urlopen('https://graph.facebook.com/123_456',

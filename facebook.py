@@ -115,17 +115,19 @@ class Facebook(source.Source):
 
     See method docstring in source.py for details.
     """
-    if user_id is None:
-      user_id = 'me'
-
     if activity_id:
+      if '_' not in activity_id:
+        if not user_id:
+          raise ValueError('Facebook activity_id %s has no user id prefix and '
+                           'user_id keyword arg was not provided.', activity_id)
+        activity_id = '%s_%s' % (user_id, activity_id)
       posts = [json.loads(self.urlread(API_OBJECT_URL % activity_id))]
       if posts == [False]:  # FB returns false for "not found"
         posts = []
       total_count = len(posts)
     else:
       url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
-      url = url % (user_id, start_index)
+      url = url % (user_id if user_id else 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
       posts = json.loads(self.urlread(url)).get('data', [])
