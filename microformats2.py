@@ -71,6 +71,7 @@ def object_to_json(obj, trim_nulls=True):
   # TODO: comments. h-cite or h-entry?
   # http://indiewebcamp.com/comment-presentation#How_to_markup
   # http://indiewebcamp.com/h-cite
+  # TODO: convert tags to p-category
   ret = {
     'type': types,
     'properties': {
@@ -232,11 +233,11 @@ def render_content(obj):
       summary = link.get('summary')
       if summary:
         content += '<span class="link-summary">%s</span>\n' % summary
-      content += '</p>\n'
+      content += '</p>'
 
   # other tags
-  content += tags_to_html(tags.pop('hashtag', []), 'freedom-hashtags')
-  content += tags_to_html(sum(tags.values(), []), 'freedom-tags')
+  content += tags_to_html(tags.pop('hashtag', []), 'p-category')
+  content += tags_to_html(sum(tags.values(), []), 'tag')
 
   return content
 
@@ -249,9 +250,9 @@ def tags_to_html(tags, css_class):
     css_class: CSS class for span to enclose tags in
   """
   if tags:
-    return ('<p class="%s">' % css_class +
+    return ('\n<p class="%s">' % css_class +
             ', '.join('<a href="%s">%s</a>' % (t.get('url'), t.get('displayName'))
                       for t in tags) +
-            '</p>\n')
+            '</p>')
   else:
     return ''
