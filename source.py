@@ -8,6 +8,7 @@ http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import datetime
+import re
 
 from webutil import util
 
@@ -53,10 +54,11 @@ class Source(object):
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#Group-ID
 
     Args:
-      user_id: string object id, defaults to the currently authenticated user
-      group_id: string object id, defaults to the current user's friends
-      app_id: string object id
-      activity_id: string object id
+      user_id: string, defaults to the currently authenticated user
+      group_id: string, one of '@self', '@all', '@friends'. defaults to
+        'friends'
+      app_id: string
+      activity_id: string
       start_index: int >= 0
       count: int >= 0
 
@@ -110,6 +112,36 @@ class Source(object):
           DISPLAY_VERBS.get(activity['verb'], 'posted'),
           obj_name if obj_name else 'a %s' % obj_type,
           ' on %s' % app if app else '')
+
+    return activity
+
+  def original_post_discovery(self, activity):
+    """Discovers original post links and stores them as tags, in place.
+
+    This is a variation on http://indiewebcamp.com/original-post-discovery . It
+    differs in that it finds multiple candidate links instead of one, and it
+    doesn't bother looking for MF2 (etc) markup because the silos don't let you
+    input it.
+
+    Args:
+      activity: activity dict
+    """
+    obj = activity['object']
+    content = obj.get('content', '')
+
+    # Permashortcitations are short references to canonical copies of a given
+    # (usually syndicated) post, of the form (DOMAIN PATH). Details:
+    # http://indiewebcamp.com/permashortcitation
+    PERMASHORTCITATION_RE = re.compile(r'\((%s) [^\s)]+\)' % util.HOSTNAME_RE_STR)
+    pscs =  set('http://%s/%s' % tuple(match.group()[1:-1].split())
+                for match in PERMASHORTCITATION_RE.finditer(content)
+                if '.' in match.group(1))
+
+    attachments = set(a.get('url') for a in obj.get('attachments', [])
+                      if a['objectType'] == 'article')
+    urls = util.trim_nulls(util.extract_links(content) | attachments | pscs)
+    obj.setdefault('tags', []).extend({'objectType': 'article', 'url': u}
+                                      for u in urls)
 
     return activity
 
