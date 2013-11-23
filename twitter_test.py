@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Unit tests for twitter.py.
 """
 
@@ -137,11 +136,11 @@ ACTIVITY = {
   'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
-    'inReplyTo' : {
+    'inReplyTo' : [{
       'objectType' : 'note',
       'url' : 'http://twitter.com/other_user/status/789',
       'id' : tag_uri('789'),
-      }
+      }]
     },
   }
 
@@ -227,9 +226,7 @@ ATOM = """\
   <published>2012-02-22T20:26:41</published>
   <updated></updated>
 
-    <thr:in-reply-to ref=\"""" + tag_uri('789') + """\"
-                     href="http://twitter.com/other_user/status/789"
-                     type="text/html" />
+    <thr:in-reply-to ref=\"""" + tag_uri('789') + """\" href="http://twitter.com/other_user/status/789" type="text/html" />
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->

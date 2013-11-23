@@ -66,11 +66,9 @@
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
   <published>{{ activity.object.published }}</published>
   <updated>{{ activity.object.updated }}</updated>
-  {% if activity.context.inReplyTo %}
-    <thr:in-reply-to ref="{{ activity.context.inReplyTo.id }}"
-                     href="{{ activity.context.inReplyTo.url }}"
-                     type="text/html" />
-  {% endif %}
+  {% for obj in activity.context.inReplyTo %}
+    <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url }}" type="text/html" />
+  {% endfor %}
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
   {% with activity.object.location as location %}

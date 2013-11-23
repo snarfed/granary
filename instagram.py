@@ -207,7 +207,7 @@ class Instagram(source.Source):
     return {
       'objectType': 'comment',
       'id': self.tag_uri(comment.id),
-      'inReplyTo': {'id': self.tag_uri(media_id)},
+      'inReplyTo': [{'id': self.tag_uri(media_id)}],
       'url': media_url,
       # TODO: add PST time zone
       'published': comment.created_at.isoformat('T'),

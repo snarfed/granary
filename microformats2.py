@@ -84,7 +84,7 @@ def object_to_json(obj, trim_nulls=True):
           'value': content,
           'html': render_content(obj),
           }],
-      'in-reply-to': [obj.get('inReplyTo', {}).get('url')],
+      'in-reply-to': [o.get('url') for o in obj.get('inReplyTo', [])],
       'author': [author],
       'location': [location],
       'comment': [object_to_json(c) for c in obj.get('replies', {}).get('items', [])]

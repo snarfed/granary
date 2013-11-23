@@ -109,7 +109,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'id': tag_uri('789'),
     'published': '2012-10-06T22:45:57',
     'url': 'http://instagram.com/p/ABC123/',
-    'inReplyTo': {'id': tag_uri('123_456')},
+    'inReplyTo': [{'id': tag_uri('123_456')}],
     },
 ]
 POST_OBJ = {  # ActivityStreams

@@ -138,7 +138,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'id': tag_uri('547822715231468_6796480'),
     'published': '2012-12-05T00:58:26+00:00',
     'url': 'http://facebook.com/547822715231468?comment_id=6796480',
-    'inReplyTo': {'id': tag_uri('547822715231468')},
+    'inReplyTo': [{'id': tag_uri('547822715231468')}],
     'tags': [{
         'objectType': 'person',
         'id': tag_uri('221330'),
@@ -167,7 +167,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'id': tag_uri('124561947600007_672819'),
     'published': '2010-10-28T00:23:04+00:00',
     'url': 'http://facebook.com/124561947600007?comment_id=672819',
-    'inReplyTo': {'id': tag_uri('124561947600007')},
+    'inReplyTo': [{'id': tag_uri('124561947600007')}],
     },
 ]
 POST_OBJ = {  # ActivityStreams

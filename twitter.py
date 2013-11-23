@@ -113,11 +113,11 @@ class Twitter(source.Source):
     reply_to_id = tweet.get('in_reply_to_status_id')
     if reply_to_id and reply_to_screenname:
       activity['context'] = {
-        'inReplyTo': {
+        'inReplyTo': [{
           'objectType': 'note',
           'id': self.tag_uri(reply_to_id),
           'url': self.status_url(reply_to_screenname, reply_to_id),
-          }
+          }]
         }
 
     # yes, the source field has an embedded HTML link. bleh.

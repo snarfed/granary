@@ -102,7 +102,7 @@ class Microformats2Test(testutil.HandlerTest):
 #                 },
 #               'content': "New blog: You're awesome.",
 #               'id': 'tag:facebook.com,2012:212038_124561947600007_672819',
-#               'inReplyTo': {'id': 'tag:facebook.com,2012:212038_124561947600007'},
+#               'inReplyTo': [{'id': 'tag:facebook.com,2012:212038_124561947600007'}],
 #               'objectType': 'comment',
 #               'published': '2010-10-28T00:23:04+0000',
 #               'url': 'http://facebook.com/212038/posts/124561947600007?comment_id=672819',

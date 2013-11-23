@@ -335,8 +335,7 @@ class Facebook(source.Source):
     if match:
       post_author, post_id, comment_id = match.groups()
       obj['url'] = 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
-      obj['inReplyTo'] = {'id': self.tag_uri(
-          '%s%s' % (post_author if post_author else '', post_id))}
+      obj['inReplyTo'] = [{'id': self.tag_uri(post_id)}]
 
     return obj
 
