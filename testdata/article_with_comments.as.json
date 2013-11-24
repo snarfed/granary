@@ -15,6 +15,7 @@
                     {"url": "http://example.com/article-abc"}]
     }, {
       "objectType": "comment",
+      "url": "http://example.com/comment/2",
       "title": "second comment name",
       "content": "And I, as well, in addition. Too.",
       "inReplyTo": [{"url": "http://example.com/article-def"},

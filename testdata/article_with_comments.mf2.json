@@ -18,6 +18,7 @@
     }, {
       "type": ["h-entry", "p-comment"],
       "properties": {
+        "url": ["http://example.com/comment/2"],
         "name": ["second comment name"],
         "content": [{"value": "And I, as well, in addition. Too.",
                      "html": "And I, as well, in addition. Too."}],
