@@ -12,7 +12,7 @@ from webutil import util
 HENTRY = string.Template("""\
 <article class="$types">
   <span class="u-uid">$uid</span>
-  <a class="u-url p-name" href="$url">$name</a>
+  $maybe_linked_name
   <time class="dt-published" datetime="$published">$published</time>
   <time class="dt-updated" datetime="$updated">$updated</time>
 $author
@@ -27,7 +27,7 @@ $comments
 """)
 HCARD = string.Template("""\
   <div class="$types">
-    <a class="u-url p-name" href="$url">$name</a>
+    $maybe_linked_name
     $photo
     <span class="u-uid">$uid</span>
   </div>
@@ -147,7 +147,8 @@ def object_to_html(obj):
                            photo=photo,
                            in_reply_tos=in_reply_tos,
                            content=props['content']['html'],
-                           comments=comments_html)
+                           comments=comments_html,
+                           maybe_linked_name=maybe_linked_name(props))
 
 
 def hcard_to_html(hcard):
@@ -164,7 +165,10 @@ def hcard_to_html(hcard):
   # extract first value from multiply valued properties
   props = {k: v[0] if v else '' for k, v in hcard['properties'].items()}
   photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
-  return HCARD.substitute(props, types=' '.join(hcard['type']), photo=photo)
+  return HCARD.substitute(props,
+                          types=' '.join(hcard['type']),
+                          photo=photo,
+                          maybe_linked_name=maybe_linked_name(props))
 
 
 def render_content(obj):
@@ -258,3 +262,17 @@ def tags_to_html(tags, css_class):
             '</p>')
   else:
     return ''
+
+def maybe_linked_name(props):
+  """Returns the HTML for a p-name with an optional u-url inside.
+
+  Args:
+    props: singly-valued properties dict
+
+  Returns: string HTML
+  """
+  name = props.get('name')
+  url = props.get('url')
+  if url:
+    name = '<a class="u-url" href="%s">%s</a>' % (url, name)
+  return '<div class="p-name">%s</div>' % name

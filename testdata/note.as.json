@@ -10,8 +10,7 @@
   "author": {
     "id": "tag:example.com,2001:ryan",
     "displayName": "Ryan Barrett",
-    "image": {"url": "http://example.com/ryan/image"},
-    "url": "http://example.com/ryan"
+    "image": {"url": "http://example.com/ryan/image"}
   },
   "location": {
     "displayName": "Carcassonne, Aude",

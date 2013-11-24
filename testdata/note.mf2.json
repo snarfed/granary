@@ -17,7 +17,6 @@
       "properties": {
         "uid": ["tag:example.com,2001:ryan"],
         "name": ["Ryan Barrett"],
-        "url": ["http://example.com/ryan"],
         "photo": ["http://example.com/ryan/image"]
       }
     }],
