@@ -34,7 +34,7 @@ class SourceTest(testutil.HandlerTest):
         copy.deepcopy(activity)))
 
     activity['object'].update({
-        'content': 'x (sn.fd 123) y (xy zz) y (a.bc D/EF) z',
+        'content': 'x (sn.fd 123) y (xy zz) y (a.bc/D/EF) z',
         'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
         'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
         })
