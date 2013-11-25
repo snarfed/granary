@@ -31,6 +31,8 @@ API_USER_URL = \
   'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
 API_CURRENT_USER_URL = \
   'https://api.twitter.com/1.1/account/verify_credentials.json'
+API_SEARCH_URL = \
+    'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
 
 
 class Twitter(source.Source):
@@ -83,6 +85,14 @@ class Twitter(source.Source):
       total_count = None
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
+
+  def get_comment(self, id):
+    """Returns an ActivityStreams comment object.
+
+    Args:
+      id: string tweet id
+    """
+    return self.tweet_to_object(json.loads(self.urlread(API_STATUS_URL % id)))
 
   def urlread(self, url):
     """Wraps urllib2.urlopen() and adds an OAuth signature.

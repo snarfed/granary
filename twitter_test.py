@@ -310,6 +310,13 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals((None, []),
                        self.twitter.get_activities(group_id=source.SELF))
 
+  def test_get_comment(self):
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/show.json?id=123&include_entities=true',
+      json.dumps(TWEET))
+    self.mox.ReplayAll()
+    self.assert_equals(OBJECT, self.twitter.get_comment('123'))
+
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
 
