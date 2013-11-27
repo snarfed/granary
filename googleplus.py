@@ -1,0 +1,76 @@
+"""Google+ source class.
+
+TODO(ryan): finish this, write a test, maybe hook it up to a demo app
+"""
+
+__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+
+import appengine_config
+import source
+
+
+class GooglePlus(source.Source):
+  """Implements the ActivityStreams API for Google+.
+
+  The Google+ API already exposes data in ActivityStreams format, so this is
+  just a pass through.
+  """
+
+  DOMAIN = 'plus.google.com'
+  NAME = 'Google+'
+
+  def __init__(self, auth_entity=None, access_token=None):
+    """Constructor.
+
+    Currently, only auth_entity is supported. TODO: implement access_token.
+
+    Args:
+      access_token: string OAuth access token
+      auth_entity: oauth-dropins.googleplus.GooglePlusAuth
+    """
+    self.access_token = access_token
+    self.auth_entity = auth_entity
+
+  def get_actor(self, user_id=None):
+    """Returns a user as a JSON ActivityStreams actor dict.
+
+    Args:
+      user_id: string id or username. Defaults to 'me', ie the current user.
+
+    Raises: GooglePlusAPIError
+    """
+    return self.auth_entity.user_json
+
+  def get_activities(self, user_id=None, group_id=None, app_id=None,
+                     activity_id=None, start_index=0, count=0):
+    """Returns a list of ActivityStreams activity dicts.
+
+    See method docstring in source.py for details. app_id is ignored.
+    """
+    if user_id is None:
+      user_id = 'me'
+
+    # https://developers.google.com/+/api/latest/activities
+    if activity_id:
+      call = self.auth_entity.api().activities().get(activityId=activity_id)
+      activities = [call.execute(self.auth_entity.http())]
+    else:
+      call = self.auth_entity.api().activities().list(
+        userId=user_id, collection='public', maxResults=count)
+      activities = call.execute(self.auth_entity.http()).get('items', [])
+
+    # convert ids to tag URIs
+    for activity in activities:
+      activity['id'] = self.tag_uri(activity['id'])
+
+    return len(activities), activities
+
+  def get_comment(self, id):
+    """Returns an ActivityStreams comment object.
+
+    Args:
+      id: string comment id
+    """
+    # https://developers.google.com/+/api/latest/comments
+    call = self.auth_entity.api().comments().get(commentId=id)
+    return call.execute(self.auth_entity.http())
