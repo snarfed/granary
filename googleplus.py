@@ -59,9 +59,8 @@ class GooglePlus(source.Source):
         userId=user_id, collection='public', maxResults=count)
       activities = call.execute(self.auth_entity.http()).get('items', [])
 
-    # convert ids to tag URIs
     for activity in activities:
-      activity['id'] = self.tag_uri(activity['id'])
+      self.postprocess_activity(activity)
 
     return len(activities), activities
 
@@ -73,4 +72,28 @@ class GooglePlus(source.Source):
     """
     # https://developers.google.com/+/api/latest/comments
     call = self.auth_entity.api().comments().get(commentId=id)
-    return call.execute(self.auth_entity.http())
+    cmt = call.execute(self.auth_entity.http())
+    self.postprocess_comment(cmt)
+    return cmt
+
+  def postprocess_activity(self, activity):
+    """Massage G+'s ActivityStreams dialect into our dialect, in place.
+
+    Args:
+      activity: ActivityStreams activity dict.
+    """
+    activity['object']['author'] = activity['actor']
+    # also convert id to tag URI
+    activity['id'] = self.tag_uri(activity['id'])
+
+  def postprocess_comment(self, comment):
+    """Hack to pretend comment activities are comment objects.
+
+    G+ puts almost everything in the comment *activity*, not the object
+    inside the activity. So, copy over the content and use the activity
+    itself.
+    """
+    comment['content'] = comment['object']['content']
+    comment['author'] = comment.pop('actor')
+    # also convert id to tag URI
+    comment['id'] = self.tag_uri(comment['id'])
