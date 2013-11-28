@@ -107,6 +107,18 @@ class Instagram(source.Source):
 
     return len(media), [self.media_to_activity(m) for m in media]
 
+  def get_comment(self, comment_id, activity_id=None):
+    """Returns an ActivityStreams comment object.
+
+    Args:
+      comment_id: string comment id
+      activity_id: string activity id, required
+    """
+    media = self.api.media(activity_id)
+    for comment in media.comments:
+      if comment.id == comment_id:
+        return self.comment_to_object(comment, activity_id, media.link)
+
   def media_to_activity(self, media):
     """Converts a media to an activity.
 

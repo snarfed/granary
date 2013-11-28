@@ -342,6 +342,19 @@ class InstagramTest(testutil.HandlerTest):
     self.assertRaises(InstagramAPIError, self.instagram.get_activities,
                       activity_id='000')
 
+  def test_get_comment(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('123_456').AndReturn(MEDIA)
+    self.mox.ReplayAll()
+    self.assert_equals(COMMENT_OBJS[0],
+                       self.instagram.get_comment('789', activity_id='123_456'))
+
+  def test_get_comment_not_found(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('123_456').AndReturn(MEDIA)
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.instagram.get_comment('111', activity_id='123_456'))
+
   def test_media_to_activity(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
 

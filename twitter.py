@@ -86,13 +86,15 @@ class Twitter(source.Source):
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
-  def get_comment(self, id):
+  def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
 
     Args:
-      id: string tweet id
+      comment_id: string comment id
+      activity_id: string activity id, optional
     """
-    return self.tweet_to_object(json.loads(self.urlread(API_STATUS_URL % id)))
+    url = API_STATUS_URL % comment_id
+    return self.tweet_to_object(json.loads(self.urlread(url)))
 
   def urlread(self, url):
     """Wraps urllib2.urlopen() and adds an OAuth signature.

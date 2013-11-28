@@ -69,11 +69,12 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def get_comment(self, id):
+  def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
 
     Args:
-      id: string object id
+      comment_id: string comment id
+      activity_id: string activity id, optional
     """
     raise NotImplementedError()
 

@@ -64,14 +64,15 @@ class GooglePlus(source.Source):
 
     return len(activities), activities
 
-  def get_comment(self, id):
+  def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
 
     Args:
-      id: string comment id
+      comment_id: string comment id
+      activity_id: string activity id, optional
     """
     # https://developers.google.com/+/api/latest/comments
-    call = self.auth_entity.api().comments().get(commentId=id)
+    call = self.auth_entity.api().comments().get(commentId=comment_id)
     cmt = call.execute(self.auth_entity.http())
     self.postprocess_comment(cmt)
     return cmt
