@@ -98,3 +98,5 @@ class GooglePlus(source.Source):
     comment['author'] = comment.pop('actor')
     # also convert id to tag URI
     comment['id'] = self.tag_uri(comment['id'])
+    # G+ comments don't have their own permalinks. :/ so, use the post's.
+    comment['url'] = comment['inReplyTo'][0]['url']
