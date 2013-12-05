@@ -79,6 +79,7 @@ VERBS = {
   'video.watches': 'play',
 }
 
+
 class Facebook(source.Source):
   """Implements the ActivityStreams API for Facebook.
   """
@@ -156,6 +157,21 @@ class Facebook(source.Source):
     logging.info('Fetching %s', log_url)
     return urllib2.urlopen(url, timeout=999).read()
 
+  def post_url(self, post):
+    """Returns a short Facebook URL for a post.
+
+    Args:
+      post: Facebook JSON post
+    """
+    post_id = post.get('id')
+    if not post_id:
+      return None
+    author_id = post.get('from', {}).get('id')
+    if author_id:
+      return 'http://facebook.com/%s/posts/%s' % (author_id, post_id)
+    else:
+      return 'http://facebook.com/%s' % post_id
+
   def post_to_activity(self, post):
     """Converts a post to an activity.
 
@@ -177,7 +193,7 @@ class Facebook(source.Source):
       'published': obj.get('published'),
       'updated': obj.get('updated'),
       'id': self.tag_uri(id) if id else None,
-      'url': ('http://facebook.com/%s' % id) if id else None,
+      'url': self.post_url(post),
       'actor': obj.get('author'),
       'object': obj,
       }
@@ -205,7 +221,7 @@ class Facebook(source.Source):
 
     post_type = post.get('type')
     status_type = post.get('status_type')
-    url = 'http://facebook.com/%s' % id
+    url = self.post_url(post)
     picture = post.get('picture')
     message = post.get('message')
     if not message:

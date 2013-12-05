@@ -182,7 +182,7 @@ POST_OBJ = {  # ActivityStreams
   'id': tag_uri('10100176064482163'),
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
-  'url': 'http://facebook.com/10100176064482163',
+  'url': 'http://facebook.com/212038/posts/10100176064482163',
   'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
   'attachments': [{
       'objectType': 'image',
@@ -246,7 +246,7 @@ ACTIVITY = {  # ActivityStreams
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
   'id': tag_uri('10100176064482163'),
-  'url': 'http://facebook.com/10100176064482163',
+  'url': 'http://facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
   'title': 'Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
@@ -318,8 +318,8 @@ my link caption
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="http://facebook.com/10100176064482163" />
-  <link rel="ostatus:conversation" href="http://facebook.com/10100176064482163" />
+  <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
+  <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
 
     <link rel="ostatus:attention" href="http://facebook.com/234" />
     <link rel="mentioned" href="http://facebook.com/234" />
@@ -353,7 +353,7 @@ my link caption
     <georss:featureName>Lake Merced</georss:featureName>
 
 
-  <link rel="self" type="application/atom+xml" href="http://facebook.com/10100176064482163" />
+  <link rel="self" type="application/atom+xml" href="http://facebook.com/212038/posts/10100176064482163" />
 </entry>
 
 </feed>
@@ -544,6 +544,7 @@ class FacebookTest(testutil.HandlerTest):
         'title': 'Ryan Barrett likes a photo on Instagram.',
         'actor': ACTOR,
         'generator': {'displayName': 'Instagram', 'id': tag_uri('12402457428')},
+        'url': 'http://facebook.com/212038/posts/10100747369806713',
         })
     activity['object']['author'] = ACTOR
     post.update({
@@ -569,11 +570,11 @@ class FacebookTest(testutil.HandlerTest):
         'actor': ACTOR,
         'verb': 'give',
         'title': 'Ryan Barrett gave a gift.',
-        'url': 'http://facebook.com/10100747',
+        'url': 'http://facebook.com/212038/posts/10100747',
         'object': {
           'id': tag_uri('10100747'),
           'author': ACTOR,
-          'url': 'http://facebook.com/10100747',
+          'url': 'http://facebook.com/212038/posts/10100747',
           'objectType': 'product',
           },
       }, self.facebook.post_to_activity({
