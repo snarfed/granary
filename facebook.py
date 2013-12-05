@@ -150,9 +150,9 @@ class Facebook(source.Source):
     """
     log_url = url
     if self.access_token:
-      url = util.add_query_params(url, [('access_token', self.access_token)])
       log_url = util.add_query_params(url, [('access_token',
                                              self.access_token[:4] + '...')])
+      url = util.add_query_params(url, [('access_token', self.access_token)])
     logging.info('Fetching %s', log_url)
     return urllib2.urlopen(url, timeout=999).read()
 
