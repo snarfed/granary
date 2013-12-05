@@ -116,7 +116,7 @@ class Source(object):
 
     return activity
 
-  _PERMASHORTCITATION_RE = re.compile(r'\(([^\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)')
+  _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)')
 
   def original_post_discovery(self, activity):
     """Discovers original post links and stores them as tags, in place.

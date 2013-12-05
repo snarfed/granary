@@ -46,3 +46,10 @@ class SourceTest(testutil.HandlerTest):
             {'objectType': 'article', 'url': 'http://bar/2'},
             ], activity['object']['tags'])
 
+
+    # leading parens used to cause us trouble
+    activity = {'object': {'content' : 'Foo (http://snarfed.org/xyz)'}}
+    self.source.original_post_discovery(activity)
+    self.assert_equals(
+      [{'objectType': 'article', 'url': 'http://snarfed.org/xyz'}],
+      activity['object']['tags'])
