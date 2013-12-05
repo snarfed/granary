@@ -148,9 +148,12 @@ class Facebook(source.Source):
   def urlread(self, url):
     """Wraps urllib2.urlopen() and passes through the access token.
     """
+    log_url = url
     if self.access_token:
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    logging.info('Fetching %s', url)
+      log_url = util.add_query_params(url, [('access_token',
+                                             self.access_token[:4] + '...')])
+    logging.info('Fetching %s', log_url)
     return urllib2.urlopen(url, timeout=999).read()
 
   def post_to_activity(self, post):
