@@ -553,7 +553,7 @@ class FacebookTest(testutil.HandlerTest):
         })
     self.assert_equals(activity, self.facebook.post_to_activity(post))
 
-  def test_story(self):
+  def test_story_as_content(self):
     self.assert_equals({
         'id': tag_uri('101007473698067'),
         'url': 'http://facebook.com/101007473698067',
@@ -562,6 +562,17 @@ class FacebookTest(testutil.HandlerTest):
       }, self.facebook.post_to_object({
         'id': '101007473698067',
         'story': 'Once upon a time.',
+        }))
+
+  def test_name_as_content(self):
+    self.assert_equals({
+        'id': tag_uri('101007473698067'),
+        'url': 'http://facebook.com/101007473698067',
+        'objectType': 'note',
+        'content': 'Once upon a time.',
+      }, self.facebook.post_to_object({
+        'id': '101007473698067',
+        'name': 'Once upon a time.',
         }))
 
   def test_gift(self):

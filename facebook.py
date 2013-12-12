@@ -223,9 +223,7 @@ class Facebook(source.Source):
     status_type = post.get('status_type')
     url = self.post_url(post)
     picture = post.get('picture')
-    message = post.get('message')
-    if not message:
-      message = post.get('story')
+    message = post.get('message') or post.get('story') or post.get('name')
     display_name = None
 
     data = post.get('data', {})
