@@ -50,12 +50,15 @@ def object_to_json(obj, trim_nulls=True):
 
   types_map = {'article': ['h-entry', 'h-as-article'],
                'comment': ['h-entry', 'p-comment'],
+               'like': ['h-entry', 'p-like'],
                'note': ['h-entry', 'h-as-note'],
                'person': ['h-card'],
                'place': ['h-card', 'p-location'],
                }
-  types = types_map.get(obj.get('objectType'), ['h-entry'])
+  obj_type = obj.get('objectType')
+  types = types_map.get(obj_type, ['h-entry'])
 
+  url = obj.get('url', '')
   content = obj.get('content', '')
   # TODO: extract snippet
   name = obj.get('displayName', obj.get('title', content))
@@ -68,16 +71,21 @@ def object_to_json(obj, trim_nulls=True):
   if location:
     location['type'] = ['h-card', 'p-location']
 
-  # TODO: comments. h-cite or h-entry?
-  # http://indiewebcamp.com/comment-presentation#How_to_markup
-  # http://indiewebcamp.com/h-cite
+  # TODO: do i need this for standalone (non-embedded) like rendering?
+  # if obj_type == 'like':
+  #   likes = [obj.get('url', '')]
+  likes = [object_to_json(t) for t in obj.get('tags', [])
+           if t.get('objectType') == 'like']
+  for like in likes:
+    like['properties']['like'] = [url]
+
   # TODO: convert tags to p-category
   ret = {
     'type': types,
     'properties': {
       'uid': [obj.get('id', '')],
       'name': [name],
-      'url': [obj.get('url', '')],
+      'url': [url],
       'photo': [obj.get('image', {}).get('url', '')],
       'published': [obj.get('published', '')],
       'updated':  [obj.get('updated', '')],
@@ -89,11 +97,16 @@ def object_to_json(obj, trim_nulls=True):
                                       obj.get('inReplyTo', [])]),
       'author': [author],
       'location': [location],
-      'comment': [object_to_json(c) for c in obj.get('replies', {}).get('items', [])]
+      'comment': [object_to_json(c) for c in obj.get('replies', {}).get('items', [])],
+      'like': likes,
       }
     }
   if trim_nulls:
     ret = util.trim_nulls(ret)
+
+  # if obj.get('objectType') == 'like':
+  #   logging.info('@ before %s', obj)
+  #   logging.info('@ after %s', ret)
   return ret
 
 
@@ -137,8 +150,12 @@ def object_to_html(obj):
   # TODO: multiple images (in attachments?)
   photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
 
+  # http://indiewebcamp.com/comment-presentation#How_to_markup
+  # http://indiewebcamp.com/h-cite
   comments = obj.get('replies', {}).get('items', [])
   comments_html = '\n'.join(object_to_html(c) for c in comments)
+
+  # likes = obj.get('likes')
 
   return HENTRY.substitute(props,
                            types=' '.join(jsn['type']),
@@ -194,7 +211,7 @@ def render_content(obj):
 
     if 'startIndex' in t and 'length' in t:
       mentions.append(t)
-    else:
+    elif t['objectType'] != 'like':  # TODO: render likes
       tags.setdefault(t['objectType'], []).append(t)
 
   # linkify embedded mention tags inside content.
