@@ -215,7 +215,6 @@ ATOM = """\
  <name>Ryan B</name>
 </author>
 
-
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
@@ -269,9 +268,6 @@ this picture is #abc #xyz
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
-
-
-
 
   <link rel="self" type="application/atom+xml" href="http://instagram.com/p/ABC123/" />
 </entry>

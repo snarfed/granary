@@ -60,8 +60,10 @@
   <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />
   <link rel="ostatus:conversation" href="{{ activity.url|safe }}" />
   {% for tag in activity.object.tags %}
-    <link rel="ostatus:attention" href="{{ tag.url }}" />
-    <link rel="mentioned" href="{{ tag.url }}" />
+    {% if tag.objectType != 'like' %}
+      <link rel="ostatus:attention" href="{{ tag.url }}" />
+      <link rel="mentioned" href="{{ tag.url }}" />
+    {% endif %}
   {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
   <published>{{ activity.object.published }}</published>

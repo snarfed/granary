@@ -185,7 +185,6 @@ ATOM = """\
  <name>Ryan Barrett</name>
 </author>
 
-
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
@@ -231,10 +230,7 @@ ATOM = """\
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
 
-
-
     <georss:featureName>Carcassonne, Aude</georss:featureName>
-
 
   <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/172417043893731329" />
 </entry>
