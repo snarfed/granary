@@ -260,7 +260,7 @@ class Facebook(source.Source):
       'displayName': display_name,
       }
 
-    # tags
+    # tags and likes
     tags = itertools.chain(post.get('to', {}).get('data', []),
                            post.get('with_tags', {}).get('data', []),
                            *post.get('message_tags', {}).values())
@@ -272,6 +272,15 @@ class Facebook(source.Source):
         'startIndex': t.get('offset'),
         'length': t.get('length'),
         } for t in tags]
+
+    obj['tags'] += [{
+      'objectType': 'like',
+      'author': {
+        'id': self.tag_uri(like.get('id')),
+        'displayName': like.get('name'),
+        'url': 'http://facebook.com/%s' % like.get('id'),
+        },
+      } for like in post.get('likes', {}).get('data', [])]
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
