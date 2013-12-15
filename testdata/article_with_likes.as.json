@@ -3,14 +3,16 @@
   "url": "http://example.com/abc",
 
   "tags": [{
-    "objectType": "like",
+    "objectType": "activity",
+    "verb": "like",
     "author": {
       "id": "100004",
       "displayName": "Alice",
       "url": "http://example.com/alice"
     }
   }, {
-    "objectType": "like",
+    "objectType": "activity",
+    "verb": "like",
     "url": "http://example.com/anonymous/like"
   }]
 }

@@ -55,8 +55,9 @@ def object_to_json(obj, trim_nulls=True):
                'note': ['h-entry', 'h-as-note'],
                'person': ['h-card'],
                'place': ['h-card', 'p-location'],
+               'repost': ['h-entry', 'h-as-repost'],
                }
-  obj_type = obj.get('objectType')
+  obj_type = object_type(obj)
   types = types_map.get(obj_type, ['h-entry'])
 
   url = obj.get('url', '')
@@ -79,7 +80,7 @@ def object_to_json(obj, trim_nulls=True):
     in_reply_to = []
 
   likes = [object_to_json(t, trim_nulls=False) for t in obj.get('tags', [])
-           if t.get('objectType') == 'like']
+           if object_type(t) == 'like']
   for like in likes:
     like['properties']['like'] = [url]
 
@@ -244,7 +245,7 @@ def render_content(obj):
     if 'startIndex' in t and 'length' in t:
       mentions.append(t)
     else:
-      tags.setdefault(t['objectType'], []).append(t)
+      tags.setdefault(object_type(t), []).append(t)
 
   # linkify embedded mention tags inside content.
   content = obj.get('content', '')
@@ -273,7 +274,7 @@ def render_content(obj):
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   # TODO: non-article attachments
   for link in obj.get('attachments', []) + tags.pop('article', []):
-    if link.get('objectType') == 'article':
+    if object_type(link) == 'article':
       url = link.get('url')
       name = link.get('displayName', url)
       image = link.get('image', {}).get('url')
@@ -296,6 +297,20 @@ def render_content(obj):
   content += tags_to_html(sum(tags.values(), []), 'tag')
 
   return content
+
+
+def object_type(obj):
+  """Returns the object type, or the verb if it's an activity object.
+
+  Details: http://activitystrea.ms/specs/json/1.0/#activity-object
+
+  Args:
+    obj: decoded JSON ActivityStreams object
+
+  Returns: string, ActivityStreams object type
+  """
+  type = obj.get('objectType')
+  return type if type != 'activity' else obj.get('verb')
 
 
 def tags_to_html(tags, css_class):
