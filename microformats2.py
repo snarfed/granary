@@ -280,6 +280,7 @@ def tags_to_html(tags, css_class):
   else:
     return ''
 
+
 def maybe_linked_name(props):
   """Returns the HTML for a p-name with an optional u-url inside.
 
@@ -288,8 +289,11 @@ def maybe_linked_name(props):
 
   Returns: string HTML
   """
-  name = props.get('name')
+  name = props.get('name', '')
   url = props.get('url')
+  html = name
   if url:
-    name = '<a class="u-url" href="%s">%s</a>' % (url, name)
-  return '<div class="p-name">%s</div>' % name
+    html = '<a class="u-url" href="%s">%s</a>' % (url, html)
+  if name:
+    html = '<div class="p-name">%s</div>' % html
+  return html
