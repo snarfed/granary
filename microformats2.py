@@ -22,6 +22,7 @@ $author
   </div>
 $location
 $in_reply_tos
+$likes
 $comments
 </article>
 """)
@@ -50,7 +51,7 @@ def object_to_json(obj, trim_nulls=True):
 
   types_map = {'article': ['h-entry', 'h-as-article'],
                'comment': ['h-entry', 'p-comment'],
-               'like': ['h-entry', 'p-like'],
+               'like': ['h-entry', 'h-as-like'],
                'note': ['h-entry', 'h-as-note'],
                'person': ['h-card'],
                'place': ['h-card', 'p-location'],
@@ -103,10 +104,6 @@ def object_to_json(obj, trim_nulls=True):
     }
   if trim_nulls:
     ret = util.trim_nulls(ret)
-
-  # if obj.get('objectType') == 'like':
-  #   logging.info('@ before %s', obj)
-  #   logging.info('@ after %s', ret)
   return ret
 
 
@@ -147,15 +144,31 @@ def object_to_html(obj):
   if author:
     author['type'].append('p-author')
 
+  content_html = props.get('content', {}).get('html', '')
+
+  # if this post is itself a like, link to the target of the like.
+  if obj['objectType'] == 'like':
+    logging.info('@ %s', props)
+    url = props.get('url')
+    like = props.get('like')
+    content_html = ' '.join([
+      '<a href="%s">likes</a>' % url if url else 'likes',
+      '<a class="u-like" href="%s">this.</a>' % like if like else 'this.',
+      content_html])
+
   # TODO: multiple images (in attachments?)
   photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
 
+  # comments
   # http://indiewebcamp.com/comment-presentation#How_to_markup
   # http://indiewebcamp.com/h-cite
   comments = obj.get('replies', {}).get('items', [])
   comments_html = '\n'.join(object_to_html(c) for c in comments)
 
-  # likes = obj.get('likes')
+  # embedded likes of this post
+  # http://indiewebcamp.com/like
+  likes_html = '\n'.join(object_to_html(tag) for tag in obj.get('tags', [])
+                         if tag['objectType'] == 'like')
 
   return HENTRY.substitute(props,
                            types=' '.join(jsn['type']),
@@ -163,8 +176,9 @@ def object_to_html(obj):
                            location=hcard_to_html(props['location']),
                            photo=photo,
                            in_reply_tos=in_reply_tos,
-                           content=props['content']['html'],
+                           content=content_html,
                            comments=comments_html,
+                           likes=likes_html,
                            maybe_linked_name=maybe_linked_name(props))
 
 
@@ -211,7 +225,7 @@ def render_content(obj):
 
     if 'startIndex' in t and 'length' in t:
       mentions.append(t)
-    elif t['objectType'] != 'like':  # TODO: render likes
+    else:
       tags.setdefault(t['objectType'], []).append(t)
 
   # linkify embedded mention tags inside content.
@@ -258,7 +272,8 @@ def render_content(obj):
         content += '<span class="link-summary">%s</span>\n' % summary
       content += '</p>'
 
-  # other tags
+  # other tags, except likes. they're rendered manually with object_to_html().
+  tags.pop('like', [])
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
   content += tags_to_html(sum(tags.values(), []), 'tag')
 
