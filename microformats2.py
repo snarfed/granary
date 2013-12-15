@@ -75,12 +75,12 @@ def object_to_json(obj, trim_nulls=True):
   # TODO: do i need this for standalone (non-embedded) like rendering?
   # if obj_type == 'like':
   #   likes = [obj.get('url', '')]
-  likes = [object_to_json(t) for t in obj.get('tags', [])
+  likes = [object_to_json(t, trim_nulls=False) for t in obj.get('tags', [])
            if t.get('objectType') == 'like']
   for like in likes:
     like['properties']['like'] = [url]
 
-  # TODO: convert tags to p-category
+  # TODO: more tags. most will be p-category?
   ret = {
     'type': types,
     'properties': {
@@ -98,7 +98,8 @@ def object_to_json(obj, trim_nulls=True):
                                       obj.get('inReplyTo', [])]),
       'author': [author],
       'location': [location],
-      'comment': [object_to_json(c) for c in obj.get('replies', {}).get('items', [])],
+      'comment': [object_to_json(c, trim_nulls=False)
+                  for c in obj.get('replies', {}).get('items', [])],
       'like': likes,
       }
     }
@@ -125,61 +126,74 @@ def object_to_html(obj):
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
+  return json_to_html(object_to_json(obj, trim_nulls=False))
+
+
+def json_to_html(obj):
+  """Converts a microformats2 JSON object to microformats2 HTML.
+
+  See object_to_html for details.
+
+  Args:
+    obj: dict, a decoded microformats2 JSON object
+
+  Returns: string HTML
+  """
   if not obj:
     return ''
 
-  jsn = object_to_json(obj, trim_nulls=False)
   # TODO: handle when h-card isn't first
-  if jsn['type'][0] == 'h-card':
-    return hcard_to_html(jsn)
+  if obj['type'][0] == 'h-card':
+    return hcard_to_html(obj)
 
-  props = jsn['properties']
+  props = obj['properties']
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
                            for url in props['in-reply-to'])
 
   # extract first value from multiply valued properties
-  props = {k: v[0] if v else '' for k, v in props.items()}
+  prop = {k: v[0] if v else '' for k, v in props.items()}
 
-  author = props['author']
+  author = prop['author']
   if author:
     author['type'].append('p-author')
 
-  content_html = props.get('content', {}).get('html', '')
+  content_html = prop.get('content', {}).get('html', '')
 
   # if this post is itself a like, link to the target of the like.
-  if obj['objectType'] == 'like':
-    logging.info('@ %s', props)
-    url = props.get('url')
-    like = props.get('like')
+  if 'h-as-like' in obj['type']:
+    url = prop.get('url')
+    like = prop.get('like')
     content_html = ' '.join([
       '<a href="%s">likes</a>' % url if url else 'likes',
-      '<a class="u-like" href="%s">this.</a>' % like if like else 'this.',
+      '<a class="u-like" href="%s">this</a>.' % like if like else 'this.',
       content_html])
 
-  # TODO: multiple images (in attachments?)
-  photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
+  photo = '\n'.join(PHOTO.substitute(url=url)
+                    for url in props.get('photo', []) if url)
 
   # comments
   # http://indiewebcamp.com/comment-presentation#How_to_markup
   # http://indiewebcamp.com/h-cite
-  comments = obj.get('replies', {}).get('items', [])
-  comments_html = '\n'.join(object_to_html(c) for c in comments)
+  comments_html = '\n'.join(json_to_html(c) for c in props.get('comment', []))
 
   # embedded likes of this post
   # http://indiewebcamp.com/like
-  likes_html = '\n'.join(object_to_html(tag) for tag in obj.get('tags', [])
-                         if tag['objectType'] == 'like')
+  # TODO: switch to like-of
+  likes_html = ''
+  likes = props.get('like', [])
+  if likes and isinstance(likes[0], dict):
+    likes_html = '\n'.join(json_to_html(l) for l in likes)
 
-  return HENTRY.substitute(props,
-                           types=' '.join(jsn['type']),
+  return HENTRY.substitute(prop,
+                           types=' '.join(obj['type']),
                            author=hcard_to_html(author),
-                           location=hcard_to_html(props['location']),
+                           location=hcard_to_html(prop['location']),
                            photo=photo,
                            in_reply_tos=in_reply_tos,
                            content=content_html,
                            comments=comments_html,
                            likes=likes_html,
-                           maybe_linked_name=maybe_linked_name(props))
+                           maybe_linked_name=maybe_linked_name(prop))
 
 
 def hcard_to_html(hcard):
