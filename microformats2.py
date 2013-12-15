@@ -72,9 +72,12 @@ def object_to_json(obj, trim_nulls=True):
   if location:
     location['type'] = ['h-card', 'p-location']
 
-  # TODO: do i need this for standalone (non-embedded) like rendering?
-  # if obj_type == 'like':
-  #   likes = [obj.get('url', '')]
+  in_reply_to = util.trim_nulls([o.get('url') for o in obj.get('inReplyTo', [])])
+  like_of = []
+  if obj_type == 'like':
+    like_of = in_reply_to
+    in_reply_to = []
+
   likes = [object_to_json(t, trim_nulls=False) for t in obj.get('tags', [])
            if t.get('objectType') == 'like']
   for like in likes:
@@ -94,13 +97,14 @@ def object_to_json(obj, trim_nulls=True):
           'value': content,
           'html': render_content(obj),
           }],
-      'in-reply-to': util.trim_nulls([o.get('url') for o in
-                                      obj.get('inReplyTo', [])]),
+      'in-reply-to': in_reply_to,
       'author': [author],
       'location': [location],
       'comment': [object_to_json(c, trim_nulls=False)
                   for c in obj.get('replies', {}).get('items', [])],
-      'like': likes,
+      'like': like_of if obj_type == 'like' else likes,
+      # http://indiewebcamp.com/like#Counterproposal
+      'like_of': like_of,
       }
     }
   if trim_nulls:
