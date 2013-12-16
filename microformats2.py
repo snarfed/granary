@@ -22,7 +22,7 @@ $author
   </div>
 $location
 $in_reply_tos
-$likes
+$likes_and_reposts
 $comments
 </article>
 """)
@@ -164,13 +164,15 @@ def json_to_html(obj):
   content_html = prop.get('content', {}).get('html', '')
 
   # if this post is itself a like or repost, link to its target.
-  if 'h-as-like' in obj['type']:# or 'h-as-repost' in obj['type']:
-    url = prop.get('url')
-    like = prop.get('like')
-    content_html = ' '.join([
-      '<a href="%s">likes</a>' % url if url else 'likes',
-      '<a class="u-like" href="%s">this</a>.' % like if like else 'this.',
-      content_html])
+  for verb in 'like', 'repost':
+    if ('h-as-%s' % verb) in obj['type']:
+      url = prop.get('url')
+      val = prop.get(verb)
+      plural = verb + 's'
+      content_html = ' '.join([
+          '<a href="%s">%s</a>' % (url, plural) if url else plural,
+          '<a class="u-%s" href="%s">this</a>.' % (verb, val) if val else 'this.',
+          content_html])
 
   photo = '\n'.join(PHOTO.substitute(url=url)
                     for url in props.get('photo', []) if url)
@@ -180,13 +182,13 @@ def json_to_html(obj):
   # http://indiewebcamp.com/h-cite
   comments_html = '\n'.join(json_to_html(c) for c in props.get('comment', []))
 
-  # embedded likes of this post
-  # http://indiewebcamp.com/like
-  # TODO: switch to like-of
-  likes_html = ''
-  likes = props.get('like', [])
-  if likes and isinstance(likes[0], dict):
-    likes_html = '\n'.join(json_to_html(l) for l in likes)
+  # embedded likes and reposts of this post
+  # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
+  likes_and_reposts = []
+  for verb in 'like', 'repost':
+    vals = props.get(verb, [])
+    if vals and isinstance(vals[0], dict):
+      likes_and_reposts += [json_to_html(v) for v in vals]
 
   return HENTRY.substitute(prop,
                            types=' '.join(obj['type']),
@@ -196,7 +198,7 @@ def json_to_html(obj):
                            in_reply_tos=in_reply_tos,
                            content=content_html,
                            comments=comments_html,
-                           likes=likes_html,
+                           likes_and_reposts='\n'.join(likes_and_reposts),
                            maybe_linked_name=maybe_linked_name(prop))
 
 
