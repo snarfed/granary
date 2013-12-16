@@ -73,16 +73,10 @@ def object_to_json(obj, trim_nulls=True):
   if location:
     location['type'] = ['h-card', 'p-location']
 
-  in_reply_to = util.trim_nulls([o.get('url') for o in obj.get('inReplyTo', [])])
-  like_of = []
-  if obj_type == 'like':
-    like_of = in_reply_to
-    in_reply_to = []
-
+  # likes
+  like_of = [obj.get('object', {}).get('url')] if obj_type == 'like' else None
   likes = [object_to_json(t, trim_nulls=False) for t in obj.get('tags', [])
            if object_type(t) == 'like']
-  for like in likes:
-    like['properties']['like'] = [url]
 
   # TODO: more tags. most will be p-category?
   ret = {
@@ -98,7 +92,8 @@ def object_to_json(obj, trim_nulls=True):
           'value': content,
           'html': render_content(obj),
           }],
-      'in-reply-to': in_reply_to,
+      'in-reply-to': util.trim_nulls([o.get('url') for o in
+                                      obj.get('inReplyTo', [])]),
       'author': [author],
       'location': [location],
       'comment': [object_to_json(c, trim_nulls=False)

@@ -5,6 +5,7 @@
   "tags": [{
     "objectType": "activity",
     "verb": "like",
+    "object": {"url": "http://example.com/abc"},
     "author": {
       "id": "100004",
       "displayName": "Alice",
@@ -13,6 +14,7 @@
   }, {
     "objectType": "activity",
     "verb": "like",
-    "url": "http://example.com/anonymous/like"
+    "url": "http://example.com/anonymous/like",
+    "object": {"url": "http://example.com/abc"}
   }]
 }

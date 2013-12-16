@@ -13,13 +13,15 @@
             "url": ["http://example.com/alice"]
           }
         }],
-        "like": ["http://example.com/abc"]
+        "like": ["http://example.com/abc"],
+        "like_of": ["http://example.com/abc"]
       }
     }, {
       "type": ["h-entry", "h-as-like"],
       "properties": {
         "url": ["http://example.com/anonymous/like"],
-        "like": ["http://example.com/abc"]
+        "like": ["http://example.com/abc"],
+        "like_of": ["http://example.com/abc"]
       }
     }]
   }
