@@ -2,8 +2,8 @@
   "type": ["h-entry", "h-as-article"],
   "properties": {
     "url": ["http://example.com/abc"],
-    "like": [{
-      "type": ["h-entry", "h-as-like"],
+    "repost": [{
+      "type": ["h-entry", "h-as-repost"],
       "properties": {
         "author": [{
           "type": ["h-card"],
@@ -13,15 +13,15 @@
             "url": ["http://example.com/alice"]
           }
         }],
-        "like": ["http://example.com/abc"],
-        "like-of": ["http://example.com/abc"]
+        "repost": ["http://example.com/abc"],
+        "repost-of": ["http://example.com/abc"]
       }
     }, {
-      "type": ["h-entry", "h-as-like"],
+      "type": ["h-entry", "h-as-repost"],
       "properties": {
-        "url": ["http://example.com/anonymous/like"],
-        "like": ["http://example.com/abc"],
-        "like-of": ["http://example.com/abc"]
+        "url": ["http://example.com/anonymous/repost"],
+        "repost": ["http://example.com/abc"],
+        "repost-of": ["http://example.com/abc"]
       }
     }]
   }

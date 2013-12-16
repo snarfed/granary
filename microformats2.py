@@ -55,7 +55,7 @@ def object_to_json(obj, trim_nulls=True):
                'note': ['h-entry', 'h-as-note'],
                'person': ['h-card'],
                'place': ['h-card', 'p-location'],
-               'repost': ['h-entry', 'h-as-repost'],
+               'share': ['h-entry', 'h-as-repost'],
                }
   obj_type = object_type(obj)
   types = types_map.get(obj_type, ['h-entry'])
@@ -72,11 +72,6 @@ def object_to_json(obj, trim_nulls=True):
   location = object_to_json(obj.get('location', {}), trim_nulls=False)
   if location:
     location['type'] = ['h-card', 'p-location']
-
-  # likes
-  like_of = [obj.get('object', {}).get('url')] if obj_type == 'like' else None
-  likes = [object_to_json(t, trim_nulls=False) for t in obj.get('tags', [])
-           if object_type(t) == 'like']
 
   # TODO: more tags. most will be p-category?
   ret = {
@@ -98,11 +93,20 @@ def object_to_json(obj, trim_nulls=True):
       'location': [location],
       'comment': [object_to_json(c, trim_nulls=False)
                   for c in obj.get('replies', {}).get('items', [])],
-      'like': like_of if obj_type == 'like' else likes,
-      # http://indiewebcamp.com/like#Counterproposal
-      'like_of': like_of,
       }
     }
+
+  # likes and reposts
+  # http://indiewebcamp.com/like#Counterproposal
+  for type, prop in ('like', 'like'), ('share', 'repost'):
+    if obj_type == type:
+      ret['properties'][prop] = ret['properties'][prop + '-of'] = \
+          [obj.get('object', {}).get('url')]
+    else:
+      ret['properties'][prop] = [object_to_json(t, trim_nulls=False)
+                                 for t in obj.get('tags', [])
+                                 if object_type(t) == type]
+
   if trim_nulls:
     ret = util.trim_nulls(ret)
   return ret
@@ -159,8 +163,8 @@ def json_to_html(obj):
 
   content_html = prop.get('content', {}).get('html', '')
 
-  # if this post is itself a like, link to the target of the like.
-  if 'h-as-like' in obj['type']:
+  # if this post is itself a like or repost, link to its target.
+  if 'h-as-like' in obj['type']:# or 'h-as-repost' in obj['type']:
     url = prop.get('url')
     like = prop.get('like')
     content_html = ' '.join([
@@ -286,8 +290,10 @@ def render_content(obj):
         content += '<span class="link-summary">%s</span>\n' % summary
       content += '</p>'
 
-  # other tags, except likes. they're rendered manually with object_to_html().
+  # other tags, except likes and (re)shares. they're rendered manually with
+  # object_to_html().
   tags.pop('like', [])
+  tags.pop('share', [])
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
   content += tags_to_html(sum(tags.values(), []), 'tag')
 

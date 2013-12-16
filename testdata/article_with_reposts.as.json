@@ -1,0 +1,18 @@
+{
+  "objectType": "article",
+  "url": "http://example.com/abc",
+
+  "tags": [{
+    "objectType": "share",
+    "object": {"url": "http://example.com/abc"},
+    "author": {
+      "id": "100004",
+      "displayName": "Alice",
+      "url": "http://example.com/alice"
+    }
+  }, {
+    "objectType": "share",
+    "url": "http://example.com/anonymous/repost",
+    "object": {"url": "http://example.com/abc"}
+  }]
+}
