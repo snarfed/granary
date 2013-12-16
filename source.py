@@ -40,7 +40,8 @@ class Source(object):
     raise NotImplementedError()
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0):
+                     activity_id=None, start_index=0, count=0,
+                     fetch_likes=False, fetch_shares=False):
     """Return a list and total count of ActivityStreams activities.
 
     If user_id is provided, only that user's activity(s) are included.
@@ -61,6 +62,10 @@ class Source(object):
       activity_id: string
       start_index: int >= 0
       count: int >= 0
+      fetch_likes: boolean, whether to fetch the list of users who have 'liked'
+        this activity, even if it requires another API round trip
+      fetch_shares: boolean, whether to fetch the list of users who have 'shared'
+        this activity, even if it requires another API round trip
 
     Returns:
       (total_results, activities) tuple
@@ -75,6 +80,24 @@ class Source(object):
     Args:
       comment_id: string comment id
       activity_id: string activity id, optional
+    """
+    raise NotImplementedError()
+
+  def get_like(self, user_id, activity_id):
+    """Returns an ActivityStreams 'like' activity object.
+
+    Args:
+      user_id: string user id of the user who liked the activity
+      activity_id: string activity id
+    """
+    raise NotImplementedError()
+
+  def get_share(self, user_id, activity_id):
+    """Returns an ActivityStreams 'share' activity object.
+
+    Args:
+      user_id: string user id of the user who shared the activity
+      activity_id: string activity id
     """
     raise NotImplementedError()
 

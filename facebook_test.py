@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Unit tests for facebook.py.
 """
 
@@ -175,6 +174,24 @@ COMMENT_OBJS = [  # ActivityStreams
     'inReplyTo': [{'id': tag_uri('124561947600007')}],
     },
 ]
+LIKE_OBJS = [{  # ActivityStreams
+    'objectType': 'activity',
+    'verb': 'like',
+    'author': {
+      'id': tag_uri('100004'),
+      'displayName': 'Alice X',
+      'url': 'http://facebook.com/100004',
+      },
+    }, {
+    'objectType': 'activity',
+    'verb': 'like',
+    'author': {
+      'id': tag_uri('683713'),
+      'displayName': 'Bob Y',
+      'url': 'http://facebook.com/683713',
+      },
+    },
+  ]
 POST_OBJ = {  # ActivityStreams
   'objectType': 'image',
   'author': {
@@ -239,24 +256,8 @@ POST_OBJ = {  # ActivityStreams
       'displayName': 'Super Happy Block Party Hackathon',
       'startIndex': 84,
       'length': 33,
-      }, {
-      'objectType': 'activity',
-      'verb': 'like',
-      'author': {
-        'id': tag_uri('100004'),
-        'displayName': 'Alice X',
-        'url': 'http://facebook.com/100004',
-        },
-      }, {
-      'objectType': 'activity',
-      'verb': 'like',
-      'author': {
-        'id': tag_uri('683713'),
-        'displayName': 'Bob Y',
-        'url': 'http://facebook.com/683713',
-        },
-      }
-    ],
+      },
+    ] + LIKE_OBJS,
   'replies': {
     'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
@@ -476,6 +477,21 @@ class FacebookTest(testutil.HandlerTest):
                         json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456'))
+
+  def test_get_like(self):
+    self.expect_urlopen('https://graph.facebook.com/123_000', json.dumps(POST))
+    self.mox.ReplayAll()
+    self.assert_equals(LIKE_OBJS[1], self.facebook.get_like('683713', '123_000'))
+
+  def test_get_like_not_found(self):
+    self.expect_urlopen('https://graph.facebook.com/123_000', json.dumps(POST))
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.facebook.get_like('9999', '123_000'))
+
+  def test_get_like_no_activity(self):
+    self.expect_urlopen('https://graph.facebook.com/123_000', '{}')
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.facebook.get_like('683713', '123_000'))
 
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))

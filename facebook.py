@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Facebook source class. Uses the Graph API.
 
 TODO:
@@ -145,6 +144,31 @@ class Facebook(source.Source):
     """
     url = API_OBJECT_URL % comment_id
     return self.comment_to_object(json.loads(self.urlread(url)))
+
+  def get_like(self, user_id, activity_id):
+    """Returns an ActivityStreams 'like' activity object.
+
+    Args:
+      user_id: string user id of the user who liked the activity
+      activity_id: string activity id
+    """
+    _, activities = self.get_activities(activity_id=activity_id)
+    if not activities:
+      return None
+
+    user_id = self.tag_uri(user_id)
+    for tag in activities[0].get('object', {}).get('tags', []):
+      if tag.get('verb') == 'like' and tag.get('author', {}).get('id') == user_id:
+        return tag
+
+  def get_share(self, user_id, activity_id):
+    """Returns an ActivityStreams 'share' activity object.
+
+    Args:
+      user_id: string user id of the user who shared the activity
+      activity_id: string activity id
+    """
+    raise NotImplementedError()
 
   def urlread(self, url):
     """Wraps urllib2.urlopen() and passes through the access token.
