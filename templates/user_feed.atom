@@ -60,7 +60,7 @@
   <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />
   <link rel="ostatus:conversation" href="{{ activity.url|safe }}" />
   {% for tag in activity.object.tags %}
-    {% if tag.objectType != 'like' %}
+    {% if tag.verb != 'like' and tag.verb != 'share' %}
       <link rel="ostatus:attention" href="{{ tag.url }}" />
       <link rel="mentioned" href="{{ tag.url }}" />
     {% endif %}

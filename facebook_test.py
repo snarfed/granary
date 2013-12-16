@@ -240,14 +240,16 @@ POST_OBJ = {  # ActivityStreams
       'startIndex': 84,
       'length': 33,
       }, {
-      'objectType': 'like',
+      'objectType': 'activity',
+      'verb': 'like',
       'author': {
         'id': tag_uri('100004'),
         'displayName': 'Alice X',
         'url': 'http://facebook.com/100004',
         },
       }, {
-      'objectType': 'like',
+      'objectType': 'activity',
+      'verb': 'like',
       'author': {
         'id': tag_uri('683713'),
         'displayName': 'Bob Y',

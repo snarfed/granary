@@ -274,7 +274,8 @@ class Facebook(source.Source):
         } for t in tags]
 
     obj['tags'] += [{
-      'objectType': 'like',
+      'objectType': 'activity',
+      'verb': 'like',
       'author': {
         'id': self.tag_uri(like.get('id')),
         'displayName': like.get('name'),
