@@ -161,14 +161,16 @@ class Facebook(source.Source):
       if tag.get('verb') == 'like' and tag.get('author', {}).get('id') == user_id:
         return tag
 
-  def get_share(self, user_id, activity_id):
-    """Returns an ActivityStreams 'share' activity object.
+  def get_repost(self, user_id, activity_id):
+    """Not implemented. Returns None.
+
+    I haven't yet found a way to fetch reshares in the Facebook API. :/
 
     Args:
       user_id: string user id of the user who shared the activity
       activity_id: string activity id
     """
-    raise NotImplementedError()
+    return None
 
   def urlread(self, url):
     """Wraps urllib2.urlopen() and passes through the access token.

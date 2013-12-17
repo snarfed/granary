@@ -92,11 +92,11 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def get_share(self, user_id, activity_id):
-    """Returns an ActivityStreams 'share' activity object.
+  def get_repost(self, user_id, activity_id):
+    """Returns an ActivityStreams 'share' (ie repost) activity object.
 
     Args:
-      user_id: string user id of the user who shared the activity
+      user_id: string user id of the user who reposted the activity
       activity_id: string activity id
     """
     raise NotImplementedError()
