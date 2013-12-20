@@ -308,6 +308,7 @@ class Facebook(source.Source):
         'id': self.tag_uri('%s_liked_by_%s' % (id, like.get('id'))),
         'objectType': 'activity',
         'verb': 'like',
+        'object': {'url': url},
         'author': {
           'id': self.tag_uri(like.get('id')),
           'displayName': like.get('name'),

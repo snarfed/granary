@@ -178,6 +178,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('10100176064482163_liked_by_100004'),
     'objectType': 'activity',
     'verb': 'like',
+    'object': {'url': 'http://facebook.com/212038/posts/10100176064482163'},
     'author': {
       'id': tag_uri('100004'),
       'displayName': 'Alice X',
@@ -187,6 +188,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('10100176064482163_liked_by_683713'),
     'objectType': 'activity',
     'verb': 'like',
+    'object': {'url': 'http://facebook.com/212038/posts/10100176064482163'},
     'author': {
       'id': tag_uri('683713'),
       'displayName': 'Bob Y',
