@@ -175,7 +175,7 @@ def json_to_html(obj):
     if ('h-as-%s' % verb) in obj['type']:
       content_html =  '%s\n%s.\n%s' % (
         maybe_linked(verb + 's', prop.get('url')),
-        ',\n'.join(maybe_linked('this', url, css_class=('u-%s' % verb))
+        ',\n'.join(maybe_linked('this', url, css_class=('u-%s u-%s-of' % (verb, verb)))
                   for url in props.get(verb)),
         content_html)
 
