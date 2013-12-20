@@ -100,8 +100,15 @@ def object_to_json(obj, trim_nulls=True):
   # http://indiewebcamp.com/like#Counterproposal
   for type, prop in ('like', 'like'), ('share', 'repost'):
     if obj_type == type:
+      # The ActivityStreams spec says the object property should always be a
+      # single object, but it's useful to let it be a list, e.g. when a like has
+      # multiple targets, e.g. a like of a post with original post URLs in it,
+      # which brid.gy does.
+      objs = obj.get('object', [])
+      if not isinstance(objs, list):
+        objs = [objs]
       ret['properties'][prop] = ret['properties'][prop + '-of'] = \
-          [obj.get('object', {}).get('url')]
+          [o.get('url') for o in objs]
     else:
       ret['properties'][prop] = [object_to_json(t, trim_nulls=False)
                                  for t in obj.get('tags', [])
@@ -163,16 +170,14 @@ def json_to_html(obj):
 
   content_html = prop.get('content', {}).get('html', '')
 
-  # if this post is itself a like or repost, link to its target.
+  # if this post is itself a like or repost, link to its target(s).
   for verb in 'like', 'repost':
     if ('h-as-%s' % verb) in obj['type']:
-      url = prop.get('url')
-      val = prop.get(verb)
-      plural = verb + 's'
-      content_html = ' '.join([
-          '<a href="%s">%s</a>' % (url, plural) if url else plural,
-          '<a class="u-%s" href="%s">this</a>.' % (verb, val) if val else 'this.',
-          content_html])
+      content_html =  '%s\n%s.\n%s' % (
+        maybe_linked(verb + 's', prop.get('url')),
+        ',\n'.join(maybe_linked('this', url, css_class=('u-%s' % verb))
+                  for url in props.get(verb)),
+        content_html)
 
   photo = '\n'.join(PHOTO.substitute(url=url)
                     for url in props.get('photo', []) if url)
@@ -342,9 +347,21 @@ def maybe_linked_name(props):
   """
   name = props.get('name', '')
   url = props.get('url')
-  html = name
-  if url:
-    html = '<a class="u-url" href="%s">%s</a>' % (url, html)
+  html = maybe_linked(name, url, css_class='u-url')
   if name:
     html = '<div class="p-name">%s</div>' % html
   return html
+
+
+def maybe_linked(text, url, css_class=None):
+  """Wraps text in an <a href=...> iff a non-empty url is provided.
+
+  Args:
+    text: string
+    url: string or None
+    css_class: string, optional class attribute
+
+  Returns: string
+  """
+  css_class = 'class="%s"' % css_class if css_class else ''
+  return ('<a %s href="%s">%s</a>' % (css_class, url, text)) if url else text
