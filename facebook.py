@@ -110,7 +110,8 @@ class Facebook(source.Source):
     return self.user_to_actor(json.loads(self.urlread(API_OBJECT_URL % user_id)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0):
+                     activity_id=None, start_index=0, count=0,
+                     fetch_likes=False, fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
@@ -300,14 +301,15 @@ class Facebook(source.Source):
         } for t in tags]
 
     obj['tags'] += [{
-      'objectType': 'activity',
-      'verb': 'like',
-      'author': {
-        'id': self.tag_uri(like.get('id')),
-        'displayName': like.get('name'),
-        'url': 'http://facebook.com/%s' % like.get('id'),
-        },
-      } for like in post.get('likes', {}).get('data', [])]
+        'id': self.tag_uri('%s_liked_by_%s' % (id, like.get('id'))),
+        'objectType': 'activity',
+        'verb': 'like',
+        'author': {
+          'id': self.tag_uri(like.get('id')),
+          'displayName': like.get('name'),
+          'url': 'http://facebook.com/%s' % like.get('id'),
+          },
+        } for like in post.get('likes', {}).get('data', [])]
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.

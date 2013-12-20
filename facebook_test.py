@@ -175,6 +175,7 @@ COMMENT_OBJS = [  # ActivityStreams
     },
 ]
 LIKE_OBJS = [{  # ActivityStreams
+    'id': tag_uri('10100176064482163_liked_by_100004'),
     'objectType': 'activity',
     'verb': 'like',
     'author': {
@@ -183,6 +184,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'http://facebook.com/100004',
       },
     }, {
+    'id': tag_uri('10100176064482163_liked_by_683713'),
     'objectType': 'activity',
     'verb': 'like',
     'author': {
