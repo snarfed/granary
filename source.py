@@ -83,21 +83,25 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def get_like(self, user_id, activity_id):
+  def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.
 
     Args:
-      user_id: string user id of the user who liked the activity
+      activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
+      like_user_id: string id of the user who liked the activity
     """
     raise NotImplementedError()
 
-  def get_repost(self, user_id, activity_id):
-    """Returns an ActivityStreams 'share' (ie repost) activity object.
+  def get_repost(self, activity_user_id, activity_id, repost_user_id):
+    """Not implemented. Returns None.
+
+    I haven't yet found a way to fetch reshares in the Facebook API. :/
 
     Args:
-      user_id: string user id of the user who reposted the activity
+      activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
+      repost_user_id: string id of the user who reposted the activity
     """
     raise NotImplementedError()
 

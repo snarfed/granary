@@ -483,17 +483,17 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_like(self):
     self.expect_urlopen('https://graph.facebook.com/123_000', json.dumps(POST))
     self.mox.ReplayAll()
-    self.assert_equals(LIKE_OBJS[1], self.facebook.get_like('683713', '123_000'))
+    self.assert_equals(LIKE_OBJS[1], self.facebook.get_like('123', '000', '683713'))
 
   def test_get_like_not_found(self):
     self.expect_urlopen('https://graph.facebook.com/123_000', json.dumps(POST))
     self.mox.ReplayAll()
-    self.assert_equals(None, self.facebook.get_like('9999', '123_000'))
+    self.assert_equals(None, self.facebook.get_like('123', '000', '999'))
 
   def test_get_like_no_activity(self):
     self.expect_urlopen('https://graph.facebook.com/123_000', '{}')
     self.mox.ReplayAll()
-    self.assert_equals(None, self.facebook.get_like('683713', '123_000'))
+    self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
 
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
