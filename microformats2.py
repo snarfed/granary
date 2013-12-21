@@ -168,16 +168,16 @@ def json_to_html(obj):
   if author:
     author['type'].append('p-author')
 
-  content_html = prop.get('content', {}).get('html', '')
+  content = prop.get('content', {})
+  content_html = content.get('html') or content.get('value')
 
   # if this post is itself a like or repost, link to its target(s).
   for verb in 'like', 'repost':
     if ('h-as-%s' % verb) in obj['type']:
-      content_html =  '%s\n%s.\n%s' % (
-        maybe_linked(verb + 's', prop.get('url')),
-        ',\n'.join(maybe_linked('this', url, css_class=('u-%s u-%s-of' % (verb, verb)))
-                  for url in props.get(verb)),
-        content_html)
+      if not content_html:
+        content_html = '%ss this.\n' % verb
+      content_html += '\n'.join('<a class="u-%s u-%s-of" href="%s" />' %
+                                (verb, verb, url) for url in props.get(verb))
 
   photo = '\n'.join(PHOTO.substitute(url=url)
                     for url in props.get('photo', []) if url)
