@@ -117,15 +117,29 @@ class Facebook(source.Source):
     See method docstring in source.py for details.
     """
     if activity_id:
-      if '_' not in activity_id:
-        if not user_id:
-          raise ValueError('Facebook activity_id %s has no user id prefix and '
-                           'user_id keyword arg was not provided.', activity_id)
-        activity_id = '%s_%s' % (user_id, activity_id)
-      posts = [json.loads(self.urlread(API_OBJECT_URL % activity_id))]
+      # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
+      # it doesn't accept that format. I can't tell which is which yet, so try
+      # them all.
+      ids_to_try = [activity_id]
+      if '_' in activity_id:
+        user_id_prefix, activity_id = activity_id.split('_', 1)
+        ids_to_try.insert(0, activity_id)
+      if user_id:
+        ids_to_try.append('%s_%s' % (user_id, activity_id))
+
+      for id in ids_to_try:
+        try:
+          posts = [json.loads(self.urlread(API_OBJECT_URL % id))]
+          break
+        except urllib2.URLError, e:
+          logging.warning("Couldn't fetch object %s: %s", id, e)
+      else:
+        posts = []
+
       if posts == [False]:  # FB returns false for "not found"
         posts = []
       total_count = len(posts)
+
     else:
       url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
       url = url % (user_id if user_id else 'me', start_index)
