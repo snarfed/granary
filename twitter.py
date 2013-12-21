@@ -69,7 +69,8 @@ class Twitter(source.Source):
     return self.user_to_actor(json.loads(self.urlread(url)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0):
+                     activity_id=None, start_index=0, count=0,
+                     fetch_likes=False, fetch_shares=False):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
     See method docstring in source.py for details.
