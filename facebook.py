@@ -320,6 +320,7 @@ class Facebook(source.Source):
 
     obj['tags'] += [{
         'id': self.tag_uri('%s_liked_by_%s' % (id, like.get('id'))),
+        'url': url,
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': url},
