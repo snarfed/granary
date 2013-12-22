@@ -324,14 +324,7 @@ class Facebook(source.Source):
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': url},
-        'author': {
-          'id': self.tag_uri(like.get('id')),
-          'displayName': like.get('name'),
-          'url': 'http://facebook.com/%s' % like.get('id'),
-          'image': {
-            'url': 'http://graph.facebook.com/%s/picture?type=large' % like.get('id'),
-            },
-          },
+        'author': self.user_to_actor(like),
         'content': 'likes this.',
         } for like in post.get('likes', {}).get('data', [])]
 
