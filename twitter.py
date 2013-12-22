@@ -89,11 +89,21 @@ class Twitter(source.Source):
 
     if fetch_shares:
       for tweet in tweets:
-        # store retweets in the 'retweets' field.
-        # TODO: make these HTTP requests asynchronous. not easy since we don't
-        # (yet) require threading support or use a non-blocking HTTP library.
-        url = API_RETWEETS_URL % tweet['id']
-        tweet['retweets'] = json.loads(self.urlread(url))
+        if (not tweet.get('retweeted') and        # this *is not* a retweet
+            tweet.get('retweet_count', 0) >= 1):  # this *has* retweets
+          # store retweets in the 'retweets' field.
+          # TODO: make these HTTP requests asynchronous. not easy since we don't
+          # (yet) require threading support or use a non-blocking HTTP library.
+          #
+          # TODO: cache results or otherwise handle rate limiting. twitter
+          # limits this API endpoint to one call per minute per user, which is
+          # easy to hit.
+          # https://dev.twitter.com/docs/rate-limiting/1.1/limits
+          #
+          # can't use the statuses/retweets_of_me endpoint because it only
+          # returns the original tweets, not the retweets or their authors.
+          url = API_RETWEETS_URL % tweet['id']
+          tweet['retweets'] = json.loads(self.urlread(url))
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 

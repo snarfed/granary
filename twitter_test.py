@@ -364,9 +364,11 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.get_activities(group_id=source.SELF))
 
   def test_get_activities_fetch_shares(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['retweet_count'] = 1
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      json.dumps([TWEET]))
+      json.dumps([tweet]))
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/retweets.json?id=172417043893731329',
       json.dumps(RETWEETS))
@@ -374,6 +376,16 @@ class TwitterTest(testutil.HandlerTest):
 
     got = self.twitter.get_activities(fetch_shares=True)
     self.assert_equals((None, [ACTIVITY_WITH_SHARES]), got)
+
+  def test_get_activities_fetch_shares_no_retweets(self):
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+      json.dumps([TWEET]))
+    # we should only ask the API for retweets when retweet_count > 0
+    self.mox.ReplayAll()
+
+    self.assert_equals((None, [ACTIVITY]),
+                       self.twitter.get_activities(fetch_shares=True))
 
   def test_get_comment(self):
     self.expect_urlopen(
