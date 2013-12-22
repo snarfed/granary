@@ -93,15 +93,13 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def get_repost(self, activity_user_id, activity_id, repost_user_id):
-    """Not implemented. Returns None.
-
-    I haven't yet found a way to fetch reshares in the Facebook API. :/
+  def get_share(self, activity_user_id, activity_id, share_id):
+    """Returns an ActivityStreams 'share' activity object.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
-      repost_user_id: string id of the user who reposted the activity
+      share_id: string id of the share object
     """
     raise NotImplementedError()
 

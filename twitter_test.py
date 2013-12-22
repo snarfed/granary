@@ -152,7 +152,8 @@ RETWEETS = [{  # Twitter
       'screen_name': 'alizz',
       },
     'retweeted_status': {
-      # ...
+      'id': 333,
+      'user': {'screen_name': 'foo'},
       },
   }, {
     'created_at': 'Wed Feb 26 20:26:41 +0000 2013',
@@ -163,7 +164,8 @@ RETWEETS = [{  # Twitter
       'screen_name': 'bobbb',
       },
     'retweeted_status': {
-      # ...
+      'id': 666,
+      'user': {'screen_name': 'bar'},
       },
     },
 ]
@@ -174,7 +176,7 @@ SHARES = [{  # ActivityStreams
     'url': 'http://twitter.com/alizz/status/123',
     'objectType': 'activity',
     'verb': 'share',
-    'object': {'url': 'http://twitter.com/snarfed_org/status/172417043893731329'},
+    'object': {'url': 'http://twitter.com/foo/status/333'},
     'author': {
       'id': 'tag:twitter.com,2013:alizz',
       'username': 'alizz',
@@ -187,7 +189,7 @@ SHARES = [{  # ActivityStreams
     'url': 'http://twitter.com/bobbb/status/456',
     'objectType': 'activity',
     'verb': 'share',
-    'object': {'url': 'http://twitter.com/snarfed_org/status/172417043893731329'},
+    'object': {'url': 'http://twitter.com/bar/status/666'},
     'author': {
       'id': 'tag:twitter.com,2013:bobbb',
       'username': 'bobbb',
@@ -394,6 +396,13 @@ class TwitterTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(OBJECT, self.twitter.get_comment('123'))
 
+  def test_get_share(self):
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/show.json?id=123&include_entities=true',
+      json.dumps(RETWEETS[0]))
+    self.mox.ReplayAll()
+    self.assert_equals(SHARES[0], self.twitter.get_share('user', 'tweet', '123'))
+
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
 
@@ -418,6 +427,13 @@ class TwitterTest(testutil.HandlerTest):
   def test_tweet_to_object_with_retweets(self):
     self.assert_equals(OBJECT_WITH_SHARES,
                        self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
+
+  def test_retweet_to_object(self):
+    for retweet, share in zip(RETWEETS, SHARES):
+      self.assert_equals(share, self.twitter.retweet_to_object(retweet))
+
+    # not a retweet
+    self.assertEquals(None, self.twitter.retweet_to_object(TWEET))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))

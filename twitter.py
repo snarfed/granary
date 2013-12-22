@@ -117,6 +117,31 @@ class Twitter(source.Source):
     url = API_STATUS_URL % comment_id
     return self.tweet_to_object(json.loads(self.urlread(url)))
 
+  def get_like(self, activity_user_id, activity_id, like_user_id):
+    """Returns an ActivityStreams 'like' activity object.
+
+    Twitter's REST API doesn't have a way to fetch a tweet's individual
+    favorites, just the total count. :/ The Streaming API can do it though.
+    sigh.
+
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      activity_id: string activity id
+      like_user_id: string id of the user who liked the activity
+    """
+    return None
+
+  def get_share(self, activity_user_id, activity_id, share_id):
+    """Returns an ActivityStreams 'share' activity object.
+
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      activity_id: string activity id
+      share_id: string id of the share object
+    """
+    url = API_STATUS_URL % share_id
+    return self.retweet_to_object(json.loads(self.urlread(url)))
+
   def urlread(self, url):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """
@@ -241,14 +266,7 @@ class Twitter(source.Source):
         del t['indices']
 
     # retweets
-    object['tags'] += [{
-        'id': self.tag_uri(r.get('id')),
-        'url': self.status_url(r['user'].get('screen_name'), r.get('id')),
-        'objectType': 'activity',
-        'verb': 'share',
-        'object': {'url': object.get('url')},
-        'author': self.user_to_actor(r.get('user', {})),
-        } for r in tweet.get('retweets', [])]
+    object['tags'] += [self.retweet_to_object(r) for r in tweet.get('retweets', [])]
 
     # location
     place = tweet.get('place')
@@ -268,7 +286,6 @@ class Twitter(source.Source):
                                        tuple(coords))
 
     return util.trim_nulls(object)
-
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.
@@ -293,6 +310,30 @@ class Twitter(source.Source):
       'username': username,
       'description': user.get('description'),
       })
+
+  def retweet_to_object(self, retweet):
+    """Converts a retweet to a share activity object.
+
+    Args:
+      retweet: dict, a decoded JSON tweet
+
+    Returns:
+      an ActivityStreams object dict
+    """
+    id = retweet.get('id')
+    orig = retweet.get('retweeted_status')
+    if not orig:
+      return None
+    author = retweet.get('user', {})
+
+    return {'id': self.tag_uri(id),
+            'url': self.status_url(author.get('screen_name'), id),
+            'objectType': 'activity',
+            'verb': 'share',
+            'author': self.user_to_actor(author),
+            'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
+                                              orig.get('id'))},
+            }
 
   @staticmethod
   def rfc2822_to_iso8601(time_str):
