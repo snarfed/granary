@@ -17,7 +17,7 @@ from webutil import util
 def tag_uri(name):
   return util.tag_uri('twitter.com', name)
 
-USER = {
+USER = {  # Twitter
   'created_at': 'Sat May 01 21:42:43 +0000 2010',
   'description': 'my description',
   'location': 'San Francisco',
@@ -25,7 +25,7 @@ USER = {
   'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
   'screen_name': 'snarfed_org',
   }
-ACTOR = {
+ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
   'image': {
     'url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
@@ -37,7 +37,7 @@ ACTOR = {
   'username': 'snarfed_org',
   'description': 'my description',
   }
-TWEET = {
+TWEET = {  # Twitter
   'created_at': 'Wed Feb 22 20:26:41 +0000 2012',
   'id': 172417043893731329,
   'place': {
@@ -83,7 +83,7 @@ TWEET = {
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
   }
-OBJECT = {
+OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
   'content': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM',
@@ -126,7 +126,7 @@ OBJECT = {
       'image': {'url': u'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
       }],
   }
-ACTIVITY = {
+ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-02-22T20:26:41',
   'id': tag_uri('172417043893731329'),
@@ -143,6 +143,63 @@ ACTIVITY = {
       }]
     },
   }
+RETWEETS = [{  # Twitter
+    'created_at': 'Wed Feb 24 20:26:41 +0000 2013',
+    'id': 123,
+    'user': {
+      'name': 'Alice',
+      'profile_image_url': 'http://alice/picture',
+      'screen_name': 'alizz',
+      },
+    'retweeted_status': {
+      # ...
+      },
+  }, {
+    'created_at': 'Wed Feb 26 20:26:41 +0000 2013',
+    'id': 456,
+    'user': {
+      'name': 'Bob',
+      'profile_image_url': 'http://bob/picture',
+      'screen_name': 'bobbb',
+      },
+    'retweeted_status': {
+      # ...
+      },
+    },
+]
+TWEET_WITH_RETWEETS = copy.deepcopy(TWEET)
+TWEET_WITH_RETWEETS['retweets'] = RETWEETS
+SHARES = [{  # ActivityStreams
+    'id': tag_uri('123'),
+    'url': 'http://twitter.com/alizz/status/123',
+    'objectType': 'activity',
+    'verb': 'share',
+    'object': {'url': 'http://twitter.com/snarfed_org/status/172417043893731329'},
+    'author': {
+      'id': 'tag:twitter.com,2013:alizz',
+      'username': 'alizz',
+      'displayName': 'Alice',
+      'url': 'http://twitter.com/alizz',
+      'image': {'url': 'http://alice/picture'},
+      },
+    }, {
+    'id': tag_uri('456'),
+    'url': 'http://twitter.com/bobbb/status/456',
+    'objectType': 'activity',
+    'verb': 'share',
+    'object': {'url': 'http://twitter.com/snarfed_org/status/172417043893731329'},
+    'author': {
+      'id': 'tag:twitter.com,2013:bobbb',
+      'username': 'bobbb',
+      'displayName': 'Bob',
+      'url': 'http://twitter.com/bobbb',
+      'image': {'url': 'http://bob/picture'},
+      },
+    }]
+OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
+OBJECT_WITH_SHARES['tags'] += SHARES
+ACTIVITY_WITH_SHARES = copy.deepcopy(ACTIVITY)
+ACTIVITY_WITH_SHARES['object'] = OBJECT_WITH_SHARES
 
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -306,6 +363,18 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals((None, []),
                        self.twitter.get_activities(group_id=source.SELF))
 
+  def test_get_activities_fetch_shares(self):
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+      json.dumps([TWEET]))
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/retweets.json?id=172417043893731329',
+      json.dumps(RETWEETS))
+    self.mox.ReplayAll()
+
+    got = self.twitter.get_activities(fetch_shares=True)
+    self.assert_equals((None, [ACTIVITY_WITH_SHARES]), got)
+
   def test_get_comment(self):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/show.json?id=123&include_entities=true',
@@ -333,6 +402,10 @@ class TwitterTest(testutil.HandlerTest):
 
   def test_tweet_to_object_empty(self):
     self.assert_equals({}, self.twitter.tweet_to_object({}))
+
+  def test_tweet_to_object_with_retweets(self):
+    self.assert_equals(OBJECT_WITH_SHARES,
+                       self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))

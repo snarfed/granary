@@ -27,6 +27,8 @@ API_SELF_TIMELINE_URL = \
   'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%d'
 API_STATUS_URL = \
   'https://api.twitter.com/1.1/statuses/show.json?id=%s&include_entities=true'
+API_RETWEETS_URL = \
+  'https://api.twitter.com/1.1/statuses/retweets.json?id=%s'
 API_USER_URL = \
   'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
 API_CURRENT_USER_URL = \
@@ -84,6 +86,14 @@ class Twitter(source.Source):
       tweets = json.loads(self.urlread(url % twitter_count))
       tweets = tweets[start_index:]
       total_count = None
+
+    if fetch_shares:
+      for tweet in tweets:
+        # store retweets in the 'retweets' field.
+        # TODO: make these HTTP requests asynchronous. not easy since we don't
+        # (yet) require threading support or use a non-blocking HTTP library.
+        url = API_RETWEETS_URL % tweet['id']
+        tweet['retweets'] = json.loads(self.urlread(url))
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
 
@@ -219,6 +229,16 @@ class Twitter(source.Source):
             'length': indices[1] - indices[0],
             })
         del t['indices']
+
+    # retweets
+    object['tags'] += [{
+        'id': self.tag_uri(r.get('id')),
+        'url': self.status_url(r['user'].get('screen_name'), r.get('id')),
+        'objectType': 'activity',
+        'verb': 'share',
+        'object': {'url': object.get('url')},
+        'author': self.user_to_actor(r.get('user', {})),
+        } for r in tweet.get('retweets', [])]
 
     # location
     place = tweet.get('place')
