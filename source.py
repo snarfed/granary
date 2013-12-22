@@ -86,12 +86,26 @@ class Source(object):
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.
 
+    Default implementation that fetches the activity and its likes, then
+    searches for a like by the given user. Subclasses should override this if
+    they can optimize the process.
+
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
     """
-    raise NotImplementedError()
+    _, activities = self.get_activities(user_id=activity_user_id,
+                                        activity_id=activity_id,
+                                        fetch_likes=True)
+    if not activities:
+      return None
+
+    like_user_id = self.tag_uri(like_user_id)
+    for tag in activities[0].get('object', {}).get('tags', []):
+      if (tag.get('verb') == 'like' and
+          tag.get('author', {}).get('id') == like_user_id):
+        return tag
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Returns an ActivityStreams 'share' activity object.
