@@ -186,6 +186,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'http://facebook.com/100004',
       'image': {'url': 'http://graph.facebook.com/100004/picture?type=large'},
       },
+    'content': 'likes this.',
     }, {
     'id': tag_uri('10100176064482163_liked_by_683713'),
     'url': 'http://facebook.com/212038/posts/10100176064482163',
@@ -198,6 +199,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'http://facebook.com/683713',
       'image': {'url': 'http://graph.facebook.com/683713/picture?type=large'},
       },
+    'content': 'likes this.',
     },
   ]
 POST_OBJ = {  # ActivityStreams

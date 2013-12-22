@@ -332,6 +332,7 @@ class Facebook(source.Source):
             'url': 'http://graph.facebook.com/%s/picture?type=large' % like.get('id'),
             },
           },
+        'content': 'likes this.',
         } for like in post.get('likes', {}).get('data', [])]
 
     # is there an attachment? prefer to represent it as a picture (ie image

@@ -335,6 +335,7 @@ class Twitter(source.Source):
             'author': self.user_to_actor(author),
             'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
                                               orig.get('id_str'))},
+            'content': 'retweeted this.',
             }
 
   @staticmethod
