@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry"],
+  "type": ["h-entry", "p-comment"],
   "properties": {
     "uid": ["tag:example.com,2001:547822715231468_6796480"],
     "url": ["http://example.com/comment/547822715231468_6796480"],
