@@ -43,7 +43,7 @@ USER = Struct(  # Instagram
   )
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
-  'id': tag_uri('snarfed'),
+  'id': tag_uri('420973239'),
   'username': 'snarfed',
   'url': 'http://snarfed.org/',
   'displayName': 'Ryan B',
@@ -103,7 +103,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'objectType': 'comment',
     'author': {
       'objectType': 'person',
-      'id': tag_uri('averygood'),
+      'id': tag_uri('232927278'),
       'username': 'averygood',
       'displayName': '\u5c0f\u6b63',
       'image': {'url': 'http://picture/commenter'},
@@ -152,7 +152,7 @@ POST_OBJ = {  # ActivityStreams
     },
   'tags': [{
       'objectType': 'person',
-      'id': tag_uri('snarfed'),
+      'id': tag_uri('420973239'),
       'username': 'snarfed',
       'url': 'http://snarfed.org/',
       'displayName': 'Ryan B',
@@ -203,7 +203,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'object': { 'url': 'http://instagram.com/p/ABC123/'},
     'author': {
       'objectType': 'person',
-      'id': tag_uri('alizz'),
+      'id': tag_uri('8'),
       'displayName': 'Alice',
       'username': 'alizz',
       'url': 'http://instagram.com/alizz',
@@ -218,7 +218,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'object': { 'url': 'http://instagram.com/p/ABC123/'},
     'author': {
       'objectType': 'person',
-      'id': tag_uri('bobbb'),
+      'id': tag_uri('9'),
       'displayName': 'Bob',
       'username': 'bobbb',
       'url': 'http://bob.com/',
@@ -415,6 +415,25 @@ class InstagramTest(testutil.HandlerTest):
     self.instagram.api.media('123_456').AndReturn(MEDIA)
     self.mox.ReplayAll()
     self.assert_equals(None, self.instagram.get_comment('111', activity_id='123_456'))
+
+  def test_get_like(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('000').AndReturn(MEDIA_WITH_LIKES)
+    self.mox.ReplayAll()
+    self.assert_equals(LIKE_OBJS[1], self.instagram.get_like('123', '000', '9'))
+
+  def test_get_like_not_found(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('000').AndReturn(MEDIA)
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.instagram.get_like('123', '000', 'xyz'))
+
+  def test_get_like_no_activity(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'media')
+    self.instagram.api.media('000').AndRaise(
+      InstagramAPIError(400, 'APINotFoundError', 'msg'))
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.instagram.get_like('123', '000', '9'))
 
   def test_media_to_activity(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))

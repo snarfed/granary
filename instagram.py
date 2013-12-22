@@ -120,6 +120,11 @@ class Instagram(source.Source):
       if comment.id == comment_id:
         return self.comment_to_object(comment, activity_id, media.link)
 
+  def get_share(self, activity_user_id, activity_id, share_id):
+    """Not implemented. Returns None. Resharing isn't a feature of Instagram.
+    """
+    return None
+
   def media_to_activity(self, media):
     """Converts a media to an activity.
 
@@ -246,22 +251,23 @@ class Instagram(source.Source):
 
     id = getattr(user, 'id', None)
     username = getattr(user, 'username', None)
+    actor = {
+      'id': self.tag_uri(id or username),
+      'username': username,
+      }
     if not id or not username:
-      return {'id': self.tag_uri(id or username),
-              'username': username}
+      return actor
 
     url = getattr(user, 'website', None)
     if not url:
       url = 'http://instagram.com/' + username
 
-    actor = {
+    actor.update({
       'objectType': 'person',
       'displayName': user.full_name,
       'image': {'url': user.profile_picture},
-      'id': self.tag_uri(username),
       'url': url,
-      'username': username,
       'description': getattr(user, 'bio', None)
-      }
+      })
 
     return util.trim_nulls(actor)
