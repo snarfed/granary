@@ -189,13 +189,8 @@ class Instagram(source.Source):
           'displayName': tag.name,
           # TODO: url
           } for tag in getattr(media, 'tags', [])] +
-        [{
-          'objectType': 'person',
-          'id': self.tag_uri(user.user.username),
-          'displayName': user.user.full_name,
-          'url': 'http://instagram.com/' + user.user.username,
-          'image': {'url': user.user.profile_picture},
-          } for user in getattr(media, 'users_in_photo', [])] +
+        [self.user_to_actor(user.user)
+         for user in getattr(media, 'users_in_photo', [])] +
         [{
           'id': self.tag_uri('%s_liked_by_%s' % (id, like.id)),
           'url': media.link,
@@ -260,6 +255,7 @@ class Instagram(source.Source):
       url = 'http://instagram.com/' + username
 
     actor = {
+      'objectType': 'person',
       'displayName': user.full_name,
       'image': {'url': user.profile_picture},
       'id': self.tag_uri(username),

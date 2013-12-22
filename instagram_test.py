@@ -42,11 +42,12 @@ USER = Struct(  # Instagram
   id='420973239',
   )
 ACTOR = {  # ActivityStreams
+  'objectType': 'person',
+  'id': tag_uri('snarfed'),
+  'username': 'snarfed',
+  'url': 'http://snarfed.org/',
   'displayName': 'Ryan B',
   'image': {'url': 'http://picture/ryan'},
-  'id': tag_uri('snarfed'),
-  'url': 'http://snarfed.org/',
-  'username': 'snarfed',
   'description': 'foo',
   }
 COMMENTS = [Struct(  # Instagram
@@ -101,6 +102,7 @@ COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
     'author': {
+      'objectType': 'person',
       'id': tag_uri('averygood'),
       'username': 'averygood',
       'displayName': '\u5c0f\u6b63',
@@ -151,9 +153,11 @@ POST_OBJ = {  # ActivityStreams
   'tags': [{
       'objectType': 'person',
       'id': tag_uri('snarfed'),
-      'url': 'http://instagram.com/snarfed',
+      'username': 'snarfed',
+      'url': 'http://snarfed.org/',
       'displayName': 'Ryan B',
       'image': {'url': 'http://picture/ryan'},
+      'description': 'foo',
       }, {
       'objectType': 'hashtag',
       'id': tag_uri('abc'),
@@ -198,6 +202,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'verb': 'like',
     'object': { 'url': 'http://instagram.com/p/ABC123/'},
     'author': {
+      'objectType': 'person',
       'id': tag_uri('alizz'),
       'displayName': 'Alice',
       'username': 'alizz',
@@ -212,6 +217,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'verb': 'like',
     'object': { 'url': 'http://instagram.com/p/ABC123/'},
     'author': {
+      'objectType': 'person',
       'id': tag_uri('bobbb'),
       'displayName': 'Bob',
       'username': 'bobbb',
@@ -305,8 +311,8 @@ this picture is #abc #xyz
   <link rel="alternate" type="text/html" href="http://instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="http://instagram.com/p/ABC123/" />
 
-    <link rel="ostatus:attention" href="http://instagram.com/snarfed" />
-    <link rel="mentioned" href="http://instagram.com/snarfed" />
+    <link rel="ostatus:attention" href="http://snarfed.org/" />
+    <link rel="mentioned" href="http://snarfed.org/" />
 
     <link rel="ostatus:attention" href="" />
     <link rel="mentioned" href="" />
