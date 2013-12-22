@@ -102,7 +102,7 @@ class Twitter(source.Source):
           #
           # can't use the statuses/retweets_of_me endpoint because it only
           # returns the original tweets, not the retweets or their authors.
-          url = API_RETWEETS_URL % tweet['id']
+          url = API_RETWEETS_URL % tweet['id_str']
           tweet['retweets'] = json.loads(self.urlread(url))
 
     return total_count, [self.tweet_to_activity(t) for t in tweets]
@@ -198,7 +198,9 @@ class Twitter(source.Source):
     """
     object = {}
 
-    id = tweet.get('id')
+    # always prefer id_str over id to avoid any chance of integer overflow.
+    # usually shouldn't matter in Python, but still.
+    id = tweet.get('id_str')
     if not id:
       return {}
 
@@ -320,7 +322,7 @@ class Twitter(source.Source):
     Returns:
       an ActivityStreams object dict
     """
-    id = retweet.get('id')
+    id = retweet.get('id_str')
     orig = retweet.get('retweeted_status')
     if not orig:
       return None
@@ -332,7 +334,7 @@ class Twitter(source.Source):
             'verb': 'share',
             'author': self.user_to_actor(author),
             'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
-                                              orig.get('id'))},
+                                              orig.get('id_str'))},
             }
 
   @staticmethod
@@ -360,4 +362,4 @@ class Twitter(source.Source):
   @classmethod
   def status_url(cls, username, id):
     """Returns the Twitter URL for a tweet from a given user with a given id."""
-    return '%s/status/%d' % (cls.user_url(username), id)
+    return '%s/status/%s' % (cls.user_url(username), id)

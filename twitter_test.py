@@ -39,7 +39,8 @@ ACTOR = {  # ActivityStreams
   }
 TWEET = {  # Twitter
   'created_at': 'Wed Feb 22 20:26:41 +0000 2012',
-  'id': 172417043893731329,
+  'id_str': '172417043893731329',
+  'id': -1,  # we should always use id_str
   'place': {
     'full_name': 'Carcassonne, Aude',
     'id': '31cb9e7ed29dbe52',
@@ -66,14 +67,14 @@ TWEET = {  # Twitter
     'user_mentions': [{
         'name': 'Twitter',
         'id_str': '783214',
-        'id': 783214,
+        'id': -1,  # we should always use id_str
         'indices': [0, 8],
         'screen_name': 'foo'
       },
       {
         'name': 'Picture.ly',
         'id_str': '334715534',
-        'id': 334715534,
+        'id': -1,
         'indices': [15, 28],
         'screen_name': 'foo'
       }],
@@ -145,26 +146,30 @@ ACTIVITY = {  # ActivityStreams
   }
 RETWEETS = [{  # Twitter
     'created_at': 'Wed Feb 24 20:26:41 +0000 2013',
-    'id': 123,
+    'id_str': '123',
+    'id': -1,  # we should always use id_str
     'user': {
       'name': 'Alice',
       'profile_image_url': 'http://alice/picture',
       'screen_name': 'alizz',
       },
     'retweeted_status': {
-      'id': 333,
+      'id_str': '333',
+      'id': -1,
       'user': {'screen_name': 'foo'},
       },
   }, {
     'created_at': 'Wed Feb 26 20:26:41 +0000 2013',
-    'id': 456,
+    'id_str': '456',
+    'id': -1,
     'user': {
       'name': 'Bob',
       'profile_image_url': 'http://bob/picture',
       'screen_name': 'bobbb',
       },
     'retweeted_status': {
-      'id': 666,
+      'id_str': '666',
+      'id': -1,
       'user': {'screen_name': 'bar'},
       },
     },
