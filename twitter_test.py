@@ -190,6 +190,7 @@ SHARES = [{  # ActivityStreams
       'image': {'url': 'http://alice/picture'},
       },
     'content': 'retweeted this.',
+    'published': '2013-02-24T20:26:41',
     }, {
     'id': tag_uri('456'),
     'url': 'http://twitter.com/bobbb/status/456',
@@ -204,6 +205,7 @@ SHARES = [{  # ActivityStreams
       'image': {'url': 'http://bob/picture'},
       },
     'content': 'retweeted this.',
+    'published': '2013-02-26T20:26:41',
     }]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
 OBJECT_WITH_SHARES['tags'] += SHARES

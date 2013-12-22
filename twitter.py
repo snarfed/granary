@@ -322,21 +322,19 @@ class Twitter(source.Source):
     Returns:
       an ActivityStreams object dict
     """
-    id = retweet.get('id_str')
     orig = retweet.get('retweeted_status')
     if not orig:
       return None
-    author = retweet.get('user', {})
 
-    return {'id': self.tag_uri(id),
-            'url': self.status_url(author.get('screen_name'), id),
-            'objectType': 'activity',
-            'verb': 'share',
-            'author': self.user_to_actor(author),
-            'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
-                                              orig.get('id_str'))},
-            'content': 'retweeted this.',
-            }
+    share = self.tweet_to_object(retweet)
+    share.update({
+        'objectType': 'activity',
+        'verb': 'share',
+        'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
+                                          orig.get('id_str'))},
+        'content': 'retweeted this.',
+        })
+    return share
 
   @staticmethod
   def rfc2822_to_iso8601(time_str):
