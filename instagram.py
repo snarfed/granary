@@ -195,7 +195,16 @@ class Instagram(source.Source):
           'displayName': user.user.full_name,
           'url': 'http://instagram.com/' + user.user.username,
           'image': {'url': user.user.profile_picture},
-          } for user in getattr(media, 'users_in_photo', [])],
+          } for user in getattr(media, 'users_in_photo', [])] +
+        [{
+          'id': self.tag_uri('%s_liked_by_%s' % (id, like.id)),
+          'url': media.link,
+          'objectType': 'activity',
+          'verb': 'like',
+          'object': {'url': media.link},
+          'author': self.user_to_actor(like),
+          'content': 'likes this.',
+          } for like in getattr(media, 'likes', [])],
       }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):

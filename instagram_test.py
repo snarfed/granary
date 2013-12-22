@@ -4,9 +4,11 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import copy
 import datetime
 import httplib2
 import json
+import logging
 import mox
 import urllib
 import urlparse
@@ -174,6 +176,56 @@ ACTIVITY = {  # ActivityStreams
   'object': POST_OBJ,
   'title': 'Ryan B: this picture is #abc #xyz',
   }
+LIKES = [  # Instagram
+  Struct(id='8',
+         username='alizz',
+         full_name='Alice',
+         profile_picture='http://alice/picture',
+         ),
+  Struct(id='9',
+         username='bobbb',
+         full_name='Bob',
+         profile_picture='http://bob/picture',
+         website='http://bob.com/',
+         ),
+  ]
+MEDIA_WITH_LIKES = copy.deepcopy(MEDIA)
+MEDIA_WITH_LIKES.likes = LIKES
+LIKE_OBJS = [{  # ActivityStreams
+    'id': tag_uri('123_456_liked_by_8'),
+    'url': 'http://instagram.com/p/ABC123/',
+    'objectType': 'activity',
+    'verb': 'like',
+    'object': { 'url': 'http://instagram.com/p/ABC123/'},
+    'author': {
+      'id': tag_uri('alizz'),
+      'displayName': 'Alice',
+      'username': 'alizz',
+      'url': 'http://instagram.com/alizz',
+      'image': {'url': 'http://alice/picture'},
+      },
+    'content': 'likes this.',
+    }, {
+    'id': tag_uri('123_456_liked_by_9'),
+    'url': 'http://instagram.com/p/ABC123/',
+    'objectType': 'activity',
+    'verb': 'like',
+    'object': { 'url': 'http://instagram.com/p/ABC123/'},
+    'author': {
+      'id': tag_uri('bobbb'),
+      'displayName': 'Bob',
+      'username': 'bobbb',
+      'url': 'http://bob.com/',
+      'image': {'url': 'http://bob/picture'},
+      },
+    'content': 'likes this.',
+    },
+  ]
+POST_OBJ_WITH_LIKES = copy.deepcopy(POST_OBJ)
+POST_OBJ_WITH_LIKES['tags'] += LIKE_OBJS
+ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
+ACTIVITY_WITH_LIKES['object'] = POST_OBJ_WITH_LIKES
+
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US"
@@ -331,6 +383,13 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
 
+  def test_get_activities_with_likes(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'user_media_feed')
+    self.instagram.api.user_media_feed().AndReturn(([MEDIA_WITH_LIKES], {}))
+    self.mox.ReplayAll()
+    got = self.instagram.get_activities()
+    self.assert_equals((1, [ACTIVITY_WITH_LIKES]), got)
+
   def test_get_activities_other_400_error(self):
     self.mox.StubOutWithMock(self.instagram.api, 'media')
     self.instagram.api.media('000').AndRaise(InstagramAPIError(400, 'other', 'msg'))
@@ -356,6 +415,10 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_media_to_object(self):
     self.assert_equals(POST_OBJ, self.instagram.media_to_object(MEDIA))
+
+  def test_media_to_object_with_likes(self):
+    self.assert_equals(POST_OBJ_WITH_LIKES,
+                       self.instagram.media_to_object(MEDIA_WITH_LIKES))
 
   def test_comment_to_object(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
