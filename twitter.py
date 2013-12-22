@@ -334,6 +334,9 @@ class Twitter(source.Source):
                                           orig.get('id_str'))},
         'content': 'retweeted this.',
         })
+    if 'tags' in share:
+      # the existing tags apply to the original tweet's text, which we replaced
+      del share['tags']
     return share
 
   @staticmethod

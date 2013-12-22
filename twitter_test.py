@@ -172,6 +172,15 @@ RETWEETS = [{  # Twitter
       'id': -1,
       'user': {'screen_name': 'bar'},
       },
+    # we replace the content, so this should be stripped
+    'entities': {
+      'user_mentions': [{
+          'name': 'foo',
+          'id_str': '783214',
+          'indices': [0, 3],
+          'screen_name': 'foo',
+          }],
+      },
     },
 ]
 TWEET_WITH_RETWEETS = copy.deepcopy(TWEET)
