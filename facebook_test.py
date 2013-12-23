@@ -5,14 +5,11 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import json
 import mox
-import urllib
-import urlparse
 
 import facebook
 import source
 from webutil import testutil
 from webutil import util
-import webapp2
 
 
 # test data

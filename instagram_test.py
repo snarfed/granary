@@ -10,8 +10,6 @@ import httplib2
 import json
 import logging
 import mox
-import urllib
-import urlparse
 
 import instagram
 from oauth_dropins.python_instagram.bind import InstagramAPIError
@@ -19,7 +17,6 @@ import source
 from webutil import testutil
 from webutil import util
 from webutil.util import Struct
-import webapp2
 
 
 def tag_uri(name):
