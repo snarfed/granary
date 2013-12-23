@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
+import json
 import mox
 
 import source
@@ -81,13 +82,31 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(LIKES[1], self.source.get_like('author', 'activity', '6'))
 
-  # def test_get_like_not_found(self):
-  #   self.expect_urlopen('https://graph.facebook.com/000', json.dumps(POST))
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(None, self.facebook.get_like('123', '000', '999'))
+  def test_get_like_not_found(self):
+    activity = copy.deepcopy(ACTIVITY)
+    del activity['object']['tags']
+    self.source.get_activities(user_id='author', activity_id='activity',
+                               fetch_likes=True).AndReturn((1, [activity]))
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
 
-  # def test_get_like_no_activity(self):
-  #   self.expect_urlopen('https://graph.facebook.com/000', '{}')
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
+  def test_get_like_no_activity(self):
+    self.source.get_activities(user_id='author', activity_id='activity',
+                               fetch_likes=True).AndReturn((0, []))
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
 
+  def test_get_share(self):
+    activity = copy.deepcopy(ACTIVITY)
+    share = activity['object']['tags'][1]
+    share['verb'] = 'share'
+    self.source.get_activities(user_id='author', activity_id='activity',
+                               fetch_shares=True).AndReturn((1, [activity]))
+    self.mox.ReplayAll()
+    self.assert_equals(share, self.source.get_share('author', 'activity', '6'))
+
+  def test_get_share_not_found(self):
+    self.source.get_activities(user_id='author', activity_id='activity',
+                               fetch_shares=True).AndReturn((1, [ACTIVITY]))
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.source.get_share('author', 'activity', '6'))
