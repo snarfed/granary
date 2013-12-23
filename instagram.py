@@ -71,13 +71,21 @@ class Instagram(source.Source):
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0,
-                     fetch_likes=False, fetch_shares=False):
+                     fetch_replies=False, fetch_likes=False,
+                     fetch_shares=False):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
     See method docstring in source.py for details. app_id is ignored.
 
     http://instagram.com/developer/endpoints/users/#get_users_feed
     http://instagram.com/developer/endpoints/users/#get_users_media_recent
+
+    Likes are always included, regardless of the fetch_likes kwarg. They come
+    bundled in the 'likes' field of the API Media object:
+    http://instagram.com/developer/endpoints/media/#
+
+    Instagram doesn't have a reshare feature, so shares are never included
+    since they don't exist. :P
 
     Raises: InstagramAPIError
     """

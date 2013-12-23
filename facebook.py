@@ -111,10 +111,18 @@ class Facebook(source.Source):
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0,
-                     fetch_likes=False, fetch_shares=False):
+                     fetch_replies=False, fetch_likes=False,
+                     fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
+
+    Replies (ie comments) and likes are always included. They come from the
+    'comments' and 'likes' fields in the Graph API's Post object:
+    https://developers.facebook.com/docs/reference/api/post/#u_0_3
+
+    Shares are not currently supported, since I haven't yet found a way to get
+    them from the API.
     """
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes

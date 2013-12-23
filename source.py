@@ -42,7 +42,8 @@ class Source(object):
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0,
-                     fetch_likes=False, fetch_shares=False):
+                     fetch_replies=False, fetch_likes=False,
+                     fetch_shares=False):
     """Return a list and total count of ActivityStreams activities.
 
     If user_id is provided, only that user's activity(s) are included.
@@ -55,6 +56,11 @@ class Source(object):
     group id is string id of group or @self, @friends, @all
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#Group-ID
 
+    The fetch_replies, fetch_likes, and fetch_shares kwargs all default to False
+    because they often require extra API round trips. Some sources return
+    replies, likes, and shares in the same initial call, so they may be included
+    even if you don't set their kwarg to True.
+
     Args:
       user_id: string, defaults to the currently authenticated user
       group_id: string, one of '@self', '@all', '@friends'. defaults to
@@ -63,10 +69,9 @@ class Source(object):
       activity_id: string
       start_index: int >= 0
       count: int >= 0
-      fetch_likes: boolean, whether to fetch the list of users who have 'liked'
-        this activity, even if it requires another API round trip
-      fetch_shares: boolean, whether to fetch the list of users who have 'shared'
-        this activity, even if it requires another API round trip
+      fetch_replies: boolean, whether to fetch each activity's replies also
+      fetch_likes: boolean, whether to fetch each activity's likes also
+      fetch_shares: boolean, whether to fetch each activity's shares also
 
     Returns:
       (total_results, activities) tuple

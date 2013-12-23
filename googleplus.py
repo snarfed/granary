@@ -45,10 +45,17 @@ class GooglePlus(source.Source):
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0,
-                     fetch_likes=False, fetch_shares=False):
+                     fetch_replies=False, fetch_likes=False,
+                     fetch_shares=False):
     """Returns a list of ActivityStreams activity dicts.
 
     See method docstring in source.py for details. app_id is ignored.
+
+    Replies (comments), likes (+1s), and shares (reshares) each need an extra
+    API call per activity. The activity has total counts for them, though, so we
+    only make those calls when we know there's something to fetch.
+    https://developers.google.com/+/api/latest/comments/list
+    https://developers.google.com/+/api/latest/people/listByActivity
     """
     if user_id is None:
       user_id = 'me'
