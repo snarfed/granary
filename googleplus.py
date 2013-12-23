@@ -5,6 +5,8 @@ TODO(ryan): finish this, write a test, maybe hook it up to a demo app
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import logging
+
 import appengine_config
 import source
 
@@ -61,6 +63,11 @@ class GooglePlus(source.Source):
       activities = call.execute(self.auth_entity.http()).get('items', [])
 
     for activity in activities:
+      obj = activity.get('object', {})
+      if fetch_likes and obj.get('plusoners', {}).get('totalItems') > 0:
+        self.add_tags(activity, 'plusoners', 'like')
+      if fetch_shares and obj.get('resharers', {}).get('totalItems') > 0:
+        self.add_tags(activity, 'resharers', 'share')
       self.postprocess_activity(activity)
 
     return len(activities), activities
@@ -101,3 +108,40 @@ class GooglePlus(source.Source):
     comment['id'] = self.tag_uri(comment['id'])
     # G+ comments don't have their own permalinks. :/ so, use the post's.
     comment['url'] = comment['inReplyTo'][0]['url']
+
+  def add_tags(self, activity, collection, verb):
+    """Fetches and adds 'like' or 'share' tags to an activity.
+
+    Converts +1s to like and reshares to share activity objects, and stores them
+    in place in the 'tags' field of the activity's object.
+    Details: https://developers.google.com/+/api/latest/people/listByActivity
+
+    Args:
+      activity: dict, G+ activity that was +1ed or reshared
+      collection: string, 'plusoners' or 'resharers'
+      verb: string, ActivityStreams verb to populate the tags with
+    """
+    # maps collection to verb to use in content string
+    content_verbs = {'plusoners': '+1ed', 'resharers': 'reshared'}
+
+    id = activity['id']
+    call = self.auth_entity.api().people().listByActivity(
+      activityId=id, collection=collection)
+    persons = call.execute(self.auth_entity.http()).get('items', [])
+    obj = activity['object']
+    tags = obj.setdefault('tags', [])
+
+    for person in persons:
+      person_id = person['id']
+      person['id'] = self.tag_uri(person['id'])
+      tags.append({
+        'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
+        'objectType': 'activity',
+        'verb': verb,
+        'url': obj.get('url'),
+        'object': {'url': obj.get('url')},
+        'author': person,
+        'content': '%s this.' % content_verbs[collection],
+        })
+
+    return tags
