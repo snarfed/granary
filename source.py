@@ -8,6 +8,7 @@ http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import datetime
+import logging
 import re
 
 from webutil import util
@@ -98,14 +99,7 @@ class Source(object):
     _, activities = self.get_activities(user_id=activity_user_id,
                                         activity_id=activity_id,
                                         fetch_likes=True)
-    if not activities:
-      return None
-
-    like_user_id = self.tag_uri(like_user_id)
-    for tag in activities[0].get('object', {}).get('tags', []):
-      if (tag.get('verb') == 'like' and
-          tag.get('author', {}).get('id') == like_user_id):
-        return tag
+    return self._get_tag(activities, 'like', like_user_id)
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Returns an ActivityStreams 'share' activity object.
@@ -113,9 +107,22 @@ class Source(object):
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
-      share_id: string id of the share object
+      share_id: string id of the share object or the user who shared it
     """
-    raise NotImplementedError()
+    _, activities = self.get_activities(user_id=activity_user_id,
+                                        activity_id=activity_id,
+                                        fetch_shares=True)
+    return self._get_tag(activities, 'share', share_id)
+
+  def _get_tag(self, activities, verb, user_id):
+    if not activities:
+      return None
+
+    user_id = self.tag_uri(user_id)
+    for tag in activities[0].get('object', {}).get('tags', []):
+      if (tag.get('verb') == verb and
+          tag.get('author', {}).get('id') == user_id):
+        return tag
 
   def postprocess_activity(self, activity):
     """Does source-independent post-processing of an activity, in place.
