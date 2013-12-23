@@ -327,12 +327,16 @@ class Twitter(source.Source):
       return None
 
     share = self.tweet_to_object(retweet)
+
+    url = share.get('url')
+    content = '<a href="%s">retweeted this.</a>' % url if url else 'retweeted this.'
+
     share.update({
         'objectType': 'activity',
         'verb': 'share',
         'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
                                           orig.get('id_str'))},
-        'content': 'retweeted this.',
+        'content': content,
         })
     if 'tags' in share:
       # the existing tags apply to the original tweet's text, which we replaced

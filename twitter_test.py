@@ -198,7 +198,7 @@ SHARES = [{  # ActivityStreams
       'url': 'http://twitter.com/alizz',
       'image': {'url': 'http://alice/picture'},
       },
-    'content': 'retweeted this.',
+    'content': '<a href="http://twitter.com/alizz/status/123">retweeted this.</a>',
     'published': '2013-02-24T20:26:41',
     }, {
     'id': tag_uri('456'),
@@ -213,7 +213,7 @@ SHARES = [{  # ActivityStreams
       'url': 'http://twitter.com/bobbb',
       'image': {'url': 'http://bob/picture'},
       },
-    'content': 'retweeted this.',
+    'content': '<a href="http://twitter.com/bobbb/status/456">retweeted this.</a>',
     'published': '2013-02-26T20:26:41',
     }]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
