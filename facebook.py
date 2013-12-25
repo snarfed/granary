@@ -122,7 +122,9 @@ class Facebook(source.Source):
     https://developers.facebook.com/docs/reference/api/post/#u_0_3
 
     Shares are not currently supported, since I haven't yet found a way to get
-    them from the API.
+    them from the API. The sharedposts field / edge seems promising, but I
+    haven't been able to get it to work, even with the read_stream OAuth scope.
+    http://stackoverflow.com/questions/17373204/information-of-re-shared-status
     """
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
