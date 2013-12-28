@@ -79,9 +79,8 @@ class Twitter(source.Source):
     See method docstring in source.py for details.
 
     Likes (ie favorites) are not yet supported, since Twitter's REST API doesn't
-    offer a way to fetch them. :( The Streaming API can, but I'm not quite that
-    desperate yet.
-    https://dev.twitter.com/discussions/661
+    offer a way to fetch them. You can get them from the Streaming API, though,
+    and convert them with streaming_event_to_object().
     https://dev.twitter.com/docs/streaming-apis/messages#Events_event
 
     Shares (ie retweets) are fetched with a separate API call per tweet:
@@ -352,6 +351,36 @@ class Twitter(source.Source):
       # the existing tags apply to the original tweet's text, which we replaced
       del share['tags']
     return share
+
+  def streaming_event_to_object(self, event):
+    """Converts a Streaming API event to an object.
+
+    https://dev.twitter.com/docs/streaming-apis/messages#Events_event
+
+    Right now, only converts favorite events to like objects.
+
+    Args:
+      event: dict, a decoded JSON Streaming API event
+
+    Returns:
+      an ActivityStreams object dict
+    """
+    source = event.get('source')
+    tweet = event.get('target_object')
+    if event.get('event') == 'favorite' and source and tweet:
+      tweet_id = tweet.get('id_str')
+      id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, source.get('id_str')))
+      url = self.status_url(event.get('target').get('screen_name'), tweet_id)
+      return {
+        'id': id,
+        'url': url,
+        'objectType': 'activity',
+        'verb': 'like',
+        'object': {'url': url},
+        'author': self.user_to_actor(source),
+        'content': 'favorited this.',
+        'published': self.rfc2822_to_iso8601(event.get('created_at')),
+        }
 
   @staticmethod
   def rfc2822_to_iso8601(time_str):

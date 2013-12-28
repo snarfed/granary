@@ -220,6 +220,30 @@ OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
 OBJECT_WITH_SHARES['tags'] += SHARES
 ACTIVITY_WITH_SHARES = copy.deepcopy(ACTIVITY)
 ACTIVITY_WITH_SHARES['object'] = OBJECT_WITH_SHARES
+FAVORITE_EVENT = {  # Twitter
+  'event' : 'favorite',
+  'created_at' : 'Fri Dec 27 17:25:55 +0000 2013',
+  'source': {
+    'id_str': '789',
+    'screen_name': 'eve',
+  },
+  'target': USER,
+  'target_object' : TWEET,
+}
+LIKE = {  # ActivityStreams
+  'id': tag_uri('172417043893731329_favorited_by_789'),
+  'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'http://twitter.com/snarfed_org/status/172417043893731329'},
+  'author': {
+    'id': tag_uri('eve'),
+    'username': 'eve',
+    'url': 'http://twitter.com/eve',
+    },
+  'content': 'favorited this.',
+  'published': '2013-12-27T17:25:55',
+  }
 
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -452,6 +476,18 @@ class TwitterTest(testutil.HandlerTest):
 
     # not a retweet
     self.assertEquals(None, self.twitter.retweet_to_object(TWEET))
+
+  def test_streaming_event_to_object(self):
+    self.assert_equals(LIKE, self.twitter.streaming_event_to_object(FAVORITE_EVENT))
+
+    # not a favorite event
+    follow = {
+      'event': 'follow',
+      'source': USER,
+      'target': USER,
+      'target_object': TWEET,
+      }
+    self.assertEquals(None, self.twitter.streaming_event_to_object(follow))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))
