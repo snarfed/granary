@@ -169,7 +169,8 @@ class Source(object):
 
   _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)')
 
-  def original_post_discovery(self, activity):
+  @staticmethod
+  def original_post_discovery(activity):
     """Discovers original post links and stores them as tags, in place.
 
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
@@ -187,7 +188,7 @@ class Source(object):
     # (usually syndicated) post, of the form (DOMAIN PATH). Details:
     # http://indiewebcamp.com/permashortcitation
     pscs =  set(match.expand(r'http://\1/\2')
-                for match in self._PERMASHORTCITATION_RE.finditer(content))
+                for match in Source._PERMASHORTCITATION_RE.finditer(content))
 
     attachments = set(a.get('url') for a in obj.get('attachments', [])
                       if a['objectType'] == 'article')
