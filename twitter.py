@@ -13,6 +13,7 @@ import datetime
 import json
 import logging
 import re
+import urllib
 import urllib2
 import urlparse
 
@@ -114,7 +115,66 @@ class Twitter(source.Source):
           url = API_RETWEETS_URL % tweet['id_str']
           tweet['retweets'] = json.loads(self.urlread(url))
 
-    return total_count, [self.tweet_to_activity(t) for t in tweets]
+    activities = [self.tweet_to_activity(t) for t in tweets]
+    if fetch_replies:
+      self.fetch_replies(activities)
+
+    return total_count, activities
+
+  def fetch_replies(self, activities):
+    """Fetches and injects Twitter replies into a list of activities, in place.
+
+    Includes indirect replies ie reply chains, not just direct replies. Searches
+    for @-mentions, matches them to the original tweets with
+    in_reply_to_status_id_str, and recurses until it's walked the entire tree.
+
+    Args:
+      activities: list of activity dicts
+
+    Returns:
+      same activities list
+    """
+
+    # cache searches for @-mentions for individual users. maps username to dict
+    # mapping tweet id to ActivityStreams reply object dict.
+    mentions = {}
+
+    # find replies
+    for activity in activities:
+      # list of ActivityStreams reply object dict and set of seen activity ids
+      # (tag URIs). seed with the original tweet; we'll filter it out later.
+      replies = [activity]
+      _, id = util.parse_tag_uri(activity['id'])
+      seen_ids = set([id])
+
+      for reply in replies:
+        # get mentions of this tweet's author so we can search them for replies to
+        # this tweet. can't use statuses/mentions_timeline because i'd need to
+        # auth as the user being mentioned.
+        # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
+        #
+        # note that these HTTP requests are synchronous. you can make async
+        # requests by using urlfetch.fetch() directly, but not with urllib2.
+        # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
+        author = reply['actor']['username']
+        if author not in mentions:
+          resp = self.urlread(API_SEARCH_URL % urllib.quote_plus('@' + author))
+          mentions[author] = json.loads(resp)['statuses']
+
+        # look for replies. add any we find to the end of replies. this makes us
+        # recursively follow reply chains to their end. (python supports
+        # appending to a sequence while you're iterating over it.)
+        for mention in mentions[author]:
+          id = mention['id_str']
+          if (mention.get('in_reply_to_status_id_str') in seen_ids and
+              id not in seen_ids):
+            replies.append(self.tweet_to_activity(mention))
+            seen_ids.add(id)
+
+      activity['object']['replies'] = {
+        'items': [r['object'] for r in replies[1:]],  # filter out seed activity
+        'totalItems': len(replies),
+        }
 
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
