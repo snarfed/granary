@@ -71,10 +71,21 @@ class GooglePlus(source.Source):
 
     for activity in activities:
       obj = activity.get('object', {})
+      # comments
+      if fetch_replies and obj.get('replies', {}).get('totalItems') > 0:
+        call = self.auth_entity.api().comments().list(
+          activityId=activity['id'], maxResults=500)
+        comments = call.execute(self.auth_entity.http())
+        for comment in comments['items']:
+          self.postprocess_comment(comment)
+        obj['replies']['items'] = comments['items']
+
+      # likes, reshares
       if fetch_likes and obj.get('plusoners', {}).get('totalItems') > 0:
         self.add_tags(activity, 'plusoners', 'like')
       if fetch_shares and obj.get('resharers', {}).get('totalItems') > 0:
         self.add_tags(activity, 'resharers', 'share')
+
       self.postprocess_activity(activity)
 
     return len(activities), activities
