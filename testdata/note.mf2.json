@@ -7,8 +7,8 @@
     "published": ["2012-02-22T20:26:41"],
     "updated": ["2013-10-25T10:31:30+00:00"],
     "content": [{
-        "html": "A blog post...",
-        "value": "A blog post..."
+        "value": "A blog post. link too",
+        "html": "A blog post. <a href=\"http://my/link\">link</a> too"
       }],
     "photo": ["http://example.com/blog-post-123/image"],
 

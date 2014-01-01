@@ -264,7 +264,7 @@ def render_content(obj):
       start = tag['startIndex']
       end = start + tag['length']
       content += orig[last_end:start]
-      content += '<a class="mention" href="%s">%s</a>' % (
+      content += '<a href="%s">%s</a>' % (
         tag['url'], orig[start:end])
       last_end = end
 

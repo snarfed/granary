@@ -57,7 +57,7 @@ TWEET = {  # Twitter
     'urls': [{
         'expanded_url': 'http://instagr.am/p/MuW67/',
         'url': 'http://t.co/6J2EgYM',
-        'indices': [43, 62],
+        'indices': [46, 65],
         'display_url': 'instagr.am/p/MuW67/'
       }],
     'hashtags': [{
@@ -119,7 +119,7 @@ OBJECT = {  # ActivityStreams
       }, {
       'objectType': 'article',
       'url': 'http://instagr.am/p/MuW67/',
-      'startIndex': 43,
+      'startIndex': 46,
       'length': 19,
       }],
   'attachments': [{

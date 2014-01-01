@@ -1,7 +1,7 @@
 {
   "objectType": "note",
   "displayName": "blog post 123",
-  "content": "A blog post...",
+  "content": "A blog post. link too",
   "id": "tag:example.com,2011:blog-post-123",
   "published": "2012-02-22T20:26:41",
   "updated": "2013-10-25T10:31:30+00:00",
@@ -16,5 +16,10 @@
     "displayName": "Carcassonne, Aude",
     "id": "31cb9e7ed29dbe52",
     "url": "https://maps.google.com/maps?q=32.4004416,-98.9852672"
-  }
+  },
+  "tags": [{
+    "url": "http://my/link",
+    "startIndex": 13,
+    "length": 4
+  }]
 }
