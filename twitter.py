@@ -226,14 +226,14 @@ class Twitter(source.Source):
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    object = self.tweet_to_object(tweet)
+    obj = self.tweet_to_object(tweet)
     activity = {
       'verb': 'post',
-      'published': object.get('published'),
-      'id': object.get('id'),
-      'url': object.get('url'),
-      'actor': object.get('author'),
-      'object': object,
+      'published': obj.get('published'),
+      'id': obj.get('id'),
+      'url': obj.get('url'),
+      'actor': obj.get('author'),
+      'object': obj,
       }
 
     reply_to_screenname = tweet.get('in_reply_to_screen_name')
@@ -265,7 +265,7 @@ class Twitter(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    object = {}
+    obj = {}
 
     # always prefer id_str over id to avoid any chance of integer overflow.
     # usually shouldn't matter in Python, but still.
@@ -273,7 +273,7 @@ class Twitter(source.Source):
     if not id:
       return {}
 
-    object = {
+    obj = {
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
       # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
@@ -284,11 +284,11 @@ class Twitter(source.Source):
 
     user = tweet.get('user')
     if user:
-      object['author'] = self.user_to_actor(user)
-      username = object['author'].get('username')
+      obj['author'] = self.user_to_actor(user)
+      username = obj['author'].get('username')
       if username:
-        object['id'] = self.tag_uri(id)
-        object['url'] = self.status_url(username, id)
+        obj['id'] = self.tag_uri(id)
+        obj['url'] = self.status_url(username, id)
 
     entities = tweet.get('entities', {})
 
@@ -297,14 +297,14 @@ class Twitter(source.Source):
     # https://dev.twitter.com/docs/tweet-entities
     media_url = entities.get('media', [{}])[0].get('media_url')
     if media_url:
-      object['image'] = {'url': media_url}
-      object['attachments'].append({
+      obj['image'] = {'url': media_url}
+      obj['attachments'].append({
           'objectType': 'image',
           'image': {'url': media_url},
           })
 
     # tags
-    object['tags'] = [
+    obj['tags'] = [
       {'objectType': 'person',
        'id': self.tag_uri(t.get('screen_name')),
        'url': self.user_url(t.get('screen_name')),
@@ -323,26 +323,35 @@ class Twitter(source.Source):
       # file:///home/ryanb/docs/activitystreams_json_spec_1.0.html#object
       {'objectType': 'article',
        'url': t.get('expanded_url'),
-       # TODO: elide full URL?
+       'displayName': t.get('display_url'),
        'indices': t.get('indices'),
        } for t in entities.get('urls', [])
       ]
-    for t in object['tags']:
+
+    # convert start/end indices to start/length, and replace t.co URLs with
+    # real "display" URLs.
+    offset = 0
+    for t in obj['tags']:
       indices = t.get('indices')
       if indices:
-        t.update({
-            'startIndex': indices[0],
-            'length': indices[1] - indices[0],
-            })
+        start = indices[0] + offset
+        end = indices[1] + offset
+        length = end - start
+        if t['objectType'] == 'article':
+          url = t.get('displayName') or t.get('url')
+          if url:
+            obj['content'] = obj['content'][:start] + url + obj['content'][end:]
+            offset += len(url) - length
+        t.update({'startIndex': start, 'length': length})
         del t['indices']
 
     # retweets
-    object['tags'] += [self.retweet_to_object(r) for r in tweet.get('retweets', [])]
+    obj['tags'] += [self.retweet_to_object(r) for r in tweet.get('retweets', [])]
 
     # location
     place = tweet.get('place')
     if place:
-      object['location'] = {
+      obj['location'] = {
         'displayName': place.get('full_name'),
         'id': place.get('id'),
         }
@@ -353,10 +362,10 @@ class Twitter(source.Source):
       if geo:
         coords = geo.get('coordinates')
         if coords:
-          object['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
+          obj['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
                                        tuple(coords))
 
-    return util.trim_nulls(object)
+    return util.trim_nulls(obj)
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.
