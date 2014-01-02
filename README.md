@@ -168,4 +168,5 @@ rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
 
 TODO
 ---
+* https kwarg to get_activities() etc that converts all http links to https
 * convert most of the per-site tests to testdata tests

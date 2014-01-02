@@ -38,6 +38,9 @@ def read_json(filename):
 
 class TestDataTest(testutil.HandlerTest):
   def test_testdata(self):
+    # TODO: use a handler with an HTTPS request so that URL schemes are converted
+    # self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
+
     # source extension, destination extention, conversion function
     mappings = (('as.json', 'mf2.json', microformats2.object_to_json),
                 ('as.json', 'mf2.html', microformats2.object_to_html),
