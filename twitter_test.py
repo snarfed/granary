@@ -302,12 +302,12 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>""" + tag_uri('172417043893731329') + """</id>
-  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 instagr.am/p/MuW67</title>
+  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-@twitter meets @seepicturely at #tcdisrupt &lt;3 <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a>
+@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67
 
 <p><a href=''>
   <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' /><br />
@@ -330,6 +330,9 @@ ATOM = """\
 
     <link rel="ostatus:attention" href="https://twitter.com/search?q=%%23tcdisrupt" />
     <link rel="mentioned" href="https://twitter.com/search?q=%%23tcdisrupt" />
+
+    <link rel="ostatus:attention" href="http://first/link/" />
+    <link rel="mentioned" href="http://first/link/" />
 
     <link rel="ostatus:attention" href="http://instagr.am/p/MuW67/" />
     <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
