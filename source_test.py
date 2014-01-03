@@ -15,11 +15,11 @@ import webapp2
 
 LIKES = [{
     'verb': 'like',
-    'author': {'id': 'tag:fake.com,2013:5'},
+    'author': {'id': 'tag:fake.com:5'},
     'object': {'url': 'http://foo/like/5'},
     }, {
     'verb': 'like',
-    'author': {'id': 'tag:fake.com,2013:6'},
+    'author': {'id': 'tag:fake.com:6'},
     'object': {'url': 'http://bar/like/6'},
     },
   ]
