@@ -53,7 +53,17 @@ TWEET = {  # Twitter
   },
   'user': USER,
   'entities': {
-    'media': [{'media_url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'}],
+    'media': [{
+        'media_url': 'http://p.twimg.com/picture1',
+        'url': 'http://t.co/picture',
+        'expanded_url': 'http://the/picture1',
+        'display_url': 'http://pic.twitter.com/2',
+        'indices': [80, 99],
+        }, {
+        'media_url': 'http://p.twimg.com/picture2',
+        'expanded_url': 'http://the/picture2',
+        'display_url': 'http://pic.twitter.com/2',
+        }],
     'urls': [{
         'expanded_url': 'http://first/link/',
         'url': 'http://t.co/6J2EgYM',
@@ -84,7 +94,7 @@ TWEET = {  # Twitter
         'screen_name': 'foo'
       }],
   },
-  'text': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM http://t.co/X',
+  'text': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
@@ -92,17 +102,27 @@ TWEET = {  # Twitter
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
-  'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67',
+  'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'id': tag_uri('172417043893731329'),
   'published': '2012-02-22T20:26:41',
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
-  'image': {'url': 'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
+  'image': {'url': 'http://p.twimg.com/picture1'},
   'location': {
     'displayName': 'Carcassonne, Aude',
     'id': '31cb9e7ed29dbe52',
     'url': 'https://maps.google.com/maps?q=32.4004416,-98.9852672',
     },
   'tags': [{
+      'objectType': 'image',
+      'url': 'http://p.twimg.com/picture1',
+      'displayName': '[picture]',
+      'startIndex': 71,
+      'length': 9,
+      }, {
+      'objectType': 'image',
+      'url': 'http://p.twimg.com/picture2',
+      'displayName': '[picture]',
+      }, {
       'objectType': 'person',
       'id': tag_uri('foo'),
       'url': 'http://twitter.com/foo',
@@ -126,17 +146,20 @@ OBJECT = {  # ActivityStreams
       'url': 'http://first/link/',
       'displayName': 'first',
       'startIndex': 46,
-      'length': 19,
+      'length': 5,
       }, {
       'objectType': 'article',
       'url': 'http://instagr.am/p/MuW67/',
       'displayName': 'instagr.am/p/MuW67',
       'startIndex': 52,
-      'length': 13,
+      'length': 18,
       }],
   'attachments': [{
       'objectType': 'image',
-      'image': {'url': u'http://p.twimg.com/AnJ54akCAAAHnfd.jpg'},
+      'image': {'url': u'http://p.twimg.com/picture1'},
+      }, {
+      'objectType': 'image',
+      'image': {'url': u'http://p.twimg.com/picture2'},
       }],
   }
 ACTIVITY = {  # ActivityStreams
@@ -146,7 +169,7 @@ ACTIVITY = {  # ActivityStreams
   'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
   'actor': ACTOR,
   'object': OBJECT,
-  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67',
+  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : [{
@@ -204,7 +227,7 @@ SHARES = [{  # ActivityStreams
     'verb': 'share',
     'object': {'url': 'http://twitter.com/foo/status/333'},
     'author': {
-      'id': 'tag:twitter.com,2013:alizz',
+      'id': 'tag:twitter.com:alizz',
       'username': 'alizz',
       'displayName': 'Alice',
       'url': 'http://twitter.com/alizz',
@@ -219,7 +242,7 @@ SHARES = [{  # ActivityStreams
     'verb': 'share',
     'object': {'url': 'http://twitter.com/bar/status/666'},
     'author': {
-      'id': 'tag:twitter.com,2013:bobbb',
+      'id': 'tag:twitter.com:bobbb',
       'username': 'bobbb',
       'displayName': 'Bob',
       'url': 'http://twitter.com/bobbb',
@@ -302,15 +325,22 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>""" + tag_uri('172417043893731329') + """</id>
-  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67</title>
+  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67
+@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]
 
 <p><a href=''>
-  <img style='float: left' src='http://p.twimg.com/AnJ54akCAAAHnfd.jpg' /><br />
+  <img style='float: left' src='http://p.twimg.com/picture1' /><br />
+  </a><br />
+
+</p>
+<p></p>
+
+<p><a href=''>
+  <img style='float: left' src='http://p.twimg.com/picture2' /><br />
   </a><br />
 
 </p>
@@ -321,6 +351,12 @@ ATOM = """\
 
   <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
   <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
+
+    <link rel="ostatus:attention" href="http://p.twimg.com/picture1" />
+    <link rel="mentioned" href="http://p.twimg.com/picture1" />
+
+    <link rel="ostatus:attention" href="http://p.twimg.com/picture2" />
+    <link rel="mentioned" href="http://p.twimg.com/picture2" />
 
     <link rel="ostatus:attention" href="http://twitter.com/foo" />
     <link rel="mentioned" href="http://twitter.com/foo" />

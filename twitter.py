@@ -295,13 +295,13 @@ class Twitter(source.Source):
     # currently the media list will only have photos. if that changes, though,
     # we'll need to make this conditional on media.type.
     # https://dev.twitter.com/docs/tweet-entities
-    media_url = entities.get('media', [{}])[0].get('media_url')
-    if media_url:
-      obj['image'] = {'url': media_url}
-      obj['attachments'].append({
+    media = entities.get('media')
+    if media:
+      obj['attachments'] += [{
           'objectType': 'image',
-          'image': {'url': media_url},
-          })
+          'image': {'url': m.get('media_url')},
+          } for m in media]
+      obj['image'] = {'url': media[0].get('media_url')}
 
     # tags
     obj['tags'] = [
@@ -326,7 +326,12 @@ class Twitter(source.Source):
        'displayName': t.get('display_url'),
        'indices': t.get('indices'),
        } for t in entities.get('urls', [])
-      ]
+      ] + [
+      {'objectType': 'image',
+       'url': t.get('media_url'),
+       'displayName': '[picture]',
+       'indices': t.get('indices'),
+       } for t in entities.get('media', [])]
 
     # convert start/end indices to start/length, and replace t.co URLs with
     # real "display" URLs.
@@ -337,11 +342,12 @@ class Twitter(source.Source):
         start = indices[0] + offset
         end = indices[1] + offset
         length = end - start
-        if t['objectType'] == 'article':
-          url = t.get('displayName') or t.get('url')
-          if url:
-            obj['content'] = obj['content'][:start] + url + obj['content'][end:]
-            offset += len(url) - length
+        if t['objectType'] in ('article', 'image'):
+          text = t.get('displayName') or t.get('url')
+          if text:
+            obj['content'] = obj['content'][:start] + text + obj['content'][end:]
+            offset += len(text) - length
+            length = len(text)
         t.update({'startIndex': start, 'length': length})
         del t['indices']
 
