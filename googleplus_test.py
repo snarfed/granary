@@ -27,6 +27,20 @@ def tag_uri(name):
   return util.tag_uri('plus.google.com', name)
 
 
+ACTIVITY_GP = {  # Google+
+  'kind': 'plus#activity',
+  'verb': 'post',
+  'id': '001',
+  'actor': {'id': '444', 'displayName': 'Charles'},
+  'object': {
+    'content': 'my post',
+    'url': 'http://plus.google.com/001',
+    },
+  }
+ACTIVITY_AS = copy.deepcopy(ACTIVITY_GP)  # ActivityStreams
+ACTIVITY_AS['id'] = tag_uri('001')
+ACTIVITY_AS['object']['author'] = ACTIVITY_GP['actor']
+
 COMMENT_GP = {  # Google+
   'kind': 'plus#comment',
   'verb': 'post',
@@ -34,7 +48,7 @@ COMMENT_GP = {  # Google+
   'actor': {'id': '777', 'displayName': 'Eve'},
   'object': {'content': 'my content'},
   'inReplyTo': [{'url': 'http://post/url'}],
-  }
+}
 COMMENT_AS = copy.deepcopy(COMMENT_GP)
 COMMENT_AS.update({  # ActivityStreams
     'author': COMMENT_AS.pop('actor'),
@@ -56,6 +70,7 @@ LIKE = {  # ActivityStreams
   'verb': 'like',
   'object': {'url': 'http://plus.google.com/001'},
   'author': {
+    'kind': 'plus#person',
     'id': tag_uri('222'),
     'displayName': 'Alice',
     'url': 'https://profiles.google.com/alice',
@@ -87,6 +102,21 @@ SHARE = {  # ActivityStreams
   }
 
 
+ACTIVITY_GP_EXTRAS = copy.deepcopy(ACTIVITY_GP)  # Google+
+ACTIVITY_GP_EXTRAS['object'].update({
+  'replies': {'totalItems': 1},
+  'plusoners': {'totalItems': 1},
+  'resharers': {'totalItems': 1},
+  })
+ACTIVITY_AS_EXTRAS = copy.deepcopy(ACTIVITY_GP_EXTRAS)  # ActivityStreams
+ACTIVITY_AS_EXTRAS['id'] = tag_uri('001')
+ACTIVITY_AS_EXTRAS['object'].update({
+    'author': ACTIVITY_GP_EXTRAS['actor'],
+    'replies': {'totalItems': 1, 'items': [COMMENT_AS]},
+    'tags': [LIKE],#, SHARE],
+    })
+
+
 class GooglePlusTest(testutil.HandlerTest):
 
   def setUp(self):
@@ -94,7 +124,9 @@ class GooglePlusTest(testutil.HandlerTest):
     self.googleplus = googleplus.GooglePlus(
       auth_entity=oauth_googleplus.GooglePlusAuth(
         key_name='my_key_name',
-        user_json=json.dumps({}),
+        user_json=json.dumps({
+            'displayName': 'Bob',
+            }),
         creds_json=json.dumps({
         'access_token': 'my token',
         'client_id': appengine_config.GOOGLE_CLIENT_ID,
@@ -117,12 +149,43 @@ class GooglePlusTest(testutil.HandlerTest):
 
     self.assert_equals(COMMENT_AS, self.googleplus.get_comment('234'))
 
-  # def test_get_like_not_found(self):
-  #   self.expect_urlopen('https://graph.googleplus.com/000', json.dumps(POST))
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(None, self.googleplus.get_like('123', '000', '999'))
+  def test_get_activity(self):
+    oauth_googleplus.json_service = discovery.build(
+      'plus', 'v1', requestBuilder=http.RequestMockBuilder({
+          'plus.activities.get': (None, json.dumps(ACTIVITY_GP))
+          }))
 
-  # def test_get_like_no_activity(self):
-  #   self.expect_urlopen('https://graph.googleplus.com/000', '{}')
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(None, self.googleplus.get_like('123', '000', '683713'))
+    self.assert_equals((1, [ACTIVITY_AS]),
+                       self.googleplus.get_activities(activity_id='234'))
+
+  def test_get_activities_no_extras_to_fetch(self):
+    oauth_googleplus.json_service = discovery.build(
+      'plus', 'v1', requestBuilder=http.RequestMockBuilder({
+          'plus.activities.list': (None, json.dumps({
+                'items': [ACTIVITY_GP, ACTIVITY_GP],
+                })),
+          },
+          # ACTIVITY_GP doesn't say there are any comments, +1s, or shares (via
+          # totalItems), so we shouldn't ask for them.
+          check_unexpected=True))
+
+    got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True,
+                                         fetch_shares=True)
+    self.assert_equals((2, [ACTIVITY_AS, ACTIVITY_AS]), got)
+
+  def test_get_activities_fetch_extras(self):
+    oauth_googleplus.json_service = discovery.build(
+      'plus', 'v1', requestBuilder=http.RequestMockBuilder({
+          'plus.activities.list': (None, json.dumps({
+                'items': [ACTIVITY_GP_EXTRAS, ACTIVITY_GP_EXTRAS],
+                })),
+          'plus.comments.list': (None, json.dumps({
+                'items': [COMMENT_GP],
+                })),
+          'plus.people.listByActivity': (None, json.dumps(
+              {'items': [PLUSONER],
+               })),
+          }, check_unexpected=True))
+
+    got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True)
+    self.assert_equals((2, [ACTIVITY_AS_EXTRAS, ACTIVITY_AS_EXTRAS]), got)
