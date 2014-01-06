@@ -338,7 +338,7 @@ class Twitter(source.Source):
     # real "display" URLs.
     offset = 0
     for t in obj['tags']:
-      indices = t.get('indices')
+      indices = t.pop('indices', None)
       if indices:
         start = indices[0] + offset
         end = indices[1] + offset
@@ -350,7 +350,6 @@ class Twitter(source.Source):
             offset += len(text) - length
             length = len(text)
         t.update({'startIndex': start, 'length': length})
-        del t['indices']
 
     # retweets
     obj['tags'] += [self.retweet_to_object(r) for r in tweet.get('retweets', [])]
