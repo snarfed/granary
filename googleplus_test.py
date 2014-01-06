@@ -23,6 +23,8 @@ from webutil import testutil
 from webutil import util
 
 
+DISCOVERY_DOC = appengine_config.read('googleplus_test_discovery.json')
+
 def tag_uri(name):
   return util.tag_uri('plus.google.com', name)
 
@@ -141,17 +143,25 @@ class GooglePlusTest(testutil.HandlerTest):
   def tearDown(self):
     oauth_googleplus.json_service = None
 
+  def init(self, **kwargs):
+    """Sets up the API service from googleplus_test_discovery.
+
+    Pass a requestBuilder or http kwarg to inject expected HTTP requests and
+    responses.
+    """
+    oauth_googleplus.json_service = discovery.build_from_document(
+      DISCOVERY_DOC, **kwargs)
+
+
   def test_get_comment(self):
-    oauth_googleplus.json_service = discovery.build(
-      'plus', 'v1', requestBuilder=http.RequestMockBuilder({
+    self.init(requestBuilder=http.RequestMockBuilder({
           'plus.comments.get': (None, json.dumps(COMMENT_GP)) # None means 200 OK
           }))
 
     self.assert_equals(COMMENT_AS, self.googleplus.get_comment('234'))
 
   def test_get_activity(self):
-    oauth_googleplus.json_service = discovery.build(
-      'plus', 'v1', requestBuilder=http.RequestMockBuilder({
+    self.init(requestBuilder=http.RequestMockBuilder({
           'plus.activities.get': (None, json.dumps(ACTIVITY_GP))
           }))
 
@@ -159,8 +169,7 @@ class GooglePlusTest(testutil.HandlerTest):
                        self.googleplus.get_activities(activity_id='234'))
 
   def test_get_activities_no_extras_to_fetch(self):
-    oauth_googleplus.json_service = discovery.build(
-      'plus', 'v1', requestBuilder=http.RequestMockBuilder({
+    self.init(requestBuilder=http.RequestMockBuilder({
           'plus.activities.list': (None, json.dumps({
                 'items': [ACTIVITY_GP, ACTIVITY_GP],
                 })),
@@ -174,8 +183,7 @@ class GooglePlusTest(testutil.HandlerTest):
     self.assert_equals((2, [ACTIVITY_AS, ACTIVITY_AS]), got)
 
   def test_get_activities_fetch_extras(self):
-    oauth_googleplus.json_service = discovery.build(
-      'plus', 'v1', requestBuilder=http.RequestMockBuilder({
+    self.init(requestBuilder=http.RequestMockBuilder({
           'plus.activities.list': (None, json.dumps({
                 'items': [ACTIVITY_GP_EXTRAS, ACTIVITY_GP_EXTRAS],
                 })),
