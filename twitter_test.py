@@ -39,7 +39,7 @@ ACTOR = {  # ActivityStreams
   }
 TWEET = {  # Twitter
   'created_at': 'Wed Feb 22 20:26:41 +0000 2012',
-  'id_str': '172417043893731329',
+  'id_str': '100',
   'id': -1,  # we should always use id_str
   'place': {
     'full_name': 'Carcassonne, Aude',
@@ -103,9 +103,9 @@ OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
   'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
-  'id': tag_uri('172417043893731329'),
+  'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41',
-  'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
+  'url': 'http://twitter.com/snarfed_org/status/100',
   'image': {'url': 'http://p.twimg.com/picture1'},
   'location': {
     'displayName': 'Carcassonne, Aude',
@@ -165,8 +165,8 @@ OBJECT = {  # ActivityStreams
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-02-22T20:26:41',
-  'id': tag_uri('172417043893731329'),
-  'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
+  'id': tag_uri('100'),
+  'url': 'http://twitter.com/snarfed_org/status/100',
   'actor': ACTOR,
   'object': OBJECT,
   'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
@@ -179,6 +179,81 @@ ACTIVITY = {  # ActivityStreams
       }]
     },
   }
+
+
+# This is the original tweet and reply chain:
+# 100 (snarfed_org) -- 200 (alice) -- 400 (snarfed_org) -- 500 (alice)
+#                   \_ 300 (bob)
+REPLIES_TO_SNARFED = {'statuses': [{  # Twitter
+      'id_str': '200',
+      'user': {'screen_name': 'alice'},
+      'text': 'reply 200',
+      'in_reply_to_status_id_str': '100',
+      }, {
+      'id_str': '300',
+      'user': {'screen_name': 'bob'},
+      'text': 'reply 300',
+      'in_reply_to_status_id_str': '100',
+      }, {
+      'id_str': '500',
+      'user': {'screen_name': 'alice'},
+      'text': 'reply 500',
+      'in_reply_to_status_id_str': '400',
+      }]}
+REPLIES_TO_ALICE = {'statuses': [{
+      'id_str': '400',
+      'user': {'screen_name': 'snarfed_org'},
+      'text': 'reply 400',
+      'in_reply_to_status_id_str': '200',
+      }]}
+REPLIES_TO_BOB = {'statuses': []}
+
+ACTIVITY_WITH_REPLIES = copy.deepcopy(ACTIVITY)  # ActivityStreams
+ACTIVITY_WITH_REPLIES['object']['replies'] = {
+  'totalItems': 4,
+  'items': [{
+      'objectType': 'note',
+      'id': tag_uri('200'),
+      'author': {
+        'id': 'tag:twitter.com:alice',
+        'username': 'alice',
+        'url': 'http://twitter.com/alice',
+        },
+      'content': 'reply 200',
+      'url': 'http://twitter.com/alice/status/200',
+      }, {
+      'objectType': 'note',
+      'id': tag_uri('300'),
+      'author': {
+        'id': 'tag:twitter.com:bob',
+        'username': 'bob',
+        'url': 'http://twitter.com/bob',
+        },
+      'content': 'reply 300',
+      'url': 'http://twitter.com/bob/status/300',
+      }, {
+      'objectType': 'note',
+      'id': tag_uri('400'),
+      'author': {
+        'id': 'tag:twitter.com:snarfed_org',
+        'username': 'snarfed_org',
+        'url': 'http://twitter.com/snarfed_org',
+        },
+      'content': 'reply 400',
+      'url': 'http://twitter.com/snarfed_org/status/400',
+      }, {
+      'objectType': 'note',
+      'id': tag_uri('500'),
+      'author': {
+        'id': 'tag:twitter.com:alice',
+        'username': 'alice',
+        'url': 'http://twitter.com/alice',
+        },
+      'content': 'reply 500',
+      'url': 'http://twitter.com/alice/status/500',
+      }],
+  }
+
 RETWEETS = [{  # Twitter
     'created_at': 'Wed Feb 24 20:26:41 +0000 2013',
     'id_str': '123',
@@ -266,11 +341,11 @@ FAVORITE_EVENT = {  # Twitter
   'target_object' : TWEET,
 }
 LIKE = {  # ActivityStreams
-  'id': tag_uri('172417043893731329_favorited_by_789'),
-  'url': 'http://twitter.com/snarfed_org/status/172417043893731329',
+  'id': tag_uri('100_favorited_by_789'),
+  'url': 'http://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
   'verb': 'like',
-  'object': {'url': 'http://twitter.com/snarfed_org/status/172417043893731329'},
+  'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
   'author': {
     'id': tag_uri('eve'),
     'username': 'eve',
@@ -324,7 +399,7 @@ ATOM = """\
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
-  <id>""" + tag_uri('172417043893731329') + """</id>
+  <id>""" + tag_uri('100') + """</id>
   <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]</title>
 
   <content type="xhtml">
@@ -349,8 +424,8 @@ ATOM = """\
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/172417043893731329" />
-  <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/172417043893731329" />
+  <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/100" />
+  <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/100" />
 
     <link rel="ostatus:attention" href="http://p.twimg.com/picture1" />
     <link rel="mentioned" href="http://p.twimg.com/picture1" />
@@ -384,7 +459,7 @@ ATOM = """\
 
     <georss:featureName>Carcassonne, Aude</georss:featureName>
 
-  <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/172417043893731329" />
+  <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/100" />
 </entry>
 
 </feed>
@@ -458,6 +533,25 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals((None, []),
                        self.twitter.get_activities(group_id=source.SELF))
 
+  def test_get_activities_fetch_replies(self):
+    tweet = copy.deepcopy(TWEET)
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+      json.dumps([tweet]))
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/search/tweets.json?q=%40snarfed_org&include_entities=true&result_type=recent&count=100',
+      json.dumps(REPLIES_TO_SNARFED))
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/search/tweets.json?q=%40alice&include_entities=true&result_type=recent&count=100',
+      json.dumps(REPLIES_TO_ALICE))
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/search/tweets.json?q=%40bob&include_entities=true&result_type=recent&count=100',
+      json.dumps(REPLIES_TO_BOB))
+    self.mox.ReplayAll()
+
+    self.assert_equals((None, [ACTIVITY_WITH_REPLIES]),
+                       self.twitter.get_activities(fetch_replies=True))
+
   def test_get_activities_fetch_shares(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
@@ -465,7 +559,7 @@ class TwitterTest(testutil.HandlerTest):
       'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
       json.dumps([tweet]))
     self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/retweets.json?id=172417043893731329',
+      'https://api.twitter.com/1.1/statuses/retweets.json?id=100',
       json.dumps(RETWEETS))
     self.mox.ReplayAll()
 

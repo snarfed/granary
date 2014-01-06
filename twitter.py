@@ -171,9 +171,10 @@ class Twitter(source.Source):
             replies.append(self.tweet_to_activity(mention))
             seen_ids.add(id)
 
+      items = [r['object'] for r in replies[1:]]  # filter out seed activity
       activity['object']['replies'] = {
-        'items': [r['object'] for r in replies[1:]],  # filter out seed activity
-        'totalItems': len(replies),
+        'items': items,
+        'totalItems': len(items),
         }
 
   def get_comment(self, comment_id, activity_id=None):
