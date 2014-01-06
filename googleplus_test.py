@@ -23,7 +23,7 @@ from webutil import testutil
 from webutil import util
 
 
-DISCOVERY_DOC = appengine_config.read('googleplus_test_discovery.json')
+DISCOVERY_DOC = appengine_config.read('googleplus_api_discovery.json')
 
 def tag_uri(name):
   return util.tag_uri('plus.google.com', name)
@@ -94,13 +94,13 @@ SHARE = {  # ActivityStreams
   'verb': 'share',
   'object': {'url': 'http://plus.google.com/001'},
   'author': {
-    'id': '444',
+    'kind': 'plus#person',
+    'id': tag_uri('444'),
     'displayName': 'Bob',
     'url': 'https://plus.google.com/bob',
     'image': {'url': 'https://bob/picture'},
     },
   'content': 'reshared this.',
-  'published': '2013-02-24T20:26:41',
   }
 
 
@@ -115,7 +115,7 @@ ACTIVITY_AS_EXTRAS['id'] = tag_uri('001')
 ACTIVITY_AS_EXTRAS['object'].update({
     'author': ACTIVITY_GP_EXTRAS['actor'],
     'replies': {'totalItems': 1, 'items': [COMMENT_AS]},
-    'tags': [LIKE],#, SHARE],
+    'tags': [LIKE, SHARE],
     })
 
 
@@ -123,22 +123,22 @@ class GooglePlusTest(testutil.HandlerTest):
 
   def setUp(self):
     super(GooglePlusTest, self).setUp()
-    self.googleplus = googleplus.GooglePlus(
-      auth_entity=oauth_googleplus.GooglePlusAuth(
-        key_name='my_key_name',
-        user_json=json.dumps({
-            'displayName': 'Bob',
-            }),
-        creds_json=json.dumps({
-        'access_token': 'my token',
-        'client_id': appengine_config.GOOGLE_CLIENT_ID,
-        'client_secret': appengine_config.GOOGLE_CLIENT_SECRET,
-        'refresh_token': 'my refresh token',
-        'token_expiry': '',
-        'token_uri': '',
-        'user_agent': '',
-        'invalid': '',
-        })))
+    self.auth_entity = oauth_googleplus.GooglePlusAuth(
+      key_name='my_key_name',
+      user_json=json.dumps({
+          'displayName': 'Bob',
+          }),
+      creds_json=json.dumps({
+          'access_token': 'my token',
+          'client_id': appengine_config.GOOGLE_CLIENT_ID,
+          'client_secret': appengine_config.GOOGLE_CLIENT_SECRET,
+          'refresh_token': 'my refresh token',
+          'token_expiry': '',
+          'token_uri': '',
+          'user_agent': '',
+          'invalid': '',
+          }))
+    self.googleplus = googleplus.GooglePlus(auth_entity=self.auth_entity)
 
   def tearDown(self):
     oauth_googleplus.json_service = None
@@ -183,17 +183,12 @@ class GooglePlusTest(testutil.HandlerTest):
     self.assert_equals((2, [ACTIVITY_AS, ACTIVITY_AS]), got)
 
   def test_get_activities_fetch_extras(self):
-    self.init(requestBuilder=http.RequestMockBuilder({
-          'plus.activities.list': (None, json.dumps({
-                'items': [ACTIVITY_GP_EXTRAS, ACTIVITY_GP_EXTRAS],
-                })),
-          'plus.comments.list': (None, json.dumps({
-                'items': [COMMENT_GP],
-                })),
-          'plus.people.listByActivity': (None, json.dumps(
-              {'items': [PLUSONER],
-               })),
-          }, check_unexpected=True))
+    self.init()
+    http_seq = http.HttpMockSequence(
+      [({'status': '200'}, json.dumps({'items': [item]})) for item in
+       ACTIVITY_GP_EXTRAS, COMMENT_GP, PLUSONER, RESHARER])
+    self.auth_entity.http = lambda: http_seq
 
-    got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True)
-    self.assert_equals((2, [ACTIVITY_AS_EXTRAS, ACTIVITY_AS_EXTRAS]), got)
+    got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True,
+                                         fetch_shares=True)
+    self.assert_equals((1, [ACTIVITY_AS_EXTRAS]), got)
