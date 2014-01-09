@@ -22,19 +22,39 @@ It's part of a suite of projects that implement the [OStatus](http://ostatus.org
 
 Google+ isn't included because the [Google+ API](https://developers.google.com/+/api/) already outputs ActivityStreams directly with only minor tweaks and extensions.
 
-There are many related projects.
-[php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds
-[microformats2](http://microformats.org/wiki/microformats2) to Facebook and
-Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
-similar "polyglot" approach, but more focused on writing than reading.
+License: This project is placed in the public domain.
+
+Related work
+--
+
+[Gnip](http://gnip.com/) is by far the most complete project in this vein. It
+similarly
+[converts social network data to ActivityStreams](http://support.gnip.com/documentation/activity_streams_intro.html)
+and supports [many more source networks](http://gnip.com/sources/).
+Unfortunately, it's commercial, there's no free trial or self-serve signup, and
+[plans start at $500](http://gnip.com/products/pricing/).
+
+[DataSift](http://datasift.com/) looks like broadly the same thing, except they
+offer [self-serve, pay as you go billing](http://dev.datasift.com/docs/billing),
+and they use
+[their own proprietary output format](http://dev.datasift.com/docs/getting-started/data)
+instead of ActivityStreams. They're also aimed more at data mining as opposed to
+individual user access.
+
 [Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
 used to do this kind of format translation, but unfortunately it and Cliqset
-died. Facebook [used to](https://developers.facebook.com/blog/post/225/)
+died.
+
+Facebook [used to](https://developers.facebook.com/blog/post/225/)
 [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
 [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
 ActivityStreams, but that's also dead.
 
-License: This project is placed in the public domain.
+On the open source side, there are many related projects.
+[php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds
+[microformats2](http://microformats.org/wiki/microformats2) to Facebook and
+Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
+similar "polyglot" approach, but more focused on writing than reading.
 
 
 Using
