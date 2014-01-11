@@ -40,12 +40,24 @@ class Source(object):
     """Returns the current user as a JSON ActivityStreams actor dict."""
     raise NotImplementedError()
 
-  def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0, etag=None,
-                     fetch_replies=False, fetch_likes=False, fetch_shares=False):
+  def get_activities(self, *args, **kwargs):
     """Fetches and returns a list of ActivityStreams activities.
 
-    Subclasses should override this.
+    See get_activities_response() for args and kwargs.
+
+    Returns:
+      list of ActivityStreams activity dicts
+    """
+    return self.get_activities_response(*args, **kwargs)['items']
+
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, start_index=0, count=0, etag=None,
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False):
+    """Fetches and returns ActivityStreams activities and response details.
+
+    Subclasses should override this. See get_activities() for an alternative
+    that just returns the list of activities.
 
     If user_id is provided, only that user's activity(s) are included.
     start_index and count determine paging, as described in the spec:
@@ -77,14 +89,6 @@ class Source(object):
       fetch_shares: boolean, whether to fetch each activity's shares also
 
     Returns:
-      list of ActivityStreams activity dicts
-    """
-    raise NotImplementedError()
-
-  def get_activities_response(self, *args, **kwargs):
-    """Fetches and returns an ActivityStreams activities response.
-
-    Returns:
       response dict with values based on OpenSocial ActivityStreams REST API:
         http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
         http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
@@ -99,7 +103,13 @@ class Source(object):
         updatedSince: False
         etag: string etag returned by the API's initial call to get activities
     """
-    activities = self.get_activities(*args, **kwargs)
+    raise NotImplementedError()
+
+  def _make_activities_base_response(self, activities, *args, **kwargs):
+    """Generates a base response dict for get_activities_response().
+
+    See get_activities() for args and kwargs.
+    """
     return {'startIndex': kwargs.get('start_index', 0),
             'itemsPerPage': len(activities),
             'totalResults': None if kwargs.get('activity_id') else len(activities),

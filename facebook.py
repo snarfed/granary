@@ -107,11 +107,13 @@ class Facebook(source.Source):
     """
     if user_id is None:
       user_id = 'me'
-    return self.user_to_actor(json.loads(self.urlread(API_OBJECT_URL % user_id)))
+    return self.user_to_actor(json.loads(
+        self.urlopen(API_OBJECT_URL % user_id).read()))
 
-  def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0, etag=None,
-                     fetch_replies=False, fetch_likes=False, fetch_shares=False):
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, start_index=0, count=0, etag=None,
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
@@ -138,7 +140,8 @@ class Facebook(source.Source):
 
       for id in ids_to_try:
         try:
-          posts = [json.loads(self.urlread(API_OBJECT_URL % id))]
+          resp = self.urlopen(API_OBJECT_URL % id)
+          posts = [json.loads(resp.read())]
           break
         except urllib2.URLError, e:
           logging.warning("Couldn't fetch object %s: %s", id, e)
@@ -153,9 +156,13 @@ class Facebook(source.Source):
       url = url % (user_id if user_id else 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
-      posts = json.loads(self.urlread(url)).get('data', [])
+      resp = self.urlopen(url)
+      posts = json.loads(resp.read()).get('data', [])
 
-    return [self.post_to_activity(p) for p in posts]
+    activities = [self.post_to_activity(p) for p in posts]
+    response = self._make_activities_base_response(activities)
+    response['etag'] = resp.info().get('ETag')
+    return response
 
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
@@ -165,7 +172,7 @@ class Facebook(source.Source):
       activity_id: string activity id, optional
     """
     url = API_OBJECT_URL % comment_id
-    return self.comment_to_object(json.loads(self.urlread(url)))
+    return self.comment_to_object(json.loads(self.urlopen(url).read()))
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Not implemented. Returns None.
@@ -179,7 +186,7 @@ class Facebook(source.Source):
     """
     return None
 
-  def urlread(self, url):
+  def urlopen(self, url):
     """Wraps urllib2.urlopen() and passes through the access token.
     """
     log_url = url
@@ -188,7 +195,7 @@ class Facebook(source.Source):
                                              self.access_token[:4] + '...')])
       url = util.add_query_params(url, [('access_token', self.access_token)])
     logging.info('Fetching %s', log_url)
-    return urllib2.urlopen(url, timeout=999).read()
+    return urllib2.urlopen(url, timeout=999)
 
   def post_url(self, post):
     """Returns a short Facebook URL for a post.

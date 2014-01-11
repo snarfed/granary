@@ -487,6 +487,13 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='12_34', user_id='56')
 
+  def test_get_activities_response_etag(self):
+    self.expect_urlopen('https://graph.facebook.com/me/home?offset=0', '{}',
+                        response_headers={'ETag': '"my etag"'})
+    self.mox.ReplayAll()
+    self.assert_equals('"my etag"',
+                       self.facebook.get_activities_response()['etag'])
+
   def test_get_comment(self):
     self.expect_urlopen('https://graph.facebook.com/123_456',
                         json.dumps(COMMENTS[0]))
