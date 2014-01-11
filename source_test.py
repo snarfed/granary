@@ -78,7 +78,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_likes=True).AndReturn((1, [ACTIVITY]))
+                               fetch_likes=True).AndReturn([ACTIVITY])
     self.mox.ReplayAll()
     self.assert_equals(LIKES[1], self.source.get_like('author', 'activity', '6'))
 
@@ -86,13 +86,13 @@ class SourceTest(testutil.HandlerTest):
     activity = copy.deepcopy(ACTIVITY)
     del activity['object']['tags']
     self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_likes=True).AndReturn((1, [activity]))
+                               fetch_likes=True).AndReturn([activity])
     self.mox.ReplayAll()
     self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
 
   def test_get_like_no_activity(self):
     self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_likes=True).AndReturn((0, []))
+                               fetch_likes=True).AndReturn([])
     self.mox.ReplayAll()
     self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
 
@@ -101,12 +101,12 @@ class SourceTest(testutil.HandlerTest):
     share = activity['object']['tags'][1]
     share['verb'] = 'share'
     self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_shares=True).AndReturn((1, [activity]))
+                               fetch_shares=True).AndReturn([activity])
     self.mox.ReplayAll()
     self.assert_equals(share, self.source.get_share('author', 'activity', '6'))
 
   def test_get_share_not_found(self):
     self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_shares=True).AndReturn((1, [ACTIVITY]))
+                               fetch_shares=True).AndReturn([ACTIVITY])
     self.mox.ReplayAll()
     self.assert_equals(None, self.source.get_share('author', 'activity', '6'))

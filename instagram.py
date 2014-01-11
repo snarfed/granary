@@ -72,7 +72,7 @@ class Instagram(source.Source):
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0,
                      fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False):
+                     fetch_shares=False, etag=None):
     """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -114,7 +114,7 @@ class Instagram(source.Source):
       else:
         raise
 
-    return len(media), [self.media_to_activity(m) for m in media]
+    return [self.media_to_activity(m) for m in media]
 
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
@@ -155,8 +155,6 @@ class Instagram(source.Source):
       'actor': object['author'],
       'object': object,
       }
-
-    return self.postprocess_activity(activity)
 
   def media_to_object(self, media):
     """Converts a media to an object.

@@ -29,14 +29,21 @@ class HandlerTest(testutil.HandlerTest):
     self.mox.UnsetStubs()
     self.mox.ResetAll()
     activitystreams.SOURCE = FakeSource
-    self.mox.StubOutWithMock(FakeSource, 'get_activities')
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
 
   def get_response(self, url, *args, **kwargs):
-    kwargs.setdefault('start_index', 0)
+    start_index = kwargs.setdefault('start_index', 0)
     kwargs.setdefault('count', activitystreams.ITEMS_PER_PAGE)
 
-    FakeSource.get_activities(*args, **kwargs)\
-        .AndReturn((9, self.activities))
+    FakeSource.get_activities_response(*args, **kwargs).AndReturn({
+        'startIndex': start_index,
+        'itemsPerPage': 1,
+        'totalResults': 9,
+        'items': self.activities,
+        'filtered': False,
+        'sorted': False,
+        'updatedSince': False,
+        })
     self.mox.ReplayAll()
 
     return activitystreams.application.get_response(url)

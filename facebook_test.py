@@ -410,33 +410,30 @@ class FacebookTest(testutil.HandlerTest):
       'https://graph.facebook.com/me/home?offset=0', resp)
     self.mox.ReplayAll()
 
-    self.assert_equals((
-        None,
-        [{'id': tag_uri('2'),
-          'object': {'content': 'foo',
-                     'id': tag_uri('2'),
-                     'objectType': 'note',
+    self.assert_equals([
+        {'id': tag_uri('2'),
+         'object': {'content': 'foo',
+                    'id': tag_uri('2'),
+                    'objectType': 'note',
                      'url': 'http://facebook.com/2'},
-          'title': 'Unknown: foo',
-          'url': 'http://facebook.com/2',
-          'verb': 'post'},
-         {'id': tag_uri('4'),
-          'object': {'content': 'bar',
-                     'id': tag_uri('4'),
-                     'objectType': 'note',
-                     'url': 'http://facebook.com/4'},
-          'title': 'Unknown: bar',
-          'url': 'http://facebook.com/4',
-          'verb': 'post'},
-         ]),
+         'title': 'Unknown: foo',
+         'url': 'http://facebook.com/2',
+         'verb': 'post'},
+        {'id': tag_uri('4'),
+         'object': {'content': 'bar',
+                    'id': tag_uri('4'),
+                    'objectType': 'note',
+                    'url': 'http://facebook.com/4'},
+         'title': 'Unknown: bar',
+         'url': 'http://facebook.com/4',
+         'verb': 'post'}],
       self.facebook.get_activities())
 
   def test_get_activities_self(self):
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0', '{}')
     self.mox.ReplayAll()
-    self.assert_equals((None, []),
-                       self.facebook.get_activities(group_id=source.SELF))
+    self.assert_equals([], self.facebook.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen(
@@ -452,16 +449,14 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
-    self.assert_equals(
-      (1, [ACTIVITY]),
-      self.facebook.get_activities(
+    self.assert_equals([ACTIVITY], self.facebook.get_activities(
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
 
   def test_get_activities_activity_id_not_found(self):
     self.expect_urlopen('https://graph.facebook.com/0', 'false')
     self.mox.ReplayAll()
-    self.assert_equals((0, []), self.facebook.get_activities(activity_id='0_0'))
+    self.assert_equals([], self.facebook.get_activities(activity_id='0_0'))
 
   def test_get_activities_start_index_and_count(self):
     self.expect_urlopen(

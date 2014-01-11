@@ -104,20 +104,8 @@ class Handler(webapp2.RequestHandler):
                                (format, expected_formats))
 
     # get activities and build response
-    total_results, activities = source.get_activities(*args, **paging_params)
-
-    response = {'startIndex': paging_params['start_index'],
-                'itemsPerPage': len(activities),
-                'totalResults': total_results,
-                # TODO: this is just for compatibility with
-                # http://activitystreamstester.appspot.com/
-                # the OpenSocial spec says to use entry instead, so switch back
-                # to that eventually
-                'items': activities,
-                'filtered': False,
-                'sorted': False,
-                'updatedSince': False,
-                }
+    response = source.get_activities_response(*args, **paging_params)
+    activities = response['items']
 
     if format == 'atom':
       # strip the access token from the request URL before returning

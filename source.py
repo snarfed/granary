@@ -41,10 +41,11 @@ class Source(object):
     raise NotImplementedError()
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0,
-                     fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False):
-    """Return a list and total count of ActivityStreams activities.
+                     activity_id=None, start_index=0, count=0, etag=None,
+                     fetch_replies=False, fetch_likes=False, fetch_shares=False):
+    """Fetches and returns a list of ActivityStreams activities.
+
+    Subclasses should override this.
 
     If user_id is provided, only that user's activity(s) are included.
     start_index and count determine paging, as described in the spec:
@@ -69,19 +70,53 @@ class Source(object):
       activity_id: string
       start_index: int >= 0
       count: int >= 0
+      etag: string, optional ETag to send with the API request. Results will
+        only be returned if the ETag has changed.
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also
 
     Returns:
-      (total_results, activities) tuple
-      total_results: int or None (e.g. if it can't be calculated efficiently)
-      activities: list of activity dicts to be JSON-encoded
+      list of ActivityStreams activity dicts
     """
     raise NotImplementedError()
 
+  def get_activities_response(self, *args, **kwargs):
+    """Fetches and returns an ActivityStreams activities response.
+
+    Returns:
+      response dict with values based on OpenSocial ActivityStreams REST API:
+        http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
+        http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
+
+      It has these keys:
+        items: list of activity dicts
+        startIndex: int or None
+        itemsPerPage: int
+        totalResults: int or None (e.g. if it can 't be calculated efficiently)
+        filtered: False
+        sorted: False
+        updatedSince: False
+        etag: string etag returned by the API's initial call to get activities
+    """
+    activities = self.get_activities(*args, **kwargs)
+    return {'startIndex': kwargs.get('start_index', 0),
+            'itemsPerPage': len(activities),
+            'totalResults': None if kwargs.get('activity_id') else len(activities),
+            # TODO: this is just for compatibility with
+            # http://activitystreamstester.appspot.com/
+            # the OpenSocial spec says to use entry instead, so switch back
+            # to that eventually
+            'items': activities,
+            'filtered': False,
+            'sorted': False,
+            'updatedSince': False,
+            }
+
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
+
+    Subclasses should override this.
 
     Args:
       comment_id: string comment id
@@ -101,9 +136,9 @@ class Source(object):
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
     """
-    _, activities = self.get_activities(user_id=activity_user_id,
-                                        activity_id=activity_id,
-                                        fetch_likes=True)
+    activities = self.get_activities(user_id=activity_user_id,
+                                     activity_id=activity_id,
+                                     fetch_likes=True)
     return self._get_tag(activities, 'like', like_user_id)
 
   def get_share(self, activity_user_id, activity_id, share_id):
@@ -114,9 +149,9 @@ class Source(object):
       activity_id: string activity id
       share_id: string id of the share object or the user who shared it
     """
-    _, activities = self.get_activities(user_id=activity_user_id,
-                                        activity_id=activity_id,
-                                        fetch_shares=True)
+    activities = self.get_activities(user_id=activity_user_id,
+                                     activity_id=activity_id,
+                                     fetch_shares=True)
     return self._get_tag(activities, 'share', share_id)
 
   def _get_tag(self, activities, verb, user_id):

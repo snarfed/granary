@@ -110,9 +110,8 @@ class Facebook(source.Source):
     return self.user_to_actor(json.loads(self.urlread(API_OBJECT_URL % user_id)))
 
   def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0,
-                     fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False):
+                     activity_id=None, start_index=0, count=0, etag=None,
+                     fetch_replies=False, fetch_likes=False, fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
@@ -148,7 +147,6 @@ class Facebook(source.Source):
 
       if posts == [False]:  # FB returns false for "not found"
         posts = []
-      total_count = len(posts)
 
     else:
       url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
@@ -156,9 +154,8 @@ class Facebook(source.Source):
       if count:
         url = util.add_query_params(url, {'limit': count})
       posts = json.loads(self.urlread(url)).get('data', [])
-      total_count = None
 
-    return total_count, [self.post_to_activity(p) for p in posts]
+    return [self.post_to_activity(p) for p in posts]
 
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.

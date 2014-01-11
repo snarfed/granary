@@ -46,7 +46,7 @@ class GooglePlus(source.Source):
   def get_activities(self, user_id=None, group_id=None, app_id=None,
                      activity_id=None, start_index=0, count=0,
                      fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False):
+                     fetch_shares=False, etag=None):
     """Returns a list of ActivityStreams activity dicts.
 
     See method docstring in source.py for details. app_id is ignored.
