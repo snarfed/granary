@@ -111,8 +111,8 @@ class Facebook(source.Source):
         self.urlopen(API_OBJECT_URL % user_id).read()))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
-                              activity_id=None, start_index=0, count=0, etag=None,
-                              fetch_replies=False, fetch_likes=False,
+                              activity_id=None, start_index=0, count=0,
+                              etag=None, fetch_replies=False, fetch_likes=False,
                               fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
@@ -127,6 +127,8 @@ class Facebook(source.Source):
     haven't been able to get it to work, even with the read_stream OAuth scope.
     http://stackoverflow.com/questions/17373204/information-of-re-shared-status
     """
+    headers = {'If-None-Match': etag} if etag else {}
+
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
       # it doesn't accept that format. I can't tell which is which yet, so try
@@ -140,7 +142,7 @@ class Facebook(source.Source):
 
       for id in ids_to_try:
         try:
-          resp = self.urlopen(API_OBJECT_URL % id)
+          resp = self.urlopen(API_OBJECT_URL % id, headers=headers)
           posts = [json.loads(resp.read())]
           break
         except urllib2.URLError, e:
@@ -156,7 +158,7 @@ class Facebook(source.Source):
       url = url % (user_id if user_id else 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
-      resp = self.urlopen(url)
+      resp = self.urlopen(url, headers=headers)
       posts = json.loads(resp.read()).get('data', [])
 
     activities = [self.post_to_activity(p) for p in posts]
@@ -186,7 +188,7 @@ class Facebook(source.Source):
     """
     return None
 
-  def urlopen(self, url):
+  def urlopen(self, url, headers={}):
     """Wraps urllib2.urlopen() and passes through the access token.
     """
     log_url = url
@@ -194,8 +196,8 @@ class Facebook(source.Source):
       log_url = util.add_query_params(url, [('access_token',
                                              self.access_token[:4] + '...')])
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    logging.info('Fetching %s', log_url)
-    return urllib2.urlopen(url, timeout=999)
+    logging.info('Fetching %s, headers %s', log_url, headers)
+    return urllib2.urlopen(urllib2.Request(url, headers=headers), timeout=999)
 
   def post_url(self, post):
     """Returns a short Facebook URL for a post.

@@ -83,7 +83,8 @@ class Source(object):
       start_index: int >= 0
       count: int >= 0
       etag: string, optional ETag to send with the API request. Results will
-        only be returned if the ETag has changed.
+        only be returned if the ETag has changed. Should include enclosing
+        double quotes, e.g. '"ABC123"'
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also
