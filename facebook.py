@@ -158,12 +158,19 @@ class Facebook(source.Source):
       url = url % (user_id if user_id else 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
-      resp = self.urlopen(url, headers=headers)
-      posts = json.loads(resp.read()).get('data', [])
+      try:
+        resp = self.urlopen(url, headers=headers)
+        etag = resp.info().get('ETag')
+        posts = json.loads(resp.read()).get('data', [])
+      except urllib2.HTTPError, e:
+        if e.code == 304:  # Not Modified, from a matching ETag
+          posts = []
+        else:
+          raise
 
     activities = [self.post_to_activity(p) for p in posts]
     response = self._make_activities_base_response(activities)
-    response['etag'] = resp.info().get('ETag')
+    response['etag'] = etag
     return response
 
   def get_comment(self, comment_id, activity_id=None):

@@ -500,6 +500,13 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals('"my etag"',
                        self.facebook.get_activities_response()['etag'])
 
+  def test_get_activities_304_not_modified(self):
+    """Requests with matching ETags return 304 Not Modified."""
+    self.expect_urlopen('https://graph.facebook.com/me/home?offset=0', '{}',
+                        status=304)
+    self.mox.ReplayAll()
+    self.assert_equals([], self.facebook.get_activities_response()['items'])
+
   def test_get_comment(self):
     self.expect_urlopen('https://graph.facebook.com/123_456',
                         json.dumps(COMMENTS[0]))
