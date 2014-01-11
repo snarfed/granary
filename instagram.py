@@ -156,6 +156,8 @@ class Instagram(source.Source):
       'object': object,
       }
 
+    return self.postprocess_activity(activity)
+
   def media_to_object(self, media):
     """Converts a media to an object.
 
