@@ -129,10 +129,7 @@ class Twitter(source.Source):
       self.fetch_replies(activities)
 
     response = self._make_activities_base_response(activities)
-    response.update({
-        'total_count': total_count,
-        'etag': resp.info().get('ETag'),
-        })
+    response.update({'total_count': total_count, 'etag': etag})
     return response
 
   def fetch_replies(self, activities):
