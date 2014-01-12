@@ -52,8 +52,8 @@ class Source(object):
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
-                              etag=None, fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False):
+                              etag=None, min_id=None, fetch_replies=False,
+                              fetch_likes=False, fetch_shares=False):
     """Fetches and returns ActivityStreams activities and response details.
 
     Subclasses should override this. See get_activities() for an alternative
@@ -85,6 +85,7 @@ class Source(object):
       etag: string, optional ETag to send with the API request. Results will
         only be returned if the ETag has changed. Should include enclosing
         double quotes, e.g. '"ABC123"'
+      min_id: only return activities with ids greater than this
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also

@@ -112,8 +112,8 @@ class Facebook(source.Source):
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
-                              etag=None, fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False):
+                              etag=None, min_id=None, fetch_replies=False,
+                              fetch_likes=False, fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.

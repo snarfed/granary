@@ -71,12 +71,12 @@ class Instagram(source.Source):
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
-                              etag=None, fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False):
+                              etag=None, min_id=None, fetch_replies=False,
+                              fetch_likes=False, fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
-    No ETag support since Instagram doesn't support it.
+    Supports min_id, but not ETag, since Instagram doesn't support it.
 
     http://instagram.com/developer/endpoints/users/#get_users_feed
     http://instagram.com/developer/endpoints/users/#get_users_media_recent
@@ -97,16 +97,19 @@ class Instagram(source.Source):
 
     # TODO: paging
     media = []
+    kwargs = {}
+    if min_id is not None:
+      kwargs['min_id'] = min_id
 
     try:
       if activity_id:
-        media = [self.api.media(activity_id)]
+        media = [self.api.media(activity_id, **kwargs)]
       elif group_id == source.SELF:
-        media, _ = self.api.user_recent_media(user_id)
+        media, _ = self.api.user_recent_media(user_id, **kwargs)
       elif group_id == source.ALL:
-        media, _ = self.api.media_popular()
+        media, _ = self.api.media_popular(**kwargs)
       elif group_id == source.FRIENDS:
-        media, _ = self.api.user_media_feed()
+        media, _ = self.api.user_media_feed(**kwargs)
 
     except InstagramAPIError, e:
       if e.error_type == 'APINotFoundError':

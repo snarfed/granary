@@ -396,6 +396,12 @@ class InstagramTest(testutil.HandlerTest):
     self.assertRaises(InstagramAPIError, self.instagram.get_activities,
                       activity_id='000')
 
+  def test_get_activities_min_id(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'user_recent_media')
+    self.instagram.api.user_recent_media('self', min_id='135').AndReturn(([], {}))
+    self.mox.ReplayAll()
+    self.instagram.get_activities(group_id=source.SELF, min_id='135')
+
   def test_get_comment(self):
     self.mox.StubOutWithMock(self.instagram.api, 'media')
     self.instagram.api.media('123_456').AndReturn(MEDIA)
