@@ -43,11 +43,11 @@ class GooglePlus(source.Source):
     """
     return self.auth_entity.user_json
 
-  def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0,
-                     fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False, etag=None):
-    """Returns a list of ActivityStreams activity dicts.
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, start_index=0, count=0,
+                              etag=None, fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False):
+    """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
 
@@ -88,7 +88,9 @@ class GooglePlus(source.Source):
 
       self.postprocess_activity(activity)
 
-    return len(activities), activities
+    response = self._make_activities_base_response(activities)
+    response['etag'] = resp.info().get('ETag')
+    return response
 
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.

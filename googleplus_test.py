@@ -165,7 +165,7 @@ class GooglePlusTest(testutil.HandlerTest):
           'plus.activities.get': (None, json.dumps(ACTIVITY_GP))
           }))
 
-    self.assert_equals((1, [ACTIVITY_AS]),
+    self.assert_equals([ACTIVITY_AS],
                        self.googleplus.get_activities(activity_id='234'))
 
   def test_get_activities_no_extras_to_fetch(self):
@@ -180,7 +180,7 @@ class GooglePlusTest(testutil.HandlerTest):
 
     got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True,
                                          fetch_shares=True)
-    self.assert_equals((2, [ACTIVITY_AS, ACTIVITY_AS]), got)
+    self.assert_equals([ACTIVITY_AS, ACTIVITY_AS], got)
 
   def test_get_activities_fetch_extras(self):
     self.init()
@@ -191,4 +191,4 @@ class GooglePlusTest(testutil.HandlerTest):
 
     got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True,
                                          fetch_shares=True)
-    self.assert_equals((1, [ACTIVITY_AS_EXTRAS]), got)
+    self.assert_equals([ACTIVITY_AS_EXTRAS], got)

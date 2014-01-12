@@ -51,8 +51,8 @@ class Source(object):
     return self.get_activities_response(*args, **kwargs)['items']
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
-                              activity_id=None, start_index=0, count=0, etag=None,
-                              fetch_replies=False, fetch_likes=False,
+                              activity_id=None, start_index=0, count=0,
+                              etag=None, fetch_replies=False, fetch_likes=False,
                               fetch_shares=False):
     """Fetches and returns ActivityStreams activities and response details.
 

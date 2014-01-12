@@ -352,8 +352,7 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(self.instagram.api, 'user_recent_media')
     self.instagram.api.user_recent_media('self').AndReturn(([], {}))
     self.mox.ReplayAll()
-    self.assert_equals((0, []),
-                       self.instagram.get_activities(group_id=source.SELF))
+    self.assert_equals([], self.instagram.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
     self.mox.StubOutWithMock(httplib2.Http, 'request')
@@ -373,9 +372,7 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
-    self.assert_equals(
-      (1, [ACTIVITY]),
-      self.instagram.get_activities(
+    self.assert_equals([ACTIVITY], self.instagram.get_activities(
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
 
@@ -384,14 +381,13 @@ class InstagramTest(testutil.HandlerTest):
     self.instagram.api.media('000').AndRaise(
       InstagramAPIError(400, 'APINotFoundError', 'msg'))
     self.mox.ReplayAll()
-    self.assert_equals((0, []), self.instagram.get_activities(activity_id='000'))
+    self.assert_equals([], self.instagram.get_activities(activity_id='000'))
 
   def test_get_activities_with_likes(self):
     self.mox.StubOutWithMock(self.instagram.api, 'user_media_feed')
     self.instagram.api.user_media_feed().AndReturn(([MEDIA_WITH_LIKES], {}))
     self.mox.ReplayAll()
-    got = self.instagram.get_activities()
-    self.assert_equals((1, [ACTIVITY_WITH_LIKES]), got)
+    self.assert_equals([ACTIVITY_WITH_LIKES], self.instagram.get_activities())
 
   def test_get_activities_other_400_error(self):
     self.mox.StubOutWithMock(self.instagram.api, 'media')

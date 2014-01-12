@@ -69,13 +69,14 @@ class Instagram(source.Source):
       user_id = 'self'
     return self.user_to_actor(self.api.user(user_id))
 
-  def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0,
-                     fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False, etag=None):
-    """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, start_index=0, count=0,
+                              etag=None, fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False):
+    """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
+    No ETag support since Instagram doesn't support it.
 
     http://instagram.com/developer/endpoints/users/#get_users_feed
     http://instagram.com/developer/endpoints/users/#get_users_media_recent
@@ -114,7 +115,9 @@ class Instagram(source.Source):
       else:
         raise
 
-    return [self.media_to_activity(m) for m in media]
+    activities = [self.media_to_activity(m) for m in media]
+    response = self._make_activities_base_response(activities)
+    return response
 
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.

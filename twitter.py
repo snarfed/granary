@@ -69,15 +69,15 @@ class Twitter(source.Source):
       url = API_CURRENT_USER_URL
     else:
       url = API_USER_URL % screen_name
-    return self.user_to_actor(json.loads(self.urlread(url)))
+    return self.user_to_actor(json.loads(self.urlopen(url).read()))
 
-  def get_activities(self, user_id=None, group_id=None, app_id=None,
-                     activity_id=None, start_index=0, count=0,
-                     fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False, etag=None):
-    """Returns a (Python) list of ActivityStreams activities to be JSON-encoded.
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, start_index=0, count=0,
+                              etag=None, fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False):
+    """Fetches posts and converts them to ActivityStreams activities.
 
-    See method docstring in source.py for details.
+    See method docstring in source.py for details. app_id is ignored.
 
     Likes (ie favorites) are not yet supported, since Twitter's REST API doesn't
     offer a way to fetch them. You can get them from the Streaming API, though,
@@ -88,14 +88,23 @@ class Twitter(source.Source):
     https://dev.twitter.com/docs/api/1.1/get/statuses/retweets/%3Aid
     """
     if activity_id:
-      tweets = [json.loads(self.urlread(API_STATUS_URL % activity_id))]
+      resp = self.urlopen(API_STATUS_URL % activity_id)
+      tweets = [json.loads(resp.read())]
       total_count = len(tweets)
     else:
       url = API_SELF_TIMELINE_URL if group_id == source.SELF else API_TIMELINE_URL
       twitter_count = count + start_index
-      tweets = json.loads(self.urlread(url % twitter_count))
-      tweets = tweets[start_index:]
+      headers = {'If-None-Match': etag} if etag else {}
       total_count = None
+      try:
+        resp = self.urlopen(url % twitter_count, headers=headers)
+        etag = resp.info().get('ETag')
+        tweets = json.loads(resp.read())[start_index:]
+      except urllib2.HTTPError, e:
+        if e.code == 304:  # Not Modified, from a matching ETag
+          tweets = []
+        else:
+          raise
 
     if fetch_shares:
       for tweet in tweets:
@@ -113,13 +122,18 @@ class Twitter(source.Source):
           # can't use the statuses/retweets_of_me endpoint because it only
           # returns the original tweets, not the retweets or their authors.
           url = API_RETWEETS_URL % tweet['id_str']
-          tweet['retweets'] = json.loads(self.urlread(url))
+          tweet['retweets'] = json.loads(self.urlopen(url).read())
 
     activities = [self.tweet_to_activity(t) for t in tweets]
     if fetch_replies:
       self.fetch_replies(activities)
 
-    return total_count, activities
+    response = self._make_activities_base_response(activities)
+    response.update({
+        'total_count': total_count,
+        'etag': resp.info().get('ETag'),
+        })
+    return response
 
   def fetch_replies(self, activities):
     """Fetches and injects Twitter replies into a list of activities, in place.
@@ -158,7 +172,7 @@ class Twitter(source.Source):
         # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
         author = reply['actor']['username']
         if author not in mentions:
-          resp = self.urlread(API_SEARCH_URL % urllib.quote_plus('@' + author))
+          resp = self.urlopen(API_SEARCH_URL % urllib.quote_plus('@' + author)).read()
           mentions[author] = json.loads(resp)['statuses']
 
         # look for replies. add any we find to the end of replies. this makes us
@@ -185,7 +199,7 @@ class Twitter(source.Source):
       activity_id: string activity id, optional
     """
     url = API_STATUS_URL % comment_id
-    return self.tweet_to_object(json.loads(self.urlread(url)))
+    return self.tweet_to_object(json.loads(self.urlopen(url).read()))
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.
@@ -210,13 +224,13 @@ class Twitter(source.Source):
       share_id: string id of the share object
     """
     url = API_STATUS_URL % share_id
-    return self.retweet_to_object(json.loads(self.urlread(url)))
+    return self.retweet_to_object(json.loads(self.urlopen(url).read()))
 
-  def urlread(self, url):
+  def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """
     return TwitterAuth.signed_urlopen(
-      url, self.access_token_key, self.access_token_secret, timeout=999).read()
+      url, self.access_token_key, self.access_token_secret, timeout=999, **kwargs)
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.
