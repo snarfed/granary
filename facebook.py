@@ -127,8 +127,6 @@ class Facebook(source.Source):
     haven't been able to get it to work, even with the read_stream OAuth scope.
     http://stackoverflow.com/questions/17373204/information-of-re-shared-status
     """
-    headers = {'If-None-Match': etag} if etag else {}
-
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
       # it doesn't accept that format. I can't tell which is which yet, so try
@@ -142,8 +140,7 @@ class Facebook(source.Source):
 
       for id in ids_to_try:
         try:
-          resp = self.urlopen(API_OBJECT_URL % id, headers=headers)
-          posts = [json.loads(resp.read())]
+          posts = [json.loads(self.urlopen(API_OBJECT_URL % id).read())]
           break
         except urllib2.URLError, e:
           logging.warning("Couldn't fetch object %s: %s", id, e)
@@ -158,6 +155,7 @@ class Facebook(source.Source):
       url = url % (user_id if user_id else 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
+      headers = {'If-None-Match': etag} if etag else {}
       try:
         resp = self.urlopen(url, headers=headers)
         etag = resp.info().get('ETag')
