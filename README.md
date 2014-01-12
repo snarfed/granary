@@ -2,6 +2,7 @@ activitystreams-unofficial ![ActivityStreams](https://raw.github.com/snarfed/act
 ===
 
   * [About](#about)
+  * [Related work](#related-work)
   * [Using](#using)
     * [Using the REST API](#using-the-REST-API)
     * [Using the library](#using-the-library)
@@ -12,15 +13,13 @@ activitystreams-unofficial ![ActivityStreams](https://raw.github.com/snarfed/act
 About
 ---
 
-This is a library and REST API that converts Facebook, Twitter, and Instagram data to [ActivityStreams](http://activitystrea.ms/) format. You can try it out with these interactive demos:
+This is a library and REST API that converts Facebook, Google+, Instagram, and Twitter data to [ActivityStreams](http://activitystrea.ms/) format. You can try it out with these interactive demos:
 
 http://facebook-activitystreams.appspot.com/  
 http://twitter-activitystreams.appspot.com/  
 http://instagram-activitystreams.appspot.com/
 
 It's part of a suite of projects that implement the [OStatus](http://ostatus.org/) federation protocols for the major social networks. The other projects include [portablecontacts-](https://github.com/snarfed/portablecontacts-unofficial), [salmon-](https://github.com/snarfed/salmon-unofficial), [webfinger-](https://github.com/snarfed/webfinger-unofficial), and [ostatus-unofficial](https://github.com/snarfed/ostatus-unofficial).
-
-Google+ isn't included because the [Google+ API](https://developers.google.com/+/api/) already outputs ActivityStreams directly with only minor tweaks and extensions.
 
 License: This project is placed in the public domain.
 
@@ -115,7 +114,7 @@ Paging is supported via the `startIndex` and `count` parameters. They're self ex
 
 Output data is [JSON Activity Streams 1.0](http://activitystrea.ms/specs/json/1.0/) objects wrapped in the [OpenSocial envelope](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service), which puts the activities in the top-level `items` field as a list and adds the `itemsPerPage`, `totalCount`, etc. fields.
 
-Most Facebook requests and all Twiter and Instagram requests will need OAuth access tokens. If you're using Python on Google App Engine, [oauth-dropins](https://github.com/snarfed/oauth-dropins) is an easy way to add OAuth client flows for these sites. Otherwise, here are the sites' authentication docs: [Facebook](https://developers.facebook.com/docs/facebook-login/access-tokens/), [Twitter](https://dev.twitter.com/docs/auth/3-legged-authorization), [Instagram](http://instagram.com/developer/authentication/).
+Most Facebook requests and all Twitter, Google+, and Instagram requests will need OAuth access tokens. If you're using Python on Google App Engine, [oauth-dropins](https://github.com/snarfed/oauth-dropins) is an easy way to add OAuth client flows for these sites. Otherwise, here are the sites' authentication docs: [Facebook](https://developers.facebook.com/docs/facebook-login/access-tokens/), [Google+](https://developers.google.com/+/api/oauth#about), [Instagram](http://instagram.com/developer/authentication/), [Twitter](https://dev.twitter.com/docs/auth/3-legged-authorization).
 
 If you get an access token and pass it along, it will be used to sign and authorize the underlying requests to the sources providers. See the demos on the REST API [endpoints above](#about) for examples.
 
