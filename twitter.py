@@ -79,6 +79,12 @@ class Twitter(source.Source):
 
     See method docstring in source.py for details. app_id is ignored.
 
+    The code for handling ETags (and 304 Not Changed responses and setting
+    If-None-Match) is here, but unused right now since Twitter evidently doesn't
+    support ETags. From https://dev.twitter.com/discussions/5800 :
+    "I've confirmed with our team that we're not explicitly supporting this
+    family of features."
+
     Likes (ie favorites) are not yet supported, since Twitter's REST API doesn't
     offer a way to fetch them. You can get them from the Streaming API, though,
     and convert them with streaming_event_to_object().
