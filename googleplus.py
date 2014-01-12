@@ -72,15 +72,26 @@ class GooglePlus(source.Source):
       http.request = request_with_etag
 
     # https://developers.google.com/+/api/latest/activities
-    if activity_id:
-      call = self.auth_entity.api().activities().get(activityId=activity_id)
-      activities = [call.execute(http)]
-    else:
-      call = self.auth_entity.api().activities().list(
-        userId=user_id, collection='public', maxResults=count)
-      resp = call.execute(http)
-      activities = resp.get('items', [])
-      etag = resp.get('etag')
+    try:
+      if activity_id:
+        call = self.auth_entity.api().activities().get(activityId=activity_id)
+        activities = [call.execute(http)]
+      else:
+        call = self.auth_entity.api().activities().list(
+          userId=user_id, collection='public', maxResults=count)
+        resp = call.execute(http)
+        activities = resp.get('items', [])
+        etag = resp.get('etag')
+    except Exception, e:
+      # this is an oauth_dropins.apiclient.errors.HttpError. can't check for it
+      # explicitly because here i'd need to import it from
+      # oauth_dropins.apiclient, but it's already been imported from
+      # bridgy.apiclient, so the classes don't match.
+      resp = getattr(e, 'resp')
+      if resp and resp.status == 304:  # Not Modified, from a matching ETag
+        activities = []
+      else:
+        raise
 
     for activity in activities:
       obj = activity.get('object', {})
