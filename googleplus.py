@@ -60,14 +60,27 @@ class GooglePlus(source.Source):
     if user_id is None:
       user_id = 'me'
 
+    http = self.auth_entity.http()
+    if etag:
+      # monkey patch the ETag header in because google-api-python-client doesn't
+      # support setting request headers yet:
+      # http://code.google.com/p/google-api-python-client/issues/detail?id=121
+      orig_request = http.request
+      def request_with_etag(*args, **kwargs):
+        kwargs.setdefault('headers', {}).update({'If-None-Match': etag})
+        return orig_request(*args, **kwargs)
+      http.request = request_with_etag
+
     # https://developers.google.com/+/api/latest/activities
     if activity_id:
       call = self.auth_entity.api().activities().get(activityId=activity_id)
-      activities = [call.execute(self.auth_entity.http())]
+      activities = [call.execute(http)]
     else:
       call = self.auth_entity.api().activities().list(
         userId=user_id, collection='public', maxResults=count)
-      activities = call.execute(self.auth_entity.http()).get('items', [])
+      resp = call.execute(http)
+      activities = resp.get('items', [])
+      etag = resp.get('etag')
 
     for activity in activities:
       obj = activity.get('object', {})
@@ -89,7 +102,7 @@ class GooglePlus(source.Source):
       self.postprocess_activity(activity)
 
     response = self._make_activities_base_response(activities)
-    response['etag'] = resp.info().get('ETag')
+    response['etag'] = etag
     return response
 
   def get_comment(self, comment_id, activity_id=None):

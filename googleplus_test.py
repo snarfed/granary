@@ -192,3 +192,25 @@ class GooglePlusTest(testutil.HandlerTest):
     got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True,
                                          fetch_shares=True)
     self.assert_equals([ACTIVITY_AS_EXTRAS], got)
+
+  # def test_get_activities_request_etag(self):
+  #   self.expect_urlopen(
+  #     'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+  #     '[]', headers={'If-none-match': '"my etag"'})
+  #   self.mox.ReplayAll()
+  #   self.twitter.get_activities_response(etag='"my etag"')
+
+  # def test_get_activities_response_etag(self):
+  #   self.expect_urlopen(
+  #     'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+  #     '[]', response_headers={'ETag': '"my etag"'})
+  #   self.mox.ReplayAll()
+  #   self.assert_equals('"my etag"', self.twitter.get_activities_response()['etag'])
+
+  # def test_get_activities_304_not_modified(self):
+  #   """Requests with matching ETags return 304 Not Modified."""
+  #   self.expect_urlopen(
+  #     'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+  #     '[]', status=304)
+  #   self.mox.ReplayAll()
+  #   self.assert_equals([], self.twitter.get_activities_response()['items'])
