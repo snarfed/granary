@@ -84,9 +84,8 @@ class GooglePlus(source.Source):
         etag = resp.get('etag')
     except Exception, e:
       # this is an oauth_dropins.apiclient.errors.HttpError. can't check for it
-      # explicitly because here i'd need to import it from
-      # oauth_dropins.apiclient, but it's already been imported from
-      # bridgy.apiclient, so the classes don't match.
+      # explicitly because the module has already been imported under the path
+      # apiclient.errors, so the classes don't match.
       resp = getattr(e, 'resp')
       if resp and resp.status == 304:  # Not Modified, from a matching ETag
         activities = []

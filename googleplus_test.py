@@ -15,10 +15,11 @@ from oauth_dropins import appengine_config
 appengine_config.GOOGLE_CLIENT_ID = 'my client id'
 appengine_config.GOOGLE_CLIENT_SECRET = 'my client secret'
 
+import googleplus
+from oauth_dropins import httplib2
 from oauth_dropins.apiclient import discovery
 from oauth_dropins.apiclient import http
 from oauth_dropins import googleplus as oauth_googleplus
-import googleplus
 from webutil import testutil
 from webutil import util
 
@@ -194,23 +195,28 @@ class GooglePlusTest(testutil.HandlerTest):
     self.assert_equals([ACTIVITY_AS_EXTRAS], got)
 
   # def test_get_activities_request_etag(self):
-  #   self.expect_urlopen(
-  #     'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-  #     '[]', headers={'If-none-match': '"my etag"'})
-  #   self.mox.ReplayAll()
-  #   self.twitter.get_activities_response(etag='"my etag"')
+  #   self.init()
+  #   http_seq = http.HttpMockSequence(
+  #     [({'status': '200'}, json.dumps({'items': [item]}))])
+  #   self.auth_entity.http = lambda: http_seq
 
-  # def test_get_activities_response_etag(self):
-  #   self.expect_urlopen(
-  #     'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-  #     '[]', response_headers={'ETag': '"my etag"'})
-  #   self.mox.ReplayAll()
-  #   self.assert_equals('"my etag"', self.twitter.get_activities_response()['etag'])
+  #   resp = self.googleplus.get_activities_response(
+  #     fetch_replies=True, fetch_likes=True, fetch_shares=True)
+  #   self.assertEquals('"my etag"', resp['etag'])
 
-  # def test_get_activities_304_not_modified(self):
-  #   """Requests with matching ETags return 304 Not Modified."""
-  #   self.expect_urlopen(
-  #     'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-  #     '[]', status=304)
-  #   self.mox.ReplayAll()
-  #   self.assert_equals([], self.twitter.get_activities_response()['items'])
+  def test_get_activities_response_etag(self):
+    self.init(requestBuilder=http.RequestMockBuilder({
+          'plus.activities.list': (httplib2.Response({'status': 200}),
+                                   json.dumps({'etag': '"my etag"'})),
+          }))
+    resp = self.googleplus.get_activities_response(
+      fetch_replies=True, fetch_likes=True, fetch_shares=True)
+    self.assertEquals('"my etag"', resp['etag'])
+
+  def test_get_activities_304_not_modified(self):
+    """Requests with matching ETags return 304 Not Modified."""
+    self.init(requestBuilder=http.RequestMockBuilder({
+          'plus.activities.list': (httplib2.Response({'status': 304}), '{}'),
+          }))
+    self.assert_equals([], self.googleplus.get_activities(
+          fetch_replies=True, fetch_likes=True, fetch_shares=True))
