@@ -55,18 +55,22 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals(activity, source.Source.original_post_discovery(
         copy.deepcopy(activity)))
 
+    activity['object']['content'] = 'x (not.at end) y (at.the end)'
+    source.Source.original_post_discovery(activity)
+    self.assert_equals([{'objectType': 'article', 'url': 'http://at.the/end'}],
+                       activity['object']['tags'])
+
     activity['object'].update({
-        'content': 'x (sn.fd 123) y (xy zz) y (a.bc/D/EF) z',
+        'content': 'x http://baz/3 y',
         'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
         'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
         })
     source.Source.original_post_discovery(activity)
     self.assert_equals([
-            {'objectType': 'article', 'url': 'http://sn.fd/123'},
-            {'objectType': 'article', 'url': 'http://a.bc/D/EF'},
-            {'objectType': 'article', 'url': 'http://foo/1'},
-            {'objectType': 'article', 'url': 'http://bar/2'},
-            ], activity['object']['tags'])
+        {'objectType': 'article', 'url': 'http://foo/1'},
+        {'objectType': 'article', 'url': 'http://bar/2'},
+        {'objectType': 'article', 'url': 'http://baz/3'},
+        ], activity['object']['tags'])
 
 
     # leading parens used to cause us trouble

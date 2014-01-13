@@ -214,7 +214,7 @@ class Source(object):
 
     return activity
 
-  _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)')
+  _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
   @staticmethod
   def original_post_discovery(activity):
@@ -229,7 +229,7 @@ class Source(object):
       activity: activity dict
     """
     obj = activity['object']
-    content = obj.get('content', '')
+    content = obj.get('content', '').strip()
 
     # Permashortcitations are short references to canonical copies of a given
     # (usually syndicated) post, of the form (DOMAIN PATH). Details:
