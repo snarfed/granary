@@ -77,7 +77,14 @@ class Twitter(source.Source):
                               fetch_likes=False, fetch_shares=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
+    XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
+    request for fetching activity tweets themselves, but to pass it to all of
+    the requests for filling in replies, retweets, etc. That's because we want
+    to find new replies and retweets of older initial tweets.
+    TODO: find a better way.
+
     See method docstring in source.py for details. app_id is ignored.
+    min_id is translated to Twitter's since_id.
 
     The code for handling ETags (and 304 Not Changed responses and setting
     If-None-Match) is here, but unused right now since Twitter evidently doesn't
@@ -99,11 +106,11 @@ class Twitter(source.Source):
       total_count = len(tweets)
     else:
       url = API_SELF_TIMELINE_URL if group_id == source.SELF else API_TIMELINE_URL
-      twitter_count = count + start_index
+      url = url % (count + start_index)
       headers = {'If-None-Match': etag} if etag else {}
       total_count = None
       try:
-        resp = self.urlopen(url % twitter_count, headers=headers)
+        resp = self.urlopen(url, headers=headers)
         etag = resp.info().get('ETag')
         tweets = json.loads(resp.read())[start_index:]
       except urllib2.HTTPError, e:
@@ -128,17 +135,19 @@ class Twitter(source.Source):
           # can't use the statuses/retweets_of_me endpoint because it only
           # returns the original tweets, not the retweets or their authors.
           url = API_RETWEETS_URL % tweet['id_str']
+          if min_id is not None:
+            url = util.add_query_params(url, {'since_id': min_id})
           tweet['retweets'] = json.loads(self.urlopen(url).read())
 
     activities = [self.tweet_to_activity(t) for t in tweets]
     if fetch_replies:
-      self.fetch_replies(activities)
+      self.fetch_replies(activities, min_id=min_id)
 
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
     return response
 
-  def fetch_replies(self, activities):
+  def fetch_replies(self, activities, min_id=None):
     """Fetches and injects Twitter replies into a list of activities, in place.
 
     Includes indirect replies ie reply chains, not just direct replies. Searches
@@ -175,7 +184,10 @@ class Twitter(source.Source):
         # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
         author = reply['actor']['username']
         if author not in mentions:
-          resp = self.urlopen(API_SEARCH_URL % urllib.quote_plus('@' + author)).read()
+          url = API_SEARCH_URL % urllib.quote_plus('@' + author)
+          if min_id is not None:
+            url = util.add_query_params(url, {'since_id': min_id})
+          resp = self.urlopen(url).read()
           mentions[author] = json.loads(resp)['statuses']
 
         # look for replies. add any we find to the end of replies. this makes us

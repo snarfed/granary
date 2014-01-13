@@ -535,18 +535,18 @@ class TwitterTest(testutil.HandlerTest):
       'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
       json.dumps([tweet]))
     self.expect_urlopen(
-      'https://api.twitter.com/1.1/search/tweets.json?q=%40snarfed_org&include_entities=true&result_type=recent&count=100',
+      'https://api.twitter.com/1.1/search/tweets.json?q=%40snarfed_org&include_entities=true&result_type=recent&count=100&since_id=567',
       json.dumps(REPLIES_TO_SNARFED))
     self.expect_urlopen(
-      'https://api.twitter.com/1.1/search/tweets.json?q=%40alice&include_entities=true&result_type=recent&count=100',
+      'https://api.twitter.com/1.1/search/tweets.json?q=%40alice&include_entities=true&result_type=recent&count=100&since_id=567',
       json.dumps(REPLIES_TO_ALICE))
     self.expect_urlopen(
-      'https://api.twitter.com/1.1/search/tweets.json?q=%40bob&include_entities=true&result_type=recent&count=100',
+      'https://api.twitter.com/1.1/search/tweets.json?q=%40bob&include_entities=true&result_type=recent&count=100&since_id=567',
       json.dumps(REPLIES_TO_BOB))
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_REPLIES],
-                       self.twitter.get_activities(fetch_replies=True))
+                       self.twitter.get_activities(fetch_replies=True, min_id='567'))
 
   def test_get_activities_fetch_shares(self):
     tweet = copy.deepcopy(TWEET)
@@ -555,12 +555,12 @@ class TwitterTest(testutil.HandlerTest):
       'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
       json.dumps([tweet]))
     self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/retweets.json?id=100',
+      'https://api.twitter.com/1.1/statuses/retweets.json?id=100&since_id=567',
       json.dumps(RETWEETS))
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_SHARES],
-                       self.twitter.get_activities(fetch_shares=True))
+                       self.twitter.get_activities(fetch_shares=True, min_id='567'))
 
   def test_get_activities_fetch_shares_no_retweets(self):
     self.expect_urlopen(
@@ -592,6 +592,13 @@ class TwitterTest(testutil.HandlerTest):
       '[]', status=304)
     self.mox.ReplayAll()
     self.assert_equals([], self.twitter.get_activities_response()['items'])
+
+  def test_get_activities_min_id(self):
+    """min_id shouldn't be passed to the initial request, just the derived ones."""
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0', '[]')
+    self.mox.ReplayAll()
+    self.twitter.get_activities_response(min_id=135)
 
   def test_get_comment(self):
     self.expect_urlopen(
