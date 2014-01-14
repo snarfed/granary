@@ -180,7 +180,6 @@ ACTIVITY = {  # ActivityStreams
     },
   }
 
-
 # This is the original tweet and reply chain:
 # 100 (snarfed_org) -- 200 (alice) -- 400 (snarfed_org) -- 500 (alice)
 #                   \_ 300 (bob)
@@ -189,6 +188,7 @@ REPLIES_TO_SNARFED = {'statuses': [{  # Twitter
       'user': {'screen_name': 'alice'},
       'text': 'reply 200',
       'in_reply_to_status_id_str': '100',
+      'in_reply_to_screen_name': 'snarfed_org',
       }, {
       'id_str': '300',
       'user': {'screen_name': 'bob'},

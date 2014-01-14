@@ -86,7 +86,7 @@ class GooglePlus(source.Source):
       # this is an oauth_dropins.apiclient.errors.HttpError. can't check for it
       # explicitly because the module has already been imported under the path
       # apiclient.errors, so the classes don't match.
-      resp = getattr(e, 'resp')
+      resp = getattr(e, 'resp', None)
       if resp and resp.status == 304:  # Not Modified, from a matching ETag
         activities = []
       else:
