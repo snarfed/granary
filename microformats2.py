@@ -172,12 +172,13 @@ def json_to_html(obj):
   content_html = content.get('html') or content.get('value')
 
   # if this post is itself a like or repost, link to its target(s).
+  likes_and_reposts = []
   for verb in 'like', 'repost':
     if ('h-as-%s' % verb) in obj['type']:
       if not content_html:
         content_html = '%ss this.\n' % verb
-      content_html += '\n'.join('<a class="u-%s u-%s-of" href="%s" />' %
-                                (verb, verb, url) for url in props.get(verb))
+      likes_and_reposts += ['<a class="u-%s u-%s-of" href="%s" />' %
+                            (verb, verb, url) for url in props.get(verb)]
 
   photo = '\n'.join(PHOTO.substitute(url=url)
                     for url in props.get('photo', []) if url)
@@ -189,7 +190,6 @@ def json_to_html(obj):
 
   # embedded likes and reposts of this post
   # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
-  likes_and_reposts = []
   for verb in 'like', 'repost':
     vals = props.get(verb, [])
     if vals and isinstance(vals[0], dict):
@@ -297,8 +297,8 @@ def render_content(obj):
         content += '<span class="link-summary">%s</span>\n' % summary
       content += '</p>'
 
-  # other tags, except likes and (re)shares. they're rendered manually with
-  # object_to_html().
+  # other tags, except likes and (re)shares. they're rendered manually in
+  # json_to_html().
   tags.pop('like', [])
   tags.pop('share', [])
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
