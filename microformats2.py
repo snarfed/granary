@@ -18,8 +18,8 @@ HENTRY = string.Template("""\
 $author
   <div class="e-content">
   $content
-  $photo
   </div>
+$photo
 $location
 $in_reply_tos
 $likes_and_reposts
