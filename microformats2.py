@@ -12,9 +12,9 @@ from webutil import util
 HENTRY = string.Template("""\
 <article class="$types">
   <span class="u-uid">$uid</span>
-  $maybe_linked_name
-  <time class="dt-published" datetime="$published">$published</time>
-  <time class="dt-updated" datetime="$updated">$updated</time>
+  $linked_name
+  $published
+  $updated
 $author
   <div class="e-content">
   $content
@@ -28,12 +28,12 @@ $comments
 """)
 HCARD = string.Template("""\
   <div class="$types">
-    $maybe_linked_name
+    $linked_name
     $photo
     <span class="u-uid">$uid</span>
   </div>
 """)
-IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url" />')
+IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
 PHOTO = string.Template('<img class="u-photo" src="$url" />')
 
 
@@ -177,7 +177,7 @@ def json_to_html(obj):
     if ('h-as-%s' % verb) in obj['type']:
       if not content_html:
         content_html = '%ss this.\n' % verb
-      likes_and_reposts += ['<a class="u-%s u-%s-of" href="%s" />' %
+      likes_and_reposts += ['<a class="u-%s u-%s-of" href="%s"></a>' %
                             (verb, verb, url) for url in props.get(verb)]
 
   photo = '\n'.join(PHOTO.substitute(url=url)
@@ -195,16 +195,19 @@ def json_to_html(obj):
     if vals and isinstance(vals[0], dict):
       likes_and_reposts += [json_to_html(v) for v in vals]
 
-  return HENTRY.substitute(prop,
-                           types=' '.join(obj['type']),
-                           author=hcard_to_html(author),
-                           location=hcard_to_html(prop['location']),
-                           photo=photo,
-                           in_reply_tos=in_reply_tos,
-                           content=content_html,
-                           comments=comments_html,
-                           likes_and_reposts='\n'.join(likes_and_reposts),
-                           maybe_linked_name=maybe_linked_name(prop))
+  return HENTRY.substitute(
+    prop,
+    published=maybe_datetime(prop.get('published'), 'dt-published'),
+    updated=maybe_datetime(prop.get('updated'), 'dt-updated'),
+    types=' '.join(obj['type']),
+    author=hcard_to_html(author),
+    location=hcard_to_html(prop['location']),
+    photo=photo,
+    in_reply_tos=in_reply_tos,
+    content=content_html,
+    comments=comments_html,
+    likes_and_reposts='\n'.join(likes_and_reposts),
+    linked_name=maybe_linked_name(prop))
 
 
 def hcard_to_html(hcard):
@@ -224,7 +227,7 @@ def hcard_to_html(hcard):
   return HCARD.substitute(props,
                           types=' '.join(hcard['type']),
                           photo=photo,
-                          maybe_linked_name=maybe_linked_name(props))
+                          linked_name=maybe_linked_name(props))
 
 
 def render_content(obj):
@@ -289,9 +292,9 @@ def render_content(obj):
 
       content += """\
 <p><a class="link" alt="%s" href="%s">
-<img class="link-thumbnail" src="%s" />
+<img class="link-thumbnail" src="%s" alt="%s" />
 <span class="link-name">%s</span>
-""" % (name, url, image, name)
+""" % (name, name, url, image, name)
       summary = link.get('summary')
       if summary:
         content += '<span class="link-summary">%s</span>\n' % summary
@@ -321,15 +324,15 @@ def object_type(obj):
   return type if type != 'activity' else obj.get('verb')
 
 
-def tags_to_html(tags, css_class):
+def tags_to_html(tags, classname):
   """Returns an HTML string with links to the given tag objects.
 
   Args:
     tags: decoded JSON ActivityStreams objects.
-    css_class: CSS class for span to enclose tags in
+    classname: class for span to enclose tags in
   """
   if tags:
-    return ('\n<p class="%s">' % css_class +
+    return ('\n<p class="%s">' % classname +
             ', '.join('<a href="%s">%s</a>' % (t.get('url'), t.get('displayName'))
                       for t in tags) +
             '</p>')
@@ -347,21 +350,36 @@ def maybe_linked_name(props):
   """
   name = props.get('name', '')
   url = props.get('url')
-  html = maybe_linked(name, url, css_class='u-url')
+  html = maybe_linked(name, url, classname='u-url')
   if name:
     html = '<div class="p-name">%s</div>' % html
   return html
 
 
-def maybe_linked(text, url, css_class=None):
+def maybe_linked(text, url, classname=None):
   """Wraps text in an <a href=...> iff a non-empty url is provided.
 
   Args:
     text: string
     url: string or None
-    css_class: string, optional class attribute
+    classname: string, optional class attribute
 
   Returns: string
   """
-  css_class = 'class="%s"' % css_class if css_class else ''
-  return ('<a %s href="%s">%s</a>' % (css_class, url, text)) if url else text
+  classname = 'class="%s"' % classname if classname else ''
+  return ('<a %s href="%s">%s</a>' % (classname, url, text)) if url else text
+
+
+def maybe_datetime(str, classname):
+  """Returns a <time datetime=...> elem if str is non-empty.
+
+  Args:
+    str: string RFC339 datetime or None
+    classname: string class name
+
+  Returns: string
+  """
+  if str:
+    return '<time class="%s" datetime="%s">%s</time>' % (classname, str, str)
+  else:
+    return ''
