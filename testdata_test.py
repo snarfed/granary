@@ -46,6 +46,7 @@ class TestDataTest(testutil.HandlerTest):
                 ('as.json', 'mf2.html', microformats2.object_to_html),
                 )
 
+    failed = False
     for src_ext, dst_ext, fn in mappings:
       for src, dst in filepairs(src_ext, dst_ext):
         if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):
@@ -53,7 +54,10 @@ class TestDataTest(testutil.HandlerTest):
         else:
           expected = read_json(dst)
         try:
-          self.assert_equals(expected, fn(read_json(src)))
-        except Exception, e:
-          logging.error('%s => %s', src, dst)
-          raise
+          self.assert_equals(expected, fn(read_json(src)),
+                             '\n%s:1:\n' % os.path.abspath(dst))
+        except AssertionError, e:
+          logging.exception('')
+          failed = True
+
+    assert not failed
