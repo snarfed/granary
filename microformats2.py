@@ -34,7 +34,7 @@ HCARD = string.Template("""\
   </div>
 """)
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
-PHOTO = string.Template('<img class="u-photo" src="$url" />')
+PHOTO = string.Template('<img class="u-photo" src="$url" alt="$alt" />')
 
 
 def object_to_json(obj, trim_nulls=True):
@@ -180,7 +180,7 @@ def json_to_html(obj):
       likes_and_reposts += ['<a class="u-%s u-%s-of" href="%s"></a>' %
                             (verb, verb, url) for url in props.get(verb)]
 
-  photo = '\n'.join(PHOTO.substitute(url=url)
+  photo = '\n'.join(PHOTO.substitute(url=url, alt='attachment')
                     for url in props.get('photo', []) if url)
 
   # comments
@@ -223,7 +223,8 @@ def hcard_to_html(hcard):
 
   # extract first value from multiply valued properties
   props = {k: v[0] if v else '' for k, v in hcard['properties'].items()}
-  photo = PHOTO.substitute(url=props['photo']) if props['photo'] else ''
+  photo = (PHOTO.substitute(url=props['photo'], alt=props.get('name', '-'))
+           if props['photo'] else '')
   return HCARD.substitute(props,
                           types=' '.join(hcard['type']),
                           photo=photo,
