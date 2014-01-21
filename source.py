@@ -255,6 +255,11 @@ class Source(object):
     """Returns the given actor's name if available, otherwise Unknown."""
     return actor.get('displayName', 'Unknown') if actor else 'Unknown'
 
+  @staticmethod
+  def set_to_public(obj, public):
+    """Fills in the Audience Targeting extension 'to' field."""
+    obj['to'] = [{'objectType':'group',
+                  'alias':'@public' if public else '@private'}]
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""

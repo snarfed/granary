@@ -56,6 +56,7 @@ COMMENTS = [{  # Facebook
         'length': 9,
         }],
     'created_time': '2012-12-05T00:58:26+0000',
+    'privacy': {'value': 'FRIENDS'},
     }, {
     'id': '124561947600007_672819',
     'from': {
@@ -63,7 +64,7 @@ COMMENTS = [{  # Facebook
       'id': '513046677'
       },
     'message': 'Foo bar!',
-    'created_time': '2010-10-28T00:23:04+0000'
+    'created_time': '2010-10-28T00:23:04+0000',
     }]
 POST = {  # Facebook
   'id': '212038_10100176064482163',
@@ -125,6 +126,7 @@ POST = {  # Facebook
              {'id': '683713', 'name': 'Bob Y'},
              ],
     },
+  'privacy': {'value': 'EVERYONE'},
 }
 COMMENT_OBJS = [  # ActivityStreams
   {
@@ -140,6 +142,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'published': '2012-12-05T00:58:26+00:00',
     'url': 'http://facebook.com/547822715231468?comment_id=6796480',
     'inReplyTo': [{'id': tag_uri('547822715231468')}],
+    'to': [{'objectType':'group', 'alias':'@private'}],
     'tags': [{
         'objectType': 'person',
         'id': tag_uri('221330'),
@@ -221,6 +224,7 @@ POST_OBJ = {  # ActivityStreams
       'content': 'my link description',
       'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'}
       }],
+  'to':[{'objectType':'group', 'alias':'@public'}],
   'location': {
     'displayName': 'Lake Merced',
     'id': '113785468632283',

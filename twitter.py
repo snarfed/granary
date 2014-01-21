@@ -3,6 +3,10 @@
 Uses the v1.1 REST API: https://dev.twitter.com/docs/api
 
 TODO: collections for twitter accounts; use as activity target?
+
+The Audience Targeting 'to' field is set to @public or @private based on whether
+the tweet author's 'protected' field is true or false.
+https://dev.twitter.com/docs/platform-objects/users
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -321,8 +325,7 @@ class Twitter(source.Source):
 
       protected = user.get('protected')
       if protected is not None:
-        obj['to'] = [{'objectType':'group',
-                      'alias':'@private' if protected else '@public'}]
+        self.set_to_public(obj, not protected)
 
     entities = tweet.get('entities', {})
 

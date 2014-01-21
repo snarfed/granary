@@ -1,5 +1,9 @@
 """Facebook source class. Uses the Graph API.
 
+The Audience Targeting 'to' field is set to @public or @private based on whether
+the Facebook object's 'privacy' field is 'EVERYONE' or anything else.
+https://developers.facebook.com/docs/reference/api/privacy-parameter/
+
 TODO:
 - friends' new friendships, ie "X is now friends with Y." Not currently
 available in /me/home. http://stackoverflow.com/questions/4358026
@@ -306,6 +310,10 @@ class Facebook(source.Source):
       'image': {'url': picture},
       'displayName': display_name,
       }
+
+    privacy = post.get('privacy', {}).get('value')
+    if privacy is not None:
+      self.set_to_public(obj, privacy.lower() == 'everyone')
 
     # tags and likes
     tags = itertools.chain(post.get('to', {}).get('data', []),
