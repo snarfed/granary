@@ -1,6 +1,8 @@
 """Google+ source class.
 
-TODO(ryan): finish this, write a test, maybe hook it up to a demo app
+The Google+ API currently only returns public activities and comments, so the
+Audience Targeting 'to' field is always set to @public.
+https://developers.google.com/+/api/latest/activities/list#collection
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -135,6 +137,7 @@ class GooglePlus(source.Source):
       activity: ActivityStreams activity dict.
     """
     activity['object']['author'] = activity['actor']
+    self.set_to_public(activity['object'], True)
     # also convert id to tag URI
     activity['id'] = self.tag_uri(activity['id'])
 
@@ -147,6 +150,7 @@ class GooglePlus(source.Source):
     """
     comment['content'] = comment['object']['content']
     comment['author'] = comment.pop('actor')
+    self.set_to_public(comment, True)
     # also convert id to tag URI
     comment['id'] = self.tag_uri(comment['id'])
     # G+ comments don't have their own permalinks. :/ so, use the post's.

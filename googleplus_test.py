@@ -43,6 +43,7 @@ ACTIVITY_GP = {  # Google+
 ACTIVITY_AS = copy.deepcopy(ACTIVITY_GP)  # ActivityStreams
 ACTIVITY_AS['id'] = tag_uri('001')
 ACTIVITY_AS['object']['author'] = ACTIVITY_GP['actor']
+ACTIVITY_AS['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
 
 COMMENT_GP = {  # Google+
   'kind': 'plus#comment',
@@ -58,6 +59,7 @@ COMMENT_AS.update({  # ActivityStreams
     'content': 'my content',
     'id': tag_uri('888'),
     'url': 'http://post/url',
+    'to': [{'objectType':'group', 'alias':'@public'}],
   })
 PLUSONER = {  # Google+
   'kind': 'plus#person',
@@ -115,6 +117,7 @@ ACTIVITY_AS_EXTRAS = copy.deepcopy(ACTIVITY_GP_EXTRAS)  # ActivityStreams
 ACTIVITY_AS_EXTRAS['id'] = tag_uri('001')
 ACTIVITY_AS_EXTRAS['object'].update({
     'author': ACTIVITY_GP_EXTRAS['actor'],
+    'to': [{'objectType':'group', 'alias':'@public'}],
     'replies': {'totalItems': 1, 'items': [COMMENT_AS]},
     'tags': [LIKE, SHARE],
     })
