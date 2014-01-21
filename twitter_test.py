@@ -24,6 +24,7 @@ USER = {  # Twitter
   'name': 'Ryan Barrett',
   'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
   'screen_name': 'snarfed_org',
+  'protected': False,
   }
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
@@ -112,6 +113,7 @@ OBJECT = {  # ActivityStreams
     'id': '31cb9e7ed29dbe52',
     'url': 'https://maps.google.com/maps?q=32.4004416,-98.9852672',
     },
+  'to':[{'objectType':'group', 'alias':'@public'}],
   'tags': [{
       'objectType': 'image',
       'url': 'http://p.twimg.com/picture1',
@@ -638,6 +640,13 @@ class TwitterTest(testutil.HandlerTest):
   def test_tweet_to_object_with_retweets(self):
     self.assert_equals(OBJECT_WITH_SHARES,
                        self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
+
+  def test_protected_tweet_to_object(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['user']['protected'] = True
+    obj = copy.deepcopy(OBJECT)
+    obj['to'][0]['alias'] = '@private'
+    self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
 
   def test_retweet_to_object(self):
     for retweet, share in zip(RETWEETS, SHARES):

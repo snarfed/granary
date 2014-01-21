@@ -3,6 +3,11 @@
 
 Based on the OpenSocial ActivityStreams REST API:
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
+
+Uses the 'to' field of the Audience Targeting extension to indicate an
+activity's privacy settings. It's set to a group with alias @public or @private,
+or unset if unknown.
+http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']

@@ -3,7 +3,6 @@
 Uses the v1.1 REST API: https://dev.twitter.com/docs/api
 
 TODO: collections for twitter accounts; use as activity target?
-TODO: reshare activities for retweets
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -319,6 +318,11 @@ class Twitter(source.Source):
       if username:
         obj['id'] = self.tag_uri(id)
         obj['url'] = self.status_url(username, id)
+
+      protected = user.get('protected')
+      if protected is not None:
+        obj['to'] = [{'objectType':'group',
+                      'alias':'@private' if protected else '@public'}]
 
     entities = tweet.get('entities', {})
 
