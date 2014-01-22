@@ -313,6 +313,9 @@ class Facebook(source.Source):
 
     privacy = post.get('privacy', {}).get('value')
     if privacy is not None:
+      # privacy value '' means it doesn't have an explicit audience set, so i
+      # *think* it inherits from its parent. TODO: use that value as opposed to
+      # defaulting to public.
       self.set_to_public(obj, privacy.lower() in (None, '', 'everyone'))
 
     # tags and likes
