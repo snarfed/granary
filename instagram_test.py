@@ -111,6 +111,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'published': '2012-10-06T22:45:57',
     'url': 'http://instagram.com/p/ABC123/',
     'inReplyTo': [{'id': tag_uri('123_456')}],
+    'to': [{'objectType':'group', 'alias':'@public'}],
     },
 ]
 POST_OBJ = {  # ActivityStreams
@@ -121,6 +122,7 @@ POST_OBJ = {  # ActivityStreams
   'published': '2012-09-21T22:25:42',
   'url': 'http://instagram.com/p/ABC123/',
   'image': {'url': 'http://attach/image/big'},
+  'to': [{'objectType':'group', 'alias':'@public'}],
   'attachments': [{
       'objectType': 'image',
       'image': {

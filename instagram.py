@@ -1,5 +1,11 @@
 #!/usr/bin/python
 """Instagram source class.
+
+Instagram's API doesn't tell you if a user has marked their account private or
+not, so the Audience Targeting 'to' field is currently always set to @public.
+https://developers.google.com/+/api/latest/activities/list#collection
+https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
+https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -186,6 +192,7 @@ class Instagram(source.Source):
       'author': self.user_to_actor(media.user),
       'content': media.caption.text if media.caption else None,
       'url': media.link,
+      'to': [{'objectType':'group', 'alias':'@public'}],
       'attachments': [{
           'objectType': 'image',
           'image': {
@@ -249,6 +256,7 @@ class Instagram(source.Source):
       'published': comment.created_at.isoformat('T'),
       'content': comment.text,
       'author': self.user_to_actor(comment.user),
+      'to': [{'objectType':'group', 'alias':'@public'}],
       }
 
   def user_to_actor(self, user):
