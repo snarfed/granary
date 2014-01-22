@@ -313,7 +313,7 @@ class Facebook(source.Source):
 
     privacy = post.get('privacy', {}).get('value')
     if privacy is not None:
-      self.set_to_public(obj, privacy.lower() == 'everyone')
+      self.set_to_public(obj, privacy.lower() in (None, '', 'everyone'))
 
     # tags and likes
     tags = itertools.chain(post.get('to', {}).get('data', []),
