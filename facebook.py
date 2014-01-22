@@ -316,7 +316,9 @@ class Facebook(source.Source):
       # privacy value '' means it doesn't have an explicit audience set, so i
       # *think* it inherits from its parent. TODO: use that value as opposed to
       # defaulting to public.
-      self.set_to_public(obj, privacy.lower() in (None, '', 'everyone'))
+      public = privacy.lower() in ('', 'everyone')
+      obj['to'] = [{'objectType': 'group',
+                    'alias': '@public' if public else '@private'}]
 
     # tags and likes
     tags = itertools.chain(post.get('to', {}).get('data', []),

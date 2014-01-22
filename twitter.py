@@ -325,7 +325,8 @@ class Twitter(source.Source):
 
       protected = user.get('protected')
       if protected is not None:
-        self.set_to_public(obj, not protected)
+        obj['to'] = [{'objectType': 'group',
+                      'alias': '@public' if not protected else '@private'}]
 
     entities = tweet.get('entities', {})
 

@@ -137,7 +137,7 @@ class GooglePlus(source.Source):
       activity: ActivityStreams activity dict.
     """
     activity['object']['author'] = activity['actor']
-    self.set_to_public(activity['object'], True)
+    activity['object']['to'] = [{'objectType': 'group', 'alias': '@public'}]
     # also convert id to tag URI
     activity['id'] = self.tag_uri(activity['id'])
 
@@ -150,7 +150,7 @@ class GooglePlus(source.Source):
     """
     comment['content'] = comment['object']['content']
     comment['author'] = comment.pop('actor')
-    self.set_to_public(comment, True)
+    comment['to'] = [{'objectType': 'group', 'alias': '@public'}]
     # also convert id to tag URI
     comment['id'] = self.tag_uri(comment['id'])
     # G+ comments don't have their own permalinks. :/ so, use the post's.
