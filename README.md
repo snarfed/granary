@@ -1,4 +1,4 @@
-activitystreams-unofficial ![ActivityStreams](https://raw.github.com/snarfed/activitystreams-unofficial/master/static/logo_small.png)
+![ActivityStreams](https://raw.github.com/snarfed/activitystreams-unofficial/master/static/logo_small.png) activitystreams-unofficial
 ===
 
   * [About](#about)
