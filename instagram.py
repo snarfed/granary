@@ -3,7 +3,7 @@
 
 Instagram's API doesn't tell you if a user has marked their account private or
 not, so the Audience Targeting 'to' field is currently always set to @public.
-https://developers.google.com/+/api/latest/activities/list#collection
+http://help.instagram.com/448523408565555
 https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
 https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """

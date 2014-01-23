@@ -129,6 +129,45 @@ POST = {  # Facebook
     },
   'privacy': {'value': 'EVERYONE'},
 }
+USER_EVENT = {  # Facebook; list in 'data' returned by /[user]/events
+  'name': 'Homebrew Website Club',
+  'start_time': '2014-01-29T18:30:00-0800',
+  'end_time': '2014-01-29T19:30:00-0800',
+  'timezone': 'America/Los_Angeles',
+  'location': 'Mozilla PDX',
+  'rsvp_status': 'attending',
+  'id': '1453049941575679',
+  }
+
+EVENT = {  # Facebook; returned by /[event id]
+  'id': '1453049941575679',
+  'owner': {
+    'name': 'Aaron P',
+    'id': '11500',
+  },
+  'name': 'Homebrew Website Club',
+  'description': 'you should come maybe, kthxbye',
+  'start_time': '2014-01-29T18:30:00-0800',
+  'end_time': '2014-01-29T19:30:00-0800',
+  'timezone': 'America/Los_Angeles',
+  'is_date_only': False,
+  'location': 'PDX',
+  'venue': {
+    'name': 'PDX',
+  },
+  'privacy': 'OPEN',
+  'updated_time': '2014-01-22T01:29:15+0000',
+}
+RSVPS = [{  # Facebook; returned by /[event id]/attending (also declined, maybe)
+    'name': 'Aaron P',
+    'rsvp_status': 'attending',
+    'id': '11500',
+    }, {
+    'name': 'Ryan B',
+    'rsvp_status': 'attending',
+    'id': '212038',
+    }]
+
 COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
@@ -276,6 +315,17 @@ POST_OBJ = {  # ActivityStreams
     'totalItems': len(COMMENT_OBJS),
     }
   }
+# file:///Users/ryan/docs/activitystreams_schema_spec_1.0.html#event
+EVENT_OBJ = {  # ActivityStreams.
+  'startTime': '2014-01-29T18:30:00-0800',
+  'endTime': '2014-01-29T19:30:00-0800',
+}
+USER_EVENT_OBJ = {  # ActivityStreams
+  'startTime': '2014-01-29T18:30:00-0800',
+  'endTime': '2014-01-29T19:30:00-0800',
+}
+RSVP_OBJS = [{  # ActivityStreams
+}]
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-03-04T18:20:37+00:00',
@@ -577,6 +627,15 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.facebook.user_to_actor({}))
+
+  # def test_event_to_object_empty(self):
+  #   self.assert_equals({}, self.facebook.event_to_object({}))
+
+  # def test_user_event_to_object(self):
+  #   self.assert_equals(, self.facebook.event_to_object(USER_EVENT))
+
+  # def test_event_to_object(self):
+  #   self.assert_equals(, self.facebook.event_to_object(EVENT))
 
   def test_picture_without_message(self):
     self.assert_equals({  # ActivityStreams
