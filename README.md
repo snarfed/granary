@@ -23,6 +23,7 @@ It's part of a suite of projects that implement the [OStatus](http://ostatus.org
 
 License: This project is placed in the public domain.
 
+
 Related work
 --
 
@@ -48,6 +49,17 @@ Facebook [used to](https://developers.facebook.com/blog/post/225/)
 [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
 [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
 ActivityStreams, but that's also dead.
+
+There are a number of products that download your social network data, normalize
+it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) and
+[ThinkUp](http://thinkup.com/) are two of the most mature. There's also the
+lifelogging/lifestream aggregator vein of projects that pull data from multiple
+source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good
+example. It doesn't include Facebook, Google+, or Instagram, but does include a
+number of smaller source sites. There are lots of others, e.g. the
+[Lifestream WordPress plugin](http://www.enthropia.com/labs/wp-lifestream/).
+Unfortunately, these are generally aimed at end users, not developers, and don't
+usually expose libraries or REST APIs.
 
 On the open source side, there are many related projects.
 [php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds
