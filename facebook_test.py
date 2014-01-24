@@ -340,31 +340,34 @@ EVENT_OBJ = {  # ActivityStreams.
   #     'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
   #     }],
   }
-RSVP_ACTIVITIES = [{  # ActivityStreams
-      'verb': 'rsvp-yes',
-      'actor': {
-        'displayName': 'Aaron P',
-        'id': tag_uri('11500'),
-        'url': 'http://facebook.com/11500',
-        'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
-        },
-      }, {
-      'verb': 'rsvp-no',
-      'actor': {
-        'displayName': 'Ryan B',
-        'id': tag_uri('212038'),
-        'url': 'http://facebook.com/212038',
-        'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
-        },
-      }, {
-      'verb': 'rsvp-maybe',
-      'actor': {
-        'displayName': 'Foo',
-        'id': tag_uri('987'),
-        'url': 'http://facebook.com/987',
-        'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
-        },
-      }]
+RSVP_OBJS = [{  # ActivityStreams
+    'objectType': 'activity',
+    'verb': 'rsvp-yes',
+    'actor': {
+      'displayName': 'Aaron P',
+      'id': tag_uri('11500'),
+      'url': 'http://facebook.com/11500',
+      'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+      },
+    }, {
+    'objectType': 'activity',
+    'verb': 'rsvp-no',
+    'actor': {
+      'displayName': 'Ryan B',
+      'id': tag_uri('212038'),
+      'url': 'http://facebook.com/212038',
+      'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+      },
+    }, {
+    'objectType': 'activity',
+    'verb': 'rsvp-maybe',
+    'actor': {
+      'displayName': 'Foo',
+      'id': tag_uri('987'),
+      'url': 'http://facebook.com/987',
+      'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
+      },
+    }]
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-03-04T18:20:37+00:00',
@@ -673,9 +676,8 @@ class FacebookTest(testutil.HandlerTest):
   def test_event_to_object(self):
     self.assert_equals(EVENT_OBJ, self.facebook.event_to_object(EVENT))
 
-  def test_rsvp_to_activity(self):
-    self.assert_equals(RSVP_ACTIVITIES,
-                       [self.facebook.rsvp_to_activity(r) for r in RSVPS])
+  def test_rsvp_to_object(self):
+    self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])
 
   def test_picture_without_message(self):
     self.assert_equals({  # ActivityStreams
