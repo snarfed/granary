@@ -495,14 +495,14 @@ class Facebook(source.Source):
       })
     return util.trim_nulls(obj)
 
-  def rsvp_to_object(self, rsvp):
-    """Converts an RSVP to an object.
+  def rsvp_to_activity(self, rsvp):
+    """Converts an RSVP to an activity.
 
     Args:
       rsvp: dict, a decoded JSON Facebook RSVP
 
     Returns:
-      an ActivityStreams object dict
+      an ActivityStreams activity dict
     """
     verbs = {'attending': 'rsvp-yes',
              'declined': 'rsvp-no',

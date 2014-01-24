@@ -340,7 +340,7 @@ EVENT_OBJ = {  # ActivityStreams.
   #     'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
   #     }],
   }
-RSVP_OBJS = [{  # ActivityStreams
+RSVP_ACTIVITIES = [{  # ActivityStreams
       'verb': 'rsvp-yes',
       'actor': {
         'displayName': 'Aaron P',
@@ -673,8 +673,9 @@ class FacebookTest(testutil.HandlerTest):
   def test_event_to_object(self):
     self.assert_equals(EVENT_OBJ, self.facebook.event_to_object(EVENT))
 
-  def test_rsvp_to_object(self):
-    self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])
+  def test_rsvp_to_activity(self):
+    self.assert_equals(RSVP_ACTIVITIES,
+                       [self.facebook.rsvp_to_activity(r) for r in RSVPS])
 
   def test_picture_without_message(self):
     self.assert_equals({  # ActivityStreams
