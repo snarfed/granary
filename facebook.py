@@ -274,8 +274,9 @@ class Facebook(source.Source):
     status_type = post.get('status_type')
     url = self.post_url(post)
     picture = post.get('picture')
-    message = post.get('message') or post.get('story') or post.get('name')
     display_name = None
+    message = (post.get('message') or post.get('story') or
+               post.get('description') or post.get('name'))
 
     data = post.get('data', {})
     for field in ('object', 'song'):
@@ -311,7 +312,9 @@ class Facebook(source.Source):
       'displayName': display_name,
       }
 
-    privacy = post.get('privacy', {}).get('value')
+    privacy = post.get('privacy', {})
+    if isinstance(privacy, dict):
+      privacy = privacy.get('value')
     if privacy is not None:
       # privacy value '' means it doesn't have an explicit audience set, so i
       # *think* it inherits from its parent. TODO: use that value as opposed to
@@ -385,6 +388,8 @@ class Facebook(source.Source):
               # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
               'position': '%+f%+f/' % (lat, lon),
               })
+    elif 'location' in post:
+      obj['location'] = {'displayName': post['location']}
 
     # comments go in the replies field, according to the "Responses for
     # Activity Streams" extension spec:
@@ -470,3 +475,41 @@ class Facebook(source.Source):
                            'displayName': location.get('name')}
 
     return util.trim_nulls(actor)
+
+  def event_to_object(self, event):
+    """Converts an event to an object.
+
+    Args:
+      event: dict, a decoded JSON Facebook event
+
+    Returns:
+      an ActivityStreams object dict
+    """
+    obj = self.post_to_object(event)
+    obj.update({
+        'displayName': event.get('name'),
+        'objectType': 'event',
+        'author': self.user_to_actor(event.get('owner')),
+        'startTime': event.get('start_time'),
+        'endTime': event.get('end_time'),
+      })
+    return util.trim_nulls(obj)
+
+  def rsvp_to_object(self, rsvp):
+    """Converts an RSVP to an object.
+
+    Args:
+      rsvp: dict, a decoded JSON Facebook RSVP
+
+    Returns:
+      an ActivityStreams object dict
+    """
+    verbs = {'attending': 'rsvp-yes',
+             'declined': 'rsvp-no',
+             'unsure': 'rsvp-maybe',
+             'not_replied': 'invited',
+             }
+    return {
+      'verb': verbs.get(rsvp.get('rsvp_status')),
+      'actor': self.user_to_actor(rsvp),
+      }

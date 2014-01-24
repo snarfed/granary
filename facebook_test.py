@@ -129,18 +129,9 @@ POST = {  # Facebook
     },
   'privacy': {'value': 'EVERYONE'},
 }
-USER_EVENT = {  # Facebook; list in 'data' returned by /[user]/events
-  'name': 'Homebrew Website Club',
-  'start_time': '2014-01-29T18:30:00-0800',
-  'end_time': '2014-01-29T19:30:00-0800',
-  'timezone': 'America/Los_Angeles',
-  'location': 'Mozilla PDX',
-  'rsvp_status': 'attending',
-  'id': '1453049941575679',
-  }
 
-EVENT = {  # Facebook; returned by /[event id]
-  'id': '1453049941575679',
+EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
+  'id': '145304994',
   'owner': {
     'name': 'Aaron P',
     'id': '11500',
@@ -157,16 +148,13 @@ EVENT = {  # Facebook; returned by /[event id]
   },
   'privacy': 'OPEN',
   'updated_time': '2014-01-22T01:29:15+0000',
+  'rsvp_status': 'attending',
 }
-RSVPS = [{  # Facebook; returned by /[event id]/attending (also declined, maybe)
-    'name': 'Aaron P',
-    'rsvp_status': 'attending',
-    'id': '11500',
-    }, {
-    'name': 'Ryan B',
-    'rsvp_status': 'attending',
-    'id': '212038',
-    }]
+RSVPS = [  # Facebook; returned by /[event id]/attending (also declined, maybe)
+  {'name': 'Aaron P', 'rsvp_status': 'attending', 'id': '11500'},
+  {'name': 'Ryan B', 'rsvp_status': 'declined', 'id': '212038'},
+  {'name': 'Foo', 'rsvp_status': 'unsure', 'id': '987'},
+  ]
 
 COMMENT_OBJS = [  # ActivityStreams
   {
@@ -317,15 +305,66 @@ POST_OBJ = {  # ActivityStreams
   }
 # file:///Users/ryan/docs/activitystreams_schema_spec_1.0.html#event
 EVENT_OBJ = {  # ActivityStreams.
+  'objectType': 'event',
+  'id': tag_uri('145304994'),
+  'url': 'http://facebook.com/145304994',
+  'displayName': 'Homebrew Website Club',
+  'author': {
+    'id': tag_uri('11500'),
+    'displayName': 'Aaron P',
+    'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+    'url': 'http://facebook.com/11500',
+    },
+  'content': 'you should come maybe, kthxbye',
+  'location': {'displayName': 'PDX'},
   'startTime': '2014-01-29T18:30:00-0800',
   'endTime': '2014-01-29T19:30:00-0800',
-}
-USER_EVENT_OBJ = {  # ActivityStreams
-  'startTime': '2014-01-29T18:30:00-0800',
-  'endTime': '2014-01-29T19:30:00-0800',
-}
+  'updated': '2014-01-22T01:29:15+00:00',
+  'to': [{'alias': '@public', 'objectType': 'group'}],
+  # 'attending': [{
+  #     'name': 'Aaron P',
+  #     'id': tag_uri('11500'),
+  #     'url': 'http://www.facebook.com/11500',
+  #     'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+  #     }],
+  # 'notAttending': [{
+  #     'name': 'Ryan B',
+  #     'id': tag_uri('212038'),
+  #     'url': 'http://www.facebook.com/212038',
+  #     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+  #     }],
+  # 'maybeAttending': [{
+  #     'name': 'Foo',
+  #     'id': tag_uri('987'),
+  #     'url': 'http://www.facebook.com/987',
+  #     'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
+  #     }],
+  }
 RSVP_OBJS = [{  # ActivityStreams
-}]
+      'verb': 'rsvp-yes',
+      'actor': {
+        'displayName': 'Aaron P',
+        'id': tag_uri('11500'),
+        'url': 'http://facebook.com/11500',
+        'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+        },
+      }, {
+      'verb': 'rsvp-no',
+      'actor': {
+        'displayName': 'Ryan B',
+        'id': tag_uri('212038'),
+        'url': 'http://facebook.com/212038',
+        'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+        },
+      }, {
+      'verb': 'rsvp-maybe',
+      'actor': {
+        'displayName': 'Foo',
+        'id': tag_uri('987'),
+        'url': 'http://facebook.com/987',
+        'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
+        },
+      }]
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-03-04T18:20:37+00:00',
@@ -628,14 +667,14 @@ class FacebookTest(testutil.HandlerTest):
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.facebook.user_to_actor({}))
 
-  # def test_event_to_object_empty(self):
-  #   self.assert_equals({}, self.facebook.event_to_object({}))
+  def test_event_to_object_empty(self):
+    self.assert_equals({'objectType': 'event'}, self.facebook.event_to_object({}))
 
-  # def test_user_event_to_object(self):
-  #   self.assert_equals(, self.facebook.event_to_object(USER_EVENT))
+  def test_event_to_object(self):
+    self.assert_equals(EVENT_OBJ, self.facebook.event_to_object(EVENT))
 
-  # def test_event_to_object(self):
-  #   self.assert_equals(, self.facebook.event_to_object(EVENT))
+  def test_rsvp_to_object(self):
+    self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])
 
   def test_picture_without_message(self):
     self.assert_equals({  # ActivityStreams
