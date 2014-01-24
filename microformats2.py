@@ -56,6 +56,9 @@ def object_to_json(obj, trim_nulls=True):
                'person': ['h-card'],
                'place': ['h-card', 'p-location'],
                'share': ['h-entry', 'h-as-repost'],
+               'rsvp-yes': ['h-entry', 'h-as-rsvp'],
+               'rsvp-no': ['h-entry', 'h-as-rsvp'],
+               'rsvp-maybe': ['h-entry', 'h-as-rsvp'],
                }
   obj_type = object_type(obj)
   types = types_map.get(obj_type, ['h-entry'])
@@ -65,13 +68,18 @@ def object_to_json(obj, trim_nulls=True):
   # TODO: extract snippet
   name = obj.get('displayName', obj.get('title', content))
 
-  author = object_to_json(obj.get('author', {}), trim_nulls=False)
+  author = obj.get('author', obj.get('actor', {}))
+  author = object_to_json(author, trim_nulls=False)
   if author:
     author['type'] = ['h-card']
 
   location = object_to_json(obj.get('location', {}), trim_nulls=False)
   if location:
     location['type'] = ['h-card', 'p-location']
+
+  in_reply_tos = obj.get('inReplyTo', [])
+  if 'h-as-rsvp' in types and 'object' in obj:
+    in_reply_tos.append(obj['object'])
 
   # TODO: more tags. most will be p-category?
   ret = {
@@ -87,14 +95,17 @@ def object_to_json(obj, trim_nulls=True):
           'value': content,
           'html': render_content(obj),
           }],
-      'in-reply-to': util.trim_nulls([o.get('url') for o in
-                                      obj.get('inReplyTo', [])]),
+      'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
       'author': [author],
       'location': [location],
       'comment': [object_to_json(c, trim_nulls=False)
                   for c in obj.get('replies', {}).get('items', [])],
       }
     }
+
+  # rsvp
+  if 'h-as-rsvp' in types:
+    ret['properties']['rsvp'] = [obj_type[len('rsvp-'):]]
 
   # likes and reposts
   # http://indiewebcamp.com/like#Counterproposal
@@ -170,6 +181,16 @@ def json_to_html(obj):
 
   content = prop.get('content', {})
   content_html = content.get('html') or content.get('value')
+
+  # rsvp
+  rsvp = prop.get('rsvp')
+  if rsvp:
+    descriptions = {'yes': 'is attending',
+                    'no': 'is not attending',
+                    'maybe': 'might attend',
+                    'invited': 'is invited'}
+    content_html = '<data class="p-rsvp" value="%s">%s</data>' % (
+      rsvp, descriptions.get(rsvp, ''))
 
   # if this post is itself a like or repost, link to its target(s).
   likes_and_reposts = []
