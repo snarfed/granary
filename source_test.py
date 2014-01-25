@@ -30,21 +30,23 @@ ACTIVITY = {
     }
   }
 RSVPS = [{
+    'id': 'tag:fake.com:246_rsvp_11500',
     'objectType': 'activity',
     'verb': 'rsvp-yes',
-    'actor': {'displayName': 'Aaron P', 'id': '11500'},
+    'actor': {'displayName': 'Aaron P', 'id': 'tag:fake.com,2013:11500'},
     }, {
     'objectType': 'activity',
     'verb': 'rsvp-no',
-    'actor': {'displayName': 'Ryan B', 'id': '212038'},
+    'actor': {'displayName': 'Ryan B'},
     }, {
+    'id': 'tag:fake.com:246_rsvp_987',
     'objectType': 'activity',
     'verb': 'rsvp-maybe',
-    'actor': {'displayName': 'Foo', 'id': '987'},
+    'actor': {'displayName': 'Foo', 'id': 'tag:fake.com,2013:987'},
     }]
 EVENT = {
+  'id': 'tag:fake.com:246',
   'objectType': 'event',
-  'id': '246',
   'displayName': 'Homebrew Website Club',
   }
 EVENT_WITH_RSVPS = copy.deepcopy(EVENT)

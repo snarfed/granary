@@ -26,6 +26,7 @@ import appengine_config
 import source
 from webutil import util
 
+# https://developers.facebook.com/docs/reference/login/
 OAUTH_SCOPES = ','.join((
     'friends_actions.music',
     'friends_actions.news',

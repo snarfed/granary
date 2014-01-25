@@ -316,13 +316,22 @@ class Source(object):
 
     Returns: sequence of ActivityStreams RSVP activity objects
     """
+    event_id = event.get('id')
+    if event_id:
+      domain, event_id = util.parse_tag_uri(event_id)
+
     rsvps = []
     for verb, field in RSVP_TO_EVENT.items():
-      rsvps += [{
-          'objectType': 'activity',
-          'verb': verb,
-          'actor': actor,
-          } for actor in event.get(field, [])]
+      for actor in event.get(field, []):
+        rsvp = {'objectType': 'activity',
+                'verb': verb,
+                'actor': actor,
+                }
+        if event_id and 'id' in actor:
+          _, actor_id = util.parse_tag_uri(actor['id'])
+          rsvp['id'] = util.tag_uri(domain, '%s_rsvp_%s' % (event_id, actor_id))
+        rsvps.append(rsvp)
+
     return rsvps
 
   def tag_uri(self, name):
