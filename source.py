@@ -34,7 +34,6 @@ RSVP_TO_EVENT = {
   'rsvp-maybe': 'maybeAttending',
   'invited': 'invited',
   }
-# EVENT_TO_RSVP = {field: verb for verb, field in RSVP_TO_EVENT.items()}
 
 
 class Source(object):
