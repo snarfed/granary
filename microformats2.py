@@ -80,7 +80,6 @@ def object_to_json(obj, trim_nulls=True):
   in_reply_tos = obj.get('inReplyTo', [])
   if 'h-as-rsvp' in types and 'object' in obj:
     in_reply_tos.append(obj['object'])
-
   # TODO: more tags. most will be p-category?
   ret = {
     'type': types,
@@ -189,7 +188,7 @@ def json_to_html(obj):
                     'no': 'is not attending',
                     'maybe': 'might attend',
                     'invited': 'is invited'}
-    content_html = '<data class="p-rsvp" value="%s">%s</data>' % (
+    content_html = '<data class="p-rsvp" value="%s">%s.</data>' % (
       rsvp, descriptions.get(rsvp, ''))
 
   # if this post is itself a like or repost, link to its target(s).
