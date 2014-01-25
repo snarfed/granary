@@ -58,7 +58,8 @@ class Source(object):
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, fetch_replies=False,
-                              fetch_likes=False, fetch_shares=False):
+                              fetch_likes=False, fetch_shares=False,
+                              fetch_events=False):
     """Fetches and returns ActivityStreams activities and response details.
 
     Subclasses should override this. See get_activities() for an alternative
@@ -74,10 +75,10 @@ class Source(object):
     group id is string id of group or @self, @friends, @all
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#Group-ID
 
-    The fetch_replies, fetch_likes, and fetch_shares kwargs all default to False
-    because they often require extra API round trips. Some sources return
-    replies, likes, and shares in the same initial call, so they may be included
-    even if you don't set their kwarg to True.
+    The fetch_* kwargs all default to False because they often require extra API
+    round trips. Some sources return replies, likes, and shares in the same
+    initial call, so they may be included even if you don't set their kwarg to
+    True.
 
     Args:
       user_id: string, defaults to the currently authenticated user
@@ -94,6 +95,7 @@ class Source(object):
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also
+      fetch_events: boolean, whether to fetch the user's events also
 
     Returns:
       response dict with values based on OpenSocial ActivityStreams REST API:
