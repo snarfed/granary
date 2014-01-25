@@ -351,6 +351,8 @@ RSVP_OBJS = [{  # ActivityStreams
       'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
       },
     }]
+RSVP_OBJ_WITH_ID = copy.deepcopy(RSVP_OBJS[0])
+RSVP_OBJ_WITH_ID['id'] = tag_uri('145304994_rsvp_11500')
 EVENT_OBJ_WITH_ATTENDEES = copy.deepcopy(EVENT_OBJ)
 EVENT_OBJ_WITH_ATTENDEES.update({
     'attending': [RSVP_OBJS[0]['actor']],
@@ -616,10 +618,11 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
 
   def test_get_rsvp(self):
-    self.expect_urlopen('https://graph.facebook.com/000/invited/456',
+    self.expect_urlopen('https://graph.facebook.com/145304994/invited/456',
                         json.dumps({'data': [RSVPS[0]]}))
     self.mox.ReplayAll()
-    self.assert_equals(RSVP_OBJS[0], self.facebook.get_rsvp('123', '000', '456'))
+    self.assert_equals(RSVP_OBJ_WITH_ID,
+                       self.facebook.get_rsvp('123', '145304994', '456'))
 
   def test_get_rsvp_not_found(self):
     self.expect_urlopen('https://graph.facebook.com/000/invited/456',
@@ -683,6 +686,10 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_rsvp_to_object(self):
     self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])
+
+  def test_rsvp_to_object_event_id(self):
+    self.assert_equals(RSVP_OBJ_WITH_ID,
+                       self.facebook.rsvp_to_object(RSVPS[0], event_id='145304994'))
 
   def test_picture_without_message(self):
     self.assert_equals({  # ActivityStreams

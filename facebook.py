@@ -209,7 +209,7 @@ class Facebook(source.Source):
     """
     url = API_RSVP_URL % (event_id, user_id)
     data = json.loads(self.urlopen(url).read()).get('data')
-    return self.rsvp_to_object(data[0]) if data else None
+    return self.rsvp_to_object(data[0], event_id=event_id) if data else None
 
   def urlopen(self, url, headers={}):
     """Wraps urllib2.urlopen() and passes through the access token.
@@ -516,18 +516,21 @@ class Facebook(source.Source):
                        'invited': 'invited',
                        }
       for rsvp in rsvps:
-        rsvp = self.rsvp_to_object(rsvp)
+        rsvp = self.rsvp_to_object(rsvp, event_id=event.get('id'))
         field = verb_to_field.get(rsvp.get('verb'))
         if field:
           obj.setdefault(field, []).append(rsvp.get('actor'))
 
     return util.trim_nulls(obj)
 
-  def rsvp_to_object(self, rsvp):
+  def rsvp_to_object(self, rsvp, event_id=None):
     """Converts an RSVP to an object.
+
+    The 'id' field will ony be filled in if event_id is provided.
 
     Args:
       rsvp: dict, a decoded JSON Facebook RSVP
+      event_id: string
 
     Returns:
       an ActivityStreams object dict
@@ -537,8 +540,13 @@ class Facebook(source.Source):
              'unsure': 'rsvp-maybe',
              'not_replied': 'invited',
              }
-    return {
+    obj = {
       'objectType': 'activity',
       'verb': verbs.get(rsvp.get('rsvp_status')),
       'actor': self.user_to_actor(rsvp),
       }
+    user_id = rsvp.get('id')
+    if event_id and user_id:
+      obj['id'] = self.tag_uri('%s_rsvp_%s' % (event_id, user_id))
+
+    return obj
