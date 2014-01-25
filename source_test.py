@@ -12,7 +12,6 @@ from webutil import testutil
 from webutil import util
 import webapp2
 
-
 LIKES = [{
     'verb': 'like',
     'author': {'id': 'tag:fake.com:5'},
@@ -30,6 +29,31 @@ ACTIVITY = {
     'tags': LIKES,
     }
   }
+RSVPS = [{
+    'objectType': 'activity',
+    'verb': 'rsvp-yes',
+    'actor': {'displayName': 'Aaron P', 'id': '11500'},
+    }, {
+    'objectType': 'activity',
+    'verb': 'rsvp-no',
+    'actor': {'displayName': 'Ryan B', 'id': '212038'},
+    }, {
+    'objectType': 'activity',
+    'verb': 'rsvp-maybe',
+    'actor': {'displayName': 'Foo', 'id': '987'},
+    }]
+EVENT = {
+  'objectType': 'event',
+  'id': '246',
+  'displayName': 'Homebrew Website Club',
+  }
+EVENT_WITH_RSVPS = copy.deepcopy(EVENT)
+EVENT_WITH_RSVPS.update({
+  'attending': [RSVPS[0]['actor']],
+  'notAttending': [RSVPS[1]['actor']],
+  'maybeAttending': [RSVPS[2]['actor']],
+  })
+
 
 class FakeSource(source.Source):
   DOMAIN = 'fake.com'
@@ -114,3 +138,15 @@ class SourceTest(testutil.HandlerTest):
                                fetch_shares=True).AndReturn([ACTIVITY])
     self.mox.ReplayAll()
     self.assert_equals(None, self.source.get_share('author', 'activity', '6'))
+
+  def test_add_rsvps_to_event(self):
+    event = copy.deepcopy(EVENT)
+    source.Source.add_rsvps_to_event(event, [])
+    self.assert_equals(EVENT, event)
+
+    source.Source.add_rsvps_to_event(event, RSVPS)
+    self.assert_equals(EVENT_WITH_RSVPS, event)
+
+  def test_get_rsvps_from_event(self):
+    self.assert_equals([], source.Source.get_rsvps_from_event(EVENT))
+    self.assert_equals(RSVPS, source.Source.get_rsvps_from_event(EVENT_WITH_RSVPS))

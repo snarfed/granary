@@ -510,16 +510,8 @@ class Facebook(source.Source):
       })
 
     if rsvps is not None:
-      verb_to_field = {'rsvp-yes': 'attending',
-                       'rsvp-no': 'notAttending',
-                       'rsvp-maybe': 'maybeAttending',
-                       'invited': 'invited',
-                       }
-      for rsvp in rsvps:
-        rsvp = self.rsvp_to_object(rsvp, event_id=event.get('id'))
-        field = verb_to_field.get(rsvp.get('verb'))
-        if field:
-          obj.setdefault(field, []).append(rsvp.get('actor'))
+      rsvps = [self.rsvp_to_object(r, event_id=event.get('id')) for r in rsvps]
+      self.add_rsvps_to_event(obj, rsvps)
 
     return util.trim_nulls(obj)
 

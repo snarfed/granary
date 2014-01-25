@@ -13,6 +13,7 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import datetime
+import itertools
 import logging
 import re
 
@@ -26,6 +27,14 @@ APP = '@app'
 
 # use this many chars from the beginning of the content in the title field.
 TITLE_LENGTH = 140
+
+RSVP_TO_EVENT = {
+  'rsvp-yes': 'attending',
+  'rsvp-no': 'notAttending',
+  'rsvp-maybe': 'maybeAttending',
+  'invited': 'invited',
+  }
+# EVENT_TO_RSVP = {field: verb for verb, field in RSVP_TO_EVENT.items()}
 
 
 class Source(object):
@@ -284,6 +293,37 @@ class Source(object):
       return True  # unset
     return '@public' in set(t.get('alias') for t in to)
 
+
+  @staticmethod
+  def add_rsvps_to_event(event, rsvps):
+    """Adds RSVP objects to an event's *attending fields, in place.
+
+    Args:
+      event: ActivityStreams event object
+      rsvps: sequence of ActivityStreams RSVP activity objects
+    """
+    for rsvp in rsvps:
+      field = RSVP_TO_EVENT.get(rsvp.get('verb'))
+      if field:
+        event.setdefault(field, []).append(rsvp.get('actor'))
+
+  @staticmethod
+  def get_rsvps_from_event(event):
+    """Returns RSVP objects for an event's *attending fields.
+
+    Args:
+      event: ActivityStreams event object
+
+    Returns: sequence of ActivityStreams RSVP activity objects
+    """
+    rsvps = []
+    for verb, field in RSVP_TO_EVENT.items():
+      rsvps += [{
+          'objectType': 'activity',
+          'verb': verb,
+          'actor': actor,
+          } for actor in event.get(field, [])]
+    return rsvps
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
