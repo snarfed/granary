@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import copy
 import json
 import mox
 
@@ -321,24 +322,6 @@ EVENT_OBJ = {  # ActivityStreams.
   'endTime': '2014-01-29T19:30:00-0800',
   'updated': '2014-01-22T01:29:15+00:00',
   'to': [{'alias': '@public', 'objectType': 'group'}],
-  # 'attending': [{
-  #     'name': 'Aaron P',
-  #     'id': tag_uri('11500'),
-  #     'url': 'http://www.facebook.com/11500',
-  #     'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
-  #     }],
-  # 'notAttending': [{
-  #     'name': 'Ryan B',
-  #     'id': tag_uri('212038'),
-  #     'url': 'http://www.facebook.com/212038',
-  #     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
-  #     }],
-  # 'maybeAttending': [{
-  #     'name': 'Foo',
-  #     'id': tag_uri('987'),
-  #     'url': 'http://www.facebook.com/987',
-  #     'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
-  #     }],
   }
 RSVP_OBJS = [{  # ActivityStreams
     'objectType': 'activity',
@@ -368,6 +351,12 @@ RSVP_OBJS = [{  # ActivityStreams
       'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
       },
     }]
+EVENT_OBJ_WITH_ATTENDEES = copy.deepcopy(EVENT_OBJ)
+EVENT_OBJ_WITH_ATTENDEES.update({
+    'attending': [RSVP_OBJS[0]['actor']],
+    'notAttending': [RSVP_OBJS[1]['actor']],
+    'maybeAttending': [RSVP_OBJS[2]['actor']],
+    })
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-03-04T18:20:37+00:00',
@@ -687,6 +676,10 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_event_to_object(self):
     self.assert_equals(EVENT_OBJ, self.facebook.event_to_object(EVENT))
+
+  def test_event_to_object_with_rsvps(self):
+    self.assert_equals(EVENT_OBJ_WITH_ATTENDEES,
+                       self.facebook.event_to_object(EVENT, rsvps=RSVPS))
 
   def test_rsvp_to_object(self):
     self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])

@@ -490,11 +490,12 @@ class Facebook(source.Source):
 
     return util.trim_nulls(actor)
 
-  def event_to_object(self, event):
+  def event_to_object(self, event, rsvps=None):
     """Converts an event to an object.
 
     Args:
       event: dict, a decoded JSON Facebook event
+      rsvps: sequence, optional Facebook RSVPs
 
     Returns:
       an ActivityStreams object dict
@@ -507,6 +508,19 @@ class Facebook(source.Source):
         'startTime': event.get('start_time'),
         'endTime': event.get('end_time'),
       })
+
+    if rsvps is not None:
+      verb_to_field = {'rsvp-yes': 'attending',
+                       'rsvp-no': 'notAttending',
+                       'rsvp-maybe': 'maybeAttending',
+                       'invited': 'invited',
+                       }
+      for rsvp in rsvps:
+        rsvp = self.rsvp_to_object(rsvp)
+        field = verb_to_field.get(rsvp.get('verb'))
+        if field:
+          obj.setdefault(field, []).append(rsvp.get('actor'))
+
     return util.trim_nulls(obj)
 
   def rsvp_to_object(self, rsvp):
