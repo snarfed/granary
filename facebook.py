@@ -54,6 +54,7 @@ API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d'
 # parity."
 # https://developers.facebook.com/docs/reference/api/#searching
 API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d'
+API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -196,6 +197,18 @@ class Facebook(source.Source):
       share_id: string id of the share object
     """
     return None
+
+  def get_rsvp(self, activity_user_id, event_id, user_id):
+    """Returns an ActivityStreams RSVP activity object.
+
+    Args:
+      activity_user_id: string id of the user who posted the event
+      event_id: string event id
+      user_id: string user id
+    """
+    url = API_RSVP_URL % (event_id, user_id)
+    data = json.loads(self.urlopen(url).read()).get('data')
+    return self.rsvp_to_object(data[0]) if data else None
 
   def urlopen(self, url, headers={}):
     """Wraps urllib2.urlopen() and passes through the access token.

@@ -626,6 +626,18 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
 
+  def test_get_rsvp(self):
+    self.expect_urlopen('https://graph.facebook.com/000/invited/123',
+                        json.dumps({'data': [RSVPS[0]]}))
+    self.mox.ReplayAll()
+    self.assert_equals(RSVP_OBJS[0], self.facebook.get_rsvp('000', '123'))
+
+  def test_get_rsvp_not_found(self):
+    self.expect_urlopen('https://graph.facebook.com/000/invited/123',
+                        json.dumps({'data': []}))
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.facebook.get_rsvp('000', '123'))
+
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
 

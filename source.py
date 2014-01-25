@@ -171,6 +171,16 @@ class Source(object):
                                      fetch_shares=True)
     return self._get_tag(activities, 'share', share_id)
 
+  def get_rsvp(self, activity_user_id, event_id, user_id):
+    """Returns an ActivityStreams 'rsvp-*' activity object.
+
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      event_id: string event id
+      user_id: string id of the user who RSVPed
+    """
+    raise NotImplementedError()
+
   def _get_tag(self, activities, verb, user_id):
     if not activities:
       return None
