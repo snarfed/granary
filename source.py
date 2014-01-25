@@ -254,7 +254,7 @@ class Source(object):
     Args:
       activity: activity dict
     """
-    obj = activity['object']
+    obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
 
     # Permashortcitations are short references to canonical copies of a given

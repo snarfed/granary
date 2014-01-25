@@ -516,6 +516,20 @@ class Facebook(source.Source):
 
     return util.trim_nulls(obj)
 
+  def event_to_activity(self, event, rsvps=None):
+    """Converts a event to an activity.
+
+    Args:
+      event: dict, a decoded JSON event
+
+    Returns: an ActivityStreams activity dict
+    """
+    obj = self.event_to_object(event, rsvps=rsvps)
+    return {'object': obj,
+            'id': obj.get('id'),
+            'url': obj.get('url'),
+            }
+
   def rsvp_to_object(self, rsvp, event_id=None):
     """Converts an RSVP to an object.
 

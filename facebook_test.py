@@ -323,7 +323,7 @@ EVENT_OBJ = {  # ActivityStreams.
   'updated': '2014-01-22T01:29:15+00:00',
   'to': [{'alias': '@public', 'objectType': 'group'}],
   }
-RSVP_OBJS_WITH_ID = [{  # ActivityStreams
+RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_11500'),
     'objectType': 'activity',
     'verb': 'rsvp-yes',
@@ -363,6 +363,11 @@ EVENT_OBJ_WITH_ATTENDEES.update({
     'notAttending': [RSVP_OBJS[1]['actor']],
     'maybeAttending': [RSVP_OBJS[2]['actor']],
     })
+EVENT_ACTIVITY_WITH_ATTENDEES = {  # ActivityStreams
+  'id': tag_uri('145304994'),
+  'url': 'http://facebook.com/145304994',
+  'object': EVENT_OBJ_WITH_ATTENDEES,
+}
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-03-04T18:20:37+00:00',
@@ -687,6 +692,14 @@ class FacebookTest(testutil.HandlerTest):
   def test_event_to_object_with_rsvps(self):
     self.assert_equals(EVENT_OBJ_WITH_ATTENDEES,
                        self.facebook.event_to_object(EVENT, rsvps=RSVPS))
+
+  def test_event_to_object_with_rsvps(self):
+    self.assert_equals(EVENT_OBJ_WITH_ATTENDEES,
+                       self.facebook.event_to_object(EVENT, rsvps=RSVPS))
+
+  def test_event_to_activity_with_rsvps(self):
+    self.assert_equals(EVENT_ACTIVITY_WITH_ATTENDEES,
+                       self.facebook.event_to_activity(EVENT, rsvps=RSVPS))
 
   def test_rsvp_to_object(self):
     self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])
