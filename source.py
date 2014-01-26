@@ -315,9 +315,10 @@ class Source(object):
 
     Returns: sequence of ActivityStreams RSVP activity objects
     """
-    event_id = event.get('id')
-    if event_id:
-      domain, event_id = util.parse_tag_uri(event_id)
+    parsed = util.parse_tag_uri(event.get('id'))
+    if not parsed:
+      return []
+    domain, event_id = parsed
 
     rsvps = []
     for verb, field in RSVP_TO_EVENT.items():

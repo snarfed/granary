@@ -152,3 +152,8 @@ class SourceTest(testutil.HandlerTest):
   def test_get_rsvps_from_event(self):
     self.assert_equals([], source.Source.get_rsvps_from_event(EVENT))
     self.assert_equals(RSVPS, source.Source.get_rsvps_from_event(EVENT_WITH_RSVPS))
+
+  def test_get_rsvps_from_event_bad_id(self):
+    event = copy.deepcopy(EVENT)
+    event['id'] = 'not_a_tag_uri'
+    self.assert_equals([], source.Source.get_rsvps_from_event(event))
