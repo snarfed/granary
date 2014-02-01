@@ -128,7 +128,7 @@ class GooglePlusTest(testutil.HandlerTest):
   def setUp(self):
     super(GooglePlusTest, self).setUp()
     self.auth_entity = oauth_googleplus.GooglePlusAuth(
-      key_name='my_key_name',
+      id='my_string_id',
       user_json=json.dumps({
           'displayName': 'Bob',
           }),

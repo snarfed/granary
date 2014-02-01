@@ -133,6 +133,7 @@ class Facebook(source.Source):
     them from the API. The sharedposts field / edge seems promising, but I
     haven't been able to get it to work, even with the read_stream OAuth scope.
     http://stackoverflow.com/questions/17373204/information-of-re-shared-status
+    http://stackoverflow.com/a/17533380/186123
     """
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
