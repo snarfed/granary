@@ -171,9 +171,7 @@ def json_to_html(obj):
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
                            for url in props['in-reply-to'])
 
-  # extract first value from multiply valued properties
-  prop = {k: v[0] if v else '' for k, v in props.items()}
-
+  prop = first_props(props)
   author = prop['author']
   if author:
     author['type'].append('p-author')
@@ -184,12 +182,15 @@ def json_to_html(obj):
   # rsvp
   rsvp = prop.get('rsvp')
   if rsvp:
-    descriptions = {'yes': 'is attending',
-                    'no': 'is not attending',
-                    'maybe': 'might attend',
-                    'invited': 'is invited'}
-    content_html = '<data class="p-rsvp" value="%s">%s.</data>' % (
-      rsvp, descriptions.get(rsvp, ''))
+    description = {'yes': 'is attending',
+                   'no': 'is not attending',
+                   'maybe': 'might attend',
+                   'invited': 'is invited'}.get(rsvp, '')
+    if not content_html:
+      content_html = '<data class="p-rsvp" value="%s">%s.</data>' % (
+        rsvp, description)
+    if not prop.get('name'):
+      prop['name'] = '%s %s' % (author_display_name(author), description)
 
   # if this post is itself a like or repost, link to its target(s).
   likes_and_reposts = []
@@ -242,7 +243,7 @@ def hcard_to_html(hcard):
     return ''
 
   # extract first value from multiply valued properties
-  props = {k: v[0] if v else '' for k, v in hcard['properties'].items()}
+  props = first_props(hcard['properties'])
   photo = (PHOTO.substitute(url=props['photo'], alt=props.get('name', '-'))
            if props['photo'] else '')
   return HCARD.substitute(props,
@@ -345,6 +346,20 @@ def object_type(obj):
   return type if type != 'activity' else obj.get('verb')
 
 
+def first_props(props):
+  """Converts a multiply-valued dict to singly valued.
+
+  Args:
+    props: dict of properties, where each value is a sequence
+
+  Returns: corresponding dict with just the first value of each sequence, or ''
+    if the sequence is empty
+  """
+  if not props:
+    return {}
+  return {k: v[0] if v else '' for k, v in props.items()}
+
+
 def tags_to_html(tags, classname):
   """Returns an HTML string with links to the given tag objects.
 
@@ -359,6 +374,15 @@ def tags_to_html(tags, classname):
             '</p>')
   else:
     return ''
+
+
+def author_display_name(hcard):
+  """Returns a human-readable string display name for an h-card object."""
+  name = None
+  if hcard:
+    props = first_props(hcard.get('properties'))
+    name = props.get('name', props.get('uid'))
+  return name if name else 'Unknown'
 
 
 def maybe_linked_name(props):
