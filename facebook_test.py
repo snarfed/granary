@@ -327,6 +327,7 @@ RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_11500'),
     'objectType': 'activity',
     'verb': 'rsvp-yes',
+    'url': 'http://facebook.com/145304994#11500',
     'actor': {
       'displayName': 'Aaron P',
       'id': tag_uri('11500'),
@@ -337,6 +338,7 @@ RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_212038'),
     'objectType': 'activity',
     'verb': 'rsvp-no',
+    'url': 'http://facebook.com/145304994#212038',
     'actor': {
       'displayName': 'Ryan B',
       'id': tag_uri('212038'),
@@ -347,6 +349,7 @@ RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_987'),
     'objectType': 'activity',
     'verb': 'rsvp-maybe',
+    'url': 'http://facebook.com/145304994#987',
     'actor': {
       'displayName': 'Foo',
       'id': tag_uri('987'),
@@ -357,6 +360,7 @@ RSVP_OBJS_WITH_ID = [{
 RSVP_OBJS = copy.deepcopy(RSVP_OBJS_WITH_ID)
 for obj in RSVP_OBJS:
   del obj['id']
+  del obj['url']
 EVENT_OBJ_WITH_ATTENDEES = copy.deepcopy(EVENT_OBJ)
 EVENT_OBJ_WITH_ATTENDEES.update({
     'attending': [RSVP_OBJS[0]['actor']],

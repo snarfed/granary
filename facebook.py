@@ -556,5 +556,6 @@ class Facebook(source.Source):
     user_id = rsvp.get('id')
     if event_id and user_id:
       obj['id'] = self.tag_uri('%s_rsvp_%s' % (event_id, user_id))
+      obj['url'] = 'http://facebook.com/%s#%s' % (event_id, user_id)
 
     return obj
