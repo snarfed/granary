@@ -166,6 +166,7 @@ COMMENT_OBJS = [  # ActivityStreams
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       'url': 'http://facebook.com/212038',
       },
+    'displayName': 'cc Sam G, Michael M',
     'content': 'cc Sam G, Michael M',
     'id': tag_uri('547822715231468_6796480'),
     'published': '2012-12-05T00:58:26+00:00',
@@ -196,6 +197,7 @@ COMMENT_OBJS = [  # ActivityStreams
       'image': {'url': 'http://graph.facebook.com/513046677/picture?type=large'},
       'url': 'http://facebook.com/513046677',
       },
+    'displayName': 'Foo bar!',
     'content': 'Foo bar!',
     'id': tag_uri('124561947600007_672819'),
     'published': '2010-10-28T00:23:04+00:00',
@@ -216,6 +218,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'http://facebook.com/100004',
       'image': {'url': 'http://graph.facebook.com/100004/picture?type=large'},
       },
+    'displayName': 'Alice X likes this.',
     'content': 'likes this.',
     }, {
     'id': tag_uri('10100176064482163_liked_by_683713'),
@@ -229,6 +232,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'http://facebook.com/683713',
       'image': {'url': 'http://graph.facebook.com/683713/picture?type=large'},
       },
+    'displayName': 'Bob Y likes this.',
     'content': 'likes this.',
     },
   ]
@@ -240,6 +244,7 @@ POST_OBJ = {  # ActivityStreams
     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
     'url': 'http://facebook.com/212038',
     },
+  'displayName': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block...',
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
   'id': tag_uri('10100176064482163'),
   'published': '2012-03-04T18:20:37+00:00',
@@ -380,7 +385,7 @@ ACTIVITY = {  # ActivityStreams
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
-  'title': 'Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
+  'title': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block...',
   'generator': {
     'displayName': 'Facebook for Android',
     'id': tag_uri('350685531728'),
@@ -431,7 +436,7 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/image
   </activity:object-type>
   <id>""" + tag_uri('10100176064482163') + """</id>
-  <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.</title>
+  <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block...</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
@@ -517,16 +522,18 @@ class FacebookTest(testutil.HandlerTest):
          'object': {'content': 'foo',
                     'id': tag_uri('2'),
                     'objectType': 'note',
-                     'url': 'http://facebook.com/2'},
-         'title': 'Unknown: foo',
+                    'displayName': 'foo',
+                    'url': 'http://facebook.com/2'},
+         'title': 'foo',
          'url': 'http://facebook.com/2',
          'verb': 'post'},
         {'id': tag_uri('4'),
          'object': {'content': 'bar',
                     'id': tag_uri('4'),
                     'objectType': 'note',
+                    'displayName': 'bar',
                     'url': 'http://facebook.com/4'},
-         'title': 'Unknown: bar',
+         'title': 'bar',
          'url': 'http://facebook.com/4',
          'verb': 'post'}],
       self.facebook.get_activities())
@@ -767,6 +774,7 @@ class FacebookTest(testutil.HandlerTest):
         'id': tag_uri('101007473698067'),
         'url': 'http://facebook.com/101007473698067',
         'objectType': 'note',
+        'displayName': 'Once upon a time.',
         'content': 'Once upon a time.',
       }, self.facebook.post_to_object({
         'id': '101007473698067',
@@ -778,6 +786,7 @@ class FacebookTest(testutil.HandlerTest):
         'id': tag_uri('101007473698067'),
         'url': 'http://facebook.com/101007473698067',
         'objectType': 'note',
+        'displayName': 'Once upon a time.',
         'content': 'Once upon a time.',
       }, self.facebook.post_to_object({
         'id': '101007473698067',
@@ -835,7 +844,7 @@ class FacebookTest(testutil.HandlerTest):
         'generator': {'displayName': 'Rdio', 'id': tag_uri('88888')},
         })
     activity['object'].update({
-        'title': "Unknown listened to The Rifle's Spiral on Rdio.",
+        'displayName': "Unknown listened to The Rifle's Spiral on Rdio.",
         'content': "Unknown listened to The Rifle's Spiral on Rdio.",
         })
     post.update({

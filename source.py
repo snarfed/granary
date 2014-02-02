@@ -25,9 +25,6 @@ ALL = '@all'
 FRIENDS = '@friends'
 APP = '@app'
 
-# use this many chars from the beginning of the content in the title field.
-TITLE_LENGTH = 140
-
 RSVP_TO_EVENT = {
   'rsvp-yes': 'attending',
   'rsvp-no': 'notAttending',
@@ -209,6 +206,7 @@ class Source(object):
     Args:
       activity: activity dict
     """
+    activity = util.trim_nulls(activity)
     # maps object type to human-readable name to use in title
     TYPE_DISPLAY_NAMES = {'image': 'photo', 'product': 'gift'}
 
@@ -216,28 +214,41 @@ class Source(object):
     DISPLAY_VERBS = {'like': 'likes', 'listen': 'listened to',
                      'play': 'watched', 'read': 'read', 'give': 'gave'}
 
-    activity = util.trim_nulls(activity)
-    content = activity.get('object', {}).get('content')
     actor_name = self.actor_name(activity.get('actor'))
-    object = activity.get('object')
+    obj = activity.get('object')
 
-    if 'title' not in activity:
-      if content:
-        activity['title'] = '%s%s%s' % (
-          actor_name + ': ' if actor_name else '',
-          content[:TITLE_LENGTH],
-          '...' if len(content) > TITLE_LENGTH else '')
-      elif object:
+    if obj and not activity.get('title'):
+      verb = DISPLAY_VERBS.get(activity['verb'])
+      obj_name = obj.get('displayName')
+      if obj_name and not verb:
+        activity['title'] = obj_name
+      else:
         app = activity.get('generator', {}).get('displayName')
-        obj_name = object.get('displayName')
-        obj_type = TYPE_DISPLAY_NAMES.get(object.get('objectType'), 'unknown')
-        activity['title'] = '%s %s %s%s.' % (
-          actor_name,
-          DISPLAY_VERBS.get(activity['verb'], 'posted'),
-          obj_name if obj_name else 'a %s' % obj_type,
-          ' on %s' % app if app else '')
+        obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'), 'unknown')
+        name = obj_name if obj_name else 'a %s' % obj_type
+        app = ' on %s' % app if app else ''
+        activity['title'] = '%s %s %s%s.' % (actor_name, verb or 'posted',
+                                             name, app)
 
-    return activity
+    return util.trim_nulls(activity)
+
+  def postprocess_object(self, obj):
+    """Does source-independent post-processing of an object, in place.
+
+    Right now just populates the displayName field.
+
+    Args:
+      object: object dict
+    """
+    content = obj.get('content')
+    if content and not obj.get('displayName'):
+      if obj.get('verb') in ('like', 'repost'):
+        name = obj.get('author', {}).get('displayName') or 'Unknown'
+        obj['displayName'] = '%s %s' % (name, content)
+      else:
+        obj['displayName'] = util.ellipsize(content)
+
+    return util.trim_nulls(obj)
 
   _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 

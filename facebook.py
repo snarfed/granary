@@ -249,7 +249,7 @@ class Facebook(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     id = None
-    if 'id' in post:
+    if post.get('id'):
       # strip USERID_ prefix if it's there
       post['id'] = post['id'].split('_', 1)[-1]
       id = post['id']
@@ -343,16 +343,16 @@ class Facebook(source.Source):
     tags = itertools.chain(post.get('to', {}).get('data', []),
                            post.get('with_tags', {}).get('data', []),
                            *post.get('message_tags', {}).values())
-    obj['tags'] = [{
+    obj['tags'] = [self.postprocess_object({
         'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
         'id': self.tag_uri(t.get('id')),
         'url': 'http://facebook.com/%s' % t.get('id'),
         'displayName': t.get('name'),
         'startIndex': t.get('offset'),
         'length': t.get('length'),
-        } for t in tags]
+        }) for t in tags]
 
-    obj['tags'] += [{
+    obj['tags'] += [self.postprocess_object({
         'id': self.tag_uri('%s_liked_by_%s' % (id, like.get('id'))),
         'url': url,
         'objectType': 'activity',
@@ -360,7 +360,7 @@ class Facebook(source.Source):
         'object': {'url': url},
         'author': self.user_to_actor(like),
         'content': 'likes this.',
-        } for like in post.get('likes', {}).get('data', [])]
+        }) for like in post.get('likes', {}).get('data', [])]
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
@@ -391,7 +391,7 @@ class Facebook(source.Source):
       obj['location'] = {
         'displayName': place.get('name'),
         'id': id,
-        'url': 'http://facebook.com/' + id,
+        'url': 'http://facebook.com/%s' % id,
         }
       location = place.get('location', None)
       if isinstance(location, dict):
@@ -418,7 +418,7 @@ class Facebook(source.Source):
         'totalItems': len(items),
         }
 
-    return util.trim_nulls(obj)
+    return self.postprocess_object(obj)
 
   COMMENT_ID_RE = re.compile('(\d+_)?(\d+)_(\d+)')
 
@@ -449,7 +449,7 @@ class Facebook(source.Source):
       obj['url'] = 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
       obj['inReplyTo'] = [{'id': self.tag_uri(post_id)}]
 
-    return obj
+    return self.postprocess_object(obj)
 
   def user_to_actor(self, user):
     """Converts a user to an actor.
@@ -515,7 +515,7 @@ class Facebook(source.Source):
       rsvps = [self.rsvp_to_object(r, event_id=event.get('id')) for r in rsvps]
       self.add_rsvps_to_event(obj, rsvps)
 
-    return util.trim_nulls(obj)
+    return self.postprocess_object(obj)
 
   def event_to_activity(self, event, rsvps=None):
     """Converts a event to an activity.
@@ -558,4 +558,4 @@ class Facebook(source.Source):
       obj['id'] = self.tag_uri('%s_rsvp_%s' % (event_id, user_id))
       obj['url'] = 'http://facebook.com/%s#%s' % (event_id, user_id)
 
-    return obj
+    return self.postprocess_object(obj)
