@@ -10,6 +10,10 @@
         "name": ["Alice"],
         "url": ["http://example.com/alice"]
       }
-    }]
+    }],
+    "name": ["Alice is attending."],
+    "content": [{
+      "html": "<data class='p-rsvp' value='yes'>is attending.</data>",
+      "value": "<data class='p-rsvp' value='yes'>is attending.</data>"}]
   }
 }

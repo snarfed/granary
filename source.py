@@ -29,7 +29,13 @@ RSVP_TO_EVENT = {
   'rsvp-yes': 'attending',
   'rsvp-no': 'notAttending',
   'rsvp-maybe': 'maybeAttending',
-  'invited': 'invited',
+  'invite': 'invited',
+  }
+RSVP_CONTENTS = {
+  'rsvp-yes': 'is attending.',
+  'rsvp-no': 'is not attending.',
+  'rsvp-maybe': 'might attend.',
+  'invite': 'is invited.',
   }
 
 
@@ -240,10 +246,23 @@ class Source(object):
     Args:
       object: object dict
     """
+    verb = obj.get('verb')
     content = obj.get('content')
+    rsvp_content = RSVP_CONTENTS.get(verb)
+
+    if rsvp_content and not content:
+      if verb.startswith('rsvp-'):
+        content = obj['content'] = '<data class="p-rsvp" value="%s">%s</data>' % (
+          verb.split('-')[1], rsvp_content)
+      else:
+        content = obj['content'] = rsvp_content
+
     if content and not obj.get('displayName'):
-      if obj.get('verb') in ('like', 'share'):
-        obj['displayName'] = '%s %s' % (self.actor_name(obj.get('author')), content)
+      actor_name = self.actor_name(obj.get('author') or obj.get('actor'))
+      if verb in ('like', 'share'):
+        obj['displayName'] = '%s %s' % (actor_name, content)
+      elif rsvp_content:
+        obj['displayName'] = '%s %s' % (actor_name, rsvp_content)
       else:
         obj['displayName'] = util.ellipsize(content)
 

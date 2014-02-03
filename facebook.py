@@ -546,7 +546,7 @@ class Facebook(source.Source):
     verbs = {'attending': 'rsvp-yes',
              'declined': 'rsvp-no',
              'unsure': 'rsvp-maybe',
-             'not_replied': 'invited',
+             'not_replied': 'invite',
              }
     obj = {
       'objectType': 'activity',

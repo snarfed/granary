@@ -179,19 +179,6 @@ def json_to_html(obj):
   content = prop.get('content', {})
   content_html = content.get('html') or content.get('value')
 
-  # rsvp
-  rsvp = prop.get('rsvp')
-  if rsvp:
-    description = {'yes': 'is attending',
-                   'no': 'is not attending',
-                   'maybe': 'might attend',
-                   'invited': 'is invited'}.get(rsvp, '')
-    if not content_html:
-      content_html = '<data class="p-rsvp" value="%s">%s.</data>' % (
-        rsvp, description)
-    if not prop.get('name'):
-      prop['name'] = '%s %s' % (author_display_name(author), description)
-
   # if this post is itself a like or repost, link to its target(s).
   likes_and_reposts = []
   for verb in 'like', 'repost':

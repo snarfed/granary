@@ -6,5 +6,7 @@
     "displayName": "Alice",
     "url": "http://example.com/alice"
   },
+  "displayName": "Alice is attending.",
+  "content": "<data class='p-rsvp' value='yes'>is attending.</data>",
   "object": {"url": "http://example.com/event"}
 }

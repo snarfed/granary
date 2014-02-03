@@ -155,6 +155,7 @@ RSVPS = [  # Facebook; returned by /[event id]/attending (also declined, maybe)
   {'name': 'Aaron P', 'rsvp_status': 'attending', 'id': '11500'},
   {'name': 'Ryan B', 'rsvp_status': 'declined', 'id': '212038'},
   {'name': 'Foo', 'rsvp_status': 'unsure', 'id': '987'},
+  {'name': 'Bar', 'rsvp_status': 'not_replied', 'id': '654'},
   ]
 
 COMMENT_OBJS = [  # ActivityStreams
@@ -339,6 +340,8 @@ RSVP_OBJS_WITH_ID = [{
       'url': 'http://facebook.com/11500',
       'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
       },
+    'displayName': 'Aaron P is attending.',
+    'content': '<data class="p-rsvp" value="yes">is attending.</data>',
     }, {
     'id': tag_uri('145304994_rsvp_212038'),
     'objectType': 'activity',
@@ -350,6 +353,8 @@ RSVP_OBJS_WITH_ID = [{
       'url': 'http://facebook.com/212038',
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       },
+    'displayName': 'Ryan B is not attending.',
+    'content': '<data class="p-rsvp" value="no">is not attending.</data>',
     }, {
     'id': tag_uri('145304994_rsvp_987'),
     'objectType': 'activity',
@@ -361,6 +366,21 @@ RSVP_OBJS_WITH_ID = [{
       'url': 'http://facebook.com/987',
       'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
       },
+    'displayName': 'Foo might attend.',
+    'content': '<data class="p-rsvp" value="maybe">might attend.</data>',
+    }, {
+    'id': tag_uri('145304994_rsvp_654'),
+    'objectType': 'activity',
+    'verb': 'invite',
+    'url': 'http://facebook.com/145304994#654',
+    'actor': {
+      'displayName': 'Bar',
+      'id': tag_uri('654'),
+      'url': 'http://facebook.com/654',
+      'image': {'url': 'http://graph.facebook.com/654/picture?type=large'},
+      },
+    'displayName': 'Bar is invited.',
+    'content': 'is invited.',
     }]
 RSVP_OBJS = copy.deepcopy(RSVP_OBJS_WITH_ID)
 for obj in RSVP_OBJS:
@@ -371,6 +391,7 @@ EVENT_OBJ_WITH_ATTENDEES.update({
     'attending': [RSVP_OBJS[0]['actor']],
     'notAttending': [RSVP_OBJS[1]['actor']],
     'maybeAttending': [RSVP_OBJS[2]['actor']],
+    'invited': [RSVP_OBJS[3]['actor']],
     })
 EVENT_ACTIVITY_WITH_ATTENDEES = {  # ActivityStreams
   'id': tag_uri('145304994'),
