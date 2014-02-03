@@ -103,6 +103,7 @@ TWEET = {  # Twitter
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
+  'displayName': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41',
@@ -171,7 +172,7 @@ ACTIVITY = {  # ActivityStreams
   'url': 'http://twitter.com/snarfed_org/status/100',
   'actor': ACTOR,
   'object': OBJECT,
-  'title': 'Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
+  'title': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : [{
@@ -221,6 +222,7 @@ ACTIVITY_WITH_REPLIES['object']['replies'] = {
         'username': 'alice',
         'url': 'http://twitter.com/alice',
         },
+      'displayName': 'reply 200',
       'content': 'reply 200',
       'url': 'http://twitter.com/alice/status/200',
       }, {
@@ -231,6 +233,7 @@ ACTIVITY_WITH_REPLIES['object']['replies'] = {
         'username': 'bob',
         'url': 'http://twitter.com/bob',
         },
+      'displayName': 'reply 300',
       'content': 'reply 300',
       'url': 'http://twitter.com/bob/status/300',
       }, {
@@ -241,6 +244,7 @@ ACTIVITY_WITH_REPLIES['object']['replies'] = {
         'username': 'snarfed_org',
         'url': 'http://twitter.com/snarfed_org',
         },
+      'displayName': 'reply 400',
       'content': 'reply 400',
       'url': 'http://twitter.com/snarfed_org/status/400',
       }, {
@@ -251,6 +255,7 @@ ACTIVITY_WITH_REPLIES['object']['replies'] = {
         'username': 'alice',
         'url': 'http://twitter.com/alice',
         },
+      'displayName': 'reply 500',
       'content': 'reply 500',
       'url': 'http://twitter.com/alice/status/500',
       }],
@@ -310,6 +315,7 @@ SHARES = [{  # ActivityStreams
       'url': 'http://twitter.com/alizz',
       'image': {'url': 'http://alice/picture'},
       },
+    'displayName': 'Alice retweeted this.',
     'content': '<a href="http://twitter.com/alizz/status/123">retweeted this.</a>',
     'published': '2013-02-24T20:26:41',
     }, {
@@ -325,6 +331,7 @@ SHARES = [{  # ActivityStreams
       'url': 'http://twitter.com/bobbb',
       'image': {'url': 'http://bob/picture'},
       },
+    'displayName': 'Bob retweeted this.',
     'content': '<a href="http://twitter.com/bobbb/status/456">retweeted this.</a>',
     'published': '2013-02-26T20:26:41',
     }]
@@ -353,6 +360,7 @@ LIKE = {  # ActivityStreams
     'username': 'eve',
     'url': 'http://twitter.com/eve',
     },
+  'displayName': 'eve favorited this.',
   'content': 'favorited this.',
   'published': '2013-12-27T17:25:55',
   }
@@ -501,7 +509,6 @@ class TwitterTest(testutil.HandlerTest):
     tweet2['user']['name'] = 'foo'
     activity2 = copy.deepcopy(ACTIVITY)
     activity2['actor']['displayName'] = 'foo'
-    activity2['title'] = activity2['title'].replace('Ryan Barrett: ', 'foo: ')
 
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/home_timeline.json?'

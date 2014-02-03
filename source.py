@@ -243,8 +243,7 @@ class Source(object):
     content = obj.get('content')
     if content and not obj.get('displayName'):
       if obj.get('verb') in ('like', 'repost'):
-        name = obj.get('author', {}).get('displayName') or 'Unknown'
-        obj['displayName'] = '%s %s' % (name, content)
+        obj['displayName'] = '%s %s' % (self.actor_name(obj.get('author')), content)
       else:
         obj['displayName'] = util.ellipsize(content)
 
@@ -284,7 +283,9 @@ class Source(object):
   @staticmethod
   def actor_name(actor):
     """Returns the given actor's name if available, otherwise Unknown."""
-    return actor.get('displayName', 'Unknown') if actor else 'Unknown'
+    if actor:
+      return actor.get('displayName') or actor.get('username') or 'Unknown'
+    return 'Unknown'
 
   @staticmethod
   def is_public(obj):

@@ -409,7 +409,7 @@ class Twitter(source.Source):
           obj['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
                                        tuple(coords))
 
-    return util.trim_nulls(obj)
+    return self.postprocess_object(obj)
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.
@@ -458,12 +458,15 @@ class Twitter(source.Source):
         'verb': 'share',
         'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
                                           orig.get('id_str'))},
+        # postprocess_object() populates displayName based on content, but we
+        # want to override it to omit the link.
+        'displayName': '%s retweeted this.' % self.actor_name(share.get('author')),
         'content': content,
         })
     if 'tags' in share:
       # the existing tags apply to the original tweet's text, which we replaced
       del share['tags']
-    return share
+    return self.postprocess_object(share)
 
   def streaming_event_to_object(self, event):
     """Converts a Streaming API event to an object.
@@ -484,7 +487,7 @@ class Twitter(source.Source):
       tweet_id = tweet.get('id_str')
       id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, source.get('id_str')))
       url = self.status_url(event.get('target').get('screen_name'), tweet_id)
-      return {
+      return self.postprocess_object({
         'id': id,
         'url': url,
         'objectType': 'activity',
@@ -493,7 +496,7 @@ class Twitter(source.Source):
         'author': self.user_to_actor(source),
         'content': 'favorited this.',
         'published': self.rfc2822_to_iso8601(event.get('created_at')),
-        }
+        })
 
   @staticmethod
   def rfc2822_to_iso8601(time_str):
