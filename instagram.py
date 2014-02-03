@@ -218,15 +218,8 @@ class Instagram(source.Source):
           } for tag in getattr(media, 'tags', [])] +
         [self.user_to_actor(user.user)
          for user in getattr(media, 'users_in_photo', [])] +
-        [{
-          'id': self.tag_uri('%s_liked_by_%s' % (id, like.id)),
-          'url': media.link,
-          'objectType': 'activity',
-          'verb': 'like',
-          'object': {'url': media.link},
-          'author': self.user_to_actor(like),
-          'content': 'likes this.',
-          } for like in getattr(media, 'likes', [])],
+        [self.like_to_object(user, id, media.link)
+         for user in getattr(media, 'likes', [])],
       }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
@@ -235,7 +228,7 @@ class Instagram(source.Source):
         object['image'] = {'url': image.url}
         break
 
-    return util.trim_nulls(object)
+    return self.postprocess_object(object)
 
   def comment_to_object(self, comment, media_id, media_url):
     """Converts a comment to an object.
@@ -248,7 +241,7 @@ class Instagram(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    return {
+    return self.postprocess_object({
       'objectType': 'comment',
       'id': self.tag_uri(comment.id),
       'inReplyTo': [{'id': self.tag_uri(media_id)}],
@@ -258,13 +251,34 @@ class Instagram(source.Source):
       'content': comment.text,
       'author': self.user_to_actor(comment.user),
       'to': [{'objectType':'group', 'alias':'@public'}],
-      }
+      })
+
+  def like_to_object(self, liker, media_id, media_url):
+    """Converts a like to an object.
+
+    Args:
+      liker: python_instagram.models.User
+      media_id: string
+      media_url: string
+
+    Returns:
+      an ActivityStreams object dict, ready to be JSON-encoded
+    """
+    return self.postprocess_object({
+        'id': self.tag_uri('%s_liked_by_%s' % (media_id, liker.id)),
+        'url': media_url,
+        'objectType': 'activity',
+        'verb': 'like',
+        'object': {'url': media_url},
+        'author': self.user_to_actor(liker),
+        'content': 'likes this.',
+        })
 
   def user_to_actor(self, user):
     """Converts a user to an actor.
 
     Args:
-      user: python_instagram.models.Comment
+      user: python_instagram.models.User
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
