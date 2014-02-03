@@ -280,7 +280,7 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
   <id>""" + tag_uri('123_456') + """</id>
-  <title>Ryan B: this picture is #abc #xyz</title>
+  <title>this picture is #abc #xyz</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">

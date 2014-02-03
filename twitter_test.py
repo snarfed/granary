@@ -410,7 +410,7 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>""" + tag_uri('100') + """</id>
-  <title>Ryan Barrett: @twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]</title>
+  <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">

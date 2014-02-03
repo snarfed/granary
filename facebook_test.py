@@ -436,7 +436,7 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/image
   </activity:object-type>
   <id>""" + tag_uri('10100176064482163') + """</id>
-  <title>Ryan Barrett: Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block...</title>
+  <title>Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block...</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
