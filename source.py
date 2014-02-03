@@ -242,7 +242,7 @@ class Source(object):
     """
     content = obj.get('content')
     if content and not obj.get('displayName'):
-      if obj.get('verb') in ('like', 'repost'):
+      if obj.get('verb') in ('like', 'share'):
         obj['displayName'] = '%s %s' % (self.actor_name(obj.get('author')), content)
       else:
         obj['displayName'] = util.ellipsize(content)

@@ -56,6 +56,7 @@ COMMENT_GP = {  # Google+
 COMMENT_AS = copy.deepcopy(COMMENT_GP)
 COMMENT_AS.update({  # ActivityStreams
     'author': COMMENT_AS.pop('actor'),
+    'displayName': 'my content',
     'content': 'my content',
     'id': tag_uri('888'),
     'url': 'http://post/url',
@@ -81,6 +82,7 @@ LIKE = {  # ActivityStreams
     'url': 'https://profiles.google.com/alice',
     'image': {'url': 'https://alice/picture'},
     },
+  'displayName': 'Alice +1ed this.',
   'content': '+1ed this.',
   }
 RESHARER = {  # Google+
@@ -103,6 +105,7 @@ SHARE = {  # ActivityStreams
     'url': 'https://plus.google.com/bob',
     'image': {'url': 'https://bob/picture'},
     },
+  'displayName': 'Bob reshared this.',
   'content': 'reshared this.',
   }
 
@@ -197,6 +200,7 @@ class GooglePlusTest(testutil.HandlerTest):
                                          fetch_shares=True)
     self.assert_equals([ACTIVITY_AS_EXTRAS], got)
 
+    # TODO: resurrect?
   # def test_get_activities_request_etag(self):
   #   self.init()
   #   http_seq = http.HttpMockSequence(

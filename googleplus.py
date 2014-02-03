@@ -102,9 +102,8 @@ class GooglePlus(source.Source):
         call = self.auth_entity.api().comments().list(
           activityId=activity['id'], maxResults=500)
         comments = call.execute(self.auth_entity.http())
-        for comment in comments['items']:
-          self.postprocess_comment(comment)
-        obj['replies']['items'] = comments['items']
+        obj['replies']['items'] = [
+          self.postprocess_comment(c) for c in comments['items']]
 
       # likes, reshares
       if fetch_likes and obj.get('plusoners', {}).get('totalItems') > 0:
@@ -128,8 +127,7 @@ class GooglePlus(source.Source):
     # https://developers.google.com/+/api/latest/comments
     call = self.auth_entity.api().comments().get(commentId=comment_id)
     cmt = call.execute(self.auth_entity.http())
-    self.postprocess_comment(cmt)
-    return cmt
+    return self.postprocess_comment(cmt)
 
   def postprocess_activity(self, activity):
     """Massage G+'s ActivityStreams dialect into our dialect, in place.
@@ -156,6 +154,7 @@ class GooglePlus(source.Source):
     comment['id'] = self.tag_uri(comment['id'])
     # G+ comments don't have their own permalinks. :/ so, use the post's.
     comment['url'] = comment['inReplyTo'][0]['url']
+    return self.postprocess_object(comment)
 
   def add_tags(self, activity, collection, verb):
     """Fetches and adds 'like' or 'share' tags to an activity.
@@ -182,7 +181,7 @@ class GooglePlus(source.Source):
     for person in persons:
       person_id = person['id']
       person['id'] = self.tag_uri(person['id'])
-      tags.append({
+      tags.append(self.postprocess_object({
         'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
         'objectType': 'activity',
         'verb': verb,
@@ -190,6 +189,6 @@ class GooglePlus(source.Source):
         'object': {'url': obj.get('url')},
         'author': person,
         'content': '%s this.' % content_verbs[collection],
-        })
+        }))
 
     return tags
