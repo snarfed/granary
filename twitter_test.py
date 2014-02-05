@@ -580,6 +580,23 @@ class TwitterTest(testutil.HandlerTest):
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
 
+  def test_retweet_limit(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['retweet_count'] = 1
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+      json.dumps([tweet] * (twitter.RETWEET_LIMIT + 2)))
+
+    for i in range(twitter.RETWEET_LIMIT):
+      self.expect_urlopen(
+        'https://api.twitter.com/1.1/statuses/retweets.json?id=100&since_id=567',
+        json.dumps(RETWEETS))
+
+    self.mox.ReplayAll()
+    self.assert_equals(([ACTIVITY_WITH_SHARES] * twitter.RETWEET_LIMIT) +
+                       [ACTIVITY, ACTIVITY],
+                       self.twitter.get_activities(fetch_shares=True, min_id='567'))
+
   def test_get_activities_request_etag(self):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',

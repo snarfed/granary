@@ -40,6 +40,11 @@ API_CURRENT_USER_URL = \
 API_SEARCH_URL = \
     'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
 
+# Don't hit the RETWEETS endpoint more than this many times per
+# get_activities() call.
+# https://dev.twitter.com/docs/rate-limiting/1.1/limits
+# TODO: sigh. figure out a better way. dammit twitter, give me a batch API!!!
+RETWEET_LIMIT = 15
 
 class Twitter(source.Source):
   """Implements the ActivityStreams API for Twitter.
@@ -103,6 +108,10 @@ class Twitter(source.Source):
 
     Shares (ie retweets) are fetched with a separate API call per tweet:
     https://dev.twitter.com/docs/api/1.1/get/statuses/retweets/%3Aid
+
+    However, retweets are only fetched for the first 15 tweets that have them,
+    since that's Twitter's rate limit per 15 minute window. :(
+    https://dev.twitter.com/docs/rate-limiting/1.1/limits
     """
     if activity_id:
       resp = self.urlopen(API_STATUS_URL % activity_id)
@@ -124,9 +133,15 @@ class Twitter(source.Source):
           raise
 
     if fetch_shares:
+      retweet_calls = 0
       for tweet in tweets:
         if (not tweet.get('retweeted') and        # this *is not* a retweet
             tweet.get('retweet_count', 0) >= 1):  # this *has* retweets
+          if retweet_calls >= RETWEET_LIMIT:
+            logging.warning("Hit Twitter's retweet rate limit (%d) with more to "
+                            "fetch! Results will be incomplete!" % RETWEET_LIMIT)
+            break
+
           # store retweets in the 'retweets' field.
           # TODO: make these HTTP requests asynchronous. not easy since we don't
           # (yet) require threading support or use a non-blocking HTTP library.
@@ -142,6 +157,7 @@ class Twitter(source.Source):
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
           tweet['retweets'] = json.loads(self.urlopen(url).read())
+          retweet_calls += 1
 
     activities = [self.tweet_to_activity(t) for t in tweets]
     if fetch_replies:
