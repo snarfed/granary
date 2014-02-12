@@ -6,17 +6,17 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
 import datetime
-import httplib2
 import json
 import logging
 import mox
 
 import instagram
+from oauth_dropins import httplib2
 from oauth_dropins.python_instagram.bind import InstagramAPIError
 import source
-from webutil import testutil
-from webutil import util
-from webutil.util import Struct
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import Struct
 
 
 def tag_uri(name):

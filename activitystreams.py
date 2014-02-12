@@ -33,10 +33,10 @@ from webob import exc
 import appengine_config
 import facebook
 import instagram
+from oauth_dropins.webutil import util
 import microformats2
 import source
 import twitter
-from webutil import util
 
 from google.appengine.ext.webapp import template
 import webapp2

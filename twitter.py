@@ -23,7 +23,7 @@ import urlparse
 import appengine_config
 import source
 from oauth_dropins.twitter import TwitterAuth
-from webutil import util
+from oauth_dropins.webutil import util
 
 API_TIMELINE_URL = \
   'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=%d'

@@ -1,1 +1,1 @@
-oauth_dropins/appengine_config.py
+from oauth_dropins.appengine_config import *

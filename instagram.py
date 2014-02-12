@@ -21,9 +21,9 @@ import urlparse
 import appengine_config
 from oauth_dropins.python_instagram.bind import InstagramAPIError
 from oauth_dropins.python_instagram.client import InstagramAPI
+from oauth_dropins.webutil import handlers
+from oauth_dropins.webutil import util
 import source
-from webutil import handlers
-from webutil import util
 
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}

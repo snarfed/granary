@@ -6,7 +6,7 @@ Microformats2 specs: http://microformats.org/wiki/microformats2
 import logging
 import string
 
-from webutil import util
+from oauth_dropins.webutil import util
 
 # TODO: comments
 HENTRY = string.Template("""\

@@ -8,9 +8,9 @@ import json
 import mox
 
 import facebook
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
 import source
-from webutil import testutil
-from webutil import util
 
 
 # test data

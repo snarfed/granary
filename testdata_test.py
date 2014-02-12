@@ -8,7 +8,7 @@ import os
 import unittest
 
 import microformats2
-from webutil import testutil
+from oauth_dropins.webutil import testutil
 
 # All test data files live in testdata/.
 os.chdir('testdata/')

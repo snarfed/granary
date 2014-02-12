@@ -7,8 +7,8 @@ import urllib
 
 import activitystreams
 import appengine_config
+from oauth_dropins.webutil import handlers
 import webapp2
-from webutil import handlers
 
 from oauth_dropins import facebook
 from oauth_dropins import instagram

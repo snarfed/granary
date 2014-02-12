@@ -9,8 +9,8 @@ import mox
 
 import source
 import twitter
-from webutil import testutil
-from webutil import util
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
 
 
 # test data

@@ -8,9 +8,9 @@ import json
 import activitystreams
 import facebook_test
 import instagram_test
-import twitter_test
+from oauth_dropins.webutil import testutil
 import source
-from webutil import testutil
+import twitter_test
 
 class FakeSource(source.Source):
   def __init__(self, **kwargs):

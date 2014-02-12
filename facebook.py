@@ -23,8 +23,8 @@ import urllib2
 import urlparse
 
 import appengine_config
+from oauth_dropins.webutil import util
 import source
-from webutil import util
 
 # https://developers.facebook.com/docs/reference/login/
 OAUTH_SCOPES = ','.join((

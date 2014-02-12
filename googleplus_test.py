@@ -11,17 +11,17 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import json
 
-from oauth_dropins import appengine_config
+import appengine_config
 appengine_config.GOOGLE_CLIENT_ID = 'my client id'
 appengine_config.GOOGLE_CLIENT_SECRET = 'my client secret'
 
 import googleplus
+from oauth_dropins import googleplus as oauth_googleplus
 from oauth_dropins import httplib2
 from oauth_dropins.apiclient import discovery
 from oauth_dropins.apiclient import http
-from oauth_dropins import googleplus as oauth_googleplus
-from webutil import testutil
-from webutil import util
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
 
 
 DISCOVERY_DOC = appengine_config.read('googleplus_api_discovery.json')

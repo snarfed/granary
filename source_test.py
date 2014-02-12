@@ -8,8 +8,8 @@ import json
 import mox
 
 import source
-from webutil import testutil
-from webutil import util
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
 import webapp2
 
 LIKES = [{

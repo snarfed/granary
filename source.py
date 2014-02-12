@@ -17,7 +17,7 @@ import itertools
 import logging
 import re
 
-from webutil import util
+from oauth_dropins.webutil import util
 
 ME = '@me'
 SELF = '@self'
