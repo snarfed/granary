@@ -265,7 +265,7 @@ class Twitter(source.Source):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """
     return TwitterAuth.signed_urlopen(
-      url, self.access_token_key, self.access_token_secret, timeout=999, **kwargs)
+      url, self.access_token_key, self.access_token_secret, **kwargs)
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.

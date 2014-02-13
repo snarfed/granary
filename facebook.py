@@ -222,7 +222,8 @@ class Facebook(source.Source):
                                              self.access_token[:4] + '...')])
       url = util.add_query_params(url, [('access_token', self.access_token)])
     logging.info('Fetching %s, headers %s', log_url, headers)
-    return urllib2.urlopen(urllib2.Request(url, headers=headers), timeout=999)
+    return urllib2.urlopen(urllib2.Request(url, headers=headers),
+                           timeout=appengine_config.HTTP_TIMEOUT)
 
   def post_url(self, post):
     """Returns a short Facebook URL for a post.
