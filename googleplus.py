@@ -101,7 +101,7 @@ class GooglePlus(source.Source):
       if fetch_replies and obj.get('replies', {}).get('totalItems') > 0:
         call = self.auth_entity.api().comments().list(
           activityId=activity['id'], maxResults=500)
-        comments = call.execute(self.auth_entity.http())
+        comments = call.execute(http)
         obj['replies']['items'] = [
           self.postprocess_comment(c) for c in comments['items']]
 
