@@ -12,14 +12,15 @@ import copy
 import json
 
 import appengine_config
+import httplib2
+from apiclient import discovery
+from apiclient import http
+
 appengine_config.GOOGLE_CLIENT_ID = 'my client id'
 appengine_config.GOOGLE_CLIENT_SECRET = 'my client secret'
 
 import googleplus
 from oauth_dropins import googleplus as oauth_googleplus
-from oauth_dropins import httplib2
-from oauth_dropins.apiclient import discovery
-from oauth_dropins.apiclient import http
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 

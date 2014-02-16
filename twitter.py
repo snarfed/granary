@@ -20,9 +20,9 @@ import urllib
 import urllib2
 import urlparse
 
+import appengine_config
 from bs4 import BeautifulSoup
 
-import appengine_config
 import source
 from oauth_dropins.twitter import TwitterAuth
 from oauth_dropins.webutil import util
