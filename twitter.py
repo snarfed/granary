@@ -251,18 +251,6 @@ class Twitter(source.Source):
     url = API_STATUS_URL % comment_id
     return self.tweet_to_object(json.loads(self.urlopen(url).read()))
 
-  def get_like(self, activity_user_id, activity_id, like_user_id):
-    """Returns an ActivityStreams 'like' activity object.
-
-    TODO: scrape html
-
-    Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      like_user_id: string id of the user who liked the activity
-    """
-    return None
-
   def get_share(self, activity_user_id, activity_id, share_id):
     """Returns an ActivityStreams 'share' activity object.
 
