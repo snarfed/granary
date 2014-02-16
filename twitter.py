@@ -20,7 +20,8 @@ import urllib
 import urllib2
 import urlparse
 
-import appengine_config
+from appengine_config import HTTP_TIMEOUT
+
 from bs4 import BeautifulSoup
 
 import source
@@ -41,6 +42,7 @@ API_CURRENT_USER_URL = \
   'https://api.twitter.com/1.1/account/verify_credentials.json'
 API_SEARCH_URL = \
     'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
+HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 # Don't hit the RETWEETS endpoint more than this many times per
 # get_activities() call.
@@ -103,9 +105,9 @@ class Twitter(source.Source):
     "I've confirmed with our team that we're not explicitly supporting this
     family of features."
 
-    Likes (ie favorites) are not yet supported, since Twitter's REST API doesn't
-    offer a way to fetch them. You can get them from the Streaming API, though,
-    and convert them with streaming_event_to_object().
+    Likes (ie favorites) are scraped from twitter.com HTML, since Twitter's REST
+    API doesn't offer a way to fetch them. You can also get them from the
+    Streaming API, though, and convert them with streaming_event_to_object().
     https://dev.twitter.com/docs/streaming-apis/messages#Events_event
 
     Shares (ie retweets) are fetched with a separate API call per tweet:
@@ -162,8 +164,19 @@ class Twitter(source.Source):
           retweet_calls += 1
 
     activities = [self.tweet_to_activity(t) for t in tweets]
+
     if fetch_replies:
       self.fetch_replies(activities, min_id=min_id)
+
+    if fetch_likes:
+      for tweet, activity in zip(tweets, activities):
+        if tweet.get('favorite_count', 0) >= 1:
+          url = HTML_FAVORITES_URL % tweet['id_str']
+          logging.debug('Fetching %s', url)
+          html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
+                            ).get('htmlUsers', '')
+          likes = self.favorites_html_to_likes(tweet, html)
+          activity['object'].setdefault('tags', []).extend(likes)
 
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
@@ -241,9 +254,7 @@ class Twitter(source.Source):
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.
 
-    Twitter's REST API doesn't have a way to fetch a tweet's individual
-    favorites, just the total count. :/ The Streaming API can do it though.
-    sigh.
+    TODO: scrape html
 
     Args:
       activity_user_id: string id of the user who posted the original activity
@@ -510,6 +521,19 @@ class Twitter(source.Source):
     """Converts the HTML from a favorited_popup request to like objects.
 
     e.g. https://twitter.com/i/activity/favorited_popup?id=434753879708672001
+
+    Manual testing in a python shell:
+cd beautifulsoup
+python
+import urllib2, json
+html = json.loads(urllib2.urlopen('https://twitter.com/i/activity/favorited_popup?id=433062167793766400').read())['htmlUsers']
+from bs4 import diagnose
+diagnose.diagnose(html)
+
+# needs all app engine lib imports :/ (webob, etc.)
+# import twitter
+# tw = twitter.Twitter(None, None)
+# tw.favorites_html_to_likes(html)
 
     Args:
       html: string

@@ -421,6 +421,10 @@ LIKES_FROM_HTML = [{  # ActivityStreams
   'content': 'favorited this.',
   }
 ]
+OBJECT_WITH_LIKES = copy.deepcopy(OBJECT)
+OBJECT_WITH_LIKES['tags'] += LIKES_FROM_HTML
+ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
+ACTIVITY_WITH_LIKES['object'] = OBJECT_WITH_LIKES
 
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -636,6 +640,28 @@ class TwitterTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
+
+  def test_get_activities_fetch_likes(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['favorite_count'] = 1
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+      json.dumps([tweet]))
+    self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100',
+      json.dumps({'htmlUsers': FAVORITES_HTML}))
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY_WITH_LIKES],
+                       self.twitter.get_activities(fetch_likes=True))
+
+  def test_get_activities_fetch_likes_no_favorites(self):
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
+      json.dumps([TWEET]))
+    # we should only ask the API for retweets when favorites_count > 0
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_likes=True))
 
   def test_retweet_limit(self):
     tweet = copy.deepcopy(TWEET)
