@@ -20,6 +20,8 @@ import urllib
 import urllib2
 import urlparse
 
+from bs4 import BeautifulSoup
+
 import appengine_config
 import source
 from oauth_dropins.twitter import TwitterAuth
@@ -443,7 +445,7 @@ class Twitter(source.Source):
     return util.trim_nulls({
       'displayName': user.get('name'),
       'image': {'url': user.get('profile_image_url')},
-      'id': self.tag_uri(username) if username else None,
+      'id': self.tag_uri(username),
       'published': self.rfc2822_to_iso8601(user.get('created_at')),
       'url': self.user_url(username),
       'location': {'displayName': user.get('location')},
@@ -500,18 +502,66 @@ class Twitter(source.Source):
     source = event.get('source')
     tweet = event.get('target_object')
     if event.get('event') == 'favorite' and source and tweet:
-      tweet_id = tweet.get('id_str')
-      id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, source.get('id_str')))
-      url = self.status_url(event.get('target').get('screen_name'), tweet_id)
-      return self.postprocess_object({
+      obj = self._make_like(tweet, source)
+      obj['published'] = self.rfc2822_to_iso8601(event.get('created_at'))
+      return obj
+
+  def favorites_html_to_likes(self, tweet, html):
+    """Converts the HTML from a favorited_popup request to like objects.
+
+    e.g. https://twitter.com/i/activity/favorited_popup?id=434753879708672001
+
+    Args:
+      html: string
+
+    Returns:
+      list of ActivityStreams like object dicts
+    """
+    soup = BeautifulSoup(html)
+    likes = []
+
+    for user in soup.find_all(class_='js-user-profile-link'):
+      username = user.find(class_='username')
+      if not username:
+        continue
+      username = username.string
+      if username.startswith('@'):
+        username = username[1:]
+
+      img = user.find(class_='js-action-profile-avatar') or {}
+      fullname = user.find(class_='fullname') or {}
+      author = {
+        'id_str': img.get('data-user-id'),
+        'screen_name': username,
+        'name': fullname.string if fullname else None,
+        'profile_image_url': img.get('src'),
+        }
+      likes.append(self._make_like(tweet, author))
+
+    return likes
+
+  def _make_like(self, tweet, liker):
+    """Generates and returns a ActivityStreams like object.
+
+    Args:
+      tweet: Twitter tweet dict
+      liker: Twitter user dict
+
+    Returns: ActivityStreams object dict
+    """
+    tweet_id = tweet.get('id_str')
+    liker_id = liker.get('id_str')
+    id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, liker_id)) \
+        if liker_id else None
+    url = self.status_url(tweet.get('user').get('screen_name'), tweet_id)
+    return self.postprocess_object({
         'id': id,
         'url': url,
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': url},
-        'author': self.user_to_actor(source),
+        'author': self.user_to_actor(liker),
         'content': 'favorited this.',
-        'published': self.rfc2822_to_iso8601(event.get('created_at')),
         })
 
   @staticmethod

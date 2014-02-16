@@ -349,7 +349,7 @@ FAVORITE_EVENT = {  # Twitter
   'target': USER,
   'target_object' : TWEET,
 }
-LIKE = {  # ActivityStreams
+LIKE_FROM_EVENT = {  # ActivityStreams
   'id': tag_uri('100_favorited_by_789'),
   'url': 'http://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
@@ -364,6 +364,63 @@ LIKE = {  # ActivityStreams
   'content': 'favorited this.',
   'published': '2013-12-27T17:25:55',
   }
+FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
+<ol class="activity-popup-users">
+    <li class="js-stream-item stream-item stream-item
+" data-item-id="353" id="stream-item-user-353" data-item-type="user">
+    <!-- snipped <div class="account"... -->
+  <div class="content">
+        <div class="stream-item-header">
+          <a class="account-group js-user-profile-link" href="/ge" >
+            <img class="avatar js-action-profile-avatar " src="https://twimg/353" alt="" data-user-id="353"/>
+            <strong class="fullname js-action-profile-name">George</strong>
+              <span class="username js-action-profile-name">@ge</span></a>
+        </div>
+      </div>
+    </div>
+    </li>
+
+  <li class="js-stream-item stream-item stream-item">
+    <!-- snipped <div class="account"... -->
+  <div class="content">
+        <div class="stream-item-header">
+          <a class="account-group js-user-profile-link" href="/ge" >
+              <span class="username js-action-profile-name">@jo</span></a>
+        </div>
+      </div>
+    </div>
+    </li>
+</ol>
+"""
+LIKES_FROM_HTML = [{  # ActivityStreams
+  'id': tag_uri('100_favorited_by_353'),
+  'url': 'http://twitter.com/snarfed_org/status/100',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
+  'author': {
+    'id': tag_uri('ge'),
+    'username': 'ge',
+    'displayName': 'George',
+    'url': 'http://twitter.com/ge',
+    'image': {'url': 'https://twimg/353'},
+    },
+  'displayName': 'George favorited this.',
+  'content': 'favorited this.',
+  }, {
+  'url': 'http://twitter.com/snarfed_org/status/100',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
+  'author': {
+    'id': tag_uri('jo'),
+    'username': 'jo',
+    'url': 'http://twitter.com/jo',
+    },
+  'displayName': 'jo favorited this.',
+  'content': 'favorited this.',
+  }
+]
 
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -680,7 +737,8 @@ class TwitterTest(testutil.HandlerTest):
     self.assertEquals(None, self.twitter.retweet_to_object(TWEET))
 
   def test_streaming_event_to_object(self):
-    self.assert_equals(LIKE, self.twitter.streaming_event_to_object(FAVORITE_EVENT))
+    self.assert_equals(LIKE_FROM_EVENT,
+                       self.twitter.streaming_event_to_object(FAVORITE_EVENT))
 
     # not a favorite event
     follow = {
@@ -690,6 +748,11 @@ class TwitterTest(testutil.HandlerTest):
       'target_object': TWEET,
       }
     self.assertEquals(None, self.twitter.streaming_event_to_object(follow))
+
+  def test_favorites_html_to_likes(self):
+    self.assert_equals([], self.twitter.favorites_html_to_likes(TWEET, ""))
+    self.assert_equals(LIKES_FROM_HTML,
+                       self.twitter.favorites_html_to_likes(TWEET, FAVORITES_HTML))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))
