@@ -30,6 +30,7 @@ ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
   'image': {'url': 'http://graph.facebook.com/snarfed.org/picture?type=large'},
   'id': tag_uri('snarfed.org'),
+  'numeric_id': '212038',
   'updated': '2012-01-06T02:11:04+00:00',
   'url': 'http://www.facebook.com/snarfed.org',
   'username': 'snarfed.org',
@@ -163,6 +164,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'objectType': 'comment',
     'author': {
       'id': tag_uri('212038'),
+      'numeric_id': '212038',
       'displayName': 'Ryan Barrett',
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       'url': 'http://facebook.com/212038',
@@ -194,6 +196,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'objectType': 'comment',
     'author': {
       'id': tag_uri('513046677'),
+      'numeric_id': '513046677',
       'displayName': 'Ron Ald',
       'image': {'url': 'http://graph.facebook.com/513046677/picture?type=large'},
       'url': 'http://facebook.com/513046677',
@@ -215,6 +218,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'object': {'url': 'http://facebook.com/212038/posts/10100176064482163'},
     'author': {
       'id': tag_uri('100004'),
+      'numeric_id': '100004',
       'displayName': 'Alice X',
       'url': 'http://facebook.com/100004',
       'image': {'url': 'http://graph.facebook.com/100004/picture?type=large'},
@@ -229,6 +233,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'object': {'url': 'http://facebook.com/212038/posts/10100176064482163'},
     'author': {
       'id': tag_uri('683713'),
+      'numeric_id': '683713',
       'displayName': 'Bob Y',
       'url': 'http://facebook.com/683713',
       'image': {'url': 'http://graph.facebook.com/683713/picture?type=large'},
@@ -241,6 +246,7 @@ POST_OBJ = {  # ActivityStreams
   'objectType': 'image',
   'author': {
     'id': tag_uri('212038'),
+    'numeric_id': '212038',
     'displayName': 'Ryan Barrett',
     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
     'url': 'http://facebook.com/212038',
@@ -318,6 +324,7 @@ EVENT_OBJ = {  # ActivityStreams.
   'displayName': 'Homebrew Website Club',
   'author': {
     'id': tag_uri('11500'),
+    'numeric_id': '11500',
     'displayName': 'Aaron P',
     'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
     'url': 'http://facebook.com/11500',
@@ -337,6 +344,7 @@ RSVP_OBJS_WITH_ID = [{
     'actor': {
       'displayName': 'Aaron P',
       'id': tag_uri('11500'),
+      'numeric_id': '11500',
       'url': 'http://facebook.com/11500',
       'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
       },
@@ -350,6 +358,7 @@ RSVP_OBJS_WITH_ID = [{
     'actor': {
       'displayName': 'Ryan B',
       'id': tag_uri('212038'),
+      'numeric_id': '212038',
       'url': 'http://facebook.com/212038',
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       },
@@ -363,6 +372,7 @@ RSVP_OBJS_WITH_ID = [{
     'actor': {
       'displayName': 'Foo',
       'id': tag_uri('987'),
+      'numeric_id': '987',
       'url': 'http://facebook.com/987',
       'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
       },
@@ -376,6 +386,7 @@ RSVP_OBJS_WITH_ID = [{
     'actor': {
       'displayName': 'Bar',
       'id': tag_uri('654'),
+      'numeric_id': '654',
       'url': 'http://facebook.com/654',
       'image': {'url': 'http://graph.facebook.com/654/picture?type=large'},
       },

@@ -198,10 +198,11 @@ class Source(object):
     if not activities:
       return None
 
-    user_id = self.tag_uri(user_id)
+    user_tag_id = self.tag_uri(user_id)
     for tag in activities[0].get('object', {}).get('tags', []):
+      author = tag.get('author', {})
       if (tag.get('verb') == verb and
-          tag.get('author', {}).get('id') == user_id):
+          (author.get('id') == user_tag_id or author.get('numeric_id') == user_id)):
         return tag
 
   def postprocess_activity(self, activity):

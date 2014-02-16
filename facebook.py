@@ -480,6 +480,9 @@ class Facebook(source.Source):
       'displayName': user.get('name'),
       'image': {'url': image_url},
       'id': self.tag_uri(handle),
+      # numeric_id is our own custom field that always has the source's numeric
+      # user id, if available.
+      'numeric_id': id,
       'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'url': url,
       'username': username,

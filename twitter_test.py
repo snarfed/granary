@@ -24,6 +24,7 @@ USER = {  # Twitter
   'name': 'Ryan Barrett',
   'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
   'screen_name': 'snarfed_org',
+  'id_str': '888',
   'protected': False,
   }
 ACTOR = {  # ActivityStreams
@@ -32,6 +33,7 @@ ACTOR = {  # ActivityStreams
     'url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
     },
   'id': tag_uri('snarfed_org'),
+  'numeric_id': '888',
   'published': '2010-05-01T21:42:43',
   'url': 'http://twitter.com/snarfed_org',
   'location': {'displayName': 'San Francisco'},
@@ -357,6 +359,7 @@ LIKE_FROM_EVENT = {  # ActivityStreams
   'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
   'author': {
     'id': tag_uri('eve'),
+    'numeric_id': '789',
     'username': 'eve',
     'url': 'http://twitter.com/eve',
     },
@@ -400,6 +403,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
   'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
   'author': {
     'id': tag_uri('ge'),
+    'numeric_id': '353',
     'username': 'ge',
     'displayName': 'George',
     'url': 'http://twitter.com/ge',

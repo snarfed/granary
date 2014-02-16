@@ -445,6 +445,9 @@ class Twitter(source.Source):
       'displayName': user.get('name'),
       'image': {'url': user.get('profile_image_url')},
       'id': self.tag_uri(username),
+      # numeric_id is our own custom field that always has the source's numeric
+      # user id, if available.
+      'numeric_id': user.get('id_str'),
       'published': self.rfc2822_to_iso8601(user.get('created_at')),
       'url': self.user_url(username),
       'location': {'displayName': user.get('location')},

@@ -14,7 +14,7 @@ import webapp2
 
 LIKES = [{
     'verb': 'like',
-    'author': {'id': 'tag:fake.com:5'},
+    'author': {'id': 'tag:fake.com:person', 'numeric_id': '5'},
     'object': {'url': 'http://foo/like/5'},
     }, {
     'verb': 'like',
@@ -111,6 +111,12 @@ class SourceTest(testutil.HandlerTest):
                                fetch_likes=True).AndReturn([ACTIVITY])
     self.mox.ReplayAll()
     self.assert_equals(LIKES[1], self.source.get_like('author', 'activity', '6'))
+
+  def test_get_like_numeric_id(self):
+    self.source.get_activities(user_id='author', activity_id='activity',
+                               fetch_likes=True).AndReturn([ACTIVITY])
+    self.mox.ReplayAll()
+    self.assert_equals(LIKES[0], self.source.get_like('author', 'activity', '5'))
 
   def test_get_like_not_found(self):
     activity = copy.deepcopy(ACTIVITY)
