@@ -12,6 +12,8 @@ import logging
 import appengine_config
 import source
 
+from apiclient.errors import HttpError
+
 
 class GooglePlus(source.Source):
   """Implements the ActivityStreams API for Google+.
@@ -85,12 +87,8 @@ class GooglePlus(source.Source):
         resp = call.execute(http)
         activities = resp.get('items', [])
         etag = resp.get('etag')
-    except Exception, e:
-      # this is an oauth_dropins.apiclient.errors.HttpError. can't check for it
-      # explicitly because the module has already been imported under the path
-      # apiclient.errors, so the classes don't match.
-      resp = getattr(e, 'resp', None)
-      if resp and resp.status == 304:  # Not Modified, from a matching ETag
+    except HttpError, e:
+      if e.resp.status == 304:  # Not Modified, from a matching ETag
         activities = []
       else:
         raise
