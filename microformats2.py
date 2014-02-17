@@ -3,6 +3,7 @@
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
 
+import itertools
 import logging
 import string
 
@@ -140,34 +141,38 @@ def json_to_object(mf2):
   if not mf2:
     return {}
 
-  # maps mf2 type to ActivityStreams objectType. ordered by priority.
-  types = mf2.get('type', [])
-  types_map = [('p-comment', 'comment'),
-               ('h-as-reply', 'comment'),
-               ('h-as-like', 'like'),
-               ('h-as-note', 'note'),
-               ('h-as-repost', 'share'),
-               ('p-location', 'place'),
-               ('h-card', 'person'),
-               ('h-as-article', 'article'),
-               ('h-as-rsvp', 'activity'),
-               ]
-  for mf2_type, as_type in types_map:
-    if mf2_type in types:
-      type = as_type
-      break
-  else:
-    type = 'h-entry'  # default
-
   props = mf2.get('properties', {})
   prop = first_props(props)
   content = prop.get('content', {})
+  rsvp = prop.get('rsvp')
+  author = json_to_object(prop.get('author'))
+
+  # maps mf2 type to ActivityStreams objectType and optional verb. ordered by
+  # priority.
+  types = mf2.get('type', [])
+  types_map = [('p-comment', 'comment', None),
+               ('h-as-reply', 'comment', None),
+               ('h-as-like', 'activity', 'like'),
+               ('h-as-repost', 'activity', 'share'),
+               ('h-as-note', 'note', None),
+               ('p-location', 'place', None),
+               ('h-card', 'person', None),
+               ('h-as-article', 'article', None),
+               ('h-as-rsvp', 'activity','rsvp-%s' % rsvp if rsvp else None),
+               ]
+  for mf2_type, as_type, as_verb in types_map:
+    if mf2_type in types:
+      break  # found
+  else:
+    as_type = 'h-entry'  # default
+    as_verb = None
+
   obj = {
     'id': prop.get('uid'),
-    'objectType': type,
+    'objectType': as_type,
+    'verb': as_verb,
     'published': prop.get('published', ''),
     'updated': prop.get('updated', ''),
-    ('actor' if type == 'activity' else 'author'): json_to_object(prop.get('author')),
     'content': content.get('html') or content.get('value'),
     'url': prop.get('url'),
     'image': {'url': prop.get('photo')},
@@ -176,7 +181,19 @@ def json_to_object(mf2):
     # location
     }
 
-  # TODO: replies, rsvps
+  if as_type == 'activity':
+    urls = set(itertools.chain.from_iterable(props.get(field, [])
+        for field in ('like', 'like-of', 'repost', 'repost-of', 'in-reply-to')))
+    objects = [{'url': url} for url in urls]
+    obj.update({
+        'object': objects[0] if len(objects) == 1 else objects,
+        'actor': author,
+        })
+  else:
+    obj.update({
+        'inReplyTo': [{'url': url} for url in props.get('in-reply-to', [])],
+        'author': author,
+        })
 
   return util.trim_nulls(obj)
 

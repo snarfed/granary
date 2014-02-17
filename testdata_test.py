@@ -55,12 +55,7 @@ class TestDataTest(testutil.HandlerTest):
         if dst in ('article_with_comments.as.json',
                    'article_with_likes.as.json',
                    'article_with_reposts.as.json',
-                   'comment.as.json',
-                   'like.as.json',
-                   'like_multiple_urls.as.json',
                    'note.as.json',
-                   'repost.as.json',
-                   'rsvp.as.json',
                    ):
           continue
         if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):

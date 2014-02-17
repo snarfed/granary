@@ -6,7 +6,7 @@
   "url": "http://example.com/this/like",
   "object": [{"url": "http://example.com/original/post"},
              {"url": "http://example.com/other/post"}],
-  "author": {
+  "actor": {
     "objectType": "person",
     "displayName": "Alice",
     "url": "http://example.com/alice"
