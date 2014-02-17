@@ -6,6 +6,7 @@
   "url": "http://example.com/this/repost",
   "object": {"url": "http://example.com/original/post"},
   "author": {
+    "objectType": "person",
     "displayName": "Alice",
     "url": "http://example.com/alice"
   }

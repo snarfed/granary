@@ -3,9 +3,7 @@
   "objectType" : "person",
   "id": "tag:example.com,2011:martin",
   "image": {
-    "url": "http://example.com/martin/image",
-    "width": 250,
-    "height": 250
+    "url": "http://example.com/martin/image"
   },
   "displayName": "Martin Smith"
 }

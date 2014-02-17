@@ -129,6 +129,58 @@ def object_to_json(obj, trim_nulls=True):
   return ret
 
 
+def json_to_object(mf2):
+  """Converts microformats2 JSON to an ActivityStreams object.
+
+  Args:
+    mf2: dict, decoded JSON microformats2 object
+
+  Returns: dict, ActivityStreams object
+  """
+  if not mf2:
+    return {}
+
+  # maps mf2 type to ActivityStreams objectType. ordered by priority.
+  types = mf2.get('type', [])
+  types_map = [('p-comment', 'comment'),
+               ('h-as-reply', 'comment'),
+               ('h-as-like', 'like'),
+               ('h-as-note', 'note'),
+               ('h-as-repost', 'share'),
+               ('p-location', 'place'),
+               ('h-card', 'person'),
+               ('h-as-article', 'article'),
+               ('h-as-rsvp', 'activity'),
+               ]
+  for mf2_type, as_type in types_map:
+    if mf2_type in types:
+      type = as_type
+      break
+  else:
+    type = 'h-entry'  # default
+
+  props = mf2.get('properties', {})
+  prop = first_props(props)
+  content = prop.get('content', {})
+  obj = {
+    'id': prop.get('uid'),
+    'objectType': type,
+    'published': prop.get('published', ''),
+    'updated': prop.get('updated', ''),
+    ('actor' if type == 'activity' else 'author'): json_to_object(prop.get('author')),
+    'content': content.get('html') or content.get('value'),
+    'url': prop.get('url'),
+    'image': {'url': prop.get('photo')},
+    'displayName': prop.get('name'),
+    # TODO
+    # location
+    }
+
+  # TODO: replies, rsvps
+
+  return util.trim_nulls(obj)
+
+
 def object_to_html(obj):
   """Converts an ActivityStreams object to microformats2 HTML.
 

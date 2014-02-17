@@ -7,6 +7,7 @@
   "object": [{"url": "http://example.com/original/post"},
              {"url": "http://example.com/other/post"}],
   "author": {
+    "objectType": "person",
     "displayName": "Alice",
     "url": "http://example.com/alice"
   }
