@@ -41,23 +41,26 @@ class TestDataTest(testutil.HandlerTest):
     # TODO: use a handler with an HTTPS request so that URL schemes are converted
     # self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
 
-    # source extension, destination extention, conversion function
-    mappings = (('as.json', 'mf2.json', microformats2.object_to_json),
-                ('mf2.json', 'as.json', microformats2.json_to_object),
-                ('as.json', 'mf2.html', microformats2.object_to_html),
-                # ('mf2.html', 'as.json', microformats2.html_to_object),
-                )
+    # source extension, destination extension, conversion function, exclude prefix
+    mappings = (
+      ('as.json', 'mf2.json', microformats2.object_to_json, ()),
+      ('as.json', 'mf2.html', microformats2.object_to_html, ()),
+      ('mf2.json', 'as.json', microformats2.json_to_object,
+       # these have tags, which we don't generate
+       ('note.', 'article_with_')),
+      # ('mf2.html', 'as.json', microformats2.html_to_object, ()),
+      )
 
     failed = False
-    for src_ext, dst_ext, fn in mappings:
+    for src_ext, dst_ext, fn, excludes in mappings:
       for src, dst in filepairs(src_ext, dst_ext):
-        # TODO
-        if dst in ('article_with_comments.as.json',
-                   'article_with_likes.as.json',
-                   'article_with_reposts.as.json',
-                   'note.as.json',
-                   ):
+        excluded = False
+        for exclude in excludes:
+          if dst.startswith(exclude):
+            excluded = True
+        if excluded:
           continue
+
         if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):
           expected = open(dst).read()
         else:
