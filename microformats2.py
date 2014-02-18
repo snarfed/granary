@@ -173,10 +173,12 @@ def json_to_object(mf2):
     'verb': as_verb,
     'published': prop.get('published', ''),
     'updated': prop.get('updated', ''),
+    'displayName': prop.get('name'),
     'content': content.get('html') or content.get('value'),
     'url': prop.get('url'),
     'image': {'url': prop.get('photo')},
-    'displayName': prop.get('name'),
+    'location': json_to_object(prop.get('location')),
+    'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     # TODO
     # location
     }

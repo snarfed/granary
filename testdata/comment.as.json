@@ -5,5 +5,11 @@
   "id": "tag:example.com,2001:547822715231468_6796480",
   "published": "2012-12-05T00:58:26+00:00",
   "url": "http://example.com/comment/547822715231468_6796480",
-  "inReplyTo": [{"url": "http://example.com/original/post"}]
+  "inReplyTo": [{"url": "http://example.com/original/post"}],
+  "location": {
+    "objectType": "place",
+    "displayName": "Carcassonne, Aude",
+    "id": "31cb9e7ed29dbe52",
+    "url": "https://maps.google.com/maps?q=32.4004416,-98.9852672"
+  }
 }
