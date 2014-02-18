@@ -68,9 +68,9 @@ class Source(object):
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
-                              etag=None, min_id=None, fetch_replies=False,
-                              fetch_likes=False, fetch_shares=False,
-                              fetch_events=False):
+                              etag=None, min_id=None, cache=None,
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False, fetch_events=False):
     """Fetches and returns ActivityStreams activities and response details.
 
     Subclasses should override this. See get_activities() for an alternative
@@ -103,6 +103,8 @@ class Source(object):
         only be returned if the ETag has changed. Should include enclosing
         double quotes, e.g. '"ABC123"'
       min_id: only return activities with ids greater than this
+      cache: object with set(key, value) and get(key) methods that can be used
+        to cache data that's expensive to regenerate, e.g. individual API calls.
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also
@@ -204,6 +206,30 @@ class Source(object):
       if (tag.get('verb') == verb and
           (author.get('id') == user_tag_id or author.get('numeric_id') == user_id)):
         return tag
+
+  def _fetch_like(self, activity):
+    """Fetches and injects likes into an activity, in place.
+
+    Subclasses should usually override.
+
+    Args:
+      activities: ActivityStreams activity dict
+
+    Returns: same activity dict
+    """
+    return activity
+
+  def _fetch_share(self, activity):
+    """Fetches and injects shares into an activity, in place.
+
+    Subclasses should usually override.
+
+    Args:
+      activities: ActivityStreams activity dict
+
+    Returns: same activity dict
+    """
+    return activity
 
   def postprocess_activity(self, activity):
     """Does source-independent post-processing of an activity, in place.
