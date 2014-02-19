@@ -136,27 +136,40 @@ class Twitter(source.Source):
         else:
           raise
 
+    # only update the cache at the end, in case we hit an error before then
+    cache_updates = {}
+
     if fetch_shares:
       retweet_calls = 0
       for tweet in tweets:
-        if (not tweet.get('retweeted') and        # this *is not* a retweet
-            tweet.get('retweet_count', 0) >= 1):  # this *has* retweets
-          if retweet_calls >= RETWEET_LIMIT:
-            logging.warning("Hit Twitter's retweet rate limit (%d) with more to "
-                            "fetch! Results will be incomplete!" % RETWEET_LIMIT)
-            break
+        if tweet.get('retweeted'):  # this tweet is itself a retweet
+          continue
+        elif retweet_calls >= RETWEET_LIMIT:
+          logging.warning("Hit Twitter's retweet rate limit (%d) with more to "
+                          "fetch! Results will be incomplete!" % RETWEET_LIMIT)
+          break
 
-          # store retweets in the 'retweets' field.
-          # TODO: make these HTTP requests asynchronous. not easy since we don't
-          # (yet) require threading support or use a non-blocking HTTP library.
-          #
-          # TODO: cache results or otherwise handle rate limiting. twitter
-          # limits this API endpoint to one call per minute per user, which is
-          # easy to hit.
-          # https://dev.twitter.com/docs/rate-limiting/1.1/limits
-          #
-          # can't use the statuses/retweets_of_me endpoint because it only
-          # returns the original tweets, not the retweets or their authors.
+        count = tweet.get('retweet_count', 0)
+        if cache is not None:
+          cache_key = 'ATR ' + tweet['id_str']
+          cached_count = cache.get(cache_key) or 0
+          if count:
+            cache_updates[cache_key] = count
+          if cached_count >= count:
+            continue
+
+        # store retweets in the 'retweets' field, which is handled by
+        # tweet_to_activity().
+        # TODO: make these HTTP requests asynchronous. not easy since we don't
+        # (yet) require threading support or use a non-blocking HTTP library.
+        #
+        # twitter limits this API endpoint to one call per minute per user,
+        # which is easy to hit, so we stop before we hit that.
+        # https://dev.twitter.com/docs/rate-limiting/1.1/limits
+        #
+        # can't use the statuses/retweets_of_me endpoint because it only
+        # returns the original tweets, not the retweets or their authors.
+        if count:
           url = API_RETWEETS_URL % tweet['id_str']
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
@@ -170,7 +183,16 @@ class Twitter(source.Source):
 
     if fetch_likes:
       for tweet, activity in zip(tweets, activities):
-        if tweet.get('favorite_count', 0) >= 1:
+        count = tweet.get('favorite_count', 0)
+        if cache is not None:
+          cache_key = 'ATF ' + tweet['id_str']
+          cached_count = cache.get(cache_key) or 0
+          if count:
+            cache_updates[cache_key] = count
+          if cached_count >= count:
+            continue
+
+        if count:
           url = HTML_FAVORITES_URL % tweet['id_str']
           logging.debug('Fetching %s', url)
           html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
@@ -180,6 +202,9 @@ class Twitter(source.Source):
 
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
+    # TODO: delete keys with value 0 instead of setting
+    if cache is not None:
+      cache.set_multi(cache_updates)
     return response
 
   def fetch_replies(self, activities, min_id=None):

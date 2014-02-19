@@ -549,6 +549,11 @@ class TwitterTest(testutil.HandlerTest):
     super(TwitterTest, self).setUp()
     self.twitter = twitter.Twitter('key', 'secret')
 
+    class Cache(dict):
+      pass
+    self.cache = Cache()
+    self.cache.set_multi = self.cache.update
+
   def test_get_actor(self):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
@@ -637,6 +642,24 @@ class TwitterTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
+
+  def test_get_activities_fetch_cache(self):
+    RETWEETS = 'https://api.twitter.com/1.1/statuses/retweets.json?id=100'
+    FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=100'
+
+    for count in (1, 2):
+      tweet = copy.deepcopy(TWEET)
+      tweet['retweet_count'] = tweet['favorite_count'] = count
+      self.expect_urlopen(TIMELINE, json.dumps([tweet]))
+      self.expect_urlopen(RETWEETS, '[]')
+      self.expect_urlopen(FAVORITES, '{}')
+      # shouldn't fetch this time because counts haven't changed
+      self.expect_urlopen(TIMELINE, json.dumps([tweet]))
+
+    self.mox.ReplayAll()
+    for i in range(4):
+      self.twitter.get_activities(fetch_shares=True, fetch_likes=True,
+                                  cache=self.cache)
 
   def test_get_activities_fetch_likes(self):
     tweet = copy.deepcopy(TWEET)

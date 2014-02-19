@@ -103,8 +103,10 @@ class Source(object):
         only be returned if the ETag has changed. Should include enclosing
         double quotes, e.g. '"ABC123"'
       min_id: only return activities with ids greater than this
-      cache: object with set(key, value) and get(key) methods that can be used
-        to cache data that's expensive to regenerate, e.g. individual API calls.
+      cache: object with get(key), set_multi(dict), and delete_multi(list)
+        methods. In practice, this is App Engine's memcache interface:
+        https://developers.google.com/appengine/docs/python/memcache/functions
+        Used to cache data that's expensive to regenerate, e.g. API calls.
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also
