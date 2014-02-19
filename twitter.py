@@ -85,9 +85,9 @@ class Twitter(source.Source):
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
-                              etag=None, min_id=None, fetch_replies=False,
-                              fetch_likes=False, fetch_shares=False,
-                              fetch_events=False):
+                              etag=None, min_id=None, cache=None,
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False, fetch_events=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -512,19 +512,6 @@ class Twitter(source.Source):
     """Converts the HTML from a favorited_popup request to like objects.
 
     e.g. https://twitter.com/i/activity/favorited_popup?id=434753879708672001
-
-    Manual testing in a python shell:
-cd beautifulsoup
-python
-import urllib2, json
-html = json.loads(urllib2.urlopen('https://twitter.com/i/activity/favorited_popup?id=433062167793766400').read())['htmlUsers']
-from bs4 import diagnose
-diagnose.diagnose(html)
-
-# needs all app engine lib imports :/ (webob, etc.)
-# import twitter
-# tw = twitter.Twitter(None, None)
-# tw.favorites_html_to_likes(html)
 
     Args:
       html: string
