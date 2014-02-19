@@ -139,6 +139,17 @@ class Twitter(source.Source):
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
+    def if_changed(field, key_prefix):
+      """Returns a numeric field value if it's different from our cache."""
+      count = tweet.get(field, 0)
+      if cache is None:
+        return count
+      key = key_prefix + tweet['id_str']
+      cached = cache.get(key) or 0
+      if count:
+        cache_updates[key] = count
+      return count if count != cached else None
+
     if fetch_shares:
       retweet_calls = 0
       for tweet in tweets:
@@ -148,15 +159,6 @@ class Twitter(source.Source):
           logging.warning("Hit Twitter's retweet rate limit (%d) with more to "
                           "fetch! Results will be incomplete!" % RETWEET_LIMIT)
           break
-
-        count = tweet.get('retweet_count', 0)
-        if cache is not None:
-          cache_key = 'ATR ' + tweet['id_str']
-          cached_count = cache.get(cache_key) or 0
-          if count:
-            cache_updates[cache_key] = count
-          if cached_count >= count:
-            continue
 
         # store retweets in the 'retweets' field, which is handled by
         # tweet_to_activity().
@@ -169,6 +171,7 @@ class Twitter(source.Source):
         #
         # can't use the statuses/retweets_of_me endpoint because it only
         # returns the original tweets, not the retweets or their authors.
+        count = if_changed('retweet_count', 'ATR ')
         if count:
           url = API_RETWEETS_URL % tweet['id_str']
           if min_id is not None:
@@ -183,15 +186,7 @@ class Twitter(source.Source):
 
     if fetch_likes:
       for tweet, activity in zip(tweets, activities):
-        count = tweet.get('favorite_count', 0)
-        if cache is not None:
-          cache_key = 'ATF ' + tweet['id_str']
-          cached_count = cache.get(cache_key) or 0
-          if count:
-            cache_updates[cache_key] = count
-          if cached_count >= count:
-            continue
-
+        count = if_changed('favorite_count', 'ATF ')
         if count:
           url = HTML_FAVORITES_URL % tweet['id_str']
           logging.debug('Fetching %s', url)
