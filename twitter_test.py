@@ -17,6 +17,8 @@ from oauth_dropins.webutil import util
 def tag_uri(name):
   return util.tag_uri('twitter.com', name)
 
+TIMELINE = 'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0'
+
 USER = {  # Twitter
   'created_at': 'Sat May 01 21:42:43 +0000 2010',
   'description': 'my description',
@@ -562,10 +564,7 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals(ACTOR, self.twitter.get_actor())
 
   def test_get_activities(self):
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?'
-      'include_entities=true&count=0',
-      json.dumps([TWEET, TWEET]))
+    self.expect_urlopen(TIMELINE, json.dumps([TWEET, TWEET]))
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY, ACTIVITY], self.twitter.get_activities())
 
@@ -605,9 +604,7 @@ class TwitterTest(testutil.HandlerTest):
 
   def test_get_activities_fetch_replies(self):
     tweet = copy.deepcopy(TWEET)
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      json.dumps([tweet]))
+    self.expect_urlopen(TIMELINE, json.dumps([tweet]))
     self.expect_urlopen(
       'https://api.twitter.com/1.1/search/tweets.json?q=%40snarfed_org&include_entities=true&result_type=recent&count=100&since_id=567',
       json.dumps(REPLIES_TO_SNARFED))
@@ -625,9 +622,7 @@ class TwitterTest(testutil.HandlerTest):
   def test_get_activities_fetch_shares(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      json.dumps([tweet]))
+    self.expect_urlopen(TIMELINE, json.dumps([tweet]))
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/retweets.json?id=100&since_id=567',
       json.dumps(RETWEETS))
@@ -637,9 +632,7 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.get_activities(fetch_shares=True, min_id='567'))
 
   def test_get_activities_fetch_shares_no_retweets(self):
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      json.dumps([TWEET]))
+    self.expect_urlopen(TIMELINE, json.dumps([TWEET]))
     # we should only ask the API for retweets when retweet_count > 0
     self.mox.ReplayAll()
 
@@ -648,9 +641,7 @@ class TwitterTest(testutil.HandlerTest):
   def test_get_activities_fetch_likes(self):
     tweet = copy.deepcopy(TWEET)
     tweet['favorite_count'] = 1
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      json.dumps([tweet]))
+    self.expect_urlopen(TIMELINE, json.dumps([tweet]))
     self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100',
       json.dumps({'htmlUsers': FAVORITES_HTML}))
     self.mox.ReplayAll()
@@ -659,9 +650,7 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.get_activities(fetch_likes=True))
 
   def test_get_activities_fetch_likes_no_favorites(self):
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      json.dumps([TWEET]))
+    self.expect_urlopen(TIMELINE, json.dumps([TWEET]))
     # we should only ask the API for retweets when favorites_count > 0
     self.mox.ReplayAll()
 
@@ -670,9 +659,7 @@ class TwitterTest(testutil.HandlerTest):
   def test_retweet_limit(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      json.dumps([tweet] * (twitter.RETWEET_LIMIT + 2)))
+    self.expect_urlopen(TIMELINE, json.dumps([tweet] * (twitter.RETWEET_LIMIT + 2)))
 
     for i in range(twitter.RETWEET_LIMIT):
       self.expect_urlopen(
@@ -685,31 +672,24 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.get_activities(fetch_shares=True, min_id='567'))
 
   def test_get_activities_request_etag(self):
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      '[]', headers={'If-none-match': '"my etag"'})
+    self.expect_urlopen(TIMELINE, '[]', headers={'If-none-match': '"my etag"'})
     self.mox.ReplayAll()
     self.twitter.get_activities_response(etag='"my etag"')
 
   def test_get_activities_response_etag(self):
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      '[]', response_headers={'ETag': '"my etag"'})
+    self.expect_urlopen(TIMELINE, '[]', response_headers={'ETag': '"my etag"'})
     self.mox.ReplayAll()
     self.assert_equals('"my etag"', self.twitter.get_activities_response()['etag'])
 
   def test_get_activities_304_not_modified(self):
     """Requests with matching ETags return 304 Not Modified."""
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0',
-      '[]', status=304)
+    self.expect_urlopen(TIMELINE, '[]', status=304)
     self.mox.ReplayAll()
     self.assert_equals([], self.twitter.get_activities_response()['items'])
 
   def test_get_activities_min_id(self):
     """min_id shouldn't be passed to the initial request, just the derived ones."""
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0', '[]')
+    self.expect_urlopen(TIMELINE, '[]')
     self.mox.ReplayAll()
     self.twitter.get_activities_response(min_id=135)
 
