@@ -13,6 +13,7 @@ import appengine_config
 import source
 
 from apiclient.errors import HttpError
+from oauth_dropins.webutil import util
 
 
 class GooglePlus(source.Source):
@@ -93,26 +94,40 @@ class GooglePlus(source.Source):
       else:
         raise
 
+    cache_updates = {}
+
     for activity in activities:
+      id = activity['id']
       obj = activity.get('object', {})
       # comments
-      if fetch_replies and obj.get('replies', {}).get('totalItems') > 0:
+      replies = util.if_changed(cache, cache_updates, 'AGC ' + id,
+                                obj.get('replies', {}).get('totalItems'))
+      if fetch_replies and replies:
         call = self.auth_entity.api().comments().list(
           activityId=activity['id'], maxResults=500)
         comments = call.execute(http)
         obj['replies']['items'] = [
           self.postprocess_comment(c) for c in comments['items']]
 
-      # likes, reshares
-      if fetch_likes and obj.get('plusoners', {}).get('totalItems') > 0:
+      # likes
+      likes = util.if_changed(cache, cache_updates, 'AGL ' + id,
+                              obj.get('plusoners', {}).get('totalItems'))
+      if fetch_likes and likes:
         self.add_tags(activity, 'plusoners', 'like')
-      if fetch_shares and obj.get('resharers', {}).get('totalItems') > 0:
+
+      # reshares
+      shares = util.if_changed(cache, cache_updates, 'AGS ' + id,
+                               obj.get('resharers', {}).get('totalItems'))
+      if fetch_shares and shares:
         self.add_tags(activity, 'resharers', 'share')
 
       self.postprocess_activity(activity)
 
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
+    # TODO: delete keys with value None instead of setting
+    if cache is not None:
+      cache.set_multi(cache_updates)
     return response
 
   def get_comment(self, comment_id, activity_id=None):

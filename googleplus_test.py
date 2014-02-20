@@ -148,6 +148,11 @@ class GooglePlusTest(testutil.HandlerTest):
           }))
     self.googleplus = googleplus.GooglePlus(auth_entity=self.auth_entity)
 
+    class Cache(dict):
+      def set(self, k, v):
+        self[k] = v
+    self.cache = Cache()
+
   def tearDown(self):
     oauth_googleplus.json_service = None
 
@@ -194,12 +199,23 @@ class GooglePlusTest(testutil.HandlerTest):
     self.init()
     http_seq = http.HttpMockSequence(
       [({'status': '200'}, json.dumps({'items': [item]})) for item in
-       ACTIVITY_GP_EXTRAS, COMMENT_GP, PLUSONER, RESHARER])
+       ACTIVITY_GP_EXTRAS,
+       # should only ask for these the first time, use the cache for the second
+       COMMENT_GP, PLUSONER, RESHARER,
+       ACTIVITY_GP_EXTRAS,
+       ])
     self.auth_entity.http = lambda: http_seq
 
-    got = self.googleplus.get_activities(fetch_replies=True, fetch_likes=True,
-                                         fetch_shares=True)
-    self.assert_equals([ACTIVITY_AS_EXTRAS], got)
+    cache = testutil.FakeCache()
+    self.assert_equals([ACTIVITY_AS_EXTRAS], self.googleplus.get_activities(
+        fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
+
+    # no new extras, so another request won't fill them in
+    activity = copy.deepcopy(ACTIVITY_AS)
+    for field in 'replies', 'plusoners', 'resharers':
+      activity['object'][field] = {'totalItems': 1}
+    self.assert_equals([activity], self.googleplus.get_activities(
+        fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
 
     # TODO: resurrect?
   # def test_get_activities_request_etag(self):
