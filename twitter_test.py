@@ -549,11 +549,6 @@ class TwitterTest(testutil.HandlerTest):
     super(TwitterTest, self).setUp()
     self.twitter = twitter.Twitter('key', 'secret')
 
-    class Cache(dict):
-      pass
-    self.cache = Cache()
-    self.cache.set_multi = self.cache.update
-
   def test_get_actor(self):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
@@ -657,9 +652,10 @@ class TwitterTest(testutil.HandlerTest):
       self.expect_urlopen(TIMELINE, json.dumps([tweet]))
 
     self.mox.ReplayAll()
+    cache = testutil.FakeCache()
     for i in range(4):
       self.twitter.get_activities(fetch_shares=True, fetch_likes=True,
-                                  cache=self.cache)
+                                  cache=cache)
 
   def test_get_activities_fetch_likes(self):
     tweet = copy.deepcopy(TWEET)

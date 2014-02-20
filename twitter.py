@@ -50,6 +50,7 @@ HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 # TODO: sigh. figure out a better way. dammit twitter, give me a batch API!!!
 RETWEET_LIMIT = 15
 
+
 class Twitter(source.Source):
   """Implements the ActivityStreams API for Twitter.
   """
@@ -139,17 +140,6 @@ class Twitter(source.Source):
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
-    def if_changed(field, key_prefix):
-      """Returns a numeric field value if it's different from our cache."""
-      count = tweet.get(field, 0)
-      if cache is None:
-        return count
-      key = key_prefix + tweet['id_str']
-      cached = cache.get(key) or 0
-      if count:
-        cache_updates[key] = count
-      return count if count != cached else None
-
     if fetch_shares:
       retweet_calls = 0
       for tweet in tweets:
@@ -171,7 +161,8 @@ class Twitter(source.Source):
         #
         # can't use the statuses/retweets_of_me endpoint because it only
         # returns the original tweets, not the retweets or their authors.
-        count = if_changed('retweet_count', 'ATR ')
+        count = util.if_changed(cache, cache_updates, 'ATR ' + tweet['id_str'],
+                                tweet.get('retweet_count'))
         if count:
           url = API_RETWEETS_URL % tweet['id_str']
           if min_id is not None:
@@ -186,7 +177,8 @@ class Twitter(source.Source):
 
     if fetch_likes:
       for tweet, activity in zip(tweets, activities):
-        count = if_changed('favorite_count', 'ATF ')
+        count = util.if_changed(cache, cache_updates, 'ATF ' + tweet['id_str'],
+                                tweet.get('favorite_count'))
         if count:
           url = HTML_FAVORITES_URL % tweet['id_str']
           logging.debug('Fetching %s', url)
@@ -197,7 +189,7 @@ class Twitter(source.Source):
 
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
-    # TODO: delete keys with value 0 instead of setting
+    # TODO: delete keys with value None instead of setting
     if cache is not None:
       cache.set_multi(cache_updates)
     return response
