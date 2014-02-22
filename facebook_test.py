@@ -883,3 +883,11 @@ class FacebookTest(testutil.HandlerTest):
         'from': USER,
         'application': {'name': 'Rdio', 'id': '88888'},
         })
+
+  def test_create_activity(self):
+    self.expect_urlopen(facebook.API_FEED_URL,
+                        json.dumps({'id': '123_456'}),
+                        data='message=my+msg')
+    self.mox.ReplayAll()
+    self.assert_equals({'id': '123_456', 'url': 'http://facebook.com/123_456'},
+                       self.facebook.create_activity({'content': 'my msg'}))

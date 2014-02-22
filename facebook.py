@@ -54,8 +54,9 @@ API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d'
 # a known issue and we don't have any near term plans to bring them back up into
 # parity."
 # https://developers.facebook.com/docs/reference/api/#searching
-API_FEED_URL = 'https://graph.facebook.com/%s/home?offset=%d'
+API_HOME_URL = 'https://graph.facebook.com/%s/home?offset=%d'
 API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
+API_FEED_URL = 'https://graph.facebook.com/me/feed'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -159,7 +160,7 @@ class Facebook(source.Source):
         posts = []
 
     else:
-      url = API_SELF_POSTS_URL if group_id == source.SELF else API_FEED_URL
+      url = API_SELF_POSTS_URL if group_id == source.SELF else API_HOME_URL
       url = url % (user_id if user_id else 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
@@ -213,7 +214,25 @@ class Facebook(source.Source):
     data = json.loads(self.urlopen(url).read()).get('data')
     return self.rsvp_to_object(data[0], event_id=event_id) if data else None
 
-  def urlopen(self, url, headers={}):
+  def create_activity(self, activity):
+    """Creates a new activity: a post, comment, like, share, or RSVP.
+
+    https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
+
+    Args:
+      activity: ActivityStreams activity object
+
+    Returns: dict with 'id' and 'url' keys for the newly created Facebook object
+    """
+    data = urllib.urlencode({'message': activity.get('content').encode('utf-8'),
+                             # TODO...or leave it to user's default?
+                             # 'privacy': '{"value":"EVERYONE"}',
+                             })
+    resp = json.loads(self.urlopen(API_FEED_URL, data=data).read())
+    resp['url'] = self.post_url(resp)
+    return resp
+
+  def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
     """
     log_url = url
@@ -221,8 +240,8 @@ class Facebook(source.Source):
       log_url = util.add_query_params(url, [('access_token',
                                              self.access_token[:4] + '...')])
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    logging.info('Fetching %s, headers %s', log_url, headers)
-    return urllib2.urlopen(urllib2.Request(url, headers=headers),
+    logging.info('Fetching %s, kwargs %s', log_url, kwargs)
+    return urllib2.urlopen(urllib2.Request(url, **kwargs),
                            timeout=appengine_config.HTTP_TIMEOUT)
 
   def post_url(self, post):
