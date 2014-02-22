@@ -254,7 +254,10 @@ class Facebook(source.Source):
       if id:
         _, base_id = util.parse_tag_uri(id)
       elif url:
-        base_id = urlparse.urlparse(url).path.rsplit('/', 1)[-1]
+        path = urlparse.urlparse(url).path
+        if path.endswith('/'):
+          path = path[:-1]
+        base_id = path.rsplit('/', 1)[-1]
 
     msg_data = urllib.urlencode({
         'message': obj.get('content', '').encode('utf-8'),

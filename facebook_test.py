@@ -884,7 +884,7 @@ class FacebookTest(testutil.HandlerTest):
         'application': {'name': 'Rdio', 'id': '88888'},
         })
 
-  def test_create(self):
+  def test_create_post(self):
     self.expect_urlopen(facebook.API_FEED_URL,
                         json.dumps({'id': '123_456'}),
                         data='message=my+msg')
@@ -921,5 +921,5 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
       rsvp = copy.deepcopy(rsvp)
-      rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234'}]
+      rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234/'}]
       self.assert_equals({}, self.facebook.create(rsvp))
