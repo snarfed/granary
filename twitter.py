@@ -294,13 +294,15 @@ class Twitter(source.Source):
     type = obj.get('objectType')
     verb = obj.get('verb')
     base_id = self.base_object_id(obj)
-    status_data = urllib.urlencode(
-      {'status': obj.get('content', '').encode('utf-8')})
+    content = obj.get('content', '').encode('utf-8')
 
     obj.get('content', '').encode('utf-8')
-    if type == 'comment':
-      resp = json.loads(self.urlopen(API_POST_TWEET_URL % base_id, data=msg_data).read())
-    #   resp['url'] = self.comment_url(base_id, resp['id'])
+    if type == 'comment' or 'inReplyTo' in obj:
+      # TODO: validate that content contains an @-mention of the original tweet.
+      # Twitter won't make it a reply if it doesn't.
+      # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
+      data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
+      resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
 
     # elif type == 'activity':
     #   # TODO: validation
@@ -312,7 +314,8 @@ class Twitter(source.Source):
 
     # TODO: require type 'note'
     else:
-      resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=status_data).read())
+      data = urllib.urlencode({'status': content})
+      resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
 
     id_str = resp.get('id_str')
     if id_str:

@@ -215,54 +215,55 @@ REPLIES_TO_ALICE = {'statuses': [{
       }]}
 REPLIES_TO_BOB = {'statuses': []}
 
+REPLY_OBJS = [{  # ActivityStreams
+    'objectType': 'note',
+    'id': tag_uri('200'),
+    'author': {
+      'id': 'tag:twitter.com:alice',
+      'username': 'alice',
+      'url': 'http://twitter.com/alice',
+      },
+    'displayName': 'reply 200',
+    'content': 'reply 200',
+    'url': 'http://twitter.com/alice/status/200',
+    }, {
+    'objectType': 'note',
+    'id': tag_uri('300'),
+    'author': {
+      'id': 'tag:twitter.com:bob',
+      'username': 'bob',
+      'url': 'http://twitter.com/bob',
+      },
+    'displayName': 'reply 300',
+    'content': 'reply 300',
+    'url': 'http://twitter.com/bob/status/300',
+    }, {
+    'objectType': 'note',
+    'id': tag_uri('400'),
+    'author': {
+      'id': 'tag:twitter.com:snarfed_org',
+      'username': 'snarfed_org',
+      'url': 'http://twitter.com/snarfed_org',
+      },
+    'displayName': 'reply 400',
+    'content': 'reply 400',
+    'url': 'http://twitter.com/snarfed_org/status/400',
+    }, {
+    'objectType': 'note',
+    'id': tag_uri('500'),
+    'author': {
+      'id': 'tag:twitter.com:alice',
+      'username': 'alice',
+      'url': 'http://twitter.com/alice',
+      },
+    'displayName': 'reply 500',
+    'content': 'reply 500',
+    'url': 'http://twitter.com/alice/status/500',
+    }]
 ACTIVITY_WITH_REPLIES = copy.deepcopy(ACTIVITY)  # ActivityStreams
 ACTIVITY_WITH_REPLIES['object']['replies'] = {
   'totalItems': 4,
-  'items': [{
-      'objectType': 'note',
-      'id': tag_uri('200'),
-      'author': {
-        'id': 'tag:twitter.com:alice',
-        'username': 'alice',
-        'url': 'http://twitter.com/alice',
-        },
-      'displayName': 'reply 200',
-      'content': 'reply 200',
-      'url': 'http://twitter.com/alice/status/200',
-      }, {
-      'objectType': 'note',
-      'id': tag_uri('300'),
-      'author': {
-        'id': 'tag:twitter.com:bob',
-        'username': 'bob',
-        'url': 'http://twitter.com/bob',
-        },
-      'displayName': 'reply 300',
-      'content': 'reply 300',
-      'url': 'http://twitter.com/bob/status/300',
-      }, {
-      'objectType': 'note',
-      'id': tag_uri('400'),
-      'author': {
-        'id': 'tag:twitter.com:snarfed_org',
-        'username': 'snarfed_org',
-        'url': 'http://twitter.com/snarfed_org',
-        },
-      'displayName': 'reply 400',
-      'content': 'reply 400',
-      'url': 'http://twitter.com/snarfed_org/status/400',
-      }, {
-      'objectType': 'note',
-      'id': tag_uri('500'),
-      'author': {
-        'id': 'tag:twitter.com:alice',
-        'username': 'alice',
-        'url': 'http://twitter.com/alice',
-        },
-      'displayName': 'reply 500',
-      'content': 'reply 500',
-      'url': 'http://twitter.com/alice/status/500',
-      }],
+  'items': REPLY_OBJS,
   }
 
 RETWEETS = [{  # Twitter
@@ -822,18 +823,14 @@ class TwitterTest(testutil.HandlerTest):
         })
     self.assert_equals(tweet, self.twitter.create(obj))
 
-  # def test_create_reply(self):
-  #   tweet = copy.deepcopy(TWEET)
-  #   tweet['id'] = '100'
-  #   self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(tweet),
-  #                       data='status=my+status')
-  #   self.mox.ReplayAll()
-  #   obj = copy.deepcopy(COMMENT_OBJS[0])
-  #   obj['content'] = 'my cmt'
-  #   self.assert_equals({
-  #       'id': '456_789',
-  #       'url': 'http://twitter.com/547822715231468?comment_id=456_789',
-  #       }, self.twitter.create(obj))
+  def test_create_reply(self):
+    self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(TWEET),
+                        data='status=reply+200&in_reply_to_status_id=100')
+    self.mox.ReplayAll()
+
+    reply = copy.deepcopy(REPLY_OBJS[0])
+    reply['inReplyTo'] = [{'id': 'tag:twitter.com,2013:100'}]
+    self.twitter.create(reply)
 
   # def test_create_like(self):
   #   self.expect_urlopen('https://graph.twitter.com/10100176064482163/likes',
