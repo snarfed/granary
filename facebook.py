@@ -57,6 +57,7 @@ API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d'
 API_HOME_URL = 'https://graph.facebook.com/%s/home?offset=%d'
 API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/me/feed'
+API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -218,18 +219,33 @@ class Facebook(source.Source):
     """Creates a new object: a post, comment, like, share, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
+    https://developers.facebook.com/docs/reference/api/post#comments
 
     Args:
       obj: ActivityStreams object
 
     Returns: dict with 'id' and 'url' keys for the newly created Facebook object
     """
+    # TODO: obj validation, error handling
+
+    objType = obj.get('objectType')
+    if objType == 'comment':
+      _, post_id = util.parse_tag_uri(obj['inReplyTo'][0]['id'])
+      endpoint = API_COMMENTS_URL % post_id
+    else:
+      endpoint = API_FEED_URL
+
     data = urllib.urlencode({'message': obj.get('content').encode('utf-8'),
                              # TODO...or leave it to user's default?
                              # 'privacy': '{"value":"EVERYONE"}',
                              })
-    resp = json.loads(self.urlopen(API_FEED_URL, data=data).read())
-    resp['url'] = self.post_url(resp)
+    resp = json.loads(self.urlopen(endpoint, data=data).read())
+
+    if objType == 'comment':
+      resp['url'] = self.comment_url(post_id, resp['id'])
+    else:
+      resp['url'] = self.post_url(resp)
+
     return resp
 
   def urlopen(self, url, **kwargs):
@@ -258,6 +274,15 @@ class Facebook(source.Source):
       return 'http://facebook.com/%s/posts/%s' % (author_id, post_id)
     else:
       return 'http://facebook.com/%s' % post_id
+
+  def comment_url(self, post_id, comment_id):
+    """Returns a short Facebook URL for a comment.
+
+    Args:
+      post_id: Facebook post id
+      comment_id: Facebook comment id
+    """
+    return 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
   def post_to_activity(self, post):
     """Converts a post to an activity.
@@ -466,7 +491,7 @@ class Facebook(source.Source):
     match = self.COMMENT_ID_RE.match(comment.get('id', ''))
     if match:
       post_author, post_id, comment_id = match.groups()
-      obj['url'] = 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+      obj['url'] = self.comment_url(post_id, comment_id)
       obj['inReplyTo'] = [{'id': self.tag_uri(post_id)}]
 
     return self.postprocess_object(obj)

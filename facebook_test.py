@@ -889,6 +889,21 @@ class FacebookTest(testutil.HandlerTest):
                         json.dumps({'id': '123_456'}),
                         data='message=my+msg')
     self.mox.ReplayAll()
+    obj = copy.deepcopy(POST_OBJ)
+    obj['content'] = 'my msg'
     self.assert_equals(
       {'id': '123_456', 'url': 'http://facebook.com/123_456'},
-      self.facebook.create({'content': 'my msg'}))
+      self.facebook.create(obj))
+
+  def test_create_comment(self):
+    self.expect_urlopen('https://graph.facebook.com/547822715231468/comments',
+                        json.dumps({'id': '456_789'}),
+                        data='message=my+cmt')
+    self.mox.ReplayAll()
+    obj = copy.deepcopy(COMMENT_OBJS[0])
+    obj['content'] = 'my cmt'
+    self.assert_equals({
+        'id': '456_789',
+        'url': 'http://facebook.com/547822715231468?comment_id=456_789',
+        }, self.facebook.create(obj))
+
