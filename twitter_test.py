@@ -809,21 +809,24 @@ class TwitterTest(testutil.HandlerTest):
     self.twitter.get_actor('foo')
 
   def test_create_tweet(self):
-    tweet = copy.deepcopy(TWEET)
-    tweet['id'] = '100'
-    self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(tweet),
+    self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(TWEET),
                         data='status=my+status')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(OBJECT)
     obj['content'] = 'my status'
-    tweet['url'] = 'http://twitter.com/snarfed_org/status/100'
+    tweet = copy.deepcopy(TWEET)
+    tweet.update({
+        'id': '100',
+        'url': 'http://twitter.com/snarfed_org/status/100',
+        })
     self.assert_equals(tweet, self.twitter.create(obj))
 
-  # def test_create_comment(self):
-  #   self.expect_urlopen('https://graph.twitter.com/547822715231468/comments',
-  #                       json.dumps({'id': '456_789'}),
-  #                       data='message=my+cmt')
+  # def test_create_reply(self):
+  #   tweet = copy.deepcopy(TWEET)
+  #   tweet['id'] = '100'
+  #   self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(tweet),
+  #                       data='status=my+status')
   #   self.mox.ReplayAll()
   #   obj = copy.deepcopy(COMMENT_OBJS[0])
   #   obj['content'] = 'my cmt'

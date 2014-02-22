@@ -313,7 +313,10 @@ class Twitter(source.Source):
     # TODO: require type 'note'
     else:
       resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=status_data).read())
-      resp['url'] = self.tweet_url(resp)
+
+    id_str = resp.get('id_str')
+    if id_str:
+      resp.update({'id': id_str, 'url': self.tweet_url(resp)})
 
     return resp
 
