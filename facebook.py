@@ -20,7 +20,6 @@ import logging
 import re
 import urllib
 import urllib2
-import urlparse
 
 import appengine_config
 from oauth_dropins.webutil import util
@@ -242,22 +241,7 @@ class Facebook(source.Source):
     # TODO: validation, error handling
     type = obj.get('objectType')
     verb = obj.get('verb')
-
-    # if this is a response to an existing object, e.g. a comment or rsvp,
-    # find that base object's id.
-    base_id = None
-    reply_to = obj.get('inReplyTo')
-    base_obj = reply_to[0] if reply_to else obj.get('object')
-    if base_obj:
-      id = base_obj.get('id')
-      url = base_obj.get('url')
-      if id:
-        _, base_id = util.parse_tag_uri(id)
-      elif url:
-        path = urlparse.urlparse(url).path
-        if path.endswith('/'):
-          path = path[:-1]
-        base_id = path.rsplit('/', 1)[-1]
+    base_id = self.base_object_id(obj)
 
     msg_data = urllib.urlencode({
         'message': obj.get('content', '').encode('utf-8'),
