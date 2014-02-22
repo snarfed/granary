@@ -304,11 +304,14 @@ class Twitter(source.Source):
       data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
       resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
 
-    elif type == 'activity':
+    elif type == 'activity' and verb == 'like':
       # TODO: validation
-      endpoints = {'like': API_POST_FAVORITE_URL, 'share': API_POST_RETWEET_URL}
-      json.loads(self.urlopen(endpoints[verb], data='id=' + base_id).read())
+      data = urllib.urlencode({'id': base_id})
+      self.urlopen(API_POST_FAVORITE_URL, data=data).read()
       resp = {}
+
+    elif type == 'activity' and verb == 'share':
+      resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data='').read())
 
     # TODO: require type 'note'
     else:

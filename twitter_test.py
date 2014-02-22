@@ -837,3 +837,16 @@ class TwitterTest(testutil.HandlerTest):
                         data='id=100')
     self.mox.ReplayAll()
     self.assert_equals({}, self.twitter.create(LIKES_FROM_HTML[0]))
+
+
+  def test_create_retweet(self):
+    self.expect_urlopen('https://api.twitter.com/1.1/statuses/retweet/333.json',
+                        json.dumps(TWEET), data='')
+    self.mox.ReplayAll()
+
+    tweet = copy.deepcopy(TWEET)
+    tweet.update({
+        'id': '100',
+        'url': 'http://twitter.com/snarfed_org/status/100',
+        })
+    self.assert_equals(tweet, self.twitter.create(SHARES[0]))
