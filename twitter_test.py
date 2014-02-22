@@ -807,3 +807,33 @@ class TwitterTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.twitter.get_actor('foo')
+
+  def test_create_tweet(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['id'] = '100'
+    self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(tweet),
+                        data='status=my+status')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(OBJECT)
+    obj['content'] = 'my status'
+    tweet['url'] = 'http://twitter.com/snarfed_org/status/100'
+    self.assert_equals(tweet, self.twitter.create(obj))
+
+  # def test_create_comment(self):
+  #   self.expect_urlopen('https://graph.twitter.com/547822715231468/comments',
+  #                       json.dumps({'id': '456_789'}),
+  #                       data='message=my+cmt')
+  #   self.mox.ReplayAll()
+  #   obj = copy.deepcopy(COMMENT_OBJS[0])
+  #   obj['content'] = 'my cmt'
+  #   self.assert_equals({
+  #       'id': '456_789',
+  #       'url': 'http://twitter.com/547822715231468?comment_id=456_789',
+  #       }, self.twitter.create(obj))
+
+  # def test_create_like(self):
+  #   self.expect_urlopen('https://graph.twitter.com/10100176064482163/likes',
+  #                       'true', data='')
+  #   self.mox.ReplayAll()
+  #   self.assert_equals({}, self.twitter.create(LIKE_OBJS[0]))

@@ -42,7 +42,11 @@ API_CURRENT_USER_URL = \
   'https://api.twitter.com/1.1/account/verify_credentials.json'
 API_SEARCH_URL = \
     'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
+API_POST_TWEET_URL = 'https://api.twitter.com/1.1/statuses/update.json'
+API_POST_RETWEET_URL = 'https://api.twitter.com/1.1/statuses/retweet/%s.json'
+API_POST_FAVORITE_URL = 'https://api.twitter.com/1.1/favorites/create.json'
 HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
+
 
 # Don't hit the RETWEETS endpoint more than this many times per
 # get_activities() call.
@@ -274,6 +278,45 @@ class Twitter(source.Source):
     url = API_STATUS_URL % share_id
     return self.retweet_to_object(json.loads(self.urlopen(url).read()))
 
+  def create(self, obj):
+    """Creates a tweet, reply tweet, retweet, or favorite.
+
+    https://dev.twitter.com/docs/api/1.1/post/statuses/update
+    https://dev.twitter.com/docs/api/1.1/post/statuses/retweet/:id
+    https://dev.twitter.com/docs/api/1.1/post/favorites/create
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: dict with 'id' and 'url' keys for the newly created Twitter object
+    """
+    # TODO: validation, error handling
+    type = obj.get('objectType')
+    verb = obj.get('verb')
+    base_id = self.base_object_id(obj)
+    status_data = urllib.urlencode(
+      {'status': obj.get('content', '').encode('utf-8')})
+
+    obj.get('content', '').encode('utf-8')
+    if type == 'comment':
+      resp = json.loads(self.urlopen(API_POST_TWEET_URL % base_id, data=msg_data).read())
+    #   resp['url'] = self.comment_url(base_id, resp['id'])
+
+    # elif type == 'activity':
+    #   # TODO: validation
+    #   # TODO: event invites
+    #   endpoint = API_LIKES_URL if verb == 'like' else RSVP_ENDPOINTS[verb]
+    #   resp = json.loads(self.urlopen(endpoint % base_id, data='').read())
+    #   assert resp == True, resp
+    #   resp = {}
+
+    # TODO: require type 'note'
+    else:
+      resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=status_data).read())
+      resp['url'] = self.tweet_url(resp)
+
+    return resp
+
   def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """
@@ -488,8 +531,7 @@ class Twitter(source.Source):
     share.update({
         'objectType': 'activity',
         'verb': 'share',
-        'object': {'url': self.status_url(orig.get('user', {}).get('screen_name'),
-                                          orig.get('id_str'))},
+        'object': {'url': self.tweet_url(orig)},
         # postprocess_object() populates displayName based on content, but we
         # want to override it to omit the link.
         'displayName': '%s retweeted this.' % self.actor_name(share.get('author')),
@@ -567,7 +609,7 @@ class Twitter(source.Source):
     liker_id = liker.get('id_str')
     id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, liker_id)) \
         if liker_id else None
-    url = self.status_url(tweet.get('user').get('screen_name'), tweet_id)
+    url = self.tweet_url(tweet)
     return self.postprocess_object({
         'id': id,
         'url': url,
@@ -604,3 +646,9 @@ class Twitter(source.Source):
   def status_url(cls, username, id):
     """Returns the Twitter URL for a tweet from a given user with a given id."""
     return '%s/status/%s' % (cls.user_url(username), id)
+
+  @classmethod
+  def tweet_url(cls, tweet):
+    """Returns the Twitter URL for a tweet given a tweet object."""
+    return cls.status_url(tweet.get('user', {}).get('screen_name'),
+                          tweet.get('id_str'))
