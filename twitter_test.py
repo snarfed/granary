@@ -832,8 +832,8 @@ class TwitterTest(testutil.HandlerTest):
     reply['inReplyTo'] = [{'id': 'tag:twitter.com,2013:100'}]
     self.twitter.create(reply)
 
-  # def test_create_like(self):
-  #   self.expect_urlopen('https://graph.twitter.com/10100176064482163/likes',
-  #                       'true', data='')
-  #   self.mox.ReplayAll()
-  #   self.assert_equals({}, self.twitter.create(LIKE_OBJS[0]))
+  def test_create_favorite(self):
+    self.expect_urlopen(twitter.API_POST_FAVORITE_URL, json.dumps(TWEET),
+                        data='id=100')
+    self.mox.ReplayAll()
+    self.assert_equals({}, self.twitter.create(LIKES_FROM_HTML[0]))
