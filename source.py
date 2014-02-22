@@ -158,8 +158,10 @@ class Source(object):
       obj: ActivityStreams object. At minimum, must have the content field.
         objectType is strongly recommended.
 
-    Returns: dict with 'id' and 'url' keys for the newly created activity in the
-      source site
+    Returns: dict, possibly empty. If the newly created object has an id or
+      permalink, they'll be provided in the values for 'id' and 'url'.
+
+    Raises exceptions on all errors.
     """
     raise NotImplementedError()
 

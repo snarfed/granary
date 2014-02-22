@@ -58,6 +58,7 @@ API_HOME_URL = 'https://graph.facebook.com/%s/home?offset=%d'
 API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/me/feed'
 API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
+API_LIKES_URL = 'https://graph.facebook.com/%s/likes'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -219,31 +220,36 @@ class Facebook(source.Source):
     """Creates a new object: a post, comment, like, share, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
-    https://developers.facebook.com/docs/reference/api/post#comments
+    https://developers.facebook.com/docs/graph-api/reference/object/comments#publish
+    https://developers.facebook.com/docs/graph-api/reference/object/likes#publish
 
     Args:
       obj: ActivityStreams object
 
     Returns: dict with 'id' and 'url' keys for the newly created Facebook object
     """
-    # TODO: obj validation, error handling
+    # TODO: validation, error handling
+    type = obj.get('objectType')
+    verb = obj.get('verb')
+    msg_data = urllib.urlencode({
+        'message': obj.get('content', '').encode('utf-8'),
+        # TODO...or leave it to user's default?
+        # 'privacy': '{"value":"EVERYONE"}',
+        })
 
-    objType = obj.get('objectType')
-    if objType == 'comment':
+    if type == 'comment':
       _, post_id = util.parse_tag_uri(obj['inReplyTo'][0]['id'])
-      endpoint = API_COMMENTS_URL % post_id
-    else:
-      endpoint = API_FEED_URL
-
-    data = urllib.urlencode({'message': obj.get('content').encode('utf-8'),
-                             # TODO...or leave it to user's default?
-                             # 'privacy': '{"value":"EVERYONE"}',
-                             })
-    resp = json.loads(self.urlopen(endpoint, data=data).read())
-
-    if objType == 'comment':
+      resp = json.loads(self.urlopen(API_COMMENTS_URL % post_id, data=msg_data).read())
       resp['url'] = self.comment_url(post_id, resp['id'])
+    elif type == 'activity' and verb == 'like':
+      path = urlparse.urlparse(obj.get('object', {}).get('url')).path
+      id = path.rsplit('/', 1)[-1]
+      resp = self.urlopen(API_LIKES_URL % id, data='').read()
+      # TODO: something else?
+      assert resp == 'true', resp
+      resp = {}
     else:
+      resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
       resp['url'] = self.post_url(resp)
 
     return resp

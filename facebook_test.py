@@ -907,3 +907,8 @@ class FacebookTest(testutil.HandlerTest):
         'url': 'http://facebook.com/547822715231468?comment_id=456_789',
         }, self.facebook.create(obj))
 
+  def test_create_like(self):
+    self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
+                        'true', data='')
+    self.mox.ReplayAll()
+    self.assert_equals({}, self.facebook.create(LIKE_OBJS[0]))
