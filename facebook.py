@@ -86,7 +86,17 @@ VERBS = {
   'product': 'give',
   'video.watches': 'play',
 }
-
+RSVP_VERBS = {
+  'attending': 'rsvp-yes',
+  'declined': 'rsvp-no',
+  'unsure': 'rsvp-maybe',
+  'not_replied': 'invite',
+  }
+RSVP_ENDPOINTS = {
+  'rsvp-yes': 'https://graph.facebook.com/%s/attending',
+  'rsvp-no': 'https://graph.facebook.com/%s/declined',
+  'rsvp-maybe': 'https://graph.facebook.com/%s/maybe',
+}
 
 class Facebook(source.Source):
   """Implements the ActivityStreams API for Facebook.
@@ -222,6 +232,7 @@ class Facebook(source.Source):
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
     https://developers.facebook.com/docs/graph-api/reference/object/comments#publish
     https://developers.facebook.com/docs/graph-api/reference/object/likes#publish
+    https://developers.facebook.com/docs/graph-api/reference/event#attending
 
     Args:
       obj: ActivityStreams object
@@ -231,6 +242,20 @@ class Facebook(source.Source):
     # TODO: validation, error handling
     type = obj.get('objectType')
     verb = obj.get('verb')
+
+    # if this is a response to an existing object, e.g. a comment or rsvp,
+    # find that base object's id.
+    base_id = None
+    reply_to = obj.get('inReplyTo')
+    base_obj = reply_to[0] if reply_to else obj.get('object')
+    if base_obj:
+      id = base_obj.get('id')
+      url = base_obj.get('url')
+      if id:
+        _, base_id = util.parse_tag_uri(id)
+      elif url:
+        base_id = urlparse.urlparse(url).path.rsplit('/', 1)[-1]
+
     msg_data = urllib.urlencode({
         'message': obj.get('content', '').encode('utf-8'),
         # TODO...or leave it to user's default?
@@ -238,16 +263,18 @@ class Facebook(source.Source):
         })
 
     if type == 'comment':
-      _, post_id = util.parse_tag_uri(obj['inReplyTo'][0]['id'])
-      resp = json.loads(self.urlopen(API_COMMENTS_URL % post_id, data=msg_data).read())
-      resp['url'] = self.comment_url(post_id, resp['id'])
-    elif type == 'activity' and verb == 'like':
-      path = urlparse.urlparse(obj.get('object', {}).get('url')).path
-      id = path.rsplit('/', 1)[-1]
-      resp = self.urlopen(API_LIKES_URL % id, data='').read()
-      # TODO: something else?
-      assert resp == 'true', resp
+      resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id, data=msg_data).read())
+      resp['url'] = self.comment_url(base_id, resp['id'])
+
+    elif type == 'activity':
+      # TODO: validation
+      # TODO: event invites
+      endpoint = API_LIKES_URL if verb == 'like' else RSVP_ENDPOINTS[verb]
+      resp = json.loads(self.urlopen(endpoint % base_id, data='').read())
+      assert resp == True, resp
       resp = {}
+
+    # TODO: require type 'note'
     else:
       resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
       resp['url'] = self.post_url(resp)
@@ -597,14 +624,9 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict
     """
-    verbs = {'attending': 'rsvp-yes',
-             'declined': 'rsvp-no',
-             'unsure': 'rsvp-maybe',
-             'not_replied': 'invite',
-             }
     obj = {
       'objectType': 'activity',
-      'verb': verbs.get(rsvp.get('rsvp_status')),
+      'verb': RSVP_VERBS.get(rsvp.get('rsvp_status')),
       'actor': self.user_to_actor(rsvp),
       }
     user_id = rsvp.get('id')

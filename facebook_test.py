@@ -912,3 +912,14 @@ class FacebookTest(testutil.HandlerTest):
                         'true', data='')
     self.mox.ReplayAll()
     self.assert_equals({}, self.facebook.create(LIKE_OBJS[0]))
+
+  def test_create_rsvp(self):
+    for endpoint in 'attending', 'declined', 'maybe':#, 'invited/567':
+      self.expect_urlopen('https://graph.facebook.com/234/' + endpoint,
+                          'true', data='')
+
+    self.mox.ReplayAll()
+    for rsvp in RSVP_OBJS_WITH_ID[:3]:
+      rsvp = copy.deepcopy(rsvp)
+      rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234'}]
+      self.assert_equals({}, self.facebook.create(rsvp))
