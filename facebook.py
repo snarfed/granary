@@ -214,17 +214,17 @@ class Facebook(source.Source):
     data = json.loads(self.urlopen(url).read()).get('data')
     return self.rsvp_to_object(data[0], event_id=event_id) if data else None
 
-  def create_activity(self, activity):
-    """Creates a new activity: a post, comment, like, share, or RSVP.
+  def create(self, obj):
+    """Creates a new object: a post, comment, like, share, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
 
     Args:
-      activity: ActivityStreams activity object
+      obj: ActivityStreams object
 
     Returns: dict with 'id' and 'url' keys for the newly created Facebook object
     """
-    data = urllib.urlencode({'message': activity.get('content').encode('utf-8'),
+    data = urllib.urlencode({'message': obj.get('content').encode('utf-8'),
                              # TODO...or leave it to user's default?
                              # 'privacy': '{"value":"EVERYONE"}',
                              })

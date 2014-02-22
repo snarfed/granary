@@ -147,16 +147,16 @@ class Source(object):
             'updatedSince': False,
             }
 
-  def create_activity(self, activity):
-    """Creates a new activity: a post, comment, like, share, or RSVP.
+  def create(self, obj):
+    """Creates a new object: a post, comment, like, share, or RSVP.
 
     Subclasses should override this. Different sites will support different
     functionality; check each subclass for details. The actor will usually be
     the authenticated user.
 
     Args:
-      activity: ActivityStreams activity object. At minimum, must have the
-        'content' field.
+      obj: ActivityStreams object. At minimum, must have the content field.
+        objectType is strongly recommended.
 
     Returns: dict with 'id' and 'url' keys for the newly created activity in the
       source site
