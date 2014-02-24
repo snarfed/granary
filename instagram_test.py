@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Unit tests for instagram.py.
 """
 
@@ -458,6 +457,13 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.instagram.user_to_actor(USER))
+
+  def test_user_to_actor_url_fallback(self):
+    user = copy.deepcopy(USER)
+    delattr(user, 'website')
+    actor = copy.deepcopy(ACTOR)
+    actor['url'] = 'http://instagram.com/snarfed'
+    self.assert_equals(actor, self.instagram.user_to_actor(user))
 
   def test_user_to_actor_minimal(self):
     self.assert_equals({'id': tag_uri('420973239'), 'username': None},

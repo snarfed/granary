@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Instagram source class.
 
 Instagram's API doesn't tell you if a user has marked their account private or
