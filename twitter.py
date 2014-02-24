@@ -390,7 +390,7 @@ class Twitter(source.Source):
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
       # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
-      # url entities below to replace them with the real URLs, and then linkify.
+      # entities below to replace them with the real URLs, and then linkify.
       'content': tweet.get('text'),
       'attachments': [],
       }
@@ -503,6 +503,15 @@ class Twitter(source.Source):
     if not username:
       return {}
 
+    url = user.get('url')
+    if url:
+      for entity in user.get('entities', {}).get('url', {}).get('urls', []):
+        expanded = entity.get('expanded_url')
+        if entity['url'] == url and expanded:
+          url = expanded
+    else:
+      url = self.user_url(username)
+
     return util.trim_nulls({
       'displayName': user.get('name'),
       'image': {'url': user.get('profile_image_url')},
@@ -511,7 +520,7 @@ class Twitter(source.Source):
       # user id, if available.
       'numeric_id': user.get('id_str'),
       'published': self.rfc2822_to_iso8601(user.get('created_at')),
-      'url': self.user_url(username),
+      'url': url,
       'location': {'displayName': user.get('location')},
       'username': username,
       'description': user.get('description'),

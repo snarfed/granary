@@ -28,6 +28,10 @@ USER = {  # Twitter
   'screen_name': 'snarfed_org',
   'id_str': '888',
   'protected': False,
+  'url': 'http://t.co/pUWU4S',
+  'entities': {'url': {'urls': [{'url': 'http://t.co/pUWU4S',
+                                 'expanded_url': 'https://snarfed.org/',
+                                 }]}},
   }
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
@@ -37,7 +41,7 @@ ACTOR = {  # ActivityStreams
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
   'published': '2010-05-01T21:42:43',
-  'url': 'http://twitter.com/snarfed_org',
+  'url': 'https://snarfed.org/',
   'location': {'displayName': 'San Francisco'},
   'username': 'snarfed_org',
   'description': 'my description',
@@ -453,11 +457,11 @@ ATOM = """\
 <updated>2012-02-22T20:26:41</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://twitter.com/snarfed_org</uri>
+ <uri>https://snarfed.org/</uri>
  <name>Ryan Barrett</name>
 </author>
 
-<link href="http://twitter.com/snarfed_org" rel="alternate" type="text/html" />
+<link href="https://snarfed.org/" rel="alternate" type="text/html" />
 <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
@@ -470,7 +474,7 @@ ATOM = """\
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://twitter.com/snarfed_org</uri>
+ <uri>https://snarfed.org/</uri>
  <name>Ryan Barrett</name>
 </author>
 
@@ -786,6 +790,13 @@ class TwitterTest(testutil.HandlerTest):
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))
+
+  def test_user_to_actor_url_fallback(self):
+    user = copy.deepcopy(USER)
+    del user['url']
+    actor = copy.deepcopy(ACTOR)
+    actor['url'] = 'http://twitter.com/snarfed_org'
+    self.assert_equals(actor, self.twitter.user_to_actor(user))
 
   def test_user_to_actor_minimal(self):
     # just test that we don't crash
