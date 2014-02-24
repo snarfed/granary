@@ -534,9 +534,8 @@ class Facebook(source.Source):
     if not handle:
       return {}
 
-    url = user.get('link')
-    if not url:
-      url = 'http://facebook.com/' + handle
+    url = (user.get('website') or user.get('link') or
+           'http://facebook.com/' + handle)
 
     # facebook implements this as a 302 redirect
     image_url = 'http://graph.facebook.com/%s/picture?type=large' % handle
