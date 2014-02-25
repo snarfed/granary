@@ -28,7 +28,4 @@ skip_files:
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
 - ^(.*/)?.*\.bak$
-# don't need anything in the tweepy or webapp-improved subdirs, especially since
-# webapp-improved/lib/ has over 1k files!
-- ^tweepy_submodule/(docs|examples|tools)/.*
-- webutil/webapp-improved/.*/.*
+- ^(.*/)?(debian|docs?|examples?|pydocs?|python3|ref|samples?|tests?)/.*
