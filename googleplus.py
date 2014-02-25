@@ -46,7 +46,7 @@ class GooglePlus(source.Source):
 
     Raises: GooglePlusAPIError
     """
-    return self.auth_entity.user_json
+    return self.user_to_actor(self.auth_entity.user_json)
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -205,3 +205,19 @@ class GooglePlus(source.Source):
         }))
 
     return tags
+
+  def user_to_actor(self, user):
+    """Returns a Google+ Person object unchanged.
+
+    https://developers.google.com/+/api/latest/people
+
+    TODO: G+'s Person resource has a multiply-valued 'urls' field. Should
+    ideally extract the (first?) non-silo URL and set that as the 'url' field.
+
+    Args:
+      user: dict, a decoded JSON Google+ Person
+
+    Returns:
+      an ActivityStreams actor dict, ready to be JSON-encoded
+    """
+    return user
