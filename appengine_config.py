@@ -7,6 +7,7 @@ from oauth_dropins.appengine_config import *
 # https://github.com/snarfed/bridgy/issues/31
 for path in (
   'beautifulsoup',
+  'mf2py',
   ):
   path = os.path.join(os.path.dirname(__file__), path)
   if path not in sys.path:
