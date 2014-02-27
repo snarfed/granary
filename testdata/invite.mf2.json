@@ -1,0 +1,24 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "url": ["http://example.com/this/invite"],
+    "invitee": [{
+      "type": ["h-card", "p-invitee"],
+      "properties": {
+        "name": ["Alice"],
+        "url": ["http://example.com/alice"]
+      }
+    }],
+    "author": [{
+      "type": ["h-card"],
+      "properties": {
+        "name": ["Mr. Host"],
+        "url": ["http://example.com/host"]
+      }
+    }],
+    "name": ["Alice is invited."],
+    "content": [{
+      "html": "is invited.",
+      "value": "is invited."}]
+  }
+}

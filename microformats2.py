@@ -18,6 +18,7 @@ HENTRY = string.Template("""\
   $updated
 $author
   <div class="e-content">
+  $invitees
   $content
   </div>
 $photo
@@ -60,6 +61,7 @@ def object_to_json(obj, trim_nulls=True):
                'rsvp-yes': ['h-entry', 'h-as-rsvp'],
                'rsvp-no': ['h-entry', 'h-as-rsvp'],
                'rsvp-maybe': ['h-entry', 'h-as-rsvp'],
+               'invite': ['h-entry'],
                }
   obj_type = object_type(obj)
   types = types_map.get(obj_type, ['h-entry'])
@@ -106,7 +108,10 @@ def object_to_json(obj, trim_nulls=True):
   # rsvp
   if 'h-as-rsvp' in types:
     ret['properties']['rsvp'] = [obj_type[len('rsvp-'):]]
-
+  elif obj_type == 'invite':
+    invitee = object_to_json(obj.get('object'), trim_nulls=False)
+    invitee['type'].append('p-invitee')
+    ret['properties']['invitee'] = [invitee]
   # likes and reposts
   # http://indiewebcamp.com/like#Counterproposal
   for type, prop in ('like', 'like'), ('share', 'repost'):
@@ -158,14 +163,18 @@ def json_to_object(mf2):
                ('p-location', 'place', None),
                ('h-card', 'person', None),
                ('h-as-article', 'article', None),
-               ('h-as-rsvp', 'activity','rsvp-%s' % rsvp if rsvp else None),
+               ('h-as-rsvp', 'activity', 'rsvp-%s' % rsvp if rsvp else None),
                ]
   for mf2_type, as_type, as_verb in types_map:
     if mf2_type in types:
       break  # found
   else:
-    as_type = 'h-entry'  # default
-    as_verb = None
+    if 'invitee' in props:
+      as_type = 'activity'
+      as_verb = 'invite'
+    else:
+      as_type = 'note'  # default
+      as_verb = None
 
   obj = {
     'id': prop.get('uid'),
@@ -187,6 +196,7 @@ def json_to_object(mf2):
     urls = set(itertools.chain.from_iterable(props.get(field, [])
         for field in ('like', 'like-of', 'repost', 'repost-of', 'in-reply-to')))
     objects = [{'url': url} for url in urls]
+    objects += [json_to_object(i) for i in props.get('invitee', [])]
     obj.update({
         'object': objects[0] if len(objects) == 1 else objects,
         'actor': author,
@@ -283,6 +293,7 @@ def json_to_html(obj):
     location=hcard_to_html(prop['location']),
     photo=photo,
     in_reply_tos=in_reply_tos,
+    invitees='\n'.join([hcard_to_html(i) for i in props.get('invitee', [])]),
     content=content_html,
     comments=comments_html,
     likes_and_reposts='\n'.join(likes_and_reposts),
@@ -303,7 +314,7 @@ def hcard_to_html(hcard):
   # extract first value from multiply valued properties
   props = first_props(hcard['properties'])
   photo = (PHOTO.substitute(url=props['photo'], alt=props.get('name', '-'))
-           if props['photo'] else '')
+           if props.get('photo') else '')
   return HCARD.substitute(props,
                           types=' '.join(hcard['type']),
                           photo=photo,

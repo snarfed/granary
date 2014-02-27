@@ -1,0 +1,17 @@
+{
+  "objectType": "activity",
+  "verb": "invite",
+  "url": "http://example.com/this/invite",
+  "actor": {
+    "objectType": "person",
+    "displayName": "Mr. Host",
+    "url": "http://example.com/host"
+  },
+  "object": {
+    "objectType": "person",
+    "displayName": "Alice",
+    "url": "http://example.com/alice"
+  },
+  "displayName": "Alice is invited.",
+  "content": "is invited."
+}
