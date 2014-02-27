@@ -385,6 +385,14 @@ RSVP_OBJS_WITH_ID = [{
     'verb': 'invite',
     'url': 'http://facebook.com/145304994#654',
     'actor': {
+      'displayName': 'Aaron P',
+      'id': tag_uri('11500'),
+      'numeric_id': '11500',
+      'url': 'http://facebook.com/11500',
+      'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+      },
+    'object': {
+      'objectType': 'person',
       'displayName': 'Bar',
       'id': tag_uri('654'),
       'numeric_id': '654',
@@ -398,12 +406,13 @@ RSVP_OBJS = copy.deepcopy(RSVP_OBJS_WITH_ID)
 for obj in RSVP_OBJS:
   del obj['id']
   del obj['url']
+del RSVP_OBJS[3]['actor']
 EVENT_OBJ_WITH_ATTENDEES = copy.deepcopy(EVENT_OBJ)
 EVENT_OBJ_WITH_ATTENDEES.update({
     'attending': [RSVP_OBJS[0]['actor']],
     'notAttending': [RSVP_OBJS[1]['actor']],
     'maybeAttending': [RSVP_OBJS[2]['actor']],
-    'invited': [RSVP_OBJS[3]['actor']],
+    'invited': [RSVP_OBJS[3]['object']],
     })
 EVENT_ACTIVITY_WITH_ATTENDEES = {  # ActivityStreams
   'id': tag_uri('145304994'),
@@ -759,8 +768,8 @@ class FacebookTest(testutil.HandlerTest):
   def test_rsvp_to_object(self):
     self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])
 
-  def test_rsvp_to_object_event_id(self):
-    objs = [self.facebook.rsvp_to_object(r, event_id='145304994') for r in RSVPS]
+  def test_rsvp_to_object_event(self):
+    objs = [self.facebook.rsvp_to_object(r, event=EVENT) for r in RSVPS]
     self.assert_equals(RSVP_OBJS_WITH_ID, objs)
 
   def test_picture_without_message(self):

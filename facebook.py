@@ -223,7 +223,7 @@ class Facebook(source.Source):
     """
     url = API_RSVP_URL % (event_id, user_id)
     data = json.loads(self.urlopen(url).read()).get('data')
-    return self.rsvp_to_object(data[0], event_id=event_id) if data else None
+    return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
   def create(self, obj):
     """Creates a new object: a post, comment, like, share, or RSVP.
@@ -246,7 +246,7 @@ class Facebook(source.Source):
     msg_data = urllib.urlencode({
         'message': obj.get('content', '').encode('utf-8'),
         # TODO...or leave it to user's default?
-        # 'privacy': '{"value":"EVERYONE"}',
+        # 'privacy': '{"value":"SELF"}',
         })
 
     if type == 'comment':
@@ -579,7 +579,7 @@ class Facebook(source.Source):
       })
 
     if rsvps is not None:
-      rsvps = [self.rsvp_to_object(r, event_id=event.get('id')) for r in rsvps]
+      rsvps = [self.rsvp_to_object(r, event=event) for r in rsvps]
       self.add_rsvps_to_event(obj, rsvps)
 
     return self.postprocess_object(obj)
@@ -598,26 +598,38 @@ class Facebook(source.Source):
             'url': obj.get('url'),
             }
 
-  def rsvp_to_object(self, rsvp, event_id=None):
+  def rsvp_to_object(self, rsvp, event=None):
     """Converts an RSVP to an object.
 
-    The 'id' field will ony be filled in if event_id is provided.
+    The 'id' field will ony be filled in if event['id'] is provided.
 
     Args:
       rsvp: dict, a decoded JSON Facebook RSVP
-      event_id: string
+      event: Facebook event object. May contain only a single 'id' element.
 
     Returns:
       an ActivityStreams object dict
     """
+    verb = RSVP_VERBS.get(rsvp.get('rsvp_status'))
     obj = {
       'objectType': 'activity',
-      'verb': RSVP_VERBS.get(rsvp.get('rsvp_status')),
-      'actor': self.user_to_actor(rsvp),
+      'verb': verb,
       }
-    user_id = rsvp.get('id')
-    if event_id and user_id:
-      obj['id'] = self.tag_uri('%s_rsvp_%s' % (event_id, user_id))
-      obj['url'] = 'http://facebook.com/%s#%s' % (event_id, user_id)
+    if verb == 'invite':
+      invitee = self.user_to_actor(rsvp)
+      invitee['objectType'] = 'person'
+      obj.update({
+          'object': invitee,
+          'actor': self.user_to_actor(event.get('owner')) if event else None,
+          })
+    else:
+      obj['actor'] = self.user_to_actor(rsvp)
+
+    if event:
+      user_id = rsvp.get('id')
+      event_id = event.get('id')
+      if event_id and user_id:
+        obj['id'] = self.tag_uri('%s_rsvp_%s' % (event_id, user_id))
+        obj['url'] = 'http://facebook.com/%s#%s' % (event_id, user_id)
 
     return self.postprocess_object(obj)

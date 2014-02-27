@@ -310,6 +310,8 @@ class Source(object):
       if verb in ('like', 'share'):
         obj['displayName'] = '%s %s' % (actor_name, content)
       elif rsvp_content:
+        if verb == 'invite':
+          actor_name = self.actor_name(obj.get('object'))
         obj['displayName'] = '%s %s' % (actor_name, rsvp_content)
       else:
         obj['displayName'] = util.ellipsize(content)
@@ -383,7 +385,8 @@ class Source(object):
     for rsvp in rsvps:
       field = RSVP_TO_EVENT.get(rsvp.get('verb'))
       if field:
-        event.setdefault(field, []).append(rsvp.get('actor'))
+        event.setdefault(field, []).append(rsvp.get(
+            'object' if field == 'invited' else 'actor'))
 
   @staticmethod
   def get_rsvps_from_event(event):
