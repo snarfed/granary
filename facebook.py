@@ -246,14 +246,14 @@ class Facebook(source.Source):
     msg_data = urllib.urlencode({
         'message': obj.get('content', '').encode('utf-8'),
         # TODO...or leave it to user's default?
-        # 'privacy': '{"value":"SELF"}',  # FB 500s on this, whether encoded or not
+        'privacy': json.dumps({'value': 'SELF'}),
         })
 
     if type == 'comment':
       resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id, data=msg_data).read())
       resp['url'] = self.comment_url(base_id, resp['id'])
 
-    elif type == 'activity':
+    elif type == 'activity' and (verb == 'like' or verb in RSVP_ENDPOINTS):
       # TODO: validation
       # TODO: event invites
       endpoint = API_LIKES_URL if verb == 'like' else RSVP_ENDPOINTS[verb]
@@ -262,9 +262,12 @@ class Facebook(source.Source):
       resp = {}
 
     # TODO: require type 'note'
-    else:
+    elif type in ('note', 'article'):
       resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
       resp['url'] = self.post_url(resp)
+
+    else:
+      raise NotImplementedError()
 
     return resp
 

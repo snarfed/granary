@@ -162,7 +162,8 @@ class Source(object):
     Returns: dict, possibly empty. If the newly created object has an id or
       permalink, they'll be provided in the values for 'id' and 'url'.
 
-    Raises exceptions on all errors.
+    Raises NotImplementedError if the site doesn't support the object type, and
+    other exceptions on other errors.
     """
     raise NotImplementedError()
 

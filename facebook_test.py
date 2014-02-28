@@ -906,20 +906,25 @@ class FacebookTest(testutil.HandlerTest):
         })
 
   def test_create_post(self):
-    self.expect_urlopen(facebook.API_FEED_URL,
-                        json.dumps({'id': '123_456'}),
-                        data='message=my+msg')
+    self.expect_urlopen(
+      facebook.API_FEED_URL,
+      json.dumps({'id': '123_456'}),
+      data='message=my+msg&privacy=%7B%22value%22%3A+%22SELF%22%7D')
     self.mox.ReplayAll()
     obj = copy.deepcopy(POST_OBJ)
-    obj['content'] = 'my msg'
+    obj.update({
+        'objectType': 'note',
+        'content': 'my msg',
+        })
     self.assert_equals(
-      {'id': '123_456', 'url': 'http://facebook.com/123_456'},
+      {'id': '123_456', 'url': 'http://facebook.com/123_456', },
       self.facebook.create(obj))
 
   def test_create_comment(self):
-    self.expect_urlopen('https://graph.facebook.com/547822715231468/comments',
-                        json.dumps({'id': '456_789'}),
-                        data='message=my+cmt')
+    self.expect_urlopen(
+      'https://graph.facebook.com/547822715231468/comments',
+      json.dumps({'id': '456_789'}),
+      data='message=my+cmt&privacy=%7B%22value%22%3A+%22SELF%22%7D')
     self.mox.ReplayAll()
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj['content'] = 'my cmt'
@@ -944,3 +949,7 @@ class FacebookTest(testutil.HandlerTest):
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234/'}]
       self.assert_equals({}, self.facebook.create(rsvp))
+
+  def test_create_unsupported_type(self):
+    self.assertRaises(NotImplementedError, self.facebook.create,
+                      {'objectType': 'activity', 'verb': 'share'})
