@@ -150,28 +150,43 @@ def json_to_object(mf2):
   prop = first_props(props)
   content = prop.get('content', {})
   rsvp = prop.get('rsvp')
+  rsvp_verb = 'rsvp-%s' % rsvp if rsvp else None
   author = json_to_object(prop.get('author'))
 
   # maps mf2 type to ActivityStreams objectType and optional verb. ordered by
   # priority.
   types = mf2.get('type', [])
-  types_map = [('p-comment', 'comment', None),
-               ('h-as-reply', 'comment', None),
-               ('h-as-like', 'activity', 'like'),
-               ('h-as-repost', 'activity', 'share'),
-               ('h-as-note', 'note', None),
-               ('p-location', 'place', None),
-               ('h-card', 'person', None),
-               ('h-as-article', 'article', None),
-               ('h-as-rsvp', 'activity', 'rsvp-%s' % rsvp if rsvp else None),
-               ]
+  types_map = [
+    ('p-comment', 'comment', None),
+    ('h-as-reply', 'comment', None),
+    ('h-as-like', 'activity', 'like'),
+    ('h-as-repost', 'activity', 'share'),
+    ('h-as-note', 'note', None),
+    ('p-location', 'place', None),
+    ('h-card', 'person', None),
+    ('h-as-article', 'article', None),
+    ('h-as-rsvp', 'activity', rsvp_verb),
+    ]
+
+  # fallback if none of the above mf2 types are found. maps property (if it
+  # exists) to objectType and verb. ordered by priority.
+  prop_types_map = [
+    ('rsvp', 'activity', rsvp_verb),
+    ('invitee', 'activity', 'invite'),
+    ('repost', 'activity', 'share'),
+    ('repost-of', 'activity', 'share'),
+    ('like', 'activity', 'like'),
+    ('like-of', 'activity', 'like'),
+    ('in-reply-to', 'comment', None),
+    ]
+
   for mf2_type, as_type, as_verb in types_map:
     if mf2_type in types:
       break  # found
   else:
-    if 'invitee' in props:
-      as_type = 'activity'
-      as_verb = 'invite'
+    for p, as_type, as_verb in prop_types_map:
+      if p in props:
+        break
     else:
       as_type = 'note'  # default
       as_verb = None
@@ -426,7 +441,17 @@ def first_props(props):
   """
   if not props:
     return {}
-  return {k: v[0] if v else '' for k, v in props.items()}
+
+  prop = {}
+  for k, v in props.items():
+    if not v:
+      prop[k] = ''
+    elif isinstance(v, (tuple, list)):
+      prop[k] = v[0]
+    else:
+      prop[k] = v
+
+  return prop
 
 
 def tags_to_html(tags, classname):

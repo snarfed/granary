@@ -246,7 +246,7 @@ class Facebook(source.Source):
     msg_data = urllib.urlencode({
         'message': obj.get('content', '').encode('utf-8'),
         # TODO...or leave it to user's default?
-        # 'privacy': '{"value":"SELF"}',
+        # 'privacy': '{"value":"SELF"}',  # FB 500s on this, whether encoded or not
         })
 
     if type == 'comment':
