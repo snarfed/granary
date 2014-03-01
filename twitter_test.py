@@ -849,7 +849,6 @@ class TwitterTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals({}, self.twitter.create(LIKES_FROM_HTML[0]))
 
-
   def test_create_retweet(self):
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/retweet/333.json',
                         json.dumps(TWEET), data='')

@@ -25,19 +25,20 @@ def tag_uri(name):
 
 # Test data.
 # The Instagram API returns objects with attributes, not JSON dicts.
-USER = Struct(  # Instagram
-  username='snarfed',
-  bio='foo',
-  website='http://snarfed.org/',
-  profile_picture='http://picture/ryan',
-  full_name='Ryan B',
-  counts={
+USER_JSON = {  # Instagram
+  'username': 'snarfed',
+  'bio': 'foo',
+  'website': 'http://snarfed.org/',
+  'profile_picture': 'http://picture/ryan',
+  'full_name': 'Ryan B',
+  'counts': {
     'media': 2,
     'followed_by': 10,
     'follows': 33,
     },
-  id='420973239',
-  )
+  'id': '420973239',
+  }
+USER = Struct(**USER_JSON)
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'id': tag_uri('420973239'),
@@ -458,6 +459,9 @@ class InstagramTest(testutil.HandlerTest):
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.instagram.user_to_actor(USER))
 
+  def test_user_to_actor_json(self):
+    self.assert_equals(ACTOR, self.instagram.user_to_actor(USER_JSON))
+
   def test_user_to_actor_url_fallback(self):
     user = copy.deepcopy(USER)
     delattr(user, 'website')
@@ -470,3 +474,26 @@ class InstagramTest(testutil.HandlerTest):
                        self.instagram.user_to_actor(Struct(id='420973239')))
     self.assert_equals({'id': tag_uri('snarfed'), 'username': 'snarfed'},
                        self.instagram.user_to_actor(Struct(username='snarfed')))
+
+    # TODO: need to fetch media URL to get its id first.
+  # def test_create_like(self):
+  #   self.mox.StubOutWithMock(self.instagram.api, 'like_media')
+  #   self.instagram.api.like_media('123_456').AndReturn(LIKES[0])
+  #   self.mox.ReplayAll()
+
+  #   ret = copy.deepcopy(LIKE_OBJS[0])
+  #   del ret['url']
+  #   self.assert_equals(ret, self.instagram.create(LIKE_OBJS[0]))
+
+  def test_create_comment(self):
+    self.mox.StubOutWithMock(self.instagram.api, 'create_media_comment')
+    self.instagram.api.create_media_comment('123_456', COMMENTS[0].text
+                                            ).AndReturn(COMMENTS[0])
+    self.mox.ReplayAll()
+
+    ret = copy.deepcopy(COMMENT_OBJS[0])
+    del ret['url']
+    self.assert_equals(ret, self.instagram.create(COMMENT_OBJS[0]))
+
+  def test_create_unsupported_type(self):
+    pass

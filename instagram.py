@@ -18,6 +18,7 @@ import urllib
 import urlparse
 
 import appengine_config
+import python_instagram
 from python_instagram.bind import InstagramAPIError
 from python_instagram.client import InstagramAPI
 
@@ -145,6 +146,43 @@ class Instagram(source.Source):
     """Not implemented. Returns None. Resharing isn't a feature of Instagram.
     """
     return None
+
+  def create(self, obj):
+    """Creates a new comment or like.
+
+    This isn't fully tested. You have to apply for access to create comments:
+    https://docs.google.com/spreadsheet/viewform?formkey=dFNydmNsUUlEUGdySWFWbGpQczdmWnc6MQ
+
+    ...and I always get this error when I try to create likes:
+      400 APINotAllowedError - you cannot like this media
+
+    https://github.com/Instagram/python-instagram#data-retrieval
+    http://instagram.com/developer/endpoints/comments/#post_media_comments
+    http://instagram.com/developer/endpoints/likes/#post_likes
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: dict, possibly with 'id' and 'url' keys for the newly created
+      Instagram object
+    """
+    # TODO: validation, error handling
+    type = obj.get('objectType')
+    verb = obj.get('verb')
+    base_id = self.base_object_id(obj)
+
+    if type == 'comment':
+      content = obj.get('content', '').encode('utf-8')
+      comment = self.api.create_media_comment(base_id, content)
+      return self.comment_to_object(comment, base_id, None)
+
+    elif type == 'activity' and verb == 'like':
+      # TODO: fetch media URL, get id, use it here. (sadly.)
+      like = self.api.like_media(base_id)
+      return self.like_to_object(like, base_id, None)
+
+    else:
+      raise NotImplementedError()
 
   def media_to_activity(self, media):
     """Converts a media to an activity.
@@ -278,13 +316,15 @@ class Instagram(source.Source):
     """Converts a user to an actor.
 
     Args:
-      user: python_instagram.models.User
+      user: python_instagram.models.User or dict
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
     if not user:
       return {}
+    elif isinstance(user, dict):
+      user = python_instagram.models.User.object_from_dictionary(user)
 
     id = getattr(user, 'id', None)
     username = getattr(user, 'username', None)
