@@ -167,6 +167,26 @@ class Source(object):
     """
     raise NotImplementedError()
 
+  def preview_create(self, obj):
+    """Previews creating a new object: a post, comment, like, share, or RSVP.
+
+    Returns HTML that previews what create() with the same object will do.
+
+    Subclasses should override this. Different sites will support different
+    functionality; check each subclass for details. The actor will usually be
+    the authenticated user.
+
+    Args:
+      obj: ActivityStreams object. At minimum, must have the content field.
+        objectType is strongly recommended.
+
+    Returns: string HTML snipper
+
+    Raises NotImplementedError if the site doesn't support the object type, and
+    other exceptions on other errors.
+    """
+    raise NotImplementedError()
+
   def get_comment(self, comment_id, activity_id=None):
     """Returns an ActivityStreams comment object.
 

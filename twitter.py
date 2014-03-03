@@ -47,12 +47,20 @@ API_POST_RETWEET_URL = 'https://api.twitter.com/1.1/statuses/retweet/%s.json'
 API_POST_FAVORITE_URL = 'https://api.twitter.com/1.1/favorites/create.json'
 HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
-
 # Don't hit the RETWEETS endpoint more than this many times per
 # get_activities() call.
 # https://dev.twitter.com/docs/rate-limiting/1.1/limits
 # TODO: sigh. figure out a better way. dammit twitter, give me a batch API!!!
 RETWEET_LIMIT = 15
+
+# HTML snippet that embeds a tweet.
+EMBED_TWEET = """
+<blockquote class="twitter-tweet" lang="en" data-conversation="none" data-dnt="true">
+<p></p>
+<a href="https://twitter.com/USERNAME/statuses/%s">DATE</a>
+</blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+"""
 
 
 class Twitter(source.Source):
@@ -281,16 +289,40 @@ class Twitter(source.Source):
   def create(self, obj):
     """Creates a tweet, reply tweet, retweet, or favorite.
 
+    Args:
+      obj: ActivityStreams object
+
+    Returns: dict with 'id' and 'url' keys for the newly created Twitter object
+    """
+    return self._create(obj, preview=False)
+
+  def preview_create(self, obj):
+    """Previews creating a tweet, reply tweet, retweet, or favorite.
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: string HTML snippet
+    """
+    return self._create(obj, preview=True)
+
+  def _create(self, obj, preview=None):
+    """Creates or previews creating a tweet, reply tweet, retweet, or favorite.
+
     https://dev.twitter.com/docs/api/1.1/post/statuses/update
     https://dev.twitter.com/docs/api/1.1/post/statuses/retweet/:id
     https://dev.twitter.com/docs/api/1.1/post/favorites/create
 
     Args:
       obj: ActivityStreams object
+      preview: boolean
 
-    Returns: dict with 'id' and 'url' keys for the newly created Twitter object
+    Returns:
+      If preview is True, a string HTML snippet. If False, a dict with 'id' and
+      'url' keys for the newly created Twitter object.
     """
     # TODO: validation, error handling
+    assert preview in (False, True)
     type = obj.get('objectType')
     verb = obj.get('verb')
     base_id = self.base_object_id(obj)
@@ -301,22 +333,38 @@ class Twitter(source.Source):
       # TODO: validate that content contains an @-mention of the original tweet.
       # Twitter won't make it a reply if it doesn't.
       # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
-      data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
-      resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
+      if preview:
+        return ('will <span class="verb">reply</span> "%s" to this tweet:\n%s' %
+                (content, EMBED_TWEET % base_id))
+      else:
+        data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
+        resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
 
     elif type == 'activity' and verb == 'like':
-      # TODO: validation
-      data = urllib.urlencode({'id': base_id})
-      self.urlopen(API_POST_FAVORITE_URL, data=data).read()
-      resp = {}
+      if preview:
+        return ('will <span class="verb">favorite</span> this tweet:\n' +
+                EMBED_TWEET % base_id)
+      else:
+        data = urllib.urlencode({'id': base_id})
+        self.urlopen(API_POST_FAVORITE_URL, data=data).read()
+        resp = {}
 
     elif type == 'activity' and verb == 'share':
-      resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data='').read())
+      if preview:
+        return ('will <span class="verb">retweet</span> this tweet:\n' +
+                EMBED_TWEET % base_id)
+      else:
+        resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data='').read())
 
-    # TODO: require type 'note'
+    elif type in ('note', 'article'):
+      if preview:
+        return 'will <span class="verb">tweet</span> "%s"' % content
+      else:
+        data = urllib.urlencode({'status': content})
+        resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
+
     else:
-      data = urllib.urlencode({'status': content})
-      resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
+      raise NotImplementedError()
 
     id_str = resp.get('id_str')
     if id_str:

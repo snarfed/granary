@@ -254,14 +254,12 @@ class Facebook(source.Source):
       resp['url'] = self.comment_url(base_id, resp['id'])
 
     elif type == 'activity' and (verb == 'like' or verb in RSVP_ENDPOINTS):
-      # TODO: validation
       # TODO: event invites
       endpoint = API_LIKES_URL if verb == 'like' else RSVP_ENDPOINTS[verb]
       resp = json.loads(self.urlopen(endpoint % base_id, data='').read())
       assert resp == True, resp
       resp = {}
 
-    # TODO: require type 'note'
     elif type in ('note', 'article'):
       resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
       resp['url'] = self.post_url(resp)
