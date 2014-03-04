@@ -911,6 +911,7 @@ class FacebookTest(testutil.HandlerTest):
       json.dumps({'id': '123_456'}),
       data='message=my+msg&privacy=%7B%22value%22%3A+%22SELF%22%7D')
     self.mox.ReplayAll()
+
     obj = copy.deepcopy(POST_OBJ)
     obj.update({
         'objectType': 'note',
@@ -920,12 +921,16 @@ class FacebookTest(testutil.HandlerTest):
       {'id': '123_456', 'url': 'http://facebook.com/123_456', },
       self.facebook.create(obj))
 
+    self.assert_equals('will <span class="verb">post</span> "my msg"',
+                       self.facebook.preview_create(obj))
+
   def test_create_comment(self):
     self.expect_urlopen(
       'https://graph.facebook.com/547822715231468/comments',
       json.dumps({'id': '456_789'}),
       data='message=my+cmt&privacy=%7B%22value%22%3A+%22SELF%22%7D')
     self.mox.ReplayAll()
+
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj['content'] = 'my cmt'
     self.assert_equals({
@@ -933,11 +938,19 @@ class FacebookTest(testutil.HandlerTest):
         'url': 'http://facebook.com/547822715231468?comment_id=456_789',
         }, self.facebook.create(obj))
 
+    preview = self.facebook.preview_create(obj)
+    self.assertIn('<span class="verb">comment</span>', preview)
+    self.assertIn('http://facebook.com/547822715231468', preview)
+
   def test_create_like(self):
     self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
                         'true', data='')
     self.mox.ReplayAll()
     self.assert_equals({}, self.facebook.create(LIKE_OBJS[0]))
+
+    preview = self.facebook.preview_create(LIKE_OBJS[0])
+    self.assertIn('<span class="verb">like</span>', preview)
+    self.assertIn('http://facebook.com/212038/posts/10100176064482163', preview)
 
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':#, 'invited/567':
@@ -950,6 +963,11 @@ class FacebookTest(testutil.HandlerTest):
       rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234/'}]
       self.assert_equals({}, self.facebook.create(rsvp))
 
+    preview = self.facebook.preview_create(rsvp)
+    self.assertIn('<span class="verb">RSVP maybe</span>', preview)
+    self.assertIn('http://facebook.com/234/', preview)
+
   def test_create_unsupported_type(self):
-    self.assertRaises(NotImplementedError, self.facebook.create,
-                      {'objectType': 'activity', 'verb': 'share'})
+    for fn in self.facebook.create, self.facebook.preview_create:
+      self.assertRaises(NotImplementedError, fn,
+                        {'objectType': 'activity', 'verb': 'share'})

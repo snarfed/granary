@@ -97,6 +97,20 @@ RSVP_ENDPOINTS = {
   'rsvp-maybe': 'https://graph.facebook.com/%s/maybe',
 }
 
+EMBED_POST = """
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+<div class="fb-post" data-href="%s"></div>
+"""
+
+
 class Facebook(source.Source):
   """Implements the ActivityStreams API for Facebook.
   """
@@ -226,7 +240,27 @@ class Facebook(source.Source):
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
   def create(self, obj):
-    """Creates a new object: a post, comment, like, share, or RSVP.
+    """Creates a new post, comment, like, share, or RSVP.
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: dict with 'id' and 'url' keys for the newly created Facebook object
+    """
+    return self._create(obj, preview=False)
+
+  def preview_create(self, obj):
+    """Previews creating a new post, comment, like, share, or RSVP.
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: string HTML snippet
+    """
+    return self._create(obj, preview=True)
+
+  def _create(self, obj, preview=None):
+    """Creates a new post, comment, like, share, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
     https://developers.facebook.com/docs/graph-api/reference/object/comments#publish
@@ -235,34 +269,62 @@ class Facebook(source.Source):
 
     Args:
       obj: ActivityStreams object
+      preview: boolean
 
-    Returns: dict with 'id' and 'url' keys for the newly created Facebook object
+    Returns:
+      If preview is True, a string HTML snippet. If False, a dict with 'id' and
+      'url' keys for the newly created Facebook object.
     """
     # TODO: validation, error handling
+    assert preview in (False, True)
     type = obj.get('objectType')
     verb = obj.get('verb')
-    base_id = self.base_object_id(obj)
+    base_id, base_url = self.base_object(obj)
+    if base_id and not base_url:
+      base_url = 'http://facebook.com/' + base_id
 
+    content = obj.get('content', '').encode('utf-8')
     msg_data = urllib.urlencode({
-        'message': obj.get('content', '').encode('utf-8'),
+        'message': content,
         # TODO...or leave it to user's default?
         'privacy': json.dumps({'value': 'SELF'}),
         })
 
     if type == 'comment':
-      resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id, data=msg_data).read())
-      resp['url'] = self.comment_url(base_id, resp['id'])
+      if preview:
+        return ('will <span class="verb">comment</span> "%s" on this post:\n%s' %
+                (content, EMBED_POST % base_url))
+      else:
+        resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
+                                       data=msg_data).read())
+        resp['url'] = self.comment_url(base_id, resp['id'])
 
-    elif type == 'activity' and (verb == 'like' or verb in RSVP_ENDPOINTS):
+    elif type == 'activity' and verb == 'like':
+      if preview:
+        return ('will <span class="verb">like</span> this post:\n' +
+                EMBED_POST % base_url)
+      else:
+        resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
+        assert resp == True, resp
+        resp = {}
+
+    elif type == 'activity' and verb in RSVP_ENDPOINTS:
       # TODO: event invites
-      endpoint = API_LIKES_URL if verb == 'like' else RSVP_ENDPOINTS[verb]
-      resp = json.loads(self.urlopen(endpoint % base_id, data='').read())
-      assert resp == True, resp
-      resp = {}
+      if preview:
+        assert verb.startswith('rsvp-')
+        return ('will <span class="verb">RSVP %s</span> to this event:\n' % verb[5:] +
+                EMBED_POST % base_url)
+      else:
+        resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
+        assert resp == True, resp
+        resp = {}
 
     elif type in ('note', 'article'):
-      resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
-      resp['url'] = self.post_url(resp)
+      if preview:
+        return 'will <span class="verb">post</span> "%s"' % content
+      else:
+        resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
+        resp['url'] = self.post_url(resp)
 
     else:
       raise NotImplementedError()
