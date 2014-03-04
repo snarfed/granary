@@ -875,3 +875,8 @@ class TwitterTest(testutil.HandlerTest):
     preview = self.twitter.preview_create(SHARES[0])
     self.assertIn('<span class="verb">retweet</span>', preview)
     self.assertIn('http://twitter.com/foo/status/333', preview)
+
+  def test_create_unsupported_type(self):
+    for fn in self.twitter.create, self.twitter.preview_create:
+      self.assertRaises(NotImplementedError, fn,
+                        {'objectType': 'activity', 'verb': 'rsvp-yes'})
