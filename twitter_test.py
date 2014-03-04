@@ -832,9 +832,10 @@ class TwitterTest(testutil.HandlerTest):
         'id': '100',
         'url': 'http://twitter.com/snarfed_org/status/100',
         })
+    self.assert_equals(tweet, self.twitter.create(obj))
+
     self.assert_equals('will <span class="verb">tweet</span> "my status"',
                        self.twitter.preview_create(obj))
-    self.assert_equals(tweet, self.twitter.create(obj))
 
   def test_create_reply(self):
     self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(TWEET),
@@ -845,11 +846,19 @@ class TwitterTest(testutil.HandlerTest):
     reply['inReplyTo'] = [{'id': 'tag:twitter.com,2013:100'}]
     self.twitter.create(reply)
 
+    preview = self.twitter.preview_create(reply)
+    self.assertIn('<span class="verb">reply</span>', preview)
+    self.assertIn('https://twitter.com/USERNAME/statuses/100', preview)
+
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL, json.dumps(TWEET),
                         data='id=100')
     self.mox.ReplayAll()
     self.assert_equals({}, self.twitter.create(LIKES_FROM_HTML[0]))
+
+    preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
+    self.assertIn('<span class="verb">favorite</span>', preview)
+    self.assertIn('http://twitter.com/snarfed_org/status/100', preview)
 
   def test_create_retweet(self):
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/retweet/333.json',
@@ -862,17 +871,6 @@ class TwitterTest(testutil.HandlerTest):
         'url': 'http://twitter.com/snarfed_org/status/100',
         })
     self.assert_equals(tweet, self.twitter.create(SHARES[0]))
-
-  def test_preview(self):
-    reply = copy.deepcopy(REPLY_OBJS[0])
-    reply['inReplyTo'] = [{'id': 'tag:twitter.com,2013:100'}]
-    preview = self.twitter.preview_create(reply)
-    self.assertIn('<span class="verb">reply</span>', preview)
-    self.assertIn('https://twitter.com/USERNAME/statuses/100', preview)
-
-    preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
-    self.assertIn('<span class="verb">favorite</span>', preview)
-    self.assertIn('http://twitter.com/snarfed_org/status/100', preview)
 
     preview = self.twitter.preview_create(SHARES[0])
     self.assertIn('<span class="verb">retweet</span>', preview)
