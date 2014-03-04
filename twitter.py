@@ -57,7 +57,7 @@ RETWEET_LIMIT = 15
 EMBED_TWEET = """
 <blockquote class="twitter-tweet" lang="en" data-conversation="none" data-dnt="true">
 <p></p>
-<a href="https://twitter.com/USERNAME/statuses/%s">DATE</a>
+<a href="%s">DATE</a>
 </blockquote>
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 """
@@ -325,7 +325,9 @@ class Twitter(source.Source):
     assert preview in (False, True)
     type = obj.get('objectType')
     verb = obj.get('verb')
-    base_id = self.base_object_id(obj)
+    base_id, base_url = self.base_object(obj)
+    if base_id and not base_url:
+      base_url = 'https://twitter.com/USERNAME/statuses/' + base_id
     content = obj.get('content', '').encode('utf-8')
 
     obj.get('content', '').encode('utf-8')
@@ -335,7 +337,7 @@ class Twitter(source.Source):
       # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
       if preview:
         return ('will <span class="verb">reply</span> "%s" to this tweet:\n%s' %
-                (content, EMBED_TWEET % base_id))
+                (content, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
@@ -343,7 +345,7 @@ class Twitter(source.Source):
     elif type == 'activity' and verb == 'like':
       if preview:
         return ('will <span class="verb">favorite</span> this tweet:\n' +
-                EMBED_TWEET % base_id)
+                EMBED_TWEET % base_url)
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE_URL, data=data).read()
@@ -352,7 +354,7 @@ class Twitter(source.Source):
     elif type == 'activity' and verb == 'share':
       if preview:
         return ('will <span class="verb">retweet</span> this tweet:\n' +
-                EMBED_TWEET % base_id)
+                EMBED_TWEET % base_url)
       else:
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data='').read())
 

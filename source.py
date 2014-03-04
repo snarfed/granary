@@ -444,29 +444,32 @@ class Source(object):
     """Returns a tag URI string for this source and the given string name."""
     return util.tag_uri(self.DOMAIN, name)
 
-  def base_object_id(self, obj):
-    """Returns the silo id of the 'base' object that an object operates on.
+  def base_object(self, obj):
+    """Returns id and URL of the 'base' silo object that an object operates on.
 
-    For example, if the object is a comment, this returns the id of the post
-    that it's a comment on. If it's an RSVP, this returns the event id. The
-    returned id is silo-specific, ie not a tag URI.
+    For example, if the object is a comment, this returns the post that it's a
+    comment on. If it's an RSVP, this returns the event. The id in the returned
+    tuple is silo-specific, ie not a tag URI.
 
     Args:
       obj: ActivityStreams object
 
-    Returns: string id or None
+    Returns: (string id, string URL) tuple. Both may be None.
     """
     reply_to = obj.get('inReplyTo')
     base_obj = reply_to[0] if reply_to else obj.get('object')
     if not base_obj:
-      return None
+      return (None, None)
 
     id = base_obj.get('id')
     url = base_obj.get('url')
+
     if id:
-      return util.parse_tag_uri(id)[1]
+      id = util.parse_tag_uri(id)[1]
     elif url:
       path = urlparse.urlparse(url).path
       if path.endswith('/'):
         path = path[:-1]
-      return path.rsplit('/', 1)[-1]
+      id = path.rsplit('/', 1)[-1]
+
+    return (id, url)

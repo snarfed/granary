@@ -832,6 +832,8 @@ class TwitterTest(testutil.HandlerTest):
         'id': '100',
         'url': 'http://twitter.com/snarfed_org/status/100',
         })
+    self.assert_equals('will <span class="verb">tweet</span> "my status"',
+                       self.twitter.preview_create(obj))
     self.assert_equals(tweet, self.twitter.create(obj))
 
   def test_create_reply(self):
@@ -862,11 +864,6 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals(tweet, self.twitter.create(SHARES[0]))
 
   def test_preview(self):
-    obj = copy.deepcopy(OBJECT)
-    obj['content'] = 'my content'
-    self.assert_equals('will <span class="verb">tweet</span> "my content"',
-                       self.twitter.preview_create(obj))
-
     reply = copy.deepcopy(REPLY_OBJS[0])
     reply['inReplyTo'] = [{'id': 'tag:twitter.com,2013:100'}]
     preview = self.twitter.preview_create(reply)
@@ -875,8 +872,8 @@ class TwitterTest(testutil.HandlerTest):
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
     self.assertIn('<span class="verb">favorite</span>', preview)
-    self.assertIn('https://twitter.com/USERNAME/statuses/100', preview)
+    self.assertIn('http://twitter.com/snarfed_org/status/100', preview)
 
     preview = self.twitter.preview_create(SHARES[0])
     self.assertIn('<span class="verb">retweet</span>', preview)
-    self.assertIn('https://twitter.com/USERNAME/statuses/333', preview)
+    self.assertIn('http://twitter.com/foo/status/333', preview)
