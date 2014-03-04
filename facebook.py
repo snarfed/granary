@@ -312,8 +312,8 @@ class Facebook(source.Source):
       # TODO: event invites
       if preview:
         assert verb.startswith('rsvp-')
-        return ('will <span class="verb">RSVP %s</span> to this event:\n' % verb[5:] +
-                EMBED_POST % base_url)
+        return ('will <span class="verb">RSVP %s</span> to <a href="%s">this '
+                'event</a>.' % (verb[5:], base_url))
       else:
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
         assert resp == True, resp
