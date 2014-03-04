@@ -844,7 +844,12 @@ class TwitterTest(testutil.HandlerTest):
 
     reply = copy.deepcopy(REPLY_OBJS[0])
     reply['inReplyTo'] = [{'id': 'tag:twitter.com,2013:100'}]
-    self.twitter.create(reply)
+    tweet = copy.deepcopy(TWEET)
+    tweet.update({
+        'id': '100',
+        'url': 'http://twitter.com/snarfed_org/status/100',
+        })
+    self.assert_equals(tweet, self.twitter.create(reply))
 
     preview = self.twitter.preview_create(reply)
     self.assertIn('<span class="verb">reply</span>', preview)
@@ -854,7 +859,8 @@ class TwitterTest(testutil.HandlerTest):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL, json.dumps(TWEET),
                         data='id=100')
     self.mox.ReplayAll()
-    self.assert_equals({}, self.twitter.create(LIKES_FROM_HTML[0]))
+    self.assert_equals({'url': 'http://twitter.com/snarfed_org/status/100'},
+                       self.twitter.create(LIKES_FROM_HTML[0]))
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
     self.assertIn('<span class="verb">favorite</span>', preview)

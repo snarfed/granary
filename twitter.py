@@ -371,7 +371,8 @@ class Twitter(source.Source):
     id_str = resp.get('id_str')
     if id_str:
       resp.update({'id': id_str, 'url': self.tweet_url(resp)})
-
+    elif 'url' not in resp:
+      resp['url'] = base_url
     return resp
 
   def urlopen(self, url, **kwargs):

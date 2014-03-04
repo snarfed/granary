@@ -329,6 +329,8 @@ class Facebook(source.Source):
     else:
       raise NotImplementedError()
 
+    if 'url' not in resp:
+      resp['url'] = base_url
     return resp
 
   def urlopen(self, url, **kwargs):

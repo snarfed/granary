@@ -946,7 +946,8 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
                         'true', data='')
     self.mox.ReplayAll()
-    self.assert_equals({}, self.facebook.create(LIKE_OBJS[0]))
+    self.assert_equals({'url': 'http://facebook.com/212038/posts/10100176064482163'},
+                       self.facebook.create(LIKE_OBJS[0]))
 
     preview = self.facebook.preview_create(LIKE_OBJS[0])
     self.assertIn('<span class="verb">like</span>', preview)
@@ -961,7 +962,8 @@ class FacebookTest(testutil.HandlerTest):
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234/'}]
-      self.assert_equals({}, self.facebook.create(rsvp))
+      self.assert_equals({'url': 'http://facebook.com/234/'},
+                          self.facebook.create(rsvp))
 
     preview = self.facebook.preview_create(rsvp)
     self.assertIn('<span class="verb">RSVP maybe</span>', preview)
