@@ -54,12 +54,15 @@ HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 RETWEET_LIMIT = 15
 
 # HTML snippet that embeds a tweet.
+# https://dev.twitter.com/docs/embedded-tweets
+EMBED_SCRIPT = """
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+"""
 EMBED_TWEET = """
 <blockquote class="twitter-tweet" lang="en" data-conversation="none" data-dnt="true">
 <p></p>
 <a href="%s">DATE</a>
 </blockquote>
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 """
 
 

@@ -97,7 +97,9 @@ RSVP_ENDPOINTS = {
   'rsvp-maybe': 'https://graph.facebook.com/%s/maybe',
 }
 
-EMBED_POST = """
+# HTML snippet that embeds a post.
+# https://developers.facebook.com/docs/plugins/embedded-posts/
+EMBED_SCRIPT = """
 <div id="fb-root"></div>
 <script>(function(d, s, id) {
   var js, fjs = d.getElementsByTagName(s)[0];
@@ -106,7 +108,9 @@ EMBED_POST = """
   js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687";
   fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));</script>
-
+"""
+EMBED_POST = """
+<br /><br />
 <div class="fb-post" data-href="%s"></div>
 """
 
