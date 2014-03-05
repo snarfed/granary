@@ -821,8 +821,8 @@ class TwitterTest(testutil.HandlerTest):
     self.twitter.get_actor('foo')
 
   def test_create_tweet(self):
-    self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(TWEET),
-                        data='status=my+status')
+    self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=my+status',
+                        json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(OBJECT)
@@ -838,8 +838,9 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.preview_create(obj))
 
   def test_create_reply(self):
-    self.expect_urlopen(twitter.API_POST_TWEET_URL, json.dumps(TWEET),
-                        data='status=reply+200&in_reply_to_status_id=100')
+    self.expect_urlopen(
+      twitter.API_POST_TWEET_URL + '?status=reply+200&in_reply_to_status_id=100',
+      json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
     reply = copy.deepcopy(REPLY_OBJS[0])
@@ -856,8 +857,8 @@ class TwitterTest(testutil.HandlerTest):
     self.assertIn('https://twitter.com/USERNAME/statuses/100', preview)
 
   def test_create_favorite(self):
-    self.expect_urlopen(twitter.API_POST_FAVORITE_URL, json.dumps(TWEET),
-                        data='id=100')
+    self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
+                        json.dumps(TWEET), data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://twitter.com/snarfed_org/status/100'},
                        self.twitter.create(LIKES_FROM_HTML[0]))
