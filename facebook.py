@@ -296,7 +296,7 @@ class Facebook(source.Source):
 
     if type == 'comment':
       if preview:
-        return ('will <span class="verb">comment</span> "%s" on this post:\n%s' %
+        return ('will <span class="verb">comment</span> <em>%s</em> on this post:\n%s' %
                 (content, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
@@ -325,7 +325,7 @@ class Facebook(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return 'will <span class="verb">post</span> "%s"' % content
+        return 'will <span class="verb">post</span> <em>%s</em>' % content
       else:
         resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
         resp['url'] = self.post_url(resp)

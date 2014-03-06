@@ -921,7 +921,7 @@ class FacebookTest(testutil.HandlerTest):
       {'id': '123_456', 'url': 'http://facebook.com/123_456', },
       self.facebook.create(obj))
 
-    self.assert_equals('will <span class="verb">post</span> "my msg"',
+    self.assert_equals('will <span class="verb">post</span> <em>my msg</em>',
                        self.facebook.preview_create(obj))
 
   def test_create_comment(self):

@@ -62,7 +62,7 @@ EMBED_TWEET = """
 <br />
 <blockquote class="twitter-tweet" lang="en" data-conversation="none" data-dnt="true">
 <p></p>
-<a href="%s">DATE</a>
+<a href="%s"></a>
 </blockquote>
 """
 
@@ -340,7 +340,7 @@ class Twitter(source.Source):
       # Twitter won't make it a reply if it doesn't.
       # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
       if preview:
-        return ('will <span class="verb">reply</span> "%s" to this tweet:\n%s' %
+        return ('will <span class="verb">reply</span> <em>%s</em> to this tweet:\n%s' %
                 (content, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
@@ -364,7 +364,7 @@ class Twitter(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return 'will <span class="verb">tweet</span> "%s"' % content
+        return 'will <span class="verb">tweet</span> <em>%s</em>' % content
       else:
         data = urllib.urlencode({'status': content})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())

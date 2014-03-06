@@ -834,7 +834,7 @@ class TwitterTest(testutil.HandlerTest):
         })
     self.assert_equals(tweet, self.twitter.create(obj))
 
-    self.assert_equals('will <span class="verb">tweet</span> "my status"',
+    self.assert_equals('will <span class="verb">tweet</span> <em>my status</em>',
                        self.twitter.preview_create(obj))
 
   def test_create_reply(self):
@@ -853,7 +853,7 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals(tweet, self.twitter.create(reply))
 
     preview = self.twitter.preview_create(reply)
-    self.assertIn('<span class="verb">reply</span>', preview)
+    self.assertIn('<span class="verb">reply</span> <em>reply 200</em>', preview)
     self.assertIn('https://twitter.com/USERNAME/statuses/100', preview)
 
   def test_create_favorite(self):
