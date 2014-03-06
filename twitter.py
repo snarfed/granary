@@ -365,7 +365,8 @@ class Twitter(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return 'will <span class="verb">tweet</span> <em>%s</em>' % content
+        return ('will <span class="verb">tweet</span>:<br /><br />'
+                '<em>%s</em><br />' % content)
       else:
         data = urllib.urlencode({'status': content})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())

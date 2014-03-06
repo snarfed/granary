@@ -112,6 +112,7 @@ EMBED_SCRIPT = """
 EMBED_POST = """
 <br /><br />
 <div class="fb-post" data-href="%s"></div>
+<br />
 """
 
 
@@ -316,8 +317,8 @@ class Facebook(source.Source):
       # TODO: event invites
       if preview:
         assert verb.startswith('rsvp-')
-        return ('will <span class="verb">RSVP %s</span> to <a href="%s">this '
-                'event</a>.' % (verb[5:], base_url))
+        return ('will <span class="verb">RSVP %s</span> to '
+                '<a href="%s">this event</a>.<br />' % (verb[5:], base_url))
       else:
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
         assert resp == True, resp
@@ -325,7 +326,8 @@ class Facebook(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return 'will <span class="verb">post</span> <em>%s</em>' % content
+        return ('will <span class="verb">post</span>:<br /><br />'
+                '<em>%s</em><br />' % content)
       else:
         resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
         resp['url'] = self.post_url(resp)

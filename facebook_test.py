@@ -921,8 +921,9 @@ class FacebookTest(testutil.HandlerTest):
       {'id': '123_456', 'url': 'http://facebook.com/123_456', },
       self.facebook.create(obj))
 
-    self.assert_equals('will <span class="verb">post</span> <em>my msg</em>',
-                       self.facebook.preview_create(obj))
+    preview = self.facebook.preview_create(obj)
+    self.assertIn('will <span class="verb">post</span>', preview)
+    self.assertIn('<em>my msg</em>', preview)
 
   def test_create_comment(self):
     self.expect_urlopen(

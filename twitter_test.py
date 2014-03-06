@@ -834,8 +834,9 @@ class TwitterTest(testutil.HandlerTest):
         })
     self.assert_equals(tweet, self.twitter.create(obj))
 
-    self.assert_equals('will <span class="verb">tweet</span> <em>my status</em>',
-                       self.twitter.preview_create(obj))
+    preview = self.twitter.preview_create(obj)
+    self.assertIn('will <span class="verb">tweet</span>', preview)
+    self.assertIn('<em>my status</em>', preview)
 
   def test_create_reply(self):
     self.expect_urlopen(
