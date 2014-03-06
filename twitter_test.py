@@ -868,8 +868,9 @@ class TwitterTest(testutil.HandlerTest):
     self.assertIn('http://twitter.com/snarfed_org/status/100', preview)
 
   def test_create_retweet(self):
-    self.expect_urlopen('https://api.twitter.com/1.1/statuses/retweet/333.json',
-                        json.dumps(TWEET), data='')
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/retweet/333.json?id=333',
+      json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
     tweet = copy.deepcopy(TWEET)

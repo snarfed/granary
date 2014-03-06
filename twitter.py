@@ -360,7 +360,8 @@ class Twitter(source.Source):
         return ('will <span class="verb">retweet</span> this tweet:\n' +
                 EMBED_TWEET % base_url)
       else:
-        resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data='').read())
+        data = urllib.urlencode({'id': base_id})
+        resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
 
     elif type in ('note', 'article'):
       if preview:
