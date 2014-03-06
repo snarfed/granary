@@ -291,7 +291,7 @@ class Facebook(source.Source):
     msg_data = urllib.urlencode({
         'message': content,
         # TODO...or leave it to user's default?
-        'privacy': json.dumps({'value': 'SELF'}),
+        # 'privacy': json.dumps({'value': 'SELF'}),
         })
 
     if type == 'comment':
