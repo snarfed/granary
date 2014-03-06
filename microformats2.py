@@ -157,15 +157,13 @@ def json_to_object(mf2):
   # priority.
   types = mf2.get('type', [])
   types_map = [
+    ('h-as-rsvp', 'activity', rsvp_verb),
+    ('h-as-repost', 'activity', 'share'),
+    ('h-as-like', 'activity', 'like'),
     ('p-comment', 'comment', None),
     ('h-as-reply', 'comment', None),
-    ('h-as-like', 'activity', 'like'),
-    ('h-as-repost', 'activity', 'share'),
-    ('h-as-note', 'note', None),
     ('p-location', 'place', None),
     ('h-card', 'person', None),
-    ('h-as-article', 'article', None),
-    ('h-as-rsvp', 'activity', rsvp_verb),
     ]
 
   # fallback if none of the above mf2 types are found. maps property (if it
@@ -188,7 +186,8 @@ def json_to_object(mf2):
       if p in props:
         break
     else:
-      as_type = 'note'  # default
+      # default
+      as_type = 'note' if 'h-as-note' in types else 'article'
       as_verb = None
 
   obj = {
