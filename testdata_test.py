@@ -10,9 +10,6 @@ import unittest
 import microformats2
 from oauth_dropins.webutil import testutil
 
-# All test data files live in testdata/.
-os.chdir('testdata/')
-
 
 def filepairs(ext1, ext2):
   """Returns all matching pairs of filenames with the given extensions.
@@ -40,6 +37,9 @@ class TestDataTest(testutil.HandlerTest):
   def test_testdata(self):
     # TODO: use a handler with an HTTPS request so that URL schemes are converted
     # self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
+
+    # All test data files live in testdata/.
+    os.chdir('testdata/')
 
     # source extension, destination extension, conversion function, exclude prefix
     mappings = (
@@ -72,4 +72,5 @@ class TestDataTest(testutil.HandlerTest):
           logging.exception('')
           failed = True
 
+    os.chdir('..')
     assert not failed
