@@ -115,6 +115,8 @@ EMBED_POST = """
 <br />
 """
 
+# Values for post.action['name'] that indicate a link back to the original post
+SEE_ORIGINAL_ACTIONS=['see original']
 
 class Facebook(source.Source):
   """Implements the ActivityStreams API for Facebook.
@@ -497,6 +499,16 @@ class Facebook(source.Source):
         'author': self.user_to_actor(like),
         'content': 'likes this.',
         }) for like in post.get('likes', {}).get('data', [])]
+
+    # "See Original" links
+    post_actions = post.get('actions',[])
+    see_orig_actions = (act for act in post_actions
+                        if act.get('name', '').lower() in SEE_ORIGINAL_ACTIONS)
+    obj['tags'] += [self.postprocess_object({
+      'objectType': 'article',
+      'url': act.get('link'),
+      'displayName': act.get('name')
+    }) for act in see_orig_actions]
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.

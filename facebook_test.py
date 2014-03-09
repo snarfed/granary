@@ -69,6 +69,7 @@ COMMENTS = [{  # Facebook
     'message': 'Foo bar!',
     'created_time': '2010-10-28T00:23:04+0000',
     'privacy': {'value': ''},  # empty means public
+    'actions': [{'name': 'See Original', 'link': 'http://ald.com/foobar'}]
     }]
 POST = {  # Facebook
   'id': '212038_10100176064482163',
@@ -209,6 +210,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'url': 'http://facebook.com/124561947600007?comment_id=672819',
     'inReplyTo': [{'id': tag_uri('124561947600007')}],
     'to': [{'objectType':'group', 'alias':'@public'}],
+    'tags': [{'displayName': 'See Original', 'objectType': 'article', 'url': 'http://ald.com/foobar'}],
     },
 ]
 LIKE_OBJS = [{  # ActivityStreams
