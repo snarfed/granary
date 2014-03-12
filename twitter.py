@@ -1,3 +1,4 @@
+# coding=utf-8
 """Twitter source class.
 
 Uses the v1.1 REST API: https://dev.twitter.com/docs/api
@@ -65,6 +66,17 @@ EMBED_TWEET = """
 <a href="%s"></a>
 </blockquote>
 """
+
+# Current max tweet length and expected length of a t.co URL, as of 2014-03-11.
+# (This is actually just for https links; it's 22 for http.)
+#
+# TODO: pull tco length from the API /help/configuration.json endpoint instead.
+# Details:
+# https://dev.twitter.com/docs/tco-link-wrapper/faq
+# https://dev.twitter.com/docs/api/1.1/get/help/configuration
+# https://dev.twitter.com/discussions/869
+MAX_TWEET_LENGTH = 140
+TCO_LENGTH = 23
 
 
 class Twitter(source.Source):
@@ -332,9 +344,28 @@ class Twitter(source.Source):
     base_id, base_url = self.base_object(obj)
     if base_id and not base_url:
       base_url = 'https://twitter.com/USERNAME/statuses/' + base_id
-    content = obj.get('content', '').encode('utf-8')
 
-    obj.get('content', '').encode('utf-8')
+    # truncate and ellipsize content if it's over the character count. URLs will
+    # be t.co-wrapped, so include that when counting.
+    content = obj.get('content', '')
+    links = util.extract_links(content)
+    # length = len(content) - len(''.join(links)) + TCO_LENGTH * len(links)
+    length = 0
+    tokens = content.split()
+    for i, token in enumerate(tokens):
+      length += (TCO_LENGTH if token in links else len(token)) + 1
+      if length > MAX_TWEET_LENGTH:
+        break
+    else:
+      i = len(tokens)
+
+    if i < len(tokens):
+      # TODO: preserve whitespace (newlines, etc)
+      content = ' '.join(tokens[:i]) + u'…'
+
+    content = unicode(content).encode('utf-8')
+
+
     if type == 'comment' or 'inReplyTo' in obj:
       # TODO: validate that content contains an @-mention of the original tweet.
       # Twitter won't make it a reply if it doesn't.

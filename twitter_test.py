@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for twitter.py.
 """
 
@@ -6,6 +7,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import json
 import mox
+import urllib
 
 import source
 import twitter
@@ -821,22 +823,37 @@ class TwitterTest(testutil.HandlerTest):
     self.twitter.get_actor('foo')
 
   def test_create_tweet(self):
-    self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=my+status',
-                        json.dumps(TWEET), data='')
+    twitter.MAX_TWEET_LENGTH = 20
+    twitter.TCO_LENGTH = 5
+
+    dots = u'…'.encode('utf-8')
+    for expected in ('my status',
+                     'too long, will be' + dots,
+                     'url shorten http://foo/bar',
+                     'url http://foo/bar ellipsize' + dots):
+      self.expect_urlopen(
+        twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(expected),
+        json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
-    obj = copy.deepcopy(OBJECT)
-    obj['content'] = 'my status'
     tweet = copy.deepcopy(TWEET)
     tweet.update({
         'id': '100',
         'url': 'http://twitter.com/snarfed_org/status/100',
         })
-    self.assert_equals(tweet, self.twitter.create(obj))
 
-    preview = self.twitter.preview_create(obj)
-    self.assertIn('will <span class="verb">tweet</span>', preview)
-    self.assertIn('<em>my status</em>', preview)
+    obj = copy.deepcopy(OBJECT)
+    for content in ('my status',
+                    'too long, will be ellipsized',
+                    'url shorten http://foo/bar',
+                    'url http://foo/bar ellipsize http://foo/baz'):
+      obj['content'] = content
+      self.assert_equals(tweet, self.twitter.create(obj))
+
+    # TODO
+    # preview = self.twitter.preview_create(obj)
+    # self.assertIn('will <span class="verb">tweet</span>', preview)
+    # self.assertIn('<em>my status</em>', preview)
 
   def test_create_reply(self):
     self.expect_urlopen(
