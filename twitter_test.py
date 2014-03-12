@@ -827,12 +827,18 @@ class TwitterTest(testutil.HandlerTest):
     twitter.TCO_LENGTH = 5
 
     dots = u'…'.encode('utf-8')
-    for expected in ('my status',
-                     'too long, will be' + dots,
-                     'url shorten http://foo/bar',
-                     'url http://foo/bar ellipsize' + dots):
+    expected = ('my status',
+                'too long, will be' + dots,
+                'url shorten http://foo/bar',
+                'url http://foo/bar ellipsize' + dots)
+    original = ('my status',
+                'too long, will be ellipsized',
+                'url shorten http://foo/bar',
+                'url http://foo/bar ellipsize http://foo/baz')
+
+    for content in expected:
       self.expect_urlopen(
-        twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(expected),
+        twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content),
         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
@@ -843,17 +849,13 @@ class TwitterTest(testutil.HandlerTest):
         })
 
     obj = copy.deepcopy(OBJECT)
-    for content in ('my status',
-                    'too long, will be ellipsized',
-                    'url shorten http://foo/bar',
-                    'url http://foo/bar ellipsize http://foo/baz'):
-      obj['content'] = content
+    for exp, orig in zip(expected, original):
+      obj['content'] = orig
       self.assert_equals(tweet, self.twitter.create(obj))
 
-    # TODO
-    # preview = self.twitter.preview_create(obj)
-    # self.assertIn('will <span class="verb">tweet</span>', preview)
-    # self.assertIn('<em>my status</em>', preview)
+      preview = self.twitter.preview_create(obj)
+      self.assertIn('will <span class="verb">tweet</span>', preview)
+      self.assertIn('<em>%s</em>' % exp, preview)
 
   def test_create_reply(self):
     self.expect_urlopen(

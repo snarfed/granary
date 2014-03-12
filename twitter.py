@@ -349,7 +349,6 @@ class Twitter(source.Source):
     # be t.co-wrapped, so include that when counting.
     content = obj.get('content', '')
     links = util.extract_links(content)
-    # length = len(content) - len(''.join(links)) + TCO_LENGTH * len(links)
     length = 0
     tokens = content.split()
     for i, token in enumerate(tokens):
@@ -359,16 +358,19 @@ class Twitter(source.Source):
     else:
       i = len(tokens)
 
+    # TODO: option to reserve space at the end for a link
     if i < len(tokens):
-      # TODO: preserve whitespace (newlines, etc)
+      # TODO: user opt in to preserve whitespace (newlines, etc)
       content = ' '.join(tokens[:i]) + u'…'
 
     content = unicode(content).encode('utf-8')
 
 
+    # TODO: ellipsize links in previews. full domain plus / plus 14 chars of
+    # path plus ellipsis
     if type == 'comment' or 'inReplyTo' in obj:
-      # TODO: validate that content contains an @-mention of the original tweet.
-      # Twitter won't make it a reply if it doesn't.
+      # TODO: validate that content contains an @-mention of the original
+      # tweet's author. Twitter won't make it a reply if it doesn't.
       # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
       if preview:
         return ('will <span class="verb">reply</span> <em>%s</em> to this tweet:\n%s' %
