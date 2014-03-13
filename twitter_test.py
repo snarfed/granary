@@ -826,16 +826,29 @@ class TwitterTest(testutil.HandlerTest):
 
   def test_create_tweet(self):
     dots = u'…'.encode('utf-8')
-    expected = ('my status',
-                'too long, will be' + dots,
-                'url shorten http://foo/bar',
-                'url http://foo/bar ellipsize' + dots)
-    original = ('my status',
-                'too long, will be ellipsized',
-                'url shorten http://foo/bar',
-                'url http://foo/bar ellipsize http://foo/baz')
+    original = (
+      'my status',
+      'too long, will be ellipsized',
+      'url shorten http://foo/bar',
+      'url http://foo/bar ellipsize http://foo/baz',
+      'long url http://www.foo/bar/baz/baj/biff/boof',
+      )
+    created = (
+      'my status',
+      'too long, will be' + dots,
+      'url shorten http://foo/bar',
+      'url http://foo/bar ellipsize' + dots,
+      'long url http://www.foo/bar/baz/baj/biff/boof',
+      )
+    previewed = (
+      'my status',
+      'too long, will be' + dots,
+      'url shorten <a href="http://foo/bar">foo/bar</a>',
+      'url <a href="http://foo/bar">foo/bar</a> ellipsize' + dots,
+      'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/biff...</a>',
+      )
 
-    for content in expected:
+    for content in created:
       self.expect_urlopen(
         twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content),
         json.dumps(TWEET), data='')
@@ -848,18 +861,17 @@ class TwitterTest(testutil.HandlerTest):
         })
 
     obj = copy.deepcopy(OBJECT)
-    for exp, orig in zip(expected, original):
+    for preview, orig in zip(previewed, original):
       obj['content'] = orig
       self.assert_equals(tweet, self.twitter.create(obj))
 
-      preview = self.twitter.preview_create(obj)
-      self.assertIn('will <span class="verb">tweet</span>', preview)
-      self.assertIn('<em>%s</em>' % exp, preview)
+      got = self.twitter.preview_create(obj)
+      self.assertIn('will <span class="verb">tweet</span>', got)
+      self.assertIn('<em>%s</em>' % preview, got)
 
   def test_create_tweet_include_link(self):
-    expected = 'too long but… http://obj'
     self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=' +
-                        urllib.quote_plus(expected),
+                        urllib.quote_plus('too long but… http://obj'),
                         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
@@ -869,7 +881,8 @@ class TwitterTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.twitter.create(obj, include_link=True)
-    self.assertIn(expected, self.twitter.preview_create(obj, include_link=True))
+    self.assertIn('too long but… <a href="http://obj">obj</a>',
+                  self.twitter.preview_create(obj, include_link=True))
 
   def test_create_reply(self):
     self.expect_urlopen(

@@ -374,16 +374,19 @@ class Twitter(source.Source):
       content += ' ' + include_url
 
     content = unicode(content).encode('utf-8')
+    # TODO: this pretty link rendering isn't exactly the same as Twitter's.
+    # Twitter shows the full domain plus 14 chars of the path, then ellipsizes.
+    # this just caps at 20 chars, regardless of domain size. not exactly a high
+    # priority to fix. :P
+    preview_content = util.linkify(content, pretty=True)
 
-    # TODO: ellipsize links in previews. full domain plus / plus 14 chars of
-    # path plus ellipsis
     if type == 'comment' or 'inReplyTo' in obj:
       # TODO: validate that content contains an @-mention of the original
       # tweet's author. Twitter won't make it a reply if it doesn't.
       # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
       if preview:
         return ('will <span class="verb">reply</span> <em>%s</em> to this tweet:\n%s' %
-                (content, EMBED_TWEET % base_url))
+                (preview_content, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
@@ -408,7 +411,7 @@ class Twitter(source.Source):
     elif type in ('note', 'article'):
       if preview:
         return ('will <span class="verb">tweet</span>:<br /><br />'
-                '<em>%s</em><br />' % content)
+                '<em>%s</em><br />' % preview_content)
       else:
         data = urllib.urlencode({'status': content})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
