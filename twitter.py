@@ -307,8 +307,7 @@ class Twitter(source.Source):
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean. If True, includes a link to the object
-        (if it has one) in the content.
+      include_link: boolean
 
     Returns: dict with 'id' and 'url' keys for the newly created Twitter object
     """
@@ -319,8 +318,7 @@ class Twitter(source.Source):
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean. If True, includes a link to the object
-        (if it has one) in the content.
+      include_link: boolean
 
     Returns: string HTML snippet
     """

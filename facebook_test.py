@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import json
 import mox
+import urllib
 
 import facebook
 from oauth_dropins.webutil import testutil
@@ -926,6 +927,21 @@ class FacebookTest(testutil.HandlerTest):
     preview = self.facebook.preview_create(obj)
     self.assertIn('will <span class="verb">post</span>', preview)
     self.assertIn('<em>my msg</em>', preview)
+
+  def test_create_post_include_link(self):
+    expected = 'my msg\n\n(http://obj)'
+    self.expect_urlopen(facebook.API_FEED_URL, '{}',
+                        data='message=' + urllib.quote_plus(expected))
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(POST_OBJ)
+    obj.update({
+        'objectType': 'article',
+        'content': 'my msg',
+        'url': 'http://obj',
+        })
+    self.facebook.create(obj, include_link=True)
+    self.assertIn(expected, self.facebook.preview_create(obj, include_link=True))
 
   def test_create_comment(self):
     self.expect_urlopen(

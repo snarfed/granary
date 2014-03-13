@@ -246,27 +246,29 @@ class Facebook(source.Source):
     data = json.loads(self.urlopen(url).read()).get('data')
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
-  def create(self, obj):
+  def create(self, obj, include_link=False):
     """Creates a new post, comment, like, share, or RSVP.
 
     Args:
       obj: ActivityStreams object
+      include_link: boolean
 
     Returns: dict with 'id' and 'url' keys for the newly created Facebook object
     """
-    return self._create(obj, preview=False)
+    return self._create(obj, preview=False, include_link=include_link)
 
-  def preview_create(self, obj):
+  def preview_create(self, obj, include_link=False):
     """Previews creating a new post, comment, like, share, or RSVP.
 
     Args:
       obj: ActivityStreams object
+      include_link: boolean
 
     Returns: string HTML snippet
     """
-    return self._create(obj, preview=True)
+    return self._create(obj, preview=True, include_link=include_link)
 
-  def _create(self, obj, preview=None):
+  def _create(self, obj, preview=None, include_link=False):
     """Creates a new post, comment, like, share, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
@@ -277,6 +279,7 @@ class Facebook(source.Source):
     Args:
       obj: ActivityStreams object
       preview: boolean
+      include_link: boolean
 
     Returns:
       If preview is True, a string HTML snippet. If False, a dict with 'id' and
@@ -290,9 +293,14 @@ class Facebook(source.Source):
     if base_id and not base_url:
       base_url = 'http://facebook.com/' + base_id
 
-    content = obj.get('content', '').encode('utf-8')
+
+    content = obj.get('content', '')
+    url = obj.get('url')
+    if include_link and url:
+      content += '\n\n(%s)' % url
+
     msg_data = urllib.urlencode({
-        'message': content,
+        'message': content.encode('utf-8'),
         # TODO...or leave it to user's default?
         # 'privacy': json.dumps({'value': 'SELF'}),
         })
