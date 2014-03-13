@@ -302,27 +302,31 @@ class Twitter(source.Source):
     url = API_STATUS_URL % share_id
     return self.retweet_to_object(json.loads(self.urlopen(url).read()))
 
-  def create(self, obj):
+  def create(self, obj, include_link=False):
     """Creates a tweet, reply tweet, retweet, or favorite.
 
     Args:
       obj: ActivityStreams object
+      include_link: boolean. If True, includes a link to the object
+        (if it has one) in the content.
 
     Returns: dict with 'id' and 'url' keys for the newly created Twitter object
     """
-    return self._create(obj, preview=False)
+    return self._create(obj, preview=False, include_link=include_link)
 
-  def preview_create(self, obj):
+  def preview_create(self, obj, include_link=False):
     """Previews creating a tweet, reply tweet, retweet, or favorite.
 
     Args:
       obj: ActivityStreams object
+      include_link: boolean. If True, includes a link to the object
+        (if it has one) in the content.
 
     Returns: string HTML snippet
     """
-    return self._create(obj, preview=True)
+    return self._create(obj, preview=True, include_link=include_link)
 
-  def _create(self, obj, preview=None):
+  def _create(self, obj, preview=None, include_link=False):
     """Creates or previews creating a tweet, reply tweet, retweet, or favorite.
 
     https://dev.twitter.com/docs/api/1.1/post/statuses/update
@@ -332,6 +336,7 @@ class Twitter(source.Source):
     Args:
       obj: ActivityStreams object
       preview: boolean
+      include_link: boolean
 
     Returns:
       If preview is True, a string HTML snippet. If False, a dict with 'id' and
@@ -349,22 +354,28 @@ class Twitter(source.Source):
     # be t.co-wrapped, so include that when counting.
     content = obj.get('content', '')
     links = util.extract_links(content)
+    max = MAX_TWEET_LENGTH
+    include_url = obj.get('url') if include_link else None
+    if include_url:
+      max -= TCO_LENGTH - 1
+
     length = 0
     tokens = content.split()
     for i, token in enumerate(tokens):
       length += (TCO_LENGTH if token in links else len(token)) + 1
-      if length > MAX_TWEET_LENGTH:
+      if length > max:
         break
     else:
       i = len(tokens)
 
-    # TODO: option to reserve space at the end for a link
     if i < len(tokens):
       # TODO: user opt in to preserve whitespace (newlines, etc)
       content = ' '.join(tokens[:i]) + u'…'
 
-    content = unicode(content).encode('utf-8')
+    if include_url:
+      content += ' ' + include_url
 
+    content = unicode(content).encode('utf-8')
 
     # TODO: ellipsize links in previews. full domain plus / plus 14 chars of
     # path plus ellipsis

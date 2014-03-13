@@ -148,7 +148,7 @@ class Source(object):
             'updatedSince': False,
             }
 
-  def create(self, obj):
+  def create(self, obj, include_link=False):
     """Creates a new object: a post, comment, like, share, or RSVP.
 
     Subclasses should override this. Different sites will support different
@@ -158,6 +158,8 @@ class Source(object):
     Args:
       obj: ActivityStreams object. At minimum, must have the content field.
         objectType is strongly recommended.
+      include_link: boolean. If True, includes a link to the object
+        (if it has one) in the content.
 
     Returns: dict, possibly empty. If the newly created object has an id or
       permalink, they'll be provided in the values for 'id' and 'url'.
@@ -167,7 +169,7 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def preview_create(self, obj):
+  def preview_create(self, obj, include_link=False):
     """Previews creating a new object: a post, comment, like, share, or RSVP.
 
     Returns HTML that previews what create() with the same object will do.
@@ -179,6 +181,8 @@ class Source(object):
     Args:
       obj: ActivityStreams object. At minimum, must have the content field.
         objectType is strongly recommended.
+      include_link: boolean. If True, includes a link to the object
+        (if it has one) in the content.
 
     Returns: string HTML snipper
 

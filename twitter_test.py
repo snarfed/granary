@@ -554,6 +554,8 @@ class TwitterTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
+    twitter.MAX_TWEET_LENGTH = 20
+    twitter.TCO_LENGTH = 5
     self.twitter = twitter.Twitter('key', 'secret')
 
   def test_get_actor(self):
@@ -823,9 +825,6 @@ class TwitterTest(testutil.HandlerTest):
     self.twitter.get_actor('foo')
 
   def test_create_tweet(self):
-    twitter.MAX_TWEET_LENGTH = 20
-    twitter.TCO_LENGTH = 5
-
     dots = u'…'.encode('utf-8')
     expected = ('my status',
                 'too long, will be' + dots,
@@ -856,6 +855,21 @@ class TwitterTest(testutil.HandlerTest):
       preview = self.twitter.preview_create(obj)
       self.assertIn('will <span class="verb">tweet</span>', preview)
       self.assertIn('<em>%s</em>' % exp, preview)
+
+  def test_create_tweet_include_link(self):
+    expected = 'too long but… http://obj'
+    self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=' +
+                        urllib.quote_plus(expected),
+                        json.dumps(TWEET), data='')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(OBJECT)
+    obj.update({
+        'content': 'too long but should include url',
+        'url': 'http://obj',
+        })
+    self.twitter.create(obj, include_link=True)
+    self.assertIn(expected, self.twitter.preview_create(obj, include_link=True))
 
   def test_create_reply(self):
     self.expect_urlopen(
