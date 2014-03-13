@@ -355,7 +355,7 @@ class Twitter(source.Source):
     max = MAX_TWEET_LENGTH
     include_url = obj.get('url') if include_link else None
     if include_url:
-      max -= TCO_LENGTH - 1
+      max -= TCO_LENGTH + 1
 
     length = 0
     tokens = content.split()
