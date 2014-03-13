@@ -929,9 +929,8 @@ class FacebookTest(testutil.HandlerTest):
     self.assertIn('<em>my msg</em>', preview)
 
   def test_create_post_include_link(self):
-    expected = 'my msg\n\n(http://obj)'
-    self.expect_urlopen(facebook.API_FEED_URL, '{}',
-                        data='message=' + urllib.quote_plus(expected))
+    self.expect_urlopen(facebook.API_FEED_URL, '{}', data='message=' +
+                        urllib.quote_plus('my msg\n\n(http://obj)'))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
@@ -941,7 +940,8 @@ class FacebookTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.facebook.create(obj, include_link=True)
-    self.assertIn(expected, self.facebook.preview_create(obj, include_link=True))
+    self.assertIn('my msg<br /><br />(http://obj)',
+                  self.facebook.preview_create(obj, include_link=True))
 
   def test_create_comment(self):
     self.expect_urlopen(

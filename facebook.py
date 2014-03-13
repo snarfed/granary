@@ -297,7 +297,7 @@ class Facebook(source.Source):
     content = obj.get('content', '')
     url = obj.get('url')
     if include_link and url:
-      content += '\n\n(%s)' % url
+      content += ('<br /><br />(%s)' if preview else '\n\n(%s)') % url
 
     msg_data = urllib.urlencode({
         'message': content.encode('utf-8'),
