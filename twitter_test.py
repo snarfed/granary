@@ -554,9 +554,13 @@ class TwitterTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
-    twitter.MAX_TWEET_LENGTH = 20
-    twitter.TCO_LENGTH = 5
+    self.orig_max_tweet_length = twitter.MAX_TWEET_LENGTH
+    self.orig_tco_length = twitter.TCO_LENGTH
     self.twitter = twitter.Twitter('key', 'secret')
+
+  def tearDown(self):
+    twitter.MAX_TWEET_LENGTH = self.orig_max_tweet_length
+    twitter.TCO_LENGTH = self.orig_tco_length
 
   def test_get_actor(self):
     self.expect_urlopen(
@@ -825,6 +829,9 @@ class TwitterTest(testutil.HandlerTest):
     self.twitter.get_actor('foo')
 
   def test_create_tweet(self):
+    twitter.MAX_TWEET_LENGTH = 20
+    twitter.TCO_LENGTH = 5
+
     dots = u'…'.encode('utf-8')
     original = (
       'my status',
@@ -870,6 +877,9 @@ class TwitterTest(testutil.HandlerTest):
       self.assertIn('<em>%s</em>' % preview, got)
 
   def test_create_tweet_include_link(self):
+    twitter.MAX_TWEET_LENGTH = 20
+    twitter.TCO_LENGTH = 5
+
     self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=' +
                         urllib.quote_plus('too long but… http://obj'),
                         json.dumps(TWEET), data='')
@@ -885,23 +895,30 @@ class TwitterTest(testutil.HandlerTest):
                   self.twitter.preview_create(obj, include_link=True))
 
   def test_create_reply(self):
-    self.expect_urlopen(
-      twitter.API_POST_TWEET_URL + '?status=reply+200&in_reply_to_status_id=100',
-      json.dumps(TWEET), data='')
+    # first content doesn't have @-mention of in-reply-to author, so we add it.
+    # second content has it already.
+    contents = ('reply 200', 'reply @snarfed_org 200')
+    expected_creates = ('%40snarfed_org+reply+200', 'reply+%40snarfed_org+200')
+    expected_previews = ('@snarfed_org reply 200', 'reply @snarfed_org 200')
+
+    for exp in expected_creates:
+      self.expect_urlopen(
+        twitter.API_POST_TWEET_URL + '?status=%s&in_reply_to_status_id=100' % exp,
+        json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
-    reply = copy.deepcopy(REPLY_OBJS[0])
-    reply['inReplyTo'] = [{'id': 'tag:twitter.com,2013:100'}]
     tweet = copy.deepcopy(TWEET)
     tweet.update({
         'id': '100',
         'url': 'http://twitter.com/snarfed_org/status/100',
         })
-    self.assert_equals(tweet, self.twitter.create(reply))
 
-    preview = self.twitter.preview_create(reply)
-    self.assertIn('<span class="verb">reply</span> <em>reply 200</em>', preview)
-    self.assertIn('https://twitter.com/USERNAME/statuses/100', preview)
+    obj= copy.deepcopy(REPLY_OBJS[0])
+    obj['inReplyTo'] = [{'url': 'http://twitter.com/snarfed_org/status/100'}]
+    for content, preview in zip(contents, expected_previews):
+      obj['content'] = content
+      self.assert_equals(tweet, self.twitter.create(obj))
+      self.assertIn(preview, self.twitter.preview_create(obj))
 
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',

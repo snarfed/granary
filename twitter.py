@@ -346,11 +346,27 @@ class Twitter(source.Source):
     verb = obj.get('verb')
     base_id, base_url = self.base_object(obj)
     if base_id and not base_url:
-      base_url = 'https://twitter.com/USERNAME/statuses/' + base_id
+      base_url = 'https://twitter.com/-/statuses/' + base_id
+    content = obj.get('content', '')
+
+    is_reply = (type == 'comment' or 'inReplyTo' in obj)
+    if is_reply:
+      # extract username from in-reply-to URL so we can @-mention it, if it's
+      # not already @-mentioned, since Twitter requires that to make our new
+      # tweet a reply.
+      # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
+      # TODO: this doesn't handle an in-reply-to username that's a prefix of
+      # another username already mentioned, e.g. in reply to @foo when content
+      # includes @foobar.
+      parts = urlparse.urlparse(base_url).path.split('/')
+      if len(parts) < 2 or not parts[1] or parts[1] == '-':
+        raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
+      mention = '@' + parts[1]
+      if mention not in content:
+        content = mention + ' ' + content
 
     # truncate and ellipsize content if it's over the character count. URLs will
     # be t.co-wrapped, so include that when counting.
-    content = obj.get('content', '')
     links = util.extract_links(content)
     max = MAX_TWEET_LENGTH
     include_url = obj.get('url') if include_link else None
@@ -380,12 +396,10 @@ class Twitter(source.Source):
     # priority to fix. :P
     preview_content = util.linkify(content, pretty=True)
 
-    if type == 'comment' or 'inReplyTo' in obj:
-      # TODO: validate that content contains an @-mention of the original
-      # tweet's author. Twitter won't make it a reply if it doesn't.
-      # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
+    if is_reply:
       if preview:
-        return ('will <span class="verb">reply</span> <em>%s</em> to this tweet:\n%s' %
+        return ('will <span class="verb">@-reply</span>:<br /><br />\n<em>%s</em>\n'
+                '<br /><br />...to this tweet:\n%s' %
                 (preview_content, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
