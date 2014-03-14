@@ -197,7 +197,7 @@ def json_to_object(mf2):
     'published': prop.get('published', ''),
     'updated': prop.get('updated', ''),
     'displayName': prop.get('name'),
-    'content': content.get('html') or content.get('value'),
+    'content': content.get('value') or content.get('html'),
     'url': prop.get('url'),
     'image': {'url': prop.get('photo')},
     'location': json_to_object(prop.get('location')),
