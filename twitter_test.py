@@ -865,6 +865,7 @@ class TwitterTest(testutil.HandlerTest):
     tweet.update({
         'id': '100',
         'url': 'http://twitter.com/snarfed_org/status/100',
+        'type': 'post',
         })
 
     obj = copy.deepcopy(OBJECT)
@@ -895,28 +896,36 @@ class TwitterTest(testutil.HandlerTest):
                   self.twitter.preview_create(obj, include_link=True))
 
   def test_create_reply(self):
+    # tuples: (content, in-reply-to domain, expected tweet, expected type)
     # first content doesn't have @-mention of in-reply-to author, so we add it.
     # second content has it already.
-    contents = ('reply 200', 'reply @snarfed_org 200')
-    expected_creates = ('%40snarfed_org+reply+200', 'reply+%40snarfed_org+200')
-    expected_previews = ('@snarfed_org reply 200', 'reply @snarfed_org 200')
+    # third is a reply to a different source domain, so we don't treat it as a
+    # reply.
+    testdata = (
+      ('my reply', 'twitter.com', '@you my reply', 'comment'),
+      ('my @you reply', 'twitter.com', 'my @you reply', 'comment'),
+      ('@you my reply', 'other.com', '@you my reply', 'post'),
+      )
 
-    for exp in expected_creates:
-      self.expect_urlopen(
-        twitter.API_POST_TWEET_URL + '?status=%s&in_reply_to_status_id=100' % exp,
-        json.dumps(TWEET), data='')
+    for _, _, tweet, type in testdata:
+      params = 'status=%s' % urllib.quote_plus(tweet)
+      if type == 'comment':
+        params += '&in_reply_to_status_id=100'
+      self.expect_urlopen(twitter.API_POST_TWEET_URL + '?' + params,
+                          json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
     tweet = copy.deepcopy(TWEET)
-    tweet.update({
-        'id': '100',
-        'url': 'http://twitter.com/snarfed_org/status/100',
-        })
-
     obj= copy.deepcopy(REPLY_OBJS[0])
-    obj['inReplyTo'] = [{'url': 'http://twitter.com/snarfed_org/status/100'}]
-    for content, preview in zip(contents, expected_previews):
-      obj['content'] = content
+
+    for content, domain, preview, type in testdata:
+      tweet.update({
+          'id': '100',
+          'url': 'http://twitter.com/snarfed_org/status/100',
+          'type': type,
+          })
+      obj.update({'inReplyTo': {'url': 'http://%s/you/status/100' % domain},
+                  'content': content})
       self.assert_equals(tweet, self.twitter.create(obj))
       self.assertIn(preview, self.twitter.preview_create(obj))
 
@@ -924,7 +933,8 @@ class TwitterTest(testutil.HandlerTest):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
                         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'http://twitter.com/snarfed_org/status/100'},
+    self.assert_equals({'url': 'http://twitter.com/snarfed_org/status/100',
+                        'type': 'like'},
                        self.twitter.create(LIKES_FROM_HTML[0]))
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
@@ -941,6 +951,7 @@ class TwitterTest(testutil.HandlerTest):
     tweet.update({
         'id': '100',
         'url': 'http://twitter.com/snarfed_org/status/100',
+        'type': 'repost',
         })
     self.assert_equals(tweet, self.twitter.create(SHARES[0]))
 

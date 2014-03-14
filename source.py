@@ -460,8 +460,25 @@ class Source(object):
 
     Returns: (string id, string URL) tuple. Both may be None.
     """
-    reply_to = obj.get('inReplyTo')
-    base_obj = reply_to[0] if reply_to else obj.get('object')
+    # first, look for an in-reply-to link to this source
+    in_reply_tos = obj.get('inReplyTo', [])
+    if isinstance(in_reply_tos, dict):
+      in_reply_tos = [in_reply_tos]
+
+    for base_obj in in_reply_tos:
+      parsed_id = util.parse_tag_uri(base_obj.get('id', ''))
+      if parsed_id:
+        domain = parsed_id[0]
+      else:
+        domain = urlparse.urlparse(base_obj.get('url', '')).netloc
+      for subdomain in 'www.', 'mobile.':
+        if domain.startswith(subdomain):
+          domain = domain[len(subdomain):]
+      if domain == self.DOMAIN:
+        break
+    else:
+      base_obj = obj.get('object')
+
     if not base_obj:
       return (None, None)
 

@@ -309,7 +309,8 @@ class Twitter(source.Source):
       obj: ActivityStreams object
       include_link: boolean
 
-    Returns: dict with 'id' and 'url' keys for the newly created Twitter object
+    Returns: dict with 'id', 'url', and 'type' keys (all optional) for the newly
+      created Twitter object
     """
     return self._create(obj, preview=False, include_link=include_link)
 
@@ -345,11 +346,9 @@ class Twitter(source.Source):
     type = obj.get('objectType')
     verb = obj.get('verb')
     base_id, base_url = self.base_object(obj)
-    if base_id and not base_url:
-      base_url = 'https://twitter.com/-/statuses/' + base_id
     content = obj.get('content', '')
 
-    is_reply = (type == 'comment' or 'inReplyTo' in obj)
+    is_reply = (type == 'comment' or 'inReplyTo' in obj) and base_url
     if is_reply:
       # extract username from in-reply-to URL so we can @-mention it, if it's
       # not already @-mentioned, since Twitter requires that to make our new
@@ -359,11 +358,16 @@ class Twitter(source.Source):
       # another username already mentioned, e.g. in reply to @foo when content
       # includes @foobar.
       parts = urlparse.urlparse(base_url).path.split('/')
-      if len(parts) < 2 or not parts[1] or parts[1] == '-':
+      if len(parts) < 2 or not parts[1]:
         raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
       mention = '@' + parts[1]
       if mention not in content:
         content = mention + ' ' + content
+
+    # need a base_url with the tweet id for the embed HTML below. do this
+    # *after* checking the real base_url for in-reply-to author username.
+    if base_id and not base_url:
+      base_url = 'https://twitter.com/-/statuses/' + base_id
 
     # truncate and ellipsize content if it's over the character count. URLs will
     # be t.co-wrapped, so include that when counting.
@@ -385,10 +389,8 @@ class Twitter(source.Source):
     if i < len(tokens):
       # TODO: user opt in to preserve whitespace (newlines, etc)
       content = ' '.join(tokens[:i]) + u'…'
-
     if include_url:
       content += ' ' + include_url
-
     content = unicode(content).encode('utf-8')
     # TODO: this pretty link rendering isn't exactly the same as Twitter's.
     # Twitter shows the full domain plus 14 chars of the path, then ellipsizes.
@@ -404,6 +406,7 @@ class Twitter(source.Source):
       else:
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
+        resp['type'] = 'comment'
 
     elif type == 'activity' and verb == 'like':
       if preview:
@@ -412,7 +415,7 @@ class Twitter(source.Source):
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE_URL, data=data).read()
-        resp = {}
+        resp = {'type': 'like'}
 
     elif type == 'activity' and verb == 'share':
       if preview:
@@ -421,14 +424,16 @@ class Twitter(source.Source):
       else:
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
+        resp['type'] = 'repost'
 
-    elif type in ('note', 'article'):
+    elif type in ('note', 'article', 'comment'):
       if preview:
         return ('will <span class="verb">tweet</span>:<br /><br />'
                 '<em>%s</em><br />' % preview_content)
       else:
         data = urllib.urlencode({'status': content})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
+        resp['type'] = 'post'
 
     else:
       raise NotImplementedError()

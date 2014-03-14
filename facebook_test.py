@@ -921,7 +921,7 @@ class FacebookTest(testutil.HandlerTest):
         'content': 'my msg',
         })
     self.assert_equals(
-      {'id': '123_456', 'url': 'http://facebook.com/123_456', },
+      {'id': '123_456', 'url': 'http://facebook.com/123_456', 'type': 'post'},
       self.facebook.create(obj))
 
     preview = self.facebook.preview_create(obj)
@@ -955,17 +955,30 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals({
         'id': '456_789',
         'url': 'http://facebook.com/547822715231468?comment_id=456_789',
+        'type': 'comment',
         }, self.facebook.create(obj))
 
     preview = self.facebook.preview_create(obj)
     self.assertIn('<span class="verb">comment</span>', preview)
     self.assertIn('http://facebook.com/547822715231468', preview)
 
+  def test_create_comment_other_domain(self):
+    self.expect_urlopen(facebook.API_FEED_URL, '{}', data='message=my+cmt')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(COMMENT_OBJS[0])
+    obj.update({'content': 'my cmt', 'inReplyTo': [{'url': 'http://other'}]})
+
+    self.assert_equals({'type': 'post'}, self.facebook.create(obj))
+    self.assertIn('<span class="verb">post</span>',
+                  self.facebook.preview_create(obj))
+
   def test_create_like(self):
     self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
                         'true', data='')
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'http://facebook.com/212038/posts/10100176064482163'},
+    self.assert_equals({'url': 'http://facebook.com/212038/posts/10100176064482163',
+                        'type': 'like'},
                        self.facebook.create(LIKE_OBJS[0]))
 
     preview = self.facebook.preview_create(LIKE_OBJS[0])
@@ -981,7 +994,7 @@ class FacebookTest(testutil.HandlerTest):
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234/'}]
-      self.assert_equals({'url': 'http://facebook.com/234/'},
+      self.assert_equals({'url': 'http://facebook.com/234/', 'type': 'rsvp'},
                           self.facebook.create(rsvp))
 
     preview = self.facebook.preview_create(rsvp)

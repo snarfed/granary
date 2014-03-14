@@ -238,6 +238,8 @@ class Facebook(source.Source):
     """Returns an ActivityStreams RSVP activity object.
 
     Args:
+
+
       activity_user_id: string id of the user who posted the event
       event_id: string event id
       user_id: string user id
@@ -305,14 +307,15 @@ class Facebook(source.Source):
         # 'privacy': json.dumps({'value': 'SELF'}),
         })
 
-    if type == 'comment':
+    if type == 'comment' and base_url:
       if preview:
         return ('will <span class="verb">comment</span> <em>%s</em> on this post:\n%s' %
                 (content, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
                                        data=msg_data).read())
-        resp['url'] = self.comment_url(base_id, resp['id'])
+        resp.update({'url': self.comment_url(base_id, resp['id']),
+                     'type': 'comment'})
 
     elif type == 'activity' and verb == 'like':
       if preview:
@@ -321,7 +324,7 @@ class Facebook(source.Source):
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
         assert resp == True, resp
-        resp = {}
+        resp = {'type': 'like'}
 
     elif type == 'activity' and verb in RSVP_ENDPOINTS:
       # TODO: event invites
@@ -332,15 +335,15 @@ class Facebook(source.Source):
       else:
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
         assert resp == True, resp
-        resp = {}
+        resp = {'type': 'rsvp'}
 
-    elif type in ('note', 'article'):
+    elif type in ('note', 'article', 'comment'):
       if preview:
         return ('will <span class="verb">post</span>:<br /><br />'
                 '<em>%s</em><br />' % content)
       else:
         resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
-        resp['url'] = self.post_url(resp)
+        resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     else:
       raise NotImplementedError()
