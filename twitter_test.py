@@ -9,6 +9,7 @@ import json
 import mox
 import urllib
 
+import microformats2
 import source
 import twitter
 from oauth_dropins.webutil import testutil
@@ -763,6 +764,37 @@ class TwitterTest(testutil.HandlerTest):
   def test_tweet_to_object_with_retweets(self):
     self.assert_equals(OBJECT_WITH_SHARES,
                        self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
+
+  def test_tweet_to_object_entity_indices_handle_display_urls(self):
+    tweet = {
+      'id_str': '123',
+      'text': '@schnarfed Hey Ryan, You might find this semi-related and interesting: https://t.co/AFGvnvG72L Heard about it from @danshipper this week.',
+      'entities': {
+        'urls': [{
+            'url': 'https://t.co/AFGvnvG72L',
+            'expanded_url': 'https://www.onename.io/',
+            'display_url': 'onename.io',
+            'indices': [71, 94],
+            }],
+        'user_mentions': [{
+            'screen_name': 'danshipper',
+            'name': 'Dan Shipper',
+            'indices': [115, 126],
+            }],
+        },
+      }
+
+    obj = self.twitter.tweet_to_object(tweet)
+    for tag in obj['tags']:
+      if tag['displayName'] == 'Dan Shipper':
+        self.assertEquals(102, tag['startIndex'])
+        self.assertEquals(11, tag['length'])
+        break
+    else:
+      self.fail('Dan Shipper not found')
+
+    self.assertEquals('@schnarfed Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="http://twitter.com/danshipper">@danshipper</a> this week.',
+                      microformats2.render_content(obj))
 
   def test_protected_tweet_to_object(self):
     tweet = copy.deepcopy(TWEET)

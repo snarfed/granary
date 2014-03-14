@@ -572,6 +572,9 @@ class Twitter(source.Source):
        'indices': t.get('indices'),
        } for t in entities.get('media', [])]
 
+    # sort tags by indices, since they need to be processed (below) in order.
+    obj['tags'].sort(key=lambda t: t.get('indices'))
+
     # convert start/end indices to start/length, and replace t.co URLs with
     # real "display" URLs.
     offset = 0
