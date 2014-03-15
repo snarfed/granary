@@ -281,12 +281,13 @@ class Twitter(source.Source):
         'totalItems': len(items),
         }
 
-  def get_comment(self, comment_id, activity_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
       activity_id: string activity id, optional
+      activity_author_id: string activity author id. Ignored.
     """
     url = API_STATUS_URL % comment_id
     return self.tweet_to_object(json.loads(self.urlopen(url).read()))

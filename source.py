@@ -191,7 +191,7 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def get_comment(self, comment_id, activity_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
 
     Subclasses should override this.
@@ -199,6 +199,8 @@ class Source(object):
     Args:
       comment_id: string comment id
       activity_id: string activity id, optional
+      activity_author_id: string activity author id, optional. Needed for some
+        sources (e.g. Facebook) to construct the comment permalink.
     """
     raise NotImplementedError()
 

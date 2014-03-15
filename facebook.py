@@ -212,15 +212,17 @@ class Facebook(source.Source):
     response['etag'] = etag
     return response
 
-  def get_comment(self, comment_id, activity_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
       activity_id: string activity id, optional
+      activity_author_id: string activity author id, optional
     """
     url = API_OBJECT_URL % comment_id
-    return self.comment_to_object(json.loads(self.urlopen(url).read()))
+    return self.comment_to_object(json.loads(self.urlopen(url).read()),
+                                  post_author_id=activity_author_id)
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Not implemented. Returns None.

@@ -130,12 +130,13 @@ class Instagram(source.Source):
     response = self._make_activities_base_response(activities)
     return response
 
-  def get_comment(self, comment_id, activity_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
-      activity_id: string activity id, required
+      activity_id: string activity id, optional
+      activity_author_id: string activity author id. Ignored.
     """
     media = self.api.media(activity_id)
     for comment in media.comments:

@@ -667,6 +667,16 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456'))
 
+  def test_get_comment_activity_author_id(self):
+    self.expect_urlopen('https://graph.facebook.com/123_456',
+                        json.dumps(COMMENTS[0]))
+    self.mox.ReplayAll()
+
+    obj = self.facebook.get_comment('123_456', activity_author_id='my-author')
+    self.assert_equals(
+      'http://facebook.com/my-author/posts/547822715231468?comment_id=6796480',
+      obj['url'])
+
   def test_get_like(self):
     self.expect_urlopen('https://graph.facebook.com/000', json.dumps(POST))
     self.mox.ReplayAll()
