@@ -376,7 +376,7 @@ class Twitter(source.Source):
     max = MAX_TWEET_LENGTH
     include_url = obj.get('url') if include_link else None
     if include_url:
-      max -= TCO_LENGTH + 1
+      max -= TCO_LENGTH + 3
 
     length = 0
     tokens = content.split()
@@ -387,11 +387,13 @@ class Twitter(source.Source):
     else:
       i = len(tokens)
 
+    # normalize whitespace
+    # TODO: user opt in to preserve original whitespace (newlines, etc)
+    content = ' '.join(tokens[:i])
     if i < len(tokens):
-      # TODO: user opt in to preserve whitespace (newlines, etc)
-      content = ' '.join(tokens[:i]) + u'…'
+      content += u'…'
     if include_url:
-      content += ' ' + include_url
+      content += ' (%s)' % include_url
     content = unicode(content).encode('utf-8')
     # TODO: this pretty link rendering isn't exactly the same as Twitter's.
     # Twitter shows the full domain plus 14 chars of the path, then ellipsizes.

@@ -914,17 +914,17 @@ class TwitterTest(testutil.HandlerTest):
     twitter.TCO_LENGTH = 5
 
     self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=' +
-                        urllib.quote_plus('too long but… http://obj'),
+                        urllib.quote_plus('too long… (http://obj)'),
                         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(OBJECT)
     obj.update({
-        'content': 'too long but should include url',
+        'content': 'too long\nextra whitespace\tbut should include url',
         'url': 'http://obj',
         })
     self.twitter.create(obj, include_link=True)
-    self.assertIn('too long but… <a href="http://obj">obj</a>',
+    self.assertIn('too long… (<a href="http://obj">obj</a>)',
                   self.twitter.preview_create(obj, include_link=True))
 
   def test_create_reply(self):
