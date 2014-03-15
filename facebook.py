@@ -379,13 +379,15 @@ class Facebook(source.Source):
     else:
       return 'http://facebook.com/%s' % post_id
 
-  def comment_url(self, post_id, comment_id):
+  def comment_url(self, post_id, comment_id, post_author_id=None):
     """Returns a short Facebook URL for a comment.
 
     Args:
       post_id: Facebook post id
       comment_id: Facebook comment id
     """
+    if post_author_id:
+      post_id = post_author_id + '/posts/' + post_id
     return 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
   def post_to_activity(self, post):
@@ -581,7 +583,7 @@ class Facebook(source.Source):
 
   COMMENT_ID_RE = re.compile('(\d+_)?(\d+)_(\d+)')
 
-  def comment_to_object(self, comment):
+  def comment_to_object(self, comment, post_author_id=None):
     """Converts a comment to an object.
 
     Args:
@@ -605,7 +607,8 @@ class Facebook(source.Source):
     match = self.COMMENT_ID_RE.match(comment.get('id', ''))
     if match:
       post_author, post_id, comment_id = match.groups()
-      obj['url'] = self.comment_url(post_id, comment_id)
+      obj['url'] = self.comment_url(post_id, comment_id,
+                                    post_author_id=post_author_id)
       obj['inReplyTo'] = [{'id': self.tag_uri(post_id)}]
 
     return self.postprocess_object(obj)

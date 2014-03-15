@@ -727,6 +727,12 @@ class FacebookTest(testutil.HandlerTest):
   def test_comment_to_object_empty(self):
     self.assert_equals({}, self.facebook.comment_to_object({}))
 
+  def test_comment_to_object_post_author_id(self):
+    obj = self.facebook.comment_to_object(COMMENTS[0], post_author_id='my-author')
+    self.assert_equals(
+      'http://facebook.com/my-author/posts/547822715231468?comment_id=6796480',
+      obj['url'])
+
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.facebook.user_to_actor(USER))
 
