@@ -956,7 +956,7 @@ class FacebookTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.facebook.create(obj, include_link=True)
-    self.assertIn('my msg<br /><br />(http://obj)',
+    self.assertIn('my msg<br /><br />(<a href="http://obj">http://obj</a>)',
                   self.facebook.preview_create(obj, include_link=True))
 
   def test_create_comment(self):

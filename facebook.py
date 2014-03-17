@@ -302,6 +302,7 @@ class Facebook(source.Source):
     url = obj.get('url')
     if include_link and url:
       content += ('<br /><br />(%s)' if preview else '\n\n(%s)') % url
+    preview_content = util.linkify(content)
 
     msg_data = urllib.urlencode({
         'message': content.encode('utf-8'),
@@ -312,7 +313,7 @@ class Facebook(source.Source):
     if type == 'comment' and base_url:
       if preview:
         return ('will <span class="verb">comment</span> <em>%s</em> on this post:\n%s' %
-                (content, EMBED_POST % base_url))
+                (preview_content, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
                                        data=msg_data).read())
@@ -342,7 +343,7 @@ class Facebook(source.Source):
     elif type in ('note', 'article', 'comment'):
       if preview:
         return ('will <span class="verb">post</span>:<br /><br />'
-                '<em>%s</em><br />' % content)
+                '<em>%s</em><br />' % preview_content)
       else:
         resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
         resp.update({'url': self.post_url(resp), 'type': 'post'})
