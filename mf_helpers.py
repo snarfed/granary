@@ -1,7 +1,7 @@
 ## function to get bare urls
-def just_urls_plz(in_reply_to):
+def just_urls_plz(org_list):
     urls = []
-    for item in in_reply_to:
+    for item in org_list:
         if isinstance(item, basestring):
             urls.append(item)
         else:
