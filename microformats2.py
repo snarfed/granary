@@ -8,6 +8,7 @@ import logging
 import string
 
 from oauth_dropins.webutil import util
+from mf_helpers import just_urls_plz
 
 # TODO: comments
 HENTRY = string.Template("""\
@@ -209,7 +210,7 @@ def json_to_object(mf2):
   if as_type == 'activity':
     urls = set(itertools.chain.from_iterable(props.get(field, [])
         for field in ('like', 'like-of', 'repost', 'repost-of', 'in-reply-to')))
-    objects = [{'url': url} for url in urls]
+    objects = [{'url': url} for url in just_urls_plz(urls)]
     objects += [json_to_object(i) for i in props.get('invitee', [])]
     obj.update({
         'object': objects[0] if len(objects) == 1 else objects,
@@ -217,7 +218,7 @@ def json_to_object(mf2):
         })
   else:
     obj.update({
-        'inReplyTo': [{'url': url} for url in props.get('in-reply-to', [])],
+        'inReplyTo': [{'url': url} for url in just_urls_plz(props.get('in-reply-to', []))],
         'author': author,
         })
 
@@ -264,7 +265,7 @@ def json_to_html(obj):
 
   props = obj['properties']
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
-                           for url in props['in-reply-to'])
+                           for url in just_urls_plz(props['in-reply-to']))
 
   prop = first_props(props)
   author = prop['author']
