@@ -9,9 +9,6 @@ import string
 
 from oauth_dropins.webutil import util
 
-
-
-
 # TODO: comments
 HENTRY = string.Template("""\
 <article class="$types">
