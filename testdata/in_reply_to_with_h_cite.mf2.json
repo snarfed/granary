@@ -1,0 +1,20 @@
+{
+  "type" : ["h-entry", "h-as-note"],
+  "properties" : {
+    "in-reply-to" : [
+      "http://example.com/bare-reply",
+      {
+        "type" : ["h-cite"],
+        "value" : "Reply inside h-cite",
+        "properties" : {
+          "url" : ["http://example.com/embedded-reply"],
+          "name" : ["Reply inside h-cite"]
+        }
+      }
+    ],
+    "content" : [{
+        "html" : "This is the main content.",
+        "value" : "This is the main content."
+      }]
+  }
+}

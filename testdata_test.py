@@ -43,8 +43,8 @@ class TestDataTest(testutil.HandlerTest):
 
     # source extension, destination extension, conversion function, exclude prefix
     mappings = (
-      ('as.json', 'mf2.json', microformats2.object_to_json, ()),
-      ('as.json', 'mf2.html', microformats2.object_to_html, ()),
+      ('as.json', 'mf2.json', microformats2.object_to_json, ('in_reply_to',)),
+      ('as.json', 'mf2.html', microformats2.object_to_html, ('in_reply_to',)),
       ('mf2.json', 'as.json', microformats2.json_to_object,
        # these have tags, which we don't generate
        ('note.', 'article_with_')),
