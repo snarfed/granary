@@ -38,6 +38,26 @@ HCARD = string.Template("""\
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
 PHOTO = string.Template('<img class="u-photo" src="$url" alt="$alt" />')
 
+## function to get bare urls
+def get_string_urls(org_list):
+  """Converts a list/set into a list of just urls by parsing embedded microformats if any.
+  see: http://indiewebcamp.com/in-reply-to#How_to_consume_in-reply-to
+  
+  Args:
+    org_list: original list containing string URLs or embedded microformats
+    
+  Returns: list contianing URL strings only.
+  """
+  urls = []
+  for item in org_list:
+    if isinstance(item, basestring):
+      urls.append(item)
+    else:
+      itemtype = [x for x in item.get('type', []) if x.startswith('h-')]
+      if itemtype:
+        urls.extend(item.get('properties', {}).get('url', []))
+  return urls
+
 
 def object_to_json(obj, trim_nulls=True):
   """Converts an ActivityStreams object to microformats2 JSON.
@@ -209,7 +229,7 @@ def json_to_object(mf2):
   if as_type == 'activity':
     urls = set(itertools.chain.from_iterable(props.get(field, [])
         for field in ('like', 'like-of', 'repost', 'repost-of', 'in-reply-to')))
-    objects = [{'url': url} for url in urls]
+    objects = [{'url': url} for url in get_string_urls(urls)]
     objects += [json_to_object(i) for i in props.get('invitee', [])]
     obj.update({
         'object': objects[0] if len(objects) == 1 else objects,
@@ -217,7 +237,7 @@ def json_to_object(mf2):
         })
   else:
     obj.update({
-        'inReplyTo': [{'url': url} for url in props.get('in-reply-to', [])],
+        'inReplyTo': [{'url': url} for url in get_string_urls(props.get('in-reply-to', []))],
         'author': author,
         })
 
@@ -264,7 +284,7 @@ def json_to_html(obj):
 
   props = obj['properties']
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
-                           for url in props['in-reply-to'])
+                           for url in get_string_urls(props['in-reply-to']))
 
   prop = first_props(props)
   author = prop['author']
