@@ -251,7 +251,7 @@ class Facebook(source.Source):
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
   def create(self, obj, include_link=False):
-    """Creates a new post, comment, like, share, or RSVP.
+    """Creates a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
@@ -262,7 +262,7 @@ class Facebook(source.Source):
     return self._create(obj, preview=False, include_link=include_link)
 
   def preview_create(self, obj, include_link=False):
-    """Previews creating a new post, comment, like, share, or RSVP.
+    """Previews creating a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
@@ -273,7 +273,7 @@ class Facebook(source.Source):
     return self._create(obj, preview=True, include_link=include_link)
 
   def _create(self, obj, preview=None, include_link=False):
-    """Creates a new post, comment, like, share, or RSVP.
+    """Creates a new post, comment, like, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
     https://developers.facebook.com/docs/graph-api/reference/object/comments#publish
