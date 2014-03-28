@@ -871,6 +871,7 @@ class TwitterTest(testutil.HandlerTest):
       'url shorten http://foo/bar',
       'url http://foo/bar ellipsize http://foo/baz',
       'long url http://www.foo/bar/baz/baj/biff/boof',
+      'trailing slash http://www.foo/',
       )
     created = (
       'my status',
@@ -878,6 +879,7 @@ class TwitterTest(testutil.HandlerTest):
       'url shorten http://foo/bar',
       'url http://foo/bar ellipsize' + dots,
       'long url http://www.foo/bar/baz/baj/biff/boof',
+      'trailing slash http://www.foo/',
       )
     previewed = (
       'my status',
@@ -885,6 +887,7 @@ class TwitterTest(testutil.HandlerTest):
       'url shorten <a href="http://foo/bar">foo/bar</a>',
       'url <a href="http://foo/bar">foo/bar</a> ellipsize' + dots,
       'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/biff...</a>',
+      'trailing slash <a href="http://www.foo/">foo/</a>',
       )
 
     for content in created:

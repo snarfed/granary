@@ -372,7 +372,7 @@ class Twitter(source.Source):
 
     # truncate and ellipsize content if it's over the character count. URLs will
     # be t.co-wrapped, so include that when counting.
-    links = util.extract_links(content)
+    links = set(util.extract_links(content))
     max = MAX_TWEET_LENGTH
     include_url = obj.get('url') if include_link else None
     if include_url:
@@ -381,7 +381,12 @@ class Twitter(source.Source):
     length = 0
     tokens = content.split()
     for i, token in enumerate(tokens):
-      length += (TCO_LENGTH if token in links else len(token)) + 1
+      # extract_links() strips trailing slashes from URLs, so do the same here
+      # so we can compare.
+      as_url = token[:-1] if token.endswith('/') else token
+      length += (TCO_LENGTH if as_url in links else len(token))
+      if i > 0:
+        length += 1  # space between tokens
       if length > max:
         break
     else:
