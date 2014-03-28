@@ -20,6 +20,7 @@ import logging
 import re
 import urllib
 import urllib2
+import urlparse
 
 import appengine_config
 from oauth_dropins.webutil import util
@@ -58,6 +59,11 @@ API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/me/feed'
 API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
 API_LIKES_URL = 'https://graph.facebook.com/%s/likes'
+
+# For parsing photo URLs, e.g.
+# https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+PHOTO_PATH = '/photo.php'
+PHOTO_ID_PARAM = 'fbid'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -392,6 +398,33 @@ class Facebook(source.Source):
     if post_author_id:
       post_id = post_author_id + '/posts/' + post_id
     return 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+
+  def base_object(self, obj):
+    """Returns id and URL of the 'base' silo object that an object operates on.
+
+    Includes special handling for Facebook photo URLs, e.g.
+    https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: (string id, string URL) tuple. Both may be None.
+    """
+    id, url = super(Facebook, self).base_object(obj)
+    try:
+        parsed = urlparse.urlparse(url)
+    except BaseException, e:
+      logging.error(
+        "Couldn't parse object URL %s : %s. Falling back to default logic.",
+        url, e)
+      return id, url
+
+    if parsed.path == PHOTO_PATH:
+      fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
+      if fbids:
+        return fbids[0], url
+
+    return id, url
 
   def post_to_activity(self, post):
     """Converts a post to an activity.

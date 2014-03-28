@@ -462,6 +462,8 @@ class Source(object):
     comment on. If it's an RSVP, this returns the event. The id in the returned
     tuple is silo-specific, ie not a tag URI.
 
+    Subclasses may override this.
+
     Args:
       obj: ActivityStreams object
 

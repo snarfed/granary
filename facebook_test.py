@@ -989,6 +989,30 @@ class FacebookTest(testutil.HandlerTest):
     self.assertIn('<span class="verb">post</span>',
                   self.facebook.preview_create(obj))
 
+  def test_create_comment_on_post_urls(self):
+    urls = ('https://www.facebook.com/snarfed.org/posts/333',
+            'https://www.facebook.com/photo.php?fbid=333&set=a.4.4&permPage=1'
+            )
+
+    for url in urls:
+      self.expect_urlopen(
+        'https://graph.facebook.com/333/comments',
+        json.dumps({'id': '456_789'}),
+        data='message=my+cmt')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(COMMENT_OBJS[0])
+    for url in urls:
+      obj.update({
+          'inReplyTo': [{'url': url}],
+          'content': 'my cmt',
+          })
+      self.assert_equals({
+          'id': '456_789',
+          'url': 'http://facebook.com/333?comment_id=456_789',
+          'type': 'comment',
+        }, self.facebook.create(obj))
+
   def test_create_like(self):
     self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
                         'true', data='')
