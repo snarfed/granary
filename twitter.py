@@ -466,6 +466,31 @@ class Twitter(source.Source):
     return TwitterAuth.signed_urlopen(
       url, self.access_token_key, self.access_token_secret, **kwargs)
 
+  def base_object(self, obj):
+    """Returns id and URL of the 'base' silo object that an object operates on.
+
+    Includes special handling for Twitter photo URLs, e.g.
+    https://twitter.com/nelson/status/447465082327298048/photo/1
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: (string id, string URL) tuple. Both may be None.
+    """
+    id, url = super(Twitter, self).base_object(obj)
+    if url:
+      try:
+        parsed = urlparse.urlparse(url)
+        parts = parsed.path.split('/')
+        if len(parts) >= 3 and parts[-2] == 'photo':
+          return parts[-3], url
+      except BaseException, e:
+        logging.error(
+          "Couldn't parse object URL %s : %s. Falling back to default logic.",
+          url, e)
+
+    return id, url
+
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.
 

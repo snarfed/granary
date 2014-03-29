@@ -931,14 +931,15 @@ class TwitterTest(testutil.HandlerTest):
                   self.twitter.preview_create(obj, include_link=True))
 
   def test_create_reply(self):
-    # tuples: (content, in-reply-to domain, expected tweet, expected type)
-    # first content doesn't have @-mention of in-reply-to author, so we add it.
-    # second content has it already.
-    # third is a reply to a different source domain, so we don't treat it as a
-    # reply.
+    # tuples: (content, in-reply-to url, expected tweet, expected type)
     testdata = (
-      ('my reply', 'twitter.com', '@you my reply', 'comment'),
-      ('my @you reply', 'twitter.com', 'my @you reply', 'comment'),
+      # good reply, with @-mention of author
+      ('foo @you', 'http://twitter.com/you/status/100', 'foo @you', 'comment'),
+      # no @-mention of in-reply-to author, so we add it
+      ('foo', 'http://twitter.com/you/status/100', '@you foo', 'comment'),
+      # photo URL. tests Twitter.base_object()
+      ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo', 'comment'),
+      # reply to different source domain, so we don't treat it as a reply
       ('@you my reply', 'other.com', '@you my reply', 'post'),
       )
 
@@ -953,14 +954,13 @@ class TwitterTest(testutil.HandlerTest):
     tweet = copy.deepcopy(TWEET)
     obj= copy.deepcopy(REPLY_OBJS[0])
 
-    for content, domain, preview, type in testdata:
+    for content, url, preview, type in testdata:
       tweet.update({
           'id': '100',
           'url': 'http://twitter.com/snarfed_org/status/100',
           'type': type,
           })
-      obj.update({'inReplyTo': {'url': 'http://%s/you/status/100' % domain},
-                  'content': content})
+      obj.update({'inReplyTo': {'url': url}, 'content': content})
       self.assert_equals(tweet, self.twitter.create(obj))
       self.assertIn(preview, self.twitter.preview_create(obj))
 
