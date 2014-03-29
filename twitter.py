@@ -14,6 +14,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import collections
 import datetime
+import itertools
 import json
 import logging
 import re
@@ -165,6 +166,11 @@ class Twitter(source.Source):
         else:
           raise
 
+    # batch get memcached counts of favorites and retweets for all tweets
+    cached = {}
+    if cache is not None:
+      keys = itertools.product(('ATR', 'ATF'), [t['id_str'] for t in tweets])
+      cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
@@ -189,14 +195,15 @@ class Twitter(source.Source):
         #
         # can't use the statuses/retweets_of_me endpoint because it only
         # returns the original tweets, not the retweets or their authors.
-        count = util.if_changed(cache, cache_updates, 'ATR ' + tweet['id_str'],
-                                tweet.get('retweet_count'))
-        if count:
-          url = API_RETWEETS_URL % tweet['id_str']
+        id = tweet['id_str']
+        count = tweet.get('retweet_count')
+        if count and count != cached.get('ATR ' + id):
+          url = API_RETWEETS_URL % id
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
           tweet['retweets'] = json.loads(self.urlopen(url).read())
           retweet_calls += 1
+          cache_updates['ATR ' + id] = count
 
     activities = [self.tweet_to_activity(t) for t in tweets]
 
@@ -205,19 +212,19 @@ class Twitter(source.Source):
 
     if fetch_likes:
       for tweet, activity in zip(tweets, activities):
-        count = util.if_changed(cache, cache_updates, 'ATF ' + tweet['id_str'],
-                                tweet.get('favorite_count'))
-        if count:
-          url = HTML_FAVORITES_URL % tweet['id_str']
+        id = tweet['id_str']
+        count = tweet.get('favorite_count')
+        if count and count != cached.get('ATF ' + id):
+          url = HTML_FAVORITES_URL % id
           logging.debug('Fetching %s', url)
           html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
                             ).get('htmlUsers', '')
           likes = self.favorites_html_to_likes(tweet, html)
           activity['object'].setdefault('tags', []).extend(likes)
+          cache_updates['ATF ' + id] = count
 
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
-    # TODO: delete keys with value None instead of setting
     if cache is not None:
       cache.set_multi(cache_updates)
     return response

@@ -7,6 +7,7 @@ https://developers.google.com/+/api/latest/activities/list#collection
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import itertools
 import logging
 
 import appengine_config
@@ -94,39 +95,45 @@ class GooglePlus(source.Source):
       else:
         raise
 
+    # batch get memcached counts of comments, likes, reshares for all activities
+    cached = {}
+    if cache is not None:
+      keys = itertools.product(('AGC', 'AGL', 'AGS'), [a['id'] for a in activities])
+      cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
+    # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
     for activity in activities:
       id = activity['id']
       obj = activity.get('object', {})
+
       # comments
-      replies = util.if_changed(cache, cache_updates, 'AGC ' + id,
-                                obj.get('replies', {}).get('totalItems'))
-      if fetch_replies and replies:
+      num_replies = obj.get('replies', {}).get('totalItems')
+      if fetch_replies and num_replies and num_replies != cached.get('AGC ' + id):
         call = self.auth_entity.api().comments().list(
           activityId=activity['id'], maxResults=500)
         comments = call.execute(http)
         obj['replies']['items'] = [
           self.postprocess_comment(c) for c in comments['items']]
+        cache_updates['AGC ' + id] = num_replies
 
       # likes
-      likes = util.if_changed(cache, cache_updates, 'AGL ' + id,
-                              obj.get('plusoners', {}).get('totalItems'))
-      if fetch_likes and likes:
+      num_likes = obj.get('plusoners', {}).get('totalItems')
+      if fetch_likes and num_likes and num_likes != cached.get('AGL ' + id):
         self.add_tags(activity, 'plusoners', 'like')
+        cache_updates['AGL ' + id] = num_likes
 
       # reshares
-      shares = util.if_changed(cache, cache_updates, 'AGS ' + id,
-                               obj.get('resharers', {}).get('totalItems'))
-      if fetch_shares and shares:
+      num_shares = obj.get('resharers', {}).get('totalItems')
+      if fetch_shares and num_shares and num_shares != cached.get('AGS ' + id):
         self.add_tags(activity, 'resharers', 'share')
+        cache_updates['AGS ' + id] = num_shares
 
       self.postprocess_activity(activity)
 
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
-    # TODO: delete keys with value None instead of setting
-    if cache is not None:
+    if cache_updates:
       cache.set_multi(cache_updates)
     return response
 
