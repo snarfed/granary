@@ -318,8 +318,9 @@ class Facebook(source.Source):
 
     if type == 'comment' and base_url:
       if preview:
-        return ('will <span class="verb">comment</span> <em>%s</em> on this post:\n%s' %
-                (preview_content, EMBED_POST % base_url))
+        return ('will <span class="verb">comment</span> <em>%s</em> on '
+                '<a href="%s">this post</a>:\n%s' %
+                (preview_content, base_url, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
                                        data=msg_data).read())
@@ -328,8 +329,8 @@ class Facebook(source.Source):
 
     elif type == 'activity' and verb == 'like':
       if preview:
-        return ('will <span class="verb">like</span> this post:\n' +
-                EMBED_POST % base_url)
+        return ('will <span class="verb">like</span> <a href="%s">this post</a>:\n%s' %
+                (base_url, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
         assert resp == True, resp

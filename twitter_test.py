@@ -940,11 +940,11 @@ class TwitterTest(testutil.HandlerTest):
       # photo URL. tests Twitter.base_object()
       ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo', 'comment'),
       # reply to different source domain, so we don't treat it as a reply
-      ('@you my reply', 'other.com', '@you my reply', 'post'),
+      ('@you my reply', 'http://other.com', '@you my reply', 'post'),
       )
 
-    for _, _, tweet, type in testdata:
-      params = 'status=%s' % urllib.quote_plus(tweet)
+    for _, _, expected_tweet, type in testdata:
+      params = 'status=%s' % urllib.quote_plus(expected_tweet)
       if type == 'comment':
         params += '&in_reply_to_status_id=100'
       self.expect_urlopen(twitter.API_POST_TWEET_URL + '?' + params,
@@ -954,7 +954,7 @@ class TwitterTest(testutil.HandlerTest):
     tweet = copy.deepcopy(TWEET)
     obj= copy.deepcopy(REPLY_OBJS[0])
 
-    for content, url, preview, type in testdata:
+    for content, url, expected_tweet, type in testdata:
       tweet.update({
           'id': '100',
           'url': 'http://twitter.com/snarfed_org/status/100',
@@ -962,7 +962,12 @@ class TwitterTest(testutil.HandlerTest):
           })
       obj.update({'inReplyTo': {'url': url}, 'content': content})
       self.assert_equals(tweet, self.twitter.create(obj))
-      self.assertIn(preview, self.twitter.preview_create(obj))
+
+      preview = self.twitter.preview_create(obj)
+      if type == 'comment':
+        self.assertIn(expected_tweet, preview)
+        self.assertIn('<span class="verb">@-reply</span>', preview)
+        self.assertIn('...to <a href="%s">this tweet</a>' % url, preview)
 
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
@@ -973,8 +978,7 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.create(LIKES_FROM_HTML[0]))
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
-    self.assertIn('<span class="verb">favorite</span>', preview)
-    self.assertIn('http://twitter.com/snarfed_org/status/100', preview)
+    self.assertIn('<span class="verb">favorite</span> <a href="http://twitter.com/snarfed_org/status/100">this tweet</a>', preview)
 
   def test_create_retweet(self):
     self.expect_urlopen(
@@ -991,8 +995,7 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals(tweet, self.twitter.create(SHARES[0]))
 
     preview = self.twitter.preview_create(SHARES[0])
-    self.assertIn('<span class="verb">retweet</span>', preview)
-    self.assertIn('http://twitter.com/foo/status/333', preview)
+    self.assertIn('<span class="verb">retweet</span> <a href="http://twitter.com/foo/status/333">this tweet</a>', preview)
 
   def test_create_unsupported_type(self):
     for fn in self.twitter.create, self.twitter.preview_create:

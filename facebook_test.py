@@ -975,8 +975,8 @@ class FacebookTest(testutil.HandlerTest):
         }, self.facebook.create(obj))
 
     preview = self.facebook.preview_create(obj)
-    self.assertIn('<span class="verb">comment</span>', preview)
-    self.assertIn('http://facebook.com/547822715231468', preview)
+    self.assertIn('<span class="verb">comment</span> <em>my cmt</em> on <a href="http://facebook.com/547822715231468">this post</a>', preview)
+    self.assertIn('<div class="fb-post" data-href="http://facebook.com/547822715231468">', preview)
 
   def test_create_comment_other_domain(self):
     self.expect_urlopen(facebook.API_FEED_URL, '{}', data='message=my+cmt')
@@ -1022,8 +1022,8 @@ class FacebookTest(testutil.HandlerTest):
                        self.facebook.create(LIKE_OBJS[0]))
 
     preview = self.facebook.preview_create(LIKE_OBJS[0])
-    self.assertIn('<span class="verb">like</span>', preview)
-    self.assertIn('http://facebook.com/212038/posts/10100176064482163', preview)
+    self.assertIn('<span class="verb">like</span> <a href="http://facebook.com/212038/posts/10100176064482163">this post</a>', preview)
+    self.assertIn('<div class="fb-post" data-href="http://facebook.com/212038/posts/10100176064482163">', preview)
 
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':#, 'invited/567':

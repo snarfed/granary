@@ -416,8 +416,8 @@ class Twitter(source.Source):
     if is_reply:
       if preview:
         return ('will <span class="verb">@-reply</span>:<br /><br />\n<em>%s</em>\n'
-                '<br /><br />...to this tweet:\n%s' %
-                (preview_content, EMBED_TWEET % base_url))
+                '<br /><br />...to <a href="%s">this tweet</a>:\n%s' %
+                (preview_content, base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
@@ -425,8 +425,8 @@ class Twitter(source.Source):
 
     elif type == 'activity' and verb == 'like':
       if preview:
-        return ('will <span class="verb">favorite</span> this tweet:\n' +
-                EMBED_TWEET % base_url)
+        return ('will <span class="verb">favorite</span> <a href="%s">this tweet</a>:\n%s' %
+                (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE_URL, data=data).read()
@@ -434,8 +434,8 @@ class Twitter(source.Source):
 
     elif type == 'activity' and verb == 'share':
       if preview:
-        return ('will <span class="verb">retweet</span> this tweet:\n' +
-                EMBED_TWEET % base_url)
+        return ('will <span class="verb">retweet</span> <a href="%s">this tweet</a>:\n%s' %
+                (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
