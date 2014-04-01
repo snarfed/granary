@@ -407,10 +407,7 @@ class Twitter(source.Source):
     if include_url:
       content += ' (%s)' % include_url
     content = unicode(content).encode('utf-8')
-    # TODO: this pretty link rendering isn't exactly the same as Twitter's.
-    # Twitter shows the full domain plus 14 chars of the path, then ellipsizes.
-    # this just caps at 20 chars, regardless of domain size. not exactly a high
-    # priority to fix. :P
+    # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True)
 
     if is_reply:

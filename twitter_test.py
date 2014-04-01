@@ -886,7 +886,7 @@ class TwitterTest(testutil.HandlerTest):
       'too long, will be' + dots,
       'url shorten <a href="http://foo/bar">foo/bar</a>',
       'url <a href="http://foo/bar">foo/bar</a> ellipsize' + dots,
-      'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/biff...</a>',
+      'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/bi...</a>',
       'trailing slash <a href="http://www.foo/">foo/</a>',
       )
 
