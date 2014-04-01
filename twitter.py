@@ -225,7 +225,7 @@ class Twitter(source.Source):
 
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
-    if cache is not None:
+    if cache_updates and cache is not None:
       cache.set_multi(cache_updates)
     return response
 

@@ -133,7 +133,7 @@ class GooglePlus(source.Source):
 
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
-    if cache_updates:
+    if cache_updates and cache is not None:
       cache.set_multi(cache_updates)
     return response
 
