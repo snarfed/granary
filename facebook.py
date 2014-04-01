@@ -412,18 +412,17 @@ class Facebook(source.Source):
     Returns: (string id, string URL) tuple. Both may be None.
     """
     id, url = super(Facebook, self).base_object(obj)
-    try:
+    if url:
+      try:
         parsed = urlparse.urlparse(url)
-    except BaseException, e:
-      logging.error(
-        "Couldn't parse object URL %s : %s. Falling back to default logic.",
-        url, e)
-      return id, url
-
-    if parsed.path == PHOTO_PATH:
-      fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
-      if fbids:
-        return fbids[0], url
+        if parsed.path == PHOTO_PATH:
+          fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
+          if fbids:
+            return fbids[0], url
+      except BaseException, e:
+        logging.error(
+          "Couldn't parse object URL %s : %s. Falling back to default logic.",
+          url, e)
 
     return id, url
 
