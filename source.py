@@ -469,12 +469,19 @@ class Source(object):
 
     Returns: (string id, string URL) tuple. Both may be None.
     """
-    # first, look for an in-reply-to link to this source
-    in_reply_tos = obj.get('inReplyTo', [])
-    if isinstance(in_reply_tos, dict):
-      in_reply_tos = [in_reply_tos]
+    # look at in-reply-tos first, then objects (for likes and reposts).
+    # technically, the ActivityStreams 'object' field is always supposed to be
+    # singular, but microformats2.json_to_object() sometimes returns activities
+    # that have a list value, e.g. likes or reposts of multiple objects.
+    candidates = []
+    for field in ('inReplyTo', 'object'):
+      objs = obj.get(field, [])
+      if isinstance(objs, dict):
+        candidates.append(objs)
+      else:
+        candidates += objs
 
-    for base_obj in in_reply_tos:
+    for base_obj in candidates:
       parsed_id = util.parse_tag_uri(base_obj.get('id', ''))
       if parsed_id:
         domain = parsed_id[0]
@@ -486,9 +493,6 @@ class Source(object):
       if domain == self.DOMAIN:
         break
     else:
-      base_obj = obj.get('object')
-
-    if not base_obj:
       return (None, None)
 
     id = base_obj.get('id')

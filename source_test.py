@@ -164,3 +164,9 @@ class SourceTest(testutil.HandlerTest):
     for id in None, 'not_a_tag_uri':
       event['id'] = id
       self.assert_equals([], source.Source.get_rsvps_from_event(event))
+
+  def test_base_object_multiple_objects(self):
+    like = copy.deepcopy(LIKES[0])
+    like['object'] = [like['object'], {'url': 'http://fake.com/second'}]
+    self.assert_equals(('second', 'http://fake.com/second'),
+                       self.source.base_object(like))

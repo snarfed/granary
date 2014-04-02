@@ -960,7 +960,9 @@ class TwitterTest(testutil.HandlerTest):
           'url': 'http://twitter.com/snarfed_org/status/100',
           'type': type,
           })
-      obj.update({'inReplyTo': {'url': url}, 'content': content})
+      obj.update({'inReplyTo': [{'url': url}],
+                  'content': content,
+                  })
       self.assert_equals(tweet, self.twitter.create(obj))
 
       preview = self.twitter.preview_create(obj)
