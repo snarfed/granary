@@ -354,7 +354,7 @@ class Twitter(source.Source):
     type = obj.get('objectType')
     verb = obj.get('verb')
     base_id, base_url = self.base_object(obj)
-    content = obj.get('content', '')
+    content = obj.get('content', '').strip()
 
     is_reply = (type == 'comment' or 'inReplyTo' in obj) and base_url
     if is_reply:

@@ -304,7 +304,7 @@ class Facebook(source.Source):
       base_url = 'http://facebook.com/' + base_id
 
 
-    content = obj.get('content', '')
+    content = obj.get('content', '').strip()
     preview_content = util.linkify(content)
     url = obj.get('url')
     msg_data = {
