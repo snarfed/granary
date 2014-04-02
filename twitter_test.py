@@ -939,6 +939,8 @@ class TwitterTest(testutil.HandlerTest):
       ('foo', 'http://twitter.com/you/status/100', '@you foo', 'comment'),
       # photo URL. tests Twitter.base_object()
       ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo', 'comment'),
+      # mobile.twitter.com URL. the mobile should be stripped from embed.
+      ('foo', 'http://mobile.twitter.com/you/status/100', '@you foo', 'comment'),
       # reply to different source domain, so we don't treat it as a reply
       ('@you my reply', 'http://other.com', '@you my reply', 'post'),
       )
@@ -969,7 +971,7 @@ class TwitterTest(testutil.HandlerTest):
       if type == 'comment':
         self.assertIn(expected_tweet, preview)
         self.assertIn('<span class="verb">@-reply</span>', preview)
-        self.assertIn('...to <a href="%s">this tweet</a>' % url, preview)
+        self.assertIn('...to <a href="http://twitter.com/you/status/100', preview)
 
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',

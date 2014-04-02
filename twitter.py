@@ -365,12 +365,19 @@ class Twitter(source.Source):
       # TODO: this doesn't handle an in-reply-to username that's a prefix of
       # another username already mentioned, e.g. in reply to @foo when content
       # includes @foobar.
-      parts = urlparse.urlparse(base_url).path.split('/')
+      parsed = urlparse.urlparse(base_url)
+      parts = parsed.path.split('/')
       if len(parts) < 2 or not parts[1]:
         raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
       mention = '@' + parts[1]
       if mention not in content:
         content = mention + ' ' + content
+
+      # the embed URL in the preview can't start with mobile. or www., so just
+      # hard-code it to twitter.com. index #1 is netloc.
+      parsed = list(parsed)
+      parsed[1] = self.DOMAIN
+      base_url = urlparse.urlunparse(parsed)
 
     # need a base_url with the tweet id for the embed HTML below. do this
     # *after* checking the real base_url for in-reply-to author username.
