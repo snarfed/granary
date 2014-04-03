@@ -137,7 +137,13 @@ Most dependencies are included as git submodules. Be sure to run `git submodule 
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
 
-You can run the unit tests with `./alltests.py`. They depend on the [App Engine SDK](https://developers.google.com/appengine/downloads) and [mox](http://code.google.com/p/pymox/), both of which you'll need to install yourself.
+Requires the [App Engine SDK](https://developers.google.com/appengine/downloads)
+and expects that it's in `~/google_appengine`. A symlink is fine. Sorry about
+the hard-coded path; if it annoys you, feel free to send a pull request that
+makes it configurable!
+
+You can run the unit tests with `alltests.py`. If you send a pull request,
+please include (or update) a test for the new functionality if possible!
 
 Note the `app.yaml.*` files, one for each App Engine app id. To work on or deploy a specific app id, symlink `app.yaml` to its `app.yaml.xxx` file. Likewise, if you add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
 
