@@ -362,9 +362,12 @@ class Source(object):
     obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
 
-    attachments = set(a.get('url') for a in obj.get('attachments', [])
-                      if a['objectType'] == 'article')
-    urls = set(util.trim_nulls(util.extract_links(content) | attachments))
+    def article_urls(field):
+      return set(util.trim_nulls(a.get('url') for a in obj.get(field, [])
+                                 if a['objectType'] == 'article'))
+    attachments = article_urls('attachments')
+    tags = article_urls('tags')
+    urls = attachments | set(util.extract_links(content))
 
     # Permashortcitations are short references to canonical copies of a given
     # (usually syndicated) post, of the form (DOMAIN PATH). Details:
@@ -372,7 +375,8 @@ class Source(object):
     for match in Source._PERMASHORTCITATION_RE.finditer(content):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
-      if http not in urls and https not in urls:
+      existing = urls | tags
+      if http not in existing and https not in existing:
         urls.add(http)
 
     obj.setdefault('tags', []).extend({'objectType': 'article', 'url': u}
