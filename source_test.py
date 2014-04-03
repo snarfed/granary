@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for source.py.
 """
 
@@ -117,6 +118,16 @@ class SourceTest(testutil.HandlerTest):
         source.Source.original_post_discovery(activity)
         self.assert_equals([{'objectType': 'article', 'url': url}],
                            activity['object']['tags'])
+
+    # exclude ellipsized URLs
+    for ellipsis in '...', '…':
+      activity = {'object': {
+          'content': 'x (foo.com/1%s)' % ellipsis,
+          'attachments': [{'objectType': 'article',
+                           'url': 'http://foo.com/1%s' % ellipsis}],
+          }}
+      source.Source.original_post_discovery(activity)
+      self.assert_equals([], activity['object']['tags'])
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',

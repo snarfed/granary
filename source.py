@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# coding=utf-8
 """Source base class.
 
 Based on the OpenSocial ActivityStreams REST API:
@@ -379,8 +379,10 @@ class Source(object):
       if http not in existing and https not in existing:
         urls.add(http)
 
-    obj.setdefault('tags', []).extend({'objectType': 'article', 'url': u}
-                                      for u in urls)
+    obj.setdefault('tags', []).extend(
+      {'objectType': 'article', 'url': u} for u in urls
+      # heuristic: ellipsized URLs are probably incomplete, so omit them.
+      if not u.endswith('...') and not u.endswith('…'))
     return activity
 
   @staticmethod
