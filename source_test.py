@@ -120,11 +120,11 @@ class SourceTest(testutil.HandlerTest):
                            activity['object']['tags'])
 
     # exclude ellipsized URLs
-    for ellipsis in '...', '…':
+    for ellipsis in '...', u'…':
+      url = 'foo.com/1' + ellipsis
       activity = {'object': {
-          'content': 'x (foo.com/1%s)' % ellipsis,
-          'attachments': [{'objectType': 'article',
-                           'url': 'http://foo.com/1%s' % ellipsis}],
+          'content': 'x (%s)' % url,
+          'attachments': [{'objectType': 'article', 'url': 'http://' + url}],
           }}
       source.Source.original_post_discovery(activity)
       self.assert_equals([], activity['object']['tags'])

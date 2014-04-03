@@ -382,7 +382,7 @@ class Source(object):
     obj.setdefault('tags', []).extend(
       {'objectType': 'article', 'url': u} for u in urls
       # heuristic: ellipsized URLs are probably incomplete, so omit them.
-      if not u.endswith('...') and not u.endswith('…'))
+      if not u.endswith('...') and not u.endswith(u'…'))
     return activity
 
   @staticmethod
