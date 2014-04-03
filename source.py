@@ -362,18 +362,21 @@ class Source(object):
     obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
 
+    attachments = set(a.get('url') for a in obj.get('attachments', [])
+                      if a['objectType'] == 'article')
+    urls = set(util.trim_nulls(util.extract_links(content) | attachments))
+
     # Permashortcitations are short references to canonical copies of a given
     # (usually syndicated) post, of the form (DOMAIN PATH). Details:
     # http://indiewebcamp.com/permashortcitation
-    pscs =  set(match.expand(r'http://\1/\2')
-                for match in Source._PERMASHORTCITATION_RE.finditer(content))
+    for match in Source._PERMASHORTCITATION_RE.finditer(content):
+      http = match.expand(r'http://\1/\2')
+      https = match.expand(r'https://\1/\2')
+      if http not in urls and https not in urls:
+        urls.add(http)
 
-    attachments = set(a.get('url') for a in obj.get('attachments', [])
-                      if a['objectType'] == 'article')
-    urls = util.trim_nulls(util.extract_links(content) | attachments | pscs)
     obj.setdefault('tags', []).extend({'objectType': 'article', 'url': u}
                                       for u in urls)
-
     return activity
 
   @staticmethod

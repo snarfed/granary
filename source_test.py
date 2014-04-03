@@ -106,6 +106,17 @@ class SourceTest(testutil.HandlerTest):
       [{'objectType': 'article', 'url': 'http://snarfed.org/xyz'}],
       activity['object']['tags'])
 
+    # don't duplicate PSCs and PSLs with http and https
+    for scheme in 'http', 'https':
+      url = scheme + '://foo.com/1'
+      activity = {'object': {
+        'content': 'x (foo.com/1)',
+        'attachments': [{'objectType': 'article', 'url': url}],
+        }}
+      source.Source.original_post_discovery(activity)
+      self.assert_equals([{'objectType': 'article', 'url': url}],
+                         activity['object']['tags'])
+
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
                                fetch_likes=True).AndReturn([ACTIVITY])
