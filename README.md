@@ -112,20 +112,13 @@ Clone or download this repo into a directory named `activitystreams_unofficial` 
 
 The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/activitystreams-unofficial/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams JSON.
 
-The `activitystreams.render_html()` function is also useful for rendering an ActivityStreams object as nicely formatted HTML.
+The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams objects as nicely formatted HTML.
 
 
 Future work
 ---
 
-The REST APIs are currently much more usable than the library. We need to make the library easier to use. Most of the hard work is already done; here's what remains.
-
-  * Allow passing OAuth tokens as keyword args.
-  * Expose the initial OAuth permission flow. The hard work is already done, we just need to let users trigger it programmatically.
-  * Expose the `format` arg and let users request [Atom](http://www.intertwingly.net/wiki/pie/FrontPage) output.
-  * Clean up and document `activitystreams.render_html()`.
-
-We'd also love to add more sites! Off the top of my head, [YouTube](http://youtu.be/), [Tumblr](http://tumblr.com/), [WordPress.com](http://wordpress.com/), [Sina Weibo](http://en.wikipedia.org/wiki/Sina_Weibo), [Qzone](http://en.wikipedia.org/wiki/Qzone), and [RenRen](http://en.wikipedia.org/wiki/Renren) would be good candidates. If you're looking to get started, implementing a new site is a good place to start. It's pretty self contained and the existing sites are good examples to follow, but it's a decent amount of work, so you'll be familiar with the whole project by the end.
+We'd love to add more sites! Off the top of my head, [YouTube](http://youtu.be/), [Tumblr](http://tumblr.com/), [WordPress.com](http://wordpress.com/), [Sina Weibo](http://en.wikipedia.org/wiki/Sina_Weibo), [Qzone](http://en.wikipedia.org/wiki/Qzone), and [RenRen](http://en.wikipedia.org/wiki/Renren) would be good candidates. If you're looking to get started, implementing a new site is a good place to start. It's pretty self contained and the existing sites are good examples to follow, but it's a decent amount of work, so you'll be familiar with the whole project by the end.
 
 
 Development
