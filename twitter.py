@@ -680,9 +680,14 @@ class Twitter(source.Source):
     else:
       url = self.user_url(username)
 
+    image = user.get('profile_image_url_https') or user.get('profile_image_url')
+    if image:
+      # remove _normal for a ~256x256 avatar rather than ~48x48
+      image = image.replace('_normal.', '.', 1)
+
     return util.trim_nulls({
       'displayName': user.get('name'),
-      'image': {'url': user.get('profile_image_url')},
+      'image': {'url': image},
       'id': self.tag_uri(username),
       # numeric_id is our own custom field that always has the source's numeric
       # user id, if available.

@@ -27,7 +27,7 @@ USER = {  # Twitter
   'description': 'my description',
   'location': 'San Francisco',
   'name': 'Ryan Barrett',
-  'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
+  'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
   'screen_name': 'snarfed_org',
   'id_str': '888',
   'protected': False,
@@ -39,7 +39,7 @@ USER = {  # Twitter
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
   'image': {
-    'url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
+    'url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
     },
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
@@ -456,7 +456,7 @@ ATOM = """\
 
 <subtitle>my description</subtitle>
 
-<logo>http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg</logo>
+<logo>http://a0.twimg.com/profile_images/866165047/ryan.jpg</logo>
 <updated>2012-02-22T20:26:41</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -465,7 +465,7 @@ ATOM = """\
 </author>
 
 <link href="https://snarfed.org/" rel="alternate" type="text/html" />
-<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
+<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan.jpg" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
