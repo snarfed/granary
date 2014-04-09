@@ -230,9 +230,9 @@ def json_to_object(mf2):
     }
 
   if as_type == 'activity':
-    urls = set(itertools.chain.from_iterable(props.get(field, [])
+    urls = set(itertools.chain.from_iterable(get_string_urls(props.get(field, []))
         for field in ('like', 'like-of', 'repost', 'repost-of', 'in-reply-to')))
-    objects = [{'url': url} for url in get_string_urls(urls)]
+    objects = [{'url': url} for url in urls]
     objects += [json_to_object(i) for i in props.get('invitee', [])]
     obj.update({
         'object': objects[0] if len(objects) == 1 else objects,
