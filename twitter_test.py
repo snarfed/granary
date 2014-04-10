@@ -12,6 +12,7 @@ import urllib
 import microformats2
 import source
 import twitter
+from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
@@ -555,6 +556,8 @@ class TwitterTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
+    appengine_config.TWITTER_APP_KEY = 'fake'
+    appengine_config.TWITTER_APP_SECRET = 'fake'
     self.orig_max_tweet_length = twitter.MAX_TWEET_LENGTH
     self.orig_tco_length = twitter.TCO_LENGTH
     self.twitter = twitter.Twitter('key', 'secret')
