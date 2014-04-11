@@ -1,0 +1,8 @@
+{
+  "objectType": "comment",
+  "content": "This is the main content.",
+  "inReplyTo": [
+    {"url": "http://example.com/bare-reply"},
+    {"url": "http://example.com/embedded-reply"}
+  ]
+}

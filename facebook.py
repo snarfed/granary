@@ -20,6 +20,7 @@ import logging
 import re
 import urllib
 import urllib2
+import urlparse
 
 import appengine_config
 from oauth_dropins.webutil import util
@@ -58,6 +59,11 @@ API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/me/feed'
 API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
 API_LIKES_URL = 'https://graph.facebook.com/%s/likes'
+
+# For parsing photo URLs, e.g.
+# https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+PHOTO_PATH = '/photo.php'
+PHOTO_ID_PARAM = 'fbid'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -251,7 +257,7 @@ class Facebook(source.Source):
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
   def create(self, obj, include_link=False):
-    """Creates a new post, comment, like, share, or RSVP.
+    """Creates a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
@@ -262,7 +268,7 @@ class Facebook(source.Source):
     return self._create(obj, preview=False, include_link=include_link)
 
   def preview_create(self, obj, include_link=False):
-    """Previews creating a new post, comment, like, share, or RSVP.
+    """Previews creating a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
@@ -273,7 +279,7 @@ class Facebook(source.Source):
     return self._create(obj, preview=True, include_link=include_link)
 
   def _create(self, obj, preview=None, include_link=False):
-    """Creates a new post, comment, like, share, or RSVP.
+    """Creates a new post, comment, like, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
     https://developers.facebook.com/docs/graph-api/reference/object/comments#publish
@@ -298,22 +304,23 @@ class Facebook(source.Source):
       base_url = 'http://facebook.com/' + base_id
 
 
-    content = obj.get('content', '')
-    url = obj.get('url')
-    if include_link and url:
-      content += ('<br /><br />(%s)' if preview else '\n\n(%s)') % url
+    content = obj.get('content', '').strip()
     preview_content = util.linkify(content)
-
-    msg_data = urllib.urlencode({
+    url = obj.get('url')
+    msg_data = {
         'message': content.encode('utf-8'),
         # TODO...or leave it to user's default?
         # 'privacy': json.dumps({'value': 'SELF'}),
-        })
+        }
+    if include_link and url:
+      msg_data['actions'] = json.dumps([{'name': 'See Original', 'link': url}])
+    msg_data = urllib.urlencode(msg_data)
 
     if type == 'comment' and base_url:
       if preview:
-        return ('will <span class="verb">comment</span> <em>%s</em> on this post:\n%s' %
-                (preview_content, EMBED_POST % base_url))
+        return ('will <span class="verb">comment</span> <em>%s</em> on '
+                '<a href="%s">this post</a>:\n%s' %
+                (preview_content, base_url, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
                                        data=msg_data).read())
@@ -322,8 +329,8 @@ class Facebook(source.Source):
 
     elif type == 'activity' and verb == 'like':
       if preview:
-        return ('will <span class="verb">like</span> this post:\n' +
-                EMBED_POST % base_url)
+        return ('will <span class="verb">like</span> <a href="%s">this post</a>:\n%s' %
+                (base_url, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
         assert resp == True, resp
@@ -392,6 +399,32 @@ class Facebook(source.Source):
     if post_author_id:
       post_id = post_author_id + '/posts/' + post_id
     return 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+
+  def base_object(self, obj):
+    """Returns id and URL of the 'base' silo object that an object operates on.
+
+    Includes special handling for Facebook photo URLs, e.g.
+    https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: (string id, string URL) tuple. Both may be None.
+    """
+    id, url = super(Facebook, self).base_object(obj)
+    if url:
+      try:
+        parsed = urlparse.urlparse(url)
+        if parsed.path == PHOTO_PATH:
+          fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
+          if fbids:
+            return fbids[0], url
+      except BaseException, e:
+        logging.error(
+          "Couldn't parse object URL %s : %s. Falling back to default logic.",
+          url, e)
+
+    return id, url
 
   def post_to_activity(self, post):
     """Converts a post to an activity.

@@ -14,6 +14,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import collections
 import datetime
+import itertools
 import json
 import logging
 import re
@@ -165,6 +166,11 @@ class Twitter(source.Source):
         else:
           raise
 
+    # batch get memcached counts of favorites and retweets for all tweets
+    cached = {}
+    if cache is not None:
+      keys = itertools.product(('ATR', 'ATF'), [t['id_str'] for t in tweets])
+      cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
@@ -189,14 +195,15 @@ class Twitter(source.Source):
         #
         # can't use the statuses/retweets_of_me endpoint because it only
         # returns the original tweets, not the retweets or their authors.
-        count = util.if_changed(cache, cache_updates, 'ATR ' + tweet['id_str'],
-                                tweet.get('retweet_count'))
-        if count:
-          url = API_RETWEETS_URL % tweet['id_str']
+        id = tweet['id_str']
+        count = tweet.get('retweet_count')
+        if count and count != cached.get('ATR ' + id):
+          url = API_RETWEETS_URL % id
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
           tweet['retweets'] = json.loads(self.urlopen(url).read())
           retweet_calls += 1
+          cache_updates['ATR ' + id] = count
 
     activities = [self.tweet_to_activity(t) for t in tweets]
 
@@ -205,20 +212,20 @@ class Twitter(source.Source):
 
     if fetch_likes:
       for tweet, activity in zip(tweets, activities):
-        count = util.if_changed(cache, cache_updates, 'ATF ' + tweet['id_str'],
-                                tweet.get('favorite_count'))
-        if count:
-          url = HTML_FAVORITES_URL % tweet['id_str']
+        id = tweet['id_str']
+        count = tweet.get('favorite_count')
+        if count and count != cached.get('ATF ' + id):
+          url = HTML_FAVORITES_URL % id
           logging.debug('Fetching %s', url)
           html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
                             ).get('htmlUsers', '')
           likes = self.favorites_html_to_likes(tweet, html)
           activity['object'].setdefault('tags', []).extend(likes)
+          cache_updates['ATF ' + id] = count
 
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
-    # TODO: delete keys with value None instead of setting
-    if cache is not None:
+    if cache_updates and cache is not None:
       cache.set_multi(cache_updates)
     return response
 
@@ -347,7 +354,7 @@ class Twitter(source.Source):
     type = obj.get('objectType')
     verb = obj.get('verb')
     base_id, base_url = self.base_object(obj)
-    content = obj.get('content', '')
+    content = obj.get('content', '').strip()
 
     is_reply = (type == 'comment' or 'inReplyTo' in obj) and base_url
     if is_reply:
@@ -358,12 +365,19 @@ class Twitter(source.Source):
       # TODO: this doesn't handle an in-reply-to username that's a prefix of
       # another username already mentioned, e.g. in reply to @foo when content
       # includes @foobar.
-      parts = urlparse.urlparse(base_url).path.split('/')
+      parsed = urlparse.urlparse(base_url)
+      parts = parsed.path.split('/')
       if len(parts) < 2 or not parts[1]:
         raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
       mention = '@' + parts[1]
       if mention not in content:
         content = mention + ' ' + content
+
+      # the embed URL in the preview can't start with mobile. or www., so just
+      # hard-code it to twitter.com. index #1 is netloc.
+      parsed = list(parsed)
+      parsed[1] = self.DOMAIN
+      base_url = urlparse.urlunparse(parsed)
 
     # need a base_url with the tweet id for the embed HTML below. do this
     # *after* checking the real base_url for in-reply-to author username.
@@ -372,7 +386,7 @@ class Twitter(source.Source):
 
     # truncate and ellipsize content if it's over the character count. URLs will
     # be t.co-wrapped, so include that when counting.
-    links = util.extract_links(content)
+    links = set(util.extract_links(content))
     max = MAX_TWEET_LENGTH
     include_url = obj.get('url') if include_link else None
     if include_url:
@@ -381,7 +395,12 @@ class Twitter(source.Source):
     length = 0
     tokens = content.split()
     for i, token in enumerate(tokens):
-      length += (TCO_LENGTH if token in links else len(token)) + 1
+      # extract_links() strips trailing slashes from URLs, so do the same here
+      # so we can compare.
+      as_url = token[:-1] if token.endswith('/') else token
+      length += (TCO_LENGTH if as_url in links else len(token))
+      if i > 0:
+        length += 1  # space between tokens
       if length > max:
         break
     else:
@@ -395,17 +414,14 @@ class Twitter(source.Source):
     if include_url:
       content += ' (%s)' % include_url
     content = unicode(content).encode('utf-8')
-    # TODO: this pretty link rendering isn't exactly the same as Twitter's.
-    # Twitter shows the full domain plus 14 chars of the path, then ellipsizes.
-    # this just caps at 20 chars, regardless of domain size. not exactly a high
-    # priority to fix. :P
+    # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True)
 
     if is_reply:
       if preview:
         return ('will <span class="verb">@-reply</span>:<br /><br />\n<em>%s</em>\n'
-                '<br /><br />...to this tweet:\n%s' %
-                (preview_content, EMBED_TWEET % base_url))
+                '<br /><br />...to <a href="%s">this tweet</a>:\n%s' %
+                (preview_content, base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
@@ -413,8 +429,8 @@ class Twitter(source.Source):
 
     elif type == 'activity' and verb == 'like':
       if preview:
-        return ('will <span class="verb">favorite</span> this tweet:\n' +
-                EMBED_TWEET % base_url)
+        return ('will <span class="verb">favorite</span> <a href="%s">this tweet</a>:\n%s' %
+                (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE_URL, data=data).read()
@@ -422,8 +438,8 @@ class Twitter(source.Source):
 
     elif type == 'activity' and verb == 'share':
       if preview:
-        return ('will <span class="verb">retweet</span> this tweet:\n' +
-                EMBED_TWEET % base_url)
+        return ('will <span class="verb">retweet</span> <a href="%s">this tweet</a>:\n%s' %
+                (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
@@ -453,6 +469,31 @@ class Twitter(source.Source):
     """
     return TwitterAuth.signed_urlopen(
       url, self.access_token_key, self.access_token_secret, **kwargs)
+
+  def base_object(self, obj):
+    """Returns id and URL of the 'base' silo object that an object operates on.
+
+    Includes special handling for Twitter photo URLs, e.g.
+    https://twitter.com/nelson/status/447465082327298048/photo/1
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: (string id, string URL) tuple. Both may be None.
+    """
+    id, url = super(Twitter, self).base_object(obj)
+    if url:
+      try:
+        parsed = urlparse.urlparse(url)
+        parts = parsed.path.split('/')
+        if len(parts) >= 3 and parts[-2] == 'photo':
+          return parts[-3], url
+      except BaseException, e:
+        logging.error(
+          "Couldn't parse object URL %s : %s. Falling back to default logic.",
+          url, e)
+
+    return id, url
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.
@@ -639,9 +680,14 @@ class Twitter(source.Source):
     else:
       url = self.user_url(username)
 
+    image = user.get('profile_image_url_https') or user.get('profile_image_url')
+    if image:
+      # remove _normal for a ~256x256 avatar rather than ~48x48
+      image = image.replace('_normal.', '.', 1)
+
     return util.trim_nulls({
       'displayName': user.get('name'),
-      'image': {'url': user.get('profile_image_url')},
+      'image': {'url': image},
       'id': self.tag_uri(username),
       # numeric_id is our own custom field that always has the source's numeric
       # user id, if available.

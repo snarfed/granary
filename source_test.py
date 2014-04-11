@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for source.py.
 """
 
@@ -106,6 +107,28 @@ class SourceTest(testutil.HandlerTest):
       [{'objectType': 'article', 'url': 'http://snarfed.org/xyz'}],
       activity['object']['tags'])
 
+    # don't duplicate PSCs and PSLs with http and https
+    for field in 'tags', 'attachments':
+      for scheme in 'http', 'https':
+        url = scheme + '://foo.com/1'
+        activity = {'object': {
+          'content': 'x (foo.com/1)',
+          field: [{'objectType': 'article', 'url': url}],
+          }}
+        source.Source.original_post_discovery(activity)
+        self.assert_equals([{'objectType': 'article', 'url': url}],
+                           activity['object']['tags'])
+
+    # exclude ellipsized URLs
+    for ellipsis in '...', u'…':
+      url = 'foo.com/1' + ellipsis
+      activity = {'object': {
+          'content': 'x (%s)' % url,
+          'attachments': [{'objectType': 'article', 'url': 'http://' + url}],
+          }}
+      source.Source.original_post_discovery(activity)
+      self.assert_equals([], activity['object']['tags'])
+
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
                                fetch_likes=True).AndReturn([ACTIVITY])
@@ -164,3 +187,9 @@ class SourceTest(testutil.HandlerTest):
     for id in None, 'not_a_tag_uri':
       event['id'] = id
       self.assert_equals([], source.Source.get_rsvps_from_event(event))
+
+  def test_base_object_multiple_objects(self):
+    like = copy.deepcopy(LIKES[0])
+    like['object'] = [like['object'], {'url': 'http://fake.com/second'}]
+    self.assert_equals(('second', 'http://fake.com/second'),
+                       self.source.base_object(like))

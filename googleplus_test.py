@@ -148,11 +148,6 @@ class GooglePlusTest(testutil.HandlerTest):
           }))
     self.googleplus = googleplus.GooglePlus(auth_entity=self.auth_entity)
 
-    class Cache(dict):
-      def set(self, k, v):
-        self[k] = v
-    self.cache = Cache()
-
   def tearDown(self):
     oauth_googleplus.json_service = None
 

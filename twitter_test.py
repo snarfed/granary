@@ -12,6 +12,7 @@ import urllib
 import microformats2
 import source
 import twitter
+from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
@@ -27,7 +28,7 @@ USER = {  # Twitter
   'description': 'my description',
   'location': 'San Francisco',
   'name': 'Ryan Barrett',
-  'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
+  'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
   'screen_name': 'snarfed_org',
   'id_str': '888',
   'protected': False,
@@ -39,7 +40,7 @@ USER = {  # Twitter
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
   'image': {
-    'url': 'http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg',
+    'url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
     },
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
@@ -456,7 +457,7 @@ ATOM = """\
 
 <subtitle>my description</subtitle>
 
-<logo>http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg</logo>
+<logo>http://a0.twimg.com/profile_images/866165047/ryan.jpg</logo>
 <updated>2012-02-22T20:26:41</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -465,7 +466,7 @@ ATOM = """\
 </author>
 
 <link href="https://snarfed.org/" rel="alternate" type="text/html" />
-<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan_normal.jpg" />
+<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan.jpg" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
@@ -555,6 +556,8 @@ class TwitterTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
+    appengine_config.TWITTER_APP_KEY = 'fake'
+    appengine_config.TWITTER_APP_SECRET = 'fake'
     self.orig_max_tweet_length = twitter.MAX_TWEET_LENGTH
     self.orig_tco_length = twitter.TCO_LENGTH
     self.twitter = twitter.Twitter('key', 'secret')
@@ -871,6 +874,7 @@ class TwitterTest(testutil.HandlerTest):
       'url shorten http://foo/bar',
       'url http://foo/bar ellipsize http://foo/baz',
       'long url http://www.foo/bar/baz/baj/biff/boof',
+      'trailing slash http://www.foo/',
       )
     created = (
       'my status',
@@ -878,13 +882,15 @@ class TwitterTest(testutil.HandlerTest):
       'url shorten http://foo/bar',
       'url http://foo/bar ellipsize' + dots,
       'long url http://www.foo/bar/baz/baj/biff/boof',
+      'trailing slash http://www.foo/',
       )
     previewed = (
       'my status',
       'too long, will be' + dots,
       'url shorten <a href="http://foo/bar">foo/bar</a>',
       'url <a href="http://foo/bar">foo/bar</a> ellipsize' + dots,
-      'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/biff...</a>',
+      'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/bi...</a>',
+      'trailing slash <a href="http://www.foo/">foo/</a>',
       )
 
     for content in created:
@@ -928,19 +934,22 @@ class TwitterTest(testutil.HandlerTest):
                   self.twitter.preview_create(obj, include_link=True))
 
   def test_create_reply(self):
-    # tuples: (content, in-reply-to domain, expected tweet, expected type)
-    # first content doesn't have @-mention of in-reply-to author, so we add it.
-    # second content has it already.
-    # third is a reply to a different source domain, so we don't treat it as a
-    # reply.
+    # tuples: (content, in-reply-to url, expected tweet, expected type)
     testdata = (
-      ('my reply', 'twitter.com', '@you my reply', 'comment'),
-      ('my @you reply', 'twitter.com', 'my @you reply', 'comment'),
-      ('@you my reply', 'other.com', '@you my reply', 'post'),
+      # good reply, with @-mention of author
+      ('foo @you', 'http://twitter.com/you/status/100', 'foo @you', 'comment'),
+      # no @-mention of in-reply-to author, so we add it
+      ('foo', 'http://twitter.com/you/status/100', '@you foo', 'comment'),
+      # photo URL. tests Twitter.base_object()
+      ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo', 'comment'),
+      # mobile.twitter.com URL. the mobile should be stripped from embed.
+      ('foo', 'http://mobile.twitter.com/you/status/100', '@you foo', 'comment'),
+      # reply to different source domain, so we don't treat it as a reply
+      ('@you my reply', 'http://other.com', '@you my reply', 'post'),
       )
 
-    for _, _, tweet, type in testdata:
-      params = 'status=%s' % urllib.quote_plus(tweet)
+    for _, _, expected_tweet, type in testdata:
+      params = 'status=%s' % urllib.quote_plus(expected_tweet)
       if type == 'comment':
         params += '&in_reply_to_status_id=100'
       self.expect_urlopen(twitter.API_POST_TWEET_URL + '?' + params,
@@ -950,16 +959,22 @@ class TwitterTest(testutil.HandlerTest):
     tweet = copy.deepcopy(TWEET)
     obj= copy.deepcopy(REPLY_OBJS[0])
 
-    for content, domain, preview, type in testdata:
+    for content, url, expected_tweet, type in testdata:
       tweet.update({
           'id': '100',
           'url': 'http://twitter.com/snarfed_org/status/100',
           'type': type,
           })
-      obj.update({'inReplyTo': {'url': 'http://%s/you/status/100' % domain},
-                  'content': content})
+      obj.update({'inReplyTo': [{'url': url}],
+                  'content': content,
+                  })
       self.assert_equals(tweet, self.twitter.create(obj))
-      self.assertIn(preview, self.twitter.preview_create(obj))
+
+      preview = self.twitter.preview_create(obj)
+      if type == 'comment':
+        self.assertIn(expected_tweet, preview)
+        self.assertIn('<span class="verb">@-reply</span>', preview)
+        self.assertIn('...to <a href="http://twitter.com/you/status/100', preview)
 
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
@@ -970,8 +985,7 @@ class TwitterTest(testutil.HandlerTest):
                        self.twitter.create(LIKES_FROM_HTML[0]))
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
-    self.assertIn('<span class="verb">favorite</span>', preview)
-    self.assertIn('http://twitter.com/snarfed_org/status/100', preview)
+    self.assertIn('<span class="verb">favorite</span> <a href="http://twitter.com/snarfed_org/status/100">this tweet</a>', preview)
 
   def test_create_retweet(self):
     self.expect_urlopen(
@@ -988,8 +1002,7 @@ class TwitterTest(testutil.HandlerTest):
     self.assert_equals(tweet, self.twitter.create(SHARES[0]))
 
     preview = self.twitter.preview_create(SHARES[0])
-    self.assertIn('<span class="verb">retweet</span>', preview)
-    self.assertIn('http://twitter.com/foo/status/333', preview)
+    self.assertIn('<span class="verb">retweet</span> <a href="http://twitter.com/foo/status/333">this tweet</a>', preview)
 
   def test_create_unsupported_type(self):
     for fn in self.twitter.create, self.twitter.preview_create:

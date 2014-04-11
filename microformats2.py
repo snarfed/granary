@@ -38,18 +38,21 @@ HCARD = string.Template("""\
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
 PHOTO = string.Template('<img class="u-photo" src="$url" alt="$alt" />')
 
-## function to get bare urls
-def get_string_urls(org_list):
-  """Converts a list/set into a list of just urls by parsing embedded microformats if any.
-  see: http://indiewebcamp.com/in-reply-to#How_to_consume_in-reply-to
-  
+
+def get_string_urls(objs):
+  """Extracts string URLs from a list of either string URLs or mf2 dicts.
+
+  Many mf2 properties can contain either string URLs or full mf2 objects, e.g.
+  h-cites. in-reply-to is the most commenly used example:
+  http://indiewebcamp.com/in-reply-to#How_to_consume_in-reply-to
+
   Args:
-    org_list: original list containing string URLs or embedded microformats
-    
-  Returns: list contianing URL strings only.
+    objs: sequence of either string URLs or embedded mf2 objects
+
+  Returns: list of string URLs
   """
   urls = []
-  for item in org_list:
+  for item in objs:
     if isinstance(item, basestring):
       urls.append(item)
     else:
@@ -227,9 +230,9 @@ def json_to_object(mf2):
     }
 
   if as_type == 'activity':
-    urls = set(itertools.chain.from_iterable(props.get(field, [])
+    urls = set(itertools.chain.from_iterable(get_string_urls(props.get(field, []))
         for field in ('like', 'like-of', 'repost', 'repost-of', 'in-reply-to')))
-    objects = [{'url': url} for url in get_string_urls(urls)]
+    objects = [{'url': url} for url in urls]
     objects += [json_to_object(i) for i in props.get('invitee', [])]
     obj.update({
         'object': objects[0] if len(objects) == 1 else objects,

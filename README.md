@@ -2,12 +2,12 @@
 ===
 
   * [About](#about)
-  * [Related work](#related-work)
   * [Using](#using)
     * [Using the REST API](#using-the-REST-API)
     * [Using the library](#using-the-library)
   * [Future work](#future-work)
   * [Development](#development)
+  * [Related work](#related-work)
 
 
 About
@@ -22,50 +22,6 @@ http://instagram-activitystreams.appspot.com/
 It's part of a suite of projects that implement the [OStatus](http://ostatus.org/) federation protocols for the major social networks. The other projects include [portablecontacts-](https://github.com/snarfed/portablecontacts-unofficial), [salmon-](https://github.com/snarfed/salmon-unofficial), [webfinger-](https://github.com/snarfed/webfinger-unofficial), and [ostatus-unofficial](https://github.com/snarfed/ostatus-unofficial).
 
 License: This project is placed in the public domain.
-
-
-Related work
---
-
-[Gnip](http://gnip.com/) is by far the most complete project in this vein. It
-similarly
-[converts social network data to ActivityStreams](http://support.gnip.com/documentation/activity_streams_intro.html)
-and supports [many more source networks](http://gnip.com/sources/).
-Unfortunately, it's commercial, there's no free trial or self-serve signup, and
-[plans start at $500](http://gnip.com/products/pricing/).
-
-[DataSift](http://datasift.com/) looks like broadly the same thing, except they
-offer [self-serve, pay as you go billing](http://dev.datasift.com/docs/billing),
-and they use
-[their own proprietary output format](http://dev.datasift.com/docs/getting-started/data)
-instead of ActivityStreams. They're also aimed more at data mining as opposed to
-individual user access.
-
-[Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
-used to do this kind of format translation, but unfortunately it and Cliqset
-died.
-
-Facebook [used to](https://developers.facebook.com/blog/post/225/)
-[officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
-[support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
-ActivityStreams, but that's also dead.
-
-There are a number of products that download your social network data, normalize
-it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) and
-[ThinkUp](http://thinkup.com/) are two of the most mature. There's also the
-lifelogging/lifestream aggregator vein of projects that pull data from multiple
-source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good
-example. It doesn't include Facebook, Google+, or Instagram, but does include a
-number of smaller source sites. There are lots of others, e.g. the
-[Lifestream WordPress plugin](http://www.enthropia.com/labs/wp-lifestream/).
-Unfortunately, these are generally aimed at end users, not developers, and don't
-usually expose libraries or REST APIs.
-
-On the open source side, there are many related projects.
-[php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds
-[microformats2](http://microformats.org/wiki/microformats2) to Facebook and
-Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
-similar "polyglot" approach, but more focused on writing than reading.
 
 
 Using
@@ -156,20 +112,13 @@ Clone or download this repo into a directory named `activitystreams_unofficial` 
 
 The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/activitystreams-unofficial/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams JSON.
 
-The `activitystreams.render_html()` function is also useful for rendering an ActivityStreams object as nicely formatted HTML.
+The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams objects as nicely formatted HTML.
 
 
 Future work
 ---
 
-The REST APIs are currently much more usable than the library. We need to make the library easier to use. Most of the hard work is already done; here's what remains.
-
-  * Allow passing OAuth tokens as keyword args.
-  * Expose the initial OAuth permission flow. The hard work is already done, we just need to let users trigger it programmatically.
-  * Expose the `format` arg and let users request [Atom](http://www.intertwingly.net/wiki/pie/FrontPage) output.
-  * Clean up and document `activitystreams.render_html()`.
-
-We'd also love to add more sites! Off the top of my head, [YouTube](http://youtu.be/), [Tumblr](http://tumblr.com/), [WordPress.com](http://wordpress.com/), [Sina Weibo](http://en.wikipedia.org/wiki/Sina_Weibo), [Qzone](http://en.wikipedia.org/wiki/Qzone), and [RenRen](http://en.wikipedia.org/wiki/Renren) would be good candidates. If you're looking to get started, implementing a new site is a good place to start. It's pretty self contained and the existing sites are good examples to follow, but it's a decent amount of work, so you'll be familiar with the whole project by the end.
+We'd love to add more sites! Off the top of my head, [YouTube](http://youtu.be/), [Tumblr](http://tumblr.com/), [WordPress.com](http://wordpress.com/), [Sina Weibo](http://en.wikipedia.org/wiki/Sina_Weibo), [Qzone](http://en.wikipedia.org/wiki/Qzone), and [RenRen](http://en.wikipedia.org/wiki/Renren) would be good candidates. If you're looking to get started, implementing a new site is a good place to start. It's pretty self contained and the existing sites are good examples to follow, but it's a decent amount of work, so you'll be familiar with the whole project by the end.
 
 
 Development
@@ -177,11 +126,17 @@ Development
 
 Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with any questions.
 
-Most dependencies are included as git submodules. Be sure to run `git submodule init` after cloning this repo.
+Most dependencies are included as git submodules. Be sure to run `git submodule update --init --recursive` after cloning this repo.
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
 
-You can run the unit tests with `./alltests.py`. They depend on the [App Engine SDK](https://developers.google.com/appengine/downloads) and [mox](http://code.google.com/p/pymox/), both of which you'll need to install yourself.
+Requires the [App Engine SDK](https://developers.google.com/appengine/downloads)
+and expects that it's in `~/google_appengine`. A symlink is fine. Sorry about
+the hard-coded path; if it annoys you, feel free to send a pull request that
+makes it configurable!
+
+You can run the unit tests with `alltests.py`. If you send a pull request,
+please include (or update) a test for the new functionality if possible!
 
 Note the `app.yaml.*` files, one for each App Engine app id. To work on or deploy a specific app id, symlink `app.yaml` to its `app.yaml.xxx` file. Likewise, if you add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
 
@@ -195,6 +150,50 @@ rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
 rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
   ~/google_appengine/appcfg.py --oauth2 update .
 ```
+
+
+Related work
+--
+
+[Gnip](http://gnip.com/) is by far the most complete project in this vein. It
+similarly
+[converts social network data to ActivityStreams](http://support.gnip.com/documentation/activity_streams_intro.html)
+and supports [many more source networks](http://gnip.com/sources/).
+Unfortunately, it's commercial, there's no free trial or self-serve signup, and
+[plans start at $500](http://gnip.com/products/pricing/).
+
+[DataSift](http://datasift.com/) looks like broadly the same thing, except they
+offer [self-serve, pay as you go billing](http://dev.datasift.com/docs/billing),
+and they use
+[their own proprietary output format](http://dev.datasift.com/docs/getting-started/data)
+instead of ActivityStreams. They're also aimed more at data mining as opposed to
+individual user access.
+
+[Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
+used to do this kind of format translation, but unfortunately it and Cliqset
+died.
+
+Facebook [used to](https://developers.facebook.com/blog/post/225/)
+[officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
+[support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
+ActivityStreams, but that's also dead.
+
+There are a number of products that download your social network data, normalize
+it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) and
+[ThinkUp](http://thinkup.com/) are two of the most mature. There's also the
+lifelogging/lifestream aggregator vein of projects that pull data from multiple
+source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good
+example. It doesn't include Facebook, Google+, or Instagram, but does include a
+number of smaller source sites. There are lots of others, e.g. the
+[Lifestream WordPress plugin](http://www.enthropia.com/labs/wp-lifestream/).
+Unfortunately, these are generally aimed at end users, not developers, and don't
+usually expose libraries or REST APIs.
+
+On the open source side, there are many related projects.
+[php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds
+[microformats2](http://microformats.org/wiki/microformats2) to Facebook and
+Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
+similar "polyglot" approach, but more focused on writing than reading.
 
 
 TODO

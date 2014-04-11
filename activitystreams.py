@@ -146,7 +146,10 @@ class Handler(webapp2.RequestHandler):
       self.response.out.write("""\
 <!DOCTYPE html>
 <html>
+<head><meta charset="utf-8"></head>
+<body>
 %s
+</body>
 </html>
 """ % '\n'.join(items))
     elif format == 'json-mf2':

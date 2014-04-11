@@ -7,6 +7,10 @@ default_expiration: 1d
 
 runtime: python27
 
+libraries:
+- name: ssl
+  version: latest
+
 handlers:
 - url: /static
   static_dir: static

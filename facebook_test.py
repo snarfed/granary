@@ -945,8 +945,9 @@ class FacebookTest(testutil.HandlerTest):
     self.assertIn('<em>my msg</em>', preview)
 
   def test_create_post_include_link(self):
-    self.expect_urlopen(facebook.API_FEED_URL, '{}', data='message=' +
-                        urllib.quote_plus('my msg\n\n(http://obj)'))
+    self.expect_urlopen(
+      facebook.API_FEED_URL, '{}',
+      data='message=my+msg&actions=%5B%7B%22link%22%3A+%22http%3A%2F%2Fobj%22%2C+%22name%22%3A+%22See+Original%22%7D%5D')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
@@ -956,8 +957,7 @@ class FacebookTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.facebook.create(obj, include_link=True)
-    self.assertIn('my msg<br /><br />(<a href="http://obj">http://obj</a>)',
-                  self.facebook.preview_create(obj, include_link=True))
+    self.assertIn('my msg', self.facebook.preview_create(obj, include_link=True))
 
   def test_create_comment(self):
     self.expect_urlopen(
@@ -975,8 +975,8 @@ class FacebookTest(testutil.HandlerTest):
         }, self.facebook.create(obj))
 
     preview = self.facebook.preview_create(obj)
-    self.assertIn('<span class="verb">comment</span>', preview)
-    self.assertIn('http://facebook.com/547822715231468', preview)
+    self.assertIn('<span class="verb">comment</span> <em>my cmt</em> on <a href="http://facebook.com/547822715231468">this post</a>', preview)
+    self.assertIn('<div class="fb-post" data-href="http://facebook.com/547822715231468">', preview)
 
   def test_create_comment_other_domain(self):
     self.expect_urlopen(facebook.API_FEED_URL, '{}', data='message=my+cmt')
@@ -989,6 +989,30 @@ class FacebookTest(testutil.HandlerTest):
     self.assertIn('<span class="verb">post</span>',
                   self.facebook.preview_create(obj))
 
+  def test_create_comment_on_post_urls(self):
+    urls = ('https://www.facebook.com/snarfed.org/posts/333',
+            'https://www.facebook.com/photo.php?fbid=333&set=a.4.4&permPage=1'
+            )
+
+    for url in urls:
+      self.expect_urlopen(
+        'https://graph.facebook.com/333/comments',
+        json.dumps({'id': '456_789'}),
+        data='message=my+cmt')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(COMMENT_OBJS[0])
+    for url in urls:
+      obj.update({
+          'inReplyTo': [{'url': url}],
+          'content': 'my cmt',
+          })
+      self.assert_equals({
+          'id': '456_789',
+          'url': 'http://facebook.com/333?comment_id=456_789',
+          'type': 'comment',
+        }, self.facebook.create(obj))
+
   def test_create_like(self):
     self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
                         'true', data='')
@@ -998,8 +1022,8 @@ class FacebookTest(testutil.HandlerTest):
                        self.facebook.create(LIKE_OBJS[0]))
 
     preview = self.facebook.preview_create(LIKE_OBJS[0])
-    self.assertIn('<span class="verb">like</span>', preview)
-    self.assertIn('http://facebook.com/212038/posts/10100176064482163', preview)
+    self.assertIn('<span class="verb">like</span> <a href="http://facebook.com/212038/posts/10100176064482163">this post</a>', preview)
+    self.assertIn('<div class="fb-post" data-href="http://facebook.com/212038/posts/10100176064482163">', preview)
 
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':#, 'invited/567':
