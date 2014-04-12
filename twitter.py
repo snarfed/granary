@@ -840,7 +840,7 @@ class Twitter(source.Source):
       return None
 
     without_timezone = re.sub(' [+-][0-9]{4} ', ' ', time_str)
-    timezone = re.search(' [+-][0-9]{4} ', time_str).group(1)
+    timezone = re.search('[+-][0-9]{4}', time_str).group(0)
     ## convert offset to seconds
     offset = 3600*int(timezone[1:3])+60*int(timezone[3:])
     ## negative offset
