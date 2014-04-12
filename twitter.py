@@ -21,6 +21,7 @@ import re
 import urllib
 import urllib2
 import urlparse
+import pytz
 
 from appengine_config import HTTP_TIMEOUT
 
@@ -823,7 +824,7 @@ class Twitter(source.Source):
       return None
 
     without_timezone = re.sub(' [+-][0-9]{4} ', ' ', time_str)
-    dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y')
+    dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y').replace(tzinfo=pytz.utc)
     return dt.isoformat()
 
   @classmethod
