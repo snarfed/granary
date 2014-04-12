@@ -82,7 +82,7 @@ TCO_LENGTH = 23
 class OffsetTzinfo(datetime.tzinfo):
   """A simple, DST-unaware tzinfo from given utc offest in seconds.
   """
-  def __init__(self, utc_offset):
+  def __init__(self, utc_offset=0):
     """Constructor.
     
     Args:
