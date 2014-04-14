@@ -513,6 +513,7 @@ class Facebook(source.Source):
       'url': url,
       'image': {'url': picture},
       'displayName': display_name,
+      'fb_object_id': post.get('object_id'),
       }
 
     privacy = post.get('privacy', {})

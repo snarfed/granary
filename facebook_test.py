@@ -119,7 +119,7 @@ POST = {  # Facebook
     }
   },
   'type': 'photo',
-  'object_id': '10100176064452223',
+  'object_id': '222',  # points to PHOTO below
   'application': {'name': 'Facebook for Android', 'id': '350685531728'},
   'created_time': '2012-03-04T18:20:37+0000',
   'updated_time': '2012-03-04T19:08:16+0000',
@@ -134,7 +134,31 @@ POST = {  # Facebook
     },
   'privacy': {'value': 'EVERYONE'},
 }
-
+# based on https://developers.facebook.com/tools/explorer?method=GET&path=10101013177735493
+PHOTO = {
+  'id': '222',
+  'created_time': '2014-04-09T20:44:26+0000',
+  'images': [{
+      'source': 'https://fbcdn-sphotos-b-a.akamaihd.net/pic.jpg',
+      'height': 720,
+      'width': 960,
+    }],
+  'from': {'name': 'Ryan Barrett','id': '212038'},
+  'link': 'https://www.facebook.com/photo.php?fbid=222&set=a.333.444.212038',
+  'name': 'Stopped in to grab coffee and saw this table topper. Wow. Just...wow.',
+  'picture': 'https://fbcdn-photos-b-a.akamaihd.net/pic_s.jpg',
+  'source': 'https://fbcdn-sphotos-b-a.akamaihd.net/pic_n.jpg',
+  'comments': {
+    'data': [{
+        'id': '222_10559',
+        'created_time': '2014-04-09T20:55:49+0000',
+        'from': {'name': 'Alice Alison', 'id': '333'},
+        'message': 'woohoo',
+      },
+    ],
+  },
+  'likes': {'data': [{'id': '666', 'name': 'Bob Bobertson'}]}
+}
 EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
   'id': '145304994',
   'owner': {
@@ -262,6 +286,7 @@ POST_OBJ = {  # ActivityStreams
   'updated': '2012-03-04T19:08:16+00:00',
   'url': 'http://facebook.com/212038/posts/10100176064482163',
   'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
+  'fb_object_id': '222',
   'attachments': [{
       'objectType': 'image',
       'url': 'http://my.link/',
@@ -270,7 +295,7 @@ POST_OBJ = {  # ActivityStreams
       'content': 'my link description',
       'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'}
       }],
-  'to':[{'objectType':'group', 'alias':'@public'}],
+  'to': [{'objectType':'group', 'alias':'@public'}],
   'location': {
     'displayName': 'Lake Merced',
     'id': '113785468632283',
