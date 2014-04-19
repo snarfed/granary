@@ -330,7 +330,7 @@ SHARES = [{  # ActivityStreams
       },
     'displayName': 'Alice retweeted this.',
     'content': '<a href="http://twitter.com/alizz/status/123">retweeted this.</a>',
-    'published': '2013-02-24T20:26:41',
+    'published': '2013-02-24T20:26:41+00:00',
     }, {
     'id': tag_uri('456'),
     'url': 'http://twitter.com/bobbb/status/456',
@@ -346,7 +346,7 @@ SHARES = [{  # ActivityStreams
       },
     'displayName': 'Bob retweeted this.',
     'content': '<a href="http://twitter.com/bobbb/status/456">retweeted this.</a>',
-    'published': '2013-02-26T20:26:41',
+    'published': '2013-02-26T20:26:41+00:00',
     }]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
 OBJECT_WITH_SHARES['tags'] += SHARES
@@ -376,7 +376,7 @@ LIKE_FROM_EVENT = {  # ActivityStreams
     },
   'displayName': 'eve favorited this.',
   'content': 'favorited this.',
-  'published': '2013-12-27T17:25:55',
+  'published': '2013-12-27T17:25:55+00:00',
   }
 FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
 <ol class="activity-popup-users">
