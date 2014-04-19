@@ -17,7 +17,11 @@ site_module = {'facebook-activitystreams': facebook,
                'instagram-activitystreams': instagram,
                'twitter-activitystreams': twitter,
                }[appengine_config.APP_ID]
-
+oauth_callback_path = {
+  'facebook-activitystreams': '/facebook/oauth_callback',
+  'instagram-activitystreams': '/instagram/oauth_callback',
+  'twitter-activitystreams': '/twitter/oauth_callback',
+  }[appengine_config.APP_ID]
 
 class FrontPageHandler(handlers.TemplateHandler):
   """Renders and serves /, ie the front page.
@@ -31,7 +35,7 @@ class FrontPageHandler(handlers.TemplateHandler):
 
 application = webapp2.WSGIApplication([
     ('/', FrontPageHandler),
-    ('/start_auth', site_module.StartHandler.to('/oauth_callback')),
-    ('/oauth_callback', site_module.CallbackHandler.to('/')),
+    ('/start_auth', site_module.StartHandler.to(oauth_callback_path)),
+    (oauth_callback_path, site_module.CallbackHandler.to('/')),
     ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)
