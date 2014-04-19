@@ -11,7 +11,6 @@ import mox
 import source
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
-import webapp2
 
 LIKES = [{
     'verb': 'like',
