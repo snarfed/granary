@@ -59,10 +59,7 @@ class Instagram(source.Source):
       access_token: string, optional OAuth access token
     """
     self.access_token = access_token
-    self.api = InstagramAPI(
-      client_id=appengine_config.INSTAGRAM_CLIENT_ID,
-      client_secret=appengine_config.INSTAGRAM_CLIENT_SECRET,
-      access_token=access_token)
+    self.api = InstagramAPI(access_token=access_token)
 
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
