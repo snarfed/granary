@@ -44,7 +44,7 @@ ACTOR = {  # ActivityStreams
     },
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
-  'published': '2010-05-01T21:42:43',
+  'published': '2010-05-01T21:42:43+00:00',
   'url': 'https://snarfed.org/',
   'location': {'displayName': 'San Francisco'},
   'username': 'snarfed_org',
@@ -118,7 +118,7 @@ OBJECT = {  # ActivityStreams
   'displayName': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'id': tag_uri('100'),
-  'published': '2012-02-22T20:26:41',
+  'published': '2012-02-22T20:26:41+00:00',
   'url': 'http://twitter.com/snarfed_org/status/100',
   'image': {'url': 'http://p.twimg.com/picture1'},
   'location': {
@@ -179,7 +179,7 @@ OBJECT = {  # ActivityStreams
   }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
-  'published': '2012-02-22T20:26:41',
+  'published': '2012-02-22T20:26:41+00:00',
   'id': tag_uri('100'),
   'url': 'http://twitter.com/snarfed_org/status/100',
   'actor': ACTOR,
@@ -330,7 +330,7 @@ SHARES = [{  # ActivityStreams
       },
     'displayName': 'Alice retweeted this.',
     'content': '<a href="http://twitter.com/alizz/status/123">retweeted this.</a>',
-    'published': '2013-02-24T20:26:41',
+    'published': '2013-02-24T20:26:41+00:00',
     }, {
     'id': tag_uri('456'),
     'url': 'http://twitter.com/bobbb/status/456',
@@ -346,7 +346,7 @@ SHARES = [{  # ActivityStreams
       },
     'displayName': 'Bob retweeted this.',
     'content': '<a href="http://twitter.com/bobbb/status/456">retweeted this.</a>',
-    'published': '2013-02-26T20:26:41',
+    'published': '2013-02-26T20:26:41+00:00',
     }]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
 OBJECT_WITH_SHARES['tags'] += SHARES
@@ -376,7 +376,7 @@ LIKE_FROM_EVENT = {  # ActivityStreams
     },
   'displayName': 'eve favorited this.',
   'content': 'favorited this.',
-  'published': '2013-12-27T17:25:55',
+  'published': '2013-12-27T17:25:55+00:00',
   }
 FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
 <ol class="activity-popup-users">
@@ -458,7 +458,7 @@ ATOM = """\
 <subtitle>my description</subtitle>
 
 <logo>http://a0.twimg.com/profile_images/866165047/ryan.jpg</logo>
-<updated>2012-02-22T20:26:41</updated>
+<updated>2012-02-22T20:26:41+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>https://snarfed.org/</uri>
@@ -535,7 +535,7 @@ ATOM = """\
     <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
-  <published>2012-02-22T20:26:41</published>
+  <published>2012-02-22T20:26:41+00:00</published>
   <updated></updated>
 
     <thr:in-reply-to ref=\"""" + tag_uri('789') + """\" href="http://twitter.com/other_user/status/789" type="text/html" />
