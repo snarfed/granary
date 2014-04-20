@@ -79,6 +79,23 @@ EMBED_TWEET = """
 MAX_TWEET_LENGTH = 140
 TCO_LENGTH = 23
 
+class OffsetTzinfo(datetime.tzinfo):
+  """A simple, DST-unaware tzinfo from given utc offest in seconds.
+  """
+  def __init__(self, utc_offset=0):
+    """Constructor.
+    
+    Args:
+      utc_offset: Offset of time zone from UTC in seconds
+    """
+    self._offset = datetime.timedelta(seconds=utc_offset)
+    
+  def utcoffset(self, dt):
+    return self._offset
+    
+  def dst(self, dt):
+    return datetime.timedelta(0)
+
 
 class Twitter(source.Source):
   """Implements the ActivityStreams API for Twitter.
@@ -823,7 +840,14 @@ class Twitter(source.Source):
       return None
 
     without_timezone = re.sub(' [+-][0-9]{4} ', ' ', time_str)
-    dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y')
+    timezone = re.search('[+-][0-9]{4}', time_str).group(0)
+    ## convert offset to seconds
+    offset = 3600 * int(timezone[1:3]) + 60 * int(timezone[3:])
+    ## negative offset
+    if timezone[0] == '-':
+      offset = -offset
+    
+    dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y').replace(tzinfo=OffsetTzinfo(offset))
     return dt.isoformat()
 
   @classmethod
