@@ -49,7 +49,7 @@ ACTOR = {  # ActivityStreams
   'description': 'foo',
   }
 COMMENTS = [Struct(  # Instagram
-    created_at=datetime.datetime.fromtimestamp(1349588757),
+    created_at=datetime.datetime.utcfromtimestamp(1349588757),
     text='\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     user=Struct(
       username='averygood',
@@ -62,7 +62,7 @@ COMMENTS = [Struct(  # Instagram
 MEDIA = Struct(  # Instagram
   id='123_456',
   filter='Normal',
-  created_time=datetime.datetime.fromtimestamp(1348291542),
+  created_time=datetime.datetime.utcfromtimestamp(1348291542),
   link='http://instagram.com/p/ABC123/',
   user_has_liked=False,
   attribution=None,
@@ -110,7 +110,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'displayName': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     'id': tag_uri('789'),
-    'published': '2012-10-06T22:45:57',
+    'published': '2012-10-07T05:45:57',
     'url': 'http://instagram.com/p/ABC123/',
     'inReplyTo': [{'id': tag_uri('123_456')}],
     'to': [{'objectType':'group', 'alias':'@public'}],
@@ -122,7 +122,7 @@ POST_OBJ = {  # ActivityStreams
   'displayName': 'this picture is #abc #xyz',
   'content': 'this picture is #abc #xyz',
   'id': tag_uri('123_456'),
-  'published': '2012-09-21T22:25:42',
+  'published': '2012-09-22T05:25:42',
   'url': 'http://instagram.com/p/ABC123/',
   'image': {'url': 'http://attach/image/big'},
   'to': [{'objectType':'group', 'alias':'@public'}],
@@ -175,7 +175,7 @@ POST_OBJ = {  # ActivityStreams
   }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
-  'published': '2012-09-21T22:25:42',
+  'published': '2012-09-22T05:25:42',
   'id': tag_uri('123_456'),
   'url': 'http://instagram.com/p/ABC123/',
   'actor': ACTOR,
@@ -253,7 +253,7 @@ ATOM = """\
 <subtitle>foo</subtitle>
 
 <logo>http://picture/ryan</logo>
-<updated>2012-09-21T22:25:42</updated>
+<updated>2012-09-22T05:25:42</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://snarfed.org/</uri>
@@ -325,7 +325,7 @@ this picture is #abc #xyz
     <link rel="mentioned" href="" />
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
-  <published>2012-09-21T22:25:42</published>
+  <published>2012-09-22T05:25:42</published>
   <updated></updated>
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
