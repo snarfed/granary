@@ -53,6 +53,10 @@ class Source(object):
     AUTH_URL = string, the url for the "Authenticate" front page link
   """
 
+  def user_url(self, user_id):
+    """Returns the URL for a user's profile."""
+    raise NotImplementedError()
+
   def get_actor(self, user_id=None):
     """Returns the current user as a JSON ActivityStreams actor dict."""
     raise NotImplementedError()

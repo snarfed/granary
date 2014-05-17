@@ -119,7 +119,7 @@ OBJECT = {  # ActivityStreams
   'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41+00:00',
-  'url': 'http://twitter.com/snarfed_org/status/100',
+  'url': 'https://twitter.com/snarfed_org/status/100',
   'image': {'url': 'http://p.twimg.com/picture1'},
   'location': {
     'displayName': 'Carcassonne, Aude',
@@ -140,14 +140,14 @@ OBJECT = {  # ActivityStreams
       }, {
       'objectType': 'person',
       'id': tag_uri('foo'),
-      'url': 'http://twitter.com/foo',
+      'url': 'https://twitter.com/foo',
       'displayName': 'Twitter',
       'startIndex': 0,
       'length': 8,
       }, {
       'objectType': 'person',
       'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
-      'url': 'http://twitter.com/foo',
+      'url': 'https://twitter.com/foo',
       'displayName': 'Picture.ly',
       'startIndex': 15,
       'length': 13,
@@ -181,7 +181,7 @@ ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-02-22T20:26:41+00:00',
   'id': tag_uri('100'),
-  'url': 'http://twitter.com/snarfed_org/status/100',
+  'url': 'https://twitter.com/snarfed_org/status/100',
   'actor': ACTOR,
   'object': OBJECT,
   'title': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
@@ -189,7 +189,7 @@ ACTIVITY = {  # ActivityStreams
   'context': {
     'inReplyTo' : [{
       'objectType' : 'note',
-      'url' : 'http://twitter.com/other_user/status/789',
+      'url' : 'https://twitter.com/other_user/status/789',
       'id' : tag_uri('789'),
       }]
     },
@@ -229,44 +229,44 @@ REPLY_OBJS = [{  # ActivityStreams
     'author': {
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
-      'url': 'http://twitter.com/alice',
+      'url': 'https://twitter.com/alice',
       },
     'displayName': 'reply 200',
     'content': 'reply 200',
-    'url': 'http://twitter.com/alice/status/200',
+    'url': 'https://twitter.com/alice/status/200',
     }, {
     'objectType': 'note',
     'id': tag_uri('300'),
     'author': {
       'id': 'tag:twitter.com:bob',
       'username': 'bob',
-      'url': 'http://twitter.com/bob',
+      'url': 'https://twitter.com/bob',
       },
     'displayName': 'reply 300',
     'content': 'reply 300',
-    'url': 'http://twitter.com/bob/status/300',
+    'url': 'https://twitter.com/bob/status/300',
     }, {
     'objectType': 'note',
     'id': tag_uri('400'),
     'author': {
       'id': 'tag:twitter.com:snarfed_org',
       'username': 'snarfed_org',
-      'url': 'http://twitter.com/snarfed_org',
+      'url': 'https://twitter.com/snarfed_org',
       },
     'displayName': 'reply 400',
     'content': 'reply 400',
-    'url': 'http://twitter.com/snarfed_org/status/400',
+    'url': 'https://twitter.com/snarfed_org/status/400',
     }, {
     'objectType': 'note',
     'id': tag_uri('500'),
     'author': {
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
-      'url': 'http://twitter.com/alice',
+      'url': 'https://twitter.com/alice',
       },
     'displayName': 'reply 500',
     'content': 'reply 500',
-    'url': 'http://twitter.com/alice/status/500',
+    'url': 'https://twitter.com/alice/status/500',
     }]
 ACTIVITY_WITH_REPLIES = copy.deepcopy(ACTIVITY)  # ActivityStreams
 ACTIVITY_WITH_REPLIES['object']['replies'] = {
@@ -317,35 +317,35 @@ TWEET_WITH_RETWEETS = copy.deepcopy(TWEET)
 TWEET_WITH_RETWEETS['retweets'] = RETWEETS
 SHARES = [{  # ActivityStreams
     'id': tag_uri('123'),
-    'url': 'http://twitter.com/alizz/status/123',
+    'url': 'https://twitter.com/alizz/status/123',
     'objectType': 'activity',
     'verb': 'share',
-    'object': {'url': 'http://twitter.com/foo/status/333'},
+    'object': {'url': 'https://twitter.com/foo/status/333'},
     'author': {
       'id': 'tag:twitter.com:alizz',
       'username': 'alizz',
       'displayName': 'Alice',
-      'url': 'http://twitter.com/alizz',
+      'url': 'https://twitter.com/alizz',
       'image': {'url': 'http://alice/picture'},
       },
     'displayName': 'Alice retweeted this.',
-    'content': '<a href="http://twitter.com/alizz/status/123">retweeted this.</a>',
+    'content': '<a href="https://twitter.com/alizz/status/123">retweeted this.</a>',
     'published': '2013-02-24T20:26:41+00:00',
     }, {
     'id': tag_uri('456'),
-    'url': 'http://twitter.com/bobbb/status/456',
+    'url': 'https://twitter.com/bobbb/status/456',
     'objectType': 'activity',
     'verb': 'share',
-    'object': {'url': 'http://twitter.com/bar/status/666'},
+    'object': {'url': 'https://twitter.com/bar/status/666'},
     'author': {
       'id': 'tag:twitter.com:bobbb',
       'username': 'bobbb',
       'displayName': 'Bob',
-      'url': 'http://twitter.com/bobbb',
+      'url': 'https://twitter.com/bobbb',
       'image': {'url': 'http://bob/picture'},
       },
     'displayName': 'Bob retweeted this.',
-    'content': '<a href="http://twitter.com/bobbb/status/456">retweeted this.</a>',
+    'content': '<a href="https://twitter.com/bobbb/status/456">retweeted this.</a>',
     'published': '2013-02-26T20:26:41+00:00',
     }]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
@@ -364,15 +364,15 @@ FAVORITE_EVENT = {  # Twitter
 }
 LIKE_FROM_EVENT = {  # ActivityStreams
   'id': tag_uri('100_favorited_by_789'),
-  'url': 'http://twitter.com/snarfed_org/status/100',
+  'url': 'https://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
   'verb': 'like',
-  'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
+  'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
   'author': {
     'id': tag_uri('eve'),
     'numeric_id': '789',
     'username': 'eve',
-    'url': 'http://twitter.com/eve',
+    'url': 'https://twitter.com/eve',
     },
   'displayName': 'eve favorited this.',
   'content': 'favorited this.',
@@ -408,29 +408,29 @@ FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
 """
 LIKES_FROM_HTML = [{  # ActivityStreams
   'id': tag_uri('100_favorited_by_353'),
-  'url': 'http://twitter.com/snarfed_org/status/100',
+  'url': 'https://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
   'verb': 'like',
-  'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
+  'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
   'author': {
     'id': tag_uri('ge'),
     'numeric_id': '353',
     'username': 'ge',
     'displayName': 'George',
-    'url': 'http://twitter.com/ge',
+    'url': 'https://twitter.com/ge',
     'image': {'url': 'https://twimg/353'},
     },
   'displayName': 'George favorited this.',
   'content': 'favorited this.',
   }, {
-  'url': 'http://twitter.com/snarfed_org/status/100',
+  'url': 'https://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
   'verb': 'like',
-  'object': {'url': 'http://twitter.com/snarfed_org/status/100'},
+  'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
   'author': {
     'id': tag_uri('jo'),
     'username': 'jo',
-    'url': 'http://twitter.com/jo',
+    'url': 'https://twitter.com/jo',
     },
   'displayName': 'jo favorited this.',
   'content': 'favorited this.',
@@ -510,8 +510,8 @@ ATOM = """\
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="http://twitter.com/snarfed_org/status/100" />
-  <link rel="ostatus:conversation" href="http://twitter.com/snarfed_org/status/100" />
+  <link rel="alternate" type="text/html" href="https://twitter.com/snarfed_org/status/100" />
+  <link rel="ostatus:conversation" href="https://twitter.com/snarfed_org/status/100" />
 
     <link rel="ostatus:attention" href="http://p.twimg.com/picture1" />
     <link rel="mentioned" href="http://p.twimg.com/picture1" />
@@ -519,11 +519,11 @@ ATOM = """\
     <link rel="ostatus:attention" href="http://p.twimg.com/picture2" />
     <link rel="mentioned" href="http://p.twimg.com/picture2" />
 
-    <link rel="ostatus:attention" href="http://twitter.com/foo" />
-    <link rel="mentioned" href="http://twitter.com/foo" />
+    <link rel="ostatus:attention" href="https://twitter.com/foo" />
+    <link rel="mentioned" href="https://twitter.com/foo" />
 
-    <link rel="ostatus:attention" href="http://twitter.com/foo" />
-    <link rel="mentioned" href="http://twitter.com/foo" />
+    <link rel="ostatus:attention" href="https://twitter.com/foo" />
+    <link rel="mentioned" href="https://twitter.com/foo" />
 
     <link rel="ostatus:attention" href="https://twitter.com/search?q=%%23tcdisrupt" />
     <link rel="mentioned" href="https://twitter.com/search?q=%%23tcdisrupt" />
@@ -538,14 +538,14 @@ ATOM = """\
   <published>2012-02-22T20:26:41+00:00</published>
   <updated></updated>
 
-    <thr:in-reply-to ref=\"""" + tag_uri('789') + """\" href="http://twitter.com/other_user/status/789" type="text/html" />
+    <thr:in-reply-to ref=\"""" + tag_uri('789') + """\" href="https://twitter.com/other_user/status/789" type="text/html" />
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
 
     <georss:featureName>Carcassonne, Aude</georss:featureName>
 
-  <link rel="self" type="application/atom+xml" href="http://twitter.com/snarfed_org/status/100" />
+  <link rel="self" type="application/atom+xml" href="https://twitter.com/snarfed_org/status/100" />
 </entry>
 
 </feed>
@@ -796,7 +796,7 @@ class TwitterTest(testutil.HandlerTest):
     else:
       self.fail('Dan Shipper not found')
 
-    self.assertEquals('@schnarfed Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="http://twitter.com/danshipper">@danshipper</a> this week.',
+    self.assertEquals('@schnarfed Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
                       microformats2.render_content(obj))
 
   def test_protected_tweet_to_object(self):
@@ -838,7 +838,7 @@ class TwitterTest(testutil.HandlerTest):
     user = copy.deepcopy(USER)
     del user['url']
     actor = copy.deepcopy(ACTOR)
-    actor['url'] = 'http://twitter.com/snarfed_org'
+    actor['url'] = 'https://twitter.com/snarfed_org'
     self.assert_equals(actor, self.twitter.user_to_actor(user))
 
   def test_user_to_actor_minimal(self):
@@ -902,7 +902,7 @@ class TwitterTest(testutil.HandlerTest):
     tweet = copy.deepcopy(TWEET)
     tweet.update({
         'id': '100',
-        'url': 'http://twitter.com/snarfed_org/status/100',
+        'url': 'https://twitter.com/snarfed_org/status/100',
         'type': 'post',
         })
 
@@ -962,7 +962,7 @@ class TwitterTest(testutil.HandlerTest):
     for content, url, expected_tweet, type in testdata:
       tweet.update({
           'id': '100',
-          'url': 'http://twitter.com/snarfed_org/status/100',
+          'url': 'https://twitter.com/snarfed_org/status/100',
           'type': type,
           })
       obj.update({'inReplyTo': [{'url': url}],
@@ -980,12 +980,12 @@ class TwitterTest(testutil.HandlerTest):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
                         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'http://twitter.com/snarfed_org/status/100',
+    self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
                         'type': 'like'},
                        self.twitter.create(LIKES_FROM_HTML[0]))
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
-    self.assertIn('<span class="verb">favorite</span> <a href="http://twitter.com/snarfed_org/status/100">this tweet</a>', preview)
+    self.assertIn('<span class="verb">favorite</span> <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>', preview)
 
   def test_create_retweet(self):
     self.expect_urlopen(
@@ -996,13 +996,13 @@ class TwitterTest(testutil.HandlerTest):
     tweet = copy.deepcopy(TWEET)
     tweet.update({
         'id': '100',
-        'url': 'http://twitter.com/snarfed_org/status/100',
+        'url': 'https://twitter.com/snarfed_org/status/100',
         'type': 'repost',
         })
     self.assert_equals(tweet, self.twitter.create(SHARES[0]))
 
     preview = self.twitter.preview_create(SHARES[0])
-    self.assertIn('<span class="verb">retweet</span> <a href="http://twitter.com/foo/status/333">this tweet</a>', preview)
+    self.assertIn('<span class="verb">retweet</span> <a href="https://twitter.com/foo/status/333">this tweet</a>', preview)
 
   def test_create_unsupported_type(self):
     for fn in self.twitter.create, self.twitter.preview_create:

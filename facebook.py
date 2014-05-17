@@ -144,6 +144,11 @@ class Facebook(source.Source):
     """
     self.access_token = access_token
 
+  def object_url(self, id):
+    return 'https://%s/%s' % (self.DOMAIN, id)
+
+  user_url = object_url
+
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
 
@@ -301,7 +306,7 @@ class Facebook(source.Source):
     verb = obj.get('verb')
     base_id, base_url = self.base_object(obj)
     if base_id and not base_url:
-      base_url = 'http://facebook.com/' + base_id
+      base_url = self.object_url(base_id)
 
 
     content = obj.get('content', '').strip()
@@ -385,9 +390,9 @@ class Facebook(source.Source):
       return None
     author_id = post.get('from', {}).get('id')
     if author_id:
-      return 'http://facebook.com/%s/posts/%s' % (author_id, post_id)
+      return 'https://facebook.com/%s/posts/%s' % (author_id, post_id)
     else:
-      return 'http://facebook.com/%s' % post_id
+      return self.object_url(post_id)
 
   def comment_url(self, post_id, comment_id, post_author_id=None):
     """Returns a short Facebook URL for a comment.
@@ -398,7 +403,7 @@ class Facebook(source.Source):
     """
     if post_author_id:
       post_id = post_author_id + '/posts/' + post_id
-    return 'http://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+    return 'https://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
   def base_object(self, obj):
     """Returns id and URL of the 'base' silo object that an object operates on.
@@ -534,7 +539,7 @@ class Facebook(source.Source):
     obj['tags'] = [self.postprocess_object({
         'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
         'id': self.tag_uri(t.get('id')),
-        'url': 'http://facebook.com/%s' % t.get('id'),
+        'url': self.object_url(t.get('id')),
         'displayName': t.get('name'),
         'startIndex': t.get('offset'),
         'length': t.get('length'),
@@ -589,7 +594,7 @@ class Facebook(source.Source):
       obj['location'] = {
         'displayName': place.get('name'),
         'id': id,
-        'url': 'http://facebook.com/%s' % id,
+        'url': self.object_url(id),
         }
       location = place.get('location', None)
       if isinstance(location, dict):
@@ -668,8 +673,7 @@ class Facebook(source.Source):
     if not handle:
       return {}
 
-    url = (user.get('website') or user.get('link') or
-           'http://facebook.com/' + handle)
+    url = (user.get('website') or user.get('link') or self.user_url(handle))
 
     # facebook implements this as a 302 redirect
     image_url = 'http://graph.facebook.com/%s/picture?type=large' % handle
@@ -764,6 +768,6 @@ class Facebook(source.Source):
       event_id = event.get('id')
       if event_id and user_id:
         obj['id'] = self.tag_uri('%s_rsvp_%s' % (event_id, user_id))
-        obj['url'] = 'http://facebook.com/%s#%s' % (event_id, user_id)
+        obj['url'] = '%s#%s' % (self.object_url(event_id), user_id)
 
     return self.postprocess_object(obj)

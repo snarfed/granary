@@ -61,6 +61,9 @@ class Instagram(source.Source):
     self.access_token = access_token
     self.api = InstagramAPI(access_token=access_token)
 
+  def user_url(self, username):
+    return 'http://instagram.com/' + username
+
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
 
@@ -335,7 +338,7 @@ class Instagram(source.Source):
 
     url = getattr(user, 'website', None)
     if not url:
-      url = 'http://instagram.com/' + username
+      url = self.user_url(username)
 
     actor.update({
       'objectType': 'person',

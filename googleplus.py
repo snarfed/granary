@@ -39,6 +39,9 @@ class GooglePlus(source.Source):
     self.access_token = access_token
     self.auth_entity = auth_entity
 
+  def user_url(self, user_id):
+    return 'https://%s/%s' % (self.DOMAIN, user_id)
+
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
 

@@ -84,15 +84,15 @@ class OffsetTzinfo(datetime.tzinfo):
   """
   def __init__(self, utc_offset=0):
     """Constructor.
-    
+
     Args:
       utc_offset: Offset of time zone from UTC in seconds
     """
     self._offset = datetime.timedelta(seconds=utc_offset)
-    
+
   def utcoffset(self, dt):
     return self._offset
-    
+
   def dst(self, dt):
     return datetime.timedelta(0)
 
@@ -846,22 +846,19 @@ class Twitter(source.Source):
     ## negative offset
     if timezone[0] == '-':
       offset = -offset
-    
+
     dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y').replace(tzinfo=OffsetTzinfo(offset))
     return dt.isoformat()
 
-  @classmethod
-  def user_url(cls, username):
+  def user_url(self, username):
     """Returns the Twitter URL for a given user."""
-    return 'http://%s/%s' % (cls.DOMAIN, username)
+    return 'https://%s/%s' % (self.DOMAIN, username)
 
-  @classmethod
-  def status_url(cls, username, id):
+  def status_url(self, username, id):
     """Returns the Twitter URL for a tweet from a given user with a given id."""
-    return '%s/status/%s' % (cls.user_url(username), id)
+    return '%s/status/%s' % (self.user_url(username), id)
 
-  @classmethod
-  def tweet_url(cls, tweet):
+  def tweet_url(self, tweet):
     """Returns the Twitter URL for a tweet given a tweet object."""
-    return cls.status_url(tweet.get('user', {}).get('screen_name'),
-                          tweet.get('id_str'))
+    return self.status_url(tweet.get('user', {}).get('screen_name'),
+                           tweet.get('id_str'))

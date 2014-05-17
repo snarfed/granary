@@ -194,26 +194,26 @@ COMMENT_OBJS = [  # ActivityStreams
       'numeric_id': '212038',
       'displayName': 'Ryan Barrett',
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
-      'url': 'http://facebook.com/212038',
+      'url': 'https://facebook.com/212038',
       },
     'displayName': 'cc Sam G, Michael M',
     'content': 'cc Sam G, Michael M',
     'id': tag_uri('547822715231468_6796480'),
     'published': '2012-12-05T00:58:26+00:00',
-    'url': 'http://facebook.com/547822715231468?comment_id=6796480',
+    'url': 'https://facebook.com/547822715231468?comment_id=6796480',
     'inReplyTo': [{'id': tag_uri('547822715231468')}],
     'to': [{'objectType':'group', 'alias':'@private'}],
     'tags': [{
         'objectType': 'person',
         'id': tag_uri('221330'),
-        'url': 'http://facebook.com/221330',
+        'url': 'https://facebook.com/221330',
         'displayName': 'Sam G',
         'startIndex': 3,
         'length': 5,
         }, {
         'objectType': 'person',
         'id': tag_uri('695687650'),
-        'url': 'http://facebook.com/695687650',
+        'url': 'https://facebook.com/695687650',
         'displayName': 'Michael Mandel',
         'startIndex': 10,
         'length': 9,
@@ -226,13 +226,13 @@ COMMENT_OBJS = [  # ActivityStreams
       'numeric_id': '513046677',
       'displayName': 'Ron Ald',
       'image': {'url': 'http://graph.facebook.com/513046677/picture?type=large'},
-      'url': 'http://facebook.com/513046677',
+      'url': 'https://facebook.com/513046677',
       },
     'displayName': 'Foo bar!',
     'content': 'Foo bar!',
     'id': tag_uri('124561947600007_672819'),
     'published': '2010-10-28T00:23:04+00:00',
-    'url': 'http://facebook.com/124561947600007?comment_id=672819',
+    'url': 'https://facebook.com/124561947600007?comment_id=672819',
     'inReplyTo': [{'id': tag_uri('124561947600007')}],
     'to': [{'objectType':'group', 'alias':'@public'}],
     'tags': [{'displayName': 'See Original', 'objectType': 'article', 'url': 'http://ald.com/foobar'}],
@@ -240,30 +240,30 @@ COMMENT_OBJS = [  # ActivityStreams
 ]
 LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('10100176064482163_liked_by_100004'),
-    'url': 'http://facebook.com/212038/posts/10100176064482163',
+    'url': 'https://facebook.com/212038/posts/10100176064482163',
     'objectType': 'activity',
     'verb': 'like',
-    'object': {'url': 'http://facebook.com/212038/posts/10100176064482163'},
+    'object': {'url': 'https://facebook.com/212038/posts/10100176064482163'},
     'author': {
       'id': tag_uri('100004'),
       'numeric_id': '100004',
       'displayName': 'Alice X',
-      'url': 'http://facebook.com/100004',
+      'url': 'https://facebook.com/100004',
       'image': {'url': 'http://graph.facebook.com/100004/picture?type=large'},
       },
     'displayName': 'Alice X likes this.',
     'content': 'likes this.',
     }, {
     'id': tag_uri('10100176064482163_liked_by_683713'),
-    'url': 'http://facebook.com/212038/posts/10100176064482163',
+    'url': 'https://facebook.com/212038/posts/10100176064482163',
     'objectType': 'activity',
     'verb': 'like',
-    'object': {'url': 'http://facebook.com/212038/posts/10100176064482163'},
+    'object': {'url': 'https://facebook.com/212038/posts/10100176064482163'},
     'author': {
       'id': tag_uri('683713'),
       'numeric_id': '683713',
       'displayName': 'Bob Y',
-      'url': 'http://facebook.com/683713',
+      'url': 'https://facebook.com/683713',
       'image': {'url': 'http://graph.facebook.com/683713/picture?type=large'},
       },
     'displayName': 'Bob Y likes this.',
@@ -277,14 +277,14 @@ POST_OBJ = {  # ActivityStreams
     'numeric_id': '212038',
     'displayName': 'Ryan Barrett',
     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
-    'url': 'http://facebook.com/212038',
+    'url': 'https://facebook.com/212038',
     },
   'displayName': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block...',
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
   'id': tag_uri('10100176064482163'),
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
-  'url': 'http://facebook.com/212038/posts/10100176064482163',
+  'url': 'https://facebook.com/212038/posts/10100176064482163',
   'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
   'fb_object_id': '222',
   'attachments': [{
@@ -299,7 +299,7 @@ POST_OBJ = {  # ActivityStreams
   'location': {
     'displayName': 'Lake Merced',
     'id': '113785468632283',
-    'url': 'http://facebook.com/113785468632283',
+    'url': 'https://facebook.com/113785468632283',
     'latitude': 37.728193717481,
     'longitude': -122.49336423595,
     'position': '+37.728194-122.493364/',
@@ -307,34 +307,34 @@ POST_OBJ = {  # ActivityStreams
   'tags': [{
       'objectType': 'person',
       'id': tag_uri('234'),
-      'url': 'http://facebook.com/234',
+      'url': 'https://facebook.com/234',
       'displayName': 'Friend 1',
       }, {
       'objectType': 'person',
       'id': tag_uri('345'),
-      'url': 'http://facebook.com/345',
+      'url': 'https://facebook.com/345',
       'displayName': 'Friend 2',
       }, {
       'objectType': 'person',
       'id': tag_uri('345'),
-      'url': 'http://facebook.com/345',
+      'url': 'https://facebook.com/345',
       'displayName': 'Friend 2',
       }, {
       'objectType': 'person',
       'id': tag_uri('456'),
-      'url': 'http://facebook.com/456',
+      'url': 'https://facebook.com/456',
       'displayName': 'Friend 3',
       }, {
       'objectType': 'person',
       'id': tag_uri('456'),
-      'url': 'http://facebook.com/456',
+      'url': 'https://facebook.com/456',
       'displayName': 'Daniel M',
       'startIndex': 122,
       'length': 8,
       }, {
       'objectType': 'event',
       'id': tag_uri('283938455011303'),
-      'url': 'http://facebook.com/283938455011303',
+      'url': 'https://facebook.com/283938455011303',
       'displayName': 'Super Happy Block Party Hackathon',
       'startIndex': 84,
       'length': 33,
@@ -349,14 +349,14 @@ POST_OBJ = {  # ActivityStreams
 EVENT_OBJ = {  # ActivityStreams.
   'objectType': 'event',
   'id': tag_uri('145304994'),
-  'url': 'http://facebook.com/145304994',
+  'url': 'https://facebook.com/145304994',
   'displayName': 'Homebrew Website Club',
   'author': {
     'id': tag_uri('11500'),
     'numeric_id': '11500',
     'displayName': 'Aaron P',
     'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
-    'url': 'http://facebook.com/11500',
+    'url': 'https://facebook.com/11500',
     },
   'content': 'you should come maybe, kthxbye',
   'location': {'displayName': 'PDX'},
@@ -369,12 +369,12 @@ RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_11500'),
     'objectType': 'activity',
     'verb': 'rsvp-yes',
-    'url': 'http://facebook.com/145304994#11500',
+    'url': 'https://facebook.com/145304994#11500',
     'actor': {
       'displayName': 'Aaron P',
       'id': tag_uri('11500'),
       'numeric_id': '11500',
-      'url': 'http://facebook.com/11500',
+      'url': 'https://facebook.com/11500',
       'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
       },
     'displayName': 'Aaron P is attending.',
@@ -383,12 +383,12 @@ RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_212038'),
     'objectType': 'activity',
     'verb': 'rsvp-no',
-    'url': 'http://facebook.com/145304994#212038',
+    'url': 'https://facebook.com/145304994#212038',
     'actor': {
       'displayName': 'Ryan B',
       'id': tag_uri('212038'),
       'numeric_id': '212038',
-      'url': 'http://facebook.com/212038',
+      'url': 'https://facebook.com/212038',
       'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
       },
     'displayName': 'Ryan B is not attending.',
@@ -397,12 +397,12 @@ RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_987'),
     'objectType': 'activity',
     'verb': 'rsvp-maybe',
-    'url': 'http://facebook.com/145304994#987',
+    'url': 'https://facebook.com/145304994#987',
     'actor': {
       'displayName': 'Foo',
       'id': tag_uri('987'),
       'numeric_id': '987',
-      'url': 'http://facebook.com/987',
+      'url': 'https://facebook.com/987',
       'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
       },
     'displayName': 'Foo might attend.',
@@ -411,12 +411,12 @@ RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_654'),
     'objectType': 'activity',
     'verb': 'invite',
-    'url': 'http://facebook.com/145304994#654',
+    'url': 'https://facebook.com/145304994#654',
     'actor': {
       'displayName': 'Aaron P',
       'id': tag_uri('11500'),
       'numeric_id': '11500',
-      'url': 'http://facebook.com/11500',
+      'url': 'https://facebook.com/11500',
       'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
       },
     'object': {
@@ -424,7 +424,7 @@ RSVP_OBJS_WITH_ID = [{
       'displayName': 'Bar',
       'id': tag_uri('654'),
       'numeric_id': '654',
-      'url': 'http://facebook.com/654',
+      'url': 'https://facebook.com/654',
       'image': {'url': 'http://graph.facebook.com/654/picture?type=large'},
       },
     'displayName': 'Bar is invited.',
@@ -444,7 +444,7 @@ EVENT_OBJ_WITH_ATTENDEES.update({
     })
 EVENT_ACTIVITY_WITH_ATTENDEES = {  # ActivityStreams
   'id': tag_uri('145304994'),
-  'url': 'http://facebook.com/145304994',
+  'url': 'https://facebook.com/145304994',
   'object': EVENT_OBJ_WITH_ATTENDEES,
 }
 ACTIVITY = {  # ActivityStreams
@@ -452,7 +452,7 @@ ACTIVITY = {  # ActivityStreams
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
   'id': tag_uri('10100176064482163'),
-  'url': 'http://facebook.com/212038/posts/10100176064482163',
+  'url': 'https://facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
   'title': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block...',
@@ -498,7 +498,7 @@ ATOM = """\
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://facebook.com/212038</uri>
+ <uri>https://facebook.com/212038</uri>
  <name>Ryan Barrett</name>
 </author>
 
@@ -523,26 +523,26 @@ my link caption
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="http://facebook.com/212038/posts/10100176064482163" />
-  <link rel="ostatus:conversation" href="http://facebook.com/212038/posts/10100176064482163" />
+  <link rel="alternate" type="text/html" href="https://facebook.com/212038/posts/10100176064482163" />
+  <link rel="ostatus:conversation" href="https://facebook.com/212038/posts/10100176064482163" />
 
-    <link rel="ostatus:attention" href="http://facebook.com/234" />
-    <link rel="mentioned" href="http://facebook.com/234" />
+    <link rel="ostatus:attention" href="https://facebook.com/234" />
+    <link rel="mentioned" href="https://facebook.com/234" />
 
-    <link rel="ostatus:attention" href="http://facebook.com/345" />
-    <link rel="mentioned" href="http://facebook.com/345" />
+    <link rel="ostatus:attention" href="https://facebook.com/345" />
+    <link rel="mentioned" href="https://facebook.com/345" />
 
-    <link rel="ostatus:attention" href="http://facebook.com/345" />
-    <link rel="mentioned" href="http://facebook.com/345" />
+    <link rel="ostatus:attention" href="https://facebook.com/345" />
+    <link rel="mentioned" href="https://facebook.com/345" />
 
-    <link rel="ostatus:attention" href="http://facebook.com/456" />
-    <link rel="mentioned" href="http://facebook.com/456" />
+    <link rel="ostatus:attention" href="https://facebook.com/456" />
+    <link rel="mentioned" href="https://facebook.com/456" />
 
-    <link rel="ostatus:attention" href="http://facebook.com/456" />
-    <link rel="mentioned" href="http://facebook.com/456" />
+    <link rel="ostatus:attention" href="https://facebook.com/456" />
+    <link rel="mentioned" href="https://facebook.com/456" />
 
-    <link rel="ostatus:attention" href="http://facebook.com/283938455011303" />
-    <link rel="mentioned" href="http://facebook.com/283938455011303" />
+    <link rel="ostatus:attention" href="https://facebook.com/283938455011303" />
+    <link rel="mentioned" href="https://facebook.com/283938455011303" />
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-03-04T18:20:37+00:00</published>
@@ -555,7 +555,7 @@ my link caption
 
     <georss:featureName>Lake Merced</georss:featureName>
 
-  <link rel="self" type="application/atom+xml" href="http://facebook.com/212038/posts/10100176064482163" />
+  <link rel="self" type="application/atom+xml" href="https://facebook.com/212038/posts/10100176064482163" />
 </entry>
 
 </feed>
@@ -593,18 +593,18 @@ class FacebookTest(testutil.HandlerTest):
                     'id': tag_uri('2'),
                     'objectType': 'note',
                     'displayName': 'foo',
-                    'url': 'http://facebook.com/2'},
+                    'url': 'https://facebook.com/2'},
          'title': 'foo',
-         'url': 'http://facebook.com/2',
+         'url': 'https://facebook.com/2',
          'verb': 'post'},
         {'id': tag_uri('4'),
          'object': {'content': 'bar',
                     'id': tag_uri('4'),
                     'objectType': 'note',
                     'displayName': 'bar',
-                    'url': 'http://facebook.com/4'},
+                    'url': 'https://facebook.com/4'},
          'title': 'bar',
-         'url': 'http://facebook.com/4',
+         'url': 'https://facebook.com/4',
          'verb': 'post'}],
       self.facebook.get_activities())
 
@@ -699,7 +699,7 @@ class FacebookTest(testutil.HandlerTest):
 
     obj = self.facebook.get_comment('123_456', activity_author_id='my-author')
     self.assert_equals(
-      'http://facebook.com/my-author/posts/547822715231468?comment_id=6796480',
+      'https://facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
 
   def test_get_like(self):
@@ -765,7 +765,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_comment_to_object_post_author_id(self):
     obj = self.facebook.comment_to_object(COMMENTS[0], post_author_id='my-author')
     self.assert_equals(
-      'http://facebook.com/my-author/posts/547822715231468?comment_id=6796480',
+      'https://facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
 
   def test_user_to_actor_full(self):
@@ -779,7 +779,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(actor, self.facebook.user_to_actor(user))
 
     del user['link']
-    actor['url'] = 'http://facebook.com/snarfed.org'
+    actor['url'] = 'https://facebook.com/snarfed.org'
     self.assert_equals(actor, self.facebook.user_to_actor(user))
 
   def test_user_to_actor_minimal(self):
@@ -820,7 +820,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals({  # ActivityStreams
         'objectType': 'image',
         'id': tag_uri('445566'),
-        'url': 'http://facebook.com/445566',
+        'url': 'https://facebook.com/445566',
         'image': {'url': 'http://its/a/picture'},
         }, self.facebook.post_to_object({  # Facebook
           'id': '445566',
@@ -833,7 +833,7 @@ class FacebookTest(testutil.HandlerTest):
         'id': tag_uri('10100747369806713'),
         'verb': 'like',
         'title': 'Unknown likes a photo.',
-        'url': 'http://facebook.com/10100747369806713',
+        'url': 'https://facebook.com/10100747369806713',
         'object': {
           'objectType': 'image',
           'id': tag_uri('214721692025931'),
@@ -857,7 +857,7 @@ class FacebookTest(testutil.HandlerTest):
         'title': 'Ryan Barrett likes a photo on Instagram.',
         'actor': ACTOR,
         'generator': {'displayName': 'Instagram', 'id': tag_uri('12402457428')},
-        'url': 'http://facebook.com/212038/posts/10100747369806713',
+        'url': 'https://facebook.com/212038/posts/10100747369806713',
         })
     activity['object']['author'] = ACTOR
     post.update({
@@ -869,7 +869,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_story_as_content(self):
     self.assert_equals({
         'id': tag_uri('101007473698067'),
-        'url': 'http://facebook.com/101007473698067',
+        'url': 'https://facebook.com/101007473698067',
         'objectType': 'note',
         'displayName': 'Once upon a time.',
         'content': 'Once upon a time.',
@@ -881,7 +881,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_name_as_content(self):
     self.assert_equals({
         'id': tag_uri('101007473698067'),
-        'url': 'http://facebook.com/101007473698067',
+        'url': 'https://facebook.com/101007473698067',
         'objectType': 'note',
         'displayName': 'Once upon a time.',
         'content': 'Once upon a time.',
@@ -896,11 +896,11 @@ class FacebookTest(testutil.HandlerTest):
         'actor': ACTOR,
         'verb': 'give',
         'title': 'Ryan Barrett gave a gift.',
-        'url': 'http://facebook.com/212038/posts/10100747',
+        'url': 'https://facebook.com/212038/posts/10100747',
         'object': {
           'id': tag_uri('10100747'),
           'author': ACTOR,
-          'url': 'http://facebook.com/212038/posts/10100747',
+          'url': 'https://facebook.com/212038/posts/10100747',
           'objectType': 'product',
           },
       }, self.facebook.post_to_activity({
@@ -926,7 +926,7 @@ class FacebookTest(testutil.HandlerTest):
         'id': tag_uri('10100747'),
         'verb': 'listen',
         'title': "Unknown listened to The Rifle's Spiral.",
-        'url': 'http://facebook.com/10100747',
+        'url': 'https://facebook.com/10100747',
         'object': {
           'id': tag_uri('101507345'),
           'url': 'http://www.rdio.com/artist/The_Shins/album/Port_Of_Morrow_1/track/The_Rifle%27s_Spiral/',
@@ -962,7 +962,7 @@ class FacebookTest(testutil.HandlerTest):
         'content': 'my msg',
         })
     self.assert_equals(
-      {'id': '123_456', 'url': 'http://facebook.com/123_456', 'type': 'post'},
+      {'id': '123_456', 'url': 'https://facebook.com/123_456', 'type': 'post'},
       self.facebook.create(obj))
 
     preview = self.facebook.preview_create(obj)
@@ -995,13 +995,13 @@ class FacebookTest(testutil.HandlerTest):
     obj['content'] = 'my cmt'
     self.assert_equals({
         'id': '456_789',
-        'url': 'http://facebook.com/547822715231468?comment_id=456_789',
+        'url': 'https://facebook.com/547822715231468?comment_id=456_789',
         'type': 'comment',
         }, self.facebook.create(obj))
 
     preview = self.facebook.preview_create(obj)
-    self.assertIn('<span class="verb">comment</span> <em>my cmt</em> on <a href="http://facebook.com/547822715231468">this post</a>', preview)
-    self.assertIn('<div class="fb-post" data-href="http://facebook.com/547822715231468">', preview)
+    self.assertIn('<span class="verb">comment</span> <em>my cmt</em> on <a href="https://facebook.com/547822715231468">this post</a>', preview)
+    self.assertIn('<div class="fb-post" data-href="https://facebook.com/547822715231468">', preview)
 
   def test_create_comment_other_domain(self):
     self.expect_urlopen(facebook.API_FEED_URL, '{}', data='message=my+cmt')
@@ -1034,7 +1034,7 @@ class FacebookTest(testutil.HandlerTest):
           })
       self.assert_equals({
           'id': '456_789',
-          'url': 'http://facebook.com/333?comment_id=456_789',
+          'url': 'https://facebook.com/333?comment_id=456_789',
           'type': 'comment',
         }, self.facebook.create(obj))
 
@@ -1042,13 +1042,13 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
                         'true', data='')
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'http://facebook.com/212038/posts/10100176064482163',
+    self.assert_equals({'url': 'https://facebook.com/212038/posts/10100176064482163',
                         'type': 'like'},
                        self.facebook.create(LIKE_OBJS[0]))
 
     preview = self.facebook.preview_create(LIKE_OBJS[0])
-    self.assertIn('<span class="verb">like</span> <a href="http://facebook.com/212038/posts/10100176064482163">this post</a>', preview)
-    self.assertIn('<div class="fb-post" data-href="http://facebook.com/212038/posts/10100176064482163">', preview)
+    self.assertIn('<span class="verb">like</span> <a href="https://facebook.com/212038/posts/10100176064482163">this post</a>', preview)
+    self.assertIn('<div class="fb-post" data-href="https://facebook.com/212038/posts/10100176064482163">', preview)
 
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':#, 'invited/567':
@@ -1058,13 +1058,13 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
       rsvp = copy.deepcopy(rsvp)
-      rsvp['inReplyTo'] = [{'url': 'http://facebook.com/234/'}]
-      self.assert_equals({'url': 'http://facebook.com/234/', 'type': 'rsvp'},
+      rsvp['inReplyTo'] = [{'url': 'https://facebook.com/234/'}]
+      self.assert_equals({'url': 'https://facebook.com/234/', 'type': 'rsvp'},
                           self.facebook.create(rsvp))
 
     preview = self.facebook.preview_create(rsvp)
     self.assertIn('<span class="verb">RSVP maybe</span>', preview)
-    self.assertIn('http://facebook.com/234/', preview)
+    self.assertIn('https://facebook.com/234/', preview)
 
   def test_create_unsupported_type(self):
     for fn in self.facebook.create, self.facebook.preview_create:
