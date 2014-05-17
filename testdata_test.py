@@ -50,12 +50,12 @@ class TestDataTest(testutil.HandlerTest):
        # like .mf2-from-as.json would supersede .mf2.json if present)
        ('in_reply_to','repost_of_with_h_cite')),
       ('as.json', 'mf2.html', microformats2.object_to_html,
-       # see above
-       ('in_reply_to','repost_of_with_h_cite')),
+       ('in_reply_to','repost_of_with_h_cite')), # see above
       ('mf2.json', 'as.json', microformats2.json_to_object,
        # these have tags, which we don't generate
        ('note.', 'article_with_')),
-      # ('mf2.html', 'as.json', microformats2.html_to_object, ()),
+      ('mf2.json', 'mf2.html', microformats2.json_to_html,
+       ('in_reply_to','repost_of_with_h_cite')), # see above
       )
 
     failed = False

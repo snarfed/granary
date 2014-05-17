@@ -287,15 +287,16 @@ def json_to_html(obj):
 
   props = obj['properties']
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
-                           for url in get_string_urls(props['in-reply-to']))
+                           for url in get_string_urls(props.get('in-reply-to', [])))
 
   prop = first_props(props)
-  author = prop['author']
+  prop.setdefault('uid', '')
+  author = prop.get('author')
   if author:
     author['type'].append('p-author')
 
   content = prop.get('content', {})
-  content_html = content.get('html') or content.get('value')
+  content_html = content.get('html', '') or content.get('value', '')
 
   # if this post is itself a like or repost, link to its target(s).
   likes_and_reposts = []
@@ -327,14 +328,14 @@ def json_to_html(obj):
     updated=maybe_datetime(prop.get('updated'), 'dt-updated'),
     types=' '.join(obj['type']),
     author=hcard_to_html(author),
-    location=hcard_to_html(prop['location']),
+    location=hcard_to_html(prop.get('location')),
     photo=photo,
     in_reply_tos=in_reply_tos,
     invitees='\n'.join([hcard_to_html(i) for i in props.get('invitee', [])]),
     content=content_html,
     comments=comments_html,
     likes_and_reposts='\n'.join(likes_and_reposts),
-    linked_name=maybe_linked_name(prop))
+    linked_name=maybe_linked_name(props))
 
 
 def hcard_to_html(hcard):
@@ -349,13 +350,14 @@ def hcard_to_html(hcard):
     return ''
 
   # extract first value from multiply valued properties
-  props = first_props(hcard['properties'])
-  photo = (PHOTO.substitute(url=props['photo'], alt=props.get('name', '-'))
-           if props.get('photo') else '')
-  return HCARD.substitute(props,
+  prop = first_props(hcard['properties'])
+  prop.setdefault('uid', '')
+  photo = (PHOTO.substitute(url=prop['photo'], alt=prop.get('name', '-'))
+           if prop.get('photo') else '')
+  return HCARD.substitute(prop,
                           types=' '.join(hcard['type']),
                           photo=photo,
-                          linked_name=maybe_linked_name(props))
+                          linked_name=maybe_linked_name(hcard['properties']))
 
 
 def render_content(obj):
@@ -496,8 +498,8 @@ def author_display_name(hcard):
   """Returns a human-readable string display name for an h-card object."""
   name = None
   if hcard:
-    props = first_props(hcard.get('properties'))
-    name = props.get('name', props.get('uid'))
+    prop = first_props(hcard.get('properties'))
+    name = prop.get('name') or prop.get('uid')
   return name if name else 'Unknown'
 
 
@@ -505,15 +507,22 @@ def maybe_linked_name(props):
   """Returns the HTML for a p-name with an optional u-url inside.
 
   Args:
-    props: singly-valued properties dict
+    props: *multiply-valued* properties dict
 
   Returns: string HTML
   """
-  name = props.get('name', '')
-  url = props.get('url')
+  prop = first_props(props)
+  name = prop.get('name', '')
+  url = prop.get('url')
   html = maybe_linked(name, url, classname='u-url')
   if name:
     html = '<div class="p-name">%s</div>' % html
+
+  extra_urls = props.get('url', [])[1:]
+  if extra_urls:
+    html += '\n' + '\n'.join(maybe_linked('', url, classname='u-url')
+                             for url in extra_urls)
+
   return html
 
 
