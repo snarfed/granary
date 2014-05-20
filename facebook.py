@@ -310,15 +310,15 @@ class Facebook(source.Source):
 
 
     content = obj.get('content', '').strip()
-    preview_content = util.linkify(content)
     url = obj.get('url')
+    if include_link and url:
+      content += '\n\n(%s)' % url
+    preview_content = util.linkify(content)
     msg_data = {
         'message': content.encode('utf-8'),
         # TODO...or leave it to user's default?
         # 'privacy': json.dumps({'value': 'SELF'}),
         }
-    if include_link and url:
-      msg_data['link'] = url
     msg_data = urllib.urlencode(msg_data)
 
     if type == 'comment' and base_url:
