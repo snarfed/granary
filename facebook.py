@@ -318,7 +318,7 @@ class Facebook(source.Source):
         # 'privacy': json.dumps({'value': 'SELF'}),
         }
     if include_link and url:
-      msg_data['actions'] = json.dumps([{'name': 'See Original', 'link': url}])
+      msg_data['link'] = url
     msg_data = urllib.urlencode(msg_data)
 
     if type == 'comment' and base_url:

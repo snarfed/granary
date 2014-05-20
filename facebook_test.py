@@ -972,7 +972,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_create_post_include_link(self):
     self.expect_urlopen(
       facebook.API_FEED_URL, '{}',
-      data='message=my+msg&actions=%5B%7B%22link%22%3A+%22http%3A%2F%2Fobj%22%2C+%22name%22%3A+%22See+Original%22%7D%5D')
+      data=urllib.urlencode({'message': 'my msg', 'link': 'http://obj'}))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
