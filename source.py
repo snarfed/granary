@@ -376,12 +376,16 @@ class Source(object):
     # Permashortcitations are short references to canonical copies of a given
     # (usually syndicated) post, of the form (DOMAIN PATH). Details:
     # http://indiewebcamp.com/permashortcitation
+    #
+    # We consider them an explicit original post link, so we store them in
+    # upstreamDuplicates to signal that.
+    # http://activitystrea.ms/specs/json/1.0/#id-comparison
     for match in Source._PERMASHORTCITATION_RE.finditer(content):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
-      existing = urls | tags
-      if http not in existing and https not in existing:
-        urls.add(http)
+      uds = obj.setdefault('upstreamDuplicates', [])
+      if http not in uds and https not in uds:
+        uds.append(http)
 
     obj.setdefault('tags', []).extend(
       {'objectType': 'article', 'url': u} for u in urls

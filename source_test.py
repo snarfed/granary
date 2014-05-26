@@ -83,8 +83,9 @@ class SourceTest(testutil.HandlerTest):
 
     activity['object']['content'] = 'x (not.at end) y (at.the end)'
     source.Source.original_post_discovery(activity)
-    self.assert_equals([{'objectType': 'article', 'url': 'http://at.the/end'}],
-                       activity['object']['tags'])
+    self.assert_equals(['http://at.the/end'],
+                       activity['object']['upstreamDuplicates'])
+    self.assert_equals([], activity['object']['tags'])
 
     activity['object'].update({
         'content': 'x http://baz/3 y',
