@@ -435,6 +435,7 @@ def render_content(obj):
   tags.pop('like', [])
   tags.pop('share', [])
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
+  content += tags_to_html(tags.pop('mention', []), 'u-mention')
   content += tags_to_html(sum(tags.values(), []), 'tag')
 
   return content
@@ -486,10 +487,11 @@ def tags_to_html(tags, classname):
     classname: class for span to enclose tags in
   """
   if tags:
-    return ('\n<p class="%s">' % classname +
-            ', '.join('<a href="%s">%s</a>' % (t.get('url'), t.get('displayName'))
-                      for t in tags) +
-            '</p>')
+    return (
+      '\n<p class="%s">' % classname +
+      ', '.join('<a href="%s">%s</a>' % (t.get('url'), t.get('displayName', ''))
+                for t in tags) +
+      '</p>')
   else:
     return ''
 
