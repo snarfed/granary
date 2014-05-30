@@ -489,7 +489,7 @@ def tags_to_html(tags, classname):
   if tags:
     return (
       '\n<p class="%s">' % classname +
-      ', '.join('<a href="%s">%s</a>' % (t.get('url'), t.get('displayName', ''))
+      '\n'.join('<a href="%s">%s</a>' % (t.get('url'), t.get('displayName', ''))
                 for t in tags) +
       '</p>')
   else:
