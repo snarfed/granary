@@ -32,7 +32,6 @@ HCARD = string.Template("""\
   <div class="$types">
     $linked_name
     $photo
-    <span class="u-uid">$uid</span>
   </div>
 """)
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
