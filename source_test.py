@@ -81,6 +81,11 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals(activity, source.Source.original_post_discovery(
         copy.deepcopy(activity)))
 
+    # missing objectType
+    activity['object']['attachments'] = [{'url': 'http://x.com/y'}]
+    source.Source.original_post_discovery(activity)
+    self.assert_equals([], activity['object']['tags'])
+
     activity['object']['content'] = 'x (not.at end) y (at.the end)'
     source.Source.original_post_discovery(activity)
     self.assert_equals(['http://at.the/end'],
@@ -98,7 +103,6 @@ class SourceTest(testutil.HandlerTest):
         {'objectType': 'article', 'url': 'http://bar/2'},
         {'objectType': 'article', 'url': 'http://baz/3'},
         ], activity['object']['tags'])
-
 
     # leading parens used to cause us trouble
     activity = {'object': {'content' : 'Foo (http://snarfed.org/xyz)'}}

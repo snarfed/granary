@@ -368,7 +368,7 @@ class Source(object):
 
     def article_urls(field):
       return set(util.trim_nulls(a.get('url') for a in obj.get(field, [])
-                                 if a['objectType'] == 'article'))
+                                 if a.get('objectType') == 'article'))
     attachments = article_urls('attachments')
     tags = article_urls('tags')
     urls = attachments | set(util.extract_links(content))
