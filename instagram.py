@@ -284,7 +284,7 @@ class Instagram(source.Source):
       'objectType': 'comment',
       'id': self.tag_uri(comment.id),
       'inReplyTo': [{'id': self.tag_uri(media_id)}],
-      'url': media_url,
+      'url': '%s#comment-%s' % (media_url, comment.id) if media_url else None,
       # TODO: add PST time zone
       'published': comment.created_at.isoformat('T'),
       'content': comment.text,
@@ -305,7 +305,7 @@ class Instagram(source.Source):
     """
     return self.postprocess_object({
         'id': self.tag_uri('%s_liked_by_%s' % (media_id, liker.id)),
-        'url': media_url,
+        'url': '%s#liked-by-%s' % (media_url, liker.id) if media_url else None,
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': media_url},

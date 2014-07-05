@@ -111,7 +111,7 @@ COMMENT_OBJS = [  # ActivityStreams
     'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     'id': tag_uri('789'),
     'published': '2012-10-07T05:45:57',
-    'url': 'http://instagram.com/p/ABC123/',
+    'url': 'http://instagram.com/p/ABC123/#comment-789',
     'inReplyTo': [{'id': tag_uri('123_456')}],
     'to': [{'objectType':'group', 'alias':'@public'}],
     },
@@ -199,7 +199,7 @@ MEDIA_WITH_LIKES = copy.deepcopy(MEDIA)
 MEDIA_WITH_LIKES.likes = LIKES
 LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('123_456_liked_by_8'),
-    'url': 'http://instagram.com/p/ABC123/',
+    'url': 'http://instagram.com/p/ABC123/#liked-by-8',
     'objectType': 'activity',
     'verb': 'like',
     'object': { 'url': 'http://instagram.com/p/ABC123/'},
@@ -215,7 +215,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'content': 'likes this.',
     }, {
     'id': tag_uri('123_456_liked_by_9'),
-    'url': 'http://instagram.com/p/ABC123/',
+    'url': 'http://instagram.com/p/ABC123/#liked-by-9',
     'objectType': 'activity',
     'verb': 'like',
     'object': { 'url': 'http://instagram.com/p/ABC123/'},
