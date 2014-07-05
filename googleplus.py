@@ -175,9 +175,11 @@ class GooglePlus(source.Source):
     comment['author'] = comment.pop('actor')
     comment['to'] = [{'objectType': 'group', 'alias': '@public'}]
     # also convert id to tag URI
-    comment['id'] = self.tag_uri(comment['id'])
-    # G+ comments don't have their own permalinks. :/ so, use the post's.
-    comment['url'] = comment['inReplyTo'][0]['url']
+    id = comment['id']
+    comment['id'] = self.tag_uri(id)
+    # G+ comments don't have their own permalinks. :/ so, use the post's and add
+    # an arbitrary fragment with the comment id.
+    comment['url'] = '%s#comment-%s' % (comment['inReplyTo'][0]['url'], id)
     return self.postprocess_object(comment)
 
   def add_tags(self, activity, collection, verb):
@@ -193,7 +195,7 @@ class GooglePlus(source.Source):
       verb: string, ActivityStreams verb to populate the tags with
     """
     # maps collection to verb to use in content string
-    content_verbs = {'plusoners': '+1ed', 'resharers': 'reshared'}
+    content_verb = {'plusoners': '+1ed', 'resharers': 'reshared'}[collection]
 
     id = activity['id']
     call = self.auth_entity.api().people().listByActivity(
@@ -209,10 +211,10 @@ class GooglePlus(source.Source):
         'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
         'objectType': 'activity',
         'verb': verb,
-        'url': obj.get('url'),
+        'url': '%s#%s-by-%s' % (obj.get('url'), content_verb, person_id),
         'object': {'url': obj.get('url')},
         'author': person,
-        'content': '%s this.' % content_verbs[collection],
+        'content': '%s this.' % content_verb,
         }))
 
     return tags
