@@ -481,11 +481,32 @@ class Twitter(source.Source):
       resp['url'] = base_url
     return resp
 
-  def urlopen(self, url, **kwargs):
+  def urlopen(self, url, headers=None, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
+
+    !!! WARNING !!! this is duplicated in oauth_dropins.twitter.TwitterAuth to
+    avoid depending on App Engine via that module. If you change anything here,
+    make the same change there!
     """
-    return TwitterAuth.signed_urlopen(
-      url, self.access_token_key, self.access_token_secret, **kwargs)
+    if headers is None:
+      headers = {}
+
+    # if this is a post, move the body params into the URL. Tweepy's OAuth
+    # signing doesn't work if they're in the body; Twitter returns a 401.
+    data = kwargs.get('data')
+    if data:
+      method = 'POST'
+      url += ('&' if '?' in url else '?') + data
+      kwargs['data'] = ''
+    else:
+      method = 'GET'
+
+    headers.update(TwitterAuth.auth_header(
+        url, self.access_token_key, self.access_token_secret, method=method))
+    timeout = kwargs.pop('timeout', HTTP_TIMEOUT)
+    logging.debug('Fetching %s', url)
+    return urllib2.urlopen(urllib2.Request(url, headers=headers, **kwargs),
+                           timeout=timeout)
 
   def base_object(self, obj):
     """Returns id and URL of the 'base' silo object that an object operates on.
