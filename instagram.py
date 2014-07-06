@@ -22,23 +22,11 @@ import python_instagram
 from python_instagram.bind import InstagramAPIError
 from python_instagram.client import InstagramAPI
 
-from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
 import source
 
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
-
-
-def handle_exception(self, e, debug):
-  """HTTP request exception handler that translates Instagram errors.
-  """
-  if isinstance(e, InstagramAPIError):
-    logging.exception(e)
-    self.response.set_status(e.status_code)
-    self.response.write(str(e))
-  else:
-    return handlers.handle_exception(self, e, debug)
 
 
 class Instagram(source.Source):
