@@ -175,11 +175,12 @@ class GooglePlus(source.Source):
     comment['author'] = comment.pop('actor')
     comment['to'] = [{'objectType': 'group', 'alias': '@public'}]
     # also convert id to tag URI
-    id = comment['id']
-    comment['id'] = self.tag_uri(id)
-    # G+ comments don't have their own permalinks. :/ so, use the post's and add
-    # an arbitrary fragment with the comment id.
-    comment['url'] = '%s#comment-%s' % (comment['inReplyTo'][0]['url'], id)
+    comment['id'] = self.tag_uri(comment['id'])
+    # G+ comments don't have their own permalinks, and I can't make one up like
+    # I do with Instagram comments/likes and Facebook RSVPs because G+ has JS
+    # that intercepts fragments and tries to redirect to them as the path. :/
+    # so, just use the post's URL, unchanged.
+    comment['url'] = comment['inReplyTo'][0]['url']
     return self.postprocess_object(comment)
 
   def add_tags(self, activity, collection, verb):
@@ -194,9 +195,8 @@ class GooglePlus(source.Source):
       collection: string, 'plusoners' or 'resharers'
       verb: string, ActivityStreams verb to populate the tags with
     """
-    # maps collection to verbs used in content string and fragment
-    content_verb = {'plusoners': '+1ed', 'resharers': 'reshared'}[collection]
-    fragment_verb = {'plusoners': 'plusoned', 'resharers': 'reshared'}[collection]
+    # maps collection to verb to use in content string
+    content_verbs = {'plusoners': '+1ed', 'resharers': 'reshared'}
 
     id = activity['id']
     call = self.auth_entity.api().people().listByActivity(
@@ -212,10 +212,10 @@ class GooglePlus(source.Source):
         'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
         'objectType': 'activity',
         'verb': verb,
-        'url': '%s#%s-by-%s' % (obj.get('url'), fragment_verb, person_id),
+        'url': obj.get('url'),
         'object': {'url': obj.get('url')},
         'author': person,
-        'content': '%s this.' % content_verb,
+        'content': '%s this.' % content_verbs[collection],
         }))
 
     return tags

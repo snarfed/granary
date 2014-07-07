@@ -60,7 +60,7 @@ COMMENT_AS.update({  # ActivityStreams
     'displayName': 'my content',
     'content': 'my content',
     'id': tag_uri('888'),
-    'url': 'http://post/url#comment-888',
+    'url': 'http://post/url',
     'to': [{'objectType':'group', 'alias':'@public'}],
   })
 PLUSONER = {  # Google+
@@ -72,7 +72,7 @@ PLUSONER = {  # Google+
   }
 LIKE = {  # ActivityStreams
   'id': tag_uri('001_liked_by_222'),
-  'url': 'http://plus.google.com/001#plusoned-by-222',
+  'url': 'http://plus.google.com/001',
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'http://plus.google.com/001'},
@@ -95,7 +95,7 @@ RESHARER = {  # Google+
   }
 SHARE = {  # ActivityStreams
   'id': tag_uri('001_shared_by_444'),
-  'url': 'http://plus.google.com/001#reshared-by-444',
+  'url': 'http://plus.google.com/001',
   'objectType': 'activity',
   'verb': 'share',
   'object': {'url': 'http://plus.google.com/001'},
