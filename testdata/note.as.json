@@ -1,6 +1,7 @@
 {
   "objectType": "note",
   "displayName": "blog post 123",
+  "summary": "too cool to summarize",
   "content": "A blog post. link too",
   "id": "tag:example.com,2011:blog-post-123",
   "published": "2012-02-22T20:26:41",

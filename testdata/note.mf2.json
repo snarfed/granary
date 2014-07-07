@@ -3,6 +3,7 @@
   "properties": {
     "uid": ["tag:example.com,2011:blog-post-123"],
     "name": ["blog post 123"],
+    "summary": ["too cool to summarize"],
     "url": ["http://example.com/blog-post-123"],
     "published": ["2012-02-22T20:26:41"],
     "updated": ["2013-10-25T10:31:30+00:00"],

@@ -14,6 +14,7 @@ HENTRY = string.Template("""\
 <article class="$types">
   <span class="u-uid">$uid</span>
   $linked_name
+  $summary
   $published
   $updated
 $author
@@ -92,6 +93,7 @@ def object_to_json(obj, trim_nulls=True):
   content = obj.get('content', '')
   # TODO: extract snippet
   name = obj.get('displayName', obj.get('title', content))
+  summary = obj.get('summary')
 
   author = obj.get('author', obj.get('actor', {}))
   author = object_to_json(author, trim_nulls=False)
@@ -111,6 +113,7 @@ def object_to_json(obj, trim_nulls=True):
     'properties': {
       'uid': [obj.get('id', '')],
       'name': [name],
+      'summary': [summary],
       'url': [url],
       'photo': [obj.get('image', {}).get('url', '')],
       'published': [obj.get('published', '')],
@@ -219,6 +222,7 @@ def json_to_object(mf2):
     'published': prop.get('published', ''),
     'updated': prop.get('updated', ''),
     'displayName': prop.get('name'),
+    'summary': prop.get('summary'),
     'content': content.get('value') or content.get('html'),
     'url': prop.get('url'),
     'image': {'url': prop.get('photo')},
@@ -296,6 +300,8 @@ def json_to_html(obj):
 
   content = prop.get('content', {})
   content_html = content.get('html', '') or content.get('value', '')
+  summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
+             if prop.get('summary') else '')
 
   # if this post is itself a like or repost, link to its target(s).
   likes_and_reposts = []
@@ -334,7 +340,8 @@ def json_to_html(obj):
     content=content_html,
     comments=comments_html,
     likes_and_reposts='\n'.join(likes_and_reposts),
-    linked_name=maybe_linked_name(props))
+    linked_name=maybe_linked_name(props),
+    summary=summary)
 
 
 def hcard_to_html(hcard):
