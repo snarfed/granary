@@ -194,8 +194,9 @@ class GooglePlus(source.Source):
       collection: string, 'plusoners' or 'resharers'
       verb: string, ActivityStreams verb to populate the tags with
     """
-    # maps collection to verb to use in content string
+    # maps collection to verbs used in content string and fragment
     content_verb = {'plusoners': '+1ed', 'resharers': 'reshared'}[collection]
+    fragment_verb = {'plusoners': 'plusoned', 'resharers': 'reshared'}[collection]
 
     id = activity['id']
     call = self.auth_entity.api().people().listByActivity(
@@ -211,7 +212,7 @@ class GooglePlus(source.Source):
         'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
         'objectType': 'activity',
         'verb': verb,
-        'url': '%s#%s-by-%s' % (obj.get('url'), content_verb, person_id),
+        'url': '%s#%s-by-%s' % (obj.get('url'), fragment_verb, person_id),
         'object': {'url': obj.get('url')},
         'author': person,
         'content': '%s this.' % content_verb,

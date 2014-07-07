@@ -72,7 +72,7 @@ PLUSONER = {  # Google+
   }
 LIKE = {  # ActivityStreams
   'id': tag_uri('001_liked_by_222'),
-  'url': 'http://plus.google.com/001#+1ed-by-222',
+  'url': 'http://plus.google.com/001#plusoned-by-222',
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'http://plus.google.com/001'},
