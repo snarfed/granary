@@ -314,11 +314,9 @@ class Facebook(source.Source):
     if include_link and url:
       content += '\n\n(%s)' % url
     preview_content = util.linkify(content)
-    msg_data = {
-        'message': content.encode('utf-8'),
-        # TODO...or leave it to user's default?
-        # 'privacy': json.dumps({'value': 'SELF'}),
-        }
+    msg_data = {'message': content.encode('utf-8')}
+    if appengine_config.DEBUG:
+      msg_data['privacy'] = json.dumps({'value': 'SELF'})
     msg_data = urllib.urlencode(msg_data)
 
     if type == 'comment' and base_url:
