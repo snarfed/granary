@@ -912,6 +912,8 @@ class TwitterTest(testutil.HandlerTest):
       self.assert_equals(tweet, self.twitter.create(obj))
 
       got = self.twitter.preview_create(obj)
+      got = unicode(got).encode('utf-8')
+
       self.assertIn('will <span class="verb">tweet</span>', got)
       self.assertIn('<em>%s</em>' % preview, got)
 
@@ -946,8 +948,10 @@ class TwitterTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.twitter.create(obj, include_link=True)
+    preview = self.twitter.preview_create(obj, include_link=True)
     self.assertIn('too long… (<a href="http://obj">obj</a>)',
-                  self.twitter.preview_create(obj, include_link=True))
+                  unicode(preview).encode('utf-8'))
+
 
   def test_create_reply(self):
     # tuples: (content, in-reply-to url, expected tweet, expected type)
