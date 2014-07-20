@@ -439,7 +439,6 @@ class Twitter(source.Source):
       content += u'…'
     if include_url:
       content += ' (%s)' % include_url
-    content = unicode(content).encode('utf-8')
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True)
 
@@ -449,6 +448,7 @@ class Twitter(source.Source):
                 '<br /><br />...to <a href="%s">this tweet</a>:\n%s' %
                 (preview_content, base_url, EMBED_TWEET % base_url))
       else:
+        content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
         resp['type'] = 'comment'
@@ -476,6 +476,7 @@ class Twitter(source.Source):
         return ('will <span class="verb">tweet</span>:<br /><br />'
                 '<em>%s</em><br />' % preview_content)
       else:
+        content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content})
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
         resp['type'] = 'post'
