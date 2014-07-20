@@ -188,7 +188,7 @@ class Source(object):
       include_link: boolean. If True, includes a link to the object
         (if it has one) in the content.
 
-    Returns: string HTML snipper
+    Returns: unicode string HTML snippet
 
     Raises NotImplementedError if the site doesn't support the object type, and
     other exceptions on other errors.

@@ -279,7 +279,7 @@ class Facebook(source.Source):
       obj: ActivityStreams object
       include_link: boolean
 
-    Returns: string HTML snippet
+    Returns: unicode string HTML snippet
     """
     return self._create(obj, preview=True, include_link=include_link)
 
@@ -297,8 +297,8 @@ class Facebook(source.Source):
       include_link: boolean
 
     Returns:
-      If preview is True, a string HTML snippet. If False, a dict with 'id' and
-      'url' keys for the newly created Facebook object.
+      If preview is True, a unicode string HTML snippet. If False, a dict with
+      'id' and 'url' keys for the newly created Facebook object.
     """
     # TODO: validation, error handling
     assert preview in (False, True)
