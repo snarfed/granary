@@ -867,7 +867,7 @@ class TwitterTest(testutil.HandlerTest):
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
-    dots = u'…'.encode('utf-8')
+    dots = u'…'
     original = (
       'my status',
       'too long, will be ellipsized',
@@ -895,7 +895,7 @@ class TwitterTest(testutil.HandlerTest):
 
     for content in created:
       self.expect_urlopen(
-        twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content),
+        twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content.encode('utf-8')),
         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
@@ -912,8 +912,6 @@ class TwitterTest(testutil.HandlerTest):
       self.assert_equals(tweet, self.twitter.create(obj))
 
       got = self.twitter.preview_create(obj)
-      got = unicode(got).encode('utf-8')
-
       self.assertIn('will <span class="verb">tweet</span>', got)
       self.assertIn('<em>%s</em>' % preview, got)
 
@@ -948,9 +946,8 @@ class TwitterTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.twitter.create(obj, include_link=True)
-    preview = self.twitter.preview_create(obj, include_link=True)
-    self.assertIn('too long… (<a href="http://obj">obj</a>)',
-                  unicode(preview).encode('utf-8'))
+    self.assertIn(u'too long… (<a href="http://obj">obj</a>)',
+                  self.twitter.preview_create(obj, include_link=True))
 
 
   def test_create_reply(self):
