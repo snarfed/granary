@@ -524,3 +524,29 @@ class Source(object):
       id = path.rsplit('/', 1)[-1]
 
     return (id, url)
+
+  def _content_for_create(self, obj):
+    """Returns the content text to use in create() and preview_create().
+
+    If objectType is note, or it's a comment (or there's an inReplyTo) and the
+    original post is on this source, then returns summary if available, then
+    content, then displayName.
+
+    Otherwise, returns summary if available, then displayName, then content.
+
+    Args:
+      obj: dict, ActivityStreams object
+
+    Returns: string text or None
+    """
+    type = obj.get('objectType')
+    summary = obj.get('summary')
+    name = obj.get('displayName')
+    content = obj.get('content')
+    _, base_url = self.base_object(obj)
+
+    if type == 'note' or (base_url and (type == 'comment' or obj.get('inReplyTo'))):
+      ret = summary or content or name
+    else:
+      ret = summary or name or content
+    return ret.strip() if ret else None

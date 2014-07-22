@@ -308,8 +308,10 @@ class Facebook(source.Source):
     if base_id and not base_url:
       base_url = self.object_url(base_id)
 
+    content = self._content_for_create(obj)
+    if not content:
+      raise NotImplementedError('No content text found.')
 
-    content = obj.get('content', '').strip()
     url = obj.get('url')
     if include_link and url:
       content += '\n\n(%s)' % url

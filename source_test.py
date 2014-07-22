@@ -8,7 +8,7 @@ import copy
 import json
 import mox
 
-import source
+from source import Source
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
@@ -57,7 +57,7 @@ EVENT_WITH_RSVPS.update({
   })
 
 
-class FakeSource(source.Source):
+class FakeSource(Source):
   DOMAIN = 'fake.com'
 
   def __init__(self, **kwargs):
@@ -78,16 +78,16 @@ class SourceTest(testutil.HandlerTest):
         'url': 'http://example.com/article-abc',
         'tags': [],
         }}
-    self.assert_equals(activity, source.Source.original_post_discovery(
+    self.assert_equals(activity, Source.original_post_discovery(
         copy.deepcopy(activity)))
 
     # missing objectType
     activity['object']['attachments'] = [{'url': 'http://x.com/y'}]
-    source.Source.original_post_discovery(activity)
+    Source.original_post_discovery(activity)
     self.assert_equals([], activity['object']['tags'])
 
     activity['object']['content'] = 'x (not.at end) y (at.the end)'
-    source.Source.original_post_discovery(activity)
+    Source.original_post_discovery(activity)
     self.assert_equals(['http://at.the/end'],
                        activity['object']['upstreamDuplicates'])
     self.assert_equals([], activity['object']['tags'])
@@ -97,7 +97,7 @@ class SourceTest(testutil.HandlerTest):
         'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
         'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
         })
-    source.Source.original_post_discovery(activity)
+    Source.original_post_discovery(activity)
     self.assert_equals([
         {'objectType': 'article', 'url': 'http://foo/1'},
         {'objectType': 'article', 'url': 'http://bar/2'},
@@ -106,7 +106,7 @@ class SourceTest(testutil.HandlerTest):
 
     # leading parens used to cause us trouble
     activity = {'object': {'content' : 'Foo (http://snarfed.org/xyz)'}}
-    source.Source.original_post_discovery(activity)
+    Source.original_post_discovery(activity)
     self.assert_equals(
       [{'objectType': 'article', 'url': 'http://snarfed.org/xyz'}],
       activity['object']['tags'])
@@ -119,7 +119,7 @@ class SourceTest(testutil.HandlerTest):
           'content': 'x (foo.com/1)',
           field: [{'objectType': 'article', 'url': url}],
           }}
-        source.Source.original_post_discovery(activity)
+        Source.original_post_discovery(activity)
         self.assert_equals([{'objectType': 'article', 'url': url}],
                            activity['object']['tags'])
 
@@ -130,7 +130,7 @@ class SourceTest(testutil.HandlerTest):
           'content': 'x (%s)' % url,
           'attachments': [{'objectType': 'article', 'url': 'http://' + url}],
           }}
-      source.Source.original_post_discovery(activity)
+      Source.original_post_discovery(activity)
       self.assert_equals([], activity['object']['tags'])
 
   def test_get_like(self):
@@ -176,24 +176,51 @@ class SourceTest(testutil.HandlerTest):
 
   def test_add_rsvps_to_event(self):
     event = copy.deepcopy(EVENT)
-    source.Source.add_rsvps_to_event(event, [])
+    Source.add_rsvps_to_event(event, [])
     self.assert_equals(EVENT, event)
 
-    source.Source.add_rsvps_to_event(event, RSVPS)
+    Source.add_rsvps_to_event(event, RSVPS)
     self.assert_equals(EVENT_WITH_RSVPS, event)
 
   def test_get_rsvps_from_event(self):
-    self.assert_equals([], source.Source.get_rsvps_from_event(EVENT))
-    self.assert_equals(RSVPS, source.Source.get_rsvps_from_event(EVENT_WITH_RSVPS))
+    self.assert_equals([], Source.get_rsvps_from_event(EVENT))
+    self.assert_equals(RSVPS, Source.get_rsvps_from_event(EVENT_WITH_RSVPS))
 
   def test_get_rsvps_from_event_bad_id(self):
     event = copy.deepcopy(EVENT)
     for id in None, 'not_a_tag_uri':
       event['id'] = id
-      self.assert_equals([], source.Source.get_rsvps_from_event(event))
+      self.assert_equals([], Source.get_rsvps_from_event(event))
 
   def test_base_object_multiple_objects(self):
     like = copy.deepcopy(LIKES[0])
     like['object'] = [like['object'], {'url': 'http://fake.com/second'}]
     self.assert_equals(('second', 'http://fake.com/second'),
                        self.source.base_object(like))
+
+  def test_content_for_create(self):
+    def cfc(base, extra):
+      obj = base.copy()
+      obj.update(extra)
+      return self.source._content_for_create(obj)
+
+    self.assertEqual(None, cfc({}, {}))
+
+    for base in ({'objectType': 'article'},
+                 {'inReplyTo': {'url': 'http://not/fake'}},
+                 {'objectType': 'comment', 'object': {'url': 'http://not/fake'}}):
+      self.assertEqual(None, cfc(base, {}))
+      self.assertEqual('c', cfc(base, {'content': ' c '}))
+      self.assertEqual('n', cfc(base, {'content': 'c', 'displayName': 'n'}))
+      self.assertEqual('s', cfc(base, {'content': 'c', 'displayName': 'n',
+                                       'summary': 's'}))
+
+    for base in ({'objectType': 'note'},
+                 {'inReplyTo': {'url': 'http://fake.com/post'}},
+                 {'objectType': 'comment',
+                  'object': {'url': 'http://fake.com/post'}}):
+      self.assertEqual(None, cfc(base, {}))
+      self.assertEqual('n', cfc(base, {'displayName': 'n'}))
+      self.assertEqual('c', cfc(base, {'displayName': 'n', 'content': 'c'}))
+      self.assertEqual('s', cfc(base, {'displayName': 'n', 'content': 'c',
+                                       'summary': ' s '}))

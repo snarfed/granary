@@ -961,8 +961,6 @@ class TwitterTest(testutil.HandlerTest):
       ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo', 'comment'),
       # mobile.twitter.com URL. the mobile should be stripped from embed.
       ('foo', 'http://mobile.twitter.com/you/status/100', '@you foo', 'comment'),
-      # reply to different source domain, so we don't treat it as a reply
-      ('@you my reply', 'http://other.com', 'my summary', 'post'),
       )
 
     for _, _, expected_tweet, type in testdata:
@@ -982,11 +980,7 @@ class TwitterTest(testutil.HandlerTest):
           'url': 'https://twitter.com/snarfed_org/status/100',
           'type': type,
           })
-      obj.update({'inReplyTo': [{'url': url}],
-                  'content': content,
-                  'summary': 'my summary',
-                  'displayName': 'my name',
-                  })
+      obj.update({'inReplyTo': [{'url': url}], 'content': content})
       self.assert_equals(tweet, self.twitter.create(obj))
 
       preview = self.twitter.preview_create(obj)

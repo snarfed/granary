@@ -371,15 +371,12 @@ class Twitter(source.Source):
     type = obj.get('objectType')
     verb = obj.get('verb')
     base_id, base_url = self.base_object(obj)
-    content = obj.get('content', '').strip()
-    summary = obj.get('summary', '').strip()
-    name = obj.get('displayName', '').strip()
+    content = self._content_for_create(obj)
+    if not content:
+      raise NotImplementedError('No content text found.')
 
     is_reply = (type == 'comment' or 'inReplyTo' in obj) and base_url
     if is_reply:
-      # prefer full content for replies
-      content = content or summary or name
-
       # extract username from in-reply-to URL so we can @-mention it, if it's
       # not already @-mentioned, since Twitter requires that to make our new
       # tweet a reply.
@@ -400,10 +397,6 @@ class Twitter(source.Source):
       parsed = list(parsed)
       parsed[1] = self.DOMAIN
       base_url = urlparse.urlunparse(parsed)
-
-    else:
-      # prefer summary for non-replies
-      content = summary or content or name
 
     # need a base_url with the tweet id for the embed HTML below. do this
     # *after* checking the real base_url for in-reply-to author username.

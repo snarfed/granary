@@ -978,7 +978,7 @@ class FacebookTest(testutil.HandlerTest):
     obj = copy.deepcopy(POST_OBJ)
     obj.update({
         'objectType': 'article',
-        'content': 'my msg',
+        'summary': 'my msg',
         'url': 'http://obj',
         })
     self.facebook.create(obj, include_link=True)
@@ -992,7 +992,7 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
-    obj['content'] = 'my cmt'
+    obj['summary'] = 'my cmt'
     self.assert_equals({
         'id': '456_789',
         'url': 'https://facebook.com/547822715231468?comment_id=456_789',
@@ -1008,7 +1008,7 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
-    obj.update({'content': 'my cmt', 'inReplyTo': [{'url': 'http://other'}]})
+    obj.update({'summary': 'my cmt', 'inReplyTo': [{'url': 'http://other'}]})
 
     self.assert_equals({'type': 'post'}, self.facebook.create(obj))
     self.assertIn('<span class="verb">post</span>',
