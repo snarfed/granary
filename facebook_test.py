@@ -1070,3 +1070,27 @@ class FacebookTest(testutil.HandlerTest):
     for fn in self.facebook.create, self.facebook.preview_create:
       self.assertRaises(NotImplementedError, fn,
                         {'objectType': 'activity', 'verb': 'share'})
+
+  def test_can_create_simple(self):
+    """Make can_create returns True for a simple message
+    """
+    can, err_plain, err_html = self.facebook.can_create({
+      'objectType': 'note',
+      'content': 'Lorem ipsum dolor sit amet'
+    })
+    self.assertTrue(can)
+    self.assertIsNone(err_plain)
+    self.assertIsNone(err_html)
+
+  def test_cannot_create_share(self):
+    """Make can_create returns False for shares on Facebook
+    """
+    can, err_plain, err_html = self.facebook.can_create({
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': [{'url': 'http://facebook.com/johndoe/posts/12345'}],
+      'content': 'Sharing this',
+    })
+    self.assertFalse(can)
+    self.assertIn('Cannot publish shares', err_plain)
+    self.assertIn('Cannot publish', err_html)

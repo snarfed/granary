@@ -195,6 +195,25 @@ class Source(object):
     """
     raise NotImplementedError()
 
+  def can_create(self, obj):
+    """Sanity-checking whether this source can publish this type of
+    object. Attempts to preview the object, catch NotImplementedErrors
+    (or better yet DetailedNotImplementedErrors), and report them to
+    the user as a helpful error message.
+
+    Args:
+      obj: an activitystreams object
+
+    Return:
+      a tuple, (boolean, plain text error, html-formatted error)
+    """
+    try:
+      self.preview_create(obj)
+      return True, None, None
+
+    except CannotPublishTypeError, e:
+      return False, e.plain, e.html
+
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
 
@@ -550,3 +569,22 @@ class Source(object):
     else:
       ret = summary or name or content
     return ret.strip() if ret else None
+
+
+class CannotPublishTypeError(BaseException):
+  """This indicates the user is trying to publish to a source that
+  explicitly does not support it (e.g. RSVPs to Twitter). We can take
+  advantage of these specific failures and give the user an informative
+  error message.
+
+  This is distinct from NotImplementedError and handled a little
+  differently. When a NotImplementedError is caught, publish will
+  continue searching the page for an h-entry. CannotPublish, on the
+  other hand, means we've hit the item that they intended to publish
+  and know that we cannot publish it, so Bridgy will report and error
+  and be done.
+  """
+
+  def __init__(self, plain, html):
+    self.plain = plain
+    self.html = html
