@@ -1,0 +1,8 @@
+{
+  "type": ["h-card"],
+    "properties": {
+      "name": ["Foo Bar"],
+      "author": ["Foo Bar"]
+    },
+  "value": "Posted by Foo Bar"
+}

@@ -168,7 +168,7 @@ def json_to_object(mf2):
 
   Returns: dict, ActivityStreams object
   """
-  if not mf2:
+  if not mf2 or not isinstance(mf2, dict):
     return {}
 
   props = mf2.get('properties', {})
