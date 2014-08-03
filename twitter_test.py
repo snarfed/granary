@@ -907,6 +907,7 @@ class TwitterTest(testutil.HandlerTest):
         })
 
     obj = copy.deepcopy(OBJECT)
+    del obj['image']
     for preview, orig in zip(previewed, original):
       obj['content'] = orig
       self.assert_equals(tweet, self.twitter.create(obj))
@@ -941,6 +942,7 @@ class TwitterTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(OBJECT)
+    del obj['image']
     obj.update({
         'content': 'too long\nextra whitespace\tbut should include url',
         'url': 'http://obj',
