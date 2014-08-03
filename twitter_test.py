@@ -1021,3 +1021,26 @@ class TwitterTest(testutil.HandlerTest):
     for fn in self.twitter.create, self.twitter.preview_create:
       self.assertRaises(NotImplementedError, fn,
                         {'objectType': 'activity', 'verb': 'rsvp-yes'})
+
+  def test_can_create_simple(self):
+    """Make can_create returns true for a simple message
+    """
+    can, err_plain, err_html = self.twitter.can_create({
+      'objectType': 'note',
+      'content': 'Lorem ipsum dolor sit amet'
+    })
+    self.assertTrue(can)
+    self.assertIsNone(err_plain)
+    self.assertIsNone(err_html)
+
+  def test_cannot_create_rsvp(self):
+    """Make can_create returns False for an RSVP
+    """
+    can, err_plain, err_html = self.twitter.can_create({
+      'objectType': 'activity',
+      'verb': 'rsvp-yes',
+      'content': "I'll be there!",
+    })
+    self.assertFalse(can)
+    self.assertIn('Cannot publish RSVPs', err_plain)
+    self.assertIn('Cannot publish', err_html)

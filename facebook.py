@@ -360,6 +360,15 @@ class Facebook(source.Source):
         resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
+    elif verb and verb == 'share':
+      # Facebook has shares, but the Facebook does not let us post them.
+      # Give a helpful error
+      raise source.CannotPublishTypeError(
+        'Cannot publish shares on Facebook.',
+        'Cannot publish <a href="http://indiewebcamp.com/repost">shares</a> '
+        'on Facebook. This limitation is imposed by the '
+        '<a href="https://developers.facebook.com/docs/graph-api/reference/v2.0/object/sharedposts/#publish">Facebook Graph API</a>.')
+
     else:
       raise NotImplementedError()
 

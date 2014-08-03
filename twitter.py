@@ -474,6 +474,13 @@ class Twitter(source.Source):
         resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
         resp['type'] = 'post'
 
+    elif verb and verb.startswith('rsvp-'):
+      # Twitter cannot publish event rsvps. Give a helpful error message if
+      # the user tries to.
+      raise source.CannotPublishTypeError(
+        'Cannot publish RSVPs to Twitter.',
+        'Cannot publish <a href="http://indiewebcamp.com/rsvp">RSVPs</a> to Twitter.')
+
     else:
       raise NotImplementedError()
 
