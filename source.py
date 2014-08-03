@@ -12,6 +12,7 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import collections
 import datetime
 import itertools
 import logging
@@ -38,6 +39,14 @@ RSVP_CONTENTS = {
   'rsvp-maybe': 'might attend.',
   'invite': 'is invited.',
   }
+
+# Provides a detailed description of publishing failures. If abort is
+# False, we should continue looking for an entry to publish; if True,
+# we should and immediately inform the user. plain text is sent in
+# response to failed publish webmentions; html will be displayed to
+# the user when publishing interactively.
+CreationFailure = collections.namedtuple('CreationFailure',
+                                         ['abort', 'plain', 'html'])
 
 
 class Source(object):
@@ -165,11 +174,15 @@ class Source(object):
       include_link: boolean. If True, includes a link to the object
         (if it has one) in the content.
 
-    Returns: dict, possibly empty. If the newly created object has an id or
-      permalink, they'll be provided in the values for 'id' and 'url'.
+    Returns:
+      (a result dict, a CreationFailure object) a tuple
 
-    Raises NotImplementedError if the site doesn't support the object type, and
-    other exceptions on other errors.
+      The result dict may be None or empty. If the newly created
+      object has an id or permalink, they'll be provided in the values
+      for 'id' and 'url'.
+
+      CreationFailure will be non-None if the site doesn't support the
+      object type.
     """
     raise NotImplementedError()
 
@@ -188,10 +201,11 @@ class Source(object):
       include_link: boolean. If True, includes a link to the object
         (if it has one) in the content.
 
-    Returns: unicode string HTML snippet
+    Returns:
+      (unicode string HTML snippet, a CreationFailure object) a tuple
 
-    Raises NotImplementedError if the site doesn't support the object type, and
-    other exceptions on other errors.
+      CreationFailure will be non-None if the site doesn't support the
+      object type.
     """
     raise NotImplementedError()
 
@@ -524,6 +538,25 @@ class Source(object):
       id = path.rsplit('/', 1)[-1]
 
     return (id, url)
+
+  def _creation_success(self, result):
+    """Utility method for _create implementations upon success. Simply
+    returns the result and None for the failure description.
+
+    Returns:
+      (the result, None) a tuple
+    """
+    return result, None
+
+  def _creation_failure(self, *args, **kwargs):
+    """Utility method for _create implementations to inform the user that
+    creation failed. Returns None for the result and passes all
+    arguments directly to the CreationFailure constructor.
+
+    Returns:
+      (None, a CreationFailure instance) a tuple
+    """
+    return None, CreationFailure(*args, **kwargs)
 
   def _content_for_create(self, obj):
     """Returns the content text to use in create() and preview_create().

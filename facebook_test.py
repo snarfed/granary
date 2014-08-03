@@ -962,10 +962,12 @@ class FacebookTest(testutil.HandlerTest):
         'content': 'my msg',
         })
     self.assert_equals(
-      {'id': '123_456', 'url': 'https://facebook.com/123_456', 'type': 'post'},
+      ({'id': '123_456', 'url': 'https://facebook.com/123_456', 'type': 'post'},
+       None),
       self.facebook.create(obj))
 
-    preview = self.facebook.preview_create(obj)
+    preview, failure = self.facebook.preview_create(obj)
+    self.assertFalse(failure)
     self.assertIn('will <span class="verb">post</span>', preview)
     self.assertIn('<em>my msg</em>', preview)
 
@@ -982,7 +984,9 @@ class FacebookTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.facebook.create(obj, include_link=True)
-    self.assertIn('my msg', self.facebook.preview_create(obj, include_link=True))
+    preview, failure = self.facebook.preview_create(obj, include_link=True)
+    self.assertFalse(failure)
+    self.assertIn('my msg', preview)
 
   def test_create_comment(self):
     self.expect_urlopen(
@@ -993,26 +997,28 @@ class FacebookTest(testutil.HandlerTest):
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj['summary'] = 'my cmt'
-    self.assert_equals({
-        'id': '456_789',
-        'url': 'https://facebook.com/547822715231468?comment_id=456_789',
-        'type': 'comment',
-        }, self.facebook.create(obj))
+    self.assert_equals(({
+      'id': '456_789',
+      'url': 'https://facebook.com/547822715231468?comment_id=456_789',
+      'type': 'comment'
+    }, None), self.facebook.create(obj))
 
-    preview = self.facebook.preview_create(obj)
+    preview, failure = self.facebook.preview_create(obj)
+    self.assertFalse(failure)
     self.assertIn('<span class="verb">comment</span> <em>my cmt</em> on <a href="https://facebook.com/547822715231468">this post</a>', preview)
     self.assertIn('<div class="fb-post" data-href="https://facebook.com/547822715231468">', preview)
 
   def test_create_comment_other_domain(self):
-    self.expect_urlopen(facebook.API_FEED_URL, '{}', data='message=my+cmt')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj.update({'summary': 'my cmt', 'inReplyTo': [{'url': 'http://other'}]})
 
-    self.assert_equals({'type': 'post'}, self.facebook.create(obj))
-    self.assertIn('<span class="verb">post</span>',
-                  self.facebook.preview_create(obj))
+    for fn in (self.facebook.preview_create, self.facebook.create):
+      result, failure = fn(obj)
+      self.assertTrue(failure)
+      self.assertTrue(failure.abort)
+      self.assertIn('Could not', failure.plain)
 
   def test_create_comment_on_post_urls(self):
     urls = ('https://www.facebook.com/snarfed.org/posts/333',
@@ -1032,21 +1038,22 @@ class FacebookTest(testutil.HandlerTest):
           'inReplyTo': [{'url': url}],
           'content': 'my cmt',
           })
-      self.assert_equals({
-          'id': '456_789',
-          'url': 'https://facebook.com/333?comment_id=456_789',
-          'type': 'comment',
-        }, self.facebook.create(obj))
+      self.assert_equals(({
+        'id': '456_789',
+        'url': 'https://facebook.com/333?comment_id=456_789',
+        'type': 'comment',
+      }, None), self.facebook.create(obj))
 
   def test_create_like(self):
     self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
                         'true', data='')
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'https://facebook.com/212038/posts/10100176064482163',
-                        'type': 'like'},
+    self.assert_equals(({'url': 'https://facebook.com/212038/posts/10100176064482163',
+                         'type': 'like'}, None),
                        self.facebook.create(LIKE_OBJS[0]))
 
-    preview = self.facebook.preview_create(LIKE_OBJS[0])
+    preview, failure = self.facebook.preview_create(LIKE_OBJS[0])
+    self.assertFalse(failure)
     self.assertIn('<span class="verb">like</span> <a href="https://facebook.com/212038/posts/10100176064482163">this post</a>', preview)
     self.assertIn('<div class="fb-post" data-href="https://facebook.com/212038/posts/10100176064482163">', preview)
 
@@ -1059,14 +1066,47 @@ class FacebookTest(testutil.HandlerTest):
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'https://facebook.com/234/'}]
-      self.assert_equals({'url': 'https://facebook.com/234/', 'type': 'rsvp'},
-                          self.facebook.create(rsvp))
+      self.assert_equals(({'url': 'https://facebook.com/234/', 'type': 'rsvp'},
+                          None),
+                         self.facebook.create(rsvp))
 
-    preview = self.facebook.preview_create(rsvp)
+    preview, failure = self.facebook.preview_create(rsvp)
+    self.assertFalse(failure)
     self.assertIn('<span class="verb">RSVP maybe</span>', preview)
     self.assertIn('https://facebook.com/234/', preview)
 
   def test_create_unsupported_type(self):
     for fn in self.facebook.create, self.facebook.preview_create:
-      self.assertRaises(NotImplementedError, fn,
-                        {'objectType': 'activity', 'verb': 'share'})
+      result, failure = fn({'objectType': 'activity', 'verb': 'share'})
+      self.assertTrue(failure)
+      self.assertTrue(failure.abort)
+      self.assertIn('Cannot publish shares', failure.plain)
+      self.assertIn('Cannot publish', failure.html)
+
+  def test_create_rsvp_without_in_reply_to(self):
+    for rsvp in RSVP_OBJS_WITH_ID[:3]:
+      rsvp = copy.deepcopy(rsvp)
+      rsvp['inReplyTo'] = [{'url': 'https://foo.com/1234'}]
+      result, failure = self.facebook.create(rsvp)
+      self.assertTrue(failure)
+      self.assertIn('missing an in-reply-to', failure.plain)
+
+  def test_create_comment_without_in_reply_to(self):
+    obj = copy.deepcopy(COMMENT_OBJS[0])
+    obj['inReplyTo'] = [{'url': 'http://foo.com/bar'}]
+
+    for fn in (self.facebook.preview_create, self.facebook.create):
+      preview, failure = fn(obj)
+      self.assertTrue(failure)
+      self.assertIn('Could not find a Facebook status to reply to', failure.plain)
+      self.assertIn('Could not find a Facebook status to', failure.html)
+
+  def test_create_like_without_object(self):
+    obj = copy.deepcopy(LIKE_OBJS[0])
+    del obj['object']
+
+    for fn in (self.facebook.preview_create, self.facebook.create):
+      preview, failure = fn(obj)
+      self.assertTrue(failure)
+      self.assertIn('Could not find a Facebook status to like', failure.plain)
+      self.assertIn('Could not find a Facebook status to', failure.html)
