@@ -539,25 +539,6 @@ class Source(object):
 
     return (id, url)
 
-  def _creation_success(self, result):
-    """Utility method for _create implementations upon success. Simply
-    returns the result and None for the failure description.
-
-    Returns:
-      (the result, None) a tuple
-    """
-    return result, None
-
-  def _creation_failure(self, *args, **kwargs):
-    """Utility method for _create implementations to inform the user that
-    creation failed. Returns None for the result and passes all
-    arguments directly to the CreationFailure constructor.
-
-    Returns:
-      (None, a CreationFailure instance) a tuple
-    """
-    return None, CreationFailure(*args, **kwargs)
-
   def _content_for_create(self, obj):
     """Returns the content text to use in create() and preview_create().
 
