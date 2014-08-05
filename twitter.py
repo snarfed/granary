@@ -21,6 +21,7 @@ import re
 import urllib
 import urllib2
 import urlparse
+import requests
 
 from appengine_config import HTTP_TIMEOUT
 
@@ -47,6 +48,7 @@ API_SEARCH_URL = \
 API_POST_TWEET_URL = 'https://api.twitter.com/1.1/statuses/update.json'
 API_POST_RETWEET_URL = 'https://api.twitter.com/1.1/statuses/retweet/%s.json'
 API_POST_FAVORITE_URL = 'https://api.twitter.com/1.1/favorites/create.json'
+API_POST_MEDIA_URL = 'https://api.twitter.com/1.1/statuses/update_with_media.json'
 HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 # Don't hit the RETWEETS endpoint more than this many times per
@@ -463,6 +465,21 @@ class Twitter(source.Source):
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
         resp['type'] = 'repost'
+
+    elif type in ('note', 'article') and obj.get('image'):
+      image_url = obj.get('image').get('url')
+      if preview:
+        return ('will <span class="verb">tweet</span> with photo:<br /><br />'
+                '<em>%s</em><br /><img src="%s"/><br />' % (preview_content, image_url))
+      else:
+        content = unicode(content).encode('utf-8')
+        data = {'status': content}
+        files = {'media[]': urllib2.urlopen(image_url)}
+        headers = twitter_auth.auth_header(API_POST_MEDIA_URL,
+            self.access_token_key, self.access_token_secret, 'POST')
+        resp = json.loads(requests.post(API_POST_MEDIA_URL,
+          data=data, files=files, headers=headers).text)
+        resp['type'] = 'post'
 
     elif type in ('note', 'article', 'comment'):
       if preview:
