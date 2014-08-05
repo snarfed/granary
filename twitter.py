@@ -21,6 +21,7 @@ import re
 import urllib
 import urllib2
 import urlparse
+import requests
 
 from appengine_config import HTTP_TIMEOUT
 
