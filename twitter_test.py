@@ -11,9 +11,9 @@ import urllib
 
 import microformats2
 import source
+import testutil
 import twitter
 from oauth_dropins import appengine_config
-from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
 
@@ -552,7 +552,7 @@ ATOM = """\
 """
 
 
-class TwitterTest(testutil.HandlerTest):
+class TwitterTest(testutil.TestCase):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
