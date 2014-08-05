@@ -269,11 +269,8 @@ class Facebook(source.Source):
       include_link: boolean
 
     Returns:
-      (the result dict, a CreationFailure object) a tuple, where
-      either can be None
-
-      the result will be a dict with 'id' and 'url' keys for the newly
-      created Facebook object (or None)
+      a CreationResult whose contents will be a dict with 'id' and
+      'url' keys for the newly created Facebook object (or None)
     """
     return self._create(obj, preview=False, include_link=include_link)
 
@@ -285,8 +282,8 @@ class Facebook(source.Source):
       include_link: boolean
 
     Returns:
-      (unicode string HTML snippet, a CreationFailure object) a tuple,
-      where either can be None
+      a CreationResult whose contents will be a unicode string HTML snippet
+      or None
     """
     return self._create(obj, preview=True, include_link=include_link)
 
@@ -304,10 +301,9 @@ class Facebook(source.Source):
       include_link: boolean
 
     Returns:
-      (the result, a CreationFailure object) a tuple, where either
-      element can be None
+      a CreationResult
 
-      If preview is True, the result will be a unicode string HTML
+      If preview is True, the contents will be a unicode string HTML
       snippet. If False, it will be a dict with 'id' and 'url' keys
       for the newly created Facebook object.
     """
@@ -324,10 +320,10 @@ class Facebook(source.Source):
       if type == 'activity':
         content = verb
       else:
-        return None, source.CreationFailure(
+        return source.creation_result(
           abort=False,  # keep looking for things to post
-          plain='No content text found.',
-          html='No content text found.')
+          error_plain='No content text found.',
+          error_html='No content text found.')
 
     url = obj.get('url')
     if include_link and url:
@@ -340,17 +336,19 @@ class Facebook(source.Source):
 
     if type == 'comment':
       if not base_url:
-        return None, source.CreationFailure(
-          abort=True, plain='Could not find a Facebook status to reply to.',
-          html='Could not find a Facebook status to <a href="http://indiewebcamp.com/comment">reply to</a>. '
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a Facebook status to reply to.',
+          error_html='Could not find a Facebook status to <a href="http://indiewebcamp.com/comment">reply to</a>. '
           'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
           'link a Facebook URL or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        return ('will <span class="verb">comment</span> <em>%s</em> on '
-                '<a href="%s">this post</a>:\n%s' %
-                (preview_content, base_url, EMBED_POST % base_url)), None
+        return source.creation_result(
+          'will <span class="verb">comment</span> <em>%s</em> on '
+          '<a href="%s">this post</a>:\n%s' %
+          (preview_content, base_url, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
                                        data=msg_data).read())
@@ -359,16 +357,18 @@ class Facebook(source.Source):
 
     elif type == 'activity' and verb == 'like':
       if not base_url:
-        return None, source.CreationFailure(
-          abort=True, plain='Could not find a Facebook status to like.',
-          html='Could not find a Facebook status to <a href="http://indiewebcamp.com/favorite">like</a>. '
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a Facebook status to like.',
+          error_html='Could not find a Facebook status to <a href="http://indiewebcamp.com/favorite">like</a>. '
           'Check that your post has an <a href="http://indiewebcamp.com/favorite">like-of</a> '
           'link a Facebook URL or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        return ('will <span class="verb">like</span> <a href="%s">this post</a>:\n%s' %
-                (base_url, EMBED_POST % base_url)), None
+        return source.creation_result(
+          'will <span class="verb">like</span> <a href="%s">this post</a>:\n%s' %
+          (base_url, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
         assert resp == True, resp
@@ -376,18 +376,20 @@ class Facebook(source.Source):
 
     elif type == 'activity' and verb in RSVP_ENDPOINTS:
       if not base_url:
-        return None, source.CreationFailure(
-          abort=True, plain="This looks like an RSVP, but it's missing an "
+        return source.creation_result(
+          abort=True,
+          error_plain="This looks like an RSVP, but it's missing an "
           "in-reply-to link to the Facebook event.",
-          html="This looks like an <a href='http://indiewebcamp.com/rsvp'>RSVP</a>, "
+          error_html="This looks like an <a href='http://indiewebcamp.com/rsvp'>RSVP</a>, "
           "but it's missing an <a href='http://indiewebcamp.com/comment'>in-reply-to</a> "
           "link to the Facebook event.")
 
       # TODO: event invites
       if preview:
         assert verb.startswith('rsvp-')
-        return ('will <span class="verb">RSVP %s</span> to '
-                '<a href="%s">this event</a>.<br />' % (verb[5:], base_url)), None
+        return source.creation_result(
+          'will <span class="verb">RSVP %s</span> to '
+          '<a href="%s">this event</a>.<br />' % (verb[5:], base_url))
       else:
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
         assert resp == True, resp
@@ -395,29 +397,30 @@ class Facebook(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return ('will <span class="verb">post</span>:<br /><br />'
-                '<em>%s</em><br />' % preview_content), None
+        return source.creation_result(
+          'will <span class="verb">post</span>:<br /><br />'
+          '<em>%s</em><br />' % preview_content)
       else:
         resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type == 'activity' and verb == 'share':
-      return None, source.CreationFailure(
+      return source.creation_result(
         abort=True,
-        plain='Cannot publish shares on Facebook.',
-        html='Cannot publish <a href="https://www.facebook.com/help/163779957017799">shares</a> '
+        error_plain='Cannot publish shares on Facebook.',
+        error_html='Cannot publish <a href="https://www.facebook.com/help/163779957017799">shares</a> '
         'on Facebook. This limitation is imposed by the '
         '<a href="https://developers.facebook.com/docs/graph-api/reference/v2.0/object/sharedposts/#publish">Facebook Graph API</a>.')
 
     else:
-      return None, source.CreationFailure(
+      return source.creation_result(
         abort=False,
-        plain='Cannot publish type=%s, verb=%s to Facebook' % (type, verb),
-        html='Cannot publish type=%s, verb=%s to Facebook' % (type, verb))
+        error_plain='Cannot publish type=%s, verb=%s to Facebook' % (type, verb),
+        error_html='Cannot publish type=%s, verb=%s to Facebook' % (type, verb))
 
     if 'url' not in resp:
       resp['url'] = base_url
-    return resp, None
+    return source.creation_result(resp)
 
   def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.

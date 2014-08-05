@@ -337,11 +337,9 @@ class Twitter(source.Source):
       include_link: boolean
 
     Returns:
-      (the result dict, a CreationFailure object) a tuple,
-      where either can be None
-
-      The result will be a dict with 'id', 'url', and 'type' keys (all
-      optional) for the newly created Twitter object (or None)
+      a CreationResult whose content will be a dict with 'id', 'url',
+      and 'type' keys (all optional) for the newly created Twitter
+      object (or None)
 
     """
     return self._create(obj, preview=False, include_link=include_link)
@@ -354,8 +352,8 @@ class Twitter(source.Source):
       include_link: boolean
 
     Returns:
-      (unicode string HTML snippet, a CreationFailure object) a
-      tuple, where either can be None
+      a CreationResult whose content will be a unicode string HTML
+      snippet (or None)
     """
     return self._create(obj, preview=True, include_link=include_link)
 
@@ -372,10 +370,9 @@ class Twitter(source.Source):
       include_link: boolean
 
     Returns:
-      (the result, a CreationFailure object) a tuple, where
-      either element can be None
+      a CreationResult
 
-      If preview is True, the result will be a unicode string HTML
+      If preview is True, the content will be a unicode string HTML
       snippet. If False, it will be a dict with 'id' and 'url' keys
       for the newly created Twitter object.
     """
@@ -389,10 +386,10 @@ class Twitter(source.Source):
       if type == 'activity':
         content = verb
       else:
-        return None, source.CreationFailure(
+        return source.creation_result(
           abort=False,  # keep looking for things to publish,
-          plain='No content text found.',
-          html='No content text found.')
+          error_plain='No content text found.',
+          error_html='No content text found.')
 
     is_reply = type == 'comment' or 'inReplyTo' in obj
     if is_reply and base_url:
@@ -456,17 +453,19 @@ class Twitter(source.Source):
 
     if is_reply:
       if not base_url:
-        return None, source.CreationFailure(
-          abort=True, plain='Could not find a tweet to reply to.',
-          html='Could not find a tweet to <a href="http://indiewebcamp.com/reply">reply to</a>. '
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a tweet to reply to.',
+          error_html='Could not find a tweet to <a href="http://indiewebcamp.com/reply">reply to</a>. '
           'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
           'link a Twitter URL or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-        return ('will <span class="verb">@-reply</span>:<br /><br />\n<em>%s</em>\n'
-                '<br /><br />...to <a href="%s">this tweet</a>:\n%s' %
-                (preview_content, base_url, EMBED_TWEET % base_url)), None
+        return source.creation_result(
+          'will <span class="verb">@-reply</span>:<br /><br />\n<em>%s</em>\n'
+          '<br /><br />...to <a href="%s">this tweet</a>:\n%s' %
+          (preview_content, base_url, EMBED_TWEET % base_url))
       else:
         content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
@@ -475,15 +474,17 @@ class Twitter(source.Source):
 
     elif type == 'activity' and verb == 'like':
       if not base_url:
-        return None, source.CreationFailure(
-          abort=True, plain='Could not find a tweet to like.',
-          html='Could not find a tweet to <a href="http://indiewebcamp.com/favorite">favorite</a>. '
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a tweet to like.',
+          error_html='Could not find a tweet to <a href="http://indiewebcamp.com/favorite">favorite</a>. '
           'Check that your post has a like-of link to a Twitter URL or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-        return ('will <span class="verb">favorite</span> <a href="%s">this tweet</a>:\n%s' %
-                (base_url, EMBED_TWEET % base_url)), None
+        return source.creation_result(
+          'will <span class="verb">favorite</span> <a href="%s">this tweet</a>:\n%s' %
+          (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE_URL, data=data).read()
@@ -491,15 +492,17 @@ class Twitter(source.Source):
 
     elif type == 'activity' and verb == 'share':
       if not base_url:
-        return None, source.CreationFailure(
-          abort=True, plain='Could not find a tweet to retweet.',
-          html='Could not find a tweet to <a href="http://indiewebcamp.com/repost">retweet</a>. '
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a tweet to retweet.',
+          error_html='Could not find a tweet to <a href="http://indiewebcamp.com/repost">retweet</a>. '
           'Check that your post has a repost-of link to a Twitter URL or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-        return ('will <span class="verb">retweet</span> <a href="%s">this tweet</a>:\n%s' %
-                (base_url, EMBED_TWEET % base_url)), None
+        return source.creation_result(
+          'will <span class="verb">retweet</span> <a href="%s">this tweet</a>:\n%s' %
+          (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
@@ -508,8 +511,9 @@ class Twitter(source.Source):
     elif type in ('note', 'article') and obj.get('image'):
       image_url = obj.get('image').get('url')
       if preview:
-        return ('will <span class="verb">tweet</span> with photo:<br /><br />'
-                '<em>%s</em><br /><img src="%s"/><br />' % (preview_content, image_url))
+        return source.creation_result(
+          'will <span class="verb">tweet</span> with photo:<br /><br />'
+          '<em>%s</em><br /><img src="%s"/><br />' % (preview_content, image_url))
       else:
         content = unicode(content).encode('utf-8')
         data = {'status': content}
@@ -522,8 +526,9 @@ class Twitter(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return ('will <span class="verb">tweet</span>:<br /><br />'
-                '<em>%s</em><br />' % preview_content), None
+        return source.creation_result(
+          'will <span class="verb">tweet</span>:<br /><br />'
+          '<em>%s</em><br />' % preview_content)
       else:
         content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content})
@@ -531,17 +536,17 @@ class Twitter(source.Source):
         resp['type'] = 'post'
 
     elif (verb and verb.startswith('rsvp-')) or verb == 'invite':
-      return None, source.CreationFailure(
+      return source.creation_result(
         abort=True,
-        plain='Cannot publish RSVPs to Twitter.',
-        html='This looks like an <a href="http://indiewebcamp.com/rsvp">RSVP</a>. '
+        error_plain='Cannot publish RSVPs to Twitter.',
+        error_html='This looks like an <a href="http://indiewebcamp.com/rsvp">RSVP</a>. '
         'Publishing events or RSVPs to Twitter is not supported.')
 
     else:
-      return None, source.CreationFailure(
+      return source.creation_result(
         abort=False,
-        plain='Cannot publish type=%s, verb=%s to Twitter' % (type, verb),
-        html='Cannot publish type=%s, verb=%s to Twitter' % (type, verb))
+        error_plain='Cannot publish type=%s, verb=%s to Twitter' % (type, verb),
+        error_html='Cannot publish type=%s, verb=%s to Twitter' % (type, verb))
 
     id_str = resp.get('id_str')
     if id_str:
@@ -549,7 +554,7 @@ class Twitter(source.Source):
     elif 'url' not in resp:
       resp['url'] = base_url
 
-    return resp, None
+    return source.creation_result(resp)
 
   def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.

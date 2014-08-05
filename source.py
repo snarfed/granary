@@ -40,13 +40,30 @@ RSVP_CONTENTS = {
   'invite': 'is invited.',
   }
 
-# Provides a detailed description of publishing failures. If abort is
-# False, we should continue looking for an entry to publish; if True,
-# we should and immediately inform the user. plain text is sent in
-# response to failed publish webmentions; html will be displayed to
-# the user when publishing interactively.
-CreationFailure = collections.namedtuple('CreationFailure',
-                                         ['abort', 'plain', 'html'])
+CreationResult = collections.namedtuple('CreationResult', [
+  'content', 'abort', 'error_plain', 'error_html'])
+
+
+def creation_result(content=None, abort=False, error_plain=None,
+                    error_html=None):
+  """Create a new CreationResult named tuple, which the result of
+  create() and preview_create() to provides a detailed description of
+  publishing failures. If abort is False, we should continue looking
+  for an entry to publish; if True, we should immediately inform the
+  user. error_plain text is sent in response to failed publish
+  webmentions; error_html will be displayed to the user when
+  publishing interactively.
+
+  Args:
+    content: a unicode string for preview_create() or a dict for create()
+    abort: a boolean
+    error_plain: a string
+    error_html: a string
+
+  Return:
+    a CreationResult named tuple
+  """
+  return CreationResult(content, abort, error_plain, error_html)
 
 
 class Source(object):
@@ -175,14 +192,11 @@ class Source(object):
         (if it has one) in the content.
 
     Returns:
-      (a result dict, a CreationFailure object) a tuple
+      a CreationResult, whose contents will be a dict
 
-      The result dict may be None or empty. If the newly created
+      The dict may be None or empty. If the newly created
       object has an id or permalink, they'll be provided in the values
       for 'id' and 'url'.
-
-      CreationFailure will be non-None if the site doesn't support the
-      object type.
     """
     raise NotImplementedError()
 
@@ -202,10 +216,8 @@ class Source(object):
         (if it has one) in the content.
 
     Returns:
-      (unicode string HTML snippet, a CreationFailure object) a tuple
-
-      CreationFailure will be non-None if the site doesn't support the
-      object type.
+      a CreationResult, whose contents will be a unicode string
+      HTML snippet (or None)
     """
     raise NotImplementedError()
 
