@@ -474,8 +474,10 @@ class Twitter(source.Source):
         content = unicode(content).encode('utf-8')
         data = {'status': content}
         files = {'media[]': urllib2.urlopen(image_url)}
-        headers = twitter_auth.auth_header(API_POST_MEDIA_URL, self.access_token_key, self.access_token_secret, 'POST')
-        resp = json.loads(requests.post(API_POST_MEDIA_URL, data=data, files=files, headers=headers).text)
+        headers = twitter_auth.auth_header(API_POST_MEDIA_URL,
+            self.access_token_key, self.access_token_secret, 'POST')
+        resp = json.loads(requests.post(API_POST_MEDIA_URL,
+          data=data, files=files, headers=headers).text)
         resp['type'] = 'post'
 
     elif type in ('note', 'article', 'comment'):
