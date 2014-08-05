@@ -12,6 +12,7 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import collections
 import datetime
 import itertools
 import logging
@@ -38,6 +39,31 @@ RSVP_CONTENTS = {
   'rsvp-maybe': 'might attend.',
   'invite': 'is invited.',
   }
+
+CreationResult = collections.namedtuple('CreationResult', [
+  'content', 'abort', 'error_plain', 'error_html'])
+
+
+def creation_result(content=None, abort=False, error_plain=None,
+                    error_html=None):
+  """Create a new CreationResult named tuple, which the result of
+  create() and preview_create() to provides a detailed description of
+  publishing failures. If abort is False, we should continue looking
+  for an entry to publish; if True, we should immediately inform the
+  user. error_plain text is sent in response to failed publish
+  webmentions; error_html will be displayed to the user when
+  publishing interactively.
+
+  Args:
+    content: a unicode string for preview_create() or a dict for create()
+    abort: a boolean
+    error_plain: a string
+    error_html: a string
+
+  Return:
+    a CreationResult named tuple
+  """
+  return CreationResult(content, abort, error_plain, error_html)
 
 
 class Source(object):
@@ -165,11 +191,12 @@ class Source(object):
       include_link: boolean. If True, includes a link to the object
         (if it has one) in the content.
 
-    Returns: dict, possibly empty. If the newly created object has an id or
-      permalink, they'll be provided in the values for 'id' and 'url'.
+    Returns:
+      a CreationResult, whose contents will be a dict
 
-    Raises NotImplementedError if the site doesn't support the object type, and
-    other exceptions on other errors.
+      The dict may be None or empty. If the newly created
+      object has an id or permalink, they'll be provided in the values
+      for 'id' and 'url'.
     """
     raise NotImplementedError()
 
@@ -188,10 +215,9 @@ class Source(object):
       include_link: boolean. If True, includes a link to the object
         (if it has one) in the content.
 
-    Returns: unicode string HTML snippet
-
-    Raises NotImplementedError if the site doesn't support the object type, and
-    other exceptions on other errors.
+    Returns:
+      a CreationResult, whose contents will be a unicode string
+      HTML snippet (or None)
     """
     raise NotImplementedError()
 

@@ -910,11 +910,11 @@ class TwitterTest(testutil.HandlerTest):
     del obj['image']
     for preview, orig in zip(previewed, original):
       obj['content'] = orig
-      self.assert_equals(tweet, self.twitter.create(obj))
+      self.assert_equals(tweet, self.twitter.create(obj).content)
 
       got = self.twitter.preview_create(obj)
-      self.assertIn('will <span class="verb">tweet</span>', got)
-      self.assertIn('<em>%s</em>' % preview, got)
+      self.assertIn('will <span class="verb">tweet</span>', got.content)
+      self.assertIn('<em>%s</em>' % preview, got.content)
 
   def test_create_tweet_prefers_summary_then_content_then_name(self):
     obj = copy.deepcopy(OBJECT)
@@ -924,13 +924,16 @@ class TwitterTest(testutil.HandlerTest):
         'displayName': 'my name',
         'content': 'my content',
         })
-    self.assertIn('<em>my summary</em>', self.twitter.preview_create(obj))
+    result = self.twitter.preview_create(obj)
+    self.assertIn('<em>my summary</em>', result.content)
 
     del obj['summary']
-    self.assertIn('<em>my content</em>', self.twitter.preview_create(obj))
+    result = self.twitter.preview_create(obj)
+    self.assertIn('<em>my content</em>', result.content)
 
     del obj['content']
-    self.assertIn('<em>my name</em>', self.twitter.preview_create(obj))
+    result = self.twitter.preview_create(obj)
+    self.assertIn('<em>my name</em>', result.content)
 
   def test_create_tweet_include_link(self):
     twitter.MAX_TWEET_LENGTH = 20
@@ -948,8 +951,9 @@ class TwitterTest(testutil.HandlerTest):
         'url': 'http://obj',
         })
     self.twitter.create(obj, include_link=True)
-    self.assertIn(u'too long… (<a href="http://obj">obj</a>)',
-                  self.twitter.preview_create(obj, include_link=True))
+    result = self.twitter.preview_create(obj, include_link=True)
+    self.assertIn(u'too long… (<a href="http://obj">obj</a>)',result.content)
+
 
 
   def test_create_reply(self):
@@ -983,13 +987,13 @@ class TwitterTest(testutil.HandlerTest):
           'type': type,
           })
       obj.update({'inReplyTo': [{'url': url}], 'content': content})
-      self.assert_equals(tweet, self.twitter.create(obj))
+      self.assert_equals(tweet, self.twitter.create(obj).content)
 
       preview = self.twitter.preview_create(obj)
       if type == 'comment':
-        self.assertIn(expected_tweet, preview)
-        self.assertIn('<span class="verb">@-reply</span>', preview)
-        self.assertIn('...to <a href="http://twitter.com/you/status/100', preview)
+        self.assertIn(expected_tweet, preview.content)
+        self.assertIn('<span class="verb">@-reply</span>', preview.content)
+        self.assertIn('...to <a href="http://twitter.com/you/status/100', preview.content)
 
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
@@ -997,10 +1001,10 @@ class TwitterTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
                         'type': 'like'},
-                       self.twitter.create(LIKES_FROM_HTML[0]))
+                       self.twitter.create(LIKES_FROM_HTML[0]).content)
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
-    self.assertIn('<span class="verb">favorite</span> <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>', preview)
+    self.assertIn('<span class="verb">favorite</span> <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>', preview.content)
 
   def test_create_retweet(self):
     self.expect_urlopen(
@@ -1014,12 +1018,52 @@ class TwitterTest(testutil.HandlerTest):
         'url': 'https://twitter.com/snarfed_org/status/100',
         'type': 'repost',
         })
-    self.assert_equals(tweet, self.twitter.create(SHARES[0]))
+    self.assert_equals(tweet, self.twitter.create(SHARES[0]).content)
 
     preview = self.twitter.preview_create(SHARES[0])
-    self.assertIn('<span class="verb">retweet</span> <a href="https://twitter.com/foo/status/333">this tweet</a>', preview)
+    self.assertIn('<span class="verb">retweet</span> <a href="https://twitter.com/foo/status/333">this tweet</a>', preview.content)
 
   def test_create_unsupported_type(self):
     for fn in self.twitter.create, self.twitter.preview_create:
-      self.assertRaises(NotImplementedError, fn,
-                        {'objectType': 'activity', 'verb': 'rsvp-yes'})
+      result = fn({'objectType': 'activity', 'verb': 'rsvp-yes'})
+      self.assertTrue(result.abort)
+      self.assertIn('Cannot publish RSVPs', result.error_plain)
+      self.assertIn('not supported', result.error_html)
+
+  def test_create_reply_without_in_reply_to(self):
+    obj = {
+      'objectType': 'comment',
+      'inReplyTo': [{'url': 'http://foo.com/bar'},
+                    {'url': 'http://baz.com/bat'}],
+      'content': '@foo reply'
+    }
+    for fn in (self.twitter.preview_create, self.twitter.create):
+      preview = fn(obj)
+      self.assertTrue(preview.abort)
+      self.assertIn('Could not find a tweet to reply to', preview.error_plain)
+      self.assertIn('Could not find a tweet to', preview.error_html)
+
+  def test_create_like_without_object(self):
+    obj = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': [{'url': 'http://foo.com/bar'},
+                 {'url': 'http://plus.google.com/1234'}],
+    }
+    for fn in (self.twitter.preview_create, self.twitter.create):
+      preview = fn(obj)
+      self.assertTrue(preview.abort)
+      self.assertIn('Could not find a tweet to like', preview.error_plain)
+      self.assertIn('Could not find a tweet to', preview.error_html)
+
+  def test_create_retweet_without_object(self):
+    obj = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': [{'url': 'http://foo.com/bar'}],
+    }
+    for fn in (self.twitter.preview_create, self.twitter.create):
+      preview = fn(obj)
+      self.assertTrue(preview.abort)
+      self.assertIn('Could not find a tweet to retweet', preview.error_plain)
+      self.assertIn('Could not find a tweet to', preview.error_html)
