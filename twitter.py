@@ -465,7 +465,7 @@ class Twitter(source.Source):
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
         resp['type'] = 'repost'
 
-    elif type == 'note' and obj.get('image'):
+    elif type in ('note', 'article') and obj.get('image'):
       image_url = obj.get('image').get('url')
       if preview:
         return ('will <span class="verb">tweet</span> with photo:<br /><br />'
