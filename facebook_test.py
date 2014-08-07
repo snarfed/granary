@@ -1040,7 +1040,7 @@ class FacebookTest(testutil.HandlerTest):
       }, self.facebook.create(obj).content)
 
   def test_create_like(self):
-    self.expect_urlopen('https://graph.facebook.com/10100176064482163/likes',
+    self.expect_urlopen('https://graph.facebook.com/212038_10100176064482163/likes',
                         'true', data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://facebook.com/212038/posts/10100176064482163',
@@ -1052,7 +1052,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assertIn('<div class="fb-post" data-href="https://facebook.com/212038/posts/10100176064482163">', preview.content)
 
   def test_create_rsvp(self):
-    for endpoint in 'attending', 'declined', 'maybe':#, 'invited/567':
+    for endpoint in 'attending', 'declined', 'maybe':
       self.expect_urlopen('https://graph.facebook.com/234/' + endpoint,
                           'true', data='')
 

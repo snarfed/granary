@@ -311,7 +311,7 @@ class Facebook(source.Source):
     assert preview in (False, True)
     type = obj.get('objectType')
     verb = obj.get('verb')
-    base_id, base_url = self.base_object(obj)
+    base_id, base_url = self.base_object(obj, verb=verb)
     if base_id and not base_url:
       base_url = self.object_url(base_id)
 
@@ -460,7 +460,7 @@ class Facebook(source.Source):
       post_id = post_author_id + '/posts/' + post_id
     return 'https://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
-  def base_object(self, obj):
+  def base_object(self, obj, verb=None):
     """Returns id and URL of the 'base' silo object that an object operates on.
 
     Includes special handling for Facebook photo URLs, e.g.
@@ -468,6 +468,7 @@ class Facebook(source.Source):
 
     Args:
       obj: ActivityStreams object
+      verb: string, optional
 
     Returns: (string id, string URL) tuple. Both may be None.
     """
@@ -479,6 +480,9 @@ class Facebook(source.Source):
           fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
           if fbids:
             return fbids[0], url
+        elif verb == 'like' and '/posts/' in parsed.path:
+          # add user id prefix. https://github.com/snarfed/bridgy/issues/229
+          id = '%s_%s' % (parsed.path.split('/posts/')[0][1:], id)
       except BaseException, e:
         logging.error(
           "Couldn't parse object URL %s : %s. Falling back to default logic.",
