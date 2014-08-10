@@ -619,8 +619,16 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([], self.twitter.get_activities(group_id=source.SELF))
 
-  def test_get_activities_list(self):
-    self.expect_urlopen('https://api.twitter.com/1.1/lists/statuses.json?count=0&slug=testlist&owner_screen_name=schnarfed',
+  def test_get_activities_list_explicit_user(self):
+    self.expect_urlopen('https://api.twitter.com/1.1/lists/statuses.json?include_entities=true&count=0&slug=testlist&owner_screen_name=schnarfed',
+                        '[]')
+    self.mox.ReplayAll()
+
+    self.assert_equals([], self.twitter.get_activities(group_id='testlist', user_id='schnarfed'))
+
+  def test_get_activities_list_implicit_user(self):
+    self.expect_urlopen('https://api.twitter.com/1.1/account/verify_credentials.json', json.dumps({'screen_name': 'schnarfed'}))
+    self.expect_urlopen('https://api.twitter.com/1.1/lists/statuses.json?include_entities=true&count=0&slug=testlist&owner_screen_name=schnarfed',
                         '[]')
     self.mox.ReplayAll()
 
