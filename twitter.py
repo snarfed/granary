@@ -167,6 +167,12 @@ class Twitter(source.Source):
     However, retweets are only fetched for the first 15 tweets that have them,
     since that's Twitter's rate limit per 15 minute window. :(
     https://dev.twitter.com/docs/rate-limiting/1.1/limits
+
+    group_id can be used to specify the slug of a list for which to return tweets.
+    By default the current API user’s lists will be used, but lists owned by other
+    users can be fetched by explicitly passing a username to user_id, e.g. to
+    fetch tweets from the list @exampleuser/example-list you would call
+    get_activities(user_id='exampleuser', group_id='example-list').
     """
     if activity_id:
       resp = self.urlopen(API_STATUS_URL % activity_id)
