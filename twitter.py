@@ -35,6 +35,8 @@ API_TIMELINE_URL = \
   'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=%d'
 API_SELF_TIMELINE_URL = \
   'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%d'
+API_LIST_TIMELINE_URL = \
+  'https://api.twitter.com/1.1/lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
 API_STATUS_URL = \
   'https://api.twitter.com/1.1/statuses/show.json?id=%s&include_entities=true'
 API_RETWEETS_URL = \
@@ -171,8 +173,17 @@ class Twitter(source.Source):
       tweets = [json.loads(resp.read())]
       total_count = len(tweets)
     else:
-      url = API_SELF_TIMELINE_URL if group_id == source.SELF else API_TIMELINE_URL
-      url = url % (count + start_index)
+      if group_id == source.SELF:
+        url = API_SELF_TIMELINE_URL % (count + start_index)
+      elif group_id in (None, source.FRIENDS, source.ALL):
+        url = API_TIMELINE_URL % (count + start_index)
+      else:
+        url = API_LIST_TIMELINE_URL % {
+          'count': count + start_index,
+          'slug': group_id,
+          'owner_screen_name': user_id or self.get_actor().get('username')
+        }
+
       headers = {'If-None-Match': etag} if etag else {}
       total_count = None
       try:

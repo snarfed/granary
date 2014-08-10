@@ -619,6 +619,13 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([], self.twitter.get_activities(group_id=source.SELF))
 
+  def test_get_activities_list(self):
+    self.expect_urlopen('https://api.twitter.com/1.1/lists/statuses.json?count=0&slug=testlist&owner_screen_name=schnarfed',
+                        '[]')
+    self.mox.ReplayAll()
+
+    self.assert_equals([], self.twitter.get_activities(group_id='testlist'))
+
   def test_get_activities_fetch_replies(self):
     tweet = copy.deepcopy(TWEET)
     self.expect_urlopen(TIMELINE, json.dumps([tweet]))
