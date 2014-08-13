@@ -8,6 +8,7 @@ import copy
 import json
 import mox
 import urllib
+import urllib2
 
 import microformats2
 import source
@@ -1082,3 +1083,26 @@ class TwitterTest(testutil.TestCase):
       self.assertTrue(preview.abort)
       self.assertIn('Could not find a tweet to retweet', preview.error_plain)
       self.assertIn('Could not find a tweet to', preview.error_html)
+
+  def test_create_with_photo(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'my caption',
+      'image': {'url': 'http://my/picture'},
+    }
+
+    # test preview
+    self.assertIn('with photo:<br /><br /><em>my caption</em><br />'
+                  '<img src="http://my/picture"/>',
+                  self.twitter.preview_create(obj).content)
+
+    # test create
+    urllib2.urlopen('http://my/picture').AndReturn('picture response')
+    self.expect_requests_post(twitter.API_POST_MEDIA_URL,
+                              json.dumps({'url': 'http://posted/picture'}),
+                              data={'status': 'my caption'},
+                              files={'media[]': 'picture response'},
+                              headers=mox.IgnoreArg())
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
+                       self.twitter.create(obj).content)

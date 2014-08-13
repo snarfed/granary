@@ -538,7 +538,7 @@ class Twitter(source.Source):
         headers = twitter_auth.auth_header(API_POST_MEDIA_URL,
             self.access_token_key, self.access_token_secret, 'POST')
         resp = json.loads(requests.post(API_POST_MEDIA_URL,
-          data=data, files=files, headers=headers).text)
+          data=data, files=files, headers=headers, timeout=HTTP_TIMEOUT).text)
         resp['type'] = 'post'
 
     elif type in ('note', 'article'):
