@@ -35,6 +35,8 @@ API_TIMELINE_URL = \
   'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=%d'
 API_SELF_TIMELINE_URL = \
   'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%d'
+API_USER_TIMELINE_URL = \
+  'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%(count)d&screen_name=%(screen_name)s'
 API_LIST_TIMELINE_URL = \
   'https://api.twitter.com/1.1/lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
 API_STATUS_URL = \
@@ -168,6 +170,9 @@ class Twitter(source.Source):
     since that's Twitter's rate limit per 15 minute window. :(
     https://dev.twitter.com/docs/rate-limiting/1.1/limits
 
+    Use the group_id @self to retrieve a user_id’s timeline. If user_id is None
+    or @me, it will return tweets for the current API user.
+
     group_id can be used to specify the slug of a list for which to return tweets.
     By default the current API user’s lists will be used, but lists owned by other
     users can be fetched by explicitly passing a username to user_id, e.g. to
@@ -180,7 +185,13 @@ class Twitter(source.Source):
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
-        url = API_SELF_TIMELINE_URL % (count + start_index)
+        if user_id in (None, source.ME):
+          url = API_SELF_TIMELINE_URL % (count + start_index)
+        else:
+          url = API_USER_TIMELINE_URL % {
+            'count': count + start_index,
+            'screen_name': user_id,
+          }
       elif group_id in (None, source.FRIENDS, source.ALL):
         url = API_TIMELINE_URL % (count + start_index)
       else:
