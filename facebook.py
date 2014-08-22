@@ -59,6 +59,7 @@ API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/me/feed'
 API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
 API_LIKES_URL = 'https://graph.facebook.com/%s/likes'
+API_PHOTOS_URL = 'https://graph.facebook.com/me/photos'
 
 # For parsing photo URLs, e.g.
 # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
@@ -332,7 +333,6 @@ class Facebook(source.Source):
     msg_data = {'message': content.encode('utf-8')}
     if appengine_config.DEBUG:
       msg_data['privacy'] = json.dumps({'value': 'SELF'})
-    msg_data = urllib.urlencode(msg_data)
 
     if type == 'comment':
       if not base_url:
@@ -351,7 +351,7 @@ class Facebook(source.Source):
           (preview_content, base_url, EMBED_POST % base_url))
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
-                                       data=msg_data).read())
+                                       data=urllib.urlencode(msg_data)).read())
         resp.update({'url': self.comment_url(base_id, resp['id']),
                      'type': 'comment'})
 
@@ -395,13 +395,24 @@ class Facebook(source.Source):
         assert resp == True, resp
         resp = {'type': 'rsvp'}
 
+    elif type in ('note', 'article') and obj.get('image'):
+      image_url = obj.get('image').get('url')
+      if preview:
+        return source.creation_result(
+          'will <span class="verb">post</span> with photo:<br /><br />'
+          '<em>%s</em><br /><img src="%s"/><br />' % (preview_content, image_url))
+      else:
+        msg_data.update({'url': image_url})
+        resp = json.loads(self.urlopen(API_PHOTOS_URL, data=urllib.urlencode(msg_data)).read())
+        resp.update({'url': self.post_url(resp), 'type': 'post'})
+
     elif type in ('note', 'article'):
       if preview:
         return source.creation_result(
           'will <span class="verb">post</span>:<br /><br />'
           '<em>%s</em><br />' % preview_content)
       else:
-        resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
+        resp = json.loads(self.urlopen(API_FEED_URL, data=urllib.urlencode(msg_data)).read())
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type == 'activity' and verb == 'share':
