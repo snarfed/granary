@@ -957,6 +957,7 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
+    del obj['image']
     obj.update({
         'objectType': 'note',
         'content': 'my msg',
@@ -976,6 +977,7 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
+    del obj['image']
     obj.update({
         'objectType': 'article',
         'summary': 'my msg',
@@ -1101,3 +1103,25 @@ class FacebookTest(testutil.HandlerTest):
       self.assertTrue(preview.abort)
       self.assertIn('Could not find a Facebook status to like', preview.error_plain)
       self.assertIn('Could not find a Facebook status to', preview.error_html)
+
+  def test_create_with_photo(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'my caption',
+      'image': {'url': 'http://my/picture'},
+    }
+
+    # test preview
+    self.assertIn('with photo:<br /><br /><em>my caption</em><br />'
+                  '<img src="http://my/picture"/>',
+                  self.facebook.preview_create(obj).content)
+
+    # test create
+    self.expect_urlopen(
+      facebook.API_PHOTOS_URL,
+      json.dumps({'id': '123_456'}),
+      data='url=http%3A%2F%2Fmy%2Fpicture&message=my+caption')
+    self.mox.ReplayAll()
+    self.assert_equals(
+      {'id': '123_456', 'url': 'https://facebook.com/123_456', 'type': 'post'},
+      self.facebook.create(obj).content)

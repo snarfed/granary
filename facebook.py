@@ -59,6 +59,7 @@ API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/me/feed'
 API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
 API_LIKES_URL = 'https://graph.facebook.com/%s/likes'
+API_PHOTOS_URL = 'https://graph.facebook.com/me/photos'
 
 # For parsing photo URLs, e.g.
 # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
@@ -394,6 +395,20 @@ class Facebook(source.Source):
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
         assert resp == True, resp
         resp = {'type': 'rsvp'}
+
+    elif type in ('note', 'article') and obj.get('image'):
+      image_url = obj.get('image').get('url')
+      if preview:
+        return source.creation_result(
+          'will <span class="verb">post</span> with photo:<br /><br />'
+          '<em>%s</em><br /><img src="%s"/><br />' % (preview_content, image_url))
+      else:
+        msg_data = {'message': content.encode('utf-8'), 'url': image_url}
+        if appengine_config.DEBUG:
+          msg_data['privacy'] = json.dumps({'value': 'SELF'})
+        msg_data = urllib.urlencode(msg_data)
+        resp = json.loads(self.urlopen(API_PHOTOS_URL, data=msg_data).read())
+        resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type in ('note', 'article'):
       if preview:
