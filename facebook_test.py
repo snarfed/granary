@@ -8,6 +8,7 @@ import json
 import mox
 import urllib
 
+import appengine_config
 import facebook
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
@@ -1125,3 +1126,16 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(
       {'id': '123_456', 'url': 'https://facebook.com/123_456', 'type': 'post'},
       self.facebook.create(obj).content)
+
+  def test_create_notification(self):
+    appengine_config.FACEBOOK_APP_ID = 'my_app_id'
+    appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'
+    params = {
+      'template': 'my text',
+      'href': 'my link',
+      'access_token': 'my_app_id|my_app_secret',
+      }
+    self.expect_urlopen('https://graph.facebook.com/me/notifications', '',
+                        data=urllib.urlencode(params))
+    self.mox.ReplayAll()
+    self.facebook.create_notification('my text', 'my link')

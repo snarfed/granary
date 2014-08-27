@@ -60,6 +60,7 @@ API_FEED_URL = 'https://graph.facebook.com/me/feed'
 API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
 API_LIKES_URL = 'https://graph.facebook.com/%s/likes'
 API_PHOTOS_URL = 'https://graph.facebook.com/me/photos'
+API_NOTIFICATION_URL = 'https://graph.facebook.com/me/notifications'
 
 # For parsing photo URLs, e.g.
 # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
@@ -448,6 +449,33 @@ class Facebook(source.Source):
     logging.info('Fetching %s, kwargs %s', log_url, kwargs)
     return urllib2.urlopen(urllib2.Request(url, **kwargs),
                            timeout=appengine_config.HTTP_TIMEOUT)
+
+  def create_notification(self, text, link):
+    """Sends the authenticated user a notification.
+
+    Uses the Notifications API (beta):
+    https://developers.facebook.com/docs/games/notifications/#impl
+
+    Args:
+      text: string, shown to the user in the notification
+      link: string URL, the user is redirected here when they click on the
+        notification
+
+    Raises: urllib2.HTPPError
+    """
+    logging.debug('Sending Facebook notification: %r, %s', text, link)
+    params = {
+      'template': text,
+      'href': link,
+      # this is a synthetic app access token.
+      # https://developers.facebook.com/docs/facebook-login/access-tokens/#apptokens
+      'access_token': '%s|%s' % (appengine_config.FACEBOOK_APP_ID,
+                                 appengine_config.FACEBOOK_APP_SECRET),
+      }
+    resp = urllib2.urlopen(urllib2.Request(API_NOTIFICATION_URL,
+                                           data=urllib.urlencode(params)),
+                           timeout=appengine_config.HTTP_TIMEOUT)
+    logging.debug('Response: %s %s', resp.getcode(), resp.read())
 
   def post_url(self, post):
     """Returns a short Facebook URL for a post.
