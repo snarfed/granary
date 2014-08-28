@@ -1135,7 +1135,7 @@ class FacebookTest(testutil.HandlerTest):
       'href': 'my link',
       'access_token': 'my_app_id|my_app_secret',
       }
-    self.expect_urlopen('https://graph.facebook.com/me/notifications', '',
+    self.expect_urlopen('https://graph.facebook.com/my-username/notifications', '',
                         data=urllib.urlencode(params))
     self.mox.ReplayAll()
-    self.facebook.create_notification('my text', 'my link')
+    self.facebook.create_notification('my-username', 'my text', 'my link')
