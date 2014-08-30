@@ -1019,11 +1019,15 @@ class FacebookTest(testutil.HandlerTest):
       self.assertIn('Could not', result.error_plain)
 
   def test_create_comment_on_post_urls(self):
-    urls = ('https://www.facebook.com/snarfed.org/posts/333',
-            'https://www.facebook.com/photo.php?fbid=333&set=a.4.4&permPage=1'
-            )
+    # maps original post URL to expected comment URL
+    urls = {
+      'https://www.facebook.com/snarfed.org/posts/333':
+        'https://facebook.com/snarfed.org/posts/333?comment_id=456_789',
+      'https://www.facebook.com/photo.php?fbid=333&set=a.4.4&permPage=1':
+        'https://facebook.com/333?comment_id=456_789',
+      }
 
-    for url in urls:
+    for _ in urls:
       self.expect_urlopen(
         'https://graph.facebook.com/333/comments',
         json.dumps({'id': '456_789'}),
@@ -1031,14 +1035,14 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
-    for url in urls:
+    for post_url, cmt_url in urls.items():
       obj.update({
-          'inReplyTo': [{'url': url}],
+          'inReplyTo': [{'url': post_url}],
           'content': 'my cmt',
           })
       self.assert_equals({
         'id': '456_789',
-        'url': 'https://facebook.com/333?comment_id=456_789',
+        'url': cmt_url,
         'type': 'comment',
       }, self.facebook.create(obj).content)
 

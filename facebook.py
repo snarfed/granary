@@ -357,8 +357,9 @@ class Facebook(source.Source):
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
                                        data=msg_data).read())
-        resp.update({'url': self.comment_url(base_id, resp['id']),
-                     'type': 'comment'})
+        url = self.comment_url(base_id, resp['id'],
+                               post_author_id=base_obj.get('author', {}).get('id'))
+        resp.update({'url': url, 'type': 'comment'})
 
     elif type == 'activity' and verb == 'like':
       if not base_url:
@@ -525,15 +526,16 @@ class Facebook(source.Source):
     if url:
       try:
         parsed = urlparse.urlparse(url)
+        if '/posts/' in parsed.path:
+          author_id = parsed.path.split('/posts/')[0][1:]
+          base_obj.setdefault('author', {})['id'] = author_id
         if parsed.path == PHOTO_PATH:
           fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
           if fbids:
             base_obj['id'] = fbids[0]
-        elif (verb == 'like' and '/posts/' in parsed.path and
-              '_' not in base_obj['id']):
-          # add user id prefix. https://github.com/snarfed/bridgy/issues/229
-          base_obj['id'] = '%s_%s' % (parsed.path.split('/posts/')[0][1:],
-                                      base_obj['id'])
+        elif verb == 'like' and '_' not in base_obj['id']:
+          # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
+          base_obj['id'] = '%s_%s' % (author_id, base_obj['id'])
       except BaseException, e:
         logging.error(
           "Couldn't parse object URL %s : %s. Falling back to default logic.",
