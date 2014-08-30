@@ -332,7 +332,7 @@ class Facebook(source.Source):
 
     url = obj.get('url')
     if include_link and url:
-      content += '\n\n(%s)' % url
+      content += '\n\n(Originally published at: %s)' % url
     preview_content = util.linkify(content)
     msg_data = {'message': content.encode('utf-8')}
     if appengine_config.DEBUG:

@@ -974,7 +974,8 @@ class FacebookTest(testutil.HandlerTest):
   def test_create_post_include_link(self):
     self.expect_urlopen(
       facebook.API_FEED_URL, '{}',
-      data=urllib.urlencode({'message': 'my msg\n\n(http://obj)'}))
+      data=urllib.urlencode(
+        {'message': 'my msg\n\n(Originally published at: http://obj)'}))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
