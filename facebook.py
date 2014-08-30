@@ -313,9 +313,12 @@ class Facebook(source.Source):
     assert preview in (False, True)
     type = obj.get('objectType')
     verb = obj.get('verb')
-    base_id, base_url = self.base_object(obj, verb=verb)
+
+    base_obj = self.base_object(obj, verb=verb)
+    base_id = base_obj.get('id')
+    base_url = base_obj.get('url')
     if base_id and not base_url:
-      base_url = self.object_url(base_id)
+      base_url = base_obj['url'] = self.object_url(base_id)
 
     content = self._content_for_create(obj)
     if not content:
@@ -505,7 +508,7 @@ class Facebook(source.Source):
     return 'https://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
   def base_object(self, obj, verb=None):
-    """Returns id and URL of the 'base' silo object that an object operates on.
+    """Returns the 'base' silo object that an object operates on.
 
     Includes special handling for Facebook photo URLs, e.g.
     https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
@@ -514,25 +517,29 @@ class Facebook(source.Source):
       obj: ActivityStreams object
       verb: string, optional
 
-    Returns: (string id, string URL) tuple. Both may be None.
+    Returns: dict, minimal ActivityStreams object. Usually has at least id and
+      url fields; may also have author.
     """
-    id, url = super(Facebook, self).base_object(obj)
+    base_obj = super(Facebook, self).base_object(obj)
+    url = base_obj.get('url')
     if url:
       try:
         parsed = urlparse.urlparse(url)
         if parsed.path == PHOTO_PATH:
           fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
           if fbids:
-            return fbids[0], url
-        elif verb == 'like' and '/posts/' in parsed.path:
+            base_obj['id'] = fbids[0]
+        elif (verb == 'like' and '/posts/' in parsed.path and
+              '_' not in base_obj['id']):
           # add user id prefix. https://github.com/snarfed/bridgy/issues/229
-          id = '%s_%s' % (parsed.path.split('/posts/')[0][1:], id)
+          base_obj['id'] = '%s_%s' % (parsed.path.split('/posts/')[0][1:],
+                                      base_obj['id'])
       except BaseException, e:
         logging.error(
           "Couldn't parse object URL %s : %s. Falling back to default logic.",
           url, e)
 
-    return id, url
+    return base_obj
 
   def post_to_activity(self, post):
     """Converts a post to an activity.

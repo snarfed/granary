@@ -408,7 +408,11 @@ class Twitter(source.Source):
     assert preview in (False, True)
     type = obj.get('objectType')
     verb = obj.get('verb')
-    base_id, base_url = self.base_object(obj)
+
+    base_obj = self.base_object(obj)
+    base_id = base_obj.get('id')
+    base_url = base_obj.get('url')
+
     content = self._content_for_create(obj)
     if not content:
       if type == 'activity':
@@ -591,7 +595,7 @@ class Twitter(source.Source):
       url, self.access_token_key, self.access_token_secret, **kwargs)
 
   def base_object(self, obj):
-    """Returns id and URL of the 'base' silo object that an object operates on.
+    """Returns the 'base' silo object that an object operates on.
 
     Includes special handling for Twitter photo URLs, e.g.
     https://twitter.com/nelson/status/447465082327298048/photo/1
@@ -599,21 +603,23 @@ class Twitter(source.Source):
     Args:
       obj: ActivityStreams object
 
-    Returns: (string id, string URL) tuple. Both may be None.
+    Returns: dict, minimal ActivityStreams object. Usually has at least id and
+      url fields; may also have author.
     """
-    id, url = super(Twitter, self).base_object(obj)
+    base_obj = super(Twitter, self).base_object(obj)
+    url = base_obj.get('url')
     if url:
       try:
         parsed = urlparse.urlparse(url)
         parts = parsed.path.split('/')
         if len(parts) >= 3 and parts[-2] == 'photo':
-          return parts[-3], url
+          base_obj['id'] = parts[-3]
       except BaseException, e:
         logging.error(
           "Couldn't parse object URL %s : %s. Falling back to default logic.",
           url, e)
 
-    return id, url
+    return base_obj
 
   def tweet_to_activity(self, tweet):
     """Converts a tweet to an activity.

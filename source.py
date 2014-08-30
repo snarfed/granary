@@ -13,6 +13,7 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import collections
+import copy
 import datetime
 import itertools
 import logging
@@ -499,18 +500,19 @@ class Source(object):
     return util.tag_uri(self.DOMAIN, name)
 
   def base_object(self, obj):
-    """Returns id and URL of the 'base' silo object that an object operates on.
+    """Returns the 'base' silo object that an object operates on.
 
     For example, if the object is a comment, this returns the post that it's a
     comment on. If it's an RSVP, this returns the event. The id in the returned
-    tuple is silo-specific, ie not a tag URI.
+    object is silo-specific, ie not a tag URI.
 
     Subclasses may override this.
 
     Args:
       obj: ActivityStreams object
 
-    Returns: (string id, string URL) tuple. Both may be None.
+    Returns: dict, minimal ActivityStreams object. Usually has at least id; may
+      also have url, author, etc.
     """
     # look at in-reply-tos first, then objects (for likes and reposts).
     # technically, the ActivityStreams 'object' field is always supposed to be
@@ -536,20 +538,23 @@ class Source(object):
       if domain == self.DOMAIN:
         break
     else:
-      return (None, None)
+      return {}
 
+    base_obj = copy.deepcopy(base_obj)
     id = base_obj.get('id')
     url = base_obj.get('url')
 
     if id:
-      id = util.parse_tag_uri(id)[1]
+      parsed = util.parse_tag_uri(id)
+      if parsed:
+        base_obj['id'] = parsed[1]
     elif url:
       path = urlparse.urlparse(url).path
       if path.endswith('/'):
         path = path[:-1]
-      id = path.rsplit('/', 1)[-1]
+      base_obj['id'] = path.rsplit('/', 1)[-1]
 
-    return (id, url)
+    return base_obj
 
   def _content_for_create(self, obj):
     """Returns the content text to use in create() and preview_create().
@@ -569,7 +574,7 @@ class Source(object):
     summary = obj.get('summary')
     name = obj.get('displayName')
     content = obj.get('content')
-    _, base_url = self.base_object(obj)
+    base_url = self.base_object(obj).get('url')
 
     if type == 'note' or (base_url and (type == 'comment' or obj.get('inReplyTo'))):
       ret = summary or content or name

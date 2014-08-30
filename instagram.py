@@ -158,7 +158,7 @@ class Instagram(source.Source):
     # TODO: validation, error handling
     type = obj.get('objectType')
     verb = obj.get('verb')
-    base_id, base_url = self.base_object(obj)
+    base_id = self.base_object(obj).get('id')
 
     if type == 'comment':
       content = obj.get('content', '').encode('utf-8')

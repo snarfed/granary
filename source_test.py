@@ -195,7 +195,7 @@ class SourceTest(testutil.HandlerTest):
   def test_base_object_multiple_objects(self):
     like = copy.deepcopy(LIKES[0])
     like['object'] = [like['object'], {'url': 'http://fake.com/second'}]
-    self.assert_equals(('second', 'http://fake.com/second'),
+    self.assert_equals({'id': 'second', 'url': 'http://fake.com/second'},
                        self.source.base_object(like))
 
   def test_content_for_create(self):
