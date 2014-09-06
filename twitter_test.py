@@ -7,6 +7,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import json
 import mox
+import requests
 import urllib
 import urllib2
 
@@ -1116,3 +1117,19 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                        self.twitter.create(obj).content)
+
+  def test_create_with_photo_error(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'my caption',
+      'image': {'url': 'http://my/picture'},
+    }
+
+    urllib2.urlopen('http://my/picture').AndReturn('picture response')
+    self.expect_requests_post(twitter.API_POST_MEDIA_URL, 'error body',
+                              data={'status': 'my caption'},
+                              files={'media[]': 'picture response'},
+                              headers=mox.IgnoreArg(),
+                              status_code=403)
+    self.mox.ReplayAll()
+    self.assertRaises(requests.HTTPError, self.twitter.create, obj)

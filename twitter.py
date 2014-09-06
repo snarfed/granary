@@ -18,10 +18,10 @@ import itertools
 import json
 import logging
 import re
+import requests
 import urllib
 import urllib2
 import urlparse
-import requests
 
 from appengine_config import HTTP_TIMEOUT
 
@@ -552,8 +552,10 @@ class Twitter(source.Source):
         files = {'media[]': urllib2.urlopen(image_url)}
         headers = twitter_auth.auth_header(API_POST_MEDIA_URL,
             self.access_token_key, self.access_token_secret, 'POST')
-        resp = json.loads(requests.post(API_POST_MEDIA_URL,
-          data=data, files=files, headers=headers, timeout=HTTP_TIMEOUT).text)
+        resp = requests.post(API_POST_MEDIA_URL, data=data, files=files,
+                             headers=headers, timeout=HTTP_TIMEOUT)
+        resp.raise_for_status()
+        resp = json.loads(resp.text)
         resp['type'] = 'post'
 
     elif type in ('note', 'article'):
