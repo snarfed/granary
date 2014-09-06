@@ -1098,20 +1098,23 @@ class TwitterTest(testutil.TestCase):
   def test_create_with_photo(self):
     obj = {
       'objectType': 'note',
-      'content': 'my caption',
+      'content': """\
+the caption. extra long so we can check that it accounts for the pic.twitter.com link. almost at 140 chars, just type a little more, ok done""",
       'image': {'url': 'http://my/picture'},
     }
 
+    ellipsized = u"""\
+the caption. extra long so we can check that it accounts for the pic.twitter.com link. almost at 140 chars, just…"""
     # test preview
-    self.assertIn('with photo:<br /><br /><em>my caption</em><br />'
-                  '<img src="http://my/picture"/>',
+    self.assertIn('with photo:<br /><br /><em>%s</em><br />'
+                  '<img src="http://my/picture"/>' % ellipsized,
                   self.twitter.preview_create(obj).content)
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
     self.expect_requests_post(twitter.API_POST_MEDIA_URL,
                               json.dumps({'url': 'http://posted/picture'}),
-                              data={'status': 'my caption'},
+                              data={'status': ellipsized.encode('utf-8')},
                               files={'media[]': 'picture response'},
                               headers=mox.IgnoreArg())
     self.mox.ReplayAll()

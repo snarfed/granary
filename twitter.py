@@ -86,7 +86,7 @@ MAX_TWEET_LENGTH = 140
 TCO_LENGTH = 23
 
 class OffsetTzinfo(datetime.tzinfo):
-  """A simple, DST-unaware tzinfo from given utc offest in seconds.
+  """A simple, DST-unaware tzinfo from given utc offset in seconds.
   """
   def __init__(self, utc_offset=0):
     """Constructor.
@@ -446,6 +446,8 @@ class Twitter(source.Source):
       parsed[1] = self.DOMAIN
       base_url = urlparse.urlunparse(parsed)
 
+    has_picture = type in ('note', 'article') and obj.get('image')
+
     # need a base_url with the tweet id for the embed HTML below. do this
     # *after* checking the real base_url for in-reply-to author username.
     if base_id and not base_url:
@@ -458,6 +460,10 @@ class Twitter(source.Source):
     include_url = obj.get('url') if include_link else None
     if include_url:
       max -= TCO_LENGTH + 3
+    if has_picture:
+      # twitter includes a pic.twitter.com link (and space) for pictures - one
+      # link total, regardless of number of pictures - so account for that.
+      max -= TCO_LENGTH + 1
 
     length = 0
     tokens = content.split()
@@ -540,7 +546,7 @@ class Twitter(source.Source):
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
         resp['type'] = 'repost'
 
-    elif type in ('note', 'article') and obj.get('image'):
+    elif has_picture:
       image_url = obj.get('image').get('url')
       if preview:
         return source.creation_result(
