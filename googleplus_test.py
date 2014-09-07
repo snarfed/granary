@@ -9,6 +9,8 @@ https://developers.google.com/api-client-library/python/guide/mocks )
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
+from email.message import Message
+from email.mime.multipart import MIMEMultipart
 import json
 
 import appengine_config
@@ -192,13 +194,27 @@ class GooglePlusTest(testutil.HandlerTest):
 
   def test_get_activities_fetch_extras(self):
     self.init()
+
+    # generate minimal fake responses for each request in the batch
+    batch = MIMEMultipart()
+    for i, item in enumerate((COMMENT_GP, PLUSONER, RESHARER)):
+      msg = Message()
+      msg.set_payload('HTTP/1.1 200 OK\n\r\n\r\n' + json.dumps({'items': [item]}))
+      msg['Content-ID'] = '<response-abc+%d>' % (i + 1)
+      batch.attach(msg)
+
+    # must be called to generate the boundaries between parts, but can't be
+    # called again, so we capture the result.
+    batch_str = batch.as_string()
+
     http_seq = http.HttpMockSequence(
-      [({'status': '200'}, json.dumps({'items': [item]})) for item in
-       ACTIVITY_GP_EXTRAS,
-       # should only ask for these the first time, use the cache for the second
-       COMMENT_GP, PLUSONER, RESHARER,
-       ACTIVITY_GP_EXTRAS,
+      [({'status': '200'}, json.dumps({'items': [ACTIVITY_GP_EXTRAS]})),
+       ({'status': '200',
+         'content-type': 'multipart/mixed; boundary="%s"' % batch.get_boundary()},
+        batch_str),
+       ({'status': '200'}, json.dumps({'items': [ACTIVITY_GP_EXTRAS]})),
        ])
+
     self.auth_entity.http = lambda: http_seq
 
     cache = testutil.FakeCache()

@@ -14,6 +14,7 @@ import appengine_config
 import source
 
 from apiclient.errors import HttpError
+from apiclient.http import BatchHttpRequest
 from oauth_dropins.webutil import util
 
 
@@ -66,6 +67,11 @@ class GooglePlus(source.Source):
     only make those calls when we know there's something to fetch.
     https://developers.google.com/+/api/latest/comments/list
     https://developers.google.com/+/api/latest/people/listByActivity
+
+    We also batch those calls into a single HTTP request, so there are at most
+    two HTTP requests total, one to get activities and optionally one to get new
+    responses.
+    https://developers.google.com/api-client-library/python/guide/batch
     """
     if user_id is None:
       user_id = 'me'
@@ -106,6 +112,10 @@ class GooglePlus(source.Source):
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
+    # prepare batch API requests for comments, likes and reshares
+    # https://developers.google.com/api-client-library/python/guide/batch
+    batch = BatchHttpRequest()
+    run_batch = False
     for activity in activities:
       id = activity['id']
       obj = activity.get('object', {})
@@ -115,24 +125,36 @@ class GooglePlus(source.Source):
       if fetch_replies and num_replies and num_replies != cached.get('AGC ' + id):
         call = self.auth_entity.api().comments().list(
           activityId=activity['id'], maxResults=500)
-        comments = call.execute(http)
-        obj['replies']['items'] = [
-          self.postprocess_comment(c) for c in comments['items']]
+
+        def set_comments(req_id, resp, exc):
+          if exc is not None:
+            raise exc
+          obj['replies']['items'] = [
+            self.postprocess_comment(c) for c in resp['items']]
+
+        batch.add(call, callback=set_comments)
+        run_batch = True
         cache_updates['AGC ' + id] = num_replies
 
       # likes
       num_likes = obj.get('plusoners', {}).get('totalItems')
       if fetch_likes and num_likes and num_likes != cached.get('AGL ' + id):
-        self.add_tags(activity, 'plusoners', 'like')
+        self.add_tags(batch, activity, 'plusoners', 'like')
+        run_batch = True
         cache_updates['AGL ' + id] = num_likes
 
       # reshares
       num_shares = obj.get('resharers', {}).get('totalItems')
       if fetch_shares and num_shares and num_shares != cached.get('AGS ' + id):
-        self.add_tags(activity, 'resharers', 'share')
+        self.add_tags(batch, activity, 'resharers', 'share')
+        run_batch = True
         cache_updates['AGS ' + id] = num_shares
 
-      self.postprocess_activity(activity)
+    if run_batch:
+      batch.execute(http)
+
+    for a in activities:
+      self.postprocess_activity(a)
 
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
@@ -183,14 +205,17 @@ class GooglePlus(source.Source):
     comment['url'] = comment['inReplyTo'][0]['url']
     return self.postprocess_object(comment)
 
-  def add_tags(self, activity, collection, verb):
+  def add_tags(self, batch, activity, collection, verb):
     """Fetches and adds 'like' or 'share' tags to an activity.
+
+    Just adds a request and callback to the batch. Does not execute the batch.
 
     Converts +1s to like and reshares to share activity objects, and stores them
     in place in the 'tags' field of the activity's object.
     Details: https://developers.google.com/+/api/latest/people/listByActivity
 
     Args:
+      batch: BatchHttpRequest
       activity: dict, G+ activity that was +1ed or reshared
       collection: string, 'plusoners' or 'resharers'
       verb: string, ActivityStreams verb to populate the tags with
@@ -199,26 +224,29 @@ class GooglePlus(source.Source):
     content_verbs = {'plusoners': '+1ed', 'resharers': 'reshared'}
 
     id = activity['id']
+    obj = activity['object']
     call = self.auth_entity.api().people().listByActivity(
       activityId=id, collection=collection)
-    persons = call.execute(self.auth_entity.http()).get('items', [])
-    obj = activity['object']
-    tags = obj.setdefault('tags', [])
 
-    for person in persons:
-      person_id = person['id']
-      person['id'] = self.tag_uri(person['id'])
-      tags.append(self.postprocess_object({
-        'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
-        'objectType': 'activity',
-        'verb': verb,
-        'url': obj.get('url'),
-        'object': {'url': obj.get('url')},
-        'author': person,
-        'content': '%s this.' % content_verbs[collection],
-        }))
+    def set_tags(req_id, resp, exc):
+      if exc is not None:
+        raise exc
 
-    return tags
+      tags = obj.setdefault('tags', [])
+      for person in resp.get('items', []):
+        person_id = person['id']
+        person['id'] = self.tag_uri(person['id'])
+        tags.append(self.postprocess_object({
+          'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
+          'objectType': 'activity',
+          'verb': verb,
+          'url': obj.get('url'),
+          'object': {'url': obj.get('url')},
+          'author': person,
+          'content': '%s this.' % content_verbs[collection],
+          }))
+
+    batch.add(call, callback=set_tags)
 
   def user_to_actor(self, user):
     """Returns a Google+ Person object unchanged.
