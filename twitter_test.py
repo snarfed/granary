@@ -5,9 +5,11 @@
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
+import httplib
 import json
 import mox
 import requests
+import socket
 import urllib
 import urllib2
 
@@ -756,6 +758,25 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.twitter.get_activities_response(min_id=135)
 
+  def test_get_activities_retries(self):
+    for exc in (httplib.HTTPException('Deadline exceeded: foo'),
+                socket.error('asdf'),
+                urllib2.HTTPError('url', 501, 'msg', {}, None)):
+      for i in range(twitter.RETRIES):
+        self.expect_urlopen(TIMELINE).AndRaise(exc)
+      self.expect_urlopen(TIMELINE, '[]')
+      self.mox.ReplayAll()
+      self.assertEquals([], self.twitter.get_activities_response()['items'])
+      self.mox.ResetAll()
+
+    # other exceptions shouldn't retry
+    for exc in (httplib.HTTPException('not a deadline'),
+                urllib2.HTTPError('url', 403, 'not a 5xx', {}, None)):
+      self.expect_urlopen(TIMELINE).AndRaise(exc)
+      self.mox.ReplayAll()
+      self.assertRaises(exc.__class__, self.twitter.get_activities_response)
+      self.mox.ResetAll()
+
   def test_get_comment(self):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/show.json?id=123&include_entities=true',
@@ -980,8 +1001,6 @@ class TwitterTest(testutil.TestCase):
     self.twitter.create(obj, include_link=True)
     result = self.twitter.preview_create(obj, include_link=True)
     self.assertIn(u'too long… (<a href="http://obj">obj</a>)',result.content)
-
-
 
   def test_create_reply(self):
     # tuples: (content, in-reply-to url, expected tweet, expected type)

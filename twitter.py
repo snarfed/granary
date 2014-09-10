@@ -15,10 +15,12 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import collections
 import datetime
 import itertools
+import httplib
 import json
 import logging
 import re
 import requests
+import socket
 import urllib
 import urllib2
 import urlparse
@@ -29,6 +31,7 @@ from bs4 import BeautifulSoup
 
 import source
 from oauth_dropins import twitter_auth
+from oauth_dropins.handlers import interpret_http_exception
 from oauth_dropins.webutil import util
 
 API_TIMELINE_URL = \
@@ -60,6 +63,9 @@ HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 # https://dev.twitter.com/docs/rate-limiting/1.1/limits
 # TODO: sigh. figure out a better way. dammit twitter, give me a batch API!!!
 RETWEET_LIMIT = 15
+
+# For read requests only.
+RETRIES = 3
 
 # HTML snippet that embeds a tweet.
 # https://dev.twitter.com/docs/embedded-tweets
@@ -599,6 +605,25 @@ class Twitter(source.Source):
   def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """
+    if ('data' not in kwargs and not
+        (isinstance(url, urllib2.Request) and url.get_method() == 'POST')):
+      # this is a GET. retry up to 3x if we deadline.
+      for attempt in range(RETRIES):
+        try:
+          return twitter_auth.signed_urlopen(
+            url, self.access_token_key, self.access_token_secret, **kwargs)
+        except httplib.HTTPException, e:
+          if not str(e).startswith('Deadline exceeded'):
+            raise
+        except socket.error, e:
+          pass
+        except urllib2.HTTPError, e:
+          code, body = interpret_http_exception(e)
+          if code is None or int(code) / 100 != 5:
+            raise
+        logging.warning('Twitter API call failed! Retrying...')
+
+    # last try. if it deadlines, let the exception bubble up.
     return twitter_auth.signed_urlopen(
       url, self.access_token_key, self.access_token_secret, **kwargs)
 
