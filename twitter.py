@@ -452,12 +452,21 @@ class Twitter(source.Source):
       parsed[1] = self.DOMAIN
       base_url = urlparse.urlunparse(parsed)
 
-    has_picture = type in ('note', 'article') and obj.get('image')
+    has_picture = obj.get('image') and (type in ('note', 'article') or is_reply)
 
     # need a base_url with the tweet id for the embed HTML below. do this
     # *after* checking the real base_url for in-reply-to author username.
     if base_id and not base_url:
       base_url = 'https://twitter.com/-/statuses/' + base_id
+
+    if is_reply and not base_url:
+      return source.creation_result(
+        abort=True,
+        error_plain='Could not find a tweet to reply to.',
+        error_html='Could not find a tweet to <a href="http://indiewebcamp.com/reply">reply to</a>. '
+        'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
+        'link a Twitter URL or to an original post that publishes a '
+        '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
     # truncate and ellipsize content if it's over the character count. URLs will
     # be t.co-wrapped, so include that when counting.
@@ -495,16 +504,32 @@ class Twitter(source.Source):
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True)
 
-    if is_reply:
-      if not base_url:
-        return source.creation_result(
-          abort=True,
-          error_plain='Could not find a tweet to reply to.',
-          error_html='Could not find a tweet to <a href="http://indiewebcamp.com/reply">reply to</a>. '
-          'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
-          'link a Twitter URL or to an original post that publishes a '
-          '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
+    if has_picture:
+      image_url = obj.get('image').get('url')
+      if preview:
+        preview = ('will <span class="verb">%s</span> with photo:<br /><br />'
+                   '<em>%s</em><br /><img src="%s"/><br />' %
+                   ('@-reply' if is_reply else 'tweet', preview_content, image_url))
+        if is_reply:
+          preview += '<br />...to <a href="%s">this tweet</a>:\n%s' % (
+            base_url, EMBED_TWEET % base_url)
+        return source.creation_result(preview)
 
+      else:
+        content = unicode(content).encode('utf-8')
+        data = {'status': content}
+        if is_reply:
+          data['in_reply_to_status_id'] = base_id
+        files = {'media[]': urllib2.urlopen(image_url)}
+        headers = twitter_auth.auth_header(API_POST_MEDIA_URL,
+            self.access_token_key, self.access_token_secret, 'POST')
+        resp = requests.post(API_POST_MEDIA_URL, data=data, files=files,
+                             headers=headers, timeout=HTTP_TIMEOUT)
+        resp.raise_for_status()
+        resp = json.loads(resp.text)
+        resp['type'] = 'post'
+
+    elif is_reply:
       if preview:
         return source.creation_result(
           'will <span class="verb">@-reply</span>:<br /><br />\n<em>%s</em>\n'
@@ -551,24 +576,6 @@ class Twitter(source.Source):
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
         resp['type'] = 'repost'
-
-    elif has_picture:
-      image_url = obj.get('image').get('url')
-      if preview:
-        return source.creation_result(
-          'will <span class="verb">tweet</span> with photo:<br /><br />'
-          '<em>%s</em><br /><img src="%s"/><br />' % (preview_content, image_url))
-      else:
-        content = unicode(content).encode('utf-8')
-        data = {'status': content}
-        files = {'media[]': urllib2.urlopen(image_url)}
-        headers = twitter_auth.auth_header(API_POST_MEDIA_URL,
-            self.access_token_key, self.access_token_secret, 'POST')
-        resp = requests.post(API_POST_MEDIA_URL, data=data, files=files,
-                             headers=headers, timeout=HTTP_TIMEOUT)
-        resp.raise_for_status()
-        resp = json.loads(resp.text)
-        resp['type'] = 'post'
 
     elif type in ('note', 'article'):
       if preview:

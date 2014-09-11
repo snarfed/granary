@@ -1140,6 +1140,30 @@ the caption. extra long so we can check that it accounts for the pic.twitter.com
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                        self.twitter.create(obj).content)
 
+  def test_create_reply_with_photo(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'my content',
+      'inReplyTo': [{'url': 'http://twitter.com/you/status/100'}],
+      'image': {'url': 'http://my/picture'},
+    }
+
+    # test preview
+    self.assertIn('<span class="verb">@-reply</span> with photo:',
+                  self.twitter.preview_create(obj).content)
+
+    # test create
+    urllib2.urlopen('http://my/picture').AndReturn('picture response')
+    self.expect_requests_post(twitter.API_POST_MEDIA_URL,
+                              json.dumps({'url': 'http://posted/picture'}),
+                              data={'status': '@you my content',
+                                    'in_reply_to_status_id': '100'},
+                              files={'media[]': 'picture response'},
+                              headers=mox.IgnoreArg())
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
+                       self.twitter.create(obj).content)
+
   def test_create_with_photo_error(self):
     obj = {
       'objectType': 'note',
