@@ -40,7 +40,7 @@ class TestCase(HandlerTest):
     if response_headers is not None:
       resp.headers.update(response_headers)
 
-    kwargs['timeout'] = appengine_config.HTTP_TIMEOUT
+    kwargs.setdefault('timeout', appengine_config.HTTP_TIMEOUT)
     if method is requests.head:
       kwargs['allow_redirects'] = True
 
