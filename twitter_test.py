@@ -1164,6 +1164,27 @@ the caption. extra long so we can check that it accounts for the pic.twitter.com
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                        self.twitter.create(obj).content)
 
+  def test_create_with_photo_no_content(self):
+    obj = {
+      'objectType': 'note',
+      'image': {'url': 'http://my/picture'},
+    }
+
+    # test preview
+    self.assertIn('<img src="http://my/picture"/>',
+                  self.twitter.preview_create(obj).content)
+
+    # test create
+    urllib2.urlopen('http://my/picture').AndReturn('picture response')
+    self.expect_requests_post(twitter.API_POST_MEDIA_URL,
+                              json.dumps({'url': 'http://posted/picture'}),
+                              data={'status': ''},
+                              files={'media[]': 'picture response'},
+                              headers=mox.IgnoreArg())
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
+                       self.twitter.create(obj).content)
+
   def test_create_with_photo_error(self):
     obj = {
       'objectType': 'note',

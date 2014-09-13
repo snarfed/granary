@@ -410,7 +410,6 @@ class Twitter(source.Source):
       snippet. If False, it will be a dict with 'id' and 'url' keys
       for the newly created Twitter object.
     """
-    # TODO: validation, error handling
     assert preview in (False, True)
     type = obj.get('objectType')
     verb = obj.get('verb')
@@ -419,17 +418,21 @@ class Twitter(source.Source):
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 
+    is_reply = type == 'comment' or 'inReplyTo' in obj
+    has_picture = obj.get('image') and (type in ('note', 'article') or is_reply)
+
     content = self._content_for_create(obj)
     if not content:
       if type == 'activity':
         content = verb
+      elif has_picture:
+        content = ''
       else:
         return source.creation_result(
           abort=False,  # keep looking for things to publish,
           error_plain='No content text found.',
           error_html='No content text found.')
 
-    is_reply = type == 'comment' or 'inReplyTo' in obj
     if is_reply and base_url:
       # extract username from in-reply-to URL so we can @-mention it, if it's
       # not already @-mentioned, since Twitter requires that to make our new
@@ -451,8 +454,6 @@ class Twitter(source.Source):
       parsed = list(parsed)
       parsed[1] = self.DOMAIN
       base_url = urlparse.urlunparse(parsed)
-
-    has_picture = obj.get('image') and (type in ('note', 'article') or is_reply)
 
     # need a base_url with the tweet id for the embed HTML below. do this
     # *after* checking the real base_url for in-reply-to author username.
