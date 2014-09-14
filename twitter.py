@@ -610,6 +610,24 @@ class Twitter(source.Source):
 
     return source.creation_result(resp)
 
+  def _content_for_create(self, obj):
+    """Returns the content text to use in create() and preview_create().
+
+    Differs from Source._content_for_create() in that it prefers displaysName
+    over content for articles. Otherwise it's the same.
+    """
+    type = obj.get('objectType')
+    summary = obj.get('summary')
+    name = obj.get('displayName')
+    content = obj.get('content')
+    base_url = self.base_object(obj).get('url')
+
+    if type == 'note' or (base_url and (type == 'comment' or obj.get('inReplyTo'))):
+      ret = summary or content or name
+    else:
+      ret = summary or name or content
+    return ret.strip() if ret else None
+
   def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """

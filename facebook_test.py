@@ -975,19 +975,21 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(
       facebook.API_FEED_URL, '{}',
       data=urllib.urlencode(
-        {'message': 'my msg\n\n(Originally published at: http://obj)'}))
+        {'message': 'my content\n\n(Originally published at: http://obj)'}))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
     del obj['image']
     obj.update({
         'objectType': 'article',
-        'summary': 'my msg',
+        'content': 'my content',
+        # displayName shouldn't override content
+        'displayName': 'my name',
         'url': 'http://obj',
         })
     self.facebook.create(obj, include_link=True)
     preview = self.facebook.preview_create(obj, include_link=True)
-    self.assertIn('my msg', preview.content)
+    self.assertIn('my content', preview.content)
 
   def test_create_comment(self):
     self.expect_urlopen(
@@ -997,6 +999,7 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
+    # summary should override content
     obj['summary'] = 'my cmt'
     self.assert_equals({
       'id': '456_789',

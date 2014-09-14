@@ -211,7 +211,7 @@ class SourceTest(testutil.HandlerTest):
                  {'objectType': 'comment', 'object': {'url': 'http://not/fake'}}):
       self.assertEqual(None, cfc(base, {}))
       self.assertEqual('c', cfc(base, {'content': ' c '}))
-      self.assertEqual('n', cfc(base, {'content': 'c', 'displayName': 'n'}))
+      self.assertEqual('c', cfc(base, {'content': 'c', 'displayName': 'n'}))
       self.assertEqual('s', cfc(base, {'content': 'c', 'displayName': 'n',
                                        'summary': 's'}))
 

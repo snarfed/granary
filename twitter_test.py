@@ -964,10 +964,11 @@ class TwitterTest(testutil.TestCase):
       self.assertIn('will <span class="verb">tweet</span>', got.content)
       self.assertIn('<em>%s</em>' % preview, got.content)
 
-  def test_create_tweet_prefers_summary_then_content_then_name(self):
+  def test_create_tweet_note_prefers_summary_then_content_then_name(self):
     obj = copy.deepcopy(OBJECT)
 
     obj.update({
+        'objectType': 'note',
         'summary': 'my summary',
         'displayName': 'my name',
         'content': 'my content',
@@ -982,6 +983,26 @@ class TwitterTest(testutil.TestCase):
     del obj['content']
     result = self.twitter.preview_create(obj)
     self.assertIn('<em>my name</em>', result.content)
+
+  def test_create_tweet_article_prefers_summary_then_name_then_content(self):
+    obj = copy.deepcopy(OBJECT)
+
+    obj.update({
+        'objectType': 'article',
+        'summary': 'my summary',
+        'displayName': 'my name',
+        'content': 'my content',
+        })
+    result = self.twitter.preview_create(obj)
+    self.assertIn('<em>my summary</em>', result.content)
+
+    del obj['summary']
+    result = self.twitter.preview_create(obj)
+    self.assertIn('<em>my name</em>', result.content)
+
+    del obj['displayName']
+    result = self.twitter.preview_create(obj)
+    self.assertIn('<em>my content</em>', result.content)
 
   def test_create_tweet_include_link(self):
     twitter.MAX_TWEET_LENGTH = 20

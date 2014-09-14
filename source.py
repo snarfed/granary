@@ -576,8 +576,5 @@ class Source(object):
     content = obj.get('content')
     base_url = self.base_object(obj).get('url')
 
-    if type == 'note' or (base_url and (type == 'comment' or obj.get('inReplyTo'))):
-      ret = summary or content or name
-    else:
-      ret = summary or name or content
+    ret = summary or content or name
     return ret.strip() if ret else None
