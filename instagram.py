@@ -18,9 +18,9 @@ import urllib
 import urlparse
 
 import appengine_config
-import python_instagram
-from python_instagram.bind import InstagramAPIError
-from python_instagram.client import InstagramAPI
+from oauth_dropins import python_instagram
+from oauth_dropins.python_instagram.bind import InstagramAPIError
+from oauth_dropins.python_instagram.client import InstagramAPI
 
 from oauth_dropins.webutil import util
 import source

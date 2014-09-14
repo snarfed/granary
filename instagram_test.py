@@ -10,7 +10,7 @@ import logging
 import mox
 
 import httplib2
-from python_instagram.bind import InstagramAPIError
+from oauth_dropins.python_instagram.bind import InstagramAPIError
 
 import instagram
 import source
