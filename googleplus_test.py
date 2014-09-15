@@ -255,3 +255,13 @@ class GooglePlusTest(testutil.HandlerTest):
           }))
     self.assert_equals([], self.googleplus.get_activities(
           fetch_replies=True, fetch_likes=True, fetch_shares=True))
+
+  def test_user_to_actor_url_field(self):
+    uta = self.googleplus.user_to_actor
+    self.assertEqual({'foo': 'bar'}, uta({'foo': 'bar'}))
+    self.assertEqual({'url': 'x',
+                      'urls': [{'value': 'x'}]},
+                     uta({'urls': [{'value': 'x'}]}))
+    self.assertEqual({'url': 'x',
+                      'urls': [{'value': 'x'}, {'value': 'y'}]},
+                     uta({'urls': [{'value': 'x'}, {'value': 'y'}]}))

@@ -35,7 +35,7 @@ ACTOR = {  # ActivityStreams
   'id': tag_uri('snarfed.org'),
   'numeric_id': '212038',
   'updated': '2012-01-06T02:11:04+00:00',
-  'url': 'https://snarfed.org/',
+  'url': 'https://snarfed.org',
   'username': 'snarfed.org',
   'description': 'something about me',
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
@@ -482,11 +482,11 @@ ATOM = """\
 <updated>2012-03-04T18:20:37+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>https://snarfed.org/</uri>
+ <uri>https://snarfed.org</uri>
  <name>Ryan Barrett</name>
 </author>
 
-<link href="https://snarfed.org/" rel="alternate" type="text/html" />
+<link href="https://snarfed.org" rel="alternate" type="text/html" />
 <link rel="avatar" href="http://graph.facebook.com/snarfed.org/picture?type=large" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
@@ -782,6 +782,30 @@ class FacebookTest(testutil.HandlerTest):
     del user['link']
     actor['url'] = 'https://facebook.com/snarfed.org'
     self.assert_equals(actor, self.facebook.user_to_actor(user))
+
+  def test_user_to_actor_multiple_urls(self):
+    actor = self.facebook.user_to_actor({
+      'id': '123',
+      'website': """
+x
+http://a
+y.com
+http://b http://c""",
+      'link': 'http://x',  # website overrides link
+      })
+    self.assertEquals('http://a', actor['url'])
+    self.assertEquals(
+      [{'value': 'http://a'}, {'value': 'http://b'}, {'value': 'http://c'}],
+      actor['urls'])
+
+    actor = self.facebook.user_to_actor({
+      'id': '123',
+      'link': 'http://b http://c	http://a',
+      })
+    self.assertEquals('http://b', actor['url'])
+    self.assertEquals(
+      [{'value': 'http://b'}, {'value': 'http://c'}, {'value': 'http://a'}],
+      actor['urls'])
 
   def test_user_to_actor_minimal(self):
     actor = self.facebook.user_to_actor({'id': '212038'})

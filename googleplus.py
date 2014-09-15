@@ -262,4 +262,7 @@ class GooglePlus(source.Source):
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
+    urls = user.get('urls')
+    if urls and not user.get('url'):
+      user['url'] = urls[0].get('value')
     return user

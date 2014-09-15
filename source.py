@@ -275,6 +275,21 @@ class Source(object):
     """
     raise NotImplementedError()
 
+  def user_to_actor(self, user):
+    """Converts a user to an actor.
+
+    The returned object will have at least a 'url' field. If the user has
+    multiple URLs, there will also be a 'urls' list field whose elements are
+    dicts with 'value': URL.
+
+    Args:
+      user: dict, a decoded JSON Facebook user
+
+    Returns:
+      an ActivityStreams actor dict, ready to be JSON-encoded
+    """
+    raise NotImplementedError()
+
   def _get_tag(self, activities, verb, user_id):
     if not activities:
       return None

@@ -785,8 +785,6 @@ class Facebook(source.Source):
     if not handle:
       return {}
 
-    url = (user.get('website') or user.get('link') or self.user_url(handle))
-
     # facebook implements this as a 302 redirect
     image_url = 'http://graph.facebook.com/%s/picture?type=large' % handle
     actor = {
@@ -797,10 +795,17 @@ class Facebook(source.Source):
       # user id, if available.
       'numeric_id': id,
       'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
-      'url': url,
       'username': username,
       'description': user.get('bio'),
       }
+
+    # extract web site links. extract_links uniquifies and preserves order
+    urls = util.extract_links(user.get('website'))
+    if not urls:
+      urls = util.extract_links(user.get('link')) or [self.user_url(handle)]
+    actor['url'] = urls[0]
+    if len(urls) > 1:
+      actor['urls'] = [{'value': u} for u in urls]
 
     location = user.get('location')
     if location:
