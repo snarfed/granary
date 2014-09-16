@@ -508,13 +508,16 @@ class Twitter(source.Source):
     if has_picture:
       image_url = obj.get('image').get('url')
       if preview:
-        preview = ('will <span class="verb">%s</span> with photo:<br /><br />'
-                   '<em>%s</em><br /><img src="%s"/><br />' %
-                   ('@-reply' if is_reply else 'tweet', preview_content, image_url))
         if is_reply:
-          preview += '<br />...to <a href="%s">this tweet</a>:\n%s' % (
-            base_url, EMBED_TWEET % base_url)
-        return source.creation_result(preview)
+          desc = ('<span class="verb">@-reply</span> to <a href="%s">this tweet'
+                  '</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
+        else:
+          desc = '<span class="verb">tweet</span>:'
+        if preview_content:
+            preview_content += '<br /><br />'
+        return source.creation_result(
+          content='%s<img src="%s" />' % (preview_content, image_url),
+          description=desc)
 
       else:
         content = unicode(content).encode('utf-8')
@@ -533,9 +536,9 @@ class Twitter(source.Source):
     elif is_reply:
       if preview:
         return source.creation_result(
-          'will <span class="verb">@-reply</span>:<br /><br />\n<em>%s</em>\n'
-          '<br /><br />...to <a href="%s">this tweet</a>:\n%s' %
-          (preview_content, base_url, EMBED_TWEET % base_url))
+          content=preview_content,
+          description='<span class="verb">@-reply</span> to <a href="%s">this tweet'
+                      '</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
       else:
         content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
@@ -553,8 +556,8 @@ class Twitter(source.Source):
 
       if preview:
         return source.creation_result(
-          'will <span class="verb">favorite</span> <a href="%s">this tweet</a>:\n%s' %
-          (base_url, EMBED_TWEET % base_url))
+          description='<span class="verb">favorite</span> <a href="%s">'
+                      'this tweet</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE_URL, data=data).read()
@@ -571,8 +574,8 @@ class Twitter(source.Source):
 
       if preview:
         return source.creation_result(
-          'will <span class="verb">retweet</span> <a href="%s">this tweet</a>:\n%s' %
-          (base_url, EMBED_TWEET % base_url))
+          description='<span class="verb">retweet</span> <a href="%s">'
+                      'this tweet</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
       else:
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
@@ -580,9 +583,8 @@ class Twitter(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return source.creation_result(
-          'will <span class="verb">tweet</span>:<br /><br />'
-          '<em>%s</em><br />' % preview_content)
+        return source.creation_result(content=preview_content,
+                                      description='<span class="verb">tweet</span>:')
       else:
         content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content})
@@ -673,6 +675,9 @@ class Twitter(source.Source):
         parts = parsed.path.split('/')
         if len(parts) >= 3 and parts[-2] == 'photo':
           base_obj['id'] = parts[-3]
+          parsed = list(parsed)
+          parsed[2] = '/'.join(parts[:-2])
+          base_obj['url'] = urlparse.urlunparse(parsed)
       except BaseException, e:
         logging.error(
           "Couldn't parse object URL %s : %s. Falling back to default logic.",

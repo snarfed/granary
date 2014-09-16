@@ -992,8 +992,8 @@ http://b http://c""",
       self.facebook.create(obj).content)
 
     preview = self.facebook.preview_create(obj)
-    self.assertIn('will <span class="verb">post</span>', preview.content)
-    self.assertIn('<em>my msg</em>', preview.content)
+    self.assertEquals('<span class="verb">post</span>:', preview.description)
+    self.assertEquals('my msg', preview.content)
 
   def test_create_post_include_link(self):
     self.expect_urlopen(
@@ -1013,7 +1013,9 @@ http://b http://c""",
         })
     self.facebook.create(obj, include_link=True)
     preview = self.facebook.preview_create(obj, include_link=True)
-    self.assertIn('my content', preview.content)
+    self.assertEquals(
+      'my content\n\n(Originally published at: <a href="http://obj">http://obj</a>)',
+      preview.content)
 
   def test_create_comment(self):
     self.expect_urlopen(
@@ -1032,8 +1034,9 @@ http://b http://c""",
     }, self.facebook.create(obj).content)
 
     preview = self.facebook.preview_create(obj)
-    self.assertIn('<span class="verb">comment</span> <em>my cmt</em> on <a href="https://facebook.com/547822715231468">this post</a>', preview.content)
-    self.assertIn('<div class="fb-post" data-href="https://facebook.com/547822715231468">', preview.content)
+    self.assertEquals('my cmt', preview.content)
+    self.assertIn('<span class="verb">comment</span> on <a href="https://facebook.com/547822715231468">this post</a>:', preview.description)
+    self.assertIn('<div class="fb-post" data-href="https://facebook.com/547822715231468">', preview.description)
 
   def test_create_comment_other_domain(self):
     self.mox.ReplayAll()
@@ -1083,8 +1086,8 @@ http://b http://c""",
                        self.facebook.create(LIKE_OBJS[0]).content)
 
     preview = self.facebook.preview_create(LIKE_OBJS[0])
-    self.assertIn('<span class="verb">like</span> <a href="https://facebook.com/212038/posts/10100176064482163">this post</a>', preview.content)
-    self.assertIn('<div class="fb-post" data-href="https://facebook.com/212038/posts/10100176064482163">', preview.content)
+    self.assertIn('<span class="verb">like</span> <a href="https://facebook.com/212038/posts/10100176064482163">this post</a>:', preview.description)
+    self.assertIn('<div class="fb-post" data-href="https://facebook.com/212038/posts/10100176064482163">', preview.description)
 
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':
@@ -1099,8 +1102,9 @@ http://b http://c""",
                          self.facebook.create(rsvp).content)
 
     preview = self.facebook.preview_create(rsvp)
-    self.assertIn('<span class="verb">RSVP maybe</span>', preview.content)
-    self.assertIn('https://facebook.com/234/', preview.content)
+    self.assertEquals('<span class="verb">RSVP maybe</span> to '
+                      '<a href="https://facebook.com/234/">this event</a>.',
+                      preview.description)
 
   def test_create_unsupported_type(self):
     for fn in self.facebook.create, self.facebook.preview_create:
@@ -1145,9 +1149,10 @@ http://b http://c""",
     }
 
     # test preview
-    self.assertIn('with photo:<br /><br /><em>my caption</em><br />'
-                  '<img src="http://my/picture"/>',
-                  self.facebook.preview_create(obj).content)
+    preview = self.facebook.preview_create(obj)
+    self.assertEquals('<span class="verb">post</span>:', preview.description)
+    self.assertEquals('my caption<br /><br /><img src="http://my/picture" />',
+                      preview.content)
 
     # test create
     self.expect_urlopen(

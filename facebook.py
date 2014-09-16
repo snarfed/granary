@@ -350,10 +350,9 @@ class Facebook(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        return source.creation_result(
-          'will <span class="verb">comment</span> <em>%s</em> on '
-          '<a href="%s">this post</a>:\n%s' %
-          (preview_content, base_url, EMBED_POST % base_url))
+        desc = ('<span class="verb">comment</span> on '
+                '<a href="%s">this post</a>:\n%s' % (base_url, EMBED_POST % base_url))
+        return source.creation_result(content=preview_content, description=desc)
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
                                        data=msg_data).read())
@@ -372,9 +371,9 @@ class Facebook(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        return source.creation_result(
-          'will <span class="verb">like</span> <a href="%s">this post</a>:\n%s' %
-          (base_url, EMBED_POST % base_url))
+        desc = ('<span class="verb">like</span> <a href="%s">this post</a>:\n%s' %
+                (base_url, EMBED_POST % base_url))
+        return source.creation_result(description=desc)
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
         assert resp == True, resp
@@ -393,9 +392,9 @@ class Facebook(source.Source):
       # TODO: event invites
       if preview:
         assert verb.startswith('rsvp-')
-        return source.creation_result(
-          'will <span class="verb">RSVP %s</span> to '
-          '<a href="%s">this event</a>.<br />' % (verb[5:], base_url))
+        desc = ('<span class="verb">RSVP %s</span> to <a href="%s">this event</a>.' %
+                (verb[5:], base_url))
+        return source.creation_result(description=desc)
       else:
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
         assert resp == True, resp
@@ -405,8 +404,8 @@ class Facebook(source.Source):
       image_url = obj.get('image').get('url')
       if preview:
         return source.creation_result(
-          'will <span class="verb">post</span> with photo:<br /><br />'
-          '<em>%s</em><br /><img src="%s"/><br />' % (preview_content, image_url))
+          content='%s<br /><br /><img src="%s" />' % (preview_content, image_url),
+          description='<span class="verb">post</span>:')
       else:
         msg_data = {'message': content.encode('utf-8'), 'url': image_url}
         if appengine_config.DEBUG:
@@ -417,9 +416,8 @@ class Facebook(source.Source):
 
     elif type in ('note', 'article'):
       if preview:
-        return source.creation_result(
-          'will <span class="verb">post</span>:<br /><br />'
-          '<em>%s</em><br />' % preview_content)
+        return source.creation_result(content=preview_content,
+                                      description='<span class="verb">post</span>:')
       else:
         resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
         resp.update({'url': self.post_url(resp), 'type': 'post'})

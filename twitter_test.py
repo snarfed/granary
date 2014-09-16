@@ -961,8 +961,8 @@ class TwitterTest(testutil.TestCase):
       self.assert_equals(tweet, self.twitter.create(obj).content)
 
       got = self.twitter.preview_create(obj)
-      self.assertIn('will <span class="verb">tweet</span>', got.content)
-      self.assertIn('<em>%s</em>' % preview, got.content)
+      self.assertEquals('<span class="verb">tweet</span>:', got.description)
+      self.assertEquals(preview, got.content)
 
   def test_create_tweet_note_prefers_summary_then_content_then_name(self):
     obj = copy.deepcopy(OBJECT)
@@ -972,17 +972,18 @@ class TwitterTest(testutil.TestCase):
         'summary': 'my summary',
         'displayName': 'my name',
         'content': 'my content',
+        'image': None,
         })
     result = self.twitter.preview_create(obj)
-    self.assertIn('<em>my summary</em>', result.content)
+    self.assertEquals('my summary', result.content)
 
     del obj['summary']
     result = self.twitter.preview_create(obj)
-    self.assertIn('<em>my content</em>', result.content)
+    self.assertEquals('my content', result.content)
 
     del obj['content']
     result = self.twitter.preview_create(obj)
-    self.assertIn('<em>my name</em>', result.content)
+    self.assertIn('my name', result.content)
 
   def test_create_tweet_article_prefers_summary_then_name_then_content(self):
     obj = copy.deepcopy(OBJECT)
@@ -992,17 +993,18 @@ class TwitterTest(testutil.TestCase):
         'summary': 'my summary',
         'displayName': 'my name',
         'content': 'my content',
+        'image': None,
         })
     result = self.twitter.preview_create(obj)
-    self.assertIn('<em>my summary</em>', result.content)
+    self.assertIn('my summary', result.content)
 
     del obj['summary']
     result = self.twitter.preview_create(obj)
-    self.assertIn('<em>my name</em>', result.content)
+    self.assertIn('my name', result.content)
 
     del obj['displayName']
     result = self.twitter.preview_create(obj)
-    self.assertIn('<em>my content</em>', result.content)
+    self.assertIn('my content', result.content)
 
   def test_create_tweet_include_link(self):
     twitter.MAX_TWEET_LENGTH = 20
@@ -1024,22 +1026,20 @@ class TwitterTest(testutil.TestCase):
     self.assertIn(u'too long… (<a href="http://obj">obj</a>)',result.content)
 
   def test_create_reply(self):
-    # tuples: (content, in-reply-to url, expected tweet, expected type)
+    # tuples: (content, in-reply-to url, expected tweet)
     testdata = (
       # good reply, with @-mention of author
-      ('foo @you', 'http://twitter.com/you/status/100', 'foo @you', 'comment'),
+      ('foo @you', 'http://twitter.com/you/status/100', 'foo @you'),
       # no @-mention of in-reply-to author, so we add it
-      ('foo', 'http://twitter.com/you/status/100', '@you foo', 'comment'),
+      ('foo', 'http://twitter.com/you/status/100', '@you foo'),
       # photo URL. tests Twitter.base_object()
-      ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo', 'comment'),
+      ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo'),
       # mobile.twitter.com URL. the mobile should be stripped from embed.
-      ('foo', 'http://mobile.twitter.com/you/status/100', '@you foo', 'comment'),
+      ('foo', 'http://mobile.twitter.com/you/status/100', '@you foo'),
       )
 
-    for _, _, expected_tweet, type in testdata:
-      params = 'status=%s' % urllib.quote_plus(expected_tweet)
-      if type == 'comment':
-        params += '&in_reply_to_status_id=100'
+    for _, _, status in testdata:
+      params = 'status=%s&in_reply_to_status_id=100' % urllib.quote_plus(status)
       self.expect_urlopen(twitter.API_POST_TWEET_URL + '?' + params,
                           json.dumps(TWEET), data='')
     self.mox.ReplayAll()
@@ -1047,20 +1047,18 @@ class TwitterTest(testutil.TestCase):
     tweet = copy.deepcopy(TWEET)
     obj= copy.deepcopy(REPLY_OBJS[0])
 
-    for content, url, expected_tweet, type in testdata:
+    for content, url, status in testdata:
       tweet.update({
           'id': '100',
           'url': 'https://twitter.com/snarfed_org/status/100',
-          'type': type,
+          'type': 'comment',
           })
       obj.update({'inReplyTo': [{'url': url}], 'content': content})
       self.assert_equals(tweet, self.twitter.create(obj).content)
 
       preview = self.twitter.preview_create(obj)
-      if type == 'comment':
-        self.assertIn(expected_tweet, preview.content)
-        self.assertIn('<span class="verb">@-reply</span>', preview.content)
-        self.assertIn('...to <a href="http://twitter.com/you/status/100', preview.content)
+      self.assertEquals(status, preview.content)
+      self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
 
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
@@ -1071,7 +1069,7 @@ class TwitterTest(testutil.TestCase):
                        self.twitter.create(LIKES_FROM_HTML[0]).content)
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
-    self.assertIn('<span class="verb">favorite</span> <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>', preview.content)
+    self.assertIn('<span class="verb">favorite</span> <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:', preview.description)
 
   def test_create_retweet(self):
     self.expect_urlopen(
@@ -1088,7 +1086,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals(tweet, self.twitter.create(SHARES[0]).content)
 
     preview = self.twitter.preview_create(SHARES[0])
-    self.assertIn('<span class="verb">retweet</span> <a href="https://twitter.com/foo/status/333">this tweet</a>', preview.content)
+    self.assertIn('<span class="verb">retweet</span> <a href="https://twitter.com/foo/status/333">this tweet</a>:', preview.description)
 
   def test_create_unsupported_type(self):
     for fn in self.twitter.create, self.twitter.preview_create:
@@ -1146,9 +1144,10 @@ the caption. extra long so we can check that it accounts for the pic.twitter.com
     ellipsized = u"""\
 the caption. extra long so we can check that it accounts for the pic.twitter.com link. almost at 140 chars, just…"""
     # test preview
-    self.assertIn('with photo:<br /><br /><em>%s</em><br />'
-                  '<img src="http://my/picture"/>' % ellipsized,
-                  self.twitter.preview_create(obj).content)
+    preview = self.twitter.preview_create(obj)
+    self.assertEquals('<span class="verb">tweet</span>:', preview.description)
+    self.assertEquals(ellipsized + '<br /><br /><img src="http://my/picture" />',
+                      preview.content)
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
@@ -1170,8 +1169,10 @@ the caption. extra long so we can check that it accounts for the pic.twitter.com
     }
 
     # test preview
-    self.assertIn('<span class="verb">@-reply</span> with photo:',
-                  self.twitter.preview_create(obj).content)
+    preview = self.twitter.preview_create(obj)
+    self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
+    self.assertEquals('@you my content<br /><br /><img src="http://my/picture" />',
+                      preview.content)
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
@@ -1192,8 +1193,9 @@ the caption. extra long so we can check that it accounts for the pic.twitter.com
     }
 
     # test preview
-    self.assertIn('<img src="http://my/picture"/>',
-                  self.twitter.preview_create(obj).content)
+    preview = self.twitter.preview_create(obj)
+    self.assertEquals('<span class="verb">tweet</span>:', preview.description)
+    self.assertEquals('<img src="http://my/picture" />', preview.content)
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')

@@ -42,11 +42,11 @@ RSVP_CONTENTS = {
   }
 
 CreationResult = collections.namedtuple('CreationResult', [
-  'content', 'abort', 'error_plain', 'error_html'])
+  'content', 'description', 'abort', 'error_plain', 'error_html'])
 
 
-def creation_result(content=None, abort=False, error_plain=None,
-                    error_html=None):
+def creation_result(content=None, description=None, abort=False,
+                    error_plain=None, error_html=None):
   """Create a new CreationResult named tuple, which the result of
   create() and preview_create() to provides a detailed description of
   publishing failures. If abort is False, we should continue looking
@@ -56,7 +56,11 @@ def creation_result(content=None, abort=False, error_plain=None,
   publishing interactively.
 
   Args:
-    content: a unicode string for preview_create() or a dict for create()
+    content: a string HTML snippet for preview_create() or a dict for create()
+    description: string HTML snippet describing the publish action, e.g.
+      '@-reply' or 'RSVP yes to this event'. The verb itself is surrounded by a
+      <span class="verb"> to allow styling. May also include <a> link(s) and
+      embedded silo post(s).
     abort: a boolean
     error_plain: a string
     error_html: a string
@@ -64,7 +68,7 @@ def creation_result(content=None, abort=False, error_plain=None,
   Return:
     a CreationResult named tuple
   """
-  return CreationResult(content, abort, error_plain, error_html)
+  return CreationResult(content, description, abort, error_plain, error_html)
 
 
 class Source(object):
