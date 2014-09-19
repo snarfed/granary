@@ -18,7 +18,7 @@ HENTRY = string.Template("""\
   $published
   $updated
 $author
-  <div class="e-content">
+  <div class="$content_classes">
   $invitees
   $content
   </div>
@@ -92,7 +92,7 @@ def object_to_json(obj, trim_nulls=True):
   url = obj.get('url', '')
   content = obj.get('content', '')
   # TODO: extract snippet
-  name = obj.get('displayName', obj.get('title', content))
+  name = obj.get('displayName', obj.get('title'))
   summary = obj.get('summary')
 
   author = obj.get('author', obj.get('actor', {}))
@@ -300,6 +300,10 @@ def json_to_html(obj):
 
   content = prop.get('content', {})
   content_html = content.get('html', '') or content.get('value', '')
+  content_classes = ['e-content']
+  if not prop.get('name'):
+    content_classes.append('p-name')
+
   summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
              if prop.get('summary') else '')
 
@@ -338,6 +342,7 @@ def json_to_html(obj):
     in_reply_tos=in_reply_tos,
     invitees='\n'.join([hcard_to_html(i) for i in props.get('invitee', [])]),
     content=content_html,
+    content_classes=' '.join(content_classes),
     comments=comments_html,
     likes_and_reposts='\n'.join(likes_and_reposts),
     linked_name=maybe_linked_name(props),
@@ -520,7 +525,7 @@ def maybe_linked_name(props):
   Returns: string HTML
   """
   prop = first_props(props)
-  name = prop.get('name', '')
+  name = prop.get('name') or ''
   url = prop.get('url')
   html = maybe_linked(name, url, classname='u-url')
   if name:
