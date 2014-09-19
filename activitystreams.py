@@ -19,6 +19,9 @@ https://developers.google.com/+/api/latest/activities/list
 
 ActivityStreams specs:
 http://activitystrea.ms/specs/
+
+Atom format spec:
+http://atomenabled.org/developers/syndication/
 """
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
@@ -146,6 +149,7 @@ class Handler(webapp2.RequestHandler):
       self.response.out.write(json.dumps(response, indent=2))
     elif format == 'atom':
       self.response.headers['Content-Type'] = 'text/xml'
+      self.preprocess_for_atom(response)
       self.response.out.write(template.render(ATOM_TEMPLATE_FILE, response))
     elif format == 'xml':
       self.response.headers['Content-Type'] = 'text/xml'
@@ -196,6 +200,22 @@ class Handler(webapp2.RequestHandler):
     except (ValueError, AssertionError):
       raise exc.HTTPBadRequest('Invalid %s: %s (should be positive int)' %
                                (param, val))
+
+  def preprocess_for_atom(self, response):
+    """Prepares data to be rendered as Atom.
+
+    Right now, just populates each activity's title field, since Atom <entry>
+    requires the title element.
+
+    Args:
+      response: ActivityStreams response dict
+    """
+    for activity in response.get('items', []):
+      if not activity.get('title'):
+        obj = activity.get('object', {})
+        activity['title'] = util.ellipsize(
+          activity.get('displayName') or activity.get('content') or
+          obj.get('title') or obj.get('displayName') or obj.get('content'))
 
 
 application = webapp2.WSGIApplication([('.*', Handler)],

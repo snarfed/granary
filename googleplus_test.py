@@ -59,7 +59,6 @@ COMMENT_GP = {  # Google+
 COMMENT_AS = copy.deepcopy(COMMENT_GP)
 COMMENT_AS.update({  # ActivityStreams
     'author': COMMENT_AS.pop('actor'),
-    'displayName': 'my content',
     'content': 'my content',
     'id': tag_uri('888'),
     'url': 'http://post/url',

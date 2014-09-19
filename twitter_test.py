@@ -119,7 +119,6 @@ TWEET = {  # Twitter
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
-  'displayName': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41+00:00',
@@ -188,7 +187,6 @@ ACTIVITY = {  # ActivityStreams
   'url': 'https://twitter.com/snarfed_org/status/100',
   'actor': ACTOR,
   'object': OBJECT,
-  'title': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
   'context': {
     'inReplyTo' : [{
@@ -235,7 +233,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'alice',
       'url': 'https://twitter.com/alice',
       },
-    'displayName': 'reply 200',
     'content': 'reply 200',
     'url': 'https://twitter.com/alice/status/200',
     }, {
@@ -246,7 +243,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'bob',
       'url': 'https://twitter.com/bob',
       },
-    'displayName': 'reply 300',
     'content': 'reply 300',
     'url': 'https://twitter.com/bob/status/300',
     }, {
@@ -257,7 +253,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'snarfed_org',
       'url': 'https://twitter.com/snarfed_org',
       },
-    'displayName': 'reply 400',
     'content': 'reply 400',
     'url': 'https://twitter.com/snarfed_org/status/400',
     }, {
@@ -268,7 +263,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'alice',
       'url': 'https://twitter.com/alice',
       },
-    'displayName': 'reply 500',
     'content': 'reply 500',
     'url': 'https://twitter.com/alice/status/500',
     }]

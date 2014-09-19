@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import copy
 import json
 
 import activitystreams
@@ -121,7 +122,7 @@ class HandlerTest(testutil.HandlerTest):
       self.reset()
       self.mox.StubOutWithMock(FakeSource, 'get_actor')
       FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
-      self.activities = [test_module.ACTIVITY]
+      self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
       # include access_token param to check that it gets stripped
       resp = self.get_response('?format=atom&access_token=foo&a=b')

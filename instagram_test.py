@@ -107,7 +107,6 @@ COMMENT_OBJS = [  # ActivityStreams
       'image': {'url': 'http://picture/commenter'},
       'url': 'http://instagram.com/averygood',
       },
-    'displayName': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     'id': tag_uri('789'),
     'published': '2012-10-07T05:45:57',
@@ -119,7 +118,6 @@ COMMENT_OBJS = [  # ActivityStreams
 POST_OBJ = {  # ActivityStreams
   'objectType': 'photo',
   'author': ACTOR,
-  'displayName': 'this picture is #abc #xyz',
   'content': 'this picture is #abc #xyz',
   'id': tag_uri('123_456'),
   'published': '2012-09-22T05:25:42',
@@ -180,7 +178,6 @@ ACTIVITY = {  # ActivityStreams
   'url': 'http://instagram.com/p/ABC123/',
   'actor': ACTOR,
   'object': POST_OBJ,
-  'title': 'this picture is #abc #xyz',
   }
 LIKES = [  # Instagram
   Struct(id='8',

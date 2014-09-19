@@ -353,7 +353,7 @@ class Source(object):
       obj_name = obj.get('displayName')
       if obj_name and not verb:
         activity['title'] = obj_name
-      else:
+      elif verb:
         app = activity.get('generator', {}).get('displayName')
         obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'), 'unknown')
         name = obj_name if obj_name else 'a %s' % obj_type
@@ -390,8 +390,6 @@ class Source(object):
         if verb == 'invite':
           actor_name = self.actor_name(obj.get('object'))
         obj['displayName'] = '%s %s' % (actor_name, rsvp_content)
-      else:
-        obj['displayName'] = util.ellipsize(content)
 
     return util.trim_nulls(obj)
 
