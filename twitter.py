@@ -531,7 +531,7 @@ class Twitter(source.Source):
                              headers=headers, timeout=HTTP_TIMEOUT)
         resp.raise_for_status()
         resp = json.loads(resp.text)
-        resp['type'] = 'post'
+        resp['type'] = 'comment' if is_reply else 'post'
 
     elif is_reply:
       if preview:

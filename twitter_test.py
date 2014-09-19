@@ -1177,7 +1177,7 @@ the caption. extra long so we can check that it accounts for the pic.twitter.com
                               files={'media[]': 'picture response'},
                               headers=mox.IgnoreArg())
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
+    self.assert_equals({'url': 'http://posted/picture', 'type': 'comment'},
                        self.twitter.create(obj).content)
 
   def test_create_with_photo_no_content(self):
