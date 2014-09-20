@@ -160,11 +160,12 @@ def object_to_json(obj, trim_nulls=True):
   return ret
 
 
-def json_to_object(mf2):
+def json_to_object(mf2, html_content=True):
   """Converts microformats2 JSON to an ActivityStreams object.
 
   Args:
     mf2: dict, decoded JSON microformats2 object
+    html_content: whether to return the content field as HTML, if available
 
   Returns: dict, ActivityStreams object
   """
@@ -215,6 +216,10 @@ def json_to_object(mf2):
       as_type = 'note' if 'h-as-note' in types else 'article'
       as_verb = None
 
+  text = content.get('value')
+  html = content.get('html')
+  content = html or text if html_content else text or html
+
   obj = {
     'id': prop.get('uid'),
     'objectType': as_type,
@@ -223,7 +228,7 @@ def json_to_object(mf2):
     'updated': prop.get('updated', ''),
     'displayName': prop.get('name'),
     'summary': prop.get('summary'),
-    'content': content.get('value') or content.get('html'),
+    'content': content,
     'url': prop.get('url'),
     'image': {'url': prop.get('photo')},
     'location': json_to_object(prop.get('location')),

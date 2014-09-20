@@ -32,3 +32,16 @@ class Microformats2Test(testutil.HandlerTest):
   def test_h_as_article(self):
     obj = microformats2.json_to_object({'type': ['h-entry', 'h-as-article']})
     self.assertEquals('article', obj['objectType'])
+
+  def test_json_to_object_html_content(self):
+    both = {'properties': {'content': [{'value': 'my val', 'html': 'my html'}]}}
+    html = {'properties': {'content': [{'html': 'my html'}]}}
+    value = {'properties': {'content': [{'value': 'my val'}]}}
+    neither = {'properties': {'content': [{}]}}
+
+    jto = microformats2.json_to_object
+    for json, html_content, expected in (
+      (both, True, 'my html'), (html, True, 'my html'), (html, False, 'my html'),
+      (both, False, 'my val'), (value, True, 'my val'), (value, False, 'my val'),
+      (neither, True, None), (neither, False, None)):
+      self.assertEquals(expected, jto(json, html_content=html_content).get('content'))
