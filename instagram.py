@@ -77,9 +77,9 @@ class Instagram(source.Source):
     http://instagram.com/developer/endpoints/users/#get_users_feed
     http://instagram.com/developer/endpoints/users/#get_users_media_recent
 
-    Comments and likes are always included, regardless of the fetch_likes kwarg.
-    They come bundled in the 'comments' and 'likes' field of the API Media
-    object: http://instagram.com/developer/endpoints/media/
+    Likes are always included, regardless of the fetch_likes kwarg. They come
+    bundled in the 'likes' field of the API Media object:
+    http://instagram.com/developer/endpoints/media/#
 
     Instagram doesn't have a reshare feature, so shares are never included
     since they don't exist. :P

@@ -206,14 +206,12 @@ class GooglePlusTest(testutil.HandlerTest):
     # called again, so we capture the result.
     batch_str = batch.as_string()
 
-    resp = {'items': [ACTIVITY_GP_EXTRAS]}
     http_seq = http.HttpMockSequence(
-      [({'status': '200'}, json.dumps(resp)),
+      [({'status': '200'}, json.dumps({'items': [ACTIVITY_GP_EXTRAS]})),
        ({'status': '200',
          'content-type': 'multipart/mixed; boundary="%s"' % batch.get_boundary()},
         batch_str),
-       ({'status': '200'}, json.dumps(resp)),
-       ({'status': '200'}, json.dumps(resp)),
+       ({'status': '200'}, json.dumps({'items': [ACTIVITY_GP_EXTRAS]})),
        ])
 
     self.auth_entity.http = lambda: http_seq
@@ -224,19 +222,10 @@ class GooglePlusTest(testutil.HandlerTest):
 
     # no new extras, so another request won't fill them in
     activity = copy.deepcopy(ACTIVITY_AS)
-    # for field in 'replies', 'plusoners', 'resharers':
-    activity['object'].update({
-        'replies': {'totalItems': 1},
-        'plusoners': {'totalItems': 1},
-        'resharers': {'totalItems': 1},
-        })
+    for field in 'replies', 'plusoners', 'resharers':
+      activity['object'][field] = {'totalItems': 1}
     self.assert_equals([activity], self.googleplus.get_activities(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
-
-    # use since_response instead of cache. should also return no new extras.
-    self.assert_equals([activity], self.googleplus.get_activities(
-        fetch_replies=True, fetch_likes=True, fetch_shares=True,
-        since_response=resp))
 
     # TODO: resurrect?
   # def test_get_activities_request_etag(self):

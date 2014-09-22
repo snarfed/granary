@@ -7,7 +7,6 @@ https://developers.google.com/+/api/latest/activities/list#collection
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-import collections
 import itertools
 import logging
 
@@ -57,9 +56,8 @@ class GooglePlus(source.Source):
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
-                              since_response=None, fetch_replies=False,
-                              fetch_likes=False, fetch_shares=False,
-                              fetch_events=False):
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False, fetch_events=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -106,21 +104,13 @@ class GooglePlus(source.Source):
       else:
         raise
 
-    # if we're using a cache, batch get the cached counts of comments, likes,
-    # reshares for all activities.
+    # batch get memcached counts of comments, likes, reshares for all activities
     cached = {}
     if cache is not None:
       keys = itertools.product(('AGC', 'AGL', 'AGS'), [a['id'] for a in activities])
       cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
-
-    # similarly, if we have a since_response, index its activities by id.
-    dictdefaultdict = lambda: collections.defaultdict(dictdefaultdict)
-    since_activities = dictdefaultdict()
-    if since_response:
-      since_activities.update({a.get('id'): a for a in
-                               since_response.get('items', [])})
 
     # prepare batch API requests for comments, likes and reshares
     # https://developers.google.com/api-client-library/python/guide/batch
@@ -129,13 +119,10 @@ class GooglePlus(source.Source):
     for activity in activities:
       id = activity['id']
       obj = activity.get('object', {})
-      since_obj = since_activities[id]['object']
 
       # comments
       num_replies = obj.get('replies', {}).get('totalItems')
-      if (fetch_replies and num_replies and
-          num_replies != cached.get('AGC ' + id) and
-          num_replies != since_obj['replies']['totalItems']):
+      if fetch_replies and num_replies and num_replies != cached.get('AGC ' + id):
         call = self.auth_entity.api().comments().list(
           activityId=activity['id'], maxResults=500)
 
@@ -151,16 +138,14 @@ class GooglePlus(source.Source):
 
       # likes
       num_likes = obj.get('plusoners', {}).get('totalItems')
-      if (fetch_likes and num_likes and num_likes != cached.get('AGL ' + id) and
-          num_likes != since_obj['plusoners']['totalItems']):
+      if fetch_likes and num_likes and num_likes != cached.get('AGL ' + id):
         self.add_tags(batch, activity, 'plusoners', 'like')
         run_batch = True
         cache_updates['AGL ' + id] = num_likes
 
       # reshares
       num_shares = obj.get('resharers', {}).get('totalItems')
-      if (fetch_shares and num_shares and num_shares != cached.get('AGS ' + id) and
-          num_shares != since_obj['resharers']['totalItems']):
+      if fetch_shares and num_shares and num_shares != cached.get('AGS ' + id):
         self.add_tags(batch, activity, 'resharers', 'share')
         run_batch = True
         cache_updates['AGS ' + id] = num_shares

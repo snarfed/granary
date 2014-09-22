@@ -105,9 +105,8 @@ class Source(object):
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
-                              since_response=None, fetch_replies=False,
-                              fetch_likes=False, fetch_shares=False,
-                              fetch_events=False):
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False, fetch_events=False):
     """Fetches and returns ActivityStreams activities and response details.
 
     Subclasses should override this. See get_activities() for an alternative
@@ -144,9 +143,6 @@ class Source(object):
         methods. In practice, this is App Engine's memcache interface:
         https://developers.google.com/appengine/docs/python/memcache/functions
         Used to cache data that's expensive to regenerate, e.g. API calls.
-      since_response: a response dict returned by a previous
-        get_activities_response() call. If provided, this call will only return
-        activities and responses newer than/not returned by that call.
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also
