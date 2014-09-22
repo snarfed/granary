@@ -692,7 +692,7 @@ class TwitterTest(testutil.TestCase):
       self.expect_urlopen(TIMELINE, json.dumps([tweet]))
 
     self.mox.ReplayAll()
-    cache = testutil.FakeCache()
+    cache = util.CacheDict()
     for i in range(4):
       self.twitter.get_activities(fetch_shares=True, fetch_likes=True,
                                   cache=cache)

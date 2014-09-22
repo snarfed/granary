@@ -216,7 +216,7 @@ class GooglePlusTest(testutil.HandlerTest):
 
     self.auth_entity.http = lambda: http_seq
 
-    cache = testutil.FakeCache()
+    cache = util.CacheDict()
     self.assert_equals([ACTIVITY_AS_EXTRAS], self.googleplus.get_activities(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
 
