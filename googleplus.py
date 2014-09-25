@@ -7,6 +7,7 @@ https://developers.google.com/+/api/latest/activities/list#collection
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import functools
 import itertools
 import logging
 
@@ -126,13 +127,13 @@ class GooglePlus(source.Source):
         call = self.auth_entity.api().comments().list(
           activityId=activity['id'], maxResults=500)
 
-        def set_comments(req_id, resp, exc):
+        def set_comments(req_id, resp, exc, obj=None):
           if exc is not None:
             raise exc
           obj['replies']['items'] = [
             self.postprocess_comment(c) for c in resp['items']]
 
-        batch.add(call, callback=set_comments)
+        batch.add(call, callback=functools.partial(set_comments, obj=obj))
         run_batch = True
         cache_updates['AGC ' + id] = num_replies
 

@@ -223,7 +223,7 @@ class Twitter(source.Source):
     cached = {}
     if cache is not None:
       keys = itertools.product(('ATR', 'ATF'), [t['id_str'] for t in tweets])
-      cached = cache.get_multi(['%s %s' % (prefix, id) for prefix, id in keys])
+      cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 

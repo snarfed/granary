@@ -194,37 +194,52 @@ class GooglePlusTest(testutil.HandlerTest):
   def test_get_activities_fetch_extras(self):
     self.init()
 
-    # generate minimal fake responses for each request in the batch
+    # Generate minimal fake responses for each request in the batch.
+    #
+    # Test with multiple activities to cover the bug described in
+    # https://github.com/snarfed/bridgy/issues/22#issuecomment-56329848 :
+    # util.CacheDict.get_multi() didn't originally handle generator args.
     batch = MIMEMultipart()
-    for i, item in enumerate((COMMENT_GP, PLUSONER, RESHARER)):
+    for i, item in enumerate((COMMENT_GP, PLUSONER, RESHARER) * 2):
       msg = Message()
       msg.set_payload('HTTP/1.1 200 OK\n\r\n\r\n' + json.dumps({'items': [item]}))
       msg['Content-ID'] = '<response-abc+%d>' % (i + 1)
       batch.attach(msg)
 
-    # must be called to generate the boundaries between parts, but can't be
-    # called again, so we capture the result.
+    # as_string() must be called before get_boundary() to generate the
+    # boundaries between parts, but can't be called again, so we capture the
+    # result.
     batch_str = batch.as_string()
 
+    gpe_1 = ACTIVITY_GP_EXTRAS
+    gpe_2 = copy.deepcopy(gpe_1)
+    gpe_2['id'] = '002'
     http_seq = http.HttpMockSequence(
-      [({'status': '200'}, json.dumps({'items': [ACTIVITY_GP_EXTRAS]})),
+      [({'status': '200'}, json.dumps({'items': [gpe_1, gpe_2]})),
        ({'status': '200',
          'content-type': 'multipart/mixed; boundary="%s"' % batch.get_boundary()},
         batch_str),
-       ({'status': '200'}, json.dumps({'items': [ACTIVITY_GP_EXTRAS]})),
+       ({'status': '200'}, json.dumps({'items': [gpe_1, gpe_2]})),
        ])
 
     self.auth_entity.http = lambda: http_seq
 
+    ase_1 = ACTIVITY_AS_EXTRAS
+    ase_2 = copy.deepcopy(ase_1)
+    ase_2['id'] = tag_uri('002')
+    ase_2['object']['tags'][0]['id'] = tag_uri('002_liked_by_222')
+    ase_2['object']['tags'][1]['id'] = tag_uri('002_shared_by_444')
     cache = util.CacheDict()
-    self.assert_equals([ACTIVITY_AS_EXTRAS], self.googleplus.get_activities(
+    self.assert_equals([ase_1, ase_2], self.googleplus.get_activities(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
 
     # no new extras, so another request won't fill them in
-    activity = copy.deepcopy(ACTIVITY_AS)
+    as_1 = copy.deepcopy(ACTIVITY_AS)
     for field in 'replies', 'plusoners', 'resharers':
-      activity['object'][field] = {'totalItems': 1}
-    self.assert_equals([activity], self.googleplus.get_activities(
+      as_1['object'][field] = {'totalItems': 1}
+    as_2 = copy.deepcopy(as_1)
+    as_2['id'] = tag_uri('002')
+    self.assert_equals([as_1, as_2], self.googleplus.get_activities(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
 
     # TODO: resurrect?

@@ -679,17 +679,26 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
 
   def test_get_activities_fetch_cache(self):
-    RETWEETS = 'https://api.twitter.com/1.1/statuses/retweets.json?id=100'
-    FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=100'
+    # Test with multiple tweets to cover the bug described in
+    # https://github.com/snarfed/bridgy/issues/22#issuecomment-56329848 :
+    # util.CacheDict.get_multi() didn't originally handle generator args.
+    RETWEETS = 'https://api.twitter.com/1.1/statuses/retweets.json?id=100_%s'
+    FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=100_%s'
+
+    tweets = [copy.deepcopy(TWEET), copy.deepcopy(TWEET)]
+    tweets[0]['id_str'] += '_a'
+    tweets[1]['id_str'] += '_b'
 
     for count in (1, 2):
-      tweet = copy.deepcopy(TWEET)
-      tweet['retweet_count'] = tweet['favorite_count'] = count
-      self.expect_urlopen(TIMELINE, json.dumps([tweet]))
-      self.expect_urlopen(RETWEETS, '[]')
-      self.expect_urlopen(FAVORITES, '{}')
+      for t in tweets:
+        t['retweet_count'] = t['favorite_count'] = count
+      self.expect_urlopen(TIMELINE, json.dumps(tweets))
+      self.expect_urlopen(RETWEETS % 'a', '[]')
+      self.expect_urlopen(RETWEETS % 'b', '[]')
+      self.expect_urlopen(FAVORITES % 'a', '{}')
+      self.expect_urlopen(FAVORITES % 'b', '{}')
       # shouldn't fetch this time because counts haven't changed
-      self.expect_urlopen(TIMELINE, json.dumps([tweet]))
+      self.expect_urlopen(TIMELINE, json.dumps(tweets))
 
     self.mox.ReplayAll()
     cache = util.CacheDict()
