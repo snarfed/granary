@@ -47,7 +47,7 @@ API_STATUS_URL = \
 API_RETWEETS_URL = \
   'https://api.twitter.com/1.1/statuses/retweets.json?id=%s'
 API_USER_URL = \
-  'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
+  'https://api.twitter.com/1.1/users/show.json?screen_name=%s'
 API_CURRENT_USER_URL = \
   'https://api.twitter.com/1.1/account/verify_credentials.json'
 API_SEARCH_URL = \

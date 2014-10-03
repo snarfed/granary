@@ -566,7 +566,7 @@ class TwitterTest(testutil.TestCase):
 
   def test_get_actor(self):
     self.expect_urlopen(
-      'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
+      'https://api.twitter.com/1.1/users/show.json?screen_name=foo',
       json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.twitter.get_actor('foo'))
@@ -907,7 +907,7 @@ class TwitterTest(testutil.TestCase):
               'oauth_signature=' in sig)
 
     self.expect_urlopen(
-      'https://api.twitter.com/1.1/users/lookup.json?screen_name=foo',
+      'https://api.twitter.com/1.1/users/show.json?screen_name=foo',
       json.dumps(USER),
       headers=mox.Func(check_headers))
     self.mox.ReplayAll()
