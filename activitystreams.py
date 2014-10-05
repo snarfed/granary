@@ -29,11 +29,11 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import json
 import logging
 import re
-import os
 import urllib
 from webob import exc
 
 import appengine_config
+import atom
 import facebook
 import instagram
 import microformats2
@@ -43,7 +43,6 @@ from oauth_dropins.python_instagram.bind import InstagramAPIError
 import source
 import twitter
 
-from google.appengine.ext.webapp import template
 import webapp2
 
 # maps app id to source class
@@ -57,7 +56,6 @@ XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>%s</response>
 """
-ATOM_TEMPLATE_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'user_feed.atom')
 ITEMS_PER_PAGE = 100
 
 # default values for each part of the API request path, e.g. /@me/@self/@all/...
@@ -120,37 +118,25 @@ class Handler(webapp2.RequestHandler):
     response = source.get_activities_response(*args, **paging_params)
     activities = response['items']
 
-    if format == 'atom':
-      # strip the access token from the request URL before returning
-      params = dict(self.request.GET.items())
-      for key in 'access_token', 'access_token_key', 'access_token_secret':
-        if key in params:
-          del params[key]
-      request_url = '%s?%s' % (self.request.path_url, urllib.urlencode(params))
-      actor = source.get_actor(user_id)
-      response.update({
-          'host_url': self.request.host_url + "/",
-          'request_url': request_url,
-          'title': 'User feed for ' + actor.get('displayName', 'unknown'),
-          'updated': activities[0]['object'].get('published') if activities else '',
-          'actor': actor,
-          })
-      # TODO: render activity contents as html. i'd need to allow markup
-      # through, though, which iirc has broken before when posts have included
-      # HTML entities.
-      # for activity in response.get('items', []):
-      #   obj = activity['object']
-      #   obj['content'] = microformats2.render_content(obj)
-
     # encode and write response
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'json':
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
     elif format == 'atom':
+      # TODO: render activity contents as html. i'd need to allow markup
+      # through, though, which iirc has broken before when posts have included
+      # HTML entities.
+      # for activity in response.get('items', []):
+      #   obj = activity['object']
+      #   obj['content'] = microformats2.render_content(obj)
+      actor = source.get_actor(user_id)
+      request_url = '%s?%s' % (self.request.path_url,
+                               urllib.urlencode(dict(self.request.GET.items())))
       self.response.headers['Content-Type'] = 'text/xml'
-      self.preprocess_for_atom(response)
-      self.response.out.write(template.render(ATOM_TEMPLATE_FILE, response))
+      self.response.out.write(atom.activities_to_atom(
+          activities, actor, host_url=self.request.host_url + '/',
+          request_url=request_url))
     elif format == 'xml':
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
@@ -200,22 +186,6 @@ class Handler(webapp2.RequestHandler):
     except (ValueError, AssertionError):
       raise exc.HTTPBadRequest('Invalid %s: %s (should be positive int)' %
                                (param, val))
-
-  def preprocess_for_atom(self, response):
-    """Prepares data to be rendered as Atom.
-
-    Right now, just populates each activity's title field, since Atom <entry>
-    requires the title element.
-
-    Args:
-      response: ActivityStreams response dict
-    """
-    for activity in response.get('items', []):
-      if not activity.get('title'):
-        obj = activity.get('object', {})
-        activity['title'] = util.ellipsize(
-          activity.get('displayName') or activity.get('content') or
-          obj.get('title') or obj.get('displayName') or obj.get('content'))
 
 
 application = webapp2.WSGIApplication([('.*', Handler)],

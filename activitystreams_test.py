@@ -127,9 +127,10 @@ class HandlerTest(testutil.HandlerTest):
       # include access_token param to check that it gets stripped
       resp = self.get_response('?format=atom&access_token=foo&a=b')
       self.assertEquals(200, resp.status_int)
-      request_url = 'http://localhost?a=b&format=atom'
-      self.assert_multiline_equals(test_module.ATOM % {'request_url': request_url},
-                                   resp.body)
+      self.assert_multiline_equals(
+        test_module.ATOM % {'request_url': 'http://localhost',
+                            'host_url': 'http://localhost/'},
+        resp.body)
 
   def test_unknown_format(self):
     resp = activitystreams.application.get_response('?format=bad')

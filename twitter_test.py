@@ -450,7 +450,7 @@ ATOM = """\
       >
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
-<id>http://localhost/</id>
+<id>%(host_url)s</id>
 <title>User feed for Ryan Barrett</title>
 
 <subtitle>my description</subtitle>
