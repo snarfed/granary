@@ -131,12 +131,10 @@ class Handler(webapp2.RequestHandler):
       #   obj = activity['object']
       #   obj['content'] = microformats2.render_content(obj)
       actor = source.get_actor(user_id)
-      request_url = '%s?%s' % (self.request.path_url,
-                               urllib.urlencode(dict(self.request.GET.items())))
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(atom.activities_to_atom(
           activities, actor, host_url=self.request.host_url + '/',
-          request_url=request_url))
+          request_url=self.request.path_url))
     elif format == 'xml':
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
