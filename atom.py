@@ -38,7 +38,8 @@ def activities_to_atom(activities, actor, request_url=None, host_url=None):
       obj = a.get('object', {})
       a['title'] = util.ellipsize(
         a.get('displayName') or a.get('content') or
-        obj.get('title') or obj.get('displayName') or obj.get('content'))
+        obj.get('title') or obj.get('displayName') or obj.get('content') or
+        'Untitled')
 
   return template.render(ATOM_TEMPLATE_FILE, {
     'items': activities,
