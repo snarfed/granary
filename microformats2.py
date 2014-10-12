@@ -5,6 +5,7 @@ Microformats2 specs: http://microformats.org/wiki/microformats2
 
 import itertools
 import logging
+import urlparse
 import string
 
 from oauth_dropins.webutil import util
@@ -219,7 +220,9 @@ def json_to_object(mf2, html_content=True):
   text = content.get('value')
   html = content.get('html')
   content = html or text if html_content else text or html
-  photos = get_string_urls(props.get('photo', []))
+  photos = [url for url in get_string_urls(props.get('photo', []))
+            # filter out relative and invalid URLs (mf2py gives absolute urls)
+            if urlparse.urlparse(url).netloc]
 
   obj = {
     'id': prop.get('uid'),
