@@ -48,14 +48,18 @@ class TestDataTest(testutil.HandlerTest):
        # info is lost in translation.
        # TODO support asymmetric comparisons (possibly: extension types
        # like .mf2-from-as.json would supersede .mf2.json if present)
-       ('in_reply_to','repost_of_with_h_cite', 'nested_author')),
+       ('in_reply_to','repost_of_with_h_cite', 'nested_author',
+        'note_with_composite_photo')),
       ('as.json', 'mf2.html', microformats2.object_to_html,
-       ('in_reply_to','repost_of_with_h_cite', 'nested_author')), # see above
+       ('in_reply_to','repost_of_with_h_cite', 'nested_author',
+      #  'note_with_composite_photo'
+      )), # see above
       ('mf2.json', 'as.json', microformats2.json_to_object,
        # these have tags, which we don't generate
        ('note.', 'article_with_')),
       ('mf2.json', 'mf2.html', microformats2.json_to_html,
-       ('in_reply_to','repost_of_with_h_cite', 'nested_author')), # see above
+       ('in_reply_to','repost_of_with_h_cite', 'nested_author',
+        'note_with_composite_photo')), # see above
       )
 
     failed = False

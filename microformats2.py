@@ -219,6 +219,7 @@ def json_to_object(mf2, html_content=True):
   text = content.get('value')
   html = content.get('html')
   content = html or text if html_content else text or html
+  photos = get_string_urls(props.get('photo', []))
 
   obj = {
     'id': prop.get('uid'),
@@ -230,7 +231,7 @@ def json_to_object(mf2, html_content=True):
     'summary': prop.get('summary'),
     'content': content,
     'url': prop.get('url'),
-    'image': {'url': prop.get('photo')},
+    'image': {'url': photos[0] if photos else None},
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     # TODO
