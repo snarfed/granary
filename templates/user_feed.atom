@@ -48,7 +48,7 @@
 {{ activity.object.content|escape }}
 {% for att in activity.object.attachments %}
 <p><a href='{{ att.url }}'>
-  <img style='float: left' src='{{ att.image.url }}' /><br />
+  <img style='float: left' src='{{ att.image.0.url }}' /><br />
   {{ att.displayName }}</a><br />
 {{ att.summary }}
 </p>

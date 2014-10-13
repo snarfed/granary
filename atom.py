@@ -31,15 +31,21 @@ def activities_to_atom(activities, actor, request_url=None, host_url=None):
               else 'https://github.com/snarfed/activitystreams-unofficial')
   request_url = _remove_query_params(request_url) if request_url else host_url
 
-  # Make sure every activity has the title field, since Atom <entry> requires
-  # the title element.
   for a in activities:
+    obj = a.get('object', {})
+    # Make sure every activity has the title field, since Atom <entry> requires
+    # the title element.
     if not a.get('title'):
-      obj = a.get('object', {})
       a['title'] = util.ellipsize(
         a.get('displayName') or a.get('content') or
         obj.get('title') or obj.get('displayName') or obj.get('content') or
         'Untitled')
+
+    # Normalize attachments.image to always be a list.
+    for att in obj.get('attachments', []):
+      image = att.get('image')
+      if image and not isinstance(image, list):
+        att['image'] = [image]
 
   return template.render(ATOM_TEMPLATE_FILE, {
     'items': activities,

@@ -223,12 +223,17 @@ class Instagram(source.Source):
       'to': [{'objectType':'group', 'alias':'@public'}],
       'attachments': [{
           'objectType': 'image',
-          'image': {
-            'url': image.url,
-            'width': image.width,
-            'height': image.height,
-            }
-          } for image in media.images.values()],
+          # ActivityStreams 2.0 allows image to be a JSON array.
+          # http://jasnell.github.io/w3c-socialwg-activitystreams/activitystreams2.html#link
+          'image': [{
+              'url': image.url,
+              'width': image.width,
+              'height': image.height,
+              } for image in sorted(media.images.values(),
+                                    # sort by size, descending, since atom.py
+                                    # uses the first image in the list.
+                                    key=lambda img: img.width, reverse=True)],
+          }],
       # comments go in the replies field, according to the "Responses for
       # Activity Streams" extension spec:
       # http://activitystrea.ms/specs/json/replies/1.0/

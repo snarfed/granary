@@ -126,25 +126,19 @@ POST_OBJ = {  # ActivityStreams
   'to': [{'objectType':'group', 'alias':'@public'}],
   'attachments': [{
       'objectType': 'image',
-      'image': {
-        'url': 'http://attach/image/thumb',
-        'width': 150,
-        'height': 150,
-        }
-      }, {
-      'objectType': 'image',
-      'image': {
-        'url': 'http://attach/image/small',
-        'width': 306,
-        'height': 306,
-        }
-      }, {
-      'objectType': 'image',
-      'image': {
+      'image': [{
         'url': 'http://attach/image/big',
         'width': 612,
         'height': 612,
-        }
+        }, {
+        'url': 'http://attach/image/small',
+        'width': 306,
+        'height': 306,
+        }, {
+        'url': 'http://attach/image/thumb',
+        'width': 150,
+        'height': 150,
+        }],
       }],
   'replies': {
     'items': COMMENT_OBJS,
@@ -284,20 +278,6 @@ ATOM = """\
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 this picture is #abc #xyz
-
-<p><a href=''>
-  <img style='float: left' src='http://attach/image/thumb' /><br />
-  </a><br />
-
-</p>
-<p></p>
-
-<p><a href=''>
-  <img style='float: left' src='http://attach/image/small' /><br />
-  </a><br />
-
-</p>
-<p></p>
 
 <p><a href=''>
   <img style='float: left' src='http://attach/image/big' /><br />
@@ -442,7 +422,12 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
 
   def test_media_to_object(self):
-    self.assert_equals(POST_OBJ, self.instagram.media_to_object(MEDIA))
+    obj = self.instagram.media_to_object(MEDIA)
+    self.assert_equals(POST_OBJ, obj)
+
+    # check that the images are ordered the way we expect, largest to smallest
+    self.assertEquals(POST_OBJ['attachments'][0]['image'],
+                      obj['attachments'][0]['image'])
 
   def test_media_to_object_with_likes(self):
     self.assert_equals(POST_OBJ_WITH_LIKES,
