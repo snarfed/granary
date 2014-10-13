@@ -10,16 +10,19 @@ import urlparse
 
 from google.appengine.ext.webapp import template
 from oauth_dropins.webutil import util
+import source
 
 ATOM_TEMPLATE_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'user_feed.atom')
 
 
-def activities_to_atom(activities, actor, request_url=None, host_url=None):
+def activities_to_atom(activities, actor, title=None, request_url=None,
+                       host_url=None):
   """Converts ActivityStreams activites to an Atom feed.
 
   Args:
     activities: list of ActivityStreams activity dicts
     actor: ActivityStreams actor dict, the author of the feed
+    title: string, the feed <title> element. Defaults to 'User feed for [NAME]'
     request_url: the URL of this Atom feed, if any. Used in a link rel="self".
     host_url: the home URL for this Atom feed, if any. Used in the top-level
       feed <id> element.
@@ -51,7 +54,7 @@ def activities_to_atom(activities, actor, request_url=None, host_url=None):
     'items': activities,
     'host_url': host_url,
     'request_url': request_url,
-    'title': 'User feed for ' + actor.get('displayName', 'unknown'),
+    'title': title or 'User feed for ' + source.Source.actor_name(actor),
     'updated': activities[0]['object'].get('published') if activities else '',
     'actor': actor,
     })

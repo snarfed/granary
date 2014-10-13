@@ -24,3 +24,9 @@ class AtomTest(testutil.HandlerTest):
           host_url='http://host/url',
           ))
 
+  def test_title(self):
+    self.assertIn('\n<title>my title</title>',
+        atom.activities_to_atom([copy.deepcopy(facebook_test.ACTIVITY)],
+                                facebook_test.ACTOR,
+                                title='my title'))
+
