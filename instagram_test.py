@@ -279,7 +279,7 @@ ATOM = """\
 
 this picture is #abc #xyz
 
-<p><a href=''>
+<p><a href='http://instagram.com/p/ABC123/'>
   <img style='float: left' src='http://attach/image/big' /><br />
   </a><br />
 

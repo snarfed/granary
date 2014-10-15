@@ -491,14 +491,14 @@ ATOM = """\
 
 @twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]
 
-<p><a href=''>
+<p><a href='https://twitter.com/snarfed_org/status/100'>
   <img style='float: left' src='http://p.twimg.com/picture1' /><br />
   </a><br />
 
 </p>
 <p></p>
 
-<p><a href=''>
+<p><a href='https://twitter.com/snarfed_org/status/100'>
   <img style='float: left' src='http://p.twimg.com/picture2' /><br />
   </a><br />
 
