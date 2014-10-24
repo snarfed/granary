@@ -353,14 +353,10 @@ POST_OBJ = {  # ActivityStreams
       },
     ] + LIKE_OBJS,
   'replies': {
-    'items': copy.deepcopy(COMMENT_OBJS),
+    'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
     }
   }
-for r in POST_OBJ['replies']['items']:
-  r['inReplyTo'][0]['id'] = tag_uri('10100176064482163')
-  r['url'] = ('https://facebook.com/10100176064482163?comment_id=' +
-              util.parse_tag_uri(r['id'])[1].split('_')[1])
 
 # file:///Users/ryan/docs/activitystreams_schema_spec_1.0.html#event
 EVENT_OBJ = {  # ActivityStreams.

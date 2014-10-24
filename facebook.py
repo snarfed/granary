@@ -741,10 +741,10 @@ class Facebook(source.Source):
 
     Args:
       comment: dict, a decoded JSON comment
-      post_id: optional string Facebook post id. If None, it's inferred from the
-        comment id if possible.
-      post_author_id: optional string Facebook post author id. If None, it's
-        inferred from the comment id if possible.
+      post_id: optional string Facebook post id. Only used if the comment id
+        doesn't have an embedded post id.
+      post_author_id: optional string Facebook post author id. Only used if the
+        comment id doesn't have an embedded post author id.
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
@@ -761,12 +761,12 @@ class Facebook(source.Source):
 
     obj['objectType'] = 'comment'
 
-    parts = comment.get('id', '').split('_')
-    comment_id = parts.pop()
-    if parts and not post_id:
-      post_id = parts.pop()
-      if parts and not post_author_id:
-        post_author_id = parts.pop()
+    ids = comment.get('id', '').split('_')
+    comment_id = ids.pop()
+    if ids:
+      post_id = ids.pop() or post_id
+    if ids:
+      post_author_id = ids.pop() or post_author_id
 
     if post_id:
       if '_' not in obj['id']:
