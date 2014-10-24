@@ -725,7 +725,7 @@ class Facebook(source.Source):
     # http://activitystrea.ms/specs/json/replies/1.0/
     comments = post.get('comments', {}).get('data')
     if comments:
-      items = [self.comment_to_object(c) for c in comments]
+      items = [self.comment_to_object(c, post_id=post['id']) for c in comments]
       obj['replies'] = {
         'items': items,
         'totalItems': len(items),
@@ -733,13 +733,15 @@ class Facebook(source.Source):
 
     return self.postprocess_object(obj)
 
-  COMMENT_ID_RE = re.compile('(\d+_)?(\d+)_(\d+)')
-
-  def comment_to_object(self, comment, post_author_id=None):
+  def comment_to_object(self, comment, post_id=None, post_author_id=None):
     """Converts a comment to an object.
 
     Args:
       comment: dict, a decoded JSON comment
+      post_id: optional string Facebook post id. If None, it's inferred from the
+        comment id if possible.
+      post_author_id: optional string Facebook post author id. If None, it's
+        inferred from the comment id if possible.
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
@@ -756,9 +758,16 @@ class Facebook(source.Source):
 
     obj['objectType'] = 'comment'
 
-    match = self.COMMENT_ID_RE.match(comment.get('id', ''))
-    if match:
-      post_author, post_id, comment_id = match.groups()
+    parts = comment.get('id', '').split('_')
+    comment_id = parts.pop()
+    if parts and not post_id:
+      post_id = parts.pop()
+      if parts and not post_author_id:
+        post_author_id = parts.pop()
+
+    if post_id:
+      if '_' not in obj['id']:
+        obj['id'] = self.tag_uri('%s_%s' % (post_id, comment_id))
       obj['url'] = self.comment_url(post_id, comment_id,
                                     post_author_id=post_author_id)
       obj['inReplyTo'] = [{'id': self.tag_uri(post_id)}]

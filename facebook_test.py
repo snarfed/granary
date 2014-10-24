@@ -179,6 +179,14 @@ EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
   'privacy': 'OPEN',
   'updated_time': '2014-01-22T01:29:15+0000',
   'rsvp_status': 'attending',
+  'comments': {
+    'data': [{
+        'id': '777',
+        'created_time': '2010-10-01T00:23:04+0000',
+        'from': {'name': 'Mr. Foo', 'id': '888'},
+        'message': 'i hereby comment',
+      }],
+    },
 }
 RSVPS = [  # Facebook; returned by /[event id]/attending (also declined, maybe)
   {'name': 'Aaron P', 'rsvp_status': 'attending', 'id': '11500'},
@@ -339,10 +347,15 @@ POST_OBJ = {  # ActivityStreams
       },
     ] + LIKE_OBJS,
   'replies': {
-    'items': COMMENT_OBJS,
+    'items': copy.deepcopy(COMMENT_OBJS),
     'totalItems': len(COMMENT_OBJS),
     }
   }
+for r in POST_OBJ['replies']['items']:
+  r['inReplyTo'][0]['id'] = tag_uri('10100176064482163')
+  r['url'] = ('https://facebook.com/10100176064482163?comment_id=' +
+              util.parse_tag_uri(r['id'])[1].split('_')[1])
+
 # file:///Users/ryan/docs/activitystreams_schema_spec_1.0.html#event
 EVENT_OBJ = {  # ActivityStreams.
   'objectType': 'event',
@@ -362,6 +375,24 @@ EVENT_OBJ = {  # ActivityStreams.
   'endTime': '2014-01-29T19:30:00-0800',
   'updated': '2014-01-22T01:29:15+00:00',
   'to': [{'alias': '@public', 'objectType': 'group'}],
+  'replies': {
+    'totalItems': 1,
+    'items': [{
+        'objectType': 'comment',
+        'author': {
+          'id': tag_uri('888'),
+          'numeric_id': '888',
+          'displayName': 'Mr. Foo',
+          'url': 'https://facebook.com/888',
+          'image': {'url': 'http://graph.facebook.com/888/picture?type=large'},
+          },
+        'content': 'i hereby comment',
+        'id': tag_uri('145304994_777'),
+        'published': '2010-10-01T00:23:04+00:00',
+        'url': 'https://facebook.com/145304994?comment_id=777',
+        'inReplyTo': [{'id': tag_uri('145304994')}],
+        }],
+    },
   }
 RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_11500'),
