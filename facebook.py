@@ -591,10 +591,13 @@ class Facebook(source.Source):
     post_type = post.get('type')
     status_type = post.get('status_type')
     url = self.post_url(post)
-    picture = post.get('picture')
     display_name = None
     message = (post.get('message') or post.get('story') or
                post.get('description') or post.get('name'))
+
+    picture = post.get('picture')
+    if isinstance(picture, dict):
+      picture = picture.get('data', {}).get('url')
 
     data = post.get('data', {})
     for field in ('object', 'song'):

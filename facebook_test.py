@@ -187,7 +187,13 @@ EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
         'message': 'i hereby comment',
       }],
     },
-}
+  'picture': {
+    'data': {
+      'is_silhouette': False,
+      'url': 'https://fbcdn-sphotos-a-a.akamaihd.net/abc/pic_n.jpg?xyz',
+    }
+  },
+ }
 RSVPS = [  # Facebook; returned by /[event id]/attending (also declined, maybe)
   {'name': 'Aaron P', 'rsvp_status': 'attending', 'id': '11500'},
   {'name': 'Ryan B', 'rsvp_status': 'declined', 'id': '212038'},
@@ -369,6 +375,7 @@ EVENT_OBJ = {  # ActivityStreams.
     'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
     'url': 'https://facebook.com/11500',
     },
+  'image': {'url': 'https://fbcdn-sphotos-a-a.akamaihd.net/abc/pic_n.jpg?xyz'},
   'content': 'you should come maybe, kthxbye',
   'location': {'displayName': 'PDX'},
   'startTime': '2014-01-29T18:30:00-0800',
