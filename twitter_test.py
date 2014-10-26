@@ -850,6 +850,23 @@ class TwitterTest(testutil.TestCase):
     self.assertEquals('@schnarfed Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
                       microformats2.render_content(obj))
 
+  def test_tweet_to_activity_on_retweet(self):
+    self.assert_equals({
+        'verb': 'share',
+        'object': {
+          'objectType': 'note',
+          'content': 'RT @orig_author: my long original tweet',
+          }
+        },
+      self.twitter.tweet_to_activity({
+        'id_str': '444',
+        'text': 'truncated',
+        'retweeted_status': {
+          'text': 'my long original tweet',
+          'user': {'id': 777, 'screen_name': 'orig_author'},
+          },
+        }))
+
   def test_protected_tweet_to_object(self):
     tweet = copy.deepcopy(TWEET)
     tweet['user']['protected'] = True

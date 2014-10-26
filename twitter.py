@@ -695,8 +695,9 @@ class Twitter(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     obj = self.tweet_to_object(tweet)
+    retweeted = tweet.get('retweeted_status')
     activity = {
-      'verb': 'post',
+      'verb': 'share' if retweeted else 'post',
       'published': obj.get('published'),
       'id': obj.get('id'),
       'url': obj.get('url'),
@@ -749,6 +750,11 @@ class Twitter(source.Source):
       'content': tweet.get('text'),
       'attachments': [],
       }
+
+    retweeted = tweet.get('retweeted_status')
+    if retweeted:
+      obj['content'] = 'RT @%s: %s' % (retweeted.get('user', {}).get('screen_name'),
+                                       retweeted.get('text'))
 
     user = tweet.get('user')
     if user:
