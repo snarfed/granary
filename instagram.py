@@ -139,11 +139,12 @@ class Instagram(source.Source):
   def create(self, obj):
     """Creates a new comment or like.
 
-    This isn't fully tested. You have to apply for access to create comments:
-    https://docs.google.com/spreadsheet/viewform?formkey=dFNydmNsUUlEUGdySWFWbGpQczdmWnc6MQ
+    The OAuth access token must have been created with scope=comments+likes (or
+    just one, respectively).
+    http://instagram.com/developer/authentication/#scope
 
-    ...and I always get this error when I try to create likes:
-      400 APINotAllowedError - you cannot like this media
+    To comment, you need to apply for access:
+    https://docs.google.com/spreadsheet/viewform?formkey=dFNydmNsUUlEUGdySWFWbGpQczdmWnc6MQ
 
     https://github.com/Instagram/python-instagram#data-retrieval
     http://instagram.com/developer/endpoints/comments/#post_media_comments
@@ -154,6 +155,7 @@ class Instagram(source.Source):
 
     Returns: dict, possibly with 'id' and 'url' keys for the newly created
       Instagram object
+
     """
     # TODO: validation, error handling
     type = obj.get('objectType')
