@@ -33,7 +33,7 @@ class Microformats2Test(testutil.HandlerTest):
     obj = microformats2.json_to_object({'type': ['h-entry', 'h-as-article']})
     self.assertEquals('article', obj['objectType'])
 
-  def test_json_to_object_html_content(self):
+  def test_html_content(self):
     both = {'properties': {'content': [{'value': 'my val', 'html': 'my html'}]}}
     html = {'properties': {'content': [{'html': 'my html'}]}}
     value = {'properties': {'content': [{'value': 'my val'}]}}
@@ -61,3 +61,15 @@ class Microformats2Test(testutil.HandlerTest):
            {'photo': ['the caption', 'alternate text']}}
     obj = microformats2.json_to_object(mf2)
     self.assertFalse(obj.get('image'))
+
+  def test_object_to_json_unescapes_html_entities(self):
+    self.assertEquals({
+      'type': ['h-entry'],
+      'properties': {'content': [{
+        'html': 'Entity &lt; <a href="http://my/link">link too</a>',
+        'value': 'Entity < link too',
+      }]},
+     }, microformats2.object_to_json({
+        'content': 'Entity &lt; link too',
+        'tags': [{'url': 'http://my/link', 'startIndex': 12, 'length': 8}]
+      }))

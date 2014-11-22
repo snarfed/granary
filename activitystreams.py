@@ -124,12 +124,6 @@ class Handler(webapp2.RequestHandler):
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
     elif format == 'atom':
-      # TODO: render activity contents as html. i'd need to allow markup
-      # through, though, which iirc has broken before when posts have included
-      # HTML entities.
-      # for activity in response.get('items', []):
-      #   obj = activity['object']
-      #   obj['content'] = microformats2.render_content(obj)
       actor = source.get_actor(user_id)
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(atom.activities_to_atom(

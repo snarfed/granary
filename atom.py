@@ -10,6 +10,7 @@ import urlparse
 
 from google.appengine.ext.webapp import template
 from oauth_dropins.webutil import util
+import microformats2
 import source
 
 ATOM_TEMPLATE_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'user_feed.atom')
@@ -36,13 +37,17 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
 
   for a in activities:
     obj = a.get('object', {})
+    # Render content as HTML
+    content = obj.get('content')
+    if content:
+      obj['rendered_content'] = microformats2.render_content(obj)
+
     # Make sure every activity has the title field, since Atom <entry> requires
     # the title element.
     if not a.get('title'):
       a['title'] = util.ellipsize(
-        a.get('displayName') or a.get('content') or
-        obj.get('title') or obj.get('displayName') or obj.get('content') or
-        'Untitled')
+        a.get('displayName') or a.get('content') or obj.get('title') or
+        obj.get('displayName') or content or 'Untitled')
 
     # Normalize attachments.image to always be a list.
     for att in obj.get('attachments', []):

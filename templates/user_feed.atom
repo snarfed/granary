@@ -45,7 +45,7 @@
   originally shared this post:
   </div>
 {% endif %}
-{{ activity.object.content|escape }}
+{{ activity.object.rendered_content|safe }}
 {% for att in activity.object.attachments %}
 <p><a href='{% firstof att.url activity.url activity.object.url %}'>
   <img style='float: left' src='{{ att.image.0.url }}' /><br />

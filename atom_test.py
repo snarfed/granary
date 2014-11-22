@@ -30,3 +30,9 @@ class AtomTest(testutil.HandlerTest):
                                 facebook_test.ACTOR,
                                 title='my title'))
 
+  def test_render_content_as_html(self):
+    self.assertIn('<3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> <a href="http://p.twimg.com/picture1">[picture]</a>',
+        atom.activities_to_atom([copy.deepcopy(twitter_test.ACTIVITY)],
+                                twitter_test.ACTOR,
+                                title='my title'))
+

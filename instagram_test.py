@@ -91,7 +91,7 @@ MEDIA = Struct(  # Instagram
   users_in_photo=[Struct(user=USER, position=Struct(x=1, y=2))],
   caption=Struct(
     created_time='1348291558',
-    text='this picture is #abc #xyz',
+    text='this picture -> is #abc #xyz',
     user={},
     id='285812769105340251'
     ),
@@ -118,7 +118,7 @@ COMMENT_OBJS = [  # ActivityStreams
 POST_OBJ = {  # ActivityStreams
   'objectType': 'photo',
   'author': ACTOR,
-  'content': 'this picture is #abc #xyz',
+  'content': 'this picture -&gt; is #abc #xyz',
   'id': tag_uri('123_456'),
   'published': '2012-09-22T05:25:42',
   'url': 'http://instagram.com/p/ABC123/',
@@ -272,12 +272,12 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
   <id>""" + tag_uri('123_456') + """</id>
-  <title>this picture is #abc #xyz</title>
+  <title>this picture -&gt; is #abc #xyz</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-this picture is #abc #xyz
+this picture -&gt; is #abc #xyz
 
 <p><a href='http://instagram.com/p/ABC123/'>
   <img style='float: left' src='http://attach/image/big' /><br />

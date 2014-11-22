@@ -3,6 +3,7 @@
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
 
+import xml.sax.saxutils
 import itertools
 import logging
 import urlparse
@@ -120,7 +121,7 @@ def object_to_json(obj, trim_nulls=True):
       'published': [obj.get('published', '')],
       'updated':  [obj.get('updated', '')],
       'content': [{
-          'value': content,
+          'value': xml.sax.saxutils.unescape(content),
           'html': render_content(obj),
           }],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),

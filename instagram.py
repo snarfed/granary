@@ -9,6 +9,7 @@ https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import xml.sax.saxutils
 import datetime
 import itertools
 import json
@@ -220,7 +221,8 @@ class Instagram(source.Source):
       'objectType': OBJECT_TYPES.get('image', 'photo'),
       'published': media.created_time.isoformat('T'),
       'author': self.user_to_actor(media.user),
-      'content': media.caption.text if media.caption else None,
+      'content': (xml.sax.saxutils.escape(media.caption.text)
+                  if media.caption else None),
       'url': media.link,
       'to': [{'objectType':'group', 'alias':'@public'}],
       'attachments': [{
