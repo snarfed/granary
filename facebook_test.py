@@ -86,20 +86,20 @@ POST = {  # Facebook
       ]},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg',
-  'message': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
+  'message': 'Checking another side project off my list. portablecontacts-unofficial is live! &3 Super Happy Block Party Hackathon, >\o/< Daniel M.',
   'message_tags': {
     '84': [{
         'id': '283938455011303',
         'name': 'Super Happy Block Party Hackathon',
         'type': 'event',
-        'offset': 84,
+        'offset': 83,
         'length': 33,
         }],
     '122': [{
         'id': '456',
         'name': 'Daniel M',
         'type': 'user',
-        'offset': 122,
+        'offset': 124,
         'length': 8,
         }],
     },
@@ -292,7 +292,7 @@ POST_OBJ = {  # ActivityStreams
     'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
     'url': 'https://facebook.com/212038',
     },
-  'content': 'Checking another side project off my list. portablecontacts-unofficial is live! <3 Super Happy Block Party Hackathon, cc Daniel M.',
+  'content': 'Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.',
   'id': tag_uri('10100176064482163'),
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
@@ -341,14 +341,14 @@ POST_OBJ = {  # ActivityStreams
       'id': tag_uri('456'),
       'url': 'https://facebook.com/456',
       'displayName': 'Daniel M',
-      'startIndex': 122,
+      'startIndex': 134,
       'length': 8,
       }, {
       'objectType': 'event',
       'id': tag_uri('283938455011303'),
       'url': 'https://facebook.com/283938455011303',
       'displayName': 'Super Happy Block Party Hackathon',
-      'startIndex': 84,
+      'startIndex': 87,
       'length': 33,
       },
     ] + LIKE_OBJS,
@@ -537,12 +537,15 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/image
   </activity:object-type>
   <id>""" + tag_uri('10100176064482163') + """</id>
-  <title>Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block...</title>
+  <title>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block...</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-Checking another side project off my list. portablecontacts-unofficial is live! &lt;3 Super Happy Block Party Hackathon, cc Daniel M.
+Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 <a href="https://facebook.com/283938455011303">Super Happy Block Party Hackathon</a>, &gt;\o/&lt; Daniel M.
+<p class="tag"><a href="https://facebook.com/234">Friend 1</a>
+<a href="https://facebook.com/345">Friend 2</a>
+<a href="https://facebook.com/456">Friend 3</a></p>
 
 <p><a href='http://my.link/'>
   <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' /><br />

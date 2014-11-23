@@ -13,6 +13,7 @@ in the data.objects array.
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import copy
 import datetime
 import itertools
 import json
@@ -626,7 +627,6 @@ class Facebook(source.Source):
       'published': util.maybe_iso8601_to_rfc3339(post.get('created_time')),
       'updated': util.maybe_iso8601_to_rfc3339(post.get('updated_time')),
       'author': author,
-      'content': message,
       # FB post ids are of the form USERID_POSTID
       'url': url,
       'image': {'url': picture},
@@ -667,6 +667,29 @@ class Facebook(source.Source):
         'author': self.user_to_actor(like),
         'content': 'likes this.',
         }) for like in post.get('likes', {}).get('data', [])]
+
+    # Escape HTML characters: <, >, &. Have to do it manually, instead of
+    # reusing e.g. cgi.escape, so that we can shuffle over each tag startIndex
+    # appropriately. :(
+    if message:
+      content = copy.copy(message)
+      tags = sorted([t for t in obj['tags'] if t.get('startIndex')],
+                    key=lambda t: t['startIndex'])
+
+      entities = {'<': '&lt;', '>': '&gt;', '&': '&amp;'}
+      i = 0
+      while i < len(content):
+        if tags and tags[0]['startIndex'] == i:
+          tags.pop(0)
+        entity = entities.get(content[i])
+        if entity:
+          content = content[:i] + entity + content[i + 1:]
+          for tag in tags:
+            tag['startIndex'] += len(entity) - 1
+        i += 1
+
+      assert not tags
+      obj['content'] = content
 
     # "See Original" links
     post_actions = post.get('actions',[])
