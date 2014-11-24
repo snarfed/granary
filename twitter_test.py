@@ -715,8 +715,23 @@ class TwitterTest(testutil.TestCase):
       json.dumps({'htmlUsers': FAVORITES_HTML}))
     self.mox.ReplayAll()
 
+    cache = util.CacheDict()
     self.assert_equals([ACTIVITY_WITH_LIKES],
-                       self.twitter.get_activities(fetch_likes=True))
+                       self.twitter.get_activities(fetch_likes=True, cache=cache))
+    self.assert_equals(1, cache['ATF 100'])
+
+  def test_get_activities_favorites_404(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['favorite_count'] = 1
+    self.expect_urlopen(TIMELINE, json.dumps([tweet]))
+    self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100'
+                        ).AndRaise(urllib2.HTTPError('url', 404, 'msg', {}, None))
+    self.mox.ReplayAll()
+
+    cache = util.CacheDict()
+    self.assert_equals([ACTIVITY],
+                       self.twitter.get_activities(fetch_likes=True, cache=cache))
+    self.assertNotIn('ATF 100', cache)
 
   def test_get_activities_fetch_likes_no_favorites(self):
     self.expect_urlopen(TIMELINE, json.dumps([TWEET]))

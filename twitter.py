@@ -270,8 +270,12 @@ class Twitter(source.Source):
         if count and count != cached.get('ATF ' + id):
           url = HTML_FAVORITES_URL % id
           logging.debug('Fetching %s', url)
-          html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
-                            ).get('htmlUsers', '')
+          try:
+            html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
+                              ).get('htmlUsers', '')
+          except urllib2.URLError, e:
+            interpret_http_exception(e)  # just log it
+            continue
           likes = self.favorites_html_to_likes(tweet, html)
           activity['object'].setdefault('tags', []).extend(likes)
           cache_updates['ATF ' + id] = count
