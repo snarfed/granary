@@ -753,8 +753,13 @@ class Twitter(source.Source):
 
     retweeted = tweet.get('retweeted_status')
     if retweeted:
-      obj['content'] = 'RT @%s: %s' % (retweeted.get('user', {}).get('screen_name'),
-                                       retweeted.get('text'))
+      entities = retweeted.get('entities', {})
+      content_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
+        (retweeted.get('user', {}).get('screen_name'),) * 2)
+      obj['content'] = content_prefix + retweeted.get('text', '')
+    else:
+      entities = tweet.get('entities', {})
+      content_prefix = ''
 
     user = tweet.get('user')
     if user:
@@ -768,8 +773,6 @@ class Twitter(source.Source):
       if protected is not None:
         obj['to'] = [{'objectType': 'group',
                       'alias': '@public' if not protected else '@private'}]
-
-    entities = tweet.get('entities', {})
 
     # currently the media list will only have photos. if that changes, though,
     # we'll need to make this conditional on media.type.
@@ -817,7 +820,7 @@ class Twitter(source.Source):
 
     # convert start/end indices to start/length, and replace t.co URLs with
     # real "display" URLs.
-    offset = 0
+    offset = len(content_prefix)
     for t in obj['tags']:
       indices = t.pop('indices', None)
       if indices:

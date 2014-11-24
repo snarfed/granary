@@ -851,12 +851,62 @@ class TwitterTest(testutil.TestCase):
     self.assertEquals('@schnarfed Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
                       microformats2.render_content(obj))
 
+  def test_tweet_to_object_retweet_with_entities(self):
+    """Retweets with entities should use the entities in the retweet object."""
+    tweet = {
+      'id_str': '123',
+      'text': 'not the full retweeted text',
+      'entities': {'urls': [{
+        'url': 'https://t.co/AFGvnvG72L',
+        'expanded_url': 'https://www.onename.io/',
+        'display_url': 'onename.io',
+        'indices': [4, 8],
+      }]},
+      'retweeted_status': {
+        'id_str': '456',
+        'user': {'screen_name': 'orig'},
+        'text': 'a @danshipper https://t.co/AFGvnvG72L ok',
+        'entities': {
+          'urls': [{
+              'url': 'https://t.co/AFGvnvG72L',
+              'expanded_url': 'https://www.onename.io/',
+              'display_url': 'onename.io',
+              'indices': [14, 37],
+              }],
+          'user_mentions': [{
+              'screen_name': 'danshipper',
+              'name': 'Dan Shipper',
+              'indices': [2, 13],
+              }],
+          },
+        }
+      }
+
+    obj = self.twitter.tweet_to_object(tweet)
+    self.assert_equals([{
+      'objectType': 'person',
+      'id': tag_uri('danshipper'),
+      'url': 'https://twitter.com/danshipper',
+      'displayName': 'Dan Shipper',
+      'startIndex': 51,
+      'length': 11,
+      }, {
+      'objectType': 'article',
+      'url': 'https://www.onename.io/',
+      'displayName': 'onename.io',
+      'startIndex': 63,
+      'length': 10,
+      }], obj['tags'])
+
+    self.assert_equals('RT <a href="https://twitter.com/orig">@orig</a>: a <a href="https://twitter.com/danshipper">@danshipper</a> <a href="https://www.onename.io/">onename.io</a> ok',
+                      microformats2.render_content(obj))
+
   def test_tweet_to_activity_on_retweet(self):
     self.assert_equals({
         'verb': 'share',
         'object': {
           'objectType': 'note',
-          'content': 'RT @orig_author: my long original tweet',
+          'content': 'RT <a href="https://twitter.com/orig_author">@orig_author</a>: my long original tweet',
           }
         },
       self.twitter.tweet_to_activity({
