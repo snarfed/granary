@@ -279,3 +279,30 @@ class GooglePlusTest(testutil.HandlerTest):
     self.assertEqual({'url': 'x',
                       'urls': [{'value': 'x'}, {'value': 'y'}]},
                      uta({'urls': [{'value': 'x'}, {'value': 'y'}]}))
+
+  def test_get_activities_extra_fetches_return_404(self):
+    """Sometimes the extras fetches return 404s. Ignore that."""
+    self.init()
+
+    batch = MIMEMultipart()
+    for i in range(3):
+      msg = Message()
+      msg.set_payload('HTTP/1.1 404 Not Found\n\r\n\r\n')
+      msg['Content-ID'] = '<response-abc+%d>' % (i + 1)
+      batch.attach(msg)
+
+    # as_string() must be called before get_boundary() to generate the
+    # boundaries between parts, but can't be called again, so we capture the
+    # result.
+    batch_str = batch.as_string()
+
+    self.auth_entity.http = lambda: http.HttpMockSequence(
+      [({'status': '200'}, json.dumps({'items': [ACTIVITY_GP_EXTRAS]})),
+       ({'status': '200',
+         'content-type': 'multipart/mixed; boundary="%s"' % batch.get_boundary()},
+        batch_str),
+       ])
+
+    self.assert_equals([ACTIVITY_AS], self.googleplus.get_activities(
+        fetch_replies=True, fetch_likes=True, fetch_shares=True,
+        cache=util.CacheDict()))

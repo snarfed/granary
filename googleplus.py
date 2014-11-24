@@ -16,6 +16,7 @@ import source
 
 from apiclient.errors import HttpError
 from apiclient.http import BatchHttpRequest
+from oauth_dropins.handlers import interpret_http_exception
 from oauth_dropins.webutil import util
 
 
@@ -128,10 +129,18 @@ class GooglePlus(source.Source):
           activityId=activity['id'], maxResults=500)
 
         def set_comments(req_id, resp, exc, obj=None):
-          if exc is not None:
-            raise exc
-          obj['replies']['items'] = [
-            self.postprocess_comment(c) for c in resp['items']]
+          if exc is None:
+            obj['replies']['items'] = [
+              self.postprocess_comment(c) for c in resp['items']]
+          else:
+            obj.pop('replies', None)
+            code, body = interpret_http_exception(exc)
+            # This evidently 404s sometimes.
+            # https://github.com/snarfed/bridgy/issues/310
+            if code == '404':
+              logging.warning('Ignoring 404 response: %s', body)
+            else:
+              raise exc
 
         batch.add(call, callback=functools.partial(set_comments, obj=obj))
         run_batch = True
@@ -230,22 +239,29 @@ class GooglePlus(source.Source):
       activityId=id, collection=collection)
 
     def set_tags(req_id, resp, exc):
-      if exc is not None:
-        raise exc
-
-      tags = obj.setdefault('tags', [])
-      for person in resp.get('items', []):
-        person_id = person['id']
-        person['id'] = self.tag_uri(person['id'])
-        tags.append(self.postprocess_object({
-          'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
-          'objectType': 'activity',
-          'verb': verb,
-          'url': obj.get('url'),
-          'object': {'url': obj.get('url')},
-          'author': person,
-          'content': '%s this.' % content_verbs[collection],
-          }))
+      if exc is None:
+        tags = obj.setdefault('tags', [])
+        for person in resp.get('items', []):
+          person_id = person['id']
+          person['id'] = self.tag_uri(person['id'])
+          tags.append(self.postprocess_object({
+            'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
+            'objectType': 'activity',
+            'verb': verb,
+            'url': obj.get('url'),
+            'object': {'url': obj.get('url')},
+            'author': person,
+            'content': '%s this.' % content_verbs[collection],
+            }))
+      else:
+        obj.pop(collection, None)
+        code, body = interpret_http_exception(exc)
+        # These evidently 404 sometimes.
+        # https://github.com/snarfed/bridgy/issues/310
+        if code == '404':
+          logging.warning('Ignoring 404 response: %s', body)
+        else:
+          raise exc
 
     batch.add(call, callback=set_tags)
 
