@@ -96,7 +96,7 @@ POST = {  # Facebook
         'length': 33,
         }],
     '122': [{
-        'id': '456',
+        'id': '789',
         'name': 'Daniel M',
         'type': 'user',
         'offset': 124,
@@ -338,8 +338,8 @@ POST_OBJ = {  # ActivityStreams
       'displayName': 'Friend 3',
       }, {
       'objectType': 'person',
-      'id': tag_uri('456'),
-      'url': 'https://facebook.com/456',
+      'id': tag_uri('789'),
+      'url': 'https://facebook.com/789',
       'displayName': 'Daniel M',
       'startIndex': 134,
       'length': 8,
@@ -542,7 +542,7 @@ ATOM = """\
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 <a href="https://facebook.com/283938455011303">Super Happy Block Party Hackathon</a>, &gt;\o/&lt; Daniel M.
+Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 <a href="https://facebook.com/283938455011303">Super Happy Block Party Hackathon</a>, &gt;\o/&lt; <a href="https://facebook.com/789">Daniel M</a>.
 <p class="tag"><a href="https://facebook.com/234">Friend 1</a>
 <a href="https://facebook.com/345">Friend 2</a>
 <a href="https://facebook.com/456">Friend 3</a></p>
@@ -572,8 +572,8 @@ my link caption
     <link rel="ostatus:attention" href="https://facebook.com/456" />
     <link rel="mentioned" href="https://facebook.com/456" />
 
-    <link rel="ostatus:attention" href="https://facebook.com/456" />
-    <link rel="mentioned" href="https://facebook.com/456" />
+    <link rel="ostatus:attention" href="https://facebook.com/789" />
+    <link rel="mentioned" href="https://facebook.com/789" />
 
     <link rel="ostatus:attention" href="https://facebook.com/283938455011303" />
     <link rel="mentioned" href="https://facebook.com/283938455011303" />

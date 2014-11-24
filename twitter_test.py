@@ -75,7 +75,7 @@ TWEET = {  # Twitter
         'url': 'http://t.co/picture',
         'expanded_url': 'http://the/picture1',
         'display_url': 'http://pic.twitter.com/2',
-        'indices': [80, 99],
+        'indices': [83, 102],
         }, {
         'media_url': 'http://p.twimg.com/picture2',
         'expanded_url': 'http://the/picture2',
@@ -84,12 +84,12 @@ TWEET = {  # Twitter
     'urls': [{
         'expanded_url': 'http://first/link/',
         'url': 'http://t.co/6J2EgYM',
-        'indices': [46, 65],
+        'indices': [49, 68],
         'display_url': 'first'
         }, {
         'expanded_url': 'http://instagr.am/p/MuW67/',
         'url': 'http://t.co/X',
-        'indices': [66, 79],
+        'indices': [69, 82],
         'display_url': 'instagr.am/p/MuW67'
       }],
     'hashtags': [{
@@ -111,7 +111,7 @@ TWEET = {  # Twitter
         'screen_name': 'foo'
       }],
   },
-  'text': '@twitter meets @seepicturely at #tcdisrupt <3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
+  'text': '@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
@@ -119,7 +119,7 @@ TWEET = {  # Twitter
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
-  'content': '@twitter meets @seepicturely at #tcdisrupt <3 first instagr.am/p/MuW67 [picture]',
+  'content': '@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]',
   'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41+00:00',
   'url': 'https://twitter.com/snarfed_org/status/100',
@@ -134,7 +134,7 @@ OBJECT = {  # ActivityStreams
       'objectType': 'image',
       'url': 'http://p.twimg.com/picture1',
       'displayName': '[picture]',
-      'startIndex': 71,
+      'startIndex': 74,
       'length': 9,
       }, {
       'objectType': 'image',
@@ -163,13 +163,13 @@ OBJECT = {  # ActivityStreams
       'objectType': 'article',
       'url': 'http://first/link/',
       'displayName': 'first',
-      'startIndex': 46,
+      'startIndex': 49,
       'length': 5,
       }, {
       'objectType': 'article',
       'url': 'http://instagr.am/p/MuW67/',
       'displayName': 'instagr.am/p/MuW67',
-      'startIndex': 52,
+      'startIndex': 55,
       'length': 18,
       }],
   'attachments': [{
@@ -489,7 +489,8 @@ ATOM = """\
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]
+<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> <a href="http://p.twimg.com/picture1">[picture]</a>
+<p class="tag"><a href="http://p.twimg.com/picture2">[picture]</a></p>
 
 <p><a href='https://twitter.com/snarfed_org/status/100'>
   <img style='float: left' src='http://p.twimg.com/picture1' /><br />

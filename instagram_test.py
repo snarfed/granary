@@ -278,6 +278,9 @@ ATOM = """\
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 this picture -&gt; is #abc #xyz
+<p class="p-category"><a href="None">abc</a>
+<a href="None">xyz</a></p>
+<p class="tag"><a href="http://snarfed.org/">Ryan B</a></p>
 
 <p><a href='http://instagram.com/p/ABC123/'>
   <img style='float: left' src='http://attach/image/big' /><br />
