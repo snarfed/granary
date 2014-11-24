@@ -232,6 +232,9 @@ class GooglePlusTest(testutil.HandlerTest):
     cache = util.CacheDict()
     self.assert_equals([ase_1, ase_2], self.googleplus.get_activities(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
+    for id in '001', '002':
+      for prefix in 'AGL ', 'AGS ':
+        self.assertEquals(1, cache[prefix + id])
 
     # no new extras, so another request won't fill them in
     as_1 = copy.deepcopy(ACTIVITY_AS)
@@ -303,6 +306,8 @@ class GooglePlusTest(testutil.HandlerTest):
         batch_str),
        ])
 
+    cache = util.CacheDict()
     self.assert_equals([ACTIVITY_AS], self.googleplus.get_activities(
-        fetch_replies=True, fetch_likes=True, fetch_shares=True,
-        cache=util.CacheDict()))
+        fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
+    for prefix in 'AGC ', 'AGL ', 'AGS ':
+      self.assertNotIn(prefix + '001', cache)

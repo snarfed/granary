@@ -117,21 +117,19 @@ class GooglePlus(source.Source):
     # prepare batch API requests for comments, likes and reshares
     # https://developers.google.com/api-client-library/python/guide/batch
     batch = BatchHttpRequest()
-    run_batch = False
     for activity in activities:
-      id = activity['id']
-      obj = activity.get('object', {})
-
       # comments
-      num_replies = obj.get('replies', {}).get('totalItems')
+      id = activity['id']
+      num_replies = activity.get('object', {}).get('replies', {}).get('totalItems')
       if fetch_replies and num_replies and num_replies != cached.get('AGC ' + id):
-        call = self.auth_entity.api().comments().list(
-          activityId=activity['id'], maxResults=500)
+        call = self.auth_entity.api().comments().list(activityId=id, maxResults=500)
 
-        def set_comments(req_id, resp, exc, obj=None):
+        def set_comments(req_id, resp, exc, activity=None):
+          obj = activity.get('object', {})
           if exc is None:
             obj['replies']['items'] = [
               self.postprocess_comment(c) for c in resp['items']]
+            cache_updates['AGC ' + activity['id']] = obj['replies']['totalItems']
           else:
             obj.pop('replies', None)
             code, body = interpret_http_exception(exc)
@@ -142,25 +140,19 @@ class GooglePlus(source.Source):
             else:
               raise exc
 
-        batch.add(call, callback=functools.partial(set_comments, obj=obj))
-        run_batch = True
-        cache_updates['AGC ' + id] = num_replies
+        batch.add(call, callback=functools.partial(set_comments, activity=activity))
 
       # likes
-      num_likes = obj.get('plusoners', {}).get('totalItems')
-      if fetch_likes and num_likes and num_likes != cached.get('AGL ' + id):
-        self.add_tags(batch, activity, 'plusoners', 'like')
-        run_batch = True
-        cache_updates['AGL ' + id] = num_likes
+      if fetch_likes:
+        self.maybe_add_tags(batch, activity, cached, cache_updates,
+                            'plusoners', 'like')
 
       # reshares
-      num_shares = obj.get('resharers', {}).get('totalItems')
-      if fetch_shares and num_shares and num_shares != cached.get('AGS ' + id):
-        self.add_tags(batch, activity, 'resharers', 'share')
-        run_batch = True
-        cache_updates['AGS ' + id] = num_shares
+      if fetch_shares:
+        self.maybe_add_tags(batch, activity, cached, cache_updates,
+                            'resharers', 'share')
 
-    if run_batch:
+    if batch._requests:
       batch.execute(http)
 
     for a in activities:
@@ -215,7 +207,7 @@ class GooglePlus(source.Source):
     comment['url'] = comment['inReplyTo'][0]['url']
     return self.postprocess_object(comment)
 
-  def add_tags(self, batch, activity, collection, verb):
+  def maybe_add_tags(self, batch, activity, cached, cache_updates, collection, verb):
     """Fetches and adds 'like' or 'share' tags to an activity.
 
     Just adds a request and callback to the batch. Does not execute the batch.
@@ -227,14 +219,24 @@ class GooglePlus(source.Source):
     Args:
       batch: BatchHttpRequest
       activity: dict, G+ activity that was +1ed or reshared
+      cached: dict of cache values. (not cache object above.)
+      cache_updates: dict, values to write back to cache
       collection: string, 'plusoners' or 'resharers'
       verb: string, ActivityStreams verb to populate the tags with
     """
     # maps collection to verb to use in content string
     content_verbs = {'plusoners': '+1ed', 'resharers': 'reshared'}
+    # maps collection to cache prefix
+    cache_prefixes = {'plusoners': 'AGL ', 'resharers': 'AGS '}
 
     id = activity['id']
     obj = activity['object']
+
+    count = obj.get(collection, {}).get('totalItems')
+    cache_key = cache_prefixes[collection] + id
+    if not count or count == cached.get(cache_key):
+      return
+
     call = self.auth_entity.api().people().listByActivity(
       activityId=id, collection=collection)
 
@@ -253,6 +255,7 @@ class GooglePlus(source.Source):
             'author': person,
             'content': '%s this.' % content_verbs[collection],
             }))
+        cache_updates[cache_key] = count
       else:
         obj.pop(collection, None)
         code, body = interpret_http_exception(exc)
