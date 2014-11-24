@@ -143,6 +143,7 @@ Note the `app.yaml.*` files, one for each App Engine app id. To work on or deplo
 To deploy:
 
 ```shell
+./alltests.py && \
 rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
   ~/google_appengine/appcfg.py --oauth2 update . && \
 rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
