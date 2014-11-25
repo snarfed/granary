@@ -283,14 +283,14 @@ class GooglePlusTest(testutil.HandlerTest):
                       'urls': [{'value': 'x'}, {'value': 'y'}]},
                      uta({'urls': [{'value': 'x'}, {'value': 'y'}]}))
 
-  def test_get_activities_extra_fetches_return_404(self):
-    """Sometimes the extras fetches return 404s. Ignore that."""
+  def test_get_activities_extra_fetches_fail(self):
+    """Sometimes the extras fetches return errors. Ignore that."""
     self.init()
 
     batch = MIMEMultipart()
     for i in range(3):
       msg = Message()
-      msg.set_payload('HTTP/1.1 404 Not Found\n\r\n\r\n')
+      msg.set_payload('HTTP/1.1 500 Foo Bar\n\r\n\r\n')
       msg['Content-ID'] = '<response-abc+%d>' % (i + 1)
       batch.attach(msg)
 

@@ -133,11 +133,7 @@ class GooglePlus(source.Source):
           else:
             obj.pop('replies', None)
             code, body = interpret_http_exception(exc)
-            # This evidently 404s sometimes.
-            # https://github.com/snarfed/bridgy/issues/310
-            if code == '404':
-              logging.warning('Ignoring 404 response: %s', body)
-            else:
+            if code not in ('404', '500'):  # these happen; ignore them
               raise exc
 
         batch.add(call, callback=functools.partial(set_comments, activity=activity))
@@ -259,11 +255,7 @@ class GooglePlus(source.Source):
       else:
         obj.pop(collection, None)
         code, body = interpret_http_exception(exc)
-        # These evidently 404 sometimes.
-        # https://github.com/snarfed/bridgy/issues/310
-        if code == '404':
-          logging.warning('Ignoring 404 response: %s', body)
-        else:
+        if code not in ('404', '500'):  # these happen; ignore them
           raise exc
 
     batch.add(call, callback=set_tags)
