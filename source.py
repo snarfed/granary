@@ -497,6 +497,7 @@ class Source(object):
     if not parsed:
       return []
     domain, event_id = parsed
+    url = event.get('url')
 
     rsvps = []
     for verb, field in RSVP_TO_EVENT.items():
@@ -504,10 +505,13 @@ class Source(object):
         rsvp = {'objectType': 'activity',
                 'verb': verb,
                 'actor': actor,
+                'url': url,
                 }
         if event_id and 'id' in actor:
           _, actor_id = util.parse_tag_uri(actor['id'])
           rsvp['id'] = util.tag_uri(domain, '%s_rsvp_%s' % (event_id, actor_id))
+          if url:
+            rsvp['url'] = '#'.join((url, actor_id))
         rsvps.append(rsvp)
 
     return rsvps

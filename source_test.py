@@ -34,21 +34,25 @@ RSVPS = [{
     'objectType': 'activity',
     'verb': 'rsvp-yes',
     'actor': {'displayName': 'Aaron P', 'id': 'tag:fake.com,2013:11500'},
+    'url': 'https://facebook.com/246#11500',
     }, {
     'objectType': 'activity',
     'verb': 'rsvp-no',
     'actor': {'displayName': 'Ryan B'},
+    'url': 'https://facebook.com/246',
     }, {
     'id': 'tag:fake.com:246_rsvp_987',
     'objectType': 'activity',
     'verb': 'rsvp-maybe',
     'actor': {'displayName': 'Foo', 'id': 'tag:fake.com,2013:987'},
+    'url': 'https://facebook.com/246#987',
     }]
 EVENT = {
   'id': 'tag:fake.com:246',
   'objectType': 'event',
   'displayName': 'Homebrew Website Club',
-  }
+  'url': 'https://facebook.com/246',
+}
 EVENT_WITH_RSVPS = copy.deepcopy(EVENT)
 EVENT_WITH_RSVPS.update({
   'attending': [RSVPS[0]['actor']],
