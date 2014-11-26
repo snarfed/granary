@@ -490,22 +490,17 @@ ATOM = """\
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 <a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> <a href="http://p.twimg.com/picture1">[picture]</a>
+<p>
+<a class="link" alt="" href="https://twitter.com/snarfed_org/status/100">
+<img class="thumbnail" src="http://p.twimg.com/picture1" alt="" />
+</a>
+</p>
+<p>
+<a class="link" alt="" href="https://twitter.com/snarfed_org/status/100">
+<img class="thumbnail" src="http://p.twimg.com/picture2" alt="" />
+</a>
+</p>
 <p class="tag"><a href="http://p.twimg.com/picture2">[picture]</a></p>
-
-<p><a href='https://twitter.com/snarfed_org/status/100'>
-  <img style='float: left' src='http://p.twimg.com/picture1' /><br />
-  </a><br />
-
-</p>
-<p></p>
-
-<p><a href='https://twitter.com/snarfed_org/status/100'>
-  <img style='float: left' src='http://p.twimg.com/picture2' /><br />
-  </a><br />
-
-</p>
-<p></p>
-
   </div>
   </content>
 

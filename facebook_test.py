@@ -543,17 +543,16 @@ ATOM = """\
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 <a href="https://facebook.com/283938455011303">Super Happy Block Party Hackathon</a>, &gt;\o/&lt; <a href="https://facebook.com/789">Daniel M</a>.
+<p>
+<a class="link" alt="my link name" href="http://my.link/">
+<img class="thumbnail" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg" alt="my link name" />
+<span class="name">my link name</span>
+</a>
+<span class="summary">my link caption</span>
+</p>
 <p class="tag"><a href="https://facebook.com/234">Friend 1</a>
 <a href="https://facebook.com/345">Friend 2</a>
 <a href="https://facebook.com/456">Friend 3</a></p>
-
-<p><a href='http://my.link/'>
-  <img style='float: left' src='https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg' /><br />
-  my link name</a><br />
-my link caption
-</p>
-<p>my link description</p>
-
   </div>
   </content>
 

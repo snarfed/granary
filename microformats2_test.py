@@ -79,8 +79,8 @@ class Microformats2Test(testutil.HandlerTest):
 foo
 <p>
 <a class="link" alt="name" href="http://link">
-<img class="link-thumbnail" src="http://image" alt="name" />
-<span class="link-name">name</span>
+<img class="thumbnail" src="http://image" alt="name" />
+<span class="name">name</span>
 </a>
 </p>""", microformats2.render_content({
         'content': 'foo',

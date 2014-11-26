@@ -46,14 +46,6 @@
   </div>
 {% endif %}
 {{ activity.object.rendered_content|safe }}
-{% for att in activity.object.attachments %}
-<p><a href='{% firstof att.url activity.url activity.object.url %}'>
-  <img style='float: left' src='{{ att.image.0.url }}' /><br />
-  {{ att.displayName }}</a><br />
-{{ att.summary }}
-</p>
-<p>{{ att.content }}</p>
-{% endfor %}
   </div>
   </content>
 
