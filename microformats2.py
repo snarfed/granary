@@ -391,6 +391,11 @@ def render_content(obj):
 
   Returns: string, rendered HTML
   """
+  content = obj.get('content', '')
+
+  # convert newlines to <br>s
+  content = content.replace('\n', '<br />\n')
+
   # extract tags. preserve order but de-dupe, ie don't include a tag more than
   # once.
   seen_ids = set()
@@ -408,7 +413,6 @@ def render_content(obj):
       tags.setdefault(object_type(t), []).append(t)
 
   # linkify embedded mention tags inside content.
-  content = obj.get('content', '')
   if mentions:
     mentions.sort(key=lambda t: t['startIndex'])
     last_end = 0

@@ -91,3 +91,9 @@ foo
           'image': {'url': 'http://image'},
         }]
       }))
+
+  def test_render_content_converts_newlines_to_brs(self):
+    self.assert_equals("""\
+foo<br />
+bar<br />
+""", microformats2.render_content({'content': 'foo\nbar\n'}))
