@@ -73,3 +73,21 @@ class Microformats2Test(testutil.HandlerTest):
         'content': 'Entity &lt; link too',
         'tags': [{'url': 'http://my/link', 'startIndex': 12, 'length': 8}]
       }))
+
+  def test_render_content_link_with_image(self):
+    self.assert_equals("""\
+foo
+<p>
+<a class="link" alt="name" href="http://link">
+<img class="link-thumbnail" src="http://image" alt="name" />
+<span class="link-name">name</span>
+</a>
+</p>""", microformats2.render_content({
+        'content': 'foo',
+        'tags': [{
+          'objectType': 'article',
+          'url': 'http://link',
+          'displayName': 'name',
+          'image': {'url': 'http://image'},
+        }]
+      }))

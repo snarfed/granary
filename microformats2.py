@@ -435,21 +435,24 @@ def render_content(obj):
   # TODO: non-article attachments
   for link in obj.get('attachments', []) + tags.pop('article', []):
     if object_type(link) == 'article':
+      content  += '\n<p>'
       url = link.get('url')
-      name = link.get('displayName', url)
-      image = link.get('image', {}).get('url')
-      if not image:
-        image = obj.get('image', {}).get('url', '')
-
-      content += """\
-<p><a class="link" alt="%s" href="%s">
-<img class="link-thumbnail" src="%s" alt="%s" />
-<span class="link-name">%s</span>
-""" % (name, name, url, image, name)
+      name = link.get('displayName', '')
+      if url:
+        content += '\n<a class="link" alt="%s" href="%s">' % (name, url)
+      image = (link.get('image', {}).get('url') or
+               obj.get('image', {}).get('url', ''))
+      if image:
+        content += ('\n<img class="link-thumbnail" src="%s" alt="%s" />' %
+                    (image, name))
+      if name:
+        content += '\n<span class="link-name">%s</span>' % name
+      if url:
+        content += '\n</a>'
       summary = link.get('summary')
-      if summary:
-        content += '<span class="link-summary">%s</span>\n' % summary
-      content += '</p>'
+      if summary and summary != name:
+        content += '\n<span class="link-summary">%s</span>' % summary
+      content += '\n</p>'
 
   # other tags, except likes and (re)shares. they're rendered manually in
   # json_to_html().
