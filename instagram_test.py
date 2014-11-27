@@ -283,8 +283,7 @@ this picture -&gt; is #abc #xyz
 <img class="thumbnail" src="http://attach/image/big" alt="" />
 </a>
 </p>
-<p class="p-category"><a href="None">abc</a>
-<a href="None">xyz</a></p>
+<p class="p-category"></p>
 <p class="tag"><a href="http://snarfed.org/">Ryan B</a></p>
   </div>
   </content>
