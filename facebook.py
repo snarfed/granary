@@ -27,18 +27,8 @@ import appengine_config
 from oauth_dropins.webutil import util
 import source
 
-# https://developers.facebook.com/docs/reference/login/
+# https://developers.facebook.com/docs/facebook-login/permissions/#reference
 OAUTH_SCOPES = ','.join((
-    'friends_actions.music',
-    'friends_actions.news',
-    'friends_actions.video',
-    'friends_actions:instapp',
-    'friends_activities',
-    'friends_games_activity',
-    'friends_likes',
-    'friends_notes',
-    'friends_photos',
-    'friends_relationships',
     'read_stream',
     'user_actions.news',
     'user_actions.video',
