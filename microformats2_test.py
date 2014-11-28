@@ -96,7 +96,11 @@ foo
     self.assert_equals("""\
 foo<br />
 bar<br />
-""", microformats2.render_content({'content': 'foo\nbar\n'}))
+<a href="http://baz">baz</a>
+""", microformats2.render_content({
+  'content': 'foo\nbar\nbaz',
+  'tags': [{'url': 'http://baz', 'startIndex': 8, 'length': 3}]
+}))
 
   def test_render_content_omits_tags_without_urls(self):
     self.assert_equals("""\

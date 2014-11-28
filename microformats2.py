@@ -393,9 +393,6 @@ def render_content(obj):
   """
   content = obj.get('content', '')
 
-  # convert newlines to <br>s
-  content = content.replace('\n', '<br />\n')
-
   # extract tags. preserve order but de-dupe, ie don't include a tag more than
   # once.
   seen_ids = set()
@@ -427,6 +424,10 @@ def render_content(obj):
       last_end = end
 
     content += orig[last_end:]
+
+  # convert newlines to <br>s
+  # do this *after* linkifying tags so we don't have to shuffle indices over
+  content = content.replace('\n', '<br />\n')
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
   # TODO: fix the bug in test_linkify_broken() in webutil/util_test.py, then
