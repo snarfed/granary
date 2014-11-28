@@ -143,13 +143,24 @@ Note the `app.yaml.*` files, one for each App Engine app id. To work on or deplo
 To deploy:
 
 ```shell
-./alltests.py && \
+git co -- app.yaml && ./alltests.py && \
 rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
   ~/google_appengine/appcfg.py --oauth2 update . && \
 rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
   ~/google_appengine/appcfg.py --oauth2 update . && \
 rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
-  ~/google_appengine/appcfg.py --oauth2 update .
+~/google_appengine/appcfg.py --oauth2 update . && \
+git co -- app.yaml
+```
+
+To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), and [instagram-atom](https://github.com/snarfed/instagram-atom) after an activitystreams-unofficial change:
+
+```shell
+#!/bin/tcsh
+foreach s (facebook twitter instagram)
+  cd ~/src/$s-atom/activitystreams && gu && git submodule update && \
+    cd .. && ~/google_appengine/appcfg.py --oauth2 update .
+end
 ```
 
 
