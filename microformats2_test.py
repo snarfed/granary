@@ -33,18 +33,17 @@ class Microformats2Test(testutil.HandlerTest):
     obj = microformats2.json_to_object({'type': ['h-entry', 'h-as-article']})
     self.assertEquals('article', obj['objectType'])
 
-  def test_html_content(self):
-    both = {'properties': {'content': [{'value': 'my val', 'html': 'my html'}]}}
-    html = {'properties': {'content': [{'html': 'my html'}]}}
-    value = {'properties': {'content': [{'value': 'my val'}]}}
-    neither = {'properties': {'content': [{}]}}
-
-    jto = microformats2.json_to_object
-    for json, html_content, expected in (
-      (both, True, 'my html'), (html, True, 'my html'), (html, False, 'my html'),
-      (both, False, 'my val'), (value, True, 'my val'), (value, False, 'my val'),
-      (neither, True, None), (neither, False, None)):
-      self.assertEquals(expected, jto(json, html_content=html_content).get('content'))
+  def test_html_content_and_summary(self):
+    for expected_content, expected_summary, value in (
+        ('my html', 'my val', {'value': 'my val', 'html': 'my html'}),
+        ('my html', None, {'html': 'my html'}),
+        ('my val', 'my val', {'value': 'my val'}),
+        ('my str', 'my str', 'my str'),
+        (None, None, {})):
+      obj = microformats2.json_to_object({'properties': {'content': value,
+                                                         'summary': value}})
+      self.assertEquals(expected_content, obj.get('content'))
+      self.assertEquals(expected_summary, obj.get('summary'))
 
   def test_photo_property_is_not_url(self):
     """handle the case where someone (incorrectly) marks up the caption

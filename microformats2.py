@@ -64,6 +64,23 @@ def get_string_urls(objs):
   return urls
 
 
+def get_html(val):
+  """Returns a string value that may have HTML markup.
+
+  Args:
+    value: mf2 property value, either string or
+     {'html': '<p>str</p>', 'value': 'str'} dict
+
+  Returns: string or None
+  """
+  return val.get('html') or val.get('value') if isinstance(val, dict) else val
+
+
+def get_text(val):
+  """Returns a plain text string value. See get_html."""
+  return val.get('value') if isinstance(val, dict) else val
+
+
 def object_to_json(obj, trim_nulls=True):
   """Converts an ActivityStreams object to microformats2 JSON.
 
@@ -162,12 +179,11 @@ def object_to_json(obj, trim_nulls=True):
   return ret
 
 
-def json_to_object(mf2, html_content=True):
+def json_to_object(mf2):
   """Converts microformats2 JSON to an ActivityStreams object.
 
   Args:
     mf2: dict, decoded JSON microformats2 object
-    html_content: whether to return the content field as HTML, if available
 
   Returns: dict, ActivityStreams object
   """
@@ -176,7 +192,6 @@ def json_to_object(mf2, html_content=True):
 
   props = mf2.get('properties', {})
   prop = first_props(props)
-  content = prop.get('content', {})
   rsvp = prop.get('rsvp')
   rsvp_verb = 'rsvp-%s' % rsvp if rsvp else None
   author = json_to_object(prop.get('author'))
@@ -218,9 +233,6 @@ def json_to_object(mf2, html_content=True):
       as_type = 'note' if 'h-as-note' in types else 'article'
       as_verb = None
 
-  text = content.get('value')
-  html = content.get('html')
-  content = html or text if html_content else text or html
   photos = [url for url in get_string_urls(props.get('photo', []))
             # filter out relative and invalid URLs (mf2py gives absolute urls)
             if urlparse.urlparse(url).netloc]
@@ -231,9 +243,9 @@ def json_to_object(mf2, html_content=True):
     'verb': as_verb,
     'published': prop.get('published', ''),
     'updated': prop.get('updated', ''),
-    'displayName': prop.get('name'),
-    'summary': prop.get('summary'),
-    'content': content,
+    'displayName': get_text(prop.get('name')),
+    'summary': get_text(prop.get('summary')),
+    'content': get_html(prop.get('content')),
     'url': prop.get('url'),
     'image': {'url': photos[0] if photos else None},
     'location': json_to_object(prop.get('location')),
