@@ -119,7 +119,7 @@ TWEET = {  # Twitter
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
-  'content': '@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]',
+  'content': '@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 ',
   'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41+00:00',
   'url': 'https://twitter.com/snarfed_org/status/100',
@@ -131,16 +131,6 @@ OBJECT = {  # ActivityStreams
     },
   'to':[{'objectType':'group', 'alias':'@public'}],
   'tags': [{
-      'objectType': 'image',
-      'url': 'http://p.twimg.com/picture1',
-      'displayName': '[picture]',
-      'startIndex': 74,
-      'length': 9,
-      }, {
-      'objectType': 'image',
-      'url': 'http://p.twimg.com/picture2',
-      'displayName': '[picture]',
-      }, {
       'objectType': 'person',
       'id': tag_uri('foo'),
       'url': 'https://twitter.com/foo',
@@ -484,12 +474,12 @@ ATOM = """\
     http://activitystrea.ms/schema/1.0/note
   </activity:object-type>
   <id>""" + tag_uri('100') + """</id>
-  <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 [picture]</title>
+  <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 </title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> <a href="http://p.twimg.com/picture1">[picture]</a>
+<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> 
 <p>
 <a class="link" alt="" href="https://twitter.com/snarfed_org/status/100">
 <img class="thumbnail" src="http://p.twimg.com/picture1" alt="" />
@@ -500,18 +490,11 @@ ATOM = """\
 <img class="thumbnail" src="http://p.twimg.com/picture2" alt="" />
 </a>
 </p>
-<p class="tag"><a href="http://p.twimg.com/picture2">[picture]</a></p>
   </div>
   </content>
 
   <link rel="alternate" type="text/html" href="https://twitter.com/snarfed_org/status/100" />
   <link rel="ostatus:conversation" href="https://twitter.com/snarfed_org/status/100" />
-
-    <link rel="ostatus:attention" href="http://p.twimg.com/picture1" />
-    <link rel="mentioned" href="http://p.twimg.com/picture1" />
-
-    <link rel="ostatus:attention" href="http://p.twimg.com/picture2" />
-    <link rel="mentioned" href="http://p.twimg.com/picture2" />
 
     <link rel="ostatus:attention" href="https://twitter.com/foo" />
     <link rel="mentioned" href="https://twitter.com/foo" />

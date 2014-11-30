@@ -752,7 +752,6 @@ class Twitter(source.Source):
       # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
       # entities below to replace them with the real URLs, and then linkify.
       'content': tweet.get('text'),
-      'attachments': [],
       }
 
     retweeted = tweet.get('retweeted_status')
@@ -783,7 +782,7 @@ class Twitter(source.Source):
     # https://dev.twitter.com/docs/tweet-entities
     media = entities.get('media')
     if media:
-      obj['attachments'] += [{
+      obj['attachments'] = [{
           'objectType': 'image',
           'image': {'url': m.get('media_url')},
           } for m in media]
@@ -803,19 +802,16 @@ class Twitter(source.Source):
        'indices': t.get('indices'),
        } for t in entities.get('hashtags', [])
       ] + [
-      # TODO: links are both tags and attachments right now. should they be one
-      # or the other?
-      # file:///home/ryanb/docs/activitystreams_schema_spec_1.0.html#tags-property
-      # file:///home/ryanb/docs/activitystreams_json_spec_1.0.html#object
       {'objectType': 'article',
        'url': t.get('expanded_url'),
        'displayName': t.get('display_url'),
        'indices': t.get('indices'),
        } for t in entities.get('urls', [])
       ] + [
+      # these are only temporary, to get rid of the image t.co links. the tag
+      # elements are removed farther down below.
       {'objectType': 'image',
-       'url': t.get('media_url'),
-       'displayName': '[picture]',
+       'displayName': '',
        'indices': t.get('indices'),
        } for t in entities.get('media', [])]
 
@@ -832,12 +828,14 @@ class Twitter(source.Source):
         end = indices[1] + offset
         length = end - start
         if t['objectType'] in ('article', 'image'):
-          text = t.get('displayName') or t.get('url')
-          if text:
+          text = t.get('displayName', t.get('url'))
+          if text is not None:
             obj['content'] = obj['content'][:start] + text + obj['content'][end:]
             offset += len(text) - length
             length = len(text)
         t.update({'startIndex': start, 'length': length})
+
+    obj['tags'] = [t for t in obj['tags'] if t['objectType'] != 'image']
 
     # retweets
     obj['tags'] += [self.retweet_to_object(r) for r in tweet.get('retweets', [])]
