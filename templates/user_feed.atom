@@ -40,8 +40,8 @@
 {% if activity.object.actor %}
   <div>
   <p>{{ activity.annotation }}</p>
-  <img src="{{ activity.object.actor.image.url }}" />
-  <a href="{{ activity.object.actor.url }}">{{ activity.object.actor.displayName }}</a>
+  <img src="{{ activity.object.actor.image.url|safe }}" />
+  <a href="{{ activity.object.actor.url|safe }}">{{ activity.object.actor.displayName }}</a>
   originally shared this post:
   </div>
 {% endif %}
@@ -53,15 +53,15 @@
   <link rel="ostatus:conversation" href="{{ activity.url|safe }}" />
   {% for tag in activity.object.tags %}
     {% if tag.verb != 'like' and tag.verb != 'share' %}
-      <link rel="ostatus:attention" href="{{ tag.url }}" />
-      <link rel="mentioned" href="{{ tag.url }}" />
+      <link rel="ostatus:attention" href="{{ tag.url|safe }}" />
+      <link rel="mentioned" href="{{ tag.url|safe }}" />
     {% endif %}
   {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
   <published>{{ activity.object.published }}</published>
   <updated>{{ activity.object.updated }}</updated>
   {% for obj in activity.context.inReplyTo %}
-    <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url }}" type="text/html" />
+    <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url|safe }}" type="text/html" />
   {% endfor %}
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->

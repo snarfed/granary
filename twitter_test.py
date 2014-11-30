@@ -481,12 +481,12 @@ ATOM = """\
 
 <a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> 
 <p>
-<a class="link" alt="" href="https://twitter.com/snarfed_org/status/100">
+<a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="thumbnail" src="http://p.twimg.com/picture1" alt="" />
 </a>
 </p>
 <p>
-<a class="link" alt="" href="https://twitter.com/snarfed_org/status/100">
+<a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="thumbnail" src="http://p.twimg.com/picture2" alt="" />
 </a>
 </p>

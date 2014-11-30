@@ -38,7 +38,6 @@ HCARD = string.Template("""\
   </div>
 """)
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
-PHOTO = string.Template('<img class="u-photo" src="$url" alt="$alt" />')
 
 
 def get_string_urls(objs):
@@ -281,8 +280,6 @@ def object_to_html(obj):
   - adds links, summaries, and thumbnails for attachments and checkins
   - adds a "via SOURCE" postscript
 
-  TODO: convert newlines to <br> or <p>
-
   Args:
     obj: dict, a decoded JSON ActivityStreams object
 
@@ -338,7 +335,7 @@ def json_to_html(obj):
       likes_and_reposts += ['<a class="u-%s u-%s-of" href="%s"></a>' %
                             (verb, verb, url) for url in props.get(verb)]
 
-  photo = '\n'.join(PHOTO.substitute(url=url, alt='attachment')
+  photo = '\n'.join(img(url, 'u-photo', 'attachment')
                     for url in props.get('photo', []) if url)
 
   # comments
@@ -385,12 +382,12 @@ def hcard_to_html(hcard):
   # extract first value from multiply valued properties
   prop = first_props(hcard['properties'])
   prop.setdefault('uid', '')
-  photo = (PHOTO.substitute(url=prop['photo'], alt=prop.get('name', '-'))
-           if prop.get('photo') else '')
-  return HCARD.substitute(prop,
-                          types=' '.join(hcard['type']),
-                          photo=photo,
-                          linked_name=maybe_linked_name(hcard['properties']))
+  photo = prop.get('photo')
+  return HCARD.substitute(
+    prop,
+    types=' '.join(hcard['type']),
+    photo=img(photo, 'u-photo', prop.get('name', '')) if photo else '',
+    linked_name=maybe_linked_name(hcard['properties']))
 
 
 def render_content(obj):
@@ -454,15 +451,14 @@ def render_content(obj):
     url = tag.get('url') or obj.get('url')
     name = tag.get('displayName', '')
     if url:
-      content += '\n<a class="link" alt="%s" href="%s">' % (name, url)
+      content += '\n<a class="link" href="%s">' % url
 
     image = tag.get('image') or obj.get('image') or []
     if image:
       if isinstance(image, list):
         image = image[0]
       if image.get('url'):
-        content += ('\n<img class="thumbnail" src="%s" alt="%s" />' %
-                    (image['url'], name))
+        content += '\n' + img(image['url'], 'thumbnail', name)
 
     if name:
       content += '\n<span class="name">%s</span>' % name
@@ -569,6 +565,15 @@ def maybe_linked_name(props):
                              for url in extra_urls)
 
   return html
+
+
+def img(src, cls, alt):
+  """Returns an <img> string with the given src, class, and alt.
+
+  Returns: string
+  """
+  return '<img class="%s" src="%s" alt=%s />' % (
+      cls, src, xml.sax.saxutils.quoteattr(alt))
 
 
 def maybe_linked(text, url, classname=None):

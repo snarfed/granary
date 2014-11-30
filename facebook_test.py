@@ -544,7 +544,7 @@ ATOM = """\
 
 Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 <a href="https://facebook.com/283938455011303">Super Happy Block Party Hackathon</a>, &gt;\o/&lt; <a href="https://facebook.com/789">Daniel M</a>.
 <p>
-<a class="link" alt="my link name" href="http://my.link/">
+<a class="link" href="http://my.link/">
 <img class="thumbnail" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg" alt="my link name" />
 <span class="name">my link name</span>
 </a>

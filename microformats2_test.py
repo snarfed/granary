@@ -77,7 +77,7 @@ class Microformats2Test(testutil.HandlerTest):
     self.assert_equals("""\
 foo
 <p>
-<a class="link" alt="name" href="http://link">
+<a class="link" href="http://link">
 <img class="thumbnail" src="http://image" alt="name" />
 <span class="name">name</span>
 </a>
@@ -112,4 +112,27 @@ foo
                  {'url': 'http://baz', 'displayName': 'baz'},
                  {'url': 'http://baj'},
                ],
+      }))
+
+  def test_escape_html_attribute_values(self):
+    self.assert_equals("""\
+<article class="h-entry">
+<span class="u-uid"></span>
+
+<div class="h-card p-author">
+<div class="p-name">a " b ' c</div>
+<img class="u-photo" src="img" alt="a &quot; b ' c" />
+</div>
+
+<div class="e-content p-name">
+
+<p>
+<img class="thumbnail" src="img" alt="d &amp; e" />
+<span class="name">d & e</span>
+</p>
+</div>
+
+</article>""", microformats2.object_to_html({
+        'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
+        'attachments': [{'image': {'url': 'img'}, 'displayName': 'd & e'}],
       }))
