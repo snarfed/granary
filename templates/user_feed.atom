@@ -8,17 +8,17 @@
       >
 <generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
   activitystreams-unofficial</generator>
-<id>{{ host_url|safe }}</id>
+<id>{{ host_url }}</id>
 <title>{{ title }}</title>
 {% if actor.description %}
 <subtitle>{{ actor.description }}</subtitle>
 {% endif %}
-<logo>{{ actor.image.url|safe }}</logo>
+<logo>{{ actor.image.url }}</logo>
 <updated>{{ updated }}</updated>
 {% include "author.atom" %}
-<link href="{{ actor.url|safe }}" rel="alternate" type="text/html" />
-<link rel="avatar" href="{{ actor.image.url|safe }}" />
-<link href="{{ request_url|safe }}" rel="self" type="application/atom+xml" />
+<link href="{{ actor.url }}" rel="alternate" type="text/html" />
+<link rel="avatar" href="{{ actor.image.url }}" />
+<link href="{{ request_url }}" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="{{ push_uri }}" rel="hub" /> -->
 <!-- <link href="{{ salmon_uri }}" rel="salmon" /> -->
@@ -40,8 +40,8 @@
 {% if activity.object.actor %}
   <div>
   <p>{{ activity.annotation }}</p>
-  <img src="{{ activity.object.actor.image.url|safe }}" />
-  <a href="{{ activity.object.actor.url|safe }}">{{ activity.object.actor.displayName }}</a>
+  <img src="{{ activity.object.actor.image.url }}" />
+  <a href="{{ activity.object.actor.url }}">{{ activity.object.actor.displayName }}</a>
   originally shared this post:
   </div>
 {% endif %}
@@ -49,19 +49,19 @@
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="{{ activity.url|safe }}" />
-  <link rel="ostatus:conversation" href="{{ activity.url|safe }}" />
+  <link rel="alternate" type="text/html" href="{{ activity.url }}" />
+  <link rel="ostatus:conversation" href="{{ activity.url }}" />
   {% for tag in activity.object.tags %}
     {% if tag.verb != 'like' and tag.verb != 'share' %}
-      <link rel="ostatus:attention" href="{{ tag.url|safe }}" />
-      <link rel="mentioned" href="{{ tag.url|safe }}" />
+      <link rel="ostatus:attention" href="{{ tag.url }}" />
+      <link rel="mentioned" href="{{ tag.url }}" />
     {% endif %}
   {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
   <published>{{ activity.object.published }}</published>
   <updated>{{ activity.object.updated }}</updated>
   {% for obj in activity.context.inReplyTo %}
-    <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url|safe }}" type="text/html" />
+    <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url }}" type="text/html" />
   {% endfor %}
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
@@ -73,7 +73,7 @@
     <georss:featureName>{{ location.displayName }}</georss:featureName>
   {% endif %}
   {% endwith %}
-  <link rel="self" type="application/atom+xml" href="{{ activity.url|safe }}" />
+  <link rel="self" type="application/atom+xml" href="{{ activity.url }}" />
 </entry>
 {% endfor %}
 </feed>
