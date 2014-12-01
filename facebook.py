@@ -566,7 +566,7 @@ class Facebook(source.Source):
         }
     return self.postprocess_activity(activity)
 
-  def post_to_object(self, post, remove_id_prefix=False):
+  def post_to_object(self, post):
     """Converts a post to an object.
 
     Args:
