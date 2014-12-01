@@ -4,6 +4,40 @@ The Audience Targeting 'to' field is set to @public or @private based on whether
 the Facebook object's 'privacy' field is 'EVERYONE' or anything else.
 https://developers.facebook.com/docs/reference/api/privacy-parameter/
 
+Retrieving @all activities from get_activities() (the default) currently returns
+an incomplete set of activities, ie *NOT* exactly the same set as your Facebook
+News Feed: https://www.facebook.com/help/327131014036297/
+
+This is complicated, and I still don't fully understand how or why they differ,
+but based on lots of experimenting and searching, it sounds like the current
+state is that you just can't reproduce the News Feed via Graph API's /me/home,
+FQL's stream table, or any other Facebook API, full stop. :(
+
+Random details:
+
+- My access tokens have the read_stream permission.
+  https://developers.facebook.com/docs/facebook-login/permissions/v2.2#reference-read_stream
+
+- Lots of FUD on Stack Overflow, etc. that permissions might be the root cause.
+  Non-public posts, photos, etc from your friends may not be exposed to an app
+  if they haven't added it themselves. Doesn't seem true empirically, since
+  get_activities() does return some non-public posts.
+
+- I tried lots of different values for stream_filter/filter_key, both Graph API
+  and FQL. No luck.
+  https://developers.facebook.com/docs/reference/fql/stream_filter/
+
+- Back in 4/2012, an FB engineer posted on SO that this is expected, and that
+  Graph API and FQL shouldn't differ: http://stackoverflow.com/a/10157136/186123
+
+- The API docs *used* to say, "Note: /me/home retrieves an outdated view of the
+  News Feed. This is currently a known issue and we don't have any near term
+  plans to bring them back up into parity."
+  (from old dead https://developers.facebook.com/docs/reference/api/#searching )
+
+See the fql_stream_to_post() method below for code I used to experiment with the
+FQL stream table.
+
 TODO:
 - friends' new friendships, ie "X is now friends with Y." Not currently
 available in /me/home. http://stackoverflow.com/questions/4358026
@@ -40,11 +74,6 @@ OAUTH_SCOPES = ','.join((
 
 API_OBJECT_URL = 'https://graph.facebook.com/%s'
 API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d'
-# this an old, out of date version of the actual news feed. sigh. :/
-# "Note: /me/home retrieves an outdated view of the News Feed. This is currently
-# a known issue and we don't have any near term plans to bring them back up into
-# parity."
-# https://developers.facebook.com/docs/reference/api/#searching
 API_HOME_URL = 'https://graph.facebook.com/%s/home?offset=%d'
 API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/me/feed'
@@ -911,3 +940,72 @@ class Facebook(source.Source):
         obj['url'] = '%s#%s' % (self.object_url(event_id), user_id)
 
     return self.postprocess_object(obj)
+
+  def fql_stream_to_post(self, stream, actor=None):
+    """Converts an FQL stream row to a Graph API post.
+
+    Currently unused and untested! Use at your own risk.
+
+    https://developers.facebook.com/docs/technical-guides/fql/
+    https://developers.facebook.com/docs/reference/fql/stream/
+
+    TODO: place, to, with_tags, message_tags, likes, comments, etc., most
+    require extra queries to inflate.
+
+    Args:
+      stream: dict, a row from the FQL stream table
+      actor: dict, a row from the FQL profile table
+
+    Returns:
+      a Graph API post dict
+
+    Here's example code to query FQL and pass the results to this method:
+
+      resp = self.urlopen('https://graph.facebook.com/fql?' + urllib.urlencode(
+          {'q': json.dumps({
+            'stream': '''\
+            SELECT actor_id, post_id, created_time, updated_time, attachment,
+              privacy, message, description
+FROM stream
+WHERE filter_key IN (
+  SELECT filter_key FROM stream_filter WHERE uid = me())
+ORDER BY created_time DESC
+LIMIT 50
+''',
+            'actors': '''\
+SELECT id, name, username, url, pic FROM profile WHERE id IN
+  (SELECT actor_id FROM #stream)
+'''})})).read()
+
+      # resp = appengine_config.read('fql.json')
+      results = {q['name']: q['fql_result_set'] for q in json.loads(resp)['data']}
+      actors = {a['id']: a for a in results['actors']}
+      posts = [self.fql_stream_to_post(row, actor=actors[row['actor_id']])
+               for row in results['stream']]
+    """
+    post = copy.deepcopy(stream)
+    post.update({
+      'id': stream.pop('post_id', None),
+      'type': stream.pop('fb_object_type', None),
+      'object_id': stream.pop('fb_object_id', None),
+      'from': actor or {'id': stream.pop('actor_id', None)},
+      # message, description, name, created_time, updated_time are left in place
+      })
+
+    # attachments
+    att = stream.pop('attachment', {})
+    for media in att.get('media') or [att]:
+      type = media.get('type')
+      obj = {
+        'type': type,
+        'url': media.get('href'),
+        'title': att.get('name') or att.get('caption') or att.get('description'),
+        'data': {'url': media.get('src')},
+      }
+      # last element of each type wins
+      if type == 'photo':
+        post['image'] = obj
+      elif type == 'link':
+        post['link'] = obj['url']
+
+    return util.trim_nulls(post)
