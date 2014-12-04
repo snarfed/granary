@@ -5,7 +5,6 @@ Microformats2 specs: http://microformats.org/wiki/microformats2
 
 import xml.sax.saxutils
 import itertools
-import logging
 import urlparse
 import string
 

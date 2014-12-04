@@ -6,7 +6,6 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import datetime
 import json
-import logging
 import mox
 
 import httplib2

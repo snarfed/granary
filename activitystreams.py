@@ -28,7 +28,6 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import json
 import logging
-import re
 import urllib
 from webob import exc
 

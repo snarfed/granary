@@ -3,9 +3,7 @@
 Atom spec: http://atomenabled.org/developers/syndication/
 """
 
-import logging
 import os
-import string
 import urlparse
 
 from google.appengine.ext.webapp import template

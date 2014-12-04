@@ -5,12 +5,9 @@
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
-import json
-import mox
 
 from source import Source
 from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil import util
 
 LIKES = [{
     'verb': 'like',

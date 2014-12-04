@@ -3,8 +3,6 @@
 
 __author__ = 'Ryan Barrett <activitystreams@ryanb.org>'
 
-import urllib
-
 import appengine_config
 import activitystreams
 from oauth_dropins.webutil import handlers

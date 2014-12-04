@@ -9,7 +9,6 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import functools
 import itertools
-import logging
 
 import appengine_config
 import source
@@ -17,7 +16,6 @@ import source
 from apiclient.errors import HttpError
 from apiclient.http import BatchHttpRequest
 from oauth_dropins.handlers import interpret_http_exception
-from oauth_dropins.webutil import util
 
 
 class GooglePlus(source.Source):

@@ -14,9 +14,6 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import collections
 import copy
-import datetime
-import itertools
-import logging
 import re
 import urlparse
 
@@ -591,11 +588,9 @@ class Source(object):
 
     Returns: string text or None
     """
-    type = obj.get('objectType')
     summary = obj.get('summary')
     name = obj.get('displayName')
     content = obj.get('content')
-    base_url = self.base_object(obj).get('url')
 
     ret = summary or content or name
     return ret.strip() if ret else None

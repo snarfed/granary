@@ -12,7 +12,6 @@ https://dev.twitter.com/docs/platform-objects/users
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-import collections
 import datetime
 import itertools
 import httplib

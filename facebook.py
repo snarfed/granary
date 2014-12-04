@@ -48,11 +48,9 @@ in the data.objects array.
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
-import datetime
 import itertools
 import json
 import logging
-import re
 import urllib
 import urllib2
 import urlparse

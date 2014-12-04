@@ -10,13 +10,7 @@ https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import xml.sax.saxutils
-import datetime
-import itertools
-import json
 import logging
-import re
-import urllib
-import urlparse
 
 import appengine_config
 from oauth_dropins import python_instagram

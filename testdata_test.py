@@ -5,7 +5,6 @@ import glob
 import json
 import logging
 import os
-import unittest
 
 import microformats2
 from oauth_dropins.webutil import testutil
@@ -79,7 +78,7 @@ class TestDataTest(testutil.HandlerTest):
         try:
           self.assert_equals(expected, fn(read_json(src)),
                              '\n%s:1:\n' % os.path.abspath(dst))
-        except AssertionError, e:
+        except AssertionError:
           logging.exception('')
           failed = True
 

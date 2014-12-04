@@ -5,7 +5,6 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import appengine_config
 
-import mox
 import requests
 
 from oauth_dropins.webutil.testutil import *

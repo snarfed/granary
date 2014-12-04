@@ -5,7 +5,6 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
 import json
-import mox
 import urllib
 
 import appengine_config
@@ -652,8 +651,8 @@ class FacebookTest(testutil.HandlerTest):
     self.facebook = facebook.Facebook(access_token='asdf')
     self.facebook.get_activities()
 
-  def test_get_activities_activity_id(self):
-    self.expect_urlopen('https://graph.facebook.com/123_000', json.dumps(POST))
+  def test_get_activities_activity_id_overrides_others(self):
+    self.expect_urlopen('https://graph.facebook.com/000', json.dumps(POST))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -849,10 +848,6 @@ http://b http://c""",
 
   def test_event_to_object(self):
     self.assert_equals(EVENT_OBJ, self.facebook.event_to_object(EVENT))
-
-  def test_event_to_object_with_rsvps(self):
-    self.assert_equals(EVENT_OBJ_WITH_ATTENDEES,
-                       self.facebook.event_to_object(EVENT, rsvps=RSVPS))
 
   def test_event_to_object_with_rsvps(self):
     self.assert_equals(EVENT_OBJ_WITH_ATTENDEES,
