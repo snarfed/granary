@@ -524,14 +524,9 @@ def tags_to_html(tags, classname):
     tags: decoded JSON ActivityStreams objects.
     classname: class for span to enclose tags in
   """
-  if tags:
-    return (
-      '\n<p class="%s">' % classname +
-      '\n'.join('<a href="%s">%s</a>' % (t['url'], t.get('displayName', ''))
-                for t in tags if t.get('url')) +
-      '</p>')
-  else:
-    return ''
+  return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, t['url'],
+                                                       t.get('displayName', ''))
+                 for t in tags if t.get('url'))
 
 
 def author_display_name(hcard):

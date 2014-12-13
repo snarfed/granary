@@ -549,9 +549,9 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </a>
 <span class="summary">my link caption</span>
 </p>
-<p class="tag"><a href="https://facebook.com/234">Friend 1</a>
-<a href="https://facebook.com/345">Friend 2</a>
-<a href="https://facebook.com/456">Friend 3</a></p>
+<a class="tag" href="https://facebook.com/234">Friend 1</a>
+<a class="tag" href="https://facebook.com/345">Friend 2</a>
+<a class="tag" href="https://facebook.com/456">Friend 3</a>
   </div>
   </content>
 

@@ -104,8 +104,8 @@ bar<br />
   def test_render_content_omits_tags_without_urls(self):
     self.assert_equals("""\
 foo
-<p class="tag"><a href="http://baz">baz</a>
-<a href="http://baj"></a></p>
+<a class="tag" href="http://baz">baz</a>
+<a class="tag" href="http://baj"></a>
 """, microformats2.render_content({
         'content': 'foo',
         'tags': [{'displayName': 'bar'},
@@ -135,4 +135,13 @@ foo
 </article>""", microformats2.object_to_html({
         'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
         'attachments': [{'image': {'url': 'img'}, 'displayName': 'd & e'}],
+      }))
+
+  def test_mention_and_hashtag(self):
+    self.assert_equals("""
+<a class="p-category" href="http://c"></a>
+<a class="u-mention" href="http://m">m</a>""",
+                       microformats2.render_content({
+        'tags': [{'objectType': 'mention', 'url': 'http://m', 'displayName': 'm'},
+                 {'objectType': 'hashtag', 'url': 'http://c'}],
       }))
