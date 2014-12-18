@@ -37,9 +37,21 @@ USER = {  # Twitter
   'id_str': '888',
   'protected': False,
   'url': 'http://t.co/pUWU4S',
-  'entities': {'url': {'urls': [{'url': 'http://t.co/pUWU4S',
-                                 'expanded_url': 'https://snarfed.org/',
-                                 }]}},
+  'entities': {
+    'url': {
+      'urls': [{
+        'url': 'http://t.co/pUWU4S',
+        'expanded_url': 'https://snarfed.org/',
+      }]},
+    'description': {
+      'urls': [{
+        'url': 'http://t.co/123',
+        'expanded_url': 'http://link/123',
+      }, {
+        'url': 'http://t.co/456',
+        'expanded_url': 'http://link/456',
+      }]},
+    },
   }
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
@@ -50,6 +62,10 @@ ACTOR = {  # ActivityStreams
   'numeric_id': '888',
   'published': '2010-05-01T21:42:43+00:00',
   'url': 'https://snarfed.org/',
+  'urls': [{'value': 'https://snarfed.org/'},
+           {'value': 'http://link/123'},
+           {'value': 'http://link/456'},
+           ],
   'location': {'displayName': 'San Francisco'},
   'username': 'snarfed_org',
   'description': 'my description',
@@ -479,7 +495,7 @@ ATOM = """\
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> 
+<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a>
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="thumbnail" src="http://p.twimg.com/picture1" alt="" />
@@ -948,8 +964,13 @@ class TwitterTest(testutil.TestCase):
 
   def test_user_to_actor_url_fallback(self):
     user = copy.deepcopy(USER)
-    del user['url']
+    del user['entities']
     actor = copy.deepcopy(ACTOR)
+    del actor['urls']
+    actor['url'] = 'http://t.co/pUWU4S'
+    self.assert_equals(actor, self.twitter.user_to_actor(user))
+
+    del user['url']
     actor['url'] = 'https://twitter.com/snarfed_org'
     self.assert_equals(actor, self.twitter.user_to_actor(user))
 

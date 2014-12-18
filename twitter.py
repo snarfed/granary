@@ -871,14 +871,11 @@ class Twitter(source.Source):
     if not username:
       return {}
 
-    url = user.get('url')
-    if url:
-      for entity in user.get('entities', {}).get('url', {}).get('urls', []):
-        expanded = entity.get('expanded_url')
-        if entity['url'] == url and expanded:
-          url = expanded
-    else:
-      url = self.user_url(username)
+    urls = util.trim_nulls(
+      [e.get('expanded_url') for e in itertools.chain(
+        *(user.get('entities', {}).get(field, {}).get('urls', [])
+          for field in ('url', 'description')))])
+    url = urls[0] if urls else user.get('url') or self.user_url(username)
 
     image = user.get('profile_image_url_https') or user.get('profile_image_url')
     if image:
@@ -894,6 +891,7 @@ class Twitter(source.Source):
       'numeric_id': user.get('id_str'),
       'published': self.rfc2822_to_iso8601(user.get('created_at')),
       'url': url,
+      'urls': [{'value': u} for u in urls],
       'location': {'displayName': user.get('location')},
       'username': username,
       'description': user.get('description'),
