@@ -513,6 +513,32 @@ class Source(object):
 
     return rsvps
 
+  @staticmethod
+  def activity_changed(before, after):
+    """Returns whether two activities or objects differ meaningfully.
+
+    Only compares a few fields: object type, verb, content, audience (ie
+    privacy), location, image, attachments, and tags. Notably does *not* compare
+    author and published/updated timestamps.
+
+    This has been tested on Facebook posts, comments, and event RSVPs (only
+    content and rsvp_status change) and Google+ posts and comments (content,
+    updated, and etag change). Twitter tweets and Instagram photo captions and
+    comments can't be edited.
+
+    Args:
+      before, after: dicts, ActivityStreams activities or objects
+
+    Returns: boolean
+
+    """
+    def values(x):
+      return [x.get(f) for f in ('objectType', 'verb', 'to', 'content',
+                                 'location', 'image', 'tags', 'attachments')]
+
+    return (values(before) != values(after) or
+            values(before.get('object', {})) != values(after.get('object', {})))
+
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
     return util.tag_uri(self.DOMAIN, name)

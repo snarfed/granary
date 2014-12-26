@@ -7,6 +7,8 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 
 from source import Source
+import facebook_test
+import googleplus_test
 from oauth_dropins.webutil import testutil
 
 LIKES = [{
@@ -225,3 +227,40 @@ class SourceTest(testutil.HandlerTest):
       self.assertEqual('c', cfc(base, {'displayName': 'n', 'content': 'c'}))
       self.assertEqual('s', cfc(base, {'displayName': 'n', 'content': 'c',
                                        'summary': ' s '}))
+
+  def test_activity_changed(self):
+    fb_post = facebook_test.ACTIVITY
+    fb_post_edited = copy.deepcopy(fb_post)
+    fb_post['object']['updated'] = '2016-01-02T00:58:26+00:00'
+
+    fb_comment = facebook_test.COMMENT_OBJS[0]
+    fb_comment_edited = copy.copy(fb_comment)
+    fb_comment['published'] = '2016-01-02T00:58:26+00:00'
+
+    gp_like = googleplus_test.LIKE
+    gp_like_edited = copy.copy(gp_like)
+    gp_like['author'] = googleplus_test.RESHARER
+
+    for before, after in (({}, {}),
+                          ({'x': 1}, {'y': 2}),
+                          (fb_post, fb_post_edited),
+                          (fb_comment, fb_comment_edited),
+                          (gp_like, gp_like_edited)):
+      self.assertFalse(self.source.activity_changed(before, after),
+                                                    '%s\n%s' % (before, after))
+
+    del fb_post_edited['object']['attachments']
+    fb_comment_edited['content'] = 'new content'
+    gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
+
+    fb_invite = facebook_test.RSVP_OBJS_WITH_ID[3]
+    self.assertEqual('invite', fb_invite['verb'])
+    fb_rsvp = copy.copy(fb_invite)
+    fb_rsvp['verb'] = 'rsvp-yes'
+
+    for before, after in ((fb_post, fb_post_edited),
+                          (fb_comment, fb_comment_edited),
+                          (gp_like, gp_like_edited),
+                          (fb_invite, fb_rsvp)):
+      self.assertTrue(self.source.activity_changed(before, after),
+                                                   '%s\n%s' % (before, after))
