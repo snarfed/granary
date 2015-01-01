@@ -3,7 +3,7 @@
 	url = git@github.com:snarfed/oauth-dropins.git
 [submodule "beautifulsoup"]
 	path = beautifulsoup
-	url = git@github.com:JinnLynn/beautifulsoup.git
+	url = git@github.com:snarfed/beautifulsoup.git
 [submodule "mf2py"]
 	path = mf2py
 	url = git@github.com:kartikprabhu/mf2py.git
