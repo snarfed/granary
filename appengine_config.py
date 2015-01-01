@@ -12,3 +12,9 @@ for path in (
   path = os.path.join(os.path.dirname(__file__), path)
   if path not in sys.path:
     sys.path.append(path)
+
+
+# Suppress BeautifulSoup warning that we let it pick the XML parser instead of
+# specifying one explicitly.
+import warnings
+warnings.filterwarnings('ignore', module='bs4', category=UserWarning)
