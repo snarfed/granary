@@ -32,7 +32,12 @@ class TestCase(HandlerTest):
                             redirected_url = None, response_headers=None,
                             **kwargs):
     resp = requests.Response()
+
+    if isinstance(response, unicode):
+      response = response.encode('utf-8')
+      resp.encoding = 'utf-8'
     resp._content = response
+
     resp.url = url if redirected_url is None else redirected_url
     resp.status_code = status_code
     resp.headers['content-type'] = content_type
