@@ -33,10 +33,10 @@ class TestCase(HandlerTest):
                             **kwargs):
     resp = requests.Response()
 
-    if isinstance(response, unicode):
-      response = response.encode('utf-8')
-      resp.encoding = 'utf-8'
-    resp._content = response
+    resp._text = response
+    resp._content = (response.encode('utf-8') if isinstance(response, unicode)
+                     else response)
+    resp.encoding = 'utf-8'
 
     resp.url = url if redirected_url is None else redirected_url
     resp.status_code = status_code
