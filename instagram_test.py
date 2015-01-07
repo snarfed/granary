@@ -6,16 +6,17 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import datetime
 import json
+import logging
 import mox
-
+import StringIO
+import urllib
+import urllib2
 import httplib2
-from oauth_dropins.python_instagram.bind import InstagramAPIError
 
 import instagram
 import source
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import Struct
 
 
 def tag_uri(name):
@@ -24,7 +25,7 @@ def tag_uri(name):
 
 # Test data.
 # The Instagram API returns objects with attributes, not JSON dicts.
-USER_JSON = {  # Instagram
+USER = {  # Instagram
   'username': 'snarfed',
   'bio': 'foo',
   'website': 'http://snarfed.org/',
@@ -34,10 +35,9 @@ USER_JSON = {  # Instagram
     'media': 2,
     'followed_by': 10,
     'follows': 33,
-    },
+  },
   'id': '420973239',
-  }
-USER = Struct(**USER_JSON)
+}
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'id': tag_uri('420973239'),
@@ -46,60 +46,62 @@ ACTOR = {  # ActivityStreams
   'displayName': 'Ryan B',
   'image': {'url': 'http://picture/ryan'},
   'description': 'foo',
-  }
-COMMENTS = [Struct(  # Instagram
-    created_at=datetime.datetime.utcfromtimestamp(1349588757),
-    text='\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
-    user=Struct(
-      username='averygood',
-      profile_picture='http://picture/commenter',
-      id='232927278',
-      full_name='\u5c0f\u6b63'
-      ),
-    id='789'
-    )]
-MEDIA = Struct(  # Instagram
-  id='123_456',
-  filter='Normal',
-  created_time=datetime.datetime.utcfromtimestamp(1348291542),
-  link='http://instagram.com/p/ABC123/',
-  user_has_liked=False,
-  attribution=None,
-  location=Struct(
-    id='520640',
-    name='Le Truc',
-    street_address='123 Main St.',
-    point=Struct(latitude=37.3, longitude=-122.5),
-    ),
-  user=USER,
-  comments=COMMENTS,
-  comment_count=len(COMMENTS),
-  images={
-    'low_resolution': Struct(
-      url='http://attach/image/small',
-      width=306,
-      height=306
-      ),
-    'thumbnail': Struct(
-      url='http://attach/image/thumb',
-      width=150,
-      height=150
-      ),
-    'standard_resolution': Struct(
-      url='http://attach/image/big',
-      width=612,
-      height=612
-      ),
+}
+COMMENTS = [{  # Instagram
+  'created_time': '1349588757',
+  'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+  'user': {
+    'username': 'averygood',
+    'profile_picture': 'http://picture/commenter',
+    'id': '232927278',
+    'full_name': '\u5c0f\u6b63',
+  },
+  'id': '789',
+}]
+MEDIA = {  # Instagram
+  'id': '123_456',
+  'filter': 'Normal',
+  'created_time': '1348291542',
+  'link': 'http://instagram.com/p/ABC123/',
+  'user_has_liked': False,
+  'attribution': None,
+  'location': {
+    'id': '520640',
+    'name': 'Le Truc',
+    'street_address': '123 Main St.',
+    'point': {'latitude':37.3, 'longitude':-122.5},
     },
-  tags=[Struct(name='abc'), Struct(name='xyz')],
-  users_in_photo=[Struct(user=USER, position=Struct(x=1, y=2))],
-  caption=Struct(
-    created_time='1348291558',
-    text='this picture -> is #abc #xyz',
-    user={},
-    id='285812769105340251'
-    ),
-  )
+  'user': USER,
+  'comments': {
+    'data': COMMENTS,
+    'count': len(COMMENTS),
+  },
+  'images': {
+    'low_resolution': {
+      'url': 'http://attach/image/small',
+      'width': 306,
+      'height': 306
+    },
+    'thumbnail': {
+      'url': 'http://attach/image/thumb',
+      'width': 150,
+      'height': 150
+    },
+    'standard_resolution': {
+      'url': 'http://attach/image/big',
+      'width': 612,
+      'height': 612
+    },
+  },
+  'tags': ['abc', 'xyz'],
+  'users_in_photo': [{'user': USER, 'position': {'x': 1, 'y': 2}}],
+  'caption': {
+    'created_time': '1348291558',
+    'text': 'this picture -> is #abc #xyz',
+    'user': {},
+    'id': '285812769105340251'
+  },
+}
 COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
@@ -186,20 +188,25 @@ ACTIVITY = {  # ActivityStreams
   'object': POST_OBJ,
   }
 LIKES = [  # Instagram
-  Struct(id='8',
-         username='alizz',
-         full_name='Alice',
-         profile_picture='http://alice/picture',
-         ),
-  Struct(id='9',
-         username='bobbb',
-         full_name='Bob',
-         profile_picture='http://bob/picture',
-         website='http://bob.com/',
-         ),
-  ]
+  {
+    'id': '8',
+    'username': 'alizz',
+    'full_name': 'Alice',
+    'profile_picture': 'http://alice/picture',
+  },
+  {
+    'id': '9',
+    'username': 'bobbb',
+    'full_name': 'Bob',
+    'profile_picture': 'http://bob/picture',
+    'website': 'http://bob.com/',
+  },
+]
 MEDIA_WITH_LIKES = copy.deepcopy(MEDIA)
-MEDIA_WITH_LIKES.likes = LIKES
+MEDIA_WITH_LIKES['likes'] = {
+  'data': LIKES,
+  'count': len(LIKES)
+}
 LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('123_456_liked_by_8'),
     'url': 'http://instagram.com/p/ABC123/#liked-by-8',
@@ -328,6 +335,7 @@ this picture -&gt; is #abc #xyz
 </feed>
 """
 
+
 class InstagramTest(testutil.HandlerTest):
 
   def setUp(self):
@@ -335,38 +343,35 @@ class InstagramTest(testutil.HandlerTest):
     self.instagram = instagram.Instagram()
 
   def test_get_actor(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'user')
-    self.instagram.api.user('foo').AndReturn(USER)
+    self.expect_urlopen('https://api.instagram.com/v1/users/foo',
+                        json.dumps({'data': USER}))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.instagram.get_actor('foo'))
 
   def test_get_actor_default(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'user')
-    self.instagram.api.user('self').AndReturn(USER)
+    self.expect_urlopen('https://api.instagram.com/v1/users/self',
+                        json.dumps({'data': USER}))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.instagram.get_actor())
 
   def test_get_activities_self(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'user_recent_media')
-    self.instagram.api.user_recent_media('self').AndReturn(([], {}))
+    self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
+                        json.dumps({'data': []}))
     self.mox.ReplayAll()
     self.assert_equals([], self.instagram.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
-    self.mox.StubOutWithMock(httplib2.Http, 'request')
-    httplib2.Http.request(
-      'https://api.instagram.com/v1/users/self/feed.json?access_token=asdf',
-      'GET', body=None, headers=mox.IgnoreArg()).AndReturn(
-      ({'status': '200'},
-       json.dumps({'meta': {'code': 200}, 'data': []})))
+    self.expect_urlopen(
+      'https://api.instagram.com/v1/users/self/feed?access_token=asdf',
+      json.dumps({'meta': {'code': 200}, 'data': []}))
     self.mox.ReplayAll()
 
     self.instagram = instagram.Instagram(access_token='asdf')
     self.instagram.get_activities()
 
   def test_get_activities_activity_id(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('000').AndReturn(MEDIA)
+    self.expect_urlopen('https://api.instagram.com/v1/media/000',
+                        json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -375,60 +380,61 @@ class InstagramTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_activity_id_not_found(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('000').AndRaise(
-      InstagramAPIError(400, 'APINotFoundError', 'msg'))
+    self.expect_urlopen('https://api.instagram.com/v1/media/000',
+                        '{"meta":{"error_type":"APINotFoundError"}}',
+                        status=400)
     self.mox.ReplayAll()
     self.assert_equals([], self.instagram.get_activities(activity_id='000'))
 
   def test_get_activities_with_likes(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'user_media_feed')
-    self.instagram.api.user_media_feed().AndReturn(([MEDIA_WITH_LIKES], {}))
+    self.expect_urlopen('https://api.instagram.com/v1/users/self/feed',
+                        json.dumps({'data': [MEDIA_WITH_LIKES]}))
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY_WITH_LIKES], self.instagram.get_activities())
 
   def test_get_activities_other_400_error(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('000').AndRaise(InstagramAPIError(400, 'other', 'msg'))
+    self.expect_urlopen('https://api.instagram.com/v1/media/000',
+                        'BAD REQUEST', status=400)
     self.mox.ReplayAll()
-    self.assertRaises(InstagramAPIError, self.instagram.get_activities,
+    self.assertRaises(urllib2.HTTPError, self.instagram.get_activities,
                       activity_id='000')
 
   def test_get_activities_min_id(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'user_recent_media')
-    self.instagram.api.user_recent_media('self', min_id='135').AndReturn(([], {}))
+    self.expect_urlopen(
+      'https://api.instagram.com/v1/users/self/media/recent/?min_id=135',
+      json.dumps({'data': []}))
     self.mox.ReplayAll()
     self.instagram.get_activities(group_id=source.SELF, min_id='135')
 
   def test_get_comment(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('123_456').AndReturn(MEDIA)
+    self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
+                        json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0],
                        self.instagram.get_comment('789', activity_id='123_456'))
 
   def test_get_comment_not_found(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('123_456').AndReturn(MEDIA)
+    self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
+                        json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assert_equals(None, self.instagram.get_comment('111', activity_id='123_456'))
 
   def test_get_like(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('000').AndReturn(MEDIA_WITH_LIKES)
+    self.expect_urlopen('https://api.instagram.com/v1/media/000',
+                        json.dumps({'data': MEDIA_WITH_LIKES}))
     self.mox.ReplayAll()
     self.assert_equals(LIKE_OBJS[1], self.instagram.get_like('123', '000', '9'))
 
   def test_get_like_not_found(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('000').AndReturn(MEDIA)
+    self.expect_urlopen('https://api.instagram.com/v1/media/000',
+                        json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assert_equals(None, self.instagram.get_like('123', '000', 'xyz'))
 
   def test_get_like_no_activity(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'media')
-    self.instagram.api.media('000').AndRaise(
-      InstagramAPIError(400, 'APINotFoundError', 'msg'))
+    self.expect_urlopen('https://api.instagram.com/v1/media/000',
+                        '{"meta":{"error_type":"APINotFoundError"}}',
+                        status=400)
     self.mox.ReplayAll()
     self.assert_equals(None, self.instagram.get_like('123', '000', '9'))
 
@@ -452,44 +458,123 @@ class InstagramTest(testutil.HandlerTest):
       self.assert_equals(obj, self.instagram.comment_to_object(
           cmt, '123_456', 'http://instagram.com/p/ABC123/'))
 
-  def test_user_to_actor_full(self):
+  def test_user_to_actor(self):
     self.assert_equals(ACTOR, self.instagram.user_to_actor(USER))
-
-  def test_user_to_actor_json(self):
-    self.assert_equals(ACTOR, self.instagram.user_to_actor(USER_JSON))
 
   def test_user_to_actor_url_fallback(self):
     user = copy.deepcopy(USER)
-    delattr(user, 'website')
+    del user['website']
     actor = copy.deepcopy(ACTOR)
     actor['url'] = 'http://instagram.com/snarfed'
     self.assert_equals(actor, self.instagram.user_to_actor(user))
 
   def test_user_to_actor_minimal(self):
     self.assert_equals({'id': tag_uri('420973239'), 'username': None},
-                       self.instagram.user_to_actor(Struct(id='420973239')))
+                       self.instagram.user_to_actor({'id': '420973239'}))
     self.assert_equals({'id': tag_uri('snarfed'), 'username': 'snarfed'},
-                       self.instagram.user_to_actor(Struct(username='snarfed')))
+                       self.instagram.user_to_actor({'username': 'snarfed'}))
 
-    # TODO: need to fetch media URL to get its id first.
-  # def test_create_like(self):
-  #   self.mox.StubOutWithMock(self.instagram.api, 'like_media')
-  #   self.instagram.api.like_media('123_456').AndReturn(LIKES[0])
-  #   self.mox.ReplayAll()
+  def test_preview_like(self):
+    # like obj doesn't have a url prior to publishing
+    to_publish = copy.deepcopy(LIKE_OBJS[0])
+    del to_publish['url']
 
-  #   ret = copy.deepcopy(LIKE_OBJS[0])
-  #   del ret['url']
-  #   self.assert_equals(ret, self.instagram.create(LIKE_OBJS[0]))
+    self.mox.ReplayAll()
+    preview = self.instagram.preview_create(to_publish)
+
+    self.assertIn('like', preview.description)
+    self.assertIn('this post', preview.description)
+
+  def test_create_like(self):
+    self.expect_urlopen(
+      'https://api.instagram.com/v1/media/shortcode/ABC123',
+      json.dumps({'data': MEDIA}))
+
+    self.expect_urlopen(
+      'https://api.instagram.com/v1/media/123_456/likes',
+      '{"meta":{"status":200}}', data='access_token=None')
+
+    self.expect_urlopen(
+      'https://api.instagram.com/v1/users/self',
+      json.dumps({'data': {
+        'id': '8',
+        'username': 'alizz',
+        'full_name': 'Alice',
+        'profile_picture': 'http://alice/picture',
+      }}))
+
+    # like obj doesn't have a url prior to publishing
+    to_publish = copy.deepcopy(LIKE_OBJS[0])
+    del to_publish['url']
+
+    self.mox.ReplayAll()
+    self.assert_equals(source.creation_result(LIKE_OBJS[0]),
+                       self.instagram.create(to_publish))
+
+  def test_preview_comment(self):
+    # comment obj doesn't have a url prior to publishing
+    to_publish = copy.deepcopy(COMMENT_OBJS[0])
+    del to_publish['url']
+
+    self.mox.ReplayAll()
+    preview = self.instagram.preview_create(to_publish)
+
+    self.assertIn('comment', preview.description)
+    self.assertIn('this post', preview.description)
+    self.assertIn('very cute', preview.content)
 
   def test_create_comment(self):
-    self.mox.StubOutWithMock(self.instagram.api, 'create_media_comment')
-    self.instagram.api.create_media_comment('123_456', COMMENTS[0].text
-                                            ).AndReturn(COMMENTS[0])
-    self.mox.ReplayAll()
+    self.expect_urlopen(
+      'https://api.instagram.com/v1/media/123_456/comments',
+      '{"meta":{"status":200}}',
+      data=urllib.urlencode({'access_token': self.instagram.access_token,
+                             'text': COMMENTS[0]['text']}))
 
-    ret = copy.deepcopy(COMMENT_OBJS[0])
-    del ret['url']
-    self.assert_equals(ret, self.instagram.create(COMMENT_OBJS[0]))
+    self.mox.ReplayAll()
+    to_publish = copy.deepcopy(COMMENT_OBJS[0])
+    del to_publish['url']
+
+    result = self.instagram.create(to_publish)
+    # TODO instagram does not give back a comment object; not sure how to
+    # get the comment id. for now, just check that creation was successful
+    # self.assert_equals(source.creation_result(COMMENT_OBJS[0]),
+    #                   self.instagram.create(to_publish))
+    self.assertTrue(result.content)
+    self.assertFalse(result.abort)
+
+  def test_create_comment_unauthorized(self):
+    # a more realistic test. this is what happens when you try to
+    # create comments with the API, with an unapproved app
+    self.expect_urlopen(
+      'https://api.instagram.com/v1/media/123_456/comments',
+      data=urllib.urlencode({'access_token': self.instagram.access_token,
+                             'text': COMMENTS[0]['text']}),
+      response='{"meta": {"code": 400, "error_type": u"OAuthPermissionsException", "error_message": "This request requires scope=comments, but this access token is not authorized with this scope. The user must re-authorize your application with scope=comments to be granted write permissions."}}',
+      status=400)
+
+    self.mox.ReplayAll()
+    to_publish = copy.deepcopy(COMMENT_OBJS[0])
+    del to_publish['url']
+
+    self.assertRaises(urllib2.HTTPError, self.instagram.create, to_publish)
+
+  def test_create_comments_disabled(self):
+    """Check that comment creation raises a sensible error when it's
+    disabled on our side.
+    """
+    to_publish = copy.deepcopy(COMMENT_OBJS[0])
+    del to_publish['url']
+
+    my_instagram = instagram.Instagram(allow_comment_creation=False)
+    preview = my_instagram.preview_create(to_publish)
+    self.assertTrue(preview.abort)
+    self.assertIn('Cannot publish comments', preview.error_plain)
+    self.assertIn('Cannot', preview.error_html)
+
+    create = my_instagram.create(to_publish)
+    self.assertTrue(create.abort)
+    self.assertIn('Cannot publish comments', create.error_plain)
+    self.assertIn('Cannot', create.error_html)
 
   def test_create_unsupported_type(self):
     pass
