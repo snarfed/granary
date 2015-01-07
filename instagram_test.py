@@ -65,7 +65,12 @@ MEDIA = Struct(  # Instagram
   link='http://instagram.com/p/ABC123/',
   user_has_liked=False,
   attribution=None,
-  location=None,
+  location=Struct(
+    id='520640',
+    name='Le Truc',
+    street_address='123 Main St.',
+    point=Struct(latitude=37.3, longitude=-122.5),
+    ),
   user=USER,
   comments=COMMENTS,
   comment_count=len(COMMENTS),
@@ -123,6 +128,14 @@ POST_OBJ = {  # ActivityStreams
   'url': 'http://instagram.com/p/ABC123/',
   'image': {'url': 'http://attach/image/big'},
   'to': [{'objectType':'group', 'alias':'@public'}],
+  'location': {
+    'id': '520640',
+    'displayName': 'Le Truc',
+    'latitude': 37.3,
+    'longitude': -122.5,
+    'position': '+37.300000-122.500000/',
+    'address': {'formatted': '123 Main St.'},
+    },
   'attachments': [{
       'objectType': 'image',
       'image': [{
@@ -304,6 +317,10 @@ this picture -&gt; is #abc #xyz
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
+
+  <georss:point>37.3 -122.5</georss:point>
+
+  <georss:featureName>Le Truc</georss:featureName>
 
   <link rel="self" type="application/atom+xml" href="http://instagram.com/p/ABC123/" />
 </entry>

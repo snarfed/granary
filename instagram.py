@@ -204,8 +204,6 @@ class Instagram(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    # TODO: location
-    # http://instagram.com/developer/endpoints/locations/
     id = media.id
 
     object = {
@@ -257,6 +255,16 @@ class Instagram(source.Source):
       if image:
         object['image'] = {'url': image.url}
         break
+
+    # http://instagram.com/developer/endpoints/locations/
+    if media.location:
+      object['location'] = {
+        'id': media.location.id,
+        'displayName': media.location.name,
+        'latitude': media.location.point.latitude,
+        'longitude': media.location.point.longitude,
+        'address': {'formatted': media.location.street_address},
+      }
 
     return self.postprocess_object(object)
 

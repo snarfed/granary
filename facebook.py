@@ -754,12 +754,7 @@ class Facebook(source.Source):
         lat = location.get('latitude')
         lon = location.get('longitude')
         if lat and lon:
-          obj['location'].update({
-              'latitude': lat,
-              'longitude': lon,
-              # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-              'position': '%+f%+f/' % (lat, lon),
-              })
+          obj['location'].update({'latitude': lat, 'longitude': lon})
     elif 'location' in post:
       obj['location'] = {'displayName': post['location']}
 

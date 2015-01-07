@@ -248,8 +248,6 @@ def json_to_object(mf2):
     'image': {'url': photos[0] if photos else None},
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
-    # TODO
-    # location
     }
 
   if as_type == 'activity':

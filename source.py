@@ -363,7 +363,9 @@ class Source(object):
   def postprocess_object(self, obj):
     """Does source-independent post-processing of an object, in place.
 
-    Right now just populates the displayName field.
+    * populates displayName
+    * populates content for rsvp-* verbs
+    * populates location.position based on latitude and longitude
 
     Args:
       object: object dict
@@ -387,6 +389,14 @@ class Source(object):
         if verb == 'invite':
           actor_name = self.actor_name(obj.get('object'))
         obj['displayName'] = '%s %s' % (actor_name, rsvp_content)
+
+    loc = obj.get('location')
+    if loc:
+      lat = loc.get('latitude')
+      lon = loc.get('longitude')
+      if lat and lon and not loc.get('position'):
+        # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
+        loc['position'] = '%+f%+f/' % (lat, lon)
 
     return util.trim_nulls(obj)
 
