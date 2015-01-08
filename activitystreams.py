@@ -38,7 +38,6 @@ import instagram
 import microformats2
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
-from oauth_dropins.python_instagram.bind import InstagramAPIError
 import source
 import twitter
 
@@ -68,15 +67,8 @@ class Handler(webapp2.RequestHandler):
   Attributes:
     source: Source subclass
   """
-  def handle_exception(self, e, debug):
-    """HTTP request exception handler that translates Instagram errors.
-    """
-    if isinstance(e, InstagramAPIError):
-      logging.exception(e)
-      self.response.set_status(e.status_code)
-      self.response.write(str(e))
-    else:
-      return handlers.handle_exception(self, e, debug)
+
+  handle_exception = handlers.handle_exception
 
   def source_class(self):
     """Return the Source subclass to use. May be overridden by subclasses."""
