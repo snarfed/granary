@@ -67,10 +67,8 @@ class Handler(webapp2.RequestHandler):
   Attributes:
     source: Source subclass
   """
-  def handle_exception(self, e, debug):
-    """HTTP request exception handler that translates Instagram errors.
-    """
-    return handlers.handle_exception(self, e, debug)
+
+  handle_exception = handlers.handle_exception
 
   def source_class(self):
     """Return the Source subclass to use. May be overridden by subclasses."""

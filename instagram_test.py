@@ -517,7 +517,8 @@ class InstagramTest(testutil.HandlerTest):
     del to_publish['url']
 
     self.mox.ReplayAll()
-    preview = self.instagram.preview_create(to_publish)
+    preview = instagram.Instagram(
+      allow_comment_creation=True).preview_create(to_publish)
 
     self.assertIn('comment', preview.description)
     self.assertIn('this post', preview.description)
@@ -534,7 +535,8 @@ class InstagramTest(testutil.HandlerTest):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    result = self.instagram.create(to_publish)
+    result = instagram.Instagram(
+      allow_comment_creation=True).create(to_publish)
     # TODO instagram does not give back a comment object; not sure how to
     # get the comment id. for now, just check that creation was successful
     # self.assert_equals(source.creation_result(COMMENT_OBJS[0]),
@@ -556,7 +558,8 @@ class InstagramTest(testutil.HandlerTest):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    self.assertRaises(urllib2.HTTPError, self.instagram.create, to_publish)
+    self.assertRaises(urllib2.HTTPError, instagram.Instagram(
+      allow_comment_creation=True).create, to_publish)
 
   def test_create_comments_disabled(self):
     """Check that comment creation raises a sensible error when it's
@@ -565,13 +568,12 @@ class InstagramTest(testutil.HandlerTest):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    my_instagram = instagram.Instagram(allow_comment_creation=False)
-    preview = my_instagram.preview_create(to_publish)
+    preview = self.instagram.preview_create(to_publish)
     self.assertTrue(preview.abort)
     self.assertIn('Cannot publish comments', preview.error_plain)
     self.assertIn('Cannot', preview.error_html)
 
-    create = my_instagram.create(to_publish)
+    create = self.instagram.create(to_publish)
     self.assertTrue(create.abort)
     self.assertIn('Cannot publish comments', create.error_plain)
     self.assertIn('Cannot', create.error_html)

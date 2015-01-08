@@ -53,7 +53,7 @@ class Instagram(source.Source):
   NAME = 'Instagram'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
 
-  def __init__(self, access_token=None, allow_comment_creation=True):
+  def __init__(self, access_token=None, allow_comment_creation=False):
     """Constructor.
 
     If an OAuth access token is provided, it will be passed on to Instagram.
@@ -67,10 +67,6 @@ class Instagram(source.Source):
     """
     self.access_token = access_token
     self.allow_comment_creation = allow_comment_creation
-
-  def timestamp_to_datetime(self, ts):
-    if ts:
-      return datetime.datetime.fromtimestamp(int(ts)).isoformat('T')
 
   def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
@@ -159,12 +155,11 @@ class Instagram(source.Source):
       # error. but if it's an error for some other reason, it probably won't
       # be properly formatted json.
       try:
-        body_obj = json.loads(body) if body else None
+        body_obj = json.loads(body) if body else {}
       except ValueError:
-        body_obj = None
+        body_obj = {}
 
-      if body_obj and body_obj.get('meta', {}).get('error_type'
-                                                   ) == 'APINotFoundError':
+      if body_obj.get('meta', {}).get('error_type') == 'APINotFoundError':
         logging.exception(body_obj.get('meta', {}).get('error_message'))
         media = []
       else:
@@ -258,8 +253,7 @@ class Instagram(source.Source):
         return source.creation_result(
           abort=True,
           error_plain='Cannot publish comments on Instagram',
-          error_html='<a href="https://www.brid.gy/about#silos">Cannot '
-          'publish comments</a> on Instagram.')
+          error_html='<a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">Cannot publish comments</a> on Instagram. The Instagram API technically supports creating comments, but <a href="http://stackoverflow.com/a/26889101/682648">anecdotal</a> <a href="http://stackoverflow.com/a/20229275/682648">evidence</a> suggests they are very selective about which applications they approve to do so.')
       content = obj.get('content', '').encode('utf-8')
       if preview:
         return source.creation_result(
@@ -271,7 +265,9 @@ class Instagram(source.Source):
         'access_token': self.access_token,
         'text': content,
       }))
-      # TODO response is empty; where do we get the comment id?
+      # response will be empty even on success, see
+      # http://instagram.com/developer/endpoints/comments/#post_media_comments.
+      # TODO where can we get the comment id?
       obj = self.comment_to_object({}, base_id, None)
       return source.creation_result(obj)
 
@@ -301,8 +297,8 @@ class Instagram(source.Source):
       self.urlopen(API_MEDIA_LIKES_URL % media_id, data=urllib.urlencode({
         'access_token': self.access_token
       }))
-      # TODO is the current user's info stored somewhere so we don't have to
-      # fetch it again?
+      # TODO use the stored user_json rather than looking it up each time.
+      # oauth-dropins auth_entities should have the user_json.
       me = json.loads(self.urlopen(API_USER_URL % 'self').read()).get('data')
       return source.creation_result(
         self.like_to_object(me, media_id, media_url))
@@ -310,7 +306,7 @@ class Instagram(source.Source):
     return source.creation_result(
       abort=True,
       error_plain='Cannot publish this post on Instagram.',
-      error_html='Cannot publish this post on Instagram. Instagram <a href="https://www.brid.gy/about#silos">does not support</a> posting photos or videos from 3rd party applications.')
+      error_html='Cannot publish this post on Instagram. Instagram <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">does not support</a> posting photos or videos from 3rd party applications.')
 
   def media_to_activity(self, media):
     """Converts a media to an activity.
@@ -353,7 +349,7 @@ class Instagram(source.Source):
       # TODO: detect videos. (the type field is in the JSON respose but not
       # propagated into the Media object.)
       'objectType': OBJECT_TYPES.get('image', 'photo'),
-      'published': self.timestamp_to_datetime(media.get('created_time')),
+      'published': util.maybe_timestamp_to_rfc3339(media.get('created_time')),
       'author': self.user_to_actor(media.get('user')),
       'content': xml.sax.saxutils.escape(
         media.get('caption', {}).get('text', '')),
@@ -363,14 +359,11 @@ class Instagram(source.Source):
         'objectType': 'image',
         # ActivityStreams 2.0 allows image to be a JSON array.
         # http://jasnell.github.io/w3c-socialwg-activitystreams/activitystreams2.html#link
-        'image': [{
-          'url': image.get('url'),
-          'width': image.get('width'),
-          'height': image.get('height'),
-        } for image in sorted(media.get('images').values(),
-                              # sort by size, descending, since atom.py
-                              # uses the first image in the list.
-                              key=operator.itemgetter('width'), reverse=True)],
+        'image': sorted(
+          media.get('images').values(),
+          # sort by size, descending, since atom.py
+          # uses the first image in the list.
+          key=operator.itemgetter('width'), reverse=True),
       }],
       # comments go in the replies field, according to the "Responses for
       # Activity Streams" extension spec:
@@ -428,7 +421,7 @@ class Instagram(source.Source):
       'inReplyTo': [{'id': self.tag_uri(media_id)}],
       'url': '%s#comment-%s' % (media_url, comment.get('id')) if media_url else None,
       # TODO: add PST time zone
-      'published': self.timestamp_to_datetime(comment.get('created_time')),
+      'published': util.maybe_timestamp_to_rfc3339(comment.get('created_time')),
       'content': comment.get('text'),
       'author': self.user_to_actor(comment.get('user')),
       'to': [{'objectType': 'group', 'alias': '@public'}],
