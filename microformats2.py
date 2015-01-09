@@ -137,7 +137,7 @@ def object_to_json(obj, trim_nulls=True):
       'updated':  [obj.get('updated', '')],
       'content': [{
           'value': xml.sax.saxutils.unescape(content),
-          'html': render_content(obj),
+          'html': render_content(obj, include_location=False),
           }],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
       'author': [author],
@@ -387,13 +387,14 @@ def hcard_to_html(hcard):
     linked_name=maybe_linked_name(hcard['properties']))
 
 
-def render_content(obj):
+def render_content(obj, include_location=True):
   """Renders the content of an ActivityStreams object.
 
   Includes tags, mentions, and attachments.
 
   Args:
     obj: decoded JSON ActivityStreams object
+    include_location: whether to render location, if provided
 
   Returns: string, rendered HTML
   """
@@ -465,6 +466,13 @@ def render_content(obj):
     if summary and summary != name:
       content += '\n<span class="summary">%s</span>' % summary
     content += '\n</p>'
+
+  # location
+  loc = obj.get('location')
+  if include_location and loc:
+    loc_mf2 = object_to_json(loc)
+    loc_mf2['type'] = ['h-card', 'p-location']
+    content += '\n' + hcard_to_html(loc_mf2)
 
   # other tags, except likes and (re)shares. they're rendered manually in
   # json_to_html().

@@ -302,6 +302,11 @@ this picture -&gt; is #abc #xyz
 <img class="thumbnail" src="http://attach/image/big" alt="" />
 </a>
 </p>
+<div class="h-card p-location">
+  <div class="p-name">Le Truc</div>
+
+</div>
+
 <a class="tag" href="http://snarfed.org/">Ryan B</a>
   </div>
   </content>

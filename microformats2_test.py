@@ -114,6 +114,21 @@ foo
                ],
       }))
 
+  def test_render_content_location(self):
+    self.assert_equals("""\
+foo
+<div class="h-card p-location">
+  <div class="p-name"><a class="u-url" href="http://my/place">My place</a></div>
+
+</div>
+""", microformats2.render_content({
+        'content': 'foo',
+        'location': {
+          'displayName': 'My place',
+          'url': 'http://my/place',
+        }
+      }))
+
   def test_escape_html_attribute_values(self):
     self.assert_equals("""\
 <article class="h-entry">

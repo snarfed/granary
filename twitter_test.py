@@ -506,6 +506,11 @@ ATOM = """\
 <img class="thumbnail" src="http://p.twimg.com/picture2" alt="" />
 </a>
 </p>
+<div class="h-card p-location">
+<div class="p-name"><a class="u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a></div>
+
+</div>
+
   </div>
   </content>
 

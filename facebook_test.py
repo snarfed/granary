@@ -549,6 +549,11 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </a>
 <span class="summary">my link caption</span>
 </p>
+<div class="h-card p-location">
+  <div class="p-name"><a class="u-url" href="https://facebook.com/113785468632283">Lake Merced</a></div>
+
+</div>
+
 <a class="tag" href="https://facebook.com/234">Friend 1</a>
 <a class="tag" href="https://facebook.com/345">Friend 2</a>
 <a class="tag" href="https://facebook.com/456">Friend 3</a>
