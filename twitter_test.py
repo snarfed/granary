@@ -56,7 +56,7 @@ USER = {  # Twitter
 ACTOR = {  # ActivityStreams
   'displayName': 'Ryan Barrett',
   'image': {
-    'url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
+    'url': 'https://twitter.com/snarfed_org/profile_image?size=original',
     },
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
@@ -238,6 +238,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
       'url': 'https://twitter.com/alice',
+      'image': {'url': 'https://twitter.com/alice/profile_image?size=original'},
       },
     'content': 'reply 200',
     'url': 'https://twitter.com/alice/status/200',
@@ -248,6 +249,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'id': 'tag:twitter.com:bob',
       'username': 'bob',
       'url': 'https://twitter.com/bob',
+      'image': {'url': 'https://twitter.com/bob/profile_image?size=original'},
       },
     'content': 'reply 300',
     'url': 'https://twitter.com/bob/status/300',
@@ -258,6 +260,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'id': 'tag:twitter.com:snarfed_org',
       'username': 'snarfed_org',
       'url': 'https://twitter.com/snarfed_org',
+      'image': {'url': 'https://twitter.com/snarfed_org/profile_image?size=original'},
       },
     'content': 'reply 400',
     'url': 'https://twitter.com/snarfed_org/status/400',
@@ -268,6 +271,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
       'url': 'https://twitter.com/alice',
+      'image': {'url': 'https://twitter.com/alice/profile_image?size=original'},
       },
     'content': 'reply 500',
     'url': 'https://twitter.com/alice/status/500',
@@ -330,7 +334,7 @@ SHARES = [{  # ActivityStreams
       'username': 'alizz',
       'displayName': 'Alice',
       'url': 'https://twitter.com/alizz',
-      'image': {'url': 'http://alice/picture'},
+      'image': {'url': 'https://twitter.com/alizz/profile_image?size=original'},
       },
     'displayName': 'Alice retweeted this.',
     'content': '<a href="https://twitter.com/alizz/status/123">retweeted this.</a>',
@@ -346,7 +350,7 @@ SHARES = [{  # ActivityStreams
       'username': 'bobbb',
       'displayName': 'Bob',
       'url': 'https://twitter.com/bobbb',
-      'image': {'url': 'http://bob/picture'},
+      'image': {'url': 'https://twitter.com/bobbb/profile_image?size=original'},
       },
     'displayName': 'Bob retweeted this.',
     'content': '<a href="https://twitter.com/bobbb/status/456">retweeted this.</a>',
@@ -377,6 +381,7 @@ LIKE_FROM_EVENT = {  # ActivityStreams
     'numeric_id': '789',
     'username': 'eve',
     'url': 'https://twitter.com/eve',
+      'image': {'url': 'https://twitter.com/eve/profile_image?size=original'},
     },
   'displayName': 'eve favorited this.',
   'content': 'favorited this.',
@@ -422,7 +427,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'username': 'ge',
     'displayName': 'George',
     'url': 'https://twitter.com/ge',
-    'image': {'url': 'https://twimg/353'},
+    'image': {'url': 'https://twitter.com/ge/profile_image?size=original'},
     },
   'displayName': 'George favorited this.',
   'content': 'favorited this.',
@@ -435,6 +440,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'id': tag_uri('jo'),
     'username': 'jo',
     'url': 'https://twitter.com/jo',
+    'image': {'url': 'https://twitter.com/jo/profile_image?size=original'},
     },
   'displayName': 'jo favorited this.',
   'content': 'favorited this.',
@@ -461,7 +467,7 @@ ATOM = """\
 
 <subtitle>my description</subtitle>
 
-<logo>http://a0.twimg.com/profile_images/866165047/ryan.jpg</logo>
+<logo>https://twitter.com/snarfed_org/profile_image?size=original</logo>
 <updated>2012-02-22T20:26:41+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -470,7 +476,7 @@ ATOM = """\
 </author>
 
 <link href="https://snarfed.org/" rel="alternate" type="text/html" />
-<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan.jpg" />
+<link rel="avatar" href="https://twitter.com/snarfed_org/profile_image?size=original" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->

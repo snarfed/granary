@@ -57,6 +57,9 @@ API_POST_FAVORITE_URL = 'https://api.twitter.com/1.1/favorites/create.json'
 API_POST_MEDIA_URL = 'https://api.twitter.com/1.1/statuses/update_with_media.json'
 HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
+# background: https://indiewebcamp.com/Twitter#Profile_Image_URLs
+PROFILE_PICTURE_URL = 'https://twitter.com/%s/profile_image?size=original'
+
 # Don't hit the RETWEETS endpoint more than this many times per
 # get_activities() call.
 # https://dev.twitter.com/docs/rate-limiting/1.1/limits
@@ -877,7 +880,8 @@ class Twitter(source.Source):
           for field in ('url', 'description')))])
     url = urls[0] if urls else user.get('url') or self.user_url(username)
 
-    image = user.get('profile_image_url_https') or user.get('profile_image_url')
+    image = (PROFILE_PICTURE_URL % username or
+             user.get('profile_image_url_https') or user.get('profile_image_url'))
     if image:
       # remove _normal for a ~256x256 avatar rather than ~48x48
       image = image.replace('_normal.', '.', 1)
@@ -977,7 +981,7 @@ class Twitter(source.Source):
         'id_str': img.get('data-user-id'),
         'screen_name': username,
         'name': fullname.string if fullname else None,
-        'profile_image_url': img.get('src'),
+        'profile_image_url': PROFILE_PICTURE_URL % username,
         }
       likes.append(self._make_like(tweet, author))
 
