@@ -18,7 +18,6 @@ import httplib
 import json
 import logging
 import re
-import requests
 import socket
 import urllib
 import urllib2
@@ -27,6 +26,7 @@ import urlparse
 from appengine_config import HTTP_TIMEOUT
 
 from bs4 import BeautifulSoup
+import requests
 
 import source
 from oauth_dropins import twitter_auth
