@@ -37,8 +37,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     obj = a.get('object', {})
     # Render content as HTML
     content = obj.get('content')
-    if content:
-      obj['rendered_content'] = microformats2.render_content(obj)
+    obj['rendered_content'] = microformats2.render_content(obj)
 
     # Make sure every activity has the title field, since Atom <entry> requires
     # the title element.
