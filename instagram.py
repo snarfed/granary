@@ -423,7 +423,7 @@ class Instagram(source.Source):
       # TODO: add PST time zone
       'published': util.maybe_timestamp_to_rfc3339(comment.get('created_time')),
       'content': comment.get('text'),
-      'author': self.user_to_actor(comment.get('user')),
+      'author': self.user_to_actor(comment.get('from')),
       'to': [{'objectType': 'group', 'alias': '@public'}],
     })
 

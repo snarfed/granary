@@ -50,7 +50,7 @@ ACTOR = {  # ActivityStreams
 COMMENTS = [{  # Instagram
   'created_time': '1349588757',
   'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
-  'user': {
+  'from': {
     'username': 'averygood',
     'profile_picture': 'http://picture/commenter',
     'id': '232927278',
