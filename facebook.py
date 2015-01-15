@@ -251,8 +251,14 @@ class Facebook(source.Source):
       activity_id: string activity id, optional
       activity_author_id: string activity author id, optional
     """
-    url = API_OBJECT_URL % comment_id
-    return self.comment_to_object(json.loads(self.urlopen(url).read()),
+    try:
+      resp = self.urlopen(API_OBJECT_URL % comment_id)
+    except urllib2.HTTPError, e:
+      if e.code == 400 and '_' in comment_id:
+        # Facebook may want us to ask for this without the other prefixed id(s)
+        resp = self.urlopen(API_OBJECT_URL % comment_id.split('_')[-1])
+
+    return self.comment_to_object(json.loads(resp.read()),
                                   post_author_id=activity_author_id)
 
   def get_share(self, activity_user_id, activity_id, share_id):
