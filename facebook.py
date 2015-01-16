@@ -56,8 +56,10 @@ import urllib2
 import urlparse
 
 import appengine_config
+from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins.webutil import util
 import source
+import webapp2
 
 # https://developers.facebook.com/docs/facebook-login/permissions/#reference
 OAUTH_SCOPES = ','.join((
@@ -70,15 +72,15 @@ OAUTH_SCOPES = ','.join((
     'user_likes',
     ))
 
-API_OBJECT_URL = 'https://graph.facebook.com/%s'
-API_SELF_POSTS_URL = 'https://graph.facebook.com/%s/posts?offset=%d'
-API_HOME_URL = 'https://graph.facebook.com/%s/home?offset=%d'
-API_RSVP_URL = 'https://graph.facebook.com/%s/invited/%s'
-API_FEED_URL = 'https://graph.facebook.com/me/feed'
-API_COMMENTS_URL = 'https://graph.facebook.com/%s/comments'
-API_LIKES_URL = 'https://graph.facebook.com/%s/likes'
-API_PHOTOS_URL = 'https://graph.facebook.com/me/photos'
-API_NOTIFICATION_URL = 'https://graph.facebook.com/%s/notifications'
+API_OBJECT_URL = 'https://graph.facebook.com/v2.2/%s'
+API_SELF_POSTS_URL = 'https://graph.facebook.com/v2.2/%s/posts?offset=%d'
+API_HOME_URL = 'https://graph.facebook.com/v2.2/%s/home?offset=%d'
+API_RSVP_URL = 'https://graph.facebook.com/v2.2/%s/invited/%s'
+API_FEED_URL = 'https://graph.facebook.com/v2.2/me/feed'
+API_COMMENTS_URL = 'https://graph.facebook.com/v2.2/%s/comments'
+API_LIKES_URL = 'https://graph.facebook.com/v2.2/%s/likes'
+API_PHOTOS_URL = 'https://graph.facebook.com/v2.2/me/photos'
+API_NOTIFICATION_URL = 'https://graph.facebook.com/v2.2/%s/notifications'
 
 # For parsing photo URLs, e.g.
 # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
@@ -118,9 +120,9 @@ RSVP_VERBS = {
   'not_replied': 'invite',
   }
 RSVP_ENDPOINTS = {
-  'rsvp-yes': 'https://graph.facebook.com/%s/attending',
-  'rsvp-no': 'https://graph.facebook.com/%s/declined',
-  'rsvp-maybe': 'https://graph.facebook.com/%s/maybe',
+  'rsvp-yes': 'https://graph.facebook.com/v2.2/%s/attending',
+  'rsvp-no': 'https://graph.facebook.com/v2.2/%s/declined',
+  'rsvp-maybe': 'https://graph.facebook.com/v2.2/%s/maybe',
 }
 
 # HTML snippet that embeds a post.
@@ -960,7 +962,7 @@ class Facebook(source.Source):
 
     Here's example code to query FQL and pass the results to this method:
 
-      resp = self.urlopen('https://graph.facebook.com/fql?' + urllib.urlencode(
+      resp = self.urlopen('https://graph.facebook.com/v2.0/fql?' + urllib.urlencode(
           {'q': json.dumps({
             'stream': '''\
             SELECT actor_id, post_id, created_time, updated_time, attachment,
@@ -1008,3 +1010,10 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
         post['link'] = obj['url']
 
     return util.trim_nulls(post)
+
+
+application = webapp2.WSGIApplication([
+    ('/start_auth', oauth_facebook.StartHandler.to('/facebook/oauth_callback',
+                                                   scopes=OAUTH_SCOPES)),
+    ('/facebook/oauth_callback', oauth_facebook.CallbackHandler.to('/')),
+    ], debug=appengine_config.DEBUG)
