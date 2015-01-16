@@ -23,12 +23,15 @@ import urllib
 import urllib2
 import urlparse
 
+import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from bs4 import BeautifulSoup
 import requests
+import webapp2
 
 import source
+from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins import twitter_auth
 from oauth_dropins.handlers import interpret_http_exception
 from oauth_dropins.webutil import util
@@ -1047,3 +1050,9 @@ class Twitter(source.Source):
     """Returns the Twitter URL for a tweet given a tweet object."""
     return self.status_url(tweet.get('user', {}).get('screen_name'),
                            tweet.get('id_str'))
+
+
+application = webapp2.WSGIApplication([
+    ('/start_auth', oauth_twitter.StartHandler.to('/twitter/oauth_callback')),
+    ('/twitter/oauth_callback', oauth_twitter.CallbackHandler.to('/')),
+    ], debug=appengine_config.DEBUG)

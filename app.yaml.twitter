@@ -19,8 +19,12 @@ handlers:
   static_files: static/favicon.ico
   upload: static/favicon.ico
 
-- url: /(start_auth|twitter/oauth_callback|.well-known/.*)?
+- url: /(.well-known/.*)?
   script: app.application
+  secure: always
+
+- url: /(start_auth|twitter/oauth_callback)
+  script: twitter.application
   secure: always
 
 - url: /.+
