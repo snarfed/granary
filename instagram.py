@@ -19,8 +19,10 @@ import datetime
 
 import appengine_config
 from oauth_dropins import handlers as oauth_handlers
+from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil import util
 import source
+import webapp2
 
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
@@ -482,3 +484,9 @@ class Instagram(source.Source):
     })
 
     return util.trim_nulls(actor)
+
+
+application = webapp2.WSGIApplication([
+    ('/start_auth', oauth_instagram.StartHandler.to('/instagram/oauth_callback')),
+    ('/instagram/oauth_callback', oauth_instagram.CallbackHandler.to('/')),
+    ], debug=appengine_config.DEBUG)

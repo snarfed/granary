@@ -19,8 +19,12 @@ handlers:
   static_files: static/favicon.ico
   upload: static/favicon.ico
 
-- url: /(start_auth|instagram/oauth_callback|.well-known/.*)?
+- url: /(.well-known/.*)?
   script: app.application
+  secure: always
+
+- url: /(start_auth|instagram/oauth_callback)
+  script: instagram.application
   secure: always
 
 - url: /.+
