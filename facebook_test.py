@@ -72,6 +72,23 @@ COMMENTS = [{  # Facebook
     'privacy': {'value': ''},  # empty means public
     'actions': [{'name': 'See Original', 'link': 'http://ald.com/foobar'}]
     }]
+# https://www.facebook.com/sfsymphony/posts/10152754134203292
+SHARE = {  # Facebook
+  'id': '321_654',
+  'from': {
+    'id': '321',
+    'name': 'Alice X'
+  },
+  'message': "sharer's message",
+  'picture': 'https://fbcdn-sphotos-e-a.akamaihd.net/hphotos-ak-xaf1/v/t1.0-9/p100x100/777_888_999_n.jpg?oh=x&oe=y&__gda__=z_w',
+  'link': 'https://www.facebook.com/sfsymphony/posts/2468',
+  'name': 'San Francisco Symphony',
+  'description': "original poster's message",
+  'type': 'link',
+  'status_type': 'shared_story',
+  'created_time': '2015-01-17T05:19:19+0000',
+  'updated_time': '2015-01-18T05:19:19+0000',
+}
 POST = {  # Facebook
   'id': '212038_10100176064482163',
   'from': {'name': 'Ryan Barrett', 'id': '212038'},
@@ -282,6 +299,31 @@ LIKE_OBJS = [{  # ActivityStreams
     'content': 'likes this.',
     },
   ]
+SHARE_OBJ = {  # ActivityStreams
+  'id': tag_uri('321_654'),
+  'url': 'https://facebook.com/321_654',
+  'objectType': 'activity',
+  'verb': 'share',
+  'object': {
+    'objectType': 'article',
+    'url': 'https://www.facebook.com/sfsymphony/posts/2468',
+    'content': "original poster's message",
+    'displayName': 'San Francisco Symphony',
+    'image': {'url': 'https://fbcdn-sphotos-e-a.akamaihd.net/hphotos-ak-xaf1/v/t1.0-9/p100x100/777_888_999_n.jpg?oh=x&oe=y&__gda__=z_w',},
+  },
+  'author': {
+    'id': tag_uri('321'),
+    'numeric_id': '321',
+    'displayName': 'Alice X',
+    'url': 'https://facebook.com/321',
+    'image': {'url': 'http://graph.facebook.com/321/picture?type=large'},
+  },
+  'displayName': "sharer's message",
+  'content': "sharer's message",
+  'image': {'url': 'https://fbcdn-sphotos-e-a.akamaihd.net/hphotos-ak-xaf1/v/t1.0-9/p100x100/777_888_999_n.jpg?oh=x&oe=y&__gda__=z_w',},
+  'published': '2015-01-17T05:19:19+00:00',
+  'updated': '2015-01-18T05:19:19+00:00',
+}
 POST_OBJ = {  # ActivityStreams
   'objectType': 'image',
   'author': {
@@ -813,6 +855,37 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(
       'https://facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
+
+  def test_share_to_object_empty(self):
+    self.assert_equals({}, self.facebook.share_to_object({}))
+
+  def test_share_to_object_minimal(self):
+    # just test that we don't crash
+    self.facebook.share_to_object({'id': '123_456_789', 'message': 'asdf'})
+
+  def test_share_to_object_full(self):
+    self.assert_equals(SHARE_OBJ, self.facebook.share_to_object(SHARE))
+
+  def test_share_to_object_no_message(self):
+    share = copy.deepcopy(SHARE)
+    del share['message']
+
+    share_obj = copy.deepcopy(SHARE_OBJ)
+    share_obj.update({
+      'content': share['description'],
+      'displayName': share['description'],
+    })
+    self.assert_equals(share_obj, self.facebook.share_to_object(share))
+
+    del share['description']
+    del share['name']
+    del share_obj['object']['content']
+    del share_obj['object']['displayName']
+    share_obj.update({
+      'content': 'shared this.',
+      'displayName': 'Alice X shared this.',
+    })
+    self.assert_equals(share_obj, self.facebook.share_to_object(share))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.facebook.user_to_actor(USER))

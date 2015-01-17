@@ -339,8 +339,14 @@ class Source(object):
     TYPE_DISPLAY_NAMES = {'image': 'photo', 'product': 'gift'}
 
     # maps verb to human-readable verb
-    DISPLAY_VERBS = {'like': 'likes', 'listen': 'listened to',
-                     'play': 'watched', 'read': 'read', 'give': 'gave'}
+    DISPLAY_VERBS = {
+      'give': 'gave',
+      'like': 'likes',
+      'listen': 'listened to',
+      'play': 'watched',
+      'read': 'read',
+      'share': 'shared',
+    }
 
     actor_name = self.actor_name(activity.get('actor'))
     obj = activity.get('object')
@@ -348,12 +354,12 @@ class Source(object):
     if obj and not activity.get('title'):
       verb = DISPLAY_VERBS.get(activity['verb'])
       obj_name = obj.get('displayName')
+      obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'))
       if obj_name and not verb:
         activity['title'] = obj_name
-      elif verb:
+      elif verb and (obj_name or obj_type):
         app = activity.get('generator', {}).get('displayName')
-        obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'), 'unknown')
-        name = obj_name if obj_name else 'a %s' % obj_type
+        name = obj_name if obj_name else 'a %s' % (obj_type or 'unknown')
         app = ' on %s' % app if app else ''
         activity['title'] = '%s %s %s%s.' % (actor_name, verb or 'posted',
                                              name, app)

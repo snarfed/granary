@@ -194,12 +194,6 @@ class Facebook(source.Source):
     Replies (ie comments) and likes are always included. They come from the
     'comments' and 'likes' fields in the Graph API's Post object:
     https://developers.facebook.com/docs/reference/api/post/#u_0_3
-
-    Shares are not currently supported, since I haven't yet found a way to get
-    them from the API. The sharedposts field / edge seems promising, but I
-    haven't been able to get it to work, even with the read_stream OAuth scope.
-    http://stackoverflow.com/questions/17373204/information-of-re-shared-status
-    http://stackoverflow.com/a/17533380/186123
     """
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
@@ -818,6 +812,37 @@ class Facebook(source.Source):
       obj['url'] = self.comment_url(post_id, comment_id,
                                     post_author_id=post_author_id)
       obj['inReplyTo'] = [{'id': self.tag_uri(post_id)}]
+
+    return self.postprocess_object(obj)
+
+  def share_to_object(self, share):
+    """Converts a share (from /OBJECT/sharedposts) to an object.
+
+    Args:
+      share: dict, a decoded JSON share
+
+    Returns:
+      an ActivityStreams object dict, ready to be JSON-encoded
+    """
+    obj = self.post_to_object(share)
+    if not obj:
+      return obj
+
+    att = obj.get('attachments', [])
+    obj.update({
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': att.pop(0) if att else {'url': share.get('link')},
+    })
+
+    if '_' in share['id']:
+      obj['url'] = self.object_url(share['id'])
+
+    content = obj.get('content')
+    if content:
+      obj['displayName'] = content
+    else:
+      obj['content'] = 'shared this.'
 
     return self.postprocess_object(obj)
 
