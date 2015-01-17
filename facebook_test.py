@@ -666,7 +666,14 @@ class FacebookTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_activity_id_not_found(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/0', 'false')
+    for id in '0', '0_0':
+      self.expect_urlopen('https://graph.facebook.com/v2.2/%s' % id, json.dumps({
+          'error': {
+            'message': '(#803) Some of the aliases you requested do not exist: 0',
+            'type': 'OAuthException',
+            'code': 803
+          }
+        }))
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities(activity_id='0_0'))
 
@@ -1110,7 +1117,7 @@ http://b http://c""",
 
   def test_create_like(self):
     self.expect_urlopen('https://graph.facebook.com/v2.2/212038_10100176064482163/likes',
-                        'true', data='')
+                        '{"success": "true"}', data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://facebook.com/212038/posts/10100176064482163',
                         'type': 'like'},
@@ -1123,7 +1130,7 @@ http://b http://c""",
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':
       self.expect_urlopen('https://graph.facebook.com/v2.2/234/' + endpoint,
-                          'true', data='')
+                          '{"success": "true"}', data='')
 
     self.mox.ReplayAll()
     for rsvp in RSVP_OBJS_WITH_ID[:3]:

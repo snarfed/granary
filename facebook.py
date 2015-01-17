@@ -214,14 +214,15 @@ class Facebook(source.Source):
 
       for id in ids_to_try:
         try:
-          posts = [json.loads(self.urlopen(API_OBJECT_URL % id).read())]
-          break
+          resp = json.loads(self.urlopen(API_OBJECT_URL % id).read())
+          if resp.get('error'):
+            logging.warning("Couldn't fetch object %s: %s", id, resp)
+          else:
+            posts = [resp]
+            break
         except urllib2.URLError, e:
           logging.warning("Couldn't fetch object %s: %s", id, e)
       else:
-        posts = []
-
-      if posts == [False]:  # FB returns false for "not found"
         posts = []
 
     else:
@@ -402,7 +403,7 @@ class Facebook(source.Source):
         return source.creation_result(description=desc)
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
-        assert resp == True, resp
+        assert resp.get('success', '').lower() == 'true', resp
         resp = {'type': 'like'}
 
     elif type == 'activity' and verb in RSVP_ENDPOINTS:
@@ -423,7 +424,7 @@ class Facebook(source.Source):
         return source.creation_result(description=desc)
       else:
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
-        assert resp == True, resp
+        assert resp.get('success', '').lower() == 'true', resp
         resp = {'type': 'rsvp'}
 
     elif type in ('note', 'article') and obj.get('image'):
