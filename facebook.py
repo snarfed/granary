@@ -403,7 +403,7 @@ class Facebook(source.Source):
         return source.creation_result(description=desc)
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
-        assert resp.get('success', '').lower() == 'true', resp
+        assert resp.get('success'), resp
         resp = {'type': 'like'}
 
     elif type == 'activity' and verb in RSVP_ENDPOINTS:
@@ -424,7 +424,7 @@ class Facebook(source.Source):
         return source.creation_result(description=desc)
       else:
         resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
-        assert resp.get('success', '').lower() == 'true', resp
+        assert resp.get('success'), resp
         resp = {'type': 'rsvp'}
 
     elif type in ('note', 'article') and obj.get('image'):

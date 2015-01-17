@@ -1117,7 +1117,7 @@ http://b http://c""",
 
   def test_create_like(self):
     self.expect_urlopen('https://graph.facebook.com/v2.2/212038_10100176064482163/likes',
-                        '{"success": "true"}', data='')
+                        '{"success": true}', data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://facebook.com/212038/posts/10100176064482163',
                         'type': 'like'},
@@ -1130,7 +1130,7 @@ http://b http://c""",
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':
       self.expect_urlopen('https://graph.facebook.com/v2.2/234/' + endpoint,
-                          '{"success": "true"}', data='')
+                          '{"success": true}', data='')
 
     self.mox.ReplayAll()
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
