@@ -79,6 +79,7 @@ API_RSVP_URL = 'https://graph.facebook.com/v2.2/%s/invited/%s'
 API_FEED_URL = 'https://graph.facebook.com/v2.2/me/feed'
 API_COMMENTS_URL = 'https://graph.facebook.com/v2.2/%s/comments'
 API_LIKES_URL = 'https://graph.facebook.com/v2.2/%s/likes'
+API_SHARES_URL = 'https://graph.facebook.com/v2.2/%s/sharedposts'
 API_PHOTOS_URL = 'https://graph.facebook.com/v2.2/me/photos'
 API_NOTIFICATION_URL = 'https://graph.facebook.com/v2.2/%s/notifications'
 
@@ -236,6 +237,15 @@ class Facebook(source.Source):
           raise
 
     activities = [self.post_to_activity(p) for p in posts]
+
+    if fetch_shares:
+      for post, activity in zip(posts, activities):
+        id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
+        if id:
+          resp = json.loads(self.urlopen(API_SHARES_URL % id).read())
+          activity.setdefault('tags', []).extend(
+            [self.share_to_object(share) for share in resp.get('data', [])])
+
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
     return response

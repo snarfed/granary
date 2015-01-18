@@ -72,7 +72,6 @@ COMMENTS = [{  # Facebook
     'privacy': {'value': ''},  # empty means public
     'actions': [{'name': 'See Original', 'link': 'http://ald.com/foobar'}]
     }]
-# https://www.facebook.com/sfsymphony/posts/10152754134203292
 SHARE = {  # Facebook
   'id': '321_654',
   'from': {
@@ -682,6 +681,22 @@ class FacebookTest(testutil.HandlerTest):
          'url': 'https://facebook.com/3_4',
          'verb': 'post'}],
       self.facebook.get_activities())
+
+  def test_get_activities_fetch_shares(self):
+    self.expect_urlopen('https://graph.facebook.com/v2.2/me/home?offset=0',
+                        json.dumps({'data': [
+                          {'id': '1_2', 'message': 'foo'},
+                          {'id': '3_4', 'message': 'bar'},
+                        ]}))
+    self.expect_urlopen('https://graph.facebook.com/v2.2/2/sharedposts',
+                        json.dumps({'data': [SHARE, SHARE]}))
+    self.expect_urlopen('https://graph.facebook.com/v2.2/4/sharedposts',
+                        json.dumps({}))
+    self.mox.ReplayAll()
+
+    got = self.facebook.get_activities(fetch_shares=True)
+    self.assert_equals([SHARE_OBJ, SHARE_OBJ], got[0]['tags'])
+    self.assert_equals([], got[1]['tags'])
 
   def test_get_activities_self(self):
     self.expect_urlopen(
