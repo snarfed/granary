@@ -300,8 +300,8 @@ LIKE_OBJS = [{  # ActivityStreams
     },
   ]
 SHARE_OBJ = {  # ActivityStreams
-  'id': tag_uri('321_654'),
-  'url': 'https://facebook.com/321_654',
+  'id': tag_uri('654'),
+  'url': 'https://facebook.com/321/posts/654',
   'objectType': 'activity',
   'verb': 'share',
   'object': {
@@ -671,15 +671,15 @@ class FacebookTest(testutil.HandlerTest):
          'object': {'content': 'foo',
                     'id': tag_uri('2'),
                     'objectType': 'note',
-                    'url': 'https://facebook.com/2'},
-         'url': 'https://facebook.com/2',
+                    'url': 'https://facebook.com/1_2'},
+         'url': 'https://facebook.com/1_2',
          'verb': 'post'},
         {'id': tag_uri('4'),
          'object': {'content': 'bar',
                     'id': tag_uri('4'),
                     'objectType': 'note',
-                    'url': 'https://facebook.com/4'},
-         'url': 'https://facebook.com/4',
+                    'url': 'https://facebook.com/3_4'},
+         'url': 'https://facebook.com/3_4',
          'verb': 'post'}],
       self.facebook.get_activities())
 

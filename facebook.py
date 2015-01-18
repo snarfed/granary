@@ -507,11 +507,16 @@ class Facebook(source.Source):
     Args:
       post: Facebook JSON post
     """
+    author_id = post.get('from', {}).get('id')
+
     post_id = post.get('id')
     if not post_id:
       return None
-    author_id = post.get('from', {}).get('id')
+
     if author_id:
+      post_ids = post_id.split('_')
+      if post_ids[0] == author_id:
+        post_id = '_'.join(post_ids[1:])
       return 'https://facebook.com/%s/posts/%s' % (author_id, post_id)
     else:
       return self.object_url(post_id)
@@ -571,11 +576,7 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    id = None
-    if post.get('id'):
-      # strip USERID_ prefix if it's there
-      post['id'] = post['id'].split('_', 1)[-1]
-      id = post['id']
+    id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
 
     obj = self.post_to_object(post)
     activity = {
@@ -605,7 +606,7 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    id = post.get('id')
+    id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
     if not id:
       return {}
 
@@ -834,9 +835,6 @@ class Facebook(source.Source):
       'verb': 'share',
       'object': att.pop(0) if att else {'url': share.get('link')},
     })
-
-    if '_' in share['id']:
-      obj['url'] = self.object_url(share['id'])
 
     content = obj.get('content')
     if content:
