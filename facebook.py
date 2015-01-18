@@ -168,7 +168,8 @@ class Facebook(source.Source):
     self.access_token = access_token
 
   def object_url(self, id):
-    return 'https://%s/%s' % (self.DOMAIN, id)
+    # Facebook always uses www. They redirect bare facebook.com URLs to it.
+    return 'https://www.facebook.com/%s' % id
 
   user_url = object_url
 
@@ -527,7 +528,7 @@ class Facebook(source.Source):
       post_ids = post_id.split('_')
       if post_ids[0] == author_id:
         post_id = '_'.join(post_ids[1:])
-      return 'https://facebook.com/%s/posts/%s' % (author_id, post_id)
+      return 'https://www.facebook.com/%s/posts/%s' % (author_id, post_id)
     else:
       return self.object_url(post_id)
 
@@ -540,7 +541,7 @@ class Facebook(source.Source):
     """
     if post_author_id:
       post_id = post_author_id + '/posts/' + post_id
-    return 'https://facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+    return 'https://www.facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
   def base_object(self, obj, verb=None):
     """Returns the 'base' silo object that an object operates on.
