@@ -83,11 +83,6 @@ API_SHARES_URL = 'https://graph.facebook.com/v2.2/%s/sharedposts'
 API_PHOTOS_URL = 'https://graph.facebook.com/v2.2/me/photos'
 API_NOTIFICATION_URL = 'https://graph.facebook.com/v2.2/%s/notifications'
 
-# For parsing photo URLs, e.g.
-# https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
-PHOTO_PATH = '/photo.php'
-PHOTO_ID_PARAM = 'fbid'
-
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
 OBJECT_TYPES = {
@@ -570,16 +565,28 @@ class Facebook(source.Source):
     if url:
       try:
         parsed = urlparse.urlparse(url)
-        if '/posts/' in parsed.path:
-          author_id = parsed.path.split('/posts/')[0][1:]
+        params = urlparse.parse_qs(parsed.query)
+        author_id = (parsed.path.split('/posts/')[0][1:]
+                     if '/posts/' in parsed.path else None)
+        if author_id:
           base_obj.setdefault('author', {})['id'] = author_id
-        if parsed.path == PHOTO_PATH:
-          fbids = urlparse.parse_qs(parsed.query).get(PHOTO_ID_PARAM)
+
+        # photo URLs look like:
+        # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+        # https://www.facebook.com/user/photos/a.12.34.56/78/?type=1&offset=0
+        if parsed.path == '/photo.php':
+          fbids = params.get('fbid')
           if fbids:
             base_obj['id'] = fbids[0]
-        elif verb == 'like' and '_' not in base_obj['id']:
-          # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
-          base_obj['id'] = '%s_%s' % (author_id, base_obj['id'])
+
+        if verb == 'like':
+          comment_id = params.get('comment_id')
+          if comment_id:
+            base_obj['id'] += '_' + comment_id[0]
+          elif '_' not in base_obj['id'] and util.is_int(author_id):
+            # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
+            base_obj['id'] = '%s_%s' % (author_id, base_obj['id'])
+
       except BaseException, e:
         logging.error(
           "Couldn't parse object URL %s : %s. Falling back to default logic.",

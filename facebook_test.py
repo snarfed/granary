@@ -1233,13 +1233,27 @@ http://b http://c""",
       }, self.facebook.create(obj).content)
 
   def test_create_like(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/212038_10100176064482163/likes',
-                        '{"success": true}', data='')
+    for url in ('https://graph.facebook.com/v2.2/212038_1234/likes',
+                'https://graph.facebook.com/v2.2/1234/likes',
+                'https://graph.facebook.com/v2.2/135_79/likes',
+                'https://graph.facebook.com/v2.2/78_90/likes',
+                'https://graph.facebook.com/v2.2/12_90/likes',
+                ):
+      self.expect_urlopen(url, '{"success": true}', data='')
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'https://www.facebook.com/212038/posts/10100176064482163',
-                        'type': 'like'},
-                       self.facebook.create(LIKE_OBJS[0]).content)
 
+    like = copy.deepcopy(LIKE_OBJS[0])
+    for url in (
+        'https://www.facebook.com/212038/posts/1234',
+        'https://www.facebook.com/snarfed.org/posts/1234',
+        'https://www.facebook.com/snarfed.org/posts/135?comment_id=79&offset=0&total_comments=1&pnref=story',
+        'https://www.facebook.com/NovemberProjectSF/photos/a.12.34.56/78/?type=1&comment_id=90&offset=0&total_comments=9',
+        'https://www.facebook.com/photo.php?fbid=12&set=a.34.56.78&type=1&comment_id=90&offset=0&total_comments=3&pnref=story'):
+      like['object']['url'] = url
+      self.assert_equals({'url': url, 'type': 'like'},
+                         self.facebook.create(like).content)
+
+  def test_create_like_preview(self):
     preview = self.facebook.preview_create(LIKE_OBJS[0])
     self.assertIn('<span class="verb">like</span> <a href="https://www.facebook.com/212038/posts/10100176064482163">this post</a>:', preview.description)
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/212038/posts/10100176064482163">', preview.description)
