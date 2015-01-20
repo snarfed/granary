@@ -12,6 +12,25 @@
 </head>
 
 <body onload="access_token_from_fragment(); render_form();">
+
+<!-- highlight fragments -->
+<style type="text/css">
+#contact, #privacy {
+  transition: background-color 2s;
+}
+</style>
+<script type="text/javascript">
+function onHashChange() {
+  var id = location.href.match(/#(.+)$/);
+  var elem = document.getElementById(id[1]);
+  if (elem) {
+    elem.style.backgroundColor = "#FFFFAA";
+  }
+}
+window.addEventListener('hashchange', onHashChange);
+document.addEventListener('DOMContentLoaded', onHashChange);
+</script>
+
 <div id="description">
 <h1>ActivityStreams for {{ domain }}</h1>
 
@@ -48,7 +67,13 @@ this site</a>.
 {% block oauth_details %}
 {% endblock %}
 
-<p>Questions? Contact <a href="http://snarfed.org/about">Ryan</a> or the
+<p id="privacy">
+This app does not store or use <em>any</em> data, yours or anyone else's. It
+only reformats data and passes it through in response to your own HTTP requests.
+</p>
+
+<p id="contact">
+Questions? Contact <a href="http://snarfed.org/about">Ryan</a> or the
 <a href="http://groups.google.com/group/activity-streams">ActivityStreams
 mailing list</a>.</p>
 
