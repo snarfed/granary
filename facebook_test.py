@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import json
 import urllib
+import urllib2
 
 import appengine_config
 import facebook
@@ -817,6 +818,21 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('https://graph.facebook.com/v2.2/789', json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456_789'))
+
+  def test_get_share(self):
+    self.expect_urlopen('https://graph.facebook.com/v2.2/123', json.dumps(SHARE))
+    self.mox.ReplayAll()
+    self.assert_equals(SHARE_OBJ, self.facebook.get_share('', '', '123'))
+
+  def test_get_share_400s(self):
+    self.expect_urlopen('https://graph.facebook.com/v2.2/123', '{}', status=400)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.facebook.get_share('', '', '123'))
+
+  def test_get_share_500s(self):
+    self.expect_urlopen('https://graph.facebook.com/v2.2/123', '{}', status=500)
+    self.mox.ReplayAll()
+    self.assertRaises(urllib2.HTTPError, self.facebook.get_share, '', '', '123')
 
   def test_get_like(self):
     self.expect_urlopen('https://graph.facebook.com/v2.2/000', json.dumps(POST))

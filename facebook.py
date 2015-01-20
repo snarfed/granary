@@ -276,23 +276,26 @@ class Facebook(source.Source):
                                   post_author_id=activity_author_id)
 
   def get_share(self, activity_user_id, activity_id, share_id):
-    """Not implemented. Returns None.
-
-    I haven't yet found a way to fetch reshares in the Facebook API. :/
+    """Returns an ActivityStreams share activity object.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       share_id: string id of the share object
     """
-    return None
+    try:
+      return self.share_to_object(
+        json.loads(self.urlopen(API_SHARES_URL % share_id).read()))
+    except urllib2.HTTPError, e:
+      # /OBJ/sharedposts sometimes 400s, not sure why
+      # https://github.com/snarfed/bridgy/issues/348
+      if e.code / 100 != 4:
+        raise
 
   def get_rsvp(self, activity_user_id, event_id, user_id):
     """Returns an ActivityStreams RSVP activity object.
 
     Args:
-
-
       activity_user_id: string id of the user who posted the event
       event_id: string event id
       user_id: string user id
