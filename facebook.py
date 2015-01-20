@@ -243,9 +243,15 @@ class Facebook(source.Source):
       for post, activity in zip(posts, activities):
         id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
         if id:
-          resp = json.loads(self.urlopen(API_SHARES_URL % id).read())
-          activity.setdefault('tags', []).extend(
-            [self.share_to_object(share) for share in resp.get('data', [])])
+          try:
+            resp = json.loads(self.urlopen(API_SHARES_URL % id).read())
+            activity.setdefault('tags', []).extend(
+              [self.share_to_object(share) for share in resp.get('data', [])])
+          except urllib2.HTTPError, e:
+            # /OBJ/sharedposts sometimes 400s, not sure why
+            # https://github.com/snarfed/bridgy/issues/348
+            if e.code / 100 != 4:
+              raise
 
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
@@ -460,7 +466,7 @@ class Facebook(source.Source):
         error_plain='Cannot publish shares on Facebook.',
         error_html='Cannot publish <a href="https://www.facebook.com/help/163779957017799">shares</a> '
         'on Facebook. This limitation is imposed by the '
-        '<a href="https://developers.facebook.com/docs/graph-api/reference/v2.0/object/sharedposts/#publish">Facebook Graph API</a>.')
+        '<a href="https://developers.facebook.com/docs/graph-api/reference/object/sharedposts/#publish">Facebook Graph API</a>.')
 
     else:
       return source.creation_result(

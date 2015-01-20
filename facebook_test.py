@@ -783,6 +783,19 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities_response()['items'])
 
+  def test_get_activities_sharedposts_400(self):
+    self.expect_urlopen('https://graph.facebook.com/v2.2/me/home?offset=0',
+                        json.dumps({'data': [{'id': '1_2'}, {'id': '3_4'}]}))
+    self.expect_urlopen('https://graph.facebook.com/v2.2/2/sharedposts',
+                        status=400)
+    self.expect_urlopen('https://graph.facebook.com/v2.2/4/sharedposts',
+                        json.dumps({'data': [SHARE]}))
+    self.mox.ReplayAll()
+
+    got = self.facebook.get_activities(fetch_shares=True)
+    self.assertNotIn('tags', got[0])
+    self.assert_equals([SHARE_OBJ], got[1]['tags'])
+
   def test_get_comment(self):
     self.expect_urlopen('https://graph.facebook.com/v2.2/123_456',
                         json.dumps(COMMENTS[0]))
