@@ -40,6 +40,43 @@ ACTOR = {  # ActivityStreams
   'description': 'something about me',
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
+PAGE = {  # Facebook
+  'id': '946432998716566',
+  'name': 'Civic Hall',
+  'username': 'CivicHallNYC',
+  'website': 'http://www.civichall.org',
+  'about': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City.',
+  'link': 'https://www.facebook.com/CivicHallNYC',
+  'category': 'Community organization',
+  'category_list': [{'id': '2260', 'name': 'Community Organization'}],
+  'cover': {
+    'id': '971136052912927',
+    'cover_id': '971136052912927',
+    'source': 'https://fbcdn-sphotos-g-a.akamaihd.net/hphotos-ak-xap1/v/t1.0-9/s720x720/11406_971136052912927_5570221582083271369_n.png?oh=c95b8aeba2c4ec8fd83c01121429bbd6&oe=552D0DBC&__gda__=1433139526_96765d58172d428585a70e0503431a6d',
+  },
+  'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful event space...',
+  'is_community_page': False,
+  'is_published': True,
+  'likes': 357,
+  'location': {
+    'city': 'New York',
+    'country': 'United States',
+    'latitude': 40.739799458026,
+    'longitude': -73.99110006757,
+    'state': 'NY',
+  },
+}
+PAGE_ACTOR = {  # ActivityStreams
+  'displayName': 'Civic Hall',
+  'image': {'url': 'http://graph.facebook.com/CivicHallNYC/picture?type=large'},
+  'id': tag_uri('CivicHallNYC'),
+  'numeric_id': '946432998716566',
+  'url': 'http://www.civichall.org',
+  'username': 'CivicHallNYC',
+  'summary': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City.',
+  'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful event space...',
+  # 'location': {},  # TODO
+  }
 COMMENTS = [{  # Facebook
     'id': '547822715231468_6796480',
     'from': {
@@ -933,6 +970,9 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.facebook.user_to_actor(USER))
+
+  def test_user_to_actor_page(self):
+    self.assert_equals(PAGE_ACTOR, self.facebook.user_to_actor(PAGE))
 
   def test_user_to_actor_url_fallback(self):
     user = copy.deepcopy(USER)

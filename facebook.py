@@ -895,10 +895,10 @@ class Facebook(source.Source):
     return self.postprocess_object(obj)
 
   def user_to_actor(self, user):
-    """Converts a user to an actor.
+    """Converts a user or page to an actor.
 
     Args:
-      user: dict, a decoded JSON Facebook user
+      user: dict, a decoded JSON Facebook user or page
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
@@ -923,7 +923,8 @@ class Facebook(source.Source):
       'numeric_id': id,
       'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'username': username,
-      'description': user.get('bio'),
+      'description': user.get('bio') or user.get('description'),
+      'summary': user.get('about'),
       }
 
     # extract web site links. extract_links uniquifies and preserves order
