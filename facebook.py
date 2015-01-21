@@ -597,7 +597,7 @@ class Facebook(source.Source):
           if fbids:
             base_obj['id'] = fbids[0]
 
-        comment_id = params.get('comment_id')
+        comment_id = params.get('comment_id') or params.get('reply_comment_id')
         if comment_id:
           base_obj['id'] += '_' + comment_id[0]
           base_obj['objectType'] = 'comment'

@@ -1247,7 +1247,7 @@ http://b http://c""",
         'https://www.facebook.com/212038/posts/1234',
         'https://www.facebook.com/snarfed.org/posts/1234',
         'https://www.facebook.com/snarfed.org/posts/135?comment_id=79&offset=0&total_comments=1&pnref=story',
-        'https://www.facebook.com/NovemberProjectSF/photos/a.12.34.56/78/?type=1&comment_id=90&offset=0&total_comments=9',
+        'https://www.facebook.com/NovemberProjectSF/photos/a.12.34.56/78/?type=1&reply_comment_id=90&offset=0&total_comments=9',
         'https://www.facebook.com/photo.php?fbid=12&set=a.34.56.78&type=1&comment_id=90&offset=0&total_comments=3&pnref=story'):
       like['object']['url'] = url
       self.assert_equals({'url': url, 'type': 'like'},
@@ -1262,14 +1262,14 @@ http://b http://c""",
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/212038/posts/10100176064482163">', preview.description)
 
     # comment
-    like['object']['url'] = 'https://www.facebook.com/foo/posts/135?comment_id=79'
+    like['object']['url'] = 'https://www.facebook.com/foo/posts/135?reply_comment_id=79'
     self.expect_urlopen('https://graph.facebook.com/v2.2/135_79',
                         json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
 
     preview = self.facebook.preview_create(like)
     self.assert_equals("""\
-<span class="verb">like</span> <a href="https://www.facebook.com/foo/posts/135?comment_id=79">this comment</a>:
+<span class="verb">like</span> <a href="https://www.facebook.com/foo/posts/135?reply_comment_id=79">this comment</a>:
 <br /><br />
 <a class="h-card" href="https://www.facebook.com/212038">
   <img class="profile u-photo" src="http://graph.facebook.com/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
