@@ -1293,15 +1293,27 @@ http://b http://c""",
       self.assert_equals({'url': url, 'type': 'like'},
                          self.facebook.create(like).content)
 
-  def test_create_like_preview(self):
-    like = copy.deepcopy(LIKE_OBJS[0])
+  def test_create_like_page_username(self):
+    self.expect_urlopen('https://graph.facebook.com/v2.2/MyPage/likes',
+                        '{"success": true}', data='')
+    self.mox.ReplayAll()
 
-    # post
-    preview = self.facebook.preview_create(like)
+    url = 'https://facebook.com/MyPage'
+    like = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': {'url': url},
+    }
+    self.assert_equals({'url': url, 'type': 'like'},
+                       self.facebook.create(like).content)
+
+  def test_create_like_post_preview(self):
+    preview = self.facebook.preview_create(LIKE_OBJS[0])
     self.assertIn('<span class="verb">like</span> <a href="https://www.facebook.com/212038/posts/10100176064482163">this post</a>:', preview.description)
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/212038/posts/10100176064482163">', preview.description)
 
-    # comment
+  def test_create_like_comment_preview(self):
+    like = copy.deepcopy(LIKE_OBJS[0])
     like['object']['url'] = 'https://www.facebook.com/foo/posts/135?reply_comment_id=79'
     self.expect_urlopen('https://graph.facebook.com/v2.2/135_79',
                         json.dumps(COMMENTS[0]))
@@ -1402,3 +1414,11 @@ cc Sam G, Michael M<br />""", preview.description)
                         data=urllib.urlencode(params))
     self.mox.ReplayAll()
     self.facebook.create_notification('my-username', 'my text', 'my link')
+
+  def test_base_object_resolve_numeric_id(self):
+    self.expect_urlopen('https://graph.facebook.com/v2.2/MyPage', json.dumps(PAGE))
+    self.mox.ReplayAll()
+
+    self.assert_equals(PAGE_ACTOR, self.facebook.base_object(
+      {'object': {'url': 'https://facebook.com/MyPage'}},
+      resolve_numeric_id=True))

@@ -418,8 +418,8 @@ class Facebook(source.Source):
           embed = comment.get('content')
           if author:
             embed = EMBED_AUTHOR % (author.get('url'),
-                                            author.get('image', {}).get('url'),
-                                            author.get('displayName')
+                                    author.get('image', {}).get('url'),
+                                    author.get('displayName')
                     ) + embed
         else:
           type = 'post'
@@ -565,7 +565,7 @@ class Facebook(source.Source):
       post_id = post_author_id + '/posts/' + post_id
     return 'https://www.facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
-  def base_object(self, obj, verb=None):
+  def base_object(self, obj, verb=None, resolve_numeric_id=False):
     """Returns the 'base' silo object that an object operates on.
 
     Includes special handling for Facebook photo URLs, e.g.
@@ -574,46 +574,60 @@ class Facebook(source.Source):
     Args:
       obj: ActivityStreams object
       verb: string, optional
+      resolve_numeric_id: if True, tries harder to populate the numeric_id field
+        by making an additional API call to look up the object if necessary.
 
-    Returns: dict, minimal ActivityStreams object. Usually has at least id and
-      url fields; may also have author.
+    Returns: dict, minimal ActivityStreams object. Usually has at least id,
+      numeric_id, and url fields; may also have author.
     """
     base_obj = super(Facebook, self).base_object(obj)
-    url = base_obj.get('url')
-    if url:
-      try:
-        parsed = urlparse.urlparse(url)
-        params = urlparse.parse_qs(parsed.query)
-        author_id = (parsed.path.split('/posts/')[0][1:]
-                     if '/posts/' in parsed.path else None)
 
+    url = base_obj.get('url')
+    if not url:
+      return base_obj
+
+    base_id = base_obj.get('id')
+    if base_id and not base_obj.get('numeric_id'):
+      if util.is_int(base_id):
+        base_obj['numeric_id'] = base_id
+      elif resolve_numeric_id:
+        base_obj = self.user_to_actor(json.loads(
+          self.urlopen(API_OBJECT_URL % base_id).read()))
+
+    try:
+      parsed = urlparse.urlparse(url)
+      params = urlparse.parse_qs(parsed.query)
+
+      author_id = (parsed.path.split('/posts/')[0][1:]
+                   if '/posts/' in parsed.path else None)
+      if author_id:
         author = base_obj.setdefault('author', {})
-        if author_id and not author.get('id'):
+        if not author.get('id'):
           author['id'] = author_id
-        if not author.get('numeric_id') and util.is_int(author_id):
+        if util.is_int(author_id) and not author.get('numeric_id'):
           author['numeric_id'] = author_id
 
-        # photo URLs look like:
-        # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
-        # https://www.facebook.com/user/photos/a.12.34.56/78/?type=1&offset=0
-        if parsed.path == '/photo.php':
-          fbids = params.get('fbid')
-          if fbids:
-            base_obj['id'] = fbids[0]
+      # photo URLs look like:
+      # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+      # https://www.facebook.com/user/photos/a.12.34.56/78/?type=1&offset=0
+      if parsed.path == '/photo.php':
+        fbids = params.get('fbid')
+        if fbids:
+          base_obj['id'] = fbids[0]
 
-        comment_id = params.get('comment_id') or params.get('reply_comment_id')
-        if comment_id:
-          base_obj['id'] += '_' + comment_id[0]
-          base_obj['objectType'] = 'comment'
+      comment_id = params.get('comment_id') or params.get('reply_comment_id')
+      if comment_id:
+        base_obj['id'] += '_' + comment_id[0]
+        base_obj['objectType'] = 'comment'
 
-        if '_' not in base_obj['id'] and author['numeric_id']:
-          # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
-          base_obj['id'] = '%s_%s' % (author['numeric_id'], base_obj['id'])
+      if '_' not in base_id and author.get('numeric_id'):
+        # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
+        base_obj['id'] = '%s_%s' % (author['numeric_id'], base_id)
 
-      except BaseException, e:
-        logging.error(
-          "Couldn't parse object URL %s : %s. Falling back to default logic.",
-          url, e)
+    except BaseException, e:
+      logging.error(
+        "Couldn't parse object URL %s : %s. Falling back to default logic.",
+        url, e)
 
     return base_obj
 
