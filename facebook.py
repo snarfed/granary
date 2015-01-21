@@ -586,8 +586,12 @@ class Facebook(source.Source):
         params = urlparse.parse_qs(parsed.query)
         author_id = (parsed.path.split('/posts/')[0][1:]
                      if '/posts/' in parsed.path else None)
-        if author_id:
-          base_obj.setdefault('author', {})['id'] = author_id
+
+        author = base_obj.setdefault('author', {})
+        if author_id and not author.get('id'):
+          author['id'] = author_id
+        if not author.get('numeric_id') and util.is_int(author_id):
+          author['numeric_id'] = author_id
 
         # photo URLs look like:
         # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
@@ -602,9 +606,9 @@ class Facebook(source.Source):
           base_obj['id'] += '_' + comment_id[0]
           base_obj['objectType'] = 'comment'
 
-        if '_' not in base_obj['id'] and util.is_int(author_id):
+        if '_' not in base_obj['id'] and author['numeric_id']:
           # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
-          base_obj['id'] = '%s_%s' % (author_id, base_obj['id'])
+          base_obj['id'] = '%s_%s' % (author['numeric_id'], base_obj['id'])
 
       except BaseException, e:
         logging.error(
