@@ -134,9 +134,11 @@ EMBED_SCRIPT = """
 }(document, 'script', 'facebook-jssdk'));</script>
 """
 EMBED_POST = """
-<br /><br />
 <div class="fb-post" data-href="%s"></div>
-<br />
+"""
+EMBED_AUTHOR = """
+<a class="h-card" href="%s">
+  <img class="profile u-photo" src="%s" width="32px" /> %s</a>:
 """
 
 # Values for post.action['name'] that indicate a link back to the original post
@@ -386,8 +388,9 @@ class Facebook(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        desc = ('<span class="verb">comment</span> on '
-                '<a href="%s">this post</a>:\n%s' % (base_url, EMBED_POST % base_url))
+        desc = """\
+<span class="verb">comment</span> on <a href="%s">this post</a>:
+<br /><br />%s<br />""" % (base_url, EMBED_POST % base_url)
         return source.creation_result(content=preview_content, description=desc)
       else:
         resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
@@ -407,8 +410,23 @@ class Facebook(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        desc = ('<span class="verb">like</span> <a href="%s">this post</a>:\n%s' %
-                (base_url, EMBED_POST % base_url))
+        if base_obj.get('objectType') == 'comment':
+          type = 'comment'
+          comment = self.comment_to_object(json.loads(
+            self.urlopen(API_OBJECT_URL % base_id).read()))
+          author = comment.get('author')
+          embed = comment.get('content')
+          if author:
+            embed = EMBED_AUTHOR % (author.get('url'),
+                                            author.get('image', {}).get('url'),
+                                            author.get('displayName')
+                    ) + embed
+        else:
+          type = 'post'
+          embed = EMBED_POST % base_url
+        desc = """\
+<span class="verb">like</span> <a href="%s">this %s</a>:
+<br /><br />%s<br />""" % (base_url, type, embed)
         return source.creation_result(description=desc)
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
@@ -579,13 +597,14 @@ class Facebook(source.Source):
           if fbids:
             base_obj['id'] = fbids[0]
 
-        if verb == 'like':
-          comment_id = params.get('comment_id')
-          if comment_id:
-            base_obj['id'] += '_' + comment_id[0]
-          elif '_' not in base_obj['id'] and util.is_int(author_id):
-            # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
-            base_obj['id'] = '%s_%s' % (author_id, base_obj['id'])
+        comment_id = params.get('comment_id')
+        if comment_id:
+          base_obj['id'] += '_' + comment_id[0]
+          base_obj['objectType'] = 'comment'
+
+        if '_' not in base_obj['id'] and util.is_int(author_id):
+          # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
+          base_obj['id'] = '%s_%s' % (author_id, base_obj['id'])
 
       except BaseException, e:
         logging.error(

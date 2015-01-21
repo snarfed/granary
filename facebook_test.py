@@ -1254,9 +1254,26 @@ http://b http://c""",
                          self.facebook.create(like).content)
 
   def test_create_like_preview(self):
-    preview = self.facebook.preview_create(LIKE_OBJS[0])
+    like = copy.deepcopy(LIKE_OBJS[0])
+
+    # post
+    preview = self.facebook.preview_create(like)
     self.assertIn('<span class="verb">like</span> <a href="https://www.facebook.com/212038/posts/10100176064482163">this post</a>:', preview.description)
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/212038/posts/10100176064482163">', preview.description)
+
+    # comment
+    like['object']['url'] = 'https://www.facebook.com/foo/posts/135?comment_id=79'
+    self.expect_urlopen('https://graph.facebook.com/v2.2/135_79',
+                        json.dumps(COMMENTS[0]))
+    self.mox.ReplayAll()
+
+    preview = self.facebook.preview_create(like)
+    self.assert_equals("""\
+<span class="verb">like</span> <a href="https://www.facebook.com/foo/posts/135?comment_id=79">this comment</a>:
+<br /><br />
+<a class="h-card" href="https://www.facebook.com/212038">
+  <img class="profile u-photo" src="http://graph.facebook.com/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
+cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':
