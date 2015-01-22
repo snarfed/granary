@@ -138,8 +138,7 @@ EMBED_POST = """
 """
 EMBED_AUTHOR = """
 <a class="h-card" href="%s">
-  <img class="profile u-photo" src="%s" width="32px" /> %s</a>:
-"""
+  <img class="profile u-photo" src="%s" width="32px" /> %s</a>"""
 
 # Values for post.action['name'] that indicate a link back to the original post
 SEE_ORIGINAL_ACTIONS=['see original']
@@ -354,6 +353,7 @@ class Facebook(source.Source):
 
     base_obj = self.base_object(obj, verb=verb)
     base_id = base_obj.get('id')
+    base_type = base_obj.get('objectType')
     base_url = base_obj.get('url')
     if base_id and not base_url:
       base_url = base_obj['url'] = self.object_url(base_id)
@@ -410,24 +410,22 @@ class Facebook(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        if base_obj.get('objectType') == 'comment':
-          type = 'comment'
+        desc = '<span class="verb">like</span> '
+        if base_type == 'comment':
           comment = self.comment_to_object(json.loads(
             self.urlopen(API_OBJECT_URL % base_id).read()))
-          author = comment.get('author')
-          embed = comment.get('content')
+          author = comment.get('author', '')
           if author:
-            embed = EMBED_AUTHOR % (author.get('url'),
-                                    author.get('image', {}).get('url'),
-                                    author.get('displayName')
-                    ) + embed
+            author = self.embed_author(author) + ':\n'
+          desc += '<a href="%s">this comment</a>:\n<br /><br />%s%s<br />' % (
+            base_url, author, comment.get('content'))
+        elif base_type in ('person', 'page'):
+          desc += self.embed_author(base_obj) + '.<br />'
         else:
-          type = 'post'
-          embed = EMBED_POST % base_url
-        desc = """\
-<span class="verb">like</span> <a href="%s">this %s</a>:
-<br /><br />%s<br />""" % (base_url, type, embed)
+          desc += '<a href="%s">this post</a>:\n<br /><br />%s<br />' % (
+            base_url, EMBED_POST % base_url)
         return source.creation_result(description=desc)
+
       else:
         resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
         assert resp.get('success'), resp
@@ -568,8 +566,8 @@ class Facebook(source.Source):
   def base_object(self, obj, verb=None, resolve_numeric_id=False):
     """Returns the 'base' silo object that an object operates on.
 
-    Includes special handling for Facebook photo URLs, e.g.
-    https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+    This is mostly a big bag of heuristics for reverse engineering and
+    parsing Facebook URLs. Whee.
 
     Args:
       obj: ActivityStreams object
@@ -586,6 +584,7 @@ class Facebook(source.Source):
     if not url:
       return base_obj
 
+    author = base_obj.setdefault('author', {})
     base_id = base_obj.get('id')
     if base_id and not base_obj.get('numeric_id'):
       if util.is_int(base_id):
@@ -597,11 +596,24 @@ class Facebook(source.Source):
     try:
       parsed = urlparse.urlparse(url)
       params = urlparse.parse_qs(parsed.query)
+      assert parsed.path.startswith('/')
+      path_parts = parsed.path.strip('/').split('/')
 
-      author_id = (parsed.path.split('/posts/')[0][1:]
-                   if '/posts/' in parsed.path else None)
-      if author_id:
-        author = base_obj.setdefault('author', {})
+      if len(path_parts) == 1:
+        if not base_obj.get('objectType'):
+          base_obj['objectType'] = 'person'  # or page
+        if not base_id:
+          base_id = base_obj['id'] = path_parts[0]
+        # this is a gross hack - adding the FB username field to an AS object
+        # and then re-running user_to_actor - but it's an easy/reusable way to
+        # populate image, displayName, etc.
+        if not base_obj.get('username') and not util.is_int(base_id):
+          base_obj['username'] = base_id
+        base_obj.update({k: v for k, v in self.user_to_actor(base_obj).items()
+                         if k not in base_obj})
+
+      elif len(path_parts) >= 3 and path_parts[1] == 'posts':
+        author_id = path_parts[0]
         if not author.get('id'):
           author['id'] = author_id
         if util.is_int(author_id) and not author.get('numeric_id'):
@@ -630,6 +642,12 @@ class Facebook(source.Source):
         url, e)
 
     return base_obj
+
+  @staticmethod
+  def embed_author(author):
+    return EMBED_AUTHOR % (author.get('url'),
+                           author.get('image', {}).get('url'),
+                           author.get('displayName'))
 
   def post_to_activity(self, post):
     """Converts a post to an activity.

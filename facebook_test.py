@@ -1308,7 +1308,7 @@ http://b http://c""",
       self.assert_equals({'url': url, 'type': 'like'},
                          self.facebook.create(like).content)
 
-  def test_create_like_page_username(self):
+  def test_create_like_page(self):
     self.expect_urlopen('https://graph.facebook.com/v2.2/MyPage/likes',
                         '{"success": true}', data='')
     self.mox.ReplayAll()
@@ -1321,6 +1321,17 @@ http://b http://c""",
     }
     self.assert_equals({'url': url, 'type': 'like'},
                        self.facebook.create(like).content)
+
+  def test_create_like_page_preview(self):
+    preview = self.facebook.preview_create({
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': {'url': 'https://facebook.com/MyPage'},
+    })
+    self.assert_equals("""\
+<span class="verb">like</span>
+<a class="h-card" href="https://facebook.com/MyPage">
+  <img class="profile u-photo" src="http://graph.facebook.com/MyPage/picture?type=large" width="32px" /> MyPage</a>.<br />""", preview.description)
 
   def test_create_like_post_preview(self):
     preview = self.facebook.preview_create(LIKE_OBJS[0])
