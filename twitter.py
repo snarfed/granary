@@ -890,6 +890,7 @@ class Twitter(source.Source):
       image = image.replace('_normal.', '.', 1)
 
     return util.trim_nulls({
+      'objectType': 'person',
       'displayName': user.get('name'),
       'image': {'url': image},
       'id': self.tag_uri(username),

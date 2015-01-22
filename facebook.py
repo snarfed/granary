@@ -72,7 +72,7 @@ OAUTH_SCOPES = ','.join((
     'user_likes',
     ))
 
-API_OBJECT_URL = 'https://graph.facebook.com/v2.2/%s'
+API_OBJECT_URL = 'https://graph.facebook.com/v2.2/%s?metadata=1'
 API_SELF_POSTS_URL = 'https://graph.facebook.com/v2.2/%s/posts?offset=%d'
 API_HOME_URL = 'https://graph.facebook.com/v2.2/%s/home?offset=%d'
 API_RSVP_URL = 'https://graph.facebook.com/v2.2/%s/invited/%s'
@@ -929,17 +929,22 @@ class Facebook(source.Source):
     # facebook implements this as a 302 redirect
     image_url = 'http://graph.facebook.com/%s/picture?type=large' % handle
     actor = {
-      'displayName': user.get('name'),
+      # FB only returns the type field if you fetch the object with ?metadata=1
+      # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.2#introspection
+      'objectType': 'page' if user.get('type') == 'page' else 'person',
+      'displayName': user.get('name') or username,
       'image': {'url': image_url},
       'id': self.tag_uri(handle),
-      # numeric_id is our own custom field that always has the source's numeric
-      # user id, if available.
-      'numeric_id': id,
       'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'username': username,
       'description': user.get('bio') or user.get('description'),
       'summary': user.get('about'),
       }
+
+    # numeric_id is our own custom field that always has the source's numeric
+    # user id, if available.
+    if util.is_int(id):
+      actor['numeric_id'] = id
 
     # extract web site links. extract_links uniquifies and preserves order
     urls = util.extract_links(user.get('website'))

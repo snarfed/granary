@@ -54,6 +54,7 @@ USER = {  # Twitter
     },
   }
 ACTOR = {  # ActivityStreams
+  'objectType': 'person',
   'displayName': 'Ryan Barrett',
   'image': {
     'url': 'https://twitter.com/snarfed_org/profile_image?size=original',
@@ -235,6 +236,7 @@ REPLY_OBJS = [{  # ActivityStreams
     'objectType': 'note',
     'id': tag_uri('200'),
     'author': {
+      'objectType': 'person',
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
       'url': 'https://twitter.com/alice',
@@ -246,6 +248,7 @@ REPLY_OBJS = [{  # ActivityStreams
     'objectType': 'note',
     'id': tag_uri('300'),
     'author': {
+      'objectType': 'person',
       'id': 'tag:twitter.com:bob',
       'username': 'bob',
       'url': 'https://twitter.com/bob',
@@ -257,6 +260,7 @@ REPLY_OBJS = [{  # ActivityStreams
     'objectType': 'note',
     'id': tag_uri('400'),
     'author': {
+      'objectType': 'person',
       'id': 'tag:twitter.com:snarfed_org',
       'username': 'snarfed_org',
       'url': 'https://twitter.com/snarfed_org',
@@ -268,6 +272,7 @@ REPLY_OBJS = [{  # ActivityStreams
     'objectType': 'note',
     'id': tag_uri('500'),
     'author': {
+      'objectType': 'person',
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
       'url': 'https://twitter.com/alice',
@@ -330,6 +335,7 @@ SHARES = [{  # ActivityStreams
     'verb': 'share',
     'object': {'url': 'https://twitter.com/foo/status/333'},
     'author': {
+      'objectType': 'person',
       'id': 'tag:twitter.com:alizz',
       'username': 'alizz',
       'displayName': 'Alice',
@@ -346,6 +352,7 @@ SHARES = [{  # ActivityStreams
     'verb': 'share',
     'object': {'url': 'https://twitter.com/bar/status/666'},
     'author': {
+      'objectType': 'person',
       'id': 'tag:twitter.com:bobbb',
       'username': 'bobbb',
       'displayName': 'Bob',
@@ -377,6 +384,7 @@ LIKE_FROM_EVENT = {  # ActivityStreams
   'verb': 'like',
   'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
   'author': {
+    'objectType': 'person',
     'id': tag_uri('eve'),
     'numeric_id': '789',
     'username': 'eve',
@@ -422,6 +430,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
   'verb': 'like',
   'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
   'author': {
+    'objectType': 'person',
     'id': tag_uri('ge'),
     'numeric_id': '353',
     'username': 'ge',
@@ -437,6 +446,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
   'verb': 'like',
   'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
   'author': {
+    'objectType': 'person',
     'id': tag_uri('jo'),
     'username': 'jo',
     'url': 'https://twitter.com/jo',

@@ -30,6 +30,7 @@ USER = {  # Facebook
   'website': 'https://snarfed.org/',
   }
 ACTOR = {  # ActivityStreams
+  'objectType': 'person',
   'displayName': 'Ryan Barrett',
   'image': {'url': 'http://graph.facebook.com/snarfed.org/picture?type=large'},
   'id': tag_uri('snarfed.org'),
@@ -41,6 +42,7 @@ ACTOR = {  # ActivityStreams
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
 PAGE = {  # Facebook
+  'type': 'page',
   'id': '946432998716566',
   'name': 'Civic Hall',
   'username': 'CivicHallNYC',
@@ -67,12 +69,13 @@ PAGE = {  # Facebook
   },
 }
 PAGE_ACTOR = {  # ActivityStreams
-  'displayName': 'Civic Hall',
-  'image': {'url': 'http://graph.facebook.com/CivicHallNYC/picture?type=large'},
+  'objectType': 'page',
   'id': tag_uri('CivicHallNYC'),
-  'numeric_id': '946432998716566',
-  'url': 'http://www.civichall.org',
   'username': 'CivicHallNYC',
+  'numeric_id': '946432998716566',
+  'displayName': 'Civic Hall',
+  'url': 'http://www.civichall.org',
+  'image': {'url': 'http://graph.facebook.com/CivicHallNYC/picture?type=large'},
   'summary': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City.',
   'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful event space...',
   # 'location': {},  # TODO
@@ -258,6 +261,7 @@ COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
     'author': {
+      'objectType': 'person',
       'id': tag_uri('212038'),
       'numeric_id': '212038',
       'displayName': 'Ryan Barrett',
@@ -289,6 +293,7 @@ COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
     'author': {
+      'objectType': 'person',
       'id': tag_uri('513046677'),
       'numeric_id': '513046677',
       'displayName': 'Ron Ald',
@@ -311,6 +316,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'verb': 'like',
     'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
     'author': {
+      'objectType': 'person',
       'id': tag_uri('100004'),
       'numeric_id': '100004',
       'displayName': 'Alice X',
@@ -326,6 +332,7 @@ LIKE_OBJS = [{  # ActivityStreams
     'verb': 'like',
     'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
     'author': {
+      'objectType': 'person',
       'id': tag_uri('683713'),
       'numeric_id': '683713',
       'displayName': 'Bob Y',
@@ -349,6 +356,7 @@ SHARE_OBJ = {  # ActivityStreams
     'image': {'url': 'https://fbcdn-sphotos-e-a.akamaihd.net/hphotos-ak-xaf1/v/t1.0-9/p100x100/777_888_999_n.jpg?oh=x&oe=y&__gda__=z_w',},
   },
   'author': {
+    'objectType': 'person',
     'id': tag_uri('321'),
     'numeric_id': '321',
     'displayName': 'Alice X',
@@ -364,6 +372,7 @@ SHARE_OBJ = {  # ActivityStreams
 POST_OBJ = {  # ActivityStreams
   'objectType': 'image',
   'author': {
+    'objectType': 'person',
     'id': tag_uri('212038'),
     'numeric_id': '212038',
     'displayName': 'Ryan Barrett',
@@ -443,6 +452,7 @@ EVENT_OBJ = {  # ActivityStreams.
   'url': 'https://www.facebook.com/145304994',
   'displayName': 'Homebrew Website Club',
   'author': {
+    'objectType': 'person',
     'id': tag_uri('11500'),
     'numeric_id': '11500',
     'displayName': 'Aaron P',
@@ -461,6 +471,7 @@ EVENT_OBJ = {  # ActivityStreams.
     'items': [{
         'objectType': 'comment',
         'author': {
+          'objectType': 'person',
           'id': tag_uri('888'),
           'numeric_id': '888',
           'displayName': 'Mr. Foo',
@@ -481,6 +492,7 @@ RSVP_OBJS_WITH_ID = [{
     'verb': 'rsvp-yes',
     'url': 'https://www.facebook.com/145304994#11500',
     'actor': {
+      'objectType': 'person',
       'displayName': 'Aaron P',
       'id': tag_uri('11500'),
       'numeric_id': '11500',
@@ -495,6 +507,7 @@ RSVP_OBJS_WITH_ID = [{
     'verb': 'rsvp-no',
     'url': 'https://www.facebook.com/145304994#212038',
     'actor': {
+      'objectType': 'person',
       'displayName': 'Ryan B',
       'id': tag_uri('212038'),
       'numeric_id': '212038',
@@ -509,6 +522,7 @@ RSVP_OBJS_WITH_ID = [{
     'verb': 'rsvp-maybe',
     'url': 'https://www.facebook.com/145304994#987',
     'actor': {
+      'objectType': 'person',
       'displayName': 'Foo',
       'id': tag_uri('987'),
       'numeric_id': '987',
@@ -523,6 +537,7 @@ RSVP_OBJS_WITH_ID = [{
     'verb': 'invite',
     'url': 'https://www.facebook.com/145304994#654',
     'actor': {
+      'objectType': 'person',
       'displayName': 'Aaron P',
       'id': tag_uri('11500'),
       'numeric_id': '11500',
