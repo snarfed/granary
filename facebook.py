@@ -601,7 +601,8 @@ class Facebook(source.Source):
       parsed = urlparse.urlparse(url)
       params = urlparse.parse_qs(parsed.query)
       assert parsed.path.startswith('/')
-      path_parts = parsed.path.strip('/').split('/')
+      path = parsed.path.strip('/')
+      path_parts = path.split('/')
 
       if len(path_parts) == 1:
         if not base_obj.get('objectType'):
@@ -626,10 +627,18 @@ class Facebook(source.Source):
       # photo URLs look like:
       # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
       # https://www.facebook.com/user/photos/a.12.34.56/78/?type=1&offset=0
-      if parsed.path == '/photo.php':
+      if path == 'photo.php':
         fbids = params.get('fbid')
         if fbids:
           base_obj['id'] = fbids[0]
+
+      # photo album URLs look like this:
+      # https://www.facebook.com/media/set/?set=a.12.34.56
+      # c.f. http://stackoverflow.com/questions/18549744
+      elif path == 'media/set':
+        set_id = params.get('set')
+        if set_id and set_id[0].startswith('a.'):
+          base_obj['id'] = set_id[0].split('.')[1]
 
       comment_id = params.get('comment_id') or params.get('reply_comment_id')
       if comment_id:

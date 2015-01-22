@@ -1293,6 +1293,7 @@ http://b http://c""",
                 'https://graph.facebook.com/v2.2/135_79/likes',
                 'https://graph.facebook.com/v2.2/78_90/likes',
                 'https://graph.facebook.com/v2.2/12_90/likes',
+                'https://graph.facebook.com/v2.2/12/likes',
                 ):
       self.expect_urlopen(url, '{"success": true}', data='')
     self.mox.ReplayAll()
@@ -1303,7 +1304,8 @@ http://b http://c""",
         'https://www.facebook.com/snarfed.org/posts/1234',
         'https://www.facebook.com/snarfed.org/posts/135?comment_id=79&offset=0&total_comments=1&pnref=story',
         'https://www.facebook.com/NovemberProjectSF/photos/a.12.34.56/78/?type=1&reply_comment_id=90&offset=0&total_comments=9',
-        'https://www.facebook.com/photo.php?fbid=12&set=a.34.56.78&type=1&comment_id=90&offset=0&total_comments=3&pnref=story'):
+        'https://www.facebook.com/photo.php?fbid=12&set=a.34.56.78&type=1&comment_id=90&offset=0&total_comments=3&pnref=story',
+        'https://www.facebook.com/media/set/?set=a.12.34.56'):
       like['object']['url'] = url
       self.assert_equals({'url': url, 'type': 'like'},
                          self.facebook.create(like).content)
