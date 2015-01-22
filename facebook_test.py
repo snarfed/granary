@@ -1309,18 +1309,14 @@ http://b http://c""",
                          self.facebook.create(like).content)
 
   def test_create_like_page(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/MyPage/likes',
-                        '{"success": true}', data='')
-    self.mox.ReplayAll()
-
-    url = 'https://facebook.com/MyPage'
-    like = {
+    result = self.facebook.create({
       'objectType': 'activity',
       'verb': 'like',
-      'object': {'url': url},
-    }
-    self.assert_equals({'url': url, 'type': 'like'},
-                       self.facebook.create(like).content)
+      'object': {'url': 'https://facebook.com/MyPage'},
+    })
+    self.assertTrue(result.abort)
+    for err in result.error_plain, result.error_html:
+      self.assertIn("the Facebook API doesn't support liking pages", err)
 
   def test_create_like_page_preview(self):
     preview = self.facebook.preview_create({
@@ -1328,10 +1324,9 @@ http://b http://c""",
       'verb': 'like',
       'object': {'url': 'https://facebook.com/MyPage'},
     })
-    self.assert_equals("""\
-<span class="verb">like</span>
-<a class="h-card" href="https://facebook.com/MyPage">
-  <img class="profile u-photo" src="http://graph.facebook.com/MyPage/picture?type=large" width="32px" /> MyPage</a>.<br />""", preview.description)
+    self.assertTrue(preview.abort)
+    for err in preview.error_plain, preview.error_html:
+      self.assertIn("the Facebook API doesn't support liking pages", err)
 
   def test_create_like_post_preview(self):
     preview = self.facebook.preview_create(LIKE_OBJS[0])

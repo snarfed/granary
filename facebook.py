@@ -408,6 +408,12 @@ class Facebook(source.Source):
           'Check that your post has an <a href="http://indiewebcamp.com/favorite">like-of</a> '
           'link a Facebook URL or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
+      elif base_type in ('person', 'page'):
+        return source.creation_result(
+          abort=True,
+          error_plain="Sorry, the Facebook API doesn't support liking pages.",
+          error_html='Sorry, <a href="https://developers.facebook.com/docs/graph-api/reference/v2.2/user/likes#publish">'
+          "the Facebook API doesn't support liking pages</a>.")
 
       if preview:
         desc = '<span class="verb">like</span> '
@@ -419,8 +425,6 @@ class Facebook(source.Source):
             author = self.embed_author(author) + ':\n'
           desc += '<a href="%s">this comment</a>:\n<br /><br />%s%s<br />' % (
             base_url, author, comment.get('content'))
-        elif base_type in ('person', 'page'):
-          desc += self.embed_author(base_obj) + '.<br />'
         else:
           desc += '<a href="%s">this post</a>:\n<br /><br />%s<br />' % (
             base_url, EMBED_POST % base_url)
