@@ -177,8 +177,7 @@ class Facebook(source.Source):
     """
     if user_id is None:
       user_id = 'me'
-    return self.user_to_actor(json.loads(
-        self.urlopen(API_OBJECT_URL % user_id).read()))
+    return self.user_to_actor(self.urlopen(API_OBJECT_URL % user_id))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -206,7 +205,7 @@ class Facebook(source.Source):
 
       for id in ids_to_try:
         try:
-          resp = json.loads(self.urlopen(API_OBJECT_URL % id).read())
+          resp = self.urlopen(API_OBJECT_URL % id)
           if resp.get('error'):
             logging.warning("Couldn't fetch object %s: %s", id, resp)
           else:
@@ -224,7 +223,7 @@ class Facebook(source.Source):
         url = util.add_query_params(url, {'limit': count})
       headers = {'If-None-Match': etag} if etag else {}
       try:
-        resp = self.urlopen(url, headers=headers)
+        resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
         posts = json.loads(resp.read()).get('data', [])
       except urllib2.HTTPError, e:
@@ -240,7 +239,7 @@ class Facebook(source.Source):
         id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
         if id:
           try:
-            resp = json.loads(self.urlopen(API_SHARES_URL % id).read())
+            resp = self.urlopen(API_SHARES_URL % id)
             activity.setdefault('tags', []).extend(
               [self.share_to_object(share) for share in resp.get('data', [])])
           except urllib2.HTTPError, e:
@@ -268,8 +267,7 @@ class Facebook(source.Source):
         # Facebook may want us to ask for this without the other prefixed id(s)
         resp = self.urlopen(API_OBJECT_URL % comment_id.split('_')[-1])
 
-    return self.comment_to_object(json.loads(resp.read()),
-                                  post_author_id=activity_author_id)
+    return self.comment_to_object(resp, post_author_id=activity_author_id)
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Returns an ActivityStreams share activity object.
@@ -281,7 +279,7 @@ class Facebook(source.Source):
     """
     try:
       return self.share_to_object(
-        json.loads(self.urlopen(API_SHARES_URL % share_id).read()))
+        self.urlopen(API_SHARES_URL % share_id))
     except urllib2.HTTPError, e:
       # /OBJ/sharedposts sometimes 400s, not sure why
       # https://github.com/snarfed/bridgy/issues/348
@@ -297,7 +295,7 @@ class Facebook(source.Source):
       user_id: string user id
     """
     url = API_RSVP_URL % (event_id, user_id)
-    data = json.loads(self.urlopen(url).read()).get('data')
+    data = self.urlopen(url).get('data')
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
   def create(self, obj, include_link=False):
@@ -393,8 +391,7 @@ class Facebook(source.Source):
 <br /><br />%s<br />""" % (base_url, EMBED_POST % base_url)
         return source.creation_result(content=preview_content, description=desc)
       else:
-        resp = json.loads(self.urlopen(API_COMMENTS_URL % base_id,
-                                       data=msg_data).read())
+        resp = self.urlopen(API_COMMENTS_URL % base_id, data=msg_data)
         url = self.comment_url(base_id, resp['id'],
                                post_author_id=base_obj.get('author', {}).get('id'))
         resp.update({'url': url, 'type': 'comment'})
@@ -418,8 +415,7 @@ class Facebook(source.Source):
       if preview:
         desc = '<span class="verb">like</span> '
         if base_type == 'comment':
-          comment = self.comment_to_object(json.loads(
-            self.urlopen(API_OBJECT_URL % base_id).read()))
+          comment = self.comment_to_object(self.urlopen(API_OBJECT_URL % base_id))
           author = comment.get('author', '')
           if author:
             author = self.embed_author(author) + ':\n'
@@ -431,7 +427,7 @@ class Facebook(source.Source):
         return source.creation_result(description=desc)
 
       else:
-        resp = json.loads(self.urlopen(API_LIKES_URL % base_id, data='').read())
+        resp = self.urlopen(API_LIKES_URL % base_id, data='')
         assert resp.get('success'), resp
         resp = {'type': 'like'}
 
@@ -452,7 +448,7 @@ class Facebook(source.Source):
                 (verb[5:], base_url))
         return source.creation_result(description=desc)
       else:
-        resp = json.loads(self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='').read())
+        resp = self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='')
         assert resp.get('success'), resp
         resp = {'type': 'rsvp'}
 
@@ -467,7 +463,7 @@ class Facebook(source.Source):
         if appengine_config.DEBUG:
           msg_data['privacy'] = json.dumps({'value': 'SELF'})
         msg_data = urllib.urlencode(msg_data)
-        resp = json.loads(self.urlopen(API_PHOTOS_URL, data=msg_data).read())
+        resp = self.urlopen(API_PHOTOS_URL, data=msg_data)
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type in ('note', 'article'):
@@ -475,7 +471,7 @@ class Facebook(source.Source):
         return source.creation_result(content=preview_content,
                                       description='<span class="verb">post</span>:')
       else:
-        resp = json.loads(self.urlopen(API_FEED_URL, data=msg_data).read())
+        resp = self.urlopen(API_FEED_URL, data=msg_data)
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type == 'activity' and verb == 'share':
@@ -496,8 +492,11 @@ class Facebook(source.Source):
       resp['url'] = base_url
     return source.creation_result(resp)
 
-  def urlopen(self, url, **kwargs):
+  def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
+
+    Returns: decoded JSON dict if parse_response is True, otherwise urlopen
+      response object
     """
     log_url = url
     if self.access_token:
@@ -505,8 +504,9 @@ class Facebook(source.Source):
                                              self.access_token[:4] + '...')])
       url = util.add_query_params(url, [('access_token', self.access_token)])
     logging.info('Fetching %s, kwargs %s', log_url, kwargs)
-    return urllib2.urlopen(urllib2.Request(url, **kwargs),
+    resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
                            timeout=appengine_config.HTTP_TIMEOUT)
+    return json.loads(resp.read()) if parse_response else resp
 
   def create_notification(self, user_id, text, link):
     """Sends the authenticated user a notification.
@@ -594,8 +594,7 @@ class Facebook(source.Source):
       if util.is_int(base_id):
         base_obj['numeric_id'] = base_id
       elif resolve_numeric_id:
-        base_obj = self.user_to_actor(json.loads(
-          self.urlopen(API_OBJECT_URL % base_id).read()))
+        base_obj = self.user_to_actor(self.urlopen(API_OBJECT_URL % base_id))
 
     try:
       parsed = urlparse.urlparse(url)
@@ -1101,10 +1100,10 @@ LIMIT 50
             'actors': '''\
 SELECT id, name, username, url, pic FROM profile WHERE id IN
   (SELECT actor_id FROM #stream)
-'''})})).read()
+'''})}))
 
       # resp = appengine_config.read('fql.json')
-      results = {q['name']: q['fql_result_set'] for q in json.loads(resp)['data']}
+      results = {q['name']: q['fql_result_set'] for q in resp['data']}
       actors = {a['id']: a for a in results['actors']}
       posts = [self.fql_stream_to_post(row, actor=actors[row['actor_id']])
                for row in results['stream']]
