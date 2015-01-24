@@ -32,7 +32,7 @@ USER = {  # Facebook
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'displayName': 'Ryan Barrett',
-  'image': {'url': 'http://graph.facebook.com/snarfed.org/picture?type=large'},
+  'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
   'id': tag_uri('snarfed.org'),
   'numeric_id': '212038',
   'updated': '2012-01-06T02:11:04+00:00',
@@ -75,7 +75,7 @@ PAGE_ACTOR = {  # ActivityStreams
   'numeric_id': '946432998716566',
   'displayName': 'Civic Hall',
   'url': 'http://www.civichall.org',
-  'image': {'url': 'http://graph.facebook.com/CivicHallNYC/picture?type=large'},
+  'image': {'url': 'https://graph.facebook.com/v2.2/946432998716566/picture?type=large'},
   'summary': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City.',
   'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful event space...',
   # 'location': {},  # TODO
@@ -265,7 +265,7 @@ COMMENT_OBJS = [  # ActivityStreams
       'id': tag_uri('212038'),
       'numeric_id': '212038',
       'displayName': 'Ryan Barrett',
-      'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
       'url': 'https://www.facebook.com/212038',
       },
     'content': 'cc Sam G, Michael M',
@@ -297,7 +297,7 @@ COMMENT_OBJS = [  # ActivityStreams
       'id': tag_uri('513046677'),
       'numeric_id': '513046677',
       'displayName': 'Ron Ald',
-      'image': {'url': 'http://graph.facebook.com/513046677/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/513046677/picture?type=large'},
       'url': 'https://www.facebook.com/513046677',
       },
     'content': 'Foo bar!',
@@ -321,7 +321,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'numeric_id': '100004',
       'displayName': 'Alice X',
       'url': 'https://www.facebook.com/100004',
-      'image': {'url': 'http://graph.facebook.com/100004/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/100004/picture?type=large'},
       },
     'displayName': 'Alice X likes this.',
     'content': 'likes this.',
@@ -337,7 +337,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'numeric_id': '683713',
       'displayName': 'Bob Y',
       'url': 'https://www.facebook.com/683713',
-      'image': {'url': 'http://graph.facebook.com/683713/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/683713/picture?type=large'},
       },
     'displayName': 'Bob Y likes this.',
     'content': 'likes this.',
@@ -361,7 +361,7 @@ SHARE_OBJ = {  # ActivityStreams
     'numeric_id': '321',
     'displayName': 'Alice X',
     'url': 'https://www.facebook.com/321',
-    'image': {'url': 'http://graph.facebook.com/321/picture?type=large'},
+    'image': {'url': 'https://graph.facebook.com/v2.2/321/picture?type=large'},
   },
   'displayName': "sharer's message",
   'content': "sharer's message",
@@ -376,7 +376,7 @@ POST_OBJ = {  # ActivityStreams
     'id': tag_uri('212038'),
     'numeric_id': '212038',
     'displayName': 'Ryan Barrett',
-    'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+    'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
     'url': 'https://www.facebook.com/212038',
     },
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.',
@@ -456,7 +456,7 @@ EVENT_OBJ = {  # ActivityStreams.
     'id': tag_uri('11500'),
     'numeric_id': '11500',
     'displayName': 'Aaron P',
-    'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+    'image': {'url': 'https://graph.facebook.com/v2.2/11500/picture?type=large'},
     'url': 'https://www.facebook.com/11500',
     },
   'image': {'url': 'https://fbcdn-sphotos-a-a.akamaihd.net/abc/pic_n.jpg?xyz'},
@@ -476,7 +476,7 @@ EVENT_OBJ = {  # ActivityStreams.
           'numeric_id': '888',
           'displayName': 'Mr. Foo',
           'url': 'https://www.facebook.com/888',
-          'image': {'url': 'http://graph.facebook.com/888/picture?type=large'},
+          'image': {'url': 'https://graph.facebook.com/v2.2/888/picture?type=large'},
           },
         'content': 'i hereby comment',
         'id': tag_uri('145304994_777'),
@@ -497,7 +497,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('11500'),
       'numeric_id': '11500',
       'url': 'https://www.facebook.com/11500',
-      'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/11500/picture?type=large'},
       },
     'displayName': 'Aaron P is attending.',
     'content': '<data class="p-rsvp" value="yes">is attending.</data>',
@@ -512,7 +512,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('212038'),
       'numeric_id': '212038',
       'url': 'https://www.facebook.com/212038',
-      'image': {'url': 'http://graph.facebook.com/212038/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
       },
     'displayName': 'Ryan B is not attending.',
     'content': '<data class="p-rsvp" value="no">is not attending.</data>',
@@ -527,7 +527,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('987'),
       'numeric_id': '987',
       'url': 'https://www.facebook.com/987',
-      'image': {'url': 'http://graph.facebook.com/987/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/987/picture?type=large'},
       },
     'displayName': 'Foo might attend.',
     'content': '<data class="p-rsvp" value="maybe">might attend.</data>',
@@ -542,7 +542,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('11500'),
       'numeric_id': '11500',
       'url': 'https://www.facebook.com/11500',
-      'image': {'url': 'http://graph.facebook.com/11500/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/11500/picture?type=large'},
       },
     'object': {
       'objectType': 'person',
@@ -550,7 +550,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('654'),
       'numeric_id': '654',
       'url': 'https://www.facebook.com/654',
-      'image': {'url': 'http://graph.facebook.com/654/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.2/654/picture?type=large'},
       },
     'displayName': 'Bar is invited.',
     'content': 'is invited.',
@@ -601,7 +601,7 @@ ATOM = """\
 
 <subtitle>something about me</subtitle>
 
-<logo>http://graph.facebook.com/snarfed.org/picture?type=large</logo>
+<logo>https://graph.facebook.com/v2.2/212038/picture?type=large</logo>
 <updated>2012-03-04T18:20:37+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -610,7 +610,7 @@ ATOM = """\
 </author>
 
 <link href="https://snarfed.org" rel="alternate" type="text/html" />
-<link rel="avatar" href="http://graph.facebook.com/snarfed.org/picture?type=large" />
+<link rel="avatar" href="https://graph.facebook.com/v2.2/212038/picture?type=large" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 <!-- TODO -->
 <!-- <link href="" rel="hub" /> -->
@@ -1027,7 +1027,7 @@ http://b http://c""",
   def test_user_to_actor_minimal(self):
     actor = self.facebook.user_to_actor({'id': '212038'})
     self.assert_equals(tag_uri('212038'), actor['id'])
-    self.assert_equals('http://graph.facebook.com/212038/picture?type=large',
+    self.assert_equals('https://graph.facebook.com/v2.2/212038/picture?type=large',
                        actor['image']['url'])
 
   def test_user_to_actor_empty(self):
@@ -1347,7 +1347,7 @@ http://b http://c""",
 <span class="verb">like</span> <a href="https://www.facebook.com/foo/posts/135?reply_comment_id=79">this comment</a>:
 <br /><br />
 <a class="h-card" href="https://www.facebook.com/212038">
-  <img class="profile u-photo" src="http://graph.facebook.com/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
+  <img class="profile u-photo" src="https://graph.facebook.com/v2.2/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
 cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp(self):

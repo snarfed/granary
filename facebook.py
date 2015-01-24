@@ -957,7 +957,7 @@ class Facebook(source.Source):
       return {}
 
     # facebook implements this as a 302 redirect
-    image_url = 'http://graph.facebook.com/%s/picture?type=large' % handle
+    image_url = 'https://graph.facebook.com/v2.2/%s/picture?type=large' % id
     actor = {
       # FB only returns the type field if you fetch the object with ?metadata=1
       # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.2#introspection
