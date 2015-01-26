@@ -72,16 +72,16 @@ OAUTH_SCOPES = ','.join((
     'user_likes',
     ))
 
-API_OBJECT_URL = 'https://graph.facebook.com/v2.2/%s?metadata=1'
-API_SELF_POSTS_URL = 'https://graph.facebook.com/v2.2/%s/posts?offset=%d'
-API_HOME_URL = 'https://graph.facebook.com/v2.2/%s/home?offset=%d'
-API_RSVP_URL = 'https://graph.facebook.com/v2.2/%s/invited/%s'
-API_FEED_URL = 'https://graph.facebook.com/v2.2/me/feed'
-API_COMMENTS_URL = 'https://graph.facebook.com/v2.2/%s/comments'
-API_LIKES_URL = 'https://graph.facebook.com/v2.2/%s/likes'
-API_SHARES_URL = 'https://graph.facebook.com/v2.2/%s/sharedposts'
-API_PHOTOS_URL = 'https://graph.facebook.com/v2.2/me/photos'
-API_NOTIFICATION_URL = 'https://graph.facebook.com/v2.2/%s/notifications'
+# API relative URLs, to be appended to API_BASE in oauth_dropins.facebook
+API_SELF_POSTS = '%s/posts?offset=%d'
+API_HOME = '%s/home?offset=%d'
+API_RSVP = '%s/invited/%s'
+API_FEED = 'me/feed'
+API_COMMENTS = '%s/comments'
+API_LIKES = '%s/likes'
+API_SHARES = '%s/sharedposts'
+API_PHOTOS = 'me/photos'
+API_NOTIFICATION = '%s/notifications'
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -177,7 +177,7 @@ class Facebook(source.Source):
     """
     if user_id is None:
       user_id = 'me'
-    return self.user_to_actor(self.urlopen(API_OBJECT_URL % user_id))
+    return self.user_to_actor(self.urlopen(user_id))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -205,7 +205,7 @@ class Facebook(source.Source):
 
       for id in ids_to_try:
         try:
-          resp = self.urlopen(API_OBJECT_URL % id)
+          resp = self.urlopen(id)
           if resp.get('error'):
             logging.warning("Couldn't fetch object %s: %s", id, resp)
           else:
@@ -217,7 +217,7 @@ class Facebook(source.Source):
         posts = []
 
     else:
-      url = API_SELF_POSTS_URL if group_id == source.SELF else API_HOME_URL
+      url = API_SELF_POSTS if group_id == source.SELF else API_HOME
       url = url % (user_id if user_id else 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
@@ -239,7 +239,7 @@ class Facebook(source.Source):
         id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
         if id:
           try:
-            resp = self.urlopen(API_SHARES_URL % id)
+            resp = self.urlopen(API_SHARES % id)
             activity.setdefault('tags', []).extend(
               [self.share_to_object(share) for share in resp.get('data', [])])
           except urllib2.HTTPError, e:
@@ -261,11 +261,11 @@ class Facebook(source.Source):
       activity_author_id: string activity author id, optional
     """
     try:
-      resp = self.urlopen(API_OBJECT_URL % comment_id)
+      resp = self.urlopen(comment_id)
     except urllib2.HTTPError, e:
       if e.code == 400 and '_' in comment_id:
         # Facebook may want us to ask for this without the other prefixed id(s)
-        resp = self.urlopen(API_OBJECT_URL % comment_id.split('_')[-1])
+        resp = self.urlopen(comment_id.split('_')[-1])
 
     return self.comment_to_object(resp, post_author_id=activity_author_id)
 
@@ -279,7 +279,7 @@ class Facebook(source.Source):
     """
     try:
       return self.share_to_object(
-        self.urlopen(API_SHARES_URL % share_id))
+        self.urlopen(API_SHARES % share_id))
     except urllib2.HTTPError, e:
       # /OBJ/sharedposts sometimes 400s, not sure why
       # https://github.com/snarfed/bridgy/issues/348
@@ -294,7 +294,7 @@ class Facebook(source.Source):
       event_id: string event id
       user_id: string user id
     """
-    url = API_RSVP_URL % (event_id, user_id)
+    url = API_RSVP % (event_id, user_id)
     data = self.urlopen(url).get('data')
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
@@ -391,7 +391,7 @@ class Facebook(source.Source):
 <br /><br />%s<br />""" % (base_url, EMBED_POST % base_url)
         return source.creation_result(content=preview_content, description=desc)
       else:
-        resp = self.urlopen(API_COMMENTS_URL % base_id, data=msg_data)
+        resp = self.urlopen(API_COMMENTS % base_id, data=msg_data)
         url = self.comment_url(base_id, resp['id'],
                                post_author_id=base_obj.get('author', {}).get('id'))
         resp.update({'url': url, 'type': 'comment'})
@@ -415,7 +415,7 @@ class Facebook(source.Source):
       if preview:
         desc = '<span class="verb">like</span> '
         if base_type == 'comment':
-          comment = self.comment_to_object(self.urlopen(API_OBJECT_URL % base_id))
+          comment = self.comment_to_object(self.urlopen(base_id))
           author = comment.get('author', '')
           if author:
             author = self.embed_author(author) + ':\n'
@@ -427,7 +427,7 @@ class Facebook(source.Source):
         return source.creation_result(description=desc)
 
       else:
-        resp = self.urlopen(API_LIKES_URL % base_id, data='')
+        resp = self.urlopen(API_LIKES % base_id, data='')
         assert resp.get('success'), resp
         resp = {'type': 'like'}
 
@@ -463,7 +463,7 @@ class Facebook(source.Source):
         if appengine_config.DEBUG:
           msg_data['privacy'] = json.dumps({'value': 'SELF'})
         msg_data = urllib.urlencode(msg_data)
-        resp = self.urlopen(API_PHOTOS_URL, data=msg_data)
+        resp = self.urlopen(API_PHOTOS, data=msg_data)
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type in ('note', 'article'):
@@ -471,7 +471,7 @@ class Facebook(source.Source):
         return source.creation_result(content=preview_content,
                                       description='<span class="verb">post</span>:')
       else:
-        resp = self.urlopen(API_FEED_URL, data=msg_data)
+        resp = self.urlopen(API_FEED, data=msg_data)
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type == 'activity' and verb == 'share':
@@ -492,12 +492,13 @@ class Facebook(source.Source):
       resp['url'] = base_url
     return source.creation_result(resp)
 
-  def urlopen(self, url, parse_response=True, **kwargs):
+  def urlopen(self, relative_url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
 
     Returns: decoded JSON dict if parse_response is True, otherwise urlopen
       response object
     """
+    url = oauth_facebook.API_BASE + relative_url
     log_url = url
     if self.access_token:
       log_url = util.add_query_params(url, [('access_token',
@@ -531,7 +532,7 @@ class Facebook(source.Source):
       'access_token': '%s|%s' % (appengine_config.FACEBOOK_APP_ID,
                                  appengine_config.FACEBOOK_APP_SECRET),
       }
-    url = API_NOTIFICATION_URL % user_id
+    url = oauth_facebook.API_BASE + API_NOTIFICATION % user_id
     resp = urllib2.urlopen(urllib2.Request(url, data=urllib.urlencode(params)),
                            timeout=appengine_config.HTTP_TIMEOUT)
     logging.debug('Response: %s %s', resp.getcode(), resp.read())
@@ -594,7 +595,7 @@ class Facebook(source.Source):
       if util.is_int(base_id):
         base_obj['numeric_id'] = base_id
       elif resolve_numeric_id:
-        base_obj = self.user_to_actor(self.urlopen(API_OBJECT_URL % base_id))
+        base_obj = self.user_to_actor(self.urlopen(base_id))
 
     try:
       parsed = urlparse.urlparse(url)

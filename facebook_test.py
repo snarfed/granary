@@ -10,9 +10,10 @@ import urllib2
 
 import appengine_config
 import facebook
-from oauth_dropins.webutil import testutil
+from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins.webutil import util
 import source
+import testutil
 
 
 # test data
@@ -698,14 +699,40 @@ class FacebookTest(testutil.HandlerTest):
   def setUp(self):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook()
+    self.batch = []
+    self.batch_responses = []
+
+  def expect_urlopen(self, url, response=None, **kwargs):
+    return super(FacebookTest, self).expect_urlopen(
+      oauth_facebook.API_BASE + url, response=response, **kwargs)
+
+  def expect_batch_req(self, url, response, status=200, headers={},
+                       response_headers=None):
+    batch.append({
+      'method': 'GET',
+      'relative_url': url,
+      'headers': [{'name': n, 'value': v} for n, v in headers.items()],
+    })
+    batch_responses.append(util.trim_nulls({
+      'code': status,
+      'body': json.dumps(response),
+      'headers': response_headers,
+    }))
+
+  def replay_batch(self):
+    self.expect_urlopen(
+      oauth_facebook.API_BASE,
+      data='batch=' + json.dumps(batch, separators=(',', ':')),
+      response=json.dumps(batch_responses))
+    self.mox.ReplayAll()
 
   def test_get_actor(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/foo', json.dumps(USER))
+    self.expect_urlopen('foo', json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.facebook.get_actor('foo'))
 
   def test_get_actor_default(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me', json.dumps(USER))
+    self.expect_urlopen('me', json.dumps(USER))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.facebook.get_actor())
 
@@ -714,8 +741,7 @@ class FacebookTest(testutil.HandlerTest):
           {'id': '1_2', 'message': 'foo'},
           {'id': '3_4', 'message': 'bar'},
           ]})
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/home?offset=0', resp)
+    self.expect_urlopen('me/home?offset=0', resp)
     self.mox.ReplayAll()
 
     self.assert_equals([
@@ -736,15 +762,13 @@ class FacebookTest(testutil.HandlerTest):
       self.facebook.get_activities())
 
   def test_get_activities_fetch_shares(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/home?offset=0',
+    self.expect_urlopen('me/home?offset=0',
                         json.dumps({'data': [
                           {'id': '1_2', 'message': 'foo'},
                           {'id': '3_4', 'message': 'bar'},
                         ]}))
-    self.expect_urlopen('https://graph.facebook.com/v2.2/2/sharedposts',
-                        json.dumps({'data': [SHARE, SHARE]}))
-    self.expect_urlopen('https://graph.facebook.com/v2.2/4/sharedposts',
-                        json.dumps({}))
+    self.expect_urlopen('2/sharedposts', json.dumps({'data': [SHARE, SHARE]}))
+    self.expect_urlopen('4/sharedposts', json.dumps({}))
     self.mox.ReplayAll()
 
     got = self.facebook.get_activities(fetch_shares=True)
@@ -752,22 +776,19 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], got[1]['tags'])
 
   def test_get_activities_self(self):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0', '{}')
+    self.expect_urlopen('me/posts?offset=0', '{}')
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/home?offset=0&access_token=asdf',
-      '{"id": 123}')
+    self.expect_urlopen('me/home?offset=0&access_token=asdf', '{"id": 123}')
     self.mox.ReplayAll()
 
     self.facebook = facebook.Facebook(access_token='asdf')
     self.facebook.get_activities()
 
   def test_get_activities_activity_id_overrides_others(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/000', json.dumps(POST))
+    self.expect_urlopen('000', json.dumps(POST))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -777,7 +798,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_activity_id_not_found(self):
     for id in '0', '0_0':
-      self.expect_urlopen('https://graph.facebook.com/v2.2/%s' % id, json.dumps({
+      self.expect_urlopen('%s' % id, json.dumps({
           'error': {
             'message': '(#803) Some of the aliases you requested do not exist: 0',
             'type': 'OAuthException',
@@ -788,42 +809,41 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], self.facebook.get_activities(activity_id='0_0'))
 
   def test_get_activities_start_index_and_count(self):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=3&limit=5', '{}')
+    self.expect_urlopen('me/posts?offset=3&limit=5', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(group_id=source.SELF,start_index=3, count=5)
 
   def test_get_activities_activity_id(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/34', '{}')
+    self.expect_urlopen('34', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='34', user_id='12')
 
   def test_get_activities_activity_id_strips_user_id_prefix(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/34', '{}')
+    self.expect_urlopen('34', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='12_34')
 
   def test_get_activities_activity_id_fallback_to_user_id_prefix(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/34', '{}', status=404)
-    self.expect_urlopen('https://graph.facebook.com/v2.2/12_34', '{}')
+    self.expect_urlopen('34', '{}', status=404)
+    self.expect_urlopen('12_34', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='12_34')
 
   def test_get_activities_activity_id_fallback_to_user_id_param(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/34', '{}', status=400)
-    self.expect_urlopen('https://graph.facebook.com/v2.2/12_34', '{}', status=500)
-    self.expect_urlopen('https://graph.facebook.com/v2.2/56_34', '{}')
+    self.expect_urlopen('34', '{}', status=400)
+    self.expect_urlopen('12_34', '{}', status=500)
+    self.expect_urlopen('56_34', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='12_34', user_id='56')
 
   def test_get_activities_request_etag(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/home?offset=0', '{}',
+    self.expect_urlopen('me/home?offset=0', '{}',
                         headers={'If-none-match': '"my etag"'})
     self.mox.ReplayAll()
     self.facebook.get_activities_response(etag='"my etag"')
 
   def test_get_activities_response_etag(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/home?offset=0', '{}',
+    self.expect_urlopen('me/home?offset=0', '{}',
                         response_headers={'ETag': '"my etag"'})
     self.mox.ReplayAll()
     self.assert_equals('"my etag"',
@@ -831,18 +851,15 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_304_not_modified(self):
     """Requests with matching ETags return 304 Not Modified."""
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/home?offset=0', '{}',
-                        status=304)
+    self.expect_urlopen('me/home?offset=0', '{}', status=304)
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities_response()['items'])
 
   def test_get_activities_sharedposts_400(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/home?offset=0',
+    self.expect_urlopen('me/home?offset=0',
                         json.dumps({'data': [{'id': '1_2'}, {'id': '3_4'}]}))
-    self.expect_urlopen('https://graph.facebook.com/v2.2/2/sharedposts',
-                        status=400)
-    self.expect_urlopen('https://graph.facebook.com/v2.2/4/sharedposts',
-                        json.dumps({'data': [SHARE]}))
+    self.expect_urlopen('2/sharedposts', status=400)
+    self.expect_urlopen('4/sharedposts', json.dumps({'data': [SHARE]}))
     self.mox.ReplayAll()
 
     got = self.facebook.get_activities(fetch_shares=True)
@@ -850,14 +867,12 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([SHARE_OBJ], got[1]['tags'])
 
   def test_get_comment(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/123_456',
-                        json.dumps(COMMENTS[0]))
+    self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456'))
 
   def test_get_comment_activity_author_id(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/123_456',
-                        json.dumps(COMMENTS[0]))
+    self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
 
     obj = self.facebook.get_comment('123_456', activity_author_id='my-author')
@@ -866,51 +881,49 @@ class FacebookTest(testutil.HandlerTest):
       obj['url'])
 
   def test_get_comment_400s_id_with_underscore(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/123_456_789', '{}', status=400)
-    self.expect_urlopen('https://graph.facebook.com/v2.2/789', json.dumps(COMMENTS[0]))
+    self.expect_urlopen('123_456_789', '{}', status=400)
+    self.expect_urlopen('789', json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456_789'))
 
   def test_get_share(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/123', json.dumps(SHARE))
+    self.expect_urlopen('123', json.dumps(SHARE))
     self.mox.ReplayAll()
     self.assert_equals(SHARE_OBJ, self.facebook.get_share('', '', '123'))
 
   def test_get_share_400s(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/123', '{}', status=400)
+    self.expect_urlopen('123', '{}', status=400)
     self.mox.ReplayAll()
     self.assertIsNone(self.facebook.get_share('', '', '123'))
 
   def test_get_share_500s(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/123', '{}', status=500)
+    self.expect_urlopen('123', '{}', status=500)
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.facebook.get_share, '', '', '123')
 
   def test_get_like(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/000', json.dumps(POST))
+    self.expect_urlopen('000', json.dumps(POST))
     self.mox.ReplayAll()
     self.assert_equals(LIKE_OBJS[1], self.facebook.get_like('123', '000', '683713'))
 
   def test_get_like_not_found(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/000', json.dumps(POST))
+    self.expect_urlopen('000', json.dumps(POST))
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_like('123', '000', '999'))
 
   def test_get_like_no_activity(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/000', '{}')
+    self.expect_urlopen('000', '{}')
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
 
   def test_get_rsvp(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/145304994/invited/456',
-                        json.dumps({'data': [RSVPS[0]]}))
+    self.expect_urlopen('145304994/invited/456', json.dumps({'data': [RSVPS[0]]}))
     self.mox.ReplayAll()
     self.assert_equals(RSVP_OBJS_WITH_ID[0],
                        self.facebook.get_rsvp('123', '145304994', '456'))
 
   def test_get_rsvp_not_found(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/000/invited/456',
-                        json.dumps({'data': []}))
+    self.expect_urlopen('000/invited/456', json.dumps({'data': []}))
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_rsvp('123', '000', '456'))
 
@@ -1185,10 +1198,8 @@ http://b http://c""",
         })
 
   def test_create_post(self):
-    self.expect_urlopen(
-      facebook.API_FEED_URL,
-      json.dumps({'id': '123_456'}),
-      data='message=my+msg') #&privacy=%7B%22value%22%3A+%22SELF%22%7D')
+    self.expect_urlopen(facebook.API_FEED, json.dumps({'id': '123_456'}),
+                        data='message=my+msg')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
@@ -1206,10 +1217,8 @@ http://b http://c""",
     self.assertEquals('my msg', preview.content)
 
   def test_create_post_include_link(self):
-    self.expect_urlopen(
-      facebook.API_FEED_URL, '{}',
-      data=urllib.urlencode(
-        {'message': 'my content\n\n(Originally published at: http://obj)'}))
+    self.expect_urlopen(facebook.API_FEED, '{}', data=urllib.urlencode(
+      {'message': 'my content\n\n(Originally published at: http://obj)'}))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
@@ -1228,10 +1237,8 @@ http://b http://c""",
       preview.content)
 
   def test_create_comment(self):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/547822715231468/comments',
-      json.dumps({'id': '456_789'}),
-      data='message=my+cmt') #&privacy=%7B%22value%22%3A+%22SELF%22%7D')
+    self.expect_urlopen('547822715231468/comments', json.dumps({'id': '456_789'}),
+                        data='message=my+cmt')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
@@ -1269,10 +1276,8 @@ http://b http://c""",
       }
 
     for _ in urls:
-      self.expect_urlopen(
-        'https://graph.facebook.com/v2.2/333/comments',
-        json.dumps({'id': '456_789'}),
-        data='message=my+cmt')
+      self.expect_urlopen('333/comments', json.dumps({'id': '456_789'}),
+                          data='message=my+cmt')
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
@@ -1288,12 +1293,12 @@ http://b http://c""",
       }, self.facebook.create(obj).content)
 
   def test_create_like(self):
-    for url in ('https://graph.facebook.com/v2.2/212038_1234/likes',
-                'https://graph.facebook.com/v2.2/1234/likes',
-                'https://graph.facebook.com/v2.2/135_79/likes',
-                'https://graph.facebook.com/v2.2/78_90/likes',
-                'https://graph.facebook.com/v2.2/12_90/likes',
-                'https://graph.facebook.com/v2.2/12/likes',
+    for url in ('212038_1234/likes',
+                '1234/likes',
+                '135_79/likes',
+                '78_90/likes',
+                '12_90/likes',
+                '12/likes',
                 ):
       self.expect_urlopen(url, '{"success": true}', data='')
     self.mox.ReplayAll()
@@ -1338,8 +1343,7 @@ http://b http://c""",
   def test_create_like_comment_preview(self):
     like = copy.deepcopy(LIKE_OBJS[0])
     like['object']['url'] = 'https://www.facebook.com/foo/posts/135?reply_comment_id=79'
-    self.expect_urlopen('https://graph.facebook.com/v2.2/135_79',
-                        json.dumps(COMMENTS[0]))
+    self.expect_urlopen('135_79', json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
 
     preview = self.facebook.preview_create(like)
@@ -1352,8 +1356,7 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':
-      self.expect_urlopen('https://graph.facebook.com/v2.2/234/' + endpoint,
-                          '{"success": true}', data='')
+      self.expect_urlopen('234/' + endpoint, '{"success": true}', data='')
 
     self.mox.ReplayAll()
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
@@ -1416,10 +1419,8 @@ cc Sam G, Michael M<br />""", preview.description)
                       preview.content)
 
     # test create
-    self.expect_urlopen(
-      facebook.API_PHOTOS_URL,
-      json.dumps({'id': '123_456'}),
-      data='url=http%3A%2F%2Fmy%2Fpicture&message=my+caption')
+    self.expect_urlopen(facebook.API_PHOTOS, json.dumps({'id': '123_456'}),
+                        data='url=http%3A%2F%2Fmy%2Fpicture&message=my+caption')
     self.mox.ReplayAll()
     self.assert_equals(
       {'id': '123_456', 'url': 'https://www.facebook.com/123_456', 'type': 'post'},
@@ -1433,13 +1434,13 @@ cc Sam G, Michael M<br />""", preview.description)
       'href': 'my link',
       'access_token': 'my_app_id|my_app_secret',
       }
-    self.expect_urlopen('https://graph.facebook.com/v2.2/my-username/notifications', '',
+    self.expect_urlopen('my-username/notifications', '',
                         data=urllib.urlencode(params))
     self.mox.ReplayAll()
     self.facebook.create_notification('my-username', 'my text', 'my link')
 
   def test_base_object_resolve_numeric_id(self):
-    self.expect_urlopen('https://graph.facebook.com/v2.2/MyPage', json.dumps(PAGE))
+    self.expect_urlopen('MyPage', json.dumps(PAGE))
     self.mox.ReplayAll()
 
     self.assert_equals(PAGE_ACTOR, self.facebook.base_object(
