@@ -1136,48 +1136,87 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
                            timeout=appengine_config.HTTP_TIMEOUT)
     return json.loads(resp.read()) if parse_response else resp
 
-  def urlopen_batch(self, requests, **kwargs):
-    """Sends a batch of multiple API calls.
+  def urlopen_batch(self, urls):
+    """Sends a batch of multiple API calls using Facebook's batch API.
+
+    Raises the appropriate urllib2.HTTPError if any individual call returns HTTP
+    status code 4xx or 5xx.
 
     https://developers.facebook.com/docs/graph-api/making-multiple-requests
 
     Args:
-      requests: sequence of string relative API URLs, e.g. ('me',
-        'me/accounts'), or dicts containing 'url' and 'headers' keys. The latter
-        is a dict of HTTP request headers. May mix strings and dicts.
+      urls: sequence of string relative API URLs, e.g. ('me', 'me/accounts')
 
     Returns: sequence of responses, either decoded JSON objects (when possible)
-      or string response bodies
-    """
-    batch = []
-    for req in requests:
-      item = {'method': 'GET'}
-      if isinstance(req, basestring):
-        item['relative_url'] = req
-      else:
-        assert isinstance(req, dict)
-        item['relative_url'] = req.get('url')
-        item['headers'] = [{'name': n, 'value': v}
-                           for n, v in req.get('headers', {}).items()]
-      batch.append(item)
+      or raw string bodies
 
-    data = 'batch=' + json.dumps(util.trim_nulls(batch),
-                                 separators=(',', ':'))  # no whitespace
-    resps = self.urlopen('', data=data)
+    """
+    resps = self.urlopen_batch_full([{'relative_url': url} for url in urls])
 
     bodies = []
-    for item, resp in zip(batch, resps):
+    for url, resp in zip(urls, resps):
       code = int(resp.get('code', 0))
       body = resp.get('body')
       if code / 100 in (4, 5):
-        raise urllib2.HTTPError(item['relative_url'], code, body,
-                                resp.get('headers'), None)
-      try:
-        bodies.append(json.loads(body))
-      except (ValueError, TypeError):
-        bodies.append(body)
+        raise urllib2.HTTPError(url, code, body, resp.get('headers'), None)
+      bodies.append(body)
 
     return bodies
+
+  def urlopen_batch_full(self, requests):
+    """Sends a batch of multiple API calls using Facebook's batch API.
+
+    Similar to urlopen_batch(), but the requests arg and return value are dicts
+    with headers, HTTP status code, etc. Only raises urllib2.HTTPError if the
+    outer batch request itself returns an HTTP error.
+
+    https://developers.facebook.com/docs/graph-api/making-multiple-requests
+
+    Args:
+      requests: sequence of dict requests in Facebook's batch format, except
+      that headers is a single dict, not a list of dicts.
+
+        [{'relative_url': 'me/feed',
+          'headers': {'ETag': 'xyz', ...},
+         },
+         ...
+        ]
+
+    Returns: sequence of dict responses in Facebook's batch format, except that
+      body is JSON-decoded if possible, and headers is a single dict, not a list
+      of dicts.
+
+      [{'code': 200,
+        'headers': {'ETag': 'xyz', ...},
+        'body': {...},
+       },
+       ...
+      ]
+
+    """
+    for req in requests:
+      if 'method' not in req:
+        req['method'] = 'GET'
+      if 'headers' in req:
+        req['headers'] = [{'name': n, 'value': v}
+                          for n, v in req['headers'].items()]
+
+    data = 'batch=' + json.dumps(util.trim_nulls(requests),
+                                 separators=(',', ':'))  # no whitespace
+    resps = self.urlopen('', data=data)
+
+    for resp in resps:
+      if 'headers' in resp:
+        resp['headers'] = {h['name']: h['value'] for h in resp['headers']}
+
+      body = resp.get('body')
+      if body:
+        try:
+          resp['body'] = json.loads(body)
+        except (ValueError, TypeError):
+          pass
+
+    return resps
 
 
 application = webapp2.WSGIApplication([

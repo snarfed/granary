@@ -1461,7 +1461,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.expect_urlopen('',
       data='batch=[{"method":"GET","relative_url":"abc"},'
                   '{"method":"GET","relative_url":"def"}]',
-      response=json.dumps([{'code': 200},
+      response=json.dumps([{'code': 304},
                            {'code': 499, 'body': 'error body'}]))
     self.mox.ReplayAll()
 
@@ -1472,15 +1472,31 @@ cc Sam G, Michael M<br />""", preview.description)
       self.assertEqual(499, e.code)
       self.assertEqual('error body', e.reason)
 
-  def test_urlopen_batch_headers(self):
+  def test_urlopen_batch_full(self):
     self.expect_urlopen('',
       data='batch=[{"headers":[{"name":"X","value":"Y"},'
                               '{"name":"U","value":"V"}],'
                    '"method":"GET","relative_url":"abc"},'
                   '{"method":"GET","relative_url":"def"}]',
-      response=json.dumps([{'code': 200}, {'code': 200}]))
+      response=json.dumps([{'code': 200, 'body': '{"json": true}'},
+                           {'code': 200, 'body': 'not json'}]))
     self.mox.ReplayAll()
 
-    self.facebook.urlopen_batch((
-      {'url': 'abc', 'headers': {'X': 'Y', 'U': 'V'}},
-      'def'))
+    self.assert_equals(
+      [{'code': 200, 'body': {"json": True}},
+       {'code': 200, 'body': 'not json'}],
+      self.facebook.urlopen_batch_full((
+        {'relative_url': 'abc', 'headers': {'X': 'Y', 'U': 'V'}},
+        {'relative_url': 'def'})))
+
+  def test_urlopen_batch_full_errors(self):
+    resps = [{'code': 501},
+             {'code': 499, 'body': 'error body'}]
+    self.expect_urlopen('',
+      data='batch=[{"method":"GET","relative_url":"abc"},'
+                  '{"method":"GET","relative_url":"def"}]',
+      response=json.dumps(resps))
+    self.mox.ReplayAll()
+
+    self.assert_equals(resps, self.facebook.urlopen_batch_full(
+      [{'relative_url': 'abc'}, {'relative_url': 'def'}]))
