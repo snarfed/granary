@@ -10,7 +10,6 @@ import urllib2
 
 import appengine_config
 import facebook
-from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins.webutil import util
 import source
 import testutil
@@ -704,7 +703,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def expect_urlopen(self, url, response=None, **kwargs):
     return super(FacebookTest, self).expect_urlopen(
-      oauth_facebook.API_BASE + url, response=response, **kwargs)
+      facebook.API_BASE + url, response=response, **kwargs)
 
   def expect_batch_req(self, url, response, status=200, headers={},
                        response_headers=None):
@@ -721,7 +720,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def replay_batch(self):
     self.expect_urlopen(
-      oauth_facebook.API_BASE,
+      facebook.API_BASE,
       data='batch=' + json.dumps(batch, separators=(',', ':')),
       response=json.dumps(batch_responses))
     self.mox.ReplayAll()
@@ -1446,3 +1445,42 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(PAGE_ACTOR, self.facebook.base_object(
       {'object': {'url': 'https://facebook.com/MyPage'}},
       resolve_numeric_id=True))
+
+  def test_urlopen_batch(self):
+    self.expect_urlopen('',
+      data='batch=[{"method":"GET","relative_url":"abc"},'
+                  '{"method":"GET","relative_url":"def"}]',
+      response=json.dumps([{'code': 200, 'body': '{"abc": 1}'},
+                           {'code': 200, 'body': '{"def": 2}'}]))
+    self.mox.ReplayAll()
+
+    self.assert_equals(({'abc': 1}, {'def': 2}),
+                       self.facebook.urlopen_batch(('abc', 'def')))
+
+  def test_urlopen_batch_error(self):
+    self.expect_urlopen('',
+      data='batch=[{"method":"GET","relative_url":"abc"},'
+                  '{"method":"GET","relative_url":"def"}]',
+      response=json.dumps([{'code': 200},
+                           {'code': 499, 'body': 'error body'}]))
+    self.mox.ReplayAll()
+
+    try:
+      self.facebook.urlopen_batch(('abc', 'def'))
+      assert False, 'expected HTTPError'
+    except urllib2.HTTPError, e:
+      self.assertEqual(499, e.code)
+      self.assertEqual('error body', e.reason)
+
+  def test_urlopen_batch_headers(self):
+    self.expect_urlopen('',
+      data='batch=[{"headers":[{"name":"X","value":"Y"},'
+                              '{"name":"U","value":"V"}],'
+                   '"method":"GET","relative_url":"abc"},'
+                  '{"method":"GET","relative_url":"def"}]',
+      response=json.dumps([{'code': 200}, {'code': 200}]))
+    self.mox.ReplayAll()
+
+    self.facebook.urlopen_batch((
+      {'url': 'abc', 'headers': {'X': 'Y', 'U': 'V'}},
+      'def'))

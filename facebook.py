@@ -72,7 +72,7 @@ OAUTH_SCOPES = ','.join((
     'user_likes',
     ))
 
-# API relative URLs, to be appended to API_BASE in oauth_dropins.facebook
+API_BASE = 'https://graph.facebook.com/v2.2/'
 API_SELF_POSTS = '%s/posts?offset=%d'
 API_HOME = '%s/home?offset=%d'
 API_RSVP = '%s/invited/%s'
@@ -492,23 +492,6 @@ class Facebook(source.Source):
       resp['url'] = base_url
     return source.creation_result(resp)
 
-  def urlopen(self, relative_url, parse_response=True, **kwargs):
-    """Wraps urllib2.urlopen() and passes through the access token.
-
-    Returns: decoded JSON dict if parse_response is True, otherwise urlopen
-      response object
-    """
-    url = oauth_facebook.API_BASE + relative_url
-    log_url = url
-    if self.access_token:
-      log_url = util.add_query_params(url, [('access_token',
-                                             self.access_token[:4] + '...')])
-      url = util.add_query_params(url, [('access_token', self.access_token)])
-    logging.info('Fetching %s, kwargs %s', log_url, kwargs)
-    resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
-                           timeout=appengine_config.HTTP_TIMEOUT)
-    return json.loads(resp.read()) if parse_response else resp
-
   def create_notification(self, user_id, text, link):
     """Sends the authenticated user a notification.
 
@@ -532,7 +515,7 @@ class Facebook(source.Source):
       'access_token': '%s|%s' % (appengine_config.FACEBOOK_APP_ID,
                                  appengine_config.FACEBOOK_APP_SECRET),
       }
-    url = oauth_facebook.API_BASE + API_NOTIFICATION % user_id
+    url = API_BASE + API_NOTIFICATION % user_id
     resp = urllib2.urlopen(urllib2.Request(url, data=urllib.urlencode(params)),
                            timeout=appengine_config.HTTP_TIMEOUT)
     logging.debug('Response: %s %s', resp.getcode(), resp.read())
@@ -1135,6 +1118,66 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
         post['link'] = obj['url']
 
     return util.trim_nulls(post)
+
+  def urlopen(self, relative_url, parse_response=True, **kwargs):
+    """Wraps urllib2.urlopen() and passes through the access token.
+
+    Returns: decoded JSON dict if parse_response is True, otherwise urlopen
+      response object
+    """
+    url = API_BASE + relative_url
+    log_url = url
+    if self.access_token:
+      log_url = util.add_query_params(url, [('access_token',
+                                             self.access_token[:4] + '...')])
+      url = util.add_query_params(url, [('access_token', self.access_token)])
+    logging.info('Fetching %s, kwargs %s', log_url, kwargs)
+    resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
+                           timeout=appengine_config.HTTP_TIMEOUT)
+    return json.loads(resp.read()) if parse_response else resp
+
+  def urlopen_batch(self, requests, **kwargs):
+    """Sends a batch of multiple API calls.
+
+    https://developers.facebook.com/docs/graph-api/making-multiple-requests
+
+    Args:
+      requests: sequence of string relative API URLs, e.g. ('me',
+        'me/accounts'), or dicts containing 'url' and 'headers' keys. The latter
+        is a dict of HTTP request headers. May mix strings and dicts.
+
+    Returns: sequence of responses, either decoded JSON objects (when possible)
+      or string response bodies
+    """
+    batch = []
+    for req in requests:
+      item = {'method': 'GET'}
+      if isinstance(req, basestring):
+        item['relative_url'] = req
+      else:
+        assert isinstance(req, dict)
+        item['relative_url'] = req.get('url')
+        item['headers'] = [{'name': n, 'value': v}
+                           for n, v in req.get('headers', {}).items()]
+      batch.append(item)
+
+    data = 'batch=' + json.dumps(util.trim_nulls(batch),
+                                 separators=(',', ':'))  # no whitespace
+    resps = self.urlopen('', data=data)
+
+    bodies = []
+    for item, resp in zip(batch, resps):
+      code = int(resp.get('code', 0))
+      body = resp.get('body')
+      if code / 100 in (4, 5):
+        raise urllib2.HTTPError(item['relative_url'], code, body,
+                                resp.get('headers'), None)
+      try:
+        bodies.append(json.loads(body))
+      except (ValueError, TypeError):
+        bodies.append(body)
+
+    return bodies
 
 
 application = webapp2.WSGIApplication([
