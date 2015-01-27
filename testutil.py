@@ -29,8 +29,12 @@ class TestCase(HandlerTest):
 
   def _expect_requests_call(self, url, response='', status_code=200,
                             content_type='text/html', method=requests.get,
-                            redirected_url = None, response_headers=None,
+                            redirected_url=None, response_headers=None,
                             **kwargs):
+    """
+    Args:
+      redirected_url: string URL or sequence of string URLs for multiple redirects
+    """
     resp = requests.Response()
 
     resp._text = response
@@ -38,7 +42,16 @@ class TestCase(HandlerTest):
                      else response)
     resp.encoding = 'utf-8'
 
-    resp.url = url if redirected_url is None else redirected_url
+    resp.url = url
+    if redirected_url is not None:
+      if isinstance(redirected_url, basestring):
+        redirected_url = [redirected_url]
+      assert isinstance(redirected_url, (list, tuple))
+      resp.url = redirected_url[-1]
+      for u in [url] + redirected_url[:-1]:
+        resp.history.append(requests.Response())
+        resp.history[-1].url = u
+
     resp.status_code = status_code
     resp.headers['content-type'] = content_type
     if response_headers is not None:
