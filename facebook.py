@@ -116,9 +116,9 @@ RSVP_VERBS = {
   'not_replied': 'invite',
   }
 RSVP_ENDPOINTS = {
-  'rsvp-yes': 'https://graph.facebook.com/v2.2/%s/attending',
-  'rsvp-no': 'https://graph.facebook.com/v2.2/%s/declined',
-  'rsvp-maybe': 'https://graph.facebook.com/v2.2/%s/maybe',
+  'rsvp-yes': '%s/attending',
+  'rsvp-no': '%s/declined',
+  'rsvp-maybe': '%s/maybe',
 }
 
 # HTML snippet that embeds a post.
