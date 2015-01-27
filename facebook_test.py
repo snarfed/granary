@@ -766,8 +766,10 @@ class FacebookTest(testutil.HandlerTest):
                           {'id': '1_2', 'message': 'foo'},
                           {'id': '3_4', 'message': 'bar'},
                         ]}))
-    self.expect_urlopen('2/sharedposts', json.dumps({'data': [SHARE, SHARE]}))
-    self.expect_urlopen('4/sharedposts', json.dumps({}))
+    self.expect_urlopen('sharedposts?ids=2,4', json.dumps({
+        '2': {'data': [SHARE, SHARE]},
+        '4': {'data': []},
+      }))
     self.mox.ReplayAll()
 
     got = self.facebook.get_activities(fetch_shares=True)
@@ -857,13 +859,12 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_sharedposts_400(self):
     self.expect_urlopen('me/home?offset=0',
                         json.dumps({'data': [{'id': '1_2'}, {'id': '3_4'}]}))
-    self.expect_urlopen('2/sharedposts', status=400)
-    self.expect_urlopen('4/sharedposts', json.dumps({'data': [SHARE]}))
+    self.expect_urlopen('sharedposts?ids=2,4', status=400)
     self.mox.ReplayAll()
 
     got = self.facebook.get_activities(fetch_shares=True)
     self.assertNotIn('tags', got[0])
-    self.assert_equals([SHARE_OBJ], got[1]['tags'])
+    self.assertNotIn('tags', got[1])
 
   def test_get_comment(self):
     self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))

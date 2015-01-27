@@ -79,7 +79,7 @@ API_RSVP = '%s/invited/%s'
 API_FEED = 'me/feed'
 API_COMMENTS = '%s/comments'
 API_LIKES = '%s/likes'
-API_SHARES = '%s/sharedposts'
+API_SHARES = 'sharedposts?ids=%s'
 API_PHOTOS = 'me/photos'
 API_NOTIFICATION = '%s/notifications'
 
@@ -196,6 +196,7 @@ class Facebook(source.Source):
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
       # it doesn't accept that format. I can't tell which is which yet, so try
       # them all.
+      # More background: https://github.com/snarfed/bridgy/issues/346
       ids_to_try = [activity_id]
       if '_' in activity_id:
         user_id_prefix, activity_id = activity_id.split('_', 1)
@@ -235,18 +236,25 @@ class Facebook(source.Source):
     activities = [self.post_to_activity(p) for p in posts]
 
     if fetch_shares:
+      id_to_activity = {}
       for post, activity in zip(posts, activities):
         id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
         if id:
-          try:
-            resp = self.urlopen(API_SHARES % id)
+          id_to_activity[id] = activity
+
+      try:
+        # https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
+        resp = self.urlopen(API_SHARES % ','.join(id_to_activity.keys()))
+        for id, shares in resp.items():
+          activity = id_to_activity.get(id)
+          if activity:
             activity.setdefault('tags', []).extend(
-              [self.share_to_object(share) for share in resp.get('data', [])])
-          except urllib2.HTTPError, e:
-            # /OBJ/sharedposts sometimes 400s, not sure why
-            # https://github.com/snarfed/bridgy/issues/348
-            if e.code / 100 != 4:
-              raise
+              [self.share_to_object(share) for share in shares.get('data', [])])
+      except urllib2.HTTPError, e:
+        # some sharedposts requests 400, not sure why.
+        # https://github.com/snarfed/bridgy/issues/348
+        if e.code / 100 != 4:
+          raise
 
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
@@ -278,10 +286,9 @@ class Facebook(source.Source):
       share_id: string id of the share object
     """
     try:
-      return self.share_to_object(
-        self.urlopen(API_SHARES % share_id))
+      return self.share_to_object(self.urlopen(share_id))
     except urllib2.HTTPError, e:
-      # /OBJ/sharedposts sometimes 400s, not sure why
+      # shares sometimes 400, not sure why.
       # https://github.com/snarfed/bridgy/issues/348
       if e.code / 100 != 4:
         raise
