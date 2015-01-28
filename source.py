@@ -591,10 +591,7 @@ class Source(object):
       if parsed_id:
         domain = parsed_id[0]
       else:
-        domain = urlparse.urlparse(base_obj.get('url', '')).netloc
-      for subdomain in 'www.', 'mobile.':
-        if domain.startswith(subdomain):
-          domain = domain[len(subdomain):]
+        domain = util.domain_from_link(base_obj.get('url', ''))
       if domain == self.DOMAIN:
         break
     else:

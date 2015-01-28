@@ -1292,6 +1292,22 @@ http://b http://c""",
         'type': 'comment',
       }, self.facebook.create(obj).content)
 
+  def test_create_comment_m_facebook_com(self):
+    self.expect_urlopen('12_90/comments', json.dumps({'id': '456_789'}),
+                        data='message=cc+Sam+G%2C+Michael+M')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(COMMENT_OBJS[0])
+    obj['inReplyTo'] = {
+      'url': 'https://m.facebook.com/photo.php?fbid=12&set=a.34.56.78&comment_id=90',
+    }
+    created = self.facebook.create(obj)
+    self.assert_equals({
+      'id': '456_789',
+      'url': 'https://www.facebook.com/12_90?comment_id=456_789',
+      'type': 'comment'
+    }, created.content, created)
+
   def test_create_like(self):
     for url in ('212038_1234/likes',
                 '1234/likes',
