@@ -373,14 +373,17 @@ class Facebook(source.Source):
           error_plain='No content text found.',
           error_html='No content text found.')
 
+    image_url = obj.get('image', {}).get('url')
+
     url = obj.get('url')
     if include_link and url:
       content += '\n\n(Originally published at: %s)' % url
     preview_content = util.linkify(content)
+    if image_url:
+      preview_content += '<br /><br /><img src="%s" />' % image_url
     msg_data = {'message': content.encode('utf-8')}
     if appengine_config.DEBUG:
       msg_data['privacy'] = json.dumps({'value': 'SELF'})
-    msg_data = urllib.urlencode(msg_data)
 
     if type == 'comment':
       if not base_url:
@@ -398,7 +401,9 @@ class Facebook(source.Source):
 <br /><br />%s<br />""" % (base_url, EMBED_POST % base_url)
         return source.creation_result(content=preview_content, description=desc)
       else:
-        resp = self.urlopen(API_COMMENTS % base_id, data=msg_data)
+        if image_url:
+          msg_data['attachment_url'] = image_url
+        resp = self.urlopen(API_COMMENTS % base_id, data=urllib.urlencode(msg_data))
         url = self.comment_url(base_id, resp['id'],
                                post_author_id=base_obj.get('author', {}).get('id'))
         resp.update({'url': url, 'type': 'comment'})
@@ -459,18 +464,15 @@ class Facebook(source.Source):
         assert resp.get('success'), resp
         resp = {'type': 'rsvp'}
 
-    elif type in ('note', 'article') and obj.get('image'):
-      image_url = obj.get('image').get('url')
+    elif type in ('note', 'article') and image_url:
       if preview:
-        return source.creation_result(
-          content='%s<br /><br /><img src="%s" />' % (preview_content, image_url),
-          description='<span class="verb">post</span>:')
+        return source.creation_result(content=preview_content,
+                                      description='<span class="verb">post</span>:')
       else:
-        msg_data = {'message': content.encode('utf-8'), 'url': image_url}
+        msg_data['url'] = image_url
         if appengine_config.DEBUG:
           msg_data['privacy'] = json.dumps({'value': 'SELF'})
-        msg_data = urllib.urlencode(msg_data)
-        resp = self.urlopen(API_PHOTOS, data=msg_data)
+        resp = self.urlopen(API_PHOTOS, data=urllib.urlencode(msg_data))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type in ('note', 'article'):
@@ -478,7 +480,7 @@ class Facebook(source.Source):
         return source.creation_result(content=preview_content,
                                       description='<span class="verb">post</span>:')
       else:
-        resp = self.urlopen(API_FEED, data=msg_data)
+        resp = self.urlopen(API_FEED, data=urllib.urlencode(msg_data))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type == 'activity' and verb == 'share':

@@ -1292,6 +1292,27 @@ http://b http://c""",
         'type': 'comment',
       }, self.facebook.create(obj).content)
 
+  def test_create_comment_with_photo(self):
+    self.expect_urlopen(
+      '547822715231468/comments', json.dumps({'id': '456_789'}),
+      data=urllib.urlencode({'message': 'cc Sam G, Michael M',
+                             'attachment_url': 'http://pict/ure'}))
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(COMMENT_OBJS[0])
+    obj['image'] = {'url': 'http://pict/ure'}
+    self.assert_equals({
+      'id': '456_789',
+      'url': 'https://www.facebook.com/547822715231468?comment_id=456_789',
+      'type': 'comment'
+    }, self.facebook.create(obj).content)
+
+    preview = self.facebook.preview_create(obj)
+    self.assertEquals('cc Sam G, Michael M<br /><br /><img src="http://pict/ure" />',
+                      preview.content)
+    self.assertIn('<span class="verb">comment</span> on <a href="https://www.facebook.com/547822715231468">this post</a>:', preview.description)
+    self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/547822715231468">', preview.description)
+
   def test_create_comment_m_facebook_com(self):
     self.expect_urlopen('12_90/comments', json.dumps({'id': '456_789'}),
                         data='message=cc+Sam+G%2C+Michael+M')
