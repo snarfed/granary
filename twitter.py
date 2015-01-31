@@ -499,7 +499,8 @@ class Twitter(source.Source):
       length += (TCO_LENGTH if as_url in links else len(token))
       if i > 0:
         length += 1  # space between tokens
-      if length > max:
+      if ((i < len(tokens) - 1 and length + 1 > max)  # account for ellipsis
+          or (i >= len(tokens) - 1 and length > max)):
         break
     else:
       i = len(tokens)

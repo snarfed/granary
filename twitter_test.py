@@ -1029,7 +1029,9 @@ class TwitterTest(testutil.TestCase):
       'url http://foo/bar ellipsize http://foo/baz',
       'long url http://www.foo/bar/baz/baj/biff/boof',
       'trailing slash http://www.foo/',
-      )
+      'exactly twenty chars',
+      'just over twenty one chars',  # would trunc after 'one' if we didn't account for the ellipsis
+    )
     created = (
       'my status',
       'too long, will be' + dots,
@@ -1037,7 +1039,9 @@ class TwitterTest(testutil.TestCase):
       'url http://foo/bar ellipsize' + dots,
       'long url http://www.foo/bar/baz/baj/biff/boof',
       'trailing slash http://www.foo/',
-      )
+      'exactly twenty chars',
+      'just over twenty' + dots,
+    )
     previewed = (
       'my status',
       'too long, will be' + dots,
@@ -1045,7 +1049,9 @@ class TwitterTest(testutil.TestCase):
       'url <a href="http://foo/bar">foo/bar</a> ellipsize' + dots,
       'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/bi...</a>',
       'trailing slash <a href="http://www.foo/">foo/</a>',
-      )
+      'exactly twenty chars',
+      'just over twenty' + dots,
+    )
 
     for content in created:
       self.expect_urlopen(
@@ -1069,6 +1075,35 @@ class TwitterTest(testutil.TestCase):
       got = self.twitter.preview_create(obj)
       self.assertEquals('<span class="verb">tweet</span>:', got.description)
       self.assertEquals(preview, got.content)
+
+  def test_ellipsize_real_tweet(self):
+    """Test ellipsizing a tweet that was giving us trouble. If you do not
+    account for the ellipsis when determining where to truncate, it will
+    truncate after 'send' and the result will be 141 characters.
+    """
+    orig = ('Hey #indieweb, the coming storm of webmention Spam may not be '
+            'far away. Those of us that have input fields to send webmentions '
+            'manually may already be getting them')
+    content = (u'Hey #indieweb, the coming storm of webmention Spam may not '
+               u'be far away. Those of us that have input fields to… '
+               u'(https://ben.thatmustbe.me/note/2015/1/31/1/)')
+    preview = (u'Hey #indieweb, the coming storm of webmention Spam may not '
+               u'be far away. Those of us that have input fields to… '
+               u'(<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>)')
+
+    self.expect_urlopen(
+      twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content.encode('utf-8')),
+      json.dumps(TWEET), data='')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(OBJECT)
+    del obj['image']
+    obj['content'] = orig
+    obj['url'] = 'https://ben.thatmustbe.me/note/2015/1/31/1/'
+
+    self.twitter.create(obj, include_link=True)
+    actual_preview = self.twitter.preview_create(obj, include_link=True).content
+    self.assertEquals(preview, actual_preview)
 
   def test_create_tweet_note_prefers_summary_then_content_then_name(self):
     obj = copy.deepcopy(OBJECT)
