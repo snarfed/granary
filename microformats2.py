@@ -24,6 +24,7 @@ $author
   $invitees
   $content
   </div>
+$video
 $photo
 $location
 $in_reply_tos
@@ -134,6 +135,7 @@ def object_to_json(obj, trim_nulls=True):
       'summary': [summary],
       'url': [url],
       'photo': [obj.get('image', {}).get('url', '')],
+      'video': [obj.get('stream', {}).get('url')],
       'published': [obj.get('published', '')],
       'updated':  [obj.get('updated', '')],
       'content': [{
@@ -335,6 +337,8 @@ def json_to_html(obj):
 
   photo = '\n'.join(img(url, 'u-photo', 'attachment')
                     for url in props.get('photo', []) if url)
+  video = '\n'.join(vid(url, None, 'u-video')
+                    for url in props.get('video', []) if url)
 
   # comments
   # http://indiewebcamp.com/comment-presentation#How_to_markup
@@ -356,6 +360,7 @@ def json_to_html(obj):
     author=hcard_to_html(author),
     location=hcard_to_html(prop.get('location')),
     photo=photo,
+    video=video,
     in_reply_tos=in_reply_tos,
     invitees='\n'.join([hcard_to_html(i) for i in props.get('invitee', [])]),
     content=content_html,
@@ -446,22 +451,34 @@ def render_content(obj, include_location=True):
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   for tag in obj.get('attachments', []) + tags.pop('article', []):
-    content  += '\n<p>'
-    url = tag.get('url') or obj.get('url')
     name = tag.get('displayName', '')
-    if url:
-      content += '\n<a class="link" href="%s">' % url
-
-    image = tag.get('image') or obj.get('image') or []
-    if image:
-      if isinstance(image, list):
-        image = image[0]
-      if image.get('url'):
-        content += '\n' + img(image['url'], 'thumbnail', name)
-
+    open_a_tag = False
+    if tag.get('objectType') == 'video':
+      video = tag.get('stream') or obj.get('stream')
+      if video:
+        if isinstance(video, list):
+          video = video[0]
+        poster = tag.get('image', {})
+        if poster and isinstance(poster, list):
+          poster = poster[0]
+        if video.get('url'):
+          content += '\n<p>%s</p>' % vid(
+            video['url'], poster.get('url'), 'thumbnail')
+    else:
+      content += '\n<p>'
+      url = tag.get('url') or obj.get('url')
+      if url:
+        content += '\n<a class="link" href="%s">' % url
+        open_a_tag = True
+      image = tag.get('image') or obj.get('image')
+      if image:
+        if isinstance(image, list):
+          image = image[0]
+        if image.get('url'):
+          content += '\n' + img(image['url'], 'thumbnail', name)
     if name:
       content += '\n<span class="name">%s</span>' % name
-    if url:
+    if open_a_tag:
       content += '\n</a>'
     summary = tag.get('summary')
     if summary and summary != name:
@@ -557,10 +574,37 @@ def maybe_linked_name(props):
 def img(src, cls, alt):
   """Returns an <img> string with the given src, class, and alt.
 
+  Args:
+    src: string, url of the image
+    cls: string, css class applied to the img tag
+
   Returns: string
   """
   return '<img class="%s" src="%s" alt=%s />' % (
       cls, src, xml.sax.saxutils.quoteattr(alt))
+
+
+def vid(src, poster, cls):
+  """Returns an <video> string with the given src and class
+
+  Args:
+    src: string, url of the video
+    poster: sring, optional. url of the poster or preview image
+    cls: string, css class applied to the video tag
+
+  Returns: string
+  """
+  html = '<video class="%s" src="%s"' % (cls, src)
+  if poster:
+    html += ' poster="%s"' % poster
+  html += ' controls>'
+
+  html += 'Your browser does not support the video tag. '
+  html += '<a href="%s">Click here to view directly' % src
+  if poster:
+    html += '<img src="%s"/>' % poster
+  html += '</a></video>'
+  return html
 
 
 def maybe_linked(text, url, classname=None):

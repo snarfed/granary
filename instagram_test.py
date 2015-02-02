@@ -102,6 +102,51 @@ MEDIA = {  # Instagram
     'id': '285812769105340251'
   },
 }
+VIDEO = {
+  'type': 'video',
+  'id': '123_456',
+  'link': 'http://instagram.com/p/ABC123/',
+  'videos': {
+    'low_resolution': {
+      'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_102.mp4',
+      'width': 480,
+      'height': 480
+    },
+    'standard_resolution': {
+      'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_101.mp4',
+      'width': 640,
+      'height': 640
+    },
+  },
+  'users_in_photo': None,
+  'filter': 'Vesper',
+  'tags': [],
+  'comments': {
+    'data': COMMENTS,
+    'count': len(COMMENTS),
+  },
+  'caption': None,
+  'user': USER,
+  'created_time': '1279340983',
+  'images': {
+    'low_resolution': {
+      'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_6.jpg',
+      'width': 306,
+      'height': 306
+    },
+    'thumbnail': {
+      'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_5.jpg',
+      'width': 150,
+      'height': 150
+    },
+    'standard_resolution': {
+      'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_7.jpg',
+      'width': 612,
+      'height': 612
+    }
+  },
+  'location': None
+}
 COMMENT_OBJS = [  # ActivityStreams
   {
     'objectType': 'comment',
@@ -245,6 +290,57 @@ POST_OBJ_WITH_LIKES = copy.deepcopy(POST_OBJ)
 POST_OBJ_WITH_LIKES['tags'] += LIKE_OBJS
 ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
 ACTIVITY_WITH_LIKES['object'] = POST_OBJ_WITH_LIKES
+VIDEO_OBJ = {
+  'attachments': [{
+    'image': [{
+      'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_7.jpg',
+      'width': 612,
+      'height': 612
+    }, {
+      'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_6.jpg',
+      'width': 306,
+      'height': 306
+    }, {
+      'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_5.jpg',
+      'width': 150,
+      'height': 150
+    }],
+    'stream': [{
+      'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_101.mp4',
+      'width': 640,
+      'height': 640
+    }, {
+      'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_102.mp4',
+      'width': 480,
+      'height': 480
+    }],
+    'objectType': 'video'
+  }],
+  'stream': {
+    'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_101.mp4'
+  },
+  'image': {
+    'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_7.jpg'
+  },
+  'author': ACTOR,
+  'url': 'http://instagram.com/p/ABC123/',
+  'replies': {
+    'items': COMMENT_OBJS,
+    'totalItems': len(COMMENT_OBJS),
+  },
+  'to': [{'alias': '@public', 'objectType': 'group'}],
+  'published': '2010-07-17T04:29:43',
+  'id': 'tag:instagram.com:123_456',
+  'objectType': 'video'
+}
+VIDEO_ACTIVITY = {
+  'url': 'http://instagram.com/p/ABC123/',
+  'object': VIDEO_OBJ,
+  'actor': ACTOR,
+  'verb': 'post',
+  'published': '2010-07-17T04:29:43',
+  'id': 'tag:instagram.com:123_456'
+}
 
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -422,6 +518,13 @@ class InstagramTest(testutil.HandlerTest):
       json.dumps({'data': []}))
     self.mox.ReplayAll()
     self.instagram.get_activities(group_id=source.SELF, min_id='135')
+
+  def test_get_video(self):
+    self.expect_urlopen('https://api.instagram.com/v1/media/5678',
+                        json.dumps({'data': VIDEO}))
+    self.mox.ReplayAll()
+    self.assert_equals([VIDEO_ACTIVITY], self.instagram.get_activities(activity_id='5678'))
+
 
   def test_get_comment(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',

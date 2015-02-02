@@ -348,7 +348,7 @@ class Instagram(source.Source):
       'id': self.tag_uri(id),
       # TODO: detect videos. (the type field is in the JSON respose but not
       # propagated into the Media object.)
-      'objectType': OBJECT_TYPES.get('image', 'photo'),
+      'objectType': OBJECT_TYPES.get(media.get('type', 'image'), 'photo'),
       'published': util.maybe_timestamp_to_rfc3339(media.get('created_time')),
       'author': self.user_to_actor(media.get('user')),
       'content': xml.sax.saxutils.escape(
@@ -356,13 +356,18 @@ class Instagram(source.Source):
       'url': media.get('link'),
       'to': [{'objectType': 'group', 'alias': '@public'}],
       'attachments': [{
-        'objectType': 'image',
+        'objectType': 'video' if 'videos' in media else 'image',
         # ActivityStreams 2.0 allows image to be a JSON array.
         # http://jasnell.github.io/w3c-socialwg-activitystreams/activitystreams2.html#link
         'image': sorted(
-          media.get('images').values(),
+          media.get('images', {}).values(),
           # sort by size, descending, since atom.py
           # uses the first image in the list.
+          key=operator.itemgetter('width'), reverse=True),
+        # video object defined in
+        # http://activitystrea.ms/head/activity-schema.html#rfc.section.4.18
+        'stream': sorted(
+          media.get('videos', {}).values(),
           key=operator.itemgetter('width'), reverse=True),
       }],
       # comments go in the replies field, according to the "Responses for
@@ -389,6 +394,12 @@ class Instagram(source.Source):
       image = media.get('images').get(version)
       if image:
         object['image'] = {'url': image.get('url')}
+        break
+
+    for version in ('standard_resolution', 'low_resolution', 'low_bandwidth'):
+      video = media.get('videos', {}).get(version)
+      if video:
+        object['stream'] = {'url': video.get('url')}
         break
 
     # http://instagram.com/developer/endpoints/locations/
