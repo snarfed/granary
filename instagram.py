@@ -27,17 +27,6 @@ import webapp2
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
 
-EMBED_SCRIPT = """
-<script async defer src="//platform.instagram.com/en_US/embeds.js"></script>
-"""
-
-EMBED_POST = """
-<p></p>
-<blockquote class="instagram-media" data-instgrm-captioned data-instgrm-version="4" style="margin: 0 auto;">
-  <a href="%s" target="_top"></a>
-</blockquote>
-"""
-
 API_USER_URL = 'https://api.instagram.com/v1/users/%s'
 API_USER_MEDIA_URL = 'https://api.instagram.com/v1/users/%s/media/recent/'
 API_USER_FEED_URL = 'https://api.instagram.com/v1/users/self/feed'
@@ -54,6 +43,14 @@ class Instagram(source.Source):
   DOMAIN = 'instagram.com'
   NAME = 'Instagram'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
+
+  EMBED_POST = """
+  <script async defer src="//platform.instagram.com/en_US/embeds.js"></script>
+  <p></p>
+  <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-version="4" style="margin: 0 auto;">
+    <a href="%s" target="_top"></a>
+  </blockquote>
+  """
 
   def __init__(self, access_token=None, allow_comment_creation=False):
     """Constructor.
@@ -261,7 +258,7 @@ class Instagram(source.Source):
         return source.creation_result(
           content=content,
           description='<span class="verb">comment</span> on <a href="%s">'
-                      'this post</a>:\n%s' % (base_url, EMBED_POST % base_url))
+                      'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
 
       self.urlopen(API_COMMENT_URL % base_id, data=urllib.urlencode({
         'access_token': self.access_token,
@@ -285,7 +282,7 @@ class Instagram(source.Source):
       if preview:
         return source.creation_result(
           description='<span class="verb">like</span> <a href="%s">'
-                      'this post</a>:\n%s' % (base_url, EMBED_POST % base_url))
+                      'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
 
       logging.debug('looking up media by shortcode %s', base_id)
       media_entry = json.loads(

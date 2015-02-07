@@ -72,19 +72,6 @@ RETWEET_LIMIT = 15
 # For read requests only.
 RETRIES = 3
 
-# HTML snippet that embeds a tweet.
-# https://dev.twitter.com/docs/embedded-tweets
-EMBED_SCRIPT = """
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-"""
-EMBED_TWEET = """
-<br />
-<blockquote class="twitter-tweet" lang="en" data-conversation="none" data-dnt="true">
-<p></p>
-<a href="%s"></a>
-</blockquote>
-"""
-
 # Current max tweet length and expected length of a t.co URL, as of 2014-03-11.
 # (This is actually just for https links; it's 22 for http.)
 #
@@ -121,6 +108,17 @@ class Twitter(source.Source):
   DOMAIN = 'twitter.com'
   NAME = 'Twitter'
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
+
+  # HTML snippet for embedding a tweet.
+  # https://dev.twitter.com/docs/embedded-tweets
+  EMBED_POST = """
+  <script async defer src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+  <br />
+  <blockquote class="twitter-tweet" lang="en" data-conversation="none" data-dnt="true">
+  <p></p>
+  <a href="%s"></a>
+  </blockquote>
+  """
 
   def __init__(self, access_token_key, access_token_secret):
     """Constructor.
@@ -520,7 +518,7 @@ class Twitter(source.Source):
       if preview:
         if is_reply:
           desc = ('<span class="verb">@-reply</span> to <a href="%s">this tweet'
-                  '</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
+                  '</a>:\n%s' % (base_url, self.embed_post(base_obj)))
         else:
           desc = '<span class="verb">tweet</span>:'
         if preview_content:
@@ -548,7 +546,7 @@ class Twitter(source.Source):
         return source.creation_result(
           content=preview_content,
           description='<span class="verb">@-reply</span> to <a href="%s">this tweet'
-                      '</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
+                      '</a>:\n%s' % (base_url, self.embed_post(base_obj)))
       else:
         content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
@@ -567,7 +565,7 @@ class Twitter(source.Source):
       if preview:
         return source.creation_result(
           description='<span class="verb">favorite</span> <a href="%s">'
-                      'this tweet</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
+                      'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE_URL, data=data).read()
@@ -585,7 +583,7 @@ class Twitter(source.Source):
       if preview:
         return source.creation_result(
           description='<span class="verb">retweet</span> <a href="%s">'
-                      'this tweet</a>:\n%s' % (base_url, EMBED_TWEET % base_url))
+                      'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
       else:
         data = urllib.urlencode({'id': base_id})
         resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())

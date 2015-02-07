@@ -121,21 +121,6 @@ RSVP_ENDPOINTS = {
   'rsvp-maybe': '%s/maybe',
 }
 
-# HTML snippet that embeds a post.
-# https://developers.facebook.com/docs/plugins/embedded-posts/
-EMBED_SCRIPT = """
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-"""
-EMBED_POST = """
-<div class="fb-post" data-href="%s"></div>
-"""
 EMBED_AUTHOR = """
 <a class="h-card" href="%s">
   <img class="profile u-photo" src="%s" width="32px" /> %s</a>"""
@@ -150,6 +135,16 @@ class Facebook(source.Source):
   DOMAIN = 'facebook.com'
   NAME = 'Facebook'
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
+
+  # HTML snippet for embedding a post.
+  # https://developers.facebook.com/docs/plugins/embedded-posts/
+  EMBED_POST = """
+  <div id="fb-root"></div>
+  <script async defer
+          src="//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687">
+  </script>
+  <div class="fb-post" data-href="%s"></div>
+  """
 
   def __init__(self, access_token=None):
     """Constructor.
@@ -398,7 +393,7 @@ class Facebook(source.Source):
       if preview:
         desc = """\
 <span class="verb">comment</span> on <a href="%s">this post</a>:
-<br /><br />%s<br />""" % (base_url, EMBED_POST % base_url)
+<br /><br />%s<br />""" % (base_url, self.embed_post(base_obj))
         return source.creation_result(content=preview_content, description=desc)
       else:
         if image_url:
@@ -435,7 +430,7 @@ class Facebook(source.Source):
             base_url, author, comment.get('content'))
         else:
           desc += '<a href="%s">this post</a>:\n<br /><br />%s<br />' % (
-            base_url, EMBED_POST % base_url)
+            base_url, self.embed_post(base_obj))
         return source.creation_result(description=desc)
 
       else:

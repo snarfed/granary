@@ -28,6 +28,14 @@ class GooglePlus(source.Source):
   DOMAIN = 'plus.google.com'
   NAME = 'Google+'
 
+  # HTML snippet for embedding a post.
+  # https://developers.google.com/+/web/embedded-post/
+  EMBED_POST = """
+  <script async defer type="text/javascript"
+          src="https://apis.google.com/js/platform.js"></script>
+  <div class="g-post" data-href="%s"></div>
+  """
+
   def __init__(self, auth_entity=None, access_token=None):
     """Constructor.
 

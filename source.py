@@ -78,7 +78,9 @@ class Source(object):
     DOMAIN: string, the source's domain
     NAME: string, the source's human-readable name
     FRONT_PAGE_TEMPLATE: string, the front page child template filename
-    AUTH_URL = string, the url for the "Authenticate" front page link
+    AUTH_URL: string, the url for the "Authenticate" front page link
+    EMBED_POST: string, the HTML for embedding a post. Should have a single %s
+      placeholder for the post URL.
   """
 
   def user_url(self, user_id):
@@ -554,6 +556,11 @@ class Source(object):
 
     return (values(before) != values(after) or
             values(before.get('object', {})) != values(after.get('object', {})))
+
+  @classmethod
+  def embed_post(cls, obj):
+    """Returns the HTML string for embedding a post object."""
+    return cls.EMBED_POST % obj.get('url')
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
