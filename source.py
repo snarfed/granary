@@ -562,6 +562,15 @@ class Source(object):
     """Returns the HTML string for embedding a post object."""
     return cls.EMBED_POST % obj.get('url')
 
+  @classmethod
+  def embed_actor(cls, actor):
+    return """
+<a class="h-card" href="%s">
+ <img class="profile u-photo" src="%s" width="32px" /> %s</a>""" % (
+   actor.get('url'),
+   actor.get('image', {}).get('url'),
+   actor.get('displayName'))
+
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
     return util.tag_uri(self.DOMAIN, name)

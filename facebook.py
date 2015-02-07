@@ -121,10 +121,6 @@ RSVP_ENDPOINTS = {
   'rsvp-maybe': '%s/maybe',
 }
 
-EMBED_AUTHOR = """
-<a class="h-card" href="%s">
-  <img class="profile u-photo" src="%s" width="32px" /> %s</a>"""
-
 # Values for post.action['name'] that indicate a link back to the original post
 SEE_ORIGINAL_ACTIONS=['see original']
 
@@ -425,7 +421,7 @@ class Facebook(source.Source):
           comment = self.comment_to_object(self.urlopen(base_id))
           author = comment.get('author', '')
           if author:
-            author = self.embed_author(author) + ':\n'
+            author = self.embed_actor(author) + ':\n'
           desc += '<a href="%s">this comment</a>:\n<br /><br />%s%s<br />' % (
             base_url, author, comment.get('content'))
         else:
@@ -642,12 +638,6 @@ class Facebook(source.Source):
         url, e)
 
     return base_obj
-
-  @staticmethod
-  def embed_author(author):
-    return EMBED_AUTHOR % (author.get('url'),
-                           author.get('image', {}).get('url'),
-                           author.get('displayName'))
 
   def post_to_activity(self, post):
     """Converts a post to an activity.
