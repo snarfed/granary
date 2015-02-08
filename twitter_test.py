@@ -1173,6 +1173,8 @@ class TwitterTest(testutil.TestCase):
       ('foo @you', 'http://twitter.com/you/status/100', 'foo @you'),
       # no @-mention of in-reply-to author, so we add it
       ('foo', 'http://twitter.com/you/status/100', '@you foo'),
+      # @-mention of in-reply-to author has a different capitalization
+      ('foo @You', 'http://twitter.com/you/status/100', 'foo @You'),
       # photo URL. tests Twitter.base_object()
       ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo'),
       # mobile.twitter.com URL. the mobile should be stripped from embed.
@@ -1186,7 +1188,7 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     tweet = copy.deepcopy(TWEET)
-    obj= copy.deepcopy(REPLY_OBJS[0])
+    obj = copy.deepcopy(REPLY_OBJS[0])
 
     for content, url, status in testdata:
       tweet.update({
