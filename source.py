@@ -68,6 +68,20 @@ def creation_result(content=None, description=None, abort=False,
   return CreationResult(content, description, abort, error_plain, error_html)
 
 
+def object_type(obj):
+  """Returns the object type, or the verb if it's an activity object.
+
+  Details: http://activitystrea.ms/specs/json/1.0/#activity-object
+
+  Args:
+    obj: decoded JSON ActivityStreams object
+
+  Returns: string, ActivityStreams object type
+  """
+  type = obj.get('objectType')
+  return type if type != 'activity' else obj.get('verb')
+
+
 class Source(object):
   """Abstract base class for a source (e.g. Facebook, Twitter).
 

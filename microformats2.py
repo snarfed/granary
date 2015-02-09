@@ -8,6 +8,7 @@ import itertools
 import urlparse
 import string
 
+import source
 from oauth_dropins.webutil import util
 
 # TODO: comments
@@ -103,7 +104,7 @@ def object_to_json(obj, trim_nulls=True):
                'rsvp-maybe': ['h-entry', 'h-as-rsvp'],
                'invite': ['h-entry'],
                }
-  obj_type = object_type(obj)
+  obj_type = source.object_type(obj)
   types = types_map.get(obj_type, ['h-entry'])
 
   url = obj.get('url', '')
@@ -170,7 +171,7 @@ def object_to_json(obj, trim_nulls=True):
     else:
       ret['properties'][prop] = [object_to_json(t, trim_nulls=False)
                                  for t in obj.get('tags', [])
-                                 if object_type(t) == type]
+                                 if source.object_type(t) == type]
 
   if trim_nulls:
     ret = util.trim_nulls(ret)
@@ -414,7 +415,7 @@ def render_content(obj, include_location=True):
     if 'startIndex' in t and 'length' in t:
       mentions.append(t)
     else:
-      tags.setdefault(object_type(t), []).append(t)
+      tags.setdefault(source.object_type(t), []).append(t)
 
   # linkify embedded mention tags inside content.
   if mentions:
@@ -483,20 +484,6 @@ def render_content(obj, include_location=True):
   content += tags_to_html(sum(tags.values(), []), 'tag')
 
   return content
-
-
-def object_type(obj):
-  """Returns the object type, or the verb if it's an activity object.
-
-  Details: http://activitystrea.ms/specs/json/1.0/#activity-object
-
-  Args:
-    obj: decoded JSON ActivityStreams object
-
-  Returns: string, ActivityStreams object type
-  """
-  type = obj.get('objectType')
-  return type if type != 'activity' else obj.get('verb')
 
 
 def first_props(props):
