@@ -54,6 +54,7 @@ API_CURRENT_USER_URL = \
   'https://api.twitter.com/1.1/account/verify_credentials.json'
 API_SEARCH_URL = \
     'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
+API_FAVORITES_URL = 'https://api.twitter.com/1.1/favorites/list.json?screen_name=%s&include_entities=true'
 API_POST_TWEET_URL = 'https://api.twitter.com/1.1/statuses/update.json'
 API_POST_RETWEET_URL = 'https://api.twitter.com/1.1/statuses/retweet/%s.json'
 API_POST_FAVORITE_URL = 'https://api.twitter.com/1.1/favorites/create.json'
@@ -188,6 +189,7 @@ class Twitter(source.Source):
     fetch tweets from the list @exampleuser/example-list you would call
     get_activities(user_id='exampleuser', group_id='example-list').
     """
+    activities = []
     if activity_id:
       tweets = [self.urlopen(API_STATUS_URL % activity_id)]
       total_count = len(tweets)
@@ -200,6 +202,14 @@ class Twitter(source.Source):
             'count': count + start_index,
             'screen_name': user_id,
           }
+
+        if fetch_likes:
+          liked = self.urlopen(API_FAVORITES_URL % (user_id or ''))
+          if liked:
+            user = self.urlopen(API_USER_URL % user_id if user_id
+                                else API_CURRENT_USER_URL)
+            activities += [self._make_like(tweet, user) for tweet in liked]
+
       elif group_id in (None, source.FRIENDS, source.ALL):
         url = API_TIMELINE_URL % (count + start_index)
       else:
@@ -260,13 +270,13 @@ class Twitter(source.Source):
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
 
-    activities = [self.tweet_to_activity(t) for t in tweets]
+    tweet_activities = [self.tweet_to_activity(t) for t in tweets]
 
     if fetch_replies:
-      self.fetch_replies(activities, min_id=min_id)
+      self.fetch_replies(tweet_activities, min_id=min_id)
 
     if fetch_likes:
-      for tweet, activity in zip(tweets, activities):
+      for tweet, activity in zip(tweets, tweet_activities):
         id = tweet['id_str']
         count = tweet.get('favorite_count')
         if count and count != cached.get('ATF ' + id):
@@ -282,6 +292,7 @@ class Twitter(source.Source):
           activity['object'].setdefault('tags', []).extend(likes)
           cache_updates['ATF ' + id] = count
 
+    activities += tweet_activities
     response = self._make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
     if cache_updates and cache is not None:

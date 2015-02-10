@@ -133,6 +133,8 @@ TWEET = {  # Twitter
   'in_reply_to_screen_name': 'other_user',
   'in_reply_to_status_id': 789,
   }
+TWEET_2 = copy.deepcopy(TWEET)
+TWEET_2['user']['name'] = 'foo'
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
@@ -203,6 +205,8 @@ ACTIVITY = {  # ActivityStreams
       }]
     },
   }
+ACTIVITY_2 = copy.deepcopy(ACTIVITY)
+ACTIVITY_2['actor']['displayName'] = 'foo'
 
 # This is the original tweet and reply chain:
 # 100 (snarfed_org) -- 200 (alice) -- 400 (snarfed_org) -- 500 (alice)
@@ -377,7 +381,7 @@ FAVORITE_EVENT = {  # Twitter
   'target': USER,
   'target_object' : TWEET,
 }
-LIKE_FROM_EVENT = {  # ActivityStreams
+LIKE_OBJ = {  # ActivityStreams
   'id': tag_uri('100_favorited_by_789'),
   'url': 'https://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
@@ -600,18 +604,13 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([ACTIVITY, ACTIVITY], self.twitter.get_activities())
 
   def test_get_activities_start_index_count(self):
-    tweet2 = copy.deepcopy(TWEET)
-    tweet2['user']['name'] = 'foo'
-    activity2 = copy.deepcopy(ACTIVITY)
-    activity2['actor']['displayName'] = 'foo'
-
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/home_timeline.json?'
       'include_entities=true&count=2',
-      json.dumps([TWEET, tweet2]))
+      json.dumps([TWEET, TWEET_2]))
     self.mox.ReplayAll()
 
-    self.assert_equals([activity2],
+    self.assert_equals([ACTIVITY_2],
                        self.twitter.get_activities(start_index=1, count=1))
 
   def test_get_activities_activity_id(self):
@@ -633,6 +632,21 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([], self.twitter.get_activities(group_id=source.SELF))
 
+  def test_get_activities_self_fetch_likes(self):
+    self.expect_urlopen('https://api.twitter.com/1.1/favorites/list.json?'
+                         'screen_name=&include_entities=true',
+                         json.dumps([TWEET_2]))
+    self.expect_urlopen('https://api.twitter.com/1.1/account/verify_credentials.json',
+                        json.dumps(FAVORITE_EVENT['source']))
+    self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
+                         'include_entities=true&count=0',
+                         json.dumps([TWEET]))
+    self.mox.ReplayAll()
+
+    got = self.twitter.get_activities(group_id=source.SELF, fetch_likes=True)
+    like_obj = copy.copy(LIKE_OBJ)
+    del like_obj['published']
+    self.assert_equals([like_obj, ACTIVITY], got)
 
   def test_get_activities_for_screen_name(self):
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
@@ -963,7 +977,7 @@ class TwitterTest(testutil.TestCase):
     self.assertEquals(None, self.twitter.retweet_to_object(TWEET))
 
   def test_streaming_event_to_object(self):
-    self.assert_equals(LIKE_FROM_EVENT,
+    self.assert_equals(LIKE_OBJ,
                        self.twitter.streaming_event_to_object(FAVORITE_EVENT))
 
     # not a favorite event
