@@ -143,7 +143,7 @@ class Twitter(source.Source):
       url = API_CURRENT_USER_URL
     else:
       url = API_USER_URL % screen_name
-    return self.user_to_actor(json.loads(self.urlopen(url).read()))
+    return self.user_to_actor(self.urlopen(url))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -189,8 +189,7 @@ class Twitter(source.Source):
     get_activities(user_id='exampleuser', group_id='example-list').
     """
     if activity_id:
-      resp = self.urlopen(API_STATUS_URL % activity_id)
-      tweets = [json.loads(resp.read())]
+      tweets = [self.urlopen(API_STATUS_URL % activity_id)]
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
@@ -213,7 +212,7 @@ class Twitter(source.Source):
       headers = {'If-None-Match': etag} if etag else {}
       total_count = None
       try:
-        resp = self.urlopen(url, headers=headers)
+        resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
         tweets = json.loads(resp.read())[start_index:]
       except urllib2.HTTPError, e:
@@ -257,7 +256,7 @@ class Twitter(source.Source):
           url = API_RETWEETS_URL % id
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
-          tweet['retweets'] = json.loads(self.urlopen(url).read())
+          tweet['retweets'] = self.urlopen(url)
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
 
@@ -329,8 +328,7 @@ class Twitter(source.Source):
           url = API_SEARCH_URL % urllib.quote_plus('@' + author)
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
-          resp = self.urlopen(url).read()
-          mentions[author] = json.loads(resp)['statuses']
+          mentions[author] = self.urlopen(url)['statuses']
 
         # look for replies. add any we find to the end of replies. this makes us
         # recursively follow reply chains to their end. (python supports
@@ -357,7 +355,7 @@ class Twitter(source.Source):
       activity_author_id: string activity author id. Ignored.
     """
     url = API_STATUS_URL % comment_id
-    return self.tweet_to_object(json.loads(self.urlopen(url).read()))
+    return self.tweet_to_object(self.urlopen(url))
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Returns an ActivityStreams 'share' activity object.
@@ -368,7 +366,7 @@ class Twitter(source.Source):
       share_id: string id of the share object
     """
     url = API_STATUS_URL % share_id
-    return self.retweet_to_object(json.loads(self.urlopen(url).read()))
+    return self.retweet_to_object(self.urlopen(url))
 
   def create(self, obj, include_link=False):
     """Creates a tweet, reply tweet, retweet, or favorite.
@@ -550,7 +548,7 @@ class Twitter(source.Source):
       else:
         content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
-        resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
+        resp = self.urlopen(API_POST_TWEET_URL, data=data)
         resp['type'] = 'comment'
 
     elif type == 'activity' and verb == 'like':
@@ -568,7 +566,7 @@ class Twitter(source.Source):
                       'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
       else:
         data = urllib.urlencode({'id': base_id})
-        self.urlopen(API_POST_FAVORITE_URL, data=data).read()
+        self.urlopen(API_POST_FAVORITE_URL, data=data)
         resp = {'type': 'like'}
 
     elif type == 'activity' and verb == 'share':
@@ -586,7 +584,7 @@ class Twitter(source.Source):
                       'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
       else:
         data = urllib.urlencode({'id': base_id})
-        resp = json.loads(self.urlopen(API_POST_RETWEET_URL % base_id, data=data).read())
+        resp = self.urlopen(API_POST_RETWEET_URL % base_id, data=data)
         resp['type'] = 'repost'
 
     elif type in ('note', 'article'):
@@ -596,7 +594,7 @@ class Twitter(source.Source):
       else:
         content = unicode(content).encode('utf-8')
         data = urllib.urlencode({'status': content})
-        resp = json.loads(self.urlopen(API_POST_TWEET_URL, data=data).read())
+        resp = self.urlopen(API_POST_TWEET_URL, data=data)
         resp['type'] = 'post'
 
     elif (verb and verb.startswith('rsvp-')) or verb == 'invite':
@@ -638,16 +636,20 @@ class Twitter(source.Source):
       ret = summary or name or content
     return ret.strip() if ret else None
 
-  def urlopen(self, url, **kwargs):
+  def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """
+    def request():
+      resp = twitter_auth.signed_urlopen(
+        url, self.access_token_key, self.access_token_secret, **kwargs)
+      return json.loads(resp.read()) if parse_response else resp
+
     if ('data' not in kwargs and not
         (isinstance(url, urllib2.Request) and url.get_method() == 'POST')):
       # this is a GET. retry up to 3x if we deadline.
       for attempt in range(RETRIES):
         try:
-          return twitter_auth.signed_urlopen(
-            url, self.access_token_key, self.access_token_secret, **kwargs)
+          return request()
         except httplib.HTTPException, e:
           if not str(e).startswith('Deadline exceeded'):
             raise
@@ -660,8 +662,7 @@ class Twitter(source.Source):
         logging.warning('Twitter API call failed! Retrying...')
 
     # last try. if it deadlines, let the exception bubble up.
-    return twitter_auth.signed_urlopen(
-      url, self.access_token_key, self.access_token_secret, **kwargs)
+    return request()
 
   def base_object(self, obj):
     """Returns the 'base' silo object that an object operates on.
