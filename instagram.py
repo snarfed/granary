@@ -48,7 +48,8 @@ class Instagram(source.Source):
   EMBED_POST = """
   <script async defer src="//platform.instagram.com/en_US/embeds.js"></script>
   <p></p>
-  <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-version="4" style="margin: 0 auto;">
+  <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-version="4"
+              style="margin: 0 auto; width: 100%%">
     <a href="%s" target="_top"></a>
   </blockquote>
   """

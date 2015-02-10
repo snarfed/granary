@@ -79,7 +79,7 @@ def object_type(obj):
   Returns: string, ActivityStreams object type
   """
   type = obj.get('objectType')
-  return type if type != 'activity' else obj.get('verb')
+  return type if type and type != 'activity' else obj.get('verb')
 
 
 class Source(object):
