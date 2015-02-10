@@ -30,6 +30,7 @@ OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
 API_USER_URL = 'https://api.instagram.com/v1/users/%s'
 API_USER_MEDIA_URL = 'https://api.instagram.com/v1/users/%s/media/recent/'
 API_USER_FEED_URL = 'https://api.instagram.com/v1/users/self/feed'
+API_USER_LIKES_URL = 'https://api.instagram.com/v1/users/%s/media/liked'
 API_MEDIA_URL = 'https://api.instagram.com/v1/media/%s'
 API_MEDIA_SHORTCODE_URL = 'https://api.instagram.com/v1/media/shortcode/%s'
 API_MEDIA_POPULAR_URL = 'https://api.instagram.com/v1/media/popular'
@@ -143,6 +144,15 @@ class Instagram(source.Source):
         if activity_id:
           media = [media]
         activities += [self.media_to_activity(m) for m in util.trim_nulls(media)]
+
+      if group_id == source.SELF and fetch_likes:
+        # add the user's own likes
+        liked = self.urlopen(
+          util.add_query_params(API_USER_LIKES_URL % user_id, kwargs))
+        if liked:
+          user = self.urlopen(API_USER_URL % user_id)
+          activities += [self.like_to_object(user, l['id'], l['link'])
+                         for l in liked]
 
     except urllib2.HTTPError, e:
       code, body = oauth_handlers.interpret_http_exception(e)

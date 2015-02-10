@@ -365,6 +365,18 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals([], self.instagram.get_activities(group_id=source.SELF))
 
+  def test_get_activities_self_fetch_likes(self):
+    self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
+                        json.dumps({'data': [MEDIA]}))
+    self.expect_urlopen('https://api.instagram.com/v1/users/self/media/liked',
+                        json.dumps({'data': [MEDIA_WITH_LIKES]}))
+    self.expect_urlopen('https://api.instagram.com/v1/users/self',
+                        json.dumps({'data': LIKES[0]}))
+    self.mox.ReplayAll()
+    self.assert_equals(
+      [ACTIVITY] + [LIKE_OBJS[0]],
+      self.instagram.get_activities(group_id=source.SELF, fetch_likes=True))
+
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen(
       'https://api.instagram.com/v1/users/self/feed?access_token=asdf',
