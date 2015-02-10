@@ -77,8 +77,9 @@ class Instagram(source.Source):
       # TODO add access_token to the data parameter for POST requests
       url = util.add_query_params(url, [('access_token', self.access_token)])
     logging.info('Fetching %s, kwargs %s', log_url, kwargs)
-    return urllib2.urlopen(urllib2.Request(url, **kwargs),
+    resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
                            timeout=appengine_config.HTTP_TIMEOUT)
+    return resp if kwargs.get('data') else json.loads(resp.read()).get('data')
 
   def user_url(self, username):
     return 'http://instagram.com/' + username
@@ -95,7 +96,7 @@ class Instagram(source.Source):
       user_id = 'self'
 
     return self.user_to_actor(util.trim_nulls(
-      json.loads(self.urlopen(API_USER_URL % user_id).read()).get('data', {})))
+      self.urlopen(API_USER_URL % user_id) or {}))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -130,23 +131,18 @@ class Instagram(source.Source):
     if min_id is not None:
       kwargs['min_id'] = min_id
 
+    activities = []
     try:
-      if activity_id:
-        resp = self.urlopen(
-          util.add_query_params(API_MEDIA_URL % activity_id, kwargs)).read()
-        media = [json.loads(resp).get('data', {})]
-      elif group_id == source.SELF:
-        resp = self.urlopen(
-          util.add_query_params(API_USER_MEDIA_URL % user_id, kwargs)).read()
-        media = json.loads(resp).get('data', [])
-      elif group_id == source.ALL:
-        resp = self.urlopen(
-          util.add_query_params(API_MEDIA_POPULAR_URL, kwargs)).read()
-        media = json.loads(resp).get('data', [])
-      elif group_id == source.FRIENDS:
-        resp = self.urlopen(
-          util.add_query_params(API_USER_FEED_URL, kwargs)).read()
-        media = json.loads(resp).get('data', [])
+      media_url = (API_MEDIA_URL % activity_id if activity_id else
+                   API_USER_MEDIA_URL % user_id if group_id == source.SELF else
+                   API_MEDIA_POPULAR_URL if group_id == source.ALL else
+                   API_USER_FEED_URL if group_id == source.FRIENDS else None)
+      assert media_url
+      media = self.urlopen(util.add_query_params(media_url, kwargs))
+      if media:
+        if activity_id:
+          media = [media]
+        activities += [self.media_to_activity(m) for m in util.trim_nulls(media)]
 
     except urllib2.HTTPError, e:
       code, body = oauth_handlers.interpret_http_exception(e)
@@ -160,13 +156,9 @@ class Instagram(source.Source):
 
       if body_obj.get('meta', {}).get('error_type') == 'APINotFoundError':
         logging.exception(body_obj.get('meta', {}).get('error_message'))
-        media = []
       else:
         raise e
 
-    # Instagram API returns null instead of leaving out fields.
-    media = util.trim_nulls(media)
-    activities = [self.media_to_activity(m) for m in media]
     response = self._make_activities_base_response(activities)
     return response
 
@@ -178,8 +170,7 @@ class Instagram(source.Source):
       activity_id: string activity id, optional
       activity_author_id: string activity author id. Ignored.
     """
-    media = util.trim_nulls(json.loads(
-      self.urlopen(API_MEDIA_URL % activity_id).read()).get('data', {}))
+    media = util.trim_nulls(self.urlopen(API_MEDIA_URL % activity_id) or {})
     for comment in media.get('comments', {}).get('data', []):
       if comment.get('id') == comment_id:
         return self.comment_to_object(comment, activity_id, media.get('link'))
@@ -285,8 +276,7 @@ class Instagram(source.Source):
                       'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
 
       logging.debug('looking up media by shortcode %s', base_id)
-      media_entry = json.loads(
-        self.urlopen(API_MEDIA_SHORTCODE_URL % base_id).read()).get('data', {})
+      media_entry = self.urlopen(API_MEDIA_SHORTCODE_URL % base_id) or {}
       media_id = media_entry.get('id')
       media_url = media_entry.get('link')
 
@@ -298,7 +288,7 @@ class Instagram(source.Source):
       }))
       # TODO use the stored user_json rather than looking it up each time.
       # oauth-dropins auth_entities should have the user_json.
-      me = json.loads(self.urlopen(API_USER_URL % 'self').read()).get('data')
+      me = self.urlopen(API_USER_URL % 'self')
       return source.creation_result(
         self.like_to_object(me, media_id, media_url))
 
