@@ -323,10 +323,10 @@ class Instagram(source.Source):
     object = self.media_to_object(media)
     activity = {
       'verb': 'post',
-      'published': object['published'],
+      'published': object.get('published'),
       'id': object['id'],
-      'url': object['url'],
-      'actor': object['author'],
+      'url': object.get('url'),
+      'actor': object.get('author'),
       'object': object,
       }
 
