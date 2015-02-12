@@ -1039,30 +1039,30 @@ class TwitterTest(testutil.TestCase):
     original = (
       'my status',
       'too long, will be ellipsized',
-      'url shorten http://foo/bar',
-      'url http://foo/bar ellipsize http://foo/baz',
-      'long url http://www.foo/bar/baz/baj/biff/boof',
-      'trailing slash http://www.foo/',
+      'url shorten http://foo.co/bar',
+      'url http://foo.co/bar ellipsize http://foo.co/baz',
+      'long url http://www.foo.co/bar/baz/baj/biff/boof',
+      'trailing slash http://www.foo.co/',
       'exactly twenty chars',
       'just over twenty one chars',  # would trunc after 'one' if we didn't account for the ellipsis
     )
     created = (
       'my status',
       'too long, will be' + dots,
-      'url shorten http://foo/bar',
-      'url http://foo/bar ellipsize' + dots,
-      'long url http://www.foo/bar/baz/baj/biff/boof',
-      'trailing slash http://www.foo/',
+      'url shorten http://foo.co/bar',
+      'url http://foo.co/bar ellipsize' + dots,
+      'long url http://www.foo.co/bar/baz/baj/biff/boof',
+      'trailing slash http://www.foo.co/',
       'exactly twenty chars',
       'just over twenty' + dots,
     )
     previewed = (
       'my status',
       'too long, will be' + dots,
-      'url shorten <a href="http://foo/bar">foo/bar</a>',
-      'url <a href="http://foo/bar">foo/bar</a> ellipsize' + dots,
-      'long url <a href="http://www.foo/bar/baz/baj/biff/boof">foo/bar/baz/baj/bi...</a>',
-      'trailing slash <a href="http://www.foo/">foo/</a>',
+      'url shorten <a href="http://foo.co/bar">foo.co/bar</a>',
+      'url <a href="http://foo.co/bar">foo.co/bar</a> ellipsize' + dots,
+      'long url <a href="http://www.foo.co/bar/baz/baj/biff/boof">foo.co/bar/baz/baj/bi...</a>',
+      'trailing slash <a href="http://www.foo.co/">foo.co/</a>',
       'exactly twenty chars',
       'just over twenty' + dots,
     )
@@ -1090,6 +1090,102 @@ class TwitterTest(testutil.TestCase):
       self.assertEquals('<span class="verb">tweet</span>:', got.description)
       self.assertEquals(preview, got.content)
 
+  def test_tweet_truncate(self):
+    """A bunch of tests to exercise the tweet shortening algorithm
+    """
+    twitter.MAX_TWEET_LENGTH = 140
+    twitter.TCO_LENGTH = 23
+
+    orig = (
+      u'Hey #indieweb, the coming storm of webmention Spam may not be '
+      u'far away. Those of us that have input fields to send webmentions '
+      u'manually may already be getting them')
+    expected = (
+      u'Hey #indieweb, the coming storm of webmention Spam may not '
+      u'be far away. Those of us that have input fields to… '
+      u'(https://ben.thatmustbe.me/note/2015/1/31/1/)')
+    result = self.twitter._truncate(orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/', False)
+    self.assertEquals(expected, result)
+
+    orig = expected = (
+      u'Despite names,\n'
+      u'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      u'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
+      u'@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+    result = self.twitter._truncate(orig, None, False)
+    self.assertEquals(expected, result)
+
+    orig = expected = (
+      u'@davewiner I stubbed a page on the wiki for '
+      u'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
+      u'welcome! @kevinmarks @julien51 @aaronpk')
+    result = self.twitter._truncate(orig, None, False)
+    self.assertEquals(expected, result)
+
+    orig = expected = (
+      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      u'that wikipedia.org/Contain_(Parentheses), a url with a query '
+      u'string;foo.withknown.com/example?query=parameters')
+    result = self.twitter._truncate(orig, None, False)
+    self.assertEquals(expected, result)
+
+    orig = (
+      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      u'long:foo.withknown.com/example?query=parameters')
+    expected = (
+      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      u'long:…')
+    result = self.twitter._truncate(orig, None, False)
+    self.assertEquals(expected, result)
+
+    twitter.MAX_TWEET_LENGTH = 20
+    twitter.TCO_LENGTH = 5
+
+    orig = u'url http://foo.co/bar ellipsize http://foo.co/baz'
+    expected = u'url http://foo.co/bar ellipsize…'
+    result = self.twitter._truncate(orig, None, False)
+    self.assertEquals(expected, result)
+
+    orig = u'too long\nextra whitespace\tbut should include url'
+    expected = u'too long… (http://obj.ca)'
+    result = self.twitter._truncate(orig, 'http://obj.ca', False)
+    self.assertEquals(expected, result)
+
+    orig = expected = u'trailing slash http://www.foo.co/'
+    result = self.twitter._truncate(orig, None, False)
+    self.assertEquals(expected, result)
+
+  def test_no_ellipsize_real_tweet(self):
+    self.maxDiff = None
+    orig = (
+      u'Despite names,\n'
+      u'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      u'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
+      u'@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+
+    preview = (
+      u'Despite names,\n'
+      u'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      u'<a href="http://indiewebcamp.com/2014-review#Indie_Term_Re-use">indiewebcamp.com/2014-review#In...</a>\n'
+      '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+
+    self.expect_urlopen(
+      twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(orig.encode('utf-8')),
+      json.dumps(TWEET), data='')
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(OBJECT)
+    del obj['image']
+    obj['content'] = orig
+    obj['url'] = 'http://tantek.com/2015/013/t1/names-ind-ie-indie-vc-not-indieweb'
+
+    actual_preview = self.twitter.preview_create(obj, include_link=False).content
+    self.assertEquals(preview, actual_preview)
+
+    self.twitter.create(obj, include_link=False)
+
   def test_ellipsize_real_tweet(self):
     """Test ellipsizing a tweet that was giving us trouble. If you do not
     account for the ellipsis when determining where to truncate, it will
@@ -1098,9 +1194,11 @@ class TwitterTest(testutil.TestCase):
     orig = ('Hey #indieweb, the coming storm of webmention Spam may not be '
             'far away. Those of us that have input fields to send webmentions '
             'manually may already be getting them')
+
     content = (u'Hey #indieweb, the coming storm of webmention Spam may not '
                u'be far away. Those of us that have input fields to… '
                u'(https://ben.thatmustbe.me/note/2015/1/31/1/)')
+
     preview = (u'Hey #indieweb, the coming storm of webmention Spam may not '
                u'be far away. Those of us that have input fields to… '
                u'(<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>)')
@@ -1166,7 +1264,7 @@ class TwitterTest(testutil.TestCase):
     twitter.TCO_LENGTH = 5
 
     self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=' +
-                        urllib.quote_plus('too long… (http://obj)'),
+                        urllib.quote_plus('too long… (http://obj.ca)'),
                         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
@@ -1174,11 +1272,11 @@ class TwitterTest(testutil.TestCase):
     del obj['image']
     obj.update({
         'content': 'too long\nextra whitespace\tbut should include url',
-        'url': 'http://obj',
+        'url': 'http://obj.ca',
         })
     self.twitter.create(obj, include_link=True)
     result = self.twitter.preview_create(obj, include_link=True)
-    self.assertIn(u'too long… (<a href="http://obj">obj</a>)',result.content)
+    self.assertIn(u'too long… (<a href="http://obj.ca">obj.ca</a>)',result.content)
 
   def test_create_reply(self):
     # tuples: (content, in-reply-to url, expected tweet)
@@ -1294,12 +1392,12 @@ class TwitterTest(testutil.TestCase):
     obj = {
       'objectType': 'note',
       'content': """\
-the caption. extra long so we can check that it accounts for the pic.twitter.com link. almost at 140 chars, just type a little more, ok done""",
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok done""",
       'image': {'url': 'http://my/picture'},
     }
 
     ellipsized = u"""\
-the caption. extra long so we can check that it accounts for the pic.twitter.com link. almost at 140 chars, just…"""
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just…"""
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertEquals('<span class="verb">tweet</span>:', preview.description)

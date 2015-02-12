@@ -485,42 +485,13 @@ class Twitter(source.Source):
         'link a Twitter URL or to an original post that publishes a '
         '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
-    # truncate and ellipsize content if it's over the character count. URLs will
-    # be t.co-wrapped, so include that when counting.
-    links = set(util.extract_links(content))
-    max = MAX_TWEET_LENGTH
+    # truncate and ellipsize content if it's over the character
+    # count. URLs will be t.co-wrapped, so include that when counting.
     include_url = obj.get('url') if include_link else None
-    if include_url:
-      max -= TCO_LENGTH + 3
-    if has_picture:
-      # twitter includes a pic.twitter.com link (and space) for pictures - one
-      # link total, regardless of number of pictures - so account for that.
-      max -= TCO_LENGTH + 1
+    content = self._truncate(content, include_url, has_picture)
 
-    length = 0
-    tokens = content.split()
-    for i, token in enumerate(tokens):
-      # extract_links() strips trailing slashes from URLs, so do the same here
-      # so we can compare.
-      as_url = token[:-1] if token.endswith('/') else token
-      length += (TCO_LENGTH if as_url in links else len(token))
-      if i > 0:
-        length += 1  # space between tokens
-      if ((i < len(tokens) - 1 and length + 1 > max)  # account for ellipsis
-          or (i >= len(tokens) - 1 and length > max)):
-        break
-    else:
-      i = len(tokens)
-
-    # normalize whitespace
-    # TODO: user opt in to preserve original whitespace (newlines, etc)
-    content = ' '.join(tokens[:i])
-    if i < len(tokens):
-      content += u'…'
-    if include_url:
-      content += ' (%s)' % include_url
     # linkify defaults to Twitter's link shortening behavior
-    preview_content = util.linkify(content, pretty=True)
+    preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
 
     if has_picture:
       image_url = obj.get('image').get('url')
@@ -628,6 +599,84 @@ class Twitter(source.Source):
       resp['url'] = base_url
 
     return source.creation_result(resp)
+
+  def _truncate(self, content, include_url, has_picture):
+    """Shorten tweet content to fit within the 140 character limit.
+
+    Args:
+      content: string
+      include_url: string
+      has_picture: boolean
+
+    Return: string, the possibly shortened and ellipsized tweet text
+    """
+    def trunc_to_nearest_word(text, length):
+      # try stripping trailing whitespace first
+      text = text.rstrip()
+      if len(text) <= length:
+        return text
+      # walk backwards until we find a delimiter
+      for j in xrange(length, -1, -1):
+        if text[j] in ',.;: \t\r\n':
+          return text[:j]
+
+    links, splits = util.tokenize_links(content, skip_bare_cc_tlds=True)
+    max = MAX_TWEET_LENGTH
+    if include_url:
+      max -= TCO_LENGTH + 3
+    if has_picture:
+      # twitter includes a pic.twitter.com link (and space) for pictures - one
+      # link total, regardless of number of pictures - so account for that.
+      max -= TCO_LENGTH + 1
+
+    tokens = []
+    for i in xrange(len(links)):
+      if splits[i]:
+        tokens.append(('text', splits[i]))
+      tokens.append(('link', links[i]))
+    if splits[-1]:
+      tokens.append(('text', splits[-1]))
+
+    length = 0
+    shortened = []
+    truncated = False
+
+    for i, (toktype, token) in enumerate(tokens):
+      tokmax = max - length
+
+      # links are all or nothing, either add it or don't
+      if toktype == 'link':
+        # account for ellipsis if this is not the last token
+        if i < len(tokens) - 1:
+          tokmax -= 1
+        if TCO_LENGTH > tokmax:
+          truncated = True
+          break
+        length += TCO_LENGTH
+        shortened.append(token)
+      # truncate text to the nearest word
+      else:
+        # account for ellipsis if this is not the last token, or it
+        # will be truncated
+        if i < len(tokens) - 1 or len(token) > tokmax:
+          tokmax -= 1
+        if len(token) > tokmax:
+          token = trunc_to_nearest_word(token, tokmax)
+          if token:
+            length += len(token)
+            shortened.append(token)
+          truncated = True
+          break
+        else:
+          length += len(token)
+          shortened.append(token)
+
+    content = ''.join(shortened)
+    if truncated:
+      content = content.rstrip() + u'…'
+    if include_url:
+      content += ' (%s)' % include_url
+    return content
 
   def _content_for_create(self, obj):
     """Returns the content text to use in create() and preview_create().

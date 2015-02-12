@@ -1223,7 +1223,7 @@ http://b http://c""",
 
   def test_create_post_include_link(self):
     self.expect_urlopen(facebook.API_FEED, '{}', data=urllib.urlencode(
-      {'message': 'my content\n\n(Originally published at: http://obj)'}))
+      {'message': 'my content\n\n(Originally published at: http://obj.co)'}))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
@@ -1233,12 +1233,12 @@ http://b http://c""",
         'content': 'my content',
         # displayName shouldn't override content
         'displayName': 'my name',
-        'url': 'http://obj',
+        'url': 'http://obj.co',
         })
     self.facebook.create(obj, include_link=True)
     preview = self.facebook.preview_create(obj, include_link=True)
     self.assertEquals(
-      'my content\n\n(Originally published at: <a href="http://obj">http://obj</a>)',
+      'my content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
   def test_create_comment(self):
