@@ -886,6 +886,11 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456_789'))
 
+  def test_get_comment_400s_id_without_underscore(self):
+    self.expect_urlopen('123', '{}', status=400)
+    self.mox.ReplayAll()
+    self.assertRaises(urllib2.HTTPError, self.facebook.get_comment, '123')
+
   def test_get_share(self):
     self.expect_urlopen('123', json.dumps(SHARE))
     self.mox.ReplayAll()

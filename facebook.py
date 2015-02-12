@@ -265,6 +265,8 @@ class Facebook(source.Source):
       if e.code == 400 and '_' in comment_id:
         # Facebook may want us to ask for this without the other prefixed id(s)
         resp = self.urlopen(comment_id.split('_')[-1])
+      else:
+        raise
 
     return self.comment_to_object(resp, post_author_id=activity_author_id)
 
