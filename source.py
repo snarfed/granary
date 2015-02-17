@@ -14,6 +14,7 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import collections
 import copy
+import logging
 import re
 import urlparse
 
@@ -546,7 +547,7 @@ class Source(object):
     return rsvps
 
   @staticmethod
-  def activity_changed(before, after):
+  def activity_changed(before, after, log=False):
     """Returns whether two activities or objects differ meaningfully.
 
     Only compares a few fields: object type, verb, content, audience (ie
@@ -562,14 +563,21 @@ class Source(object):
       before, after: dicts, ActivityStreams activities or objects
 
     Returns: boolean
-
     """
-    def values(x):
-      return [x.get(f) for f in ('objectType', 'verb', 'to', 'content',
-                                 'location', 'image', 'tags', 'attachments')]
+    def changed(b, a, field, label):
+      b_val = b.get(field)
+      a_val = a.get(field)
+      if b_val != a_val:
+        if log:
+          logging.debug('%s[%s] %s => %s', label, field, b_val, a_val)
+        return True
 
-    return (values(before) != values(after) or
-            values(before.get('object', {})) != values(after.get('object', {})))
+    obj_b = before.get('object', {})
+    obj_a = after.get('object', {})
+    return any(changed(before, after, field, 'activity') or
+               changed(obj_b, obj_a, field, 'activity[object]')
+               for field in ('objectType', 'verb', 'to', 'content', 'location',
+                             'image', 'tags', 'attachments'))
 
   @classmethod
   def embed_post(cls, obj):

@@ -246,7 +246,7 @@ class SourceTest(testutil.HandlerTest):
                           (fb_post, fb_post_edited),
                           (fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited)):
-      self.assertFalse(self.source.activity_changed(before, after),
+      self.assertFalse(self.source.activity_changed(before, after, log=True),
                                                     '%s\n%s' % (before, after))
 
     del fb_post_edited['object']['attachments']
@@ -262,5 +262,5 @@ class SourceTest(testutil.HandlerTest):
                           (fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited),
                           (fb_invite, fb_rsvp)):
-      self.assertTrue(self.source.activity_changed(before, after),
+      self.assertTrue(self.source.activity_changed(before, after, log=True),
                                                    '%s\n%s' % (before, after))
