@@ -623,8 +623,9 @@ class InstagramTest(testutil.HandlerTest):
         'profile_picture': 'http://alice/picture',
       }}))
 
-    # like obj doesn't have a url prior to publishing
+    # like obj doesn't have url or id prior to publishing
     to_publish = copy.deepcopy(LIKE_OBJS[0])
+    del to_publish['id']
     del to_publish['url']
 
     self.mox.ReplayAll()
@@ -655,8 +656,7 @@ class InstagramTest(testutil.HandlerTest):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    result = instagram.Instagram(
-      allow_comment_creation=True).create(to_publish)
+    result = instagram.Instagram(allow_comment_creation=True).create(to_publish)
     # TODO instagram does not give back a comment object; not sure how to
     # get the comment id. for now, just check that creation was successful
     # self.assert_equals(source.creation_result(COMMENT_OBJS[0]),
@@ -698,5 +698,18 @@ class InstagramTest(testutil.HandlerTest):
     self.assertIn('Cannot publish comments', create.error_plain)
     self.assertIn('Cannot', create.error_html)
 
-  def test_create_unsupported_type(self):
-    pass
+  def test_base_object(self):
+    self.assertEquals({
+      'id': '123',
+      'url': 'http://instagram.com/p/zHA5BLo1Mo/',
+      }, self.instagram.base_object({
+        'id': tag_uri('123_456_liked_by_789'),
+        'object': {'url': 'http://instagram.com/p/zHA5BLo1Mo/'},
+      }))
+
+    # with only URL, we don't know id
+    self.assertEquals(
+      {'url': 'http://instagram.com/p/zHA5BLo1Mo/'},
+      self.instagram.base_object({
+        'object': {'url': 'http://instagram.com/p/zHA5BLo1Mo/'},
+      }))

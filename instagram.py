@@ -10,12 +10,13 @@ https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import xml.sax.saxutils
+import datetime
 import json
 import logging
 import urllib
 import urllib2
+import urlparse
 import operator
-import datetime
 
 import appengine_config
 from oauth_dropins import handlers as oauth_handlers
@@ -286,22 +287,24 @@ class Instagram(source.Source):
           description='<span class="verb">like</span> <a href="%s">'
                       'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
 
-      logging.debug('looking up media by shortcode %s', base_id)
-      media_entry = self.urlopen(API_MEDIA_SHORTCODE_URL % base_id) or {}
-      media_id = media_entry.get('id')
-      media_url = media_entry.get('link')
+      if not base_id:
+        shortcode = urlparse.urlparse(base_url).path.rstrip('/').rsplit('/', 1)[-1]
+        logging.debug('looking up media by shortcode %s', shortcode)
+        media_entry = self.urlopen(API_MEDIA_SHORTCODE_URL % shortcode) or {}
+        base_id = media_entry.get('id')
+        base_url = media_entry.get('link')
 
       logging.info('posting like for media id id=%s, url=%s',
-                   media_id, media_url)
+                   base_id, base_url)
       # no response other than success/failure
-      self.urlopen(API_MEDIA_LIKES_URL % media_id, data=urllib.urlencode({
+      self.urlopen(API_MEDIA_LIKES_URL % base_id, data=urllib.urlencode({
         'access_token': self.access_token
       }))
       # TODO use the stored user_json rather than looking it up each time.
       # oauth-dropins auth_entities should have the user_json.
       me = self.urlopen(API_USER_URL % 'self')
       return source.creation_result(
-        self.like_to_object(me, media_id, media_url))
+        self.like_to_object(me, base_id, base_url))
 
     return source.creation_result(
       abort=True,
@@ -493,6 +496,23 @@ class Instagram(source.Source):
     })
 
     return util.trim_nulls(actor)
+
+  def base_object(self, obj):
+    """Extends the default base_object() to avoid using shortcodes as object ids.
+    """
+    base_obj = super(Instagram, self).base_object(obj)
+
+    base_id = base_obj.get('id')
+    if base_id and not base_id.replace('_', '').isdigit():
+      # this isn't id. it's probably a shortcode.
+      del base_obj['id']
+      id = obj.get('id')
+      if id:
+        parsed = util.parse_tag_uri(id)
+        if parsed and '_' in parsed[1]:
+          base_obj['id'] = parsed[1].split('_')[0]
+
+    return base_obj
 
 
 application = webapp2.WSGIApplication([
