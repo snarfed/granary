@@ -645,9 +645,7 @@ class Source(object):
         base_obj['id'] = parsed[1]
     elif url:
       path = urlparse.urlparse(url).path
-      if path.endswith('/'):
-        path = path[:-1]
-      base_obj['id'] = path.rsplit('/', 1)[-1]
+      base_obj['id'] = path.rstrip('/').rsplit('/', 1)[-1]
 
     return base_obj
 
