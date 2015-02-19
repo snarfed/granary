@@ -139,7 +139,9 @@ class Facebook(source.Source):
   <script async defer
           src="//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687">
   </script>
-  <div class="fb-post" data-href="%s"></div>
+  <div class="fb-post" data-href="%(url)s">
+    <div class="fb-xfbml-parse-ignore"><a href="%(url)s">%(content)s</a></div>
+  </div>
   """
 
   def __init__(self, access_token=None):

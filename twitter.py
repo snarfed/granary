@@ -115,9 +115,8 @@ class Twitter(source.Source):
   EMBED_POST = """
   <script async defer src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
   <br />
-  <blockquote class="twitter-tweet" lang="en" data-conversation="none" data-dnt="true">
-  <p></p>
-  <a href="%s"></a>
+  <blockquote class="twitter-tweet" lang="en" data-dnt="true">
+  <p><a href="%(url)s">%(content)s</a></p>
   </blockquote>
   """
 

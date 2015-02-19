@@ -33,7 +33,9 @@ class GooglePlus(source.Source):
   EMBED_POST = """
   <script async defer type="text/javascript"
           src="https://apis.google.com/js/platform.js"></script>
-  <div class="g-post" data-href="%s"></div>
+  <div class="g-post" data-href="%(url)s">
+    <p><a href="%(url)s" target="_top">%(content)s</a></p>
+  </div>
   """
 
   def __init__(self, auth_entity=None, access_token=None):

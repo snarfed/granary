@@ -94,8 +94,9 @@ class Source(object):
     NAME: string, the source's human-readable name
     FRONT_PAGE_TEMPLATE: string, the front page child template filename
     AUTH_URL: string, the url for the "Authenticate" front page link
-    EMBED_POST: string, the HTML for embedding a post. Should have a single %s
-      placeholder for the post URL.
+    EMBED_POST: string, the HTML for embedding a post. Should have a %(url)s
+      placeholder for the post URL and (optionally) a %(content)s placeholder
+      for the post content.
   """
 
   def user_url(self, user_id):
@@ -582,7 +583,11 @@ class Source(object):
   @classmethod
   def embed_post(cls, obj):
     """Returns the HTML string for embedding a post object."""
-    return cls.EMBED_POST % obj.get('url')
+    obj = copy.copy(obj)
+    for field in 'url', 'content':
+      if field not in obj:
+        obj.setdefault(field, obj.get('object', {}).get(field, ''))
+    return cls.EMBED_POST % obj
 
   @classmethod
   def embed_actor(cls, actor):
