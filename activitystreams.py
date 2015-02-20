@@ -125,7 +125,8 @@ class Handler(webapp2.RequestHandler):
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
     elif format == 'html':
       self.response.headers['Content-Type'] = 'text/html'
-      items = [microformats2.object_to_html(a['object']) for a in activities]
+      items = [microformats2.object_to_html(a['object'], a.get('context', {}))
+               for a in activities]
       self.response.out.write("""\
 <!DOCTYPE html>
 <html>
@@ -137,7 +138,8 @@ class Handler(webapp2.RequestHandler):
 """ % '\n'.join(items))
     elif format == 'json-mf2':
       self.response.headers['Content-Type'] = 'application/json'
-      items = [microformats2.object_to_json(a['object']) for a in activities]
+      items = [microformats2.object_to_json(a['object'], a.get('context', {}))
+               for a in activities]
       self.response.out.write(json.dumps({'items': items}, indent=2))
 
     if 'plaintext' in self.request.params:

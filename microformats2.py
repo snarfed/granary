@@ -81,11 +81,12 @@ def get_text(val):
   return val.get('value') if isinstance(val, dict) else val
 
 
-def object_to_json(obj, trim_nulls=True):
+def object_to_json(obj, ctx={}, trim_nulls=True):
   """Converts an ActivityStreams object to microformats2 JSON.
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
+    ctx: dict, a decoded JSON ActivityStreams context
     trim_nulls: boolean, whether to remove elements with null or empty values
 
   Returns: dict, decoded microformats2 JSON
@@ -123,7 +124,7 @@ def object_to_json(obj, trim_nulls=True):
   if location:
     location['type'] = ['h-card', 'p-location']
 
-  in_reply_tos = obj.get('inReplyTo', [])
+  in_reply_tos = obj.get('inReplyTo', []) + ctx.get('inReplyTo', [])
   if 'h-as-rsvp' in types and 'object' in obj:
     in_reply_tos.append(obj['object'])
   # TODO: more tags. most will be p-category?
@@ -271,7 +272,7 @@ def json_to_object(mf2):
   return util.trim_nulls(obj)
 
 
-def object_to_html(obj):
+def object_to_html(obj, ctx={}):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
@@ -282,12 +283,13 @@ def object_to_html(obj):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
+    ctx: dict, a decoded JSON ActivityStreams context
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
-  return json_to_html(object_to_json(obj, trim_nulls=False))
+  return json_to_html(object_to_json(obj, ctx=ctx, trim_nulls=False))
 
 
 def json_to_html(obj):

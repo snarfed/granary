@@ -7,6 +7,7 @@ for full testdata tests.
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import microformats2
+import re
 from oauth_dropins.webutil import testutil
 
 
@@ -72,6 +73,44 @@ class Microformats2Test(testutil.HandlerTest):
         'content': 'Entity &lt; link too',
         'tags': [{'url': 'http://my/link', 'startIndex': 12, 'length': 8}]
       }))
+
+  def test_object_to_json_note_with_in_reply_to(self):
+    self.assertEquals({
+      'type': ['h-entry'],
+      'properties': {
+        'content': [{
+          'html': '@hey great post',
+          'value': '@hey great post',
+        }],
+        'in-reply-to': ['http://reply/target'],
+      },
+    }, microformats2.object_to_json({
+        'content': '@hey great post',
+      }, ctx={
+        'inReplyTo': [{
+          'url': 'http://reply/target',
+        }]
+      }))
+
+  def test_object_to_html_note_with_in_reply_to(self):
+    expected = """\
+<article class="h-entry">
+<span class="u-uid"></span>
+<div class="e-content p-name">
+@hey great post
+</div>
+<a class="u-in-reply-to" href="http://reply/target"></a>
+</article>
+"""
+    result = microformats2.object_to_html({
+      'content': '@hey great post',
+    }, ctx={
+      'inReplyTo': [{
+        'url': 'http://reply/target',
+      }]
+    })
+    self.assertEquals(re.sub('\n\s*', '\n', expected),
+                      re.sub('\n\s*', '\n', result))
 
   def test_render_content_link_with_image(self):
     self.assert_equals("""\
