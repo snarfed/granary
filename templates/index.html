@@ -87,7 +87,8 @@ mailing list</a>.</p>
 / @me /
 <select id="group_id" name="group_id" onchange="render_form()">
   <option value="all">@all</input>
-  <option value="self">@self</input>
+  <option value="self" {% if domain == 'facebook.com' %} selected {% endif %}>
+    @self</input>
   <option value="friends">@friends</input>
 </select>
 / @app /
