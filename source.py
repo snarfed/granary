@@ -459,12 +459,14 @@ class Source(object):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
       uds = obj.setdefault('upstreamDuplicates', [])
-      if http not in uds and https not in uds:
+      if (http not in uds and https not in uds
+          # heuristic: ellipsized URLs are probably incomplete, so omit them.
+          and not http.endswith('...') and not http.endswith(u'…')):
         uds.append(http)
 
     obj.setdefault('tags', []).extend(
       {'objectType': 'article', 'url': u} for u in urls
-      # heuristic: ellipsized URLs are probably incomplete, so omit them.
+      # same heuristic from above
       if not u.endswith('...') and not u.endswith(u'…'))
     return activity
 

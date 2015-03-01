@@ -136,6 +136,16 @@ class SourceTest(testutil.HandlerTest):
       Source.original_post_discovery(activity)
       self.assert_equals([], activity['object']['tags'])
 
+    # exclude ellipsized PSCs and PSLs
+    for separator in '/', ' ':
+      for ellipsis in '...', u'…':
+        activity = {'object': {
+            'content': 'x (ttk.me%s123%s)' % (separator, ellipsis),
+            }}
+        Source.original_post_discovery(activity)
+        self.assert_equals([], activity['object']['tags'])
+
+
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
                                fetch_likes=True).AndReturn([ACTIVITY])
