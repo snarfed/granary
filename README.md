@@ -13,7 +13,15 @@
 About
 ---
 
-This is a library and REST API that converts Facebook, Google+, Instagram, and Twitter data to [ActivityStreams](http://activitystrea.ms/) format. You can try it out with these interactive demos:
+This is a library and REST API that fetches and converts social network data between a wide variety of formats:
+* Facebook, Google+, Instagram, and Twitter native APIs
+* [ActivityStreams](http://activitystrea.ms/)
+* [microformats2](http://microformats.org/wiki/microformats2) HTML
+* [microformats2](http://microformats.org/wiki/microformats2) JSON
+* [Atom](http://atomenabled.org/)
+* XML
+
+You can try it out with these interactive demos:
 
 http://facebook-activitystreams.appspot.com/  
 http://twitter-activitystreams.appspot.com/  
