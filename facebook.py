@@ -238,11 +238,13 @@ class Facebook(source.Source):
       try:
         # https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
         resp = self.urlopen(API_SHARES % ','.join(id_to_activity.keys()))
-        for id, shares in resp.items():
-          activity = id_to_activity.get(id)
-          if activity:
-            activity.setdefault('tags', []).extend(
-              [self.share_to_object(share) for share in shares.get('data', [])])
+        # usually the response is a dict, but when it's empty, it's a list. :(
+        if resp:
+          for id, shares in resp.items():
+            activity = id_to_activity.get(id)
+            if activity:
+              activity.setdefault('tags', []).extend(
+                [self.share_to_object(share) for share in shares.get('data', [])])
       except urllib2.HTTPError, e:
         # some sharedposts requests 400, not sure why.
         # https://github.com/snarfed/bridgy/issues/348
