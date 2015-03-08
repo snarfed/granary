@@ -243,6 +243,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'objectType': 'person',
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
+      'displayName': 'alice',
       'url': 'https://twitter.com/alice',
       'image': {'url': 'https://twitter.com/alice/profile_image?size=original'},
       },
@@ -255,6 +256,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'objectType': 'person',
       'id': 'tag:twitter.com:bob',
       'username': 'bob',
+      'displayName': 'bob',
       'url': 'https://twitter.com/bob',
       'image': {'url': 'https://twitter.com/bob/profile_image?size=original'},
       },
@@ -267,6 +269,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'objectType': 'person',
       'id': 'tag:twitter.com:snarfed_org',
       'username': 'snarfed_org',
+      'displayName': 'snarfed_org',
       'url': 'https://twitter.com/snarfed_org',
       'image': {'url': 'https://twitter.com/snarfed_org/profile_image?size=original'},
       },
@@ -279,6 +282,7 @@ REPLY_OBJS = [{  # ActivityStreams
       'objectType': 'person',
       'id': 'tag:twitter.com:alice',
       'username': 'alice',
+      'displayName': 'alice',
       'url': 'https://twitter.com/alice',
       'image': {'url': 'https://twitter.com/alice/profile_image?size=original'},
       },
@@ -392,6 +396,7 @@ LIKE_OBJ = {  # ActivityStreams
     'id': tag_uri('eve'),
     'numeric_id': '789',
     'username': 'eve',
+    'displayName': 'eve',
     'url': 'https://twitter.com/eve',
       'image': {'url': 'https://twitter.com/eve/profile_image?size=original'},
     },
@@ -453,6 +458,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'objectType': 'person',
     'id': tag_uri('jo'),
     'username': 'jo',
+    'displayName': 'jo',
     'url': 'https://twitter.com/jo',
     'image': {'url': 'https://twitter.com/jo/profile_image?size=original'},
     },
@@ -1008,6 +1014,18 @@ class TwitterTest(testutil.TestCase):
     del user['url']
     actor['url'] = 'https://twitter.com/snarfed_org'
     self.assert_equals(actor, self.twitter.user_to_actor(user))
+
+  def test_user_to_actor_displayName_fallback(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': tag_uri('schnarfed'),
+      'username': 'schnarfed',
+      'displayName': 'schnarfed',
+      'url': 'https://twitter.com/schnarfed',
+      'image': {'url': 'https://twitter.com/schnarfed/profile_image?size=original'},
+    }, self.twitter.user_to_actor({
+      'screen_name': 'schnarfed',
+    }))
 
   def test_user_to_actor_minimal(self):
     # just test that we don't crash

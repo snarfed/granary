@@ -488,7 +488,7 @@ class Instagram(source.Source):
 
     actor.update({
       'objectType': 'person',
-      'displayName': user.get('full_name'),
+      'displayName': user.get('full_name') or username,
       'image': {'url': user.get('profile_picture')},
       'url': url,
       'description': user.get('bio')

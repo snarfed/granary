@@ -950,7 +950,7 @@ class Twitter(source.Source):
 
     return util.trim_nulls({
       'objectType': 'person',
-      'displayName': user.get('name'),
+      'displayName': user.get('name') or username,
       'image': {'url': image},
       'id': self.tag_uri(username),
       # numeric_id is our own custom field that always has the source's numeric

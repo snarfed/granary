@@ -588,6 +588,18 @@ class InstagramTest(testutil.HandlerTest):
     actor['url'] = 'http://instagram.com/snarfed'
     self.assert_equals(actor, self.instagram.user_to_actor(user))
 
+  def test_user_to_actor_displayName_fallback(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': tag_uri('420973239'),
+      'username': 'snarfed',
+      'displayName': 'snarfed',
+      'url': 'http://instagram.com/snarfed',
+    }, self.instagram.user_to_actor({
+      'id': '420973239',
+      'username': 'snarfed',
+    }))
+
   def test_user_to_actor_minimal(self):
     self.assert_equals({'id': tag_uri('420973239'), 'username': None},
                        self.instagram.user_to_actor({'id': '420973239'}))

@@ -1026,6 +1026,17 @@ class FacebookTest(testutil.HandlerTest):
     actor['url'] = 'https://www.facebook.com/snarfed.org'
     self.assert_equals(actor, self.facebook.user_to_actor(user))
 
+  def test_user_to_actor_displayName_fallback(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': tag_uri('snarfed.org'),
+      'username': 'snarfed.org',
+      'displayName': 'snarfed.org',
+      'url': 'https://www.facebook.com/snarfed.org',
+    }, self.facebook.user_to_actor({
+      'username': 'snarfed.org',
+    }))
+
   def test_user_to_actor_multiple_urls(self):
     actor = self.facebook.user_to_actor({
       'id': '123',

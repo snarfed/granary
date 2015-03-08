@@ -941,13 +941,11 @@ class Facebook(source.Source):
       return {}
 
     # facebook implements this as a 302 redirect
-    image_url = 'https://graph.facebook.com/v2.2/%s/picture?type=large' % id
     actor = {
       # FB only returns the type field if you fetch the object with ?metadata=1
       # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.2#introspection
       'objectType': 'page' if user.get('type') == 'page' else 'person',
       'displayName': user.get('name') or username,
-      'image': {'url': image_url},
       'id': self.tag_uri(handle),
       'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'username': username,
@@ -958,7 +956,12 @@ class Facebook(source.Source):
     # numeric_id is our own custom field that always has the source's numeric
     # user id, if available.
     if util.is_int(id):
-      actor['numeric_id'] = id
+      actor.update({
+        'numeric_id': id,
+        'image': {
+          'url': 'https://graph.facebook.com/v2.2/%s/picture?type=large' % id,
+        },
+      })
 
     # extract web site links. extract_links uniquifies and preserves order
     urls = util.extract_links(user.get('website'))
