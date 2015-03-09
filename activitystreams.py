@@ -96,7 +96,11 @@ class Handler(webapp2.RequestHandler):
     args = [None if a in defaults else a
             for a, defaults in zip(args, PATH_DEFAULTS)]
     user_id = args[0] if args else None
-    paging_params = self.get_paging_params()
+    kwargs = self.get_paging_params()
+    kwargs.update({
+      key: self.request.params[key]
+      for key in ('search_query',)
+      if key in self.request.params})
 
     # extract format
     expected_formats = ('json', 'atom', 'xml', 'html', 'json-mf2')
@@ -106,7 +110,7 @@ class Handler(webapp2.RequestHandler):
                                (format, expected_formats))
 
     # get activities and build response
-    response = source.get_activities_response(*args, **paging_params)
+    response = source.get_activities_response(*args, **kwargs)
     activities = response['items']
 
     # encode and write response

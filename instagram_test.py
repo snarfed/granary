@@ -519,6 +519,13 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.instagram.get_activities(group_id=source.SELF, min_id='135')
 
+  def test_get_activities_search(self):
+    self.expect_urlopen('https://api.instagram.com/v1/tags/indieweb/media/recent',
+                        json.dumps({'data': [MEDIA]}))
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.instagram.get_activities(
+      group_id=source.SEARCH, search_query='indieweb'))
+
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
                         json.dumps({'data': VIDEO}))

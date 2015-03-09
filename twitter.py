@@ -149,7 +149,8 @@ class Twitter(source.Source):
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, fetch_events=False):
+                              fetch_shares=False, fetch_events=False,
+                              search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -208,7 +209,8 @@ class Twitter(source.Source):
             user = self.urlopen(API_USER_URL % user_id if user_id
                                 else API_CURRENT_USER_URL)
             activities += [self._make_like(tweet, user) for tweet in liked]
-
+      elif group_id == source.SEARCH:
+        url = API_SEARCH_URL % urllib.quote_plus(search_query)
       elif group_id in (None, source.FRIENDS, source.ALL):
         url = API_TIMELINE_URL % (count + start_index)
       else:
@@ -223,7 +225,10 @@ class Twitter(source.Source):
       try:
         resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
-        tweets = json.loads(resp.read())[start_index:]
+        tweet_obj = json.loads(resp.read())
+        if group_id == source.SEARCH:
+          tweet_obj = tweet_obj.get('statuses', [])
+        tweets = tweet_obj[start_index:]
       except urllib2.HTTPError, e:
         if e.code == 304:  # Not Modified, from a matching ETag
           tweets = []

@@ -33,6 +33,7 @@ API_USER_MEDIA_URL = 'https://api.instagram.com/v1/users/%s/media/recent/'
 API_USER_FEED_URL = 'https://api.instagram.com/v1/users/self/feed'
 API_USER_LIKES_URL = 'https://api.instagram.com/v1/users/%s/media/liked'
 API_MEDIA_URL = 'https://api.instagram.com/v1/media/%s'
+API_MEDIA_SEARCH_URL = 'https://api.instagram.com/v1/tags/%s/media/recent'
 API_MEDIA_SHORTCODE_URL = 'https://api.instagram.com/v1/media/shortcode/%s'
 API_MEDIA_POPULAR_URL = 'https://api.instagram.com/v1/media/popular'
 API_MEDIA_LIKES_URL = 'https://api.instagram.com/v1/media/%s/likes'
@@ -104,7 +105,8 @@ class Instagram(source.Source):
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, fetch_events=False):
+                              fetch_shares=False, fetch_events=False,
+                              search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -138,6 +140,7 @@ class Instagram(source.Source):
       media_url = (API_MEDIA_URL % activity_id if activity_id else
                    API_USER_MEDIA_URL % user_id if group_id == source.SELF else
                    API_MEDIA_POPULAR_URL if group_id == source.ALL else
+                   API_MEDIA_SEARCH_URL % search_query if group_id == source.SEARCH else
                    API_USER_FEED_URL if group_id == source.FRIENDS else None)
       assert media_url
       media = self.urlopen(util.add_query_params(media_url, kwargs))

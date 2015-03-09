@@ -25,6 +25,7 @@ SELF = '@self'
 ALL = '@all'
 FRIENDS = '@friends'
 APP = '@app'
+SEARCH = '@search'
 
 RSVP_TO_EVENT = {
   'rsvp-yes': 'attending',

@@ -26,6 +26,9 @@ def tag_uri(name):
   return util.tag_uri('twitter.com', name)
 
 TIMELINE = 'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0'
+SEARCH_URL = 'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
+
+
 
 USER = {  # Twitter
   'created_at': 'Sat May 01 21:42:43 +0000 2010',
@@ -830,6 +833,18 @@ class TwitterTest(testutil.TestCase):
       self.mox.ReplayAll()
       self.assertRaises(exc.__class__, self.twitter.get_activities_response)
       self.mox.ResetAll()
+
+  def test_get_activities_search(self):
+    self.expect_urlopen(SEARCH_URL % 'indieweb', json.dumps({
+      'statuses': [TWEET, TWEET],
+      'search_metadata': {
+        'max_id': 250126199840518145,
+      },
+    }))
+    self.mox.ReplayAll()
+    self.assert_equals(
+      [ACTIVITY, ACTIVITY], self.twitter.get_activities(
+        group_id=source.SEARCH, search_query='indieweb'))
 
   def test_get_comment(self):
     self.expect_urlopen(
