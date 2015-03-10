@@ -391,7 +391,7 @@ def hcard_to_html(hcard):
   return HCARD.substitute(
     prop,
     types=' '.join(hcard['type']),
-    photo=img(photo, 'u-photo', prop.get('name', '')) if photo else '',
+    photo=img(photo, 'u-photo', '') if photo else '',
     linked_name=maybe_linked_name(hcard['properties']))
 
 

@@ -175,7 +175,7 @@ foo
 
 <div class="h-card p-author">
 <div class="p-name">a " b ' c</div>
-<img class="u-photo" src="img" alt="a &quot; b ' c" />
+<img class="u-photo" src="img" alt="" />
 </div>
 
 <div class="e-content p-name">
