@@ -11,15 +11,14 @@ import string
 import source
 from oauth_dropins.webutil import util
 
-# TODO: comments
 HENTRY = string.Template("""\
 <article class="$types">
   <span class="u-uid">$uid</span>
-  $linked_name
   $summary
   $published
   $updated
 $author
+  $linked_name
   <div class="$content_classes">
   $invitees
   $content
