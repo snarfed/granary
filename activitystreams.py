@@ -96,11 +96,6 @@ class Handler(webapp2.RequestHandler):
     args = [None if a in defaults else a
             for a, defaults in zip(args, PATH_DEFAULTS)]
     user_id = args[0] if args else None
-    kwargs = self.get_paging_params()
-    kwargs.update({
-      key: self.request.params[key]
-      for key in ('search_query',)
-      if key in self.request.params})
 
     # extract format
     expected_formats = ('json', 'atom', 'xml', 'html', 'json-mf2')
@@ -110,7 +105,7 @@ class Handler(webapp2.RequestHandler):
                                (format, expected_formats))
 
     # get activities and build response
-    response = source.get_activities_response(*args, **kwargs)
+    response = source.get_activities_response(*args, **self.get_kwargs())
     activities = response['items']
 
     # encode and write response
@@ -150,8 +145,9 @@ class Handler(webapp2.RequestHandler):
       # override response content type
       self.response.headers['Content-Type'] = 'text/plain'
 
-  def get_paging_params(self):
-    """Extracts, normalizes and returns the startIndex and count query params.
+  def get_kwargs(self):
+    """Extracts, normalizes and returns the startIndex, count, and search
+    query params.
 
     Returns:
       dict with 'start_index' and 'count' keys mapped to integers
@@ -164,7 +160,13 @@ class Handler(webapp2.RequestHandler):
     else:
       count = min(count, ITEMS_PER_PAGE)
 
-    return {'start_index': start_index, 'count': count}
+    kwargs = {'start_index': start_index, 'count': count}
+
+    search_query = self.request.get('q')
+    if search_query:
+      kwargs['search_query'] = search_query
+
+    return kwargs
 
   def get_positive_int(self, param):
     try:

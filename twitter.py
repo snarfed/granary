@@ -53,7 +53,7 @@ API_USER_URL = \
 API_CURRENT_USER_URL = \
   'https://api.twitter.com/1.1/account/verify_credentials.json'
 API_SEARCH_URL = \
-    'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
+    'https://api.twitter.com/1.1/search/tweets.json?q=%(q)s&include_entities=true&result_type=recent&count=%(count)d'
 API_FAVORITES_URL = 'https://api.twitter.com/1.1/favorites/list.json?screen_name=%s&include_entities=true'
 API_POST_TWEET_URL = 'https://api.twitter.com/1.1/statuses/update.json'
 API_POST_RETWEET_URL = 'https://api.twitter.com/1.1/statuses/retweet/%s.json'
@@ -210,7 +210,10 @@ class Twitter(source.Source):
                                 else API_CURRENT_USER_URL)
             activities += [self._make_like(tweet, user) for tweet in liked]
       elif group_id == source.SEARCH:
-        url = API_SEARCH_URL % urllib.quote_plus(search_query)
+        url = API_SEARCH_URL % {
+          'q': urllib.quote_plus(search_query),
+          'count': count + start_index,
+        }
       elif group_id in (None, source.FRIENDS, source.ALL):
         url = API_TIMELINE_URL % (count + start_index)
       else:
@@ -340,7 +343,10 @@ class Twitter(source.Source):
         # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
         author = reply['actor']['username']
         if author not in mentions:
-          url = API_SEARCH_URL % urllib.quote_plus('@' + author)
+          url = API_SEARCH_URL % {
+            'q': urllib.quote_plus('@' + author),
+            'count': 100,
+          }
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
           mentions[author] = self.urlopen(url)['statuses']

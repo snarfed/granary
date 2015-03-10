@@ -163,6 +163,8 @@ class Source(object):
       fetch_likes: boolean, whether to fetch each activity's likes also
       fetch_shares: boolean, whether to fetch each activity's shares also
       fetch_events: boolean, whether to fetch the user's events also
+      search_query: string, an optional search query, only for use with
+         @search group_id
 
     Returns:
       response dict with values based on OpenSocial ActivityStreams REST API:

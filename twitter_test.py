@@ -25,9 +25,8 @@ from oauth_dropins.webutil import util
 def tag_uri(name):
   return util.tag_uri('twitter.com', name)
 
-TIMELINE = 'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=0'
-SEARCH_URL = 'https://api.twitter.com/1.1/search/tweets.json?q=%s&include_entities=true&result_type=recent&count=100'
-
+TIMELINE = twitter.API_TIMELINE_URL % 0
+SEARCH_URL = twitter.API_SEARCH_URL
 
 
 USER = {  # Twitter
@@ -835,7 +834,7 @@ class TwitterTest(testutil.TestCase):
       self.mox.ResetAll()
 
   def test_get_activities_search(self):
-    self.expect_urlopen(SEARCH_URL % 'indieweb', json.dumps({
+    self.expect_urlopen(SEARCH_URL % {'q': 'indieweb', 'count': 0}, json.dumps({
       'statuses': [TWEET, TWEET],
       'search_metadata': {
         'max_id': 250126199840518145,
