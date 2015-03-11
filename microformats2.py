@@ -3,10 +3,11 @@
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
 
-import xml.sax.saxutils
+import copy
 import itertools
 import urlparse
 import string
+import xml.sax.saxutils
 
 import source
 from oauth_dropins.webutil import util
@@ -288,7 +289,7 @@ def object_to_html(obj, ctx={}):
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
-  return json_to_html(object_to_json(obj, ctx=ctx, trim_nulls=False))
+  return json_to_html(object_to_json(obj, ctx=ctx))
 
 
 def json_to_html(obj):
@@ -308,7 +309,7 @@ def json_to_html(obj):
   if obj['type'][0] == 'h-card':
     return hcard_to_html(obj)
 
-  props = obj['properties']
+  props = copy.copy(obj['properties'])
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
                            for url in get_string_urls(props.get('in-reply-to', [])))
 
@@ -318,23 +319,26 @@ def json_to_html(obj):
   if author:
     author['type'].append('p-author')
 
-  content = prop.get('content', {})
-  content_html = content.get('html', '') or content.get('value', '')
-  content_classes = ['e-content']
-  if not prop.get('name'):
-    content_classes.append('p-name')
-
-  summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
-             if prop.get('summary') else '')
-
   # if this post is itself a like or repost, link to its target(s).
+  # (do this *before* content since it sets props['name'] if necessary.)
   likes_and_reposts = []
   for verb in 'like', 'repost':
     if ('h-as-%s' % verb) in obj['type']:
-      if not content_html:
-        content_html = '%ss this.\n' % verb
+      if not props.get('name'):
+        props['name'] = ['%ss this.' % verb]
       likes_and_reposts += ['<a class="u-%s u-%s-of" href="%s"></a>' %
                             (verb, verb, url) for url in props.get(verb)]
+
+  content = prop.get('content', {})
+  content_html = content.get('html', '') or content.get('value', '')
+  content_classes = []
+  if content_html:
+    content_classes.append('e-content')
+    if not props.get('name'):
+      content_classes.append('p-name')
+
+  summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
+             if prop.get('summary') else '')
 
   photo = '\n'.join(img(url, 'u-photo', 'attachment')
                     for url in props.get('photo', []) if url)
