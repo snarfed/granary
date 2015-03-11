@@ -266,8 +266,6 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'http://instagram.com/alizz',
       'image': {'url': 'http://alice/picture'},
       },
-    'displayName': 'Alice likes this.',
-    'content': 'likes this.',
     }, {
     'id': tag_uri('123_456_liked_by_9'),
     'url': 'http://instagram.com/p/ABC123/#liked-by-9',
@@ -282,8 +280,6 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'http://bob.com/',
       'image': {'url': 'http://bob/picture'},
       },
-    'displayName': 'Bob likes this.',
-    'content': 'likes this.',
     },
   ]
 POST_OBJ_WITH_LIKES = copy.deepcopy(POST_OBJ)

@@ -323,8 +323,6 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'https://www.facebook.com/100004',
       'image': {'url': 'https://graph.facebook.com/v2.2/100004/picture?type=large'},
       },
-    'displayName': 'Alice X likes this.',
-    'content': 'likes this.',
     }, {
     'id': tag_uri('10100176064482163_liked_by_683713'),
     'url': 'https://www.facebook.com/212038/posts/10100176064482163',
@@ -339,8 +337,6 @@ LIKE_OBJS = [{  # ActivityStreams
       'url': 'https://www.facebook.com/683713',
       'image': {'url': 'https://graph.facebook.com/v2.2/683713/picture?type=large'},
       },
-    'displayName': 'Bob Y likes this.',
-    'content': 'likes this.',
     },
   ]
 SHARE_OBJ = {  # ActivityStreams
@@ -1001,12 +997,10 @@ class FacebookTest(testutil.HandlerTest):
 
     del share['description']
     del share['name']
+    del share_obj['content']
+    del share_obj['displayName']
     del share_obj['object']['content']
     del share_obj['object']['displayName']
-    share_obj.update({
-      'content': 'shared this.',
-      'displayName': 'Alice X shared this.',
-    })
     self.assert_equals(share_obj, self.facebook.share_to_object(share))
 
   def test_user_to_actor_full(self):

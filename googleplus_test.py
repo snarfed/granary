@@ -84,8 +84,6 @@ LIKE = {  # ActivityStreams
     'url': 'https://profiles.google.com/alice',
     'image': {'url': 'https://alice/picture'},
     },
-  'displayName': 'Alice +1ed this.',
-  'content': '+1ed this.',
   }
 RESHARER = {  # Google+
   'kind': 'plus#person',
@@ -107,8 +105,6 @@ SHARE = {  # ActivityStreams
     'url': 'https://plus.google.com/bob',
     'image': {'url': 'https://bob/picture'},
     },
-  'displayName': 'Bob reshared this.',
-  'content': 'reshared this.',
   }
 
 

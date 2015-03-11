@@ -461,7 +461,6 @@ class Instagram(source.Source):
         'verb': 'like',
         'object': {'url': media_url},
         'author': self.user_to_actor(liker),
-        'content': 'likes this.',
     })
 
   def user_to_actor(self, user):

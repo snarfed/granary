@@ -829,15 +829,18 @@ class Twitter(source.Source):
       'content': tweet.get('text'),
       }
 
+    content_prefix = ''
+
     retweeted = tweet.get('retweeted_status')
     if retweeted:
       entities = retweeted.get('entities', {})
-      content_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
-        (retweeted.get('user', {}).get('screen_name'),) * 2)
-      obj['content'] = content_prefix + retweeted.get('text', '')
+      text = retweeted.get('text', '')
+      if text:
+        content_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
+          (retweeted.get('user', {}).get('screen_name'),) * 2)
+        obj['content'] = content_prefix + text
     else:
       entities = tweet.get('entities', {})
-      content_prefix = ''
 
     user = tweet.get('user')
     if user:
@@ -989,18 +992,10 @@ class Twitter(source.Source):
       return None
 
     share = self.tweet_to_object(retweet)
-
-    url = share.get('url')
-    content = '<a href="%s">retweeted this.</a>' % url if url else 'retweeted this.'
-
     share.update({
         'objectType': 'activity',
         'verb': 'share',
         'object': {'url': self.tweet_url(orig)},
-        # postprocess_object() populates displayName based on content, but we
-        # want to override it to omit the link.
-        'displayName': '%s retweeted this.' % self.actor_name(share.get('author')),
-        'content': content,
         })
     if 'tags' in share:
       # the existing tags apply to the original tweet's text, which we replaced
@@ -1082,7 +1077,6 @@ class Twitter(source.Source):
         'verb': 'like',
         'object': {'url': url},
         'author': self.user_to_actor(liker),
-        'content': 'favorited this.',
         })
 
   @staticmethod

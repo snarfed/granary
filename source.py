@@ -410,9 +410,7 @@ class Source(object):
 
     if content and not obj.get('displayName'):
       actor_name = self.actor_name(obj.get('author') or obj.get('actor'))
-      if verb in ('like', 'share'):
-        obj['displayName'] = '%s %s' % (actor_name, content)
-      elif rsvp_content:
+      if rsvp_content:
         if verb == 'invite':
           actor_name = self.actor_name(obj.get('object'))
         obj['displayName'] = '%s %s' % (actor_name, rsvp_content)

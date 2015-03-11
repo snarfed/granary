@@ -765,7 +765,6 @@ class Facebook(source.Source):
         'verb': 'like',
         'object': {'url': url},
         'author': self.user_to_actor(like),
-        'content': 'likes this.',
         }) for like in post.get('likes', {}).get('data', [])]
 
     # Escape HTML characters: <, >, &. Have to do it manually, instead of
@@ -918,8 +917,6 @@ class Facebook(source.Source):
     content = obj.get('content')
     if content:
       obj['displayName'] = content
-    else:
-      obj['content'] = 'shared this.'
 
     return self.postprocess_object(obj)
 

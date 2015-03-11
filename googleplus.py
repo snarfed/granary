@@ -229,8 +229,6 @@ class GooglePlus(source.Source):
       collection: string, 'plusoners' or 'resharers'
       verb: string, ActivityStreams verb to populate the tags with
     """
-    # maps collection to verb to use in content string
-    content_verbs = {'plusoners': '+1ed', 'resharers': 'reshared'}
     # maps collection to cache prefix
     cache_prefixes = {'plusoners': 'AGL ', 'resharers': 'AGS '}
 
@@ -258,7 +256,6 @@ class GooglePlus(source.Source):
             'url': obj.get('url'),
             'object': {'url': obj.get('url')},
             'author': person,
-            'content': '%s this.' % content_verbs[collection],
             }))
         cache_updates[cache_key] = count
       else:

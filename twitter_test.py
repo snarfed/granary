@@ -324,6 +324,7 @@ RETWEETS = [{  # Twitter
       'id_str': '666',
       'id': -1,
       'user': {'screen_name': 'bar'},
+      'text': 'retweeted text',
       },
     # we replace the content, so this should be stripped
     'entities': {
@@ -352,8 +353,6 @@ SHARES = [{  # ActivityStreams
       'url': 'https://twitter.com/alizz',
       'image': {'url': 'https://twitter.com/alizz/profile_image?size=original'},
       },
-    'displayName': 'Alice retweeted this.',
-    'content': '<a href="https://twitter.com/alizz/status/123">retweeted this.</a>',
     'published': '2013-02-24T20:26:41+00:00',
     }, {
     'id': tag_uri('456'),
@@ -361,6 +360,7 @@ SHARES = [{  # ActivityStreams
     'objectType': 'activity',
     'verb': 'share',
     'object': {'url': 'https://twitter.com/bar/status/666'},
+    'content': 'RT <a href="https://twitter.com/bar">@bar</a>: retweeted text',
     'author': {
       'objectType': 'person',
       'id': 'tag:twitter.com:bobbb',
@@ -369,8 +369,6 @@ SHARES = [{  # ActivityStreams
       'url': 'https://twitter.com/bobbb',
       'image': {'url': 'https://twitter.com/bobbb/profile_image?size=original'},
       },
-    'displayName': 'Bob retweeted this.',
-    'content': '<a href="https://twitter.com/bobbb/status/456">retweeted this.</a>',
     'published': '2013-02-26T20:26:41+00:00',
     }]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
@@ -402,8 +400,6 @@ LIKE_OBJ = {  # ActivityStreams
     'url': 'https://twitter.com/eve',
       'image': {'url': 'https://twitter.com/eve/profile_image?size=original'},
     },
-  'displayName': 'eve favorited this.',
-  'content': 'favorited this.',
   'published': '2013-12-27T17:25:55+00:00',
   }
 FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
@@ -449,8 +445,6 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'url': 'https://twitter.com/ge',
     'image': {'url': 'https://twitter.com/ge/profile_image?size=original'},
     },
-  'displayName': 'George favorited this.',
-  'content': 'favorited this.',
   }, {
   'url': 'https://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
@@ -464,8 +458,6 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'url': 'https://twitter.com/jo',
     'image': {'url': 'https://twitter.com/jo/profile_image?size=original'},
     },
-  'displayName': 'jo favorited this.',
-  'content': 'favorited this.',
   }
 ]
 OBJECT_WITH_LIKES = copy.deepcopy(OBJECT)
