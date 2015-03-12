@@ -11,7 +11,5 @@
     "objectType": "person",
     "displayName": "Alice",
     "url": "http://example.com/alice"
-  },
-  "displayName": "Alice is invited.",
-  "content": "is invited."
+  }
 }

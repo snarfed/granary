@@ -319,8 +319,8 @@ def json_to_html(obj):
   if author:
     author['type'].append('p-author')
 
-  # if this post is itself a like or repost, link to its target(s).
-  # (do this *before* content since it sets props['name'] if necessary.)
+  # if this post is itself a like or repost, link to its target(s). (do this and
+  # rsvp below *before* content since they set props['name'] if necessary.)
   likes_and_reposts = []
   for verb in 'like', 'repost':
     if ('h-as-%s' % verb) in obj['type']:
@@ -329,6 +329,22 @@ def json_to_html(obj):
       likes_and_reposts += ['<a class="u-%s u-%s-of" href="%s"></a>' %
                             (verb, verb, url) for url in props.get(verb)]
 
+  # if this post is an rsvp, populate its data element. if it's an invite, give
+  # it a default name.
+  rsvp = prop.get('rsvp')
+  invitee = prop.get('rsvp')
+  if rsvp:
+    if not props.get('name'):
+      props['name'] = [{'yes': 'is attending.',
+                        'no': 'is not attending.',
+                        'maybe': 'might attend.'}.get(rsvp)]
+    props['name'][0] = '<data class="p-rsvp" value="%s">%s</data>' % (
+      rsvp, props['name'][0])
+
+  elif props.get('invitee') and not props.get('name'):
+    props['name'] = ['invited']
+
+  # set up content and name
   content = prop.get('content', {})
   content_html = content.get('html', '') or content.get('value', '')
   content_classes = []

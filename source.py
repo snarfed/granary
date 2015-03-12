@@ -33,12 +33,6 @@ RSVP_TO_EVENT = {
   'rsvp-maybe': 'maybeAttending',
   'invite': 'invited',
   }
-RSVP_CONTENTS = {
-  'rsvp-yes': 'is attending.',
-  'rsvp-no': 'is not attending.',
-  'rsvp-maybe': 'might attend.',
-  'invite': 'is invited.',
-  }
 
 CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
@@ -390,31 +384,11 @@ class Source(object):
   def postprocess_object(self, obj):
     """Does source-independent post-processing of an object, in place.
 
-    * populates displayName
-    * populates content for rsvp-* verbs
     * populates location.position based on latitude and longitude
 
     Args:
       object: object dict
     """
-    verb = obj.get('verb')
-    content = obj.get('content')
-    rsvp_content = RSVP_CONTENTS.get(verb)
-
-    if rsvp_content and not content:
-      if verb.startswith('rsvp-'):
-        content = obj['content'] = '<data class="p-rsvp" value="%s">%s</data>' % (
-          verb.split('-')[1], rsvp_content)
-      else:
-        content = obj['content'] = rsvp_content
-
-    if content and not obj.get('displayName'):
-      actor_name = self.actor_name(obj.get('author') or obj.get('actor'))
-      if rsvp_content:
-        if verb == 'invite':
-          actor_name = self.actor_name(obj.get('object'))
-        obj['displayName'] = '%s %s' % (actor_name, rsvp_content)
-
     loc = obj.get('location')
     if loc:
       lat = loc.get('latitude')

@@ -495,8 +495,6 @@ RSVP_OBJS_WITH_ID = [{
       'url': 'https://www.facebook.com/11500',
       'image': {'url': 'https://graph.facebook.com/v2.2/11500/picture?type=large'},
       },
-    'displayName': 'Aaron P is attending.',
-    'content': '<data class="p-rsvp" value="yes">is attending.</data>',
     }, {
     'id': tag_uri('145304994_rsvp_212038'),
     'objectType': 'activity',
@@ -510,8 +508,6 @@ RSVP_OBJS_WITH_ID = [{
       'url': 'https://www.facebook.com/212038',
       'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
       },
-    'displayName': 'Ryan B is not attending.',
-    'content': '<data class="p-rsvp" value="no">is not attending.</data>',
     }, {
     'id': tag_uri('145304994_rsvp_987'),
     'objectType': 'activity',
@@ -525,8 +521,6 @@ RSVP_OBJS_WITH_ID = [{
       'url': 'https://www.facebook.com/987',
       'image': {'url': 'https://graph.facebook.com/v2.2/987/picture?type=large'},
       },
-    'displayName': 'Foo might attend.',
-    'content': '<data class="p-rsvp" value="maybe">might attend.</data>',
     }, {
     'id': tag_uri('145304994_rsvp_654'),
     'objectType': 'activity',
@@ -548,8 +542,6 @@ RSVP_OBJS_WITH_ID = [{
       'url': 'https://www.facebook.com/654',
       'image': {'url': 'https://graph.facebook.com/v2.2/654/picture?type=large'},
       },
-    'displayName': 'Bar is invited.',
-    'content': 'is invited.',
     }]
 RSVP_OBJS = copy.deepcopy(RSVP_OBJS_WITH_ID)
 for obj in RSVP_OBJS:
