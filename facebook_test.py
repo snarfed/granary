@@ -949,6 +949,14 @@ class FacebookTest(testutil.HandlerTest):
   def test_post_to_object_empty(self):
     self.assert_equals({}, self.facebook.post_to_object({}))
 
+  def test_post_to_object_expands_relative_links(self):
+    post = copy.copy(POST)
+    post['link'] = '/relative/123'
+
+    post_obj = copy.deepcopy(POST_OBJ)
+    post_obj['attachments'][0]['url'] = 'https://www.facebook.com/relative/123'
+    self.assert_equals(post_obj, self.facebook.post_to_object(post))
+
   def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.facebook.comment_to_object(cmt))

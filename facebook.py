@@ -712,8 +712,12 @@ class Facebook(source.Source):
     object_type = OBJECT_TYPES.get(post_type)
     author = self.user_to_actor(post.get('from'))
     link = post.get('link', '')
+    gift = link.startswith('/gifts/')
 
-    if link.startswith('/gifts/'):
+    if link.startswith('/'):
+      link = 'https://www.facebook.com' + link
+
+    if gift:
       object_type = 'product'
     if not object_type:
       if picture and not message:
@@ -818,7 +822,7 @@ class Facebook(source.Source):
           'image': {'url': picture[:-6] + '_o.jpg'},
           })
       obj['attachments'] = [att]
-    elif link and not link.startswith('/gifts/'):
+    elif link and not gift:
       att['objectType'] = 'article'
       obj['attachments'] = [att]
 
