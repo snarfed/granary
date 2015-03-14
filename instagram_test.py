@@ -510,7 +510,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_min_id(self):
     self.expect_urlopen(
-      'https://api.instagram.com/v1/users/self/media/recent/?min_id=135',
+      'https://api.instagram.com/v1/users/self/media/recent?min_id=135',
       json.dumps({'data': []}))
     self.mox.ReplayAll()
     self.instagram.get_activities(group_id=source.SELF, min_id='135')

@@ -29,7 +29,7 @@ import webapp2
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
 
 API_USER_URL = 'https://api.instagram.com/v1/users/%s'
-API_USER_MEDIA_URL = 'https://api.instagram.com/v1/users/%s/media/recent/'
+API_USER_MEDIA_URL = 'https://api.instagram.com/v1/users/%s/media/recent'
 API_USER_FEED_URL = 'https://api.instagram.com/v1/users/self/feed'
 API_USER_LIKES_URL = 'https://api.instagram.com/v1/users/%s/media/liked'
 API_MEDIA_URL = 'https://api.instagram.com/v1/media/%s'
