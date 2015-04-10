@@ -528,9 +528,8 @@ class Source(object):
   def activity_changed(before, after, log=False):
     """Returns whether two activities or objects differ meaningfully.
 
-    Only compares a few fields: object type, verb, content, audience (ie
-    privacy), location, image, attachments, and tags. Notably does *not* compare
-    author and published/updated timestamps.
+    Only compares a few fields: object type, verb, content, location, and image.
+    Notably does *not* compare author and published/updated timestamps.
 
     This has been tested on Facebook posts, comments, and event RSVPs (only
     content and rsvp_status change) and Google+ posts and comments (content,
@@ -541,6 +540,7 @@ class Source(object):
       before, after: dicts, ActivityStreams activities or objects
 
     Returns: boolean
+
     """
     def changed(b, a, field, label):
       b_val = b.get(field)
@@ -555,7 +555,7 @@ class Source(object):
     return any(changed(before, after, field, 'activity') or
                changed(obj_b, obj_a, field, 'activity[object]')
                for field in ('objectType', 'verb', 'to', 'content', 'location',
-                             'image', 'tags', 'attachments'))
+                             'image'))
 
   @classmethod
   def embed_post(cls, obj):

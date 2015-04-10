@@ -259,7 +259,6 @@ class SourceTest(testutil.HandlerTest):
       self.assertFalse(self.source.activity_changed(before, after, log=True),
                                                     '%s\n%s' % (before, after))
 
-    del fb_post_edited['object']['attachments']
     fb_comment_edited['content'] = 'new content'
     gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
 
@@ -268,8 +267,7 @@ class SourceTest(testutil.HandlerTest):
     fb_rsvp = copy.copy(fb_invite)
     fb_rsvp['verb'] = 'rsvp-yes'
 
-    for before, after in ((fb_post, fb_post_edited),
-                          (fb_comment, fb_comment_edited),
+    for before, after in ((fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited),
                           (fb_invite, fb_rsvp)):
       self.assertTrue(self.source.activity_changed(before, after, log=True),
