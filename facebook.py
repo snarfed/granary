@@ -47,6 +47,7 @@ in the data.objects array.
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
+import collections
 import copy
 import itertools
 import json
@@ -123,6 +124,9 @@ RSVP_ENDPOINTS = {
 
 # Values for post.action['name'] that indicate a link back to the original post
 SEE_ORIGINAL_ACTIONS=['see original']
+
+FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
+
 
 class Facebook(source.Source):
   """Implements the ActivityStreams API for Facebook.
@@ -1123,6 +1127,53 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
         post['link'] = obj['url']
 
     return util.trim_nulls(post)
+
+  @staticmethod
+  def parse_id(id, type):
+    """Parses a Facebook id.
+
+    Facebook ids come in different formats:
+    * Simple number, usually a user or post: 12
+    * Two numbers with underscore, usually POST_COMMENT or USER_POST: 12_34
+    * Three numbers with underscores, USER_POST_COMMENT: 12_34_56
+    * Three numbers with colons, USER:POST:SHARD: 12:34:63
+      (We're guessing that the third part is a shard in some FB internal system.
+      In our experience so far, it's always either 63 or the app-scoped user id
+      for 63.)
+    * Four numbers with colons/underscore, USER:POST:SHARD_COMMENT: 12:34:63_56
+
+    Background:
+    * https://github.com/snarfed/bridgy/issues/305
+    * https://developers.facebook.com/bugs/786903278061433/
+
+    Args:
+      id: string
+      type: 'user', 'post', or 'comment'
+
+    Returns: FacebookId or None
+    """
+    assert type in ('user', 'post', 'comment')
+    if not id:
+      return None
+
+    match = re.match(r'^(\d+):(\d+):\d+(?:_(\d+))?$', id)
+    if match and type != 'user':
+      return FacebookId(*match.groups())
+
+    match = re.match(r'^(\d+)(?:_(\d+))?(?:_(\d+))?$', id)
+    if match:
+      first, second, third = match.groups()
+      if type == 'user' and not second and not third:
+        return FacebookId(first, second, third)
+      elif type == 'post' and not third:
+        return (FacebookId(first, second, None) if second
+                else FacebookId(None, first, None))
+      elif type == 'comment':
+        return (FacebookId(first, second, third) if second and third
+                else FacebookId(None, first, second) if second
+                else FacebookId(None, None, first))
+
+    logging.error('Cowardly refusing comment with unknown id format: %s', id)
 
   def urlopen(self, relative_url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
