@@ -538,19 +538,17 @@ class Facebook(source.Source):
     Args:
       post: Facebook JSON post
     """
-    author_id = post.get('from', {}).get('id')
-
-    post_id = post.get('id')
-    if not post_id:
+    fb_id = post.get('id')
+    if not fb_id:
       return None
 
-    if author_id:
-      post_ids = post_id.split('_')
-      if post_ids[0] == author_id:
-        post_id = '_'.join(post_ids[1:])
-      return 'https://www.facebook.com/%s/posts/%s' % (author_id, post_id)
-    else:
-      return self.object_url(post_id)
+    id = self.parse_id(fb_id, 'post')
+    if id:
+      author_id = id.user or post.get('from', {}).get('id')
+      if author_id:
+        return 'https://www.facebook.com/%s/posts/%s' % (author_id, id.post)
+
+    return self.object_url(fb_id)
 
   def comment_url(self, post_id, comment_id, post_author_id=None):
     """Returns a short Facebook URL for a comment.
@@ -660,18 +658,20 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
-
     obj = self.post_to_object(post)
     activity = {
       'verb': VERBS.get(post.get('type', obj.get('objectType')), 'post'),
       'published': obj.get('published'),
       'updated': obj.get('updated'),
-      'id': self.tag_uri(id) if id else None,
+      'fb_id': post.get('id'),
       'url': self.post_url(post),
       'actor': obj.get('author'),
       'object': obj,
       }
+
+    id = self.parse_id(activity['fb_id'], 'post')
+    if id:
+      activity['id'] = self.tag_uri(id.post)
 
     application = post.get('application')
     if application:
@@ -681,19 +681,19 @@ class Facebook(source.Source):
         }
     return self.postprocess_activity(activity)
 
-  def post_to_object(self, post):
+  def post_to_object(self, post, _type='post'):
     """Converts a post to an object.
 
     Args:
       post: dict, a decoded JSON post
+      _type: either 'post' or 'comment'
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
-    if not id:
-      return {}
+    assert _type in ('post', 'comment')
 
+    fb_id = post.get('id')
     post_type = post.get('type')
     status_type = post.get('status_type')
     url = self.post_url(post)
@@ -709,7 +709,7 @@ class Facebook(source.Source):
     for field in ('object', 'song'):
       obj = data.get(field)
       if obj:
-        id = obj.get('id')
+        fb_id = obj.get('id')
         post_type = obj.get('type')
         url = obj.get('url')
         display_name = obj.get('title')
@@ -730,8 +730,12 @@ class Facebook(source.Source):
       else:
         object_type = 'note'
 
+    id = self.parse_id(fb_id, _type)
+    if not id:
+      return {}
     obj = {
-      'id': self.tag_uri(str(id)),
+      'id': self.tag_uri(id.post),
+      'fb_id': fb_id,
       'objectType': object_type,
       'published': util.maybe_iso8601_to_rfc3339(post.get('created_time')),
       'updated': util.maybe_iso8601_to_rfc3339(post.get('updated_time')),
@@ -768,7 +772,7 @@ class Facebook(source.Source):
         }) for t in tags]
 
     obj['tags'] += [self.postprocess_object({
-        'id': self.tag_uri('%s_liked_by_%s' % (id, like.get('id'))),
+        'id': '%s_liked_by_%s' % (obj['id'], like.get('id')),
         'url': url,
         'objectType': 'activity',
         'verb': 'like',
@@ -834,11 +838,11 @@ class Facebook(source.Source):
     # location
     place = post.get('place')
     if place:
-      id = place.get('id')
+      place_id = place.get('id')
       obj['location'] = {
         'displayName': place.get('name'),
-        'id': id,
-        'url': self.object_url(id),
+        'id': place_id,
+        'url': self.object_url(place_id),
         }
       location = place.get('location', None)
       if isinstance(location, dict):
@@ -881,25 +885,26 @@ class Facebook(source.Source):
     comment = dict(comment)
     comment['message_tags'] = {'1': comment.get('message_tags', [])}
 
-    obj = self.post_to_object(comment)
+    obj = self.post_to_object(comment, _type='comment')
     if not obj:
       return obj
 
     obj['objectType'] = 'comment'
 
-    ids = comment.get('id', '').split('_')
-    comment_id = ids.pop()
-    if ids:
-      post_id = ids.pop() or post_id
-    if ids:
-      post_author_id = ids.pop() or post_author_id
+    fb_id = comment.get('id')
+    obj['fb_id'] = fb_id
+    id = self.parse_id(fb_id, 'comment')
+    if not id:
+      return None
 
+    post_id = id.post or post_id
+    post_author_id = id.user or post_author_id
     if post_id:
-      if '_' not in obj['id']:
-        obj['id'] = self.tag_uri('%s_%s' % (post_id, comment_id))
-      obj['url'] = self.comment_url(post_id, comment_id,
-                                    post_author_id=post_author_id)
-      obj['inReplyTo'] = [{'id': self.tag_uri(post_id)}]
+      obj.update({
+        'id': self.tag_uri('%s_%s' % (post_id, id.comment)),
+        'url': self.comment_url(post_id, id.comment, post_author_id=post_author_id),
+        'inReplyTo': [{'id': self.tag_uri(post_id)}],
+      })
 
     return self.postprocess_object(obj)
 
@@ -1148,14 +1153,15 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     * https://developers.facebook.com/bugs/786903278061433/
 
     Args:
-      id: string
+      id: string or integer
       type: 'user', 'post', or 'comment'
 
     Returns: FacebookId or None
     """
     assert type in ('user', 'post', 'comment')
-    if not id:
+    if id is None or id == '':
       return None
+    id = str(id)
 
     match = re.match(r'^(\d+):(\d+):\d+(?:_(\d+))?$', id)
     if match and type != 'user':

@@ -44,6 +44,7 @@ ACTOR = {  # ActivityStreams
 PAGE = {  # Facebook
   'type': 'page',
   'id': '946432998716566',
+  'fb_id': '946432998716566',
   'name': 'Civic Hall',
   'username': 'CivicHallNYC',
   'website': 'http://www.civichall.org',
@@ -270,6 +271,7 @@ COMMENT_OBJS = [  # ActivityStreams
       },
     'content': 'cc Sam G, Michael M',
     'id': tag_uri('547822715231468_6796480'),
+    'fb_id': '547822715231468_6796480',
     'published': '2012-12-05T00:58:26+00:00',
     'url': 'https://www.facebook.com/547822715231468?comment_id=6796480',
     'inReplyTo': [{'id': tag_uri('547822715231468')}],
@@ -302,6 +304,7 @@ COMMENT_OBJS = [  # ActivityStreams
       },
     'content': 'Foo bar!',
     'id': tag_uri('124561947600007_672819'),
+    'fb_id': '124561947600007_672819',
     'published': '2010-10-28T00:23:04+00:00',
     'url': 'https://www.facebook.com/124561947600007?comment_id=672819',
     'inReplyTo': [{'id': tag_uri('124561947600007')}],
@@ -341,6 +344,7 @@ LIKE_OBJS = [{  # ActivityStreams
   ]
 SHARE_OBJ = {  # ActivityStreams
   'id': tag_uri('654'),
+  'fb_id': '321_654',
   'url': 'https://www.facebook.com/321/posts/654',
   'objectType': 'activity',
   'verb': 'share',
@@ -377,6 +381,7 @@ POST_OBJ = {  # ActivityStreams
     },
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.',
   'id': tag_uri('10100176064482163'),
+  'fb_id': '212038_10100176064482163',
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
   'url': 'https://www.facebook.com/212038/posts/10100176064482163',
@@ -445,6 +450,7 @@ POST_OBJ = {  # ActivityStreams
 EVENT_OBJ = {  # ActivityStreams.
   'objectType': 'event',
   'id': tag_uri('145304994'),
+  'fb_id': '145304994',
   'url': 'https://www.facebook.com/145304994',
   'displayName': 'Homebrew Website Club',
   'author': {
@@ -476,6 +482,7 @@ EVENT_OBJ = {  # ActivityStreams.
           },
         'content': 'i hereby comment',
         'id': tag_uri('145304994_777'),
+        'fb_id': '777',
         'published': '2010-10-01T00:23:04+00:00',
         'url': 'https://www.facebook.com/145304994?comment_id=777',
         'inReplyTo': [{'id': tag_uri('145304994')}],
@@ -565,6 +572,7 @@ ACTIVITY = {  # ActivityStreams
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
   'id': tag_uri('10100176064482163'),
+  'fb_id': '212038_10100176064482163',
   'url': 'https://www.facebook.com/212038/posts/10100176064482163',
   'actor': POST_OBJ['author'],
   'object': POST_OBJ,
@@ -733,18 +741,22 @@ class FacebookTest(testutil.HandlerTest):
 
     self.assert_equals([
         {'id': tag_uri('2'),
+         'fb_id': '1_2',
          'object': {'content': 'foo',
                     'id': tag_uri('2'),
+                    'fb_id': '1_2',
                     'objectType': 'note',
-                    'url': 'https://www.facebook.com/1_2'},
-         'url': 'https://www.facebook.com/1_2',
+                    'url': 'https://www.facebook.com/1/posts/2'},
+         'url': 'https://www.facebook.com/1/posts/2',
          'verb': 'post'},
         {'id': tag_uri('4'),
+         'fb_id': '3_4',
          'object': {'content': 'bar',
                     'id': tag_uri('4'),
+                    'fb_id': '3_4',
                     'objectType': 'note',
-                    'url': 'https://www.facebook.com/3_4'},
-         'url': 'https://www.facebook.com/3_4',
+                    'url': 'https://www.facebook.com/3/posts/4'},
+         'url': 'https://www.facebook.com/3/posts/4',
          'verb': 'post'}],
       self.facebook.get_activities())
 
@@ -957,6 +969,24 @@ class FacebookTest(testutil.HandlerTest):
     post_obj['attachments'][0]['url'] = 'https://www.facebook.com/relative/123'
     self.assert_equals(post_obj, self.facebook.post_to_object(post))
 
+  def test_post_to_object_colon_id(self):
+    """See https://github.com/snarfed/bridgy/issues/305"""
+    id = '12:34:56'
+    self.assert_equals({
+      'objectType': 'note',
+      'id': tag_uri('34'),
+      'fb_id': id,
+      'content': 'asdf',
+      'url': 'https://www.facebook.com/12/posts/34',
+    }, self.facebook.post_to_object({
+      'id': id,
+      'message': 'asdf',
+    }))
+
+  def test_post_to_object_unknown_id_format(self):
+    """See https://github.com/snarfed/bridgy/issues/305"""
+    self.assert_equals({}, self.facebook.post_to_object({'id': '123^456'}))
+
   def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.facebook.comment_to_object(cmt))
@@ -973,6 +1003,25 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(
       'https://www.facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
+
+  def test_comment_to_object_colon_id(self):
+    """See https://github.com/snarfed/bridgy/issues/305"""
+    id = '12:34:56_78'
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': tag_uri('34_78'),
+      'fb_id': id,
+      'content': 'asdf',
+      'url': 'https://www.facebook.com/12/posts/34?comment_id=78',
+      'inReplyTo': [{'id': tag_uri('34')}],
+    }, self.facebook.comment_to_object({
+      'id': id,
+      'message': 'asdf',
+    }))
+
+  def test_comment_to_object_unknown_id_format(self):
+    """See https://github.com/snarfed/bridgy/issues/305"""
+    self.assert_equals({}, self.facebook.comment_to_object({'id': '123 456^789'}))
 
   def test_share_to_object_empty(self):
     self.assert_equals({}, self.facebook.share_to_object({}))
@@ -1087,25 +1136,28 @@ http://b http://c""",
 
   def test_picture_without_message(self):
     self.assert_equals({  # ActivityStreams
-        'objectType': 'image',
-        'id': tag_uri('445566'),
-        'url': 'https://www.facebook.com/445566',
-        'image': {'url': 'http://its/a/picture'},
-        }, self.facebook.post_to_object({  # Facebook
-          'id': '445566',
-          'picture': 'http://its/a/picture',
-          'source': 'https://from/a/source',
-          }))
+      'objectType': 'image',
+      'id': tag_uri('445566'),
+      'fb_id': '445566',
+      'url': 'https://www.facebook.com/445566',
+      'image': {'url': 'http://its/a/picture'},
+    }, self.facebook.post_to_object({  # Facebook
+      'id': '445566',
+      'picture': 'http://its/a/picture',
+      'source': 'https://from/a/source',
+    }))
 
   def test_like(self):
     activity = {
         'id': tag_uri('10100747369806713'),
+        'fb_id': '10100747369806713',
         'verb': 'like',
         'title': 'Unknown likes a photo.',
         'url': 'https://www.facebook.com/10100747369806713',
         'object': {
           'objectType': 'image',
           'id': tag_uri('214721692025931'),
+          'fb_id': '214721692025931',
           'url': 'http://instagram.com/p/eJfUHYh-x8/',
           }
         }
@@ -1138,6 +1190,7 @@ http://b http://c""",
   def test_story_as_content(self):
     self.assert_equals({
         'id': tag_uri('101007473698067'),
+        'fb_id': '101007473698067',
         'url': 'https://www.facebook.com/101007473698067',
         'objectType': 'note',
         'content': 'Once upon a time.',
@@ -1149,6 +1202,7 @@ http://b http://c""",
   def test_name_as_content(self):
     self.assert_equals({
         'id': tag_uri('101007473698067'),
+        'fb_id': '101007473698067',
         'url': 'https://www.facebook.com/101007473698067',
         'objectType': 'note',
         'content': 'Once upon a time.',
@@ -1160,12 +1214,14 @@ http://b http://c""",
   def test_gift(self):
     self.assert_equals({
         'id': tag_uri('10100747'),
+        'fb_id': '10100747',
         'actor': ACTOR,
         'verb': 'give',
         'title': 'Ryan Barrett gave a gift.',
         'url': 'https://www.facebook.com/212038/posts/10100747',
         'object': {
           'id': tag_uri('10100747'),
+          'fb_id': '10100747',
           'author': ACTOR,
           'url': 'https://www.facebook.com/212038/posts/10100747',
           'objectType': 'product',
@@ -1191,11 +1247,13 @@ http://b http://c""",
       }
     activity = {
         'id': tag_uri('10100747'),
+        'fb_id': '10100747',
         'verb': 'listen',
         'title': "Unknown listened to The Rifle's Spiral.",
         'url': 'https://www.facebook.com/10100747',
         'object': {
           'id': tag_uri('101507345'),
+          'fb_id': '101507345',
           'url': 'http://www.rdio.com/artist/The_Shins/album/Port_Of_Morrow_1/track/The_Rifle%27s_Spiral/',
           'objectType': 'audio',
           'displayName': "The Rifle's Spiral",
@@ -1226,9 +1284,11 @@ http://b http://c""",
         'objectType': 'note',
         'content': 'my msg',
         })
-    self.assert_equals(
-      {'id': '123_456', 'url': 'https://www.facebook.com/123_456', 'type': 'post'},
-      self.facebook.create(obj).content)
+    self.assert_equals({
+      'id': '123_456',
+      'url': 'https://www.facebook.com/123/posts/456',
+      'type': 'post',
+    }, self.facebook.create(obj).content)
 
     preview = self.facebook.preview_create(obj)
     self.assertEquals('<span class="verb">post</span>:', preview.description)
@@ -1477,9 +1537,10 @@ cc Sam G, Michael M<br />""", preview.description)
     self.expect_urlopen(facebook.API_PHOTOS, json.dumps({'id': '123_456'}),
                         data='url=http%3A%2F%2Fmy%2Fpicture&message=my+caption')
     self.mox.ReplayAll()
-    self.assert_equals(
-      {'id': '123_456', 'url': 'https://www.facebook.com/123_456', 'type': 'post'},
-      self.facebook.create(obj).content)
+    self.assert_equals({
+      'id': '123_456',
+      'url': 'https://www.facebook.com/123/posts/456',
+      'type': 'post'}, self.facebook.create(obj).content)
 
   def test_create_notification(self):
     appengine_config.FACEBOOK_APP_ID = 'my_app_id'
