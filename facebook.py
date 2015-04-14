@@ -52,6 +52,7 @@ import copy
 import itertools
 import json
 import logging
+import re
 import urllib
 import urllib2
 import urlparse
