@@ -659,6 +659,9 @@ class Facebook(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     obj = self.post_to_object(post)
+    if not obj:
+      return {}
+
     activity = {
       'verb': VERBS.get(post.get('type', obj.get('objectType')), 'post'),
       'published': obj.get('published'),

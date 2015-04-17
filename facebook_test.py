@@ -951,6 +951,10 @@ class FacebookTest(testutil.HandlerTest):
     # just test that we don't crash
     self.facebook.post_to_activity({})
 
+  def test_post_to_activity_unknown_id_format(self):
+    """See https://github.com/snarfed/bridgy/issues/305"""
+    self.assert_equals({}, self.facebook.post_to_activity({'id': '123^456'}))
+
   def test_post_to_object_full(self):
     self.assert_equals(POST_OBJ, self.facebook.post_to_object(POST))
 
