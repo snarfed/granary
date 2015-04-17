@@ -991,6 +991,12 @@ class FacebookTest(testutil.HandlerTest):
     """See https://github.com/snarfed/bridgy/issues/305"""
     self.assert_equals({}, self.facebook.post_to_object({'id': '123^456'}))
 
+  def test_post_to_object_with_comment_unknown_id_format(self):
+    """See https://github.com/snarfed/bridgy/issues/305"""
+    post = copy.deepcopy(POST)
+    post['comments']['data'].append({'id': '123 456^789'})
+    self.assert_equals(POST_OBJ, self.facebook.post_to_object(post))
+
   def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.facebook.comment_to_object(cmt))

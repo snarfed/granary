@@ -861,7 +861,8 @@ class Facebook(source.Source):
     # http://activitystrea.ms/specs/json/replies/1.0/
     comments = post.get('comments', {}).get('data')
     if comments:
-      items = [self.comment_to_object(c, post_id=post['id']) for c in comments]
+      items = util.trim_nulls([self.comment_to_object(c, post_id=post['id'])
+                               for c in comments])
       obj['replies'] = {
         'items': items,
         'totalItems': len(items),
