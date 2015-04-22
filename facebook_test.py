@@ -797,7 +797,7 @@ class FacebookTest(testutil.HandlerTest):
     self.facebook.get_activities()
 
   def test_get_activities_activity_id_overrides_others(self):
-    self.expect_urlopen('000', json.dumps(POST))
+    self.expect_urlopen('123_000', json.dumps(POST))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -806,7 +806,7 @@ class FacebookTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_activity_id_not_found(self):
-    for id in '0', '0_0':
+    for id in '0_0', '0':
       self.expect_urlopen('%s' % id, json.dumps({
           'error': {
             'message': '(#803) Some of the aliases you requested do not exist: 0',
@@ -822,26 +822,26 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.facebook.get_activities(group_id=source.SELF,start_index=3, count=5)
 
-  def test_get_activities_activity_id(self):
-    self.expect_urlopen('34', '{}')
+  def test_get_activities_activity_id_with_user_id(self):
+    self.expect_urlopen('12_34', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='34', user_id='12')
 
-  def test_get_activities_activity_id_strips_user_id_prefix(self):
-    self.expect_urlopen('34', '{}')
-    self.mox.ReplayAll()
-    self.facebook.get_activities(activity_id='12_34')
-
-  def test_get_activities_activity_id_fallback_to_user_id_prefix(self):
-    self.expect_urlopen('34', '{}', status=404)
+  def test_get_activities_activity_id_with_prefix(self):
     self.expect_urlopen('12_34', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='12_34')
 
+  def test_get_activities_activity_id_fallback_to_strip_prefix(self):
+    self.expect_urlopen('12_34', '{}', status=404)
+    self.expect_urlopen('34', '{}')
+    self.mox.ReplayAll()
+    self.facebook.get_activities(activity_id='12_34')
+
   def test_get_activities_activity_id_fallback_to_user_id_param(self):
-    self.expect_urlopen('34', '{}', status=400)
-    self.expect_urlopen('12_34', '{}', status=500)
-    self.expect_urlopen('56_34', '{}')
+    self.expect_urlopen('12_34', '{}', status=400)
+    self.expect_urlopen('56_34', '{}', status=500)
+    self.expect_urlopen('34', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(activity_id='12_34', user_id='56')
 
@@ -915,17 +915,17 @@ class FacebookTest(testutil.HandlerTest):
     self.assertRaises(urllib2.HTTPError, self.facebook.get_share, '', '', '123')
 
   def test_get_like(self):
-    self.expect_urlopen('000', json.dumps(POST))
+    self.expect_urlopen('123_000', json.dumps(POST))
     self.mox.ReplayAll()
     self.assert_equals(LIKE_OBJS[1], self.facebook.get_like('123', '000', '683713'))
 
   def test_get_like_not_found(self):
-    self.expect_urlopen('000', json.dumps(POST))
+    self.expect_urlopen('123_000', json.dumps(POST))
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_like('123', '000', '999'))
 
   def test_get_like_no_activity(self):
-    self.expect_urlopen('000', '{}')
+    self.expect_urlopen('123_000', '{}')
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
 

@@ -196,12 +196,13 @@ class Facebook(source.Source):
       # it doesn't accept that format. I can't tell which is which yet, so try
       # them all.
       # More background: https://github.com/snarfed/bridgy/issues/346
-      ids_to_try = [activity_id]
       if '_' in activity_id:
-        user_id_prefix, activity_id = activity_id.split('_', 1)
-        ids_to_try.insert(0, activity_id)
-      if user_id:
-        ids_to_try.append('%s_%s' % (user_id, activity_id))
+        suffix = activity_id.split('_', 1)[1]
+        ids_to_try = [activity_id, suffix]
+        if user_id:
+          ids_to_try.insert(1, '_'.join((user_id, suffix)))
+      else:
+        ids_to_try = ['_'.join((user_id, activity_id)), activity_id]
 
       for id in ids_to_try:
         try:
