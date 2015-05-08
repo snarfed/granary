@@ -32,7 +32,7 @@
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/{{ activity.object.objectType }}
   </activity:object-type>
-  <id>{{ activity.id }}</id>
+  <id>{{ activity.url }}</id>
   <title>{{ activity.title|safe }}</title>
 
   <content type="xhtml">

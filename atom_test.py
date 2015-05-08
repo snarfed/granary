@@ -54,3 +54,20 @@ class AtomTest(testutil.HandlerTest):
       '<img class="thumbnail" src="http://attach/image/big"',
       atom.activities_to_atom([activity], instagram_test.ACTOR,
                               title='my title'))
+
+  def test_render_encodes_ampersands(self):
+    # only the one unencoded & in a&b should be encoded
+    activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}
+
+    out = atom.activities_to_atom([activity], twitter_test.ACTOR, title='my title')
+    self.assertIn('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
+    self.assertNotIn('a&b', out)
+
+  def test_escape_urls(self):
+    url = 'http://foo/bar?baz&baj'
+    activity = {'url': url, 'object': {}}
+
+    out = atom.activities_to_atom([activity], twitter_test.ACTOR, title='my title')
+    self.assertIn('<id>http://foo/bar?baz&amp;baj</id>', out)
+    self.assertNotIn(url, out)
+

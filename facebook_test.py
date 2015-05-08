@@ -625,7 +625,7 @@ ATOM = """\
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/image
   </activity:object-type>
-  <id>""" + tag_uri('10100176064482163') + """</id>
+  <id>https://www.facebook.com/212038/posts/10100176064482163</id>
   <title>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block...</title>
 
   <content type="xhtml">

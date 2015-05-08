@@ -382,7 +382,7 @@ ATOM = """\
   <activity:object-type>
     http://activitystrea.ms/schema/1.0/photo
   </activity:object-type>
-  <id>""" + tag_uri('123_456') + """</id>
+  <id>http://instagram.com/p/ABC123/</id>
   <title>this picture -&gt; is #abc #xyz</title>
 
   <content type="xhtml">
