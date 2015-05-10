@@ -489,6 +489,11 @@ EVENT_OBJ = {  # ActivityStreams.
         }],
     },
   }
+EVENT_ACTIVITY = {  # ActivityStreams
+  'id': tag_uri('145304994'),
+  'url': 'https://www.facebook.com/145304994',
+  'object': EVENT_OBJ,
+}
 RSVP_OBJS_WITH_ID = [{
     'id': tag_uri('145304994_rsvp_11500'),
     'objectType': 'activity',
@@ -873,6 +878,11 @@ class FacebookTest(testutil.HandlerTest):
     got = self.facebook.get_activities(fetch_shares=True)
     self.assertNotIn('tags', got[0])
     self.assertNotIn('tags', got[1])
+
+  def test_get_event(self):
+    self.expect_urlopen('145304994', json.dumps(EVENT))
+    self.mox.ReplayAll()
+    self.assert_equals(EVENT_ACTIVITY, self.facebook.get_event('145304994'))
 
   def test_get_comment(self):
     self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
