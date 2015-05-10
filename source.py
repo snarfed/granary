@@ -238,6 +238,16 @@ class Source(object):
     """
     raise NotImplementedError()
 
+  def get_event(self, event_id):
+    """Returns a ActivityStreams event activity.
+
+    Args:
+      id: string, site-specific event id
+
+    Returns: dict, decoded ActivityStreams activity, or None
+    """
+    raise NotImplementedError()
+
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
 
