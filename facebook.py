@@ -270,14 +270,11 @@ class Facebook(source.Source):
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    try:
-      resp = self.urlopen(event_id)
-      if resp.get('error'):
-        logging.warning("Couldn't fetch event %s: %s", event_id, resp)
-      else:
-        return self.event_to_activity(resp)
-    except urllib2.URLError, e:
-      logging.warning("Couldn't fetch event %s: %s", event_id, e)
+    resp = self.urlopen(event_id)
+    if resp.get('error'):
+      logging.warning("Couldn't fetch event %s: %s", event_id, resp)
+    else:
+      return self.event_to_activity(resp)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
