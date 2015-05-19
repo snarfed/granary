@@ -226,7 +226,10 @@ class Facebook(source.Source):
       try:
         resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
-        posts = json.loads(resp.read()).get('data', [])
+        posts = [p for p in json.loads(resp.read()).get('data', [])
+                 # filter out shared_story because they tend to be very
+                 # tangential - friends' likes, related posts, etc.
+                 if p.get('status_type') != 'shared_story']
       except urllib2.HTTPError, e:
         if e.code == 304:  # Not Modified, from a matching ETag
           posts = []
