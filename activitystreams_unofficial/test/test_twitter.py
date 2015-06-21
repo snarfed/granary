@@ -13,12 +13,13 @@ import socket
 import urllib
 import urllib2
 
-import microformats2
-import source
-import testutil
-import twitter
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import util
+
+from activitystreams_unofficial import microformats2
+from activitystreams_unofficial import source
+from activitystreams_unofficial import testutil
+from activitystreams_unofficial import twitter
 
 
 # test data

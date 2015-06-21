@@ -8,11 +8,12 @@ import json
 import urllib
 import urllib2
 
-import appengine_config
-import facebook
 from oauth_dropins.webutil import util
-import source
-import testutil
+
+from activitystreams_unofficial import appengine_config
+from activitystreams_unofficial import facebook
+from activitystreams_unofficial import source
+from activitystreams_unofficial import testutil
 
 
 # test data

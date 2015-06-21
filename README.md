@@ -27,8 +27,6 @@ http://facebook-activitystreams.appspot.com/
 http://twitter-activitystreams.appspot.com/
 http://instagram-activitystreams.appspot.com/
 
-It's part of a suite of projects that implement the [OStatus](http://ostatus.org/) federation protocols for the major social networks. The other projects include [portablecontacts-](https://github.com/snarfed/portablecontacts-unofficial), [salmon-](https://github.com/snarfed/salmon-unofficial), [webfinger-](https://github.com/snarfed/webfinger-unofficial), and [ostatus-unofficial](https://github.com/snarfed/ostatus-unofficial).
-
 License: This project is placed in the public domain.
 
 
@@ -136,17 +134,15 @@ Development
 
 Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with any questions.
 
-Most dependencies are included as git submodules. Be sure to run `git submodule update --init --recursive` after cloning this repo.
+All dependencies are handled by pip and enumerated in
+[requirements.txt](https://github.com/snarfed/oauth-dropins/blob/master/requirements.txt).
 
-[This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
-
-You can run the unit tests with `alltests.py`. If you send a pull request,
-please include (or update) a test for the new functionality if possible!
-
-The tests require the
-[App Engine SDK](https://developers.google.com/appengine/downloads). They look
-for it in the `GAE_SDK_ROOT` environment variable,
-`/usr/local/google_appengine`, or `~/google_appengine`, in that order.
+If you send a pull request, please include (or update) a test for the new
+functionality if possible! The tests require the
+[App Engine SDK](https://developers.google.com/appengine/downloads).
+We recommend that you install with pip in a
+[`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
+([App Engine details.](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring))
 
 Note the `app.yaml.*` files, one for each App Engine app id. To work on or deploy a specific app id, symlink `app.yaml` to its `app.yaml.xxx` file. Likewise, if you add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
 
@@ -163,12 +159,14 @@ rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
 git co -- app.yaml
 ```
 
+[This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
+
 To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), and [instagram-atom](https://github.com/snarfed/instagram-atom) after an activitystreams-unofficial change:
 
 ```shell
 #!/bin/tcsh
 foreach s (facebook twitter instagram)
-  cd ~/src/$s-atom/activitystreams && gu && git submodule update && \
+  cd ~/src/$s-atom/activitystreams && git pull && \
     cd .. && ~/google_appengine/appcfg.py --oauth2 update .
 end
 ```

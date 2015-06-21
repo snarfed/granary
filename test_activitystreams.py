@@ -6,12 +6,14 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import copy
 import json
 
-import activitystreams
-import facebook_test
-import instagram_test
 from oauth_dropins.webutil import testutil
-import source
-import twitter_test
+
+import activitystreams
+from activitystreams_unofficial import source
+from activitystreams_unofficial.test import test_facebook
+from activitystreams_unofficial.test import test_instagram
+from activitystreams_unofficial.test import test_twitter
+
 
 class FakeSource(source.Source):
   def __init__(self, **kwargs):
@@ -118,7 +120,7 @@ class HandlerTest(testutil.HandlerTest):
 """, resp.body)
 
   def test_atom_format(self):
-    for test_module in facebook_test, instagram_test, twitter_test:
+    for test_module in test_facebook, test_instagram, test_twitter:
       self.reset()
       self.mox.StubOutWithMock(FakeSource, 'get_actor')
       FakeSource.get_actor(None).AndReturn(test_module.ACTOR)

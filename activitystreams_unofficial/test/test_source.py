@@ -6,10 +6,12 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
 import copy
 
-from source import Source
-import facebook_test
-import googleplus_test
-from oauth_dropins.webutil import testutil
+from activitystreams_unofficial.source import Source
+from activitystreams_unofficial import testutil
+
+import test_facebook
+import test_googleplus
+
 
 LIKES = [{
     'verb': 'like',
@@ -239,17 +241,17 @@ class SourceTest(testutil.HandlerTest):
                                        'summary': ' s '}))
 
   def test_activity_changed(self):
-    fb_post = facebook_test.ACTIVITY
+    fb_post = test_facebook.ACTIVITY
     fb_post_edited = copy.deepcopy(fb_post)
     fb_post['object']['updated'] = '2016-01-02T00:58:26+00:00'
 
-    fb_comment = facebook_test.COMMENT_OBJS[0]
+    fb_comment = test_facebook.COMMENT_OBJS[0]
     fb_comment_edited = copy.copy(fb_comment)
     fb_comment['published'] = '2016-01-02T00:58:26+00:00'
 
-    gp_like = googleplus_test.LIKE
+    gp_like = test_googleplus.LIKE
     gp_like_edited = copy.copy(gp_like)
-    gp_like['author'] = googleplus_test.RESHARER
+    gp_like['author'] = test_googleplus.RESHARER
 
     for before, after in (({}, {}),
                           ({'x': 1}, {'y': 2}),
@@ -262,7 +264,7 @@ class SourceTest(testutil.HandlerTest):
     fb_comment_edited['content'] = 'new content'
     gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
 
-    fb_invite = facebook_test.RSVP_OBJS_WITH_ID[3]
+    fb_invite = test_facebook.RSVP_OBJS_WITH_ID[3]
     self.assertEqual('invite', fb_invite['verb'])
     fb_rsvp = copy.copy(fb_invite)
     fb_rsvp['verb'] = 'rsvp-yes'

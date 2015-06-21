@@ -13,18 +13,17 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 import json
 
-import appengine_config
-import httplib2
 from apiclient import discovery
 from apiclient import http
+import httplib2
+from oauth_dropins import googleplus as oauth_googleplus
+from oauth_dropins.webutil import util
+from oauth_dropins.webutil import testutil
 
+from activitystreams_unofficial import appengine_config
 appengine_config.GOOGLE_CLIENT_ID = 'my client id'
 appengine_config.GOOGLE_CLIENT_SECRET = 'my client secret'
-
-import googleplus
-from oauth_dropins import googleplus as oauth_googleplus
-from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil import util
+from activitystreams_unofficial import googleplus
 
 
 DISCOVERY_DOC = appengine_config.read('googleplus_api_discovery.json')
@@ -149,7 +148,7 @@ class GooglePlusTest(testutil.HandlerTest):
     oauth_googleplus.json_service = None
 
   def init(self, **kwargs):
-    """Sets up the API service from googleplus_test_discovery.
+    """Sets up the API service from test_googleplus_discovery.
 
     Pass a requestBuilder or http kwarg to inject expected HTTP requests and
     responses.

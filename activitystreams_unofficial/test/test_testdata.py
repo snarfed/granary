@@ -6,8 +6,8 @@ import json
 import logging
 import os
 
-import microformats2
-from oauth_dropins.webutil import testutil
+from activitystreams_unofficial import microformats2
+from activitystreams_unofficial import testutil
 
 
 def filepairs(ext1, ext2):
@@ -38,7 +38,7 @@ class TestDataTest(testutil.HandlerTest):
     # self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
 
     # All test data files live in testdata/.
-    os.chdir('testdata/')
+    os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
     # source extension, destination extension, conversion function, exclude prefix
     mappings = (

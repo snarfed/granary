@@ -29,17 +29,18 @@ __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 import json
 import logging
 import urllib
-from webob import exc
 
-import appengine_config
-import atom
-import facebook
-import instagram
-import microformats2
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
-import source
-import twitter
+from webob import exc
+
+from activitystreams_unofficial import appengine_config
+from activitystreams_unofficial import atom
+from activitystreams_unofficial import facebook
+from activitystreams_unofficial import instagram
+from activitystreams_unofficial import microformats2
+from activitystreams_unofficial import source
+from activitystreams_unofficial import twitter
 
 import webapp2
 

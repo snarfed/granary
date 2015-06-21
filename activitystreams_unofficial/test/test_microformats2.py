@@ -6,9 +6,9 @@ for full testdata tests.
 
 __author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
 
-import microformats2
+from activitystreams_unofficial import microformats2
 import re
-from oauth_dropins.webutil import testutil
+from activitystreams_unofficial import testutil
 
 
 class Microformats2Test(testutil.HandlerTest):

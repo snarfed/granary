@@ -7,8 +7,10 @@ import os
 import re
 import urlparse
 
+import webapp2
 from google.appengine.ext.webapp import template
 from oauth_dropins.webutil import util
+
 import microformats2
 import source
 

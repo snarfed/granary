@@ -13,9 +13,9 @@ import urllib
 import urllib2
 import httplib2
 
-import instagram
-import source
-from oauth_dropins.webutil import testutil
+from activitystreams_unofficial import instagram
+from activitystreams_unofficial import source
+from activitystreams_unofficial import testutil
 from oauth_dropins.webutil import util
 
 
