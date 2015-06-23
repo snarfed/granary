@@ -4,4 +4,3 @@ from activitystreams_unofficial.appengine_config import *
 # https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring
 from google.appengine.ext import vendor
 vendor.add('local')
-

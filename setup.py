@@ -6,10 +6,18 @@ http://pythonhosted.org/setuptools/setuptools.html
 
 Based on https://github.com/pypa/sampleproject/blob/master/setup.py
 """
-from setuptools import setup, find_packages
+import unittest
 
-# test/__init__.py makes App Engine SDK's bundled libraries importable.
-import oauth_dropins.test
+from setuptools import setup, find_packages
+from setuptools.command.test import ScanningLoader
+
+
+class TestLoader(ScanningLoader):
+  def __init__(self, *args, **kwargs):
+    super(ScanningLoader, self).__init__(*args, **kwargs)
+    # test/__init__.py makes App Engine SDK's bundled libraries importable.
+    import oauth_dropins.test
+
 
 setup(name='activitystreams-unofficial',
       version='1.0',
@@ -31,9 +39,12 @@ setup(name='activitystreams-unofficial',
       ],
       keywords='activitystreams facebook twitter google+ twitter microformats2 mf2 atom',
       install_requires=[
+          # Keep in sync with requirements.txt!
           'beautifulsoup4',
-          'mf2py',
+          'mf2py>=0.2.6',
           'oauth-dropins',
+          'requests',
       ],
-      test_suite='activitystreams_unofficial',
+      test_loader='setup:TestLoader',
+      test_suite='activitystreams_unofficial.test',
 )

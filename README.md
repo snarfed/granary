@@ -33,6 +33,11 @@ License: This project is placed in the public domain.
 Using
 ---
 
+All dependencies are handled by pip and enumerated in
+[requirements.txt](https://github.com/snarfed/oauth-dropins/blob/master/requirements.txt). We recommend that you install with pip in a
+[`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
+([App Engine details.](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring))
+
 The library and REST API are both based on the [OpenSocial Activity Streams service](http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
 
 Let's start with an example. This code using the library:
@@ -131,18 +136,23 @@ We'd love to add more sites! Off the top of my head, [YouTube](http://youtu.be/)
 
 Development
 ---
-
 Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with any questions.
 
-All dependencies are handled by pip and enumerated in
-[requirements.txt](https://github.com/snarfed/oauth-dropins/blob/master/requirements.txt).
+To get started, clone the repo, then::
+
+```shell
+virtualenv local
+source local/bin/activate
+pip install -r requirements.txt
+python setup.py test
+```
 
 If you send a pull request, please include (or update) a test for the new
 functionality if possible! The tests require the
 [App Engine SDK](https://developers.google.com/appengine/downloads).
-We recommend that you install with pip in a
-[`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
-([App Engine details.](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring))
+
+If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with
+`pip install -e <path to oauth-dropins repo>`.
 
 Note the `app.yaml.*` files, one for each App Engine app id. To work on or deploy a specific app id, symlink `app.yaml` to its `app.yaml.xxx` file. Likewise, if you add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
 
@@ -159,8 +169,6 @@ rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
 git co -- app.yaml
 ```
 
-[This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
-
 To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), and [instagram-atom](https://github.com/snarfed/instagram-atom) after an activitystreams-unofficial change:
 
 ```shell
@@ -170,6 +178,8 @@ foreach s (facebook twitter instagram)
     cd .. && ~/google_appengine/appcfg.py --oauth2 update .
 end
 ```
+
+[This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
 
 
 Related work
