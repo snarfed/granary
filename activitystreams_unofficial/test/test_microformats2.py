@@ -62,6 +62,23 @@ class Microformats2Test(testutil.HandlerTest):
     obj = microformats2.json_to_object(mf2)
     self.assertFalse(obj.get('image'))
 
+  def test_nested_compound_url_object(self):
+    mf2 = {'type': ['h-as-repost'],
+           'properties': {
+             'repost-of': [{
+               'type': ['h-outer'],
+               'properties': {
+                 'url': [{
+                   'type': ['h-inner'],
+                   'properties': {'url': ['http://nested']},
+                 }],
+               },
+             }],
+           }}
+    obj = microformats2.json_to_object(mf2)
+    print obj
+    self.assertEquals('http://nested', obj['object']['url'])
+
   def test_object_to_json_unescapes_html_entities(self):
     self.assertEquals({
       'type': ['h-entry'],
@@ -199,3 +216,18 @@ foo
         'tags': [{'objectType': 'mention', 'url': 'http://m', 'displayName': 'm'},
                  {'objectType': 'hashtag', 'url': 'http://c'}],
       }))
+
+  def test_get_string_urls(self):
+    for expected, objs in (
+        ([], []),
+        (['asdf'], ['asdf']),
+        ([], [{'type': 'h-ok'}]),
+        ([], [{'properties': {'url': ['nope']}}]),
+        ([], [{'type': ['h-ok'], 'properties': {'no': 'url'}}]),
+        (['good1', 'good2'], ['good1',
+                            {'type': ['h-ok']},
+                            {'type': ['h-ok'], 'properties': {'url': ['good2']}}]),
+        (['nested'], [{'type': ['h-ok'], 'properties': {'url': [
+            {'type': ['h-nested'], 'url': ['nested']}]}}]),
+        ):
+      self.assertEquals(expected, microformats2.get_string_urls(objs))

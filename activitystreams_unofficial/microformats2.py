@@ -60,7 +60,9 @@ def get_string_urls(objs):
     else:
       itemtype = [x for x in item.get('type', []) if x.startswith('h-')]
       if itemtype:
-        urls.extend(item.get('properties', {}).get('url', []))
+        item = item.get('properties') or item
+        urls.extend(get_string_urls(item.get('url', [])))
+
   return urls
 
 
