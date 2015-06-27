@@ -138,7 +138,12 @@ Development
 ---
 Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with any questions.
 
-To get started, clone the repo, then::
+You'll need the
+[App Engine Python SDK](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python)
+version 1.9.15 or later (for
+[`vendor`](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring)
+support). Add it to your `$PYTHONPATH`, e.g.
+`export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine`, and then run:
 
 ```shell
 virtualenv local
