@@ -4,11 +4,11 @@ Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
-from activitystreams_unofficial import microformats2
+from granary import microformats2
 import re
-from activitystreams_unofficial import testutil
+from granary import testutil
 
 
 class Microformats2Test(testutil.HandlerTest):

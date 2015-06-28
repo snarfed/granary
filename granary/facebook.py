@@ -45,7 +45,7 @@ available in /me/home. http://stackoverflow.com/questions/4358026
 in the data.objects array.
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import collections
 import copy

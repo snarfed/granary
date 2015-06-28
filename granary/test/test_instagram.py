@@ -1,7 +1,7 @@
 """Unit tests for instagram.py.
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
 import datetime
@@ -13,9 +13,9 @@ import urllib
 import urllib2
 import httplib2
 
-from activitystreams_unofficial import instagram
-from activitystreams_unofficial import source
-from activitystreams_unofficial import testutil
+from granary import instagram
+from granary import source
+from granary import testutil
 from oauth_dropins.webutil import util
 
 
@@ -347,8 +347,8 @@ ATOM = """\
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
-<generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
-  activitystreams-unofficial</generator>
+<generator uri="https://github.com/snarfed/granary" version="0.1">
+  granary</generator>
 <id>%(host_url)s</id>
 <title>User feed for Ryan B</title>
 

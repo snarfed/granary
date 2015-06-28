@@ -5,7 +5,7 @@ Audience Targeting 'to' field is always set to @public.
 https://developers.google.com/+/api/latest/activities/list#collection
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import functools
 import itertools

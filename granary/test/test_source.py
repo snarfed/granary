@@ -2,12 +2,12 @@
 """Unit tests for source.py.
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
 
-from activitystreams_unofficial.source import Source
-from activitystreams_unofficial import testutil
+from granary.source import Source
+from granary import testutil
 
 import test_facebook
 import test_googleplus

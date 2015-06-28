@@ -1,4 +1,4 @@
-"""setuptools setup module for activitystreams-unofficial.
+"""setuptools setup module for granary.
 
 Docs:
 https://packaging.python.org/en/latest/distributing.html
@@ -19,14 +19,14 @@ class TestLoader(ScanningLoader):
     import oauth_dropins.test
 
 
-setup(name='activitystreams-unofficial',
+setup(name='granary',
       version='1.0',
       description='Fetches and converts data between Facebook, Google+, Instagram, and Twitter native APIs, ActivityStreams, microformats2 HTML and JSON, Atom, and more.',
       long_description=open('README.rst').read(),
-      url='https://github.com/snarfed/activitystreams-unofficial',
+      url='https://github.com/snarfed/granary',
       packages=find_packages(exclude='test'),
       author='Ryan Barrett',
-      author_email='activitystreams@ryanb.org',
+      author_email='granary@ryanb.org',
       license='Public domain',
       classifiers=[
           'Development Status :: 5 - Production/Stable',
@@ -46,5 +46,5 @@ setup(name='activitystreams-unofficial',
           'requests',
       ],
       test_loader='setup:TestLoader',
-      test_suite='activitystreams_unofficial.test',
+      test_suite='granary.test',
 )

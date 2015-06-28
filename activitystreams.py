@@ -24,7 +24,7 @@ Atom format spec:
 http://atomenabled.org/developers/syndication/
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import json
 import logging
@@ -34,13 +34,13 @@ from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
 from webob import exc
 
-from activitystreams_unofficial import appengine_config
-from activitystreams_unofficial import atom
-from activitystreams_unofficial import facebook
-from activitystreams_unofficial import instagram
-from activitystreams_unofficial import microformats2
-from activitystreams_unofficial import source
-from activitystreams_unofficial import twitter
+from granary import appengine_config
+from granary import atom
+from granary import facebook
+from granary import instagram
+from granary import microformats2
+from granary import source
+from granary import twitter
 
 import webapp2
 

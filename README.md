@@ -1,4 +1,4 @@
-![ActivityStreams](https://raw.github.com/snarfed/activitystreams-unofficial/master/static/logo_small.png) activitystreams-unofficial
+![Granary](https://raw.github.com/snarfed/granary/master/static/logo_small.png) granary
 ===
 
   * [About](#about)
@@ -43,7 +43,7 @@ The library and REST API are both based on the [OpenSocial Activity Streams serv
 Let's start with an example. This code using the library:
 
 ```python
-from activitystreams_unofficial import twitter
+from granary import twitter
 ...
 tw = twitter.Twitter(ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET)
 tw.get_activities(group_id='@friends')
@@ -121,9 +121,9 @@ Using the library
 
 See the [example above](#using) for a quick start guide.
 
-Clone or download this repo into a directory named `activitystreams_unofficial` (note the underscore instead of dash). Each source works the same way. Import the module for the source you want to use, then instantiate its class by passing the HTTP handler object. The handler should have a `request` attribute for the current HTTP request.
+Clone or download this repo into a directory named `granary` (note the underscore instead of dash). Each source works the same way. Import the module for the source you want to use, then instantiate its class by passing the HTTP handler object. The handler should have a `request` attribute for the current HTTP request.
 
-The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/activitystreams-unofficial/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams JSON.
+The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/granary/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams JSON.
 
 The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams objects as nicely formatted HTML.
 
@@ -174,7 +174,7 @@ rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
 git co -- app.yaml
 ```
 
-To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), and [instagram-atom](https://github.com/snarfed/instagram-atom) after an activitystreams-unofficial change:
+To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), and [instagram-atom](https://github.com/snarfed/instagram-atom) after an granary change:
 
 ```shell
 #!/bin/tcsh

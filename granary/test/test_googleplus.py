@@ -6,7 +6,7 @@ RequestMockBuilder:
 https://developers.google.com/api-client-library/python/guide/mocks )
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
 from email.message import Message
@@ -20,10 +20,10 @@ from oauth_dropins import googleplus as oauth_googleplus
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil import testutil
 
-from activitystreams_unofficial import appengine_config
+from granary import appengine_config
 appengine_config.GOOGLE_CLIENT_ID = 'my client id'
 appengine_config.GOOGLE_CLIENT_SECRET = 'my client secret'
-from activitystreams_unofficial import googleplus
+from granary import googleplus
 
 
 DISCOVERY_DOC = appengine_config.read('googleplus_api_discovery.json')

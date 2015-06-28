@@ -39,7 +39,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   """
   # Strip query params from URLs so that we don't include access tokens, etc
   host_url = (_remove_query_params(host_url) if host_url
-              else 'https://github.com/snarfed/activitystreams-unofficial')
+              else 'https://github.com/snarfed/granary')
   request_url = _remove_query_params(request_url) if request_url else host_url
 
   for a in activities:

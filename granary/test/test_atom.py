@@ -4,7 +4,7 @@ import copy
 
 from oauth_dropins.webutil import testutil
 
-from activitystreams_unofficial import atom
+from granary import atom
 
 import test_facebook
 import test_instagram

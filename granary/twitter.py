@@ -10,7 +10,7 @@ the tweet author's 'protected' field is true or false.
 https://dev.twitter.com/docs/platform-objects/users
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import datetime
 import itertools

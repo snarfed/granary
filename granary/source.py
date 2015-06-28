@@ -10,7 +10,7 @@ or unset if unknown.
 http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import collections
 import copy

@@ -1,7 +1,7 @@
 """Unit test utilities.
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import appengine_config
 

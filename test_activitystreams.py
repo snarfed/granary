@@ -1,7 +1,7 @@
 """Unit tests for activitystreams.py.
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
 import json
@@ -9,10 +9,10 @@ import json
 from oauth_dropins.webutil import testutil
 
 import activitystreams
-from activitystreams_unofficial import source
-from activitystreams_unofficial.test import test_facebook
-from activitystreams_unofficial.test import test_instagram
-from activitystreams_unofficial.test import test_twitter
+from granary import source
+from granary.test import test_facebook
+from granary.test import test_instagram
+from granary.test import test_twitter
 
 
 class FakeSource(source.Source):

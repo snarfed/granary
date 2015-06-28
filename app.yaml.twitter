@@ -24,7 +24,7 @@ handlers:
   secure: always
 
 - url: /(start_auth|twitter/oauth_callback)
-  script: activitystreams_unofficial.twitter.application
+  script: granary.twitter.application
   secure: always
 
 - url: /.+

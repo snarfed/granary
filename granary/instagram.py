@@ -7,7 +7,7 @@ https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
 https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import xml.sax.saxutils
 import datetime

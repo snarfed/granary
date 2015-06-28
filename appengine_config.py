@@ -1,4 +1,4 @@
-from activitystreams_unofficial.appengine_config import *
+from granary.appengine_config import *
 
 # Load packages from virtualenv
 # https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring

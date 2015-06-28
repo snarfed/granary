@@ -15,7 +15,7 @@ http://facebook-activitystreams.appspot.com/
 http://twitter-activitystreams.appspot.com/
 http://instagram-activitystreams.appspot.com/
 
-`Check out the docs for more! <https://github.com/snarfed/activitystreams-unofficial>`__
+`Check out the docs for more! <https://github.com/snarfed/granary>`__
 
 License: This project is placed in the public domain.
 
@@ -31,7 +31,7 @@ Let's start with an example. This code using the library:
 
 .. code:: python
 
-    from activitystreams_unofficial import twitter
+    from granary import twitter
     ...
     tw = twitter.Twitter(ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET)
     tw.get_activities(group_id='@friends')
@@ -75,4 +75,4 @@ people they follow. Here's the JSON output:
       ...
     }
 
-`Check out the docs for more! <https://github.com/snarfed/activitystreams-unofficial>`__
+`Check out the docs for more! <https://github.com/snarfed/granary>`__

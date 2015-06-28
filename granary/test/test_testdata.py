@@ -6,8 +6,8 @@ import json
 import logging
 import os
 
-from activitystreams_unofficial import microformats2
-from activitystreams_unofficial import testutil
+from granary import microformats2
+from granary import testutil
 
 
 def filepairs(ext1, ext2):

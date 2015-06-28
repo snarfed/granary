@@ -6,8 +6,8 @@
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
-<generator uri="https://github.com/snarfed/activitystreams-unofficial" version="0.1">
-  activitystreams-unofficial</generator>
+<generator uri="https://github.com/snarfed/granary" version="0.1">
+  granary</generator>
 <id>{{ host_url }}</id>
 <title>{{ title }}</title>
 {% if actor.description %}
