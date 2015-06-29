@@ -243,7 +243,7 @@ class SourceTest(testutil.HandlerTest):
   def test_activity_changed(self):
     fb_post = test_facebook.ACTIVITY
     fb_post_edited = copy.deepcopy(fb_post)
-    fb_post['object']['updated'] = '2016-01-02T00:58:26+00:00'
+    fb_post_edited['object']['updated'] = '2016-01-02T00:58:26+00:00'
 
     fb_comment = test_facebook.COMMENT_OBJS[0]
     fb_comment_edited = copy.copy(fb_comment)

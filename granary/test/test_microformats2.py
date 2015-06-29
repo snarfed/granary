@@ -76,7 +76,6 @@ class Microformats2Test(testutil.HandlerTest):
              }],
            }}
     obj = microformats2.json_to_object(mf2)
-    print obj
     self.assertEquals('http://nested', obj['object']['url'])
 
   def test_object_to_json_unescapes_html_entities(self):
