@@ -250,8 +250,8 @@ class SourceTest(testutil.HandlerTest):
     fb_comment_edited['published'] = '2016-01-02T00:58:26+00:00'
 
     gp_like = test_googleplus.LIKE
-    gp_like_edited = copy.copy(gp_like)
-    gp_like['author'] = test_googleplus.RESHARER
+    gp_like_edited = copy.deepcopy(gp_like)
+    gp_like_edited['author'] = test_googleplus.RESHARER
 
     for before, after in (({}, {}),
                           ({'x': 1}, {'y': 2}),
