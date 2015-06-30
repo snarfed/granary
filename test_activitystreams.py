@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 import copy
 import json
 
+import oauth_dropins.test
 from oauth_dropins.webutil import testutil
 
 import activitystreams
