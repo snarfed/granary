@@ -246,8 +246,8 @@ class SourceTest(testutil.HandlerTest):
     fb_post_edited['object']['updated'] = '2016-01-02T00:58:26+00:00'
 
     fb_comment = test_facebook.COMMENT_OBJS[0]
-    fb_comment_edited = copy.copy(fb_comment)
-    fb_comment['published'] = '2016-01-02T00:58:26+00:00'
+    fb_comment_edited = copy.deepcopy(fb_comment)
+    fb_comment_edited['published'] = '2016-01-02T00:58:26+00:00'
 
     gp_like = test_googleplus.LIKE
     gp_like_edited = copy.copy(gp_like)
