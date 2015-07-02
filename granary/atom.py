@@ -3,18 +3,18 @@
 Atom spec: http://atomenabled.org/developers/syndication/
 """
 
+import collections
 import os
 import re
 import urlparse
 
-import webapp2
-from google.appengine.ext.webapp import template
+import jinja2
 from oauth_dropins.webutil import util
 
 import microformats2
 import source
 
-ATOM_TEMPLATE_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'user_feed.atom')
+ATOM_TEMPLATE_FILE = 'user_feed.atom'
 # stolen from django.utils.html
 UNENCODED_AMPERSANDS_RE = re.compile(r'&(?!(\w+|#\d+);)')
 
@@ -61,14 +61,29 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
       if image and not isinstance(image, list):
         att['image'] = [image]
 
-  return template.render(ATOM_TEMPLATE_FILE, {
-    'items': activities,
-    'host_url': host_url,
-    'request_url': request_url,
-    'title': title or 'User feed for ' + source.Source.actor_name(actor),
-    'updated': activities[0]['object'].get('published') if activities else '',
-    'actor': actor,
-    })
+  # Emulate Django template behavior that returns a special default value that
+  # can continue to be referenced when an attribute or item lookup fails. Helps
+  # avoid conditionals in the template itself.
+  # https://docs.djangoproject.com/en/1.8/ref/templates/language/#variables
+  class Defaulter(collections.defaultdict):
+    def __init__(self, **kwargs):
+      super(Defaulter, self).__init__(Defaulter, **{
+        k: (Defaulter(**v) if isinstance(v, dict) else v)
+        for k, v in kwargs.items()})
+
+    def __unicode__(self):
+      return super(Defaulter, self).__unicode__() if self else u''
+
+  env = jinja2.Environment(loader=jinja2.PackageLoader(__package__, 'templates'),
+                           autoescape=True)
+  return env.get_template(ATOM_TEMPLATE_FILE).render(
+    items=[Defaulter(**a) for a in activities],
+    host_url=host_url,
+    request_url=request_url,
+    title=title or 'User feed for ' + source.Source.actor_name(actor),
+    updated=activities[0]['object'].get('published', '') if activities else '',
+    actor=actor,
+    )
 
 
 def _remove_query_params(url):
