@@ -226,15 +226,20 @@ class Facebook(source.Source):
       try:
         resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
-        posts = [p for p in json.loads(resp.read()).get('data', [])
-                 # filter out shared_story because they tend to be very
-                 # tangential - friends' likes, related posts, etc.
-                 if p.get('status_type') != 'shared_story']
+        posts = json.loads(resp.read()).get('data', [])
       except urllib2.HTTPError, e:
         if e.code == 304:  # Not Modified, from a matching ETag
           posts = []
         else:
           raise
+
+      # for group feeds, filter out some shared_story posts because they tend to
+      # be very tangential - friends' likes, related posts, etc.
+      #
+      # don't do it for individual people's feeds, e.g. the current user's,
+      # because posts with attached links are also status_type == shared_story.
+      if group_id != source.SELF:
+        posts = [p for p in posts if not p.get('status_type') == 'shared_story']
 
     activities = [self.post_to_activity(p) for p in posts]
 

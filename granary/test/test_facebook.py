@@ -885,12 +885,20 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(EVENT_ACTIVITY, self.facebook.get_event('145304994'))
 
-  def test_get_activities_excludes_shared_story(self):
+  def test_get_activities_group_excludes_shared_story(self):
     self.expect_urlopen(
       'me/home?offset=0',
       json.dumps({'data': [{'id': '1_2', 'status_type': 'shared_story'}]}))
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities())
+
+  def test_get_activities_self_includes_shared_story(self):
+    post = copy.copy(POST)
+    post['status_type'] = 'shared_story'
+    self.expect_urlopen('me/posts?offset=0', json.dumps({'data': [post]}))
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY],
+                       self.facebook.get_activities(group_id=source.SELF))
 
   def test_get_comment(self):
     self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
