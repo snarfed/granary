@@ -15,7 +15,7 @@ import source
 
 from apiclient.errors import HttpError
 from apiclient.http import BatchHttpRequest
-from oauth_dropins.handlers import interpret_http_exception
+from oauth_dropins.webutil import util
 
 
 class GooglePlus(source.Source):
@@ -141,7 +141,7 @@ class GooglePlus(source.Source):
             cache_updates['AGC ' + activity['id']] = obj['replies']['totalItems']
           else:
             obj.pop('replies', None)
-            code, body = interpret_http_exception(exc)
+            code, body = util.interpret_http_exception(exc)
             if code not in ('404', '500'):  # these happen; ignore them
               raise exc
 
@@ -260,7 +260,7 @@ class GooglePlus(source.Source):
         cache_updates[cache_key] = count
       else:
         obj.pop(collection, None)
-        code, body = interpret_http_exception(exc)
+        code, body = util.interpret_http_exception(exc)
         if code not in ('404', '500'):  # these happen; ignore them
           raise exc
 

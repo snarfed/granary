@@ -32,7 +32,6 @@ import webapp2
 
 import source
 from oauth_dropins import twitter_auth
-from oauth_dropins.handlers import interpret_http_exception
 from oauth_dropins.webutil import util
 
 API_TIMELINE_URL = \
@@ -292,7 +291,7 @@ class Twitter(source.Source):
             html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
                               ).get('htmlUsers', '')
           except urllib2.URLError, e:
-            interpret_http_exception(e)  # just log it
+            util.interpret_http_exception(e)  # just log it
             continue
           likes = self.favorites_html_to_likes(tweet, html)
           activity['object'].setdefault('tags', []).extend(likes)
@@ -725,7 +724,7 @@ class Twitter(source.Source):
         except socket.error, e:
           pass
         except urllib2.HTTPError, e:
-          code, body = interpret_http_exception(e)
+          code, body = util.interpret_http_exception(e)
           if code is None or int(code) / 100 != 5:
             raise
         logging.warning('Twitter API call failed! Retrying...')

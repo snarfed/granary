@@ -19,7 +19,6 @@ import urlparse
 import operator
 
 import appengine_config
-from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.webutil import util
 import source
 import webapp2
@@ -158,7 +157,7 @@ class Instagram(source.Source):
                          for l in liked]
 
     except urllib2.HTTPError, e:
-      code, body = oauth_handlers.interpret_http_exception(e)
+      code, body = util.interpret_http_exception(e)
       # instagram api should give us back a json block describing the
       # error. but if it's an error for some other reason, it probably won't
       # be properly formatted json.
