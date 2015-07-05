@@ -58,21 +58,9 @@ import urllib2
 import urlparse
 
 import appengine_config
-from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins.webutil import util
 import source
 import webapp2
-
-# https://developers.facebook.com/docs/facebook-login/permissions/#reference
-OAUTH_SCOPES = ','.join((
-    'read_stream',
-    'user_actions.news',
-    'user_actions.video',
-    'user_actions:instapp',
-    'user_activities',
-    'user_games_activity',
-    'user_likes',
-    ))
 
 API_BASE = 'https://graph.facebook.com/v2.2/'
 API_SELF_POSTS = '%s/posts?offset=%d'
@@ -1307,10 +1295,3 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
           pass
 
     return resps
-
-
-application = webapp2.WSGIApplication([
-    ('/start_auth', oauth_facebook.StartHandler.to('/facebook/oauth_callback',
-                                                   scopes=OAUTH_SCOPES)),
-    ('/facebook/oauth_callback', oauth_facebook.CallbackHandler.to('/')),
-    ], debug=appengine_config.DEBUG)

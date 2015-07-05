@@ -1,4 +1,4 @@
-|ActivityStreams|
+|Granary|
 
 This is a library and REST API that fetches and converts social network
 data between a wide variety of formats:
@@ -23,9 +23,8 @@ License: This project is placed in the public domain.
 Using
 -----
 
-The library and REST API are both based on the `OpenSocial Activity
-Streams
-service <http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service>`__.
+The library and REST API are both based on the
+`OpenSocial Activity Streams service <http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service>`__.
 
 Let's start with an example. This code using the library:
 

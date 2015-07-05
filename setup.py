@@ -20,7 +20,7 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='1.0',
+      version='1.0a1',
       description='Fetches and converts data between Facebook, Google+, Instagram, and Twitter native APIs, ActivityStreams, microformats2 HTML and JSON, Atom, and more.',
       long_description=open('README.rst').read(),
       url='https://github.com/snarfed/granary',

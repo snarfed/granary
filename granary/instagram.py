@@ -20,7 +20,6 @@ import operator
 
 import appengine_config
 from oauth_dropins import handlers as oauth_handlers
-from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil import util
 import source
 import webapp2
@@ -514,9 +513,3 @@ class Instagram(source.Source):
           base_obj['id'] = parsed[1].split('_')[0]
 
     return base_obj
-
-
-application = webapp2.WSGIApplication([
-    ('/start_auth', oauth_instagram.StartHandler.to('/instagram/oauth_callback')),
-    ('/instagram/oauth_callback', oauth_instagram.CallbackHandler.to('/')),
-    ], debug=appengine_config.DEBUG)
