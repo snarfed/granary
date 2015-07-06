@@ -27,10 +27,10 @@ class FrontPageHandler(handlers.TemplateHandler):
   """Renders and serves /, ie the front page.
   """
   def template_file(self):
-    return activitystreams.SOURCE.FRONT_PAGE_TEMPLATE
+    return 'granary/templates/index.html'
 
   def template_vars(self):
-    return {'domain': activitystreams.SOURCE.DOMAIN}
+    return {}
 
 
 application = webapp2.WSGIApplication([

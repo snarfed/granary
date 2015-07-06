@@ -11,12 +11,22 @@ libraries:
   version: latest
 
 handlers:
+- url: /(static/bootstrap.*\.css)
+  static_files: local/lib/python2.7/site-packages/oauth_dropins/\1
+  upload: local/lib/python2.7/site-packages/oauth_dropins/static/bootstrap.*\.css
+
 - url: /static
   static_dir: static
 
 - url: /favicon.ico
   static_files: static/favicon.ico
   upload: static/favicon.ico
+
+- url: /oauth_dropins/static
+  static_dir: local/lib/python2.7/site-packages/oauth_dropins/static
+
+- url: /fonts
+  static_dir: local/lib/python2.7/site-packages/oauth_dropins/fonts
 
 - url: /(.well-known/.*)?
   script: app.application

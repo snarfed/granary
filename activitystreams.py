@@ -44,12 +44,6 @@ from granary import twitter
 
 import webapp2
 
-# maps app id to source class
-SOURCE = {
-  'facebook-activitystreams': facebook.Facebook,
-  'instagram-activitystreams': instagram.Instagram,
-  'twitter-activitystreams': twitter.Twitter,
-  }.get(appengine_config.APP_ID)
 
 XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>

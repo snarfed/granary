@@ -6,9 +6,9 @@ div#description {
   max-width: 700px;
 }
 
-img#logo {
-  float: right;
-}
+/* img#logo { */
+/*   float: right; */
+/* } */
 
 select, input[type=text] {
   border: 1px solid gray;

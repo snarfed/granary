@@ -1,6 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -8,8 +7,42 @@
         content="http://{{ host }}/.well-known/host-meta.xrds" />
   <script type="text/javascript" src="/static/demo.js"></script>
   <link href="/static/style.css" rel="stylesheet" type="text/css" />
-  <title>ActivityStreams for {{ domain }}</title>
+  <title>Granary</title>
+
+  <meta name="viewport" content="width=device-width">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
+
+<style type="text/css">
+body {
+  padding-top: 2em;
+}
+.tp-main {
+  padding-top: 6em;
+}
+.tp-main h1 {
+  font-size: 4em;
+}
+.tp-main .lead {
+  font-size: 2em;
+}
+form {
+  display: inline;
+}
+form input {
+  vertical-align: middle;
+}
+.row {
+  text-align: center;
+}
+.col-md-3 {
+  margin-bottom: 1em;
+}
+</style>
+
 </head>
+
 
 <body onload="access_token_from_fragment(); render_form();">
 
@@ -32,95 +65,58 @@ document.addEventListener('DOMContentLoaded', onHashChange);
 </script>
 
 <div id="description">
-<h1>ActivityStreams for {{ domain }}</h1>
 
-<a href="http://activitystrea.ms/">
-  <img id="logo" src="/static/logo.png" /></a>
+<!-- github ribbon: https://github.com/blog/273-github-ribbons -->
+<a href="https://github.com/snarfed/granary">
+  <img style="position: absolute; top: 0; right: 0; border: 0;"
+       src="http://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"
+       alt="Fork me on GitHub" />
+</a>
 
-<p>This is an unofficial
-  <a href="http://activitystrea.ms/">ActivityStreams</a> server
-for <a href="http://{{ domain }}/">{{ domain }}</a>. It can also be
-<a href="https://github.com/snarfed/granary#readme">used as a
-library</a>.</p>
+<h1>Granary</h1>
 
-<p>For more details on ActivityStreams, see the
-<a href="http://activitystrea.ms/specs/">specs</a>,
-<a href="http://wiki.activitystrea.ms/">wiki</a>, and the
-<a href="https://github.com/snarfed/granary">source for
-this site</a>.
-</p>
+<img id="logo" src="/static/logo.png" />
 
-<p>This is the API endpoint:</p>
-<ul>
-  <li><code>https://{{ host }}/<a href="http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service">...</a></code></li>
-</ul>
+<p>This is a library and REST API that does...
+  <a href="http://activitystrea.ms/">ActivityStreams</a>.</p>
 
-<p>These are the
- <a href="http://docs.oasis-open.org/xri/xrd/v1.0/xrd-1.0.html">XRD</a> and
- <a href="http://hueniverse.com/drafts/draft-xrds-simple-01.html">XRDS-Simple</a>
- (deprecated!) discovery endpoints:</p>
-<ul>
-  <li><code>https://{{ host }}/.well-known/host-meta</code></li>
-  <li><code>https://{{ host }}/.well-known/host-meta.xrds</code></li>
-</ul>
-
-{% block oauth_details %}
-{% endblock %}
-
-<p id="privacy">
-This app does not store or use <em>any</em> data, yours or anyone else's. It
-only reformats data and passes it through in response to your own HTTP requests.
-</p>
-
-<p id="contact">
-Questions? Contact <a href="http://snarfed.org/about">Ryan</a> or the
-<a href="http://groups.google.com/group/activity-streams">ActivityStreams
-mailing list</a>.</p>
-
-<hr />
 </div>
 
-<h2>Demo</h2>
+<br />
+<div class="row">
+<div class="col-md-3 col-sm-6"><form method="post" action="/twitter/start">
+  <input type="image" class="shadow" alt="Twitter" src="/oauth_dropins/static/twitter.png" />
+</form></div>
+<div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start">
+  <input type="image" class="shadow" alt="Facebook"
+         src="/oauth_dropins/static/facebook.png" />
+</form></div>
+  <div class="clearfix visible-sm"></div>
+<div class="col-md-3 col-sm-6"><form method="post" action="/googleplus/start">
+  <input type="image" class="shadow" alt="Google+"
+         src="/oauth_dropins/static/google_plus.png" />
+</form></div>
+<div class="col-md-3 col-sm-6"><form method="post" action="/instagram/start">
+  <input type="image" class="shadow" alt="Instagram"
+         src="/oauth_dropins/static/instagram.png" />
+</form></div>
+</div>
 
-<form id="demo" method="get" target="results">
-<p><nobr><code>
-/ @me /
-<select id="group_id" name="group_id" onchange="render_form()">
-  <option value="all">@all</input>
-  <option value="self" {% if domain == 'facebook.com' %} selected {% endif %}>
-    @self</input>
-  <option value="friends">@friends</input>
-</select>
-/ @app /
-<input id="activity_id" name="activity_id" type="text"
-       value="activity id (optional)" size="12"
-       onkeyup="render_form()" onfocus="render_form()" onblur="render_form()" />
-       <!-- onkeyup instead of onkeypress because onkeypress fires *before* the
-            browser adds the character to the input value -->
-? format =
-<select id="format" name="format" onchange="render_form()">
-  <option value="json">json</input>
-  <option value="atom">atom</input>
-  <option value="xml">xml</input>
-  <option value="html">html</input>
-  <option value="json-mf2">json-mf2</input>
-</select>
-&
-{% block query_params %}
-{% endblock %}
-<input type="hidden" name="plaintext" />
-</code></nobr></p>
-
-<p>
-<input type="submit" value="GET" />
-<a href="/start_auth">Authenticate</a></p>
-</p>
-</form>
-
-<p><nobr><code id="url"></code></nobr></p>
-
-<iframe name="results">
-</iframe>
+{% if source == "twitter" %}
+  <label id="access_token_key_label" for="access_token_key">access_token_key =</label>
+  <input id="access_token_key" name="access_token_key" type="text" size="10"
+         onkeyup="render_form()" onchange="render_form()"
+         value="{{ access_token_key }}" />
+  <label id="access_token_secret_label" for="access_token_secret">& access_token_secret =</label>
+  <input id="access_token_secret" name="access_token_secret" type="text" size="10"
+         onkeyup="render_form()" onchange="render_form()"
+         value="{{ access_token_secret }}" />
+{% else %}
+  <label id="access_token_label" for="access_token">access_token =</label>
+  <input id="access_token" name="access_token" type="text" size="10"
+         onkeyup="render_form()" onchange="render_form()"
+         value="{{ access_token }}" />
+{% endif %}
 
 </body>
 </html>
