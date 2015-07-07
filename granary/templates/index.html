@@ -6,41 +6,13 @@
   <meta http-equiv="X-XRDS-Location"
         content="http://{{ host }}/.well-known/host-meta.xrds" />
   <script type="text/javascript" src="/static/demo.js"></script>
-  <link href="/static/style.css" rel="stylesheet" type="text/css" />
   <title>Granary</title>
-
   <meta name="viewport" content="width=device-width">
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
 
-<style type="text/css">
-body {
-  padding-top: 2em;
-}
-.tp-main {
-  padding-top: 6em;
-}
-.tp-main h1 {
-  font-size: 4em;
-}
-.tp-main .lead {
-  font-size: 2em;
-}
-form {
-  display: inline;
-}
-form input {
-  vertical-align: middle;
-}
-.row {
-  text-align: center;
-}
-.col-md-3 {
-  margin-bottom: 1em;
-}
-</style>
-
+  <link rel="stylesheet" type="text/css" href="/oauth_dropins/static/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="/oauth_dropins/static/bootstrap-theme.min.css" />
+  <link rel="stylesheet" type="text/css" href="/oauth_dropins/static/style.css" />
+  <link rel="stylesheet" type="text/css" href="/static/style.css" />
 </head>
 
 
@@ -64,59 +36,140 @@ window.addEventListener('hashchange', onHashChange);
 document.addEventListener('DOMContentLoaded', onHashChange);
 </script>
 
-<div id="description">
-
-<!-- github ribbon: https://github.com/blog/273-github-ribbons -->
+<!--
+  -- github ribbon: https://github.com/blog/273-github-ribbons
+  -->
 <a href="https://github.com/snarfed/granary">
   <img style="position: absolute; top: 0; right: 0; border: 0;"
        src="http://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"
        alt="Fork me on GitHub" />
 </a>
 
-<h1>Granary</h1>
+<main class="tp-main">
+<div class="container">
 
-<img id="logo" src="/static/logo.png" />
+<h1>granary</h1>
 
-<p>This is a library and REST API that does...
-  <a href="http://activitystrea.ms/">ActivityStreams</a>.</p>
+<!-- <p class="lead"> -->
+<!-- <blockquote><a href="https://en.wikipedia.org/wiki/Silo"> -->
+<!--  Silos are used in agriculture to store grain -->
+<!-- </a></blockquote> -->
+<!-- <blockquote><a href="https://en.wikipedia.org/wiki/Granary"> -->
+<!--  A granary is a storehouse or room in a barn for threshed grain -->
+<!-- </a></blockquote> -->
+<!-- <blockquote><a href="https://en.wikipedia.org/wiki/Threshing"> -->
+<!--  Threshing is the process of loosening the edible part of cereal grain from the -->
+<!--  scaly, inedible chaff -->
+<!-- </a></blockquote> -->
+<!-- </p> -->
 
-</div>
+<p class="lead">
+A library and REST API
+that <a href="https://en.wikipedia.org/wiki/Threshing">frees</a> social data
+from the <a href="https://en.wikipedia.org/wiki/Chaff">chaff</a> of social
+network
+<a href="https://indiewebcamp.com/silo">silos</a> and gives you the sweet
+foodstuffs inside: HTML and JSON
+with <a href="http://microformats.org/wiki/microformats2">microformats2</a>,
+<a href="http://activitystrea.ms/">ActivityStreams</a>,
+<a href="http://atomenabled.org/">Atom</a>, XML, and more!
+</p>
 
+<p class="lead">
+Details in
+the <a href="https://github.com/snarfed/granary">GitHub repo</a>.
+Click on a site to try the demo!
+</p>
+
+<!--
+  -- oauth login buttons
+  -->
 <br />
-<div class="row">
-<div class="col-md-3 col-sm-6"><form method="post" action="/twitter/start">
-  <input type="image" class="shadow" alt="Twitter" src="/oauth_dropins/static/twitter.png" />
+<div class="row login">
+<div class="col-md-3 col-sm-6"><form method="post" action="/twitter/start_auth">
+  <input type="image" class="shadow" alt="Twitter"
+         src="/oauth_dropins/static/twitter.png" />
 </form></div>
-<div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start">
+<div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start_auth">
   <input type="image" class="shadow" alt="Facebook"
          src="/oauth_dropins/static/facebook.png" />
 </form></div>
   <div class="clearfix visible-sm"></div>
-<div class="col-md-3 col-sm-6"><form method="post" action="/googleplus/start">
+<div class="col-md-3 col-sm-6"><form method="post" action="/googleplus/start_auth">
   <input type="image" class="shadow" alt="Google+"
          src="/oauth_dropins/static/google_plus.png" />
 </form></div>
-<div class="col-md-3 col-sm-6"><form method="post" action="/instagram/start">
+<div class="col-md-3 col-sm-6"><form method="post" action="/instagram/start_auth">
   <input type="image" class="shadow" alt="Instagram"
          src="/oauth_dropins/static/instagram.png" />
 </form></div>
 </div>
 
-{% if source == "twitter" %}
-  <label id="access_token_key_label" for="access_token_key">access_token_key =</label>
+<!--
+  -- interactive form
+  -->
+{% if access_token or access_token_key or access_token_secret %}
+
+<div class="row">
+<p class="lead"><em>
+{% if declined or error %}
+<span style="color: red">Please accept the prompt to try the demo.</span>
+{% endif %}
+{% if entity %}
+<span style="color: green">
+ Authenticated as {{ entity.user_display_name }} on {{ entity.site_name }}.</span>
+{% endif %}
+</em></p>
+</div>
+
+<form id="demo" method="get" target="results">
+<p><nobr><code>
+/ {{ entity.site_name.lower }} / @me /
+<select id="group_id" name="group_id" class="form-control">
+  <option value="all">@all</option>
+  <option value="self">@self</option>
+  <option value="friends">@friends</option>
+</select>
+/ @app /
+<input id="activity_id" name="activity_id" type="text" class="form-control"
+       placeholder="activity id (optional)" size="12" />
+? <label for="format">format =</label>
+<select id="format" name="format" class="form-control">
+  <option value="json">json</option>
+  <option value="atom">atom</option>
+  <option value="xml">xml</option>
+  <option value="html">html</option>
+  <option value="json-mf2">json-mf2</option>
+</select>
+&
+{% if access_token_key and access_token_secret %}
+  <label for="access_token_key">access_token_key =</label>
   <input id="access_token_key" name="access_token_key" type="text" size="10"
-         onkeyup="render_form()" onchange="render_form()"
-         value="{{ access_token_key }}" />
-  <label id="access_token_secret_label" for="access_token_secret">& access_token_secret =</label>
+         class="form-control" value="{{ access_token_key }}" />
+  <label for="access_token_secret">& access_token_secret =</label>
   <input id="access_token_secret" name="access_token_secret" type="text" size="10"
-         onkeyup="render_form()" onchange="render_form()"
-         value="{{ access_token_secret }}" />
-{% else %}
-  <label id="access_token_label" for="access_token">access_token =</label>
-  <input id="access_token" name="access_token" type="text" size="10"
-         onkeyup="render_form()" onchange="render_form()"
-         value="{{ access_token }}" />
+         class="form-control" value="{{ access_token_secret }}" />
 {% endif %}
 
+{% if access_token %}
+  <label for="access_token">access_token =</label>
+  <input id="access_token" name="access_token" type="text" size="10"
+         class="form-control" value="{{ access_token }}" />
+{% endif %}
+<input type="hidden" name="plaintext" />
+</code>
+<button class="btn btn-default" type="submit">GET</button>
+</nobr>
+
+</p>
+</form>
+
+<iframe name="results">
+</iframe>
+
+{% endif %}
+
+</div>
+</main>
 </body>
 </html>

@@ -21,11 +21,7 @@ This is a library and REST API that fetches and converts social network data bet
 * [Atom](http://atomenabled.org/)
 * XML
 
-You can try it out with these interactive demos:
-
-http://facebook-activitystreams.appspot.com/
-http://twitter-activitystreams.appspot.com/
-http://instagram-activitystreams.appspot.com/
+You can try out an interactive demo at https://granary-demo.appspot.com/
 
 License: This project is placed in the public domain.
 
@@ -52,7 +48,7 @@ tw.get_activities(group_id='@friends')
 is equivalent to this `HTTP GET` request:
 
 ```
-https://twitter-activitystreams.appspot.com/@me/@friends/@app/
+https://granary-demo.appspot.com/twitter/@me/@friends/@app/
   ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 ```
 

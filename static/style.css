@@ -2,20 +2,23 @@
  * Stylesheet for the front page, mostly the demo form.
  */
 
-div#description {
-  max-width: 700px;
+.tp-main {
+  padding-top: 0;
+}
+
+.form-control {
+  display: inline;
+  width: auto;
+  height: auto;
+  padding: 0 .5em 0 .5em;
 }
 
 /* img#logo { */
 /*   float: right; */
 /* } */
 
-select, input[type=text] {
-  border: 1px solid gray;
-}
-
 iframe {
   width: 100%;
-  min-height: 40em;
-  border: 1px solid gray;
+  /* min-height: 40em; */
+  border: 0; /* 1px solid gray; */
 }

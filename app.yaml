@@ -25,14 +25,11 @@ handlers:
 - url: /oauth_dropins/static
   static_dir: local/lib/python2.7/site-packages/oauth_dropins/static
 
-- url: /fonts
-  static_dir: local/lib/python2.7/site-packages/oauth_dropins/fonts
-
 - url: /(.well-known/.*)?
   script: app.application
   secure: always
 
-- url: /(start_auth|twitter/oauth_callback)
+- url: /(twitter|facebook|instagram|google\+)/(start_auth|oauth_callback)
   script: app.application
   secure: always
 
