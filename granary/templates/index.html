@@ -93,9 +93,12 @@ Click on a site to try the demo!
 <div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start_auth">
   <input type="image" class="shadow" alt="Facebook"
          src="/oauth_dropins/static/facebook.png" />
+  <!-- https://developers.facebook.com/docs/reference/login/ -->
+  <input name="scope" type="hidden"
+         value="user_status,user_posts,user_photos,user_events,read_stream">
 </form></div>
-  <div class="clearfix visible-sm"></div>
-<div class="col-md-3 col-sm-6"><form method="post" action="/googleplus/start_auth">
+<div class="clearfix visible-sm"></div>
+<div class="col-md-3 col-sm-6"><form method="post" action="/google+/start_auth">
   <input type="image" class="shadow" alt="Google+"
          src="/oauth_dropins/static/google_plus.png" />
 </form></div>
@@ -122,8 +125,9 @@ Click on a site to try the demo!
 </em></p>
 </div>
 
-<form id="demo" method="get" target="results">
+<form id="demo" action="/demo" method="get" target="results">
 <p><nobr><code>
+<input type="hidden" name="site" value="{{ entity.site_name.lower }}" />
 / {{ entity.site_name.lower }} / @me /
 <select id="group_id" name="group_id" class="form-control">
   <option value="all">@all</option>
@@ -158,7 +162,7 @@ Click on a site to try the demo!
 {% endif %}
 <input type="hidden" name="plaintext" />
 </code>
-<button class="btn btn-default" type="submit">GET</button>
+<button type="submit" class="btn btn-default">GET</button>
 </nobr>
 
 </p>

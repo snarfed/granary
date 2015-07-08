@@ -25,7 +25,7 @@ handlers:
 - url: /oauth_dropins/static
   static_dir: local/lib/python2.7/site-packages/oauth_dropins/static
 
-- url: /(.well-known/.*)?
+- url: /(demo|.well-known/.*)?
   script: app.application
   secure: always
 

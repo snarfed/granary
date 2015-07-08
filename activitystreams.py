@@ -38,6 +38,11 @@ from granary import appengine_config
 from granary import atom
 from granary import microformats2
 from granary import source
+# Import source modules so their classes are loaded and registered
+from granary import facebook
+from granary import googleplus
+from granary import instagram
+from granary import twitter
 
 import webapp2
 
@@ -71,11 +76,13 @@ class Handler(webapp2.RequestHandler):
     # parse path
     args = urllib.unquote(self.request.path).strip('/').split('/')
     if not args or len(args) > MAX_PATH_LEN:
-      raise exc.HTTPNotFound()
+      raise exc.HTTPNotFound('Expected 1-%d path elements; found %d' %
+                             (MAX_PATH_LEN, len(args)))
 
-    src_cls = source.sources.get(args.pop(0))
+    site = args.pop(0)
+    src_cls = source.sources.get(site)
     if not src_cls:
-      raise exc.HTTPNotFound()
+      raise exc.HTTPNotFound('Unknown site %r' % site)
     src = src_cls(**{key: val for key, val in self.request.params.items()
                      if key.startswith('access_token')})
 

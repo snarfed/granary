@@ -6,11 +6,16 @@
   padding-top: 0;
 }
 
-.form-control {
+.form-control, button.btn {
   display: inline;
   width: auto;
   height: auto;
   padding: 0 .5em 0 .5em;
+}
+
+code {
+  color: #333;
+  background-color: #EEE;
 }
 
 /* img#logo { */
@@ -19,6 +24,6 @@
 
 iframe {
   width: 100%;
-  /* min-height: 40em; */
-  border: 0; /* 1px solid gray; */
+  min-height: 40em;
+  background-color: gray;
 }
