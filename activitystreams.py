@@ -36,14 +36,10 @@ from webob import exc
 
 from granary import appengine_config
 from granary import atom
-from granary import facebook
-from granary import instagram
 from granary import microformats2
 from granary import source
-from granary import twitter
 
 import webapp2
-
 
 XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -51,9 +47,10 @@ XML_TEMPLATE = """\
 """
 ITEMS_PER_PAGE = 100
 
-# default values for each part of the API request path, e.g. /@me/@self/@all/...
+# default values for each part of the API request path except the site, e.g.
+# /twitter/@me/@self/@all/...
 PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
-MAX_PATH_LEN = len(PATH_DEFAULTS)
+MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
 
 class Handler(webapp2.RequestHandler):
@@ -65,27 +62,22 @@ class Handler(webapp2.RequestHandler):
 
   handle_exception = handlers.handle_exception
 
-  def source_class(self):
-    """Return the Source subclass to use. May be overridden by subclasses."""
-    return SOURCE
-
   def get(self):
     """Handles an API GET.
 
-    Request path is of the form /user_id/group_id/app_id/activity_id , where
-    each element is an optional string object id.
+    Request path is of the form /site/user_id/group_id/app_id/activity_id ,
+    where each element except site is an optional string object id.
     """
-    args = {key: self.request.params[key]
-            for key in ('access_token', 'access_token_key', 'access_token_secret')
-            if key in self.request.params}
-    source = self.source_class()(**args)
-
     # parse path
     args = urllib.unquote(self.request.path).strip('/').split('/')
-    if len(args) > MAX_PATH_LEN:
+    if not args or len(args) > MAX_PATH_LEN:
       raise exc.HTTPNotFound()
-    elif args == ['']:
-      args = []
+
+    src_cls = source.sources.get(args.pop(0))
+    if not src_cls:
+      raise exc.HTTPNotFound()
+    src = src_cls(**{key: val for key, val in self.request.params.items()
+                     if key.startswith('access_token')})
 
     # handle default path elements
     args = [None if a in defaults else a
@@ -100,7 +92,7 @@ class Handler(webapp2.RequestHandler):
                                (format, expected_formats))
 
     # get activities and build response
-    response = source.get_activities_response(*args, **self.get_kwargs())
+    response = src.get_activities_response(*args, **self.get_kwargs())
     activities = response['items']
 
     # encode and write response
@@ -109,7 +101,7 @@ class Handler(webapp2.RequestHandler):
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
     elif format == 'atom':
-      actor = source.get_actor(user_id)
+      actor = src.get_actor(user_id)
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(atom.activities_to_atom(
           activities, actor, host_url=self.request.host_url + '/',

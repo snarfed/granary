@@ -17,6 +17,8 @@ from granary.test import test_twitter
 
 
 class FakeSource(source.Source):
+  NAME = 'Fake'
+
   def __init__(self, **kwargs):
     pass
 
@@ -53,7 +55,7 @@ class HandlerTest(testutil.HandlerTest):
     return activitystreams.application.get_response(url)
 
   def check_request(self, url, *args, **kwargs):
-    resp = self.get_response(url, *args, **kwargs)
+    resp = self.get_response('/fake' + url, *args, **kwargs)
     self.assertEquals(200, resp.status_int)
     self.assert_equals({
         'startIndex': int(kwargs.get('start_index', 0)),
@@ -103,7 +105,7 @@ class HandlerTest(testutil.HandlerTest):
     self.check_request('/@me/?format=json', None)
 
   def test_xml_format(self):
-    resp = self.get_response('?format=xml')
+    resp = self.get_response('/fake?format=xml')
     self.assertEquals(200, resp.status_int)
     self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -128,23 +130,23 @@ class HandlerTest(testutil.HandlerTest):
       self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
       # include access_token param to check that it gets stripped
-      resp = self.get_response('?format=atom&access_token=foo&a=b')
+      resp = self.get_response('/fake?format=atom&access_token=foo&a=b')
       self.assertEquals(200, resp.status_int)
       self.assert_multiline_equals(
-        test_module.ATOM % {'request_url': 'http://localhost',
+        test_module.ATOM % {'request_url': 'http://localhost/fake',
                             'host_url': 'http://localhost/'},
         resp.body)
 
   def test_unknown_format(self):
-    resp = activitystreams.application.get_response('?format=bad')
+    resp = activitystreams.application.get_response('/fake?format=bad')
     self.assertEquals(400, resp.status_int)
 
   def test_bad_start_index(self):
-    resp = activitystreams.application.get_response('?startIndex=foo')
+    resp = activitystreams.application.get_response('/fake?startIndex=foo')
     self.assertEquals(400, resp.status_int)
 
   def test_bad_count(self):
-    resp = activitystreams.application.get_response('?count=-1')
+    resp = activitystreams.application.get_response('/fake?count=-1')
     self.assertEquals(400, resp.status_int)
 
   def test_start_index(self):
