@@ -6,8 +6,13 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
 
+from granary import facebook
+from granary import googleplus
+from granary import instagram
+from granary import source
 from granary.source import Source
 from granary import testutil
+from granary import twitter
 
 import test_facebook
 import test_googleplus
@@ -274,3 +279,10 @@ class SourceTest(testutil.HandlerTest):
                           (fb_invite, fb_rsvp)):
       self.assertTrue(self.source.activity_changed(before, after, log=True),
                                                    '%s\n%s' % (before, after))
+
+  def test_sources_global(self):
+    self.assertEquals(facebook.Facebook, source.sources['facebook'])
+    self.assertEquals(googleplus.GooglePlus, source.sources['google+'])
+    self.assertEquals(instagram.Instagram, source.sources['instagram'])
+    self.assertEquals(twitter.Twitter, source.sources['twitter'])
+

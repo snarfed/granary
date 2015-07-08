@@ -34,6 +34,9 @@ RSVP_TO_EVENT = {
   'invite': 'invited',
   }
 
+# maps lower case string short name to Source subclass. populated by SourceMeta.
+sources = {}
+
 CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
 
@@ -78,6 +81,16 @@ def object_type(obj):
   return type if type and type != 'activity' else obj.get('verb')
 
 
+class SourceMeta(type):
+  """Source metaclass. Registers all source classes in the sources global."""
+  def __new__(meta, name, bases, class_dict):
+    cls = type.__new__(meta, name, bases, class_dict)
+    name = getattr(cls, 'NAME', None)
+    if name:
+      sources[name.lower()] = cls
+    return cls
+
+
 class Source(object):
   """Abstract base class for a source (e.g. Facebook, Twitter).
 
@@ -93,6 +106,7 @@ class Source(object):
       placeholder for the post URL and (optionally) a %(content)s placeholder
       for the post content.
   """
+  __metaclass__ = SourceMeta
 
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""
