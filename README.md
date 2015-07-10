@@ -1,6 +1,10 @@
 ![Granary](https://raw.github.com/snarfed/granary/master/static/logo_small.png) granary
 ===
 
+[Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API
+[chaff](https://en.wikipedia.org/wiki/Chaff) and expose the sweet social
+data foodstuff inside in standard formats and protocols!
+
   * [About](#about)
   * [Using](#using)
     * [Using the REST API](#using-the-REST-API)
@@ -13,7 +17,7 @@
 About
 ---
 
-This is a library and REST API that fetches and converts social network data between a wide variety of formats:
+Granary is a library and REST API that converts between a wide variety of formats:
 * Facebook, Google+, Instagram, and Twitter native APIs
 * [ActivityStreams](http://activitystrea.ms/)
 * [microformats2](http://microformats.org/wiki/microformats2) HTML
@@ -21,7 +25,7 @@ This is a library and REST API that fetches and converts social network data bet
 * [Atom](http://atomenabled.org/)
 * XML
 
-You can try out an interactive demo at https://granary-demo.appspot.com/
+Try out the interactive demo: https://granary-demo.appspot.com/
 
 License: This project is placed in the public domain.
 

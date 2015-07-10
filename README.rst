@@ -1,7 +1,6 @@
-|Granary|
-
-This is a library and REST API that fetches and converts social network
+Granary is a library and REST API that fetches and converts social network
 data between a wide variety of formats:
+
 - Facebook, Google+, Instagram, and Twitter native APIs
 - `ActivityStreams <http://activitystrea.ms/>`__
 - `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
@@ -9,13 +8,8 @@ data between a wide variety of formats:
 - `Atom <http://atomenabled.org/>`__
 - XML
 
-You can try it out with these interactive demos:
-
-http://facebook-activitystreams.appspot.com/
-http://twitter-activitystreams.appspot.com/
-http://instagram-activitystreams.appspot.com/
-
-`Check out the docs for more! <https://github.com/snarfed/granary>`__
+`Try out the interactive demo <https://granary-demo.appspot.com/>`__ and
+`check out the docs <https://github.com/snarfed/granary>`__.
 
 License: This project is placed in the public domain.
 
@@ -39,7 +33,7 @@ is equivalent to this ``HTTP GET`` request:
 
 ::
 
-    https://twitter-activitystreams.appspot.com/@me/@friends/@app/
+    https://granary-demo.appspot.com/twitter/@me/@friends/@app/
       ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 
 They return the authenticated user's Twitter stream, ie tweets from the
