@@ -60,7 +60,6 @@ import urlparse
 import appengine_config
 from oauth_dropins.webutil import util
 import source
-import webapp2
 
 API_BASE = 'https://graph.facebook.com/v2.2/'
 API_SELF_POSTS = '%s/posts?offset=%d'

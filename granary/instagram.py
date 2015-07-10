@@ -21,7 +21,6 @@ import operator
 import appengine_config
 from oauth_dropins.webutil import util
 import source
-import webapp2
 
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}

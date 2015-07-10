@@ -20,8 +20,8 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='1.0a1',
-      description='Fetches and converts data between Facebook, Google+, Instagram, and Twitter native APIs, ActivityStreams, microformats2 HTML and JSON, Atom, and more.',
+      version='1.0',
+      description='`Free <https://en.wikipedia.org/wiki/Threshing>`__ yourself from silo API `chaff <https://en.wikipedia.org/wiki/Chaff>`__ and expose the sweet social data foodstuff inside in standard formats and protocols!',
       long_description=open('README.rst').read(),
       url='https://github.com/snarfed/granary',
       packages=find_packages(exclude='test'),

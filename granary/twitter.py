@@ -28,7 +28,6 @@ from appengine_config import HTTP_TIMEOUT
 
 from bs4 import BeautifulSoup
 import requests
-import webapp2
 
 import source
 from oauth_dropins import twitter_auth
