@@ -16,7 +16,7 @@
 </head>
 
 
-<body onload="access_token_from_fragment()">
+<body>
 
 <!-- highlight fragments -->
 <style type="text/css">
@@ -127,12 +127,12 @@ Click on a site to try the demo!
 
 <form id="demo" action="/demo" method="get" target="results">
 <input type="hidden" id="site" name="site" value="{{ entity.site_name.lower }}" />
-<p><nobr><code>
+<p><code>
 <label>/ {{ entity.site_name.lower }} / @me /</label>
 <select id="group_id" name="group_id">
-  <option value="all">@all</option>
-  <option value="self">@self</option>
-  <option value="friends">@friends</option>
+  <option value="@all">@all</option>
+  <option value="@self">@self</option>
+  <option value="@friends">@friends</option>
 </select>
 <label>/ @app /</label>
 <input id="activity_id" name="activity_id" type="text" class="form-control"
@@ -160,10 +160,8 @@ Click on a site to try the demo!
   <input id="access_token" name="access_token" type="text" size="10"
          class="form-control" value="{{ access_token }}" />
 {% endif %}
-<input type="hidden" name="plaintext" />
 </code>
 <button type="submit" class="btn btn-default" onclick="render_request()">GET</button>
-</nobr>
 
 </p>
 </form>
