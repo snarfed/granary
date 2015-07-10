@@ -16,7 +16,7 @@
 </head>
 
 
-<body onload="access_token_from_fragment(); render_form();">
+<body onload="access_token_from_fragment()">
 
 <!-- highlight fragments -->
 <style type="text/css">
@@ -126,19 +126,19 @@ Click on a site to try the demo!
 </div>
 
 <form id="demo" action="/demo" method="get" target="results">
+<input type="hidden" id="site" name="site" value="{{ entity.site_name.lower }}" />
 <p><nobr><code>
-<input type="hidden" name="site" value="{{ entity.site_name.lower }}" />
-/ {{ entity.site_name.lower }} / @me /
-<select id="group_id" name="group_id" class="form-control">
+<label>/ {{ entity.site_name.lower }} / @me /</label>
+<select id="group_id" name="group_id">
   <option value="all">@all</option>
   <option value="self">@self</option>
   <option value="friends">@friends</option>
 </select>
-/ @app /
+<label>/ @app /</label>
 <input id="activity_id" name="activity_id" type="text" class="form-control"
        placeholder="activity id (optional)" size="12" />
 ? <label for="format">format =</label>
-<select id="format" name="format" class="form-control">
+<select id="format" name="format">
   <option value="json">json</option>
   <option value="atom">atom</option>
   <option value="xml">xml</option>
@@ -162,14 +162,17 @@ Click on a site to try the demo!
 {% endif %}
 <input type="hidden" name="plaintext" />
 </code>
-<button type="submit" class="btn btn-default">GET</button>
+<button type="submit" class="btn btn-default" onclick="render_request()">GET</button>
 </nobr>
 
 </p>
 </form>
 
+<div id="results">
+<p><code id="request"></code></p>
 <iframe name="results">
 </iframe>
+</div>
 
 {% endif %}
 

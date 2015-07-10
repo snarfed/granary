@@ -22,8 +22,12 @@ code {
 /*   float: right; */
 /* } */
 
+div#results {
+  background-color: #EEE;
+}
+
 iframe {
   width: 100%;
   min-height: 40em;
-  background-color: gray;
+  border: 0;
 }

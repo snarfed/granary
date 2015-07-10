@@ -30,18 +30,18 @@ import json
 import logging
 import urllib
 
+from google.appengine.ext import ndb
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
 from webob import exc
 
 from granary import appengine_config
 from granary import atom
-from granary import microformats2
-from granary import source
-# Import source modules so their classes are loaded and registered
 from granary import facebook
 from granary import googleplus
 from granary import instagram
+from granary import microformats2
+from granary import source
 from granary import twitter
 
 import webapp2
@@ -79,7 +79,22 @@ class Handler(webapp2.RequestHandler):
       raise exc.HTTPNotFound('Expected 1-%d path elements; found %d' %
                              (MAX_PATH_LEN, len(args)))
 
+    # make source instance
     site = args.pop(0)
+    if site == 'twitter':
+      src = twitter.Twitter(
+        access_token_key=util.get_required_param(self, 'access_token_key'),
+        access_token_secret=util.get_required_param(self, 'access_token_secret'))
+    elif site == 'facebook':
+      src = facebook.Facebook(
+        access_token=util.get_required_param(self, 'access_token'))
+    elif site == 'instagram':
+      src = instagram.Instagram(
+        access_token=util.get_required_param(self, 'access_token'))
+    elif site == 'google+':
+      auth_entity = util.get_required_param(self, 'auth_entity')
+      src = googleplus.GooglePlus(auth_entity=ndb.Key(auth_entity).get())
+
     src_cls = source.sources.get(site)
     if not src_cls:
       raise exc.HTTPNotFound('Unknown site %r' % site)
