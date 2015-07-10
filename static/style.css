@@ -22,8 +22,13 @@ code {
 /*   float: right; */
 /* } */
 
-div#results {
+#results {
   background-color: #EEE;
+}
+
+#privacy {
+  margin-top: 2em;
+  font-size: 1.2em;
 }
 
 iframe {

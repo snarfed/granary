@@ -160,14 +160,7 @@ Note the `app.yaml.*` files, one for each App Engine app id. To work on or deplo
 To deploy:
 
 ```shell
-git co -- app.yaml && ./alltests.py && \
-rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
-  ~/google_appengine/appcfg.py --oauth2 update . && \
-rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
-  ~/google_appengine/appcfg.py --oauth2 update . && \
-rm -f app.yaml && ln -s app.yaml.instagram app.yaml && \
-~/google_appengine/appcfg.py --oauth2 update . && \
-git co -- app.yaml
+python -m unittest discover && ~/google_appengine/appcfg.py update .
 ```
 
 To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), and [instagram-atom](https://github.com/snarfed/instagram-atom) after an granary change:
@@ -176,9 +169,23 @@ To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-at
 #!/bin/tcsh
 foreach s (facebook twitter instagram)
   cd ~/src/$s-atom/activitystreams && git pull && \
-    cd .. && ~/google_appengine/appcfg.py --oauth2 update .
+    cd .. && ~/google_appengine/appcfg.py update .
 end
 ```
+
+To deploy the old `*-activitystreams.appspot.com` apps:
+
+```shell
+cd old_apps
+rm -f app.yaml && ln -s app.twitter.yaml app.yaml && \
+  ~/google_appengine/appcfg.py update . && \
+rm -f app.yaml && ln -s app.facebook.yaml app.yaml && \
+  ~/google_appengine/appcfg.py update . && \
+rm -f app.yaml && ln -s app.instagram.yaml app.yaml && \
+  ~/google_appengine/appcfg.py update . && \
+git co -- app.yaml
+```
+
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
 
