@@ -110,10 +110,11 @@ Click on a site to try the demo!
 </em></p>
 </div>
 
+{% with entity.site_name.lower as site %}
 <form id="demo" action="/demo" method="get" target="results">
-<input type="hidden" id="site" name="site" value="{{ entity.site_name.lower }}" />
+<input type="hidden" id="site" name="site" value="{{ site }}" />
 <p><code>
-<label>/ {{ entity.site_name.lower }} / @me /</label>
+<label>/ {{ site }} / @me /</label>
 <select id="group_id" name="group_id">
   <option value="@all">@all</option>
   <option value="@self">@self</option>
@@ -131,12 +132,12 @@ Click on a site to try the demo!
   <option value="json-mf2">json-mf2</option>
 </select>
 &
-{% if auth_entity %}
+{% if site == 'google+' %}
   <label for="auth_entity">auth_entity =</label>
   <input id="auth_entity" name="auth_entity" type="text" size="10"
          class="form-control" value="{{ auth_entity }}" />
 {% endif %}
-{% if access_token and not auth_entity %}
+{% if access_token and site != 'google+' %}
   <label for="access_token">access_token =</label>
   <input id="access_token" name="access_token" type="text" size="10"
          class="form-control" value="{{ access_token }}" />
@@ -161,6 +162,7 @@ Click on a site to try the demo!
 </iframe>
 </div>
 
+{% endwith %}
 {% endif %}
 
 <div class="row">
