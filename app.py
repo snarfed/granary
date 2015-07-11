@@ -38,7 +38,7 @@ class DemoHandler(webapp2.RequestHandler):
   def get(self):
     params = {name: val for name, val in self.request.params.items()
               if name == 'format' or name.startswith('access_token')}
-    return self.redirect('/%s/@me/%s/@app/%s?%s' % (
+    return self.redirect('/%s/@me/%s/@app/%s?plaintext=true&%s' % (
       util.get_required_param(self, 'site'),
       self.request.get('group_id', source.ALL),
       self.request.get('activity_id', ''),
