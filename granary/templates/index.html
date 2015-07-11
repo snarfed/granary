@@ -131,6 +131,16 @@ Click on a site to try the demo!
   <option value="json-mf2">json-mf2</option>
 </select>
 &
+{% if auth_entity %}
+  <label for="auth_entity">auth_entity =</label>
+  <input id="auth_entity" name="auth_entity" type="text" size="10"
+         class="form-control" value="{{ auth_entity }}" />
+{% endif %}
+{% if access_token and not auth_entity %}
+  <label for="access_token">access_token =</label>
+  <input id="access_token" name="access_token" type="text" size="10"
+         class="form-control" value="{{ access_token }}" />
+{% endif %}
 {% if access_token_key and access_token_secret %}
   <label for="access_token_key">access_token_key =</label>
   <input id="access_token_key" name="access_token_key" type="text" size="10"
@@ -138,12 +148,6 @@ Click on a site to try the demo!
   <label for="access_token_secret">& access_token_secret =</label>
   <input id="access_token_secret" name="access_token_secret" type="text" size="10"
          class="form-control" value="{{ access_token_secret }}" />
-{% endif %}
-
-{% if access_token %}
-  <label for="access_token">access_token =</label>
-  <input id="access_token" name="access_token" type="text" size="10"
-         class="form-control" value="{{ access_token }}" />
 {% endif %}
 </code>
 <button type="submit" class="btn btn-default" onclick="render_request()">GET</button>

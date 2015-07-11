@@ -2,7 +2,8 @@
  * Utilities for the demo form on the front page.
  */
 
-var OAUTH_INPUT_IDS = ['access_token', 'access_token_key', 'access_token_secret'];
+var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
+                       'access_token_key', 'access_token_secret'];
 
 function render_request() {
   var url = window.location.origin + '/' +

@@ -93,13 +93,12 @@ class Handler(webapp2.RequestHandler):
         access_token=util.get_required_param(self, 'access_token'))
     elif site == 'google+':
       auth_entity = util.get_required_param(self, 'auth_entity')
-      src = googleplus.GooglePlus(auth_entity=ndb.Key(auth_entity).get())
-
-    src_cls = source.sources.get(site)
-    if not src_cls:
-      raise exc.HTTPNotFound('Unknown site %r' % site)
-    src = src_cls(**{key: val for key, val in self.request.params.items()
-                     if key.startswith('access_token')})
+      src = googleplus.GooglePlus(auth_entity=ndb.Key(urlsafe=auth_entity).get())
+    else:
+      src_cls = source.sources.get(site)
+      if not src_cls:
+        raise exc.HTTPNotFound('Unknown site %r' % site)
+      src = src_cls(**self.request.params)
 
     # handle default path elements
     args = [None if a in defaults else a

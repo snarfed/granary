@@ -5,6 +5,8 @@ __author__ = 'Ryan Barrett <granary@ryanb.org>'
 
 import urllib
 
+import appengine_config
+
 from google.appengine.ext import ndb
 from oauth_dropins import facebook
 from oauth_dropins import googleplus
@@ -14,9 +16,16 @@ from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
 import webapp2
 
-import appengine_config
 import activitystreams
 from granary import source
+
+API_PARAMS = {
+  'access_token',
+  'access_token_key',
+  'access_token_secret',
+  'auth_entity',
+  'format',
+}
 
 
 class FrontPageHandler(handlers.TemplateHandler):
@@ -37,7 +46,7 @@ class DemoHandler(webapp2.RequestHandler):
   """Handles requests from the interactive demo form on the front page."""
   def get(self):
     params = {name: val for name, val in self.request.params.items()
-              if name == 'format' or name.startswith('access_token')}
+              if name in API_PARAMS}
     return self.redirect('/%s/@me/%s/@app/%s?plaintext=true&%s' % (
       util.get_required_param(self, 'site'),
       self.request.get('group_id', source.ALL),
