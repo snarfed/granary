@@ -82,7 +82,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     request_url=request_url,
     title=title or 'User feed for ' + source.Source.actor_name(actor),
     updated=activities[0]['object'].get('published', '') if activities else '',
-    actor=actor,
+    actor=Defaulter(**actor),
     )
 
 
