@@ -1,0 +1,5 @@
+# Used by include_package_data=True in setup.py to include static files.
+# Docs: https://docs.python.org/2/distutils/sourcedist.html#manifest-template
+include CHANGELOG.md
+recursive-include granary *
+recursive-exclude granary *.pyc .git*

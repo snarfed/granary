@@ -20,11 +20,12 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='1.0',
+      version='1.0.1',
       description='Free yourself from silo API chaff and expose the sweet social data foodstuff inside in standard formats and protocols!',
       long_description=open('README.rst').read(),
       url='https://github.com/snarfed/granary',
-      packages=find_packages(exclude='test'),
+      packages=find_packages(),
+      include_package_data=True,
       author='Ryan Barrett',
       author_email='granary@ryanb.org',
       license='Public domain',
@@ -37,7 +38,7 @@ setup(name='granary',
           'Programming Language :: Python :: 2',
           'Topic :: Software Development :: Libraries :: Python Modules',
       ],
-      keywords='activitystreams facebook twitter google+ twitter microformats2 mf2 atom',
+      keywords='facebook twitter google+ twitter activitystreams html microformats2 mf2 atom',
       install_requires=[
           # Keep in sync with requirements.txt!
           'beautifulsoup4',
