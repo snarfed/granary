@@ -1,4 +1,5 @@
-![Granary](https://raw.github.com/snarfed/granary/master/static/logo_small.png) granary
+![Granary](https://raw.github.com/snarfed/granary/master/static/granary_logo_128.png)
+granary
 ===
 
 [Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API
