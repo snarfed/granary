@@ -18,9 +18,9 @@ code {
   background-color: #EEE;
 }
 
-/* img#logo { */
-/*   float: right; */
-/* } */
+h1 {
+  text-align: center;
+}
 
 #results {
   background-color: #EEE;
