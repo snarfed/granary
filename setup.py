@@ -15,8 +15,8 @@ from setuptools.command.test import ScanningLoader
 class TestLoader(ScanningLoader):
   def __init__(self, *args, **kwargs):
     super(ScanningLoader, self).__init__(*args, **kwargs)
-    # test/__init__.py makes App Engine SDK's bundled libraries importable.
-    import oauth_dropins.test
+    # webutil/test/__init__.py makes App Engine SDK's bundled libraries importable.
+    import oauth_dropins.webutil.test
 
 
 setup(name='granary',
