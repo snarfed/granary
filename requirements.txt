@@ -3,4 +3,4 @@ beautifulsoup4
 jinja2
 mf2py>=0.2.6
 oauth-dropins
-requests
+requests<2.6.0
