@@ -182,7 +182,15 @@ class Facebook(source.Source):
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
       # it doesn't accept that format. I can't tell which is which yet, so try
       # them all.
-      # More background: https://github.com/snarfed/bridgy/issues/346
+      #
+      # For example, posts with link attachments only return the 'link' field
+      # when fetched with the user id prefix, e.g. /212038_10101610780998763,
+      # not with just the id, e.g. /10101610780998763. Details:
+      # https://github.com/snarfed/bridgy/issues/388
+      #
+      # Alternatively, photos include likes when fetched with just the id, but
+      # not with the user id prefix. Details:
+      # https://github.com/snarfed/bridgy/issues/424
       if '_' in activity_id:
         suffix = activity_id.split('_', 1)[1]
         ids_to_try = [activity_id, suffix]
@@ -191,18 +199,18 @@ class Facebook(source.Source):
       else:
         ids_to_try = ['_'.join((user_id, activity_id)), activity_id]
 
+      post = {}
       for id in ids_to_try:
         try:
           resp = self.urlopen(id)
           if resp.get('error'):
             logging.warning("Couldn't fetch object %s: %s", id, resp)
           else:
-            posts = [resp]
-            break
+            post.update(resp)
         except urllib2.URLError, e:
           logging.warning("Couldn't fetch object %s: %s", id, e)
-      else:
-        posts = []
+
+      posts = [post] if post else []
 
     else:
       url = API_SELF_POSTS if group_id == source.SELF else API_HOME
