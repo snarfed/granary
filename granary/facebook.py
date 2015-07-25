@@ -61,6 +61,10 @@ import appengine_config
 from oauth_dropins.webutil import util
 import source
 
+# WARNING: when we upgrade to 2.4, we'll need to start including the fields
+# query param for most or all requests. :/
+# https://developers.facebook.com/docs/apps/changelog#v2_4_changes
+#   (see the Declarative Fields section)
 API_BASE = 'https://graph.facebook.com/v2.2/'
 API_SELF_POSTS = '%s/posts?offset=%d'
 API_HOME = '%s/home?offset=%d'
