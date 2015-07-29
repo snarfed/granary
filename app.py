@@ -9,6 +9,7 @@ import appengine_config
 
 from google.appengine.ext import ndb
 from oauth_dropins import facebook
+from oauth_dropins import flickr
 from oauth_dropins import googleplus
 from oauth_dropins import instagram
 from oauth_dropins import twitter
@@ -59,6 +60,8 @@ application = webapp2.WSGIApplication([
   ('/demo', DemoHandler),
   ('/facebook/start_auth', facebook.StartHandler.to('/facebook/oauth_callback')),
   ('/facebook/oauth_callback', facebook.CallbackHandler.to('/')),
+  ('/flickr/start_auth', flickr.StartHandler.to('/flickr/oauth_callback')),
+  ('/flickr/oauth_callback', flickr.CallbackHandler.to('/')),
   ('/google\\+/start_auth', googleplus.StartHandler.to('/google+/oauth_callback')),
   ('/google\\+/oauth_callback', googleplus.CallbackHandler.to('/')),
   ('/instagram/start_auth', instagram.StartHandler.to('/instagram/oauth_callback')),
