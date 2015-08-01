@@ -25,6 +25,7 @@ API_PARAMS = {
   'access_token_key',
   'access_token_secret',
   'auth_entity',
+  'user_id',
   'format',
 }
 
