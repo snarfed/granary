@@ -92,7 +92,8 @@ class Handler(webapp2.RequestHandler):
     elif site == 'flickr':
       src = flickr.Flickr(
         access_token_key=util.get_required_param(self, 'access_token_key'),
-        access_token_secret=util.get_required_param(self, 'access_token_secret'))
+        access_token_secret=util.get_required_param(self, 'access_token_secret'),
+        user_id=util.get_required_param(self, 'user_id'))
     elif site == 'instagram':
       src = instagram.Instagram(
         access_token=util.get_required_param(self, 'access_token'))

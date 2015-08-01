@@ -19,7 +19,7 @@ class Flickr(source.Source):
   DOMAIN = 'flickr.com'
   NAME = 'Flickr'
 
-  def __init__(self, access_token_key, access_token_secret):
+  def __init__(self, access_token_key, access_token_secret, user_id):
     """Constructor.
 
     Args:
@@ -30,6 +30,7 @@ class Flickr(source.Source):
     logging.debug('token sec: %s', access_token_secret)
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
+    self.user_id = user_id
 
   def call_api_method(self, method, params):
     return flickr_auth.call_api_method(
@@ -48,10 +49,12 @@ class Flickr(source.Source):
 
     params = {}
     method = None
+    solo = False
 
     if activity_id:
       method = 'flickr.photos.getInfo'
       params['photo_id'] = activity_id
+      solo = True
     elif group_id == source.SELF:
       method = 'flickr.people.getPhotos'
       params['user_id'] = user_id
@@ -83,67 +86,31 @@ class Flickr(source.Source):
       'items': []
     }
 
-    for photo in photos_resp.get('photos', {}).get('photo', []):
-      photo_permalink = 'https://flickr.com/photos/{}/{}'.format(
-        photo.get('owner'), photo.get('id'))
-      activity = {
-        'url': 'https://flickr.com/photos/{}/{}'.format(
-          photo.get('owner'), photo.get('id')),
-        'actor': {
-          'numeric_id': photo.get('owner'),
-        },
-        'object': {
-          'displayName': photo.get('title'),
-          'url': photo_permalink,
-          'id': self.tag_uri(photo.get('id')),
-          'image': {
-            'url': 'https://farm{}.staticflickr.com/{}/{}_{}_{}.jpg'.format(
-              photo.get('farm'), photo.get('server'),
-              photo.get('id'), photo.get('secret'), 'b'),
-          },
-          'objectType': 'photo',
-          'created': photo.get('datetaken'),
-          'published': self.reformat_unix_time(photo.get('dateupload')),
-        },
-        'verb': 'post',
-        'created': photo.get('datetaken'),
-        'published': self.reformat_unix_time(photo.get('dateupload')),
-      }
+    if solo:
+      photos = [photos_resp.get('photo', {})]
+    else:
+      photos = photos_resp.get('photos', {}).get('photo', [])
 
-      if fetch_replies or True:
+    for photo in photos:
+      activity = self.photo_to_activity(photo)
+
+      # TODO consider using 'flickr.activity.userPhotos' when group_id=@self,
+      # gives all recent comments and faves, instead of hitting the API for
+      # each photo
+      if fetch_replies:
         replies = []
         comments_resp = self.call_api_method('flickr.photos.comments.getList', {
           'photo_id': photo.get('id'),
+          'max_comment_date': etag,
         })
         for comment in comments_resp.get('comments', {}).get('comment', []):
-          replies.append({
-            'objectType': 'comment',
-            'url': comment.get('permalink'),
-            'id': self.tag_uri('{}_{}'.format(
-              photo.get('id'), comment.get('id'))),
-            'inReplyTo': [{'id': self.tag_uri(photo.get('id'))}],
-            'content': comment.get('_content'),
-            'created': self.reformat_unix_time(comment.get('datecreate')),
-            'updated': self.reformat_unix_time(comment.get('datecreate')),
-            'author': {
-              'objectType': 'person',
-              'displayName': comment.get('realname'),
-              'username': comment.get('authorname'),
-              'id': self.tag_uri(comment.get('author')),
-              'image': {
-                'url': 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
-                  comment.get('iconfarm'), comment.get('iconserver'),
-                  comment.get('author')),
-              },
-            }
-          })
-
+          replies.append(self.comment_to_object(comment, photo.get('id')))
           activity['object']['replies'] = {
-            'items': util.trim_nulls(replies),
+            'items': replies,
             'totalItems': len(replies),
           }
 
-      if fetch_likes or True:
+      if fetch_likes:
         faves_resp = self.call_api_method('flickr.photos.getFavorites', {
           'photo_id': photo.get('id'),
         })
@@ -161,8 +128,8 @@ class Flickr(source.Source):
               },
             },
             'url': '{}#liked-by-#{}'.format(
-              photo_permalink, person.get('nsid')),
-            'object': {'url': photo_permalink},
+              activity.get9('url'), person.get('nsid')),
+            'object': {'url': activity.get('url')},
             'id': self.tag_uri('{}_liked_by_{}'.format(
               photo.get('id'), person.get('nsid'))),
             'objectType': 'activity',
@@ -172,6 +139,114 @@ class Flickr(source.Source):
       result['items'].append(activity)
 
     return result
+
+  def get_actor(self, user_id=None):
+    if user_id is None:
+      user_id = self.user_id
+
+    logging.debug('flickr.people.getInfo with user_id %s', user_id)
+    resp = self.call_api_method('flickr.people.getInfo', {'user_id': user_id})
+    logging.debug('flickr.people.getInfo resp %s', json.dumps(resp, indent=True))
+
+    person = resp.get('person', {})
+    username = person.get('username', {}).get('_content')
+    obj = util.trim_nulls({
+      'objectType': 'person',
+      'displayName': person.get('realname', {}).get('_content') or username,
+      'image': {
+        'url': 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
+          person.get('iconfarm'), person.get('iconserver'), person.get('nsid'))
+      },
+      'id': self.tag_uri(username),
+      # numeric_id is our own custom field that always has the source's numeric
+      # user id, if available.
+      'numeric_id': person.get('nsid'),
+      'url': person.get('profileurl', {}).get('_content'),
+      'location': {
+        'displayName': person.get('location', {}).get('_content'),
+      },
+      'username': username,
+      'description': person.get('description', {}).get('_content'),
+    })
+    logging.debug('actor %s', json.dumps(obj, indent=True))
+    return obj
+
+  def get_comment(self, comment_id, activity_id, activity_author_id=None):
+    """Returns an ActivityStreams comment object.
+
+    Args:
+      comment_id: string comment id
+      activity_id: string activity id, required
+      activity_author_id: string activity author id, ignored
+    """
+    resp = self.call_api_method('flickr.photos.comments.getList', {
+      'photo_id': activity_id,
+    })
+
+    for comment in resp.get('comments', {}).get('comment', []):
+      if comment.get('id') == comment_id:
+        return self.comment_to_object(resp)
+
+  def photo_to_activity(self, photo):
+    owner = photo.get('owner')
+    if isinstance(owner, dict):
+      owner = owner.get('nsid')
+
+    created = photo.get('dates', {}).get('taken') or photo.get('datetaken')
+    published = self.reformat_unix_time(
+      photo.get('dates', {}).get('posted') or photo.get('dateupload'))
+
+    photo_permalink = 'https://flickr.com/photos/{}/{}'.format(
+      owner, photo.get('id'))
+
+    activity = {
+      'url': 'https://flickr.com/photos/{}/{}'.format(owner, photo.get('id')),
+      'actor': {
+        'numeric_id': owner,
+      },
+      'object': {
+        'displayName': photo.get('title'),
+        'url': photo_permalink,
+        'id': self.tag_uri(photo.get('id')),
+        'image': {
+          'url': 'https://farm{}.staticflickr.com/{}/{}_{}_{}.jpg'.format(
+            photo.get('farm'), photo.get('server'),
+            photo.get('id'), photo.get('secret'), 'b'),
+        },
+        'objectType': 'photo',
+        'created': created,
+        'published': published,
+      },
+      'verb': 'post',
+      'created': created,
+      'published': published,
+    }
+    self.postprocess_activity(activity)
+    return activity
+
+  def comment_to_object(self, comment, photo_id):
+    obj = {
+      'objectType': 'comment',
+      'url': comment.get('permalink'),
+      'id': self.tag_uri('{}_{}'.format(photo_id, comment.get('id'))),
+      'inReplyTo': [{'id': self.tag_uri(photo_id)}],
+      'content': comment.get('_content'),
+      'created': self.reformat_unix_time(comment.get('datecreate')),
+      'updated': self.reformat_unix_time(comment.get('datecreate')),
+      'author': {
+        'objectType': 'person',
+        'displayName': comment.get('realname'),
+        'username': comment.get('authorname'),
+        'id': self.tag_uri(comment.get('author')),
+        'image': {
+          'url': 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
+            comment.get('iconfarm'), comment.get('iconserver'),
+            comment.get('author')),
+        },
+      }
+    }
+    self.postprocess_object(obj)
+    return obj
 
   def reformat_unix_time(self, ts):
     return ts and datetime.datetime.fromtimestamp(int(ts)).isoformat()
@@ -206,6 +281,109 @@ PHOTOS = """
     "machine_tags": "",
     "owner": "39216764@N00"
    },
+"""
+
+PHOTO_INFO = """
+{
+ "stat": "ok",
+ "photo": {
+  "comments": {
+   "_content": "0"
+  },
+  "server": "7459",
+  "title": {
+   "_content": "Percheron Thunder"
+  },
+  "editability": {
+   "canaddmeta": 1,
+   "cancomment": 1
+  },
+  "visibility": {
+   "ispublic": 1,
+   "isfamily": 0,
+   "isfriend": 0
+  },
+  "id": "8998787742",
+  "permissions": {
+   "permcomment": 3,
+   "permaddmeta": 2
+  },
+  "media": "photo",
+  "rotation": 0,
+  "originalsecret": "f129836c24",
+  "owner": {
+   "location": "San Diego, CA, USA",
+   "iconserver": "4068",
+   "iconfarm": 5,
+   "path_alias": "kindofblue115",
+   "username": "kindofblue115",
+   "nsid": "39216764@N00",
+   "realname": "Kyle Mahan"
+  },
+  "farm": 8,
+  "safety_level": "0",
+  "originalformat": "jpg",
+  "license": "2",
+  "secret": "89e6e03647",
+  "description": {
+   "_content": "This guy was driving the 6 biggest horses I've ever seen"
+  },
+  "publiceditability": {
+   "canaddmeta": 0,
+   "cancomment": 1
+  },
+  "people": {
+   "haspeople": 0
+  },
+  "dates": {
+   "takengranularity": "0",
+   "lastupdate": "1370800238",
+   "takenunknown": 0,
+   "taken": "2013-06-08 03:20:48",
+   "posted": "1370799634"
+  },
+  "views": "196",
+  "dateuploaded": "1370799634",
+  "isfavorite": 0,
+  "usage": {
+   "canshare": 1,
+   "canprint": 1,
+   "candownload": 1,
+   "canblog": 1
+  },
+  "tags": {
+   "tag": [
+    {
+     "raw": "oregon",
+     "id": "4942564-8998787742-1228",
+     "_content": "oregon",
+     "author": "39216764@N00",
+     "authorname": "kindofblue115",
+     "machine_tag": false
+    },
+    {
+     "raw": "sisters rodeo",
+     "id": "4942564-8998787742-24046921",
+     "_content": "sistersrodeo",
+     "author": "39216764@N00",
+     "authorname": "kindofblue115",
+     "machine_tag": false
+    }
+   ]
+  },
+  "urls": {
+   "url": [
+    {
+     "type": "photopage",
+     "_content": "https://www.flickr.com/photos/kindofblue115/8998787742/"
+    }
+   ]
+  },
+  "notes": {
+   "note": []
+  }
+ }
+}
 """
 
 PHOTO_COMMENTS = """
@@ -376,5 +554,64 @@ ACTIVITY_USER_PHOTOS = """
   ],
   "perpage": 50
  }
+}
+"""
+
+PERSON_INFO = """
+{
+  "person": {
+    "id": "39216764@N00",
+    "nsid": "39216764@N00",
+    "ispro": 0,
+    "can_buy_pro": 0,
+    "iconserver": "4068",
+    "iconfarm": 5,
+    "path_alias": "kindofblue115",
+    "has_stats": 1,
+    "username": {
+      "_content": "kindofblue115"
+    },
+    "realname": {
+      "_content": "Kyle Mahan"
+    },
+    "mbox_sha1sum": {
+      "_content": "049cf71f4b437dc0ab497e107f7b7d2c55a096d4"
+    },
+    "location": {
+      "_content": "San Diego, CA, USA"
+    },
+    "timezone": {
+      "label": "Pacific Time (US & Canada); Tijuana",
+      "offset": "-08:00",
+      "timezone_id": "PST8PDT"
+    },
+    "description": {
+      "_content": "Trying a little bit of everything, usually with a D40 now more or less permanently affixed with a 35mm f\/1.8 lens, occasionally with a beautiful old Minolta Hi-Matic 7s rangefinder, even more occasionally with a pinhole camera made out of a cereal box :)\n\nI don't like food photography nearly as much as I probably make it look like -- I do like cooking and eating that much though!\n\n\n<a href=\"http:\/\/www.flickriver.com\/photos\/kindofblue115\/\" rel=\"nofollow\">\n<img src=\"https:\/\/s.yimg.com\/pw\/images\/spaceout.gif\" data-blocked-src=\"https:\/\/ec.yimg.com\/ec?url=http%3A%2F%2Fwww.flickriver.com%2Fbadge%2Fuser%2Fall%2Frecent%2Fshuffle%2Fmedium-horiz%2Fffffff%2F333333%2F39216764%40N00.jpg&amp;t=1438359583&amp;sig=5tYM6QkpgJsvYIjzVJcfcA--~C\" title=\"Click to load remote image from www.flickriver.com\" onclick=\"this.onload=this.onerror=function(){this.className=this.className.replace('blocked-loading','blocked-loaded');this.onload=this.onerror=null};this.className=this.className.replace('blocked-image','blocked-loading');this.src=this.getAttribute('data-blocked-src');this.title='';this.onclick=null;if(this.parentNode && this.parentNode.nodeName == 'A') {return false;}\" class=\"blocked-image notsowide\" \/><\/a>\n\nAnd some photos that I find inspirational or otherwise awesome:\n<a href=\"http:\/\/www.flickriver.com\/photos\/kindofblue115\/favorites\/\" rel=\"nofollow\">\n<img src=\"https:\/\/s.yimg.com\/pw\/images\/spaceout.gif\" data-blocked-src=\"https:\/\/ec.yimg.com\/ec?url=http%3A%2F%2Fwww.flickriver.com%2Fbadge%2Fuser%2Ffavorites%2Frecent%2Fshuffle%2Fmedium-horiz%2Fffffff%2F333333%2F39216764%40N00.jpg&amp;t=1438359583&amp;sig=T79khy3J2Q_uUNCNnIgAOw--~C\" title=\"Click to load remote image from www.flickriver.com\" onclick=\"this.onload=this.onerror=function(){this.className=this.className.replace('blocked-loading','blocked-loaded');this.onload=this.onerror=null};this.className=this.className.replace('blocked-image','blocked-loading');this.src=this.getAttribute('data-blocked-src');this.title='';this.onclick=null;if(this.parentNode && this.parentNode.nodeName == 'A') {return false;}\" class=\"blocked-image notsowide\" \/><\/a>"
+    },
+    "photosurl": {
+      "_content": "https:\/\/www.flickr.com\/photos\/kindofblue115\/"
+    },
+    "profileurl": {
+      "_content": "https:\/\/www.flickr.com\/people\/kindofblue115\/"
+    },
+    "mobileurl": {
+      "_content": "https:\/\/m.flickr.com\/photostream.gne?id=4942564"
+    },
+    "photos": {
+      "firstdatetaken": {
+        "_content": "2005-12-27 18:29:07"
+      },
+      "firstdate": {
+        "_content": "1159222380"
+      },
+      "count": {
+        "_content": "1461"
+      },
+      "views": {
+        "_content": "7459"
+      }
+    }
+  },
+  "stat": "ok"
 }
 """
