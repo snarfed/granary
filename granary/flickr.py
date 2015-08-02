@@ -12,6 +12,8 @@ import logging
 import requests
 import source
 import sys
+import mf2py
+import urllib2
 
 
 class Flickr(source.Source):
@@ -19,20 +21,21 @@ class Flickr(source.Source):
   DOMAIN = 'flickr.com'
   NAME = 'Flickr'
 
-  def __init__(self, access_token_key, access_token_secret, user_id):
+  def __init__(self, access_token_key, access_token_secret, user_id=None):
     """Constructor.
 
     Args:
       access_token_key: string, OAuth access token key
       access_token_secret: string, OAuth access token secret
+      user_id: string, the logged in user's Flickr nsid (optional)
     """
-    logging.debug('token key: %s', access_token_key)
-    logging.debug('token sec: %s', access_token_secret)
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
     self.user_id = user_id
 
-  def call_api_method(self, method, params):
+  def call_api_method(self, method, params={}):
+    """Call a Flickr API method.
+    """
     return flickr_auth.call_api_method(
       method, params, self.access_token_key, self.access_token_secret)
 
@@ -42,6 +45,8 @@ class Flickr(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
                               search_query=None):
+    """Get Flickr actvities
+    """
     if user_id is None:
       user_id = 'me'
     if group_id is None:
@@ -50,6 +55,8 @@ class Flickr(source.Source):
     params = {}
     method = None
     solo = False
+    extras = ','.join(('date_upload', 'date_taken', 'tags', 'machine_tags',
+                      'views', 'media', 'tags', 'machine_tags', 'geo'))
 
     if activity_id:
       method = 'flickr.photos.getInfo'
@@ -58,29 +65,21 @@ class Flickr(source.Source):
     elif group_id == source.SELF:
       method = 'flickr.people.getPhotos'
       params['user_id'] = user_id
-      params['extras'] = 'date_upload,date_taken,tags,machine_tags,views,media'
+      params['extras'] = extras
       params['per_page'] = 50
     elif group_id == source.FRIENDS:
       method = 'flickr.photos.getContactsPhotos'
-      params['extras'] = 'date_upload,date_taken,tags,machine_tags,views,media'
+      params['extras'] = extras
       params['per_page'] = 50
     elif group_id == source.ALL:
       method = 'flickr.photos.getRecent'
-      params['extras'] = 'date_upload,date_taken,tags,machine_tags,views,media'
+      params['extras'] = extras
       params['per_page'] = 50
 
     assert method
     logging.debug('calling %s with %s', method, params)
     photos_resp = self.call_api_method(method, params)
     logging.debug('response %s', json.dumps(photos_resp, indent=True))
-
-    # activities_by_photo = {}
-    # if fetch_replies and group_id == source.SELF:
-    #   activity_resp = self.call_api_method('flickr.activity.userPhotos', {
-    #     'per_page': 50})
-    #   for item in activity_resp.get('items', []):
-    #     for event in item.get('activity', {}).get('event', []):
-    #       activities_by_photo.setdefault(item.get('id'), []).append(event)
 
     result = {
       'items': []
@@ -141,12 +140,25 @@ class Flickr(source.Source):
     return result
 
   def get_actor(self, user_id=None):
-    if user_id is None:
+    """Get an ActivityStreams object of type 'person' given a Flickr user's nsid.
+    If no user_id is provided, this method will make another API requeset to
+    find out the currently logged in user's id.
+
+    Args:
+      user_id: string, optional
+
+    Returns:
+      dict, an ActivityStreams object
+    """
+    if not user_id:
       user_id = self.user_id
 
-    logging.debug('flickr.people.getInfo with user_id %s', user_id)
+    if not user_id:
+      resp = self.call_api_method('flickr.people.getLimits')
+      user_id = resp.get('person', {}).get('nsid')
+
+    logging.debug('calling flickr.people.getInfo with user_id %s', user_id)
     resp = self.call_api_method('flickr.people.getInfo', {'user_id': user_id})
-    logging.debug('flickr.people.getInfo resp %s', json.dumps(resp, indent=True))
 
     person = resp.get('person', {})
     username = person.get('username', {}).get('_content')
@@ -161,15 +173,31 @@ class Flickr(source.Source):
       # numeric_id is our own custom field that always has the source's numeric
       # user id, if available.
       'numeric_id': person.get('nsid'),
-      'url': person.get('profileurl', {}).get('_content'),
       'location': {
         'displayName': person.get('location', {}).get('_content'),
       },
       'username': username,
       'description': person.get('description', {}).get('_content'),
     })
-    logging.debug('actor %s', json.dumps(obj, indent=True))
-    return obj
+
+    # fetch profile page to get url(s)
+    profile_url = person.get('profileurl', {}).get('_content')
+    if profile_url:
+      try:
+        logging.debug('fetching flickr profile page %s', profile_url)
+        resp = urllib2.urlopen(
+          profile_url, timeout=appengine_config.HTTP_TIMEOUT)
+        profile_json = mf2py.parse(doc=resp, url=profile_url)
+        # personal site is likely the first non-flickr url
+        urls = profile_json.get('rels', {}).get('me', [])
+        obj['urls'] = [{'value': u} for u in urls]
+        obj['url'] = next(
+          (u for u in urls if not u.startswith('https://www.flickr.com/')),
+          None)
+      except urllib2.URLError, e:
+        logging.warning('could not fetch user homepage %s', profile_url)
+
+    return self.postprocess_object(obj)
 
   def get_comment(self, comment_id, activity_id, activity_author_id=None):
     """Returns an ActivityStreams comment object.
@@ -188,6 +216,10 @@ class Flickr(source.Source):
         return self.comment_to_object(resp)
 
   def photo_to_activity(self, photo):
+    """Convert a Flickr photo to an ActivityStreams object. Takes either
+    data in the expanded form returned by flickr.photos.getInfo or the
+    abbreviated form returned by flickr.people.getPhotos.
+    """
     owner = photo.get('owner')
     if isinstance(owner, dict):
       owner = owner.get('nsid')
@@ -221,10 +253,29 @@ class Flickr(source.Source):
       'created': created,
       'published': published,
     }
+
+    if isinstance(photo.get('tags'), dict):
+      activity['object']['tags'] = [{
+          'objectType': 'hashtag',
+          'id': self.tag_uri(tag.get('id')),
+          'url': 'https://www.flickr.com/search?tags={}'.format(
+            tag.get('_content')),
+          'displayName': tag.get('raw'),
+        } for tag in photo.get('tags', {}).get('tag', [])]
+    elif isinstance(photo.get('tags'), basestring):
+      activity['object']['tags'] = [{
+        'objectType': 'hashtag',
+        'url': 'https://www.flickr.com/search?tags={}'.format(
+          tag.strip()),
+        'displayName': tag.strip(),
+      } for tag in photo.get('tags').split(' ') if tag.strip()]
+
     self.postprocess_activity(activity)
     return activity
 
   def comment_to_object(self, comment, photo_id):
+    """Convert a Flickr comment json object to an ActivityStreams comment.
+    """
     obj = {
       'objectType': 'comment',
       'url': comment.get('permalink'),
@@ -250,368 +301,3 @@ class Flickr(source.Source):
 
   def reformat_unix_time(self, ts):
     return ts and datetime.datetime.fromtimestamp(int(ts)).isoformat()
-
-
-PHOTOS = """
-{
- "stat": "ok",
- "photos": {
-  "total": "1461",
-  "page": 1,
-  "perpage": 100,
-  "pages": 15,
-  "photo": [
-   {
-    "views": "32",
-    "tags": "",
-    "secret": "e6a57986ff",
-    "datetakengranularity": "0",
-    "id": "14921050422",
-    "datetakenunknown": 0,
-    "isfriend": 0,
-    "server": "3872",
-    "media_status": "ready",
-    "media": "photo",
-    "farm": 4,
-    "title": "14806801522_ae17468aa1",
-    "datetaken": "2014-08-14 17:29:02",
-    "isfamily": 0,
-    "ispublic": 1,
-    "dateupload": "1408062546",
-    "machine_tags": "",
-    "owner": "39216764@N00"
-   },
-"""
-
-PHOTO_INFO = """
-{
- "stat": "ok",
- "photo": {
-  "comments": {
-   "_content": "0"
-  },
-  "server": "7459",
-  "title": {
-   "_content": "Percheron Thunder"
-  },
-  "editability": {
-   "canaddmeta": 1,
-   "cancomment": 1
-  },
-  "visibility": {
-   "ispublic": 1,
-   "isfamily": 0,
-   "isfriend": 0
-  },
-  "id": "8998787742",
-  "permissions": {
-   "permcomment": 3,
-   "permaddmeta": 2
-  },
-  "media": "photo",
-  "rotation": 0,
-  "originalsecret": "f129836c24",
-  "owner": {
-   "location": "San Diego, CA, USA",
-   "iconserver": "4068",
-   "iconfarm": 5,
-   "path_alias": "kindofblue115",
-   "username": "kindofblue115",
-   "nsid": "39216764@N00",
-   "realname": "Kyle Mahan"
-  },
-  "farm": 8,
-  "safety_level": "0",
-  "originalformat": "jpg",
-  "license": "2",
-  "secret": "89e6e03647",
-  "description": {
-   "_content": "This guy was driving the 6 biggest horses I've ever seen"
-  },
-  "publiceditability": {
-   "canaddmeta": 0,
-   "cancomment": 1
-  },
-  "people": {
-   "haspeople": 0
-  },
-  "dates": {
-   "takengranularity": "0",
-   "lastupdate": "1370800238",
-   "takenunknown": 0,
-   "taken": "2013-06-08 03:20:48",
-   "posted": "1370799634"
-  },
-  "views": "196",
-  "dateuploaded": "1370799634",
-  "isfavorite": 0,
-  "usage": {
-   "canshare": 1,
-   "canprint": 1,
-   "candownload": 1,
-   "canblog": 1
-  },
-  "tags": {
-   "tag": [
-    {
-     "raw": "oregon",
-     "id": "4942564-8998787742-1228",
-     "_content": "oregon",
-     "author": "39216764@N00",
-     "authorname": "kindofblue115",
-     "machine_tag": false
-    },
-    {
-     "raw": "sisters rodeo",
-     "id": "4942564-8998787742-24046921",
-     "_content": "sistersrodeo",
-     "author": "39216764@N00",
-     "authorname": "kindofblue115",
-     "machine_tag": false
-    }
-   ]
-  },
-  "urls": {
-   "url": [
-    {
-     "type": "photopage",
-     "_content": "https://www.flickr.com/photos/kindofblue115/8998787742/"
-    }
-   ]
-  },
-  "notes": {
-   "note": []
-  }
- }
-}
-"""
-
-PHOTO_COMMENTS = """
-{
-  "comments": {
-    "photo_id": "8998784856",
-    "comment": [
-      {
-        "id": "4942564-8998784856-72157656523655185",
-        "author": "39216764@N00",
-        "authorname": "kylewm",
-        "iconserver": "4068",
-        "iconfarm": 5,
-        "datecreate": "1438185302",
-        "permalink": "https:\/\/www.flickr.com\/photos\/kindofblue115\/8998784856\/#comment72157656523655185",
-        "path_alias": "kindofblue115",
-        "realname": "Kyle Mahan",
-        "_content": "This is a test comment"
-      }
-    ]
-  },
-  "stat": "ok"
-}
-"""
-
-ACTIVITY_USER_PHOTOS = """
-{
- "stat": "ok",
- "items": {
-  "total": 4,
-  "page": 1,
-  "pages": 1,
-  "item": [
-   {
-    "iconserver": "4068",
-    "realname": "Kyle Mahan",
-    "comments": 1,
-    "ownername": "kylewm",
-    "id": "8998784856",
-    "faves": 0,
-    "secret": "5145958eaa",
-    "server": "5345",
-    "farm": 6,
-    "views": 93,
-    "type": "photo",
-    "iconfarm": 5,
-    "notes": 0,
-    "title": {
-     "_content": "Rodeo sunset"
-    },
-    "owner": "39216764@N00",
-    "activity": {
-     "event": [
-      {
-       "iconserver": "4068",
-       "realname": "Kyle Mahan",
-       "username": "kylewm",
-       "user": "39216764@N00",
-       "commentid": "72157656523655185",
-       "_content": "This is a test comment",
-       "type": "comment",
-       "dateadded": "1438185302",
-       "iconfarm": 5
-      }
-     ]
-    },
-    "media": "photo"
-   },
-   {
-    "iconserver": "4068",
-    "realname": "Kyle Mahan",
-    "comments": 3,
-    "ownername": "kylewm",
-    "id": "4075466518",
-    "faves": 1,
-    "secret": "80f29254ea",
-    "server": "2528",
-    "farm": 3,
-    "views": 60,
-    "type": "photo",
-    "iconfarm": 5,
-    "notes": 0,
-    "title": {
-     "_content": "Yellow"
-    },
-    "owner": "39216764@N00",
-    "activity": {
-     "event": [
-      {
-       "iconserver": "2824",
-       "realname": "John Brian Kirby",
-       "username": "9gon",
-       "user": "68269724@N06",
-       "type": "fave",
-       "dateadded": "1436889861",
-       "iconfarm": 3
-      }
-     ]
-    },
-    "media": "photo"
-   },
-   {
-    "iconserver": "4068",
-    "realname": "Kyle Mahan",
-    "comments": 1,
-    "ownername": "kylewm",
-    "id": "4739173072",
-    "faves": 3,
-    "secret": "fa3cdd0198",
-    "server": "4134",
-    "farm": 5,
-    "views": 163,
-    "type": "photo",
-    "iconfarm": 5,
-    "notes": 0,
-    "title": {
-     "_content": "Roy G"
-    },
-    "owner": "39216764@N00",
-    "activity": {
-     "event": [
-      {
-       "iconserver": "2824",
-       "realname": "John Brian Kirby",
-       "username": "9gon",
-       "user": "68269724@N06",
-       "type": "fave",
-       "dateadded": "1436889825",
-       "iconfarm": 3
-      }
-     ]
-    },
-    "media": "photo"
-   },
-   {
-    "iconserver": "4068",
-    "realname": "Kyle Mahan",
-    "comments": 2,
-    "ownername": "kylewm",
-    "id": "5064358742",
-    "faves": 1,
-    "secret": "7a3846c1a1",
-    "server": "4113",
-    "farm": 5,
-    "views": 159,
-    "type": "photo",
-    "iconfarm": 5,
-    "notes": 0,
-    "title": {
-     "_content": "Departure of the bride & groom"
-    },
-    "owner": "39216764@N00",
-    "activity": {
-     "event": [
-      {
-       "iconserver": "2824",
-       "realname": "John Brian Kirby",
-       "username": "9gon",
-       "user": "68269724@N06",
-       "type": "fave",
-       "dateadded": "1436889807",
-       "iconfarm": 3
-      }
-     ]
-    },
-    "media": "photo"
-   }
-  ],
-  "perpage": 50
- }
-}
-"""
-
-PERSON_INFO = """
-{
-  "person": {
-    "id": "39216764@N00",
-    "nsid": "39216764@N00",
-    "ispro": 0,
-    "can_buy_pro": 0,
-    "iconserver": "4068",
-    "iconfarm": 5,
-    "path_alias": "kindofblue115",
-    "has_stats": 1,
-    "username": {
-      "_content": "kindofblue115"
-    },
-    "realname": {
-      "_content": "Kyle Mahan"
-    },
-    "mbox_sha1sum": {
-      "_content": "049cf71f4b437dc0ab497e107f7b7d2c55a096d4"
-    },
-    "location": {
-      "_content": "San Diego, CA, USA"
-    },
-    "timezone": {
-      "label": "Pacific Time (US & Canada); Tijuana",
-      "offset": "-08:00",
-      "timezone_id": "PST8PDT"
-    },
-    "description": {
-      "_content": "Trying a little bit of everything, usually with a D40 now more or less permanently affixed with a 35mm f\/1.8 lens, occasionally with a beautiful old Minolta Hi-Matic 7s rangefinder, even more occasionally with a pinhole camera made out of a cereal box :)\n\nI don't like food photography nearly as much as I probably make it look like -- I do like cooking and eating that much though!\n\n\n<a href=\"http:\/\/www.flickriver.com\/photos\/kindofblue115\/\" rel=\"nofollow\">\n<img src=\"https:\/\/s.yimg.com\/pw\/images\/spaceout.gif\" data-blocked-src=\"https:\/\/ec.yimg.com\/ec?url=http%3A%2F%2Fwww.flickriver.com%2Fbadge%2Fuser%2Fall%2Frecent%2Fshuffle%2Fmedium-horiz%2Fffffff%2F333333%2F39216764%40N00.jpg&amp;t=1438359583&amp;sig=5tYM6QkpgJsvYIjzVJcfcA--~C\" title=\"Click to load remote image from www.flickriver.com\" onclick=\"this.onload=this.onerror=function(){this.className=this.className.replace('blocked-loading','blocked-loaded');this.onload=this.onerror=null};this.className=this.className.replace('blocked-image','blocked-loading');this.src=this.getAttribute('data-blocked-src');this.title='';this.onclick=null;if(this.parentNode && this.parentNode.nodeName == 'A') {return false;}\" class=\"blocked-image notsowide\" \/><\/a>\n\nAnd some photos that I find inspirational or otherwise awesome:\n<a href=\"http:\/\/www.flickriver.com\/photos\/kindofblue115\/favorites\/\" rel=\"nofollow\">\n<img src=\"https:\/\/s.yimg.com\/pw\/images\/spaceout.gif\" data-blocked-src=\"https:\/\/ec.yimg.com\/ec?url=http%3A%2F%2Fwww.flickriver.com%2Fbadge%2Fuser%2Ffavorites%2Frecent%2Fshuffle%2Fmedium-horiz%2Fffffff%2F333333%2F39216764%40N00.jpg&amp;t=1438359583&amp;sig=T79khy3J2Q_uUNCNnIgAOw--~C\" title=\"Click to load remote image from www.flickriver.com\" onclick=\"this.onload=this.onerror=function(){this.className=this.className.replace('blocked-loading','blocked-loaded');this.onload=this.onerror=null};this.className=this.className.replace('blocked-image','blocked-loading');this.src=this.getAttribute('data-blocked-src');this.title='';this.onclick=null;if(this.parentNode && this.parentNode.nodeName == 'A') {return false;}\" class=\"blocked-image notsowide\" \/><\/a>"
-    },
-    "photosurl": {
-      "_content": "https:\/\/www.flickr.com\/photos\/kindofblue115\/"
-    },
-    "profileurl": {
-      "_content": "https:\/\/www.flickr.com\/people\/kindofblue115\/"
-    },
-    "mobileurl": {
-      "_content": "https:\/\/m.flickr.com\/photostream.gne?id=4942564"
-    },
-    "photos": {
-      "firstdatetaken": {
-        "_content": "2005-12-27 18:29:07"
-      },
-      "firstdate": {
-        "_content": "1159222380"
-      },
-      "count": {
-        "_content": "1461"
-      },
-      "views": {
-        "_content": "7459"
-      }
-    }
-  },
-  "stat": "ok"
-}
-"""
