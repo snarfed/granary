@@ -55,8 +55,8 @@ class Flickr(source.Source):
     params = {}
     method = None
     solo = False
-    extras = ','.join(('date_upload', 'date_taken', 'tags', 'machine_tags',
-                      'views', 'media', 'tags', 'machine_tags', 'geo'))
+    extras = ','.join(('date_upload', 'date_taken', 'views', 'media',
+                       'description' 'tags', 'machine_tags', 'geo'))
 
     if activity_id:
       method = 'flickr.photos.getInfo'
@@ -121,13 +121,14 @@ class Flickr(source.Source):
               'username': person.get('username'),
               'id': self.tag_uri(person.get('nsid')),
               'image': {
-                'url': 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
-                  person.get('iconfarm'), person.get('iconserver'),
-                  person.get('nsid')),
+                'url': self.get_user_image(person.get('iconfarm'),
+                                           person.get('iconserver'),
+                                           person.get('nsid')),
               },
             },
-            'url': '{}#liked-by-#{}'.format(
-              activity.get9('url'), person.get('nsid')),
+            'created': self.reformat_unix_time(activity.get('favedate')),
+            'url': '{}#liked-by-{}'.format(
+              activity.get('url'), person.get('nsid')),
             'object': {'url': activity.get('url')},
             'id': self.tag_uri('{}_liked_by_{}'.format(
               photo.get('id'), person.get('nsid'))),
@@ -159,15 +160,18 @@ class Flickr(source.Source):
 
     logging.debug('calling flickr.people.getInfo with user_id %s', user_id)
     resp = self.call_api_method('flickr.people.getInfo', {'user_id': user_id})
+    return self.user_to_actor(resp)
 
+  def user_to_actor(self, resp):
     person = resp.get('person', {})
     username = person.get('username', {}).get('_content')
     obj = util.trim_nulls({
       'objectType': 'person',
       'displayName': person.get('realname', {}).get('_content') or username,
       'image': {
-        'url': 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
-          person.get('iconfarm'), person.get('iconserver'), person.get('nsid'))
+        'url': self.get_user_image(person.get('iconfarm'),
+                                   person.get('iconserver'),
+                                   person.get('nsid')),
       },
       'id': self.tag_uri(username),
       # numeric_id is our own custom field that always has the source's numeric
@@ -207,13 +211,19 @@ class Flickr(source.Source):
       activity_id: string activity id, required
       activity_author_id: string activity author id, ignored
     """
+    logging.debug('looking for comment %s under photo %s', comment_id, activity_id)
     resp = self.call_api_method('flickr.photos.comments.getList', {
       'photo_id': activity_id,
     })
 
+    logging.debug('photo comments %s', resp)
+
     for comment in resp.get('comments', {}).get('comment', []):
-      if comment.get('id') == comment_id:
-        return self.comment_to_object(resp)
+      logging.debug('checking comment id %s', comment.get('id'))
+      # comment id is the in form ###-postid-commentid
+      if (comment.get('id') == comment_id or
+              comment.get('id').split('-')[-1] == comment_id):
+        return self.comment_to_object(resp, activity_id)
 
   def photo_to_activity(self, photo):
     """Convert a Flickr photo to an ActivityStreams object. Takes either
@@ -221,8 +231,7 @@ class Flickr(source.Source):
     abbreviated form returned by flickr.people.getPhotos.
     """
     owner = photo.get('owner')
-    if isinstance(owner, dict):
-      owner = owner.get('nsid')
+    owner_id = owner.get('nsid')if isinstance(owner, dict) else owner
 
     created = photo.get('dates', {}).get('taken') or photo.get('datetaken')
     published = self.reformat_unix_time(
@@ -234,7 +243,7 @@ class Flickr(source.Source):
     activity = {
       'url': 'https://flickr.com/photos/{}/{}'.format(owner, photo.get('id')),
       'actor': {
-        'numeric_id': owner,
+        'numeric_id': owner_id,
       },
       'object': {
         'displayName': photo.get('title'),
@@ -245,6 +254,7 @@ class Flickr(source.Source):
             photo.get('farm'), photo.get('server'),
             photo.get('id'), photo.get('secret'), 'b'),
         },
+        'content': photo.get('description', {}).get('_content', ''),
         'objectType': 'photo',
         'created': created,
         'published': published,
@@ -253,6 +263,19 @@ class Flickr(source.Source):
       'created': created,
       'published': published,
     }
+
+    if isinstance(owner, dict):
+      activity['object']['author'] = {
+        'objectType': 'person',
+        'displayName': owner.get('realname'),
+        'username': owner.get('username'),
+        'id': self.tag_uri(owner.get('username')),
+        'image': {
+          'url': self.get_user_image(owner.get('iconfarm'),
+                                     owner.get('iconserver'),
+                                     owner.get('nsid')),
+        },
+      }
 
     if isinstance(photo.get('tags'), dict):
       activity['object']['tags'] = [{
@@ -290,14 +313,18 @@ class Flickr(source.Source):
         'username': comment.get('authorname'),
         'id': self.tag_uri(comment.get('author')),
         'image': {
-          'url': 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
-            comment.get('iconfarm'), comment.get('iconserver'),
-            comment.get('author')),
+          'url': self.get_user_image(comment.get('iconfarm'),
+                                     comment.get('iconserver'),
+                                     comment.get('author')),
         },
       }
     }
     self.postprocess_object(obj)
     return obj
+
+  def get_user_image(self, farm, server, author):
+    return 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
+      farm, author, server)
 
   def reformat_unix_time(self, ts):
     return ts and datetime.datetime.fromtimestamp(int(ts)).isoformat()
