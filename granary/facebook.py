@@ -932,6 +932,10 @@ class Facebook(source.Source):
         'inReplyTo': [{'id': self.tag_uri(post_id)}],
       })
 
+    parent_id = comment.get('parent', {}).get('id')
+    if parent_id:
+      obj.setdefault('inReplyTo', []).append({'id': self.tag_uri(parent_id)})
+
     return self.postprocess_object(obj)
 
   def share_to_object(self, share):

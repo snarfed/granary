@@ -1073,6 +1073,27 @@ class FacebookTest(testutil.HandlerTest):
     """See https://github.com/snarfed/bridgy/issues/305"""
     self.assert_equals({}, self.facebook.comment_to_object({'id': '123 456^789'}))
 
+  def test_comment_to_object_with_parent_comment(self):
+    """See https://github.com/snarfed/bridgy/issues/435"""
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': tag_uri('34_78'),
+      'fb_id': '34_78',
+      'content': "now you're giving me all sorts of ideas!",
+      'url': 'https://www.facebook.com/34?comment_id=78',
+      'inReplyTo': [
+        {'id': tag_uri('34')},
+        {'id': tag_uri('34_56')},
+      ],
+    }, self.facebook.comment_to_object({
+      'id': '34_78',
+      'message': "now you're giving me all sorts of ideas!",
+      'parent': {
+        'message': 'You put coffee on tortilla chips?',
+        'id': '34_56'
+      },
+    }))
+
   def test_share_to_object_empty(self):
     self.assert_equals({}, self.facebook.share_to_object({}))
 
