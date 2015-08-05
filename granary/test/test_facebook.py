@@ -275,7 +275,10 @@ COMMENT_OBJS = [  # ActivityStreams
     'fb_id': '547822715231468_6796480',
     'published': '2012-12-05T00:58:26+00:00',
     'url': 'https://www.facebook.com/547822715231468?comment_id=6796480',
-    'inReplyTo': [{'id': tag_uri('547822715231468')}],
+    'inReplyTo': [{
+      'id': tag_uri('547822715231468'),
+      'url': 'https://www.facebook.com/547822715231468',
+    }],
     'to': [{'objectType':'group', 'alias':'@private'}],
     'tags': [{
         'objectType': 'person',
@@ -308,7 +311,10 @@ COMMENT_OBJS = [  # ActivityStreams
     'fb_id': '124561947600007_672819',
     'published': '2010-10-28T00:23:04+00:00',
     'url': 'https://www.facebook.com/124561947600007?comment_id=672819',
-    'inReplyTo': [{'id': tag_uri('124561947600007')}],
+    'inReplyTo': [{
+      'id': tag_uri('124561947600007'),
+      'url': 'https://www.facebook.com/124561947600007',
+    }],
     'to': [{'objectType':'group', 'alias':'@public'}],
     'tags': [{'displayName': 'See Original', 'objectType': 'article', 'url': 'http://ald.com/foobar'}],
     },
@@ -486,7 +492,10 @@ EVENT_OBJ = {  # ActivityStreams.
         'fb_id': '777',
         'published': '2010-10-01T00:23:04+00:00',
         'url': 'https://www.facebook.com/145304994?comment_id=777',
-        'inReplyTo': [{'id': tag_uri('145304994')}],
+        'inReplyTo': [{
+          'id': tag_uri('145304994'),
+          'url': 'https://www.facebook.com/145304994',
+    }],
         }],
     },
   }
@@ -912,12 +921,16 @@ class FacebookTest(testutil.HandlerTest):
                        self.facebook.get_activities(group_id=source.SELF))
 
   def test_get_comment(self):
-    self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
+    self.expect_urlopen(
+      '123_456?fields=id,message,from,created_time,message_tags,parent',
+      json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456'))
 
   def test_get_comment_activity_author_id(self):
-    self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
+    self.expect_urlopen(
+      '123_456?fields=id,message,from,created_time,message_tags,parent',
+      json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
 
     obj = self.facebook.get_comment('123_456', activity_author_id='my-author')
@@ -926,13 +939,19 @@ class FacebookTest(testutil.HandlerTest):
       obj['url'])
 
   def test_get_comment_400s_id_with_underscore(self):
-    self.expect_urlopen('123_456_789', '{}', status=400)
-    self.expect_urlopen('789', json.dumps(COMMENTS[0]))
+    self.expect_urlopen(
+      '123_456_789?fields=id,message,from,created_time,message_tags,parent',
+      '{}', status=400)
+    self.expect_urlopen(
+      '789?fields=id,message,from,created_time,message_tags,parent',
+      json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456_789'))
 
   def test_get_comment_400s_id_without_underscore(self):
-    self.expect_urlopen('123', '{}', status=400)
+    self.expect_urlopen(
+      '123?fields=id,message,from,created_time,message_tags,parent',
+      '{}', status=400)
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.facebook.get_comment, '123')
 
@@ -1063,7 +1082,10 @@ class FacebookTest(testutil.HandlerTest):
       'fb_id': id,
       'content': 'asdf',
       'url': 'https://www.facebook.com/12/posts/34?comment_id=78',
-      'inReplyTo': [{'id': tag_uri('34')}],
+      'inReplyTo': [{
+        'id': tag_uri('34'),
+        'url': 'https://www.facebook.com/12/posts/34',
+      }],
     }, self.facebook.comment_to_object({
       'id': id,
       'message': 'asdf',
@@ -1082,8 +1104,10 @@ class FacebookTest(testutil.HandlerTest):
       'content': "now you're giving me all sorts of ideas!",
       'url': 'https://www.facebook.com/34?comment_id=78',
       'inReplyTo': [
-        {'id': tag_uri('34')},
-        {'id': tag_uri('34_56')},
+        {'id': tag_uri('34'),
+         'url': 'https://www.facebook.com/34'},
+        {'id': tag_uri('34_56'),
+         'url': 'https://www.facebook.com/34?comment_id=56'},
       ],
     }, self.facebook.comment_to_object({
       'id': '34_78',

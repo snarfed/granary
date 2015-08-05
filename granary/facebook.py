@@ -76,6 +76,9 @@ API_SHARES = 'sharedposts?ids=%s'
 API_PHOTOS = 'me/photos'
 API_NOTIFICATION = '%s/notifications'
 
+API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
+                      'parent')
+
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
 OBJECT_TYPES = {
@@ -291,12 +294,13 @@ class Facebook(source.Source):
       activity_id: string activity id, optional
       activity_author_id: string activity author id, optional
     """
+    query = '?fields=%s' % ','.join(API_COMMENT_FIELDS)
     try:
-      resp = self.urlopen(comment_id)
+      resp = self.urlopen(comment_id + query)
     except urllib2.HTTPError, e:
       if e.code == 400 and '_' in comment_id:
         # Facebook may want us to ask for this without the other prefixed id(s)
-        resp = self.urlopen(comment_id.split('_')[-1])
+        resp = self.urlopen(comment_id.split('_')[-1] + query)
       else:
         raise
 
@@ -929,12 +933,20 @@ class Facebook(source.Source):
       obj.update({
         'id': self.tag_uri('%s_%s' % (post_id, id.comment)),
         'url': self.comment_url(post_id, id.comment, post_author_id=post_author_id),
-        'inReplyTo': [{'id': self.tag_uri(post_id)}],
+        'inReplyTo': [{
+          'id': self.tag_uri(post_id),
+          'url': self.post_url({'id': post_id, 'from': {'id': post_author_id}}),
+        }],
       })
 
     parent_id = comment.get('parent', {}).get('id')
     if parent_id:
-      obj.setdefault('inReplyTo', []).append({'id': self.tag_uri(parent_id)})
+      obj.setdefault('inReplyTo', []).append({
+        'id': self.tag_uri(parent_id),
+        'url': self.comment_url(post_id,
+                                parent_id.split('_')[-1],  # strip POSTID_ prefix
+                                post_author_id=post_author_id)
+      })
 
     return self.postprocess_object(obj)
 
