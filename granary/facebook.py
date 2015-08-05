@@ -939,14 +939,14 @@ class Facebook(source.Source):
         }],
       })
 
-    parent_id = comment.get('parent', {}).get('id')
-    if parent_id:
-      obj.setdefault('inReplyTo', []).append({
-        'id': self.tag_uri(parent_id),
-        'url': self.comment_url(post_id,
-                                parent_id.split('_')[-1],  # strip POSTID_ prefix
-                                post_author_id=post_author_id)
-      })
+      parent_id = comment.get('parent', {}).get('id')
+      if parent_id:
+        obj['inReplyTo'].append({
+          'id': self.tag_uri(parent_id),
+          'url': self.comment_url(post_id,
+                                  parent_id.split('_')[-1],  # strip POSTID_ prefix
+                                  post_author_id=post_author_id)
+        })
 
     return self.postprocess_object(obj)
 
