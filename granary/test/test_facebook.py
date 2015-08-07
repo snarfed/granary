@@ -840,22 +840,22 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_activity_id_with_user_id(self):
     """Check that we fetch both forms of the id and merge the results."""
-    self.expect_urlopen('12_34', '{"id": 123}')
-    self.expect_urlopen('34', '{"message": "x"}')
+    self.expect_urlopen('12_34', json.dumps({'id': '123'}))
+    self.expect_urlopen('34', json.dumps({'message': 'x'}))
     self.mox.ReplayAll()
 
     obj = self.facebook.get_activities(activity_id='34', user_id='12')[0]['object']
-    self.assertEquals(123, obj['fb_id'])
+    self.assertEquals('123', obj['fb_id'])
     self.assertEquals('x', obj['content'])
 
   def test_get_activities_activity_id_with_prefix(self):
     """Check that we fetch both forms of the id and merge the results."""
-    self.expect_urlopen('12_34', '{"id": 123}')
-    self.expect_urlopen('34', '{"message": "x"}')
+    self.expect_urlopen('12_34', json.dumps({'id': '123'}))
+    self.expect_urlopen('34', json.dumps({'message': 'x'}))
     self.mox.ReplayAll()
 
     obj = self.facebook.get_activities(activity_id='12_34')[0]['object']
-    self.assertEquals(123, obj['fb_id'])
+    self.assertEquals('123', obj['fb_id'])
     self.assertEquals('x', obj['content'])
 
   def test_get_activities_activity_id_fallback_to_strip_prefix(self):
@@ -919,6 +919,29 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY],
                        self.facebook.get_activities(group_id=source.SELF))
+
+  def test_get_activities_fetch_replies(self):
+    post2 = copy.deepcopy(POST)
+    post2['id'] = '222'
+    post3 = copy.deepcopy(POST)
+    post3['id'] = '333'
+    self.expect_urlopen('me/posts?offset=0',
+                        json.dumps({'data': [POST, post2, post3]}))
+    self.expect_urlopen('comments?filter=stream&ids=222,333,10100176064482163',
+                        json.dumps({
+        '222': {'data': [{'id': '777', 'message': 'foo'},
+                         {'id': '888', 'message': 'bar'}]},
+        '333': {'data': [{'id': '999', 'message': 'baz'},
+                         {'id': COMMENTS[0]['id'], 'message': 'omitted!'}]},
+                        }))
+    self.mox.ReplayAll()
+
+    activities = self.facebook.get_activities(group_id=source.SELF,
+                                              fetch_replies=True)
+    base_ids = ['547822715231468_6796480', '124561947600007_672819']
+    self.assert_equals([base_ids, base_ids + ['777', '888'], base_ids + ['999']],
+                       [[c['fb_id'] for c in a['object']['replies']['items']]
+                        for a in activities])
 
   def test_get_comment(self):
     self.expect_urlopen(
