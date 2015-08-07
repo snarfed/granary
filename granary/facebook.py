@@ -66,7 +66,7 @@ import source
 # https://developers.facebook.com/docs/apps/changelog#v2_4_changes
 #   (see the Declarative Fields section)
 API_BASE = 'https://graph.facebook.com/v2.2/'
-API_SELF_POSTS = '%s/posts?offset=%d'
+API_SELF_POSTS = '%s/feed?offset=%d'
 API_HOME = '%s/home?offset=%d'
 API_RSVP = '%s/invited/%s'
 API_FEED = 'me/feed'

@@ -800,7 +800,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assertNotIn('tags', got[0])
 
   def test_get_activities_self(self):
-    self.expect_urlopen('me/posts?offset=0', '{}')
+    self.expect_urlopen('me/feed?offset=0', '{}')
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities(group_id=source.SELF))
 
@@ -834,7 +834,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], self.facebook.get_activities(activity_id='0_0'))
 
   def test_get_activities_start_index_and_count(self):
-    self.expect_urlopen('me/posts?offset=3&limit=5', '{}')
+    self.expect_urlopen('me/feed?offset=3&limit=5', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(group_id=source.SELF,start_index=3, count=5)
 
@@ -915,7 +915,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_self_includes_shared_story(self):
     post = copy.copy(POST)
     post['status_type'] = 'shared_story'
-    self.expect_urlopen('me/posts?offset=0', json.dumps({'data': [post]}))
+    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': [post]}))
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY],
                        self.facebook.get_activities(group_id=source.SELF))
@@ -925,7 +925,7 @@ class FacebookTest(testutil.HandlerTest):
     post2['id'] = '222'
     post3 = copy.deepcopy(POST)
     post3['id'] = '333'
-    self.expect_urlopen('me/posts?offset=0',
+    self.expect_urlopen('me/feed?offset=0',
                         json.dumps({'data': [POST, post2, post3]}))
     self.expect_urlopen('comments?filter=stream&ids=222,333,10100176064482163',
                         json.dumps({
@@ -944,7 +944,7 @@ class FacebookTest(testutil.HandlerTest):
                         for a in activities])
 
   def test_get_activities_skips_extras_if_no_posts(self):
-    self.expect_urlopen('me/posts?offset=0', json.dumps({'data': []}))
+    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': []}))
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
