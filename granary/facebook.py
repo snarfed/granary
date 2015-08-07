@@ -256,7 +256,7 @@ class Facebook(source.Source):
         id_to_activity[id] = activity
     ids_str = ','.join(id_to_activity.keys())
 
-    if fetch_shares:
+    if activities and fetch_shares:
       try:
         # https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
         resp = self.urlopen(API_SHARES % ids_str)
@@ -273,7 +273,7 @@ class Facebook(source.Source):
         if e.code / 100 != 4:
           raise
 
-    if fetch_replies:
+    if activities and fetch_replies:
       resp = self.urlopen(API_COMMENTS_ALL % ids_str)
       if resp:
         for id, comments in resp.items():

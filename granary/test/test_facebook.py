@@ -943,6 +943,12 @@ class FacebookTest(testutil.HandlerTest):
                        [[c['fb_id'] for c in a['object']['replies']['items']]
                         for a in activities])
 
+  def test_get_activities_skips_extras_if_no_posts(self):
+    self.expect_urlopen('me/posts?offset=0', json.dumps({'data': []}))
+    self.mox.ReplayAll()
+    self.assert_equals([], self.facebook.get_activities(
+      group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+
   def test_get_comment(self):
     self.expect_urlopen(
       '123_456?fields=id,message,from,created_time,message_tags,parent',
