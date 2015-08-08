@@ -6,29 +6,28 @@ for full testdata tests.
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
-from granary import microformats2
 import re
+
+from granary import microformats2
 from granary import testutil
 
 
 class Microformats2Test(testutil.HandlerTest):
 
   def test_properties_override_h_as_article(self):
-    for prop, verb in (('like', 'like'),
-                       ('like-of', 'like'),
-                       ('repost', 'share'),
-                       ('repost-of', 'share')):
+    for prop, verb in ('like-of', 'like'), ('repost-of', 'share'):
       obj = microformats2.json_to_object(
         {'type': ['h-entry', 'h-as-note'],
           'properties': {prop: ['http://foo/bar']}})
       self.assertEquals('activity', obj['objectType'])
       self.assertEquals(verb, obj['verb'])
 
-    obj = microformats2.json_to_object(
-      {'type': ['h-entry', 'h-as-article'],
-       'properties': {'rsvp': ['no']}})
-    self.assertEquals('activity', obj['objectType'])
-    self.assertEquals('rsvp-no', obj['verb'])
+  def test_verb_require_of_suffix(self):
+    for prop in 'like', 'repost':
+      obj = microformats2.json_to_object(
+        {'type': ['h-entry', 'h-as-note'],
+         'properties': {prop: ['http://foo/bar']}})
+      self.assertNotIn('verb', obj)
 
   def test_h_as_article(self):
     obj = microformats2.json_to_object({'type': ['h-entry', 'h-as-article']})
