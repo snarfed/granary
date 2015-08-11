@@ -275,7 +275,10 @@ COMMENT_OBJS = [  # ActivityStreams
     'fb_id': '547822715231468_6796480',
     'published': '2012-12-05T00:58:26+00:00',
     'url': 'https://www.facebook.com/547822715231468?comment_id=6796480',
-    'inReplyTo': [{'id': tag_uri('547822715231468')}],
+    'inReplyTo': [{
+      'id': tag_uri('547822715231468'),
+      'url': 'https://www.facebook.com/547822715231468',
+    }],
     'to': [{'objectType':'group', 'alias':'@private'}],
     'tags': [{
         'objectType': 'person',
@@ -308,7 +311,10 @@ COMMENT_OBJS = [  # ActivityStreams
     'fb_id': '124561947600007_672819',
     'published': '2010-10-28T00:23:04+00:00',
     'url': 'https://www.facebook.com/124561947600007?comment_id=672819',
-    'inReplyTo': [{'id': tag_uri('124561947600007')}],
+    'inReplyTo': [{
+      'id': tag_uri('124561947600007'),
+      'url': 'https://www.facebook.com/124561947600007',
+    }],
     'to': [{'objectType':'group', 'alias':'@public'}],
     'tags': [{'displayName': 'See Original', 'objectType': 'article', 'url': 'http://ald.com/foobar'}],
     },
@@ -486,7 +492,10 @@ EVENT_OBJ = {  # ActivityStreams.
         'fb_id': '777',
         'published': '2010-10-01T00:23:04+00:00',
         'url': 'https://www.facebook.com/145304994?comment_id=777',
-        'inReplyTo': [{'id': tag_uri('145304994')}],
+        'inReplyTo': [{
+          'id': tag_uri('145304994'),
+          'url': 'https://www.facebook.com/145304994',
+    }],
         }],
     },
   }
@@ -791,7 +800,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assertNotIn('tags', got[0])
 
   def test_get_activities_self(self):
-    self.expect_urlopen('me/posts?offset=0', '{}')
+    self.expect_urlopen('me/feed?offset=0', '{}')
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities(group_id=source.SELF))
 
@@ -804,6 +813,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_activity_id_overrides_others(self):
     self.expect_urlopen('123_000', json.dumps(POST))
+    self.expect_urlopen('000', json.dumps(POST))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -824,19 +834,29 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], self.facebook.get_activities(activity_id='0_0'))
 
   def test_get_activities_start_index_and_count(self):
-    self.expect_urlopen('me/posts?offset=3&limit=5', '{}')
+    self.expect_urlopen('me/feed?offset=3&limit=5', '{}')
     self.mox.ReplayAll()
     self.facebook.get_activities(group_id=source.SELF,start_index=3, count=5)
 
   def test_get_activities_activity_id_with_user_id(self):
-    self.expect_urlopen('12_34', '{}')
+    """Check that we fetch both forms of the id and merge the results."""
+    self.expect_urlopen('12_34', json.dumps({'id': '123'}))
+    self.expect_urlopen('34', json.dumps({'message': 'x'}))
     self.mox.ReplayAll()
-    self.facebook.get_activities(activity_id='34', user_id='12')
+
+    obj = self.facebook.get_activities(activity_id='34', user_id='12')[0]['object']
+    self.assertEquals('123', obj['fb_id'])
+    self.assertEquals('x', obj['content'])
 
   def test_get_activities_activity_id_with_prefix(self):
-    self.expect_urlopen('12_34', '{}')
+    """Check that we fetch both forms of the id and merge the results."""
+    self.expect_urlopen('12_34', json.dumps({'id': '123'}))
+    self.expect_urlopen('34', json.dumps({'message': 'x'}))
     self.mox.ReplayAll()
-    self.facebook.get_activities(activity_id='12_34')
+
+    obj = self.facebook.get_activities(activity_id='12_34')[0]['object']
+    self.assertEquals('123', obj['fb_id'])
+    self.assertEquals('x', obj['content'])
 
   def test_get_activities_activity_id_fallback_to_strip_prefix(self):
     self.expect_urlopen('12_34', '{}', status=404)
@@ -895,18 +915,51 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_self_includes_shared_story(self):
     post = copy.copy(POST)
     post['status_type'] = 'shared_story'
-    self.expect_urlopen('me/posts?offset=0', json.dumps({'data': [post]}))
+    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': [post]}))
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY],
                        self.facebook.get_activities(group_id=source.SELF))
 
+  def test_get_activities_fetch_replies(self):
+    post2 = copy.deepcopy(POST)
+    post2['id'] = '222'
+    post3 = copy.deepcopy(POST)
+    post3['id'] = '333'
+    self.expect_urlopen('me/feed?offset=0',
+                        json.dumps({'data': [POST, post2, post3]}))
+    self.expect_urlopen('comments?filter=stream&ids=222,333,10100176064482163',
+                        json.dumps({
+        '222': {'data': [{'id': '777', 'message': 'foo'},
+                         {'id': '888', 'message': 'bar'}]},
+        '333': {'data': [{'id': '999', 'message': 'baz'},
+                         {'id': COMMENTS[0]['id'], 'message': 'omitted!'}]},
+                        }))
+    self.mox.ReplayAll()
+
+    activities = self.facebook.get_activities(group_id=source.SELF,
+                                              fetch_replies=True)
+    base_ids = ['547822715231468_6796480', '124561947600007_672819']
+    self.assert_equals([base_ids, base_ids + ['777', '888'], base_ids + ['999']],
+                       [[c['fb_id'] for c in a['object']['replies']['items']]
+                        for a in activities])
+
+  def test_get_activities_skips_extras_if_no_posts(self):
+    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': []}))
+    self.mox.ReplayAll()
+    self.assert_equals([], self.facebook.get_activities(
+      group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+
   def test_get_comment(self):
-    self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
+    self.expect_urlopen(
+      '123_456?fields=id,message,from,created_time,message_tags,parent',
+      json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456'))
 
   def test_get_comment_activity_author_id(self):
-    self.expect_urlopen('123_456', json.dumps(COMMENTS[0]))
+    self.expect_urlopen(
+      '123_456?fields=id,message,from,created_time,message_tags,parent',
+      json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
 
     obj = self.facebook.get_comment('123_456', activity_author_id='my-author')
@@ -915,13 +968,19 @@ class FacebookTest(testutil.HandlerTest):
       obj['url'])
 
   def test_get_comment_400s_id_with_underscore(self):
-    self.expect_urlopen('123_456_789', '{}', status=400)
-    self.expect_urlopen('789', json.dumps(COMMENTS[0]))
+    self.expect_urlopen(
+      '123_456_789?fields=id,message,from,created_time,message_tags,parent',
+      '{}', status=400)
+    self.expect_urlopen(
+      '789?fields=id,message,from,created_time,message_tags,parent',
+      json.dumps(COMMENTS[0]))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456_789'))
 
   def test_get_comment_400s_id_without_underscore(self):
-    self.expect_urlopen('123', '{}', status=400)
+    self.expect_urlopen(
+      '123?fields=id,message,from,created_time,message_tags,parent',
+      '{}', status=400)
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.facebook.get_comment, '123')
 
@@ -942,16 +1001,19 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_like(self):
     self.expect_urlopen('123_000', json.dumps(POST))
+    self.expect_urlopen('000', json.dumps(POST))
     self.mox.ReplayAll()
     self.assert_equals(LIKE_OBJS[1], self.facebook.get_like('123', '000', '683713'))
 
   def test_get_like_not_found(self):
     self.expect_urlopen('123_000', json.dumps(POST))
+    self.expect_urlopen('000', json.dumps(POST))
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_like('123', '000', '999'))
 
   def test_get_like_no_activity(self):
     self.expect_urlopen('123_000', '{}')
+    self.expect_urlopen('000', '{}')
     self.mox.ReplayAll()
     self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
 
@@ -1049,7 +1111,10 @@ class FacebookTest(testutil.HandlerTest):
       'fb_id': id,
       'content': 'asdf',
       'url': 'https://www.facebook.com/12/posts/34?comment_id=78',
-      'inReplyTo': [{'id': tag_uri('34')}],
+      'inReplyTo': [{
+        'id': tag_uri('34'),
+        'url': 'https://www.facebook.com/12/posts/34',
+      }],
     }, self.facebook.comment_to_object({
       'id': id,
       'message': 'asdf',
@@ -1058,6 +1123,29 @@ class FacebookTest(testutil.HandlerTest):
   def test_comment_to_object_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
     self.assert_equals({}, self.facebook.comment_to_object({'id': '123 456^789'}))
+
+  def test_comment_to_object_with_parent_comment(self):
+    """See https://github.com/snarfed/bridgy/issues/435"""
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': tag_uri('34_78'),
+      'fb_id': '34_78',
+      'content': "now you're giving me all sorts of ideas!",
+      'url': 'https://www.facebook.com/34?comment_id=78',
+      'inReplyTo': [
+        {'id': tag_uri('34'),
+         'url': 'https://www.facebook.com/34'},
+        {'id': tag_uri('34_56'),
+         'url': 'https://www.facebook.com/34?comment_id=56'},
+      ],
+    }, self.facebook.comment_to_object({
+      'id': '34_78',
+      'message': "now you're giving me all sorts of ideas!",
+      'parent': {
+        'message': 'You put coffee on tortilla chips?',
+        'id': '34_56'
+      },
+    }))
 
   def test_share_to_object_empty(self):
     self.assert_equals({}, self.facebook.share_to_object({}))

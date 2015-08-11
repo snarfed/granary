@@ -2,6 +2,7 @@
 /dist/
 /.eggs/
 /*.egg-info
+/l
 /local/
 datastore.dat
 oauth_client_secret

@@ -9,8 +9,8 @@ import urlparse
 import string
 import xml.sax.saxutils
 
-import source
 from oauth_dropins.webutil import util
+import source
 
 HENTRY = string.Template("""\
 <article class="$types">
@@ -218,9 +218,7 @@ def json_to_object(mf2):
   prop_types_map = [
     ('rsvp', 'activity', rsvp_verb),
     ('invitee', 'activity', 'invite'),
-    ('repost', 'activity', 'share'),
     ('repost-of', 'activity', 'share'),
-    ('like', 'activity', 'like'),
     ('like-of', 'activity', 'like'),
     ('in-reply-to', 'comment', None),
     ]

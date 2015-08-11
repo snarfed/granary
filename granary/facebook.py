@@ -61,16 +61,24 @@ import appengine_config
 from oauth_dropins.webutil import util
 import source
 
+# WARNING: when we upgrade to 2.4, we'll need to start including the fields
+# query param for most or all requests. :/
+# https://developers.facebook.com/docs/apps/changelog#v2_4_changes
+#   (see the Declarative Fields section)
 API_BASE = 'https://graph.facebook.com/v2.2/'
-API_SELF_POSTS = '%s/posts?offset=%d'
+API_SELF_POSTS = '%s/feed?offset=%d'
 API_HOME = '%s/home?offset=%d'
 API_RSVP = '%s/invited/%s'
 API_FEED = 'me/feed'
 API_COMMENTS = '%s/comments'
+API_COMMENTS_ALL = 'comments?filter=stream&ids=%s'
 API_LIKES = '%s/likes'
 API_SHARES = 'sharedposts?ids=%s'
 API_PHOTOS = 'me/photos'
 API_NOTIFICATION = '%s/notifications'
+
+API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
+                      'parent')
 
 # Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
 # objectType.
@@ -174,15 +182,26 @@ class Facebook(source.Source):
 
     See method docstring in source.py for details.
 
-    Replies (ie comments) and likes are always included. They come from the
-    'comments' and 'likes' fields in the Graph API's Post object:
+    Likes and *top-level* replies (ie comments) are always included. They come
+    from the 'comments' and 'likes' fields in the Graph API's Post object:
     https://developers.facebook.com/docs/reference/api/post/#u_0_3
+
+    Threaded comments, ie comments in reply to other top-level comments, require
+    an additional API call, so they're only included if fetch_replies is True.
     """
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
       # it doesn't accept that format. I can't tell which is which yet, so try
       # them all.
-      # More background: https://github.com/snarfed/bridgy/issues/346
+      #
+      # For example, posts with link attachments only return the 'link' field
+      # when fetched with the user id prefix, e.g. /212038_10101610780998763,
+      # not with just the id, e.g. /10101610780998763. Details:
+      # https://github.com/snarfed/bridgy/issues/388
+      #
+      # Alternatively, photos include likes when fetched with just the id, but
+      # not with the user id prefix. Details:
+      # https://github.com/snarfed/bridgy/issues/424
       if '_' in activity_id:
         suffix = activity_id.split('_', 1)[1]
         ids_to_try = [activity_id, suffix]
@@ -191,18 +210,18 @@ class Facebook(source.Source):
       else:
         ids_to_try = ['_'.join((user_id, activity_id)), activity_id]
 
+      post = {}
       for id in ids_to_try:
         try:
           resp = self.urlopen(id)
           if resp.get('error'):
             logging.warning("Couldn't fetch object %s: %s", id, resp)
           else:
-            posts = [resp]
-            break
+            post.update(resp)
         except urllib2.URLError, e:
           logging.warning("Couldn't fetch object %s: %s", id, e)
-      else:
-        posts = []
+
+      posts = [post] if post else []
 
     else:
       url = API_SELF_POSTS if group_id == source.SELF else API_HOME
@@ -230,16 +249,17 @@ class Facebook(source.Source):
 
     activities = [self.post_to_activity(p) for p in posts]
 
-    if fetch_shares:
-      id_to_activity = {}
-      for post, activity in zip(posts, activities):
-        id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
-        if id:
-          id_to_activity[id] = activity
+    id_to_activity = {}
+    for post, activity in zip(posts, activities):
+      id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
+      if id:
+        id_to_activity[id] = activity
+    ids_str = ','.join(id_to_activity.keys())
 
+    if activities and fetch_shares:
       try:
         # https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
-        resp = self.urlopen(API_SHARES % ','.join(id_to_activity.keys()))
+        resp = self.urlopen(API_SHARES % ids_str)
         # usually the response is a dict, but when it's empty, it's a list. :(
         if resp:
           for id, shares in resp.items():
@@ -252,6 +272,20 @@ class Facebook(source.Source):
         # https://github.com/snarfed/bridgy/issues/348
         if e.code / 100 != 4:
           raise
+
+    if activities and fetch_replies:
+      resp = self.urlopen(API_COMMENTS_ALL % ids_str)
+      if resp:
+        for id, comments in resp.items():
+          activity = id_to_activity.get(id)
+          if activity:
+            replies = activity['object'].setdefault('replies', {}
+                                       ).setdefault('items', [])
+            existing_ids = {reply['fb_id'] for reply in replies}
+            for comment in comments.get('data', []):
+              if comment['id'] not in existing_ids:
+                replies.append(self.comment_to_object(comment))
+
 
     response = self._make_activities_base_response(activities)
     response['etag'] = etag
@@ -279,12 +313,13 @@ class Facebook(source.Source):
       activity_id: string activity id, optional
       activity_author_id: string activity author id, optional
     """
+    query = '?fields=%s' % ','.join(API_COMMENT_FIELDS)
     try:
-      resp = self.urlopen(comment_id)
+      resp = self.urlopen(comment_id + query)
     except urllib2.HTTPError, e:
       if e.code == 400 and '_' in comment_id:
         # Facebook may want us to ask for this without the other prefixed id(s)
-        resp = self.urlopen(comment_id.split('_')[-1])
+        resp = self.urlopen(comment_id.split('_')[-1] + query)
       else:
         raise
 
@@ -917,8 +952,20 @@ class Facebook(source.Source):
       obj.update({
         'id': self.tag_uri('%s_%s' % (post_id, id.comment)),
         'url': self.comment_url(post_id, id.comment, post_author_id=post_author_id),
-        'inReplyTo': [{'id': self.tag_uri(post_id)}],
+        'inReplyTo': [{
+          'id': self.tag_uri(post_id),
+          'url': self.post_url({'id': post_id, 'from': {'id': post_author_id}}),
+        }],
       })
+
+      parent_id = comment.get('parent', {}).get('id')
+      if parent_id:
+        obj['inReplyTo'].append({
+          'id': self.tag_uri(parent_id),
+          'url': self.comment_url(post_id,
+                                  parent_id.split('_')[-1],  # strip POSTID_ prefix
+                                  post_author_id=post_author_id)
+        })
 
     return self.postprocess_object(obj)
 
