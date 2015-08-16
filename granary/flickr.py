@@ -79,12 +79,8 @@ class Flickr(source.Source):
     assert method
     logging.debug('calling %s with %s', method, params)
     photos_resp = self.call_api_method(method, params)
-    logging.debug('response %s', json.dumps(photos_resp, indent=True))
 
-    result = {
-      'items': []
-    }
-
+    result = {'items': []}
     if solo:
       photos = [photos_resp.get('photo', {})]
     else:
@@ -100,7 +96,6 @@ class Flickr(source.Source):
         replies = []
         comments_resp = self.call_api_method('flickr.photos.comments.getList', {
           'photo_id': photo.get('id'),
-          'max_comment_date': etag,
         })
         for comment in comments_resp.get('comments', {}).get('comment', []):
           replies.append(self.comment_to_object(comment, photo.get('id')))
@@ -215,15 +210,13 @@ class Flickr(source.Source):
     resp = self.call_api_method('flickr.photos.comments.getList', {
       'photo_id': activity_id,
     })
-
-    logging.debug('photo comments %s', resp)
-
     for comment in resp.get('comments', {}).get('comment', []):
       logging.debug('checking comment id %s', comment.get('id'))
       # comment id is the in form ###-postid-commentid
       if (comment.get('id') == comment_id or
               comment.get('id').split('-')[-1] == comment_id):
-        return self.comment_to_object(resp, activity_id)
+        logging.debug('found comment matching %s', comment_id)
+        return self.comment_to_object(comment, activity_id)
 
   def photo_to_activity(self, photo):
     """Convert a Flickr photo to an ActivityStreams object. Takes either
@@ -231,22 +224,28 @@ class Flickr(source.Source):
     abbreviated form returned by flickr.people.getPhotos.
     """
     owner = photo.get('owner')
-    owner_id = owner.get('nsid')if isinstance(owner, dict) else owner
+    owner_id = owner.get('nsid') if isinstance(owner, dict) else owner
 
     created = photo.get('dates', {}).get('taken') or photo.get('datetaken')
     published = self.reformat_unix_time(
       photo.get('dates', {}).get('posted') or photo.get('dateupload'))
 
-    photo_permalink = 'https://flickr.com/photos/{}/{}'.format(
-      owner, photo.get('id'))
+    photo_permalink = 'https://www.flickr.com/photos/{}/{}'.format(
+      owner_id, photo.get('id'))
+
+    title = photo.get('title')
+    if isinstance(title, dict):
+      title = title.get('_content', '')
 
     activity = {
-      'url': 'https://flickr.com/photos/{}/{}'.format(owner, photo.get('id')),
+      'id': self.tag_uri(photo.get('id')),
+      'flickr_id': photo.get('id'),
+      'url': 'https://www.flickr.com/photos/{}/{}'.format(owner_id, photo.get('id')),
       'actor': {
         'numeric_id': owner_id,
       },
       'object': {
-        'displayName': photo.get('title'),
+        'displayName': title,
         'url': photo_permalink,
         'id': self.tag_uri(photo.get('id')),
         'image': {
@@ -254,7 +253,8 @@ class Flickr(source.Source):
             photo.get('farm'), photo.get('server'),
             photo.get('id'), photo.get('secret'), 'b'),
         },
-        'content': photo.get('description', {}).get('_content', ''),
+        'content': '\n'.join((
+          title, photo.get('description', {}).get('_content', ''))),
         'objectType': 'photo',
         'created': created,
         'published': published,
@@ -302,9 +302,9 @@ class Flickr(source.Source):
     obj = {
       'objectType': 'comment',
       'url': comment.get('permalink'),
-      'id': self.tag_uri('{}_{}'.format(photo_id, comment.get('id'))),
+      'id': self.tag_uri(comment.get('id')),
       'inReplyTo': [{'id': self.tag_uri(photo_id)}],
-      'content': comment.get('_content'),
+      'content': comment.get('_content', ''),
       'created': self.reformat_unix_time(comment.get('datecreate')),
       'updated': self.reformat_unix_time(comment.get('datecreate')),
       'author': {
@@ -324,7 +324,10 @@ class Flickr(source.Source):
 
   def get_user_image(self, farm, server, author):
     return 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
-      farm, author, server)
+      farm, server, author)
 
   def reformat_unix_time(self, ts):
     return ts and datetime.datetime.fromtimestamp(int(ts)).isoformat()
+
+  def user_url(self, handle):
+    return 'https://www.flickr.com/people/%s' % handle
