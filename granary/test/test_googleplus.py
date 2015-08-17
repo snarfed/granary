@@ -50,7 +50,7 @@ ACTIVITY_AS['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
 COMMENT_GP = {  # Google+
   'kind': 'plus#comment',
   'verb': 'post',
-  'id': '888',
+  'id': 'zyx.888',
   'actor': {'id': '777', 'displayName': 'Eve'},
   'object': {'content': 'my content'},
   'inReplyTo': [{'url': 'http://post/url'}],
@@ -59,8 +59,8 @@ COMMENT_AS = copy.deepcopy(COMMENT_GP)
 COMMENT_AS.update({  # ActivityStreams
     'author': COMMENT_AS.pop('actor'),
     'content': 'my content',
-    'id': tag_uri('888'),
-    'url': 'http://post/url',
+    'id': tag_uri('zyx.888'),
+    'url': 'http://post/url#zyx%23888',
     'to': [{'objectType':'group', 'alias':'@public'}],
   })
 PLUSONER = {  # Google+

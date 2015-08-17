@@ -203,13 +203,11 @@ class GooglePlus(source.Source):
     comment['content'] = comment['object']['content']
     comment['author'] = comment.pop('actor')
     comment['to'] = [{'objectType': 'group', 'alias': '@public'}]
-    # also convert id to tag URI
+    # populate permalink. details in https://github.com/snarfed/bridgy/issues/444
+    comment['url'] = '%s#%s' % (comment['inReplyTo'][0]['url'],
+                                comment['id'].replace('.', '%23'))
+    # convert id to tag URI
     comment['id'] = self.tag_uri(comment['id'])
-    # G+ comments don't have their own permalinks, and I can't make one up like
-    # I do with Instagram comments/likes and Facebook RSVPs because G+ has JS
-    # that intercepts fragments and tries to redirect to them as the path. :/
-    # so, just use the post's URL, unchanged.
-    comment['url'] = comment['inReplyTo'][0]['url']
     return self.postprocess_object(comment)
 
   def maybe_add_tags(self, batch, activity, cached, cache_updates, collection, verb):
