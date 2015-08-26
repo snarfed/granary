@@ -7,8 +7,11 @@ https://developers.google.com/+/api/latest/activities/list#collection
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
+import datetime
 import functools
+import json
 import itertools
+import re
 
 import appengine_config
 import source
@@ -282,3 +285,54 @@ class GooglePlus(source.Source):
     if urls and not user.get('url'):
       user['url'] = urls[0].get('value')
     return user
+
+  def html_to_activities(self, html):
+    """Converts HTML from https://plus.google.com/ to ActivityStreams activities.
+
+    Args:
+      html: unicode string
+
+    Returns:
+      list of ActivityStreams activity dicts
+    """
+    # extract JSON data blob
+    script_start = "<script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:"
+    start = html.index(script_start) + len(script_start)
+    end = html.index('});</script>', start)
+    html = html.decode('utf-8')[start:end]
+
+    # insert placeholder nulls for omitted values, e.g. [,,,"x",,,] so that we
+    # can decode it as JSON. run twice to handle overlaps.
+    for i in range(2):
+      html = re.sub(r'([,[])\s*([],])', r'\1null\2', html)
+
+    data = json.loads(html)[1][7][1:2]
+    data = [d[6].values()[0] for d in data]
+
+    activities = []
+    for d in data:
+      # posix timestamp in ms
+      published = datetime.datetime.utcfromtimestamp(d[5] / 1000).isoformat('T')
+      activity = {
+        'id': self.tag_uri(d[8]),
+        'url': 'https://%s/%s' % (self.DOMAIN, d[21]),  # d[132] is full url
+        'objectType': 'note',
+        'published': published,
+        'updated': published,
+        'verb': 'post',
+        'object': {
+          'content': d[20],  # also in d[138] with different encoding
+        },
+        'actor': {
+          # more author details are in d[137]
+          'id': self.tag_uri(d[16]),
+          'url': self.user_url(d[16]),
+          'objectType': 'person',
+          'displayName': d[3],
+          'image': {'url': d[18]},
+         }
+      }
+
+      activities.append(activity)
+
+    return activities

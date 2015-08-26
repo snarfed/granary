@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for googleplus.py.
 
 See apiclient/http.py for details on using RequestMockBuilder to mock out Google
@@ -121,6 +122,143 @@ ACTIVITY_AS_EXTRAS['object'].update({
     'replies': {'totalItems': 1, 'items': [COMMENT_AS]},
     'tags': [LIKE, SHARE],
     })
+
+# HTML from http://plus.google.com/
+HTML_ACTIVITIES_GP = """
+<!DOCTYPE html><html lang="en" dir="ltr" ><head><meta name="referrer" content="origin"><base href="https://plus.google.com/"><style>
+...
+</style></head><body class="Td lj"><input type="text" name="hist_state" id="hist_state" style="display:none;"><iframe id="hist_frame" name="hist_frame1623222153" class="ss" tabindex="-1"></iframe><script>window['OZ_wizstart'] && window['OZ_wizstart']()</script>
+<script>AF_initDataCallback({key: '199', isError:  false , hash: '13', data:[2,0]
+});</script><script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:["os.con",[[]
+,"these few lines test the code that collapses commas",
+[,1,1,,,,20,,"social.google.com",[,]
+,,,2,,,0,,15,,[[1002,2],"..."]],,[,],,,""" + json.dumps([
+ ["..."],
+ [1002, None, None, None, None, [1001, "z13gjrz4ymeldtd5f04chnrixnvpjjqy42o"],
+ {"33558957" : [
+   "",
+   "",
+   "",
+   "David Barrett",
+   "",
+   1440425513401,
+   None,
+   [],  # first comment (if any) would be here
+   "z13gjrz4ymeldtd5f04chnrixnvpjjqy42o",
+   "",
+   "a:ext:client.sharebox.108380595987.apps.googleusercontent.com",
+   [None],
+   [None],
+   "",
+   None,
+   [None],
+   "105815303293125791402",
+   [None],
+   "https://lh4.googleusercontent.com/-OvNQMFbbks0/AAAAAAAAAAI/AAAAAAAAOuo/YXnsx5bfWxo/photo.jpg",
+   None,
+   u"Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…","+DavidBarrettQuinthar/posts/VefFHLMoCqV",
+   "+DavidBarrettQuinthar/posts/VefFHLMoCqV",
+   0,
+   0,
+   "./105815303293125791402",
+   [None], None, None, "", 0, 0, 0, 1, None, 0, 1, None, 0,
+   1440425513401,
+  ] + [None] * 58 + [  # collapsed for brevity
+   [
+     [335, 0],
+     "http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/",
+     None, None, None, None,
+     [
+       1440425513266,
+       "http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/",
+       "http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/",
+       "http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/",
+       [None], [None], [None]
+     ],
+     "http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/",
+     {
+       "39748951" : [
+         "http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/",
+         "http://0.gravatar.com/blavatar/ee4c59993abdb971416349dee59ca9d1?s=200&ts=1440425508",
+         "Realtime Expense Reports are Here! (And so much more...)",
+         "Hi! It's been a while since I've written because we've been hard at work, but I'm very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I kn...",
+         None,
+         ["//lh6.googleusercontent.com/proxy/IvWQIbjjvIWCUhTACtHDQRysGY2NYqf-A6XWPOGMLdr4W5BHFjIeQw4ZOTDrkDA2oc1kKfCgkV7gT-iQIFvOaeUhtfEf_3BPBTNsmesTGSawvh5kednyc-Oi8MPmpdRZ_SE2=w120-h120",
+          120, 120, None, None, None, None, 120,
+          [2,
+           "https://lh6.googleusercontent.com/proxy/IvWQIbjjvIWCUhTACtHDQRysGY2NYqf-A6XWPOGMLdr4W5BHFjIeQw4ZOTDrkDA2oc1kKfCgkV7gT-iQIFvOaeUhtfEf_3BPBTNsmesTGSawvh5kednyc-Oi8MPmpdRZ_SE2=w800-h800"]],
+         "//s2.googleusercontent.com/s2/favicons?domain=blog.expensify.com",
+         [[[350, 335, 0], "http://quinthar.com/",
+           {"41007156" : ["http://quinthar.com/", None, None, None, None, None,
+                          None, [None], None, None, [None]]}]],
+         None, None, [None], "blog.expensify.com",] + [None] * 172 + [# collapsed for brevity
+           [[339, 338, 336, 335, 0],
+            "http://0.gravatar.com/blavatar/ee4c59993abdb971416349dee59ca9d1?s=200&ts=1440425508",
+            {"40265033" : [
+              "http://0.gravatar.com/blavatar/ee4c59993abdb971416349dee59ca9d1?s=200&ts=1440425508",
+              "http://0.gravatar.com/blavatar/ee4c59993abdb971416349dee59ca9d1?s=200&ts=1440425508",
+              None, None, None,
+              ["//lh6.googleusercontent.com/proxy/IvWQIbjjvIWCUhTACtHDQRysGY2NYqf-A6XWPOGMLdr4W5BHFjIeQw4ZOTDrkDA2oc1kKfCgkV7gT-iQIFvOaeUhtfEf_3BPBTNsmesTGSawvh5kednyc-Oi8MPmpdRZ_SE2=w120-h120",
+               120, 120, None, None, None, None, 120,
+               [2,
+                "https://lh6.googleusercontent.com/proxy/IvWQIbjjvIWCUhTACtHDQRysGY2NYqf-A6XWPOGMLdr4W5BHFjIeQw4ZOTDrkDA2oc1kKfCgkV7gT-iQIFvOaeUhtfEf_3BPBTNsmesTGSawvh5kednyc-Oi8MPmpdRZ_SE2=w800-h800"]],
+              # ...
+           ]}]]}], # ...
+  ]}],], # ...
+) + """
+]
+]
+});</script></body></html>"""
+
+HTML_ACTIVITIES_AS = [{  # Google+
+    'id': tag_uri('z13gjrz4ymeldtd5f04chnrixnvpjjqy42o'),
+    'url': 'https://plus.google.com/+DavidBarrettQuinthar/posts/VefFHLMoCqV',
+    'objectType': 'note',
+
+    'published': '2015-08-24T14:11:53',
+    'updated': '2015-08-24T14:11:53',
+    'actor': {
+      'id': tag_uri('105815303293125791402'),
+      'url': 'https://plus.google.com/105815303293125791402',
+      'objectType': 'person',
+      'displayName': 'David Barrett',
+      'image': {
+        'url': 'https://lh4.googleusercontent.com/-OvNQMFbbks0/AAAAAAAAAAI/AAAAAAAAOuo/YXnsx5bfWxo/photo.jpg',
+      },
+    },
+    'verb': 'post',
+    'object': {
+      'content': u'Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…',
+      # 'attachments': [
+      #   {
+      #     'objectType': 'article',
+      #     'displayName': 'Realtime Expense Reports are Here! (And so much more...)',
+      #     'content': 'Hi! It\'s been a while since I\'ve written because we\'ve been hard at work, but I\'m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I kn...',
+      #     'url': 'http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/',
+      #     'image': {
+      #       'url': 'https://lh6.googleusercontent.com/proxy/IvWQIbjjvIWCUhTACtHDQRysGY2NYqf-A6XWPOGMLdr4W5BHFjIeQw4ZOTDrkDA2oc1kKfCgkV7gT-iQIFvOaeUhtfEf_3BPBTNsmesTGSawvh5kednyc-Oi8MPmpdRZ_SE2=w120-h120',
+      #       'type': 'image/jpeg',
+      #       'height': 120,
+      #       'width': 120
+      #     },
+      #     'fullImage': {
+      #       'url': 'http://0.gravatar.com/blavatar/ee4c59993abdb971416349dee59ca9d1?s=200&ts=1440425508',
+      #       'type': 'image/jpeg'
+      #     }
+      #   }
+      # ]
+    },
+    # 'access': {
+    #   'kind': 'plus#acl',
+    #   'description': 'Public',
+    #   'items': [
+    #     {
+    #       'type': 'public'
+    #     }
+    #   ]
+    # }
+  }
+]
 
 
 class GooglePlusTest(testutil.HandlerTest):
@@ -306,3 +444,7 @@ class GooglePlusTest(testutil.HandlerTest):
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
     for prefix in 'AGC ', 'AGL ', 'AGS ':
       self.assertNotIn(prefix + '001', cache)
+
+  def test_html_to_activities(self):
+    self.assert_equals(HTML_ACTIVITIES_AS,
+                       self.googleplus.html_to_activities(HTML_ACTIVITIES_GP))
