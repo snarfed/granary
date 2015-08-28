@@ -413,6 +413,9 @@ class Instagram(source.Source):
         'latitude': media_loc.get('point', {}).get('latitude'),
         'longitude': media_loc.get('point', {}).get('longitude'),
         'address': {'formatted': media_loc.get('street_address')},
+        'url': (media_loc.get('id')
+                and 'https://instagram.com/explore/locations/%s/'
+                % media_loc.get('id')),
       }
 
     return self.postprocess_object(object)

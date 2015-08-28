@@ -70,6 +70,7 @@ MEDIA = {  # Instagram
     'name': 'Le Truc',
     'street_address': '123 Main St.',
     'point': {'latitude':37.3, 'longitude':-122.5},
+    'url': 'https://instagram.com/explore/locations/520640/',
     },
   'user': USER,
   'comments': {
@@ -182,6 +183,7 @@ POST_OBJ = {  # ActivityStreams
     'longitude': -122.5,
     'position': '+37.300000-122.500000/',
     'address': {'formatted': '123 Main St.'},
+    'url': 'https://instagram.com/explore/locations/520640/',
     },
   'attachments': [{
       'objectType': 'image',
@@ -395,7 +397,7 @@ this picture -&gt; is #abc #xyz
 </a>
 </p>
 <div class="h-card p-location">
-  <div class="p-name">Le Truc</div>
+  <div class="p-name"><a class="u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a></div>
 
 </div>
 
