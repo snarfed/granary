@@ -9,8 +9,8 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import datetime
 import functools
-import json
 import itertools
+import json
 import re
 
 import appengine_config
@@ -299,15 +299,15 @@ class GooglePlus(source.Source):
     script_start = "<script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:"
     start = html.index(script_start) + len(script_start)
     end = html.index('});</script>', start)
-    html = html.decode('utf-8')[start:end]
+    html = html[start:end]
 
     # insert placeholder nulls for omitted values, e.g. [,,,"x",,,] so that we
     # can decode it as JSON. run twice to handle overlaps.
     for i in range(2):
       html = re.sub(r'([,[])\s*([],])', r'\1null\2', html)
 
-    data = json.loads(html)[1][7][1:2]
-    data = [d[6].values()[0] for d in data]
+    data = json.loads(html)[1][7][1:]
+    data = [d[6].values()[0] for d in data if len(d) >= 7 and d[6]]
 
     activities = []
     for d in data:

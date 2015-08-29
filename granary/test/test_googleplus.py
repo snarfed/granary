@@ -219,7 +219,15 @@ HTML_ACTIVITIES_GP = """
                 "https://lh6.googleusercontent.com/proxy/IvWQIbjjvIWCUhTACtHDQRysGY2NYqf-A6XWPOGMLdr4W5BHFjIeQw4ZOTDrkDA2oc1kKfCgkV7gT-iQIFvOaeUhtfEf_3BPBTNsmesTGSawvh5kednyc-Oi8MPmpdRZ_SE2=w800-h800"]],
               # ...
            ]}]]}], # ...
-  ]}],], # ...
+  ]}],
+
+ # second element is non-post, under 7 items long
+ [1002, None, None],
+
+ # third element is non-post, item 6 is empty
+ [1002, None, None, None, None, None, {}],
+
+], # ...
 ) + """
 ]
 ]
