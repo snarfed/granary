@@ -311,17 +311,21 @@ class GooglePlus(source.Source):
 
     activities = []
     for d in data:
+      id = self.tag_uri(d[8])
+      url = 'https://%s/%s' % (self.DOMAIN, d[21])  # d[132] is full url
       # posix timestamp in ms
-      published = datetime.datetime.utcfromtimestamp(d[5] / 1000).isoformat('T')
+      published = datetime.datetime.utcfromtimestamp(d[5] / 1000).isoformat('T') + 'Z'
       activity = {
-        'id': self.tag_uri(d[8]),
-        'url': 'https://%s/%s' % (self.DOMAIN, d[21]),  # d[132] is full url
-        'objectType': 'note',
-        'published': published,
-        'updated': published,
+        'id': id,
+        'url': url,
         'verb': 'post',
         'object': {
+          'id': id,
+          'url': url,
+          'objectType': 'note',
           'content': d[20],  # also in d[138] with different encoding
+          'published': published,
+          'updated': published,
         },
         'actor': {
           # more author details are in d[137]
@@ -352,6 +356,7 @@ class GooglePlus(source.Source):
           'content': att[3],
          } for att in attachments.values()]
 
-      activities.append(activity)
+      self.postprocess_object(activity['object'])
+      activities.append(super(GooglePlus, self).postprocess_activity(activity))
 
     return activities

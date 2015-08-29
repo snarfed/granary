@@ -236,10 +236,6 @@ HTML_ACTIVITIES_GP = """
 HTML_ACTIVITIES_AS = [{  # Google+
     'id': tag_uri('z13gjrz4ymeldtd5f04chnrixnvpjjqy42o'),
     'url': 'https://plus.google.com/+DavidBarrettQuinthar/posts/VefFHLMoCqV',
-    'objectType': 'note',
-
-    'published': '2015-08-24T14:11:53',
-    'updated': '2015-08-24T14:11:53',
     'actor': {
       'id': tag_uri('105815303293125791402'),
       'url': 'https://plus.google.com/105815303293125791402',
@@ -251,6 +247,11 @@ HTML_ACTIVITIES_AS = [{  # Google+
     },
     'verb': 'post',
     'object': {
+      'id': tag_uri('z13gjrz4ymeldtd5f04chnrixnvpjjqy42o'),
+      'url': 'https://plus.google.com/+DavidBarrettQuinthar/posts/VefFHLMoCqV',
+      'objectType': 'note',
+      'published': '2015-08-24T14:11:53Z',
+      'updated': '2015-08-24T14:11:53Z',
       'content': u'Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…',
       'attachments': [
         {
