@@ -156,12 +156,27 @@ HTML_ACTIVITIES_GP = """
    [None],
    "https://lh4.googleusercontent.com/-OvNQMFbbks0/AAAAAAAAAAI/AAAAAAAAOuo/YXnsx5bfWxo/photo.jpg",
    None,
-   u"Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…","+DavidBarrettQuinthar/posts/VefFHLMoCqV",
+   u"Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…",
    "+DavidBarrettQuinthar/posts/VefFHLMoCqV",
    0,
    0,
    "./105815303293125791402",
-   [None], None, None, "", 0, 0, 0, 1, None, 0, 1, None, 0,
+   [None], None,
+   [ # location
+     41.230564,
+     9.172682,
+     "(41.2305630, 9.1726818)",
+     "",
+     None,
+     "/maps/api/staticmap?center=41.230564,9.172682&zoom=14&size=300x220&sensor=false&markers=41.230564,9.172682&client=google-buzz&signature=GDLZ49Fe0-uc4BoVt-e7p-OmZ50%3D",
+     ["1152921504606846977", "-7273273746059208260"],
+     "",
+     "https://maps.google.com?ll=41.230564,9.172682&q=41.230564,9.172682",
+     None,
+     "https://maps-api-ssl.google.com/maps/api/staticmap?center=41.230564,9.172682&zoom=15&size=100x100&sensor=false&client=google-buzz&signature=Doqggt3WB5BQzKieZRSA2VwHRXM%3D",
+     0, None, 412305629, 91726818, None, None, [None]
+   ],
+   "", 0, 0, 0, 1, None, 0, 1, None, 0,
    1440425513401,
   ] + [None] * 58 + [  # collapsed for brevity
    [
@@ -247,6 +262,12 @@ HTML_ACTIVITIES_AS = [{  # Google+
       #     }
       #   }
       # ]
+    },
+    'location': {
+      'displayName': '(41.2305630, 9.1726818)',
+      'url': 'https://maps.google.com?ll=41.230564,9.172682&q=41.230564,9.172682',
+      'latitude': 41.230564,
+      'longitude': 9.172682,
     },
     # 'access': {
     #   'kind': 'plus#acl',

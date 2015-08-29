@@ -333,6 +333,15 @@ class GooglePlus(source.Source):
          }
       }
 
+      loc = d[27]
+      if loc:
+        activity['location'] = {
+          'displayName': loc[2],
+          'url': loc[8],
+          'latitude': loc[0],
+          'longitude': loc[1],
+        }
+
       activities.append(activity)
 
     return activities
