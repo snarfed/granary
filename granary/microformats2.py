@@ -598,11 +598,12 @@ def img(src, cls, alt):
   Args:
     src: string, url of the image
     cls: string, css class applied to the img tag
+    alt: string, alt attribute value, or None
 
   Returns: string
   """
   return '<img class="%s" src="%s" alt=%s />' % (
-      cls, src, xml.sax.saxutils.quoteattr(alt))
+      cls, src, xml.sax.saxutils.quoteattr(alt or ''))
 
 
 def vid(src, poster, cls):

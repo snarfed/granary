@@ -229,3 +229,7 @@ foo
             {'type': ['h-nested'], 'url': ['nested']}]}}]),
         ):
       self.assertEquals(expected, microformats2.get_string_urls(objs))
+
+  def test_img_blank_alt(self):
+    self.assertEquals('<img class="bar" src="foo" alt="" />',
+                      microformats2.img('foo', 'bar', None))
