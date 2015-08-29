@@ -342,6 +342,16 @@ class GooglePlus(source.Source):
           'longitude': loc[1],
         }
 
+      attachments = d[97] and d[97][8]
+      if attachments:
+        activity['object']['attachments'] = [{
+          'objectType': 'article',
+          'url': att[0],
+          'image': {'url': att[1]},
+          'displayName': att[2],
+          'content': att[3],
+         } for att in attachments.values()]
+
       activities.append(activity)
 
     return activities

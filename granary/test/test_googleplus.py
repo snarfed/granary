@@ -178,7 +178,7 @@ HTML_ACTIVITIES_GP = """
    ],
    "", 0, 0, 0, 1, None, 0, 1, None, 0,
    1440425513401,
-  ] + [None] * 58 + [  # collapsed for brevity
+   ] + [None] * 58 + [  # collapsed for brevity
    [
      [335, 0],
      "http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/",
@@ -244,24 +244,17 @@ HTML_ACTIVITIES_AS = [{  # Google+
     'verb': 'post',
     'object': {
       'content': u'Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…',
-      # 'attachments': [
-      #   {
-      #     'objectType': 'article',
-      #     'displayName': 'Realtime Expense Reports are Here! (And so much more...)',
-      #     'content': 'Hi! It\'s been a while since I\'ve written because we\'ve been hard at work, but I\'m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I kn...',
-      #     'url': 'http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/',
-      #     'image': {
-      #       'url': 'https://lh6.googleusercontent.com/proxy/IvWQIbjjvIWCUhTACtHDQRysGY2NYqf-A6XWPOGMLdr4W5BHFjIeQw4ZOTDrkDA2oc1kKfCgkV7gT-iQIFvOaeUhtfEf_3BPBTNsmesTGSawvh5kednyc-Oi8MPmpdRZ_SE2=w120-h120',
-      #       'type': 'image/jpeg',
-      #       'height': 120,
-      #       'width': 120
-      #     },
-      #     'fullImage': {
-      #       'url': 'http://0.gravatar.com/blavatar/ee4c59993abdb971416349dee59ca9d1?s=200&ts=1440425508',
-      #       'type': 'image/jpeg'
-      #     }
-      #   }
-      # ]
+      'attachments': [
+        {
+          'objectType': 'article',
+          'displayName': 'Realtime Expense Reports are Here! (And so much more...)',
+          'content': "Hi! It's been a while since I've written because we've been hard at work, but I'm very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I kn...",
+          'url': 'http://blog.expensify.com/2015/08/24/realtime-expense-reports-are-here-and-so-much-more/',
+          'image': {
+            'url': 'http://0.gravatar.com/blavatar/ee4c59993abdb971416349dee59ca9d1?s=200&ts=1440425508',
+          }
+        }
+      ]
     },
     'location': {
       'displayName': '(41.2305630, 9.1726818)',
