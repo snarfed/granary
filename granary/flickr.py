@@ -21,6 +21,9 @@ class Flickr(source.Source):
   DOMAIN = 'flickr.com'
   NAME = 'Flickr'
 
+  API_EXTRAS = ','.join(('date_upload', 'date_taken', 'views', 'media',
+                         'description' 'tags', 'machine_tags', 'geo'))
+
   def __init__(self, access_token_key, access_token_secret, user_id=None):
     """Constructor.
 
@@ -55,8 +58,6 @@ class Flickr(source.Source):
     params = {}
     method = None
     solo = False
-    extras = ','.join(('date_upload', 'date_taken', 'views', 'media',
-                       'description' 'tags', 'machine_tags', 'geo'))
 
     if activity_id:
       method = 'flickr.photos.getInfo'
@@ -65,15 +66,15 @@ class Flickr(source.Source):
     elif group_id == source.SELF:
       method = 'flickr.people.getPhotos'
       params['user_id'] = user_id
-      params['extras'] = extras
+      params['extras'] = self.API_EXTRAS
       params['per_page'] = 50
     elif group_id == source.FRIENDS:
       method = 'flickr.photos.getContactsPhotos'
-      params['extras'] = extras
+      params['extras'] = self.API_EXTRAS
       params['per_page'] = 50
     elif group_id == source.ALL:
       method = 'flickr.photos.getRecent'
-      params['extras'] = extras
+      params['extras'] = self.API_EXTRAS
       params['per_page'] = 50
 
     assert method
@@ -133,7 +134,7 @@ class Flickr(source.Source):
 
       result['items'].append(activity)
 
-    return result
+    return util.trim_nulls(result)
 
   def get_actor(self, user_id=None):
     """Get an ActivityStreams object of type 'person' given a Flickr user's nsid.
@@ -158,6 +159,8 @@ class Flickr(source.Source):
     return self.user_to_actor(resp)
 
   def user_to_actor(self, resp):
+    """Convert a Flickr user dict into an ActivityStreams actor.
+    """
     person = resp.get('person', {})
     username = person.get('username', {}).get('_content')
     obj = util.trim_nulls({
@@ -222,6 +225,12 @@ class Flickr(source.Source):
     """Convert a Flickr photo to an ActivityStreams object. Takes either
     data in the expanded form returned by flickr.photos.getInfo or the
     abbreviated form returned by flickr.people.getPhotos.
+
+    Args:
+      photo: dict response from Flickr
+
+    Returns:
+      dict, an ActivityStreams object
     """
     owner = photo.get('owner')
     owner_id = owner.get('nsid') if isinstance(owner, dict) else owner
@@ -230,7 +239,7 @@ class Flickr(source.Source):
     published = self.reformat_unix_time(
       photo.get('dates', {}).get('posted') or photo.get('dateupload'))
 
-    photo_permalink = 'https://www.flickr.com/photos/{}/{}'.format(
+    photo_permalink = 'https://www.flickr.com/photos/{}/{}/'.format(
       owner_id, photo.get('id'))
 
     title = photo.get('title')
@@ -240,7 +249,7 @@ class Flickr(source.Source):
     activity = {
       'id': self.tag_uri(photo.get('id')),
       'flickr_id': photo.get('id'),
-      'url': 'https://www.flickr.com/photos/{}/{}'.format(owner_id, photo.get('id')),
+      'url': photo_permalink,
       'actor': {
         'numeric_id': owner_id,
       },
@@ -298,6 +307,13 @@ class Flickr(source.Source):
 
   def comment_to_object(self, comment, photo_id):
     """Convert a Flickr comment json object to an ActivityStreams comment.
+
+    Args:
+      comment: dict, the comment object from Flickr
+      photo_id: string, the Flickr ID of the photo that this comment belongs to
+
+    Returns:
+      dict, an ActivityStreams object
     """
     obj = {
       'objectType': 'comment',
@@ -312,6 +328,7 @@ class Flickr(source.Source):
         'displayName': comment.get('realname'),
         'username': comment.get('authorname'),
         'id': self.tag_uri(comment.get('author')),
+        'url': self.user_url(comment.get('path_alias')),
         'image': {
           'url': self.get_user_image(comment.get('iconfarm'),
                                      comment.get('iconserver'),
@@ -323,11 +340,32 @@ class Flickr(source.Source):
     return obj
 
   def get_user_image(self, farm, server, author):
+    """Convert fields from a typical Flickr response into the buddy icon
+    URL.
+
+    ref: https://www.flickr.com/services/api/misc.buddyicons.html
+    """
     return 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
       farm, server, author)
 
   def reformat_unix_time(self, ts):
+    """Convert a Unix timestamp into a datetime object
+
+    Args:
+      ts: string or int, the unix timestamp
+
+    Returns:
+      a datetime.datetime
+    """
     return ts and datetime.datetime.fromtimestamp(int(ts)).isoformat()
 
   def user_url(self, handle):
-    return 'https://www.flickr.com/people/%s' % handle
+    """Convert a user's screen name to their Flickr profile page URL.
+
+    Args:
+      handle: string, the Flickr user's screen name
+
+    Returns:
+      string, a profile URL
+    """
+    return handle and 'https://www.flickr.com/people/%s' % handle
