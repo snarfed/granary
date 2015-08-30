@@ -3,7 +3,8 @@
  */
 
 var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
-                       'access_token_key', 'access_token_secret'];
+                       'access_token_key', 'access_token_secret',
+                       'user_id'];
 
 function render_request() {
   var url = window.location.origin + '/' +
