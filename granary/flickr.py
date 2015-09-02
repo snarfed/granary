@@ -1,9 +1,18 @@
-from apiclient.errors import HttpError
-from apiclient.http import BatchHttpRequest
-from oauth_dropins.webutil import util
-from oauth_dropins import flickr_auth
+# coding=utf-8
+"""Flickr source class.
 
-import appengine_config
+Uses Flickr's REST API https://www.flickr.com/services/api/
+
+TODO: Fetching feeds with comments and/or favorites is very request
+intensive right now. It would be ideal to find a way to batch
+requests, make requests asynchronously, or make better calls to the
+API itself. Maybe use flickr.activity.userPhotos
+(https://www.flickr.com/services/api/flickr.activity.userPhotos.html)
+when group_id=SELF.
+"""
+
+__author__ = ['Kyle Mahan <kyle@kylewm.com>']
+
 import datetime
 import functools
 import itertools
@@ -14,6 +23,13 @@ import source
 import sys
 import mf2py
 import urllib2
+
+import appengine_config
+from oauth_dropins.webutil import util
+from oauth_dropins import flickr_auth
+
+from apiclient.errors import HttpError
+from apiclient.http import BatchHttpRequest
 
 
 class Flickr(source.Source):
@@ -57,32 +73,26 @@ class Flickr(source.Source):
 
     params = {}
     method = None
-    solo = False
 
     if activity_id:
-      method = 'flickr.photos.getInfo'
       params['photo_id'] = activity_id
-      solo = True
-    elif group_id == source.SELF:
-      method = 'flickr.people.getPhotos'
-      params['user_id'] = user_id
+      method = 'flickr.photos.getInfo'
+    else:
       params['extras'] = self.API_EXTRAS
       params['per_page'] = 50
-    elif group_id == source.FRIENDS:
-      method = 'flickr.photos.getContactsPhotos'
-      params['extras'] = self.API_EXTRAS
-      params['per_page'] = 50
-    elif group_id == source.ALL:
-      method = 'flickr.photos.getRecent'
-      params['extras'] = self.API_EXTRAS
-      params['per_page'] = 50
+      if group_id == source.SELF:
+        params['user_id'] = user_id
+        method = 'flickr.people.getPhotos'
+      if group_id == source.FRIENDS:
+        method = 'flickr.photos.getContactsPhotos'
+      if group_id == source.ALL:
+        method = 'flickr.photos.getRecent'
 
     assert method
-    logging.debug('calling %s with %s', method, params)
     photos_resp = self.call_api_method(method, params)
 
     result = {'items': []}
-    if solo:
+    if activity_id:
       photos = [photos_resp.get('photo', {})]
     else:
       photos = photos_resp.get('photos', {}).get('photo', [])
@@ -100,37 +110,18 @@ class Flickr(source.Source):
         })
         for comment in comments_resp.get('comments', {}).get('comment', []):
           replies.append(self.comment_to_object(comment, photo.get('id')))
-          activity['object']['replies'] = {
-            'items': replies,
-            'totalItems': len(replies),
-          }
+        activity['object']['replies'] = {
+          'items': replies,
+          'totalItems': len(replies),
+        }
 
       if fetch_likes:
         faves_resp = self.call_api_method('flickr.photos.getFavorites', {
           'photo_id': photo.get('id'),
         })
         for person in faves_resp.get('photo', {}).get('person', []):
-          activity['object'].setdefault('tags', []).append({
-            'author': {
-              'objectType': 'person',
-              'displayName': person.get('realname'),
-              'username': person.get('username'),
-              'id': self.tag_uri(person.get('nsid')),
-              'image': {
-                'url': self.get_user_image(person.get('iconfarm'),
-                                           person.get('iconserver'),
-                                           person.get('nsid')),
-              },
-            },
-            'created': self.reformat_unix_time(activity.get('favedate')),
-            'url': '{}#liked-by-{}'.format(
-              activity.get('url'), person.get('nsid')),
-            'object': {'url': activity.get('url')},
-            'id': self.tag_uri('{}_liked_by_{}'.format(
-              photo.get('id'), person.get('nsid'))),
-            'objectType': 'activity',
-            'verb': 'like',
-          })
+          activity['object'].setdefault('tags', []).append(
+            self.like_to_object(person, activity))
 
       result['items'].append(activity)
 
@@ -152,9 +143,7 @@ class Flickr(source.Source):
 
     if not user_id:
       resp = self.call_api_method('flickr.people.getLimits')
-      user_id = resp.get('person', {}).get('nsid')
-
-    logging.debug('calling flickr.people.getInfo with user_id %s', user_id)
+      self.user_id = user_id = resp.get('person', {}).get('nsid')
     resp = self.call_api_method('flickr.people.getInfo', {'user_id': user_id})
     return self.user_to_actor(resp)
 
@@ -209,7 +198,6 @@ class Flickr(source.Source):
       activity_id: string activity id, required
       activity_author_id: string activity author id, ignored
     """
-    logging.debug('looking for comment %s under photo %s', comment_id, activity_id)
     resp = self.call_api_method('flickr.photos.comments.getList', {
       'photo_id': activity_id,
     })
@@ -236,7 +224,7 @@ class Flickr(source.Source):
     owner_id = owner.get('nsid') if isinstance(owner, dict) else owner
 
     created = photo.get('dates', {}).get('taken') or photo.get('datetaken')
-    published = self.reformat_unix_time(
+    published = util.maybe_timestamp_to_rfc3339(
       photo.get('dates', {}).get('posted') or photo.get('dateupload'))
 
     photo_permalink = 'https://www.flickr.com/photos/{}/{}/'.format(
@@ -305,6 +293,39 @@ class Flickr(source.Source):
     self.postprocess_activity(activity)
     return activity
 
+  def like_to_object(self, person, photo_activity):
+    """Convert a Flickr favorite into an ActivityStreams like tag.
+
+    Args:
+      person: dict, the person object from Flickr
+      photo_activity: dict, the ActivityStreams object representing
+        the photo this like belongs to
+
+    Returns:
+      dict, an ActivityStreams object
+    """
+    return {
+      'author': {
+        'objectType': 'person',
+        'displayName': person.get('realname'),
+        'username': person.get('username'),
+        'id': self.tag_uri(person.get('nsid')),
+        'image': {
+          'url': self.get_user_image(person.get('iconfarm'),
+                                     person.get('iconserver'),
+                                     person.get('nsid')),
+        },
+      },
+      'created': util.maybe_timestamp_to_rfc3339(photo_activity.get('favedate')),
+      'url': '{}#liked-by-{}'.format(
+        photo_activity.get('url'), person.get('nsid')),
+      'object': {'url': photo_activity.get('url')},
+      'id': self.tag_uri('{}_liked_by_{}'.format(
+        photo_activity.get('flickr_id'), person.get('nsid'))),
+      'objectType': 'activity',
+      'verb': 'like',
+    }
+
   def comment_to_object(self, comment, photo_id):
     """Convert a Flickr comment json object to an ActivityStreams comment.
 
@@ -321,8 +342,8 @@ class Flickr(source.Source):
       'id': self.tag_uri(comment.get('id')),
       'inReplyTo': [{'id': self.tag_uri(photo_id)}],
       'content': comment.get('_content', ''),
-      'created': self.reformat_unix_time(comment.get('datecreate')),
-      'updated': self.reformat_unix_time(comment.get('datecreate')),
+      'created': util.maybe_timestamp_to_rfc3339(comment.get('datecreate')),
+      'updated': util.maybe_timestamp_to_rfc3339(comment.get('datecreate')),
       'author': {
         'objectType': 'person',
         'displayName': comment.get('realname'),
@@ -348,17 +369,6 @@ class Flickr(source.Source):
     return 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
       farm, server, author)
 
-  def reformat_unix_time(self, ts):
-    """Convert a Unix timestamp into a datetime object
-
-    Args:
-      ts: string or int, the unix timestamp
-
-    Returns:
-      a datetime.datetime
-    """
-    return ts and datetime.datetime.fromtimestamp(int(ts)).isoformat()
-
   def user_url(self, handle):
     """Convert a user's screen name to their Flickr profile page URL.
 
@@ -368,4 +378,4 @@ class Flickr(source.Source):
     Returns:
       string, a profile URL
     """
-    return handle and 'https://www.flickr.com/people/%s' % handle
+    return handle and 'https://www.flickr.com/people/%s/' % handle

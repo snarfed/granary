@@ -2,13 +2,11 @@
 """
 from __future__ import unicode_literals, print_function
 
-
 import copy
 import json
 import urllib
 
 from oauth_dropins.webutil import util
-
 from oauth_dropins import appengine_config as od_appengine_config
 from granary import appengine_config
 from granary import flickr
@@ -21,7 +19,7 @@ __author__ = ['Kyle Mahan <kyle@kylewm.com>']
 def tag_uri(name):
   return util.tag_uri('flickr.com', name)
 
-
+# format for a list of photos like the response to flickr.photos.getRecent
 PHOTOS = {
   'photos': {
     'page': 1,
@@ -118,6 +116,7 @@ PHOTOS = {
   'stat': 'ok'
 }
 
+# format for a single photos like the response to flickr.photos.getInfo
 PHOTO_INFO = {
   'photo': {
     'id': '5227922370',
@@ -247,11 +246,12 @@ PHOTO_INFO = {
   'stat': 'ok'
 }
 
+# single PHOTO_INFO response convertd to ActivityStreams
 ACTIVITY = {
   'verb': 'post',
   'actor': {'numeric_id': '39216764@N00'},
   'created': '2010-11-26 17:50:30',
-  'url': 'https://www.flickr.com/photos/39216764@N00/5227922370',
+  'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/',
   'object': {
     'content': 'Candy canes\n',
     'displayName': 'Candy canes',
@@ -263,7 +263,7 @@ ACTIVITY = {
       'objectType': 'person'
     },
     'created': '2010-11-26 17:50:30',
-    'url': 'https://www.flickr.com/photos/39216764@N00/5227922370',
+    'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/',
     'image': {'url': 'https://farm6.staticflickr.com/5246/5227922370_5f19cb9767_b.jpg'},
     'published': '2010-12-03T01:15:21',
     'id': 'tag:flickr.com:5227922370',
@@ -280,6 +280,7 @@ ACTIVITY = {
   'published': '2010-12-03T01:15:21'
 }
 
+# favorites response corresponding to PHOTO_INFO above
 PHOTO_FAVORITES = {
   'photo': {
     'person': [
@@ -307,6 +308,7 @@ PHOTO_FAVORITES = {
   'stat': 'ok'
 }
 
+# comments response corresponing to PHOTO_INFO above
 PHOTO_COMMENTS = {
   'comments': {
     'photo_id': '5227922370',
@@ -336,7 +338,7 @@ COMMENT_OBJS = [{  # ActivityStreams
     'displayName': 'Dusty',
     'username': 'if winter ends',
     'image': {'url': 'https://farm1.staticflickr.com/108/buddyicons/36398523@N00.jpg'},
-    'url': 'https://www.flickr.com/people/if_winter_ends',
+    'url': 'https://www.flickr.com/people/if_winter_ends/',
   },
   'content': 'Love this!',
   'id': tag_uri('4942564-5227922370-72157625845945286'),
@@ -363,16 +365,16 @@ FAVORITE_OBJS = [{
     'username': 'absentmindedprof'
   },
   'id': tag_uri('5227922370_liked_by_95922884@N00'),
-  'object': {'url': 'https://www.flickr.com/photos/39216764@N00/5227922370'},
+  'object': {'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/'},
   'objectType': 'activity',
-  'url': 'https://www.flickr.com/photos/39216764@N00/5227922370#liked-by-95922884@N00',
+  'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/#liked-by-95922884@N00',
   'verb': 'like'
 }]
 
 ACTIVITY_WITH_FAVES = copy.deepcopy(ACTIVITY)
 ACTIVITY_WITH_FAVES['object']['tags'] += FAVORITE_OBJS
 
-
+# response from flickr.people.getInfo
 PERSON_INFO = {
   'person': {
     'id': '39216764@N00',
@@ -462,12 +464,12 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
   'verb': 'post',
   'actor': {'numeric_id': '5555'},
   'created': '2013-06-08 03:20:48',
-  'url': 'https://www.flickr.com/photos/5555/1234',
+  'url': 'https://www.flickr.com/photos/5555/1234/',
   'object': {
     'content': 'First Photo\n',
     'displayName': 'First Photo',
     'created': '2013-06-08 03:20:48',
-    'url': 'https://www.flickr.com/photos/5555/1234',
+    'url': 'https://www.flickr.com/photos/5555/1234/',
     'image': {
       'url': 'https://farm4.staticflickr.com/99/1234_22_b.jpg'
     },
@@ -490,12 +492,12 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
 }, {
   'verb': 'post',
   'actor': {'numeric_id': '6666'}, 'created': '2010-11-27 12:54:33',
-  'url': 'https://www.flickr.com/photos/6666/2345',
+  'url': 'https://www.flickr.com/photos/6666/2345/',
   'object': {
     'content': 'Second Photo\n',
     'displayName': 'Second Photo',
     'created': '2010-11-27 12:54:33',
-    'url': 'https://www.flickr.com/photos/6666/2345',
+    'url': 'https://www.flickr.com/photos/6666/2345/',
     'image': {
       'url': 'https://farm4.staticflickr.com/88/2345_33_b.jpg'
     },
@@ -553,15 +555,12 @@ class FlickrTest(testutil.TestCase):
     super(FlickrTest, self).setUp()
     appengine_config.FLICKR_APP_KEY = 'fake'
     appengine_config.FLICKR_APP_SECRET = 'fake'
-    od_appengine_config.FLICKR_APP_KEY = 'fake'
-    od_appengine_config.FLICKR_APP_SECRET = 'fake'
     self.flickr = flickr.Flickr('key', 'secret')
 
   def expect_call_api_method(self, method, params, result):
     full_params = {
       'nojsoncallback': 1,
       'format': 'json',
-      'api_key': 'fake',
       'method': method,
     }
     full_params.update(params)
@@ -601,6 +600,7 @@ class FlickrTest(testutil.TestCase):
     self.assert_equals(ACTOR, self.flickr.get_actor())
 
   def test_get_activities_defaults(self):
+    self.maxDiff=None
     self.expect_call_api_method(
       'flickr.photos.getContactsPhotos', {
         'extras': flickr.Flickr.API_EXTRAS,
@@ -608,7 +608,7 @@ class FlickrTest(testutil.TestCase):
       }, json.dumps(CONTACTS_PHOTOS))
 
     self.mox.ReplayAll()
-    self.assertEqual(CONTACTS_PHOTOS_ACTIVITIES, self.flickr.get_activities())
+    self.assert_equals(CONTACTS_PHOTOS_ACTIVITIES, self.flickr.get_activities())
 
   def test_get_activities_specific(self):
     self.expect_call_api_method(
@@ -617,8 +617,9 @@ class FlickrTest(testutil.TestCase):
       }, json.dumps(PHOTO_INFO))
 
     self.mox.ReplayAll()
-    self.assertEqual([ACTIVITY],
-                     self.flickr.get_activities(activity_id='5227922370'))
+    self.assert_equals(
+      [ACTIVITY],
+      self.flickr.get_activities(activity_id='5227922370'))
 
   def test_get_activities_with_comments(self):
     self.expect_call_api_method(
@@ -631,7 +632,7 @@ class FlickrTest(testutil.TestCase):
     }, json.dumps(PHOTO_COMMENTS))
 
     self.mox.ReplayAll()
-    self.assertEqual(
+    self.assert_equals(
       [ACTIVITY_WITH_COMMENTS], self.flickr.get_activities(
         activity_id='5227922370', fetch_replies=True))
 
@@ -646,6 +647,6 @@ class FlickrTest(testutil.TestCase):
     }, json.dumps(PHOTO_FAVORITES))
 
     self.mox.ReplayAll()
-    self.assertEqual(
+    self.assert_equals(
       [ACTIVITY_WITH_FAVES], self.flickr.get_activities(
         activity_id='5227922370', fetch_likes=True))

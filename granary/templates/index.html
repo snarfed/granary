@@ -99,7 +99,7 @@ Click on a site to try the demo!
 </form></div>
 
 <div class="col-md-2 col-sm-6"><form method="post" action="/flickr/start_auth">
-  <input type="image" alt="Flickr" src="/static/flickr.png" />
+  <input type="image" alt="Flickr" src="/oauth_dropins/static/flickr.png" />
 </form></div>
 
 </div>
@@ -142,7 +142,7 @@ Click on a site to try the demo!
   <option value="html">html</option>
   <option value="json-mf2">json-mf2</option>
 </select>
-&
+&amp;
 {% if site == 'google+' %}
   <label for="auth_entity">auth_entity =</label>
   <input id="auth_entity" name="auth_entity" type="text" size="10"
@@ -157,15 +157,9 @@ Click on a site to try the demo!
   <label for="access_token_key">access_token_key =</label>
   <input id="access_token_key" name="access_token_key" type="text" size="10"
          class="form-control" value="{{ access_token_key }}" />
-  <label for="access_token_secret">& access_token_secret =</label>
+  <label for="access_token_secret">&amp; access_token_secret =</label>
   <input id="access_token_secret" name="access_token_secret" type="text" size="10"
          class="form-control" value="{{ access_token_secret }}" />
-  {% if site == 'flickr' %}
-    <label for="user_id">& user_id =</label>
-    <input id="user_id" name="user_id" type="text" size="10"
-           class="form-control" value="{{ entity.user_display_name }}" />
-  {% endif %}
-
 {% endif %}
 </code>
 <button type="submit" class="btn btn-default" onclick="render_request()">GET</button>
