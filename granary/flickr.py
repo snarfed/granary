@@ -129,7 +129,7 @@ class Flickr(source.Source):
 
   def get_actor(self, user_id=None):
     """Get an ActivityStreams object of type 'person' given a Flickr user's nsid.
-    If no user_id is provided, this method will make another API requeset to
+    If no user_id is provided, this method will make another API request to
     find out the currently logged in user's id.
 
     Args:

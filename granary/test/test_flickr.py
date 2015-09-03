@@ -308,7 +308,7 @@ PHOTO_FAVORITES = {
   'stat': 'ok'
 }
 
-# comments response corresponing to PHOTO_INFO above
+# comments response corresponding to PHOTO_INFO above
 PHOTO_COMMENTS = {
   'comments': {
     'photo_id': '5227922370',
@@ -600,7 +600,6 @@ class FlickrTest(testutil.TestCase):
     self.assert_equals(ACTOR, self.flickr.get_actor())
 
   def test_get_activities_defaults(self):
-    self.maxDiff=None
     self.expect_call_api_method(
       'flickr.photos.getContactsPhotos', {
         'extras': flickr.Flickr.API_EXTRAS,
@@ -650,3 +649,5 @@ class FlickrTest(testutil.TestCase):
     self.assert_equals(
       [ACTIVITY_WITH_FAVES], self.flickr.get_activities(
         activity_id='5227922370', fetch_likes=True))
+
+  # TODO add test for get_comment
