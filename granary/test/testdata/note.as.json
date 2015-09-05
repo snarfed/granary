@@ -22,5 +22,6 @@
     "url": "http://my/link",
     "startIndex": 13,
     "length": 4
-  }]
+  }],
+  "upstreamDuplicates": ["http://orig/1", "http://orig/2"]
 }

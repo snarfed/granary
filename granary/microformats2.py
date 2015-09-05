@@ -136,7 +136,7 @@ def object_to_json(obj, ctx={}, trim_nulls=True):
       'uid': [obj.get('id', '')],
       'name': [name],
       'summary': [summary],
-      'url': [url],
+      'url': [url] + obj.get('upstreamDuplicates', []),
       'photo': [obj.get('image', {}).get('url', '')],
       'video': [obj.get('stream', {}).get('url')],
       'published': [obj.get('published', '')],
