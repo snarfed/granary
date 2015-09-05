@@ -343,7 +343,7 @@ COMMENT_OBJS = [{  # ActivityStreams
   'content': 'Love this!',
   'id': tag_uri('4942564-5227922370-72157625845945286'),
   'updated': '2011-01-17T18:24:03',
-  'created': '2011-01-17T18:24:03',
+  'published': '2011-01-17T18:24:03',
   'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/#comment72157625845945286',
   'inReplyTo': [{
     'id': tag_uri('5227922370'),

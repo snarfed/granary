@@ -342,7 +342,7 @@ class Flickr(source.Source):
       'id': self.tag_uri(comment.get('id')),
       'inReplyTo': [{'id': self.tag_uri(photo_id)}],
       'content': comment.get('_content', ''),
-      'created': util.maybe_timestamp_to_rfc3339(comment.get('datecreate')),
+      'published': util.maybe_timestamp_to_rfc3339(comment.get('datecreate')),
       'updated': util.maybe_timestamp_to_rfc3339(comment.get('datecreate')),
       'author': {
         'objectType': 'person',
