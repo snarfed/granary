@@ -447,6 +447,9 @@ class Source(object):
     tags = article_urls('tags')
     urls = attachments | set(util.extract_links(content))
 
+    # heuristic: ellipsized URLs are probably incomplete, so omit them.
+    ellipsized = lambda url: url.endswith('...') or url.endswith(u'…')
+
     # Permashortcitations are short references to canonical copies of a given
     # (usually syndicated) post, of the form (DOMAIN PATH). Details:
     # http://indiewebcamp.com/permashortcitation
@@ -458,15 +461,11 @@ class Source(object):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
       uds = obj.setdefault('upstreamDuplicates', [])
-      if (http not in uds and https not in uds
-          # heuristic: ellipsized URLs are probably incomplete, so omit them.
-          and not http.endswith('...') and not http.endswith(u'…')):
+      if http not in uds and https not in uds and not ellipsized(http):
         uds.append(http)
 
     obj.setdefault('tags', []).extend(
-      {'objectType': 'article', 'url': u} for u in urls
-      # same heuristic from above
-      if not u.endswith('...') and not u.endswith(u'…'))
+      {'objectType': 'article', 'url': u} for u in urls if not ellipsized(u))
     return activity
 
   @staticmethod
