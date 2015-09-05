@@ -19,5 +19,6 @@ function render_request() {
       url += '&' + elem.name + '=' + elem.value;
   }
 
-  document.getElementById('request').innerHTML = 'GET ' + url;
+  document.getElementById('request').innerHTML =
+    'GET <a href="' + url + '">' + url + '</a>';
 }
