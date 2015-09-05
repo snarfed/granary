@@ -2,8 +2,6 @@
 """Unit tests for twitter.py.
 """
 
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import copy
 import httplib
 import json
@@ -21,6 +19,7 @@ from granary import source
 from granary import testutil
 from granary import twitter
 
+__author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 # test data
 def tag_uri(name):
@@ -1163,6 +1162,19 @@ class TwitterTest(testutil.TestCase):
       u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
       u'long:…')
     result = self.twitter._truncate(orig, None, False)
+    self.assertEquals(expected, result)
+
+    # test case-insensitive link matching
+    orig = (
+      u'The Telegram Bot API is the best bot API ever. Everyone should '
+      u'learn from it, especially Matrix.org, which currently requires a '
+      u'particular URL structure and registration files.')
+    expected = (
+      u'The Telegram Bot API is the best bot API ever. Everyone should learn '
+      u'from it, especially Matrix.org… '
+      u'(https://unrelenting.technology/notes/2015-09-05-00-35-13)')
+    result = self.twitter._truncate(
+      orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13', False)
     self.assertEquals(expected, result)
 
     twitter.MAX_TWEET_LENGTH = 20

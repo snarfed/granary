@@ -617,15 +617,18 @@ class Twitter(source.Source):
 
     Return: string, the possibly shortened and ellipsized tweet text
     """
+    def rstrip_cruft(text):
+      return text.rstrip().rstrip(',;.')
+
     def trunc_to_nearest_word(text, length):
       # try stripping trailing whitespace first
-      text = text.rstrip()
+      text = rstrip_cruft(text)
       if len(text) <= length:
         return text
       # walk backwards until we find a delimiter
       for j in xrange(length, -1, -1):
         if text[j] in ',.;: \t\r\n':
-          return text[:j]
+          return rstrip_cruft(text[:j])
 
     links, splits = util.tokenize_links(content, skip_bare_cc_tlds=True)
     max = MAX_TWEET_LENGTH
