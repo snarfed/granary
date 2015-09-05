@@ -38,6 +38,7 @@ from webob import exc
 from granary import appengine_config
 from granary import atom
 from granary import facebook
+from granary import flickr
 from granary import googleplus
 from granary import instagram
 from granary import microformats2
@@ -88,6 +89,10 @@ class Handler(webapp2.RequestHandler):
     elif site == 'facebook':
       src = facebook.Facebook(
         access_token=util.get_required_param(self, 'access_token'))
+    elif site == 'flickr':
+      src = flickr.Flickr(
+        access_token_key=util.get_required_param(self, 'access_token_key'),
+        access_token_secret=util.get_required_param(self, 'access_token_secret'))
     elif site == 'instagram':
       src = instagram.Instagram(
         access_token=util.get_required_param(self, 'access_token'))

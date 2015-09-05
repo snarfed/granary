@@ -29,7 +29,7 @@ handlers:
   script: app.application
   secure: always
 
-- url: /(twitter|facebook|instagram|google\+)/(start_auth|oauth_callback)
+- url: /(twitter|facebook|flickr|instagram|google\+)/(start_auth|oauth_callback)
   script: app.application
   secure: always
 
