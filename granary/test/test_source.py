@@ -82,9 +82,9 @@ class SourceTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(self.source, 'get_activities')
 
   def test_original_post_discovery(self):
-    def check(obj, uds=None, tags=[]):
+    def check(obj, uds=None, tags=[], **kwargs):
       activity = {'object': obj}
-      Source.original_post_discovery(activity)
+      Source.original_post_discovery(activity, **kwargs)
       self.assertEquals(uds, activity['object'].get('upstreamDuplicates'))
       self.assertEquals([{'objectType': 'article', 'url': tag} for tag in tags],
                         activity['object'].get('tags'))
@@ -155,6 +155,11 @@ class SourceTest(testutil.HandlerTest):
     for domains in [], ['end'], ['foo', 'end']:
       check({'content': 'http://start/x http://end/y'},
             uds=['http://end/y'], tags=['http://start/x'])
+
+    for domains in ['start'], ['foo'], ['foo', 'start']:
+      check({'content': 'http://start/x http://end/y'},
+            tags=['http://start/x', 'http://end/y'],
+            domains=domains)
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',

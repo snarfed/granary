@@ -426,7 +426,7 @@ class Source(object):
   _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
   @staticmethod
-  def original_post_discovery(activity):
+  def original_post_discovery(activity, domains=None):
     """Discovers original post links and stores them as tags, in place.
 
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
@@ -441,6 +441,9 @@ class Source(object):
 
     Args:
       activity: activity dict
+      domains: optional sequence of domains. If provided, only links to these
+        domains will be considered original and stored in upstreamDuplicates.
+        (Permashortcitations are exempt.)
     """
     obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
@@ -449,11 +452,14 @@ class Source(object):
       return set(util.trim_nulls(a.get('url') for a in obj.get(field, [])
                                  if a.get('objectType') == 'article'))
     attachments = article_urls('attachments')
-    tags = article_urls('tags')
 
+    originals = set()
     links = util.extract_links(content)
-    if links and content.find(links[-1]) + len(links[-1]) >= len(content) - 4:
-      obj.setdefault('upstreamDuplicates', []).append(links.pop())
+    if links:
+      last = links[-1]
+      if (content.find(last) + len(last) >= len(content) - 4 and
+          (not domains or util.domain_from_link(last) in domains)):
+        originals.add(links.pop())
 
     urls = attachments | set(links)
 
@@ -466,12 +472,13 @@ class Source(object):
     for match in Source._PERMASHORTCITATION_RE.finditer(content):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
-      uds = obj.setdefault('upstreamDuplicates', [])
-      if http not in uds and https not in uds and not ellipsized(http):
-        uds.append(http)
+      if http not in originals and https not in originals and not ellipsized(http):
+        originals.add(http)
 
     obj.setdefault('tags', []).extend(
       {'objectType': 'article', 'url': u} for u in urls if not ellipsized(u))
+    if originals:
+      obj.setdefault('upstreamDuplicates', []).extend(originals)
     return activity
 
   @staticmethod
