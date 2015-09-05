@@ -432,7 +432,12 @@ class Source(object):
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
     differs in that it finds multiple candidate links instead of one, and it
     doesn't bother looking for MF2 (etc) markup because the silos don't let you
-    input it.
+    input it. More background:
+    https://github.com/snarfed/bridgy/issues/51#issuecomment-136018857
+
+    The full implementation of the extended OPD algorithm is actually split
+    between here and Bridgy's handlers.ItemHandler.add_original_post_urls(),
+    which checks whether the time difference between the posts is <24h.
 
     Link(s) that are probably the original post(s) are stored in the
     upstreamDuplicates field. Other links are stored as tags with objectType

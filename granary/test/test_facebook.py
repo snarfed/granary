@@ -316,8 +316,8 @@ COMMENT_OBJS = [  # ActivityStreams
       'url': 'https://www.facebook.com/124561947600007',
     }],
     'to': [{'objectType':'group', 'alias':'@public'}],
-    'tags': [{'displayName': 'See Original', 'objectType': 'article', 'url': 'http://ald.com/foobar'}],
-    },
+    'upstreamDuplicates': ['http://ald.com/foobar'],
+  },
 ]
 LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('10100176064482163_liked_by_100004'),
