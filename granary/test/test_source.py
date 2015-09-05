@@ -96,14 +96,16 @@ class SourceTest(testutil.HandlerTest):
     Source.original_post_discovery(activity)
     self.assert_equals([], activity['object']['tags'])
 
+    # permashortcitations
     activity['object']['content'] = 'x (not.at end) y (at.the end)'
     Source.original_post_discovery(activity)
     self.assert_equals(['http://at.the/end'],
                        activity['object']['upstreamDuplicates'])
     self.assert_equals([], activity['object']['tags'])
 
+    # merge with existing tags
     activity['object'].update({
-        'content': 'x http://baz/3 y',
+        'content': 'x http://baz/3 yyyy',
         'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
         'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
         })
@@ -114,12 +116,25 @@ class SourceTest(testutil.HandlerTest):
         {'objectType': 'article', 'url': 'http://baz/3'},
         ], activity['object']['tags'])
 
+    # links at the end (modulo punctuation) become upstreamDuplicates
+    for end in '', ' ', '.' ')', ') ', ' ! ', ' :-D':
+      activity = {'object': {'content': 'asdf http://middle http://end' + end}}
+      Source.original_post_discovery(activity)
+      self.assert_equals(['http://end'], activity['object']['upstreamDuplicates'])
+      self.assert_equals([{'objectType': 'article', 'url': 'http://middle'}],
+                         activity['object']['tags'])
+
+    activity = {'object': {'content': 'asdf http://too far!'}}
+    Source.original_post_discovery(activity)
+    self.assertNotIn('upstreamDuplicates', activity['object'])
+    self.assert_equals([{'objectType': 'article', 'url': 'http://too'}],
+                       activity['object']['tags'])
+
     # leading parens used to cause us trouble
     activity = {'object': {'content' : 'Foo (http://snarfed.org/xyz)'}}
     Source.original_post_discovery(activity)
-    self.assert_equals(
-      [{'objectType': 'article', 'url': 'http://snarfed.org/xyz'}],
-      activity['object']['tags'])
+    self.assert_equals(['http://snarfed.org/xyz'],
+                       activity['object']['upstreamDuplicates'])
 
     # don't duplicate PSCs and PSLs with http and https
     for field in 'tags', 'attachments':
@@ -151,7 +166,6 @@ class SourceTest(testutil.HandlerTest):
             }}
         Source.original_post_discovery(activity)
         self.assert_equals([], activity['object']['tags'])
-
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',

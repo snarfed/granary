@@ -434,6 +434,11 @@ class Source(object):
     doesn't bother looking for MF2 (etc) markup because the silos don't let you
     input it.
 
+    Link(s) that are probably the original post(s) are stored in the
+    upstreamDuplicates field. Other links are stored as tags with objectType
+    article.
+    http://activitystrea.ms/specs/json/1.0/#id-comparison
+
     Args:
       activity: activity dict
     """
@@ -445,18 +450,19 @@ class Source(object):
                                  if a.get('objectType') == 'article'))
     attachments = article_urls('attachments')
     tags = article_urls('tags')
-    urls = attachments | set(util.extract_links(content))
+
+    links = util.extract_links(content)
+    if links and content.find(links[-1]) + len(links[-1]) >= len(content) - 4:
+      obj.setdefault('upstreamDuplicates', []).append(links.pop())
+
+    urls = attachments | set(links)
 
     # heuristic: ellipsized URLs are probably incomplete, so omit them.
     ellipsized = lambda url: url.endswith('...') or url.endswith(u'…')
 
-    # Permashortcitations are short references to canonical copies of a given
-    # (usually syndicated) post, of the form (DOMAIN PATH). Details:
-    # http://indiewebcamp.com/permashortcitation
-    #
-    # We consider them an explicit original post link, so we store them in
-    # upstreamDuplicates to signal that.
-    # http://activitystrea.ms/specs/json/1.0/#id-comparison
+    # Permashortcitations (http://indiewebcamp.com/permashortcitation) are short
+    # references to canonical copies of a given (usually syndicated) post, of
+    # the form (DOMAIN PATH). We consider them an explicit original post link.
     for match in Source._PERMASHORTCITATION_RE.finditer(content):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
