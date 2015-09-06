@@ -83,43 +83,36 @@ class SourceTest(testutil.HandlerTest):
 
   def test_original_post_discovery(self):
     def check(obj, uds=None, tags=[], **kwargs):
-      activity = {'object': obj}
+      activity = {'object': copy.deepcopy(obj)}
       Source.original_post_discovery(activity, **kwargs)
-      self.assertEquals(uds, activity['object'].get('upstreamDuplicates'))
-      self.assertEquals([{'objectType': 'article', 'url': tag} for tag in tags],
-                        activity['object'].get('tags'))
+      self.assert_equals(uds, activity['object'].get('upstreamDuplicates'))
+      self.assert_equals([{'objectType': 'article', 'url': tag} for tag in tags],
+                         activity['object'].get('tags'))
 
     # noop
-    activity = {'object': {
-        'objectType': 'article',
-        'displayName': 'article abc',
-        'url': 'http://example.com/article-abc',
-        'tags': [],
-        'upstreamDuplicates': [],
-        }}
-    self.assert_equals(activity, Source.original_post_discovery(
-        copy.deepcopy(activity)))
+    obj = {
+      'objectType': 'article',
+      'displayName': 'article abc',
+      'url': 'http://example.com/article-abc',
+      'tags': [],
+      # 'upstreamDuplicates': [],
+    }
+    check(obj)
 
     # missing objectType
-    activity['object']['attachments'] = [{'url': 'http://x.com/y'}]
-    Source.original_post_discovery(activity)
-    self.assert_equals([], activity['object']['tags'])
+    obj['attachments'] = [{'url': 'http://x.com/y'}]
+    check(obj)
 
     # permashortcitations
     check({'content': 'x (not.at end) y (at.the end)'}, uds=['http://at.the/end'])
 
     # merge with existing tags
-    activity['object'].update({
-        'content': 'x http://baz/3 yyyy',
-        'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
-        'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
-        })
-    Source.original_post_discovery(activity)
-    self.assert_equals([
-        {'objectType': 'article', 'url': 'http://foo/1'},
-        {'objectType': 'article', 'url': 'http://bar/2'},
-        {'objectType': 'article', 'url': 'http://baz/3'},
-        ], activity['object']['tags'])
+    obj.update({
+      'content': 'x http://baz/3 yyyy',
+      'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
+      'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
+    })
+    check(obj, tags=['http://foo/1', 'http://bar/2', 'http://baz/3'])
 
     # links at the end (modulo punctuation) become upstreamDuplicates
     for end in '', ' ', '.' ')', ') ', ' ! ', ' :-D':
@@ -127,6 +120,9 @@ class SourceTest(testutil.HandlerTest):
             uds=['http://end'], tags=['http://middle'])
 
     check({'content': 'asdf http://too far!'}, tags=['http://too'])
+    check({'content': 'x http://existing y',
+           'upstreamDuplicates': ['http://existing']},
+          uds=['http://existing'])
 
     # leading parens used to cause us trouble
     check({'content': 'Foo (http://snarfed.org/xyz)'},

@@ -483,7 +483,9 @@ class Source(object):
     obj.setdefault('tags', []).extend(
       {'objectType': 'article', 'url': u} for u in urls if not ellipsized(u))
     if originals:
-      obj.setdefault('upstreamDuplicates', []).extend(originals)
+      uds = obj.setdefault('upstreamDuplicates', [])
+      uds.extend(o for o in originals if o not in uds)
+
     return activity
 
   @staticmethod
