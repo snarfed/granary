@@ -3,7 +3,7 @@
 Granary is a library and REST API that fetches and converts social network
 data between a wide variety of formats:
 
-- Facebook, Google+, Instagram, and Twitter native APIs
+- Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 - `ActivityStreams <http://activitystrea.ms/>`__
 - `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
 - `microformats2 <http://microformats.org/wiki/microformats2>`__ JSON
