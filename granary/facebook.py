@@ -852,14 +852,11 @@ class Facebook(source.Source):
       obj['content'] = content
 
     # "See Original" links
-    post_actions = post.get('actions',[])
-    see_orig_actions = (act for act in post_actions
-                        if act.get('name', '').lower() in SEE_ORIGINAL_ACTIONS)
-    obj['tags'] += [self.postprocess_object({
-      'objectType': 'article',
-      'url': act.get('link'),
-      'displayName': act.get('name')
-    }) for act in see_orig_actions]
+    see_orig_links = filter(
+      None, (act.get('link') for act in post.get('actions',[])
+             if act.get('name', '').lower() in SEE_ORIGINAL_ACTIONS))
+    if see_orig_links:
+      obj.setdefault('upstreamDuplicates', []).extend(see_orig_links)
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.

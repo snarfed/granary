@@ -426,16 +426,29 @@ class Source(object):
   _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
   @staticmethod
-  def original_post_discovery(activity):
+  def original_post_discovery(activity, domains=None):
     """Discovers original post links and stores them as tags, in place.
 
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
     differs in that it finds multiple candidate links instead of one, and it
     doesn't bother looking for MF2 (etc) markup because the silos don't let you
-    input it.
+    input it. More background:
+    https://github.com/snarfed/bridgy/issues/51#issuecomment-136018857
+
+    The full implementation of the extended OPD algorithm is actually split
+    between here and Bridgy's handlers.ItemHandler.add_original_post_urls(),
+    which checks whether the time difference between the posts is <24h.
+
+    Link(s) that are probably the original post(s) are stored in the
+    upstreamDuplicates field. Other links are stored as tags with objectType
+    article.
+    http://activitystrea.ms/specs/json/1.0/#id-comparison
 
     Args:
       activity: activity dict
+      domains: optional sequence of domains. If provided, only links to these
+        domains will be considered original and stored in upstreamDuplicates.
+        (Permashortcitations are exempt.)
     """
     obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
@@ -444,28 +457,35 @@ class Source(object):
       return set(util.trim_nulls(a.get('url') for a in obj.get(field, [])
                                  if a.get('objectType') == 'article'))
     attachments = article_urls('attachments')
-    tags = article_urls('tags')
-    urls = attachments | set(util.extract_links(content))
+
+    originals = set()
+    links = util.extract_links(content)
+    if links:
+      last = links[-1]
+      if (content.find(last) + len(last) >= len(content) - 4 and
+          (not domains or util.domain_from_link(last) in domains)):
+        originals.add(links.pop())
+
+    urls = attachments | set(links)
 
     # heuristic: ellipsized URLs are probably incomplete, so omit them.
     ellipsized = lambda url: url.endswith('...') or url.endswith(u'…')
 
-    # Permashortcitations are short references to canonical copies of a given
-    # (usually syndicated) post, of the form (DOMAIN PATH). Details:
-    # http://indiewebcamp.com/permashortcitation
-    #
-    # We consider them an explicit original post link, so we store them in
-    # upstreamDuplicates to signal that.
-    # http://activitystrea.ms/specs/json/1.0/#id-comparison
+    # Permashortcitations (http://indiewebcamp.com/permashortcitation) are short
+    # references to canonical copies of a given (usually syndicated) post, of
+    # the form (DOMAIN PATH). We consider them an explicit original post link.
     for match in Source._PERMASHORTCITATION_RE.finditer(content):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
-      uds = obj.setdefault('upstreamDuplicates', [])
-      if http not in uds and https not in uds and not ellipsized(http):
-        uds.append(http)
+      if http not in originals and https not in originals and not ellipsized(http):
+        originals.add(http)
 
     obj.setdefault('tags', []).extend(
       {'objectType': 'article', 'url': u} for u in urls if not ellipsized(u))
+    if originals:
+      uds = obj.setdefault('upstreamDuplicates', [])
+      uds.extend(o for o in originals if o not in uds)
+
     return activity
 
   @staticmethod

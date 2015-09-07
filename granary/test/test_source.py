@@ -82,76 +82,80 @@ class SourceTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(self.source, 'get_activities')
 
   def test_original_post_discovery(self):
-    activity = {'object': {
-        'objectType': 'article',
-        'displayName': 'article abc',
-        'url': 'http://example.com/article-abc',
-        'tags': [],
-        }}
-    self.assert_equals(activity, Source.original_post_discovery(
-        copy.deepcopy(activity)))
+    def check(obj, uds=None, tags=[], **kwargs):
+      activity = {'object': copy.deepcopy(obj)}
+      Source.original_post_discovery(activity, **kwargs)
+      self.assert_equals(uds, activity['object'].get('upstreamDuplicates'))
+      self.assert_equals([{'objectType': 'article', 'url': tag} for tag in tags],
+                         activity['object'].get('tags'))
+
+    # noop
+    obj = {
+      'objectType': 'article',
+      'displayName': 'article abc',
+      'url': 'http://example.com/article-abc',
+      'tags': [],
+      # 'upstreamDuplicates': [],
+    }
+    check(obj)
 
     # missing objectType
-    activity['object']['attachments'] = [{'url': 'http://x.com/y'}]
-    Source.original_post_discovery(activity)
-    self.assert_equals([], activity['object']['tags'])
+    obj['attachments'] = [{'url': 'http://x.com/y'}]
+    check(obj)
 
-    activity['object']['content'] = 'x (not.at end) y (at.the end)'
-    Source.original_post_discovery(activity)
-    self.assert_equals(['http://at.the/end'],
-                       activity['object']['upstreamDuplicates'])
-    self.assert_equals([], activity['object']['tags'])
+    # permashortcitations
+    check({'content': 'x (not.at end) y (at.the end)'}, uds=['http://at.the/end'])
 
-    activity['object'].update({
-        'content': 'x http://baz/3 y',
-        'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
-        'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
-        })
-    Source.original_post_discovery(activity)
-    self.assert_equals([
-        {'objectType': 'article', 'url': 'http://foo/1'},
-        {'objectType': 'article', 'url': 'http://bar/2'},
-        {'objectType': 'article', 'url': 'http://baz/3'},
-        ], activity['object']['tags'])
+    # merge with existing tags
+    obj.update({
+      'content': 'x http://baz/3 yyyy',
+      'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
+      'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
+    })
+    check(obj, tags=['http://foo/1', 'http://bar/2', 'http://baz/3'])
+
+    # links at the end (modulo punctuation) become upstreamDuplicates
+    for end in '', ' ', '.' ')', ') ', ' ! ', ' :-D':
+      check({'content': 'asdf http://middle http://end' + end},
+            uds=['http://end'], tags=['http://middle'])
+
+    check({'content': 'asdf http://too far!'}, tags=['http://too'])
+    check({'content': 'x http://existing y',
+           'upstreamDuplicates': ['http://existing']},
+          uds=['http://existing'])
 
     # leading parens used to cause us trouble
-    activity = {'object': {'content' : 'Foo (http://snarfed.org/xyz)'}}
-    Source.original_post_discovery(activity)
-    self.assert_equals(
-      [{'objectType': 'article', 'url': 'http://snarfed.org/xyz'}],
-      activity['object']['tags'])
+    check({'content': 'Foo (http://snarfed.org/xyz)'},
+          uds=['http://snarfed.org/xyz'])
 
     # don't duplicate PSCs and PSLs with http and https
     for field in 'tags', 'attachments':
       for scheme in 'http', 'https':
         url = scheme + '://foo.com/1'
-        activity = {'object': {
-          'content': 'x (foo.com/1)',
-          field: [{'objectType': 'article', 'url': url}],
-          }}
-        Source.original_post_discovery(activity)
-        self.assert_equals([{'objectType': 'article', 'url': url}],
-                           activity['object']['tags'])
+        check({'content': 'x (foo.com/1)',
+               field: [{'objectType': 'article', 'url': url}]},
+              uds=['http://foo.com/1'], tags=[url])
 
     # exclude ellipsized URLs
     for ellipsis in '...', u'…':
       url = 'foo.com/1' + ellipsis
-      activity = {'object': {
-          'content': 'x (%s)' % url,
-          'attachments': [{'objectType': 'article', 'url': 'http://' + url}],
-          }}
-      Source.original_post_discovery(activity)
-      self.assert_equals([], activity['object']['tags'])
+      check({'content': 'x (%s)' % url,
+             'attachments': [{'objectType': 'article', 'url': 'http://' + url}]})
 
     # exclude ellipsized PSCs and PSLs
     for separator in '/', ' ':
       for ellipsis in '...', u'…':
-        activity = {'object': {
-            'content': 'x (ttk.me%s123%s)' % (separator, ellipsis),
-            }}
-        Source.original_post_discovery(activity)
-        self.assert_equals([], activity['object']['tags'])
+        check({'content': 'x (ttk.me%s123%s)' % (separator, ellipsis)})
 
+    # domains param
+    for domains in [], ['end'], ['foo', 'end']:
+      check({'content': 'http://start/x http://end/y'},
+            uds=['http://end/y'], tags=['http://start/x'])
+
+    for domains in ['start'], ['foo'], ['foo', 'start']:
+      check({'content': 'http://start/x http://end/y'},
+            tags=['http://start/x', 'http://end/y'],
+            domains=domains)
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
