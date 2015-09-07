@@ -650,4 +650,61 @@ class FlickrTest(testutil.TestCase):
       [ACTIVITY_WITH_FAVES], self.flickr.get_activities(
         activity_id='5227922370', fetch_likes=True))
 
-  # TODO add test for get_comment
+  def test_favorite_without_display_name(self):
+    """Make sure faves fall back to the username if the user did not
+    supply a real name.
+    """
+    faves = copy.deepcopy(PHOTO_FAVORITES)
+    del faves['photo']['person'][0]['realname']
+
+    self.expect_call_api_method(
+      'flickr.photos.getInfo', {
+        'photo_id': '5227922370',
+      }, json.dumps(PHOTO_INFO))
+
+    self.expect_call_api_method('flickr.photos.getFavorites', {
+        'photo_id': '5227922370',
+    }, json.dumps(faves))
+
+    self.mox.ReplayAll()
+    resp = self.flickr.get_activities(
+      activity_id='5227922370', fetch_likes=True)
+
+    like = next(tag for tag in resp[0]['object']['tags']
+                if tag.get('verb') == 'like')
+    self.assert_equals('absentmindedprof', like['author']['displayName'])
+
+  def test_comment_without_display_name(self):
+    """Make sure comments fall back to the username if the user did not
+    supply a real name.
+    """
+    comments = copy.deepcopy(PHOTO_COMMENTS)
+    del comments['comments']['comment'][0]['realname']
+
+    self.expect_call_api_method(
+      'flickr.photos.getInfo', {
+        'photo_id': '5227922370',
+      }, json.dumps(PHOTO_INFO))
+
+    self.expect_call_api_method('flickr.photos.comments.getList', {
+        'photo_id': '5227922370',
+    }, json.dumps(comments))
+
+    self.mox.ReplayAll()
+    resp = self.flickr.get_activities(
+      activity_id='5227922370', fetch_replies=True)
+
+    comment = resp[0]['object']['replies']['items'][0]
+    self.assert_equals('if winter ends', comment['author']['displayName'])
+
+  def test_get_comment(self):
+    """get_comment should fetch the list of comments for a photo, and then
+    iteratively look for the comment by id.
+    """
+    self.expect_call_api_method(
+      'flickr.photos.comments.getList', {
+        'photo_id': '5227922370',
+      }, json.dumps(PHOTO_COMMENTS))
+    self.mox.ReplayAll()
+    self.assert_equals(COMMENT_OBJS[0], self.flickr.get_comment(
+      '4942564-5227922370-72157625845945286', '5227922370'))

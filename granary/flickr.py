@@ -264,7 +264,7 @@ class Flickr(source.Source):
     if isinstance(owner, dict):
       activity['object']['author'] = {
         'objectType': 'person',
-        'displayName': owner.get('realname'),
+        'displayName': owner.get('realname') or owner.get('username'),
         'username': owner.get('username'),
         'id': self.tag_uri(owner.get('username')),
         'image': {
@@ -307,7 +307,7 @@ class Flickr(source.Source):
     return {
       'author': {
         'objectType': 'person',
-        'displayName': person.get('realname'),
+        'displayName': person.get('realname') or person.get('username'),
         'username': person.get('username'),
         'id': self.tag_uri(person.get('nsid')),
         'image': {
@@ -346,7 +346,7 @@ class Flickr(source.Source):
       'updated': util.maybe_timestamp_to_rfc3339(comment.get('datecreate')),
       'author': {
         'objectType': 'person',
-        'displayName': comment.get('realname'),
+        'displayName': comment.get('realname') or comment.get('authorname'),
         'username': comment.get('authorname'),
         'id': self.tag_uri(comment.get('author')),
         'url': self.user_url(comment.get('path_alias')),
