@@ -115,14 +115,11 @@ class SourceTest(testutil.HandlerTest):
       'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
       'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
     })
-    check(obj, uds=['http://foo/1'], tags=['http://bar/2', 'http://baz/3'])
+    check(obj, uds=['http://foo/1', 'http://baz/3'], tags=['http://bar/2'])
 
-    # links at the end (modulo punctuation) become upstreamDuplicates
-    for end in '', ' ', '.' ')', ') ', ' ! ', ' :-D':
-      check({'content': 'asdf http://middle http://end' + end},
-            uds=['http://end'], tags=['http://middle'])
-
-    check({'content': 'asdf http://too far!'}, tags=['http://too'])
+    # links become upstreamDuplicates
+    check({'content': 'asdf http://first ooooh http://second qwert'},
+          uds=['http://first', 'http://second'])
     check({'content': 'x http://existing y',
            'upstreamDuplicates': ['http://existing']},
           uds=['http://existing'])
@@ -138,9 +135,12 @@ class SourceTest(testutil.HandlerTest):
              'tags': [{'objectType': 'article', 'url': url}]},
             uds=['http://foo.com/1'], tags=[url])
 
-    for scheme in 'http', 'https':
-      url = scheme + '://foo.com/1'
-      check({'content': 'x (foo.com/1)', 'attachments': [{'url': url}]}, uds=[url])
+    check({'content': 'x (foo.com/1)',
+           'attachments': [{'url': 'http://foo.com/1'}]},
+          uds=['http://foo.com/1'])
+    check({'content': 'x (foo.com/1)',
+           'attachments': [{'url': 'https://foo.com/1'}]},
+          uds=[url])
 
     # exclude ellipsized URLs
     for ellipsis in '...', u'…':
@@ -154,14 +154,15 @@ class SourceTest(testutil.HandlerTest):
         check({'content': 'x (ttk.me%s123%s)' % (separator, ellipsis)})
 
     # domains param
-    for domains in [], ['end'], ['foo', 'end']:
-      check({'content': 'http://start/x http://end/y'},
-            uds=['http://end/y'], tags=['http://start/x'])
-
-    for domains in ['start'], ['foo'], ['foo', 'start']:
-      check({'content': 'http://start/x http://end/y'},
-            tags=['http://start/x', 'http://end/y'],
-            domains=domains)
+    obj = {
+      'content': 'x http://me/a y',
+      'upstreamDuplicates': ['http://me/b'],
+      'attachments': [{'url': 'http://me/c'}],
+    }
+    links = ['http://me/a', 'http://me/b', 'http://me/c']
+    for domains in [], ['me'], ['foo', 'me']:
+      check(obj, uds=links)
+    check(obj, domains=['notme', 'alsonotme'], uds=['http://me/b'], tags=links)
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',

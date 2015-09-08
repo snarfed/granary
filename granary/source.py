@@ -435,10 +435,6 @@ class Source(object):
     input it. More background:
     https://github.com/snarfed/bridgy/issues/51#issuecomment-136018857
 
-    The full implementation of the extended OPD algorithm is actually split
-    between here and Bridgy's handlers.ItemHandler.add_original_post_urls(),
-    which checks whether the time difference between the posts is <24h.
-
     Link(s) that are probably the original post(s) are stored in the
     upstreamDuplicates field. Other links are stored as tags with objectType
     article.
@@ -450,30 +446,20 @@ class Source(object):
         domains will be considered original and stored in upstreamDuplicates.
         (Permashortcitations are exempt.)
     """
-    obj = activity.get('object') or activity
-    originals = set(obj.get('upstreamDuplicates', []))
+    originals = set()
     mentions = set()
 
     domain_ok = lambda url: not domains or util.domain_from_link(url) in domains
 
-    # attachments
-    for url in util.trim_nulls(a.get('url') for a in obj.get('attachments', [])
-                               if a.get('objectType') in ('article', None)):
-      if domain_ok(url):
-        originals.add(url)
-      else:
-        mentions.add(url)
-
-    # text links in content
+    obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
-    links = util.extract_links(content)
 
-    if links:
-      last = links[-1]
-      if domain_ok(last) and content.find(last) + len(last) >= len(content) - 4:
-        originals.add(links.pop())
-
-    mentions |= set(links)
+    # upstreamDuplicates candidates come from existing upstreamDuplicates,
+    # attachments, and text links in content.
+    attachments = [a.get('url') for a in obj.get('attachments', [])
+                   if a.get('objectType') in ('article', None)]
+    candidates = set(attachments + util.extract_links(content) +
+                     obj.get('upstreamDuplicates', []))
 
     # Permashortcitations (http://indiewebcamp.com/permashortcitation) are short
     # references to canonical copies of a given (usually syndicated) post, of
@@ -481,16 +467,22 @@ class Source(object):
     for match in Source._PERMASHORTCITATION_RE.finditer(content):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
-      if http not in originals and https not in originals:
-        originals.add(http)
+      if http not in candidates and https not in candidates:
+        candidates.add(http)
 
-    # heuristic: ellipsized URLs are probably incomplete, so omit them.
-    ellipsized = lambda url: url.endswith('...') or url.endswith(u'…')
+    for url in candidates:
+      # heuristic: ellipsized URLs are probably incomplete, so omit them.
+      if not url or url.endswith('...') or url.endswith(u'…'):
+        continue
+      elif domain_ok(url):
+        originals.add(url)
+      else:
+        mentions.add(url)
 
     obj.setdefault('tags', []).extend(
-      {'objectType': 'article', 'url': u} for u in mentions if not ellipsized(u))
+      {'objectType': 'article', 'url': u} for u in mentions)
     if originals:
-      obj['upstreamDuplicates'] = list(u for u in originals if not ellipsized(u))
+      obj['upstreamDuplicates'] = list(originals)
 
     return activity
 
