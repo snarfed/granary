@@ -451,25 +451,29 @@ class Source(object):
         (Permashortcitations are exempt.)
     """
     obj = activity.get('object') or activity
+    originals = set(obj.get('upstreamDuplicates', []))
+    mentions = set()
+
+    domain_ok = lambda url: not domains or util.domain_from_link(url) in domains
+
+    # attachments
+    for url in util.trim_nulls(a.get('url') for a in obj.get('attachments', [])
+                               if a.get('objectType') in ('article', None)):
+      if domain_ok(url):
+        originals.add(url)
+      else:
+        mentions.add(url)
+
+    # text links in content
     content = obj.get('content', '').strip()
-
-    def article_urls(field):
-      return set(util.trim_nulls(a.get('url') for a in obj.get(field, [])
-                                 if a.get('objectType') == 'article'))
-    attachments = article_urls('attachments')
-
-    originals = set()
     links = util.extract_links(content)
+
     if links:
       last = links[-1]
-      if (content.find(last) + len(last) >= len(content) - 4 and
-          (not domains or util.domain_from_link(last) in domains)):
+      if domain_ok(last) and content.find(last) + len(last) >= len(content) - 4:
         originals.add(links.pop())
 
-    urls = attachments | set(links)
-
-    # heuristic: ellipsized URLs are probably incomplete, so omit them.
-    ellipsized = lambda url: url.endswith('...') or url.endswith(u'…')
+    mentions |= set(links)
 
     # Permashortcitations (http://indiewebcamp.com/permashortcitation) are short
     # references to canonical copies of a given (usually syndicated) post, of
@@ -477,14 +481,16 @@ class Source(object):
     for match in Source._PERMASHORTCITATION_RE.finditer(content):
       http = match.expand(r'http://\1/\2')
       https = match.expand(r'https://\1/\2')
-      if http not in originals and https not in originals and not ellipsized(http):
+      if http not in originals and https not in originals:
         originals.add(http)
 
+    # heuristic: ellipsized URLs are probably incomplete, so omit them.
+    ellipsized = lambda url: url.endswith('...') or url.endswith(u'…')
+
     obj.setdefault('tags', []).extend(
-      {'objectType': 'article', 'url': u} for u in urls if not ellipsized(u))
+      {'objectType': 'article', 'url': u} for u in mentions if not ellipsized(u))
     if originals:
-      uds = obj.setdefault('upstreamDuplicates', [])
-      uds.extend(o for o in originals if o not in uds)
+      obj['upstreamDuplicates'] = list(u for u in originals if not ellipsized(u))
 
     return activity
 

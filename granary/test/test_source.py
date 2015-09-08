@@ -82,10 +82,10 @@ class SourceTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(self.source, 'get_activities')
 
   def test_original_post_discovery(self):
-    def check(obj, uds=None, tags=[], **kwargs):
+    def check(obj, uds=[], tags=[], **kwargs):
       activity = {'object': copy.deepcopy(obj)}
       Source.original_post_discovery(activity, **kwargs)
-      self.assert_equals(uds, activity['object'].get('upstreamDuplicates'))
+      self.assert_equals(uds, activity['object'].get('upstreamDuplicates', []))
       self.assert_equals([{'objectType': 'article', 'url': tag} for tag in tags],
                          activity['object'].get('tags'))
 
@@ -95,13 +95,16 @@ class SourceTest(testutil.HandlerTest):
       'displayName': 'article abc',
       'url': 'http://example.com/article-abc',
       'tags': [],
-      # 'upstreamDuplicates': [],
     }
     check(obj)
 
-    # missing objectType
-    obj['attachments'] = [{'url': 'http://x.com/y'}]
-    check(obj)
+    # attachments become upstreamDuplicates
+    check({'attachments': [{'url': 'http://x.com/y'}]}, uds=['http://x.com/y'])
+    check({'attachments': [{'url': 'http://x.com/y', 'objectType': 'article'}]},
+          uds=['http://x.com/y'])
+
+    # non-article objectType
+    check({'attachments': [{'url': 'http://x.com/y', 'objectType': 'iamge'}]})
 
     # permashortcitations
     check({'content': 'x (not.at end) y (at.the end)'}, uds=['http://at.the/end'])
@@ -112,7 +115,7 @@ class SourceTest(testutil.HandlerTest):
       'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
       'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
     })
-    check(obj, tags=['http://foo/1', 'http://bar/2', 'http://baz/3'])
+    check(obj, uds=['http://foo/1'], tags=['http://bar/2', 'http://baz/3'])
 
     # links at the end (modulo punctuation) become upstreamDuplicates
     for end in '', ' ', '.' ')', ') ', ' ! ', ' :-D':
@@ -129,12 +132,15 @@ class SourceTest(testutil.HandlerTest):
           uds=['http://snarfed.org/xyz'])
 
     # don't duplicate PSCs and PSLs with http and https
-    for field in 'tags', 'attachments':
-      for scheme in 'http', 'https':
-        url = scheme + '://foo.com/1'
-        check({'content': 'x (foo.com/1)',
-               field: [{'objectType': 'article', 'url': url}]},
-              uds=['http://foo.com/1'], tags=[url])
+    for scheme in 'http', 'https':
+      url = scheme + '://foo.com/1'
+      check({'content': 'x (foo.com/1)',
+             'tags': [{'objectType': 'article', 'url': url}]},
+            uds=['http://foo.com/1'], tags=[url])
+
+    for scheme in 'http', 'https':
+      url = scheme + '://foo.com/1'
+      check({'content': 'x (foo.com/1)', 'attachments': [{'url': url}]}, uds=[url])
 
     # exclude ellipsized URLs
     for ellipsis in '...', u'…':
