@@ -322,25 +322,20 @@ class SourceTest(testutil.TestCase):
       'http://final/url',
       source.follow_redirects('http://will/redirect', cache=cache).url)
 
-
   def test_follow_redirects_with_refresh_header(self):
-    self.expect_requests_head('http://will/redirect',
+    headers = {'x': 'y'}
+    self.expect_requests_head('http://will/redirect', headers=headers,
                               response_headers={'refresh': '0; url=http://refresh'})
-    self.expect_requests_head('http://refresh', redirected_url='http://final')
+    self.expect_requests_head('http://refresh', headers=headers,
+                              redirected_url='http://final')
 
     self.mox.ReplayAll()
+    cache = util.CacheDict()
     self.assert_equals('http://final',
-                       source.follow_redirects('http://will/redirect').url)
+                       source.follow_redirects('http://will/redirect', cache=cache,
+                                               headers=headers).url)
 
   def test_follow_redirects_defaults_scheme_to_http(self):
     self.expect_requests_head('http://foo/bar', redirected_url='http://final')
     self.mox.ReplayAll()
     self.assert_equals('http://final', source.follow_redirects('foo/bar').url)
-
-  def test_follow_redirects_refresh_header(self):
-    self.expect_requests_head('http://will/redirect',
-                              response_headers={'refresh': '0; url=http://final'})
-    self.expect_requests_head('http://final')
-    self.mox.ReplayAll()
-    self.assert_equals('http://final',
-                       source.follow_redirects('http://will/redirect').url)
