@@ -756,7 +756,7 @@ def follow_redirects(url, cache=None, **kwargs):
   if refresh:
     for part in refresh.split(';'):
       if part.strip().startswith('url='):
-        return follow_redirects(part.strip()[4:])
+        return follow_redirects(part.strip()[4:], cache=cache, **kwargs)
 
   if cache is not None:
     cache.set(cache_key, resolved, time=cache_time)

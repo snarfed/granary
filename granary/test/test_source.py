@@ -336,3 +336,11 @@ class SourceTest(testutil.TestCase):
     self.expect_requests_head('http://foo/bar', redirected_url='http://final')
     self.mox.ReplayAll()
     self.assert_equals('http://final', source.follow_redirects('foo/bar').url)
+
+  def test_follow_redirects_refresh_header(self):
+    self.expect_requests_head('http://will/redirect',
+                              response_headers={'refresh': '0; url=http://final'})
+    self.expect_requests_head('http://final')
+    self.mox.ReplayAll()
+    self.assert_equals('http://final',
+                       source.follow_redirects('http://will/redirect').url)
