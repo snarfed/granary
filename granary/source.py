@@ -435,10 +435,13 @@ class Source(object):
     input it. More background:
     https://github.com/snarfed/bridgy/issues/51#issuecomment-136018857
 
+    Original post candidates come from the upstreamDuplicates, attachments, and
+    tags fields, as well as links and permashortlinks/permashortcitations in the
+    text content.
+
     Link(s) that are probably the original post(s) are stored in the
     upstreamDuplicates field. Other links are stored as tags with objectType
-    article.
-    http://activitystrea.ms/specs/json/1.0/#id-comparison
+    article. http://activitystrea.ms/specs/json/1.0/#id-comparison
 
     Args:
       activity: activity dict
@@ -454,11 +457,9 @@ class Source(object):
     obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
 
-    # upstreamDuplicates candidates come from existing upstreamDuplicates,
-    # attachments, and text links in content.
-    attachments = [a.get('url') for a in obj.get('attachments', [])
-                   if a.get('objectType') in ('article', None)]
-    candidates = set(attachments + util.extract_links(content) +
+    tags = [t.get('url') for t in obj.get('attachments', []) + obj.get('tags', [])
+            if t.get('objectType') in ('article', None)]
+    candidates = set(tags + util.extract_links(content) +
                      obj.get('upstreamDuplicates', []))
 
     # Permashortcitations (http://indiewebcamp.com/permashortcitation) are short
@@ -479,8 +480,10 @@ class Source(object):
       else:
         mentions.add(url)
 
+    existing_tags = set(t.get('url') for t in obj.get('tags', []))
     obj.setdefault('tags', []).extend(
-      {'objectType': 'article', 'url': u} for u in mentions)
+      {'objectType': 'article', 'url': url} for url in mentions
+      if url not in existing_tags)
     if originals:
       obj['upstreamDuplicates'] = list(originals)
 

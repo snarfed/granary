@@ -86,8 +86,7 @@ class SourceTest(testutil.HandlerTest):
       activity = {'object': copy.deepcopy(obj)}
       Source.original_post_discovery(activity, **kwargs)
       self.assert_equals(uds, activity['object'].get('upstreamDuplicates', []))
-      self.assert_equals([{'objectType': 'article', 'url': tag} for tag in tags],
-                         activity['object'].get('tags'))
+      self.assert_equals(tags, [t['url'] for t in activity['object'].get('tags')])
 
     # noop
     obj = {
@@ -98,13 +97,16 @@ class SourceTest(testutil.HandlerTest):
     }
     check(obj)
 
-    # attachments become upstreamDuplicates
-    check({'attachments': [{'url': 'http://x.com/y'}]}, uds=['http://x.com/y'])
-    check({'attachments': [{'url': 'http://x.com/y', 'objectType': 'article'}]},
+    # attachments and tags become upstreamDuplicates
+    check({'tags': [{'url': 'http://x.com/y', 'objectType': 'article'}]},
+          uds=['http://x.com/y'], tags=['http://x.com/y'])
+    check({'attachments': [{'url': 'http://x.com/y'}]},
           uds=['http://x.com/y'])
 
     # non-article objectType
-    check({'attachments': [{'url': 'http://x.com/y', 'objectType': 'iamge'}]})
+    urls = [{'url': 'http://x.com/y', 'objectType': 'image'}]
+    check({'attachment': urls})
+    check({'tags': urls}, tags=['http://x.com/y'])
 
     # permashortcitations
     check({'content': 'x (not.at end) y (at.the end)'}, uds=['http://at.the/end'])
@@ -115,7 +117,8 @@ class SourceTest(testutil.HandlerTest):
       'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
       'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
     })
-    check(obj, uds=['http://foo/1', 'http://baz/3'], tags=['http://bar/2'])
+    check(obj, uds=['http://foo/1', 'http://bar/2', 'http://baz/3'],
+          tags=['http://bar/2'])
 
     # links become upstreamDuplicates
     check({'content': 'asdf http://first ooooh http://second qwert'},
@@ -131,16 +134,13 @@ class SourceTest(testutil.HandlerTest):
     # don't duplicate PSCs and PSLs with http and https
     for scheme in 'http', 'https':
       url = scheme + '://foo.com/1'
-      check({'content': 'x (foo.com/1)',
-             'tags': [{'objectType': 'article', 'url': url}]},
-            uds=['http://foo.com/1'], tags=[url])
+      check({'content': 'x (foo.com/1)', 'tags': [{'url': url}]},
+            uds=[url], tags=[url])
 
-    check({'content': 'x (foo.com/1)',
-           'attachments': [{'url': 'http://foo.com/1'}]},
+    check({'content': 'x (foo.com/1)', 'attachments': [{'url': 'http://foo.com/1'}]},
           uds=['http://foo.com/1'])
-    check({'content': 'x (foo.com/1)',
-           'attachments': [{'url': 'https://foo.com/1'}]},
-          uds=[url])
+    check({'content': 'x (foo.com/1)', 'tags': [{'url': 'https://foo.com/1'}]},
+          uds=['https://foo.com/1'], tags=['https://foo.com/1'])
 
     # exclude ellipsized URLs
     for ellipsis in '...', u'…':
@@ -158,10 +158,11 @@ class SourceTest(testutil.HandlerTest):
       'content': 'x http://me/a y',
       'upstreamDuplicates': ['http://me/b'],
       'attachments': [{'url': 'http://me/c'}],
+      'tags': [{'url': 'http://me/d'}],
     }
-    links = ['http://me/a', 'http://me/b', 'http://me/c']
+    links = ['http://me/a', 'http://me/b', 'http://me/c', 'http://me/d']
     for domains in [], ['me'], ['foo', 'me']:
-      check(obj, uds=links)
+      check(obj, uds=links, tags=['http://me/d'])
     check(obj, domains=['notme', 'alsonotme'], uds=['http://me/b'], tags=links)
 
   def test_get_like(self):
