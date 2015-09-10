@@ -490,22 +490,10 @@ class Source(object):
         seen.add(new_url)
         candidates.append(new_url)
 
-    # de-dupe http vs https for the same link. (prefer https.)
-    # https://github.com/snarfed/bridgy/issues/290
-    schemeless = {}  # maps schemeless URL to full URL
-    for url in candidates:
-      key = util.schemeless(url)
-      existing = schemeless.get(key)
-      if (not existing or
-          (existing.startswith('http://') and url.startswith('https://'))):
-        schemeless[key] = url
-
-    candidates = schemeless.values()
-
     # use domains to determine which URLs are original post links vs mentions
     originals = set()
     mentions = set()
-    for url in candidates:
+    for url in util.dedupe_urls(candidates):
       if not domains or util.domain_from_link(url) in domains:
         originals.add(url)
       else:
