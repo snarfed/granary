@@ -769,5 +769,6 @@ def follow_redirects(url, cache=None, **kwargs):
         return follow_redirects(part.strip()[4:], cache=cache, **kwargs)
 
   if cache is not None:
-    cache.set(cache_key, resolved, time=cache_time)
+    cache.set_multi({cache_key: resolved, 'R ' + resolved.url: resolved},
+                    time=cache_time)
   return resolved
