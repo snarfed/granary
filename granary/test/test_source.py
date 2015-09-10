@@ -100,9 +100,10 @@ class SourceTest(testutil.TestCase):
     check(obj, [])
 
     # attachments and tags become upstreamDuplicates
-    check({'tags': [{'url': 'http://x.com/y', 'objectType': 'article'}]},
-          ['http://x.com/y'])
-    check({'attachments': [{'url': 'http://x.com/y'}]}, ['http://x.com/y'])
+    check({'tags': [{'url': 'http://a', 'objectType': 'article'},
+                    {'url': 'http://b'}],
+           'attachments': [{'url': 'http://c', 'objectType': 'mention'}]},
+          ['http://a', 'http://b', 'http://c'])
 
     # non-article objectType
     urls = [{'url': 'http://x.com/y', 'objectType': 'image'}]
