@@ -15,14 +15,33 @@ class TestCase(HandlerTest):
 
   def setUp(self):
     super(TestCase, self).setUp()
-    for method in ('get', 'head', 'post'):
+    for method in 'get', 'post':
       self.mox.StubOutWithMock(requests, method, use_mock_anything=True)
+    self.stub_requests_head()
+
+  def stub_requests_head(self):
+    # don't make actual HTTP requests to follow original post url redirects
+    def fake_head(url, **kwargs):
+      resp = requests.Response()
+      resp.url = url
+      if '.' in url or url.startswith('http'):
+        resp.headers['content-type'] = 'text/html; charset=UTF-8'
+        resp.status_code = 200
+      else:
+        resp.status_code = 404
+      return resp
+    self.mox.stubs.Set(requests, 'head', fake_head)
+
+    self._is_head_mocked = False  # expect_requests_head() sets this to True
+
+  def expect_requests_head(self, *args, **kwargs):
+    if not self._is_head_mocked:
+      self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+      self._is_head_mocked = True
+    return self._expect_requests_call(*args, method=requests.head, **kwargs)
 
   def expect_requests_get(self, *args, **kwargs):
     return self._expect_requests_call(*args, method=requests.get, **kwargs)
-
-  def expect_requests_head(self, *args, **kwargs):
-    return self._expect_requests_call(*args, method=requests.head, **kwargs)
 
   def expect_requests_post(self, *args, **kwargs):
     return self._expect_requests_call(*args, method=requests.post, **kwargs)
