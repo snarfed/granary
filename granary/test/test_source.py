@@ -176,6 +176,11 @@ class SourceTest(testutil.TestCase):
            'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123']},
           ['http://or.ig/post', 'http://other/link?a=b'])
 
+    # invalid URLs
+    check({'upstreamDuplicates': [''],
+           'tags': [{'url': 'http://bad]'}]},
+          [])
+
   def test_original_post_discovery_follow_redirects(self):
     self.expect_requests_head('http://other/link',
                               redirected_url='http://other/link/redirect')

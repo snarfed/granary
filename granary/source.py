@@ -470,10 +470,10 @@ class Source(object):
     candidates += [match.expand(r'http://\1/\2') for match in
                    Source._PERMASHORTCITATION_RE.finditer(content)]
 
-    candidates = list(set(
-      util.clean_url(url) for url in candidates
-      # heuristic: ellipsized URLs are probably incomplete, so omit them.
-      if url and not url.endswith('...') and not url.endswith(u'…')))
+    candidates = list(set(filter(None,
+      (util.clean_url(url) for url in candidates
+       # heuristic: ellipsized URLs are probably incomplete, so omit them.
+       if url and not url.endswith('...') and not url.endswith(u'…')))))
 
     # check for redirects, and if there are any follow them and add final urls
     # in addition to the initial urls. appends to the lists while iterating over
