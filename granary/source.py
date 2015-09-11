@@ -470,25 +470,17 @@ class Source(object):
     candidates += [match.expand(r'http://\1/\2') for match in
                    Source._PERMASHORTCITATION_RE.finditer(content)]
 
-    candidates = list(set(filter(None,
+    candidates = set(filter(None,
       (util.clean_url(url) for url in candidates
        # heuristic: ellipsized URLs are probably incomplete, so omit them.
-       if url and not url.endswith('...') and not url.endswith(u'…')))))
+       if url and not url.endswith('...') and not url.endswith(u'…'))))
 
-    # check for redirects, and if there are any follow them and add final urls
-    # in addition to the initial urls. appends to the lists while iterating over
-    # them so that we keep following redirects until we hit the end.
-    seen = set()
-    for url in candidates:
-      if url in seen:
-        continue
-      seen.add(url)
+    # check for redirect and add their final urls
+    for url in list(candidates):
       resolved = follow_redirects(url, cache=cache, **kwargs)
-      new_url = util.clean_url(resolved.url)
-      if (new_url != url and new_url not in seen and new_url not in candidates and
+      if (resolved.url != url and
           resolved.headers.get('content-type', '').startswith('text/html')):
-        seen.add(new_url)
-        candidates.append(new_url)
+        candidates.add(resolved.url)
 
     # use domains to determine which URLs are original post links vs mentions
     originals = set()
@@ -768,6 +760,7 @@ def follow_redirects(url, cache=None, **kwargs):
       if part.strip().startswith('url='):
         return follow_redirects(part.strip()[4:], cache=cache, **kwargs)
 
+  resolved.url = util.clean_url(resolved.url)
   if cache is not None:
     cache.set_multi({cache_key: resolved, 'R ' + resolved.url: resolved},
                     time=cache_time)
