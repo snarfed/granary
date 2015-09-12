@@ -106,6 +106,10 @@ class GooglePlus(source.Source):
       if activity_id:
         call = self.auth_entity.api().activities().get(activityId=activity_id)
         activities = [call.execute(http)]
+      elif search_query:
+        call = self.auth_entity.api().activities().search(
+          query=search_query, maxResults=count)
+        activities = call.execute(http).get('items', [])
       else:
         call = self.auth_entity.api().activities().list(
           userId=user_id, collection='public', maxResults=count)

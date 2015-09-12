@@ -5,6 +5,8 @@ See apiclient/http.py for details on using RequestMockBuilder to mock out Google
 API calls. (This is the current doc on apiclient mocks, but it doesn't mention
 RequestMockBuilder:
 https://developers.google.com/api-client-library/python/guide/mocks )
+
+TODO: figure out how to check the query parameters. Right now they're ignored. :/
 """
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
@@ -400,6 +402,13 @@ class GooglePlusTest(testutil.HandlerTest):
     as_2['id'] = tag_uri('002')
     self.assert_equals([as_1, as_2], self.googleplus.get_activities(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
+
+  def test_get_activities_search(self):
+    self.init(requestBuilder=http.RequestMockBuilder({
+          'plus.activities.search': (None, json.dumps({'items': [ACTIVITY_GP]})),
+      }))
+    self.assert_equals([ACTIVITY_AS],
+                       self.googleplus.get_activities(search_query='qwert'))
 
     # TODO: resurrect?
   # def test_get_activities_request_etag(self):
