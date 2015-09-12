@@ -119,12 +119,23 @@ class Instagram(source.Source):
     Instagram doesn't have a reshare feature, so shares are never included
     since they don't exist. :P
 
+    Instagram only supports search over hashtags, so if search_query is set, it
+    must begin with #.
+
     Raises: InstagramAPIError
     """
     if user_id is None:
       user_id = 'self'
     if group_id is None:
       group_id = source.FRIENDS
+
+    if search_query:
+      if search_query.startswith('#'):
+        search_query = search_query[1:]
+      else:
+        raise NotImplementedError(
+          'Instagram only supports search over hashtags, so search_query must '
+          'begin with the # character.')
 
     # TODO: paging
     media = []

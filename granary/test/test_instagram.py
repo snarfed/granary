@@ -522,7 +522,11 @@ class InstagramTest(testutil.HandlerTest):
                         json.dumps({'data': [MEDIA]}))
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.instagram.get_activities(
-      group_id=source.SEARCH, search_query='indieweb'))
+      group_id=source.SEARCH, search_query='#indieweb'))
+
+  def test_get_activities_search_non_hashtag(self):
+    with self.assertRaises(NotImplementedError):
+      self.instagram.get_activities(search_query='foo')
 
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
