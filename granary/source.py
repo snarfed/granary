@@ -432,8 +432,8 @@ class Source(object):
   _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
   @staticmethod
-  def original_post_discovery(activity, domains=None):
-    """Discovers original post links and stores them as tags, in place.
+  def original_post_discovery(activity, domains=None, cache=None, **kwargs):
+    """Discovers original post links.
 
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
     differs in that it finds multiple candidate links instead of one, and it
@@ -445,55 +445,55 @@ class Source(object):
     tags fields, as well as links and permashortlinks/permashortcitations in the
     text content.
 
-    Link(s) that are probably the original post(s) are stored in the
-    upstreamDuplicates field. Other links are stored as tags with objectType
-    article. http://activitystrea.ms/specs/json/1.0/#id-comparison
-
     Args:
       activity: activity dict
       domains: optional sequence of domains. If provided, only links to these
         domains will be considered original and stored in upstreamDuplicates.
         (Permashortcitations are exempt.)
+      cache: optional, a cache object for storing resolved URL redirects. Passed
+        to follow_redirects().
+      kwargs: passed to requests.head() when following redirects
+
+    Returns: ([string original post URLs], [string mention URLs]) tuple
     """
-    originals = set()
-    mentions = set()
-
-    domain_ok = lambda url: not domains or util.domain_from_link(url) in domains
-
     obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
 
+    # find all candidate URLs
     tags = [t.get('url') for t in obj.get('attachments', []) + obj.get('tags', [])
-            if t.get('objectType') in ('article', None)]
-    candidates = set(tags + util.extract_links(content) +
-                     obj.get('upstreamDuplicates', []))
+            if t.get('objectType') in ('article', 'mention', None)]
+    candidates = tags + util.extract_links(content) + obj.get('upstreamDuplicates', [])
 
     # Permashortcitations (http://indiewebcamp.com/permashortcitation) are short
     # references to canonical copies of a given (usually syndicated) post, of
     # the form (DOMAIN PATH). We consider them an explicit original post link.
-    for match in Source._PERMASHORTCITATION_RE.finditer(content):
-      http = match.expand(r'http://\1/\2')
-      https = match.expand(r'https://\1/\2')
-      if http not in candidates and https not in candidates:
-        candidates.add(http)
+    candidates += [match.expand(r'http://\1/\2') for match in
+                   Source._PERMASHORTCITATION_RE.finditer(content)]
 
-    for url in candidates:
-      # heuristic: ellipsized URLs are probably incomplete, so omit them.
-      if not url or url.endswith('...') or url.endswith(u'…'):
-        continue
-      elif domain_ok(url):
+    candidates = set(filter(None,
+      (util.clean_url(url) for url in candidates
+       # heuristic: ellipsized URLs are probably incomplete, so omit them.
+       if url and not url.endswith('...') and not url.endswith(u'…'))))
+
+    # check for redirect and add their final urls
+    for url in list(candidates):
+      resolved = follow_redirects(url, cache=cache, **kwargs)
+      if (resolved.url != url and
+          resolved.headers.get('content-type', '').startswith('text/html')):
+        candidates.add(resolved.url)
+
+    # use domains to determine which URLs are original post links vs mentions
+    originals = set()
+    mentions = set()
+    for url in util.dedupe_urls(candidates):
+      if not domains or util.domain_from_link(url) in domains:
         originals.add(url)
       else:
         mentions.add(url)
 
-    existing_tags = set(t.get('url') for t in obj.get('tags', []))
-    obj.setdefault('tags', []).extend(
-      {'objectType': 'article', 'url': url} for url in mentions
-      if url not in existing_tags)
-    if originals:
-      obj['upstreamDuplicates'] = list(originals)
-
-    return activity
+    logging.info('Original post discovery found original posts %s, mentions %s',
+                 originals, mentions)
+    return originals, mentions
 
   @staticmethod
   def actor_name(actor):
@@ -737,6 +737,8 @@ def follow_redirects(url, cache=None, **kwargs):
     kwargs.setdefault('timeout', appengine_config.HTTP_TIMEOUT)
     resolved = requests.head(url, allow_redirects=True, **kwargs)
     resolved.raise_for_status()
+    if resolved.url != url:
+      logging.debug('Resolved %s to %s', url, resolved.url)
     cache_time = 0  # forever
   except AssertionError:
     raise
@@ -758,6 +760,8 @@ def follow_redirects(url, cache=None, **kwargs):
       if part.strip().startswith('url='):
         return follow_redirects(part.strip()[4:], cache=cache, **kwargs)
 
+  resolved.url = util.clean_url(resolved.url)
   if cache is not None:
-    cache.set(cache_key, resolved, time=cache_time)
+    cache.set_multi({cache_key: resolved, 'R ' + resolved.url: resolved},
+                    time=cache_time)
   return resolved

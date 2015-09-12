@@ -82,12 +82,13 @@ class SourceTest(testutil.TestCase):
     self.source = FakeSource()
     self.mox.StubOutWithMock(self.source, 'get_activities')
 
+  def check_original_post_discovery(self, obj, originals, **kwargs):
+    got = Source.original_post_discovery({'object': obj}, **kwargs)
+    self.assertItemsEqual(originals, got[0])
+    return got
+
   def test_original_post_discovery(self):
-    def check(obj, uds=[], tags=[], **kwargs):
-      activity = {'object': copy.deepcopy(obj)}
-      Source.original_post_discovery(activity, **kwargs)
-      self.assert_equals(uds, activity['object'].get('upstreamDuplicates', []))
-      self.assert_equals(tags, [t['url'] for t in activity['object'].get('tags')])
+    check = self.check_original_post_discovery
 
     # noop
     obj = {
@@ -96,21 +97,21 @@ class SourceTest(testutil.TestCase):
       'url': 'http://example.com/article-abc',
       'tags': [],
     }
-    check(obj)
+    check(obj, [])
 
     # attachments and tags become upstreamDuplicates
-    check({'tags': [{'url': 'http://x.com/y', 'objectType': 'article'}]},
-          uds=['http://x.com/y'], tags=['http://x.com/y'])
-    check({'attachments': [{'url': 'http://x.com/y'}]},
-          uds=['http://x.com/y'])
+    check({'tags': [{'url': 'http://a', 'objectType': 'article'},
+                    {'url': 'http://b'}],
+           'attachments': [{'url': 'http://c', 'objectType': 'mention'}]},
+          ['http://a', 'http://b', 'http://c'])
 
     # non-article objectType
     urls = [{'url': 'http://x.com/y', 'objectType': 'image'}]
-    check({'attachment': urls})
-    check({'tags': urls}, tags=['http://x.com/y'])
+    check({'attachment': urls}, [])
+    check({'tags': urls}, [])
 
     # permashortcitations
-    check({'content': 'x (not.at end) y (at.the end)'}, uds=['http://at.the/end'])
+    check({'content': 'x (not.at end) y (at.the end)'}, ['http://at.the/end'])
 
     # merge with existing tags
     obj.update({
@@ -118,41 +119,44 @@ class SourceTest(testutil.TestCase):
       'attachments': [{'objectType': 'article', 'url': 'http://foo/1'}],
       'tags': [{'objectType': 'article', 'url': 'http://bar/2'}],
     })
-    check(obj, uds=['http://foo/1', 'http://bar/2', 'http://baz/3'],
-          tags=['http://bar/2'])
+    check(obj, ['http://foo/1', 'http://bar/2', 'http://baz/3'])
 
     # links become upstreamDuplicates
     check({'content': 'asdf http://first ooooh http://second qwert'},
-          uds=['http://first', 'http://second'])
+          ['http://first', 'http://second'])
     check({'content': 'x http://existing y',
            'upstreamDuplicates': ['http://existing']},
-          uds=['http://existing'])
+          ['http://existing'])
 
     # leading parens used to cause us trouble
-    check({'content': 'Foo (http://snarfed.org/xyz)'},
-          uds=['http://snarfed.org/xyz'])
+    check({'content': 'Foo (http://snarfed.org/xyz)'}, ['http://snarfed.org/xyz'])
+
+    # don't duplicate http and https
+    check({'content': 'X http://mention Y https://both Z http://both2',
+           'upstreamDuplicates': ['http://upstream', 'http://both', 'https://both2']},
+          ['http://upstream', 'https://both', 'https://both2', 'http://mention'])
 
     # don't duplicate PSCs and PSLs with http and https
     for scheme in 'http', 'https':
       url = scheme + '://foo.com/1'
-      check({'content': 'x (foo.com/1)', 'tags': [{'url': url}]},
-            uds=[url], tags=[url])
+      check({'content': 'x (foo.com/1)', 'tags': [{'url': url}]}, [url])
 
     check({'content': 'x (foo.com/1)', 'attachments': [{'url': 'http://foo.com/1'}]},
-          uds=['http://foo.com/1'])
+          ['http://foo.com/1'])
     check({'content': 'x (foo.com/1)', 'tags': [{'url': 'https://foo.com/1'}]},
-          uds=['https://foo.com/1'], tags=['https://foo.com/1'])
+          ['https://foo.com/1'])
 
     # exclude ellipsized URLs
     for ellipsis in '...', u'…':
       url = 'foo.com/1' + ellipsis
       check({'content': 'x (%s)' % url,
-             'attachments': [{'objectType': 'article', 'url': 'http://' + url}]})
+             'attachments': [{'objectType': 'article', 'url': 'http://' + url}]},
+            [])
 
     # exclude ellipsized PSCs and PSLs
     for separator in '/', ' ':
       for ellipsis in '...', u'…':
-        check({'content': 'x (ttk.me%s123%s)' % (separator, ellipsis)})
+        check({'content': 'x (ttk.me%s123%s)' % (separator, ellipsis)}, [])
 
     # domains param
     obj = {
@@ -163,8 +167,34 @@ class SourceTest(testutil.TestCase):
     }
     links = ['http://me/a', 'http://me/b', 'http://me/c', 'http://me/d']
     for domains in [], ['me'], ['foo', 'me']:
-      check(obj, uds=links, tags=['http://me/d'])
-    check(obj, domains=['notme', 'alsonotme'], uds=['http://me/b'], tags=links)
+      check(obj, links)
+
+    _, mentions = check(obj, [], domains=['notme', 'alsonotme'])
+    self.assertItemsEqual(links, mentions)
+
+    # utm_* query params
+    check({'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
+           'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123']},
+          ['http://or.ig/post', 'http://other/link?a=b'])
+
+    # invalid URLs
+    check({'upstreamDuplicates': [''],
+           'tags': [{'url': 'http://bad]'}]},
+          [])
+
+  def test_original_post_discovery_follow_redirects(self):
+    self.expect_requests_head('http://other/link',
+                              redirected_url='http://other/link/redirect')
+    self.expect_requests_head('http://or.ig/post',
+                              redirected_url='http://or.ig/post/redirect')
+    self.mox.ReplayAll()
+
+    self.check_original_post_discovery(
+      {'content': 'asdf http://other/link qwert',
+       'upstreamDuplicates': ['http://or.ig/post'],
+      },
+      ['http://or.ig/post', 'http://or.ig/post/redirect',
+       'http://other/link', 'http://other/link/redirect'])
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
