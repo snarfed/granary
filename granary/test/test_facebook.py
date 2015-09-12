@@ -949,6 +949,10 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], self.facebook.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
 
+  def test_get_activities_search_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.facebook.get_activities(search_query='foo')
+
   def test_get_comment(self):
     self.expect_urlopen(
       '123_456?fields=id,message,from,created_time,message_tags,parent',

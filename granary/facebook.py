@@ -189,6 +189,9 @@ class Facebook(source.Source):
     Threaded comments, ie comments in reply to other top-level comments, require
     an additional API call, so they're only included if fetch_replies is True.
     """
+    if search_query:
+      raise NotImplementedError()
+
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
       # it doesn't accept that format. I can't tell which is which yet, so try
