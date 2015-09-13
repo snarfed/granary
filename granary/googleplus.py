@@ -64,7 +64,7 @@ class GooglePlus(source.Source):
 
     Raises: GooglePlusAPIError
     """
-    return self.user_to_actor(self.auth_entity.user_json)
+    return self.postprocess_actor(self.auth_entity.user_json)
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -195,10 +195,11 @@ class GooglePlus(source.Source):
     Args:
       activity: ActivityStreams activity dict.
     """
-    activity['object']['author'] = activity['actor']
+    activity['object']['author'] = self.postprocess_actor(activity['actor'])
     activity['object']['to'] = [{'objectType': 'group', 'alias': '@public'}]
     # also convert id to tag URI
     activity['id'] = self.tag_uri(activity['id'])
+    return activity
 
   def postprocess_comment(self, comment):
     """Hack to pretend comment activities are comment objects.
@@ -208,7 +209,7 @@ class GooglePlus(source.Source):
     itself.
     """
     comment['content'] = comment['object']['content']
-    comment['author'] = comment.pop('actor')
+    comment['author'] = self.postprocess_actor(comment.pop('actor'))
     comment['to'] = [{'objectType': 'group', 'alias': '@public'}]
     # populate permalink. details in https://github.com/snarfed/bridgy/issues/444
     comment['url'] = '%s#%s' % (comment['inReplyTo'][0]['url'],
@@ -216,6 +217,22 @@ class GooglePlus(source.Source):
     # convert id to tag URI
     comment['id'] = self.tag_uri(comment['id'])
     return self.postprocess_object(comment)
+
+  def postprocess_actor(self, actor):
+    """Massage G+'s ActivityStreams dialect into our dialect, in place.
+
+    Args:
+      actor: ActivityStreams actor dict.
+    """
+    id = actor.get('id')
+    if id:
+      actor['id'] = self.tag_uri(id)
+
+    urls = actor.get('urls')
+    if urls and not actor.get('url'):
+      actor['url'] = urls[0].get('value')
+
+    return actor
 
   def maybe_add_tags(self, batch, activity, cached, cache_updates, collection, verb):
     """Fetches and adds 'like' or 'share' tags to an activity.
@@ -270,25 +287,6 @@ class GooglePlus(source.Source):
           raise exc
 
     batch.add(call, callback=set_tags)
-
-  def user_to_actor(self, user):
-    """Returns a Google+ Person object unchanged.
-
-    https://developers.google.com/+/api/latest/people
-
-    TODO: G+'s Person resource has a multiply-valued 'urls' field. Should
-    ideally extract the (first?) non-silo URL and set that as the 'url' field.
-
-    Args:
-      user: dict, a decoded JSON Google+ Person
-
-    Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
-    """
-    urls = user.get('urls')
-    if urls and not user.get('url'):
-      user['url'] = urls[0].get('value')
-    return user
 
   def html_to_activities(self, html):
     """Converts HTML from https://plus.google.com/ to ActivityStreams activities.

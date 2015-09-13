@@ -45,10 +45,18 @@ ACTIVITY_GP = {  # Google+
     'url': 'http://plus.google.com/001',
     },
   }
-ACTIVITY_AS = copy.deepcopy(ACTIVITY_GP)  # ActivityStreams
-ACTIVITY_AS['id'] = tag_uri('001')
-ACTIVITY_AS['object']['author'] = ACTIVITY_GP['actor']
-ACTIVITY_AS['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
+ACTIVITY_AS = {  # ActivityStreams
+  'kind': 'plus#activity',
+  'verb': 'post',
+  'id': tag_uri('001'),
+  'actor': {'id': tag_uri('444'), 'displayName': 'Charles'},
+  'object': {
+    'content': 'my post',
+    'url': 'http://plus.google.com/001',
+    'author': {'id': tag_uri('444'), 'displayName': 'Charles'},
+    'to': [{'objectType':'group', 'alias':'@public'}],
+    },
+  }
 
 COMMENT_GP = {  # Google+
   'kind': 'plus#comment',
@@ -58,14 +66,17 @@ COMMENT_GP = {  # Google+
   'object': {'content': 'my content'},
   'inReplyTo': [{'url': 'http://post/url'}],
 }
-COMMENT_AS = copy.deepcopy(COMMENT_GP)
-COMMENT_AS.update({  # ActivityStreams
-    'author': COMMENT_AS.pop('actor'),
-    'content': 'my content',
-    'id': tag_uri('zyx.888'),
-    'url': 'http://post/url#zyx%23888',
-    'to': [{'objectType':'group', 'alias':'@public'}],
-  })
+COMMENT_AS = {  # ActivityStreams
+  'kind': 'plus#comment',
+  'verb': 'post',
+  'id': tag_uri('zyx.888'),
+  'url': 'http://post/url#zyx%23888',
+  'author': {'id': tag_uri('777'), 'displayName': 'Eve'},
+  'content': 'my content',
+  'object': {'content': 'my content'},
+  'inReplyTo': [{'url': 'http://post/url'}],
+  'to': [{'objectType':'group', 'alias':'@public'}],
+  }
 PLUSONER = {  # Google+
   'kind': 'plus#person',
   'id': '222',
@@ -116,14 +127,13 @@ ACTIVITY_GP_EXTRAS['object'].update({
   'plusoners': {'totalItems': 1},
   'resharers': {'totalItems': 1},
   })
-ACTIVITY_AS_EXTRAS = copy.deepcopy(ACTIVITY_GP_EXTRAS)  # ActivityStreams
-ACTIVITY_AS_EXTRAS['id'] = tag_uri('001')
+ACTIVITY_AS_EXTRAS = copy.deepcopy(ACTIVITY_AS)  # ActivityStreams
 ACTIVITY_AS_EXTRAS['object'].update({
-    'author': ACTIVITY_GP_EXTRAS['actor'],
-    'to': [{'objectType':'group', 'alias':'@public'}],
-    'replies': {'totalItems': 1, 'items': [COMMENT_AS]},
-    'tags': [LIKE, SHARE],
-    })
+  'replies': {'totalItems': 1, 'items': [COMMENT_AS]},
+  'plusoners': {'totalItems': 1},
+  'resharers': {'totalItems': 1},
+  'tags': [LIKE, SHARE],
+  })
 
 # HTML from http://plus.google.com/
 HTML_ACTIVITIES_GP = """
@@ -438,8 +448,8 @@ class GooglePlusTest(testutil.HandlerTest):
     self.assert_equals([], self.googleplus.get_activities(
           fetch_replies=True, fetch_likes=True, fetch_shares=True))
 
-  def test_user_to_actor_url_field(self):
-    uta = self.googleplus.user_to_actor
+  def test_postprocess_actor_url_field(self):
+    uta = self.googleplus.postprocess_actor
     self.assertEqual({'foo': 'bar'}, uta({'foo': 'bar'}))
     self.assertEqual({'url': 'x',
                       'urls': [{'value': 'x'}]},
