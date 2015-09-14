@@ -449,14 +449,18 @@ class GooglePlusTest(testutil.HandlerTest):
           fetch_replies=True, fetch_likes=True, fetch_shares=True))
 
   def test_postprocess_actor_url_field(self):
-    uta = self.googleplus.postprocess_actor
-    self.assertEqual({'foo': 'bar'}, uta({'foo': 'bar'}))
+    pa = self.googleplus.postprocess_actor
+    self.assertEqual({'foo': 'bar'}, pa({'foo': 'bar'}))
     self.assertEqual({'url': 'x',
                       'urls': [{'value': 'x'}]},
-                     uta({'urls': [{'value': 'x'}]}))
+                     pa({'urls': [{'value': 'x'}]}))
     self.assertEqual({'url': 'x',
                       'urls': [{'value': 'x'}, {'value': 'y'}]},
-                     uta({'urls': [{'value': 'x'}, {'value': 'y'}]}))
+                     pa({'urls': [{'value': 'x'}, {'value': 'y'}]}))
+
+    # check alias
+    self.assertEquals(self.googleplus.postprocess_actor,
+                      self.googleplus.user_to_actor)
 
   def test_get_activities_extra_fetches_fail(self):
     """Sometimes the extras fetches return errors. Ignore that."""

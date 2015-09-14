@@ -236,6 +236,8 @@ class GooglePlus(source.Source):
 
     return actor
 
+  user_to_actor = postprocess_actor
+
   def maybe_add_tags(self, batch, activity, cached, cache_updates, collection, verb):
     """Fetches and adds 'like' or 'share' tags to an activity.
 
