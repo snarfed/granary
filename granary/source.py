@@ -149,7 +149,7 @@ class Source(object):
     app id is just object id
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#appId
 
-    group id is string id of group or @self, @friends, @all
+    group id is string id of group or @self, @friends, @all, @search
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#Group-ID
 
     The fetch_* kwargs all default to False because they often require extra API
@@ -159,8 +159,8 @@ class Source(object):
 
     Args:
       user_id: string, defaults to the currently authenticated user
-      group_id: string, one of '@self', '@all', '@friends'. defaults to
-        'friends'
+      group_id: string, one of '@self', '@all', '@friends', '@search'. defaults
+        to 'friends'
       app_id: string
       activity_id: string
       start_index: int >= 0
