@@ -20,6 +20,8 @@ from apiclient.errors import HttpError
 from apiclient.http import BatchHttpRequest
 from oauth_dropins.webutil import util
 
+SEARCH_MAX_RESULTS = 20
+
 
 class GooglePlus(source.Source):
   """Implements the ActivityStreams API for Google+.
@@ -108,7 +110,7 @@ class GooglePlus(source.Source):
         activities = [call.execute(http)]
       elif search_query:
         call = self.auth_entity.api().activities().search(
-          query=search_query, maxResults=count)
+          query=search_query, maxResults=min(count, SEARCH_MAX_RESULTS))
         activities = call.execute(http).get('items', [])
       else:
         call = self.auth_entity.api().activities().list(
