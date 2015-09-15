@@ -10,6 +10,7 @@ from oauth_dropins.webutil import util
 from oauth_dropins import appengine_config as od_appengine_config
 from granary import appengine_config
 from granary import flickr
+from granary import source
 from granary import testutil
 
 __author__ = ['Kyle Mahan <kyle@kylewm.com>']
@@ -708,3 +709,7 @@ class FlickrTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.flickr.get_comment(
       '4942564-5227922370-72157625845945286', '5227922370'))
+
+  def test_search_raises_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.flickr.get_activities(group_id=source.SEARCH, search_query='foo')

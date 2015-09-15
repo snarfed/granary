@@ -88,7 +88,9 @@ class Flickr(source.Source):
       if group_id == source.ALL:
         method = 'flickr.photos.getRecent'
 
-    assert method
+    if not method:
+      raise NotImplementedError()
+
     photos_resp = self.call_api_method(method, params)
 
     result = {'items': []}
