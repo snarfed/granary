@@ -76,6 +76,8 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
 
   env = jinja2.Environment(loader=jinja2.PackageLoader(__package__, 'templates'),
                            autoescape=True)
+  if actor is None:
+    actor = {}
   return env.get_template(ATOM_TEMPLATE_FILE).render(
     items=[Defaulter(**a) for a in activities],
     host_url=host_url,

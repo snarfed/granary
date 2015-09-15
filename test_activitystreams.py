@@ -138,7 +138,7 @@ class HandlerTest(testutil.HandlerTest):
         resp.body)
 
   def test_unknown_format(self):
-    resp = activitystreams.application.get_response('/fake?format=bad')
+    resp = self.get_response('/fake?format=bad')
     self.assertEquals(400, resp.status_int)
 
   def test_bad_start_index(self):

@@ -197,7 +197,8 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def _make_activities_base_response(self, activities, *args, **kwargs):
+  @classmethod
+  def make_activities_base_response(cls, activities, *args, **kwargs):
     """Generates a base response dict for get_activities_response().
 
     See get_activities() for args and kwargs.

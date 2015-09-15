@@ -290,7 +290,7 @@ class Facebook(source.Source):
                 replies.append(self.comment_to_object(comment))
 
 
-    response = self._make_activities_base_response(activities)
+    response = self.make_activities_base_response(activities)
     response['etag'] = etag
     return response
 
