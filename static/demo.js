@@ -6,7 +6,7 @@ var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
                        'access_token_key', 'access_token_secret',
                        'user_id'];
 
-function render_request() {
+function render_demo_request() {
   var url = window.location.origin + '/' +
       document.getElementById('site').value + '/@me/' +
       document.getElementById('group_id').value + '/@app/' +
@@ -18,6 +18,17 @@ function render_request() {
     if (elem && elem.value)
       url += '&' + elem.name + '=' + elem.value;
   }
+
+  document.getElementById('request').innerHTML =
+    'GET <a href="' + url + '">' + url + '</a>';
+}
+
+function render_url_request() {
+  var url = window.location.origin + '/' +
+      document.getElementById('site').value + '/@me/' +
+      document.getElementById('group_id').value + '/@app/' +
+      document.getElementById('activity_id').value + '?format=' +
+      document.getElementById('format').value;
 
   document.getElementById('request').innerHTML =
     'GET <a href="' + url + '">' + url + '</a>';

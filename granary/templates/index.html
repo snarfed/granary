@@ -103,14 +103,16 @@ Click on a site to try the demo!
          src="/oauth_dropins/static/flickr.png" />
 </form></div>
 
-<div class="col-md-2 col-sm-4"><form method="get" action="/microformats2">
+<div class="col-md-2 col-sm-4"><form method="get">
   <input type="image" class="shadow" alt="Microformats2"
          src="/static/microformats_button.png" />
+  <input name="input" type="hidden" value="html" />
 </form></div>
 
-<div class="col-md-2 col-sm-4"><form method="get" action="/activitystreams">
+<div class="col-md-2 col-sm-4"><form method="get">
   <input type="image" class="shadow" alt="ActivityStreams"
          src="/static/activitystreams_button_small.png" />
+  <input name="input" type="hidden" value="activitystreams" />
 </form></div>
 
 </div>
@@ -118,7 +120,7 @@ Click on a site to try the demo!
 <!--
   -- interactive form
   -->
-{% if access_token or access_token_key or access_token_secret %}
+{% if access_token or access_token_key or access_token_secret or input %}
 
 <div class="row">
 <p class="lead"><em>
@@ -132,6 +134,8 @@ Click on a site to try the demo!
 </em></p>
 </div>
 
+
+{% if entity %}
 {% with entity.site_name.lower as site %}
 <form id="demo" action="/demo" method="get" target="results">
 <input type="hidden" id="site" name="site" value="{{ site }}" />
@@ -173,10 +177,44 @@ Click on a site to try the demo!
          class="form-control" value="{{ access_token_secret }}" />
 {% endif %}
 </code>
-<button type="submit" class="btn btn-default" onclick="render_request()">GET</button>
 
+<button type="submit" class="btn btn-default"
+        onclick="render_demo_request()">GET</button>
 </p>
 </form>
+{% endwith %}
+{% endif %}
+
+{% if input %}
+<form id="url" action="/url" method="get" target="results">
+<p><code>
+<label>/ url ? input = </label>
+<select id="input" name="input">
+  <option {% if input == "activitystreams" %} selected {% endif %}
+          value="activitystreams">activitystreams</option>
+  <option {% if input == "html" %} selected {% endif %}
+          value="html">html</option>
+  <option {% if input == "json-mf2" %} selected {% endif %}
+          value="json-mf2">json-mf2</option>
+</select>
+<label>& output = </label>
+<select id="output" name="output">
+  <option value="json">json</option>
+  <option value="atom">atom</option>
+  <option value="xml">xml</option>
+  <option value="html">html</option>
+  <option value="json-mf2">json-mf2</option>
+</select>
+<label>& url = </label>
+<input id="url" name="url" type="text" class="form-control"
+       placeholder="http://example.com/post.html" size="30" />
+
+<button type="submit" class="btn btn-default"
+        onclick="render_url_request()">GET</button>
+</code></p>
+</form>
+{% endif %}
+
 
 <div id="results">
 <p><code id="request"></code></p>
@@ -184,7 +222,6 @@ Click on a site to try the demo!
 </iframe>
 </div>
 
-{% endwith %}
 {% endif %}
 
 <div class="row">
