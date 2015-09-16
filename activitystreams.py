@@ -110,24 +110,41 @@ class Handler(webapp2.RequestHandler):
             for a, defaults in zip(args, PATH_DEFAULTS)]
     user_id = args[0] if args else None
 
-    # extract format
-    expected_formats = ('json', 'atom', 'xml', 'html', 'json-mf2')
-    format = self.request.get('format', 'json')
+    # fetch actor if necessary
+    actor = None
+    if self.request.get('format') == 'atom':
+      # atom needs actor
+      args = [None if a in defaults else a  # handle default path elements
+              for a, defaults in zip(args, PATH_DEFAULTS)]
+      user_id = args[0] if args else None
+      actor = src.get_actor(user_id) if src else {}
+
+    # get activities and write response
+    response = src.get_activities_response(*args, **self.get_kwargs())
+    self.write_response(response, actor=actor)
+
+  def write_response(self, response, actor=None):
+    """Converts ActivityStreams activities and writes them out.
+
+    Args:
+      response: response dict with values based on OpenSocial ActivityStreams
+        REST API, as returned by Source.get_activities_response()
+      actor: optional ActivityStreams actor dict for current user. Only used
+        for Atom output.
+    """
+    expected_formats = ('activitystreams', 'json', 'atom', 'xml', 'html', 'json-mf2')
+    format = self.request.get('format') or self.request.get('output') or 'json'
     if format not in expected_formats:
       raise exc.HTTPBadRequest('Invalid format: %s, expected one of %r' %
                                (format, expected_formats))
 
-    # get activities and build response
-    response = src.get_activities_response(*args, **self.get_kwargs())
     activities = response['items']
 
-    # encode and write response
     self.response.headers['Access-Control-Allow-Origin'] = '*'
-    if format == 'json':
+    if format in ('json', 'activitystreams'):
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
     elif format == 'atom':
-      actor = src.get_actor(user_id)
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(atom.activities_to_atom(
           activities, actor, host_url=self.request.host_url + '/',
@@ -137,17 +154,7 @@ class Handler(webapp2.RequestHandler):
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
     elif format == 'html':
       self.response.headers['Content-Type'] = 'text/html'
-      items = [microformats2.object_to_html(a['object'], a.get('context', {}))
-               for a in activities]
-      self.response.out.write("""\
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body>
-%s
-</body>
-</html>
-""" % '\n'.join(items))
+      self.response.out.write(microformats2.activities_to_html(activities))
     elif format == 'json-mf2':
       self.response.headers['Content-Type'] = 'application/json'
       items = [microformats2.object_to_json(a['object'], a.get('context', {}))

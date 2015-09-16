@@ -181,7 +181,7 @@ class Instagram(source.Source):
       else:
         raise e
 
-    response = self._make_activities_base_response(activities)
+    response = self.make_activities_base_response(activities)
     return response
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
