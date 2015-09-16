@@ -10,8 +10,10 @@ function render_demo_request() {
   var url = window.location.origin + '/' +
       document.getElementById('site').value + '/@me/' +
       document.getElementById('group_id').value + '/@app/' +
-      document.getElementById('activity_id').value + '?format=' +
-      document.getElementById('format').value;
+      (document.getElementById('group_id').value == '@search'
+         ? '?search_query=' + document.getElementById('search_query').value + '&'
+         : document.getElementById('activity_id').value + '?') +
+      'format=' + document.getElementById('format').value;
 
   for (i in OAUTH_INPUT_IDS) {
     elem = document.getElementById(OAUTH_INPUT_IDS[i]);
@@ -32,4 +34,15 @@ function render_url_request() {
 
   document.getElementById('request').innerHTML =
     'GET <a href="' + url + '">' + url + '</a>';
+}
+
+function update_search() {
+  group_id = document.getElementById('group_id');
+  if (group_id) {
+    searching = group_id.value == '@search';
+    document.getElementById('activity_id_span').style.display =
+      searching ? 'none' : 'inline';
+    document.getElementById('search_query_span').style.display =
+      searching ? 'inline' : 'none';
+  }
 }

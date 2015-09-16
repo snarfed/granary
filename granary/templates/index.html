@@ -26,13 +26,16 @@
 <script type="text/javascript">
 function onHashChange() {
   var id = location.href.match(/#(.+)$/);
-  var elem = document.getElementById(id[1]);
-  if (elem) {
-    elem.style.backgroundColor = "#FFFFAA";
+  if (id) {
+    var elem = document.getElementById(id[1]);
+    if (elem) {
+      elem.style.backgroundColor = "#FFFFAA";
+    }
   }
 }
 window.addEventListener('hashchange', onHashChange);
 document.addEventListener('DOMContentLoaded', onHashChange);
+window.onload = update_search();
 </script>
 
 <!--
@@ -141,15 +144,28 @@ Click on a site to try the demo!
 <input type="hidden" id="site" name="site" value="{{ site }}" />
 <p><code>
 <label>/ {{ site }} / @me /</label>
-<select id="group_id" name="group_id">
+<select id="group_id" name="group_id" onchange="update_search()">
   <option value="@all">@all</option>
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
+  {% if site == 'twitter' or site == 'instagram' %}
+    <option value="@search">@search</option>
+  {% endif %}
 </select>
-<label>/ @app /</label>
-<input id="activity_id" name="activity_id" type="text" class="form-control"
-       placeholder="activity id (optional)" size="12" />
-? <label for="format">format =</label>
+<label>/ @app </label>
+<span id="activity_id_span">
+  <label for="activity_id"> / </label>
+  <input id="activity_id" name="activity_id" type="text" class="form-control"
+         placeholder="activity id (optional)" size="12" />
+</span>
+?
+<span id="search_query_span">
+  <label for="search_query">search_query =</label>
+  <input id="search_query" name="search_query" type="text" class="form-control"
+         required placeholder="search query" size="12" />
+  &
+</span>
+<label for="format">format =</label>
 <select id="format" name="format">
   <option value="json">json</option>
   <option value="atom">atom</option>

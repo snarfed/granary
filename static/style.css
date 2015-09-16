@@ -31,6 +31,10 @@
   padding: 0 .5em 0 .5em;
 }
 
+#search_query_span {
+  display: none;
+}
+
 code {
   color: #333;
   background-color: #EEE;
