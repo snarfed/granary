@@ -81,7 +81,8 @@ class UrlHandler(activitystreams.Handler):
     # elif input == 'html':
     #   activities = json.loads(body)
     elif input == 'json-mf2':
-      activities = microformats2.json_to_object(json.loads(body).get('items', []))
+      activities = [microformats2.json_to_object(item)
+                    for item in json.loads(body).get('items', [])]
 
     self.write_response(source.Source.make_activities_base_response(activities))
 

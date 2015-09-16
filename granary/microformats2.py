@@ -272,6 +272,29 @@ def json_to_object(mf2):
   return util.trim_nulls(obj)
 
 
+def activities_to_html(activities):
+  """Converts ActivityStreams activities to a microformats2 HTML h-feed.
+
+  Args:
+    obj: dict, a decoded JSON ActivityStreams object
+    ctx: dict, a decoded JSON ActivityStreams context
+
+  Returns: string, the content field in obj with the tags in the tags field
+    converted to links if they have startIndex and length, otherwise added to
+    the end.
+  """
+  return """\
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+%s
+</body>
+</html>
+""" % '\n'.join(object_to_html(a.get('object') or a, a.get('context', {}))
+                for a in activities)
+
+
 def object_to_html(obj, ctx={}):
   """Converts an ActivityStreams object to microformats2 HTML.
 

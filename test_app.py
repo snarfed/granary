@@ -41,12 +41,66 @@ MF2_JSON = {'items': [{
   },
 }]}
 
+HTML = """\
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<article class="h-entry h-as-article">
+  <span class="u-uid"></span>
+
+  <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
+
+  <a class="u-url" href="https://perma/link"></a>
+  <div class="e-content p-name">
+
+  foo bar
+  </div>
+
+</article>
+
+<article class="h-entry h-as-article">
+  <span class="u-uid"></span>
+
+  <div class="e-content p-name">
+
+  baz baj
+  </div>
+
+</article>
+
+</body>
+</html>
+"""
+
+ATOM = """\
+"""
+
 
 class AppTest(testutil.HandlerTest):
-  def test_url_activitystreams_json_mf2(self):
+
+  def test_url_activitystreams_to_json_mf2(self):
     self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
     self.mox.ReplayAll()
+
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=activitystreams&output=json-mf2')
     self.assert_equals(200, resp.status_int)
     self.assert_equals(MF2_JSON, json.loads(resp.body))
+
+  def test_url_json_mf2_to_html(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(MF2_JSON))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=json-mf2&output=html')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals(HTML, resp.body)
+
+  # def test_url_html_to_atom(self):
+  #   self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
+  #   self.mox.ReplayAll()
+  #   resp = app.application.get_response(
+  #     '/url?url=http://my/posts.json&input=activitystreams&output=json-mf2')
+  #   self.assert_equals(200, resp.status_int)
+  #   self.assert_equals(MF2_JSON, json.loads(resp.body))
