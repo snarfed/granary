@@ -71,9 +71,19 @@ HTML = """\
 
 </body>
 </html>
+
 """
 
-ATOM = """\
+ATOM_CONTENT = """\
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
+
+<br />
+<br />
+  %s<br />
+  
+  </div>
+  </content>
 """
 
 
@@ -97,10 +107,12 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(200, resp.status_int)
     self.assert_equals(HTML, resp.body)
 
-  # def test_url_html_to_atom(self):
-  #   self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
-  #   self.mox.ReplayAll()
-  #   resp = app.application.get_response(
-  #     '/url?url=http://my/posts.json&input=activitystreams&output=json-mf2')
-  #   self.assert_equals(200, resp.status_int)
-  #   self.assert_equals(MF2_JSON, json.loads(resp.body))
+  def test_url_html_to_atom(self):
+    self.expect_urlopen('http://my/posts.html', HTML)
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html&input=html&output=atom')
+    self.assert_equals(200, resp.status_int)
+    self.assertIn(ATOM_CONTENT % 'foo bar', resp.body)
+    self.assertIn(ATOM_CONTENT % 'baz baj', resp.body)

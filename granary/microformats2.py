@@ -9,6 +9,7 @@ import urlparse
 import string
 import xml.sax.saxutils
 
+from mf2py import parser
 from oauth_dropins.webutil import util
 import source
 
@@ -272,6 +273,19 @@ def json_to_object(mf2):
   return util.trim_nulls(obj)
 
 
+def html_to_activities(html, url=None):
+  """Converts a microformats2 HTML h-feed to ActivityStreams activities.
+
+  Args:
+    html: string HTML
+    url: optional string URL that HTML came from
+
+  Returns: list of ActivityStreams activity dicts
+  """
+  parsed = parser.Parser(doc=html, url=None).to_dict()
+  return [{'object': json_to_object(item)} for item in parsed.get('items', [])]
+
+
 def activities_to_html(activities):
   """Converts ActivityStreams activities to a microformats2 HTML h-feed.
 
@@ -291,7 +305,7 @@ def activities_to_html(activities):
 %s
 </body>
 </html>
-""" % '\n'.join(object_to_html(a.get('object') or a, a.get('context', {}))
+  """ % '\n'.join(object_to_html(a.get('object') or a, a.get('context', {}))
                 for a in activities)
 
 

@@ -73,13 +73,15 @@ class UrlHandler(activitystreams.Handler):
     url = util.get_required_param(self, 'url')
     logging.info('Fetching %s', url)
     resp = urllib2.urlopen(url, timeout=appengine_config.HTTP_TIMEOUT)
+    if url != resp.geturl():
+      logging.info('Redirected to %s', resp.geturl())
     body = resp.read()
 
     # decode data
     if input == 'activitystreams':
       activities = json.loads(body)
-    # elif input == 'html':
-    #   activities = json.loads(body)
+    elif input == 'html':
+      activities = microformats2.html_to_activities(body, resp.geturl())
     elif input == 'json-mf2':
       activities = [microformats2.json_to_object(item)
                     for item in json.loads(body).get('items', [])]
