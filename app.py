@@ -51,13 +51,24 @@ class FrontPageHandler(handlers.TemplateHandler):
 class DemoHandler(webapp2.RequestHandler):
   """Handles silo requests from the interactive demo form on the front page."""
   def get(self):
-    params = {name: val for name, val in self.request.params.items()
-              if name in API_PARAMS}
-    return self.redirect('/%s/@me/%s/@app/%s?plaintext=true&%s' % (
-      util.get_required_param(self, 'site'),
-      self.request.get('group_id', source.ALL),
-      self.request.get('activity_id', ''),
-      urllib.urlencode(params)))
+    site = util.get_required_param(self, 'site')
+    group = self.request.get('group_id', source.ALL)
+
+    if group == source.SEARCH:
+      search_query = self.request.get('search_query', '')
+      activity_id = ''
+    else:
+      activity_id = self.request.get('activity_id', '')
+      search_query = ''
+
+    params = {
+      'plaintext': 'true',
+      'search_query': search_query,
+    }
+    params.update({name: val for name, val in self.request.params.items()
+                   if name in API_PARAMS})
+    return self.redirect('/%s/@me/%s/@app/%s?%s' % (
+      site, group, activity_id, urllib.urlencode(params)))
 
 
 class UrlHandler(activitystreams.Handler):
