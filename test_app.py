@@ -45,7 +45,7 @@ HTML = """\
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body>
+<body%s>
 <article class="h-entry h-as-article">
   <span class="u-uid"></span>
 
@@ -105,10 +105,10 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=json-mf2&output=html')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals(HTML, resp.body)
+    self.assert_equals(HTML % '', resp.body)
 
   def test_url_html_to_atom(self):
-    self.expect_urlopen('http://my/posts.html', HTML)
+    self.expect_urlopen('http://my/posts.html', HTML % ' class="h-feed"')
     self.mox.ReplayAll()
 
     resp = app.application.get_response(

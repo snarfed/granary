@@ -3,6 +3,7 @@
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
 
+from collections import deque
 import copy
 import itertools
 import urlparse
@@ -283,7 +284,9 @@ def html_to_activities(html, url=None):
   Returns: list of ActivityStreams activity dicts
   """
   parsed = parser.Parser(doc=html, url=None).to_dict()
-  return [{'object': json_to_object(item)} for item in parsed.get('items', [])]
+  hfeed = find_first_entry(parsed, ['h-feed'])
+  items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
+  return [{'object': json_to_object(item)} for item in items]
 
 
 def activities_to_html(activities):
@@ -693,3 +696,17 @@ def maybe_datetime(str, classname):
     return '<time class="%s" datetime="%s">%s</time>' % (classname, str, str)
   else:
     return ''
+
+
+def find_first_entry(parsed, types):
+  """Find the first interesting h-* object in BFS-order
+
+  Flagrantly stolen from https://github.com/kylewm/mf2util.
+  TODO: bite the bullet, add it as a dependency, and use it from there!
+  """
+  queue = deque(item for item in parsed['items'])
+  while queue:
+    item = queue.popleft()
+    if any(h_class in item['type'] for h_class in types):
+      return item
+    queue.extend(item.get('children', []))
