@@ -236,6 +236,8 @@ class Flickr(source.Source):
     if isinstance(title, dict):
       title = title.get('_content', '')
 
+    public = (photo.get('visibility') or photo).get('ispublic')
+
     activity = {
       'id': self.tag_uri(photo.get('id')),
       'flickr_id': photo.get('id'),
@@ -257,6 +259,8 @@ class Flickr(source.Source):
         'objectType': 'photo',
         'created': created,
         'published': published,
+        'to': [{'objectType': 'group',
+                'alias': '@public' if public else '@private'}],
       },
       'verb': 'post',
       'created': created,

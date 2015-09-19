@@ -274,7 +274,8 @@ ACTIVITY = {
       'id': 'tag:flickr.com:4942564-5227922370-22730',
       'objectType': 'hashtag'
     }],
-    'objectType': 'photo'
+    'to': [{'objectType': 'group', 'alias': '@public'}],
+    'objectType': 'photo',
   },
   'id': 'tag:flickr.com:5227922370',
   'flickr_id': '5227922370',
@@ -446,6 +447,10 @@ CONTACTS_PHOTOS = {
       'datetaken': '2013-06-08 03:20:48',
       'tags': 'tag1 tag2',
       'media': 'photo',
+      'ispublic': 0,
+      'isfriend': 1,
+      'isfamily': 1,
+      'iscontact': 0,
     }, {
       'id': '2345',
       'secret': '33',
@@ -457,6 +462,10 @@ CONTACTS_PHOTOS = {
       'datetaken': '2010-11-27 12:54:33',
       'tags': 'tag1 tag2',
       'media': 'photo',
+      'ispublic': 1,
+      'isfriend': 0,
+      'isfamily': 0,
+      'iscontact': 0,
     }],
   },
 }
@@ -485,6 +494,7 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
       'displayName': 'tag2',
       'objectType': 'hashtag'
     }],
+    'to': [{'objectType': 'group', 'alias': '@private'}],
     'objectType': 'photo'
   },
   'id': 'tag:flickr.com:1234',
@@ -513,6 +523,7 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
       'displayName': 'tag2',
       'objectType': 'hashtag'
     }],
+    'to': [{'objectType': 'group', 'alias': '@public'}],
     'objectType': 'photo'
   },
   'id': 'tag:flickr.com:2345',
