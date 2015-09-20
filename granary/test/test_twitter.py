@@ -132,8 +132,6 @@ TWEET = {  # Twitter
   },
   'text': '@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
-  'in_reply_to_screen_name': 'other_user',
-  'in_reply_to_status_id': 789,
   }
 TWEET_2 = copy.deepcopy(TWEET)
 TWEET_2['user']['name'] = 'foo'
@@ -199,13 +197,6 @@ ACTIVITY = {  # ActivityStreams
   'actor': ACTOR,
   'object': OBJECT,
   'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
-  'context': {
-    'inReplyTo' : [{
-      'objectType' : 'note',
-      'url' : 'https://twitter.com/other_user/status/789',
-      'id' : tag_uri('789'),
-      }]
-    },
   }
 ACTIVITY_2 = copy.deepcopy(ACTIVITY)
 ACTIVITY_2['actor']['displayName'] = 'foo'
@@ -555,8 +546,6 @@ ATOM = """\
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41+00:00</published>
   <updated></updated>
-
-    <thr:in-reply-to ref=\"""" + tag_uri('789') + """\" href="https://twitter.com/other_user/status/789" type="text/html" />
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
@@ -956,6 +945,24 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals('RT <a href="https://twitter.com/orig">@orig</a>: a <a href="https://twitter.com/danshipper">@danshipper</a> <a href="https://www.onename.io/">onename.io</a> ok',
                       microformats2.render_content(obj))
+
+  def test_reply_tweet_to_activity(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet.update({
+      'in_reply_to_screen_name': 'other_user',
+      'in_reply_to_status_id': 789,
+      })
+    expected = [{
+      'url' : 'https://twitter.com/other_user/status/789',
+      'id' : tag_uri('789'),
+    }]
+
+    activity = self.twitter.tweet_to_activity(tweet)
+    self.assert_equals({'inReplyTo': expected}, activity['context'])
+    self.assert_equals(expected, activity['object']['inReplyTo'])
+
+    direct_obj = self.twitter.tweet_to_object(tweet)
+    self.assert_equals(expected, direct_obj['inReplyTo'])
 
   def test_tweet_to_activity_on_retweet(self):
     self.assert_equals({

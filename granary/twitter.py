@@ -784,16 +784,9 @@ class Twitter(source.Source):
       'object': obj,
       }
 
-    reply_to_screenname = tweet.get('in_reply_to_screen_name')
-    reply_to_id = tweet.get('in_reply_to_status_id')
-    if reply_to_id and reply_to_screenname:
-      activity['context'] = {
-        'inReplyTo': [{
-          'objectType': 'note',
-          'id': self.tag_uri(reply_to_id),
-          'url': self.status_url(reply_to_screenname, reply_to_id),
-          }]
-        }
+    in_reply_to = obj.get('inReplyTo')
+    if in_reply_to:
+      activity['context'] = {'inReplyTo': in_reply_to}
 
     # yes, the source field has an embedded HTML link. bleh.
     # https://dev.twitter.com/docs/api/1.1/get/statuses/show/
@@ -933,7 +926,16 @@ class Twitter(source.Source):
         coords = geo.get('coordinates')
         if coords:
           obj['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
-                                       tuple(coords))
+                                    tuple(coords))
+
+    # inReplyTo
+    reply_to_screenname = tweet.get('in_reply_to_screen_name')
+    reply_to_id = tweet.get('in_reply_to_status_id')
+    if reply_to_id and reply_to_screenname:
+      obj['inReplyTo'] = [{
+          'id': self.tag_uri(reply_to_id),
+          'url': self.status_url(reply_to_screenname, reply_to_id),
+          }]
 
     return self.postprocess_object(obj)
 
