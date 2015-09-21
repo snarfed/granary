@@ -321,10 +321,34 @@ class GooglePlus(source.Source):
       url = 'https://%s/%s' % (self.DOMAIN, d[21])  # d[132] is full url
       # posix timestamp in ms
       published = datetime.datetime.utcfromtimestamp(d[5] / 1000).isoformat('T') + 'Z'
+
+      if d[69]:
+        # this is a like, reshare, etc
+        verb = 'like' if d[69][0] == 202 else 'unknown'
+        profile = d[69][1][0]
+        actor = {
+          'id': self.tag_uri(profile[1]),
+          'url': profile[5],
+          'objectType': 'person',
+          'displayName': profile[0],
+          'image': {'url': profile[4]},
+        }
+      else:
+        # this is a direct post
+        verb = 'post'
+        actor = {
+          # more author details are in d[137]
+          'id': self.tag_uri(d[16]),
+          'url': self.user_url(d[16]),
+          'objectType': 'person',
+          'displayName': d[3],
+          'image': {'url': d[18]},
+        }
+
       activity = {
         'id': id,
         'url': url,
-        'verb': 'post',
+        'verb': verb,
         'object': {
           'id': id,
           'url': url,
@@ -333,14 +357,7 @@ class GooglePlus(source.Source):
           'published': published,
           'updated': published,
         },
-        'actor': {
-          # more author details are in d[137]
-          'id': self.tag_uri(d[16]),
-          'url': self.user_url(d[16]),
-          'objectType': 'person',
-          'displayName': d[3],
-          'image': {'url': d[18]},
-         }
+        'actor': actor,
       }
 
       loc = d[27]

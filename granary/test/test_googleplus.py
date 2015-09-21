@@ -136,15 +136,7 @@ ACTIVITY_AS_EXTRAS['object'].update({
   })
 
 # HTML from http://plus.google.com/
-HTML_ACTIVITIES_GP = """
-<!DOCTYPE html><html lang="en" dir="ltr" ><head><meta name="referrer" content="origin"><base href="https://plus.google.com/"><style>
-...
-</style></head><body class="Td lj"><input type="text" name="hist_state" id="hist_state" style="display:none;"><iframe id="hist_frame" name="hist_frame1623222153" class="ss" tabindex="-1"></iframe><script>window['OZ_wizstart'] && window['OZ_wizstart']()</script>
-<script>AF_initDataCallback({key: '199', isError:  false , hash: '13', data:[2,0]
-});</script><script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:["os.con",[[]
-,"these few lines test the code that collapses commas",
-[,1,1,,,,20,,"social.google.com",[,]
-,,,2,,,0,,15,,[[1002,2],"..."]],,[,],,,""" + json.dumps([
+HTML_ACTIVITY_GP = [
  ["..."],
  [1002, None, None, None, None, [1001, "z13gjrz4ymeldtd5f04chnrixnvpjjqy42o"],
  {"33558957" : [
@@ -239,13 +231,23 @@ HTML_ACTIVITIES_GP = """
  # third element is non-post, item 6 is empty
  [1002, None, None, None, None, None, {}],
 
-], # ...
-) + """
+] # ...
+
+HTML_ACTIVITIES_GP_HEADER = """
+<!DOCTYPE html><html lang="en" dir="ltr" ><head><meta name="referrer" content="origin"><base href="https://plus.google.com/"><style>
+...
+</style></head><body class="Td lj"><input type="text" name="hist_state" id="hist_state" style="display:none;"><iframe id="hist_frame" name="hist_frame1623222153" class="ss" tabindex="-1"></iframe><script>window['OZ_wizstart'] && window['OZ_wizstart']()</script>
+<script>AF_initDataCallback({key: '199', isError:  false , hash: '13', data:[2,0]
+});</script><script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:["os.con",[[]
+,"these few lines test the code that collapses commas",
+[,1,1,,,,20,,"social.google.com",[,]
+,,,2,,,0,,15,,[[1002,2],"..."]],,[,],,,"""
+HTML_ACTIVITIES_GP_FOOTER = """
 ]
 ]
 });</script></body></html>"""
 
-HTML_ACTIVITIES_AS = [{  # Google+
+HTML_ACTIVITY_AS = {  # Google+
     'id': tag_uri('z13gjrz4ymeldtd5f04chnrixnvpjjqy42o'),
     'url': 'https://plus.google.com/+DavidBarrettQuinthar/posts/VefFHLMoCqV',
     'actor': {
@@ -293,7 +295,6 @@ HTML_ACTIVITIES_AS = [{  # Google+
     #   ]
     # }
   }
-]
 
 
 class GooglePlusTest(testutil.HandlerTest):
@@ -492,5 +493,37 @@ class GooglePlusTest(testutil.HandlerTest):
       self.assertNotIn(prefix + '001', cache)
 
   def test_html_to_activities(self):
-    self.assert_equals(HTML_ACTIVITIES_AS,
-                       self.googleplus.html_to_activities(HTML_ACTIVITIES_GP))
+    html = (HTML_ACTIVITIES_GP_HEADER + json.dumps(HTML_ACTIVITY_GP) +
+            HTML_ACTIVITIES_GP_FOOTER)
+    self.assert_equals([HTML_ACTIVITY_AS], self.googleplus.html_to_activities(html))
+
+  def test_html_to_activities_plusoned(self):
+    html_gp = copy.deepcopy(HTML_ACTIVITY_GP)
+    html_gp[1][6].values()[0][69] = [
+      202,
+      [['Billy Bob',
+        '1056789',
+        1,
+        1,
+        'https://lh3.googleusercontent.com/billybob.jpg',
+        'https://plus.google.com/+BillyBob',
+        'male',
+      ]],
+      # ...
+    ]
+
+    expected = copy.deepcopy(HTML_ACTIVITY_AS)
+    expected.update({
+      'verb': 'like',
+      'actor': {
+        'id': tag_uri('1056789'),
+        'url': 'https://plus.google.com/+BillyBob',
+        'objectType': 'person',
+        'displayName': 'Billy Bob',
+        'image': {'url': 'https://lh3.googleusercontent.com/billybob.jpg'},
+      },
+    })
+
+    html = (HTML_ACTIVITIES_GP_HEADER + json.dumps(html_gp) +
+            HTML_ACTIVITIES_GP_FOOTER)
+    self.assert_equals([expected], self.googleplus.html_to_activities(html))
