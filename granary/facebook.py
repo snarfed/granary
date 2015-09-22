@@ -90,6 +90,7 @@ OBJECT_TYPES = {
   'link': 'article',
   'location': 'place',
   'music.song': 'audio',
+  'note': 'article',  # amusing mismatch between FB and AS/mf2
   'page': 'page',
   'photo': 'image',
   'post': 'note',

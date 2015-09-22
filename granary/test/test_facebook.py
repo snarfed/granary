@@ -1401,6 +1401,18 @@ http://b http://c""",
         'application': {'name': 'Rdio', 'id': '88888'},
         })
 
+  def test_facebook_note(self):
+    """https://github.com/snarfed/bridgy/issues/480"""
+    self.assert_equals({
+        'id': tag_uri('101007473698067'),
+        'fb_id': '101007473698067',
+        'url': 'https://www.facebook.com/101007473698067',
+        'objectType': 'article',
+      }, self.facebook.post_to_object({
+        'id': '101007473698067',
+        'type': 'note',
+        }))
+
   def test_create_post(self):
     self.expect_urlopen(facebook.API_FEED, json.dumps({'id': '123_456'}),
                         data='message=my+msg')
