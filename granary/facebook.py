@@ -258,12 +258,17 @@ class Facebook(source.Source):
       id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
       if id:
         id_to_activity[id] = activity
-    ids_str = ','.join(id_to_activity.keys())
 
-    if activities and fetch_shares:
+    # don't fetch extras for Facebook notes. if you pass /comments a note id, it
+    # 400s with "notes API is deprecated for versions ..."
+    # https://github.com/snarfed/bridgy/issues/480
+    non_note_ids = ','.join(id for id, activity in id_to_activity.items()
+                            if activity['object'].get('objectType') != 'article')
+
+    if non_note_ids and fetch_shares:
       try:
         # https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
-        resp = self.urlopen(API_SHARES % ids_str)
+        resp = self.urlopen(API_SHARES % non_note_ids)
         # usually the response is a dict, but when it's empty, it's a list. :(
         if resp:
           for id, shares in resp.items():
@@ -277,8 +282,8 @@ class Facebook(source.Source):
         if e.code / 100 != 4:
           raise
 
-    if activities and fetch_replies:
-      resp = self.urlopen(API_COMMENTS_ALL % ids_str)
+    if non_note_ids and fetch_replies:
+      resp = self.urlopen(API_COMMENTS_ALL % non_note_ids)
       if resp:
         for id, comments in resp.items():
           activity = id_to_activity.get(id)

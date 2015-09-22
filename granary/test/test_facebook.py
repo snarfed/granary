@@ -596,6 +596,24 @@ ACTIVITY = {  # ActivityStreams
     'id': tag_uri('350685531728'),
     }
   }
+
+FB_NOTE = {
+  'id': '101007473698067',
+  'type': 'note',
+}
+FB_NOTE_ACTIVITY = {
+  'id': tag_uri('101007473698067'),
+  'fb_id': '101007473698067',
+  'url': 'https://www.facebook.com/101007473698067',
+  'verb': 'post',
+  'object': {
+    'id': tag_uri('101007473698067'),
+    'fb_id': '101007473698067',
+    'url': 'https://www.facebook.com/101007473698067',
+    'objectType': 'article',
+  },
+}
+
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US"
@@ -947,6 +965,23 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('me/feed?offset=0', json.dumps({'data': []}))
     self.mox.ReplayAll()
     self.assert_equals([], self.facebook.get_activities(
+      group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+
+
+  def test_get_activities_extras_skips_notes(self):
+    # first call returns just note
+    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': [FB_NOTE]}))
+
+    # second call returns note and normal post
+    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': [FB_NOTE, POST]}))
+    self.expect_urlopen('sharedposts?ids=10100176064482163', json.dumps([]))
+    self.expect_urlopen('comments?filter=stream&ids=10100176064482163', json.dumps({}))
+
+    self.mox.ReplayAll()
+
+    self.assert_equals([FB_NOTE_ACTIVITY], self.facebook.get_activities(
+      group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+    self.assert_equals([FB_NOTE_ACTIVITY, ACTIVITY], self.facebook.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
 
   def test_get_activities_search_not_implemented(self):
@@ -1403,15 +1438,7 @@ http://b http://c""",
 
   def test_facebook_note(self):
     """https://github.com/snarfed/bridgy/issues/480"""
-    self.assert_equals({
-        'id': tag_uri('101007473698067'),
-        'fb_id': '101007473698067',
-        'url': 'https://www.facebook.com/101007473698067',
-        'objectType': 'article',
-      }, self.facebook.post_to_object({
-        'id': '101007473698067',
-        'type': 'note',
-        }))
+    self.assert_equals(FB_NOTE_ACTIVITY, self.facebook.post_to_activity(FB_NOTE))
 
   def test_create_post(self):
     self.expect_urlopen(facebook.API_FEED, json.dumps({'id': '123_456'}),
