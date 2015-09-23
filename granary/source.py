@@ -477,20 +477,28 @@ class Source(object):
        if url and not url.endswith('...') and not url.endswith(u'…'))))
 
     # check for redirect and add their final urls
+    redirects = {}  # maps final URL to original URL for redirects
     for url in list(candidates):
       resolved = follow_redirects(url, cache=cache, **kwargs)
       if (resolved.url != url and
           resolved.headers.get('content-type', '').startswith('text/html')):
+        redirects[resolved.url] = url
         candidates.add(resolved.url)
 
     # use domains to determine which URLs are original post links vs mentions
     originals = set()
     mentions = set()
     for url in util.dedupe_urls(candidates):
-      if not domains or util.domain_from_link(url) in domains:
-        originals.add(url)
-      else:
-        mentions.add(url)
+      if url in redirects.values():
+        # this is a redirected original URL. postpone and handle it when we hit
+        # its final URL so that we know the final domain.
+        continue
+      which = (originals if not domains or util.domain_from_link(url) in domains
+               else mentions)
+      which.add(url)
+      redirected_from = redirects.get(url)
+      if redirected_from:
+        which.add(redirected_from)
 
     logging.info('Original post discovery found original posts %s, mentions %s',
                  originals, mentions)

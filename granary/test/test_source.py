@@ -82,10 +82,11 @@ class SourceTest(testutil.TestCase):
     self.source = FakeSource()
     self.mox.StubOutWithMock(self.source, 'get_activities')
 
-  def check_original_post_discovery(self, obj, originals, **kwargs):
+  def check_original_post_discovery(self, obj, originals, mentions=None,
+                                    **kwargs):
     got = Source.original_post_discovery({'object': obj}, **kwargs)
     self.assertItemsEqual(originals, got[0])
-    return got
+    self.assertItemsEqual(mentions or [], got[1])
 
   def test_original_post_discovery(self):
     check = self.check_original_post_discovery
@@ -169,8 +170,7 @@ class SourceTest(testutil.TestCase):
     for domains in [], ['me'], ['foo', 'me']:
       check(obj, links)
 
-    _, mentions = check(obj, [], domains=['notme', 'alsonotme'])
-    self.assertItemsEqual(links, mentions)
+    check(obj, [], mentions=links, domains=['notme', 'alsonotme'])
 
     # utm_* query params
     check({'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
@@ -184,17 +184,22 @@ class SourceTest(testutil.TestCase):
 
   def test_original_post_discovery_follow_redirects(self):
     self.expect_requests_head('http://other/link',
-                              redirected_url='http://other/link/redirect')
-    self.expect_requests_head('http://or.ig/post',
-                              redirected_url='http://or.ig/post/redirect')
+                              redirected_url='http://other/link/redirected'
+                             ).MultipleTimes()
+    self.expect_requests_head('http://sho.rt/post',
+                              redirected_url='http://or.ig/post/redirected'
+                             ).MultipleTimes()
     self.mox.ReplayAll()
 
-    self.check_original_post_discovery(
-      {'content': 'asdf http://other/link qwert',
-       'upstreamDuplicates': ['http://or.ig/post'],
-      },
-      ['http://or.ig/post', 'http://or.ig/post/redirect',
-       'http://other/link', 'http://other/link/redirect'])
+    obj = {
+      'content': 'asdf http://other/link qwert',
+      'upstreamDuplicates': ['http://sho.rt/post'],
+    }
+    originals = ['http://sho.rt/post', 'http://or.ig/post/redirected']
+    mentions = ['http://other/link', 'http://other/link/redirected']
+    self.check_original_post_discovery(obj, originals + mentions)
+    self.check_original_post_discovery(obj, originals, mentions=mentions,
+                                       domains=['or.ig'])
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
