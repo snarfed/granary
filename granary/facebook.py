@@ -262,8 +262,9 @@ class Facebook(source.Source):
     # don't fetch extras for Facebook notes. if you pass /comments a note id, it
     # 400s with "notes API is deprecated for versions ..."
     # https://github.com/snarfed/bridgy/issues/480
-    non_note_ids = ','.join(id for id, activity in id_to_activity.items()
-                            if activity['object'].get('objectType') != 'article')
+    non_note_ids = ','.join(
+      id for id, activity in id_to_activity.items()
+      if activity.get('object', {}).get('objectType') != 'article')
 
     if non_note_ids and fetch_shares:
       try:
@@ -815,10 +816,18 @@ class Facebook(source.Source):
       obj['to'] = [{'objectType': 'group',
                     'alias': '@public' if public else '@private'}]
 
+    # message_tags is a dict in most post types, but a list in some other object
+    # types, e.g. comments.
+    message_tags = post.get('message_tags', [])
+    if isinstance(message_tags, dict):
+      message_tags = sum(message_tags.values(), [])  # flatten
+    elif not isinstance(message_tags, list):
+      message_tags = list(message_tags)  # fingers crossed! :P
+
     # tags and likes
     tags = itertools.chain(post.get('to', {}).get('data', []),
                            post.get('with_tags', {}).get('data', []),
-                           *post.get('message_tags', {}).values())
+                           message_tags)
     obj['tags'] = [self.postprocess_object({
         'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
         'id': self.tag_uri(t.get('id')),
@@ -934,12 +943,6 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    # the message_tags field is different in comment vs post. in post, it's a
-    # dict of lists, in comment it's just a list. so, convert it to post style
-    # here before running post_to_object().
-    comment = dict(comment)
-    comment['message_tags'] = {'1': comment.get('message_tags', [])}
-
     obj = self.post_to_object(comment, _type='comment')
     if not obj:
       return obj

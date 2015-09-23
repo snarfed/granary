@@ -1124,6 +1124,12 @@ class FacebookTest(testutil.HandlerTest):
     post['comments']['data'].append({'id': '123 456^789'})
     self.assert_equals(POST_OBJ, self.facebook.post_to_object(post))
 
+  def test_post_to_object_message_tags_list(self):
+    post = copy.copy(POST)
+    tags = post['message_tags'].values()
+    post['message_tags'] = tags[0] + tags[1]  # both lists
+    self.assert_equals(POST_OBJ, self.facebook.post_to_object(post))
+
   def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.facebook.comment_to_object(cmt))
