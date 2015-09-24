@@ -433,7 +433,8 @@ class Source(object):
   _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
   @staticmethod
-  def original_post_discovery(activity, domains=None, cache=None, **kwargs):
+  def original_post_discovery(activity, domains=None, cache=None,
+                              include_redirect_sources=True, **kwargs):
     """Discovers original post links.
 
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
@@ -453,6 +454,8 @@ class Source(object):
         (Permashortcitations are exempt.)
       cache: optional, a cache object for storing resolved URL redirects. Passed
         to follow_redirects().
+      include_redirect_sources: boolean, whether to include URLs that redirect
+        as well as their final destination URLs
       kwargs: passed to requests.head() when following redirects
 
     Returns: ([string original post URLs], [string mention URLs]) tuple
@@ -497,7 +500,7 @@ class Source(object):
                else mentions)
       which.add(url)
       redirected_from = redirects.get(url)
-      if redirected_from:
+      if redirected_from and include_redirect_sources:
         which.add(redirected_from)
 
     logging.info('Original post discovery found original posts %s, mentions %s',

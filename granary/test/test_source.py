@@ -197,9 +197,12 @@ class SourceTest(testutil.TestCase):
     }
     originals = ['http://sho.rt/post', 'http://or.ig/post/redirected']
     mentions = ['http://other/link', 'http://other/link/redirected']
-    self.check_original_post_discovery(obj, originals + mentions)
-    self.check_original_post_discovery(obj, originals, mentions=mentions,
-                                       domains=['or.ig'])
+
+    check = self.check_original_post_discovery
+    check(obj, originals + mentions)
+    check(obj, originals, mentions=mentions, domains=['or.ig'])
+    check(obj, ['http://or.ig/post/redirected', 'http://other/link/redirected'],
+          include_redirect_sources=False)
 
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
