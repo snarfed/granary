@@ -601,6 +601,11 @@ FB_NOTE = {
   'id': '101007473698067',
   'type': 'note',
 }
+FB_CREATED_NOTE = {
+  'id': '101007473698067',
+  'type': 'status',
+  'status_type': 'created_note',
+}
 FB_NOTE_ACTIVITY = {
   'id': tag_uri('101007473698067'),
   'fb_id': '101007473698067',
@@ -969,20 +974,22 @@ class FacebookTest(testutil.HandlerTest):
 
 
   def test_get_activities_extras_skips_notes(self):
-    # first call returns just note
-    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': [FB_NOTE]}))
+    # first call returns just notes
+    self.expect_urlopen('me/feed?offset=0', json.dumps(
+      {'data': [FB_NOTE, FB_CREATED_NOTE]}))
 
-    # second call returns note and normal post
-    self.expect_urlopen('me/feed?offset=0', json.dumps({'data': [FB_NOTE, POST]}))
+    # second call returns notes and normal post
+    self.expect_urlopen('me/feed?offset=0', json.dumps({
+      'data': [FB_NOTE, FB_CREATED_NOTE, POST]}))
     self.expect_urlopen('sharedposts?ids=10100176064482163', json.dumps([]))
     self.expect_urlopen('comments?filter=stream&ids=10100176064482163', json.dumps({}))
 
     self.mox.ReplayAll()
 
-    self.assert_equals([FB_NOTE_ACTIVITY], self.facebook.get_activities(
-      group_id=source.SELF, fetch_shares=True, fetch_replies=True))
-    self.assert_equals([FB_NOTE_ACTIVITY, ACTIVITY], self.facebook.get_activities(
-      group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+    for expected in ([FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY],
+                     [FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY, ACTIVITY]):
+      self.assert_equals(expected, self.facebook.get_activities(
+        group_id=source.SELF, fetch_shares=True, fetch_replies=True))
 
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
@@ -1445,6 +1452,8 @@ http://b http://c""",
   def test_facebook_note(self):
     """https://github.com/snarfed/bridgy/issues/480"""
     self.assert_equals(FB_NOTE_ACTIVITY, self.facebook.post_to_activity(FB_NOTE))
+    self.assert_equals(FB_NOTE_ACTIVITY,
+                       self.facebook.post_to_activity(FB_CREATED_NOTE))
 
   def test_create_post(self):
     self.expect_urlopen(facebook.API_FEED, json.dumps({'id': '123_456'}),

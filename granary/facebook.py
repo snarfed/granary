@@ -80,10 +80,12 @@ API_NOTIFICATION = '%s/notifications'
 API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
                       'parent')
 
-# Maps Facebook Graph API post type or Open Graph data type to ActivityStreams
-# objectType.
+# Maps Facebook Graph API type, status_type, or Open Graph data type to
+# ActivityStreams objectType.
+# https://developers.facebook.com/docs/graph-api/reference/post#fields
 OBJECT_TYPES = {
   'application': 'application',
+  'created_note': 'article',
   'event': 'event',
   'group': 'group',
   'instapp:photo': 'image',
@@ -262,6 +264,9 @@ class Facebook(source.Source):
     # don't fetch extras for Facebook notes. if you pass /comments a note id, it
     # 400s with "notes API is deprecated for versions ..."
     # https://github.com/snarfed/bridgy/issues/480
+    #
+    # if the 'article' check is confusing, remember that facebook notes are
+    # AS articles. :P
     non_note_ids = ','.join(
       id for id, activity in id_to_activity.items()
       if activity.get('object', {}).get('objectType') != 'article')
@@ -772,7 +777,7 @@ class Facebook(source.Source):
         url = obj.get('url')
         display_name = obj.get('title')
 
-    object_type = OBJECT_TYPES.get(post_type)
+    object_type = OBJECT_TYPES.get(status_type) or OBJECT_TYPES.get(post_type)
     author = self.user_to_actor(post.get('from'))
     link = post.get('link', '')
     gift = link.startswith('/gifts/')
