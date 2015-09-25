@@ -65,6 +65,15 @@ class AtomTest(testutil.HandlerTest):
     self.assertIn('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
 
+  def test_updated_defaults_to_published(self):
+    activities = [
+      {'object': {'published': '2013-12-27T17:25:55+00:00'}},
+      {'object': {'published': '2014-12-27T17:25:55+00:00'}},
+    ]
+
+    out = atom.activities_to_atom(activities, test_twitter.ACTOR, title='my title')
+    self.assertIn('<updated>2014-12-27T17:25:55+00:00</updated>', out)
+
   def test_escape_urls(self):
     url = 'http://foo/bar?baz&baj'
     activity = {'url': url, 'object': {}}

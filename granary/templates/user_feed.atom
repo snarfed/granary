@@ -60,7 +60,7 @@
   {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
   <published>{{ activity.object.published }}</published>
-  <updated>{{ activity.object.updated }}</updated>
+  <updated>{{ activity.object.updated or activity.object.published }}</updated>
   {% for obj in activity.context.inReplyTo %}
     <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url }}" type="text/html" />
   {% endfor %}

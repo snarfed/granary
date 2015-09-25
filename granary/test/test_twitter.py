@@ -545,7 +545,7 @@ ATOM = """\
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41+00:00</published>
-  <updated></updated>
+  <updated>2012-02-22T20:26:41+00:00</updated>
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->

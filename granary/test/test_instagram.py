@@ -419,7 +419,7 @@ this picture -&gt; is #abc #xyz
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-09-22T05:25:42</published>
-  <updated></updated>
+  <updated>2012-09-22T05:25:42</updated>
 
   <!-- <link rel="ostatus:conversation" href="" /> -->
   <!-- http://www.georss.org/simple -->
