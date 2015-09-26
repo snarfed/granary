@@ -311,6 +311,7 @@ class SourceTest(testutil.TestCase):
 
     for before, after in (({}, {}),
                           ({'x': 1}, {'y': 2}),
+                          ({'to': None}, {'to': ''}),
                           (fb_post, fb_post_edited),
                           (fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited)):

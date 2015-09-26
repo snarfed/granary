@@ -607,7 +607,7 @@ class Source(object):
     def changed(b, a, field, label):
       b_val = b.get(field)
       a_val = a.get(field)
-      if b_val != a_val:
+      if b_val != a_val and (a_val or b_val):
         if log:
           logging.debug('%s[%s] %s => %s', label, field, b_val, a_val)
         return True
