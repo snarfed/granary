@@ -322,7 +322,7 @@ class GooglePlus(source.Source):
       # posix timestamp in ms
       published = datetime.datetime.utcfromtimestamp(d[5] / 1000).isoformat('T') + 'Z'
 
-      if d[69]:
+      if d[69] and len(d[69]) >= 2 and d[69][1] and d[69][1][0]:
         # this is a like, reshare, etc
         verb = 'like' if d[69][0] == 202 else 'unknown'
         profile = d[69][1][0]

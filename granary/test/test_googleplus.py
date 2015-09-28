@@ -527,3 +527,12 @@ class GooglePlusTest(testutil.HandlerTest):
     html = (HTML_ACTIVITIES_GP_HEADER + json.dumps(html_gp) +
             HTML_ACTIVITIES_GP_FOOTER)
     self.assert_equals([expected], self.googleplus.html_to_activities(html))
+
+  def test_html_to_activities_similar_to_plusoned(self):
+    html_gp = copy.deepcopy(HTML_ACTIVITY_GP)
+    for data_at_69 in None, [], [None], [None, None], [None, [None]]:
+      html_gp[1][6].values()[0][69] = data_at_69
+      html = (HTML_ACTIVITIES_GP_HEADER + json.dumps(html_gp) +
+              HTML_ACTIVITIES_GP_FOOTER)
+      self.assert_equals([HTML_ACTIVITY_AS],
+                         self.googleplus.html_to_activities(html))
