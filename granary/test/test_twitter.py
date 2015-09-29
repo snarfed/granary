@@ -1093,7 +1093,7 @@ class TwitterTest(testutil.TestCase):
       'url shorten <a href="http://foo.co/bar">foo.co/bar</a>',
       'url <a href="http://foo.co/bar">foo.co/bar</a> ellipsize' + dots,
       'long url <a href="http://www.foo.co/bar/baz/baj/biff/boof">foo.co/bar/baz/baj/bi...</a>',
-      'trailing slash <a href="http://www.foo.co/">foo.co/</a>',
+      'trailing slash <a href="http://www.foo.co/">foo.co</a>',
       'exactly twenty chars',
       'just over twenty' + dots,
     )
