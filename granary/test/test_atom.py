@@ -32,6 +32,13 @@ class AtomTest(testutil.HandlerTest):
                                 test_facebook.ACTOR,
                                 title='my title'))
 
+  def test_strip_html_tags_from_titles(self):
+    activity = copy.deepcopy(test_facebook.ACTIVITY)
+    activity['displayName'] = '<p>foo &amp; <a href="http://bar">bar</a></p>'
+    self.assertIn('<title>foo &amp; bar</title>\n',
+                  atom.activities_to_atom([activity], test_facebook.ACTOR))
+
+
   def test_render_content_as_html(self):
     self.assertIn('<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> ',
         atom.activities_to_atom([copy.deepcopy(test_twitter.ACTIVITY)],
