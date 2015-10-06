@@ -691,8 +691,18 @@ class TwitterTest(testutil.TestCase):
                        self.twitter.get_activities(fetch_shares=True, min_id='567'))
 
   def test_get_activities_fetch_shares_no_retweets(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['retweet_count'] = 1
+    self.expect_urlopen(TIMELINE, json.dumps([tweet]))
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/retweets.json?id=100',
+      json.dumps(RETWEETS)).AndRaise(urllib2.HTTPError('url', 404, 'msg', {}, None))
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
+
+  def test_get_activities_fetch_shares_404s(self):
     self.expect_urlopen(TIMELINE, json.dumps([TWEET]))
-    # we should only ask the API for retweets when retweet_count > 0
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))

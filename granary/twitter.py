@@ -270,7 +270,14 @@ class Twitter(source.Source):
           url = API_RETWEETS_URL % id
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
-          tweet['retweets'] = self.urlopen(url)
+
+          try:
+            tweet['retweets'] = self.urlopen(url)
+          except urllib2.URLError, e:
+            code, _ = util.interpret_http_exception(e)
+            if code != '404':  # 404 means the original tweet was deleted
+              raise
+
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
 
