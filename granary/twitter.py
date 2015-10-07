@@ -192,7 +192,9 @@ class Twitter(source.Source):
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
-        if user_id in (None, source.ME):
+        if user_id == source.ME:
+          user_id = None
+        if not user_id:
           url = API_SELF_TIMELINE_URL % (count + start_index)
         else:
           url = API_USER_TIMELINE_URL % {
