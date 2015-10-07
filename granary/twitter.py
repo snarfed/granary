@@ -783,15 +783,19 @@ class Twitter(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     obj = self.tweet_to_object(tweet)
-    retweeted = tweet.get('retweeted_status')
     activity = {
-      'verb': 'share' if retweeted else 'post',
+      'verb': 'post',
       'published': obj.get('published'),
       'id': obj.get('id'),
       'url': obj.get('url'),
       'actor': obj.get('author'),
       'object': obj,
       }
+
+    retweeted = tweet.get('retweeted_status')
+    if retweeted:
+      activity['verb'] = 'share'
+      activity['object'] = self.tweet_to_object(retweeted)
 
     in_reply_to = obj.get('inReplyTo')
     if in_reply_to:

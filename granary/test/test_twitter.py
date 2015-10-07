@@ -977,15 +977,18 @@ class TwitterTest(testutil.TestCase):
   def test_tweet_to_activity_on_retweet(self):
     self.assert_equals({
         'verb': 'share',
+        'url': 'https://twitter.com/',
         'object': {
           'objectType': 'note',
-          'content': 'RT <a href="https://twitter.com/orig_author">@orig_author</a>: my long original tweet',
+          'content': 'my long original tweet',
           }
         },
       self.twitter.tweet_to_activity({
         'id_str': '444',
         'text': 'truncated',
+        'user': {'id': 888, 'screen_name': 'rt_author'},
         'retweeted_status': {
+          'id_str': '333',
           'text': 'my long original tweet',
           'user': {'id': 777, 'screen_name': 'orig_author'},
           },
