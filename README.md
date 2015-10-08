@@ -10,6 +10,7 @@ data foodstuff inside in standard formats and protocols!
   * [Using](#using)
     * [Using the REST API](#using-the-REST-API)
     * [Using the library](#using-the-library)
+  * [Troubleshooting/FAQ](#troubleshootingfaq)
   * [Future work](#future-work)
   * [Development](#development)
   * [Related work](#related-work)
@@ -127,6 +128,23 @@ Clone or download this repo into a directory named `granary` (note the underscor
 The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/granary/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams JSON.
 
 The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams objects as nicely formatted HTML.
+
+
+Troubleshooting/FAQ
+---
+Check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). It's pretty comprehensive and applies to this project too. For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
+
+```
+bash: ./bin/easy_install: ...bad interpreter: No such file or directory
+
+ImportError: cannot import name certs
+
+ImportError: cannot import name tweepy
+
+File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
+  raise TweepError(e)
+TweepError: must be _socket.socket, not socket
+```
 
 
 Future work
