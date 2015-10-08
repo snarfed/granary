@@ -6,8 +6,7 @@
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
-<generator uri="https://github.com/snarfed/granary" version="0.1">
-  granary</generator>
+<generator uri="https://github.com/snarfed/granary" version="0.1">granary</generator>
 <id>{{ host_url }}</id>
 <title>{{ title }}</title>
 {% if actor.description %}
@@ -20,53 +19,47 @@
 <link href="{{ actor.url }}" rel="alternate" type="text/html" />
 <link rel="avatar" href="{{ actor.image.url }}" />
 <link href="{{ request_url }}" rel="self" type="application/atom+xml" />
-<!-- TODO -->
-<!-- <link href="{{ push_uri }}" rel="hub" /> -->
-<!-- <link href="{{ salmon_uri }}" rel="salmon" /> -->
-<!-- <link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
-<!-- <link href="{{ salmon_uri }}" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
+
 {% for activity in items %}
 <entry>
-{% set actor = activity.actor %}
+{% set obj = activity.object %}
+{% set actor = activity.actor or activity.object.author %}
 {% include "author.atom" %}
 
-  <activity:object-type>
-    http://activitystrea.ms/schema/1.0/{{ activity.object.objectType }}
-  </activity:object-type>
-  <id>{{ activity.url }}</id>
+  <activity:object-type>http://activitystrea.ms/schema/1.0/{{ obj.objectType }}</activity:object-type>
+  {% set url = activity.url or obj.url %}
+  <id>{{ url }}</id>
   <title>{{ activity.title|safe }}</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
-{% if activity.object.actor %}
+{% if obj.actor %}
   <div>
   <p>{{ activity.annotation }}</p>
-  <img src="{{ activity.object.actor.image.url }}" />
-  <a href="{{ activity.object.actor.url }}">{{ activity.object.actor.displayName }}</a>
+  <img src="{{ obj.actor.image.url }}" />
+  <a href="{{ obj.actor.url }}">{{ obj.actor.displayName }}</a>
   originally shared this post:
   </div>
 {% endif %}
-{{ activity.object.rendered_content|safe }}
+{{ obj.rendered_content|safe }}
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="{{ activity.url }}" />
-  <link rel="ostatus:conversation" href="{{ activity.url }}" />
-  {% for tag in activity.object.tags %}
+  <link rel="alternate" type="text/html" href="{{ url }}" />
+  <link rel="ostatus:conversation" href="{{ url }}" />
+  {% for tag in obj.tags %}
     {% if tag.verb != 'like' and tag.verb != 'share' %}
       <link rel="ostatus:attention" href="{{ tag.url }}" />
       <link rel="mentioned" href="{{ tag.url }}" />
     {% endif %}
   {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
-  <published>{{ activity.object.published }}</published>
-  <updated>{{ activity.object.updated or activity.object.published }}</updated>
+  <published>{{ obj.published }}</published>
+  <updated>{{ obj.updated or obj.published }}</updated>
   {% for obj in activity.context.inReplyTo %}
     <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url }}" type="text/html" />
   {% endfor %}
-  <!-- <link rel="ostatus:conversation" href="" /> -->
-  <!-- http://www.georss.org/simple -->
-  {% set location = activity.object.location %}
+  {% set location = obj.location %}
   {% if location.latitude and location.longitude %}
     <georss:point>{{ location.latitude }} {{location.longitude }}</georss:point>
   {% endif %}
@@ -74,7 +67,7 @@
     <georss:featureName>{{ location.displayName }}</georss:featureName>
   {% endif %}
 
-  <link rel="self" type="application/atom+xml" href="{{ activity.url }}" />
+  <link rel="self" type="application/atom+xml" href="{{ url }}" />
 </entry>
 {% endfor %}
 </feed>

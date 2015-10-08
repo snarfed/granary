@@ -349,8 +349,7 @@ ATOM = """\
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
-<generator uri="https://github.com/snarfed/granary" version="0.1">
-  granary</generator>
+<generator uri="https://github.com/snarfed/granary" version="0.1">granary</generator>
 <id>%(host_url)s</id>
 <title>User feed for Ryan B</title>
 
@@ -367,11 +366,6 @@ ATOM = """\
 <link href="http://snarfed.org/" rel="alternate" type="text/html" />
 <link rel="avatar" href="http://picture/ryan" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
-<!-- TODO -->
-<!-- <link href="" rel="hub" /> -->
-<!-- <link href="" rel="salmon" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 
 <entry>
 
@@ -381,9 +375,8 @@ ATOM = """\
  <name>Ryan B</name>
 </author>
 
-  <activity:object-type>
-    http://activitystrea.ms/schema/1.0/photo
-  </activity:object-type>
+  <activity:object-type>http://activitystrea.ms/schema/1.0/photo</activity:object-type>
+
   <id>http://instagram.com/p/ABC123/</id>
   <title>this picture -&gt; is #abc #xyz</title>
 
@@ -420,9 +413,6 @@ this picture -&gt; is #abc #xyz
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-09-22T05:25:42</published>
   <updated>2012-09-22T05:25:42</updated>
-
-  <!-- <link rel="ostatus:conversation" href="" /> -->
-  <!-- http://www.georss.org/simple -->
 
   <georss:point>37.3 -122.5</georss:point>
 

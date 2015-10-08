@@ -628,8 +628,7 @@ ATOM = """\
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
-<generator uri="https://github.com/snarfed/granary" version="0.1">
-  granary</generator>
+<generator uri="https://github.com/snarfed/granary" version="0.1">granary</generator>
 <id>%(host_url)s</id>
 <title>User feed for Ryan Barrett</title>
 
@@ -646,11 +645,6 @@ ATOM = """\
 <link href="https://snarfed.org" rel="alternate" type="text/html" />
 <link rel="avatar" href="https://graph.facebook.com/v2.2/212038/picture?type=large" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
-<!-- TODO -->
-<!-- <link href="" rel="hub" /> -->
-<!-- <link href="" rel="salmon" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 
 <entry>
 
@@ -660,9 +654,8 @@ ATOM = """\
  <name>Ryan Barrett</name>
 </author>
 
-  <activity:object-type>
-    http://activitystrea.ms/schema/1.0/image
-  </activity:object-type>
+  <activity:object-type>http://activitystrea.ms/schema/1.0/image</activity:object-type>
+
   <id>https://www.facebook.com/212038/posts/10100176064482163</id>
   <title>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block...</title>
 
@@ -712,9 +705,6 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-03-04T18:20:37+00:00</published>
   <updated>2012-03-04T19:08:16+00:00</updated>
-
-  <!-- <link rel="ostatus:conversation" href="" /> -->
-  <!-- http://www.georss.org/simple -->
 
     <georss:point>37.7281937175 -122.493364236</georss:point>
 
