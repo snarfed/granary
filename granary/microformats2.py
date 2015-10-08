@@ -85,17 +85,16 @@ def get_text(val):
   return val.get('value') if isinstance(val, dict) else val
 
 
-def object_to_json(obj, ctx={}, trim_nulls=True):
-  """Converts an ActivityStreams object to microformats2 JSON.
+def object_to_json(act, trim_nulls=True):
+  """Converts an ActivityStreams activity to microformats2 JSON.
 
   Args:
-    obj: dict, a decoded JSON ActivityStreams object
-    ctx: dict, a decoded JSON ActivityStreams context
+    act: dict, a decoded JSON ActivityStreams object
     trim_nulls: boolean, whether to remove elements with null or empty values
 
   Returns: dict, decoded microformats2 JSON
   """
-  if not obj:
+  if not act:
     return {}
 
   types_map = {'article': ['h-entry', 'h-as-article'],
@@ -110,74 +109,85 @@ def object_to_json(obj, ctx={}, trim_nulls=True):
                'rsvp-maybe': ['h-entry', 'h-as-rsvp'],
                'invite': ['h-entry'],
                }
-  obj_type = source.object_type(obj)
-  types = types_map.get(obj_type, ['h-entry'])
+  act_type = source.object_type(act)
+  # if the activity type is a post, then it's really just a conduit
+  # for the object.  for other verbs, the activity itself is the
+  # interesting thing
+  if act_type == 'post':
+    obj = act.get('object', {})
+    act_type = source.object_type(obj)
+    primary = obj
+  else:
+    primary = act
 
-  url = obj.get('url', '')
-  content = obj.get('content', '')
+  types = types_map.get(act_type, ['h-entry'])
+
+  url = act.get('url', '')
+  content = primary.get('content', '')
   # TODO: extract snippet
-  name = obj.get('displayName', obj.get('title'))
-  summary = obj.get('summary')
+  name = primary.get('displayName', primary.get('title'))
+  summary = primary.get('summary')
 
-  author = obj.get('author', obj.get('actor', {}))
+  author = act.get('author', act.get('actor', {}))
   author = object_to_json(author, trim_nulls=False)
   if author:
     author['type'] = ['h-card']
 
-  location = object_to_json(obj.get('location', {}), trim_nulls=False)
+  location = object_to_json(primary.get('location', {}), trim_nulls=False)
   if location:
+    # FIXME p-location is not a valid type, maybe h-as-location?
     location['type'] = ['h-card', 'p-location']
 
-  in_reply_tos = obj.get('inReplyTo', []) + ctx.get('inReplyTo', [])
-  if 'h-as-rsvp' in types and 'object' in obj:
-    in_reply_tos.append(obj['object'])
+  in_reply_tos = act.get('inReplyTo', []) + act.get('context', {}).get('inReplyTo', [])
+  if 'h-as-rsvp' in types and 'object' in act:
+    in_reply_tos.append(act['object'])
   # TODO: more tags. most will be p-category?
   ret = {
     'type': types,
     'properties': {
-      'uid': [obj.get('id', '')],
+      'uid': [act.get('id', '')],
       'name': [name],
       'summary': [summary],
-      'url': [url] + obj.get('upstreamDuplicates', []),
-      'photo': [obj.get('image', {}).get('url', '')],
-      'video': [obj.get('stream', {}).get('url')],
-      'published': [obj.get('published', '')],
-      'updated':  [obj.get('updated', '')],
+      'url': [url] + act.get('upstreamDuplicates', []),
+      'photo': [act.get('image', {}).get('url', '')],
+      'video': [act.get('stream', {}).get('url')],
+      'published': [act.get('published', '')],
+      'updated': [act.get('updated', '')],
       'content': [{
           'value': xml.sax.saxutils.unescape(content),
-          'html': render_content(obj, include_location=False),
+          'html': render_content(act, include_location=False),
           }],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
       'author': [author],
       'location': [location],
       'comment': [object_to_json(c, trim_nulls=False)
-                  for c in obj.get('replies', {}).get('items', [])],
+                  for c in act.get('replies', {}).get('items', [])],
       }
     }
 
   # rsvp
   if 'h-as-rsvp' in types:
-    ret['properties']['rsvp'] = [obj_type[len('rsvp-'):]]
-  elif obj_type == 'invite':
-    invitee = object_to_json(obj.get('object'), trim_nulls=False)
+    ret['properties']['rsvp'] = [act_type[len('rsvp-'):]]
+  elif act_type == 'invite':
+    invitee = object_to_json(act.get('object'), trim_nulls=False)
     invitee['type'].append('p-invitee')
     ret['properties']['invitee'] = [invitee]
   # likes and reposts
   # http://indiewebcamp.com/like#Counterproposal
   for type, prop in ('like', 'like'), ('share', 'repost'):
-    if obj_type == type:
+    if act_type == type:
       # The ActivityStreams spec says the object property should always be a
       # single object, but it's useful to let it be a list, e.g. when a like has
       # multiple targets, e.g. a like of a post with original post URLs in it,
       # which brid.gy does.
-      objs = obj.get('object', [])
+      objs = act.get('object', [])
       if not isinstance(objs, list):
         objs = [objs]
       ret['properties'][prop] = ret['properties'][prop + '-of'] = \
           [o.get('url') for o in objs]
     else:
       ret['properties'][prop] = [object_to_json(t, trim_nulls=False)
-                                 for t in obj.get('tags', [])
+                                 for t in act.get('tags', [])
                                  if source.object_type(t) == type]
 
   if trim_nulls:
@@ -308,11 +318,10 @@ def activities_to_html(activities):
 %s
 </body>
 </html>
-  """ % '\n'.join(object_to_html(a.get('object') or a, a.get('context', {}))
-                for a in activities)
+  """ % '\n'.join(object_to_html(a) for a in activities)
 
 
-def object_to_html(obj, ctx={}):
+def object_to_html(obj):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
@@ -323,13 +332,12 @@ def object_to_html(obj, ctx={}):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
-    ctx: dict, a decoded JSON ActivityStreams context
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
-  return json_to_html(object_to_json(obj, ctx=ctx))
+  return json_to_html(object_to_json(obj))
 
 
 def json_to_html(obj):
@@ -550,6 +558,7 @@ def render_content(obj, include_location=True):
   loc = obj.get('location')
   if include_location and loc:
     loc_mf2 = object_to_json(loc)
+    # FIXME p-location is not a valid type, maybe h-as-location?
     loc_mf2['type'] = ['h-card', 'p-location']
     content += '\n' + hcard_to_html(loc_mf2)
 
