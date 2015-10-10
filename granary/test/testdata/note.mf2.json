@@ -25,7 +25,7 @@
     }],
 
     "location": [{
-      "type": ["h-card", "p-location"],
+      "type": ["h-card", "h-as-location"],
       "properties": {
         "uid": ["31cb9e7ed29dbe52"],
         "name": ["Carcassonne, Aude"],

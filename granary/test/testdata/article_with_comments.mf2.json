@@ -5,7 +5,7 @@
     "url": ["http://example.com/article-abc"],
 
     "comment": [{
-      "type": ["h-entry", "p-comment"],
+      "type": ["h-cite", "h-as-comment"],
       "properties": {
         "author": [{
           "type": ["h-card"],
@@ -15,7 +15,7 @@
         "in-reply-to": ["http://example.com/article-abc"]
       }
     }, {
-      "type": ["h-entry", "p-comment"],
+      "type": ["h-cite", "h-as-comment"],
       "properties": {
         "url": ["http://example.com/comment/2"],
         "name": ["second comment name"],

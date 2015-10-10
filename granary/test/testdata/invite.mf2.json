@@ -3,7 +3,7 @@
   "properties": {
     "url": ["http://example.com/this/invite"],
     "invitee": [{
-      "type": ["h-card", "p-invitee"],
+      "type": ["h-card"],
       "properties": {
         "name": ["Alice"],
         "url": ["http://example.com/alice"]

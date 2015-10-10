@@ -76,8 +76,9 @@ class TestDataTest(testutil.HandlerTest):
         else:
           expected = read_json(dst)
         try:
-          self.assert_equals(expected, fn(read_json(src)),
-                             '\n%s:1:\n' % os.path.abspath(dst))
+          self.assert_equals(
+            expected, fn(read_json(src)),
+            '\n%s %s:1:\n' % (fn.__name__, os.path.abspath(dst)))
         except AssertionError:
           logging.exception('')
           failed = True

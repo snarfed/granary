@@ -10,12 +10,14 @@ import app
 
 
 ACTIVITIES = [{
+  'verb': 'post',
   'object': {
     'content': 'foo bar',
     'published': '2012-03-04T18:20:37+00:00',
     'url': 'https://perma/link',
   }
 }, {
+  'verb': 'post',
   'object': {
     'content': 'baz baj',
   },

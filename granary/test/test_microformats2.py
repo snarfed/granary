@@ -85,9 +85,12 @@ class Microformats2Test(testutil.HandlerTest):
         'value': 'Entity < link too',
       }]},
      }, microformats2.object_to_json({
+       'verb': 'post',
+       'object': {
         'content': 'Entity &lt; link too',
         'tags': [{'url': 'http://my/link', 'startIndex': 12, 'length': 8}]
-      }))
+       }
+     }))
 
   def test_object_to_json_note_with_in_reply_to(self):
     self.assertEquals({
@@ -100,12 +103,15 @@ class Microformats2Test(testutil.HandlerTest):
         'in-reply-to': ['http://reply/target'],
       },
     }, microformats2.object_to_json({
+      'verb': 'post',
+      'object': {
         'content': '@hey great post',
-      }, ctx={
+      },
+      'context': {
         'inReplyTo': [{
           'url': 'http://reply/target',
-        }]
-      }))
+        }],
+      }}))
 
   def test_object_to_html_note_with_in_reply_to(self):
     expected = """\
@@ -118,11 +124,15 @@ class Microformats2Test(testutil.HandlerTest):
 </article>
 """
     result = microformats2.object_to_html({
-      'content': '@hey great post',
-    }, ctx={
-      'inReplyTo': [{
-        'url': 'http://reply/target',
-      }]
+      'verb': 'post',
+      'context': {
+        'inReplyTo': [{
+          'url': 'http://reply/target',
+        }],
+      },
+      'object': {
+        'content': '@hey great post',
+      }
     })
     self.assertEquals(re.sub('\n\s*', '\n', expected),
                       re.sub('\n\s*', '\n', result))
@@ -171,7 +181,7 @@ foo
   def test_render_content_location(self):
     self.assert_equals("""\
 foo
-<div class="h-card p-location">
+<div class="p-location h-card h-as-location">
   <div class="p-name"><a class="u-url" href="http://my/place">My place</a></div>
 
 </div>
@@ -188,7 +198,7 @@ foo
 <article class="h-entry">
 <span class="u-uid"></span>
 
-<div class="h-card p-author">
+<div class="p-author h-card">
 <div class="p-name">a " b ' c</div>
 <img class="u-photo" src="img" alt="" />
 </div>

@@ -396,7 +396,7 @@ this picture -&gt; is #abc #xyz
 <img class="thumbnail" src="http://attach/image/big" alt="" />
 </a>
 </p>
-<div class="h-card p-location">
+<div class="p-location h-card h-as-location">
   <div class="p-name"><a class="u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a></div>
 
 </div>
