@@ -178,8 +178,6 @@ functionality if possible! The tests require the
 If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with
 `pip install -e <path to oauth-dropins repo>`.
 
-Note the `app.yaml.*` files, one for each App Engine app id. To work on or deploy a specific app id, symlink `app.yaml` to its `app.yaml.xxx` file. Likewise, if you add a new site, you'll need to add a corresponding `app.yaml.xxx` file.
-
 To deploy:
 
 ```shell
