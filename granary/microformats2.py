@@ -128,7 +128,7 @@ def object_to_json(obj, ctx={}, trim_nulls=True):
   if location:
     location['type'] = ['h-card', 'p-location']
 
-  in_reply_tos = obj.get('inReplyTo', []) + ctx.get('inReplyTo', [])
+  in_reply_tos = obj.get('inReplyTo', ctx.get('inReplyTo', []))
   if 'h-as-rsvp' in types and 'object' in obj:
     in_reply_tos.append(obj['object'])
   # TODO: more tags. most will be p-category?
