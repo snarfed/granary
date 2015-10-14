@@ -89,3 +89,21 @@ class AtomTest(testutil.HandlerTest):
     self.assertIn('<id>http://foo/bar?baz&amp;baj</id>', out)
     self.assertNotIn(url, out)
 
+  def test_object_only(self):
+    out = atom.activities_to_atom([{'object': {
+      'displayName': 'Den oberoende sociala webben 2015',
+      'id': 'http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/',
+      'author': {
+        'image': {'url': 'http://voxpelli.com/avatar.jpg'},
+        'url': 'http://voxpelli.com/',
+      },
+      'url': 'http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/',
+    }}], test_twitter.ACTOR)
+
+    for expected in (
+        '<link rel="alternate" type="text/html" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
+        '<link rel="self" type="application/atom+xml" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
+        '<uri>http://voxpelli.com/</uri>',
+        ):
+      self.assertIn(expected, out)
+

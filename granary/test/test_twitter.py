@@ -465,8 +465,7 @@ ATOM = """\
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
-<generator uri="https://github.com/snarfed/granary" version="0.1">
-  granary</generator>
+<generator uri="https://github.com/snarfed/granary" version="0.1">granary</generator>
 <id>%(host_url)s</id>
 <title>User feed for Ryan Barrett</title>
 
@@ -483,11 +482,6 @@ ATOM = """\
 <link href="https://snarfed.org/" rel="alternate" type="text/html" />
 <link rel="avatar" href="https://twitter.com/snarfed_org/profile_image?size=original" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
-<!-- TODO -->
-<!-- <link href="" rel="hub" /> -->
-<!-- <link href="" rel="salmon" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-replies" /> -->
-<!-- <link href="" rel="http://salmon-protocol.org/ns/salmon-mention" /> -->
 
 <entry>
 
@@ -497,9 +491,8 @@ ATOM = """\
  <name>Ryan Barrett</name>
 </author>
 
-  <activity:object-type>
-    http://activitystrea.ms/schema/1.0/note
-  </activity:object-type>
+  <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
+
   <id>https://twitter.com/snarfed_org/status/100</id>
   <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 </title>
 
@@ -546,9 +539,6 @@ ATOM = """\
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-02-22T20:26:41+00:00</published>
   <updated>2012-02-22T20:26:41+00:00</updated>
-
-  <!-- <link rel="ostatus:conversation" href="" /> -->
-  <!-- http://www.georss.org/simple -->
 
     <georss:featureName>Carcassonne, Aude</georss:featureName>
 

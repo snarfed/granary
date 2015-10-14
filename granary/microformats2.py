@@ -87,10 +87,11 @@ def get_text(val):
 
 def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
                    default_object_type=None):
-  """Converts an ActivityStreams activity to microformats2 JSON.
+  """Converts an ActivityStreams object to microformats2 JSON.
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
+    ctx: dict, a decoded JSON ActivityStreams context
     trim_nulls: boolean, whether to remove elements with null or empty values
     entry_class: string, the mf2 class that entries should be given (e.g.
       'h-cite' when parsing a reference to a foreign entry). defaults to
@@ -476,7 +477,7 @@ def hcard_to_html(hcard, parent_prop=None):
   photo = prop.get('photo')
   return HCARD.substitute(
     prop,
-    types=' '.join(([parent_prop] if parent_prop else []) + hcard['type']),
+    types=' '.join(hcard['type']),
     photo=img(photo, 'u-photo', '') if photo else '',
     linked_name=maybe_linked_name(hcard['properties']))
 
