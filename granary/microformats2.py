@@ -465,6 +465,8 @@ def hcard_to_html(hcard, parent_prop=None):
 
   Args:
     hcard: dict, decoded JSON h-card
+    parent_prop: string (optional), the property of the parent object where
+      this object is embedded, e.g. 'p-author'
 
   Returns: string, rendered HTML
   """
@@ -477,7 +479,7 @@ def hcard_to_html(hcard, parent_prop=None):
   photo = prop.get('photo')
   return HCARD.substitute(
     prop,
-    types=' '.join(hcard['type']),
+    types=' '.join(([parent_prop] if parent_prop else []) + hcard['type']),
     photo=img(photo, 'u-photo', '') if photo else '',
     linked_name=maybe_linked_name(hcard['properties']))
 
