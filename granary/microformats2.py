@@ -85,12 +85,18 @@ def get_text(val):
   return val.get('value') if isinstance(val, dict) else val
 
 
-def object_to_json(obj, trim_nulls=True, entry_class='h-entry', default_object_type=None):
+def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
+                   default_object_type=None):
   """Converts an ActivityStreams activity to microformats2 JSON.
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
     trim_nulls: boolean, whether to remove elements with null or empty values
+    entry_class: string, the mf2 class that entries should be given (e.g.
+      'h-cite' when parsing a reference to a foreign entry). defaults to
+      'h-entry'
+    default_object_type: string, the ActivityStreams objectType to use if one
+      is not present. defaults to None
 
   Returns: dict, decoded microformats2 JSON
   """
@@ -103,7 +109,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry', default_object_t
                'note': [entry_class, 'h-as-note'],
                'person': ['h-card'],
                'place': ['h-card', 'h-as-location'],
-               'share': [entry_class, 'h-as-repost'],  # should be h-as-share?
+               'share': [entry_class, 'h-as-share'],
                'rsvp-yes': [entry_class, 'h-as-rsvp'],
                'rsvp-no': [entry_class, 'h-as-rsvp'],
                'rsvp-maybe': [entry_class, 'h-as-rsvp'],
@@ -128,9 +134,11 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry', default_object_t
   summary = primary.get('summary')
 
   author = obj.get('author', obj.get('actor', {}))
-  author = object_to_json(author, trim_nulls=False, default_object_type='person')
+  author = object_to_json(author, trim_nulls=False,
+                          default_object_type='person')
 
-  in_reply_tos = obj.get('inReplyTo', []) + obj.get('context', {}).get('inReplyTo', [])
+  in_reply_tos = obj.get(
+    'inReplyTo', obj.get('context', {}).get('inReplyTo', []))
   if 'h-as-rsvp' in types and 'object' in obj:
     in_reply_tos.append(obj['object'])
   # TODO: more tags. most will be p-category?
@@ -214,7 +222,7 @@ def json_to_object(mf2):
   types = mf2.get('type', [])
   types_map = [
     ('h-as-rsvp', 'activity', rsvp_verb),
-    ('h-as-repost', 'activity', 'share'),
+    ('h-as-share', 'activity', 'share'),
     ('h-as-like', 'activity', 'like'),
     ('h-as-comment', 'comment', None),
     ('h-as-reply', 'comment', None),
@@ -329,6 +337,8 @@ def object_to_html(obj, parent_prop=None):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
+    parent_prop: string (optional), the property of the parent object where
+      this object is embedded, e.g. 'u-repost-of'
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
@@ -373,7 +383,7 @@ def json_to_html(obj, parent_prop=None):
     likes_and_reposts += ['<a class="u-like u-like-of" href="%s"></a>' %
                           url for url in props.get('like-of')]
 
-  if 'h-as-repost' in obj['type']:
+  if 'h-as-share' in obj['type']:
     if not props.get('name'):
       props['name'] = ['reposts this.']
     for repost in props.get('repost-of', []):

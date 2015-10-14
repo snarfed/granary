@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry", "h-as-repost"],
+  "type": ["h-entry", "h-as-share"],
   "properties": {
     "uid": ["tag:example.com,2001:3344"],
     "url": ["http://example.com/this/repost"],

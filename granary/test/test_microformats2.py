@@ -62,7 +62,7 @@ class Microformats2Test(testutil.HandlerTest):
     self.assertFalse(obj.get('image'))
 
   def test_nested_compound_url_object(self):
-    mf2 = {'type': ['h-as-repost'],
+    mf2 = {'type': ['h-as-share'],
            'properties': {
              'repost-of': [{
                'type': ['h-outer'],
