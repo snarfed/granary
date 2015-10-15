@@ -130,13 +130,19 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   url = obj.get('url', primary.get('url', ''))
   content = primary.get('content', '')
+
+  if obj_type == 'share':
+    target = obj.get('object', {})
+    targ_author = target.get('author', target.get('actor', {}))
+    content = '<p>%s <a href="%s">a post</a> by <a href="%s">%s</a></p>%s' % (
+      'Shared', target.get('url'),
+      targ_author.get('url'), targ_author.get('displayName'),
+      target.get('content'))
+
   # TODO: extract snippet
   name = primary.get('displayName', primary.get('title'))
   summary = primary.get('summary')
-
   author = obj.get('author', obj.get('actor', {}))
-  author = object_to_json(author, trim_nulls=False,
-                          default_object_type='person')
 
   in_reply_tos = obj.get(
     'inReplyTo', obj.get('context', {}).get('inReplyTo', []))
@@ -159,7 +165,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
           'html': render_content(primary, include_location=False),
       }],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
-      'author': [author],
+      'author': [object_to_json(
+        author, trim_nulls=False, default_object_type='person')],
       'location': [object_to_json(
         primary.get('location', {}), trim_nulls=False,
         default_object_type='place')],
