@@ -670,10 +670,10 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </a>
 <span class="summary">my link caption</span>
 </p>
-<div class="p-location h-card h-as-location">
-  <div class="p-name"><a class="u-url" href="https://www.facebook.com/113785468632283">Lake Merced</a></div>
+<span class="p-location h-card h-as-location">
+  <a class="p-name u-url" href="https://www.facebook.com/113785468632283">Lake Merced</a>
 
-</div>
+</span>
 
 <a class="tag" href="https://www.facebook.com/234">Friend 1</a>
 <a class="tag" href="https://www.facebook.com/345">Friend 2</a>

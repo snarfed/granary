@@ -38,6 +38,7 @@ class TestDataTest(testutil.HandlerTest):
     # self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
 
     # All test data files live in testdata/.
+    prevdir = os.getcwd()
     os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
     # source extension, destination extension, conversion function, exclude prefix
@@ -83,5 +84,5 @@ class TestDataTest(testutil.HandlerTest):
           logging.exception('')
           failed = True
 
-    os.chdir('..')
+    os.chdir(prevdir)
     assert not failed

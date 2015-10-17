@@ -324,15 +324,6 @@ def activities_to_html(activities):
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<style>
-.h-card img {
-  max-height: 2em;
-  width: auto;
-}
-article + article {
-  margin-top: 2em;
-}
-</style>
 <body>
 %s
 </body>
@@ -420,10 +411,12 @@ def json_to_html(obj, parent_props=[]):
         likes_and_reposts_as_content.append(
           hcite_to_content_html(target, part))
       else:
-        # this simple context can go right into the e-content
+        # this simple context can go right into the e-content. only
+        # include text if this is the first one.
+        phrase = ('%ss this.' % mftype) if not likes_and_reposts_as_content else ''
         likes_and_reposts_as_content.append(
-          '<a class="u-%s u-%s-of" href="%s">%ss this.</a>' % (
-            mftype, mftype, target, mftype))
+          '<a class="u-%s u-%s-of" href="%s">%s</a>' % (
+            mftype, mftype, target, phrase))
 
   # set up content and name
   content = prop.get('content', {})
@@ -769,7 +762,7 @@ def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
     classname = ' class="%s"' % linked_classname if linked_classname else ''
     return '<a%s href="%s">%s</a>' % (classname, url, text)
   if unlinked_classname:
-    return '<span class="%s">%s</a>' % (unlinked_classname, text)
+    return '<span class="%s">%s</span>' % (unlinked_classname, text)
   return text
 
 

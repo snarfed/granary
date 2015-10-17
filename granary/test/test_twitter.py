@@ -510,10 +510,10 @@ ATOM = """\
 <img class="thumbnail" src="http://p.twimg.com/picture2" alt="" />
 </a>
 </p>
-<div class="p-location h-card h-as-location">
-<div class="p-name"><a class="u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a></div>
+<span class="p-location h-card h-as-location">
+<a class="p-name u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a>
 
-</div>
+</span>
 
   </div>
   </content>

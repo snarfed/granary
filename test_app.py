@@ -49,11 +49,11 @@ HTML = """\
 <head><meta charset="utf-8"></head>
 <body%s>
 <article class="h-entry h-as-article">
-  <span class="u-uid"></span>
+  <span class="p-uid"></span>
 
   <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
 
-  <a class="u-url" href="https://perma/link"></a>
+  <a class="u-url" href="https://perma/link">https://perma/link</a>
   <div class="e-content p-name">
 
   foo bar
@@ -62,7 +62,7 @@ HTML = """\
 </article>
 
 <article class="h-entry h-as-article">
-  <span class="u-uid"></span>
+  <span class="p-uid"></span>
 
   <div class="e-content p-name">
 
