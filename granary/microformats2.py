@@ -16,7 +16,7 @@ import source
 
 HENTRY = string.Template("""\
 <article class="$types">
-  <span class="u-uid">$uid</span>
+  <span class="p-uid">$uid</span>
   $summary
   $published
   $updated
@@ -35,12 +35,19 @@ $comments
 </article>
 """)
 HCARD = string.Template("""\
-  <div class="$types">
+  <span class="$types">
     $linked_name
     $photo
-  </div>
+  </span>
 """)
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
+# Simplified version of a nested post, for use in the outer post's content
+HCITE_AS_CONTENT = string.Template("""\
+$participle $linked_name by $author
+<div>
+  $content
+</div>
+""")
 
 
 def get_string_urls(objs):
@@ -91,7 +98,6 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
-    ctx: dict, a decoded JSON ActivityStreams context
     trim_nulls: boolean, whether to remove elements with null or empty values
     entry_class: string, the mf2 class that entries should be given (e.g.
       'h-cite' when parsing a reference to a foreign entry). defaults to
@@ -130,14 +136,6 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   url = obj.get('url', primary.get('url', ''))
   content = primary.get('content', '')
-
-  if obj_type == 'share':
-    target = obj.get('object', {})
-    targ_author = target.get('author', target.get('actor', {}))
-    content = '<p>%s <a href="%s">a post</a> by <a href="%s">%s</a></p>%s' % (
-      'Shared', target.get('url'),
-      targ_author.get('url'), targ_author.get('displayName'),
-      target.get('content'))
 
   # TODO: extract snippet
   name = primary.get('displayName', primary.get('title'))
@@ -197,8 +195,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
         o['url'] if 'url' in o and len(o) == 1
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
         for o in objs]
-
     else:
+      # received likes and reposts
       ret['properties'][prop] = [
         object_to_json(t, trim_nulls=False, entry_class='h-cite')
         for t in obj.get('tags', []) if source.object_type(t) == type]
@@ -317,7 +315,6 @@ def activities_to_html(activities):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
-    ctx: dict, a decoded JSON ActivityStreams context
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
@@ -327,6 +324,15 @@ def activities_to_html(activities):
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
+<style>
+.h-card img {
+  max-height: 2em;
+  width: auto;
+}
+article + article {
+  margin-top: 2em;
+}
+</style>
 <body>
 %s
 </body>
@@ -334,7 +340,7 @@ def activities_to_html(activities):
   """ % '\n'.join(object_to_html(a) for a in activities)
 
 
-def object_to_html(obj, parent_prop=None):
+def object_to_html(obj, parent_props=[]):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
@@ -345,24 +351,24 @@ def object_to_html(obj, parent_prop=None):
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
-    parent_prop: string (optional), the property of the parent object where
-      this object is embedded, e.g. 'u-repost-of'
+    parent_props: list of strings, the properties of the parent object where
+      this object is embedded, e.g. ['u-repost-of']
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
-  return json_to_html(object_to_json(obj), parent_prop)
+  return json_to_html(object_to_json(obj), parent_props)
 
 
-def json_to_html(obj, parent_prop=None):
+def json_to_html(obj, parent_props=[]):
   """Converts a microformats2 JSON object to microformats2 HTML.
 
   See object_to_html for details.
 
   Args:
     obj: dict, a decoded microformats2 JSON object
-    parent_prop: string (optional), the property of the parent object where
+    parent_props: list of strings, the properties of the parent object where
       this object is embedded, e.g. 'u-repost-of'
 
   Returns: string HTML
@@ -372,7 +378,7 @@ def json_to_html(obj, parent_prop=None):
 
   # TODO: handle when h-card isn't first
   if obj['type'][0] == 'h-card':
-    return hcard_to_html(obj, parent_prop)
+    return hcard_to_html(obj, parent_props)
 
   props = copy.copy(obj['properties'])
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
@@ -382,28 +388,9 @@ def json_to_html(obj, parent_prop=None):
   prop.setdefault('uid', '')
   author = prop.get('author')
 
-  # if this post is itself a like or repost, link to its target(s). (do this and
-  # rsvp below *before* content since they set props['name'] if necessary.)
-  likes_and_reposts = []
-  if 'h-as-like' in obj['type']:
-    if not props.get('name'):
-      props['name'] = ['likes this.']
-    likes_and_reposts += ['<a class="u-like u-like-of" href="%s"></a>' %
-                          url for url in props.get('like-of')]
-
-  if 'h-as-share' in obj['type']:
-    if not props.get('name'):
-      props['name'] = ['reposts this.']
-    for repost in props.get('repost-of', []):
-      if isinstance(repost, dict):
-        likes_and_reposts.append(
-          json_to_html(repost, parent_prop='u-repost u-repost-of'))
-      else:
-        likes_and_reposts.append(
-          '<a class="u-repost u-repost-of" href="%s"></a>' % repost)
-
   # if this post is an rsvp, populate its data element. if it's an invite, give
   # it a default name.
+  # do this *before* content since it sets props['name'] if necessary.
   rsvp = prop.get('rsvp')
   if rsvp:
     if not props.get('name'):
@@ -416,10 +403,35 @@ def json_to_html(obj, parent_prop=None):
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
 
+  # if this post is itself a like or repost, link to its target(s).
+  likes_and_reposts = []
+  # simple version of the like/repost context for the outer post's e-content
+  likes_and_reposts_as_content = []
+
+  for astype, mftype, part in [
+      ('like', 'like', 'Liked'),
+      ('share', 'repost', 'Shared')
+  ]:
+    # having like-of or repost-of makes this a like or repost.
+    for target in props.get(mftype + '-of', []):
+      if isinstance(target, dict):
+        likes_and_reposts.append(json_to_html(
+          target, ['u-' + mftype, 'u-' + mftype + '-of']))
+        likes_and_reposts_as_content.append(
+          hcite_to_content_html(target, part))
+      else:
+        # this simple context can go right into the e-content
+        likes_and_reposts_as_content.append(
+          '<a class="u-%s u-%s-of" href="%s">%ss this.</a>' % (
+            mftype, mftype, target, mftype))
+
   # set up content and name
   content = prop.get('content', {})
-  content_html = content.get('html', '') or content.get('value', '')
+  content_html = '\n'.join(
+    [content.get('html', '') or content.get('value', '')]
+    + likes_and_reposts_as_content)
   content_classes = []
+
   if content_html:
     content_classes.append('e-content')
     if not props.get('name'):
@@ -436,28 +448,30 @@ def json_to_html(obj, parent_prop=None):
   # comments
   # http://indiewebcamp.com/comment-presentation#How_to_markup
   # http://indiewebcamp.com/h-cite
-  comments_html = '\n'.join(json_to_html(c, parent_prop='p-comment')
+  comments_html = '\n'.join(json_to_html(c, ['p-comment'])
                             for c in props.get('comment', []))
 
   # embedded likes and reposts of this post
   # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
   for verb in 'like', 'repost':
-    vals = props.get(verb, [])
-    if vals and isinstance(vals[0], dict):
-      likes_and_reposts += [json_to_html(v, parent_prop='u-' + verb)
-                            for v in vals]
+    # including u-like and u-repost for backcompat means that we must ignore
+    # these properties when converting a post that is itself a like or repost
+    if not verb + '-of' in props:
+      vals = props.get(verb, [])
+      if vals and isinstance(vals[0], dict):
+        likes_and_reposts += [json_to_html(v, ['u-' + verb]) for v in vals]
 
   return HENTRY.substitute(
     prop,
     published=maybe_datetime(prop.get('published'), 'dt-published'),
     updated=maybe_datetime(prop.get('updated'), 'dt-updated'),
-    types=' '.join(([parent_prop] if parent_prop else []) + obj['type']),
-    author=hcard_to_html(author, parent_prop='p-author'),
-    location=hcard_to_html(prop.get('location'), 'p-location'),
+    types=' '.join(parent_props + obj['type']),
+    author=hcard_to_html(author, ['p-author']),
+    location=hcard_to_html(prop.get('location'), ['p-location']),
     photo=photo,
     video=video,
     in_reply_tos=in_reply_tos,
-    invitees='\n'.join([hcard_to_html(i, parent_prop='p-invitee')
+    invitees='\n'.join([hcard_to_html(i, ['p-invitee'])
                         for i in props.get('invitee', [])]),
     content=content_html,
     content_classes=' '.join(content_classes),
@@ -467,13 +481,44 @@ def json_to_html(obj, parent_prop=None):
     summary=summary)
 
 
-def hcard_to_html(hcard, parent_prop=None):
+def hcite_to_content_html(hcite, participle):
+  """Generate a simplified rendering of an h-cite to use as the
+  e-content of the outer post. Somewhat confusingly, this rendering
+  *cannot* include mf2 property classes, or those properties would be
+  hoisted to the outer h-entry.
+
+  Args:
+    hcite: dict, json-mf2 objec for the nested h-cite
+    participle: string, the past-tense form of the verb that describes this
+      post's relation to its containing post (e.g. "Shared")
+
+  Returns: string, rendered html
+  """
+  prop = first_props(hcite['properties'])
+  content = prop.get('content', {})
+  content_html = content.get('html', content.get('value', ''))
+
+  # remove the author photo, looks bad in the simple rendering
+  author = copy.deepcopy(prop.get('author', prop.get('actor', {})))
+  if 'photo' in author['properties']:
+    del author['properties']['photo']
+
+  return HCITE_AS_CONTENT.substitute(
+    participle=participle,
+    linked_name='<a href="%s">%s</a>' % (
+      prop.get('url', '#'), prop.get('name', 'a post')),
+    # class="h-card" is ok, but make sure not to give it p-author
+    author=hcard_to_html(author),
+    content=content_html)
+
+
+def hcard_to_html(hcard, parent_props=[]):
   """Renders an h-card as HTML.
 
   Args:
     hcard: dict, decoded JSON h-card
-    parent_prop: string (optional), the property of the parent object where
-      this object is embedded, e.g. 'p-author'
+    parent_props: list of strings, the properties of the parent object where
+      this object is embedded, e.g. ['p-author']
 
   Returns: string, rendered HTML
   """
@@ -486,7 +531,7 @@ def hcard_to_html(hcard, parent_prop=None):
   photo = prop.get('photo')
   return HCARD.substitute(
     prop,
-    types=' '.join(([parent_prop] if parent_prop else []) + hcard['type']),
+    types=' '.join(parent_props + hcard['type']),
     photo=img(photo, 'u-photo', '') if photo else '',
     linked_name=maybe_linked_name(hcard['properties']))
 
@@ -588,7 +633,7 @@ def render_content(obj, include_location=True):
   if include_location and loc:
     content += '\n' + hcard_to_html(
       object_to_json(loc, default_object_type='place'),
-      'p-location')
+      parent_props=['p-location'])
 
   # other tags, except likes and (re)shares. they're rendered manually in
   # json_to_html().
@@ -655,15 +700,18 @@ def maybe_linked_name(props):
   Returns: string HTML
   """
   prop = first_props(props)
-  name = prop.get('name') or ''
+  name = prop.get('name')
   url = prop.get('url')
-  html = maybe_linked(name, url, classname='u-url')
+
   if name:
-    html = '<div class="p-name">%s</div>' % html
+    html = maybe_linked(name, url, linked_classname='p-name u-url',
+                        unlinked_classname='p-name')
+  else:
+    html = maybe_linked(url or '', url, linked_classname='u-url')
 
   extra_urls = props.get('url', [])[1:]
   if extra_urls:
-    html += '\n' + '\n'.join(maybe_linked('', url, classname='u-url')
+    html += '\n' + '\n'.join(maybe_linked('', url, linked_classname='u-url')
                              for url in extra_urls)
 
   return html
@@ -706,18 +754,23 @@ def vid(src, poster, cls):
   return html
 
 
-def maybe_linked(text, url, classname=None):
+def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
   """Wraps text in an <a href=...> iff a non-empty url is provided.
 
   Args:
     text: string
     url: string or None
-    classname: string, optional class attribute
+    linked_classname: string, optional class attribute to use if url
+    unlinked_classname: string, optional class attribute to use if not url
 
   Returns: string
   """
-  classname = 'class="%s"' % classname if classname else ''
-  return ('<a %s href="%s">%s</a>' % (classname, url, text)) if url else text
+  if url:
+    classname = ' class="%s"' % linked_classname if linked_classname else ''
+    return '<a%s href="%s">%s</a>' % (classname, url, text)
+  if unlinked_classname:
+    return '<span class="%s">%s</a>' % (unlinked_classname, text)
+  return text
 
 
 def maybe_datetime(str, classname):
