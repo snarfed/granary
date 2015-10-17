@@ -4,7 +4,7 @@
     "repost-of" : [
       "http://example.com/bare-repost",
       {
-        "type" : ["h-cite"],
+        "type" : ["h-cite", "h-as-article"],
         "value" : "Author\nRepost content inside h-cite",
         "properties" : {
           "url" : ["http://example.com/embedded-repost"],

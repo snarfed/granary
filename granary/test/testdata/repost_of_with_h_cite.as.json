@@ -4,6 +4,11 @@
   "content": "This is the main content.",
   "object": [
     {"url": "http://example.com/bare-repost"},
-    {"url": "http://example.com/embedded-repost"}
+    {
+      "displayName": "Author",
+      "content": "Repost inside h-cite",
+      "url": "http://example.com/embedded-repost",
+      "objectType": "article"
+    }
   ]
 }

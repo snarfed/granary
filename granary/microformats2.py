@@ -262,6 +262,8 @@ def json_to_object(mf2):
             # filter out relative and invalid URLs (mf2py gives absolute urls)
             if urlparse.urlparse(url).netloc]
 
+  urls = props.get('url') and get_string_urls(props.get('url'))
+
   obj = {
     'id': prop.get('uid'),
     'objectType': as_type,
@@ -271,17 +273,21 @@ def json_to_object(mf2):
     'displayName': get_text(prop.get('name')),
     'summary': get_text(prop.get('summary')),
     'content': get_html(prop.get('content')),
-    'url': prop.get('url'),
+    'url': urls[0] if urls else None,
     'image': {'url': photos[0] if photos else None},
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     }
 
   if as_type == 'activity':
-    urls = set(itertools.chain.from_iterable(get_string_urls(props.get(field, []))
-        for field in ('like', 'like-of', 'repost', 'repost-of', 'in-reply-to')))
-    objects = [{'url': url} for url in urls]
-    objects += [json_to_object(i) for i in props.get('invitee', [])]
+    objects = []
+    for target in itertools.chain.from_iterable(
+        props.get(field, []) for field in (
+          'like', 'like-of', 'repost', 'repost-of', 'in-reply-to', 'invitee')):
+      t = json_to_object(target) if isinstance(target, dict) else {'url': target}
+      # eliminate duplicates from redundant backcompat properties
+      if t not in objects:
+        objects.append(t)
     obj.update({
         'object': objects[0] if len(objects) == 1 else objects,
         'actor': author,
