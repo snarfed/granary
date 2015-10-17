@@ -688,10 +688,17 @@ class Source(object):
       if parsed:
         base_obj['id'] = parsed[1]
     elif url:
-      path = urlparse.urlparse(url).path
-      base_obj['id'] = path.rstrip('/').rsplit('/', 1)[-1]
+      base_obj['id'] = self.post_id(url)
 
     return base_obj
+
+  @classmethod
+  def post_id(cls, url):
+    """Guesses the post id of the given URL.
+
+    Returns: string, or None
+    """
+    return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
   def _content_for_create(self, obj):
     """Returns the content text to use in create() and preview_create().

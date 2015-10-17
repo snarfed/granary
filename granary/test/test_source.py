@@ -378,3 +378,9 @@ class SourceTest(testutil.TestCase):
     self.expect_requests_head('http://foo/bar', redirected_url='http://final')
     self.mox.ReplayAll()
     self.assert_equals('http://final', source.follow_redirects('foo/bar').url)
+
+  def test_post_id(self):
+    self.assertEquals('1', self.source.post_id('http://x/y/1'))
+    self.assertEquals('1', self.source.post_id('http://x/y/1/'))
+    self.assertIsNone(self.source.post_id('http://x/'))
+    self.assertIsNone(self.source.post_id(''))

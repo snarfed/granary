@@ -298,7 +298,7 @@ class Instagram(source.Source):
                       'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
 
       if not base_id:
-        shortcode = urlparse.urlparse(base_url).path.rstrip('/').rsplit('/', 1)[-1]
+        shortcode = self.post_id(base_url)
         logging.debug('looking up media by shortcode %s', shortcode)
         media_entry = self.urlopen(API_MEDIA_SHORTCODE_URL % shortcode) or {}
         base_id = media_entry.get('id')
