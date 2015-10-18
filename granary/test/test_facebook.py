@@ -1127,6 +1127,13 @@ class FacebookTest(testutil.HandlerTest):
     post['message_tags'] = tags[0] + tags[1]  # both lists
     self.assert_equals(POST_OBJ, self.facebook.post_to_object(post))
 
+  def test_post_to_object_with_photo(self):
+    post = copy.copy(POST)
+    post['likes'] = 5  # count instead of actual like objects
+    obj = copy.copy(POST_OBJ)
+    obj['tags'] = [t for t in obj['tags'] if t.get('verb') != 'like']
+    self.assert_equals(obj, self.facebook.post_to_object(post))
+
   def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.facebook.comment_to_object(cmt))

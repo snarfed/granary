@@ -842,14 +842,16 @@ class Facebook(source.Source):
         'length': t.get('length'),
         }) for t in tags]
 
-    obj['tags'] += [self.postprocess_object({
-        'id': '%s_liked_by_%s' % (obj['id'], like.get('id')),
-        'url': url,
-        'objectType': 'activity',
-        'verb': 'like',
-        'object': {'url': url},
-        'author': self.user_to_actor(like),
-        }) for like in post.get('likes', {}).get('data', [])]
+    likes = post.get('likes')
+    if isinstance(likes, dict):
+      obj['tags'] += [self.postprocess_object({
+          'id': '%s_liked_by_%s' % (obj['id'], like.get('id')),
+          'url': url,
+          'objectType': 'activity',
+          'verb': 'like',
+          'object': {'url': url},
+          'author': self.user_to_actor(like),
+          }) for like in likes.get('data', [])]
 
     # Escape HTML characters: <, >, &. Have to do it manually, instead of
     # reusing e.g. cgi.escape, so that we can shuffle over each tag startIndex
