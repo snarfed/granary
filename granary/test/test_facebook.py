@@ -27,7 +27,7 @@ USER = {  # Facebook
   'username': 'snarfed.org',
   'location': {'id': '123', 'name': 'San Francisco, California'},
   'updated_time': '2012-01-06T02:11:04+0000',
-  'bio': 'something about me',
+  'bio': 'something about me http://in.description.com',
   'website': 'https://snarfed.org/',
   }
 ACTOR = {  # ActivityStreams
@@ -38,8 +38,11 @@ ACTOR = {  # ActivityStreams
   'numeric_id': '212038',
   'updated': '2012-01-06T02:11:04+00:00',
   'url': 'https://snarfed.org',
+  'urls': [{'value': 'https://snarfed.org'},
+           {'value': 'http://in.description.com'},
+           ],
   'username': 'snarfed.org',
-  'description': 'something about me',
+  'description': 'something about me http://in.description.com',
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
 PAGE = {  # Facebook
@@ -49,7 +52,7 @@ PAGE = {  # Facebook
   'name': 'Civic Hall',
   'username': 'CivicHallNYC',
   'website': 'http://www.civichall.org',
-  'about': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City.',
+  'about': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City. https://in.about.net',
   'link': 'https://www.facebook.com/CivicHallNYC',
   'category': 'Community organization',
   'category_list': [{'id': '2260', 'name': 'Community Organization'}],
@@ -58,7 +61,7 @@ PAGE = {  # Facebook
     'cover_id': '971136052912927',
     'source': 'https://fbcdn-sphotos-g-a.akamaihd.net/hphotos-ak-xap1/v/t1.0-9/s720x720/11406_971136052912927_5570221582083271369_n.png?oh=c95b8aeba2c4ec8fd83c01121429bbd6&oe=552D0DBC&__gda__=1433139526_96765d58172d428585a70e0503431a6d',
   },
-  'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful event space...',
+  'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful http://in.description.gov event space...',
   'is_community_page': False,
   'is_published': True,
   'likes': 357,
@@ -77,9 +80,13 @@ PAGE_ACTOR = {  # ActivityStreams
   'numeric_id': '946432998716566',
   'displayName': 'Civic Hall',
   'url': 'http://www.civichall.org',
+  'urls': [{'value': 'http://www.civichall.org'},
+           {'value': 'https://in.about.net'},
+           {'value': 'http://in.description.gov'},
+           ],
   'image': {'url': 'https://graph.facebook.com/v2.2/946432998716566/picture?type=large'},
-  'summary': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City.',
-  'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful event space...',
+  'summary': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City. https://in.about.net',
+  'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful http://in.description.gov event space...',
   # 'location': {},  # TODO
   }
 COMMENTS = [{  # Facebook
@@ -632,7 +639,7 @@ ATOM = """\
 <id>%(host_url)s</id>
 <title>User feed for Ryan Barrett</title>
 
-<subtitle>something about me</subtitle>
+<subtitle>something about me http://in.description.com</subtitle>
 
 <logo>https://graph.facebook.com/v2.2/212038/picture?type=large</logo>
 <updated>2012-03-04T18:20:37+00:00</updated>
@@ -1233,8 +1240,10 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_user_to_actor_url_fallback(self):
     user = copy.deepcopy(USER)
-    del user['website']
     actor = copy.deepcopy(ACTOR)
+    del user['website']
+    del actor['urls']
+    user['bio'] = actor['description'] = 'no links'
     actor['url'] = user['link']
     self.assert_equals(actor, self.facebook.user_to_actor(user))
 

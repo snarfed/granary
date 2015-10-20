@@ -1053,12 +1053,15 @@ class Facebook(source.Source):
       })
 
     # extract web site links. extract_links uniquifies and preserves order
-    urls = util.extract_links(user.get('website'))
-    if not urls:
-      urls = util.extract_links(user.get('link')) or [self.user_url(handle)]
-    actor['url'] = urls[0]
-    if len(urls) > 1:
-      actor['urls'] = [{'value': u} for u in urls]
+    urls = (sum((util.extract_links(user.get(field)) for field in
+                ('website', 'about', 'bio', 'description')),
+                []) or
+            util.extract_links(user.get('link')) or
+            [self.user_url(handle)])
+    if urls:
+      actor['url'] = urls[0]
+      if len(urls) > 1:
+        actor['urls'] = [{'value': u} for u in urls]
 
     location = user.get('location')
     if location:
