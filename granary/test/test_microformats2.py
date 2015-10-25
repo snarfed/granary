@@ -62,7 +62,7 @@ class Microformats2Test(testutil.HandlerTest):
     self.assertFalse(obj.get('image'))
 
   def test_nested_compound_url_object(self):
-    mf2 = {'type': ['h-as-repost'],
+    mf2 = {'type': ['h-as-share'],
            'properties': {
              'repost-of': [{
                'type': ['h-outer'],
@@ -85,9 +85,12 @@ class Microformats2Test(testutil.HandlerTest):
         'value': 'Entity < link too',
       }]},
      }, microformats2.object_to_json({
+       'verb': 'post',
+       'object': {
         'content': 'Entity &lt; link too',
         'tags': [{'url': 'http://my/link', 'startIndex': 12, 'length': 8}]
-      }))
+       }
+     }))
 
   def test_object_to_json_note_with_in_reply_to(self):
     self.assertEquals({
@@ -100,17 +103,20 @@ class Microformats2Test(testutil.HandlerTest):
         'in-reply-to': ['http://reply/target'],
       },
     }, microformats2.object_to_json({
+      'verb': 'post',
+      'object': {
         'content': '@hey great post',
-      }, ctx={
+      },
+      'context': {
         'inReplyTo': [{
           'url': 'http://reply/target',
-        }]
-      }))
+        }],
+      }}))
 
   def test_object_to_html_note_with_in_reply_to(self):
     expected = """\
 <article class="h-entry">
-<span class="u-uid"></span>
+<span class="p-uid"></span>
 <div class="e-content p-name">
 @hey great post
 </div>
@@ -118,11 +124,15 @@ class Microformats2Test(testutil.HandlerTest):
 </article>
 """
     result = microformats2.object_to_html({
-      'content': '@hey great post',
-    }, ctx={
-      'inReplyTo': [{
-        'url': 'http://reply/target',
-      }]
+      'verb': 'post',
+      'context': {
+        'inReplyTo': [{
+          'url': 'http://reply/target',
+        }],
+      },
+      'object': {
+        'content': '@hey great post',
+      }
     })
     self.assertEquals(re.sub('\n\s*', '\n', expected),
                       re.sub('\n\s*', '\n', result))
@@ -171,10 +181,10 @@ foo
   def test_render_content_location(self):
     self.assert_equals("""\
 foo
-<div class="h-card p-location">
-  <div class="p-name"><a class="u-url" href="http://my/place">My place</a></div>
+<span class="p-location h-card h-as-location">
+  <a class="p-name u-url" href="http://my/place">My place</a>
 
-</div>
+</span>
 """, microformats2.render_content({
         'content': 'foo',
         'location': {
@@ -186,12 +196,12 @@ foo
   def test_escape_html_attribute_values(self):
     self.assert_equals("""\
 <article class="h-entry">
-<span class="u-uid"></span>
+<span class="p-uid"></span>
 
-<div class="h-card p-author">
-<div class="p-name">a " b ' c</div>
+<span class="p-author h-card">
+<span class="p-name">a " b ' c</span>
 <img class="u-photo" src="img" alt="" />
-</div>
+</span>
 
 <div class="e-content p-name">
 

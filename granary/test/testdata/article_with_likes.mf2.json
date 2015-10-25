@@ -3,7 +3,7 @@
   "properties": {
     "url": ["http://example.com/abc"],
     "like": [{
-      "type": ["h-entry", "h-as-like"],
+      "type": ["h-cite", "h-as-like"],
       "properties": {
         "author": [{
           "type": ["h-card"],
@@ -17,7 +17,7 @@
         "like-of": ["http://example.com/abc"]
       }
     }, {
-      "type": ["h-entry", "h-as-like"],
+      "type": ["h-cite", "h-as-like"],
       "properties": {
         "url": ["http://example.com/anonymous/like"],
         "like": ["http://example.com/abc"],

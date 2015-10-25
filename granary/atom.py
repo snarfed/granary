@@ -48,7 +48,22 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     obj = a.get('object', {})
     # Render content as HTML; escape &s
     content = obj.get('content')
-    obj['rendered_content'] = _encode_ampersands(microformats2.render_content(obj))
+    rendered = []
+
+    for target_type, participle in ('share', 'Shared'), ('like', 'Liked'):
+      if source.object_type(a) == target_type:
+        if 'author' in obj and 'url' in obj:
+          rendered.append(
+            '<p>%s <a href="%s">a post</a> by <a href="%s">%s</a></p>' % (
+              participle, obj.get('url'), obj.get('author', {}).get('url'),
+              obj.get('author', {}).get('displayName')))
+        else:
+          rendered.append(
+            '<p>%s <a href="%s">a post</a>' % (
+              participle, obj.get('url', '#')))
+
+    rendered.append(microformats2.render_content(obj))
+    obj['rendered_content'] = _encode_ampersands('\n'.join(rendered))
 
     # Make sure every activity has the title field, since Atom <entry> requires
     # the title element.

@@ -192,7 +192,9 @@ class Twitter(source.Source):
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
-        if user_id in (None, source.ME):
+        if user_id == source.ME:
+          user_id = None
+        if not user_id:
           url = API_SELF_TIMELINE_URL % (count + start_index)
         else:
           url = API_USER_TIMELINE_URL % {
@@ -781,15 +783,19 @@ class Twitter(source.Source):
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     obj = self.tweet_to_object(tweet)
-    retweeted = tweet.get('retweeted_status')
     activity = {
-      'verb': 'share' if retweeted else 'post',
+      'verb': 'post',
       'published': obj.get('published'),
       'id': obj.get('id'),
       'url': obj.get('url'),
       'actor': obj.get('author'),
       'object': obj,
       }
+
+    retweeted = tweet.get('retweeted_status')
+    if retweeted:
+      activity['verb'] = 'share'
+      activity['object'] = self.tweet_to_object(retweeted)
 
     in_reply_to = obj.get('inReplyTo')
     if in_reply_to:

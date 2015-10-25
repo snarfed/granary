@@ -510,10 +510,10 @@ ATOM = """\
 <img class="thumbnail" src="http://p.twimg.com/picture2" alt="" />
 </a>
 </p>
-<div class="h-card p-location">
-<div class="p-name"><a class="u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a></div>
+<span class="p-location h-card h-as-location">
+<a class="p-name u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a>
 
-</div>
+</span>
 
   </div>
   </content>
@@ -967,15 +967,37 @@ class TwitterTest(testutil.TestCase):
   def test_tweet_to_activity_on_retweet(self):
     self.assert_equals({
         'verb': 'share',
+        'url': 'https://twitter.com/rt_author/status/444',
+        'actor': {
+            'displayName': 'rt_author',
+            'id': tag_uri('rt_author'),
+            'image': {'url': 'https://twitter.com/rt_author/profile_image?size=original'},
+            'objectType': 'person',
+            'url': 'https://twitter.com/rt_author',
+            'username': 'rt_author'
+          },
+        'id': tag_uri(444),
         'object': {
+          'author': {
+            'displayName': 'orig_author',
+            'id': tag_uri('orig_author'),
+            'image': {'url': 'https://twitter.com/orig_author/profile_image?size=original'},
+            'objectType': 'person',
+            'url': 'https://twitter.com/orig_author',
+            'username': 'orig_author'
+          },
           'objectType': 'note',
-          'content': 'RT <a href="https://twitter.com/orig_author">@orig_author</a>: my long original tweet',
+          'content': 'my long original tweet',
+          'id': tag_uri(333),
+          'url': 'https://twitter.com/orig_author/status/333',
           }
         },
       self.twitter.tweet_to_activity({
         'id_str': '444',
         'text': 'truncated',
+        'user': {'id': 888, 'screen_name': 'rt_author'},
         'retweeted_status': {
+          'id_str': '333',
           'text': 'my long original tweet',
           'user': {'id': 777, 'screen_name': 'orig_author'},
           },
