@@ -113,7 +113,8 @@ class Twitter(source.Source):
   <script async defer src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
   <br />
   <blockquote class="twitter-tweet" lang="en" data-dnt="true">
-  <p><a href="%(url)s">%(content)s</a></p>
+  <p>%(content)s
+  <a href="%(url)s">#</a></p>
   </blockquote>
   """
 
