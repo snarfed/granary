@@ -192,7 +192,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       if not isinstance(objs, list):
         objs = [objs]
       ret['properties'][prop + '-of'] = ret['properties'][prop] = [
-        o['url'] if 'url' in o and len(o) == 1
+        o['url'] if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
         for o in objs]
     else:
