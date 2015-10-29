@@ -714,6 +714,7 @@ class Twitter(source.Source):
       ret = summary or content or name
     else:
       ret = summary or name or content
+
     return ret.strip() if ret else None
 
   def urlopen(self, url, parse_response=True, **kwargs):

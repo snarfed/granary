@@ -10,9 +10,11 @@ import urlparse
 import string
 import xml.sax.saxutils
 
-from mf2py import parser
+import mf2py
+import mf2util
 from oauth_dropins.webutil import util
 import source
+
 
 HENTRY = string.Template("""\
 <article class="$types">
@@ -223,40 +225,41 @@ def json_to_object(mf2):
   rsvp_verb = 'rsvp-%s' % rsvp if rsvp else None
   author = json_to_object(prop.get('author'))
 
-  # maps mf2 type to ActivityStreams objectType and optional verb. ordered by
-  # priority.
-  types = mf2.get('type', [])
-  types_map = [
-    ('h-as-rsvp', 'activity', rsvp_verb),
-    ('h-as-share', 'activity', 'share'),
-    ('h-as-like', 'activity', 'like'),
-    ('h-as-comment', 'comment', None),
-    ('h-as-reply', 'comment', None),
-    ('h-as-location', 'place', None),
-    ('h-card', 'person', None),
-    ]
+  # maps mf2 class to a mf2 type. ordered by priority. these explicit
+  # h-as-* types can override implicit post type discovery.
+  h_class_overrides = [
+    ('h-as-rsvp', 'rsvp'),
+    ('h-as-share', 'repost'),
+    ('h-as-like', 'like'),
+    ('h-as-comment', 'reply'),
+    ('h-as-reply', 'reply'),
+    ('h-as-article', 'article'),
+    ('h-as-note', 'note'),
+    ('h-as-location', 'location'),
+    ('h-card', 'person'),
+  ]
 
-  # fallback if none of the above mf2 types are found. maps property (if it
-  # exists) to objectType and verb. ordered by priority.
-  prop_types_map = [
-    ('rsvp', 'activity', rsvp_verb),
-    ('invitee', 'activity', 'invite'),
-    ('repost-of', 'activity', 'share'),
-    ('like-of', 'activity', 'like'),
-    ('in-reply-to', 'comment', None),
-    ]
+  # maps mf2 type to ActivityStreams objectType and optional verb.
+  mf2_type_to_as_type = {
+    'rsvp': ('activity', rsvp_verb),
+    'invite': ('activity', 'invite'),
+    'repost': ('activity', 'share'),
+    'like': ('activity', 'like'),
+    'reply': ('comment', None),
+    'person': ('person', None),
+    'location': ('place', None),
+    'note': ('note', None),
+    'photo': ('note', None),
+    'article': ('article', None),
+  }
 
-  for mf2_type, as_type, as_verb in types_map:
-    if mf2_type in types:
+  for h_class, mf2_type in h_class_overrides:
+    if h_class in mf2.get('type', []):
       break  # found
   else:
-    for p, as_type, as_verb in prop_types_map:
-      if p in props:
-        break
-    else:
-      # default
-      as_type = 'note' if 'h-as-note' in types else 'article'
-      as_verb = None
+    mf2_type = mf2util.post_type_discovery(mf2)
+
+  as_type, as_verb = mf2_type_to_as_type.get(mf2_type, (None, None))
 
   photos = [url for url in get_string_urls(props.get('photo', []))
             # filter out relative and invalid URLs (mf2py gives absolute urls)
@@ -310,7 +313,7 @@ def html_to_activities(html, url=None):
 
   Returns: list of ActivityStreams activity dicts
   """
-  parsed = parser.Parser(doc=html, url=None).to_dict()
+  parsed = mf2py.parse(doc=html, url=None)
   hfeed = find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
   return [{'object': json_to_object(item)} for item in items]

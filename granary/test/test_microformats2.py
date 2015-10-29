@@ -14,10 +14,10 @@ from granary import testutil
 
 class Microformats2Test(testutil.HandlerTest):
 
-  def test_properties_override_h_as_article(self):
+  def test_post_type_discovery(self):
     for prop, verb in ('like-of', 'like'), ('repost-of', 'share'):
       obj = microformats2.json_to_object(
-        {'type': ['h-entry', 'h-as-note'],
+        {'type': ['h-entry'],
           'properties': {prop: ['http://foo/bar']}})
       self.assertEquals('activity', obj['objectType'])
       self.assertEquals(verb, obj['verb'])

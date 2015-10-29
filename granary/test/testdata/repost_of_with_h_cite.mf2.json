@@ -1,5 +1,5 @@
 {
-  "type" : ["h-entry", "h-as-note"],
+  "type" : ["h-entry"],
   "properties" : {
     "repost-of" : [
       "http://example.com/bare-repost",

@@ -48,7 +48,7 @@ HTML = """\
 <html>
 <head><meta charset="utf-8"></head>
 <body%s>
-<article class="h-entry h-as-article">
+<article class="h-entry h-as-note">
   <span class="p-uid"></span>
 
   <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
@@ -57,17 +57,17 @@ HTML = """\
   <div class="e-content p-name">
 
   foo bar
-  </div>
+</div>
 
 </article>
 
-<article class="h-entry h-as-article">
+<article class="h-entry h-as-note">
   <span class="p-uid"></span>
 
   <div class="e-content p-name">
 
   baz baj
-  </div>
+</div>
 
 </article>
 
@@ -83,7 +83,7 @@ ATOM_CONTENT = """\
 <br />
 <br />
   %s<br />
-  
+
   </div>
   </content>
 """
