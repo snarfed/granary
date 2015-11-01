@@ -1,5 +1,5 @@
 ![Granary](https://raw.github.com/snarfed/granary/master/static/granary_logo_128.png)
-granary
+granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary)
 ===
 
 [Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API
