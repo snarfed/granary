@@ -1752,34 +1752,36 @@ cc Sam G, Michael M<br />""", preview.description)
       resolve_numeric_id=True))
 
   def test_parse_id(self):
+    def check(expected, id, is_comment):
+      got = facebook.Facebook.parse_id(id, is_comment=is_comment)
+      self.assertEquals(facebook.FacebookId(*expected), got,
+                        '%s %s, got %s' % (id, is_comment, got))
+
+    blank = facebook.FacebookId(None, None, None)
+
     # bad
-    for id in (None, '', 'abc', '12_34^56', '12:34', '12_34_56_78', '12__34',
-               '_12_34', '12_34_', '12:34:56_', '12:34:', ':12:34'):
-      for type in 'user', 'post', 'comment':
-        self.assertIsNone(facebook.Facebook.parse_id(id, type))
+    for id in (None, '', 'abc', '12_34^56', '12_34_56_78', '12__34',
+               '_12_34', '12_34_', '12:34:', ':12:34'):
+      for is_comment in True, False:
+        check((None, None, None), id, is_comment)
 
-    # underscore format
-    for id, type, expected in (
-        ('12', 'user', ('12', None, None)),
-        ('12', 'post', (None, '12', None)),
-        ('12', 'comment', (None, None, '12')),
-        ('12_34', 'user', None),
-        ('12_34', 'post', ('12', '34', None)),
-        ('12_34', 'comment', (None, '12', '34')),
-        ('12_34_56', 'user', None),
-        ('12_34_56', 'post', None),
-        ('12_34_56', 'comment', ('12', '34', '56'))):
-      self.assertEquals(expected, facebook.Facebook.parse_id(id, type))
+    # these depend on is_comment
+    check((None, '12', None), '12', False)
+    check((None, None, '12'),'12',  True)
+    check(('12', '34', None), '12_34', False)
+    check((None, '12', '34'), '12_34', True)
 
-    # colon format
-    for id, type, expected in (
-        ('12:34:56', 'user', None),
-        ('12:34:56', 'post', ('12', '34', None)),
-        ('12:34:56', 'comment', ('12', '34', None)),
-        ('12:34:56_78', 'user', None),
-        ('12:34:56_78', 'post', ('12', '34', '78')),
-        ('12:34:56_78', 'comment', ('12', '34', '78'))):
-      self.assertEquals(expected, facebook.Facebook.parse_id(id, type))
+    # these don't
+    for id, expected in (
+        ('12_34_56', ('12', '34', '56')),
+        ('12:34:56', ('12', '34', None)),
+        ('12:34:56_78', ('12', '34', '78')),
+        ('12:34:56_', ('12', '34', None)),
+        ('34:56', (None, '34', None)),
+        ('34:56_78', (None, '34', '78')),
+      ):
+      check(expected, id, False)
+      check(expected, id, True)
 
   def test_urlopen_batch(self):
     self.expect_urlopen('',

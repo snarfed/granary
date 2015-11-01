@@ -602,11 +602,10 @@ class Facebook(source.Source):
     if not fb_id:
       return None
 
-    id = self.parse_id(fb_id, 'post')
-    if id:
-      author_id = id.user or post.get('from', {}).get('id')
-      if author_id:
-        return 'https://www.facebook.com/%s/posts/%s' % (author_id, id.post)
+    id = self.parse_id(fb_id)
+    author_id = id.user or post.get('from', {}).get('id')
+    if author_id and id.post:
+      return 'https://www.facebook.com/%s/posts/%s' % (author_id, id.post)
 
     return self.object_url(fb_id)
 
@@ -732,9 +731,9 @@ class Facebook(source.Source):
       'object': obj,
       }
 
-    id = self.parse_id(activity['fb_id'], 'post')
-    if id:
-      activity['id'] = self.tag_uri(id.post)
+    post_id = self.parse_id(activity['fb_id']).post
+    if post_id:
+      activity['id'] = self.tag_uri(post_id)
 
     application = post.get('application')
     if application:
@@ -744,17 +743,17 @@ class Facebook(source.Source):
         }
     return self.postprocess_activity(activity)
 
-  def post_to_object(self, post, _type='post'):
+  def post_to_object(self, post, is_comment=False):
     """Converts a post to an object.
 
     Args:
       post: dict, a decoded JSON post
-      _type: either 'post' or 'comment'
+      is_comment: True if post is actually a comment
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    assert _type in ('post', 'comment')
+    assert is_comment in (True, False)
 
     fb_id = post.get('id')
     post_type = post.get('type')
@@ -793,9 +792,12 @@ class Facebook(source.Source):
       else:
         object_type = 'note'
 
-    id = self.parse_id(fb_id, _type)
-    if not id:
+    id = self.parse_id(fb_id, is_comment=is_comment)
+    if is_comment and not id.comment:
       return {}
+    elif not is_comment and not id.post:
+      return {}
+
     obj = {
       'id': self.tag_uri(id.post),
       'fb_id': fb_id,
@@ -950,7 +952,7 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    obj = self.post_to_object(comment, _type='comment')
+    obj = self.post_to_object(comment, is_comment=True)
     if not obj:
       return obj
 
@@ -958,8 +960,8 @@ class Facebook(source.Source):
 
     fb_id = comment.get('id')
     obj['fb_id'] = fb_id
-    id = self.parse_id(fb_id, 'comment')
-    if not id:
+    id = self.parse_id(fb_id, is_comment=True)
+    if not id.comment:
       return None
 
     post_id = id.post or post_id
@@ -1215,8 +1217,8 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     return util.trim_nulls(post)
 
   @staticmethod
-  def parse_id(id, type):
-    """Parses a Facebook id.
+  def parse_id(id, is_comment=False):
+    """Parses a Facebook post or comment id.
 
     Facebook ids come in different formats:
     * Simple number, usually a user or post: 12
@@ -1226,6 +1228,8 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
       (We're guessing that the third part is a shard in some FB internal system.
       In our experience so far, it's always either 63 or the app-scoped user id
       for 63.)
+    * Two numbers with colon, POST:SHARD: 12:34
+      (We've seen 0 as shard in this format.)
     * Four numbers with colons/underscore, USER:POST:SHARD_COMMENT: 12:34:63_56
 
     Background:
@@ -1234,33 +1238,59 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
 
     Args:
       id: string or integer
-      type: 'user', 'post', or 'comment'
+      is_comment: boolean
 
-    Returns: FacebookId or None
+    Returns: FacebookId. Some or all fields may be None.
     """
-    assert type in ('user', 'post', 'comment')
+    assert is_comment in (True, False), is_comment
+
+    blank = FacebookId(None, None, None)
     if id is None or id == '':
-      return None
+      return blank
+
     id = str(id)
+    user = None
+    post = None
+    comment = None
 
-    match = re.match(r'^(\d+):(\d+):\d+(?:_(\d+))?$', id)
-    if match and type != 'user':
-      return FacebookId(*match.groups())
+    by_colon = id.split(':')
+    by_underscore = id.split('_')
 
-    match = re.match(r'^(\d+)(?:_(\d+))?(?:_(\d+))?$', id)
-    if match:
-      first, second, third = match.groups()
-      if type == 'user' and not second and not third:
-        return FacebookId(first, second, third)
-      elif type == 'post' and not third:
-        return (FacebookId(first, second, None) if second
-                else FacebookId(None, first, None))
-      elif type == 'comment':
-        return (FacebookId(first, second, third) if second and third
-                else FacebookId(None, first, second) if second
-                else FacebookId(None, None, first))
+    # colon id?
+    if len(by_colon) in (2, 3) and all(by_colon):
+      if len(by_colon) == 3:
+        user = by_colon.pop(0)
+      post, shard = by_colon
+      parts = shard.split('_')
+      if len(parts) >= 2 and parts[-1]:
+        comment = parts[-1]
+    elif len(by_colon) == 2 and all(by_colon):
+      post = by_colon[0]
+    # underscore id?
+    elif len(by_underscore) == 3 and all(by_underscore):
+      user, post, comment = by_underscore
+    elif len(by_underscore) == 2 and all(by_underscore):
+      if is_comment:
+        post, comment = by_underscore
+      else:
+        user, post = by_underscore
+    # plain number?
+    elif util.is_int(id):
+      if is_comment:
+        comment = id
+      else:
+        post = id
 
-    logging.error('Cowardly refusing comment with unknown id format: %s', id)
+    fbid = FacebookId(user, post, comment)
+
+    for sub_id in user, post, comment:
+      if sub_id and not re.match(r'^[0-9a-zA-Z]+$', sub_id):
+        fbid = blank
+
+    if fbid == blank:
+      logging.error('Cowardly refusing Facebook id with unknown format: %s', id)
+
+    return fbid
 
   def urlopen(self, relative_url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
