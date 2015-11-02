@@ -7,8 +7,7 @@ import json
 import urllib
 
 from oauth_dropins.webutil import util
-from oauth_dropins import appengine_config as od_appengine_config
-from granary import appengine_config
+from oauth_dropins import appengine_config
 from granary import flickr
 from granary import source
 from granary import testutil
