@@ -1344,6 +1344,49 @@ class TwitterTest(testutil.TestCase):
     result = self.twitter.preview_create(obj, include_link=True)
     self.assertIn(u'too long… (<a href="http://obj.ca">obj.ca</a>)',result.content)
 
+  def test_create_recognize_note(self):
+    """Use post-type-discovery to recognize a note with non-trivial html
+    content (and no explicit h-as-* type).  We'll know it was
+    successful if it respects the rich content and includes newlines
+    in the output.
+    """
+
+    obj = microformats2.json_to_object({
+      "type": ["h-entry"],
+      "properties": {
+        "author": [
+          {
+            "properties": {
+              "name": ["Tantek \u00c7elik"],
+              "photo": ["http://tantek.com/logo.jpg"],
+              "url": ["http://tantek.com/"]
+            },
+            "type": ["h-card"],
+            "value": "",
+          }
+        ],
+        "content": [
+          {
+            "html": "https://instagram.com/p/9XVBIRA9cj/\n\nSocial Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.",
+            "value": " https://instagram.com/p/9XVBIRA9cj/Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan."
+          }
+        ],
+        "name": ["https://instagram.com/p/9XVBIRA9cj/Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan."],
+        "photo": ["https://igcdn-photos-b-a.akamaihd.net/hphotos-ak-xaf1/t51.2885-15/e35/12145332_1662314194043465_2009449288_n.jpg"],
+        "published": ["2015-10-27T19:48:00-0700"],
+        "syndication": [
+          "https://www.facebook.com/photo.php?fbid=10101948228396473",
+          "https://twitter.com/t/status/659200761427980288"
+        ],
+        "uid": ["http://tantek.com/2015/300/t1/social-web-session-w3c-tpac2015"],
+        "updated": ["2015-10-27T19:48:00-0700"],
+        "url": ["http://tantek.com/2015/300/t1/social-web-session-w3c-tpac2015"],
+      },
+    })
+
+    result = self.twitter.preview_create(obj, include_link=False)
+    self.assertIn('instagram.com/p/9XVBIRA9cj</a>\n\nSocial Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.', result.content)
+
   def test_create_reply(self):
     # tuples: (content, in-reply-to url, expected tweet)
     testdata = (
