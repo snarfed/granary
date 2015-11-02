@@ -495,15 +495,19 @@ class Instagram(source.Source):
     if not id or not username:
       return actor
 
-    url = user.get('website')
-    if not url:
-      url = self.user_url(username)
+    urls = sum((util.extract_links(user.get(field)) for field in ('website', 'bio')),
+               [])
+    if urls:
+      actor['url'] = urls[0]
+      if len(urls) > 1:
+        actor['urls'] = [{'value': u} for u in urls]
+    else:
+      actor['url'] = self.user_url(username)
 
     actor.update({
       'objectType': 'person',
       'displayName': user.get('full_name') or username,
       'image': {'url': user.get('profile_picture')},
-      'url': url,
       'description': user.get('bio')
     })
 

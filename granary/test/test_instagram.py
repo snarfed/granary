@@ -27,8 +27,8 @@ def tag_uri(name):
 # The Instagram API returns objects with attributes, not JSON dicts.
 USER = {  # Instagram
   'username': 'snarfed',
-  'bio': 'foo',
-  'website': 'http://snarfed.org/',
+  'bio': 'foo https://asdf.com bar',
+  'website': 'http://snarfed.org',
   'profile_picture': 'http://picture/ryan',
   'full_name': 'Ryan B',
   'counts': {
@@ -42,10 +42,12 @@ ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'id': tag_uri('420973239'),
   'username': 'snarfed',
-  'url': 'http://snarfed.org/',
+  'url': 'http://snarfed.org',
+  'urls': [{'value': 'http://snarfed.org'},
+           {'value': 'https://asdf.com'}],
   'displayName': 'Ryan B',
   'image': {'url': 'http://picture/ryan'},
-  'description': 'foo',
+  'description': 'foo https://asdf.com bar',
 }
 COMMENTS = [{  # Instagram
   'created_time': '1349588757',
@@ -209,10 +211,12 @@ POST_OBJ = {  # ActivityStreams
       'objectType': 'person',
       'id': tag_uri('420973239'),
       'username': 'snarfed',
-      'url': 'http://snarfed.org/',
+      'url': 'http://snarfed.org',
+      'urls': [{'value': 'http://snarfed.org'},
+               {'value': 'https://asdf.com'}],
       'displayName': 'Ryan B',
       'image': {'url': 'http://picture/ryan'},
-      'description': 'foo',
+      'description': 'foo https://asdf.com bar',
       }, {
       'objectType': 'hashtag',
       'id': tag_uri('abc'),
@@ -279,7 +283,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'id': tag_uri('9'),
       'displayName': 'Bob',
       'username': 'bobbb',
-      'url': 'http://bob.com/',
+      'url': 'http://bob.com',
       'image': {'url': 'http://bob/picture'},
       },
     },
@@ -353,17 +357,17 @@ ATOM = """\
 <id>%(host_url)s</id>
 <title>User feed for Ryan B</title>
 
-<subtitle>foo</subtitle>
+<subtitle>foo https://asdf.com bar</subtitle>
 
 <logo>http://picture/ryan</logo>
 <updated>2012-09-22T05:25:42</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://snarfed.org/</uri>
+ <uri>http://snarfed.org</uri>
  <name>Ryan B</name>
 </author>
 
-<link href="http://snarfed.org/" rel="alternate" type="text/html" />
+<link href="http://snarfed.org" rel="alternate" type="text/html" />
 <link rel="avatar" href="http://picture/ryan" />
 <link href="%(request_url)s" rel="self" type="application/atom+xml" />
 
@@ -371,7 +375,7 @@ ATOM = """\
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://snarfed.org/</uri>
+ <uri>http://snarfed.org</uri>
  <name>Ryan B</name>
 </author>
 
@@ -394,15 +398,15 @@ this picture -&gt; is #abc #xyz
 
 </span>
 
-<a class="tag" href="http://snarfed.org/">Ryan B</a>
+<a class="tag" href="http://snarfed.org">Ryan B</a>
   </div>
   </content>
 
   <link rel="alternate" type="text/html" href="http://instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="http://instagram.com/p/ABC123/" />
 
-    <link rel="ostatus:attention" href="http://snarfed.org/" />
-    <link rel="mentioned" href="http://snarfed.org/" />
+    <link rel="ostatus:attention" href="http://snarfed.org" />
+    <link rel="mentioned" href="http://snarfed.org" />
 
     <link rel="ostatus:attention" href="" />
     <link rel="mentioned" href="" />
@@ -583,8 +587,11 @@ class InstagramTest(testutil.HandlerTest):
   def test_user_to_actor_url_fallback(self):
     user = copy.deepcopy(USER)
     del user['website']
+    del user['bio']
     actor = copy.deepcopy(ACTOR)
     actor['url'] = 'http://instagram.com/snarfed'
+    del actor['urls']
+    del actor['description']
     self.assert_equals(actor, self.instagram.user_to_actor(user))
 
   def test_user_to_actor_displayName_fallback(self):
