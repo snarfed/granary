@@ -8,13 +8,13 @@ import copy
 import itertools
 import urlparse
 import string
+import re
 import xml.sax.saxutils
 
 import mf2py
 import mf2util
 from oauth_dropins.webutil import util
 import source
-
 
 HENTRY = string.Template("""\
 <article class="$types">
@@ -43,13 +43,6 @@ HCARD = string.Template("""\
   </span>
 """)
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
-# Simplified version of a nested post, for use in the outer post's content
-HCITE_AS_CONTENT = string.Template("""\
-$participle $linked_name by $author
-<div>
-  $content
-</div>
-""")
 
 
 def get_string_urls(objs):
@@ -194,6 +187,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       if not isinstance(objs, list):
         objs = [objs]
       ret['properties'][prop + '-of'] = ret['properties'][prop] = [
+        # flatten contexts that are just a url
         o['url'] if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
         for o in objs]
@@ -373,6 +367,55 @@ def json_to_html(obj, parent_props=[]):
 
   Returns: string HTML
   """
+  def render_target_as_content(hcite, mftype, participle, first):
+    """Generate a simplified rendering of an h-cite to use in the
+    e-content of the outer post. Somewhat confusingly, this rendering
+    *cannot* include mf2 property classes, or those properties would be
+    hoisted to the outer h-entry.
+
+    Args:
+      hcite: dict or string, json-mf2 object for the nested h-cite or
+        simple URL of the target
+      mftype: string, mf2 type of nested h-cite (like or repost)
+      participle: string, the past-tense form of the verb that describes this
+        post's relation to its containing post (e.g. "Shared")
+      first: boolean, whether this is the first target of its kind.
+
+    Returns: string, rendered html
+    """
+    if isinstance(hcite, basestring):
+      return '<a class="u-%s u-%s-of" href="%s">%s</a>' % (
+        mftype, mftype, hcite, ('%ss this.' % mftype) if first else '')
+
+    prop = first_props(hcite['properties'])
+    content = prop.get('content', {})
+    content_html = content.get('html', content.get('value', ''))
+    url = prop.get('url', '#')
+
+    # remove the author photo, looks bad in the simple rendering
+    author = copy.deepcopy(prop.get('author', prop.get('actor', {})))
+    if author and 'photo' in author['properties']:
+      del author['properties']['photo']
+
+    if mftype == 'repost':
+      m = re.match('https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/(.*)', url)
+      if m:
+        return 'RT <a href="%s">@%s</a> %s' % (
+          author.get('properties', {}).get('url', ['#'])[0],
+          m.group(1),
+          content_html,
+        )
+
+    # Simplified version of the nested post, without mf2 properties
+    return '%s <a href="%s">%s</a> by %s<div>%s</div>' % (
+        participle,
+        url or '#',
+        prop.get('name', 'a post'),
+        # class="h-card" is ok, but make sure not to give it p-author
+        hcard_to_html(author),
+        content_html,
+      )
+
   if not obj:
     return ''
 
@@ -406,32 +449,28 @@ def json_to_html(obj, parent_props=[]):
   # if this post is itself a like or repost, link to its target(s).
   likes_and_reposts = []
   # simple version of the like/repost context for the outer post's e-content
-  likes_and_reposts_as_content = []
+  extra_content = ''
 
-  for astype, mftype, part in [
+  for astype, mftype, participle in [
       ('like', 'like', 'Liked'),
-      ('share', 'repost', 'Shared')
+      ('share', 'repost', 'Shared'),
   ]:
     # having like-of or repost-of makes this a like or repost.
     for target in props.get(mftype + '-of', []):
+      extra_content += '\n' + render_target_as_content(
+          target, mftype, participle, not extra_content)
+
+      # simple contexts are handled by the previous call and go right
+      # into the e-content. complex ones, we'll include separately in
+      # likes_and_reposts
       if isinstance(target, dict):
         likes_and_reposts.append(json_to_html(
           target, ['u-' + mftype, 'u-' + mftype + '-of']))
-        likes_and_reposts_as_content.append(
-          hcite_to_content_html(target, part))
-      else:
-        # this simple context can go right into the e-content. only
-        # include text if this is the first one.
-        phrase = ('%ss this.' % mftype) if not likes_and_reposts_as_content else ''
-        likes_and_reposts_as_content.append(
-          '<a class="u-%s u-%s-of" href="%s">%s</a>' % (
-            mftype, mftype, target, phrase))
 
   # set up content and name
   content = prop.get('content', {})
-  content_html = '\n'.join(
-    [content.get('html', '') or content.get('value', '')]
-    + likes_and_reposts_as_content)
+  content_html = (content.get('html', '') or content.get('value', '')
+                  + extra_content)
   content_classes = []
 
   if content_html:
@@ -458,7 +497,7 @@ def json_to_html(obj, parent_props=[]):
   for verb in 'like', 'repost':
     # including u-like and u-repost for backcompat means that we must ignore
     # these properties when converting a post that is itself a like or repost
-    if not verb + '-of' in props:
+    if verb + '-of' not in props:
       vals = props.get(verb, [])
       if vals and isinstance(vals[0], dict):
         likes_and_reposts += [json_to_html(v, ['u-' + verb]) for v in vals]
@@ -481,37 +520,6 @@ def json_to_html(obj, parent_props=[]):
     likes_and_reposts='\n'.join(likes_and_reposts),
     linked_name=maybe_linked_name(props),
     summary=summary)
-
-
-def hcite_to_content_html(hcite, participle):
-  """Generate a simplified rendering of an h-cite to use as the
-  e-content of the outer post. Somewhat confusingly, this rendering
-  *cannot* include mf2 property classes, or those properties would be
-  hoisted to the outer h-entry.
-
-  Args:
-    hcite: dict, json-mf2 objec for the nested h-cite
-    participle: string, the past-tense form of the verb that describes this
-      post's relation to its containing post (e.g. "Shared")
-
-  Returns: string, rendered html
-  """
-  prop = first_props(hcite['properties'])
-  content = prop.get('content', {})
-  content_html = content.get('html', content.get('value', ''))
-
-  # remove the author photo, looks bad in the simple rendering
-  author = copy.deepcopy(prop.get('author', prop.get('actor', {})))
-  if 'photo' in author['properties']:
-    del author['properties']['photo']
-
-  return HCITE_AS_CONTENT.substitute(
-    participle=participle,
-    linked_name='<a href="%s">%s</a>' % (
-      prop.get('url', '#'), prop.get('name', 'a post')),
-    # class="h-card" is ok, but make sure not to give it p-author
-    author=hcard_to_html(author),
-    content=content_html)
 
 
 def hcard_to_html(hcard, parent_props=[]):
