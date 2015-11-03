@@ -469,7 +469,7 @@ def json_to_html(obj, parent_props=[]):
 
   # set up content and name
   content = prop.get('content', {})
-  content_html = (content.get('html', '') or content.get('value', '')
+  content_html = ((content.get('html', '') or content.get('value', ''))
                   + extra_content)
   content_classes = []
 
