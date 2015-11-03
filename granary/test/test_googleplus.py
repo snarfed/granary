@@ -463,6 +463,23 @@ class GooglePlusTest(testutil.HandlerTest):
     self.assertEquals(self.googleplus.postprocess_actor,
                       self.googleplus.user_to_actor)
 
+  def test_get_actor_minimal(self):
+    self.assert_equals({'displayName': 'Bob'}, self.googleplus.get_actor())
+
+  def test_get_actor(self):
+    user = {
+      'id': '222',
+      'displayName': 'Alice',
+      'urls': [{'value': 'https://profiles.google.com/alice'}],
+    }
+    self.auth_entity.user_json = json.dumps(user)
+
+    user.update({
+      'id': tag_uri('222'),
+      'url': 'https://profiles.google.com/alice',
+    })
+    self.assert_equals(user, self.googleplus.get_actor())
+
   def test_get_activities_extra_fetches_fail(self):
     """Sometimes the extras fetches return errors. Ignore that."""
     self.init()

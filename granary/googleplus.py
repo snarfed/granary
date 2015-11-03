@@ -58,7 +58,7 @@ class GooglePlus(source.Source):
   def user_url(self, user_id):
     return 'https://%s/%s' % (self.DOMAIN, user_id)
 
-  def get_actor(self, user_id=None):
+  def get_actor(self):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Args:
@@ -66,7 +66,9 @@ class GooglePlus(source.Source):
 
     Raises: GooglePlusAPIError
     """
-    return self.postprocess_actor(self.auth_entity.user_json)
+    if self.auth_entity and self.auth_entity.user_json:
+      return self.postprocess_actor(json.loads(self.auth_entity.user_json))
+    return {}
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
