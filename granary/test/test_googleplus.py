@@ -330,7 +330,6 @@ class GooglePlusTest(testutil.HandlerTest):
     oauth_googleplus.json_service = discovery.build_from_document(
       DISCOVERY_DOC, **kwargs)
 
-
   def test_get_comment(self):
     self.init(requestBuilder=http.RequestMockBuilder({
           'plus.comments.get': (None, json.dumps(COMMENT_GP)) # None means 200 OK
@@ -479,6 +478,10 @@ class GooglePlusTest(testutil.HandlerTest):
       'url': 'https://profiles.google.com/alice',
     })
     self.assert_equals(user, self.googleplus.get_actor())
+
+  def test_get_actor_other_user(self):
+    with self.assertRaises(NotImplementedError):
+      self.googleplus.get_actor('other')
 
   def test_get_activities_extra_fetches_fail(self):
     """Sometimes the extras fetches return errors. Ignore that."""
