@@ -1,0 +1,8 @@
+# timezone defaults to UTC
+# docs: https://developers.google.com/appengine/docs/python/config/cron
+
+cron:
+  # https://developers.google.com/appengine/articles/python/recording_exceptions_with_ereporter
+- description: ereporter exception report
+  url: /_ereporter?sender=admin@brid-gy.appspotmail.com&to=ryan@brid.gy,kyle.mahan@gmail.com
+  schedule: every day 00:00  # 5pm pst
