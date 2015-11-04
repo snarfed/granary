@@ -38,7 +38,7 @@ class Flickr(source.Source):
   NAME = 'Flickr'
 
   API_EXTRAS = ','.join(('date_upload', 'date_taken', 'views', 'media',
-                         'description' 'tags', 'machine_tags', 'geo'))
+                         'description', 'tags', 'machine_tags', 'geo'))
 
   def __init__(self, access_token_key, access_token_secret, user_id=None):
     """Constructor.
