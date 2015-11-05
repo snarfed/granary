@@ -229,7 +229,7 @@ class Flickr(source.Source):
     published = util.maybe_timestamp_to_rfc3339(
       photo.get('dates', {}).get('posted') or photo.get('dateupload'))
 
-    photo_permalink = 'https://www.flickr.com/photos/{}/{}/'.format(
+    photo_permalink = u'https://www.flickr.com/photos/{}/{}/'.format(
       owner_id, photo.get('id'))
 
     title = photo.get('title')
@@ -250,7 +250,7 @@ class Flickr(source.Source):
         'url': photo_permalink,
         'id': self.tag_uri(photo.get('id')),
         'image': {
-          'url': 'https://farm{}.staticflickr.com/{}/{}_{}_{}.jpg'.format(
+          'url': u'https://farm{}.staticflickr.com/{}/{}_{}_{}.jpg'.format(
             photo.get('farm'), photo.get('server'),
             photo.get('id'), photo.get('secret'), 'b'),
         },
@@ -284,14 +284,14 @@ class Flickr(source.Source):
       activity['object']['tags'] = [{
           'objectType': 'hashtag',
           'id': self.tag_uri(tag.get('id')),
-          'url': 'https://www.flickr.com/search?tags={}'.format(
+          'url': u'https://www.flickr.com/search?tags={}'.format(
             tag.get('_content')),
           'displayName': tag.get('raw'),
         } for tag in photo.get('tags', {}).get('tag', [])]
     elif isinstance(photo.get('tags'), basestring):
       activity['object']['tags'] = [{
         'objectType': 'hashtag',
-        'url': 'https://www.flickr.com/search?tags={}'.format(
+        'url': u'https://www.flickr.com/search?tags={}'.format(
           tag.strip()),
         'displayName': tag.strip(),
       } for tag in photo.get('tags').split(' ') if tag.strip()]
@@ -323,10 +323,10 @@ class Flickr(source.Source):
         },
       },
       'created': util.maybe_timestamp_to_rfc3339(photo_activity.get('favedate')),
-      'url': '{}#liked-by-{}'.format(
+      'url': u'{}#liked-by-{}'.format(
         photo_activity.get('url'), person.get('nsid')),
       'object': {'url': photo_activity.get('url')},
-      'id': self.tag_uri('{}_liked_by_{}'.format(
+      'id': self.tag_uri(u'{}_liked_by_{}'.format(
         photo_activity.get('flickr_id'), person.get('nsid'))),
       'objectType': 'activity',
       'verb': 'like',
@@ -372,7 +372,7 @@ class Flickr(source.Source):
 
     ref: https://www.flickr.com/services/api/misc.buddyicons.html
     """
-    return 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
+    return u'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
       farm, server, author)
 
   def user_url(self, handle):
