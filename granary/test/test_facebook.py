@@ -728,7 +728,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def setUp(self):
     super(FacebookTest, self).setUp()
-    self.facebook = facebook.Facebook()
+    self.fb = facebook.Facebook()
     self.batch = []
     self.batch_responses = []
 
@@ -759,12 +759,12 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_actor(self):
     self.expect_urlopen('foo', USER)
     self.mox.ReplayAll()
-    self.assert_equals(ACTOR, self.facebook.get_actor('foo'))
+    self.assert_equals(ACTOR, self.fb.get_actor('foo'))
 
   def test_get_actor_default(self):
     self.expect_urlopen('me', USER)
     self.mox.ReplayAll()
-    self.assert_equals(ACTOR, self.facebook.get_actor())
+    self.assert_equals(ACTOR, self.fb.get_actor())
 
   def test_get_activities_defaults(self):
     resp = {'data': [
@@ -793,7 +793,7 @@ class FacebookTest(testutil.HandlerTest):
                     'url': 'https://www.facebook.com/3/posts/4'},
          'url': 'https://www.facebook.com/3/posts/4',
          'verb': 'post'}],
-      self.facebook.get_activities())
+      self.fb.get_activities())
 
   def test_get_activities_fetch_shares(self):
     self.expect_urlopen('me/home?offset=0',
@@ -807,7 +807,7 @@ class FacebookTest(testutil.HandlerTest):
       })
     self.mox.ReplayAll()
 
-    got = self.facebook.get_activities(fetch_shares=True)
+    got = self.fb.get_activities(fetch_shares=True)
     self.assert_equals([SHARE_OBJ, SHARE_OBJ], got[0]['tags'])
     self.assert_equals([], got[1]['tags'])
 
@@ -816,20 +816,20 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('sharedposts?ids=2', [])
     self.mox.ReplayAll()
 
-    got = self.facebook.get_activities(fetch_shares=True)
+    got = self.fb.get_activities(fetch_shares=True)
     self.assertNotIn('tags', got[0])
 
   def test_get_activities_self(self):
     self.expect_urlopen('me/feed?offset=0', {})
     self.mox.ReplayAll()
-    self.assert_equals([], self.facebook.get_activities(group_id=source.SELF))
+    self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen('me/home?offset=0&access_token=asdf', {"id": 123})
     self.mox.ReplayAll()
 
-    self.facebook = facebook.Facebook(access_token='asdf')
-    self.facebook.get_activities()
+    self.fb = facebook.Facebook(access_token='asdf')
+    self.fb.get_activities()
 
   def test_get_activities_activity_id_overrides_others(self):
     self.expect_urlopen('123_000', POST)
@@ -837,7 +837,7 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
-    self.assert_equals([ACTIVITY], self.facebook.get_activities(
+    self.assert_equals([ACTIVITY], self.fb.get_activities(
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
 
@@ -851,12 +851,12 @@ class FacebookTest(testutil.HandlerTest):
           }
         })
     self.mox.ReplayAll()
-    self.assert_equals([], self.facebook.get_activities(activity_id='0_0'))
+    self.assert_equals([], self.fb.get_activities(activity_id='0_0'))
 
   def test_get_activities_start_index_and_count(self):
     self.expect_urlopen('me/feed?offset=3&limit=5', {})
     self.mox.ReplayAll()
-    self.facebook.get_activities(group_id=source.SELF,start_index=3, count=5)
+    self.fb.get_activities(group_id=source.SELF,start_index=3, count=5)
 
   def test_get_activities_activity_id_with_user_id(self):
     """Check that we fetch both forms of the id and merge the results."""
@@ -864,7 +864,7 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('34', {'message': 'x'})
     self.mox.ReplayAll()
 
-    obj = self.facebook.get_activities(activity_id='34', user_id='12')[0]['object']
+    obj = self.fb.get_activities(activity_id='34', user_id='12')[0]['object']
     self.assertEquals('123', obj['fb_id'])
     self.assertEquals('x', obj['content'])
 
@@ -874,7 +874,7 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('34', {'message': 'x'})
     self.mox.ReplayAll()
 
-    obj = self.facebook.get_activities(activity_id='12_34')[0]['object']
+    obj = self.fb.get_activities(activity_id='12_34')[0]['object']
     self.assertEquals('123', obj['fb_id'])
     self.assertEquals('x', obj['content'])
 
@@ -882,33 +882,33 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('12_34', {}, status=404)
     self.expect_urlopen('34', {})
     self.mox.ReplayAll()
-    self.facebook.get_activities(activity_id='12_34')
+    self.fb.get_activities(activity_id='12_34')
 
   def test_get_activities_activity_id_fallback_to_user_id_param(self):
     self.expect_urlopen('12_34', {}, status=400)
     self.expect_urlopen('56_34', {}, status=500)
     self.expect_urlopen('34', {})
     self.mox.ReplayAll()
-    self.facebook.get_activities(activity_id='12_34', user_id='56')
+    self.fb.get_activities(activity_id='12_34', user_id='56')
 
   def test_get_activities_request_etag(self):
     self.expect_urlopen('me/home?offset=0', {},
                         headers={'If-none-match': '"my etag"'})
     self.mox.ReplayAll()
-    self.facebook.get_activities_response(etag='"my etag"')
+    self.fb.get_activities_response(etag='"my etag"')
 
   def test_get_activities_response_etag(self):
     self.expect_urlopen('me/home?offset=0', {},
                         response_headers={'ETag': '"my etag"'})
     self.mox.ReplayAll()
     self.assert_equals('"my etag"',
-                       self.facebook.get_activities_response()['etag'])
+                       self.fb.get_activities_response()['etag'])
 
   def test_get_activities_304_not_modified(self):
     """Requests with matching ETags return 304 Not Modified."""
     self.expect_urlopen('me/home?offset=0', {}, status=304)
     self.mox.ReplayAll()
-    self.assert_equals([], self.facebook.get_activities_response()['items'])
+    self.assert_equals([], self.fb.get_activities_response()['items'])
 
   def test_get_activities_sharedposts_400(self):
     self.expect_urlopen('me/home?offset=0',
@@ -916,21 +916,21 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('sharedposts?ids=2,4', status=400)
     self.mox.ReplayAll()
 
-    got = self.facebook.get_activities(fetch_shares=True)
+    got = self.fb.get_activities(fetch_shares=True)
     self.assertNotIn('tags', got[0])
     self.assertNotIn('tags', got[1])
 
   def test_get_event(self):
     self.expect_urlopen('145304994', EVENT)
     self.mox.ReplayAll()
-    self.assert_equals(EVENT_ACTIVITY, self.facebook.get_event('145304994'))
+    self.assert_equals(EVENT_ACTIVITY, self.fb.get_event('145304994'))
 
   def test_get_activities_group_excludes_shared_story(self):
     self.expect_urlopen(
       'me/home?offset=0',
       {'data': [{'id': '1_2', 'status_type': 'shared_story'}]})
     self.mox.ReplayAll()
-    self.assert_equals([], self.facebook.get_activities())
+    self.assert_equals([], self.fb.get_activities())
 
   def test_get_activities_self_includes_shared_story(self):
     post = copy.copy(POST)
@@ -938,7 +938,7 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('me/feed?offset=0', {'data': [post]})
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY],
-                       self.facebook.get_activities(group_id=source.SELF))
+                       self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_fetch_replies(self):
     post2 = copy.deepcopy(POST)
@@ -955,7 +955,7 @@ class FacebookTest(testutil.HandlerTest):
       })
     self.mox.ReplayAll()
 
-    activities = self.facebook.get_activities(group_id=source.SELF,
+    activities = self.fb.get_activities(group_id=source.SELF,
                                               fetch_replies=True)
     base_ids = ['547822715231468_6796480', '124561947600007_672819']
     self.assert_equals([base_ids, base_ids + ['777', '888'], base_ids + ['999']],
@@ -965,7 +965,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_skips_extras_if_no_posts(self):
     self.expect_urlopen('me/feed?offset=0', {'data': []})
     self.mox.ReplayAll()
-    self.assert_equals([], self.facebook.get_activities(
+    self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
 
 
@@ -983,19 +983,19 @@ class FacebookTest(testutil.HandlerTest):
 
     for expected in ([FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY],
                      [FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY, ACTIVITY]):
-      self.assert_equals(expected, self.facebook.get_activities(
+      self.assert_equals(expected, self.fb.get_activities(
         group_id=source.SELF, fetch_shares=True, fetch_replies=True))
 
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
-      self.facebook.get_activities(search_query='foo')
+      self.fb.get_activities(search_query='foo')
 
   def test_get_comment(self):
     self.expect_urlopen(
       '123_456?fields=id,message,from,created_time,message_tags,parent',
       COMMENTS[0])
     self.mox.ReplayAll()
-    self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456'))
+    self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456'))
 
   def test_get_comment_activity_author_id(self):
     self.expect_urlopen(
@@ -1003,7 +1003,7 @@ class FacebookTest(testutil.HandlerTest):
       COMMENTS[0])
     self.mox.ReplayAll()
 
-    obj = self.facebook.get_comment('123_456', activity_author_id='my-author')
+    obj = self.fb.get_comment('123_456', activity_author_id='my-author')
     self.assert_equals(
       'https://www.facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
@@ -1016,83 +1016,83 @@ class FacebookTest(testutil.HandlerTest):
       '789?fields=id,message,from,created_time,message_tags,parent',
       COMMENTS[0])
     self.mox.ReplayAll()
-    self.assert_equals(COMMENT_OBJS[0], self.facebook.get_comment('123_456_789'))
+    self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456_789'))
 
   def test_get_comment_400s_id_without_underscore(self):
     self.expect_urlopen(
       '123?fields=id,message,from,created_time,message_tags,parent',
       {}, status=400)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.facebook.get_comment, '123')
+    self.assertRaises(urllib2.HTTPError, self.fb.get_comment, '123')
 
   def test_get_share(self):
     self.expect_urlopen('123', SHARE)
     self.mox.ReplayAll()
-    self.assert_equals(SHARE_OBJ, self.facebook.get_share('', '', '123'))
+    self.assert_equals(SHARE_OBJ, self.fb.get_share('', '', '123'))
 
   def test_get_share_400s(self):
     self.expect_urlopen('123', {}, status=400)
     self.mox.ReplayAll()
-    self.assertIsNone(self.facebook.get_share('', '', '123'))
+    self.assertIsNone(self.fb.get_share('', '', '123'))
 
   def test_get_share_500s(self):
     self.expect_urlopen('123', {}, status=500)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.facebook.get_share, '', '', '123')
+    self.assertRaises(urllib2.HTTPError, self.fb.get_share, '', '', '123')
 
   def test_get_like(self):
     self.expect_urlopen('123_000', POST)
     self.expect_urlopen('000', POST)
     self.mox.ReplayAll()
-    self.assert_equals(LIKE_OBJS[1], self.facebook.get_like('123', '000', '683713'))
+    self.assert_equals(LIKE_OBJS[1], self.fb.get_like('123', '000', '683713'))
 
   def test_get_like_not_found(self):
     self.expect_urlopen('123_000', POST)
     self.expect_urlopen('000', POST)
     self.mox.ReplayAll()
-    self.assert_equals(None, self.facebook.get_like('123', '000', '999'))
+    self.assert_equals(None, self.fb.get_like('123', '000', '999'))
 
   def test_get_like_no_activity(self):
     self.expect_urlopen('123_000', {})
     self.expect_urlopen('000', {})
     self.mox.ReplayAll()
-    self.assert_equals(None, self.facebook.get_like('123', '000', '683713'))
+    self.assert_equals(None, self.fb.get_like('123', '000', '683713'))
 
   def test_get_rsvp(self):
     self.expect_urlopen('145304994/invited/456', {'data': [RSVPS[0]]})
     self.mox.ReplayAll()
     self.assert_equals(RSVP_OBJS_WITH_ID[0],
-                       self.facebook.get_rsvp('123', '145304994', '456'))
+                       self.fb.get_rsvp('123', '145304994', '456'))
 
   def test_get_rsvp_not_found(self):
     self.expect_urlopen('000/invited/456', {'data': []})
     self.mox.ReplayAll()
-    self.assert_equals(None, self.facebook.get_rsvp('123', '000', '456'))
+    self.assert_equals(None, self.fb.get_rsvp('123', '000', '456'))
 
   def test_post_to_activity_full(self):
-    self.assert_equals(ACTIVITY, self.facebook.post_to_activity(POST))
+    self.assert_equals(ACTIVITY, self.fb.post_to_activity(POST))
 
   def test_post_to_activity_minimal(self):
     # just test that we don't crash
-    self.facebook.post_to_activity({'id': '123_456', 'message': 'asdf'})
+    self.fb.post_to_activity({'id': '123_456', 'message': 'asdf'})
 
   def test_post_to_activity_empty(self):
     # just test that we don't crash
-    self.facebook.post_to_activity({})
+    self.fb.post_to_activity({})
 
   def test_post_to_activity_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
-    self.assert_equals({}, self.facebook.post_to_activity({'id': '123^456'}))
+    self.assert_equals({}, self.fb.post_to_activity({'id': '123^456'}))
 
   def test_post_to_object_full(self):
-    self.assert_equals(POST_OBJ, self.facebook.post_to_object(POST))
+    self.assert_equals(POST_OBJ, self.fb.post_to_object(POST))
 
   def test_post_to_object_minimal(self):
     # just test that we don't crash
-    self.facebook.post_to_object({'id': '123_456', 'message': 'asdf'})
+    self.fb.post_to_object({'id': '123_456', 'message': 'asdf'})
 
   def test_post_to_object_empty(self):
-    self.assert_equals({}, self.facebook.post_to_object({}))
+    self.assert_equals({}, self.fb.post_to_object({}))
 
   def test_post_to_object_expands_relative_links(self):
     post = copy.copy(POST)
@@ -1100,7 +1100,7 @@ class FacebookTest(testutil.HandlerTest):
 
     post_obj = copy.deepcopy(POST_OBJ)
     post_obj['attachments'][0]['url'] = 'https://www.facebook.com/relative/123'
-    self.assert_equals(post_obj, self.facebook.post_to_object(post))
+    self.assert_equals(post_obj, self.fb.post_to_object(post))
 
   def test_post_to_object_colon_id(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
@@ -1111,47 +1111,47 @@ class FacebookTest(testutil.HandlerTest):
       'fb_id': id,
       'content': 'asdf',
       'url': 'https://www.facebook.com/12/posts/34',
-    }, self.facebook.post_to_object({
+    }, self.fb.post_to_object({
       'id': id,
       'message': 'asdf',
     }))
 
   def test_post_to_object_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
-    self.assert_equals({}, self.facebook.post_to_object({'id': '123^456'}))
+    self.assert_equals({}, self.fb.post_to_object({'id': '123^456'}))
 
   def test_post_to_object_with_comment_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
     post = copy.deepcopy(POST)
     post['comments']['data'].append({'id': '123 456^789'})
-    self.assert_equals(POST_OBJ, self.facebook.post_to_object(post))
+    self.assert_equals(POST_OBJ, self.fb.post_to_object(post))
 
   def test_post_to_object_message_tags_list(self):
     post = copy.copy(POST)
     tags = post['message_tags'].values()
     post['message_tags'] = tags[0] + tags[1]  # both lists
-    self.assert_equals(POST_OBJ, self.facebook.post_to_object(post))
+    self.assert_equals(POST_OBJ, self.fb.post_to_object(post))
 
   def test_post_to_object_with_photo(self):
     post = copy.copy(POST)
     post['likes'] = 5  # count instead of actual like objects
     obj = copy.copy(POST_OBJ)
     obj['tags'] = [t for t in obj['tags'] if t.get('verb') != 'like']
-    self.assert_equals(obj, self.facebook.post_to_object(post))
+    self.assert_equals(obj, self.fb.post_to_object(post))
 
   def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
-      self.assert_equals(obj, self.facebook.comment_to_object(cmt))
+      self.assert_equals(obj, self.fb.comment_to_object(cmt))
 
   def test_comment_to_object_minimal(self):
     # just test that we don't crash
-    self.facebook.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
+    self.fb.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
 
   def test_comment_to_object_empty(self):
-    self.assert_equals({}, self.facebook.comment_to_object({}))
+    self.assert_equals({}, self.fb.comment_to_object({}))
 
   def test_comment_to_object_post_author_id(self):
-    obj = self.facebook.comment_to_object(COMMENTS[0], post_author_id='my-author')
+    obj = self.fb.comment_to_object(COMMENTS[0], post_author_id='my-author')
     self.assert_equals(
       'https://www.facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
@@ -1169,14 +1169,14 @@ class FacebookTest(testutil.HandlerTest):
         'id': tag_uri('34'),
         'url': 'https://www.facebook.com/12/posts/34',
       }],
-    }, self.facebook.comment_to_object({
+    }, self.fb.comment_to_object({
       'id': id,
       'message': 'asdf',
     }))
 
   def test_comment_to_object_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
-    self.assert_equals({}, self.facebook.comment_to_object({'id': '123 456^789'}))
+    self.assert_equals({}, self.fb.comment_to_object({'id': '123 456^789'}))
 
   def test_comment_to_object_with_parent_comment(self):
     """See https://github.com/snarfed/bridgy/issues/435"""
@@ -1192,7 +1192,7 @@ class FacebookTest(testutil.HandlerTest):
         {'id': tag_uri('34_56'),
          'url': 'https://www.facebook.com/34?comment_id=56'},
       ],
-    }, self.facebook.comment_to_object({
+    }, self.fb.comment_to_object({
       'id': '34_78',
       'message': "now you're giving me all sorts of ideas!",
       'parent': {
@@ -1202,14 +1202,14 @@ class FacebookTest(testutil.HandlerTest):
     }))
 
   def test_share_to_object_empty(self):
-    self.assert_equals({}, self.facebook.share_to_object({}))
+    self.assert_equals({}, self.fb.share_to_object({}))
 
   def test_share_to_object_minimal(self):
     # just test that we don't crash
-    self.facebook.share_to_object({'id': '123_456_789', 'message': 'asdf'})
+    self.fb.share_to_object({'id': '123_456_789', 'message': 'asdf'})
 
   def test_share_to_object_full(self):
-    self.assert_equals(SHARE_OBJ, self.facebook.share_to_object(SHARE))
+    self.assert_equals(SHARE_OBJ, self.fb.share_to_object(SHARE))
 
   def test_share_to_object_no_message(self):
     share = copy.deepcopy(SHARE)
@@ -1220,7 +1220,7 @@ class FacebookTest(testutil.HandlerTest):
       'content': share['description'],
       'displayName': share['description'],
     })
-    self.assert_equals(share_obj, self.facebook.share_to_object(share))
+    self.assert_equals(share_obj, self.fb.share_to_object(share))
 
     del share['description']
     del share['name']
@@ -1228,13 +1228,13 @@ class FacebookTest(testutil.HandlerTest):
     del share_obj['displayName']
     del share_obj['object']['content']
     del share_obj['object']['displayName']
-    self.assert_equals(share_obj, self.facebook.share_to_object(share))
+    self.assert_equals(share_obj, self.fb.share_to_object(share))
 
   def test_user_to_actor_full(self):
-    self.assert_equals(ACTOR, self.facebook.user_to_actor(USER))
+    self.assert_equals(ACTOR, self.fb.user_to_actor(USER))
 
   def test_user_to_actor_page(self):
-    self.assert_equals(PAGE_ACTOR, self.facebook.user_to_actor(PAGE))
+    self.assert_equals(PAGE_ACTOR, self.fb.user_to_actor(PAGE))
 
   def test_user_to_actor_url_fallback(self):
     user = copy.deepcopy(USER)
@@ -1243,11 +1243,11 @@ class FacebookTest(testutil.HandlerTest):
     del actor['urls']
     user['bio'] = actor['description'] = 'no links'
     actor['url'] = user['link']
-    self.assert_equals(actor, self.facebook.user_to_actor(user))
+    self.assert_equals(actor, self.fb.user_to_actor(user))
 
     del user['link']
     actor['url'] = 'https://www.facebook.com/snarfed.org'
-    self.assert_equals(actor, self.facebook.user_to_actor(user))
+    self.assert_equals(actor, self.fb.user_to_actor(user))
 
   def test_user_to_actor_displayName_fallback(self):
     self.assert_equals({
@@ -1256,12 +1256,12 @@ class FacebookTest(testutil.HandlerTest):
       'username': 'snarfed.org',
       'displayName': 'snarfed.org',
       'url': 'https://www.facebook.com/snarfed.org',
-    }, self.facebook.user_to_actor({
+    }, self.fb.user_to_actor({
       'username': 'snarfed.org',
     }))
 
   def test_user_to_actor_multiple_urls(self):
-    actor = self.facebook.user_to_actor({
+    actor = self.fb.user_to_actor({
       'id': '123',
       'website': """
 x
@@ -1275,7 +1275,7 @@ http://b http://c""",
       [{'value': 'http://a'}, {'value': 'http://b'}, {'value': 'http://c'}],
       actor['urls'])
 
-    actor = self.facebook.user_to_actor({
+    actor = self.fb.user_to_actor({
       'id': '123',
       'link': 'http://b http://c	http://a',
       })
@@ -1285,33 +1285,33 @@ http://b http://c""",
       actor['urls'])
 
   def test_user_to_actor_minimal(self):
-    actor = self.facebook.user_to_actor({'id': '212038'})
+    actor = self.fb.user_to_actor({'id': '212038'})
     self.assert_equals(tag_uri('212038'), actor['id'])
     self.assert_equals('https://graph.facebook.com/v2.2/212038/picture?type=large',
                        actor['image']['url'])
 
   def test_user_to_actor_empty(self):
-    self.assert_equals({}, self.facebook.user_to_actor({}))
+    self.assert_equals({}, self.fb.user_to_actor({}))
 
   def test_event_to_object_empty(self):
-    self.assert_equals({'objectType': 'event'}, self.facebook.event_to_object({}))
+    self.assert_equals({'objectType': 'event'}, self.fb.event_to_object({}))
 
   def test_event_to_object(self):
-    self.assert_equals(EVENT_OBJ, self.facebook.event_to_object(EVENT))
+    self.assert_equals(EVENT_OBJ, self.fb.event_to_object(EVENT))
 
   def test_event_to_object_with_rsvps(self):
     self.assert_equals(EVENT_OBJ_WITH_ATTENDEES,
-                       self.facebook.event_to_object(EVENT, rsvps=RSVPS))
+                       self.fb.event_to_object(EVENT, rsvps=RSVPS))
 
   def test_event_to_activity_with_rsvps(self):
     self.assert_equals(EVENT_ACTIVITY_WITH_ATTENDEES,
-                       self.facebook.event_to_activity(EVENT, rsvps=RSVPS))
+                       self.fb.event_to_activity(EVENT, rsvps=RSVPS))
 
   def test_rsvp_to_object(self):
-    self.assert_equals(RSVP_OBJS, [self.facebook.rsvp_to_object(r) for r in RSVPS])
+    self.assert_equals(RSVP_OBJS, [self.fb.rsvp_to_object(r) for r in RSVPS])
 
   def test_rsvp_to_object_event(self):
-    objs = [self.facebook.rsvp_to_object(r, event=EVENT) for r in RSVPS]
+    objs = [self.fb.rsvp_to_object(r, event=EVENT) for r in RSVPS]
     self.assert_equals(RSVP_OBJS_WITH_ID, objs)
 
   def test_picture_without_message(self):
@@ -1321,7 +1321,7 @@ http://b http://c""",
       'fb_id': '445566',
       'url': 'https://www.facebook.com/445566',
       'image': {'url': 'http://its/a/picture'},
-    }, self.facebook.post_to_object({  # Facebook
+    }, self.fb.post_to_object({  # Facebook
       'id': '445566',
       'picture': 'http://its/a/picture',
       'source': 'https://from/a/source',
@@ -1352,7 +1352,7 @@ http://b http://c""",
             }
           }
         }
-    self.assert_equals(activity, self.facebook.post_to_activity(post))
+    self.assert_equals(activity, self.fb.post_to_activity(post))
 
     activity.update({
         'title': 'Ryan Barrett likes a photo on Instagram.',
@@ -1365,7 +1365,7 @@ http://b http://c""",
         'from': USER,
         'application': {'name': 'Instagram', 'id': '12402457428'},
         })
-    self.assert_equals(activity, self.facebook.post_to_activity(post))
+    self.assert_equals(activity, self.fb.post_to_activity(post))
 
   def test_story_as_content(self):
     self.assert_equals({
@@ -1374,7 +1374,7 @@ http://b http://c""",
         'url': 'https://www.facebook.com/101007473698067',
         'objectType': 'note',
         'content': 'Once upon a time.',
-      }, self.facebook.post_to_object({
+      }, self.fb.post_to_object({
         'id': '101007473698067',
         'story': 'Once upon a time.',
         }))
@@ -1386,7 +1386,7 @@ http://b http://c""",
         'url': 'https://www.facebook.com/101007473698067',
         'objectType': 'note',
         'content': 'Once upon a time.',
-      }, self.facebook.post_to_object({
+      }, self.fb.post_to_object({
         'id': '101007473698067',
         'name': 'Once upon a time.',
         }))
@@ -1406,7 +1406,7 @@ http://b http://c""",
           'url': 'https://www.facebook.com/212038/posts/10100747',
           'objectType': 'product',
           },
-      }, self.facebook.post_to_activity({
+      }, self.fb.post_to_activity({
         'id': '10100747',
         'from': USER,
         'link': '/gifts/12345',
@@ -1439,7 +1439,7 @@ http://b http://c""",
           'displayName': "The Rifle's Spiral",
           },
       }
-    self.assert_equals(activity, self.facebook.post_to_activity(post))
+    self.assert_equals(activity, self.fb.post_to_activity(post))
 
     activity.update({
         'title': "Unknown listened to The Rifle's Spiral on Rdio.",
@@ -1455,9 +1455,9 @@ http://b http://c""",
 
   def test_facebook_note(self):
     """https://github.com/snarfed/bridgy/issues/480"""
-    self.assert_equals(FB_NOTE_ACTIVITY, self.facebook.post_to_activity(FB_NOTE))
+    self.assert_equals(FB_NOTE_ACTIVITY, self.fb.post_to_activity(FB_NOTE))
     self.assert_equals(FB_NOTE_ACTIVITY,
-                       self.facebook.post_to_activity(FB_CREATED_NOTE))
+                       self.fb.post_to_activity(FB_CREATED_NOTE))
 
   def test_create_post(self):
     self.expect_urlopen(facebook.API_FEED, {'id': '123_456'},
@@ -1474,9 +1474,9 @@ http://b http://c""",
       'id': '123_456',
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post',
-    }, self.facebook.create(obj).content)
+    }, self.fb.create(obj).content)
 
-    preview = self.facebook.preview_create(obj)
+    preview = self.fb.preview_create(obj)
     self.assertEquals('<span class="verb">post</span>:', preview.description)
     self.assertEquals('my msg', preview.content)
 
@@ -1494,8 +1494,8 @@ http://b http://c""",
         'displayName': 'my name',
         'url': 'http://obj.co',
         })
-    self.facebook.create(obj, include_link=True)
-    preview = self.facebook.preview_create(obj, include_link=True)
+    self.fb.create(obj, include_link=True)
+    preview = self.fb.preview_create(obj, include_link=True)
     self.assertEquals(
       'my content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
@@ -1512,9 +1512,9 @@ http://b http://c""",
       'id': '456_789',
       'url': 'https://www.facebook.com/547822715231468?comment_id=456_789',
       'type': 'comment'
-    }, self.facebook.create(obj).content)
+    }, self.fb.create(obj).content)
 
-    preview = self.facebook.preview_create(obj)
+    preview = self.fb.preview_create(obj)
     self.assertEquals('my cmt', preview.content)
     self.assertIn('<span class="verb">comment</span> on <a href="https://www.facebook.com/547822715231468">this post</a>:', preview.description)
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/547822715231468">', preview.description)
@@ -1525,7 +1525,7 @@ http://b http://c""",
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj.update({'summary': 'my cmt', 'inReplyTo': [{'url': 'http://other'}]})
 
-    for fn in (self.facebook.preview_create, self.facebook.create):
+    for fn in (self.fb.preview_create, self.fb.create):
       result = fn(obj)
       self.assertTrue(result.abort)
       self.assertIn('Could not', result.error_plain)
@@ -1554,7 +1554,7 @@ http://b http://c""",
         'id': '456_789',
         'url': cmt_url,
         'type': 'comment',
-      }, self.facebook.create(obj).content)
+      }, self.fb.create(obj).content)
 
   def test_create_comment_with_photo(self):
     self.expect_urlopen(
@@ -1569,9 +1569,9 @@ http://b http://c""",
       'id': '456_789',
       'url': 'https://www.facebook.com/547822715231468?comment_id=456_789',
       'type': 'comment'
-    }, self.facebook.create(obj).content)
+    }, self.fb.create(obj).content)
 
-    preview = self.facebook.preview_create(obj)
+    preview = self.fb.preview_create(obj)
     self.assertEquals('cc Sam G, Michael M<br /><br /><img src="http://pict/ure" />',
                       preview.content)
     self.assertIn('<span class="verb">comment</span> on <a href="https://www.facebook.com/547822715231468">this post</a>:', preview.description)
@@ -1586,7 +1586,7 @@ http://b http://c""",
     obj['inReplyTo'] = {
       'url': 'https://m.facebook.com/photo.php?fbid=12&set=a.34.56.78&comment_id=90',
     }
-    created = self.facebook.create(obj)
+    created = self.fb.create(obj)
     self.assert_equals({
       'id': '456_789',
       'url': 'https://www.facebook.com/12_90?comment_id=456_789',
@@ -1614,10 +1614,10 @@ http://b http://c""",
         'https://www.facebook.com/media/set/?set=a.12.34.56'):
       like['object']['url'] = url
       self.assert_equals({'url': url, 'type': 'like'},
-                         self.facebook.create(like).content)
+                         self.fb.create(like).content)
 
   def test_create_like_page(self):
-    result = self.facebook.create({
+    result = self.fb.create({
       'objectType': 'activity',
       'verb': 'like',
       'object': {'url': 'https://facebook.com/MyPage'},
@@ -1627,7 +1627,7 @@ http://b http://c""",
       self.assertIn("the Facebook API doesn't support liking pages", err)
 
   def test_create_like_page_preview(self):
-    preview = self.facebook.preview_create({
+    preview = self.fb.preview_create({
       'objectType': 'activity',
       'verb': 'like',
       'object': {'url': 'https://facebook.com/MyPage'},
@@ -1637,7 +1637,7 @@ http://b http://c""",
       self.assertIn("the Facebook API doesn't support liking pages", err)
 
   def test_create_like_post_preview(self):
-    preview = self.facebook.preview_create(LIKE_OBJS[0])
+    preview = self.fb.preview_create(LIKE_OBJS[0])
     self.assertIn('<span class="verb">like</span> <a href="https://www.facebook.com/212038/posts/10100176064482163">this post</a>:', preview.description)
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/212038/posts/10100176064482163">', preview.description)
 
@@ -1647,7 +1647,7 @@ http://b http://c""",
     self.expect_urlopen('135_79', COMMENTS[0])
     self.mox.ReplayAll()
 
-    preview = self.facebook.preview_create(like)
+    preview = self.fb.preview_create(like)
     self.assert_equals("""\
 <span class="verb">like</span> <a href="https://www.facebook.com/foo/posts/135?reply_comment_id=79">this comment</a>:
 <br /><br />
@@ -1664,15 +1664,15 @@ cc Sam G, Michael M<br />""", preview.description)
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'https://www.facebook.com/234/'}]
       self.assert_equals({'url': 'https://www.facebook.com/234/', 'type': 'rsvp'},
-                         self.facebook.create(rsvp).content)
+                         self.fb.create(rsvp).content)
 
-    preview = self.facebook.preview_create(rsvp)
+    preview = self.fb.preview_create(rsvp)
     self.assertEquals('<span class="verb">RSVP maybe</span> to '
                       '<a href="https://www.facebook.com/234/">this event</a>.',
                       preview.description)
 
   def test_create_unsupported_type(self):
-    for fn in self.facebook.create, self.facebook.preview_create:
+    for fn in self.fb.create, self.fb.preview_create:
       result = fn({'objectType': 'activity', 'verb': 'share'})
       self.assertTrue(result.abort)
       self.assertIn('Cannot publish shares', result.error_plain)
@@ -1682,7 +1682,7 @@ cc Sam G, Michael M<br />""", preview.description)
     for rsvp in RSVP_OBJS_WITH_ID[:3]:
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'https://foo.com/1234'}]
-      result = self.facebook.create(rsvp)
+      result = self.fb.create(rsvp)
       self.assertTrue(result.abort)
       self.assertIn('missing an in-reply-to', result.error_plain)
 
@@ -1690,7 +1690,7 @@ cc Sam G, Michael M<br />""", preview.description)
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj['inReplyTo'] = [{'url': 'http://foo.com/bar'}]
 
-    for fn in (self.facebook.preview_create, self.facebook.create):
+    for fn in (self.fb.preview_create, self.fb.create):
       preview = fn(obj)
       self.assertTrue(preview.abort)
       self.assertIn('Could not find a Facebook status to reply to', preview.error_plain)
@@ -1700,7 +1700,7 @@ cc Sam G, Michael M<br />""", preview.description)
     obj = copy.deepcopy(LIKE_OBJS[0])
     del obj['object']
 
-    for fn in (self.facebook.preview_create, self.facebook.create):
+    for fn in (self.fb.preview_create, self.fb.create):
       preview = fn(obj)
       self.assertTrue(preview.abort)
       self.assertIn('Could not find a Facebook status to like', preview.error_plain)
@@ -1714,7 +1714,7 @@ cc Sam G, Michael M<br />""", preview.description)
     }
 
     # test preview
-    preview = self.facebook.preview_create(obj)
+    preview = self.fb.preview_create(obj)
     self.assertEquals('<span class="verb">post</span>:', preview.description)
     self.assertEquals('my caption<br /><br /><img src="http://my/picture" />',
                       preview.content)
@@ -1726,7 +1726,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals({
       'id': '123_456',
       'url': 'https://www.facebook.com/123/posts/456',
-      'type': 'post'}, self.facebook.create(obj).content)
+      'type': 'post'}, self.fb.create(obj).content)
 
   def test_create_notification(self):
     appengine_config.FACEBOOK_APP_ID = 'my_app_id'
@@ -1739,13 +1739,13 @@ cc Sam G, Michael M<br />""", preview.description)
     self.expect_urlopen('my-username/notifications', '',
                         data=urllib.urlencode(params))
     self.mox.ReplayAll()
-    self.facebook.create_notification('my-username', 'my text', 'my link')
+    self.fb.create_notification('my-username', 'my text', 'my link')
 
   def test_base_object_resolve_numeric_id(self):
     self.expect_urlopen('MyPage', PAGE)
     self.mox.ReplayAll()
 
-    self.assert_equals(PAGE_ACTOR, self.facebook.base_object(
+    self.assert_equals(PAGE_ACTOR, self.fb.base_object(
       {'object': {'url': 'https://facebook.com/MyPage'}},
       resolve_numeric_id=True))
 
@@ -1787,12 +1787,12 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     for id in '222', '222:0', '111_222_9':
-      self.assertEqual('333', self.facebook.resolve_object_id(111, id))
+      self.assertEqual('333', self.fb.resolve_object_id(111, id))
 
   def test_resolve_object_id_fetch_400s(self):
     self.expect_urlopen('111_222', {}, status=400)
     self.mox.ReplayAll()
-    self.assertIsNone(self.facebook.resolve_object_id('111', '222'))
+    self.assertIsNone(self.fb.resolve_object_id('111', '222'))
 
   def test_resolve_object_id_with_activity(self):
     """If we pass an activity with fb_object_id, use that, don't fetch from FB."""
@@ -1800,7 +1800,7 @@ cc Sam G, Michael M<br />""", preview.description)
     act = {'object': obj}
 
     for activity in obj, act:
-      self.assertEqual('333', self.facebook.resolve_object_id(
+      self.assertEqual('333', self.fb.resolve_object_id(
                                 '111', '222', activity=activity))
 
   def test_urlopen_batch(self):
@@ -1812,7 +1812,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     self.assert_equals(({'abc': 1}, {'def': 2}),
-                       self.facebook.urlopen_batch(('abc', 'def')))
+                       self.fb.urlopen_batch(('abc', 'def')))
 
   def test_urlopen_batch_error(self):
     self.expect_urlopen('',
@@ -1823,7 +1823,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     try:
-      self.facebook.urlopen_batch(('abc', 'def'))
+      self.fb.urlopen_batch(('abc', 'def'))
       assert False, 'expected HTTPError'
     except urllib2.HTTPError, e:
       self.assertEqual(499, e.code)
@@ -1842,7 +1842,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(
       [{'code': 200, 'body': {"json": True}},
        {'code': 200, 'body': 'not json'}],
-      self.facebook.urlopen_batch_full((
+      self.fb.urlopen_batch_full((
         {'relative_url': 'abc', 'headers': {'X': 'Y', 'U': 'V'}},
         {'relative_url': 'def'})))
 
@@ -1855,5 +1855,5 @@ cc Sam G, Michael M<br />""", preview.description)
       response=resps)
     self.mox.ReplayAll()
 
-    self.assert_equals(resps, self.facebook.urlopen_batch_full(
+    self.assert_equals(resps, self.fb.urlopen_batch_full(
       [{'relative_url': 'abc'}, {'relative_url': 'def'}]))
