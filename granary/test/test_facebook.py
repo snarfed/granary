@@ -1783,6 +1783,28 @@ cc Sam G, Michael M<br />""", preview.description)
       check(expected, id, False)
       check(expected, id, True)
 
+  def test_resolve_object_id(self):
+    self.expect_urlopen('111_222', json.dumps({'id': '0', 'object_id': '333'})
+                       ).MultipleTimes(3)
+    self.mox.ReplayAll()
+
+    for id in '222', '222:0', '111_222_9':
+      self.assertEqual('333', self.facebook.resolve_object_id(111, id))
+
+  def test_resolve_object_id_fetch_400s(self):
+    self.expect_urlopen('111_222', '{}', status=400)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.facebook.resolve_object_id('111', '222'))
+
+  def test_resolve_object_id_with_activity(self):
+    """If we pass an activity with fb_object_id, use that, don't fetch from FB."""
+    obj = {'fb_object_id': 333}
+    act = {'object': obj}
+
+    for activity in obj, act:
+      self.assertEqual('333', self.facebook.resolve_object_id(
+                                '111', '222', activity=activity))
+
   def test_urlopen_batch(self):
     self.expect_urlopen('',
       data='batch=[{"method":"GET","relative_url":"abc"},'

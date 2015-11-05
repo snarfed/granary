@@ -76,6 +76,7 @@ API_LIKES = '%s/likes'
 API_SHARES = 'sharedposts?ids=%s'
 API_PHOTOS = 'me/photos'
 API_NOTIFICATION = '%s/notifications'
+API_POST_OBJECT = '%s_%s'  # USERID_POSTID
 
 API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
                       'parent')
@@ -1291,6 +1292,52 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
       logging.error('Cowardly refusing Facebook id with unknown format: %s', id)
 
     return fbid
+
+  def resolve_object_id(self, user_id, post_id, activity=None):
+    """Resolve a post id to its Facebook object id, if any.
+
+    Used for photo posts, since Facebook has (at least) two different objects
+    (and ids) for them, one for the post and one for each photo.
+
+    This is the same logic that we do for canonicalizing photo objects in
+    get_activities() above.
+
+    If activity is not provided, looks up the post id in
+    self.resolved_object_ids_json. If it's not there, fetches the post from
+    Facebook.
+
+    Args:
+      user_id: string Facebook user id who posted the post
+      post_id: string Facebook post id
+      activity: optional AS activity representation of Facebook post
+
+    Returns: string Facebook object id or None
+    """
+    assert user_id, user_id
+    assert post_id, post_id
+
+    if activity:
+      fb_id = (activity.get('fb_object_id') or
+               activity.get('object', {}).get('fb_object_id'))
+      if fb_id:
+        return str(fb_id)
+
+    parsed = self.parse_id(post_id)
+    if parsed.post:
+      post_id = parsed.post
+
+    try:
+      post = self.urlopen(API_POST_OBJECT % (user_id, post_id))
+      resolved = post.get('object_id')
+    except BaseException, e:
+      code, body = util.interpret_http_exception(e)
+      if code and int(code) / 100 == 4:
+        resolved = None  # interpret_http_exception logged it already
+      else:
+        raise
+
+    logging.info('Resolved Facebook post id %r to %r.', post_id, resolved)
+    return str(resolved) if resolved else None
 
   def urlopen(self, relative_url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
