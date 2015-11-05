@@ -33,13 +33,13 @@ handlers:
   script: app.application
   secure: always
 
-- url: /.+
-  script: activitystreams.application
-  secure: always
-
 - url: /_ereporter.*
   script: google.appengine.ext.ereporter.report_generator.application
   login: admin
+
+- url: /.+
+  script: activitystreams.application
+  secure: always
 
 skip_files:
 - ^(.*/)?.*\.py[co]
