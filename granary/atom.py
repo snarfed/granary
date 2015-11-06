@@ -45,24 +45,16 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   request_url = _remove_query_params(request_url) if request_url else host_url
 
   for a in activities:
-    obj = a.get('object', {})
+    act_type = source.object_type(a)
+    if not act_type or act_type == 'post':
+      primary = a.get('object', {})
+    else:
+      primary = a
+    obj = a.setdefault('object', {})
     # Render content as HTML; escape &s
-    content = obj.get('content')
     rendered = []
 
-    for target_type, participle in ('share', 'Shared'), ('like', 'Liked'):
-      if source.object_type(a) == target_type:
-        if 'author' in obj and 'url' in obj:
-          rendered.append(
-            '<p>%s <a href="%s">a post</a> by <a href="%s">%s</a></p>' % (
-              participle, obj.get('url'), obj.get('author', {}).get('url'),
-              obj.get('author', {}).get('displayName')))
-        else:
-          rendered.append(
-            '<p>%s <a href="%s">a post</a>' % (
-              participle, obj.get('url', '#')))
-
-    rendered.append(microformats2.render_content(obj))
+    rendered.append(microformats2.render_content(primary))
     obj['rendered_content'] = _encode_ampersands('\n'.join(rendered))
 
     # Make sure every activity has the title field, since Atom <entry> requires
@@ -70,7 +62,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     if not a.get('title'):
       a['title'] = util.ellipsize(_encode_ampersands(
         a.get('displayName') or a.get('content') or obj.get('title') or
-        obj.get('displayName') or content or 'Untitled'))
+        obj.get('displayName') or obj.get('content') or 'Untitled'))
 
     # strip HTML tags. the Atom spec says title is plain text:
     # http://atomenabled.org/developers/syndication/#requiredEntryElements
@@ -78,7 +70,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
       BeautifulSoup(a['title'], 'html.parser').get_text(''))
 
     # Normalize attachments.image to always be a list.
-    for att in obj.get('attachments', []):
+    for att in primary.get('attachments', []):
       image = att.get('image')
       if image and not isinstance(image, list):
         att['image'] = [image]

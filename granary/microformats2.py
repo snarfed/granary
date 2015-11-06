@@ -367,54 +367,6 @@ def json_to_html(obj, parent_props=[]):
 
   Returns: string HTML
   """
-  def render_target_as_content(hcite, mftype, participle, first):
-    """Generate a simplified rendering of an h-cite to use in the
-    e-content of the outer post. Somewhat confusingly, this rendering
-    *cannot* include mf2 property classes, or those properties would be
-    hoisted to the outer h-entry.
-
-    Args:
-      hcite: dict or string, json-mf2 object for the nested h-cite or
-        simple URL of the target
-      mftype: string, mf2 type of nested h-cite (like or repost)
-      participle: string, the past-tense form of the verb that describes this
-        post's relation to its containing post (e.g. "Shared")
-      first: boolean, whether this is the first target of its kind.
-
-    Returns: string, rendered html
-    """
-    if isinstance(hcite, basestring):
-      return '<a class="u-%s u-%s-of" href="%s">%s</a>' % (
-        mftype, mftype, hcite, ('%ss this.' % mftype) if first else '')
-
-    prop = first_props(hcite['properties'])
-    content = prop.get('content', {})
-    content_html = content.get('html', content.get('value', ''))
-    url = prop.get('url', '#')
-
-    # remove the author photo, looks bad in the simple rendering
-    author = copy.deepcopy(prop.get('author', prop.get('actor', {})))
-    if author and 'photo' in author['properties']:
-      del author['properties']['photo']
-
-    if mftype == 'repost':
-      m = re.match('https?://(?:www\.|mobile\.)?twitter\.com/(\w+)/(.*)', url)
-      if m:
-        return 'RT <a href="%s">@%s</a> %s' % (
-          author.get('properties', {}).get('url', ['#'])[0],
-          m.group(1),
-          content_html,
-        )
-
-    # Simplified version of the nested post, without mf2 properties
-    return '%s <a href="%s">%s</a> by %s<div>%s</div>' % (
-        participle,
-        url or '#',
-        prop.get('name', 'a post'),
-        # class="h-card" is ok, but make sure not to give it p-author
-        hcard_to_html(author),
-        content_html,
-      )
 
   if not obj:
     return ''
@@ -449,7 +401,7 @@ def json_to_html(obj, parent_props=[]):
   # if this post is itself a like or repost, link to its target(s).
   likes_and_reposts = []
   # simple version of the like/repost context for the outer post's e-content
-  extra_content = ''
+  extra_content = []
 
   for astype, mftype, participle in [
       ('like', 'like', 'Liked'),
@@ -457,20 +409,17 @@ def json_to_html(obj, parent_props=[]):
   ]:
     # having like-of or repost-of makes this a like or repost.
     for target in props.get(mftype + '-of', []):
-      extra_content += '\n' + render_target_as_content(
-          target, mftype, participle, not extra_content)
-
-      # simple contexts are handled by the previous call and go right
-      # into the e-content. complex ones, we'll include separately in
-      # likes_and_reposts
-      if isinstance(target, dict):
+      if isinstance(target, basestring):
+        likes_and_reposts.append('<a class="u-%s u-%s-of" href="%s"></a>' % (
+          mftype, mftype, target))
+      else:
         likes_and_reposts.append(json_to_html(
           target, ['u-' + mftype, 'u-' + mftype + '-of']))
 
   # set up content and name
   content = prop.get('content', {})
-  content_html = ((content.get('html', '') or content.get('value', ''))
-                  + extra_content)
+  content_html = '\n'.join(
+    [content.get('html', '') or content.get('value', '')] + extra_content)
   content_classes = []
 
   if content_html:
@@ -637,6 +586,45 @@ def render_content(obj, include_location=True):
     if summary and summary != name:
       content += '\n<span class="summary">%s</span>' % summary
     content += '\n</p>'
+
+  # share/like contexts
+  for as_type, verb in [('share', 'Shared'), ('like', 'Likes')]:
+    obj_type = source.object_type(obj)
+    if obj_type != as_type or 'object' not in obj:
+      continue
+
+    target = obj.get('object')
+    if not target:
+      continue
+
+    # sometimes likes don't have enough content to render anything
+    # interesting
+    if 'url' in target and set(target) <= set(['url', 'objectType']):
+      content += '<a href="%s">%s this</a>.' % (
+        target.get('url'), verb)
+
+    else:
+      author = target.get('author', target.get('actor', {}))
+      # special case for twitter RT's
+      if obj_type == 'share' and 'url' in obj and re.search(
+              '^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
+        content += 'RT <a href="%s">@%s</a> ' % (
+          target.get('url', '#'),
+          author.get('username'),
+        )
+      else:
+        # image looks bad in the simplified rendering
+        author = {k: v for k, v in author.iteritems() if k != 'image'}
+        content += '%s <a href="%s">%s</a> by %s: ' % (
+          verb, target.get('url', '#'),
+          target.get('displayName', target.get('title', 'a post')),
+          hcard_to_html(object_to_json(author, default_object_type='person')),
+        )
+      content += render_content(target)
+
+    # only include the first context in the content (if there are
+    # others, they'll be included as separate properties)
+    break
 
   # location
   loc = obj.get('location')
