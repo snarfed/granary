@@ -4,3 +4,8 @@ from oauth_dropins.appengine_config import *
 # specifying one explicitly.
 import warnings
 warnings.filterwarnings('ignore', module='bs4', category=UserWarning)
+
+# Additional ereporter exceptions to suppress.
+BlacklistingHandler.BLACKLIST += (
+  'HTTPError: HTTP Error 401: Unauthorized',
+)
