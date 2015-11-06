@@ -26,11 +26,10 @@ function render_demo_request() {
 }
 
 function render_url_request() {
-  var url = window.location.origin + '/' +
-      document.getElementById('site').value + '/@me/' +
-      document.getElementById('group_id').value + '/@app/' +
-      document.getElementById('activity_id').value + '?format=' +
-      document.getElementById('format').value;
+  var url = window.location.origin + '/url'
+      + '?input=' + document.getElementById('input').value
+      + '&output=' + document.getElementById('output').value
+      + '&url=' + encodeURIComponent(document.getElementById('url').value);
 
   document.getElementById('request').innerHTML =
     'GET <a href="' + url + '">' + url + '</a>';

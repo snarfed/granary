@@ -4,7 +4,7 @@
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <meta http-equiv="X-XRDS-Location"
         content="//{{ host }}/.well-known/host-meta.xrds" />
-  <script type="text/javascript" src="/static/demo.js"></script>
+  <script type="text/javascript" src="/static/demo.js?version=20151105"></script>
   <title>Granary</title>
   <meta name="viewport" content="width=device-width">
 
@@ -140,7 +140,7 @@ Click on a site to try the demo!
 
 {% if entity %}
 {% with entity.site_name.lower as site %}
-<form id="demo" action="/demo" method="get" target="results">
+<form id="demo-form" action="/demo" method="get" target="results">
 <input type="hidden" id="site" name="site" value="{{ site }}" />
 <p><code>
 <label>/ {{ site }} / @me /</label>
@@ -202,7 +202,7 @@ Click on a site to try the demo!
 {% endif %}
 
 {% if input %}
-<form id="url" action="/url" method="get" target="results">
+<form id="url-form" action="/url" method="get" target="results">
 <p><code>
 <label>/ url ? input = </label>
 <select id="input" name="input">
