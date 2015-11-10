@@ -32,57 +32,58 @@ def read_json(filename):
     raise
 
 
-class TestDataTest(testutil.HandlerTest):
-  def test_testdata(self):
-    # TODO: use a handler with an HTTPS request so that URL schemes are converted
-    # self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
+def create_test_function(fn, original, expected):
+  """Create a simple test function that asserts
+  fn(original) == expected"""
+  return lambda self: self.assert_equals(expected, fn(original))
 
-    # All test data files live in testdata/.
-    prevdir = os.getcwd()
-    os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
-    # source extension, destination extension, conversion function, exclude prefix
-    mappings = (
-      ('as.json', 'mf2.json', microformats2.object_to_json,
-       # as and mf2 do not have feature parity for these types, some
-       # info is lost in translation.
-       # TODO support asymmetric comparisons (possibly: extension types
-       # like .mf2-from-as.json would supersede .mf2.json if present)
-       ('in_reply_to','repost_of_with_h_cite', 'nested_author',
-        'note_with_composite_photo')),
-      ('as.json', 'mf2.html', microformats2.object_to_html,
-       ('in_reply_to','repost_of_with_h_cite', 'nested_author',
-      #  'note_with_composite_photo'
-      )), # see above
-      ('mf2.json', 'as.json', microformats2.json_to_object,
-       # these have tags, which we don't generate
-       ('note.', 'article_with_')),
-      ('mf2.json', 'mf2.html', microformats2.json_to_html,
-       ('in_reply_to','repost_of_with_h_cite', 'nested_author',
-        'note_with_composite_photo')), # see above
-      )
+# TODO: use a handler with an HTTPS request so that URL schemes are converted
+# self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
 
-    failed = False
-    for src_ext, dst_ext, fn, excludes in mappings:
-      for src, dst in filepairs(src_ext, dst_ext):
-        excluded = False
-        for exclude in excludes:
-          if dst.startswith(exclude):
-            excluded = True
-        if excluded:
-          continue
+# All test data files live in testdata/.
+prevdir = os.getcwd()
+os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
-        if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):
-          expected = open(dst).read()
-        else:
-          expected = read_json(dst)
-        try:
-          self.assert_equals(
-            expected, fn(read_json(src)),
-            '\n%s %s:1:\n' % (fn.__name__, os.path.abspath(dst)))
-        except AssertionError:
-          logging.exception('')
-          failed = True
+# source extension, destination extension, conversion function, exclude prefix
+mappings = (
+  ('as.json', 'mf2.json', microformats2.object_to_json,
+   # as and mf2 do not have feature parity for these types, some
+   # info is lost in translation.
+   # TODO support asymmetric comparisons (possibly: extension types
+   # like .mf2-from-as.json would supersede .mf2.json if present)
+   ('in_reply_to', 'repost_of_with_h_cite', 'nested_author',
+    'note_with_composite_photo')),
+  ('as.json', 'mf2.html', microformats2.object_to_html,
+   ('in_reply_to', 'repost_of_with_h_cite', 'nested_author',
+    #  'note_with_composite_photo'
+    )),  # see above
+  ('mf2.json', 'as.json', microformats2.json_to_object,
+   # these have tags, which we don't generate
+   ('note.', 'article_with_')),
+  ('mf2.json', 'mf2.html', microformats2.json_to_html,
+   ('in_reply_to', 'repost_of_with_h_cite', 'nested_author',
+    'note_with_composite_photo')),  # see above
+)
 
-    os.chdir(prevdir)
-    assert not failed
+test_funcs = {}
+for src_ext, dst_ext, fn, excludes in mappings:
+  for src, dst in filepairs(src_ext, dst_ext):
+    if any(dst.startswith(exclude) for exclude in excludes):
+      continue
+
+    if os.path.splitext(dst_ext)[1] in ('.html', '.xml'):
+      expected = open(dst).read()
+    else:
+      expected = read_json(dst)
+    original = read_json(src)
+
+    test_name = (
+      'test__%s__%s__%s' % (fn.__name__, src, dst)
+    ).replace('.', '_').replace('-', '_')
+    test_funcs[test_name] = create_test_function(fn, original, expected)
+
+os.chdir(prevdir)
+
+
+TestDataTest = type('TestDataTest', (testutil.HandlerTest,), test_funcs)
