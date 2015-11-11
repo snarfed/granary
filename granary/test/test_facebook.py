@@ -460,6 +460,59 @@ POST_OBJ = {  # ActivityStreams
     }
   }
 
+PHOTO_OBJ = copy.deepcopy(POST_OBJ)  # ActivityStreams
+PHOTO_OBJ.update({
+  'id': tag_uri('222'),
+  'fb_id': '222',
+  'url': 'https://www.facebook.com/212038/posts/222',
+  'fb_object_id': '222',
+})
+for tag in PHOTO_OBJ['tags']:
+  if tag.get('verb') == 'like':
+    tag['id'] = tag['id'].replace('10100176064482163', '222')
+    tag.update({
+      'url': 'https://www.facebook.com/212038/posts/222',
+      'object': {'url': 'https://www.facebook.com/212038/posts/222'},
+    })
+SELF_POST_OBJ = copy.deepcopy(PHOTO_OBJ)
+
+PHOTO_OBJ['replies']['totalItems'] += 1
+PHOTO_OBJ['replies']['items'].append({
+  'id': tag_uri('222_10559'),
+  'fb_id': '222_10559',
+  'url': 'https://www.facebook.com/222?comment_id=10559',
+  'objectType': 'comment',
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('333'),
+    'numeric_id': '333',
+    'displayName': 'Alice Alison',
+    'image': {'url': 'https://graph.facebook.com/v2.2/333/picture?type=large'},
+    'url': 'https://www.facebook.com/333',
+    },
+  'content': 'woohoo',
+  'published': '2014-04-09T20:55:49+00:00',
+  'inReplyTo': [{
+    'id': tag_uri('222'),
+    'url': 'https://www.facebook.com/222',
+  }],
+})
+PHOTO_OBJ['tags'].append({
+  'id': tag_uri('222_liked_by_666'),
+  'url': 'https://www.facebook.com/212038/posts/222',
+  'object': {'url': 'https://www.facebook.com/212038/posts/222'},
+  'objectType': 'activity',
+  'verb': 'like',
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('666'),
+    'numeric_id': '666',
+    'displayName': 'Bob Bobertson',
+    'url': 'https://www.facebook.com/666',
+    'image': {'url': 'https://graph.facebook.com/v2.2/666/picture?type=large'},
+  },
+})
+
 # file:///Users/ryan/docs/activitystreams_schema_spec_1.0.html#event
 EVENT_OBJ = {  # ActivityStreams.
   'objectType': 'event',
@@ -502,10 +555,10 @@ EVENT_OBJ = {  # ActivityStreams.
         'inReplyTo': [{
           'id': tag_uri('145304994'),
           'url': 'https://www.facebook.com/145304994',
-    }],
         }],
-    },
-  }
+    }],
+  },
+}
 EVENT_ACTIVITY = {  # ActivityStreams
   'id': tag_uri('145304994'),
   'url': 'https://www.facebook.com/145304994',
@@ -601,8 +654,17 @@ ACTIVITY = {  # ActivityStreams
   'generator': {
     'displayName': 'Facebook for Android',
     'id': tag_uri('350685531728'),
-    }
   }
+}
+PHOTO_ACTIVITY = copy.deepcopy(ACTIVITY)
+PHOTO_ACTIVITY.update({
+  'id': tag_uri('222'),
+  'fb_id': '222',
+  'url': 'https://www.facebook.com/212038/posts/222',
+  'object': PHOTO_OBJ,
+})
+SELF_ACTIVITY = copy.deepcopy(PHOTO_ACTIVITY)
+SELF_ACTIVITY['object'] = SELF_POST_OBJ
 
 FB_NOTE = {
   'id': '101007473698067',
@@ -809,7 +871,7 @@ class FacebookTest(testutil.HandlerTest):
 
     got = self.fb.get_activities(fetch_shares=True)
     self.assert_equals([SHARE_OBJ, SHARE_OBJ], got[0]['tags'])
-    self.assert_equals([], got[1]['tags'])
+    self.assertNotIn('tags', got[1])
 
   def test_get_activities_fetch_shares_returns_empty_list(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
@@ -819,10 +881,22 @@ class FacebookTest(testutil.HandlerTest):
     got = self.fb.get_activities(fetch_shares=True)
     self.assertNotIn('tags', got[0])
 
-  def test_get_activities_self(self):
+  def test_get_activities_self_empty(self):
     self.expect_urlopen('me/feed?offset=0', {})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('me/events', {})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
+
+  def test_get_activities_self_photo_and_event(self):
+    self.expect_urlopen('me/feed?offset=0', {'data': [POST]})
+    self.expect_urlopen('me/photos/uploaded', {'data': [PHOTO]})
+    self.expect_urlopen('me/events', {'data': [EVENT]})
+    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
+
+    self.mox.ReplayAll()
+    self.assert_equals([EVENT_ACTIVITY, PHOTO_ACTIVITY],
+                       self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen('me/home?offset=0&access_token=asdf', {"id": 123})
@@ -854,9 +928,9 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], self.fb.get_activities(activity_id='0_0'))
 
   def test_get_activities_start_index_and_count(self):
-    self.expect_urlopen('me/feed?offset=3&limit=5', {})
+    self.expect_urlopen('me/home?offset=3&limit=5', {})
     self.mox.ReplayAll()
-    self.fb.get_activities(group_id=source.SELF,start_index=3, count=5)
+    self.fb.get_activities(start_index=3, count=5)
 
   def test_get_activities_activity_id_with_user_id(self):
     """Check that we fetch both forms of the id and merge the results."""
@@ -921,7 +995,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assertNotIn('tags', got[1])
 
   def test_get_event(self):
-    self.expect_urlopen('145304994', EVENT)
+    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
     self.mox.ReplayAll()
     self.assert_equals(EVENT_ACTIVITY, self.fb.get_event('145304994'))
 
@@ -936,8 +1010,10 @@ class FacebookTest(testutil.HandlerTest):
     post = copy.copy(POST)
     post['status_type'] = 'shared_story'
     self.expect_urlopen('me/feed?offset=0', {'data': [post]})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('me/events', {})
     self.mox.ReplayAll()
-    self.assert_equals([ACTIVITY],
+    self.assert_equals([SELF_ACTIVITY],
                        self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_fetch_replies(self):
@@ -945,7 +1021,7 @@ class FacebookTest(testutil.HandlerTest):
     post2['id'] = '222'
     post3 = copy.deepcopy(POST)
     post3['id'] = '333'
-    self.expect_urlopen('me/feed?offset=0',
+    self.expect_urlopen('me/home?offset=0',
                         {'data': [POST, post2, post3]})
     self.expect_urlopen('comments?filter=stream&ids=222,333,10100176064482163',
       {'222': {'data': [{'id': '777', 'message': 'foo'},
@@ -955,8 +1031,7 @@ class FacebookTest(testutil.HandlerTest):
       })
     self.mox.ReplayAll()
 
-    activities = self.fb.get_activities(group_id=source.SELF,
-                                              fetch_replies=True)
+    activities = self.fb.get_activities(fetch_replies=True)
     base_ids = ['547822715231468_6796480', '124561947600007_672819']
     self.assert_equals([base_ids, base_ids + ['777', '888'], base_ids + ['999']],
                        [[c['fb_id'] for c in a['object']['replies']['items']]
@@ -964,6 +1039,8 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_skips_extras_if_no_posts(self):
     self.expect_urlopen('me/feed?offset=0', {'data': []})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('me/events', {})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
@@ -971,10 +1048,11 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_extras_skips_notes(self):
     # first call returns just notes
-    self.expect_urlopen('me/feed?offset=0', {'data': [FB_NOTE, FB_CREATED_NOTE]})
+    self.expect_urlopen('me/home?offset=0',
+                        {'data': [FB_NOTE, FB_CREATED_NOTE]})
 
     # second call returns notes and normal post
-    self.expect_urlopen('me/feed?offset=0',
+    self.expect_urlopen('me/home?offset=0',
                         {'data': [FB_NOTE, FB_CREATED_NOTE, POST]})
     self.expect_urlopen('sharedposts?ids=10100176064482163', [])
     self.expect_urlopen('comments?filter=stream&ids=10100176064482163', {})
@@ -984,7 +1062,43 @@ class FacebookTest(testutil.HandlerTest):
     for expected in ([FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY],
                      [FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY, ACTIVITY]):
       self.assert_equals(expected, self.fb.get_activities(
-        group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+        fetch_shares=True, fetch_replies=True))
+
+  def test_get_activities_canonicalizes_ids_with_colons(self):
+    """https://github.com/snarfed/bridgy/issues/305"""
+    # translate post id and comment ids to same ids in new colon-based format
+    post = copy.deepcopy(POST)
+    activity = copy.deepcopy(ACTIVITY)
+    post['id'] = activity['object']['fb_id'] = activity['fb_id'] = \
+        '212038:10100176064482163:11'
+
+    reply = activity['object']['replies']['items'][0]
+    post['comments']['data'][0]['id'] = reply['fb_id'] = \
+        '12345:547822715231468:987_6796480'
+    reply['url'] = 'https://www.facebook.com/12345/posts/547822715231468?comment_id=6796480'
+    reply['inReplyTo'][0]['url'] = 'https://www.facebook.com/12345/posts/547822715231468'
+
+    self.expect_urlopen('me/home?offset=0', {'data': [post]})
+    self.mox.ReplayAll()
+
+    self.assert_equals([activity], self.fb.get_activities())
+
+  def test_get_activities_ignores_bad_comment_ids(self):
+    """https://github.com/snarfed/bridgy/issues/305"""
+    bad_post = copy.deepcopy(POST)
+    bad_post['id'] = '90^90'
+    del bad_post['object_id']
+
+    post_with_bad_comment = copy.deepcopy(POST)
+    post_with_bad_comment['comments']['data'].append(
+      {'id': '12^34', 'message': 'bad to the bone'})
+
+    self.expect_urlopen('me/home?offset=0', {'data': [bad_post, post_with_bad_comment]})
+    self.mox.ReplayAll()
+
+    # should only get the base activity, without the extra comment, and not the
+    # bad activity at all
+    self.assert_equals([ACTIVITY], self.fb.get_activities())
 
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):

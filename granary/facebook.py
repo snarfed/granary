@@ -66,17 +66,29 @@ import source
 # https://developers.facebook.com/docs/apps/changelog#v2_4_changes
 #   (see the Declarative Fields section)
 API_BASE = 'https://graph.facebook.com/v2.2/'
-API_SELF_POSTS = '%s/feed?offset=%d'
-API_HOME = '%s/home?offset=%d'
-API_RSVP = '%s/invited/%s'
-API_FEED = 'me/feed'
 API_COMMENTS = '%s/comments'
 API_COMMENTS_ALL = 'comments?filter=stream&ids=%s'
+# Ideally this fields arg would just be [default fields plus comments], but
+# there's no way to ask for that. :/
+# https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
+API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
+# WARNING: this edge is deprecated in API v2.4 and will stop working in 2017.
+# https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
+API_EVENT_RSVPS = '%s/invited'
+API_FEED = 'me/feed'
+API_HOME = '%s/home?offset=%d'
 API_LIKES = '%s/likes'
-API_SHARES = 'sharedposts?ids=%s'
-API_PHOTOS = 'me/photos'
 API_NOTIFICATION = '%s/notifications'
+API_PHOTOS = 'me/photos'
+API_PHOTOS_UPLOADED = 'me/photos/uploaded'
 API_POST_OBJECT = '%s_%s'  # USERID_POSTID
+API_RSVP = '%s/invited/%s'
+API_SELF_POSTS = '%s/feed?offset=%d'
+API_SHARES = 'sharedposts?ids=%s'
+# returns yes and maybe
+API_USER_RSVPS = 'me/events'
+API_USER_RSVPS_DECLINED = 'me/events/declined'
+API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
 
 API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
                       'parent')
@@ -196,6 +208,7 @@ class Facebook(source.Source):
     if search_query:
       raise NotImplementedError()
 
+    activities = []
     if activity_id:
       # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
       # it doesn't accept that format. I can't tell which is which yet, so try
@@ -246,15 +259,19 @@ class Facebook(source.Source):
         else:
           raise
 
-      # for group feeds, filter out some shared_story posts because they tend to
-      # be very tangential - friends' likes, related posts, etc.
-      #
-      # don't do it for individual people's feeds, e.g. the current user's,
-      # because posts with attached links are also status_type == shared_story.
-      if group_id != source.SELF:
+      if group_id == source.SELF:
+        # TODO: save and use ETag for all of these extra calls
+        self._merge_photos(posts)
+        activities.extend(self._get_events())
+      else:
+        # for group feeds, filter out some shared_story posts because they tend
+        # to be very tangential - friends' likes, related posts, etc.
+        #
+        # don't do it for individual people's feeds, e.g. the current user's,
+        # because posts with attached links are also status_type == shared_story
         posts = [p for p in posts if not p.get('status_type') == 'shared_story']
 
-    activities = [self.post_to_activity(p) for p in posts]
+    activities.extend(self.post_to_activity(p) for p in posts)
 
     id_to_activity = {}
     for post, activity in zip(posts, activities):
@@ -302,10 +319,65 @@ class Facebook(source.Source):
               if comment['id'] not in existing_ids:
                 replies.append(self.comment_to_object(comment))
 
-
-    response = self.make_activities_base_response(activities)
+    response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag
     return response
+
+  def _merge_photos(self, posts):
+    """Fetches the current user's photos and merges them into existing posts.
+
+    Have to uploaded photos manually since facebook sometimes collapses multiple
+    photos into albums, and the album post object won't have the post content,
+    comments, etc. from the individual photo posts.
+
+    http://stackoverflow.com/questions/12785120
+
+    Args:
+      posts: list of Facebook post object dicts
+    """
+    photos = self.urlopen(API_PHOTOS_UPLOADED).get('data', [])
+
+    # photos and photo posts stories are distinct and have separate ids. the
+    # post's object_id field points to the photo's id. de-dupe by switching the
+    # post to use object_id when it's provided.
+    posts_by_obj_id = {}
+    for post in posts:
+      obj_id = post.get('object_id')
+      if not obj_id:
+        continue
+
+      posts_by_obj_id[obj_id] = post
+      orig_id = post.get('id', '')
+      if orig_id:
+        post['id'] = obj_id
+        post['url'] = post.get('url', '').replace(orig_id, obj_id)
+
+    # merge comments and likes from existing photo objects, and add new ones.
+    for photo in photos:
+      existing = posts_by_obj_id.get(photo.get('id'))
+      if existing:
+        for field in 'comments', 'likes':
+          existing.setdefault(field, {}).setdefault('data', []).extend(
+            photo.get(field, {}).get('data', []))
+      else:
+        posts.append(photo)
+
+  def _get_events(self):
+    """Fetches the current user's events.
+
+    https://developers.facebook.com/docs/graph-api/reference/user/events/
+    https://developers.facebook.com/docs/graph-api/reference/event#edges
+
+    TODO: also fetch and use API_USER_RSVPS_DECLINED
+
+    Returns:
+      posts: list of Facebook post object dicts
+    """
+    rsvps = self.urlopen(API_USER_RSVPS).get('data', [])
+
+    # have to re-fetch the individual event objects because the user rsvps
+    # response doesn't include the event description.
+    return [self.get_event(rsvp['id']) for rsvp in rsvps if rsvp.get('id')]
 
   def get_event(self, event_id):
     """Returns a Facebook event post.
@@ -315,7 +387,7 @@ class Facebook(source.Source):
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    resp = self.urlopen(event_id)
+    resp = self.urlopen(API_EVENT % event_id)
     if resp.get('error'):
       logging.warning("Couldn't fetch event %s: %s", event_id, resp)
     else:
@@ -365,8 +437,7 @@ class Facebook(source.Source):
       event_id: string event id
       user_id: string user id
     """
-    url = API_RSVP % (event_id, user_id)
-    data = self.urlopen(url).get('data')
+    data = self.urlopen(API_RSVP % (event_id, user_id)).get('data', [])
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
   def create(self, obj, include_link=False):
