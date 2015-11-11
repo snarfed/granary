@@ -262,7 +262,8 @@ class Facebook(source.Source):
       if group_id == source.SELF:
         # TODO: save and use ETag for all of these extra calls
         self._merge_photos(posts)
-        activities.extend(self._get_events())
+        if fetch_events:
+          activities.extend(self._get_events())
       else:
         # for group feeds, filter out some shared_story posts because they tend
         # to be very tangential - friends' likes, related posts, etc.
