@@ -261,9 +261,11 @@ class Facebook(source.Source):
 
       if group_id == source.SELF:
         # TODO: save and use ETag for all of these extra calls
+        # TODO: use batch API to get photos, events, etc in one request
+        # https://developers.facebook.com/docs/graph-api/making-multiple-requests
         self._merge_photos(posts)
         if fetch_events:
-          activities.extend(self._get_events())
+          activities.extend(self._get_events(user_id))
       else:
         # for group feeds, filter out some shared_story posts because they tend
         # to be very tangential - friends' likes, related posts, etc.
@@ -363,13 +365,16 @@ class Facebook(source.Source):
       else:
         posts.append(photo)
 
-  def _get_events(self):
+  def _get_events(self, user_id):
     """Fetches the current user's events.
 
     https://developers.facebook.com/docs/graph-api/reference/user/events/
     https://developers.facebook.com/docs/graph-api/reference/event#edges
 
     TODO: also fetch and use API_USER_RSVPS_DECLINED
+
+    Args:
+      user_id: string. will only fetch RSVPs for events owned by this user
 
     Returns:
       posts: list of Facebook post object dicts
@@ -378,21 +383,33 @@ class Facebook(source.Source):
 
     # have to re-fetch the individual event objects because the user rsvps
     # response doesn't include the event description.
-    return [self.get_event(rsvp['id']) for rsvp in rsvps if rsvp.get('id')]
+    return [self.get_event(rsvp['id'], user_id=user_id)
+            for rsvp in rsvps if rsvp.get('id')]
 
-  def get_event(self, event_id):
+  def get_event(self, event_id, user_id=None):
     """Returns a Facebook event post.
 
     Args:
       id: string, site-specific event id
+      user_id: string. if provided, will only fetch RSVPs for events owned by
+        this user
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    resp = self.urlopen(API_EVENT % event_id)
-    if resp.get('error'):
-      logging.warning("Couldn't fetch event %s: %s", event_id, resp)
-    else:
-      return self.event_to_activity(resp)
+    event = self.urlopen(API_EVENT % event_id)
+    if event.get('error'):
+      logging.warning("Couldn't fetch event %s: %s", event_id, event)
+      return None
+
+    # when possible, only get RSVPs for events that the user is the owner of.
+    # avoids (but doesn't entirely prevent) processing big non-indieweb events
+    # with tons of attendees that put us over app engine's instance memory
+    # limit. details: https://github.com/snarfed/bridgy/issues/77
+    rsvps = None
+    if not user_id or event.get('owner', {}).get('id') == user_id:
+      rsvps = self.urlopen(API_EVENT_RSVPS % event_id).get('data')
+
+    return self.event_to_activity(event, rsvps=rsvps)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
