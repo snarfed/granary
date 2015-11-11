@@ -13,6 +13,7 @@
             "url": ["http://example.com/alice"]
           }
         }],
+        "content": [{"html": "<a href=\"http://example.com/abc\">shared this.</a>"}],
         "repost": ["http://example.com/abc"],
         "repost-of": ["http://example.com/abc"]
       }
@@ -20,6 +21,7 @@
       "type": ["h-cite", "h-as-share"],
       "properties": {
         "url": ["http://example.com/anonymous/repost"],
+        "content": [{"html": "<a href=\"http://example.com/abc\">shared this.</a>"}],
         "repost": ["http://example.com/abc"],
         "repost-of": ["http://example.com/abc"]
       }
