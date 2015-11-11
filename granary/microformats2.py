@@ -581,10 +581,11 @@ def render_content(obj, include_location=True):
       content += '\n<span class="summary">%s</span>' % summary
     content += '\n</p>'
 
-  # share/like contexts
+  # generate share/like contexts if the activity does not have content
+  # of its own
   for as_type, verb in [('share', 'Shared'), ('like', 'Likes')]:
     obj_type = source.object_type(obj)
-    if obj_type != as_type or 'object' not in obj:
+    if obj_type != as_type or 'object' not in obj or 'content' in obj:
       continue
 
     targets = obj.get('object')
@@ -607,9 +608,7 @@ def render_content(obj, include_location=True):
         if obj_type == 'share' and 'url' in obj and re.search(
                 '^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
           content += 'RT <a href="%s">@%s</a> ' % (
-            target.get('url', '#'),
-            author.get('username'),
-          )
+            target.get('url', '#'), author.get('username'))
         else:
           # image looks bad in the simplified rendering
           author = {k: v for k, v in author.iteritems() if k != 'image'}

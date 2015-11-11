@@ -1,0 +1,11 @@
+{
+  "type" : ["h-entry", "h-as-comment"],
+  "properties" : {
+    "in-reply-to" : ["http://example.com/bare-reply",
+                     "http://example.com/embedded-reply"],
+    "content" : [{
+        "html" : "This is the main content.",
+        "value" : "This is the main content."
+      }]
+  }
+}

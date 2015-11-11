@@ -9,7 +9,7 @@
         "properties" : {
           "url" : ["http://example.com/embedded-repost"],
           "name" : ["Author"],
-          "content" : ["Repost inside h-cite"]
+          "content" : [{"html": "Repost inside h-cite"}]
         }
       }
     ],

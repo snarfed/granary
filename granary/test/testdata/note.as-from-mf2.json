@@ -1,0 +1,23 @@
+{
+  "objectType": "note",
+  "displayName": "blog post 123",
+  "summary": "too cool to summarize",
+  "content": "A blog post. <a href=\"http://my/link\">link</a> too",
+  "id": "tag:example.com,2011:blog-post-123",
+  "published": "2012-02-22T20:26:41",
+  "updated": "2013-10-25T10:31:30+00:00",
+  "url": "http://example.com/blog-post-123",
+  "image": {"url": "http://example.com/blog-post-123/image"},
+  "author": {
+    "id": "tag:example.com,2001:ryan",
+    "displayName": "Ryan Barrett",
+    "image": {"url": "http://example.com/ryan/image"},
+    "objectType": "person"
+  },
+  "location": {
+    "displayName": "Carcassonne, Aude",
+    "id": "31cb9e7ed29dbe52",
+    "url": "https://maps.google.com/maps?q=32.4004416,-98.9852672",
+    "objectType": "place"
+  }
+}

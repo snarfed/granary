@@ -1,0 +1,6 @@
+{
+  "type": ["h-entry", "h-as-note"],
+  "properties": {
+    "photo": ["https://ben.thatmustbe.me/static/img.jpg"]
+  }
+}
