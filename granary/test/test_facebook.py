@@ -899,6 +899,27 @@ class FacebookTest(testutil.HandlerTest):
       [EVENT_ACTIVITY_WITH_ATTENDEES, PHOTO_ACTIVITY],
       self.fb.get_activities(group_id=source.SELF, fetch_events=True))
 
+  def test_get_activities_self_owned_event_rsvps(self):
+    self.expect_urlopen('me/feed?offset=0', {})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('me/events', {'data': [EVENT]})
+    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {'data': RSVPS})
+
+    self.mox.ReplayAll()
+    self.assert_equals([EVENT_ACTIVITY_WITH_ATTENDEES], self.fb.get_activities(
+      group_id=source.SELF, fetch_events=True, event_owner_id=EVENT['owner']['id']))
+
+  def test_get_activities_self_unowned_event_no_rsvps(self):
+    self.expect_urlopen('me/feed?offset=0', {})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('me/events', {'data': [EVENT]})
+    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
+
+    self.mox.ReplayAll()
+    self.assert_equals([], self.fb.get_activities(
+      group_id=source.SELF, fetch_events=True, event_owner_id='xyz'))
+
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen('me/home?offset=0&access_token=asdf', {"id": 123})
     self.mox.ReplayAll()
@@ -1005,15 +1026,15 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_event_user_id_not_owner(self):
     self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
     self.mox.ReplayAll()
-    self.assert_equals(EVENT_ACTIVITY,
-                       self.fb.get_event('145304994', user_id='xyz'))
+    got = self.fb.get_event('145304994', owner_id='xyz')
+    self.assert_equals(None, got)
 
   def test_get_event_user_id_owner(self):
     self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
     self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {})
     self.mox.ReplayAll()
-    self.assert_equals(EVENT_ACTIVITY,
-                       self.fb.get_event('145304994', user_id=EVENT['owner']['id']))
+    got = self.fb.get_event('145304994', owner_id=EVENT['owner']['id'])
+    self.assert_equals(EVENT_ACTIVITY, got)
 
   def test_get_activities_group_excludes_shared_story(self):
     self.expect_urlopen(
