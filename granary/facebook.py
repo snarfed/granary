@@ -93,6 +93,8 @@ API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
 API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
                       'parent')
 
+MAX_IDS = 50  # for the ids query param
+
 # Maps Facebook Graph API type, status_type, or Open Graph data type to
 # ActivityStreams objectType.
 # https://developers.facebook.com/docs/graph-api/reference/post#fields
@@ -295,21 +297,16 @@ class Facebook(source.Source):
     #
     # if the 'article' check is confusing, remember that facebook notes are
     # AS articles. :P
-    non_note_ids = ','.join(
-      id for id, activity in id_to_activity.items()
-      if activity.get('object', {}).get('objectType') != 'article')
+    non_note_ids = [id for id, activity in id_to_activity.items()
+                    if activity.get('object', {}).get('objectType') != 'article']
 
     if non_note_ids and fetch_shares:
       try:
-        # https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
-        resp = self.urlopen(API_SHARES % non_note_ids)
-        # usually the response is a dict, but when it's empty, it's a list. :(
-        if resp:
-          for id, shares in resp.items():
-            activity = id_to_activity.get(id)
-            if activity:
-              activity.setdefault('tags', []).extend(
-                [self.share_to_object(share) for share in shares.get('data', [])])
+        for id, shares in self._split_id_requests(API_SHARES, non_note_ids).items():
+          activity = id_to_activity.get(id)
+          if activity:
+            activity.setdefault('tags', []).extend(
+              [self.share_to_object(share) for share in shares])
       except urllib2.HTTPError, e:
         # some sharedposts requests 400, not sure why.
         # https://github.com/snarfed/bridgy/issues/348
@@ -317,17 +314,15 @@ class Facebook(source.Source):
           raise
 
     if non_note_ids and fetch_replies:
-      resp = self.urlopen(API_COMMENTS_ALL % non_note_ids)
-      if resp:
-        for id, comments in resp.items():
-          activity = id_to_activity.get(id)
-          if activity:
-            replies = activity['object'].setdefault('replies', {}
-                                       ).setdefault('items', [])
-            existing_ids = {reply['fb_id'] for reply in replies}
-            for comment in comments.get('data', []):
-              if comment['id'] not in existing_ids:
-                replies.append(self.comment_to_object(comment))
+      for id, comments in self._split_id_requests(API_COMMENTS_ALL, non_note_ids).items():
+        activity = id_to_activity.get(id)
+        if activity:
+          replies = activity['object'].setdefault('replies', {}
+                                     ).setdefault('items', [])
+          existing_ids = {reply['fb_id'] for reply in replies}
+          for comment in comments:
+            if comment['id'] not in existing_ids:
+              replies.append(self.comment_to_object(comment))
 
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag
@@ -371,6 +366,27 @@ class Facebook(source.Source):
             photo.get(field, {}).get('data', []))
       else:
         posts.append(photo)
+
+  def _split_id_requests(self, api_call, ids):
+    """Splits an API call into multiple to stay under the MAX_IDS limit per call.
+
+    https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
+
+    Args:
+      api_call: string with %s placeholder for ids query param
+      ids: sequence of string ids
+
+    Returns: merged list of objects from the responses' 'data' fields
+    """
+    results = {}
+    for i in range(0, len(ids), MAX_IDS):
+      resp = self.urlopen(api_call % ','.join(ids[i:i + MAX_IDS]))
+      # usually the response is a dict, but when it's empty, it's a list. :(
+      if resp:
+        for id, objs in resp.items():
+          results.setdefault(id, []).extend(objs.get('data', []))
+
+    return results
 
   def _get_events(self, owner_id=None):
     """Fetches the current user's events.
