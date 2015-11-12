@@ -1,0 +1,30 @@
+{
+  "type" : ["h-entry", "h-as-share"],
+  "properties" : {
+    "repost" : [
+      "http://example.com/bare-repost",
+      {
+        "type": ["h-cite", "h-as-article"],
+        "properties": {
+          "name": ["Author"],
+          "content": [{"html": "Repost inside h-cite", "value": "Repost inside h-cite"}],
+          "url": ["http://example.com/embedded-repost"]
+        }
+      }
+    ],
+    "repost-of" : [
+      "http://example.com/bare-repost",
+      {
+        "type": ["h-cite", "h-as-article"],
+        "properties": {
+          "name": ["Author"],
+          "content": [{"html": "Repost inside h-cite", "value": "Repost inside h-cite"}],
+          "url": ["http://example.com/embedded-repost"]
+        }
+      }],
+    "content" : [{
+      "html" : "This is the main content.",
+      "value" : "This is the main content."
+    }]
+  }
+}

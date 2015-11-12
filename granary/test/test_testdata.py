@@ -49,23 +49,12 @@ os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
 # source extension, destination extension, conversion function, exclude prefix
 mappings = (
-  ('as.json', ['mf2.json'], microformats2.object_to_json,
-   # as and mf2 do not have feature parity for these types, some
-   # info is lost in translation.
-   # TODO support asymmetric comparisons (possibly: extension types
-   # like .mf2-from-as.json would supersede .mf2.json if present)
-   ('in_reply_to', 'repost_of_with_h_cite', 'nested_author',
-    'note_with_composite_photo')),
-  ('as.json', ['mf2.html'], microformats2.object_to_html,
-   ('in_reply_to', 'repost_of_with_h_cite', 'nested_author',
-    #  'note_with_composite_photo'
-    )),  # see above
-  ('mf2.json', ['as-from-mf2.json', 'as.json'], microformats2.json_to_object,
-   # these have tags, which we don't generate
-   ('note.', 'article_with_')),
-  ('mf2.json', ['mf2.html'], microformats2.json_to_html,
-   ('in_reply_to', 'repost_of_with_h_cite', 'nested_author',
-    'note_with_composite_photo')),  # see above
+  ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json, ()),
+  ('as.json', ['mf2-from-as.html', 'mf2.html'], microformats2.object_to_html, ()),
+  ('mf2.json', ['as-from-mf2.json', 'as.json'], microformats2.json_to_object, ()),
+  ('mf2.json', ['mf2-from-json.html', 'mf2.html'], microformats2.json_to_html,
+   # we do not format h-media photos properly in html
+   ('note_with_composite_photo',)),
 )
 
 test_funcs = {}
@@ -81,8 +70,8 @@ for src_ext, dst_exts, fn, excludes in mappings:
     original = read_json(src)
 
     test_name = (
-      'test__%s__%s__%s' % (fn.__name__, src, dst)
-    ).replace('.', '_').replace('-', '_')
+      'test_%s_%s' % (fn.__name__, src[:-len(src_ext)])
+    ).replace('.', '_').replace('-', '_').strip('_')
     test_funcs[test_name] = create_test_function(fn, original, expected)
 
 os.chdir(prevdir)

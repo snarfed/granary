@@ -1,0 +1,6 @@
+{
+  "type": ["h-card"],
+  "properties": {
+    "name": ["Foo Bar"]
+  }
+}
