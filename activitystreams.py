@@ -181,7 +181,7 @@ class Handler(webapp2.RequestHandler):
 
     kwargs = {'start_index': start_index, 'count': count}
 
-    search_query = self.request.get('search_query')
+    search_query = self.request.get('search_query') or self.request.get('q')
     if search_query:
       kwargs['search_query'] = search_query
 
