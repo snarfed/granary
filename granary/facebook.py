@@ -549,7 +549,7 @@ class Facebook(source.Source):
           error_html='No content text found.')
 
     image_url = obj.get('image', {}).get('url')
-    tags = self._get_person_tags(obj)
+    people = self._get_person_tags(obj)
 
     url = obj.get('url')
     if include_link and url:
@@ -557,10 +557,10 @@ class Facebook(source.Source):
     preview_content = util.linkify(content)
     if image_url:
       preview_content += '<br /><br /><img src="%s" />' % image_url
-    if tags:
+    if people:
       preview_content += '<br /><br /><em>with %s</em>' % ', '.join(
         '<a href="%s">%s</a>' % (tag.get('url'), tag.get('displayName'))
-        for tag in tags)
+        for tag in people)
     msg_data = {'message': content.encode('utf-8')}
     if appengine_config.DEBUG:
       msg_data['privacy'] = json.dumps({'value': 'SELF'})
@@ -653,8 +653,8 @@ class Facebook(source.Source):
         if image_url:
           msg_data['url'] = image_url
           api_call = API_PHOTOS
-        if tags:
-          msg_data['tags'] = ','.join(tag['id'] for tag in tags)
+        if people:
+          msg_data['tags'] = ','.join(tag['id'] for tag in people)
         resp = self.urlopen(api_call, data=urllib.urlencode(msg_data))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
@@ -685,17 +685,19 @@ class Facebook(source.Source):
     Returns: sequence of ActivityStreams tag objects with url, id, and optional
       displayName fields. The id field is a raw Facebook user id.
     """
-    tags = []
+    people = {}  # maps id to tag
 
     for tag in obj.get('tags', []):
       url = tag.get('url', '')
       id = url.split('/')[-1]
       if (util.domain_from_link(url) == 'facebook.com' and util.is_int(id) and
-          tag.get('objectType') == 'person'):
+          tag.get('objectType') == 'person' and
+          not tag.get('startIndex')):  # mentions are linkified separately
+        tag = copy.copy(tag)
         tag['id'] = id
-        tags.append(tag)
+        people[id] = tag
 
-    return tags
+    return people.values()
 
   def create_notification(self, user_id, text, link):
     """Sends the authenticated user a notification.

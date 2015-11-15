@@ -1668,8 +1668,10 @@ http://b http://c""",
                        self.fb.post_to_activity(FB_CREATED_NOTE))
 
   def test_create_post(self):
-    self.expect_urlopen(facebook.API_FEED, {'id': '123_456'},
-                        data='message=my+msg')
+    self.expect_urlopen(facebook.API_FEED, {'id': '123_456'}, data=urllib.urlencode({
+        'message': 'my msg',
+        'tags': '234,345,456',
+      }))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
@@ -1686,15 +1688,17 @@ http://b http://c""",
 
     preview = self.fb.preview_create(obj)
     self.assertEquals('<span class="verb">post</span>:', preview.description)
-    self.assertEquals('my msg', preview.content)
+    self.assertEquals('my msg<br /><br /><em>with <a href="https://www.facebook.com/234">Friend 1</a>, <a href="https://www.facebook.com/345">Friend 2</a>, <a href="https://www.facebook.com/456">Friend 3</a></em>', preview.content)
 
   def test_create_post_include_link(self):
-    self.expect_urlopen(facebook.API_FEED, {}, data=urllib.urlencode(
-      {'message': 'my content\n\n(Originally published at: http://obj.co)'}))
+    self.expect_urlopen(facebook.API_FEED, {}, data=urllib.urlencode({
+      'message': 'my content\n\n(Originally published at: http://obj.co)',
+    }))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
     del obj['image']
+    del obj['tags']  # skip person tags
     obj.update({
         'objectType': 'article',
         'content': 'my content',
@@ -1772,7 +1776,10 @@ http://b http://c""",
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
-    obj['image'] = {'url': 'http://pict/ure'}
+    obj.update({
+      'image': {'url': 'http://pict/ure'},
+      'tags': [],  # skip person tags
+    })
     self.assert_equals({
       'id': '456_789',
       'url': 'https://www.facebook.com/547822715231468?comment_id=456_789',
@@ -1935,42 +1942,6 @@ cc Sam G, Michael M<br />""", preview.description)
       'id': '123_456',
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post'}, self.fb.create(obj).content)
-
-  def test_create_with_person_tags(self):
-    obj = {
-      'objectType': 'note',
-      'content': 'a msg',
-      'tags': [{
-        # unknown; ignore
-        'objectType': 'person',
-        'url': 'https://unknown/',
-        'displayName': 'Mr. Unknown',
-      }, {
-        # user id
-        'objectType': 'person',
-        'url': 'https://www.facebook.com/444',
-        'displayName': 'Mr. 444',
-      }],
-    }
-
-    # test preview
-    preview = self.fb.preview_create(obj)
-    self.assertEquals('<span class="verb">post</span>:', preview.description)
-    self.assertEquals('a msg<br /><br /><em>with '
-                        '<a href="https://www.facebook.com/444">Mr. 444</a></em>',
-                      preview.content)
-
-    # test create
-    self.expect_urlopen(facebook.API_FEED, {'id': '123_999'}, data=urllib.urlencode({
-      'message': 'a msg',
-      'tags': '444',
-    }))
-    self.mox.ReplayAll()
-    self.assert_equals({
-      'id': '123_999',
-      'url': 'https://www.facebook.com/123/posts/999',
-      'type': 'post',
-    }, self.fb.create(obj).content)
 
   def test_create_notification(self):
     appengine_config.FACEBOOK_APP_ID = 'my_app_id'
