@@ -168,6 +168,18 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       }
     }
 
+  # hashtags and person tags
+  tags = obj.get('tags', [])
+  ret['properties']['category'] = []
+  for tag in tags:
+    if tag.get('objectType') == 'person':
+      cls = 'u-category h-card'
+    elif tag.get('objectType') == 'hashtag':
+      cls = 'u-category'
+    else:
+      break
+    ret['properties']['category'].append(object_to_json(tag, entry_class=cls))
+
   # rsvp
   if 'h-as-rsvp' in types:
     ret['properties']['rsvp'] = [obj_type[len('rsvp-'):]]
@@ -195,7 +207,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       # received likes and reposts
       ret['properties'][prop] = [
         object_to_json(t, trim_nulls=False, entry_class='h-cite')
-        for t in obj.get('tags', []) if source.object_type(t) == type]
+        for t in tags if source.object_type(t) == type]
 
   if trim_nulls:
     ret = util.trim_nulls(ret)
@@ -274,7 +286,8 @@ def json_to_object(mf2):
     'image': {'url': photos[0] if photos else None},
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
-    }
+    'tags': [json_to_object(cat) for cat in props.get('category', [])],
+  }
 
   if as_type == 'activity':
     objects = []
@@ -636,6 +649,7 @@ def render_content(obj, include_location=True):
   tags.pop('share', [])
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
   content += tags_to_html(tags.pop('mention', []), 'u-mention')
+  content += tags_to_html(tags.pop('person', []), 'u-category h-card')
   content += tags_to_html(sum(tags.values(), []), 'tag')
 
   return content

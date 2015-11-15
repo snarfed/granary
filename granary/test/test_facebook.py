@@ -744,9 +744,9 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 
 </span>
 
-<a class="tag" href="https://www.facebook.com/234">Friend 1</a>
-<a class="tag" href="https://www.facebook.com/345">Friend 2</a>
-<a class="tag" href="https://www.facebook.com/456">Friend 3</a>
+<a class="u-category h-card" href="https://www.facebook.com/234">Friend 1</a>
+<a class="u-category h-card" href="https://www.facebook.com/345">Friend 2</a>
+<a class="u-category h-card" href="https://www.facebook.com/456">Friend 3</a>
   </div>
   </content>
 
