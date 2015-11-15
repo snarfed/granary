@@ -1936,6 +1936,42 @@ cc Sam G, Michael M<br />""", preview.description)
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post'}, self.fb.create(obj).content)
 
+  def test_create_with_person_tags(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'a msg',
+      'tags': [{
+        # unknown; ignore
+        'objectType': 'person',
+        'url': 'https://unknown/',
+        'displayName': 'Mr. Unknown',
+      }, {
+        # user id
+        'objectType': 'person',
+        'url': 'https://www.facebook.com/444',
+        'displayName': 'Mr. 444',
+      }],
+    }
+
+    # test preview
+    preview = self.fb.preview_create(obj)
+    self.assertEquals('<span class="verb">post</span>:', preview.description)
+    self.assertEquals('a msg<br /><br /><em>with '
+                        '<a href="https://www.facebook.com/444">Mr. 444</a></em>',
+                      preview.content)
+
+    # test create
+    self.expect_urlopen(facebook.API_FEED, {'id': '123_999'}, data=urllib.urlencode({
+      'message': 'a msg',
+      'tags': '444',
+    }))
+    self.mox.ReplayAll()
+    self.assert_equals({
+      'id': '123_999',
+      'url': 'https://www.facebook.com/123/posts/999',
+      'type': 'post',
+    }, self.fb.create(obj).content)
+
   def test_create_notification(self):
     appengine_config.FACEBOOK_APP_ID = 'my_app_id'
     appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'

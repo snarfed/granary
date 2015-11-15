@@ -549,6 +549,7 @@ class Facebook(source.Source):
           error_html='No content text found.')
 
     image_url = obj.get('image', {}).get('url')
+    tags = self._get_person_tags(obj)
 
     url = obj.get('url')
     if include_link and url:
@@ -556,6 +557,10 @@ class Facebook(source.Source):
     preview_content = util.linkify(content)
     if image_url:
       preview_content += '<br /><br /><img src="%s" />' % image_url
+    if tags:
+      preview_content += '<br /><br /><em>with %s</em>' % ', '.join(
+        '<a href="%s">%s</a>' % (tag.get('url'), tag.get('displayName'))
+        for tag in tags)
     msg_data = {'message': content.encode('utf-8')}
     if appengine_config.DEBUG:
       msg_data['privacy'] = json.dumps({'value': 'SELF'})
@@ -639,23 +644,18 @@ class Facebook(source.Source):
         assert resp.get('success'), resp
         resp = {'type': 'rsvp'}
 
-    elif type in ('note', 'article') and image_url:
-      if preview:
-        return source.creation_result(content=preview_content,
-                                      description='<span class="verb">post</span>:')
-      else:
-        msg_data['url'] = image_url
-        if appengine_config.DEBUG:
-          msg_data['privacy'] = json.dumps({'value': 'SELF'})
-        resp = self.urlopen(API_PHOTOS, data=urllib.urlencode(msg_data))
-        resp.update({'url': self.post_url(resp), 'type': 'post'})
-
     elif type in ('note', 'article'):
       if preview:
         return source.creation_result(content=preview_content,
                                       description='<span class="verb">post</span>:')
       else:
-        resp = self.urlopen(API_FEED, data=urllib.urlencode(msg_data))
+        api_call = API_FEED
+        if image_url:
+          msg_data['url'] = image_url
+          api_call = API_PHOTOS
+        if tags:
+          msg_data['tags'] = ','.join(tag['id'] for tag in tags)
+        resp = self.urlopen(api_call, data=urllib.urlencode(msg_data))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 
     elif type == 'activity' and verb == 'share':
@@ -675,6 +675,27 @@ class Facebook(source.Source):
     if 'url' not in resp:
       resp['url'] = base_url
     return source.creation_result(resp)
+
+  def _get_person_tags(self, obj):
+    """Extracts and prepares person tags for Facebook users.
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns: sequence of ActivityStreams tag objects with url, id, and optional
+      displayName fields. The id field is a raw Facebook user id.
+    """
+    tags = []
+
+    for tag in obj.get('tags', []):
+      url = tag.get('url', '')
+      id = url.split('/')[-1]
+      if (util.domain_from_link(url) == 'facebook.com' and util.is_int(id) and
+          tag.get('objectType') == 'person'):
+        tag['id'] = id
+        tags.append(tag)
+
+    return tags
 
   def create_notification(self, user_id, text, link):
     """Sends the authenticated user a notification.
