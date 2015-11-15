@@ -31,6 +31,7 @@ $author
 $video
 $photo
 $location
+$people
 $in_reply_tos
 $likes_and_reposts
 $comments
@@ -441,6 +442,11 @@ def json_to_html(obj, parent_props=[]):
                     for url in props.get('photo', []) if url)
   video = '\n'.join(vid(url, None, 'u-video')
                     for url in props.get('video', []) if url)
+  people = '\n'.join(
+    hcard_to_html(cat, ['u-category', 'h-card'])
+    for cat in props.get('category', [])
+    if 'h-card' in cat.get('type') and
+    not cat.get('startIndex'))  # mentions are already linkified in content
 
   # comments
   # http://indiewebcamp.com/comment-presentation#How_to_markup
@@ -465,6 +471,7 @@ def json_to_html(obj, parent_props=[]):
     types=' '.join(parent_props + obj['type']),
     author=hcard_to_html(author, ['p-author']),
     location=hcard_to_html(prop.get('location'), ['p-location']),
+    people=people,
     photo=photo,
     video=video,
     in_reply_tos=in_reply_tos,
@@ -643,13 +650,13 @@ def render_content(obj, include_location=True):
       object_to_json(loc, default_object_type='place'),
       parent_props=['p-location'])
 
-  # other tags, except likes and (re)shares. they're rendered manually in
-  # json_to_html().
+  # other tags, except likes, (re)shares, and people. they're rendered manually
+  # in json_to_html().
   tags.pop('like', [])
   tags.pop('share', [])
+  tags.pop('person', [])
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
   content += tags_to_html(tags.pop('mention', []), 'u-mention')
-  content += tags_to_html(tags.pop('person', []), 'u-category h-card')
   content += tags_to_html(sum(tags.values(), []), 'tag')
 
   return content

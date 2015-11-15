@@ -48,9 +48,12 @@
   <link rel="alternate" type="text/html" href="{{ url }}" />
   <link rel="ostatus:conversation" href="{{ url }}" />
   {% for tag in obj.tags %}
-    {% if tag.verb != 'like' and tag.verb != 'share' %}
+    {% if tag.url and tag.verb != 'like' and tag.verb != 'share' %}
       <link rel="ostatus:attention" href="{{ tag.url }}" />
       <link rel="mentioned" href="{{ tag.url }}" />
+      {% if tag.displayName and not tag.startIndex %}
+        <a href="{{ tag.url }}">{{ tag.displayName }}</a>
+      {% endif %}
     {% endif %}
   {% endfor %}
   <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>

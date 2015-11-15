@@ -398,7 +398,6 @@ this picture -&gt; is #abc #xyz
 
 </span>
 
-<a class="tag" href="http://snarfed.org">Ryan B</a>
   </div>
   </content>
 
@@ -408,11 +407,7 @@ this picture -&gt; is #abc #xyz
     <link rel="ostatus:attention" href="http://snarfed.org" />
     <link rel="mentioned" href="http://snarfed.org" />
 
-    <link rel="ostatus:attention" href="" />
-    <link rel="mentioned" href="" />
-
-    <link rel="ostatus:attention" href="" />
-    <link rel="mentioned" href="" />
+    <a href="http://snarfed.org">Ryan B</a>
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-09-22T05:25:42</published>
