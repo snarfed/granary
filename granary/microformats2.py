@@ -307,7 +307,7 @@ def html_to_activities(html, url=None):
 
   Returns: list of ActivityStreams activity dicts
   """
-  parsed = mf2py.parse(doc=html, url=None)
+  parsed = mf2py.parse(doc=html, url=url)
   hfeed = find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
   return [{'object': json_to_object(item)} for item in items]
