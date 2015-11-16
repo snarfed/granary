@@ -22,7 +22,9 @@ import requests
 import source
 import sys
 import mf2py
+import mf2util
 import urllib2
+import urlparse
 
 import appengine_config
 from oauth_dropins.webutil import util
@@ -38,25 +40,190 @@ class Flickr(source.Source):
   NAME = 'Flickr'
 
   API_EXTRAS = ','.join(('date_upload', 'date_taken', 'views', 'media',
-                         'description', 'tags', 'machine_tags', 'geo'))
+                         'description', 'tags', 'machine_tags', 'geo',
+                         'path_alias'))
 
-  def __init__(self, access_token_key, access_token_secret, user_id=None):
+  def __init__(self, access_token_key, access_token_secret,
+               user_id=None, path_alias=None):
     """Constructor.
+
+    If they are not provided, user_id and path_alias will be looked up via the
+    API on first use.
 
     Args:
       access_token_key: string, OAuth access token key
       access_token_secret: string, OAuth access token secret
-      user_id: string, the logged in user's Flickr nsid (optional)
+      user_id: string, the logged in user's Flickr nsid. (optional)
+      path_alias: string, the logged in user's path_alias, replaces user_id in
+        canonical profile and photo urls (optional)
     """
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
-    self.user_id = user_id
+    self._user_id = user_id
+    self._path_alias = path_alias
 
   def call_api_method(self, method, params={}):
     """Call a Flickr API method.
     """
     return flickr_auth.call_api_method(
       method, params, self.access_token_key, self.access_token_secret)
+
+  def upload_photo(self, params, photo_file):
+    """Upload a photo via the Flickr API
+    """
+    return flickr_auth.upload(
+      params, photo_file, self.access_token_key, self.access_token_secret)
+
+  def create(self, obj, include_link=False):
+    """Creates a photo, comment, or favorite.
+
+    Args:
+      obj: ActivityStreams object
+      include_link: boolean
+
+    Returns:
+      a CreationResult whose content will be a dict with 'id', 'url',
+      and 'type' keys (all optional) for the newly created Flickr
+      object (or None)
+
+    """
+    return self._create(obj, preview=False, include_link=include_link)
+
+  def preview_create(self, obj, include_link=False):
+    """Preview creation of a photo, comment, or favorite.
+
+    Args:
+      obj: ActivityStreams object
+      include_link: boolean
+
+    Returns:
+      a CreationResult whose description will be an HTML summary of
+      what publishing will do, and whose content will be an HTML preview
+      of the result (or None)
+    """
+    return self._create(obj, preview=True, include_link=include_link)
+
+  def _create(self, obj, preview, include_link):
+    """Creates or previews creating for the previous two methods.
+
+    https://www.flickr.com/services/api/upload.api.html
+    https://www.flickr.com/services/api/flickr.photos.comments.addComment.html
+    https://www.flickr.com/services/api/flickr.favorites.add.html
+
+    Args:
+      obj: ActivityStreams object
+      preview: boolean
+      include_link: boolean
+
+    Return:
+      a CreationResult
+    """
+    # photo, comment, or like
+    type = source.object_type(obj)
+    logging.debug('publishing object type %s to Flickr', type)
+    content = self._content_for_create(obj)
+    link_text = '(Originally published at: %s)' % obj.get('url')
+
+    if obj.get('image') and type in ('note', 'article'):
+      image_url = obj.get('image').get('url')
+      name = obj.get('displayName')
+
+      # if name does not represent an explicit title, then we'll just
+      # use it as the title and wipe out the content
+      if name and content and not mf2util.is_name_a_title(name, content):
+        content = None
+
+      # add original post link
+      if include_link:
+        content = ((content + '\n\n') if content else '') + link_text
+
+      if preview:
+        preview_content = ''
+        if name:
+          preview_content += '<h4>%s</h4>' % name
+        if content:
+          preview_content += '<div>%s</div>' % content
+        preview_content += '<img src="%s" />' % image_url
+        return source.creation_result(
+          content=preview_content, description='post')
+
+      params = []
+      if name:
+        params.append(('title', name))
+      if content:
+        params.append(('description', content))
+
+      resp = self.upload_photo(params, urllib2.urlopen(image_url))
+      # note that this requires self.user_id to be set
+      # TODO fetch user profile and replace user_id with path_alias?
+      resp.update({
+        'type': 'post',
+        'url': self.photo_url(self.user_id(), self.path_alias(),
+                              resp.get('id')),
+      })
+      return source.creation_result(resp)
+
+    base_obj = self.base_object(obj)
+    base_id = base_obj.get('id')
+    base_url = base_obj.get('url')
+
+    # maybe a comment on a flickr photo?
+    if type == 'comment' or obj.get('inReplyTo'):
+      if not base_id:
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a photo to comment on.',
+          error_html='Could not find a photo to <a href="http://indiewebcamp.com/reply">comment on</a>. '
+          'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
+          'link to a Flickr photo or to an original post that publishes a '
+          '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Flickr.')
+
+      if include_link:
+        content += '\n\n' + link_text
+      if preview:
+        return source.creation_result(
+          content=content,
+          description='comment on <a href="%s">this photo</a>.' % base_url)
+
+      resp = self.call_api_method('flickr.photos.comments.addComment', {
+        'photo_id': base_id,
+        'comment_text': content,
+      })
+      resp = resp.get('comment', {})
+      resp.update({
+        'type': 'comment',
+        'url': resp.get('permalink'),
+      })
+      return source.creation_result(resp)
+
+    if type == 'like':
+      if not base_id:
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a photo to favorite.',
+          error_html='Could not find a photo to <a href="http://indiewebcamp.com/like">favorite</a>. '
+          'Check that your post has an <a href="http://indiewebcamp.com/like">like-of</a> '
+          'link to a Flickr photo or to an original post that publishes a '
+          '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Flickr.')
+      if preview:
+        return source.creation_result(
+          description='favorite <a href="%s">this photo</a>.' % base_url)
+
+      # this method doesn't return any data
+      self.call_api_method('flickr.favorites.add', {
+        'photo_id': base_id,
+      })
+      # TODO should we canonicalize the base_url (e.g. removing trailing path
+      # info like "/in/contacts/")
+      return source.creation_result({
+        'type': 'like',
+        'url': '%s#favorited-by-%s' % (base_url, self.user_id()),
+      })
+
+    return source.creation_result(
+      abort=False,
+      error_plain='Cannot publish type=%s to Flickr.' % type,
+      error_html='Cannot publish type=%s to Flickr.' % type)
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -140,13 +307,9 @@ class Flickr(source.Source):
     Returns:
       dict, an ActivityStreams object
     """
-    if not user_id:
-      user_id = self.user_id
-
-    if not user_id:
-      resp = self.call_api_method('flickr.people.getLimits')
-      self.user_id = user_id = resp.get('person', {}).get('nsid')
-    resp = self.call_api_method('flickr.people.getInfo', {'user_id': user_id})
+    resp = self.call_api_method('flickr.people.getInfo', {
+      'user_id': user_id or self.user_id(),
+    })
     return self.user_to_actor(resp)
 
   def user_to_actor(self, resp):
@@ -223,14 +386,19 @@ class Flickr(source.Source):
       dict, an ActivityStreams object
     """
     owner = photo.get('owner')
-    owner_id = owner.get('nsid') if isinstance(owner, dict) else owner
+    if isinstance(owner, dict):
+      owner_id = owner.get('nsid')
+      path_alias = owner.get('path_alias')
+    else:
+      owner_id = owner
+      path_alias = photo.get('pathalias')
 
     created = photo.get('dates', {}).get('taken') or photo.get('datetaken')
     published = util.maybe_timestamp_to_rfc3339(
       photo.get('dates', {}).get('posted') or photo.get('dateupload'))
 
-    photo_permalink = u'https://www.flickr.com/photos/{}/{}/'.format(
-      owner_id, photo.get('id'))
+    # TODO replace owner_id with path_alias?
+    photo_permalink = self.photo_url(owner_id, path_alias, photo.get('id'))
 
     title = photo.get('title')
     if isinstance(title, dict):
@@ -355,7 +523,7 @@ class Flickr(source.Source):
         'displayName': comment.get('realname') or comment.get('authorname'),
         'username': comment.get('authorname'),
         'id': self.tag_uri(comment.get('author')),
-        'url': self.user_url(comment.get('path_alias')),
+        'url': self.user_url(comment.get('author'), comment.get('path_alias')),
         'image': {
           'url': self.get_user_image(comment.get('iconfarm'),
                                      comment.get('iconserver'),
@@ -375,13 +543,68 @@ class Flickr(source.Source):
     return u'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
       farm, server, author)
 
-  def user_url(self, handle):
-    """Convert a user's screen name to their Flickr profile page URL.
+  def user_id(self):
+    """Get the nsid of the currently authorized user. The first time this
+    is called, it will invoke the flickr.people.getLimits api method.
+
+    https://www.flickr.com/services/api/flickr.people.getLimits.html
+
+    Return:
+      a string
+    """
+    if not self._user_id:
+      resp = self.call_api_method('flickr.people.getLimits')
+      self._user_id = resp.get('person', {}).get('nsid')
+    return self._user_id
+
+  def path_alias(self):
+    """Get the path_alias of the currently authorized user. The first time this
+    is called, it will invoke the flickr.people.getInfo api method.
+
+    https://www.flickr.com/services/api/flickr.people.getInfo.html
+
+    Return:
+      a string
+    """
+    if not self._path_alias:
+      resp = self.call_api_method('flickr.people.getInfo', {
+        'user_id': self.user_id(),
+      })
+      self._path_alias = resp.get('person', {}).get('path_alias')
+    return self._path_alias
+
+  def user_url(self, user_id, path_alias):
+    """Convert a user's path_alias to their Flickr profile page URL.
 
     Args:
-      handle: string, the Flickr user's screen name
+      user_id (string): user's alphanumeric nsid
+      path_alias (string): if given, user's path_alias replaces the user_id
+        in canonical urls
 
     Returns:
       string, a profile URL
     """
-    return handle and 'https://www.flickr.com/people/%s/' % handle
+    return path_alias and 'https://www.flickr.com/people/%s/' % path_alias
+
+  def photo_url(self, user_id, path_alias, photo_id):
+    """Construct a url for a photo given user id and the photo id
+    Args:
+      user_id (string): alphanumeric user ID or path alias
+      path_alias (string): if it exists, path_alias replaces user_id in the
+        canonical URL
+      photo_id (string): numeric photo ID
+
+    Returns:
+      string, the photo URL
+    """
+    return u'https://www.flickr.com/photos/{}/{}/'.format(
+      path_alias or user_id, photo_id)
+
+  @classmethod
+  def post_id(cls, url):
+    """Used when publishing comments or favorites. Flickr photo ID is the
+    3rd path component rather than the first.
+    """
+    parts = urlparse.urlparse(url).path.split('/')
+    if len(parts) >= 4 and parts[1] == 'photos':
+      return parts[3]

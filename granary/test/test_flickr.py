@@ -4,7 +4,10 @@ from __future__ import unicode_literals, print_function
 
 import copy
 import json
+import mox
+import StringIO
 import urllib
+import urllib2
 
 from oauth_dropins.webutil import util
 from oauth_dropins import appengine_config
@@ -132,7 +135,7 @@ PHOTO_INFO = {
     'originalformat': 'jpg',
     'owner': {
       'nsid': '39216764@N00',
-      'username': 'kindofblue115',
+      'username': 'kylewm',
       'realname': 'Kyle Mahan',
       'location': 'San Diego, CA, USA',
       'iconserver': '4068',
@@ -251,19 +254,19 @@ ACTIVITY = {
   'verb': 'post',
   'actor': {'numeric_id': '39216764@N00'},
   'created': '2010-11-26 17:50:30',
-  'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/',
+  'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/',
   'object': {
     'content': 'Candy canes\n',
     'displayName': 'Candy canes',
     'author': {
-      'username': 'kindofblue115',
+      'username': 'kylewm',
       'image': {'url': 'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg'},
       'displayName': 'Kyle Mahan',
-      'id': 'tag:flickr.com:kindofblue115',
+      'id': 'tag:flickr.com:kylewm',
       'objectType': 'person'
     },
     'created': '2010-11-26 17:50:30',
-    'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/',
+    'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/',
     'image': {'url': 'https://farm6.staticflickr.com/5246/5227922370_5f19cb9767_b.jpg'},
     'published': '2010-12-03T01:15:21',
     'id': 'tag:flickr.com:5227922370',
@@ -366,9 +369,9 @@ FAVORITE_OBJS = [{
     'username': 'absentmindedprof'
   },
   'id': tag_uri('5227922370_liked_by_95922884@N00'),
-  'object': {'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/'},
+  'object': {'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/'},
   'objectType': 'activity',
-  'url': 'https://www.flickr.com/photos/39216764@N00/5227922370/#liked-by-95922884@N00',
+  'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/#liked-by-95922884@N00',
   'verb': 'like'
 }]
 
@@ -387,7 +390,7 @@ PERSON_INFO = {
     'path_alias': 'kindofblue115',
     'has_stats': 1,
     'username': {
-      '_content': 'kindofblue115'
+      '_content': 'kylewm'
     },
     'realname': {
       '_content': 'Kyle Mahan'
@@ -536,7 +539,7 @@ ACTOR = {
   'image': {
     'url': 'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
   },
-  'id': 'tag:flickr.com:kindofblue115',
+  'id': 'tag:flickr.com:kylewm',
   'location': {'displayName': 'San Diego, CA, USA'},
   'description': 'Trying a little bit of everything',
   'url': 'https://kylewm.com/',
@@ -545,7 +548,7 @@ ACTOR = {
     {'value': 'https://www.flickr.com/people/kindofblue115/contacts/'},
     {'value': 'https://kylewm.com/'},
   ],
-  'username': 'kindofblue115',
+  'username': 'kylewm',
   'numeric_id': '39216764@N00',
 }
 
@@ -558,6 +561,86 @@ PROFILE_HTML = """
   </body>
 </html>
 """
+
+# an AS photo post with person tags
+OBJECT = {
+  'image': {
+    'url': 'https://jeena.net/photos/IMG_20150729_181700.jpg',
+  },
+  'url': 'https://jeena.net/photos/164',
+  'content': 'First Homebrew Website Club in Gothenburg #IndieWeb',
+  'updated': '2015-07-29T17:14:34+0000',
+  'author': {
+    'image': {
+      'url': 'https://jeena.net/avatar.jpg',
+    },
+    'url': 'https://jeena.net/',
+    'displayName': 'Jeena',
+    'objectType': 'person',
+  },
+  'tags': [{
+    'url': 'http://licit.li/',
+    'displayName': 'Martijn van der Ven',
+    'objectType': 'person',
+  }, {
+    'url': 'https://joskar.se/',
+    'displayName': 'Johnny Oskarsson',
+    'objectType': 'person',
+  }, {
+    'url': 'https://jeena.net/',
+    'displayName': 'Jeena',
+    'objectType': 'person',
+  }],
+  'published': '2015-07-29T17:14:34+0000',
+  'displayName': 'Photo #164',
+  'objectType': 'note',
+}
+
+REPLY_OBJ = {
+  'inReplyTo': [{
+    'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/',
+  }],
+  'displayName': 'punkins!',
+  'author': {
+    'url': 'https://kylewm.com',
+    'image': {'url': 'https://kylewm.com/static/img/users/kyle.jpg'},
+    'displayName': 'Kyle Mahan', 'objectType': 'person',
+  },
+  'url': 'https://kylewm.com/2015/11/punkins',
+  'content': 'punkins!',
+  'published': '2015-11-15T09:58:35-0800',
+  'id': 'https://kylewm.com/2015/11/punkins',
+  'objectType': 'comment',
+}
+
+LIKE_OBJ = {
+  'object': [{
+    'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/',
+  }],
+  'author': {
+    'url': 'https://kylewm.com',
+    'image': {'url': 'https://kylewm.com/static/img/users/kyle.jpg'},
+    'displayName': 'Kyle Mahan', 'objectType': 'person',
+  },
+  'url': 'https://kylewm.com/2015/11/like-of-alber',
+  'content': 'punkins!',
+  'published': '2015-11-15T09:58:35-0800',
+  'id': 'https://kylewm.com/2015/11/like-of-alber',
+  'objectType': 'activity',
+  'verb': 'like',
+}
+
+# uploads send oauth params along with the post data; it's useful to
+# be able to check that they exist, but ignore their values.
+IGNORED_OAUTH_PARAMS = [
+  ('oauth_nonce', mox.IsA(str)),
+  ('oauth_timestamp', mox.IsA(str)),
+  ('oauth_version', mox.IsA(str)),
+  ('oauth_signature_method', mox.IsA(str)),
+  ('oauth_consumer_key', mox.IsA(str)),
+  ('oauth_token', mox.IsA(str)),
+  ('oauth_signature', mox.IsA(str)),
+]
 
 
 class FlickrTest(testutil.TestCase):
@@ -723,3 +806,147 @@ class FlickrTest(testutil.TestCase):
   def test_search_raises_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.flickr.get_activities(group_id=source.SEARCH, search_query='foo')
+
+  def test_preview_create_photo(self):
+    preview = self.flickr.preview_create(OBJECT, include_link=True)
+    self.assertEquals('post', preview.description)
+    self.assertIn('Photo #164', preview.content)
+    self.assertIn(
+      'First Homebrew Website Club in Gothenburg #IndieWeb',
+      preview.content)
+    self.assertIn(
+      '\n\n(Originally published at: https://jeena.net/photos/164)',
+      preview.content)
+    self.assertIn(
+      '<img src="https://jeena.net/photos/IMG_20150729_181700.jpg"',
+      preview.content)
+
+  def test_create_photo_success(self):
+    """Check that successfully uploading an image returns the expected
+    response.
+    """
+    data = [
+      ('title', 'Photo #164'),
+      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'
+       '\n\n(Originally published at: https://jeena.net/photos/164)'),
+    ] + IGNORED_OAUTH_PARAMS
+
+    # fetch the image
+    urllib2.urlopen(
+      'https://jeena.net/photos/IMG_20150729_181700.jpg'
+    ).AndReturn('picture response')
+
+    # upload to Flickr
+    self.expect_requests_post(
+      'https://up.flickr.com/services/upload',
+      data=data, files={'photo': 'picture response'},
+      response="""\
+<?xml version="1.0" encoding="utf-8" ?>
+<rsp stat="ok">
+  <photoid>9876</photoid>
+</rsp>
+""")
+
+    # lookup user id
+    self.expect_call_api_method(
+      'flickr.people.getLimits', {},
+      json.dumps({'person': {'nsid': '39216764@N00'}}))
+
+    # lookup path alias
+    self.expect_call_api_method(
+      'flickr.people.getInfo', {'user_id': '39216764@N00'},
+      json.dumps({'person': {'nsid': '39216764@N00',
+                             'path_alias': 'kindofblue115'}}))
+
+    self.mox.ReplayAll()
+    self.assertEquals({
+      'id': '9876',
+      'url': 'https://www.flickr.com/photos/kindofblue115/9876/',
+      'type': 'post',
+    }, self.flickr.create(OBJECT, include_link=True).content)
+
+  def test_create_photo_failure(self):
+    """If uploading returns a failure, interpret it correctly.
+    """
+    data = [
+      ('title', 'Photo #164'),
+      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'),
+    ] + IGNORED_OAUTH_PARAMS
+
+    # fetch the image
+    urllib2.urlopen(
+      'https://jeena.net/photos/IMG_20150729_181700.jpg'
+    ).AndReturn('picture response')
+
+    # upload to Flickr
+    self.expect_requests_post(
+      'https://up.flickr.com/services/upload',
+      data=data, files={'photo': 'picture response'},
+      response="""\
+<?xml version="1.0" encoding="utf-8" ?>
+<rsp stat="fail">
+  <err code="98" msg="Login Failed" />
+</rsp>
+""")
+    self.mox.ReplayAll()
+
+    self.assertRaises(urllib2.HTTPError, self.flickr.create, OBJECT)
+
+  def test_preview_create_comment(self):
+    preview = self.flickr.preview_create(REPLY_OBJ, include_link=True)
+    self.assertEquals(
+      'comment on <a href="https://www.flickr.com/photos/marietta_wood_works/'
+      '21904325000/in/contacts/">this photo</a>.',
+      preview.description)
+    self.assertEquals(
+      'punkins!\n\n'
+      '(Originally published at: https://kylewm.com/2015/11/punkins)',
+      preview.content)
+
+  def test_create_comment(self):
+    self.expect_call_api_method('flickr.photos.comments.addComment', {
+      'photo_id': '21904325000',
+      'comment_text': 'punkins!\n\n'
+      '(Originally published at: https://kylewm.com/2015/11/punkins)',
+    }, json.dumps({
+      'comment': {
+        'id': '4942564-21904325000-72157661220102352',
+        'author': '39216764@N00',
+        'authorname': 'kylewm',
+        'datecreate': '1447612679',
+        'permalink': 'https://www.flickr.com/photos/marietta_wood_works/'
+        '21904325000/#comment72157661220102352',
+        'path_alias': 'kindofblue115',
+        'realname': 'Kyle Mahan',
+        '_content': 'punkins!'
+      },
+      'stat': 'ok'
+    }))
+
+    self.mox.ReplayAll()
+
+    reply_content = self.flickr.create(REPLY_OBJ, include_link=True).content
+    self.assertEquals(
+      '4942564-21904325000-72157661220102352',
+      reply_content.get('id'))
+    self.assertEquals(
+      'https://www.flickr.com/photos/marietta_wood_works/21904325000/'
+      '#comment72157661220102352',
+      reply_content.get('url'))
+
+  def test_create_favorite(self):
+    """Favoriting a photo generates a URL using a fake fragment id
+    """
+    self.expect_call_api_method(
+      'flickr.favorites.add', {'photo_id': '21904325000'},
+      json.dumps({'stat': 'ok'}))
+
+    self.expect_call_api_method(
+      'flickr.people.getLimits', {},
+      json.dumps({'person': {'nsid': '39216764@N00'}}))
+
+    self.mox.ReplayAll()
+    self.assertEquals({
+      'type': 'like',
+      'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/#favorited-by-39216764@N00',
+    }, self.flickr.create(LIKE_OBJ).content)

@@ -701,7 +701,7 @@ class Twitter(source.Source):
   def _content_for_create(self, obj):
     """Returns the content text to use in create() and preview_create().
 
-    Differs from Source._content_for_create() in that it prefers displaysName
+    Differs from Source._content_for_create() in that it prefers displayName
     over content for articles. Otherwise it's the same.
     """
     type = obj.get('objectType')
