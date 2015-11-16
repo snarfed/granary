@@ -815,7 +815,7 @@ class FlickrTest(testutil.TestCase):
       'First Homebrew Website Club in Gothenburg #IndieWeb',
       preview.content)
     self.assertIn(
-      '(<a href="https://jeena.net/photos/164">Original</a>)',
+      '\n\n(Originally published at: https://jeena.net/photos/164)',
       preview.content)
     self.assertIn(
       '<img src="https://jeena.net/photos/IMG_20150729_181700.jpg"',
@@ -827,7 +827,8 @@ class FlickrTest(testutil.TestCase):
     """
     data = [
       ('title', 'Photo #164'),
-      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb (<a href="https://jeena.net/photos/164">Original</a>)'),
+      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'
+       '\n\n(Originally published at: https://jeena.net/photos/164)'),
     ] + IGNORED_OAUTH_PARAMS
 
     # fetch the image
@@ -898,14 +899,15 @@ class FlickrTest(testutil.TestCase):
       '21904325000/in/contacts/">this photo</a>.',
       preview.description)
     self.assertEquals(
-      'punkins! (<a href="https://kylewm.com/2015/11/punkins">Original</a>)',
+      'punkins!\n\n'
+      '(Originally published at: https://kylewm.com/2015/11/punkins)',
       preview.content)
 
   def test_create_comment(self):
     self.expect_call_api_method('flickr.photos.comments.addComment', {
       'photo_id': '21904325000',
-      'comment_text': 'punkins! '
-      '(<a href="https://kylewm.com/2015/11/punkins">Original</a>)',
+      'comment_text': 'punkins!\n\n'
+      '(Originally published at: https://kylewm.com/2015/11/punkins)',
     }, json.dumps({
       'comment': {
         'id': '4942564-21904325000-72157661220102352',

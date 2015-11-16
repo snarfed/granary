@@ -22,6 +22,7 @@ import requests
 import source
 import sys
 import mf2py
+import mf2util
 import urllib2
 import urlparse
 
@@ -46,10 +47,15 @@ class Flickr(source.Source):
                user_id=None, path_alias=None):
     """Constructor.
 
+    If they are not provided, user_id and path_alias will be looked up via the
+    API on first use.
+
     Args:
       access_token_key: string, OAuth access token key
       access_token_secret: string, OAuth access token secret
-      user_id: string, the logged in user's Flickr nsid (optional)
+      user_id: string, the logged in user's Flickr nsid. (optional)
+      path_alias: string, the logged in user's path_alias, replaces user_id in
+        canonical profile and photo urls (optional)
     """
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
@@ -116,23 +122,25 @@ class Flickr(source.Source):
     type = source.object_type(obj)
     logging.debug('publishing object type %s to Flickr', type)
     content = self._content_for_create(obj)
-
-    include_url = ('(<a href="%s">Original</a>)' % obj.get('url')
-                   if include_link else None)
+    link_text = '(Originally published at: %s)' % obj.get('url')
 
     if obj.get('image') and type in ('note', 'article'):
       image_url = obj.get('image').get('url')
-      title = obj.get('displayName')
+      name = obj.get('displayName')
 
-      if title and content and content.strip() == title.strip():
-        content = include_url
-      elif include_url:
-        content += ' ' + include_url
+      # if name does not represent an explicit title, then we'll just
+      # use it as the title and wipe out the content
+      if name and content and not mf2util.is_name_a_title(name, content):
+        content = None
+
+      # add original post link
+      if include_link:
+        content = ((content + '\n\n') if content else '') + link_text
 
       if preview:
         preview_content = ''
-        if title:
-          preview_content += '<h4>%s</h4>' % title
+        if name:
+          preview_content += '<h4>%s</h4>' % name
         if content:
           preview_content += '<div>%s</div>' % content
         preview_content += '<img src="%s" />' % image_url
@@ -140,8 +148,8 @@ class Flickr(source.Source):
           content=preview_content, description='post')
 
       params = []
-      if title:
-        params.append(('title', title))
+      if name:
+        params.append(('title', name))
       if content:
         params.append(('description', content))
 
@@ -170,8 +178,8 @@ class Flickr(source.Source):
           'link to a Flickr photo or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Flickr.')
 
-      if include_url:
-        content += ' ' + include_url
+      if include_link:
+        content += '\n\n' + link_text
       if preview:
         return source.creation_result(
           content=content,
