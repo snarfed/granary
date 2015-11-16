@@ -538,8 +538,9 @@ class Facebook(source.Source):
     if base_id and not base_url:
       base_url = base_obj['url'] = self.object_url(base_id)
 
-    content = self._content_for_create(obj)
-    if not content:
+    image_url = obj.get('image', {}).get('url')
+    content = self._content_for_create(obj) or ''
+    if not content and not image_url:
       if type == 'activity':
         content = verb
       else:
@@ -548,7 +549,6 @@ class Facebook(source.Source):
           error_plain='No content text found.',
           error_html='No content text found.')
 
-    image_url = obj.get('image', {}).get('url')
     people = self._get_person_tags(obj)
 
     url = obj.get('url')
@@ -649,12 +649,19 @@ class Facebook(source.Source):
         return source.creation_result(content=preview_content,
                                       description='<span class="verb">post</span>:')
       else:
-        api_call = API_FEED
         if image_url:
-          msg_data['url'] = image_url
           api_call = API_PHOTOS
-        if people:
-          msg_data['tags'] = ','.join(tag['id'] for tag in people)
+          msg_data['url'] = image_url
+          if people:
+            # tags is JSON list of dicts with tag_uid fields
+            # https://developers.facebook.com/docs/graph-api/reference/v2.2/user/photos#Creating
+            msg_data['tags'] = json.dumps([{'tag_uid': tag['id']} for tag in people])
+        else:
+          api_call = API_FEED
+          if people:
+            # tags is comma-separated user id string
+            # https://developers.facebook.com/docs/graph-api/reference/v2.2/user/feed#pubfields
+            msg_data['tags'] = ','.join(tag['id'] for tag in people)
         resp = self.urlopen(api_call, data=urllib.urlencode(msg_data))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
 

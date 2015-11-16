@@ -1921,6 +1921,43 @@ cc Sam G, Michael M<br />""", preview.description)
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post'}, self.fb.create(obj).content)
 
+  def test_create_with_photo_and_person_tags(self):
+    obj = {
+      'objectType': 'note',
+      'image': {'url': 'http://my/picture'},
+      'tags': [{
+        'objectType': 'person',
+        'displayName': 'Foo',
+        'url': 'https://www.facebook.com/234',
+      }, {
+        'objectType': 'person',
+        'displayName': 'Bar',
+        'url': 'https://www.facebook.com/345',
+      }],
+    }
+
+    # test preview
+    preview = self.fb.preview_create(obj)
+    self.assertEquals(
+      '<br /><br /><img src="http://my/picture" /><br /><br /><em>with '
+      '<a href="https://www.facebook.com/234">Foo</a>, '
+      '<a href="https://www.facebook.com/345">Bar</a></em>',
+      preview.content)
+
+    # test create
+    self.expect_urlopen(
+      facebook.API_PHOTOS, {'id': '123_456'}, data=urllib.urlencode({
+        'url': 'http://my/picture',
+        'message': '',
+        'tags': json.dumps([{'tag_uid': '234'}, {'tag_uid': '345'}]),
+      }))
+    self.mox.ReplayAll()
+    self.assert_equals({
+      'id': '123_456',
+      'url': 'https://www.facebook.com/123/posts/456',
+      'type': 'post',
+    }, self.fb.create(obj).content)
+
   def test_create_notification(self):
     appengine_config.FACEBOOK_APP_ID = 'my_app_id'
     appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'
