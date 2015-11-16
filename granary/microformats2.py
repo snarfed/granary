@@ -385,11 +385,11 @@ def json_to_html(obj, parent_props=[]):
   if not obj:
     return ''
 
-  # TODO: handle when h-card isn't first
-  if obj['type'][0] == 'h-card':
+  types = obj.get('type', [])
+  if 'h-card' in types:
     return hcard_to_html(obj, parent_props)
 
-  props = copy.copy(obj['properties'])
+  props = copy.copy(obj.get('properties', {}))
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
                            for url in get_string_urls(props.get('in-reply-to', [])))
 
@@ -468,7 +468,7 @@ def json_to_html(obj, parent_props=[]):
     prop,
     published=maybe_datetime(prop.get('published'), 'dt-published'),
     updated=maybe_datetime(prop.get('updated'), 'dt-updated'),
-    types=' '.join(parent_props + obj['type']),
+    types=' '.join(parent_props + types),
     author=hcard_to_html(author, ['p-author']),
     location=hcard_to_html(prop.get('location'), ['p-location']),
     people=people,

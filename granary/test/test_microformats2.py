@@ -243,3 +243,7 @@ foo
   def test_img_blank_alt(self):
     self.assertEquals('<img class="bar" src="foo" alt="" />',
                       microformats2.img('foo', 'bar', None))
+
+  def test_json_to_html_no_properties_or_type(self):
+    # just check that we don't crash
+    microformats2.json_to_html({'x': 'y'})
