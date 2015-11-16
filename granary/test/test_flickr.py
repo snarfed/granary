@@ -839,7 +839,6 @@ class FlickrTest(testutil.TestCase):
     self.expect_requests_post(
       'https://up.flickr.com/services/upload',
       data=data, files={'photo': 'picture response'},
-      timeout=60,
       response="""\
 <?xml version="1.0" encoding="utf-8" ?>
 <rsp stat="ok">
@@ -882,7 +881,6 @@ class FlickrTest(testutil.TestCase):
     self.expect_requests_post(
       'https://up.flickr.com/services/upload',
       data=data, files={'photo': 'picture response'},
-      timeout=60,
       response="""\
 <?xml version="1.0" encoding="utf-8" ?>
 <rsp stat="fail">

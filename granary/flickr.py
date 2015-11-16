@@ -66,8 +66,7 @@ class Flickr(source.Source):
     """Upload a photo via the Flickr API
     """
     return flickr_auth.upload(
-      params, photo_file, self.access_token_key, self.access_token_secret,
-      timeout=60)
+      params, photo_file, self.access_token_key, self.access_token_secret)
 
   def create(self, obj, include_link=False):
     """Creates a photo, comment, or favorite.
