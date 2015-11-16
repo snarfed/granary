@@ -158,7 +158,7 @@ class Flickr(source.Source):
       # TODO fetch user profile and replace user_id with path_alias?
       resp.update({
         'type': 'post',
-        'url': self.photo_url(self.user_id(), self.path_alias(),
+        'url': self.photo_url(self.path_alias() or self.user_id(),
                               resp.get('id')),
       })
       return source.creation_result(resp)
@@ -398,7 +398,7 @@ class Flickr(source.Source):
       photo.get('dates', {}).get('posted') or photo.get('dateupload'))
 
     # TODO replace owner_id with path_alias?
-    photo_permalink = self.photo_url(owner_id, path_alias, photo.get('id'))
+    photo_permalink = self.photo_url(path_alias or owner_id, photo.get('id'))
 
     title = photo.get('title')
     if isinstance(title, dict):
@@ -523,7 +523,7 @@ class Flickr(source.Source):
         'displayName': comment.get('realname') or comment.get('authorname'),
         'username': comment.get('authorname'),
         'id': self.tag_uri(comment.get('author')),
-        'url': self.user_url(comment.get('author'), comment.get('path_alias')),
+        'url': self.user_url(comment.get('path_alias') or comment.get('author')),
         'image': {
           'url': self.get_user_image(comment.get('iconfarm'),
                                      comment.get('iconserver'),
@@ -573,32 +573,27 @@ class Flickr(source.Source):
       self._path_alias = resp.get('person', {}).get('path_alias')
     return self._path_alias
 
-  def user_url(self, user_id, path_alias):
+  def user_url(self, user_id):
     """Convert a user's path_alias to their Flickr profile page URL.
 
     Args:
-      user_id (string): user's alphanumeric nsid
-      path_alias (string): if given, user's path_alias replaces the user_id
-        in canonical urls
+      user_id (string): user's alphanumeric nsid or path alias
 
     Returns:
       string, a profile URL
     """
-    return path_alias and 'https://www.flickr.com/people/%s/' % path_alias
+    return user_id and 'https://www.flickr.com/people/%s/' % user_id
 
-  def photo_url(self, user_id, path_alias, photo_id):
+  def photo_url(self, user_id, photo_id):
     """Construct a url for a photo given user id and the photo id
     Args:
       user_id (string): alphanumeric user ID or path alias
-      path_alias (string): if it exists, path_alias replaces user_id in the
-        canonical URL
       photo_id (string): numeric photo ID
 
     Returns:
       string, the photo URL
     """
-    return u'https://www.flickr.com/photos/{}/{}/'.format(
-      path_alias or user_id, photo_id)
+    return u'https://www.flickr.com/photos/%s/%s/' % (user_id, photo_id)
 
   @classmethod
   def post_id(cls, url):
