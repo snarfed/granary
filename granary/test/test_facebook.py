@@ -875,8 +875,9 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
-    self.assert_equals([SHARE_OBJ, SHARE_OBJ], got[0]['tags'])
+    self.assert_equals([SHARE_OBJ, SHARE_OBJ], got[0]['object']['tags'])
     self.assertNotIn('tags', got[1])
+    self.assertNotIn('tags', got[1]['object'])
 
   def test_get_activities_fetch_shares_returns_empty_list(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
@@ -884,6 +885,7 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
+    self.assertNotIn('tags', got[0]['object'])
     self.assertNotIn('tags', got[0])
 
   def test_get_activities_self_empty(self):

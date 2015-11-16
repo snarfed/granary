@@ -305,7 +305,7 @@ class Facebook(source.Source):
         for id, shares in self._split_id_requests(API_SHARES, non_note_ids).items():
           activity = id_to_activity.get(id)
           if activity:
-            activity.setdefault('tags', []).extend(
+            activity['object'].setdefault('tags', []).extend(
               [self.share_to_object(share) for share in shares])
       except urllib2.HTTPError, e:
         # some sharedposts requests 400, not sure why.
