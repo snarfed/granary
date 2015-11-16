@@ -1018,67 +1018,38 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
-    self.assertNotIn('tags', got[0])
-    self.assertNotIn('tags', got[1])
+    for activity in got:
+      self.assertNotIn('tags', activity)
+      self.assertNotIn('tags', activity['object'])
 
-  # def test_get_activities_too_many_ids(self):
-  #   ids = [str(i) for i in range(facebook.MAX_IDS + 3)]
-  #   self.expect_urlopen('me/home?offset=0', {'data': [{'id': id} for id in ids]})
+  def test_get_activities_too_many_ids(self):
+    ids = ['1', '2', '3', '4', '5']
+    self.expect_urlopen('me/home?offset=0', {'data': [{'id': id} for id in ids]})
+    self.expect_urlopen('sharedposts?ids=1,3', {'1': {'data': [{'id': '222'}]}})
+    self.expect_urlopen('sharedposts?ids=2,5', {'2': {'data': [{'id': '444'}]}})
+    self.expect_urlopen('sharedposts?ids=4', {})
+    self.expect_urlopen('comments?filter=stream&ids=1,3',
+                        {'1': {'data': [{'id': '111'}]}})
+    self.expect_urlopen('comments?filter=stream&ids=2,5',
+                        {'1': {'data': [{'id': '333'}]}})
+    self.expect_urlopen('comments?filter=stream&ids=4', {})
+    self.mox.ReplayAll()
 
-  #   first = ','.join(set(ids[:facebook.MAX_IDS]))
-  #   second = ','.join(set(ids[facebook.MAX_IDS:]))
+    try:
+      orig_max_ids = facebook.MAX_IDS
+      facebook.MAX_IDS = 2
+      activities = self.fb.get_activities(fetch_replies=True, fetch_shares=True)
+    finally:
+      facebook.MAX_IDS = orig_max_ids
 
-  #   self.expect_urlopen('comments?filter=stream&ids=%s' % first,
-  #                       {'1': {'data': [{'id': '111'}, {'id': '333'}]}})
-  #   self.expect_urlopen('comments?filter=stream&ids=%s' % second,
-  #                       {'2': {'data': [{'id': '555'}]},
-  #                        '1': {'data': [{'id': '777'}]}})
+    self.assert_equals(ids, [a['fb_id'] for a in activities])
 
-  #   self.expect_urlopen('sharedposts?ids=%s' % first,
-  #                       {'1': {'data': [{'id': '222'}]},
-  #                        '2': {'data': [{'id': '444'}]}})
-  #   self.expect_urlopen('sharedposts?ids=%s' % second,
-  #                       {'2': {'data': [{'id': '666'}, {'id': '888'}]}})
-  #   self.mox.ReplayAll()
+    obj0 = activities[0]['object']
+    self.assert_equals(['111', '333'], [r['fb_id'] for r in obj0['replies']['items']])
+    self.assert_equals(['222'], [t['fb_id'] for t in obj0['tags']])
 
-  #   activities = [{
-  #     'id': tag_uri(id),
-  #     'fb_id': id,
-  #     'object': {
-  #       'id': tag_uri(id),
-  #       'fb_id': id,
-  #       'objectType': 'note',
-  #       'url': 'https://www.facebook.com/%s' % id,
-  #     },
-  #     'url': 'https://www.facebook.com/%s' % id,
-  #     'verb': 'post',
-  #   } for id in ids]
-
-  #   activities[1]['object']['replies'] = {'items': [
-  #     {'fb_id': '111'},
-  #     {'fb_id': '333'},
-  #     {'fb_id': '777'},
-  #   ]}
-  #   activities[2]['object']['replies'] = {'items': [
-  #     {'fb_id': '555'},
-  #   ]}
-  #   activities[1]['object']['tags'] = [
-  #     {'fb_id': '222',
-  #      'objectType': 'activity',
-  #      'verb': 'share',
-  #      'object': {},
-  #      },
-  #   ]
-  #   activities[2]['object']['tags'] = [
-  #     {'fb_id': '444',
-  #      'objectType': 'activity',
-  #      'verb': 'share',
-  #      'object': {},
-  #      },
-  #   ]
-
-  #   self.assert_equals(activities, self.fb.get_activities(
-  #     fetch_replies=True, fetch_shares=True))
+    obj1 = activities[1]['object']
+    self.assert_equals(['444'], [t['fb_id'] for t in obj1['tags']])
 
   def test_get_event(self):
     self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
