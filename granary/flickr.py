@@ -148,7 +148,8 @@ class Flickr(source.Source):
           preview_content += '<div>%s</div>' % content
         if people:
           preview_content += '<div> with %s</div>' % ', '.join(
-            ('<a href="%s">%s</a>' % (p.get('url'), p.get('displayName'))
+            ('<a href="%s">%s</a>' % (
+              p.get('url'), p.get('displayName') or 'User %s' % p.get('id'))
              for p in people))
         preview_content += '<img src="%s" />' % image_url
         return source.creation_result(

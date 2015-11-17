@@ -583,7 +583,6 @@ OBJECT = {
     'objectType': 'person',
   }, {
     'url': 'https://flickr.com/people/oskarsson/',
-    'displayName': 'Johnny Oskarsson',
     'objectType': 'person',
   }, {
     'url': 'https://flickr.com/photos/382@123/',
@@ -834,6 +833,9 @@ class FlickrTest(testutil.TestCase):
       preview.content)
     self.assertIn(
       '<a href="https://www.flickr.com/photos/vanderven/">Martijn van der Ven</a>',
+      preview.content)
+    self.assertIn(
+      '<a href="https://flickr.com/people/oskarsson/">User 456@4</a>',
       preview.content)
     self.assertIn(
       '<a href="https://flickr.com/photos/382@123/">Jeena</a>',
