@@ -559,7 +559,8 @@ class Facebook(source.Source):
       preview_content += '<br /><br /><img src="%s" />' % image_url
     if people:
       preview_content += '<br /><br /><em>with %s</em>' % ', '.join(
-        '<a href="%s">%s</a>' % (tag.get('url'), tag.get('displayName'))
+        '<a href="%s">%s</a>' % (
+          tag.get('url'), tag.get('displayName') or 'User %s' % tag['id'])
         for tag in people)
     msg_data = {'message': content.encode('utf-8')}
     if appengine_config.DEBUG:

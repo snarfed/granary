@@ -1931,7 +1931,6 @@ cc Sam G, Michael M<br />""", preview.description)
         'url': 'https://www.facebook.com/234',
       }, {
         'objectType': 'person',
-        'displayName': 'Bar',
         'url': 'https://www.facebook.com/345',
       }],
     }
@@ -1941,7 +1940,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assertEquals(
       '<br /><br /><img src="http://my/picture" /><br /><br /><em>with '
       '<a href="https://www.facebook.com/234">Foo</a>, '
-      '<a href="https://www.facebook.com/345">Bar</a></em>',
+      '<a href="https://www.facebook.com/345">User 345</a></em>',
       preview.content)
 
     # test create
