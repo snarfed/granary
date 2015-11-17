@@ -93,6 +93,7 @@ class SourceMeta(type):
     cls = type.__new__(meta, name, bases, class_dict)
     name = getattr(cls, 'NAME', None)
     if name:
+      assert name.lower() not in sources, cls
       sources[name.lower()] = cls
     return cls
 
