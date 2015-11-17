@@ -5,7 +5,6 @@ from __future__ import unicode_literals, print_function
 import copy
 import json
 import mox
-import StringIO
 import urllib
 import urllib2
 
@@ -579,15 +578,15 @@ OBJECT = {
     'objectType': 'person',
   },
   'tags': [{
-    'url': 'http://licit.li/',
+    'url': 'https://www.flickr.com/photos/vanderven/',
     'displayName': 'Martijn van der Ven',
     'objectType': 'person',
   }, {
-    'url': 'https://joskar.se/',
+    'url': 'https://flickr.com/people/oskarsson/',
     'displayName': 'Johnny Oskarsson',
     'objectType': 'person',
   }, {
-    'url': 'https://jeena.net/',
+    'url': 'https://flickr.com/photos/382@123/',
     'displayName': 'Jeena',
     'objectType': 'person',
   }],
@@ -658,8 +657,8 @@ class FlickrTest(testutil.TestCase):
       'method': method,
     }
     full_params.update(params)
-    self.expect_urlopen('https://api.flickr.com/services/rest?'
-                        + urllib.urlencode(full_params), result)
+    return self.expect_urlopen('https://api.flickr.com/services/rest?'
+                               + urllib.urlencode(full_params), result)
 
   def test_get_actor(self):
     self.expect_call_api_method('flickr.people.getInfo', {
@@ -807,7 +806,20 @@ class FlickrTest(testutil.TestCase):
     with self.assertRaises(NotImplementedError):
       self.flickr.get_activities(group_id=source.SEARCH, search_query='foo')
 
+  def _expect_lookup_users(self):
+    """Several tests use this to lookup Flickr NSIDs for the three people
+    tagged in OBJECT.
+    """
+    for url, user_id in [('https://www.flickr.com/photos/vanderven/', '123@1'),
+                         ('https://flickr.com/people/oskarsson/', '456@4'),
+                         ('https://flickr.com/photos/382@123/', '382@123')]:
+      self.expect_call_api_method(
+        'flickr.urls.lookupUser', {'url': url},
+        json.dumps({'user': {'id': user_id}}))
+
   def test_preview_create_photo(self):
+    self._expect_lookup_users()
+    self.mox.ReplayAll()
     preview = self.flickr.preview_create(OBJECT, include_link=True)
     self.assertEquals('post', preview.description)
     self.assertIn('Photo #164', preview.content)
@@ -820,6 +832,12 @@ class FlickrTest(testutil.TestCase):
     self.assertIn(
       '<img src="https://jeena.net/photos/IMG_20150729_181700.jpg"',
       preview.content)
+    self.assertIn(
+      '<a href="https://www.flickr.com/photos/vanderven/">Martijn van der Ven</a>',
+      preview.content)
+    self.assertIn(
+      '<a href="https://flickr.com/photos/382@123/">Jeena</a>',
+      preview.content)
 
   def test_create_photo_success(self):
     """Check that successfully uploading an image returns the expected
@@ -830,6 +848,8 @@ class FlickrTest(testutil.TestCase):
       ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'
        '\n\n(Originally published at: https://jeena.net/photos/164)'),
     ] + IGNORED_OAUTH_PARAMS
+
+    self._expect_lookup_users()
 
     # fetch the image
     urllib2.urlopen(
@@ -858,6 +878,13 @@ class FlickrTest(testutil.TestCase):
       json.dumps({'person': {'nsid': '39216764@N00',
                              'path_alias': 'kindofblue115'}}))
 
+    # add person tags
+    for user_id in ['123@1', '456@4', '382@123']:
+      self.expect_call_api_method(
+        'flickr.photos.people.add', {'photo_id': '9876', 'user_id': user_id},
+        '{"stat": "ok"}'
+      ).InAnyOrder()
+
     self.mox.ReplayAll()
     self.assertEquals({
       'id': '9876',
@@ -872,6 +899,8 @@ class FlickrTest(testutil.TestCase):
       ('title', 'Photo #164'),
       ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'),
     ] + IGNORED_OAUTH_PARAMS
+
+    self._expect_lookup_users()
 
     # fetch the image
     urllib2.urlopen(

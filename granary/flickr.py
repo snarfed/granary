@@ -13,6 +13,7 @@ when group_id=SELF.
 
 __author__ = ['Kyle Mahan <kyle@kylewm.com>']
 
+import copy
 import datetime
 import functools
 import itertools
@@ -109,6 +110,7 @@ class Flickr(source.Source):
     https://www.flickr.com/services/api/upload.api.html
     https://www.flickr.com/services/api/flickr.photos.comments.addComment.html
     https://www.flickr.com/services/api/flickr.favorites.add.html
+    https://www.flickr.com/services/api/flickr.photos.people.add.html
 
     Args:
       obj: ActivityStreams object
@@ -127,6 +129,7 @@ class Flickr(source.Source):
     if obj.get('image') and type in ('note', 'article'):
       image_url = obj.get('image').get('url')
       name = obj.get('displayName')
+      people = self._get_person_tags(obj)
 
       # if name does not represent an explicit title, then we'll just
       # use it as the title and wipe out the content
@@ -143,6 +146,10 @@ class Flickr(source.Source):
           preview_content += '<h4>%s</h4>' % name
         if content:
           preview_content += '<div>%s</div>' % content
+        if people:
+          preview_content += '<div> with %s</div>' % ', '.join(
+            ('<a href="%s">%s</a>' % (p.get('url'), p.get('displayName'))
+             for p in people))
         preview_content += '<img src="%s" />' % image_url
         return source.creation_result(
           content=preview_content, description='post')
@@ -154,13 +161,18 @@ class Flickr(source.Source):
         params.append(('description', content))
 
       resp = self.upload_photo(params, urllib2.urlopen(image_url))
-      # note that this requires self.user_id to be set
-      # TODO fetch user profile and replace user_id with path_alias?
+      photo_id = resp.get('id')
       resp.update({
         'type': 'post',
-        'url': self.photo_url(self.path_alias() or self.user_id(),
-                              resp.get('id')),
+        'url': self.photo_url(self.path_alias() or self.user_id(), photo_id),
       })
+      # add person tags
+      for person in people:
+        self.call_api_method('flickr.photos.people.add', {
+          'photo_id': photo_id,
+          'user_id': person.get('id')
+        })
+
       return source.creation_result(resp)
 
     base_obj = self.base_object(obj)
@@ -224,6 +236,32 @@ class Flickr(source.Source):
       abort=False,
       error_plain='Cannot publish type=%s to Flickr.' % type,
       error_html='Cannot publish type=%s to Flickr.' % type)
+
+  def _get_person_tags(self, obj):
+    """Extract person tags that refer to Flickr users.
+
+    Uses https://www.flickr.com/services/api/flickr.urls.lookupUser.html
+    to find the NSID for a particular URL.
+
+    Args:
+      obj: ActivityStreams object that may contain person targets
+
+    Returns:
+      a sequence of ActivityStream person objects augmented with 'id' equal to
+      the Flickr user's NSID
+    """
+    people = {}  # maps id to tag
+    for tag in obj.get('tags', []):
+      url = tag.get('url', '')
+      if (util.domain_from_link(url) == 'flickr.com' and
+          tag.get('objectType') == 'person'):
+        resp = self.call_api_method('flickr.urls.lookupUser', {'url': url})
+        id = resp.get('user', {}).get('id')
+        if id:
+          tag = copy.copy(tag)
+          tag['id'] = id
+          people[id] = tag
+    return people.values()
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
