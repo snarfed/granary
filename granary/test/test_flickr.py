@@ -578,11 +578,7 @@ OBJECT = {
     'objectType': 'person',
   },
   'tags': [{
-    'url': 'http://licit.li/',
-    'urls': [
-      {'value': 'https://www.flickr.com/photos/vanderven/'},
-      {'value': 'http://twitter.com/vanderven'}
-    ],
+    'url': 'https://www.flickr.com/photos/vanderven/',
     'displayName': 'Martijn van der Ven',
     'objectType': 'person',
   }, {
