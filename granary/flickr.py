@@ -253,15 +253,18 @@ class Flickr(source.Source):
     """
     people = {}  # maps id to tag
     for tag in obj.get('tags', []):
-      url = tag.get('url', '')
-      if (util.domain_from_link(url) == 'flickr.com' and
-          tag.get('objectType') == 'person'):
-        resp = self.call_api_method('flickr.urls.lookupUser', {'url': url})
-        id = resp.get('user', {}).get('id')
-        if id:
-          tag = copy.copy(tag)
-          tag['id'] = id
-          people[id] = tag
+      urls = [tag.get('url')] + [d.get('value') for d in tag.get('urls', [])]
+      for url in filter(None, urls):
+        if (util.domain_from_link(url) == 'flickr.com'
+            and tag.get('objectType') == 'person'):
+          resp = self.call_api_method('flickr.urls.lookupUser', {'url': url})
+          id = resp.get('user', {}).get('id')
+          if id:
+            tag = copy.copy(tag)
+            tag['url'] = url  # replace first URL with the flickr URL
+            tag['id'] = id
+            people[id] = tag
+          break
     return people.values()
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
