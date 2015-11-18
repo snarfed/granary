@@ -168,10 +168,10 @@ class Flickr(source.Source):
         'url': self.photo_url(self.path_alias() or self.user_id(), photo_id),
       })
       # add person tags
-      for person in people:
+      for person_id in sorted(p.get('id') for p in people):
         self.call_api_method('flickr.photos.people.add', {
           'photo_id': photo_id,
-          'user_id': person.get('id')
+          'user_id': person_id,
         })
 
       return source.creation_result(resp)

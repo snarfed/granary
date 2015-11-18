@@ -284,6 +284,7 @@ def json_to_object(mf2):
     'summary': get_text(prop.get('summary')),
     'content': get_html(prop.get('content')),
     'url': urls[0] if urls else None,
+    'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,
     'image': {'url': photos[0] if photos else None},
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},

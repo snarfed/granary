@@ -881,11 +881,11 @@ class FlickrTest(testutil.TestCase):
                              'path_alias': 'kindofblue115'}}))
 
     # add person tags
-    for user_id in ['123@1', '456@4', '382@123']:
+    for user_id in ['123@1', '382@123', '456@4']:
       self.expect_call_api_method(
         'flickr.photos.people.add', {'photo_id': '9876', 'user_id': user_id},
         '{"stat": "ok"}'
-      ).InAnyOrder()
+      )
 
     self.mox.ReplayAll()
     self.assertEquals({
