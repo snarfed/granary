@@ -6,7 +6,7 @@ import warnings
 warnings.filterwarnings('ignore', module='bs4', category=UserWarning)
 
 # Additional ereporter exceptions to suppress.
-BlacklistingHandler.BLACKLIST += (
+ereporter_logging_handler.BLACKLIST += (
   'HTTPError: HTTP Error 401: Unauthorized',
   'HTTPError: HTTP Error 403: Forbidden',
 )
