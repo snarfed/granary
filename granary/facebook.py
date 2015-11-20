@@ -56,6 +56,7 @@ import re
 import urllib
 import urllib2
 import urlparse
+import mf2util
 
 import appengine_config
 from oauth_dropins.webutil import util
@@ -578,6 +579,9 @@ class Facebook(source.Source):
           abort=False,  # keep looking for things to post
           error_plain='No content text found.',
           error_html='No content text found.')
+
+    if obj.get('displayName') and mf2util.is_name_a_title(obj.get('displayName'), content):
+        content = obj.get('displayName') + u"\n\n" + content
 
     people = self._get_person_tags(obj)
 
