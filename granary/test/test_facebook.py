@@ -1110,6 +1110,17 @@ class FacebookTest(testutil.HandlerTest):
                        [[c['fb_id'] for c in a['object']['replies']['items']]
                         for a in activities])
 
+  def test_get_activities_fetch_replies_400s(self):
+    post = copy.deepcopy(POST)
+    del post['comments']
+    self.expect_urlopen('me/home?offset=0', {'data': [post]})
+    self.expect_urlopen('comments?filter=stream&ids=10100176064482163', status=400)
+    self.mox.ReplayAll()
+
+    activity = copy.deepcopy(ACTIVITY)
+    del activity['object']['replies']
+    self.assert_equals([activity], self.fb.get_activities(fetch_replies=True))
+
   def test_get_activities_skips_extras_if_no_posts(self):
     self.expect_urlopen('me/feed?offset=0', {'data': []})
     self.expect_urlopen('me/photos/uploaded', {})

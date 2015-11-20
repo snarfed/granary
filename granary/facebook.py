@@ -314,15 +314,20 @@ class Facebook(source.Source):
           raise
 
     if non_note_ids and fetch_replies:
-      for id, comments in self._split_id_requests(API_COMMENTS_ALL, non_note_ids).items():
-        activity = id_to_activity.get(id)
-        if activity:
-          replies = activity['object'].setdefault('replies', {}
-                                     ).setdefault('items', [])
-          existing_ids = {reply['fb_id'] for reply in replies}
-          for comment in comments:
-            if comment['id'] not in existing_ids:
-              replies.append(self.comment_to_object(comment))
+      try:
+        for id, comments in self._split_id_requests(API_COMMENTS_ALL, non_note_ids).items():
+          activity = id_to_activity.get(id)
+          if activity:
+            replies = activity['object'].setdefault('replies', {}
+                                       ).setdefault('items', [])
+            existing_ids = {reply['fb_id'] for reply in replies}
+            for comment in comments:
+              if comment['id'] not in existing_ids:
+                replies.append(self.comment_to_object(comment))
+      except urllib2.HTTPError, e:
+        # some comments requests 400, not sure why.
+        if e.code / 100 != 4:
+          raise
 
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag
