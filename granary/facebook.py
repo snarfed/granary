@@ -301,20 +301,18 @@ class Facebook(source.Source):
                     if activity.get('object', {}).get('objectType') != 'article']
 
     if non_note_ids and fetch_shares:
-      try:
+      # some sharedposts requests 400, not sure why.
+      # https://github.com/snarfed/bridgy/issues/348
+      with util.ignore_http_4xx_error():
         for id, shares in self._split_id_requests(API_SHARES, non_note_ids).items():
           activity = id_to_activity.get(id)
           if activity:
             activity['object'].setdefault('tags', []).extend(
               [self.share_to_object(share) for share in shares])
-      except urllib2.HTTPError, e:
-        # some sharedposts requests 400, not sure why.
-        # https://github.com/snarfed/bridgy/issues/348
-        if e.code / 100 != 4:
-          raise
 
     if non_note_ids and fetch_replies:
-      try:
+      # some comments requests 400, not sure why.
+      with util.ignore_http_4xx_error():
         for id, comments in self._split_id_requests(API_COMMENTS_ALL, non_note_ids).items():
           activity = id_to_activity.get(id)
           if activity:
@@ -324,10 +322,6 @@ class Facebook(source.Source):
             for comment in comments:
               if comment['id'] not in existing_ids:
                 replies.append(self.comment_to_object(comment))
-      except urllib2.HTTPError, e:
-        # some comments requests 400, not sure why.
-        if e.code / 100 != 4:
-          raise
 
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag
@@ -424,8 +418,11 @@ class Facebook(source.Source):
     Returns: dict, decoded ActivityStreams activity, or None if the event is not
       found or is owned by a different user than owner_id (if provided)
     """
-    event = self.urlopen(API_EVENT % event_id)
-    if event.get('error'):
+    event = None
+    with util.ignore_http_4xx_error():
+      event = self.urlopen(API_EVENT % event_id)
+
+    if not event or event.get('error'):
       logging.warning("Couldn't fetch event %s: %s", event_id, event)
       return None
 
@@ -435,7 +432,10 @@ class Facebook(source.Source):
                    event.get('name') or event.get('id'), event_owner_id, owner_id)
       return None
 
-    rsvps = self.urlopen(API_EVENT_RSVPS % event_id).get('data')
+    rsvps = None
+    with util.ignore_http_4xx_error():
+      rsvps = self.urlopen(API_EVENT_RSVPS % event_id).get('data')
+
     return self.event_to_activity(event, rsvps=rsvps)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
@@ -466,13 +466,10 @@ class Facebook(source.Source):
       activity_id: string activity id
       share_id: string id of the share object
     """
-    try:
+    # shares sometimes 400, not sure why.
+    # https://github.com/snarfed/bridgy/issues/348
+    with util.ignore_http_4xx_error():
       return self.share_to_object(self.urlopen(share_id))
-    except urllib2.HTTPError, e:
-      # shares sometimes 400, not sure why.
-      # https://github.com/snarfed/bridgy/issues/348
-      if e.code / 100 != 4:
-        raise
 
   def get_rsvp(self, activity_user_id, event_id, user_id):
     """Returns an ActivityStreams RSVP activity object.
@@ -1473,18 +1470,12 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     if parsed.post:
       post_id = parsed.post
 
-    try:
+    with util.ignore_http_4xx_error():
       post = self.urlopen(API_POST_OBJECT % (user_id, post_id))
       resolved = post.get('object_id')
-    except BaseException, e:
-      code, body = util.interpret_http_exception(e)
-      if code and int(code) / 100 == 4:
-        resolved = None  # interpret_http_exception logged it already
-      else:
-        raise
-
-    logging.info('Resolved Facebook post id %r to %r.', post_id, resolved)
-    return str(resolved) if resolved else None
+      if resolved:
+        logging.info('Resolved Facebook post id %r to %r.', post_id, resolved)
+        return str(resolved)
 
   def urlopen(self, relative_url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
