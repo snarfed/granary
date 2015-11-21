@@ -1145,86 +1145,6 @@ class TwitterTest(testutil.TestCase):
       self.assertEquals('<span class="verb">tweet</span>:', got.description)
       self.assertEquals(preview, got.content)
 
-  def test_tweet_truncate(self):
-    """A bunch of tests to exercise the tweet shortening algorithm
-    """
-    twitter.MAX_TWEET_LENGTH = 140
-    twitter.TCO_LENGTH = 23
-
-    orig = (
-      u'Hey #indieweb, the coming storm of webmention Spam may not be '
-      u'far away. Those of us that have input fields to send webmentions '
-      u'manually may already be getting them')
-    expected = (
-      u'Hey #indieweb, the coming storm of webmention Spam may not '
-      u'be far away. Those of us that have input fields to… '
-      u'(https://ben.thatmustbe.me/note/2015/1/31/1/)')
-    result = self.twitter._truncate(orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/', False)
-    self.assertEquals(expected, result)
-
-    orig = expected = (
-      u'Despite names,\n'
-      u'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
-      u'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
-      u'@iainspad @sashtown @thomatronic (ttk.me t4_81)')
-    result = self.twitter._truncate(orig, None, False)
-    self.assertEquals(expected, result)
-
-    orig = expected = (
-      u'@davewiner I stubbed a page on the wiki for '
-      u'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
-      u'welcome! @kevinmarks @julien51 @aaronpk')
-    result = self.twitter._truncate(orig, None, False)
-    self.assertEquals(expected, result)
-
-    orig = expected = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), a url with a query '
-      u'string;foo.withknown.com/example?query=parameters')
-    result = self.twitter._truncate(orig, None, False)
-    self.assertEquals(expected, result)
-
-    orig = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      u'long:foo.withknown.com/example?query=parameters')
-    expected = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      u'long:…')
-    result = self.twitter._truncate(orig, None, False)
-    self.assertEquals(expected, result)
-
-    # test case-insensitive link matching
-    orig = (
-      u'The Telegram Bot API is the best bot API ever. Everyone should '
-      u'learn from it, especially Matrix.org, which currently requires a '
-      u'particular URL structure and registration files.')
-    expected = (
-      u'The Telegram Bot API is the best bot API ever. Everyone should learn '
-      u'from it, especially Matrix.org… '
-      u'(https://unrelenting.technology/notes/2015-09-05-00-35-13)')
-    result = self.twitter._truncate(
-      orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13', False)
-    self.assertEquals(expected, result)
-
-    twitter.MAX_TWEET_LENGTH = 20
-    twitter.TCO_LENGTH = 5
-
-    orig = u'url http://foo.co/bar ellipsize http://foo.co/baz'
-    expected = u'url http://foo.co/bar ellipsize…'
-    result = self.twitter._truncate(orig, None, False)
-    self.assertEquals(expected, result)
-
-    orig = u'too long\nextra whitespace\tbut should include url'
-    expected = u'too long… (http://obj.ca)'
-    result = self.twitter._truncate(orig, 'http://obj.ca', False)
-    self.assertEquals(expected, result)
-
-    orig = expected = u'trailing slash http://www.foo.co/'
-    result = self.twitter._truncate(orig, None, False)
-    self.assertEquals(expected, result)
-
   def test_no_ellipsize_real_tweet(self):
     self.maxDiff = None
     orig = (
@@ -1264,12 +1184,12 @@ class TwitterTest(testutil.TestCase):
             'manually may already be getting them')
 
     content = (u'Hey #indieweb, the coming storm of webmention Spam may not '
-               u'be far away. Those of us that have input fields to… '
-               u'(https://ben.thatmustbe.me/note/2015/1/31/1/)')
+               u'be far away. Those of us that have input fields to send… '
+               u'https://ben.thatmustbe.me/note/2015/1/31/1/')
 
     preview = (u'Hey #indieweb, the coming storm of webmention Spam may not '
-               u'be far away. Those of us that have input fields to… '
-               u'(<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>)')
+               u'be far away. Those of us that have input fields to send… '
+               u'<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
 
     self.expect_urlopen(
       twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content.encode('utf-8')),
@@ -1284,6 +1204,16 @@ class TwitterTest(testutil.TestCase):
     self.twitter.create(obj, include_link=True)
     actual_preview = self.twitter.preview_create(obj, include_link=True).content
     self.assertEquals(preview, actual_preview)
+
+  def test_tweet_article_has_different_format(self):
+    preview = self.twitter.preview_create({
+      'objectType': 'article',
+      'displayName': 'The Article Title',
+      'url': 'http://example.com/article',
+    }, include_link=True).content
+    self.assertEquals(
+      'The Article Title: <a href="http://example.com/article">example.com/'
+      'article</a>', preview)
 
   def test_create_tweet_note_prefers_summary_then_content_then_name(self):
     obj = copy.deepcopy(OBJECT)
@@ -1332,7 +1262,7 @@ class TwitterTest(testutil.TestCase):
     twitter.TCO_LENGTH = 5
 
     self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=' +
-                        urllib.quote_plus('too long… (http://obj.ca)'),
+                        urllib.quote_plus('too long… http://obj.ca'),
                         json.dumps(TWEET), data='')
     self.mox.ReplayAll()
 
@@ -1344,7 +1274,7 @@ class TwitterTest(testutil.TestCase):
         })
     self.twitter.create(obj, include_link=True)
     result = self.twitter.preview_create(obj, include_link=True)
-    self.assertIn(u'too long… (<a href="http://obj.ca">obj.ca</a>)',result.content)
+    self.assertIn(u'too long… <a href="http://obj.ca">obj.ca</a>',result.content)
 
   def test_create_recognize_note(self):
     """Use post-type-discovery to recognize a note with non-trivial html
