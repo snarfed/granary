@@ -50,7 +50,7 @@ def get_string_urls(objs):
   """Extracts string URLs from a list of either string URLs or mf2 dicts.
 
   Many mf2 properties can contain either string URLs or full mf2 objects, e.g.
-  h-cites. in-reply-to is the most commenly used example:
+  h-cites. in-reply-to is the most commonly used example:
   http://indiewebcamp.com/in-reply-to#How_to_consume_in-reply-to
 
   Args:
@@ -694,9 +694,14 @@ def tags_to_html(tags, classname):
     tags: decoded JSON ActivityStreams objects.
     classname: class for span to enclose tags in
   """
-  return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, t['url'],
-                                                       t.get('displayName', ''))
-                 for t in tags if t.get('url'))
+  urls = set()  # stores (url, displayName) tuples
+  for tag in tags:
+    name = tag.get('displayName') or ''
+    urls.add((tag.get('url'), name))
+    urls.update((u.get('value'), name) for u in tag.get('urls', []))
+
+  return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, url, name)
+                 for url, name in urls if url)
 
 
 def author_display_name(hcard):
