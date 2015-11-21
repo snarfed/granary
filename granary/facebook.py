@@ -480,33 +480,37 @@ class Facebook(source.Source):
     data = self.urlopen(API_RSVP % (event_id, user_id)).get('data', [])
     return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
 
-  def create(self, obj, include_link=False):
+  def create(self, obj, include_link=False, ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
       include_link: boolean
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult whose contents will be a dict with 'id' and
       'url' keys for the newly created Facebook object (or None)
     """
-    return self._create(obj, preview=False, include_link=include_link)
+    return self._create(obj, preview=False, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
 
-  def preview_create(self, obj, include_link=False):
+  def preview_create(self, obj, include_link=False, ignore_formatting=False):
     """Previews creating a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
       include_link: boolean
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult whose contents will be a unicode string HTML snippet
       or None
     """
-    return self._create(obj, preview=True, include_link=include_link)
+    return self._create(obj, preview=True, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview=None, include_link=False):
+  def _create(self, obj, preview=None, include_link=False, ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
@@ -539,7 +543,7 @@ class Facebook(source.Source):
       base_url = base_obj['url'] = self.object_url(base_id)
 
     image_url = obj.get('image', {}).get('url')
-    content = self._content_for_create(obj) or ''
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting) or ''
     if not content and not image_url:
       if type == 'activity':
         content = verb

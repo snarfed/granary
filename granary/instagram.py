@@ -202,19 +202,21 @@ class Instagram(source.Source):
     """
     return None
 
-  def create(self, obj, include_link=False):
+  def create(self, obj, include_link=False, ignore_formatting=False):
     """Creates a new comment or like.
 
     Args:
       obj: ActivityStreams object
       include_link: boolean
+      ignore_formatting: boolean
 
     Returns: a CreationResult. if successful, content will have and 'id' and
              'url' keys for the newly created Instagram object
     """
-    return self._create(obj, include_link=include_link, preview=False)
+    return self._create(obj, include_link=include_link, preview=False,
+                        ignore_formatting=ignore_formatting)
 
-  def preview_create(self, obj, include_link=False):
+  def preview_create(self, obj, include_link=False, ignore_formatting=False):
     """Preview a new comment or like.
 
     Args:
@@ -224,9 +226,10 @@ class Instagram(source.Source):
     Returns: a CreationResult. if successful, content and description
              will describe the new instagram object.
     """
-    return self._create(obj, include_link=include_link, preview=True)
+    return self._create(obj, include_link=include_link, preview=True,
+                        ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, include_link=False, preview=None):
+  def _create(self, obj, include_link=False, preview=None, ignore_formatting=False):
     """Creates a new comment or like.
 
     The OAuth access token must have been created with scope=comments+likes (or
@@ -267,6 +270,7 @@ class Instagram(source.Source):
           error_plain='Cannot publish comments on Instagram',
           error_html='<a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">Cannot publish comments</a> on Instagram. The Instagram API technically supports creating comments, but <a href="http://stackoverflow.com/a/26889101/682648">anecdotal</a> <a href="http://stackoverflow.com/a/20229275/682648">evidence</a> suggests they are very selective about which applications they approve to do so.')
       content = obj.get('content', '').encode('utf-8')
+      content = content if ignore_formatting else self._html_to_text(content)
       if preview:
         return source.creation_result(
           content=content,

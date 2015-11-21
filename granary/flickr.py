@@ -75,12 +75,13 @@ class Flickr(source.Source):
     return flickr_auth.upload(
       params, photo_file, self.access_token_key, self.access_token_secret)
 
-  def create(self, obj, include_link=False):
+  def create(self, obj, include_link=False, ignore_formatting=False):
     """Creates a photo, comment, or favorite.
 
     Args:
       obj: ActivityStreams object
       include_link: boolean
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult whose content will be a dict with 'id', 'url',
@@ -88,9 +89,10 @@ class Flickr(source.Source):
       object (or None)
 
     """
-    return self._create(obj, preview=False, include_link=include_link)
+    return self._create(obj, preview=False, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
 
-  def preview_create(self, obj, include_link=False):
+  def preview_create(self, obj, include_link=False, ignore_formatting=False):
     """Preview creation of a photo, comment, or favorite.
 
     Args:
@@ -102,9 +104,10 @@ class Flickr(source.Source):
       what publishing will do, and whose content will be an HTML preview
       of the result (or None)
     """
-    return self._create(obj, preview=True, include_link=include_link)
+    return self._create(obj, preview=True, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview, include_link):
+  def _create(self, obj, preview, include_link, ignore_formatting=False):
     """Creates or previews creating for the previous two methods.
 
     https://www.flickr.com/services/api/upload.api.html
@@ -123,7 +126,7 @@ class Flickr(source.Source):
     # photo, comment, or like
     type = source.object_type(obj)
     logging.debug('publishing object type %s to Flickr', type)
-    content = self._content_for_create(obj)
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     link_text = '(Originally published at: %s)' % obj.get('url')
 
     if obj.get('image') and type in ('note', 'article'):

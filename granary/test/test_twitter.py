@@ -1100,6 +1100,7 @@ class TwitterTest(testutil.TestCase):
       'trailing slash http://www.foo.co/',
       'exactly twenty chars',
       'just over twenty one chars',  # would trunc after 'one' if we didn't account for the ellipsis
+      'HTML<br/>h &amp; h'
     )
     created = (
       'my status',
@@ -1110,6 +1111,7 @@ class TwitterTest(testutil.TestCase):
       'trailing slash http://www.foo.co/',
       'exactly twenty chars',
       'just over twenty' + dots,
+      'HTML\nh & h'
     )
     previewed = (
       'my status',
@@ -1120,6 +1122,7 @@ class TwitterTest(testutil.TestCase):
       'trailing slash <a href="http://www.foo.co/">foo.co</a>',
       'exactly twenty chars',
       'just over twenty' + dots,
+      'HTML\nh & h'
     )
 
     for content in created:
@@ -1246,7 +1249,7 @@ class TwitterTest(testutil.TestCase):
 
     obj = copy.deepcopy(OBJECT)
     del obj['image']
-    obj['content'] = orig
+    obj['content'] = orig.replace("\n", '<br />').replace('&', '&amp;')
     obj['url'] = 'http://tantek.com/2015/013/t1/names-ind-ie-indie-vc-not-indieweb'
 
     actual_preview = self.twitter.preview_create(obj, include_link=False).content
@@ -1313,7 +1316,7 @@ class TwitterTest(testutil.TestCase):
         'objectType': 'article',
         'summary': 'my summary',
         'displayName': 'my name',
-        'content': 'my content',
+        'content': 'my<br />content',
         'image': None,
         })
     result = self.twitter.preview_create(obj)
@@ -1325,7 +1328,7 @@ class TwitterTest(testutil.TestCase):
 
     del obj['displayName']
     result = self.twitter.preview_create(obj)
-    self.assertIn('my content', result.content)
+    self.assertIn('my\ncontent', result.content)
 
   def test_create_tweet_include_link(self):
     twitter.MAX_TWEET_LENGTH = 20
@@ -1369,7 +1372,7 @@ class TwitterTest(testutil.TestCase):
         ],
         "content": [
           {
-            "html": "https://instagram.com/p/9XVBIRA9cj/\n\nSocial Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.",
+            "html": "https://instagram.com/p/9XVBIRA9cj/<br /><br />Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.",
             "value": " https://instagram.com/p/9XVBIRA9cj/Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan."
           }
         ],
