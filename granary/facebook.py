@@ -195,7 +195,8 @@ class Facebook(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              search_query=None, event_owner_id=None):
+                              fetch_mentions=False, search_query=None,
+                              event_owner_id=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
@@ -206,6 +207,10 @@ class Facebook(source.Source):
 
     Threaded comments, ie comments in reply to other top-level comments, require
     an additional API call, so they're only included if fetch_replies is True.
+
+    Mentions are never fetched or included because the API doesn't support
+    searching for them.
+    https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
 
     Additional args:
       event_owner_id: string. if provided, only events owned by this user id

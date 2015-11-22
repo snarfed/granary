@@ -603,19 +603,20 @@ class TwitterTest(testutil.TestCase):
         start_index=3, count=6))
 
   def test_get_activities_self(self):
-    self.expect_urlopen('statuses/user_timeline.json?include_entities=true&count=0',
-                        [])
+    self.expect_urlopen(
+      'statuses/user_timeline.json?include_entities=true&count=0&screen_name=', [])
     self.mox.ReplayAll()
 
     self.assert_equals([], self.twitter.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_fetch_likes(self):
-    self.expect_urlopen('favorites/list.json?screen_name=&include_entities=true',
-                        [TWEET_2])
-    self.expect_urlopen('account/verify_credentials.json',
-                        FAVORITE_EVENT['source'])
-    self.expect_urlopen('statuses/user_timeline.json?include_entities=true&count=0',
-                        [TWEET])
+    self.expect_urlopen(
+      'favorites/list.json?screen_name=&include_entities=true', [TWEET_2])
+    self.expect_urlopen(
+      'account/verify_credentials.json', FAVORITE_EVENT['source'])
+    self.expect_urlopen(
+      'statuses/user_timeline.json?include_entities=true&count=0&screen_name=',
+      [TWEET])
     self.mox.ReplayAll()
 
     got = self.twitter.get_activities(group_id=source.SELF, fetch_likes=True)
@@ -651,8 +652,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([], self.twitter.get_activities(group_id='testlist'))
 
   def test_get_activities_fetch_replies(self):
-    tweet = copy.deepcopy(TWEET)
-    self.expect_urlopen(TIMELINE, [tweet])
+    self.expect_urlopen(TIMELINE, [TWEET])
     self.expect_urlopen('search/tweets.json?q=%40snarfed_org&include_entities=true&result_type=recent&count=100&since_id=567',
       REPLIES_TO_SNARFED)
     self.expect_urlopen('search/tweets.json?q=%40alice&include_entities=true&result_type=recent&count=100&since_id=567',
@@ -663,6 +663,32 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([ACTIVITY_WITH_REPLIES],
                        self.twitter.get_activities(fetch_replies=True, min_id='567'))
+
+  def test_get_activities_fetch_mentions(self):
+    self.expect_urlopen(TIMELINE, [])
+    self.expect_urlopen('account/verify_credentials.json',
+                        {'screen_name': 'schnarfed'})
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/search/tweets.json?q=%40schnarfed&include_entities=true&result_type=recent&count=100&since_id=567',
+      {'statuses': [
+        {'id_str': '1', 'text': '@schnarfed foo',
+         'in_reply_to_status_id_str': '11'},
+        {'id_str': '2', 'text': '@eve bar, cc @schnarfed',
+         'in_reply_to_status_id_str': '12'},
+        {'id_str': '3', 'text': '@frank baz, cc @schnarfed',
+         'in_reply_to_status_id_str': '13'},
+        {'id_str': '4', 'text': 'mention @schnarfed'},
+      ]})
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/lookup.json?id=11,12,13&include_entities=true',
+      [{'id_str': '11', 'user': {'screen_name': 'schnarfed'}},
+       {'id_str': '12', 'user_mentions': [{'screen_name': 'schnarfed'}]},
+       {'id_str': '13', 'text': 'barrey'},
+      ])
+    self.mox.ReplayAll()
+
+    got = self.twitter.get_activities(fetch_mentions=True, min_id='567')
+    self.assert_equals([tag_uri('3'), tag_uri('4')], [a['id'] for a in got])
 
   def test_get_activities_fetch_shares(self):
     tweet = copy.deepcopy(TWEET)

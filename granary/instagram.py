@@ -103,7 +103,7 @@ class Instagram(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              search_query=None):
+                              fetch_mentions=False, search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -116,8 +116,11 @@ class Instagram(source.Source):
     bundled in the 'likes' field of the API Media object:
     http://instagram.com/developer/endpoints/media/#
 
-    Instagram doesn't have a reshare feature, so shares are never included
-    since they don't exist. :P
+    Mentions are never fetched or included because the API doesn't support
+    searching for them.
+    https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
+
+    Shares are never fetched included since there is no share feature.
 
     Instagram only supports search over hashtags, so if search_query is set, it
     must begin with #.

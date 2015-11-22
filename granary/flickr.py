@@ -269,8 +269,13 @@ class Flickr(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              search_query=None):
-    """Get Flickr actvities
+                              fetch_mentions=False, search_query=None):
+    """Fetches Flickr photos and converts them to ActivityStreams activities.
+
+    See method docstring in source.py for details.
+
+    Mentions are not fetched or included because they don't exist in Flickr.
+    https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
     """
     if user_id is None:
       user_id = 'me'

@@ -35,10 +35,10 @@ from oauth_dropins.webutil import util
 
 API_BASE = 'https://api.twitter.com/1.1/'
 API_TIMELINE_URL = 'statuses/home_timeline.json?include_entities=true&count=%d'
-API_SELF_TIMELINE_URL = 'statuses/user_timeline.json?include_entities=true&count=%d'
 API_USER_TIMELINE_URL = 'statuses/user_timeline.json?include_entities=true&count=%(count)d&screen_name=%(screen_name)s'
 API_LIST_TIMELINE_URL = 'lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
 API_STATUS_URL = 'statuses/show.json?id=%s&include_entities=true'
+API_LOOKUP_URL = 'statuses/lookup.json?id=%s&include_entities=true'
 API_RETWEETS_URL = 'statuses/retweets.json?id=%s'
 API_USER_URL = 'users/show.json?screen_name=%s'
 API_CURRENT_USER_URL = 'account/verify_credentials.json'
@@ -140,7 +140,7 @@ class Twitter(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              search_query=None):
+                              fetch_mentions=False, search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -178,41 +178,56 @@ class Twitter(source.Source):
     users can be fetched by explicitly passing a username to user_id, e.g. to
     fetch tweets from the list @exampleuser/example-list you would call
     get_activities(user_id='exampleuser', group_id='example-list').
+
+    Twitter replies default to including a mention of the user they're replying
+    to, which overloads mentions a bit. When fetch_shares is True, we determine
+    that a tweet mentions the current user if it @-mentions their username and:
+    * it's not a reply, OR
+    * it's a reply, but not to the current user, AND
+      * the tweet it's replying to doesn't @-mention the current user
     """
+    if group_id is None:
+      group_id = source.FRIENDS
+
+    # nested function for lazily fetching the user object if we need it
+    user = []
+    def _user():
+      if not user:
+        user.append(self.urlopen(API_USER_URL % user_id if user_id
+                                 else API_CURRENT_USER_URL))
+      return user[0]
+
     activities = []
     if activity_id:
       tweets = [self.urlopen(API_STATUS_URL % activity_id)]
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
-        if user_id == source.ME:
-          user_id = None
-        if not user_id:
-          url = API_SELF_TIMELINE_URL % (count + start_index)
-        else:
-          url = API_USER_TIMELINE_URL % {
-            'count': count + start_index,
-            'screen_name': user_id,
-          }
+        if user_id in (None, source.ME):
+          user_id = ''
+        url = API_USER_TIMELINE_URL % {
+          'count': count + start_index,
+          'screen_name': user_id,
+        }
 
         if fetch_likes:
-          liked = self.urlopen(API_FAVORITES_URL % (user_id or ''))
+          liked = self.urlopen(API_FAVORITES_URL % user_id)
           if liked:
-            user = self.urlopen(API_USER_URL % user_id if user_id
-                                else API_CURRENT_USER_URL)
-            activities += [self._make_like(tweet, user) for tweet in liked]
+            activities += [self._make_like(tweet, _user()) for tweet in liked]
       elif group_id == source.SEARCH:
         url = API_SEARCH_URL % {
           'q': urllib.quote_plus(search_query),
           'count': count + start_index,
         }
-      elif group_id in (None, source.FRIENDS, source.ALL):
+      elif group_id in (source.FRIENDS, source.ALL):
         url = API_TIMELINE_URL % (count + start_index)
       else:
+        if not user_id:
+          user_id = _user().get('screen_name')
         url = API_LIST_TIMELINE_URL % {
           'count': count + start_index,
           'slug': group_id,
-          'owner_screen_name': user_id or self.get_actor().get('username')
+          'owner_screen_name': user_id,
         }
 
       headers = {'If-None-Match': etag} if etag else {}
@@ -275,6 +290,9 @@ class Twitter(source.Source):
 
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
+
+    if fetch_mentions:
+      tweets += self.fetch_mentions(_user().get('screen_name'), min_id=min_id)
 
     tweet_activities = [self.tweet_to_activity(t) for t in tweets]
 
@@ -365,6 +383,49 @@ class Twitter(source.Source):
         'items': items,
         'totalItems': len(items),
         }
+
+  def fetch_mentions(self, username, min_id=None):
+    """Fetches a user's @-mentions and returns them as ActivityStreams.
+
+    Tries to only include explicit mentions, not mentions automatically created
+    by @-replying. See the get_activities() docstring for details.
+
+    Args:
+      username: string
+      min_id: only return activities with ids greater than this
+
+    Returns:
+      list of activity dicts
+    """
+    # get mentions
+    url = API_SEARCH_URL % {
+      'q': urllib.quote_plus('@' + username),
+      'count': 100,
+    }
+    if min_id is not None:
+      url = util.add_query_params(url, {'since_id': min_id})
+    candidates = self.urlopen(url)['statuses']
+
+    # filter out replies that we don't consider mentions
+    in_reply_to_ids = util.trim_nulls(
+      [c.get('in_reply_to_status_id_str') for c in candidates])
+    if not in_reply_to_ids:
+      return candidates
+
+    origs = {o.get('id_str'): o for o in
+             self.urlopen(API_LOOKUP_URL % ','.join(in_reply_to_ids))}
+    mentions = []
+    for c in candidates:
+      reply_to = origs.get(c.get('in_reply_to_status_id_str'))
+      if not reply_to:
+        mentions.append(c)
+      else:
+        reply_to_user = reply_to.get('user', {}).get('screen_name')
+        mentioned = [u.get('screen_name') for u in reply_to.get('user_mentions', [])]
+        if username != reply_to_user and username not in mentioned:
+          mentions.append(c)
+
+    return mentions
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
@@ -823,6 +884,7 @@ class Twitter(source.Source):
       return {}
 
     obj = {
+      'id': self.tag_uri(id),
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
       # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
@@ -848,7 +910,6 @@ class Twitter(source.Source):
       obj['author'] = self.user_to_actor(user)
       username = obj['author'].get('username')
       if username:
-        obj['id'] = self.tag_uri(id)
         obj['url'] = self.status_url(username, id)
 
       protected = user.get('protected')

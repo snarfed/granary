@@ -78,7 +78,7 @@ class GooglePlus(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              search_query=None):
+                              fetch_mentions=False, search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -93,6 +93,10 @@ class GooglePlus(source.Source):
     two HTTP requests total, one to get activities and optionally one to get new
     responses.
     https://developers.google.com/api-client-library/python/guide/batch
+
+    Mentions are not currently fetched or included because the API doesn't
+    explicitly support searching for them. It could be approximated, though:
+    https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
     """
     if user_id is None:
       user_id = 'me'
