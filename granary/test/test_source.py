@@ -270,10 +270,10 @@ class SourceTest(testutil.TestCase):
                        self.source.base_object(like))
 
   def test_content_for_create(self):
-    def cfc(base, extra):
+    def cfc(base, extra, ignore_formatting=False):
       obj = base.copy()
       obj.update(extra)
-      return self.source._content_for_create(obj)
+      return self.source._content_for_create(obj, ignore_formatting=ignore_formatting)
 
     self.assertEqual(None, cfc({}, {}))
 
@@ -285,6 +285,7 @@ class SourceTest(testutil.TestCase):
       self.assertEqual('c', cfc(base, {'content': 'c', 'displayName': 'n'}))
       self.assertEqual('s', cfc(base, {'content': 'c', 'displayName': 'n',
                                        'summary': 's'}))
+      self.assertEqual('c<a&b\nhai', cfc(base, {'content': 'c<a&b\nhai'}, ignore_formatting=True))
 
     for base in ({'objectType': 'note'},
                  {'inReplyTo': {'url': 'http://fake.com/post'}},

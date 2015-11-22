@@ -18,6 +18,7 @@ import logging
 import mimetypes
 import re
 import urlparse
+import html2text
 
 import requests
 
@@ -219,7 +220,7 @@ class Source(object):
             'updatedSince': False,
             }
 
-  def create(self, obj, include_link=False):
+  def create(self, obj, include_link=False, ignore_formatting=False):
     """Creates a new object: a post, comment, like, share, or RSVP.
 
     Subclasses should override this. Different sites will support different
@@ -231,6 +232,8 @@ class Source(object):
         objectType is strongly recommended.
       include_link: boolean. If True, includes a link to the object
         (if it has one) in the content.
+      ignore_formatting: whether to use content text as is, instead of
+        converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
       a CreationResult, whose contents will be a dict
@@ -241,7 +244,7 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def preview_create(self, obj, include_link=False):
+  def preview_create(self, obj, include_link=False, ignore_formatting=False):
     """Previews creating a new object: a post, comment, like, share, or RSVP.
 
     Returns HTML that previews what create() with the same object will do.
@@ -255,6 +258,8 @@ class Source(object):
         objectType is strongly recommended.
       include_link: boolean. If True, includes a link to the object
         (if it has one) in the content.
+      ignore_formatting: whether to use content text as is, instead of
+        converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
       a CreationResult, whose contents will be a unicode string
@@ -703,17 +708,18 @@ class Source(object):
     """
     return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
-  def _content_for_create(self, obj):
+  def _content_for_create(self, obj, ignore_formatting=False):
     """Returns the content text to use in create() and preview_create().
 
-    If objectType is note, or it's a comment (or there's an inReplyTo) and the
-    original post is on this source, then returns summary if available, then
-    content, then displayName.
+    returns summary if available, then content, then displayName.
 
-    Otherwise, returns summary if available, then displayName, then content.
+    If usig content, renders the HTML content to text using html2text so
+    that whitespace is formatted like in the browser.
 
     Args:
       obj: dict, ActivityStreams object
+      ignore_formatting: whether to use content text as is, instead of
+        converting its HTML to plain text styling (newlines, etc.)
 
     Returns: string text or None
     """
@@ -721,9 +727,21 @@ class Source(object):
     name = obj.get('displayName')
     content = obj.get('content')
 
-    ret = summary or content or name
-    return ret.strip() if ret else None
+    ret = summary or \
+          (content if ignore_formatting else self._html_to_text(content)) or \
+          name
+    return ret.strip() if ret else (None if content is None else u'')
 
+  def _html_to_text(self, html):
+    if html:
+      h = html2text.HTML2Text()
+      h.unicode_snob = True
+      h.body_width = 0  # don't wrap lines
+      h.ignore_links = True
+      h.ignore_images = True
+      return '\n'.join(
+        # strip trailing whitespace that html2text adds to ends of some lines
+        line.rstrip() for line in h.unescape(h.handle(html)).splitlines())
 
 def follow_redirects(url, cache=None, **kwargs):
   """Fetches a URL with HEAD, repeating if necessary to follow redirects.

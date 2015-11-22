@@ -648,6 +648,7 @@ class InstagramTest(testutil.HandlerTest):
   def test_preview_comment(self):
     # comment obj doesn't have a url prior to publishing
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
+    to_publish['content'] = 'very<br />cute'
     del to_publish['url']
 
     self.mox.ReplayAll()
@@ -656,7 +657,7 @@ class InstagramTest(testutil.HandlerTest):
 
     self.assertIn('comment', preview.description)
     self.assertIn('this post', preview.description)
-    self.assertIn('very cute', preview.content)
+    self.assertIn('very\ncute', preview.content)
 
   def test_create_comment(self):
     self.expect_urlopen(

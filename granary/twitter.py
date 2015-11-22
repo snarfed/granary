@@ -450,12 +450,13 @@ class Twitter(source.Source):
     url = API_STATUS_URL % share_id
     return self.retweet_to_object(self.urlopen(url))
 
-  def create(self, obj, include_link=False):
+  def create(self, obj, include_link=False, ignore_formatting=False):
     """Creates a tweet, reply tweet, retweet, or favorite.
 
     Args:
       obj: ActivityStreams object
       include_link: boolean
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult whose content will be a dict with 'id', 'url',
@@ -463,22 +464,25 @@ class Twitter(source.Source):
       object (or None)
 
     """
-    return self._create(obj, preview=False, include_link=include_link)
+    return self._create(obj, preview=False, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
 
-  def preview_create(self, obj, include_link=False):
+  def preview_create(self, obj, include_link=False, ignore_formatting=False):
     """Previews creating a tweet, reply tweet, retweet, or favorite.
 
     Args:
       obj: ActivityStreams object
       include_link: boolean
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult whose content will be a unicode string HTML
       snippet (or None)
     """
-    return self._create(obj, preview=True, include_link=include_link)
+    return self._create(obj, preview=True, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview=None, include_link=False):
+  def _create(self, obj, preview=None, include_link=False, ignore_formatting=False):
     """Creates or previews creating a tweet, reply tweet, retweet, or favorite.
 
     https://dev.twitter.com/docs/api/1.1/post/statuses/update
@@ -508,7 +512,7 @@ class Twitter(source.Source):
     is_reply = type == 'comment' or 'inReplyTo' in obj
     has_picture = obj.get('image') and (type in ('note', 'article') or is_reply)
 
-    content = self._content_for_create(obj)
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     if not content:
       if type == 'activity':
         content = verb
@@ -753,22 +757,22 @@ class Twitter(source.Source):
       content += ' (%s)' % include_url
     return content
 
-  def _content_for_create(self, obj):
+  def _content_for_create(self, obj, ignore_formatting=False):
     """Returns the content text to use in create() and preview_create().
 
     Differs from Source._content_for_create() in that it prefers displayName
     over content for articles. Otherwise it's the same.
     """
     type = obj.get('objectType')
+    base_url = self.base_object(obj).get('url')
+    if type == 'note' or (base_url and (type == 'comment' or obj.get('inReplyTo'))):
+        return source.Source._content_for_create(self, obj, ignore_formatting=ignore_formatting)
+
     summary = obj.get('summary')
     name = obj.get('displayName')
     content = obj.get('content')
-    base_url = self.base_object(obj).get('url')
 
-    if type == 'note' or (base_url and (type == 'comment' or obj.get('inReplyTo'))):
-      ret = summary or content or name
-    else:
-      ret = summary or name or content
+    ret = summary or name or (content if ignore_formatting else self._html_to_text(content))
 
     return ret.strip() if ret else None
 
