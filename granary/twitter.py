@@ -33,29 +33,21 @@ import source
 from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 
-API_TIMELINE_URL = \
-  'https://api.twitter.com/1.1/statuses/home_timeline.json?include_entities=true&count=%d'
-API_SELF_TIMELINE_URL = \
-  'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%d'
-API_USER_TIMELINE_URL = \
-  'https://api.twitter.com/1.1/statuses/user_timeline.json?include_entities=true&count=%(count)d&screen_name=%(screen_name)s'
-API_LIST_TIMELINE_URL = \
-  'https://api.twitter.com/1.1/lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
-API_STATUS_URL = \
-  'https://api.twitter.com/1.1/statuses/show.json?id=%s&include_entities=true'
-API_RETWEETS_URL = \
-  'https://api.twitter.com/1.1/statuses/retweets.json?id=%s'
-API_USER_URL = \
-  'https://api.twitter.com/1.1/users/show.json?screen_name=%s'
-API_CURRENT_USER_URL = \
-  'https://api.twitter.com/1.1/account/verify_credentials.json'
-API_SEARCH_URL = \
-    'https://api.twitter.com/1.1/search/tweets.json?q=%(q)s&include_entities=true&result_type=recent&count=%(count)d'
-API_FAVORITES_URL = 'https://api.twitter.com/1.1/favorites/list.json?screen_name=%s&include_entities=true'
-API_POST_TWEET_URL = 'https://api.twitter.com/1.1/statuses/update.json'
-API_POST_RETWEET_URL = 'https://api.twitter.com/1.1/statuses/retweet/%s.json'
-API_POST_FAVORITE_URL = 'https://api.twitter.com/1.1/favorites/create.json'
-API_POST_MEDIA_URL = 'https://api.twitter.com/1.1/statuses/update_with_media.json'
+API_BASE = 'https://api.twitter.com/1.1/'
+API_TIMELINE_URL = 'statuses/home_timeline.json?include_entities=true&count=%d'
+API_SELF_TIMELINE_URL = 'statuses/user_timeline.json?include_entities=true&count=%d'
+API_USER_TIMELINE_URL = 'statuses/user_timeline.json?include_entities=true&count=%(count)d&screen_name=%(screen_name)s'
+API_LIST_TIMELINE_URL = 'lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
+API_STATUS_URL = 'statuses/show.json?id=%s&include_entities=true'
+API_RETWEETS_URL = 'statuses/retweets.json?id=%s'
+API_USER_URL = 'users/show.json?screen_name=%s'
+API_CURRENT_USER_URL = 'account/verify_credentials.json'
+API_SEARCH_URL = 'search/tweets.json?q=%(q)s&include_entities=true&result_type=recent&count=%(count)d'
+API_FAVORITES_URL = 'favorites/list.json?screen_name=%s&include_entities=true'
+API_POST_TWEET_URL = 'statuses/update.json'
+API_POST_RETWEET_URL = 'statuses/retweet/%s.json'
+API_POST_FAVORITE_URL = 'favorites/create.json'
+API_POST_MEDIA_URL = 'statuses/update_with_media.json'
 HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 # background: https://indiewebcamp.com/Twitter#Profile_Image_URLs
@@ -530,9 +522,10 @@ class Twitter(source.Source):
         if is_reply:
           data['in_reply_to_status_id'] = base_id
         files = {'media[]': urllib2.urlopen(image_url)}
-        headers = twitter_auth.auth_header(API_POST_MEDIA_URL,
-            self.access_token_key, self.access_token_secret, 'POST')
-        resp = requests.post(API_POST_MEDIA_URL, data=data, files=files,
+        url = API_BASE + API_POST_MEDIA_URL
+        headers = twitter_auth.auth_header(url, self.access_token_key,
+                                           self.access_token_secret, 'POST')
+        resp = requests.post(url, data=data, files=files,
                              headers=headers, timeout=HTTP_TIMEOUT)
         resp.raise_for_status()
         resp = json.loads(resp.text)
@@ -722,7 +715,7 @@ class Twitter(source.Source):
     """
     def request():
       resp = twitter_auth.signed_urlopen(
-        url, self.access_token_key, self.access_token_secret, **kwargs)
+        API_BASE + url, self.access_token_key, self.access_token_secret, **kwargs)
       return json.loads(resp.read()) if parse_response else resp
 
     if ('data' not in kwargs and not
