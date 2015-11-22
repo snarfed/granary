@@ -421,7 +421,8 @@ class Twitter(source.Source):
         mentions.append(c)
       else:
         reply_to_user = reply_to.get('user', {}).get('screen_name')
-        mentioned = [u.get('screen_name') for u in reply_to.get('user_mentions', [])]
+        mentioned = [u.get('screen_name') for u in
+                     reply_to.get('entities', {}).get('user_mentions', [])]
         if username != reply_to_user and username not in mentioned:
           mentions.append(c)
 

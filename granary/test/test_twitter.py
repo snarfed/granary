@@ -682,7 +682,7 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/lookup.json?id=11,12,13&include_entities=true',
       [{'id_str': '11', 'user': {'screen_name': 'schnarfed'}},
-       {'id_str': '12', 'user_mentions': [{'screen_name': 'schnarfed'}]},
+       {'id_str': '12', 'entities': {'user_mentions': [{'screen_name': 'schnarfed'}]}},
        {'id_str': '13', 'text': 'barrey'},
       ])
     self.mox.ReplayAll()
