@@ -407,6 +407,8 @@ class Twitter(source.Source):
     candidates = self.urlopen(url)['statuses']
 
     # filter out replies that we don't consider mentions
+    candidates = [c for c in candidates
+                  if c.get('user', {}).get('screen_name') != username]
     in_reply_to_ids = util.trim_nulls(
       [c.get('in_reply_to_status_id_str') for c in candidates])
     if not in_reply_to_ids:

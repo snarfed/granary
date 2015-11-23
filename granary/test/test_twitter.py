@@ -678,6 +678,8 @@ class TwitterTest(testutil.TestCase):
         {'id_str': '3', 'text': '@frank baz, cc @schnarfed',
          'in_reply_to_status_id_str': '13'},
         {'id_str': '4', 'text': 'mention @schnarfed'},
+        {'id_str': '5', 'text': '@schnarfed mentions himself',
+         'user': {'screen_name': 'schnarfed'}},
       ]})
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/lookup.json?id=11,12,13&include_entities=true',
