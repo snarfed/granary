@@ -130,9 +130,6 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   types = types_map.get(obj_type, [entry_class])
 
-  url = obj.get('url', primary.get('url', ''))
-  content = primary.get('content', '')
-
   # TODO: extract snippet
   name = primary.get('displayName', primary.get('title'))
   summary = primary.get('summary')
@@ -149,13 +146,14 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'uid': [obj.get('id', '')],
       'name': [name],
       'summary': [summary],
-      'url': [url] + obj.get('upstreamDuplicates', []),
+      'url': (list(object_urls(obj) or object_urls(primary)) +
+              obj.get('upstreamDuplicates', [])),
       'photo': [obj.get('image', primary.get('image', {})).get('url', '')],
       'video': [obj.get('stream', primary.get('stream', {})).get('url')],
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'content': [{
-          'value': xml.sax.saxutils.unescape(content),
+          'value': xml.sax.saxutils.unescape(primary.get('content', '')),
           'html': render_content(primary, include_location=False),
       }],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
@@ -697,11 +695,16 @@ def tags_to_html(tags, classname):
   urls = set()  # stores (url, displayName) tuples
   for tag in tags:
     name = tag.get('displayName') or ''
-    urls.add((tag.get('url'), name))
-    urls.update((u.get('value'), name) for u in tag.get('urls', []))
+    urls.update((url, name) for url in object_urls(tag))
 
   return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, url, name)
-                 for url, name in urls if url)
+                 for url, name in urls)
+
+
+def object_urls(tag):
+  """Returns an object's URLs as a set."""
+  return set(util.trim_nulls([tag.get('url')] +
+                             [u.get('value') for u in tag.get('urls', [])]))
 
 
 def author_display_name(hcard):

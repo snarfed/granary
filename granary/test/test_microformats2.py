@@ -226,7 +226,8 @@ foo
       }))
 
   def test_tag_multiple_urls(self):
-    expected = """
+    expected_urls = ['http://1', 'https://2']
+    expected_html = """
 <a class="tag" href="http://1"></a>
 <a class="tag" href="https://2"></a>
 """
@@ -235,7 +236,12 @@ foo
                 {'url': 'http://1',
                  'urls': [{'value': 'https://2'}]},
                 {'urls': [{'value': 'http://1'}, {'value': 'https://2'}]}):
-      self.assert_equals(expected, microformats2.render_content({'tags': [tag]}))
+      self.assert_equals(expected_urls,
+                         microformats2.object_to_json(tag)['properties']['url'],
+                         tag)
+      self.assert_equals(expected_html,
+                         microformats2.render_content({'tags': [tag]}),
+                         tag)
 
   def test_get_string_urls(self):
     for expected, objs in (
