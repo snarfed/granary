@@ -671,15 +671,22 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen(
       'https://api.twitter.com/1.1/search/tweets.json?q=%40schnarfed&include_entities=true&result_type=recent&count=100&since_id=567',
       {'statuses': [
+        # reply to me
         {'id_str': '1', 'text': '@schnarfed foo',
          'in_reply_to_status_id_str': '11'},
+        # reply to a tweet that @-mentions me
         {'id_str': '2', 'text': '@eve bar, cc @schnarfed',
          'in_reply_to_status_id_str': '12'},
+        # reply to a tweet that doesn't @-mention me
         {'id_str': '3', 'text': '@frank baz, cc @schnarfed',
          'in_reply_to_status_id_str': '13'},
+        # normal tweet that @-mentions me
         {'id_str': '4', 'text': 'mention @schnarfed'},
+        # self mention
         {'id_str': '5', 'text': '@schnarfed mentions himself',
          'user': {'screen_name': 'schnarfed'}},
+        # retweet of a tweet that mentions me
+        {'id_str': '6', 'retweeted_status': {'id_str': '4'}},
       ]})
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/lookup.json?id=11,12,13&include_entities=true',

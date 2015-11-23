@@ -406,18 +406,19 @@ class Twitter(source.Source):
       url = util.add_query_params(url, {'since_id': min_id})
     candidates = self.urlopen(url)['statuses']
 
-    # filter out replies that we don't consider mentions
-    candidates = [c for c in candidates
-                  if c.get('user', {}).get('screen_name') != username]
+    # fetch in-reply-to tweets (if any)
     in_reply_to_ids = util.trim_nulls(
       [c.get('in_reply_to_status_id_str') for c in candidates])
-    if not in_reply_to_ids:
-      return candidates
-
     origs = {o.get('id_str'): o for o in
              self.urlopen(API_LOOKUP_URL % ','.join(in_reply_to_ids))}
+
+    # filter out tweets that we don't consider mentions
     mentions = []
     for c in candidates:
+      if (c.get('user', {}).get('screen_name') == username or
+          c.get('retweeted_status')):
+        continue
+
       reply_to = origs.get(c.get('in_reply_to_status_id_str'))
       if not reply_to:
         mentions.append(c)
