@@ -969,10 +969,15 @@ class Facebook(source.Source):
     privacy = post.get('privacy', {})
     if isinstance(privacy, dict):
       privacy = privacy.get('value')
-    if privacy is not None:
-      # privacy value '' means it doesn't have an explicit audience set, so i
-      # *think* it inherits from its parent. TODO: use that value as opposed to
-      # defaulting to public.
+    # privacy value '' means it doesn't have an explicit audience set, so it
+    # inherits the defaults privacy setting for wherever it was posted: a
+    # group, a page, a user's timeline, etc. unfortunately we haven't found a
+    # way to get that default setting via the API. so just omit it for at
+    # least some known post types like this. background:
+    # https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227
+    if status_type == 'wall_post' and not privacy:
+      obj['to'] = [{'objectType': 'unknown'}]
+    elif privacy is not None:
       public = privacy.lower() in ('', 'everyone', 'open')
       obj['to'] = [{'objectType': 'group',
                     'alias': '@public' if public else '@private'}]

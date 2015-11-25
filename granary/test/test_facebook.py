@@ -1678,6 +1678,27 @@ http://b http://c""",
     self.assert_equals(FB_NOTE_ACTIVITY,
                        self.fb.post_to_activity(FB_CREATED_NOTE))
 
+  def test_wall_post_blank_privacy(self):
+    """https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227"""
+    obj = copy.deepcopy(POST_OBJ)
+    obj['to'] = [{'objectType':'unknown'}]
+
+    post = copy.deepcopy(POST)
+    post.update({
+      'status_type': 'wall_post',
+      'privacy': {
+        'allow': '',
+        'deny': '',
+        'description': '',
+        'friends': '',
+        'value': ''
+      },
+    })
+    self.assert_equals(obj, self.fb.post_to_object(post))
+
+    del post['privacy']
+    self.assert_equals(obj, self.fb.post_to_object(post))
+
   def test_create_post(self):
     self.expect_urlopen(facebook.API_FEED, {'id': '123_456'}, data=urllib.urlencode({
         'message': 'my msg',
