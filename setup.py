@@ -42,6 +42,7 @@ setup(name='granary',
       install_requires=[
           # Keep in sync with requirements.txt!
           'beautifulsoup4',
+          'html2text',
           'jinja2',
           'mf2py>=0.2.6',
           'mf2util>=0.2.9',
