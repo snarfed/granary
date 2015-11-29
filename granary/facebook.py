@@ -104,7 +104,7 @@ OBJECT_TYPES = {
   'event': 'event',
   'group': 'group',
   'instapp:photo': 'image',
-  'link': 'article',
+  'link': 'note',
   'location': 'place',
   'music.song': 'audio',
   'note': 'article',  # amusing mismatch between FB and AS/mf2

@@ -687,6 +687,28 @@ FB_NOTE_ACTIVITY = {
     'objectType': 'article',
   },
 }
+FB_LINK = {
+  'id': '555',
+  'status_type': 'shared_story',
+  'type': 'link',
+  'link': 'http://a/link',
+}
+FB_LINK_ACTIVITY = {
+  'id': tag_uri('555'),
+  'fb_id': '555',
+  'url': 'https://www.facebook.com/555',
+  'verb': 'post',
+  'object': {
+    'id': tag_uri('555'),
+    'fb_id': '555',
+    'url': 'https://www.facebook.com/555',
+    'objectType': 'note',
+    'attachments': [{
+      'objectType': 'article',
+      'url': 'http://a/link',
+    }],
+  },
+}
 
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1151,23 +1173,25 @@ class FacebookTest(testutil.HandlerTest):
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
 
 
-  def test_get_activities_extras_skips_notes(self):
+  def test_get_activities_extras_skips_notes_includes_links(self):
     # first call returns just notes
-    self.expect_urlopen('me/home?offset=0',
+    self.expect_urlopen('me/feed?offset=0',
                         {'data': [FB_NOTE, FB_CREATED_NOTE]})
+    self.expect_urlopen('me/photos/uploaded', {})
 
-    # second call returns notes and normal post
-    self.expect_urlopen('me/home?offset=0',
-                        {'data': [FB_NOTE, FB_CREATED_NOTE, POST]})
-    self.expect_urlopen('sharedposts?ids=10100176064482163', [])
-    self.expect_urlopen('comments?filter=stream&ids=10100176064482163', {})
+    # second call returns notes and link
+    self.expect_urlopen('me/feed?offset=0',
+                        {'data': [FB_NOTE, FB_CREATED_NOTE, FB_LINK]})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('sharedposts?ids=555', [])
+    self.expect_urlopen('comments?filter=stream&ids=555', {})
 
     self.mox.ReplayAll()
 
     for expected in ([FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY],
-                     [FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY, ACTIVITY]):
+                     [FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY, FB_LINK_ACTIVITY]):
       self.assert_equals(expected, self.fb.get_activities(
-        fetch_shares=True, fetch_replies=True))
+        group_id=source.SELF, fetch_shares=True, fetch_replies=True))
 
   def test_get_activities_canonicalizes_ids_with_colons(self):
     """https://github.com/snarfed/bridgy/issues/305"""
@@ -1677,6 +1701,10 @@ http://b http://c""",
     self.assert_equals(FB_NOTE_ACTIVITY, self.fb.post_to_activity(FB_NOTE))
     self.assert_equals(FB_NOTE_ACTIVITY,
                        self.fb.post_to_activity(FB_CREATED_NOTE))
+
+  def test_link_type(self):
+    """https://github.com/snarfed/bridgy/issues/502#issuecomment-160480559"""
+    self.assert_equals(FB_LINK_ACTIVITY, self.fb.post_to_activity(FB_LINK))
 
   def test_wall_post_blank_privacy(self):
     """https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227"""
