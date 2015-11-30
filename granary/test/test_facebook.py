@@ -2070,7 +2070,7 @@ cc Sam G, Michael M<br />""", preview.description)
 
     # bad
     for id in (None, '', 'abc', '12_34^56', '12_34_56_78', '12__34',
-               '_12_34', '12_34_', '12:34:', ':12:34'):
+               '_12_34', '12_34_', '12:34:', ':12:34', 'login.php'):
       for is_comment in True, False:
         check((None, None, None), id, is_comment)
 

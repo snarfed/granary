@@ -1404,7 +1404,8 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     assert is_comment in (True, False), is_comment
 
     blank = FacebookId(None, None, None)
-    if id is None or id == '':
+    if id in (None, '', 'login.php'):
+      # some FB permalinks redirect to login.php, e.g. group and non-public posts
       return blank
 
     id = str(id)
