@@ -1390,6 +1390,10 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     * Two numbers with colon, POST:SHARD: 12:34
       (We've seen 0 as shard in this format.)
     * Four numbers with colons/underscore, USER:POST:SHARD_COMMENT: 12:34:63_56
+    * Five numbers with colons/underscore, USER:EVENT:UNKNOWN:UNKNOWN_UNKNOWN
+      Not currently supported! Examples:
+111599105530674:998145346924699:10102446236688861:10207188792305341_998153510257216
+111599105530674:195181727490727:10102446236688861:10205257726909910_195198790822354
 
     Background:
     * https://github.com/snarfed/bridgy/issues/305
