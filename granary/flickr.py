@@ -587,6 +587,8 @@ class Flickr(source.Source):
 
     ref: https://www.flickr.com/services/api/misc.buddyicons.html
     """
+    if server == 0:
+      return u'https://www.flickr.com/images/buddyicon.gif'
     return u'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
       farm, server, author)
 
