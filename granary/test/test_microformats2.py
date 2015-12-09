@@ -113,6 +113,19 @@ class Microformats2Test(testutil.HandlerTest):
         }],
       }}))
 
+  def test_object_to_json_preserves_url_order(self):
+    self.assertEquals({
+      'type': ['h-card'],
+      'properties': {
+        'url': ['http://2', 'http://4', 'http://6'],
+      },
+    }, microformats2.object_to_json({
+      'objectType': 'person',
+      'url': 'http://2',
+      'urls': [{'value': 'http://4'},
+               {'value': 'http://6'}],
+    }))
+
   def test_object_to_html_note_with_in_reply_to(self):
     expected = """\
 <article class="h-entry">

@@ -702,9 +702,10 @@ def tags_to_html(tags, classname):
 
 
 def object_urls(tag):
-  """Returns an object's URLs as a set."""
-  return set(util.trim_nulls([tag.get('url')] +
-                             [u.get('value') for u in tag.get('urls', [])]))
+  """Returns an object's unique URLs, preserving order.
+  """
+  return util.uniquify(util.trim_nulls(
+    [tag.get('url')] + [u.get('value') for u in tag.get('urls', [])]))
 
 
 def author_display_name(hcard):
