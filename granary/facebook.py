@@ -964,23 +964,8 @@ class Facebook(source.Source):
       'image': {'url': picture},
       'displayName': display_name,
       'fb_object_id': post.get('object_id'),
+      'to': self.privacy_to_to(post),
       }
-
-    privacy = post.get('privacy', {})
-    if isinstance(privacy, dict):
-      privacy = privacy.get('value')
-    # privacy value '' means it doesn't have an explicit audience set, so it
-    # inherits the defaults privacy setting for wherever it was posted: a
-    # group, a page, a user's timeline, etc. unfortunately we haven't found a
-    # way to get that default setting via the API. so just omit it for at
-    # least some known post types like this. background:
-    # https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227
-    if status_type == 'wall_post' and not privacy:
-      obj['to'] = [{'objectType': 'unknown'}]
-    elif privacy is not None:
-      public = privacy.lower() in ('', 'everyone', 'open')
-      obj['to'] = [{'objectType': 'group',
-                    'alias': '@public' if public else '@private'}]
 
     # message_tags is a dict in most post types, but a list in some other object
     # types, e.g. comments.
@@ -1305,6 +1290,66 @@ class Facebook(source.Source):
         obj['url'] = '%s#%s' % (self.object_url(event_id), user_id)
 
     return self.postprocess_object(obj)
+
+  def album_to_object(self, album):
+    """Converts a photo album to an object.
+
+    Args:
+      album: dict, a decoded JSON Facebook album
+
+    Returns:
+      an ActivityStreams object dict
+    """
+    if not album:
+      return {}
+
+    id = album.get('id')
+    return self.postprocess_object({
+      'id': self.tag_uri(id),
+      'fb_id': id,
+      'url': album.get('link'),
+      'objectType': 'collection',
+      'author': self.user_to_actor(album.get('from')),
+      'displayName': album.get('name'),
+      'totalItems': album.get('count'),
+      'to': self.privacy_to_to(album),
+      'published': util.maybe_iso8601_to_rfc3339(album.get('created_time')),
+      'updated': util.maybe_iso8601_to_rfc3339(album.get('updated_time')),
+    })
+
+  @staticmethod
+  def privacy_to_to(obj):
+    """Converts a Facebook `privacy` field to an ActivityStreams `to` field.
+
+    privacy is sometimes an object:
+    https://developers.facebook.com/docs/graph-api/reference/v2.2/post#fields
+
+    ...and other times a string:
+    https://developers.facebook.com/docs/graph-api/reference/v2.2/album/#readfields
+
+    Args:
+      obj: dict, Facebook object (post, album, comment, etc)
+
+    Returns:
+      dict (ActivityStreams `to` object) or None if unknown
+    """
+    privacy = obj.get('privacy')
+    if isinstance(privacy, dict):
+      privacy = privacy.get('value')
+
+    if obj.get('status_type') == 'wall_post' and not privacy:
+      # privacy value '' means it doesn't have an explicit audience set, so it
+      # inherits the defaults privacy setting for wherever it was posted: a
+      # group, a page, a user's timeline, etc. unfortunately we haven't found a
+      # way to get that default setting via the API. so just omit it for at
+      # least some known post types like this. background:
+      # https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227
+      return [{'objectType': 'unknown'}]
+    elif privacy and privacy.lower() == 'custom':
+      return [{'objectType': 'unknown'}]
+    elif privacy is not None:
+      public = privacy.lower() in ('', 'everyone', 'open')
+      return [{'objectType': 'group', 'alias': '@public' if public else '@private'}]
 
   def fql_stream_to_post(self, stream, actor=None):
     """Converts an FQL stream row to a Graph API post.

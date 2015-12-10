@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for facebook.py.
 """
 
@@ -708,6 +709,41 @@ FB_LINK_ACTIVITY = {
       'url': 'http://a/link',
     }],
   },
+}
+ALBUM = {  # Facebook
+  'id': '1520022318322674',
+  'name': 'Bridgy Photos',
+  'can_upload': True,
+  'count': 2,
+  'cover_photo': '1520050698319836',
+  'from': {
+    'name': 'Snoøpy Barrett',
+    'id': '1407574399567467'
+  },
+  'link': 'https://www.facebook.com/album.php?fbid=1520022318322674&id=1407574399567467&aid=1073741827',
+  'privacy': 'everyone',
+  'type': 'app',
+  'created_time': '2015-11-16T22:10:42+0000',
+  'updated_time': '2015-11-19T02:34:16+0000',
+}
+ALBUM_OBJ = {  # ActivityStreams
+  'id': tag_uri('1520022318322674'),
+  'fb_id': '1520022318322674',
+  'objectType': 'collection',
+  'displayName': 'Bridgy Photos',
+  'totalItems': 2,
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('1407574399567467'),
+    'numeric_id': '1407574399567467',
+    'displayName': 'Snoøpy Barrett',
+    'image': {'url': 'https://graph.facebook.com/v2.2/1407574399567467/picture?type=large'},
+    'url': 'https://www.facebook.com/1407574399567467',
+    },
+  'url': 'https://www.facebook.com/album.php?fbid=1520022318322674&id=1407574399567467&aid=1073741827',
+  'to': [{'objectType':'group', 'alias':'@public'}],
+  'published': '2015-11-16T22:10:42+00:00',
+  'updated': '2015-11-19T02:34:16+00:00',
 }
 
 ATOM = """\
@@ -1706,26 +1742,35 @@ http://b http://c""",
     """https://github.com/snarfed/bridgy/issues/502#issuecomment-160480559"""
     self.assert_equals(FB_LINK_ACTIVITY, self.fb.post_to_activity(FB_LINK))
 
-  def test_wall_post_blank_privacy(self):
-    """https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227"""
-    obj = copy.deepcopy(POST_OBJ)
-    obj['to'] = [{'objectType':'unknown'}]
+  def test_privacy_to_to(self):
+    """https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227
+    (among others)
+    """
+    for expected, inputs in (
+        (None, [{}]),
+        ([{'objectType': 'group', 'alias':'@private'}],
+         ({'privacy': 'friends'}, {'privacy': {'value': 'FRIENDS'}},
+          {'privacy': 'all_friends'}, {'privacy': {'value': 'ALL_FRIENDS'}})),
+        ([{'objectType': 'group', 'alias':'@public'}],
+         ({'privacy': ''}, {'privacy': {'value': ''}},
+          {'privacy': 'open'}, {'privacy': {'value': 'OPEN'}},
+          {'privacy': 'everyone'}, {'privacy': {'value': 'EVERYONE'}})),
+        ([{'objectType': 'unknown'}],
+         ({'privacy': 'custom'}, {'privacy': {'value': 'CUSTOM'}},
+          {'status_type': 'wall_post', 'privacy': {'value': ''}})),
+        ):
+      for input in inputs:
+        self.assert_equals(expected, self.fb.privacy_to_to(input), input)
 
-    post = copy.deepcopy(POST)
-    post.update({
-      'status_type': 'wall_post',
-      'privacy': {
-        'allow': '',
-        'deny': '',
-        'description': '',
-        'friends': '',
-        'value': ''
-      },
-    })
-    self.assert_equals(obj, self.fb.post_to_object(post))
+  def test_album_to_object_empty(self):
+    self.assert_equals({}, self.fb.album_to_object({}))
 
-    del post['privacy']
-    self.assert_equals(obj, self.fb.post_to_object(post))
+  def test_album_to_object_minimal(self):
+    # just test that we don't crash
+    self.fb.album_to_object({'id': '123_456_789', 'name': 'asdf'})
+
+  def test_album_to_object_full(self):
+    self.assert_equals(ALBUM_OBJ, self.fb.album_to_object(ALBUM))
 
   def test_create_post(self):
     self.expect_urlopen(facebook.API_FEED, {'id': '123_456'}, data=urllib.urlencode({
