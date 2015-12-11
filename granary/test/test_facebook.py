@@ -186,7 +186,6 @@ POST = {  # Facebook
     }
   },
   'type': 'photo',
-  'object_id': '222',  # points to PHOTO below
   'application': {'name': 'Facebook for Android', 'id': '350685531728'},
   'created_time': '2012-03-04T18:20:37+0000',
   'updated_time': '2012-03-04T19:08:16+0000',
@@ -226,6 +225,9 @@ PHOTO = {
   },
   'likes': {'data': [{'id': '666', 'name': 'Bob Bobertson'}]}
 }
+PHOTO_POST = copy.deepcopy(POST)
+PHOTO_POST['object_id'] = '222'  # points to PHOTO
+
 EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
   'id': '145304994',
   'owner': {
@@ -401,7 +403,6 @@ POST_OBJ = {  # ActivityStreams
   'updated': '2012-03-04T19:08:16+00:00',
   'url': 'https://www.facebook.com/212038/posts/10100176064482163',
   'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
-  'fb_object_id': '222',
   'attachments': [{
       'objectType': 'image',
       'url': 'http://my.link/',
@@ -461,58 +462,63 @@ POST_OBJ = {  # ActivityStreams
     }
   }
 
-PHOTO_OBJ = copy.deepcopy(POST_OBJ)  # ActivityStreams
-PHOTO_OBJ.update({
+PHOTO_OBJ = {  # ActivityStreams
   'id': tag_uri('222'),
   'fb_id': '222',
+  'objectType': 'note',
   'url': 'https://www.facebook.com/212038/posts/222',
-  'fb_object_id': '222',
-})
-for tag in PHOTO_OBJ['tags']:
-  if tag.get('verb') == 'like':
-    tag['id'] = tag['id'].replace('10100176064482163', '222')
-    tag.update({
-      'url': 'https://www.facebook.com/212038/posts/222',
-      'object': {'url': 'https://www.facebook.com/212038/posts/222'},
-    })
-SELF_POST_OBJ = copy.deepcopy(PHOTO_OBJ)
-
-PHOTO_OBJ['replies']['totalItems'] += 1
-PHOTO_OBJ['replies']['items'].append({
-  'id': tag_uri('222_10559'),
-  'fb_id': '222_10559',
-  'url': 'https://www.facebook.com/222?comment_id=10559',
-  'objectType': 'comment',
-  'author': {
-    'objectType': 'person',
-    'id': tag_uri('333'),
-    'numeric_id': '333',
-    'displayName': 'Alice Alison',
-    'image': {'url': 'https://graph.facebook.com/v2.2/333/picture?type=large'},
-    'url': 'https://www.facebook.com/333',
-    },
-  'content': 'woohoo',
-  'published': '2014-04-09T20:55:49+00:00',
-  'inReplyTo': [{
-    'id': tag_uri('222'),
-    'url': 'https://www.facebook.com/222',
+  'content': 'Stopped in to grab coffee and saw this table topper. Wow. Just...wow.',
+  'image': {'url': u'https://fbcdn-photos-b-a.akamaihd.net/pic_s.jpg'},
+  'published': '2014-04-09T20:44:26+00:00',
+  'author': POST_OBJ['author'],
+  'to': [{'alias': '@public', 'objectType': 'group'}],
+  'attachments': [{
+    'displayName': 'Stopped in to grab coffee and saw this table topper. Wow. Just...wow.',
+    'image': {'url':'https://fbcdn-photos-b-a.akamaihd.net/pic_s.jpg'},
+    'objectType': 'article',
+    'url': 'https://www.facebook.com/photo.php?fbid=222&set=a.333.444.212038',
   }],
-})
-PHOTO_OBJ['tags'].append({
-  'id': tag_uri('222_liked_by_666'),
-  'url': 'https://www.facebook.com/212038/posts/222',
-  'object': {'url': 'https://www.facebook.com/212038/posts/222'},
-  'objectType': 'activity',
-  'verb': 'like',
-  'author': {
-    'objectType': 'person',
-    'id': tag_uri('666'),
-    'numeric_id': '666',
-    'displayName': 'Bob Bobertson',
-    'url': 'https://www.facebook.com/666',
-    'image': {'url': 'https://graph.facebook.com/v2.2/666/picture?type=large'},
+  'replies': {
+    'totalItems': 1,
+    'items': [{
+      'id': tag_uri('222_10559'),
+      'fb_id': '222_10559',
+      'url': 'https://www.facebook.com/222?comment_id=10559',
+      'objectType': 'comment',
+      'author': {
+        'objectType': 'person',
+        'id': tag_uri('333'),
+        'numeric_id': '333',
+        'displayName': 'Alice Alison',
+        'image': {'url': 'https://graph.facebook.com/v2.2/333/picture?type=large'},
+        'url': 'https://www.facebook.com/333',
+        },
+      'content': 'woohoo',
+      'published': '2014-04-09T20:55:49+00:00',
+      'inReplyTo': [{
+        'id': tag_uri('222'),
+        'url': 'https://www.facebook.com/222',
+      }],
+    }],
   },
-})
+  'tags':[{
+    'id': tag_uri('222_liked_by_666'),
+    'url': 'https://www.facebook.com/212038/posts/222',
+    'object': {'url': 'https://www.facebook.com/212038/posts/222'},
+    'objectType': 'activity',
+    'verb': 'like',
+    'author': {
+      'objectType': 'person',
+      'id': tag_uri('666'),
+      'numeric_id': '666',
+      'displayName': 'Bob Bobertson',
+      'url': 'https://www.facebook.com/666',
+      'image': {'url': 'https://graph.facebook.com/v2.2/666/picture?type=large'},
+    },
+  }],
+}
+PHOTO_POST_OBJ = copy.deepcopy(POST_OBJ)
+PHOTO_POST_OBJ['fb_object_id'] = '222'
 
 # file:///Users/ryan/docs/activitystreams_schema_spec_1.0.html#event
 EVENT_OBJ = {  # ActivityStreams.
@@ -657,15 +663,15 @@ ACTIVITY = {  # ActivityStreams
     'id': tag_uri('350685531728'),
   }
 }
-PHOTO_ACTIVITY = copy.deepcopy(ACTIVITY)
-PHOTO_ACTIVITY.update({
+PHOTO_ACTIVITY = {
   'id': tag_uri('222'),
   'fb_id': '222',
   'url': 'https://www.facebook.com/212038/posts/222',
   'object': PHOTO_OBJ,
-})
-SELF_ACTIVITY = copy.deepcopy(PHOTO_ACTIVITY)
-SELF_ACTIVITY['object'] = SELF_POST_OBJ
+  'actor': PHOTO_OBJ['author'],
+  'verb': 'post',
+  'published': '2014-04-09T20:44:26+00:00',
+}
 
 FB_NOTE = {
   'id': '101007473698067',
@@ -953,7 +959,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_photo_and_event(self):
-    self.expect_urlopen('me/feed?offset=0', {'data': [POST]})
+    self.expect_urlopen('me/feed?offset=0', {'data': [PHOTO_POST]})
     self.expect_urlopen('me/photos/uploaded', {'data': [PHOTO]})
     self.expect_urlopen('me/events', {'data': [EVENT]})
     self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
@@ -963,6 +969,44 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(
       [EVENT_ACTIVITY_WITH_ATTENDEES, PHOTO_ACTIVITY],
       self.fb.get_activities(group_id=source.SELF, fetch_events=True))
+
+  def test_get_activities_self_merge_photos(self):
+    """
+    https://github.com/snarfed/bridgy/issues/562
+    """
+    self.expect_urlopen('me/feed?offset=0', {'data': [
+      {'id': '1', 'object_id': '11',   # has photo but no album
+       'privacy': {'value': 'EVERYONE'}},
+      {'id': '3', 'object_id': '33'},  # has photo but no album
+      {'id': '5', 'object_id': '55'},  # no photo
+      {'id': '6', 'object_id': '66',   # this is a consolidated post
+       'privacy': {'value': 'CUSTOM'}},
+      {'id': '7', 'object_id': '77',   # ditto, and photo has no album
+       'privacy': {'value': 'CUSTOM'}},
+    ]})
+    self.expect_urlopen('me/photos/uploaded', {'data': [
+      {'id': '11'},
+      {'id': '22', 'album': '222'},  # no matching post
+      {'id': '33', 'album': '333'},  # no matching album
+      {'id': '44', 'album': '444'},  # no matching post or album
+      {'id': '66', 'album': '666'},  # consolidated posts...
+      {'id': '77'},
+    ]})
+    self.expect_urlopen('me/albums', {'data': [
+      {'id': '222', 'privacy': 'friends'},   # no post
+      {'id': '666', 'privacy': 'everyone'},  # consolidated post
+    ]})
+
+    self.mox.ReplayAll()
+    self.assert_equals([
+      {'fb_id': '11', 'to': [{'objectType':'group', 'alias':'@public'}]},
+      {'fb_id': '22', 'to': [{'objectType':'group', 'alias':'@private'}]},
+      {'fb_id': '33'},
+      {'fb_id': '44'},
+      {'fb_id': '66', 'to': [{'objectType':'group', 'alias':'@public'}]},
+      {'fb_id': '77', 'to': [{'objectType': 'unknown'}]},
+    ], [{k: v for k, v in activity['object'].items() if k in ('fb_id', 'to')}
+        for activity in self.fb.get_activities(group_id=source.SELF)])
 
   def test_get_activities_self_owned_event_rsvps(self):
     self.expect_urlopen('me/feed?offset=0', {})
@@ -1161,13 +1205,13 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([], self.fb.get_activities())
 
   def test_get_activities_self_includes_shared_story(self):
-    post = copy.copy(POST)
-    post['status_type'] = 'shared_story'
+    post = {'id': '1', 'status_type': 'shared_story'}
+    activity = self.fb.post_to_activity(post)
+
     self.expect_urlopen('me/feed?offset=0', {'data': [post]})
     self.expect_urlopen('me/photos/uploaded', {})
     self.mox.ReplayAll()
-    self.assert_equals([SELF_ACTIVITY],
-                       self.fb.get_activities(group_id=source.SELF))
+    self.assert_equals([activity], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_fetch_replies(self):
     post2 = copy.deepcopy(POST)
@@ -1252,7 +1296,6 @@ class FacebookTest(testutil.HandlerTest):
     """https://github.com/snarfed/bridgy/issues/305"""
     bad_post = copy.deepcopy(POST)
     bad_post['id'] = '90^90'
-    del bad_post['object_id']
 
     post_with_bad_comment = copy.deepcopy(POST)
     post_with_bad_comment['comments']['data'].append(
@@ -1429,12 +1472,15 @@ class FacebookTest(testutil.HandlerTest):
     post['message_tags'] = tags[0] + tags[1]  # both lists
     self.assert_equals(POST_OBJ, self.fb.post_to_object(post))
 
-  def test_post_to_object_with_photo(self):
+  def test_post_to_object_with_only_count_of_likes(self):
     post = copy.copy(POST)
     post['likes'] = 5  # count instead of actual like objects
     obj = copy.copy(POST_OBJ)
     obj['tags'] = [t for t in obj['tags'] if t.get('verb') != 'like']
     self.assert_equals(obj, self.fb.post_to_object(post))
+
+  def test_post_to_object_photo_post(self):
+    self.assert_equals(PHOTO_POST_OBJ, self.fb.post_to_object(PHOTO_POST))
 
   def test_comment_to_object_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):

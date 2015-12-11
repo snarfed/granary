@@ -278,7 +278,8 @@ class Facebook(source.Source):
         # TODO: save and use ETag for all of these extra calls
         # TODO: use batch API to get photos, events, etc in one request
         # https://developers.facebook.com/docs/graph-api/making-multiple-requests
-        self._merge_photos(posts)
+        # https://github.com/snarfed/bridgy/issues/44
+        posts = self._merge_photos(posts)
         if fetch_events:
           activities.extend(self._get_events(owner_id=event_owner_id))
       else:
@@ -334,43 +335,39 @@ class Facebook(source.Source):
     return response
 
   def _merge_photos(self, posts):
-    """Fetches the current user's photos and merges them into existing posts.
+    """Fetches and merges photo objects into posts, replacing matching posts.
 
-    Have to uploaded photos manually since facebook sometimes collapses multiple
-    photos into albums, and the album post object won't have the post content,
-    comments, etc. from the individual photo posts.
+    Have to fetch uploaded photos manually since facebook sometimes collapses
+    multiple photos into consolidated posts. Also, photo objects don't have the
+    privacy field, so we get that from the corresponding post or album, if
+    possible.
 
+    https://github.com/snarfed/bridgy/issues/562
     http://stackoverflow.com/questions/12785120
 
     Args:
       posts: list of Facebook post object dicts
+
+    Returns: new list of post and photo object dicts
     """
+    posts_by_obj_id = {p['object_id']: p for p in posts if p.get('object_id')}
+    albums = None  # lazy loaded, maps facebook id to ActivityStreams object
+
     photos = self.urlopen(API_PHOTOS_UPLOADED).get('data', [])
-
-    # photos and photo posts stories are distinct and have separate ids. the
-    # post's object_id field points to the photo's id. de-dupe by switching the
-    # post to use object_id when it's provided.
-    posts_by_obj_id = {}
-    for post in posts:
-      obj_id = post.get('object_id')
-      if not obj_id:
-        continue
-
-      posts_by_obj_id[obj_id] = post
-      orig_id = post.get('id', '')
-      if orig_id:
-        post['id'] = obj_id
-        post['url'] = post.get('url', '').replace(orig_id, obj_id)
-
-    # merge comments and likes from existing photo objects, and add new ones.
     for photo in photos:
-      existing = posts_by_obj_id.get(photo.get('id'))
-      if existing:
-        for field in 'comments', 'likes':
-          existing.setdefault(field, {}).setdefault('data', []).extend(
-            photo.get(field, {}).get('data', []))
+      album_id = photo.get('album')
+      post_privacy = posts_by_obj_id.get(photo.get('id'), {}).get('privacy')
+      if post_privacy and post_privacy.get('value') != 'CUSTOM':
+        photo['privacy'] = post_privacy
+      elif album_id:
+        if albums is None:
+          albums = {a['id']: a for a in
+                    self.urlopen(API_ALBUMS % 'me').get('data', [])}
+        photo['privacy'] = albums.get(album_id, {}).get('privacy')
       else:
-        posts.append(photo)
+        photo['privacy'] = 'custom'  # ie unknown
+
+    return [p for p in posts if not p.get('object_id')] + photos
 
   def _split_id_requests(self, api_call, ids):
     """Splits an API call into multiple to stay under the MAX_IDS limit per call.
