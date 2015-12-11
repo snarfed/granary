@@ -81,6 +81,7 @@ API_LIKES = '%s/likes'
 API_NOTIFICATION = '%s/notifications'
 API_PHOTOS = 'me/photos'
 API_PHOTOS_UPLOADED = 'me/photos/uploaded'
+API_ALBUMS = '%s/albums'
 API_POST_OBJECT = '%s_%s'  # USERID_POSTID
 API_RSVP = '%s/invited/%s'
 API_SELF_POSTS = '%s/feed?offset=%d'
@@ -501,6 +502,18 @@ class Facebook(source.Source):
     """
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
+
+  def get_albums(self, user_id=None):
+    """Fetches and returns a user's photo albums.
+
+    Args:
+      user_id: string id or username. Defaults to 'me', ie the current user.
+
+    Returns:
+      sequence of ActivityStream album object dicts
+    """
+    url = API_ALBUMS % (user_id if user_id is not None else 'me')
+    return [self.album_to_object(a) for a in self.urlopen(url).get('data', [])]
 
   def preview_create(self, obj, include_link=False, ignore_formatting=False):
     """Previews creating a new post, comment, like, or RSVP.

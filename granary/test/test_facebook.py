@@ -717,7 +717,7 @@ ALBUM = {  # Facebook
   'count': 2,
   'cover_photo': '1520050698319836',
   'from': {
-    'name': 'Snoøpy Barrett',
+    'name': u'Snoøpy Barrett',
     'id': '1407574399567467'
   },
   'link': 'https://www.facebook.com/album.php?fbid=1520022318322674&id=1407574399567467&aid=1073741827',
@@ -736,7 +736,7 @@ ALBUM_OBJ = {  # ActivityStreams
     'objectType': 'person',
     'id': tag_uri('1407574399567467'),
     'numeric_id': '1407574399567467',
-    'displayName': 'Snoøpy Barrett',
+    'displayName': u'Snoøpy Barrett',
     'image': {'url': 'https://graph.facebook.com/v2.2/1407574399567467/picture?type=large'},
     'url': 'https://www.facebook.com/1407574399567467',
     },
@@ -1347,6 +1347,24 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('000/invited/456', {'data': []})
     self.mox.ReplayAll()
     self.assert_equals(None, self.fb.get_rsvp('123', '000', '456'))
+
+  def test_get_albums_empty(self):
+    self.expect_urlopen('000/albums', {'data': []})
+    self.mox.ReplayAll()
+    self.assert_equals([], self.fb.get_albums(user_id='000'))
+
+  def test_get_albums(self):
+    album_2 = copy.deepcopy(ALBUM)
+    album_2['id'] = '2'
+    album_2_obj = copy.deepcopy(ALBUM_OBJ)
+    album_2_obj.update({
+      'id': tag_uri('2'),
+      'fb_id': '2',
+    })
+
+    self.expect_urlopen('me/albums', {'data': [ALBUM, album_2]})
+    self.mox.ReplayAll()
+    self.assert_equals([ALBUM_OBJ, album_2_obj], self.fb.get_albums())
 
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.fb.post_to_activity(POST))
