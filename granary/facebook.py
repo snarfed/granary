@@ -82,6 +82,7 @@ API_NOTIFICATION = '%s/notifications'
 API_PHOTOS = 'me/photos'
 API_PHOTOS_UPLOADED = 'me/photos/uploaded'
 API_ALBUMS = '%s/albums'
+API_ALBUM_PHOTOS = '%s/photos'
 API_POST_OBJECT = '%s_%s'  # USERID_POSTID
 API_RSVP = '%s/invited/%s'
 API_SELF_POSTS = '%s/feed?offset=%d'
@@ -674,6 +675,15 @@ class Facebook(source.Source):
         if image_url:
           api_call = API_PHOTOS
           msg_data['url'] = image_url
+          # use Timeline Photos album, if we can find it, since it keeps photo
+          # posts separate instead of consolidating them into a single "X added
+          # n new photos..." post.
+          # https://github.com/snarfed/bridgy/issues/571
+          for album in self.urlopen(API_ALBUMS % 'me').get('data', []):
+            id = album.get('id')
+            if id and album.get('type') == 'wall':
+              api_call = API_ALBUM_PHOTOS % id
+              break
           if people:
             # tags is JSON list of dicts with tag_uid fields
             # https://developers.facebook.com/docs/graph-api/reference/v2.2/user/photos#Creating

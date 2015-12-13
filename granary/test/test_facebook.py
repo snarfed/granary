@@ -2104,6 +2104,7 @@ cc Sam G, Michael M<br />""", preview.description)
                       preview.content)
 
     # test create
+    self.expect_urlopen('me/albums', {'data': []})
     self.expect_urlopen(facebook.API_PHOTOS, {'id': '123_456'},
                         data='url=http%3A%2F%2Fmy%2Fpicture&message=my+caption')
     self.mox.ReplayAll()
@@ -2111,6 +2112,22 @@ cc Sam G, Michael M<br />""", preview.description)
       'id': '123_456',
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post'}, self.fb.create(obj).content)
+
+  def test_create_with_photo_uses_timeline_photos_album(self):
+    """https://github.com/snarfed/bridgy/issues/571"""
+    obj = {
+      'objectType': 'note',
+      'image': {'url': 'http://my/picture'},
+    }
+
+    self.expect_urlopen('me/albums', {'data': [
+      {'id': '1', 'name': 'foo bar'},
+      {'id': '2', 'type': 'wall'},
+    ]})
+    self.expect_urlopen('2/photos', {}, data=urllib.urlencode({
+      'url': 'http://my/picture', 'message': ''}))
+    self.mox.ReplayAll()
+    self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
 
   def test_create_with_photo_and_person_tags(self):
     obj = {
@@ -2135,6 +2152,7 @@ cc Sam G, Michael M<br />""", preview.description)
       preview.content)
 
     # test create
+    self.expect_urlopen('me/albums', {'data': []})
     self.expect_urlopen(
       facebook.API_PHOTOS, {'id': '123_456'}, data=urllib.urlencode({
         'url': 'http://my/picture',
