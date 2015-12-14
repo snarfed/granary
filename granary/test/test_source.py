@@ -104,7 +104,7 @@ class SourceTest(testutil.TestCase):
     check({'tags': [{'url': 'http://a', 'objectType': 'article'},
                     {'url': 'http://b'}],
            'attachments': [{'url': 'http://c', 'objectType': 'mention'}]},
-          ['http://a', 'http://b', 'http://c'])
+          ['http://a/', 'http://b/', 'http://c/'])
 
     # non-article objectType
     urls = [{'url': 'http://x.com/y', 'objectType': 'image'}]
@@ -124,10 +124,10 @@ class SourceTest(testutil.TestCase):
 
     # links become upstreamDuplicates
     check({'content': 'asdf http://first ooooh http://second qwert'},
-          ['http://first', 'http://second'])
+          ['http://first/', 'http://second/'])
     check({'content': 'x http://existing y',
            'upstreamDuplicates': ['http://existing']},
-          ['http://existing'])
+          ['http://existing/'])
 
     # leading parens used to cause us trouble
     check({'content': 'Foo (http://snarfed.org/xyz)'}, ['http://snarfed.org/xyz'])
@@ -135,7 +135,7 @@ class SourceTest(testutil.TestCase):
     # don't duplicate http and https
     check({'content': 'X http://mention Y https://both Z http://both2',
            'upstreamDuplicates': ['http://upstream', 'http://both', 'https://both2']},
-          ['http://upstream', 'https://both', 'https://both2', 'http://mention'])
+          ['http://upstream/', 'https://both/', 'https://both2/', 'http://mention/'])
 
     # don't duplicate PSCs and PSLs with http and https
     for scheme in 'http', 'https':
