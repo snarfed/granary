@@ -78,7 +78,8 @@ class GooglePlus(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None):
+                              fetch_mentions=False, fetch_quotes=False,
+                              search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.

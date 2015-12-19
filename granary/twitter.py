@@ -140,7 +140,8 @@ class Twitter(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None):
+                              fetch_mentions=False, fetch_quotes=False,
+                              search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -169,6 +170,11 @@ class Twitter(source.Source):
     However, retweets are only fetched for the first 15 tweets that have them,
     since that's Twitter's rate limit per 15 minute window. :(
     https://dev.twitter.com/docs/rate-limiting/1.1/limits
+
+    Quote tweets are fetched by searching for the possibly quoted tweet's ID,
+    using the OR operator to search up to 5 IDs at a time, and then checking
+    the quoted_status_id_str field
+    https://dev.twitter.com/overview/api/tweets#quoted_status_id_str
 
     Use the group_id @self to retrieve a user_id’s timeline. If user_id is None
     or @me, it will return tweets for the current API user.
@@ -290,6 +296,29 @@ class Twitter(source.Source):
 
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
+
+    if fetch_quotes:
+      # organize quote tweets by id of the original
+      quote_tweets = {}
+      # search for 5 ids at a time based on the guideline
+      # "Limit your searches to 10 keywords and operators."
+      # https://dev.twitter.com/rest/public/search
+      for five_tweets in [tweets[i:i + 5] for i in xrange(0, len(tweets), 5)]:
+        url = API_SEARCH_URL % {
+          'q': urllib.quote_plus(
+            ' OR '.join((t['id_str'] for t in five_tweets))),
+          'count': 100,
+        }
+        if min_id is not None:
+          url = util.add_query_params(url, {'since_id': min_id})
+        candidates = self.urlopen(url)['statuses']
+        for c in candidates:
+          quoted_status_id = c.get('quoted_status_id_str')
+          if quoted_status_id:
+            quote_tweets.setdefault(quoted_status_id, []).append(c)
+      for tweet in tweets:
+        if tweet['id_str'] in quote_tweets:
+          tweet['quote_tweets'] = quote_tweets[tweet['id_str']]
 
     if fetch_mentions:
       tweets += self.fetch_mentions(_user().get('screen_name'), min_id=min_id)
@@ -986,7 +1015,12 @@ class Twitter(source.Source):
     obj['tags'] = [t for t in obj['tags'] if t['objectType'] != 'image']
 
     # retweets
-    obj['tags'] += [self.retweet_to_object(r) for r in tweet.get('retweets', [])]
+    obj['tags'] += [
+      self.retweet_to_object(r) for r in tweet.get('retweets', [])]
+
+    # quotes
+    obj['tags'] += [
+      self.quote_tweet_to_object(r) for r in tweet.get('quote_tweets', [])]
 
     # location
     place = tweet.get('place')
@@ -1078,8 +1112,32 @@ class Twitter(source.Source):
         })
     if 'tags' in share:
       # the existing tags apply to the original tweet's text, which we replaced
+      # TODO: is this still true? Doesn't look like we replace the tweet's text anymore
       del share['tags']
     return self.postprocess_object(share)
+
+  def quote_tweet_to_object(self, quote_tweet):
+    """Converts a quote tweet to an activity object.
+
+    Args:
+      quote_tweet: dict, a decoded JSON tweet
+
+    Returns:
+      an ActivityStreams object dict
+    """
+    orig = quote_tweet.get('quoted_status')
+    if not orig:
+      return None
+
+    quote = self.tweet_to_object(quote_tweet)
+    quote.update({
+        'objectType': 'activity',
+        # TODO not a real AS verb! Gnip just uses "post". Is there a better
+        # way to differentiate quotes in the tags field?
+        'verb': 'quote',
+        'object': {'url': self.tweet_url(orig)},
+        })
+    return self.postprocess_object(quote)
 
   def streaming_event_to_object(self, event):
     """Converts a Streaming API event to an object.

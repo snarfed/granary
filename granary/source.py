@@ -139,7 +139,8 @@ class Source(object):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None):
+                              fetch_mentions=False, fetch_quotes=False,
+                              search_query=None):
     """Fetches and returns ActivityStreams activities and response details.
 
     Subclasses should override this. See get_activities() for an alternative
@@ -181,6 +182,7 @@ class Source(object):
       fetch_shares: boolean, whether to fetch each activity's shares also
       fetch_events: boolean, whether to fetch the user's events also
       fetch_mentions: boolean, whether to fetch posts that mention the user
+      fetch_quotes: boolean, whether to fetch posts that quote this user's post
       search_query: string, an optional search query, only for use with
          @search group_id
 
