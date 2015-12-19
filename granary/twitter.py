@@ -1112,7 +1112,6 @@ class Twitter(source.Source):
         })
     if 'tags' in share:
       # the existing tags apply to the original tweet's text, which we replaced
-      # TODO: is this still true? Doesn't look like we replace the tweet's text anymore
       del share['tags']
     return self.postprocess_object(share)
 
