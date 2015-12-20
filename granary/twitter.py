@@ -59,6 +59,9 @@ PROFILE_PICTURE_URL = 'https://twitter.com/%s/profile_image?size=original'
 # TODO: sigh. figure out a better way. dammit twitter, give me a batch API!!!
 RETWEET_LIMIT = 15
 
+# Number of IDs to search for at a time
+QUOTE_SEARCH_BATCH_SIZE = 20
+
 # For read requests only.
 RETRIES = 3
 
@@ -140,8 +143,7 @@ class Twitter(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, fetch_quotes=False,
-                              search_query=None):
+                              fetch_mentions=False, search_query=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -297,31 +299,9 @@ class Twitter(source.Source):
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
 
-    if fetch_quotes:
-      # organize quote tweets by id of the original
-      quote_tweets = {}
-      # search for 5 ids at a time based on the guideline
-      # "Limit your searches to 10 keywords and operators."
-      # https://dev.twitter.com/rest/public/search
-      for five_tweets in [tweets[i:i + 5] for i in xrange(0, len(tweets), 5)]:
-        url = API_SEARCH_URL % {
-          'q': urllib.quote_plus(
-            ' OR '.join((t['id_str'] for t in five_tweets))),
-          'count': 100,
-        }
-        if min_id is not None:
-          url = util.add_query_params(url, {'since_id': min_id})
-        candidates = self.urlopen(url)['statuses']
-        for c in candidates:
-          quoted_status_id = c.get('quoted_status_id_str')
-          if quoted_status_id:
-            quote_tweets.setdefault(quoted_status_id, []).append(c)
-      for tweet in tweets:
-        if tweet['id_str'] in quote_tweets:
-          tweet['quote_tweets'] = quote_tweets[tweet['id_str']]
-
     if fetch_mentions:
-      tweets += self.fetch_mentions(_user().get('screen_name'), min_id=min_id)
+      tweets += self.fetch_mentions(_user().get('screen_name'), tweets,
+                                    min_id=min_id)
 
     tweet_activities = [self.tweet_to_activity(t) for t in tweets]
 
@@ -413,7 +393,7 @@ class Twitter(source.Source):
         'totalItems': len(items),
         }
 
-  def fetch_mentions(self, username, min_id=None):
+  def fetch_mentions(self, username, tweets, min_id=None):
     """Fetches a user's @-mentions and returns them as ActivityStreams.
 
     Tries to only include explicit mentions, not mentions automatically created
@@ -421,12 +401,13 @@ class Twitter(source.Source):
 
     Args:
       username: string
+      tweets: list of Twitter API objects
       min_id: only return activities with ids greater than this
 
     Returns:
       list of activity dicts
     """
-    # get mentions
+    # get @-name mentions
     url = API_SEARCH_URL % {
       'q': urllib.quote_plus('@' + username),
       'count': 100,
@@ -438,8 +419,10 @@ class Twitter(source.Source):
     # fetch in-reply-to tweets (if any)
     in_reply_to_ids = util.trim_nulls(
       [c.get('in_reply_to_status_id_str') for c in candidates])
-    origs = {o.get('id_str'): o for o in
-             self.urlopen(API_LOOKUP_URL % ','.join(in_reply_to_ids))}
+    origs = {
+      o.get('id_str'): o for o in
+      self.urlopen(API_LOOKUP_URL % ','.join(in_reply_to_ids))
+    } if in_reply_to_ids else {}
 
     # filter out tweets that we don't consider mentions
     mentions = []
@@ -447,7 +430,6 @@ class Twitter(source.Source):
       if (c.get('user', {}).get('screen_name') == username or
           c.get('retweeted_status')):
         continue
-
       reply_to = origs.get(c.get('in_reply_to_status_id_str'))
       if not reply_to:
         mentions.append(c)
@@ -456,6 +438,27 @@ class Twitter(source.Source):
         mentioned = [u.get('screen_name') for u in
                      reply_to.get('entities', {}).get('user_mentions', [])]
         if username != reply_to_user and username not in mentioned:
+          mentions.append(c)
+
+    # search for quote tweets
+    # Guideline ("Limit your searches to 10 keywords and operators.")
+    # implies fewer, but 20 IDs seems to work in practice.
+    # https://dev.twitter.com/rest/public/search
+    for batch in [
+        tweets[i:i + QUOTE_SEARCH_BATCH_SIZE]
+        for i in xrange(0, len(tweets), QUOTE_SEARCH_BATCH_SIZE)
+    ]:
+      batch_ids = [t['id_str'] for t in batch]
+      url = API_SEARCH_URL % {
+        'q': urllib.quote_plus(' OR '.join(batch_ids)),
+        'count': 100,
+      }
+      if min_id is not None:
+        url = util.add_query_params(url, {'since_id': min_id})
+      candidates = self.urlopen(url)['statuses']
+      for c in candidates:
+        quoted_status_id = c.get('quoted_status_id_str')
+        if quoted_status_id and quoted_status_id in batch_ids:
           mentions.append(c)
 
     return mentions
@@ -930,7 +933,6 @@ class Twitter(source.Source):
       }
 
     content_prefix = ''
-
     retweeted = tweet.get('retweeted_status')
     if retweeted:
       entities = retweeted.get('entities', {})
@@ -962,8 +964,13 @@ class Twitter(source.Source):
       obj['attachments'] = [{
           'objectType': 'image',
           'image': {'url': m.get('media_url')},
-          } for m in media]
+      } for m in media]
       obj['image'] = {'url': media[0].get('media_url')}
+
+    # if this tweet is quoting another tweet, include it as an attachment
+    quoted = tweet.get('quoted_status')
+    if quoted:
+      obj.setdefault('attachments', []).append(self.tweet_to_object(quoted))
 
     # tags
     obj['tags'] = [
@@ -973,18 +980,18 @@ class Twitter(source.Source):
        'displayName': t.get('name'),
        'indices': t.get('indices')
        } for t in entities.get('user_mentions', [])
-      ] + [
+    ] + [
       {'objectType': 'hashtag',
        'url': 'https://twitter.com/search?q=%23' + t.get('text'),
        'indices': t.get('indices'),
        } for t in entities.get('hashtags', [])
-      ] + [
+    ] + [
       {'objectType': 'article',
        'url': t.get('expanded_url'),
        'displayName': t.get('display_url'),
        'indices': t.get('indices'),
        } for t in entities.get('urls', [])
-      ] + [
+    ] + [
       # these are only temporary, to get rid of the image t.co links. the tag
       # elements are removed farther down below.
       {'objectType': 'image',
@@ -1020,7 +1027,7 @@ class Twitter(source.Source):
 
     # quotes
     obj['tags'] += [
-      self.quote_tweet_to_object(r) for r in tweet.get('quote_tweets', [])]
+      self.tweet_to_object(r) for r in tweet.get('quote_tweets', [])]
 
     # location
     place = tweet.get('place')
@@ -1114,29 +1121,6 @@ class Twitter(source.Source):
       # the existing tags apply to the original tweet's text, which we replaced
       del share['tags']
     return self.postprocess_object(share)
-
-  def quote_tweet_to_object(self, quote_tweet):
-    """Converts a quote tweet to an activity object.
-
-    Args:
-      quote_tweet: dict, a decoded JSON tweet
-
-    Returns:
-      an ActivityStreams object dict
-    """
-    orig = quote_tweet.get('quoted_status')
-    if not orig:
-      return None
-
-    quote = self.tweet_to_object(quote_tweet)
-    quote.update({
-        'objectType': 'activity',
-        # TODO not a real AS verb! Gnip just uses "post". Is there a better
-        # way to differentiate quotes in the tags field?
-        'verb': 'quote',
-        'object': {'url': self.tweet_url(orig)},
-        })
-    return self.postprocess_object(quote)
 
   def streaming_event_to_object(self, event):
     """Converts a Streaming API event to an object.
