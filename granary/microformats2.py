@@ -139,6 +139,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     'inReplyTo', obj.get('context', {}).get('inReplyTo', []))
   if 'h-as-rsvp' in types and 'object' in obj:
     in_reply_tos.append(obj['object'])
+
   # TODO: more tags. most will be p-category?
   ret = {
     'type': types,
@@ -164,8 +165,11 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
         default_object_type='place')],
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
                   for c in obj.get('replies', {}).get('items', [])],
-      }
-    }
+    },
+    'children': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
+                 for c in primary.get('attachments', [])
+                 if c.get('objectType') in ('note', 'article')],
+  }
 
   # hashtags and person tags
   tags = obj.get('tags', [])
@@ -462,6 +466,9 @@ def json_to_html(obj, parent_props=[]):
       vals = props.get(verb, [])
       if vals and isinstance(vals[0], dict):
         likes_and_reposts += [json_to_html(v, ['u-' + verb]) for v in vals]
+
+  # embedded children of this post
+  likes_and_reposts += [json_to_html(c) for c in obj.get('children', [])]
 
   return HENTRY.substitute(
     prop,

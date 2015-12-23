@@ -699,6 +699,61 @@ class TwitterTest(testutil.TestCase):
     got = self.twitter.get_activities(fetch_mentions=True, min_id='567')
     self.assert_equals([tag_uri('3'), tag_uri('4')], [a['id'] for a in got])
 
+  def test_get_activities_quote_tweets(self):
+    twitter.QUOTE_SEARCH_BATCH_SIZE = 5  # reduce the batch size for testing
+    # search for 8 tweets to make sure we split them up into groups of <= 5
+    tweets = []
+    for id in xrange(1000, 1008):
+      tweet = copy.deepcopy(TWEET)
+      tweet['id'] = id
+      tweet['id_str'] = str(id)
+      tweets.append(tweet)
+
+    self.expect_urlopen(TIMELINE, tweets)
+
+    # search @-mentions returns nothing
+    self.expect_urlopen('account/verify_credentials.json',
+                        {'screen_name': 'schnarfed'})
+    self.expect_urlopen(twitter.API_SEARCH_URL % {
+      'q': urllib.quote_plus('@schnarfed'),
+      'count': 100,
+    } + '&since_id=567', {'statuses': []})
+
+    # first search returns no results
+    self.expect_urlopen(twitter.API_SEARCH_URL % {
+      'q': urllib.quote_plus('1000 OR 1001 OR 1002 OR 1003 OR 1004'),
+      'count': 100,
+    } + '&since_id=567', {'statuses': []})
+
+    # second search finds one quote for 1006
+    self.expect_urlopen(twitter.API_SEARCH_URL % {
+      'q': urllib.quote_plus('1005 OR 1006 OR 1007'),
+      'count': 100,
+    } + '&since_id=567', {
+      'statuses': [{
+        'id': 2345,
+        'id_str': '2345',
+        'quoted_status_id_str': '1006',
+        'quoted_status': tweets[6],
+        'text': 'I agree with this',
+        'user': {
+          'screen_name': 'kylewmahan',
+        },
+      }],
+    })
+
+    self.mox.ReplayAll()
+    got = self.twitter.get_activities(fetch_mentions=True, min_id='567')
+
+    self.assertEqual(9, len(got))
+    quote = got[-1]
+    self.assertEqual('tag:twitter.com:2345', quote.get('id'))
+    self.assertEqual('https://twitter.com/kylewmahan/status/2345',
+                     quote.get('url'))
+    attachment = quote.get('object', {}).get('attachments')[0]
+    self.assertEqual('tag:twitter.com:1006', attachment.get('id'))
+    self.assertEqual('note', attachment.get('objectType'))
+
   def test_get_activities_fetch_shares(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
