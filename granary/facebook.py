@@ -387,7 +387,8 @@ class Facebook(source.Source):
       # usually the response is a dict, but when it's empty, it's a list. :(
       if resp:
         for id, objs in resp.items():
-          results.setdefault(id, []).extend(objs.get('data', []))
+          # objs is usually a dict but sometimes a boolean. (oh FB, never change!)
+          results.setdefault(id, []).extend((objs or {}).get('data', []))
 
     return results
 
@@ -426,7 +427,7 @@ class Facebook(source.Source):
     with util.ignore_http_4xx_error():
       event = self.urlopen(API_EVENT % event_id)
 
-    if not event or event.get('error'):
+    if not event or not isinstance(event, dict) or event.get('error'):
       logging.warning("Couldn't fetch event %s: %s", event_id, event)
       return None
 
@@ -1576,7 +1577,16 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     logging.info('Fetching %s, kwargs %s', log_url, kwargs)
     resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
                            timeout=appengine_config.HTTP_TIMEOUT)
-    return json.loads(resp.read()) if parse_response else resp
+
+    if not parse_response:
+      return resp
+
+    body = resp.read()
+    try:
+      return json.loads(body)
+    except ValueError:  # couldn't parse JSON
+      logging.debug('Response: %s %s', resp.getcode(), body)
+      raise
 
   def urlopen_batch(self, urls):
     """Sends a batch of multiple API calls using Facebook's batch API.

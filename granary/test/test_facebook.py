@@ -952,6 +952,15 @@ class FacebookTest(testutil.HandlerTest):
     self.assertNotIn('tags', got[0]['object'])
     self.assertNotIn('tags', got[0])
 
+  def test_get_activities_fetch_shares_returns_boolean(self):
+    self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
+    self.expect_urlopen('sharedposts?ids=2', {'2': False})
+    self.mox.ReplayAll()
+
+    got = self.fb.get_activities(fetch_shares=True)
+    self.assertNotIn('tags', got[0]['object'])
+    self.assertNotIn('tags', got[0])
+
   def test_get_activities_self_empty(self):
     self.expect_urlopen('me/feed?offset=0', {})
     self.expect_urlopen('me/photos/uploaded', {})
@@ -1196,6 +1205,11 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     got = self.fb.get_event('145304994', owner_id=EVENT['owner']['id'])
     self.assert_equals(EVENT_ACTIVITY, got)
+
+  def test_get_event_returns_list(self):
+    self.expect_urlopen(facebook.API_EVENT % '145304994', ['xyz'])
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_event('145304994'))
 
   def test_get_activities_group_excludes_shared_story(self):
     self.expect_urlopen(
