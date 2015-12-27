@@ -384,11 +384,13 @@ class Facebook(source.Source):
     results = {}
     for i in range(0, len(ids), MAX_IDS):
       resp = self.urlopen(api_call % ','.join(ids[i:i + MAX_IDS]))
-      # usually the response is a dict, but when it's empty, it's a list. :(
-      if resp:
-        for id, objs in resp.items():
-          # objs is usually a dict but sometimes a boolean. (oh FB, never change!)
-          results.setdefault(id, []).extend((objs or {}).get('data', []))
+      if not isinstance(resp, dict):
+        logging.warning("/sharedposts didn't return a dict! this can happen "
+                        "(e.g. a list); we don't really know why. %r", resp)
+        continue
+      for id, objs in resp.items():
+        # objs is usually a dict but sometimes a boolean. (oh FB, never change!)
+        results.setdefault(id, []).extend((objs or {}).get('data', []))
 
     return results
 
