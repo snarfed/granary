@@ -504,7 +504,8 @@ class Source(object):
         # this is a redirected original URL. postpone and handle it when we hit
         # its final URL so that we know the final domain.
         continue
-      which = (originals if not domains or util.domain_from_link(url) in domains
+      domain = util.domain_from_link(url)
+      which = (originals if not domains or util.domain_or_parent_in(domain, domains)
                else mentions)
       which.add(url)
       redirected_from = redirects.get(url)

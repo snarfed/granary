@@ -161,16 +161,17 @@ class SourceTest(testutil.TestCase):
 
     # domains param
     obj = {
-      'content': 'x http://me/a y',
-      'upstreamDuplicates': ['http://me/b'],
-      'attachments': [{'url': 'http://me/c'}],
-      'tags': [{'url': 'http://me/d'}],
+      'content': 'x http://me.x.y/a y',
+      'upstreamDuplicates': ['http://me.x.y/b'],
+      'attachments': [{'url': 'http://me.x.y/c'}],
+      'tags': [{'url': 'http://me.x.y/d'}],
     }
-    links = ['http://me/a', 'http://me/b', 'http://me/c', 'http://me/d']
-    for domains in [], ['me'], ['foo', 'me']:
-      check(obj, links)
+    links = ['http://me.x.y/a', 'http://me.x.y/b', 'http://me.x.y/c', 'http://me.x.y/d']
+    check(obj, links)
+    for domains in [], ['me.x.y'], ['foo', 'x.y']:
+      check(obj, links, domains=domains)
 
-    check(obj, [], mentions=links, domains=['notme', 'alsonotme'])
+    check(obj, [], mentions=links, domains=['e.x.y', 'not.me.x.y', 'alsonotme'])
 
     # utm_* query params
     check({'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
