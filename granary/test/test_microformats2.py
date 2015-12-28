@@ -256,6 +256,25 @@ foo
                          microformats2.render_content({'tags': [tag]}),
                          tag)
 
+  def test_dont_stop_at_unknown_tag_type(self):
+    obj = {'tags': [
+      {'objectType': 'x', 'url': 'http://x'},
+      {'objectType': 'person', 'url': 'http://p', 'displayName': 'p'}],
+    }
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'category': [{
+          'type': ['h-card'],
+          'properties': {
+            'name': ['p'],
+            'url': ['http://p'],
+          },
+        }],
+        'content': [{'html': '\n<a class="tag" href="http://x"></a>'}],
+      },
+    }, microformats2.object_to_json(obj))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),

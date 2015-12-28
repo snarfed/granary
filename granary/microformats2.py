@@ -180,7 +180,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     elif tag.get('objectType') == 'hashtag':
       cls = 'u-category'
     else:
-      break
+      continue
     ret['properties']['category'].append(object_to_json(tag, entry_class=cls))
 
   # rsvp
