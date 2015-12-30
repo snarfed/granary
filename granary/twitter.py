@@ -48,6 +48,7 @@ API_POST_TWEET_URL = 'statuses/update.json'
 API_POST_RETWEET_URL = 'statuses/retweet/%s.json'
 API_POST_FAVORITE_URL = 'favorites/create.json'
 API_POST_MEDIA_URL = 'statuses/update_with_media.json'
+API_UPLOAD_MEDIA_URL = 'https://upload.twitter.com/1.1/media/upload.json'
 HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 # background: https://indiewebcamp.com/Twitter#Profile_Image_URLs
@@ -65,16 +66,18 @@ QUOTE_SEARCH_BATCH_SIZE = 20
 # For read requests only.
 RETRIES = 3
 
-# Current max tweet length and expected length of a t.co URL, as of 2014-03-11.
-# (This is actually just for https links; it's 22 for http.)
+# Config constants, as of 2015-12-29:
+# * Current max tweet length and expected length of a t.co URL.
+#   https://dev.twitter.com/docs/tco-link-wrapper/faq
+# * Max media per tweet.
+#   https://dev.twitter.com/rest/reference/post/statuses/update#api-param-media_ids
 #
-# TODO: pull tco length from the API /help/configuration.json endpoint instead.
-# Details:
-# https://dev.twitter.com/docs/tco-link-wrapper/faq
+# TODO: pull these from /help/configuration.json instead.
 # https://dev.twitter.com/docs/api/1.1/get/help/configuration
-# https://dev.twitter.com/discussions/869
 MAX_TWEET_LENGTH = 140
 TCO_LENGTH = 23
+MAX_MEDIA = 4
+
 
 class OffsetTzinfo(datetime.tzinfo):
   """A simple, DST-unaware tzinfo from given utc offset in seconds.
@@ -603,48 +606,7 @@ class Twitter(source.Source):
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
 
-    if has_picture:
-      image_url = obj.get('image').get('url')
-      if preview:
-        if is_reply:
-          desc = ('<span class="verb">@-reply</span> to <a href="%s">this tweet'
-                  '</a>:\n%s' % (base_url, self.embed_post(base_obj)))
-        else:
-          desc = '<span class="verb">tweet</span>:'
-        if preview_content:
-            preview_content += '<br /><br />'
-        return source.creation_result(
-          content='%s<img src="%s" />' % (preview_content, image_url),
-          description=desc)
-
-      else:
-        content = unicode(content).encode('utf-8')
-        data = {'status': content}
-        if is_reply:
-          data['in_reply_to_status_id'] = base_id
-        files = {'media[]': urllib2.urlopen(image_url)}
-        url = API_BASE + API_POST_MEDIA_URL
-        headers = twitter_auth.auth_header(url, self.access_token_key,
-                                           self.access_token_secret, 'POST')
-        resp = requests.post(url, data=data, files=files,
-                             headers=headers, timeout=HTTP_TIMEOUT)
-        resp.raise_for_status()
-        resp = json.loads(resp.text)
-        resp['type'] = 'comment' if is_reply else 'post'
-
-    elif is_reply:
-      if preview:
-        return source.creation_result(
-          content=preview_content,
-          description='<span class="verb">@-reply</span> to <a href="%s">this tweet'
-                      '</a>:\n%s' % (base_url, self.embed_post(base_obj)))
-      else:
-        content = unicode(content).encode('utf-8')
-        data = urllib.urlencode({'status': content, 'in_reply_to_status_id': base_id})
-        resp = self.urlopen(API_POST_TWEET_URL, data=data)
-        resp['type'] = 'comment'
-
-    elif type == 'activity' and verb == 'like':
+    if type == 'activity' and verb == 'like':
       if not base_url:
         return source.creation_result(
           abort=True,
@@ -680,15 +642,31 @@ class Twitter(source.Source):
         resp = self.urlopen(API_POST_RETWEET_URL % base_id, data=data)
         resp['type'] = 'repost'
 
-    elif type in ('note', 'article'):
+    elif type in ('note', 'article'):  # a tweet
+      content = unicode(content).encode('utf-8')
+      data = {'status': content}
+
+      if is_reply:
+        description = \
+          '<span class="verb">@-reply</span> to <a href="%s">this tweet</a>:\n%s' % (
+            base_url, self.embed_post(base_obj))
+        data['in_reply_to_status_id'] = base_id
+      else:
+        description = '<span class="verb">tweet</span>:'
+
+      if has_picture:
+        image_urls = [image.get('url') for image in util.get_list(obj, 'image')]
+        preview_content += '<br /><br />'.join(
+          '<img src="%s" />' % url for url in image_urls)
+        if not preview:
+          data['media_ids'] = ','.join(self.upload_media(image_urls))
+
       if preview:
-        return source.creation_result(content=preview_content,
-                                      description='<span class="verb">tweet</span>:')
+        return source.creation_result(content=preview_content, description=description)
       else:
         content = unicode(content).encode('utf-8')
-        data = urllib.urlencode({'status': content})
-        resp = self.urlopen(API_POST_TWEET_URL, data=data)
-        resp['type'] = 'post'
+        resp = self.urlopen(API_POST_TWEET_URL, data=urllib.urlencode(data))
+        resp['type'] = 'comment' if is_reply else 'post'
 
     elif (verb and verb.startswith('rsvp-')) or verb == 'invite':
       return source.creation_result(
@@ -810,6 +788,44 @@ class Twitter(source.Source):
     ret = summary or name or (content if ignore_formatting else self._html_to_text(content))
 
     return ret.strip() if ret else None
+
+  def upload_media(self, urls):
+    """Uploads one or more images from web URLs.
+
+    https://dev.twitter.com/rest/reference/post/media/upload
+
+    Videos are not currently supported, since they have to use the chunked
+    variant: https://dev.twitter.com/rest/reference/post/media/upload-chunked
+
+    Args:
+      media_urls: sequence of string URLs of images
+
+    Returns: list of string media ids
+    """
+    if len(urls) > MAX_MEDIA:
+      urls = urls[:MAX_MEDIA]
+      logging.warning('Only uploading the first four images! %r', urls)
+
+    ids = []
+    for url in urls:
+      headers = twitter_auth.auth_header(
+        API_UPLOAD_MEDIA_URL, self.access_token_key, self.access_token_secret,
+        'POST')
+      logging.info('Fetching %s', url)
+      files = {'media': urllib2.urlopen(url)}
+      logging.info('Posting multipart/form-data %s to %s',
+                   {'media': url}, API_UPLOAD_MEDIA_URL)
+      resp = requests.post(API_UPLOAD_MEDIA_URL, files=files, headers=headers,
+                           timeout=HTTP_TIMEOUT)
+      resp.raise_for_status()
+      logging.info('Got: %s', resp.text)
+      try:
+        ids.append(json.loads(resp.text)['media_id_string'])
+      except ValueError, KeyError:
+        logging.exception("Couldn't parse response: %s", resp.text)
+        raise
+
+    return ids
 
   def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
