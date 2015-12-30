@@ -71,9 +71,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
 
     # Normalize attachments.image to always be a list.
     for att in primary.get('attachments', []):
-      image = att.get('image')
-      if image and not isinstance(image, list):
-        att['image'] = [image]
+      att['image'] = util.get_list(att, 'image')
 
   # Emulate Django template behavior that returns a special default value that
   # can continue to be referenced when an attribute or item lookup fails. Helps

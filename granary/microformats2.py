@@ -198,9 +198,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       # single object, but it's useful to let it be a list, e.g. when a like has
       # multiple targets, e.g. a like of a post with original post URLs in it,
       # which brid.gy does.
-      objs = obj.get('object', [])
-      if not isinstance(objs, list):
-        objs = [objs]
+      objs = util.get_list(obj, 'object')
       ret['properties'][prop + '-of'] = ret['properties'][prop] = [
         # flatten contexts that are just a url
         o['url'] if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
@@ -576,28 +574,19 @@ def render_content(obj, include_location=True):
     name = tag.get('displayName', '')
     open_a_tag = False
     if tag.get('objectType') == 'video':
-      video = tag.get('stream') or obj.get('stream')
-      if video:
-        if isinstance(video, list):
-          video = video[0]
-        poster = tag.get('image', {})
-        if poster and isinstance(poster, list):
-          poster = poster[0]
-        if video.get('url'):
-          content += '\n<p>%s</p>' % vid(
-            video['url'], poster.get('url'), 'thumbnail')
+      video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
+      poster = util.get_first(tag, 'image', {})
+      if video and video.get('url'):
+        content += '\n<p>%s</p>' % vid(video['url'], poster.get('url'), 'thumbnail')
     else:
       content += '\n<p>'
       url = tag.get('url') or obj.get('url')
       if url:
         content += '\n<a class="link" href="%s">' % url
         open_a_tag = True
-      image = tag.get('image') or obj.get('image')
-      if image:
-        if isinstance(image, list):
-          image = image[0]
-        if image.get('url'):
-          content += '\n' + img(image['url'], 'thumbnail', name)
+      image = util.get_first(tag, 'image') or util.get_first(obj, 'image')
+      if image and image.get('url'):
+        content += '\n' + img(image['url'], 'thumbnail', name)
     if name:
       content += '\n<span class="name">%s</span>' % name
     if open_a_tag:
@@ -614,12 +603,9 @@ def render_content(obj, include_location=True):
     if obj_type != as_type or 'object' not in obj or 'content' in obj:
       continue
 
-    targets = obj.get('object')
+    targets = util.get_list(obj, 'object')
     if not targets:
       continue
-
-    if not isinstance(targets, list):
-      targets = [targets]
 
     for target in targets:
       # sometimes likes don't have enough content to render anything
@@ -677,19 +663,7 @@ def first_props(props):
   Returns: corresponding dict with just the first value of each sequence, or ''
     if the sequence is empty
   """
-  if not props:
-    return {}
-
-  prop = {}
-  for k, v in props.items():
-    if not v:
-      prop[k] = ''
-    elif isinstance(v, (tuple, list)):
-      prop[k] = v[0]
-    else:
-      prop[k] = v
-
-  return prop
+  return {k: util.get_first(props, k, '') for k in props} if props else {}
 
 
 def tags_to_html(tags, classname):
