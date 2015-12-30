@@ -1,0 +1,9 @@
+{
+  "type": ["h-entry", "h-as-note"],
+  "properties": {
+    "photo": [
+      "http://pics/1.jpg",
+      "https://pics/2.jpg"
+    ]
+  }
+}

@@ -149,7 +149,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'summary': [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
-      'photo': [obj.get('image', primary.get('image', {})).get('url', '')],
+      'photo': [image.get('url') for image in
+                (util.get_list(obj, 'image') or util.get_list(primary, 'image'))],
       'video': [obj.get('stream', primary.get('stream', {})).get('url')],
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
@@ -285,7 +286,7 @@ def json_to_object(mf2):
     'content': get_html(prop.get('content')),
     'url': urls[0] if urls else None,
     'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,
-    'image': {'url': photos[0] if photos else None},
+    'image': [{'url': url} for url in photos],
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     'tags': [json_to_object(cat) for cat in props.get('category', [])],

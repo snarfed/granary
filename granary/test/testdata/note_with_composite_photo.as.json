@@ -1,4 +1,4 @@
 {
     "objectType": "note",
-    "image": {"url": "https://ben.thatmustbe.me/static/img.jpg"}
+    "image": [{"url": "https://ben.thatmustbe.me/static/img.jpg"}]
 }

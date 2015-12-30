@@ -12,11 +12,11 @@
     {"value": "http://orig/1"},
     {"value": "http://orig/2"}
   ],
-  "image": {"url": "http://example.com/blog-post-123/image"},
+  "image": [{"url": "http://example.com/blog-post-123/image"}],
   "author": {
     "id": "tag:example.com,2001:ryan",
     "displayName": "Ryan Barrett",
-    "image": {"url": "http://example.com/ryan/image"},
+    "image": [{"url": "http://example.com/ryan/image"}],
     "objectType": "person"
   },
   "location": {

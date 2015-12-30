@@ -52,7 +52,7 @@ class Microformats2Test(testutil.HandlerTest):
     mf2 = {'properties':
            {'photo': ['the caption', 'http://example.com/image.jpg']}}
     obj = microformats2.json_to_object(mf2)
-    self.assertEquals('http://example.com/image.jpg', obj['image']['url'])
+    self.assertEquals([{'url': 'http://example.com/image.jpg'}], obj['image'])
 
   def test_photo_property_has_no_url(self):
     """handle the case where the photo property is *only* text, not a url"""
