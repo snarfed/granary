@@ -568,7 +568,7 @@ class Facebook(source.Source):
     if base_id and not base_url:
       base_url = base_obj['url'] = self.object_url(base_id)
 
-    image_url = obj.get('image', {}).get('url')
+    image_url = util.get_first(obj, 'image', {}).get('url')
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting) or ''
     if not content and not image_url:
       if type == 'activity':

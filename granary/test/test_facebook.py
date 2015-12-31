@@ -2139,7 +2139,7 @@ cc Sam G, Michael M<br />""", preview.description)
     """https://github.com/snarfed/bridgy/issues/571"""
     obj = {
       'objectType': 'note',
-      'image': {'url': 'http://my/picture'},
+      'image': [{'url': 'http://my/picture'}],
     }
 
     self.expect_urlopen('me/albums', {'data': [
