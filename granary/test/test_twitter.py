@@ -1625,12 +1625,16 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
-    self.expect_requests_post(POST_MEDIA_URL,
-                              json.dumps({'url': 'http://posted/picture'}),
-                              data={'status': '@you my content',
-                                    'in_reply_to_status_id': '100'},
-                              files={'media[]': 'picture response'},
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+                              json.dumps({'media_id_string': '123'}),
+                              files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
+    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+      'status': '@you my content',
+      'in_reply_to_status_id': '100',
+      'media_ids': '123',
+    })
+    self.expect_urlopen(url, {'url': 'http://posted/picture'}, data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'comment'},
                        self.twitter.create(obj).content)
@@ -1644,15 +1648,19 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertEquals('<span class="verb">tweet</span>:', preview.description)
-    self.assertEquals('<img src="http://my/picture" />', preview.content)
+    self.assertEquals('<br /><br /><img src="http://my/picture" />', preview.content)
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
-    self.expect_requests_post(POST_MEDIA_URL,
-                              json.dumps({'url': 'http://posted/picture'}),
-                              data={'status': ''},
-                              files={'media[]': 'picture response'},
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+                              json.dumps({'media_id_string': '123'}),
+                              files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
+    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+      'status': '',
+      'media_ids': '123',
+    })
+    self.expect_urlopen(url, {'url': 'http://posted/picture'}, data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                        self.twitter.create(obj).content)
@@ -1665,10 +1673,14 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     }
 
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
-    self.expect_requests_post(POST_MEDIA_URL, 'error body',
-                              data={'status': 'my caption'},
-                              files={'media[]': 'picture response'},
-                              headers=mox.IgnoreArg(),
-                              status_code=403)
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+                              json.dumps({'media_id_string': '123'}),
+                              files={'media': 'picture response'},
+                              headers=mox.IgnoreArg())
+    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+      'status': 'my caption',
+      'media_ids': '123',
+    })
+    self.expect_urlopen(url, {'url': 'http://posted/picture'}, data='', status=403)
     self.mox.ReplayAll()
-    self.assertRaises(requests.HTTPError, self.twitter.create, obj)
+    self.assertRaises(urllib2.HTTPError, self.twitter.create, obj)
