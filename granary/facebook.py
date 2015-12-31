@@ -408,12 +408,17 @@ class Facebook(source.Source):
     Returns:
       posts: list of Facebook post object dicts
     """
-    rsvps = self.urlopen(API_USER_RSVPS).get('data', [])
+    rsvps = self.urlopen(API_USER_RSVPS)
+    if not isinstance(rsvps, dict):
+      logging.warning("me/events didn't return a dict! this can happen "
+                      "(e.g. a list); we don't really know why. %r", rsvps)
+      return []
 
     # have to re-fetch the individual event objects because the user rsvps
     # response doesn't include the event description.
-    return util.trim_nulls([self.get_event(rsvp['id'], owner_id=owner_id)
-                            for rsvp in rsvps if rsvp.get('id')])
+    return util.trim_nulls(
+      [self.get_event(rsvp['id'], owner_id=owner_id)
+       for rsvp in rsvps.get('data', []) if rsvp.get('id')])
 
   def get_event(self, event_id, owner_id=None):
     """Returns a Facebook event post.

@@ -1060,6 +1060,14 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals([EVENT_ACTIVITY], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True))
 
+  def test_get_activities_self_events_returns_list(self):
+    self.expect_urlopen('me/feed?offset=0', {})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('me/events', [])
+    self.mox.ReplayAll()
+    self.assert_equals([], self.fb.get_activities(
+      group_id=source.SELF, fetch_events=True))
+
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen('me/home?offset=0&access_token=asdf', {"id": 123})
     self.mox.ReplayAll()
