@@ -656,6 +656,11 @@ class Twitter(source.Source):
 
       if has_picture:
         image_urls = [image.get('url') for image in util.get_list(obj, 'image')]
+        num_image_urls = len(image_urls)
+        if num_image_urls > MAX_MEDIA:
+          image_urls = image_urls[:MAX_MEDIA]
+          logging.warning('Found %d photos! Only using the first %d: %r',
+                          num_image_urls, MAX_MEDIA, image_urls)
         preview_content += '\n'.join(
           '<br /><br /><img src="%s" />' % url for url in image_urls)
         if not preview:
@@ -801,10 +806,6 @@ class Twitter(source.Source):
 
     Returns: list of string media ids
     """
-    if len(urls) > MAX_MEDIA:
-      urls = urls[:MAX_MEDIA]
-      logging.warning('Only uploading the first four images! %r', urls)
-
     ids = []
     for url in urls:
       headers = twitter_auth.auth_header(

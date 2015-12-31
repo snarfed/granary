@@ -1588,7 +1588,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     preview = self.twitter.preview_create(obj)
     self.assertEquals('<span class="verb">tweet</span>:', preview.description)
     self.assertEquals(ellipsized + '\n'.join('<br /><br /><img src="%s" />' % url
-                                             for url in image_urls),
+                                             for url in image_urls[:-1]),
                       preview.content)
 
     # test create
