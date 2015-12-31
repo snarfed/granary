@@ -26,7 +26,6 @@ def tag_uri(name):
   return util.tag_uri('twitter.com', name)
 
 TIMELINE = twitter.API_TIMELINE_URL % 0
-POST_MEDIA_URL = twitter.API_BASE + twitter.API_POST_MEDIA_URL
 
 USER = {  # Twitter
   'created_at': 'Sat May 01 21:42:43 +0000 2010',
@@ -1574,12 +1573,13 @@ class TwitterTest(testutil.TestCase):
       self.assertIn('Could not find a tweet to retweet', preview.error_plain)
       self.assertIn('Could not find a tweet to', preview.error_html)
 
-  def test_create_with_photo(self):
+  def test_create_with_multiple_photos(self):
+    image_urls = ['http://my/picture/%d' % i for i in range(twitter.MAX_MEDIA + 1)]
     obj = {
       'objectType': 'note',
       'content': """\
 the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok done""",
-      'image': {'url': 'http://my/picture'},
+      'image': [{'url': url} for url in image_urls],
     }
 
     ellipsized = u"""\
@@ -1587,16 +1587,24 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertEquals('<span class="verb">tweet</span>:', preview.description)
-    self.assertEquals(ellipsized + '<br /><br /><img src="http://my/picture" />',
+    self.assertEquals(ellipsized + '\n'.join('<br /><br /><img src="%s" />' % url
+                                             for url in image_urls),
                       preview.content)
 
     # test create
-    urllib2.urlopen('http://my/picture').AndReturn('picture response')
-    self.expect_requests_post(POST_MEDIA_URL,
-                              json.dumps({'url': 'http://posted/picture'}),
-                              data={'status': ellipsized.encode('utf-8')},
-                              files={'media[]': 'picture response'},
-                              headers=mox.IgnoreArg())
+    for i, url in enumerate(image_urls[:-1]):
+      content = 'picture response %d' % i
+      urllib2.urlopen(url).AndReturn(content)
+      self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+                                json.dumps({'media_id_string': str(i)}),
+                                files={'media': content},
+                                headers=mox.IgnoreArg())
+    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+      'status': ellipsized.encode('utf-8'),
+      'media_ids': '0,1,2,3',
+    })
+    resp = {'url': 'http://posted/picture'}
+    self.expect_urlopen(url, resp, data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                        self.twitter.create(obj).content)

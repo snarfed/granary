@@ -656,15 +656,14 @@ class Twitter(source.Source):
 
       if has_picture:
         image_urls = [image.get('url') for image in util.get_list(obj, 'image')]
-        preview_content += '<br /><br />'.join(
-          '<img src="%s" />' % url for url in image_urls)
+        preview_content += '\n'.join(
+          '<br /><br /><img src="%s" />' % url for url in image_urls)
         if not preview:
           data['media_ids'] = ','.join(self.upload_media(image_urls))
 
       if preview:
         return source.creation_result(content=preview_content, description=description)
       else:
-        content = unicode(content).encode('utf-8')
         resp = self.urlopen(API_POST_TWEET_URL, data=urllib.urlencode(data))
         resp['type'] = 'comment' if is_reply else 'post'
 
