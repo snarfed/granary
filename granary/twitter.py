@@ -642,7 +642,7 @@ class Twitter(source.Source):
         resp = self.urlopen(API_POST_RETWEET_URL % base_id, data=data)
         resp['type'] = 'repost'
 
-    elif type in ('note', 'article'):  # a tweet
+    elif type in ('note', 'article') or is_reply:  # a tweet
       content = unicode(content).encode('utf-8')
       data = {'status': content}
 

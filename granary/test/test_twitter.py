@@ -1502,6 +1502,28 @@ class TwitterTest(testutil.TestCase):
       self.assertEquals(status, preview.content)
       self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
 
+  def test_create_reply_objectType_comment(self):
+    obj = {
+      'objectType': 'comment',
+      'content': 'my content',
+      'inReplyTo': [{'url': 'http://twitter.com/you/status/100'}],
+    }
+
+    # test preview
+    preview = self.twitter.preview_create(obj)
+    self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
+    self.assertEquals('@you my content', preview.content)
+
+    # test create
+    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+      'status': '@you my content',
+      'in_reply_to_status_id': '100',
+    })
+    self.expect_urlopen(url, {'url': 'http://posted/tweet'}, data='')
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
+                       self.twitter.create(obj).content)
+
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
                         TWEET, data='')
