@@ -1,9 +1,9 @@
 # coding=utf-8
 """Unit tests for googleplus.py.
 
-See apiclient/http.py for details on using RequestMockBuilder to mock out Google
-API calls. (This is the current doc on apiclient mocks, but it doesn't mention
-RequestMockBuilder:
+See googleapiclient/http.py for details on using RequestMockBuilder to mock out
+Google API calls. (This is the current doc on apiclient mocks, but it doesn't
+mention RequestMockBuilder:
 https://developers.google.com/api-client-library/python/guide/mocks )
 
 TODO: figure out how to check the query parameters. Right now they're ignored. :/
@@ -15,6 +15,7 @@ import copy
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 import json
+import os
 
 from apiclient import discovery
 from apiclient import http
@@ -29,7 +30,8 @@ appengine_config.GOOGLE_CLIENT_SECRET = 'my client secret'
 from granary import googleplus
 
 
-DISCOVERY_DOC = appengine_config.read('googleplus_api_discovery.json')
+DISCOVERY_DOC = appengine_config.read(
+  os.path.join(os.path.dirname(__file__), '../../googleplus_api_discovery.json'))
 
 def tag_uri(name):
   return util.tag_uri('plus.google.com', name)
@@ -297,6 +299,17 @@ HTML_ACTIVITY_AS = {  # Google+
   }
 
 
+CREDS_JSON = json.dumps({
+  'access_token': 'my token',
+  'client_id': appengine_config.GOOGLE_CLIENT_ID,
+  'client_secret': appengine_config.GOOGLE_CLIENT_SECRET,
+  'refresh_token': 'my refresh token',
+  'token_expiry': '',
+  'token_uri': '',
+  'user_agent': '',
+  'invalid': '',
+})
+
 class GooglePlusTest(testutil.HandlerTest):
 
   def setUp(self):
@@ -306,16 +319,7 @@ class GooglePlusTest(testutil.HandlerTest):
       user_json=json.dumps({
           'displayName': 'Bob',
           }),
-      creds_json=json.dumps({
-          'access_token': 'my token',
-          'client_id': appengine_config.GOOGLE_CLIENT_ID,
-          'client_secret': appengine_config.GOOGLE_CLIENT_SECRET,
-          'refresh_token': 'my refresh token',
-          'token_expiry': '',
-          'token_uri': '',
-          'user_agent': '',
-          'invalid': '',
-          }))
+      creds_json=CREDS_JSON)
     self.googleplus = googleplus.GooglePlus(auth_entity=self.auth_entity)
 
   def tearDown(self):
