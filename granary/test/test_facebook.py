@@ -1894,13 +1894,57 @@ http://b http://c""",
         'objectType': 'article',
         'content': 'my content',
         # displayName shouldn't override content
-        'displayName': 'my name',
+        'displayName': 'my content',
         'url': 'http://obj.co',
         })
     self.fb.create(obj, include_link=True)
     preview = self.fb.preview_create(obj, include_link=True)
     self.assertEquals(
       'my content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
+      preview.content)
+
+  def test_create_post_with_title(self):
+    self.expect_urlopen(facebook.API_FEED, {}, data=urllib.urlencode({
+      'message': 'my title\n\nmy content\n\n(Originally published at: http://obj.co)',
+    }))
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(POST_OBJ)
+    del obj['image']
+    del obj['tags']  # skip person tags
+    obj.update({
+        'objectType': 'article',
+        'content': 'my content',
+        # displayName shouldn't override content
+        'displayName': 'my title',
+        'url': 'http://obj.co',
+        })
+    self.fb.create(obj, include_link=True)
+    preview = self.fb.preview_create(obj, include_link=True)
+    self.assertEquals(
+      'my title\n\nmy content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
+      preview.content)
+
+  def test_create_post_with_no_title(self):
+    self.expect_urlopen(facebook.API_FEED, {}, data=urllib.urlencode({
+      'message': 'my\ncontent\n\n(Originally published at: http://obj.co)',
+    }))
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(POST_OBJ)
+    del obj['image']
+    del obj['tags']  # skip person tags
+    obj.update({
+        'objectType': 'article',
+        'content': 'my<br />content',
+        # displayName shouldn't override content
+        'displayName': 'my\ncontent',
+        'url': 'http://obj.co',
+        })
+    self.fb.create(obj, include_link=True)
+    preview = self.fb.preview_create(obj, include_link=True)
+    self.assertEquals(
+      'my\ncontent\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
   def test_create_comment(self):
