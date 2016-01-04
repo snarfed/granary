@@ -9,7 +9,6 @@ import re
 import urlparse
 import xml.sax.saxutils
 
-from bs4 import BeautifulSoup
 import jinja2
 from oauth_dropins.webutil import util
 
@@ -66,8 +65,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
 
     # strip HTML tags. the Atom spec says title is plain text:
     # http://atomenabled.org/developers/syndication/#requiredEntryElements
-    a['title'] = xml.sax.saxutils.escape(
-      BeautifulSoup(a['title'], 'html.parser').get_text(''))
+    a['title'] = xml.sax.saxutils.escape(source.strip_html_tags(a['title']))
 
     # Normalize attachments.image to always be a list.
     for att in primary.get('attachments', []):

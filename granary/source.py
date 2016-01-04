@@ -20,6 +20,7 @@ import re
 import urlparse
 import html2text
 
+from bs4 import BeautifulSoup
 import requests
 
 import appengine_config
@@ -46,6 +47,11 @@ sources = {}
 
 CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
+
+
+def strip_html_tags(str):
+  """Returns the text content of an HTML string, with tags removed."""
+  return BeautifulSoup(str, 'html.parser').get_text('')
 
 
 def creation_result(content=None, description=None, abort=False,

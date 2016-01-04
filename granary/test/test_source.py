@@ -391,3 +391,9 @@ class SourceTest(testutil.TestCase):
     self.assertEquals('1', self.source.post_id('http://x/y/1/'))
     self.assertIsNone(self.source.post_id('http://x/'))
     self.assertIsNone(self.source.post_id(''))
+
+  def test_strip_html_tags(self):
+    self.assertEquals('', source.strip_html_tags(''))
+    self.assertEquals('foo', source.strip_html_tags('foo'))
+    self.assertEquals('xyz', source.strip_html_tags(
+      '<p>x<a href="l">y</a><br />z</p>'))
