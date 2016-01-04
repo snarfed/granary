@@ -731,17 +731,22 @@ class Source(object):
 
     Returns: string, possibly empty
     """
-    summary = obj.get('summary')
-    name = obj.get('displayName')
-    content = obj.get('content')
+    summary = obj.get('summary', '').strip()
+    name = obj.get('displayName', '').strip()
+    content = obj.get('content', '').strip()
+
+    if summary == strip_html_tags(content).strip():
+      # summary and content are the same; prefer content so that we can use its
+      # HTML formatting.
+      summary = None
+
     if not ignore_formatting:
       content = self._html_to_text(content)
 
-    ret = summary or (
-           (name or content) if prefer_name else
-           (content or name)
-          ) or u''
-    return ret.strip()
+    return summary or (
+            (name or content) if prefer_name else
+            (content or name)
+           ) or u''
 
   def _html_to_text(self, html):
     if html:

@@ -286,7 +286,12 @@ class SourceTest(testutil.TestCase):
       self.assertEqual('c', cfc(base, {'content': 'c', 'displayName': 'n'}))
       self.assertEqual('s', cfc(base, {'content': 'c', 'displayName': 'n',
                                        'summary': 's'}))
-      self.assertEqual('c<a&b\nhai', cfc(base, {'content': 'c<a&b\nhai'}, ignore_formatting=True))
+      self.assertEqual('c<a&b\nhai', cfc(base, {'content': 'c<a&b\nhai'},
+                                         ignore_formatting=True))
+      # when the text of content and summary are the same, content should
+      # override so we can use its formatting
+      self.assertEqual('the\ntext', cfc(base, {'content': '  the<br />text',
+                                               'summary': 'thetext  '}))
 
     for base in ({'objectType': 'note'},
                  {'inReplyTo': {'url': 'http://fake.com/post'}},
