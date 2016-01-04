@@ -271,17 +271,17 @@ class SourceTest(testutil.TestCase):
                        self.source.base_object(like))
 
   def test_content_for_create(self):
-    def cfc(base, extra, ignore_formatting=False):
+    def cfc(base, extra, **kwargs):
       obj = base.copy()
       obj.update(extra)
-      return self.source._content_for_create(obj, ignore_formatting=ignore_formatting)
+      return self.source._content_for_create(obj, **kwargs)
 
-    self.assertEqual(None, cfc({}, {}))
+    self.assertEqual('', cfc({}, {}))
 
     for base in ({'objectType': 'article'},
                  {'inReplyTo': {'url': 'http://not/fake'}},
                  {'objectType': 'comment', 'object': {'url': 'http://not/fake'}}):
-      self.assertEqual(None, cfc(base, {}))
+      self.assertEqual('', cfc(base, {}))
       self.assertEqual('c', cfc(base, {'content': ' c '}))
       self.assertEqual('c', cfc(base, {'content': 'c', 'displayName': 'n'}))
       self.assertEqual('s', cfc(base, {'content': 'c', 'displayName': 'n',
@@ -292,11 +292,16 @@ class SourceTest(testutil.TestCase):
                  {'inReplyTo': {'url': 'http://fake.com/post'}},
                  {'objectType': 'comment',
                   'object': {'url': 'http://fake.com/post'}}):
-      self.assertEqual(None, cfc(base, {}))
+      self.assertEqual('', cfc(base, {}))
       self.assertEqual('n', cfc(base, {'displayName': 'n'}))
       self.assertEqual('c', cfc(base, {'displayName': 'n', 'content': 'c'}))
+      self.assertEqual('n', cfc(base, {'displayName': 'n', 'content': 'c'},
+                                prefer_name=True))
       self.assertEqual('s', cfc(base, {'displayName': 'n', 'content': 'c',
                                        'summary': ' s '}))
+      self.assertEqual('s', cfc(base, {'displayName': 'n', 'content': 'c',
+                                       'summary': ' s '},
+                                prefer_name=True))
 
   def test_activity_changed(self):
     fb_post = test_facebook.ACTIVITY

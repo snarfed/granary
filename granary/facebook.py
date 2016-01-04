@@ -570,7 +570,7 @@ class Facebook(source.Source):
       base_url = base_obj['url'] = self.object_url(base_id)
 
     image_url = util.get_first(obj, 'image', {}).get('url')
-    content = self._content_for_create(obj, ignore_formatting=ignore_formatting) or ''
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     if not content and not image_url:
       if type == 'activity':
         content = verb

@@ -550,7 +550,13 @@ class Twitter(source.Source):
     is_reply = type == 'comment' or 'inReplyTo' in obj
     has_picture = obj.get('image') and (type in ('note', 'article') or is_reply)
 
-    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
+    # prefer displayName over content for articles
+    type = obj.get('objectType')
+    base_url = self.base_object(obj).get('url')
+    prefer_content = type == 'note' or (base_url and (type == 'comment'
+                                                      or obj.get('inReplyTo')))
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
+                                       prefer_name=not prefer_content)
     if not content:
       if type == 'activity':
         content = verb
@@ -773,25 +779,6 @@ class Twitter(source.Source):
     if include_url:
       content += ' (%s)' % include_url
     return content
-
-  def _content_for_create(self, obj, ignore_formatting=False):
-    """Returns the content text to use in create() and preview_create().
-
-    Differs from Source._content_for_create() in that it prefers displayName
-    over content for articles. Otherwise it's the same.
-    """
-    type = obj.get('objectType')
-    base_url = self.base_object(obj).get('url')
-    if type == 'note' or (base_url and (type == 'comment' or obj.get('inReplyTo'))):
-        return source.Source._content_for_create(self, obj, ignore_formatting=ignore_formatting)
-
-    summary = obj.get('summary')
-    name = obj.get('displayName')
-    content = obj.get('content')
-
-    ret = summary or name or (content if ignore_formatting else self._html_to_text(content))
-
-    return ret.strip() if ret else None
 
   def upload_media(self, urls):
     """Uploads one or more images from web URLs.

@@ -709,29 +709,33 @@ class Source(object):
     """
     return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
-  def _content_for_create(self, obj, ignore_formatting=False):
+  def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False):
     """Returns the content text to use in create() and preview_create().
 
-    returns summary if available, then content, then displayName.
+    Returns summary if available, then content, then displayName.
 
-    If usig content, renders the HTML content to text using html2text so
+    If using content, renders the HTML content to text using html2text so
     that whitespace is formatted like in the browser.
 
     Args:
       obj: dict, ActivityStreams object
-      ignore_formatting: whether to use content text as is, instead of
+      ignore_formatting: boolean, whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
+      prefer_name: boolean, whether to prefer displayName to content
 
-    Returns: string text or None
+    Returns: string, possibly empty
     """
     summary = obj.get('summary')
     name = obj.get('displayName')
     content = obj.get('content')
+    if not ignore_formatting:
+      content = self._html_to_text(content)
 
-    ret = summary or \
-          (content if ignore_formatting else self._html_to_text(content)) or \
-          name
-    return ret.strip() if ret else (None if content is None else u'')
+    ret = summary or (
+           (name or content) if prefer_name else
+           (content or name)
+          ) or u''
+    return ret.strip()
 
   def _html_to_text(self, html):
     if html:
