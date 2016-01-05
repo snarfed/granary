@@ -1190,15 +1190,19 @@ class Twitter(source.Source):
     """
     tweet_id = tweet.get('id_str')
     liker_id = liker.get('id_str')
-    id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, liker_id)) \
-        if liker_id else None
-    url = self.tweet_url(tweet)
+    id = None
+    url = obj_url = self.tweet_url(tweet)
+
+    if liker_id:
+      id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, liker_id))
+      url += '#favorited-by-%s' % liker_id
+
     return self.postprocess_object({
         'id': id,
         'url': url,
         'objectType': 'activity',
         'verb': 'like',
-        'object': {'url': url},
+        'object': {'url': obj_url},
         'author': self.user_to_actor(liker),
         })
 

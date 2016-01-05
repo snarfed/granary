@@ -376,7 +376,7 @@ FAVORITE_EVENT = {  # Twitter
 }
 LIKE_OBJ = {  # ActivityStreams
   'id': tag_uri('100_favorited_by_789'),
-  'url': 'https://twitter.com/snarfed_org/status/100',
+  'url': 'https://twitter.com/snarfed_org/status/100#favorited-by-789',
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
@@ -421,7 +421,7 @@ FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
 """
 LIKES_FROM_HTML = [{  # ActivityStreams
   'id': tag_uri('100_favorited_by_353'),
-  'url': 'https://twitter.com/snarfed_org/status/100',
+  'url': 'https://twitter.com/snarfed_org/status/100#favorited-by-353',
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
