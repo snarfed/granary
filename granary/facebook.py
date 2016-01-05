@@ -1024,7 +1024,7 @@ class Facebook(source.Source):
     if isinstance(likes, dict):
       obj['tags'] += [self.postprocess_object({
           'id': '%s_liked_by_%s' % (obj['id'], like.get('id')),
-          'url': url,
+          'url': url + '#liked-by-%s' % like.get('id'),
           'objectType': 'activity',
           'verb': 'like',
           'object': {'url': url},

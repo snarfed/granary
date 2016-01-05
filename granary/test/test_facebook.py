@@ -331,7 +331,7 @@ COMMENT_OBJS = [  # ActivityStreams
 ]
 LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('10100176064482163_liked_by_100004'),
-    'url': 'https://www.facebook.com/212038/posts/10100176064482163',
+    'url': 'https://www.facebook.com/212038/posts/10100176064482163#liked-by-100004',
     'objectType': 'activity',
     'verb': 'like',
     'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
@@ -345,7 +345,7 @@ LIKE_OBJS = [{  # ActivityStreams
       },
     }, {
     'id': tag_uri('10100176064482163_liked_by_683713'),
-    'url': 'https://www.facebook.com/212038/posts/10100176064482163',
+    'url': 'https://www.facebook.com/212038/posts/10100176064482163#liked-by-683713',
     'objectType': 'activity',
     'verb': 'like',
     'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
@@ -503,7 +503,7 @@ PHOTO_OBJ = {  # ActivityStreams
   },
   'tags':[{
     'id': tag_uri('222_liked_by_666'),
-    'url': 'https://www.facebook.com/212038/posts/222',
+    'url': 'https://www.facebook.com/212038/posts/222#liked-by-666',
     'object': {'url': 'https://www.facebook.com/212038/posts/222'},
     'objectType': 'activity',
     'verb': 'like',
