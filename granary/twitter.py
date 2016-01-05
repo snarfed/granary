@@ -667,8 +667,8 @@ class Twitter(source.Source):
           image_urls = image_urls[:MAX_MEDIA]
           logging.warning('Found %d photos! Only using the first %d: %r',
                           num_image_urls, MAX_MEDIA, image_urls)
-        preview_content += '\n'.join(
-          '<br /><br /><img src="%s" />' % url for url in image_urls)
+        preview_content += '<br /><br />' + ' &nbsp; '.join(
+          '<img src="%s" />' % url for url in image_urls)
         if not preview:
           data['media_ids'] = ','.join(self.upload_media(image_urls))
 
