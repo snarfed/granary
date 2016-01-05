@@ -88,7 +88,7 @@ PLUSONER = {  # Google+
   }
 LIKE = {  # ActivityStreams
   'id': tag_uri('001_liked_by_222'),
-  'url': 'http://plus.google.com/001',
+  'url': 'http://plus.google.com/001#liked-by-222',
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'http://plus.google.com/001'},
@@ -109,7 +109,7 @@ RESHARER = {  # Google+
   }
 SHARE = {  # ActivityStreams
   'id': tag_uri('001_shared_by_444'),
-  'url': 'http://plus.google.com/001',
+  'url': 'http://plus.google.com/001#shared-by-444',
   'objectType': 'activity',
   'verb': 'share',
   'object': {'url': 'http://plus.google.com/001'},

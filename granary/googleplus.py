@@ -288,7 +288,7 @@ class GooglePlus(source.Source):
             'id': self.tag_uri('%s_%sd_by_%s' % (id, verb, person_id)),
             'objectType': 'activity',
             'verb': verb,
-            'url': obj.get('url'),
+            'url': obj.get('url') + '#%sd-by-%s' % (verb, person_id),
             'object': {'url': obj.get('url')},
             'author': person,
             }))
