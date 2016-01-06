@@ -297,3 +297,23 @@ foo
   def test_json_to_html_no_properties_or_type(self):
     # just check that we don't crash
     microformats2.json_to_html({'x': 'y'})
+
+  def test_json_to_object_with_location(self):
+    obj = microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'location': [{
+          'type': ['h-geo'],
+          'properties': {
+            'latitude': ['50.820641'],
+            'longitude': ['-0.149522'],
+          }
+        }],
+      },
+    })
+    self.assertEquals({
+      'position': '+50.820641-000.149522/',
+      'latitude': 50.820641,
+      'longitude': -0.149522,
+      'objectType': 'place',
+    }, obj.get('location'))
