@@ -6,6 +6,7 @@ Microformats2 specs: http://microformats.org/wiki/microformats2
 from collections import deque
 import copy
 import itertools
+import logging
 import urlparse
 import string
 import re
@@ -245,6 +246,7 @@ def json_to_object(mf2):
     ('h-as-article', 'article'),
     ('h-as-note', 'note'),
     ('h-as-location', 'location'),
+    ('h-geo', 'location'),
     ('h-card', 'person'),
   ]
 
@@ -292,6 +294,17 @@ def json_to_object(mf2):
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     'tags': [json_to_object(cat) for cat in props.get('category', [])],
   }
+
+  lat, lng = prop.get('latitude'), prop.get('longitude')
+  if lat and lng:
+    try:
+      lat, lng = float(lat), float(lng)
+      # 2 leading places for latitude, 3 for longitude
+      obj['position'] = '%0+10.6f%0+11.6f/' % (lat, lng)
+      obj['latitude'], obj['longitude'] = lat, lng
+    except ValueError:
+      logging.warn(
+        'Could not convert latitude/longitude (%s, %s) to decimal', lat, lng)
 
   if as_type == 'activity':
     objects = []
