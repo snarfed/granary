@@ -130,9 +130,11 @@ class Flickr(source.Source):
     link_text = '(Originally published at: %s)' % obj.get('url')
 
     if obj.get('image') and type in ('note', 'article'):
-      image_url = obj.get('image').get('url')
+      image_url = util.get_first(obj, 'image').get('url')
       name = obj.get('displayName')
       people = self._get_person_tags(obj)
+      lat = obj.get('location', {}).get('latitude')
+      lng = obj.get('location', {}).get('longitude')
 
       # if name does not represent an explicit title, then we'll just
       # use it as the title and wipe out the content
@@ -154,6 +156,8 @@ class Flickr(source.Source):
             ('<a href="%s">%s</a>' % (
               p.get('url'), p.get('displayName') or 'User %s' % p.get('id'))
              for p in people))
+        if lat and lng:
+          preview_content += '<div> at <a href="https://maps.google.com/maps?q=%s,%s">%s, %s</a></div>' % (lat, lng, lat, lng)
         preview_content += '<img src="%s" />' % image_url
         return source.creation_result(
           content=preview_content, description='post')
@@ -175,6 +179,14 @@ class Flickr(source.Source):
         self.call_api_method('flickr.photos.people.add', {
           'photo_id': photo_id,
           'user_id': person_id,
+        })
+
+      # add location
+      if lat and lng:
+        self.call_api_method('flickr.photos.geo.setLocation', {
+            'photo_id': photo_id,
+            'lat': lat,
+            'lon': lng,
         })
 
       return source.creation_result(resp)
@@ -511,6 +523,18 @@ class Flickr(source.Source):
         'displayName': tag.strip(),
       } for tag in photo.get('tags').split(' ') if tag.strip()]
 
+    # location is represented differently in a list of photos vs a
+    # single photo info
+    lat = photo.get('latitude') or photo.get('location', {}).get('latitude')
+    lng = photo.get('longitude') or photo.get('location', {}).get('longitude')
+    if lat and lng and float(lat) != 0 and float(lng) != 0:
+      activity['object']['location'] = {
+        'objectType': 'place',
+        'latitude': float(lat),
+        'longitude': float(lng),
+      }
+
+    self.postprocess_object(activity['object'])
     self.postprocess_activity(activity)
     return activity
 

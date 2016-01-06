@@ -248,7 +248,7 @@ PHOTO_INFO = {
   'stat': 'ok'
 }
 
-# single PHOTO_INFO response convertd to ActivityStreams
+# single PHOTO_INFO response converted to ActivityStreams
 ACTIVITY = {
   'verb': 'post',
   'actor': {'numeric_id': '39216764@N00'},
@@ -275,6 +275,12 @@ ACTIVITY = {
       'id': 'tag:flickr.com:4942564-5227922370-22730',
       'objectType': 'hashtag'
     }],
+    'location': {
+      'latitude': 33.746288,
+      'longitude': -116.712441,
+      'position': '+33.746288-116.712441/',
+      'objectType': 'place',
+    },
     'to': [{'objectType': 'group', 'alias': '@public'}],
     'objectType': 'photo',
   },
@@ -563,16 +569,17 @@ PROFILE_HTML = """
 
 # an AS photo post with person tags
 OBJECT = {
-  'image': {
+  # microformats2 returns images as lists now
+  'image': [{
     'url': 'https://jeena.net/photos/IMG_20150729_181700.jpg',
-  },
+  }],
   'url': 'https://jeena.net/photos/164',
   'content': 'First Homebrew Website Club in Gothenburg #IndieWeb',
   'updated': '2015-07-29T17:14:34+0000',
   'author': {
-    'image': {
+    'image': [{
       'url': 'https://jeena.net/avatar.jpg',
-    },
+    }],
     'url': 'https://jeena.net/',
     'displayName': 'Jeena',
     'objectType': 'person',
@@ -589,6 +596,11 @@ OBJECT = {
     'displayName': 'Jeena',
     'objectType': 'person',
   }],
+  'location': {
+    'objectType': 'place',
+    'latitude': 57.7020124,
+    'longitude': 11.6135007,
+  },
   'published': '2015-07-29T17:14:34+0000',
   'displayName': 'Photo #164',
   'objectType': 'note',
@@ -601,7 +613,7 @@ REPLY_OBJ = {
   'displayName': 'punkins!',
   'author': {
     'url': 'https://kylewm.com',
-    'image': {'url': 'https://kylewm.com/static/img/users/kyle.jpg'},
+    'image': [{'url': 'https://kylewm.com/static/img/users/kyle.jpg'}],
     'displayName': 'Kyle Mahan', 'objectType': 'person',
   },
   'url': 'https://kylewm.com/2015/11/punkins',
@@ -617,7 +629,7 @@ LIKE_OBJ = {
   }],
   'author': {
     'url': 'https://kylewm.com',
-    'image': {'url': 'https://kylewm.com/static/img/users/kyle.jpg'},
+    'image': [{'url': 'https://kylewm.com/static/img/users/kyle.jpg'}],
     'displayName': 'Kyle Mahan', 'objectType': 'person',
   },
   'url': 'https://kylewm.com/2015/11/like-of-alber',
@@ -840,6 +852,7 @@ class FlickrTest(testutil.TestCase):
     self.assertIn(
       '<a href="https://flickr.com/photos/382@123/">Jeena</a>',
       preview.content)
+    self.assertIn('57.7020124, 11.6135007', preview.content)
 
   def test_create_photo_success(self):
     """Check that successfully uploading an image returns the expected
@@ -884,8 +897,13 @@ class FlickrTest(testutil.TestCase):
     for user_id in ['123@1', '382@123', '456@4']:
       self.expect_call_api_method(
         'flickr.photos.people.add', {'photo_id': '9876', 'user_id': user_id},
-        '{"stat": "ok"}'
-      )
+        '{"stat": "ok"}')
+
+    # add location
+    self.expect_call_api_method(
+      'flickr.photos.geo.setLocation', {
+        'photo_id': '9876', 'lat': 57.7020124, 'lon': 11.6135007
+      }, '{"stat": "ok"}')
 
     self.mox.ReplayAll()
     self.assertEquals({
