@@ -440,7 +440,7 @@ class Source(object):
       lon = loc.get('longitude')
       if lat and lon and not loc.get('position'):
         # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-        loc['position'] = '%+f%+f/' % (lat, lon)
+        loc['position'] = '%0+10.6f%0+11.6f/' % (lat, lon)
 
     return util.trim_nulls(obj)
 

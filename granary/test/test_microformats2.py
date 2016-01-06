@@ -312,7 +312,6 @@ foo
       },
     })
     self.assertEquals({
-      'position': '+50.820641-000.149522/',
       'latitude': 50.820641,
       'longitude': -0.149522,
       'objectType': 'place',
