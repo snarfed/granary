@@ -145,8 +145,8 @@ OBJECT = {  # ActivityStreams
     'displayName': 'Carcassonne, Aude',
     'id': '31cb9e7ed29dbe52',
     'url': 'https://maps.google.com/maps?q=32.4004416,-98.9852672',
-    },
-  'to':[{'objectType':'group', 'alias':'@public'}],
+  },
+  'to': [{'objectType': 'group', 'alias': '@public'}],
   'tags': [{
       'objectType': 'person',
       'id': tag_uri('foo'),
@@ -1464,6 +1464,54 @@ class TwitterTest(testutil.TestCase):
 
     result = self.twitter.preview_create(obj, include_link=False)
     self.assertIn('instagram.com/p/9XVBIRA9cj</a>\n\nSocial Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.', result.content)
+
+  def test_create_tweet_with_location(self):
+    obj = microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'author': [{
+          'type': ['h-card'],
+          'properties': {
+            'name': ['Kyle Mahan'],
+            'photo': ['https://kylewm.com/static/img/users/kyle.jpg'],
+            'url': ['https://kylewm.com'],
+          },
+          'value': 'Kyle Mahan',
+        }],
+        'location': [{
+          'type': ['h-card'],
+          'properties': {
+            'name': ['Timeless Coffee Roasters'],
+            'locality': ['Oakland'],
+            'region': ['California'],
+            'latitude': ['37.83'],
+            'longitude': ['-122.25'],
+            'url': ['https://kylewm.com/venues/timeless-coffee-roasters-oakland-california'],
+          },
+          'value': 'Timeless Coffee Roasters',
+        }],
+        'name': ['Checked in to Timeless Coffee Roasters'],
+        'url': ['https://kylewm.com/2015/11/checked-into-timeless-coffee-roasters'],
+        'uid': ['https://kylewm.com/2015/11/checked-into-timeless-coffee-roasters'],
+        'shortlink': ['https://kylewm.com/c/4e01'],
+        'published': ['2015-11-01T15:34:38-08:00'],
+        'content': [{
+            'html': '<p>Checked in to Timeless Coffee Roasters</p>',
+            'value': 'Checked in to Timeless Coffee Roasters',
+          }]
+      }
+    })
+
+    result = self.twitter.preview_create(obj, include_link=False)
+    self.assertIn('37.83, -122.25', result.content)
+
+    self.expect_urlopen(twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+      'status': 'Checked in to Timeless Coffee Roasters',
+      'lat': '37.83',
+      'long': '-122.25',
+    }), TWEET, data='')
+    self.mox.ReplayAll()
+    self.twitter.create(obj, include_link=False)
 
   def test_create_reply(self):
     # tuples: (content, in-reply-to url, expected tweet)

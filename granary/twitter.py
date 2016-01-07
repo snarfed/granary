@@ -549,6 +549,8 @@ class Twitter(source.Source):
 
     is_reply = type == 'comment' or 'inReplyTo' in obj
     has_picture = obj.get('image') and (type in ('note', 'article') or is_reply)
+    lat = obj.get('location', {}).get('latitude')
+    lng = obj.get('location', {}).get('longitude')
 
     # prefer displayName over content for articles
     type = obj.get('objectType')
@@ -671,6 +673,13 @@ class Twitter(source.Source):
           '<img src="%s" />' % url for url in image_urls)
         if not preview:
           data['media_ids'] = ','.join(self.upload_media(image_urls))
+
+      if lat and lng:
+        preview_content += (
+          '<div>at <a href="https://maps.google.com/maps?q=%s,%s">'
+          '%s, %s</a></div>' % (lat, lng, lat, lng))
+        data['lat'] = lat
+        data['long'] = lng
 
       if preview:
         return source.creation_result(content=preview_content, description=description)
