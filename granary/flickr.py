@@ -133,6 +133,8 @@ class Flickr(source.Source):
       image_url = util.get_first(obj, 'image').get('url')
       name = obj.get('displayName')
       people = self._get_person_tags(obj)
+      hashtags = [t.get('displayName') for t in obj.get('tags', [])
+                  if t.get('objectType') == 'hashtag' and t.get('displayName')]
       lat = obj.get('location', {}).get('latitude')
       lng = obj.get('location', {}).get('longitude')
 
@@ -151,6 +153,8 @@ class Flickr(source.Source):
           preview_content += '<h4>%s</h4>' % name
         if content:
           preview_content += '<div>%s</div>' % content
+        if hashtags:
+          preview_content += '<div> %s</div>' % ' '.join('#' + t for t in hashtags)
         if people:
           preview_content += '<div> with %s</div>' % ', '.join(
             ('<a href="%s">%s</a>' % (
@@ -174,6 +178,14 @@ class Flickr(source.Source):
         'type': 'post',
         'url': self.photo_url(self.path_alias() or self.user_id(), photo_id),
       })
+
+      # add regular tags
+      if hashtags:
+        self.call_api_method('flickr.photos.addTags', {
+          'photo_id': photo_id,
+          'tags': ','.join('"%s"' % t if ' ' in t else t for t in hashtags),
+        })
+
       # add person tags
       for person_id in sorted(p.get('id') for p in people):
         self.call_api_method('flickr.photos.people.add', {

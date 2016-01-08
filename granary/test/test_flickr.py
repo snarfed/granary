@@ -595,6 +595,12 @@ OBJECT = {
     'url': 'https://flickr.com/photos/382@123/',
     'displayName': 'Jeena',
     'objectType': 'person',
+  }, {
+    'displayName': 'indieweb',
+    'objectType': 'hashtag',
+  }, {
+    'displayName': 'homebrew website club',
+    'objectType': 'hashtag',
   }],
   'location': {
     'objectType': 'place',
@@ -852,6 +858,8 @@ class FlickrTest(testutil.TestCase):
     self.assertIn(
       '<a href="https://flickr.com/photos/382@123/">Jeena</a>',
       preview.content)
+    # hashtags
+    self.assertIn('#indieweb #homebrew website club', preview.content)
     self.assertIn('57.7020124, 11.6135007', preview.content)
 
   def test_create_photo_success(self):
@@ -892,6 +900,12 @@ class FlickrTest(testutil.TestCase):
       'flickr.people.getInfo', {'user_id': '39216764@N00'},
       json.dumps({'person': {'nsid': '39216764@N00',
                              'path_alias': 'kindofblue115'}}))
+
+    # add regular tags
+    self.expect_call_api_method('flickr.photos.addTags', {
+      'photo_id': '9876',
+      'tags': 'indieweb,"homebrew website club"',
+    }, '{"stat": "ok"}')
 
     # add person tags
     for user_id in ['123@1', '382@123', '456@4']:
