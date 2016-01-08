@@ -165,6 +165,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'location': [object_to_json(
         primary.get('location', {}), trim_nulls=False,
         default_object_type='place')],
+      'latitude': primary.get('latitude'),
+      'longitude': primary.get('longitude'),
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
                   for c in obj.get('replies', {}).get('items', [])],
     },
