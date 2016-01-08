@@ -171,6 +171,9 @@ class Flickr(source.Source):
         params.append(('title', name))
       if content:
         params.append(('description', content))
+      if hashtags:
+        params.append(
+          ('tags', ','.join('"%s"' % t if ' ' in t else t for t in hashtags)))
 
       resp = self.upload_photo(params, urllib2.urlopen(image_url))
       photo_id = resp.get('id')
@@ -178,13 +181,6 @@ class Flickr(source.Source):
         'type': 'post',
         'url': self.photo_url(self.path_alias() or self.user_id(), photo_id),
       })
-
-      # add regular tags
-      if hashtags:
-        self.call_api_method('flickr.photos.addTags', {
-          'photo_id': photo_id,
-          'tags': ','.join('"%s"' % t if ' ' in t else t for t in hashtags),
-        })
 
       # add person tags
       for person_id in sorted(p.get('id') for p in people):

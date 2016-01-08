@@ -870,6 +870,7 @@ class FlickrTest(testutil.TestCase):
       ('title', 'Photo #164'),
       ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'
        '\n\n(Originally published at: https://jeena.net/photos/164)'),
+      ('tags', 'indieweb,"homebrew website club"'),
     ] + IGNORED_OAUTH_PARAMS
 
     self._expect_lookup_users()
@@ -901,12 +902,6 @@ class FlickrTest(testutil.TestCase):
       json.dumps({'person': {'nsid': '39216764@N00',
                              'path_alias': 'kindofblue115'}}))
 
-    # add regular tags
-    self.expect_call_api_method('flickr.photos.addTags', {
-      'photo_id': '9876',
-      'tags': 'indieweb,"homebrew website club"',
-    }, '{"stat": "ok"}')
-
     # add person tags
     for user_id in ['123@1', '382@123', '456@4']:
       self.expect_call_api_method(
@@ -932,6 +927,7 @@ class FlickrTest(testutil.TestCase):
     data = [
       ('title', 'Photo #164'),
       ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'),
+      ('tags', 'indieweb,"homebrew website club"'),
     ] + IGNORED_OAUTH_PARAMS
 
     self._expect_lookup_users()
