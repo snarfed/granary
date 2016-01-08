@@ -293,7 +293,10 @@ def json_to_object(mf2):
     'image': [{'url': url} for url in photos],
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
-    'tags': [json_to_object(cat) for cat in props.get('category', [])],
+    'tags': [{'objectType': 'hashtag', 'displayName': cat}
+             if isinstance(cat, basestring)
+             else json_to_object(cat)
+             for cat in props.get('category', [])],
   }
 
   lat, lng = prop.get('latitude'), prop.get('longitude')

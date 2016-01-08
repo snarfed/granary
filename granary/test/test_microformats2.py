@@ -316,3 +316,36 @@ foo
       'longitude': -0.149522,
       'objectType': 'place',
     }, obj.get('location'))
+
+  def test_json_to_object_with_categories(self):
+    obj = microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'category': [
+          {
+            'type': ['h-card'],
+            'properties': {
+              'name': ['Kyle Mahan'],
+              'url': ['https://kylewm.com'],
+            },
+          },
+          'cats',
+          'indieweb']
+      },
+    })
+
+    self.assertEquals([
+      {
+        'objectType': 'person',
+        'displayName': 'Kyle Mahan',
+        'url': 'https://kylewm.com',
+      },
+      {
+        'objectType': 'hashtag',
+        'displayName': 'cats',
+      },
+      {
+        'objectType': 'hashtag',
+        'displayName': 'indieweb',
+      },
+    ], obj.get('tags'))
