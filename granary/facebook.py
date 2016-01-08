@@ -244,8 +244,10 @@ class Facebook(source.Source):
         ids_to_try = [activity_id, suffix]
         if user_id:
           ids_to_try.insert(1, '_'.join((user_id, suffix)))
-      else:
+      elif user_id:
         ids_to_try = ['_'.join((user_id, activity_id)), activity_id]
+      else:
+        ids_to_try = [activity_id]
 
       post = {}
       for id in ids_to_try:
