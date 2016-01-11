@@ -90,7 +90,7 @@ def get_text(val):
 
 
 def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
-                   default_object_type=None):
+                   default_object_type=None, synthesize_content=True):
   """Converts an ActivityStreams object to microformats2 JSON.
 
   Args:
@@ -101,6 +101,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'h-entry'
     default_object_type: string, the ActivityStreams objectType to use if one
       is not present. defaults to None
+    synthesize_content: whether to generate synthetic content if the object
+      doesn't have its own, e.g. 'likes this.' or 'shared this.'
 
   Returns: dict, decoded microformats2 JSON
   """
@@ -157,7 +159,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'content': [{
           'value': xml.sax.saxutils.unescape(primary.get('content', '')),
-          'html': render_content(primary, include_location=False),
+          'html': render_content(primary, include_location=False,
+                                 synthesize_content=synthesize_content),
       }],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
       'author': [object_to_json(
@@ -366,7 +369,7 @@ def activities_to_html(activities):
   """ % '\n'.join(object_to_html(a) for a in activities)
 
 
-def object_to_html(obj, parent_props=[]):
+def object_to_html(obj, parent_props=[], synthesize_content=True):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
@@ -379,12 +382,15 @@ def object_to_html(obj, parent_props=[]):
     obj: dict, a decoded JSON ActivityStreams object
     parent_props: list of strings, the properties of the parent object where
       this object is embedded, e.g. ['u-repost-of']
+    synthesize_content: whether to generate synthetic content if the object
+      doesn't have its own, e.g. 'likes this.' or 'shared this.'
 
   Returns: string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
-  return json_to_html(object_to_json(obj), parent_props)
+  return json_to_html(object_to_json(obj, synthesize_content=synthesize_content),
+                      parent_props)
 
 
 def json_to_html(obj, parent_props=[]):
@@ -530,7 +536,7 @@ def hcard_to_html(hcard, parent_props=[]):
     linked_name=maybe_linked_name(hcard['properties']))
 
 
-def render_content(obj, include_location=True):
+def render_content(obj, include_location=True, synthesize_content=True):
   """Renders the content of an ActivityStreams object.
 
   Includes tags, mentions, and attachments.
@@ -538,6 +544,8 @@ def render_content(obj, include_location=True):
   Args:
     obj: decoded JSON ActivityStreams object
     include_location: whether to render location, if provided
+    synthesize_content: whether to generate synthetic content if the object
+      doesn't have its own, e.g. 'likes this.' or 'shared this.'
 
   Returns: string, rendered HTML
   """
@@ -617,7 +625,8 @@ def render_content(obj, include_location=True):
   # of its own
   for as_type, verb in [('share', 'Shared'), ('like', 'Likes')]:
     obj_type = source.object_type(obj)
-    if obj_type != as_type or 'object' not in obj or 'content' in obj:
+    if (not synthesize_content or obj_type != as_type or 'object' not in obj or
+        'content' in obj):
       continue
 
     targets = util.get_list(obj, 'object')
@@ -646,7 +655,8 @@ def render_content(obj, include_location=True):
             target.get('displayName', target.get('title', 'a post')),
             hcard_to_html(object_to_json(author, default_object_type='person')),
           )
-        content += render_content(target)
+        content += render_content(target, include_location=include_location,
+                                  synthesize_content=synthesize_content)
       # only include the first context in the content (if there are
       # others, they'll be included as separate properties)
       break

@@ -206,6 +206,22 @@ foo
         }
       }))
 
+  def test_render_content_synthesize_content(self):
+    for verb, phrase in ('like', 'likes'), ('share', 'shared'):
+      obj = {
+        'verb': verb,
+        'object': {'url': 'http://orig/post'},
+      }
+      self.assert_equals('<a href="http://orig/post">%s this.</a>' % phrase,
+                         microformats2.render_content(obj, synthesize_content=True))
+      self.assert_equals('',
+                         microformats2.render_content(obj, synthesize_content=False))
+
+      obj['content'] = 'Message from actor'
+      for val in False, True:
+        self.assert_equals(obj['content'],
+                           microformats2.render_content(obj, synthesize_content=val))
+
   def test_escape_html_attribute_values(self):
     self.assert_equals("""\
 <article class="h-entry">
