@@ -1,4 +1,8 @@
-|Granary logo|
+.. image:: https://raw.github.com/snarfed/granary/master/static/granary_logo_128.png
+   :target: https://github.com/snarfed/granary
+.. image:: https://circleci.com/gh/snarfed/granary.svg?style=svg
+   :target: https://circleci.com/gh/snarfed/granary
+
 
 Granary is a library and REST API that fetches and converts social network
 data between a wide variety of formats:
@@ -71,6 +75,3 @@ people they follow. Here's the JSON output:
     }
 
 `Check out the docs for more! <https://github.com/snarfed/granary>`__
-
-
-.. |Granary logo| image:: https://raw.github.com/snarfed/granary/master/static/granary_logo_128.png

@@ -255,6 +255,62 @@ Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
 similar "polyglot" approach, but more focused on writing than reading.
 
 
+Changes
+---
+
+#### 1.2.0 - 2016-01-11
+* Improve original post discovery algorithm. ([bridgy #51](https://github.com/snarfed/bridgy/issues/51))
+* Flickr tweaks. ([bridgy #466](https://github.com/snarfed/bridgy/issues/466))
+* Add mf2, activitystreams, atom, and search to interactive UI. ([#31](https://github.com/snarfed/granary/issues/31), [#29](https://github.com/snarfed/granary/issues/29))
+* Improved post type discovery (using mf2util).
+* Extract user web site links from all fields in profile (e.g. description/bio).
+* Add fabricated fragments to comment/like permalinks (e.g. #liked-by-user123) so that object urls are always unique (multiple silos).
+* Improve formatting/whitespace support in create/preview (multiple silos).
+* Google+:
+  * Add search.
+* Facebook:
+  * Fetch more things in get_activities: photos, events, RSVPs.
+  * Support person tags in create/preview.
+  * Prevent facebook from automatically consolidating photo posts by uploading photos to "Timeline Photos" album.
+  * Include title in create/preview.
+  * Improve object id parsing/resolving.
+  * Improve tag handling.
+  * Bug fix for fetching nested comments.
+  * Misc improvements, API error/flakiness handling.
+* Flickr:
+  * Create/preview support for photos, comments, favorites, tags, person tags, location.
+* Twitter:
+  * Create/preview support for location, multiple photos.
+  * Fetch quote tweets.
+  * Fetching user mentions improvements, bug fixes.
+  * Fix embeds.
+  * Misc AS conversion improvements.
+* microformats2:
+  * Improve like and repost rendering.
+* Misc bug fixes.
+* Set up CircleCI.
+
+#### 1.1.0 - 2015-09-06
+* Add Flickr.
+* Facebook:
+  * Fetch multiple id formats, e.g. with and without USERID_ prefix.
+  * Support threaded comments.
+  * Switch from /posts API endpoint to /feed.
+* Google+:
+  * Support converting plus.google.com HTML to ActivityStreams.
+* Instagram:
+  * Support location.
+* Improve original post discovery algorithm.
+* New logo.
+
+#### 1.0.1 - 2015-07-11
+* Bug fix for atom template rendering.
+* Facebook, Instagram: support access_token parameter.
+
+#### 1.0 - 2015-07-10
+* Initial PyPi release.
+
+
 TODO
 ---
 * https kwarg to get_activities() etc that converts all http links to https
