@@ -92,6 +92,7 @@ API_SHARES = 'sharedposts?ids=%s'
 API_USER_RSVPS = 'me/events'
 API_USER_RSVPS_DECLINED = 'me/events/declined'
 API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
+API_NEWS_PUBLISHES = 'me/news.publishes'
 
 API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
                       'parent')
@@ -283,6 +284,7 @@ class Facebook(source.Source):
         # TODO: use batch API to get photos, events, etc in one request
         # https://developers.facebook.com/docs/graph-api/making-multiple-requests
         # https://github.com/snarfed/bridgy/issues/44
+        posts.extend(self.urlopen(API_NEWS_PUBLISHES).get('data', []))
         posts = self._merge_photos(posts)
         if fetch_events:
           activities.extend(self._get_events(owner_id=event_owner_id))
