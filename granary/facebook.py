@@ -200,7 +200,7 @@ class Facebook(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
                               fetch_mentions=False, search_query=None,
-                              event_owner_id=None):
+                              fetch_news=False, event_owner_id=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
@@ -217,11 +217,13 @@ class Facebook(source.Source):
     https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
 
     Additional args:
+      fetch_news: boolean, whether to also fetch and include Open Graph news
+        stories (/USER/news.publishes). Requires the user_actions.news
+        permission. Background in https://github.com/snarfed/bridgy/issues/479
       event_owner_id: string. if provided, only events owned by this user id
         will be returned. avoids (but doesn't entirely prevent) processing big
         non-indieweb events with tons of attendees that put us over app engine's
-        instance memory limit. details:
-        https://github.com/snarfed/bridgy/issues/77
+        instance memory limit. https://github.com/snarfed/bridgy/issues/77
     """
     if search_query:
       raise NotImplementedError()
@@ -284,7 +286,8 @@ class Facebook(source.Source):
         # TODO: use batch API to get photos, events, etc in one request
         # https://developers.facebook.com/docs/graph-api/making-multiple-requests
         # https://github.com/snarfed/bridgy/issues/44
-        posts.extend(self.urlopen(API_NEWS_PUBLISHES).get('data', []))
+        if fetch_news:
+          posts.extend(self.urlopen(API_NEWS_PUBLISHES).get('data', []))
         posts = self._merge_photos(posts)
         if fetch_events:
           activities.extend(self._get_events(owner_id=event_owner_id))
