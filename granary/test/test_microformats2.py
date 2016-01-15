@@ -291,6 +291,38 @@ foo
       },
     }, microformats2.object_to_json(obj))
 
+  def test_attachments_to_children(self):
+    obj = {'attachments': [
+      {'objectType': 'note', 'url': 'http://p', 'displayName': 'p'},
+      {'objectType': 'x', 'url': 'http://x'},
+      {'objectType': 'article', 'url': 'http://a'},
+    ]}
+
+    self.assert_equals([{
+      'type': ['h-cite', 'h-as-note'],
+      'properties': {'url': ['http://p'], 'name': ['p']},
+    }, {
+      'type': ['h-cite', 'h-as-article'],
+      'properties': {'url': ['http://a']},
+    }], microformats2.object_to_json(obj)['children'])
+
+    html = microformats2.object_to_html(obj)
+    squeezed = '\n'.join(l.strip() for l in html.splitlines(True) if l.strip())
+    self.assertIn("""\
+<article class="h-cite h-as-note">
+<span class="p-uid"></span>
+<a class="p-name u-url" href="http://p">p</a>
+<div class="">
+</div>
+</article>
+<article class="h-cite h-as-article">
+<span class="p-uid"></span>
+<a class="u-url" href="http://a">http://a</a>
+<div class="">
+</div>
+</article>
+""", squeezed, squeezed)
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),

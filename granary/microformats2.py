@@ -34,7 +34,7 @@ $photo
 $location
 $people
 $in_reply_tos
-$likes_and_reposts
+$children
 $comments
 </article>
 """)
@@ -436,17 +436,17 @@ def json_to_html(obj, parent_props=[]):
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
 
-  # if this post is itself a like or repost, link to its target(s).
-  likes_and_reposts = []
+  children = []
 
+  # if this post is itself a like or repost, link to its target(s).
   for mftype in ['like', 'repost']:
     # having like-of or repost-of makes this a like or repost.
     for target in props.get(mftype + '-of', []):
       if isinstance(target, basestring):
-        likes_and_reposts.append('<a class="u-%s u-%s-of" href="%s"></a>' % (
+        children.append('<a class="u-%s u-%s-of" href="%s"></a>' % (
           mftype, mftype, target))
       else:
-        likes_and_reposts.append(json_to_html(
+        children.append(json_to_html(
           target, ['u-' + mftype, 'u-' + mftype + '-of']))
 
   # set up content and name
@@ -486,10 +486,10 @@ def json_to_html(obj, parent_props=[]):
     if verb + '-of' not in props:
       vals = props.get(verb, [])
       if vals and isinstance(vals[0], dict):
-        likes_and_reposts += [json_to_html(v, ['u-' + verb]) for v in vals]
+        children += [json_to_html(v, ['u-' + verb]) for v in vals]
 
   # embedded children of this post
-  likes_and_reposts += [json_to_html(c) for c in obj.get('children', [])]
+  children += [json_to_html(c) for c in obj.get('children', [])]
 
   return HENTRY.substitute(
     prop,
@@ -507,7 +507,7 @@ def json_to_html(obj, parent_props=[]):
     content=content_html,
     content_classes=' '.join(content_classes),
     comments=comments_html,
-    likes_and_reposts='\n'.join(likes_and_reposts),
+    children='\n'.join(children),
     linked_name=maybe_linked_name(props),
     summary=summary)
 
