@@ -6,14 +6,15 @@ granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](ht
 [chaff](https://en.wikipedia.org/wiki/Chaff) and expose the sweet social
 data foodstuff inside in standard formats and protocols!
 
-  * [About](#about)
-  * [Using](#using)
-    * [Using the REST API](#using-the-REST-API)
-    * [Using the library](#using-the-library)
-  * [Troubleshooting/FAQ](#troubleshootingfaq)
-  * [Future work](#future-work)
-  * [Development](#development)
-  * [Related work](#related-work)
+* [About](#about)
+* [Using](#using)
+  * [Using the REST API](#using-the-REST-API)
+  * [Using the library](#using-the-library)
+* [Troubleshooting/FAQ](#troubleshootingfaq)
+* [Future work](#future-work)
+* [Development](#development)
+* [Related work](#related-work)
+* [Changes](#changes)
 
 
 About
