@@ -190,8 +190,7 @@ To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-at
 ```shell
 #!/bin/tcsh
 foreach s (facebook twitter instagram)
-  cd ~/src/$s-atom/activitystreams && git pull && \
-    cd .. && ~/google_appengine/appcfg.py update .
+  cd ~/src/$s-atom && ~/google_appengine/appcfg.py update .
 end
 ```
 
