@@ -42,6 +42,11 @@
   </div>
 {% endif %}
 {{ obj.rendered_content|safe }}
+{% for child in obj.rendered_children %}
+<blockquote>
+{{ child|safe }}
+</blockquote>
+{% endfor %}
   </div>
   </content>
 

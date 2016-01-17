@@ -307,21 +307,27 @@ foo
     }], microformats2.object_to_json(obj)['children'])
 
     html = microformats2.object_to_html(obj)
-    squeezed = '\n'.join(l.strip() for l in html.splitlines(True) if l.strip())
-    self.assertIn("""\
+    self.assert_multiline_in("""\
 <article class="h-cite h-as-note">
 <span class="p-uid"></span>
+
 <a class="p-name u-url" href="http://p">p</a>
 <div class="">
+
 </div>
+
 </article>
+
 <article class="h-cite h-as-article">
 <span class="p-uid"></span>
+
 <a class="u-url" href="http://a">http://a</a>
 <div class="">
+
 </div>
+
 </article>
-""", squeezed, squeezed)
+""", html)
 
   def test_get_string_urls(self):
     for expected, objs in (

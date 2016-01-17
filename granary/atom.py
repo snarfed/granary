@@ -71,6 +71,10 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     for att in primary.get('attachments', []):
       att['image'] = util.get_list(att, 'image')
 
+    obj['rendered_children'] = [
+      microformats2.render_content(att) for att in primary.get('attachments', [])
+      if att.get('objectType') in ('note', 'article')]
+
   # Emulate Django template behavior that returns a special default value that
   # can continue to be referenced when an attribute or item lookup fails. Helps
   # avoid conditionals in the template itself.

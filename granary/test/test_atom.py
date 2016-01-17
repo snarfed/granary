@@ -27,28 +27,29 @@ class AtomTest(testutil.HandlerTest):
           ))
 
   def test_title(self):
-    self.assertIn('\n<title>my title</title>',
-        atom.activities_to_atom([copy.deepcopy(test_facebook.ACTIVITY)],
-                                test_facebook.ACTOR,
-                                title='my title'))
+    self.assert_multiline_in(
+      '\n<title>my title</title>',
+      atom.activities_to_atom([copy.deepcopy(test_facebook.ACTIVITY)],
+                              test_facebook.ACTOR, title='my title'))
 
   def test_strip_html_tags_from_titles(self):
     activity = copy.deepcopy(test_facebook.ACTIVITY)
     activity['displayName'] = '<p>foo &amp; <a href="http://bar">bar</a></p>'
-    self.assertIn('<title>foo &amp; bar</title>\n',
-                  atom.activities_to_atom([activity], test_facebook.ACTOR))
+    self.assert_multiline_in(
+      '<title>foo &amp; bar</title>\n',
+      atom.activities_to_atom([activity], test_facebook.ACTOR))
 
 
   def test_render_content_as_html(self):
-    self.assertIn('<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> ',
-        atom.activities_to_atom([copy.deepcopy(test_twitter.ACTIVITY)],
-                                test_twitter.ACTOR,
-                                title='my title'))
+    self.assert_multiline_in(
+      '<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> ',
+      atom.activities_to_atom([copy.deepcopy(test_twitter.ACTIVITY)],
+                              test_twitter.ACTOR, title='my title'))
 
   def test_render_with_image(self):
     """Attached images are rendered inline as HTML
     """
-    self.assertIn(
+    self.assert_multiline_in(
       '<img class="thumbnail" src="http://attach/image/big"',
       atom.activities_to_atom([copy.deepcopy(test_instagram.ACTIVITY)],
                               test_instagram.ACTOR,
@@ -59,7 +60,7 @@ class AtomTest(testutil.HandlerTest):
     """
     activity = copy.deepcopy(test_instagram.ACTIVITY)
     del activity['object']['content']
-    self.assertIn(
+    self.assert_multiline_in(
       '<img class="thumbnail" src="http://attach/image/big"',
       atom.activities_to_atom([activity], test_instagram.ACTOR,
                               title='my title'))
@@ -69,7 +70,7 @@ class AtomTest(testutil.HandlerTest):
     activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}
 
     out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
-    self.assertIn('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
+    self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
 
   def test_updated_defaults_to_published(self):
@@ -79,14 +80,14 @@ class AtomTest(testutil.HandlerTest):
     ]
 
     out = atom.activities_to_atom(activities, test_twitter.ACTOR, title='my title')
-    self.assertIn('<updated>2014-12-27T17:25:55+00:00</updated>', out)
+    self.assert_multiline_in('<updated>2014-12-27T17:25:55+00:00</updated>', out)
 
   def test_escape_urls(self):
     url = 'http://foo/bar?baz&baj'
     activity = {'url': url, 'object': {}}
 
     out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
-    self.assertIn('<id>http://foo/bar?baz&amp;baj</id>', out)
+    self.assert_multiline_in('<id>http://foo/bar?baz&amp;baj</id>', out)
     self.assertNotIn(url, out)
 
   def test_object_only(self):
@@ -105,5 +106,21 @@ class AtomTest(testutil.HandlerTest):
         '<link rel="self" type="application/atom+xml" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
         '<uri>http://voxpelli.com/</uri>',
         ):
-      self.assertIn(expected, out)
+      self.assert_multiline_in(expected, out)
 
+  def test_attachments(self):
+    got = atom.activities_to_atom([{'object': {'attachments': [
+      {'objectType': 'note', 'url': 'http://p', 'content': 'note content'},
+      {'objectType': 'x', 'url': 'http://x'},
+      {'objectType': 'article', 'url': 'http://a', 'content': 'article content'},
+    ]}}], None)
+    self.assert_multiline_in("""
+<blockquote>
+note content
+</blockquote>
+""", got)
+    self.assert_multiline_in("""
+<blockquote>
+article content
+</blockquote>
+""", got)

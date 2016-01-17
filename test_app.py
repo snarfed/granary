@@ -116,5 +116,5 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_int)
-    self.assertIn(ATOM_CONTENT % 'foo bar', resp.body)
-    self.assertIn(ATOM_CONTENT % 'baz baj', resp.body)
+    self.assert_multiline_in(ATOM_CONTENT % 'foo bar', resp.body)
+    self.assert_multiline_in(ATOM_CONTENT % 'baz baj', resp.body)
