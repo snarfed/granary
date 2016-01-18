@@ -842,10 +842,17 @@ class InstagramTest(testutil.HandlerTest):
     }))
 
   def test_user_to_actor_minimal(self):
-    self.assert_equals({'id': tag_uri('420973239'), 'username': None},
-                       self.instagram.user_to_actor({'id': '420973239'}))
-    self.assert_equals({'id': tag_uri('snarfed'), 'username': 'snarfed'},
-                       self.instagram.user_to_actor({'username': 'snarfed'}))
+    self.assert_equals({
+      'id': tag_uri('420973239'),
+      'username': None,
+      'objectType': 'person',
+    }, self.instagram.user_to_actor({'id': '420973239'}))
+
+    self.assert_equals({
+      'id': tag_uri('snarfed'),
+      'username': 'snarfed',
+      'objectType': 'person',
+    }, self.instagram.user_to_actor({'username': 'snarfed'}))
 
   def test_preview_like(self):
     # like obj doesn't have a url prior to publishing
