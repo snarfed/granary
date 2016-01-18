@@ -577,6 +577,14 @@ HTML_FEED_FOOTER = """
 </html>
 """
 
+HTML_VIEWER = {
+  'displayName': 'Ryan B',
+  'id': tag_uri('420973239'),
+  'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_a.jpg'},
+  'objectType': 'person',
+  'url': 'https://snarfed.org',
+  'username': 'snarfed',
+}
 HTML_ACTOR = {
   'displayName': 'Jerry C',
   'id': tag_uri('54861273'),
@@ -585,7 +593,6 @@ HTML_ACTOR = {
   'url': 'http://instagram.com/jc',
   'username': 'jc',
 }
-
 HTML_ACTIVITIES = [{  # ActivityStreams
   # Photo
   'verb': 'post',
@@ -977,4 +984,6 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_html_to_activities(self):
     html = HTML_FEED_HEADER + json.dumps(HTML_FEED_DATA) + HTML_FEED_FOOTER
-    self.assert_equals(HTML_ACTIVITIES, self.instagram.html_to_activities(html))
+    activities, viewer = self.instagram.html_to_activities(html)
+    self.assert_equals(HTML_ACTIVITIES, activities)
+    self.assert_equals(HTML_VIEWER, viewer)

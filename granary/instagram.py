@@ -548,7 +548,7 @@ class Instagram(source.Source):
       html: unicode string
 
     Returns:
-      list of ActivityStreams activity dicts
+      ([ActivityStreams activities], ActivityStreams viewer actor)
     """
     # extract JSON data blob
     script_start = '<script type="text/javascript">window._sharedData = '
@@ -599,4 +599,8 @@ class Instagram(source.Source):
         self.postprocess_object(activity['object'])
         activities.append(super(Instagram, self).postprocess_activity(activity))
 
-    return activities
+    viewer = data.get('config', {}).get('viewer', {})
+    viewer['profile_picture'] = viewer.get('profile_pic_url', '').replace('\/', '/')
+    viewer['website'] = viewer.get('external_url', '').replace('\/', '/')
+
+    return activities, self.user_to_actor(viewer)
