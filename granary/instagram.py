@@ -364,17 +364,21 @@ class Instagram(source.Source):
     """
     id = media.get('id')
 
+    user = media.get('user', {})
     object = {
       'id': self.tag_uri(id),
       # TODO: detect videos. (the type field is in the JSON respose but not
       # propagated into the Media object.)
       'objectType': OBJECT_TYPES.get(media.get('type', 'image'), 'photo'),
       'published': util.maybe_timestamp_to_rfc3339(media.get('created_time')),
-      'author': self.user_to_actor(media.get('user')),
+      'author': self.user_to_actor(user),
       'content': xml.sax.saxutils.escape(
         media.get('caption', {}).get('text', '')),
       'url': media.get('link'),
-      'to': [{'objectType': 'group', 'alias': '@public'}],
+      'to': [{
+        'objectType': 'group',
+        'alias': '@private' if user.get('is_private') else '@public',
+      }],
       'attachments': [{
         'objectType': 'video' if 'videos' in media else 'image',
         # ActivityStreams 2.0 allows image to be a JSON array.
@@ -498,6 +502,7 @@ class Instagram(source.Source):
     actor = {
       'id': self.tag_uri(id or username),
       'username': username,
+      'objectType': 'person',
     }
     if not id or not username:
       return actor
@@ -512,7 +517,6 @@ class Instagram(source.Source):
       actor['url'] = self.user_url(username)
 
     actor.update({
-      'objectType': 'person',
       'displayName': user.get('full_name') or username,
       'image': {'url': user.get('profile_picture')},
       'description': user.get('bio')
@@ -536,3 +540,63 @@ class Instagram(source.Source):
           base_obj['id'] = parsed[1].split('_')[0]
 
     return base_obj
+
+  def html_to_activities(self, html):
+    """Converts HTML from https://www.instagram.com/ to ActivityStreams activities.
+
+    Args:
+      html: unicode string
+
+    Returns:
+      list of ActivityStreams activity dicts
+    """
+    # extract JSON data blob
+    script_start = '<script type="text/javascript">window._sharedData = '
+    start = html.index(script_start) + len(script_start)
+    end = html.index(';</script>', start)
+    data = json.loads(html[start:end])
+
+    activities = []
+    for page in data.get('entry_data', {}).get('FeedPage', []):
+      for media in page.get('feed', {}).get('media', {}).get('nodes', []):
+        # preprocess to make its field names match the API's
+        dims = media.get('dimensions', {})
+        media.update({
+          'link': 'http://instagram.com/p/%s/' % media.get('code'),
+          'user': media.get('owner', {}),
+          'created_time': media.get('date'),
+          'caption': {'text': media.get('caption')},
+          'images': {'standard_resolution': {
+            'url': media.get('display_src').replace('\/', '/'),
+            'width': dims.get('width'),
+            'height': dims.get('height'),
+          }},
+          'users_in_photo': media.get('usertags', {}).get('nodes', []),
+        })
+
+        for obj in [media] + media['comments']['nodes'] + media['likes']['nodes']:
+          obj['user']['profile_picture'] = \
+            obj['user'].get('profile_pic_url', '').replace('\/', '/')
+
+        media['comments']['data'] = media['comments']['nodes']
+        for c in media['comments']['data']:
+          c['from'] = c['user']
+          c['created_time'] = c['created_at']
+        media['likes']['data'] = [l['user'] for l in media['likes']['nodes']]
+
+
+        if media.get('is_video'):
+          media.update({
+            'type': 'video',
+            'videos': {'standard_resolution': {
+              'url': media.get('video_url').replace('\/', '/'),
+              'width': dims.get('width'),
+              'height': dims.get('height'),
+            }},
+          })
+
+        activity = self.media_to_activity(util.trim_nulls(media))
+        self.postprocess_object(activity['object'])
+        activities.append(super(Instagram, self).postprocess_activity(activity))
+
+    return activities

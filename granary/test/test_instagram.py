@@ -423,6 +423,246 @@ this picture -&gt; is #abc #xyz
 </feed>
 """
 
+# HTML from https://www.instagram.com/
+# https://github.com/snarfed/granary/issues/65
+HTML_FEED_DATA = {
+  'environment_switcher_visible_server_guess': True,
+  'config': {
+    'csrf_token': '...',
+    'viewer': {
+      'external_url': 'https:\/\/snarfed.org',
+      'biography': None,
+      'id': '420973239',
+      'full_name': 'Ryan B',
+      'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
+      'has_profile_pic': True,
+      'username': 'snarfed',
+    }
+  },
+  'display_properties_server_guess': {'pixel_ratio': 2.0, 'viewport_width': 1280},
+  'qe': {'su': {'g': 'control', 'p': {'enabled': 'false'}}},
+  'hostname': 'www.instagram.com',
+  'platform': 'web',
+  'static_root': '\/\/instagramstatic-a.akamaihd.net\/bluebar\/cf5f70d',
+  'gatekeepers': {'sfbf': True, 'addpp': True, 'rhp': True, 'cpp': True},
+  'language_code': 'en',
+  'country_code': 'US',
+  'entry_data': {'FeedPage': [{
+    '__path': '\/',
+    'suggestedUsersList': None,
+    '__get_params': None,
+    '__query_string': '?',
+    'feed': {'media': {'nodes': [{
+
+      # Photo
+      'location': {
+        'name': 'RCA Studio B',
+        'id': '345924646',
+        'has_public_page': True
+      },
+      'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfp1\/t51.2885-15\/e35\/12545499_1662965520652470_1466520818_n.jpg',
+      'id': '123_456',
+      'is_video': False,
+      'owner': {
+        'is_private': False,
+        'id': '54861273',
+        'has_blocked_viewer': False,
+        'full_name': 'Jerry C',
+        'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+        'blocked_by_viewer': False,
+        'followed_by_viewer': True,
+        'requested_by_viewer': False,
+        'username': 'jc',
+      },
+      'likes': {
+        'nodes': [{
+          'user': {
+            'id': '8',
+            'profile_pic_url': 'http:\/\/alice\/picture',
+            'username': 'alizz',
+            'full_name': 'Alice',
+          }
+        }, {
+          'user': {
+            'id': '9',
+            'profile_pic_url': 'http:\/\/bob\/picture',
+            'username': 'bobbb',
+            'full_name': 'Bob',
+            'website': 'http://bob.com/',
+          }
+        }],
+        'viewer_has_liked': False,
+        'count': 2,
+      },
+      'caption': 'Elvis hits out of RCA Studio B',
+      'comments': {
+        'nodes': [],
+        'page_info': {
+          'has_next_page': False,
+          'end_cursor': None,
+          'start_cursor': None,
+          'has_previous_page': False
+        },
+        'count': 0,
+      },
+      'dimensions': {'width': 1080, 'height': 1293},
+      'date': 1453063593.0,
+      'code': 'ABC123',
+
+    }, {
+
+      # Video
+      'location': None,
+      'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
+      'id': '123_456',
+      'is_video': True,
+      'video_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xtp1\/t50.2886-16\/12604073_746855092124622_46574942_n.mp4',
+      'dimensions': {'height': 640, 'width': 640},
+      'owner': {
+        'is_private': True,
+        'id': '54861273',
+        'full_name': 'Jerry C',
+        'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+        'username': 'jc',
+      },
+      'likes': {
+        'nodes': [],
+        'count': 0,
+      },
+      'caption': 'Eye of deer \ud83d\udc41 and #selfie from me',
+      'comments': {
+        'nodes': [{
+          'user': {
+            'id': '232927278',
+            'profile_pic_url': 'http:\/\/picture\/commenter',
+            'username': 'averygood',
+            'full_name': '\u5c0f\u6b63',
+          },
+          'id': '789',
+          'created_at': 1349588757,
+          'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+        }],
+      },
+      'usertags': {
+        'nodes': [{
+          'user': {'username': 'ap'},
+          'position': {'x': 0.4657777507, 'y': 0.4284444173},
+        }],
+      },
+      'date': 1453036552.0,
+      'code': 'ABC123',
+    }],
+
+    'page_info': {
+      'has_next_page': True,
+      'end_cursor': '1163980147673702805',
+      'start_cursor': '1164745675899097546',
+      'has_previous_page': False
+    },
+  }
+}}]}}
+
+HTML_FEED_HEADER = """
+<!DOCTYPE html>
+...
+    <link href="https://www.instagram.com/" rel="alternate" hreflang="x-default" />
+...
+<script type="text/javascript">window._sharedData = """
+HTML_FEED_FOOTER = """
+;</script>
+<script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_Commons.js/907dcce6a88a.js" type="text/javascript"></script>
+<script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_FeedPage.js/d0ffd22d18b5.js" type="text/javascript"></script>
+...
+    </body>
+</html>
+"""
+
+HTML_ACTOR = {
+  'displayName': 'Jerry C',
+  'id': tag_uri('54861273'),
+  'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg'},
+  'objectType': 'person',
+  'url': 'http://instagram.com/jc',
+  'username': 'jc',
+}
+
+HTML_ACTIVITIES = [{  # ActivityStreams
+  # Photo
+  'verb': 'post',
+  'published': '2016-01-17T20:46:33',
+  'id': tag_uri('123_456'),
+  'url': 'http://instagram.com/p/ABC123/',
+  'actor': HTML_ACTOR,
+  'object': {
+    'objectType': 'photo',
+    'author': HTML_ACTOR,
+    'content': 'Elvis hits out of RCA Studio B',
+    'id': tag_uri('123_456'),
+    'published': '2016-01-17T20:46:33',
+    'url': 'http://instagram.com/p/ABC123/',
+    'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg'},
+    'to': [{'objectType':'group', 'alias':'@public'}],
+    'location': {
+      'id': '345924646',
+      'displayName': 'RCA Studio B',
+      'url': 'https://instagram.com/explore/locations/345924646/',
+    },
+    'attachments': [{
+      'objectType': 'image',
+      'image': [{
+        'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg',
+        'width': 1080,
+        'height': 1293,
+      }],
+    }],
+    'replies': {
+      'totalItems': 0,
+    },
+    'tags': LIKE_OBJS,
+  }
+}, {
+  # Video
+  'verb': 'post',
+  'published': '2016-01-17T13:15:52',
+  'id': tag_uri('123_456'),
+  'url': 'http://instagram.com/p/ABC123/',
+  'actor': HTML_ACTOR,
+  'object': {
+    'objectType': 'video',
+    'author': HTML_ACTOR,
+    'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
+    'id': tag_uri('123_456'),
+    'published': '2016-01-17T13:15:52',
+    'url': 'http://instagram.com/p/ABC123/',
+    'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'},
+    'to': [{'objectType':'group', 'alias':'@private'}],
+    'stream': {
+      'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
+    },
+    'attachments': [{
+      'objectType': 'video',
+      'stream': [{
+        'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
+        'width': 640,
+        'height': 640,
+      }],
+      'image': [{
+        'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg',
+        'width': 640,
+        'height': 640,
+      }],
+    }],
+    'replies': {
+      'items': COMMENT_OBJS,
+    },
+    'tags': [{
+      'objectType': 'person',
+      'id': tag_uri('ap'),
+      'username': 'ap',
+    }],
+  },
+}]
+
 
 class InstagramTest(testutil.HandlerTest):
 
@@ -727,3 +967,7 @@ class InstagramTest(testutil.HandlerTest):
       self.instagram.base_object({
         'object': {'url': 'http://instagram.com/p/zHA5BLo1Mo/'},
       }))
+
+  def test_html_to_activities(self):
+    html = HTML_FEED_HEADER + json.dumps(HTML_FEED_DATA) + HTML_FEED_FOOTER
+    self.assert_equals(HTML_ACTIVITIES, self.instagram.html_to_activities(html))
