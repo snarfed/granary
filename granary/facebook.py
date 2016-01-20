@@ -94,6 +94,9 @@ API_USER_RSVPS_DECLINED = 'me/events/declined'
 API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
 API_NEWS_PUBLISHES = 'me/news.publishes'
 
+# endpoint for uploading video. note the hostname and v2.3 instead of v2.2
+API_VIDEOS = 'https://graph-video.facebook.com/v2.3/me/videos'
+
 API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
                       'parent')
 
@@ -576,9 +579,10 @@ class Facebook(source.Source):
     if base_id and not base_url:
       base_url = base_obj['url'] = self.object_url(base_id)
 
+    video_url = util.get_first(obj, 'stream', {}).get('url')
     image_url = util.get_first(obj, 'image', {}).get('url')
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
-    if not content and not image_url:
+    if not content and not (video_url or image_url):
       if type == 'activity':
         content = verb
       else:
@@ -596,7 +600,10 @@ class Facebook(source.Source):
     if include_link and url:
       content += '\n\n(Originally published at: %s)' % url
     preview_content = util.linkify(content)
-    if image_url:
+    if video_url:
+      preview_content += ('<br /><br /><video controls src="%s"><a href="%s">'
+                          'this video</a></video>' % (video_url, video_url))
+    elif image_url:
       preview_content += '<br /><br /><img src="%s" />' % image_url
     if people:
       preview_content += '<br /><br /><em>with %s</em>' % ', '.join(
@@ -691,7 +698,13 @@ class Facebook(source.Source):
         return source.creation_result(content=preview_content,
                                       description='<span class="verb">post</span>:')
       else:
-        if image_url:
+        if video_url:
+          api_call = API_VIDEOS
+          msg_data.update({
+            'file_url': video_url,
+            'description': msg_data.pop('message', ''),
+          })
+        elif image_url:
           api_call = API_PHOTOS
           msg_data['url'] = image_url
           # use Timeline Photos album, if we can find it, since it keeps photo
@@ -713,8 +726,12 @@ class Facebook(source.Source):
             # tags is comma-separated user id string
             # https://developers.facebook.com/docs/graph-api/reference/v2.2/user/feed#pubfields
             msg_data['tags'] = ','.join(tag['id'] for tag in people)
+
         resp = self.urlopen(api_call, data=urllib.urlencode(msg_data))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
+        if video_url and not resp.get('success', True):
+          msg = 'Video upload failed.'
+          return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
     elif type == 'activity' and verb == 'share':
       return source.creation_result(
@@ -1580,13 +1597,14 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
         logging.info('Resolved Facebook post id %r to %r.', post_id, resolved)
         return str(resolved)
 
-  def urlopen(self, relative_url, parse_response=True, **kwargs):
+  def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
 
     Returns: decoded JSON dict if parse_response is True, otherwise urlopen
       response object
     """
-    url = API_BASE + relative_url
+    if not url.startswith('http'):
+      url = API_BASE + url
     log_url = url
     if self.access_token:
       log_url = util.add_query_params(url, [('access_token',

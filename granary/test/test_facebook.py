@@ -864,8 +864,10 @@ class FacebookTest(testutil.HandlerTest):
     self.batch_responses = []
 
   def expect_urlopen(self, url, response=None, **kwargs):
+    if not url.startswith('http'):
+      url = facebook.API_BASE + url
     return super(FacebookTest, self).expect_urlopen(
-      facebook.API_BASE + url, response=json.dumps(response), **kwargs)
+      url, response=json.dumps(response), **kwargs)
 
   def expect_batch_req(self, url, response, status=200, headers={},
                        response_headers=None):
@@ -2239,6 +2241,26 @@ cc Sam G, Michael M<br />""", preview.description)
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post',
     }, self.fb.create(obj).content)
+
+  def test_create_with_video(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'my caption',
+      'stream': {'url': 'http://my/video'},
+    }
+
+    # test preview
+    preview = self.fb.preview_create(obj)
+    self.assertEquals('<span class="verb">post</span>:', preview.description)
+    self.assertEquals('my caption<br /><br /><video controls src="http://my/video">'
+                      '<a href="http://my/video">this video</a></video>',
+                      preview.content)
+
+    # test create
+    self.expect_urlopen(facebook.API_VIDEOS, {}, data=urllib.urlencode({
+      'file_url': 'http://my/video', 'description': 'my caption'}))
+    self.mox.ReplayAll()
+    self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
 
   def test_create_notification(self):
     appengine_config.FACEBOOK_APP_ID = 'my_app_id'
