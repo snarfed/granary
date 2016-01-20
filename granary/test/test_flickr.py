@@ -951,6 +951,51 @@ class FlickrTest(testutil.TestCase):
 
     self.assertRaises(urllib2.HTTPError, self.flickr.create, OBJECT)
 
+  def test_create_video_success(self):
+    self.flickr._user_id = '39216764@N00'
+    self.flickr._path_alias = 'kindofblue115'
+
+    obj = {
+      'objectType': 'note',
+      'stream': {'url': 'https://jeena.net/videos/xyz.mp4'},
+      'image': [{'url': 'https://jeena.net/photos/xyz.jpg'}],
+      'url': 'https://jeena.net/videos/164',
+      'content': 'my video',
+    }
+
+    # preview
+    preview = self.flickr.preview_create(obj)
+    self.assertEquals('post', preview.description)
+    self.assertEquals(
+      '<div>my video</div>'
+        '<video controls src="https://jeena.net/videos/xyz.mp4">'
+        '<a href="https://jeena.net/videos/xyz.mp4">this video</a></video>',
+      preview.content)
+
+    # create
+    urllib2.urlopen('https://jeena.net/videos/xyz.mp4').AndReturn('video response')
+    self.expect_requests_post(
+      'https://up.flickr.com/services/upload',
+      data=[
+        ('description', 'my video'),
+      ] + IGNORED_OAUTH_PARAMS,
+      files={'photo': 'video response'},
+      response="""\
+<?xml version="1.0" encoding="utf-8" ?>
+<rsp stat="ok">
+  <photoid>9876</photoid>
+</rsp>
+""")
+    self.mox.ReplayAll()
+
+    self.assert_equals({
+      'id': '9876',
+      'url': 'https://www.flickr.com/photos/kindofblue115/9876/',
+      'type': 'post',
+      'granary_message':
+        "Note that videos take time to process before they're visible.",
+    }, self.flickr.create(obj).content)
+
   def test_preview_create_comment(self):
     preview = self.flickr.preview_create(REPLY_OBJ, include_link=True)
     self.assertEquals(

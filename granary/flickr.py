@@ -69,11 +69,11 @@ class Flickr(source.Source):
     return flickr_auth.call_api_method(
       method, params, self.access_token_key, self.access_token_secret)
 
-  def upload_photo(self, params, photo_file):
-    """Upload a photo via the Flickr API
+  def upload(self, params, file):
+    """Upload a photo or video via the Flickr API.
     """
     return flickr_auth.upload(
-      params, photo_file, self.access_token_key, self.access_token_secret)
+      params, file, self.access_token_key, self.access_token_secret)
 
   def create(self, obj, include_link=False, ignore_formatting=False):
     """Creates a photo, comment, or favorite.
@@ -107,7 +107,7 @@ class Flickr(source.Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview, include_link, ignore_formatting=False):
+  def _create(self, obj, preview, include_link=False, ignore_formatting=False):
     """Creates or previews creating for the previous two methods.
 
     https://www.flickr.com/services/api/upload.api.html
@@ -129,8 +129,9 @@ class Flickr(source.Source):
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     link_text = '(Originally published at: %s)' % obj.get('url')
 
-    if obj.get('image') and type in ('note', 'article'):
-      image_url = util.get_first(obj, 'image').get('url')
+    video_url = util.get_first(obj, 'stream', {}).get('url')
+    image_url = util.get_first(obj, 'image', {}).get('url')
+    if (video_url or image_url) and type in ('note', 'article'):
       name = obj.get('displayName')
       people = self._get_person_tags(obj)
       hashtags = [t.get('displayName') for t in obj.get('tags', [])
@@ -162,9 +163,14 @@ class Flickr(source.Source):
              for p in people))
         if lat and lng:
           preview_content += '<div> at <a href="https://maps.google.com/maps?q=%s,%s">%s, %s</a></div>' % (lat, lng, lat, lng)
-        preview_content += '<img src="%s" />' % image_url
-        return source.creation_result(
-          content=preview_content, description='post')
+
+        if video_url:
+          preview_content += ('<video controls src="%s"><a href="%s">this video'
+                              '</a></video>' % (video_url, video_url))
+        else:
+          preview_content += '<img src="%s" />' % image_url
+
+        return source.creation_result(content=preview_content, description='post')
 
       params = []
       if name:
@@ -175,12 +181,15 @@ class Flickr(source.Source):
         params.append(
           ('tags', ','.join('"%s"' % t if ' ' in t else t for t in hashtags)))
 
-      resp = self.upload_photo(params, urllib2.urlopen(image_url))
+      resp = self.upload(params, urllib2.urlopen(video_url or image_url))
       photo_id = resp.get('id')
       resp.update({
         'type': 'post',
         'url': self.photo_url(self.path_alias() or self.user_id(), photo_id),
       })
+      if video_url:
+        resp['granary_message'] = \
+          "Note that videos take time to process before they're visible."
 
       # add person tags
       for person_id in sorted(p.get('id') for p in people):
