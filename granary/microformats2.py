@@ -276,7 +276,8 @@ def json_to_object(mf2):
 
   as_type, as_verb = mf2_type_to_as_type.get(mf2_type, (None, None))
 
-  photos = [url for url in get_string_urls(props.get('photo', []))
+  def absolute_urls(prop):
+    return [{'url': url} for url in get_string_urls(props.get(prop, []))
             # filter out relative and invalid URLs (mf2py gives absolute urls)
             if urlparse.urlparse(url).netloc]
 
@@ -293,7 +294,8 @@ def json_to_object(mf2):
     'content': get_html(prop.get('content')),
     'url': urls[0] if urls else None,
     'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,
-    'image': [{'url': url} for url in photos],
+    'image': absolute_urls('photo'),
+    'stream': absolute_urls('video'),
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     'tags': [{'objectType': 'hashtag', 'displayName': cat}

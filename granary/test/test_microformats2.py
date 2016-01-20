@@ -61,6 +61,15 @@ class Microformats2Test(testutil.HandlerTest):
     obj = microformats2.json_to_object(mf2)
     self.assertFalse(obj.get('image'))
 
+  def test_video_stream(self):
+    """handle the case where someone (incorrectly) marks up the caption
+    with p-photo
+    """
+    mf2 = {'properties':
+           {'video': ['http://example.com/video.mp4']}}
+    obj = microformats2.json_to_object(mf2)
+    self.assertEquals([{'url': 'http://example.com/video.mp4'}], obj['stream'])
+
   def test_nested_compound_url_object(self):
     mf2 = {'type': ['h-as-share'],
            'properties': {
