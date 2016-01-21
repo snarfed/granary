@@ -34,22 +34,22 @@ from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 
 API_BASE = 'https://api.twitter.com/1.1/'
-API_TIMELINE_URL = 'statuses/home_timeline.json?include_entities=true&count=%d'
-API_USER_TIMELINE_URL = 'statuses/user_timeline.json?include_entities=true&count=%(count)d&screen_name=%(screen_name)s'
-API_LIST_TIMELINE_URL = 'lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
-API_STATUS_URL = 'statuses/show.json?id=%s&include_entities=true'
-API_LOOKUP_URL = 'statuses/lookup.json?id=%s&include_entities=true'
-API_RETWEETS_URL = 'statuses/retweets.json?id=%s'
-API_USER_URL = 'users/show.json?screen_name=%s'
-API_CURRENT_USER_URL = 'account/verify_credentials.json'
-API_SEARCH_URL = 'search/tweets.json?q=%(q)s&include_entities=true&result_type=recent&count=%(count)d'
-API_FAVORITES_URL = 'favorites/list.json?screen_name=%s&include_entities=true'
-API_POST_TWEET_URL = 'statuses/update.json'
-API_POST_RETWEET_URL = 'statuses/retweet/%s.json'
-API_POST_FAVORITE_URL = 'favorites/create.json'
-API_POST_MEDIA_URL = 'statuses/update_with_media.json'
-API_UPLOAD_MEDIA_URL = 'https://upload.twitter.com/1.1/media/upload.json'
-HTML_FAVORITES_URL = 'https://twitter.com/i/activity/favorited_popup?id=%s'
+API_TIMELINE = 'statuses/home_timeline.json?include_entities=true&count=%d'
+API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&count=%(count)d&screen_name=%(screen_name)s'
+API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
+API_STATUS = 'statuses/show.json?id=%s&include_entities=true'
+API_LOOKUP = 'statuses/lookup.json?id=%s&include_entities=true'
+API_RETWEETS = 'statuses/retweets.json?id=%s'
+API_USER = 'users/show.json?screen_name=%s'
+API_CURRENT_USER = 'account/verify_credentials.json'
+API_SEARCH = 'search/tweets.json?q=%(q)s&include_entities=true&result_type=recent&count=%(count)d'
+API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true'
+API_POST_TWEET = 'statuses/update.json'
+API_POST_RETWEET = 'statuses/retweet/%s.json'
+API_POST_FAVORITE = 'favorites/create.json'
+API_POST_MEDIA = 'statuses/update_with_media.json'
+API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
+HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 # background: https://indiewebcamp.com/Twitter#Profile_Image_URLs
 PROFILE_PICTURE_URL = 'https://twitter.com/%s/profile_image?size=original'
@@ -136,9 +136,9 @@ class Twitter(source.Source):
       screen_name: string username. Defaults to the current user.
     """
     if screen_name is None:
-      url = API_CURRENT_USER_URL
+      url = API_CURRENT_USER
     else:
-      url = API_USER_URL % screen_name
+      url = API_USER % screen_name
     return self.user_to_actor(self.urlopen(url))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
@@ -204,38 +204,37 @@ class Twitter(source.Source):
     user = []
     def _user():
       if not user:
-        user.append(self.urlopen(API_USER_URL % user_id if user_id
-                                 else API_CURRENT_USER_URL))
+        user.append(self.urlopen(API_USER % user_id if user_id else API_CURRENT_USER))
       return user[0]
 
     activities = []
     if activity_id:
-      tweets = [self.urlopen(API_STATUS_URL % activity_id)]
+      tweets = [self.urlopen(API_STATUS % activity_id)]
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
         if user_id in (None, source.ME):
           user_id = ''
-        url = API_USER_TIMELINE_URL % {
+        url = API_USER_TIMELINE % {
           'count': count + start_index,
           'screen_name': user_id,
         }
 
         if fetch_likes:
-          liked = self.urlopen(API_FAVORITES_URL % user_id)
+          liked = self.urlopen(API_FAVORITES % user_id)
           if liked:
             activities += [self._make_like(tweet, _user()) for tweet in liked]
       elif group_id == source.SEARCH:
-        url = API_SEARCH_URL % {
+        url = API_SEARCH % {
           'q': urllib.quote_plus(search_query),
           'count': count + start_index,
         }
       elif group_id in (source.FRIENDS, source.ALL):
-        url = API_TIMELINE_URL % (count + start_index)
+        url = API_TIMELINE % (count + start_index)
       else:
         if not user_id:
           user_id = _user().get('screen_name')
-        url = API_LIST_TIMELINE_URL % {
+        url = API_LIST_TIMELINE % {
           'count': count + start_index,
           'slug': group_id,
           'owner_screen_name': user_id,
@@ -288,7 +287,7 @@ class Twitter(source.Source):
         id = tweet['id_str']
         count = tweet.get('retweet_count')
         if count and count != cached.get('ATR ' + id):
-          url = API_RETWEETS_URL % id
+          url = API_RETWEETS % id
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
 
@@ -316,7 +315,7 @@ class Twitter(source.Source):
         id = tweet['id_str']
         count = tweet.get('favorite_count')
         if count and count != cached.get('ATF ' + id):
-          url = HTML_FAVORITES_URL % id
+          url = HTML_FAVORITES % id
           logging.debug('Fetching %s', url)
           try:
             html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
@@ -372,7 +371,7 @@ class Twitter(source.Source):
         # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
         author = reply['actor']['username']
         if author not in mentions:
-          url = API_SEARCH_URL % {
+          url = API_SEARCH % {
             'q': urllib.quote_plus('@' + author),
             'count': 100,
           }
@@ -411,7 +410,7 @@ class Twitter(source.Source):
       list of activity dicts
     """
     # get @-name mentions
-    url = API_SEARCH_URL % {
+    url = API_SEARCH % {
       'q': urllib.quote_plus('@' + username),
       'count': 100,
     }
@@ -424,7 +423,7 @@ class Twitter(source.Source):
       [c.get('in_reply_to_status_id_str') for c in candidates])
     origs = {
       o.get('id_str'): o for o in
-      self.urlopen(API_LOOKUP_URL % ','.join(in_reply_to_ids))
+      self.urlopen(API_LOOKUP % ','.join(in_reply_to_ids))
     } if in_reply_to_ids else {}
 
     # filter out tweets that we don't consider mentions
@@ -452,7 +451,7 @@ class Twitter(source.Source):
         for i in xrange(0, len(tweets), QUOTE_SEARCH_BATCH_SIZE)
     ]:
       batch_ids = [t['id_str'] for t in batch]
-      url = API_SEARCH_URL % {
+      url = API_SEARCH % {
         'q': urllib.quote_plus(' OR '.join(batch_ids)),
         'count': 100,
       }
@@ -474,7 +473,7 @@ class Twitter(source.Source):
       activity_id: string activity id, optional
       activity_author_id: string activity author id. Ignored.
     """
-    url = API_STATUS_URL % comment_id
+    url = API_STATUS % comment_id
     return self.tweet_to_object(self.urlopen(url))
 
   def get_share(self, activity_user_id, activity_id, share_id):
@@ -485,7 +484,7 @@ class Twitter(source.Source):
       activity_id: string activity id
       share_id: string id of the share object
     """
-    url = API_STATUS_URL % share_id
+    url = API_STATUS % share_id
     return self.retweet_to_object(self.urlopen(url))
 
   def create(self, obj, include_link=False, ignore_formatting=False):
@@ -629,7 +628,7 @@ class Twitter(source.Source):
                       'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
       else:
         data = urllib.urlencode({'id': base_id})
-        self.urlopen(API_POST_FAVORITE_URL, data=data)
+        self.urlopen(API_POST_FAVORITE, data=data)
         resp = {'type': 'like'}
 
     elif type == 'activity' and verb == 'share':
@@ -647,7 +646,7 @@ class Twitter(source.Source):
                       'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
       else:
         data = urllib.urlencode({'id': base_id})
-        resp = self.urlopen(API_POST_RETWEET_URL % base_id, data=data)
+        resp = self.urlopen(API_POST_RETWEET % base_id, data=data)
         resp['type'] = 'repost'
 
     elif type in ('note', 'article') or is_reply:  # a tweet
@@ -684,7 +683,7 @@ class Twitter(source.Source):
       if preview:
         return source.creation_result(content=preview_content, description=description)
       else:
-        resp = self.urlopen(API_POST_TWEET_URL, data=urllib.urlencode(data))
+        resp = self.urlopen(API_POST_TWEET, data=urllib.urlencode(data))
         resp['type'] = 'comment' if is_reply else 'post'
 
     elif (verb and verb.startswith('rsvp-')) or verb == 'invite':
@@ -805,13 +804,12 @@ class Twitter(source.Source):
     ids = []
     for url in urls:
       headers = twitter_auth.auth_header(
-        API_UPLOAD_MEDIA_URL, self.access_token_key, self.access_token_secret,
-        'POST')
+        API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
       logging.info('Fetching %s', url)
       files = {'media': urllib2.urlopen(url)}
       logging.info('Posting multipart/form-data %s to %s',
-                   {'media': url}, API_UPLOAD_MEDIA_URL)
-      resp = requests.post(API_UPLOAD_MEDIA_URL, files=files, headers=headers,
+                   {'media': url}, API_UPLOAD_MEDIA)
+      resp = requests.post(API_UPLOAD_MEDIA, files=files, headers=headers,
                            timeout=HTTP_TIMEOUT)
       resp.raise_for_status()
       logging.info('Got: %s', resp.text)

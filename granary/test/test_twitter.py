@@ -25,7 +25,7 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 def tag_uri(name):
   return util.tag_uri('twitter.com', name)
 
-TIMELINE = twitter.API_TIMELINE_URL % 0
+TIMELINE = twitter.API_TIMELINE % 0
 
 USER = {  # Twitter
   'created_at': 'Sat May 01 21:42:43 +0000 2010',
@@ -713,19 +713,19 @@ class TwitterTest(testutil.TestCase):
     # search @-mentions returns nothing
     self.expect_urlopen('account/verify_credentials.json',
                         {'screen_name': 'schnarfed'})
-    self.expect_urlopen(twitter.API_SEARCH_URL % {
+    self.expect_urlopen(twitter.API_SEARCH % {
       'q': urllib.quote_plus('@schnarfed'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
     # first search returns no results
-    self.expect_urlopen(twitter.API_SEARCH_URL % {
+    self.expect_urlopen(twitter.API_SEARCH % {
       'q': urllib.quote_plus('1000 OR 1001 OR 1002 OR 1003 OR 1004'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
     # second search finds one quote for 1006
-    self.expect_urlopen(twitter.API_SEARCH_URL % {
+    self.expect_urlopen(twitter.API_SEARCH % {
       'q': urllib.quote_plus('1005 OR 1006 OR 1007'),
       'count': 100,
     } + '&since_id=567', {
@@ -895,7 +895,7 @@ class TwitterTest(testutil.TestCase):
       self.mox.ResetAll()
 
   def test_get_activities_search(self):
-    self.expect_urlopen(twitter.API_SEARCH_URL % {'q': 'indieweb', 'count': 0}, {
+    self.expect_urlopen(twitter.API_SEARCH % {'q': 'indieweb', 'count': 0}, {
       'statuses': [TWEET, TWEET],
       'search_metadata': {
         'max_id': 250126199840518145,
@@ -1211,7 +1211,7 @@ class TwitterTest(testutil.TestCase):
 
     for content in created:
       self.expect_urlopen(
-        twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content.encode('utf-8')),
+        twitter.API_POST_TWEET + '?status=' + urllib.quote_plus(content.encode('utf-8')),
         TWEET, data='')
     self.mox.ReplayAll()
 
@@ -1327,7 +1327,7 @@ class TwitterTest(testutil.TestCase):
       '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
 
     self.expect_urlopen(
-      twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(orig.encode('utf-8')),
+      twitter.API_POST_TWEET + '?status=' + urllib.quote_plus(orig.encode('utf-8')),
       TWEET, data='')
     self.mox.ReplayAll()
 
@@ -1359,7 +1359,7 @@ class TwitterTest(testutil.TestCase):
                u'(<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>)')
 
     self.expect_urlopen(
-      twitter.API_POST_TWEET_URL + '?status=' + urllib.quote_plus(content.encode('utf-8')),
+      twitter.API_POST_TWEET + '?status=' + urllib.quote_plus(content.encode('utf-8')),
       TWEET, data='')
     self.mox.ReplayAll()
 
@@ -1418,7 +1418,7 @@ class TwitterTest(testutil.TestCase):
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
-    self.expect_urlopen(twitter.API_POST_TWEET_URL + '?status=' +
+    self.expect_urlopen(twitter.API_POST_TWEET + '?status=' +
                         urllib.quote_plus('too long… (http://obj.ca)'),
                         TWEET, data='')
     self.mox.ReplayAll()
@@ -1516,7 +1516,7 @@ class TwitterTest(testutil.TestCase):
     result = self.twitter.preview_create(obj, include_link=False)
     self.assertIn('37.83, -122.25', result.content)
 
-    self.expect_urlopen(twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+    self.expect_urlopen(twitter.API_POST_TWEET + '?' + urllib.urlencode({
       'status': 'Checked in to Timeless Coffee Roasters',
       'lat': '37.83',
       'long': '-122.25',
@@ -1541,7 +1541,7 @@ class TwitterTest(testutil.TestCase):
 
     for _, _, status in testdata:
       params = 'status=%s&in_reply_to_status_id=100' % urllib.quote_plus(status)
-      self.expect_urlopen(twitter.API_POST_TWEET_URL + '?' + params,
+      self.expect_urlopen(twitter.API_POST_TWEET + '?' + params,
                           TWEET, data='')
     self.mox.ReplayAll()
 
@@ -1574,7 +1574,7 @@ class TwitterTest(testutil.TestCase):
     self.assertEquals('@you my content', preview.content)
 
     # test create
-    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+    url = twitter.API_POST_TWEET + '?' + urllib.urlencode({
       'status': '@you my content',
       'in_reply_to_status_id': '100',
     })
@@ -1584,7 +1584,7 @@ class TwitterTest(testutil.TestCase):
                        self.twitter.create(obj).content)
 
   def test_create_favorite(self):
-    self.expect_urlopen(twitter.API_POST_FAVORITE_URL + '?id=100',
+    self.expect_urlopen(twitter.API_POST_FAVORITE + '?id=100',
                         TWEET, data='')
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
@@ -1677,11 +1677,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     for i, url in enumerate(image_urls[:-1]):
       content = 'picture response %d' % i
       urllib2.urlopen(url).AndReturn(content)
-      self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+      self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                                 json.dumps({'media_id_string': str(i)}),
                                 files={'media': content},
                                 headers=mox.IgnoreArg())
-    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+    url = twitter.API_POST_TWEET + '?' + urllib.urlencode({
       'status': ellipsized.encode('utf-8'),
       'media_ids': '0,1,2,3',
     })
@@ -1707,11 +1707,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json.dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+    url = twitter.API_POST_TWEET + '?' + urllib.urlencode({
       'status': '@you my content',
       'in_reply_to_status_id': '100',
       'media_ids': '123',
@@ -1734,11 +1734,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     # test create
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json.dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+    url = twitter.API_POST_TWEET + '?' + urllib.urlencode({
       'status': '',
       'media_ids': '123',
     })
@@ -1755,11 +1755,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     }
 
     urllib2.urlopen('http://my/picture').AndReturn('picture response')
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA_URL,
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json.dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    url = twitter.API_POST_TWEET_URL + '?' + urllib.urlencode({
+    url = twitter.API_POST_TWEET + '?' + urllib.urlencode({
       'status': 'my caption',
       'media_ids': '123',
     })
