@@ -547,7 +547,9 @@ class Twitter(source.Source):
     base_url = base_obj.get('url')
 
     is_reply = type == 'comment' or 'inReplyTo' in obj
-    has_picture = obj.get('image') and (type in ('note', 'article') or is_reply)
+    image_urls = [image.get('url') for image in util.get_list(obj, 'image')]
+    video_url = util.get_first(obj, 'stream', {}).get('url')
+    has_media = (image_urls or video_url) and (type in ('note', 'article') or is_reply)
     lat = obj.get('location', {}).get('latitude')
     lng = obj.get('location', {}).get('longitude')
 
@@ -561,7 +563,7 @@ class Twitter(source.Source):
     if not content:
       if type == 'activity':
         content = verb
-      elif has_picture:
+      elif has_media:
         content = ''
       else:
         return source.creation_result(
@@ -608,7 +610,7 @@ class Twitter(source.Source):
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
     include_url = obj.get('url') if include_link else None
-    content = self._truncate(content, include_url, has_picture)
+    content = self._truncate(content, include_url, has_media)
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -661,17 +663,22 @@ class Twitter(source.Source):
       else:
         description = '<span class="verb">tweet</span>:'
 
-      if has_picture:
-        image_urls = [image.get('url') for image in util.get_list(obj, 'image')]
-        num_image_urls = len(image_urls)
-        if num_image_urls > MAX_MEDIA:
+      if video_url:
+        preview_content += ('<br /><br /><video controls src="%s"><a href="%s">'
+                            'this video</a></video>' % (video_url, video_url))
+        if not preview:
+          data['media_ids'] = self.upload_video(video_url)
+
+      elif image_urls:
+        num_urls = len(image_urls)
+        if num_urls > MAX_MEDIA:
           image_urls = image_urls[:MAX_MEDIA]
           logging.warning('Found %d photos! Only using the first %d: %r',
-                          num_image_urls, MAX_MEDIA, image_urls)
+                          num_urls, MAX_MEDIA, image_urls)
         preview_content += '<br /><br />' + ' &nbsp; '.join(
           '<img src="%s" />' % url for url in image_urls)
         if not preview:
-          data['media_ids'] = ','.join(self.upload_media(image_urls))
+          data['media_ids'] = ','.join(self.upload_images(image_urls))
 
       if lat and lng:
         preview_content += (
@@ -707,13 +714,13 @@ class Twitter(source.Source):
 
     return source.creation_result(resp)
 
-  def _truncate(self, content, include_url, has_picture):
+  def _truncate(self, content, include_url, has_media):
     """Shorten tweet content to fit within the 140 character limit.
 
     Args:
       content: string
       include_url: string
-      has_picture: boolean
+      has_media: boolean
 
     Return: string, the possibly shortened and ellipsized tweet text
     """
@@ -734,9 +741,10 @@ class Twitter(source.Source):
     max = MAX_TWEET_LENGTH
     if include_url:
       max -= TCO_LENGTH + 3
-    if has_picture:
-      # twitter includes a pic.twitter.com link (and space) for pictures - one
-      # link total, regardless of number of pictures - so account for that.
+    if has_media:
+      # twitter includes a pic.twitter.com link (and space) for pictures or
+      # video - one link total, regardless of number of pictures - so account
+      # for that.
       max -= TCO_LENGTH + 1
 
     tokens = []
@@ -788,16 +796,13 @@ class Twitter(source.Source):
       content += ' (%s)' % include_url
     return content
 
-  def upload_media(self, urls):
+  def upload_images(self, urls):
     """Uploads one or more images from web URLs.
 
     https://dev.twitter.com/rest/reference/post/media/upload
 
-    Videos are not currently supported, since they have to use the chunked
-    variant: https://dev.twitter.com/rest/reference/post/media/upload-chunked
-
     Args:
-      media_urls: sequence of string URLs of images
+      urls: sequence of string URLs of images
 
     Returns: list of string media ids
     """
@@ -821,12 +826,64 @@ class Twitter(source.Source):
 
     return ids
 
+  def upload_video(self, url):
+    """Uploads a video from web URLs using the chunked upload process.
+
+    Chunked upload consists of multiple API calls:
+    * command=INIT, which allocates the media id
+    * command=APPEND for each 5MB block, up to 15MB total
+    * command=FINALIZE
+
+    https://dev.twitter.com/rest/reference/post/media/upload-chunked
+    https://dev.twitter.com/rest/public/uploading-media#chunkedupload
+
+    Args:
+      url: string URL of images
+
+    Returns: string media id
+    """
+    logging.info('Fetching %s', url)
+    video_resp = urllib2.urlopen(url)
+
+    # INIT
+    media_id = self.urlopen(API_UPLOAD_MEDIA, data=urllib.urlencode({
+      'command': 'INIT',
+      'media_type': 'video/mp4',
+      'total_bytes': video_resp.headers.get('Content-Length', ''),
+    }))['media_id_string']
+
+    # APPEND
+    headers = twitter_auth.auth_header(
+      API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
+    data = {
+      'command': 'APPEND',
+      'media_id': media_id,
+      'segment_index': 0, # TODO,
+    }
+    logging.info('Posting data %s and multipart/form-data %s to %s',
+                 data, {'media': url}, API_UPLOAD_MEDIA)
+    resp = requests.post(API_UPLOAD_MEDIA, data=data, files={'media': video_resp},
+                         headers=headers, timeout=HTTP_TIMEOUT)
+    resp.raise_for_status()
+    logging.info('Got: %s', resp.text)
+
+    # FINALIZE
+    self.urlopen(API_UPLOAD_MEDIA, data=urllib.urlencode({
+      'command': 'FINALIZE',
+      'media_id': media_id,
+    }))
+
+    return media_id
+
   def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.
     """
+    if not url.startswith('http'):
+      url = API_BASE + url
+
     def request():
       resp = twitter_auth.signed_urlopen(
-        API_BASE + url, self.access_token_key, self.access_token_secret, **kwargs)
+        url, self.access_token_key, self.access_token_secret, **kwargs)
       if parse_response:
         try:
           return json.loads(resp.read())
