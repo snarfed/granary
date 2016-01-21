@@ -566,8 +566,10 @@ class TwitterTest(testutil.TestCase):
   def expect_urlopen(self, url, response=None, **kwargs):
     if not url.startswith('http'):
       url = twitter.API_BASE + url
+    if not isinstance(response, basestring):
+      response=json.dumps(response)
     return super(TwitterTest, self).expect_urlopen(
-      url, response=json.dumps(response), **kwargs)
+      url, response=response, **kwargs)
 
   def test_get_actor(self):
     self.expect_urlopen('users/show.json?screen_name=foo', USER)
@@ -1160,7 +1162,7 @@ class TwitterTest(testutil.TestCase):
     self.twitter.get_actor('foo')
 
   def test_urlopen_not_json(self):
-    super(TwitterTest, self).expect_urlopen(twitter.API_BASE + 'xyz', 'not json'
+    self.expect_urlopen(twitter.API_BASE + 'xyz', 'not json'
       ).MultipleTimes(twitter.RETRIES + 1)
     self.mox.ReplayAll()
 
@@ -1676,7 +1678,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     for i, url in enumerate(image_urls[:-1]):
       content = 'picture response %d' % i
-      urllib2.urlopen(url).AndReturn(content)
+      self.expect_urlopen(url, content)
       self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                                 json.dumps({'media_id_string': str(i)}),
                                 files={'media': content},
@@ -1706,7 +1708,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                       preview.content)
 
     # test create
-    urllib2.urlopen('http://my/picture').AndReturn('picture response')
+    self.expect_urlopen('http://my/picture', 'picture response')
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json.dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -1733,7 +1735,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.assertEquals('<br /><br /><img src="http://my/picture" />', preview.content)
 
     # test create
-    urllib2.urlopen('http://my/picture').AndReturn('picture response')
+    self.expect_urlopen('http://my/picture', 'picture response')
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json.dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -1754,7 +1756,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       'image': {'url': 'http://my/picture'},
     }
 
-    urllib2.urlopen('http://my/picture').AndReturn('picture response')
+    self.expect_urlopen('http://my/picture', 'picture response')
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json.dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -1766,3 +1768,53 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.expect_urlopen(url, {'url': 'http://posted/picture'}, data='', status=403)
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.twitter.create, obj)
+
+  def test_create_with_video(self):
+    obj = {
+      'objectType': 'note',
+      'content': """\
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok done""",
+      'stream': {'url': 'http://my/video'},
+    }
+    ellipsized = u"""\
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just…"""
+
+    # test preview
+    self.assertEquals(ellipsized +
+      '<br /><br /><video controls src="http://my/video">'
+      '<a href="http://my/video">this video</a></video>',
+      self.twitter.preview_create(obj).content)
+
+    # test create
+    content = 'video response'
+    self.expect_urlopen('http://my/video', content,
+                        response_headers={'Content-Length': len(content)})
+
+    self.expect_urlopen(twitter.API_UPLOAD_MEDIA + '?' + urllib.urlencode({
+      'command': 'INIT',
+      'media_type': 'video/mp4',
+      'total_bytes': len(content),
+    }), {
+      'media_id_string': '9',
+    }, data='')
+
+    self.expect_requests_post(
+      twitter.API_UPLOAD_MEDIA, '',
+      data={'command': 'APPEND', 'media_id': '9', 'segment_index': '0'},
+      files={'media': content},
+      headers=mox.IgnoreArg())
+
+    self.expect_urlopen(twitter.API_UPLOAD_MEDIA + '?' + urllib.urlencode({
+      'command': 'FINALIZE',
+      'media_id': '9',
+    }), {}, data='')
+
+    self.expect_urlopen(twitter.API_POST_TWEET + '?' + urllib.urlencode({
+      'status': ellipsized.encode('utf-8'),
+      'media_ids': '9',
+    }), {'url': 'http://posted/video'}, data='')
+
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'http://posted/video', 'type': 'post'},
+                       self.twitter.create(obj).content)
+

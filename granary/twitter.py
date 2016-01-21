@@ -811,7 +811,7 @@ class Twitter(source.Source):
       headers = twitter_auth.auth_header(
         API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
       logging.info('Fetching %s', url)
-      files = {'media': urllib2.urlopen(url)}
+      files = {'media': urllib2.urlopen(url, timeout=HTTP_TIMEOUT)}
       logging.info('Posting multipart/form-data %s to %s',
                    {'media': url}, API_UPLOAD_MEDIA)
       resp = requests.post(API_UPLOAD_MEDIA, files=files, headers=headers,
@@ -843,7 +843,7 @@ class Twitter(source.Source):
     Returns: string media id
     """
     logging.info('Fetching %s', url)
-    video_resp = urllib2.urlopen(url)
+    video_resp = urllib2.urlopen(url, timeout=HTTP_TIMEOUT)
 
     # INIT
     media_id = self.urlopen(API_UPLOAD_MEDIA, data=urllib.urlencode({
@@ -858,7 +858,7 @@ class Twitter(source.Source):
     data = {
       'command': 'APPEND',
       'media_id': media_id,
-      'segment_index': 0, # TODO,
+      'segment_index': '0', # TODO,
     }
     logging.info('Posting data %s and multipart/form-data %s to %s',
                  data, {'media': url}, API_UPLOAD_MEDIA)
