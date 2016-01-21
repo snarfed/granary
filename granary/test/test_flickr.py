@@ -876,9 +876,8 @@ class FlickrTest(testutil.TestCase):
     self._expect_lookup_users()
 
     # fetch the image
-    urllib2.urlopen(
-      'https://jeena.net/photos/IMG_20150729_181700.jpg'
-    ).AndReturn('picture response')
+    self.expect_urlopen('https://jeena.net/photos/IMG_20150729_181700.jpg',
+                        'picture response')
 
     # upload to Flickr
     self.expect_requests_post(
@@ -933,9 +932,8 @@ class FlickrTest(testutil.TestCase):
     self._expect_lookup_users()
 
     # fetch the image
-    urllib2.urlopen(
-      'https://jeena.net/photos/IMG_20150729_181700.jpg'
-    ).AndReturn('picture response')
+    self.expect_urlopen('https://jeena.net/photos/IMG_20150729_181700.jpg',
+                        'picture response')
 
     # upload to Flickr
     self.expect_requests_post(
@@ -973,7 +971,7 @@ class FlickrTest(testutil.TestCase):
       preview.content)
 
     # create
-    urllib2.urlopen('https://jeena.net/videos/xyz.mp4').AndReturn('video response')
+    self.expect_urlopen('https://jeena.net/videos/xyz.mp4', 'video response')
     self.expect_requests_post(
       'https://up.flickr.com/services/upload',
       data=[
