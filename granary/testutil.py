@@ -80,6 +80,15 @@ class TestCase(HandlerTest):
     if method is requests.head:
       kwargs['allow_redirects'] = True
 
+    files = kwargs.get('files')
+    if files:
+      def check_files(actual):
+        self.assertEqual(actual.keys(), files.keys())
+        for name, expected in files.items():
+          self.assertEqual(expected, actual[name].read())
+        return True
+      kwargs['files'] = mox.Func(check_files)
+
     call = method(url, **kwargs)
     call.AndReturn(resp)
     return call
