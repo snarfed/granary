@@ -2316,8 +2316,8 @@ cc Sam G, Michael M<br />""", preview.description)
       check(expected, id, True)
 
   def test_resolve_object_id(self):
-    self.expect_urlopen('111_222', {'id': '0', 'object_id': '333'}
-                       ).MultipleTimes(3)
+    for i in range(3):
+      self.expect_urlopen('111_222', {'id': '0', 'object_id': '333'})
     self.mox.ReplayAll()
 
     for id in '222', '222:0', '111_222_9':
