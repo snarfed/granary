@@ -281,6 +281,15 @@ foo
                          microformats2.render_content({'tags': [tag]}),
                          tag)
 
+  def test_dont_render_images_inside_attachments(self):
+    self.assert_equals('my content', microformats2.render_content({
+       'content': 'my content',
+       'attachments': [{
+         'objectType': 'note',
+         'image': {'url': 'http://attached/image'},
+       }],
+    }))
+
   def test_dont_stop_at_unknown_tag_type(self):
     obj = {'tags': [
       {'objectType': 'x', 'url': 'http://x'},

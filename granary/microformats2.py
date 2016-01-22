@@ -541,7 +541,9 @@ def hcard_to_html(hcard, parent_props=[]):
 def render_content(obj, include_location=True, synthesize_content=True):
   """Renders the content of an ActivityStreams object.
 
-  Includes tags, mentions, and attachments.
+  Includes tags, mentions, and non-note/article attachments. (Note/article
+  attachments are converted to mf2 children in object_to_json and then rendered
+  in json_to_html.)
 
   Args:
     obj: decoded JSON ActivityStreams object
@@ -597,7 +599,10 @@ def render_content(obj, include_location=True, synthesize_content=True):
 
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
-  for tag in obj.get('attachments', []) + tags.pop('article', []):
+  attachments = [a for a in obj.get('attachments', [])
+                 if a.get('objectType') not in ('note', 'article')]
+
+  for tag in attachments + tags.pop('article', []):
     name = tag.get('displayName', '')
     open_a_tag = False
     if tag.get('objectType') == 'video':
