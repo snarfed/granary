@@ -17,6 +17,7 @@ import itertools
 import httplib
 import json
 import logging
+import mimetypes
 import re
 import socket
 import urllib
@@ -71,12 +72,19 @@ RETRIES = 3
 #   https://dev.twitter.com/docs/tco-link-wrapper/faq
 # * Max media per tweet.
 #   https://dev.twitter.com/rest/reference/post/statuses/update#api-param-media_ids
+# * Allowed video formats, max video size, and upload chunk size:
+#   https://dev.twitter.com/rest/public/uploading-media#keepinmind
 #
 # TODO: pull these from /help/configuration.json instead.
 # https://dev.twitter.com/docs/api/1.1/get/help/configuration
 MAX_TWEET_LENGTH = 140
 TCO_LENGTH = 23
 MAX_MEDIA = 4
+
+MB = 1024 * 1024
+MAX_VIDEO_SIZE = 15 * MB
+UPLOAD_CHUNK_SIZE = 5 * MB
+VIDEO_MIME_TYPES = frozenset(('video/mp4',))
 
 
 class OffsetTzinfo(datetime.tzinfo):
@@ -667,7 +675,10 @@ class Twitter(source.Source):
         preview_content += ('<br /><br /><video controls src="%s"><a href="%s">'
                             'this video</a></video>' % (video_url, video_url))
         if not preview:
-          data['media_ids'] = self.upload_video(video_url)
+          ret = self.upload_video(video_url)
+          if isinstance(ret, source.CreationResult):
+            return ret
+          data['media_ids'] = ret
 
       elif image_urls:
         num_urls = len(image_urls)
@@ -840,16 +851,35 @@ class Twitter(source.Source):
     Args:
       url: string URL of images
 
-    Returns: string media id
+    Returns: string media id or CreationResult on error
     """
     logging.info('Fetching %s', url)
     video_resp = urllib2.urlopen(url, timeout=HTTP_TIMEOUT)
+
+    # check format and size
+    type = video_resp.headers.get('Content-Type')
+    if not type:
+      type, _ = mimetypes.guess_type(url)
+    if type and type not in VIDEO_MIME_TYPES:
+      msg = 'Twitter only supports MP4 videos; yours looks like a %s.' % type
+      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+
+    length = video_resp.headers.get('Content-Length')
+    if not util.is_int(length):
+      msg = "Couldn't determine your video's size."
+      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+
+    length = int(length)
+    if int(length) > MAX_VIDEO_SIZE:
+      msg = "Your %sMB video is larger than Twitter's %dMB limit." % (
+        length // MB, MAX_VIDEO_SIZE // MB)
+      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
     # INIT
     media_id = self.urlopen(API_UPLOAD_MEDIA, data=urllib.urlencode({
       'command': 'INIT',
       'media_type': 'video/mp4',
-      'total_bytes': video_resp.headers.get('Content-Length', ''),
+      'total_bytes': length,
     }))['media_id_string']
 
     # APPEND

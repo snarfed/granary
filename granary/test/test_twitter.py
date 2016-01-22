@@ -1595,7 +1595,7 @@ class TwitterTest(testutil.TestCase):
     self.assertIn('<span class="verb">favorite</span> <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:', preview.description)
 
   def test_create_retweet(self):
-    self.expect_urlopen(twitter.API_POST_RETWEET % 333, TWEET, {'id': 333})
+    self.expect_urlopen(twitter.API_POST_RETWEET % 333, TWEET, params={'id': 333})
     self.mox.ReplayAll()
 
     tweet = copy.deepcopy(TWEET)
@@ -1816,3 +1816,31 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.assert_equals({'url': 'http://posted/video', 'type': 'post'},
                        self.twitter.create(obj).content)
 
+  def test_create_with_video_too_big(self):
+    self.expect_urlopen(
+      'http://my/video', '',
+      response_headers={'Content-Length': twitter.MAX_VIDEO_SIZE + 1})
+    self.mox.ReplayAll()
+
+    ret = self.twitter.create({
+      'objectType': 'note',
+      'stream': {'url': 'http://my/video'},
+    })
+    self.assertTrue(ret.abort)
+    self.assertIn("larger than Twitter's 15MB limit.", ret.error_plain)
+    self.assertIn("larger than Twitter's 15MB limit.", ret.error_html)
+
+  def test_create_with_video_wrong_type(self):
+    self.expect_urlopen('http://my/video', '',
+                        response_headers={'Content-Type': 'video/unknown'})
+    self.expect_urlopen('http://my/video.mov', '')
+    self.mox.ReplayAll()
+
+    for url in 'http://my/video', 'http://my/video.mov':
+      ret = self.twitter.create({
+        'objectType': 'note',
+        'stream': {'url': url},
+      })
+      self.assertTrue(ret.abort)
+      self.assertIn('Twitter only supports MP4 videos', ret.error_plain)
+      self.assertIn('Twitter only supports MP4 videos', ret.error_html)
