@@ -1137,10 +1137,6 @@ class Twitter(source.Source):
     obj['tags'] += [
       self.retweet_to_object(r) for r in tweet.get('retweets', [])]
 
-    # quotes
-    obj['tags'] += [
-      self.tweet_to_object(r) for r in tweet.get('quote_tweets', [])]
-
     # location
     place = tweet.get('place')
     if place:
