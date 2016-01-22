@@ -1767,6 +1767,13 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.assertRaises(urllib2.HTTPError, self.twitter.create, obj)
 
   def test_create_with_video(self):
+    try:
+      orig_size = twitter.UPLOAD_CHUNK_SIZE
+      self._test_create_with_video()
+    finally:
+      twitter.UPLOAD_CHUNK_SIZE = orig_size
+
+  def _test_create_with_video(self):
     obj = {
       'objectType': 'note',
       'content': """\
@@ -1794,11 +1801,13 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                           'total_bytes': len(content),
                         })
 
-    self.expect_requests_post(
-      twitter.API_UPLOAD_MEDIA, '',
-      data={'command': 'APPEND', 'media_id': '9', 'segment_index': '0'},
-      files={'media': content},
-      headers=mox.IgnoreArg())
+    twitter.UPLOAD_CHUNK_SIZE = 5
+    for i, chunk in (0, 'video'), (1, ' resp'), (2, 'onse'):
+      self.expect_requests_post(
+        twitter.API_UPLOAD_MEDIA, '',
+        data={'command': 'APPEND', 'media_id': '9', 'segment_index': i},
+        files={'media': chunk},
+        headers=mox.IgnoreArg())
 
     self.expect_urlopen(twitter.API_UPLOAD_MEDIA, {},
                         params={

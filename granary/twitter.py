@@ -885,17 +885,24 @@ class Twitter(source.Source):
     # APPEND
     headers = twitter_auth.auth_header(
       API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
-    data = {
-      'command': 'APPEND',
-      'media_id': media_id,
-      'segment_index': '0', # TODO,
-    }
-    logging.info('Posting data %s and multipart/form-data %s to %s',
-                 data, {'media': url}, API_UPLOAD_MEDIA)
-    resp = requests.post(API_UPLOAD_MEDIA, data=data, files={'media': video_resp},
-                         headers=headers, timeout=HTTP_TIMEOUT)
-    resp.raise_for_status()
-    logging.info('Got: %s', resp.text)
+
+    i = 0
+    while True:
+      chunk = util.FileLimiter(video_resp, UPLOAD_CHUNK_SIZE)
+      data = {
+        'command': 'APPEND',
+        'media_id': media_id,
+        'segment_index': i,
+      }
+      logging.info('Posting data %s and multipart/form-data %s to %s',
+                   data, {'media': url}, API_UPLOAD_MEDIA)
+      resp = requests.post(API_UPLOAD_MEDIA, data=data, files={'media': chunk},
+                           headers=headers, timeout=HTTP_TIMEOUT)
+      resp.raise_for_status()
+
+      if chunk.ateof:
+        break
+      i += 1
 
     # FINALIZE
     self.urlopen(API_UPLOAD_MEDIA, data=urllib.urlencode({
