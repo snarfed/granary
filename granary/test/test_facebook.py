@@ -945,6 +945,13 @@ class FacebookTest(testutil.HandlerTest):
     self.assertNotIn('tags', got[1])
     self.assertNotIn('tags', got[1]['object'])
 
+  def test_get_activities_home_returns_bool(self):
+    self.expect_urlopen('me/home?offset=0', True)
+    # self.expect_urlopen('me/photos/uploaded', [])
+    # self.expect_urlopen('me/events', {})
+    self.mox.ReplayAll()
+    self.assert_equals([], self.fb.get_activities())
+
   def test_get_activities_fetch_shares_returns_list(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
     self.expect_urlopen('sharedposts?ids=2', ['asdf'])
@@ -1018,6 +1025,12 @@ class FacebookTest(testutil.HandlerTest):
       {'fb_id': '77', 'to': [{'objectType': 'unknown'}]},
     ], [{k: v for k, v in activity['object'].items() if k in ('fb_id', 'to')}
         for activity in self.fb.get_activities(group_id=source.SELF)])
+
+  def test_get_activities_self_photos_returns_list(self):
+    self.expect_urlopen('me/feed?offset=0', {})
+    self.expect_urlopen('me/photos/uploaded', [])
+    self.mox.ReplayAll()
+    self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_owned_event_rsvps(self):
     self.expect_urlopen('me/feed?offset=0', {})

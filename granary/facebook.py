@@ -275,9 +275,9 @@ class Facebook(source.Source):
         url = util.add_query_params(url, {'limit': count})
       headers = {'If-None-Match': etag} if etag else {}
       try:
-        resp = self.urlopen(url, headers=headers, parse_response=False)
+        resp = self.urlopen(url, headers=headers, _as=None)
         etag = resp.info().get('ETag')
-        posts = json.loads(resp.read()).get('data', [])
+        posts = self._as(list, json.loads(resp.read()))
       except urllib2.HTTPError, e:
         if e.code == 304:  # Not Modified, from a matching ETag
           posts = []
@@ -290,7 +290,7 @@ class Facebook(source.Source):
         # https://developers.facebook.com/docs/graph-api/making-multiple-requests
         # https://github.com/snarfed/bridgy/issues/44
         if fetch_news:
-          posts.extend(self.urlopen(API_NEWS_PUBLISHES).get('data', []))
+          posts.extend(self.urlopen(API_NEWS_PUBLISHES, _as=list))
         posts = self._merge_photos(posts)
         if fetch_events:
           activities.extend(self._get_events(owner_id=event_owner_id))
@@ -365,7 +365,7 @@ class Facebook(source.Source):
     posts_by_obj_id = {p['object_id']: p for p in posts if p.get('object_id')}
     albums = None  # lazy loaded, maps facebook id to ActivityStreams object
 
-    photos = self.urlopen(API_PHOTOS_UPLOADED).get('data', [])
+    photos = self.urlopen(API_PHOTOS_UPLOADED, _as=list)
     for photo in photos:
       album_id = photo.get('album')
       post_privacy = posts_by_obj_id.get(photo.get('id'), {}).get('privacy')
@@ -373,8 +373,7 @@ class Facebook(source.Source):
         photo['privacy'] = post_privacy
       elif album_id:
         if albums is None:
-          albums = {a['id']: a for a in
-                    self.urlopen(API_ALBUMS % 'me').get('data', [])}
+          albums = {a['id']: a for a in self.urlopen(API_ALBUMS % 'me', _as=list)}
         photo['privacy'] = albums.get(album_id, {}).get('privacy')
       else:
         photo['privacy'] = 'custom'  # ie unknown
@@ -395,10 +394,6 @@ class Facebook(source.Source):
     results = {}
     for i in range(0, len(ids), MAX_IDS):
       resp = self.urlopen(api_call % ','.join(ids[i:i + MAX_IDS]))
-      if not isinstance(resp, dict):
-        logging.warning("/sharedposts didn't return a dict! this can happen "
-                        "(e.g. a list); we don't really know why. %r", resp)
-        continue
       for id, objs in resp.items():
         # objs is usually a dict but sometimes a boolean. (oh FB, never change!)
         results.setdefault(id, []).extend((objs or {}).get('data', []))
@@ -419,17 +414,12 @@ class Facebook(source.Source):
     Returns:
       posts: list of Facebook post object dicts
     """
-    rsvps = self.urlopen(API_USER_RSVPS)
-    if not isinstance(rsvps, dict):
-      logging.warning("me/events didn't return a dict! this can happen "
-                      "(e.g. a list); we don't really know why. %r", rsvps)
-      return []
+    rsvps = self.urlopen(API_USER_RSVPS, _as=list)
 
     # have to re-fetch the individual event objects because the user rsvps
     # response doesn't include the event description.
-    return util.trim_nulls(
-      [self.get_event(rsvp['id'], owner_id=owner_id)
-       for rsvp in rsvps.get('data', []) if rsvp.get('id')])
+    return util.trim_nulls([self.get_event(rsvp['id'], owner_id=owner_id)
+                            for rsvp in rsvps if rsvp.get('id')])
 
   def get_event(self, event_id, owner_id=None):
     """Returns a Facebook event post.
@@ -445,7 +435,7 @@ class Facebook(source.Source):
     with util.ignore_http_4xx_error():
       event = self.urlopen(API_EVENT % event_id)
 
-    if not event or not isinstance(event, dict) or event.get('error'):
+    if not event or event.get('error'):
       logging.warning("Couldn't fetch event %s: %s", event_id, event)
       return None
 
@@ -457,7 +447,7 @@ class Facebook(source.Source):
 
     rsvps = None
     with util.ignore_http_4xx_error():
-      rsvps = self.urlopen(API_EVENT_RSVPS % event_id).get('data')
+      rsvps = self.urlopen(API_EVENT_RSVPS % event_id, _as=list)
 
     return self.event_to_activity(event, rsvps=rsvps)
 
@@ -502,8 +492,8 @@ class Facebook(source.Source):
       event_id: string event id
       user_id: string user id
     """
-    data = self.urlopen(API_RSVP % (event_id, user_id)).get('data', [])
-    return self.rsvp_to_object(data[0], event={'id': event_id}) if data else None
+    rsvps = self.urlopen(API_RSVP % (event_id, user_id), _as=list)
+    return self.rsvp_to_object(rsvps[0], event={'id': event_id}) if rsvps else None
 
   def create(self, obj, include_link=False, ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
@@ -530,7 +520,7 @@ class Facebook(source.Source):
       sequence of ActivityStream album object dicts
     """
     url = API_ALBUMS % (user_id if user_id is not None else 'me')
-    return [self.album_to_object(a) for a in self.urlopen(url).get('data', [])]
+    return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
 
   def preview_create(self, obj, include_link=False, ignore_formatting=False):
     """Previews creating a new post, comment, like, or RSVP.
@@ -711,7 +701,7 @@ class Facebook(source.Source):
           # posts separate instead of consolidating them into a single "X added
           # n new photos..." post.
           # https://github.com/snarfed/bridgy/issues/571
-          for album in self.urlopen(API_ALBUMS % 'me').get('data', []):
+          for album in self.urlopen(API_ALBUMS % 'me', _as=list):
             id = album.get('id')
             if id and album.get('type') == 'wall':
               api_call = API_ALBUM_PHOTOS % id
@@ -1597,11 +1587,14 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
         logging.info('Resolved Facebook post id %r to %r.', post_id, resolved)
         return str(resolved)
 
-  def urlopen(self, url, parse_response=True, **kwargs):
+  def urlopen(self, url, _as=dict, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token.
 
-    Returns: decoded JSON dict if parse_response is True, otherwise urlopen
-      response object
+    Args:
+      _as: if not None, parses the response as JSON and passes it through _as()
+           with this type. if None, returns the response object.
+
+    Returns: decoded JSON object or urlopen response object
     """
     if not url.startswith('http'):
       url = API_BASE + url
@@ -1614,15 +1607,42 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
                            timeout=appengine_config.HTTP_TIMEOUT)
 
-    if not parse_response:
+    if _as is None:
       return resp
 
     body = resp.read()
     try:
-      return json.loads(body)
+      return self._as(_as, json.loads(body))
     except ValueError:  # couldn't parse JSON
       logging.debug('Response: %s %s', resp.getcode(), body)
       raise
+
+  @staticmethod
+  def _as(type, resp):
+    """Converts an API response to a specific type.
+
+    If resp isn't the right type, an empty instance of type is returned.
+
+    If type is list, the response is expected to be a dict with the returned
+    list in the 'data' field. If the response is a list, it's returned as is.
+
+    Args:
+      type: list or dict
+      resp: parsed JSON object
+    """
+    assert type in (list, dict)
+
+    if type is list:
+      if isinstance(resp, dict):
+        resp = resp.get('data', [])
+      else:
+        logging.warning('Expected dict response with `data` field, got %s', resp)
+
+    if isinstance(resp, type):
+      return resp
+    else:
+      logging.warning('Expected %s response, got %s', type, resp)
+      return type()
 
   def urlopen_batch(self, urls):
     """Sends a batch of multiple API calls using Facebook's batch API.
@@ -1691,7 +1711,7 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
 
     data = 'batch=' + json.dumps(util.trim_nulls(requests),
                                  separators=(',', ':'))  # no whitespace
-    resps = self.urlopen('', data=data)
+    resps = self.urlopen('', data=data, _as=list)
 
     for resp in resps:
       if 'headers' in resp:
