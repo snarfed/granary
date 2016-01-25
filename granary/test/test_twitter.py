@@ -1777,7 +1777,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     obj = {
       'objectType': 'note',
       'content': """\
-the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok done""",
+the caption.\nextra long so we can check that it accounts for the pic-twitter-com link. <video xyz>should be removed. </video> almost at 140 chars, just type a little more, ok done.""",
       'stream': {'url': 'http://my/video'},
     }
     ellipsized = u"""\

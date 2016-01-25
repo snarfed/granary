@@ -958,14 +958,15 @@ class FlickrTest(testutil.TestCase):
       'stream': {'url': 'https://jeena.net/videos/xyz.mp4'},
       'image': [{'url': 'https://jeena.net/photos/xyz.jpg'}],
       'url': 'https://jeena.net/videos/164',
-      'content': 'my video',
+      # the <video> tag should be removed, but other formatting should be preserved
+      'content': 'check<br />out <video>my video</video>',
     }
 
     # preview
     preview = self.flickr.preview_create(obj)
     self.assertEquals('post', preview.description)
     self.assertEquals(
-      '<div>my video</div>'
+      '<div>check\nout</div>'
         '<video controls src="https://jeena.net/videos/xyz.mp4">'
         '<a href="https://jeena.net/videos/xyz.mp4">this video</a></video>',
       preview.content)
@@ -975,7 +976,7 @@ class FlickrTest(testutil.TestCase):
     self.expect_requests_post(
       'https://up.flickr.com/services/upload',
       data=[
-        ('description', 'my video'),
+        ('description', 'check\nout'),
       ] + IGNORED_OAUTH_PARAMS,
       files={'photo': 'video response'},
       response="""\

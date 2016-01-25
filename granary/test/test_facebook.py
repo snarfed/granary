@@ -2258,20 +2258,20 @@ cc Sam G, Michael M<br />""", preview.description)
   def test_create_with_video(self):
     obj = {
       'objectType': 'note',
-      'content': 'my caption',
+      'content': 'my <br /> caption <video class="x" y>should be removed </video>',
       'stream': {'url': 'http://my/video'},
     }
 
     # test preview
     preview = self.fb.preview_create(obj)
     self.assertEquals('<span class="verb">post</span>:', preview.description)
-    self.assertEquals('my caption<br /><br /><video controls src="http://my/video">'
+    self.assertEquals('my\ncaption<br /><br /><video controls src="http://my/video">'
                       '<a href="http://my/video">this video</a></video>',
                       preview.content)
 
     # test create
     self.expect_urlopen(facebook.API_VIDEOS, {}, data=urllib.urlencode({
-      'file_url': 'http://my/video', 'description': 'my caption'}))
+      'file_url': 'http://my/video', 'description': 'my\ncaption'}))
     self.mox.ReplayAll()
     self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
 

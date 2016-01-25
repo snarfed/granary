@@ -715,7 +715,8 @@ class Source(object):
     """
     return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
-  def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False):
+  def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False,
+                          strip_first_video_tag=False):
     """Returns the content text to use in create() and preview_create().
 
     Returns summary if available, then content, then displayName.
@@ -728,12 +729,19 @@ class Source(object):
       ignore_formatting: boolean, whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
       prefer_name: boolean, whether to prefer displayName to content
+      strip_first_video_tag: if true, removes the first <video> tag. useful when
+        it will be uploaded and attached to the post natively in the silo.
 
     Returns: string, possibly empty
     """
     summary = obj.get('summary', '').strip()
     name = obj.get('displayName', '').strip()
     content = obj.get('content', '').strip()
+
+    if strip_first_video_tag:
+      # don't use BeautifulSoup because we want to preserve exact formatting
+      # and whitespace otherwise
+      content = re.sub(r'<video[^<>]*>.*</video>', '', content, count=1)
 
     if summary == strip_html_tags(content).strip():
       # summary and content are the same; prefer content so that we can use its

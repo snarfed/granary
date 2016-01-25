@@ -126,11 +126,13 @@ class Flickr(source.Source):
     # photo, comment, or like
     type = source.object_type(obj)
     logging.debug('publishing object type %s to Flickr', type)
-    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     link_text = '(Originally published at: %s)' % obj.get('url')
 
-    video_url = util.get_first(obj, 'stream', {}).get('url')
     image_url = util.get_first(obj, 'image', {}).get('url')
+    video_url = util.get_first(obj, 'stream', {}).get('url')
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
+                                       strip_first_video_tag=bool(video_url))
+
     if (video_url or image_url) and type in ('note', 'article'):
       name = obj.get('displayName')
       people = self._get_person_tags(obj)

@@ -571,7 +571,9 @@ class Facebook(source.Source):
 
     video_url = util.get_first(obj, 'stream', {}).get('url')
     image_url = util.get_first(obj, 'image', {}).get('url')
-    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
+                                       strip_first_video_tag=bool(video_url))
+
     if not content and not (video_url or image_url):
       if type == 'activity':
         content = verb

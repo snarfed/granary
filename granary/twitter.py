@@ -567,7 +567,8 @@ class Twitter(source.Source):
     prefer_content = type == 'note' or (base_url and (type == 'comment'
                                                       or obj.get('inReplyTo')))
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
-                                       prefer_name=not prefer_content)
+                                       prefer_name=not prefer_content,
+                                       strip_first_video_tag=bool(video_url))
     if not content:
       if type == 'activity':
         content = verb
