@@ -308,6 +308,14 @@ class SourceTest(testutil.TestCase):
                                        'summary': ' s '},
                                 prefer_name=True))
 
+      # test stripping <video>
+      # https://github.com/snarfed/bridgy/issues/612#issuecomment-175096511
+      # based on http://tantek.com/2016/010/t2/waves-break-rush-lava-rocks
+      self.assertEqual('Watching waves break.', cfc(base, {
+        'content': '<video class="u-video" loop="loop"><a href="xyz>a video</a>'
+                   '</video>Watching waves break.',
+      }, strip_first_video_tag=True))
+
   def test_activity_changed(self):
     fb_post = test_facebook.ACTIVITY
     fb_post_edited = copy.deepcopy(fb_post)
