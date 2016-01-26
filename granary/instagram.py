@@ -325,7 +325,7 @@ class Instagram(source.Source):
 
     return source.creation_result(
       abort=True,
-      error_plain='Cannot publish this post on Instagram.',
+      error_plain='Cannot publish this post on Instagram. Instagram does not support posting photos or videos from 3rd party applications.',
       error_html='Cannot publish this post on Instagram. Instagram <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">does not support</a> posting photos or videos from 3rd party applications.')
 
   def media_to_activity(self, media):
