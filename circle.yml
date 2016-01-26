@@ -13,7 +13,7 @@ dependencies:
     - unzip -q -d $HOME $HOME/google_appengine_1.9.28.zip
     - pip install -e oauth-dropins/
   post:
-    - pip install coverage
+    - pip install coverage coveralls
     - ln -s $VIRTUAL_ENV local  # we use app engine's vendor module to point here
 
 machine:
@@ -25,3 +25,5 @@ test:
   override:
     - python -m coverage run --source=. --omit=granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\* -m unittest discover -v
     - python -m coverage html -d $CIRCLE_ARTIFACTS
+  post:
+    - coveralls
