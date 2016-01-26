@@ -583,8 +583,9 @@ class Facebook(source.Source):
           error_plain='No content text found.',
           error_html='No content text found.')
 
-    if obj.get('displayName') and mf2util.is_name_a_title(obj.get('displayName'), content):
-        content = obj.get('displayName') + u"\n\n" + content
+    name = obj.get('displayName')
+    if name and mf2util.is_name_a_title(name, content):
+        content = name + u"\n\n" + content
 
     people = self._get_person_tags(obj)
 
