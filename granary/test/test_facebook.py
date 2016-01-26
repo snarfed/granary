@@ -2258,6 +2258,7 @@ cc Sam G, Michael M<br />""", preview.description)
   def test_create_with_video(self):
     obj = {
       'objectType': 'note',
+      'displayName': 'my \n caption should be removed ',
       'content': 'my <br /> caption <video class="x" y>should be removed </video>',
       'stream': {'url': 'http://my/video'},
     }

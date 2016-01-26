@@ -144,6 +144,7 @@ class Flickr(source.Source):
       # if name does not represent an explicit title, then we'll just
       # use it as the title and wipe out the content
       if name and content and not mf2util.is_name_a_title(name, content):
+        name = content
         content = None
 
       # add original post link

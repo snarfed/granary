@@ -995,6 +995,16 @@ class FlickrTest(testutil.TestCase):
         "Note that videos take time to process before they're visible.",
     }, self.flickr.create(obj).content)
 
+  def test_create_strips_video_tag_and_name_matches_content(self):
+    preview = self.flickr.preview_create({
+      'objectType': 'note',
+      'stream': {'url': 'https://jeena.net/videos/xyz.mp4'},
+      'displayName': 'my content should hide',
+      'content': 'my content <video>should hide</video>',
+    }).content
+    self.assertTrue(preview.startswith('<h4>my content</h4>'), preview)
+    self.assertNotIn('should hide', preview)
+
   def test_preview_create_comment(self):
     preview = self.flickr.preview_create(REPLY_OBJ, include_link=True)
     self.assertEquals(
