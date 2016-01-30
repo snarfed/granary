@@ -396,7 +396,7 @@ class Facebook(source.Source):
       resp = self.urlopen(api_call % ','.join(ids[i:i + MAX_IDS]))
       for id, objs in resp.items():
         # objs is usually a dict but sometimes a boolean. (oh FB, never change!)
-        results.setdefault(id, []).extend((objs or {}).get('data', []))
+        results.setdefault(id, []).extend(self._as(dict, objs).get('data', []))
 
     return results
 
