@@ -600,7 +600,13 @@ class Instagram(source.Source):
         activities.append(super(Instagram, self).postprocess_activity(activity))
 
     viewer = data.get('config', {}).get('viewer', {})
-    viewer['profile_picture'] = viewer.get('profile_pic_url', '').replace('\/', '/')
-    viewer['website'] = viewer.get('external_url', '').replace('\/', '/')
+
+    profile = viewer.get('profile_pic_url')
+    if profile:
+      viewer['profile_picture'] = profile.replace('\/', '/')
+
+    website = viewer.get('external_url')
+    if website:
+      viewer['website'] = website.replace('\/', '/')
 
     return activities, self.user_to_actor(viewer)

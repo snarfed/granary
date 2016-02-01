@@ -987,3 +987,15 @@ class InstagramTest(testutil.HandlerTest):
     activities, viewer = self.instagram.html_to_activities(html)
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER, viewer)
+
+  def test_html_to_activities_missing_profile_picture_external_url(self):
+    data = copy.deepcopy(HTML_FEED_DATA)
+    data['config']['viewer']['profile_pic_url'] = None
+    data['config']['viewer']['external_url'] = None
+    _, viewer = self.instagram.html_to_activities(
+      HTML_FEED_HEADER + json.dumps(data) + HTML_FEED_FOOTER)
+
+    expected = copy.deepcopy(HTML_VIEWER)
+    expected['url'] = 'http://instagram.com/snarfed'
+    del expected['image']
+    self.assert_equals(expected, viewer)
