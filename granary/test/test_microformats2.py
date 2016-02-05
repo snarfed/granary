@@ -177,6 +177,22 @@ foo
         }]
       }))
 
+  def test_render_content_multiple_image_attachments(self):
+    self.assert_equals("""\
+foo
+<p>
+<img class="thumbnail" src="http://1" alt="" />
+</p>
+<p>
+<img class="thumbnail" src="http://2" alt="" />
+</p>""", microformats2.render_content({
+        'content': 'foo',
+        'attachments': [
+          {'objectType': 'image', 'image': {'url': 'http://1'}},
+          {'objectType': 'image', 'image': {'url': 'http://2'}},
+        ]
+      }))
+
   def test_render_content_converts_newlines_to_brs(self):
     self.assert_equals("""\
 foo<br />
@@ -281,7 +297,7 @@ foo
                          microformats2.render_content({'tags': [tag]}),
                          tag)
 
-  def test_dont_render_images_inside_attachments(self):
+  def test_dont_render_images_inside_non_image_attachments(self):
     self.assert_equals('my content', microformats2.render_content({
        'content': 'my content',
        'attachments': [{

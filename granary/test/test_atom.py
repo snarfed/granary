@@ -46,14 +46,17 @@ class AtomTest(testutil.HandlerTest):
       atom.activities_to_atom([copy.deepcopy(test_twitter.ACTIVITY)],
                               test_twitter.ACTOR, title='my title'))
 
-  def test_render_with_image(self):
-    """Attached images are rendered inline as HTML
-    """
+  def test_render_with_images(self):
+    """Attached images are rendered inline as HTML."""
+    activity = copy.deepcopy(test_instagram.ACTIVITY)
+    activity['object']['attachments'].append(
+      {'objectType': 'image', 'image': {'url': 'http://image/2'}})
+
+    got = atom.activities_to_atom([activity],test_instagram.ACTOR, title='')
     self.assert_multiline_in(
-      '<img class="thumbnail" src="http://attach/image/big"',
-      atom.activities_to_atom([copy.deepcopy(test_instagram.ACTIVITY)],
-                              test_instagram.ACTOR,
-                              title='my title'))
+      '<img class="thumbnail" src="http://attach/image/big"', got)
+    self.assert_multiline_in(
+      '<img class="thumbnail" src="http://image/2"', got)
 
   def test_render_untitled_image(self):
     """Images should be included even if there is no other content
