@@ -91,13 +91,13 @@ TWEET = {  # Twitter
         'media_url': 'http://p.twimg.com/picture1',
         'url': 'http://t.co/picture',
         'expanded_url': 'http://the/picture1',
-        'display_url': 'http://pic.twitter.com/2',
+        'display_url': 'http://pic.twitter.com/1',
         'indices': [83, 102],
-        }, {
-        'media_url': 'http://p.twimg.com/picture2',
-        'expanded_url': 'http://the/picture2',
-        'display_url': 'http://pic.twitter.com/2',
-        }],
+      }, {
+        # duplicated in extended_entities; we should de-dupe
+        'id': 'picture3',
+        'media_url': 'http://p.twimg.com/picture3',
+      }],
     'urls': [{
         'expanded_url': 'http://first/link/',
         'url': 'http://t.co/6J2EgYM',
@@ -127,6 +127,17 @@ TWEET = {  # Twitter
         'indices': [15, 28],
         'screen_name': 'foo'
       }],
+  },
+  'extended_entities': {
+    'media': [{
+      'media_url': 'http://p.twimg.com/picture2',
+      'expanded_url': 'http://the/picture2',
+      'display_url': 'http://pic.twitter.com/2',
+    }, {
+      # duplicated in entities; we should de-dupe
+      'id': 'picture3',
+      'media_url': 'http://p.twimg.com/picture3',
+    }],
   },
   'text': '@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
@@ -185,6 +196,9 @@ OBJECT = {  # ActivityStreams
       }, {
       'objectType': 'image',
       'image': {'url': u'http://p.twimg.com/picture2'},
+      }, {
+      'objectType': 'image',
+      'image': {'url': u'http://p.twimg.com/picture3'},
       }],
   }
 ACTIVITY = {  # ActivityStreams
@@ -506,6 +520,11 @@ ATOM = """\
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="thumbnail" src="http://p.twimg.com/picture2" alt="" />
+</a>
+</p>
+<p>
+<a class="link" href="https://twitter.com/snarfed_org/status/100">
+<img class="thumbnail" src="http://p.twimg.com/picture3" alt="" />
 </a>
 </p>
 <span class="p-location h-card h-as-location">

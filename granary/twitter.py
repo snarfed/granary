@@ -12,6 +12,7 @@ https://dev.twitter.com/docs/platform-objects/users
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
+import collections
 import datetime
 import itertools
 import httplib
@@ -1048,14 +1049,14 @@ class Twitter(source.Source):
     content_prefix = ''
     retweeted = tweet.get('retweeted_status')
     if retweeted:
-      entities = retweeted.get('entities', {})
+      entities = self._get_entities(retweeted)
       text = retweeted.get('text', '')
       if text:
         content_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
           (retweeted.get('user', {}).get('screen_name'),) * 2)
         obj['content'] = content_prefix + text
     else:
-      entities = tweet.get('entities', {})
+      entities = self._get_entities(tweet)
 
     user = tweet.get('user')
     if user:
@@ -1072,7 +1073,7 @@ class Twitter(source.Source):
     # currently the media list will only have photos. if that changes, though,
     # we'll need to make this conditional on media.type.
     # https://dev.twitter.com/docs/tweet-entities
-    media = entities.get('media')
+    media = entities.get('media', [])
     if media:
       obj['attachments'] = [{
           'objectType': 'image',
@@ -1110,7 +1111,7 @@ class Twitter(source.Source):
       {'objectType': 'image',
        'displayName': '',
        'indices': t.get('indices'),
-       } for t in entities.get('media', [])]
+       } for t in media]
 
     # sort tags by indices, since they need to be processed (below) in order.
     obj['tags'].sort(key=lambda t: t.get('indices'))
@@ -1165,6 +1166,27 @@ class Twitter(source.Source):
           }]
 
     return self.postprocess_object(obj)
+
+  @staticmethod
+  def _get_entities(tweet):
+    """Merges and returns a tweet's entities and extended_entities."""
+    entities = collections.defaultdict(list)
+
+    # maps kind to set of id_str, url, and text values we've seen, for de-duping
+    seen_ids = collections.defaultdict(set)
+
+    for field in 'entities', 'extended_entities':
+      # kind is media, urls, hashtags, user_mentions, symbols, etc
+      for kind, values in tweet.get(field, {}).items():
+        for v in values:
+          id = v.get('id_str') or v.get('id') or v.get('url') or v.get('text')
+          if id in seen_ids[kind]:
+            continue
+          elif id:
+            seen_ids[kind].add(id)
+          entities[kind].append(v)
+
+    return entities
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.
