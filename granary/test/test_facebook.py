@@ -91,38 +91,38 @@ PAGE_ACTOR = {  # ActivityStreams
   # 'location': {},  # TODO
   }
 COMMENTS = [{  # Facebook
-    'id': '547822715231468_6796480',
-    'from': {
-      'name': 'Ryan Barrett',
-      'id': '212038'
-      },
-    'message': 'cc Sam G, Michael M',
-    'message_tags': [{
-        'id': '221330',
-        'name': 'Sam G',
-        'type': 'user',
-        'offset': 3,
-        'length': 5,
-        }, {
-        'id': '695687650',
-        'name': 'Michael Mandel',
-        'type': 'user',
-        'offset': 10,
-        'length': 9,
-        }],
-    'created_time': '2012-12-05T00:58:26+0000',
-    'privacy': {'value': 'FRIENDS'},
-    }, {
-    'id': '124561947600007_672819',
-    'from': {
-      'name': 'Ron Ald',
-      'id': '513046677'
-      },
-    'message': 'Foo bar!',
-    'created_time': '2010-10-28T00:23:04+0000',
-    'privacy': {'value': ''},  # empty means public
-    'actions': [{'name': 'See Original', 'link': 'http://ald.com/foobar'}]
-    }]
+  'id': '547822715231468_6796480',
+  'from': {
+    'name': 'Ryan Barrett',
+    'id': '212038'
+  },
+  'message': 'cc Sam G, Michael M',
+  'message_tags': [{
+    'id': '221330',
+    'name': 'Sam G',
+    'type': 'user',
+    'offset': 3,
+    'length': 5,
+  }, {
+    'id': '695687650',
+    'name': 'Michael Mandel',
+    'type': 'user',
+    'offset': 10,
+    'length': 9,
+  }],
+  'created_time': '2012-12-05T00:58:26+0000',
+  'privacy': {'value': 'FRIENDS'},
+}, {
+  'id': '124561947600007_672819',
+  'from': {
+    'name': 'Ron Ald',
+    'id': '513046677'
+  },
+  'message': 'Foo bar!',
+  'created_time': '2010-10-28T00:23:04+0000',
+  'privacy': {'value': ''},  # empty means public
+  'actions': [{'name': 'See Original', 'link': 'http://ald.com/foobar'}]
+}]
 SHARE = {  # Facebook
   'id': '321_654',
   'from': {
@@ -1308,6 +1308,23 @@ class FacebookTest(testutil.HandlerTest):
                      [FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY, FB_LINK_ACTIVITY]):
       self.assert_equals(expected, self.fb.get_activities(
         group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+
+  def test_get_activities_matches_extras_with_correct_activity(self):
+    self.expect_urlopen('me/feed?offset=0', {'data': [POST]})
+    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen('me/events', {'data': [EVENT]})
+    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {})
+    self.expect_urlopen('sharedposts?ids=10100176064482163',
+                        {'10100176064482163': {'data': [SHARE]}})
+    self.expect_urlopen('comments?filter=stream&ids=10100176064482163',
+                        {'10100176064482163': {'data': COMMENTS}})
+
+    self.mox.ReplayAll()
+    activity = copy.deepcopy(ACTIVITY)
+    activity['object']['tags'].append(SHARE_OBJ)
+    self.assert_equals([EVENT_ACTIVITY, activity], self.fb.get_activities(
+      group_id=source.SELF, fetch_events=True, fetch_shares=True, fetch_replies=True))
 
   def test_get_activities_self_fetch_news(self):
     self.expect_urlopen('me/feed?offset=0', {'data': [POST]})

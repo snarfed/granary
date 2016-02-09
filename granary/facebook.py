@@ -300,12 +300,12 @@ class Facebook(source.Source):
         #
         # don't do it for individual people's feeds, e.g. the current user's,
         # because posts with attached links are also status_type == shared_story
-        posts = [p for p in posts if not p.get('status_type') == 'shared_story']
-
-    activities.extend(self.post_to_activity(p) for p in posts)
+        posts = [p for p in posts if p.get('status_type') != 'shared_story']
 
     id_to_activity = {}
-    for post, activity in zip(posts, activities):
+    for post in posts:
+      activity = self.post_to_activity(post)
+      activities.append(activity)
       id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
       if id:
         id_to_activity[id] = activity
@@ -412,7 +412,7 @@ class Facebook(source.Source):
       owner_id: string. if provided, only returns events owned by this user
 
     Returns:
-      posts: list of Facebook post object dicts
+      list of ActivityStreams event objects
     """
     rsvps = self.urlopen(API_USER_RSVPS, _as=list)
 
