@@ -36,6 +36,8 @@ API_MEDIA_POPULAR_URL = 'https://api.instagram.com/v1/media/popular'
 API_MEDIA_LIKES_URL = 'https://api.instagram.com/v1/media/%s/likes'
 API_COMMENT_URL = 'https://api.instagram.com/v1/media/%s/comments'
 
+HTML_PROFILE = 'https://www.instagram.com/%s'
+
 
 class Instagram(source.Source):
   """Implements the ActivityStreams API for Instagram."""
@@ -103,7 +105,8 @@ class Instagram(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None):
+                              fetch_mentions=False, search_query=None,
+                              scrape=False):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -125,8 +128,19 @@ class Instagram(source.Source):
     Instagram only supports search over hashtags, so if search_query is set, it
     must begin with #.
 
+    Args (beyond Source.get_activities_response):
+      scrape: if True, scrapes HTML from instagram.com instead of using the API.
+        Useful for apps that haven't yet been approved in the new permissions
+        approval process. Currently only supports group_id=SELF.
+        http://developers.instagram.com/post/133424514006/instagram-platform-update
+
     Raises: InstagramAPIError
     """
+    if scrape:
+      if not user_id or group_id != source.SELF:
+        raise NotImplementedError('Scraping requires user_id and group_id=@self.')
+      return self._scrape(user_id, fetch_replies or fetch_likes)
+
     if user_id is None:
       user_id = 'self'
     if group_id is None:
@@ -184,8 +198,16 @@ class Instagram(source.Source):
       else:
         raise e
 
-    response = self.make_activities_base_response(activities)
-    return response
+    return self.make_activities_base_response(activities)
+
+  def _scrape(self, user_id, fetch_extras):
+    """Scrapes a user's profile page and converts the media to activities.
+    """
+    assert user_id
+    html = urllib2.urlopen(HTML_PROFILE % user_id,
+                           timeout=appengine_config.HTTP_TIMEOUT).read()
+    activities, _ = self.html_to_activities(html)
+    return self.make_activities_base_response(activities)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
@@ -556,9 +578,11 @@ class Instagram(source.Source):
     end = html.index(';</script>', start)
     data = json.loads(html[start:end])
 
+    entry_data = data.get('entry_data', {})
     activities = []
-    for page in data.get('entry_data', {}).get('FeedPage', []):
-      for media in page.get('feed', {}).get('media', {}).get('nodes', []):
+    for page in entry_data.get('FeedPage') or entry_data.get('ProfilePage') or []:
+      feed = page.get('feed') or page.get('user') or {}
+      for media in feed.get('media', {}).get('nodes', []):
         # preprocess to make its field names match the API's
         dims = media.get('dimensions', {})
         media.update({
@@ -574,16 +598,17 @@ class Instagram(source.Source):
           'users_in_photo': media.get('usertags', {}).get('nodes', []),
         })
 
-        for obj in [media] + media['comments']['nodes'] + media['likes']['nodes']:
+        comments = media.setdefault('comments', {}).setdefault('nodes', [])
+        likes = media.setdefault('likes', {}).setdefault('nodes', [])
+        for obj in [media] + comments + likes:
           obj['user']['profile_picture'] = \
             obj['user'].get('profile_pic_url', '').replace('\/', '/')
 
-        media['comments']['data'] = media['comments']['nodes']
+        media['comments']['data'] = comments
         for c in media['comments']['data']:
           c['from'] = c['user']
           c['created_time'] = c['created_at']
-        media['likes']['data'] = [l['user'] for l in media['likes']['nodes']]
-
+        media['likes']['data'] = [l['user'] for l in likes]
 
         if media.get('is_video'):
           media.update({
@@ -599,7 +624,7 @@ class Instagram(source.Source):
         self.postprocess_object(activity['object'])
         activities.append(super(Instagram, self).postprocess_activity(activity))
 
-    viewer = data.get('config', {}).get('viewer', {})
+    viewer = data.get('config', {}).get('viewer') or {}
 
     profile = viewer.get('profile_pic_url')
     if profile:

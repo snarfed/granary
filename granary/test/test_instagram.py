@@ -423,9 +423,115 @@ this picture -&gt; is #abc #xyz
 </feed>
 """
 
-# HTML from https://www.instagram.com/
+# HTML objects from https://www.instagram.com/...
 # https://github.com/snarfed/granary/issues/65
-HTML_FEED_DATA = {
+# https://github.com/snarfed/bridgy/issues/603
+HTML_PHOTO_FULL = {
+  'id': '123_456',
+  'code': 'ABC123',
+  'location': {
+    'name': 'RCA Studio B',
+    'id': '345924646',
+    'has_public_page': True
+  },
+  'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfp1\/t51.2885-15\/e35\/12545499_1662965520652470_1466520818_n.jpg',
+  'is_video': False,
+  'owner': {
+    'is_private': False,
+    'id': '54861273',
+    'has_blocked_viewer': False,
+    'full_name': 'Jerry C',
+    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+    'blocked_by_viewer': False,
+    'followed_by_viewer': True,
+    'requested_by_viewer': False,
+    'username': 'jc',
+  },
+  'likes': {
+    'nodes': [{
+      'user': {
+        'id': '8',
+        'profile_pic_url': 'http:\/\/alice\/picture',
+        'username': 'alizz',
+        'full_name': 'Alice',
+      }
+    }, {
+      'user': {
+        'id': '9',
+        'profile_pic_url': 'http:\/\/bob\/picture',
+        'username': 'bobbb',
+        'full_name': 'Bob',
+        'website': 'http://bob.com/',
+      }
+    }],
+    'viewer_has_liked': False,
+    'count': 2,
+  },
+  'caption': 'Elvis hits out of RCA Studio B',
+  'comments': {
+    'nodes': [],
+    'page_info': {
+      'has_next_page': False,
+      'end_cursor': None,
+      'start_cursor': None,
+      'has_previous_page': False
+    },
+    'count': 0,
+  },
+  'dimensions': {'width': 1080, 'height': 1293},
+  'date': 1453063593.0,
+}
+HTML_VIDEO_FULL = {
+  'id': '123_456',
+  'code': 'XYZ789',
+  'location': None,
+  'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
+  'is_video': True,
+  'video_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xtp1\/t50.2886-16\/12604073_746855092124622_46574942_n.mp4',
+  'dimensions': {'height': 640, 'width': 640},
+  'owner': {
+    'is_private': True,
+    'id': '54861273',
+    'full_name': 'Jerry C',
+    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+    'username': 'jc',
+  },
+  'likes': {
+    'nodes': [],
+    'count': 0,
+  },
+  'caption': 'Eye of deer \ud83d\udc41 and #selfie from me',
+  'comments': {
+    'nodes': [{
+      'user': {
+        'id': '232927278',
+        'profile_pic_url': 'http:\/\/picture\/commenter',
+        'username': 'averygood',
+        'full_name': '\u5c0f\u6b63',
+      },
+      'id': '789',
+      'created_at': 1349588757,
+      'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+    }],
+  },
+  'usertags': {
+    'nodes': [{
+      'user': {'username': 'ap'},
+      'position': {'x': 0.4657777507, 'y': 0.4284444173},
+    }],
+  },
+  'date': 1453036552.0,
+}
+
+HTML_VIDEO = copy.deepcopy(HTML_VIDEO_FULL)
+del HTML_VIDEO['likes']['nodes']
+del HTML_VIDEO['comments']['nodes']
+
+HTML_PHOTO = copy.deepcopy(HTML_PHOTO_FULL)
+del HTML_PHOTO['likes']['nodes']
+del HTML_PHOTO['comments']['nodes']
+
+HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
   'environment_switcher_visible_server_guess': True,
   'config': {
     'csrf_token': '...',
@@ -452,128 +558,91 @@ HTML_FEED_DATA = {
     'suggestedUsersList': None,
     '__get_params': None,
     '__query_string': '?',
-    'feed': {'media': {'nodes': [{
+    'feed': {'media': {
+      'nodes': [
+        HTML_PHOTO_FULL,
+        HTML_VIDEO_FULL,
+      ],
+      'page_info': {
+        'has_next_page': True,
+        'end_cursor': '1163980147673702805',
+        'start_cursor': '1164745675899097546',
+        'has_previous_page': False
+      },
+    }},
+}]}}
 
-      # Photo
-      'location': {
-        'name': 'RCA Studio B',
-        'id': '345924646',
-        'has_public_page': True
+HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
+  'config': {
+    'csrf_token': '6a5737e3f1a23873f98d96e12974e2d5',
+    'viewer': None,
+  },
+  '...': '...',  # many of the same top-level fields as in HTML_FEED
+  'entry_data': {'ProfilePage': [{'user': {
+    'external_url': 'http:\/\/snarfed.org',
+    'is_private': False,
+    'has_blocked_viewer': False,
+    'is_verified': False,
+    'blocked_by_viewer': False,
+    'media': {
+      'nodes': [
+        HTML_PHOTO,
+        HTML_VIDEO,
+      ],
+      'page_info': {
+        'has_next_page': True,
+        'end_cursor': '1151679169740247288',
+        'start_cursor': '1178482373937173104',
+        'has_previous_page': False,
       },
-      'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfp1\/t51.2885-15\/e35\/12545499_1662965520652470_1466520818_n.jpg',
-      'id': '123_456',
-      'is_video': False,
-      'owner': {
-        'is_private': False,
-        'id': '54861273',
-        'has_blocked_viewer': False,
-        'full_name': 'Jerry C',
-        'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
-        'blocked_by_viewer': False,
-        'followed_by_viewer': True,
-        'requested_by_viewer': False,
-        'username': 'jc',
-      },
-      'likes': {
-        'nodes': [{
-          'user': {
-            'id': '8',
-            'profile_pic_url': 'http:\/\/alice\/picture',
-            'username': 'alizz',
-            'full_name': 'Alice',
-          }
-        }, {
-          'user': {
-            'id': '9',
-            'profile_pic_url': 'http:\/\/bob\/picture',
-            'username': 'bobbb',
-            'full_name': 'Bob',
-            'website': 'http://bob.com/',
-          }
-        }],
-        'viewer_has_liked': False,
-        'count': 2,
-      },
-      'caption': 'Elvis hits out of RCA Studio B',
-      'comments': {
-        'nodes': [],
-        'page_info': {
-          'has_next_page': False,
-          'end_cursor': None,
-          'start_cursor': None,
-          'has_previous_page': False
-        },
-        'count': 0,
-      },
-      'dimensions': {'width': 1080, 'height': 1293},
-      'date': 1453063593.0,
-      'code': 'ABC123',
-
-    }, {
-
-      # Video
-      'location': None,
-      'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
-      'id': '123_456',
-      'is_video': True,
-      'video_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xtp1\/t50.2886-16\/12604073_746855092124622_46574942_n.mp4',
-      'dimensions': {'height': 640, 'width': 640},
-      'owner': {
-        'is_private': True,
-        'id': '54861273',
-        'full_name': 'Jerry C',
-        'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
-        'username': 'jc',
-      },
-      'likes': {
-        'nodes': [],
-        'count': 0,
-      },
-      'caption': 'Eye of deer \ud83d\udc41 and #selfie from me',
-      'comments': {
-        'nodes': [{
-          'user': {
-            'id': '232927278',
-            'profile_pic_url': 'http:\/\/picture\/commenter',
-            'username': 'averygood',
-            'full_name': '\u5c0f\u6b63',
-          },
-          'id': '789',
-          'created_at': 1349588757,
-          'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
-        }],
-      },
-      'usertags': {
-        'nodes': [{
-          'user': {'username': 'ap'},
-          'position': {'x': 0.4657777507, 'y': 0.4284444173},
-        }],
-      },
-      'date': 1453036552.0,
-      'code': 'ABC123',
-    }],
-
-    'page_info': {
-      'has_next_page': True,
-      'end_cursor': '1163980147673702805',
-      'start_cursor': '1164745675899097546',
-      'has_previous_page': False
+      'count': 471,
     },
-  }
-}}]}}
+    'full_name': 'Ryan B',
+    'biography': 'something or other',
+    'id': '1379',
+    'profile_pic_url': 'https:\/\/scontent.cdninstagram.com\/t51.2885-19\/s150x150\/12_34_56_a.jpg',
+    'follows_viewer': False,
+    'followed_by_viewer': False,
+    'has_requested_viewer': False,
+    'country_block': None,
+    'followed_by': {'count': 458},
+    'requested_by_viewer': False,
+    'follows': {'count': 295},
+    'username': 'z',
+  }}]},
+}
 
-HTML_FEED_HEADER = """
+HTML_PHOTO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
+  'config': {
+    'csrf_token': 'xyz',
+    'viewer': None,
+  },
+  '...': '...',  # many of the same top-level fields as in HTML_FEED and HTML_PROFILE
+  'entry_data': {'PostPage': [{'media': HTML_PHOTO_FULL}]},
+}
+
+HTML_VIDEO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
+  'config': {
+    'csrf_token': 'xyz',
+    'viewer': None,
+  },
+  '...': '...',
+  'entry_data': {'PostPage': [{'media': HTML_VIDEO_FULL}]},
+}
+
+HTML_HEADER = """
 <!DOCTYPE html>
 ...
-    <link href="https://www.instagram.com/" rel="alternate" hreflang="x-default" />
+<link href="https://www.instagram.com/" rel="alternate" hreflang="x-default" />
 ...
+<body>
 <script type="text/javascript">window._sharedData = """
-HTML_FEED_FOOTER = """
+HTML_FOOTER = """
 ;</script>
 <script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_Commons.js/907dcce6a88a.js" type="text/javascript"></script>
 <script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_FeedPage.js/d0ffd22d18b5.js" type="text/javascript"></script>
 ...
-    </body>
+</body>
 </html>
 """
 
@@ -625,14 +694,13 @@ HTML_ACTIVITIES = [{  # ActivityStreams
     'replies': {
       'totalItems': 0,
     },
-    'tags': LIKE_OBJS,
   }
 }, {
   # Video
   'verb': 'post',
   'published': '2016-01-17T13:15:52',
   'id': tag_uri('123_456'),
-  'url': 'https://www.instagram.com/p/ABC123/',
+  'url': 'https://www.instagram.com/p/XYZ789/',
   'actor': HTML_ACTOR,
   'object': {
     'objectType': 'video',
@@ -640,7 +708,7 @@ HTML_ACTIVITIES = [{  # ActivityStreams
     'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
     'id': tag_uri('123_456'),
     'published': '2016-01-17T13:15:52',
-    'url': 'https://www.instagram.com/p/ABC123/',
+    'url': 'https://www.instagram.com/p/XYZ789/',
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'},
     'to': [{'objectType':'group', 'alias':'@private'}],
     'stream': {
@@ -659,9 +727,6 @@ HTML_ACTIVITIES = [{  # ActivityStreams
         'height': 640,
       }],
     }],
-    'replies': {
-      'items': COMMENT_OBJS,
-    },
     'tags': [{
       'objectType': 'person',
       'id': tag_uri('ap'),
@@ -669,6 +734,12 @@ HTML_ACTIVITIES = [{  # ActivityStreams
     }],
   },
 }]
+HTML_ACTIVITIES_FULL = copy.deepcopy(HTML_ACTIVITIES)
+HTML_ACTIVITIES_FULL[0]['object']['tags'] = LIKE_OBJS
+HTML_ACTIVITIES_FULL[1]['object']['replies'] = \
+  {'items': copy.deepcopy(COMMENT_OBJS)}
+HTML_ACTIVITIES_FULL[1]['object']['replies']['items'][0]['url'] = \
+  'http://instagram.com/p/XYZ789/#comment-789'
 
 
 class InstagramTest(testutil.HandlerTest):
@@ -764,12 +835,39 @@ class InstagramTest(testutil.HandlerTest):
     with self.assertRaises(NotImplementedError):
       self.instagram.get_activities(search_query='foo')
 
+  def test_get_activities_scrape(self):
+    self.expect_urlopen('https://www.instagram.com/x',
+                        HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
+    self.mox.ReplayAll()
+    self.assert_equals(HTML_ACTIVITIES, self.instagram.get_activities(
+      user_id='x', group_id=source.SELF, scrape=True))
+
+  def test_get_activities_scrape_fetch_extras(self):
+    self.expect_urlopen('https://www.instagram.com/x',
+                        HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
+    self.expect_urlopen('https://www.instagram.com/p/ABC123',
+                        HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER)
+    self.expect_urlopen('https://www.instagram.com/p/XYZ789',
+                        HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER)
+
+    self.mox.ReplayAll()
+    self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
+      user_id='x', group_id=source.SELF, fetch_likes=True, fetch_replies=True,
+      scrape=True))
+
+  def test_get_activities_scrape_requires_self_and_user_id(self):
+    for group_id in None, source.ALL, source.FRIENDS, source.SEARCH:
+      with self.assertRaises(NotImplementedError):
+        self.instagram.get_activities(user_id='x', group_id=group_id, scrape=True)
+
+    with self.assertRaises(NotImplementedError):
+      self.instagram.get_activities(user_id='', group_id=source.SELF, scrape=True)
+
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
                         json.dumps({'data': VIDEO}))
     self.mox.ReplayAll()
     self.assert_equals([VIDEO_ACTIVITY], self.instagram.get_activities(activity_id='5678'))
-
 
   def test_get_comment(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
@@ -983,17 +1081,17 @@ class InstagramTest(testutil.HandlerTest):
       }))
 
   def test_html_to_activities(self):
-    html = HTML_FEED_HEADER + json.dumps(HTML_FEED_DATA) + HTML_FEED_FOOTER
-    activities, viewer = self.instagram.html_to_activities(html)
-    self.assert_equals(HTML_ACTIVITIES, activities)
+    activities, viewer = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER)
+    self.assert_equals(HTML_ACTIVITIES_FULL, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
   def test_html_to_activities_missing_profile_picture_external_url(self):
-    data = copy.deepcopy(HTML_FEED_DATA)
+    data = copy.deepcopy(HTML_FEED)
     data['config']['viewer']['profile_pic_url'] = None
     data['config']['viewer']['external_url'] = None
     _, viewer = self.instagram.html_to_activities(
-      HTML_FEED_HEADER + json.dumps(data) + HTML_FEED_FOOTER)
+      HTML_HEADER + json.dumps(data) + HTML_FOOTER)
 
     expected = copy.deepcopy(HTML_VIEWER)
     expected['url'] = 'https://www.instagram.com/snarfed/'
