@@ -64,7 +64,7 @@ MEDIA = {  # Instagram
   'id': '123_456',
   'filter': 'Normal',
   'created_time': '1348291542',
-  'link': 'http://instagram.com/p/ABC123/',
+  'link': 'https://www.instagram.com/p/ABC123/',
   'user_has_liked': False,
   'attribution': None,
   'location': {
@@ -108,7 +108,7 @@ MEDIA = {  # Instagram
 VIDEO = {
   'type': 'video',
   'id': '123_456',
-  'link': 'http://instagram.com/p/ABC123/',
+  'link': 'https://www.instagram.com/p/ABC123/',
   'videos': {
     'low_resolution': {
       'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_102.mp4',
@@ -159,12 +159,12 @@ COMMENT_OBJS = [  # ActivityStreams
       'username': 'averygood',
       'displayName': '\u5c0f\u6b63',
       'image': {'url': 'http://picture/commenter'},
-      'url': 'http://instagram.com/averygood',
+      'url': 'https://www.instagram.com/averygood/',
       },
     'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     'id': tag_uri('789'),
     'published': '2012-10-07T05:45:57',
-    'url': 'http://instagram.com/p/ABC123/#comment-789',
+    'url': 'https://www.instagram.com/p/ABC123/#comment-789',
     'inReplyTo': [{'id': tag_uri('123_456')}],
     'to': [{'objectType':'group', 'alias':'@public'}],
     },
@@ -175,7 +175,7 @@ POST_OBJ = {  # ActivityStreams
   'content': 'this picture -&gt; is #abc #xyz',
   'id': tag_uri('123_456'),
   'published': '2012-09-22T05:25:42',
-  'url': 'http://instagram.com/p/ABC123/',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'image': {'url': 'http://attach/image/big'},
   'to': [{'objectType':'group', 'alias':'@public'}],
   'location': {
@@ -234,7 +234,7 @@ ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-09-22T05:25:42',
   'id': tag_uri('123_456'),
-  'url': 'http://instagram.com/p/ABC123/',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'actor': ACTOR,
   'object': POST_OBJ,
   }
@@ -260,24 +260,24 @@ MEDIA_WITH_LIKES['likes'] = {
 }
 LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('123_456_liked_by_8'),
-    'url': 'http://instagram.com/p/ABC123/#liked-by-8',
+    'url': 'https://www.instagram.com/p/ABC123/#liked-by-8',
     'objectType': 'activity',
     'verb': 'like',
-    'object': { 'url': 'http://instagram.com/p/ABC123/'},
+    'object': { 'url': 'https://www.instagram.com/p/ABC123/'},
     'author': {
       'objectType': 'person',
       'id': tag_uri('8'),
       'displayName': 'Alice',
       'username': 'alizz',
-      'url': 'http://instagram.com/alizz',
+      'url': 'https://www.instagram.com/alizz/',
       'image': {'url': 'http://alice/picture'},
       },
     }, {
     'id': tag_uri('123_456_liked_by_9'),
-    'url': 'http://instagram.com/p/ABC123/#liked-by-9',
+    'url': 'https://www.instagram.com/p/ABC123/#liked-by-9',
     'objectType': 'activity',
     'verb': 'like',
-    'object': { 'url': 'http://instagram.com/p/ABC123/'},
+    'object': { 'url': 'https://www.instagram.com/p/ABC123/'},
     'author': {
       'objectType': 'person',
       'id': tag_uri('9'),
@@ -325,7 +325,7 @@ VIDEO_OBJ = {
     'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_7.jpg'
   },
   'author': ACTOR,
-  'url': 'http://instagram.com/p/ABC123/',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'replies': {
     'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
@@ -336,7 +336,7 @@ VIDEO_OBJ = {
   'objectType': 'video'
 }
 VIDEO_ACTIVITY = {
-  'url': 'http://instagram.com/p/ABC123/',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'object': VIDEO_OBJ,
   'actor': ACTOR,
   'verb': 'post',
@@ -381,7 +381,7 @@ ATOM = """\
 
   <activity:object-type>http://activitystrea.ms/schema/1.0/photo</activity:object-type>
 
-  <id>http://instagram.com/p/ABC123/</id>
+  <id>https://www.instagram.com/p/ABC123/</id>
   <title>this picture -&gt; is #abc #xyz</title>
 
   <content type="xhtml">
@@ -389,7 +389,7 @@ ATOM = """\
 
 this picture -&gt; is #abc #xyz
 <p>
-<a class="link" href="http://instagram.com/p/ABC123/">
+<a class="link" href="https://www.instagram.com/p/ABC123/">
 <img class="thumbnail" src="http://attach/image/big" alt="" />
 </a>
 </p>
@@ -401,8 +401,8 @@ this picture -&gt; is #abc #xyz
   </div>
   </content>
 
-  <link rel="alternate" type="text/html" href="http://instagram.com/p/ABC123/" />
-  <link rel="ostatus:conversation" href="http://instagram.com/p/ABC123/" />
+  <link rel="alternate" type="text/html" href="https://www.instagram.com/p/ABC123/" />
+  <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
 
     <link rel="ostatus:attention" href="http://snarfed.org" />
     <link rel="mentioned" href="http://snarfed.org" />
@@ -417,7 +417,7 @@ this picture -&gt; is #abc #xyz
 
   <georss:featureName>Le Truc</georss:featureName>
 
-  <link rel="self" type="application/atom+xml" href="http://instagram.com/p/ABC123/" />
+  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
 </entry>
 
 </feed>
@@ -590,7 +590,7 @@ HTML_ACTOR = {
   'id': tag_uri('54861273'),
   'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg'},
   'objectType': 'person',
-  'url': 'http://instagram.com/jc',
+  'url': 'https://www.instagram.com/jc/',
   'username': 'jc',
 }
 HTML_ACTIVITIES = [{  # ActivityStreams
@@ -598,7 +598,7 @@ HTML_ACTIVITIES = [{  # ActivityStreams
   'verb': 'post',
   'published': '2016-01-17T20:46:33',
   'id': tag_uri('123_456'),
-  'url': 'http://instagram.com/p/ABC123/',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'actor': HTML_ACTOR,
   'object': {
     'objectType': 'photo',
@@ -606,7 +606,7 @@ HTML_ACTIVITIES = [{  # ActivityStreams
     'content': 'Elvis hits out of RCA Studio B',
     'id': tag_uri('123_456'),
     'published': '2016-01-17T20:46:33',
-    'url': 'http://instagram.com/p/ABC123/',
+    'url': 'https://www.instagram.com/p/ABC123/',
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg'},
     'to': [{'objectType':'group', 'alias':'@public'}],
     'location': {
@@ -632,7 +632,7 @@ HTML_ACTIVITIES = [{  # ActivityStreams
   'verb': 'post',
   'published': '2016-01-17T13:15:52',
   'id': tag_uri('123_456'),
-  'url': 'http://instagram.com/p/ABC123/',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'actor': HTML_ACTOR,
   'object': {
     'objectType': 'video',
@@ -640,7 +640,7 @@ HTML_ACTIVITIES = [{  # ActivityStreams
     'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
     'id': tag_uri('123_456'),
     'published': '2016-01-17T13:15:52',
-    'url': 'http://instagram.com/p/ABC123/',
+    'url': 'https://www.instagram.com/p/ABC123/',
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'},
     'to': [{'objectType':'group', 'alias':'@private'}],
     'stream': {
@@ -821,7 +821,7 @@ class InstagramTest(testutil.HandlerTest):
   def test_comment_to_object(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
       self.assert_equals(obj, self.instagram.comment_to_object(
-          cmt, '123_456', 'http://instagram.com/p/ABC123/'))
+          cmt, '123_456', 'https://www.instagram.com/p/ABC123/'))
 
   def test_user_to_actor(self):
     self.assert_equals(ACTOR, self.instagram.user_to_actor(USER))
@@ -831,7 +831,7 @@ class InstagramTest(testutil.HandlerTest):
     del user['website']
     del user['bio']
     actor = copy.deepcopy(ACTOR)
-    actor['url'] = 'http://instagram.com/snarfed'
+    actor['url'] = 'https://www.instagram.com/snarfed/'
     del actor['urls']
     del actor['description']
     self.assert_equals(actor, self.instagram.user_to_actor(user))
@@ -842,7 +842,7 @@ class InstagramTest(testutil.HandlerTest):
       'id': tag_uri('420973239'),
       'username': 'snarfed',
       'displayName': 'snarfed',
-      'url': 'http://instagram.com/snarfed',
+      'url': 'https://www.instagram.com/snarfed/',
     }, self.instagram.user_to_actor({
       'id': '420973239',
       'username': 'snarfed',
@@ -969,17 +969,17 @@ class InstagramTest(testutil.HandlerTest):
   def test_base_object(self):
     self.assertEquals({
       'id': '123',
-      'url': 'http://instagram.com/p/zHA5BLo1Mo/',
+      'url': 'https://www.instagram.com/p/zHA5BLo1Mo/',
       }, self.instagram.base_object({
         'id': tag_uri('123_456_liked_by_789'),
-        'object': {'url': 'http://instagram.com/p/zHA5BLo1Mo/'},
+        'object': {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       }))
 
     # with only URL, we don't know id
     self.assertEquals(
-      {'url': 'http://instagram.com/p/zHA5BLo1Mo/'},
+      {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       self.instagram.base_object({
-        'object': {'url': 'http://instagram.com/p/zHA5BLo1Mo/'},
+        'object': {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       }))
 
   def test_html_to_activities(self):
@@ -996,6 +996,6 @@ class InstagramTest(testutil.HandlerTest):
       HTML_FEED_HEADER + json.dumps(data) + HTML_FEED_FOOTER)
 
     expected = copy.deepcopy(HTML_VIEWER)
-    expected['url'] = 'http://instagram.com/snarfed'
+    expected['url'] = 'https://www.instagram.com/snarfed/'
     del expected['image']
     self.assert_equals(expected, viewer)

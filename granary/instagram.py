@@ -82,7 +82,7 @@ class Instagram(source.Source):
     return resp if kwargs.get('data') else json.loads(resp.read()).get('data')
 
   def user_url(self, username):
-    return 'http://instagram.com/' + username
+    return 'https://www.instagram.com/%s/' % username
 
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -562,7 +562,7 @@ class Instagram(source.Source):
         # preprocess to make its field names match the API's
         dims = media.get('dimensions', {})
         media.update({
-          'link': 'http://instagram.com/p/%s/' % media.get('code'),
+          'link': 'https://www.instagram.com/p/%s/' % media.get('code'),
           'user': media.get('owner', {}),
           'created_time': media.get('date'),
           'caption': {'text': media.get('caption')},
