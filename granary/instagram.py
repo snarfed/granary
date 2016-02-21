@@ -43,6 +43,7 @@ class Instagram(source.Source):
   """Implements the ActivityStreams API for Instagram."""
 
   DOMAIN = 'instagram.com'
+  BASE_URL = 'https://www.instagram.com/'
   NAME = 'Instagram'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
 

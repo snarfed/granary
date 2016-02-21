@@ -31,6 +31,7 @@ class GooglePlus(source.Source):
   """
 
   DOMAIN = 'plus.google.com'
+  BASE_URL = 'https://plus.google.com/'
   NAME = 'Google+'
 
   # HTML snippet for embedding a post.

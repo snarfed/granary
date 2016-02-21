@@ -760,7 +760,7 @@ ATOM = """\
       xmlns:georss="http://www.georss.org/georss"
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
-      >
+      xml:base="%(base_url)s">
 <generator uri="https://github.com/snarfed/granary" version="0.1">granary</generator>
 <id>%(host_url)s</id>
 <title>User feed for Ryan Barrett</title>

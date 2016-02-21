@@ -18,6 +18,8 @@ from granary.test import test_twitter
 
 class FakeSource(source.Source):
   NAME = 'Fake'
+  DOMAIN = 'fa.ke'
+  BASE_URL = 'http://fa.ke/'
 
   def __init__(self, **kwargs):
     pass
@@ -133,8 +135,11 @@ class HandlerTest(testutil.HandlerTest):
       resp = self.get_response('/fake?format=atom&access_token=foo&a=b')
       self.assertEquals(200, resp.status_int)
       self.assert_multiline_equals(
-        test_module.ATOM % {'request_url': 'http://localhost/fake',
-                            'host_url': 'http://localhost/'},
+        test_module.ATOM % {
+          'request_url': 'http://localhost/fake',
+          'host_url': 'http://localhost/',
+          'base_url': 'http://fa.ke/',
+        },
         resp.body)
 
   def test_unknown_format(self):

@@ -111,6 +111,7 @@ class Twitter(source.Source):
   """
 
   DOMAIN = 'twitter.com'
+  BASE_URL = 'https://twitter.com/'
   NAME = 'Twitter'
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
 

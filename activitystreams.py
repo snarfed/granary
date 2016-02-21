@@ -121,7 +121,7 @@ class Handler(webapp2.RequestHandler):
 
     # get activities and write response
     response = src.get_activities_response(*args, **self.get_kwargs())
-    self.write_response(response, actor=actor)
+    self.write_response(response, actor=actor, xml_base=src.BASE_URL)
 
   def write_response(self, response, actor=None, xml_base=None):
     """Converts ActivityStreams activities and writes them out.

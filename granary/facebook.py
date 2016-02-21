@@ -154,6 +154,7 @@ class Facebook(source.Source):
   """
 
   DOMAIN = 'facebook.com'
+  BASE_URL = 'https://www.facebook.com/'
   NAME = 'Facebook'
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
 

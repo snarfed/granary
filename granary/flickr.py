@@ -38,6 +38,7 @@ from apiclient.http import BatchHttpRequest
 class Flickr(source.Source):
 
   DOMAIN = 'flickr.com'
+  BASE_URL = 'https://www.flickr.com/'
   NAME = 'Flickr'
 
   API_EXTRAS = ','.join(('date_upload', 'date_taken', 'views', 'media',

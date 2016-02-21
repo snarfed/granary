@@ -18,13 +18,15 @@ class AtomTest(testutil.HandlerTest):
       self.assert_multiline_equals(
         test_module.ATOM % {'request_url': 'http://request/url',
                             'host_url': 'http://host/url',
+                            'base_url': 'http://base/url',
                             },
         atom.activities_to_atom(
           [copy.deepcopy(test_module.ACTIVITY)],
           test_module.ACTOR,
           request_url='http://request/url?access_token=foo',
           host_url='http://host/url',
-          ))
+          xml_base='http://base/url',
+        ))
 
   def test_title(self):
     self.assert_multiline_in(
