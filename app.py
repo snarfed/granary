@@ -7,6 +7,7 @@ import json
 import logging
 import urllib
 import urllib2
+import urlparse
 
 import appengine_config
 
@@ -21,7 +22,6 @@ from oauth_dropins.webutil import util
 import webapp2
 
 import activitystreams
-from granary import atom
 from granary import microformats2
 from granary import source
 
@@ -85,19 +85,23 @@ class UrlHandler(activitystreams.Handler):
     logging.info('Fetching %s', url)
     resp = urllib2.urlopen(url, timeout=appengine_config.HTTP_TIMEOUT)
     if url != resp.geturl():
-      logging.info('Redirected to %s', resp.geturl())
+      url = resp.geturl()
+      logging.info('Redirected to %s', url)
     body = resp.read()
 
     # decode data
     if input == 'activitystreams':
       activities = json.loads(body)
     elif input == 'html':
-      activities = microformats2.html_to_activities(body, resp.geturl())
+      activities = microformats2.html_to_activities(body, url)
     elif input == 'json-mf2':
       activities = [microformats2.json_to_object(item)
                     for item in json.loads(body).get('items', [])]
 
-    self.write_response(source.Source.make_activities_base_response(activities))
+    # base URL includes all of path except last elem *if* no trailing slash
+    base_url = urlparse.urljoin(url, ' ')[:-1]
+    self.write_response(source.Source.make_activities_base_response(activities),
+                        xml_base=base_url)
 
 
 application = webapp2.WSGIApplication([

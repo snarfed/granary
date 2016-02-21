@@ -185,12 +185,12 @@ To deploy:
 python -m unittest discover && ~/google_appengine/appcfg.py update .
 ```
 
-To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), and [instagram-atom](https://github.com/snarfed/instagram-atom) after an granary change:
+To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), [instagram-atom](https://github.com/snarfed/instagram-atom), and [plusstreamfeed](http://plusstreamfeed.appspot.com/) after a granary change:
 
 ```shell
 #!/bin/tcsh
-foreach s (facebook twitter instagram)
-  cd ~/src/$s-atom && ~/google_appengine/appcfg.py update .
+foreach s (facebook-atom twitter-atom instagram-atom plusstreamfeed)
+  cd ~/src/$s && ~/google_appengine/appcfg.py update .
 end
 ```
 
