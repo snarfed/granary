@@ -25,7 +25,7 @@ def _encode_ampersands(text):
 
 
 def activities_to_atom(activities, actor, title=None, request_url=None,
-                       host_url=None):
+                       host_url=None, xml_base=None):
   """Converts ActivityStreams activites to an Atom feed.
 
   Args:
@@ -35,6 +35,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     request_url: the URL of this Atom feed, if any. Used in a link rel="self".
     host_url: the home URL for this Atom feed, if any. Used in the top-level
       feed <id> element.
+    xml_base: the base URL, if any. Used in the top-level xml:base attribute.
 
   Returns: unicode string with Atom XML
   """
@@ -96,6 +97,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     items=[Defaulter(**a) for a in activities],
     host_url=host_url,
     request_url=request_url,
+    xml_base=xml_base,
     title=title or 'User feed for ' + source.Source.actor_name(actor),
     updated=activities[0]['object'].get('published', '') if activities else '',
     actor=Defaulter(**actor),

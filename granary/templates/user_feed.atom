@@ -5,7 +5,7 @@
       xmlns:georss="http://www.georss.org/georss"
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
-      >
+      {% if xml_base %}xml:base="{{ xml_base }}"{% endif %}>
 <generator uri="https://github.com/snarfed/granary" version="0.1">granary</generator>
 <id>{{ host_url }}</id>
 <title>{{ title }}</title>

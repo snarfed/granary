@@ -127,3 +127,15 @@ note content
 article content
 </blockquote>
 """, got)
+
+  def test_xml_base(self):
+    self.assert_multiline_in("""
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
+      xmlns:ostatus="http://ostatus.org/schema/1.0"
+      xmlns:thr="http://purl.org/syndication/thread/1.0"
+      xml:base="http://my.xml/base">
+""", atom.activities_to_atom([], {}, xml_base='http://my.xml/base'))
