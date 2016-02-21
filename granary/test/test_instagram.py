@@ -739,7 +739,7 @@ HTML_ACTIVITIES_FULL[0]['object']['tags'] = LIKE_OBJS
 HTML_ACTIVITIES_FULL[1]['object']['replies'] = \
   {'items': copy.deepcopy(COMMENT_OBJS)}
 HTML_ACTIVITIES_FULL[1]['object']['replies']['items'][0]['url'] = \
-  'http://instagram.com/p/XYZ789/#comment-789'
+  'https://www.instagram.com/p/XYZ789/#comment-789'
 
 
 class InstagramTest(testutil.HandlerTest):
@@ -836,18 +836,18 @@ class InstagramTest(testutil.HandlerTest):
       self.instagram.get_activities(search_query='foo')
 
   def test_get_activities_scrape(self):
-    self.expect_urlopen('https://www.instagram.com/x',
+    self.expect_urlopen('https://www.instagram.com/x/',
                         HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES, self.instagram.get_activities(
       user_id='x', group_id=source.SELF, scrape=True))
 
   def test_get_activities_scrape_fetch_extras(self):
-    self.expect_urlopen('https://www.instagram.com/x',
+    self.expect_urlopen('https://www.instagram.com/x/',
                         HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
-    self.expect_urlopen('https://www.instagram.com/p/ABC123',
+    self.expect_urlopen('https://www.instagram.com/p/ABC123/',
                         HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER)
-    self.expect_urlopen('https://www.instagram.com/p/XYZ789',
+    self.expect_urlopen('https://www.instagram.com/p/XYZ789/',
                         HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER)
 
     self.mox.ReplayAll()

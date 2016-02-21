@@ -36,7 +36,7 @@ API_MEDIA_POPULAR_URL = 'https://api.instagram.com/v1/media/popular'
 API_MEDIA_LIKES_URL = 'https://api.instagram.com/v1/media/%s/likes'
 API_COMMENT_URL = 'https://api.instagram.com/v1/media/%s/comments'
 
-HTML_PROFILE = 'https://www.instagram.com/%s'
+HTML_MEDIA = 'https://www.instagram.com/p/%s/'
 
 
 class Instagram(source.Source):
@@ -203,10 +203,14 @@ class Instagram(source.Source):
   def _scrape(self, user_id, fetch_extras):
     """Scrapes a user's profile page and converts the media to activities.
     """
+    def fetch(url):
+      return urllib2.urlopen(url, timeout=appengine_config.HTTP_TIMEOUT).read()
+
     assert user_id
-    html = urllib2.urlopen(HTML_PROFILE % user_id,
-                           timeout=appengine_config.HTTP_TIMEOUT).read()
-    activities, _ = self.html_to_activities(html)
+    activities, _ = self.html_to_activities(fetch(self.user_url(user_id)))
+    if fetch_extras:
+      activities = [self.html_to_activities(fetch(a['url']))[0][0]
+                    for a in activities]
     return self.make_activities_base_response(activities)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
@@ -580,49 +584,56 @@ class Instagram(source.Source):
 
     entry_data = data.get('entry_data', {})
     activities = []
-    for page in entry_data.get('FeedPage') or entry_data.get('ProfilePage') or []:
-      feed = page.get('feed') or page.get('user') or {}
-      for media in feed.get('media', {}).get('nodes', []):
-        # preprocess to make its field names match the API's
-        dims = media.get('dimensions', {})
+
+    # find media
+    medias = []
+    for page in entry_data.get('FeedPage', []):
+      medias.extend(page.get('feed', {}).get('media', {}).get('nodes', []))
+    for page in entry_data.get('ProfilePage', []):
+      medias.extend(page.get('user', {}).get('media', {}).get('nodes', []))
+    medias.extend(page.get('media') for page in entry_data.get('PostPage', []))
+
+    for media in util.trim_nulls(medias):
+      # preprocess to make its field names match the API's
+      dims = media.get('dimensions', {})
+      media.update({
+        'link': 'https://www.instagram.com/p/%s/' % media.get('code'),
+        'user': media.get('owner', {}),
+        'created_time': media.get('date'),
+        'caption': {'text': media.get('caption')},
+        'images': {'standard_resolution': {
+          'url': media.get('display_src').replace('\/', '/'),
+          'width': dims.get('width'),
+          'height': dims.get('height'),
+        }},
+        'users_in_photo': media.get('usertags', {}).get('nodes', []),
+      })
+
+      comments = media.setdefault('comments', {}).setdefault('nodes', [])
+      likes = media.setdefault('likes', {}).setdefault('nodes', [])
+      for obj in [media] + comments + likes:
+        obj['user']['profile_picture'] = \
+          obj['user'].get('profile_pic_url', '').replace('\/', '/')
+
+      media['comments']['data'] = comments
+      for c in media['comments']['data']:
+        c['from'] = c['user']
+        c['created_time'] = c['created_at']
+      media['likes']['data'] = [l['user'] for l in likes]
+
+      if media.get('is_video'):
         media.update({
-          'link': 'https://www.instagram.com/p/%s/' % media.get('code'),
-          'user': media.get('owner', {}),
-          'created_time': media.get('date'),
-          'caption': {'text': media.get('caption')},
-          'images': {'standard_resolution': {
-            'url': media.get('display_src').replace('\/', '/'),
+          'type': 'video',
+          'videos': {'standard_resolution': {
+            'url': media.get('video_url').replace('\/', '/'),
             'width': dims.get('width'),
             'height': dims.get('height'),
           }},
-          'users_in_photo': media.get('usertags', {}).get('nodes', []),
         })
 
-        comments = media.setdefault('comments', {}).setdefault('nodes', [])
-        likes = media.setdefault('likes', {}).setdefault('nodes', [])
-        for obj in [media] + comments + likes:
-          obj['user']['profile_picture'] = \
-            obj['user'].get('profile_pic_url', '').replace('\/', '/')
-
-        media['comments']['data'] = comments
-        for c in media['comments']['data']:
-          c['from'] = c['user']
-          c['created_time'] = c['created_at']
-        media['likes']['data'] = [l['user'] for l in likes]
-
-        if media.get('is_video'):
-          media.update({
-            'type': 'video',
-            'videos': {'standard_resolution': {
-              'url': media.get('video_url').replace('\/', '/'),
-              'width': dims.get('width'),
-              'height': dims.get('height'),
-            }},
-          })
-
-        activity = self.media_to_activity(util.trim_nulls(media))
-        self.postprocess_object(activity['object'])
-        activities.append(super(Instagram, self).postprocess_activity(activity))
+      activity = self.media_to_activity(util.trim_nulls(media))
+      self.postprocess_object(activity['object'])
+      activities.append(super(Instagram, self).postprocess_activity(activity))
 
     viewer = data.get('config', {}).get('viewer') or {}
 
