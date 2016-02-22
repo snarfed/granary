@@ -8,6 +8,8 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import re
 
+import mf2py
+
 from granary import microformats2
 from granary import testutil
 
@@ -437,3 +439,17 @@ foo
         'displayName': 'indieweb',
       },
     ], obj.get('tags'))
+
+  def test_find_author(self):
+    self.assert_equals({
+    'displayName': 'my name',
+    'url': 'http://li/nk',
+    'image': {'url': 'http://pic/ture'},
+  }, microformats2.find_author(mf2py.parse(doc="""\
+<body class="p-author h-card">
+<a href="http://li/nk">my name</a>
+<img class="u-photo" src="http://pic/ture" />
+<div class="h-entry"></div>
+</body>
+""", url='http://123')))
+

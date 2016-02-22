@@ -688,6 +688,20 @@ def render_content(obj, include_location=True, synthesize_content=True):
   return content
 
 
+def find_author(parsed):
+  """Returns the author of a page as a ActivityStreams actor dict.
+
+  Args:
+    parsed: return value from mf2py.parse()
+  """
+  author = mf2util.find_author(parsed, 'http://123')
+  return {
+    'displayName': author.get('name'),
+    'url': author.get('url'),
+    'image': {'url': author.get('photo')},
+  }
+
+
 def first_props(props):
   """Converts a multiply-valued dict to singly valued.
 

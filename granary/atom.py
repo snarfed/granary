@@ -115,22 +115,13 @@ def html_to_atom(html, url=None, **kwargs):
 
   Returns: unicode string with Atom XML
   """
-  activities = microformats2.html_to_activities(html, url)
-
   parsed = mf2py.parse(doc=html, url=url)
-  title = mf2util.interpret_feed(parsed, url).get('name')
-  author = mf2util.find_author(parsed, url)
-  actor = {
-    'displayName': author.get('name'),
-    'url': author.get('url'),
-    'image': {'url': author.get('photo')},
-  }
-
-  # base URL includes all of path except last elem *if* no trailing slash
-  base_url = urlparse.urljoin(url, ' ')[:-1] if url else None
-
-  return activities_to_atom(activities, actor, title=title, xml_base=base_url,
-                            host_url=url)
+  return activities_to_atom(
+    microformats2.html_to_activities(html, url),
+    microformats2.find_author(parsed),
+    title=mf2util.interpret_feed(parsed, url).get('name'),
+    xml_base=util.base_url(url),
+    host_url=url)
 
 
 def _remove_query_params(url):
