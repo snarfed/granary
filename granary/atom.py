@@ -10,6 +10,8 @@ import urlparse
 import xml.sax.saxutils
 
 import jinja2
+import mf2py
+import mf2util
 from oauth_dropins.webutil import util
 
 import microformats2
@@ -102,6 +104,33 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     updated=activities[0]['object'].get('published', '') if activities else '',
     actor=Defaulter(**actor),
     )
+
+
+def html_to_atom(html, url=None, **kwargs):
+  """Converts microformats2 HTML to an Atom feed.
+
+  Args:
+    html: string
+    url: string URL html came from, optional
+
+  Returns: unicode string with Atom XML
+  """
+  activities = microformats2.html_to_activities(html, url)
+
+  parsed = mf2py.parse(doc=html, url=url)
+  title = mf2util.interpret_feed(parsed, url).get('name')
+  author = mf2util.find_author(parsed, url)
+  actor = {
+    'displayName': author.get('name'),
+    'url': author.get('url'),
+    'image': {'url': author.get('photo')},
+  }
+
+  # base URL includes all of path except last elem *if* no trailing slash
+  base_url = urlparse.urljoin(url, ' ')[:-1] if url else None
+
+  return activities_to_atom(activities, actor, title=title, xml_base=base_url,
+                            host_url=url)
 
 
 def _remove_query_params(url):

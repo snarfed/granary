@@ -141,3 +141,77 @@ article content
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       xml:base="http://my.xml/base">
 """, atom.activities_to_atom([], {}, xml_base='http://my.xml/base'))
+
+  def test_html_to_atom(self):
+    self.assert_multiline_equals("""\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
+      xmlns:ostatus="http://ostatus.org/schema/1.0"
+      xmlns:thr="http://purl.org/syndication/thread/1.0"
+      xml:base="https://my.site/">
+<generator uri="https://github.com/snarfed/granary">granary</generator>
+<id>https://my.site/feed</id>
+<title>my title</title>
+
+<logo>http://my/picture</logo>
+<updated></updated>
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://my/site</uri>
+ <name>My Name</name>
+</author>
+
+<link href="http://my/site" rel="alternate" type="text/html" />
+<link rel="avatar" href="http://my/picture" />
+<link href="https://my.site/feed" rel="self" type="application/atom+xml" />
+
+<entry>
+
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri></uri>
+ <name></name>
+</author>
+
+  <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
+
+  <id>http://my/post</id>
+  <title>my content</title>
+
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
+
+my content
+
+  </div>
+  </content>
+
+  <link rel="alternate" type="text/html" href="http://my/post" />
+  <link rel="ostatus:conversation" href="http://my/post" />
+
+  <activity:verb>http://activitystrea.ms/schema/1.0/</activity:verb>
+  <published></published>
+  <updated></updated>
+
+  <link rel="self" type="application/atom+xml" href="http://my/post" />
+</entry>
+
+</feed>
+""", atom.html_to_atom("""\
+<div class="p-author h-card">
+  <a href="http://my/site">My Name</a>
+  <img src="http://my/picture" />
+</div>
+
+<div class="h-feed">
+<span class="p-name">my title</span>
+
+<article class="h-entry">
+<a class="u-url" href="http://my/post" />
+<div class="e-content">my content</div>
+</article>
+</div>
+""", 'https://my.site/feed'))
