@@ -121,9 +121,9 @@ class Handler(webapp2.RequestHandler):
 
     # get activities and write response
     response = src.get_activities_response(*args, **self.get_kwargs())
-    self.write_response(response, actor=actor, xml_base=src.BASE_URL)
+    self.write_response(response, actor=actor, url=src.BASE_URL)
 
-  def write_response(self, response, actor=None, xml_base=None):
+  def write_response(self, response, actor=None, url=None, title=None):
     """Converts ActivityStreams activities and writes them out.
 
     Args:
@@ -131,7 +131,8 @@ class Handler(webapp2.RequestHandler):
         REST API, as returned by Source.get_activities_response()
       actor: optional ActivityStreams actor dict for current user. Only used
         for Atom output.
-      xml_base: the base URL, if any. Used in the top-level xml:base attribute.
+      url: the input URL
+      title: string, Used in Atom output
     """
     expected_formats = ('activitystreams', 'json', 'atom', 'xml', 'html', 'json-mf2')
     format = self.request.get('format') or self.request.get('output') or 'json'
@@ -148,8 +149,11 @@ class Handler(webapp2.RequestHandler):
     elif format == 'atom':
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(atom.activities_to_atom(
-          activities, actor, host_url=self.request.host_url + '/',
-          request_url=self.request.path_url, xml_base=xml_base))
+        activities, actor,
+        host_url=url or self.request.host_url + '/',
+        request_url=self.request.path_url,
+        xml_base=util.base_url(url),
+        title=title))
     elif format == 'xml':
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))

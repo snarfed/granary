@@ -47,7 +47,7 @@ HTML = """\
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body%s>
+<body%(body_class)s>%(extra)s
 <article class="h-entry h-as-note">
   <span class="p-uid"></span>
 
@@ -77,15 +77,62 @@ HTML = """\
 """
 
 ATOM_CONTENT = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
+      xmlns:ostatus="http://ostatus.org/schema/1.0"
+      xmlns:thr="http://purl.org/syndication/thread/1.0"
+      xml:base="http://my/">
+<generator uri="https://github.com/snarfed/granary">granary</generator>
+<id>http://my/posts.html</id>
+<title>my title</title>
+
+<logo>http://my/picture</logo>
+<updated>2012-03-04T18:20:37+0000</updated>
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://my/site</uri>
+ <name>My Name</name>
+</author>
+
+<link href="http://my/site" rel="alternate" type="text/html" />
+<link rel="avatar" href="http://my/picture" />
+<link href="http://localhost/url" rel="self" type="application/atom+xml" />
+
+<entry>
+
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri></uri>
+ <name></name>
+</author>
+
+  <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
+
+  <id>https://perma/link</id>
+  <title>foo bar</title>
+
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 <br />
 <br />
-  %s<br />
+foo bar<br />
 
   </div>
   </content>
+
+  <link rel="alternate" type="text/html" href="https://perma/link" />
+  <link rel="ostatus:conversation" href="https://perma/link" />
+
+  <activity:verb>http://activitystrea.ms/schema/1.0/</activity:verb>
+  <published>2012-03-04T18:20:37+0000</published>
+  <updated>2012-03-04T18:20:37+0000</updated>
+
+  <link rel="self" type="application/atom+xml" href="https://perma/link" />
+</entry>
 """
 
 
@@ -107,14 +154,25 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=json-mf2&output=html')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals(HTML % '', resp.body)
+    self.assert_equals(HTML % {
+      'body_class': '',
+      'extra': '',
+    }, resp.body)
 
   def test_url_html_to_atom(self):
-    self.expect_urlopen('http://my/posts.html', HTML % ' class="h-feed"')
+    self.expect_urlopen('http://my/posts.html', HTML % {
+      'body_class': ' class="h-feed"',
+      'extra': """
+<span class="p-name">my title</span>
+<div class="p-author h-card">
+  <a href="http://my/site">My Name</a>
+  <img src="http://my/picture" />
+</div>
+""",
+    })
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
       '/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_int)
-    self.assert_multiline_in(ATOM_CONTENT % 'foo bar', resp.body)
-    self.assert_multiline_in(ATOM_CONTENT % 'baz baj', resp.body)
+    self.assert_multiline_in(ATOM_CONTENT, resp.body)

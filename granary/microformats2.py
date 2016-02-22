@@ -695,11 +695,12 @@ def find_author(parsed):
     parsed: return value from mf2py.parse()
   """
   author = mf2util.find_author(parsed, 'http://123')
-  return {
-    'displayName': author.get('name'),
-    'url': author.get('url'),
-    'image': {'url': author.get('photo')},
-  }
+  if author:
+    return {
+      'displayName': author.get('name'),
+      'url': author.get('url'),
+      'image': {'url': author.get('photo')},
+    }
 
 
 def first_props(props):

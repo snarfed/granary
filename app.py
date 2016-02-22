@@ -12,6 +12,8 @@ import urlparse
 import appengine_config
 
 from google.appengine.ext import ndb
+import mf2py
+import mf2util
 from oauth_dropins import facebook
 from oauth_dropins import flickr
 from oauth_dropins import googleplus
@@ -90,18 +92,26 @@ class UrlHandler(activitystreams.Handler):
     body = resp.read()
 
     # decode data
+    mf2 = None
     if input == 'activitystreams':
       activities = json.loads(body)
     elif input == 'html':
       activities = microformats2.html_to_activities(body, url)
+      mf2 = mf2py.parse(doc=body, url=url)
     elif input == 'json-mf2':
+      mf2 = json.loads(body)
+      mf2['rels'] = {}  # mf2util expects rels
       activities = [microformats2.json_to_object(item)
-                    for item in json.loads(body).get('items', [])]
+                    for item in mf2.get('items', [])]
 
-    # base URL includes all of path except last elem *if* no trailing slash
-    base_url = urlparse.urljoin(url, ' ')[:-1]
+    author = None
+    title = None
+    if mf2:
+      author = microformats2.find_author(mf2)
+      title = mf2util.interpret_feed(mf2, url).get('name')
+
     self.write_response(source.Source.make_activities_base_response(activities),
-                        xml_base=base_url)
+                        url=url, actor=author, title=title)
 
 
 application = webapp2.WSGIApplication([
