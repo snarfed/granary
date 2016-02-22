@@ -90,7 +90,7 @@ ATOM_CONTENT = """\
 <title>my title</title>
 
 <logo>http://my/picture</logo>
-<updated>2012-03-04T18:20:37+0000</updated>
+<updated>2012-03-04T18:20:37+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://my/site</uri>
@@ -128,8 +128,8 @@ foo bar<br />
   <link rel="ostatus:conversation" href="https://perma/link" />
 
   <activity:verb>http://activitystrea.ms/schema/1.0/</activity:verb>
-  <published>2012-03-04T18:20:37+0000</published>
-  <updated>2012-03-04T18:20:37+0000</updated>
+  <published>2012-03-04T18:20:37+00:00</published>
+  <updated>2012-03-04T18:20:37+00:00</updated>
 
   <link rel="self" type="application/atom+xml" href="https://perma/link" />
 </entry>
