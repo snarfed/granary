@@ -20,7 +20,7 @@ class TestCase(HandlerTest):
     self.stub_requests_head()
 
   def stub_requests_head(self):
-    # don't make actual HTTP requests to follow original post url redirects
+    """Automatically return 200 to outgoing HEAD requests."""
     def fake_head(url, **kwargs):
       resp = requests.Response()
       resp.url = url
@@ -34,10 +34,14 @@ class TestCase(HandlerTest):
 
     self._is_head_mocked = False  # expect_requests_head() sets this to True
 
-  def expect_requests_head(self, *args, **kwargs):
+  def unstub_requests_head(self):
+    """Mock outgoing HEAD requests so they must be expected individually."""
     if not self._is_head_mocked:
       self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
       self._is_head_mocked = True
+
+  def expect_requests_head(self, *args, **kwargs):
+    self.unstub_requests_head()
     return self._expect_requests_call(*args, method=requests.head, **kwargs)
 
   def expect_requests_get(self, *args, **kwargs):
