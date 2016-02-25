@@ -304,6 +304,8 @@ class Facebook(source.Source):
         posts = [p for p in posts if p.get('status_type') != 'shared_story']
 
     id_to_activity = {}
+    fetch_comments_ids = []
+    fetch_shares_ids = []
     for post in posts:
       activity = self.post_to_activity(post)
       activities.append(activity)
@@ -311,29 +313,31 @@ class Facebook(source.Source):
       if id:
         id_to_activity[id] = activity
 
+      type = post.get('type')
+      status_type = post.get('status_type')
+      if type != 'note' and status_type != 'created_note':
+        fetch_comments_ids.append(id)
+        if type != 'news.publishes':
+          fetch_shares_ids.append(id)
+
     # don't fetch extras for Facebook notes. if you pass /comments a note id, it
     # 400s with "notes API is deprecated for versions ..."
     # https://github.com/snarfed/bridgy/issues/480
-    #
-    # if the 'article' check is confusing, remember that facebook notes are
-    # AS articles. :P
-    non_note_ids = [id for id, activity in id_to_activity.items()
-                    if activity.get('object', {}).get('objectType') != 'article']
-
-    if non_note_ids and fetch_shares:
+    if fetch_shares and fetch_shares_ids:
       # some sharedposts requests 400, not sure why.
       # https://github.com/snarfed/bridgy/issues/348
       with util.ignore_http_4xx_error():
-        for id, shares in self._split_id_requests(API_SHARES, non_note_ids).items():
+        for id, shares in self._split_id_requests(API_SHARES, fetch_shares_ids).items():
           activity = id_to_activity.get(id)
           if activity:
             activity['object'].setdefault('tags', []).extend(
               [self.share_to_object(share) for share in shares])
 
-    if non_note_ids and fetch_replies:
+    if fetch_replies and fetch_comments_ids:
       # some comments requests 400, not sure why.
       with util.ignore_http_4xx_error():
-        for id, comments in self._split_id_requests(API_COMMENTS_ALL, non_note_ids).items():
+        for id, comments in self._split_id_requests(API_COMMENTS_ALL,
+                                                    fetch_comments_ids).items():
           activity = id_to_activity.get(id)
           if activity:
             replies = activity['object'].setdefault('replies', {}

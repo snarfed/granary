@@ -716,6 +716,34 @@ FB_LINK_ACTIVITY = {
     }],
   },
 }
+FB_NEWS_PUBLISH = {
+  'id': '555',
+  'type': 'news.publishes',
+  'no_feed_story': False,
+  'photos': ['10207402663015202'],
+  'publish_time': '2015-09-20T12:52:56+0000',
+  'data': {
+    'article': {
+      'id': '881901168553792',
+      'title': 'Keine Hektik',
+      'type': 'article',
+      'url': 'http://drikkes.com/?p=9965'
+    }
+  },
+  'application': {}, # ...
+}
+FB_NEWS_PUBLISH_ACTIVITY =  {
+  'id': 'tag:facebook.com:555',
+  'fb_id': '555',
+  'verb': 'post',
+  'object': {
+    'id': 'tag:facebook.com:555',
+    'fb_id': '555',
+    'objectType': 'note',
+    'url': 'https://www.facebook.com/555',
+  },
+  'url': 'https://www.facebook.com/555',
+}
 ALBUM = {  # Facebook
   'id': '1520022318322674',
   'name': 'Bridgy Photos',
@@ -1183,14 +1211,14 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_too_many_ids(self):
     ids = ['1', '2', '3', '4', '5']
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': id} for id in ids]})
-    self.expect_urlopen('sharedposts?ids=1,3', {'1': {'data': [{'id': '222'}]}})
-    self.expect_urlopen('sharedposts?ids=2,5', {'2': {'data': [{'id': '444'}]}})
-    self.expect_urlopen('sharedposts?ids=4', {})
-    self.expect_urlopen('comments?filter=stream&ids=1,3',
+    self.expect_urlopen('sharedposts?ids=1,2', {'1': {'data': [{'id': '222'}]}})
+    self.expect_urlopen('sharedposts?ids=3,4', {'2': {'data': [{'id': '444'}]}})
+    self.expect_urlopen('sharedposts?ids=5', {})
+    self.expect_urlopen('comments?filter=stream&ids=1,2',
                         {'1': {'data': [{'id': '111'}]}})
-    self.expect_urlopen('comments?filter=stream&ids=2,5',
+    self.expect_urlopen('comments?filter=stream&ids=3,4',
                         {'1': {'data': [{'id': '333'}]}})
-    self.expect_urlopen('comments?filter=stream&ids=4', {})
+    self.expect_urlopen('comments?filter=stream&ids=5', {})
     self.mox.ReplayAll()
 
     try:
@@ -1257,7 +1285,7 @@ class FacebookTest(testutil.HandlerTest):
     post3['id'] = '333'
     self.expect_urlopen('me/home?offset=0',
                         {'data': [POST, post2, post3]})
-    self.expect_urlopen('comments?filter=stream&ids=222,333,10100176064482163',
+    self.expect_urlopen('comments?filter=stream&ids=10100176064482163,222,333',
       {'222': {'data': [{'id': '777', 'message': 'foo'},
                         {'id': '888', 'message': 'bar'}]},
        '333': {'data': [{'id': '999', 'message': 'baz'},
@@ -1328,12 +1356,15 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_fetch_news(self):
     self.expect_urlopen('me/feed?offset=0', {'data': [POST]})
-    self.expect_urlopen('me/news.publishes', {'data': [FB_LINK]})
+    self.expect_urlopen('me/news.publishes', {'data': [FB_NEWS_PUBLISH]})
     self.expect_urlopen('me/photos/uploaded', {})
+    # should only fetch sharedposts for POST, not FB_NEWS_PUBLISH
+    self.expect_urlopen('sharedposts?ids=10100176064482163', {})
 
     self.mox.ReplayAll()
-    self.assert_equals([ACTIVITY, FB_LINK_ACTIVITY],
-                       self.fb.get_activities(group_id=source.SELF, fetch_news=True))
+    got = self.fb.get_activities(group_id=source.SELF, fetch_news=True,
+                                 fetch_shares=True)
+    self.assert_equals([ACTIVITY, FB_NEWS_PUBLISH_ACTIVITY], got)
 
   def test_get_activities_canonicalizes_ids_with_colons(self):
     """https://github.com/snarfed/bridgy/issues/305"""
