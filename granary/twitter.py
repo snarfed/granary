@@ -324,7 +324,7 @@ class Twitter(source.Source):
       for tweet, activity in zip(tweets, tweet_activities):
         id = tweet['id_str']
         count = tweet.get('favorite_count')
-        if count and count != cached.get('ATF ' + id):
+        if self.is_public(activity) and count and count != cached.get('ATF ' + id):
           url = HTML_FAVORITES % id
           logging.debug('Fetching %s', url)
           try:

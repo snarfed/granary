@@ -864,6 +864,19 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_likes=True))
 
+  def test_get_activities_private_activity_skips_fetch_likes(self):
+    tweet = copy.deepcopy(TWEET)
+    tweet['user']['protected'] = True
+    tweet['favorite_count'] = 1
+
+    self.expect_urlopen(TIMELINE, [tweet])
+    # no HTML favorites fetch
+    self.mox.ReplayAll()
+
+    activity = copy.deepcopy(ACTIVITY)
+    activity['object']['to'][0]['alias'] = '@private'
+    self.assert_equals([activity], self.twitter.get_activities(fetch_likes=True))
+
   def test_retweet_limit(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
