@@ -421,7 +421,6 @@ class Flickr(source.Source):
     profile_url = person.get('profileurl', {}).get('_content')
     if profile_url:
       try:
-        logging.debug('fetching flickr profile page %s', profile_url)
         resp = util.urlopen(profile_url)
         profile_json = mf2py.parse(doc=resp, url=profile_url)
         # personal site is likely the first non-flickr url

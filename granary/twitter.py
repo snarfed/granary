@@ -26,7 +26,6 @@ import urllib2
 import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 
 from bs4 import BeautifulSoup
 import requests
@@ -822,12 +821,9 @@ class Twitter(source.Source):
     for url in urls:
       headers = twitter_auth.auth_header(
         API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
-      logging.info('Posting multipart/form-data %s to %s',
-                   {'media': url}, API_UPLOAD_MEDIA)
-      resp = requests.post(API_UPLOAD_MEDIA,
-                           files={'media': util.urlopen(url)},
-                           headers=headers,
-                           timeout=HTTP_TIMEOUT)
+      resp = util.requests_post(API_UPLOAD_MEDIA,
+                                files={'media': util.urlopen(url)},
+                                headers=headers)
       resp.raise_for_status()
       logging.info('Got: %s', resp.text)
       try:
@@ -894,10 +890,8 @@ class Twitter(source.Source):
         'media_id': media_id,
         'segment_index': i,
       }
-      logging.info('Posting data %s and multipart/form-data %s to %s',
-                   data, {'media': url}, API_UPLOAD_MEDIA)
-      resp = requests.post(API_UPLOAD_MEDIA, data=data, files={'media': chunk},
-                           headers=headers, timeout=HTTP_TIMEOUT)
+      resp = util.requests_post(API_UPLOAD_MEDIA, data=data,
+                                files={'media': chunk}, headers=headers)
       resp.raise_for_status()
 
       if chunk.ateof:

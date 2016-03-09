@@ -71,8 +71,7 @@ class Instagram(source.Source):
     self.allow_comment_creation = allow_comment_creation
 
   def urlopen(self, url, **kwargs):
-    """Wraps urllib2.urlopen() and passes through the access token.
-    """
+    """Wraps urllib2.urlopen() and passes through the access token."""
     log_url = url
     if self.access_token:
       # TODO add access_token to the data parameter for POST requests

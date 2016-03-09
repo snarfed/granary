@@ -1608,7 +1608,6 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     log_url = url
     if self.access_token:
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    logging.info('Fetching %s, kwargs %s', log_url, kwargs)
     resp = util.urlopen(urllib2.Request(url, **kwargs))
 
     if _as is None:

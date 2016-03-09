@@ -799,8 +799,7 @@ def follow_redirects(url, cache=None, **kwargs):
     parsed = urlparse.urlparse(url)
     if not parsed.scheme:
       url = 'http://' + url
-    kwargs.setdefault('timeout', appengine_config.HTTP_TIMEOUT)
-    resolved = requests.head(url, allow_redirects=True, **kwargs)
+    resolved = util.requests_head(url, allow_redirects=True, **kwargs)
     resolved.raise_for_status()
     if resolved.url != url:
       logging.debug('Resolved %s to %s', url, resolved.url)
