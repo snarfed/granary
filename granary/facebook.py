@@ -796,8 +796,7 @@ class Facebook(source.Source):
                                  appengine_config.FACEBOOK_APP_SECRET),
       }
     url = API_BASE + API_NOTIFICATION % user_id
-    resp = urllib2.urlopen(urllib2.Request(url, data=urllib.urlencode(params)),
-                           timeout=appengine_config.HTTP_TIMEOUT)
+    resp = util.urlopen(urllib2.Request(url, data=urllib.urlencode(params)))
     logging.debug('Response: %s %s', resp.getcode(), resp.read())
 
   def post_url(self, post):
@@ -1608,12 +1607,9 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
       url = API_BASE + url
     log_url = url
     if self.access_token:
-      log_url = util.add_query_params(url, [('access_token',
-                                             self.access_token[:4] + '...')])
       url = util.add_query_params(url, [('access_token', self.access_token)])
     logging.info('Fetching %s, kwargs %s', log_url, kwargs)
-    resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
-                           timeout=appengine_config.HTTP_TIMEOUT)
+    resp = util.urlopen(urllib2.Request(url, **kwargs))
 
     if _as is None:
       return resp

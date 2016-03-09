@@ -84,8 +84,7 @@ class UrlHandler(activitystreams.Handler):
 
     # fetch url
     url = util.get_required_param(self, 'url')
-    logging.info('Fetching %s', url)
-    resp = urllib2.urlopen(url, timeout=appengine_config.HTTP_TIMEOUT)
+    resp = util.urlopen(url)
     if url != resp.geturl():
       url = resp.geturl()
       logging.info('Redirected to %s', url)

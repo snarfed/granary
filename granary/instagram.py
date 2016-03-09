@@ -75,13 +75,9 @@ class Instagram(source.Source):
     """
     log_url = url
     if self.access_token:
-      log_url = util.add_query_params(url, [('access_token',
-                                             self.access_token[:4] + '...')])
       # TODO add access_token to the data parameter for POST requests
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    logging.info('Fetching %s, kwargs %s', log_url, kwargs)
-    resp = urllib2.urlopen(urllib2.Request(url, **kwargs),
-                           timeout=appengine_config.HTTP_TIMEOUT)
+    resp = util.urlopen(urllib2.Request(url, **kwargs))
     return resp if kwargs.get('data') else json.loads(resp.read()).get('data')
 
   def user_url(self, username):
@@ -204,14 +200,15 @@ class Instagram(source.Source):
   def _scrape(self, user_id, fetch_extras):
     """Scrapes a user's profile page and converts the media to activities.
     """
-    def fetch(url):
-      return urllib2.urlopen(url, timeout=appengine_config.HTTP_TIMEOUT).read()
-
     assert user_id
-    activities, _ = self.html_to_activities(fetch(self.user_url(user_id)))
+
+    html = util.urlopen(self.user_url(user_id)).read()
+    activities, _ = self.html_to_activities(html)
+
     if fetch_extras:
-      activities = [self.html_to_activities(fetch(a['url']))[0][0]
+      activities = [self.html_to_activities(util.urlopen(a['url']).read())[0][0]
                     for a in activities]
+
     return self.make_activities_base_response(activities)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):

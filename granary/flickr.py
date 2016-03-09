@@ -185,8 +185,7 @@ class Flickr(source.Source):
         params.append(
           ('tags', ','.join('"%s"' % t if ' ' in t else t for t in hashtags)))
 
-      file = urllib2.urlopen(video_url or image_url,
-                             timeout=appengine_config.HTTP_TIMEOUT)
+      file = util.urlopen(video_url or image_url)
       resp = self.upload(params, file)
       photo_id = resp.get('id')
       resp.update({
@@ -423,7 +422,7 @@ class Flickr(source.Source):
     if profile_url:
       try:
         logging.debug('fetching flickr profile page %s', profile_url)
-        resp = urllib2.urlopen(profile_url, timeout=appengine_config.HTTP_TIMEOUT)
+        resp = util.urlopen(profile_url)
         profile_json = mf2py.parse(doc=resp, url=profile_url)
         # personal site is likely the first non-flickr url
         urls = profile_json.get('rels', {}).get('me', [])

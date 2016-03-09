@@ -326,10 +326,8 @@ class Twitter(source.Source):
         count = tweet.get('favorite_count')
         if self.is_public(activity) and count and count != cached.get('ATF ' + id):
           url = HTML_FAVORITES % id
-          logging.debug('Fetching %s', url)
           try:
-            html = json.loads(urllib2.urlopen(url, timeout=HTTP_TIMEOUT).read()
-                              ).get('htmlUsers', '')
+            html = json.loads(util.urlopen(url).read()).get('htmlUsers', '')
           except urllib2.URLError, e:
             util.interpret_http_exception(e)  # just log it
             continue
@@ -824,11 +822,11 @@ class Twitter(source.Source):
     for url in urls:
       headers = twitter_auth.auth_header(
         API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
-      logging.info('Fetching %s', url)
-      files = {'media': urllib2.urlopen(url, timeout=HTTP_TIMEOUT)}
       logging.info('Posting multipart/form-data %s to %s',
                    {'media': url}, API_UPLOAD_MEDIA)
-      resp = requests.post(API_UPLOAD_MEDIA, files=files, headers=headers,
+      resp = requests.post(API_UPLOAD_MEDIA,
+                           files={'media': util.urlopen(url)},
+                           headers=headers,
                            timeout=HTTP_TIMEOUT)
       resp.raise_for_status()
       logging.info('Got: %s', resp.text)
@@ -856,8 +854,7 @@ class Twitter(source.Source):
 
     Returns: string media id or CreationResult on error
     """
-    logging.info('Fetching %s', url)
-    video_resp = urllib2.urlopen(url, timeout=HTTP_TIMEOUT)
+    video_resp = util.urlopen(url)
 
     # check format and size
     type = video_resp.headers.get('Content-Type')
