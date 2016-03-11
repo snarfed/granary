@@ -310,14 +310,17 @@ class Twitter(source.Source):
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
 
-    if fetch_mentions:
-      tweets += self.fetch_mentions(_user().get('screen_name'), tweets,
-                                    min_id=min_id)
-
     tweet_activities = [self.tweet_to_activity(t) for t in tweets]
 
     if fetch_replies:
       self.fetch_replies(tweet_activities, min_id=min_id)
+
+    if fetch_mentions:
+      # fetch mentions *after* replies so that we don't get replies to mentions
+      # https://github.com/snarfed/bridgy/issues/631
+      mentions = self.fetch_mentions(_user().get('screen_name'), tweets,
+                                     min_id=min_id)
+      tweet_activities += [self.tweet_to_activity(m) for m in mentions]
 
     if fetch_likes:
       for tweet, activity in zip(tweets, tweet_activities):
@@ -410,7 +413,7 @@ class Twitter(source.Source):
 
     Args:
       username: string
-      tweets: list of Twitter API objects
+      tweets: list of Twitter API objects. used to find quote tweets quoting them.
       min_id: only return activities with ids greater than this
 
     Returns:

@@ -719,7 +719,10 @@ class TwitterTest(testutil.TestCase):
       ])
     self.mox.ReplayAll()
 
-    got = self.twitter.get_activities(fetch_mentions=True, min_id='567')
+    # fetch_replies as well as fetch_mentions to make sure we don't try to find
+    # replies to the mentions. https://github.com/snarfed/bridgy/issues/631
+    got = self.twitter.get_activities(fetch_mentions=True, fetch_replies=True,
+                                      min_id='567')
     self.assert_equals([tag_uri('3'), tag_uri('4')], [a['id'] for a in got])
 
   def test_get_activities_quote_tweets(self):
