@@ -9,12 +9,12 @@ import json
 import urllib
 import urllib2
 
+from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
 from granary import appengine_config
 from granary import facebook
 from granary import source
-from granary import testutil
 
 
 # test data

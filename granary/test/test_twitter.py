@@ -12,11 +12,11 @@ import urllib
 import urllib2
 
 from oauth_dropins import appengine_config
+from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
 from granary import microformats2
 from granary import source
-from granary import testutil
 from granary import twitter
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']

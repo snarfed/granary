@@ -8,10 +8,10 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import re
 
+from oauth_dropins.webutil import testutil
 import mf2py
 
 from granary import microformats2
-from granary import testutil
 
 
 class Microformats2Test(testutil.HandlerTest):

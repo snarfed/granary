@@ -6,8 +6,10 @@ import json
 import logging
 import os
 
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
+
 from granary import microformats2
-from granary import testutil
 
 
 def filepairs(ext1, ext2s):

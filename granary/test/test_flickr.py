@@ -8,11 +8,11 @@ import mox
 import urllib
 import urllib2
 
-from oauth_dropins.webutil import util
 from oauth_dropins import appengine_config
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
 from granary import flickr
 from granary import source
-from granary import testutil
 
 __author__ = ['Kyle Mahan <kyle@kylewm.com>']
 

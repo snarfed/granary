@@ -40,8 +40,6 @@ RSVP_TO_EVENT = {
   'invite': 'invited',
   }
 
-FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
-
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -497,7 +495,7 @@ class Source(object):
     # check for redirect and add their final urls
     redirects = {}  # maps final URL to original URL for redirects
     for url in list(candidates):
-      resolved = follow_redirects(url, cache=cache, **kwargs)
+      resolved = util.follow_redirects(url, cache=cache, **kwargs)
       if (resolved.url != url and
           resolved.headers.get('content-type', '').startswith('text/html')):
         redirects[resolved.url] = url
@@ -767,65 +765,3 @@ class Source(object):
       return '\n'.join(
         # strip trailing whitespace that html2text adds to ends of some lines
         line.rstrip() for line in h.unescape(h.handle(html)).splitlines())
-
-def follow_redirects(url, cache=None, **kwargs):
-  """Fetches a URL with HEAD, repeating if necessary to follow redirects.
-
-  Caches resolved URLs in memcache by default. *Does not* raise an exception if
-  any of the HTTP requests fail, just returns the failed response. If you care,
-  be sure to check the returned response's status code!
-
-  Args:
-    url: string
-    cache: optional, a cache object to read and write resolved URLs to. Must
-      have get(key) and set(key, value, time=...) methods. Stores
-      'R [original URL]' in key, final URL in value.
-    **kwargs: passed to requests.head()
-
-  Returns:
-    the requests.Response for the final request
-  """
-  if cache is not None:
-    cache_key = 'R ' + url
-    resolved = cache.get(cache_key)
-    if resolved is not None:
-      return resolved
-
-  # can't use urllib2 since it uses GET on redirect requests, even if i specify
-  # HEAD for the initial request.
-  # http://stackoverflow.com/questions/9967632
-  try:
-    # default scheme to http
-    parsed = urlparse.urlparse(url)
-    if not parsed.scheme:
-      url = 'http://' + url
-    resolved = util.requests_head(url, allow_redirects=True, **kwargs)
-    resolved.raise_for_status()
-    if resolved.url != url:
-      logging.debug('Resolved %s to %s', url, resolved.url)
-    cache_time = 0  # forever
-  except AssertionError:
-    raise
-  except BaseException, e:
-    logging.warning("Couldn't resolve URL %s : %s", url, e)
-    resolved = requests.Response()
-    resolved.url = url
-    resolved.status_code = 499  # not standard. i made this up.
-    cache_time = FAILED_RESOLVE_URL_CACHE_TIME
-
-  content_type = resolved.headers.get('content-type')
-  if not content_type:
-    type, _ = mimetypes.guess_type(resolved.url)
-    resolved.headers['content-type'] = type or 'text/html'
-
-  refresh = resolved.headers.get('refresh')
-  if refresh:
-    for part in refresh.split(';'):
-      if part.strip().startswith('url='):
-        return follow_redirects(part.strip()[4:], cache=cache, **kwargs)
-
-  resolved.url = util.clean_url(resolved.url)
-  if cache is not None:
-    cache.set_multi({cache_key: resolved, 'R ' + resolved.url: resolved},
-                    time=cache_time)
-  return resolved

@@ -13,10 +13,11 @@ import urllib
 import urllib2
 import httplib2
 
+from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import util
+
 from granary import instagram
 from granary import source
-from granary import testutil
-from oauth_dropins.webutil import util
 
 
 def tag_uri(name):
