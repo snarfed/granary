@@ -527,7 +527,7 @@ ATOM = """\
 <img class="thumbnail" src="http://p.twimg.com/picture3" alt="" />
 </a>
 </p>
-<span class="p-location h-card h-as-location">
+<span class="p-location h-card">
 <a class="p-name u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a>
 
 </span>
@@ -1469,12 +1469,10 @@ class TwitterTest(testutil.TestCase):
     self.assertIn(u'too long… (<a href="http://obj.ca">obj.ca</a>)',result.content)
 
   def test_create_recognize_note(self):
-    """Use post-type-discovery to recognize a note with non-trivial html
-    content (and no explicit h-as-* type).  We'll know it was
-    successful if it respects the rich content and includes newlines
-    in the output.
+    """Use post-type-discovery to recognize a note with non-trivial html content.
+    We'll know it was successful if it respects the rich content and includes
+    newlines in the output.
     """
-
     obj = microformats2.json_to_object({
       "type": ["h-entry"],
       "properties": {

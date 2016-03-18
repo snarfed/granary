@@ -1,5 +1,5 @@
 {
-  "type" : ["h-entry", "h-as-comment"],
+  "type" : ["h-entry"],
   "properties" : {
     "in-reply-to" : ["http://example.com/bare-reply",
                      "http://example.com/embedded-reply"],

@@ -27,13 +27,14 @@ class Microformats2Test(testutil.HandlerTest):
   def test_verb_require_of_suffix(self):
     for prop in 'like', 'repost':
       obj = microformats2.json_to_object(
-        {'type': ['h-entry', 'h-as-note'],
+        {'type': ['h-entry'],
          'properties': {prop: ['http://foo/bar']}})
       self.assertNotIn('verb', obj)
 
-  def test_h_as_article(self):
-    obj = microformats2.json_to_object({'type': ['h-entry', 'h-as-article']})
-    self.assertEquals('article', obj['objectType'])
+  def test_ignore_h_as(self):
+    """https://github.com/snarfed/bridgy/issues/635"""
+    obj = microformats2.json_to_object({'type': ['h-entry']})
+    self.assertEquals('note', obj['objectType'])
 
   def test_html_content_and_summary(self):
     for expected_content, expected_summary, value in (
@@ -73,8 +74,7 @@ class Microformats2Test(testutil.HandlerTest):
     self.assertEquals([{'url': 'http://example.com/video.mp4'}], obj['stream'])
 
   def test_nested_compound_url_object(self):
-    mf2 = {'type': ['h-as-share'],
-           'properties': {
+    mf2 = {'properties': {
              'repost-of': [{
                'type': ['h-outer'],
                'properties': {
@@ -221,7 +221,7 @@ foo
   def test_render_content_location(self):
     self.assert_equals("""\
 foo
-<span class="p-location h-card h-as-location">
+<span class="p-location h-card">
   <a class="p-name u-url" href="http://my/place">My place</a>
 
 </span>
@@ -335,16 +335,16 @@ foo
     ]}
 
     self.assert_equals([{
-      'type': ['h-cite', 'h-as-note'],
+      'type': ['h-cite'],
       'properties': {'url': ['http://p'], 'name': ['p']},
     }, {
-      'type': ['h-cite', 'h-as-article'],
+      'type': ['h-cite'],
       'properties': {'url': ['http://a']},
     }], microformats2.object_to_json(obj)['children'])
 
     html = microformats2.object_to_html(obj)
     self.assert_multiline_in("""\
-<article class="h-cite h-as-note">
+<article class="h-cite">
 <span class="p-uid"></span>
 
 <a class="p-name u-url" href="http://p">p</a>
@@ -354,7 +354,7 @@ foo
 
 </article>
 
-<article class="h-cite h-as-article">
+<article class="h-cite">
 <span class="p-uid"></span>
 
 <a class="u-url" href="http://a">http://a</a>

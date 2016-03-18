@@ -109,18 +109,6 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   if not obj:
     return {}
 
-  types_map = {'article': [entry_class, 'h-as-article'],
-               'comment': [entry_class, 'h-as-comment'],
-               'like': [entry_class, 'h-as-like'],
-               'note': [entry_class, 'h-as-note'],
-               'person': ['h-card'],
-               'place': ['h-card', 'h-as-location'],
-               'share': [entry_class, 'h-as-share'],
-               'rsvp-yes': [entry_class, 'h-as-rsvp'],
-               'rsvp-no': [entry_class, 'h-as-rsvp'],
-               'rsvp-maybe': [entry_class, 'h-as-rsvp'],
-               'invite': [entry_class],
-               }
   obj_type = source.object_type(obj) or default_object_type
   # if the activity type is a post, then it's really just a conduit
   # for the object. for other verbs, the activity itself is the
@@ -131,8 +119,6 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   else:
     primary = obj
 
-  types = types_map.get(obj_type, [entry_class])
-
   # TODO: extract snippet
   name = primary.get('displayName', primary.get('title'))
   summary = primary.get('summary')
@@ -140,12 +126,15 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   in_reply_tos = obj.get(
     'inReplyTo', obj.get('context', {}).get('inReplyTo', []))
-  if 'h-as-rsvp' in types and 'object' in obj:
+  is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
+  if is_rsvp and obj.get('object'):
     in_reply_tos.append(obj['object'])
 
   # TODO: more tags. most will be p-category?
   ret = {
-    'type': types,
+    'type': (['h-card'] if obj_type == 'person'
+             else ['h-card', 'p-location'] if obj_type == 'place'
+             else [entry_class]),
     'properties': {
       'uid': [obj.get('id', '')],
       'name': [name],
@@ -191,7 +180,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     ret['properties']['category'].append(object_to_json(tag, entry_class=cls))
 
   # rsvp
-  if 'h-as-rsvp' in types:
+  if is_rsvp:
     ret['properties']['rsvp'] = [obj_type[len('rsvp-'):]]
   elif obj_type == 'invite':
     invitee = object_to_json(obj.get('object'), trim_nulls=False,
@@ -239,21 +228,6 @@ def json_to_object(mf2):
   rsvp_verb = 'rsvp-%s' % rsvp if rsvp else None
   author = json_to_object(prop.get('author'))
 
-  # maps mf2 class to a mf2 type. ordered by priority. these explicit
-  # h-as-* types can override implicit post type discovery.
-  h_class_overrides = [
-    ('h-as-rsvp', 'rsvp'),
-    ('h-as-share', 'repost'),
-    ('h-as-like', 'like'),
-    ('h-as-comment', 'reply'),
-    ('h-as-reply', 'reply'),
-    ('h-as-article', 'article'),
-    ('h-as-note', 'note'),
-    ('h-as-location', 'location'),
-    ('h-geo', 'location'),
-    ('h-card', 'person'),
-  ]
-
   # maps mf2 type to ActivityStreams objectType and optional verb.
   mf2_type_to_as_type = {
     'rsvp': ('activity', rsvp_verb),
@@ -268,12 +242,9 @@ def json_to_object(mf2):
     'article': ('article', None),
   }
 
-  for h_class, mf2_type in h_class_overrides:
-    if h_class in mf2.get('type', []):
-      break  # found
-  else:
-    mf2_type = mf2util.post_type_discovery(mf2)
-
+  mf2_types = mf2.get('type') or []
+  mf2_type = ('location' if 'h-geo' in mf2_types or 'p-location' in mf2_types
+              else mf2util.post_type_discovery(mf2))
   as_type, as_verb = mf2_type_to_as_type.get(mf2_type, (None, None))
 
   def absolute_urls(prop):
@@ -533,7 +504,7 @@ def hcard_to_html(hcard, parent_props=[]):
   photo = prop.get('photo')
   return HCARD.substitute(
     prop,
-    types=' '.join(parent_props + hcard['type']),
+    types=' '.join(util.uniquify(parent_props + hcard['type'])),
     photo=img(photo, 'u-photo', '') if photo else '',
     linked_name=maybe_linked_name(hcard['properties']))
 

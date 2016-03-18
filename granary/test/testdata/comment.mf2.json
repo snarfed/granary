@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry", "h-as-comment"],
+  "type": ["h-entry"],
   "properties": {
     "uid": ["tag:example.com,2001:547822715231468_6796480"],
     "url": ["http://example.com/comment/547822715231468_6796480"],
@@ -7,7 +7,7 @@
     "content": [{"value": "foo bar baz", "html": "foo bar baz"}],
     "in-reply-to": ["http://example.com/original/post"],
     "location": [{
-      "type": ["h-card", "h-as-location"],
+      "type": ["h-card", "p-location"],
       "properties": {
         "uid": ["31cb9e7ed29dbe52"],
         "name": ["Carcassonne, Aude"],

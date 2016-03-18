@@ -831,7 +831,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </a>
 <span class="summary">my link caption</span>
 </p>
-<span class="p-location h-card h-as-location">
+<span class="p-location h-card">
   <a class="p-name u-url" href="https://www.facebook.com/113785468632283">Lake Merced</a>
 
 </span>

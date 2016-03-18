@@ -48,7 +48,7 @@ HTML = """\
 <html>
 <head><meta charset="utf-8"></head>
 <body%(body_class)s>%(extra)s
-<article class="h-entry h-as-note">
+<article class="h-entry">
   <span class="p-uid"></span>
 
   <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
@@ -61,7 +61,7 @@ HTML = """\
 
 </article>
 
-<article class="h-entry h-as-note">
+<article class="h-entry">
   <span class="p-uid"></span>
 
   <div class="e-content p-name">

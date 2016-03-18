@@ -1,9 +1,9 @@
 {
-  "type": ["h-entry", "h-as-article"],
+  "type": ["h-entry"],
   "properties": {
     "url": ["http://example.com/abc"],
     "repost": [{
-      "type": ["h-cite", "h-as-share"],
+      "type": ["h-cite"],
       "properties": {
         "author": [{
           "type": ["h-card"],
@@ -18,7 +18,7 @@
         "repost-of": ["http://example.com/abc"]
       }
     }, {
-      "type": ["h-cite", "h-as-share"],
+      "type": ["h-cite"],
       "properties": {
         "url": ["http://example.com/anonymous/repost"],
         "content": [{"html": "<a href=\"http://example.com/abc\">shared this.</a>"}],

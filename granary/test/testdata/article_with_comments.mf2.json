@@ -1,11 +1,11 @@
 {
-  "type": ["h-entry", "h-as-article"],
+  "type": ["h-entry"],
   "properties": {
     "name": ["article abc"],
     "url": ["http://example.com/article-abc"],
 
     "comment": [{
-      "type": ["h-cite", "h-as-comment"],
+      "type": ["h-cite"],
       "properties": {
         "author": [{
           "type": ["h-card"],
@@ -15,7 +15,7 @@
         "in-reply-to": ["http://example.com/article-abc"]
       }
     }, {
-      "type": ["h-cite", "h-as-comment"],
+      "type": ["h-cite"],
       "properties": {
         "url": ["http://example.com/comment/2"],
         "name": ["second comment name"],
