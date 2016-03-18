@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry", "h-as-like"],
+  "type": ["h-entry"],
   "properties": {
     "uid": ["tag:example.com,2001:98765"],
     "url": ["http://example.com/this/like"],

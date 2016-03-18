@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry", "h-as-rsvp"],
+  "type": ["h-entry"],
   "properties": {
     "url": ["http://example.com/this/rsvp"],
     "in-reply-to": ["http://example.com/event"],

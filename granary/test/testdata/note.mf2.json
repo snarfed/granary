@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry", "h-as-note"],
+  "type": ["h-entry"],
   "properties": {
     "uid": ["tag:example.com,2011:blog-post-123"],
     "name": ["blog post 123"],
@@ -25,7 +25,7 @@
     }],
 
     "location": [{
-      "type": ["h-card", "h-as-location"],
+      "type": ["h-card", "h-geo"],
       "properties": {
         "uid": ["31cb9e7ed29dbe52"],
         "name": ["Carcassonne, Aude"],

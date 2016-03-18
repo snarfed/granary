@@ -1,9 +1,9 @@
 {
-  "type": ["h-entry", "h-as-article"],
+  "type": ["h-entry"],
   "properties": {
     "url": ["http://example.com/abc"],
     "like": [{
-      "type": ["h-cite", "h-as-like"],
+      "type": ["h-cite"],
       "properties": {
         "author": [{
           "type": ["h-card"],
@@ -18,7 +18,7 @@
         "like-of": ["http://example.com/abc"]
       }
     }, {
-      "type": ["h-cite", "h-as-like"],
+      "type": ["h-cite"],
       "properties": {
         "url": ["http://example.com/anonymous/like"],
         "content": [{"html": "<a href=\"http://example.com/abc\">likes this.</a>"}],

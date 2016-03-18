@@ -1,5 +1,5 @@
 {
-  "type": ["h-entry", "h-as-note"],
+  "type": ["h-entry"],
   "properties": {
     "photo": [
       "http://pics/1.jpg",
