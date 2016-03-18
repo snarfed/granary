@@ -133,7 +133,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # TODO: more tags. most will be p-category?
   ret = {
     'type': (['h-card'] if obj_type == 'person'
-             else ['h-card', 'h-geo'] if obj_type == 'place'
+             else ['h-card', 'p-location'] if obj_type == 'place'
              else [entry_class]),
     'properties': {
       'uid': [obj.get('id', '')],
@@ -243,8 +243,7 @@ def json_to_object(mf2):
   }
 
   mf2_types = mf2.get('type') or []
-  mf2_type = ('location' if 'h-geo' in mf2_types
-              else 'person' if 'h-card' in mf2_types
+  mf2_type = ('location' if 'h-geo' in mf2_types or 'p-location' in mf2_types
               else mf2util.post_type_discovery(mf2))
   as_type, as_verb = mf2_type_to_as_type.get(mf2_type, (None, None))
 
@@ -505,7 +504,7 @@ def hcard_to_html(hcard, parent_props=[]):
   photo = prop.get('photo')
   return HCARD.substitute(
     prop,
-    types=' '.join(parent_props + hcard['type']),
+    types=' '.join(util.uniquify(parent_props + hcard['type'])),
     photo=img(photo, 'u-photo', '') if photo else '',
     linked_name=maybe_linked_name(hcard['properties']))
 

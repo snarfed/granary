@@ -221,7 +221,7 @@ foo
   def test_render_content_location(self):
     self.assert_equals("""\
 foo
-<span class="p-location h-card h-geo">
+<span class="p-location h-card">
   <a class="p-name u-url" href="http://my/place">My place</a>
 
 </span>

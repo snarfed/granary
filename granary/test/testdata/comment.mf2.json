@@ -7,7 +7,7 @@
     "content": [{"value": "foo bar baz", "html": "foo bar baz"}],
     "in-reply-to": ["http://example.com/original/post"],
     "location": [{
-      "type": ["h-card", "h-geo"],
+      "type": ["h-card", "p-location"],
       "properties": {
         "uid": ["31cb9e7ed29dbe52"],
         "name": ["Carcassonne, Aude"],
