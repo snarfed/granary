@@ -550,6 +550,11 @@ class Source(object):
       return True  # unset
     return '@public' in set(t.get('alias') for t in to)
 
+  @staticmethod
+  def is_privacy_known(obj):
+    """Returns True if the object's privacy (ie 'to') is known, False otherwise."""
+    return any(t.get('alias') and t['alias'] != 'unknown'
+               for t in obj.get('to') or obj.get('object', {}).get('to') or [])
 
   @staticmethod
   def add_rsvps_to_event(event, rsvps):

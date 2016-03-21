@@ -1563,9 +1563,7 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     This is the same logic that we do for canonicalizing photo objects in
     get_activities() above.
 
-    If activity is not provided, looks up the post id in
-    self.resolved_object_ids_json. If it's not there, fetches the post from
-    Facebook.
+    If activity is not provided, fetches the post from Facebook.
 
     Args:
       user_id: string Facebook user id who posted the post

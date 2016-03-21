@@ -392,3 +392,31 @@ class SourceTest(testutil.TestCase):
       self.assertTrue(Source.is_public(obj), obj)
       self.assertTrue(Source.is_public({'object': obj}), obj)
 
+  def test_is_privacy_known(self):
+    for obj in ({},
+                {'privacy': 'xyz'},
+                {'to': []},
+                {'to': [{'objectType': 'unknown'}]},
+                {'to': [{'objectType': 'unknown'},
+                        {'objectType': 'unknown'}]},
+               ):
+      self.assertFalse(Source.is_privacy_known(obj), obj)
+      self.assertFalse(Source.is_privacy_known({'object': obj}), obj)
+
+    for obj in ({'to': [{'objectType': 'group', 'alias': '@public'}]},
+                {'to': [{'objectType': 'group', 'alias': '@private'}]},
+                {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
+                {'to': [{'objectType': 'group', 'alias': '@private'},
+                        {'objectType': 'group', 'alias': '@public'}]},
+                {'to': [{'objectType': 'unknown'},
+                        {'objectType': 'group', 'alias': '@public'},
+                        {'objectType': 'unknown'},
+                        ]},
+                {'to': [{'objectType': 'group', 'alias': '@public'},
+                        {'objectType': 'group', 'alias': '@private'}]},
+                {'to': [{'objectType': 'group', 'alias': 'xyz'},
+                        {'objectType': 'group', 'alias': '@private'}]},
+               ):
+      self.assertTrue(Source.is_privacy_known(obj), obj)
+      self.assertTrue(Source.is_privacy_known({'object': obj}), obj)
+
