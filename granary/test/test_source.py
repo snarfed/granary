@@ -369,3 +369,26 @@ class SourceTest(testutil.TestCase):
     self.assertEquals('foo', source.strip_html_tags('foo'))
     self.assertEquals('xyz', source.strip_html_tags(
       '<p>x<a href="l">y</a><br />z</p>'))
+
+  def test_is_public(self):
+    for obj in ({'to': [{'objectType': 'unknown'}]},
+                {'to': [{'objectType': 'group', 'alias': '@private'}]},
+                {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
+                {'to': [{'objectType': 'group', 'alias': 'xyz'},
+                        {'objectType': 'group', 'alias': '@private'}]},
+               ):
+      self.assertFalse(Source.is_public(obj), obj)
+      self.assertFalse(Source.is_public({'object': obj}), obj)
+
+    for obj in ({},
+                {'privacy': 'xyz'},
+                {'to': []},
+                {'to': [{'objectType': 'group', 'alias': '@public'}]},
+                {'to': [{'objectType': 'group', 'alias': '@private'},
+                        {'objectType': 'group', 'alias': '@public'}]},
+                {'to': [{'objectType': 'group', 'alias': '@public'},
+                        {'objectType': 'group', 'alias': '@private'}]},
+               ):
+      self.assertTrue(Source.is_public(obj), obj)
+      self.assertTrue(Source.is_public({'object': obj}), obj)
+
