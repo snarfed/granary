@@ -372,51 +372,36 @@ class SourceTest(testutil.TestCase):
 
   def test_is_public(self):
     for obj in ({'to': [{'objectType': 'unknown'}]},
-                {'to': [{'objectType': 'group', 'alias': '@private'}]},
-                {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
-                {'to': [{'objectType': 'group', 'alias': 'xyz'},
-                        {'objectType': 'group', 'alias': '@private'}]},
+                {'to': [{'objectType': 'unknown'},
+                        {'objectType': 'unknown'}]},
+                {'to': [{'alias': 'xyz'},
+                        {'objectType': 'unknown'}]},
                ):
-      self.assertFalse(Source.is_public(obj), obj)
-      self.assertFalse(Source.is_public({'object': obj}), obj)
+      self.assertIsNone(Source.is_public(obj), `obj`)
+      self.assertIsNone(Source.is_public({'object': obj}), `obj`)
 
     for obj in ({},
                 {'privacy': 'xyz'},
                 {'to': []},
+                {'to': [{}]},
+                {'to': [{'objectType': 'group'}]},
                 {'to': [{'objectType': 'group', 'alias': '@public'}]},
                 {'to': [{'objectType': 'group', 'alias': '@private'},
                         {'objectType': 'group', 'alias': '@public'}]},
-                {'to': [{'objectType': 'group', 'alias': '@public'},
-                        {'objectType': 'group', 'alias': '@private'}]},
+                {'to': [{'alias': '@public'},
+                        {'alias': '@private'}]},
                ):
-      self.assertTrue(Source.is_public(obj), obj)
-      self.assertTrue(Source.is_public({'object': obj}), obj)
+      self.assertTrue(Source.is_public(obj), `obj`)
+      self.assertTrue(Source.is_public({'object': obj}), `obj`)
 
-  def test_is_privacy_known(self):
-    for obj in ({},
-                {'privacy': 'xyz'},
-                {'to': []},
-                {'to': [{'objectType': 'unknown'}]},
-                {'to': [{'objectType': 'unknown'},
-                        {'objectType': 'unknown'}]},
-               ):
-      self.assertFalse(Source.is_privacy_known(obj), obj)
-      self.assertFalse(Source.is_privacy_known({'object': obj}), obj)
-
-    for obj in ({'to': [{'objectType': 'group', 'alias': '@public'}]},
-                {'to': [{'objectType': 'group', 'alias': '@private'}]},
+    for obj in ({'to': [{'objectType': 'group', 'alias': '@private'}]},
                 {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
-                {'to': [{'objectType': 'group', 'alias': '@private'},
-                        {'objectType': 'group', 'alias': '@public'}]},
-                {'to': [{'objectType': 'unknown'},
-                        {'objectType': 'group', 'alias': '@public'},
-                        {'objectType': 'unknown'},
-                        ]},
-                {'to': [{'objectType': 'group', 'alias': '@public'},
-                        {'objectType': 'group', 'alias': '@private'}]},
-                {'to': [{'objectType': 'group', 'alias': 'xyz'},
-                        {'objectType': 'group', 'alias': '@private'}]},
+                {'to': [{'alias': 'xyz'}]},
+                {'to': [{'alias': 'xyz'},
+                        {'alias': '@private'}]},
+                {'to': [{'objectType': 'group'},
+                        {'alias': 'xyz'},
+                        {'alias': '@private'}]},
                ):
-      self.assertTrue(Source.is_privacy_known(obj), obj)
-      self.assertTrue(Source.is_privacy_known({'object': obj}), obj)
-
+      self.assertFalse(Source.is_public(obj), `obj`)
+      self.assertFalse(Source.is_public({'object': obj}), `obj`)

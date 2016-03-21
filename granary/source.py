@@ -530,7 +530,7 @@ class Source(object):
 
   @staticmethod
   def is_public(obj):
-    """Returns True if the activity or object is public or unspecified.
+    """Returns True if the object is public, False if private, None if unknown.
 
     ...according to the Audience Targeting extension
     https://developers.google.com/+/api/latest/activities/list#collection
@@ -543,18 +543,13 @@ class Source(object):
     bridgy/util.prune_activity()). If the default here ever changes, be sure to
     update Bridgy's code.
     """
-    to = obj.get('to')
-    if not to:
-      to = obj.get('object', {}).get('to')
-    if not to:
-      return True  # unset
-    return '@public' in set(t.get('alias') for t in to)
-
-  @staticmethod
-  def is_privacy_known(obj):
-    """Returns True if the object's privacy (ie 'to') is known, False otherwise."""
-    return any(t.get('alias') and t['alias'] != 'unknown'
-               for t in obj.get('to') or obj.get('object', {}).get('to') or [])
+    to = obj.get('to') or obj.get('object', {}).get('to') or []
+    aliases = util.trim_nulls([t.get('alias') for t in to])
+    object_types = util.trim_nulls([t.get('objectType') for t in to])
+    return (True if '@public' in aliases
+            else None if 'unknown' in object_types
+            else False if aliases
+            else True)
 
   @staticmethod
   def add_rsvps_to_event(event, rsvps):
