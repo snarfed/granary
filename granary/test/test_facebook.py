@@ -1050,6 +1050,7 @@ class FacebookTest(testutil.HandlerTest):
       {'fb_id': '22', 'to': [{'objectType':'group', 'alias':'@private'}]},
       {'fb_id': '33'},
       {'fb_id': '44'},
+      {'fb_id': '5'},
       {'fb_id': '66', 'to': [{'objectType':'group', 'alias':'@public'}]},
       {'fb_id': '77', 'to': [{'objectType': 'unknown'}]},
     ], [{k: v for k, v in activity['object'].items() if k in ('fb_id', 'to')}

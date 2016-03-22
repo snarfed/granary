@@ -399,7 +399,8 @@ class Facebook(source.Source):
 
     # STATE: test that we keep post w/obj id w/o matching photo obj
 
-    return [p for p in posts if not p.get('object_id')] + photos
+    return ([p for p in posts if not p.get('object_id')] +
+            posts_by_obj_id.values() + photos)
 
   def _split_id_requests(self, api_call, ids):
     """Splits an API call into multiple to stay under the MAX_IDS limit per call.
