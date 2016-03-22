@@ -375,7 +375,10 @@ class Facebook(source.Source):
     for post in posts:
       obj_id = post.get('object_id')
       if obj_id:
-        assert obj_id not in posts_by_obj_id
+        existing = posts_by_obj_id.get(obj_id)
+        if existing:
+          logging.warning('merging posts for object_id %s: overwriting %s with %s!',
+                          obj_id, existing.get('id'), post.get('id'))
         posts_by_obj_id[obj_id] = post
 
     albums = None  # lazy loaded, maps facebook id to ActivityStreams object
@@ -396,8 +399,6 @@ class Facebook(source.Source):
         photo['privacy'] = albums.get(album_id, {}).get('privacy')
       else:
         photo['privacy'] = 'custom'  # ie unknown
-
-    # STATE: test that we keep post w/obj id w/o matching photo obj
 
     return ([p for p in posts if not p.get('object_id')] +
             posts_by_obj_id.values() + photos)
