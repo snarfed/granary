@@ -465,6 +465,7 @@ POST_OBJ = {  # ActivityStreams
 PHOTO_OBJ = {  # ActivityStreams
   'id': tag_uri('222'),
   'fb_id': '222',
+  'fb_object_for_ids': ['212038_10100176064482163'],
   'objectType': 'note',
   'url': 'https://www.facebook.com/212038/posts/222',
   'content': 'Stopped in to grab coffee and saw this table topper. Wow. Just...wow.',

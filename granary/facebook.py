@@ -362,26 +362,42 @@ class Facebook(source.Source):
     https://github.com/snarfed/bridgy/issues/562
     http://stackoverflow.com/questions/12785120
 
+    Populates a custom 'object_for_ids' field in the FB photo objects. This is
+    later copied into a custom 'fb_object_for_ids' field in their corresponding
+    AS objects.
+
     Args:
       posts: list of Facebook post object dicts
 
     Returns: new list of post and photo object dicts
     """
-    posts_by_obj_id = {p['object_id']: p for p in posts if p.get('object_id')}
+    posts_by_obj_id = {}
+    for post in posts:
+      obj_id = post.get('object_id')
+      if obj_id:
+        assert obj_id not in posts_by_obj_id
+        posts_by_obj_id[obj_id] = post
+
     albums = None  # lazy loaded, maps facebook id to ActivityStreams object
 
     photos = self.urlopen(API_PHOTOS_UPLOADED, _as=list)
     for photo in photos:
       album_id = photo.get('album')
-      post_privacy = posts_by_obj_id.get(photo.get('id'), {}).get('privacy')
-      if post_privacy and post_privacy.get('value') != 'CUSTOM':
-        photo['privacy'] = post_privacy
+      post = posts_by_obj_id.pop(photo.get('id'), {})
+      if post.get('id'):
+        photo.setdefault('object_for_ids', []).append(post['id'])
+      privacy = post.get('privacy')
+
+      if privacy and privacy.get('value') != 'CUSTOM':
+        photo['privacy'] = privacy
       elif album_id:
         if albums is None:
           albums = {a['id']: a for a in self.urlopen(API_ALBUMS % 'me', _as=list)}
         photo['privacy'] = albums.get(album_id, {}).get('privacy')
       else:
         photo['privacy'] = 'custom'  # ie unknown
+
+    # STATE: test that we keep post w/obj id w/o matching photo obj
 
     return [p for p in posts if not p.get('object_id')] + photos
 
@@ -1017,6 +1033,7 @@ class Facebook(source.Source):
       'image': {'url': picture},
       'displayName': display_name,
       'fb_object_id': post.get('object_id'),
+      'fb_object_for_ids': post.get('object_for_ids'),
       'to': self.privacy_to_to(post),
       }
 
