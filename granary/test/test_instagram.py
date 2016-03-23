@@ -428,7 +428,7 @@ this picture -&gt; is #abc #xyz
 # https://github.com/snarfed/granary/issues/65
 # https://github.com/snarfed/bridgy/issues/603
 HTML_PHOTO_FULL = {
-  'id': '123_456',
+  'id': '123',
   'code': 'ABC123',
   'location': {
     'name': 'RCA Studio B',
@@ -439,7 +439,7 @@ HTML_PHOTO_FULL = {
   'is_video': False,
   'owner': {
     'is_private': False,
-    'id': '54861273',
+    'id': '456',
     'has_blocked_viewer': False,
     'full_name': 'Jerry C',
     'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
@@ -483,7 +483,7 @@ HTML_PHOTO_FULL = {
   'date': 1453063593.0,
 }
 HTML_VIDEO_FULL = {
-  'id': '123_456',
+  'id': '123',
   'code': 'XYZ789',
   'location': None,
   'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
@@ -492,7 +492,7 @@ HTML_VIDEO_FULL = {
   'dimensions': {'height': 640, 'width': 640},
   'owner': {
     'is_private': True,
-    'id': '54861273',
+    'id': '456',
     'full_name': 'Jerry C',
     'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
     'username': 'jc',
@@ -657,7 +657,7 @@ HTML_VIEWER = {
 }
 HTML_ACTOR = {
   'displayName': 'Jerry C',
-  'id': tag_uri('54861273'),
+  'id': tag_uri('456'),
   'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg'},
   'objectType': 'person',
   'url': 'https://www.instagram.com/jc/',

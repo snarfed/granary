@@ -593,9 +593,10 @@ class Instagram(source.Source):
     for media in util.trim_nulls(medias):
       # preprocess to make its field names match the API's
       dims = media.get('dimensions', {})
+      owner = media.get('owner', {})
       media.update({
         'link': 'https://www.instagram.com/p/%s/' % media.get('code'),
-        'user': media.get('owner', {}),
+        'user': owner,
         'created_time': media.get('date'),
         'caption': {'text': media.get('caption')},
         'images': {'standard_resolution': {
@@ -605,6 +606,11 @@ class Instagram(source.Source):
         }},
         'users_in_photo': media.get('usertags', {}).get('nodes', []),
       })
+
+      id = media.get('id')
+      owner_id = owner.get('id')
+      if id and owner_id:
+        media['id'] = '%s_%s' % (id, owner_id)
 
       comments = media.setdefault('comments', {}).setdefault('nodes', [])
       likes = media.setdefault('likes', {}).setdefault('nodes', [])
