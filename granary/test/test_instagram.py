@@ -1098,3 +1098,14 @@ class InstagramTest(testutil.HandlerTest):
     expected['url'] = 'https://www.instagram.com/snarfed/'
     del expected['image']
     self.assert_equals(expected, viewer)
+
+  def test_html_to_activities_missing_video_url(self):
+    data = copy.deepcopy(HTML_FEED)
+    del data['entry_data']['FeedPage'][0]['feed']['media']['nodes'][1]['video_url']
+    activities, _ = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(data) + HTML_FOOTER)
+
+    expected = copy.deepcopy(HTML_ACTIVITIES_FULL)
+    del expected[1]['object']['stream']
+    del expected[1]['object']['attachments'][0]['stream'][0]['url']
+    self.assert_equals(expected, activities)

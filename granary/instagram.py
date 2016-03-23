@@ -628,7 +628,7 @@ class Instagram(source.Source):
         media.update({
           'type': 'video',
           'videos': {'standard_resolution': {
-            'url': media.get('video_url').replace('\/', '/'),
+            'url': media.get('video_url', '').replace('\/', '/'),
             'width': dims.get('width'),
             'height': dims.get('height'),
           }},
