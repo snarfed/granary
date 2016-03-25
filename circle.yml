@@ -26,4 +26,4 @@ test:
     - python -m coverage run --source=. --omit=granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\* -m unittest discover -v
     - python -m coverage html -d $CIRCLE_ARTIFACTS
   post:
-    - coveralls
+    - if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
