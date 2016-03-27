@@ -13,13 +13,14 @@ import xml.sax.saxutils
 import datetime
 import json
 import logging
+import operator
 import urllib
 import urllib2
 import urlparse
-import operator
 
 import appengine_config
 from oauth_dropins.webutil import util
+import requests
 import source
 
 # Maps Instagram media type to ActivityStreams objectType.
@@ -102,7 +103,7 @@ class Instagram(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
                               fetch_mentions=False, search_query=None,
-                              scrape=False):
+                              scrape=False, cookie=None):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -126,16 +127,21 @@ class Instagram(source.Source):
 
     Args (beyond Source.get_activities_response):
       scrape: if True, scrapes HTML from instagram.com instead of using the API.
+        Populates the user's actor object in the 'actor' response field.
         Useful for apps that haven't yet been approved in the new permissions
         approval process. Currently only supports group_id=SELF.
         http://developers.instagram.com/post/133424514006/instagram-platform-update
+      cookie: string, only used if scrape=True
 
     Raises: InstagramAPIError
     """
     if scrape:
-      if not user_id or group_id != source.SELF:
-        raise NotImplementedError('Scraping requires user_id and group_id=@self.')
-      return self._scrape(user_id, fetch_replies or fetch_likes)
+      if not ((group_id == source.SELF and user_id) or
+              (group_id == source.FRIENDS and cookie)):
+        raise NotImplementedError(
+          'Scraping requires group_id=@self and user_id or group_id=@friends and cookie.')
+      return self._scrape(user_id=user_id, cookie=cookie,
+                          fetch_extras=fetch_replies or fetch_likes)
 
     if user_id is None:
       user_id = 'self'
@@ -196,19 +202,36 @@ class Instagram(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def _scrape(self, user_id, fetch_extras):
-    """Scrapes a user's profile page and converts the media to activities.
+  def _scrape(self, user_id=None, cookie=None, fetch_extras=False):
+    """Scrapes a user's profile or feed and converts the media to activities.
+
+    Args:
+      user_id: string
+      fetch_extras: boolean
+      cookie: string
+
+    Returns: list of activities
     """
-    assert user_id
+    assert user_id or cookie
 
-    html = util.urlopen(self.user_url(user_id)).read()
-    activities, _ = self.html_to_activities(html)
+    url = self.user_url(user_id) if user_id else self.BASE_URL
+    kwargs = {}
+    if cookie:
+      kwargs = {'headers': {'Cookie': cookie}}
+    resp = util.requests_get(url, allow_redirects=False, **kwargs)
+    if ('not-logged-in' in resp.text or
+        (resp.status_code in ('301', '302') and
+         '/accounts/login' in resp.headers.get('Location', ''))):
+      raise requests.HTTPError('401 Unauthorized', response=resp)
 
+    activities, actor = self.html_to_activities(resp.text)
     if fetch_extras:
-      activities = [self.html_to_activities(util.urlopen(a['url']).read())[0][0]
+      activities = [self.html_to_activities(util.requests_get(a['url']).text)[0][0]
                     for a in activities]
 
-    return self.make_activities_base_response(activities)
+    resp = self.make_activities_base_response(activities)
+    resp['actor'] = actor
+    return resp
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
@@ -575,7 +598,11 @@ class Instagram(source.Source):
     """
     # extract JSON data blob
     script_start = '<script type="text/javascript">window._sharedData = '
-    start = html.index(script_start) + len(script_start)
+    start = html.find(script_start)
+    if start == -1:
+      return [], {}
+
+    start += len(script_start)
     end = html.index(';</script>', start)
     data = json.loads(html[start:end])
 
@@ -584,10 +611,12 @@ class Instagram(source.Source):
 
     # find media
     medias = []
+    profile_user = None
     for page in entry_data.get('FeedPage', []):
       medias.extend(page.get('feed', {}).get('media', {}).get('nodes', []))
     for page in entry_data.get('ProfilePage', []):
-      medias.extend(page.get('user', {}).get('media', {}).get('nodes', []))
+      profile_user = page.get('user', {})
+      medias.extend(profile_user.get('media', {}).get('nodes', []))
     medias.extend(page.get('media') for page in entry_data.get('PostPage', []))
 
     for media in util.trim_nulls(medias):
@@ -638,8 +667,7 @@ class Instagram(source.Source):
       self.postprocess_object(activity['object'])
       activities.append(super(Instagram, self).postprocess_activity(activity))
 
-    viewer = data.get('config', {}).get('viewer') or {}
-
+    viewer = data.get('config', {}).get('viewer') or profile_user or {}
     profile = viewer.get('profile_pic_url')
     if profile:
       viewer['profile_picture'] = profile.replace('\/', '/')
@@ -647,5 +675,7 @@ class Instagram(source.Source):
     website = viewer.get('external_url')
     if website:
       viewer['website'] = website.replace('\/', '/')
+
+    viewer.setdefault('bio', viewer.get('biography'))
 
     return activities, self.user_to_actor(viewer)

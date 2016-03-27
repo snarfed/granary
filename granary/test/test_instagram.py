@@ -15,6 +15,7 @@ import httplib2
 
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+import requests
 
 from granary import instagram
 from granary import source
@@ -538,7 +539,7 @@ HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
     'csrf_token': '...',
     'viewer': {
       'external_url': 'https:\/\/snarfed.org',
-      'biography': None,
+      'biography': 'something or other',
       'id': '420973239',
       'full_name': 'Ryan B',
       'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
@@ -600,8 +601,8 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
     },
     'full_name': 'Ryan B',
     'biography': 'something or other',
-    'id': '1379',
-    'profile_pic_url': 'https:\/\/scontent.cdninstagram.com\/t51.2885-19\/s150x150\/12_34_56_a.jpg',
+    'id': '420973239',
+    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
     'follows_viewer': False,
     'followed_by_viewer': False,
     'has_requested_viewer': False,
@@ -609,7 +610,8 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
     'followed_by': {'count': 458},
     'requested_by_viewer': False,
     'follows': {'count': 295},
-    'username': 'z',
+    'username': 'snarfed',
+    'external_url': 'https:\/\/snarfed.org',
   }}]},
 }
 
@@ -654,6 +656,7 @@ HTML_VIEWER = {
   'objectType': 'person',
   'url': 'https://snarfed.org',
   'username': 'snarfed',
+  'description': 'something or other',
 }
 HTML_ACTOR = {
   'displayName': 'Jerry C',
@@ -836,33 +839,114 @@ class InstagramTest(testutil.HandlerTest):
     with self.assertRaises(NotImplementedError):
       self.instagram.get_activities(search_query='foo')
 
-  def test_get_activities_scrape(self):
-    self.expect_urlopen('https://www.instagram.com/x/',
-                        HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
+  def test_get_activities_scrape_self(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/x/',
+      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER,
+      allow_redirects=False)
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES, self.instagram.get_activities(
       user_id='x', group_id=source.SELF, scrape=True))
 
-  def test_get_activities_scrape_fetch_extras(self):
-    self.expect_urlopen('https://www.instagram.com/x/',
-                        HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
-    self.expect_urlopen('https://www.instagram.com/p/ABC123/',
-                        HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER)
-    self.expect_urlopen('https://www.instagram.com/p/XYZ789/',
-                        HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER)
+  def test_get_activities_response_scrape_self_viewer(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/x/',
+      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER,
+      allow_redirects=False)
+    self.mox.ReplayAll()
+
+    resp = self.instagram.get_activities_response(
+      user_id='x', group_id=source.SELF, scrape=True)
+    self.assert_equals(HTML_ACTIVITIES, resp['items'])
+    self.assert_equals(HTML_VIEWER, resp['actor'])
+
+  def test_get_activities_scrape_self_fetch_extras(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/x/',
+      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER,
+      allow_redirects=False)
+    self.expect_requests_get(
+      'https://www.instagram.com/p/ABC123/',
+      HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER)
+    self.expect_requests_get(
+      'https://www.instagram.com/p/XYZ789/',
+      HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER)
 
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
       user_id='x', group_id=source.SELF, fetch_likes=True, fetch_replies=True,
       scrape=True))
 
-  def test_get_activities_scrape_requires_self_and_user_id(self):
-    for group_id in None, source.ALL, source.FRIENDS, source.SEARCH:
+  def test_get_activities_scrape_missing_data(self):
+    self.expect_requests_get('https://www.instagram.com/x/', """
+<!DOCTYPE html>
+<html><body>
+</body></html>
+""", allow_redirects=False)
+    self.mox.ReplayAll()
+    self.assert_equals([], self.instagram.get_activities(
+      user_id='x', group_id=source.SELF, scrape=True))
+
+  def test_get_activities_scrape_friends_cookie(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/',
+      HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER, allow_redirects=False,
+      headers={'Cookie': 'my cookie'})
+    self.mox.ReplayAll()
+    self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
+      group_id=source.FRIENDS, scrape=True, cookie='my cookie'))
+
+  def test_get_activities_response_scrape_friends_viewer(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/',
+      HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER, allow_redirects=False,
+      headers={'Cookie': 'my cookie'})
+    self.mox.ReplayAll()
+
+    resp = self.instagram.get_activities_response(
+      group_id=source.FRIENDS, scrape=True, cookie='my cookie')
+    self.assert_equals(HTML_ACTIVITIES_FULL, resp['items'])
+    self.assert_equals(HTML_VIEWER, resp['actor'])
+
+  def test_get_activities_scrape_cookie_not_logged_in(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/', '<html>not-logged-in</html>',
+      allow_redirects=False, headers={'Cookie': 'my cookie'})
+    self.mox.ReplayAll()
+
+    with self.assertRaises(requests.HTTPError) as cm:
+      self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
+                                    cookie='my cookie')
+
+    self.assertEquals('401 Unauthorized', cm.exception.message)
+
+  def test_get_activities_scrape_cookie_redirects_to_login(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/',
+      allow_redirects=False,
+      headers={'Cookie': 'my cookie'},
+      status_code='302',
+      redirected_url='https://www.instagram.com/accounts/login/?next=/')
+    self.mox.ReplayAll()
+
+    with self.assertRaises(requests.HTTPError) as cm:
+      self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
+                                    cookie='my cookie')
+
+    self.assertEquals('401 Unauthorized', cm.exception.message)
+
+  def test_get_activities_scrape_options_not_implemented(self):
+    for group_id in None, source.ALL, source.SEARCH:
       with self.assertRaises(NotImplementedError):
         self.instagram.get_activities(user_id='x', group_id=group_id, scrape=True)
 
     with self.assertRaises(NotImplementedError):
-      self.instagram.get_activities(user_id='', group_id=source.SELF, scrape=True)
+      # SELF requires user_id
+      self.instagram.get_activities(group_id=source.SELF, scrape=True)
+
+    with self.assertRaises(NotImplementedError):
+      # FRIENDS requires cookie
+      self.instagram.get_activities(group_id=source.FRIENDS, scrape=True)
 
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
