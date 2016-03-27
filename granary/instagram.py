@@ -222,6 +222,7 @@ class Instagram(source.Source):
     if ('not-logged-in' in resp.text or
         (resp.status_code in ('301', '302') and
          '/accounts/login' in resp.headers.get('Location', ''))):
+      resp.status_code = '401'
       raise requests.HTTPError('401 Unauthorized', response=resp)
 
     activities, actor = self.html_to_activities(resp.text)

@@ -919,6 +919,7 @@ class InstagramTest(testutil.HandlerTest):
                                     cookie='my cookie')
 
     self.assertEquals('401 Unauthorized', cm.exception.message)
+    self.assertEquals('401', cm.exception.response.status_code)
 
   def test_get_activities_scrape_cookie_redirects_to_login(self):
     self.expect_requests_get(
@@ -934,6 +935,7 @@ class InstagramTest(testutil.HandlerTest):
                                     cookie='my cookie')
 
     self.assertEquals('401 Unauthorized', cm.exception.message)
+    self.assertEquals('401', cm.exception.response.status_code)
 
   def test_get_activities_scrape_options_not_implemented(self):
     for group_id in None, source.ALL, source.SEARCH:
