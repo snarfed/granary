@@ -43,9 +43,14 @@ class FrontPageHandler(handlers.TemplateHandler):
 
   def template_vars(self):
     vars = dict(self.request.params)
+
+    entity = None
     key = vars.get('auth_entity')
     if key:
-      vars['entity'] = ndb.Key(urlsafe=key).get()
+      entity = vars['entity'] = ndb.Key(urlsafe=key).get()
+
+    if entity:
+      vars.setdefault('site', vars['entity'].site_name().lower())
 
     return vars
 
@@ -54,7 +59,8 @@ class DemoHandler(webapp2.RequestHandler):
   """Handles silo requests from the interactive demo form on the front page."""
   def get(self):
     site = util.get_required_param(self, 'site')
-    group = self.request.get('group_id', source.ALL)
+    group = self.request.get('group_id') or source.ALL
+    user = self.request.get('user_id') or source.ME
 
     if group == source.SEARCH:
       search_query = self.request.get('search_query', '')
@@ -69,8 +75,8 @@ class DemoHandler(webapp2.RequestHandler):
     }
     params.update({name: val for name, val in self.request.params.items()
                    if name in API_PARAMS})
-    return self.redirect('/%s/@me/%s/@app/%s?%s' % (
-      site, group, activity_id, urllib.urlencode(params)))
+    return self.redirect('/%s/%s/%s/@app/%s?%s' % (
+      site, user, group, activity_id, urllib.urlencode(params)))
 
 
 class UrlHandler(activitystreams.Handler):
@@ -122,8 +128,6 @@ application = webapp2.WSGIApplication([
   ('/flickr/oauth_callback', flickr.CallbackHandler.to('/')),
   ('/google\\+/start_auth', googleplus.StartHandler.to('/google+/oauth_callback')),
   ('/google\\+/oauth_callback', googleplus.CallbackHandler.to('/')),
-  ('/instagram/start_auth', instagram.StartHandler.to('/instagram/oauth_callback')),
-  ('/instagram/oauth_callback', instagram.CallbackHandler.to('/')),
   ('/twitter/start_auth', twitter.StartHandler.to('/twitter/oauth_callback')),
   ('/twitter/oauth_callback', twitter.CallbackHandler.to('/')),
   ('/url', UrlHandler),

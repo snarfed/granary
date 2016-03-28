@@ -7,18 +7,22 @@ var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
                        'user_id'];
 
 function render_demo_request() {
-  var url = window.location.origin + '/' +
-      document.getElementById('site').value + '/@me/' +
-      document.getElementById('group_id').value + '/@app/' +
-      (document.getElementById('group_id').value == '@search'
-         ? '?search_query=' + document.getElementById('search_query').value + '&'
-         : document.getElementById('activity_id').value + '?') +
-      'format=' + document.getElementById('format').value;
+  var site = get('site');
+  var user_id = get('user_id') || '@me';
 
-  for (i in OAUTH_INPUT_IDS) {
-    elem = document.getElementById(OAUTH_INPUT_IDS[i]);
-    if (elem && elem.value)
-      url += '&' + elem.name + '=' + elem.value;
+  var url = window.location.origin + '/' +
+      site + '/' + user_id + '/' +
+      get('group_id') + '/@app/' +
+      (get('group_id') == '@search' ? '?search_query=' + get('search_query') + '&'
+                                    : get('activity_id') + '?') +
+      'format=' + get('format');
+
+  if (site != 'instagram') {
+    for (i in OAUTH_INPUT_IDS) {
+      elem = document.getElementById(OAUTH_INPUT_IDS[i]);
+      if (elem && elem.value)
+        url += '&' + elem.name + '=' + elem.value;
+    }
   }
 
   document.getElementById('request').innerHTML =
@@ -27,9 +31,9 @@ function render_demo_request() {
 
 function render_url_request() {
   var url = window.location.origin + '/url'
-      + '?input=' + document.getElementById('input').value
-      + '&output=' + document.getElementById('output').value
-      + '&url=' + encodeURIComponent(document.getElementById('url').value);
+      + '?input=' + get('input')
+      + '&output=' + get('output')
+      + '&url=' + encodeURIComponent(get('url'));
 
   document.getElementById('request').innerHTML =
     'GET <a href="' + url + '">' + url + '</a>';
@@ -44,4 +48,9 @@ function update_search() {
     document.getElementById('search_query_span').style.display =
       searching ? 'inline' : 'none';
   }
+}
+
+function get(id) {
+  var elem = document.getElementById(id);
+  return elem ? elem.value : '';
 }

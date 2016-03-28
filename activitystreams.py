@@ -94,8 +94,7 @@ class Handler(webapp2.RequestHandler):
         access_token_key=util.get_required_param(self, 'access_token_key'),
         access_token_secret=util.get_required_param(self, 'access_token_secret'))
     elif site == 'instagram':
-      src = instagram.Instagram(
-        access_token=util.get_required_param(self, 'access_token'))
+      src = instagram.Instagram()
     elif site == 'google+':
       auth_entity = util.get_required_param(self, 'auth_entity')
       src = googleplus.GooglePlus(auth_entity=ndb.Key(urlsafe=auth_entity).get())
@@ -110,17 +109,18 @@ class Handler(webapp2.RequestHandler):
             for a, defaults in zip(args, PATH_DEFAULTS)]
     user_id = args[0] if args else None
 
+    # get activities
+    response = src.get_activities_response(*args, **self.get_kwargs(src))
+
     # fetch actor if necessary
-    actor = None
-    if self.request.get('format') == 'atom':
+    actor = response.get('actor')
+    if not actor and self.request.get('format') == 'atom':
       # atom needs actor
       args = [None if a in defaults else a  # handle default path elements
               for a, defaults in zip(args, PATH_DEFAULTS)]
       user_id = args[0] if args else None
       actor = src.get_actor(user_id) if src else {}
 
-    # get activities and write response
-    response = src.get_activities_response(*args, **self.get_kwargs())
     self.write_response(response, actor=actor, url=src.BASE_URL)
 
   def write_response(self, response, actor=None, url=None, title=None):
@@ -169,9 +169,12 @@ class Handler(webapp2.RequestHandler):
       # override response content type
       self.response.headers['Content-Type'] = 'text/plain'
 
-  def get_kwargs(self):
+  def get_kwargs(self, source):
     """Extracts, normalizes and returns the startIndex, count, and search
     query params.
+
+    Args:
+      source: Source instance
 
     Returns:
       dict with 'start_index' and 'count' keys mapped to integers
@@ -189,6 +192,9 @@ class Handler(webapp2.RequestHandler):
     search_query = self.request.get('search_query') or self.request.get('q')
     if search_query:
       kwargs['search_query'] = search_query
+
+    if isinstance(source, instagram.Instagram):
+      kwargs['scrape'] = True
 
     return kwargs
 

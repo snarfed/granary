@@ -100,10 +100,11 @@ Click on a site to try the demo!
 </form></div>
 
 <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<form method="post" action="/instagram/start_auth">
+<a href="/?site=instagram">
   <input type="image" class="shadow" alt="Instagram"
          src="/oauth_dropins/static/instagram.png" />
-</form></div>
+</a>
+</div>
 
 <div class="col-lg-offset-3 col-md-offset-2 col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="post" action="/flickr/start_auth">
@@ -130,7 +131,7 @@ Click on a site to try the demo!
 <!--
   -- interactive form
   -->
-{% if access_token or access_token_key or access_token_secret or input %}
+{% if access_token or access_token_key or access_token_secret or input or site %}
 
 <div class="row">
 <p class="lead"><em>
@@ -145,17 +146,23 @@ Click on a site to try the demo!
 </div>
 
 
-{% if entity %}
-{% with entity.site_name.lower as site %}
+{% if entity or site %}
 <form id="demo-form" action="/demo" method="get" target="results">
 <input type="hidden" id="site" name="site" value="{{ site }}" />
 <p><code>
-<label>/ {{ site }} / @me /</label>
+<label>/ {{ site }} / </label>
+{% if site == 'instagram' %}
+<input id="user_id" name="user_id" type="text" class="form-control"
+       placeholder="username" size="12" required />
+<input type="hidden" id="group_id" name="group_id" value="@self" />
+<label>/ @self / @app </label>
+{% else %}
+<label> me / </label>
 <select id="group_id" name="group_id" onchange="update_search()">
   <option value="@all">@all</option>
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
-  {% if site == 'twitter' or site == 'instagram' %}
+  {% if site == 'twitter' %}
     <option value="@search">@search</option>
   {% endif %}
 </select>
@@ -165,6 +172,7 @@ Click on a site to try the demo!
   <input id="activity_id" name="activity_id" type="text" class="form-control"
          placeholder="activity id (optional)" size="12" />
 </span>
+{% endif %}
 ?
 <span id="search_query_span">
   <label for="search_query">search_query =</label>
@@ -180,19 +188,18 @@ Click on a site to try the demo!
   <option value="html">html</option>
   <option value="json-mf2">json-mf2</option>
 </select>
-&amp;
 {% if site == 'google+' %}
-  <label for="auth_entity">auth_entity =</label>
+  <label for="auth_entity">&amp; auth_entity =</label>
   <input id="auth_entity" name="auth_entity" type="text" size="10"
          class="form-control" value="{{ auth_entity }}" />
 {% endif %}
 {% if access_token and site != 'google+' %}
-  <label for="access_token">access_token =</label>
+  <label for="access_token">&amp; access_token =</label>
   <input id="access_token" name="access_token" type="text" size="10"
          class="form-control" value="{{ access_token }}" />
 {% endif %}
 {% if access_token_key and access_token_secret %}
-  <label for="access_token_key">access_token_key =</label>
+  <label for="access_token_key">&amp; access_token_key =</label>
   <input id="access_token_key" name="access_token_key" type="text" size="10"
          class="form-control" value="{{ access_token_key }}" />
   <label for="access_token_secret">&amp; access_token_secret =</label>
@@ -205,7 +212,6 @@ Click on a site to try the demo!
         onclick="render_demo_request()">GET</button>
 </p>
 </form>
-{% endwith %}
 {% endif %}
 
 {% if input %}
