@@ -842,7 +842,9 @@ class InstagramTest(testutil.HandlerTest):
   def test_get_activities_scrape_self(self):
     self.expect_requests_get(
       'https://www.instagram.com/x/',
-      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER,
+      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER +
+        # check that we ignore this for profile fetches
+        ' not-logged-in ',
       allow_redirects=False)
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES, self.instagram.get_activities(

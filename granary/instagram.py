@@ -219,7 +219,7 @@ class Instagram(source.Source):
     if cookie:
       kwargs = {'headers': {'Cookie': cookie}}
     resp = util.requests_get(url, allow_redirects=False, **kwargs)
-    if ('not-logged-in' in resp.text or
+    if ((cookie and 'not-logged-in' in resp.text) or
         (resp.status_code in ('301', '302') and
          '/accounts/login' in resp.headers.get('Location', ''))):
       resp.status_code = '401'
