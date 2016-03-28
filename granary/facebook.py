@@ -204,7 +204,7 @@ class Facebook(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
                               fetch_mentions=False, search_query=None,
-                              fetch_news=False, event_owner_id=None):
+                              fetch_news=False, event_owner_id=None, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.

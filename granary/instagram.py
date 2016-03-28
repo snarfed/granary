@@ -103,7 +103,7 @@ class Instagram(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
                               fetch_mentions=False, search_query=None,
-                              scrape=False, cookie=None):
+                              scrape=False, cookie=None, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
