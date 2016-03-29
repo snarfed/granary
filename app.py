@@ -38,6 +38,8 @@ API_PARAMS = {
 
 class FrontPageHandler(handlers.TemplateHandler):
   """Renders and serves the front page."""
+  handle_exception = handlers.handle_exception
+
   def template_file(self):
     return 'granary/templates/index.html'
 
@@ -57,6 +59,8 @@ class FrontPageHandler(handlers.TemplateHandler):
 
 class DemoHandler(webapp2.RequestHandler):
   """Handles silo requests from the interactive demo form on the front page."""
+  handle_exception = handlers.handle_exception
+
   def get(self):
     site = util.get_required_param(self, 'site')
     group = self.request.get('group_id') or source.ALL
@@ -81,6 +85,8 @@ class DemoHandler(webapp2.RequestHandler):
 
 class UrlHandler(activitystreams.Handler):
   """Handles AS/mf2 requests from the interactive demo form on the front page."""
+  handle_exception = handlers.handle_exception
+
   def get(self):
     expected_inputs = ('activitystreams', 'html', 'json-mf2')
     input = util.get_required_param(self, 'input')
