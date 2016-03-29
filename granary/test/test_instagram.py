@@ -1169,10 +1169,16 @@ class InstagramTest(testutil.HandlerTest):
         'object': {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       }))
 
-  def test_html_to_activities(self):
+  def test_html_to_activities_feed(self):
     activities, viewer = self.instagram.html_to_activities(
       HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
+    self.assert_equals(HTML_VIEWER, viewer)
+
+  def test_html_to_activities_profile(self):
+    activities, viewer = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
+    self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
   def test_html_to_activities_missing_profile_picture_external_url(self):
