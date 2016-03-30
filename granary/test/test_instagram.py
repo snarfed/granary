@@ -1215,3 +1215,14 @@ class InstagramTest(testutil.HandlerTest):
     del expected[1]['object']['stream']
     del expected[1]['object']['attachments'][0]['stream'][0]['url']
     self.assert_equals(expected, activities)
+
+  def test_id_to_shortcode(self):
+    for shortcode, id in (
+        (None, None),
+        (None, ''),
+        ('BDJ7Nr5Nxpa', 1209758400153852506),
+        ('BDJ7Nr5Nxpa', '1209758400153852506'),
+        ('BDJ7Nr5Nxpa', '1209758400153852506'),
+        ('BDJ7Nr5Nxpa', '1209758400153852506_1103525'),
+    ):
+      self.assertEquals(shortcode, self.instagram.id_to_shortcode(id))

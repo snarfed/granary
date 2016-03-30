@@ -9,14 +9,15 @@ https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
-import xml.sax.saxutils
 import datetime
 import json
 import logging
 import operator
+import string
 import urllib
 import urllib2
 import urlparse
+import xml.sax.saxutils
 
 import appengine_config
 from oauth_dropins.webutil import util
@@ -39,6 +40,8 @@ API_COMMENT_URL = 'https://api.instagram.com/v1/media/%s/comments'
 
 HTML_MEDIA = 'https://www.instagram.com/p/%s/'
 
+# URL-safe base64 encoding. used in Instagram.id_to_shortcode()
+BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
 
 class Instagram(source.Source):
   """Implements the ActivityStreams API for Instagram."""
@@ -587,6 +590,27 @@ class Instagram(source.Source):
           base_obj['id'] = parsed[1].split('_')[0]
 
     return base_obj
+
+  @staticmethod
+  def id_to_shortcode(id):
+    """Converts a media id to the shortcode used in its instagram.com URL.
+
+    Based on http://carrot.is/coding/instagram-ids , which determined that
+    shortcodes are just URL-safe base64 encoded ids.
+    """
+    if not id:
+      return None
+
+    if isinstance(id, basestring):
+      id = int(id.split('_')[0])
+
+    A = ord('A')
+    chars = []
+    while id > 0:
+      id, rem = divmod(id, 64)
+      chars.append(BASE64[rem])
+
+    return ''.join(reversed(chars))
 
   def html_to_activities(self, html):
     """Converts Instagram HTML to ActivityStreams activities.
