@@ -59,7 +59,7 @@ class Instagram(source.Source):
   </blockquote>
   """
 
-  def __init__(self, access_token=None, allow_comment_creation=False):
+  def __init__(self, access_token=None, allow_comment_creation=False, scrape=False):
     """Constructor.
 
     If an OAuth access token is provided, it will be passed on to Instagram.
@@ -70,9 +70,12 @@ class Instagram(source.Source):
       access_token: string, optional OAuth access token
       allow_comment_creation: boolean, optionally disable comment creation,
         useful if the app is not approved to create comments.
+      scrape: boolean, whether to scrape instagram.com's HTML (True) or use
+      the API (False)
     """
     self.access_token = access_token
     self.allow_comment_creation = allow_comment_creation
+    self.scrape = scrape
 
   def urlopen(self, url, **kwargs):
     """Wraps urllib2.urlopen() and passes through the access token."""
@@ -138,7 +141,7 @@ class Instagram(source.Source):
 
     Raises: InstagramAPIError
     """
-    if scrape:
+    if scrape or self.scrape:
       if not ((group_id == source.SELF and (user_id or activity_id)) or
               (group_id == source.FRIENDS and cookie)):
         raise NotImplementedError(

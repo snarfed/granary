@@ -94,7 +94,7 @@ class Handler(webapp2.RequestHandler):
         access_token_key=util.get_required_param(self, 'access_token_key'),
         access_token_secret=util.get_required_param(self, 'access_token_secret'))
     elif site == 'instagram':
-      src = instagram.Instagram()
+      src = instagram.Instagram(scrape=True)
     elif site == 'google+':
       auth_entity = util.get_required_param(self, 'auth_entity')
       src = googleplus.GooglePlus(auth_entity=ndb.Key(urlsafe=auth_entity).get())
@@ -192,9 +192,6 @@ class Handler(webapp2.RequestHandler):
     search_query = self.request.get('search_query') or self.request.get('q')
     if search_query:
       kwargs['search_query'] = search_query
-
-    if isinstance(source, instagram.Instagram):
-      kwargs['scrape'] = True
 
     return kwargs
 
