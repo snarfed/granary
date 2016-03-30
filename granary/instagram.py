@@ -589,7 +589,12 @@ class Instagram(source.Source):
     return base_obj
 
   def html_to_activities(self, html):
-    """Converts HTML from https://www.instagram.com/ to ActivityStreams activities.
+    """Converts Instagram HTML to ActivityStreams activities.
+
+    The input HTML may be from:
+    * a user's feed, eg https://www.instagram.com/ while logged in
+    * a user's profile, eg https://www.instagram.com/snarfed/
+    * a photo or video, eg https://www.instagram.com/p/BBWCSrfFZAk/
 
     Args:
       html: unicode string
@@ -668,15 +673,16 @@ class Instagram(source.Source):
       self.postprocess_object(activity['object'])
       activities.append(super(Instagram, self).postprocess_activity(activity))
 
-    viewer = data.get('config', {}).get('viewer') or profile_user or {}
-    profile = viewer.get('profile_pic_url')
-    if profile:
-      viewer['profile_picture'] = profile.replace('\/', '/')
+    actor = None
+    viewer = data.get('config', {}).get('viewer') or profile_user or None
+    if viewer:
+      profile = viewer.get('profile_pic_url')
+      if profile:
+        viewer['profile_picture'] = profile.replace('\/', '/')
+      website = viewer.get('external_url')
+      if website:
+        viewer['website'] = website.replace('\/', '/')
+      viewer.setdefault('bio', viewer.get('biography'))
+      actor = self.user_to_actor(viewer)
 
-    website = viewer.get('external_url')
-    if website:
-      viewer['website'] = website.replace('\/', '/')
-
-    viewer.setdefault('bio', viewer.get('biography'))
-
-    return activities, self.user_to_actor(viewer)
+    return activities, actor

@@ -1181,6 +1181,18 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
+  def test_html_to_activities_photo(self):
+    activities, viewer = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER)
+    self.assert_equals([HTML_ACTIVITIES_FULL[0]], activities)
+    self.assertIsNone(viewer)
+
+  def test_html_to_activities_video(self):
+    activities, viewer = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER)
+    self.assert_equals([HTML_ACTIVITIES_FULL[1]], activities)
+    self.assertIsNone(viewer)
+
   def test_html_to_activities_missing_profile_picture_external_url(self):
     data = copy.deepcopy(HTML_FEED)
     data['config']['viewer']['profile_pic_url'] = None
