@@ -923,6 +923,18 @@ class InstagramTest(testutil.HandlerTest):
     self.assertEquals('401 Unauthorized', cm.exception.message)
     self.assertEquals('401', cm.exception.response.status_code)
 
+  def test_get_activities_scrape_activity_id(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/p/BDG6Ms_J0vQ/',
+      HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER,
+      allow_redirects=False)
+    self.mox.ReplayAll()
+
+    resp = self.instagram.get_activities_response(
+      group_id=source.SELF, scrape=True, activity_id='1208909509631101904_942513')
+    self.assert_equals([HTML_ACTIVITIES_FULL[0]], resp['items'])
+    self.assertIsNone(resp['actor'])
+
   def test_get_activities_scrape_cookie_redirects_to_login(self):
     self.expect_requests_get(
       'https://www.instagram.com/',

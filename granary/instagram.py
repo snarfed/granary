@@ -139,11 +139,11 @@ class Instagram(source.Source):
     Raises: InstagramAPIError
     """
     if scrape:
-      if not ((group_id == source.SELF and user_id) or
+      if not ((group_id == source.SELF and (user_id or activity_id)) or
               (group_id == source.FRIENDS and cookie)):
         raise NotImplementedError(
-          'Scraping requires group_id=@self and user_id or group_id=@friends and cookie.')
-      return self._scrape(user_id=user_id, cookie=cookie,
+          'Scraping requires group_id=@self and user_id/activity_id or group_id=@friends and cookie.')
+      return self._scrape(user_id=user_id, activity_id=activity_id, cookie=cookie,
                           fetch_extras=fetch_replies or fetch_likes)
 
     if user_id is None:
@@ -205,19 +205,22 @@ class Instagram(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def _scrape(self, user_id=None, cookie=None, fetch_extras=False):
+  def _scrape(self, user_id=None, activity_id=None, cookie=None, fetch_extras=False):
     """Scrapes a user's profile or feed and converts the media to activities.
 
     Args:
       user_id: string
+      activity_id: string
       fetch_extras: boolean
       cookie: string
 
     Returns: list of activities
     """
-    assert user_id or cookie
+    assert user_id or activity_id or cookie
 
-    url = self.user_url(user_id) if user_id else self.BASE_URL
+    url = (HTML_MEDIA % self.id_to_shortcode(activity_id) if activity_id
+           else self.user_url(user_id) if user_id
+           else self.BASE_URL)
     kwargs = {}
     if cookie:
       kwargs = {'headers': {'Cookie': cookie}}
@@ -229,7 +232,7 @@ class Instagram(source.Source):
       raise requests.HTTPError('401 Unauthorized', response=resp)
 
     activities, actor = self.html_to_activities(resp.text)
-    if fetch_extras:
+    if fetch_extras and not activity_id:
       activities = [self.html_to_activities(util.requests_get(a['url']).text)[0][0]
                     for a in activities]
 
