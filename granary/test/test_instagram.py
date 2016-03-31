@@ -1015,6 +1015,16 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(None, self.instagram.get_like('123', '000', '9'))
 
+  def test_get_like_scrape(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
+      allow_redirects=False)
+    self.mox.ReplayAll()
+
+    ig = instagram.Instagram(scrape=True)
+    self.assert_equals(LIKE_OBJS[0],
+                       ig.get_like('456', '1208909509631101904_942513', '8'))
+
   def test_media_to_activity(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
 
