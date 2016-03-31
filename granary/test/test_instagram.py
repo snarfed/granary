@@ -666,7 +666,7 @@ HTML_ACTOR = {
   'url': 'https://www.instagram.com/jc/',
   'username': 'jc',
 }
-HTML_ACTIVITIES = [{  # ActivityStreams
+HTML_PHOTO_ACTIVITY = {  # ActivityStreams
   # Photo
   'verb': 'post',
   'published': '2016-01-17T20:46:33',
@@ -698,8 +698,12 @@ HTML_ACTIVITIES = [{  # ActivityStreams
     'replies': {
       'totalItems': 0,
     },
-  }
-}, {
+  },
+}
+HTML_PHOTO_ACTIVITY_FULL = copy.deepcopy(HTML_PHOTO_ACTIVITY)
+HTML_PHOTO_ACTIVITY_FULL['object']['tags'] = LIKE_OBJS
+
+HTML_VIDEO_ACTIVITY = {  # ActivityStreams
   # Video
   'verb': 'post',
   'published': '2016-01-17T13:15:52',
@@ -737,13 +741,20 @@ HTML_ACTIVITIES = [{  # ActivityStreams
       'username': 'ap',
     }],
   },
-}]
-HTML_ACTIVITIES_FULL = copy.deepcopy(HTML_ACTIVITIES)
-HTML_ACTIVITIES_FULL[0]['object']['tags'] = LIKE_OBJS
-HTML_ACTIVITIES_FULL[1]['object']['replies'] = \
+}
+HTML_VIDEO_ACTIVITY_FULL = copy.deepcopy(HTML_VIDEO_ACTIVITY)
+HTML_VIDEO_ACTIVITY_FULL['object']['replies'] = \
   {'items': copy.deepcopy(COMMENT_OBJS)}
-HTML_ACTIVITIES_FULL[1]['object']['replies']['items'][0]['url'] = \
+HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0]['url'] = \
   'https://www.instagram.com/p/XYZ789/#comment-789'
+
+HTML_ACTIVITIES = [HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY]
+HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
+
+HTML_FEED_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER
+HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
+HTML_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
+HTML_VIDEO_COMPLETE = HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
 
 
 class InstagramTest(testutil.HandlerTest):
@@ -841,8 +852,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_self(self):
     self.expect_requests_get(
-      'https://www.instagram.com/x/',
-      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER +
+      'https://www.instagram.com/x/', HTML_PROFILE_COMPLETE +
         # check that we ignore this for profile fetches
         ' not-logged-in ',
       allow_redirects=False)
@@ -852,8 +862,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_response_scrape_self_viewer(self):
     self.expect_requests_get(
-      'https://www.instagram.com/x/',
-      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER,
+      'https://www.instagram.com/x/', HTML_PROFILE_COMPLETE,
       allow_redirects=False)
     self.mox.ReplayAll()
 
@@ -864,15 +873,12 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_self_fetch_extras(self):
     self.expect_requests_get(
-      'https://www.instagram.com/x/',
-      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER,
+      'https://www.instagram.com/x/', HTML_PROFILE_COMPLETE,
       allow_redirects=False)
     self.expect_requests_get(
-      'https://www.instagram.com/p/ABC123/',
-      HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER)
+      'https://www.instagram.com/p/ABC123/', HTML_PHOTO_COMPLETE)
     self.expect_requests_get(
-      'https://www.instagram.com/p/XYZ789/',
-      HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER)
+      'https://www.instagram.com/p/XYZ789/', HTML_VIDEO_COMPLETE)
 
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
@@ -891,8 +897,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_friends_cookie(self):
     self.expect_requests_get(
-      'https://www.instagram.com/',
-      HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER, allow_redirects=False,
+      'https://www.instagram.com/', HTML_FEED_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
@@ -900,8 +905,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_response_scrape_friends_viewer(self):
     self.expect_requests_get(
-      'https://www.instagram.com/',
-      HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER, allow_redirects=False,
+      'https://www.instagram.com/', HTML_FEED_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
 
@@ -925,14 +929,13 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_activity_id(self):
     self.expect_requests_get(
-      'https://www.instagram.com/p/BDG6Ms_J0vQ/',
-      HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER,
+      'https://www.instagram.com/p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
       allow_redirects=False)
     self.mox.ReplayAll()
 
     resp = self.instagram.get_activities_response(
       group_id=source.SELF, scrape=True, activity_id='1208909509631101904_942513')
-    self.assert_equals([HTML_ACTIVITIES_FULL[0]], resp['items'])
+    self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], resp['items'])
     self.assertIsNone(resp['actor'])
 
   def test_get_activities_scrape_cookie_redirects_to_login(self):
@@ -985,13 +988,12 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_comment_scrape(self):
     self.expect_requests_get(
-      'https://www.instagram.com/p/BDG6Ms_J0vQ/',
-      HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER,
+      'https://www.instagram.com/p/BDG6Ms_J0vQ/', HTML_VIDEO_COMPLETE,
       allow_redirects=False)
     self.mox.ReplayAll()
 
     ig = instagram.Instagram(scrape=True)
-    self.assert_equals(HTML_ACTIVITIES_FULL[1]['object']['replies']['items'][0],
+    self.assert_equals(HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0],
                        ig.get_comment('789', activity_id='1208909509631101904_942513'))
 
   def test_get_like(self):
@@ -1193,27 +1195,23 @@ class InstagramTest(testutil.HandlerTest):
       }))
 
   def test_html_to_activities_feed(self):
-    activities, viewer = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER)
+    activities, viewer = self.instagram.html_to_activities(HTML_FEED_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
   def test_html_to_activities_profile(self):
-    activities, viewer = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER)
+    activities, viewer = self.instagram.html_to_activities(HTML_PROFILE_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
   def test_html_to_activities_photo(self):
-    activities, viewer = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER)
-    self.assert_equals([HTML_ACTIVITIES_FULL[0]], activities)
+    activities, viewer = self.instagram.html_to_activities(HTML_PHOTO_COMPLETE)
+    self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], activities)
     self.assertIsNone(viewer)
 
   def test_html_to_activities_video(self):
-    activities, viewer = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER)
-    self.assert_equals([HTML_ACTIVITIES_FULL[1]], activities)
+    activities, viewer = self.instagram.html_to_activities(HTML_VIDEO_COMPLETE)
+    self.assert_equals([HTML_VIDEO_ACTIVITY_FULL], activities)
     self.assertIsNone(viewer)
 
   def test_html_to_activities_missing_profile_picture_external_url(self):
