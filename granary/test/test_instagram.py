@@ -983,6 +983,17 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(None, self.instagram.get_comment('111', activity_id='123_456'))
 
+  def test_get_comment_scrape(self):
+    self.expect_requests_get(
+      'https://www.instagram.com/p/BDG6Ms_J0vQ/',
+      HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER,
+      allow_redirects=False)
+    self.mox.ReplayAll()
+
+    ig = instagram.Instagram(scrape=True)
+    self.assert_equals(HTML_ACTIVITIES_FULL[1]['object']['replies']['items'][0],
+                       ig.get_comment('789', activity_id='1208909509631101904_942513'))
+
   def test_get_like(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         json.dumps({'data': MEDIA_WITH_LIKES}))

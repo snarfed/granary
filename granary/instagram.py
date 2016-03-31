@@ -142,10 +142,11 @@ class Instagram(source.Source):
     Raises: InstagramAPIError
     """
     if scrape or self.scrape:
-      if not ((group_id == source.SELF and (user_id or activity_id)) or
+      if not (activity_id or
+              (group_id == source.SELF and user_id) or
               (group_id == source.FRIENDS and cookie)):
         raise NotImplementedError(
-          'Scraping requires group_id=@self and user_id/activity_id or group_id=@friends and cookie.')
+          'Scraping only supports activity_id, user_id and group_id=@self, or cookie and group_id=@friends.')
       return self._scrape(user_id=user_id, activity_id=activity_id, cookie=cookie,
                           fetch_extras=fetch_replies or fetch_likes)
 
@@ -248,13 +249,15 @@ class Instagram(source.Source):
 
     Args:
       comment_id: string comment id
-      activity_id: string activity id, optional
+      activity_id: string activity id, required
       activity_author_id: string activity author id. Ignored.
     """
-    media = util.trim_nulls(self.urlopen(API_MEDIA_URL % activity_id) or {})
-    for comment in media.get('comments', {}).get('data', []):
-      if comment.get('id') == comment_id:
-        return self.comment_to_object(comment, activity_id, media.get('link'))
+    activities = self.get_activities(activity_id=activity_id)
+    if activities:
+      tag_id = self.tag_uri(comment_id)
+      for reply in activities[0].get('object', {}).get('replies', {}).get('items', []):
+        if reply.get('id') == tag_id:
+          return reply
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Not implemented. Returns None. Resharing isn't a feature of Instagram.
