@@ -775,6 +775,12 @@ class InstagramTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.instagram.get_actor())
 
+  def test_get_actor_scrape(self):
+    self.expect_requests_get('https://www.instagram.com/foo/',
+                             HTML_PROFILE_COMPLETE, allow_redirects=False)
+    self.mox.ReplayAll()
+    self.assert_equals(HTML_VIEWER, instagram.Instagram(scrape=True).get_actor('foo'))
+
   def test_get_activities_self(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
                         json.dumps({'data': []}))

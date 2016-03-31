@@ -98,10 +98,15 @@ class Instagram(source.Source):
     Raises: InstagramAPIError
     """
     if user_id is None:
+      assert self.scrape is False, 'get_actor() requires user_id when scraping'
       user_id = 'self'
 
-    return self.user_to_actor(util.trim_nulls(
-      self.urlopen(API_USER_URL % user_id) or {}))
+    if self.scrape:
+      return self.get_activities_response(group_id=source.SELF, user_id=user_id
+                                         ).get('actor')
+    else:
+      return self.user_to_actor(util.trim_nulls(
+        self.urlopen(API_USER_URL % user_id) or {}))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
