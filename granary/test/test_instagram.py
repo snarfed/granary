@@ -1220,6 +1220,14 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
+  def test_html_to_activities_profile_private(self):
+    profile = copy.deepcopy(HTML_PROFILE)
+    profile['entry_data']['ProfilePage'][0]['user']['is_private'] = True
+
+    _, actor = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(profile) + HTML_FOOTER)
+    self.assert_equals([{'objectType':'group', 'alias':'@private'}], actor['to'])
+
   def test_html_to_activities_photo(self):
     activities, viewer = self.instagram.html_to_activities(HTML_PHOTO_COMPLETE)
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], activities)

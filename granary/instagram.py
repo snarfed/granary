@@ -723,5 +723,7 @@ class Instagram(source.Source):
         viewer['website'] = website.replace('\/', '/')
       viewer.setdefault('bio', viewer.get('biography'))
       actor = self.user_to_actor(viewer)
+      if viewer.get('is_private'):
+        actor['to'] = [{'objectType':'group', 'alias':'@private'}]
 
     return activities, actor
