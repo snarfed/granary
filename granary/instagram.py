@@ -86,7 +86,8 @@ class Instagram(source.Source):
     resp = util.urlopen(urllib2.Request(url, **kwargs))
     return resp if kwargs.get('data') else json.loads(resp.read()).get('data')
 
-  def user_url(self, username):
+  @staticmethod
+  def user_url(username):
     return 'https://www.instagram.com/%s/' % username
 
   def get_actor(self, user_id=None):
