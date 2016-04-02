@@ -157,7 +157,7 @@ class Instagram(source.Source):
         raise NotImplementedError(
           'Scraping only supports activity_id, user_id and group_id=@self, or cookie and group_id=@friends.')
       return self._scrape(user_id=user_id, activity_id=activity_id, cookie=cookie,
-                          fetch_extras=fetch_replies or fetch_likes)
+                          fetch_extras=fetch_replies or fetch_likes, cache=cache)
 
     if user_id is None:
       user_id = 'self'
@@ -218,7 +218,8 @@ class Instagram(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def _scrape(self, user_id=None, activity_id=None, cookie=None, fetch_extras=False):
+  def _scrape(self, user_id=None, activity_id=None, cookie=None,
+              fetch_extras=False, cache=None):
     """Scrapes a user's profile or feed and converts the media to activities.
 
     Args:
@@ -245,9 +246,37 @@ class Instagram(source.Source):
       raise requests.HTTPError('401 Unauthorized', response=resp)
 
     activities, actor = self.html_to_activities(resp.text)
+
     if fetch_extras and not activity_id:
-      activities = [self.html_to_activities(util.requests_get(a['url']).text)[0][0]
-                    for a in activities]
+      # batch get cached counts of comments and likes for all activities
+      cached = {}
+      # don't update the cache until the end, in case we hit an error before
+      cache_updates = {}
+      if cache is not None:
+        keys = []
+        for activity in activities:
+          _, id = util.parse_tag_uri(activity['id'])
+          keys.extend(['AIL ' + id, 'AIC ' + id])
+        cached = cache.get_multi(keys)
+
+      for i, activity in enumerate(activities):
+        obj = activity['object']
+        _, id = util.parse_tag_uri(activity['id'])
+        likes = obj.get('ig_like_count') or 0
+        comments = obj.get('replies', {}).get('totalItems') or 0
+        likes_key = 'AIL %s' % id
+        comments_key = 'AIC %s' % id
+
+        if (likes and likes != cached.get(likes_key) or
+            comments and comments != cached.get(comments_key)):
+          full_activity, _ = self.html_to_activities(
+            util.requests_get(activity['url']).text)
+          if full_activity:
+            activities[i] = full_activity[0]
+            cache_updates.update({likes_key: likes, comments_key: comments})
+
+      if cache_updates and cache is not None:
+        cache.set_multi(cache_updates)
 
     resp = self.make_activities_base_response(activities)
     resp['actor'] = actor

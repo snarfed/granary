@@ -484,7 +484,7 @@ HTML_PHOTO_FULL = {
   'date': 1453063593.0,
 }
 HTML_VIDEO_FULL = {
-  'id': '123',
+  'id': '789',
   'code': 'XYZ789',
   'location': None,
   'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
@@ -707,14 +707,14 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
   # Video
   'verb': 'post',
   'published': '2016-01-17T13:15:52',
-  'id': tag_uri('123_456'),
+  'id': tag_uri('789_456'),
   'url': 'https://www.instagram.com/p/XYZ789/',
   'actor': HTML_ACTOR,
   'object': {
     'objectType': 'video',
     'author': HTML_ACTOR,
     'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
-    'id': tag_uri('123_456'),
+    'id': tag_uri('789_456'),
     'published': '2016-01-17T13:15:52',
     'url': 'https://www.instagram.com/p/XYZ789/',
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'},
@@ -749,8 +749,10 @@ HTML_VIDEO_ACTIVITY_FULL['object']['replies'] = {
   'items': copy.deepcopy(COMMENT_OBJS),
   'totalItems': len(COMMENT_OBJS),
 }
-HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0]['url'] = \
-  'https://www.instagram.com/p/XYZ789/#comment-789'
+HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0].update({
+  'url': 'https://www.instagram.com/p/XYZ789/#comment-789',
+  'inReplyTo': [{'id': tag_uri('789_456')}],
+})
 
 HTML_ACTIVITIES = [HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY]
 HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
@@ -871,9 +873,8 @@ class InstagramTest(testutil.HandlerTest):
       user_id='x', group_id=source.SELF, scrape=True))
 
   def test_get_activities_response_scrape_self_viewer(self):
-    self.expect_requests_get(
-      'https://www.instagram.com/x/', HTML_PROFILE_COMPLETE,
-      allow_redirects=False)
+    self.expect_requests_get('https://www.instagram.com/x/',
+                             HTML_PROFILE_COMPLETE, allow_redirects=False)
     self.mox.ReplayAll()
 
     resp = self.instagram.get_activities_response(
@@ -882,18 +883,58 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(HTML_VIEWER, resp['actor'])
 
   def test_get_activities_scrape_self_fetch_extras(self):
-    self.expect_requests_get(
-      'https://www.instagram.com/x/', HTML_PROFILE_COMPLETE,
-      allow_redirects=False)
-    self.expect_requests_get(
-      'https://www.instagram.com/p/ABC123/', HTML_PHOTO_COMPLETE)
-    self.expect_requests_get(
-      'https://www.instagram.com/p/XYZ789/', HTML_VIDEO_COMPLETE)
+    self.expect_requests_get('https://www.instagram.com/x/',
+                             HTML_PROFILE_COMPLETE, allow_redirects=False)
+    self.expect_requests_get('https://www.instagram.com/p/ABC123/',
+                             HTML_PHOTO_COMPLETE)
+    self.expect_requests_get('https://www.instagram.com/p/XYZ789/',
+                             HTML_VIDEO_COMPLETE)
 
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
       user_id='x', group_id=source.SELF, fetch_likes=True, fetch_replies=True,
       scrape=True))
+
+  def test_get_activities_scrape_fetch_extras_cache(self):
+    # first time, cache is cold
+    self.expect_requests_get('https://www.instagram.com/x/',
+                             HTML_PROFILE_COMPLETE, allow_redirects=False)
+    self.expect_requests_get('https://www.instagram.com/p/ABC123/',
+                             HTML_PHOTO_COMPLETE)
+    self.expect_requests_get('https://www.instagram.com/p/XYZ789/',
+                             HTML_VIDEO_COMPLETE)
+
+    # second time, comment and like counts are unchanged, so no media page fetches
+    # profile = copy.deepcopy(HTML_PROFILE)
+    self.expect_requests_get('https://www.instagram.com/x/',
+                             HTML_PROFILE_COMPLETE, allow_redirects=False)
+
+    # third time, video comment count changes, like counts stay the same
+    profile = copy.deepcopy(HTML_PROFILE)
+    profile['entry_data']['ProfilePage'][0]['user']['media']['nodes'][1]\
+      ['comments']['count'] = 3
+    self.expect_requests_get('https://www.instagram.com/x/',
+                             HTML_HEADER + json.dumps(profile) + HTML_FOOTER,
+                             allow_redirects=False)
+    video = copy.deepcopy(HTML_VIDEO_FULL)
+    video['comments']['count'] = 4
+    self.expect_requests_get('https://www.instagram.com/p/XYZ789/',
+                             HTML_HEADER + json.dumps(video) + HTML_FOOTER)
+
+    self.mox.ReplayAll()
+
+    cache = util.CacheDict()
+    for i in range(3):
+      self.instagram.get_activities(user_id='x', group_id=source.SELF,
+                                    fetch_likes=True, fetch_replies=True,
+                                    scrape=True, cache=cache)
+
+    self.assert_equals({
+      'AIC 123_456': 0,  # photo
+      'AIL 123_456': 5,
+      'AIC 789_456': 1,  # video
+      'AIL 789_456': 9,
+    }, cache)
 
   def test_get_activities_scrape_missing_data(self):
     self.expect_requests_get('https://www.instagram.com/x/', """
