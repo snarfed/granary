@@ -615,6 +615,8 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
     'external_url': 'https:\/\/snarfed.org',
   }}]},
 }
+HTML_PROFILE_PRIVATE = copy.deepcopy(HTML_PROFILE)
+HTML_PROFILE_PRIVATE['entry_data']['ProfilePage'][0]['user']['is_private'] = True
 
 HTML_PHOTO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
   'config': {
@@ -759,6 +761,7 @@ HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
 
 HTML_FEED_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER
 HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
+HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
 HTML_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
 HTML_VIDEO_COMPLETE = HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
 
@@ -1266,11 +1269,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(HTML_VIEWER, viewer)
 
   def test_html_to_activities_profile_private(self):
-    profile = copy.deepcopy(HTML_PROFILE)
-    profile['entry_data']['ProfilePage'][0]['user']['is_private'] = True
-
-    _, actor = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(profile) + HTML_FOOTER)
+    _, actor = self.instagram.html_to_activities(HTML_PROFILE_PRIVATE_COMPLETE)
     self.assert_equals([{'objectType':'group', 'alias':'@private'}], actor['to'])
 
   def test_html_to_activities_photo(self):
