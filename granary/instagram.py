@@ -137,6 +137,9 @@ class Instagram(source.Source):
     Instagram only supports search over hashtags, so if search_query is set, it
     must begin with #.
 
+    May populate a custom 'ig_like_count' property in media objects. (Currently
+    only when scraping.)
+
     Args (beyond Source.get_activities_response):
       scrape: if True, scrapes HTML from instagram.com instead of using the API.
         Populates the user's actor object in the 'actor' response field.
@@ -709,6 +712,7 @@ class Instagram(source.Source):
         })
 
       activity = self.media_to_activity(util.trim_nulls(media))
+      activity['object']['ig_like_count'] = media['likes'].get('count', 0)
       self.postprocess_object(activity['object'])
       activities.append(super(Instagram, self).postprocess_activity(activity))
 

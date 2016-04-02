@@ -467,7 +467,7 @@ HTML_PHOTO_FULL = {
       }
     }],
     'viewer_has_liked': False,
-    'count': 2,
+    'count': 5,
   },
   'caption': 'Elvis hits out of RCA Studio B',
   'comments': {
@@ -500,7 +500,7 @@ HTML_VIDEO_FULL = {
   },
   'likes': {
     'nodes': [],
-    'count': 0,
+    'count': 9,
   },
   'caption': 'Eye of deer \ud83d\udc41 and #selfie from me',
   'comments': {
@@ -515,6 +515,7 @@ HTML_VIDEO_FULL = {
       'created_at': 1349588757,
       'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
     }],
+    'count': 1,
   },
   'usertags': {
     'nodes': [{
@@ -695,9 +696,8 @@ HTML_PHOTO_ACTIVITY = {  # ActivityStreams
         'height': 1293,
       }],
     }],
-    'replies': {
-      'totalItems': 0,
-    },
+    'replies': {'totalItems': 0},
+    'ig_like_count': 5,
   },
 }
 HTML_PHOTO_ACTIVITY_FULL = copy.deepcopy(HTML_PHOTO_ACTIVITY)
@@ -719,6 +719,8 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
     'url': 'https://www.instagram.com/p/XYZ789/',
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'},
     'to': [{'objectType':'group', 'alias':'@private'}],
+    'replies': {'totalItems': 1},
+    'ig_like_count': 9,
     'stream': {
       'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
     },
@@ -743,8 +745,10 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
   },
 }
 HTML_VIDEO_ACTIVITY_FULL = copy.deepcopy(HTML_VIDEO_ACTIVITY)
-HTML_VIDEO_ACTIVITY_FULL['object']['replies'] = \
-  {'items': copy.deepcopy(COMMENT_OBJS)}
+HTML_VIDEO_ACTIVITY_FULL['object']['replies'] = {
+  'items': copy.deepcopy(COMMENT_OBJS),
+  'totalItems': len(COMMENT_OBJS),
+}
 HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0]['url'] = \
   'https://www.instagram.com/p/XYZ789/#comment-789'
 
