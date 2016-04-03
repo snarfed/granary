@@ -7,23 +7,6 @@
     "content": [{
       "html": "Shared <a href=\"http://example.com/original/post\">a post</a> by   <span class=\"h-card\">\n    <a class=\"p-name u-url\" href=\"http://example.com/bob\">Bob</a>\n    \n  </span>\nThe original post"
     }],
-    "repost": [{
-      "type": ["h-cite"],
-      "properties": {
-        "author": [{
-          "type": ["h-card"],
-          "properties": {
-            "name": ["Bob"],
-            "url": ["http://example.com/bob"]
-          }
-        }],
-        "content": [{
-          "html": "The original post",
-          "value": "The original post"
-        }],
-        "url": ["http://example.com/original/post"]
-      }
-    }],
     "repost-of": [{
       "type": ["h-cite"],
       "properties": {

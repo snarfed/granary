@@ -195,7 +195,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       # multiple targets, e.g. a like of a post with original post URLs in it,
       # which brid.gy does.
       objs = util.get_list(obj, 'object')
-      ret['properties'][prop + '-of'] = ret['properties'][prop] = [
+      ret['properties'][prop + '-of'] = [
         # flatten contexts that are just a url
         o['url'] if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
@@ -416,11 +416,9 @@ def json_to_html(obj, parent_props=[]):
     # having like-of or repost-of makes this a like or repost.
     for target in props.get(mftype + '-of', []):
       if isinstance(target, basestring):
-        children.append('<a class="u-%s u-%s-of" href="%s"></a>' % (
-          mftype, mftype, target))
+        children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))
       else:
-        children.append(json_to_html(
-          target, ['u-' + mftype, 'u-' + mftype + '-of']))
+        children.append(json_to_html(target, ['u-' + mftype + '-of']))
 
   # set up content and name
   content = prop.get('content', {})

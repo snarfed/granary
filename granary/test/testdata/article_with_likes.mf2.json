@@ -14,7 +14,6 @@
           }
         }],
         "content": [{"html": "<a href=\"http://example.com/abc\">likes this.</a>"}],
-        "like": ["http://example.com/abc"],
         "like-of": ["http://example.com/abc"]
       }
     }, {
@@ -22,7 +21,6 @@
       "properties": {
         "url": ["http://example.com/anonymous/like"],
         "content": [{"html": "<a href=\"http://example.com/abc\">likes this.</a>"}],
-        "like": ["http://example.com/abc"],
         "like-of": ["http://example.com/abc"]
       }
     }]

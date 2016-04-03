@@ -14,7 +14,6 @@
           }
         }],
         "content": [{"html": "<a href=\"http://example.com/abc\">shared this.</a>"}],
-        "repost": ["http://example.com/abc"],
         "repost-of": ["http://example.com/abc"]
       }
     }, {
@@ -22,7 +21,6 @@
       "properties": {
         "url": ["http://example.com/anonymous/repost"],
         "content": [{"html": "<a href=\"http://example.com/abc\">shared this.</a>"}],
-        "repost": ["http://example.com/abc"],
         "repost-of": ["http://example.com/abc"]
       }
     }]
