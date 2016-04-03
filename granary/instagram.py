@@ -13,6 +13,7 @@ import datetime
 import json
 import logging
 import operator
+import re
 import string
 import urllib
 import urllib2
@@ -42,6 +43,9 @@ HTML_MEDIA = 'https://www.instagram.com/p/%s/'
 
 # URL-safe base64 encoding. used in Instagram.id_to_shortcode()
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
+
+MENTION_RE = re.compile(r'@([A-Za-z0-9._]+)')
+
 
 class Instagram(source.Source):
   """Implements the ActivityStreams API for Instagram."""
@@ -86,9 +90,9 @@ class Instagram(source.Source):
     resp = util.urlopen(urllib2.Request(url, **kwargs))
     return resp if kwargs.get('data') else json.loads(resp.read()).get('data')
 
-  @staticmethod
-  def user_url(username):
-    return 'https://www.instagram.com/%s/' % username
+  @classmethod
+  def user_url(cls, username):
+    return '%s%s/' % (cls.BASE_URL, username)
 
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -462,6 +466,7 @@ class Instagram(source.Source):
     id = media.get('id')
 
     user = media.get('user', {})
+    content = xml.sax.saxutils.escape(media.get('caption', {}).get('text', ''))
     object = {
       'id': self.tag_uri(id),
       # TODO: detect videos. (the type field is in the JSON respose but not
@@ -469,8 +474,7 @@ class Instagram(source.Source):
       'objectType': OBJECT_TYPES.get(media.get('type', 'image'), 'photo'),
       'published': util.maybe_timestamp_to_rfc3339(media.get('created_time')),
       'author': self.user_to_actor(user),
-      'content': xml.sax.saxutils.escape(
-        media.get('caption', {}).get('text', '')),
+      'content': content,
       'url': media.get('link'),
       'to': [{
         'objectType': 'group',
@@ -508,7 +512,15 @@ class Instagram(source.Source):
       [self.user_to_actor(user.get('user'))
        for user in media.get('users_in_photo', [])] +
       [self.like_to_object(user, id, media.get('link'))
-       for user in media.get('likes', {}).get('data', [])],
+       for user in media.get('likes', {}).get('data', [])] +
+      [{
+        'objectType': 'person',
+        'id': self.tag_uri(mention.group(1)),
+        'displayName': mention.group(1),
+        'url': self.user_url(mention.group(1)),
+        'startIndex': mention.start(),
+        'length': mention.end() - mention.start(),
+        } for mention in MENTION_RE.finditer(content)],
     }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):

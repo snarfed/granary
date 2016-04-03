@@ -102,7 +102,7 @@ MEDIA = {  # Instagram
   'users_in_photo': [{'user': USER, 'position': {'x': 1, 'y': 2}}],
   'caption': {
     'created_time': '1348291558',
-    'text': 'this picture -> is #abc #xyz',
+    'text': 'this picture -> is #abc @foo #xyz',
     'user': {},
     'id': '285812769105340251'
   },
@@ -152,29 +152,27 @@ VIDEO = {
   },
   'location': None
 }
-COMMENT_OBJS = [  # ActivityStreams
-  {
-    'objectType': 'comment',
-    'author': {
-      'objectType': 'person',
-      'id': tag_uri('232927278'),
-      'username': 'averygood',
-      'displayName': '\u5c0f\u6b63',
-      'image': {'url': 'http://picture/commenter'},
-      'url': 'https://www.instagram.com/averygood/',
-      },
-    'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
-    'id': tag_uri('789'),
-    'published': '2012-10-07T05:45:57',
-    'url': 'https://www.instagram.com/p/ABC123/#comment-789',
-    'inReplyTo': [{'id': tag_uri('123_456')}],
-    'to': [{'objectType':'group', 'alias':'@public'}],
-    },
-]
-POST_OBJ = {  # ActivityStreams
+COMMENT_OBJS = [{  # ActivityStreams
+  'objectType': 'comment',
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('232927278'),
+    'username': 'averygood',
+    'displayName': '\u5c0f\u6b63',
+    'image': {'url': 'http://picture/commenter'},
+    'url': 'https://www.instagram.com/averygood/',
+  },
+  'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+  'id': tag_uri('789'),
+  'published': '2012-10-07T05:45:57',
+  'url': 'https://www.instagram.com/p/ABC123/#comment-789',
+  'inReplyTo': [{'id': tag_uri('123_456')}],
+  'to': [{'objectType':'group', 'alias':'@public'}],
+}]
+MEDIA_OBJ = {  # ActivityStreams
   'objectType': 'photo',
   'author': ACTOR,
-  'content': 'this picture -&gt; is #abc #xyz',
+  'content': 'this picture -&gt; is #abc @foo #xyz',
   'id': tag_uri('123_456'),
   'published': '2012-09-22T05:25:42',
   'url': 'https://www.instagram.com/p/ABC123/',
@@ -188,57 +186,64 @@ POST_OBJ = {  # ActivityStreams
     'position': '+37.300000-122.500000/',
     'address': {'formatted': '123 Main St.'},
     'url': 'https://instagram.com/explore/locations/520640/',
-    },
+  },
   'attachments': [{
-      'objectType': 'image',
-      'image': [{
-        'url': 'http://attach/image/big',
-        'width': 612,
-        'height': 612,
-        }, {
-        'url': 'http://attach/image/small',
-        'width': 306,
-        'height': 306,
-        }, {
-        'url': 'http://attach/image/thumb',
-        'width': 150,
-        'height': 150,
-        }],
-      }],
+    'objectType': 'image',
+    'image': [{
+      'url': 'http://attach/image/big',
+      'width': 612,
+      'height': 612,
+    }, {
+      'url': 'http://attach/image/small',
+      'width': 306,
+      'height': 306,
+    }, {
+      'url': 'http://attach/image/thumb',
+      'width': 150,
+      'height': 150,
+    }],
+  }],
   'replies': {
     'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
     },
   'tags': [{
-      'objectType': 'person',
-      'id': tag_uri('420973239'),
-      'username': 'snarfed',
-      'url': 'http://snarfed.org',
-      'urls': [{'value': 'http://snarfed.org'},
-               {'value': 'https://asdf.com'}],
-      'displayName': 'Ryan B',
-      'image': {'url': 'http://picture/ryan'},
-      'description': 'foo https://asdf.com bar',
-      }, {
-      'objectType': 'hashtag',
-      'id': tag_uri('abc'),
-      'displayName': 'abc',
-      # TODO?
-      # 'startIndex': 32,
-      # 'length': 10,
-      }, {
-      'objectType': 'hashtag',
-      'id': tag_uri('xyz'),
-      'displayName': 'xyz',
-      }],
-  }
+    'objectType': 'person',
+    'id': tag_uri('420973239'),
+    'username': 'snarfed',
+    'url': 'http://snarfed.org',
+    'urls': [{'value': 'http://snarfed.org'},
+             {'value': 'https://asdf.com'}],
+    'displayName': 'Ryan B',
+    'image': {'url': 'http://picture/ryan'},
+    'description': 'foo https://asdf.com bar',
+  }, {
+    'objectType': 'hashtag',
+    'id': tag_uri('abc'),
+    'displayName': 'abc',
+    # TODO?
+    # 'startIndex': 32,
+    # 'length': 10,
+  }, {
+    'objectType': 'hashtag',
+    'id': tag_uri('xyz'),
+    'displayName': 'xyz',
+  }, {
+    'objectType': 'person',
+    'id': tag_uri('foo'),
+    'displayName': 'foo',
+    'url': 'https://www.instagram.com/foo/',
+    'startIndex': 27,
+    'length': 4,
+  }],
+}
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-09-22T05:25:42',
   'id': tag_uri('123_456'),
   'url': 'https://www.instagram.com/p/ABC123/',
   'actor': ACTOR,
-  'object': POST_OBJ,
+  'object': MEDIA_OBJ,
   }
 LIKES = [  # Instagram
   {
@@ -290,10 +295,10 @@ LIKE_OBJS = [{  # ActivityStreams
       },
     },
   ]
-POST_OBJ_WITH_LIKES = copy.deepcopy(POST_OBJ)
-POST_OBJ_WITH_LIKES['tags'] += LIKE_OBJS
+MEDIA_OBJ_WITH_LIKES = copy.deepcopy(MEDIA_OBJ)
+MEDIA_OBJ_WITH_LIKES['tags'] += LIKE_OBJS
 ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
-ACTIVITY_WITH_LIKES['object'] = POST_OBJ_WITH_LIKES
+ACTIVITY_WITH_LIKES['object'] = MEDIA_OBJ_WITH_LIKES
 VIDEO_OBJ = {
   'attachments': [{
     'image': [{
@@ -384,12 +389,12 @@ ATOM = """\
   <activity:object-type>http://activitystrea.ms/schema/1.0/photo</activity:object-type>
 
   <id>https://www.instagram.com/p/ABC123/</id>
-  <title>this picture -&gt; is #abc #xyz</title>
+  <title>this picture -&gt; is #abc @foo #xyz</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-this picture -&gt; is #abc #xyz
+this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz
 <p>
 <a class="link" href="https://www.instagram.com/p/ABC123/">
 <img class="thumbnail" src="http://attach/image/big" alt="" />
@@ -410,6 +415,9 @@ this picture -&gt; is #abc #xyz
     <link rel="mentioned" href="http://snarfed.org" />
 
     <a href="http://snarfed.org">Ryan B</a>
+
+  <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
+  <link rel="mentioned" href="https://www.instagram.com/foo/" />
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   <published>2012-09-22T05:25:42</published>
@@ -1084,14 +1092,14 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_media_to_object(self):
     obj = self.instagram.media_to_object(MEDIA)
-    self.assert_equals(POST_OBJ, obj)
+    self.assert_equals(MEDIA_OBJ, obj)
 
     # check that the images are ordered the way we expect, largest to smallest
-    self.assertEquals(POST_OBJ['attachments'][0]['image'],
+    self.assertEquals(MEDIA_OBJ['attachments'][0]['image'],
                       obj['attachments'][0]['image'])
 
   def test_media_to_object_with_likes(self):
-    self.assert_equals(POST_OBJ_WITH_LIKES,
+    self.assert_equals(MEDIA_OBJ_WITH_LIKES,
                        self.instagram.media_to_object(MEDIA_WITH_LIKES))
 
   def test_comment_to_object(self):
