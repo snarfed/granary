@@ -65,7 +65,6 @@ class Handler(webapp2.RequestHandler):
   Attributes:
     source: Source subclass
   """
-
   handle_exception = handlers.handle_exception
 
   def get(self):
@@ -110,7 +109,10 @@ class Handler(webapp2.RequestHandler):
     user_id = args[0] if args else None
 
     # get activities
-    response = src.get_activities_response(*args, **self.get_kwargs(src))
+    try:
+      response = src.get_activities_response(*args, **self.get_kwargs(src))
+    except NotImplementedError as e:
+      self.abort(400, str(e))
 
     # fetch actor if necessary
     actor = response.get('actor')

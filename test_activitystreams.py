@@ -146,6 +146,12 @@ class HandlerTest(testutil.HandlerTest):
     resp = self.get_response('/fake?format=bad')
     self.assertEquals(400, resp.status_int)
 
+  def test_convert_not_implemented_error(self):
+    resp = activitystreams.application.get_response(
+      '/instagram/@me/@friends/@app/?format=html&access_token=...')
+    self.assert_equals(400, resp.status_int)
+    self.assertIn('Scraping only supports activity_id', resp.body)
+
   def test_bad_start_index(self):
     resp = activitystreams.application.get_response('/fake?startIndex=foo')
     self.assertEquals(400, resp.status_int)
