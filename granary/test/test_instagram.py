@@ -916,7 +916,6 @@ class InstagramTest(testutil.HandlerTest):
                              HTML_VIDEO_COMPLETE)
 
     # second time, comment and like counts are unchanged, so no media page fetches
-    # profile = copy.deepcopy(HTML_PROFILE)
     self.expect_requests_get('https://www.instagram.com/x/',
                              HTML_PROFILE_COMPLETE, allow_redirects=False)
 

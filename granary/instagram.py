@@ -689,7 +689,7 @@ class Instagram(source.Source):
     script_start = '<script type="text/javascript">window._sharedData = '
     start = html.find(script_start)
     if start == -1:
-      return [], {}
+      return [], None
 
     start += len(script_start)
     end = html.index(';</script>', start)
