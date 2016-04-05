@@ -560,3 +560,6 @@ class GooglePlusTest(testutil.HandlerTest):
               HTML_ACTIVITIES_GP_FOOTER)
       self.assert_equals([HTML_ACTIVITY_AS],
                          self.googleplus.html_to_activities(html))
+
+  def test_html_to_activities_missing_data(self):
+    self.assert_equals([], self.googleplus.html_to_activities(''))

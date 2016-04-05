@@ -313,8 +313,11 @@ class GooglePlus(source.Source):
     """
     # extract JSON data blob
     script_start = "<script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:"
-    start = html.index(script_start) + len(script_start)
-    end = html.index('});</script>', start)
+    start = html.find(script_start)
+    end = html.find('});</script>', start)
+    if start == -1 or end == -1:
+      return []
+    start += len(script_start)
     html = html[start:end]
 
     # insert placeholder nulls for omitted values, e.g. [,,,"x",,,] so that we
