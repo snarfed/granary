@@ -374,7 +374,7 @@ class Instagram(source.Source):
           error_plain='Cannot publish comments on Instagram',
           error_html='<a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">Cannot publish comments</a> on Instagram. The Instagram API technically supports creating comments, but <a href="http://stackoverflow.com/a/26889101/682648">anecdotal</a> <a href="http://stackoverflow.com/a/20229275/682648">evidence</a> suggests they are very selective about which applications they approve to do so.')
       content = obj.get('content', '').encode('utf-8')
-      content = content if ignore_formatting else self._html_to_text(content)
+      content = content if ignore_formatting else source.html_to_text(content)
       if preview:
         return source.creation_result(
           content=content,

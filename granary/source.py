@@ -52,6 +52,19 @@ def strip_html_tags(str):
   return BeautifulSoup(str, 'html.parser').get_text('')
 
 
+def html_to_text(html):
+  """Converts string html to string text with html2text."""
+  if html:
+    h = html2text.HTML2Text()
+    h.unicode_snob = True
+    h.body_width = 0  # don't wrap lines
+    h.ignore_links = True
+    h.ignore_images = True
+    return '\n'.join(
+      # strip trailing whitespace that html2text adds to ends of some lines
+      line.rstrip() for line in h.unescape(h.handle(html)).splitlines())
+
+
 def creation_result(content=None, description=None, abort=False,
                     error_plain=None, error_html=None):
   """Create a new CreationResult named tuple, which the result of
@@ -749,20 +762,9 @@ class Source(object):
       summary = None
 
     if not ignore_formatting:
-      content = self._html_to_text(content)
+      content = html_to_text(content)
 
     return summary or (
             (name or content) if prefer_name else
             (content or name)
            ) or u''
-
-  def _html_to_text(self, html):
-    if html:
-      h = html2text.HTML2Text()
-      h.unicode_snob = True
-      h.body_width = 0  # don't wrap lines
-      h.ignore_links = True
-      h.ignore_images = True
-      return '\n'.join(
-        # strip trailing whitespace that html2text adds to ends of some lines
-        line.rstrip() for line in h.unescape(h.handle(html)).splitlines())
