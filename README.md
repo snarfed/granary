@@ -66,10 +66,10 @@ They return the authenticated user's Twitter stream, ie tweets from the people t
 {
   "itemsPerPage": 10,
   "startIndex": 0,
-  "totalResults": 12
+  "totalResults": 12,
   "items": [{
       "verb": "post",
-      "id": "tag:twitter.com,2013:374272979578150912"
+      "id": "tag:twitter.com,2013:374272979578150912",
       "url": "http://twitter.com/evanpro/status/374272979578150912",
       "content": "Getting stuff for barbecue tomorrow. No ribs left! Got some nice tenderloin though. (@ Metro Plus Famille Lemay) http://t.co/b2PLgiLJwP",
       "actor": {
