@@ -2,12 +2,15 @@
    :target: https://github.com/snarfed/granary
 .. image:: https://circleci.com/gh/snarfed/granary.svg?style=svg
    :target: https://circleci.com/gh/snarfed/granary
+.. image:: https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=master
+   :target: https://coveralls.io/github/snarfed/granary?branch=master
 
 
 Granary is a library and REST API that fetches and converts social network
 data between a wide variety of formats:
 
 - Facebook, Flickr, Google+, Instagram, and Twitter native APIs
+- Instagram and Google+ scraped HTML
 - `ActivityStreams <http://activitystrea.ms/>`__
 - `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
 - `microformats2 <http://microformats.org/wiki/microformats2>`__ JSON
@@ -68,10 +71,10 @@ people they follow. Here's the JSON output:
                 "startIndex": 113,
                 "length": 22,
                 "objectType": "article"
-              }, ...],
+              }, "..."],
           },
-        }, ...]
-      ...
+        }, "..."]
+      "..."
     }
 
 `Check out the docs for more! <https://github.com/snarfed/granary>`__

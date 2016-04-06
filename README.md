@@ -14,7 +14,7 @@ data foodstuff inside in standard formats and protocols!
 * [Future work](#future-work)
 * [Development](#development)
 * [Related work](#related-work)
-* [Changes](#changes)
+* [Changelog](#changelog)
 
 
 About
@@ -22,6 +22,7 @@ About
 
 Granary is a library and REST API that converts between a wide variety of formats:
 * Facebook, Flickr, Google+, Instagram, and Twitter native APIs
+* Instagram and Google+ scraped HTML
 * [ActivityStreams](http://activitystrea.ms/)
 * [microformats2](http://microformats.org/wiki/microformats2) HTML
 * [microformats2](http://microformats.org/wiki/microformats2) JSON
@@ -83,10 +84,10 @@ They return the authenticated user's Twitter stream, ie tweets from the people t
             "startIndex": 113,
             "length": 22,
             "objectType": "article"
-          }, ...],
+          }, "..."],
       },
-    }, ...]
-  ...
+    }, "..."]
+  "..."
 }
 ```
 
@@ -255,10 +256,10 @@ Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
 similar "polyglot" approach, but more focused on writing than reading.
 
 
-Changes
+Changelog
 ---
 
-#### 1.3.0 - unreleased
+#### 1.3.0 - 2016-04-06
 * Support posting videos! Currently in Facebook, Flickr, and Twitter.
 * Instagram:
   * Add support for scraping, since they're [locking down their API and requiring manual approval](http://developers.instagram.com/post/133424514006/instagram-platform-update).
@@ -276,6 +277,8 @@ Changes
   * Load and convert h-card.
   * Drop support for h-as-* classes, both incoming and outgoing. They're deprecated in favor of https://indiewebcamp.com/post-type-discovery .
   * Drop old deprecated `u-like` and `u-repost` properties.
+* Misc bug fixes.
+* Set up Coveralls.
 
 #### 1.2.0 - 2016-01-11
 * Improve original post discovery algorithm. ([bridgy #51](https://github.com/snarfed/bridgy/issues/51))
