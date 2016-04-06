@@ -440,6 +440,24 @@ foo
       },
     ], obj.get('tags'))
 
+  def test_json_to_object_converts_text_newlines_to_brs(self):
+    """Text newlines should be converted to <br>s."""
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'asdf\nqwer',
+    }, microformats2.json_to_object({
+      'properties': {'content': [{'value': 'asdf\nqwer'}]},
+    }))
+
+  def test_json_to_object_drops_html_newlines(self):
+    """HTML newlines should be discarded."""
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'asdf qwer',
+    }, microformats2.json_to_object({
+      'properties': {'content': [{'html': 'asdf\nqwer', 'value': ''}]},
+    }))
+
   def test_find_author(self):
     self.assert_equals({
     'displayName': 'my name',

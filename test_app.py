@@ -117,9 +117,9 @@ ATOM_CONTENT = """\
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-<br />
-<br />
-foo bar<br />
+
+
+foo bar
 
   </div>
   </content>

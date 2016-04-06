@@ -81,7 +81,14 @@ def get_html(val):
 
   Returns: string or None
   """
-  return val.get('html') or val.get('value') if isinstance(val, dict) else val
+  if isinstance(val, dict) and val.get('html'):
+    # this came from e-content, so newlines aren't meaningful. drop them so that
+    # we don't replace them with <br>s in render_content().
+    # https://github.com/snarfed/granary/issues/80
+    # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
+    return val['html'].replace('\n', ' ')
+
+  return get_text(val)
 
 
 def get_text(val):
