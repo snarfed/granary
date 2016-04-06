@@ -258,6 +258,25 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changes
 ---
 
+#### 1.3.0 - unreleased
+* Support posting videos! Currently in Facebook, Flickr, and Twitter.
+* Instagram:
+  * Add support for scraping, since they're [locking down their API and requiring manual approval](http://developers.instagram.com/post/133424514006/instagram-platform-update).
+  * Linkify @-mentions in photo captions.
+* Facebook:
+  * Fetch [Open Graph stories aka `news.publish` actions](https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/).
+  * Many bug fixes for photo posts: better privacy detection, fix bug that attached comments to wrong posts.
+* Twitter:
+  * Handle all photos/videos attached to a tweet, not just the first.
+  * Stop fetching replies to @-mentions.
+* Atom:
+  * Render attachments.
+  * Add `xml:base`.
+* microformats2:
+  * Load and convert h-card.
+  * Drop support for h-as-* classes, both incoming and outgoing. They're deprecated in favor of https://indiewebcamp.com/post-type-discovery .
+  * Drop old deprecated `u-like` and `u-repost` properties.
+
 #### 1.2.0 - 2016-01-11
 * Improve original post discovery algorithm. ([bridgy #51](https://github.com/snarfed/bridgy/issues/51))
 * Flickr tweaks. ([bridgy #466](https://github.com/snarfed/bridgy/issues/466))
@@ -309,9 +328,3 @@ Changes
 
 #### 1.0 - 2015-07-10
 * Initial PyPi release.
-
-
-TODO
----
-* https kwarg to get_activities() etc that converts all http links to https
-* convert most of the per-site tests to testdata tests
