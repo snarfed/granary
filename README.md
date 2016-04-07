@@ -275,7 +275,8 @@ Changelog
   * Add `xml:base`.
 * microformats2:
   * Load and convert h-card.
-  * Drop support for h-as-* classes, both incoming and outgoing. They're deprecated in favor of https://indiewebcamp.com/post-type-discovery .
+  * Implement full post type discovery algorithm, using mf2util. https://indiewebcamp.com/post-type-discovery
+  * Drop support for h-as-* classes, both incoming and outgoing. They're deprecated in favor of post type discovery.
   * Drop old deprecated `u-like` and `u-repost` properties.
 * Misc bug fixes.
 * Set up Coveralls.
