@@ -259,6 +259,9 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
+#### 1.3.1 - 2016-04-07
+* Update [oauth-dropins](https://github.com/snarfed/oauth-dropins) dependency to >=1.3.
+
 #### 1.3.0 - 2016-04-06
 * Support posting videos! Currently in Facebook, Flickr, and Twitter.
 * Instagram:
