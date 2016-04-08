@@ -130,6 +130,11 @@ article content
 </blockquote>
 """, got)
 
+  def test_rels(self):
+    got = atom.activities_to_atom([], {}, rels={'foo': 'bar', 'baz': 'baj'})
+    self.assert_multiline_in('<link rel="foo" href="bar" />', got)
+    self.assert_multiline_in('<link rel="baz" href="baj" />', got)
+
   def test_xml_base(self):
     self.assert_multiline_in("""
 <?xml version="1.0" encoding="UTF-8"?>
@@ -164,9 +169,9 @@ article content
  <name>My Name</name>
 </author>
 
-<link href="http://my/site" rel="alternate" type="text/html" />
+<link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
-<link href="https://my.site/feed" rel="self" type="application/atom+xml" />
+<link rel="self" href="https://my.site/feed" type="application/atom+xml" />
 
 <entry>
 

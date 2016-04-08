@@ -97,9 +97,9 @@ ATOM_CONTENT = """\
  <name>My Name</name>
 </author>
 
-<link href="http://my/site" rel="alternate" type="text/html" />
+<link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
-<link href="http://localhost/url" rel="self" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url" type="application/atom+xml" />
 
 <entry>
 

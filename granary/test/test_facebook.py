@@ -804,9 +804,9 @@ ATOM = """\
  <name>Ryan Barrett</name>
 </author>
 
-<link href="https://snarfed.org" rel="alternate" type="text/html" />
+<link rel="alternate" href="https://snarfed.org" type="text/html" />
 <link rel="avatar" href="https://graph.facebook.com/v2.2/212038/picture?type=large" />
-<link href="%(request_url)s" rel="self" type="application/atom+xml" />
+<link rel="self" href="%(request_url)s" type="application/atom+xml" />
 
 <entry>
 

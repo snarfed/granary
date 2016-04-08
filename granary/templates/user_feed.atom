@@ -16,9 +16,12 @@
 <updated>{{ updated }}</updated>
 {% include "author.atom" %}
 
-<link href="{{ actor.url }}" rel="alternate" type="text/html" />
+<link rel="alternate" href="{{ actor.url }}" type="text/html" />
 <link rel="avatar" href="{{ actor.image.url }}" />
-<link href="{{ request_url }}" rel="self" type="application/atom+xml" />
+<link rel="self" href="{{ request_url }}" type="application/atom+xml" />
+{% for rel, url in rels.items() %}
+<link rel="{{ rel }}" href="{{ url }}" />
+{% endfor %}
 
 {% for activity in items %}
 <entry>
