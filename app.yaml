@@ -6,6 +6,10 @@ default_expiration: 1d
 
 runtime: python27
 
+automatic_scaling:
+  max_idle_instances: 1
+  max_concurrent_requests: 12
+
 libraries:
 - name: ssl
   version: latest
