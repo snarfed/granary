@@ -69,7 +69,7 @@ import source
 API_BASE = 'https://graph.facebook.com/v2.2/'
 API_COMMENTS = '%s/comments'
 API_COMMENTS_ALL = 'comments?filter=stream&ids=%s'
-API_COMMENT = '%s?fields=id,message,from,created_time,message_tags,parent'
+API_COMMENT = '%s?fields=id,message,from,created_time,message_tags,parent,attachment'
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
@@ -1197,6 +1197,15 @@ class Facebook(source.Source):
                                   parent_id.split('_')[-1],  # strip POSTID_ prefix
                                   post_author_id=post_author_id)
         })
+
+    att = comment.get('attachment')
+    if att and att.get('type') == 'photo' and not obj.get('image'):
+      obj['image'] = {'url': att.get('media', {}).get('image', {}).get('src')}
+      obj.setdefault('attachments', []).append({
+        'objectType': 'image',
+        'image': obj['image'],
+        'url': att.get('url'),
+      })
 
     return self.postprocess_object(obj)
 

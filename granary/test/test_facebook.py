@@ -123,6 +123,22 @@ COMMENTS = [{  # Facebook
   'privacy': {'value': ''},  # empty means public
   'actions': [{'name': 'See Original', 'link': 'http://ald.com/foobar'}]
 }]
+COMMENT_WITH_PHOTO = copy.deepcopy(COMMENTS[0])
+COMMENT_WITH_PHOTO['attachment'] = {
+  'type': 'photo',
+  'url': 'https://www.facebook.com/photo.php?fbid=10154842838994408&set=p.10154842838994408&type=3',
+  'media': {
+    'image': {
+      'src': 'https://scontent.xx.fbcdn.net/hphotos-xat1/v/t1.0-9/s720x720/12932713_10154842838994408_8485929365544529955_n.jpg?oh=d27b9a87ea83b77f00ef1f30a78d914d&oe=5775B834',
+      'height': 405,
+      'width': 720,
+    }
+  },
+  'target': {
+    'id': '10154842838994408',
+    'url': 'https://www.facebook.com/photo.php?fbid=10154842838994408&set=p.10154842838994408&type=3',
+  },
+}
 SHARE = {  # Facebook
   'id': '321_654',
   'from': {
@@ -329,6 +345,15 @@ COMMENT_OBJS = [  # ActivityStreams
     'upstreamDuplicates': ['http://ald.com/foobar'],
   },
 ]
+COMMENT_WITH_PHOTO_OBJ = copy.deepcopy(COMMENT_OBJS[0])
+COMMENT_WITH_PHOTO_OBJ.update({
+  'image': {'url': 'https://scontent.xx.fbcdn.net/hphotos-xat1/v/t1.0-9/s720x720/12932713_10154842838994408_8485929365544529955_n.jpg?oh=d27b9a87ea83b77f00ef1f30a78d914d&oe=5775B834'},
+  'attachments': [{
+    'objectType': 'image',
+    'image': {'url': 'https://scontent.xx.fbcdn.net/hphotos-xat1/v/t1.0-9/s720x720/12932713_10154842838994408_8485929365544529955_n.jpg?oh=d27b9a87ea83b77f00ef1f30a78d914d&oe=5775B834'},
+    'url': 'https://www.facebook.com/photo.php?fbid=10154842838994408&set=p.10154842838994408&type=3',
+  }],
+})
 LIKE_OBJS = [{  # ActivityStreams
     'id': tag_uri('10100176064482163_liked_by_100004'),
     'url': 'https://www.facebook.com/212038/posts/10100176064482163#liked-by-100004',
@@ -1409,14 +1434,14 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_comment(self):
     self.expect_urlopen(
-      '123_456?fields=id,message,from,created_time,message_tags,parent',
+      '123_456?fields=id,message,from,created_time,message_tags,parent,attachment',
       COMMENTS[0])
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456'))
 
   def test_get_comment_activity_author_id(self):
     self.expect_urlopen(
-      '123_456?fields=id,message,from,created_time,message_tags,parent',
+      '123_456?fields=id,message,from,created_time,message_tags,parent,attachment',
       COMMENTS[0])
     self.mox.ReplayAll()
 
@@ -1427,17 +1452,17 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_comment_400s_id_with_underscore(self):
     self.expect_urlopen(
-      '123_456_789?fields=id,message,from,created_time,message_tags,parent',
+      '123_456_789?fields=id,message,from,created_time,message_tags,parent,attachment',
       {}, status=400)
     self.expect_urlopen(
-      '789?fields=id,message,from,created_time,message_tags,parent',
+      '789?fields=id,message,from,created_time,message_tags,parent,attachment',
       COMMENTS[0])
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456_789'))
 
   def test_get_comment_400s_id_without_underscore(self):
     self.expect_urlopen(
-      '123?fields=id,message,from,created_time,message_tags,parent',
+      '123?fields=id,message,from,created_time,message_tags,parent,attachment',
       {}, status=400)
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.fb.get_comment, '123')
@@ -1638,6 +1663,10 @@ class FacebookTest(testutil.HandlerTest):
         'id': '34_56'
       },
     }))
+
+  def test_comment_with_photo_to_object(self):
+    self.assert_equals(COMMENT_WITH_PHOTO_OBJ,
+                       self.fb.comment_to_object(COMMENT_WITH_PHOTO))
 
   def test_share_to_object_empty(self):
     self.assert_equals({}, self.fb.share_to_object({}))
