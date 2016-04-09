@@ -69,6 +69,7 @@ import source
 API_BASE = 'https://graph.facebook.com/v2.2/'
 API_COMMENTS = '%s/comments'
 API_COMMENTS_ALL = 'comments?filter=stream&ids=%s'
+API_COMMENT = '%s?fields=id,message,from,created_time,message_tags,parent'
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
@@ -96,9 +97,6 @@ API_NEWS_PUBLISHES = 'me/news.publishes'
 
 # endpoint for uploading video. note the hostname and v2.3 instead of v2.2
 API_VIDEOS = 'https://graph-video.facebook.com/v2.3/me/videos'
-
-API_COMMENT_FIELDS = ('id', 'message', 'from', 'created_time', 'message_tags',
-                      'parent')
 
 MAX_IDS = 50  # for the ids query param
 
@@ -482,13 +480,12 @@ class Facebook(source.Source):
       activity_id: string activity id, optional
       activity_author_id: string activity author id, optional
     """
-    query = '?fields=%s' % ','.join(API_COMMENT_FIELDS)
     try:
-      resp = self.urlopen(comment_id + query)
+      resp = self.urlopen(API_COMMENT % comment_id)
     except urllib2.HTTPError, e:
       if e.code == 400 and '_' in comment_id:
         # Facebook may want us to ask for this without the other prefixed id(s)
-        resp = self.urlopen(comment_id.split('_')[-1] + query)
+        resp = self.urlopen(API_COMMENT % comment_id.split('_')[-1])
       else:
         raise
 
