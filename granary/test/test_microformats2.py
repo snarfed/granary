@@ -43,8 +43,8 @@ class Microformats2Test(testutil.HandlerTest):
         ('my val', 'my val', {'value': 'my val'}),
         ('my str', 'my str', 'my str'),
         (None, None, {})):
-      obj = microformats2.json_to_object({'properties': {'content': value,
-                                                         'summary': value}})
+      obj = microformats2.json_to_object({'properties': {'content': [value],
+                                                         'summary': [value]}})
       self.assertEquals(expected_content, obj.get('content'))
       self.assertEquals(expected_summary, obj.get('summary'))
 
