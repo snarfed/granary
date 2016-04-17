@@ -706,11 +706,11 @@ def tags_to_html(tags, classname):
                  for url, name in urls)
 
 
-def object_urls(tag):
+def object_urls(obj):
   """Returns an object's unique URLs, preserving order.
   """
   return util.uniquify(util.trim_nulls(
-    [tag.get('url')] + [u.get('value') for u in tag.get('urls', [])]))
+    [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))
 
 
 def author_display_name(hcard):
