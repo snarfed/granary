@@ -342,7 +342,10 @@ COMMENT_OBJS = [  # ActivityStreams
       'url': 'https://www.facebook.com/124561947600007',
     }],
     'to': [{'objectType':'group', 'alias':'@public'}],
-    'upstreamDuplicates': ['http://ald.com/foobar'],
+    # no upstreamDuplicates despite the fact that this comment has a See
+    # Original action, since we don't support that any more.
+    # https://github.com/snarfed/bridgy/issues/368
+    # https://github.com/snarfed/bridgy/issues/650
   },
 ]
 COMMENT_WITH_PHOTO_OBJ = copy.deepcopy(COMMENT_OBJS[0])
