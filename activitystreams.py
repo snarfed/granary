@@ -150,12 +150,17 @@ class Handler(webapp2.RequestHandler):
       self.response.out.write(json.dumps(response, indent=2))
     elif format == 'atom':
       self.response.headers['Content-Type'] = 'text/xml'
+      hub = self.request.get('hub')
       self.response.out.write(atom.activities_to_atom(
         activities, actor,
         host_url=url or self.request.host_url + '/',
-        request_url=self.request.path_url,
+        request_url=self.request.url,
         xml_base=util.base_url(url),
-        title=title))
+        title=title,
+        rels={'hub': hub} if hub else None))
+      self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
+      if hub:
+        self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
     elif format == 'xml':
       self.response.headers['Content-Type'] = 'text/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))

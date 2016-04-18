@@ -2,6 +2,7 @@
 """
 
 import json
+import xml.sax.saxutils
 
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
@@ -97,9 +98,9 @@ ATOM_CONTENT = """\
  <name>My Name</name>
 </author>
 
-<link href="http://my/site" rel="alternate" type="text/html" />
+<link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
-<link href="http://localhost/url" rel="self" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
@@ -176,3 +177,23 @@ class AppTest(testutil.HandlerTest):
       '/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_int)
     self.assert_multiline_in(ATOM_CONTENT, resp.body)
+
+  def test_hub(self):
+    self.expect_urlopen('http://my/posts.html', HTML % {
+      'body_class': '',
+      'extra': '',
+    })
+    self.mox.ReplayAll()
+
+    url = '/url?url=http://my/posts.html&input=html&output=atom&hub=http://a/hub'
+    resp = app.application.get_response(url)
+
+    self_url = 'http://localhost' + url
+    self.assert_equals(200, resp.status_int)
+    self.assert_multiline_in('<link rel="hub" href="http://a/hub" />', resp.body)
+    self.assert_multiline_in(
+      '<link rel="self" href="%s"' % xml.sax.saxutils.escape(self_url), resp.body)
+
+    headers = resp.headers.getall('Link')
+    self.assertIn('<http://a/hub>; rel="hub"', headers)
+    self.assertIn('<%s>; rel="self"' % self_url, headers)

@@ -15,17 +15,21 @@ class AtomTest(testutil.HandlerTest):
 
   def test_activities_to_atom(self):
     for test_module in test_facebook, test_instagram, test_twitter:
+      request_url = 'http://request/url?access_token=foo'
+      host_url = 'http://host/url'
+      base_url = 'http://base/url'
       self.assert_multiline_equals(
-        test_module.ATOM % {'request_url': 'http://request/url',
-                            'host_url': 'http://host/url',
-                            'base_url': 'http://base/url',
-                            },
+        test_module.ATOM % {
+          'request_url': request_url,
+          'host_url': host_url,
+          'base_url': base_url,
+        },
         atom.activities_to_atom(
           [copy.deepcopy(test_module.ACTIVITY)],
           test_module.ACTOR,
-          request_url='http://request/url?access_token=foo',
-          host_url='http://host/url',
-          xml_base='http://base/url',
+          request_url=request_url,
+          host_url=host_url,
+          xml_base=base_url
         ))
 
   def test_title(self):
@@ -130,6 +134,11 @@ article content
 </blockquote>
 """, got)
 
+  def test_rels(self):
+    got = atom.activities_to_atom([], {}, rels={'foo': 'bar', 'baz': 'baj'})
+    self.assert_multiline_in('<link rel="foo" href="bar" />', got)
+    self.assert_multiline_in('<link rel="baz" href="baj" />', got)
+
   def test_xml_base(self):
     self.assert_multiline_in("""
 <?xml version="1.0" encoding="UTF-8"?>
@@ -164,9 +173,9 @@ article content
  <name>My Name</name>
 </author>
 
-<link href="http://my/site" rel="alternate" type="text/html" />
+<link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
-<link href="https://my.site/feed" rel="self" type="application/atom+xml" />
+<link rel="self" href="https://my.site/feed" type="application/atom+xml" />
 
 <entry>
 

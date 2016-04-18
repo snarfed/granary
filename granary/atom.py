@@ -27,7 +27,7 @@ def _encode_ampersands(text):
 
 
 def activities_to_atom(activities, actor, title=None, request_url=None,
-                       host_url=None, xml_base=None):
+                       host_url=None, xml_base=None, rels=None):
   """Converts ActivityStreams activites to an Atom feed.
 
   Args:
@@ -38,13 +38,15 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     host_url: the home URL for this Atom feed, if any. Used in the top-level
       feed <id> element.
     xml_base: the base URL, if any. Used in the top-level xml:base attribute.
+    rels: rel links to include. dict mapping string rel value to string URL.
 
   Returns: unicode string with Atom XML
   """
   # Strip query params from URLs so that we don't include access tokens, etc
   host_url = (_remove_query_params(host_url) if host_url
               else 'https://github.com/snarfed/granary')
-  request_url = _remove_query_params(request_url) if request_url else host_url
+  if request_url is None:
+    request_url = host_url
 
   for a in activities:
     act_type = source.object_type(a)
@@ -103,6 +105,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     title=title or 'User feed for ' + source.Source.actor_name(actor),
     updated=activities[0]['object'].get('published', '') if activities else '',
     actor=Defaulter(**actor),
+    rels=rels or {},
     )
 
 

@@ -136,7 +136,7 @@ class HandlerTest(testutil.HandlerTest):
       self.assertEquals(200, resp.status_int)
       self.assert_multiline_equals(
         test_module.ATOM % {
-          'request_url': 'http://localhost/fake',
+          'request_url': 'http://localhost/fake?format=atom&amp;access_token=foo&amp;a=b',
           'host_url': 'http://fa.ke/',
           'base_url': 'http://fa.ke/',
         },

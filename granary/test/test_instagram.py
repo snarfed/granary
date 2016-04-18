@@ -374,9 +374,9 @@ ATOM = """\
  <name>Ryan B</name>
 </author>
 
-<link href="http://snarfed.org" rel="alternate" type="text/html" />
+<link rel="alternate" href="http://snarfed.org" type="text/html" />
 <link rel="avatar" href="http://picture/ryan" />
-<link href="%(request_url)s" rel="self" type="application/atom+xml" />
+<link rel="self" href="%(request_url)s" type="application/atom+xml" />
 
 <entry>
 
