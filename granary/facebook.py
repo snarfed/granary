@@ -141,9 +141,6 @@ RSVP_ENDPOINTS = {
   'rsvp-maybe': '%s/maybe',
 }
 
-# Values for post.action['name'] that indicate a link back to the original post
-SEE_ORIGINAL_ACTIONS=['see original']
-
 FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
 
 
@@ -1090,13 +1087,6 @@ class Facebook(source.Source):
 
       assert not tags
       obj['content'] = content
-
-    # "See Original" links
-    see_orig_links = filter(
-      None, (act.get('link') for act in post.get('actions',[])
-             if act.get('name', '').lower() in SEE_ORIGINAL_ACTIONS))
-    if see_orig_links:
-      obj.setdefault('upstreamDuplicates', []).extend(see_orig_links)
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
