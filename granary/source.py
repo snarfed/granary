@@ -60,6 +60,16 @@ def html_to_text(html):
     h.body_width = 0  # don't wrap lines
     h.ignore_links = True
     h.ignore_images = True
+
+    # hacky monkey patch fix for html2text escaping sequences that are
+    # significant in markdown syntax. the X\\Y replacement depends on knowledge
+    # of html2text's internals, specifically that it replaces RE_MD_*_MATCHER
+    # with \1\\\2. :(:(:(
+    html2text.config.RE_MD_DOT_MATCHER = \
+      html2text.config.RE_MD_PLUS_MATCHER = \
+      html2text.config.RE_MD_DASH_MATCHER = \
+        re.compile(r'(X)\\(Y)')
+
     return '\n'.join(
       # strip trailing whitespace that html2text adds to ends of some lines
       line.rstrip() for line in h.unescape(h.handle(html)).splitlines())

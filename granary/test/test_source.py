@@ -316,6 +316,13 @@ class SourceTest(testutil.TestCase):
                    '</video>Watching waves break.',
       }, strip_first_video_tag=True))
 
+    # Odd bug triggered by specific combination of leading <span> and trailing #
+    # https://github.com/snarfed/bridgy/issues/656
+    self.assertEqual('2016. #',
+                     cfc({'objectType': 'note'}, {'content': '<span /> 2016. #'}))
+    # double check our hacky fix. (programming is the worst!)
+    self.assertEqual('XY', cfc({'objectType': 'note'}, {'content': 'XY'}))
+
   def test_activity_changed(self):
     fb_post = test_facebook.ACTIVITY
     fb_post_edited = copy.deepcopy(fb_post)
