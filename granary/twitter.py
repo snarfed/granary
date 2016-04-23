@@ -29,6 +29,7 @@ import appengine_config
 
 from bs4 import BeautifulSoup
 import requests
+import brevity
 
 import source
 from oauth_dropins import twitter_auth
@@ -621,7 +622,7 @@ class Twitter(source.Source):
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
     include_url = obj.get('url') if include_link else None
-    content = self._truncate(content, include_url, has_media)
+    content = self._truncate(content, include_url, type, has_media)
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -728,87 +729,27 @@ class Twitter(source.Source):
 
     return source.creation_result(resp)
 
-  def _truncate(self, content, include_url, has_media):
+  def _truncate(self, content, include_url, type, has_media):
     """Shorten tweet content to fit within the 140 character limit.
 
     Args:
       content: string
       include_url: string
+      type: string
       has_media: boolean
 
     Return: string, the possibly shortened and ellipsized tweet text
     """
-    def rstrip_cruft(text):
-      return text.rstrip().rstrip(',;.')
-
-    def trunc_to_nearest_word(text, length):
-      # try stripping trailing whitespace first
-      text = rstrip_cruft(text)
-      if len(text) <= length:
-        return text
-      # walk backwards until we find a delimiter
-      for j in xrange(length, -1, -1):
-        if text[j] in ',.;: \t\r\n':
-          return rstrip_cruft(text[:j])
-
-    links, splits = util.tokenize_links(content, skip_bare_cc_tlds=True)
-    max = MAX_TWEET_LENGTH
-    if include_url:
-      max -= TCO_LENGTH + 3
+    if type == 'article':
+      format = brevity.FORMAT_ARTICLE
+    else:
+      format = brevity.FORMAT_NOTE
     if has_media:
-      # twitter includes a pic.twitter.com link (and space) for pictures or
-      # video - one link total, regardless of number of pictures - so account
-      # for that.
-      max -= TCO_LENGTH + 1
+      format += '+' + brevity.FORMAT_MEDIA
 
-    tokens = []
-    for i in xrange(len(links)):
-      if splits[i]:
-        tokens.append(('text', splits[i]))
-      tokens.append(('link', links[i]))
-    if splits[-1]:
-      tokens.append(('text', splits[-1]))
-
-    length = 0
-    shortened = []
-    truncated = False
-
-    for i, (toktype, token) in enumerate(tokens):
-      tokmax = max - length
-
-      # links are all or nothing, either add it or don't
-      if toktype == 'link':
-        # account for ellipsis if this is not the last token
-        if i < len(tokens) - 1:
-          tokmax -= 1
-        if TCO_LENGTH > tokmax:
-          truncated = True
-          break
-        length += TCO_LENGTH
-        shortened.append(token)
-      # truncate text to the nearest word
-      else:
-        # account for ellipsis if this is not the last token, or it
-        # will be truncated
-        if i < len(tokens) - 1 or len(token) > tokmax:
-          tokmax -= 1
-        if len(token) > tokmax:
-          token = trunc_to_nearest_word(token, tokmax)
-          if token:
-            length += len(token)
-            shortened.append(token)
-          truncated = True
-          break
-        else:
-          length += len(token)
-          shortened.append(token)
-
-    content = ''.join(shortened)
-    if truncated:
-      content = content.rstrip() + u'…'
-    if include_url:
-      content += ' (%s)' % include_url
-    return content
+    return brevity.shorten(
+      content, permalink=include_url, permashortlink=include_url,
+      target_length=MAX_TWEET_LENGTH, link_length=TCO_LENGTH, format=format)
 
   def upload_images(self, urls):
     """Uploads one or more images from web URLs.
