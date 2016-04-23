@@ -90,7 +90,7 @@ Click on a site to try the demo!
          src="/oauth_dropins/static/facebook.png" />
   <!-- https://developers.facebook.com/docs/reference/login/ -->
   <input name="scope" type="hidden"
-         value="user_status,user_posts,user_photos,user_events,read_stream">
+         value="user_status,user_posts,user_photos,user_events">
 </form></div>
 
 <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
@@ -158,6 +158,10 @@ Click on a site to try the demo!
 <label>/ @self / @app </label>
 {% else %}
 <label> me / </label>
+{% if site == 'facebook' %}
+<label> @self / </label>
+<input type="hidden" id="group_id" name="group_id" value="@self" />
+{% else %}
 <select id="group_id" name="group_id" onchange="update_search()">
   <option value="@all">@all</option>
   <option value="@self">@self</option>
@@ -166,6 +170,7 @@ Click on a site to try the demo!
     <option value="@search">@search</option>
   {% endif %}
 </select>
+{% endif %}
 <label>/ @app </label>
 <span id="activity_id_span">
   <label for="activity_id"> / </label>

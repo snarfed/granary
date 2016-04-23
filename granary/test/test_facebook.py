@@ -14,6 +14,10 @@ from oauth_dropins.webutil import util
 
 from granary import appengine_config
 from granary import facebook
+from granary.facebook import \
+  API_ALBUMS, API_BASE, API_COMMENTS_ALL, API_EVENT, API_EVENT_RSVPS, \
+  API_NEWS_PUBLISHES, API_PHOTOS_UPLOADED, API_PUBLISH_PHOTO, API_PUBLISH_POST, \
+  API_UPLOAD_VIDEO
 from granary import source
 
 
@@ -34,7 +38,7 @@ USER = {  # Facebook
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'displayName': 'Ryan Barrett',
-  'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
+  'image': {'url': 'https://graph.facebook.com/v2.6/212038/picture?type=large'},
   'id': tag_uri('snarfed.org'),
   'numeric_id': '212038',
   'updated': '2012-01-06T02:11:04+00:00',
@@ -85,7 +89,7 @@ PAGE_ACTOR = {  # ActivityStreams
            {'value': 'https://in.about.net'},
            {'value': 'http://in.description.gov'},
            ],
-  'image': {'url': 'https://graph.facebook.com/v2.2/946432998716566/picture?type=large'},
+  'image': {'url': 'https://graph.facebook.com/v2.6/946432998716566/picture?type=large'},
   'summary': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City. https://in.about.net',
   'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful http://in.description.gov event space...',
   # 'location': {},  # TODO
@@ -293,7 +297,7 @@ COMMENT_OBJS = [  # ActivityStreams
       'id': tag_uri('212038'),
       'numeric_id': '212038',
       'displayName': 'Ryan Barrett',
-      'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/212038/picture?type=large'},
       'url': 'https://www.facebook.com/212038',
       },
     'content': 'cc Sam G, Michael M',
@@ -329,7 +333,7 @@ COMMENT_OBJS = [  # ActivityStreams
       'id': tag_uri('513046677'),
       'numeric_id': '513046677',
       'displayName': 'Ron Ald',
-      'image': {'url': 'https://graph.facebook.com/v2.2/513046677/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/513046677/picture?type=large'},
       'url': 'https://www.facebook.com/513046677',
       },
     'content': 'Foo bar!',
@@ -369,7 +373,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'numeric_id': '100004',
       'displayName': 'Alice X',
       'url': 'https://www.facebook.com/100004',
-      'image': {'url': 'https://graph.facebook.com/v2.2/100004/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/100004/picture?type=large'},
       },
     }, {
     'id': tag_uri('10100176064482163_liked_by_683713'),
@@ -383,7 +387,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'numeric_id': '683713',
       'displayName': 'Bob Y',
       'url': 'https://www.facebook.com/683713',
-      'image': {'url': 'https://graph.facebook.com/v2.2/683713/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/683713/picture?type=large'},
       },
     },
   ]
@@ -406,7 +410,7 @@ SHARE_OBJ = {  # ActivityStreams
     'numeric_id': '321',
     'displayName': 'Alice X',
     'url': 'https://www.facebook.com/321',
-    'image': {'url': 'https://graph.facebook.com/v2.2/321/picture?type=large'},
+    'image': {'url': 'https://graph.facebook.com/v2.6/321/picture?type=large'},
   },
   'displayName': "sharer's message",
   'content': "sharer's message",
@@ -421,7 +425,7 @@ POST_OBJ = {  # ActivityStreams
     'id': tag_uri('212038'),
     'numeric_id': '212038',
     'displayName': 'Ryan Barrett',
-    'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
+    'image': {'url': 'https://graph.facebook.com/v2.6/212038/picture?type=large'},
     'url': 'https://www.facebook.com/212038',
     },
   'content': 'Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.',
@@ -519,7 +523,7 @@ PHOTO_OBJ = {  # ActivityStreams
         'id': tag_uri('333'),
         'numeric_id': '333',
         'displayName': 'Alice Alison',
-        'image': {'url': 'https://graph.facebook.com/v2.2/333/picture?type=large'},
+        'image': {'url': 'https://graph.facebook.com/v2.6/333/picture?type=large'},
         'url': 'https://www.facebook.com/333',
         },
       'content': 'woohoo',
@@ -542,7 +546,7 @@ PHOTO_OBJ = {  # ActivityStreams
       'numeric_id': '666',
       'displayName': 'Bob Bobertson',
       'url': 'https://www.facebook.com/666',
-      'image': {'url': 'https://graph.facebook.com/v2.2/666/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/666/picture?type=large'},
     },
   }],
 }
@@ -561,7 +565,7 @@ EVENT_OBJ = {  # ActivityStreams.
     'id': tag_uri('11500'),
     'numeric_id': '11500',
     'displayName': 'Aaron P',
-    'image': {'url': 'https://graph.facebook.com/v2.2/11500/picture?type=large'},
+    'image': {'url': 'https://graph.facebook.com/v2.6/11500/picture?type=large'},
     'url': 'https://www.facebook.com/11500',
     },
   'image': {'url': 'https://fbcdn-sphotos-a-a.akamaihd.net/abc/pic_n.jpg?xyz'},
@@ -581,7 +585,7 @@ EVENT_OBJ = {  # ActivityStreams.
           'numeric_id': '888',
           'displayName': 'Mr. Foo',
           'url': 'https://www.facebook.com/888',
-          'image': {'url': 'https://graph.facebook.com/v2.2/888/picture?type=large'},
+          'image': {'url': 'https://graph.facebook.com/v2.6/888/picture?type=large'},
           },
         'content': 'i hereby comment',
         'id': tag_uri('145304994_777'),
@@ -611,7 +615,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('11500'),
       'numeric_id': '11500',
       'url': 'https://www.facebook.com/11500',
-      'image': {'url': 'https://graph.facebook.com/v2.2/11500/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/11500/picture?type=large'},
       },
     }, {
     'id': tag_uri('145304994_rsvp_212038'),
@@ -624,7 +628,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('212038'),
       'numeric_id': '212038',
       'url': 'https://www.facebook.com/212038',
-      'image': {'url': 'https://graph.facebook.com/v2.2/212038/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/212038/picture?type=large'},
       },
     }, {
     'id': tag_uri('145304994_rsvp_987'),
@@ -637,7 +641,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('987'),
       'numeric_id': '987',
       'url': 'https://www.facebook.com/987',
-      'image': {'url': 'https://graph.facebook.com/v2.2/987/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/987/picture?type=large'},
       },
     }, {
     'id': tag_uri('145304994_rsvp_654'),
@@ -650,7 +654,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('11500'),
       'numeric_id': '11500',
       'url': 'https://www.facebook.com/11500',
-      'image': {'url': 'https://graph.facebook.com/v2.2/11500/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/11500/picture?type=large'},
       },
     'object': {
       'objectType': 'person',
@@ -658,7 +662,7 @@ RSVP_OBJS_WITH_ID = [{
       'id': tag_uri('654'),
       'numeric_id': '654',
       'url': 'https://www.facebook.com/654',
-      'image': {'url': 'https://graph.facebook.com/v2.2/654/picture?type=large'},
+      'image': {'url': 'https://graph.facebook.com/v2.6/654/picture?type=large'},
       },
     }]
 RSVP_OBJS = copy.deepcopy(RSVP_OBJS_WITH_ID)
@@ -800,7 +804,7 @@ ALBUM_OBJ = {  # ActivityStreams
     'id': tag_uri('1407574399567467'),
     'numeric_id': '1407574399567467',
     'displayName': u'Snoøpy Barrett',
-    'image': {'url': 'https://graph.facebook.com/v2.2/1407574399567467/picture?type=large'},
+    'image': {'url': 'https://graph.facebook.com/v2.6/1407574399567467/picture?type=large'},
     'url': 'https://www.facebook.com/1407574399567467',
     },
   'url': 'https://www.facebook.com/album.php?fbid=1520022318322674&id=1407574399567467&aid=1073741827',
@@ -824,7 +828,7 @@ ATOM = """\
 
 <subtitle>something about me http://in.description.com</subtitle>
 
-<logo>https://graph.facebook.com/v2.2/212038/picture?type=large</logo>
+<logo>https://graph.facebook.com/v2.6/212038/picture?type=large</logo>
 <updated>2012-03-04T18:20:37+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -833,7 +837,7 @@ ATOM = """\
 </author>
 
 <link rel="alternate" href="https://snarfed.org" type="text/html" />
-<link rel="avatar" href="https://graph.facebook.com/v2.2/212038/picture?type=large" />
+<link rel="avatar" href="https://graph.facebook.com/v2.6/212038/picture?type=large" />
 <link rel="self" href="%(request_url)s" type="application/atom+xml" />
 
 <entry>
@@ -922,7 +926,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def expect_urlopen(self, url, response=None, **kwargs):
     if not url.startswith('http'):
-      url = facebook.API_BASE + url
+      url = API_BASE + url
     return super(FacebookTest, self).expect_urlopen(
       url, response=json.dumps(response), **kwargs)
 
@@ -941,7 +945,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def replay_batch(self):
     self.expect_urlopen(
-      facebook.API_BASE,
+      API_BASE,
       data='batch=' + json.dumps(batch, separators=(',', ':')),
       response=batch_responses)
     self.mox.ReplayAll()
@@ -991,9 +995,9 @@ class FacebookTest(testutil.HandlerTest):
                           {'id': '1_2', 'message': 'foo'},
                           {'id': '3_4', 'message': 'bar'},
                         ]})
-    self.expect_urlopen('sharedposts?ids=2,4', {
-        '2': {'data': [SHARE, SHARE]},
-        '4': {'data': []},
+    self.expect_urlopen('sharedposts?ids=1_2,3_4', {
+        '1_2': {'data': [SHARE, SHARE]},
+        '3_4': {'data': []},
       })
     self.mox.ReplayAll()
 
@@ -1004,14 +1008,12 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_home_returns_bool(self):
     self.expect_urlopen('me/home?offset=0', True)
-    # self.expect_urlopen('me/photos/uploaded', [])
-    # self.expect_urlopen('me/events', {})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities())
 
   def test_get_activities_fetch_shares_returns_list(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
-    self.expect_urlopen('sharedposts?ids=2', ['asdf'])
+    self.expect_urlopen('sharedposts?ids=1_2', ['asdf'])
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
@@ -1020,7 +1022,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_fetch_shares_returns_boolean(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
-    self.expect_urlopen('sharedposts?ids=2', {'2': False})
+    self.expect_urlopen('sharedposts?ids=1_2', {'1_2': False})
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
@@ -1029,16 +1031,16 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_empty(self):
     self.expect_urlopen('me/feed?offset=0', {})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_photo_and_event(self):
     self.expect_urlopen('me/feed?offset=0', {'data': [PHOTO_POST]})
-    self.expect_urlopen('me/photos/uploaded', {'data': [PHOTO]})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
     self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {'data': RSVPS})
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS})
 
     self.mox.ReplayAll()
     self.assert_equals(
@@ -1059,15 +1061,15 @@ class FacebookTest(testutil.HandlerTest):
       {'id': '7', 'object_id': '77',   # ditto, and photo has no album
        'privacy': {'value': 'CUSTOM'}},
     ]})
-    self.expect_urlopen('me/photos/uploaded', {'data': [
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {'data': [
       {'id': '11'},
-      {'id': '22', 'album': '222'},  # no matching post
-      {'id': '33', 'album': '333'},  # no matching album
-      {'id': '44', 'album': '444'},  # no matching post or album
-      {'id': '66', 'album': '666'},  # consolidated posts...
+      {'id': '22', 'album': {'id': '222'}},  # no matching post
+      {'id': '33', 'album': {'id': '333'}},  # no matching album
+      {'id': '44', 'album': {'id': '444'}},  # no matching post or album
+      {'id': '66', 'album': {'id': '666'}},  # consolidated posts...
       {'id': '77'},
     ]})
-    self.expect_urlopen('me/albums', {'data': [
+    self.expect_urlopen(API_ALBUMS % 'me', {'data': [
       {'id': '222', 'privacy': 'friends'},   # no post
       {'id': '666', 'privacy': 'everyone'},  # consolidated post
     ]})
@@ -1086,16 +1088,16 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_photos_returns_list(self):
     self.expect_urlopen('me/feed?offset=0', {})
-    self.expect_urlopen('me/photos/uploaded', [])
+    self.expect_urlopen(API_PHOTOS_UPLOADED, [])
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_owned_event_rsvps(self):
     self.expect_urlopen('me/feed?offset=0', {})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {'data': RSVPS})
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS})
 
     self.mox.ReplayAll()
     self.assert_equals([EVENT_ACTIVITY_WITH_ATTENDEES], self.fb.get_activities(
@@ -1103,9 +1105,9 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_unowned_event_no_rsvps(self):
     self.expect_urlopen('me/feed?offset=0', {})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
 
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
@@ -1113,9 +1115,9 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_event_400s(self):
     self.expect_urlopen('me/feed?offset=0', {})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT, status=400)
+    self.expect_urlopen(API_EVENT % '145304994', EVENT, status=400)
 
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
@@ -1123,10 +1125,10 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_event_rsvps_400s(self):
     self.expect_urlopen('me/feed?offset=0', {})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {'data': RSVPS},
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS},
                         status=400)
 
     self.mox.ReplayAll()
@@ -1135,7 +1137,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_events_returns_list(self):
     self.expect_urlopen('me/feed?offset=0', {})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', [])
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
@@ -1230,7 +1232,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_sharedposts_400(self):
     self.expect_urlopen('me/home?offset=0',
                         {'data': [{'id': '1_2'}, {'id': '3_4'}]})
-    self.expect_urlopen('sharedposts?ids=2,4', status=400)
+    self.expect_urlopen('sharedposts?ids=1_2,3_4', status=400)
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
@@ -1244,11 +1246,9 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen('sharedposts?ids=1,2', {'1': {'data': [{'id': '222'}]}})
     self.expect_urlopen('sharedposts?ids=3,4', {'2': {'data': [{'id': '444'}]}})
     self.expect_urlopen('sharedposts?ids=5', {})
-    self.expect_urlopen('comments?filter=stream&ids=1,2',
-                        {'1': {'data': [{'id': '111'}]}})
-    self.expect_urlopen('comments?filter=stream&ids=3,4',
-                        {'1': {'data': [{'id': '333'}]}})
-    self.expect_urlopen('comments?filter=stream&ids=5', {})
+    self.expect_urlopen(API_COMMENTS_ALL % '1,2', {'1': {'data': [{'id': '111'}]}})
+    self.expect_urlopen(API_COMMENTS_ALL % '3,4', {'1': {'data': [{'id': '333'}]}})
+    self.expect_urlopen(API_COMMENTS_ALL % '5', {})
     self.mox.ReplayAll()
 
     try:
@@ -1268,27 +1268,27 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(['444'], [t['fb_id'] for t in obj1['tags']])
 
   def test_get_event(self):
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {'data': RSVPS})
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS})
     self.mox.ReplayAll()
     self.assert_equals(EVENT_ACTIVITY_WITH_ATTENDEES,
                        self.fb.get_event('145304994'))
 
   def test_get_event_user_id_not_owner(self):
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
     self.mox.ReplayAll()
     got = self.fb.get_event('145304994', owner_id='xyz')
     self.assert_equals(None, got)
 
   def test_get_event_user_id_owner(self):
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {})
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {})
     self.mox.ReplayAll()
     got = self.fb.get_event('145304994', owner_id=EVENT['owner']['id'])
     self.assert_equals(EVENT_ACTIVITY, got)
 
   def test_get_event_returns_list(self):
-    self.expect_urlopen(facebook.API_EVENT % '145304994', ['xyz'])
+    self.expect_urlopen(API_EVENT % '145304994', ['xyz'])
     self.mox.ReplayAll()
     self.assertIsNone(self.fb.get_event('145304994'))
 
@@ -1304,7 +1304,7 @@ class FacebookTest(testutil.HandlerTest):
     activity = self.fb.post_to_activity(post)
 
     self.expect_urlopen('me/feed?offset=0', {'data': [post]})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.mox.ReplayAll()
     self.assert_equals([activity], self.fb.get_activities(group_id=source.SELF))
 
@@ -1315,7 +1315,7 @@ class FacebookTest(testutil.HandlerTest):
     post3['id'] = '333'
     self.expect_urlopen('me/home?offset=0',
                         {'data': [POST, post2, post3]})
-    self.expect_urlopen('comments?filter=stream&ids=10100176064482163,222,333',
+    self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163,222,333',
       {'222': {'data': [{'id': '777', 'message': 'foo'},
                         {'id': '888', 'message': 'bar'}]},
        '333': {'data': [{'id': '999', 'message': 'baz'},
@@ -1333,7 +1333,7 @@ class FacebookTest(testutil.HandlerTest):
     post = copy.deepcopy(POST)
     del post['comments']
     self.expect_urlopen('me/home?offset=0', {'data': [post]})
-    self.expect_urlopen('comments?filter=stream&ids=10100176064482163', status=400)
+    self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163', status=400)
     self.mox.ReplayAll()
 
     activity = copy.deepcopy(ACTIVITY)
@@ -1342,7 +1342,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_skips_extras_if_no_posts(self):
     self.expect_urlopen('me/feed?offset=0', {'data': []})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
@@ -1351,14 +1351,14 @@ class FacebookTest(testutil.HandlerTest):
     # first call returns just notes
     self.expect_urlopen('me/feed?offset=0',
                         {'data': [FB_NOTE, FB_CREATED_NOTE]})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
 
     # second call returns notes and link
     self.expect_urlopen('me/feed?offset=0',
                         {'data': [FB_NOTE, FB_CREATED_NOTE, FB_LINK]})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('sharedposts?ids=555', [])
-    self.expect_urlopen('comments?filter=stream&ids=555', {})
+    self.expect_urlopen(API_COMMENTS_ALL % '555', {})
 
     self.mox.ReplayAll()
 
@@ -1369,14 +1369,14 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_matches_extras_with_correct_activity(self):
     self.expect_urlopen('me/feed?offset=0', {'data': [POST]})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(facebook.API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(facebook.API_EVENT_RSVPS % '145304994', {})
-    self.expect_urlopen('sharedposts?ids=10100176064482163',
-                        {'10100176064482163': {'data': [SHARE]}})
-    self.expect_urlopen('comments?filter=stream&ids=10100176064482163',
-                        {'10100176064482163': {'data': COMMENTS}})
+    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {})
+    self.expect_urlopen('sharedposts?ids=212038_10100176064482163',
+                        {'212038_10100176064482163': {'data': [SHARE]}})
+    self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163',
+                        {'212038_10100176064482163': {'data': COMMENTS}})
 
     self.mox.ReplayAll()
     activity = copy.deepcopy(ACTIVITY)
@@ -1386,10 +1386,10 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_fetch_news(self):
     self.expect_urlopen('me/feed?offset=0', {'data': [POST]})
-    self.expect_urlopen('me/news.publishes', {'data': [FB_NEWS_PUBLISH]})
-    self.expect_urlopen('me/photos/uploaded', {})
+    self.expect_urlopen(API_NEWS_PUBLISHES, {'data': [FB_NEWS_PUBLISH]})
+    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     # should only fetch sharedposts for POST, not FB_NEWS_PUBLISH
-    self.expect_urlopen('sharedposts?ids=10100176064482163', {})
+    self.expect_urlopen('sharedposts?ids=212038_10100176064482163', {})
 
     self.mox.ReplayAll()
     got = self.fb.get_activities(group_id=source.SELF, fetch_news=True,
@@ -1515,7 +1515,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(None, self.fb.get_rsvp('123', '000', '456'))
 
   def test_get_albums_empty(self):
-    self.expect_urlopen('000/albums', {'data': []})
+    self.expect_urlopen(API_ALBUMS % '000', {'data': []})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_albums(user_id='000'))
 
@@ -1528,7 +1528,7 @@ class FacebookTest(testutil.HandlerTest):
       'fb_id': '2',
     })
 
-    self.expect_urlopen('me/albums', {'data': [ALBUM, album_2]})
+    self.expect_urlopen(API_ALBUMS % 'me', {'data': [ALBUM, album_2]})
     self.mox.ReplayAll()
     self.assert_equals([ALBUM_OBJ, album_2_obj], self.fb.get_albums())
 
@@ -1757,7 +1757,7 @@ http://b http://c""",
   def test_user_to_actor_minimal(self):
     actor = self.fb.user_to_actor({'id': '212038'})
     self.assert_equals(tag_uri('212038'), actor['id'])
-    self.assert_equals('https://graph.facebook.com/v2.2/212038/picture?type=large',
+    self.assert_equals('https://graph.facebook.com/v2.6/212038/picture?type=large',
                        actor['image']['url'])
 
   def test_user_to_actor_empty(self):
@@ -1964,7 +1964,7 @@ http://b http://c""",
     self.assert_equals(ALBUM_OBJ, self.fb.album_to_object(ALBUM))
 
   def test_create_post(self):
-    self.expect_urlopen(facebook.API_FEED, {'id': '123_456'}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.urlencode({
         'message': 'my msg',
         'tags': '234,345,456',
       }))
@@ -1987,7 +1987,7 @@ http://b http://c""",
     self.assertEquals('my msg<br /><br /><em>with <a href="https://www.facebook.com/234">Friend 1</a>, <a href="https://www.facebook.com/345">Friend 2</a>, <a href="https://www.facebook.com/456">Friend 3</a></em>', preview.content)
 
   def test_create_post_include_link(self):
-    self.expect_urlopen(facebook.API_FEED, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.urlencode({
       'message': 'my content\n\n(Originally published at: http://obj.co)',
     }))
     self.mox.ReplayAll()
@@ -2009,7 +2009,7 @@ http://b http://c""",
       preview.content)
 
   def test_create_post_with_title(self):
-    self.expect_urlopen(facebook.API_FEED, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.urlencode({
       'message': 'my title\n\nmy content\n\n(Originally published at: http://obj.co)',
     }))
     self.mox.ReplayAll()
@@ -2031,7 +2031,7 @@ http://b http://c""",
       preview.content)
 
   def test_create_post_with_no_title(self):
-    self.expect_urlopen(facebook.API_FEED, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.urlencode({
       'message': 'my\ncontent\n\n(Originally published at: http://obj.co)',
     }))
     self.mox.ReplayAll()
@@ -2207,7 +2207,7 @@ http://b http://c""",
 <span class="verb">like</span> <a href="https://www.facebook.com/foo/posts/135?reply_comment_id=79">this comment</a>:
 <br /><br />
 <a class="h-card" href="https://www.facebook.com/212038">
-  <img class="profile u-photo" src="https://graph.facebook.com/v2.2/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
+  <img class="profile u-photo" src="https://graph.facebook.com/v2.6/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
 cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp(self):
@@ -2275,8 +2275,8 @@ cc Sam G, Michael M<br />""", preview.description)
                       preview.content)
 
     # test create
-    self.expect_urlopen('me/albums', {'data': []})
-    self.expect_urlopen(facebook.API_PHOTOS, {'id': '123_456'},
+    self.expect_urlopen(API_ALBUMS % 'me', {'data': []})
+    self.expect_urlopen(API_PUBLISH_PHOTO, {'id': '123_456'},
                         data='url=http%3A%2F%2Fmy%2Fpicture&message=my+caption')
     self.mox.ReplayAll()
     self.assert_equals({
@@ -2291,7 +2291,7 @@ cc Sam G, Michael M<br />""", preview.description)
       'image': [{'url': 'http://my/picture'}],
     }
 
-    self.expect_urlopen('me/albums', {'data': [
+    self.expect_urlopen(API_ALBUMS % 'me', {'data': [
       {'id': '1', 'name': 'foo bar'},
       {'id': '2', 'type': 'wall'},
     ]})
@@ -2323,9 +2323,9 @@ cc Sam G, Michael M<br />""", preview.description)
       preview.content)
 
     # test create
-    self.expect_urlopen('me/albums', {'data': []})
+    self.expect_urlopen(API_ALBUMS % 'me', {'data': []})
     self.expect_urlopen(
-      facebook.API_PHOTOS, {'id': '123_456'}, data=urllib.urlencode({
+      API_PUBLISH_PHOTO, {'id': '123_456'}, data=urllib.urlencode({
         'url': 'http://my/picture',
         'message': '',
         'tags': json.dumps([{'tag_uid': '234'}, {'tag_uid': '345'}]),
@@ -2353,7 +2353,7 @@ cc Sam G, Michael M<br />""", preview.description)
                       preview.content)
 
     # test create
-    self.expect_urlopen(facebook.API_VIDEOS, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_UPLOAD_VIDEO, {}, data=urllib.urlencode({
       'file_url': 'http://my/video', 'description': 'my\ncaption'}))
     self.mox.ReplayAll()
     self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
@@ -2413,14 +2413,14 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_resolve_object_id(self):
     for i in range(3):
-      self.expect_urlopen('111_222', {'id': '0', 'object_id': '333'})
+      self.expect_urlopen('111_222?fields=object_id', {'id': '0', 'object_id': '333'})
     self.mox.ReplayAll()
 
     for id in '222', '222:0', '111_222_9':
       self.assertEqual('333', self.fb.resolve_object_id(111, id))
 
   def test_resolve_object_id_fetch_400s(self):
-    self.expect_urlopen('111_222', {}, status=400)
+    self.expect_urlopen('111_222?fields=object_id', {}, status=400)
     self.mox.ReplayAll()
     self.assertIsNone(self.fb.resolve_object_id('111', '222'))
 

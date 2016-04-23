@@ -259,6 +259,11 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
+#### 1.4 - unreleased
+* Twitter:
+  * Switch create() to use brevity for counting characters. https://github.com/kylewm/brevity
+* Fix bug in create() that occasionally incorrectly escaped ., +, and - characters.
+
 #### 1.3.1 - 2016-04-07
 * Update [oauth-dropins](https://github.com/snarfed/oauth-dropins) dependency to >=1.3.
 

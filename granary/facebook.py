@@ -16,7 +16,7 @@ FQL's stream table, or any other Facebook API, full stop. :(
 Random details:
 
 - My access tokens have the read_stream permission.
-  https://developers.facebook.com/docs/facebook-login/permissions/v2.2#reference-read_stream
+  https://developers.facebook.com/docs/facebook-login/permissions#reference-read_stream
 
 - Lots of FUD on Stack Overflow, etc. that permissions might be the root cause.
   Non-public posts, photos, etc from your friends may not be exposed to an app
@@ -37,12 +37,6 @@ Random details:
 
 See the fql_stream_to_post() method below for code I used to experiment with the
 FQL stream table.
-
-TODO:
-- friends' new friendships, ie "X is now friends with Y." Not currently
-available in /me/home. http://stackoverflow.com/questions/4358026
-- when someone likes multiple things (og.likes type), only the first is included
-in the data.objects array.
 """
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
@@ -62,41 +56,50 @@ import appengine_config
 from oauth_dropins.webutil import util
 import source
 
-# WARNING: when we upgrade to 2.4, we'll need to start including the fields
-# query param for most or all requests. :/
+# Since API v2.4, we need to explicitly ask for the fields we want from most API
+# endpoints with ?fields=...
 # https://developers.facebook.com/docs/apps/changelog#v2_4_changes
 #   (see the Declarative Fields section)
-API_BASE = 'https://graph.facebook.com/v2.2/'
-API_COMMENTS = '%s/comments'
-API_COMMENTS_ALL = 'comments?filter=stream&ids=%s'
-API_COMMENT = '%s?fields=id,message,from,created_time,message_tags,parent,attachment'
+API_BASE = 'https://graph.facebook.com/v2.6/'
+API_COMMENTS_FIELDS = 'id,message,from,created_time,message_tags,parent,attachment'
+API_COMMENTS_ALL = 'comments?filter=stream&ids=%s&fields=' + API_COMMENTS_FIELDS
+API_COMMENT = '%s?fields=' + API_COMMENTS_FIELDS
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
-API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
-# WARNING: this edge is deprecated in API v2.4 and will stop working in 2017.
-# https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
-API_EVENT_RSVPS = '%s/invited'
-API_FEED = 'me/feed'
+API_EVENT = '%s?fields=comments,description,end_time,id,name,owner,picture,place,start_time,timezone,updated_time'
+API_EVENT_ATTENDING = '%s/attending'
+API_EVENT_MAYBE = '%s/maybe'
+API_EVENT_INTERESTED = '%s/interested'
+API_EVENT_DECLINED = '%s/declined'
+API_EVENT_RSVPS = '%s/noreply'
+# /user/home requires the read_stream permission, which you probably don't have.
+# details in the file docstring.
+# https://developers.facebook.com/docs/graph-api/reference/v2.2/user/home
+# https://github.com/snarfed/granary/issues/26
 API_HOME = '%s/home?offset=%d'
-API_LIKES = '%s/likes'
-API_NOTIFICATION = '%s/notifications'
-API_PHOTOS = 'me/photos'
-API_PHOTOS_UPLOADED = 'me/photos/uploaded'
-API_ALBUMS = '%s/albums'
-API_ALBUM_PHOTOS = '%s/photos'
-API_POST_OBJECT = '%s_%s'  # USERID_POSTID
-API_RSVP = '%s/invited/%s'
+API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,created_time,from,images,link,name,name_tags,page_story_id,picture,privacy,object_id,updated_time'
+API_ALBUMS = '%s/albums?fields=id,count,created_time,from,link,name,privacy,type,updated_time'
+API_POST_OBJECT = '%s_%s?fields=object_id'  # USERID_POSTID
 API_SELF_POSTS = '%s/feed?offset=%d'
 API_SHARES = 'sharedposts?ids=%s'
-# returns yes and maybe
-API_USER_RSVPS = 'me/events'
-API_USER_RSVPS_DECLINED = 'me/events/declined'
-API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
+# XXX TODO need to switch get_rsvp to use these
+API_USER_EVENTS = 'me/events'  # includes yes and maybe
+API_USER_EVENTS_DECLINED = 'me/events?type=declined'
+API_USER_EVENTS_NOT_REPLIED = 'me/events?type=not_replied'
+# https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/
 API_NEWS_PUBLISHES = 'me/news.publishes'
 
-# endpoint for uploading video. note the hostname and v2.3 instead of v2.2
-API_VIDEOS = 'https://graph-video.facebook.com/v2.3/me/videos'
+API_PUBLISH_POST = 'me/feed'
+API_PUBLISH_COMMENT = '%s/comments'
+API_PUBLISH_LIKE = '%s/likes'
+API_PUBLISH_PHOTO = 'me/photos'
+API_PUBLISH_ALBUM_PHOTO = '%s/photos'
+API_NOTIFICATION = '%s/notifications'
+
+# endpoint for uploading video. note the graph-video subdomain.
+# https://developers.facebook.com/docs/graph-api/video-uploads
+API_UPLOAD_VIDEO = 'https://graph-video.facebook.com/v2.6/me/videos'
 
 MAX_IDS = 50  # for the ids query param
 
@@ -135,10 +138,11 @@ RSVP_VERBS = {
   'unsure': 'rsvp-maybe',
   'not_replied': 'invite',
   }
-RSVP_ENDPOINTS = {
-  'rsvp-yes': '%s/attending',
-  'rsvp-no': '%s/declined',
-  'rsvp-maybe': '%s/maybe',
+RSVP_PUBLISH_ENDPOINTS = {
+  'rsvp-yes': API_EVENT_ATTENDING,
+  'rsvp-no': API_EVENT_DECLINED,
+  'rsvp-maybe': API_EVENT_MAYBE,
+  'rsvp-interested': API_EVENT_INTERESTED,
 }
 
 FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
@@ -304,7 +308,7 @@ class Facebook(source.Source):
     for post in posts:
       activity = self.post_to_activity(post)
       activities.append(activity)
-      id = post.get('id', '').split('_', 1)[-1]  # strip any USERID_ prefix
+      id = post.get('id')
       if id:
         id_to_activity[id] = activity
 
@@ -380,7 +384,7 @@ class Facebook(source.Source):
 
     photos = self.urlopen(API_PHOTOS_UPLOADED, _as=list)
     for photo in photos:
-      album_id = photo.get('album')
+      album_id = photo.get('album', {}).get('id')
       post = posts_by_obj_id.pop(photo.get('id'), {})
       if post.get('id'):
         photo.setdefault('object_for_ids', []).append(post['id'])
@@ -424,7 +428,7 @@ class Facebook(source.Source):
     https://developers.facebook.com/docs/graph-api/reference/user/events/
     https://developers.facebook.com/docs/graph-api/reference/event#edges
 
-    TODO: also fetch and use API_USER_RSVPS_DECLINED
+    TODO: also fetch and use API_USER_EVENTS_DECLINED, API_USER_EVENTS_NOT_REPLIED
 
     Args:
       owner_id: string. if provided, only returns events owned by this user
@@ -432,12 +436,12 @@ class Facebook(source.Source):
     Returns:
       list of ActivityStreams event objects
     """
-    rsvps = self.urlopen(API_USER_RSVPS, _as=list)
+    events = self.urlopen(API_USER_EVENTS, _as=list)
 
-    # have to re-fetch the individual event objects because the user rsvps
+    # have to re-fetch the individual event objects because the user events
     # response doesn't include the event description.
-    return util.trim_nulls([self.get_event(rsvp['id'], owner_id=owner_id)
-                            for rsvp in rsvps if rsvp.get('id')])
+    return util.trim_nulls([self.get_event(event['id'], owner_id=owner_id)
+                            for event in events if event.get('id')])
 
   def get_event(self, event_id, owner_id=None):
     """Returns a Facebook event post.
@@ -646,7 +650,8 @@ class Facebook(source.Source):
       else:
         if image_url:
           msg_data['attachment_url'] = image_url
-        resp = self.urlopen(API_COMMENTS % base_id, data=urllib.urlencode(msg_data))
+        resp = self.urlopen(API_PUBLISH_COMMENT % base_id,
+                            data=urllib.urlencode(msg_data))
         url = self.comment_url(base_id, resp['id'],
                                post_author_id=base_obj.get('author', {}).get('id'))
         resp.update({'url': url, 'type': 'comment'})
@@ -664,7 +669,7 @@ class Facebook(source.Source):
         return source.creation_result(
           abort=True,
           error_plain="Sorry, the Facebook API doesn't support liking pages.",
-          error_html='Sorry, <a href="https://developers.facebook.com/docs/graph-api/reference/v2.2/user/likes#publish">'
+          error_html='Sorry, <a href="https://developers.facebook.com/docs/graph-api/reference/user/likes#Creating">'
           "the Facebook API doesn't support liking pages</a>.")
 
       if preview:
@@ -682,11 +687,11 @@ class Facebook(source.Source):
         return source.creation_result(description=desc)
 
       else:
-        resp = self.urlopen(API_LIKES % base_id, data='')
+        resp = self.urlopen(API_PUBLISH_LIKE % base_id, data='')
         assert resp.get('success'), resp
         resp = {'type': 'like'}
 
-    elif type == 'activity' and verb in RSVP_ENDPOINTS:
+    elif type == 'activity' and verb in RSVP_PUBLISH_ENDPOINTS:
       if not base_url:
         return source.creation_result(
           abort=True,
@@ -703,7 +708,7 @@ class Facebook(source.Source):
                 (verb[5:], base_url))
         return source.creation_result(description=desc)
       else:
-        resp = self.urlopen(RSVP_ENDPOINTS[verb] % base_id, data='')
+        resp = self.urlopen(RSVP_PUBLISH_ENDPOINTS[verb] % base_id, data='')
         assert resp.get('success'), resp
         resp = {'type': 'rsvp'}
 
@@ -713,13 +718,13 @@ class Facebook(source.Source):
                                       description='<span class="verb">post</span>:')
       else:
         if video_url:
-          api_call = API_VIDEOS
+          api_call = API_UPLOAD_VIDEO
           msg_data.update({
             'file_url': video_url,
             'description': msg_data.pop('message', ''),
           })
         elif image_url:
-          api_call = API_PHOTOS
+          api_call = API_PUBLISH_PHOTO
           msg_data['url'] = image_url
           # use Timeline Photos album, if we can find it, since it keeps photo
           # posts separate instead of consolidating them into a single "X added
@@ -728,17 +733,17 @@ class Facebook(source.Source):
           for album in self.urlopen(API_ALBUMS % 'me', _as=list):
             id = album.get('id')
             if id and album.get('type') == 'wall':
-              api_call = API_ALBUM_PHOTOS % id
+              api_call = API_PUBLISH_ALBUM_PHOTO % id
               break
           if people:
             # tags is JSON list of dicts with tag_uid fields
-            # https://developers.facebook.com/docs/graph-api/reference/v2.2/user/photos#Creating
+            # https://developers.facebook.com/docs/graph-api/reference/user/photos#Creating
             msg_data['tags'] = json.dumps([{'tag_uid': tag['id']} for tag in people])
         else:
-          api_call = API_FEED
+          api_call = API_PUBLISH_POST
           if people:
             # tags is comma-separated user id string
-            # https://developers.facebook.com/docs/graph-api/reference/v2.2/user/feed#pubfields
+            # https://developers.facebook.com/docs/graph-api/reference/user/feed#pubfields
             msg_data['tags'] = ','.join(tag['id'] for tag in people)
 
         resp = self.urlopen(api_call, data=urllib.urlencode(msg_data))
@@ -1250,7 +1255,7 @@ class Facebook(source.Source):
     # facebook implements this as a 302 redirect
     actor = {
       # FB only returns the type field if you fetch the object with ?metadata=1
-      # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.2#introspection
+      # https://developers.facebook.com/docs/graph-api/using-graph-api#introspection
       'objectType': 'page' if user.get('type') == 'page' else 'person',
       'displayName': user.get('name') or username,
       'id': self.tag_uri(handle),
@@ -1266,7 +1271,7 @@ class Facebook(source.Source):
       actor.update({
         'numeric_id': id,
         'image': {
-          'url': 'https://graph.facebook.com/v2.2/%s/picture?type=large' % id,
+          'url': '%s%s/picture?type=large' % (API_BASE, id),
         },
       })
 
@@ -1394,10 +1399,10 @@ class Facebook(source.Source):
     """Converts a Facebook `privacy` field to an ActivityStreams `to` field.
 
     privacy is sometimes an object:
-    https://developers.facebook.com/docs/graph-api/reference/v2.2/post#fields
+    https://developers.facebook.com/docs/graph-api/reference/post#fields
 
     ...and other times a string:
-    https://developers.facebook.com/docs/graph-api/reference/v2.2/album/#readfields
+    https://developers.facebook.com/docs/graph-api/reference/album/#readfields
 
     Args:
       obj: dict, Facebook object (post, album, comment, etc)
