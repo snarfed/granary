@@ -76,12 +76,13 @@ class Flickr(source.Source):
     return flickr_auth.upload(
       params, file, self.access_token_key, self.access_token_secret)
 
-  def create(self, obj, include_link=False, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK,
+             ignore_formatting=False):
     """Creates a photo, comment, or favorite.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
       ignore_formatting: boolean
 
     Returns:
@@ -93,12 +94,14 @@ class Flickr(source.Source):
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def preview_create(self, obj, include_link=False, ignore_formatting=False):
+  def preview_create(self, obj, include_link=source.OMIT_LINK,
+                     ignore_formatting=False):
     """Preview creation of a photo, comment, or favorite.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult whose description will be an HTML summary of
@@ -108,7 +111,8 @@ class Flickr(source.Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview, include_link=False, ignore_formatting=False):
+  def _create(self, obj, preview, include_link=source.OMIT_LINK,
+              ignore_formatting=False):
     """Creates or previews creating for the previous two methods.
 
     https://www.flickr.com/services/api/upload.api.html
@@ -119,7 +123,8 @@ class Flickr(source.Source):
     Args:
       obj: ActivityStreams object
       preview: boolean
-      include_link: boolean
+      include_link: string
+      ignore_formatting: boolean
 
     Return:
       a CreationResult
@@ -149,7 +154,7 @@ class Flickr(source.Source):
         content = None
 
       # add original post link
-      if include_link:
+      if include_link == source.INCLUDE_LINK:
         content = ((content + '\n\n') if content else '') + link_text
 
       if preview:
@@ -228,7 +233,7 @@ class Flickr(source.Source):
           'link to a Flickr photo or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Flickr.')
 
-      if include_link:
+      if include_link == source.INCLUDE_LINK:
         content += '\n\n' + link_text
       if preview:
         return source.creation_result(

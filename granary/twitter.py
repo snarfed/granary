@@ -498,12 +498,13 @@ class Twitter(source.Source):
     url = API_STATUS % share_id
     return self.retweet_to_object(self.urlopen(url))
 
-  def create(self, obj, include_link=False, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK,
+             ignore_formatting=False):
     """Creates a tweet, reply tweet, retweet, or favorite.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
       ignore_formatting: boolean
 
     Returns:
@@ -515,12 +516,13 @@ class Twitter(source.Source):
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def preview_create(self, obj, include_link=False, ignore_formatting=False):
+  def preview_create(self, obj, include_link=source.OMIT_LINK,
+                     ignore_formatting=False):
     """Previews creating a tweet, reply tweet, retweet, or favorite.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
       ignore_formatting: boolean
 
     Returns:
@@ -530,7 +532,8 @@ class Twitter(source.Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview=None, include_link=False, ignore_formatting=False):
+  def _create(self, obj, preview=None, include_link=source.OMIT_LINK,
+              ignore_formatting=False):
     """Creates or previews creating a tweet, reply tweet, retweet, or favorite.
 
     https://dev.twitter.com/docs/api/1.1/post/statuses/update
@@ -540,7 +543,8 @@ class Twitter(source.Source):
     Args:
       obj: ActivityStreams object
       preview: boolean
-      include_link: boolean
+      include_link: string
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult
@@ -621,8 +625,8 @@ class Twitter(source.Source):
 
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
-    include_url = obj.get('url') if include_link else None
-    content = self._truncate(content, include_url, type, has_media)
+    content = self._truncate(
+      content, obj.get('url'), include_link, type, has_media)
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -729,12 +733,13 @@ class Twitter(source.Source):
 
     return source.creation_result(resp)
 
-  def _truncate(self, content, include_url, type, has_media):
+  def _truncate(self, content, url, include_link, type, has_media):
     """Shorten tweet content to fit within the 140 character limit.
 
     Args:
       content: string
-      include_url: string
+      url: string
+      include_link: string
       type: string
       has_media: boolean
 
@@ -748,7 +753,11 @@ class Twitter(source.Source):
       format += '+' + brevity.FORMAT_MEDIA
 
     return brevity.shorten(
-      content, permalink=include_url, permashortlink=include_url,
+      content,
+      # permalink is included only when the text is truncated
+      permalink=url if include_link != source.OMIT_LINK else None,
+      # permashortlink is always included
+      permashortlink=url if include_link == source.INCLUDE_LINK else None,
       target_length=MAX_TWEET_LENGTH, link_length=TCO_LENGTH, format=format)
 
   def upload_images(self, urls):

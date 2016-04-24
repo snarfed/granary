@@ -1285,7 +1285,9 @@ class TwitterTest(testutil.TestCase):
       u'Hey #indieweb, the coming storm of webmention Spam may not '
       u'be far away. Those of us that have input fields to send… '
       u'https://ben.thatmustbe.me/note/2015/1/31/1/')
-    result = self.twitter._truncate(orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/', 'note', False)
+    result = self.twitter._truncate(
+      orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/',
+      source.INCLUDE_LINK, 'note', False)
     self.assertEquals(expected, result)
 
     orig = expected = (
@@ -1293,21 +1295,25 @@ class TwitterTest(testutil.TestCase):
       u'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
       u'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
       u'@iainspad @sashtown @thomatronic (ttk.me t4_81)')
-    result = self.twitter._truncate(orig, None, 'note', False)
+    result = self.twitter._truncate(
+      orig, 'http://tantek.com/1234', source.OMIT_LINK, 'note', False)
     self.assertEquals(expected, result)
 
     orig = expected = (
       u'@davewiner I stubbed a page on the wiki for '
       u'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
       u'welcome! @kevinmarks @julien51 @aaronpk')
-    result = self.twitter._truncate(orig, None, 'note', False)
+    result = self.twitter._truncate(
+      orig, 'https://kylewm.com/5678', source.INCLUDE_IF_TRUNCATED,
+      'note', False)
     self.assertEquals(expected, result)
 
     orig = expected = (
       u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
       u'that wikipedia.org/Contain_(Parentheses), a url with a query '
       u'string;foo.withknown.com/example?query=parameters')
-    result = self.twitter._truncate(orig, None, 'note', False)
+    result = self.twitter._truncate(
+      orig, 'https://foo.bar/', source.INCLUDE_IF_TRUNCATED, 'note', False)
     self.assertEquals(expected, result)
 
     orig = (
@@ -1318,7 +1324,8 @@ class TwitterTest(testutil.TestCase):
       u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
       u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
       u'long:…')
-    result = self.twitter._truncate(orig, None, 'note', False)
+    result = self.twitter._truncate(
+      orig, 'http://foo.com/', source.OMIT_LINK, 'note', False)
     self.assertEquals(expected, result)
 
     # test case-insensitive link matching
@@ -1331,7 +1338,9 @@ class TwitterTest(testutil.TestCase):
       u'from it, especially Matrix.org… '
       u'https://unrelenting.technology/notes/2015-09-05-00-35-13')
     result = self.twitter._truncate(
-      orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13', 'note', False)
+      orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13',
+      source.INCLUDE_IF_TRUNCATED,
+      'note', False)
     self.assertEquals(expected, result)
 
     twitter.MAX_TWEET_LENGTH = 20
@@ -1339,16 +1348,19 @@ class TwitterTest(testutil.TestCase):
 
     orig = u'url http://foo.co/bar ellipsize http://foo.co/baz'
     expected = u'url http://foo.co/bar ellipsize…'
-    result = self.twitter._truncate(orig, None, 'note', False)
+    result = self.twitter._truncate(
+      orig, 'http://foo.com', source.OMIT_LINK, 'note', False)
     self.assertEquals(expected, result)
 
     orig = u'too long\nextra whitespace\tbut should include url'
     expected = u'too long… http://obj.ca'
-    result = self.twitter._truncate(orig, 'http://obj.ca', 'note', False)
+    result = self.twitter._truncate(
+      orig, 'http://obj.ca', source.INCLUDE_LINK, 'note', False)
     self.assertEquals(expected, result)
 
     orig = expected = u'trailing slash http://www.foo.co/'
-    result = self.twitter._truncate(orig, None, 'note', False)
+    result = self.twitter._truncate(
+      orig, 'http://www.foo.co/', source.OMIT_LINK, 'note', False)
     self.assertEquals(expected, result)
 
   def test_no_ellipsize_real_tweet(self):
@@ -1373,10 +1385,11 @@ class TwitterTest(testutil.TestCase):
     obj['content'] = orig.replace("\n", '<br />').replace('&', '&amp;')
     obj['url'] = 'http://tantek.com/2015/013/t1/names-ind-ie-indie-vc-not-indieweb'
 
-    actual_preview = self.twitter.preview_create(obj, include_link=False).content
+    actual_preview = self.twitter.preview_create(
+      obj, include_link=source.OMIT_LINK).content
     self.assertEquals(preview, actual_preview)
 
-    self.twitter.create(obj, include_link=False)
+    self.twitter.create(obj, include_link=source.OMIT_LINK)
 
   def test_ellipsize_real_tweet(self):
     """Test ellipsizing a tweet that was giving us trouble. If you do not
@@ -1404,8 +1417,8 @@ class TwitterTest(testutil.TestCase):
     obj['content'] = orig
     obj['url'] = 'https://ben.thatmustbe.me/note/2015/1/31/1/'
 
-    self.twitter.create(obj, include_link=True)
-    actual_preview = self.twitter.preview_create(obj, include_link=True).content
+    self.twitter.create(obj, include_link=source.INCLUDE_LINK)
+    actual_preview = self.twitter.preview_create(obj, include_link=source.INCLUDE_LINK).content
     self.assertEquals(preview, actual_preview)
 
   def test_tweet_article_has_different_format(self):
@@ -1416,7 +1429,7 @@ class TwitterTest(testutil.TestCase):
       'objectType': 'article',
       'displayName': 'The Article Title',
       'url': 'http://example.com/article',
-    }, include_link=True).content
+    }, include_link=source.INCLUDE_LINK).content
     self.assertEquals(
       'The Article Title: <a href="http://example.com/article">example.com/'
       'article</a>', preview)
@@ -1477,10 +1490,43 @@ class TwitterTest(testutil.TestCase):
         'content': 'too long\nextra whitespace\tbut should include url',
         'url': 'http://obj.ca',
         })
-    self.twitter.create(obj, include_link=True)
-    result = self.twitter.preview_create(obj, include_link=True)
+    self.twitter.create(obj, include_link=source.INCLUDE_LINK)
+    result = self.twitter.preview_create(obj, include_link=source.INCLUDE_LINK)
     self.assertIn(u'too long… <a href="http://obj.ca">obj.ca</a>',
                   result.content)
+
+  def test_create_tweet_include_link_if_truncated(self):
+    twitter.MAX_TWEET_LENGTH = 20
+    twitter.TCO_LENGTH = 5
+
+    cases = [(
+      u'too long\nextra whitespace\tbut should include url',
+      u'http://obj.ca',
+      u'too long… http://obj.ca',
+      u'too long… <a href="http://obj.ca">obj.ca</a>',
+    ), (
+      u'short and sweet',
+      u'http://obj.ca',
+      u'short and sweet',
+      u'short and sweet',
+    )]
+
+    for _, _, expected, _ in cases:
+      self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
+                          params={'status': expected.encode('utf-8')})
+
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(OBJECT)
+    del obj['image']
+
+    for content, url, _, expected in cases:
+      obj.update({'content': content, 'url': url})
+      self.twitter.create(
+        obj, include_link=source.INCLUDE_IF_TRUNCATED)
+      result = self.twitter.preview_create(
+        obj, include_link=source.INCLUDE_IF_TRUNCATED)
+      self.assertIn(expected, result.content)
 
   def test_create_recognize_note(self):
     """Use post-type-discovery to recognize a note with non-trivial html content.
@@ -1520,7 +1566,7 @@ class TwitterTest(testutil.TestCase):
       },
     })
 
-    result = self.twitter.preview_create(obj, include_link=False)
+    result = self.twitter.preview_create(obj, include_link=source.OMIT_LINK)
     self.assertIn('instagram.com/p/9XVBIRA9cj</a>\n\nSocial Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.', result.content)
 
   def test_create_tweet_with_location(self):
@@ -1560,7 +1606,7 @@ class TwitterTest(testutil.TestCase):
       }
     })
 
-    result = self.twitter.preview_create(obj, include_link=False)
+    result = self.twitter.preview_create(obj, include_link=source.OMIT_LINK)
     self.assertIn('37.83, -122.25', result.content)
 
     self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={
@@ -1569,7 +1615,7 @@ class TwitterTest(testutil.TestCase):
       'long': '-122.25',
     })
     self.mox.ReplayAll()
-    self.twitter.create(obj, include_link=False)
+    self.twitter.create(obj, include_link=source.OMIT_LINK)
 
   def test_create_reply(self):
     # tuples: (content, in-reply-to url, expected tweet)

@@ -306,12 +306,13 @@ class Instagram(source.Source):
     """
     return None
 
-  def create(self, obj, include_link=False, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK,
+             ignore_formatting=False):
     """Creates a new comment or like.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
       ignore_formatting: boolean
 
     Returns: a CreationResult. if successful, content will have and 'id' and
@@ -320,12 +321,14 @@ class Instagram(source.Source):
     return self._create(obj, include_link=include_link, preview=False,
                         ignore_formatting=ignore_formatting)
 
-  def preview_create(self, obj, include_link=False, ignore_formatting=False):
+  def preview_create(self, obj, include_link=source.OMIT_LINK,
+                     ignore_formatting=False):
     """Preview a new comment or like.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
+      ignore_formatting: boolean
 
     Returns: a CreationResult. if successful, content and description
              will describe the new instagram object.
@@ -333,7 +336,8 @@ class Instagram(source.Source):
     return self._create(obj, include_link=include_link, preview=True,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, include_link=False, preview=None, ignore_formatting=False):
+  def _create(self, obj, include_link=source.OMIT_LINK, preview=None,
+              ignore_formatting=False):
     """Creates a new comment or like.
 
     The OAuth access token must have been created with scope=comments+likes (or
@@ -348,7 +352,7 @@ class Instagram(source.Source):
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
       preview: boolean
 
     Returns: a CreationResult. if successful, content will have and 'id' and

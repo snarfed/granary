@@ -33,6 +33,11 @@ FRIENDS = '@friends'
 APP = '@app'
 SEARCH = '@search'
 
+# values for create's include_link param
+OMIT_LINK = 'omit'
+INCLUDE_LINK = 'include'
+INCLUDE_IF_TRUNCATED = 'if truncated'
+
 RSVP_TO_EVENT = {
   'rsvp-yes': 'attending',
   'rsvp-no': 'notAttending',
@@ -239,7 +244,7 @@ class Source(object):
             'updatedSince': False,
             }
 
-  def create(self, obj, include_link=False, ignore_formatting=False):
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Creates a new object: a post, comment, like, share, or RSVP.
 
     Subclasses should override this. Different sites will support different
@@ -249,8 +254,8 @@ class Source(object):
     Args:
       obj: ActivityStreams object. At minimum, must have the content field.
         objectType is strongly recommended.
-      include_link: boolean. If True, includes a link to the object
-        (if it has one) in the content.
+      include_link: string. 'include', 'omit', or 'if truncated'; whether to
+        include a link to the object (if it has one) in the content.
       ignore_formatting: whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
 
@@ -263,7 +268,7 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def preview_create(self, obj, include_link=False, ignore_formatting=False):
+  def preview_create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Previews creating a new object: a post, comment, like, share, or RSVP.
 
     Returns HTML that previews what create() with the same object will do.
@@ -275,7 +280,7 @@ class Source(object):
     Args:
       obj: ActivityStreams object. At minimum, must have the content field.
         objectType is strongly recommended.
-      include_link: boolean. If True, includes a link to the object
+      include_link: string. Whether to include a link to the object
         (if it has one) in the content.
       ignore_formatting: whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
