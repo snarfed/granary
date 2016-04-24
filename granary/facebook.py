@@ -78,17 +78,18 @@ API_EVENT_RSVPS = '%s/noreply'
 # https://developers.facebook.com/docs/graph-api/reference/v2.2/user/home
 # https://github.com/snarfed/granary/issues/26
 API_HOME = '%s/home?offset=%d'
-API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,created_time,from,images,link,name,name_tags,page_story_id,picture,privacy,object_id,updated_time'
+API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,shares,updated_time'
 API_ALBUMS = '%s/albums?fields=id,count,created_time,from,link,name,privacy,type,updated_time'
 API_POST_OBJECT = '%s_%s?fields=object_id'  # USERID_POSTID
-API_SELF_POSTS = '%s/feed?offset=%d'
+POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,shares,source,status_type,story,to,type,updated_time,with_tags'
+API_SELF_POSTS = '%s/feed?offset=%d&fields=' + POST_FIELDS
 API_SHARES = 'sharedposts?ids=%s'
 # XXX TODO need to switch get_rsvp to use these
 API_USER_EVENTS = 'me/events'  # includes yes and maybe
 API_USER_EVENTS_DECLINED = 'me/events?type=declined'
 API_USER_EVENTS_NOT_REPLIED = 'me/events?type=not_replied'
 # https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/
-API_NEWS_PUBLISHES = 'me/news.publishes'
+API_NEWS_PUBLISHES = 'me/news.publishes?fields=' + POST_FIELDS
 
 API_PUBLISH_POST = 'me/feed'
 API_PUBLISH_COMMENT = '%s/comments'
