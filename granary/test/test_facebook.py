@@ -2002,8 +2002,8 @@ http://b http://c""",
         'displayName': 'my content',
         'url': 'http://obj.co',
         })
-    self.fb.create(obj, include_link=True)
-    preview = self.fb.preview_create(obj, include_link=True)
+    self.fb.create(obj, include_link=source.INCLUDE_LINK)
+    preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
     self.assertEquals(
       'my content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
@@ -2024,8 +2024,8 @@ http://b http://c""",
         'displayName': 'my title',
         'url': 'http://obj.co',
         })
-    self.fb.create(obj, include_link=True)
-    preview = self.fb.preview_create(obj, include_link=True)
+    self.fb.create(obj, include_link=source.INCLUDE_LINK)
+    preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
     self.assertEquals(
       'my title\n\nmy content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
@@ -2046,8 +2046,8 @@ http://b http://c""",
         'displayName': 'my\ncontent',
         'url': 'http://obj.co',
         })
-    self.fb.create(obj, include_link=True)
-    preview = self.fb.preview_create(obj, include_link=True)
+    self.fb.create(obj, include_link=source.INCLUDE_LINK)
+    preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
     self.assertEquals(
       'my\ncontent\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)

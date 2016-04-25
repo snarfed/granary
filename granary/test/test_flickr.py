@@ -837,7 +837,8 @@ class FlickrTest(testutil.TestCase):
   def test_preview_create_photo(self):
     self._expect_lookup_users()
     self.mox.ReplayAll()
-    preview = self.flickr.preview_create(OBJECT, include_link=True)
+    preview = self.flickr.preview_create(
+      OBJECT, include_link=source.INCLUDE_LINK)
     self.assertEquals('post', preview.description)
     self.assertIn('Photo #164', preview.content)
     self.assertIn(
@@ -918,7 +919,7 @@ class FlickrTest(testutil.TestCase):
       'id': '9876',
       'url': 'https://www.flickr.com/photos/kindofblue115/9876/',
       'type': 'post',
-    }, self.flickr.create(OBJECT, include_link=True).content)
+    }, self.flickr.create(OBJECT, include_link=source.INCLUDE_LINK).content)
 
   def test_create_photo_failure(self):
     """If uploading returns a failure, interpret it correctly.
@@ -1006,7 +1007,8 @@ class FlickrTest(testutil.TestCase):
     self.assertNotIn('should hide', preview)
 
   def test_preview_create_comment(self):
-    preview = self.flickr.preview_create(REPLY_OBJ, include_link=True)
+    preview = self.flickr.preview_create(
+      REPLY_OBJ, include_link=source.INCLUDE_LINK)
     self.assertEquals(
       'comment on <a href="https://www.flickr.com/photos/marietta_wood_works/'
       '21904325000/in/contacts/">this photo</a>.',
@@ -1038,7 +1040,8 @@ class FlickrTest(testutil.TestCase):
 
     self.mox.ReplayAll()
 
-    reply_content = self.flickr.create(REPLY_OBJ, include_link=True).content
+    reply_content = self.flickr.create(
+      REPLY_OBJ, include_link=source.INCLUDE_LINK).content
     self.assertEquals(
       '4942564-21904325000-72157661220102352',
       reply_content.get('id'))

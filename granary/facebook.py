@@ -512,12 +512,13 @@ class Facebook(source.Source):
     rsvps = self.urlopen(API_RSVP % (event_id, user_id), _as=list)
     return self.rsvp_to_object(rsvps[0], event={'id': event_id}) if rsvps else None
 
-  def create(self, obj, include_link=False, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK,
+             ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
       ignore_formatting: boolean
 
     Returns:
@@ -539,12 +540,13 @@ class Facebook(source.Source):
     url = API_ALBUMS % (user_id if user_id is not None else 'me')
     return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
 
-  def preview_create(self, obj, include_link=False, ignore_formatting=False):
+  def preview_create(self, obj, include_link=source.OMIT_LINK,
+                     ignore_formatting=False):
     """Previews creating a new post, comment, like, or RSVP.
 
     Args:
       obj: ActivityStreams object
-      include_link: boolean
+      include_link: string
       ignore_formatting: boolean
 
     Returns:
@@ -554,7 +556,8 @@ class Facebook(source.Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview=None, include_link=False, ignore_formatting=False):
+  def _create(self, obj, preview=None, include_link=source.OMIT_LINK,
+              ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
 
     https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
@@ -565,7 +568,8 @@ class Facebook(source.Source):
     Args:
       obj: ActivityStreams object
       preview: boolean
-      include_link: boolean
+      include_link: string
+      ignore_formatting: boolean
 
     Returns:
       a CreationResult
@@ -607,7 +611,7 @@ class Facebook(source.Source):
     people = self._get_person_tags(obj)
 
     url = obj.get('url')
-    if include_link and url:
+    if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url
     preview_content = util.linkify(content)
     if video_url:
