@@ -348,10 +348,9 @@ class SourceTest(testutil.TestCase):
     fb_comment_edited['content'] = 'new content'
     gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
 
-    fb_invite = test_facebook.RSVP_OBJS_WITH_ID[3]
+    fb_invite = test_facebook.INVITE_OBJ
     self.assertEqual('invite', fb_invite['verb'])
-    fb_rsvp = copy.copy(fb_invite)
-    fb_rsvp['verb'] = 'rsvp-yes'
+    fb_rsvp = test_facebook.RSVP_YES_OBJ
 
     for before, after in ((fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited),

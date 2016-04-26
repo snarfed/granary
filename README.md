@@ -260,6 +260,8 @@ Changelog
 ---
 
 #### 1.4 - unreleased
+* Facebook:
+  * Upgrade from API v2.2 to v2.6. https://developers.facebook.com/docs/apps/changelog
 * Twitter:
   * Switch create() to use brevity for counting characters. https://github.com/kylewm/brevity
 * Fix bug in create() that occasionally incorrectly escaped ., +, and - characters.

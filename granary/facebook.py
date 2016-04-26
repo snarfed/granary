@@ -1,3 +1,4 @@
+# coding=utf-8
 """Facebook source class. Uses the Graph API.
 
 The Audience Targeting 'to' field is set to @public or @private based on whether
@@ -67,15 +68,10 @@ API_COMMENT = '%s?fields=' + API_COMMENTS_FIELDS
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
-API_EVENT = '%s?fields=comments,description,end_time,id,name,owner,picture,place,start_time,timezone,updated_time'
-API_EVENT_ATTENDING = '%s/attending'
-API_EVENT_MAYBE = '%s/maybe'
-API_EVENT_INTERESTED = '%s/interested'
-API_EVENT_DECLINED = '%s/declined'
-API_EVENT_RSVPS = '%s/noreply'
+API_EVENT = '%s?fields=id,attending,comments,declined,description,end_time,interested,invited,maybe,noreply,name,owner,picture,place,start_time,timezone,updated_time'
 # /user/home requires the read_stream permission, which you probably don't have.
 # details in the file docstring.
-# https://developers.facebook.com/docs/graph-api/reference/v2.2/user/home
+# https://developers.facebook.com/docs/graph-api/reference/user/home
 # https://github.com/snarfed/granary/issues/26
 API_HOME = '%s/home?offset=%d'
 API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,shares,updated_time'
@@ -84,8 +80,7 @@ API_POST_OBJECT = '%s_%s?fields=object_id'  # USERID_POSTID
 POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,shares,source,status_type,story,to,type,updated_time,with_tags'
 API_SELF_POSTS = '%s/feed?offset=%d&fields=' + POST_FIELDS
 API_SHARES = 'sharedposts?ids=%s'
-# XXX TODO need to switch get_rsvp to use these
-API_USER_EVENTS = 'me/events'  # includes yes and maybe
+API_USER_EVENTS = 'me/events'  # includes yes, maybe, interested
 API_USER_EVENTS_DECLINED = 'me/events?type=declined'
 API_USER_EVENTS_NOT_REPLIED = 'me/events?type=not_replied'
 # https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/
@@ -95,7 +90,13 @@ API_PUBLISH_POST = 'me/feed'
 API_PUBLISH_COMMENT = '%s/comments'
 API_PUBLISH_LIKE = '%s/likes'
 API_PUBLISH_PHOTO = 'me/photos'
+# the docs say these can't be published to, but they actually can. ¯\_(ツ)_/¯
+# https://developers.facebook.com/docs/graph-api/reference/event/attending/#Creating
 API_PUBLISH_ALBUM_PHOTO = '%s/photos'
+API_PUBLISH_RSVP_ATTENDING = '%s/attending'
+API_PUBLISH_RSVP_MAYBE = '%s/maybe'
+API_PUBLISH_RSVP_INTERESTED = '%s/interested'
+API_PUBLISH_RSVP_DECLINED = '%s/declined'
 API_NOTIFICATION = '%s/notifications'
 
 # endpoint for uploading video. note the graph-video subdomain.
@@ -133,17 +134,27 @@ VERBS = {
   'product': 'give',
   'video.watches': 'play',
 }
+# The fields in an event object that contain invited and RSVPed users. Slightly
+# different from the rsvp_status field values, just to keep us entertained. :/
+RSVP_FIELDS = ('attending', 'maybe', 'interested', 'declined', 'noreply')
+# Maps rsvp_status field to AS verb.
 RSVP_VERBS = {
   'attending': 'rsvp-yes',
   'declined': 'rsvp-no',
+  'maybe': 'rsvp-maybe',
   'unsure': 'rsvp-maybe',
   'not_replied': 'invite',
-  }
+  'noreply': 'invite',
+  # 'interested' RSVPs actually have rsvp_status='unsure', so this is only used
+  # for rsvp_to_object(type='invited').
+  'interested': 'rsvp-interested',
+}
+# Maps AS verb to API endpoint for publishing RSVP.
 RSVP_PUBLISH_ENDPOINTS = {
-  'rsvp-yes': API_EVENT_ATTENDING,
-  'rsvp-no': API_EVENT_DECLINED,
-  'rsvp-maybe': API_EVENT_MAYBE,
-  'rsvp-interested': API_EVENT_INTERESTED,
+  'rsvp-yes': API_PUBLISH_RSVP_ATTENDING,
+  'rsvp-no': API_PUBLISH_RSVP_DECLINED,
+  'rsvp-maybe': API_PUBLISH_RSVP_MAYBE,
+  'rsvp-interested': API_PUBLISH_RSVP_INTERESTED,
 }
 
 FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
@@ -468,11 +479,7 @@ class Facebook(source.Source):
                    event.get('name') or event.get('id'), event_owner_id, owner_id)
       return None
 
-    rsvps = None
-    with util.ignore_http_4xx_error():
-      rsvps = self.urlopen(API_EVENT_RSVPS % event_id, _as=list)
-
-    return self.event_to_activity(event, rsvps=rsvps)
+    return self.event_to_activity(event)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns an ActivityStreams comment object.
@@ -514,8 +521,14 @@ class Facebook(source.Source):
       event_id: string event id
       user_id: string user id
     """
-    rsvps = self.urlopen(API_RSVP % (event_id, user_id), _as=list)
-    return self.rsvp_to_object(rsvps[0], event={'id': event_id}) if rsvps else None
+    event = self.get_event(event_id)
+    if not event:
+      return
+
+    for field in source.RSVP_TO_EVENT.values():
+      for rsvp in event.get('object', {}).get(field, []):
+        if util.parse_tag_uri(rsvp['id'])[1] == user_id:
+          return rsvp
 
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):
@@ -1306,16 +1319,19 @@ class Facebook(source.Source):
     """
     obj = self.post_to_object(event)
     obj.update({
-        'displayName': event.get('name'),
-        'objectType': 'event',
-        'author': self.user_to_actor(event.get('owner')),
-        'startTime': event.get('start_time'),
-        'endTime': event.get('end_time'),
-      })
+      'displayName': event.get('name'),
+      'objectType': 'event',
+      'author': self.user_to_actor(event.get('owner')),
+      'startTime': event.get('start_time'),
+      'endTime': event.get('end_time'),
+    })
 
-    if rsvps is not None:
-      rsvps = [self.rsvp_to_object(r, event=event) for r in rsvps]
-      self.add_rsvps_to_event(obj, rsvps)
+    rsvps = ([] if rsvps is None
+             else [self.rsvp_to_object(r, event=event) for r in rsvps])
+    for field in RSVP_FIELDS:
+      rsvps.extend(self.rsvp_to_object(r, type=field, event=event)
+                   for r in event.get(field, {}).get('data', []))
+    self.add_rsvps_to_event(obj, rsvps)
 
     return self.postprocess_object(obj)
 
@@ -1323,7 +1339,8 @@ class Facebook(source.Source):
     """Converts a event to an activity.
 
     Args:
-      event: dict, a decoded JSON event
+      event: dict, a decoded JSON Facebook event
+      rsvps: list of JSON Facebook RSVPs
 
     Returns: an ActivityStreams activity dict
     """
@@ -1333,19 +1350,20 @@ class Facebook(source.Source):
             'url': obj.get('url'),
             }
 
-  def rsvp_to_object(self, rsvp, event=None):
+  def rsvp_to_object(self, rsvp, type=None, event=None):
     """Converts an RSVP to an object.
 
     The 'id' field will ony be filled in if event['id'] is provided.
 
     Args:
       rsvp: dict, a decoded JSON Facebook RSVP
+      type: optional Facebook RSVP type, one of RSVP_FIELDS
       event: Facebook event object. May contain only a single 'id' element.
 
     Returns:
       an ActivityStreams object dict
     """
-    verb = RSVP_VERBS.get(rsvp.get('rsvp_status'))
+    verb = RSVP_VERBS.get(type or rsvp.get('rsvp_status'))
     obj = {
       'objectType': 'activity',
       'verb': verb,

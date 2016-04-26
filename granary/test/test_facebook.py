@@ -15,7 +15,7 @@ from oauth_dropins.webutil import util
 from granary import appengine_config
 from granary import facebook
 from granary.facebook import \
-  API_ALBUMS, API_BASE, API_COMMENTS_ALL, API_EVENT, API_EVENT_RSVPS, \
+  API_ALBUMS, API_BASE, API_COMMENTS_ALL, API_EVENT, API_USER_EVENTS, \
   API_NEWS_PUBLISHES, API_PHOTOS_UPLOADED, API_PUBLISH_PHOTO, API_PUBLISH_POST, \
   API_UPLOAD_VIDEO
 from granary import source
@@ -250,6 +250,12 @@ PHOTO = {
 PHOTO_POST = copy.deepcopy(POST)
 PHOTO_POST['object_id'] = '222'  # points to PHOTO
 
+RSVP_ATTENDING = {'name': 'Aaron P', 'rsvp_status': 'attending', 'id': '11500'}
+RSVP_MAYBE = {'name': 'Foo', 'rsvp_status': 'unsure', 'id': '987'}
+RSVP_INTERESTED = {'name': 'Alice', 'rsvp_status': 'unsure', 'id': '321'}
+RSVP_DECLINED = {'name': 'Ryan B', 'rsvp_status': 'declined', 'id': '212038'}
+RSVP_NOREPLY = {'name': 'Bar', 'rsvp_status': 'not_replied', 'id': '654'}
+
 EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
   'id': '145304994',
   'owner': {
@@ -283,13 +289,12 @@ EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
       'url': 'https://fbcdn-sphotos-a-a.akamaihd.net/abc/pic_n.jpg?xyz',
     }
   },
- }
-RSVPS = [  # Facebook; returned by /[event id]/attending (also declined, maybe)
-  {'name': 'Aaron P', 'rsvp_status': 'attending', 'id': '11500'},
-  {'name': 'Ryan B', 'rsvp_status': 'declined', 'id': '212038'},
-  {'name': 'Foo', 'rsvp_status': 'unsure', 'id': '987'},
-  {'name': 'Bar', 'rsvp_status': 'not_replied', 'id': '654'},
-  ]
+  'attending': {'data': [RSVP_ATTENDING]},
+  'maybe': {'data': [RSVP_MAYBE]},
+  'interested': {'data': [RSVP_INTERESTED]},
+  'declined': {'data': [RSVP_DECLINED]},
+  'noreply': {'data': [RSVP_NOREPLY]},
+}
 
 COMMENT_OBJS = [  # ActivityStreams
   {
@@ -555,8 +560,94 @@ PHOTO_OBJ = {  # ActivityStreams
 PHOTO_POST_OBJ = copy.deepcopy(POST_OBJ)
 PHOTO_POST_OBJ['fb_object_id'] = '222'
 
+RSVP_YES_OBJ = {
+  'id': tag_uri('145304994_rsvp_11500'),
+  'objectType': 'activity',
+  'verb': 'rsvp-yes',
+  'url': 'https://www.facebook.com/145304994#11500',
+  'actor': {
+    'objectType': 'person',
+    'displayName': 'Aaron P',
+    'id': tag_uri('11500'),
+    'numeric_id': '11500',
+    'url': 'https://www.facebook.com/11500',
+    'image': {'url': 'https://graph.facebook.com/v2.6/11500/picture?type=large'},
+  },
+}
+RSVP_NO_OBJ = {
+  'id': tag_uri('145304994_rsvp_212038'),
+  'objectType': 'activity',
+  'verb': 'rsvp-no',
+  'url': 'https://www.facebook.com/145304994#212038',
+  'actor': {
+    'objectType': 'person',
+    'displayName': 'Ryan B',
+    'id': tag_uri('212038'),
+    'numeric_id': '212038',
+    'url': 'https://www.facebook.com/212038',
+    'image': {'url': 'https://graph.facebook.com/v2.6/212038/picture?type=large'},
+  },
+}
+RSVP_MAYBE_OBJ = {
+  'id': tag_uri('145304994_rsvp_987'),
+  'objectType': 'activity',
+  'verb': 'rsvp-maybe',
+  'url': 'https://www.facebook.com/145304994#987',
+  'actor': {
+    'objectType': 'person',
+    'displayName': 'Foo',
+    'id': tag_uri('987'),
+    'numeric_id': '987',
+    'url': 'https://www.facebook.com/987',
+    'image': {'url': 'https://graph.facebook.com/v2.6/987/picture?type=large'},
+  },
+}
+RSVP_INTERESTED_OBJ = {
+  'id': tag_uri('145304994_rsvp_321'),
+  'objectType': 'activity',
+  'verb': 'rsvp-interested',
+  'url': 'https://www.facebook.com/145304994#321',
+  'actor': {
+    'objectType': 'person',
+    'displayName': 'Alice',
+    'id': tag_uri('321'),
+    'numeric_id': '321',
+    'url': 'https://www.facebook.com/321',
+    'image': {'url': 'https://graph.facebook.com/v2.6/321/picture?type=large'},
+  },
+}
+INVITE_OBJ = {
+  'id': tag_uri('145304994_rsvp_654'),
+  'objectType': 'activity',
+  'verb': 'invite',
+  'url': 'https://www.facebook.com/145304994#654',
+  'actor': {
+    'objectType': 'person',
+    'displayName': 'Aaron P',
+    'id': tag_uri('11500'),
+    'numeric_id': '11500',
+    'url': 'https://www.facebook.com/11500',
+    'image': {'url': 'https://graph.facebook.com/v2.6/11500/picture?type=large'},
+    },
+  'object': {
+    'objectType': 'person',
+    'displayName': 'Bar',
+    'id': tag_uri('654'),
+    'numeric_id': '654',
+    'url': 'https://www.facebook.com/654',
+    'image': {'url': 'https://graph.facebook.com/v2.6/654/picture?type=large'},
+  },
+}
+RSVPS_TO_OBJS = (
+  (RSVP_ATTENDING, RSVP_YES_OBJ),
+  (RSVP_DECLINED, RSVP_NO_OBJ),
+  (RSVP_MAYBE, RSVP_MAYBE_OBJ),
+  (RSVP_INTERESTED, RSVP_INTERESTED_OBJ),
+  (RSVP_NOREPLY, INVITE_OBJ),
+)
+
 # file:///Users/ryan/docs/activitystreams_schema_spec_1.0.html#event
-EVENT_OBJ = {  # ActivityStreams.
+EVENT_OBJ = {
   'objectType': 'event',
   'id': tag_uri('145304994'),
   'fb_id': '145304994',
@@ -600,89 +691,16 @@ EVENT_OBJ = {  # ActivityStreams.
         }],
     }],
   },
+  'attending': [RSVP_YES_OBJ['actor']],
+  'notAttending': [RSVP_NO_OBJ['actor']],
+  'maybeAttending': [RSVP_MAYBE_OBJ['actor']],
+  'interested': [RSVP_INTERESTED_OBJ['actor']],
+  'invited': [INVITE_OBJ['object']],
 }
 EVENT_ACTIVITY = {  # ActivityStreams
   'id': tag_uri('145304994'),
   'url': 'https://www.facebook.com/145304994',
   'object': EVENT_OBJ,
-}
-RSVP_OBJS_WITH_ID = [{
-    'id': tag_uri('145304994_rsvp_11500'),
-    'objectType': 'activity',
-    'verb': 'rsvp-yes',
-    'url': 'https://www.facebook.com/145304994#11500',
-    'actor': {
-      'objectType': 'person',
-      'displayName': 'Aaron P',
-      'id': tag_uri('11500'),
-      'numeric_id': '11500',
-      'url': 'https://www.facebook.com/11500',
-      'image': {'url': 'https://graph.facebook.com/v2.6/11500/picture?type=large'},
-      },
-    }, {
-    'id': tag_uri('145304994_rsvp_212038'),
-    'objectType': 'activity',
-    'verb': 'rsvp-no',
-    'url': 'https://www.facebook.com/145304994#212038',
-    'actor': {
-      'objectType': 'person',
-      'displayName': 'Ryan B',
-      'id': tag_uri('212038'),
-      'numeric_id': '212038',
-      'url': 'https://www.facebook.com/212038',
-      'image': {'url': 'https://graph.facebook.com/v2.6/212038/picture?type=large'},
-      },
-    }, {
-    'id': tag_uri('145304994_rsvp_987'),
-    'objectType': 'activity',
-    'verb': 'rsvp-maybe',
-    'url': 'https://www.facebook.com/145304994#987',
-    'actor': {
-      'objectType': 'person',
-      'displayName': 'Foo',
-      'id': tag_uri('987'),
-      'numeric_id': '987',
-      'url': 'https://www.facebook.com/987',
-      'image': {'url': 'https://graph.facebook.com/v2.6/987/picture?type=large'},
-      },
-    }, {
-    'id': tag_uri('145304994_rsvp_654'),
-    'objectType': 'activity',
-    'verb': 'invite',
-    'url': 'https://www.facebook.com/145304994#654',
-    'actor': {
-      'objectType': 'person',
-      'displayName': 'Aaron P',
-      'id': tag_uri('11500'),
-      'numeric_id': '11500',
-      'url': 'https://www.facebook.com/11500',
-      'image': {'url': 'https://graph.facebook.com/v2.6/11500/picture?type=large'},
-      },
-    'object': {
-      'objectType': 'person',
-      'displayName': 'Bar',
-      'id': tag_uri('654'),
-      'numeric_id': '654',
-      'url': 'https://www.facebook.com/654',
-      'image': {'url': 'https://graph.facebook.com/v2.6/654/picture?type=large'},
-      },
-    }]
-RSVP_OBJS = copy.deepcopy(RSVP_OBJS_WITH_ID)
-for obj in RSVP_OBJS:
-  del obj['id']
-  del obj['url']
-del RSVP_OBJS[3]['actor']
-EVENT_OBJ_WITH_ATTENDEES = copy.deepcopy(EVENT_OBJ)
-EVENT_OBJ_WITH_ATTENDEES.update({
-    'attending': [RSVP_OBJS[0]['actor']],
-    'notAttending': [RSVP_OBJS[1]['actor']],
-    'maybeAttending': [RSVP_OBJS[2]['actor']],
-    'invited': [RSVP_OBJS[3]['object']],
-    })
-EVENT_ACTIVITY_WITH_ATTENDEES = {  # ActivityStreams
-  'id': tag_uri('145304994'),
-  'url': 'https://www.facebook.com/145304994',
-  'object': EVENT_OBJ_WITH_ATTENDEES,
 }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
@@ -1042,11 +1060,10 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
     self.expect_urlopen('me/events', {'data': [EVENT]})
     self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS})
 
     self.mox.ReplayAll()
     self.assert_equals(
-      [EVENT_ACTIVITY_WITH_ATTENDEES, PHOTO_ACTIVITY],
+      [EVENT_ACTIVITY, PHOTO_ACTIVITY],
       self.fb.get_activities(group_id=source.SELF, fetch_events=True))
 
   def test_get_activities_self_merge_photos(self):
@@ -1099,10 +1116,9 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', {'data': [EVENT]})
     self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS})
 
     self.mox.ReplayAll()
-    self.assert_equals([EVENT_ACTIVITY_WITH_ATTENDEES], self.fb.get_activities(
+    self.assert_equals([EVENT_ACTIVITY], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True, event_owner_id=EVENT['owner']['id']))
 
   def test_get_activities_self_unowned_event_no_rsvps(self):
@@ -1123,18 +1139,6 @@ class FacebookTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
-      group_id=source.SELF, fetch_events=True))
-
-  def test_get_activities_self_event_rsvps_400s(self):
-    self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-    self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS},
-                        status=400)
-
-    self.mox.ReplayAll()
-    self.assert_equals([EVENT_ACTIVITY], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True))
 
   def test_get_activities_self_events_returns_list(self):
@@ -1271,10 +1275,8 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_event(self):
     self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {'data': RSVPS})
     self.mox.ReplayAll()
-    self.assert_equals(EVENT_ACTIVITY_WITH_ATTENDEES,
-                       self.fb.get_event('145304994'))
+    self.assert_equals(EVENT_ACTIVITY, self.fb.get_event('145304994'))
 
   def test_get_event_user_id_not_owner(self):
     self.expect_urlopen(API_EVENT % '145304994', EVENT)
@@ -1284,7 +1286,6 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_event_user_id_owner(self):
     self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {})
     self.mox.ReplayAll()
     got = self.fb.get_event('145304994', owner_id=EVENT['owner']['id'])
     self.assert_equals(EVENT_ACTIVITY, got)
@@ -1374,7 +1375,6 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen('me/events', {'data': [EVENT]})
     self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.expect_urlopen(API_EVENT_RSVPS % '145304994', {})
     self.expect_urlopen('sharedposts?ids=212038_10100176064482163',
                         {'212038_10100176064482163': {'data': [SHARE]}})
     self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163',
@@ -1506,15 +1506,24 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(None, self.fb.get_like('123', '000', '683713'))
 
   def test_get_rsvp(self):
-    self.expect_urlopen('145304994/invited/456', {'data': [RSVPS[0]]})
+    for i in range(len(RSVPS_TO_OBJS)):
+      self.expect_urlopen(API_EVENT % '1', EVENT)
     self.mox.ReplayAll()
-    self.assert_equals(RSVP_OBJS_WITH_ID[0],
-                       self.fb.get_rsvp('123', '145304994', '456'))
+
+    for rsvp, obj in RSVPS_TO_OBJS:
+      expected = obj.get('object') or obj.get('actor')
+      user_id = expected['numeric_id']
+      self.assert_equals(expected, self.fb.get_rsvp('unused', '1', user_id))
 
   def test_get_rsvp_not_found(self):
-    self.expect_urlopen('000/invited/456', {'data': []})
+    self.expect_urlopen(API_EVENT % '1', EVENT)
     self.mox.ReplayAll()
-    self.assert_equals(None, self.fb.get_rsvp('123', '000', '456'))
+    self.assert_equals(None, self.fb.get_rsvp('123', '1', '456'))
+
+  def test_get_rsvp_event_not_found(self):
+    self.expect_urlopen(API_EVENT % '1', {})
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.fb.get_rsvp('123', '1', '456'))
 
   def test_get_albums_empty(self):
     self.expect_urlopen(API_ALBUMS % '000', {'data': []})
@@ -1772,19 +1781,51 @@ http://b http://c""",
     self.assert_equals(EVENT_OBJ, self.fb.event_to_object(EVENT))
 
   def test_event_to_object_with_rsvps(self):
-    self.assert_equals(EVENT_OBJ_WITH_ATTENDEES,
-                       self.fb.event_to_object(EVENT, rsvps=RSVPS))
+    obj = copy.deepcopy(EVENT_OBJ)
+    obj['notAttending'].append({
+      'objectType': 'person',
+      'displayName': 'Bob',
+      'id': tag_uri('345'),
+      'numeric_id': '345',
+      'url': 'https://www.facebook.com/345',
+      'image': {'url': 'https://graph.facebook.com/v2.6/345/picture?type=large'},
+    })
+    obj['maybeAttending'].append({
+      'objectType': 'person',
+      'displayName': 'Eve',
+      'id': tag_uri('678'),
+      'numeric_id': '678',
+      'url': 'https://www.facebook.com/678',
+      'image': {'url': 'https://graph.facebook.com/v2.6/678/picture?type=large'},
+    })
 
-  def test_event_to_activity_with_rsvps(self):
-    self.assert_equals(EVENT_ACTIVITY_WITH_ATTENDEES,
-                       self.fb.event_to_activity(EVENT, rsvps=RSVPS))
+    self.assert_equals(obj, self.fb.event_to_object(EVENT, rsvps=[
+      {'name': 'Bob', 'rsvp_status': 'declined', 'id': '345'},
+      {'name': 'Eve', 'rsvp_status': 'maybe', 'id': '678'},
+    ]))
+
+  def test_event_to_activity(self):
+    self.assert_equals(EVENT_ACTIVITY, self.fb.event_to_activity(EVENT))
 
   def test_rsvp_to_object(self):
-    self.assert_equals(RSVP_OBJS, [self.fb.rsvp_to_object(r) for r in RSVPS])
+    for rsvp, obj in RSVPS_TO_OBJS:
+      if rsvp == RSVP_INTERESTED:
+        continue
 
-  def test_rsvp_to_object_event(self):
-    objs = [self.fb.rsvp_to_object(r, event=EVENT) for r in RSVPS]
-    self.assert_equals(RSVP_OBJS_WITH_ID, objs)
+      # with event
+      self.assert_equals(obj, self.fb.rsvp_to_object(rsvp, event=EVENT))
+
+      # without event
+      obj = copy.deepcopy(obj)
+      del obj['id']
+      del obj['url']
+      if rsvp == RSVP_NOREPLY:
+        del obj['actor']
+      self.assert_equals(obj, self.fb.rsvp_to_object(rsvp))
+
+  def test_rsvp_to_object_with_type(self):
+    obj = self.fb.rsvp_to_object(RSVP_INTERESTED, type='interested', event=EVENT)
+    self.assert_equals(RSVP_INTERESTED_OBJ, obj)
 
   def test_picture_without_message(self):
     self.assert_equals({  # ActivityStreams
@@ -2213,18 +2254,20 @@ http://b http://c""",
 cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp(self):
-    for endpoint in 'attending', 'declined', 'maybe':
+    for endpoint in 'attending', 'declined', 'maybe', 'interested':
       self.expect_urlopen('234/' + endpoint, {"success": True}, data='')
 
     self.mox.ReplayAll()
-    for rsvp in RSVP_OBJS_WITH_ID[:3]:
+    for rsvp in RSVP_YES_OBJ, RSVP_NO_OBJ, RSVP_MAYBE_OBJ, RSVP_INTERESTED_OBJ:
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'https://www.facebook.com/234/'}]
+      created = self.fb.create(rsvp)
       self.assert_equals({'url': 'https://www.facebook.com/234/', 'type': 'rsvp'},
-                         self.fb.create(rsvp).content)
+                         created.content,
+                         '%s\n%s' % (created.content, rsvp))
 
     preview = self.fb.preview_create(rsvp)
-    self.assertEquals('<span class="verb">RSVP maybe</span> to '
+    self.assertEquals('<span class="verb">RSVP interested</span> to '
                       '<a href="https://www.facebook.com/234/">this event</a>.',
                       preview.description)
 
@@ -2236,7 +2279,7 @@ cc Sam G, Michael M<br />""", preview.description)
       self.assertIn('Cannot publish', result.error_html)
 
   def test_create_rsvp_without_in_reply_to(self):
-    for rsvp in RSVP_OBJS_WITH_ID[:3]:
+    for rsvp in RSVP_YES_OBJ, RSVP_NO_OBJ, RSVP_MAYBE_OBJ, RSVP_INTERESTED_OBJ:
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'https://foo.com/1234'}]
       result = self.fb.create(rsvp)
