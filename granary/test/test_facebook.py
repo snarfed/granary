@@ -1058,8 +1058,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_self_photo_and_event(self):
     self.expect_urlopen(API_ME_POSTS, {'data': [PHOTO_POST]})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
-    self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
 
     self.mox.ReplayAll()
     self.assert_equals(
@@ -1114,8 +1113,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_self_owned_event_rsvps(self):
     self.expect_urlopen(API_ME_POSTS, {})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-    self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
 
     self.mox.ReplayAll()
     self.assert_equals([EVENT_ACTIVITY], self.fb.get_activities(
@@ -1124,27 +1122,16 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_self_unowned_event_no_rsvps(self):
     self.expect_urlopen(API_ME_POSTS, {})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-    self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
 
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True, event_owner_id='xyz'))
 
-  def test_get_activities_self_event_400s(self):
-    self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-    self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(API_EVENT % '145304994', EVENT, status=400)
-
-    self.mox.ReplayAll()
-    self.assert_equals([], self.fb.get_activities(
-      group_id=source.SELF, fetch_events=True))
-
   def test_get_activities_self_events_returns_list(self):
     self.expect_urlopen(API_ME_POSTS, {})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-    self.expect_urlopen('me/events', [])
+    self.expect_urlopen(API_USER_EVENTS, [])
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True))
@@ -1295,6 +1282,11 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assertIsNone(self.fb.get_event('145304994'))
 
+  def test_get_event_400s(self):
+    self.expect_urlopen(API_EVENT % '145304994', status=400)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_event('145304994'))
+
   def test_get_activities_group_excludes_shared_story(self):
     self.expect_urlopen(
       'me/home?offset=0',
@@ -1373,8 +1365,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_matches_extras_with_correct_activity(self):
     self.expect_urlopen(API_ME_POSTS, {'data': [POST]})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-    self.expect_urlopen('me/events', {'data': [EVENT]})
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
+    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
     self.expect_urlopen('sharedposts?ids=212038_10100176064482163',
                         {'212038_10100176064482163': {'data': [SHARE]}})
     self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163',

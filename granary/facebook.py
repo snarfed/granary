@@ -68,7 +68,8 @@ API_COMMENT = '%s?fields=' + API_COMMENTS_FIELDS
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
-API_EVENT = '%s?fields=id,attending,comments,declined,description,end_time,interested,invited,maybe,noreply,name,owner,picture,place,start_time,timezone,updated_time'
+API_EVENT_FIELDS = 'id,attending,comments,declined,description,end_time,interested,maybe,noreply,name,owner,picture,place,rsvp_status,start_time,timezone,updated_time'
+API_EVENT = '%s?fields=' + API_EVENT_FIELDS
 # /user/home requires the read_stream permission, which you probably don't have.
 # details in the file docstring.
 # https://developers.facebook.com/docs/graph-api/reference/user/home
@@ -77,15 +78,16 @@ API_HOME = '%s/home?offset=%d'
 API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,shares,updated_time'
 API_ALBUMS = '%s/albums?fields=id,count,created_time,from,link,name,privacy,type,updated_time'
 API_POST_OBJECT = '%s_%s?fields=object_id'  # USERID_POSTID
-POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,shares,source,status_type,story,to,type,updated_time,with_tags'
-API_SELF_POSTS = '%s/feed?offset=%d&fields=' + POST_FIELDS
+API_POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,shares,source,status_type,story,to,type,updated_time,with_tags'
+API_SELF_POSTS = '%s/feed?offset=%d&fields=' + API_POST_FIELDS
 API_SHARES = 'sharedposts?ids=%s'
-API_USER_EVENTS = 'me/events'  # includes yes, maybe, interested
-API_USER_EVENTS_DECLINED = 'me/events?type=declined'
-API_USER_EVENTS_NOT_REPLIED = 'me/events?type=not_replied'
+# by default, me/events only includes events that the user has RSVPed yes,
+# maybe, or interested to.
+API_USER_EVENTS = 'me/events?fields=' + API_EVENT_FIELDS
+API_USER_EVENTS_DECLINED = 'me/events?type=declined&fields=' + API_EVENT_FIELDS
+API_USER_EVENTS_NOT_REPLIED = 'me/events?type=not_replied&fields=' + API_EVENT_FIELDS
 # https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/
-API_NEWS_PUBLISHES = 'me/news.publishes?fields=' + POST_FIELDS
-
+API_NEWS_PUBLISHES = 'me/news.publishes?fields=' + API_POST_FIELDS
 API_PUBLISH_POST = 'me/feed'
 API_PUBLISH_COMMENT = '%s/comments'
 API_PUBLISH_LIKE = '%s/likes'
@@ -449,11 +451,8 @@ class Facebook(source.Source):
       list of ActivityStreams event objects
     """
     events = self.urlopen(API_USER_EVENTS, _as=list)
-
-    # have to re-fetch the individual event objects because the user events
-    # response doesn't include the event description.
-    return util.trim_nulls([self.get_event(event['id'], owner_id=owner_id)
-                            for event in events if event.get('id')])
+    return [self.event_to_activity(event) for event in events
+            if not owner_id or owner_id == event.get('owner', {}).get('id')]
 
   def get_event(self, event_id, owner_id=None):
     """Returns a Facebook event post.
