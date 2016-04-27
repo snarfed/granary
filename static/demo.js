@@ -11,10 +11,11 @@ function render_demo_request() {
   var user_id = get('user_id') || '@me';
 
   var url = window.location.origin + '/' +
-      site + '/' + user_id + '/' +
+      site + '/' + encodeURIComponent(user_id) + '/' +
       get('group_id') + '/@app/' +
-      (get('group_id') == '@search' ? '?search_query=' + get('search_query') + '&'
-                                    : get('activity_id') + '?') +
+      (get('group_id') == '@search'
+       ? '?search_query=' + encodeURIComponent(get('search_query')) + '&'
+       : encodeURIComponent(get('activity_id')) + '?') +
       'format=' + get('format');
 
   if (site != 'instagram') {
