@@ -77,9 +77,9 @@ API_EVENT = '%s?fields=' + API_EVENT_FIELDS
 API_HOME = '%s/home?offset=%d'
 API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,shares,updated_time'
 API_ALBUMS = '%s/albums?fields=id,count,created_time,from,link,name,privacy,type,updated_time'
-API_POST_OBJECT = '%s_%s?fields=object_id'  # USERID_POSTID
 API_POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,shares,source,status_type,story,to,type,updated_time,with_tags'
 API_SELF_POSTS = '%s/feed?offset=%d&fields=' + API_POST_FIELDS
+API_OBJECT = '%s_%s?fields=' + API_POST_FIELDS  # USERID_POSTID
 API_SHARES = 'sharedposts?ids=%s'
 # by default, me/events only includes events that the user has RSVPed yes,
 # maybe, or interested to.
@@ -246,41 +246,16 @@ class Facebook(source.Source):
       raise NotImplementedError()
 
     activities = []
+
     if activity_id:
-      # Sometimes Facebook requires post ids in USERID_POSTID format; sometimes
-      # it doesn't accept that format. I can't tell which is which yet, so try
-      # them all.
-      #
-      # For example, posts with link attachments only return the 'link' field
-      # when fetched with the user id prefix, e.g. /212038_10101610780998763,
-      # not with just the id, e.g. /10101610780998763. Details:
-      # https://github.com/snarfed/bridgy/issues/388
-      #
-      # Alternatively, photos include likes when fetched with just the id, but
-      # not with the user id prefix. Details:
-      # https://github.com/snarfed/bridgy/issues/424
-      if '_' in activity_id:
-        suffix = activity_id.split('_', 1)[1]
-        ids_to_try = [activity_id, suffix]
-        if user_id:
-          ids_to_try.insert(1, '_'.join((user_id, suffix)))
-      elif user_id:
-        ids_to_try = ['_'.join((user_id, activity_id)), activity_id]
+      if not user_id:
+        user_id, activity_id = activity_id.split('_', 1)
+      post = self.urlopen(API_OBJECT % (user_id, activity_id))
+      if post.get('error'):
+        logging.warning("Couldn't fetch object %s: %s", activity_id, post)
+        posts = []
       else:
-        ids_to_try = [activity_id]
-
-      post = {}
-      for id in ids_to_try:
-        try:
-          resp = self.urlopen(id)
-          if resp.get('error'):
-            logging.warning("Couldn't fetch object %s: %s", id, resp)
-          else:
-            post.update(resp)
-        except urllib2.URLError, e:
-          logging.warning("Couldn't fetch object %s: %s", id, e)
-
-      posts = [post] if post else []
+        posts = [post]
 
     else:
       url = API_SELF_POSTS if group_id == source.SELF else API_HOME
@@ -1628,7 +1603,7 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
       post_id = parsed.post
 
     with util.ignore_http_4xx_error():
-      post = self.urlopen(API_POST_OBJECT % (user_id, post_id))
+      post = self.urlopen(API_OBJECT % (user_id, post_id))
       resolved = post.get('object_id')
       if resolved:
         logging.info('Resolved Facebook post id %r to %r.', post_id, resolved)

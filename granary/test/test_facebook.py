@@ -16,8 +16,8 @@ from granary import appengine_config
 from granary import facebook
 from granary.facebook import \
   API_ALBUMS, API_BASE, API_COMMENTS_ALL, API_EVENT, API_USER_EVENTS, \
-  API_NEWS_PUBLISHES, API_PHOTOS_UPLOADED, API_PUBLISH_PHOTO, API_PUBLISH_POST, \
-  API_UPLOAD_VIDEO
+  API_NEWS_PUBLISHES, API_OBJECT, API_PHOTOS_UPLOADED, API_PUBLISH_PHOTO, \
+  API_PUBLISH_POST, API_UPLOAD_VIDEO
 from granary import source
 
 API_ME_POSTS = facebook.API_SELF_POSTS % ('me', 0)
@@ -1144,8 +1144,7 @@ class FacebookTest(testutil.HandlerTest):
     self.fb.get_activities()
 
   def test_get_activities_activity_id_overrides_others(self):
-    self.expect_urlopen('123_000', POST)
-    self.expect_urlopen('000', POST)
+    self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -1154,14 +1153,13 @@ class FacebookTest(testutil.HandlerTest):
         start_index=3, count=6))
 
   def test_get_activities_activity_id_not_found(self):
-    for id in '0_0', '0':
-      self.expect_urlopen('%s' % id, {
-          'error': {
-            'message': '(#803) Some of the aliases you requested do not exist: 0',
-            'type': 'OAuthException',
-            'code': 803
-          }
-        })
+    self.expect_urlopen(API_OBJECT % ('0', '0'), {
+      'error': {
+        'message': '(#803) Some of the aliases you requested do not exist: 0',
+        'type': 'OAuthException',
+        'code': 803
+      }
+    })
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(activity_id='0_0'))
 
@@ -1170,38 +1168,17 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.fb.get_activities(start_index=3, count=5)
 
-  def test_get_activities_activity_id_with_user_id(self):
-    """Check that we fetch both forms of the id and merge the results."""
-    self.expect_urlopen('12_34', {'id': '123'})
-    self.expect_urlopen('34', {'message': 'x'})
+  def test_get_activities_activity_id_with_underscore(self):
+    self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
     self.mox.ReplayAll()
-
-    obj = self.fb.get_activities(activity_id='34', user_id='12')[0]['object']
-    self.assertEquals('123', obj['fb_id'])
-    self.assertEquals('x', obj['content'])
-
-  def test_get_activities_activity_id_with_prefix(self):
-    """Check that we fetch both forms of the id and merge the results."""
-    self.expect_urlopen('12_34', {'id': '123'})
-    self.expect_urlopen('34', {'message': 'x'})
-    self.mox.ReplayAll()
-
     obj = self.fb.get_activities(activity_id='12_34')[0]['object']
     self.assertEquals('123', obj['fb_id'])
-    self.assertEquals('x', obj['content'])
 
-  def test_get_activities_activity_id_fallback_to_strip_prefix(self):
-    self.expect_urlopen('12_34', {}, status=404)
-    self.expect_urlopen('34', {})
+  def test_get_activities_activity_id_with_user_id(self):
+    self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
     self.mox.ReplayAll()
-    self.fb.get_activities(activity_id='12_34')
-
-  def test_get_activities_activity_id_fallback_to_user_id_param(self):
-    self.expect_urlopen('12_34', {}, status=400)
-    self.expect_urlopen('56_34', {}, status=500)
-    self.expect_urlopen('34', {})
-    self.mox.ReplayAll()
-    self.fb.get_activities(activity_id='12_34', user_id='56')
+    obj = self.fb.get_activities(activity_id='34', user_id='12')[0]['object']
+    self.assertEquals('123', obj['fb_id'])
 
   def test_get_activities_request_etag(self):
     self.expect_urlopen('me/home?offset=0', {},
@@ -1479,20 +1456,17 @@ class FacebookTest(testutil.HandlerTest):
     self.assertRaises(urllib2.HTTPError, self.fb.get_share, '', '', '123')
 
   def test_get_like(self):
-    self.expect_urlopen('123_000', POST)
-    self.expect_urlopen('000', POST)
+    self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
     self.mox.ReplayAll()
     self.assert_equals(LIKE_OBJS[1], self.fb.get_like('123', '000', '683713'))
 
   def test_get_like_not_found(self):
-    self.expect_urlopen('123_000', POST)
-    self.expect_urlopen('000', POST)
+    self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
     self.mox.ReplayAll()
     self.assert_equals(None, self.fb.get_like('123', '000', '999'))
 
   def test_get_like_no_activity(self):
-    self.expect_urlopen('123_000', {})
-    self.expect_urlopen('000', {})
+    self.expect_urlopen(API_OBJECT % ('123', '000'), {})
     self.mox.ReplayAll()
     self.assert_equals(None, self.fb.get_like('123', '000', '683713'))
 
@@ -2449,14 +2423,15 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_resolve_object_id(self):
     for i in range(3):
-      self.expect_urlopen('111_222?fields=object_id', {'id': '0', 'object_id': '333'})
+      self.expect_urlopen(API_OBJECT % ('111', '222'),
+                          {'id': '0', 'object_id': '333'})
     self.mox.ReplayAll()
 
     for id in '222', '222:0', '111_222_9':
       self.assertEqual('333', self.fb.resolve_object_id(111, id))
 
   def test_resolve_object_id_fetch_400s(self):
-    self.expect_urlopen('111_222?fields=object_id', {}, status=400)
+    self.expect_urlopen(API_OBJECT % ('111', '222'), {}, status=400)
     self.mox.ReplayAll()
     self.assertIsNone(self.fb.resolve_object_id('111', '222'))
 
