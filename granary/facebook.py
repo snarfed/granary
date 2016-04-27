@@ -497,18 +497,15 @@ class Facebook(source.Source):
     """Returns an ActivityStreams RSVP activity object.
 
     Args:
-      activity_user_id: string id of the user who posted the event
+      activity_user_id: string id of the user who posted the event. unused.
       event_id: string event id
       user_id: string user id
     """
-    event = self.get_event(event_id)
-    if not event:
-      return
-
-    for field in source.RSVP_TO_EVENT.values():
-      for rsvp in event.get('object', {}).get(field, []):
-        if util.parse_tag_uri(rsvp['id'])[1] == user_id:
-          return rsvp
+    event = self.urlopen(API_EVENT % event_id)
+    for field in RSVP_FIELDS:
+      for rsvp in event.get(field, {}).get('data', []):
+        if rsvp.get('id') == user_id:
+          return self.rsvp_to_object(rsvp, type=field, event=event)
 
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):

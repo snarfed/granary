@@ -1475,14 +1475,13 @@ class FacebookTest(testutil.HandlerTest):
     self.assert_equals(None, self.fb.get_like('123', '000', '683713'))
 
   def test_get_rsvp(self):
-    for i in range(len(RSVPS_TO_OBJS)):
+    for _ in RSVPS_TO_OBJS:
       self.expect_urlopen(API_EVENT % '1', EVENT)
     self.mox.ReplayAll()
 
     for rsvp, obj in RSVPS_TO_OBJS:
-      expected = obj.get('object') or obj.get('actor')
-      user_id = expected['numeric_id']
-      self.assert_equals(expected, self.fb.get_rsvp('unused', '1', user_id))
+      user_id = (obj.get('object') or obj.get('actor'))['numeric_id']
+      self.assert_equals(obj, self.fb.get_rsvp('unused', '1', user_id))
 
   def test_get_rsvp_not_found(self):
     self.expect_urlopen(API_EVENT % '1', EVENT)
