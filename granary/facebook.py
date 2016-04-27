@@ -77,7 +77,7 @@ API_EVENT = '%s?fields=' + API_EVENT_FIELDS
 API_HOME = '%s/home?offset=%d'
 API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,shares,updated_time'
 API_ALBUMS = '%s/albums?fields=id,count,created_time,from,link,name,privacy,type,updated_time'
-API_POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,shares,source,status_type,story,to,type,updated_time,with_tags'
+API_POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,sharedposts,shares,source,status_type,story,to,type,updated_time,with_tags'
 API_SELF_POSTS = '%s/feed?offset=%d&fields=' + API_POST_FIELDS
 API_OBJECT = '%s_%s?fields=' + API_POST_FIELDS  # USERID_POSTID
 API_SHARES = 'sharedposts?ids=%s'
@@ -488,10 +488,26 @@ class Facebook(source.Source):
       activity_id: string activity id
       share_id: string id of the share object
     """
+    orig_id = '%s_%s' % (activity_user_id, activity_id)
+
     # shares sometimes 400, not sure why.
     # https://github.com/snarfed/bridgy/issues/348
+    shares = {}
     with util.ignore_http_4xx_error():
-      return self.share_to_object(self.urlopen(share_id))
+      shares = self.urlopen(API_SHARES % orig_id, _as=dict)
+
+    shares = shares.get(orig_id, {}).get('data', [])
+    if not shares:
+      return
+
+    for share in shares:
+      id = share.get('id')
+      if not id:
+        continue
+      user_id, obj_id = id.split('_', 1)  # strip user id prefix
+      if share_id == id == share_id or share_id == obj_id:
+        with util.ignore_http_4xx_error():
+          return self.share_to_object(self.urlopen(API_OBJECT % (user_id, obj_id)))
 
   def get_rsvp(self, activity_user_id, event_id, user_id):
     """Returns an ActivityStreams RSVP activity object.
@@ -964,6 +980,8 @@ class Facebook(source.Source):
 
   def post_to_object(self, post, is_comment=False):
     """Converts a post to an object.
+
+    TODO: handle the sharedposts field
 
     Args:
       post: dict, a decoded JSON post

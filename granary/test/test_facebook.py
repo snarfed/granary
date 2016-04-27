@@ -17,7 +17,7 @@ from granary import facebook
 from granary.facebook import \
   API_ALBUMS, API_BASE, API_COMMENTS_ALL, API_EVENT, API_USER_EVENTS, \
   API_NEWS_PUBLISHES, API_OBJECT, API_PHOTOS_UPLOADED, API_PUBLISH_PHOTO, \
-  API_PUBLISH_POST, API_UPLOAD_VIDEO
+  API_PUBLISH_POST, API_SHARES, API_UPLOAD_VIDEO
 from granary import source
 
 API_ME_POSTS = facebook.API_SELF_POSTS % ('me', 0)
@@ -1015,7 +1015,7 @@ class FacebookTest(testutil.HandlerTest):
                           {'id': '1_2', 'message': 'foo'},
                           {'id': '3_4', 'message': 'bar'},
                         ]})
-    self.expect_urlopen('sharedposts?ids=1_2,3_4', {
+    self.expect_urlopen(API_SHARES % '1_2,3_4', {
         '1_2': {'data': [SHARE, SHARE]},
         '3_4': {'data': []},
       })
@@ -1033,7 +1033,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_fetch_shares_returns_list(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
-    self.expect_urlopen('sharedposts?ids=1_2', ['asdf'])
+    self.expect_urlopen(API_SHARES % '1_2', ['asdf'])
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
@@ -1042,7 +1042,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_fetch_shares_returns_boolean(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
-    self.expect_urlopen('sharedposts?ids=1_2', {'1_2': False})
+    self.expect_urlopen(API_SHARES % '1_2', {'1_2': False})
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
@@ -1206,7 +1206,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_sharedposts_400(self):
     self.expect_urlopen('me/home?offset=0',
                         {'data': [{'id': '1_2'}, {'id': '3_4'}]})
-    self.expect_urlopen('sharedposts?ids=1_2,3_4', status=400)
+    self.expect_urlopen(API_SHARES % '1_2,3_4', status=400)
     self.mox.ReplayAll()
 
     got = self.fb.get_activities(fetch_shares=True)
@@ -1217,9 +1217,9 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_too_many_ids(self):
     ids = ['1', '2', '3', '4', '5']
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': id} for id in ids]})
-    self.expect_urlopen('sharedposts?ids=1,2', {'1': {'data': [{'id': '222'}]}})
-    self.expect_urlopen('sharedposts?ids=3,4', {'2': {'data': [{'id': '444'}]}})
-    self.expect_urlopen('sharedposts?ids=5', {})
+    self.expect_urlopen(API_SHARES % '1,2', {'1': {'data': [{'id': '222'}]}})
+    self.expect_urlopen(API_SHARES % '3,4', {'2': {'data': [{'id': '444'}]}})
+    self.expect_urlopen(API_SHARES % '5', {})
     self.expect_urlopen(API_COMMENTS_ALL % '1,2', {'1': {'data': [{'id': '111'}]}})
     self.expect_urlopen(API_COMMENTS_ALL % '3,4', {'1': {'data': [{'id': '333'}]}})
     self.expect_urlopen(API_COMMENTS_ALL % '5', {})
@@ -1333,7 +1333,7 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_ME_POSTS,
                         {'data': [FB_NOTE, FB_CREATED_NOTE, FB_LINK]})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-    self.expect_urlopen('sharedposts?ids=555', [])
+    self.expect_urlopen(API_SHARES % '555', [])
     self.expect_urlopen(API_COMMENTS_ALL % '555', {})
 
     self.mox.ReplayAll()
@@ -1347,7 +1347,7 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_ME_POSTS, {'data': [POST]})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
-    self.expect_urlopen('sharedposts?ids=212038_10100176064482163',
+    self.expect_urlopen(API_SHARES % '212038_10100176064482163',
                         {'212038_10100176064482163': {'data': [SHARE]}})
     self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163',
                         {'212038_10100176064482163': {'data': COMMENTS}})
@@ -1363,7 +1363,7 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_NEWS_PUBLISHES, {'data': [FB_NEWS_PUBLISH]})
     self.expect_urlopen(API_PHOTOS_UPLOADED, {})
     # should only fetch sharedposts for POST, not FB_NEWS_PUBLISH
-    self.expect_urlopen('sharedposts?ids=212038_10100176064482163', {})
+    self.expect_urlopen(API_SHARES % '212038_10100176064482163', {})
 
     self.mox.ReplayAll()
     got = self.fb.get_activities(group_id=source.SELF, fetch_news=True,
@@ -1445,19 +1445,39 @@ class FacebookTest(testutil.HandlerTest):
     self.assertRaises(urllib2.HTTPError, self.fb.get_comment, '123')
 
   def test_get_share(self):
-    self.expect_urlopen('123', SHARE)
+    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
+    self.expect_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')), SHARE)
     self.mox.ReplayAll()
-    self.assert_equals(SHARE_OBJ, self.fb.get_share('', '', '123'))
+    self.assert_equals(SHARE_OBJ, self.fb.get_share('1', '2', SHARE['id']))
+
+  def test_get_share_without_user_id_prefix(self):
+    user_id, share_id = SHARE['id'].split('_')
+    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
+    self.expect_urlopen(API_OBJECT % (user_id, share_id), SHARE)
+    self.mox.ReplayAll()
+    self.assert_equals(SHARE_OBJ, self.fb.get_share('1', '2', share_id))
+
+  def test_get_share_missing(self):
+    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': '34_56'}]}})
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_share('1', '2', '78'))
 
   def test_get_share_400s(self):
-    self.expect_urlopen('123', {}, status=400)
+    self.expect_urlopen(API_SHARES % '1_2', {}, status=400)
     self.mox.ReplayAll()
-    self.assertIsNone(self.fb.get_share('', '', '123'))
+    self.assertIsNone(self.fb.get_share('1', '2', '_'))
+
+  def test_get_share_obj_400s(self):
+    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
+    self.expect_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')), SHARE,
+                        status=400)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_share('1', '2', SHARE['id']))
 
   def test_get_share_500s(self):
-    self.expect_urlopen('123', {}, status=500)
+    self.expect_urlopen(API_SHARES % '1_2', {}, status=500)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.fb.get_share, '', '', '123')
+    self.assertRaises(urllib2.HTTPError, self.fb.get_share, '1', '2', '_')
 
   def test_get_like(self):
     self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
