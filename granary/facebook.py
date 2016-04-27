@@ -68,7 +68,7 @@ API_COMMENT = '%s?fields=' + API_COMMENTS_FIELDS
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
-API_EVENT_FIELDS = 'id,attending,comments,declined,description,end_time,interested,maybe,noreply,name,owner,picture,place,rsvp_status,start_time,timezone,updated_time'
+API_EVENT_FIELDS = 'id,attending,comments,declined,description,end_time,interested,maybe,noreply,name,owner,picture,place,start_time,timezone,updated_time'
 API_EVENT = '%s?fields=' + API_EVENT_FIELDS
 # /user/home requires the read_stream permission, which you probably don't have.
 # details in the file docstring.
@@ -83,7 +83,10 @@ API_OBJECT = '%s_%s?fields=' + API_POST_FIELDS  # USERID_POSTID
 API_SHARES = 'sharedposts?ids=%s'
 # by default, me/events only includes events that the user has RSVPed yes,
 # maybe, or interested to.
-API_USER_EVENTS = 'me/events?fields=' + API_EVENT_FIELDS
+#
+# also note that it includes the rsvp_status field, which isn't in
+# API_EVENT_FIELDS because individual event objects don't support it.
+API_USER_EVENTS = 'me/events?fields=rsvp_status,' + API_EVENT_FIELDS
 API_USER_EVENTS_DECLINED = 'me/events?type=declined&fields=' + API_EVENT_FIELDS
 API_USER_EVENTS_NOT_REPLIED = 'me/events?type=not_replied&fields=' + API_EVENT_FIELDS
 # https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/
