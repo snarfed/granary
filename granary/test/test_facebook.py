@@ -1180,6 +1180,10 @@ class FacebookTest(testutil.HandlerTest):
     obj = self.fb.get_activities(activity_id='34', user_id='12')[0]['object']
     self.assertEquals('123', obj['fb_id'])
 
+  def test_get_activities_activity_id_no_underscore_or_user_id(self):
+    with self.assertRaises(NotImplementedError):
+      self.fb.get_activities(activity_id='34')
+
   def test_get_activities_request_etag(self):
     self.expect_urlopen('me/home?offset=0', {},
                         headers={'If-none-match': '"my etag"'})

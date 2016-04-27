@@ -249,6 +249,9 @@ class Facebook(source.Source):
 
     if activity_id:
       if not user_id:
+        if '_' not in activity_id:
+          raise NotImplementedError(
+            'Facebook activity ids must be of the form USERID_POSTID')
         user_id, activity_id = activity_id.split('_', 1)
       post = self.urlopen(API_OBJECT % (user_id, activity_id))
       if post.get('error'):
