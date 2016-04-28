@@ -31,7 +31,7 @@ LIKES = [{
 REACTIONS = [{
   'id': 'tag:fake.com:apple',
   'verb': 'react',
-  'content': u'🍎',
+  'content': u'✁',
   'author': {'id': 'tag:fake.com:5'},
   'object': {'url': 'http://foo/like/5'},
 }]

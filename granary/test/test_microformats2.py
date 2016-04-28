@@ -380,6 +380,23 @@ foo
       'object': {'url': 'https://orig/post'},
     }))
 
+  def test_object_to_json_multiple_object_urls(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'content': [{'html': u'✁', 'value': u'✁'}],
+        'in-reply-to': ['https://orig/post/1', 'https://orig/post/2'],
+      },
+    }, microformats2.object_to_json({
+      'objectType': 'activity',
+      'verb': 'react',
+      'content': u'✁',
+      'object': [
+        {'url': 'https://orig/post/1'},
+        {'url': 'https://orig/post/2'},
+      ],
+    }))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),

@@ -135,7 +135,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     'inReplyTo', obj.get('context', {}).get('inReplyTo', []))
   is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
   if (is_rsvp or obj_type == 'react') and obj.get('object'):
-    in_reply_tos.append(obj['object'])
+    objs = obj['object']
+    in_reply_tos.extend(objs if isinstance(objs, list) else [objs])
 
   # TODO: more tags. most will be p-category?
   ret = {
