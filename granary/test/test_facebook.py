@@ -1589,6 +1589,33 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals([ALBUM_OBJ, album_2_obj], self.fb.get_albums())
 
+  def test_get_reaction_full_id(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
+      '123', '10100176064482163', '100006', '10100176064482163_sad_by_100006'))
+
+  def test_get_reaction_short_id(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
+      '123', '10100176064482163', '100006', 'sad'))
+
+  def test_get_reaction_ignores_likes(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_reaction(
+      '123', '10100176064482163', '100004', 'like'))
+
+  def test_get_reaction_missing(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_reaction(
+      '123', '10100176064482163', '100006', 'wow'))
+    self.assertIsNone(self.fb.get_reaction(
+      '123', '10100176064482163', '100009', 'sad'))
+
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.fb.post_to_activity(POST))
 

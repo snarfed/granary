@@ -544,6 +544,22 @@ class Facebook(source.Source):
     url = API_ALBUMS % (user_id if user_id is not None else 'me')
     return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
 
+  def get_reaction(self, activity_user_id, activity_id, reaction_user_id,
+                   reaction_id):
+    """Fetches and returns a reaction.
+
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      activity_id: string activity id
+      reaction_user_id: string id of the user who reacted
+      reaction_id: string id of the reaction. one of:
+        'love', 'wow', 'haha', 'sad', 'angry'
+    """
+    if '_' not in reaction_id:  # handle just name of reaction type
+      reaction_id = '%s_%s_by_%s' % (activity_id, reaction_id, reaction_user_id)
+    return super(Facebook, self).get_reaction(activity_user_id, activity_id,
+                                              reaction_user_id, reaction_id)
+
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
