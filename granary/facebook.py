@@ -75,9 +75,9 @@ API_EVENT = '%s?fields=' + API_EVENT_FIELDS
 # https://developers.facebook.com/docs/graph-api/reference/user/home
 # https://github.com/snarfed/granary/issues/26
 API_HOME = '%s/home?offset=%d'
-API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,shares,updated_time'
+API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,reactions,shares,updated_time'
 API_ALBUMS = '%s/albums?fields=id,count,created_time,from,link,name,privacy,type,updated_time'
-API_POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,sharedposts,shares,source,status_type,story,to,type,updated_time,with_tags'
+API_POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,reactions,sharedposts,shares,source,status_type,story,to,type,updated_time,with_tags'
 API_SELF_POSTS = '%s/feed?offset=%d&fields=' + API_POST_FIELDS
 API_OBJECT = '%s_%s?fields=' + API_POST_FIELDS  # USERID_POSTID
 API_SHARES = 'sharedposts?ids=%s'
@@ -161,6 +161,14 @@ RSVP_PUBLISH_ENDPOINTS = {
   'rsvp-maybe': API_PUBLISH_RSVP_MAYBE,
   'rsvp-interested': API_PUBLISH_RSVP_INTERESTED,
 }
+REACTION_CONTENT = {
+  'LOVE': u'❤️',
+  'WOW': u'😲',
+  'HAHA': u'😆',
+  'SAD': u'😢',
+  'ANGRY': u'😡',
+  # nothing for LIKE (it's a like :P) or for NONE
+}
 
 FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
 
@@ -225,9 +233,10 @@ class Facebook(source.Source):
 
     See method docstring in source.py for details.
 
-    Likes and *top-level* replies (ie comments) are always included. They come
-    from the 'comments' and 'likes' fields in the Graph API's Post object:
-    https://developers.facebook.com/docs/reference/api/post/#u_0_3
+    Likes, *top-level* replies (ie comments), and reactions are always included.
+    They come from the 'comments', 'likes', and 'reactions' fields in the Graph
+    API's Post object:
+    https://developers.facebook.com/docs/reference/api/post/
 
     Threaded comments, ie comments in reply to other top-level comments, require
     an additional API call, so they're only included if fetch_replies is True.
@@ -1060,28 +1069,42 @@ class Facebook(source.Source):
       message_tags = list(message_tags)  # fingers crossed! :P
 
     # tags and likes
-    tags = itertools.chain(post.get('to', {}).get('data', []),
-                           post.get('with_tags', {}).get('data', []),
-                           message_tags)
+    tags = (self._as(list, post.get('to', {})) +
+            self._as(list, post.get('with_tags', {})) +
+            message_tags)
     obj['tags'] = [self.postprocess_object({
-        'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
-        'id': self.tag_uri(t.get('id')),
-        'url': self.object_url(t.get('id')),
-        'displayName': t.get('name'),
-        'startIndex': t.get('offset'),
-        'length': t.get('length'),
-        }) for t in tags]
+      'objectType': OBJECT_TYPES.get(t.get('type'), 'person'),
+      'id': self.tag_uri(t.get('id')),
+      'url': self.object_url(t.get('id')),
+      'displayName': t.get('name'),
+      'startIndex': t.get('offset'),
+      'length': t.get('length'),
+    }) for t in tags]
 
-    likes = post.get('likes')
-    if isinstance(likes, dict):
-      obj['tags'] += [self.postprocess_object({
-          'id': '%s_liked_by_%s' % (obj['id'], like.get('id')),
-          'url': url + '#liked-by-%s' % like.get('id'),
+    obj['tags'] += [self.postprocess_object({
+      'id': '%s_liked_by_%s' % (obj['id'], like.get('id')),
+      'url': url + '#liked-by-%s' % like.get('id'),
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': {'url': url},
+      'author': self.user_to_actor(like),
+    }) for like in self._as(list, post.get('likes', {}))]
+
+    for reaction in self._as(list, post.get('reactions', {})):
+      id = reaction.get('id')
+      type = reaction.get('type', '')
+      content = REACTION_CONTENT.get(type)
+      if content:
+        type = type.lower()
+        obj['tags'].append(self.postprocess_object({
+          'id': '%s_%s_by_%s' % (obj['id'], type, id),
+          'url': url + '#%s-by-%s' % (type, id),
           'objectType': 'activity',
-          'verb': 'like',
+          'verb': 'react',
+          'content': content,
           'object': {'url': url},
-          'author': self.user_to_actor(like),
-          }) for like in likes.get('data', [])]
+          'author': self.user_to_actor(reaction),
+        }))
 
     # Escape HTML characters: <, >, &. Have to do it manually, instead of
     # reusing e.g. cgi.escape, so that we can shuffle over each tag startIndex
