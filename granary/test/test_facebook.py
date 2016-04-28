@@ -603,7 +603,7 @@ PHOTO_OBJ = {  # ActivityStreams
     'url': 'https://www.facebook.com/212038/posts/222#wow-by-777',
     'objectType': 'activity',
     'verb': 'react',
-    'content': u'😲',
+    'content': u'😮',
     'object': {'url': 'https://www.facebook.com/212038/posts/222'},
     'author': {
       'objectType': 'person',

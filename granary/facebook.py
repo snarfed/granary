@@ -163,7 +163,7 @@ RSVP_PUBLISH_ENDPOINTS = {
 }
 REACTION_CONTENT = {
   'LOVE': u'❤️',
-  'WOW': u'😲',
+  'WOW': u'😮',
   'HAHA': u'😆',
   'SAD': u'😢',
   'ANGRY': u'😡',
