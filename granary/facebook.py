@@ -532,6 +532,18 @@ class Facebook(source.Source):
         if rsvp.get('id') == user_id:
           return self.rsvp_to_object(rsvp, type=field, event=event)
 
+  def get_albums(self, user_id=None):
+    """Fetches and returns a user's photo albums.
+
+    Args:
+      user_id: string id or username. Defaults to 'me', ie the current user.
+
+    Returns:
+      sequence of ActivityStream album object dicts
+    """
+    url = API_ALBUMS % (user_id if user_id is not None else 'me')
+    return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
+
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
@@ -547,18 +559,6 @@ class Facebook(source.Source):
     """
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
-
-  def get_albums(self, user_id=None):
-    """Fetches and returns a user's photo albums.
-
-    Args:
-      user_id: string id or username. Defaults to 'me', ie the current user.
-
-    Returns:
-      sequence of ActivityStream album object dicts
-    """
-    url = API_ALBUMS % (user_id if user_id is not None else 'me')
-    return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
 
   def preview_create(self, obj, include_link=source.OMIT_LINK,
                      ignore_formatting=False):
