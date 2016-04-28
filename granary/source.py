@@ -42,8 +42,9 @@ RSVP_TO_EVENT = {
   'rsvp-yes': 'attending',
   'rsvp-no': 'notAttending',
   'rsvp-maybe': 'maybeAttending',
+  'rsvp-interested': 'interested',
   'invite': 'invited',
-  }
+}
 
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}
