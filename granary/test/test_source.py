@@ -20,40 +20,46 @@ import test_googleplus
 
 
 LIKES = [{
-    'verb': 'like',
-    'author': {'id': 'tag:fake.com:person', 'numeric_id': '5'},
-    'object': {'url': 'http://foo/like/5'},
-    }, {
-    'verb': 'like',
-    'author': {'id': 'tag:fake.com:6'},
-    'object': {'url': 'http://bar/like/6'},
-    },
-  ]
+  'verb': 'like',
+  'author': {'id': 'tag:fake.com:person', 'numeric_id': '5'},
+  'object': {'url': 'http://foo/like/5'},
+}, {
+  'verb': 'like',
+  'author': {'id': 'tag:fake.com:6'},
+  'object': {'url': 'http://bar/like/6'},
+}]
+REACTIONS = [{
+  'id': 'tag:fake.com:apple',
+  'verb': 'react',
+  'content': u'✁',
+  'author': {'id': 'tag:fake.com:5'},
+  'object': {'url': 'http://foo/like/5'},
+}]
 ACTIVITY = {
   'id': '1',
   'object': {
     'id': '1',
-    'tags': LIKES,
-    }
-  }
+    'tags': LIKES + REACTIONS,
+  },
+}
 RSVPS = [{
-    'id': 'tag:fake.com:246_rsvp_11500',
-    'objectType': 'activity',
-    'verb': 'rsvp-yes',
-    'actor': {'displayName': 'Aaron P', 'id': 'tag:fake.com,2013:11500'},
-    'url': 'https://facebook.com/246#11500',
-    }, {
-    'objectType': 'activity',
-    'verb': 'rsvp-no',
-    'actor': {'displayName': 'Ryan B'},
-    'url': 'https://facebook.com/246',
-    }, {
-    'id': 'tag:fake.com:246_rsvp_987',
-    'objectType': 'activity',
-    'verb': 'rsvp-maybe',
-    'actor': {'displayName': 'Foo', 'id': 'tag:fake.com,2013:987'},
-    'url': 'https://facebook.com/246#987',
-    }]
+  'id': 'tag:fake.com:246_rsvp_11500',
+  'objectType': 'activity',
+  'verb': 'rsvp-yes',
+  'actor': {'displayName': 'Aaron P', 'id': 'tag:fake.com,2013:11500'},
+  'url': 'https://facebook.com/246#11500',
+}, {
+  'objectType': 'activity',
+  'verb': 'rsvp-no',
+  'actor': {'displayName': 'Ryan B'},
+  'url': 'https://facebook.com/246',
+}, {
+  'id': 'tag:fake.com:246_rsvp_987',
+  'objectType': 'activity',
+  'verb': 'rsvp-maybe',
+  'actor': {'displayName': 'Foo', 'id': 'tag:fake.com,2013:987'},
+  'url': 'https://facebook.com/246#987',
+}]
 EVENT = {
   'id': 'tag:fake.com:246',
   'objectType': 'event',
@@ -65,7 +71,7 @@ EVENT_WITH_RSVPS.update({
   'attending': [RSVPS[0]['actor']],
   'notAttending': [RSVPS[1]['actor']],
   'maybeAttending': [RSVPS[2]['actor']],
-  })
+})
 
 
 class FakeSource(Source):
@@ -230,6 +236,19 @@ class SourceTest(testutil.TestCase):
                                fetch_likes=True).AndReturn([])
     self.mox.ReplayAll()
     self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
+
+  def test_get_reaction(self):
+    self.source.get_activities(user_id='author', activity_id='activity'
+                               ).AndReturn([ACTIVITY])
+    self.mox.ReplayAll()
+    self.assert_equals(REACTIONS[0], self.source.get_reaction(
+      'author', 'activity', '5', 'apple'))
+
+  def test_get_reaction_not_found(self):
+    self.source.get_activities(user_id='author', activity_id='activity'
+                               ).AndReturn([ACTIVITY])
+    self.mox.ReplayAll()
+    self.assertIsNone(self.source.get_reaction('author', 'activity', '5', 'foo'))
 
   def test_get_share(self):
     activity = copy.deepcopy(ACTIVITY)

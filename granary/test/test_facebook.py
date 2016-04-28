@@ -215,11 +215,18 @@ POST = {  # Facebook
     'data': COMMENTS,
     'count': len(COMMENTS),
     },
-  'likes': {
-    'data': [{'id': '100004', 'name': 'Alice X'},
-             {'id': '683713', 'name': 'Bob Y'},
-             ],
-    },
+  'likes': {'data': [
+    {'id': '100004', 'name': 'Alice X'},
+    {'id': '683713', 'name': 'Bob Y'},
+  ]},
+  'reactions': {'data': [
+    # possible types are NONE, LIKE, LOVE, WOW, HAHA, SAD, ANGRY
+    {'id': '100005', 'name': 'Laugher', 'type': 'HAHA'},
+    {'id': '100006', 'name': 'Cryer', 'type': 'SAD'},
+    # likes are duplicated in reactions
+    {'id': '100004', 'name': 'Alice X', 'type': 'LIKE'},
+    {'id': '683713', 'name': 'Bob Y', 'type': 'LIKE'},
+  ]},
   'privacy': {'value': 'EVERYONE'},
 }
 # based on https://developers.facebook.com/tools/explorer?method=GET&path=10101013177735493
@@ -245,7 +252,13 @@ PHOTO = {
       },
     ],
   },
-  'likes': {'data': [{'id': '666', 'name': 'Bob Bobertson'}]}
+  'likes': {'data': [
+    {'id': '666', 'name': 'Bob Bobertson'},
+  ]},
+  'reactions': {'data': [
+    {'id': '777', 'name': 'Wower', 'type': 'WOW'},
+    {'id': '666', 'name': 'Bob Bobertson', 'type': 'LIKE'},
+  ]},
 }
 PHOTO_POST = copy.deepcopy(POST)
 PHOTO_POST['object_id'] = '222'  # points to PHOTO
@@ -369,35 +382,65 @@ COMMENT_WITH_PHOTO_OBJ.update({
   }],
 })
 LIKE_OBJS = [{  # ActivityStreams
-    'id': tag_uri('10100176064482163_liked_by_100004'),
-    'url': 'https://www.facebook.com/212038/posts/10100176064482163#liked-by-100004',
-    'objectType': 'activity',
-    'verb': 'like',
-    'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
-    'author': {
-      'objectType': 'person',
-      'id': tag_uri('100004'),
-      'numeric_id': '100004',
-      'displayName': 'Alice X',
-      'url': 'https://www.facebook.com/100004',
-      'image': {'url': 'https://graph.facebook.com/v2.6/100004/picture?type=large'},
-      },
-    }, {
-    'id': tag_uri('10100176064482163_liked_by_683713'),
-    'url': 'https://www.facebook.com/212038/posts/10100176064482163#liked-by-683713',
-    'objectType': 'activity',
-    'verb': 'like',
-    'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
-    'author': {
-      'objectType': 'person',
-      'id': tag_uri('683713'),
-      'numeric_id': '683713',
-      'displayName': 'Bob Y',
-      'url': 'https://www.facebook.com/683713',
-      'image': {'url': 'https://graph.facebook.com/v2.6/683713/picture?type=large'},
-      },
-    },
-  ]
+  'id': tag_uri('10100176064482163_liked_by_100004'),
+  'url': 'https://www.facebook.com/212038/posts/10100176064482163#liked-by-100004',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('100004'),
+    'numeric_id': '100004',
+    'displayName': 'Alice X',
+    'url': 'https://www.facebook.com/100004',
+    'image': {'url': 'https://graph.facebook.com/v2.6/100004/picture?type=large'},
+  },
+}, {
+  'id': tag_uri('10100176064482163_liked_by_683713'),
+  'url': 'https://www.facebook.com/212038/posts/10100176064482163#liked-by-683713',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('683713'),
+    'numeric_id': '683713',
+    'displayName': 'Bob Y',
+    'url': 'https://www.facebook.com/683713',
+    'image': {'url': 'https://graph.facebook.com/v2.6/683713/picture?type=large'},
+  },
+}]
+REACTION_OBJS = [{  # ActivityStreams
+  'id': tag_uri('10100176064482163_haha_by_100005'),
+  'url': 'https://www.facebook.com/212038/posts/10100176064482163#haha-by-100005',
+  'objectType': 'activity',
+  'verb': 'react',
+  'content': u'😆',
+  'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('100005'),
+    'numeric_id': '100005',
+    'displayName': 'Laugher',
+    'url': 'https://www.facebook.com/100005',
+    'image': {'url': 'https://graph.facebook.com/v2.6/100005/picture?type=large'},
+  },
+}, {
+  'id': tag_uri('10100176064482163_sad_by_100006'),
+  'url': 'https://www.facebook.com/212038/posts/10100176064482163#sad-by-100006',
+  'objectType': 'activity',
+  'verb': 'react',
+  'content': u'😢',
+  'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('100006'),
+    'numeric_id': '100006',
+    'displayName': 'Cryer',
+    'url': 'https://www.facebook.com/100006',
+    'image': {'url': 'https://graph.facebook.com/v2.6/100006/picture?type=large'},
+  },
+}]
 SHARE_OBJ = {  # ActivityStreams
   'id': tag_uri('654'),
   'fb_id': '321_654',
@@ -494,7 +537,7 @@ POST_OBJ = {  # ActivityStreams
       'startIndex': 87,
       'length': 33,
       },
-    ] + LIKE_OBJS,
+    ] + LIKE_OBJS + REACTION_OBJS,
   'replies': {
     'items': COMMENT_OBJS,
     'totalItems': len(COMMENT_OBJS),
@@ -554,6 +597,21 @@ PHOTO_OBJ = {  # ActivityStreams
       'displayName': 'Bob Bobertson',
       'url': 'https://www.facebook.com/666',
       'image': {'url': 'https://graph.facebook.com/v2.6/666/picture?type=large'},
+    },
+  }, {
+    'id': tag_uri('222_wow_by_777'),
+    'url': 'https://www.facebook.com/212038/posts/222#wow-by-777',
+    'objectType': 'activity',
+    'verb': 'react',
+    'content': u'😲',
+    'object': {'url': 'https://www.facebook.com/212038/posts/222'},
+    'author': {
+      'objectType': 'person',
+      'id': tag_uri('777'),
+      'numeric_id': '777',
+      'displayName': 'Wower',
+      'url': 'https://www.facebook.com/777',
+      'image': {'url': 'https://graph.facebook.com/v2.6/777/picture?type=large'},
     },
   }],
 }
@@ -1530,6 +1588,33 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_ALBUMS % 'me', {'data': [ALBUM, album_2]})
     self.mox.ReplayAll()
     self.assert_equals([ALBUM_OBJ, album_2_obj], self.fb.get_albums())
+
+  def test_get_reaction_full_id(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
+      '123', '10100176064482163', '100006', '10100176064482163_sad_by_100006'))
+
+  def test_get_reaction_short_id(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
+      '123', '10100176064482163', '100006', 'sad'))
+
+  def test_get_reaction_ignores_likes(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_reaction(
+      '123', '10100176064482163', '100004', 'like'))
+
+  def test_get_reaction_missing(self):
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
+    self.mox.ReplayAll()
+    self.assertIsNone(self.fb.get_reaction(
+      '123', '10100176064482163', '100006', 'wow'))
+    self.assertIsNone(self.fb.get_reaction(
+      '123', '10100176064482163', '100009', 'sad'))
 
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.fb.post_to_activity(POST))
