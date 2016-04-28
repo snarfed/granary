@@ -56,7 +56,7 @@
   <link rel="alternate" type="text/html" href="{{ url }}" />
   <link rel="ostatus:conversation" href="{{ url }}" />
   {% for tag in obj.tags %}
-    {% if tag.url and tag.verb != 'like' and tag.verb != 'share' %}
+    {% if tag.url and tag.verb not in ('like', 'react', 'share') %}
       <link rel="ostatus:attention" href="{{ tag.url }}" />
       <link rel="mentioned" href="{{ tag.url }}" />
       {% if tag.displayName and not tag.startIndex %}

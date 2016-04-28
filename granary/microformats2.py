@@ -134,7 +134,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   in_reply_tos = obj.get(
     'inReplyTo', obj.get('context', {}).get('inReplyTo', []))
   is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
-  if is_rsvp and obj.get('object'):
+  if (is_rsvp or obj_type == 'react') and obj.get('object'):
     in_reply_tos.append(obj['object'])
 
   # TODO: more tags. most will be p-category?
@@ -651,11 +651,11 @@ def render_content(obj, include_location=True, synthesize_content=True):
       object_to_json(loc, default_object_type='place'),
       parent_props=['p-location'])
 
-  # other tags, except likes, (re)shares, and people. they're rendered manually
-  # in json_to_html().
-  tags.pop('like', [])
-  tags.pop('share', [])
-  tags.pop('person', [])
+  # these are rendered manually in json_to_html()
+  for type in 'like', 'share', 'react', 'person':
+    tags.pop(type, None)
+
+  # render the rest
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
   content += tags_to_html(tags.pop('mention', []), 'u-mention')
   content += tags_to_html(sum(tags.values(), []), 'tag')
