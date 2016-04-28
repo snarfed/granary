@@ -342,6 +342,24 @@ class Source(object):
                                      fetch_likes=True)
     return self._get_tag(activities, 'like', like_user_id)
 
+  def get_reaction(self, activity_user_id, activity_id, reaction_user_id,
+                   reaction_id):
+    """Returns an ActivityStreams 'reaction' activity object.
+
+    Default implementation that fetches the activity and its reactions, then
+    searches for this specific reaction. Subclasses should override this if they
+    can optimize the process.
+
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      activity_id: string activity id
+      reaction_user_id: string id of the user who reacted
+      reaction_id: string id of the reaction
+    """
+    activities = self.get_activities(user_id=activity_user_id,
+                                     activity_id=activity_id)
+    return self._get_tag(activities, 'react', reaction_user_id, reaction_id)
+
   def get_share(self, activity_user_id, activity_id, share_id):
     """Returns an ActivityStreams 'share' activity object.
 
@@ -380,14 +398,18 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def _get_tag(self, activities, verb, user_id):
+  def _get_tag(self, activities, verb, user_id, tag_id=None):
     if not activities:
       return None
 
     user_tag_id = self.tag_uri(user_id)
+    if tag_id:
+      tag_id = self.tag_uri(tag_id)
+
     for tag in activities[0].get('object', {}).get('tags', []):
       author = tag.get('author', {})
       if (tag.get('verb') == verb and
+          (not tag_id or tag_id == tag.get('id')) and
           (author.get('id') == user_tag_id or author.get('numeric_id') == user_id)):
         return tag
 
