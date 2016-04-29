@@ -141,7 +141,8 @@ VERBS = {
 }
 # The fields in an event object that contain invited and RSVPed users. Slightly
 # different from the rsvp_status field values, just to keep us entertained. :/
-RSVP_FIELDS = ('attending', 'maybe', 'interested', 'declined', 'noreply')
+# Ordered by precedence.
+RSVP_FIELDS = ('attending', 'declined', 'maybe', 'interested', 'noreply')
 # Maps rsvp_status field to AS verb.
 RSVP_VERBS = {
   'attending': 'rsvp-yes',
@@ -1360,12 +1361,19 @@ class Facebook(source.Source):
       'endTime': event.get('end_time'),
     })
 
-    rsvps = ([] if rsvps is None
-             else [self.rsvp_to_object(r, event=event) for r in rsvps])
-    for field in RSVP_FIELDS:
-      rsvps.extend(self.rsvp_to_object(r, type=field, event=event)
-                   for r in event.get(field, {}).get('data', []))
-    self.add_rsvps_to_event(obj, rsvps)
+    if rsvps:
+      self.add_rsvps_to_event(
+        obj, [self.rsvp_to_object(r, event=event) for r in rsvps])
+
+    # de-dupe the event's RSVPs by (user) id. RSVP_FIELDS is ordered by
+    # precedence, so iterate in reverse order so higher precedence fields
+    # override.
+    id_to_rsvp = {}
+    for field in reversed(RSVP_FIELDS):
+      for rsvp in event.get(field, {}).get('data', []):
+        rsvp = self.rsvp_to_object(rsvp, type=field, event=event)
+        id_to_rsvp[rsvp['id']] = rsvp
+    self.add_rsvps_to_event(obj, id_to_rsvp.values())
 
     return self.postprocess_object(obj)
 

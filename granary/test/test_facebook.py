@@ -304,9 +304,10 @@ EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
   },
   'attending': {'data': [RSVP_ATTENDING]},
   'maybe': {'data': [RSVP_MAYBE]},
-  'interested': {'data': [RSVP_INTERESTED]},
   'declined': {'data': [RSVP_DECLINED]},
   'noreply': {'data': [RSVP_NOREPLY]},
+  # maybes are often (always?) duplicated in interested
+  'interested': {'data': [RSVP_MAYBE, RSVP_INTERESTED]},
 }
 
 COMMENT_OBJS = [  # ActivityStreams
