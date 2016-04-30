@@ -1062,6 +1062,26 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals('RT <a href="https://twitter.com/orig">@orig</a>: a <a href="https://twitter.com/danshipper">@danshipper</a> <a href="https://www.onename.io/">onename.io</a> ok',
                       microformats2.render_content(obj))
 
+  def test_tweet_to_object_multiple_pictures_only_one_picture_link(self):
+    self.assert_equals({
+      'id': tag_uri('726480459488587776'),
+      'objectType': 'note',
+      'content': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee ',
+      'attachments': [{'objectType': 'image'}, {'objectType': 'image'}],
+    }, self.twitter.tweet_to_object({
+      'id_str': '726480459488587776',
+      'text': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee https://t.co/6Ta5P8A2cs',
+      'extended_entities': {
+        'media': [{
+          'id_str': '1',
+          'indices': [53, 76],
+        }, {
+          'id_str': '2',
+          'indices': [53, 76],
+        }],
+      },
+    }))
+
   def test_reply_tweet_to_activity(self):
     tweet = copy.deepcopy(TWEET)
     tweet.update({

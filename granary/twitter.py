@@ -1050,13 +1050,21 @@ class Twitter(source.Source):
        'displayName': t.get('display_url'),
        'indices': t.get('indices'),
        } for t in entities.get('urls', [])
-    ] + [
-      # these are only temporary, to get rid of the image t.co links. the tag
-      # elements are removed farther down below.
-      {'objectType': 'image',
-       'displayName': '',
-       'indices': t.get('indices'),
-       } for t in media]
+    ]
+
+    # media. these are only temporary, to get rid of the image t.co links. the tag
+    # elements are removed farther down below.
+    #
+    # when there are multiple, twitter usually (always?) only adds a single
+    # media link to the end of the tweet text, and all of the media objects will
+    # have the same indices. so de-dupe based on indices.
+    indices_to_media = {
+      tuple(t['indices']): {
+        'objectType': 'image',
+        'displayName': '',
+        'indices': t['indices'],
+      } for t in media if t.get('indices')}
+    obj['tags'].extend(indices_to_media.values())
 
     # sort tags by indices, since they need to be processed (below) in order.
     obj['tags'].sort(key=lambda t: t.get('indices'))
