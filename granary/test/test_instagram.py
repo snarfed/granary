@@ -986,7 +986,7 @@ class InstagramTest(testutil.HandlerTest):
                                     cookie='my cookie')
 
     self.assertEquals('401 Unauthorized', cm.exception.message)
-    self.assertEquals('401', cm.exception.response.status_code)
+    self.assertEquals(401, cm.exception.response.status_code)
 
   def test_get_activities_scrape_activity_id(self):
     self.expect_requests_get(
@@ -1004,7 +1004,7 @@ class InstagramTest(testutil.HandlerTest):
       'https://www.instagram.com/',
       allow_redirects=False,
       headers={'Cookie': 'my cookie'},
-      status_code='302',
+      status_code=302,
       redirected_url='https://www.instagram.com/accounts/login/?next=/')
     self.mox.ReplayAll()
 
@@ -1013,7 +1013,7 @@ class InstagramTest(testutil.HandlerTest):
                                     cookie='my cookie')
 
     self.assertEquals('401 Unauthorized', cm.exception.message)
-    self.assertEquals('401', cm.exception.response.status_code)
+    self.assertEquals(401, cm.exception.response.status_code)
 
   def test_get_activities_scrape_options_not_implemented(self):
     for group_id in None, source.ALL, source.SEARCH:
@@ -1027,6 +1027,19 @@ class InstagramTest(testutil.HandlerTest):
     with self.assertRaises(NotImplementedError):
       # FRIENDS requires cookie
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True)
+
+  def test_get_activities_scrape_error(self):
+    self.expect_requests_get('https://www.instagram.com/',
+                             headers={'Cookie': 'my cookie'},
+                             allow_redirects=False,
+                             status_code=429)
+    self.mox.ReplayAll()
+
+    with self.assertRaises(requests.HTTPError) as cm:
+      a = self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
+                                        cookie='my cookie')
+
+    self.assertEquals(429, cm.exception.response.status_code)
 
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
