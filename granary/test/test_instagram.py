@@ -1028,6 +1028,16 @@ class InstagramTest(testutil.HandlerTest):
       # FRIENDS requires cookie
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True)
 
+  def test_get_activities_scrape_not_found(self):
+    self.expect_requests_get('https://www.instagram.com/foo/',
+                             allow_redirects=False, status_code=404)
+    self.mox.ReplayAll()
+
+    resp = self.instagram.get_activities_response(
+      group_id=source.SELF, user_id='foo', scrape=True)
+    self.assertIsNone(resp['actor'])
+    self.assertEquals([], resp['items'])
+
   def test_get_activities_scrape_error(self):
     self.expect_requests_get('https://www.instagram.com/',
                              headers={'Cookie': 'my cookie'},

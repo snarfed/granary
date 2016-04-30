@@ -232,7 +232,7 @@ class Instagram(source.Source):
       fetch_extras: boolean
       cookie: string
 
-    Returns: list of activities
+    Returns: dict activities API response
     """
     assert user_id or activity_id or cookie
 
@@ -248,7 +248,8 @@ class Instagram(source.Source):
          '/accounts/login' in resp.headers.get('Location', ''))):
       resp.status_code = 401
       raise requests.HTTPError('401 Unauthorized', response=resp)
-    resp.raise_for_status()
+    elif resp.status_code != 404:  # return an empty response for 404
+      resp.raise_for_status()
 
     activities, actor = self.html_to_activities(resp.text)
 
