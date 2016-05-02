@@ -793,7 +793,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(ACTOR, self.instagram.get_actor())
 
   def test_get_actor_scrape(self):
-    self.expect_requests_get('https://www.instagram.com/foo/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'foo/',
                              HTML_PROFILE_COMPLETE, allow_redirects=False)
     self.mox.ReplayAll()
     self.assert_equals(HTML_VIEWER, instagram.Instagram(scrape=True).get_actor('foo'))
@@ -875,7 +875,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_self(self):
     self.expect_requests_get(
-      'https://www.instagram.com/x/', HTML_PROFILE_COMPLETE +
+      instagram.HTML_BASE_URL + 'x/', HTML_PROFILE_COMPLETE +
         # check that we ignore this for profile fetches
         ' not-logged-in ',
       allow_redirects=False)
@@ -884,7 +884,7 @@ class InstagramTest(testutil.HandlerTest):
       user_id='x', group_id=source.SELF, scrape=True))
 
   def test_get_activities_response_scrape_self_viewer(self):
-    self.expect_requests_get('https://www.instagram.com/x/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_PROFILE_COMPLETE, allow_redirects=False)
     self.mox.ReplayAll()
 
@@ -894,11 +894,11 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(HTML_VIEWER, resp['actor'])
 
   def test_get_activities_scrape_self_fetch_extras(self):
-    self.expect_requests_get('https://www.instagram.com/x/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_PROFILE_COMPLETE, allow_redirects=False)
-    self.expect_requests_get('https://www.instagram.com/p/ABC123/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'p/ABC123/',
                              HTML_PHOTO_COMPLETE)
-    self.expect_requests_get('https://www.instagram.com/p/XYZ789/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'p/XYZ789/',
                              HTML_VIDEO_COMPLETE)
 
     self.mox.ReplayAll()
@@ -908,27 +908,27 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_fetch_extras_cache(self):
     # first time, cache is cold
-    self.expect_requests_get('https://www.instagram.com/x/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_PROFILE_COMPLETE, allow_redirects=False)
-    self.expect_requests_get('https://www.instagram.com/p/ABC123/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'p/ABC123/',
                              HTML_PHOTO_COMPLETE)
-    self.expect_requests_get('https://www.instagram.com/p/XYZ789/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'p/XYZ789/',
                              HTML_VIDEO_COMPLETE)
 
     # second time, comment and like counts are unchanged, so no media page fetches
-    self.expect_requests_get('https://www.instagram.com/x/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_PROFILE_COMPLETE, allow_redirects=False)
 
     # third time, video comment count changes, like counts stay the same
     profile = copy.deepcopy(HTML_PROFILE)
     profile['entry_data']['ProfilePage'][0]['user']['media']['nodes'][1]\
       ['comments']['count'] = 3
-    self.expect_requests_get('https://www.instagram.com/x/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_HEADER + json.dumps(profile) + HTML_FOOTER,
                              allow_redirects=False)
     video = copy.deepcopy(HTML_VIDEO_FULL)
     video['comments']['count'] = 4
-    self.expect_requests_get('https://www.instagram.com/p/XYZ789/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'p/XYZ789/',
                              HTML_HEADER + json.dumps(video) + HTML_FOOTER)
 
     self.mox.ReplayAll()
@@ -947,7 +947,7 @@ class InstagramTest(testutil.HandlerTest):
     }, cache)
 
   def test_get_activities_scrape_missing_data(self):
-    self.expect_requests_get('https://www.instagram.com/x/', """
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'x/', """
 <!DOCTYPE html>
 <html><body>
 </body></html>
@@ -958,7 +958,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_friends_cookie(self):
     self.expect_requests_get(
-      'https://www.instagram.com/', HTML_FEED_COMPLETE, allow_redirects=False,
+      instagram.HTML_BASE_URL, HTML_FEED_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
@@ -966,7 +966,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_response_scrape_friends_viewer(self):
     self.expect_requests_get(
-      'https://www.instagram.com/', HTML_FEED_COMPLETE, allow_redirects=False,
+      instagram.HTML_BASE_URL, HTML_FEED_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
 
@@ -977,7 +977,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_cookie_not_logged_in(self):
     self.expect_requests_get(
-      'https://www.instagram.com/', '<html>not-logged-in</html>',
+      instagram.HTML_BASE_URL, '<html>not-logged-in</html>',
       allow_redirects=False, headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
 
@@ -990,7 +990,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_activity_id(self):
     self.expect_requests_get(
-      'https://www.instagram.com/p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
+      instagram.HTML_BASE_URL + 'p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
       allow_redirects=False)
     self.mox.ReplayAll()
 
@@ -1001,7 +1001,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_cookie_redirects_to_login(self):
     self.expect_requests_get(
-      'https://www.instagram.com/',
+      instagram.HTML_BASE_URL,
       allow_redirects=False,
       headers={'Cookie': 'my cookie'},
       status_code=302,
@@ -1029,7 +1029,7 @@ class InstagramTest(testutil.HandlerTest):
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True)
 
   def test_get_activities_scrape_not_found(self):
-    self.expect_requests_get('https://www.instagram.com/foo/',
+    self.expect_requests_get(instagram.HTML_BASE_URL + 'foo/',
                              allow_redirects=False, status_code=404)
     self.mox.ReplayAll()
 
@@ -1039,7 +1039,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assertEquals([], resp['items'])
 
   def test_get_activities_scrape_error(self):
-    self.expect_requests_get('https://www.instagram.com/',
+    self.expect_requests_get(instagram.HTML_BASE_URL,
                              headers={'Cookie': 'my cookie'},
                              allow_redirects=False,
                              status_code=429)
@@ -1072,7 +1072,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_comment_scrape(self):
     self.expect_requests_get(
-      'https://www.instagram.com/p/BDG6Ms_J0vQ/', HTML_VIDEO_COMPLETE,
+      instagram.HTML_BASE_URL + 'p/BDG6Ms_J0vQ/', HTML_VIDEO_COMPLETE,
       allow_redirects=False)
     self.mox.ReplayAll()
 
@@ -1101,7 +1101,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_like_scrape(self):
     self.expect_requests_get(
-      'https://www.instagram.com/p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
+      instagram.HTML_BASE_URL + 'p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
       allow_redirects=False)
     self.mox.ReplayAll()
 

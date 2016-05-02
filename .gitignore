@@ -19,6 +19,7 @@ instagram_client_id
 instagram_client_secret
 instagram_client_id_local
 instagram_client_secret_local
+instagram_scrape_base
 twitter_app_key
 twitter_app_secret
 flickr_app_secret

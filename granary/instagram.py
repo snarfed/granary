@@ -39,7 +39,10 @@ API_MEDIA_POPULAR_URL = 'https://api.instagram.com/v1/media/popular'
 API_MEDIA_LIKES_URL = 'https://api.instagram.com/v1/media/%s/likes'
 API_COMMENT_URL = 'https://api.instagram.com/v1/media/%s/comments'
 
-HTML_MEDIA = 'https://www.instagram.com/p/%s/'
+HTML_BASE_URL = (appengine_config.read('instagram_scrape_base') or
+                 'https://www.instagram.com/')
+HTML_MEDIA = HTML_BASE_URL + 'p/%s/'
+HTML_PROFILE = HTML_BASE_URL + '%s/'
 
 # URL-safe base64 encoding. used in Instagram.id_to_shortcode()
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
@@ -237,8 +240,8 @@ class Instagram(source.Source):
     assert user_id or activity_id or cookie
 
     url = (HTML_MEDIA % self.id_to_shortcode(activity_id) if activity_id
-           else self.user_url(user_id) if user_id
-           else self.BASE_URL)
+           else HTML_PROFILE % user_id if user_id
+           else HTML_BASE_URL)
     kwargs = {}
     if cookie:
       kwargs = {'headers': {'Cookie': cookie}}
@@ -275,8 +278,8 @@ class Instagram(source.Source):
 
         if (likes and likes != cached.get(likes_key) or
             comments and comments != cached.get(comments_key)):
-          full_activity, _ = self.html_to_activities(
-            util.requests_get(activity['url']).text)
+          url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
+          full_activity, _ = self.html_to_activities(util.requests_get(url).text)
           if full_activity:
             activities[i] = full_activity[0]
             cache_updates.update({likes_key: likes, comments_key: comments})
