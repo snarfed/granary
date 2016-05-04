@@ -262,9 +262,15 @@ Changelog
 #### 1.4 - unreleased
 * Facebook:
   * Upgrade from API v2.2 to v2.6. https://developers.facebook.com/docs/apps/changelog
+  * Add reaction support.
+  * De-dupe event RSVPs by user.
 * Twitter:
   * Switch create() to use brevity for counting characters. https://github.com/kylewm/brevity
-* Fix bug in create() that occasionally incorrectly escaped ., +, and - characters.
+  * Fix bug in create() that occasionally incorrectly escaped ., +, and - characters.
+  * Fix text rendering bug when there are multipl photos/videos.
+* Instagram:
+  * Fix bugs in scraping.
+* Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support App Engine.
 
 #### 1.3.1 - 2016-04-07
 * Update [oauth-dropins](https://github.com/snarfed/oauth-dropins) dependency to >=1.3.
