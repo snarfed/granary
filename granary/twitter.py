@@ -476,24 +476,27 @@ class Twitter(source.Source):
 
     return mentions
 
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
+                  activity=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
       activity_id: string activity id, optional
       activity_author_id: string activity author id. Ignored.
+      activity: activity object, optional
     """
     url = API_STATUS % comment_id
     return self.tweet_to_object(self.urlopen(url))
 
-  def get_share(self, activity_user_id, activity_id, share_id):
+  def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Returns an ActivityStreams 'share' activity object.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       share_id: string id of the share object
+      activity: activity object, optional
     """
     url = API_STATUS % share_id
     return self.retweet_to_object(self.urlopen(url))

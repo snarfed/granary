@@ -15,7 +15,7 @@ from oauth_dropins.webutil import util
 from granary import appengine_config
 from granary import facebook
 from granary.facebook import \
-  API_ALBUMS, API_BASE, API_COMMENTS_ALL, API_EVENT, API_USER_EVENTS, \
+  API_ALBUMS, API_BASE, API_COMMENT, API_COMMENTS_ALL, API_EVENT, API_USER_EVENTS, \
   API_NEWS_PUBLISHES, API_OBJECT, API_PHOTOS_UPLOADED, API_PUBLISH_PHOTO, \
   API_PUBLISH_POST, API_SHARES, API_UPLOAD_VIDEO
 from granary import source
@@ -1469,16 +1469,12 @@ class FacebookTest(testutil.HandlerTest):
       self.fb.get_activities(search_query='foo')
 
   def test_get_comment(self):
-    self.expect_urlopen(
-      '123_456?fields=id,message,from,created_time,message_tags,parent,attachment',
-      COMMENTS[0])
+    self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456'))
 
   def test_get_comment_activity_author_id(self):
-    self.expect_urlopen(
-      '123_456?fields=id,message,from,created_time,message_tags,parent,attachment',
-      COMMENTS[0])
+    self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
     self.mox.ReplayAll()
 
     obj = self.fb.get_comment('123_456', activity_author_id='my-author')
@@ -1490,9 +1486,7 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(
       '123_456_789?fields=id,message,from,created_time,message_tags,parent,attachment',
       {}, status=400)
-    self.expect_urlopen(
-      '789?fields=id,message,from,created_time,message_tags,parent,attachment',
-      COMMENTS[0])
+    self.expect_urlopen(API_COMMENT % '789', COMMENTS[0])
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456_789'))
 
@@ -1502,6 +1496,12 @@ class FacebookTest(testutil.HandlerTest):
       {}, status=400)
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.fb.get_comment, '123')
+
+  def test_get_comment_with_activity(self):
+    # still makes the API call, since the comment might be paged out or nested
+    self.expect_urlopen(API_COMMENT % '123', COMMENTS[0])
+    self.mox.ReplayAll()
+    self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123', activity=ACTIVITY))
 
   def test_get_share(self):
     self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
@@ -1538,6 +1538,13 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.fb.get_share, '1', '2', '_')
 
+  def test_get_share_with_activity(self):
+    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
+    self.expect_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')), SHARE)
+    self.mox.ReplayAll()
+    self.assert_equals(SHARE_OBJ,
+                       self.fb.get_share('1', '2', SHARE['id'], activity=ACTIVITY))
+
   def test_get_like(self):
     self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
     self.mox.ReplayAll()
@@ -1552,6 +1559,11 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_OBJECT % ('123', '000'), {})
     self.mox.ReplayAll()
     self.assert_equals(None, self.fb.get_like('123', '000', '683713'))
+
+  def test_get_like_with_activity(self):
+    # skips API call
+    self.assert_equals(LIKE_OBJS[1],
+                       self.fb.get_like('123', '000', '683713', activity=ACTIVITY))
 
   def test_get_rsvp(self):
     for _ in RSVPS_TO_OBJS:
@@ -1571,6 +1583,11 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_EVENT % '1', {})
     self.mox.ReplayAll()
     self.assert_equals(None, self.fb.get_rsvp('123', '1', '456'))
+
+  def test_get_rsvp_with_event(self):
+    # skips API call
+    self.assert_equals(RSVP_YES_OBJ, self.fb.get_rsvp(
+      'unused', '1', '11500', event=EVENT_ACTIVITY))
 
   def test_get_albums_empty(self):
     self.expect_urlopen(API_ALBUMS % '000', {'data': []})
@@ -1616,6 +1633,11 @@ class FacebookTest(testutil.HandlerTest):
       '123', '10100176064482163', '100006', 'wow'))
     self.assertIsNone(self.fb.get_reaction(
       '123', '10100176064482163', '100009', 'sad'))
+
+  def test_get_reaction_with_activity(self):
+    # skips API call
+    self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
+      '123', '10100176064482163', '100006', 'sad', activity=ACTIVITY))
 
   def test_post_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.fb.post_to_activity(POST))

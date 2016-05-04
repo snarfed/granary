@@ -474,13 +474,15 @@ class Facebook(source.Source):
 
     return self.event_to_activity(event)
 
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
+                  activity=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
       activity_id: string activity id, optional
       activity_author_id: string activity author id, optional
+      activity: activity object (optional)
     """
     try:
       resp = self.urlopen(API_COMMENT % comment_id)
@@ -493,13 +495,14 @@ class Facebook(source.Source):
 
     return self.comment_to_object(resp, post_author_id=activity_author_id)
 
-  def get_share(self, activity_user_id, activity_id, share_id):
+  def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Returns an ActivityStreams share activity object.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       share_id: string id of the share object
+      activity: activity object (optional)
     """
     orig_id = '%s_%s' % (activity_user_id, activity_id)
 
@@ -522,20 +525,6 @@ class Facebook(source.Source):
         with util.ignore_http_4xx_error():
           return self.share_to_object(self.urlopen(API_OBJECT % (user_id, obj_id)))
 
-  def get_rsvp(self, activity_user_id, event_id, user_id):
-    """Returns an ActivityStreams RSVP activity object.
-
-    Args:
-      activity_user_id: string id of the user who posted the event. unused.
-      event_id: string event id
-      user_id: string user id
-    """
-    event = self.urlopen(API_EVENT % event_id)
-    for field in RSVP_FIELDS:
-      for rsvp in event.get(field, {}).get('data', []):
-        if rsvp.get('id') == user_id:
-          return self.rsvp_to_object(rsvp, type=field, event=event)
-
   def get_albums(self, user_id=None):
     """Fetches and returns a user's photo albums.
 
@@ -549,7 +538,7 @@ class Facebook(source.Source):
     return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
 
   def get_reaction(self, activity_user_id, activity_id, reaction_user_id,
-                   reaction_id):
+                   reaction_id, activity=None):
     """Fetches and returns a reaction.
 
     Args:
@@ -558,11 +547,12 @@ class Facebook(source.Source):
       reaction_user_id: string id of the user who reacted
       reaction_id: string id of the reaction. one of:
         'love', 'wow', 'haha', 'sad', 'angry'
+      activity: activity object (optional)
     """
     if '_' not in reaction_id:  # handle just name of reaction type
       reaction_id = '%s_%s_by_%s' % (activity_id, reaction_id, reaction_user_id)
-    return super(Facebook, self).get_reaction(activity_user_id, activity_id,
-                                              reaction_user_id, reaction_id)
+    return super(Facebook, self).get_reaction(
+      activity_user_id, activity_id, reaction_user_id, reaction_id, activity=activity)
 
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):

@@ -312,7 +312,8 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
+                  activity=None):
     """Returns an ActivityStreams comment object.
 
     Subclasses should override this.
@@ -322,10 +323,11 @@ class Source(object):
       activity_id: string activity id, optional
       activity_author_id: string activity author id, optional. Needed for some
         sources (e.g. Facebook) to construct the comment permalink.
+      activity: activity object, optional. May avoid an API call if provided.
     """
     raise NotImplementedError()
 
-  def get_like(self, activity_user_id, activity_id, like_user_id):
+  def get_like(self, activity_user_id, activity_id, like_user_id, activity=None):
     """Returns an ActivityStreams 'like' activity object.
 
     Default implementation that fetches the activity and its likes, then
@@ -336,14 +338,14 @@ class Source(object):
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
+      activity: activity object, optional. May avoid an API call if provided.
     """
-    activities = self.get_activities(user_id=activity_user_id,
-                                     activity_id=activity_id,
-                                     fetch_likes=True)
-    return self._get_tag(activities, 'like', like_user_id)
+    if not activity:
+      activity = self._get_activity(activity_user_id, activity_id, fetch_likes=True)
+    return self._get_tag(activity, 'like', like_user_id)
 
   def get_reaction(self, activity_user_id, activity_id, reaction_user_id,
-                   reaction_id):
+                   reaction_id, activity=None):
     """Returns an ActivityStreams 'reaction' activity object.
 
     Default implementation that fetches the activity and its reactions, then
@@ -355,33 +357,45 @@ class Source(object):
       activity_id: string activity id
       reaction_user_id: string id of the user who reacted
       reaction_id: string id of the reaction
+      activity: activity object, optional. May avoid an API call if provided.
     """
-    activities = self.get_activities(user_id=activity_user_id,
-                                     activity_id=activity_id)
-    return self._get_tag(activities, 'react', reaction_user_id, reaction_id)
+    if not activity:
+      activity = self._get_activity(activity_user_id, activity_id)
+    return self._get_tag(activity, 'react', reaction_user_id, reaction_id)
 
-  def get_share(self, activity_user_id, activity_id, share_id):
+  def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Returns an ActivityStreams 'share' activity object.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       share_id: string id of the share object or the user who shared it
+      activity: activity object, optional. May avoid an API call if provided.
     """
-    activities = self.get_activities(user_id=activity_user_id,
-                                     activity_id=activity_id,
-                                     fetch_shares=True)
-    return self._get_tag(activities, 'share', share_id)
+    if not activity:
+      activity = self._get_activity(activity_user_id, activity_id, fetch_shares=True)
+    return self._get_tag(activity, 'share', share_id)
 
-  def get_rsvp(self, activity_user_id, event_id, user_id):
-    """Returns an ActivityStreams 'rsvp-*' activity object.
+  def get_rsvp(self, activity_user_id, event_id, user_id, event=None):
+    """Returns an ActivityStreams RSVP activity object.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
+      activity_user_id: string id of the user who posted the event. unused.
       event_id: string event id
-      user_id: string id of the user who RSVPed
+      user_id: string user id
+      event: AS event activity (optional)
     """
-    raise NotImplementedError()
+    user_tag_id = self.tag_uri(user_id)
+    if not event:
+      event = self.get_event(event_id)
+      if not event:
+        return None
+
+    for rsvp in self.get_rsvps_from_event(event['object']):
+      for field in 'actor', 'object':
+        id = rsvp.get(field, {}).get('id')
+        if id and user_id == util.parse_tag_uri(id)[1]:
+          return rsvp
 
   def user_to_actor(self, user):
     """Converts a user to an actor.
@@ -398,15 +412,21 @@ class Source(object):
     """
     raise NotImplementedError()
 
-  def _get_tag(self, activities, verb, user_id, tag_id=None):
-    if not activities:
+  def _get_activity(self, user_id, activity_id, **kwargs):
+    activities = self.get_activities(user_id=user_id, activity_id=activity_id,
+                                     **kwargs)
+    if activities:
+      return activities[0]
+
+  def _get_tag(self, activity, verb, user_id, tag_id=None):
+    if not activity:
       return None
 
     user_tag_id = self.tag_uri(user_id)
     if tag_id:
       tag_id = self.tag_uri(tag_id)
 
-    for tag in activities[0].get('object', {}).get('tags', []):
+    for tag in activity.get('object', {}).get('tags', []):
       author = tag.get('author', {})
       if (tag.get('verb') == verb and
           (not tag_id or tag_id == tag.get('id')) and
@@ -634,20 +654,26 @@ class Source(object):
       return []
     domain, event_id = parsed
     url = event.get('url')
+    author = event.get('author')
 
     rsvps = []
     for verb, field in RSVP_TO_EVENT.items():
       for actor in event.get(field, []):
         rsvp = {'objectType': 'activity',
                 'verb': verb,
-                'actor': actor,
+                'object' if verb == 'invite' else 'actor': actor,
                 'url': url,
                 }
+
         if event_id and 'id' in actor:
           _, actor_id = util.parse_tag_uri(actor['id'])
           rsvp['id'] = util.tag_uri(domain, '%s_rsvp_%s' % (event_id, actor_id))
           if url:
             rsvp['url'] = '#'.join((url, actor_id))
+
+        if verb == 'invite' and author:
+          rsvp['actor'] = author
+
         rsvps.append(rsvp)
 
     return rsvps

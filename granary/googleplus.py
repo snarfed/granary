@@ -188,13 +188,15 @@ class GooglePlus(source.Source):
       cache.set_multi(cache_updates)
     return response
 
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
+                  activity=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
       activity_id: string activity id, optional
       activity_author_id: string activity author id. Ignored.
+      activity: activity object (optional)
     """
     # https://developers.google.com/+/api/latest/comments
     call = self.auth_entity.api().comments().get(commentId=comment_id)

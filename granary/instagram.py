@@ -291,28 +291,30 @@ class Instagram(source.Source):
     resp['actor'] = actor
     return resp
 
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
+                  activity=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
       activity_id: string activity id, required
       activity_author_id: string activity author id. Ignored.
+      activity: activity object, optional. Avoids fetching the activity.
     """
-    activities = self.get_activities(activity_id=activity_id)
-    if activities:
+    if not activity:
+      activity = self._get_activity(None, activity_id)
+    if activity:
       tag_id = self.tag_uri(comment_id)
-      for reply in activities[0].get('object', {}).get('replies', {}).get('items', []):
+      for reply in activity.get('object', {}).get('replies', {}).get('items', []):
         if reply.get('id') == tag_id:
           return reply
 
-  def get_share(self, activity_user_id, activity_id, share_id):
+  def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Not implemented. Returns None. Resharing isn't a feature of Instagram.
     """
     return None
 
-  def create(self, obj, include_link=source.OMIT_LINK,
-             ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
     """Creates a new comment or like.
 
     Args:

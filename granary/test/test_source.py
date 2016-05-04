@@ -35,50 +35,66 @@ REACTIONS = [{
   'author': {'id': 'tag:fake.com:5'},
   'object': {'url': 'http://foo/like/5'},
 }]
+SHARES = [{
+  'verb': 'share',
+  'author': {'id': 'tag:fake.com:3'},
+  'object': {'url': 'http://bar/like/3'},
+}]
 ACTIVITY = {
   'id': '1',
   'object': {
     'id': '1',
-    'tags': LIKES + REACTIONS,
+    'tags': LIKES + REACTIONS + SHARES,
   },
 }
-RSVPS = [{
+RSVP_YES = {
   'id': 'tag:fake.com:246_rsvp_11500',
   'objectType': 'activity',
   'verb': 'rsvp-yes',
   'actor': {'displayName': 'Aaron P', 'id': 'tag:fake.com,2013:11500'},
   'url': 'https://facebook.com/246#11500',
-}, {
+}
+RSVP_NO = {
   'objectType': 'activity',
   'verb': 'rsvp-no',
   'actor': {'displayName': 'Ryan B'},
   'url': 'https://facebook.com/246',
-}, {
+}
+RSVP_MAYBE = {
   'id': 'tag:fake.com:246_rsvp_987',
   'objectType': 'activity',
   'verb': 'rsvp-maybe',
   'actor': {'displayName': 'Foo', 'id': 'tag:fake.com,2013:987'},
   'url': 'https://facebook.com/246#987',
-}]
+}
+INVITE = {
+  'id': 'tag:fake.com:246_rsvp_555',
+  'objectType': 'activity',
+  'verb': 'invite',
+  'actor': {'displayName': 'Host', 'id': 'tag:fake.com,2013:666'},
+  'object': {'displayName': 'Invit Ee', 'id': 'tag:fake.com,2013:555'},
+  'url': 'https://facebook.com/246#555',
+}
+RSVPS = [RSVP_YES, RSVP_NO, RSVP_MAYBE, INVITE]
 EVENT = {
   'id': 'tag:fake.com:246',
   'objectType': 'event',
   'displayName': 'Homebrew Website Club',
   'url': 'https://facebook.com/246',
+  'author': {'displayName': 'Host', 'id': 'tag:fake.com,2013:666'},
 }
 EVENT_WITH_RSVPS = copy.deepcopy(EVENT)
 EVENT_WITH_RSVPS.update({
-  'attending': [RSVPS[0]['actor']],
-  'notAttending': [RSVPS[1]['actor']],
-  'maybeAttending': [RSVPS[2]['actor']],
+  'attending': [RSVP_YES['actor']],
+  'notAttending': [RSVP_NO['actor']],
+  'maybeAttending': [RSVP_MAYBE['actor']],
+  'invited': [INVITE['object']],
 })
+EVENT_ACTIVITY_WITH_RSVPS = {'object': EVENT_WITH_RSVPS}
 
 
 class FakeSource(Source):
   DOMAIN = 'fake.com'
-
-  def __init__(self, **kwargs):
-    pass
 
 
 class SourceTest(testutil.TestCase):
@@ -87,6 +103,7 @@ class SourceTest(testutil.TestCase):
     super(SourceTest, self).setUp()
     self.source = FakeSource()
     self.mox.StubOutWithMock(self.source, 'get_activities')
+    self.mox.StubOutWithMock(self.source, 'get_event')
 
   def check_original_post_discovery(self, obj, originals, mentions=None,
                                     **kwargs):
@@ -217,6 +234,11 @@ class SourceTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals(LIKES[1], self.source.get_like('author', 'activity', '6'))
 
+  def test_get_like_with_activity(self):
+    # skips fetch
+    self.assert_equals(LIKES[1], self.source.get_like(
+      'author', 'activity', '6', activity=ACTIVITY))
+
   def test_get_like_numeric_id(self):
     self.source.get_activities(user_id='author', activity_id='activity',
                                fetch_likes=True).AndReturn([ACTIVITY])
@@ -244,6 +266,11 @@ class SourceTest(testutil.TestCase):
     self.assert_equals(REACTIONS[0], self.source.get_reaction(
       'author', 'activity', '5', 'apple'))
 
+  def test_get_reaction_with_activity(self):
+    # skips fetch
+    self.assert_equals(REACTIONS[0], self.source.get_reaction(
+      'author', 'activity', '5', 'apple', activity=ACTIVITY))
+
   def test_get_reaction_not_found(self):
     self.source.get_activities(user_id='author', activity_id='activity'
                                ).AndReturn([ACTIVITY])
@@ -251,13 +278,15 @@ class SourceTest(testutil.TestCase):
     self.assertIsNone(self.source.get_reaction('author', 'activity', '5', 'foo'))
 
   def test_get_share(self):
-    activity = copy.deepcopy(ACTIVITY)
-    share = activity['object']['tags'][1]
-    share['verb'] = 'share'
     self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_shares=True).AndReturn([activity])
+                               fetch_shares=True).AndReturn([ACTIVITY])
     self.mox.ReplayAll()
-    self.assert_equals(share, self.source.get_share('author', 'activity', '6'))
+    self.assert_equals(SHARES[0], self.source.get_share('author', 'activity', '3'))
+
+  def test_get_share_with_activity(self):
+    # skips fetch
+    self.assert_equals(SHARES[0], self.source.get_share(
+      'author', 'activity', '3', activity=ACTIVITY))
 
   def test_get_share_not_found(self):
     self.source.get_activities(user_id='author', activity_id='activity',
@@ -282,6 +311,30 @@ class SourceTest(testutil.TestCase):
     for id in None, 'not_a_tag_uri':
       event['id'] = id
       self.assert_equals([], Source.get_rsvps_from_event(event))
+
+  def test_get_rsvp(self):
+    self.source.get_event('1').MultipleTimes().AndReturn(EVENT_ACTIVITY_WITH_RSVPS)
+    self.mox.ReplayAll()
+    self.assert_equals(RSVP_YES, self.source.get_rsvp('unused', '1', '11500'))
+    self.assert_equals(RSVP_MAYBE, self.source.get_rsvp('unused', '1', '987'))
+    self.assert_equals(INVITE, self.source.get_rsvp('unused', '1', '555'))
+
+  def test_get_rsvp_not_found(self):
+    self.source.get_event('1').AndReturn(EVENT_ACTIVITY_WITH_RSVPS)
+    self.source.get_event('2').AndReturn({'object': EVENT})
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.source.get_rsvp('123', '1', 'xyz'))
+    self.assert_equals(None, self.source.get_rsvp('123', '2', '11500'))
+
+  def test_get_rsvp_event_not_found(self):
+    self.source.get_event('1').AndReturn(None)
+    self.mox.ReplayAll()
+    self.assert_equals(None, self.source.get_rsvp('123', '1', '456'))
+
+  def test_get_rsvp_with_event(self):
+    # skips event fetch
+    self.assert_equals(RSVP_YES, self.source.get_rsvp(
+      'unused', '1', '11500', event=EVENT_ACTIVITY_WITH_RSVPS))
 
   def test_base_object_multiple_objects(self):
     like = copy.deepcopy(LIKES[0])

@@ -439,13 +439,15 @@ class Flickr(source.Source):
 
     return self.postprocess_object(obj)
 
-  def get_comment(self, comment_id, activity_id, activity_author_id=None):
+  def get_comment(self, comment_id, activity_id, activity_author_id=None,
+                  activity=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
       activity_id: string activity id, required
       activity_author_id: string activity author id, ignored
+      activity: activity object (optional)
     """
     resp = self.call_api_method('flickr.photos.comments.getList', {
       'photo_id': activity_id,

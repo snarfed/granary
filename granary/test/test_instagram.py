@@ -1080,6 +1080,11 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0],
                        ig.get_comment('789', activity_id='1208909509631101904_942513'))
 
+  def test_get_comment_with_activity(self):
+    # skips API call
+    self.assert_equals(COMMENT_OBJS[0],
+                       self.instagram.get_comment('789', activity=ACTIVITY))
+
   def test_get_like(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         json.dumps({'data': MEDIA_WITH_LIKES}))
