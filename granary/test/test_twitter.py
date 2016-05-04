@@ -57,7 +57,7 @@ ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'displayName': 'Ryan Barrett',
   'image': {
-    'url': 'https://twitter.com/snarfed_org/profile_image?size=original',
+    'url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
     },
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
@@ -250,7 +250,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'alice',
       'displayName': 'alice',
       'url': 'https://twitter.com/alice',
-      'image': {'url': 'https://twitter.com/alice/profile_image?size=original'},
       },
     'content': 'reply 200',
     'url': 'https://twitter.com/alice/status/200',
@@ -263,7 +262,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'bob',
       'displayName': 'bob',
       'url': 'https://twitter.com/bob',
-      'image': {'url': 'https://twitter.com/bob/profile_image?size=original'},
       },
     'content': 'reply 300',
     'url': 'https://twitter.com/bob/status/300',
@@ -276,7 +274,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'snarfed_org',
       'displayName': 'snarfed_org',
       'url': 'https://twitter.com/snarfed_org',
-      'image': {'url': 'https://twitter.com/snarfed_org/profile_image?size=original'},
       },
     'content': 'reply 400',
     'url': 'https://twitter.com/snarfed_org/status/400',
@@ -289,7 +286,6 @@ REPLY_OBJS = [{  # ActivityStreams
       'username': 'alice',
       'displayName': 'alice',
       'url': 'https://twitter.com/alice',
-      'image': {'url': 'https://twitter.com/alice/profile_image?size=original'},
       },
     'content': 'reply 500',
     'url': 'https://twitter.com/alice/status/500',
@@ -354,7 +350,7 @@ SHARES = [{  # ActivityStreams
       'username': 'alizz',
       'displayName': 'Alice',
       'url': 'https://twitter.com/alizz',
-      'image': {'url': 'https://twitter.com/alizz/profile_image?size=original'},
+      'image': {'url': 'http://alice/picture'},
       },
     'published': '2013-02-24T20:26:41+00:00',
     }, {
@@ -370,7 +366,7 @@ SHARES = [{  # ActivityStreams
       'username': 'bobbb',
       'displayName': 'Bob',
       'url': 'https://twitter.com/bobbb',
-      'image': {'url': 'https://twitter.com/bobbb/profile_image?size=original'},
+      'image': {'url': 'http://bob/picture'},
       },
     'published': '2013-02-26T20:26:41+00:00',
     }]
@@ -401,7 +397,6 @@ LIKE_OBJ = {  # ActivityStreams
     'username': 'eve',
     'displayName': 'eve',
     'url': 'https://twitter.com/eve',
-      'image': {'url': 'https://twitter.com/eve/profile_image?size=original'},
     },
   'published': '2013-12-27T17:25:55+00:00',
   }
@@ -446,7 +441,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'username': 'ge',
     'displayName': 'George',
     'url': 'https://twitter.com/ge',
-    'image': {'url': 'https://twitter.com/ge/profile_image?size=original'},
+    'image': {'url': 'https://twimg/353'},
     },
   }, {
   'url': 'https://twitter.com/snarfed_org/status/100',
@@ -459,7 +454,6 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'username': 'jo',
     'displayName': 'jo',
     'url': 'https://twitter.com/jo',
-    'image': {'url': 'https://twitter.com/jo/profile_image?size=original'},
     },
   }
 ]
@@ -483,7 +477,7 @@ ATOM = """\
 
 <subtitle>my description</subtitle>
 
-<logo>https://twitter.com/snarfed_org/profile_image?size=original</logo>
+<logo>http://a0.twimg.com/profile_images/866165047/ryan.jpg</logo>
 <updated>2012-02-22T20:26:41+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -492,7 +486,7 @@ ATOM = """\
 </author>
 
 <link rel="alternate" href="https://snarfed.org/" type="text/html" />
-<link rel="avatar" href="https://twitter.com/snarfed_org/profile_image?size=original" />
+<link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan.jpg" />
 <link rel="self" href="%(request_url)s" type="application/atom+xml" />
 
 <entry>
@@ -1107,7 +1101,6 @@ class TwitterTest(testutil.TestCase):
         'actor': {
             'displayName': 'rt_author',
             'id': tag_uri('rt_author'),
-            'image': {'url': 'https://twitter.com/rt_author/profile_image?size=original'},
             'objectType': 'person',
             'url': 'https://twitter.com/rt_author',
             'username': 'rt_author'
@@ -1117,7 +1110,6 @@ class TwitterTest(testutil.TestCase):
           'author': {
             'displayName': 'orig_author',
             'id': tag_uri('orig_author'),
-            'image': {'url': 'https://twitter.com/orig_author/profile_image?size=original'},
             'objectType': 'person',
             'url': 'https://twitter.com/orig_author',
             'username': 'orig_author'
@@ -1193,7 +1185,6 @@ class TwitterTest(testutil.TestCase):
       'username': 'schnarfed',
       'displayName': 'schnarfed',
       'url': 'https://twitter.com/schnarfed',
-      'image': {'url': 'https://twitter.com/schnarfed/profile_image?size=original'},
     }, self.twitter.user_to_actor({
       'screen_name': 'schnarfed',
     }))
