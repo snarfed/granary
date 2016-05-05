@@ -1,6 +1,8 @@
 from oauth_dropins.appengine_config import *
 
-# Suppress BeautifulSoup warning that we let it pick the XML parser instead of
-# specifying one explicitly.
+# Suppress warnings. These are duplicated in oauth-dropins and bridgy; keep them
+# in sync!
 import warnings
-warnings.filterwarnings('ignore', module='bs4', category=UserWarning)
+warnings.filterwarnings('ignore', module='bs4',
+                        message='No parser was explicitly specified')
+warnings.filterwarnings('ignore', message='urllib3 is using URLFetch')
