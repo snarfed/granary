@@ -601,9 +601,10 @@ class Twitter(source.Source):
       parts = parsed.path.split('/')
       if len(parts) < 2 or not parts[1]:
         raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
-      if parts[1] != self.username:
-        mention = '@' + parts[1]
-        if mention.lower() not in content.lower():
+      reply_to = parts[1].lower()
+      if not self.username or reply_to != self.username.lower():
+        mention = '@' + reply_to
+        if mention not in content.lower():
           content = mention + ' ' + content
 
       # the embed URL in the preview can't start with mobile. or www., so just

@@ -1689,27 +1689,31 @@ class TwitterTest(testutil.TestCase):
                        self.twitter.create(obj).content)
 
   def test_create_reply_to_self_omits_mention(self):
-    tw = twitter.Twitter('key', 'secret', username='me')
-    obj = {
-      'objectType': 'comment',
-      'content': 'my content',
-      'inReplyTo': [{'url': 'http://twitter.com/me/status/100'}],
-    }
-
-    # test preview
-    preview = tw.preview_create(obj)
-    self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/me/status/100">this tweet</a>:', preview.description)
-    self.assertEquals('my content', preview.content)
-
-    # test create
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
-                        params={
-                          'status': 'my content',
-                          'in_reply_to_status_id': '100',
-                        })
+    for i in range(3):
+      self.expect_urlopen(
+        twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
+        params={'status': 'my content', 'in_reply_to_status_id': '100'},
+      )
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
-                       tw.create(obj).content)
+
+    for username, reply_to in ('me', 'me'), ('ME', 'ME'), ('Me', 'mE'):
+      tw = twitter.Twitter('key', 'secret', username=username)
+      obj = {
+        'objectType': 'comment',
+        'content': 'my content',
+        'inReplyTo': [{'url': 'http://twitter.com/%s/status/100' % reply_to}],
+      }
+
+      # test preview
+      preview = tw.preview_create(obj)
+      self.assertIn('@-reply</span> to <a href="%s">this tweet</a>:' %
+                      obj['inReplyTo'][0]['url'],
+                    preview.description)
+      self.assertEquals('my content', preview.content)
+
+      # test create
+      self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
+                         tw.create(obj).content)
 
   def test_create_favorite(self):
     self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
