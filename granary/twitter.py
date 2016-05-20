@@ -123,7 +123,7 @@ class Twitter(source.Source):
   </blockquote>
   """
 
-  def __init__(self, access_token_key, access_token_secret):
+  def __init__(self, access_token_key, access_token_secret, username=None):
     """Constructor.
 
     Twitter now requires authentication in v1.1 of their API. You can get an
@@ -132,9 +132,11 @@ class Twitter(source.Source):
     Args:
       access_token_key: string, OAuth access token key
       access_token_secret: string, OAuth access token secret
+      username: string, optional, the current user. Used in e.g. preview/create.
     """
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
+    self.username = username
 
   def get_actor(self, screen_name=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -599,9 +601,10 @@ class Twitter(source.Source):
       parts = parsed.path.split('/')
       if len(parts) < 2 or not parts[1]:
         raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
-      mention = '@' + parts[1]
-      if mention.lower() not in content.lower():
-        content = mention + ' ' + content
+      if parts[1] != self.username:
+        mention = '@' + parts[1]
+        if mention.lower() not in content.lower():
+          content = mention + ' ' + content
 
       # the embed URL in the preview can't start with mobile. or www., so just
       # hard-code it to twitter.com. index #1 is netloc.

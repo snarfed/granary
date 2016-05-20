@@ -268,6 +268,7 @@ Changelog
   * Switch create() to use brevity for counting characters. https://github.com/kylewm/brevity
   * Fix bug in create() that occasionally incorrectly escaped ., +, and - characters.
   * Fix text rendering bug when there are multipl photos/videos.
+  * When replying to yourself, don't add a self @-mention.
 * Instagram:
   * Fix bugs in scraping.
 * Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support App Engine.
