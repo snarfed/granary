@@ -182,3 +182,9 @@ class HandlerTest(testutil.HandlerTest):
     # second fetch should use the cache instead of fetching from the silo
     second = activitystreams.application.get_response('/fake/123/@all/')
     self.assert_equals(first.body, second.body)
+
+  def test_cache_false_query_param(self):
+    first = self.get_response('/fake/123/@all/?cache=false', '123', None)
+    self.reset()
+    second = self.get_response('/fake/123/@all/?cache=false', '123', None)
+    self.assert_equals(first.body, second.body)

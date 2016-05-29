@@ -75,6 +75,7 @@ class DemoHandler(webapp2.RequestHandler):
 
     params = {
       'plaintext': 'true',
+      'cache': 'false',
       'search_query': search_query,
     }
     params.update({name: val for name, val in self.request.params.items()

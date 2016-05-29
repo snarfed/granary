@@ -68,6 +68,8 @@ class Handler(webapp2.RequestHandler):
   override, eg Instagram sets to 60m. Background:
   https://github.com/snarfed/bridgy/issues/665
 
+  You can skip the cache by including a cache=false query param.
+
   Attributes:
     source: Source subclass
   """
@@ -110,13 +112,15 @@ class Handler(webapp2.RequestHandler):
       src = src_cls(**self.request.params)
 
     # check if request is cached
-    cache_key = 'R %s' % self.request.path
-    cached = memcache.get(cache_key)
-    if cached:
-      logging.info('Serving cached response %r', cache_key)
-      self.write_response(cached['response'], actor=cached['actor'],
-                          url=src.BASE_URL)
-      return
+    cache = self.request.get('cache', '').lower() != 'false'
+    if cache:
+      cache_key = 'R %s' % self.request.path
+      cached = memcache.get(cache_key)
+      if cached:
+        logging.info('Serving cached response %r', cache_key)
+        self.write_response(cached['response'], actor=cached['actor'],
+                            url=src.BASE_URL)
+        return
 
     # handle default path elements
     args = [None if a in defaults else a
@@ -141,9 +145,10 @@ class Handler(webapp2.RequestHandler):
     self.write_response(response, actor=actor, url=src.BASE_URL)
 
     # cache response
-    logging.info('Caching response in %r', cache_key)
-    memcache.set(cache_key, {'response': response, 'actor': actor},
-                 src.RESPONSE_CACHE_TIME)
+    if cache:
+      logging.info('Caching response in %r', cache_key)
+      memcache.set(cache_key, {'response': response, 'actor': actor},
+                   src.RESPONSE_CACHE_TIME)
 
   def write_response(self, response, actor=None, url=None, title=None):
     """Converts ActivityStreams activities and writes them out.
