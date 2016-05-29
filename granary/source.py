@@ -150,6 +150,8 @@ class Source(object):
   """
   __metaclass__ = SourceMeta
 
+  RESPONSE_CACHE_TIME = 5 * 60  # 5m
+
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""
     raise NotImplementedError()

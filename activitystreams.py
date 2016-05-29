@@ -30,6 +30,7 @@ import json
 import logging
 import urllib
 
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
@@ -61,6 +62,11 @@ MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
 class Handler(webapp2.RequestHandler):
   """Base class for ActivityStreams API handlers.
+
+  Silo responses are cached. Cache key is 'R [PATH]', value is dict with
+  'activities' and 'actor' keys. Cache duration defaults to 5m but silos can
+  override, eg Instagram sets to 60m. Background:
+  https://github.com/snarfed/bridgy/issues/665
 
   Attributes:
     source: Source subclass
@@ -103,6 +109,15 @@ class Handler(webapp2.RequestHandler):
         raise exc.HTTPNotFound('Unknown site %r' % site)
       src = src_cls(**self.request.params)
 
+    # check if request is cached
+    cache_key = 'R %s' % self.request.path
+    cached = memcache.get(cache_key)
+    if cached:
+      logging.info('Serving cached response %r', cache_key)
+      self.write_response(cached['response'], actor=cached['actor'],
+                          url=src.BASE_URL)
+      return
+
     # handle default path elements
     args = [None if a in defaults else a
             for a, defaults in zip(args, PATH_DEFAULTS)]
@@ -124,6 +139,11 @@ class Handler(webapp2.RequestHandler):
       actor = src.get_actor(user_id) if src else {}
 
     self.write_response(response, actor=actor, url=src.BASE_URL)
+
+    # cache response
+    logging.info('Caching response in %r', cache_key)
+    memcache.set(cache_key, {'response': response, 'actor': actor},
+                 src.RESPONSE_CACHE_TIME)
 
   def write_response(self, response, actor=None, url=None, title=None):
     """Converts ActivityStreams activities and writes them out.

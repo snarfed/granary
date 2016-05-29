@@ -57,6 +57,7 @@ class Instagram(source.Source):
   BASE_URL = 'https://www.instagram.com/'
   NAME = 'Instagram'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
+  RESPONSE_CACHE_TIME = 60 * 60  # 60m
 
   EMBED_POST = """
   <script async defer src="//platform.instagram.com/en_US/embeds.js"></script>

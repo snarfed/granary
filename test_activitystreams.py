@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 import copy
 import json
 
+from google.appengine.api import memcache
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
 
@@ -127,6 +128,7 @@ class HandlerTest(testutil.HandlerTest):
   def test_atom_format(self):
     for test_module in test_facebook, test_instagram, test_twitter:
       self.reset()
+      memcache.flush_all()
       self.mox.StubOutWithMock(FakeSource, 'get_actor')
       FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
       self.activities = [copy.deepcopy(test_module.ACTIVITY)]
@@ -172,6 +174,14 @@ class HandlerTest(testutil.HandlerTest):
 
   def test_count_greater_than_items_per_page(self):
     self.check_request('?count=999', count=activitystreams.ITEMS_PER_PAGE)
+
+  def test_cache(self):
+    # first fetch populates the cache
+    first = self.get_response('/fake/123/@all/', '123', None)
+
+    # second fetch should use the cache instead of fetching from the silo
+    second = activitystreams.application.get_response('/fake/123/@all/')
+    self.assert_equals(first.body, second.body)
 
     # TODO: move to facebook and/or twitter since they do implementation
   # def test_start_index_count_zero(self):
