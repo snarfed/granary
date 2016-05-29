@@ -610,6 +610,25 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([ACTIVITY_2],
                        self.twitter.get_activities(start_index=1, count=1))
 
+  def test_get_activities_start_index_count_zero(self):
+    self.expect_urlopen('statuses/home_timeline.json?include_entities=true&count=0',
+                        [TWEET, TWEET_2])
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY, ACTIVITY_2],
+                       self.twitter.get_activities(start_index=0, count=0))
+
+  def test_get_activities_count_past_end(self):
+    self.expect_urlopen('statuses/home_timeline.json?include_entities=true&count=9',
+                        [TWEET])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.twitter.get_activities(count=9))
+
+  def test_get_activities_start_index_past_end(self):
+    self.expect_urlopen('statuses/home_timeline.json?include_entities=true&count=0', [])
+    self.mox.ReplayAll()
+    self.assert_equals([], self.twitter.get_activities(start_index=9))
+
   def test_get_activities_activity_id(self):
     self.expect_urlopen('statuses/show.json?id=000&include_entities=true', TWEET)
     self.mox.ReplayAll()

@@ -1227,6 +1227,22 @@ class FacebookTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.fb.get_activities(start_index=3, count=5)
 
+  def test_get_activities_start_index_count_zero(self):
+    self.expect_urlopen('me/home?offset=0', {'data': [POST, FB_NOTE]})
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY, FB_NOTE_ACTIVITY],
+                       self.fb.get_activities(start_index=0, count=0))
+
+  def test_get_activities_count_past_end(self):
+    self.expect_urlopen('me/home?offset=0&limit=9', {'data': [POST]})
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.fb.get_activities(count=9))
+
+  def test_get_activities_start_index_past_end(self):
+    self.expect_urlopen('me/home?offset=0', {'data': [POST]})
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.fb.get_activities(offset=9))
+
   def test_get_activities_activity_id_with_underscore(self):
     self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
     self.mox.ReplayAll()

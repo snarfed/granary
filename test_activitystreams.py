@@ -182,30 +182,3 @@ class HandlerTest(testutil.HandlerTest):
     # second fetch should use the cache instead of fetching from the silo
     second = activitystreams.application.get_response('/fake/123/@all/')
     self.assert_equals(first.body, second.body)
-
-    # TODO: move to facebook and/or twitter since they do implementation
-  # def test_start_index_count_zero(self):
-  #   self.check_request('?startIndex=0&count=0', self.ACTIVITIES)
-
-  # def test_start_index(self):
-  #   self.check_request('?startIndex=1&count=0', self.ACTIVITIES[1:])
-  #   self.check_request('?startIndex=2&count=0', self.ACTIVITIES[2:])
-
-  # def test_count_past_end(self):
-  #   self.check_request('?startIndex=0&count=10', self.ACTIVITIES)
-  #   self.check_request('?startIndex=1&count=10', self.ACTIVITIES[1:])
-
-  # def test_start_index_past_end(self):
-  #   self.check_request('?startIndex=10&count=0', [])
-  #   self.check_request('?startIndex=10&count=10', [])
-
-  # def test_start_index_subtracts_from_count(self):
-  #   try:
-  #     orig_items_per_page = activitystreams.ITEMS_PER_PAGE
-  #     activitystreams.ITEMS_PER_PAGE = 2
-  #     self.check_request('?startIndex=1&count=0', self.ACTIVITIES[1:2])
-  #   finally:
-  #     activitystreams.ITEMS_PER_PAGE = orig_items_per_page
-
-  # def test_start_index_and_count(self):
-  #   self.check_request('?startIndex=1&count=1', [self.ACTIVITIES[1]])

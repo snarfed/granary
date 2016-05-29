@@ -216,6 +216,9 @@ class Twitter(source.Source):
         user.append(self.urlopen(API_USER % user_id if user_id else API_CURRENT_USER))
       return user[0]
 
+    if count:
+      count += start_index
+
     activities = []
     if activity_id:
       tweets = [self.urlopen(API_STATUS % activity_id)]
@@ -225,7 +228,7 @@ class Twitter(source.Source):
         if user_id in (None, source.ME):
           user_id = ''
         url = API_USER_TIMELINE % {
-          'count': count + start_index,
+          'count': count,
           'screen_name': user_id,
         }
 
@@ -236,15 +239,15 @@ class Twitter(source.Source):
       elif group_id == source.SEARCH:
         url = API_SEARCH % {
           'q': urllib.quote_plus(search_query),
-          'count': count + start_index,
+          'count': count,
         }
       elif group_id in (source.FRIENDS, source.ALL):
-        url = API_TIMELINE % (count + start_index)
+        url = API_TIMELINE % (count)
       else:
         if not user_id:
           user_id = _user().get('screen_name')
         url = API_LIST_TIMELINE % {
-          'count': count + start_index,
+          'count': count,
           'slug': group_id,
           'owner_screen_name': user_id,
         }
