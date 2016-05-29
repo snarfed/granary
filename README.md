@@ -260,6 +260,8 @@ Changelog
 ---
 
 #### 1.4 - unreleased
+* REST API:
+  * Cache silo requests for 5m by default, 60m for Instagram because they aggressively blocking scraping. You can skip the cache with the new cache=false query param.
 * Facebook:
   * Upgrade from API v2.2 to v2.6. https://developers.facebook.com/docs/apps/changelog
   * Add reaction support.
