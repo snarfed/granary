@@ -585,7 +585,7 @@ def render_content(obj, include_location=True, synthesize_content=True):
       video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
       poster = util.get_first(tag, 'image', {})
       if video and video.get('url'):
-        content += '\n<p>%s</p>' % vid(video['url'], poster.get('url'), 'thumbnail')
+        content += '\n<p>%s' % vid(video['url'], poster.get('url'), 'thumbnail')
     else:
       content += '\n<p>'
       url = tag.get('url') or obj.get('url')
@@ -776,7 +776,10 @@ def vid(src, poster, cls):
   html = '<video class="%s" src="%s"' % (cls, src)
   if poster:
     html += ' poster="%s"' % poster
-  html += ' controls>'
+
+  # include ="controls" value since this HTML is also used in the Atom
+  # template, which has to validate as XML.
+  html += ' controls="controls">'
 
   html += 'Your browser does not support the video tag. '
   html += '<a href="%s">Click here to view directly' % src

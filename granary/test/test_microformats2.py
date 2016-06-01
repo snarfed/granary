@@ -250,6 +250,20 @@ foo
         self.assert_equals(obj['content'],
                            microformats2.render_content(obj, synthesize_content=val))
 
+  def test_render_content_video(self):
+    self.assert_equals("""\
+foo
+<p><video class="thumbnail" src="http://vid/eo" poster="http://im/age" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly<img src="http://im/age"/></a></video>
+</p>
+""", microformats2.render_content({
+      'content': 'foo',
+      'attachments': [{
+        'image': [{'url': 'http://im/age'}],
+        'stream': [{'url': 'http://vid/eo'}],
+        'objectType': 'video',
+      }],
+    }))
+
   def test_escape_html_attribute_values(self):
     self.assert_equals("""\
 <article class="h-entry">
