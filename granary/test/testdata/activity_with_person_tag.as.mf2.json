@@ -1,0 +1,13 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "uid": ["tag:example.com,2011:note-123"],
+    "category": [{
+      "type": ["h-card"],
+      "properties": {
+        "url": ["https://alice"],
+        "name": ["Alice"]
+      }
+    }]
+  }
+}

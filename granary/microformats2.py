@@ -176,7 +176,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   }
 
   # hashtags and person tags
-  tags = obj.get('tags', [])
+  tags = obj.get('tags', []) or util.get_first(obj, 'object', {}).get('tags', [])
   ret['properties']['category'] = []
   for tag in tags:
     if tag.get('objectType') == 'person':

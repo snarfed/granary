@@ -1,0 +1,12 @@
+{
+  "objectType": "activity",
+  "object": {
+    "objectType": "note",
+    "id": "tag:example.com,2011:note-123",
+    "tags": [{
+      "objectType": "person",
+      "url": "https://alice",
+      "displayName": "Alice"
+    }]
+  }
+}
