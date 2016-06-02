@@ -155,7 +155,7 @@ Click on a site to try the demo!
 <input id="user_id" name="user_id" type="text" class="form-control"
        placeholder="username" size="12" required />
 <input type="hidden" id="group_id" name="group_id" value="@self" />
-<label>/ @self / @app </label>
+<label>/ @self </label>
 {% else %}
 <label> me / </label>
 {% if site == 'facebook' %}
@@ -171,13 +171,14 @@ Click on a site to try the demo!
   {% endif %}
 </select>
 {% endif %}
+{% endif %}
+
 <label>/ @app </label>
 <span id="activity_id_span">
   <label for="activity_id"> / </label>
   <input id="activity_id" name="activity_id" type="text" class="form-control"
          placeholder="activity id (optional)" size="12" />
 </span>
-{% endif %}
 ?
 <span id="search_query_span">
   <label for="search_query">search_query =</label>
