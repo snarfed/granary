@@ -152,7 +152,8 @@ class Instagram(source.Source):
       scrape: if True, scrapes HTML from instagram.com instead of using the API.
         Populates the user's actor object in the 'actor' response field.
         Useful for apps that haven't yet been approved in the new permissions
-        approval process. Currently only supports group_id=SELF.
+        approval process. Currently only supports group_id=SELF. Also supports
+        passing a shortcode as activity_id as well as the internal API id.
         http://developers.instagram.com/post/133424514006/instagram-platform-update
       cookie: string, only used if scrape=True
 
@@ -227,20 +228,25 @@ class Instagram(source.Source):
     return self.make_activities_base_response(activities)
 
   def _scrape(self, user_id=None, activity_id=None, cookie=None,
-              fetch_extras=False, cache=None):
+              fetch_extras=False, cache=None, shortcode=None):
     """Scrapes a user's profile or feed and converts the media to activities.
 
     Args:
       user_id: string
-      activity_id: string
+      activity_id: string, e.g. '1020355224898358984_654594'
       fetch_extras: boolean
       cookie: string
+      shortcode: string, e.g. '4pB6vEx87I'
 
     Returns: dict activities API response
     """
-    assert user_id or activity_id or cookie
+    assert user_id or activity_id or shortcode or cookie
+    assert not (activity_id and shortcode)
 
-    url = (HTML_MEDIA % self.id_to_shortcode(activity_id) if activity_id
+    if not shortcode:
+      shortcode = self.id_to_shortcode(activity_id)
+
+    url = (HTML_MEDIA % shortcode if shortcode
            else HTML_PROFILE % user_id if user_id
            else HTML_BASE_URL)
     kwargs = {}
@@ -252,7 +258,11 @@ class Instagram(source.Source):
          '/accounts/login' in resp.headers.get('Location', ''))):
       resp.status_code = 401
       raise requests.HTTPError('401 Unauthorized', response=resp)
-    elif resp.status_code != 404:  # return an empty response for 404
+    elif resp.status_code == 404:
+      if activity_id:
+        return self._scrape(shortcode=activity_id, cookie=cookie)
+      # otherwise not found, fall through and return empty response
+    else:
       resp.raise_for_status()
 
     activities, actor = self.html_to_activities(resp.text)
@@ -673,7 +683,10 @@ class Instagram(source.Source):
       return None
 
     if isinstance(id, basestring):
-      id = int(id.split('_')[0])
+      parts = id.split('_')
+      if not util.is_int(parts[0]):
+        return id
+      id = int(parts[0])
 
     A = ord('A')
     chars = []

@@ -825,7 +825,7 @@ class InstagramTest(testutil.HandlerTest):
     self.instagram = instagram.Instagram(access_token='asdf')
     self.instagram.get_activities()
 
-  def test_get_activities_activity_id(self):
+  def test_get_activities_activity_id_shortcode(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
@@ -998,6 +998,29 @@ class InstagramTest(testutil.HandlerTest):
       group_id=source.SELF, scrape=True, activity_id='1208909509631101904_942513')
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], resp['items'])
     self.assertIsNone(resp['actor'])
+
+  def test_get_activities_scrape_activity_id_shortcode(self):
+    self.expect_requests_get(
+      instagram.HTML_BASE_URL + 'p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
+      allow_redirects=False)
+    self.mox.ReplayAll()
+
+    resp = self.instagram.get_activities_response(
+      group_id=source.SELF, scrape=True, activity_id='BDG6Ms_J0vQ')
+    self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], resp['items'])
+
+  def test_get_activities_scrape_activity_id_shortcode_404(self):
+    self.expect_requests_get(
+      instagram.HTML_BASE_URL + 'p/B7/', status_code=404,
+      allow_redirects=False)
+    self.expect_requests_get(
+      instagram.HTML_BASE_URL + 'p/123_ABC/', HTML_PHOTO_COMPLETE,
+      allow_redirects=False)
+    self.mox.ReplayAll()
+
+    resp = self.instagram.get_activities_response(
+      group_id=source.SELF, scrape=True, activity_id='123_ABC')
+    self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], resp['items'])
 
   def test_get_activities_scrape_cookie_redirects_to_login(self):
     self.expect_requests_get(
@@ -1348,5 +1371,7 @@ class InstagramTest(testutil.HandlerTest):
         ('BDJ7Nr5Nxpa', '1209758400153852506'),
         ('BDJ7Nr5Nxpa', '1209758400153852506'),
         ('BDJ7Nr5Nxpa', '1209758400153852506_1103525'),
+        ('BDJ7Nr5Nxpa', 'BDJ7Nr5Nxpa'),
+        ('BDJ7N_5Nxpa', 'BDJ7N_5Nxpa'),
     ):
       self.assertEquals(shortcode, self.instagram.id_to_shortcode(id))
