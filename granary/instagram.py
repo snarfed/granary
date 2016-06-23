@@ -716,9 +716,20 @@ class Instagram(source.Source):
     if start == -1:
       return [], None
 
+    # App Engine's Python 2.7.5 json module doesn't support unpaired surrogate
+    # Unicode chars, so it chokes on some JSON docs. Monkey patch in simplejson
+    # to fix that.
+    # https://code.google.com/p/googleappengine/issues/detail?id=12823
+    # http://stackoverflow.com/questions/15236742
+    try:
+      import simplejson
+      json_module = simplejson
+    except ImportError:
+      json_module = json
+
     start += len(script_start)
     end = html.index(';</script>', start)
-    data = json.loads(html[start:end])
+    data = json_module.loads(html[start:end])
 
     entry_data = data.get('entry_data', {})
     activities = []
