@@ -510,10 +510,11 @@ foo
     'url': 'http://li/nk',
     'image': {'url': 'http://pic/ture'},
   }, microformats2.find_author(mf2py.parse(doc="""\
-<body class="p-author h-card">
+<body class="h-entry">
+<div class="p-author h-card">
 <a href="http://li/nk">my name</a>
 <img class="u-photo" src="http://pic/ture" />
-<div class="h-entry"></div>
+</div>
 </body>
 """, url='http://123')))
 
