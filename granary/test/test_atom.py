@@ -210,12 +210,12 @@ my content
 
 </feed>
 """, atom.html_to_atom("""\
+<div class="h-feed">
 <div class="p-author h-card">
   <a href="http://my/site">My Name</a>
   <img src="http://my/picture" />
 </div>
 
-<div class="h-feed">
 <span class="p-name">my title</span>
 
 <article class="h-entry">
