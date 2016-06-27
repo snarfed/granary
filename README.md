@@ -259,7 +259,10 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
-#### 1.4 - unreleased
+#### 1.4.1 - 2016-06-27
+* Bump oauth-dropins requirement to 1.4.
+
+#### 1.4.0 - 2016-06-27
 * REST API:
   * Cache silo requests for 5m by default, 60m for Instagram because they aggressively blocking scraping. You can skip the cache with the new cache=false query param.
 * Facebook:
