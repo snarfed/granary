@@ -70,6 +70,8 @@ RETRIES = 3
 #   https://dev.twitter.com/docs/tco-link-wrapper/faq
 # * Max media per tweet.
 #   https://dev.twitter.com/rest/reference/post/statuses/update#api-param-media_ids
+# * Allowed image formats:
+#   https://dev.twitter.com/rest/media/uploading-media#imagerecs
 # * Allowed video formats, max video size, and upload chunk size:
 #   https://dev.twitter.com/rest/public/uploading-media#keepinmind
 #
@@ -78,11 +80,11 @@ RETRIES = 3
 MAX_TWEET_LENGTH = 140
 TCO_LENGTH = 23
 MAX_MEDIA = 4
-
+IMAGE_MIME_TYPES = frozenset(('image/jpg', 'image/png', 'image/gif', 'image/webp',))
+VIDEO_MIME_TYPES = frozenset(('video/mp4',))
 MB = 1024 * 1024
 MAX_VIDEO_SIZE = 15 * MB
 UPLOAD_CHUNK_SIZE = 5 * MB
-VIDEO_MIME_TYPES = frozenset(('video/mp4',))
 
 
 class OffsetTzinfo(datetime.tzinfo):
@@ -704,7 +706,10 @@ class Twitter(source.Source):
         preview_content += '<br /><br />' + ' &nbsp; '.join(
           '<img src="%s" />' % url for url in image_urls)
         if not preview:
-          data['media_ids'] = ','.join(self.upload_images(image_urls))
+          ret = self.upload_images(image_urls)
+          if isinstance(ret, source.CreationResult):
+            return ret
+          data['media_ids'] = ','.join(ret)
 
       if lat and lng:
         preview_content += (
@@ -779,10 +784,16 @@ class Twitter(source.Source):
     """
     ids = []
     for url in urls:
+      image_resp = util.urlopen(url)
+      bad_type = self._check_mime_type(url, image_resp, IMAGE_MIME_TYPES,
+                                       'JPG, PNG, GIF, and WEBP images')
+      if bad_type:
+        return bad_type
+
       headers = twitter_auth.auth_header(
         API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
       resp = util.requests_post(API_UPLOAD_MEDIA,
-                                files={'media': util.urlopen(url)},
+                                files={'media': image_resp},
                                 headers=headers)
       resp.raise_for_status()
       logging.info('Got: %s', resp.text)
@@ -811,14 +822,9 @@ class Twitter(source.Source):
     Returns: string media id or CreationResult on error
     """
     video_resp = util.urlopen(url)
-
-    # check format and size
-    type = video_resp.headers.get('Content-Type')
-    if not type:
-      type, _ = mimetypes.guess_type(url)
-    if type and type not in VIDEO_MIME_TYPES:
-      msg = 'Twitter only supports MP4 videos; yours looks like a %s.' % type
-      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+    bad_type = self._check_mime_type(url, video_resp, VIDEO_MIME_TYPES, 'MP4 videos')
+    if bad_type:
+      return bad_type
 
     length = video_resp.headers.get('Content-Length')
     if not util.is_int(length):
@@ -865,6 +871,27 @@ class Twitter(source.Source):
     }))
 
     return media_id
+
+  @staticmethod
+  def _check_mime_type(url, resp, allowed, label):
+    """Checks that a URL is in a set of allowed MIME type(s).
+
+    Args:
+      url: string
+      resp: urlopen result object
+      allowed: sequence of allowed string MIME types
+      label: human-readable description of the allowed MIME types, to be used in
+        an error message
+
+    Returns: None if the url's MIME type is in the set, CreationResult with
+      abort=True if it isn't
+    """
+    type = resp.headers.get('Content-Type')
+    if not type:
+      type, _ = mimetypes.guess_type(url)
+    if type and type not in allowed:
+      msg = 'Twitter only supports %s; %s looks like %s' % (label, url, type)
+      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
   def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps urllib2.urlopen() and adds an OAuth signature.

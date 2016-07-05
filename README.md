@@ -261,6 +261,8 @@ Changelog
 
 #### 1.4.1 - 2016-06-27
 * Bump oauth-dropins requirement to 1.4.
+* Twitter:
+  * Better error message when uploading a photo with an unsupported type.
 
 #### 1.4.0 - 2016-06-27
 * REST API:

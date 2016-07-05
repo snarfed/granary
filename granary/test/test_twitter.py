@@ -1916,6 +1916,20 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.mox.ReplayAll()
     self.assertRaises(urllib2.HTTPError, self.twitter.create, obj)
 
+  def test_create_with_photo_wrong_type(self):
+    obj = {
+      'objectType': 'note',
+      'image': {'url': 'http://my/picture.tiff'},
+    }
+    self.expect_urlopen('http://my/picture.tiff', '')
+    self.mox.ReplayAll()
+
+    ret = self.twitter.create(obj)
+    self.assertTrue(ret.abort)
+    for msg in ret.error_plain, ret.error_html:
+      self.assertEquals('Twitter only supports JPG, PNG, GIF, and WEBP images; '
+                        'http://my/picture.tiff looks like image/tiff', msg)
+
   def test_create_with_video(self):
     try:
       orig_size = twitter.UPLOAD_CHUNK_SIZE
@@ -2001,5 +2015,5 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
         'stream': {'url': url},
       })
       self.assertTrue(ret.abort)
-      self.assertIn('Twitter only supports MP4 videos', ret.error_plain)
-      self.assertIn('Twitter only supports MP4 videos', ret.error_html)
+      for msg in ret.error_plain, ret.error_html:
+        self.assertIn('Twitter only supports MP4 videos', msg)
