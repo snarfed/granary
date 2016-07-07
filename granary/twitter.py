@@ -80,7 +80,8 @@ RETRIES = 3
 MAX_TWEET_LENGTH = 140
 TCO_LENGTH = 23
 MAX_MEDIA = 4
-IMAGE_MIME_TYPES = frozenset(('image/jpg', 'image/png', 'image/gif', 'image/webp',))
+IMAGE_MIME_TYPES = frozenset(('image/jpg', 'image/jpeg', 'image/png',
+                              'image/gif', 'image/webp',))
 VIDEO_MIME_TYPES = frozenset(('video/mp4',))
 MB = 1024 * 1024
 MAX_VIDEO_SIZE = 15 * MB
