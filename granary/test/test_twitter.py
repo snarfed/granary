@@ -764,7 +764,7 @@ class TwitterTest(testutil.TestCase):
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
-    # second search finds one quote for 1006
+    # second search finds a quote tweet for 1006 and an RT of that
     self.expect_urlopen(twitter.API_SEARCH % {
       'q': urllib.quote_plus('1005 OR 1006 OR 1007'),
       'count': 100,
@@ -778,13 +778,22 @@ class TwitterTest(testutil.TestCase):
         'user': {
           'screen_name': 'kylewmahan',
         },
+      }, {
+        'id': 6789,
+        'id_str': '6789',
+        'quoted_status_id_str': '1006',
+        'text': 'RT @kylewmahan: I agree with this',
+        'retweeted_status': {
+          'id': 1006,
+        },
       }],
     })
 
     self.mox.ReplayAll()
     got = self.twitter.get_activities(fetch_mentions=True, min_id='567')
-
     self.assertEqual(9, len(got))
+
+    # should include quote tweet
     quote = got[-1]
     self.assertEqual('tag:twitter.com:2345', quote.get('id'))
     self.assertEqual('https://twitter.com/kylewmahan/status/2345',
@@ -792,6 +801,9 @@ class TwitterTest(testutil.TestCase):
     attachment = quote.get('object', {}).get('attachments')[0]
     self.assertEqual('tag:twitter.com:1006', attachment.get('id'))
     self.assertEqual('note', attachment.get('objectType'))
+
+    # shouldn't include RT of quote tweet
+    self.assertNotIn('tag:twitter.com:6789', [a.get('id') for a in got])
 
   def test_get_activities_fetch_shares(self):
     tweet = copy.deepcopy(TWEET)

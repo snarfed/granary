@@ -476,7 +476,8 @@ class Twitter(source.Source):
       candidates = self.urlopen(url)['statuses']
       for c in candidates:
         quoted_status_id = c.get('quoted_status_id_str')
-        if quoted_status_id and quoted_status_id in batch_ids:
+        if (quoted_status_id and quoted_status_id in batch_ids and
+            not c.get('retweeted_status')):
           mentions.append(c)
 
     return mentions
