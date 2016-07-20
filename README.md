@@ -215,8 +215,13 @@ git co -- app.yaml
 Related work
 --
 
-[Gnip](http://gnip.com/) is by far the most complete project in this vein. It
-similarly
+[Apache Streams](http://streams.incubator.apache.org/) is a similar project that
+translates between storage systems and database as well as social schemas. It's
+a Java library, and its design is heavily structured.
+[Here's the list of formats it supports.](http://streams.incubator.apache.org/site/0.3-incubating-SNAPSHOT/streams-project/streams-contrib/index.html) It's
+mainly used by [People Pattern](http://www.peoplepattern.com/).
+
+[Gnip](http://gnip.com/) similarly
 [converts social network data to ActivityStreams](http://support.gnip.com/documentation/activity_streams_intro.html)
 and supports [many more source networks](http://gnip.com/sources/).
 Unfortunately, it's commercial, there's no free trial or self-serve signup, and
