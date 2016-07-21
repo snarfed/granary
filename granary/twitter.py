@@ -281,7 +281,11 @@ class Twitter(source.Source):
     if fetch_shares:
       retweet_calls = 0
       for tweet in tweets:
-        if tweet.get('retweeted'):  # this tweet is itself a retweet
+        # don't fetch retweets the tweet is itself a retweet or if the
+        # author's account is protected. /statuses/retweets 403s with error
+        # code 200 (?!) for protected accounts.
+        # https://github.com/snarfed/bridgy/issues/688
+        if tweet.get('retweeted') or tweet.get('user', {}).get('protected'):
           continue
         elif retweet_calls >= RETWEET_LIMIT:
           logging.warning("Hit Twitter's retweet rate limit (%d) with more to "
