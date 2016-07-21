@@ -268,6 +268,7 @@ Changelog
 * Twitter:
   * Better error message when uploading a photo with an unsupported type.
   * Only include original quote tweets, not retweets of them.
+  * Skip fetching retweets for protected accounts since the API call always 403s.
 
 #### 1.4.1 - 2016-06-27
 * Bump oauth-dropins requirement to 1.4.
