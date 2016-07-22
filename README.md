@@ -269,6 +269,10 @@ Changelog
   * Better error message when uploading a photo with an unsupported type.
   * Only include original quote tweets, not retweets of them.
   * Skip fetching retweets for protected accounts since the API call always 403s.
+* Flickr:
+  * Better username detection. Flickr's API is very inconsistent about username
+    vs real name vs path alias. This specifically detects when a user name is
+    probably actually a real name because it has a space.
 
 #### 1.4.1 - 2016-06-27
 * Bump oauth-dropins requirement to 1.4.

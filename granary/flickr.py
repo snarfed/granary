@@ -456,7 +456,7 @@ class Flickr(source.Source):
       logging.debug('checking comment id %s', comment.get('id'))
       # comment id is the in form ###-postid-commentid
       if (comment.get('id') == comment_id or
-              comment.get('id').split('-')[-1] == comment_id):
+          comment.get('id').split('-')[-1] == comment_id):
         logging.debug('found comment matching %s', comment_id)
         return self.comment_to_object(comment, activity_id)
 
@@ -522,11 +522,20 @@ class Flickr(source.Source):
     }
 
     if isinstance(owner, dict):
+      username = owner.get('username')
+      # Flickr API is evidently inconsistent in what it puts in realname vs
+      # username vs path_alias. if username has spaces, it's probably actually
+      # real name, so use path alias instead.
+      # https://github.com/snarfed/bridgy/issues/687
+      # https://www.flickr.com/groups/51035612836@N01/discuss/72157625945600254
+      if not username or ' ' in username:
+        username = owner.get('path_alias')
+
       activity['object']['author'] = {
         'objectType': 'person',
-        'displayName': owner.get('realname') or owner.get('username'),
-        'username': owner.get('username'),
-        'id': self.tag_uri(owner.get('username')),
+        'displayName': owner.get('realname') or username,
+        'username': username,
+        'id': self.tag_uri(username),
         'image': {
           'url': self.get_user_image(owner.get('iconfarm'),
                                      owner.get('iconserver'),

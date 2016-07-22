@@ -1066,3 +1066,21 @@ class FlickrTest(testutil.TestCase):
       'type': 'like',
       'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/#favorited-by-39216764@N00',
     }, self.flickr.create(LIKE_OBJ).content)
+
+  def test_photo_to_activity_uses_path_alias_if_username_has_spaces(self):
+    photo = PHOTO_INFO['photo']
+    photo['owner'].update({
+      'username': 'Foo Bar',
+      'path_alias': 'my_alias',
+    })
+
+    activity = self.flickr.photo_to_activity(photo)
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'tag:flickr.com:my_alias',
+      'username': 'my_alias',
+      'displayName': 'Kyle Mahan',
+      'image': {
+        'url': 'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
+      },
+    }, activity['object']['author'])
