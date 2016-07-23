@@ -67,10 +67,10 @@ class DemoHandler(webapp2.RequestHandler):
     user = self.request.get('user_id') or source.ME
 
     if group == source.SEARCH:
-      search_query = self.request.get('search_query', '')
+      search_query = self.request.get('search_query', '').encode('utf-8')
       activity_id = ''
     else:
-      activity_id = self.request.get('activity_id', '')
+      activity_id = self.request.get('activity_id', '').encode('utf-8')
       search_query = ''
 
     params = {
@@ -81,7 +81,8 @@ class DemoHandler(webapp2.RequestHandler):
     params.update({name: val for name, val in self.request.params.items()
                    if name in API_PARAMS})
     return self.redirect('/%s/%s/%s/@app/%s?%s' % (
-      site, user, group, activity_id, urllib.urlencode(params)))
+      site, urllib.quote_plus(user.encode('utf-8')), group, activity_id,
+      urllib.urlencode(params)))
 
 
 class UrlHandler(activitystreams.Handler):
