@@ -111,6 +111,16 @@ class Handler(webapp2.RequestHandler):
         raise exc.HTTPNotFound('Unknown site %r' % site)
       src = src_cls(**self.request.params)
 
+    # decode tag URI ids
+    for i, arg in enumerate(args):
+      parsed = util.parse_tag_uri(arg)
+      if parsed:
+        domain, id = parsed
+        if domain != src.DOMAIN:
+          raise exc.HTTPBadRequest('Expected domain %s in tag URI %s, found %s' %
+                                   (src.DOMAIN, arg, domain))
+        args[i] = id
+
     # check if request is cached
     cache = self.request.get('cache', '').lower() != 'false'
     if cache:

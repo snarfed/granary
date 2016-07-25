@@ -80,6 +80,9 @@ class HandlerTest(testutil.HandlerTest):
   def test_user_id(self):
     self.check_request('/123/', '123')
 
+  def test_user_id_tag_uri(self):
+    self.check_request('/tag:fa.ke:123/', '123')
+
   def test_all(self):
     self.check_request('/123/@all/', '123', None)
 
@@ -98,8 +101,20 @@ class HandlerTest(testutil.HandlerTest):
   def test_app_id(self):
     self.check_request('/123/456/789/', '123', '456', '789')
 
+  def test_app_id_tag_uri(self):
+    self.check_request('/123/456/tag:fa.ke:789/', '123', '456', '789')
+
   def test_activity_id(self):
     self.check_request('/123/456/789/000/', '123', '456', '789', '000')
+
+  def test_activity_id_tag_uri(self):
+    self.check_request('/tag:fa.ke:123/456/tag:fa.ke:789/tag:fa.ke:000/',
+                       '123', '456', '789', '000')
+
+  def test_activity_id_tag_uri_wrong_domain(self):
+    resp = activitystreams.application.get_response(
+      '/fake/123/456/789/tag:foo.bar:000/')
+    self.assertEquals(400, resp.status_int)
 
   def test_defaults_and_activity_id(self):
     self.check_request('/@me/@all/@app/000/', None, None, None, '000')

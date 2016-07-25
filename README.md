@@ -265,6 +265,8 @@ Changelog
 ---
 
 #### 1.5 - unreleased
+* REST API:
+  * Support tag URI for user id, app id, and activity id.
 * Twitter:
   * Better error message when uploading a photo with an unsupported type.
   * Only include original quote tweets, not retweets of them.
