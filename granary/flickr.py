@@ -191,7 +191,15 @@ class Flickr(source.Source):
           ('tags', ','.join('"%s"' % t if ' ' in t else t for t in hashtags)))
 
       file = util.urlopen(video_url or image_url)
-      resp = self.upload(params, file)
+      try:
+        resp = self.upload(params, file)
+      except requests.exceptions.ConnectionError as e:
+        if e.args[0].message.startswith('Request exceeds 10 MiB limit'):
+          msg = 'Sorry, photos and videos must be under 10MB.'
+          return source.creation_result(error_plain=msg, error_html=msg)
+        else:
+          raise
+
       photo_id = resp.get('id')
       resp.update({
         'type': 'post',

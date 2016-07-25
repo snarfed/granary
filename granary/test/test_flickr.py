@@ -5,6 +5,8 @@ from __future__ import unicode_literals, print_function
 import copy
 import json
 import mox
+import requests
+import socket
 import urllib
 import urllib2
 
@@ -1005,6 +1007,26 @@ class FlickrTest(testutil.TestCase):
     }).content
     self.assertTrue(preview.startswith('<h4>my content</h4>'), preview)
     self.assertNotIn('should hide', preview)
+
+  def test_create_video_too_big(self):
+    self.expect_urlopen('http://foo/xyz.mp4', 'video response')
+    self.expect_requests_post(
+      'https://up.flickr.com/services/upload',
+      data=[('description', 'foo')] + IGNORED_OAUTH_PARAMS,
+      files={'photo': 'video response'}
+    ).AndRaise(requests.exceptions.ConnectionError(socket.error(
+      'Request exceeds 10 MiB limit for URL: https://up.flickr.com/services/upload')))
+    self.mox.ReplayAll()
+
+    err = 'Sorry, photos and videos must be under 10MB.'
+    self.assert_equals(
+      source.creation_result(error_plain=err, error_html=err),
+      self.flickr.create({
+        'objectType': 'note',
+        'stream': {'url': 'http://foo/xyz.mp4'},
+        'url': 'http://foo/xyz',
+        'content': 'foo',
+      }))
 
   def test_preview_create_comment(self):
     preview = self.flickr.preview_create(
