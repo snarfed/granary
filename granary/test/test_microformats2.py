@@ -534,3 +534,7 @@ foo
         }),
     ):
       self.assertEquals(expected, microformats2.object_urls(actor))
+
+  def test_hcard_to_html_no_properties(self):
+    self.assertEquals('', microformats2.hcard_to_html({}))
+    self.assertEquals('', microformats2.hcard_to_html({'properties': {}}))

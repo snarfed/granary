@@ -505,14 +505,18 @@ def hcard_to_html(hcard, parent_props=[]):
     return ''
 
   # extract first value from multiply valued properties
-  prop = first_props(hcard['properties'])
+  props = hcard.get('properties', {})
+  prop = first_props(props)
+  if not prop:
+    return ''
+
   prop.setdefault('uid', '')
   photo = prop.get('photo')
   return HCARD.substitute(
     prop,
-    types=' '.join(util.uniquify(parent_props + hcard['type'])),
+    types=' '.join(util.uniquify(parent_props + hcard.get('type', []))),
     photo=img(photo, 'u-photo', '') if photo else '',
-    linked_name=maybe_linked_name(hcard['properties']))
+    linked_name=maybe_linked_name(props))
 
 
 def render_content(obj, include_location=True, synthesize_content=True):
