@@ -276,6 +276,8 @@ Changelog
     vs real name vs path alias. This specifically detects when a user name is
     probably actually a real name because it has a space.
   * Uploading: detect and handle App Engine's 10MB HTTP request limit.
+* Atom:
+  * Bug fix: escape &s in attachments' text (e.g. quote tweets).
 
 #### 1.4.1 - 2016-06-27
 * Bump oauth-dropins requirement to 1.4.
