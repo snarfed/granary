@@ -55,11 +55,9 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     else:
       primary = a
     obj = a.setdefault('object', {})
-    # Render content as HTML; escape &s
-    rendered = []
 
-    rendered.append(microformats2.render_content(primary))
-    obj['rendered_content'] = _encode_ampersands('\n'.join(rendered))
+    # Render content as HTML; escape &s
+    obj['rendered_content'] = _encode_ampersands(microformats2.render_content(primary))
 
     # Make sure every activity has the title field, since Atom <entry> requires
     # the title element.
@@ -77,7 +75,8 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
       att['image'] = util.get_list(att, 'image')
 
     obj['rendered_children'] = [
-      microformats2.render_content(att) for att in primary.get('attachments', [])
+      _encode_ampersands(microformats2.render_content(att))
+      for att in primary.get('attachments', [])
       if att.get('objectType') in ('note', 'article')]
 
   # Emulate Django template behavior that returns a special default value that

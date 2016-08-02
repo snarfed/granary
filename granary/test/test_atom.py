@@ -82,6 +82,19 @@ class AtomTest(testutil.HandlerTest):
     self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
 
+  def test_render_encodes_ampersands_in_quote_tweets(self):
+    activity = {'object': {
+      'content': 'outer',
+      'attachments': [{
+        'objectType': 'note',
+        'content': 'X <y> http://z?w a&b c&amp;d e&gt;f',
+      }],
+    }}
+
+    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
+    self.assertNotIn('a&b', out)
+
   def test_updated_defaults_to_published(self):
     activities = [
       {'object': {'published': '2013-12-27T17:25:55+00:00'}},
