@@ -64,11 +64,11 @@ class Flickr(source.Source):
     self._user_id = user_id
     self._path_alias = path_alias
 
-  def call_api_method(self, method, params={}):
+  def call_api_method(self, method, params=None):
     """Call a Flickr API method.
     """
     return flickr_auth.call_api_method(
-      method, params, self.access_token_key, self.access_token_secret)
+      method, params or {}, self.access_token_key, self.access_token_secret)
 
   def upload(self, params, file):
     """Upload a photo or video via the Flickr API.

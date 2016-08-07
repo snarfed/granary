@@ -350,7 +350,7 @@ def activities_to_html(activities):
   """ % '\n'.join(object_to_html(a) for a in activities)
 
 
-def object_to_html(obj, parent_props=[], synthesize_content=True):
+def object_to_html(obj, parent_props=None, synthesize_content=True):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
@@ -374,7 +374,7 @@ def object_to_html(obj, parent_props=[], synthesize_content=True):
                       parent_props)
 
 
-def json_to_html(obj, parent_props=[]):
+def json_to_html(obj, parent_props=None):
   """Converts a microformats2 JSON object to microformats2 HTML.
 
   See object_to_html for details.
@@ -389,6 +389,8 @@ def json_to_html(obj, parent_props=[]):
 
   if not obj:
     return ''
+  if not parent_props:
+    parent_props = []
 
   types = obj.get('type', [])
   if 'h-card' in types:
@@ -491,7 +493,7 @@ def json_to_html(obj, parent_props=[]):
     summary=summary)
 
 
-def hcard_to_html(hcard, parent_props=[]):
+def hcard_to_html(hcard, parent_props=None):
   """Renders an h-card as HTML.
 
   Args:
@@ -503,6 +505,9 @@ def hcard_to_html(hcard, parent_props=[]):
   """
   if not hcard:
     return ''
+  if not parent_props:
+    parent_props = []
+
 
   # extract first value from multiply valued properties
   props = hcard.get('properties', {})
