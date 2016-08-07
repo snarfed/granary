@@ -178,6 +178,10 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(200, resp.status_int)
     self.assert_multiline_in(ATOM_CONTENT, resp.body)
 
+  def test_url_bad_input(self):
+    resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')
+    self.assert_equals(400, resp.status_int)
+
   def test_hub(self):
     self.expect_urlopen('http://my/posts.html', HTML % {
       'body_class': '',

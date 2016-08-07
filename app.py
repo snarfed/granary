@@ -22,6 +22,7 @@ from oauth_dropins import twitter
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
 import webapp2
+from webob import exc
 
 import activitystreams
 from granary import microformats2
