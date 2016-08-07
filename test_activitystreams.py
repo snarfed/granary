@@ -5,6 +5,7 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
 import json
+import socket
 
 from google.appengine.api import memcache
 import oauth_dropins.webutil.test
@@ -203,3 +204,11 @@ class HandlerTest(testutil.HandlerTest):
     self.reset()
     second = self.get_response('/fake/123/@all/?cache=false', '123', None)
     self.assert_equals(first.body, second.body)
+
+  def test_get_activities_connection_error(self):
+    FakeSource.get_activities_response(
+      None, start_index=0, count=activitystreams.ITEMS_PER_PAGE
+    ).AndRaise(socket.error(''))
+    self.mox.ReplayAll()
+    resp = activitystreams.application.get_response('/fake/@me')
+    self.assertEquals(502, resp.status_int)

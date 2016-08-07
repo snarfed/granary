@@ -142,6 +142,10 @@ class Handler(webapp2.RequestHandler):
       response = src.get_activities_response(*args, **self.get_kwargs(src))
     except NotImplementedError as e:
       self.abort(400, str(e))
+    except Exception as e:
+      if util.is_connection_failure(e):
+        self.abort(502, str(e))
+      raise
 
     # fetch actor if necessary
     actor = response.get('actor')
