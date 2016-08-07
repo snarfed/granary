@@ -1,7 +1,8 @@
 """Unit tests for app.py.
 """
-
+import httplib
 import json
+import socket
 import xml.sax.saxutils
 
 import oauth_dropins.webutil.test
@@ -181,6 +182,19 @@ class AppTest(testutil.HandlerTest):
   def test_url_bad_input(self):
     resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')
     self.assert_equals(400, resp.status_int)
+
+  def test_url_bad_url(self):
+    self.expect_urlopen('http://astralandopal.com\\').AndRaise(httplib.InvalidURL(''))
+    self.mox.ReplayAll()
+    resp = app.application.get_response(
+      '/url?url=http://astralandopal.com\\&input=html')
+    self.assert_equals(400, resp.status_int)
+
+  def test_url_fetch_fails(self):
+    self.expect_urlopen('http://my/posts.html').AndRaise(socket.error(''))
+    self.mox.ReplayAll()
+    resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(502, resp.status_int)
 
   def test_hub(self):
     self.expect_urlopen('http://my/posts.html', HTML % {

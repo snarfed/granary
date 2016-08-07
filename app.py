@@ -3,6 +3,7 @@
 
 __author__ = 'Ryan Barrett <granary@ryanb.org>'
 
+import httplib
 import json
 import logging
 import urllib
@@ -99,7 +100,15 @@ class UrlHandler(activitystreams.Handler):
 
     # fetch url
     url = util.get_required_param(self, 'url')
-    resp = util.urlopen(url)
+    try:
+      resp = util.urlopen(url)
+    except httplib.InvalidURL as e:
+      self.abort(400, str(e))
+    except Exception as e:
+      if util.is_connection_failure(e):
+        self.abort(502, str(e))
+      raise
+
     if url != resp.geturl():
       url = resp.geturl()
       logging.info('Redirected to %s', url)
