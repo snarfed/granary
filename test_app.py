@@ -196,6 +196,20 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
     self.assert_equals(502, resp.status_int)
 
+  def test_cache(self):
+    self.expect_urlopen('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
+    self.mox.ReplayAll()
+
+    # first fetch populates the cache
+    url = '/url?url=http://my/posts.html&input=html'
+    first = app.application.get_response(url)
+    self.assert_equals(200, first.status_int)
+
+    # second fetch should use the cache instead of fetching from the silo
+    second = app.application.get_response(url)
+    self.assert_equals(200, first.status_int)
+    self.assert_equals(first.body, second.body)
+
   def test_hub(self):
     self.expect_urlopen('http://my/posts.html', HTML % {
       'body_class': '',

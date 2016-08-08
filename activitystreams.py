@@ -63,7 +63,7 @@ MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 class Handler(webapp2.RequestHandler):
   """Base class for ActivityStreams API handlers.
 
-  Silo responses are cached. Cache key is 'R [PATH]', value is dict with
+  Response data is cached. Cache key is 'R [PATH]', value is dict with
   'activities' and 'actor' keys. Cache duration defaults to 5m but silos can
   override, eg Instagram sets to 60m. Background:
   https://github.com/snarfed/bridgy/issues/665

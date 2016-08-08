@@ -12,6 +12,7 @@ import urlparse
 
 import appengine_config
 
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import mf2py
 import mf2util
@@ -36,6 +37,8 @@ API_PARAMS = {
   'auth_entity',
   'format',
 }
+
+URL_CACHE_TIME = 5 * 60  # 5m
 
 
 class FrontPageHandler(handlers.TemplateHandler):
@@ -88,7 +91,13 @@ class DemoHandler(webapp2.RequestHandler):
 
 
 class UrlHandler(activitystreams.Handler):
-  """Handles AS/mf2 requests from the interactive demo form on the front page."""
+  """Handles AS/mf2 requests from the interactive demo form on the front page.
+
+  Fetched URL data is cached for 5m. Cache key is 'U [URL]', value is dict with
+  'url' and 'body'. Background: https://github.com/snarfed/bridgy/issues/665
+
+  You can skip the cache by including a cache=false query param.
+  """
   handle_exception = handlers.handle_exception
 
   def get(self):
@@ -97,22 +106,36 @@ class UrlHandler(activitystreams.Handler):
     if input not in expected_inputs:
       raise exc.HTTPBadRequest('Invalid input: %s, expected one of %r' %
                                (input, expected_inputs))
-
-    # fetch url
     url = util.get_required_param(self, 'url')
-    try:
-      resp = util.urlopen(url)
-    except httplib.InvalidURL as e:
-      self.abort(400, str(e))
-    except Exception as e:
-      if util.is_connection_failure(e):
-        self.abort(502, str(e))
-      raise
 
-    if url != resp.geturl():
-      url = resp.geturl()
-      logging.info('Redirected to %s', url)
-    body = resp.read()
+    # check if request is cached
+    cache = self.request.get('cache', '').lower() != 'false'
+    cache_key = 'U %s' % url
+    cached = memcache.get(cache_key) if cache else None
+
+    if cached:
+      logging.info('Serving cached response %r', cache_key)
+      url = cached['url']
+      body = cached['body']
+    else:
+      # fetch url
+      try:
+        resp = util.urlopen(url)
+      except httplib.InvalidURL as e:
+        self.abort(400, str(e))
+      except Exception as e:
+        if util.is_connection_failure(e):
+          self.abort(502, str(e))
+        raise
+
+      if url != resp.geturl():
+        url = resp.geturl()
+        logging.info('Redirected to %s', url)
+      body = resp.read()
+
+      if cache:
+        logging.info('Caching response in %r', cache_key)
+        memcache.set(cache_key, {'url': url, 'body': body}, URL_CACHE_TIME)
 
     # decode data
     mf2 = None

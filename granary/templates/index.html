@@ -149,7 +149,8 @@ Click on a site to try the demo!
 {% if entity or site %}
 <form id="demo-form" action="/demo" method="get" target="results">
 <input type="hidden" id="site" name="site" value="{{ site }}" />
-<p><code>
+<input type="hidden" name="cache" value="false" />
+l<p><code>
 <label>/ {{ site }} / </label>
 {% if site == 'instagram' %}
 <input id="user_id" name="user_id" type="text" class="form-control"
@@ -245,6 +246,7 @@ Click on a site to try the demo!
        placeholder="http://example.com/post.html" size="30" />
 
 <input type="hidden" name="plaintext" value="true" />
+<input type="hidden" name="cache" value="false" />
 <button type="submit" class="btn btn-default"
         onclick="render_url_request()">GET</button>
 </code></p>
