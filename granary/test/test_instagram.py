@@ -8,9 +8,9 @@ import datetime
 import json
 import logging
 import mox
-import StringIO
-import urllib
-import urllib2
+import io
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import httplib2
 
 from oauth_dropins.webutil import testutil
@@ -53,12 +53,12 @@ ACTOR = {  # ActivityStreams
 }
 COMMENTS = [{  # Instagram
   'created_time': '1349588757',
-  'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+  'text': '\\u592a\\u53ef\\u7231\\u4e86\\u3002cute\\uff0cvery cute',
   'from': {
     'username': 'averygood',
     'profile_picture': 'http://picture/commenter',
     'id': '232927278',
-    'full_name': '\u5c0f\u6b63',
+    'full_name': '\\u5c0f\\u6b63',
   },
   'id': '789',
 }]
@@ -158,11 +158,11 @@ COMMENT_OBJS = [{  # ActivityStreams
     'objectType': 'person',
     'id': tag_uri('232927278'),
     'username': 'averygood',
-    'displayName': '\u5c0f\u6b63',
+    'displayName': '\\u5c0f\\u6b63',
     'image': {'url': 'http://picture/commenter'},
     'url': 'https://www.instagram.com/averygood/',
   },
-  'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+  'content': '\\u592a\\u53ef\\u7231\\u4e86\\u3002cute\\uff0cvery cute',
   'id': tag_uri('789'),
   'published': '2012-10-07T05:45:57',
   'url': 'https://www.instagram.com/p/ABC123/#comment-789',
@@ -510,18 +510,18 @@ HTML_VIDEO_FULL = {
     'nodes': [],
     'count': 9,
   },
-  'caption': 'Eye of deer \ud83d\udc41 and #selfie from me',
+  'caption': 'Eye of deer \\ud83d\\udc41 and #selfie from me',
   'comments': {
     'nodes': [{
       'user': {
         'id': '232927278',
         'profile_pic_url': 'http:\/\/picture\/commenter',
         'username': 'averygood',
-        'full_name': '\u5c0f\u6b63',
+        'full_name': '\\u5c0f\\u6b63',
       },
       'id': '789',
       'created_at': 1349588757,
-      'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+      'text': '\\u592a\\u53ef\\u7231\\u4e86\\u3002cute\\uff0cvery cute',
     }],
     'count': 1,
   },
@@ -723,7 +723,7 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
   'object': {
     'objectType': 'video',
     'author': HTML_ACTOR,
-    'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
+    'content': 'Eye of deer \\ud83d\\udc41 and #selfie from me',
     'id': tag_uri('789_456'),
     'published': '2016-01-17T13:15:52',
     'url': 'https://www.instagram.com/p/XYZ789/',
@@ -852,7 +852,7 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         'BAD REQUEST', status=400)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.instagram.get_activities,
+    self.assertRaises(urllib.error.HTTPError, self.instagram.get_activities,
                       activity_id='000')
 
   def test_get_activities_min_id(self):
@@ -985,8 +985,8 @@ class InstagramTest(testutil.HandlerTest):
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                     cookie='my cookie')
 
-    self.assertEquals('401 Unauthorized', cm.exception.message)
-    self.assertEquals(401, cm.exception.response.status_code)
+    self.assertEqual('401 Unauthorized', cm.exception.message)
+    self.assertEqual(401, cm.exception.response.status_code)
 
   def test_get_activities_scrape_activity_id(self):
     self.expect_requests_get(
@@ -1035,8 +1035,8 @@ class InstagramTest(testutil.HandlerTest):
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                     cookie='my cookie')
 
-    self.assertEquals('401 Unauthorized', cm.exception.message)
-    self.assertEquals(401, cm.exception.response.status_code)
+    self.assertEqual('401 Unauthorized', cm.exception.message)
+    self.assertEqual(401, cm.exception.response.status_code)
 
   def test_get_activities_scrape_options_not_implemented(self):
     for group_id in None, source.ALL, source.SEARCH:
@@ -1059,7 +1059,7 @@ class InstagramTest(testutil.HandlerTest):
     resp = self.instagram.get_activities_response(
       group_id=source.SELF, user_id='foo', scrape=True)
     self.assertIsNone(resp['actor'])
-    self.assertEquals([], resp['items'])
+    self.assertEqual([], resp['items'])
 
   def test_get_activities_scrape_error(self):
     self.expect_requests_get(instagram.HTML_BASE_URL,
@@ -1072,7 +1072,7 @@ class InstagramTest(testutil.HandlerTest):
       a = self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                         cookie='my cookie')
 
-    self.assertEquals(429, cm.exception.response.status_code)
+    self.assertEqual(429, cm.exception.response.status_code)
 
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
@@ -1145,7 +1145,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(MEDIA_OBJ, obj)
 
     # check that the images are ordered the way we expect, largest to smallest
-    self.assertEquals(MEDIA_OBJ['attachments'][0]['image'],
+    self.assertEqual(MEDIA_OBJ['attachments'][0]['image'],
                       obj['attachments'][0]['image'])
 
   def test_media_to_object_with_likes(self):
@@ -1251,7 +1251,7 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_urlopen(
       'https://api.instagram.com/v1/media/123_456/comments',
       '{"meta":{"status":200}}',
-      data=urllib.urlencode({'access_token': self.instagram.access_token,
+      data=urllib.parse.urlencode({'access_token': self.instagram.access_token,
                              'text': COMMENTS[0]['text']}))
 
     self.mox.ReplayAll()
@@ -1271,7 +1271,7 @@ class InstagramTest(testutil.HandlerTest):
     # create comments with the API, with an unapproved app
     self.expect_urlopen(
       'https://api.instagram.com/v1/media/123_456/comments',
-      data=urllib.urlencode({'access_token': self.instagram.access_token,
+      data=urllib.parse.urlencode({'access_token': self.instagram.access_token,
                              'text': COMMENTS[0]['text']}),
       response='{"meta": {"code": 400, "error_type": u"OAuthPermissionsException", "error_message": "This request requires scope=comments, but this access token is not authorized with this scope. The user must re-authorize your application with scope=comments to be granted write permissions."}}',
       status=400)
@@ -1280,7 +1280,7 @@ class InstagramTest(testutil.HandlerTest):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    self.assertRaises(urllib2.HTTPError, instagram.Instagram(
+    self.assertRaises(urllib.error.HTTPError, instagram.Instagram(
       allow_comment_creation=True).create, to_publish)
 
   def test_create_comments_disabled(self):
@@ -1301,7 +1301,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assertIn('Cannot', create.error_html)
 
   def test_base_object(self):
-    self.assertEquals({
+    self.assertEqual({
       'id': '123',
       'url': 'https://www.instagram.com/p/zHA5BLo1Mo/',
       }, self.instagram.base_object({
@@ -1310,7 +1310,7 @@ class InstagramTest(testutil.HandlerTest):
       }))
 
     # with only URL, we don't know id
-    self.assertEquals(
+    self.assertEqual(
       {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       self.instagram.base_object({
         'object': {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
@@ -1374,4 +1374,4 @@ class InstagramTest(testutil.HandlerTest):
         ('BDJ7Nr5Nxpa', 'BDJ7Nr5Nxpa'),
         ('BDJ7N_5Nxpa', 'BDJ7N_5Nxpa'),
     ):
-      self.assertEquals(shortcode, self.instagram.id_to_shortcode(id))
+      self.assertEqual(shortcode, self.instagram.id_to_shortcode(id))

@@ -20,14 +20,14 @@ import itertools
 import json
 import logging
 import requests
-import source
+from . import source
 import sys
 import mf2py
 import mf2util
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 
-import appengine_config
+from . import appengine_config
 from oauth_dropins.webutil import util
 from oauth_dropins import flickr_auth
 
@@ -313,7 +313,7 @@ class Flickr(source.Source):
           tag = copy.copy(tag)
           tag['id'] = id
           people[id] = tag
-    return people.values()
+    return list(people.values())
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -443,7 +443,7 @@ class Flickr(source.Source):
         obj['url'] = next(
           (u for u in urls if not u.startswith('https://www.flickr.com/')),
           None)
-      except urllib2.URLError, e:
+      except urllib.error.URLError as e:
         logging.warning('could not fetch user homepage %s', profile_url)
 
     return self.postprocess_object(obj)
@@ -513,7 +513,7 @@ class Flickr(source.Source):
         'url': photo_permalink,
         'id': self.tag_uri(photo.get('id')),
         'image': {
-          'url': u'https://farm{}.staticflickr.com/{}/{}_{}_{}.jpg'.format(
+          'url': 'https://farm{}.staticflickr.com/{}/{}_{}_{}.jpg'.format(
             photo.get('farm'), photo.get('server'),
             photo.get('id'), photo.get('secret'), 'b'),
         },
@@ -556,14 +556,14 @@ class Flickr(source.Source):
       activity['object']['tags'] = [{
           'objectType': 'hashtag',
           'id': self.tag_uri(tag.get('id')),
-          'url': u'https://www.flickr.com/search?tags={}'.format(
+          'url': 'https://www.flickr.com/search?tags={}'.format(
             tag.get('_content')),
           'displayName': tag.get('raw'),
         } for tag in photo.get('tags', {}).get('tag', [])]
-    elif isinstance(photo.get('tags'), basestring):
+    elif isinstance(photo.get('tags'), str):
       activity['object']['tags'] = [{
         'objectType': 'hashtag',
-        'url': u'https://www.flickr.com/search?tags={}'.format(
+        'url': 'https://www.flickr.com/search?tags={}'.format(
           tag.strip()),
         'displayName': tag.strip(),
       } for tag in photo.get('tags').split(' ') if tag.strip()]
@@ -607,10 +607,10 @@ class Flickr(source.Source):
         },
       },
       'created': util.maybe_timestamp_to_rfc3339(photo_activity.get('favedate')),
-      'url': u'{}#liked-by-{}'.format(
+      'url': '{}#liked-by-{}'.format(
         photo_activity.get('url'), person.get('nsid')),
       'object': {'url': photo_activity.get('url')},
-      'id': self.tag_uri(u'{}_liked_by_{}'.format(
+      'id': self.tag_uri('{}_liked_by_{}'.format(
         photo_activity.get('flickr_id'), person.get('nsid'))),
       'objectType': 'activity',
       'verb': 'like',
@@ -657,8 +657,8 @@ class Flickr(source.Source):
     ref: https://www.flickr.com/services/api/misc.buddyicons.html
     """
     if server == 0:
-      return u'https://www.flickr.com/images/buddyicon.gif'
-    return u'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
+      return 'https://www.flickr.com/images/buddyicon.gif'
+    return 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
       farm, server, author)
 
   def user_id(self):
@@ -711,13 +711,13 @@ class Flickr(source.Source):
     Returns:
       string, the photo URL
     """
-    return u'https://www.flickr.com/photos/%s/%s/' % (user_id, photo_id)
+    return 'https://www.flickr.com/photos/%s/%s/' % (user_id, photo_id)
 
   @classmethod
   def post_id(cls, url):
     """Used when publishing comments or favorites. Flickr photo ID is the
     3rd path component rather than the first.
     """
-    parts = urlparse.urlparse(url).path.split('/')
+    parts = urllib.parse.urlparse(url).path.split('/')
     if len(parts) >= 4 and parts[1] == 'photos':
       return parts[3]

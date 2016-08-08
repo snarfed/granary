@@ -162,7 +162,7 @@ HTML_ACTIVITY_GP = [
    [None],
    "https://lh4.googleusercontent.com/-OvNQMFbbks0/AAAAAAAAAAI/AAAAAAAAOuo/YXnsx5bfWxo/photo.jpg",
    None,
-   u"Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…",
+   "Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…",
    "+DavidBarrettQuinthar/posts/VefFHLMoCqV",
    0,
    0,
@@ -268,7 +268,7 @@ HTML_ACTIVITY_AS = {  # Google+
       'objectType': 'note',
       'published': '2015-08-24T14:11:53Z',
       'updated': '2015-08-24T14:11:53Z',
-      'content': u'Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…',
+      'content': 'Hi! It’s been a while since I’ve written because we’ve been hard at work, but I’m very happy to take the wraps off our latest feature (or really, series of features): Realtime Expense Reports. I know I’ve been hyping this up for a long time, and you’re…',
       'attachments': [
         {
           'objectType': 'article',
@@ -406,7 +406,7 @@ class GooglePlusTest(testutil.HandlerTest):
         fetch_replies=True, fetch_likes=True, fetch_shares=True, cache=cache))
     for id in '001', '002':
       for prefix in 'AGL ', 'AGS ':
-        self.assertEquals(1, cache[prefix + id])
+        self.assertEqual(1, cache[prefix + id])
 
     # no new extras, so another request won't fill them in
     as_1 = copy.deepcopy(ACTIVITY_AS)
@@ -442,7 +442,7 @@ class GooglePlusTest(testutil.HandlerTest):
           }))
     resp = self.googleplus.get_activities_response(
       fetch_replies=True, fetch_likes=True, fetch_shares=True)
-    self.assertEquals('"my etag"', resp['etag'])
+    self.assertEqual('"my etag"', resp['etag'])
 
   def test_get_activities_304_not_modified(self):
     """Requests with matching ETags return 304 Not Modified."""
@@ -463,7 +463,7 @@ class GooglePlusTest(testutil.HandlerTest):
                      pa({'urls': [{'value': 'x'}, {'value': 'y'}]}))
 
     # check alias
-    self.assertEquals(self.googleplus.postprocess_actor,
+    self.assertEqual(self.googleplus.postprocess_actor,
                       self.googleplus.user_to_actor)
 
   def test_get_actor_minimal(self):
@@ -523,7 +523,7 @@ class GooglePlusTest(testutil.HandlerTest):
 
   def test_html_to_activities_plusoned(self):
     html_gp = copy.deepcopy(HTML_ACTIVITY_GP)
-    html_gp[1][6].values()[0][69] = [
+    list(html_gp[1][6].values())[0][69] = [
       202,
       [['Billy Bob',
         '1056789',
@@ -555,7 +555,7 @@ class GooglePlusTest(testutil.HandlerTest):
   def test_html_to_activities_similar_to_plusoned(self):
     html_gp = copy.deepcopy(HTML_ACTIVITY_GP)
     for data_at_69 in None, [], [None], [None, None], [None, [None]]:
-      html_gp[1][6].values()[0][69] = data_at_69
+      list(html_gp[1][6].values())[0][69] = data_at_69
       html = (HTML_ACTIVITIES_GP_HEADER + json.dumps(html_gp) +
               HTML_ACTIVITIES_GP_FOOTER)
       self.assert_equals([HTML_ACTIVITY_AS],

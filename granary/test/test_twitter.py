@@ -3,13 +3,13 @@
 """
 
 import copy
-import httplib
+import http.client
 import json
 import mox
 import requests
 import socket
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
@@ -199,13 +199,13 @@ OBJECT = {  # ActivityStreams
       }],
   'attachments': [{
       'objectType': 'image',
-      'image': {'url': u'http://p.twimg.com/picture1'},
+      'image': {'url': 'http://p.twimg.com/picture1'},
       }, {
       'objectType': 'image',
-      'image': {'url': u'http://p.twimg.com/picture2'},
+      'image': {'url': 'http://p.twimg.com/picture2'},
       }, {
       'objectType': 'image',
-      'image': {'url': u'http://p.twimg.com/picture3'},
+      'image': {'url': 'http://p.twimg.com/picture3'},
       }],
   }
 ACTIVITY = {  # ActivityStreams
@@ -661,9 +661,9 @@ class TwitterTest(testutil.TestCase):
     if not url.startswith('http'):
       url = twitter.API_BASE + url
     if params:
-      url += '?' + urllib.urlencode(params)
+      url += '?' + urllib.parse.urlencode(params)
       kwargs.setdefault('data', '')
-    if not isinstance(response, basestring):
+    if not isinstance(response, str):
       response=json.dumps(response)
     return super(TwitterTest, self).expect_urlopen(
       url, response=response, **kwargs)
@@ -818,7 +818,7 @@ class TwitterTest(testutil.TestCase):
     twitter.QUOTE_SEARCH_BATCH_SIZE = 5  # reduce the batch size for testing
     # search for 8 tweets to make sure we split them up into groups of <= 5
     tweets = []
-    for id in xrange(1000, 1008):
+    for id in range(1000, 1008):
       tweet = copy.deepcopy(TWEET)
       tweet['id'] = id
       tweet['id_str'] = str(id)
@@ -830,13 +830,13 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen('account/verify_credentials.json',
                         {'screen_name': 'schnarfed'})
     self.expect_urlopen(twitter.API_SEARCH % {
-      'q': urllib.quote_plus('@schnarfed'),
+      'q': urllib.parse.quote_plus('@schnarfed'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
     # first search returns no results
     self.expect_urlopen(twitter.API_SEARCH % {
-      'q': urllib.quote_plus('1000 OR 1001 OR 1002 OR 1003 OR 1004'),
+      'q': urllib.parse.quote_plus('1000 OR 1001 OR 1002 OR 1003 OR 1004'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
@@ -846,7 +846,7 @@ class TwitterTest(testutil.TestCase):
     retweeted_quote_tweet = copy.deepcopy(RETWEETED_QUOTE_TWEET)
     retweeted_quote_tweet['quoted_status_id_str'] = '1006'
     self.expect_urlopen(twitter.API_SEARCH % {
-      'q': urllib.quote_plus('1005 OR 1006 OR 1007'),
+      'q': urllib.parse.quote_plus('1005 OR 1006 OR 1007'),
       'count': 100,
     } + '&since_id=567', {
       'statuses': [quote_tweet, retweeted_quote_tweet],
@@ -877,7 +877,7 @@ class TwitterTest(testutil.TestCase):
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
     self.expect_urlopen(API_RETWEETS % '100'
-                       ).AndRaise(urllib2.HTTPError('url', 404, 'msg', {}, None))
+                       ).AndRaise(urllib.error.HTTPError('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
@@ -931,7 +931,7 @@ class TwitterTest(testutil.TestCase):
     tweet['favorite_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
     self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100'
-      ).AndRaise(urllib2.HTTPError('url', 404, 'msg', {}, None))
+      ).AndRaise(urllib.error.HTTPError('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
     cache = util.CacheDict()
@@ -996,19 +996,19 @@ class TwitterTest(testutil.TestCase):
     self.twitter.get_activities_response(min_id=135)
 
   def test_get_activities_retries(self):
-    for exc in (httplib.HTTPException('Deadline exceeded: foo'),
+    for exc in (http.client.HTTPException('Deadline exceeded: foo'),
                 socket.error('asdf'),
-                urllib2.HTTPError('url', 501, 'msg', {}, None)):
+                urllib.error.HTTPError('url', 501, 'msg', {}, None)):
       for i in range(twitter.RETRIES):
         self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.expect_urlopen(TIMELINE, [])
       self.mox.ReplayAll()
-      self.assertEquals([], self.twitter.get_activities_response()['items'])
+      self.assertEqual([], self.twitter.get_activities_response()['items'])
       self.mox.ResetAll()
 
     # other exceptions shouldn't retry
-    for exc in (httplib.HTTPException('not a deadline'),
-                urllib2.HTTPError('url', 403, 'not a 5xx', {}, None)):
+    for exc in (http.client.HTTPException('not a deadline'),
+                urllib.error.HTTPError('url', 403, 'not a 5xx', {}, None)):
       self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.mox.ReplayAll()
       self.assertRaises(exc.__class__, self.twitter.get_activities_response)
@@ -1130,14 +1130,14 @@ class TwitterTest(testutil.TestCase):
     obj = self.twitter.tweet_to_object(tweet)
     for tag in obj['tags']:
       if tag['displayName'] == 'Dan Shipper':
-        self.assertEquals(91, tag['startIndex'])
-        self.assertEquals(11, tag['length'])
+        self.assertEqual(91, tag['startIndex'])
+        self.assertEqual(11, tag['length'])
         break
     else:
       self.fail('Dan Shipper not found')
 
-    self.assertEquals('Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
-                      microformats2.render_content(obj))
+    self.assertEqual('Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
+                     microformats2.render_content(obj))
 
   def test_tweet_to_object_retweet_with_entities(self):
     """Retweets with entities should use the entities in the retweet object."""
@@ -1193,11 +1193,11 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals({
       'id': tag_uri('726480459488587776'),
       'objectType': 'note',
-      'content': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee ',
+      'content': '\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee ',
       'attachments': [{'objectType': 'image'}, {'objectType': 'image'}],
     }, self.twitter.tweet_to_object({
       'id_str': '726480459488587776',
-      'text': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee https://t.co/6Ta5P8A2cs',
+      'text': '\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee https://t.co/6Ta5P8A2cs',
       'extended_entities': {
         'media': [{
           'id_str': '1',
@@ -1280,7 +1280,7 @@ class TwitterTest(testutil.TestCase):
       self.assert_equals(share, self.twitter.retweet_to_object(retweet))
 
     # not a retweet
-    self.assertEquals(None, self.twitter.retweet_to_object(TWEET))
+    self.assertEqual(None, self.twitter.retweet_to_object(TWEET))
 
   def test_streaming_event_to_object(self):
     self.assert_equals(LIKE_OBJ,
@@ -1293,7 +1293,7 @@ class TwitterTest(testutil.TestCase):
       'target': USER,
       'target_object': TWEET,
       }
-    self.assertEquals(None, self.twitter.streaming_event_to_object(follow))
+    self.assertEqual(None, self.twitter.streaming_event_to_object(follow))
 
   def test_favorites_html_to_likes(self):
     self.assert_equals([], self.twitter.favorites_html_to_likes(TWEET, ""))
@@ -1359,7 +1359,7 @@ class TwitterTest(testutil.TestCase):
     try:
       self.twitter.urlopen('xyz')
       self.fail('Expected HTTPError')
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError, e:
       self.assertEqual(502, e.code)
 
   def test_get_activities_not_json(self):
@@ -1369,14 +1369,14 @@ class TwitterTest(testutil.TestCase):
     try:
       self.twitter.get_activities()
       self.fail('Expected HTTPError')
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError, e:
       self.assertEqual(502, e.code)
 
   def test_create_tweet(self):
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
-    dots = u'…'
+    dots = '…'
     original = (
       'my status',
       'too long, will be ellipsized',
@@ -1430,8 +1430,8 @@ class TwitterTest(testutil.TestCase):
       self.assert_equals(tweet, self.twitter.create(obj).content)
 
       got = self.twitter.preview_create(obj)
-      self.assertEquals('<span class="verb">tweet</span>:', got.description)
-      self.assertEquals(preview, got.content)
+      self.assertEqual('<span class="verb">tweet</span>:', got.description)
+      self.assertEqual(preview, got.content)
 
   def test_tweet_truncate(self):
     """A bunch of tests to exercise the tweet shortening algorithm
@@ -1440,70 +1440,70 @@ class TwitterTest(testutil.TestCase):
     twitter.TCO_LENGTH = 23
 
     orig = (
-      u'Hey #indieweb, the coming storm of webmention Spam may not be '
-      u'far away. Those of us that have input fields to send webmentions '
-      u'manually may already be getting them')
+      'Hey #indieweb, the coming storm of webmention Spam may not be '
+      'far away. Those of us that have input fields to send webmentions '
+      'manually may already be getting them')
     expected = (
-      u'Hey #indieweb, the coming storm of webmention Spam may not '
-      u'be far away. Those of us that have input fields to send… '
-      u'https://ben.thatmustbe.me/note/2015/1/31/1/')
+      'Hey #indieweb, the coming storm of webmention Spam may not '
+      'be far away. Those of us that have input fields to send… '
+      'https://ben.thatmustbe.me/note/2015/1/31/1/')
     result = self.twitter._truncate(
       orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/',
       source.INCLUDE_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = expected = (
-      u'Despite names,\n'
-      u'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
-      u'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
-      u'@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+      'Despite names,\n'
+      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
+      '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
     result = self.twitter._truncate(
       orig, 'http://tantek.com/1234', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = expected = (
-      u'@davewiner I stubbed a page on the wiki for '
-      u'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
-      u'welcome! @kevinmarks @julien51 @aaronpk')
+      '@davewiner I stubbed a page on the wiki for '
+      'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
+      'welcome! @kevinmarks @julien51 @aaronpk')
     result = self.twitter._truncate(
       orig, 'https://kylewm.com/5678', source.INCLUDE_IF_TRUNCATED,
       'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = expected = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), a url with a query '
-      u'string;foo.withknown.com/example?query=parameters')
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), a url with a query '
+      'string;foo.withknown.com/example?query=parameters')
     result = self.twitter._truncate(
       orig, 'https://foo.bar/', source.INCLUDE_IF_TRUNCATED, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      u'long:foo.withknown.com/example?query=parameters')
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      'long:foo.withknown.com/example?query=parameters')
     expected = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      u'long:…')
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      'long:…')
     result = self.twitter._truncate(
       orig, 'http://foo.com/', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     # test case-insensitive link matching
     orig = (
-      u'The Telegram Bot API is the best bot API ever. Everyone should '
-      u'learn from it, especially Matrix.org, which currently requires a '
-      u'particular URL structure and registration files.')
+      'The Telegram Bot API is the best bot API ever. Everyone should '
+      'learn from it, especially Matrix.org, which currently requires a '
+      'particular URL structure and registration files.')
     expected = (
-      u'The Telegram Bot API is the best bot API ever. Everyone should learn '
-      u'from it, especially Matrix.org… '
-      u'https://unrelenting.technology/notes/2015-09-05-00-35-13')
+      'The Telegram Bot API is the best bot API ever. Everyone should learn '
+      'from it, especially Matrix.org… '
+      'https://unrelenting.technology/notes/2015-09-05-00-35-13')
     result = self.twitter._truncate(
       orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13',
       source.INCLUDE_IF_TRUNCATED,
       'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = (u'Leaving this here for future reference. Turn on debug menu '
       u'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu '
@@ -1511,27 +1511,27 @@ class TwitterTest(testutil.TestCase):
     expected = (u'Leaving this here for future reference. Turn on debug menu '
       u'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu…')
     result = self.twitter._truncate(orig, 'http://foo.com', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
-    orig = u'url http://foo.co/bar ellipsize http://foo.co/baz'
-    expected = u'url http://foo.co/bar ellipsize…'
+    orig = 'url http://foo.co/bar ellipsize http://foo.co/baz'
+    expected = 'url http://foo.co/bar ellipsize…'
     result = self.twitter._truncate(
       orig, 'http://foo.com', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
-    orig = u'too long\nextra whitespace\tbut should include url'
-    expected = u'too long… http://obj.ca'
+    orig = 'too long\nextra whitespace\tbut should include url'
+    expected = 'too long… http://obj.ca'
     result = self.twitter._truncate(
       orig, 'http://obj.ca', source.INCLUDE_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
-    orig = expected = u'trailing slash http://www.foo.co/'
+    orig = expected = 'trailing slash http://www.foo.co/'
     result = self.twitter._truncate(
       orig, 'http://www.foo.co/', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
   def test_no_ellipsize_real_tweet(self):
     orig = (
@@ -1556,7 +1556,7 @@ class TwitterTest(testutil.TestCase):
 
     actual_preview = self.twitter.preview_create(
       obj, include_link=source.OMIT_LINK).content
-    self.assertEquals(preview, actual_preview)
+    self.assertEqual(preview, actual_preview)
 
     self.twitter.create(obj, include_link=source.OMIT_LINK)
 
@@ -1569,13 +1569,13 @@ class TwitterTest(testutil.TestCase):
             'far away. Those of us that have input fields to send webmentions '
             'manually may already be getting them')
 
-    content = (u'Hey #indieweb, the coming storm of webmention Spam may not '
-               u'be far away. Those of us that have input fields to send… '
-               u'https://ben.thatmustbe.me/note/2015/1/31/1/')
+    content = ('Hey #indieweb, the coming storm of webmention Spam may not '
+               'be far away. Those of us that have input fields to send… '
+               'https://ben.thatmustbe.me/note/2015/1/31/1/')
 
-    preview = (u'Hey #indieweb, the coming storm of webmention Spam may not '
-               u'be far away. Those of us that have input fields to send… '
-               u'<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
+    preview = ('Hey #indieweb, the coming storm of webmention Spam may not '
+               'be far away. Those of us that have input fields to send… '
+               '<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
 
     self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
                         params={'status': content.encode('utf-8')})
@@ -1588,7 +1588,7 @@ class TwitterTest(testutil.TestCase):
 
     self.twitter.create(obj, include_link=source.INCLUDE_LINK)
     actual_preview = self.twitter.preview_create(obj, include_link=source.INCLUDE_LINK).content
-    self.assertEquals(preview, actual_preview)
+    self.assertEqual(preview, actual_preview)
 
   def test_tweet_article_has_different_format(self):
     """Articles are published with a slightly different format:
@@ -1599,7 +1599,7 @@ class TwitterTest(testutil.TestCase):
       'displayName': 'The Article Title',
       'url': 'http://example.com/article',
     }, include_link=source.INCLUDE_LINK).content
-    self.assertEquals(
+    self.assertEqual(
       'The Article Title: <a href="http://example.com/article">example.com/'
       'article</a>', preview)
 
@@ -1614,11 +1614,11 @@ class TwitterTest(testutil.TestCase):
         'image': None,
         })
     result = self.twitter.preview_create(obj)
-    self.assertEquals('my summary', result.content)
+    self.assertEqual('my summary', result.content)
 
     del obj['summary']
     result = self.twitter.preview_create(obj)
-    self.assertEquals('my content', result.content)
+    self.assertEqual('my content', result.content)
 
     del obj['content']
     result = self.twitter.preview_create(obj)
@@ -1661,7 +1661,7 @@ class TwitterTest(testutil.TestCase):
         })
     self.twitter.create(obj, include_link=source.INCLUDE_LINK)
     result = self.twitter.preview_create(obj, include_link=source.INCLUDE_LINK)
-    self.assertIn(u'too long… <a href="http://obj.ca">obj.ca</a>',
+    self.assertIn('too long… <a href="http://obj.ca">obj.ca</a>',
                   result.content)
 
   def test_create_tweet_include_link_if_truncated(self):
@@ -1669,15 +1669,15 @@ class TwitterTest(testutil.TestCase):
     twitter.TCO_LENGTH = 5
 
     cases = [(
-      u'too long\nextra whitespace\tbut should include url',
-      u'http://obj.ca',
-      u'too long… http://obj.ca',
-      u'too long… <a href="http://obj.ca">obj.ca</a>',
+      'too long\nextra whitespace\tbut should include url',
+      'http://obj.ca',
+      'too long… http://obj.ca',
+      'too long… <a href="http://obj.ca">obj.ca</a>',
     ), (
-      u'short and sweet',
-      u'http://obj.ca',
-      u'short and sweet',
-      u'short and sweet',
+      'short and sweet',
+      'http://obj.ca',
+      'short and sweet',
+      'short and sweet',
     )]
 
     for _, _, expected, _ in cases:
@@ -1708,7 +1708,7 @@ class TwitterTest(testutil.TestCase):
         "author": [
           {
             "properties": {
-              "name": ["Tantek \u00c7elik"],
+              "name": ["Tantek \\u00c7elik"],
               "photo": ["http://tantek.com/logo.jpg"],
               "url": ["http://tantek.com/"]
             },
@@ -1849,7 +1849,7 @@ class TwitterTest(testutil.TestCase):
       self.assert_equals(tweet, self.twitter.create(obj).content)
 
       preview = self.twitter.preview_create(obj)
-      self.assertEquals(status, preview.content)
+      self.assertEqual(status, preview.content)
       self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
 
   def test_create_reply_objectType_comment(self):
@@ -1862,7 +1862,7 @@ class TwitterTest(testutil.TestCase):
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
-    self.assertEquals('my content', preview.content)
+    self.assertEqual('my content', preview.content)
 
     # test create
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
@@ -1899,7 +1899,7 @@ class TwitterTest(testutil.TestCase):
       self.assertIn('@-reply</span> to <a href="%s">this tweet</a>:' %
                       obj['inReplyTo'][0]['url'],
                     preview.description)
-      self.assertEquals('my content', preview.content)
+      self.assertEqual('my content', preview.content)
 
       # test create
       self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
@@ -1984,12 +1984,12 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       'image': [{'url': url} for url in image_urls],
     }
 
-    ellipsized = u"""\
+    ellipsized = """\
 the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, and…"""
     # test preview
     preview = self.twitter.preview_create(obj)
-    self.assertEquals('<span class="verb">tweet</span>:', preview.description)
-    self.assertEquals(ellipsized + '<br /><br />' +
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual(ellipsized + '<br /><br />' +
                       ' &nbsp; '.join('<img src="%s" />' % url
                                       for url in image_urls[:-1]),
                       preview.content)
@@ -2022,7 +2022,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
-    self.assertEquals('my content<br /><br /><img src="http://my/picture" />',
+    self.assertEqual('my content<br /><br /><img src="http://my/picture" />',
                       preview.content)
 
     # test create
@@ -2050,8 +2050,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     # test preview
     preview = self.twitter.preview_create(obj)
-    self.assertEquals('<span class="verb">tweet</span>:', preview.description)
-    self.assertEquals('<br /><br /><img src="http://my/picture" />', preview.content)
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual('<br /><br /><img src="http://my/picture" />', preview.content)
 
     # test create
     self.expect_urlopen('http://my/picture', 'picture response')
@@ -2086,7 +2086,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                           'media_ids': '123',
                         }, status=403)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.twitter.create, obj)
+    self.assertRaises(urllib.error.HTTPError, self.twitter.create, obj)
 
   def test_create_with_photo_wrong_type(self):
     obj = {
@@ -2099,7 +2099,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     ret = self.twitter.create(obj)
     self.assertTrue(ret.abort)
     for msg in ret.error_plain, ret.error_html:
-      self.assertEquals('Twitter only supports JPG, PNG, GIF, and WEBP images; '
+      self.assertEqual('Twitter only supports JPG, PNG, GIF, and WEBP images; '
                         'http://my/picture.tiff looks like image/tiff', msg)
 
   def test_create_with_video(self):
@@ -2116,11 +2116,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 the caption.\nextra long so we can check that it accounts for the pic-twitter-com link. <video xyz>should be removed. </video> almost at 140 chars, just type a little more, ok done.""",
       'stream': {'url': 'http://my/video'},
     }
-    ellipsized = u"""\
+    ellipsized = """\
 the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok…"""
 
     # test preview
-    self.assertEquals(ellipsized +
+    self.assertEqual(ellipsized +
       '<br /><br /><video controls src="http://my/video">'
       '<a href="http://my/video">this video</a></video>',
       self.twitter.preview_create(obj).content)

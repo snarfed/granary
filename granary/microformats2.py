@@ -7,7 +7,7 @@ from collections import deque
 import copy
 import itertools
 import logging
-import urlparse
+import urllib.parse
 import string
 import re
 import xml.sax.saxutils
@@ -15,7 +15,7 @@ import xml.sax.saxutils
 import mf2py
 import mf2util
 from oauth_dropins.webutil import util
-import source
+from . import source
 
 HENTRY = string.Template("""\
 <article class="$types">
@@ -62,7 +62,7 @@ def get_string_urls(objs):
   """
   urls = []
   for item in objs:
-    if isinstance(item, basestring):
+    if isinstance(item, str):
       urls.append(item)
     else:
       itemtype = [x for x in item.get('type', []) if x.startswith('h-')]
@@ -273,7 +273,7 @@ def json_to_object(mf2, actor=None):
   def absolute_urls(prop):
     return [{'url': url} for url in get_string_urls(props.get(prop, []))
             # filter out relative and invalid URLs (mf2py gives absolute urls)
-            if urlparse.urlparse(url).netloc]
+            if urllib.parse.urlparse(url).netloc]
 
   urls = props.get('url') and get_string_urls(props.get('url'))
 
@@ -293,7 +293,7 @@ def json_to_object(mf2, actor=None):
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     'tags': [{'objectType': 'hashtag', 'displayName': cat}
-             if isinstance(cat, basestring)
+             if isinstance(cat, str)
              else json_to_object(cat)
              for cat in props.get('category', [])],
   }
@@ -454,7 +454,7 @@ def json_to_html(obj, parent_props=None):
   for mftype in ['like', 'repost']:
     # having like-of or repost-of makes this a like or repost.
     for target in props.get(mftype + '-of', []):
-      if isinstance(target, basestring):
+      if isinstance(target, str):
         children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))
       else:
         children.append(json_to_html(target, ['u-' + mftype + '-of']))
@@ -672,7 +672,7 @@ def render_content(obj, include_location=True, synthesize_content=True):
             target.get('url', '#'), author.get('username'))
         else:
           # image looks bad in the simplified rendering
-          author = {k: v for k, v in author.iteritems() if k != 'image'}
+          author = {k: v for k, v in author.items() if k != 'image'}
           content += '%s <a href="%s">%s</a> by %s' % (
             verb, target.get('url', '#'),
             target.get('displayName', target.get('title', 'a post')),
@@ -699,7 +699,7 @@ def render_content(obj, include_location=True, synthesize_content=True):
   # render the rest
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
   content += tags_to_html(tags.pop('mention', []), 'u-mention')
-  content += tags_to_html(sum(tags.values(), []), 'tag')
+  content += tags_to_html(sum(list(tags.values()), []), 'tag')
 
   return content
 

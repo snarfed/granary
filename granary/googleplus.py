@@ -13,8 +13,8 @@ import itertools
 import json
 import re
 
-import appengine_config
-import source
+from . import appengine_config
+from . import source
 
 from apiclient.errors import HttpError
 from apiclient.http import BatchHttpRequest
@@ -128,7 +128,7 @@ class GooglePlus(source.Source):
         resp = call.execute(http)
         activities = resp.get('items', [])
         etag = resp.get('etag')
-    except HttpError, e:
+    except HttpError as e:
       if e.resp.status == 304:  # Not Modified, from a matching ETag
         activities = []
       else:
@@ -328,7 +328,7 @@ class GooglePlus(source.Source):
       html = re.sub(r'([,[])\s*([],])', r'\1null\2', html)
 
     data = json.loads(html)[1][7][1:]
-    data = [d[6].values()[0] for d in data if len(d) >= 7 and d[6]]
+    data = [list(d[6].values())[0] for d in data if len(d) >= 7 and d[6]]
 
     activities = []
     for d in data:
@@ -392,7 +392,7 @@ class GooglePlus(source.Source):
           'image': {'url': att[1]},
           'displayName': att[2],
           'content': att[3],
-         } for att in attachments.values()]
+         } for att in list(attachments.values())]
 
       self.postprocess_object(activity['object'])
       activities.append(super(GooglePlus, self).postprocess_activity(activity))

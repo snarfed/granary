@@ -6,8 +6,8 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
 import json
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 import mox
 from oauth_dropins.webutil import testutil
@@ -417,7 +417,7 @@ REACTION_OBJS = [{  # ActivityStreams
   'url': 'https://www.facebook.com/212038/posts/10100176064482163#haha-by-100005',
   'objectType': 'activity',
   'verb': 'react',
-  'content': u'😆',
+  'content': '😆',
   'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
   'author': {
     'objectType': 'person',
@@ -432,7 +432,7 @@ REACTION_OBJS = [{  # ActivityStreams
   'url': 'https://www.facebook.com/212038/posts/10100176064482163#sad-by-100006',
   'objectType': 'activity',
   'verb': 'react',
-  'content': u'😢',
+  'content': '😢',
   'object': {'url': 'https://www.facebook.com/212038/posts/10100176064482163'},
   'author': {
     'objectType': 'person',
@@ -553,7 +553,7 @@ PHOTO_OBJ = {  # ActivityStreams
   'objectType': 'note',
   'url': 'https://www.facebook.com/212038/posts/222',
   'content': 'Stopped in to grab coffee and saw this table topper. Wow. Just...wow.',
-  'image': {'url': u'https://fbcdn-photos-b-a.akamaihd.net/pic_s.jpg'},
+  'image': {'url': 'https://fbcdn-photos-b-a.akamaihd.net/pic_s.jpg'},
   'published': '2014-04-09T20:44:26+00:00',
   'author': POST_OBJ['author'],
   'to': [{'alias': '@public', 'objectType': 'group'}],
@@ -605,7 +605,7 @@ PHOTO_OBJ = {  # ActivityStreams
     'url': 'https://www.facebook.com/212038/posts/222#wow-by-777',
     'objectType': 'activity',
     'verb': 'react',
-    'content': u'😮',
+    'content': '😮',
     'object': {'url': 'https://www.facebook.com/212038/posts/222'},
     'author': {
       'objectType': 'person',
@@ -864,7 +864,7 @@ ALBUM = {  # Facebook
   'count': 2,
   'cover_photo': '1520050698319836',
   'from': {
-    'name': u'Snoøpy Barrett',
+    'name': 'Snoøpy Barrett',
     'id': '1407574399567467'
   },
   'link': 'https://www.facebook.com/album.php?fbid=1520022318322674&id=1407574399567467&aid=1073741827',
@@ -883,7 +883,7 @@ ALBUM_OBJ = {  # ActivityStreams
     'objectType': 'person',
     'id': tag_uri('1407574399567467'),
     'numeric_id': '1407574399567467',
-    'displayName': u'Snoøpy Barrett',
+    'displayName': 'Snoøpy Barrett',
     'image': {'url': 'https://graph.facebook.com/v2.6/1407574399567467/picture?type=large'},
     'url': 'https://www.facebook.com/1407574399567467',
     },
@@ -1015,7 +1015,7 @@ class FacebookTest(testutil.HandlerTest):
     batch.append({
       'method': 'GET',
       'relative_url': url,
-      'headers': [{'name': n, 'value': v} for n, v in headers.items()],
+      'headers': [{'name': n, 'value': v} for n, v in list(headers.items())],
     })
     batch_responses.append(util.trim_nulls({
       'code': status,
@@ -1161,7 +1161,7 @@ class FacebookTest(testutil.HandlerTest):
       {'fb_id': '5'},
       {'fb_id': '66', 'to': [{'objectType':'group', 'alias':'@public'}]},
       {'fb_id': '77', 'to': [{'objectType': 'unknown'}]},
-    ], [{k: v for k, v in activity['object'].items() if k in ('fb_id', 'to')}
+    ], [{k: v for k, v in list(activity['object'].items()) if k in ('fb_id', 'to')}
         for activity in self.fb.get_activities(group_id=source.SELF)])
 
   def test_get_activities_self_photos_returns_list(self):
@@ -1248,13 +1248,13 @@ class FacebookTest(testutil.HandlerTest):
     self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
     self.mox.ReplayAll()
     obj = self.fb.get_activities(activity_id='12_34')[0]['object']
-    self.assertEquals('123', obj['fb_id'])
+    self.assertEqual('123', obj['fb_id'])
 
   def test_get_activities_activity_id_with_user_id(self):
     self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
     self.mox.ReplayAll()
     obj = self.fb.get_activities(activity_id='34', user_id='12')[0]['object']
-    self.assertEquals('123', obj['fb_id'])
+    self.assertEqual('123', obj['fb_id'])
 
   def test_get_activities_activity_id_no_underscore_or_user_id(self):
     with self.assertRaises(NotImplementedError):
@@ -1525,7 +1525,7 @@ class FacebookTest(testutil.HandlerTest):
       '123?fields=id,message,from,created_time,message_tags,parent,attachment',
       {}, status=400)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.fb.get_comment, '123')
+    self.assertRaises(urllib.error.HTTPError, self.fb.get_comment, '123')
 
   def test_get_comment_with_activity(self):
     # still makes the API call, since the comment might be paged out or nested
@@ -1566,7 +1566,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_share_500s(self):
     self.expect_urlopen(API_SHARES % '1_2', {}, status=500)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.fb.get_share, '1', '2', '_')
+    self.assertRaises(urllib.error.HTTPError, self.fb.get_share, '1', '2', '_')
 
   def test_get_share_with_activity(self):
     self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
@@ -1728,7 +1728,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_post_to_object_message_tags_list(self):
     post = copy.copy(POST)
-    tags = post['message_tags'].values()
+    tags = list(post['message_tags'].values())
     post['message_tags'] = tags[0] + tags[1]  # both lists
     self.assert_equals(POST_OBJ, self.fb.post_to_object(post))
 
@@ -1877,8 +1877,8 @@ y.com
 http://b http://c""",
       'link': 'http://x',  # website overrides link
       })
-    self.assertEquals('http://a', actor['url'])
-    self.assertEquals(
+    self.assertEqual('http://a', actor['url'])
+    self.assertEqual(
       [{'value': 'http://a'}, {'value': 'http://b'}, {'value': 'http://c'}],
       actor['urls'])
 
@@ -1886,8 +1886,8 @@ http://b http://c""",
       'id': '123',
       'link': 'http://b http://c	http://a',
       })
-    self.assertEquals('http://b', actor['url'])
-    self.assertEquals(
+    self.assertEqual('http://b', actor['url'])
+    self.assertEqual(
       [{'value': 'http://b'}, {'value': 'http://c'}, {'value': 'http://a'}],
       actor['urls'])
 
@@ -2133,7 +2133,7 @@ http://b http://c""",
     self.assert_equals(ALBUM_OBJ, self.fb.album_to_object(ALBUM))
 
   def test_create_post(self):
-    self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.parse.urlencode({
         'message': 'my msg',
         'tags': '234,345,456',
       }))
@@ -2152,11 +2152,11 @@ http://b http://c""",
     }, self.fb.create(obj).content)
 
     preview = self.fb.preview_create(obj)
-    self.assertEquals('<span class="verb">post</span>:', preview.description)
-    self.assertEquals('my msg<br /><br /><em>with <a href="https://www.facebook.com/234">Friend 1</a>, <a href="https://www.facebook.com/345">Friend 2</a>, <a href="https://www.facebook.com/456">Friend 3</a></em>', preview.content)
+    self.assertEqual('<span class="verb">post</span>:', preview.description)
+    self.assertEqual('my msg<br /><br /><em>with <a href="https://www.facebook.com/234">Friend 1</a>, <a href="https://www.facebook.com/345">Friend 2</a>, <a href="https://www.facebook.com/456">Friend 3</a></em>', preview.content)
 
   def test_create_post_include_link(self):
-    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.parse.urlencode({
       'message': 'my content\n\n(Originally published at: http://obj.co)',
     }))
     self.mox.ReplayAll()
@@ -2173,12 +2173,12 @@ http://b http://c""",
         })
     self.fb.create(obj, include_link=source.INCLUDE_LINK)
     preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
-    self.assertEquals(
+    self.assertEqual(
       'my content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
   def test_create_post_with_title(self):
-    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.parse.urlencode({
       'message': 'my title\n\nmy content\n\n(Originally published at: http://obj.co)',
     }))
     self.mox.ReplayAll()
@@ -2195,12 +2195,12 @@ http://b http://c""",
         })
     self.fb.create(obj, include_link=source.INCLUDE_LINK)
     preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
-    self.assertEquals(
+    self.assertEqual(
       'my title\n\nmy content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
   def test_create_post_with_no_title(self):
-    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.parse.urlencode({
       'message': 'my\ncontent\n\n(Originally published at: http://obj.co)',
     }))
     self.mox.ReplayAll()
@@ -2217,7 +2217,7 @@ http://b http://c""",
         })
     self.fb.create(obj, include_link=source.INCLUDE_LINK)
     preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
-    self.assertEquals(
+    self.assertEqual(
       'my\ncontent\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
@@ -2236,7 +2236,7 @@ http://b http://c""",
     }, self.fb.create(obj).content)
 
     preview = self.fb.preview_create(obj)
-    self.assertEquals('my cmt', preview.content)
+    self.assertEqual('my cmt', preview.content)
     self.assertIn('<span class="verb">comment</span> on <a href="https://www.facebook.com/547822715231468">this post</a>:', preview.description)
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/547822715231468">', preview.description)
 
@@ -2266,7 +2266,7 @@ http://b http://c""",
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
-    for post_url, cmt_url in urls.items():
+    for post_url, cmt_url in list(urls.items()):
       obj.update({
           'inReplyTo': [{'url': post_url}],
           'content': 'my cmt',
@@ -2280,7 +2280,7 @@ http://b http://c""",
   def test_create_comment_with_photo(self):
     self.expect_urlopen(
       '547822715231468/comments', {'id': '456_789'},
-      data=urllib.urlencode({'message': 'cc Sam G, Michael M',
+      data=urllib.parse.urlencode({'message': 'cc Sam G, Michael M',
                              'attachment_url': 'http://pict/ure'}))
     self.mox.ReplayAll()
 
@@ -2296,7 +2296,7 @@ http://b http://c""",
     }, self.fb.create(obj).content)
 
     preview = self.fb.preview_create(obj)
-    self.assertEquals('cc Sam G, Michael M<br /><br /><img src="http://pict/ure" />',
+    self.assertEqual('cc Sam G, Michael M<br /><br /><img src="http://pict/ure" />',
                       preview.content)
     self.assertIn('<span class="verb">comment</span> on <a href="https://www.facebook.com/547822715231468">this post</a>:', preview.description)
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/547822715231468">', preview.description)
@@ -2393,7 +2393,7 @@ cc Sam G, Michael M<br />""", preview.description)
                          '%s\n%s' % (created.content, rsvp))
 
     preview = self.fb.preview_create(rsvp)
-    self.assertEquals('<span class="verb">RSVP interested</span> to '
+    self.assertEqual('<span class="verb">RSVP interested</span> to '
                       '<a href="https://www.facebook.com/234/">this event</a>.',
                       preview.description)
 
@@ -2441,8 +2441,8 @@ cc Sam G, Michael M<br />""", preview.description)
 
     # test preview
     preview = self.fb.preview_create(obj)
-    self.assertEquals('<span class="verb">post</span>:', preview.description)
-    self.assertEquals('my caption<br /><br /><img src="http://my/picture" />',
+    self.assertEqual('<span class="verb">post</span>:', preview.description)
+    self.assertEqual('my caption<br /><br /><img src="http://my/picture" />',
                       preview.content)
 
     # test create
@@ -2466,7 +2466,7 @@ cc Sam G, Michael M<br />""", preview.description)
       {'id': '1', 'name': 'foo bar'},
       {'id': '2', 'type': 'wall'},
     ]})
-    self.expect_urlopen('2/photos', {}, data=urllib.urlencode({
+    self.expect_urlopen('2/photos', {}, data=urllib.parse.urlencode({
       'url': 'http://my/picture', 'message': ''}))
     self.mox.ReplayAll()
     self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
@@ -2487,7 +2487,7 @@ cc Sam G, Michael M<br />""", preview.description)
 
     # test preview
     preview = self.fb.preview_create(obj)
-    self.assertEquals(
+    self.assertEqual(
       '<br /><br /><img src="http://my/picture" /><br /><br /><em>with '
       '<a href="https://www.facebook.com/234">Foo</a>, '
       '<a href="https://www.facebook.com/345">User 345</a></em>',
@@ -2496,7 +2496,7 @@ cc Sam G, Michael M<br />""", preview.description)
     # test create
     self.expect_urlopen(API_ALBUMS % 'me', {'data': []})
     self.expect_urlopen(
-      API_PUBLISH_PHOTO, {'id': '123_456'}, data=urllib.urlencode({
+      API_PUBLISH_PHOTO, {'id': '123_456'}, data=urllib.parse.urlencode({
         'url': 'http://my/picture',
         'message': '',
         'tags': json.dumps([{'tag_uid': '234'}, {'tag_uid': '345'}]),
@@ -2518,13 +2518,13 @@ cc Sam G, Michael M<br />""", preview.description)
 
     # test preview
     preview = self.fb.preview_create(obj)
-    self.assertEquals('<span class="verb">post</span>:', preview.description)
-    self.assertEquals('my\ncaption<br /><br /><video controls src="http://my/video">'
+    self.assertEqual('<span class="verb">post</span>:', preview.description)
+    self.assertEqual('my\ncaption<br /><br /><video controls src="http://my/video">'
                       '<a href="http://my/video">this video</a></video>',
                       preview.content)
 
     # test create
-    self.expect_urlopen(API_UPLOAD_VIDEO, {}, data=urllib.urlencode({
+    self.expect_urlopen(API_UPLOAD_VIDEO, {}, data=urllib.parse.urlencode({
       'file_url': 'http://my/video', 'description': 'my\ncaption'}))
     self.mox.ReplayAll()
     self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
@@ -2538,7 +2538,7 @@ cc Sam G, Michael M<br />""", preview.description)
       'access_token': 'my_app_id|my_app_secret',
       }
     self.expect_urlopen('my-username/notifications', '',
-                        data=urllib.urlencode(params))
+                        data=urllib.parse.urlencode(params))
     self.mox.ReplayAll()
     self.fb.create_notification('my-username', 'my text', 'my link')
 
@@ -2553,7 +2553,7 @@ cc Sam G, Michael M<br />""", preview.description)
   def test_parse_id(self):
     def check(expected, id, is_comment):
       got = facebook.Facebook.parse_id(id, is_comment=is_comment)
-      self.assertEquals(facebook.FacebookId(*expected), got,
+      self.assertEqual(facebook.FacebookId(*expected), got,
                         '%s %s, got %s' % (id, is_comment, got))
 
     blank = facebook.FacebookId(None, None, None)
@@ -2627,7 +2627,7 @@ cc Sam G, Michael M<br />""", preview.description)
     try:
       self.fb.urlopen_batch(('abc', 'def'))
       assert False, 'expected HTTPError'
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       self.assertEqual(499, e.code)
       self.assertEqual('error body', e.reason)
 

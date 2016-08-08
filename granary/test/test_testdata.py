@@ -31,7 +31,7 @@ def read_json(filename):
   try:
     with open(filename) as f:
       return json.loads(f.read())
-  except Exception, e:
+  except Exception as e:
     e.args = ('%s: ' % filename,) + e.args
     raise
 

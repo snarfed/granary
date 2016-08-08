@@ -6,7 +6,7 @@ Atom spec: http://atomenabled.org/developers/syndication/
 import collections
 import os
 import re
-import urlparse
+import urllib.parse
 import xml.sax.saxutils
 
 import jinja2
@@ -14,8 +14,8 @@ import mf2py
 import mf2util
 from oauth_dropins.webutil import util
 
-import microformats2
-import source
+from . import microformats2
+from . import source
 
 ATOM_TEMPLATE_FILE = 'user_feed.atom'
 # stolen from django.utils.html
@@ -88,10 +88,10 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     def __init__(self, **kwargs):
       super(Defaulter, self).__init__(Defaulter, **{
         k: (Defaulter(**v) if isinstance(v, dict) else v)
-        for k, v in kwargs.items()})
+        for k, v in list(kwargs.items())})
 
     def __unicode__(self):
-      return super(Defaulter, self).__unicode__() if self else u''
+      return super(Defaulter, self).__unicode__() if self else ''
 
   env = jinja2.Environment(loader=jinja2.PackageLoader(__package__, 'templates'),
                            autoescape=True)
@@ -136,6 +136,6 @@ def html_to_atom(html, url=None, fetch_author=False):
 
 
 def _remove_query_params(url):
-  parsed = list(urlparse.urlparse(url))
+  parsed = list(urllib.parse.urlparse(url))
   parsed[4] = ''
-  return urlparse.urlunparse(parsed)
+  return urllib.parse.urlunparse(parsed)

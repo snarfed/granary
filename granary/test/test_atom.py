@@ -9,9 +9,9 @@ import requests
 
 from granary import atom
 
-import test_facebook
-import test_instagram
-import test_twitter
+from . import test_facebook
+from . import test_instagram
+from . import test_twitter
 
 
 class AtomTest(testutil.HandlerTest):

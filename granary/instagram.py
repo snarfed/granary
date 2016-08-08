@@ -15,15 +15,15 @@ import logging
 import operator
 import re
 import string
-import urllib
-import urllib2
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 import xml.sax.saxutils
 
-import appengine_config
+from . import appengine_config
 from oauth_dropins.webutil import util
 import requests
-import source
+from . import source
 
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
@@ -91,7 +91,7 @@ class Instagram(source.Source):
     if self.access_token:
       # TODO add access_token to the data parameter for POST requests
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    resp = util.urlopen(urllib2.Request(url, **kwargs))
+    resp = util.urlopen(urllib.request.Request(url, **kwargs))
     return (resp if kwargs.get('data')
             else source.load_json(resp.read(), url).get('data'))
 
@@ -213,7 +213,7 @@ class Instagram(source.Source):
           activities += [self.like_to_object(user, l['id'], l['link'])
                          for l in liked]
 
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # instagram api should give us back a json block describing the
       # error. but if it's an error for some other reason, it probably won't
@@ -410,7 +410,7 @@ class Instagram(source.Source):
           description='<span class="verb">comment</span> on <a href="%s">'
                       'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
 
-      self.urlopen(API_COMMENT_URL % base_id, data=urllib.urlencode({
+      self.urlopen(API_COMMENT_URL % base_id, data=urllib.parse.urlencode({
         'access_token': self.access_token,
         'text': content,
       }))
@@ -444,7 +444,7 @@ class Instagram(source.Source):
       logging.info('posting like for media id id=%s, url=%s',
                    base_id, base_url)
       # no response other than success/failure
-      self.urlopen(API_MEDIA_LIKES_URL % base_id, data=urllib.urlencode({
+      self.urlopen(API_MEDIA_LIKES_URL % base_id, data=urllib.parse.urlencode({
         'access_token': self.access_token
       }))
       # TODO use the stored user_json rather than looking it up each time.
@@ -514,14 +514,14 @@ class Instagram(source.Source):
         # ActivityStreams 2.0 allows image to be a JSON array.
         # http://jasnell.github.io/w3c-socialwg-activitystreams/activitystreams2.html#link
         'image': sorted(
-          media.get('images', {}).values(),
+          list(media.get('images', {}).values()),
           # sort by size, descending, since atom.py
           # uses the first image in the list.
           key=operator.itemgetter('width'), reverse=True),
         # video object defined in
         # http://activitystrea.ms/head/activity-schema.html#rfc.section.4.18
         'stream': sorted(
-          media.get('videos', {}).values(),
+          list(media.get('videos', {}).values()),
           key=operator.itemgetter('width'), reverse=True),
       }],
       # comments go in the replies field, according to the "Responses for
@@ -689,7 +689,7 @@ class Instagram(source.Source):
     if not id:
       return None
 
-    if isinstance(id, basestring):
+    if isinstance(id, str):
       parts = id.split('_')
       if not util.is_int(parts[0]):
         return id
