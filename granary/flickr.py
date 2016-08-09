@@ -185,10 +185,11 @@ class Flickr(source.Source):
       if name:
         params.append(('title', name))
       if content:
-        params.append(('description', content))
+        params.append(('description', content.encode('utf-8')))
       if hashtags:
         params.append(
-          ('tags', ','.join('"%s"' % t if ' ' in t else t for t in hashtags)))
+          ('tags', ','.join(('"%s"' % t if ' ' in t else t).encode('utf-8')
+                            for t in hashtags)))
 
       file = util.urlopen(video_url or image_url)
       try:
@@ -250,7 +251,7 @@ class Flickr(source.Source):
 
       resp = self.call_api_method('flickr.photos.comments.addComment', {
         'photo_id': base_id,
-        'comment_text': content,
+        'comment_text': content.encode('utf-8'),
       })
       resp = resp.get('comment', {})
       resp.update({

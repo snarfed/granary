@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for flickr.py
 """
 from __future__ import unicode_literals, print_function
@@ -1071,6 +1072,29 @@ class FlickrTest(testutil.TestCase):
       'https://www.flickr.com/photos/marietta_wood_works/21904325000/'
       '#comment72157661220102352',
       reply_content.get('url'))
+
+  # https://github.com/snarfed/bridgy/issues/692
+  def test_create_comment_encodes_unicode(self):
+    self.expect_call_api_method('flickr.photos.comments.addComment', {
+      'photo_id': '28733650665',
+      'comment_text': u'these ‘are smart’ quotes'.encode('utf-8'),
+    }, json.dumps({
+      'comment': {
+        'id': '123456',
+        'permalink': 'https://www.flickr.com/comment/123456',
+      },
+    }))
+    self.mox.ReplayAll()
+
+    reply_content = self.flickr.create({
+      'objectType': 'comment',
+      'content': u'these ‘are smart’ quotes',
+      'inReplyTo': [{
+        'url': 'https://www.flickr.com/photos/58071954@N08/28733650665/',
+      }],
+    }).content
+    self.assertEquals('123456', reply_content['id'])
+    self.assertEquals('https://www.flickr.com/comment/123456', reply_content['url'])
 
   def test_create_favorite(self):
     """Favoriting a photo generates a URL using a fake fragment id

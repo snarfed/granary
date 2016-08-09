@@ -276,6 +276,8 @@ Changelog
     vs real name vs path alias. This specifically detects when a user name is
     probably actually a real name because it has a space.
   * Uploading: detect and handle App Engine's 10MB HTTP request limit.
+  * Bug fix in create: handle unicode characters in photo/video description,
+    hashtags, and comment text.
 * Atom:
   * Bug fix: escape &s in attachments' text (e.g. quote tweets).
 
