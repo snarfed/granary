@@ -12,7 +12,11 @@ automatic_scaling:
   max_concurrent_requests: 12
 
 libraries:
+- name: lxml
+  version: latest
 - name: ssl
+  version: latest
+- name: webob
   version: latest
 
 handlers:
