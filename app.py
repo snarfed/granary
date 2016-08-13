@@ -121,7 +121,7 @@ class UrlHandler(activitystreams.Handler):
       # fetch url
       try:
         resp = util.urlopen(url)
-      except httplib.InvalidURL as e:
+      except (ValueError, httplib.InvalidURL) as e:
         self.abort(400, str(e))
       except Exception as e:
         if util.is_connection_failure(e):
