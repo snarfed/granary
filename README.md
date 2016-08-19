@@ -8,7 +8,7 @@ data foodstuff inside in standard formats and protocols!
 
 * [About](#about)
 * [Using](#using)
-  * [Using the REST API](#using-the-REST-API)
+  * [Using the REST API](#using-the-rest-api)
   * [Using the library](#using-the-library)
 * [Troubleshooting/FAQ](#troubleshootingfaq)
 * [Future work](#future-work)
