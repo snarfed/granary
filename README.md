@@ -38,7 +38,7 @@ Using
 ---
 
 All dependencies are handled by pip and enumerated in
-[requirements.txt](https://github.com/snarfed/oauth-dropins/blob/master/requirements.txt). We recommend that you install with pip in a
+[requirements.txt](https://github.com/snarfed/granary/blob/master/requirements.txt). We recommend that you install with pip in a
 [`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
 ([App Engine details.](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring))
 
