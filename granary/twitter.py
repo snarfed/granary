@@ -1283,7 +1283,7 @@ class Twitter(source.Source):
       username = user.find(class_='username')
       if not username:
         continue
-      username = username.string
+      username = unicode(username.string)
       if username.startswith('@'):
         username = username[1:]
 
@@ -1292,7 +1292,7 @@ class Twitter(source.Source):
       author = {
         'id_str': img.get('data-user-id'),
         'screen_name': username,
-        'name': fullname.string if fullname else None,
+        'name': unicode(fullname.string) if fullname else None,
         'profile_image_url': img.get('src'),
         }
       likes.append(self._make_like(tweet, author))

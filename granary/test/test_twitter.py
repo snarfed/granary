@@ -1192,8 +1192,12 @@ class TwitterTest(testutil.TestCase):
 
   def test_favorites_html_to_likes(self):
     self.assert_equals([], self.twitter.favorites_html_to_likes(TWEET, ""))
-    self.assert_equals(LIKES_FROM_HTML,
-                       self.twitter.favorites_html_to_likes(TWEET, FAVORITES_HTML))
+    likes = self.twitter.favorites_html_to_likes(TWEET, FAVORITES_HTML)
+    self.assert_equals(LIKES_FROM_HTML, likes)
+
+    # https://console.cloud.google.com/errors/16941961690170721544
+    for like in likes:
+      self.assertEquals(unicode, like['author']['displayName'].__class__)
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))

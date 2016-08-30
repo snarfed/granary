@@ -264,6 +264,11 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
+#### 1.6 - unreleased
+* Twitter:
+  * Bug fix: ensure like.author.displayName is a plain unicode string so that it
+    can be pickled normally, e.g. by App Engine's memcache.
+
 #### 1.5 - 2016-08-25
 * REST API:
   * Support tag URI for user id, app id, and activity id.
