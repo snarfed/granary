@@ -41,7 +41,15 @@ API_PARAMS = {
 URL_CACHE_TIME = 5 * 60  # 5m
 
 
-class FrontPageHandler(handlers.TemplateHandler):
+class Handler(webapp2.RequestHandler):
+  """Base handler class that adds the HSTS header."""
+  def __init__(self, *args, **kwargs):
+    super(Handler, self).__init__(*args, **kwargs)
+    self.response.headers['Strict-Transport-Security'] = \
+        'max-age=16070400; includeSubDomains; preload'  # 6 months
+
+
+class FrontPageHandler(handlers.TemplateHandler, Handler):
   """Renders and serves the front page."""
   handle_exception = handlers.handle_exception
 
@@ -62,7 +70,7 @@ class FrontPageHandler(handlers.TemplateHandler):
     return vars
 
 
-class DemoHandler(webapp2.RequestHandler):
+class DemoHandler(Handler):
   """Handles silo requests from the interactive demo form on the front page."""
   handle_exception = handlers.handle_exception
 
@@ -90,7 +98,7 @@ class DemoHandler(webapp2.RequestHandler):
       urllib.urlencode(params)))
 
 
-class UrlHandler(activitystreams.Handler):
+class UrlHandler(activitystreams.Handler, Handler):
   """Handles AS/mf2 requests from the interactive demo form on the front page.
 
   Fetched URL data is cached for 5m. Cache key is 'U [URL]', value is dict with

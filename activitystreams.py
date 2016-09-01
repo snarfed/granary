@@ -183,7 +183,12 @@ class Handler(webapp2.RequestHandler):
 
     activities = response['items']
 
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers.update({
+      'Access-Control-Allow-Origin': '*',
+      'Strict-Transport-Security':
+          'max-age=16070400; includeSubDomains; preload',  # 6 months
+    })
+
     if format in ('json', 'activitystreams'):
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
