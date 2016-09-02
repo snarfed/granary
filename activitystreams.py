@@ -60,7 +60,7 @@ PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
 
-class Handler(webapp2.RequestHandler):
+class Handler(handlers.ModernHandler):
   """Base class for ActivityStreams API handlers.
 
   Response data is cached. Cache key is 'R [PATH]', value is dict with
