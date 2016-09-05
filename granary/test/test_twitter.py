@@ -1390,6 +1390,14 @@ class TwitterTest(testutil.TestCase):
       'note', False)
     self.assertEquals(expected, result)
 
+    orig = (u'Leaving this here for future reference. Turn on debug menu '
+      u'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu '
+      u'-bool true`')
+    expected = (u'Leaving this here for future reference. Turn on debug menu '
+      u'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu…')
+    result = self.twitter._truncate(orig, 'http://foo.com', source.OMIT_LINK, 'note', False)
+    self.assertEquals(expected, result)
+
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
