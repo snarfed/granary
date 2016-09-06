@@ -462,6 +462,54 @@ OBJECT_WITH_LIKES['tags'] += LIKES_FROM_HTML
 ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
 ACTIVITY_WITH_LIKES['object'] = OBJECT_WITH_LIKES
 
+QUOTE_TWEET = {
+  'id': 2345,
+  'id_str': '2345',
+  'is_quote_status': True,
+  'quoted_status_id_str': TWEET['id_str'],
+  'quoted_status': TWEET,
+  'text': 'I agree with this',
+  'user': {'screen_name': 'kylewmahan'},
+}
+QUOTE_ACTOR = {
+  'displayName': 'kylewmahan',
+  'id': 'tag:twitter.com:kylewmahan',
+  'objectType': 'person',
+  'url': 'https://twitter.com/kylewmahan',
+  'username': 'kylewmahan'
+}
+QUOTE_ACTIVITY = {
+  'id': 'tag:twitter.com:2345',
+  'url': 'https://twitter.com/kylewmahan/status/2345',
+  'verb': 'post',
+  'actor': QUOTE_ACTOR,
+  'object': {
+    'id': 'tag:twitter.com:2345',
+    'url': 'https://twitter.com/kylewmahan/status/2345',
+    'objectType': 'note',
+    'content': 'I agree with this',
+    'attachments': [OBJECT],
+    'author': QUOTE_ACTOR,
+  },
+}
+RETWEETED_QUOTE_TWEET = {
+  'id': 6789,
+  'id_str': '6789',
+  'retweeted_status': QUOTE_TWEET,
+  'is_quote_status': True,
+  'quoted_status_id_str': TWEET['id_str'],
+  'text': 'RT @kylewmahan: I agree with this',
+  'user': USER,
+}
+QUOTE_SHARE = {
+  'id': tag_uri('6789'),
+  'url': 'https://twitter.com/snarfed_org/status/6789',
+  'verb': 'share',
+  'actor': ACTOR,
+  'object': QUOTE_ACTIVITY['object'],
+}
+
+
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US"
@@ -765,28 +813,15 @@ class TwitterTest(testutil.TestCase):
     } + '&since_id=567', {'statuses': []})
 
     # second search finds a quote tweet for 1006 and an RT of that
+    quote_tweet = copy.deepcopy(QUOTE_TWEET)
+    quote_tweet['quoted_status_id_str'] = '1006'
+    retweeted_quote_tweet = copy.deepcopy(RETWEETED_QUOTE_TWEET)
+    retweeted_quote_tweet['quoted_status_id_str'] = '1006'
     self.expect_urlopen(twitter.API_SEARCH % {
       'q': urllib.quote_plus('1005 OR 1006 OR 1007'),
       'count': 100,
     } + '&since_id=567', {
-      'statuses': [{
-        'id': 2345,
-        'id_str': '2345',
-        'quoted_status_id_str': '1006',
-        'quoted_status': tweets[6],
-        'text': 'I agree with this',
-        'user': {
-          'screen_name': 'kylewmahan',
-        },
-      }, {
-        'id': 6789,
-        'id_str': '6789',
-        'quoted_status_id_str': '1006',
-        'text': 'RT @kylewmahan: I agree with this',
-        'retweeted_status': {
-          'id': 1006,
-        },
-      }],
+      'statuses': [quote_tweet, retweeted_quote_tweet],
     })
 
     self.mox.ReplayAll()
@@ -794,13 +829,7 @@ class TwitterTest(testutil.TestCase):
     self.assertEqual(9, len(got))
 
     # should include quote tweet
-    quote = got[-1]
-    self.assertEqual('tag:twitter.com:2345', quote.get('id'))
-    self.assertEqual('https://twitter.com/kylewmahan/status/2345',
-                     quote.get('url'))
-    attachment = quote.get('object', {}).get('attachments')[0]
-    self.assertEqual('tag:twitter.com:1006', attachment.get('id'))
-    self.assertEqual('note', attachment.get('objectType'))
+    self.assert_equals(QUOTE_ACTIVITY, got[-1])
 
     # shouldn't include RT of quote tweet
     self.assertNotIn('tag:twitter.com:6789', [a.get('id') for a in got])
@@ -1162,6 +1191,10 @@ class TwitterTest(testutil.TestCase):
           'user': {'id': 777, 'screen_name': 'orig_author'},
           },
         }))
+
+  def test_tweet_to_activity_retweet_of_quote_tweet(self):
+    self.assert_equals(QUOTE_SHARE,
+                       self.twitter.tweet_to_activity(RETWEETED_QUOTE_TWEET))
 
   def test_protected_tweet_to_object(self):
     tweet = copy.deepcopy(TWEET)
