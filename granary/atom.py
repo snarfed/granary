@@ -71,13 +71,13 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     a['title'] = xml.sax.saxutils.escape(source.strip_html_tags(a['title']))
 
     # Normalize attachments.image to always be a list.
-    for att in primary.get('attachments', []):
+    attachments = a.get('attachments') or obj.get('attachments') or []
+    for att in attachments:
       att['image'] = util.get_list(att, 'image')
 
     obj['rendered_children'] = [
       _encode_ampersands(microformats2.render_content(att))
-      for att in primary.get('attachments', [])
-      if att.get('objectType') in ('note', 'article')]
+      for att in attachments if att.get('objectType') in ('note', 'article')]
 
   # Emulate Django template behavior that returns a special default value that
   # can continue to be referenced when an attribute or item lookup fails. Helps

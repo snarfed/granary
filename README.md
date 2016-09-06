@@ -268,6 +268,8 @@ Changelog
 * Twitter:
   * Bug fix: ensure like.author.displayName is a plain unicode string so that it
     can be pickled normally, e.g. by App Engine's memcache.
+* Atom:
+  * Render full original quoted tweet in retweets of quote tweets.
 
 #### 1.5 - 2016-08-25
 * REST API:

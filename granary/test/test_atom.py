@@ -74,6 +74,43 @@ class AtomTest(testutil.HandlerTest):
       atom.activities_to_atom([activity], test_instagram.ACTOR,
                               title='my title'))
 
+  def test_render_share(self):
+    activity = {
+      'verb': 'share',
+      'content': "sharer's comment",
+      'object': {
+        'content': 'original object',
+        'author': {'displayName': 'Mr. Foo'},
+      },
+    }
+
+    out = atom.activities_to_atom([activity], {})
+    self.assert_multiline_in("""
+<title>sharer's comment</title>
+""", out)
+    self.assert_multiline_in("""
+sharer's comment
+""", out)
+    self.assertNotIn('original object', out)
+
+  def test_render_share_no_content(self):
+    activity = {
+      'verb': 'share',
+      'object': {
+        'content': 'original object',
+        'author': {'displayName': 'Mr. Foo'},
+      },
+    }
+
+    out = atom.activities_to_atom([activity], {})
+    self.assert_multiline_in("""
+Shared <a href="#">a post</a> by   <span class="h-card">
+<span class="p-name">Mr. Foo</span>
+
+</span>
+original object
+""", out)
+
   def test_render_encodes_ampersands(self):
     # only the one unencoded & in a&b should be encoded
     activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}
@@ -146,6 +183,28 @@ note content
 article content
 </blockquote>
 """, got)
+
+  def test_render_share_of_obj_with_attachments(self):
+    """This is e.g. a retweet of a quote tweet."""
+    activity = {
+      'verb': 'share',
+      'object': {
+        'content': 'RT @quoter: comment',
+        'attachments': [{
+          'objectType': 'note',
+          'content': 'quoted text',
+        }],
+      },
+    }
+
+    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    self.assert_multiline_in("""
+RT @quoter: comment
+
+<blockquote>
+quoted text
+</blockquote>
+""", out)
 
   def test_rels(self):
     got = atom.activities_to_atom([], {}, rels={'foo': 'bar', 'baz': 'baj'})
