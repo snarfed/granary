@@ -1288,13 +1288,16 @@ class Twitter(source.Source):
         username = username[1:]
 
       img = user.find(class_='js-action-profile-avatar') or {}
-      fullname = user.find(class_='fullname') or {}
       author = {
         'id_str': img.get('data-user-id'),
         'screen_name': username,
-        'name': unicode(fullname.string) if fullname else None,
         'profile_image_url': img.get('src'),
         }
+
+      fullname = user.find(class_='fullname')
+      if fullname:
+        author['name'] = fullname.get_text(' ', strip=True)
+
       likes.append(self._make_like(tweet, author))
 
     return likes

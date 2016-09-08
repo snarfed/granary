@@ -400,7 +400,7 @@ LIKE_OBJ = {  # ActivityStreams
     },
   'published': '2013-12-27T17:25:55+00:00',
   }
-FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
+FAVORITES_HTML = u"""  # Twitter, from /i/activity/favorited_popup?id=...
 <ol class="activity-popup-users">
     <li class="js-stream-item stream-item stream-item
 " data-item-id="353" id="stream-item-user-353" data-item-type="user">
@@ -418,14 +418,25 @@ FAVORITES_HTML = """  # Twitter, from /i/activity/favorited_popup?id=...
 
   <li class="js-stream-item stream-item stream-item">
     <!-- snipped <div class="account"... -->
-  <div class="content">
-        <div class="stream-item-header">
-          <a class="account-group js-user-profile-link" href="/ge" >
-              <span class="username js-action-profile-name">@jo</span></a>
-        </div>
+    <div class="content">
+      <div class="stream-item-header">
+        <a class="account-group js-user-profile-link" href="/ge" >
+          <span class="username js-action-profile-name">@jo</span></a>
       </div>
     </div>
-    </li>
+  </li>
+
+  <li class="js-stream-item stream-item stream-item">
+    <div class="content">
+      <div class="stream-item-header">
+        <a class="account-group js-user-profile-link" href="/c_foo" >
+          <img class="avatar js-action-profile-avatar  " src="https://pbs.twimg.com/profile_images/123/abc_normal.jpg" alt="" data-user-id="23238890"/>
+          <strong class="fullname js-action-profile-name">Charles <span class="Emoji Emoji--forLinks" style="background-image:url('https://abs.twimg.com/emoji/v2/72x72/000.png')" title="Hot beverage" aria-label="Emoji: Hot beverage">&nbsp;</span><span class="visuallyhidden" aria-hidden="true">☕</span> Foo</strong>
+            <span class="username js-action-profile-name">@c_foo</span>
+        </a>
+      </div>
+    </div>
+  </li>
 </ol>
 """
 LIKES_FROM_HTML = [{  # ActivityStreams
@@ -442,8 +453,8 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'displayName': 'George',
     'url': 'https://twitter.com/ge',
     'image': {'url': 'https://twimg/353'},
-    },
-  }, {
+  },
+}, {
   'url': 'https://twitter.com/snarfed_org/status/100',
   'objectType': 'activity',
   'verb': 'like',
@@ -454,9 +465,23 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'username': 'jo',
     'displayName': 'jo',
     'url': 'https://twitter.com/jo',
-    },
-  }
-]
+  },
+}, {
+  'id': tag_uri('100_favorited_by_23238890'),
+  'url': 'https://twitter.com/snarfed_org/status/100#favorited-by-23238890',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'https://twitter.com/snarfed_org/status/100'},
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('c_foo'),
+    'numeric_id': '23238890',
+    'username': 'c_foo',
+    'displayName': u'Charles ☕ Foo',
+    'url': 'https://twitter.com/c_foo',
+    'image': {'url': u'https://pbs.twimg.com/profile_images/123/abc.jpg'},
+  },
+}]
 OBJECT_WITH_LIKES = copy.deepcopy(OBJECT)
 OBJECT_WITH_LIKES['tags'] += LIKES_FROM_HTML
 ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
