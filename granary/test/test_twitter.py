@@ -18,6 +18,9 @@ from oauth_dropins.webutil import util
 from granary import microformats2
 from granary import source
 from granary import twitter
+from granary.twitter import (
+  API_FAVORITES, API_LIST_TIMELINE, API_LOOKUP, API_RETWEETS, API_SEARCH,
+  API_STATUS, API_TIMELINE, API_USER_TIMELINE, HTML_FAVORITES)
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
@@ -676,34 +679,31 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([ACTIVITY, ACTIVITY], self.twitter.get_activities())
 
   def test_get_activities_start_index_count(self):
-    self.expect_urlopen('statuses/home_timeline.json?include_entities=true&count=2',
-                        [TWEET, TWEET_2])
+    self.expect_urlopen(API_TIMELINE % 2, [TWEET, TWEET_2])
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_2],
                        self.twitter.get_activities(start_index=1, count=1))
 
   def test_get_activities_start_index_count_zero(self):
-    self.expect_urlopen('statuses/home_timeline.json?include_entities=true&count=0',
-                        [TWEET, TWEET_2])
+    self.expect_urlopen(API_TIMELINE % 0, [TWEET, TWEET_2])
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY, ACTIVITY_2],
                        self.twitter.get_activities(start_index=0, count=0))
 
   def test_get_activities_count_past_end(self):
-    self.expect_urlopen('statuses/home_timeline.json?include_entities=true&count=9',
-                        [TWEET])
+    self.expect_urlopen(API_TIMELINE % 9, [TWEET])
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.twitter.get_activities(count=9))
 
   def test_get_activities_start_index_past_end(self):
-    self.expect_urlopen('statuses/home_timeline.json?include_entities=true&count=0', [])
+    self.expect_urlopen(API_TIMELINE % 0, [])
     self.mox.ReplayAll()
     self.assert_equals([], self.twitter.get_activities(start_index=9))
 
   def test_get_activities_activity_id(self):
-    self.expect_urlopen('statuses/show.json?id=000&include_entities=true', TWEET)
+    self.expect_urlopen(API_STATUS % '000', TWEET)
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -712,20 +712,16 @@ class TwitterTest(testutil.TestCase):
         start_index=3, count=6))
 
   def test_get_activities_self(self):
-    self.expect_urlopen(
-      'statuses/user_timeline.json?include_entities=true&count=0&screen_name=', [])
+    self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': ''}, [])
     self.mox.ReplayAll()
 
     self.assert_equals([], self.twitter.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_fetch_likes(self):
-    self.expect_urlopen(
-      'favorites/list.json?screen_name=&include_entities=true', [TWEET_2])
+    self.expect_urlopen(API_FAVORITES % '', [TWEET_2])
     self.expect_urlopen(
       'account/verify_credentials.json', FAVORITE_EVENT['source'])
-    self.expect_urlopen(
-      'statuses/user_timeline.json?include_entities=true&count=0&screen_name=',
-      [TWEET])
+    self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': ''}, [TWEET])
     self.mox.ReplayAll()
 
     got = self.twitter.get_activities(group_id=source.SELF, fetch_likes=True)
@@ -734,18 +730,19 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([like_obj, ACTIVITY], got)
 
   def test_get_activities_for_screen_name(self):
-    self.expect_urlopen(
-      'statuses/user_timeline.json?include_entities=true&count=0&screen_name=schnarfed',
-      [])
+    self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': 'schnarfed'},
+                        [])
     self.mox.ReplayAll()
 
     self.assert_equals([], self.twitter.get_activities(user_id='schnarfed',
                                                        group_id=source.SELF))
 
   def test_get_activities_list_explicit_user(self):
-    self.expect_urlopen(
-      'lists/statuses.json?include_entities=true&count=0&slug=testlist&owner_screen_name=schnarfed',
-      [])
+    self.expect_urlopen(API_LIST_TIMELINE % {
+      'count': 0,
+      'slug': 'testlist',
+      'owner_screen_name': 'schnarfed',
+    }, [])
     self.mox.ReplayAll()
 
     self.assert_equals([], self.twitter.get_activities(group_id='testlist', user_id='schnarfed'))
@@ -753,21 +750,23 @@ class TwitterTest(testutil.TestCase):
   def test_get_activities_list_implicit_user(self):
     self.expect_urlopen('account/verify_credentials.json',
                         {'screen_name': 'schnarfed'})
-    self.expect_urlopen(
-      'lists/statuses.json?include_entities=true&count=0&slug=testlist&owner_screen_name=schnarfed',
-      [])
+    self.expect_urlopen(API_LIST_TIMELINE % {
+      'count': 0,
+      'slug': 'testlist',
+      'owner_screen_name': 'schnarfed',
+    }, [])
     self.mox.ReplayAll()
 
     self.assert_equals([], self.twitter.get_activities(group_id='testlist'))
 
   def test_get_activities_fetch_replies(self):
     self.expect_urlopen(TIMELINE, [TWEET])
-    self.expect_urlopen('search/tweets.json?q=%40snarfed_org&include_entities=true&result_type=recent&count=100&since_id=567',
-      REPLIES_TO_SNARFED)
-    self.expect_urlopen('search/tweets.json?q=%40alice&include_entities=true&result_type=recent&count=100&since_id=567',
-      REPLIES_TO_ALICE)
-    self.expect_urlopen('search/tweets.json?q=%40bob&include_entities=true&result_type=recent&count=100&since_id=567',
-      REPLIES_TO_BOB)
+
+    search = API_SEARCH + '&since_id=567'
+    self.expect_urlopen(search % {'q': '%40snarfed_org', 'count': 100},
+                        REPLIES_TO_SNARFED)
+    self.expect_urlopen(search % {'q': '%40alice', 'count': 100}, REPLIES_TO_ALICE)
+    self.expect_urlopen(search % {'q': '%40bob', 'count': 100}, REPLIES_TO_BOB)
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_REPLIES],
@@ -777,9 +776,9 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen(TIMELINE, [])
     self.expect_urlopen('account/verify_credentials.json',
                         {'screen_name': 'schnarfed'})
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/search/tweets.json?q=%40schnarfed&include_entities=true&result_type=recent&count=100&since_id=567',
-      {'statuses': [
+    search_url = API_SEARCH % {'q': '%40schnarfed', 'count': 100} + '&since_id=567'
+    self.expect_urlopen(search_url, {
+      'statuses': [
         # reply to me
         {'id_str': '1', 'text': '@schnarfed foo',
          'in_reply_to_status_id_str': '11'},
@@ -797,8 +796,7 @@ class TwitterTest(testutil.TestCase):
         # retweet of a tweet that mentions me
         {'id_str': '6', 'retweeted_status': {'id_str': '4'}},
       ]})
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/lookup.json?id=11,12,13&include_entities=true',
+    self.expect_urlopen(API_LOOKUP % '11,12,13',
       [{'id_str': '11', 'user': {'screen_name': 'schnarfed'}},
        {'id_str': '12', 'entities': {'user_mentions': [{'screen_name': 'schnarfed'}]}},
        {'id_str': '13', 'text': 'barrey'},
@@ -889,9 +887,6 @@ class TwitterTest(testutil.TestCase):
     # Test with multiple tweets to cover the bug described in
     # https://github.com/snarfed/bridgy/issues/22#issuecomment-56329848 :
     # util.CacheDict.get_multi() didn't originally handle generator args.
-    RETWEETS = 'statuses/retweets.json?id=100_%s'
-    FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=100_%s'
-
     tweets = [copy.deepcopy(TWEET), copy.deepcopy(TWEET)]
     tweets[0]['id_str'] += '_a'
     tweets[1]['id_str'] += '_b'
@@ -900,10 +895,10 @@ class TwitterTest(testutil.TestCase):
       for t in tweets:
         t['retweet_count'] = t['favorite_count'] = count
       self.expect_urlopen(TIMELINE, tweets)
-      self.expect_urlopen(RETWEETS % 'a', [])
-      self.expect_urlopen(RETWEETS % 'b', [])
-      self.expect_urlopen(FAVORITES % 'a', {})
-      self.expect_urlopen(FAVORITES % 'b', {})
+      self.expect_urlopen(API_RETWEETS % '100_a', [])
+      self.expect_urlopen(API_RETWEETS % '100_b', [])
+      self.expect_urlopen(HTML_FAVORITES % '100_a', {})
+      self.expect_urlopen(HTML_FAVORITES % '100_b', {})
       # shouldn't fetch this time because counts haven't changed
       self.expect_urlopen(TIMELINE, tweets)
 
@@ -1027,12 +1022,12 @@ class TwitterTest(testutil.TestCase):
         group_id=source.SEARCH, search_query='indieweb'))
 
   def test_get_comment(self):
-    self.expect_urlopen('statuses/show.json?id=123&include_entities=true', TWEET)
+    self.expect_urlopen(API_STATUS % '123', TWEET)
     self.mox.ReplayAll()
     self.assert_equals(OBJECT, self.twitter.get_comment('123'))
 
   def test_get_share(self):
-    self.expect_urlopen('statuses/show.json?id=123&include_entities=true', RETWEETS[0])
+    self.expect_urlopen(API_STATUS % '123', RETWEETS[0])
     self.mox.ReplayAll()
     self.assert_equals(SHARES[0], self.twitter.get_share('user', 'tweet', '123'))
 
