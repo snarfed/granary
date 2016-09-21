@@ -74,7 +74,9 @@ ACTOR = {  # ActivityStreams
   'username': 'snarfed_org',
   'description': 'my description',
   }
-TWEET = {  # Twitter
+# Twitter
+# (extended tweet: https://dev.twitter.com/overview/api/upcoming-changes-to-tweets )
+TWEET = {
   'created_at': 'Wed Feb 22 20:26:41 +0000 2012',
   'id_str': '100',
   'id': -1,  # we should always use id_str
@@ -142,7 +144,9 @@ TWEET = {  # Twitter
       'media_url': 'http://p.twimg.com/picture3',
     }],
   },
-  'text': '@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
+  'full_text': '@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
+  'truncated': False,
+  'display_text_range': [0, 82],  # includes @twitter, excludes http://t.co/picture
   'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
   }
 TWEET_2 = copy.deepcopy(TWEET)
@@ -150,7 +154,7 @@ TWEET_2['user']['name'] = 'foo'
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
-  'content': '@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 ',
+  'content': '@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67',
   'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41+00:00',
   'url': 'https://twitter.com/snarfed_org/status/100',
@@ -576,7 +580,7 @@ ATOM = """\
   <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
 
   <id>https://twitter.com/snarfed_org/status/100</id>
-  <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67 </title>
+  <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
@@ -861,7 +865,7 @@ class TwitterTest(testutil.TestCase):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
-    self.expect_urlopen('statuses/retweets.json?id=100&since_id=567', RETWEETS)
+    self.expect_urlopen(API_RETWEETS % '100' + '&since_id=567', RETWEETS)
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_SHARES],
@@ -871,7 +875,7 @@ class TwitterTest(testutil.TestCase):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
-    self.expect_urlopen('statuses/retweets.json?id=100'
+    self.expect_urlopen(API_RETWEETS % '100'
                        ).AndRaise(urllib2.HTTPError('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
@@ -961,7 +965,7 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen(TIMELINE, [tweet] * (twitter.RETWEET_LIMIT + 2))
 
     for i in range(twitter.RETWEET_LIMIT):
-      self.expect_urlopen('statuses/retweets.json?id=100&since_id=567', RETWEETS)
+      self.expect_urlopen(API_RETWEETS % 100 + '&since_id=567', RETWEETS)
 
     self.mox.ReplayAll()
     self.assert_equals(([ACTIVITY_WITH_SHARES] * twitter.RETWEET_LIMIT) +
@@ -1056,10 +1060,45 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals(OBJECT_WITH_SHARES,
                        self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
 
+  def test_tweet_to_object_display_text_range(self):
+    self.assert_equals({
+      'objectType': 'note',
+      # should only have the text inside display_text_range
+      'content': 'i hereby reply',
+      'id': tag_uri('100'),
+      # both tags are outside display_text_range, so they shouldn't have
+      # startIndex or length
+      'tags': [{
+        'objectType': 'person',
+        'id': tag_uri('OP'),
+        'url': 'https://twitter.com/OP',
+      }, {
+        'objectType': 'article',
+        'url': 'http://full/quoted/tweet',
+      }],
+    }, self.twitter.tweet_to_object({
+      'id_str': '100',
+      'full_text': '@OP i hereby reply http://quoted/tweet',
+      'truncated': False,
+      'display_text_range': [4, 18],
+      'entities': {
+        'user_mentions': [{
+          'screen_name': 'OP',
+          'indices': [0, 3],
+        }],
+        'urls': [{
+          'expanded_url': 'http://full/quoted/tweet',
+          'url': 'http://quoted/tweet',
+          'indices': [19, 38],
+        }],
+      },
+    }))
+
   def test_tweet_to_object_entity_indices_handle_display_urls(self):
     tweet = {
       'id_str': '123',
-      'text': '@schnarfed Hey Ryan, You might find this semi-related and interesting: https://t.co/AFGvnvG72L Heard about it from @danshipper this week.',
+      'full_text': '@schnarfed Hey Ryan, You might find this semi-related and interesting: https://t.co/AFGvnvG72L Heard about it from @danshipper this week.',
+      'display_text_range': [11, 137],
       'entities': {
         'urls': [{
             'url': 'https://t.co/AFGvnvG72L',
@@ -1078,13 +1117,13 @@ class TwitterTest(testutil.TestCase):
     obj = self.twitter.tweet_to_object(tweet)
     for tag in obj['tags']:
       if tag['displayName'] == 'Dan Shipper':
-        self.assertEquals(102, tag['startIndex'])
+        self.assertEquals(91, tag['startIndex'])
         self.assertEquals(11, tag['length'])
         break
     else:
       self.fail('Dan Shipper not found')
 
-    self.assertEquals('@schnarfed Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
+    self.assertEquals('Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
                       microformats2.render_content(obj))
 
   def test_tweet_to_object_retweet_with_entities(self):

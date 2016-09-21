@@ -36,16 +36,16 @@ from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 
 API_BASE = 'https://api.twitter.com/1.1/'
-API_TIMELINE = 'statuses/home_timeline.json?include_entities=true&count=%d'
-API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&count=%(count)d&screen_name=%(screen_name)s'
-API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
-API_STATUS = 'statuses/show.json?id=%s&include_entities=true'
-API_LOOKUP = 'statuses/lookup.json?id=%s&include_entities=true'
-API_RETWEETS = 'statuses/retweets.json?id=%s'
+API_TIMELINE = 'statuses/home_timeline.json?include_entities=true&tweet_mode=extended&count=%d'
+API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&tweet_mode=extended&count=%(count)d&screen_name=%(screen_name)s'
+API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&tweet_mode=extended&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
+API_STATUS = 'statuses/show.json?id=%s&include_entities=true&tweet_mode=extended'
+API_LOOKUP = 'statuses/lookup.json?id=%s&include_entities=true&tweet_mode=extended'
+API_RETWEETS = 'statuses/retweets.json?id=%s&tweet_mode=extended'
 API_USER = 'users/show.json?screen_name=%s'
 API_CURRENT_USER = 'account/verify_credentials.json'
-API_SEARCH = 'search/tweets.json?q=%(q)s&include_entities=true&result_type=recent&count=%(count)d'
-API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true'
+API_SEARCH = 'search/tweets.json?q=%(q)s&include_entities=true&tweet_mode=extended&result_type=recent&count=%(count)d'
+API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true&tweet_mode=extended'
 API_POST_TWEET = 'statuses/update.json'
 API_POST_RETWEET = 'statuses/retweet/%s.json'
 API_POST_FAVORITE = 'favorites/create.json'
@@ -1026,22 +1026,11 @@ class Twitter(source.Source):
       'id': self.tag_uri(id),
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
-      # don't linkify embedded URLs. (they'll all be t.co URLs.) instead, use
-      # entities below to replace them with the real URLs, and then linkify.
-      'content': tweet.get('text'),
-      }
+    }
 
-    content_prefix = ''
     retweeted = tweet.get('retweeted_status')
-    if retweeted:
-      entities = self._get_entities(retweeted)
-      text = retweeted.get('text', '')
-      if text:
-        content_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
-          (retweeted.get('user', {}).get('screen_name'),) * 2)
-        obj['content'] = content_prefix + text
-    else:
-      entities = self._get_entities(tweet)
+    base_tweet = retweeted if retweeted else tweet
+    entities = self._get_entities(base_tweet)
 
     user = tweet.get('user')
     if user:
@@ -1109,28 +1098,46 @@ class Twitter(source.Source):
     # sort tags by indices, since they need to be processed (below) in order.
     obj['tags'].sort(key=lambda t: t.get('indices'))
 
+    # RT @username: prefix for retweets
+    rt_prefix = ''
+    if retweeted and retweeted.get('text'):
+      rt_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
+        (retweeted.get('user', {}).get('screen_name'),) * 2)
+
+    # text content. linkify entities. convert start/end indices to start/length,
+    # and replace t.co URLs with real "display" URLs.
+    text = base_tweet.get('text') or ''
+    text_start, text_end = (0, len(text))
+
+    full_text = base_tweet.get('full_text')
+    if full_text:
+      text = full_text
+      range = tweet.get('display_text_range')
+      text_start, text_end = range if range else (0, len(full_text))
+
     # convert start/end indices to start/length, and replace t.co URLs with
     # real "display" URLs.
-    offset = len(content_prefix)
+    content = rt_prefix + text[text_start:text_end]
+    offset = len(rt_prefix) - text_start
     for t in obj['tags']:
-      indices = t.pop('indices', None)
-      if indices:
-        start = indices[0] + offset
-        end = indices[1] + offset
+      start, end = t.pop('indices', None) or (0, 0)
+      if start >= text_start and end <= text_end:
+        start += offset
+        end += offset
         length = end - start
         if t['objectType'] in ('article', 'image'):
-          text = t.get('displayName', t.get('url'))
-          if text is not None:
-            obj['content'] = obj['content'][:start] + text + obj['content'][end:]
-            offset += len(text) - length
-            length = len(text)
+          tag_text = t.get('displayName', t.get('url'))
+          if tag_text is not None:
+            content = content[:start] + tag_text + content[end:]
+            offset += len(tag_text) - length
+            length = len(tag_text)
         t.update({'startIndex': start, 'length': length})
 
-    obj['tags'] = [t for t in obj['tags'] if t['objectType'] != 'image']
-
-    # retweets
-    obj['tags'] += [
-      self.retweet_to_object(r) for r in tweet.get('retweets', [])]
+    obj.update({
+      'tags': [t for t in obj['tags'] if t['objectType'] != 'image'] +
+              [self.retweet_to_object(r) for r in tweet.get('retweets', [])],
+      'content': content,
+    })
 
     # location
     place = tweet.get('place')
