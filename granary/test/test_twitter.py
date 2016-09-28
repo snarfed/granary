@@ -1025,6 +1025,13 @@ class TwitterTest(testutil.TestCase):
       [ACTIVITY, ACTIVITY], self.twitter.get_activities(
         group_id=source.SEARCH, search_query='indieweb'))
 
+  def test_get_activities_search_with_unicode_char(self):
+    self.expect_urlopen(twitter.API_SEARCH % {'q': u'%E2%98%95+foo', 'count': 0},
+                        {'statuses': []})
+    self.mox.ReplayAll()
+    self.assert_equals([], self.twitter.get_activities(
+        group_id=source.SEARCH, search_query=u'☕ foo'))
+
   def test_get_comment(self):
     self.expect_urlopen(API_STATUS % '123', TWEET)
     self.mox.ReplayAll()

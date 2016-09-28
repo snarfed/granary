@@ -241,7 +241,7 @@ class Twitter(source.Source):
             activities += [self._make_like(tweet, _user()) for tweet in liked]
       elif group_id == source.SEARCH:
         url = API_SEARCH % {
-          'q': urllib.quote_plus(search_query),
+          'q': urllib.quote_plus(search_query.encode('utf-8')),
           'count': count,
         }
       elif group_id in (source.FRIENDS, source.ALL):
@@ -392,7 +392,7 @@ class Twitter(source.Source):
         author = reply['actor']['username']
         if author not in mentions:
           url = API_SEARCH % {
-            'q': urllib.quote_plus('@' + author),
+            'q': urllib.quote_plus('@' + author.encode('utf-8')),
             'count': 100,
           }
           if min_id is not None:
@@ -431,7 +431,7 @@ class Twitter(source.Source):
     """
     # get @-name mentions
     url = API_SEARCH % {
-      'q': urllib.quote_plus('@' + username),
+      'q': urllib.quote_plus('@' + username.encode('utf-8')),
       'count': 100,
     }
     if min_id is not None:

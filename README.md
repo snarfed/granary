@@ -272,6 +272,7 @@ Changelog
   * Bug fix: ensure like.author.displayName is a plain unicode string so that it
     can be pickled normally, e.g. by App Engine's memcache.
   * Bug fix: handle names with emoji correctly in favorites_html_to_likes().
+  * Bug fix: handle search queries with unicode characters.
 * Atom:
   * Render full original quoted tweet in retweets of quote tweets.
 
