@@ -601,26 +601,15 @@ class Twitter(source.Source):
           error_html='No content text found.')
 
     if is_reply and base_url:
-      # extract username from in-reply-to URL so we can @-mention it, if it's
-      # not already @-mentioned, since Twitter requires that to make our new
-      # tweet a reply.
+      # Twitter *used* to require replies to include an @-mention of the
+      # original tweet's author
       # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
-      # TODO: this doesn't handle an in-reply-to username that's a prefix of
-      # another username already mentioned, e.g. in reply to @foo when content
-      # includes @foobar.
-      parsed = urlparse.urlparse(base_url)
-      parts = parsed.path.split('/')
-      if len(parts) < 2 or not parts[1]:
-        raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
-      reply_to = parts[1].lower()
-      if not self.username or reply_to != self.username.lower():
-        mention = '@' + reply_to
-        if mention not in content.lower():
-          content = mention + ' ' + content
+      # ...but now we use the auto_populate_reply_metadata query param instead:
+      # https://dev.twitter.com/overview/api/upcoming-changes-to-tweets
 
       # the embed URL in the preview can't start with mobile. or www., so just
       # hard-code it to twitter.com. index #1 is netloc.
-      parsed = list(parsed)
+      parsed = list(urlparse.urlparse(base_url))
       parsed[1] = self.DOMAIN
       base_url = urlparse.urlunparse(parsed)
 
@@ -690,7 +679,10 @@ class Twitter(source.Source):
         description = \
           '<span class="verb">@-reply</span> to <a href="%s">this tweet</a>:\n%s' % (
             base_url, self.embed_post(base_obj))
-        data['in_reply_to_status_id'] = base_id
+        data.update({
+          'in_reply_to_status_id': base_id,
+          'auto_populate_reply_metadata': 'true',
+        })
       else:
         description = '<span class="verb">tweet</span>:'
 

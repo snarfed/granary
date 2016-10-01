@@ -1774,22 +1774,21 @@ class TwitterTest(testutil.TestCase):
   def test_create_reply(self):
     # tuples: (content, in-reply-to url, expected tweet)
     testdata = (
-      # good reply, with @-mention of author
+      # reply with @-mention of author
       ('foo @you', 'http://twitter.com/you/status/100', 'foo @you'),
-      # no @-mention of in-reply-to author, so we add it
-      ('foo', 'http://twitter.com/you/status/100', '@you foo'),
-      # @-mention of in-reply-to author has a different capitalization
-      ('foo @You', 'http://twitter.com/you/status/100', 'foo @You'),
+      # reply without @-mention of in-reply-to author
+      ('foo', 'http://twitter.com/you/status/100', 'foo'),
       # photo URL. tests Twitter.base_object()
-      ('foo', 'http://twitter.com/you/status/100/photo/1', '@you foo'),
+      ('foo', 'http://twitter.com/you/status/100/photo/1', 'foo'),
       # mobile.twitter.com URL. the mobile should be stripped from embed.
-      ('foo', 'http://mobile.twitter.com/you/status/100', '@you foo'),
+      ('foo', 'http://mobile.twitter.com/you/status/100', 'foo'),
       )
 
     for _, _, status in testdata:
       self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={
         'status': status,
         'in_reply_to_status_id': 100,
+        'auto_populate_reply_metadata': 'true',
       })
     self.mox.ReplayAll()
 
@@ -1819,13 +1818,14 @@ class TwitterTest(testutil.TestCase):
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
-    self.assertEquals('@you my content', preview.content)
+    self.assertEquals('my content', preview.content)
 
     # test create
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
                         params={
-                          'status': '@you my content',
+                          'status': 'my content',
                           'in_reply_to_status_id': '100',
+                          'auto_populate_reply_metadata': 'true',
                         })
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
@@ -1835,8 +1835,11 @@ class TwitterTest(testutil.TestCase):
     for i in range(3):
       self.expect_urlopen(
         twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
-        params={'status': 'my content', 'in_reply_to_status_id': '100'},
-      )
+        params={
+          'status': 'my content',
+          'in_reply_to_status_id': '100',
+          'auto_populate_reply_metadata': 'true',
+        })
     self.mox.ReplayAll()
 
     for username, reply_to in ('me', 'me'), ('ME', 'ME'), ('Me', 'mE'):
@@ -1975,7 +1978,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
-    self.assertEquals('@you my content<br /><br /><img src="http://my/picture" />',
+    self.assertEquals('my content<br /><br /><img src="http://my/picture" />',
                       preview.content)
 
     # test create
@@ -1986,9 +1989,10 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params={
-                          'status': '@you my content',
+                          'status': 'my content',
                           'in_reply_to_status_id': '100',
                           'media_ids': '123',
+                          'auto_populate_reply_metadata': 'true',
                         })
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'comment'},
