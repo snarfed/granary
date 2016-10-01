@@ -641,7 +641,7 @@ class Twitter(source.Source):
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
     content = self._truncate(
-      content, obj.get('url'), include_link, type, has_media)
+      content, obj.get('url'), include_link, type)
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -751,15 +751,14 @@ class Twitter(source.Source):
 
     return source.creation_result(resp)
 
-  def _truncate(self, content, url, include_link, type, has_media):
+  def _truncate(self, content, url, include_link, type):
     """Shorten tweet content to fit within the 140 character limit.
 
     Args:
       content: string
       url: string
       include_link: string
-      type: string
-      has_media: boolean
+      type: string: 'article', 'note', etc.
 
     Return: string, the possibly shortened and ellipsized tweet text
     """
@@ -767,8 +766,6 @@ class Twitter(source.Source):
       format = brevity.FORMAT_ARTICLE
     else:
       format = brevity.FORMAT_NOTE
-    if has_media:
-      format += '+' + brevity.FORMAT_MEDIA
 
     return brevity.shorten(
       content,

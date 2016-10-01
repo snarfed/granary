@@ -646,6 +646,7 @@ class TwitterTest(testutil.TestCase):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
+    self.maxDiff = None
     appengine_config.TWITTER_APP_KEY = 'fake'
     appengine_config.TWITTER_APP_SECRET = 'fake'
     self.orig_max_tweet_length = twitter.MAX_TWEET_LENGTH
@@ -1433,7 +1434,7 @@ class TwitterTest(testutil.TestCase):
       u'https://ben.thatmustbe.me/note/2015/1/31/1/')
     result = self.twitter._truncate(
       orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/',
-      source.INCLUDE_LINK, 'note', False)
+      source.INCLUDE_LINK, 'note')
     self.assertEquals(expected, result)
 
     orig = expected = (
@@ -1442,7 +1443,7 @@ class TwitterTest(testutil.TestCase):
       u'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
       u'@iainspad @sashtown @thomatronic (ttk.me t4_81)')
     result = self.twitter._truncate(
-      orig, 'http://tantek.com/1234', source.OMIT_LINK, 'note', False)
+      orig, 'http://tantek.com/1234', source.OMIT_LINK, 'note')
     self.assertEquals(expected, result)
 
     orig = expected = (
@@ -1451,7 +1452,7 @@ class TwitterTest(testutil.TestCase):
       u'welcome! @kevinmarks @julien51 @aaronpk')
     result = self.twitter._truncate(
       orig, 'https://kylewm.com/5678', source.INCLUDE_IF_TRUNCATED,
-      'note', False)
+      'note')
     self.assertEquals(expected, result)
 
     orig = expected = (
@@ -1459,7 +1460,7 @@ class TwitterTest(testutil.TestCase):
       u'that wikipedia.org/Contain_(Parentheses), a url with a query '
       u'string;foo.withknown.com/example?query=parameters')
     result = self.twitter._truncate(
-      orig, 'https://foo.bar/', source.INCLUDE_IF_TRUNCATED, 'note', False)
+      orig, 'https://foo.bar/', source.INCLUDE_IF_TRUNCATED, 'note')
     self.assertEquals(expected, result)
 
     orig = (
@@ -1471,7 +1472,7 @@ class TwitterTest(testutil.TestCase):
       u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
       u'long:…')
     result = self.twitter._truncate(
-      orig, 'http://foo.com/', source.OMIT_LINK, 'note', False)
+      orig, 'http://foo.com/', source.OMIT_LINK, 'note')
     self.assertEquals(expected, result)
 
     # test case-insensitive link matching
@@ -1486,7 +1487,7 @@ class TwitterTest(testutil.TestCase):
     result = self.twitter._truncate(
       orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13',
       source.INCLUDE_IF_TRUNCATED,
-      'note', False)
+      'note')
     self.assertEquals(expected, result)
 
     orig = (u'Leaving this here for future reference. Turn on debug menu '
@@ -1494,7 +1495,7 @@ class TwitterTest(testutil.TestCase):
       u'-bool true`')
     expected = (u'Leaving this here for future reference. Turn on debug menu '
       u'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu…')
-    result = self.twitter._truncate(orig, 'http://foo.com', source.OMIT_LINK, 'note', False)
+    result = self.twitter._truncate(orig, 'http://foo.com', source.OMIT_LINK, 'note')
     self.assertEquals(expected, result)
 
     twitter.MAX_TWEET_LENGTH = 20
@@ -1503,22 +1504,21 @@ class TwitterTest(testutil.TestCase):
     orig = u'url http://foo.co/bar ellipsize http://foo.co/baz'
     expected = u'url http://foo.co/bar ellipsize…'
     result = self.twitter._truncate(
-      orig, 'http://foo.com', source.OMIT_LINK, 'note', False)
+      orig, 'http://foo.com', source.OMIT_LINK, 'note')
     self.assertEquals(expected, result)
 
     orig = u'too long\nextra whitespace\tbut should include url'
     expected = u'too long… http://obj.ca'
     result = self.twitter._truncate(
-      orig, 'http://obj.ca', source.INCLUDE_LINK, 'note', False)
+      orig, 'http://obj.ca', source.INCLUDE_LINK, 'note')
     self.assertEquals(expected, result)
 
     orig = expected = u'trailing slash http://www.foo.co/'
     result = self.twitter._truncate(
-      orig, 'http://www.foo.co/', source.OMIT_LINK, 'note', False)
+      orig, 'http://www.foo.co/', source.OMIT_LINK, 'note')
     self.assertEquals(expected, result)
 
   def test_no_ellipsize_real_tweet(self):
-    self.maxDiff = None
     orig = (
       'Despite names,\n'
       'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
@@ -1933,12 +1933,12 @@ class TwitterTest(testutil.TestCase):
     obj = {
       'objectType': 'note',
       'content': """\
-the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok done""",
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, and even more, ok done""",
       'image': [{'url': url} for url in image_urls],
     }
 
     ellipsized = u"""\
-the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just…"""
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, and…"""
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertEquals('<span class="verb">tweet</span>:', preview.description)
@@ -2069,7 +2069,7 @@ the caption.\nextra long so we can check that it accounts for the pic-twitter-co
       'stream': {'url': 'http://my/video'},
     }
     ellipsized = u"""\
-the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just…"""
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok…"""
 
     # test preview
     self.assertEquals(ellipsized +

@@ -7,5 +7,5 @@ mf2util>=0.3.3
 oauth-dropins>=1.5
 requests>=2.10.0
 requests-toolbelt>=0.6.2
-brevity>=0.2.10
+brevity>=0.2.11
 urllib3>=1.14
