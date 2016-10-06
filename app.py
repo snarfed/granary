@@ -139,25 +139,29 @@ class UrlHandler(activitystreams.Handler):
 
     # decode data
     mf2 = None
-    if input == 'activitystreams':
-      activities = json.loads(body)
-    elif input == 'html':
-      activities = microformats2.html_to_activities(body, url)
+    if input == 'html':
       mf2 = mf2py.parse(doc=body, url=url)
     elif input == 'json-mf2':
       mf2 = json.loads(body)
-      mf2['rels'] = {}  # mf2util expects rels
-      activities = [microformats2.json_to_object(item)
-                    for item in mf2.get('items', [])]
+      mf2.setdefault('rels', {})  # mf2util expects rels
 
-    author = None
+    actor = None
     title = None
     if mf2:
-      author = microformats2.find_author(mf2)
+      actor = microformats2.find_author(
+        mf2, fetch_mf2_func=lambda url: mf2py.parse(url=url))
       title = mf2util.interpret_feed(mf2, url).get('name')
 
+    if input == 'activitystreams':
+      activities = json.loads(body)
+    elif input == 'html':
+      activities = microformats2.html_to_activities(body, url, actor)
+    elif input == 'json-mf2':
+      activities = [microformats2.json_to_object(item, actor=actor)
+                    for item in mf2.get('items', [])]
+
     self.write_response(source.Source.make_activities_base_response(activities),
-                        url=url, actor=author, title=title)
+                        url=url, actor=actor, title=title)
 
 
 application = webapp2.WSGIApplication([

@@ -219,11 +219,13 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   return ret
 
 
-def json_to_object(mf2):
+def json_to_object(mf2, actor=None):
   """Converts microformats2 JSON to an ActivityStreams object.
 
   Args:
     mf2: dict, decoded JSON microformats2 object
+    actor: optional author AS actor object. usually comes from a rel="author"
+      link. if mf2 has its own author, that will override this.
 
   Returns: dict, ActivityStreams object
   """
@@ -234,7 +236,7 @@ def json_to_object(mf2):
   prop = first_props(props)
   rsvp = prop.get('rsvp')
   rsvp_verb = 'rsvp-%s' % rsvp if rsvp else None
-  author = json_to_object(prop.get('author'))
+  author = json_to_object(prop['author']) if prop.get('author') else actor
 
   # maps mf2 type to ActivityStreams objectType and optional verb.
   mf2_type_to_as_type = {
@@ -314,19 +316,22 @@ def json_to_object(mf2):
   return util.trim_nulls(obj)
 
 
-def html_to_activities(html, url=None):
+def html_to_activities(html, url=None, actor=None):
   """Converts a microformats2 HTML h-feed to ActivityStreams activities.
 
   Args:
     html: string HTML
     url: optional string URL that HTML came from
+    actor: optional author AS actor object for all activities. usually comes
+      from a rel="author" link.
 
   Returns: list of ActivityStreams activity dicts
+
   """
   parsed = mf2py.parse(doc=html, url=url)
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
-  return [{'object': json_to_object(item)} for item in items]
+  return [{'object': json_to_object(item, actor=actor)} for item in items]
 
 
 def activities_to_html(activities):
@@ -673,13 +678,14 @@ def render_content(obj, include_location=True, synthesize_content=True):
   return content
 
 
-def find_author(parsed):
+def find_author(parsed, **kwargs):
   """Returns the author of a page as a ActivityStreams actor dict.
 
   Args:
     parsed: return value from mf2py.parse()
+    kwargs: passed through to mf2util.find_author
   """
-  author = mf2util.find_author(parsed, 'http://123')
+  author = mf2util.find_author(parsed, 'http://123', **kwargs)
   if author:
     return {
       'displayName': author.get('name'),

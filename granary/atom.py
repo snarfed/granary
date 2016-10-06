@@ -108,19 +108,26 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     )
 
 
-def html_to_atom(html, url=None, **kwargs):
+def html_to_atom(html, url=None, fetch_author=False):
   """Converts microformats2 HTML to an Atom feed.
 
   Args:
     html: string
     url: string URL html came from, optional
+    fetch_author: boolean, whether to make HTTP request to fetch rel-author link
 
   Returns: unicode string with Atom XML
   """
+  if fetch_author:
+    assert url, 'fetch_author=True requires url!'
+
   parsed = mf2py.parse(doc=html, url=url)
+  actor = microformats2.find_author(
+    parsed, fetch_mf2_func=lambda url: mf2py.parse(url=url))
+
   return activities_to_atom(
-    microformats2.html_to_activities(html, url),
-    microformats2.find_author(parsed),
+    microformats2.html_to_activities(html, url, actor),
+    actor,
     title=mf2util.interpret_feed(parsed, url).get('name'),
     xml_base=util.base_url(url),
     host_url=url)

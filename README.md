@@ -275,6 +275,8 @@ Changelog
   * Bug fix: handle search queries with unicode characters.
 * Atom:
   * Render full original quoted tweet in retweets of quote tweets.
+* microformats2 HTML:
+  * Optionally follow and fetch rel="author" links.
 
 #### 1.5 - 2016-08-25
 * REST API:

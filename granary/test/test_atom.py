@@ -1,8 +1,11 @@
+# coding=utf-8
 """Unit tests for atom.py."""
 
 import copy
 
+import mox
 from oauth_dropins.webutil import testutil
+import requests
 
 from granary import atom
 
@@ -253,8 +256,8 @@ quoted text
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri></uri>
- <name></name>
+ <uri>http://my/site</uri>
+ <name>My Name</name>
 </author>
 
   <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
@@ -296,3 +299,54 @@ my content
 </article>
 </div>
 """, 'https://my.site/feed'))
+
+  def test_html_to_atom_fetch_author(self):
+    """Based on http://tantek.com/ .
+    https://github.com/snarfed/granary/issues/98
+    https://github.com/kylewm/mf2util/issues/14
+    """
+    with self.assertRaises(AssertionError):
+      # fetch_author requires url
+      atom.html_to_atom('', fetch_author=True)
+
+    html = u"""\
+<body class="h-card vcard">
+<img class="photo u-photo" src="photo.jpg" alt=""/>
+<a class="u-url u-uid" rel="author" href="/author"></a>
+<h1 class="p-name fn">Tantek Çelik</h1>
+
+<div class="h-feed section stream" id="updates">
+<span class="p-name"></span><ol>
+<li class="h-entry hentry as-note">
+<p class="p-name entry-title e-content entry-content article">
+going to Homebrew Website Club
+</p></li>
+</ol></div></body>
+"""
+
+    self.expect_requests_get(
+      'https://my.site/author', html, headers=mox.IgnoreArg(), timeout=None,
+      response_headers={'content-type': 'text/html; charset=utf-8'})
+    self.mox.ReplayAll()
+
+    got = atom.html_to_atom(html, 'https://my.site/', fetch_author=True)
+    self.assert_multiline_in(u"""\
+<author>
+<activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+<uri>https://my.site/author</uri>
+<name>Tantek Çelik</name>
+</author>
+
+<link rel="alternate" href="https://my.site/author" type="text/html" />
+<link rel="avatar" href="https://my.site/photo.jpg" />
+<link rel="self" href="https://my.site/" type="application/atom+xml" />
+
+<entry>
+
+<author>
+<activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+<uri>https://my.site/author</uri>
+<name>Tantek Çelik</name>
+</author>
+""".encode('utf-8'), got.encode('utf-8'))
+

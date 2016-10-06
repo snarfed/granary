@@ -5,6 +5,7 @@ import json
 import socket
 import xml.sax.saxutils
 
+import mox
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
 
@@ -107,8 +108,8 @@ ATOM_CONTENT = """\
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri></uri>
- <name></name>
+ <uri>http://my/site</uri>
+ <name>My Name</name>
 </author>
 
   <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
@@ -178,6 +179,49 @@ class AppTest(testutil.HandlerTest):
       '/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_int)
     self.assert_multiline_in(ATOM_CONTENT, resp.body)
+
+  def test_url_html_to_atom_rel_author(self):
+    """
+    https://github.com/snarfed/granary/issues/98
+    https://github.com/kylewm/mf2util/issues/14
+    """
+    self.expect_urlopen('http://my/posts.html', HTML % {
+      'body_class': ' class="h-feed"',
+      'extra': """
+<span class="p-name">my title</span>
+<a href="/author" rel="author"></a>,
+"""
+    })
+    self.expect_requests_get('http://my/author', """
+<div class="h-card">
+  <a class="u-url" href="http://my/author">Someone Else</a>
+  <img class="u-photo" src="http://someone/picture" />
+</div>
+""", headers=mox.IgnoreArg(), timeout=None)
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html&input=html&output=atom')
+    self.assert_equals(200, resp.status_int)
+    self.assert_multiline_in("""
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://my/author</uri>
+ <name>Someone Else</name>
+</author>
+
+<link rel="alternate" href="http://my/author" type="text/html" />
+<link rel="avatar" href="http://someone/picture" />
+<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+
+<entry>
+
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://my/author</uri>
+ <name>Someone Else</name>
+</author>
+""", resp.body)
 
   def test_url_bad_input(self):
     resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')
