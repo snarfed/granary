@@ -277,6 +277,7 @@ Changelog
   * Render full original quoted tweet in retweets of quote tweets.
 * microformats2 HTML:
   * Optionally follow and fetch rel="author" links.
+  * Improve mapping between microformats2 and ActivityStreams 'photo' types. (mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type *is* a photo. So, map mf2 photos to underlying type without photo.)
 
 #### 1.5 - 2016-08-25
 * REST API:

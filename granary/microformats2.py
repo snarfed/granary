@@ -248,13 +248,21 @@ def json_to_object(mf2, actor=None):
     'person': ('person', None),
     'location': ('place', None),
     'note': ('note', None),
-    'photo': ('note', None),
     'article': ('article', None),
   }
 
   mf2_types = mf2.get('type') or []
-  mf2_type = ('location' if 'h-geo' in mf2_types or 'p-location' in mf2_types
-              else mf2util.post_type_discovery(mf2))
+  if 'h-geo' in mf2_types or 'p-location' in mf2_types:
+    mf2_type = 'location'
+  else:
+    # mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type
+    # *is* a photo. so, special case photo type to fall through to underlying
+    # mf2 type without photo.
+    # https://github.com/snarfed/bridgy/issues/702
+    without_photo = copy.deepcopy(mf2)
+    without_photo.get('properties', {}).pop('photo', None)
+    mf2_type = mf2util.post_type_discovery(without_photo)
+
   as_type, as_verb = mf2_type_to_as_type.get(mf2_type, (None, None))
 
   def absolute_urls(prop):

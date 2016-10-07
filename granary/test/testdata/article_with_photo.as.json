@@ -1,0 +1,6 @@
+{
+  "objectType": "article",
+  "displayName": "article abc",
+  "content": "foo bar",
+  "image": [{"url": "http://pic/ture.jpg"}]
+}

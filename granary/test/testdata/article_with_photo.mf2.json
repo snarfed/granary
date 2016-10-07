@@ -1,0 +1,11 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "name": ["article abc"],
+    "content": [{
+      "value": "foo bar",
+      "html": "foo bar"
+    }],
+    "photo": ["http://pic/ture.jpg"]
+  }
+}

@@ -3,7 +3,7 @@
   "displayName": "article abc",
   "content": "foo bar",
   "url": "http://example.com/article-abc",
-  
+
   "replies": {
     "items": [{
       "objectType": "comment",
