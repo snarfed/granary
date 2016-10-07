@@ -1,4 +1,6 @@
 {
-  "objectType": "note",
-  "url": "http://example.com/abc"
+  "objectType": "article",
+  "displayName": "article abc",
+  "url": "http://example.com/abc",
+  "content": "foo bar"
 }

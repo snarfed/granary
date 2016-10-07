@@ -1,5 +1,7 @@
 {
-  "objectType": "note",
+  "objectType": "article",
+  "displayName": "article abc",
+  "content": "foo bar",
   "url": "http://example.com/abc",
 
   "tags": [{

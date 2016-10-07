@@ -2,8 +2,11 @@
   "type": ["h-entry"],
   "properties": {
     "name": ["article abc"],
+    "content": [{
+      "value": "foo bar",
+      "html": "foo bar"
+    }],
     "url": ["http://example.com/article-abc"],
-
     "comment": [{
       "type": ["h-cite"],
       "properties": {

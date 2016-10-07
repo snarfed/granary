@@ -326,7 +326,6 @@ def html_to_activities(html, url=None, actor=None):
       from a rel="author" link.
 
   Returns: list of ActivityStreams activity dicts
-
   """
   parsed = mf2py.parse(doc=html, url=url)
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])

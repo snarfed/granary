@@ -1,7 +1,8 @@
 {
-  "objectType": "note",
+  "objectType": "article",
   "displayName": "article abc",
   "url": "http://example.com/article-abc",
+  "content": "foo bar",
 
   "replies": {
     "items": [{
