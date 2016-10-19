@@ -1778,6 +1778,9 @@ class TwitterTest(testutil.TestCase):
       ('foo @you', 'http://twitter.com/you/status/100', 'foo @you'),
       # reply without @-mention of in-reply-to author
       ('foo', 'http://twitter.com/you/status/100', 'foo'),
+      # replies with leading @-mentions, should be removed
+      ('@you foo', 'http://twitter.com/you/status/100', 'foo'),
+      ('@YoU foo', 'http://twitter.com/you/status/100', 'foo'),
       # photo URL. tests Twitter.base_object()
       ('foo', 'http://twitter.com/you/status/100/photo/1', 'foo'),
       # mobile.twitter.com URL. the mobile should be stripped from embed.

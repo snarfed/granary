@@ -609,7 +609,15 @@ class Twitter(source.Source):
 
       # the embed URL in the preview can't start with mobile. or www., so just
       # hard-code it to twitter.com. index #1 is netloc.
-      parsed = list(urlparse.urlparse(base_url))
+      parsed = urlparse.urlparse(base_url)
+      parts = parsed.path.split('/')
+      if len(parts) < 2 or not parts[1]:
+        raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
+      reply_to_prefix = '@%s ' % parts[1].lower()
+      if content.lower().startswith(reply_to_prefix):
+        content = content[len(reply_to_prefix):]
+
+      parsed = list(parsed)
       parsed[1] = self.DOMAIN
       base_url = urlparse.urlunparse(parsed)
 
