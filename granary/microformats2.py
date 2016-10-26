@@ -232,7 +232,8 @@ def json_to_object(mf2, actor=None):
   if not mf2 or not isinstance(mf2, dict):
     return {}
 
-  props = mf2.get('properties', {})
+  mf2 = copy.copy(mf2)
+  props = mf2.setdefault('properties', {})
   prop = first_props(props)
   rsvp = prop.get('rsvp')
   rsvp_verb = 'rsvp-%s' % rsvp if rsvp else None
@@ -293,14 +294,22 @@ def json_to_object(mf2, actor=None):
              for cat in props.get('category', [])],
   }
 
-  lat, lng = prop.get('latitude'), prop.get('longitude')
-  if lat and lng:
-    try:
-      obj['latitude'], obj['longitude'] = float(lat), float(lng)
-      # TODO fill in 'position', maybe using Source.postprocess_object?
-    except ValueError:
-      logging.warn(
-        'Could not convert latitude/longitude (%s, %s) to decimal', lat, lng)
+  # mf2util uses the indieweb/mf2 location algorithm to collect location properties.
+  # 
+  interpreted = mf2util.interpret({'items': [mf2]}, None)
+  if interpreted:
+    loc = interpreted.get('location')
+    if loc:
+      obj['location']['objectType'] = 'place'
+      lat, lng = loc.get('latitude'), loc.get('longitude')
+      if lat and lng:
+        try:
+          obj['location']['latitude'] = float(lat)
+          obj['location']['longitude'] = float(lng)
+          # TODO fill in 'position', maybe using Source.postprocess_object?
+        except ValueError:
+          logging.warn(
+            'Could not convert latitude/longitude (%s, %s) to decimal', lat, lng)
 
   if as_type == 'activity':
     objects = []

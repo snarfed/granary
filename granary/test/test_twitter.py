@@ -1723,8 +1723,44 @@ class TwitterTest(testutil.TestCase):
     result = self.twitter.preview_create(obj, include_link=source.OMIT_LINK)
     self.assertIn('instagram.com/p/9XVBIRA9cj</a>\n\nSocial Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.', result.content)
 
-  def test_create_tweet_with_location(self):
-    obj = microformats2.json_to_object({
+  def test_create_tweet_with_location_hcard(self):
+    self._test_create_tweet_with_location({
+      'location': [{
+        'type': ['h-card'],
+        'properties': {
+          'name': ['Timeless Coffee Roasters'],
+          'locality': ['Oakland'],
+          'region': ['California'],
+          'latitude': ['37.83'],
+          'longitude': ['-122.25'],
+          'url': ['https://kylewm.com/venues/timeless-coffee-roasters-oakland-california'],
+        },
+        'value': 'Timeless Coffee Roasters',
+      }]})
+
+  def test_create_tweet_with_location_geo(self):
+    self._test_create_tweet_with_location({
+      'geo': [{
+        'properties': {
+          'latitude': ['37.83'],
+          'longitude': ['-122.25'],
+        },
+      }]
+    })
+
+  def test_create_tweet_with_location_geo_url(self):
+    self._test_create_tweet_with_location({
+      'geo': ['geo:37.83,-122.25;foo=bar'],
+    })
+
+  def test_create_tweet_with_location_top_level(self):
+    self._test_create_tweet_with_location({
+      'latitude': ['37.83'],
+      'longitude': ['-122.25'],
+    })
+
+  def _test_create_tweet_with_location(self, props):
+    mf2 = {
       'type': ['h-entry'],
       'properties': {
         'author': [{
@@ -1736,18 +1772,6 @@ class TwitterTest(testutil.TestCase):
           },
           'value': 'Kyle Mahan',
         }],
-        'location': [{
-          'type': ['h-card'],
-          'properties': {
-            'name': ['Timeless Coffee Roasters'],
-            'locality': ['Oakland'],
-            'region': ['California'],
-            'latitude': ['37.83'],
-            'longitude': ['-122.25'],
-            'url': ['https://kylewm.com/venues/timeless-coffee-roasters-oakland-california'],
-          },
-          'value': 'Timeless Coffee Roasters',
-        }],
         'name': ['Checked in to Timeless Coffee Roasters'],
         'url': ['https://kylewm.com/2015/11/checked-into-timeless-coffee-roasters'],
         'uid': ['https://kylewm.com/2015/11/checked-into-timeless-coffee-roasters'],
@@ -1758,7 +1782,9 @@ class TwitterTest(testutil.TestCase):
             'value': 'Checked in to Timeless Coffee Roasters',
           }]
       }
-    })
+    }
+    mf2['properties'].update(props)
+    obj = microformats2.json_to_object(mf2)
 
     result = self.twitter.preview_create(obj, include_link=source.OMIT_LINK)
     self.assertIn('37.83, -122.25', result.content)

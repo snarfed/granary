@@ -434,18 +434,67 @@ foo
     # just check that we don't crash
     microformats2.json_to_html({'x': 'y'})
 
-  def test_json_to_object_with_location(self):
+  def test_json_to_object_with_location_hcard(self):
     obj = microformats2.json_to_object({
       'type': ['h-entry'],
       'properties': {
         'location': [{
-          'type': ['h-geo'],
+          'type': ['h-card'],
           'properties': {
+            'name': ['Timeless Coffee Roasters'],
+            'locality': ['Oakland'],
+            'region': ['California'],
             'latitude': ['50.820641'],
             'longitude': ['-0.149522'],
-          }
+            'url': ['https://kylewm.com/venues/timeless-coffee-roasters-oakland-california'],
+          },
+          'value': 'Timeless Coffee Roasters',
         }],
-      },
+      }})
+    self.assertEquals({
+      'objectType': 'place',
+      'latitude': 50.820641,
+      'longitude': -0.149522,
+      'displayName': 'Timeless Coffee Roasters',
+      'url': 'https://kylewm.com/venues/timeless-coffee-roasters-oakland-california',
+    }, obj['location'])
+
+  def test_json_to_object_with_location_geo(self):
+    self._test_json_to_object_with_location({
+      'location': [{
+        'type': ['h-geo'],
+        'properties': {
+          'latitude': ['50.820641'],
+          'longitude': ['-0.149522'],
+        }
+      }],
+    })
+
+  def test_json_to_object_with_geo(self):
+    self._test_json_to_object_with_location({
+      'geo': [{
+        'properties': {
+          'latitude': ['50.820641'],
+          'longitude': ['-0.149522'],
+        },
+      }]
+    })
+
+  def test_json_to_object_with_geo_url(self):
+    self._test_json_to_object_with_location({
+      'geo': ['geo:50.820641,-0.149522;foo=bar'],
+    })
+
+  def test_json_to_object_with_lat_lon_top_level(self):
+    self._test_json_to_object_with_location({
+      'latitude': ['50.820641'],
+      'longitude': ['-0.149522'],
+    })
+
+  def _test_json_to_object_with_location(self, props):
+    obj = microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': props,
     })
     self.assertEquals({
       'latitude': 50.820641,
