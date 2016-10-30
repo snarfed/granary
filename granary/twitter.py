@@ -1023,6 +1023,7 @@ class Twitter(source.Source):
       'id': self.tag_uri(id),
       'objectType': 'note',
       'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
+      'to': [],
     }
 
     retweeted = tweet.get('retweeted_status')
@@ -1038,8 +1039,10 @@ class Twitter(source.Source):
 
       protected = user.get('protected')
       if protected is not None:
-        obj['to'] = [{'objectType': 'group',
-                      'alias': '@public' if not protected else '@private'}]
+        obj['to'].append({
+          'objectType': 'group',
+          'alias': '@public' if not protected else '@private',
+        })
 
     # currently the media list will only have photos. if that changes, though,
     # we'll need to make this conditional on media.type.
@@ -1109,8 +1112,12 @@ class Twitter(source.Source):
     full_text = base_tweet.get('full_text')
     if full_text:
       text = full_text
-      range = tweet.get('display_text_range')
-      text_start, text_end = range if range else (0, len(full_text))
+      text_start, text_end = (tweet['display_text_range']
+                              if tweet.get('display_text_range')
+                              else (0, len(full_text)))
+      obj['to'].extend(tag for tag in obj['tags']
+                       if tag.get('objectType') == 'person'
+                       and tag.get('indices')[1] <= text_start)
 
     # convert start/end indices to start/length, and replace t.co URLs with
     # real "display" URLs.

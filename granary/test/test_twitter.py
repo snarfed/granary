@@ -1068,7 +1068,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals(OBJECT_WITH_SHARES,
                        self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
 
-  def test_tweet_to_object_display_text_range(self):
+  def test_tweet_to_activity_display_text_range(self):
     self.assert_equals({
       'objectType': 'note',
       # should only have the text inside display_text_range
@@ -1083,6 +1083,11 @@ class TwitterTest(testutil.TestCase):
       }, {
         'objectType': 'article',
         'url': 'http://full/quoted/tweet',
+      }],
+      'to': [{
+        'objectType': 'person',
+        'id': tag_uri('OP'),
+        'url': 'https://twitter.com/OP',
       }],
     }, self.twitter.tweet_to_object({
       'id_str': '100',
