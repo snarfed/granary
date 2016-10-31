@@ -187,6 +187,33 @@ article content
 </blockquote>
 """, got)
 
+  def test_to_people(self):
+    got = atom.activities_to_atom([{
+      'object': {
+        'objectType': 'note',
+        'content': 'an extended tweet reply',
+        'to': [{
+          'objectType': 'group',
+          'alias': '@public',
+        }, {
+          'objectType': 'person',
+          'url': 'https://twitter.com/A',
+          'displayName': 'aye',
+        }, {
+          'objectType': 'person',
+          'id': 'B',
+          'url': 'https://twitter.com/B',
+          'displayName': 'bee',
+        }],
+      },
+    }], None)
+    self.assert_multiline_in("""
+<p>In reply to
+<a class="h-card p-name u-url" href="https://twitter.com/A">aye</a>,
+
+<a class="h-card p-name u-url" href="https://twitter.com/B">bee</a>:</p>
+""", got)
+
   def test_render_share_of_obj_with_attachments(self):
     """This is e.g. a retweet of a quote tweet."""
     activity = {
