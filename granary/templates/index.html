@@ -138,7 +138,7 @@ Click on a site to try the demo!
 {% endif %}
 {% if entity %}
 <span style="color: green">
- Authenticated as {{ entity.user_display_name }} on {{ entity.site_name }}.</span>
+ Authenticated as {{ entity.user_display_name() }} on {{ entity.site_name() }}.</span>
 {% endif %}
 </em></p>
 </div>
