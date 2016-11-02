@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /demo
+Disallow: /facebook/
+Disallow: /flickr/
+Disallow: /google+/
+Disallow: /instagram/
+Disallow: /twitter/
+Disallow: /url
+Disallow: /*?*
