@@ -117,7 +117,13 @@ All query parameters are optional. `FORMAT` may be `json` (the default), `xml`, 
 
 Errors are returned with the appropriate HTTP response code, e.g. 403 for Unauthorized, with details in the response body.
 
+By default, responses are cached and reused for 5m without re-fetching the source data. (Instagram responses are cached for 60m.) You can prevent this by adding the `cache=false` query parameter to your request.
+
 To use the REST API in an existing ActivityStreams client, you'll need to hard-code exceptions for the domains you want to use e.g. `facebook.com`, and redirect HTTP requests to the corresponding [endpoint above](#about).
+
+The web UI ([granary-demo.appspot.com](https://granary-demo.appspot.com/)) currently only fetches Facebook access tokens for users. If you want to use it to access a Facebook page, you'll need to get an access token manually with the [Graph API Explorer](https://developers.facebook.com/tools/explorer/) (click on the _Get To..._ drop-down) . Then, log into Facebook on [granary-demo.appspot.com](https://granary-demo.appspot.com/) and paste the page access token into the `access_token` text box.
+
+(Google+ pages [aren't supported in their API](https://github.com/snarfed/bridgy/issues/354).)
 
 
 Using the library
