@@ -411,6 +411,27 @@ foo
       ],
     }))
 
+  def test_object_to_json_not_dict(self):
+    """This can happen if we get a dict instead of a list, e.g. with AS 2.0.
+
+    Found via AS2 on http://evanminto.com/indieweb/activity-stream.php, e.g.:
+
+    {
+      "@context": "https://www.w3.org/ns/activitystreams",
+      "0": {
+        "name": "Evan reposted another post.",
+        "type": "Announce",
+        "actor": {
+          "type": "Person",
+          "name": "Evan Minto",
+          "url": "http://evanminto.com"
+        },
+        "object": "http://www.harkavagrant.com/index.php?id=402"
+      },
+    ...
+    """
+    self.assert_equals({}, microformats2.object_to_json('foo bar'))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),

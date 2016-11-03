@@ -113,7 +113,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   Returns: dict, decoded microformats2 JSON
   """
-  if not obj:
+  if not obj or not isinstance(obj, dict):
     return {}
 
   obj_type = source.object_type(obj) or default_object_type
