@@ -260,7 +260,7 @@ class Twitter(source.Source):
       try:
         resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
-        tweet_obj = json.loads(resp.read())
+        tweet_obj = self._load_json(resp.read(), url)
         if group_id == source.SEARCH:
           tweet_obj = tweet_obj.get('statuses', [])
         tweets = tweet_obj[start_index:]
@@ -897,24 +897,14 @@ class Twitter(source.Source):
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
   def urlopen(self, url, parse_response=True, **kwargs):
-    """Wraps urllib2.urlopen() and adds an OAuth signature.
-    """
+    """Wraps urllib2.urlopen() and adds an OAuth signature."""
     if not url.startswith('http'):
       url = API_BASE + url
 
     def request():
       resp = twitter_auth.signed_urlopen(
         url, self.access_token_key, self.access_token_secret, **kwargs)
-      if parse_response:
-        body = resp.read()
-        try:
-          return json.loads(body)
-        except (ValueError, TypeError):
-          msg = 'Non-JSON response! Returning synthetic HTTP 503.\n%s' % body
-          logging.error(msg)
-          raise urllib2.HTTPError(API_BASE + url, 503, msg, {}, None)
-      else:
-        return resp
+      return self._load_json(resp.read(), url) if parse_response else resp
 
     if ('data' not in kwargs and not
         (isinstance(url, urllib2.Request) and url.get_method() == 'POST')):
@@ -935,6 +925,17 @@ class Twitter(source.Source):
 
     # last try. if it deadlines, let the exception bubble up.
     return request()
+
+
+  @staticmethod
+  def _load_json(body, url):
+    """Parses and returns body as JSON. Raises HTTPError 503 on failure"""
+    try:
+      return json.loads(body)
+    except (ValueError, TypeError):
+      msg = 'Non-JSON response! Returning synthetic HTTP 503.\n%s' % body
+      logging.error(msg)
+      raise urllib2.HTTPError(API_BASE + url, 503, msg, {}, None)
 
   def base_object(self, obj):
     """Returns the 'base' silo object that an object operates on.

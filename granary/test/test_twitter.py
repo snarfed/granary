@@ -1362,6 +1362,16 @@ class TwitterTest(testutil.TestCase):
     except urllib2.HTTPError, e:
       self.assertEqual(503, e.code)
 
+  def test_get_activities_not_json(self):
+    self.expect_urlopen(TIMELINE, 'not json')
+    self.mox.ReplayAll()
+
+    try:
+      self.twitter.get_activities()
+      self.fail('Expected HTTPError')
+    except urllib2.HTTPError, e:
+      self.assertEqual(503, e.code)
+
   def test_create_tweet(self):
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
