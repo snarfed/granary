@@ -800,11 +800,7 @@ class Twitter(source.Source):
                                 headers=headers)
       resp.raise_for_status()
       logging.info('Got: %s', resp.text)
-      try:
-        ids.append(json.loads(resp.text)['media_id_string'])
-      except ValueError, KeyError:
-        logging.exception("Couldn't parse response: %s", resp.text)
-        raise
+      ids.append(self._load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string'])
 
     return ids
 
