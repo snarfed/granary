@@ -92,7 +92,8 @@ class Instagram(source.Source):
       # TODO add access_token to the data parameter for POST requests
       url = util.add_query_params(url, [('access_token', self.access_token)])
     resp = util.urlopen(urllib2.Request(url, **kwargs))
-    return resp if kwargs.get('data') else json.loads(resp.read()).get('data')
+    return (resp if kwargs.get('data')
+            else source.load_json(resp.read(), url).get('data'))
 
   @classmethod
   def user_url(cls, username):

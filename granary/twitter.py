@@ -260,7 +260,7 @@ class Twitter(source.Source):
       try:
         resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
-        tweet_obj = self._load_json(resp.read(), url)
+        tweet_obj = source.load_json(resp.read(), url)
         if group_id == source.SEARCH:
           tweet_obj = tweet_obj.get('statuses', [])
         tweets = tweet_obj[start_index:]
@@ -339,7 +339,8 @@ class Twitter(source.Source):
         if self.is_public(activity) and count and count != cached.get('ATF ' + id):
           url = HTML_FAVORITES % id
           try:
-            html = json.loads(util.urlopen(url).read()).get('htmlUsers', '')
+            resp = util.urlopen(url).read()
+            html = source.load_json(resp, url).get('htmlUsers', '')
           except urllib2.URLError, e:
             util.interpret_http_exception(e)  # just log it
             continue
@@ -800,7 +801,7 @@ class Twitter(source.Source):
                                 headers=headers)
       resp.raise_for_status()
       logging.info('Got: %s', resp.text)
-      ids.append(self._load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string'])
+      ids.append(source.load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string'])
 
     return ids
 
@@ -900,7 +901,7 @@ class Twitter(source.Source):
     def request():
       resp = twitter_auth.signed_urlopen(
         url, self.access_token_key, self.access_token_secret, **kwargs)
-      return self._load_json(resp.read(), url) if parse_response else resp
+      return source.load_json(resp.read(), url) if parse_response else resp
 
     if ('data' not in kwargs and not
         (isinstance(url, urllib2.Request) and url.get_method() == 'POST')):
@@ -921,17 +922,6 @@ class Twitter(source.Source):
 
     # last try. if it deadlines, let the exception bubble up.
     return request()
-
-
-  @staticmethod
-  def _load_json(body, url):
-    """Parses and returns body as JSON. Raises HTTPError 503 on failure"""
-    try:
-      return json.loads(body)
-    except (ValueError, TypeError):
-      msg = 'Non-JSON response! Returning synthetic HTTP 503.\n%s' % body
-      logging.error(msg)
-      raise urllib2.HTTPError(API_BASE + url, 503, msg, {}, None)
 
   def base_object(self, obj):
     """Returns the 'base' silo object that an object operates on.

@@ -9,6 +9,7 @@ import json
 import urllib
 import urllib2
 
+import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
@@ -1258,6 +1259,19 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_activity_id_no_underscore_or_user_id(self):
     with self.assertRaises(NotImplementedError):
       self.fb.get_activities(activity_id='34')
+
+  def test_get_activities_response_not_json(self):
+    super(FacebookTest, self).expect_urlopen(API_BASE + 'me/home?offset=0',
+                                             'not json')
+    self.mox.ReplayAll()
+
+    try:
+      self.fb.get_activities()
+      assert False, 'expected HTTPError'
+    except urllib2.HTTPError, e:
+      self.assertEqual(503, e.code)
+      self.assertEqual('Non-JSON response! Returning synthetic HTTP 503.\nnot json',
+                       e.reason)
 
   def test_get_activities_request_etag(self):
     self.expect_urlopen('me/home?offset=0', {},

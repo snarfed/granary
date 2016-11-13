@@ -14,9 +14,11 @@ __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import collections
 import copy
+import json
 import logging
 import mimetypes
 import re
+import urllib2
 import urlparse
 import html2text
 
@@ -79,6 +81,16 @@ def html_to_text(html):
     return '\n'.join(
       # strip trailing whitespace that html2text adds to ends of some lines
       line.rstrip() for line in h.unescape(h.handle(html)).splitlines())
+
+
+def load_json(body, url):
+  """Utility method to parse a JSON string. Raises HTTPError 503 on failure."""
+  try:
+    return json.loads(body)
+  except (ValueError, TypeError):
+    msg = 'Non-JSON response! Returning synthetic HTTP 503.\n%s' % body
+    logging.error(msg)
+    raise urllib2.HTTPError(url, 503, msg, {}, None)
 
 
 def creation_result(content=None, description=None, abort=False,

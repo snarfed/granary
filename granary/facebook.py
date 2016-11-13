@@ -285,7 +285,7 @@ class Facebook(source.Source):
       try:
         resp = self.urlopen(url, headers=headers, _as=None)
         etag = resp.info().get('ETag')
-        posts = self._as(list, json.loads(resp.read()))
+        posts = self._as(list, source.load_json(resp.read(), url))
       except urllib2.HTTPError, e:
         if e.code == 304:  # Not Modified, from a matching ETag
           posts = []
@@ -1691,7 +1691,7 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
 
     body = resp.read()
     try:
-      return self._as(_as, json.loads(body))
+      return self._as(_as, source.load_json(body, url))
     except ValueError:  # couldn't parse JSON
       logging.debug('Response: %s %s', resp.getcode(), body)
       raise
