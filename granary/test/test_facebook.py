@@ -1269,8 +1269,8 @@ class FacebookTest(testutil.HandlerTest):
       self.fb.get_activities()
       assert False, 'expected HTTPError'
     except urllib2.HTTPError, e:
-      self.assertEqual(503, e.code)
-      self.assertEqual('Non-JSON response! Returning synthetic HTTP 503.\nnot json',
+      self.assertEqual(502, e.code)
+      self.assertEqual('Non-JSON response! Returning synthetic HTTP 502.\nnot json',
                        e.reason)
 
   def test_get_activities_request_etag(self):

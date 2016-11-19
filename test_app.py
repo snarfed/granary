@@ -238,7 +238,7 @@ class AppTest(testutil.HandlerTest):
     self.expect_urlopen('http://my/posts.html').AndRaise(socket.error(''))
     self.mox.ReplayAll()
     resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
-    self.assert_equals(502, resp.status_int)
+    self.assert_equals(504, resp.status_int)
 
   def test_cache(self):
     self.expect_urlopen('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})

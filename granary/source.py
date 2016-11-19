@@ -84,13 +84,13 @@ def html_to_text(html):
 
 
 def load_json(body, url):
-  """Utility method to parse a JSON string. Raises HTTPError 503 on failure."""
+  """Utility method to parse a JSON string. Raises HTTPError 502 on failure."""
   try:
     return json.loads(body)
   except (ValueError, TypeError):
-    msg = 'Non-JSON response! Returning synthetic HTTP 503.\n%s' % body
+    msg = 'Non-JSON response! Returning synthetic HTTP 502.\n%s' % body
     logging.error(msg)
-    raise urllib2.HTTPError(url, 503, msg, {}, None)
+    raise urllib2.HTTPError(url, 502, msg, {}, None)
 
 
 def creation_result(content=None, description=None, abort=False,

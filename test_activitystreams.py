@@ -211,4 +211,4 @@ class HandlerTest(testutil.HandlerTest):
     ).AndRaise(socket.error(''))
     self.mox.ReplayAll()
     resp = activitystreams.application.get_response('/fake/@me')
-    self.assertEquals(502, resp.status_int)
+    self.assertEquals(504, resp.status_int)

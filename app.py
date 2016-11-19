@@ -125,7 +125,8 @@ class UrlHandler(activitystreams.Handler):
         self.abort(400, str(e))
       except Exception as e:
         if util.is_connection_failure(e):
-          self.abort(502, str(e))
+          # HTTP 504 Gateway Timeout
+          self.abort(504, str(e))
         raise
 
       if url != resp.geturl():

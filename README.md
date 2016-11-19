@@ -286,6 +286,7 @@ Changelog
   * Improve mapping between microformats2 and ActivityStreams 'photo' types. (mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type *is* a photo. So, map mf2 photos to underlying type without photo.)
   * Support location properties beyond h-card, e.g. h-adr, h-geo, u-geo, and even
     when properties like latitude and longitude appear at the top level.
+* Error handling: return HTTP 502 for non-JSON API responses, 504 for connection failures.
 
 #### 1.5 - 2016-08-25
 * REST API:
