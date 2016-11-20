@@ -6,8 +6,6 @@ http://pythonhosted.org/setuptools/setuptools.html
 
 Based on https://github.com/pypa/sampleproject/blob/master/setup.py
 """
-import unittest
-
 from setuptools import setup, find_packages
 from setuptools.command.test import ScanningLoader
 

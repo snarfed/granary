@@ -25,4 +25,7 @@ tail -n +19 ../README.md \
   >> index.rst
 
 source ../local/bin/activate
-sphinx-build -b html . _build/html
+
+# Run sphinx in the virtualenv's python interpreter so it can import packages
+# installed in the virtualenv.
+python `which sphinx-build` -b html . _build/html
