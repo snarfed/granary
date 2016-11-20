@@ -21,6 +21,7 @@ About
 ---
 
 Granary is a library and REST API that converts between a wide variety of formats:
+
 * Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 * Instagram and Google+ scraped HTML
 * [ActivityStreams](http://activitystrea.ms/)
@@ -29,7 +30,14 @@ Granary is a library and REST API that converts between a wide variety of format
 * [Atom](http://atomenabled.org/)
 * XML
 
-Try out the interactive demo: https://granary-demo.appspot.com/
+Here's how to get started:
+
+* Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/)
+  Install with `pip install granary`.
+* [Click here for getting started docs.](#quick-start)
+* [Click here for reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
+* The REST API and demo app are deployed at
+[granary-demo.appspot.com](https://granary-demo.appspot.com/).
 
 License: This project is placed in the public domain.
 
@@ -214,6 +222,14 @@ rm -f app.yaml && ln -s app.instagram.yaml app.yaml && \
 git co -- app.yaml
 ```
 
+The docs are built with [Sphinx](http://sphinx-doc.org/), including
+[apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html),
+[autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and
+[napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration
+is in
+[`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py)
+To build them, run
+[`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
 
@@ -270,86 +286,86 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
-#### 1.6 - unreleased
+### 1.6 - unreleased
 * Twitter:
-  * Handle new "extended" tweets with hidden reply-to @-mentions and trailing
+    * Handle new "extended" tweets with hidden reply-to @-mentions and trailing
     URLs for media, quote tweets, etc. Background:
     https://dev.twitter.com/overview/api/upcoming-changes-to-tweets
-  * Bug fix: ensure like.author.displayName is a plain unicode string so that it
+    * Bug fix: ensure like.author.displayName is a plain unicode string so that it
     can be pickled normally, e.g. by App Engine's memcache.
-  * Bug fix: handle names with emoji correctly in favorites_html_to_likes().
-  * Bug fix: handle search queries with unicode characters.
+    * Bug fix: handle names with emoji correctly in favorites_html_to_likes().
+    * Bug fix: handle search queries with unicode characters.
 * Atom:
-  * Render full original quoted tweet in retweets of quote tweets.
+    * Render full original quoted tweet in retweets of quote tweets.
 * microformats2 HTML:
-  * Optionally follow and fetch rel="author" links.
-  * Improve mapping between microformats2 and ActivityStreams 'photo' types. (mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type *is* a photo. So, map mf2 photos to underlying type without photo.)
-  * Support location properties beyond h-card, e.g. h-adr, h-geo, u-geo, and even
+    * Optionally follow and fetch rel="author" links.
+    * Improve mapping between microformats2 and ActivityStreams 'photo' types. (mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type *is* a photo. So, map mf2 photos to underlying type without photo.)
+    * Support location properties beyond h-card, e.g. h-adr, h-geo, u-geo, and even
     when properties like latitude and longitude appear at the top level.
 * Error handling: return HTTP 502 for non-JSON API responses, 504 for connection failures.
 
-#### 1.5 - 2016-08-25
+### 1.5 - 2016-08-25
 * REST API:
-  * Support tag URI for user id, app id, and activity id.
+    * Support tag URI for user id, app id, and activity id.
 * Twitter:
-  * Better error message when uploading a photo with an unsupported type.
-  * Only include original quote tweets, not retweets of them.
-  * Skip fetching retweets for protected accounts since the API call always 403s.
+    * Better error message when uploading a photo with an unsupported type.
+    * Only include original quote tweets, not retweets of them.
+    * Skip fetching retweets for protected accounts since the API call always 403s.
 * Flickr:
-  * Better username detection. Flickr's API is very inconsistent about username
+    * Better username detection. Flickr's API is very inconsistent about username
     vs real name vs path alias. This specifically detects when a user name is
     probably actually a real name because it has a space.
-  * Uploading: detect and handle App Engine's 10MB HTTP request limit.
-  * Bug fix in create: handle unicode characters in photo/video description,
+    * Uploading: detect and handle App Engine's 10MB HTTP request limit.
+    * Bug fix in create: handle unicode characters in photo/video description,
     hashtags, and comment text.
 * Atom:
-  * Bug fix: escape &s in attachments' text (e.g. quote tweets).
+    * Bug fix: escape &s in attachments' text (e.g. quote tweets).
 
-#### 1.4.1 - 2016-06-27
+### 1.4.1 - 2016-06-27
 * Bump oauth-dropins requirement to 1.4.
 
-#### 1.4.0 - 2016-06-27
+### 1.4.0 - 2016-06-27
 * REST API:
-  * Cache silo requests for 5m by default, 60m for Instagram because they aggressively blocking scraping. You can skip the cache with the new cache=false query param.
+    * Cache silo requests for 5m by default, 60m for Instagram because they aggressively blocking scraping. You can skip the cache with the new cache=false query param.
 * Facebook:
-  * Upgrade from API v2.2 to v2.6. https://developers.facebook.com/docs/apps/changelog
-  * Add reaction support.
-  * De-dupe event RSVPs by user.
+    * Upgrade from API v2.2 to v2.6. https://developers.facebook.com/docs/apps/changelog
+    * Add reaction support.
+    * De-dupe event RSVPs by user.
 * Twitter:
-  * Switch create() to use brevity for counting characters. https://github.com/kylewm/brevity
-  * Fix bug in create() that occasionally incorrectly escaped ., +, and - characters.
-  * Fix text rendering bug when there are multipl photos/videos.
-  * When replying to yourself, don't add a self @-mention.
+    * Switch create() to use brevity for counting characters. https://github.com/kylewm/brevity
+    * Fix bug in create() that occasionally incorrectly escaped ., +, and - characters.
+    * Fix text rendering bug when there are multipl photos/videos.
+    * When replying to yourself, don't add a self @-mention.
 * Instagram:
-  * Fix bugs in scraping.
+    * Fix bugs in scraping.
 * Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support App Engine.
 
-#### 1.3.1 - 2016-04-07
+### 1.3.1 - 2016-04-07
 * Update [oauth-dropins](https://github.com/snarfed/oauth-dropins) dependency to >=1.3.
 
-#### 1.3.0 - 2016-04-06
+### 1.3.0 - 2016-04-06
 * Support posting videos! Currently in Facebook, Flickr, and Twitter.
 * Instagram:
-  * Add support for scraping, since they're [locking down their API and requiring manual approval](http://developers.instagram.com/post/133424514006/instagram-platform-update).
-  * Linkify @-mentions in photo captions.
+    * Add support for scraping, since they're [locking down their API and requiring manual approval](http://developers.instagram.com/post/133424514006/instagram-platform-update).
+    * Linkify @-mentions in photo captions.
 * Facebook:
-  * Fetch [Open Graph stories aka `news.publish` actions](https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/).
-  * Many bug fixes for photo posts: better privacy detection, fix bug that attached comments to wrong posts.
+    * Fetch [Open Graph stories aka `news.publish` actions](https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/).
+    * Many bug fixes for photo posts: better privacy detection, fix bug that attached comments to wrong posts.
 * Twitter:
-  * Handle all photos/videos attached to a tweet, not just the first.
-  * Stop fetching replies to @-mentions.
+    * Handle all photos/videos attached to a tweet, not just the first.
+    * Stop fetching replies to @-mentions.
 * Atom:
-  * Render attachments.
-  * Add `xml:base`.
+    * Render attachments.
+    * Add `xml:base`.
 * microformats2:
-  * Load and convert h-card.
-  * Implement full post type discovery algorithm, using mf2util. https://indiewebcamp.com/post-type-discovery
-  * Drop support for h-as-* classes, both incoming and outgoing. They're deprecated in favor of post type discovery.
-  * Drop old deprecated `u-like` and `u-repost` properties.
+    * Load and convert h-card.
+    * Implement full post type discovery algorithm, using mf2util. https://indiewebcamp.com/post-type-discovery
+    * Drop support for h-as-* classes, both incoming and outgoing. They're deprecated in favor of post type discovery.
+    * Drop old deprecated `u-like` and `u-repost` properties.
 * Misc bug fixes.
 * Set up Coveralls.
 
-#### 1.2.0 - 2016-01-11
+### 1.2.0 - 2016-01-11
 * Improve original post discovery algorithm. ([bridgy #51](https://github.com/snarfed/bridgy/issues/51))
 * Flickr tweaks. ([bridgy #466](https://github.com/snarfed/bridgy/issues/466))
 * Add mf2, activitystreams, atom, and search to interactive UI. ([#31](https://github.com/snarfed/granary/issues/31), [#29](https://github.com/snarfed/granary/issues/29))
@@ -358,45 +374,45 @@ Changelog
 * Add fabricated fragments to comment/like permalinks (e.g. #liked-by-user123) so that object urls are always unique (multiple silos).
 * Improve formatting/whitespace support in create/preview (multiple silos).
 * Google+:
-  * Add search.
+    * Add search.
 * Facebook:
-  * Fetch more things in get_activities: photos, events, RSVPs.
-  * Support person tags in create/preview.
-  * Prevent facebook from automatically consolidating photo posts by uploading photos to "Timeline Photos" album.
-  * Include title in create/preview.
-  * Improve object id parsing/resolving.
-  * Improve tag handling.
-  * Bug fix for fetching nested comments.
-  * Misc improvements, API error/flakiness handling.
+    * Fetch more things in get_activities: photos, events, RSVPs.
+    * Support person tags in create/preview.
+    * Prevent facebook from automatically consolidating photo posts by uploading photos to "Timeline Photos" album.
+    * Include title in create/preview.
+    * Improve object id parsing/resolving.
+    * Improve tag handling.
+    * Bug fix for fetching nested comments.
+    * Misc improvements, API error/flakiness handling.
 * Flickr:
-  * Create/preview support for photos, comments, favorites, tags, person tags, location.
+    * Create/preview support for photos, comments, favorites, tags, person tags, location.
 * Twitter:
-  * Create/preview support for location, multiple photos.
-  * Fetch quote tweets.
-  * Fetching user mentions improvements, bug fixes.
-  * Fix embeds.
-  * Misc AS conversion improvements.
+    * Create/preview support for location, multiple photos.
+    * Fetch quote tweets.
+    * Fetching user mentions improvements, bug fixes.
+    * Fix embeds.
+    * Misc AS conversion improvements.
 * microformats2:
-  * Improve like and repost rendering.
+    * Improve like and repost rendering.
 * Misc bug fixes.
 * Set up CircleCI.
 
-#### 1.1.0 - 2015-09-06
+### 1.1.0 - 2015-09-06
 * Add Flickr.
 * Facebook:
-  * Fetch multiple id formats, e.g. with and without USERID_ prefix.
-  * Support threaded comments.
-  * Switch from /posts API endpoint to /feed.
+    * Fetch multiple id formats, e.g. with and without USERID_ prefix.
+    * Support threaded comments.
+    * Switch from /posts API endpoint to /feed.
 * Google+:
-  * Support converting plus.google.com HTML to ActivityStreams.
+    * Support converting plus.google.com HTML to ActivityStreams.
 * Instagram:
-  * Support location.
+    * Support location.
 * Improve original post discovery algorithm.
 * New logo.
 
-#### 1.0.1 - 2015-07-11
+### 1.0.1 - 2015-07-11
 * Bug fix for atom template rendering.
 * Facebook, Instagram: support access_token parameter.
 
-#### 1.0 - 2015-07-10
+### 1.0 - 2015-07-10
 * Initial PyPi release.

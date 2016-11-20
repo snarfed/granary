@@ -52,6 +52,9 @@ setup(name='granary',
           'brevity>=0.2.8',
           'urllib3>=1.14',
       ],
+      extras_require={
+          'appengine-sdk': ['appengine-sdk >= 1.9.40.post0'],
+      },
       test_loader='setup:TestLoader',
       test_suite='granary.test',
 )

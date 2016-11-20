@@ -1,0 +1,11 @@
+# Config file for Sphinx build on ReadTheDocs:
+# https://docs.readthedocs.io/en/latest/yaml-config.html
+#
+# extra_requirements is the important one. docs/conf.py configures sphinx to use
+# autodoc, which generates docs from docstrings in code. It imports the code,
+# which depends on the App Engine SDK.
+python:
+    setup_py_install: false
+    pip_install: true
+    extra_requirements:
+        - appengine-sdk

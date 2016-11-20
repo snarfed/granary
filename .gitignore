@@ -1,5 +1,6 @@
 .coverage
 /build/
+/docs/_build/
 /dist/
 /.eggs/
 /*.egg-info
