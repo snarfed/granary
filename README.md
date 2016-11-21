@@ -34,7 +34,7 @@ Here's how to get started:
 
 * Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/)
   Install with `pip install granary`.
-* [Click here for getting started docs.](#quick-start)
+* [Click here for getting started docs.](#using)
 * [Click here for reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
 * The REST API and demo app are deployed at
 [granary-demo.appspot.com](https://granary-demo.appspot.com/).
@@ -228,7 +228,9 @@ The docs are built with [Sphinx](http://sphinx-doc.org/), including
 [napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration
 is in
 [`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py)
-To build them, run
+To build them, first install Sphinx with `pip install sphinx`. (You may want to
+do this outside your virtualenv; if so, you'll need to reconfigure it to see
+system packages with `virtualenv --system-site-packages local`.) Then, run
 [`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
