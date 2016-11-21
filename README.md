@@ -351,7 +351,7 @@ Changelog
     * Add support for scraping, since they're [locking down their API and requiring manual approval](http://developers.instagram.com/post/133424514006/instagram-platform-update).
     * Linkify @-mentions in photo captions.
 * Facebook:
-    * Fetch [Open Graph stories aka `news.publish` actions](https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/).
+    * Fetch [Open Graph stories](https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/) aka `news.publish` actions.
     * Many bug fixes for photo posts: better privacy detection, fix bug that attached comments to wrong posts.
 * Twitter:
     * Handle all photos/videos attached to a tweet, not just the first.
