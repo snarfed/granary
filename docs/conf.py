@@ -42,6 +42,12 @@ extensions = [
     'sphinx.ext.viewcode',
 ]
 
+# autodoc settings
+autoclass_content = 'both'  # both class and __init__ docstrings
+autodoc_member_order = 'bysource'
+autodoc_default_flags = ['show-inheritance', 'members']
+                         # 'no-private-members', 'no-special-members']
+
 # Napoleon settings
 # http://www.sphinx-doc.org/en/stable/ext/napoleon.html
 napoleon_google_docstring = True

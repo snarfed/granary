@@ -4,70 +4,36 @@ granary package
 Reference documentation.
 
 .. toctree::
-
     granary
 
-
-atom module
--------------------
-
+atom
+----
 .. automodule:: granary.atom
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-facebook module
------------------------
-
+facebook
+--------
 .. automodule:: granary.facebook
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-flickr module
----------------------
-
+flickr
+------
 .. automodule:: granary.flickr
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-googleplus module
--------------------------
-
+googleplus
+----------
 .. automodule:: granary.googleplus
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-instagram module
-------------------------
-
+instagram
+---------
 .. automodule:: granary.instagram
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-microformats2 module
-----------------------------
-
+microformats2
+-------------
 .. automodule:: granary.microformats2
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-source module
----------------------
-
+source
+------
 .. automodule:: granary.source
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
-twitter module
-----------------------
-
+twitter
+-------
 .. automodule:: granary.twitter
-    :members:
-    :undoc-members:
-    :show-inheritance:

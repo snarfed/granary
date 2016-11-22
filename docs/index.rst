@@ -485,8 +485,9 @@ Changelog
 
 -  Facebook:
 
-   -  Fetch `Open Graph stories aka ``news.publish``
-      actions <https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/>`__.
+   -  Fetch `Open Graph
+      stories <https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/>`__
+      aka ``news.publish`` actions.
    -  Many bug fixes for photo posts: better privacy detection, fix bug
       that attached comments to wrong posts.
 

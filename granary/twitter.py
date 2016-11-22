@@ -167,8 +167,8 @@ class Twitter(source.Source):
     to find new replies and retweets of older initial tweets.
     TODO: find a better way.
 
-    See method docstring in source.py for details. app_id is ignored.
-    min_id is translated to Twitter's since_id.
+    See :meth:`source.Source.get_activities_response()` for details. app_id is
+    ignored. min_id is translated to Twitter's since_id.
 
     The code for handling ETags (and 304 Not Changed responses and setting
     If-None-Match) is here, but unused right now since Twitter evidently doesn't
@@ -205,6 +205,7 @@ class Twitter(source.Source):
     Twitter replies default to including a mention of the user they're replying
     to, which overloads mentions a bit. When fetch_shares is True, we determine
     that a tweet mentions the current user if it @-mentions their username and:
+
     * it's not a reply, OR
     * it's a reply, but not to the current user, AND
       * the tweet it's replying to doesn't @-mention the current user
@@ -420,7 +421,7 @@ class Twitter(source.Source):
     """Fetches a user's @-mentions and returns them as ActivityStreams.
 
     Tries to only include explicit mentions, not mentions automatically created
-    by @-replying. See the get_activities() docstring for details.
+    by @-replying. See the :meth:`get_activities()` docstring for details.
 
     Args:
       username: string
@@ -784,7 +785,8 @@ class Twitter(source.Source):
     Args:
       urls: sequence of string URLs of images
 
-    Returns: list of string media ids
+    Returns:
+      list of string media ids
     """
     ids = []
     for url in urls:
@@ -809,6 +811,7 @@ class Twitter(source.Source):
     """Uploads a video from web URLs using the chunked upload process.
 
     Chunked upload consists of multiple API calls:
+
     * command=INIT, which allocates the media id
     * command=APPEND for each 5MB block, up to 15MB total
     * command=FINALIZE
@@ -819,7 +822,8 @@ class Twitter(source.Source):
     Args:
       url: string URL of images
 
-    Returns: string media id or CreationResult on error
+    Returns:
+      string media id or :class:`CreationResult` on error
     """
     video_resp = util.urlopen(url)
     bad_type = self._check_mime_type(url, video_resp, VIDEO_MIME_TYPES, 'MP4 videos')
@@ -883,8 +887,9 @@ class Twitter(source.Source):
       label: human-readable description of the allowed MIME types, to be used in
         an error message
 
-    Returns: None if the url's MIME type is in the set, CreationResult with
-      abort=True if it isn't
+    Returns:
+      None if the url's MIME type is in the set, :class:`CreationResult`
+      with abort=True if it isn't
     """
     type = resp.headers.get('Content-Type')
     if not type:
@@ -894,7 +899,7 @@ class Twitter(source.Source):
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
   def urlopen(self, url, parse_response=True, **kwargs):
-    """Wraps urllib2.urlopen() and adds an OAuth signature."""
+    """Wraps :func:`urllib2.urlopen()` and adds an OAuth signature."""
     if not url.startswith('http'):
       url = API_BASE + url
 
@@ -932,7 +937,8 @@ class Twitter(source.Source):
     Args:
       obj: ActivityStreams object
 
-    Returns: dict, minimal ActivityStreams object. Usually has at least id and
+    Returns:
+      dict, minimal ActivityStreams object. Usually has at least id and
       url fields; may also have author.
     """
     base_obj = super(Twitter, self).base_object(obj)
@@ -1308,7 +1314,8 @@ class Twitter(source.Source):
       tweet: Twitter tweet dict
       liker: Twitter user dict
 
-    Returns: ActivityStreams object dict
+    Returns:
+      ActivityStreams object dict
     """
     tweet_id = tweet.get('id_str')
     liker_id = liker.get('id_str')

@@ -40,7 +40,8 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     xml_base: the base URL, if any. Used in the top-level xml:base attribute.
     rels: rel links to include. dict mapping string rel value to string URL.
 
-  Returns: unicode string with Atom XML
+  Returns:
+    unicode string with Atom XML
   """
   # Strip query params from URLs so that we don't include access tokens, etc
   host_url = (_remove_query_params(host_url) if host_url
@@ -116,7 +117,8 @@ def html_to_atom(html, url=None, fetch_author=False):
     url: string URL html came from, optional
     fetch_author: boolean, whether to make HTTP request to fetch rel-author link
 
-  Returns: unicode string with Atom XML
+  Returns:
+    unicode string with Atom XML
   """
   if fetch_author:
     assert url, 'fetch_author=True requires url!'

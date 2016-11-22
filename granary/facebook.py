@@ -1,14 +1,17 @@
 # coding=utf-8
 """Facebook source class. Uses the Graph API.
 
+https://developers.facebook.com/docs/graph-api/using-graph-api/
+
 The Audience Targeting 'to' field is set to @public or @private based on whether
 the Facebook object's 'privacy' field is 'EVERYONE' or anything else.
 https://developers.facebook.com/docs/reference/api/privacy-parameter/
 
-Retrieving @all activities from get_activities() (the default) currently returns
-an incomplete set of activities, ie *NOT* exactly the same set as your Facebook
-News Feed: https://www.facebook.com/help/327131014036297/
-
+Retrieving @all activities from :meth:`get_activities()` (the default) currently
+returns an incomplete set of activities, ie *NOT* exactly the same set as your
+Facebook News Feed: https://www.facebook.com/help/327131014036297/
+"""
+"""
 This is complicated, and I still don't fully understand how or why they differ,
 but based on lots of experimenting and searching, it sounds like the current
 state is that you just can't reproduce the News Feed via Graph API's /me/home,
@@ -376,7 +379,8 @@ class Facebook(source.Source):
     Args:
       posts: list of Facebook post object dicts
 
-    Returns: new list of post and photo object dicts
+    Returns:
+      new list of post and photo object dicts
     """
     posts_by_obj_id = {}
     for post in posts:
@@ -419,7 +423,8 @@ class Facebook(source.Source):
       api_call: string with %s placeholder for ids query param
       ids: sequence of string ids
 
-    Returns: merged list of objects from the responses' 'data' fields
+    Returns:
+      merged list of objects from the responses' 'data' fields
     """
     results = {}
     for i in range(0, len(ids), MAX_IDS):
@@ -455,7 +460,8 @@ class Facebook(source.Source):
       id: string, site-specific event id
       owner_id: string
 
-    Returns: dict, decoded ActivityStreams activity, or None if the event is not
+    Returns:
+      dict, decoded ActivityStreams activity, or None if the event is not
       found or is owned by a different user than owner_id (if provided)
     """
     event = None
@@ -802,7 +808,8 @@ class Facebook(source.Source):
     Args:
       obj: ActivityStreams object
 
-    Returns: sequence of ActivityStreams tag objects with url, id, and optional
+    Returns:
+      sequence of ActivityStreams tag objects with url, id, and optional
       displayName fields. The id field is a raw Facebook user id.
     """
     people = {}  # maps id to tag
@@ -886,7 +893,8 @@ class Facebook(source.Source):
       resolve_numeric_id: if True, tries harder to populate the numeric_id field
         by making an additional API call to look up the object if necessary.
 
-    Returns: dict, minimal ActivityStreams object. Usually has at least id,
+    Returns:
+      dict, minimal ActivityStreams object. Usually has at least id,
       numeric_id, and url fields; may also have author.
     """
     base_obj = super(Facebook, self).base_object(obj)
@@ -1377,7 +1385,8 @@ class Facebook(source.Source):
       event: dict, a decoded JSON Facebook event
       rsvps: list of JSON Facebook RSVPs
 
-    Returns: an ActivityStreams activity dict
+    Returns:
+      an ActivityStreams activity dict
     """
     obj = self.event_to_object(event, rsvps=rsvps)
     return {'object': obj,
@@ -1462,7 +1471,7 @@ class Facebook(source.Source):
       obj: dict, Facebook object (post, album, comment, etc)
 
     Returns:
-      dict (ActivityStreams `to` object) or None if unknown
+      dict: ActivityStreams `to` object, or None if unknown
     """
     privacy = obj.get('privacy')
     if isinstance(privacy, dict):
@@ -1498,27 +1507,26 @@ class Facebook(source.Source):
       actor: dict, a row from the FQL profile table
 
     Returns:
-      a Graph API post dict
+      dict, Graph API post
 
-    Here's example code to query FQL and pass the results to this method:
+    Here's example code to query FQL and pass the results to this method::
 
       resp = self.urlopen('https://graph.facebook.com/v2.0/fql?' + urllib.urlencode(
           {'q': json.dumps({
-            'stream': '''\
-            SELECT actor_id, post_id, created_time, updated_time, attachment,
-              privacy, message, description
-FROM stream
-WHERE filter_key IN (
-  SELECT filter_key FROM stream_filter WHERE uid = me())
-ORDER BY created_time DESC
-LIMIT 50
-''',
-            'actors': '''\
-SELECT id, name, username, url, pic FROM profile WHERE id IN
-  (SELECT actor_id FROM #stream)
-'''})}))
+            'stream': '''\\
+              SELECT actor_id, post_id, created_time, updated_time,
+                attachment, privacy, message, description
+              FROM stream
+              WHERE filter_key IN (
+                SELECT filter_key FROM stream_filter WHERE uid = me())
+              ORDER BY created_time DESC
+              LIMIT 50
+              ''',
+            'actors': '''\\
+              SELECT id, name, username, url, pic FROM profile WHERE id IN
+                (SELECT actor_id FROM #stream)
+              '''})}))
 
-      # resp = appengine_config.read('fql.json')
       results = {q['name']: q['fql_result_set'] for q in resp['data']}
       actors = {a['id']: a for a in results['actors']}
       posts = [self.fql_stream_to_post(row, actor=actors[row['actor_id']])
@@ -1556,6 +1564,7 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     """Parses a Facebook post or comment id.
 
     Facebook ids come in different formats:
+
     * Simple number, usually a user or post: 12
     * Two numbers with underscore, usually POST_COMMENT or USER_POST: 12_34
     * Three numbers with underscores, USER_POST_COMMENT: 12_34_56
@@ -1568,10 +1577,11 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     * Four numbers with colons/underscore, USER:POST:SHARD_COMMENT: 12:34:63_56
     * Five numbers with colons/underscore, USER:EVENT:UNKNOWN:UNKNOWN_UNKNOWN
       Not currently supported! Examples:
-111599105530674:998145346924699:10102446236688861:10207188792305341_998153510257216
-111599105530674:195181727490727:10102446236688861:10205257726909910_195198790822354
+      111599105530674:998145346924699:10102446236688861:10207188792305341_998153510257216
+      111599105530674:195181727490727:10102446236688861:10205257726909910_195198790822354
 
     Background:
+
     * https://github.com/snarfed/bridgy/issues/305
     * https://developers.facebook.com/bugs/786903278061433/
 
@@ -1579,7 +1589,8 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
       id: string or integer
       is_comment: boolean
 
-    Returns: FacebookId. Some or all fields may be None.
+    Returns:
+      FacebookId: Some or all fields may be None.
     """
     assert is_comment in (True, False), is_comment
 
@@ -1648,7 +1659,8 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
       post_id: string Facebook post id
       activity: optional AS activity representation of Facebook post
 
-    Returns: string Facebook object id or None
+    Returns:
+      string: Facebook object id or None
     """
     assert user_id, user_id
     assert post_id, post_id
@@ -1671,13 +1683,14 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
         return str(resolved)
 
   def urlopen(self, url, _as=dict, **kwargs):
-    """Wraps urllib2.urlopen() and passes through the access token.
+    """Wraps :func:`urllib2.urlopen()` and passes through the access token.
 
     Args:
       _as: if not None, parses the response as JSON and passes it through _as()
            with this type. if None, returns the response object.
 
-    Returns: decoded JSON object or urlopen response object
+    Returns:
+      decoded JSON object or urlopen response object
     """
     if not url.startswith('http'):
       url = API_BASE + url
@@ -1726,17 +1739,17 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
   def urlopen_batch(self, urls):
     """Sends a batch of multiple API calls using Facebook's batch API.
 
-    Raises the appropriate urllib2.HTTPError if any individual call returns HTTP
-    status code 4xx or 5xx.
+    Raises the appropriate :class:`urllib2.HTTPError` if any individual call
+    returns HTTP status code 4xx or 5xx.
 
     https://developers.facebook.com/docs/graph-api/making-multiple-requests
 
     Args:
       urls: sequence of string relative API URLs, e.g. ('me', 'me/accounts')
 
-    Returns: sequence of responses, either decoded JSON objects (when possible)
+    Returns:
+      sequence of responses, either decoded JSON objects (when possible)
       or raw string bodies
-
     """
     resps = self.urlopen_batch_full([{'relative_url': url} for url in urls])
 
@@ -1754,32 +1767,32 @@ SELECT id, name, username, url, pic FROM profile WHERE id IN
     """Sends a batch of multiple API calls using Facebook's batch API.
 
     Similar to urlopen_batch(), but the requests arg and return value are dicts
-    with headers, HTTP status code, etc. Only raises urllib2.HTTPError if the
-    outer batch request itself returns an HTTP error.
+    with headers, HTTP status code, etc. Only raises :class:`urllib2.HTTPError`
+    if the outer batch request itself returns an HTTP error.
 
     https://developers.facebook.com/docs/graph-api/making-multiple-requests
 
     Args:
       requests: sequence of dict requests in Facebook's batch format, except
-      that headers is a single dict, not a list of dicts.
+        that headers is a single dict, not a list of dicts, e.g.::
 
-        [{'relative_url': 'me/feed',
-          'headers': {'ETag': 'xyz', ...},
-         },
-         ...
-        ]
+          [{'relative_url': 'me/feed',
+            'headers': {'ETag': 'xyz', ...},
+           },
+           ...
+          ]
 
-    Returns: sequence of dict responses in Facebook's batch format, except that
-      body is JSON-decoded if possible, and headers is a single dict, not a list
-      of dicts.
+    Returns:
+      sequence of dict responses in Facebook's batch format, except that body is
+      JSON-decoded if possible, and headers is a single dict, not a list of
+      dicts, e.g.::
 
-      [{'code': 200,
-        'headers': {'ETag': 'xyz', ...},
-        'body': {...},
-       },
-       ...
-      ]
-
+          [{'code': 200,
+            'headers': {'ETag': 'xyz', ...},
+            'body': {...},
+           },
+           ...
+          ]
     """
     for req in requests:
       if 'method' not in req:

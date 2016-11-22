@@ -57,7 +57,8 @@ def get_string_urls(objs):
   Args:
     objs: sequence of either string URLs or embedded mf2 objects
 
-  Returns: list of string URLs
+  Returns:
+    list of string URLs
   """
   urls = []
   for item in objs:
@@ -79,7 +80,8 @@ def get_html(val):
     value: mf2 property value, either string or
      {'html': '<p>str</p>', 'value': 'str'} dict
 
-  Returns: string or None
+  Returns:
+    string or None
   """
   if isinstance(val, dict) and val.get('html'):
     # this came from e-content, so newlines aren't meaningful. drop them so that
@@ -111,7 +113,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     synthesize_content: whether to generate synthetic content if the object
       doesn't have its own, e.g. 'likes this.' or 'shared this.'
 
-  Returns: dict, decoded microformats2 JSON
+  Returns:
+    dict, decoded microformats2 JSON
   """
   if not obj or not isinstance(obj, dict):
     return {}
@@ -227,7 +230,8 @@ def json_to_object(mf2, actor=None):
     actor: optional author AS actor object. usually comes from a rel="author"
       link. if mf2 has its own author, that will override this.
 
-  Returns: dict, ActivityStreams object
+  Returns:
+    dict, ActivityStreams object
   """
   if not mf2 or not isinstance(mf2, dict):
     return {}
@@ -295,7 +299,6 @@ def json_to_object(mf2, actor=None):
   }
 
   # mf2util uses the indieweb/mf2 location algorithm to collect location properties.
-  # 
   interpreted = mf2util.interpret({'items': [mf2]}, None)
   if interpreted:
     loc = interpreted.get('location')
@@ -342,7 +345,8 @@ def html_to_activities(html, url=None, actor=None):
     actor: optional author AS actor object for all activities. usually comes
       from a rel="author" link.
 
-  Returns: list of ActivityStreams activity dicts
+  Returns:
+    list of ActivityStreams activity dicts
   """
   parsed = mf2py.parse(doc=html, url=url)
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
@@ -356,7 +360,8 @@ def activities_to_html(activities):
   Args:
     obj: dict, a decoded JSON ActivityStreams object
 
-  Returns: string, the content field in obj with the tags in the tags field
+  Returns:
+    string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
@@ -375,10 +380,11 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
-  - linkifies embedded tags and adds links for other tags
-  - linkifies embedded URLs
-  - adds links, summaries, and thumbnails for attachments and checkins
-  - adds a "via SOURCE" postscript
+
+  * linkifies embedded tags and adds links for other tags
+  * linkifies embedded URLs
+  * adds links, summaries, and thumbnails for attachments and checkins
+  * adds a "via SOURCE" postscript
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
@@ -387,7 +393,8 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
     synthesize_content: whether to generate synthetic content if the object
       doesn't have its own, e.g. 'likes this.' or 'shared this.'
 
-  Returns: string, the content field in obj with the tags in the tags field
+  Returns:
+    string, the content field in obj with the tags in the tags field
     converted to links if they have startIndex and length, otherwise added to
     the end.
   """
@@ -405,7 +412,8 @@ def json_to_html(obj, parent_props=None):
     parent_props: list of strings, the properties of the parent object where
       this object is embedded, e.g. 'u-repost-of'
 
-  Returns: string HTML
+  Returns:
+    string HTML
   """
 
   if not obj:
@@ -522,7 +530,8 @@ def hcard_to_html(hcard, parent_props=None):
     parent_props: list of strings, the properties of the parent object where
       this object is embedded, e.g. ['p-author']
 
-  Returns: string, rendered HTML
+  Returns:
+    string, rendered HTML
   """
   if not hcard:
     return ''
@@ -558,7 +567,8 @@ def render_content(obj, include_location=True, synthesize_content=True):
     synthesize_content: whether to generate synthetic content if the object
       doesn't have its own, e.g. 'likes this.' or 'shared this.'
 
-  Returns: string, rendered HTML
+  Returns:
+    string, rendered HTML
   """
   content = obj.get('content', '')
 
@@ -699,7 +709,7 @@ def find_author(parsed, **kwargs):
 
   Args:
     parsed: return value from mf2py.parse()
-    kwargs: passed through to mf2util.find_author
+    kwargs: passed through to mf2util.find_author()
   """
   author = mf2util.find_author(parsed, 'http://123', **kwargs)
   if author:
@@ -716,7 +726,8 @@ def first_props(props):
   Args:
     props: dict of properties, where each value is a sequence
 
-  Returns: corresponding dict with just the first value of each sequence, or ''
+  Returns:
+    corresponding dict with just the first value of each sequence, or ''
     if the sequence is empty
   """
   return {k: util.get_first(props, k, '') for k in props} if props else {}
@@ -760,7 +771,8 @@ def maybe_linked_name(props):
   Args:
     props: *multiply-valued* properties dict
 
-  Returns: string HTML
+  Returns:
+    string HTML
   """
   prop = first_props(props)
   name = prop.get('name')
@@ -788,7 +800,8 @@ def img(src, cls, alt):
     cls: string, css class applied to the img tag
     alt: string, alt attribute value, or None
 
-  Returns: string
+  Returns:
+    string
   """
   return '<img class="%s" src="%s" alt=%s />' % (
       cls, src, xml.sax.saxutils.quoteattr(alt or ''))
@@ -802,7 +815,8 @@ def vid(src, poster, cls):
     poster: sring, optional. url of the poster or preview image
     cls: string, css class applied to the video tag
 
-  Returns: string
+  Returns:
+    string
   """
   html = '<video class="%s" src="%s"' % (cls, src)
   if poster:
@@ -829,7 +843,8 @@ def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
     linked_classname: string, optional class attribute to use if url
     unlinked_classname: string, optional class attribute to use if not url
 
-  Returns: string
+  Returns:
+    string
   """
   if url:
     classname = ' class="%s"' % linked_classname if linked_classname else ''
@@ -846,7 +861,8 @@ def maybe_datetime(str, classname):
     str: string RFC339 datetime or None
     classname: string class name
 
-  Returns: string
+  Returns:
+    string
   """
   if str:
     return '<time class="%s" datetime="%s">%s</time>' % (classname, str, str)

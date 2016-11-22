@@ -95,16 +95,18 @@ def load_json(body, url):
 
 def creation_result(content=None, description=None, abort=False,
                     error_plain=None, error_html=None):
-  """Create a new CreationResult named tuple, which the result of
-  create() and preview_create() to provides a detailed description of
-  publishing failures. If abort is False, we should continue looking
-  for an entry to publish; if True, we should immediately inform the
-  user. error_plain text is sent in response to failed publish
-  webmentions; error_html will be displayed to the user when
-  publishing interactively.
+  """Create a new :class:`CreationResult`.
+
+  :meth:`create()` and :meth:`preview_create()` use this to provide a detailed
+  description of publishing failures. If abort is False, we should continue
+  looking for an entry to publish; if True, we should immediately inform the
+  user. error_plain text is sent in response to failed publish webmentions;
+  error_html will be displayed to the user when publishing interactively.
 
   Args:
-    content: a string HTML snippet for preview_create() or a dict for create()
+
+    content: a string HTML snippet for :meth:`preview_create()` or a dict for
+      :meth:`create()`
     description: string HTML snippet describing the publish action, e.g.
       '@-reply' or 'RSVP yes to this event'. The verb itself is surrounded by a
       <span class="verb"> to allow styling. May also include <a> link(s) and
@@ -114,7 +116,7 @@ def creation_result(content=None, description=None, abort=False,
     error_html: a string
 
   Return:
-    a CreationResult named tuple
+    a :class:`CreationResult`
   """
   return CreationResult(content, description, abort, error_plain, error_html)
 
@@ -127,7 +129,8 @@ def object_type(obj):
   Args:
     obj: decoded JSON ActivityStreams object
 
-  Returns: string, ActivityStreams object type
+  Returns:
+    string: ActivityStreams object type
   """
   type = obj.get('objectType')
   return type if type and type != 'activity' else obj.get('verb')
@@ -148,17 +151,18 @@ class Source(object):
   """Abstract base class for a source (e.g. Facebook, Twitter).
 
   Concrete subclasses must override the class constants below and implement
-  get_activities().
+  :meth:`get_activities()`.
 
   Class constants:
-    DOMAIN: string, the source's domain
-    BASE_URL: optional, the source's base url
-    NAME: string, the source's human-readable name
-    FRONT_PAGE_TEMPLATE: string, the front page child template filename
-    AUTH_URL: string, the url for the "Authenticate" front page link
-    EMBED_POST: string, the HTML for embedding a post. Should have a %(url)s
-      placeholder for the post URL and (optionally) a %(content)s placeholder
-      for the post content.
+
+  * DOMAIN: string, the source's domain
+  * BASE_URL: optional, the source's base url
+  * NAME: string, the source's human-readable name
+  * FRONT_PAGE_TEMPLATE: string, the front page child template filename
+  * AUTH_URL: string, the url for the "Authenticate" front page link
+  * EMBED_POST: string, the HTML for embedding a post. Should have a %(url)s
+    placeholder for the post URL and (optionally) a %(content)s placeholder
+    for the post content.
   """
   __metaclass__ = SourceMeta
 
@@ -178,7 +182,7 @@ class Source(object):
     See get_activities_response() for args and kwargs.
 
     Returns:
-      list of ActivityStreams activity dicts
+      list, ActivityStreams activity dicts
     """
     return self.get_activities_response(*args, **kwargs)['items']
 
@@ -190,17 +194,17 @@ class Source(object):
                               fetch_mentions=False, search_query=None, **kwargs):
     """Fetches and returns ActivityStreams activities and response details.
 
-    Subclasses should override this. See get_activities() for an alternative
-    that just returns the list of activities.
+    Subclasses should override this. See :meth:`get_activities()` for an
+    alternative that just returns the list of activities.
 
     If user_id is provided, only that user's activity(s) are included.
     start_index and count determine paging, as described in the spec:
     http://activitystrea.ms/draft-spec.html#anchor14
 
-    app id is just object id
+    app id is just object id:
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#appId
 
-    group id is string id of group or @self, @friends, @all, @search
+    group id is string id of group or @self, @friends, @all, @search:
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#Group-ID
 
     The fetch_* kwargs all default to False because they often require extra API
@@ -211,7 +215,7 @@ class Source(object):
     Args:
       user_id: string, defaults to the currently authenticated user
       group_id: string, one of '@self', '@all', '@friends', '@search'. defaults
-        to 'friends'
+        to '@friends'
       app_id: string
       activity_id: string
       start_index: int >= 0
@@ -234,27 +238,27 @@ class Source(object):
       kwargs: some sources accept extra kwargs. See their docs for details.
 
     Returns:
-      response dict with values based on OpenSocial ActivityStreams REST API:
+      dict: response values based on OpenSocial ActivityStreams REST API.
         http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
         http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
 
       It has these keys:
-        items: list of activity dicts
-        startIndex: int or None
-        itemsPerPage: int
-        totalResults: int or None (e.g. if it can 't be calculated efficiently)
-        filtered: False
-        sorted: False
-        updatedSince: False
-        etag: string etag returned by the API's initial call to get activities
+      * items: list of activity dicts
+      * startIndex: int or None
+      * itemsPerPage: int
+      * totalResults: int or None (e.g. if it can 't be calculated efficiently)
+      * filtered: False
+      * sorted: False
+      * updatedSince: False
+      * etag: string etag returned by the API's initial call to get activities
     """
     raise NotImplementedError()
 
   @classmethod
   def make_activities_base_response(cls, activities, *args, **kwargs):
-    """Generates a base response dict for get_activities_response().
+    """Generates a base response dict for :meth:`get_activities_response()`.
 
-    See get_activities() for args and kwargs.
+    See :meth:`get_activities()` for args and kwargs.
     """
     return {'startIndex': kwargs.get('start_index', 0),
             'itemsPerPage': len(activities),
@@ -285,18 +289,17 @@ class Source(object):
         converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
-      a CreationResult, whose contents will be a dict
-
-      The dict may be None or empty. If the newly created
-      object has an id or permalink, they'll be provided in the values
-      for 'id' and 'url'.
+      CreationResult: contents will be a dict. The dict may be None or empty. If
+        the newly created object has an id or permalink, they'll be provided in
+        the values for 'id' and 'url'.
     """
     raise NotImplementedError()
 
   def preview_create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Previews creating a new object: a post, comment, like, share, or RSVP.
 
-    Returns HTML that previews what create() with the same object will do.
+    Returns HTML that previews what :meth:`create()` with the same object will
+    do.
 
     Subclasses should override this. Different sites will support different
     functionality; check each subclass for details. The actor will usually be
@@ -311,8 +314,7 @@ class Source(object):
         converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
-      a CreationResult, whose contents will be a unicode string
-      HTML snippet (or None)
+      CreationResult: contents will be a unicode string HTML snippet (or None)
     """
     raise NotImplementedError()
 
@@ -322,7 +324,8 @@ class Source(object):
     Args:
       id: string, site-specific event id
 
-    Returns: dict, decoded ActivityStreams activity, or None
+    Returns:
+      dict: decoded ActivityStreams activity, or None
     """
     raise NotImplementedError()
 
@@ -419,10 +422,10 @@ class Source(object):
     dicts with 'value': URL.
 
     Args:
-      user: dict, a decoded JSON Facebook user
+      user: dict, a decoded JSON silo user object
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor, ready to be JSON-encoded
     """
     raise NotImplementedError()
 
@@ -455,7 +458,8 @@ class Source(object):
     Args:
       activities: ActivityStreams activity dict
 
-    Returns: same activity dict
+    Returns:
+      dict: same activity
     """
     return activity
 
@@ -467,7 +471,8 @@ class Source(object):
     Args:
       activities: ActivityStreams activity dict
 
-    Returns: same activity dict
+    Returns:
+      dict: same activity
     """
     return activity
 
@@ -514,7 +519,7 @@ class Source(object):
   def postprocess_object(self, obj):
     """Does source-independent post-processing of an object, in place.
 
-    * populates location.position based on latitude and longitude
+    Populates location.position based on latitude and longitude.
 
     Args:
       object: object dict
@@ -557,7 +562,8 @@ class Source(object):
         as well as their final destination URLs
       kwargs: passed to requests.head() when following redirects
 
-    Returns: ([string original post URLs], [string mention URLs]) tuple
+    Returns:
+      ([string original post URLs], [string mention URLs]) tuple
     """
     obj = activity.get('object') or activity
     content = obj.get('content', '').strip()
@@ -639,7 +645,7 @@ class Source(object):
 
   @staticmethod
   def add_rsvps_to_event(event, rsvps):
-    """Adds RSVP objects to an event's *attending fields, in place.
+    """Adds RSVP objects to an event's attending fields, in place.
 
     Args:
       event: ActivityStreams event object
@@ -653,12 +659,13 @@ class Source(object):
 
   @staticmethod
   def get_rsvps_from_event(event):
-    """Returns RSVP objects for an event's *attending fields.
+    """Returns RSVP objects for an event's attending fields.
 
     Args:
       event: ActivityStreams event object
 
-    Returns: sequence of ActivityStreams RSVP activity objects
+    Returns:
+      sequence of ActivityStreams RSVP activity objects
     """
     id = event.get('id')
     if not id:
@@ -707,8 +714,8 @@ class Source(object):
     Args:
       before, after: dicts, ActivityStreams activities or objects
 
-    Returns: boolean
-
+    Returns:
+      boolean
     """
     def changed(b, a, field, label):
       b_val = b.get(field)
@@ -736,6 +743,7 @@ class Source(object):
 
   @classmethod
   def embed_actor(cls, actor):
+    """Returns the HTML string for embedding an actor object."""
     return """
 <a class="h-card" href="%s">
  <img class="profile u-photo" src="%s" width="32px" /> %s</a>""" % (
@@ -759,7 +767,8 @@ class Source(object):
     Args:
       obj: ActivityStreams object
 
-    Returns: dict, minimal ActivityStreams object. Usually has at least id; may
+    Returns:
+      dict, minimal ActivityStreams object. Usually has at least id; may
       also have url, author, etc.
     """
     # look at in-reply-tos first, then objects (for likes and reposts).
@@ -802,13 +811,14 @@ class Source(object):
   def post_id(cls, url):
     """Guesses the post id of the given URL.
 
-    Returns: string, or None
+    Returns:
+      string, or None
     """
     return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
   def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False,
                           strip_first_video_tag=False):
-    """Returns the content text to use in create() and preview_create().
+    """Returns content text for :meth:`create()` and :meth:`preview_create()`.
 
     Returns summary if available, then content, then displayName.
 
@@ -823,7 +833,8 @@ class Source(object):
       strip_first_video_tag: if true, removes the first <video> tag. useful when
         it will be uploaded and attached to the post natively in the silo.
 
-    Returns: string, possibly empty
+    Returns:
+      string, possibly empty
     """
     summary = obj.get('summary', '').strip()
     name = obj.get('displayName', '').strip()

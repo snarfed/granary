@@ -86,7 +86,7 @@ class Instagram(source.Source):
     self.scrape = scrape
 
   def urlopen(self, url, **kwargs):
-    """Wraps urllib2.urlopen() and passes through the access token."""
+    """Wraps :func:`urllib2.urlopen()` and passes through the access token."""
     log_url = url
     if self.access_token:
       # TODO add access_token to the data parameter for POST requests
@@ -149,7 +149,7 @@ class Instagram(source.Source):
     May populate a custom 'ig_like_count' property in media objects. (Currently
     only when scraping.)
 
-    Args (beyond Source.get_activities_response):
+    Args:
       scrape: if True, scrapes HTML from instagram.com instead of using the API.
         Populates the user's actor object in the 'actor' response field.
         Useful for apps that haven't yet been approved in the new permissions
@@ -157,8 +157,10 @@ class Instagram(source.Source):
         passing a shortcode as activity_id as well as the internal API id.
         http://developers.instagram.com/post/133424514006/instagram-platform-update
       cookie: string, only used if scrape=True
+      **: see :meth:`Source.get_activities_reponse`
 
-    Raises: InstagramAPIError
+    Raises:
+      InstagramAPIError
     """
     if scrape or self.scrape:
       if not (activity_id or
@@ -239,7 +241,8 @@ class Instagram(source.Source):
       cookie: string
       shortcode: string, e.g. '4pB6vEx87I'
 
-    Returns: dict activities API response
+    Returns:
+      dict activities API response
     """
     assert user_id or activity_id or shortcode or cookie
     assert not (activity_id and shortcode)
@@ -334,7 +337,8 @@ class Instagram(source.Source):
       include_link: string
       ignore_formatting: boolean
 
-    Returns: a CreationResult. if successful, content will have and 'id' and
+    Returns:
+      a CreationResult. if successful, content will have and 'id' and
              'url' keys for the newly created Instagram object
     """
     return self._create(obj, include_link=include_link, preview=False,
@@ -349,7 +353,8 @@ class Instagram(source.Source):
       include_link: string
       ignore_formatting: boolean
 
-    Returns: a CreationResult. if successful, content and description
+    Returns:
+      a CreationResult. if successful, content and description
              will describe the new instagram object.
     """
     return self._create(obj, include_link=include_link, preview=True,
@@ -374,7 +379,8 @@ class Instagram(source.Source):
       include_link: string
       preview: boolean
 
-    Returns: a CreationResult. if successful, content will have and 'id' and
+    Returns:
+      a CreationResult. if successful, content will have and 'id' and
              'url' keys for the newly created Instagram object
     """
     # TODO: validation, error handling
@@ -701,6 +707,7 @@ class Instagram(source.Source):
     """Converts Instagram HTML to ActivityStreams activities.
 
     The input HTML may be from:
+
     * a user's feed, eg https://www.instagram.com/ while logged in
     * a user's profile, eg https://www.instagram.com/snarfed/
     * a photo or video, eg https://www.instagram.com/p/BBWCSrfFZAk/
@@ -709,7 +716,7 @@ class Instagram(source.Source):
       html: unicode string
 
     Returns:
-      ([ActivityStreams activities], ActivityStreams viewer actor)
+      tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
     """
     # extract JSON data blob
     script_start = '<script type="text/javascript">window._sharedData = '
