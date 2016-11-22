@@ -1,9 +1,6 @@
 #!/bin/bash
 #
 # Preprocesses docs and runs Sphinx (apidoc and build) to build the HTML docs.
-#
-# Still imperfect. After pandoc generates index.rst, you need to revise the
-# header and remove the manual TOC and the footer images.
 set -e
 
 absfile=`readlink -f $0`
@@ -14,8 +11,8 @@ cd `dirname $absfile`
 
 rm -f index.rst
 cat > index.rst <<EOF
-granary
-=======
+granary documentation
+=====================
 
 EOF
 

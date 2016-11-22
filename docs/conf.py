@@ -13,7 +13,6 @@
 
 import sys
 import os
-import shlex
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -324,8 +323,9 @@ texinfo_documents = [
 intersphinx_mapping = {
   # TODO
   # 'appengine': ('https://cloud.google.com/appengine/docs/python/refdocs', None),
+  'oauth_dropins': ('https://oauth-dropins.readthedocs.io/en/latest', None),
   'python': ('https://docs.python.org/', None),
   'requests': ('http://docs.python-requests.org/en/latest', None),
-  'urllib3': ('http://urllib3.readthedocs.io/en/latest', None),
+  'urllib3': ('https://urllib3.readthedocs.io/en/latest', None),
   'webapp2': ('https://webapp2.readthedocs.io/en/latest', None),
 }
