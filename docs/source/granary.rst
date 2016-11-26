@@ -13,6 +13,7 @@ atom
 facebook
 --------
 .. automodule:: granary.facebook
+    :exclude-members: __getnewargs__, __getstate__, __new__, __repr__
 
 flickr
 ------
@@ -33,6 +34,7 @@ microformats2
 source
 ------
 .. automodule:: granary.source
+    :exclude-members: __getnewargs__, __getstate__, __new__, __repr__
 
 twitter
 -------
