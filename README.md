@@ -288,7 +288,7 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
-### 1.6 - unreleased
+### 1.6 - 2016-11-26
 * Twitter:
     * Handle new "extended" tweets with hidden reply-to @-mentions and trailing
     URLs for media, quote tweets, etc. Background:

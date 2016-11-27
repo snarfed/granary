@@ -1,5 +1,5 @@
-granary
-=======
+granary documentation
+=====================
 
 About
 -----
@@ -368,7 +368,7 @@ Facebook and Twitter's raw HTML.
 Changelog
 ---------
 
-1.6 - unreleased
+1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
 
 -  Twitter:
