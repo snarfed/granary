@@ -12,13 +12,12 @@ data between a wide variety of formats:
 - Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 - Instagram and Google+ scraped HTML
 - `ActivityStreams <http://activitystrea.ms/>`__
-- `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
-- `microformats2 <http://microformats.org/wiki/microformats2>`__ JSON
+- `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML and JSON
 - `Atom <http://atomenabled.org/>`__
 - XML
 
 `Try out the interactive demo <https://granary-demo.appspot.com/>`__ and
-`check out the docs <https://github.com/snarfed/granary>`__.
+`check out the docs <https://granary.readthedocs.io/>`__.
 
 License: This project is placed in the public domain.
 
@@ -77,4 +76,4 @@ people they follow. Here's the JSON output:
       "..."
     }
 
-`Check out the docs for more! <https://github.com/snarfed/granary>`__
+`Check out the docs for more! <https://granary.readthedocs.io/>`__
