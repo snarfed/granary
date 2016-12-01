@@ -87,6 +87,16 @@ MB = 1024 * 1024
 MAX_VIDEO_SIZE = 15 * MB
 UPLOAD_CHUNK_SIZE = 5 * MB
 
+# username requirements and limits:
+# https://support.twitter.com/articles/101299#error
+# http://stackoverflow.com/a/13396934/186123
+MENTION_RE = re.compile(r'(^|[^@\w])@(\w{1,15})\b', re.UNICODE)
+
+# hashtag requirements and limits:
+# https://support.twitter.com/articles/370610
+# http://stackoverflow.com/questions/8451846
+HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
+
 
 class OffsetTzinfo(datetime.tzinfo):
   """A simple, DST-unaware tzinfo from given utc offset in seconds.
@@ -644,6 +654,10 @@ class Twitter(source.Source):
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
+    preview_content = MENTION_RE.sub(
+      r'\1<a href="https://twitter.com/\2">@\2</a>', preview_content)
+    preview_content = HASHTAG_RE.sub(
+      r'\1<a href="https://twitter.com/hashtag/\2">#\2</a>', preview_content)
 
     if type == 'activity' and verb == 'like':
       if not base_url:

@@ -287,6 +287,10 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
+### 1.7 - unreleased
+* Twitter:
+    * Linkify @-mentions and hashtags in `preview_create()`.
+
 ### 1.6 - 2016-11-26
 * Twitter:
     * Handle new "extended" tweets with hidden reply-to @-mentions and trailing

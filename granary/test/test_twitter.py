@@ -1384,9 +1384,12 @@ class TwitterTest(testutil.TestCase):
       'url http://foo.co/bar ellipsize http://foo.co/baz',
       'long url http://www.foo.co/bar/baz/baj/biff/boof',
       'trailing slash http://www.foo.co/',
+      'fragment http://foo.co/#bar',
       'exactly twenty chars',
       'just over twenty one chars',  # would trunc after 'one' if we didn't account for the ellipsis
       'HTML<br/>h &amp; h',
+      "to @schnarfed's user",
+      'a #hashyytag',
     )
     created = (
       'my status',
@@ -1395,9 +1398,12 @@ class TwitterTest(testutil.TestCase):
       'url http://foo.co/bar ellipsize' + dots,
       'long url http://www.foo.co/bar/baz/baj/biff/boof',
       'trailing slash http://www.foo.co/',
+      'fragment http://foo.co/#bar',
       'exactly twenty chars',
       'just over twenty' + dots,
       'HTML\nh & h',
+      "to @schnarfed's user",
+      'a #hashyytag',
     )
     previewed = (
       'my status',
@@ -1406,9 +1412,12 @@ class TwitterTest(testutil.TestCase):
       'url <a href="http://foo.co/bar">foo.co/bar</a> ellipsize' + dots,
       'long url <a href="http://www.foo.co/bar/baz/baj/biff/boof">foo.co/bar/baz/baj/bi...</a>',
       'trailing slash <a href="http://www.foo.co/">foo.co</a>',
+      'fragment <a href="http://foo.co/#bar">foo.co/#bar</a>',
       'exactly twenty chars',
       'just over twenty' + dots,
       'HTML\nh & h',
+      'to <a href="https://twitter.com/schnarfed">@schnarfed</a>\'s user',
+      'a <a href="https://twitter.com/hashtag/hashyytag">#hashyytag</a>',
     )
 
     for content in created:
@@ -1534,17 +1543,17 @@ class TwitterTest(testutil.TestCase):
     self.assertEquals(expected, result)
 
   def test_no_ellipsize_real_tweet(self):
-    orig = (
-      'Despite names,\n'
-      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
-      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
-      '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+    orig = """\
+Despite names,
+ind.ie&indie.vc are NOT #indieweb @indiewebcamp
+indiewebcamp.com/2014-review#Indie_Term_Re-use
+@iainspad @sashtown @thomatronic (ttk.me t4_81)"""
 
-    preview = (
-      'Despite names,\n'
-      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
-      '<a href="http://indiewebcamp.com/2014-review#Indie_Term_Re-use">indiewebcamp.com/2014-review#In...</a>\n'
-      '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+    preview = """\
+Despite names,
+ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb</a> <a href="https://twitter.com/indiewebcamp">@indiewebcamp</a>
+<a href="http://indiewebcamp.com/2014-review#Indie_Term_Re-use">indiewebcamp.com/2014-review#In...</a>
+<a href="https://twitter.com/iainspad">@iainspad</a> <a href="https://twitter.com/sashtown">@sashtown</a> <a href="https://twitter.com/thomatronic">@thomatronic</a> (ttk.me t4_81)"""
 
     self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={'status': orig})
     self.mox.ReplayAll()
@@ -1573,7 +1582,8 @@ class TwitterTest(testutil.TestCase):
                u'be far away. Those of us that have input fields to send… '
                u'https://ben.thatmustbe.me/note/2015/1/31/1/')
 
-    preview = (u'Hey #indieweb, the coming storm of webmention Spam may not '
+    preview = (u'Hey <a href="https://twitter.com/hashtag/indieweb">#indieweb</a>, '
+               u'the coming storm of webmention Spam may not '
                u'be far away. Those of us that have input fields to send… '
                u'<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
 
@@ -1736,7 +1746,7 @@ class TwitterTest(testutil.TestCase):
     })
 
     result = self.twitter.preview_create(obj, include_link=source.OMIT_LINK)
-    self.assertIn('instagram.com/p/9XVBIRA9cj</a>\n\nSocial Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.', result.content)
+    self.assertIn('instagram.com/p/9XVBIRA9cj</a>\n\nSocial Web session <a href="https://twitter.com/W3C">@W3C</a> <a href="https://twitter.com/hashtag/TPAC2015">#TPAC2015</a> in Sapporo, Hokkaido, Japan.', result.content)
 
   def test_create_tweet_with_location_hcard(self):
     self._test_create_tweet_with_location({
@@ -1813,22 +1823,23 @@ class TwitterTest(testutil.TestCase):
     self.twitter.create(obj, include_link=source.OMIT_LINK)
 
   def test_create_reply(self):
-    # tuples: (content, in-reply-to url, expected tweet)
+    # tuples: (content, in-reply-to url, expected tweet, expected preview)
     testdata = (
       # reply with @-mention of author
-      ('foo @you', 'http://twitter.com/you/status/100', 'foo @you'),
+      ('foo @you', 'http://twitter.com/you/status/100', 'foo @you',
+       'foo <a href="https://twitter.com/you">@you</a>'),
       # reply without @-mention of in-reply-to author
-      ('foo', 'http://twitter.com/you/status/100', 'foo'),
+      ('foo', 'http://twitter.com/you/status/100', 'foo', 'foo'),
       # replies with leading @-mentions, should be removed
-      ('@you foo', 'http://twitter.com/you/status/100', 'foo'),
-      ('@YoU foo', 'http://twitter.com/you/status/100', 'foo'),
+      ('@you foo', 'http://twitter.com/you/status/100', 'foo', 'foo'),
+      ('@YoU foo', 'http://twitter.com/you/status/100', 'foo', 'foo'),
       # photo URL. tests Twitter.base_object()
-      ('foo', 'http://twitter.com/you/status/100/photo/1', 'foo'),
+      ('foo', 'http://twitter.com/you/status/100/photo/1', 'foo', 'foo'),
       # mobile.twitter.com URL. the mobile should be stripped from embed.
-      ('foo', 'http://mobile.twitter.com/you/status/100', 'foo'),
+      ('foo', 'http://mobile.twitter.com/you/status/100', 'foo', 'foo'),
       )
 
-    for _, _, status in testdata:
+    for _, _, status, _ in testdata:
       self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={
         'status': status,
         'in_reply_to_status_id': 100,
@@ -1839,7 +1850,7 @@ class TwitterTest(testutil.TestCase):
     tweet = copy.deepcopy(TWEET)
     obj = copy.deepcopy(REPLY_OBJS[0])
 
-    for content, url, status in testdata:
+    for content, url, _, expected_preview in testdata:
       tweet.update({
           'id': '100',
           'url': 'https://twitter.com/snarfed_org/status/100',
@@ -1849,7 +1860,7 @@ class TwitterTest(testutil.TestCase):
       self.assert_equals(tweet, self.twitter.create(obj).content)
 
       preview = self.twitter.preview_create(obj)
-      self.assertEquals(status, preview.content)
+      self.assertEquals(expected_preview, preview.content)
       self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
 
   def test_create_reply_objectType_comment(self):
