@@ -772,6 +772,8 @@ HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
 HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
 HTML_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
 HTML_VIDEO_COMPLETE = HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
+HTML_PHOTO_MISSING_HEADER = json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
+HTML_PHOTO_MISSING_FOOTER = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE)
 
 
 class InstagramTest(testutil.HandlerTest):
@@ -1362,6 +1364,16 @@ class InstagramTest(testutil.HandlerTest):
     del expected[1]['object']['stream']
     del expected[1]['object']['attachments'][0]['stream'][0]['url']
     self.assert_equals(expected, activities)
+
+  def test_html_to_activities_missing_header(self):
+    activities, viewer = self.instagram.html_to_activities(HTML_PHOTO_MISSING_HEADER)
+    self.assert_equals([], activities)
+    self.assertIsNone(viewer)
+
+  def test_html_to_activities_missing_footer(self):
+    activities, viewer = self.instagram.html_to_activities(HTML_PHOTO_MISSING_FOOTER)
+    self.assert_equals([], activities)
+    self.assertIsNone(viewer)
 
   def test_id_to_shortcode(self):
     for shortcode, id in (

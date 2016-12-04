@@ -722,6 +722,7 @@ class Instagram(source.Source):
     script_start = '<script type="text/javascript">window._sharedData = '
     start = html.find(script_start)
     if start == -1:
+      logging.warning('JSON script tag not found! Raw HTML:\n' + html)
       return [], None
 
     # App Engine's Python 2.7.5 json module doesn't support unpaired surrogate
@@ -736,7 +737,10 @@ class Instagram(source.Source):
       json_module = json
 
     start += len(script_start)
-    end = html.index(';</script>', start)
+    end = html.find(';</script>', start)
+    if end == -1:
+      logging.warning('JSON script close tag not found! Raw HTML:\n' + html)
+      return [], None
     data = json_module.loads(html[start:end])
 
     entry_data = data.get('entry_data', {})

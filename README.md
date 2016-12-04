@@ -290,6 +290,8 @@ Changelog
 ### 1.7 - unreleased
 * Twitter:
     * Linkify @-mentions and hashtags in `preview_create()`.
+* Instagram:
+    * Improve HTML scraping error handling.
 
 ### 1.6 - 2016-11-26
 * Twitter:
