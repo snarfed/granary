@@ -294,7 +294,9 @@ class Instagram(source.Source):
         if (likes and likes != cached.get(likes_key) or
             comments and comments != cached.get(comments_key)):
           url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
-          full_activity, _ = self.html_to_activities(util.requests_get(url).text)
+          resp = util.requests_get(url)
+          resp.raise_for_status()
+          full_activity, _ = self.html_to_activities(resp.text)
           if full_activity:
             activities[i] = full_activity[0]
             cache_updates.update({likes_key: likes, comments_key: comments})
@@ -722,7 +724,9 @@ class Instagram(source.Source):
     script_start = '<script type="text/javascript">window._sharedData = '
     start = html.find(script_start)
     if start == -1:
-      logging.warning('JSON script tag not found! Raw HTML:\n' + html)
+      # Instagram sometimes returns 200 with incomplete HTML. often it stops at
+      # the end of one of the <style> tags inside <head>. not sure why.
+      logging.warning('JSON script tag not found!')
       return [], None
 
     # App Engine's Python 2.7.5 json module doesn't support unpaired surrogate
@@ -739,7 +743,8 @@ class Instagram(source.Source):
     start += len(script_start)
     end = html.find(';</script>', start)
     if end == -1:
-      logging.warning('JSON script close tag not found! Raw HTML:\n' + html)
+      # as mentioned above, Instagram sometimes returns 200 with incomplete HTML
+      logging.warning('JSON script close tag not found!')
       return [], None
     data = json_module.loads(html[start:end])
 
