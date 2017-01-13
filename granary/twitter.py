@@ -75,6 +75,9 @@ RETRIES = 3
 # * Allowed video formats, max video size, and upload chunk size:
 #   https://dev.twitter.com/rest/public/uploading-media#keepinmind
 #
+# Update by running help/configuration.json manually in
+# https://apigee.com/embed/console/twitter
+#
 # TODO: pull these from /help/configuration.json instead.
 # https://dev.twitter.com/docs/api/1.1/get/help/configuration
 MAX_TWEET_LENGTH = 140
