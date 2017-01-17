@@ -2380,11 +2380,11 @@ http://b http://c""",
 cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp(self):
-    for endpoint in 'attending', 'declined', 'maybe', 'interested':
+    for endpoint in 'attending', 'declined', 'maybe':
       self.expect_urlopen('234/' + endpoint, {"success": True}, data='')
 
     self.mox.ReplayAll()
-    for rsvp in RSVP_YES_OBJ, RSVP_NO_OBJ, RSVP_MAYBE_OBJ, RSVP_INTERESTED_OBJ:
+    for rsvp in RSVP_YES_OBJ, RSVP_NO_OBJ, RSVP_MAYBE_OBJ:
       rsvp = copy.deepcopy(rsvp)
       rsvp['inReplyTo'] = [{'url': 'https://www.facebook.com/234/'}]
       created = self.fb.create(rsvp)
@@ -2393,9 +2393,27 @@ cc Sam G, Michael M<br />""", preview.description)
                          '%s\n%s' % (created.content, rsvp))
 
     preview = self.fb.preview_create(rsvp)
-    self.assertEquals('<span class="verb">RSVP interested</span> to '
+    self.assertEquals('<span class="verb">RSVP maybe</span> to '
                       '<a href="https://www.facebook.com/234/">this event</a>.',
                       preview.description)
+
+  def test_create_interested_rsvp_error(self):
+    """Facebook API doesn't support creating "interested" RSVPs.
+
+    https://github.com/snarfed/bridgy/issues/717
+    """
+    rsvp = copy.deepcopy(RSVP_INTERESTED_OBJ)
+    rsvp['inReplyTo'] = [{'url': 'https://www.facebook.com/234/'}]
+    # shouldn't make an API call
+    result = self.fb.create(rsvp)
+
+    self.assertTrue(result.abort)
+    expected = 'Facebook API doesn\'t support creating "interested" RSVPs'
+    self.assertIn(expected, result.error_plain)
+
+    preview = self.fb.preview_create(rsvp)
+    self.assertTrue(preview.abort)
+    self.assertIn(expected, preview.error_plain)
 
   def test_create_unsupported_type(self):
     for fn in self.fb.create, self.fb.preview_create:

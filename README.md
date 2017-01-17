@@ -292,6 +292,8 @@ Changelog
     * Linkify @-mentions and hashtags in `preview_create()`.
 * Instagram:
     * Improve HTML scraping error handling.
+* Facebook:
+    * Disable creating "interested" RSVPs, since Facebook's API doesn't allow it.
 
 ### 1.6 - 2016-11-26
 * Twitter:

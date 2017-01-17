@@ -106,8 +106,17 @@ API_PUBLISH_PHOTO = 'me/photos'
 API_PUBLISH_ALBUM_PHOTO = '%s/photos'
 API_PUBLISH_RSVP_ATTENDING = '%s/attending'
 API_PUBLISH_RSVP_MAYBE = '%s/maybe'
-API_PUBLISH_RSVP_INTERESTED = '%s/interested'
 API_PUBLISH_RSVP_DECLINED = '%s/declined'
+# ...except /interested. POSTing to it returns this 400 error. details in
+# https://github.com/snarfed/bridgy/issues/717
+# {
+#   "error": {
+#     "message": "Unsupported post request. Object with ID '1680863225573216' does not exist, cannot be loaded due to missing permissions, or does not support this operation. Please read the Graph API documentation at https://developers.facebook.com/docs/graph-api",
+#     "type": "GraphMethodException",
+#     "code": 100
+#   }
+# }
+API_PUBLISH_RSVP_INTERESTED = '%s/interested'
 API_NOTIFICATION = '%s/notifications'
 
 # endpoint for uploading video. note the graph-video subdomain.
@@ -166,7 +175,7 @@ RSVP_PUBLISH_ENDPOINTS = {
   'rsvp-yes': API_PUBLISH_RSVP_ATTENDING,
   'rsvp-no': API_PUBLISH_RSVP_DECLINED,
   'rsvp-maybe': API_PUBLISH_RSVP_MAYBE,
-  'rsvp-interested': API_PUBLISH_RSVP_INTERESTED,
+  'rsvp-interested': None,  # not supported. see API_PUBLISH_RSVP_INTERESTED
 }
 REACTION_CONTENT = {
   'LOVE': u'❤️',
@@ -732,6 +741,11 @@ class Facebook(source.Source):
           error_html="This looks like an <a href='http://indiewebcamp.com/rsvp'>RSVP</a>, "
           "but it's missing an <a href='http://indiewebcamp.com/comment'>in-reply-to</a> "
           "link to the Facebook event.")
+      elif verb == 'rsvp-interested':
+        # API doesn't support creating "interested" RSVPs.
+        # https://github.com/snarfed/bridgy/issues/717
+        msg = 'Sorry, the Facebook API doesn\'t support creating "interested" RSVPs. Try a "maybe" RSVP instead!'
+        return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
       # TODO: event invites
       if preview:
