@@ -191,10 +191,12 @@ class Handler(handlers.ModernHandler):
     })
 
     if format in ('json', 'activitystreams'):
+      # list of official MIME types:
+      # https://www.iana.org/assignments/media-types/media-types.xhtml
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(response, indent=2))
     elif format == 'atom':
-      self.response.headers['Content-Type'] = 'text/xml'
+      self.response.headers['Content-Type'] = 'application/atom+xml'
       hub = self.request.get('hub')
       self.response.out.write(atom.activities_to_atom(
         activities, actor,
@@ -207,7 +209,7 @@ class Handler(handlers.ModernHandler):
       if hub:
         self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
     elif format == 'xml':
-      self.response.headers['Content-Type'] = 'text/xml'
+      self.response.headers['Content-Type'] = 'application/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
     elif format == 'html':
       self.response.headers['Content-Type'] = 'text/html'

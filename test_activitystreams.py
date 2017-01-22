@@ -71,6 +71,7 @@ class HandlerTest(testutil.HandlerTest):
         'updatedSince': False,
         },
       json.loads(resp.body))
+    return resp
 
   def test_all_defaults(self):
     self.check_request('/')
@@ -121,11 +122,14 @@ class HandlerTest(testutil.HandlerTest):
     self.check_request('/@me/@all/@app/000/', None, None, None, '000')
 
   def test_json_format(self):
-    self.check_request('/@me/?format=json', None)
+    resp = self.check_request('/@me/?format=json', None)
+    self.assertEquals('application/json', resp.headers['Content-Type'])
 
   def test_xml_format(self):
     resp = self.get_response('/fake?format=xml')
     self.assertEquals(200, resp.status_int)
+    self.assertEquals('application/xml; charset=utf-8',
+                      resp.headers['Content-Type'])
     self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
@@ -152,6 +156,8 @@ class HandlerTest(testutil.HandlerTest):
       # include access_token param to check that it gets stripped
       resp = self.get_response('/fake?format=atom&access_token=foo&a=b')
       self.assertEquals(200, resp.status_int)
+      self.assertEquals('application/atom+xml; charset=utf-8',
+                        resp.headers['Content-Type'])
       self.assert_multiline_equals(
         test_module.ATOM % {
           'request_url': 'http://localhost/fake?format=atom&amp;access_token=foo&amp;a=b',
@@ -159,6 +165,11 @@ class HandlerTest(testutil.HandlerTest):
           'base_url': 'http://fa.ke/',
         },
         resp.body)
+
+  def test_html_format(self):
+    resp = self.get_response('/fake?format=html')
+    self.assertEquals(200, resp.status_int)
+    self.assertEquals('text/html', resp.headers['Content-Type'])
 
   def test_unknown_format(self):
     resp = self.get_response('/fake?format=bad')
