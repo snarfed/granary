@@ -250,6 +250,11 @@ class Source(object):
       * sorted: False
       * updatedSince: False
       * etag: string etag returned by the API's initial call to get activities
+
+    Raises:
+      :class:`ValueError`: if any argument is invalid for this source
+      :class:`NotImplementedError`: if the source doesn't support the requested
+        operation, e.g. Facebook doesn't support search.
     """
     raise NotImplementedError()
 
@@ -340,6 +345,9 @@ class Source(object):
       activity_author_id: string activity author id, optional. Needed for some
         sources (e.g. Facebook) to construct the comment permalink.
       activity: activity object, optional. May avoid an API call if provided.
+
+    Raises:
+      :class:`ValueError`: if any argument is invalid for this source
     """
     raise NotImplementedError()
 

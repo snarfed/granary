@@ -180,7 +180,7 @@ class Instagram(source.Source):
       if search_query.startswith('#'):
         search_query = search_query[1:]
       else:
-        raise NotImplementedError(
+        raise ValueError(
           'Instagram only supports search over hashtags, so search_query must '
           'begin with the # character.')
 

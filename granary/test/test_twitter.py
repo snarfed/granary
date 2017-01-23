@@ -716,6 +716,11 @@ class TwitterTest(testutil.TestCase):
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
 
+  def test_get_activities_bad_activity_id(self):
+    """https://github.com/snarfed/bridgy/issues/719"""
+    self.assertRaises(ValueError, self.twitter.get_activities,
+                      activity_id='123:abc')
+
   def test_get_activities_self(self):
     self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': ''}, [])
     self.mox.ReplayAll()
@@ -1038,10 +1043,18 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals(OBJECT, self.twitter.get_comment('123'))
 
+  def test_get_comment_bad_comment_id(self):
+    """https://github.com/snarfed/bridgy/issues/719"""
+    self.assertRaises(ValueError, self.twitter.get_comment, '123:abc')
+
   def test_get_share(self):
     self.expect_urlopen(API_STATUS % '123', RETWEETS[0])
     self.mox.ReplayAll()
     self.assert_equals(SHARES[0], self.twitter.get_share('user', 'tweet', '123'))
+
+  def test_get_share_bad_id(self):
+    """https://github.com/snarfed/bridgy/issues/719"""
+    self.assertRaises(ValueError, self.twitter.get_share, None, None, '123:abc')
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))

@@ -1257,7 +1257,7 @@ class FacebookTest(testutil.HandlerTest):
     self.assertEquals('123', obj['fb_id'])
 
   def test_get_activities_activity_id_no_underscore_or_user_id(self):
-    with self.assertRaises(NotImplementedError):
+    with self.assertRaises(ValueError):
       self.fb.get_activities(activity_id='34')
 
   def test_get_activities_response_not_json(self):
