@@ -288,6 +288,7 @@ Changelog
 ---
 
 ### 1.7 - unreleased
+* Source.get_activities(): start raising ValueError on bad argument values, notably invalid Facebook and Twitter ids and Instagram search queries.
 * Twitter:
     * Linkify @-mentions and hashtags in `preview_create()`.
 * Instagram:

@@ -140,7 +140,7 @@ class Handler(handlers.ModernHandler):
     # get activities
     try:
       response = src.get_activities_response(*args, **self.get_kwargs(src))
-    except NotImplementedError as e:
+    except (NotImplementedError, ValueError) as e:
       self.abort(400, str(e))
     except Exception as e:
       if util.is_connection_failure(e):

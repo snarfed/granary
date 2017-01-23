@@ -872,7 +872,7 @@ class InstagramTest(testutil.HandlerTest):
       group_id=source.SEARCH, search_query='#indieweb'))
 
   def test_get_activities_search_non_hashtag(self):
-    with self.assertRaises(NotImplementedError):
+    with self.assertRaises(ValueError):
       self.instagram.get_activities(search_query='foo')
 
   def test_get_activities_scrape_self(self):

@@ -238,6 +238,7 @@ class Twitter(source.Source):
 
     activities = []
     if activity_id:
+      self._validate_id(activity_id)
       tweets = [self.urlopen(API_STATUS % activity_id)]
       total_count = len(tweets)
     else:
@@ -511,6 +512,7 @@ class Twitter(source.Source):
       activity_author_id: string activity author id. Ignored.
       activity: activity object, optional
     """
+    self._validate_id(comment_id)
     url = API_STATUS % comment_id
     return self.tweet_to_object(self.urlopen(url))
 
@@ -523,6 +525,7 @@ class Twitter(source.Source):
       share_id: string id of the share object
       activity: activity object, optional
     """
+    self._validate_id(share_id)
     url = API_STATUS % share_id
     return self.retweet_to_object(self.urlopen(url))
 
@@ -1388,3 +1391,8 @@ class Twitter(source.Source):
     """Returns the Twitter URL for a tweet given a tweet object."""
     return self.status_url(tweet.get('user', {}).get('screen_name'),
                            tweet.get('id_str'))
+
+  @staticmethod
+  def _validate_id(id):
+      if not util.is_int(id):
+        raise ValueError('Twitter ids must be integers; got %s' % id)
