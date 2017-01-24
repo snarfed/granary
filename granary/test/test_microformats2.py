@@ -350,16 +350,16 @@ foo
     ]}
 
     self.assert_equals([{
-      'type': ['h-cite'],
+      'type': ['u-quotation-of', 'h-cite'],
       'properties': {'url': ['http://p'], 'name': ['p']},
     }, {
-      'type': ['h-cite'],
+      'type': ['u-quotation-of', 'h-cite'],
       'properties': {'url': ['http://a']},
     }], microformats2.object_to_json(obj)['children'])
 
     html = microformats2.object_to_html(obj)
     self.assert_multiline_in("""\
-<article class="h-cite">
+<article class="u-quotation-of h-cite">
 <span class="p-uid"></span>
 
 <a class="p-name u-url" href="http://p">p</a>
@@ -369,7 +369,7 @@ foo
 
 </article>
 
-<article class="h-cite">
+<article class="u-quotation-of h-cite">
 <span class="p-uid"></span>
 
 <a class="u-url" href="http://a">http://a</a>

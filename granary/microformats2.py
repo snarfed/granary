@@ -105,9 +105,9 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   Args:
     obj: dict, a decoded JSON ActivityStreams object
     trim_nulls: boolean, whether to remove elements with null or empty values
-    entry_class: string, the mf2 class that entries should be given (e.g.
-      'h-cite' when parsing a reference to a foreign entry). defaults to
-      'h-entry'
+    entry_class: string or sequence, the mf2 class(es) that entries should be
+      given (e.g. 'h-cite' when parsing a reference to a foreign entry).
+      defaults to 'h-entry'
     default_object_type: string, the ActivityStreams objectType to use if one
       is not present. defaults to None
     synthesize_content: whether to generate synthetic content if the object
@@ -145,7 +145,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   ret = {
     'type': (['h-card'] if obj_type == 'person'
              else ['h-card', 'p-location'] if obj_type == 'place'
-             else [entry_class]),
+             else [entry_class] if isinstance(entry_class, basestring)
+             else list(entry_class)),
     'properties': {
       'uid': [obj.get('id', '')],
       'name': [name],
@@ -173,7 +174,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
                   for c in obj.get('replies', {}).get('items', [])],
     },
-    'children': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
+    'children': [object_to_json(c, trim_nulls=False,
+                                entry_class=['u-quotation-of', 'h-cite'])
                  for c in primary.get('attachments', [])
                  if c.get('objectType') in ('note', 'article')],
   }
