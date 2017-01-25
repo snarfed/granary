@@ -53,6 +53,8 @@ API_POST_MEDIA = 'statuses/update_with_media.json'
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
 HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
+TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
+
 # Don't hit the RETWEETS endpoint more than this many times per
 # get_activities() call.
 # https://dev.twitter.com/docs/rate-limiting/1.1/limits
@@ -138,6 +140,11 @@ class Twitter(source.Source):
   <a href="%(url)s">#</a></p>
   </blockquote>
   """
+
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+    domain=DOMAIN,
+    approve=TWEET_URL_RE,
+    reject=r'https://twitter\.com/.+\?protected_redirect=true')
 
   def __init__(self, access_token_key, access_token_secret, username=None):
     """Constructor.
@@ -607,6 +614,11 @@ class Twitter(source.Source):
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
                                        prefer_name=not prefer_content,
                                        strip_first_video_tag=bool(video_url))
+    for att in obj.get('attachments', []):
+      url = self.URL_CANONICALIZER(att.get('url', ''))
+      if url and TWEET_URL_RE.match(url):
+        content += ' ' + url
+
     if not content:
       if type == 'activity':
         content = verb
