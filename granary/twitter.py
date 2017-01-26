@@ -622,9 +622,9 @@ class Twitter(source.Source):
         content += ' ' + url
         preview_description += """\
 <span class="verb">quote</span>
-<a href="%s">this tweet</a>:
+<a href="%s">this tweet</a>:<br>
 %s
-and """ % (url, self.embed_post(att))
+<br>and """ % (url, self.embed_post(att))
         break
 
     if not content:
