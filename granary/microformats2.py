@@ -280,8 +280,10 @@ def json_to_object(mf2, actor=None):
   urls = props.get('url') and get_string_urls(props.get('url'))
 
   # quotations: https://indieweb.org/quotation#How_to_markup
-  attachments = [json_to_object(child) for child in mf2.get('children', [])
-                 if set(child.get('type', [])) & set(('h-cite', 'u-quotation-of'))]
+  attachments = [
+    json_to_object(quote)
+    for quote in mf2.get('children', []) + props.get('quotation-of', [])
+    if 'h-cite' in set(quote.get('type', []))]
 
   obj = {
     'id': prop.get('uid'),
