@@ -279,6 +279,10 @@ def json_to_object(mf2, actor=None):
 
   urls = props.get('url') and get_string_urls(props.get('url'))
 
+  # quotations: https://indieweb.org/quotation#How_to_markup
+  attachments = [json_to_object(child) for child in mf2.get('children', [])
+                 if set(child.get('type', [])) & set(('h-cite', 'u-quotation-of'))]
+
   obj = {
     'id': prop.get('uid'),
     'objectType': as_type,
@@ -298,6 +302,7 @@ def json_to_object(mf2, actor=None):
              if isinstance(cat, basestring)
              else json_to_object(cat)
              for cat in props.get('category', [])],
+    'attachments': attachments,
   }
 
   # mf2util uses the indieweb/mf2 location algorithm to collect location properties.

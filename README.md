@@ -290,9 +290,10 @@ Changelog
 ### 1.7 - unreleased
 * Source.get_activities(): start raising ValueError on bad argument values, notably invalid Facebook and Twitter ids and Instagram search queries.
 * microformats2:
-    * Use [experimental u-quotation-of property](https://indieweb.org/quotation#How_to_markup) for attachments, e.g. quote tweets.
+    * Interpret `h-cite` and [`u-quotation-of` (experimental)](https://indieweb.org/quotation#How_to_markup) as attachments, e.g. for quote tweets.
 * Twitter:
     * Linkify @-mentions and hashtags in `preview_create()`.
+    * Support creating quote tweets from attachments with Twitter URLs.
 * Instagram:
     * Improve HTML scraping error handling.
 * Facebook:
