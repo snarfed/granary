@@ -1,0 +1,13 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "content": ["i hereby quote"]
+  },
+  "children": [{
+    "type": ["h-cite", "u-quotation-of"],
+    "properties": {
+      "content": ["this is being quoted"],
+      "url": ["http://quoted/post"]
+    }
+  }]
+}

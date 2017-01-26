@@ -1,0 +1,9 @@
+{
+  "objectType": "note",
+  "content": "i hereby quote",
+  "attachments": [{
+    "objectType": "note",
+    "content": "this is being quoted",
+    "url": "http://quoted/post"
+  }]
+}
