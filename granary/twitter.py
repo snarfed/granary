@@ -614,10 +614,18 @@ class Twitter(source.Source):
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
                                        prefer_name=not prefer_content,
                                        strip_first_video_tag=bool(video_url))
+
+    preview_description = ''
     for att in obj.get('attachments', []):
       url = self.URL_CANONICALIZER(att.get('url', ''))
       if url and TWEET_URL_RE.match(url):
         content += ' ' + url
+        preview_description += """\
+<span class="verb">quote</span>
+<a href="%s">this tweet</a>:
+%s
+and """ % (url, self.embed_post(att))
+        break
 
     if not content:
       if type == 'activity':
@@ -687,9 +695,11 @@ class Twitter(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-        return source.creation_result(
-          description='<span class="verb">favorite</span> <a href="%s">'
-                      'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
+        preview_description += """\
+<span class="verb">favorite</span>
+<a href="%s">this tweet</a>:
+%s""" % (base_url, self.embed_post(base_obj))
+        return source.creation_result(description=preview_description)
       else:
         data = urllib.urlencode({'id': base_id})
         self.urlopen(API_POST_FAVORITE, data=data)
@@ -705,9 +715,11 @@ class Twitter(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-        return source.creation_result(
-          description='<span class="verb">retweet</span> <a href="%s">'
-                      'this tweet</a>:\n%s' % (base_url, self.embed_post(base_obj)))
+          preview_description += """\
+<span class="verb">retweet</span>
+<a href="%s">this tweet</a>:
+%s""" % (base_url, self.embed_post(base_obj))
+          return source.creation_result(description=preview_description)
       else:
         data = urllib.urlencode({'id': base_id})
         resp = self.urlopen(API_POST_RETWEET % base_id, data=data)
@@ -718,15 +730,15 @@ class Twitter(source.Source):
       data = {'status': content}
 
       if is_reply:
-        description = \
-          '<span class="verb">@-reply</span> to <a href="%s">this tweet</a>:\n%s' % (
-            base_url, self.embed_post(base_obj))
+        preview_description += """\
+<span class="verb">@-reply</span> to <a href="%s">this tweet</a>:
+%s""" % (base_url, self.embed_post(base_obj))
         data.update({
           'in_reply_to_status_id': base_id,
           'auto_populate_reply_metadata': 'true',
         })
       else:
-        description = '<span class="verb">tweet</span>:'
+        preview_description += '<span class="verb">tweet</span>:'
 
       if video_url:
         preview_content += ('<br /><br /><video controls src="%s"><a href="%s">'
@@ -759,7 +771,8 @@ class Twitter(source.Source):
         data['long'] = lng
 
       if preview:
-        return source.creation_result(content=preview_content, description=description)
+        return source.creation_result(content=preview_content,
+                                      description=preview_description)
       else:
         resp = self.urlopen(API_POST_TWEET, data=urllib.urlencode(data))
         resp['type'] = 'comment' if is_reply else 'post'

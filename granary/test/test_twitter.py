@@ -1937,7 +1937,10 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                        self.twitter.create(LIKES_FROM_HTML[0]).content)
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
-    self.assertIn('<span class="verb">favorite</span> <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:', preview.description)
+    self.assertIn("""\
+<span class="verb">favorite</span>
+<a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
+                  preview.description)
 
   def test_create_retweet(self):
     self.expect_urlopen(twitter.API_POST_RETWEET % 333, TWEET, params={'id': 333})
@@ -1952,7 +1955,10 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.assert_equals(tweet, self.twitter.create(SHARES[0]).content)
 
     preview = self.twitter.preview_create(SHARES[0])
-    self.assertIn('<span class="verb">retweet</span> <a href="https://twitter.com/foo/status/333">this tweet</a>:', preview.description)
+    self.assertIn("""\
+<span class="verb">retweet</span>
+<a href="https://twitter.com/foo/status/333">this tweet</a>:""",
+                  preview.description)
 
   def test_create_quote_tweet(self):
     self.expect_urlopen(
@@ -1968,6 +1974,10 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
     preview = self.twitter.preview_create(QUOTE_ACTIVITY['object'])
     self.assertEquals('I agree with this <a href="https://twitter.com/snarfed_org/status/100">twitter.com/snarfed_org/st...</a>', preview.content)
+    self.assertIn("""\
+<span class="verb">quote</span>
+<a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
+                  preview.description)
 
   def test_create_unsupported_type(self):
     for fn in self.twitter.create, self.twitter.preview_create:
