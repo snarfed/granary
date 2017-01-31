@@ -1,0 +1,16 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "content": ["i hereby quote"],
+    "quotation-of": [
+      "this should be ignored",
+      {
+        "type": ["h-cite"],
+        "properties": {
+          "content": ["this is being quoted"],
+          "url": ["http://quoted/post"]
+        }
+      }
+    ]
+  }
+}

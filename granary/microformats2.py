@@ -283,7 +283,7 @@ def json_to_object(mf2, actor=None):
   attachments = [
     json_to_object(quote)
     for quote in mf2.get('children', []) + props.get('quotation-of', [])
-    if 'h-cite' in set(quote.get('type', []))]
+    if isinstance(quote, dict) and 'h-cite' in set(quote.get('type', []))]
 
   obj = {
     'id': prop.get('uid'),
