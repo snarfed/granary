@@ -9,6 +9,7 @@ import re
 import urlparse
 import xml.sax.saxutils
 
+from bs4 import BeautifulSoup
 import jinja2
 import mf2py
 import mf2util
@@ -69,7 +70,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
 
     # strip HTML tags. the Atom spec says title is plain text:
     # http://atomenabled.org/developers/syndication/#requiredEntryElements
-    a['title'] = xml.sax.saxutils.escape(source.strip_html_tags(a['title']))
+    a['title'] = xml.sax.saxutils.escape(BeautifulSoup(a['title']).get_text(''))
 
     # Normalize attachments.image to always be a list.
     attachments = a.get('attachments') or obj.get('attachments') or []

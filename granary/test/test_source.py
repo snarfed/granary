@@ -358,6 +358,8 @@ class SourceTest(testutil.TestCase):
       self.assertEqual('c', cfc(base, {'content': 'c', 'displayName': 'n'}))
       self.assertEqual('s', cfc(base, {'content': 'c', 'displayName': 'n',
                                        'summary': 's'}))
+      self.assertEqual('xy\nz', cfc(base, {'content':
+                                           '<p>x<a href="l">y</a><br />z</p>'}))
       self.assertEqual('c<a&b\nhai', cfc(base, {'content': 'c<a&b\nhai'},
                                          ignore_formatting=True))
       # when the text of content and summary are the same, content should
@@ -384,7 +386,7 @@ class SourceTest(testutil.TestCase):
       # https://github.com/snarfed/bridgy/issues/612#issuecomment-175096511
       # based on http://tantek.com/2016/010/t2/waves-break-rush-lava-rocks
       self.assertEqual('Watching waves break.', cfc(base, {
-        'content': '<video class="u-video" loop="loop"><a href="xyz>a video</a>'
+        'content': '<video class="u-video" loop="loop"><a href="xyz">a video</a>'
                    '</video>Watching waves break.',
       }, strip_first_video_tag=True))
 
@@ -394,6 +396,17 @@ class SourceTest(testutil.TestCase):
                      cfc({'objectType': 'note'}, {'content': '<span /> 2016. #'}))
     # double check our hacky fix. (programming is the worst!)
     self.assertEqual('XY', cfc({'objectType': 'note'}, {'content': 'XY'}))
+
+    # test stripping .u-quotation-of
+    # https://github.com/snarfed/bridgy/issues/723
+    self.assertEqual('Watching waves break.', cfc({'objectType': 'note'}, {'content': """
+Watching  \t waves
+ break.
+<cite class="h-cite u-quotation-of">
+  <a class="u-url" href="https://twitter.com/schnarfed/status/448205453911015425">
+    A provocative statement.
+  </a>
+</cite>"""}, strip_quotations=True))
 
   def test_activity_changed(self):
     fb_post = test_facebook.ACTIVITY
@@ -441,12 +454,6 @@ class SourceTest(testutil.TestCase):
     self.assertEquals('1', self.source.post_id('http://x/y/1/'))
     self.assertIsNone(self.source.post_id('http://x/'))
     self.assertIsNone(self.source.post_id(''))
-
-  def test_strip_html_tags(self):
-    self.assertEquals('', source.strip_html_tags(''))
-    self.assertEquals('foo', source.strip_html_tags('foo'))
-    self.assertEquals('xyz', source.strip_html_tags(
-      '<p>x<a href="l">y</a><br />z</p>'))
 
   def test_is_public(self):
     for obj in ({'to': [{'objectType': 'unknown'}]},
