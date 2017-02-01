@@ -55,11 +55,6 @@ CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
 
 
-def strip_html_tags(str):
-  """Returns the text content of an HTML string, with tags removed."""
-  return BeautifulSoup(str, 'html.parser').get_text('')
-
-
 def html_to_text(html):
   """Converts string html to string text with html2text."""
   if html:
@@ -824,7 +819,7 @@ class Source(object):
     return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
   def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False,
-                          strip_first_video_tag=False):
+                          strip_first_video_tag=False, strip_quotations=False):
     """Returns content text for :meth:`create()` and :meth:`preview_create()`.
 
     Returns summary if available, then content, then displayName.
@@ -839,6 +834,8 @@ class Source(object):
       prefer_name: boolean, whether to prefer displayName to content
       strip_first_video_tag: if true, removes the first <video> tag. useful when
         it will be uploaded and attached to the post natively in the silo.
+      strip_first_video_tag: if true, removes .u-quotation-of tags. useful when
+        creating quote tweets.
 
     Returns:
       string, possibly empty
@@ -847,12 +844,28 @@ class Source(object):
     name = obj.get('displayName', '').strip()
     content = obj.get('content', '').strip()
 
+    # note that unicode() on a BeautifulSoup object preserves HTML and
+    # whitespace, even after modifying the DOM, which is important for
+    # formatting.
+    #
+    # The catch is that it adds a '<html><head></head><body>' header and
+    # '</body></html>' footer. ah well. harmless.
+    soup = BeautifulSoup(content)
     if strip_first_video_tag:
-      # don't use BeautifulSoup because we want to preserve exact formatting
-      # and whitespace otherwise
-      content = re.sub(r'<video[^<>]*>.*</video>', '', content, count=1)
+      video = soup.video or soup.find(class_='u-video')
+      if video:
+        video.extract()
+        content = unicode(soup)
 
-    if summary == strip_html_tags(content).strip():
+    if strip_quotations:
+      quotations = soup.find_all(class_='u-quotation-of')
+      if quotations:
+        for q in quotations:
+          q.extract()
+        content = unicode(soup)
+
+    # compare to content with HTML tags stripped
+    if summary == soup.get_text('').strip():
       # summary and content are the same; prefer content so that we can use its
       # HTML formatting.
       summary = None
