@@ -611,21 +611,22 @@ class Twitter(source.Source):
     base_url = self.base_object(obj).get('url')
     prefer_content = type == 'note' or (base_url and (type == 'comment'
                                                       or obj.get('inReplyTo')))
-    content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
-                                       prefer_name=not prefer_content,
-                                       strip_first_video_tag=bool(video_url))
-
     preview_description = ''
+    quote_tweet_url = None
     for att in obj.get('attachments', []):
       url = self.URL_CANONICALIZER(att.get('url', ''))
       if url and TWEET_URL_RE.match(url):
-        content += ' ' + url
+        quote_tweet_url = url
         preview_description += """\
 <span class="verb">quote</span>
 <a href="%s">this tweet</a>:<br>
 %s
 <br>and """ % (url, self.embed_post(att))
         break
+
+    content = self._content_for_create(
+      obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content,
+      strip_first_video_tag=bool(video_url), strip_quotations=bool(quote_tweet_url))
 
     if not content:
       if type == 'activity':
@@ -675,8 +676,8 @@ class Twitter(source.Source):
 
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
-    content = self._truncate(
-      content, obj.get('url'), include_link, type)
+    content = self._truncate(content, obj.get('url'), include_link, type,
+                             quote_tweet=quote_tweet_url)
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -798,7 +799,7 @@ class Twitter(source.Source):
 
     return source.creation_result(resp)
 
-  def _truncate(self, content, url, include_link, type):
+  def _truncate(self, content, url, include_link, type, quote_tweet=None):
     """Shorten tweet content to fit within the 140 character limit.
 
     Args:
@@ -806,6 +807,8 @@ class Twitter(source.Source):
       url: string
       include_link: string
       type: string: 'article', 'note', etc.
+      quote_tweet: string URL, optional. If provided,
+        it will be appended to the content, *after* truncating.
 
     Return: string, the possibly shortened and ellipsized tweet text
     """
@@ -814,13 +817,22 @@ class Twitter(source.Source):
     else:
       format = brevity.FORMAT_NOTE
 
-    return brevity.shorten(
+    target_length = MAX_TWEET_LENGTH
+    if quote_tweet:
+      target_length -= (TCO_LENGTH + 1)
+
+    truncated = brevity.shorten(
       content,
       # permalink is included only when the text is truncated
       permalink=url if include_link != source.OMIT_LINK else None,
       # permashortlink is always included
       permashortlink=url if include_link == source.INCLUDE_LINK else None,
-      target_length=MAX_TWEET_LENGTH, link_length=TCO_LENGTH, format=format)
+      target_length=target_length, link_length=TCO_LENGTH, format=format)
+
+    if quote_tweet:
+      truncated += ' ' + quote_tweet
+
+    return truncated
 
   def upload_images(self, urls):
     """Uploads one or more images from web URLs.

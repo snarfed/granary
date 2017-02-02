@@ -1979,6 +1979,26 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
                   preview.description)
 
+  def test_create_quote_tweet_strips_quotation(self):
+    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
+        'status': 'I agree with this https://twitter.com/snarfed_org/status/100',
+      })
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(QUOTE_ACTIVITY['object'])
+    obj['content'] = 'I\tagree\n<cite class="u-quotation-of h-cite">foo</cite>\nwith this'
+    created = self.twitter.create(obj)
+
+  def test_create_quote_tweet_truncated_content(self):
+    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
+        'status':(u'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
+      })
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(QUOTE_ACTIVITY['object'])
+    obj['content'] = u'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X'
+    created = self.twitter.create(obj)
+
   def test_create_unsupported_type(self):
     for fn in self.twitter.create, self.twitter.preview_create:
       result = fn({'objectType': 'activity', 'verb': 'rsvp-yes'})
