@@ -161,7 +161,7 @@ class GooglePlus(source.Source):
           else:
             obj.pop('replies', None)
             code, body = util.interpret_http_exception(exc)
-            if code not in ('404', '500'):  # these happen; ignore them
+            if code not in ('404', '500', '502', '504'):  # these happen; ignore them
               raise exc
 
         batch.add(call, callback=functools.partial(set_comments, activity=activity))
@@ -299,7 +299,7 @@ class GooglePlus(source.Source):
       else:
         obj.pop(collection, None)
         code, body = util.interpret_http_exception(exc)
-        if code not in ('404', '500'):  # these happen; ignore them
+        if code not in ('404', '500', '502', '504'):  # these happen; ignore them
           raise exc
 
     batch.add(call, callback=set_tags)
