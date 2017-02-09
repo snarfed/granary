@@ -142,11 +142,8 @@ class Handler(handlers.ModernHandler):
       response = src.get_activities_response(*args, **self.get_kwargs(src))
     except (NotImplementedError, ValueError) as e:
       self.abort(400, str(e))
-    except Exception as e:
-      if util.is_connection_failure(e):
-        # HTTP 504 Gateway Timeout
-        self.abort(504, str(e))
-      raise
+      # other exceptions are handled by webutil.handlers.handle_exception(),
+      # which uses interpret_http_exception(), etc.
 
     # fetch actor if necessary
     actor = response.get('actor')

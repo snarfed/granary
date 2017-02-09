@@ -123,11 +123,8 @@ class UrlHandler(activitystreams.Handler):
         resp = util.urlopen(url)
       except (ValueError, httplib.InvalidURL) as e:
         self.abort(400, str(e))
-      except Exception as e:
-        if util.is_connection_failure(e):
-          # HTTP 504 Gateway Timeout
-          self.abort(504, str(e))
-        raise
+        # other exceptions are handled by webutil.handlers.handle_exception(),
+        # which uses interpret_http_exception(), etc.
 
       if url != resp.geturl():
         url = resp.geturl()
