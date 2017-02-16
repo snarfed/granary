@@ -294,6 +294,7 @@ Changelog
 * Twitter:
     * Linkify @-mentions and hashtags in `preview_create()`.
     * Support creating quote tweets from attachments with Twitter URLs.
+    * When converting quote tweets to AS, strip quoted tweet URL from end of text.
 * Instagram:
     * Improve HTML scraping error handling.
 * Facebook:
