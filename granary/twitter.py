@@ -1080,6 +1080,7 @@ class Twitter(source.Source):
     retweeted = tweet.get('retweeted_status')
     base_tweet = retweeted if retweeted else tweet
     entities = self._get_entities(base_tweet)
+    text = base_tweet.get('text') or ''
 
     user = tweet.get('user')
     if user:
@@ -1108,8 +1109,19 @@ class Twitter(source.Source):
 
     # if this tweet is quoting another tweet, include it as an attachment
     quoted = tweet.get('quoted_status')
+    quoted_url = None
     if quoted:
-      obj.setdefault('attachments', []).append(self.tweet_to_object(quoted))
+      quoted_obj = self.tweet_to_object(quoted)
+      obj.setdefault('attachments', []).append(quoted_obj)
+      quoted_url = quoted_obj.get('url')
+
+      # remove quoted tweet URL from text
+      url_entities = entities.get('urls', [])
+      for i, entity in enumerate(url_entities):
+        indices = entity.get('indices')
+        if indices and entity.get('expanded_url') == quoted_url:
+          text = text[:indices[0]] + text[indices[1]:]
+          del url_entities[i]
 
     # tags
     obj['tags'] = [

@@ -500,8 +500,16 @@ QUOTE_TWEET = {
   'is_quote_status': True,
   'quoted_status_id_str': TWEET['id_str'],
   'quoted_status': TWEET,
-  'text': 'I agree with this',
+  'text': 'I agree with this https://t.co/ww6HD8KroG',
   'user': {'screen_name': 'kylewmahan'},
+  'entities': {
+    'urls': [{
+      'url': 'https://t.co/ww6HD8KroG',
+      'expanded_url': 'https://twitter.com/snarfed_org/status/100',
+      'display_url': u'twitter.com/schnar…',
+      'indices': [18, 41],
+    }],
+  },
 }
 QUOTE_ACTOR = {
   'displayName': 'kylewmahan',
@@ -519,7 +527,7 @@ QUOTE_ACTIVITY = {
     'id': 'tag:twitter.com:2345',
     'url': 'https://twitter.com/kylewmahan/status/2345',
     'objectType': 'note',
-    'content': 'I agree with this',
+    'content': 'I agree with this ',
     'attachments': [OBJECT],
     'author': QUOTE_ACTOR,
   },
@@ -530,7 +538,7 @@ RETWEETED_QUOTE_TWEET = {
   'retweeted_status': QUOTE_TWEET,
   'is_quote_status': True,
   'quoted_status_id_str': TWEET['id_str'],
-  'text': 'RT @kylewmahan: I agree with this',
+  'text': 'RT @kylewmahan: I agree with this ',
   'user': USER,
 }
 QUOTE_SHARE = {
@@ -1066,6 +1074,21 @@ class TwitterTest(testutil.TestCase):
   def test_tweet_to_activity_empty(self):
     # just test that we don't crash
     self.twitter.tweet_to_activity({})
+
+  def test_quote_tweet_to_activity(self):
+    self.assert_equals(QUOTE_ACTIVITY, self.twitter.tweet_to_activity(QUOTE_TWEET))
+
+  def test_quote_tweet_to_activity_without_quoted_tweet_url_entity(self):
+    quote_tweet = copy.deepcopy(QUOTE_TWEET)
+    quote_tweet['entities']['urls'][0]['expanded_url'] = 'http://foo/bar'
+
+    suffix = u' twitter.com/schnar…'
+    content = self.twitter.tweet_to_activity(quote_tweet)['object']['content']
+    self.assertTrue(content.endswith(suffix), content)
+
+    del quote_tweet['entities']
+    activity = self.twitter.tweet_to_activity(quote_tweet)['object']['content']
+    self.assertTrue(content.endswith(suffix), content)
 
   def test_tweet_to_object_full(self):
     self.assert_equals(OBJECT, self.twitter.tweet_to_object(TWEET))
