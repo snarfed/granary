@@ -1082,13 +1082,12 @@ class TwitterTest(testutil.TestCase):
     quote_tweet = copy.deepcopy(QUOTE_TWEET)
     quote_tweet['entities']['urls'][0]['expanded_url'] = 'http://foo/bar'
 
-    suffix = u' twitter.com/schnar…'
-    content = self.twitter.tweet_to_activity(quote_tweet)['object']['content']
-    self.assertTrue(content.endswith(suffix), content)
+    self.assert_equals(u'I agree with this twitter.com/schnar…',
+                       self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
 
     del quote_tweet['entities']
-    activity = self.twitter.tweet_to_activity(quote_tweet)['object']['content']
-    self.assertTrue(content.endswith(suffix), content)
+    self.assert_equals('I agree with this https://t.co/ww6HD8KroG',
+                       self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
 
   def test_tweet_to_object_full(self):
     self.assert_equals(OBJECT, self.twitter.tweet_to_object(TWEET))

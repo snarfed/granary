@@ -1169,7 +1169,6 @@ class Twitter(source.Source):
 
     # text content. linkify entities. convert start/end indices to start/length,
     # and replace t.co URLs with real "display" URLs.
-    text = base_tweet.get('text') or ''
     text_start, text_end = (0, len(text))
 
     full_text = base_tweet.get('full_text')
