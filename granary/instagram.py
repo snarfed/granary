@@ -745,7 +745,7 @@ class Instagram(source.Source):
       # as mentioned above, Instagram sometimes returns 200 with incomplete HTML
       logging.warning('JSON script close tag not found!')
       return [], None
-    data = json_module.loads(html[start:end])
+    data = util.trim_nulls(json_module.loads(html[start:end]))
 
     entry_data = data.get('entry_data', {})
     activities = []
