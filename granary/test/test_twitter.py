@@ -1089,6 +1089,27 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals('I agree with this https://t.co/ww6HD8KroG',
                        self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
 
+  def test_tweet_to_object_multi_byte_unicode_chars(self):
+    # the first three unicode chars in this string and in the text are the '100'
+    # emoji, which is multi-code-point. the emacs font i use doesn't render it,
+    # so it looks blank.
+    self.assert_equals(
+      u'💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>)',
+      self.twitter.tweet_to_object({
+        'id_str': '831552681210556416',
+        'text': u'💯💯💯 (by @itsmaeril) https://t.co/pWrOHzuHkP',
+        'entities': {
+          'user_mentions': [{
+            'screen_name': 'itsmaeril',
+            'indices': [8, 18]
+          }],
+          'media': [{
+            'indices': [20, 43],
+            'media_url': 'http://pbs.twimg.com/media/C4pEu77UkAAVy9l.jpg',
+          }]
+        },
+      })['content'])
+
   def test_tweet_to_object_full(self):
     self.assert_equals(OBJECT, self.twitter.tweet_to_object(TWEET))
 

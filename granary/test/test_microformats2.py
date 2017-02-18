@@ -264,6 +264,23 @@ foo
       }],
     }))
 
+  def test_render_content_multi_byte_unicode_chars(self):
+    """Based on https://twitter.com/schnarfed/status/831552681210556416"""
+    # the first three unicode chars in this string and in the text are the '100'
+    # emoji, which is multi-byte. the emacs font i use doesn't render it, so it
+    # looks blank.
+    self.assert_equals(
+      u'💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>)',
+      microformats2.render_content({
+        'content': u'\U0001f4af\U0001f4af\U0001f4af (by @itsmaeriHkP',
+        'tags': [{
+          'displayName': 'Maeril',
+          'objectType': 'person',
+          'startIndex': 8,
+          'length': 10,
+          'url': 'https://twitter.com/itsmaeril',
+        }]}))
+
   def test_escape_html_attribute_values(self):
     self.assert_equals("""\
 <article class="h-entry">
