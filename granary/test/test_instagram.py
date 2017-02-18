@@ -1375,6 +1375,23 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals([], activities)
     self.assertIsNone(viewer)
 
+  def test_html_to_activities_trims_nulls(self):
+    activities, viewer = self.instagram.html_to_activities(HTML_HEADER + json.dumps({
+      'entry_data': {
+        'FeedPage': [{
+          'feed': {
+            'media': {
+              'nodes': None,
+            }
+          }
+        }],
+        'ProfilePage': {'user': None},
+        'PostPage': None,
+      },
+    }) + HTML_FOOTER)
+    self.assert_equals([], activities)
+    self.assertIsNone(viewer)
+
   def test_id_to_shortcode(self):
     for shortcode, id in (
         (None, None),
