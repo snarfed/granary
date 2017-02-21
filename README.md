@@ -299,6 +299,8 @@ Changelog
     * Improve HTML scraping error handling.
 * Facebook:
     * Disable creating "interested" RSVPs, since Facebook's API doesn't allow it.
+* Atom:
+    * Support [media enclosures](http://atomenabled.org/developers/syndication/#link) for audio and video attachments.
 
 ### 1.6 - 2016-11-26
 * Twitter:

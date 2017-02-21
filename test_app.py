@@ -135,6 +135,7 @@ foo bar
   <updated>2012-03-04T18:20:37+00:00</updated>
 
   <link rel="self" type="application/atom+xml" href="https://perma/link" />
+
 </entry>
 """
 

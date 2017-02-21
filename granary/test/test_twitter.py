@@ -644,6 +644,7 @@ ATOM = """\
     <georss:featureName>Carcassonne, Aude</georss:featureName>
 
   <link rel="self" type="application/atom+xml" href="https://twitter.com/snarfed_org/status/100" />
+
 </entry>
 
 </feed>
