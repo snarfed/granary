@@ -296,6 +296,7 @@ Changelog
     * Linkify @-mentions and hashtags in `preview_create()`.
     * Support creating quote tweets from attachments with Twitter URLs.
     * When converting quote tweets to AS, strip quoted tweet URL from end of text.
+    * Fix bug in converting and linkifying entities (links, user mentions, etc) when text has Unicode high code points, e.g. some emoji.
 * Instagram:
     * Improve HTML scraping error handling.
 * Facebook:

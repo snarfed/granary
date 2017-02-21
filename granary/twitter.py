@@ -1080,7 +1080,7 @@ class Twitter(source.Source):
     retweeted = tweet.get('retweeted_status')
     base_tweet = retweeted if retweeted else tweet
     entities = self._get_entities(base_tweet)
-    text = base_tweet.get('text') or ''
+    text = util.WideUnicode(base_tweet.get('text') or '')
 
     user = tweet.get('user')
     if user:
@@ -1173,17 +1173,17 @@ class Twitter(source.Source):
 
     full_text = base_tweet.get('full_text')
     if full_text:
-      text = full_text
+      text = util.WideUnicode(full_text)
       text_start, text_end = (tweet['display_text_range']
                               if tweet.get('display_text_range')
-                              else (0, len(full_text)))
+                              else (0, len(text)))
       obj['to'].extend(tag for tag in obj['tags']
                        if tag.get('objectType') == 'person'
                        and tag.get('indices')[1] <= text_start)
 
     # convert start/end indices to start/length, and replace t.co URLs with
     # real "display" URLs.
-    content = rt_prefix + text[text_start:text_end]
+    content = util.WideUnicode(rt_prefix + text[text_start:text_end])
     offset = len(rt_prefix) - text_start
     for t in obj['tags']:
       start, end = t.pop('indices', None) or (0, 0)
@@ -1194,7 +1194,7 @@ class Twitter(source.Source):
         if t['objectType'] in ('article', 'image'):
           tag_text = t.get('displayName', t.get('url'))
           if tag_text is not None:
-            content = content[:start] + tag_text + content[end:]
+            content = util.WideUnicode(content[:start] + tag_text + content[end:])
             offset += len(tag_text) - length
             length = len(tag_text)
         t.update({'startIndex': start, 'length': length})
