@@ -1090,6 +1090,29 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals('I agree with this https://t.co/ww6HD8KroG',
                        self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
 
+  def test_tweet_to_object_unicode_high_code_points(self):
+    # the first three unicode chars in this string and in the text are the '100'
+    # emoji, which is a high code point, ie above the Basic Multi-lingual Plane
+    # (ie 16 bits). the emacs font i use doesn't render it, so it looks blank.
+    obj = self.twitter.tweet_to_object({
+      'id_str': '831552681210556416',
+      'text': u'💯💯💯 (by @itsmaeril) https://t.co/pWrOHzuHkP',
+      'entities': {
+        'user_mentions': [{
+          'screen_name': 'itsmaeril',
+          'indices': [8, 18]
+        }],
+        'media': [{
+          'indices': [20, 43],
+          'media_url': 'http://pbs.twimg.com/media/C4pEu77UkAAVy9l.jpg',
+        }]
+      },
+    })
+    self.assert_equals(u'💯💯💯 (by @itsmaeril) ', obj['content'])
+    self.assert_equals(
+      u'💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>) ',
+      microformats2.render_content(obj).splitlines()[0])
+
   def test_tweet_to_object_full(self):
     self.assert_equals(OBJECT, self.twitter.tweet_to_object(TWEET))
 
