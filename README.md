@@ -291,6 +291,7 @@ Changelog
 * Source.get_activities(): start raising ValueError on bad argument values, notably invalid Facebook and Twitter ids and Instagram search queries.
 * microformats2:
     * Interpret `h-cite` and [`u-quotation-of` (experimental)](https://indieweb.org/quotation#How_to_markup) as attachments, e.g. for quote tweets.
+    * Convert [audio](http://indieweb.org/audio) and [video](http://indieweb.org/video) properties to AS attachments.
 * Twitter:
     * Linkify @-mentions and hashtags in `preview_create()`.
     * Support creating quote tweets from attachments with Twitter URLs.

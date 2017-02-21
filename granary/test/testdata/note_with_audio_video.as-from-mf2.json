@@ -1,0 +1,12 @@
+{
+  "objectType": "note",
+  "content": "something",
+  "attachments": [{
+    "objectType": "audio",
+    "url": "http://a/podcast.mp3"
+  }, {
+    "objectType": "video",
+    "url": "http://a/vidjo.mov"
+  }],
+  "stream": [{"url": "http://a/vidjo.mov"}]
+}

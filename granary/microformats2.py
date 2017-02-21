@@ -285,6 +285,11 @@ def json_to_object(mf2, actor=None):
     for quote in mf2.get('children', []) + props.get('quotation-of', [])
     if isinstance(quote, dict) and 'h-cite' in set(quote.get('type', []))]
 
+  # audio and video
+  for type in 'audio', 'video':
+    attachments.extend({'objectType': type, 'url': url}
+                       for url in get_string_urls(props.get(type, [])))
+
   obj = {
     'id': prop.get('uid'),
     'objectType': as_type,

@@ -1,0 +1,8 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "content": "something",
+    "audio": ["http://a/podcast.mp3"],
+    "video": ["http://a/vidjo.mov"]
+  }
+}
