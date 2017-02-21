@@ -48,7 +48,6 @@ class AtomTest(testutil.HandlerTest):
       '<title>foo &amp; bar</title>\n',
       atom.activities_to_atom([activity], test_facebook.ACTOR))
 
-
   def test_render_content_as_html(self):
     self.assert_multiline_in(
       '<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> ',
@@ -308,6 +307,7 @@ my content
   <updated></updated>
 
   <link rel="self" type="application/atom+xml" href="http://my/post" />
+
 </entry>
 
 </feed>
@@ -377,3 +377,21 @@ going to Homebrew Website Club
 </author>
 """.encode('utf-8'), got.encode('utf-8'))
 
+  def test_media_enclosures(self):
+    self.assert_multiline_in("""\
+<link rel="enclosure" href="http://a/podcast.mp3" />
+
+<link rel="enclosure" href="http://a/vidjo.mov" />
+""",
+      atom.activities_to_atom([{
+        'object': {
+          'content': 'foo bar',
+          'attachments': [{
+            'objectType': 'audio',
+            'url': 'http://a/podcast.mp3',
+          }, {
+            'objectType': 'video',
+            'url': 'http://a/vidjo.mov',
+          }],
+        },
+      }], {}))

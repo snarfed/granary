@@ -990,6 +990,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
     <georss:featureName>Lake Merced</georss:featureName>
 
   <link rel="self" type="application/atom+xml" href="https://www.facebook.com/212038/posts/10100176064482163" />
+
 </entry>
 
 </feed>
