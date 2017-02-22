@@ -606,13 +606,13 @@ def render_content(obj, include_location=True, synthesize_content=True):
   if mentions:
     mentions.sort(key=lambda t: t['startIndex'])
     last_end = 0
-    orig = content
-    content = ''
+    orig = util.WideUnicode(content)
+    content = util.WideUnicode(u'')
     for tag in mentions:
       start = tag['startIndex']
       end = start + tag['length']
-      content += orig[last_end:start]
-      content += '<a href="%s">%s</a>' % (tag['url'], orig[start:end])
+      content = util.WideUnicode(u'%s%s<a href="%s">%s</a>' % (
+        content, orig[last_end:start], tag['url'], orig[start:end]))
       last_end = end
 
     content += orig[last_end:]

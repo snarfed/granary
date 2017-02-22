@@ -1091,9 +1091,14 @@ class TwitterTest(testutil.TestCase):
                        self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
 
   def test_tweet_to_object_unicode_high_code_points(self):
-    # the first three unicode chars in this string and in the text are the '100'
-    # emoji, which is a high code point, ie above the Basic Multi-lingual Plane
-    # (ie 16 bits). the emacs font i use doesn't render it, so it looks blank.
+    """Test Unicode high code point chars.
+
+    The first three unicode chars in the text are the '100' emoji, which is a
+    high code point, ie above the Basic Multi-lingual Plane (ie 16 bits). The
+    emacs font i use doesn't render it, so it looks blank.
+
+    First discovered in https://twitter.com/schnarfed/status/831552681210556416
+    """
     obj = self.twitter.tweet_to_object({
       'id_str': '831552681210556416',
       'text': u'💯💯💯 (by @itsmaeril) https://t.co/pWrOHzuHkP',

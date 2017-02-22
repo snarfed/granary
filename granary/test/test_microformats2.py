@@ -264,6 +264,27 @@ foo
       }],
     }))
 
+  def test_render_content_unicode_high_code_points(self):
+    """Test Unicode high code point chars.
+
+    The first three unicode chars in the content are the '100' emoji, which is a
+    high code point, ie above the Basic Multi-lingual Plane (ie 16 bits). The
+    emacs font i use doesn't render it, so it looks blank.
+
+    First discovered in https://twitter.com/schnarfed/status/831552681210556416
+    """
+    self.assert_equals(
+      u'💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>)',
+      microformats2.render_content({
+        'content': u'💯💯💯 (by @itsmaeril)',
+        'tags': [{
+          'displayName': 'Maeril',
+          'objectType': 'person',
+          'startIndex': 8,
+          'length': 10,
+          'url': 'https://twitter.com/itsmaeril',
+        }]}))
+
   def test_escape_html_attribute_values(self):
     self.assert_equals("""\
 <article class="h-entry">
