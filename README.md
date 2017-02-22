@@ -296,13 +296,13 @@ Changelog
     * Linkify @-mentions and hashtags in `preview_create()`.
     * Support creating quote tweets from attachments with Twitter URLs.
     * When converting quote tweets to AS, strip quoted tweet URL from end of text.
-    * Fix bug in converting and linkifying entities (links, user mentions, etc) when text has Unicode high code points, e.g. some emoji.
 * Instagram:
     * Improve HTML scraping error handling.
 * Facebook:
     * Disable creating "interested" RSVPs, since Facebook's API doesn't allow it.
 * Atom:
     * Support [media enclosures](http://atomenabled.org/developers/syndication/#link) for audio and video attachments.
+* Fix rendering and linkifying content with Unicode high code points, ie characters above the BMP, including some emoji, on "narrow" builds of Python 2 with `--enable-unicode=ucs2` (default on Mac OS X, Windows, and older *nix).
 
 ### 1.6 - 2016-11-26
 * Twitter:
