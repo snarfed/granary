@@ -288,7 +288,6 @@ Changelog
 ---
 
 ### 1.7 - unreleased
-* Source.get_activities(): start raising ValueError on bad argument values, notably invalid Facebook and Twitter ids and Instagram search queries.
 * microformats2:
     * Interpret `h-cite` and [`u-quotation-of` (experimental)](https://indieweb.org/quotation#How_to_markup) as attachments, e.g. for quote tweets.
     * Convert [audio](http://indieweb.org/audio) and [video](http://indieweb.org/video) properties to AS attachments.
@@ -302,7 +301,8 @@ Changelog
     * Disable creating "interested" RSVPs, since Facebook's API doesn't allow it.
 * Atom:
     * Support [media enclosures](http://atomenabled.org/developers/syndication/#link) for audio and video attachments.
-* Fix rendering and linkifying content with Unicode high code points, ie characters above the BMP, including some emoji, on "narrow" builds of Python 2 with `--enable-unicode=ucs2` (default on Mac OS X, Windows, and older *nix).
+* Source.get_activities(): start raising ValueError on bad argument values, notably invalid Facebook and Twitter ids and Instagram search queries.
+* Fix rendering and linkifying content with Unicode high code points (ie above the 16-bit Basic Multilingual Plane), including some emoji, on "narrow" builds of Python 2 with `--enable-unicode=ucs2`, which is the default on Mac OS X, Windows, and older *nix.
 
 ### 1.6 - 2016-11-26
 * Twitter:

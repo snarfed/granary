@@ -1142,7 +1142,7 @@ class Facebook(source.Source):
     # reusing e.g. cgi.escape, so that we can shuffle over each tag startIndex
     # appropriately. :(
     if message:
-      content = copy.copy(message)
+      content = util.WideUnicode(copy.copy(message))
       tags = sorted([t for t in obj['tags'] if t.get('startIndex')],
                     key=lambda t: t['startIndex'])
 
@@ -1153,7 +1153,7 @@ class Facebook(source.Source):
           tags.pop(0)
         entity = entities.get(content[i])
         if entity:
-          content = content[:i] + entity + content[i + 1:]
+          content = util.WideUnicode(content[:i] + entity + content[i + 1:])
           for tag in tags:
             tag['startIndex'] += len(entity) - 1
         i += 1
