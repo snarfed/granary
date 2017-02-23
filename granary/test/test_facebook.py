@@ -2624,6 +2624,42 @@ cc Sam G, Michael M<br />""", preview.description)
       self.assertEqual('333', self.fb.resolve_object_id(
                                 '111', '222', activity=activity))
 
+  def test_render_content_escape_html_unicode_high_code_points(self):
+    """Test Unicode high code point chars.
+
+    The first three unicode chars in the content are the '100' emoji, which is a
+    high code point, ie above the Basic Multilingual Plane (ie 16 bits). The
+    emacs font I use doesn't render it, so it looks blank.
+
+    First discovered in https://twitter.com/schnarfed/status/831552681210556416
+    """
+    self.assert_equals({  # ActivityStreams
+      'id': tag_uri('12345'),
+      'fb_id': '12345',
+      'objectType': 'note',
+      'content': u'me 💯💯💯 &amp; @itsmaeril',
+      'url': 'https://www.facebook.com/12345',
+      'tags': [{
+        'id': tag_uri('678'),
+        'objectType': 'person',
+        'url': 'https://www.facebook.com/678',
+        'displayName': 'Maeril',
+        'startIndex': 13,
+        'length': 10,
+      }],
+    }, self.fb.post_to_object({
+      'id': '12345',
+      'message': u'me 💯💯💯 & @itsmaeril',
+      'message_tags': {
+        '84': [{
+          'id': '678',
+          'name': 'Maeril',
+          'type': 'person',
+          'offset': 9,
+          'length': 10,
+        }],
+      }}))
+
   def test_urlopen_batch(self):
     self.expect_urlopen('',
       data='batch=[{"method":"GET","relative_url":"abc"},'
