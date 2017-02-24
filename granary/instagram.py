@@ -761,53 +761,7 @@ class Instagram(source.Source):
     medias.extend(page.get('media') for page in entry_data.get('PostPage', []))
 
     for media in util.trim_nulls(medias):
-      # preprocess to make its field names match the API's
-      dims = media.get('dimensions', {})
-      owner = media.get('owner', {})
-      media.update({
-        'link': 'https://www.instagram.com/p/%s/' % media.get('code'),
-        'user': owner,
-        'created_time': media.get('date'),
-        'caption': {'text': media.get('caption')},
-        'images': {'standard_resolution': {
-          'url': media.get('display_src').replace('\/', '/'),
-          'width': dims.get('width'),
-          'height': dims.get('height'),
-        }},
-        'users_in_photo': media.get('usertags', {}).get('nodes', []),
-      })
-
-      id = media.get('id')
-      owner_id = owner.get('id')
-      if id and owner_id:
-        media['id'] = '%s_%s' % (id, owner_id)
-
-      comments = media.setdefault('comments', {}).setdefault('nodes', [])
-      likes = media.setdefault('likes', {}).setdefault('nodes', [])
-      for obj in [media] + comments + likes:
-        obj['user']['profile_picture'] = \
-          obj['user'].get('profile_pic_url', '').replace('\/', '/')
-
-      media['comments']['data'] = comments
-      for c in media['comments']['data']:
-        c['from'] = c['user']
-        c['created_time'] = c['created_at']
-      media['likes']['data'] = [l['user'] for l in likes]
-
-      if media.get('is_video'):
-        media.update({
-          'type': 'video',
-          'videos': {'standard_resolution': {
-            'url': media.get('video_url', '').replace('\/', '/'),
-            'width': dims.get('width'),
-            'height': dims.get('height'),
-          }},
-        })
-
-      activity = self.media_to_activity(util.trim_nulls(media))
-      activity['object']['ig_like_count'] = media['likes'].get('count', 0)
-      self.postprocess_object(activity['object'])
-      activities.append(super(Instagram, self).postprocess_activity(activity))
+      activities.append(self._json_media_node_to_activity(media))
 
     actor = None
     viewer = data.get('config', {}).get('viewer') or profile_user or None
@@ -824,3 +778,64 @@ class Instagram(source.Source):
         actor['to'] = [{'objectType':'group', 'alias':'@private'}]
 
     return activities, actor
+
+  def _json_media_node_to_activity(self, media):
+    """Converts Instagram HTML JSON media node to ActivityStreams activity.
+
+    Args:
+      media: dict, subset of Instagram HTML JSON representing a single photo
+        or video
+
+    Returns:
+      dict, ActivityStreams activity
+    """
+    # preprocess to make its field names match the API's
+    dims = media.get('dimensions', {})
+    owner = media.get('owner', {})
+    image_url = media.get('display_src') or media.get('display_url') or ''
+    media.update({
+      'link': 'https://www.instagram.com/p/%s/' % media.get('code'),
+      'user': owner,
+      'created_time': media.get('date'),
+      'caption': {'text': media.get('caption')},
+      'images': {'standard_resolution': {
+        'url': image_url.replace('\/', '/'),
+        'width': dims.get('width'),
+        'height': dims.get('height'),
+      }},
+      'users_in_photo': media.get('usertags', {}).get('nodes', []),
+    })
+
+    id = media.get('id')
+    owner_id = owner.get('id')
+    if id and owner_id:
+      media['id'] = '%s_%s' % (id, owner_id)
+
+    comments = media.setdefault('comments', {}).setdefault('nodes', [])
+    likes = media.setdefault('likes', {}).setdefault('nodes', [])
+    for obj in [media] + comments + likes:
+      obj['user']['profile_picture'] = \
+        obj['user'].get('profile_pic_url', '').replace('\/', '/')
+
+    media['comments']['data'] = comments
+    for c in media['comments']['data']:
+      c['from'] = c['user']
+      c['created_time'] = c['created_at']
+    media['likes']['data'] = [l['user'] for l in likes]
+
+    if media.get('is_video'):
+      media.update({
+        'type': 'video',
+        'videos': {'standard_resolution': {
+          'url': media.get('video_url', '').replace('\/', '/'),
+          'width': dims.get('width'),
+          'height': dims.get('height'),
+        }},
+      })
+
+    activity = self.media_to_activity(util.trim_nulls(media))
+    obj = activity['object']
+    obj['ig_like_count'] = media['likes'].get('count', 0)
+
+    self.postprocess_object(obj)
+    return super(Instagram, self).postprocess_activity(activity)
