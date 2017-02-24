@@ -297,6 +297,7 @@ Changelog
     * When converting quote tweets to AS, strip quoted tweet URL from end of text.
 * Instagram:
     * Improve HTML scraping error handling.
+    * Support [multi-photo/video posts](https://www.instagram.com/p/BQ0mDB2gV_O/).
 * Facebook:
     * Disable creating "interested" RSVPs, since Facebook's API doesn't allow it.
 * Atom:

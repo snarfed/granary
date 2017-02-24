@@ -189,6 +189,7 @@ MEDIA_OBJ = {  # ActivityStreams
   },
   'attachments': [{
     'objectType': 'image',
+    'url': 'https://www.instagram.com/p/ABC123/',
     'image': [{
       'url': 'http://attach/image/big',
       'width': 612,
@@ -301,6 +302,7 @@ ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
 ACTIVITY_WITH_LIKES['object'] = MEDIA_OBJ_WITH_LIKES
 VIDEO_OBJ = {
   'attachments': [{
+    'url': 'https://www.instagram.com/p/ABC123/',
     'image': [{
       'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_7.jpg',
       'width': 612,
@@ -543,6 +545,36 @@ HTML_PHOTO = copy.deepcopy(HTML_PHOTO_FULL)
 del HTML_PHOTO['likes']['nodes']
 del HTML_PHOTO['comments']['nodes']
 
+# based on https://www.instagram.com/p/BQ0mDB2gV_O/
+HTML_MULTI_PHOTO = copy.deepcopy(HTML_PHOTO)
+HTML_MULTI_PHOTO.update({
+  'edge_sidecar_to_children': {
+    'edges': [{
+      'node': {
+        '__typename': 'GraphVideo',
+        'id': '1455954809369749561',
+        'shortcode': 'BQ0ly9lgWg5',
+        'dimensions': {'height': 640, 'width': 640},
+        'display_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s640x640/e15/16789781_644256779091860_6907514546886279168_n.jpg',
+        'video_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t50.2886-16/16914332_634350210109260_5674637823722913792_n.mp4',
+        'video_view_count': 0,
+        'is_video': True,
+        'edge_media_to_tagged_user': {'edges': []},
+      },
+    }, {
+      'node': {
+        '__typename': 'GraphImage',
+        'id': '1455954810972087680',
+        'shortcode': 'BQ0ly_FAyWA',
+        'dimensions': {'height': 1080, 'width': 1080},
+        'display_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
+        'is_video': False,
+        'edge_media_to_tagged_user': {'edges': []},
+      },
+    }],
+  },
+})
+
 HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
   'environment_switcher_visible_server_guess': True,
   'config': {
@@ -645,6 +677,15 @@ HTML_VIDEO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
   'entry_data': {'PostPage': [{'media': HTML_VIDEO_FULL}]},
 }
 
+HTML_MULTI_PHOTO_PAGE = {  # eg https://www.instagram.com/p/BQ0mDB2gV_O/
+  'config': {
+    'csrf_token': 'xyz',
+    'viewer': None,
+  },
+  'entry_data': {'PostPage': [{'media': HTML_MULTI_PHOTO}]},
+}
+
+
 HTML_HEADER = """
 <!DOCTYPE html>
 ...
@@ -701,6 +742,7 @@ HTML_PHOTO_ACTIVITY = {  # ActivityStreams
     },
     'attachments': [{
       'objectType': 'image',
+      'url': 'https://www.instagram.com/p/ABC123/',
       'image': [{
         'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg',
         'width': 1080,
@@ -737,6 +779,7 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
     },
     'attachments': [{
       'objectType': 'video',
+      'url': 'https://www.instagram.com/p/XYZ789/',
       'stream': [{
         'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
         'width': 640,
@@ -765,6 +808,30 @@ HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0].update({
   'inReplyTo': [{'id': tag_uri('789_456')}],
 })
 
+HTML_MULTI_PHOTO_ACTIVITY = copy.deepcopy(HTML_PHOTO_ACTIVITY)  # ActivityStreams
+HTML_MULTI_PHOTO_ACTIVITY['object']['attachments'] = [{
+  'objectType': 'video',
+  'url': 'https://www.instagram.com/p/BQ0ly9lgWg5/',
+  'stream': [{
+    'url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t50.2886-16/16914332_634350210109260_5674637823722913792_n.mp4',
+    'width': 640,
+    'height': 640,
+  }],
+  'image': [{
+    'url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s640x640/e15/16789781_644256779091860_6907514546886279168_n.jpg',
+    'width': 640,
+    'height': 640,
+  }],
+}, {
+  'objectType': 'image',
+  'url': 'https://www.instagram.com/p/BQ0ly_FAyWA/',
+  'image': [{
+    'url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
+    'width': 1080,
+    'height': 1080,
+  }],
+}]
+
 HTML_ACTIVITIES = [HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY]
 HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
 
@@ -773,6 +840,7 @@ HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
 HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
 HTML_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
 HTML_VIDEO_COMPLETE = HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
+HTML_MULTI_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_MULTI_PHOTO_PAGE) + HTML_FOOTER
 HTML_PHOTO_MISSING_HEADER = json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
 HTML_PHOTO_MISSING_FOOTER = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE)
 
@@ -1341,6 +1409,11 @@ class InstagramTest(testutil.HandlerTest):
   def test_html_to_activities_video(self):
     activities, viewer = self.instagram.html_to_activities(HTML_VIDEO_COMPLETE)
     self.assert_equals([HTML_VIDEO_ACTIVITY_FULL], activities)
+    self.assertIsNone(viewer)
+
+  def test_html_to_activities_multi_photo(self):
+    activities, viewer = self.instagram.html_to_activities(HTML_MULTI_PHOTO_COMPLETE)
+    self.assert_equals([HTML_MULTI_PHOTO_ACTIVITY], activities)
     self.assertIsNone(viewer)
 
   def test_html_to_activities_missing_profile_picture_external_url(self):

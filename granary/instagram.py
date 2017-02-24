@@ -10,6 +10,7 @@ https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import datetime
+import itertools
 import json
 import logging
 import operator
@@ -98,6 +99,10 @@ class Instagram(source.Source):
   @classmethod
   def user_url(cls, username):
     return '%s%s/' % (cls.BASE_URL, username)
+
+  @classmethod
+  def media_url(cls, shortcode):
+    return '%sp/%s/' % (cls.BASE_URL, shortcode)
 
   def get_actor(self, user_id=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -512,6 +517,7 @@ class Instagram(source.Source):
       }],
       'attachments': [{
         'objectType': 'video' if 'videos' in media else 'image',
+        'url': media.get('link'),
         # ActivityStreams 2.0 allows image to be a JSON array.
         # http://jasnell.github.io/w3c-socialwg-activitystreams/activitystreams2.html#link
         'image': sorted(
@@ -794,7 +800,7 @@ class Instagram(source.Source):
     owner = media.get('owner', {})
     image_url = media.get('display_src') or media.get('display_url') or ''
     media.update({
-      'link': 'https://www.instagram.com/p/%s/' % media.get('code'),
+      'link': self.media_url(media.get('code') or media.get('shortcode')),
       'user': owner,
       'created_time': media.get('date'),
       'caption': {'text': media.get('caption')},
@@ -836,6 +842,13 @@ class Instagram(source.Source):
     activity = self.media_to_activity(util.trim_nulls(media))
     obj = activity['object']
     obj['ig_like_count'] = media['likes'].get('count', 0)
+
+    # multi-photo
+    children = media.get('edge_sidecar_to_children', {}).get('edges', [])
+    if children:
+      obj['attachments'] = list(itertools.chain(*(
+        self._json_media_node_to_activity(child.get('node'))['object']['attachments']
+        for child in children)))
 
     self.postprocess_object(obj)
     return super(Instagram, self).postprocess_activity(activity)
