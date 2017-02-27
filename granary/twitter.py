@@ -262,6 +262,8 @@ class Twitter(source.Source):
           if liked:
             activities += [self._make_like(tweet, _user()) for tweet in liked]
       elif group_id == source.SEARCH:
+        if not search_query:
+          raise ValueError('search requires search_query parameter')
         url = API_SEARCH % {
           'q': urllib.quote_plus(search_query.encode('utf-8')),
           'count': count,
