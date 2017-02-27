@@ -1040,6 +1040,10 @@ class TwitterTest(testutil.TestCase):
       [ACTIVITY, ACTIVITY], self.twitter.get_activities(
         group_id=source.SEARCH, search_query='indieweb'))
 
+  def test_get_activities_search_no_query(self):
+    with self.assertRaises(ValueError):
+      self.twitter.get_activities(group_id=source.SEARCH, search_query=None)
+
   def test_get_activities_search_with_unicode_char(self):
     self.expect_urlopen(twitter.API_SEARCH % {'q': u'%E2%98%95+foo', 'count': 0},
                         {'statuses': []})

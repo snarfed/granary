@@ -295,6 +295,7 @@ Changelog
     * Linkify @-mentions and hashtags in `preview_create()`.
     * Support creating quote tweets from attachments with Twitter URLs.
     * When converting quote tweets to AS, strip quoted tweet URL from end of text.
+    * Raise ValueError when `get_activities()` is passed `group_id='@search'` but not `search_query`.
 * Instagram:
     * Improve HTML scraping error handling.
     * Support [multi-photo/video posts](https://www.instagram.com/p/BQ0mDB2gV_O/).
