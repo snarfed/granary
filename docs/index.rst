@@ -11,7 +11,7 @@ of formats:
 -  Instagram and Google+ scraped HTML
 -  `ActivityStreams <http://activitystrea.ms/>`__
 -  `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
--  `microformats2 <http://microformats.org/wiki/microformats2>`__ JSON
+   and JSON
 -  `Atom <http://atomenabled.org/>`__
 -  XML
 
@@ -367,6 +367,52 @@ Facebook and Twitter's raw HTML.
 
 Changelog
 ---------
+
+1.7 - 2017-02-27
+~~~~~~~~~~~~~~~~
+
+-  microformats2:
+
+   -  Interpret ``h-cite`` and `u-quotation-of``
+      (experimental) <https://indieweb.org/quotation#How_to_markup>`__
+      as attachments, e.g. for quote tweets.
+   -  Convert `audio <http://indieweb.org/audio>`__ and
+      `video <http://indieweb.org/video>`__ properties to AS
+      attachments.
+
+-  Twitter:
+
+   -  Linkify @-mentions and hashtags in ``preview_create()``.
+   -  Support creating quote tweets from attachments with Twitter URLs.
+   -  When converting quote tweets to AS, strip quoted tweet URL from
+      end of text.
+   -  Raise ValueError when ``get_activities()`` is passed
+      ``group_id='@search'`` but not ``search_query``.
+
+-  Instagram:
+
+   -  Improve HTML scraping error handling.
+   -  Support `multi-photo/video
+      posts <https://www.instagram.com/p/BQ0mDB2gV_O/>`__.
+
+-  Facebook:
+
+   -  Disable creating "interested" RSVPs, since Facebook's API doesn't
+      allow it.
+
+-  Atom:
+
+   -  Support `media
+      enclosures <http://atomenabled.org/developers/syndication/#link>`__
+      for audio and video attachments.
+
+-  Source.get\_activities(): start raising ValueError on bad argument
+   values, notably invalid Facebook and Twitter ids and Instagram search
+   queries.
+-  Fix rendering and linkifying content with Unicode high code points
+   (ie above the 16-bit Basic Multilingual Plane), including some emoji,
+   on "narrow" builds of Python 2 with ``--enable-unicode=ucs2``, which
+   is the default on Mac OS X, Windows, and older \*nix.
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
