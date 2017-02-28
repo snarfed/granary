@@ -287,7 +287,7 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
-### 1.7 - unreleased
+### 1.7 - 2017-02-27
 * microformats2:
     * Interpret `h-cite` and [`u-quotation-of` (experimental)](https://indieweb.org/quotation#How_to_markup) as attachments, e.g. for quote tweets.
     * Convert [audio](http://indieweb.org/audio) and [video](http://indieweb.org/video) properties to AS attachments.
