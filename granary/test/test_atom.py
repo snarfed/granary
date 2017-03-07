@@ -62,9 +62,9 @@ class AtomTest(testutil.HandlerTest):
 
     got = atom.activities_to_atom([activity],test_instagram.ACTOR, title='')
     self.assert_multiline_in(
-      '<img class="thumbnail" src="http://attach/image/big"', got)
+      '<img class="u-photo" src="http://attach/image/big"', got)
     self.assert_multiline_in(
-      '<img class="thumbnail" src="http://image/2"', got)
+      '<img class="u-photo" src="http://image/2"', got)
 
   def test_render_untitled_image(self):
     """Images should be included even if there is no other content
@@ -72,7 +72,7 @@ class AtomTest(testutil.HandlerTest):
     activity = copy.deepcopy(test_instagram.ACTIVITY)
     del activity['object']['content']
     self.assert_multiline_in(
-      '<img class="thumbnail" src="http://attach/image/big"',
+      '<img class="u-photo" src="http://attach/image/big"',
       atom.activities_to_atom([activity], test_instagram.ACTOR,
                               title='my title'))
 
@@ -93,7 +93,9 @@ class AtomTest(testutil.HandlerTest):
     self.assert_multiline_in("""
 sharer's comment
 """, out)
-    self.assertNotIn('original object', out)
+    self.assert_multiline_in("""
+original object
+""", out)
 
   def test_render_share_no_content(self):
     activity = {
@@ -170,21 +172,31 @@ original object
       self.assert_multiline_in(expected, out)
 
   def test_attachments(self):
-    got = atom.activities_to_atom([{'object': {'attachments': [
+    activities = [{'object': {'attachments': [
       {'objectType': 'note', 'url': 'http://p', 'content': 'note content'},
       {'objectType': 'x', 'url': 'http://x'},
       {'objectType': 'article', 'url': 'http://a', 'content': 'article content'},
-    ]}}], None)
-    self.assert_multiline_in("""
+    ]}}]
+    got = atom.activities_to_atom(activities, None)
+
+    # check for note and article
+    atts = activities[0]['object']['attachments']
+    for a in atts[0], atts[2]:
+      self.assert_multiline_in("""
 <blockquote>
-note content
+<article class="u-quotation-of h-cite">
+<span class="p-uid"></span>
+
+<a class="u-url" href="%(url)s">%(url)s</a>
+<div class="e-content p-name">
+
+%(content)s
+</div>
+
+</article>
+
 </blockquote>
-""", got)
-    self.assert_multiline_in("""
-<blockquote>
-article content
-</blockquote>
-""", got)
+""" % a, got)
 
   def test_to_people(self):
     got = atom.activities_to_atom([{
@@ -229,9 +241,19 @@ article content
     out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
     self.assert_multiline_in("""
 RT @quoter: comment
+</div>
 
 <blockquote>
+<article class="u-quotation-of h-cite">
+<span class="p-uid"></span>
+
+<div class="e-content p-name">
+
 quoted text
+</div>
+
+</article>
+
 </blockquote>
 """, out)
 

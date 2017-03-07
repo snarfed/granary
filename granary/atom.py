@@ -72,14 +72,9 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     # http://atomenabled.org/developers/syndication/#requiredEntryElements
     a['title'] = xml.sax.saxutils.escape(BeautifulSoup(a['title']).get_text(''))
 
-    # Normalize attachments.image to always be a list.
-    attachments = a.get('attachments') or obj.get('attachments') or []
-    for att in attachments:
-      att['image'] = util.get_list(att, 'image')
-
-    obj['rendered_children'] = [
-      _encode_ampersands(microformats2.render_content(att))
-      for att in attachments if att.get('objectType') in ('note', 'article')]
+    obj['rendered_children'] = _encode_ampersands(
+      microformats2.render_children(microformats2.object_to_json(primary),
+                                    responses=False))
 
   # Emulate Django template behavior that returns a special default value that
   # can continue to be referenced when an attribute or item lookup fails. Helps

@@ -486,9 +486,9 @@ POST_OBJ = {  # ActivityStreams
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
   'url': 'https://www.facebook.com/212038/posts/10100176064482163',
-  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
+  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'},
   'attachments': [{
-      'objectType': 'image',
+      'objectType': 'article',
       'url': 'http://my.link/',
       'displayName': 'my link name',
       'summary': 'my link caption',
@@ -939,7 +939,6 @@ ATOM = """\
 Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 <a href="https://www.facebook.com/283938455011303">Super Happy Block Party Hackathon</a>, &gt;\o/&lt; <a href="https://www.facebook.com/789">Daniel M</a>.
 <p>
 <a class="link" href="http://my.link/">
-<img class="thumbnail" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg" alt="my link name" />
 <span class="name">my link name</span>
 </a>
 <span class="summary">my link caption</span>
@@ -949,6 +948,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 
 </span>
 
+<img class="u-photo" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg" alt="attachment" />
   </div>
   </content>
 

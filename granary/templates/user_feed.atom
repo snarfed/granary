@@ -56,11 +56,7 @@
 {% endfor %}
 
 {{ obj.rendered_content|safe }}
-{% for child in obj.rendered_children %}
-<blockquote>
-{{ child|safe }}
-</blockquote>
-{% endfor %}
+{{ obj.rendered_children|safe }}
   </div>
   </content>
 

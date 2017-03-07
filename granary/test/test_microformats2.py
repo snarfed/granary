@@ -163,38 +163,40 @@ class Microformats2Test(testutil.HandlerTest):
                       re.sub('\n\s*', '\n', result))
 
   def test_render_content_link_with_image(self):
+    obj = {
+      'content': 'foo',
+      'tags': [{
+        'objectType': 'article',
+        'url': 'http://link',
+        'displayName': 'name',
+        'image': {'url': 'http://image'},
+      }]
+    }
     self.assert_equals("""\
 foo
+<img class="thumbnail" src="http://image" alt="name" />
 <p>
 <a class="link" href="http://link">
-<img class="thumbnail" src="http://image" alt="name" />
 <span class="name">name</span>
 </a>
-</p>""", microformats2.render_content({
-        'content': 'foo',
-        'tags': [{
-          'objectType': 'article',
-          'url': 'http://link',
-          'displayName': 'name',
-          'image': {'url': 'http://image'},
-        }]
-      }))
+</p>""", microformats2.render_content(obj))
 
-  def test_render_content_multiple_image_attachments(self):
+    # render_children should ignore it since it's objectType article
+    self.assert_equals('', microformats2.render_content(
+      microformats2.object_to_json(obj)))
+
+
+  def test_render_children_multiple_image_attachments(self):
     self.assert_equals("""\
-foo
-<p>
-<img class="thumbnail" src="http://1" alt="" />
-</p>
-<p>
-<img class="thumbnail" src="http://2" alt="" />
-</p>""", microformats2.render_content({
+<img class="u-photo" src="http://1" alt="attachment" />
+<img class="u-photo" src="http://2" alt="attachment" />
+""", microformats2.render_children(microformats2.object_to_json({
         'content': 'foo',
         'attachments': [
           {'objectType': 'image', 'image': {'url': 'http://1'}},
           {'objectType': 'image', 'image': {'url': 'http://2'}},
         ]
-      }))
+      })))
 
   def test_render_content_converts_newlines_to_brs(self):
     self.assert_equals("""\
@@ -250,19 +252,18 @@ foo
         self.assert_equals(obj['content'],
                            microformats2.render_content(obj, synthesize_content=val))
 
-  def test_render_content_video(self):
+  def test_render_children_video(self):
     self.assert_equals("""\
-foo
-<p><video class="thumbnail" src="http://vid/eo" poster="http://im/age" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly<img src="http://im/age"/></a></video>
-</p>
-""", microformats2.render_content({
+<img class="u-photo" src="http://im/age" alt="attachment" />
+<video class="u-video" src="http://vid/eo" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly</a></video>
+""", microformats2.render_children(microformats2.object_to_json({
       'content': 'foo',
       'attachments': [{
         'image': [{'url': 'http://im/age'}],
         'stream': [{'url': 'http://vid/eo'}],
         'objectType': 'video',
       }],
-    }))
+    })))
 
   def test_render_content_unicode_high_code_points(self):
     """Test Unicode high code point chars.
@@ -297,11 +298,13 @@ foo
 
 <div class="e-content p-name">
 
-<p>
 <img class="thumbnail" src="img" alt="d &amp; e" />
+<p>
 <span class="name">d & e</span>
 </p>
 </div>
+
+<img class="u-photo" src="img" alt="attachment" />
 
 </article>""", microformats2.object_to_html({
         'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
@@ -380,6 +383,7 @@ foo
 
     html = microformats2.object_to_html(obj)
     self.assert_multiline_in("""\
+<blockquote>
 <article class="u-quotation-of h-cite">
 <span class="p-uid"></span>
 
@@ -390,6 +394,8 @@ foo
 
 </article>
 
+</blockquote>
+<blockquote>
 <article class="u-quotation-of h-cite">
 <span class="p-uid"></span>
 
@@ -399,6 +405,8 @@ foo
 </div>
 
 </article>
+
+</blockquote>
 """, html)
 
   def test_object_to_json_reaction(self):

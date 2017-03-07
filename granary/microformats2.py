@@ -29,8 +29,6 @@ $author
   $invitees
   $content
   </div>
-$video
-$photo
 $location
 $people
 $in_reply_tos
@@ -47,8 +45,22 @@ HCARD = string.Template("""\
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
 
 
+def object_urls(obj):
+  """Returns an object's unique URLs, preserving order.
+
+  Args:
+    obj: decoded JSON ActivityStreams object
+
+  Returns: sequence of strings
+  """
+  if not obj:
+    return []
+  return util.uniquify(util.trim_nulls(
+    [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))
+
+
 def get_string_urls(objs):
-  """Extracts string URLs from a list of either string URLs or mf2 dicts.
+  """Extracts unique string URLs from a list of either string URLs or mf2 dicts.
 
   Many mf2 properties can contain either string URLs or full mf2 objects, e.g.
   h-cites. in-reply-to is the most commonly used example:
@@ -70,10 +82,10 @@ def get_string_urls(objs):
         item = item.get('properties') or item
         urls.extend(get_string_urls(item.get('url', [])))
 
-  return urls
+  return util.uniquify(util.trim_nulls(urls))
 
 
-def get_html(val):
+def get_html(val, drop_newlines=True):
   """Returns a string value that may have HTML markup.
 
   Args:
@@ -84,18 +96,21 @@ def get_html(val):
     string or None
   """
   if isinstance(val, dict) and val.get('html'):
-    # this came from e-content, so newlines aren't meaningful. drop them so that
-    # we don't replace them with <br>s in render_content().
-    # https://github.com/snarfed/granary/issues/80
-    # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
-    return val['html'].replace('\n', ' ')
+    html = val['html']
+    if drop_newlines:
+      # this came from e-content, so newlines aren't meaningful. drop them so
+      # that we don't replace them with <br>s in render_content().
+      # https://github.com/snarfed/granary/issues/80
+      # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
+      html = html.replace('\n', ' ')
+    return html
 
   return get_text(val)
 
 
 def get_text(val):
   """Returns a plain text string value. See get_html."""
-  return val.get('value') if isinstance(val, dict) else val
+  return val.get('value', '') if isinstance(val, dict) else val
 
 
 def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
@@ -141,7 +156,19 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     objs = obj['object']
     in_reply_tos.extend(objs if isinstance(objs, list) else [objs])
 
-  # TODO: more tags. most will be p-category?
+  def get_urls_from(object_type, prop=None):
+    candidates = []
+
+    for container in obj, primary:
+      candidates.extend(util.get_list(container, prop))
+      for name in 'attachments', 'tags':
+        for c in util.get_list(container, name):
+          if c.get('objectType') == object_type:
+            candidates.append(c)
+          candidates.extend(util.get_list(c, prop))
+
+    return util.uniquify(itertools.chain(*(object_urls(val) for val in candidates)))
+
   ret = {
     'type': (['h-card'] if obj_type == 'person'
              else ['h-card', 'p-location'] if obj_type == 'place'
@@ -153,9 +180,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'summary': [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
-      'photo': [image.get('url') for image in
-                (util.get_list(obj, 'image') or util.get_list(primary, 'image'))],
-      'video': [obj.get('stream', primary.get('stream', {})).get('url')],
+      # TODO: alt text from displayName
+      'photo': get_urls_from('image', 'image'),
+      'video': get_urls_from('video', 'stream'),
+      'audio': get_urls_from('audio'),
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'content': [{
@@ -416,13 +444,13 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
                       parent_props)
 
 
-def json_to_html(obj, parent_props=None):
+def json_to_html(mf2, parent_props=None):
   """Converts a microformats2 JSON object to microformats2 HTML.
 
   See object_to_html for details.
 
   Args:
-    obj: dict, a decoded microformats2 JSON object
+    mf2: dict, a decoded microformats2 JSON object
     parent_props: list of strings, the properties of the parent object where
       this object is embedded, e.g. 'u-repost-of'
 
@@ -430,16 +458,16 @@ def json_to_html(obj, parent_props=None):
     string HTML
   """
 
-  if not obj:
+  if not mf2:
     return ''
   if not parent_props:
     parent_props = []
 
-  types = obj.get('type', [])
+  types = mf2.get('type', [])
   if 'h-card' in types:
-    return hcard_to_html(obj, parent_props)
+    return hcard_to_html(mf2, parent_props)
 
-  props = copy.copy(obj.get('properties', {}))
+  props = copy.copy(mf2.get('properties', {}))
   in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
                            for url in get_string_urls(props.get('in-reply-to', [])))
 
@@ -462,20 +490,9 @@ def json_to_html(obj, parent_props=None):
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
 
-  children = []
-
-  # if this post is itself a like or repost, link to its target(s).
-  for mftype in ['like', 'repost']:
-    # having like-of or repost-of makes this a like or repost.
-    for target in props.get(mftype + '-of', []):
-      if isinstance(target, basestring):
-        children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))
-      else:
-        children.append(json_to_html(target, ['u-' + mftype + '-of']))
-
   # set up content and name
   content = prop.get('content', {})
-  content_html = content.get('html', '') or content.get('value', '')
+  content_html = get_html(content, drop_newlines=False)
   content_classes = []
 
   if content_html:
@@ -486,10 +503,6 @@ def json_to_html(obj, parent_props=None):
   summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
              if prop.get('summary') else '')
 
-  photo = '\n'.join(img(url, 'u-photo', 'attachment')
-                    for url in props.get('photo', []) if url)
-  video = '\n'.join(vid(url, None, 'u-video')
-                    for url in props.get('video', []) if url)
   people = '\n'.join(
     hcard_to_html(cat, ['u-category', 'h-card'])
     for cat in props.get('category', [])
@@ -502,19 +515,6 @@ def json_to_html(obj, parent_props=None):
   comments_html = '\n'.join(json_to_html(c, ['p-comment'])
                             for c in props.get('comment', []))
 
-  # embedded likes and reposts of this post
-  # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
-  for verb in 'like', 'repost':
-    # including u-like and u-repost for backcompat means that we must ignore
-    # these properties when converting a post that is itself a like or repost
-    if verb + '-of' not in props:
-      vals = props.get(verb, [])
-      if vals and isinstance(vals[0], dict):
-        children += [json_to_html(v, ['u-' + verb]) for v in vals]
-
-  # embedded children of this post
-  children += [json_to_html(c) for c in obj.get('children', [])]
-
   return HENTRY.substitute(
     prop,
     published=maybe_datetime(prop.get('published'), 'dt-published'),
@@ -523,15 +523,13 @@ def json_to_html(obj, parent_props=None):
     author=hcard_to_html(author, ['p-author']),
     location=hcard_to_html(prop.get('location'), ['p-location']),
     people=people,
-    photo=photo,
-    video=video,
     in_reply_tos=in_reply_tos,
     invitees='\n'.join([hcard_to_html(i, ['p-invitee'])
                         for i in props.get('invitee', [])]),
     content=content_html,
     content_classes=' '.join(content_classes),
     comments=comments_html,
-    children='\n'.join(children),
+    children=render_children(mf2),
     linked_name=maybe_linked_name(props),
     summary=summary)
 
@@ -630,25 +628,30 @@ def render_content(obj, include_location=True, synthesize_content=True):
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   attachments = [a for a in obj.get('attachments', [])
-                 if a.get('objectType') not in ('note', 'article')]
+                 if a.get('objectType') not in ('note', 'video', 'audio', 'image')]
 
   for tag in attachments + tags.pop('article', []):
     name = tag.get('displayName', '')
     open_a_tag = False
-    if tag.get('objectType') == 'video':
-      video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
+
+    video = util.get_first(tag, 'stream')
+    if video and video.get('url'):
       poster = util.get_first(tag, 'image', {})
-      if video and video.get('url'):
-        content += '\n<p>%s' % vid(video['url'], poster.get('url'), 'thumbnail')
-    else:
-      content += '\n<p>'
-      url = tag.get('url') or obj.get('url')
-      if url:
-        content += '\n<a class="link" href="%s">' % url
-        open_a_tag = True
-      image = util.get_first(tag, 'image') or util.get_first(obj, 'image')
-      if image and image.get('url'):
-        content += '\n' + img(image['url'], 'thumbnail', name)
+      content += '\n' + vid(video['url'], poster.get('url'), '')
+
+    audio = util.get_first(tag, 'stream')
+    if audio and audio.get('url'):
+      content += '\n' + aud(audio['url'], '')
+
+    image = util.get_first(tag, 'image')
+    if image and image.get('url'):
+      content += '\n' + img(image['url'], 'thumbnail', name)
+
+    content += '\n<p>'
+    url = tag.get('url') or obj.get('url')
+    if url:
+      content += '\n<a class="link" href="%s">' % url
+      open_a_tag = True
     if name:
       content += '\n<span class="name">%s</span>' % name
     if open_a_tag:
@@ -718,6 +721,53 @@ def render_content(obj, include_location=True, synthesize_content=True):
   return content
 
 
+def render_children(mf2, responses=True):
+  """Renders the children, photos, videos, and audio in an mf2 object.
+
+  TODO: image alt text, video poster images. They're usually in the original AS
+  object, but not easily accessible (if at all) in mf2 objects.
+
+  Args:
+    mf2: dict, decoded JSON microformats2 object
+    responses: boolean, whether to render likes and reposts
+
+  Returns:
+    string, rendered HTML
+  """
+  props = mf2.get('properties', {})
+
+  children = (
+    [img(url, 'u-photo', 'attachment') for url in props.get('photo', []) if url] +
+    [vid(url, None, 'u-video') for url in props.get('video', []) if url] +
+    [aud(url, 'u-audio') for url in props.get('audio', []) if url])
+
+  # if this post is itself a like or repost, link to its target(s).
+  for mftype in 'like', 'repost':
+    # having like-of or repost-of makes this a like or repost.
+    for target in props.get(mftype + '-of', []):
+      if isinstance(target, basestring):
+        children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))
+      else:
+        children.append(json_to_html(target, ['u-' + mftype + '-of']))
+
+  # embedded likes and reposts of this post
+  # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
+  if responses:
+    for verb in 'like', 'repost':
+      # including u-like and u-repost for backcompat means that we must ignore
+      # these properties when converting a post that is itself a like or repost
+      if verb + '-of' not in props:
+        vals = props.get(verb, [])
+        if vals and isinstance(vals[0], dict):
+          children += [json_to_html(v, ['u-' + verb]) for v in vals]
+
+  # embedded children of this post
+  children += ['<blockquote>\n' + json_to_html(c) + '\n</blockquote>'
+               for c in mf2.get('children', [])]
+
+  return '\n'.join(children)
+
+
 def find_author(parsed, **kwargs):
   """Returns the author of a page as a ActivityStreams actor dict.
 
@@ -763,15 +813,14 @@ def tags_to_html(tags, classname):
                  for url, name in urls)
 
 
-def object_urls(obj):
-  """Returns an object's unique URLs, preserving order.
-  """
-  return util.uniquify(util.trim_nulls(
-    [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))
-
-
 def author_display_name(hcard):
-  """Returns a human-readable string display name for an h-card object."""
+  """Returns a human-readable string display name for an h-card object.
+
+  Args:
+    hcard: dict, decoded JSON h-card
+
+  Returns: string
+  """
   name = None
   if hcard:
     prop = first_props(hcard.get('properties'))
@@ -846,6 +895,19 @@ def vid(src, poster, cls):
     html += '<img src="%s"/>' % poster
   html += '</a></video>'
   return html
+
+
+def aud(src, cls):
+  """Returns an <audio> string with the given src and class
+
+  Args:
+    src: string, url of the video
+    cls: string, css class applied to the video tag
+
+  Returns:
+    string
+  """
+  return '<audio class="%s" src="%s" controls="controls"></audio>' % (cls, src)
 
 
 def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
