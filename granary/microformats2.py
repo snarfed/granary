@@ -110,7 +110,7 @@ def get_html(val, drop_newlines=True):
 
 def get_text(val):
   """Returns a plain text string value. See get_html."""
-  return val.get('value', '') if isinstance(val, dict) else val
+  return (val.get('value') if isinstance(val, dict) else val) or ''
 
 
 def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
@@ -167,7 +167,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
             candidates.append(c)
           candidates.extend(util.get_list(c, prop))
 
-    return util.uniquify(itertools.chain(*(object_urls(val) for val in candidates)))
+    return util.uniquify(itertools.chain(*(object_urls(c) for c in candidates)))
 
   ret = {
     'type': (['h-card'] if obj_type == 'person'
@@ -529,7 +529,7 @@ def json_to_html(mf2, parent_props=None):
     content=content_html,
     content_classes=' '.join(content_classes),
     comments=comments_html,
-    children=render_children(mf2),
+    children=render_children(json_to_object(mf2)),
     linked_name=maybe_linked_name(props),
     summary=summary)
 
@@ -562,7 +562,7 @@ def hcard_to_html(hcard, parent_props=None):
   return HCARD.substitute(
     prop,
     types=' '.join(util.uniquify(parent_props + hcard.get('type', []))),
-    photo=img(photo, 'u-photo', '') if photo else '',
+    photo=img(photo),
     linked_name=maybe_linked_name(props))
 
 
@@ -580,7 +580,7 @@ def render_content(obj, include_location=True, synthesize_content=True):
       doesn't have its own, e.g. 'likes this.' or 'shared this.'
 
   Returns:
-    string, rendered HTML
+    string, rendered microformats2 HTML
   """
   content = obj.get('content', '')
 
@@ -628,42 +628,32 @@ def render_content(obj, include_location=True, synthesize_content=True):
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   attachments = [a for a in obj.get('attachments', [])
-                 if a.get('objectType') not in ('note', 'video', 'audio', 'image')]
+                 if a.get('objectType') not in ('video', 'audio', 'image')]
 
-  for tag in attachments + tags.pop('article', []):
-    name = tag.get('displayName', '')
-    open_a_tag = False
+  # XXX moved to render_children
+  # for tag in attachments + tags.pop('article', []):
+  #   name = tag.get('displayName', '')
 
-    video = util.get_first(tag, 'stream')
-    if video and video.get('url'):
-      poster = util.get_first(tag, 'image', {})
-      content += '\n' + vid(video['url'], poster.get('url'), '')
+  #   content += '\n<p>'
+  #   url = tag.get('url') or obj.get('url')
 
-    audio = util.get_first(tag, 'stream')
-    if audio and audio.get('url'):
-      content += '\n' + aud(audio['url'], '')
+  #   open_a_tag = False
+  #   if url:
+  #     content += '\n<a class="link" href="%s">' % url
+  #     open_a_tag = True
+  #   if name:
+  #     content += '\n<span class="name">%s</span>' % name
+  #   if open_a_tag:
+  #     content += '\n</a>'
 
-    image = util.get_first(tag, 'image')
-    if image and image.get('url'):
-      content += '\n' + img(image['url'], 'thumbnail', name)
+  #   summary = tag.get('summary')
+  #   if summary and summary != name:
+  #     content += '\n<span class="summary">%s</span>' % summary
+  #   content += '\n</p>'
 
-    content += '\n<p>'
-    url = tag.get('url') or obj.get('url')
-    if url:
-      content += '\n<a class="link" href="%s">' % url
-      open_a_tag = True
-    if name:
-      content += '\n<span class="name">%s</span>' % name
-    if open_a_tag:
-      content += '\n</a>'
-    summary = tag.get('summary')
-    if summary and summary != name:
-      content += '\n<span class="summary">%s</span>' % summary
-    content += '\n</p>'
-
-  # generate share/like contexts if the activity does not have content
-  # of its own
-  for as_type, verb in [('share', 'Shared'), ('like', 'Likes')]:
+  # generate share/like contexts if the activity does not have content of its own
+  for as_type, verb, mf2_class in (('share', 'Shared', 'u-repost-of'),
+                                   ('like', 'Likes', 'u-like-of')):
     obj_type = source.object_type(obj)
     if (not synthesize_content or obj_type != as_type or 'object' not in obj or
         'content' in obj):
@@ -674,24 +664,26 @@ def render_content(obj, include_location=True, synthesize_content=True):
       continue
 
     for target in targets:
+      url = target.get('url', '#')
+
       # sometimes likes don't have enough content to render anything
       # interesting
       if 'url' in target and set(target) <= set(['url', 'objectType']):
-        content += '<a href="%s">%s this.</a>' % (
-          target.get('url'), verb.lower())
+        content += '<a class="%s" href="%s">%s this.</a>' % (
+          mf2_class, url, verb.lower())
 
       else:
         author = target.get('author', target.get('actor', {}))
         # special case for twitter RT's
         if obj_type == 'share' and 'url' in obj and re.search(
                 '^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
-          content += 'RT <a href="%s">@%s</a> ' % (
-            target.get('url', '#'), author.get('username'))
+          content += '<a class="%s" href="%s">RT @%s</a> ' % (
+            mf2_class, url, author.get('username'))
         else:
           # image looks bad in the simplified rendering
           author = {k: v for k, v in author.iteritems() if k != 'image'}
-          content += '%s <a href="%s">%s</a> by %s' % (
-            verb, target.get('url', '#'),
+          content += '%s <a class="%s" href="%s">%s</a> by %s' % (
+            verb, mf2_class, url,
             target.get('displayName', target.get('title', 'a post')),
             hcard_to_html(object_to_json(author, default_object_type='person')),
           )
@@ -721,49 +713,41 @@ def render_content(obj, include_location=True, synthesize_content=True):
   return content
 
 
-def render_children(mf2, responses=True):
-  """Renders the children, photos, videos, and audio in an mf2 object.
-
-  TODO: image alt text, video poster images. They're usually in the original AS
-  object, but not easily accessible (if at all) in mf2 objects.
+def render_children(obj, responses=True):
+  """Renders the children, photos, videos, and audio in an AS object.
 
   Args:
-    mf2: dict, decoded JSON microformats2 object
+    obj: dict, decoded JSON ActivityStreams object
     responses: boolean, whether to render likes and reposts
 
   Returns:
     string, rendered HTML
   """
-  props = mf2.get('properties', {})
+  children = []
 
-  children = (
-    [img(url, 'u-photo', 'attachment') for url in props.get('photo', []) if url] +
-    [vid(url, None, 'u-video') for url in props.get('video', []) if url] +
-    [aud(url, 'u-audio') for url in props.get('audio', []) if url])
+  STATE: reuse render_content() to render children
+  for child in obj.get('attachments', []) + obj.get('tags', []):
+    type = source.object_type(child)
+    if type == 'photo':
+      children.append(img(child))
+    elif type == 'audio':
+      children.append(audio(child))
+    elif type == 'video':
+      children.append(video(child))
+    elif type in ('like', 'share'):
+      # embedded likes and reposts of this post
+      # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
+      cls = 'u-like-of' if type == 'like' else 'u-repost-of'
+      children.append(json_to_html(object_to_json(child), [cls]))
+    elif type in ('note', 'article'):
+      children.append(json_to_html(object_to_json(child)) +
+                      video(util.get_first(child, 'video')) +
+                      audio(util.get_first(child, 'audio')) +
+                      img(util.get_first(child, 'image')))
 
-  # if this post is itself a like or repost, link to its target(s).
-  for mftype in 'like', 'repost':
-    # having like-of or repost-of makes this a like or repost.
-    for target in props.get(mftype + '-of', []):
-      if isinstance(target, basestring):
-        children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))
-      else:
-        children.append(json_to_html(target, ['u-' + mftype + '-of']))
-
-  # embedded likes and reposts of this post
-  # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
-  if responses:
-    for verb in 'like', 'repost':
-      # including u-like and u-repost for backcompat means that we must ignore
-      # these properties when converting a post that is itself a like or repost
-      if verb + '-of' not in props:
-        vals = props.get(verb, [])
-        if vals and isinstance(vals[0], dict):
-          children += [json_to_html(v, ['u-' + verb]) for v in vals]
-
-  # embedded children of this post
-  children += ['<blockquote>\n' + json_to_html(c) + '\n</blockquote>'
-               for c in mf2.get('children', [])]
+  # # other types not rendered in render_content()
+  # children += ['<blockquote>\n' + json_to_html(c) + '\n</blockquote>'
+  #              for c in mf2.get('children', [])]
 
   return '\n'.join(children)
 
@@ -855,59 +839,78 @@ def maybe_linked_name(props):
   return html
 
 
-def img(src, cls, alt):
-  """Returns an <img> string with the given src, class, and alt.
+def img(obj):
+  """Renders an AS object as an HTML <img> tag.
 
   Args:
-    src: string, url of the image
-    cls: string, css class applied to the img tag
-    alt: string, alt attribute value, or None
+    obj: dict, decoded JSON ActivityStreams object, or string URL
 
   Returns:
     string
   """
-  return '<img class="%s" src="%s" alt=%s />' % (
-      cls, src, xml.sax.saxutils.quoteattr(alt or ''))
+  if not isinstance(obj, dict):
+    obj = {'url': obj}
+
+  url = obj.get('url')
+  if not url:
+    return ''
+
+  alt = get_text(obj.get('name') or obj.get('summary') or obj.get('content'))
+  return """
+<img class="u-photo" src="%s" alt=%s />""" % (url, xml.sax.saxutils.quoteattr(alt))
 
 
-def vid(src, poster, cls):
-  """Returns an <video> string with the given src and class
+def video(obj):
+  """Renders an AS object as an HTML <video> tag.
 
   Args:
-    src: string, url of the video
-    poster: sring, optional. url of the poster or preview image
-    cls: string, css class applied to the video tag
+    obj: dict, decoded JSON ActivityStreams object, or string URL
 
   Returns:
     string
   """
-  html = '<video class="%s" src="%s"' % (cls, src)
-  if poster:
-    html += ' poster="%s"' % poster
+  if not isinstance(obj, dict):
+    obj = {'stream': obj}
 
-  # include ="controls" value since this HTML is also used in the Atom
-  # template, which has to validate as XML.
-  html += ' controls="controls">'
+  url = obj.get('stream') or obj.get('url')
+  if not url:
+    return ''
 
-  html += 'Your browser does not support the video tag. '
-  html += '<a href="%s">Click here to view directly' % src
-  if poster:
-    html += '<img src="%s"/>' % poster
-  html += '</a></video>'
-  return html
+  poster = util.get_first(obj, 'image', {}).get('url')
+
+  # include controls="controls" attr value since this HTML is also used in the
+  # Atom template, which has to validate as XML.
+  return """
+<video class="u-video" poster="%s" src="%s" controls="controls">'
+Your browser does not support the video tag.
+<a href="%s">Click here to view directly.
+<img src="%s" />
+</a></video>""" % (poster, url, url, poster)
 
 
-def aud(src, cls):
-  """Returns an <audio> string with the given src and class
+def audio(obj):
+  """Renders an AS object as an HTML <audio> tag.
 
   Args:
-    src: string, url of the video
-    cls: string, css class applied to the video tag
+    obj: dict, decoded JSON ActivityStreams object, or string URL
 
   Returns:
     string
   """
-  return '<audio class="%s" src="%s" controls="controls"></audio>' % (cls, src)
+  if not isinstance(obj, dict):
+    obj = {'stream': obj}
+
+  url = obj.get('stream') or obj.get('url')
+  if not url:
+    return ''
+
+  # include controls="controls" attr value since this HTML is also used in the
+  # Atom template, which has to validate as XML.
+  return """
+<audio class="u-audio" src="%s" controls="controls">
+Your browser does not support the audio tag.
+<a href="%s">Click here to view directly.</a>
+</audio>""" % (url, url)
 
 
 def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):

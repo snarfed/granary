@@ -168,16 +168,16 @@ class Microformats2Test(testutil.HandlerTest):
       'tags': [{
         'objectType': 'article',
         'url': 'http://link',
-        'displayName': 'name',
+        'displayName': 'some alt text',
         'image': {'url': 'http://image'},
       }]
     }
     self.assert_equals("""\
 foo
-<img class="thumbnail" src="http://image" alt="name" />
+<img class="u-photo" src="http://image" alt="some alt text" />
 <p>
 <a class="link" href="http://link">
-<span class="name">name</span>
+<span class="name">some alt text</span>
 </a>
 </p>""", microformats2.render_content(obj))
 
@@ -188,8 +188,8 @@ foo
 
   def test_render_children_multiple_image_attachments(self):
     self.assert_equals("""\
-<img class="u-photo" src="http://1" alt="attachment" />
-<img class="u-photo" src="http://2" alt="attachment" />
+<img class="u-photo" src="http://1" alt="" />
+<img class="u-photo" src="http://2" alt="" />
 """, microformats2.render_children(microformats2.object_to_json({
         'content': 'foo',
         'attachments': [
@@ -237,15 +237,17 @@ foo
       }))
 
   def test_render_content_synthesize_content(self):
-    for verb, phrase in ('like', 'likes'), ('share', 'shared'):
+    for verb, phrase, mf2_class in (('like', 'likes', 'u-like-of'),
+                                    ('share', 'shared', 'u-repost-of')):
       obj = {
         'verb': verb,
         'object': {'url': 'http://orig/post'},
       }
-      self.assert_equals('<a href="http://orig/post">%s this.</a>' % phrase,
-                         microformats2.render_content(obj, synthesize_content=True))
-      self.assert_equals('',
-                         microformats2.render_content(obj, synthesize_content=False))
+      self.assert_equals(
+        '<a class="%s" href="http://orig/post">%s this.</a>' % (mf2_class, phrase),
+        microformats2.render_content(obj, synthesize_content=True))
+      self.assert_equals(
+        '', microformats2.render_content(obj, synthesize_content=False))
 
       obj['content'] = 'Message from actor'
       for val in False, True:
@@ -254,7 +256,7 @@ foo
 
   def test_render_children_video(self):
     self.assert_equals("""\
-<img class="u-photo" src="http://im/age" alt="attachment" />
+<img class="u-photo" src="http://im/age" alt="" />
 <video class="u-video" src="http://vid/eo" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly</a></video>
 """, microformats2.render_children(microformats2.object_to_json({
       'content': 'foo',
@@ -298,13 +300,13 @@ foo
 
 <div class="e-content p-name">
 
-<img class="thumbnail" src="img" alt="d &amp; e" />
+<img class="u-photo" src="img" alt="d &amp; e" />
 <p>
 <span class="name">d & e</span>
 </p>
 </div>
 
-<img class="u-photo" src="img" alt="attachment" />
+<img class="u-photo" src="img" alt="d &amp; e" />
 
 </article>""", microformats2.object_to_html({
         'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
@@ -383,30 +385,12 @@ foo
 
     html = microformats2.object_to_html(obj)
     self.assert_multiline_in("""\
-<blockquote>
-<article class="u-quotation-of h-cite">
-<span class="p-uid"></span>
-
-<a class="p-name u-url" href="http://p">p</a>
-<div class="">
-
-</div>
-
-</article>
-
-</blockquote>
-<blockquote>
-<article class="u-quotation-of h-cite">
-<span class="p-uid"></span>
-
-<a class="u-url" href="http://a">http://a</a>
-<div class="">
-
-</div>
-
-</article>
-
-</blockquote>
+<p>
+<a class="link" href="http://p">p</a>
+</p>
+<p>
+<a class="link" href="http://a">http://a</a>
+</p>
 """, html)
 
   def test_object_to_json_reaction(self):
@@ -476,9 +460,9 @@ foo
         ):
       self.assertEquals(expected, microformats2.get_string_urls(objs))
 
-  def test_img_blank_alt(self):
-    self.assertEquals('<img class="bar" src="foo" alt="" />',
-                      microformats2.img('foo', 'bar', None))
+  def test_img_no_alt(self):
+    self.assertEquals('<img class="u-photo" src="foo" alt="" />',
+                      microformats2.img({'url': 'foo'}).strip())
 
   def test_json_to_html_no_properties_or_type(self):
     # just check that we don't crash
