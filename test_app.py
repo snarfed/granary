@@ -193,12 +193,12 @@ class AppTest(testutil.HandlerTest):
 <a href="/author" rel="author"></a>,
 """
     })
-    self.expect_requests_get('http://my/author', """
+    self.expect_urlopen('http://my/author', """
 <div class="h-card">
   <a class="u-url" href="http://my/author">Someone Else</a>
   <img class="u-photo" src="http://someone/picture" />
 </div>
-""", headers=mox.IgnoreArg(), timeout=None)
+""", timeout=15)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
