@@ -106,8 +106,37 @@ class UrlHandler(activitystreams.Handler):
     if input not in expected_inputs:
       raise exc.HTTPBadRequest('Invalid input: %s, expected one of %r' %
                                (input, expected_inputs))
-    url = util.get_required_param(self, 'url')
+    url, body = self._urlopen(util.get_required_param(self, 'url'))
 
+    # decode data
+    mf2 = None
+    if input == 'html':
+      mf2 = mf2py.parse(doc=body, url=url)
+    elif input == 'json-mf2':
+      mf2 = json.loads(body)
+      mf2.setdefault('rels', {})  # mf2util expects rels
+
+    actor = None
+    title = None
+    if mf2:
+      def fetch_mf2_func(url):
+        _, doc = self._urlopen(url)
+        return mf2py.parse(doc=doc, url=url)
+      actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
+      title = mf2util.interpret_feed(mf2, url).get('name')
+
+    if input == 'activitystreams':
+      activities = json.loads(body)
+    elif input == 'html':
+      activities = microformats2.html_to_activities(body, url, actor)
+    elif input == 'json-mf2':
+      activities = [microformats2.json_to_object(item, actor=actor)
+                    for item in mf2.get('items', [])]
+
+    self.write_response(source.Source.make_activities_base_response(activities),
+                        url=url, actor=actor, title=title)
+
+  def _urlopen(self, url):
     # check if request is cached
     cache = self.request.get('cache', '').lower() != 'false'
     cache_key = 'U %s' % url
@@ -135,31 +164,7 @@ class UrlHandler(activitystreams.Handler):
         logging.info('Caching response in %r', cache_key)
         memcache.set(cache_key, {'url': url, 'body': body}, URL_CACHE_TIME)
 
-    # decode data
-    mf2 = None
-    if input == 'html':
-      mf2 = mf2py.parse(doc=body, url=url)
-    elif input == 'json-mf2':
-      mf2 = json.loads(body)
-      mf2.setdefault('rels', {})  # mf2util expects rels
-
-    actor = None
-    title = None
-    if mf2:
-      actor = microformats2.find_author(
-        mf2, fetch_mf2_func=lambda url: mf2py.parse(url=url))
-      title = mf2util.interpret_feed(mf2, url).get('name')
-
-    if input == 'activitystreams':
-      activities = json.loads(body)
-    elif input == 'html':
-      activities = microformats2.html_to_activities(body, url, actor)
-    elif input == 'json-mf2':
-      activities = [microformats2.json_to_object(item, actor=actor)
-                    for item in mf2.get('items', [])]
-
-    self.write_response(source.Source.make_activities_base_response(activities),
-                        url=url, actor=actor, title=title)
+    return url, body
 
 
 application = webapp2.WSGIApplication([
