@@ -990,8 +990,9 @@ class Twitter(source.Source):
   def base_object(self, obj):
     """Returns the 'base' silo object that an object operates on.
 
-    Includes special handling for Twitter photo URLs, e.g.
+    Includes special handling for Twitter photo and video URLs, e.g.
     https://twitter.com/nelson/status/447465082327298048/photo/1
+    https://twitter.com/nelson/status/447465082327298048/video/1
 
     Args:
       obj: ActivityStreams object
@@ -1006,7 +1007,7 @@ class Twitter(source.Source):
       try:
         parsed = urlparse.urlparse(url)
         parts = parsed.path.split('/')
-        if len(parts) >= 3 and parts[-2] == 'photo':
+        if len(parts) >= 3 and parts[-2] in ('photo', 'video'):
           base_obj['id'] = parts[-3]
           parsed = list(parsed)
           parsed[2] = '/'.join(parts[:-2])

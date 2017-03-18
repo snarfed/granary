@@ -1901,8 +1901,9 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       # replies with leading @-mentions, should be removed
       ('@you foo', 'http://twitter.com/you/status/100', 'foo', 'foo'),
       ('@YoU foo', 'http://twitter.com/you/status/100', 'foo', 'foo'),
-      # photo URL. tests Twitter.base_object()
+      # photo and video URLs. tests Twitter.base_object()
       ('foo', 'http://twitter.com/you/status/100/photo/1', 'foo', 'foo'),
+      ('foo', 'http://twitter.com/you/status/100/video/1', 'foo', 'foo'),
       # mobile.twitter.com URL. the mobile should be stripped from embed.
       ('foo', 'http://mobile.twitter.com/you/status/100', 'foo', 'foo'),
       )
@@ -1992,6 +1993,22 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                        self.twitter.create(LIKES_FROM_HTML[0]).content)
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
+    self.assertIn("""\
+<span class="verb">favorite</span>
+<a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
+                  preview.description)
+
+  def test_create_favorite_of_video_url(self):
+    like = copy.deepcopy(LIKES_FROM_HTML[0])
+    like['object']['url'] = 'https://twitter.com/snarfed_org/status/100/video/1'
+
+    self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
+                        'type': 'like'},
+                       self.twitter.create(like).content)
+
+    preview = self.twitter.preview_create(like)
     self.assertIn("""\
 <span class="verb">favorite</span>
 <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
