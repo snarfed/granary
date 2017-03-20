@@ -402,10 +402,11 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 <img class="thumbnail" src="http://attach/image/big" alt="" />
 </a>
 </p>
-<span class="p-location h-card">
+<p>  <span class="p-location h-card">
   <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a>
 
 </span>
+</p>
 
   </div>
   </content>

@@ -222,10 +222,11 @@ foo
   def test_render_content_location(self):
     self.assert_equals("""\
 foo
-<span class="p-location h-card">
+<p>  <span class="p-location h-card">
   <a class="p-name u-url" href="http://my/place">My place</a>
 
 </span>
+</p>
 """, microformats2.render_content({
         'content': 'foo',
         'location': {

@@ -702,7 +702,7 @@ def render_content(obj, include_location=True, synthesize_content=True):
   # location
   loc = obj.get('location')
   if include_location and loc:
-    content += '\n' + hcard_to_html(
+    content += '\n<p>%s</p>' % hcard_to_html(
       object_to_json(loc, default_object_type='place'),
       parent_props=['p-location'])
 
