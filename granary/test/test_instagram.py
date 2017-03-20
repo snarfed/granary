@@ -684,6 +684,21 @@ HTML_MULTI_PHOTO.update({
   },
 })
 
+HTML_SUGGESTED_USERS = {
+  'suggested_users': [{
+    'id': '123',
+    'username': 'ms_person',
+    'full_name': 'Ms Person',
+    'biography': 'a person who did stuff',
+    'profile_pic_url': 'https://scontent.cdninstagram.com/t51.2885-19/s150x150/13398501_243709166011988_1998688411_a.jpg',
+    'edge_followed_by': {'count': 106},
+    'is_private': True,
+    'is_verified': False,
+    'is_viewer': False,
+  }],
+  '__typename': 'GraphSuggestedUserFeedUnit',
+}
+
 HTML_FEED_OLD = {  # eg https://www.instagram.com/ when you're logged in
   'environment_switcher_visible_server_guess': True,
   'config': {
@@ -758,6 +773,7 @@ HTML_FEED_NEW = {  # new schema, as of 2017-02-27
       'edges': [
         {'node': HTML_PHOTO_FULL_NEW},
         {'node': HTML_VIDEO_FULL_NEW},
+        {'node': HTML_SUGGESTED_USERS},
       ],
     },
   }}}]},

@@ -560,7 +560,7 @@ class Instagram(source.Source):
     }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
-      image = media.get('images').get(version)
+      image = media.get('images', {}).get(version)
       if image:
         object['image'] = {'url': image.get('url')}
         break
@@ -766,8 +766,10 @@ class Instagram(source.Source):
       medias.extend(page.get('feed', {}).get('media', {}).get('nodes', []))
       # new schema
       edges = page.get('graphql', {}).get('user', {})\
-                        .get('edge_web_feed_timeline', {}).get('edges', [])
-      medias.extend(e.get('node') for e in edges)
+                  .get('edge_web_feed_timeline', {}).get('edges', [])
+      medias.extend(e.get('node') for e in edges
+                    if e.get('node', {}).get('__typename') not in
+                    ('GraphSuggestedUserFeedUnit',))
 
     # profiles
     for page in entry_data.get('ProfilePage', []):
