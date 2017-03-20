@@ -439,7 +439,7 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 # HTML objects from https://www.instagram.com/...
 # https://github.com/snarfed/granary/issues/65
 # https://github.com/snarfed/bridgy/issues/603
-HTML_PHOTO_FULL = {
+HTML_PHOTO_FULL_OLD = {  # old schema, no longer on home page as of 2017-02-27
   'id': '123',
   'code': 'ABC123',
   'location': {
@@ -494,7 +494,68 @@ HTML_PHOTO_FULL = {
   'dimensions': {'width': 1080, 'height': 1293},
   'date': 1453063593.0,
 }
-HTML_VIDEO_FULL = {
+# new schema, visible *only* on home page (not profiles or individual photo/video
+# permalinks) as of 2017-02-27.
+HTML_PHOTO_FULL_NEW = {
+  'id': '123',
+  '__typename': 'GraphImage',
+  'code': 'ABC123',
+  'location': {
+    'name': 'RCA Studio B',
+    'id': '345924646',
+    'has_public_page': True
+  },
+  'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfp1\/t51.2885-15\/e35\/12545499_1662965520652470_1466520818_n.jpg',
+  'is_video': False,
+  'owner': {
+    'is_private': False,
+    'id': '456',
+    'has_blocked_viewer': False,
+    'full_name': 'Jerry C',
+    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+    'blocked_by_viewer': False,
+    'followed_by_viewer': True,
+    'requested_by_viewer': False,
+    'username': 'jc',
+  },
+  'edge_media_to_caption': {'edges': [{'node': {
+    'text': 'Elvis hits out of RCA Studio B',
+  }}]},
+  'edge_media_preview_like': {
+    'edges': [{
+      'node': {
+        'id': '8',
+        'profile_pic_url': 'http:\/\/alice\/picture',
+        'username': 'alizz',
+        'full_name': 'Alice',
+      }
+    }, {
+      'node': {
+        'id': '9',
+        'profile_pic_url': 'http:\/\/bob\/picture',
+        'username': 'bobbb',
+        'full_name': 'Bob',
+        'website': 'http://bob.com/',
+      }
+    }],
+    'count': 5,
+  },
+  'viewer_has_liked': False,
+  'edge_media_to_comment': {
+    'edges': [],
+    'page_info': {
+      'has_next_page': False,
+      'end_cursor': None,
+      'start_cursor': None,
+      'has_previous_page': False
+    },
+    'count': 0,
+  },
+  'dimensions': {'width': 1080, 'height': 1293},
+  'taken_at_timestamp': 1453063593,
+}
+
+HTML_VIDEO_FULL_OLD = {  # old schema, no longer on home page as of 2017-02-27
   'id': '789',
   'code': 'XYZ789',
   'location': None,
@@ -536,12 +597,59 @@ HTML_VIDEO_FULL = {
   },
   'date': 1453036552.0,
 }
+# new schema, visible *only* on home page (not profiles or individual photo/video
+# permalinks) as of 2017-02-27.
+HTML_VIDEO_FULL_NEW = {
+  'id': '789',
+  'code': 'XYZ789',
+  'location': None,
+  'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
+  'is_video': True,
+  'video_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xtp1\/t50.2886-16\/12604073_746855092124622_46574942_n.mp4',
+  'dimensions': {'height': 640, 'width': 640},
+  'owner': {
+    'is_private': True,
+    'id': '456',
+    'full_name': 'Jerry C',
+    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+    'username': 'jc',
+  },
+  'edge_media_to_caption': {'edges': [{'node': {
+    'text': 'Eye of deer \ud83d\udc41 and #selfie from me',
+  }}]},
+  'edge_media_preview_like': {
+    'edges': [],
+    'count': 9,
+  },
+  'edge_media_to_comment': {
+    'edges': [{'node': {
+      'owner': {
+        'id': '232927278',
+        'profile_pic_url': 'http:\/\/picture\/commenter',
+        'username': 'averygood',
+        'full_name': '\u5c0f\u6b63',
+      },
+      'id': '789',
+      'created_at': 1349588757,
+      'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+    }}],
+    'count': 1,
+  },
+  'edge_media_to_tagged_user': {
+    'edges': [{'node': {
+      'user': {'username': 'ap'},
+      'x': 0.4657777507,
+      'y': 0.4284444173},
+    }],
+  },
+  'taken_at_timestamp': 1453036552,
+}
 
-HTML_VIDEO = copy.deepcopy(HTML_VIDEO_FULL)
+HTML_VIDEO = copy.deepcopy(HTML_VIDEO_FULL_OLD)
 del HTML_VIDEO['likes']['nodes']
 del HTML_VIDEO['comments']['nodes']
 
-HTML_PHOTO = copy.deepcopy(HTML_PHOTO_FULL)
+HTML_PHOTO = copy.deepcopy(HTML_PHOTO_FULL_OLD)
 del HTML_PHOTO['likes']['nodes']
 del HTML_PHOTO['comments']['nodes']
 
@@ -575,7 +683,7 @@ HTML_MULTI_PHOTO.update({
   },
 })
 
-HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
+HTML_FEED_OLD = {  # eg https://www.instagram.com/ when you're logged in
   'environment_switcher_visible_server_guess': True,
   'config': {
     'csrf_token': '...',
@@ -604,8 +712,8 @@ HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
     '__query_string': '?',
     'feed': {'media': {
       'nodes': [
-        HTML_PHOTO_FULL,
-        HTML_VIDEO_FULL,
+        HTML_PHOTO_FULL_OLD,
+        HTML_VIDEO_FULL_OLD,
       ],
       'page_info': {
         'has_next_page': True,
@@ -615,6 +723,44 @@ HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
       },
     }},
 }]}}
+HTML_FEED_NEW = {  # new schema, as of 2017-02-27
+  'environment_switcher_visible_server_guess': True,
+  'config': {
+    'csrf_token': '...',
+    'viewer': {
+      'external_url': 'https:\/\/snarfed.org',
+      'biography': 'something or other',
+      'id': '420973239',
+      'full_name': 'Ryan B',
+      'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
+      'has_profile_pic': True,
+      'username': 'snarfed',
+    }
+  },
+  'display_properties_server_guess': {'pixel_ratio': 2.0, 'viewport_width': 1280},
+  'qe': {'su': {'g': 'control', 'p': {'enabled': 'false'}}},
+  'hostname': 'www.instagram.com',
+  'platform': 'web',
+  'static_root': '\/\/instagramstatic-a.akamaihd.net\/bluebar\/cf5f70d',
+  'gatekeepers': {'sfbf': True, 'addpp': True, 'rhp': True, 'cpp': True},
+  'language_code': 'en',
+  'country_code': 'US',
+  'entry_data': {'FeedPage': [{'graphql': {'user': {
+    'id': '420973239',
+    'profile_pic_url': 'https://instagram.fsnc1-1.fna.fbcdn.net/t51.2885-19/11373714_959073410822287_2004790583_a.jpg',
+    'username': 'snarfed',
+    'edge_web_feed_timeline': {
+      'page_info': {
+        'has_next_page': True,
+        'end_cursor': '...',
+      },
+      'edges': [
+        {'node': HTML_PHOTO_FULL_NEW},
+        {'node': HTML_VIDEO_FULL_NEW},
+      ],
+    },
+  }}}]},
+}
 
 HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
   'config': {
@@ -665,7 +811,7 @@ HTML_PHOTO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
     'viewer': None,
   },
   '...': '...',  # many of the same top-level fields as in HTML_FEED and HTML_PROFILE
-  'entry_data': {'PostPage': [{'media': HTML_PHOTO_FULL}]},
+  'entry_data': {'PostPage': [{'media': HTML_PHOTO_FULL_OLD}]},
 }
 
 HTML_VIDEO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
@@ -674,7 +820,7 @@ HTML_VIDEO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
     'viewer': None,
   },
   '...': '...',
-  'entry_data': {'PostPage': [{'media': HTML_VIDEO_FULL}]},
+  'entry_data': {'PostPage': [{'media': HTML_VIDEO_FULL_OLD}]},
 }
 
 HTML_MULTI_PHOTO_PAGE = {  # eg https://www.instagram.com/p/BQ0mDB2gV_O/
@@ -835,7 +981,8 @@ HTML_MULTI_PHOTO_ACTIVITY['object']['attachments'] = [{
 HTML_ACTIVITIES = [HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY]
 HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
 
-HTML_FEED_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER
+HTML_FEED_OLD_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED_OLD) + HTML_FOOTER
+HTML_FEED_NEW_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED_NEW) + HTML_FOOTER
 HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
 HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
 HTML_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
@@ -997,7 +1144,7 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_HEADER + json.dumps(profile) + HTML_FOOTER,
                              allow_redirects=False)
-    video = copy.deepcopy(HTML_VIDEO_FULL)
+    video = copy.deepcopy(HTML_VIDEO_FULL_OLD)
     video['comments']['count'] = 4
     self.expect_requests_get(instagram.HTML_BASE_URL + 'p/XYZ789/',
                              HTML_HEADER + json.dumps(video) + HTML_FOOTER)
@@ -1029,7 +1176,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_friends_cookie(self):
     self.expect_requests_get(
-      instagram.HTML_BASE_URL, HTML_FEED_COMPLETE, allow_redirects=False,
+      instagram.HTML_BASE_URL, HTML_FEED_OLD_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
@@ -1037,7 +1184,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_response_scrape_friends_viewer(self):
     self.expect_requests_get(
-      instagram.HTML_BASE_URL, HTML_FEED_COMPLETE, allow_redirects=False,
+      instagram.HTML_BASE_URL, HTML_FEED_OLD_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
 
@@ -1387,8 +1534,13 @@ class InstagramTest(testutil.HandlerTest):
         'object': {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       }))
 
-  def test_html_to_activities_feed(self):
-    activities, viewer = self.instagram.html_to_activities(HTML_FEED_COMPLETE)
+  def test_html_to_activities_feed_old(self):
+    activities, viewer = self.instagram.html_to_activities(HTML_FEED_OLD_COMPLETE)
+    self.assert_equals(HTML_ACTIVITIES_FULL, activities)
+    self.assert_equals(HTML_VIEWER, viewer)
+
+  def test_html_to_activities_feed_new(self):
+    activities, viewer = self.instagram.html_to_activities(HTML_FEED_NEW_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
@@ -1417,7 +1569,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assertIsNone(viewer)
 
   def test_html_to_activities_missing_profile_picture_external_url(self):
-    data = copy.deepcopy(HTML_FEED)
+    data = copy.deepcopy(HTML_FEED_OLD)
     data['config']['viewer']['profile_pic_url'] = None
     data['config']['viewer']['external_url'] = None
     _, viewer = self.instagram.html_to_activities(
@@ -1429,7 +1581,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(expected, viewer)
 
   def test_html_to_activities_missing_video_url(self):
-    data = copy.deepcopy(HTML_FEED)
+    data = copy.deepcopy(HTML_FEED_OLD)
     del data['entry_data']['FeedPage'][0]['feed']['media']['nodes'][1]['video_url']
     activities, _ = self.instagram.html_to_activities(
       HTML_HEADER + json.dumps(data) + HTML_FOOTER)
