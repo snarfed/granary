@@ -83,7 +83,9 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
         html = microformats2.render_content(att)
         author = att.get('author')
         if author:
-          html = '%s: %s' % (microformats2.object_to_html(author).strip(), html)
+          name = microformats2.maybe_linked_name(
+            microformats2.object_to_json(author).get('properties', []))
+          html = '%s: %s' % (name.strip(), html)
         obj['rendered_children'].append(_encode_ampersands(html))
 
   # Emulate Django template behavior that returns a special default value that
