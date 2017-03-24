@@ -411,13 +411,15 @@ FAVORITES_HTML = u"""  # Twitter, from /i/activity/favorited_popup?id=...
 <ol class="activity-popup-users">
     <li class="js-stream-item stream-item stream-item
 " data-item-id="353" id="stream-item-user-353" data-item-type="user">
-    <!-- snipped <div class="account"... -->
+  <!-- snipped <div class="account"... -->
+
+  <!-- new HTML, as of at least 2017-03-23, wraps username in <b> -->
   <div class="content">
         <div class="stream-item-header">
           <a class="account-group js-user-profile-link" href="/ge" >
             <img class="avatar js-action-profile-avatar " src="https://twimg/353" alt="" data-user-id="353"/>
             <strong class="fullname js-action-profile-name">George</strong>
-              <span class="username js-action-profile-name">@ge</span></a>
+              <span class="username u-dir" dir="ltr">@<b>ge</b></span></a>
         </div>
       </div>
     </div>
@@ -428,11 +430,12 @@ FAVORITES_HTML = u"""  # Twitter, from /i/activity/favorited_popup?id=...
     <div class="content">
       <div class="stream-item-header">
         <a class="account-group js-user-profile-link" href="/ge" >
-          <span class="username js-action-profile-name">@jo</span></a>
+          <span class="username u-dir" dir="ltr">@<b>jo</b></span></a>
       </div>
     </div>
   </li>
 
+  <!-- old HTML, has js-action-profile-name -->
   <li class="js-stream-item stream-item stream-item">
     <div class="content">
       <div class="stream-item-header">

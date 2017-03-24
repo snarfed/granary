@@ -290,6 +290,7 @@ Changelog
 ### 1.8 - unreleased
 * Twitter:
     * Bug fix for creating replies, favorites, or retweets of video URLs, e.g. https://twitter.com/name/status/123/video/1 .
+    * Bug fix for parsing favorites HTML to handle a small change on Twitter's side.
 * Instagram:
     * Update scraping to handle new home page (ie news feed) JSON schema, which changed sometime around 2017-02-27. (Profile pages and individual photo/video permalinks still haven't changed yet.)
 * microformats2:

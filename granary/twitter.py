@@ -1359,7 +1359,7 @@ class Twitter(source.Source):
       username = user.find(class_='username')
       if not username:
         continue
-      username = unicode(username.string)
+      username = unicode(username.get_text(''))
       if username.startswith('@'):
         username = username[1:]
 
