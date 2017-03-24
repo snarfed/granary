@@ -173,7 +173,9 @@ original object
     got = atom.activities_to_atom([{'object': {'attachments': [
       {'objectType': 'note', 'url': 'http://p', 'content': 'note content'},
       {'objectType': 'x', 'url': 'http://x'},
-      {'objectType': 'article', 'url': 'http://a', 'content': 'article content'},
+      {'objectType': 'article', 'url': 'http://a', 'content': 'article content',
+       'author': {'displayName': 'Mr. Foo', 'url': 'http://x/', 'objectType': 'person'},
+      },
     ]}}], None)
     self.assert_multiline_in("""
 <blockquote>
@@ -182,7 +184,10 @@ note content
 """, got)
     self.assert_multiline_in("""
 <blockquote>
-article content
+<span class="h-card">
+<a class="p-name u-url" href="http://x/">Mr. Foo</a>
+
+</span>: article content
 </blockquote>
 """, got)
 

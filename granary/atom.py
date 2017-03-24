@@ -77,9 +77,14 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     for att in attachments:
       att['image'] = util.get_list(att, 'image')
 
-    obj['rendered_children'] = [
-      _encode_ampersands(microformats2.render_content(att))
-      for att in attachments if att.get('objectType') in ('note', 'article')]
+    obj['rendered_children'] = []
+    for att in attachments:
+      if att.get('objectType') in ('note', 'article'):
+        html = microformats2.render_content(att)
+        author = att.get('author')
+        if author:
+          html = '%s: %s' % (microformats2.object_to_html(author).strip(), html)
+        obj['rendered_children'].append(_encode_ampersands(html))
 
   # Emulate Django template behavior that returns a special default value that
   # can continue to be referenced when an attribute or item lookup fails. Helps

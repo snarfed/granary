@@ -295,6 +295,8 @@ Changelog
     * Update scraping to handle new home page (ie news feed) JSON schema, which changed sometime around 2017-02-27. (Profile pages and individual photo/video permalinks still haven't changed yet.)
 * microformats2:
     * Minor whitespace change (added <p>) when rendering locations as HTML.
+* Atom:
+    * Include author name when rendering attached articles and notes (e.g. quote tweets).
 
 ### 1.7 - 2017-02-27
 * microformats2:
