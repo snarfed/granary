@@ -191,6 +191,10 @@ FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
 
 class Facebook(source.Source):
   """Implements the ActivityStreams API for Facebook.
+
+  Attributes:
+    access_token: string, optional, OAuth access token
+    user_id: string, optional, current user's id (either global or app-scoped)
   """
 
   DOMAIN = 'facebook.com'
@@ -210,7 +214,7 @@ class Facebook(source.Source):
   </div>
   """
 
-  def __init__(self, access_token=None):
+  def __init__(self, access_token=None, user_id=None):
     """Constructor.
 
     If an OAuth access token is provided, it will be passed on to Facebook. This
@@ -219,8 +223,10 @@ class Facebook(source.Source):
 
     Args:
       access_token: string, optional OAuth access token
+      user_id: string, optional, current user's id (either global or app-scoped)
     """
     self.access_token = access_token
+    self.user_id = user_id
 
   def object_url(self, id):
     # Facebook always uses www. They redirect bare facebook.com URLs to it.
@@ -993,7 +999,7 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    obj = self.post_to_object(post)
+    obj = self.post_to_object(post, type='post')
     if not obj:
       return {}
 
@@ -1019,19 +1025,19 @@ class Facebook(source.Source):
         }
     return self.postprocess_activity(activity)
 
-  def post_to_object(self, post, is_comment=False):
+  def post_to_object(self, post, type=None):
     """Converts a post to an object.
 
     TODO: handle the sharedposts field
 
     Args:
       post: dict, a decoded JSON post
-      is_comment: True if post is actually a comment
+      type: string object type: None, 'post', or 'comment'
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    assert is_comment in (True, False)
+    assert type in (None, 'post', 'comment')
 
     fb_id = post.get('id')
     post_type = post.get('type')
@@ -1070,10 +1076,10 @@ class Facebook(source.Source):
       else:
         object_type = 'note'
 
-    id = self.parse_id(fb_id, is_comment=is_comment)
-    if is_comment and not id.comment:
+    id = self.parse_id(fb_id, is_comment=(type == 'comment'))
+    if type == 'comment' and not id.comment:
       return {}
-    elif not is_comment and not id.post:
+    elif type != 'comment' and not id.post:
       return {}
 
     obj = {
@@ -1089,7 +1095,7 @@ class Facebook(source.Source):
       'displayName': display_name,
       'fb_object_id': post.get('object_id'),
       'fb_object_for_ids': post.get('object_for_ids'),
-      'to': self.privacy_to_to(post),
+      'to': self.privacy_to_to(post, type=type),
       }
 
     # message_tags is a dict in most post types, but a list in some other object
@@ -1228,7 +1234,7 @@ class Facebook(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    obj = self.post_to_object(comment, is_comment=True)
+    obj = self.post_to_object(comment, type='comment')
     if not obj:
       return obj
 
@@ -1471,8 +1477,7 @@ class Facebook(source.Source):
       'updated': util.maybe_iso8601_to_rfc3339(album.get('updated_time')),
     })
 
-  @staticmethod
-  def privacy_to_to(obj):
+  def privacy_to_to(self, obj, type=None):
     """Converts a Facebook `privacy` field to an ActivityStreams `to` field.
 
     privacy is sometimes an object:
@@ -1486,18 +1491,22 @@ class Facebook(source.Source):
 
     Returns:
       dict: ActivityStreams `to` object, or None if unknown
+      type: string object type: None, 'post', or 'comment'
     """
     privacy = obj.get('privacy')
     if isinstance(privacy, dict):
       privacy = privacy.get('value')
 
-    if obj.get('status_type') == 'wall_post' and not privacy:
+    from_id = obj.get('from', {}).get('id')
+    if (type == 'post' and not privacy and
+        (from_id and self.user_id and from_id != self.user_id)):
       # privacy value '' means it doesn't have an explicit audience set, so it
       # inherits the defaults privacy setting for wherever it was posted: a
       # group, a page, a user's timeline, etc. unfortunately we haven't found a
-      # way to get that default setting via the API. so just omit it for at
-      # least some known post types like this. background:
+      # way to get that default setting via the API. so, approximate that
+      # by checking whether the current user posted it or someone else.
       # https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227
+      # https://github.com/snarfed/bridgy/issues/739#issuecomment-290118032
       return [{'objectType': 'unknown'}]
     elif privacy and privacy.lower() == 'custom':
       return [{'objectType': 'unknown'}]

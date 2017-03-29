@@ -2108,21 +2108,54 @@ http://b http://c""",
     """https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227
     (among others)
     """
-    for expected, inputs in (
-        (None, [{}]),
-        ([{'objectType': 'group', 'alias':'@private'}],
-         ({'privacy': 'friends'}, {'privacy': {'value': 'FRIENDS'}},
-          {'privacy': 'all_friends'}, {'privacy': {'value': 'ALL_FRIENDS'}})),
-        ([{'objectType': 'group', 'alias':'@public'}],
-         ({'privacy': ''}, {'privacy': {'value': ''}},
-          {'privacy': 'open'}, {'privacy': {'value': 'OPEN'}},
-          {'privacy': 'everyone'}, {'privacy': {'value': 'EVERYONE'}})),
-        ([{'objectType': 'unknown'}],
-         ({'privacy': 'custom'}, {'privacy': {'value': 'CUSTOM'}},
-          {'status_type': 'wall_post', 'privacy': {'value': ''}})),
-        ):
+    self.assertIsNone(self.fb.privacy_to_to({}))
+
+    for expected, inputs in ((
+        {'objectType': 'group', 'alias':'@private'}, (
+          {'privacy': 'friends'},
+          {'privacy': {'value': 'FRIENDS'}},
+          {'privacy': 'all_friends'},
+          {'privacy': {'value': 'ALL_FRIENDS'}},
+        )), (
+        {'objectType': 'group', 'alias':'@public'}, (
+          {'privacy': ''},
+          {'privacy': {'value': ''}},
+          {'privacy': 'open'},
+          {'privacy': {'value': 'OPEN'}},
+          {'privacy': 'everyone'},
+          {'privacy': {'value': 'EVERYONE'}},
+          {'privacy': {'value': ''}, 'status_type': 'wall_post'},
+          # normally we'd interpret this as private if it's from someone other
+          # than the current user, but self.fb wasn't given the current user's
+          # id, so we default to public. see below for tests with current user.
+          # https://github.com/snarfed/bridgy/issues/739#issuecomment-290118032 (etc)
+          {'privacy': '', 'from': {'id': '987', 'name': 'Somone Else'}},
+        )), (
+          {'objectType': 'unknown'},
+          ({'privacy': 'custom'},
+           {'privacy': {'value': 'CUSTOM'}},
+        ))):
       for input in inputs:
-        self.assert_equals(expected, self.fb.privacy_to_to(input), input)
+        self.assert_equals([expected], self.fb.privacy_to_to(input), input)
+
+    # if we know the current user, and a post has blank privacy and is from
+    # someone else, default to interpreting it as private.
+    # https://github.com/snarfed/bridgy/issues/739#issuecomment-290118032 (etc)
+    fb = facebook.Facebook(user_id='123')
+    public = [{'objectType': 'group', 'alias':'@public'}]
+    for input in (
+        {'privacy': '', 'from': {}},
+        {'privacy': '', 'status_type': 'wall_post'},
+        {'privacy': '', 'from': {'id': '123'}},
+    ):
+      for type in None, 'post', 'comment':
+        self.assert_equals(public, fb.privacy_to_to(input, type=type), input)
+
+    from_other = {'privacy': '', 'from': {'id': '987'}}
+    self.assert_equals([{'objectType': 'unknown'}],
+                       fb.privacy_to_to(from_other, type='post'))
+    self.assert_equals(public, fb.privacy_to_to(from_other, type='comment'))
+    self.assert_equals(public, fb.privacy_to_to(from_other))
 
   def test_album_to_object_empty(self):
     self.assert_equals({}, self.fb.album_to_object({}))
