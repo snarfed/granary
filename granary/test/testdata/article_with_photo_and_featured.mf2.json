@@ -1,0 +1,9 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "name": ["article abc"],
+    "content": ["foo bar"],
+    "photo": ["http://a/png", "http://b/jpg"],
+    "featured": ["http://b/jpg", "http://c/gif"]
+  }
+}

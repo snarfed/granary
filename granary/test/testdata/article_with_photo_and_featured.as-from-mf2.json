@@ -1,0 +1,6 @@
+{
+  "objectType": "article",
+  "displayName": "article abc",
+  "content": "foo bar",
+  "image": [{"url": "http://a/png"}, {"url": "http://b/jpg"}, {"url": "http://c/gif"}]
+}
