@@ -495,8 +495,8 @@ HTML_PHOTO_FULL_OLD = {  # old schema, no longer on home page as of 2017-02-27
   'dimensions': {'width': 1080, 'height': 1293},
   'date': 1453063593.0,
 }
-# new schema, visible *only* on home page (not profiles or individual photo/video
-# permalinks) as of 2017-02-27.
+# new schema, visible on home page as of 2017-02-27, profiles or individual
+# photo/video permalinks as of 2017-04-17.
 HTML_PHOTO_FULL_NEW = {
   'id': '123',
   '__typename': 'GraphImage',
@@ -598,8 +598,8 @@ HTML_VIDEO_FULL_OLD = {  # old schema, no longer on home page as of 2017-02-27
   },
   'date': 1453036552.0,
 }
-# new schema, visible *only* on home page (not profiles or individual photo/video
-# permalinks) as of 2017-02-27.
+# new schema, visible on home page as of 2017-02-27, profiles or individual
+# photo/video permalinks as of 2017-04-17.
 HTML_VIDEO_FULL_NEW = {
   'id': '789',
   'code': 'XYZ789',
@@ -646,13 +646,13 @@ HTML_VIDEO_FULL_NEW = {
   'taken_at_timestamp': 1453036552,
 }
 
-HTML_VIDEO = copy.deepcopy(HTML_VIDEO_FULL_OLD)
-del HTML_VIDEO['likes']['nodes']
-del HTML_VIDEO['comments']['nodes']
+HTML_VIDEO = copy.deepcopy(HTML_VIDEO_FULL_NEW)
+del HTML_VIDEO['edge_media_preview_like']['edges']
+del HTML_VIDEO['edge_media_to_comment']['edges']
 
-HTML_PHOTO = copy.deepcopy(HTML_PHOTO_FULL_OLD)
-del HTML_PHOTO['likes']['nodes']
-del HTML_PHOTO['comments']['nodes']
+HTML_PHOTO = copy.deepcopy(HTML_PHOTO_FULL_NEW)
+del HTML_PHOTO['edge_media_preview_like']['edges']
+del HTML_PHOTO['edge_media_to_comment']['edges']
 
 # based on https://www.instagram.com/p/BQ0mDB2gV_O/
 HTML_MULTI_PHOTO = copy.deepcopy(HTML_PHOTO)
@@ -828,7 +828,7 @@ HTML_PHOTO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
     'viewer': None,
   },
   '...': '...',  # many of the same top-level fields as in HTML_FEED and HTML_PROFILE
-  'entry_data': {'PostPage': [{'media': HTML_PHOTO_FULL_OLD}]},
+  'entry_data': {'PostPage': [{'graphql': {'shortcode_media': HTML_PHOTO_FULL_NEW}}]},
 }
 
 HTML_VIDEO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
@@ -837,7 +837,7 @@ HTML_VIDEO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
     'viewer': None,
   },
   '...': '...',
-  'entry_data': {'PostPage': [{'media': HTML_VIDEO_FULL_OLD}]},
+  'entry_data': {'PostPage': [{'media': HTML_VIDEO_FULL_NEW}]},
 }
 
 HTML_MULTI_PHOTO_PAGE = {  # eg https://www.instagram.com/p/BQ0mDB2gV_O/
@@ -1157,12 +1157,12 @@ class InstagramTest(testutil.HandlerTest):
     # third time, video comment count changes, like counts stay the same
     profile = copy.deepcopy(HTML_PROFILE)
     profile['entry_data']['ProfilePage'][0]['user']['media']['nodes'][1]\
-      ['comments']['count'] = 3
+      ['edge_media_to_comment']['count'] = 3
     self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_HEADER + json.dumps(profile) + HTML_FOOTER,
                              allow_redirects=False)
-    video = copy.deepcopy(HTML_VIDEO_FULL_OLD)
-    video['comments']['count'] = 4
+    video = copy.deepcopy(HTML_VIDEO_FULL_NEW)
+    video['edge_media_to_comment']['count'] = 4
     self.expect_requests_get(instagram.HTML_BASE_URL + 'p/XYZ789/',
                              HTML_HEADER + json.dumps(video) + HTML_FOOTER)
 
@@ -1193,7 +1193,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_friends_cookie(self):
     self.expect_requests_get(
-      instagram.HTML_BASE_URL, HTML_FEED_OLD_COMPLETE, allow_redirects=False,
+      instagram.HTML_BASE_URL, HTML_FEED_NEW_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
@@ -1201,7 +1201,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_response_scrape_friends_viewer(self):
     self.expect_requests_get(
-      instagram.HTML_BASE_URL, HTML_FEED_OLD_COMPLETE, allow_redirects=False,
+      instagram.HTML_BASE_URL, HTML_FEED_NEW_COMPLETE, allow_redirects=False,
       headers={'Cookie': 'my cookie'})
     self.mox.ReplayAll()
 
@@ -1586,7 +1586,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assertIsNone(viewer)
 
   def test_html_to_activities_missing_profile_picture_external_url(self):
-    data = copy.deepcopy(HTML_FEED_OLD)
+    data = copy.deepcopy(HTML_FEED_NEW)
     data['config']['viewer']['profile_pic_url'] = None
     data['config']['viewer']['external_url'] = None
     _, viewer = self.instagram.html_to_activities(
@@ -1598,8 +1598,9 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(expected, viewer)
 
   def test_html_to_activities_missing_video_url(self):
-    data = copy.deepcopy(HTML_FEED_OLD)
-    del data['entry_data']['FeedPage'][0]['feed']['media']['nodes'][1]['video_url']
+    data = copy.deepcopy(HTML_FEED_NEW)
+    del data['entry_data']['FeedPage'][0]['graphql']['user']\
+            ['edge_web_feed_timeline']['edges'][1]['node']['video_url']
     activities, _ = self.instagram.html_to_activities(
       HTML_HEADER + json.dumps(data) + HTML_FOOTER)
 

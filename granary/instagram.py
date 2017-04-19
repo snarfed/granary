@@ -777,7 +777,11 @@ class Instagram(source.Source):
       medias.extend(profile_user.get('media', {}).get('nodes', []))
 
     # individual photo/video permalinks
-    medias.extend(page.get('media') for page in entry_data.get('PostPage', []))
+    for page in entry_data.get('PostPage', []):
+      media = (page.get('media')  # old schema
+               or page.get('graphql', {}).get('shortcode_media'))  # new schema
+      if media:
+        medias.append(media)
 
     for media in util.trim_nulls(medias):
       activities.append(self._json_media_node_to_activity(media))
