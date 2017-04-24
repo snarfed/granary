@@ -47,7 +47,7 @@ setup(name='granary',
           'oauth-dropins>=1.7',
           'requests>=2.10.0',
           'requests-toolbelt>=0.6.2',
-          'brevity>=0.2.8',
+          'brevity>=0.2.14',
           'urllib3>=1.14',
       ],
       extras_require={

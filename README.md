@@ -24,7 +24,7 @@ Granary is a library and REST API that converts between a wide variety of format
 
 * Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 * Instagram and Google+ scraped HTML
-* [ActivityStreams](http://activitystrea.ms/)
+* [ActivityStreams](http://activitystrea.ms/) (1, mostly)
 * [microformats2](http://microformats.org/wiki/microformats2) HTML and JSON
 * [Atom](http://atomenabled.org/)
 * XML
@@ -300,6 +300,7 @@ Changelog
     * Minor whitespace change (added <p>) when rendering locations as HTML.
 * Atom:
     * Include author name when rendering attached articles and notes (e.g. quote tweets).
+* Upgrade brevity to 0.2.14 for a couple [bug](https://github.com/kylewm/brevity/issues/5) [fixes](https://github.com/kylewm/brevity/issues/6).
 
 ### 1.7 - 2017-02-27
 * microformats2:
