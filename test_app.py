@@ -1,5 +1,6 @@
 """Unit tests for app.py.
 """
+import copy
 import httplib
 import json
 import socket
@@ -223,6 +224,26 @@ class AppTest(testutil.HandlerTest):
  <name>Someone Else</name>
 </author>
 """, resp.body)
+
+  def test_url_activitystreams_to_atom_reader_false(self):
+    """reader=false should omit location in Atom output.
+
+    https://github.com/snarfed/granary/issues/104
+    """
+    activity = copy.deepcopy(ACTIVITIES[0])
+    activity['object']['location'] = {
+      'displayName': 'My place',
+      'url': 'http://my/place',
+    }
+    self.expect_urlopen('http://my/posts.as', json.dumps([activity]))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.as&input=activitystreams&output=atom&reader=false')
+    self.assert_equals(200, resp.status_int, resp.body)
+    self.assertNotIn('p-location', resp.body)
+    self.assertNotIn('<a class="p-name u-url" href="http://my/place">My place</a>',
+                     resp.body)
 
   def test_url_bad_input(self):
     resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')

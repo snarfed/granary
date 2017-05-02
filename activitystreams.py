@@ -195,13 +195,17 @@ class Handler(handlers.ModernHandler):
     elif format == 'atom':
       self.response.headers['Content-Type'] = 'application/atom+xml'
       hub = self.request.get('hub')
+      reader = self.request.get('reader', 'true').lower()
+      if reader not in ('true', 'false'):
+        self.abort(400, 'reader param must be either true or false')
       self.response.out.write(atom.activities_to_atom(
         activities, actor,
         host_url=url or self.request.host_url + '/',
         request_url=self.request.url,
         xml_base=util.base_url(url),
         title=title,
-        rels={'hub': hub} if hub else None))
+        rels={'hub': hub} if hub else None,
+        reader=(reader == 'true')))
       self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
       if hub:
         self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))

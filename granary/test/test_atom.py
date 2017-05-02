@@ -404,3 +404,20 @@ going to Homebrew Website Club
           }],
         },
       }], {}))
+
+  def test_reader_param_and_location(self):
+    activity = {
+      'object': {
+        'content': 'foo',
+        'location': {
+          'displayName': 'My place',
+          'url': 'http://my/place',
+        },
+      },
+    }
+    location = '<a class="p-name u-url" href="http://my/place">My place</a>'
+
+    self.assert_multiline_in(
+      location, atom.activities_to_atom([activity], {}, reader=True))
+    self.assertNotIn(
+      location, atom.activities_to_atom([activity], {}, reader=False))

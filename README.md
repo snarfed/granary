@@ -120,7 +120,7 @@ The [endpoints above](#about) all serve the [OpenSocial Activity Streams REST AP
 /USER_ID/GROUP_ID/APP_ID/ACTIVITY_ID?startIndex=...&count=...&format=FORMAT&access_token=...
 ```
 
-All query parameters are optional. `FORMAT` may be `json` (the default), `xml`, or `atom`, both of which return [Atom](http://www.intertwingly.net/wiki/pie/FrontPage). The rest of the path elements and query params are [described above](#using).
+All query parameters are optional. `FORMAT` may be `json` (the default), `xml`, or `atom`, both of which return [Atom](http://www.intertwingly.net/wiki/pie/FrontPage). `atom` supports a boolean `reader` query parameter for toggling rendering appropriate to feed readers, e.g. location is rendered in content when `reader=true` (the default). The rest of the path elements and query params are [described above](#using).
 
 Errors are returned with the appropriate HTTP response code, e.g. 403 for Unauthorized, with details in the response body.
 
@@ -299,6 +299,7 @@ Changelog
     * Add [`u-featured`](https://indieweb.org/featured) to ActivityStreams `image`.
     * Minor whitespace change (added <p>) when rendering locations as HTML.
 * Atom:
+    * Add new `reader` query param for toggling rendering decisions that are specific to feed readers. Right now, just affects location: it's rendered in the content when `reader=true` (the default), omitted when `reader=false`.
     * Include author name when rendering attached articles and notes (e.g. quote tweets).
 * Upgrade brevity to 0.2.14 for a couple [bug](https://github.com/kylewm/brevity/issues/5) [fixes](https://github.com/kylewm/brevity/issues/6).
 

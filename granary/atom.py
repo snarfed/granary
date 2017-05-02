@@ -28,7 +28,7 @@ def _encode_ampersands(text):
 
 
 def activities_to_atom(activities, actor, title=None, request_url=None,
-                       host_url=None, xml_base=None, rels=None):
+                       host_url=None, xml_base=None, rels=None, reader=True):
   """Converts ActivityStreams activites to an Atom feed.
 
   Args:
@@ -40,6 +40,8 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
       feed <id> element.
     xml_base: the base URL, if any. Used in the top-level xml:base attribute.
     rels: rel links to include. dict mapping string rel value to string URL.
+    reader: boolean, whether the output will be rendered in a feed reader.
+      Currently just includes location if True, not otherwise.
 
   Returns:
     unicode string with Atom XML
@@ -59,7 +61,8 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     obj = a.setdefault('object', {})
 
     # Render content as HTML; escape &s
-    obj['rendered_content'] = _encode_ampersands(microformats2.render_content(primary))
+    obj['rendered_content'] = _encode_ampersands(microformats2.render_content(
+      primary, include_location=reader))
 
     # Make sure every activity has the title field, since Atom <entry> requires
     # the title element.
@@ -80,7 +83,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     obj['rendered_children'] = []
     for att in attachments:
       if att.get('objectType') in ('note', 'article'):
-        html = microformats2.render_content(att)
+        html = microformats2.render_content(att, include_location=reader)
         author = att.get('author')
         if author:
           name = microformats2.maybe_linked_name(
@@ -117,13 +120,15 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     )
 
 
-def html_to_atom(html, url=None, fetch_author=False):
+def html_to_atom(html, url=None, fetch_author=False, reader=True):
   """Converts microformats2 HTML to an Atom feed.
 
   Args:
     html: string
     url: string URL html came from, optional
     fetch_author: boolean, whether to make HTTP request to fetch rel-author link
+    reader: boolean, whether the output will be rendered in a feed reader.
+      Currently just includes location if True, not otherwise.
 
   Returns:
     unicode string with Atom XML
@@ -140,7 +145,8 @@ def html_to_atom(html, url=None, fetch_author=False):
     actor,
     title=mf2util.interpret_feed(parsed, url).get('name'),
     xml_base=util.base_url(url),
-    host_url=url)
+    host_url=url,
+    reader=reader)
 
 
 def _remove_query_params(url):
