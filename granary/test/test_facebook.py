@@ -221,7 +221,7 @@ POST = {  # Facebook
     {'id': '683713', 'name': 'Bob Y'},
   ]},
   'reactions': {'data': [
-    # possible types are NONE, LIKE, LOVE, WOW, HAHA, SAD, ANGRY
+    # possible types are NONE, LIKE, LOVE, WOW, HAHA, SAD, ANGRY, THANKFUL
     {'id': '100005', 'name': 'Laugher', 'type': 'HAHA'},
     {'id': '100006', 'name': 'Cryer', 'type': 'SAD'},
     # likes are duplicated in reactions

@@ -177,12 +177,14 @@ RSVP_PUBLISH_ENDPOINTS = {
   'rsvp-maybe': API_PUBLISH_RSVP_MAYBE,
   'rsvp-interested': None,  # not supported. see API_PUBLISH_RSVP_INTERESTED
 }
+# https://developers.facebook.com/docs/graph-api/reference/post/reactions
 REACTION_CONTENT = {
   'LOVE': u'❤️',
   'WOW': u'😮',
   'HAHA': u'😆',
   'SAD': u'😢',
   'ANGRY': u'😡',
+  'THANKFUL': u'🌼',  # https://github.com/snarfed/bridgy/issues/748
   # nothing for LIKE (it's a like :P) or for NONE
 }
 
