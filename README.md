@@ -298,6 +298,8 @@ Changelog
 * microformats2:
     * Add [`u-featured`](https://indieweb.org/featured) to ActivityStreams `image`.
     * Minor whitespace change (added <p>) when rendering locations as HTML.
+* Google+:
+    * Update HTML scraping to handle changed serialized JSON data format.
 * Atom:
     * Add new `reader` query param for toggling rendering decisions that are specific to feed readers. Right now, just affects location: it's rendered in the content when `reader=true` (the default), omitted when `reader=false`.
     * Include author name when rendering attached articles and notes (e.g. quote tweets).

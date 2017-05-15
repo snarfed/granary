@@ -314,9 +314,9 @@ class GooglePlus(source.Source):
       list of ActivityStreams activity dicts
     """
     # extract JSON data blob
-    script_start = "<script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:"
+    script_start = "AF_initDataCallback({key: 'ds:5', isError:  false , hash: '10', data:function(){return"
     start = html.find(script_start)
-    end = html.find('});</script>', start)
+    end = html.find('}});</script>', start)
     if start == -1 or end == -1:
       return []
     start += len(script_start)
@@ -327,7 +327,7 @@ class GooglePlus(source.Source):
     for i in range(2):
       html = re.sub(r'([,[])\s*([],])', r'\1null\2', html)
 
-    data = json.loads(html)[1][7][1:]
+    data = json.loads(html)[0][7]
     data = [d[6].values()[0] for d in data if len(d) >= 7 and d[6]]
 
     activities = []

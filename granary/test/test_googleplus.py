@@ -139,8 +139,7 @@ ACTIVITY_AS_EXTRAS['object'].update({
 
 # HTML from http://plus.google.com/
 HTML_ACTIVITY_GP = [
- ["..."],
- [1002, None, None, None, None, [1001, "z13gjrz4ymeldtd5f04chnrixnvpjjqy42o"],
+ [1002, None, None, None, None, [1002, "z13gjrz4ymeldtd5f04chnrixnvpjjqy42o"],
  {"33558957" : [
    "",
    "",
@@ -240,14 +239,14 @@ HTML_ACTIVITIES_GP_HEADER = """
 ...
 </style></head><body class="Td lj"><input type="text" name="hist_state" id="hist_state" style="display:none;"><iframe id="hist_frame" name="hist_frame1623222153" class="ss" tabindex="-1"></iframe><script>window['OZ_wizstart'] && window['OZ_wizstart']()</script>
 <script>AF_initDataCallback({key: '199', isError:  false , hash: '13', data:[2,0]
-});</script><script>AF_initDataCallback({key: '161', isError:  false , hash: '14', data:["os.con",[[]
+});</script><script>AF_initDataCallback({key: 'ds:5', isError:  false , hash: '10', data:function(){return [[
 ,"these few lines test the code that collapses commas",
-[,1,1,,,,20,,"social.google.com",[,]
-,,,2,,,0,,15,,[[1002,2],"..."]],,[,],,,"""
+,,,,,"""
+
 HTML_ACTIVITIES_GP_FOOTER = """
 ]
 ]
-});</script></body></html>"""
+}});</script></body></html>"""
 
 HTML_ACTIVITY_AS = {  # Google+
     'id': tag_uri('z13gjrz4ymeldtd5f04chnrixnvpjjqy42o'),
@@ -523,7 +522,7 @@ class GooglePlusTest(testutil.HandlerTest):
 
   def test_html_to_activities_plusoned(self):
     html_gp = copy.deepcopy(HTML_ACTIVITY_GP)
-    html_gp[1][6].values()[0][69] = [
+    html_gp[0][6].values()[0][69] = [
       202,
       [['Billy Bob',
         '1056789',
@@ -555,7 +554,7 @@ class GooglePlusTest(testutil.HandlerTest):
   def test_html_to_activities_similar_to_plusoned(self):
     html_gp = copy.deepcopy(HTML_ACTIVITY_GP)
     for data_at_69 in None, [], [None], [None, None], [None, [None]]:
-      html_gp[1][6].values()[0][69] = data_at_69
+      html_gp[0][6].values()[0][69] = data_at_69
       html = (HTML_ACTIVITIES_GP_HEADER + json.dumps(html_gp) +
               HTML_ACTIVITIES_GP_FOOTER)
       self.assert_equals([HTML_ACTIVITY_AS],
