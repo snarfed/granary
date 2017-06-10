@@ -185,6 +185,7 @@ REACTION_CONTENT = {
   'SAD': u'😢',
   'ANGRY': u'😡',
   'THANKFUL': u'🌼',  # https://github.com/snarfed/bridgy/issues/748
+  'PRIDE': u'🏳️‍🌈',
   # nothing for LIKE (it's a like :P) or for NONE
 }
 
