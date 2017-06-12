@@ -331,7 +331,7 @@ class GooglePlusTest(testutil.HandlerTest):
     responses.
     """
     oauth_googleplus.json_service = discovery.build_from_document(
-      DISCOVERY_DOC, **kwargs)
+      DISCOVERY_DOC, credentials=self.auth_entity.creds(), **kwargs)
 
   def test_get_comment(self):
     self.init(requestBuilder=http.RequestMockBuilder({
