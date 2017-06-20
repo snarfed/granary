@@ -188,7 +188,11 @@ python setup.py test
 
 If you send a pull request, please include (or update) a test for the new
 functionality if possible! The tests require the
-[App Engine SDK](https://developers.google.com/appengine/downloads).
+[App Engine SDK](https://developers.google.com/appengine/downloads)
+or the
+[Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`)
+with the `gcloud-appengine-python` and `gcloud-appengine-python-extras`
+[components](https://cloud.google.com/sdk/docs/components#additional_components).
 
 If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with
 `pip install -e <path to oauth-dropins repo>`.
@@ -288,6 +292,11 @@ Changelog
 ---
 
 ### 1.8 - unreleased
+
+WARNING: this release upgrades to google-api-python-client 1.6.2, which has a bug in our usage of the Google+ API, google-api-python-client#350, that's fixed by unreleased (but merged) PR google-api-python-client#376. Wait until that fix is released, and then bump our google-api-python-client version here, before releasing 1.8!
+
+In the meantime, I've patched [this http.py](https://raw.githubusercontent.com/mgilson/google-api-python-client/2b98e6149cc108574aef26b0a22aad15ba48f0e7/googleapiclient/http.py) from google-api-python-client@2b98e6149cc108574aef26b0a22aad15ba48f0e7 into granary (and Bridgy).
+
 * Twitter:
     * Bug fix for creating replies, favorites, or retweets of video URLs, e.g. https://twitter.com/name/status/123/video/1 .
     * Bug fix for parsing favorites HTML to handle a small change on Twitter's side.
