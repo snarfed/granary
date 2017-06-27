@@ -15,6 +15,7 @@ data between a wide variety of formats:
 - `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML and JSON
 - `Atom <http://atomenabled.org/>`__
 - XML
+- `JSON Feed <https://jsonfeed.org/>`__
 
 `Try out the interactive demo <https://granary-demo.appspot.com/>`__ and
 `check out the docs <https://granary.readthedocs.io/>`__.

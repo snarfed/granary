@@ -9,7 +9,7 @@ import os
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
-from granary import microformats2
+from granary import jsonfeed, microformats2
 
 
 def filepairs(ext1, ext2s):
@@ -49,6 +49,17 @@ def create_test_function(fn, original, expected):
 prevdir = os.getcwd()
 os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
+ACTOR = read_json('actor.as.json')
+
+# wrap jsonfeed functions to add/remove actor and wrap/unwrap activity in list
+def activity_to_jsonfeed(activity):
+  return jsonfeed.activities_to_jsonfeed([activity], ACTOR)
+
+def jsonfeed_to_activity(jf):
+  activities, _ = jsonfeed.jsonfeed_to_activities(jf)
+  return activities[0]
+
+
 # source extension, destination extension, conversion function, exclude prefix
 mappings = (
   ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json, ()),
@@ -57,6 +68,8 @@ mappings = (
   ('mf2.json', ['mf2-from-json.html', 'mf2.html'], microformats2.json_to_html,
    # we do not format h-media photos properly in html
    ('note_with_composite_photo',)),
+  ('as.json', ['feed.json'], activity_to_jsonfeed, ()),
+  # ('feed.json', ['as.json'], jsonfeed_to_activity, ()),
 )
 
 test_funcs = {}

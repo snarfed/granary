@@ -28,6 +28,7 @@ Granary is a library and REST API that converts between a wide variety of format
 * [microformats2](http://microformats.org/wiki/microformats2) HTML and JSON
 * [Atom](http://atomenabled.org/)
 * XML
+* [JSON Feed](https://jsonfeed.org/)
 
 Here's how to get started:
 
@@ -297,6 +298,7 @@ WARNING: this release upgrades to google-api-python-client 1.6.2, which has a bu
 
 In the meantime, I've patched [this http.py](https://raw.githubusercontent.com/mgilson/google-api-python-client/2b98e6149cc108574aef26b0a22aad15ba48f0e7/googleapiclient/http.py) from google-api-python-client@2b98e6149cc108574aef26b0a22aad15ba48f0e7 into granary (and Bridgy).
 
+* Add [JSON Feed](https://jsonfeed.org/) support to both library and REST API.
 * Twitter:
     * Bug fix for creating replies, favorites, or retweets of video URLs, e.g. https://twitter.com/name/status/123/video/1 .
     * Bug fix for parsing favorites HTML to handle a small change on Twitter's side.

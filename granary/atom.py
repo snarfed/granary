@@ -29,7 +29,7 @@ def _encode_ampersands(text):
 
 def activities_to_atom(activities, actor, title=None, request_url=None,
                        host_url=None, xml_base=None, rels=None, reader=True):
-  """Converts ActivityStreams activites to an Atom feed.
+  """Converts ActivityStreams activities to an Atom feed.
 
   Args:
     activities: list of ActivityStreams activity dicts

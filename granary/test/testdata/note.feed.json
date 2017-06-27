@@ -1,0 +1,21 @@
+{
+  "version": "https://jsonfeed.org/version/1",
+  "author": {
+    "name": "Martin Smith",
+    "url": "http://example.com/martin",
+    "avatar": "http://example.com/martin/image"
+  },
+  "items": [{
+    "id": "tag:example.com,2011:blog-post-123",
+    "url": "http://example.com/blog-post-123",
+    "image": "http://example.com/blog-post-123/image",
+    "summary": "too cool to summarize",
+    "content_text": "A note. link too",
+    "date_published": "2012-02-22T20:26:41",
+    "date_modified": "2013-10-25T10:31:30+00:00",
+    "author": {
+      "name": "Ryan Barrett",
+      "avatar": "http://example.com/ryan/image"
+    }
+  }]
+}
