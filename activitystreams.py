@@ -34,19 +34,21 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
+import webapp2
 from webob import exc
 
-from granary import appengine_config
-from granary import atom
-from granary import facebook
-from granary import flickr
-from granary import googleplus
-from granary import instagram
-from granary import microformats2
-from granary import source
-from granary import twitter
-
-import webapp2
+from granary import (
+  appengine_config,
+  atom,
+  facebook,
+  flickr,
+  googleplus,
+  instagram,
+  jsonfeed,
+  microformats2,
+  source,
+  twitter,
+)
 
 XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -169,11 +171,12 @@ class Handler(handlers.ModernHandler):
       response: response dict with values based on OpenSocial ActivityStreams
         REST API, as returned by Source.get_activities_response()
       actor: optional ActivityStreams actor dict for current user. Only used
-        for Atom output.
+        for Atom and JSON Feed output.
       url: the input URL
-      title: string, Used in Atom output
+      title: string, Used in Atom and JSON Feed output
     """
-    expected_formats = ('activitystreams', 'json', 'atom', 'xml', 'html', 'json-mf2')
+    expected_formats = ('activitystreams', 'json', 'atom', 'xml', 'html',
+                        'json-mf2', 'jsonfeed')
     format = self.request.get('format') or self.request.get('output') or 'json'
     if format not in expected_formats:
       raise exc.HTTPBadRequest('Invalid format: %s, expected one of %r' %
@@ -219,6 +222,10 @@ class Handler(handlers.ModernHandler):
       self.response.headers['Content-Type'] = 'application/json'
       items = [microformats2.object_to_json(a) for a in activities]
       self.response.out.write(json.dumps({'items': items}, indent=2))
+    elif format == 'jsonfeed':
+      self.response.headers['Content-Type'] = 'application/json'
+      self.response.out.write(json.dumps(jsonfeed.activities_to_jsonfeed(
+        activities, actor=actor, title=title)))
 
     if 'plaintext' in self.request.params:
       # override response content type

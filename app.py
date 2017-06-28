@@ -91,7 +91,7 @@ class DemoHandler(handlers.ModernHandler):
 
 
 class UrlHandler(activitystreams.Handler):
-  """Handles AS/mf2 requests from the interactive demo form on the front page.
+  """Handles URL requests from the interactive demo form on the front page.
 
   Fetched URL data is cached for 5m. Cache key is 'U [URL]', value is dict with
   'url' and 'body'. Background: https://github.com/snarfed/bridgy/issues/665
@@ -101,7 +101,7 @@ class UrlHandler(activitystreams.Handler):
   handle_exception = handlers.handle_exception
 
   def get(self):
-    expected_inputs = ('activitystreams', 'html', 'json-mf2')
+    expected_inputs = ('activitystreams', 'html', 'json-mf2', 'jsonfeed')
     input = util.get_required_param(self, 'input')
     if input not in expected_inputs:
       raise exc.HTTPBadRequest('Invalid input: %s, expected one of %r' %

@@ -47,6 +47,19 @@ MF2_JSON = {'items': [{
   },
 }]}
 
+JSONFEED = {
+  'version': 'https://jsonfeed.org/version/1',
+  'title': 'JSON Feed',
+  'items': [{
+    'url': 'https://perma/link',
+    'id': 'https://perma/link',
+    'content_text': 'foo bar',
+    'date_published': '2012-03-04T18:20:37+00:00',
+  }, {
+    'content_text': 'baz baj',
+  }],
+}
+
 HTML = """\
 <!DOCTYPE html>
 <html>
@@ -150,7 +163,18 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=activitystreams&output=json-mf2')
     self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/json', resp.headers['Content-Type'])
     self.assert_equals(MF2_JSON, json.loads(resp.body))
+
+  def test_url_activitystreams_to_jsonfeed(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=activitystreams&output=jsonfeed')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/json', resp.headers['Content-Type'])
+    self.assert_equals(JSONFEED, json.loads(resp.body))
 
   def test_url_json_mf2_to_html(self):
     self.expect_urlopen('http://my/posts.json', json.dumps(MF2_JSON))

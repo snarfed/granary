@@ -7,7 +7,7 @@ import mimetypes
 from oauth_dropins.webutil import util
 
 
-def activities_to_jsonfeed(activities, actor, title=None, feed_url=None,
+def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
                            home_page_url=None):
   """Converts ActivityStreams activities to a JSON feed.
 
@@ -27,6 +27,35 @@ def activities_to_jsonfeed(activities, actor, title=None, feed_url=None,
   def actor_name(obj):
     return obj.get('displayName') or obj.get('username')
 
+  if not actor:
+    actor = {}
+
+  items = []
+  for activity in activities:
+    obj = activity.get('object') or activity
+    author = obj.get('author', {})
+    items.append({
+      'id': obj.get('id') or obj.get('url'),
+      'url': obj.get('url'),
+      'image': image_url(obj),
+      'title': obj.get('title'),
+      'summary': obj.get('summary'),
+      'content_text': obj.get('content'),
+      # 'content_html': TODO
+      'date_published': obj.get('published'),
+      'date_modified': obj.get('updated'),
+      'author': {
+        'name': actor_name(author),
+        'url': author.get('url'),
+        'avatar': image_url(author),
+      },
+      'attachments': [{
+        'url': att.get('url'),
+        'mime_type': mimetypes.guess_type(att.get('url'))[0],
+        'title': att.get('title'),
+      } for att in obj.get('attachments', [])],
+    })
+
   return util.trim_nulls({
     'version': 'https://jsonfeed.org/version/1',
     'title': title or actor_name(actor) or 'JSON Feed',
@@ -37,27 +66,7 @@ def activities_to_jsonfeed(activities, actor, title=None, feed_url=None,
       'url': actor.get('url'),
       'avatar': image_url(actor),
     },
-    'items': [{
-      'id': a.get('id') or a.get('url'),
-      'url': a.get('url'),
-      'image': image_url(a),
-      'title': a.get('title'),
-      'summary': a.get('summary'),
-      'content_text': a.get('content'),
-      # 'content_html': TODO
-      'date_published': a.get('published'),
-      'date_modified': a.get('updated'),
-      'author': {
-        'name': actor_name(a.get('author', {})),
-        'url': a.get('author', {}).get('url'),
-        'avatar': image_url(a.get('author', {})),
-      },
-      'attachments': [{
-        'url': att.get('url'),
-        'mime_type': mimetypes.guess_type(att.get('url'))[0],
-        'title': att.get('title'),
-      } for att in a.get('attachments', [])],
-    } for a in activities],
+    'items': items,
   })
 
 
