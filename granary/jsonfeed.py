@@ -6,6 +6,9 @@ import mimetypes
 
 from oauth_dropins.webutil import util
 
+# allowed ActivityStreams objectTypes for attachments
+ATTACHMENT_TYPES = {'image', 'audio', 'video'}
+
 
 def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
                            home_page_url=None):
@@ -50,12 +53,20 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
         'url': author.get('url'),
         'avatar': image_url(author),
       },
-      'attachments': [{
-        'url': att.get('url'),
-        'mime_type': mimetypes.guess_type(att.get('url'))[0],
-        'title': att.get('title'),
-      } for att in obj.get('attachments', [])],
+      'attachments': [],
     }
+
+    for att in obj.get('attachments', []):
+      url = att.get('url') or att.get('image', {}).get('url') or ''
+      mime = mimetypes.guess_type(url)[0]
+      if (att.get('objectType') in ATTACHMENT_TYPES or
+          mime and mime.split('/')[0] in ATTACHMENT_TYPES):
+        item['attachments'].append({
+          'url': url,
+          'mime_type': mime,
+          'title': att.get('title'),
+        })
+
     if not item['content_html']:
       item['content_text'] = ''
     items.append(item)

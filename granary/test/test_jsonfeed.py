@@ -42,7 +42,37 @@ class JsonFeedTest(testutil.HandlerTest):
           'content_text': '',
         }],
       }, activities_to_jsonfeed([{
-        "image": [{"url": "http://no/content"}],
+        'image': [{'url': 'http://no/content'}],
+      }], {}))
+
+  def test_activities_to_jsonfeed_image_attachment(self):
+      self.assert_equals({
+        'version': 'https://jsonfeed.org/version/1',
+        'title': 'JSON Feed',
+        'items': [{
+          'content_text': '',
+          'attachments': [{
+            'url': 'http://pict/ure.jpg',
+            'mime_type': 'image/jpeg',
+          }],
+        }],
+      }, activities_to_jsonfeed([{
+        'attachments': [{'image': {'url': 'http://pict/ure.jpg'}}],
+      }], {}))
+
+  def test_activities_to_jsonfeed_ignore_other_attachment_types(self):
+      self.assert_equals({
+        'version': 'https://jsonfeed.org/version/1',
+        'title': 'JSON Feed',
+        'items': [{'content_text': ''}],
+      }, activities_to_jsonfeed([{
+        'attachments': [{
+            'url': 'http://quoted/tweet',
+            'objectType': 'note',
+          }, {
+            'url': 'http://some/one',
+            'objectType': 'person',
+          }],
       }], {}))
 
   def test_jsonfeed_to_activities_empty(self):
