@@ -61,7 +61,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     'version': 'https://jsonfeed.org/version/1',
     'title': title or actor_name(actor) or 'JSON Feed',
     'feed_url': feed_url,
-    'home_page_url': home_page_url,
+    'home_page_url': home_page_url or actor.get('url'),
     'author': {
       'name': actor_name(actor),
       'url': actor.get('url'),

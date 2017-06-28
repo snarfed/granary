@@ -10,6 +10,7 @@ import mox
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
 
+import appengine_config
 import app
 
 
@@ -156,6 +157,10 @@ foo bar
 
 class AppTest(testutil.HandlerTest):
 
+  @staticmethod
+  def request_url(path):
+    return '%s://%s%s' % (appengine_config.SCHEME, appengine_config.HOST, path)
+
   def test_url_activitystreams_to_json_mf2(self):
     self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
     self.mox.ReplayAll()
@@ -170,18 +175,21 @@ class AppTest(testutil.HandlerTest):
     self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=activitystreams&output=jsonfeed')
+    path = '/url?url=http://my/posts.json&input=activitystreams&output=jsonfeed'
+    resp = app.application.get_response(path)
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/json', resp.headers['Content-Type'])
-    self.assert_equals(JSONFEED, json.loads(resp.body))
+
+    expected = copy.deepcopy(JSONFEED)
+    expected['feed_url'] = self.request_url(path)
+    self.assert_equals(expected, json.loads(resp.body))
 
   def test_url_jsonfeed_to_json_mf2(self):
     self.expect_urlopen('http://my/feed.json', json.dumps(JSONFEED))
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2')
+    path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
+    resp = app.application.get_response(path)
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/json', resp.headers['Content-Type'])
 
