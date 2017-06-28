@@ -36,7 +36,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     if obj.get('objectType') == 'person':
       continue
     author = obj.get('author', {})
-    items.append({
+    item = {
       'id': obj.get('id') or obj.get('url'),
       'url': obj.get('url'),
       'image': image_url(obj),
@@ -55,7 +55,10 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
         'mime_type': mimetypes.guess_type(att.get('url'))[0],
         'title': att.get('title'),
       } for att in obj.get('attachments', [])],
-    })
+    }
+    if not item['content_html']:
+      item['content_text'] = ''
+    items.append(item)
 
   return util.trim_nulls({
     'version': 'https://jsonfeed.org/version/1',
@@ -68,7 +71,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
       'avatar': image_url(actor),
     },
     'items': items,
-  })
+  }, ignore='content_text')
 
 
 def jsonfeed_to_activities(jsonfeed):

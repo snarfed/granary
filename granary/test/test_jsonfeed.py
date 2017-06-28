@@ -12,7 +12,7 @@ class JsonFeedTest(testutil.HandlerTest):
       self.assert_equals({
         'version': 'https://jsonfeed.org/version/1',
         'title': 'JSON Feed',
-      }, activities_to_jsonfeed([{}], {}))
+      }, activities_to_jsonfeed([], {}))
 
   def test_activities_to_jsonfeed_extra_fields(self):
       self.assert_equals({
@@ -21,7 +21,7 @@ class JsonFeedTest(testutil.HandlerTest):
         'feed_url': 'http://a/feed',
         'home_page_url': 'http://a/home',
       }, activities_to_jsonfeed(
-        [{}], {}, title='a something', feed_url='http://a/feed',
+        [], {}, title='a something', feed_url='http://a/feed',
         home_page_url='http://a/home'))
 
   def test_activities_to_jsonfeed_skip_people(self):
@@ -31,6 +31,18 @@ class JsonFeedTest(testutil.HandlerTest):
       }, activities_to_jsonfeed([{
         'objectType': 'person',
         'displayName': 'somebody',
+      }], {}))
+
+  def test_activities_to_jsonfeed_no_content(self):
+      self.assert_equals({
+        'version': 'https://jsonfeed.org/version/1',
+        'title': 'JSON Feed',
+        'items': [{
+          'image': 'http://no/content',
+          'content_text': '',
+        }],
+      }, activities_to_jsonfeed([{
+        "image": [{"url": "http://no/content"}],
       }], {}))
 
   def test_jsonfeed_to_activities_empty(self):
