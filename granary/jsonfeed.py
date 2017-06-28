@@ -57,3 +57,27 @@ def jsonfeed_to_activities(jsonfeed):
     (activities, actor) tuple, where activities and actor are both
     ActivityStreams object dicts
   """
+  author = jsonfeed.get('author', {})
+  actor = {
+    'objectType': 'person',
+    'url': author.get('url'),
+    'image': [{'url': author.get('avatar')}],
+    'displayName': author.get('name'),
+  }
+
+  activities = [{
+    'objectType': 'article' if item.get('title') else 'note',
+    'summary': item.get('summary'),
+    'content': item.get('content_html') or item.get('content_text'),
+    'id': unicode(item.get('id')),
+    'published': item.get('date_published'),
+    'updated': item.get('date_modified'),
+    'url': item.get('url'),
+    'image': [{'url':  item.get('image')}],
+    'author': {
+      'displayName': item.get('author', {}).get('name'),
+      'image': [{'url': item.get('author', {}).get('avatar')}]
+    },
+  } for item in jsonfeed.get('items', [])]
+
+  return util.trim_nulls((activities, actor))

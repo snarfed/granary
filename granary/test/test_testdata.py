@@ -69,7 +69,7 @@ mappings = (
    # we do not format h-media photos properly in html
    ('note_with_composite_photo',)),
   ('as.json', ['feed.json'], activity_to_jsonfeed, ()),
-  # ('feed.json', ['as.json'], jsonfeed_to_activity, ()),
+  ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, ()),
 )
 
 test_funcs = {}
