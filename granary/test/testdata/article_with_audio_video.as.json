@@ -1,0 +1,12 @@
+{
+  "objectType": "article",
+  "title": "i'm ready to speak",
+  "content": "something",
+  "attachments": [{
+    "objectType": "audio",
+    "url": "http://a/podcast.mp3"
+  }, {
+    "objectType": "video",
+    "url": "http://a/vidjo.mov"
+  }]
+}

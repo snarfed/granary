@@ -1,0 +1,19 @@
+{
+  "version": "https://jsonfeed.org/version/1",
+  "author": {
+    "name": "Martin Smith",
+    "url": "http://example.com/martin",
+    "avatar": "http://example.com/martin/image"
+  },
+  "items": [{
+    "title": "i'm ready to speak",
+    "content_text": "something",
+    "attachments": [{
+      "mime_type": "audio/mpeg",
+      "url": "http://a/podcast.mp3"
+    }, {
+      "mime_type": "video/quicktime",
+      "url": "http://a/vidjo.mov"
+    }]
+  }]
+}

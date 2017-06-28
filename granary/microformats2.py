@@ -60,6 +60,9 @@ def get_string_urls(objs):
   Returns:
     list of string URLs
   """
+  if not objs:
+    return []
+
   urls = []
   for item in objs:
     if isinstance(item, basestring):
@@ -155,7 +158,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
               obj.get('upstreamDuplicates', [])),
       'photo': [image.get('url') for image in
                 (util.get_list(obj, 'image') or util.get_list(primary, 'image'))],
-      'video': [obj.get('stream', primary.get('stream', {})).get('url')],
+      'video': get_string_urls(obj.get('stream') or primary.get('stream')),
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'content': [{
