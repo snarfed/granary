@@ -16,19 +16,23 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import mf2py
 import mf2util
-from oauth_dropins import facebook
-from oauth_dropins import flickr
-from oauth_dropins import googleplus
-from oauth_dropins import instagram
-from oauth_dropins import twitter
-from oauth_dropins.webutil import handlers
-from oauth_dropins.webutil import util
+from oauth_dropins import (
+  facebook,
+  flickr,
+  googleplus,
+  instagram,
+  twitter,
+)
+from oauth_dropins.webutil import handlers, util
 import webapp2
 from webob import exc
 
 import activitystreams
-from granary import microformats2
-from granary import source
+from granary import (
+  jsonfeed,
+  microformats2,
+  source,
+)
 
 API_PARAMS = {
   'access_token',
@@ -132,6 +136,8 @@ class UrlHandler(activitystreams.Handler):
     elif input == 'json-mf2':
       activities = [microformats2.json_to_object(item, actor=actor)
                     for item in mf2.get('items', [])]
+    elif input == 'jsonfeed':
+      activities, actor = jsonfeed.jsonfeed_to_activities(json.loads(body))
 
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=url, actor=actor, title=title)

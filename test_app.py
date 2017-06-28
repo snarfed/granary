@@ -176,6 +176,19 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals('application/json', resp.headers['Content-Type'])
     self.assert_equals(JSONFEED, json.loads(resp.body))
 
+  def test_url_jsonfeed_to_json_mf2(self):
+    self.expect_urlopen('http://my/feed.json', json.dumps(JSONFEED))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/json', resp.headers['Content-Type'])
+
+    expected = copy.deepcopy(MF2_JSON)
+    expected['items'][0]['properties']['uid'] = [JSONFEED['items'][0]['id']]
+    self.assert_equals(expected, json.loads(resp.body))
+
   def test_url_json_mf2_to_html(self):
     self.expect_urlopen('http://my/posts.json', json.dumps(MF2_JSON))
     self.mox.ReplayAll()

@@ -224,8 +224,8 @@ class Handler(handlers.ModernHandler):
       self.response.out.write(json.dumps({'items': items}, indent=2))
     elif format == 'jsonfeed':
       self.response.headers['Content-Type'] = 'application/json'
-      self.response.out.write(json.dumps(jsonfeed.activities_to_jsonfeed(
-        activities, actor=actor, title=title)))
+      jf = jsonfeed.activities_to_jsonfeed(activities, actor=actor, title=title)
+      self.response.out.write(json.dumps(jf, indent=2))
 
     if 'plaintext' in self.request.params:
       # override response content type
