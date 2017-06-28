@@ -7,10 +7,6 @@ import mimetypes
 from oauth_dropins.webutil import util
 
 
-def _actor_name(obj):
-  return obj.get('displayName') or obj.get('username')
-
-
 def activities_to_jsonfeed(activities, actor, feed_url=None):
   """Converts ActivityStreams activities to a JSON feed.
 
@@ -22,21 +18,24 @@ def activities_to_jsonfeed(activities, actor, feed_url=None):
   Returns:
     dict, JSON Feed data, ready to be JSON-encoded
   """
-  def get_image(obj):
+  def image_url(obj):
     return util.get_first(obj, 'image', {}).get('url')
+
+  def actor_name(obj):
+    return obj.get('displayName') or obj.get('username')
 
   return util.trim_nulls({
     'version': 'https://jsonfeed.org/version/1',
     'feed_url': feed_url,
     'author': {
-      'name': _actor_name(actor),
+      'name': actor_name(actor),
       'url': actor.get('url'),
-      'avatar': get_image(actor),
+      'avatar': image_url(actor),
     },
     'items': [{
       'id': a.get('id'),
       'url': a.get('url'),
-      'image': get_image(a),
+      'image': image_url(a),
       'title': a.get('title'),
       'summary': a.get('summary'),
       'content_text': a.get('content'),
@@ -44,9 +43,9 @@ def activities_to_jsonfeed(activities, actor, feed_url=None):
       'date_published': a.get('published'),
       'date_modified': a.get('updated'),
       'author': {
-        'name': _actor_name(a.get('author', {})),
+        'name': actor_name(a.get('author', {})),
         'url': a.get('author', {}).get('url'),
-        'avatar': get_image(a.get('author', {})),
+        'avatar': image_url(a.get('author', {})),
       },
       'attachments': [{
         'url': att.get('url'),
