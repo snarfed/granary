@@ -298,6 +298,8 @@ WARNING: this release upgrades to google-api-python-client 1.6.2, which has a bu
 
 In the meantime, I've patched [this http.py](https://raw.githubusercontent.com/mgilson/google-api-python-client/2b98e6149cc108574aef26b0a22aad15ba48f0e7/googleapiclient/http.py) from google-api-python-client@2b98e6149cc108574aef26b0a22aad15ba48f0e7 into granary (and Bridgy).
 
+TODO: release oauth-dropins 1.8 and bump dependency version here before releasing granary 1.8.
+
 * Add [JSON Feed](https://jsonfeed.org/) support to both library and REST API.
 * Twitter:
     * Bug fix for creating replies, favorites, or retweets of video URLs, e.g. https://twitter.com/name/status/123/video/1 .

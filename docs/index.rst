@@ -9,11 +9,12 @@ of formats:
 
 -  Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 -  Instagram and Google+ scraped HTML
--  `ActivityStreams <http://activitystrea.ms/>`__
+-  `ActivityStreams <http://activitystrea.ms/>`__ (1, mostly)
 -  `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
    and JSON
 -  `Atom <http://atomenabled.org/>`__
 -  XML
+-  `JSON Feed <https://jsonfeed.org/>`__
 
 Here's how to get started:
 
@@ -147,8 +148,11 @@ Request paths are of the form:
 
 All query parameters are optional. ``FORMAT`` may be ``json`` (the
 default), ``xml``, or ``atom``, both of which return
-`Atom <http://www.intertwingly.net/wiki/pie/FrontPage>`__. The rest of
-the path elements and query params are `described above <#using>`__.
+`Atom <http://www.intertwingly.net/wiki/pie/FrontPage>`__. ``atom``
+supports a boolean ``reader`` query parameter for toggling rendering
+appropriate to feed readers, e.g. location is rendered in content when
+``reader=true`` (the default). The rest of the path elements and query
+params are `described above <#using>`__.
 
 Errors are returned with the appropriate HTTP response code, e.g. 403
 for Unauthorized, with details in the response body.
@@ -255,7 +259,11 @@ run:
 
 If you send a pull request, please include (or update) a test for the
 new functionality if possible! The tests require the `App Engine
-SDK <https://developers.google.com/appengine/downloads>`__.
+SDK <https://developers.google.com/appengine/downloads>`__ or the
+`Google Cloud SDK <https://cloud.google.com/sdk/gcloud/>`__ (aka
+``gcloud``) with the ``gcloud-appengine-python`` and
+``gcloud-appengine-python-extras``
+`components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
 
 If you want to work on
 `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ at the same
@@ -367,6 +375,70 @@ Facebook and Twitter's raw HTML.
 
 Changelog
 ---------
+
+1.8 - unreleased
+~~~~~~~~~~~~~~~~
+
+WARNING: this release upgrades to google-api-python-client 1.6.2, which
+has a bug in our usage of the Google+ API, google-api-python-client#350,
+that's fixed by unreleased (but merged) PR google-api-python-client#376.
+Wait until that fix is released, and then bump our
+google-api-python-client version here, before releasing 1.8!
+
+In the meantime, I've patched `this
+http.py <https://raw.githubusercontent.com/mgilson/google-api-python-client/2b98e6149cc108574aef26b0a22aad15ba48f0e7/googleapiclient/http.py>`__
+from google-api-python-client@2b98e6149cc108574aef26b0a22aad15ba48f0e7
+into granary (and Bridgy).
+
+-  Add `JSON Feed <https://jsonfeed.org/>`__ support to both library and
+   REST API.
+-  Twitter:
+
+   -  Bug fix for creating replies, favorites, or retweets of video
+      URLs, e.g. https://twitter.com/name/status/123/video/1 .
+   -  Bug fix for parsing favorites HTML to handle a small change on
+      Twitter's side.
+
+-  Facebook:
+
+   -  Improve heuristic for determining privacy of wall posts from other
+      users.
+
+-  Instagram:
+
+   -  Update scraping to handle new home page (ie news feed) JSON
+      schema, which changed sometime around 2017-02-27. (Profile pages
+      and individual photo/video permalinks still haven't changed yet.)
+
+-  microformats2:
+
+   -  Add `u-featured <https://indieweb.org/featured>`__ to
+      ActivityStreams ``image``.
+   -  Minor whitespace change (added
+
+      .. raw:: html
+
+         <p>
+
+      ) when rendering locations as HTML.
+
+-  Google+:
+
+   -  Update HTML scraping to handle changed serialized JSON data
+      format.
+
+-  Atom:
+
+   -  Add new ``reader`` query param for toggling rendering decisions
+      that are specific to feed readers. Right now, just affects
+      location: it's rendered in the content when ``reader=true`` (the
+      default), omitted when ``reader=false``.
+   -  Include author name when rendering attached articles and notes
+      (e.g. quote tweets).
+
+-  Upgrade brevity to 0.2.14 for a couple
+   `bug <https://github.com/kylewm/brevity/issues/5>`__
+   `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
