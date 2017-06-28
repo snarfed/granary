@@ -74,7 +74,8 @@ Click on a site to try the demo!
   -- oauth login buttons
   -->
 <br />
-<div class="row login">
+<div class="login">
+<div class="row">
 
 <div class="col-lg-offset-2 col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="post" action="/twitter/start_auth">
@@ -104,7 +105,10 @@ Click on a site to try the demo!
 </a>
 </div>
 
-<div class="col-lg-offset-3 col-md-offset-2 col-lg-2 col-md-3 col-sm-4 col-xs-6">
+</div>
+<div class="row">
+
+<div class="col-lg-offset-2 col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="post" action="/flickr/start_auth">
   <input type="image" class="shadow" alt="Flickr"
          src="/oauth_dropins/static/flickr.png" />
@@ -117,13 +121,21 @@ Click on a site to try the demo!
   <input name="input" type="hidden" value="html" />
 </form></div>
 
-<div class="col-sm-offset-4 col-md-offset-0 col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="get">
   <input type="image" class="shadow" alt="ActivityStreams"
          src="/static/activitystreams_button_small.png" />
   <input name="input" type="hidden" value="activitystreams" />
 </form></div>
 
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<form method="get">
+  <input type="image" class="shadow" alt="JSON Feed"
+         src="/static/jsonfeed_button.png" height="45" />
+  <input name="input" type="hidden" value="jsonfeed" />
+</form></div>
+
+</div>
 </div>
 
 <!--
@@ -230,6 +242,8 @@ Click on a site to try the demo!
           value="html">html</option>
   <option {% if input == "json-mf2" %} selected {% endif %}
           value="json-mf2">json-mf2</option>
+  <option {% if input == "jsonfeed" %} selected {% endif %}
+          value="jsonfeed">jsonfeed</option>
 </select>
 <label>& output = </label>
 <select id="output" name="output">
@@ -238,6 +252,7 @@ Click on a site to try the demo!
   <option value="xml">xml</option>
   <option value="html">html</option>
   <option value="json-mf2">json-mf2</option>
+  <option value="jsonfeed">jsonfeed</option>
 </select>
 <label>& url = </label>
 <input id="url" name="url" type="url" required class="form-control"
