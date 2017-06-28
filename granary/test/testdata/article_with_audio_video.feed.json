@@ -1,5 +1,6 @@
 {
   "version": "https://jsonfeed.org/version/1",
+  "title": "Martin Smith",
   "author": {
     "name": "Martin Smith",
     "url": "http://example.com/martin",

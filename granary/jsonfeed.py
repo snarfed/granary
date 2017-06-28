@@ -7,12 +7,15 @@ import mimetypes
 from oauth_dropins.webutil import util
 
 
-def activities_to_jsonfeed(activities, actor, feed_url=None):
+def activities_to_jsonfeed(activities, actor, title=None, feed_url=None,
+                           home_page_url=None):
   """Converts ActivityStreams activities to a JSON feed.
 
   Args:
     activities: sequence of ActivityStreams activity dicts
     actor: ActivityStreams actor dict, the author of the feed
+    title: string, the feed title
+    home_page_url: string, the home page URL
     feed_url: the URL of the JSON Feed, if any. Included in the feed_url field.
 
   Returns:
@@ -26,14 +29,16 @@ def activities_to_jsonfeed(activities, actor, feed_url=None):
 
   return util.trim_nulls({
     'version': 'https://jsonfeed.org/version/1',
+    'title': title or actor_name(actor) or 'JSON Feed',
     'feed_url': feed_url,
+    'home_page_url': home_page_url,
     'author': {
       'name': actor_name(actor),
       'url': actor.get('url'),
       'avatar': image_url(actor),
     },
     'items': [{
-      'id': a.get('id'),
+      'id': a.get('id') or a.get('url'),
       'url': a.get('url'),
       'image': image_url(a),
       'title': a.get('title'),
