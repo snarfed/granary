@@ -33,6 +33,8 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
   items = []
   for activity in activities:
     obj = activity.get('object') or activity
+    if obj.get('objectType') == 'person':
+      continue
     author = obj.get('author', {})
     items.append({
       'id': obj.get('id') or obj.get('url'),
@@ -40,8 +42,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
       'image': image_url(obj),
       'title': obj.get('title'),
       'summary': obj.get('summary'),
-      'content_text': obj.get('content'),
-      # 'content_html': TODO
+      'content_html': obj.get('content'),
       'date_published': obj.get('published'),
       'date_modified': obj.get('updated'),
       'author': {

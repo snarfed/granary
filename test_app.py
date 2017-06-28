@@ -53,10 +53,10 @@ JSONFEED = {
   'items': [{
     'url': 'https://perma/link',
     'id': 'https://perma/link',
-    'content_text': 'foo bar',
+    'content_html': 'foo bar',
     'date_published': '2012-03-04T18:20:37+00:00',
   }, {
-    'content_text': 'baz baj',
+    'content_html': 'baz baj',
   }],
 }
 

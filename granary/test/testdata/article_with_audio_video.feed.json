@@ -8,7 +8,7 @@
   },
   "items": [{
     "title": "i'm ready to speak",
-    "content_text": "something",
+    "content_html": "something",
     "attachments": [{
       "mime_type": "audio/mpeg",
       "url": "http://a/podcast.mp3"
