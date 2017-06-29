@@ -184,6 +184,14 @@ class AppTest(testutil.HandlerTest):
     expected['feed_url'] = self.request_url(path)
     self.assert_equals(expected, json.loads(resp.body))
 
+  def test_url_activitystreams_to_jsonfeed_not_list(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps({'foo': 'bar'}))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=activitystreams&output=jsonfeed')
+    self.assert_equals(400, resp.status_int)
+
   def test_url_jsonfeed_to_json_mf2(self):
     self.expect_urlopen('http://my/feed.json', json.dumps(JSONFEED))
     self.mox.ReplayAll()

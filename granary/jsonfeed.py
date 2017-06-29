@@ -24,6 +24,14 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
   Returns:
     dict, JSON Feed data, ready to be JSON-encoded
   """
+  try:
+    iter(activities)
+  except TypeError:
+    raise TypeError('activities must be iterable')
+
+  if isinstance(activities, (dict, basestring)):
+    raise TypeError('activities may not be a dict or string')
+
   def image_url(obj):
     return util.get_first(obj, 'image', {}).get('url')
 

@@ -75,6 +75,11 @@ class JsonFeedTest(testutil.HandlerTest):
           }],
       }], {}))
 
+  def test_activities_to_jsonfeed_not_list(self):
+    for bad in None, 3, 'asdf', {'not': 'a list'}:
+      with self.assertRaises(TypeError):
+        activities_to_jsonfeed(bad)
+
   def test_jsonfeed_to_activities_empty(self):
       self.assert_equals(([], {'objectType': 'person'}),
                          jsonfeed_to_activities({}))

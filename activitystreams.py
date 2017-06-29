@@ -224,8 +224,11 @@ class Handler(handlers.ModernHandler):
       self.response.out.write(json.dumps({'items': items}, indent=2))
     elif format == 'jsonfeed':
       self.response.headers['Content-Type'] = 'application/json'
-      jf = jsonfeed.activities_to_jsonfeed(activities, actor=actor, title=title,
-                                           feed_url=self.request.url)
+      try:
+        jf = jsonfeed.activities_to_jsonfeed(activities, actor=actor, title=title,
+                                             feed_url=self.request.url)
+      except TypeError as e:
+        raise exc.HTTPBadRequest('Unsupported input data: %s' % e)
       self.response.out.write(json.dumps(jf, indent=2))
 
     if 'plaintext' in self.request.params:
