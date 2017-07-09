@@ -1271,7 +1271,9 @@ class Facebook(source.Source):
         })
 
     att = comment.get('attachment')
-    if att and att.get('type') == 'photo' and not obj.get('image'):
+    if (att and att.get('type') in
+         ('photo', 'animated_image_autoplay', 'animated_image_share') and
+        not obj.get('image')):
       obj['image'] = {'url': att.get('media', {}).get('image', {}).get('src')}
       obj.setdefault('attachments', []).append({
         'objectType': 'image',
