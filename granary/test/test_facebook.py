@@ -983,6 +983,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
     <link rel="mentioned" href="https://www.facebook.com/283938455011303" />
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
+
   <published>2012-03-04T18:20:37+00:00</published>
   <updated>2012-03-04T19:08:16+00:00</updated>
 

@@ -29,7 +29,10 @@
 {% set actor = activity.actor or activity.object.author %}
 {% include "author.atom" %}
 
-  <activity:object-type>http://activitystrea.ms/schema/1.0/{{ obj.objectType }}</activity:object-type>
+  {% if obj.objectType %}
+    <activity:object-type>http://activitystrea.ms/schema/1.0/{{ obj.objectType }}</activity:object-type>
+  {% endif %}
+
   {% set url = activity.url or obj.url %}
   <id>{{ url }}</id>
   <title>{{ activity.title|safe }}</title>
@@ -75,7 +78,9 @@
       {% endif %}
     {% endif %}
   {% endfor %}
-  <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
+  {% if activity.verb %}
+    <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
+  {% endif %}
   <published>{{ obj.published }}</published>
   <updated>{{ obj.updated or obj.published }}</updated>
   {% for obj in activity.context.inReplyTo %}

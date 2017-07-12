@@ -145,7 +145,6 @@ foo bar
   <link rel="alternate" type="text/html" href="https://perma/link" />
   <link rel="ostatus:conversation" href="https://perma/link" />
 
-  <activity:verb>http://activitystrea.ms/schema/1.0/</activity:verb>
   <published>2012-03-04T18:20:37+00:00</published>
   <updated>2012-03-04T18:20:37+00:00</updated>
 

@@ -156,6 +156,11 @@ quoted text
     self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
 
+  def test_render_missing_object_type_and_verb(self):
+    activity = {'object': {'content': 'foo'}}
+    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    self.assertNotIn('>http://activitystrea.ms/schema/1.0/<', out)
+
   def test_updated_defaults_to_published(self):
     activities = [
       {'object': {'published': '2013-12-27T17:25:55+00:00'}},
@@ -311,7 +316,6 @@ my content
   <link rel="alternate" type="text/html" href="http://my/post" />
   <link rel="ostatus:conversation" href="http://my/post" />
 
-  <activity:verb>http://activitystrea.ms/schema/1.0/</activity:verb>
   <published></published>
   <updated></updated>
 

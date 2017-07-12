@@ -642,6 +642,7 @@ ATOM = """\
     <link rel="mentioned" href="http://instagr.am/p/MuW67/" />
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
+
   <published>2012-02-22T20:26:41+00:00</published>
   <updated>2012-02-22T20:26:41+00:00</updated>
 
