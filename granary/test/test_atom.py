@@ -113,6 +113,28 @@ Shared <a href="#">a post</a> by   <span class="h-card">
 original object
 """, out)
 
+  def test_render_share_of_obj_with_attachments(self):
+    """This is e.g. a retweet of a quote tweet."""
+    activity = {
+      'verb': 'share',
+      'object': {
+        'content': 'RT @quoter: comment',
+        'attachments': [{
+          'objectType': 'note',
+          'content': 'quoted text',
+        }],
+      },
+    }
+
+    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    self.assert_multiline_in("""
+RT @quoter: comment
+
+<blockquote>
+quoted text
+</blockquote>
+""", out)
+
   def test_render_encodes_ampersands(self):
     # only the one unencoded & in a&b should be encoded
     activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}
@@ -221,28 +243,6 @@ note content
 
 <a class="h-card p-name u-url" href="https://twitter.com/B">bee</a>:</p>
 """, got)
-
-  def test_render_share_of_obj_with_attachments(self):
-    """This is e.g. a retweet of a quote tweet."""
-    activity = {
-      'verb': 'share',
-      'object': {
-        'content': 'RT @quoter: comment',
-        'attachments': [{
-          'objectType': 'note',
-          'content': 'quoted text',
-        }],
-      },
-    }
-
-    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
-    self.assert_multiline_in("""
-RT @quoter: comment
-
-<blockquote>
-quoted text
-</blockquote>
-""", out)
 
   def test_rels(self):
     got = atom.activities_to_atom([], {}, rels={'foo': 'bar', 'baz': 'baj'})
