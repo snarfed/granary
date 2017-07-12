@@ -36,6 +36,7 @@ from apiclient.http import BatchHttpRequest
 
 
 class Flickr(source.Source):
+  """Flickr source class. See file docstring and Source class for details."""
 
   DOMAIN = 'flickr.com'
   BASE_URL = 'https://www.flickr.com/'
@@ -714,7 +715,7 @@ class Flickr(source.Source):
     return u'https://www.flickr.com/photos/%s/%s/' % (user_id, photo_id)
 
   @classmethod
-  def post_id(cls, url):
+  def base_id(cls, url):
     """Used when publishing comments or favorites. Flickr photo ID is the
     3rd path component rather than the first.
     """

@@ -5,6 +5,7 @@
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
 import copy
+import re
 
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
@@ -454,6 +455,14 @@ Watching  \t waves
     self.assertEquals('1', self.source.post_id('http://x/y/1/'))
     self.assertIsNone(self.source.post_id('http://x/'))
     self.assertIsNone(self.source.post_id(''))
+
+    # test POST_ID
+    FakeSource.POST_ID_RE = re.compile('^$')
+    self.assertIsNone(self.source.post_id('http://x/y/1'))
+
+    FakeSource.POST_ID_RE = re.compile('^a+$')
+    self.assertIsNone(self.source.post_id('http://x/y/1'))
+    self.assertEquals('aaa', self.source.post_id('http://x/y/aaa'))
 
   def test_is_public(self):
     for obj in ({'to': [{'objectType': 'unknown'}]},

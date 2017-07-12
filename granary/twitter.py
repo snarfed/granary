@@ -122,13 +122,13 @@ class OffsetTzinfo(datetime.tzinfo):
 
 
 class Twitter(source.Source):
-  """Implements the ActivityStreams API for Twitter.
-  """
+  """Twitter source class. See file docstring and Source class for details."""
 
   DOMAIN = 'twitter.com'
   BASE_URL = 'https://twitter.com/'
   NAME = 'Twitter'
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
+  POST_ID_RE = re.compile('^[0-9]+$')
 
   # HTML snippet for embedding a tweet.
   # https://dev.twitter.com/docs/embedded-tweets
@@ -305,7 +305,7 @@ class Twitter(source.Source):
     if fetch_shares:
       retweet_calls = 0
       for tweet in tweets:
-        # don't fetch retweets the tweet is itself a retweet or if the
+        # don't fetch retweets if the tweet is itself a retweet or if the
         # author's account is protected. /statuses/retweets 403s with error
         # code 200 (?!) for protected accounts.
         # https://github.com/snarfed/bridgy/issues/688

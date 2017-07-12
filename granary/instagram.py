@@ -52,7 +52,7 @@ MENTION_RE = re.compile(r'@([A-Za-z0-9._]+)')
 
 
 class Instagram(source.Source):
-  """Implements the ActivityStreams API for Instagram."""
+  """Instagram source class. See file docstring and Source class for details."""
 
   DOMAIN = 'instagram.com'
   BASE_URL = 'https://www.instagram.com/'

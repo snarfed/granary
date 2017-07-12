@@ -157,10 +157,12 @@ class Source(object):
   * EMBED_POST: string, the HTML for embedding a post. Should have a %(url)s
     placeholder for the post URL and (optionally) a %(content)s placeholder
     for the post content.
+  * POST_ID_RE: regexp, optional, matches valid post ids. Used in post_id().
   """
   __metaclass__ = SourceMeta
 
   RESPONSE_CACHE_TIME = 5 * 60  # 5m
+  POST_ID_RE = None
 
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""
@@ -805,9 +807,18 @@ class Source(object):
       if parsed:
         base_obj['id'] = parsed[1]
     elif url:
-      base_obj['id'] = self.post_id(url)
+      base_obj['id'] = self.base_id(url)
 
     return base_obj
+
+  @classmethod
+  def base_id(cls, url):
+    """Guesses the id of the object in the given URL.
+
+    Returns:
+      string, or None
+    """
+    return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
   @classmethod
   def post_id(cls, url):
@@ -816,7 +827,9 @@ class Source(object):
     Returns:
       string, or None
     """
-    return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
+    id = cls.base_id(url)
+    if id and (not cls.POST_ID_RE or cls.POST_ID_RE.match(id)):
+      return id
 
   def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False,
                           strip_first_video_tag=False, strip_quotations=False):

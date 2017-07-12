@@ -24,10 +24,10 @@ SEARCH_MAX_RESULTS = 20
 
 
 class GooglePlus(source.Source):
-  """Implements the ActivityStreams API for Google+.
+  """Google+ source class. See file docstring and Source class for details.
 
   The Google+ API already exposes data in ActivityStreams format, so this is
-  just a pass through.
+  mostly just a pass through.
   """
 
   DOMAIN = 'plus.google.com'

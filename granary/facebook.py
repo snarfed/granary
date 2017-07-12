@@ -193,7 +193,7 @@ FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
 
 
 class Facebook(source.Source):
-  """Implements the ActivityStreams API for Facebook.
+  """Facebook source class. See file docstring and Source class for details.
 
   Attributes:
     access_token: string, optional, OAuth access token
@@ -204,6 +204,7 @@ class Facebook(source.Source):
   BASE_URL = 'https://www.facebook.com/'
   NAME = 'Facebook'
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
+  POST_ID_RE = re.compile('^[0-9_:]+$')  # see parse_id() for gory details
 
   # HTML snippet for embedding a post.
   # https://developers.facebook.com/docs/plugins/embedded-posts/
