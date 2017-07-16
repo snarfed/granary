@@ -76,7 +76,7 @@ def get_string_urls(objs):
   return urls
 
 
-def get_html(val):
+def get_html(val, keep_newlines=False):
   """Returns a string value that may have HTML markup.
 
   Args:
@@ -91,14 +91,15 @@ def get_html(val):
     # we don't replace them with <br>s in render_content().
     # https://github.com/snarfed/granary/issues/80
     # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
-    return val['html'].replace('\n', ' ')
+    html = val['html']
+    return html if keep_newlines else html.replace('\n', ' ')
 
   return get_text(val)
 
 
 def get_text(val):
   """Returns a plain text string value. See get_html."""
-  return val.get('value') if isinstance(val, dict) else val
+  return (val.get('value') if isinstance(val, dict) else val) or ''
 
 
 def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
@@ -478,8 +479,7 @@ def json_to_html(obj, parent_props=None):
         children.append(json_to_html(target, ['u-' + mftype + '-of']))
 
   # set up content and name
-  content = prop.get('content', {})
-  content_html = content.get('html', '') or content.get('value', '')
+  content_html = get_html(prop.get('content', {}), keep_newlines=True)
   content_classes = []
 
   if content_html:
