@@ -314,6 +314,7 @@ TODO: release oauth-dropins 1.8 and bump dependency version here before releasin
     * Add [`u-featured`](https://indieweb.org/featured) to ActivityStreams `image`.
     * Minor whitespace change (added <p>) when rendering locations as HTML.
     * `post_id()` now validates ids more strictly before returning them.
+    * Fix bugs in converting latitude and longitude between ActivityStreams and mf2.
 * Google+:
     * Update HTML scraping to handle changed serialized JSON data format.
 * Atom:
