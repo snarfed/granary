@@ -1,0 +1,9 @@
+{
+  "type": ["h-event"],
+  "properties": {
+    "name": ["XYZ"],
+    "url": ["http://example.com/event-xyz"],
+    "content": ["this event is gonna be great"],
+    "location": ["the place"]
+  }
+}

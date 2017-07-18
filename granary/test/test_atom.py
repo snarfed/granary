@@ -135,6 +135,13 @@ quoted text
 </blockquote>
 """, out)
 
+  def test_render_event_omits_object_type_verb(self):
+    activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}
+
+    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
+    self.assertNotIn('a&b', out)
+
   def test_render_encodes_ampersands(self):
     # only the one unencoded & in a&b should be encoded
     activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}

@@ -1,0 +1,15 @@
+{
+  "objectType": "event",
+  "id": tag:example.com,2011:event-xyz",
+  "url": "http://example.com/event-xyz",
+  "displayName": "XYZ",
+  "content": "this event is gonna be great",
+  "startTime": "2014-01-29T18:30:00-0800",
+  "endTime": "2014-01-29T19:30:00-0800",
+  "published": "2014-01-22T01:29:15+00:00",
+  "attending": [RSVP_YES_OBJ["actor"]],
+  "notAttending": [RSVP_NO_OBJ["actor"]],
+  "maybeAttending": [RSVP_MAYBE_OBJ["actor"]],
+  "interested": [RSVP_INTERESTED_OBJ["actor"]],
+  "invited": [INVITE_OBJ["object"]],
+}

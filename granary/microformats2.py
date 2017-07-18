@@ -31,6 +31,7 @@ $author
   </div>
 $video
 $photo
+$event_times
 $location
 $people
 $in_reply_tos
@@ -45,6 +46,24 @@ HCARD = string.Template("""\
   </span>
 """)
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
+AS_TO_MF2_TYPE = {
+  'event': ['h-event'],
+  'person': ['h-card'],
+  'place': ['h-card', 'p-location'],
+}
+MF2_TO_AS_TYPE_VERB = {
+  'article': ('article', None),
+  'event': ('event', None),
+  'invite': ('activity', 'invite'),
+  'like': ('activity', 'like'),
+  'location': ('place', None),
+  'note': ('note', None),
+  'person': ('person', None),
+  'reply': ('comment', None),
+  'repost': ('activity', 'share'),
+  'rsvp': ('activity', None),  # json_to_object() will generate verb from rsvp
+}
+
 
 
 def get_string_urls(objs):
@@ -147,9 +166,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   # TODO: more tags. most will be p-category?
   ret = {
-    'type': (['h-card'] if obj_type == 'person'
-             else ['h-card', 'p-location'] if obj_type == 'place'
-             else [entry_class] if isinstance(entry_class, basestring)
+    'type': (AS_TO_MF2_TYPE.get(obj_type) or
+             [entry_class] if isinstance(entry_class, basestring)
              else list(entry_class)),
     'properties': {
       'uid': [obj.get('id', '')],
@@ -177,6 +195,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'longitude': [str(primary.get('longitude') or '')],
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
                   for c in obj.get('replies', {}).get('items', [])],
+      'start': [primary.get('startTime')],
+      'end': [primary.get('endTime')],
     },
     'children': [object_to_json(c, trim_nulls=False,
                                 entry_class=['u-quotation-of', 'h-cite'])
@@ -246,21 +266,7 @@ def json_to_object(mf2, actor=None):
   props = mf2.setdefault('properties', {})
   prop = first_props(props)
   rsvp = prop.get('rsvp')
-  rsvp_verb = 'rsvp-%s' % rsvp if rsvp else None
   author = json_to_object(prop['author']) if prop.get('author') else actor
-
-  # maps mf2 type to ActivityStreams objectType and optional verb.
-  mf2_type_to_as_type = {
-    'rsvp': ('activity', rsvp_verb),
-    'invite': ('activity', 'invite'),
-    'repost': ('activity', 'share'),
-    'like': ('activity', 'like'),
-    'reply': ('comment', None),
-    'person': ('person', None),
-    'location': ('place', None),
-    'note': ('note', None),
-    'article': ('article', None),
-  }
 
   mf2_types = mf2.get('type') or []
   if 'h-geo' in mf2_types or 'p-location' in mf2_types:
@@ -274,7 +280,9 @@ def json_to_object(mf2, actor=None):
     without_photo.get('properties', {}).pop('photo', None)
     mf2_type = mf2util.post_type_discovery(without_photo)
 
-  as_type, as_verb = mf2_type_to_as_type.get(mf2_type, (None, None))
+  as_type, as_verb = MF2_TO_AS_TYPE_VERB.get(mf2_type, (None, None))
+  if rsvp:
+    as_verb = 'rsvp-%s' % rsvp
 
   def absolute_urls(prop):
     return [url for url in get_string_urls(props.get(prop, []))
@@ -300,6 +308,8 @@ def json_to_object(mf2, actor=None):
     'verb': as_verb,
     'published': prop.get('published', ''),
     'updated': prop.get('updated', ''),
+    'startTime': prop.get('start'),
+    'endTime': prop.get('end'),
     'displayName': get_text(prop.get('name')),
     'summary': get_text(prop.get('summary')),
     'content': get_html(prop.get('content')),
@@ -519,13 +529,27 @@ def json_to_html(obj, parent_props=None):
   # embedded children of this post
   children += [json_to_html(c) for c in obj.get('children', [])]
 
+  # location; make sure it's an object
+  location = prop.get('location')
+  if isinstance(location, basestring):
+    location = {'properties': {'name': [location]}}
+
+  # event times
+  event_times = []
+  start = props.get('start', [])
+  end = props.get('end', [])
+  event_times += ['  <time class="dt-start">%s</time>' % time for time in start]
+  if start and end:
+    event_times.append('  to')
+  event_times += ['  <time class="dt-end">%s</time>' % time for time in end]
+
   return HENTRY.substitute(
     prop,
     published=maybe_datetime(prop.get('published'), 'dt-published'),
     updated=maybe_datetime(prop.get('updated'), 'dt-updated'),
     types=' '.join(parent_props + types),
     author=hcard_to_html(author, ['p-author']),
-    location=hcard_to_html(prop.get('location'), ['p-location']),
+    location=hcard_to_html(location, ['p-location']),
     people=people,
     photo=photo,
     video=video,
@@ -537,7 +561,8 @@ def json_to_html(obj, parent_props=None):
     comments=comments_html,
     children='\n'.join(children),
     linked_name=maybe_linked_name(props),
-    summary=summary)
+    summary=summary,
+    event_times='\n'.join(event_times))
 
 
 def hcard_to_html(hcard, parent_props=None):
@@ -555,7 +580,6 @@ def hcard_to_html(hcard, parent_props=None):
     return ''
   if not parent_props:
     parent_props = []
-
 
   # extract first value from multiply valued properties
   props = hcard.get('properties', {})
