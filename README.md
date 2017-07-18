@@ -312,6 +312,7 @@ TODO: release oauth-dropins 1.8 and bump dependency version here before releasin
     * Update scraping to handle new home page (ie news feed) JSON schema, which changed sometime around 2017-02-27. (Profile pages and individual photo/video permalinks still haven't changed yet.)
 * microformats2:
     * Add [`u-featured`](https://indieweb.org/featured) to ActivityStreams `image`.
+    * Improve `h-event` support.
     * Minor whitespace change (added <p>) when rendering locations as HTML.
     * `post_id()` now validates ids more strictly before returning them.
     * Fix bugs in converting latitude and longitude between ActivityStreams and mf2.
