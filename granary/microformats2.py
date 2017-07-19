@@ -63,7 +63,8 @@ MF2_TO_AS_TYPE_VERB = {
   'repost': ('activity', 'share'),
   'rsvp': ('activity', None),  # json_to_object() will generate verb from rsvp
 }
-
+# ISO 6709 location string. http://en.wikipedia.org/wiki/ISO_6709
+ISO_6709_RE = re.compile(r'^([-+][0-9.]+)([-+][0-9.]+).*/$')
 
 
 def get_string_urls(objs):
@@ -191,8 +192,6 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'location': [object_to_json(
         primary.get('location', {}), trim_nulls=False,
         default_object_type='place')],
-      'latitude': [str(primary.get('latitude') or '')],
-      'longitude': [str(primary.get('longitude') or '')],
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
                   for c in obj.get('replies', {}).get('items', [])],
       'start': [primary.get('startTime')],
@@ -242,6 +241,21 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       ret['properties'][prop] = [
         object_to_json(t, trim_nulls=False, entry_class='h-cite')
         for t in tags if source.object_type(t) == type]
+
+  # latitude & longitude
+  lat = long = None
+  position = ISO_6709_RE.match(primary.get('position') or '')
+  if position:
+    lat, long = position.groups()
+  if not lat:
+    lat = primary.get('latitude')
+  if not long:
+    long = primary.get('longitude')
+
+  if lat:
+    ret['properties']['latitude'] = [str(lat)]
+  if long:
+    ret['properties']['longitude'] = [str(long)]
 
   if trim_nulls:
     ret = util.trim_nulls(ret)

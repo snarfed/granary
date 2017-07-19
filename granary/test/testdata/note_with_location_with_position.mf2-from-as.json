@@ -1,0 +1,12 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "location": [{
+      "type": ["h-card", "p-location"],
+      "properties": {
+        "latitude": ["+50.820641"],
+        "longitude": ["-0.149522"]
+      }
+    }]
+  }
+}
