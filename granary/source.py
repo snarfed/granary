@@ -520,7 +520,8 @@ class Source(object):
 
     return util.trim_nulls(activity)
 
-  def postprocess_object(self, obj):
+  @staticmethod
+  def postprocess_object(obj):
     """Does source-independent post-processing of an object, in place.
 
     Populates location.position based on latitude and longitude.

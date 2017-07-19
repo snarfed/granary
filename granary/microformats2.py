@@ -350,9 +350,10 @@ def json_to_object(mf2, actor=None):
       lat, lng = loc.get('latitude'), loc.get('longitude')
       if lat and lng:
         try:
-          obj['location']['latitude'] = float(lat)
-          obj['location']['longitude'] = float(lng)
-          # TODO fill in 'position', maybe using Source.postprocess_object?
+          obj['location'].update({
+            'latitude': float(lat),
+            'longitude': float(lng),
+          })
         except ValueError:
           logging.warn(
             'Could not convert latitude/longitude (%s, %s) to decimal', lat, lng)
@@ -376,7 +377,7 @@ def json_to_object(mf2, actor=None):
         'author': author,
         })
 
-  return util.trim_nulls(obj)
+  return source.Source.postprocess_object(obj)
 
 
 def html_to_activities(html, url=None, actor=None):
