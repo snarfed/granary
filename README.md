@@ -272,8 +272,7 @@ Facebook [used to](https://developers.facebook.com/blog/post/225/)
 ActivityStreams, but that's also dead.
 
 There are a number of products that download your social network data, normalize
-it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) and
-[ThinkUp](http://thinkup.com/) are two of the most mature. There's also the
+it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) is one, although the SSL certificate is currently out of date. [ThinkUp](http://web.archive.org/web/20161108212106/http://www.thinkup.com/) was an open source product, but shuttered on 18 July 2016. There's also the
 lifelogging/lifestream aggregator vein of projects that pull data from multiple
 source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good
 example. It doesn't include Facebook, Google+, or Instagram, but does include a
