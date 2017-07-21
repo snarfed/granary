@@ -545,6 +545,11 @@ class Twitter(source.Source):
     May make multiple API calls, using cursors, to fully fetch large blocklists.
     https://dev.twitter.com/overview/api/cursoring
 
+    Block lists may have up to 10k users, but each API call only returns 100 at
+    most, and the API endpoint is rate limited to 15 calls per user per 15m. So
+    if a user has >1500 users on their block list, I can't get the whole thing
+    at once. :(
+
     Returns:
       sequence of actor objects
     """
@@ -552,6 +557,7 @@ class Twitter(source.Source):
     cursor = '-1'
     while cursor and cursor != '0':
       resp = self.urlopen(API_BLOCKS % cursor)
+      logging.info(json.dumps(resp, indent=2))
       blocks.extend(self.user_to_actor(user) for user in resp.get('users', []))
       cursor = resp.get('next_cursor_str')
 
