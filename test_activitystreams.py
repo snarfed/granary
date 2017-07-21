@@ -40,6 +40,7 @@ class HandlerTest(testutil.HandlerTest):
     self.mox.ResetAll()
     activitystreams.SOURCE = FakeSource
     self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
 
   def get_response(self, url, *args, **kwargs):
     start_index = kwargs.setdefault('start_index', 0)
@@ -93,6 +94,16 @@ class HandlerTest(testutil.HandlerTest):
 
   def test_self(self):
     self.check_request('/123/@self/', '123', '@self')
+
+  def test_blocks(self):
+    blocks = [{'blockee': '1'}, {'blockee': '2'}]
+    FakeSource.get_blocklist().AndReturn(blocks)
+    self.mox.ReplayAll()
+
+    resp = activitystreams.application.get_response('/fake/123/@blocks/')
+    self.assertEquals(200, resp.status_int)
+    self.assert_equals({'items': blocks},
+                       json.loads(resp.body))
 
   def test_group_id(self):
     self.check_request('/123/456', '123', '456')

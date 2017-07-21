@@ -33,7 +33,7 @@ function onHashChange() {
 }
 window.addEventListener('hashchange', onHashChange);
 document.addEventListener('DOMContentLoaded', onHashChange);
-window.onload = update_search();
+window.onload = update_form();
 </script>
 
 <!--
@@ -173,12 +173,13 @@ Click on a site to try the demo!
 <label> @self </label>
 <input type="hidden" id="group_id" name="group_id" value="@self" />
 {% else %}
-<select id="group_id" name="group_id" onchange="update_search()">
+<select id="group_id" name="group_id" onchange="update_form()">
   <option value="@all">@all</option>
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
   {% if site == 'twitter' %}
     <option value="@search">@search</option>
+    <option value="@blocks">@blocks</option>
   {% endif %}
 </select>
 {% endif %}

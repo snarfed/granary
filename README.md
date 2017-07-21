@@ -99,7 +99,7 @@ They return the authenticated user's Twitter stream, ie tweets from the people t
 }
 ```
 
-The request parameters are the same for both, all optional: `USER_ID` is a source-specific id or `@me` for the authenticated user. `GROUP_ID` may be `@all`, `@friends` (currently identical to `@all`), `@self`, or `@search`; `APP_ID` is currently ignored; best practice is to use `@app` as a placeholder.
+The request parameters are the same for both, all optional: `USER_ID` is a source-specific id or `@me` for the authenticated user. `GROUP_ID` may be `@all`, `@friends` (currently identical to `@all`), `@self`, `@search`, or `@blocks`; `APP_ID` is currently ignored; best practice is to use `@app` as a placeholder.
 
 Paging is supported via the `startIndex` and `count` parameters. They're self explanatory, and described in detail in the [OpenSearch spec](http://www.opensearch.org/Specifications/OpenSearch/1.1#The_.22count.22_parameter) and [OpenSocial spec](https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
 

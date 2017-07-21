@@ -75,12 +75,11 @@ class DemoHandler(handlers.ModernHandler):
     group = self.request.get('group_id') or source.ALL
     user = self.request.get('user_id') or source.ME
 
+    activity_id = search_query = ''
     if group == source.SEARCH:
       search_query = self.request.get('search_query', '').encode('utf-8')
-      activity_id = ''
-    else:
+    elif group != source.BLOCKS:
       activity_id = self.request.get('activity_id', '').encode('utf-8')
-      search_query = ''
 
     params = {
       'plaintext': 'true',

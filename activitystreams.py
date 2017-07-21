@@ -139,9 +139,12 @@ class Handler(handlers.ModernHandler):
             for a, defaults in zip(args, PATH_DEFAULTS)]
     user_id = args[0] if args else None
 
-    # get activities
+    # get activities (etc)
     try:
-      response = src.get_activities_response(*args, **self.get_kwargs(src))
+      if len(args) >= 2 and args[1] == '@blocks':
+        response = {'items': src.get_blocklist()}
+      else:
+        response = src.get_activities_response(*args, **self.get_kwargs(src))
     except (NotImplementedError, ValueError) as e:
       self.abort(400, str(e))
       # other exceptions are handled by webutil.handlers.handle_exception(),

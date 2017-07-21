@@ -40,14 +40,20 @@ function render_url_request() {
     'GET <a href="' + url + '">' + url + '</a>';
 }
 
-function update_search() {
-  group_id = document.getElementById('group_id');
-  if (group_id) {
-    searching = group_id.value == '@search';
-    document.getElementById('activity_id_span').style.display =
-      searching ? 'none' : 'inline';
-    document.getElementById('search_query_span').style.display =
-      searching ? 'inline' : 'none';
+function update_form() {
+  group = document.getElementById('group_id');
+  if (group) {
+    activity = document.getElementById('activity_id_span');
+    search = document.getElementById('search_query_span');
+    if (group.value == '@search') {
+      search.style.display = 'inline';
+      activity.style.display  = 'none';
+    } else if (group.value == '@blocks') {
+      search.style.display = activity.style.display  = 'none';
+    } else {
+      activity.style.display = 'inline';
+      search.style.display = 'none';
+    }
   }
 }
 

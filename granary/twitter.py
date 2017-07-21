@@ -36,7 +36,7 @@ from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 
 API_BASE = 'https://api.twitter.com/1.1/'
-API_BLOCKS = 'blocks/list.json?skip_status=true&cursor=%s'
+API_BLOCKS = 'blocks/list.json?skip_status=true&count=5000&cursor=%s'
 API_CURRENT_USER = 'account/verify_credentials.json'
 API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true&tweet_mode=extended'
 API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&tweet_mode=extended&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
