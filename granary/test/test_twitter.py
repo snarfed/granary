@@ -19,8 +19,17 @@ from granary import microformats2
 from granary import source
 from granary import twitter
 from granary.twitter import (
-  API_FAVORITES, API_LIST_TIMELINE, API_LOOKUP, API_RETWEETS, API_SEARCH,
-  API_STATUS, API_TIMELINE, API_USER_TIMELINE, HTML_FAVORITES)
+  API_BLOCKS,
+  API_FAVORITES,
+  API_LIST_TIMELINE,
+  API_LOOKUP,
+  API_RETWEETS,
+  API_SEARCH,
+  API_STATUS,
+  API_TIMELINE,
+  API_USER_TIMELINE,
+  HTML_FAVORITES,
+)
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
 
@@ -54,14 +63,24 @@ USER = {  # Twitter
         'url': 'http://t.co/456',
         'expanded_url': 'http://link/456',
       }]},
-    },
-  }
+  },
+}
+USER_2 = {
+  'name': 'Alice Foo',
+  'screen_name': 'alice',
+  'id_str': '777',
+}
+USER_3 = {
+  'name': 'Bob Bar',
+  'screen_name': 'bob',
+  'id_str': '666',
+}
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'displayName': 'Ryan Barrett',
   'image': {
     'url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
-    },
+  },
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
   'published': '2010-05-01T21:42:43+00:00',
@@ -73,7 +92,23 @@ ACTOR = {  # ActivityStreams
   'location': {'displayName': 'San Francisco'},
   'username': 'snarfed_org',
   'description': 'my description',
-  }
+}
+ACTOR_2 = {
+  'objectType': 'person',
+  'displayName': 'Alice Foo',
+  'id': tag_uri('alice'),
+  'numeric_id': '777',
+  'username': 'alice',
+  'url': 'https://twitter.com/alice',
+}
+ACTOR_3 = {
+  'objectType': 'person',
+  'displayName': 'Bob Bar',
+  'id': tag_uri('bob'),
+  'numeric_id': '666',
+  'username': 'bob',
+  'url': 'https://twitter.com/bob',
+}
 # Twitter
 # (extended tweet: https://dev.twitter.com/overview/api/upcoming-changes-to-tweets )
 TWEET = {
@@ -1073,6 +1108,19 @@ class TwitterTest(testutil.TestCase):
   def test_get_share_bad_id(self):
     """https://github.com/snarfed/bridgy/issues/719"""
     self.assertRaises(ValueError, self.twitter.get_share, None, None, '123:abc')
+
+  def test_get_blocklist(self):
+    self.expect_urlopen(API_BLOCKS % '-1', {
+      'users': [USER],
+      'next_cursor_str': '9',
+    })
+    self.expect_urlopen(API_BLOCKS % '9', {
+      'users': [USER_2, USER_3],
+      'next_cursor_str': '0',
+    })
+    self.mox.ReplayAll()
+    self.assert_equals([ACTOR, ACTOR_2, ACTOR_3],
+                       self.twitter.get_blocklist())
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))

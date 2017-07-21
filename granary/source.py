@@ -418,6 +418,17 @@ class Source(object):
         if id and user_id == util.parse_tag_uri(id)[1]:
           return rsvp
 
+  def get_blocklist(self):
+    """Returns the current user's block list.
+
+    ...ie the users that the current user is blocking. The exact semantics of
+    "blocking" vary from silo to silo.
+
+    Returns:
+      sequence of actor objects
+    """
+    raise NotImplementedError()
+
   def user_to_actor(self, user):
     """Converts a user to an actor.
 

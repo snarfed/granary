@@ -36,21 +36,22 @@ from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 
 API_BASE = 'https://api.twitter.com/1.1/'
-API_TIMELINE = 'statuses/home_timeline.json?include_entities=true&tweet_mode=extended&count=%d'
-API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&tweet_mode=extended&count=%(count)d&screen_name=%(screen_name)s'
-API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&tweet_mode=extended&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
-API_STATUS = 'statuses/show.json?id=%s&include_entities=true&tweet_mode=extended'
-API_LOOKUP = 'statuses/lookup.json?id=%s&include_entities=true&tweet_mode=extended'
-API_RETWEETS = 'statuses/retweets.json?id=%s&tweet_mode=extended'
-API_USER = 'users/show.json?screen_name=%s'
+API_BLOCKS = 'blocks/list.json?skip_status=true&cursor=%s'
 API_CURRENT_USER = 'account/verify_credentials.json'
-API_SEARCH = 'search/tweets.json?q=%(q)s&include_entities=true&tweet_mode=extended&result_type=recent&count=%(count)d'
 API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true&tweet_mode=extended'
-API_POST_TWEET = 'statuses/update.json'
-API_POST_RETWEET = 'statuses/retweet/%s.json'
+API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&tweet_mode=extended&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
+API_LOOKUP = 'statuses/lookup.json?id=%s&include_entities=true&tweet_mode=extended'
 API_POST_FAVORITE = 'favorites/create.json'
 API_POST_MEDIA = 'statuses/update_with_media.json'
+API_POST_RETWEET = 'statuses/retweet/%s.json'
+API_POST_TWEET = 'statuses/update.json'
+API_RETWEETS = 'statuses/retweets.json?id=%s&tweet_mode=extended'
+API_SEARCH = 'search/tweets.json?q=%(q)s&include_entities=true&tweet_mode=extended&result_type=recent&count=%(count)d'
+API_STATUS = 'statuses/show.json?id=%s&include_entities=true&tweet_mode=extended'
+API_TIMELINE = 'statuses/home_timeline.json?include_entities=true&tweet_mode=extended&count=%d'
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
+API_USER = 'users/show.json?screen_name=%s'
+API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&tweet_mode=extended&count=%(count)d&screen_name=%(screen_name)s'
 HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
@@ -537,6 +538,24 @@ class Twitter(source.Source):
     self._validate_id(share_id)
     url = API_STATUS % share_id
     return self.retweet_to_object(self.urlopen(url))
+
+  def get_blocklist(self):
+    """Returns the current user's block list.
+
+    May make multiple API calls, using cursors, to fully fetch large blocklists.
+    https://dev.twitter.com/overview/api/cursoring
+
+    Returns:
+      sequence of actor objects
+    """
+    blocks = []
+    cursor = '-1'
+    while cursor and cursor != '0':
+      resp = self.urlopen(API_BLOCKS % cursor)
+      blocks.extend(self.user_to_actor(user) for user in resp.get('users', []))
+      cursor = resp.get('next_cursor_str')
+
+    return blocks
 
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):

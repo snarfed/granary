@@ -301,6 +301,7 @@ TODO: release oauth-dropins 1.8 and bump dependency version here before releasin
 
 * Add [JSON Feed](https://jsonfeed.org/) support to both library and REST API.
 * Twitter:
+    * Add `get_blocklist()`.
     * Bug fix for creating replies, favorites, or retweets of video URLs, e.g. https://twitter.com/name/status/123/video/1 .
     * Bug fix for parsing favorites HTML to handle a small change on Twitter's side.
     * `post_id()` now validates ids more strictly before returning them.
