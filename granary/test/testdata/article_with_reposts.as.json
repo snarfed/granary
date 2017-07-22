@@ -6,7 +6,7 @@
     "objectType": "share",
     "object": {"url": "http://example.com/abc"},
     "author": {
-      "id": "100004",
+      "numeric_id": "100004",
       "displayName": "Alice",
       "url": "http://example.com/alice"
     }

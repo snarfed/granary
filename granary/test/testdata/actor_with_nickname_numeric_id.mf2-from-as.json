@@ -1,0 +1,14 @@
+{
+  "type": ["h-card"],
+  "properties": {
+    "uid": ["tag:example.com,2011:martin"],
+    "numeric-id": ["4321"],
+    "name": ["Martin Smith"],
+    "nickname": ["martin"],
+    "url": [
+      "http://example.com/martin",
+      "https://example.com/4321"
+    ],
+    "photo": ["http://example.com/martin/image"]
+  }
+}

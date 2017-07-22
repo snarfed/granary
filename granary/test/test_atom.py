@@ -107,6 +107,7 @@ sharer's comment
     out = atom.activities_to_atom([activity], {})
     self.assert_multiline_in("""
 Shared <a href="#">a post</a> by   <span class="h-card">
+
 <span class="p-name">Mr. Foo</span>
 
 </span>

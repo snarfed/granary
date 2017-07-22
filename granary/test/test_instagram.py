@@ -179,7 +179,7 @@ MEDIA_OBJ = {  # ActivityStreams
   'image': {'url': 'http://attach/image/big'},
   'to': [{'objectType':'group', 'alias':'@public'}],
   'location': {
-    'id': '520640',
+    'id': tag_uri('520640'),
     'displayName': 'Le Truc',
     'latitude': 37.3,
     'longitude': -122.5,
@@ -403,6 +403,7 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 </a>
 </p>
 <p>  <span class="p-location h-card">
+  <data class="p-uid" value="tag:instagram.com:520640" />
   <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a>
 
 </span>
@@ -900,7 +901,7 @@ HTML_PHOTO_ACTIVITY = {  # ActivityStreams
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg'},
     'to': [{'objectType':'group', 'alias':'@public'}],
     'location': {
-      'id': '345924646',
+      'id': tag_uri('345924646'),
       'displayName': 'RCA Studio B',
       'url': 'https://instagram.com/explore/locations/345924646/',
     },

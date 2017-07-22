@@ -8,7 +8,7 @@
         "author": [{
           "type": ["h-card"],
           "properties": {
-            "uid": ["100004"],
+            "numeric-id": ["100004"],
             "name": ["Alice"],
             "url": ["http://example.com/alice"]
           }

@@ -37,10 +37,14 @@ def read_json(filename):
 
 
 def create_test_function(fn, original, expected):
-  """Create a simple test function that asserts
-  fn(original) == expected"""
-  return lambda self: self.assert_equals(expected, fn(original))
-
+  """Create a simple test function that asserts fn(original) == expected"""
+  def test(self):
+    got = fn(original)
+    if isinstance(got, basestring) and isinstance(expected, basestring):
+      return self.assert_multiline_equals(expected, got, ignore_blanks=True)
+    else:
+      return self.assert_equals(expected, got)
+  return test
 
 # TODO: use a handler with an HTTPS request so that URL schemes are converted
 # self.handler.request = webapp2.Request.blank('/', base_url='https://foo')

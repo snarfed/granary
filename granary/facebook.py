@@ -1199,7 +1199,7 @@ class Facebook(source.Source):
       place_id = place.get('id')
       obj['location'] = {
         'displayName': place.get('name'),
-        'id': place_id,
+        'id': self.tag_uri(place_id),
         'url': self.object_url(place_id),
         }
       location = place.get('location', None)

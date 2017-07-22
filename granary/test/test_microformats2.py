@@ -220,7 +220,7 @@ foo
       }))
 
   def test_render_content_location(self):
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <p>  <span class="p-location h-card">
   <a class="p-name u-url" href="http://my/place">My place</a>
@@ -233,7 +233,7 @@ foo
           'displayName': 'My place',
           'url': 'http://my/place',
         }
-      }))
+      }), ignore_blanks=True)
 
   def test_render_content_synthesize_content(self):
     for verb, phrase in ('like', 'likes'), ('share', 'shared'):
@@ -287,17 +287,14 @@ foo
         }]}))
 
   def test_escape_html_attribute_values(self):
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 <article class="h-entry">
 <span class="p-uid"></span>
-
 <span class="p-author h-card">
 <span class="p-name">a " b ' c</span>
 <img class="u-photo" src="img" alt="" />
 </span>
-
 <div class="e-content p-name">
-
 <p>
 <img class="thumbnail" src="img" alt="d &amp; e" />
 <span class="name">d & e</span>
@@ -307,7 +304,7 @@ foo
 </article>""", microformats2.object_to_html({
         'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
         'attachments': [{'image': {'url': 'img'}, 'displayName': 'd & e'}],
-      }))
+      }), ignore_blanks=True)
 
   def test_mention_and_hashtag(self):
     self.assert_equals("""

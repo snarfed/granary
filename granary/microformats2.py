@@ -41,8 +41,10 @@ $comments
 """)
 HCARD = string.Template("""\
   <span class="$types">
+    $ids
     $linked_name
-    $photo
+    $nicknames
+    $photos
   </span>
 """)
 IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
@@ -171,8 +173,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
              [entry_class] if isinstance(entry_class, basestring)
              else list(entry_class)),
     'properties': {
-      'uid': [obj.get('id', '')],
+      'uid': [obj.get('id') or ''],
+      'numeric-id': [obj.get('numeric_id') or ''],
       'name': [name],
+      'nickname': [obj.get('username') or ''],
       'summary': [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
@@ -602,13 +606,18 @@ def hcard_to_html(hcard, parent_props=None):
   if not prop:
     return ''
 
-  prop.setdefault('uid', '')
-  photo = prop.get('photo')
   return HCARD.substitute(
-    prop,
     types=' '.join(util.uniquify(parent_props + hcard.get('type', []))),
-    photo=img(photo, 'u-photo', '') if photo else '',
-    linked_name=maybe_linked_name(props))
+    ids='\n'.join(['<data class="p-uid" value="%s" />' % uid
+                   for uid in props.get('uid', []) if uid] +
+                  ['<data class="p-numeric-id" value="%s" />' % nid
+                   for nid in props.get('numeric-id', []) if nid]),
+    linked_name=maybe_linked_name(props),
+    nicknames='\n'.join('<span class="p-nickname">%s</span>' % nick
+                        for nick in props.get('nickname', []) if nick),
+    photos='\n'.join(img(photo, 'u-photo', '')
+                     for photo in props.get('photo', []) if photo),
+  )
 
 
 def render_content(obj, include_location=True, synthesize_content=True):

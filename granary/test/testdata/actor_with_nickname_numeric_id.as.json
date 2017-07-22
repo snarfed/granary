@@ -1,0 +1,14 @@
+{
+  "urls": [
+    {"value": "http://example.com/martin"},
+    {"value": "https://example.com/4321"}
+  ],
+  "objectType" : "person",
+  "id": "tag:example.com,2011:martin",
+  "numeric_id": "4321",
+  "image": [{
+    "url": "http://example.com/martin/image"
+  }],
+  "displayName": "Martin Smith",
+  "username": "martin"
+}

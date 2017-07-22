@@ -575,7 +575,7 @@ class Instagram(source.Source):
     if 'location' in media:
       media_loc = media.get('location', {})
       object['location'] = {
-        'id': media_loc.get('id'),
+        'id': self.tag_uri(media_loc.get('id')),
         'displayName': media_loc.get('name'),
         'latitude': media_loc.get('point', {}).get('latitude'),
         'longitude': media_loc.get('point', {}).get('longitude'),

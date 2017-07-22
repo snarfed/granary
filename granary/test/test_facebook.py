@@ -498,7 +498,7 @@ POST_OBJ = {  # ActivityStreams
   'to': [{'objectType':'group', 'alias':'@public'}],
   'location': {
     'displayName': 'Lake Merced',
-    'id': '113785468632283',
+    'id': tag_uri('113785468632283'),
     'url': 'https://www.facebook.com/113785468632283',
     'latitude': 37.728193717481,
     'longitude': -122.49336423595,
@@ -945,6 +945,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 <span class="summary">my link caption</span>
 </p>
 <p>  <span class="p-location h-card">
+  <data class="p-uid" value="tag:facebook.com:113785468632283" />
   <a class="p-name u-url" href="https://www.facebook.com/113785468632283">Lake Merced</a>
 
 </span>

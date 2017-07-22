@@ -1262,7 +1262,7 @@ class Twitter(source.Source):
     if place:
       obj['location'] = {
         'displayName': place.get('full_name'),
-        'id': place.get('id'),
+        'id': self.tag_uri(place.get('id')),
         }
 
       # place['url'] is a JSON API url, not useful for end users. get the

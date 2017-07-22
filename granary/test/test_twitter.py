@@ -197,7 +197,7 @@ OBJECT = {  # ActivityStreams
   'image': {'url': 'http://p.twimg.com/picture1'},
   'location': {
     'displayName': 'Carcassonne, Aude',
-    'id': '31cb9e7ed29dbe52',
+    'id': tag_uri('31cb9e7ed29dbe52'),
     'url': 'https://maps.google.com/maps?q=32.4004416,-98.9852672',
   },
   'to': [{'objectType': 'group', 'alias': '@public'}],
@@ -649,6 +649,7 @@ ATOM = """\
 </a>
 </p>
 <p>  <span class="p-location h-card">
+<data class="p-uid" value="tag:twitter.com:31cb9e7ed29dbe52" />
 <a class="p-name u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a>
 
 </span>
