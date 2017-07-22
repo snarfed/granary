@@ -19,6 +19,7 @@ from granary import microformats2
 from granary import source
 from granary import twitter
 from granary.twitter import (
+  API_BLOCK_IDS,
   API_BLOCKS,
   API_FAVORITES,
   API_LIST_TIMELINE,
@@ -1121,6 +1122,18 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals([ACTOR, ACTOR_2, ACTOR_3],
                        self.twitter.get_blocklist())
+
+  def test_get_blocklist_ids(self):
+    self.expect_urlopen(API_BLOCK_IDS % '-1', {
+      'ids': ['1', '2'],
+      'next_cursor_str': '9',
+    })
+    self.expect_urlopen(API_BLOCK_IDS % '9', {
+      'ids': ['4', '5'],
+      'next_cursor_str': '0',
+    })
+    self.mox.ReplayAll()
+    self.assert_equals(['1', '2', '4', '5'], self.twitter.get_blocklist_ids())
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))

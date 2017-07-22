@@ -36,6 +36,7 @@ from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 
 API_BASE = 'https://api.twitter.com/1.1/'
+API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
 API_BLOCKS = 'blocks/list.json?skip_status=true&count=5000&cursor=%s'
 API_CURRENT_USER = 'account/verify_credentials.json'
 API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true&tweet_mode=extended'
@@ -141,6 +142,29 @@ class Twitter(source.Source):
   <a href="%(url)s">#</a></p>
   </blockquote>
   """
+
+  def get_blocklist_ids(self):
+    """Returns the current user's block list as a list of Twitter user ids.
+
+    May make multiple API calls, using cursors, to fully fetch large blocklists.
+    https://dev.twitter.com/overview/api/cursoring
+
+    Subject to the same rate limiting as get_blocklist(), but each API call
+    returns ~4k ids, so realistically this can actually fetch entire large
+    blocklists at once.
+
+    Returns:
+      sequence of string Twitter user ids
+    """
+    ids = []
+    cursor = '-1'
+    while cursor and cursor != '0':
+      resp = self.urlopen(API_BLOCK_IDS % cursor)
+      logging.info(json.dumps(resp, indent=2))
+      ids.extend(resp.get('ids', []))
+      cursor = resp.get('next_cursor_str')
+
+    return ids
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=DOMAIN,
