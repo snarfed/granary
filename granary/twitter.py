@@ -160,7 +160,6 @@ class Twitter(source.Source):
     cursor = '-1'
     while cursor and cursor != '0':
       resp = self.urlopen(API_BLOCK_IDS % cursor)
-      logging.info(json.dumps(resp, indent=2))
       ids.extend(resp.get('ids', []))
       cursor = resp.get('next_cursor_str')
 
@@ -581,7 +580,6 @@ class Twitter(source.Source):
     cursor = '-1'
     while cursor and cursor != '0':
       resp = self.urlopen(API_BLOCKS % cursor)
-      logging.info(json.dumps(resp, indent=2))
       blocks.extend(self.user_to_actor(user) for user in resp.get('users', []))
       cursor = resp.get('next_cursor_str')
 
