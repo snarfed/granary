@@ -649,7 +649,7 @@ ATOM = """\
 </a>
 </p>
 <p>  <span class="p-location h-card">
-<data class="p-uid" value="tag:twitter.com:31cb9e7ed29dbe52" />
+<data class="p-uid" value="tag:twitter.com:31cb9e7ed29dbe52"></data>
 <a class="p-name u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a>
 
 </span>

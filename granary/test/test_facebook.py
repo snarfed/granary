@@ -945,7 +945,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 <span class="summary">my link caption</span>
 </p>
 <p>  <span class="p-location h-card">
-  <data class="p-uid" value="tag:facebook.com:113785468632283" />
+  <data class="p-uid" value="tag:facebook.com:113785468632283"></data>
   <a class="p-name u-url" href="https://www.facebook.com/113785468632283">Lake Merced</a>
 
 </span>

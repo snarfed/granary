@@ -608,9 +608,9 @@ def hcard_to_html(hcard, parent_props=None):
 
   return HCARD.substitute(
     types=' '.join(util.uniquify(parent_props + hcard.get('type', []))),
-    ids='\n'.join(['<data class="p-uid" value="%s" />' % uid
+    ids='\n'.join(['<data class="p-uid" value="%s"></data>' % uid
                    for uid in props.get('uid', []) if uid] +
-                  ['<data class="p-numeric-id" value="%s" />' % nid
+                  ['<data class="p-numeric-id" value="%s"></data>' % nid
                    for nid in props.get('numeric-id', []) if nid]),
     linked_name=maybe_linked_name(props),
     nicknames='\n'.join('<span class="p-nickname">%s</span>' % nick

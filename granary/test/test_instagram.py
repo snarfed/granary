@@ -403,7 +403,7 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 </a>
 </p>
 <p>  <span class="p-location h-card">
-  <data class="p-uid" value="tag:instagram.com:520640" />
+  <data class="p-uid" value="tag:instagram.com:520640"></data>
   <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a>
 
 </span>
