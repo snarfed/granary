@@ -301,6 +301,16 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')
     self.assert_equals(400, resp.status_int)
 
+  def test_url_input_not_json(self):
+    self.expect_urlopen('http://my/posts', '<html><body>not JSON</body></html>'
+                        ).MultipleTimes()
+    self.mox.ReplayAll()
+
+    for input in 'activitystreams', 'json-mf2', 'jsonfeed':
+      resp = app.application.get_response(
+        '/url?url=http://my/posts&input=%s' % input)
+      self.assert_equals(400, resp.status_int)
+
   def test_url_bad_url(self):
     self.expect_urlopen('http://astralandopal.com\\').AndRaise(httplib.InvalidURL(''))
     self.mox.ReplayAll()

@@ -112,11 +112,17 @@ class UrlHandler(activitystreams.Handler):
     url, body = self._urlopen(util.get_required_param(self, 'url'))
 
     # decode data
+    if input in ('activitystreams', 'json-mf2', 'jsonfeed'):
+      try:
+        body_json = json.loads(body)
+      except (TypeError, ValueError):
+        raise exc.HTTPBadRequest('Could not decode %s as JSON' % url)
+
     mf2 = None
     if input == 'html':
       mf2 = mf2py.parse(doc=body, url=url)
     elif input == 'json-mf2':
-      mf2 = json.loads(body)
+      mf2 = body_json
       mf2.setdefault('rels', {})  # mf2util expects rels
 
     actor = None
@@ -129,14 +135,14 @@ class UrlHandler(activitystreams.Handler):
       title = mf2util.interpret_feed(mf2, url).get('name')
 
     if input == 'activitystreams':
-      activities = json.loads(body)
+      activities = body_json
     elif input == 'html':
       activities = microformats2.html_to_activities(body, url, actor)
     elif input == 'json-mf2':
       activities = [microformats2.json_to_object(item, actor=actor)
                     for item in mf2.get('items', [])]
     elif input == 'jsonfeed':
-      activities, actor = jsonfeed.jsonfeed_to_activities(json.loads(body))
+      activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
 
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=url, actor=actor, title=title)
