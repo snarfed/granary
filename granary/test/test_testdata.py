@@ -56,15 +56,15 @@ os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 ACTOR = read_json('actor.as.json')
 del ACTOR['id']
 
-# wrap jsonfeed functions to add/remove actor and wrap/unwrap activity in list
-def activity_to_jsonfeed(activity):
-  return jsonfeed.activities_to_jsonfeed([activity], ACTOR)
+# wrap jsonfeed functions to add/remove actors and wrap/unwrap activities
+def activity_to_jsonfeed(obj):
+  return jsonfeed.activities_to_jsonfeed([{'object': obj}], ACTOR)
 
 def jsonfeed_to_activity(jf):
   activities, actor = jsonfeed.jsonfeed_to_activities(jf)
   assert actor == ACTOR, (actor, ACTOR)
   assert len(activities) == 1
-  return activities[0]
+  return activities[0]['object']
 
 
 # source extension, destination extension, conversion function, exclude prefix

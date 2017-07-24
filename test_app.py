@@ -17,14 +17,14 @@ import app
 ACTIVITIES = [{
   'verb': 'post',
   'object': {
-    'content': 'foo bar',
+    'content': ' foo bar ',
     'published': '2012-03-04T18:20:37+00:00',
     'url': 'https://perma/link',
   }
 }, {
   'verb': 'post',
   'object': {
-    'content': 'baz baj',
+    'content': ' baz baj ',
   },
 }]
 
@@ -32,8 +32,8 @@ MF2_JSON = {'items': [{
   'type': [u'h-entry'],
   'properties': {
     'content': [{
-      'value': 'foo bar',
-      'html': 'foo bar',
+      'value': ' foo bar ',
+      'html': ' foo bar ',
     }],
     'published': ['2012-03-04T18:20:37+00:00'],
     'url': ['https://perma/link'],
@@ -42,8 +42,8 @@ MF2_JSON = {'items': [{
   'type': [u'h-entry'],
   'properties': {
     'content': [{
-      'value': 'baz baj',
-      'html': 'baz baj',
+      'value': ' baz baj ',
+      'html': ' baz baj ',
     }],
   },
 }]}
@@ -54,10 +54,10 @@ JSONFEED = {
   'items': [{
     'url': 'https://perma/link',
     'id': 'https://perma/link',
-    'content_html': 'foo bar',
+    'content_html': ' foo bar ',
     'date_published': '2012-03-04T18:20:37+00:00',
   }, {
-    'content_html': 'baz baj',
+    'content_html': ' baz baj ',
   }],
 }
 
@@ -73,8 +73,7 @@ HTML = """\
 
   <a class="u-url" href="https://perma/link">https://perma/link</a>
   <div class="e-content p-name">
-
-  foo bar
+foo bar
 </div>
 
 </article>
@@ -83,8 +82,7 @@ HTML = """\
   <span class="p-uid"></span>
 
   <div class="e-content p-name">
-
-  baz baj
+baz baj
 </div>
 
 </article>
@@ -211,10 +209,10 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=json-mf2&output=html')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals(HTML % {
+    self.assert_multiline_equals(HTML % {
       'body_class': '',
       'extra': '',
-    }, resp.body)
+    }, resp.body, ignore_blanks=True)
 
   def test_url_html_to_atom(self):
     self.expect_urlopen('http://my/posts.html', HTML % {
@@ -276,6 +274,45 @@ class AppTest(testutil.HandlerTest):
  <name>Someone Else</name>
 </author>
 """, resp.body)
+
+  def test_url_html_to_json_mf2(self):
+    html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
+    self.expect_urlopen('http://my/posts.html', html)
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html&input=html&output=json-mf2')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/json', resp.headers['Content-Type'])
+
+    expected = copy.deepcopy(MF2_JSON)
+    for obj in expected['items']:
+      obj['properties']['name'] = [obj['properties']['content'][0]['value'].strip()]
+    self.assert_equals(expected, json.loads(resp.body))
+
+  def test_url_html_to_html(self):
+    html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
+    self.expect_urlopen('http://my/posts.html', html)
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html&input=html&output=html')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
+
+    self.assert_multiline_in("""\
+<time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
+<a class="p-name u-url" href="https://perma/link">foo bar</a>
+<div class="e-content">
+foo bar
+</div>
+""", resp.body, ignore_blanks=True)
+    self.assert_multiline_in("""\
+<span class="p-name">baz baj</span>
+<div class="e-content">
+baz baj
+</div>
+""", resp.body, ignore_blanks=True)
 
   def test_url_activitystreams_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.

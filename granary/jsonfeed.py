@@ -111,7 +111,7 @@ def jsonfeed_to_activities(jsonfeed):
     'displayName': author.get('name'),
   }
 
-  activities = [{
+  activities = [{'object': {
     'objectType': 'article' if item.get('title') else 'note',
     'title': item.get('title'),
     'summary': item.get('summary'),
@@ -130,6 +130,6 @@ def jsonfeed_to_activities(jsonfeed):
       'objectType': att.get('mime_type', '').split('/')[0],
       'title': att.get('title'),
     } for att in item.get('attachments', [])],
-  } for item in jsonfeed.get('items', [])]
+  }} for item in jsonfeed.get('items', [])]
 
   return (util.trim_nulls(activities), util.trim_nulls(actor))

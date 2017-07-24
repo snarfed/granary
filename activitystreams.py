@@ -223,7 +223,7 @@ class Handler(handlers.ModernHandler):
       self.response.out.write(microformats2.activities_to_html(activities))
     elif format == 'json-mf2':
       self.response.headers['Content-Type'] = 'application/json'
-      items = [microformats2.object_to_json(a) for a in activities]
+      items = [microformats2.activity_to_json(a) for a in activities]
       self.response.out.write(json.dumps({'items': items}, indent=2))
     elif format == 'jsonfeed':
       self.response.headers['Content-Type'] = 'application/json'

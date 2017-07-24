@@ -124,6 +124,19 @@ def get_text(val):
   return (val.get('value') if isinstance(val, dict) else val) or ''
 
 
+def activity_to_json(activity, **kwargs):
+  """Converts an ActivityStreams activity to microformats2 JSON.
+
+  Args:
+    activity: dict, a decoded JSON ActivityStreams activity
+    kwargs: passed to object_to_json
+
+  Returns:
+    dict, decoded microformats2 JSON
+  """
+  return object_to_json(activity.get('object') or activity, **kwargs)
+
+
 def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
                    default_object_type=None, synthesize_content=True):
   """Converts an ActivityStreams object to microformats2 JSON.
@@ -421,7 +434,7 @@ def activities_to_html(activities):
 %s
 </body>
 </html>
-  """ % '\n'.join(object_to_html(a) for a in activities)
+  """ % '\n'.join(object_to_html(a.get('object') or a) for a in activities)
 
 
 def object_to_html(obj, parent_props=None, synthesize_content=True):
