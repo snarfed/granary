@@ -196,7 +196,7 @@ class Flickr(source.Source):
       try:
         resp = self.upload(params, file)
       except requests.exceptions.ConnectionError as e:
-        if e.args[0].message.startswith('Request exceeds 10 MiB limit'):
+        if unicode(e.args[0].message).startswith('Request exceeds 10 MiB limit'):
           msg = 'Sorry, photos and videos must be under 10MB.'
           return source.creation_result(error_plain=msg, error_html=msg)
         else:
