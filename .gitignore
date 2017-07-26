@@ -6,6 +6,7 @@
 /*.egg-info
 /l
 /local/
+circleci_token
 datastore.dat
 oauth_client_secret
 plus-dogfood.json

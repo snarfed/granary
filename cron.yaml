@@ -1,0 +1,7 @@
+# timezone defaults to UTC
+# docs: https://developers.google.com/appengine/docs/python/config/cron
+
+cron:
+- description: nightly CircleCI build
+  url: /cron/build_circle
+  schedule: every 24 hours
