@@ -25,5 +25,6 @@ test:
   override:
     - python -m coverage run --source=. --omit=granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\* -m unittest discover -v
     - python -m coverage html -d $CIRCLE_ARTIFACTS
+    - python ./instagram_live_test.py --debug
   post:
     - if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi

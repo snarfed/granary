@@ -50,6 +50,11 @@ handlers:
   script: app.application
   secure: always
 
+- url: /cron/build_circle
+  script: cron.application
+  login: admin
+  secure: always
+
 - url: /.+
   script: activitystreams.application
   secure: always
