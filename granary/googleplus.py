@@ -21,6 +21,9 @@ from apiclient.http import BatchHttpRequest
 from oauth_dropins.webutil import util
 
 SEARCH_MAX_RESULTS = 20
+HTML_ACTIVITIES_RE = re.compile(
+  r"AF_initDataCallback\({key: *'ds:[^']*', *isError: *false *, *hash: *'[^']*', *data:function\(\){return *(\[\[[^[].+?)}}\);</script>",
+  re.DOTALL)
 
 
 class GooglePlus(source.Source):
@@ -314,13 +317,13 @@ class GooglePlus(source.Source):
       list of ActivityStreams activity dicts
     """
     # extract JSON data blob
-    script_start = "AF_initDataCallback({key: 'ds:5', isError:  false , hash: '10', data:function(){return"
-    start = html.find(script_start)
-    end = html.find('}});</script>', start)
-    if start == -1 or end == -1:
+    match = HTML_ACTIVITIES_RE.search(html)
+    if not match:
       return []
-    start += len(script_start)
-    html = html[start:end]
+
+    html = match.group(1)
+    if not html:
+      return []
 
     # insert placeholder nulls for omitted values, e.g. [,,,"x",,,] so that we
     # can decode it as JSON. run twice to handle overlaps.
