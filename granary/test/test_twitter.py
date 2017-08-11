@@ -655,6 +655,10 @@ ATOM = """\
 </span>
 </p>
 
+<blockquote>
+<img class="u-photo" src="http://p.twimg.com/picture1" alt="" />
+</blockquote>
+
   </div>
   </content>
 

@@ -433,3 +433,51 @@ going to Homebrew Website Club
       location, atom.activities_to_atom([activity], {}, reader=True))
     self.assertNotIn(
       location, atom.activities_to_atom([activity], {}, reader=False))
+
+  def test_image_outside_content(self):
+    """image field (from e.g. mf2 u-photo) should be rendered in content.
+
+    https://github.com/snarfed/granary/issues/113
+    """
+    activity = {
+      'object': {
+        'content': 'foo',
+        'image': [
+          {"url": "http://pics/1.jpg"},
+          {"url": "http://pics/2.jpg"},
+        ],
+      },
+    }
+
+    self.assert_multiline_in("""\
+<blockquote>
+<img class="u-photo" src="http://pics/1.jpg" alt="" />
+</blockquote>
+
+<blockquote>
+<img class="u-photo" src="http://pics/2.jpg" alt="" />
+</blockquote>
+""", atom.activities_to_atom([activity], {}))
+
+  def test_image_duplicated_in_content(self):
+    """If an image is already in the content, don't render a duplicate.
+
+    https://github.com/snarfed/granary/issues/113
+    """
+    activity = {
+      'object': {
+        'content': 'foo <img src="http://pics/1.jpg?foo"> bar',
+        'image': [
+          {"url": "http://pics/1.jpg?foo"},
+          {"url": "http://pics/2.jpg"},
+        ],
+      },
+    }
+
+    got = atom.activities_to_atom([activity], {})
+    self.assertNotIn('<img class="u-photo" src="http://pics/1.jpg?foo" alt="" />', got)
+    self.assert_multiline_in("""\
+<blockquote>
+<img class="u-photo" src="http://pics/2.jpg" alt="" />
+</blockquote>
+""", got)
