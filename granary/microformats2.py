@@ -628,7 +628,7 @@ def hcard_to_html(hcard, parent_props=None):
     linked_name=maybe_linked_name(props),
     nicknames='\n'.join('<span class="p-nickname">%s</span>' % nick
                         for nick in props.get('nickname', []) if nick),
-    photos='\n'.join(img(photo, 'u-photo', '')
+    photos='\n'.join(img(photo, 'u-photo')
                      for photo in props.get('photo', []) if photo),
   )
 
@@ -871,7 +871,7 @@ def maybe_linked_name(props):
   return html
 
 
-def img(src, cls, alt):
+def img(src, cls='', alt=''):
   """Returns an <img> string with the given src, class, and alt.
 
   Args:
@@ -883,7 +883,7 @@ def img(src, cls, alt):
     string
   """
   return '<img class="%s" src="%s" alt=%s />' % (
-      cls, src, xml.sax.saxutils.quoteattr(alt or ''))
+      cls or '', src, xml.sax.saxutils.quoteattr(alt or ''))
 
 
 def vid(src, poster, cls):
