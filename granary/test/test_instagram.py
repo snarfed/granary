@@ -409,10 +409,6 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 </span>
 </p>
 
-<blockquote>
-<img class="u-photo" src="http://attach/image/big" alt="" />
-</blockquote>
-
   </div>
   </content>
 

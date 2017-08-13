@@ -75,25 +75,13 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     # http://atomenabled.org/developers/syndication/#requiredEntryElements
     a['title'] = xml.sax.saxutils.escape(BeautifulSoup(a['title']).get_text(''))
 
-    # Normalize attachments.image to always be a list.
-    attachments = a.get('attachments') or obj.get('attachments') or []
-    for att in attachments:
-      att['image'] = util.get_list(att, 'image')
-
     children = []
-
-    # render image(s) that aren't already in the content
-    content = obj.get('content', '')
-    for image in util.get_list(obj, 'image'):
-      if not image:
-        continue
-      url = image.get('url')
-      if url and not re.search(r"""src *= *['"] *%s *['"]""" % re.escape(url),
-                               content):
-        children.append(microformats2.img(image['url'], 'u-photo'))
+    image_urls = set()
 
     # render attached notes/articles
+    attachments = a.get('attachments') or obj.get('attachments') or []
     for att in attachments:
+      image_urls |= set(img.get('url') for img in util.get_list(att, 'image'))
       if att.get('objectType') in ('note', 'article'):
         html = microformats2.render_content(att, include_location=reader)
         author = att.get('author')
@@ -102,6 +90,16 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
             microformats2.object_to_json(author).get('properties', []))
           html = '%s: %s' % (name.strip(), html)
         children.append(html)
+
+    # render image(s) that we haven't already seen
+    content = obj.get('content', '')
+    for image in util.get_list(obj, 'image'):
+      if not image:
+        continue
+      url = image.get('url')
+      if (url and url not in image_urls and
+          not re.search(r"""src *= *['"] *%s *['"]""" % re.escape(url), content)):
+        children.append(microformats2.img(image['url'], 'u-photo'))
 
     obj['rendered_children'] = [_encode_ampersands(html) for html in children]
 

@@ -481,3 +481,29 @@ going to Homebrew Website Club
 <img class="u-photo" src="http://pics/2.jpg" alt="" />
 </blockquote>
 """, got)
+
+  def test_image_duplicated_in_attachment(self):
+    """If an image is also in an attachment, don't render a duplicate.
+
+    https://github.com/snarfed/twitter-atom/issues/8
+    """
+    activity = {
+      'object': {
+        'content': 'foo bar',
+        'image': [
+          {'url': 'http://pics/1.jpg'},
+          {'url': 'http://pics/2.jpg'},
+        ],
+        'attachments': [{
+          'objectType': 'note',
+          'image': {'url': 'http://pics/2.jpg'},
+        }, {
+          'objectType': 'image',
+          'image': {'url': 'http://pics/1.jpg'},
+        }],
+      },
+    }
+
+    got = atom.activities_to_atom([activity], {})
+    self.assertNotIn('<img class="u-photo" src="http://pics/1.jpg" alt="" />', got)
+    self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got)
