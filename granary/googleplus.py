@@ -120,15 +120,15 @@ class GooglePlus(source.Source):
     try:
       if activity_id:
         call = self.auth_entity.api().activities().get(activityId=activity_id)
-        activities = [call.execute(http)]
+        activities = [call.execute(http=http)]
       elif search_query:
         call = self.auth_entity.api().activities().search(
           query=search_query, maxResults=min(count, SEARCH_MAX_RESULTS))
-        activities = call.execute(http).get('items', [])
+        activities = call.execute(http=http).get('items', [])
       else:
         call = self.auth_entity.api().activities().list(
           userId=user_id, collection='public', maxResults=count)
-        resp = call.execute(http)
+        resp = call.execute(http=http)
         activities = resp.get('items', [])
         etag = resp.get('etag')
     except HttpError, e:
@@ -180,7 +180,7 @@ class GooglePlus(source.Source):
                             'resharers', 'share')
 
     if batch._requests:
-      batch.execute(http)
+      batch.execute(http=http)
 
     for a in activities:
       self.postprocess_activity(a)
@@ -203,7 +203,7 @@ class GooglePlus(source.Source):
     """
     # https://developers.google.com/+/api/latest/comments
     call = self.auth_entity.api().comments().get(commentId=comment_id)
-    cmt = call.execute(self.auth_entity.http())
+    cmt = call.execute(http=self.auth_entity.http())
     return self.postprocess_comment(cmt)
 
   def postprocess_activity(self, activity):
