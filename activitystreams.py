@@ -187,12 +187,6 @@ class Handler(handlers.ModernHandler):
 
     activities = response['items']
 
-    self.response.headers.update({
-      'Access-Control-Allow-Origin': '*',
-      'Strict-Transport-Security':
-          'max-age=16070400; includeSubDomains; preload',  # 6 months
-    })
-
     if format in ('json', 'activitystreams'):
       # list of official MIME types:
       # https://www.iana.org/assignments/media-types/media-types.xhtml
