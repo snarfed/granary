@@ -23,7 +23,7 @@ machine:
 
 test:
   override:
-    - python -m coverage run --source=. --omit=granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\* -m unittest discover -v
+    - python -m coverage run --source=. --omit=granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
     - python -m coverage html -d $CIRCLE_ARTIFACTS
     - python ./instagram_live_test.py --debug
   post:
