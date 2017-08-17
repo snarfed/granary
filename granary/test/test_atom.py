@@ -464,15 +464,16 @@ going to Homebrew Website Club
 
     https://github.com/snarfed/granary/issues/113
     """
-    activity = {
-      'object': {
-        'content': 'foo <img src="http://pics/1.jpg?foo"> bar',
-        'image': [
-          {"url": "http://pics/1.jpg?foo"},
-          {"url": "http://pics/2.jpg"},
-        ],
-      },
-    }
+    for url in 'http://pics/1.jpg?foo', '/1.jpg?foo':
+      activity = {
+        'object': {
+          'content': 'foo <img src="%s"> bar' % url,
+          'image': [
+            {"url": "http://pics/1.jpg?foo"},
+            {"url": "http://pics/2.jpg"},
+          ],
+        },
+      }
 
     got = atom.activities_to_atom([activity], {})
     self.assertNotIn('<img class="u-photo" src="http://pics/1.jpg?foo" alt="" />', got)

@@ -97,8 +97,14 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
       if not image:
         continue
       url = image.get('url')
+      parsed = urlparse.urlparse(url)
+      scheme = parsed.scheme
+      netloc = parsed.netloc
+      rest = urlparse.urlunparse(('', '') + parsed[2:])
+      img_src_re = re.compile(r"""src *= *['"] *((%s)?//%s)?%s *['"]""" %
+                              (scheme, re.escape(netloc), re.escape(rest)))
       if (url and url not in image_urls and
-          not re.search(r"""src *= *['"] *%s *['"]""" % re.escape(url), content)):
+          not img_src_re.search(content)):
         children.append(microformats2.img(image['url'], 'u-photo'))
 
     obj['rendered_children'] = [_encode_ampersands(html) for html in children]
