@@ -592,6 +592,7 @@ class Twitter(source.Source):
       except urllib2.HTTPError as e:
         if e.code == HTTP_RATE_LIMIT_CODE:
           raise source.RateLimited(unicode(e), partial=values)
+        raise
       values.extend(response_fn(resp))
       cursor = resp.get('next_cursor_str')
 

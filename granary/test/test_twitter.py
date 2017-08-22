@@ -1141,6 +1141,13 @@ class TwitterTest(testutil.TestCase):
 
     self.assertEquals([ACTOR, ACTOR_2, ACTOR_3], e.exception.partial)
 
+  def test_get_blocklist_other_http_error(self):
+    self.expect_urlopen(API_BLOCKS % '-1', status=406)
+    self.mox.ReplayAll()
+    with self.assertRaises(urllib2.HTTPError) as e:
+      self.twitter.get_blocklist()
+    self.assertEquals(406, e.exception.code)
+
   def test_get_blocklist_ids(self):
     self.expect_urlopen(API_BLOCK_IDS % '-1', {
       'ids': ['1', '2'],
