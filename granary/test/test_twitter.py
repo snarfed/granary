@@ -1124,6 +1124,23 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([ACTOR, ACTOR_2, ACTOR_3],
                        self.twitter.get_blocklist())
 
+  def test_get_blocklist_rate_limited(self):
+    self.expect_urlopen(API_BLOCKS % '-1', {
+      'users': [USER],
+      'next_cursor_str': '3',
+    })
+    self.expect_urlopen(API_BLOCKS % '3', {
+      'users': [USER_2, USER_3],
+      'next_cursor_str': '6',
+    })
+    self.expect_urlopen(API_BLOCKS % '6', status=429)
+
+    self.mox.ReplayAll()
+    with self.assertRaises(source.RateLimited) as e:
+      self.twitter.get_blocklist()
+
+    self.assertEquals([ACTOR, ACTOR_2, ACTOR_3], e.exception.partial)
+
   def test_get_blocklist_ids(self):
     self.expect_urlopen(API_BLOCK_IDS % '-1', {
       'ids': ['1', '2'],
@@ -1135,6 +1152,23 @@ class TwitterTest(testutil.TestCase):
     })
     self.mox.ReplayAll()
     self.assert_equals(['1', '2', '4', '5'], self.twitter.get_blocklist_ids())
+
+  def test_get_blocklist_ids_rate_limited(self):
+    self.expect_urlopen(API_BLOCK_IDS % '-1', {
+      'ids': ['1', '2'],
+      'next_cursor_str': '3',
+    })
+    self.expect_urlopen(API_BLOCK_IDS % '3', {
+      'ids': ['4', '5'],
+      'next_cursor_str': '6',
+    })
+    self.expect_urlopen(API_BLOCK_IDS % '6', status=429)
+
+    self.mox.ReplayAll()
+    with self.assertRaises(source.RateLimited) as e:
+      self.twitter.get_blocklist_ids()
+
+    self.assertEquals(['1', '2', '4', '5'], e.exception.partial)
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))

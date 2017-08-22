@@ -55,6 +55,16 @@ sources = {}
 CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
 
+class RateLimited(BaseException):
+  """Raised when an API rate limits us, and we may have a partial result.
+
+  Attributes:
+    partial: the partial result, if any. Usually a list.
+  """
+  def __init__(self, *args, **kwargs):
+    self.partial = kwargs.pop('partial', None)
+    super(RateLimited, self).__init__(*args, **kwargs)
+
 
 def html_to_text(html):
   """Converts string html to string text with html2text."""

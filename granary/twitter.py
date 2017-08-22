@@ -56,6 +56,7 @@ API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&tweet_mod
 HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
+HTTP_RATE_LIMIT_CODE = 429
 
 # Don't hit the RETWEETS endpoint more than this many times per
 # get_activities() call.
@@ -142,28 +143,6 @@ class Twitter(source.Source):
   <a href="%(url)s">#</a></p>
   </blockquote>
   """
-
-  def get_blocklist_ids(self):
-    """Returns the current user's block list as a list of Twitter user ids.
-
-    May make multiple API calls, using cursors, to fully fetch large blocklists.
-    https://dev.twitter.com/overview/api/cursoring
-
-    Subject to the same rate limiting as get_blocklist(), but each API call
-    returns ~4k ids, so realistically this can actually fetch entire large
-    blocklists at once.
-
-    Returns:
-      sequence of string Twitter user ids
-    """
-    ids = []
-    cursor = '-1'
-    while cursor and cursor != '0':
-      resp = self.urlopen(API_BLOCK_IDS % cursor)
-      ids.extend(resp.get('ids', []))
-      cursor = resp.get('next_cursor_str')
-
-    return ids
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=DOMAIN,
@@ -570,20 +549,53 @@ class Twitter(source.Source):
 
     Block lists may have up to 10k users, but each API call only returns 100 at
     most, and the API endpoint is rate limited to 15 calls per user per 15m. So
-    if a user has >1500 users on their block list, I can't get the whole thing
+    if a user has >1500 users on their block list, we can't get the whole thing
     at once. :(
 
     Returns:
       sequence of actor objects
+
+    Raises:
+      :class:`source.RateLimited` if we hit the rate limit. The partial
+      attribute will have the list of user ids we fetched before hitting the
+      limit.
     """
-    blocks = []
+    return self._get_blocklist_fn(API_BLOCKS,
+        lambda resp: (self.user_to_actor(user) for user in resp.get('users', [])))
+
+  def get_blocklist_ids(self):
+    """Returns the current user's block list as a list of Twitter user ids.
+
+    May make multiple API calls, using cursors, to fully fetch large blocklists.
+    https://dev.twitter.com/overview/api/cursoring
+
+    Subject to the same rate limiting as get_blocklist(), but each API call
+    returns ~4k ids, so realistically this can actually fetch blocklists of up
+    to 75k users at once. Beware though, many Twitter users have even more!
+
+    Returns:
+      sequence of string Twitter user ids
+
+    Raises:
+      :class:`source.RateLimited` if we hit the rate limit. The partial
+      attribute will have the list of user ids we fetched before hitting the
+      limit.
+    """
+    return self._get_blocklist_fn(API_BLOCK_IDS, lambda resp: resp.get('ids', []))
+
+  def _get_blocklist_fn(self, api_endpoint, response_fn):
+    values = []
     cursor = '-1'
     while cursor and cursor != '0':
-      resp = self.urlopen(API_BLOCKS % cursor)
-      blocks.extend(self.user_to_actor(user) for user in resp.get('users', []))
+      try:
+        resp = self.urlopen(api_endpoint % cursor)
+      except urllib2.HTTPError as e:
+        if e.code == HTTP_RATE_LIMIT_CODE:
+          raise source.RateLimited(unicode(e), partial=values)
+      values.extend(response_fn(resp))
       cursor = resp.get('next_cursor_str')
 
-    return blocks
+    return values
 
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):
