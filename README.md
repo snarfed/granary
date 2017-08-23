@@ -323,6 +323,7 @@ TODO: release oauth-dropins 1.8 and bump dependency version here before releasin
     * Include author name when rendering attached articles and notes (e.g. quote tweets).
     * Only include AS `activity:object-type` and `activity:verb` elements when they have values.
     * Render AS image and mf2 u-photo if they're not already in content.
+    * Render `thr:in-reply-to` from `object.inReplyTo` as well as `activity.context.inReplyTo`.
 * REST API:
     * Fix bugs in html => json-mf2 and html => html conversions.
 * Upgrade brevity to 0.2.14 for a couple [bug](https://github.com/kylewm/brevity/issues/5) [fixes](https://github.com/kylewm/brevity/issues/6).

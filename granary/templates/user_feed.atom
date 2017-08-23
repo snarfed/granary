@@ -83,8 +83,8 @@
   {% endif %}
   <published>{{ obj.published }}</published>
   <updated>{{ obj.updated or obj.published }}</updated>
-  {% for obj in activity.context.inReplyTo %}
-    <thr:in-reply-to ref="{{ obj.id }}" href="{{ obj.url }}" type="text/html" />
+  {% for orig in obj.inReplyTo or activity.context.inReplyTo %}
+    <thr:in-reply-to ref="{{ orig.id }}" href="{{ orig.url }}" type="text/html" />
   {% endfor %}
   {% set location = obj.location %}
   {% if location.latitude and location.longitude %}

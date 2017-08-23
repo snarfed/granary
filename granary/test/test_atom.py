@@ -508,3 +508,32 @@ going to Homebrew Website Club
     got = atom.activities_to_atom([activity], {})
     self.assertNotIn('<img class="u-photo" src="http://pics/1.jpg" alt="" />', got)
     self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got)
+
+  def test_context_in_reply_to(self):
+    """context.inReplyTo should be translated to thr:in-reply-to."""
+    activity = {
+      'context': {'inReplyTo': [{
+        'id': 'the:orig',
+        'url': 'http://orig',
+      }]},
+      'object': {'id': 'my:reply'},
+    }
+
+    self.assert_multiline_in(
+      '<thr:in-reply-to ref="the:orig" href="http://orig" type="text/html" />',
+      atom.activities_to_atom([activity], {}))
+
+  def test_object_in_reply_to(self):
+    """inReplyTo should be translated to thr:in-reply-to."""
+    activity = {'object': {
+      'id': 'my:reply',
+      'inReplyTo': [{
+        'id': 'the:orig',
+        'url': 'http://orig',
+      }],
+    }}
+
+    self.assert_multiline_in(
+      '<thr:in-reply-to ref="the:orig" href="http://orig" type="text/html" />',
+      atom.activities_to_atom([activity], {}))
+
