@@ -6,6 +6,7 @@ import json
 import socket
 import xml.sax.saxutils
 
+from google.appengine.api import memcache
 import mox
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
@@ -374,6 +375,16 @@ baz baj
     second = app.application.get_response(url)
     self.assert_equals(200, first.status_int)
     self.assert_equals(first.body, second.body)
+
+  def test_skip_caching_big_responses(self):
+    self.mox.stubs.Set(memcache, 'MAX_VALUE_SIZE', 100)
+
+    self.expect_urlopen('http://my/posts.html', 'x' * 101)
+    self.mox.ReplayAll()
+
+    first = app.application.get_response('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(200, first.status_int)
+
 
   def test_hub(self):
     self.expect_urlopen('http://my/posts.html', HTML % {

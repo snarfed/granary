@@ -173,7 +173,10 @@ class UrlHandler(activitystreams.Handler):
 
       if cache:
         logging.info('Caching response in %r', cache_key)
-        memcache.set(cache_key, {'url': url, 'body': body}, URL_CACHE_TIME)
+        try:
+          memcache.set(cache_key, {'url': url, 'body': body}, URL_CACHE_TIME)
+        except ValueError:
+          logging.warning('Response is too big for memcache!')
 
     return url, body
 
