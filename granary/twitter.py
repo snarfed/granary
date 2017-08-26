@@ -1042,7 +1042,7 @@ class Twitter(source.Source):
           code, body = util.interpret_http_exception(e)
           if code is None or int(code) / 100 != 5:
             raise
-        logging.warning('Twitter API call failed! Retrying...')
+        logging.info('Twitter API call failed! Retrying...')
 
     # last try. if it deadlines, let the exception bubble up.
     return request()
