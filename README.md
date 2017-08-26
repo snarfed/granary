@@ -320,6 +320,7 @@ TODO: release oauth-dropins 1.8 and bump dependency version here before releasin
 * Google+:
     * Update HTML scraping to handle changed serialized JSON data format.
 * Atom:
+    * Add new `activity_to_atom()` function that renders a single top-level `<entry>` instead of `<feed>`.
     * Add new `reader` query param for toggling rendering decisions that are specific to feed readers. Right now, just affects location: it's rendered in the content when `reader=true` (the default), omitted when `reader=false`.
     * Include author name when rendering attached articles and notes (e.g. quote tweets).
     * Only include AS `activity:object-type` and `activity:verb` elements when they have values.

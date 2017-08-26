@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xml:lang="en-US"
+       xmlns="http://www.w3.org/2005/Atom"
+       xmlns:activity="http://activitystrea.ms/spec/1.0/"
+       xmlns:georss="http://www.georss.org/georss"
+       xmlns:ostatus="http://ostatus.org/schema/1.0"
+       xmlns:thr="http://purl.org/syndication/thread/1.0"
+       {% if xml_base %}xml:base="{{ xml_base }}"{% endif %}>
+{% include "_entry.atom" %}
+</entry>

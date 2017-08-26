@@ -1,0 +1,76 @@
+{% set obj = activity.object %}
+{% set actor = activity.actor or activity.object.author %}
+{% include "author.atom" %}
+
+  {% if obj.objectType %}
+    <activity:object-type>http://activitystrea.ms/schema/1.0/{{ obj.objectType }}</activity:object-type>
+  {% endif %}
+
+  {% set url = activity.url or obj.url %}
+  <id>{{ url }}</id>
+  <title>{{ activity.title|safe }}</title>
+
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
+{% if obj.actor %}
+  <div>
+  <p>{{ activity.annotation }}</p>
+  <img src="{{ obj.actor.image.url }}" />
+  <a href="{{ obj.actor.url }}">{{ obj.actor.displayName }}</a>
+  originally shared this post:
+  </div>
+{% endif %}
+
+{% for type, list in obj.to|groupby('objectType') %}
+  {% if type == 'person' %}
+    {% for to in list %}
+      {% if loop.first %}<p>In reply to{% endif %}
+      <a class="h-card p-name u-url" href="{{ to.url }}">{{ to.displayName }}</a>
+      {%- if loop.last %}:</p>{% else %}, {% endif -%}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+
+{{ obj.rendered_content|safe }}
+{% for child in obj.rendered_children %}
+<blockquote>
+{{ child|safe }}
+</blockquote>
+{% endfor %}
+  </div>
+  </content>
+
+  <link rel="alternate" type="text/html" href="{{ url }}" />
+  <link rel="ostatus:conversation" href="{{ url }}" />
+  {% for tag in obj.tags %}
+    {% if tag.url and tag.verb not in ('like', 'react', 'share') %}
+      <link rel="ostatus:attention" href="{{ tag.url }}" />
+      <link rel="mentioned" href="{{ tag.url }}" />
+      {% if tag.displayName and not tag.startIndex %}
+        <a href="{{ tag.url }}">{{ tag.displayName }}</a>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% if activity.verb %}
+    <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
+  {% endif %}
+  <published>{{ obj.published }}</published>
+  <updated>{{ obj.updated or obj.published }}</updated>
+  {% for orig in obj.inReplyTo or activity.context.inReplyTo %}
+    <thr:in-reply-to ref="{{ orig.id }}" href="{{ orig.url }}" type="text/html" />
+  {% endfor %}
+  {% set location = obj.location %}
+  {% if location.latitude and location.longitude %}
+    <georss:point>{{ location.latitude }} {{location.longitude }}</georss:point>
+  {% endif %}
+  {% if location.displayName %}
+    <georss:featureName>{{ location.displayName }}</georss:featureName>
+  {% endif %}
+
+  <link rel="self" type="application/atom+xml" href="{{ url }}" />
+
+  {% for att in obj.attachments %}
+    {% if att.objectType in ('audio', 'video') %}
+      <link rel="enclosure" href="{{ att.url }}" />
+    {% endif %}
+  {% endfor %}

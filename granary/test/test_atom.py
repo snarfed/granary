@@ -35,6 +35,57 @@ class AtomTest(testutil.HandlerTest):
           xml_base=base_url
         ))
 
+  def test_activity_to_atom(self):
+    self.assert_multiline_in("""\
+<entry xml:lang="en-US"
+       xmlns="http://www.w3.org/2005/Atom"
+       xmlns:activity="http://activitystrea.ms/spec/1.0/"
+       xmlns:georss="http://www.georss.org/georss"
+       xmlns:ostatus="http://ostatus.org/schema/1.0"
+       xmlns:thr="http://purl.org/syndication/thread/1.0"
+       >
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>http://snarfed.org</uri>
+ <name>Ryan B</name>
+</author>
+
+  <activity:object-type>http://activitystrea.ms/schema/1.0/photo</activity:object-type>
+  <id>https://www.instagram.com/p/ABC123/</id>
+  <title>this picture -&gt; is #abc @foo #xyz</title>
+  <content type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
+this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz
+<p>
+<a class="link" href="https://www.instagram.com/p/ABC123/">
+<img class="thumbnail" src="http://attach/image/big" alt="" />
+</a>
+</p>
+<p>  <span class="p-location h-card">
+  <data class="p-uid" value="tag:instagram.com:520640"></data>
+  <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a>
+</span>
+</p>
+  </div>
+  </content>
+
+  <link rel="alternate" type="text/html" href="https://www.instagram.com/p/ABC123/" />
+  <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
+    <link rel="ostatus:attention" href="http://snarfed.org" />
+    <link rel="mentioned" href="http://snarfed.org" />
+    <a href="http://snarfed.org">Ryan B</a>
+  <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
+  <link rel="mentioned" href="https://www.instagram.com/foo/" />
+  <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
+  <published>2012-09-22T05:25:42</published>
+  <updated>2012-09-22T05:25:42</updated>
+  <georss:point>37.3 -122.5</georss:point>
+  <georss:featureName>Le Truc</georss:featureName>
+  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
+</entry>
+""", atom.activity_to_atom(copy.deepcopy(test_instagram.ACTIVITY)),
+    ignore_blanks=True)
+
   def test_title(self):
     self.assert_multiline_in(
       '\n<title>my title</title>',
