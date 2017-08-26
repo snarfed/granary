@@ -35,7 +35,7 @@ USER = {  # Facebook
   'username': 'snarfed.org',
   'location': {'id': '123', 'name': 'San Francisco, California'},
   'updated_time': '2012-01-06T02:11:04+0000',
-  'bio': 'something about me http://in.description.com',
+  'about': 'something about me http://in.description.com',
   'website': 'https://snarfed.org/',
   }
 ACTOR = {  # ActivityStreams
@@ -51,6 +51,7 @@ ACTOR = {  # ActivityStreams
            ],
   'username': 'snarfed.org',
   'description': 'something about me http://in.description.com',
+  'summary': 'something about me http://in.description.com',
   'location': {'id': '123', 'displayName': 'San Francisco, California'},
   }
 PAGE = {  # Facebook
@@ -1856,7 +1857,7 @@ class FacebookTest(testutil.HandlerTest):
     actor = copy.deepcopy(ACTOR)
     del user['website']
     del actor['urls']
-    user['bio'] = actor['description'] = 'no links'
+    user['about'] = actor['description'] = actor['summary'] = 'no links'
     actor['url'] = user['link']
     self.assert_equals(actor, self.fb.user_to_actor(user))
 

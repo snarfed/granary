@@ -1337,7 +1337,7 @@ class Facebook(source.Source):
       'id': self.tag_uri(handle),
       'updated': util.maybe_iso8601_to_rfc3339(user.get('updated_time')),
       'username': username,
-      'description': user.get('bio') or user.get('description'),
+      'description': user.get('description') or user.get('about'),
       'summary': user.get('about'),
       }
 
@@ -1353,8 +1353,7 @@ class Facebook(source.Source):
 
     # extract web site links. extract_links uniquifies and preserves order
     urls = (sum((util.extract_links(user.get(field)) for field in
-                ('website', 'about', 'bio', 'description')),
-                []) or
+                ('website', 'about', 'description')), []) or
             util.extract_links(user.get('link')) or
             [self.user_url(handle)])
     if urls:
