@@ -308,6 +308,7 @@ TODO: release oauth-dropins 1.8 and bump dependency version here before releasin
 * Facebook:
     * Improve heuristic for determining privacy of wall posts from other users.
     * Support GIFs in comments (attachment types `animated_image_autoplay` and `animated_image_share`).
+    * Upgrade Graph API from [v2.6](https://developers.facebook.com/docs/apps/changelog#v2_6) to [v2.10](https://developers.facebook.com/docs/apps/changelog#v2_10).
 * Instagram:
     * Update scraping to handle new home page (ie news feed) JSON schema, which changed sometime around 2017-02-27. (Profile pages and individual photo/video permalinks still haven't changed yet.)
 * microformats2:
