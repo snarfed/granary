@@ -94,8 +94,8 @@ people they follow. Here's the JSON output:
 The request parameters are the same for both, all optional: ``USER_ID``
 is a source-specific id or ``@me`` for the authenticated user.
 ``GROUP_ID`` may be ``@all``, ``@friends`` (currently identical to
-``@all``), ``@self``, or ``@search``; ``APP_ID`` is currently ignored;
-best practice is to use ``@app`` as a placeholder.
+``@all``), ``@self``, ``@search``, or ``@blocks``; ``APP_ID`` is
+currently ignored; best practice is to use ``@app`` as a placeholder.
 
 Paging is supported via the ``startIndex`` and ``count`` parameters.
 They're self explanatory, and described in detail in the `OpenSearch
@@ -354,10 +354,12 @@ ActivityStreams, but that's also dead.
 
 There are a number of products that download your social network data,
 normalize it, and let you query and visualize it.
-`SocialSafe <http://socialsafe.net/>`__ and
-`ThinkUp <http://thinkup.com/>`__ are two of the most mature. There's
-also the lifelogging/lifestream aggregator vein of projects that pull
-data from multiple source sites.
+`SocialSafe <http://socialsafe.net/>`__ is one, although the SSL
+certificate is currently out of date.
+`ThinkUp <http://web.archive.org/web/20161108212106/http://www.thinkup.com/>`__
+was an open source product, but shuttered on 18 July 2016. There's also
+the lifelogging/lifestream aggregator vein of projects that pull data
+from multiple source sites.
 `Storytlr <https://github.com/storytlr/storytlr>`__ is a good example.
 It doesn't include Facebook, Google+, or Instagram, but does include a
 number of smaller source sites. There are lots of others, e.g. the
@@ -376,33 +378,31 @@ Facebook and Twitter's raw HTML.
 Changelog
 ---------
 
-1.8 - unreleased
+1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
-
-WARNING: this release upgrades to google-api-python-client 1.6.2, which
-has a bug in our usage of the Google+ API, google-api-python-client#350,
-that's fixed by unreleased (but merged) PR google-api-python-client#376.
-Wait until that fix is released, and then bump our
-google-api-python-client version here, before releasing 1.8!
-
-In the meantime, I've patched `this
-http.py <https://raw.githubusercontent.com/mgilson/google-api-python-client/2b98e6149cc108574aef26b0a22aad15ba48f0e7/googleapiclient/http.py>`__
-from google-api-python-client@2b98e6149cc108574aef26b0a22aad15ba48f0e7
-into granary (and Bridgy).
 
 -  Add `JSON Feed <https://jsonfeed.org/>`__ support to both library and
    REST API.
 -  Twitter:
 
+   -  Add ``get_blocklist()``.
    -  Bug fix for creating replies, favorites, or retweets of video
       URLs, e.g. https://twitter.com/name/status/123/video/1 .
    -  Bug fix for parsing favorites HTML to handle a small change on
       Twitter's side.
+   -  ``post_id()`` now validates ids more strictly before returning
+      them.
 
 -  Facebook:
 
    -  Improve heuristic for determining privacy of wall posts from other
       users.
+   -  Support GIFs in comments (attachment types
+      ``animated_image_autoplay`` and ``animated_image_share``).
+   -  Upgrade Graph API from
+      `v2.6 <https://developers.facebook.com/docs/apps/changelog#v2_6>`__
+      to
+      `v2.10 <https://developers.facebook.com/docs/apps/changelog#v2_10>`__.
 
 -  Instagram:
 
@@ -414,13 +414,12 @@ into granary (and Bridgy).
 
    -  Add `u-featured <https://indieweb.org/featured>`__ to
       ActivityStreams ``image``.
-   -  Minor whitespace change (added
-
-      .. raw:: html
-
-         <p>
-
-      ) when rendering locations as HTML.
+   -  Improve ``h-event`` support.
+   -  Minor whitespace change (added ``<p>``) when rendering locations as HTML.
+   -  ``post_id()`` now validates ids more strictly before returning
+      them.
+   -  Fix bugs in converting latitude and longitude between
+      ActivityStreams and mf2.
 
 -  Google+:
 
@@ -429,12 +428,23 @@ into granary (and Bridgy).
 
 -  Atom:
 
+   -  Add new ``activity_to_atom()`` function that renders a single
+      top-level ``<entry>`` instead of ``<feed>``.
    -  Add new ``reader`` query param for toggling rendering decisions
       that are specific to feed readers. Right now, just affects
       location: it's rendered in the content when ``reader=true`` (the
       default), omitted when ``reader=false``.
    -  Include author name when rendering attached articles and notes
       (e.g. quote tweets).
+   -  Only include AS ``activity:object-type`` and ``activity:verb``
+      elements when they have values.
+   -  Render AS image and mf2 u-photo if they're not already in content.
+   -  Render ``thr:in-reply-to`` from ``object.inReplyTo`` as well as
+      ``activity.context.inReplyTo``.
+
+-  REST API:
+
+   -  Fix bugs in html => json-mf2 and html => html conversions.
 
 -  Upgrade brevity to 0.2.14 for a couple
    `bug <https://github.com/kylewm/brevity/issues/5>`__
