@@ -291,13 +291,7 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
-### 1.8 - unreleased
-
-WARNING: this release upgrades to google-api-python-client 1.6.2, which has a bug in our usage of the Google+ API, google-api-python-client#350, that's fixed by unreleased (but merged) PR google-api-python-client#376. Wait until that fix is released, and then bump our google-api-python-client version here, before releasing 1.8!
-
-In the meantime, I've patched [this http.py](https://raw.githubusercontent.com/mgilson/google-api-python-client/2b98e6149cc108574aef26b0a22aad15ba48f0e7/googleapiclient/http.py) from google-api-python-client@2b98e6149cc108574aef26b0a22aad15ba48f0e7 into granary (and Bridgy).
-
-TODO: release oauth-dropins 1.8 and bump dependency version here before releasing granary 1.8.
+### 1.8 - 2017-08-29
 
 * Add [JSON Feed](https://jsonfeed.org/) support to both library and REST API.
 * Twitter:
