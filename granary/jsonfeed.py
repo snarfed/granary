@@ -102,7 +102,13 @@ def jsonfeed_to_activities(jsonfeed):
   Returns:
     (activities, actor) tuple, where activities and actor are both
     ActivityStreams object dicts
+
+  Raises:
+    ValueError, if jsonfeed isn't a valid JSON Feed dict
   """
+  if not hasattr(jsonfeed, 'get'):
+    raise ValueError('Expected dict (or compatible), got %s' % jsonfeed.__class__)
+
   author = jsonfeed.get('author', {})
   actor = {
     'objectType': 'person',

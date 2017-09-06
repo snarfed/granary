@@ -83,3 +83,23 @@ class JsonFeedTest(testutil.HandlerTest):
   def test_jsonfeed_to_activities_empty(self):
       self.assert_equals(([], {'objectType': 'person'}),
                          jsonfeed_to_activities({}))
+
+  def test_not_jsonfeed(self):
+    """Based on this JSON, which isn't JSON Feed:
+
+    http://blogs.adobe.com/adobemarketingcloudjapan/feed-json-adobemarketingcloudjapan/
+
+    https://console.cloud.google.com/errors/2337929195804363905
+    """
+    with self.assertRaises(ValueError):
+      jsonfeed_to_activities([{
+        'id': 7,
+        'date': 'July 11, 2017',
+        'title': 'Adobe Digital Insights: 音声認識機能は次の破壊的技術革新となるか',
+        'catname': 'Adobe Digital Insights',
+        'tags': 'ADI',
+        'description': '音声認識機能は新しいコンセプトではありませんが、人工知能 (AI) とマシンラーニングの進歩により、近年採用される機会が増えています。アドビが公開したAdobe Digital Insights (ADI) の最新のレポートによると、音声認識デバイスの市場競争が激化していることが明らかになりました。',
+        'subdescription': '音声認識機能は新しいコンセプトではありませんが、人工知能 (AI) とマシンラーニングの進歩により、近年採用される機会が増えています。アドビが公開したAdobe Digital Insights (ADI) の最新のレポートによると、音声認識デバイスの市場競争が激化していることが明らかになりました。',
+        'document': 'http://blogs.adobe.com/adobemarketingcloudjapan/2017/07/11/adi-voice-report/',
+        'iconUrl': 'http://blogs.adobe.com/adobemarketingcloudjapan/files/2017/07/1046x616_Voice-Assistants-Are-Poised-To-Be-The-Next-Tech-Disruptor-Static-1024x603.jpg'
+      }])

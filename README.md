@@ -291,6 +291,11 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
+### 1.9 - unreleased
+
+* JSON Feed:
+  * Raise ValueError on bad (non-dict) input.
+
 ### 1.8 - 2017-08-29
 
 * Add [JSON Feed](https://jsonfeed.org/) support to both library and REST API.
