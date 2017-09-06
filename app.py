@@ -142,7 +142,11 @@ class UrlHandler(activitystreams.Handler):
       activities = [microformats2.json_to_object(item, actor=actor)
                     for item in mf2.get('items', [])]
     elif input == 'jsonfeed':
-      activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
+      try:
+        activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
+      except ValueError as e:
+        logging.exception('jsonfeed_to_activities failed')
+        raise exc.HTTPBadRequest('Could not parse %s as JSON Feed' % url)
 
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=url, actor=actor, title=title)

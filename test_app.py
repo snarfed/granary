@@ -203,6 +203,15 @@ class AppTest(testutil.HandlerTest):
     expected['items'][0]['properties']['uid'] = [JSONFEED['items'][0]['id']]
     self.assert_equals(expected, json.loads(resp.body))
 
+  def test_url_bad_jsonfeed(self):
+    self.expect_urlopen('http://my/feed.json', json.dumps(['not', 'jsonfeed']))
+    self.mox.ReplayAll()
+
+    path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
+    resp = app.application.get_response(path)
+    self.assert_equals(400, resp.status_int)
+    self.assertIn('Could not parse http://my/feed.json as JSON Feed', resp.body)
+
   def test_url_json_mf2_to_html(self):
     self.expect_urlopen('http://my/posts.json', json.dumps(MF2_JSON))
     self.mox.ReplayAll()
