@@ -291,7 +291,7 @@ LIKE_OBJS = [{  # ActivityStreams
       'id': tag_uri('9'),
       'displayName': 'Bob',
       'username': 'bobbb',
-      'url': 'http://bob.com',
+      'url': 'http://bob.com/',
       'image': {'url': 'http://bob/picture'},
       },
     },

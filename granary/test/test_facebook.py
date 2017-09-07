@@ -45,8 +45,8 @@ ACTOR = {  # ActivityStreams
   'id': tag_uri('snarfed.org'),
   'numeric_id': '212038',
   'updated': '2012-01-06T02:11:04+00:00',
-  'url': 'https://snarfed.org',
-  'urls': [{'value': 'https://snarfed.org'},
+  'url': 'https://snarfed.org/',
+  'urls': [{'value': 'https://snarfed.org/'},
            {'value': 'http://in.description.com'},
            ],
   'username': 'snarfed.org',
@@ -913,11 +913,11 @@ ATOM = """\
 <updated>2012-03-04T18:20:37+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>https://snarfed.org</uri>
+ <uri>https://snarfed.org/</uri>
  <name>Ryan Barrett</name>
 </author>
 
-<link rel="alternate" href="https://snarfed.org" type="text/html" />
+<link rel="alternate" href="https://snarfed.org/" type="text/html" />
 <link rel="avatar" href="https://graph.facebook.com/v2.10/212038/picture?type=large" />
 <link rel="self" href="%(request_url)s" type="application/atom+xml" />
 
