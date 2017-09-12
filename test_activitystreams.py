@@ -175,7 +175,7 @@ class HandlerTest(testutil.HandlerTest):
           'host_url': 'http://fa.ke/',
           'base_url': 'http://fa.ke/',
         },
-        resp.body)
+        resp.body, ignore_blanks=True)
 
   def test_html_format(self):
     resp = self.get_response('/fake?format=html')

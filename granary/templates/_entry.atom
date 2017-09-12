@@ -53,6 +53,8 @@
   {% endfor %}
   {% if activity.verb %}
     <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>
+  {% else %}
+    <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   {% endif %}
   <published>{{ obj.published }}</published>
   <updated>{{ obj.updated or obj.published }}</updated>

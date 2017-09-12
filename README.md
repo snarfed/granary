@@ -293,6 +293,8 @@ Changelog
 
 ### 1.9 - unreleased
 
+* Atom:
+  * Add email field to author, if provided.
 * JSON Feed:
   * Raise ValueError on bad (non-dict) input.
 

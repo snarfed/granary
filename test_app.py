@@ -143,6 +143,7 @@ foo bar
 
   <link rel="alternate" type="text/html" href="https://perma/link" />
   <link rel="ostatus:conversation" href="https://perma/link" />
+  <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
 
   <published>2012-03-04T18:20:37+00:00</published>
   <updated>2012-03-04T18:20:37+00:00</updated>
@@ -240,7 +241,7 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_int)
-    self.assert_multiline_in(ATOM_CONTENT, resp.body)
+    self.assert_multiline_in(ATOM_CONTENT, resp.body, ignore_blanks=True)
 
   def test_url_html_to_atom_rel_author(self):
     """
@@ -283,7 +284,7 @@ class AppTest(testutil.HandlerTest):
  <uri>http://my/author</uri>
  <name>Someone Else</name>
 </author>
-""", resp.body)
+""", resp.body, ignore_blanks=True)
 
   def test_url_html_to_json_mf2(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}

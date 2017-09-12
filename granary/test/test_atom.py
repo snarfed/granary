@@ -33,7 +33,8 @@ class AtomTest(testutil.HandlerTest):
           request_url=request_url,
           host_url=host_url,
           xml_base=base_url
-        ))
+        ),
+        ignore_blanks=True)
 
   def test_activity_to_atom(self):
     self.assert_multiline_in("""\
@@ -374,6 +375,7 @@ my content
 
   <link rel="alternate" type="text/html" href="http://my/post" />
   <link rel="ostatus:conversation" href="http://my/post" />
+  <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
 
   <published></published>
   <updated></updated>
@@ -397,7 +399,8 @@ my content
 <div class="e-content">my content</div>
 </article>
 </div>
-""", 'https://my.site/feed'))
+""", 'https://my.site/feed'),
+    ignore_blanks=True)
 
   def test_html_to_atom_fetch_author(self):
     """Based on http://tantek.com/ .
@@ -441,13 +444,12 @@ going to Homebrew Website Club
 <link rel="self" href="https://my.site/" type="application/atom+xml" />
 
 <entry>
-
 <author>
 <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
 <uri>https://my.site/author</uri>
 <name>Tantek Çelik</name>
 </author>
-""".encode('utf-8'), got.encode('utf-8'))
+""".encode('utf-8'), got.encode('utf-8'), ignore_blanks=True)
 
   def test_media_enclosures(self):
     self.assert_multiline_in("""\
@@ -588,3 +590,21 @@ going to Homebrew Website Club
       '<thr:in-reply-to ref="the:orig" href="http://orig" type="text/html" />',
       atom.activities_to_atom([activity], {}))
 
+  def test_author_email(self):
+    """inReplyTo should be translated to thr:in-reply-to."""
+    activity = {'object': {
+      'content': 'foo',
+      'author': {
+        'displayName': 'Mrs. Foo',
+        'email': 'mrs@foo.com',
+      },
+    }}
+
+    self.assert_multiline_in("""\
+<author>
+<activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+<uri></uri>
+<name>Mrs. Foo</name>
+<email>mrs@foo.com</email>
+</author>
+""", atom.activities_to_atom([activity], {}), ignore_blanks=True)
