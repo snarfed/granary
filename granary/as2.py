@@ -40,6 +40,9 @@ def from_as1(obj, type=None, context=CONTEXT):
 
   Returns: dict, AS2 activity or object
   """
+  if not obj:
+    return {}
+
   obj = copy.deepcopy(obj)
 
   verb = obj.pop('verb', None)
@@ -73,15 +76,23 @@ def to_as1(obj):
 
   Returns: dict, AS1 activity or object
   """
+  if not obj:
+    return {}
+
   obj = copy.deepcopy(obj)
 
   obj.pop('@context', None)
   type = obj.pop('@type', None)
 
+  def url_or_as1(val):
+    return {'url': val} if isinstance(val, basestring) else to_as1(val)
+
   obj.update({
-    'id': obj.pop('id', None),
+    'id': obj.pop('@id', None),
     'objectType': TYPE_TO_OBJECT_TYPE.get(type),
     'verb': TYPE_TO_VERB.get(type),
     'image': [to_as1(img) for img in obj.get('image', [])],
+    'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
+    'location': url_or_as1(obj.get('location')),
   })
   return util.trim_nulls(obj)

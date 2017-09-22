@@ -10,4 +10,12 @@ from granary import as2
 
 
 class ActivityStreams2Test(testutil.HandlerTest):
-  pass
+
+  def test_from_as1_blank(self):
+    self.assertEqual({}, as2.from_as1(None))
+    self.assertEqual({}, as2.from_as1({}))
+
+  def test_to_as1_blank(self):
+    self.assertEqual({}, as2.to_as1(None))
+    self.assertEqual({}, as2.to_as1({}))
+
