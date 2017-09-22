@@ -9,7 +9,7 @@ import os
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
-from granary import jsonfeed, microformats2
+from granary import as2, jsonfeed, microformats2
 
 
 def filepairs(ext1, ext2s):
@@ -77,6 +77,8 @@ mappings = (
    ('note_with_composite_photo',)),
   ('as.json', ['feed.json'], activity_to_jsonfeed, ()),
   ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, ()),
+  ('as.json', ['as2.json'], as2.from_as1, ()),
+  ('as2.json', ['as.json'], as2.to_as1, ()),
 )
 
 test_funcs = {}

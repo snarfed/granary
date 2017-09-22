@@ -2,8 +2,6 @@
 
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
-
-from collections import deque
 import copy
 import itertools
 import logging
