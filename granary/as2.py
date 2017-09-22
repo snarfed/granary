@@ -40,30 +40,29 @@ def from_as1(obj, type=None, context=CONTEXT):
 
   Returns: dict, AS2 activity or object
   """
-  as1 = copy.deepcopy(obj)
-  verb = as1.pop('verb', None)
-  obj_type = as1.pop('objectType', None)
-  id = as1.pop('id', None)
+  obj = copy.deepcopy(obj)
 
+  verb = obj.pop('verb', None)
+  obj_type = obj.pop('objectType', None)
   type = (OBJECT_TYPE_TO_TYPE.get(verb or obj_type) or
           VERB_TO_TYPE.get(verb or obj_type) or
           type)
 
-  as2 = copy.deepcopy(as1)
   if context:
-    as2['@context'] = CONTEXT
-  as2.update({
+    obj['@context'] = CONTEXT
+
+  obj.update({
     '@type': type,
-    '@id': id,
-    'image': [from_as1(img, type='Image', context=False) for img in as1.get('image', [])],
-    'inReplyTo': util.trim_nulls([orig.get('url') for orig in as1.get('inReplyTo', [])]),
+    '@id': obj.pop('id', None),
+    'image': [from_as1(img, type='Image', context=False) for img in obj.get('image', [])],
+    'inReplyTo': util.trim_nulls([orig.get('url') for orig in obj.get('inReplyTo', [])]),
   })
 
-  loc = as1.get('location')
+  loc = obj.get('location')
   if loc:
-    as2['location'] = from_as1(loc, type='Place', context=False)
+    obj['location'] = from_as1(loc, type='Place', context=False)
 
-  return util.trim_nulls(as2)
+  return util.trim_nulls(obj)
 
 
 def to_as1(obj):
@@ -74,18 +73,15 @@ def to_as1(obj):
 
   Returns: dict, AS1 activity or object
   """
-  as2 = copy.deepcopy(obj)
-  as2.pop('@context', None)
-  as2.pop('type', None)
-  type = as2.pop('@type', None)
-  id = as2.pop('id', None)
+  obj = copy.deepcopy(obj)
 
-  as1 = copy.deepcopy(as2)
-  as1.update({
-    'id': id,
+  obj.pop('@context', None)
+  type = obj.pop('@type', None)
+
+  obj.update({
+    'id': obj.pop('id', None),
     'objectType': TYPE_TO_OBJECT_TYPE.get(type),
     'verb': TYPE_TO_VERB.get(type),
     'image': [to_as1(img) for img in obj.get('image', [])],
   })
-
-  return util.trim_nulls(as1)
+  return util.trim_nulls(obj)
