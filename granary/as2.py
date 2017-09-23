@@ -6,6 +6,7 @@ AS1: http://activitystrea.ms/specs/json/1.0/
      http://activitystrea.ms/specs/json/schema/activity-schema.html
 """
 import copy
+import logging
 
 from oauth_dropins.webutil import util
 
@@ -20,9 +21,10 @@ def _invert(d):
 
 OBJECT_TYPE_TO_TYPE = {
   'comment': 'Note',
+  'event': 'Event',
+  'note': 'Note',
   'person': 'Person',
   'place': 'Place',
-  'event': 'Event',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 
@@ -55,11 +57,17 @@ def from_as1(obj, type=None, context=CONTEXT):
   if context:
     obj['@context'] = CONTEXT
 
+  def all_from_as1(field, type=None):
+    return [from_as1(elem, type=type, context=False)
+            for elem in util.pop_list(obj, field)]
+
   obj.update({
     '@type': type,
     '@id': obj.pop('id', None),
-    'image': [from_as1(img, type='Image', context=False) for img in obj.get('image', [])],
+    'attributedTo': all_from_as1('author', type='Person'),
+    'image': all_from_as1('image', type='Image'),
     'inReplyTo': util.trim_nulls([orig.get('url') for orig in obj.get('inReplyTo', [])]),
+    'tag': all_from_as1('tags')
   })
 
   loc = obj.get('location')
@@ -88,6 +96,9 @@ def to_as1(obj):
   def url_or_as1(val):
     return {'url': val} if isinstance(val, basestring) else to_as1(val)
 
+  def all_to_as1(field):
+    return [to_as1(elem) for elem in util.pop_list(obj, field)]
+
   obj.update({
     'id': obj.pop('@id', None),
     'objectType': TYPE_TO_OBJECT_TYPE.get(type),
@@ -95,5 +106,17 @@ def to_as1(obj):
     'image': [to_as1(img) for img in obj.get('image', [])],
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
+    'tags': all_to_as1('tag'),
   })
+
+  if obj['inReplyTo'] and obj['objectType'] in ('note', 'article'):
+    obj['objectType'] = 'comment'
+
+  attrib = obj.pop('attributedTo', None)
+  if attrib:
+    if len(attrib) > 1:
+      logging.warning('ActivityStreams 1 only supports single author; '
+                      'dropping extra attributedTo values: %s' % attrib[1:])
+    obj['author'] = to_as1(attrib[0])
+
   return util.trim_nulls(obj)
