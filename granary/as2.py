@@ -22,6 +22,7 @@ OBJECT_TYPE_TO_TYPE = {
   'comment': 'Note',
   'person': 'Person',
   'place': 'Place',
+  'event': 'Event',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 
