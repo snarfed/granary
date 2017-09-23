@@ -30,6 +30,7 @@ OBJECT_TYPE_TO_TYPE = {
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 
 VERB_TO_TYPE = {
+  'like': 'Like',
 }
 TYPE_TO_VERB = _invert(VERB_TO_TYPE)
 
@@ -59,12 +60,13 @@ def from_as1(obj, type=None, context=CONTEXT):
     obj['@context'] = CONTEXT
 
   def all_from_as1(field, type=None):
-    return [from_as1(elem, type=type, context=False)
+    return [from_as1(elem, type=type, context=None)
             for elem in util.pop_list(obj, field)]
 
   obj.update({
     '@type': type,
     '@id': obj.pop('id', None),
+    'actor': from_as1(obj.get('actor'), context=None),
     'attributedTo': all_from_as1('author', type='Person'),
     'image': all_from_as1('image', type='Image'),
     'inReplyTo': util.trim_nulls([orig.get('url') for orig in obj.get('inReplyTo', [])]),
@@ -73,7 +75,7 @@ def from_as1(obj, type=None, context=CONTEXT):
 
   loc = obj.get('location')
   if loc:
-    obj['location'] = from_as1(loc, type='Place', context=False)
+    obj['location'] = from_as1(loc, type='Place', context=None)
 
   return util.trim_nulls(obj)
 
@@ -94,6 +96,11 @@ def to_as1(obj):
   obj.pop('@context', None)
   type = obj.pop('@type', None)
 
+  obj_type = TYPE_TO_OBJECT_TYPE.get(type)
+  verb = TYPE_TO_VERB.get(type)
+  if verb and not obj_type:
+    obj_type = 'activity'
+
   def url_or_as1(val):
     return {'url': val} if isinstance(val, basestring) else to_as1(val)
 
@@ -102,8 +109,9 @@ def to_as1(obj):
 
   obj.update({
     'id': obj.pop('@id', None),
-    'objectType': TYPE_TO_OBJECT_TYPE.get(type),
-    'verb': TYPE_TO_VERB.get(type),
+    'objectType': obj_type,
+    'verb': verb,
+    'actor': to_as1(obj.get('actor')),
     'image': [to_as1(img) for img in obj.get('image', [])],
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
