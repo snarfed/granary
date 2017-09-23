@@ -21,16 +21,26 @@ def _invert(d):
 
 OBJECT_TYPE_TO_TYPE = {
   'article': 'Article',
+  'audio': 'Audio',
+  'collection': 'Collection',
   'comment': 'Note',
   'event': 'Event',
   'note': 'Note',
   'person': 'Person',
   'place': 'Place',
+  'video': 'Video',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 
 VERB_TO_TYPE = {
+  'favorite': 'Favorite',
+  'invite': 'Invite',
   'like': 'Like',
+  'rsvp-maybe': 'TentativeAccept',
+  'rsvp-no': 'Reject',
+  'rsvp-yes': 'Accept',
+  'tag': 'Add',
+  'update': 'Update',
 }
 TYPE_TO_VERB = _invert(VERB_TO_TYPE)
 
@@ -67,6 +77,7 @@ def from_as1(obj, type=None, context=CONTEXT):
     '@type': type,
     '@id': obj.pop('id', None),
     'actor': from_as1(obj.get('actor'), context=None),
+    'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
     'image': all_from_as1('image', type='Image'),
     'inReplyTo': util.trim_nulls([orig.get('url') for orig in obj.get('inReplyTo', [])]),
@@ -112,6 +123,7 @@ def to_as1(obj):
     'objectType': obj_type,
     'verb': verb,
     'actor': to_as1(obj.get('actor')),
+    'attachments': all_to_as1('attachment'),
     'image': [to_as1(img) for img in obj.get('image', [])],
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),

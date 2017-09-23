@@ -1,0 +1,13 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "@type": "Article",
+  "title": "i'm ready to speak",
+  "content": "something",
+  "attachment": [{
+    "@type": "Audio",
+    "url": "http://a/podcast.mp3"
+  }, {
+    "@type": "Video",
+    "url": "http://a/vidjo.mov"
+  }]
+}
