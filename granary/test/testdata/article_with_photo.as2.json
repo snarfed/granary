@@ -1,0 +1,10 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "@type": "Article",
+  "displayName": "article abc",
+  "content": "foo bar",
+  "image": [{
+    "@type": "Image",
+    "url": "http://pic/ture.jpg"
+  }]
+}

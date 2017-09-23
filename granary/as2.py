@@ -20,6 +20,7 @@ def _invert(d):
   return {v: k for k, v in d.items()}
 
 OBJECT_TYPE_TO_TYPE = {
+  'article': 'Article',
   'comment': 'Note',
   'event': 'Event',
   'note': 'Note',
