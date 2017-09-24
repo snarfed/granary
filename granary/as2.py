@@ -4,6 +4,10 @@ AS2: http://www.w3.org/TR/activitystreams-core/
 
 AS1: http://activitystrea.ms/specs/json/1.0/
      http://activitystrea.ms/specs/json/schema/activity-schema.html
+
+TODO:
+* RSVPs. what are they in AS2? accept/reject an invite? what if there's no invite?
+* reposts aka shares
 """
 import copy
 import logging
