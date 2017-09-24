@@ -1,0 +1,15 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "@type": "Invite",
+  "url": "http://example.com/this/invite",
+  "actor": {
+    "@type": "Person",
+    "displayName": "Mr. Host",
+    "url": "http://example.com/host"
+  },
+  "object": {
+    "@type": "Person",
+    "displayName": "Alice",
+    "url": "http://example.com/alice"
+  }
+}

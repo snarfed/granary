@@ -82,6 +82,7 @@ def from_as1(obj, type=None, context=CONTEXT):
     'attributedTo': all_from_as1('author', type='Person'),
     'image': all_from_as1('image', type='Image'),
     'inReplyTo': util.trim_nulls([orig.get('url') for orig in obj.get('inReplyTo', [])]),
+    'object': from_as1(obj.get('object'), context=None),
     'tag': all_from_as1('tags')
   })
 
@@ -130,6 +131,7 @@ def to_as1(obj, use_type=True):
     'image': [to_as1(img, use_type=False) for img in obj.get('image', [])],
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
+    'object': to_as1(obj.get('object')),
     'tags': all_to_as1('tag'),
   })
 
