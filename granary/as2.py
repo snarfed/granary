@@ -25,6 +25,7 @@ OBJECT_TYPE_TO_TYPE = {
   'collection': 'Collection',
   'comment': 'Note',
   'event': 'Event',
+  'image': 'Image',
   'note': 'Note',
   'person': 'Person',
   'place': 'Place',
@@ -91,11 +92,12 @@ def from_as1(obj, type=None, context=CONTEXT):
   return util.trim_nulls(obj)
 
 
-def to_as1(obj):
+def to_as1(obj, use_type=True):
   """Converts an ActivityStreams 2 activity or object to ActivityStreams 1.
 
   Args:
     obj: dict, AS2 activity or object
+    use_type: boolean, whether to include objectType and verb
 
   Returns: dict, AS1 activity or object
   """
@@ -105,12 +107,15 @@ def to_as1(obj):
   obj = copy.deepcopy(obj)
 
   obj.pop('@context', None)
-  type = obj.pop('@type', None)
 
-  obj_type = TYPE_TO_OBJECT_TYPE.get(type)
-  verb = TYPE_TO_VERB.get(type)
-  if verb and not obj_type:
-    obj_type = 'activity'
+  type = obj.pop('@type', None)
+  if use_type:
+    obj['objectType'] = TYPE_TO_OBJECT_TYPE.get(type)
+    obj['verb'] = TYPE_TO_VERB.get(type)
+    if obj.get('inReplyTo') and obj['objectType'] in ('note', 'article'):
+      obj['objectType'] = 'comment'
+    elif obj['verb'] and not obj['objectType']:
+      obj['objectType'] = 'activity'
 
   def url_or_as1(val):
     return {'url': val} if isinstance(val, basestring) else to_as1(val)
@@ -120,18 +125,13 @@ def to_as1(obj):
 
   obj.update({
     'id': obj.pop('@id', None),
-    'objectType': obj_type,
-    'verb': verb,
     'actor': to_as1(obj.get('actor')),
     'attachments': all_to_as1('attachment'),
-    'image': [to_as1(img) for img in obj.get('image', [])],
+    'image': [to_as1(img, use_type=False) for img in obj.get('image', [])],
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
     'tags': all_to_as1('tag'),
   })
-
-  if obj['inReplyTo'] and obj['objectType'] in ('note', 'article'):
-    obj['objectType'] = 'comment'
 
   attrib = obj.pop('attributedTo', None)
   if attrib:
