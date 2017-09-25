@@ -19,3 +19,8 @@ class ActivityStreams2Test(testutil.HandlerTest):
     self.assertEqual({}, as2.to_as1(None))
     self.assertEqual({}, as2.to_as1({}))
 
+  def test_bad_input_types(self):
+    for bad in 'a', 1, [2], (3,):
+      for fn in as2.to_as1, as2.from_as1:
+        with self.assertRaises(ValueError):
+          fn(bad)

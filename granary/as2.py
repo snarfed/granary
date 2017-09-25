@@ -57,6 +57,8 @@ def from_as1(obj, type=None, context=CONTEXT):
   """
   if not obj:
     return {}
+  elif not isinstance(obj, dict):
+    raise ValueError('Expected dict, got %r' % obj)
 
   obj = copy.deepcopy(obj)
 
@@ -103,6 +105,8 @@ def to_as1(obj, use_type=True):
   """
   if not obj:
     return {}
+  elif not isinstance(obj, dict):
+    raise ValueError('Expected dict, got %r' % obj)
 
   obj = copy.deepcopy(obj)
 
