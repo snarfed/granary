@@ -4,10 +4,6 @@ AS2: http://www.w3.org/TR/activitystreams-core/
 
 AS1: http://activitystrea.ms/specs/json/1.0/
      http://activitystrea.ms/specs/json/schema/activity-schema.html
-
-TODO:
-* RSVPs. what are they in AS2? accept/reject an invite? what if there's no invite?
-* reposts aka shares
 """
 import copy
 import logging
@@ -16,9 +12,6 @@ from oauth_dropins.webutil import util
 
 CONTEXT = 'https://www.w3.org/ns/activitystreams'
 
-# STATE: use:
-# file:///Users/ryan/docs/activitystreams_schema_spec_2.0.html#as1properties
-# file:///Users/ryan/docs/activitystreams_json_spec_2.0.html#deprecated-syntax
 
 def _invert(d):
   return {v: k for k, v in d.items()}
@@ -44,6 +37,7 @@ VERB_TO_TYPE = {
   'rsvp-maybe': 'TentativeAccept',
   'rsvp-no': 'Reject',
   'rsvp-yes': 'Accept',
+  'share': 'Announce',
   'tag': 'Add',
   'update': 'Update',
 }
@@ -139,7 +133,7 @@ def to_as1(obj, use_type=True):
     'tags': all_to_as1('tag'),
   })
 
-  attrib = obj.pop('attributedTo', None)
+  attrib = util.pop_list(obj, 'attributedTo')
   if attrib:
     if len(attrib) > 1:
       logging.warning('ActivityStreams 1 only supports single author; '
