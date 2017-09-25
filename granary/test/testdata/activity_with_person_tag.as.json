@@ -1,5 +1,6 @@
 {
   "objectType": "activity",
+  "verb": "post",
   "object": {
     "objectType": "note",
     "id": "tag:example.com,2011:note-123",

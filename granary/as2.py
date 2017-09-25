@@ -34,6 +34,7 @@ VERB_TO_TYPE = {
   'favorite': 'Favorite',
   'invite': 'Invite',
   'like': 'Like',
+  'post': 'Create',
   'rsvp-maybe': 'TentativeAccept',
   'rsvp-no': 'Reject',
   'rsvp-yes': 'Accept',
