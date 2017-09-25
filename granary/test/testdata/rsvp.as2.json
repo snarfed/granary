@@ -1,0 +1,11 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "@type": "Accept",
+  "url": "http://example.com/this/rsvp",
+  "actor": {
+    "@type": "Person",
+    "displayName": "Alice",
+    "url": "http://example.com/alice"
+  },
+  "object": {"url": "http://example.com/event"}
+}
