@@ -1,4 +1,4 @@
-"""Unit tests for activitystreams.py.
+"""Unit tests for api.py.
 """
 
 __author__ = ['Ryan Barrett <granary@ryanb.org>']
@@ -11,7 +11,7 @@ from google.appengine.api import memcache
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
 
-import activitystreams
+import api
 from granary import source
 from granary.test import test_facebook
 from granary.test import test_instagram
@@ -38,13 +38,13 @@ class HandlerTest(testutil.HandlerTest):
   def reset(self):
     self.mox.UnsetStubs()
     self.mox.ResetAll()
-    activitystreams.SOURCE = FakeSource
+    api.SOURCE = FakeSource
     self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
     self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
 
   def get_response(self, url, *args, **kwargs):
     start_index = kwargs.setdefault('start_index', 0)
-    kwargs.setdefault('count', activitystreams.ITEMS_PER_PAGE)
+    kwargs.setdefault('count', api.ITEMS_PER_PAGE)
 
     FakeSource.get_activities_response(*args, **kwargs).AndReturn({
         'startIndex': start_index,
@@ -57,7 +57,7 @@ class HandlerTest(testutil.HandlerTest):
         })
     self.mox.ReplayAll()
 
-    return activitystreams.application.get_response(url)
+    return api.application.get_response(url)
 
   def check_request(self, url, *args, **kwargs):
     resp = self.get_response('/fake' + url, *args, **kwargs)
@@ -100,7 +100,7 @@ class HandlerTest(testutil.HandlerTest):
     FakeSource.get_blocklist().AndReturn(blocks)
     self.mox.ReplayAll()
 
-    resp = activitystreams.application.get_response('/fake/123/@blocks/')
+    resp = api.application.get_response('/fake/123/@blocks/')
     self.assertEquals(200, resp.status_int)
     self.assert_equals({'items': blocks},
                        json.loads(resp.body))
@@ -125,7 +125,7 @@ class HandlerTest(testutil.HandlerTest):
                        '123', '456', '789', '000')
 
   def test_activity_id_tag_uri_wrong_domain(self):
-    resp = activitystreams.application.get_response(
+    resp = api.application.get_response(
       '/fake/123/456/789/tag:foo.bar:000/')
     self.assertEquals(400, resp.status_int)
 
@@ -202,21 +202,21 @@ class HandlerTest(testutil.HandlerTest):
     self.assertEquals(400, resp.status_int)
 
   def test_convert_not_implemented_error(self):
-    resp = activitystreams.application.get_response(
+    resp = api.application.get_response(
       '/instagram/@me/@friends/@app/?format=html&access_token=...')
     self.assert_equals(400, resp.status_int)
     self.assertIn('Scraping only supports activity_id', resp.body)
 
   def test_bad_start_index(self):
-    resp = activitystreams.application.get_response('/fake?startIndex=foo')
+    resp = api.application.get_response('/fake?startIndex=foo')
     self.assertEquals(400, resp.status_int)
 
   def test_bad_count(self):
-    resp = activitystreams.application.get_response('/fake?count=-1')
+    resp = api.application.get_response('/fake?count=-1')
     self.assertEquals(400, resp.status_int)
 
   def test_start_index(self):
-    expected_count = activitystreams.ITEMS_PER_PAGE - 2
+    expected_count = api.ITEMS_PER_PAGE - 2
     self.check_request('?startIndex=2', start_index=2, count=expected_count)
 
   def test_count(self):
@@ -226,14 +226,14 @@ class HandlerTest(testutil.HandlerTest):
     self.check_request('?startIndex=4&count=5', start_index=4, count=5)
 
   def test_count_greater_than_items_per_page(self):
-    self.check_request('?count=999', count=activitystreams.ITEMS_PER_PAGE)
+    self.check_request('?count=999', count=api.ITEMS_PER_PAGE)
 
   def test_cache(self):
     # first fetch populates the cache
     first = self.get_response('/fake/123/@all/', '123', None)
 
     # second fetch should use the cache instead of fetching from the silo
-    second = activitystreams.application.get_response('/fake/123/@all/')
+    second = api.application.get_response('/fake/123/@all/')
     self.assert_equals(first.body, second.body)
 
   def test_cache_false_query_param(self):
@@ -244,8 +244,8 @@ class HandlerTest(testutil.HandlerTest):
 
   def test_get_activities_connection_error(self):
     FakeSource.get_activities_response(
-      None, start_index=0, count=activitystreams.ITEMS_PER_PAGE
+      None, start_index=0, count=api.ITEMS_PER_PAGE
     ).AndRaise(socket.error(''))
     self.mox.ReplayAll()
-    resp = activitystreams.application.get_response('/fake/@me')
+    resp = api.application.get_response('/fake/@me')
     self.assertEquals(504, resp.status_int)

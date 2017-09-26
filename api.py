@@ -1,4 +1,4 @@
-"""ActivityStreams API handler classes.
+"""API handler classes.
 
 Implements the OpenSocial ActivityStreams REST API:
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
@@ -78,7 +78,7 @@ FORMATS = (
 
 
 class Handler(handlers.ModernHandler):
-  """Base class for ActivityStreams API handlers.
+  """Base class for API handlers.
 
   Response data is cached. Cache key is 'R [PATH]', value is dict with
   'activities' and 'actor' keys. Cache duration defaults to 5m but silos can

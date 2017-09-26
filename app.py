@@ -27,7 +27,7 @@ from oauth_dropins.webutil import handlers, util
 import webapp2
 from webob import exc
 
-import activitystreams
+import api
 from granary import (
   as2,
   jsonfeed,
@@ -102,7 +102,7 @@ class DemoHandler(handlers.ModernHandler):
       urllib.urlencode(params)))
 
 
-class UrlHandler(activitystreams.Handler):
+class UrlHandler(api.Handler):
   """Handles URL requests from the interactive demo form on the front page.
 
   Fetched URL data is cached for 5m. Cache key is 'U [URL]', value is dict with

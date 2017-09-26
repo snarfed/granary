@@ -56,7 +56,7 @@ handlers:
   secure: always
 
 - url: /.+
-  script: activitystreams.application
+  script: api.application
   secure: always
 
 skip_files:
