@@ -132,12 +132,16 @@ class HandlerTest(testutil.HandlerTest):
   def test_defaults_and_activity_id(self):
     self.check_request('/@me/@all/@app/000/', None, None, None, '000')
 
+  def test_as1_format(self):
+    resp = self.check_request('/@me/?format=as1', None)
+    self.assertEquals('application/stream+json', resp.headers['Content-Type'])
+
   def test_json_format(self):
     resp = self.check_request('/@me/?format=json', None)
     self.assertEquals('application/json', resp.headers['Content-Type'])
 
-  def test_xml_format(self):
-    resp = self.get_response('/fake?format=xml')
+  def test_as1_xml_format(self):
+    resp = self.get_response('/fake?format=as1-xml')
     self.assertEquals(200, resp.status_int)
     self.assertEquals('application/xml; charset=utf-8',
                       resp.headers['Content-Type'])
@@ -155,6 +159,17 @@ class HandlerTest(testutil.HandlerTest):
 <totalResults>9</totalResults>
 </response>
 """, resp.body)
+
+  def test_xml_format(self):
+    resp = self.get_response('/fake?format=xml')
+    self.assertEquals(200, resp.status_int)
+    self.assertEquals('application/xml; charset=utf-8',
+                      resp.headers['Content-Type'])
+
+  def test_as2_format(self):
+    resp = self.get_response('/fake?format=as2')
+    self.assertEquals(200, resp.status_int)
+    self.assertEquals('application/activity+json', resp.headers['Content-Type'])
 
   def test_atom_format(self):
     for test_module in test_facebook, test_instagram, test_twitter:

@@ -15,7 +15,8 @@ import appengine_config
 import app
 
 
-ACTIVITIES = [{
+AS1 = [{
+  'objectType': 'activity',
   'verb': 'post',
   'object': {
     'content': ' foo bar ',
@@ -23,13 +24,46 @@ ACTIVITIES = [{
     'url': 'https://perma/link',
   }
 }, {
+  'objectType': 'activity',
   'verb': 'post',
   'object': {
     'content': ' baz baj ',
   },
 }]
+AS1_RESPONSE = {
+  'items': AS1,
+  'itemsPerPage': 2,
+  'filtered': False,
+  'sorted': False,
+  'startIndex': 0,
+  'totalResults': 2,
+  'updatedSince': False,
+}
 
-MF2_JSON = {'items': [{
+AS2 = [{
+  '@context': 'https://www.w3.org/ns/activitystreams',
+  '@type': 'Create',
+  'object': {
+    'content': ' foo bar ',
+    'published': '2012-03-04T18:20:37+00:00',
+    'url': 'https://perma/link',
+  }
+}, {
+  '@context': 'https://www.w3.org/ns/activitystreams',
+  '@type': 'Create',
+  'object': {
+    'content': ' baz baj ',
+  },
+}]
+AS2_RESPONSE = {
+  'items': AS2,
+  'itemsPerPage': 2,
+  'startIndex': 0,
+  'totalItems': 2,
+  'updated': False,
+}
+
+MF2 = {'items': [{
   'type': [u'h-entry'],
   'properties': {
     'content': [{
@@ -160,21 +194,61 @@ class AppTest(testutil.HandlerTest):
   def request_url(path):
     return '%s://%s%s' % (appengine_config.SCHEME, appengine_config.HOST, path)
 
-  def test_url_activitystreams_to_json_mf2(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
+  def test_url_as1_to_mf2_json(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(AS1))
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=activitystreams&output=json-mf2')
+      '/url?url=http://my/posts.json&input=as1&output=mf2-json')
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/json', resp.headers['Content-Type'])
-    self.assert_equals(MF2_JSON, json.loads(resp.body))
+    self.assert_equals(MF2, json.loads(resp.body))
 
-  def test_url_activitystreams_to_jsonfeed(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(ACTIVITIES))
+  def test_url_as1_to_as2(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(AS1))
     self.mox.ReplayAll()
 
-    path = '/url?url=http://my/posts.json&input=activitystreams&output=jsonfeed'
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=as1&output=as2')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/activity+json', resp.headers['Content-Type'])
+    self.assert_equals(AS2_RESPONSE, json.loads(resp.body))
+
+  def test_url_as1_response_to_as2(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(AS1_RESPONSE))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=as1&output=as2')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/activity+json', resp.headers['Content-Type'])
+    self.assert_equals(AS2_RESPONSE, json.loads(resp.body))
+
+  def test_url_as2_to_as1(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(AS2))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=as2&output=as1')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals(AS1_RESPONSE, json.loads(resp.body))
+
+  def test_url_as2_response_to_as1(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(AS2_RESPONSE))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=as2&output=as1')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals(AS1_RESPONSE, json.loads(resp.body))
+
+  def test_url_as1_to_jsonfeed(self):
+    self.expect_urlopen('http://my/posts.json', json.dumps(AS1))
+    self.mox.ReplayAll()
+
+    path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = app.application.get_response(path)
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/json', resp.headers['Content-Type'])
@@ -183,13 +257,14 @@ class AppTest(testutil.HandlerTest):
     expected['feed_url'] = self.request_url(path)
     self.assert_equals(expected, json.loads(resp.body))
 
-  def test_url_activitystreams_to_jsonfeed_not_list(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps({'foo': 'bar'}))
-    self.mox.ReplayAll()
+    # TODO: drop?
+  # def test_url_as1_to_jsonfeed_not_list(self):
+  #   self.expect_urlopen('http://my/posts.json', json.dumps({'foo': 'bar'}))
+  #   self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=activitystreams&output=jsonfeed')
-    self.assert_equals(400, resp.status_int)
+  #   resp = app.application.get_response(
+  #     '/url?url=http://my/posts.json&input=as1&output=jsonfeed')
+  #   self.assert_equals(400, resp.status_int)
 
   def test_url_jsonfeed_to_json_mf2(self):
     self.expect_urlopen('http://my/feed.json', json.dumps(JSONFEED))
@@ -200,7 +275,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/json', resp.headers['Content-Type'])
 
-    expected = copy.deepcopy(MF2_JSON)
+    expected = copy.deepcopy(MF2)
     expected['items'][0]['properties']['uid'] = [JSONFEED['items'][0]['id']]
     self.assert_equals(expected, json.loads(resp.body))
 
@@ -214,7 +289,7 @@ class AppTest(testutil.HandlerTest):
     self.assertIn('Could not parse http://my/feed.json as JSON Feed', resp.body)
 
   def test_url_json_mf2_to_html(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(MF2_JSON))
+    self.expect_urlopen('http://my/posts.json', json.dumps(MF2))
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -296,7 +371,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/json', resp.headers['Content-Type'])
 
-    expected = copy.deepcopy(MF2_JSON)
+    expected = copy.deepcopy(MF2)
     for obj in expected['items']:
       obj['properties']['name'] = [obj['properties']['content'][0]['value'].strip()]
     self.assert_equals(expected, json.loads(resp.body))
@@ -325,12 +400,12 @@ baz baj
 </div>
 """, resp.body, ignore_blanks=True)
 
-  def test_url_activitystreams_to_atom_reader_false(self):
+  def test_url_as1_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.
 
     https://github.com/snarfed/granary/issues/104
     """
-    activity = copy.deepcopy(ACTIVITIES[0])
+    activity = copy.deepcopy(AS1[0])
     activity['object']['location'] = {
       'displayName': 'My place',
       'url': 'http://my/place',
@@ -339,7 +414,7 @@ baz baj
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
-      '/url?url=http://my/posts.as&input=activitystreams&output=atom&reader=false')
+      '/url?url=http://my/posts.as&input=as1&output=atom&reader=false')
     self.assert_equals(200, resp.status_int, resp.body)
     self.assertNotIn('p-location', resp.body)
     self.assertNotIn('<a class="p-name u-url" href="http://my/place">My place</a>',
@@ -354,7 +429,7 @@ baz baj
                         ).MultipleTimes()
     self.mox.ReplayAll()
 
-    for input in 'activitystreams', 'json-mf2', 'jsonfeed':
+    for input in 'as1', 'as2', 'activitystreams', 'json-mf2', 'jsonfeed':
       resp = app.application.get_response(
         '/url?url=http://my/posts&input=%s' % input)
       self.assert_equals(400, resp.status_int)

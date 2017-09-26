@@ -29,6 +29,7 @@ from webob import exc
 
 import activitystreams
 from granary import (
+  as2,
   jsonfeed,
   microformats2,
   source,
@@ -41,7 +42,15 @@ API_PARAMS = {
   'auth_entity',
   'format',
 }
-
+INPUTS = (
+  'activitystreams',
+  'as1',
+  'as2',
+  'html',
+  'json-mf2',
+  'jsonfeed',
+  'mf2-json',
+)
 URL_CACHE_TIME = 5 * 60  # 5m
 
 
@@ -104,24 +113,25 @@ class UrlHandler(activitystreams.Handler):
   handle_exception = handlers.handle_exception
 
   def get(self):
-    expected_inputs = ('activitystreams', 'html', 'json-mf2', 'jsonfeed')
     input = util.get_required_param(self, 'input')
-    if input not in expected_inputs:
+    if input not in INPUTS:
       raise exc.HTTPBadRequest('Invalid input: %s, expected one of %r' %
-                               (input, expected_inputs))
+                               (input, INPUTS))
     url, body = self._urlopen(util.get_required_param(self, 'url'))
 
     # decode data
-    if input in ('activitystreams', 'json-mf2', 'jsonfeed'):
+    if input in ('activitystreams', 'as1', 'as2', 'mf2-json', 'json-mf2', 'jsonfeed'):
       try:
         body_json = json.loads(body)
+        body_items = (body_json if isinstance(body_json, list)
+                      else body_json.get('items') or [body_json])
       except (TypeError, ValueError):
         raise exc.HTTPBadRequest('Could not decode %s as JSON' % url)
 
     mf2 = None
     if input == 'html':
       mf2 = mf2py.parse(doc=body, url=url)
-    elif input == 'json-mf2':
+    elif input in ('mf2-json', 'json-mf2'):
       mf2 = body_json
       mf2.setdefault('rels', {})  # mf2util expects rels
 
@@ -134,11 +144,13 @@ class UrlHandler(activitystreams.Handler):
       actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
       title = mf2util.interpret_feed(mf2, url).get('name')
 
-    if input == 'activitystreams':
-      activities = body_json
+    if input in ('as1', 'activitystreams'):
+      activities = body_items
+    elif input == 'as2':
+      activities = [as2.to_as1(obj) for obj in body_items]
     elif input == 'html':
       activities = microformats2.html_to_activities(body, url, actor)
-    elif input == 'json-mf2':
+    elif input in ('mf2-json', 'json-mf2'):
       activities = [microformats2.json_to_object(item, actor=actor)
                     for item in mf2.get('items', [])]
     elif input == 'jsonfeed':

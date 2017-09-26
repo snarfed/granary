@@ -39,6 +39,7 @@ from webob import exc
 
 from granary import (
   appengine_config,
+  as2,
   atom,
   facebook,
   flickr,
@@ -60,6 +61,20 @@ ITEMS_PER_PAGE = 100
 # /twitter/@me/@self/@all/...
 PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
+
+FORMATS = (
+  'activitystreams',
+  'as1',
+  'as1-xml',
+  'as2',
+  'atom',
+  'html',
+  'json',
+  'json-mf2',
+  'jsonfeed',
+  'mf2-json',
+  'xml',
+)
 
 
 class Handler(handlers.ModernHandler):
@@ -178,20 +193,29 @@ class Handler(handlers.ModernHandler):
       url: the input URL
       title: string, Used in Atom and JSON Feed output
     """
-    expected_formats = ('activitystreams', 'json', 'atom', 'xml', 'html',
-                        'json-mf2', 'jsonfeed')
     format = self.request.get('format') or self.request.get('output') or 'json'
-    if format not in expected_formats:
+    if format not in FORMATS:
       raise exc.HTTPBadRequest('Invalid format: %s, expected one of %r' %
-                               (format, expected_formats))
+                               (format, FORMATS))
 
     activities = response['items']
 
-    if format in ('json', 'activitystreams'):
+    if format in ('as1', 'json', 'activitystreams'):
       # list of official MIME types:
       # https://www.iana.org/assignments/media-types/media-types.xhtml
-      self.response.headers['Content-Type'] = 'application/json'
+      self.response.headers['Content-Type'] = \
+        'application/json' if format == 'json' else 'application/stream+json'
       self.response.out.write(json.dumps(response, indent=2))
+    elif format == 'as2':
+      self.response.headers['Content-Type'] = 'application/activity+json'
+      response.update({
+        'items': [as2.from_as1(a) for a in activities],
+        'totalItems': response.pop('totalResults', None),
+        'updated': response.pop('updatedSince', None),
+        'filtered': None,
+        'sorted': None,
+      })
+      self.response.out.write(json.dumps(util.trim_nulls(response), indent=2))
     elif format == 'atom':
       self.response.headers['Content-Type'] = 'application/atom+xml'
       hub = self.request.get('hub')
@@ -209,13 +233,13 @@ class Handler(handlers.ModernHandler):
       self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
       if hub:
         self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
-    elif format == 'xml':
+    elif format in ('as1-xml', 'xml'):
       self.response.headers['Content-Type'] = 'application/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))
     elif format == 'html':
       self.response.headers['Content-Type'] = 'text/html'
       self.response.out.write(microformats2.activities_to_html(activities))
-    elif format == 'json-mf2':
+    elif format in ('mf2-json', 'json-mf2'):
       self.response.headers['Content-Type'] = 'application/json'
       items = [microformats2.activity_to_json(a) for a in activities]
       self.response.out.write(json.dumps({'items': items}, indent=2))

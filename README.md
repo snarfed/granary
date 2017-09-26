@@ -24,7 +24,7 @@ Granary is a library and REST API that converts between a wide variety of format
 
 * Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 * Instagram and Google+ scraped HTML
-* [ActivityStreams](http://activitystrea.ms/) (1, mostly)
+* [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0
 * [microformats2](http://microformats.org/wiki/microformats2) HTML and JSON
 * [Atom](http://atomenabled.org/)
 * XML
@@ -141,9 +141,9 @@ See the [example above](#using) for a quick start guide.
 
 Clone or download this repo into a directory named `granary` (note the underscore instead of dash). Each source works the same way. Import the module for the source you want to use, then instantiate its class by passing the HTTP handler object. The handler should have a `request` attribute for the current HTTP request.
 
-The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/granary/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams JSON.
+The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/granary/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams 1 JSON.
 
-The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams objects as nicely formatted HTML.
+The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams 1 objects as nicely formatted HTML.
 
 
 Troubleshooting/FAQ
@@ -298,6 +298,8 @@ Changelog
   * Add email field to author, if provided.
 * JSON Feed:
   * Raise ValueError on bad (non-dict) input.
+* REST API:
+  * Add `as2` value for `format` and `input`. Revise existing ActivityStreams and microformats2 value names to `as1`, `as1-xml`, and `mf2-json`. Old values `activitystreams`, `json`, `json-mf2`, and `xml` are still accepted, but deprecated.
 
 ### 1.8 - 2017-08-29
 
