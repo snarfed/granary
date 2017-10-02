@@ -42,7 +42,7 @@ AS1_RESPONSE = {
 
 AS2 = [{
   '@context': 'https://www.w3.org/ns/activitystreams',
-  '@type': 'Create',
+  'type': 'Create',
   'object': {
     'content': ' foo bar ',
     'published': '2012-03-04T18:20:37+00:00',
@@ -50,7 +50,7 @@ AS2 = [{
   }
 }, {
   '@context': 'https://www.w3.org/ns/activitystreams',
-  '@type': 'Create',
+  'type': 'Create',
   'object': {
     'content': ' baz baj ',
   },

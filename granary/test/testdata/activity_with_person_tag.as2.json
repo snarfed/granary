@@ -1,11 +1,11 @@
 {
   "@context": "https://www.w3.org/ns/activitystreams",
-  "@type": "Create",
+  "type": "Create",
   "object": {
-    "@type": "Note",
-    "@id": "tag:example.com,2011:note-123",
+    "type": "Note",
+    "id": "tag:example.com,2011:note-123",
     "tag": [{
-      "@type": "Person",
+      "type": "Person",
       "url": "https://alice",
       "displayName": "Alice"
     }]

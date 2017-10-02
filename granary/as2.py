@@ -50,7 +50,7 @@ def from_as1(obj, type=None, context=CONTEXT):
 
   Args:
     obj: dict, AS1 activity or object/
-    type: string, default @type if type inference can't determine a type.
+    type: string, default type if type inference can't determine a type.
     context: string, included as @context
 
   Returns: dict, AS2 activity or object
@@ -76,8 +76,7 @@ def from_as1(obj, type=None, context=CONTEXT):
             for elem in util.pop_list(obj, field)]
 
   obj.update({
-    '@type': type,
-    '@id': obj.pop('id', None),
+    'type': type,
     'actor': from_as1(obj.get('actor'), context=None),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
@@ -112,7 +111,7 @@ def to_as1(obj, use_type=True):
 
   obj.pop('@context', None)
 
-  type = obj.pop('@type', None)
+  type = obj.pop('type', None)
   if use_type:
     obj['objectType'] = TYPE_TO_OBJECT_TYPE.get(type)
     obj['verb'] = TYPE_TO_VERB.get(type)
@@ -128,7 +127,6 @@ def to_as1(obj, use_type=True):
     return [to_as1(elem) for elem in util.pop_list(obj, field)]
 
   obj.update({
-    'id': obj.pop('@id', None),
     'actor': to_as1(obj.get('actor')),
     'attachments': all_to_as1('attachment'),
     'image': [to_as1(img, use_type=False) for img in obj.get('image', [])],

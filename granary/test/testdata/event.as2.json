@@ -1,7 +1,7 @@
 {
   "@context": "https://www.w3.org/ns/activitystreams",
-  "@type": "Event",
-  "@id": "tag:example.com,2011:event-xyz",
+  "type": "Event",
+  "id": "tag:example.com,2011:event-xyz",
   "url": "http://example.com/event-xyz",
   "displayName": "XYZ",
   "summary": "it's happening!",
@@ -10,7 +10,7 @@
   "startTime": "2017-07-12 17:30",
   "endTime": "2017-07-12 19:30",
   "location": {
-    "@type": "Place",
+    "type": "Place",
     "displayName": "the place"
   }
 }
