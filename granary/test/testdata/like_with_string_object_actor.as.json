@@ -1,0 +1,6 @@
+{
+  "objectType": "activity",
+  "verb": "like",
+  "object": {"url": "http://example.com/original/post"},
+  "actor": {"url": "http://example.com/author-456"}
+}

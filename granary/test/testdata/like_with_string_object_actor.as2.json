@@ -1,0 +1,6 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Like",
+  "object": "http://example.com/original/post",
+  "actor": "http://example.com/author-456"
+}

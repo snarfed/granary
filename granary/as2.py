@@ -90,7 +90,11 @@ def from_as1(obj, type=None, context=CONTEXT):
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
 
-  return util.trim_nulls(obj)
+  obj = util.trim_nulls(obj)
+  if obj.keys() == ['url']:
+    return obj['url']
+
+  return obj
 
 
 def to_as1(obj, use_type=True):
@@ -104,6 +108,8 @@ def to_as1(obj, use_type=True):
   """
   if not obj:
     return {}
+  elif isinstance(obj, basestring):
+    return {'url': obj}
   elif not isinstance(obj, dict):
     raise ValueError('Expected dict, got %r' % obj)
 

@@ -7,5 +7,5 @@
     "displayName": "Alice",
     "url": "http://example.com/alice"
   },
-  "object": {"url": "http://example.com/event"}
+  "object": "http://example.com/event"
 }
