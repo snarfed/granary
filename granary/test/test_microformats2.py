@@ -629,3 +629,29 @@ foo
   def test_hcard_to_html_no_properties(self):
     self.assertEquals('', microformats2.hcard_to_html({}))
     self.assertEquals('', microformats2.hcard_to_html({'properties': {}}))
+
+  def test_activities_to_html_like(self):
+    self.assert_multiline_equals("""\
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<article class="h-entry">
+  <span class="p-uid">http://localhost:3000/users/ryan#likes/7</span>
+  <span class="p-author h-card">
+    <a class="u-url" href="http://localhost:3000/users/ryan">http://localhost:3000/users/ryan</a>
+  </span>
+  <div class="e-content p-name">
+  <a href="http://localhost/2017-10-01_mastodon-dev-6">likes this.</a>
+  </div>
+<a class="u-like-of" href="http://localhost/2017-10-01_mastodon-dev-6"></a>
+</article>
+</body>
+</html>
+""", microformats2.activities_to_html([{
+  'id': 'http://localhost:3000/users/ryan#likes/7',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'http://localhost/2017-10-01_mastodon-dev-6'},
+  'actor': {'url': 'http://localhost:3000/users/ryan'},
+}]), ignore_blanks=True)

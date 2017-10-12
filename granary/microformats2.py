@@ -432,7 +432,11 @@ def activities_to_html(activities):
 %s
 </body>
 </html>
-  """ % '\n'.join(object_to_html(a.get('object') or a) for a in activities)
+""" % '\n'.join(object_to_html(
+    a['object']
+    if a.get('object') and a.get('verb') not in ('invite', 'like', 'repost', 'rsvp')
+    else a)
+  for a in activities)
 
 
 def object_to_html(obj, parent_props=None, synthesize_content=True):
