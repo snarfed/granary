@@ -3,8 +3,8 @@
   "objectType" : "person",
   "id": "tag:example.com,2011:martin",
   "image": [
-    {"url": "http://example.com/martin/image"},
-    {"url": "http://example.com/martin/icon"}
+    {"url": "http://example.com/martin/icon"},
+    {"url": "http://example.com/martin/image"}
   ],
   "displayName": "Martin Smith"
 }

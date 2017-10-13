@@ -43,7 +43,7 @@ def create_test_function(fn, original, expected):
     if isinstance(got, basestring) and isinstance(expected, basestring):
       return self.assert_multiline_equals(expected, got, ignore_blanks=True)
     else:
-      return self.assert_equals(expected, got)
+      return self.assert_equals(expected, got, in_order=True)
   return test
 
 # TODO: use a handler with an HTTPS request so that URL schemes are converted
@@ -78,7 +78,7 @@ mappings = (
   ('as.json', ['feed.json'], activity_to_jsonfeed, ()),
   ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, ()),
   ('as.json', ['as2.json'], as2.from_as1, ()),
-  ('as2.json', ['as.json'], as2.to_as1, ()),
+  ('as2.json', ['as.json', 'as-from-as2.json'], as2.to_as1, ()),
 )
 
 test_funcs = {}
