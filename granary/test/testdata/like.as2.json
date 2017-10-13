@@ -7,7 +7,7 @@
   "object": "http://example.com/original/post",
   "actor": {
     "type": "Person",
-    "displayName": "Alice",
+    "name": "Alice",
     "url": "http://example.com/alice"
   }
 }

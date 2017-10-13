@@ -4,12 +4,12 @@
   "url": "http://example.com/this/invite",
   "actor": {
     "type": "Person",
-    "displayName": "Mr. Host",
+    "name": "Mr. Host",
     "url": "http://example.com/host"
   },
   "object": {
     "type": "Person",
-    "displayName": "Alice",
+    "name": "Alice",
     "url": "http://example.com/alice"
   }
 }

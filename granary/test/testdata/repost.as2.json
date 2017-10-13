@@ -8,7 +8,7 @@
     "type": "Article",
     "attributedTo": [{
       "type": "Person",
-      "displayName": "Bob",
+      "name": "Bob",
       "url": "http://example.com/bob"
     }],
     "content": "The original post",
@@ -16,7 +16,7 @@
   },
   "actor": {
     "type": "Person",
-    "displayName": "Alice",
+    "name": "Alice",
     "url": "http://example.com/alice"
   }
 }

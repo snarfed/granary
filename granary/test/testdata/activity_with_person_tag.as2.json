@@ -7,7 +7,7 @@
     "tag": [{
       "type": "Person",
       "url": "https://alice",
-      "displayName": "Alice"
+      "name": "Alice"
     }]
   }
 }

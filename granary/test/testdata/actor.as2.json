@@ -3,7 +3,7 @@
   "type": "Person",
   "id": "tag:example.com,2011:martin",
   "url": "http://example.com/martin",
-  "displayName": "Martin Smith",
+  "name": "Martin Smith",
   "image": [{
     "type": "Image",
     "url": "http://example.com/martin/image"

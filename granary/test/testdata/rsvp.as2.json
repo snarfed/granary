@@ -4,7 +4,7 @@
   "url": "http://example.com/this/rsvp",
   "actor": {
     "type": "Person",
-    "displayName": "Alice",
+    "name": "Alice",
     "url": "http://example.com/alice"
   },
   "object": "http://example.com/event"

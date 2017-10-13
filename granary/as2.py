@@ -77,6 +77,7 @@ def from_as1(obj, type=None, context=CONTEXT):
 
   obj.update({
     'type': type,
+    'name': obj.pop('displayName', None),
     'actor': from_as1(obj.get('actor'), context=None),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
@@ -133,6 +134,7 @@ def to_as1(obj, use_type=True):
     return [to_as1(elem) for elem in util.pop_list(obj, field)]
 
   obj.update({
+    'displayName': obj.pop('name', None),
     'actor': to_as1(obj.get('actor')),
     'attachments': all_to_as1('attachment'),
     'image': [to_as1(img, use_type=False) for img in obj.get('image', [])],
