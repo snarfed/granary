@@ -1,0 +1,15 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Person",
+  "id": "tag:example.com,2011:martin",
+  "url": "http://example.com/martin",
+  "name": "Martin Smith",
+  "image": [{
+    "type": "Image",
+    "url": "http://example.com/martin/image"
+  }],
+  "icon": [{
+    "type": "Image",
+    "url": "http://example.com/martin/icon"
+  }]
+}

@@ -137,7 +137,8 @@ def to_as1(obj, use_type=True):
     'displayName': obj.pop('name', None),
     'actor': to_as1(obj.get('actor')),
     'attachments': all_to_as1('attachment'),
-    'image': [to_as1(img, use_type=False) for img in obj.get('image', [])],
+    'image': [to_as1(img, use_type=False) for img in
+              util.get_list(obj, 'image') + util.get_list(obj, 'icon')],
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
     'object': to_as1(obj.get('object')),
