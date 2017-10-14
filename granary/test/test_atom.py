@@ -13,31 +13,8 @@ import test_facebook
 import test_instagram
 import test_twitter
 
-
-class AtomTest(testutil.HandlerTest):
-
-  def test_activities_to_atom(self):
-    for test_module in test_facebook, test_instagram, test_twitter:
-      request_url = 'http://request/url?access_token=foo'
-      host_url = 'http://host/url'
-      base_url = 'http://base/url'
-      self.assert_multiline_equals(
-        test_module.ATOM % {
-          'request_url': request_url,
-          'host_url': host_url,
-          'base_url': base_url,
-        },
-        atom.activities_to_atom(
-          [copy.deepcopy(test_module.ACTIVITY)],
-          test_module.ACTOR,
-          request_url=request_url,
-          host_url=host_url,
-          xml_base=base_url
-        ),
-        ignore_blanks=True)
-
-  def test_activity_to_atom(self):
-    self.assert_multiline_in("""\
+INSTAGRAM_ATOM_ENTRY = """\
+<?xml version="1.0" encoding="UTF-8"?>
 <entry xml:lang="en-US"
        xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/"
@@ -84,8 +61,60 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <georss:featureName>Le Truc</georss:featureName>
   <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
 </entry>
-""", atom.activity_to_atom(copy.deepcopy(test_instagram.ACTIVITY)),
-    ignore_blanks=True)
+"""
+
+
+class AtomTest(testutil.HandlerTest):
+
+  def test_activities_to_atom(self):
+    for test_module in test_facebook, test_instagram, test_twitter:
+      request_url = 'http://request/url?access_token=foo'
+      host_url = 'http://host/url'
+      base_url = 'http://base/url'
+      self.assert_multiline_equals(
+        test_module.ATOM % {
+          'request_url': request_url,
+          'host_url': host_url,
+          'base_url': base_url,
+        },
+        atom.activities_to_atom(
+          [copy.deepcopy(test_module.ACTIVITY)],
+          test_module.ACTOR,
+          request_url=request_url,
+          host_url=host_url,
+          xml_base=base_url
+        ),
+        ignore_blanks=True)
+
+  def test_activity_to_atom(self):
+    self.assert_multiline_equals(
+      INSTAGRAM_ATOM_ENTRY,
+      atom.activity_to_atom(copy.deepcopy(test_instagram.ACTIVITY)),
+      ignore_blanks=True)
+
+  def test_atom_to_object(self):
+    expected = {
+      'verb': 'post',
+      'objectType': 'photo',
+      'id': 'https://www.instagram.com/p/ABC123/',
+      'url': 'https://www.instagram.com/p/ABC123/',
+      'title': 'this picture -> is #abc @foo #xyz',
+      'content': 'this picture -> is #abc @foo #xyz Le Truc',
+      'published': '2012-09-22T05:25:42',
+      'updated': '2012-09-22T05:25:42',
+      'author': {
+        'displayName': 'Ryan B',
+        'objectType': 'person',
+        'url': 'http://snarfed.org',
+      },
+      'location': {
+        'displayName': 'Le Truc',
+        'latitude': 37.3,
+        'longitude': -122.5,
+        'position': '+37.300000-122.500000/',
+      },
+    }
+    self.assert_equals(expected, atom.atom_to_object(INSTAGRAM_ATOM_ENTRY))
 
   def test_title(self):
     self.assert_multiline_in(

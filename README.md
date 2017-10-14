@@ -293,8 +293,9 @@ Changelog
 
 ### 1.9 - unreleased
 
-* Add [ActivityStreams 2.0](http://www.w3.org/TR/activitystreams-core/)! Currently supported: articles, notes, replies, likes, reposts, events, RSVPs, tags, attachments.
+* Add [ActivityStreams 2.0](http://www.w3.org/TR/activitystreams-core/)! New `as2` module includes `to_as1()` and `from_as1()` functions. Currently supported: articles, notes, replies, likes, reposts, events, RSVPs, tags, attachments.
 * Atom:
+  * Add new `atom_to_object()` function for converting Atom to AS1.
   * Add email field to author, if provided.
 * JSON Feed:
   * Raise ValueError on bad (non-dict) input.

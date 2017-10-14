@@ -1,4 +1,4 @@
-"""Convert ActivityStreams to Atom.
+"""Convert between ActivityStreams 1 and Atom.
 
 Atom spec: http://atomenabled.org/developers/syndication/
 """
@@ -7,6 +7,7 @@ import collections
 import os
 import re
 import urlparse
+from xml.etree import ElementTree
 import xml.sax.saxutils
 
 from bs4 import BeautifulSoup
@@ -47,7 +48,7 @@ class Defaulter(collections.defaultdict):
 
 def activities_to_atom(activities, actor, title=None, request_url=None,
                        host_url=None, xml_base=None, rels=None, reader=True):
-  """Converts ActivityStreams activities to an Atom feed.
+  """Converts ActivityStreams 1 activities to an Atom feed.
 
   Args:
     activities: list of ActivityStreams activity dicts
@@ -88,7 +89,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
 
 
 def activity_to_atom(activity, xml_base=None, reader=True):
-  """Converts a single ActivityStreams activity to an Atom entry.
+  """Converts a single ActivityStreams 1 activity to an Atom entry.
 
   Kwargs are passed through to :func:`activities_to_atom`.
 
@@ -105,6 +106,81 @@ def activity_to_atom(activity, xml_base=None, reader=True):
     activity=Defaulter(**activity),
     xml_base=xml_base,
   )
+
+
+def atom_to_object(atom):
+  """Converts an Atom entry to an ActivityStreams 1 object.
+
+  Args:
+    atom: string, Atom document
+
+  Returns:
+    dict, ActivityStreams object
+  """
+  namespaces = {
+    'atom': 'http://www.w3.org/2005/Atom',
+    'activity': 'http://activitystrea.ms/spec/1.0/',
+    'georss': 'http://www.georss.org/georss',
+  }
+
+  entry = ElementTree.fromstring(atom)
+  if entry.tag.split('}')[-1] != 'entry':
+    raise ValueError('Expected root entry tag; got %s' % entry.tag)
+
+  def maybe(elem, field):
+    if ':' not in field:
+      field = 'atom:' + field
+    val = elem.find(field, namespaces)
+    if val is not None:
+      return val.text
+
+  def activity_ns(elem, field):
+    type = maybe(elem, 'activity:%s' % field)
+    if type:
+      return type.split('/')[-1]
+
+  id = maybe(entry, 'id')
+  obj = {
+    'objectType': activity_ns(entry, 'object-type'),
+    'verb': activity_ns(entry, 'verb'),
+    'id': id,
+    'url': maybe(entry, 'uri') or id,
+    'title': maybe(entry, 'title'),
+    'published': maybe(entry, 'published'),
+    'updated': maybe(entry, 'updated'),
+    'location': {
+      'displayName': maybe(entry, 'georss:featureName'),
+    }
+  }
+
+  content = entry.find('atom:content', namespaces)
+  if content is not None:
+    # TODO: use 'html' instead of 'text' to include HTML tags. the problem is,
+    # if there's an embedded XML namespace, it prefixes *every* tag with that
+    # namespace. breaks on e.g. the <div xmlns="http://www.w3.org/1999/xhtml">
+    # that our Atom templates wrap HTML content in.
+    text = ElementTree.tostring(content, 'utf-8', 'text')
+    obj['content'] = re.sub(r'\s+', ' ', text.strip())
+
+  point = maybe(entry, 'georss:point')
+  if point:
+    lat, long = point.split(' ')
+    obj['location'].update({
+      'latitude': float(lat),
+      'longitude': float(long),
+    })
+
+  author = entry.find('atom:author', namespaces)
+  if author is not None:
+      obj['author'] = {
+        'objectType': activity_ns(author, 'object-type'),
+        'id': maybe(author, 'id'),
+        'url': maybe(author, 'uri'),
+        'displayName': maybe(author, 'name'),
+        'email': maybe(author, 'email'),
+      }
+
+  return source.Source.postprocess_object(obj)
 
 
 def html_to_atom(html, url=None, fetch_author=False, reader=True):
@@ -142,7 +218,7 @@ def _prepare_activity(a, reader=True):
   Modifies a in place.
 
   Args:
-    a: ActivityStreams activity dict
+    a: ActivityStreams 1 activity dict
     reader: boolean, whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
   """

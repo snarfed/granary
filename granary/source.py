@@ -502,7 +502,8 @@ class Source(object):
     """
     return activity
 
-  def postprocess_activity(self, activity):
+  @staticmethod
+  def postprocess_activity(activity):
     """Does source-independent post-processing of an activity, in place.
 
     Right now just populates the title field.
@@ -524,7 +525,7 @@ class Source(object):
       'share': 'shared',
     }
 
-    actor_name = self.actor_name(activity.get('actor'))
+    actor_name = Source.actor_name(activity.get('actor'))
     obj = activity.get('object')
 
     if obj and not activity.get('title'):
