@@ -126,6 +126,7 @@ class AtomTest(testutil.HandlerTest):
         ('<uri>foo</uri>', {'id': 'foo', 'url': 'foo'}),
       ):
       self.assert_equals({
+        'url': 'like-url',
         'objectType': 'activity',
         'verb': 'like',
         'object': as_obj,
@@ -133,6 +134,7 @@ class AtomTest(testutil.HandlerTest):
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/">
+<uri>like-url</uri>
 <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
 <activity:object>%s</activity:object>
 </entry>
@@ -141,8 +143,12 @@ class AtomTest(testutil.HandlerTest):
   def test_atom_to_reply(self):
     expected = {
       'objectType': 'activity',
+      'id': 'reply-url',
+      'url': 'reply-url',
       'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       'object': {
+        'id': 'reply-url',
+        'url': 'reply-url',
         'content': u'I hereby ☕ reply.',
         'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       },
@@ -151,6 +157,7 @@ class AtomTest(testutil.HandlerTest):
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:thr="http://purl.org/syndication/thread/1.0">
+<uri>reply-url</uri>
 <thr:in-reply-to ref="foo-id" href="foo-url" />
 <content>I hereby ☕ reply.</content>
 </entry>

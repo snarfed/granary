@@ -188,16 +188,12 @@ def atom_to_activity(atom):
   a = {
     'objectType': 'activity',
     'verb': _as1_value(entry, 'verb'),
+    'id': _text(entry, 'id') or (obj['id'] if obj_elem is None else None),
+    'url': _text(entry, 'uri') or (obj['url'] if obj_elem is None else None),
     'object': obj,
     'actor': _author_to_actor(entry),
     'inReplyTo': obj.get('inReplyTo'),
   }
-
-  if obj_elem is None:
-    a.update({
-      'id': obj['id'],
-      'url': obj['url'],
-    })
 
   return source.Source.postprocess_activity(a)
 
