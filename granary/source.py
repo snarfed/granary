@@ -528,18 +528,20 @@ class Source(object):
     actor_name = Source.actor_name(activity.get('actor'))
     obj = activity.get('object')
 
-    if obj and not activity.get('title'):
-      verb = DISPLAY_VERBS.get(activity['verb'])
-      obj_name = obj.get('displayName')
-      obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'))
-      if obj_name and not verb:
-        activity['title'] = obj_name
-      elif verb and (obj_name or obj_type):
-        app = activity.get('generator', {}).get('displayName')
-        name = obj_name if obj_name else 'a %s' % (obj_type or 'unknown')
-        app = ' on %s' % app if app else ''
-        activity['title'] = '%s %s %s%s.' % (actor_name, verb or 'posted',
-                                             name, app)
+    if obj:
+      activity['object'] = Source.postprocess_object(obj)
+      if not activity.get('title'):
+        verb = DISPLAY_VERBS.get(activity['verb'])
+        obj_name = obj.get('displayName')
+        obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'))
+        if obj_name and not verb:
+          activity['title'] = obj_name
+        elif verb and (obj_name or obj_type):
+          app = activity.get('generator', {}).get('displayName')
+          name = obj_name if obj_name else 'a %s' % (obj_type or 'unknown')
+          app = ' on %s' % app if app else ''
+          activity['title'] = '%s %s %s%s.' % (actor_name, verb or 'posted',
+                                               name, app)
 
     return util.trim_nulls(activity)
 

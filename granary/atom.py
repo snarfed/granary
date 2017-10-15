@@ -108,7 +108,7 @@ def activity_to_atom(activity, xml_base=None, reader=True):
   )
 
 
-def atom_to_object(atom):
+def atom_to_activity(atom):
   """Converts an Atom entry to an ActivityStreams 1 object.
 
   Args:
@@ -142,7 +142,6 @@ def atom_to_object(atom):
   id = maybe(entry, 'id')
   obj = {
     'objectType': activity_ns(entry, 'object-type'),
-    'verb': activity_ns(entry, 'verb'),
     'id': id,
     'url': maybe(entry, 'uri') or id,
     'title': maybe(entry, 'title'),
@@ -170,9 +169,17 @@ def atom_to_object(atom):
       'longitude': float(long),
     })
 
+  a = {
+    'objectType': 'activity',
+    'verb': activity_ns(entry, 'verb'),
+    'id': obj['id'],
+    'url': obj['url'],
+    'object': obj,
+  }
+
   author = entry.find('atom:author', namespaces)
   if author is not None:
-      obj['author'] = {
+      a['actor'] = {
         'objectType': activity_ns(author, 'object-type'),
         'id': maybe(author, 'id'),
         'url': maybe(author, 'uri'),
@@ -180,7 +187,7 @@ def atom_to_object(atom):
         'email': maybe(author, 'email'),
       }
 
-  return source.Source.postprocess_object(obj)
+  return source.Source.postprocess_activity(a)
 
 
 def html_to_atom(html, url=None, fetch_author=False, reader=True):

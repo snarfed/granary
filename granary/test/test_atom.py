@@ -92,29 +92,34 @@ class AtomTest(testutil.HandlerTest):
       atom.activity_to_atom(copy.deepcopy(test_instagram.ACTIVITY)),
       ignore_blanks=True)
 
-  def test_atom_to_object(self):
+  def test_atom_to_activity(self):
     expected = {
+      'objectType': 'activity',
       'verb': 'post',
-      'objectType': 'photo',
       'id': 'https://www.instagram.com/p/ABC123/',
       'url': 'https://www.instagram.com/p/ABC123/',
-      'title': 'this picture -> is #abc @foo #xyz',
-      'content': 'this picture -> is #abc @foo #xyz Le Truc',
-      'published': '2012-09-22T05:25:42',
-      'updated': '2012-09-22T05:25:42',
-      'author': {
+      'actor': {
         'displayName': 'Ryan B',
         'objectType': 'person',
         'url': 'http://snarfed.org',
       },
-      'location': {
-        'displayName': 'Le Truc',
-        'latitude': 37.3,
-        'longitude': -122.5,
-        'position': '+37.300000-122.500000/',
+      'object': {
+        'id': 'https://www.instagram.com/p/ABC123/',
+        'url': 'https://www.instagram.com/p/ABC123/',
+        'objectType': 'photo',
+        'title': 'this picture -> is #abc @foo #xyz',
+        'content': 'this picture -> is #abc @foo #xyz Le Truc',
+        'published': '2012-09-22T05:25:42',
+        'updated': '2012-09-22T05:25:42',
+        'location': {
+          'displayName': 'Le Truc',
+          'latitude': 37.3,
+          'longitude': -122.5,
+          'position': '+37.300000-122.500000/',
+        },
       },
     }
-    self.assert_equals(expected, atom.atom_to_object(INSTAGRAM_ATOM_ENTRY))
+    self.assert_equals(expected, atom.atom_to_activity(INSTAGRAM_ATOM_ENTRY))
 
   def test_title(self):
     self.assert_multiline_in(
