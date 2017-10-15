@@ -23,6 +23,11 @@ FEED_TEMPLATE = 'user_feed.atom'
 ENTRY_TEMPLATE = 'entry.atom'
 # stolen from django.utils.html
 UNENCODED_AMPERSANDS_RE = re.compile(r'&(?!(\w+|#\d+);)')
+NAMESPACES = {
+  'atom': 'http://www.w3.org/2005/Atom',
+  'activity': 'http://activitystrea.ms/spec/1.0/',
+  'georss': 'http://www.georss.org/georss',
+}
 
 jinja_env = jinja2.Environment(
   loader=jinja2.PackageLoader(__package__, 'templates'), autoescape=True)
@@ -30,6 +35,41 @@ jinja_env = jinja2.Environment(
 
 def _encode_ampersands(text):
   return UNENCODED_AMPERSANDS_RE.sub('&amp;', text)
+
+def _text(elem, field):
+  """Returns the text in a child element if it exists.
+
+  For example, if elem contains <name>Ryan</name>, returns 'Ryan'.
+
+  Args:
+    elem: ElementTree.Element
+    field: string
+
+  Returns: string or None
+  """
+  if ':' not in field:
+    field = 'atom:' + field
+  val = elem.find(field, NAMESPACES)
+  if val is not None:
+    return val.text.strip()
+
+
+def _as1_value(elem, field):
+  """Returns an AS1 namespaced schema value if it exists.
+
+  For example, returns 'like' for field 'verb' if elem contains:
+
+    <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
+
+  Args:
+    elem: ElementTree.Element
+    field: string
+
+  Returns: string or None
+  """
+  type = _text(elem, 'activity:%s' % field)
+  if type:
+    return type.split('/')[-1]
 
 
 # Emulate Django template behavior that returns a special default value that
@@ -109,50 +149,23 @@ def activity_to_atom(activity, xml_base=None, reader=True):
 
 
 def atom_to_activity(atom):
-  """Converts an Atom entry to an ActivityStreams 1 object.
+  """Converts an Atom entry to an ActivityStreams 1 activity.
 
   Args:
     atom: string, Atom document
 
   Returns:
-    dict, ActivityStreams object
+    dict, ActivityStreams activity
   """
-  namespaces = {
-    'atom': 'http://www.w3.org/2005/Atom',
-    'activity': 'http://activitystrea.ms/spec/1.0/',
-    'georss': 'http://www.georss.org/georss',
-  }
-
   entry = ElementTree.fromstring(atom)
   if entry.tag.split('}')[-1] != 'entry':
     raise ValueError('Expected root entry tag; got %s' % entry.tag)
 
-  def maybe(elem, field):
-    if ':' not in field:
-      field = 'atom:' + field
-    val = elem.find(field, namespaces)
-    if val is not None:
-      return val.text
+  # default object data from entry. override with data inside activity:object.
+  obj_elem = entry.find('activity:object', NAMESPACES)
+  obj = _atom_to_object(obj_elem if obj_elem is not None else entry)
 
-  def activity_ns(elem, field):
-    type = maybe(elem, 'activity:%s' % field)
-    if type:
-      return type.split('/')[-1]
-
-  id = maybe(entry, 'id')
-  obj = {
-    'objectType': activity_ns(entry, 'object-type'),
-    'id': id,
-    'url': maybe(entry, 'uri') or id,
-    'title': maybe(entry, 'title'),
-    'published': maybe(entry, 'published'),
-    'updated': maybe(entry, 'updated'),
-    'location': {
-      'displayName': maybe(entry, 'georss:featureName'),
-    }
-  }
-
-  content = entry.find('atom:content', namespaces)
+  content = entry.find('atom:content', NAMESPACES)
   if content is not None:
     # TODO: use 'html' instead of 'text' to include HTML tags. the problem is,
     # if there's an embedded XML namespace, it prefixes *every* tag with that
@@ -161,7 +174,7 @@ def atom_to_activity(atom):
     text = ElementTree.tostring(content, 'utf-8', 'text')
     obj['content'] = re.sub(r'\s+', ' ', text.strip())
 
-  point = maybe(entry, 'georss:point')
+  point = _text(entry, 'georss:point')
   if point:
     lat, long = point.split(' ')
     obj['location'].update({
@@ -171,23 +184,63 @@ def atom_to_activity(atom):
 
   a = {
     'objectType': 'activity',
-    'verb': activity_ns(entry, 'verb'),
-    'id': obj['id'],
-    'url': obj['url'],
+    'verb': _as1_value(entry, 'verb'),
     'object': obj,
+    'actor': _author_to_actor(entry),
   }
 
-  author = entry.find('atom:author', namespaces)
-  if author is not None:
-      a['actor'] = {
-        'objectType': activity_ns(author, 'object-type'),
-        'id': maybe(author, 'id'),
-        'url': maybe(author, 'uri'),
-        'displayName': maybe(author, 'name'),
-        'email': maybe(author, 'email'),
-      }
+  if obj_elem is None:
+    a.update({
+      'id': obj['id'],
+      'url': obj['url'],
+    })
 
   return source.Source.postprocess_activity(a)
+
+
+def _atom_to_object(elem):
+  """Converts an Atom entry to an ActivityStreams 1 object.
+
+  Args:
+    elem: ElementTree.Element
+
+  Returns:
+    dict, ActivityStreams object
+  """
+  id = _text(elem, 'id') or elem.text.strip()
+  return {
+    'objectType': _as1_value(elem, 'object-type'),
+    'id': id,
+    'url': _text(elem, 'uri') or id,
+    'title': _text(elem, 'title'),
+    'published': _text(elem, 'published'),
+    'updated': _text(elem, 'updated'),
+    'location': {
+      'displayName': _text(elem, 'georss:featureName'),
+    }
+  }
+
+
+def _author_to_actor(elem):
+  """Converts an Atom <author> element to an ActivityStreams 1 actor.
+
+   Looks for <author> *inside* elem.
+
+  Args:
+    elem: ElementTree.Element
+
+  Returns:
+    dict, ActivityStreams actor object
+  """
+  author = elem.find('atom:author', NAMESPACES)
+  if author is not None:
+      return {
+        'objectType': _as1_value(author, 'object-type'),
+        'id': _text(author, 'id'),
+        'url': _text(author, 'uri'),
+        'displayName': _text(author, 'name'),
+        'email': _text(author, 'email'),
+      }
 
 
 def html_to_atom(html, url=None, fetch_author=False, reader=True):

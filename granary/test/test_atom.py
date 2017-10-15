@@ -121,6 +121,24 @@ class AtomTest(testutil.HandlerTest):
     }
     self.assert_equals(expected, atom.atom_to_activity(INSTAGRAM_ATOM_ENTRY))
 
+  def test_atom_to_like_object_text_is_url(self):
+    expected = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': {
+        'id': 'http://orig/post',
+        'url': 'http://orig/post',
+      },
+    }
+    self.assert_equals(expected, atom.atom_to_activity("""\
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns="http://www.w3.org/2005/Atom"
+       xmlns:activity="http://activitystrea.ms/spec/1.0/">
+<activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
+<activity:object>http://orig/post</activity:object>
+</entry>
+"""))
+
   def test_title(self):
     self.assert_multiline_in(
       '\n<title>my title</title>',

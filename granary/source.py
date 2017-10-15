@@ -531,7 +531,7 @@ class Source(object):
     if obj:
       activity['object'] = Source.postprocess_object(obj)
       if not activity.get('title'):
-        verb = DISPLAY_VERBS.get(activity['verb'])
+        verb = DISPLAY_VERBS.get(activity.get('verb'))
         obj_name = obj.get('displayName')
         obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'))
         if obj_name and not verb:
