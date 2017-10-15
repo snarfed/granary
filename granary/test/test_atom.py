@@ -119,7 +119,7 @@ class AtomTest(testutil.HandlerTest):
     }
     self.assert_equals(expected, atom.atom_to_activity(INSTAGRAM_ATOM_ENTRY))
 
-  def test_atom_to_like(self):
+  def test_atom_to_activity_like(self):
     for atom_obj, as_obj in (
         ('foo', {'id': 'foo', 'url': 'foo'}),
         ('<id>foo</id>', {'id': 'foo'}),
@@ -140,7 +140,7 @@ class AtomTest(testutil.HandlerTest):
 </entry>
 """ % atom_obj))
 
-  def test_atom_to_reply(self):
+  def test_atom_to_activity_reply(self):
     expected = {
       'objectType': 'activity',
       'id': 'reply-url',
@@ -160,6 +160,21 @@ class AtomTest(testutil.HandlerTest):
 <uri>reply-url</uri>
 <thr:in-reply-to ref="foo-id" href="foo-url" />
 <content>I hereby ☕ reply.</content>
+</entry>
+"""))
+
+  def test_atom_to_activity_in_reply_to_text(self):
+    expected = {
+      'objectType': 'activity',
+      'inReplyTo': [{'id': 'my-inreplyto', 'url': 'my-inreplyto'}],
+      'object': {
+        'inReplyTo': [{'id': 'my-inreplyto', 'url': 'my-inreplyto'}],
+      },
+    }
+    self.assert_equals(expected, atom.atom_to_activity(u"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:thr="http://purl.org/syndication/thread/1.0">
+<thr:in-reply-to>my-inreplyto</thr:in-reply-to>
 </entry>
 """))
 

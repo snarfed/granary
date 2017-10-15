@@ -215,8 +215,10 @@ def _atom_to_object(elem):
     'title': _text(elem, 'title'),
     'published': _text(elem, 'published'),
     'updated': _text(elem, 'updated'),
-    'inReplyTo': [{'id': r.attrib.get('ref'), 'url': r.attrib.get('href')}
-                  for r in elem.findall('thr:in-reply-to', NAMESPACES)],
+    'inReplyTo': [{
+      'id': r.attrib.get('ref') or r.text,
+      'url': r.attrib.get('href') or r.text,
+    } for r in elem.findall('thr:in-reply-to', NAMESPACES)],
     'location': {
       'displayName': _text(elem, 'georss:featureName'),
     }
