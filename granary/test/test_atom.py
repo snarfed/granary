@@ -13,7 +13,7 @@ import test_facebook
 import test_instagram
 import test_twitter
 
-INSTAGRAM_ATOM_ENTRY = """\
+INSTAGRAM_ATOM_ENTRY = u"""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xml:lang="en-US"
        xmlns="http://www.w3.org/2005/Atom"
@@ -129,7 +129,7 @@ class AtomTest(testutil.HandlerTest):
         'objectType': 'activity',
         'verb': 'like',
         'object': as_obj,
-      }, atom.atom_to_activity("""\
+      }, atom.atom_to_activity(u"""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/">
@@ -143,16 +143,16 @@ class AtomTest(testutil.HandlerTest):
       'objectType': 'activity',
       'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       'object': {
-        'content': 'I hereby reply.',
+        'content': u'I hereby ☕ reply.',
         'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       },
     }
-    self.assert_equals(expected, atom.atom_to_activity("""\
+    self.assert_equals(expected, atom.atom_to_activity(u"""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:thr="http://purl.org/syndication/thread/1.0">
 <thr:in-reply-to ref="foo-id" href="foo-url" />
-<content>I hereby reply.</content>
+<content>I hereby ☕ reply.</content>
 </entry>
 """))
 

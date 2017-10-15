@@ -52,7 +52,7 @@ def _text(elem, field):
     field = 'atom:' + field
   val = elem.find(field, NAMESPACES)
   if val is not None:
-    return val.text.strip()
+    return val.text.decode('utf-8').strip()
 
 
 def _as1_value(elem, field):
@@ -153,12 +153,14 @@ def atom_to_activity(atom):
   """Converts an Atom entry to an ActivityStreams 1 activity.
 
   Args:
-    atom: string, Atom document
+    atom: unicode string, Atom document
 
   Returns:
     dict, ActivityStreams activity
   """
-  entry = ElementTree.fromstring(atom)
+  assert isinstance(atom, unicode)
+  parser = ElementTree.XMLParser(encoding='UTF-8')
+  entry = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if entry.tag.split('}')[-1] != 'entry':
     raise ValueError('Expected root entry tag; got %s' % entry.tag)
 
@@ -172,7 +174,7 @@ def atom_to_activity(atom):
     # if there's an embedded XML namespace, it prefixes *every* tag with that
     # namespace. breaks on e.g. the <div xmlns="http://www.w3.org/1999/xhtml">
     # that our Atom templates wrap HTML content in.
-    text = ElementTree.tostring(content, 'utf-8', 'text')
+    text = ElementTree.tostring(content, 'utf-8', 'text').decode('utf-8')
     obj['content'] = re.sub(r'\s+', ' ', text.strip())
 
   point = _text(entry, 'georss:point')
