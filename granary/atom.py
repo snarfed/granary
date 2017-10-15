@@ -24,9 +24,10 @@ ENTRY_TEMPLATE = 'entry.atom'
 # stolen from django.utils.html
 UNENCODED_AMPERSANDS_RE = re.compile(r'&(?!(\w+|#\d+);)')
 NAMESPACES = {
-  'atom': 'http://www.w3.org/2005/Atom',
   'activity': 'http://activitystrea.ms/spec/1.0/',
+  'atom': 'http://www.w3.org/2005/Atom',
   'georss': 'http://www.georss.org/georss',
+  'thr': 'http://purl.org/syndication/thread/1.0',
 }
 
 jinja_env = jinja2.Environment(
@@ -187,6 +188,7 @@ def atom_to_activity(atom):
     'verb': _as1_value(entry, 'verb'),
     'object': obj,
     'actor': _author_to_actor(entry),
+    'inReplyTo': obj.get('inReplyTo'),
   }
 
   if obj_elem is None:
@@ -215,6 +217,8 @@ def _atom_to_object(elem):
     'title': _text(elem, 'title'),
     'published': _text(elem, 'published'),
     'updated': _text(elem, 'updated'),
+    'inReplyTo': [{'id': r.attrib.get('ref'), 'url': r.attrib.get('href')}
+                  for r in elem.findall('thr:in-reply-to', NAMESPACES)],
     'location': {
       'displayName': _text(elem, 'georss:featureName'),
     }

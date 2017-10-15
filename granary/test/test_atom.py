@@ -119,37 +119,17 @@ class AtomTest(testutil.HandlerTest):
     }
     self.assert_equals(expected, atom.atom_to_activity(INSTAGRAM_ATOM_ENTRY))
 
-  def test_atom_to_like_object_text_is_url(self):
-    expected = {
-      'objectType': 'activity',
-      'verb': 'like',
-      'object': {
-        'id': 'http://orig/post',
-        'url': 'http://orig/post',
-      },
-    }
-    self.assert_equals(expected, atom.atom_to_activity("""\
-<?xml version="1.0" encoding="UTF-8"?>
-<entry xmlns="http://www.w3.org/2005/Atom"
-       xmlns:activity="http://activitystrea.ms/spec/1.0/">
-<activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
-<activity:object>http://orig/post</activity:object>
-</entry>
-"""))
-
   def test_atom_to_like(self):
-    expected = {
-      'objectType': 'activity',
-      'verb': 'like',
-    }
-
     for atom_obj, as_obj in (
         ('foo', {'id': 'foo', 'url': 'foo'}),
         ('<id>foo</id>', {'id': 'foo'}),
         ('<uri>foo</uri>', {'id': 'foo', 'url': 'foo'}),
       ):
-      expected['object'] = as_obj
-      self.assert_equals(expected, atom.atom_to_activity("""\
+      self.assert_equals({
+        'objectType': 'activity',
+        'verb': 'like',
+        'object': as_obj,
+      }, atom.atom_to_activity("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/">
@@ -157,6 +137,24 @@ class AtomTest(testutil.HandlerTest):
 <activity:object>%s</activity:object>
 </entry>
 """ % atom_obj))
+
+  def test_atom_to_reply(self):
+    expected = {
+      'objectType': 'activity',
+      'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
+      'object': {
+        'content': 'I hereby reply.',
+        'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
+      },
+    }
+    self.assert_equals(expected, atom.atom_to_activity("""\
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns="http://www.w3.org/2005/Atom"
+       xmlns:thr="http://purl.org/syndication/thread/1.0">
+<thr:in-reply-to ref="foo-id" href="foo-url" />
+<content>I hereby reply.</content>
+</entry>
+"""))
 
   def test_title(self):
     self.assert_multiline_in(
