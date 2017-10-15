@@ -97,7 +97,6 @@ class AtomTest(testutil.HandlerTest):
       'objectType': 'activity',
       'verb': 'post',
       'id': 'https://www.instagram.com/p/ABC123/',
-      'url': 'https://www.instagram.com/p/ABC123/',
       'actor': {
         'displayName': 'Ryan B',
         'objectType': 'person',
@@ -105,7 +104,6 @@ class AtomTest(testutil.HandlerTest):
       },
       'object': {
         'id': 'https://www.instagram.com/p/ABC123/',
-        'url': 'https://www.instagram.com/p/ABC123/',
         'objectType': 'photo',
         'title': 'this picture -> is #abc @foo #xyz',
         'content': 'this picture -> is #abc @foo #xyz Le Truc',
@@ -138,6 +136,27 @@ class AtomTest(testutil.HandlerTest):
 <activity:object>http://orig/post</activity:object>
 </entry>
 """))
+
+  def test_atom_to_like(self):
+    expected = {
+      'objectType': 'activity',
+      'verb': 'like',
+    }
+
+    for atom_obj, as_obj in (
+        ('foo', {'id': 'foo', 'url': 'foo'}),
+        ('<id>foo</id>', {'id': 'foo'}),
+        ('<uri>foo</uri>', {'id': 'foo', 'url': 'foo'}),
+      ):
+      expected['object'] = as_obj
+      self.assert_equals(expected, atom.atom_to_activity("""\
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns="http://www.w3.org/2005/Atom"
+       xmlns:activity="http://activitystrea.ms/spec/1.0/">
+<activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
+<activity:object>%s</activity:object>
+</entry>
+""" % atom_obj))
 
   def test_title(self):
     self.assert_multiline_in(

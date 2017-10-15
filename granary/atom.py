@@ -207,11 +207,11 @@ def _atom_to_object(elem):
   Returns:
     dict, ActivityStreams object
   """
-  id = _text(elem, 'id') or elem.text.strip()
+  uri = _text(elem, 'uri') or (elem.text.strip() if elem.text else None)
   return {
     'objectType': _as1_value(elem, 'object-type'),
-    'id': id,
-    'url': _text(elem, 'uri') or id,
+    'id': _text(elem, 'id') or uri,
+    'url': uri,
     'title': _text(elem, 'title'),
     'published': _text(elem, 'published'),
     'updated': _text(elem, 'updated'),
