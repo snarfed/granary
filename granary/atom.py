@@ -37,22 +37,25 @@ jinja_env = jinja2.Environment(
 def _encode_ampersands(text):
   return UNENCODED_AMPERSANDS_RE.sub('&amp;', text)
 
-def _text(elem, field):
-  """Returns the text in a child element if it exists.
+def _text(elem, field=None):
+  """Returns the text in an element or child element if it exists.
 
-  For example, if elem contains <name>Ryan</name>, returns 'Ryan'.
+  For example, if field is 'name' and elem contains <name>Ryan</name>, returns
+  'Ryan'.
 
   Args:
     elem: ElementTree.Element
     field: string
 
   Returns: string or None
+
   """
-  if ':' not in field:
-    field = 'atom:' + field
-  val = elem.find(field, NAMESPACES)
-  if val is not None:
-    return val.text.decode('utf-8').strip()
+  if field:
+    if ':' not in field:
+      field = 'atom:' + field
+    elem = elem.find(field, NAMESPACES)
+  if elem is not None and elem.text:
+    return elem.text.decode('utf-8').strip()
 
 
 def _as1_value(elem, field):
@@ -207,7 +210,7 @@ def _atom_to_object(elem):
   Returns:
     dict, ActivityStreams object
   """
-  uri = _text(elem, 'uri') or (elem.text.strip() if elem.text else None)
+  uri = _text(elem, 'uri') or _text(elem)
   return {
     'objectType': _as1_value(elem, 'object-type'),
     'id': _text(elem, 'id') or uri,
@@ -216,8 +219,8 @@ def _atom_to_object(elem):
     'published': _text(elem, 'published'),
     'updated': _text(elem, 'updated'),
     'inReplyTo': [{
-      'id': r.attrib.get('ref') or r.text,
-      'url': r.attrib.get('href') or r.text,
+      'id': r.attrib.get('ref') or _text(r),
+      'url': r.attrib.get('href') or _text(r),
     } for r in elem.findall('thr:in-reply-to', NAMESPACES)],
     'location': {
       'displayName': _text(elem, 'georss:featureName'),
