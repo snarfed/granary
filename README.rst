@@ -11,7 +11,7 @@ data between a wide variety of formats:
 
 - Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 - Instagram and Google+ scraped HTML
-- `ActivityStreams <http://activitystrea.ms/>`__
+- `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0
 - `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML and JSON
 - `Atom <http://atomenabled.org/>`__
 - XML

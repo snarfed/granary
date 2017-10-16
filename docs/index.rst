@@ -9,7 +9,7 @@ of formats:
 
 -  Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 -  Instagram and Google+ scraped HTML
--  `ActivityStreams <http://activitystrea.ms/>`__ (1, mostly)
+-  `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0
 -  `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
    and JSON
 -  `Atom <http://atomenabled.org/>`__
@@ -196,10 +196,10 @@ returns the current authenticated user (if any). See the `individual
 method
 docstrings <https://github.com/snarfed/granary/blob/master/source.py>`__
 for details. All return values are Python dicts of decoded
-ActivityStreams JSON.
+ActivityStreams 1 JSON.
 
 The ``microformats2.*_to_html()`` functions are also useful for
-rendering ActivityStreams objects as nicely formatted HTML.
+rendering ActivityStreams 1 objects as nicely formatted HTML.
 
 Troubleshooting/FAQ
 -------------------
@@ -377,6 +377,25 @@ Facebook and Twitter's raw HTML.
 
 Changelog
 ---------
+
+1.9 - unreleased
+~~~~~~~~~~~~~~~~
+
+-  Add `ActivityStreams 2.0 <http://www.w3.org/TR/activitystreams-core/>`__!
+   New ``as2`` module includes ``to_as1()`` and ``from_as1()`` functions. Currently
+   supported: articles, notes, replies, likes, reposts, events, RSVPs,
+   tags, attachments.
+-  Atom:
+    -  Add new ``atom_to_activity()`` function for converting Atom to AS1.
+    -  Add email field to author, if provided.
+-  JSON Feed:
+    -  Raise ValueError on bad (non-dict) input.
+-  REST API:
+    -  Add ``as2`` value for ``format`` and ``input``. Revise existing
+   ActivityStreams and microformats2 value names to ``as1``,
+   ``as1-xml``, and ``mf2-json``. Old values ``activitystreams``,
+   ``json``, ``json-mf2``, and ``xml`` are still accepted, but
+   deprecated.
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
