@@ -56,7 +56,7 @@ API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&tweet_mod
 HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
-HTTP_RATE_LIMIT_CODE = 429
+HTTP_RATE_LIMIT_CODES = (429, 503)
 
 # Don't hit the RETWEETS endpoint more than this many times per
 # get_activities() call.
@@ -590,7 +590,7 @@ class Twitter(source.Source):
       try:
         resp = self.urlopen(api_endpoint % cursor)
       except urllib2.HTTPError as e:
-        if e.code == HTTP_RATE_LIMIT_CODE:
+        if e.code in HTTP_RATE_LIMIT_CODES:
           raise source.RateLimited(unicode(e), partial=values)
         raise
       values.extend(response_fn(resp))
@@ -1040,7 +1040,7 @@ class Twitter(source.Source):
           pass
         except urllib2.HTTPError, e:
           code, body = util.interpret_http_exception(e)
-          if code is None or int(code) / 100 != 5:
+          if code is None or int(code) not in (500, 501, 502):
             raise
         logging.info('Twitter API call failed! Retrying...')
 
