@@ -56,6 +56,9 @@
   {% else %}
     <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
   {% endif %}
+  {% if activity.verb in VERBS_WITH_OBJECT and (obj.url or obj.id) %}
+    <activity:object>{{ obj.url or obj.id }}</activity:object>
+  {% endif %}
   <published>{{ obj.published }}</published>
   <updated>{{ obj.updated or obj.published }}</updated>
   {% for orig in obj.inReplyTo or activity.context.inReplyTo %}

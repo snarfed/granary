@@ -89,6 +89,9 @@ class Defaulter(collections.defaultdict):
   def __unicode__(self):
     return super(Defaulter, self).__unicode__() if self else u''
 
+  def __hash__(self):
+    return super(Defaulter, self).__hash__() if self else None.__hash__()
+
 
 def activities_to_atom(activities, actor, title=None, request_url=None,
                        host_url=None, xml_base=None, rels=None, reader=True):
@@ -129,6 +132,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     updated=activities[0]['object'].get('published', '') if activities else '',
     actor=Defaulter(**actor),
     rels=rels or {},
+    VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
     )
 
 
@@ -149,6 +153,7 @@ def activity_to_atom(activity, xml_base=None, reader=True):
   return jinja_env.get_template(ENTRY_TEMPLATE).render(
     activity=Defaulter(**activity),
     xml_base=xml_base,
+    VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
   )
 
 

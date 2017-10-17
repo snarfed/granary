@@ -48,6 +48,7 @@ RSVP_TO_EVENT = {
   'rsvp-interested': 'interested',
   'invite': 'invited',
 }
+VERBS_WITH_OBJECT = {'like', 'react', 'repost'} | set(RSVP_TO_EVENT.keys())
 
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}

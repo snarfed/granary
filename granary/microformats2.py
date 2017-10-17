@@ -434,7 +434,7 @@ def activities_to_html(activities):
 </html>
 """ % '\n'.join(object_to_html(
     a['object']
-    if a.get('object') and a.get('verb') not in ('invite', 'like', 'repost', 'rsvp')
+    if a.get('object') and a.get('verb') not in source.VERBS_WITH_OBJECT
     else a)
   for a in activities)
 

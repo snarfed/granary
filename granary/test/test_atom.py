@@ -140,6 +140,18 @@ class AtomTest(testutil.HandlerTest):
 </entry>
 """ % atom_obj))
 
+  def test_activity_to_atom_like(self):
+    for obj in {'id': 'foo', 'url': 'foo'}, {'id': 'foo'}, {'url': 'foo'}:
+      self.assert_multiline_in("""\
+<activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
+<activity:object>foo</activity:object>
+""", atom.activity_to_atom({
+        'url': 'like-url',
+        'objectType': 'activity',
+        'verb': 'like',
+        'object': obj,
+      }), ignore_blanks=True)
+
   def test_atom_to_activity_reply(self):
     expected = {
       'objectType': 'activity',
