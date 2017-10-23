@@ -239,7 +239,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     ret['properties']['invitee'] = [invitee]
 
   # like and repost mentions
-  for type, prop in ('like', 'like'), ('share', 'repost'):
+  for type, prop in ('favorite', 'like'), ('like', 'like'), ('share', 'repost'):
     if obj_type == type:
       # The ActivityStreams spec says the object property should always be a
       # single object, but it's useful to let it be a list, e.g. when a like has
@@ -727,7 +727,8 @@ def render_content(obj, include_location=True, synthesize_content=True):
 
   # generate share/like contexts if the activity does not have content
   # of its own
-  for as_type, verb in [('share', 'Shared'), ('like', 'Likes')]:
+  for as_type, verb in (
+      ('favorite', 'Favorites'), ('like', 'Likes'), ('share', 'Shared')):
     obj_type = source.object_type(obj)
     if (not synthesize_content or obj_type != as_type or 'object' not in obj or
         'content' in obj):
