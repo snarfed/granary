@@ -82,7 +82,8 @@ def from_as1(obj, type=None, context=CONTEXT):
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
     'image': all_from_as1('image', type='Image'),
-    'inReplyTo': util.trim_nulls([orig.get('url') for orig in obj.get('inReplyTo', [])]),
+    'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
+                                  for orig in obj.get('inReplyTo', [])]),
     'object': from_as1(obj.get('object'), context=None),
     'tag': all_from_as1('tags')
   })
