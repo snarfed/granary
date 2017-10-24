@@ -34,6 +34,11 @@ from granary import (
   microformats2,
   source,
 )
+from granary.facebook import Facebook
+from granary.flickr import Flickr
+from granary.googleplus import GooglePlus
+from granary.instagram import Instagram
+from granary.twitter import Twitter
 
 API_PARAMS = {
   'access_token',
@@ -52,6 +57,13 @@ INPUTS = (
   'mf2-json',
 )
 URL_CACHE_TIME = 5 * 60  # 5m
+SILO_DOMAINS = {cls.DOMAIN for cls in (
+  Facebook,
+  Flickr,
+  GooglePlus,
+  Instagram,
+  Twitter,
+)}
 
 
 class FrontPageHandler(handlers.TemplateHandler):
@@ -139,8 +151,11 @@ class UrlHandler(api.Handler):
     title = None
     if mf2:
       def fetch_mf2_func(url):
+        if util.domain_or_parent_in(urlparse.urlparse(url).netloc, SILO_DOMAINS):
+          return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
         _, doc = self._urlopen(url)
         return mf2py.parse(doc=doc, url=url)
+
       actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
       title = mf2util.interpret_feed(mf2, url).get('name')
 

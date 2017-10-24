@@ -12,12 +12,16 @@
 {% if actor.description %}
 <subtitle>{{ actor.description }}</subtitle>
 {% endif %}
+{% if actor.image.url %}
 <logo>{{ actor.image.url }}</logo>
+{% endif %}
 <updated>{{ updated }}</updated>
 {% include "author.atom" %}
 
 <link rel="alternate" href="{{ actor.url }}" type="text/html" />
+{% if actor.image.url %}
 <link rel="avatar" href="{{ actor.image.url }}" />
+{% endif %}
 <link rel="self" href="{{ request_url }}" type="application/atom+xml" />
 {% for rel, url in rels.items() %}
 <link rel="{{ rel }}" href="{{ url }}" />

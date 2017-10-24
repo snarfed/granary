@@ -361,6 +361,36 @@ class AppTest(testutil.HandlerTest):
 </author>
 """, resp.body, ignore_blanks=True)
 
+  def test_url_html_to_atom_skip_silo_rel_authors(self):
+    self.expect_urlopen('http://my/posts.html', HTML % {
+      'body_class': ' class="h-feed"',
+      'extra': """
+<span class="p-name">my title</span>
+<a href="https://plus.google.com/+Author" rel="author"></a>,
+"""
+    })
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html&input=html&output=atom')
+    self.assert_equals(200, resp.status_int)
+    self.assert_multiline_in("""
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>https://plus.google.com/+Author</uri>
+</author>
+
+<link rel="alternate" href="https://plus.google.com/+Author" type="text/html" />
+<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+
+<entry>
+
+<author>
+ <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+ <uri>https://plus.google.com/+Author</uri>
+</author>
+""", resp.body, ignore_blanks=True)
+
   def test_url_html_to_json_mf2(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
     self.expect_urlopen('http://my/posts.html', html)
