@@ -75,18 +75,23 @@ def from_as1(obj, type=None, context=CONTEXT):
     return [from_as1(elem, type=type, context=None)
             for elem in util.pop_list(obj, field)]
 
+  images = all_from_as1('image', type='Image')
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
     'actor': from_as1(obj.get('actor'), context=None),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
-    'image': all_from_as1('image', type='Image'),
+    'image': images,
     'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
                                   for orig in obj.get('inReplyTo', [])]),
     'object': from_as1(obj.get('object'), context=None),
     'tag': all_from_as1('tags')
   })
+
+  if obj_type == 'person':
+    # TODO: something better. (we don't know aspect ratio though.)
+    obj['icon'] = images
 
   loc = obj.get('location')
   if loc:
@@ -134,14 +139,19 @@ def to_as1(obj, use_type=True):
   def all_to_as1(field):
     return [to_as1(elem) for elem in util.pop_list(obj, field)]
 
+  images = []
+  # icon first since e.g. Mastodon uses icon for profile picture,
+  # image for featured photo.
+  for as2_img in util.pop_list(obj, 'icon') + util.pop_list(obj, 'image'):
+    as1_img = to_as1(as2_img, use_type=False)
+    if as1_img not in images:
+      images.append(as1_img)
+
   obj.update({
     'displayName': obj.pop('name', None),
     'actor': to_as1(obj.get('actor')),
     'attachments': all_to_as1('attachment'),
-    'image': [to_as1(img, use_type=False) for img in
-              # icon first since e.g. Mastodon uses icon for profile picture,
-              # image for featured photo.
-              util.pop_list(obj, 'icon') + util.pop_list(obj, 'image')],
+    'image': images,
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
     'object': to_as1(obj.get('object')),

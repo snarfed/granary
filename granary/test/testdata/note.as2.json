@@ -15,10 +15,8 @@
     "type": "Person",
     "id": "tag:example.com,2001:ryan",
     "name": "Ryan Barrett",
-    "image": [{
-    "type": "Image",
-      "url": "http://example.com/ryan/image"
-    }]
+    "icon": [{"type": "Image", "url": "http://example.com/ryan/image"}],
+    "image": [{"type": "Image", "url": "http://example.com/ryan/image"}]
   }],
   "location": {
     "type": "Place",
