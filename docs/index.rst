@@ -378,7 +378,7 @@ Facebook and Twitter's raw HTML.
 Changelog
 ---------
 
-1.9 - unreleased
+1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
 
 -  Add `ActivityStreams 2.0 <http://www.w3.org/TR/activitystreams-core/>`__!

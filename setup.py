@@ -18,7 +18,7 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='1.8',
+      version='1.9',
       description='Free yourself from silo API chaff and expose the sweet social data foodstuff inside in standard formats and protocols!',
       long_description=open('README.rst').read(),
       url='https://github.com/snarfed/granary',
@@ -44,7 +44,7 @@ setup(name='granary',
           'jinja2',
           'mf2py>=0.2.7',
           'mf2util>=0.5.0',
-          'oauth-dropins>=1.8',
+          'oauth-dropins>=1.9',
           'requests>=2.10.0',
           'requests-toolbelt>=0.6.2',
           'brevity>=0.2.14',
