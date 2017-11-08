@@ -70,8 +70,9 @@ QUOTE_SEARCH_BATCH_SIZE = 20
 # For read requests only.
 RETRIES = 3
 
-# Config constants, as of 2015-12-29:
+# Config constants, as of 2017-11-08:
 # * Current max tweet length and expected length of a t.co URL.
+#   https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425
 #   https://dev.twitter.com/docs/tco-link-wrapper/faq
 # * Max media per tweet.
 #   https://dev.twitter.com/rest/reference/post/statuses/update#api-param-media_ids
@@ -83,9 +84,9 @@ RETRIES = 3
 # Update by running help/configuration.json manually in
 # https://apigee.com/embed/console/twitter
 #
-# TODO: pull these from /help/configuration.json instead.
-# https://dev.twitter.com/docs/api/1.1/get/help/configuration
-MAX_TWEET_LENGTH = 140
+# TODO: pull these from /help/configuration.json instead (except max tweet length)
+# https://developer.twitter.com/en/docs/developer-utilities/configuration/api-reference/get-help-configuration
+MAX_TWEET_LENGTH = 280
 TCO_LENGTH = 23
 MAX_MEDIA = 4
 IMAGE_MIME_TYPES = frozenset(('image/jpg', 'image/jpeg', 'image/png',
@@ -862,7 +863,7 @@ class Twitter(source.Source):
     return source.creation_result(resp)
 
   def _truncate(self, content, url, include_link, type, quote_tweet=None):
-    """Shorten tweet content to fit within the 140 character limit.
+    """Shorten tweet content to fit within the character limit.
 
     Args:
       content: string

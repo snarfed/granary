@@ -1621,8 +1621,8 @@ class TwitterTest(testutil.TestCase):
   def test_tweet_truncate(self):
     """A bunch of tests to exercise the tweet shortening algorithm
     """
+    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
     twitter.MAX_TWEET_LENGTH = 140
-    twitter.TCO_LENGTH = 23
 
     orig = (
       u'Hey #indieweb, the coming storm of webmention Spam may not be '
@@ -1748,8 +1748,11 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
   def test_ellipsize_real_tweet(self):
     """Test ellipsizing a tweet that was giving us trouble. If you do not
     account for the ellipsis when determining where to truncate, it will
-    truncate after 'send' and the result will be 141 characters.
+    truncate after 'send' and the result will be one char too long.
     """
+    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
+    twitter.MAX_TWEET_LENGTH = 140
+
     orig = ('Hey #indieweb, the coming storm of webmention Spam may not be '
             'far away. Those of us that have input fields to send webmentions '
             'manually may already be getting them')
@@ -2170,6 +2173,9 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     created = self.twitter.create(obj)
 
   def test_create_quote_tweet_truncated_content(self):
+    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
+    twitter.MAX_TWEET_LENGTH = 140
+
     self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
         'status':(u'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
       })
@@ -2225,6 +2231,9 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       self.assertIn('Could not find a tweet to', preview.error_html)
 
   def test_create_with_multiple_photos(self):
+    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
+    twitter.MAX_TWEET_LENGTH = 140
+
     image_urls = ['http://my/picture/%d' % i for i in range(twitter.MAX_MEDIA + 1)]
     obj = {
       'objectType': 'note',
@@ -2352,13 +2361,9 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                         'http://my/picture.tiff looks like image/tiff', msg)
 
   def test_create_with_video(self):
-    try:
-      orig_size = twitter.UPLOAD_CHUNK_SIZE
-      self._test_create_with_video()
-    finally:
-      twitter.UPLOAD_CHUNK_SIZE = orig_size
+    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
+    twitter.MAX_TWEET_LENGTH = 140
 
-  def _test_create_with_video(self):
     obj = {
       'objectType': 'note',
       'content': """\
