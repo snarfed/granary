@@ -291,6 +291,10 @@ similar "polyglot" approach, but more focused on writing than reading.
 Changelog
 ---
 
+### 1.10 - unreleased
+* Twitter:
+  * Update the publish character limit to 280. [Background.](https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425)
+
 ### 1.9 - 2017-10-24
 
 * Add [ActivityStreams 2.0](http://www.w3.org/TR/activitystreams-core/)! New `as2` module includes `to_as1()` and `from_as1()` functions. Currently supported: articles, notes, replies, likes, reposts, events, RSVPs, tags, attachments.
