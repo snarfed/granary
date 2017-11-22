@@ -294,6 +294,7 @@ Changelog
 ### 1.10 - unreleased
 * Twitter:
   * Update the publish character limit to 280. [Background.](https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425)
+  * Fix a [bug in `preview_create` that auto-linked @-mentions inside URLs](https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800), e.g. Medium posts.
 
 ### 1.9 - 2017-10-24
 

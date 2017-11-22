@@ -1779,6 +1779,18 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     actual_preview = self.twitter.preview_create(obj, include_link=source.INCLUDE_LINK).content
     self.assertEquals(preview, actual_preview)
 
+  def test_create_preview_dont_autolink_at_mentions_inside_urls(self):
+    """Don't autolink @-mentions inside urls.
+
+    https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800
+    """
+    obj = copy.deepcopy(OBJECT)
+    del obj['image']
+    obj['content'] = u'時空黑洞都出現了，非常歡樂！LOL https://medium.com/@abc/xyz'
+    self.assertEquals(
+      u'時空黑洞都出現了，非常歡樂！LOL <a href="https://medium.com/@abc/xyz">medium.com/@abc/xyz</a>',
+      self.twitter.preview_create(obj).content)
+
   def test_tweet_article_has_different_format(self):
     """Articles are published with a slightly different format:
     "The Title: url", instead of "The Title (url)"

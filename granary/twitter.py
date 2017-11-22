@@ -99,7 +99,7 @@ UPLOAD_CHUNK_SIZE = 5 * MB
 # username requirements and limits:
 # https://support.twitter.com/articles/101299#error
 # http://stackoverflow.com/a/13396934/186123
-MENTION_RE = re.compile(r'(^|[^@\w])@(\w{1,15})\b', re.UNICODE)
+MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(\w{1,15})\b', re.UNICODE)
 
 # hashtag requirements and limits:
 # https://support.twitter.com/articles/370610
