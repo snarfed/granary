@@ -25,7 +25,7 @@ Here's how to get started:
 -  `Click here for reference
    docs. <https://granary.readthedocs.io/en/latest/source/granary.html>`__
 -  The REST API and demo app are deployed at
-   `granary-demo.appspot.com <https://granary-demo.appspot.com/>`__.
+   `granary.io <https://granary.io/>`__.
 
 License: This project is placed in the public domain.
 
@@ -56,7 +56,7 @@ is equivalent to this ``HTTP GET`` request:
 
 ::
 
-    https://granary-demo.appspot.com/twitter/@me/@friends/@app/
+    https://granary.io/twitter/@me/@friends/@app/
       ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 
 They return the authenticated user's Twitter stream, ie tweets from the
@@ -168,13 +168,13 @@ to hard-code exceptions for the domains you want to use e.g.
 `endpoint above <#about>`__.
 
 The web UI
-(`granary-demo.appspot.com <https://granary-demo.appspot.com/>`__)
+(`granary.io <https://granary.io/>`__)
 currently only fetches Facebook access tokens for users. If you want to
 use it to access a Facebook page, you'll need to get an access token
 manually with the `Graph API
 Explorer <https://developers.facebook.com/tools/explorer/>`__ (click on
 the *Get To...* drop-down) . Then, log into Facebook on
-`granary-demo.appspot.com <https://granary-demo.appspot.com/>`__ and
+`granary.io <https://granary.io/>`__ and
 paste the page access token into the ``access_token`` text box.
 
 (Google+ pages `aren't supported in their

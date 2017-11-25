@@ -37,7 +37,7 @@ Here's how to get started:
 * [Click here for getting started docs.](#using)
 * [Click here for reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
 * The REST API and demo app are deployed at
-[granary-demo.appspot.com](https://granary-demo.appspot.com/).
+[granary.io](https://granary.io/).
 
 License: This project is placed in the public domain.
 
@@ -64,7 +64,7 @@ tw.get_activities(group_id='@friends')
 is equivalent to this `HTTP GET` request:
 
 ```
-https://granary-demo.appspot.com/twitter/@me/@friends/@app/
+https://granary.io/twitter/@me/@friends/@app/
   ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 ```
 
@@ -129,7 +129,7 @@ By default, responses are cached and reused for 5m without re-fetching the sourc
 
 To use the REST API in an existing ActivityStreams client, you'll need to hard-code exceptions for the domains you want to use e.g. `facebook.com`, and redirect HTTP requests to the corresponding [endpoint above](#about).
 
-The web UI ([granary-demo.appspot.com](https://granary-demo.appspot.com/)) currently only fetches Facebook access tokens for users. If you want to use it to access a Facebook page, you'll need to get an access token manually with the [Graph API Explorer](https://developers.facebook.com/tools/explorer/) (click on the _Get To..._ drop-down) . Then, log into Facebook on [granary-demo.appspot.com](https://granary-demo.appspot.com/) and paste the page access token into the `access_token` text box.
+The web UI ([granary.io](https://granary.io/)) currently only fetches Facebook access tokens for users. If you want to use it to access a Facebook page, you'll need to get an access token manually with the [Graph API Explorer](https://developers.facebook.com/tools/explorer/) (click on the _Get To..._ drop-down) . Then, log into Facebook on [granary.io](https://granary.io/) and paste the page access token into the `access_token` text box.
 
 (Google+ pages [aren't supported in their API](https://github.com/snarfed/bridgy/issues/354).)
 

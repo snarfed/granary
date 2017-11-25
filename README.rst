@@ -17,7 +17,7 @@ data between a wide variety of formats:
 - XML
 - `JSON Feed <https://jsonfeed.org/>`__
 
-`Try out the interactive demo <https://granary-demo.appspot.com/>`__ and
+`Try out the interactive demo <https://granary.io/>`__ and
 `check out the docs <https://granary.readthedocs.io/>`__.
 
 License: This project is placed in the public domain.
@@ -42,7 +42,7 @@ is equivalent to this ``HTTP GET`` request:
 
 ::
 
-    https://granary-demo.appspot.com/twitter/@me/@friends/@app/
+    https://granary.io/twitter/@me/@friends/@app/
       ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 
 They return the authenticated user's Twitter stream, ie tweets from the
