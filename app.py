@@ -70,6 +70,10 @@ class FrontPageHandler(handlers.TemplateHandler):
   """Renders and serves the front page."""
   handle_exception = handlers.handle_exception
 
+  @api.canonicalize_domain
+  def get(self, *args, **kwargs):
+    return super(FrontPageHandler, self).get(*args, **kwargs)
+
   def template_file(self):
     return 'granary/templates/index.html'
 
@@ -91,6 +95,7 @@ class DemoHandler(handlers.ModernHandler):
   """Handles silo requests from the interactive demo form on the front page."""
   handle_exception = handlers.handle_exception
 
+  @api.canonicalize_domain
   def get(self):
     site = util.get_required_param(self, 'site')
     group = self.request.get('group_id') or source.ALL
@@ -124,6 +129,7 @@ class UrlHandler(api.Handler):
   """
   handle_exception = handlers.handle_exception
 
+  @api.canonicalize_domain
   def get(self):
     input = util.get_required_param(self, 'input')
     if input not in INPUTS:

@@ -76,6 +76,9 @@ FORMATS = (
   'xml',
 )
 
+canonicalize_domain = handlers.redirect(
+  ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io')
+
 
 class Handler(handlers.ModernHandler):
   """Base class for API handlers.
@@ -92,6 +95,7 @@ class Handler(handlers.ModernHandler):
   """
   handle_exception = handlers.handle_exception
 
+  @canonicalize_domain
   def get(self):
     """Handles an API GET.
 
