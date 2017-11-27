@@ -31,7 +31,7 @@ OBJECT_TYPE_TO_TYPE = {
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 
 VERB_TO_TYPE = {
-  'favorite': 'Favorite',
+  'favorite': 'Like',
   'invite': 'Invite',
   'like': 'Like',
   'post': 'Create',
