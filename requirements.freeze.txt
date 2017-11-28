@@ -1,0 +1,33 @@
+beautifulsoup4==4.4.1
+brevity==0.2.14
+certifi==2017.7.27.1
+chardet==3.0.4
+coverage==4.0.3
+-e git+https://github.com/snarfed/gdata-python-client-1.git@1df4e1efea7e5cf2754bc7eec6c1ab48ab09e3b1#egg=gdata
+google-api-python-client==1.6.3
+html2text==2016.9.19
+html5lib==0.9999999
+httplib2==0.10.3
+idna==2.6
+Jinja2==2.10
+MarkupSafe==1.0
+mf2py==1.0.5
+-e git+https://github.com/snarfed/mf2util.git@992b2655be66a128bb40f847f3eba0ed955cadfe#egg=mf2util
+mox==0.5.3
+-e git+git@github.com:snarfed/oauth-dropins.git@0de5f2da6fbf345ceea262d23f9e40576e6ce7db#egg=oauth_dropins
+oauth2client==4.1.2
+oauthlib==2.0.2
+pyasn1==0.3.3
+pyasn1-modules==0.1.1
+python-tumblpy==1.0.4
+requests==2.18.4
+requests-oauthlib==0.8.0
+requests-toolbelt==0.8.0
+rsa==3.4.2
+simplejson==3.7.3
+six==1.10.0
+tweepy==3.3.0
+uritemplate==3.0.0
+urllib3==1.22
+webapp2==2.5.2
+WebOb==1.4.1
