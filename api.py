@@ -261,14 +261,13 @@ class Handler(handlers.ModernHandler):
       self.response.headers['Content-Type'] = 'text/plain'
 
   def get_kwargs(self, source):
-    """Extracts, normalizes and returns the startIndex, count, and search
-    query params.
+    """Extracts, normalizes and returns the kwargs for get_activities().
 
     Args:
       source: Source instance
 
     Returns:
-      dict with 'start_index' and 'count' keys mapped to integers
+      dict
     """
     start_index = self.get_positive_int('startIndex')
     count = self.get_positive_int('count')
@@ -283,6 +282,10 @@ class Handler(handlers.ModernHandler):
     search_query = self.request.get('search_query') or self.request.get('q')
     if search_query:
       kwargs['search_query'] = search_query
+
+    cookie = self.request.get('cookie')
+    if cookie:
+      kwargs['cookie'] = cookie
 
     return kwargs
 

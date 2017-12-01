@@ -167,19 +167,21 @@ class Instagram(source.Source):
     Raises:
       InstagramAPIError
     """
+    if group_id is None:
+      group_id = source.FRIENDS
+
     if scrape or self.scrape:
       if not (activity_id or
               (group_id == source.SELF and user_id) or
               (group_id == source.FRIENDS and cookie)):
         raise NotImplementedError(
           'Scraping only supports activity_id, user_id and group_id=@self, or cookie and group_id=@friends.')
-      return self._scrape(user_id=user_id, activity_id=activity_id, cookie=cookie,
-                          fetch_extras=fetch_replies or fetch_likes, cache=cache)
+      return self._scrape(
+        user_id=user_id, group_id=group_id, activity_id=activity_id,
+        cookie=cookie, fetch_extras=fetch_replies or fetch_likes, cache=cache)
 
     if user_id is None:
       user_id = 'self'
-    if group_id is None:
-      group_id = source.FRIENDS
 
     if search_query:
       if search_query.startswith('#'):
@@ -235,7 +237,7 @@ class Instagram(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def _scrape(self, user_id=None, activity_id=None, cookie=None,
+  def _scrape(self, user_id=None, group_id=None, activity_id=None, cookie=None,
               fetch_extras=False, cache=None, shortcode=None):
     """Scrapes a user's profile or feed and converts the media to activities.
 
@@ -256,10 +258,12 @@ class Instagram(source.Source):
       shortcode = self.id_to_shortcode(activity_id)
 
     url = (HTML_MEDIA % shortcode if shortcode
-           else HTML_PROFILE % user_id if user_id
+           else HTML_PROFILE % user_id if user_id and group_id == source.SELF
            else HTML_BASE_URL)
     kwargs = {}
     if cookie:
+      if not cookie.startswith('sessionid='):
+        cookie = 'sessionid=' + cookie
       kwargs = {'headers': {'Cookie': cookie}}
     resp = util.requests_get(url, allow_redirects=False, **kwargs)
     if ((cookie and 'not-logged-in' in resp.text) or

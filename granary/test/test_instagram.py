@@ -1196,15 +1196,16 @@ class InstagramTest(testutil.HandlerTest):
   def test_get_activities_scrape_friends_cookie(self):
     self.expect_requests_get(
       instagram.HTML_BASE_URL, HTML_FEED_NEW_COMPLETE, allow_redirects=False,
-      headers={'Cookie': 'my cookie'})
+      headers={'Cookie': 'sessionid=my-cookie'})
     self.mox.ReplayAll()
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
-      group_id=source.FRIENDS, scrape=True, cookie='my cookie'))
+      user_id='self', group_id=source.FRIENDS, scrape=True,
+      cookie='sessionid=my-cookie'))
 
   def test_get_activities_response_scrape_friends_viewer(self):
     self.expect_requests_get(
       instagram.HTML_BASE_URL, HTML_FEED_NEW_COMPLETE, allow_redirects=False,
-      headers={'Cookie': 'my cookie'})
+      headers={'Cookie': 'sessionid=my cookie'})
     self.mox.ReplayAll()
 
     resp = self.instagram.get_activities_response(
@@ -1215,7 +1216,7 @@ class InstagramTest(testutil.HandlerTest):
   def test_get_activities_scrape_cookie_not_logged_in(self):
     self.expect_requests_get(
       instagram.HTML_BASE_URL, '<html>not-logged-in</html>',
-      allow_redirects=False, headers={'Cookie': 'my cookie'})
+      allow_redirects=False, headers={'Cookie': 'sessionid=my cookie'})
     self.mox.ReplayAll()
 
     with self.assertRaises(requests.HTTPError) as cm:
@@ -1263,7 +1264,7 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_requests_get(
       instagram.HTML_BASE_URL,
       allow_redirects=False,
-      headers={'Cookie': 'my cookie'},
+      headers={'Cookie': 'sessionid=my cookie'},
       status_code=302,
       redirected_url='https://www.instagram.com/accounts/login/?next=/')
     self.mox.ReplayAll()
@@ -1300,7 +1301,7 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_get_activities_scrape_error(self):
     self.expect_requests_get(instagram.HTML_BASE_URL,
-                             headers={'Cookie': 'my cookie'},
+                             headers={'Cookie': 'sessionid=my cookie'},
                              allow_redirects=False,
                              status_code=429)
     self.mox.ReplayAll()

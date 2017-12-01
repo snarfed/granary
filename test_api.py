@@ -12,6 +12,7 @@ import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
 
 import api
+from granary import instagram
 from granary import source
 from granary.test import test_facebook
 from granary.test import test_instagram
@@ -33,14 +34,13 @@ class HandlerTest(testutil.HandlerTest):
 
   def setUp(self):
     super(HandlerTest, self).setUp()
-    self.reset()
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
 
   def reset(self):
     self.mox.UnsetStubs()
     self.mox.ResetAll()
     api.SOURCE = FakeSource
     self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
 
   def get_response(self, url, *args, **kwargs):
     start_index = kwargs.setdefault('start_index', 0)
@@ -96,6 +96,7 @@ class HandlerTest(testutil.HandlerTest):
     self.check_request('/123/@self/', '123', '@self')
 
   def test_blocks(self):
+    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
     blocks = [{'blockee': '1'}, {'blockee': '2'}]
     FakeSource.get_blocklist().AndReturn(blocks)
     self.mox.ReplayAll()
@@ -201,7 +202,19 @@ class HandlerTest(testutil.HandlerTest):
     resp = self.get_response('/fake?format=bad')
     self.assertEquals(400, resp.status_int)
 
-  def test_convert_not_implemented_error(self):
+  def test_instagram_scrape_with_cookie(self):
+    self.expect_requests_get(
+      instagram.HTML_BASE_URL, test_instagram.HTML_FEED_NEW_COMPLETE,
+      allow_redirects=False, headers={'Cookie': 'sessionid=c00k1e'})
+    self.mox.ReplayAll()
+    resp = api.application.get_response(
+      '/instagram/@me/@friends/@app/?cookie=c00k1e')
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('application/json', resp.headers['Content-Type'])
+    self.assert_equals(test_instagram.HTML_ACTIVITIES_FULL,
+                       json.loads(resp.body)['items'])
+
+  def test_instagram_scrape_without_cookie_error(self):
     resp = api.application.get_response(
       '/instagram/@me/@friends/@app/?format=html&access_token=...')
     self.assert_equals(400, resp.status_int)
