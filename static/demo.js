@@ -18,6 +18,11 @@ function render_demo_request() {
        : encodeURIComponent(get('activity_id')) + '?') +
       'format=' + get('format');
 
+  cookie = get('cookie');
+  if (cooke && site == 'instagram') {
+    url += '&cookie=' + cookie;
+  }
+
   if (site != 'instagram') {
     for (i in OAUTH_INPUT_IDS) {
       elem = document.getElementById(OAUTH_INPUT_IDS[i]);

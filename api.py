@@ -163,7 +163,7 @@ class Handler(handlers.ModernHandler):
       if len(args) >= 2 and args[1] == '@blocks':
         response = {'items': src.get_blocklist()}
       else:
-        response = src.get_activities_response(*args, **self.get_kwargs(src))
+        response = src.get_activities_response(*args, **self.get_kwargs())
     except (NotImplementedError, ValueError) as e:
       self.abort(400, str(e))
       # other exceptions are handled by webutil.handlers.handle_exception(),
@@ -260,11 +260,8 @@ class Handler(handlers.ModernHandler):
       # override response content type
       self.response.headers['Content-Type'] = 'text/plain'
 
-  def get_kwargs(self, source):
+  def get_kwargs(self):
     """Extracts, normalizes and returns the kwargs for get_activities().
-
-    Args:
-      source: Source instance
 
     Returns:
       dict

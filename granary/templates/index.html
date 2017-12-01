@@ -165,17 +165,18 @@ Click on a site to try it!
 <label>/ {{ site }} / </label>
 {% if site == 'instagram' %}
 <input id="user_id" name="user_id" type="text" class="form-control"
-       placeholder="username" size="12" required />
-<input type="hidden" id="group_id" name="group_id" value="@self" />
-<label>/ @self </label>
+       placeholder="username" size="12" />
 {% else %}
 <label> me / </label>
+{% endif %}
 {% if site == 'facebook' %}
 <label> @self </label>
 <input type="hidden" id="group_id" name="group_id" value="@self" />
 {% else %}
 <select id="group_id" name="group_id" onchange="update_form()">
-  <option value="@all">@all</option>
+  {% if site != 'instagram' %}
+    <option value="@all">@all</option>
+  {% endif %}
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
   {% if site == 'twitter' %}
@@ -183,7 +184,6 @@ Click on a site to try it!
     <option value="@blocks">@blocks</option>
   {% endif %}
 </select>
-{% endif %}
 {% endif %}
 
 <label>/ @app </label>
@@ -226,6 +226,14 @@ Click on a site to try it!
   <label for="access_token_secret">&amp; access_token_secret =</label>
   <input id="access_token_secret" name="access_token_secret" type="text" size="10"
          class="form-control" value="{{ access_token_secret }}" />
+{% endif %}
+
+{% if site == 'instagram' %}
+<nobr>
+  <label for="cookie">& cookie =</label>
+  <input id="cookie" name="cookie" type="text" class="form-control"
+         placeholder="sessionid cookie (for @friends)" size="31" />
+</nobr>
 {% endif %}
 </code>
 

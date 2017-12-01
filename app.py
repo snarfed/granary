@@ -3,6 +3,7 @@
 
 __author__ = 'Ryan Barrett <granary@ryanb.org>'
 
+import copy
 import httplib
 import json
 import logging
@@ -40,13 +41,6 @@ from granary.googleplus import GooglePlus
 from granary.instagram import Instagram
 from granary.twitter import Twitter
 
-API_PARAMS = {
-  'access_token',
-  'access_token_key',
-  'access_token_secret',
-  'auth_entity',
-  'format',
-}
 INPUTS = (
   'activitystreams',
   'as1',
@@ -107,13 +101,13 @@ class DemoHandler(handlers.ModernHandler):
     elif group != source.BLOCKS:
       activity_id = self.request.get('activity_id', '').encode('utf-8')
 
-    params = {
+    # pass query params through
+    params = dict(self.request.params.items())
+    params.update({
       'plaintext': 'true',
       'cache': 'false',
-      'search_query': search_query,
-    }
-    params.update({name: val for name, val in self.request.params.items()
-                   if name in API_PARAMS})
+    })
+
     return self.redirect('/%s/%s/%s/@app/%s?%s' % (
       site, urllib.quote_plus(user.encode('utf-8')), group, activity_id,
       urllib.urlencode(params)))
