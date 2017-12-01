@@ -19,7 +19,7 @@ function render_demo_request() {
       'format=' + get('format');
 
   cookie = get('cookie');
-  if (cooke && site == 'instagram') {
+  if (cookie && site == 'instagram') {
     url += '&cookie=' + cookie;
   }
 
