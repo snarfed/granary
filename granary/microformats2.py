@@ -462,10 +462,10 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
     the end.
   """
   return json_to_html(object_to_json(obj, synthesize_content=synthesize_content),
-                      parent_props)
+                      parent_props=parent_props, render_attachments=False)
 
 
-def json_to_html(obj, parent_props=None):
+def json_to_html(obj, parent_props=None, render_attachments=True):
   """Converts a microformats2 JSON object to microformats2 HTML.
 
   See object_to_html for details.
@@ -474,6 +474,7 @@ def json_to_html(obj, parent_props=None):
     obj: dict, a decoded microformats2 JSON object
     parent_props: list of strings, the properties of the parent object where
       this object is embedded, e.g. 'u-repost-of'
+    render_attachments: boolean, whether to render attachments
 
   Returns:
     string HTML
@@ -534,10 +535,13 @@ def json_to_html(obj, parent_props=None):
   summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
              if prop.get('summary') else '')
 
-  photo = '\n'.join(img(url, 'u-photo', 'attachment')
-                    for url in props.get('photo', []) if url)
-  video = '\n'.join(vid(url, None, 'u-video')
-                    for url in props.get('video', []) if url)
+  photo = video = ''
+  if render_attachments:
+    photo = '\n'.join(img(url, 'u-photo', 'attachment')
+                      for url in props.get('photo', []) if url)
+    video = '\n'.join(vid(url, None, 'u-video')
+                      for url in props.get('video', []) if url)
+
   people = '\n'.join(
     hcard_to_html(cat, ['u-category', 'h-card'])
     for cat in props.get('category', [])
@@ -700,15 +704,10 @@ def render_content(obj, include_location=True, synthesize_content=True):
                  if a.get('objectType') not in ('note', 'article')]
 
   for tag in attachments + tags.pop('article', []):
-    tag_type = tag.get('objectType')
-    if (tag_type == 'image' and
-        util.get_first(tag, 'image') in util.get_list(obj, 'image')):
-      continue
-
     name = tag.get('displayName', '')
     open_a_tag = False
     content += '\n<p>'
-    if tag_type == 'video':
+    if tag.get('objectType') == 'video':
       video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
       poster = util.get_first(tag, 'image', {})
       if video and video.get('url'):
