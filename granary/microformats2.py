@@ -700,15 +700,20 @@ def render_content(obj, include_location=True, synthesize_content=True):
                  if a.get('objectType') not in ('note', 'article')]
 
   for tag in attachments + tags.pop('article', []):
+    tag_type = tag.get('objectType')
+    if (tag_type == 'image' and
+        util.get_first(tag, 'image') in util.get_list(obj, 'image')):
+      continue
+
     name = tag.get('displayName', '')
     open_a_tag = False
-    if tag.get('objectType') == 'video':
+    content += '\n<p>'
+    if tag_type == 'video':
       video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
       poster = util.get_first(tag, 'image', {})
       if video and video.get('url'):
-        content += '\n<p>%s' % vid(video['url'], poster.get('url'), 'thumbnail')
+        content += vid(video['url'], poster.get('url'), 'thumbnail')
     else:
-      content += '\n<p>'
       url = tag.get('url') or obj.get('url')
       if url:
         content += '\n<a class="link" href="%s">' % url

@@ -1,0 +1,9 @@
+{
+  "objectType": "article",
+  "content": "foo bar",
+  "image": [{"url": "http://pic/ture.jpg"}],
+  "attachments": [{
+    "objectType": "image",
+    "image": [{"url": "http://pic/ture.jpg"}]
+  }]
+}
