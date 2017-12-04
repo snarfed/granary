@@ -462,10 +462,10 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
     the end.
   """
   return json_to_html(object_to_json(obj, synthesize_content=synthesize_content),
-                      parent_props=parent_props, render_attachments=False)
+                      parent_props=parent_props)
 
 
-def json_to_html(obj, parent_props=None, render_attachments=True):
+def json_to_html(obj, parent_props=None):
   """Converts a microformats2 JSON object to microformats2 HTML.
 
   See object_to_html for details.
@@ -474,7 +474,6 @@ def json_to_html(obj, parent_props=None, render_attachments=True):
     obj: dict, a decoded microformats2 JSON object
     parent_props: list of strings, the properties of the parent object where
       this object is embedded, e.g. 'u-repost-of'
-    render_attachments: boolean, whether to render attachments
 
   Returns:
     string HTML
@@ -535,12 +534,12 @@ def json_to_html(obj, parent_props=None, render_attachments=True):
   summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
              if prop.get('summary') else '')
 
-  photo = video = ''
-  if render_attachments:
-    photo = '\n'.join(img(url, 'u-photo', 'attachment')
-                      for url in props.get('photo', []) if url)
-    video = '\n'.join(vid(url, None, 'u-video')
-                      for url in props.get('video', []) if url)
+  # TODO: use photo alt property as alt text once mf2py handles that.
+  # https://github.com/tommorris/mf2py/issues/83
+  photo = '\n'.join(img(url, 'u-photo', 'attachment')
+                    for url in props.get('photo', []) if url)
+  video = '\n'.join(vid(url, None, 'u-video')
+                    for url in props.get('video', []) if url)
 
   people = '\n'.join(
     hcard_to_html(cat, ['u-category', 'h-card'])
@@ -639,7 +638,8 @@ def hcard_to_html(hcard, parent_props=None):
   )
 
 
-def render_content(obj, include_location=True, synthesize_content=True):
+def render_content(obj, include_location=True, synthesize_content=True,
+                   render_attachments=False):
   """Renders the content of an ActivityStreams object.
 
   Includes tags, mentions, and non-note/article attachments. (Note/article
@@ -700,34 +700,34 @@ def render_content(obj, include_location=True, synthesize_content=True):
 
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
-  attachments = [a for a in obj.get('attachments', [])
-                 if a.get('objectType') not in ('note', 'article')]
-
-  for tag in attachments + tags.pop('article', []):
-    name = tag.get('displayName', '')
-    open_a_tag = False
-    content += '\n<p>'
-    if tag.get('objectType') == 'video':
-      video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
-      poster = util.get_first(tag, 'image', {})
-      if video and video.get('url'):
-        content += vid(video['url'], poster.get('url'), 'thumbnail')
-    else:
-      url = tag.get('url') or obj.get('url')
-      if url:
-        content += '\n<a class="link" href="%s">' % url
-        open_a_tag = True
-      image = util.get_first(tag, 'image') or util.get_first(obj, 'image')
-      if image and image.get('url'):
-        content += '\n' + img(image['url'], 'thumbnail', name)
-    if name:
-      content += '\n<span class="name">%s</span>' % name
-    if open_a_tag:
-      content += '\n</a>'
-    summary = tag.get('summary')
-    if summary and summary != name:
-      content += '\n<span class="summary">%s</span>' % summary
-    content += '\n</p>'
+  if render_attachments:
+    attachments = [a for a in obj.get('attachments', [])
+                   if a.get('objectType') not in ('note', 'article')]
+    for tag in attachments + tags.pop('article', []):
+      name = tag.get('displayName', '')
+      open_a_tag = False
+      content += '\n<p>'
+      if tag.get('objectType') == 'video':
+        video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
+        poster = util.get_first(tag, 'image', {})
+        if video and video.get('url'):
+          content += vid(video['url'], poster.get('url'), 'thumbnail')
+      else:
+        url = tag.get('url') or obj.get('url')
+        if url:
+          content += '\n<a class="link" href="%s">' % url
+          open_a_tag = True
+        image = util.get_first(tag, 'image') or util.get_first(obj, 'image')
+        if image and image.get('url'):
+          content += '\n' + img(image['url'], 'thumbnail', name)
+      if name:
+        content += '\n<span class="name">%s</span>' % name
+      if open_a_tag:
+        content += '\n</a>'
+      summary = tag.get('summary')
+      if summary and summary != name:
+        content += '\n<span class="summary">%s</span>' % summary
+      content += '\n</p>'
 
   # generate share/like contexts if the activity does not have content
   # of its own

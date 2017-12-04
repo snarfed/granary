@@ -1,6 +1,6 @@
 """Convert between ActivityStreams 1 and Atom.
 
-Atom spec: http://atomenabled.org/developers/syndication/
+Atom spec: https://tools.ietf.org/html/rfc5023 (RIP atomenabled.org)
 """
 
 import collections
@@ -303,7 +303,7 @@ def _prepare_activity(a, reader=True):
 
   # Render content as HTML; escape &s
   obj['rendered_content'] = _encode_ampersands(microformats2.render_content(
-    primary, include_location=reader))
+    primary, include_location=reader, render_attachments=True))
 
   # Make sure every activity has the title field, since Atom <entry> requires
   # the title element.

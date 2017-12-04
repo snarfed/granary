@@ -163,6 +163,21 @@ class Microformats2Test(testutil.HandlerTest):
                       re.sub('\n\s*', '\n', result))
 
   def test_render_content_link_with_image(self):
+    obj = {
+      'content': 'foo',
+      'tags': [{
+        'objectType': 'article',
+        'url': 'http://link',
+        'displayName': 'name',
+        'image': {'url': 'http://image'},
+      }]
+    }
+
+    self.assert_equals("""\
+foo
+<a class="tag" href="http://link">name</a>
+""", microformats2.render_content(obj, render_attachments=False))
+
     self.assert_equals("""\
 foo
 <p>
@@ -170,17 +185,19 @@ foo
 <img class="thumbnail" src="http://image" alt="name" />
 <span class="name">name</span>
 </a>
-</p>""", microformats2.render_content({
-        'content': 'foo',
-        'tags': [{
-          'objectType': 'article',
-          'url': 'http://link',
-          'displayName': 'name',
-          'image': {'url': 'http://image'},
-        }]
-      }))
+</p>""", microformats2.render_content(obj, render_attachments=True))
 
   def test_render_content_multiple_image_attachments(self):
+    obj = {
+      'content': 'foo',
+      'attachments': [
+        {'objectType': 'image', 'image': {'url': 'http://1'}},
+        {'objectType': 'image', 'image': {'url': 'http://2'}},
+      ],
+    }
+
+    self.assert_equals('foo', microformats2.render_content(obj))
+
     self.assert_equals("""\
 foo
 <p>
@@ -188,13 +205,7 @@ foo
 </p>
 <p>
 <img class="thumbnail" src="http://2" alt="" />
-</p>""", microformats2.render_content({
-        'content': 'foo',
-        'attachments': [
-          {'objectType': 'image', 'image': {'url': 'http://1'}},
-          {'objectType': 'image', 'image': {'url': 'http://2'}},
-        ]
-      }))
+</p>""", microformats2.render_content(obj, render_attachments=True))
 
   def test_render_content_converts_newlines_to_brs(self):
     self.assert_equals("""\
@@ -252,18 +263,22 @@ foo
                            microformats2.render_content(obj, synthesize_content=val))
 
   def test_render_content_video(self):
-    self.assert_equals("""\
-foo
-<p><video class="thumbnail" src="http://vid/eo" poster="http://im/age" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly<img src="http://im/age"/></a></video>
-</p>
-""", microformats2.render_content({
+    obj = {
       'content': 'foo',
       'attachments': [{
         'image': [{'url': 'http://im/age'}],
         'stream': [{'url': 'http://vid/eo'}],
         'objectType': 'video',
       }],
-    }))
+    }
+
+    self.assert_equals('foo', microformats2.render_content(obj))
+
+    self.assert_equals("""\
+foo
+<p><video class="thumbnail" src="http://vid/eo" poster="http://im/age" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly<img src="http://im/age"/></a></video>
+</p>
+""", microformats2.render_content(obj, render_attachments=True))
 
   def test_render_content_unicode_high_code_points(self):
     """Test Unicode high code point chars.
@@ -287,6 +302,13 @@ foo
         }]}))
 
   def test_escape_html_attribute_values(self):
+    obj = {
+      'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
+      'attachments': [{'image': {'url': 'img'}, 'displayName': 'd & e'}],
+    }
+
+    # TODO: test that img alt gets displayName 'd & e' once mf2py handles that.
+    # https://github.com/tommorris/mf2py/issues/83
     self.assert_multiline_equals("""\
 <article class="h-entry">
 <span class="p-uid"></span>
@@ -294,17 +316,16 @@ foo
 <span class="p-name">a " b ' c</span>
 <img class="u-photo" src="img" alt="" />
 </span>
-<div class="e-content p-name">
+<div class="">
+</div>
+</article>""", microformats2.object_to_html(obj), ignore_blanks=True)
+
+    content = microformats2.render_content(obj, render_attachments=True)
+    self.assert_multiline_equals("""\
 <p>
 <img class="thumbnail" src="img" alt="d &amp; e" />
 <span class="name">d & e</span>
-</p>
-</div>
-
-</article>""", microformats2.object_to_html({
-        'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
-        'attachments': [{'image': {'url': 'img'}, 'displayName': 'd & e'}],
-      }), ignore_blanks=True)
+</p>""", content, ignore_blanks=True)
 
   def test_mention_and_hashtag(self):
     self.assert_equals("""
