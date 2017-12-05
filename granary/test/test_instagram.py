@@ -399,7 +399,7 @@ ATOM = """\
 this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz
 <p>
 <a class="link" href="https://www.instagram.com/p/ABC123/">
-<img class="thumbnail" src="http://attach/image/big" alt="" />
+<img class="u-photo" src="http://attach/image/big" alt="" />
 </a>
 </p>
 <p>  <span class="p-location h-card">

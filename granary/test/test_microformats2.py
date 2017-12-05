@@ -182,7 +182,7 @@ foo
 foo
 <p>
 <a class="link" href="http://link">
-<img class="thumbnail" src="http://image" alt="name" />
+<img class="u-photo" src="http://image" alt="name" />
 <span class="name">name</span>
 </a>
 </p>""", microformats2.render_content(obj, render_attachments=True))
@@ -201,10 +201,10 @@ foo
     self.assert_equals("""\
 foo
 <p>
-<img class="thumbnail" src="http://1" alt="" />
+<img class="u-photo" src="http://1" alt="" />
 </p>
 <p>
-<img class="thumbnail" src="http://2" alt="" />
+<img class="u-photo" src="http://2" alt="" />
 </p>""", microformats2.render_content(obj, render_attachments=True))
 
   def test_render_content_converts_newlines_to_brs(self):
@@ -262,13 +262,16 @@ foo
         self.assert_equals(obj['content'],
                            microformats2.render_content(obj, synthesize_content=val))
 
-  def test_render_content_video(self):
+  def test_render_content_video_audio(self):
     obj = {
       'content': 'foo',
       'attachments': [{
         'image': [{'url': 'http://im/age'}],
         'stream': [{'url': 'http://vid/eo'}],
         'objectType': 'video',
+      }, {
+        'stream': [{'url': 'http://aud/io'}],
+        'objectType': 'audio',
       }],
     }
 
@@ -276,7 +279,9 @@ foo
 
     self.assert_equals("""\
 foo
-<p><video class="thumbnail" src="http://vid/eo" poster="http://im/age" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly.<img src="http://im/age"/></a></video>
+<p><video class="u-video" src="http://vid/eo" controls="controls" poster="http://im/age">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly. <img src="http://im/age"></a></video>
+</p>
+<p><audio class="u-audio" src="http://aud/io" controls="controls">Your browser does not support the audio tag. <a href="http://aud/io">Click here to listen directly.</a></audio>
 </p>
 """, microformats2.render_content(obj, render_attachments=True))
 
@@ -303,8 +308,8 @@ foo
 
   def test_escape_html_attribute_values(self):
     obj = {
-      'author': {'image': {'url': 'img'}, 'displayName': 'a " b \' c'},
-      'attachments': [{'image': {'url': 'img'}, 'displayName': 'd & e'}],
+      'author': {'image': {'url': 'author-img'}, 'displayName': 'a " b \' c'},
+      'attachments': [{'image': {'url': 'att-img'}, 'displayName': 'd & e'}],
     }
 
     # TODO: test that img alt gets displayName 'd & e' once mf2py handles that.
@@ -314,16 +319,17 @@ foo
 <span class="p-uid"></span>
 <span class="p-author h-card">
 <span class="p-name">a " b ' c</span>
-<img class="u-photo" src="img" alt="" />
+<img class="u-photo" src="author-img" alt="" />
 </span>
 <div class="">
 </div>
+<img class="u-photo" src="att-img" alt="" />
 </article>""", microformats2.object_to_html(obj), ignore_blanks=True)
 
     content = microformats2.render_content(obj, render_attachments=True)
     self.assert_multiline_equals("""\
 <p>
-<img class="thumbnail" src="img" alt="d &amp; e" />
+<img class="u-photo" src="att-img" alt="d &amp; e" />
 <span class="name">d & e</span>
 </p>""", content, ignore_blanks=True)
 
@@ -488,8 +494,8 @@ foo
       self.assertEquals(expected, microformats2.get_string_urls(objs))
 
   def test_img_blank_alt(self):
-    self.assertEquals('<img class="bar" src="foo" alt="" />',
-                      microformats2.img('foo', 'bar'))
+    self.assertEquals('<img class="u-photo" src="foo" alt="" />',
+                      microformats2.img('foo'))
 
   def test_json_to_html_no_properties_or_type(self):
     # just check that we don't crash

@@ -27,8 +27,7 @@ $author
   $invitees
   $content
   </div>
-$video
-$photo
+$attachments
 $event_times
 $location
 $people
@@ -178,7 +177,19 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     objs = obj['object']
     in_reply_tos.extend(objs if isinstance(objs, list) else [objs])
 
-  # TODO: more tags. most will be p-category?
+  def get_urls_from(object_type, prop=None):
+    candidates = []
+
+    for container in obj, primary:
+      candidates.extend(util.get_list(container, prop))
+      for name in 'attachments', 'tags':
+        for c in util.get_list(container, name):
+          if c.get('objectType') == object_type:
+            candidates.append(c)
+          candidates.extend(util.get_list(c, prop))
+
+    return util.uniquify(itertools.chain(*(object_urls(val) for val in candidates)))
+
   ret = {
     'type': (AS_TO_MF2_TYPE.get(obj_type) or
              [entry_class] if isinstance(entry_class, basestring)
@@ -191,10 +202,9 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'summary': [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
-      'photo': util.dedupe_urls(util.get_urls(obj, 'image') + util.get_urls(primary, 'image')),
-      'video': util.dedupe_urls(
-        util.get_urls(obj, 'stream') + util.get_urls(primary, 'stream') +
-        [a.get('url') for a in obj.get('attachments', []) if a.get('objectType') == 'video']),
+      'photo': get_urls_from('image', 'image'),
+      'video': get_urls_from('video', 'stream'),
+      'audio': get_urls_from('audio'),
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'content': [{
@@ -535,12 +545,12 @@ def json_to_html(obj, parent_props=None):
   summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
              if prop.get('summary') else '')
 
+  # render attachments
   # TODO: use photo alt property as alt text once mf2py handles that.
   # https://github.com/tommorris/mf2py/issues/83
-  photo = '\n'.join(img(url, 'u-photo', 'attachment')
-                    for url in props.get('photo', []) if url)
-  video = '\n'.join(vid(url, None, 'u-video')
-                    for url in props.get('video', []) if url)
+  attachments = []
+  for name, fn in ('photo', img), ('video', vid), ('audio', aud):
+    attachments.extend(fn(val) for val in props.get(name, []))
 
   people = '\n'.join(
     hcard_to_html(cat, ['u-category', 'h-card'])
@@ -589,8 +599,7 @@ def json_to_html(obj, parent_props=None):
     author=hcard_to_html(author, ['p-author']),
     location=hcard_to_html(location, ['p-location']),
     people=people,
-    photo=photo,
-    video=video,
+    attachments='\n'.join(attachments),
     in_reply_tos=in_reply_tos,
     invitees='\n'.join([hcard_to_html(i, ['p-invitee'])
                         for i in props.get('invitee', [])]),
@@ -634,8 +643,7 @@ def hcard_to_html(hcard, parent_props=None):
     linked_name=maybe_linked_name(props),
     nicknames='\n'.join('<span class="p-nickname">%s</span>' % nick
                         for nick in props.get('nickname', []) if nick),
-    photos='\n'.join(img(photo, 'u-photo')
-                     for photo in props.get('photo', []) if photo),
+    photos='\n'.join(img(photo) for photo in props.get('photo', []) if photo),
   )
 
 
@@ -709,10 +717,14 @@ def render_content(obj, include_location=True, synthesize_content=True,
       open_a_tag = False
       content += '\n<p>'
       if tag.get('objectType') == 'video':
-        video = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
+        stream = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
         poster = util.get_first(tag, 'image', {})
-        if video and video.get('url'):
-          content += vid(video['url'], poster.get('url'), 'thumbnail')
+        if stream and stream.get('url'):
+          content += vid(stream['url'], poster=poster.get('url'))
+      elif tag.get('objectType') == 'audio':
+        stream = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
+        if stream and stream.get('url'):
+          content += aud(stream['url'])
       else:
         url = tag.get('url') or obj.get('url')
         if url:
@@ -720,7 +732,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
           open_a_tag = True
         image = util.get_first(tag, 'image') or util.get_first(obj, 'image')
         if image and image.get('url'):
-          content += '\n' + img(image['url'], 'thumbnail', name)
+          content += '\n' + img(image['url'], name)
       if name:
         content += '\n<span class="name">%s</span>' % name
       if open_a_tag:
@@ -879,46 +891,48 @@ def maybe_linked_name(props):
   return html
 
 
-def img(src, cls='', alt=''):
+def img(src, alt=''):
   """Returns an <img> string with the given src, class, and alt.
 
   Args:
     src: string, url of the image
-    cls: string, css class applied to the img tag
     alt: string, alt attribute value, or None
 
   Returns:
     string
   """
-  return '<img class="%s" src="%s" alt=%s />' % (
-      cls or '', src, xml.sax.saxutils.quoteattr(alt or ''))
+  return '<img class="u-photo" src="%s" alt=%s />' % (
+      src, xml.sax.saxutils.quoteattr(alt or ''))
 
 
-def vid(src, poster, cls):
+def vid(src, poster=''):
   """Returns an <video> string with the given src and class
 
   Args:
     src: string, url of the video
     poster: sring, optional. url of the poster or preview image
-    cls: string, css class applied to the video tag
 
   Returns:
     string
   """
-  html = '<video class="%s" src="%s"' % (cls, src)
-  if poster:
-    html += ' poster="%s"' % poster
+  poster_img = '<img src="%s">' % poster if poster else ''
 
   # include ="controls" value since this HTML is also used in the Atom
   # template, which has to validate as XML.
-  html += ' controls="controls">'
+  return '<video class="u-video" src="%s" controls="controls" poster="%s">Your browser does not support the video tag. <a href="%s">Click here to view directly. %s</a></video>' % (
+    src, poster, src, poster_img)
 
-  html += 'Your browser does not support the video tag. '
-  html += '<a href="%s">Click here to view directly.' % src
-  if poster:
-    html += '<img src="%s"/>' % poster
-  html += '</a></video>'
-  return html
+
+def aud(src):
+  """Returns an <audio> string with the given src and class
+
+  Args:
+    src: string, url of the audio
+
+  Returns:
+    string
+  """
+  return '<audio class="u-audio" src="%s" controls="controls">Your browser does not support the audio tag. <a href="%s">Click here to listen directly.</a></audio>' % (src, src)
 
 
 def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):

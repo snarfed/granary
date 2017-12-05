@@ -1,0 +1,9 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "name": ["i'm ready to speak"],
+    "content": [{"value": "something", "html": "something"}],
+    "audio": ["http://a/podcast.mp3"],
+    "video": ["http://a/vidjo.mov"]
+  }
+}

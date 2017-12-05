@@ -36,7 +36,7 @@ INSTAGRAM_ATOM_ENTRY = u"""\
 this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz
 <p>
 <a class="link" href="https://www.instagram.com/p/ABC123/">
-<img class="thumbnail" src="http://attach/image/big" alt="" />
+<img class="u-photo" src="http://attach/image/big" alt="" />
 </a>
 </p>
 <p>  <span class="p-location h-card">
@@ -217,9 +217,9 @@ class AtomTest(testutil.HandlerTest):
 
     got = atom.activities_to_atom([activity],test_instagram.ACTOR, title='')
     self.assert_multiline_in(
-      '<img class="thumbnail" src="http://attach/image/big"', got)
+      '<img class="u-photo" src="http://attach/image/big"', got)
     self.assert_multiline_in(
-      '<img class="thumbnail" src="http://image/2"', got)
+      '<img class="u-photo" src="http://image/2"', got)
 
   def test_render_untitled_image(self):
     """Images should be included even if there is no other content
@@ -227,7 +227,7 @@ class AtomTest(testutil.HandlerTest):
     activity = copy.deepcopy(test_instagram.ACTIVITY)
     del activity['object']['content']
     self.assert_multiline_in(
-      '<img class="thumbnail" src="http://attach/image/big"',
+      '<img class="u-photo" src="http://attach/image/big"',
       atom.activities_to_atom([activity], test_instagram.ACTOR,
                               title='my title'))
 
@@ -662,7 +662,7 @@ going to Homebrew Website Club
     }
 
     got = atom.activities_to_atom([activity], {})
-    self.assertNotIn('<img class="u-photo" src="http://pics/1.jpg" alt="" />', got)
+    self.assertEquals(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'))
     self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got)
 
   def test_context_in_reply_to(self):

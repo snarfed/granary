@@ -346,7 +346,7 @@ def _prepare_activity(a, reader=True):
                             (scheme, re.escape(netloc), re.escape(rest)))
     if (url and url not in image_urls and
         not img_src_re.search(content)):
-      children.append(microformats2.img(image['url'], 'u-photo'))
+      children.append(microformats2.img(image['url']))
 
   obj['rendered_children'] = [_encode_ampersands(html) for html in children]
 
