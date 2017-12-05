@@ -1,0 +1,7 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "content": [{"html": "foo bar", "value": "foo bar"}],
+    "video": ["http://vid/eo.mp4"]
+  }
+}

@@ -191,9 +191,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'summary': [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
-      'photo': [image.get('url') for image in
-                (util.get_list(obj, 'image') or util.get_list(primary, 'image'))],
-      'video': get_string_urls(obj.get('stream') or primary.get('stream')),
+      'photo': util.dedupe_urls(util.get_urls(obj, 'image') + util.get_urls(primary, 'image')),
+      'video': util.dedupe_urls(
+        util.get_urls(obj, 'stream') + util.get_urls(primary, 'stream') +
+        [a.get('url') for a in obj.get('attachments', []) if a.get('objectType') == 'video']),
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'content': [{
@@ -640,7 +641,7 @@ def hcard_to_html(hcard, parent_props=None):
 
 def render_content(obj, include_location=True, synthesize_content=True,
                    render_attachments=False):
-  """Renders the content of an ActivityStreams object.
+  """Renders the content of an ActivityStreams object as HTML.
 
   Includes tags, mentions, and non-note/article attachments. (Note/article
   attachments are converted to mf2 children in object_to_json and then rendered
@@ -913,7 +914,7 @@ def vid(src, poster, cls):
   html += ' controls="controls">'
 
   html += 'Your browser does not support the video tag. '
-  html += '<a href="%s">Click here to view directly' % src
+  html += '<a href="%s">Click here to view directly.' % src
   if poster:
     html += '<img src="%s"/>' % poster
   html += '</a></video>'

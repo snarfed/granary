@@ -276,7 +276,7 @@ foo
 
     self.assert_equals("""\
 foo
-<p><video class="thumbnail" src="http://vid/eo" poster="http://im/age" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly<img src="http://im/age"/></a></video>
+<p><video class="thumbnail" src="http://vid/eo" poster="http://im/age" controls="controls">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly.<img src="http://im/age"/></a></video>
 </p>
 """, microformats2.render_content(obj, render_attachments=True))
 

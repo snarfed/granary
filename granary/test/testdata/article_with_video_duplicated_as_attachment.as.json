@@ -1,0 +1,9 @@
+{
+  "objectType": "article",
+  "content": "foo bar",
+  "stream": [{"url": "http://vid/eo.mp4"}],
+  "attachments": [{
+    "objectType": "video",
+    "stream": [{"url": "http://vid/eo.mp4"}]
+  }]
+}
