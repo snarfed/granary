@@ -65,12 +65,12 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     }
 
     for att in obj.get('attachments', []):
-      url = att.get('url') or att.get('image', {}).get('url') or ''
+      url = (att.get('stream') or att.get('image') or att).get('url')
       mime = mimetypes.guess_type(url)[0]
       if (att.get('objectType') in ATTACHMENT_TYPES or
           mime and mime.split('/')[0] in ATTACHMENT_TYPES):
         item['attachments'].append({
-          'url': url,
+          'url': url or '',
           'mime_type': mime,
           'title': att.get('title'),
         })
@@ -117,6 +117,19 @@ def jsonfeed_to_activities(jsonfeed):
     'displayName': author.get('name'),
   }
 
+  def attachment(jf):
+    url = jf.get('url')
+    type = jf.get('mime_type', '').split('/')[0]
+    as1 = {
+      'objectType': type,
+      'title': jf.get('title'),
+    }
+    if type in ('audio', 'video'):
+      as1['stream'] = {'url': url}
+    else:
+      as1['url'] = url
+    return as1
+
   activities = [{'object': {
     'objectType': 'article' if item.get('title') else 'note',
     'title': item.get('title'),
@@ -131,11 +144,7 @@ def jsonfeed_to_activities(jsonfeed):
       'displayName': item.get('author', {}).get('name'),
       'image': [{'url': item.get('author', {}).get('avatar')}]
     },
-    'attachments': [{
-      'url': att.get('url'),
-      'objectType': att.get('mime_type', '').split('/')[0],
-      'title': att.get('title'),
-    } for att in item.get('attachments', [])],
+    'attachments': [attachment(a) for a in item.get('attachments', [])],
   }} for item in jsonfeed.get('items', [])]
 
   return (util.trim_nulls(activities), util.trim_nulls(actor))

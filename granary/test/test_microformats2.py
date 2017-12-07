@@ -308,8 +308,14 @@ foo
 
   def test_escape_html_attribute_values(self):
     obj = {
-      'author': {'image': {'url': 'author-img'}, 'displayName': 'a " b \' c'},
-      'attachments': [{'image': {'url': 'att-img'}, 'displayName': 'd & e'}],
+      'author': {
+        'image': {'url': 'author-img'},
+        'displayName': 'a " b \' c',
+      },
+      'attachments': [{
+        'objectType': 'image',
+        'image': {'url': 'att-img'},
+        'displayName': 'd & e'}],
     }
 
     # TODO: test that img alt gets displayName 'd & e' once mf2py handles that.

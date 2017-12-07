@@ -298,6 +298,11 @@ Changelog
   * Fix a [bug in `preview_create` that auto-linked @-mentions inside URLs](https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800), e.g. Medium posts.
 * Instagram:
   * Add cookie query param to REST API to allow scraping that logged in user's feed.
+* HTML (including Atom content):
+  * Render image, video, and audio attachments more often and consistently.
+  * Include microformats2 `u-photo`, `u-video`, and `u-audio` classes more often and consistently.
+* JSON Feed:
+  * Fix bug that omitted title in some cases ([#122](https://github.com/snarfed/granary/issues/122)).
 
 ### 1.9 - 2017-10-24
 

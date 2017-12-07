@@ -2,6 +2,7 @@
 
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
+from collections import defaultdict
 import copy
 import itertools
 import logging
@@ -13,6 +14,13 @@ import xml.sax.saxutils
 import mf2py
 import mf2util
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import (
+  dedupe_urls,
+  get_first,
+  get_list,
+  get_urls,
+  uniquify,
+)
 import source
 
 HENTRY = string.Template("""\
@@ -177,19 +185,13 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     objs = obj['object']
     in_reply_tos.extend(objs if isinstance(objs, list) else [objs])
 
-  def get_urls_from(object_type, prop=None):
-    candidates = []
+  # maps objectType to list of objects
+  attachments = defaultdict(list)
+  for prop in 'attachments', 'tags':
+    for elem in get_list(primary, prop):
+      attachments[elem.get('objectType')].append(elem)
 
-    for container in obj, primary:
-      candidates.extend(util.get_list(container, prop))
-      for name in 'attachments', 'tags':
-        for c in util.get_list(container, name):
-          if c.get('objectType') == object_type:
-            candidates.append(c)
-          candidates.extend(util.get_list(c, prop))
-
-    return util.uniquify(itertools.chain(*(object_urls(val) for val in candidates)))
-
+  # construct mf2!
   ret = {
     'type': (AS_TO_MF2_TYPE.get(obj_type) or
              [entry_class] if isinstance(entry_class, basestring)
@@ -202,9 +204,11 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'summary': [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
-      'photo': get_urls_from('image', 'image'),
-      'video': get_urls_from('video', 'stream'),
-      'audio': get_urls_from('audio'),
+      'photo': dedupe_urls(get_urls(attachments, 'image', 'image') +
+                           get_urls(primary, 'image')),
+      'video': dedupe_urls(get_urls(attachments, 'video', 'stream') +
+                           get_urls(primary, 'stream')),
+      'audio': get_urls(attachments, 'audio', 'stream'),
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'content': [{
@@ -223,14 +227,13 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'start': [primary.get('startTime')],
       'end': [primary.get('endTime')],
     },
-    'children': [object_to_json(c, trim_nulls=False,
+    'children': [object_to_json(a, trim_nulls=False,
                                 entry_class=['u-quotation-of', 'h-cite'])
-                 for c in primary.get('attachments', [])
-                 if c.get('objectType') in ('note', 'article')],
+                 for a in attachments['note'] + attachments['article']]
   }
 
   # hashtags and person tags
-  tags = obj.get('tags', []) or util.get_first(obj, 'object', {}).get('tags', [])
+  tags = obj.get('tags', []) or get_first(obj, 'object', {}).get('tags', [])
   ret['properties']['category'] = []
   for tag in tags:
     if tag.get('objectType') == 'person':
@@ -256,7 +259,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       # single object, but it's useful to let it be a list, e.g. when a like has
       # multiple targets, e.g. a like of a post with original post URLs in it,
       # which brid.gy does.
-      objs = util.get_list(obj, 'object')
+      objs = get_list(obj, 'object')
       ret['properties'][prop + '-of'] = [
         # flatten contexts that are just a url
         o['url'] if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
@@ -339,7 +342,7 @@ def json_to_object(mf2, actor=None):
 
   # audio and video
   for type in 'audio', 'video':
-    attachments.extend({'objectType': type, 'url': url}
+    attachments.extend({'objectType': type, 'stream': {'url': url}}
                        for url in get_string_urls(props.get(type, [])))
 
   obj = {
@@ -356,7 +359,7 @@ def json_to_object(mf2, actor=None):
     'url': urls[0] if urls else None,
     'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,
     'image': [{'url': url} for url in
-              util.dedupe_urls(absolute_urls('photo') + absolute_urls('featured'))],
+              dedupe_urls(absolute_urls('photo') + absolute_urls('featured'))],
     'stream': [{'url': url} for url in absolute_urls('video')],
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
@@ -635,7 +638,7 @@ def hcard_to_html(hcard, parent_props=None):
     return ''
 
   return HCARD.substitute(
-    types=' '.join(util.uniquify(parent_props + hcard.get('type', []))),
+    types=' '.join(uniquify(parent_props + hcard.get('type', []))),
     ids='\n'.join(['<data class="p-uid" value="%s"></data>' % uid
                    for uid in props.get('uid', []) if uid] +
                   ['<data class="p-numeric-id" value="%s"></data>' % nid
@@ -714,25 +717,23 @@ def render_content(obj, include_location=True, synthesize_content=True,
                    if a.get('objectType') not in ('note', 'article')]
     for tag in attachments + tags.pop('article', []):
       name = tag.get('displayName', '')
+      stream = get_first(tag, 'stream', {}).get('url')
+      image = get_first(tag, 'image', {}).get('url')
       open_a_tag = False
       content += '\n<p>'
       if tag.get('objectType') == 'video':
-        stream = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
-        poster = util.get_first(tag, 'image', {})
-        if stream and stream.get('url'):
-          content += vid(stream['url'], poster=poster.get('url'))
+        if stream:
+          content += vid(stream, poster=image)
       elif tag.get('objectType') == 'audio':
-        stream = util.get_first(tag, 'stream') or util.get_first(obj, 'stream')
-        if stream and stream.get('url'):
-          content += aud(stream['url'])
+        if stream:
+          content += aud(stream)
       else:
         url = tag.get('url') or obj.get('url')
         if url:
           content += '\n<a class="link" href="%s">' % url
           open_a_tag = True
-        image = util.get_first(tag, 'image') or util.get_first(obj, 'image')
-        if image and image.get('url'):
-          content += '\n' + img(image['url'], name)
+        if image:
+          content += '\n' + img(image, name)
       if name:
         content += '\n<span class="name">%s</span>' % name
       if open_a_tag:
@@ -751,7 +752,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
         'content' in obj):
       continue
 
-    targets = util.get_list(obj, 'object')
+    targets = get_list(obj, 'object')
     if not targets:
       continue
 
@@ -829,7 +830,7 @@ def first_props(props):
     corresponding dict with just the first value of each sequence, or ''
     if the sequence is empty
   """
-  return {k: util.get_first(props, k, '') for k in props} if props else {}
+  return {k: get_first(props, k, '') for k in props} if props else {}
 
 
 def tags_to_html(tags, classname):
@@ -851,7 +852,9 @@ def tags_to_html(tags, classname):
 def object_urls(obj):
   """Returns an object's unique URLs, preserving order.
   """
-  return util.uniquify(util.trim_nulls(
+  if isinstance(obj, basestring):
+    return obj
+  return uniquify(util.trim_nulls(
     [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))
 
 

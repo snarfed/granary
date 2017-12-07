@@ -93,6 +93,11 @@ def from_as1(obj, type=None, context=CONTEXT):
     # TODO: something better. (we don't know aspect ratio though.)
     obj['icon'] = images
 
+  if obj_type in ('audio', 'video'):
+    stream = obj.pop('stream', {}).get('url')
+    if stream:
+      obj['url'] = stream
+
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
@@ -157,6 +162,9 @@ def to_as1(obj, use_type=True):
     'object': to_as1(obj.get('object')),
     'tags': all_to_as1('tag'),
   })
+
+  if type in ('Audio', 'Video'):
+    obj['stream'] = {'url': obj.pop('url', None)}
 
   attrib = util.pop_list(obj, 'attributedTo')
   if attrib:
