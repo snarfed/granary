@@ -1,0 +1,10 @@
+{
+  "objectType": "article",
+  "attachments": [{
+    "objectType": "video",
+    "stream": [
+      {"url": "http://a/vidjo/1.mov"},
+      {"url": "http://a/vidjo/2.mov"}
+    ]
+  }]
+}

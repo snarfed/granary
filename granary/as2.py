@@ -94,9 +94,11 @@ def from_as1(obj, type=None, context=CONTEXT):
     obj['icon'] = images
 
   if obj_type in ('audio', 'video'):
-    stream = obj.pop('stream', {}).get('url')
+    stream = util.pop_list(obj, 'stream')
     if stream:
-      obj['url'] = stream
+      url = stream[0].get('url')
+      if url:
+        obj['url'] = url
 
   loc = obj.get('location')
   if loc:

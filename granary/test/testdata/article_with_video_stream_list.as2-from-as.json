@@ -1,0 +1,8 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Article",
+  "attachment": [{
+    "type": "Video",
+    "url": "http://a/vidjo/1.mov"
+  }]
+}
