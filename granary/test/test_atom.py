@@ -555,23 +555,29 @@ going to Homebrew Website Club
 """.encode('utf-8'), got.encode('utf-8'), ignore_blanks=True)
 
   def test_media_enclosures(self):
+    got = atom.activities_to_atom([{
+      'object': {
+        'content': 'foo bar',
+        'attachments': [{
+          'objectType': 'audio',
+          'stream': {'url': 'http://a/podcast.mp3'},
+          'url': 'unused',
+        }, {
+          'objectType': 'video',
+          'stream': [
+            {'url': 'http://a/vidjo/1.mov'},  # only the first is rendered
+            {'url': 'http://a/vidjo/2.mov'},
+          ],
+          'url': 'also unused',
+        }],
+      },
+    }], {})
     self.assert_multiline_in("""\
 <link rel="enclosure" href="http://a/podcast.mp3" />
 
-<link rel="enclosure" href="http://a/vidjo.mov" />
-""",
-      atom.activities_to_atom([{
-        'object': {
-          'content': 'foo bar',
-          'attachments': [{
-            'objectType': 'audio',
-            'url': 'http://a/podcast.mp3',
-          }, {
-            'objectType': 'video',
-            'url': 'http://a/vidjo.mov',
-          }],
-        },
-      }], {}))
+<link rel="enclosure" href="http://a/vidjo/1.mov" />
+""", got)
+    self.assertNotIn('unused', got)
 
   def test_reader_param_and_location(self):
     activity = {

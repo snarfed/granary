@@ -319,9 +319,10 @@ def _prepare_activity(a, reader=True):
   children = []
   image_urls = set()
 
-  # render attached notes/articles
+  # normalize attachments, render attached notes/articles
   attachments = a.get('attachments') or obj.get('attachments') or []
   for att in attachments:
+    att['stream'] = util.get_first(att, 'stream')
     image_urls |= set(img.get('url') for img in util.get_list(att, 'image'))
     if att.get('objectType') in ('note', 'article'):
       html = microformats2.render_content(att, include_location=reader)
