@@ -1160,14 +1160,19 @@ class Twitter(source.Source):
           'alias': '@public' if not protected else '@private',
         })
 
-    # currently the media list will only have photos. if that changes, though,
-    # we'll need to make this conditional on media.type.
-    # https://dev.twitter.com/docs/tweet-entities
+    # media! into attachments.
+    # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
     media = entities.get('media', [])
     if media:
+      types = {
+        'photo': 'image',
+        'video': 'video',
+        'animated_gif': 'video',
+      }
       obj['attachments'] = [{
-          'objectType': 'image',
+          'objectType': types.get(m.get('type')),
           'image': {'url': m.get('media_url')},
+          'stream': {'url': util.get_url(m.get('video_info', {}), 'variants')},
       } for m in media]
       obj['image'] = {'url': media[0].get('media_url')}
 
@@ -1299,20 +1304,30 @@ class Twitter(source.Source):
 
   @staticmethod
   def _get_entities(tweet):
-    """Merges and returns a tweet's entities and extended_entities."""
+    """Merges and returns a tweet's entities and extended_entities.
+
+    Most entities are in the entities field - urls, hashtags, user_mentions,
+    symbols, etc. Media are special though: extended_entities is always
+    preferred. It has videos, animated gifs, and multiple photos. entities only
+    has one photo at most, either the first or a thumbnail from the video, and
+    its type is always 'photo' even for videos and animated gifs. (The id and
+    id_str will be the same.) So ignore it unless extended_entities is missing.
+
+    https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
+    """
     entities = collections.defaultdict(list)
 
     # maps kind to set of id_str, url, and text values we've seen, for de-duping
     seen_ids = collections.defaultdict(set)
 
-    for field in 'entities', 'extended_entities':
+    for field in 'extended_entities', 'entities':  # prefer extended_entities!
       # kind is media, urls, hashtags, user_mentions, symbols, etc
       for kind, values in tweet.get(field, {}).items():
         for v in values:
           id = v.get('id_str') or v.get('id') or v.get('url') or v.get('text')
-          if id in seen_ids[kind]:
-            continue
-          elif id:
+          if id:
+            if id in seen_ids[kind]:
+              continue
             seen_ids[kind].add(id)
           entities[kind].append(v)
 

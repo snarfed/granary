@@ -129,15 +129,18 @@ TWEET = {
   'user': USER,
   'entities': {
     'media': [{
+        'id': 'picture1',
         'media_url': 'http://p.twimg.com/picture1',
         'url': 'http://t.co/picture',
         'expanded_url': 'http://the/picture1',
         'display_url': 'http://pic.twitter.com/1',
         'indices': [83, 102],
+        'type': 'photo',
       }, {
         # duplicated in extended_entities; we should de-dupe
         'id': 'picture3',
         'media_url': 'http://p.twimg.com/picture3',
+        'type': 'photo',
       }],
     'urls': [{
         'expanded_url': 'http://first/link/',
@@ -174,6 +177,7 @@ TWEET = {
       'media_url': 'http://p.twimg.com/picture2',
       'expanded_url': 'http://the/picture2',
       'display_url': 'http://pic.twitter.com/2',
+      'type': 'photo',
     }, {
       # duplicated in entities; we should de-dupe
       'id': 'picture3',
@@ -194,7 +198,7 @@ OBJECT = {  # ActivityStreams
   'id': tag_uri('100'),
   'published': '2012-02-22T20:26:41+00:00',
   'url': 'https://twitter.com/snarfed_org/status/100',
-  'image': {'url': 'http://p.twimg.com/picture1'},
+  'image': {'url': 'http://p.twimg.com/picture2'},
   'location': {
     'displayName': 'Carcassonne, Aude',
     'id': tag_uri('31cb9e7ed29dbe52'),
@@ -202,48 +206,47 @@ OBJECT = {  # ActivityStreams
   },
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'tags': [{
-      'objectType': 'person',
-      'id': tag_uri('foo'),
-      'url': 'https://twitter.com/foo',
-      'displayName': 'Twitter',
-      'startIndex': 0,
-      'length': 8,
-      }, {
-      'objectType': 'person',
-      'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
-      'url': 'https://twitter.com/foo',
-      'displayName': 'Picture.ly',
-      'startIndex': 15,
-      'length': 13,
-      }, {
-      'objectType': 'hashtag',
-      'url': 'https://twitter.com/search?q=%23tcdisrupt',
-      'startIndex': 32,
-      'length': 10,
-      }, {
-      'objectType': 'article',
-      'url': 'http://first/link/',
-      'displayName': 'first',
-      'startIndex': 49,
-      'length': 5,
-      }, {
-      'objectType': 'article',
-      'url': 'http://instagr.am/p/MuW67/',
-      'displayName': 'instagr.am/p/MuW67',
-      'startIndex': 55,
-      'length': 18,
-      }],
+    'objectType': 'person',
+    'id': tag_uri('foo'),
+    'url': 'https://twitter.com/foo',
+    'displayName': 'Twitter',
+    'startIndex': 0,
+    'length': 8,
+  }, {
+    'objectType': 'person',
+    'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
+    'url': 'https://twitter.com/foo',
+    'displayName': 'Picture.ly',
+    'startIndex': 15,
+    'length': 13,
+  }, {
+    'objectType': 'hashtag',
+    'url': 'https://twitter.com/search?q=%23tcdisrupt',
+    'startIndex': 32,
+    'length': 10,
+  }, {
+    'objectType': 'article',
+    'url': 'http://first/link/',
+    'displayName': 'first',
+    'startIndex': 49,
+    'length': 5,
+  }, {
+    'objectType': 'article',
+    'url': 'http://instagr.am/p/MuW67/',
+    'displayName': 'instagr.am/p/MuW67',
+    'startIndex': 55,
+    'length': 18,
+  }],
   'attachments': [{
-      'objectType': 'image',
-      'image': {'url': u'http://p.twimg.com/picture1'},
-      }, {
-      'objectType': 'image',
-      'image': {'url': u'http://p.twimg.com/picture2'},
-      }, {
-      'objectType': 'image',
-      'image': {'url': u'http://p.twimg.com/picture3'},
-      }],
-  }
+    'objectType': 'image',
+    'image': {'url': u'http://p.twimg.com/picture2'},
+  }, {
+    'image': {'url': u'http://p.twimg.com/picture3'},
+  }, {
+    'objectType': 'image',
+    'image': {'url': u'http://p.twimg.com/picture1'},
+  }],
+}
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': '2012-02-22T20:26:41+00:00',
@@ -635,17 +638,17 @@ ATOM = """\
 <a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a>
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
-<img class="u-photo" src="http://p.twimg.com/picture1" alt="" />
-</a>
-</p>
-<p>
-<a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="u-photo" src="http://p.twimg.com/picture2" alt="" />
 </a>
 </p>
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="u-photo" src="http://p.twimg.com/picture3" alt="" />
+</a>
+</p>
+<p>
+<a class="link" href="https://twitter.com/snarfed_org/status/100">
+<img class="u-photo" src="http://p.twimg.com/picture1" alt="" />
 </a>
 </p>
 <p>  <span class="p-location h-card">
@@ -1370,7 +1373,6 @@ class TwitterTest(testutil.TestCase):
       'id': tag_uri('726480459488587776'),
       'objectType': 'note',
       'content': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee ',
-      'attachments': [{'objectType': 'image'}, {'objectType': 'image'}],
     }, self.twitter.tweet_to_object({
       'id_str': '726480459488587776',
       'text': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee https://t.co/6Ta5P8A2cs',
@@ -1457,6 +1459,43 @@ class TwitterTest(testutil.TestCase):
 
     # not a retweet
     self.assertEquals(None, self.twitter.retweet_to_object(TWEET))
+
+  def test_video_tweet_to_object(self):
+    tweet = copy.deepcopy(TWEET)
+    # extended_entities has full video data and type 'video'. entities just has
+    # image URLs and incorrect type 'photo'. details:
+    # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
+    tweet['extended_entities'] = {
+      'media': [{
+        'id': TWEET['entities']['media'][0]['id'],
+        'media_url': 'http://pbs.twimg.com/tweet_video_thumb/9182.jpg',
+        'media_url_https': 'https://pbs.twimg.com/tweet_video_thumb/9182.jpg',
+        'url': 'https://t.co/YUY4GGWKbP',
+        'display_url': 'pic.twitter.com/YUY4GGWKbP',
+        'expanded_url': 'https://twitter.com/bradfitz/status/9182/photo/1',
+        'type': 'animated_gif',
+        'sizes': {
+          'medium': {'w': 350, 'h': 310, 'resize': 'fit'},
+          # ...
+        },
+        'video_info': {
+          'aspect_ratio': [35, 31],
+          'variants': [{
+            'bitrate': 0,
+            'content_type': 'video/mp4',
+            'url': 'https://video.twimg.com/tweet_video/9182.mp4'
+          }],
+        },
+      }],
+    }
+    self.assert_equals([{
+      'objectType': 'video',
+      'stream': {'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
+      'image': {'url': 'http://pbs.twimg.com/tweet_video_thumb/9182.jpg'},
+    }, {
+      'objectType': 'image',
+      'image': {'url': 'http://p.twimg.com/picture3'},
+    }], self.twitter.tweet_to_object(tweet)['attachments'])
 
   def test_streaming_event_to_object(self):
     self.assert_equals(LIKE_OBJ,
