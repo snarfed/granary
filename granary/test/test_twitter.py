@@ -1467,7 +1467,7 @@ class TwitterTest(testutil.TestCase):
     # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
     tweet['extended_entities'] = {
       'media': [{
-        'id': TWEET['entities']['media'][0]['id'],
+        'id': TWEET['entities']['media'][0]['id'],  # check de-duping
         'media_url': 'http://pbs.twimg.com/tweet_video_thumb/9182.jpg',
         'media_url_https': 'https://pbs.twimg.com/tweet_video_thumb/9182.jpg',
         'url': 'https://t.co/YUY4GGWKbP',
@@ -1488,6 +1488,8 @@ class TwitterTest(testutil.TestCase):
         },
       }],
     }
+
+    obj = self.twitter.tweet_to_object(tweet)
     self.assert_equals([{
       'objectType': 'video',
       'stream': {'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
@@ -1495,7 +1497,10 @@ class TwitterTest(testutil.TestCase):
     }, {
       'objectType': 'image',
       'image': {'url': 'http://p.twimg.com/picture3'},
-    }], self.twitter.tweet_to_object(tweet)['attachments'])
+    }], obj['attachments'])
+    self.assert_equals({'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
+                       obj['stream'])
+    self.assertNotIn('image', obj)
 
   def test_streaming_event_to_object(self):
     self.assert_equals(LIKE_OBJ,

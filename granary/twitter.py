@@ -1174,7 +1174,12 @@ class Twitter(source.Source):
           'image': {'url': m.get('media_url')},
           'stream': {'url': util.get_url(m.get('video_info', {}), 'variants')},
       } for m in media]
-      obj['image'] = {'url': media[0].get('media_url')}
+
+      first = obj['attachments'][0]
+      if first['objectType'] == 'video':
+        obj['stream'] = first['stream']
+      else:
+        obj['image'] = first['image']
 
     # if this tweet is quoting another tweet, include it as an attachment
     quoted = tweet.get('quoted_status')
