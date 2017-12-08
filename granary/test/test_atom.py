@@ -554,7 +554,7 @@ going to Homebrew Website Club
 </author>
 """.encode('utf-8'), got.encode('utf-8'), ignore_blanks=True)
 
-  def test_media_enclosures(self):
+  def test_media_tags_and_enclosures(self):
     got = atom.activities_to_atom([{
       'object': {
         'content': 'foo bar',
@@ -568,10 +568,17 @@ going to Homebrew Website Club
             {'url': 'http://a/vidjo/1.mov'},  # only the first is rendered
             {'url': 'http://a/vidjo/2.mov'},
           ],
+          'image': {'url': 'http://thumb'},
           'url': 'also unused',
         }],
       },
     }], {})
+    self.assert_multiline_in("""\
+<p><audio class="u-audio" src="http://a/podcast.mp3" controls="controls">Your browser does not support the audio tag. <a href="http://a/podcast.mp3">Click here to listen directly.</a></audio>
+</p>
+<p><video class="u-video" src="http://a/vidjo/1.mov" controls="controls" poster="http://thumb">Your browser does not support the video tag. <a href="http://a/vidjo/1.mov">Click here to view directly. <img src="http://thumb" /></a></video>
+</p>
+""", got)
     self.assert_multiline_in("""\
 <link rel="enclosure" href="http://a/podcast.mp3" />
 
