@@ -369,7 +369,7 @@ ATOM = """\
 <subtitle>foo https://asdf.com bar</subtitle>
 
 <logo>http://picture/ryan</logo>
-<updated>2012-09-22T05:25:42</updated>
+<updated>2012-09-22T05:25:42Z</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://snarfed.org</uri>
@@ -425,8 +425,8 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
 
-  <published>2012-09-22T05:25:42</published>
-  <updated>2012-09-22T05:25:42</updated>
+  <published>2012-09-22T05:25:42Z</published>
+  <updated>2012-09-22T05:25:42Z</updated>
 
   <georss:point>37.3 -122.5</georss:point>
 

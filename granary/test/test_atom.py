@@ -55,8 +55,8 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
   <link rel="mentioned" href="https://www.instagram.com/foo/" />
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
-  <published>2012-09-22T05:25:42</published>
-  <updated>2012-09-22T05:25:42</updated>
+  <published>2012-09-22T05:25:42Z</published>
+  <updated>2012-09-22T05:25:42Z</updated>
   <georss:point>37.3 -122.5</georss:point>
   <georss:featureName>Le Truc</georss:featureName>
   <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
@@ -107,8 +107,8 @@ class AtomTest(testutil.HandlerTest):
         'objectType': 'photo',
         'title': 'this picture -> is #abc @foo #xyz',
         'content': 'this picture -> is #abc @foo #xyz Le Truc',
-        'published': '2012-09-22T05:25:42',
-        'updated': '2012-09-22T05:25:42',
+        'published': '2012-09-22T05:25:42Z',
+        'updated': '2012-09-22T05:25:42Z',
         'location': {
           'displayName': 'Le Truc',
           'latitude': 37.3,

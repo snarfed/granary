@@ -133,7 +133,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     actor=Defaulter(**actor),
     rels=rels or {},
     VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
-    )
+  )
 
 
 def activity_to_atom(activity, xml_base=None, reader=True):
@@ -350,6 +350,12 @@ def _prepare_activity(a, reader=True):
       children.append(microformats2.img(image['url']))
 
   obj['rendered_children'] = [_encode_ampersands(html) for html in children]
+
+  # make sure published and updated are strict RFC 3339 timestamps
+  for prop in 'published', 'updated':
+    val = obj.get(prop)
+    if val and '+' not in val and not val.endswith('Z'):
+      obj[prop] += 'Z'
 
 
 def _remove_query_params(url):
