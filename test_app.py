@@ -10,6 +10,7 @@ from google.appengine.api import memcache
 import mox
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil
+import requests
 
 import appengine_config
 import app
@@ -195,7 +196,7 @@ class AppTest(testutil.HandlerTest):
     return '%s://%s%s' % (appengine_config.SCHEME, appengine_config.HOST, path)
 
   def test_url_as1_to_mf2_json(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(AS1))
+    self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -205,7 +206,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(MF2, json.loads(resp.body))
 
   def test_url_as1_to_as2(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(AS1))
+    self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -215,7 +216,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(AS2_RESPONSE, json.loads(resp.body))
 
   def test_url_as1_response_to_as2(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(AS1_RESPONSE))
+    self.expect_requests_get('http://my/posts.json', AS1_RESPONSE)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -225,7 +226,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(AS2_RESPONSE, json.loads(resp.body))
 
   def test_url_as2_to_as1(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(AS2))
+    self.expect_requests_get('http://my/posts.json', AS2)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -235,7 +236,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(AS1_RESPONSE, json.loads(resp.body))
 
   def test_url_as2_response_to_as1(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(AS2_RESPONSE))
+    self.expect_requests_get('http://my/posts.json', AS2_RESPONSE)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -245,7 +246,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(AS1_RESPONSE, json.loads(resp.body))
 
   def test_url_as1_to_jsonfeed(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(AS1))
+    self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
     path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
@@ -259,7 +260,7 @@ class AppTest(testutil.HandlerTest):
 
     # TODO: drop?
   # def test_url_as1_to_jsonfeed_not_list(self):
-  #   self.expect_urlopen('http://my/posts.json', json.dumps({'foo': 'bar'}))
+  #   self.expect_requests_get('http://my/posts.json', {'foo': 'bar'})
   #   self.mox.ReplayAll()
 
   #   resp = app.application.get_response(
@@ -267,7 +268,7 @@ class AppTest(testutil.HandlerTest):
   #   self.assert_equals(400, resp.status_int)
 
   def test_url_jsonfeed_to_json_mf2(self):
-    self.expect_urlopen('http://my/feed.json', json.dumps(JSONFEED))
+    self.expect_requests_get('http://my/feed.json', JSONFEED)
     self.mox.ReplayAll()
 
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
@@ -280,7 +281,7 @@ class AppTest(testutil.HandlerTest):
     self.assert_equals(expected, json.loads(resp.body))
 
   def test_url_bad_jsonfeed(self):
-    self.expect_urlopen('http://my/feed.json', json.dumps(['not', 'jsonfeed']))
+    self.expect_requests_get('http://my/feed.json', ['not', 'jsonfeed'])
     self.mox.ReplayAll()
 
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
@@ -289,7 +290,7 @@ class AppTest(testutil.HandlerTest):
     self.assertIn('Could not parse http://my/feed.json as JSON Feed', resp.body)
 
   def test_url_json_mf2_to_html(self):
-    self.expect_urlopen('http://my/posts.json', json.dumps(MF2))
+    self.expect_requests_get('http://my/posts.json', MF2)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -301,7 +302,7 @@ class AppTest(testutil.HandlerTest):
     }, resp.body, ignore_blanks=True)
 
   def test_url_html_to_atom(self):
-    self.expect_urlopen('http://my/posts.html', HTML % {
+    self.expect_requests_get('http://my/posts.html', HTML % {
       'body_class': ' class="h-feed"',
       'extra': """
 <span class="p-name">my title</span>
@@ -323,14 +324,14 @@ class AppTest(testutil.HandlerTest):
     https://github.com/snarfed/granary/issues/98
     https://github.com/kylewm/mf2util/issues/14
     """
-    self.expect_urlopen('http://my/posts.html', HTML % {
+    self.expect_requests_get('http://my/posts.html', HTML % {
       'body_class': ' class="h-feed"',
       'extra': """
 <span class="p-name">my title</span>
 <a href="/author" rel="author"></a>,
 """
     })
-    self.expect_urlopen('http://my/author', """
+    self.expect_requests_get('http://my/author', """
 <div class="h-card">
   <a class="u-url" href="http://my/author">Someone Else</a>
   <img class="u-photo" src="http://someone/picture" />
@@ -362,7 +363,7 @@ class AppTest(testutil.HandlerTest):
 """, resp.body, ignore_blanks=True)
 
   def test_url_html_to_atom_skip_silo_rel_authors(self):
-    self.expect_urlopen('http://my/posts.html', HTML % {
+    self.expect_requests_get('http://my/posts.html', HTML % {
       'body_class': ' class="h-feed"',
       'extra': """
 <span class="p-name">my title</span>
@@ -393,7 +394,7 @@ class AppTest(testutil.HandlerTest):
 
   def test_url_html_to_json_mf2(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
-    self.expect_urlopen('http://my/posts.html', html)
+    self.expect_requests_get('http://my/posts.html', html)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -408,7 +409,7 @@ class AppTest(testutil.HandlerTest):
 
   def test_url_html_to_html(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
-    self.expect_urlopen('http://my/posts.html', html)
+    self.expect_requests_get('http://my/posts.html', html)
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -431,7 +432,7 @@ baz baj
 """, resp.body, ignore_blanks=True)
 
   def test_url_atom_to_html(self):
-    self.expect_urlopen('http://feed', ATOM_CONTENT + '</feed>\n')
+    self.expect_requests_get('http://feed', ATOM_CONTENT + '</feed>\n')
     self.mox.ReplayAll()
 
     resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
@@ -474,7 +475,7 @@ baz baj
       'displayName': 'My place',
       'url': 'http://my/place',
     }
-    self.expect_urlopen('http://my/posts.as', json.dumps([activity]))
+    self.expect_requests_get('http://my/posts.as', [activity])
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -489,7 +490,7 @@ baz baj
     self.assert_equals(400, resp.status_int)
 
   def test_url_input_not_json(self):
-    self.expect_urlopen('http://my/posts', '<html><body>not JSON</body></html>'
+    self.expect_requests_get('http://my/posts', '<html><body>not JSON</body></html>'
                         ).MultipleTimes()
     self.mox.ReplayAll()
 
@@ -499,20 +500,21 @@ baz baj
       self.assert_equals(400, resp.status_int)
 
   def test_url_bad_url(self):
-    self.expect_urlopen('http://astralandopal.com\\').AndRaise(httplib.InvalidURL(''))
+    self.expect_requests_get('http://astralandopal.com\\'
+                            ).AndRaise(requests.exceptions.MissingSchema('foo'))
     self.mox.ReplayAll()
     resp = app.application.get_response(
       '/url?url=http://astralandopal.com\\&input=html')
     self.assert_equals(400, resp.status_int)
 
   def test_url_fetch_fails(self):
-    self.expect_urlopen('http://my/posts.html').AndRaise(socket.error(''))
+    self.expect_requests_get('http://my/posts.html').AndRaise(socket.error(''))
     self.mox.ReplayAll()
     resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
     self.assert_equals(504, resp.status_int)
 
   def test_cache(self):
-    self.expect_urlopen('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
+    self.expect_requests_get('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
     self.mox.ReplayAll()
 
     # first fetch populates the cache
@@ -528,7 +530,7 @@ baz baj
   def test_skip_caching_big_responses(self):
     self.mox.stubs.Set(memcache, 'MAX_VALUE_SIZE', 100)
 
-    self.expect_urlopen('http://my/posts.html', 'x' * 101)
+    self.expect_requests_get('http://my/posts.html', 'x' * 101)
     self.mox.ReplayAll()
 
     first = app.application.get_response('/url?url=http://my/posts.html&input=html')
@@ -536,7 +538,7 @@ baz baj
 
 
   def test_hub(self):
-    self.expect_urlopen('http://my/posts.html', HTML % {
+    self.expect_requests_get('http://my/posts.html', HTML % {
       'body_class': '',
       'extra': '',
     })

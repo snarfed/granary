@@ -8,7 +8,6 @@ import httplib
 import json
 import logging
 import urllib
-import urllib2
 import urlparse
 
 import appengine_config
@@ -25,6 +24,7 @@ from oauth_dropins import (
   twitter,
 )
 from oauth_dropins.webutil import handlers, util
+import requests
 import webapp2
 from webob import exc
 
@@ -131,7 +131,7 @@ class UrlHandler(api.Handler):
     if input not in INPUTS:
       raise exc.HTTPBadRequest('Invalid input: %s, expected one of %r' %
                                (input, INPUTS))
-    url, body = self._urlopen(util.get_required_param(self, 'url'))
+    url, body = self._fetch(util.get_required_param(self, 'url'))
 
     # decode data
     if input in ('activitystreams', 'as1', 'as2', 'mf2-json', 'json-mf2', 'jsonfeed'):
@@ -155,7 +155,7 @@ class UrlHandler(api.Handler):
       def fetch_mf2_func(url):
         if util.domain_or_parent_in(urlparse.urlparse(url).netloc, SILO_DOMAINS):
           return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
-        _, doc = self._urlopen(url)
+        _, doc = self._fetch(url)
         return mf2py.parse(doc=doc, url=url)
 
       actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
@@ -166,7 +166,7 @@ class UrlHandler(api.Handler):
     elif input == 'as2':
       activities = [as2.to_as1(obj) for obj in body_items]
     elif input == 'atom':
-      activities = atom.atom_to_activities(body)#.decode('utf-8')) TODO
+      activities = atom.atom_to_activities(body)
     elif input == 'html':
       activities = microformats2.html_to_activities(body, url, actor)
     elif input in ('mf2-json', 'json-mf2'):
@@ -182,7 +182,8 @@ class UrlHandler(api.Handler):
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=url, actor=actor, title=title)
 
-  def _urlopen(self, url):
+  def _fetch(self, url):
+    """Fetches url and returns (string final url, unicode body)."""
     # check if request is cached
     cache = self.request.get('cache', '').lower() != 'false'
     cache_key = 'U %s' % url
@@ -195,16 +196,16 @@ class UrlHandler(api.Handler):
     else:
       # fetch url
       try:
-        resp = util.urlopen(url)
-      except (ValueError, httplib.InvalidURL) as e:
+        resp = util.requests_get(url)
+      except (ValueError, requests.URLRequired) as e:
         self.abort(400, str(e))
         # other exceptions are handled by webutil.handlers.handle_exception(),
         # which uses interpret_http_exception(), etc.
 
-      if url != resp.geturl():
-        url = resp.geturl()
+      if url != resp.url:
+        url = resp.url
         logging.info('Redirected to %s', url)
-      body = resp.read()
+      body = resp.text
 
       if cache:
         logging.info('Caching response in %r', cache_key)
