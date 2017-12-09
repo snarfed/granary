@@ -292,15 +292,18 @@ Changelog
 ---
 
 ### 1.10 - unreleased
-* Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
+* Move web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
 * Twitter:
   * Update the publish character limit to 280. [Background.](https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425)
   * Fix a [bug in `preview_create` that auto-linked @-mentions inside URLs](https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800), e.g. Medium posts.
+  * Support videos and animated GIFs in `get_activities()` etc.
 * Instagram:
   * Add cookie query param to REST API to allow scraping that logged in user's feed.
 * HTML (including Atom content):
   * Render image, video, and audio attachments more often and consistently.
   * Include microformats2 `u-photo`, `u-video`, and `u-audio` classes more often and consistently.
+* Atom:
+  * Add `atom_to_activities()` for converting full feed documents.
 * JSON Feed:
   * Fix bug that omitted title in some cases ([#122](https://github.com/snarfed/granary/issues/122)).
 

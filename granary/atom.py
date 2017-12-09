@@ -37,6 +37,12 @@ jinja_env = jinja2.Environment(
 def _encode_ampersands(text):
   return UNENCODED_AMPERSANDS_RE.sub('&amp;', text)
 
+
+def _tag(elem):
+  """Removes the namespace from an ElementTree element tag."""
+  return elem.tag.split('}')[-1]
+
+
 def _text(elem, field=None):
   """Returns the text in an element or child element if it exists.
 
@@ -157,11 +163,28 @@ def activity_to_atom(activity, xml_base=None, reader=True):
   )
 
 
+def atom_to_activities(atom):
+  """Converts an Atom feed to ActivityStreams 1 activities.
+
+  Args:
+    atom: unicode string, Atom document with top-level <feed> element
+
+  Returns:
+    list of ActivityStreams activity dicts
+  """
+  assert isinstance(atom, unicode)
+  parser = ElementTree.XMLParser(encoding='UTF-8')
+  feed = ElementTree.XML(atom.encode('utf-8'), parser=parser)
+  if _tag(feed) != 'feed':
+    raise ValueError('Expected root entry tag; got %s' % feed.tag)
+  return [_atom_to_activity(elem) for elem in feed if _tag(elem) == 'entry']
+
+
 def atom_to_activity(atom):
   """Converts an Atom entry to an ActivityStreams 1 activity.
 
   Args:
-    atom: unicode string, Atom document
+    atom: unicode string, Atom document with top-level <entry> element
 
   Returns:
     dict, ActivityStreams activity
@@ -169,9 +192,20 @@ def atom_to_activity(atom):
   assert isinstance(atom, unicode)
   parser = ElementTree.XMLParser(encoding='UTF-8')
   entry = ElementTree.XML(atom.encode('utf-8'), parser=parser)
-  if entry.tag.split('}')[-1] != 'entry':
+  if _tag(entry) != 'entry':
     raise ValueError('Expected root entry tag; got %s' % entry.tag)
+  return _atom_to_activity(entry)
 
+
+def _atom_to_activity(entry):
+  """Converts an internal Atom entry element to an ActivityStreams 1 activity.
+
+  Args:
+    entry: ElementTree <entry> element
+
+  Returns:
+    dict, ActivityStreams activity
+  """
   # default object data from entry. override with data inside activity:object.
   obj_elem = entry.find('activity:object', NAMESPACES)
   obj = _atom_to_object(obj_elem if obj_elem is not None else entry)

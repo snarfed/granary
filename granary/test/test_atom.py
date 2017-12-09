@@ -13,15 +13,7 @@ import test_facebook
 import test_instagram
 import test_twitter
 
-INSTAGRAM_ATOM_ENTRY = u"""\
-<?xml version="1.0" encoding="UTF-8"?>
-<entry xml:lang="en-US"
-       xmlns="http://www.w3.org/2005/Atom"
-       xmlns:activity="http://activitystrea.ms/spec/1.0/"
-       xmlns:georss="http://www.georss.org/georss"
-       xmlns:ostatus="http://ostatus.org/schema/1.0"
-       xmlns:thr="http://purl.org/syndication/thread/1.0"
-       >
+INSTAGRAM_ENTRY_BODY = u"""\
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://snarfed.org</uri>
@@ -59,9 +51,57 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <updated>2012-09-22T05:25:42Z</updated>
   <georss:point>37.3 -122.5</georss:point>
   <georss:featureName>Le Truc</georss:featureName>
-  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
+  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />"""
+INSTAGRAM_ENTRY = u"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xml:lang="en-US"
+       xmlns="http://www.w3.org/2005/Atom"
+       xmlns:activity="http://activitystrea.ms/spec/1.0/"
+       xmlns:georss="http://www.georss.org/georss"
+       xmlns:ostatus="http://ostatus.org/schema/1.0"
+       xmlns:thr="http://purl.org/syndication/thread/1.0"
+       >
+""" + INSTAGRAM_ENTRY_BODY + """
 </entry>
 """
+INSTAGRAM_FEED = u"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+       xmlns="http://www.w3.org/2005/Atom"
+       xmlns:activity="http://activitystrea.ms/spec/1.0/"
+       xmlns:georss="http://www.georss.org/georss"
+       xmlns:ostatus="http://ostatus.org/schema/1.0"
+       xmlns:thr="http://purl.org/syndication/thread/1.0"
+       >
+<entry>
+""" + INSTAGRAM_ENTRY_BODY + """
+</entry>
+</feed>
+"""
+INSTAGRAM_ACTIVITY = {
+  'objectType': 'activity',
+  'verb': 'post',
+  'id': 'https://www.instagram.com/p/ABC123/',
+  'actor': {
+    'displayName': 'Ryan B',
+    'objectType': 'person',
+    'url': 'http://snarfed.org',
+  },
+  'object': {
+    'id': 'https://www.instagram.com/p/ABC123/',
+    'objectType': 'photo',
+    'title': 'this picture -> is #abc @foo #xyz',
+    'content': 'this picture -> is #abc @foo #xyz Le Truc',
+    'published': '2012-09-22T05:25:42Z',
+    'updated': '2012-09-22T05:25:42Z',
+    'location': {
+      'displayName': 'Le Truc',
+      'latitude': 37.3,
+      'longitude': -122.5,
+      'position': '+37.300000-122.500000/',
+    },
+  },
+}
 
 
 class AtomTest(testutil.HandlerTest):
@@ -88,36 +128,17 @@ class AtomTest(testutil.HandlerTest):
 
   def test_activity_to_atom(self):
     self.assert_multiline_equals(
-      INSTAGRAM_ATOM_ENTRY,
+      INSTAGRAM_ENTRY,
       atom.activity_to_atom(copy.deepcopy(test_instagram.ACTIVITY)),
       ignore_blanks=True)
 
   def test_atom_to_activity(self):
-    expected = {
-      'objectType': 'activity',
-      'verb': 'post',
-      'id': 'https://www.instagram.com/p/ABC123/',
-      'actor': {
-        'displayName': 'Ryan B',
-        'objectType': 'person',
-        'url': 'http://snarfed.org',
-      },
-      'object': {
-        'id': 'https://www.instagram.com/p/ABC123/',
-        'objectType': 'photo',
-        'title': 'this picture -> is #abc @foo #xyz',
-        'content': 'this picture -> is #abc @foo #xyz Le Truc',
-        'published': '2012-09-22T05:25:42Z',
-        'updated': '2012-09-22T05:25:42Z',
-        'location': {
-          'displayName': 'Le Truc',
-          'latitude': 37.3,
-          'longitude': -122.5,
-          'position': '+37.300000-122.500000/',
-        },
-      },
-    }
-    self.assert_equals(expected, atom.atom_to_activity(INSTAGRAM_ATOM_ENTRY))
+    self.assert_equals(INSTAGRAM_ACTIVITY,
+                       atom.atom_to_activity(INSTAGRAM_ENTRY))
+
+  def test_atom_feed_to_activities(self):
+    self.assert_equals([INSTAGRAM_ACTIVITY],
+                       atom.atom_to_activities(INSTAGRAM_FEED))
 
   def test_atom_to_activity_like(self):
     for atom_obj, as_obj in (
