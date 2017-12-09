@@ -430,6 +430,40 @@ baz baj
 </div>
 """, resp.body, ignore_blanks=True)
 
+  def test_url_atom_to_html(self):
+    self.expect_urlopen('http://feed', ATOM_CONTENT + '</feed>\n')
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals({
+      'items': [{
+        'id': 'https://perma/link',
+        'objectType': 'activity',
+        'verb': 'post',
+        'actor': {
+          'objectType': 'person',
+          'displayName': 'My Name',
+          'url': 'http://my/site',
+        },
+        'object': {
+          'id': 'https://perma/link',
+          'objectType': 'note',
+          'title': 'foo bar',
+          'content': 'foo bar',
+          'published': '2012-03-04T18:20:37+00:00',
+          'updated': '2012-03-04T18:20:37+00:00',
+        },
+      }],
+      'itemsPerPage': 1,
+      'totalResults': 1,
+      'startIndex': 0,
+      'sorted': False,
+      'filtered': False,
+      'updatedSince': False,
+    }, json.loads(resp.body))
+
   def test_url_as1_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.
 

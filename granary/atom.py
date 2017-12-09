@@ -172,8 +172,9 @@ def atom_to_activities(atom):
   Returns:
     list of ActivityStreams activity dicts
   """
-  assert isinstance(atom, unicode)
+  assert isinstance(atom, basestring)
   parser = ElementTree.XMLParser(encoding='UTF-8')
+  # TODO
   feed = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(feed) != 'feed':
     raise ValueError('Expected root entry tag; got %s' % feed.tag)

@@ -31,6 +31,7 @@ from webob import exc
 import api
 from granary import (
   as2,
+  atom,
   jsonfeed,
   microformats2,
   source,
@@ -45,6 +46,7 @@ INPUTS = (
   'activitystreams',
   'as1',
   'as2',
+  'atom',
   'html',
   'json-mf2',
   'jsonfeed',
@@ -163,6 +165,8 @@ class UrlHandler(api.Handler):
       activities = body_items
     elif input == 'as2':
       activities = [as2.to_as1(obj) for obj in body_items]
+    elif input == 'atom':
+      activities = atom.atom_to_activities(body)#.decode('utf-8')) TODO
     elif input == 'html':
       activities = microformats2.html_to_activities(body, url, actor)
     elif input in ('mf2-json', 'json-mf2'):
