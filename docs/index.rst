@@ -1,11 +1,11 @@
-granary documentation
-=====================
+granary
+=======
 
 About
 -----
 
-Granary is a library and REST API that converts between a wide variety
-of formats:
+Granary is a library and REST API that fetches and converts between a
+wide variety of data sources and formats:
 
 -  Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 -  Instagram and Google+ scraped HTML
@@ -16,7 +16,11 @@ of formats:
 -  XML
 -  `JSON Feed <https://jsonfeed.org/>`__
 
-Here's how to get started:
+`Free <https://en.wikipedia.org/wiki/Threshing>`__ yourself from silo
+API `chaff <https://en.wikipedia.org/wiki/Chaff>`__ and expose the sweet
+social data foodstuff inside in standard formats and protocols!
+
+Here’s how to get started:
 
 -  Granary is `available on
    PyPi. <https://pypi.python.org/pypi/granary/>`__ Install with
@@ -43,7 +47,7 @@ The library and REST API are both based on the `OpenSocial Activity
 Streams
 service <https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service>`__.
 
-Let's start with an example. This code using the library:
+Let’s start with an example. This code using the library:
 
 .. code:: python
 
@@ -59,8 +63,8 @@ is equivalent to this ``HTTP GET`` request:
     https://granary.io/twitter/@me/@friends/@app/
       ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 
-They return the authenticated user's Twitter stream, ie tweets from the
-people they follow. Here's the JSON output:
+They return the authenticated user’s Twitter stream, ie tweets from the
+people they follow. Here’s the JSON output:
 
 .. code:: json
 
@@ -98,7 +102,7 @@ is a source-specific id or ``@me`` for the authenticated user.
 currently ignored; best practice is to use ``@app`` as a placeholder.
 
 Paging is supported via the ``startIndex`` and ``count`` parameters.
-They're self explanatory, and described in detail in the `OpenSearch
+They’re self explanatory, and described in detail in the `OpenSearch
 spec <http://www.opensearch.org/Specifications/OpenSearch/1.1#The_.22count.22_parameter>`__
 and `OpenSocial
 spec <https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service>`__.
@@ -120,10 +124,10 @@ which puts the activities in the top-level ``items`` field as a list and
 adds the ``itemsPerPage``, ``totalCount``, etc. fields.
 
 Most Facebook requests and all Twitter, Google+, Instagram, and Flickr
-requests will need OAuth access tokens. If you're using Python on Google
+requests will need OAuth access tokens. If you’re using Python on Google
 App Engine, `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
 is an easy way to add OAuth client flows for these sites. Otherwise,
-here are the sites' authentication docs:
+here are the sites’ authentication docs:
 `Facebook <https://developers.facebook.com/docs/facebook-login/access-tokens/>`__,
 `Flickr <https://www.flickr.com/services/api/auth.oauth.html>`__,
 `Google+ <https://developers.google.com/+/api/oauth#about>`__,
@@ -150,11 +154,11 @@ All query parameters are optional. ``FORMAT`` may be ``json`` (the
 default), ``xml``, or ``atom``, both of which return
 `Atom <http://www.intertwingly.net/wiki/pie/FrontPage>`__. ``atom``
 supports a boolean ``reader`` query parameter for toggling rendering
-appropriate to feed readers, e.g. location is rendered in content when
+appropriate to feed readers, e.g. location is rendered in content when
 ``reader=true`` (the default). The rest of the path elements and query
 params are `described above <#using>`__.
 
-Errors are returned with the appropriate HTTP response code, e.g. 403
+Errors are returned with the appropriate HTTP response code, e.g. 403
 for Unauthorized, with details in the response body.
 
 By default, responses are cached and reused for 5m without re-fetching
@@ -162,22 +166,20 @@ the source data. (Instagram responses are cached for 60m.) You can
 prevent this by adding the ``cache=false`` query parameter to your
 request.
 
-To use the REST API in an existing ActivityStreams client, you'll need
+To use the REST API in an existing ActivityStreams client, you’ll need
 to hard-code exceptions for the domains you want to use e.g.
 ``facebook.com``, and redirect HTTP requests to the corresponding
 `endpoint above <#about>`__.
 
-The web UI
-(`granary.io <https://granary.io/>`__)
-currently only fetches Facebook access tokens for users. If you want to
-use it to access a Facebook page, you'll need to get an access token
-manually with the `Graph API
-Explorer <https://developers.facebook.com/tools/explorer/>`__ (click on
-the *Get To...* drop-down) . Then, log into Facebook on
-`granary.io <https://granary.io/>`__ and
-paste the page access token into the ``access_token`` text box.
+The web UI (`granary.io <https://granary.io/>`__) currently only fetches
+Facebook access tokens for users. If you want to use it to access a
+Facebook page, you’ll need to get an access token manually with the
+`Graph API Explorer <https://developers.facebook.com/tools/explorer/>`__
+(click on the *Get To…* drop-down) . Then, log into Facebook on
+`granary.io <https://granary.io/>`__ and paste the page access token
+into the ``access_token`` text box.
 
-(Google+ pages `aren't supported in their
+(Google+ pages `aren’t supported in their
 API <https://github.com/snarfed/bridgy/issues/354>`__.)
 
 Using the library
@@ -206,7 +208,7 @@ Troubleshooting/FAQ
 
 Check out the `oauth-dropins Troubleshooting/FAQ
 section <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__.
-It's pretty comprehensive and applies to this project too. For
+It’s pretty comprehensive and applies to this project too. For
 searchability, here are a handful of error messages that `have solutions
 there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
 
@@ -225,15 +227,15 @@ there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
 Future work
 -----------
 
-We'd love to add more sites! Off the top of my head,
+We’d love to add more sites! Off the top of my head,
 `YouTube <http://youtu.be/>`__, `Tumblr <http://tumblr.com/>`__,
 `WordPress.com <http://wordpress.com/>`__, `Sina
 Weibo <http://en.wikipedia.org/wiki/Sina_Weibo>`__,
 `Qzone <http://en.wikipedia.org/wiki/Qzone>`__, and
 `RenRen <http://en.wikipedia.org/wiki/Renren>`__ would be good
-candidates. If you're looking to get started, implementing a new site is
-a good place to start. It's pretty self contained and the existing sites
-are good examples to follow, but it's a decent amount of work, so you'll
+candidates. If you’re looking to get started, implementing a new site is
+a good place to start. It’s pretty self contained and the existing sites
+are good examples to follow, but it’s a decent amount of work, so you’ll
 be familiar with the whole project by the end.
 
 Development
@@ -242,7 +244,7 @@ Development
 Pull requests are welcome! Feel free to `ping
 me <http://snarfed.org/about>`__ with any questions.
 
-You'll need the `App Engine Python
+You’ll need the `App Engine Python
 SDK <https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python>`__
 version 1.9.15 or later (for
 `vendor <https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring>`__
@@ -267,14 +269,14 @@ SDK <https://developers.google.com/appengine/downloads>`__ or the
 
 If you want to work on
 `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ at the same
-time, install it in "source" mode with
+time, install it in “source” mode with
 ``pip install -e <path to oauth-dropins repo>``.
 
 To deploy:
 
 .. code:: shell
 
-    python -m unittest discover && ~/google_appengine/appcfg.py update .
+    python -m unittest discover && gcloud -q app deploy granary-demo *.yaml
 
 To deploy `facebook-atom <https://github.com/snarfed/facebook-atom>`__,
 `twitter-atom <https://github.com/snarfed/twitter-atom>`__,
@@ -286,21 +288,8 @@ change:
 
     #!/bin/tcsh
     foreach s (facebook-atom twitter-atom instagram-atom plusstreamfeed)
-      cd ~/src/$s && ~/google_appengine/appcfg.py update .
+      cd ~/src/$s && gcloud -q app deploy $s *.yaml
     end
-
-To deploy the old ``*-activitystreams.appspot.com`` apps:
-
-.. code:: shell
-
-    cd old_apps
-    rm -f app.yaml && ln -s app.twitter.yaml app.yaml && \
-      ~/google_appengine/appcfg.py update . && \
-    rm -f app.yaml && ln -s app.facebook.yaml app.yaml && \
-      ~/google_appengine/appcfg.py update . && \
-    rm -f app.yaml && ln -s app.instagram.yaml app.yaml && \
-      ~/google_appengine/appcfg.py update . && \
-    git co -- app.yaml
 
 The docs are built with `Sphinx <http://sphinx-doc.org/>`__, including
 `apidoc <http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html>`__,
@@ -309,7 +298,7 @@ The docs are built with `Sphinx <http://sphinx-doc.org/>`__, including
 Configuration is in
 `docs/conf.py <https://github.com/snarfed/granary/blob/master/docs/conf.py>`__
 To build them, first install Sphinx with ``pip install sphinx``. (You
-may want to do this outside your virtualenv; if so, you'll need to
+may want to do this outside your virtualenv; if so, you’ll need to
 reconfigure it to see system packages with
 ``virtualenv --system-site-packages local``.) Then, run
 `docs/build.sh <https://github.com/snarfed/granary/blob/master/docs/build.sh>`__.
@@ -323,15 +312,15 @@ Related work
 
 `Apache Streams <http://streams.incubator.apache.org/>`__ is a similar
 project that translates between storage systems and database as well as
-social schemas. It's a Java library, and its design is heavily
-structured. `Here's the list of formats it
+social schemas. It’s a Java library, and its design is heavily
+structured. `Here’s the list of formats it
 supports. <http://streams.incubator.apache.org/site/0.3-incubating-SNAPSHOT/streams-project/streams-contrib/index.html>`__
-It's mainly used by `People Pattern <http://www.peoplepattern.com/>`__.
+It’s mainly used by `People Pattern <http://www.peoplepattern.com/>`__.
 
 `Gnip <http://gnip.com/>`__ similarly `converts social network data to
 ActivityStreams <http://support.gnip.com/documentation/activity_streams_intro.html>`__
 and supports `many more source networks <http://gnip.com/sources/>`__.
-Unfortunately, it's commercial, there's no free trial or self-serve
+Unfortunately, it’s commercial, there’s no free trial or self-serve
 signup, and `plans start at $500 <http://gnip.com/products/pricing/>`__.
 
 `DataSift <http://datasift.com/>`__ looks like broadly the same thing,
@@ -339,10 +328,10 @@ except they offer `self-serve, pay as you go
 billing <http://dev.datasift.com/docs/billing>`__, and they use `their
 own proprietary output
 format <http://dev.datasift.com/docs/getting-started/data>`__ instead of
-ActivityStreams. They're also aimed more at data mining as opposed to
+ActivityStreams. They’re also aimed more at data mining as opposed to
 individual user access.
 
-`Cliqset's
+`Cliqset’s
 FeedProxy <http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php>`__
 used to do this kind of format translation, but unfortunately it and
 Cliqset died.
@@ -350,52 +339,98 @@ Cliqset died.
 Facebook `used to <https://developers.facebook.com/blog/post/225/>`__
 `officially <https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/>`__
 `support <https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY>`__
-ActivityStreams, but that's also dead.
+ActivityStreams, but that’s also dead.
 
 There are a number of products that download your social network data,
 normalize it, and let you query and visualize it.
 `SocialSafe <http://socialsafe.net/>`__ is one, although the SSL
 certificate is currently out of date.
 `ThinkUp <http://web.archive.org/web/20161108212106/http://www.thinkup.com/>`__
-was an open source product, but shuttered on 18 July 2016. There's also
+was an open source product, but shuttered on 18 July 2016. There’s also
 the lifelogging/lifestream aggregator vein of projects that pull data
 from multiple source sites.
 `Storytlr <https://github.com/storytlr/storytlr>`__ is a good example.
-It doesn't include Facebook, Google+, or Instagram, but does include a
-number of smaller source sites. There are lots of others, e.g. the
+It doesn’t include Facebook, Google+, or Instagram, but does include a
+number of smaller source sites. There are lots of others, e.g. the
 `Lifestream WordPress
 plugin <http://www.enthropia.com/labs/wp-lifestream/>`__. Unfortunately,
-these are generally aimed at end users, not developers, and don't
+these are generally aimed at end users, not developers, and don’t
 usually expose libraries or REST APIs.
 
 On the open source side, there are many related projects.
 `php-mf2-shim <https://github.com/indieweb/php-mf2-shim>`__ adds
 `microformats2 <http://microformats.org/wiki/microformats2>`__ to
-Facebook and Twitter's raw HTML.
+Facebook and Twitter’s raw HTML.
 `sockethub <https://github.com/sockethub/sockethub>`__ is a similar
-"polyglot" approach, but more focused on writing than reading.
+“polyglot” approach, but more focused on writing than reading.
 
 Changelog
 ---------
 
+1.10 - unreleased
+~~~~~~~~~~~~~~~~~
+
+-  Moved web site and REST API to granary.io! granary-demo.appspot.com
+   now 301 redirects.
+-  Twitter:
+
+   -  Update the publish character limit to 280.
+      `Background. <https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425>`__
+   -  Fix a `bug in ``preview_create`` that auto-linked @-mentions
+      inside
+      URLs <https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800>`__,
+      e.g. Medium posts.
+   -  Support videos and animated GIFs in ``get_activities()`` etc.
+
+-  Instagram:
+
+   -  Add cookie query param to REST API to allow scraping that logged
+      in user’s feed.
+
+-  HTML (including Atom content):
+
+   -  Render image, video, and audio attachments more often and
+      consistently.
+   -  Include microformats2 ``u-photo``, ``u-video``, and ``u-audio``
+      classes more often and consistently.
+
+-  Atom:
+
+   -  Add ``atom_to_activities()`` for converting full feed documents.
+   -  Add to REST API and web UI.
+
+-  JSON Feed:
+
+   -  Fix bug that omitted title in some cases
+      (`#122 <https://github.com/snarfed/granary/issues/122>`__).
+
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
 
--  Add `ActivityStreams 2.0 <http://www.w3.org/TR/activitystreams-core/>`__!
-   New ``as2`` module includes ``to_as1()`` and ``from_as1()`` functions. Currently
+-  Add `ActivityStreams
+   2.0 <http://www.w3.org/TR/activitystreams-core/>`__! New ``as2``
+   module includes ``to_as1()`` and ``from_as1()`` functions. Currently
    supported: articles, notes, replies, likes, reposts, events, RSVPs,
    tags, attachments.
 -  Atom:
-    -  Add new ``atom_to_activity()`` function for converting Atom to AS1.
-    -  Add email field to author, if provided.
+
+   -  Add new ``atom_to_activity()`` function for converting Atom to
+      AS1.
+   -  Add email field to author, if provided.
+
 -  JSON Feed:
-    -  Raise ValueError on bad (non-dict) input.
+
+   -  Raise ValueError on bad (non-dict) input.
+
 -  REST API:
-    -  Add ``as2`` value for ``format`` and ``input``. Revise existing
-   ActivityStreams and microformats2 value names to ``as1``,
-   ``as1-xml``, and ``mf2-json``. Old values ``activitystreams``,
-   ``json``, ``json-mf2``, and ``xml`` are still accepted, but
-   deprecated.
+
+   -  Add ``as2`` value for ``format`` and ``input``. Revise existing
+      ActivityStreams and microformats2 value names to ``as1``,
+      ``as1-xml``, and ``mf2-json``. Old values ``activitystreams``,
+      ``json``, ``json-mf2``, and ``xml`` are still accepted, but
+      deprecated.
+
+.. section-1:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -406,9 +441,9 @@ Changelog
 
    -  Add ``get_blocklist()``.
    -  Bug fix for creating replies, favorites, or retweets of video
-      URLs, e.g. https://twitter.com/name/status/123/video/1 .
+      URLs, e.g. https://twitter.com/name/status/123/video/1 .
    -  Bug fix for parsing favorites HTML to handle a small change on
-      Twitter's side.
+      Twitter’s side.
    -  ``post_id()`` now validates ids more strictly before returning
       them.
 
@@ -427,14 +462,20 @@ Changelog
 
    -  Update scraping to handle new home page (ie news feed) JSON
       schema, which changed sometime around 2017-02-27. (Profile pages
-      and individual photo/video permalinks still haven't changed yet.)
+      and individual photo/video permalinks still haven’t changed yet.)
 
 -  microformats2:
 
    -  Add `u-featured <https://indieweb.org/featured>`__ to
       ActivityStreams ``image``.
    -  Improve ``h-event`` support.
-   -  Minor whitespace change (added ``<p>``) when rendering locations as HTML.
+   -  Minor whitespace change (added
+
+      .. raw:: html
+
+         <p>
+
+      ) when rendering locations as HTML.
    -  ``post_id()`` now validates ids more strictly before returning
       them.
    -  Fix bugs in converting latitude and longitude between
@@ -451,13 +492,13 @@ Changelog
       top-level ``<entry>`` instead of ``<feed>``.
    -  Add new ``reader`` query param for toggling rendering decisions
       that are specific to feed readers. Right now, just affects
-      location: it's rendered in the content when ``reader=true`` (the
+      location: it’s rendered in the content when ``reader=true`` (the
       default), omitted when ``reader=false``.
    -  Include author name when rendering attached articles and notes
-      (e.g. quote tweets).
+      (e.g. quote tweets).
    -  Only include AS ``activity:object-type`` and ``activity:verb``
       elements when they have values.
-   -  Render AS image and mf2 u-photo if they're not already in content.
+   -  Render AS image and mf2 u-photo if they’re not already in content.
    -  Render ``thr:in-reply-to`` from ``object.inReplyTo`` as well as
       ``activity.context.inReplyTo``.
 
@@ -469,6 +510,8 @@ Changelog
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
+.. section-2:
+
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
 
@@ -476,7 +519,7 @@ Changelog
 
    -  Interpret ``h-cite`` and `u-quotation-of``
       (experimental) <https://indieweb.org/quotation#How_to_markup>`__
-      as attachments, e.g. for quote tweets.
+      as attachments, e.g. for quote tweets.
    -  Convert `audio <http://indieweb.org/audio>`__ and
       `video <http://indieweb.org/video>`__ properties to AS
       attachments.
@@ -498,7 +541,7 @@ Changelog
 
 -  Facebook:
 
-   -  Disable creating "interested" RSVPs, since Facebook's API doesn't
+   -  Disable creating “interested” RSVPs, since Facebook’s API doesn’t
       allow it.
 
 -  Atom:
@@ -507,26 +550,28 @@ Changelog
       enclosures <http://atomenabled.org/developers/syndication/#link>`__
       for audio and video attachments.
 
--  Source.get\_activities(): start raising ValueError on bad argument
+-  Source.get_activities(): start raising ValueError on bad argument
    values, notably invalid Facebook and Twitter ids and Instagram search
    queries.
 -  Fix rendering and linkifying content with Unicode high code points
    (ie above the 16-bit Basic Multilingual Plane), including some emoji,
-   on "narrow" builds of Python 2 with ``--enable-unicode=ucs2``, which
+   on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
+
+.. section-3:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
 
 -  Twitter:
 
-   -  Handle new "extended" tweets with hidden reply-to @-mentions and
+   -  Handle new “extended” tweets with hidden reply-to @-mentions and
       trailing URLs for media, quote tweets, etc. Background:
       https://dev.twitter.com/overview/api/upcoming-changes-to-tweets
    -  Bug fix: ensure like.author.displayName is a plain unicode string
-      so that it can be pickled normally, e.g. by App Engine's memcache.
+      so that it can be pickled normally, e.g. by App Engine’s memcache.
    -  Bug fix: handle names with emoji correctly in
-      favorites\_html\_to\_likes().
+      favorites_html_to_likes().
    -  Bug fix: handle search queries with unicode characters.
 
 -  Atom:
@@ -535,17 +580,19 @@ Changelog
 
 -  microformats2 HTML:
 
-   -  Optionally follow and fetch rel="author" links.
-   -  Improve mapping between microformats2 and ActivityStreams 'photo'
-      types. (mf2 'photo' type is a note or article *with* a photo, but
-      AS 'photo' type *is* a photo. So, map mf2 photos to underlying
+   -  Optionally follow and fetch rel=“author” links.
+   -  Improve mapping between microformats2 and ActivityStreams ‘photo’
+      types. (mf2 ‘photo’ type is a note or article *with* a photo, but
+      AS ‘photo’ type *is* a photo. So, map mf2 photos to underlying
       type without photo.)
-   -  Support location properties beyond h-card, e.g. h-adr, h-geo,
+   -  Support location properties beyond h-card, e.g. h-adr, h-geo,
       u-geo, and even when properties like latitude and longitude appear
       at the top level.
 
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
+
+.. section-4:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -564,22 +611,26 @@ Changelog
 
 -  Flickr:
 
-   -  Better username detection. Flickr's API is very inconsistent about
+   -  Better username detection. Flickr’s API is very inconsistent about
       username vs real name vs path alias. This specifically detects
       when a user name is probably actually a real name because it has a
       space.
-   -  Uploading: detect and handle App Engine's 10MB HTTP request limit.
+   -  Uploading: detect and handle App Engine’s 10MB HTTP request limit.
    -  Bug fix in create: handle unicode characters in photo/video
       description, hashtags, and comment text.
 
 -  Atom:
 
-   -  Bug fix: escape &s in attachments' text (e.g. quote tweets).
+   -  Bug fix: escape &s in attachments’ text (e.g. quote tweets).
+
+.. section-5:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
+
+.. section-6:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -604,7 +655,7 @@ Changelog
    -  Fix bug in create() that occasionally incorrectly escaped ., +,
       and - characters.
    -  Fix text rendering bug when there are multipl photos/videos.
-   -  When replying to yourself, don't add a self @-mention.
+   -  When replying to yourself, don’t add a self @-mention.
 
 -  Instagram:
 
@@ -613,11 +664,15 @@ Changelog
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
+.. section-7:
+
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
 
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
+
+.. section-8:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -625,7 +680,7 @@ Changelog
 -  Support posting videos! Currently in Facebook, Flickr, and Twitter.
 -  Instagram:
 
-   -  Add support for scraping, since they're `locking down their API
+   -  Add support for scraping, since they’re `locking down their API
       and requiring manual
       approval <http://developers.instagram.com/post/133424514006/instagram-platform-update>`__.
    -  Linkify @-mentions in photo captions.
@@ -654,11 +709,13 @@ Changelog
    -  Implement full post type discovery algorithm, using mf2util.
       https://indiewebcamp.com/post-type-discovery
    -  Drop support for h-as-\* classes, both incoming and outgoing.
-      They're deprecated in favor of post type discovery.
+      They’re deprecated in favor of post type discovery.
    -  Drop old deprecated ``u-like`` and ``u-repost`` properties.
 
 -  Misc bug fixes.
 -  Set up Coveralls.
+
+.. section-9:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -671,8 +728,8 @@ Changelog
    (`#31 <https://github.com/snarfed/granary/issues/31>`__,
    `#29 <https://github.com/snarfed/granary/issues/29>`__)
 -  Improved post type discovery (using mf2util).
--  Extract user web site links from all fields in profile (e.g.
-   description/bio).
+-  Extract user web site links from all fields in profile
+   (e.g. description/bio).
 -  Add fabricated fragments to comment/like permalinks (e.g.
    #liked-by-user123) so that object urls are always unique (multiple
    silos).
@@ -684,10 +741,10 @@ Changelog
 
 -  Facebook:
 
-   -  Fetch more things in get\_activities: photos, events, RSVPs.
+   -  Fetch more things in get_activities: photos, events, RSVPs.
    -  Support person tags in create/preview.
    -  Prevent facebook from automatically consolidating photo posts by
-      uploading photos to "Timeline Photos" album.
+      uploading photos to “Timeline Photos” album.
    -  Include title in create/preview.
    -  Improve object id parsing/resolving.
    -  Improve tag handling.
@@ -714,13 +771,15 @@ Changelog
 -  Misc bug fixes.
 -  Set up CircleCI.
 
+.. section-10:
+
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
 
 -  Add Flickr.
 -  Facebook:
 
-   -  Fetch multiple id formats, e.g. with and without USERID\_ prefix.
+   -  Fetch multiple id formats, e.g. with and without USERID\_ prefix.
    -  Support threaded comments.
    -  Switch from /posts API endpoint to /feed.
 
@@ -735,11 +794,15 @@ Changelog
 -  Improve original post discovery algorithm.
 -  New logo.
 
+.. section-11:
+
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
 
 -  Bug fix for atom template rendering.
--  Facebook, Instagram: support access\_token parameter.
+-  Facebook, Instagram: support access_token parameter.
+
+.. section-12:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~

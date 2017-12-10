@@ -2,9 +2,7 @@
 granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=master)](https://coveralls.io/github/snarfed/granary?branch=master)
 ===
 
-[Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API
-[chaff](https://en.wikipedia.org/wiki/Chaff) and expose the sweet social
-data foodstuff inside in standard formats and protocols!
+The social web translator. Fetches and converts data between social networks, HTML and JSON with microformats2, ActivityStreams 1 and 2, Atom, JSON Feed, and more.
 
 * [About](#about)
 * [Using](#using)
@@ -20,7 +18,7 @@ data foodstuff inside in standard formats and protocols!
 About
 ---
 
-Granary is a library and REST API that converts between a wide variety of formats:
+Granary is a library and REST API that fetches and converts between a wide variety of data sources and formats:
 
 * Facebook, Flickr, Google+, Instagram, and Twitter native APIs
 * Instagram and Google+ scraped HTML
@@ -30,14 +28,14 @@ Granary is a library and REST API that converts between a wide variety of format
 * XML
 * [JSON Feed](https://jsonfeed.org/)
 
+[Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API [chaff](https://en.wikipedia.org/wiki/Chaff) and expose the sweet social data foodstuff inside in standard formats and protocols!
+
 Here's how to get started:
 
-* Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/)
-  Install with `pip install granary`.
+* Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/) Install with `pip install granary`.
 * [Click here for getting started docs.](#using)
 * [Click here for reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
-* The REST API and demo app are deployed at
-[granary.io](https://granary.io/).
+* The REST API and demo app are deployed at [granary.io](https://granary.io/).
 
 License: This project is placed in the public domain.
 
@@ -45,10 +43,7 @@ License: This project is placed in the public domain.
 Using
 ---
 
-All dependencies are handled by pip and enumerated in
-[requirements.txt](https://github.com/snarfed/granary/blob/master/requirements.txt). We recommend that you install with pip in a
-[`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
-([App Engine details.](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring))
+All dependencies are handled by pip and enumerated in [requirements.txt](https://github.com/snarfed/granary/blob/master/requirements.txt). We recommend that you install with pip in a [`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/). ([App Engine details.](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring))
 
 The library and REST API are both based on the [OpenSocial Activity Streams service](https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
 
@@ -173,12 +168,7 @@ Development
 ---
 Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with any questions.
 
-You'll need the
-[App Engine Python SDK](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python)
-version 1.9.15 or later (for
-[`vendor`](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring)
-support). Add it to your `$PYTHONPATH`, e.g.
-`export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine`, and then run:
+You'll need the [App Engine Python SDK](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python) version 1.9.15 or later (for [`vendor`](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring) support). Add it to your `$PYTHONPATH`, e.g. `export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine`, and then run:
 
 ```shell
 virtualenv local
@@ -187,13 +177,7 @@ pip install -r requirements.txt
 python setup.py test
 ```
 
-If you send a pull request, please include (or update) a test for the new
-functionality if possible! The tests require the
-[App Engine SDK](https://developers.google.com/appengine/downloads)
-or the
-[Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`)
-with the `gcloud-appengine-python` and `gcloud-appengine-python-extras`
-[components](https://cloud.google.com/sdk/docs/components#additional_components).
+If you send a pull request, please include (or update) a test for the new functionality if possible! The tests require the [App Engine SDK](https://developers.google.com/appengine/downloads) or the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`) with the `gcloud-appengine-python` and `gcloud-appengine-python-extras` [components](https://cloud.google.com/sdk/docs/components#additional_components).
 
 If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with
 `pip install -e <path to oauth-dropins repo>`.
@@ -201,7 +185,7 @@ If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins)
 To deploy:
 
 ```shell
-python -m unittest discover && ~/google_appengine/appcfg.py update .
+python -m unittest discover && gcloud -q app deploy granary-demo *.yaml
 ```
 
 To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), [instagram-atom](https://github.com/snarfed/instagram-atom), and [plusstreamfeed](http://plusstreamfeed.appspot.com/) after a granary change:
@@ -209,33 +193,11 @@ To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-at
 ```shell
 #!/bin/tcsh
 foreach s (facebook-atom twitter-atom instagram-atom plusstreamfeed)
-  cd ~/src/$s && ~/google_appengine/appcfg.py update .
+  cd ~/src/$s && gcloud -q app deploy $s *.yaml
 end
 ```
 
-To deploy the old `*-activitystreams.appspot.com` apps:
-
-```shell
-cd old_apps
-rm -f app.yaml && ln -s app.twitter.yaml app.yaml && \
-  ~/google_appengine/appcfg.py update . && \
-rm -f app.yaml && ln -s app.facebook.yaml app.yaml && \
-  ~/google_appengine/appcfg.py update . && \
-rm -f app.yaml && ln -s app.instagram.yaml app.yaml && \
-  ~/google_appengine/appcfg.py update . && \
-git co -- app.yaml
-```
-
-The docs are built with [Sphinx](http://sphinx-doc.org/), including
-[apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html),
-[autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and
-[napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration
-is in
-[`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py)
-To build them, first install Sphinx with `pip install sphinx`. (You may want to
-do this outside your virtualenv; if so, you'll need to reconfigure it to see
-system packages with `virtualenv --system-site-packages local`.) Then, run
-[`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
+The docs are built with [Sphinx](http://sphinx-doc.org/), including [apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html), [autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and [napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration is in [`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py) To build them, first install Sphinx with `pip install sphinx`. (You may want to do this outside your virtualenv; if so, you'll need to reconfigure it to see system packages with `virtualenv --system-site-packages local`.) Then, run [`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
 
@@ -243,56 +205,26 @@ system packages with `virtualenv --system-site-packages local`.) Then, run
 Related work
 --
 
-[Apache Streams](http://streams.incubator.apache.org/) is a similar project that
-translates between storage systems and database as well as social schemas. It's
-a Java library, and its design is heavily structured.
-[Here's the list of formats it supports.](http://streams.incubator.apache.org/site/0.3-incubating-SNAPSHOT/streams-project/streams-contrib/index.html) It's
-mainly used by [People Pattern](http://www.peoplepattern.com/).
+[Apache Streams](http://streams.incubator.apache.org/) is a similar project that translates between storage systems and database as well as social schemas. It's a Java library, and its design is heavily structured. [Here's the list of formats it supports.](http://streams.incubator.apache.org/site/0.3-incubating-SNAPSHOT/streams-project/streams-contrib/index.html) It's mainly used by [People Pattern](http://www.peoplepattern.com/).
 
-[Gnip](http://gnip.com/) similarly
-[converts social network data to ActivityStreams](http://support.gnip.com/documentation/activity_streams_intro.html)
-and supports [many more source networks](http://gnip.com/sources/).
-Unfortunately, it's commercial, there's no free trial or self-serve signup, and
-[plans start at $500](http://gnip.com/products/pricing/).
+[Gnip](http://gnip.com/) similarly [converts social network data to ActivityStreams](http://support.gnip.com/documentation/activity_streams_intro.html) and supports [many more source networks](http://gnip.com/sources/). Unfortunately, it's commercial, there's no free trial or self-serve signup, and [plans start at $500](http://gnip.com/products/pricing/).
 
-[DataSift](http://datasift.com/) looks like broadly the same thing, except they
-offer [self-serve, pay as you go billing](http://dev.datasift.com/docs/billing),
-and they use
-[their own proprietary output format](http://dev.datasift.com/docs/getting-started/data)
-instead of ActivityStreams. They're also aimed more at data mining as opposed to
-individual user access.
+[DataSift](http://datasift.com/) looks like broadly the same thing, except they offer [self-serve, pay as you go billing](http://dev.datasift.com/docs/billing), and they use [their own proprietary output format](http://dev.datasift.com/docs/getting-started/data) instead of ActivityStreams. They're also aimed more at data mining as opposed to individual user access.
 
-[Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php)
-used to do this kind of format translation, but unfortunately it and Cliqset
-died.
+[Cliqset's FeedProxy](http://www.readwriteweb.com/archives/cliqset_activity_streams_api.php) used to do this kind of format translation, but unfortunately it and Cliqset died.
 
-Facebook [used to](https://developers.facebook.com/blog/post/225/)
-[officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/)
-[support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY)
-ActivityStreams, but that's also dead.
+Facebook [used to](https://developers.facebook.com/blog/post/225/) [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/) [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY) ActivityStreams, but that's also dead.
 
-There are a number of products that download your social network data, normalize
-it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) is one, although the SSL certificate is currently out of date. [ThinkUp](http://web.archive.org/web/20161108212106/http://www.thinkup.com/) was an open source product, but shuttered on 18 July 2016. There's also the
-lifelogging/lifestream aggregator vein of projects that pull data from multiple
-source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good
-example. It doesn't include Facebook, Google+, or Instagram, but does include a
-number of smaller source sites. There are lots of others, e.g. the
-[Lifestream WordPress plugin](http://www.enthropia.com/labs/wp-lifestream/).
-Unfortunately, these are generally aimed at end users, not developers, and don't
-usually expose libraries or REST APIs.
+There are a number of products that download your social network data, normalize it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) is one, although the SSL certificate is currently out of date. [ThinkUp](http://web.archive.org/web/20161108212106/http://www.thinkup.com/) was an open source product, but shuttered on 18 July 2016. There's also the lifelogging/lifestream aggregator vein of projects that pull data from multiple source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good example. It doesn't include Facebook, Google+, or Instagram, but does include a number of smaller source sites. There are lots of others, e.g. the [Lifestream WordPress plugin](http://www.enthropia.com/labs/wp-lifestream/). Unfortunately, these are generally aimed at end users, not developers, and don't usually expose libraries or REST APIs.
 
-On the open source side, there are many related projects.
-[php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds
-[microformats2](http://microformats.org/wiki/microformats2) to Facebook and
-Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a
-similar "polyglot" approach, but more focused on writing than reading.
+On the open source side, there are many related projects. [php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds [microformats2](http://microformats.org/wiki/microformats2) to Facebook and Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a similar "polyglot" approach, but more focused on writing than reading.
 
 
 Changelog
 ---
 
 ### 1.10 - unreleased
-* Move web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
+* Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
 * Twitter:
   * Update the publish character limit to 280. [Background.](https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425)
   * Fix a [bug in `preview_create` that auto-linked @-mentions inside URLs](https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800), e.g. Medium posts.
@@ -304,6 +236,7 @@ Changelog
   * Include microformats2 `u-photo`, `u-video`, and `u-audio` classes more often and consistently.
 * Atom:
   * Add `atom_to_activities()` for converting full feed documents.
+  * Add to REST API and web UI.
 * JSON Feed:
   * Fix bug that omitted title in some cases ([#122](https://github.com/snarfed/granary/issues/122)).
 

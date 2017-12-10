@@ -8,15 +8,15 @@ cd `dirname $absfile`
 
 # generates the module index files:
 #   docs/source/oauth_dropins.rst, oauth_dropins.webutil.rst
-# only used to bootstrap. we've edited by hand since ten so don't run any more
+# only used to bootstrap. we've edited by hand since then so don't run any more
 # or it will overwrite them.
 # sphinx-apidoc -f -o source ../granary \
 #   ../granary/{appengine_config.py,test}
 
 rm -f index.rst
 cat > index.rst <<EOF
-granary documentation
-=====================
+granary
+=======
 
 EOF
 

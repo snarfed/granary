@@ -51,24 +51,22 @@ window.onload = update_form();
 
 <h1>
 <img id="logo" src="/static/granary_logo_128.png" />
-granary
+granary<br>
+<small>The social web translator</small>
 </h1>
 
 <p class="lead">
-A library and REST API
-that <a href="https://en.wikipedia.org/wiki/Threshing">frees</a> you
-from <a href="https://indiewebcamp.com/silo">social network</a>
-API <a href="https://en.wikipedia.org/wiki/Chaff">chaff</a> and and exposes the
-sweet social data foodstuff inside as HTML and JSON
-with <a href="http://microformats.org/wiki/microformats2">microformats2</a>,
+Fetches and converts data between
+<a href="https://indiewebcamp.com/silo">social networks</a>, HTML and JSON with
+<a href="http://microformats.org/wiki/microformats2">microformats2</a>,
 <a href="http://activitystrea.ms/">ActivityStreams</a> 1 and 2,
 <a href="http://atomenabled.org/">Atom</a>,
 <a href="https://jsonfeed.org/">JSON Feed</a>, and more.
 </p>
-
 <p class="lead">
-Details in the <a href="https://github.com/snarfed/granary">GitHub repo</a>.
-Click on a button to try it!
+Details in the <a href="https://granary.readthedocs.io/">docs</a> and
+<a href="https://github.com/snarfed/granary">GitHub repo</a>. Click on a button
+to try it!
 </p>
 
 <!--
@@ -78,7 +76,7 @@ Click on a button to try it!
 <div class="login">
 <div class="row">
 
-<div class="col-lg-offset-2 col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6 col-lg-offset-1">
 <form method="post" action="/twitter/start_auth">
   <input type="image" class="shadow" alt="Twitter"
          src="/oauth_dropins/static/twitter.png" />
@@ -106,16 +104,13 @@ Click on a button to try it!
 </a>
 </div>
 
-</div>
-<div class="row">
-
-<div class="col-lg-offset-2 col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="post" action="/flickr/start_auth">
   <input type="image" class="shadow" alt="Flickr"
          src="/oauth_dropins/static/flickr.png" />
 </form></div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6 col-lg-offset-1">
 <form method="get">
   <input type="image" class="shadow" alt="Microformats2"
          src="/static/microformats_button.png" />
@@ -136,11 +131,7 @@ Click on a button to try it!
   <input name="input" type="hidden" value="jsonfeed" />
 </form></div>
 
-</div>
-
-<div class="row">
-
-<div class="col-lg-offset-4 col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="get">
   <input type="image" class="shadow" alt="HTML" id="html"
          src="/static/html_button.png" height="60" />
