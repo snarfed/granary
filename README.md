@@ -2,7 +2,7 @@
 granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=master)](https://coveralls.io/github/snarfed/granary?branch=master)
 ===
 
-The social web translator. Fetches and converts data between social networks, HTML and JSON with microformats2, ActivityStreams 1 and 2, Atom, JSON Feed, and more.
+The social web translator. Fetches and converts data between social networks, HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2), [ActivityStreams](http://activitystrea.ms/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
 
 * [About](#about)
 * [Using](#using)
@@ -24,9 +24,9 @@ Granary is a library and REST API that fetches and converts between a wide varie
 * Instagram and Google+ scraped HTML
 * [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0
 * [microformats2](http://microformats.org/wiki/microformats2) HTML and JSON
-* [Atom](http://atomenabled.org/)
-* XML
+* [Atom](https://tools.ietf.org/html/rfc4287)
 * [JSON Feed](https://jsonfeed.org/)
+* XML
 
 [Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API [chaff](https://en.wikipedia.org/wiki/Chaff) and expose the sweet social data foodstuff inside in standard formats and protocols!
 
@@ -223,7 +223,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 1.10 - unreleased
+### 1.10 - 2017-12-10
 * Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
 * Twitter:
   * Update the publish character limit to 280. [Background.](https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425)
