@@ -31,6 +31,14 @@
   padding: 0 .5em 0 .5em;
 }
 
+#atom {
+  background: linear-gradient(to bottom, white, #eeddcc);
+}
+
+#html {
+  background: linear-gradient(to bottom, white, #dddddd);
+}
+
 #search_query_span {
   display: none;
 }
