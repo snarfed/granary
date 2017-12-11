@@ -227,7 +227,7 @@ Changelog
 * Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
 * Twitter:
   * Update the publish character limit to 280. [Background.](https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425)
-  * Fix a [bug in `preview_create` that auto-linked @-mentions inside URLs](https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800), e.g. Medium posts.
+  * Fix a [bug in preview_create that auto-linked @-mentions inside URLs](https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800), e.g. Medium posts.
   * Support videos and animated GIFs in `get_activities()` etc.
 * Instagram:
   * Add cookie query param to REST API to allow scraping that logged in user's feed.
@@ -286,7 +286,7 @@ Changelog
 
 ### 1.7 - 2017-02-27
 * microformats2:
-    * Interpret `h-cite` and [`u-quotation-of` (experimental)](https://indieweb.org/quotation#How_to_markup) as attachments, e.g. for quote tweets.
+    * Interpret h-cite and [u-quotation-of](https://indieweb.org/quotation#How_to_markup) (experimental) as attachments, e.g. for quote tweets.
     * Convert [audio](http://indieweb.org/audio) and [video](http://indieweb.org/video) properties to AS attachments.
 * Twitter:
     * Linkify @-mentions and hashtags in `preview_create()`.

@@ -1,8 +1,7 @@
 granary
 =======
 
-About
------
+--------------
 
 Granary is a library and REST API that fetches and converts between a
 wide variety of data sources and formats:
@@ -12,9 +11,9 @@ wide variety of data sources and formats:
 -  `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0
 -  `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
    and JSON
--  `Atom <http://atomenabled.org/>`__
--  XML
+-  `Atom <https://tools.ietf.org/html/rfc4287>`__
 -  `JSON Feed <https://jsonfeed.org/>`__
+-  XML
 
 `Free <https://en.wikipedia.org/wiki/Threshing>`__ yourself from silo
 API `chaff <https://en.wikipedia.org/wiki/Chaff>`__ and expose the sweet
@@ -367,7 +366,7 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-1.10 - unreleased
+1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
 
 -  Moved web site and REST API to granary.io! granary-demo.appspot.com
@@ -376,8 +375,7 @@ Changelog
 
    -  Update the publish character limit to 280.
       `Background. <https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425>`__
-   -  Fix a `bug in ``preview_create`` that auto-linked @-mentions
-      inside
+   -  Fix a `bug in preview_create that auto-linked @-mentions inside
       URLs <https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800>`__,
       e.g. Medium posts.
    -  Support videos and animated GIFs in ``get_activities()`` etc.
@@ -403,6 +401,8 @@ Changelog
 
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
+
+.. section-1:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -430,7 +430,7 @@ Changelog
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. section-1:
+.. section-2:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -510,16 +510,16 @@ Changelog
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. section-2:
+.. section-3:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
 
 -  microformats2:
 
-   -  Interpret ``h-cite`` and `u-quotation-of``
-      (experimental) <https://indieweb.org/quotation#How_to_markup>`__
-      as attachments, e.g. for quote tweets.
+   -  Interpret h-cite and
+      `u-quotation-of <https://indieweb.org/quotation#How_to_markup>`__
+      (experimental) as attachments, e.g. for quote tweets.
    -  Convert `audio <http://indieweb.org/audio>`__ and
       `video <http://indieweb.org/video>`__ properties to AS
       attachments.
@@ -558,7 +558,7 @@ Changelog
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. section-3:
+.. section-4:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -592,7 +592,7 @@ Changelog
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. section-4:
+.. section-5:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -623,14 +623,14 @@ Changelog
 
    -  Bug fix: escape &s in attachments’ text (e.g. quote tweets).
 
-.. section-5:
+.. section-6:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. section-6:
+.. section-7:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -664,7 +664,7 @@ Changelog
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. section-7:
+.. section-8:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -672,7 +672,7 @@ Changelog
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. section-8:
+.. section-9:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -715,7 +715,7 @@ Changelog
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. section-9:
+.. section-10:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -771,7 +771,7 @@ Changelog
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. section-10:
+.. section-11:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -794,7 +794,7 @@ Changelog
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. section-11:
+.. section-12:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -802,7 +802,7 @@ Changelog
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. section-12:
+.. section-13:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~
