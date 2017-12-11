@@ -9,6 +9,7 @@ import json
 import logging
 import urllib
 import urlparse
+from xml.etree import ElementTree
 
 import appengine_config
 
@@ -166,7 +167,10 @@ class UrlHandler(api.Handler):
     elif input == 'as2':
       activities = [as2.to_as1(obj) for obj in body_items]
     elif input == 'atom':
-      activities = atom.atom_to_activities(body)
+      try:
+        activities = atom.atom_to_activities(body)
+      except ElementTree.ParseError as e:
+        raise exc.HTTPBadRequest('Could not parse %s as XML: %s' % (url, e))
     elif input == 'html':
       activities = microformats2.html_to_activities(body, url, actor)
     elif input in ('mf2-json', 'json-mf2'):

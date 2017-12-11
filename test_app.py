@@ -431,7 +431,7 @@ baz baj
 </div>
 """, resp.body, ignore_blanks=True)
 
-  def test_url_atom_to_html(self):
+  def test_url_atom_to_as1(self):
     self.expect_requests_get('http://feed', ATOM_CONTENT + '</feed>\n')
     self.mox.ReplayAll()
 
@@ -464,6 +464,14 @@ baz baj
       'filtered': False,
       'updatedSince': False,
     }, json.loads(resp.body))
+
+  def test_url_atom_to_as1_parse_error(self):
+    self.expect_requests_get('http://feed', 'not valid xml')
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
+    self.assert_equals(400, resp.status_int)
+    self.assertIn('Could not parse http://feed as XML: ', resp.body)
 
   def test_url_as1_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.
