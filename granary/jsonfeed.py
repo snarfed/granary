@@ -65,7 +65,8 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     }
 
     for att in obj.get('attachments', []):
-      url = (att.get('stream') or att.get('image') or att).get('url')
+      url = (util.get_first(att, 'stream') or util.get_first(att, 'image') or att
+            ).get('url')
       mime = mimetypes.guess_type(url)[0]
       if (att.get('objectType') in ATTACHMENT_TYPES or
           mime and mime.split('/')[0] in ATTACHMENT_TYPES):

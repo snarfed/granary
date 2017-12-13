@@ -1,0 +1,17 @@
+{
+  "version": "https://jsonfeed.org/version/1",
+  "title": "Martin Smith",
+  "home_page_url": "http://example.com/martin",
+  "author": {
+    "name": "Martin Smith",
+    "url": "http://example.com/martin",
+    "avatar": "http://example.com/martin/image"
+  },
+  "items": [{
+    "content_text": "",
+    "attachments": [{
+      "mime_type": "image/gif",
+      "url": "http://a/pic.gif"
+    }]
+  }]
+}
