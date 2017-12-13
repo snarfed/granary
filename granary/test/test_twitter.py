@@ -1481,7 +1481,21 @@ class TwitterTest(testutil.TestCase):
         'video_info': {
           'aspect_ratio': [35, 31],
           'variants': [{
-            'bitrate': 0,
+            # this is an HLS video (playlist) with all the different variants.
+            # we should ignore it.
+            #
+            #     https://twittercommunity.com/t/retiring-mp4-video-output-support-on-august-1st-2016/66045
+            # https://twittercommunity.com/t/retiring-mp4-video-output/66093
+            # https://twittercommunity.com/t/mp4-still-appears-despite-of-retiring-announcment/788
+            'content_type': 'application/x-mpegURL',
+            'url': 'https://video.twimg.com/ext_tw_video/9182.m3u8',
+          }, {
+            'bitrate': 1,
+            'content_type': 'video/mp4',
+            'url': 'https://video.twimg.com/tweet_video/bad.mp4'
+          }, {
+            # should pick this one since it's the highest bitrate
+            'bitrate': 2,
             'content_type': 'video/mp4',
             'url': 'https://video.twimg.com/tweet_video/9182.mp4'
           }],

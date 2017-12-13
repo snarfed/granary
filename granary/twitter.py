@@ -1172,7 +1172,7 @@ class Twitter(source.Source):
       obj['attachments'] = [{
           'objectType': types.get(m.get('type')),
           'image': {'url': m.get('media_url')},
-          'stream': {'url': util.get_url(m.get('video_info', {}), 'variants')},
+          'stream': {'url': self._video_url(m)},
       } for m in media]
 
       first = obj['attachments'][0]
@@ -1337,6 +1337,42 @@ class Twitter(source.Source):
           entities[kind].append(v)
 
     return entities
+
+  def _video_url(self, media):
+    """Returns the best video URL from a media object.
+
+    Prefers MIME types that start with video/, then falls back to others.
+
+    https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
+
+    Twitter videos in extended entities currently often have both .m3u8 (HLS)
+    and .mp4 variants. Twitter threatened to drop the MP4s in Aug 2016, but
+    they're still there as of Dec 2017.
+
+    https://twittercommunity.com/t/retiring-mp4-video-output-support-on-august-1st-2016/66045
+    https://twittercommunity.com/t/retiring-mp4-video-output/66093
+    https://twittercommunity.com/t/mp4-still-appears-despite-of-retiring-announcment/78894
+
+    Args:
+      media: dict, Twitter media object
+
+    Returns: string URL
+    """
+    variants = media.get('video_info', {}).get('variants')
+    if not variants:
+      return
+
+    best_bitrate = 0
+    best_url = None
+    for variant in variants:
+      url = variant.get('url')
+      bitrate = variant.get('bitrate', 0)
+      type = variant.get('content_type', '')
+      if url and type.startswith('video/') and bitrate >= best_bitrate:
+        best_url = url
+        best_bitrate = bitrate
+
+    return url or variants[0].get('url')
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.
