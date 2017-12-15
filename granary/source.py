@@ -910,8 +910,15 @@ class Source(object):
       # HTML formatting.
       summary = None
 
-    if not ignore_formatting:
+    # sniff whether content is HTML or plain text. use html.parser instead of
+    # the default html5lib since html.parser is stricter and expects actual
+    # HTML tags.
+    # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
+    is_html = bool(BeautifulSoup(content, 'html.parser').find())
+    if is_html and not ignore_formatting:
       content = html_to_text(content)
+    elif not is_html and ignore_formatting:
+      content = re.sub(r'\s+', ' ', content)
 
     return summary or (
             (name or content) if prefer_name else

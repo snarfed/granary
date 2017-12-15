@@ -361,12 +361,17 @@ class SourceTest(testutil.TestCase):
                                        'summary': 's'}))
       self.assertEqual('xy\nz', cfc(base, {'content':
                                            '<p>x<a href="l">y</a><br />z</p>'}))
-      self.assertEqual('c<a&b\nhai', cfc(base, {'content': 'c<a&b\nhai'},
-                                         ignore_formatting=True))
-      # when the text of content and summary are the same, content should
-      # override so we can use its formatting
-      self.assertEqual('the\ntext', cfc(base, {'content': '  the<br />text',
-                                               'summary': 'thetext  '}))
+
+      # preserve whitespace in non-HTML content, except if ignore_formatting
+      for content, expected, expected_ignore in (
+          ('a   b\n\nc', 'a   b\n\nc', 'a b c'),
+          ('c<a&b\nhai', 'c<a&b\nhai', 'c<a&b hai'),
+          ('  the<br />text ', 'the\ntext', 'the<br />text'),
+      ):
+        self.assertEqual(expected,
+                         cfc(base, {'content': content}, ignore_formatting=False))
+        self.assertEqual(expected_ignore,
+                         cfc(base, {'content': content}, ignore_formatting=True))
 
     for base in ({'objectType': 'note'},
                  {'inReplyTo': {'url': 'http://fake.com/post'}},
