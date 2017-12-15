@@ -50,6 +50,8 @@ RSVP_TO_EVENT = {
 }
 VERBS_WITH_OBJECT = {'like', 'react', 'repost'} | set(RSVP_TO_EVENT.keys())
 
+HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')
+
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -914,7 +916,8 @@ class Source(object):
     # the default html5lib since html.parser is stricter and expects actual
     # HTML tags.
     # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
-    is_html = bool(BeautifulSoup(content, 'html.parser').find())
+    is_html = (bool(BeautifulSoup(content, 'html.parser').find()) or
+               HTML_ENTITY_RE.search(content))
     if is_html and not ignore_formatting:
       content = html_to_text(content)
     elif not is_html and ignore_formatting:

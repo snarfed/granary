@@ -367,6 +367,7 @@ class SourceTest(testutil.TestCase):
           ('a   b\n\nc', 'a   b\n\nc', 'a b c'),
           ('c<a&b\nhai', 'c<a&b\nhai', 'c<a&b hai'),
           ('  the<br />text ', 'the\ntext', 'the<br />text'),
+          ('abc &amp; xyz', 'abc & xyz', 'abc &amp; xyz'),
       ):
         self.assertEqual(expected,
                          cfc(base, {'content': content}, ignore_formatting=False))
