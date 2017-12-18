@@ -351,14 +351,21 @@ def _prepare_activity(a, reader=True):
   a['title'] = xml.sax.saxutils.escape(BeautifulSoup(a['title']).get_text(''))
 
   children = []
-  image_urls = set()
+  image_urls_seen = set()
+  image_atts = []
 
   # normalize attachments, render attached notes/articles
   attachments = a.get('attachments') or obj.get('attachments') or []
   for att in attachments:
     att['stream'] = util.get_first(att, 'stream')
-    image_urls |= set(img.get('url') for img in util.get_list(att, 'image'))
-    if att.get('objectType') in ('note', 'article'):
+    type = att.get('objectType')
+
+    if type == 'image':
+      image_atts.append(util.get_first(att, 'image'))
+      continue
+
+    image_urls_seen |= set(util.get_urls(att, 'image'))
+    if type in ('note', 'article'):
       html = microformats2.render_content(att, include_location=reader)
       author = att.get('author')
       if author:
@@ -368,8 +375,7 @@ def _prepare_activity(a, reader=True):
       children.append(html)
 
   # render image(s) that we haven't already seen
-  content = obj.get('content', '')
-  for image in util.get_list(obj, 'image'):
+  for image in image_atts + util.get_list(obj, 'image'):
     if not image:
       continue
     url = image.get('url')
@@ -377,11 +383,12 @@ def _prepare_activity(a, reader=True):
     scheme = parsed.scheme
     netloc = parsed.netloc
     rest = urlparse.urlunparse(('', '') + parsed[2:])
-    img_src_re = re.compile(r"""src *= *['"] *((%s)?//%s)?%s *['"]""" %
-                            (scheme, re.escape(netloc), re.escape(rest)))
-    if (url and url not in image_urls and
-        not img_src_re.search(content)):
-      children.append(microformats2.img(image['url']))
+    img_src_re = re.compile(r"""src *= *['"] *((https?:)?//%s)?%s *['"]""" %
+                            (re.escape(netloc), re.escape(rest)))
+    if (url and url not in image_urls_seen and
+        not img_src_re.search(obj['rendered_content'])):
+      children.append(microformats2.img(url))
+      image_urls_seen.add(url)
 
   obj['rendered_children'] = [_encode_ampersands(html) for html in children]
 

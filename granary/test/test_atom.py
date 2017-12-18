@@ -384,6 +384,9 @@ quoted text
     got = atom.activities_to_atom([{'object': {'attachments': [
       {'objectType': 'note', 'url': 'http://p', 'content': 'note content'},
       {'objectType': 'x', 'url': 'http://x'},
+      {'objectType': 'image',
+       'image': [{'url': 'http://pic'}, {'url': 'ignore'}],
+      },
       {'objectType': 'article',
        'url': 'http://a',
        'content': 'article content',
@@ -396,11 +399,14 @@ quoted text
       },
     ]}}], None)
     self.assert_multiline_in("""
+<p>
+<img class="u-photo" src="http://pic" alt="" />
+</p>
+
 <blockquote>
 note content
 </blockquote>
-""", got)
-    self.assert_multiline_in("""
+
 <blockquote>
 <a class="p-name u-url" href="http://x/">Mr. Foo</a>: article content
 </blockquote>
@@ -696,8 +702,8 @@ going to Homebrew Website Club
     }
 
     got = atom.activities_to_atom([activity], {})
-    self.assertEquals(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'))
-    self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got)
+    self.assertEquals(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'), got)
+    self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got, got)
 
   def test_context_in_reply_to(self):
     """context.inReplyTo should be translated to thr:in-reply-to."""

@@ -952,11 +952,6 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 
 </span>
 </p>
-
-<blockquote>
-<img class="u-photo" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg" alt="" />
-</blockquote>
-
   </div>
   </content>
 

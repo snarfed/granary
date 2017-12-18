@@ -228,6 +228,8 @@ Changelog
   * Prefer HTTPS URLs for media images.
 * Facebook:
   * Try harder to find original (full) sized photo URLs, specifically `_o.jpg` files instead of `_s.jpg`.
+* Atom:
+  * Bug fixes for rendering image attachments in shares and de-duping images.
 
 ### 1.10 - 2017-12-10
 * Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
