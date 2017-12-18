@@ -225,6 +225,7 @@ Changelog
 ### 1.11 - unreleased
 * Twitter:
   * Prefer MP4 and other video/... content types to HLS (.m3u8) etc. [Background.](https://twittercommunity.com/t/retiring-mp4-video-output/66093)
+  * Prefer HTTPS URLs for media images.
 
 ### 1.10 - 2017-12-10
 * Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.

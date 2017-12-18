@@ -130,7 +130,8 @@ TWEET = {
   'entities': {
     'media': [{
         'id': 'picture1',
-        'media_url': 'http://p.twimg.com/picture1',
+        'media_url_https': 'https://p.twimg.com/picture1',
+        'media_url': 'should ignore',
         'url': 'http://t.co/picture',
         'expanded_url': 'http://the/picture1',
         'display_url': 'http://pic.twitter.com/1',
@@ -244,7 +245,7 @@ OBJECT = {  # ActivityStreams
     'image': {'url': u'http://p.twimg.com/picture3'},
   }, {
     'objectType': 'image',
-    'image': {'url': u'http://p.twimg.com/picture1'},
+    'image': {'url': u'https://p.twimg.com/picture1'},
   }],
 }
 ACTIVITY = {  # ActivityStreams
@@ -648,7 +649,7 @@ ATOM = """\
 </p>
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
-<img class="u-photo" src="http://p.twimg.com/picture1" alt="" />
+<img class="u-photo" src="https://p.twimg.com/picture1" alt="" />
 </a>
 </p>
 <p>  <span class="p-location h-card">
@@ -1507,7 +1508,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([{
       'objectType': 'video',
       'stream': {'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
-      'image': {'url': 'http://pbs.twimg.com/tweet_video_thumb/9182.jpg'},
+      'image': {'url': 'https://pbs.twimg.com/tweet_video_thumb/9182.jpg'},
     }, {
       'objectType': 'image',
       'image': {'url': 'http://p.twimg.com/picture3'},
