@@ -226,6 +226,8 @@ Changelog
 * Twitter:
   * Prefer MP4 and other video/... content types to HLS (.m3u8) etc. [Background.](https://twittercommunity.com/t/retiring-mp4-video-output/66093)
   * Prefer HTTPS URLs for media images.
+* Facebook:
+  * Try harder to find original (full) sized photo URLs, specifically `_o.jpg` files instead of `_s.jpg`.
 
 ### 1.10 - 2017-12-10
 * Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.

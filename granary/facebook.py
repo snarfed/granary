@@ -1054,6 +1054,10 @@ class Facebook(source.Source):
     picture = post.get('picture')
     if isinstance(picture, dict):
       picture = picture.get('data', {}).get('url')
+    # if the user posted this picture, try to get a larger size.
+    if (picture and picture.endswith('_s.jpg') and
+        (post_type == 'photo' or status_type == 'added_photos')):
+      picture = picture[:-6] + '_o.jpg'
 
     data = post.get('data', {})
     for field in ('object', 'song'):
@@ -1174,20 +1178,15 @@ class Facebook(source.Source):
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
     att = {
-        'url': link if link else url,
-        'image': {'url': picture},
-        'displayName': post.get('name'),
-        'summary': post.get('caption'),
-        'content': post.get('description'),
-        }
+      'url': link if link else url,
+      'image': {'url': picture},
+      'displayName': post.get('name'),
+      'summary': post.get('caption'),
+      'content': post.get('description'),
+    }
 
-    if (picture and picture.endswith('_s.jpg') and
-        (post_type == 'photo' or status_type == 'added_photos')):
-      # a picture the user posted. get a larger size.
-      att.update({
-          'objectType': 'image',
-          'image': {'url': picture[:-6] + '_o.jpg'},
-          })
+    if post_type == 'photo' or status_type == 'added_photos':
+      att['objectType'] = 'image'
       obj['attachments'] = [att]
     elif link and not gift:
       att['objectType'] = 'article'

@@ -234,6 +234,7 @@ POST = {  # Facebook
 # based on https://developers.facebook.com/tools/explorer?method=GET&path=10101013177735493
 PHOTO = {
   'id': '222',
+  'status_type': 'added_photos',
   'created_time': '2014-04-09T20:44:26+0000',
   'images': [{
       'source': 'https://fbcdn-sphotos-b-a.akamaihd.net/pic.jpg',
@@ -487,15 +488,15 @@ POST_OBJ = {  # ActivityStreams
   'published': '2012-03-04T18:20:37+00:00',
   'updated': '2012-03-04T19:08:16+00:00',
   'url': 'https://www.facebook.com/212038/posts/10100176064482163',
-  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg'},
+  'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'},
   'attachments': [{
-      'objectType': 'image',
-      'url': 'http://my.link/',
-      'displayName': 'my link name',
-      'summary': 'my link caption',
-      'content': 'my link description',
-      'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'}
-      }],
+    'objectType': 'image',
+    'url': 'http://my.link/',
+    'displayName': 'my link name',
+    'summary': 'my link caption',
+    'content': 'my link description',
+    'image': {'url': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg'}
+  }],
   'to': [{'objectType':'group', 'alias':'@public'}],
   'location': {
     'displayName': 'Lake Merced',
@@ -554,14 +555,14 @@ PHOTO_OBJ = {  # ActivityStreams
   'objectType': 'note',
   'url': 'https://www.facebook.com/212038/posts/222',
   'content': 'Stopped in to grab coffee and saw this table topper. Wow. Just...wow.',
-  'image': {'url': u'https://fbcdn-photos-b-a.akamaihd.net/pic_s.jpg'},
+  'image': {'url': u'https://fbcdn-photos-b-a.akamaihd.net/pic_o.jpg'},
   'published': '2014-04-09T20:44:26+00:00',
   'author': POST_OBJ['author'],
   'to': [{'alias': '@public', 'objectType': 'group'}],
   'attachments': [{
     'displayName': 'Stopped in to grab coffee and saw this table topper. Wow. Just...wow.',
-    'image': {'url':'https://fbcdn-photos-b-a.akamaihd.net/pic_s.jpg'},
-    'objectType': 'article',
+    'image': {'url':'https://fbcdn-photos-b-a.akamaihd.net/pic_o.jpg'},
+    'objectType': 'image',
     'url': 'https://www.facebook.com/photo.php?fbid=222&set=a.333.444.212038',
   }],
   'replies': {
@@ -953,7 +954,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </p>
 
 <blockquote>
-<img class="u-photo" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg" alt="" />
+<img class="u-photo" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg" alt="" />
 </blockquote>
 
   </div>
