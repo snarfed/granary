@@ -397,6 +397,12 @@ quoted text
          'image': {'url': 'http://x/avatar.jpg'},
        },
       },
+      {'objectType': 'note', 'content': 'quoted tweet with photo',
+       'attachments': [{
+         'objectType': 'image',
+         'image': [{'url': 'http://quote/tweet/pic'}],
+       }],
+      },
     ]}}], None)
     self.assert_multiline_in("""
 <p>
@@ -409,6 +415,13 @@ note content
 
 <blockquote>
 <a class="p-name u-url" href="http://x/">Mr. Foo</a>: article content
+</blockquote>
+
+<blockquote>
+quoted tweet with photo
+<p>
+<img class="u-photo" src="http://quote/tweet/pic" alt="" />
+</p>
 </blockquote>
 """, got)
 
