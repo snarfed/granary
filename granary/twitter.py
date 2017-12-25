@@ -1372,7 +1372,7 @@ class Twitter(source.Source):
         best_url = url
         best_bitrate = bitrate
 
-    return url or variants[0].get('url')
+    return best_url or variants[0].get('url')
 
   def user_to_actor(self, user):
     """Converts a tweet to an activity.
