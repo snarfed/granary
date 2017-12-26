@@ -8,6 +8,7 @@ google-api-python-client==1.6.3
 html2text==2016.9.19
 html5lib==0.9999999
 httplib2==0.10.3
+humanize==0.5.1
 idna==2.6
 Jinja2==2.10
 MarkupSafe==1.0
