@@ -1,8 +1,5 @@
 """Serves the the front page, discovery files, and OAuth flows.
 """
-
-__author__ = 'Ryan Barrett <granary@ryanb.org>'
-
 import copy
 import httplib
 import json

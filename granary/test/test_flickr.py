@@ -17,9 +17,6 @@ from oauth_dropins.webutil import util
 from granary import flickr
 from granary import source
 
-__author__ = ['Kyle Mahan <kyle@kylewm.com>']
-
-
 # test data
 def tag_uri(name):
   return util.tag_uri('flickr.com', name)

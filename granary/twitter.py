@@ -9,9 +9,6 @@ The Audience Targeting 'to' field is set to @public or @private based on whether
 the tweet author's 'protected' field is true or false.
 https://dev.twitter.com/docs/platform-objects/users
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import collections
 import datetime
 import itertools

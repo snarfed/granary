@@ -42,9 +42,6 @@ Random details:
 See the fql_stream_to_post() method below for code I used to experiment with the
 FQL stream table.
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import collections
 import copy
 import itertools

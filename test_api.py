@@ -1,8 +1,5 @@
 """Unit tests for api.py.
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import copy
 import json
 import socket

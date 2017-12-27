@@ -1,8 +1,5 @@
 """Unit tests for instagram.py.
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import copy
 import datetime
 import json

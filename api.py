@@ -23,9 +23,6 @@ http://activitystrea.ms/specs/
 Atom format spec:
 http://atomenabled.org/developers/syndication/
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import json
 import logging
 import urllib

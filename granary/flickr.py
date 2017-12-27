@@ -10,9 +10,6 @@ API itself. Maybe use flickr.activity.userPhotos
 (https://www.flickr.com/services/api/flickr.activity.userPhotos.html)
 when group_id=SELF.
 """
-
-__author__ = ['Kyle Mahan <kyle@kylewm.com>']
-
 import copy
 import datetime
 import functools

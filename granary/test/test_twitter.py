@@ -31,9 +31,6 @@ from granary.twitter import (
   API_USER_TIMELINE,
   HTML_FAVORITES,
 )
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 # test data
 def tag_uri(name):
   return util.tag_uri('twitter.com', name)

@@ -8,9 +8,6 @@ https://developers.google.com/api-client-library/python/guide/mocks )
 
 TODO: figure out how to check the query parameters. Right now they're ignored. :/
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import copy
 from email.message import Message
 from email.mime.multipart import MIMEMultipart

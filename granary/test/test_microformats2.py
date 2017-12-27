@@ -4,9 +4,6 @@
 Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import re
 
 from oauth_dropins.webutil import testutil

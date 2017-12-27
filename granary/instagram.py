@@ -6,9 +6,6 @@ http://help.instagram.com/448523408565555
 https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
 https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import datetime
 import itertools
 import json

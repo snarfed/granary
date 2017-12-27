@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit tests for facebook.py.
 """
-
-__author__ = ['Ryan Barrett <granary@ryanb.org>']
-
 import copy
 import json
 import urllib
