@@ -620,10 +620,11 @@ going to Homebrew Website Club
 </p>
 """, got)
     self.assert_multiline_in("""\
-<link rel="enclosure" href="http://a/podcast.mp3" />
-
-<link rel="enclosure" href="http://a/vidjo/1.mov" />
-""", got)
+<link rel="enclosure" href="http://a/podcast.mp3"
+      type="audio/mpeg" />
+<link rel="enclosure" href="http://a/vidjo/1.mov"
+      type="video/quicktime" />
+""", got, ignore_blanks=True)
     self.assertNotIn('unused', got)
 
   def test_reader_param_and_location(self):
@@ -716,6 +717,10 @@ going to Homebrew Website Club
 
     got = atom.activities_to_atom([activity], {})
     self.assertEquals(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'), got)
+    self.assert_multiline_in("""
+<link rel="enclosure" href="http://pics/1.jpg"
+      type="image/jpeg" />
+""", got)
     self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got, got)
 
   def test_context_in_reply_to(self):

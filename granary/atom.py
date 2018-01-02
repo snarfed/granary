@@ -1,9 +1,9 @@
 """Convert between ActivityStreams 1 and Atom.
 
-Atom spec: https://tools.ietf.org/html/rfc5023 (RIP atomenabled.org)
+Atom spec: https://tools.ietf.org/html/rfc4287 (RIP atomenabled.org)
 """
-
 import collections
+import mimetypes
 import os
 import re
 import urlparse
@@ -130,15 +130,16 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   if actor is None:
     actor = {}
   return jinja_env.get_template(FEED_TEMPLATE).render(
-    items=[Defaulter(**a) for a in activities],
+    actor=Defaulter(**actor),
     host_url=host_url,
+    items=[Defaulter(**a) for a in activities],
+    mimetypes=mimetypes,
+    rels=rels or {},
     request_url=request_url,
-    xml_base=xml_base,
     title=title or 'User feed for ' + source.Source.actor_name(actor),
     updated=activities[0]['object'].get('published', '') if activities else '',
-    actor=Defaulter(**actor),
-    rels=rels or {},
     VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
+    xml_base=xml_base,
   )
 
 
@@ -158,8 +159,9 @@ def activity_to_atom(activity, xml_base=None, reader=True):
   _prepare_activity(activity, reader=reader)
   return jinja_env.get_template(ENTRY_TEMPLATE).render(
     activity=Defaulter(**activity),
-    xml_base=xml_base,
+    mimetypes=mimetypes,
     VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
+    xml_base=xml_base,
   )
 
 

@@ -229,6 +229,7 @@ Changelog
 * Facebook:
   * Try harder to find original (full) sized photo URLs, specifically `_o.jpg` files instead of `_s.jpg`.
 * Atom:
+  * Add enclosures for image attachments.
   * Bug fixes for rendering image attachments in shares and attachments and de-duping images.
 
 ### 1.10 - 2017-12-10
