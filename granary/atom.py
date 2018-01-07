@@ -61,7 +61,10 @@ def _text(elem, field=None):
       field = 'atom:' + field
     elem = elem.find(field, NAMESPACES)
   if elem is not None and elem.text:
-    return elem.text.decode('utf-8').strip()
+    text = elem.text
+    if not isinstance(elem.text, unicode):
+      text = text.decode('utf-8')
+    return text.strip()
 
 
 def _as1_value(elem, field):

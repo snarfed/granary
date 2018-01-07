@@ -211,6 +211,20 @@ class AtomTest(testutil.HandlerTest):
 </entry>
 """))
 
+  def test_atom_to_activity_unicode_title(self):
+    """Unicode smart quote in the <title> element."""
+    self.assert_equals({
+      'objectType': 'activity',
+      'object': {
+        'title': u'How quill’s editor looks',
+      },
+    }, atom.atom_to_activity(u"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<entry xmlns='http://www.w3.org/2005/Atom'>
+<title>How quill’s editor looks</title>
+</entry>
+"""))
+
   def test_title(self):
     self.assert_multiline_in(
       '\n<title>my title</title>',
