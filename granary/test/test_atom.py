@@ -313,6 +313,9 @@ original object
         'attachments': [{
           'objectType': 'note',
           'content': 'quoted text',
+        }, {
+          'objectType': 'video',
+          'stream': [{'url': 'http://a/vidjo/1.mov'}],
         }],
       },
     }
@@ -325,6 +328,9 @@ RT @quoter: comment
 quoted text
 </blockquote>
 """, out)
+    self.assert_multiline_in("""
+<p><video class="u-video" src="http://a/vidjo/1.mov" controls="controls" poster="">Your browser does not support the video tag. <a href="http://a/vidjo/1.mov">Click here to view directly. </a></video>
+</p>""", out)
 
   def test_render_event_omits_object_type_verb(self):
     activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}

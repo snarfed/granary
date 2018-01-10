@@ -282,6 +282,28 @@ foo
 </p>
 """, microformats2.render_content(obj, render_attachments=True))
 
+  def test_render_content_shared_object_attachments(self):
+    share = {
+      'verb': 'share',
+      'object': {
+        'content': 'foo',
+        'attachments': [{
+          'image': [{'url': 'http://im/age'}],
+          'stream': [{'url': 'http://vid/eo'}],
+          'objectType': 'video',
+        }, {
+          'stream': [{'url': 'http://aud/io'}],
+          'objectType': 'audio',
+        }],
+      },
+    }
+
+    self.assertIn("""
+<p><video class="u-video" src="http://vid/eo" controls="controls" poster="http://im/age">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly. <img src="http://im/age" /></a></video>
+</p>
+<p><audio class="u-audio" src="http://aud/io" controls="controls">Your browser does not support the audio tag. <a href="http://aud/io">Click here to listen directly.</a></audio>
+</p>""", microformats2.render_content(share, render_attachments=True))
+
   def test_render_content_unicode_high_code_points(self):
     """Test Unicode high code point chars.
 

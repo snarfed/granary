@@ -716,12 +716,16 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   if render_attachments:
-    attachments = [a for a in obj.get('attachments', [])
+    candidates = obj.get('attachments', [])
+    if obj.get('verb') == 'share':
+      candidates.extend(obj.get('object', {}).get('attachments', []))
+    attachments = [a for a in candidates
                    if a.get('objectType') not in ('note', 'article')]
+
     for tag in attachments + tags.pop('article', []):
       name = tag.get('displayName', '')
-      stream = get_first(tag, 'stream', {}).get('url')
-      image = get_first(tag, 'image', {}).get('url')
+      stream = get_first(tag, 'stream', {}).get('url') or ''
+      image = get_first(tag, 'image', {}).get('url') or ''
       open_a_tag = False
       content += '\n<p>'
       if tag.get('objectType') == 'video':
