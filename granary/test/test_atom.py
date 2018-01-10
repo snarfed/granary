@@ -321,9 +321,8 @@ original object
     }
 
     out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
-    self.assert_multiline_in("""
-RT @quoter: comment
-
+    self.assertIn('RT @quoter: comment', out)
+    self.assert_multiline_in("""\
 <blockquote>
 quoted text
 </blockquote>

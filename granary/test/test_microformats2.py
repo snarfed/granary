@@ -298,11 +298,13 @@ foo
       },
     }
 
-    self.assertIn("""
+    out = microformats2.render_content(share, render_attachments=True)
+    self.assert_multiline_equals("""
+Shared <a href="#">a post</a> by foo
 <p><video class="u-video" src="http://vid/eo" controls="controls" poster="http://im/age">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly. <img src="http://im/age" /></a></video>
 </p>
 <p><audio class="u-audio" src="http://aud/io" controls="controls">Your browser does not support the audio tag. <a href="http://aud/io">Click here to listen directly.</a></audio>
-</p>""", microformats2.render_content(share, render_attachments=True))
+</p>""", out, ignore_blanks=True)
 
   def test_render_content_unicode_high_code_points(self):
     """Test Unicode high code point chars.

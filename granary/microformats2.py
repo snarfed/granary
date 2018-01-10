@@ -716,45 +716,15 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   if render_attachments:
-    candidates = obj.get('attachments', [])
-    if obj.get('verb') == 'share':
-      candidates.extend(obj.get('object', {}).get('attachments', []))
-    attachments = [a for a in candidates
-                   if a.get('objectType') not in ('note', 'article')]
-
-    for tag in attachments + tags.pop('article', []):
-      name = tag.get('displayName', '')
-      stream = get_first(tag, 'stream', {}).get('url') or ''
-      image = get_first(tag, 'image', {}).get('url') or ''
-      open_a_tag = False
-      content += '\n<p>'
-      if tag.get('objectType') == 'video':
-        if stream:
-          content += vid(stream, poster=image)
-      elif tag.get('objectType') == 'audio':
-        if stream:
-          content += aud(stream)
-      else:
-        url = tag.get('url') or obj.get('url')
-        if url:
-          content += '\n<a class="link" href="%s">' % url
-          open_a_tag = True
-        if image:
-          content += '\n' + img(image, name)
-      if name:
-        content += '\n<span class="name">%s</span>' % name
-      if open_a_tag:
-        content += '\n</a>'
-      summary = tag.get('summary')
-      if summary and summary != name:
-        content += '\n<span class="summary">%s</span>' % summary
-      content += '\n</p>'
+    atts = [a for a in obj.get('attachments', [])
+            if a.get('objectType') not in ('note', 'article')]
+    content += _render_attachments(atts + tags.pop('article', []), obj)
 
   # generate share/like contexts if the activity does not have content
   # of its own
+  obj_type = source.object_type(obj)
   for as_type, verb in (
       ('favorite', 'Favorites'), ('like', 'Likes'), ('share', 'Shared')):
-    obj_type = source.object_type(obj)
     if (not synthesize_content or obj_type != as_type or 'object' not in obj or
         'content' in obj):
       continue
@@ -792,6 +762,11 @@ def render_content(obj, include_location=True, synthesize_content=True,
       break
     break
 
+  if render_attachments and obj.get('verb') == 'share':
+    atts = [a for a in obj.get('object', {}).get('attachments', [])
+            if a.get('objectType') not in ('note', 'article')]
+    content += _render_attachments(atts, obj)
+
   # location
   loc = obj.get('location')
   if include_location and loc:
@@ -807,6 +782,56 @@ def render_content(obj, include_location=True, synthesize_content=True,
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
   content += tags_to_html(tags.pop('mention', []), 'u-mention')
   content += tags_to_html(sum(tags.values(), []), 'tag')
+
+  return content
+
+
+def _render_attachments(attachments, obj):
+  """Renders ActivityStreams attachments (or tags etc) as HTML.
+
+  Note that the returned HTML is included in Atom as well as HTML documents,
+  so it *must* be HTML4 / XHTML, not HTML5! All tags must be closed, etc.
+
+  Args:
+    attachments: sequence of decoded JSON ActivityStreams objects
+    obj: top-level decoded JSON ActivityStreams object
+
+  Returns:
+    string, rendered HTML
+  """
+  content = ''
+
+  for att in attachments:
+    name = att.get('displayName', '')
+    stream = get_first(att, 'stream', {}).get('url') or ''
+    image = get_first(att, 'image', {}).get('url') or ''
+    open_a_tag = False
+    content += '\n<p>'
+
+    if att.get('objectType') == 'video':
+      if stream:
+        content += vid(stream, poster=image)
+    elif att.get('objectType') == 'audio':
+      if stream:
+        content += aud(stream)
+    else:
+      url = att.get('url') or obj.get('url')
+      if url:
+        content += '\n<a class="link" href="%s">' % url
+        open_a_tag = True
+      if image:
+        content += '\n' + img(image, name)
+
+    if name:
+      content += '\n<span class="name">%s</span>' % name
+
+    if open_a_tag:
+      content += '\n</a>'
+
+    summary = att.get('summary')
+    if summary and summary != name:
+      content += '\n<span class="summary">%s</span>' % summary
+    content += '\n</p>'
 
   return content
 
