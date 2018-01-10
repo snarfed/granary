@@ -75,6 +75,18 @@ class JsonFeedTest(testutil.HandlerTest):
           }],
       }], {}))
 
+  def test_activities_to_jsonfeed_attachment_without_url(self):
+      self.assert_equals({
+        'version': 'https://jsonfeed.org/version/1',
+        'title': 'JSON Feed',
+        'items': [{'content_text': ''}],
+      }, activities_to_jsonfeed([{
+        'attachments': [{
+            'content': 'foo',
+            'objectType': 'note',
+          }],
+      }], {}))
+
   def test_activities_to_jsonfeed_not_list(self):
     for bad in None, 3, 'asdf', {'not': 'a list'}:
       with self.assertRaises(TypeError):
