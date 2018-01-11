@@ -665,6 +665,22 @@ Shared <a href="#">a post</a> by foo
       },
     }))
 
+  def test_json_to_object_simple_name_author(self):
+    """Simple name-only authors should be handled ok."""
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo',
+      'author': {
+        'displayName': 'My Name',
+        'objectType': 'person',
+      },
+    }, microformats2.json_to_object({
+      'properties': {
+        'content': ['foo'],
+        'author': ['My Name'],
+      },
+    }))
+
   def test_find_author(self):
     self.assert_equals({
     'displayName': 'my name',

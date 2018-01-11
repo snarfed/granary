@@ -313,9 +313,12 @@ def json_to_object(mf2, actor=None):
   author = actor
   mf2_author = prop.get('author')
   if mf2_author:
-    author = (json_to_object(mf2_author) if isinstance(mf2_author, dict)
-              else {'url': mf2_author, 'objectType': 'person'})
-                            # else {'properties': {'url': [mf2_author]}})
+    if isinstance(mf2_author, dict):
+      author = json_to_object(mf2_author)
+    elif mf2_author.startswith('http://') or mf2_author.startswith('https://'):
+      author = {'url': mf2_author, 'objectType': 'person'}
+    else:
+      author = {'displayName': mf2_author, 'objectType': 'person'}
 
   mf2_types = mf2.get('type') or []
   if 'h-geo' in mf2_types or 'p-location' in mf2_types:
