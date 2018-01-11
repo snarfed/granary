@@ -649,6 +649,22 @@ Shared <a href="#">a post</a> by foo
       'properties': {'content': [{'html': 'asdf\nqwer', 'value': ''}]},
     }))
 
+  def test_json_to_object_simple_url_author(self):
+    """Simple URL-only authors should be handled ok."""
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo',
+      'author': {
+        'url': 'http://example.com',
+        'objectType': 'person',
+      },
+    }, microformats2.json_to_object({
+      'properties': {
+        'content': ['foo'],
+        'author': ['http://example.com'],
+      },
+    }))
+
   def test_find_author(self):
     self.assert_equals({
     'displayName': 'my name',

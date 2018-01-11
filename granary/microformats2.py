@@ -309,7 +309,13 @@ def json_to_object(mf2, actor=None):
   props = mf2.setdefault('properties', {})
   prop = first_props(props)
   rsvp = prop.get('rsvp')
-  author = json_to_object(prop['author']) if prop.get('author') else actor
+
+  author = actor
+  mf2_author = prop.get('author')
+  if mf2_author:
+    author = (json_to_object(mf2_author) if isinstance(mf2_author, dict)
+              else {'url': mf2_author, 'objectType': 'person'})
+                            # else {'properties': {'url': [mf2_author]}})
 
   mf2_types = mf2.get('type') or []
   if 'h-geo' in mf2_types or 'p-location' in mf2_types:

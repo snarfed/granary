@@ -231,6 +231,8 @@ Changelog
 * microformats2, Atom:
   * Add enclosures for image attachments.
   * Bug fixes for rendering image, video, and audio attachments inside shares and attachments. De-dupe images.
+* microformats2:
+  * Handle simple string-only author properties.
 
 ### 1.10 - 2017-12-10
 * Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
