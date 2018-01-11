@@ -1,0 +1,8 @@
+{
+  "objectType" : "person",
+  "displayName": "Foo Bar",
+  "author": {
+    "displayName": "Foo Bar",
+    "objectType": "person"
+  }
+}
