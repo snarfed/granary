@@ -681,6 +681,32 @@ Shared <a href="#">a post</a> by foo
       },
     }))
 
+  def test_json_to_object_authorship_fetch_mf2_func(self):
+    self.expect_requests_get('http://example.com', u"""
+<div class="h-card">
+<a class="p-name u-url" rel="me" href="/">Ms. ☕ Baz</span>
+<img class="u-photo" src="/my/pic" />
+</div>
+""")
+    self.mox.ReplayAll()
+
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo',
+      'author': {
+        'url': 'http://example.com/',
+        'objectType': 'person',
+        'displayName': u'Ms. ☕ Baz',
+        'image': [{'url': 'http://example.com/my/pic'}],
+      },
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['foo'],
+        'author': ['http://example.com'],
+      },
+    }, fetch_mf2=True))
+
   def test_find_author(self):
     self.assert_equals({
     'displayName': 'my name',

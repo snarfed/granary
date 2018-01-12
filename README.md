@@ -233,6 +233,7 @@ Changelog
   * Bug fixes for rendering image, video, and audio attachments inside shares and attachments. De-dupe images.
 * microformats2:
   * Handle simple string-only author properties.
+  * Add `fetch_mf2` kwarg to `json_to_object()` for fetching additional pages over HTTP to determine authorship.
 
 ### 1.10 - 2017-12-10
 * Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.

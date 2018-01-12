@@ -291,13 +291,15 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   return ret
 
 
-def json_to_object(mf2, actor=None):
+def json_to_object(mf2, actor=None, fetch_mf2=False):
   """Converts microformats2 JSON to an ActivityStreams object.
 
   Args:
     mf2: dict, decoded JSON microformats2 object
     actor: optional author AS actor object. usually comes from a rel="author"
       link. if mf2 has its own author, that will override this.
+    fetch_mf2: boolean, whether to fetch additional pages via HTTP if necessary,
+      e.g. to determine authorship: https://indieweb.org/authorship
 
   Returns:
     dict, ActivityStreams object
@@ -310,15 +312,27 @@ def json_to_object(mf2, actor=None):
   prop = first_props(props)
   rsvp = prop.get('rsvp')
 
-  author = actor
+  # convert author
   mf2_author = prop.get('author')
-  if mf2_author:
-    if isinstance(mf2_author, dict):
-      author = json_to_object(mf2_author)
-    elif mf2_author.startswith('http://') or mf2_author.startswith('https://'):
-      author = {'url': mf2_author, 'objectType': 'person'}
-    else:
-      author = {'displayName': mf2_author, 'objectType': 'person'}
+  if mf2_author and isinstance(mf2_author, dict):
+    author = json_to_object(mf2_author)
+  else:
+    # the author h-card may be on another page. run full authorship algorithm:
+    # https://indieweb.org/authorship
+    def fetch(url):
+      return mf2py.parse(util.requests_get(url).text, url=url)
+    author = mf2util.find_author(
+      {'items': [mf2]}, hentry=mf2, fetch_mf2_func=fetch if fetch_mf2 else None)
+    if author:
+      author = {
+        'objectType': 'person',
+        'url': author.get('url'),
+        'displayName': author.get('name'),
+        'image': [{'url': author.get('photo')}],
+      }
+
+  if not author:
+    author = actor
 
   mf2_types = mf2.get('type') or []
   if 'h-geo' in mf2_types or 'p-location' in mf2_types:
