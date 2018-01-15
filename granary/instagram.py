@@ -6,6 +6,11 @@ http://help.instagram.com/448523408565555
 https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
 https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """
+from __future__ import absolute_import, unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from past.builtins import basestring
+
 import datetime
 import itertools
 import json
@@ -13,16 +18,14 @@ import logging
 import operator
 import re
 import string
-import urllib
-import urllib2
-import urlparse
+import urllib.error, urllib.parse, urllib.request
 import xml.sax.saxutils
 
-import appengine_config
+from . import appengine_config
 from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
 import requests
-import source
+from . import source
 
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
@@ -87,11 +90,10 @@ class Instagram(source.Source):
 
   def urlopen(self, url, **kwargs):
     """Wraps :func:`urllib2.urlopen()` and passes through the access token."""
-    log_url = url
     if self.access_token:
       # TODO add access_token to the data parameter for POST requests
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    resp = util.urlopen(urllib2.Request(url, **kwargs))
+    resp = util.urlopen(urllib.request.Request(url, **kwargs))
     return (resp if kwargs.get('data')
             else source.load_json(resp.read(), url).get('data'))
 
@@ -219,7 +221,7 @@ class Instagram(source.Source):
           activities += [self.like_to_object(user, l['id'], l['link'])
                          for l in liked]
 
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # instagram api should give us back a json block describing the
       # error. but if it's an error for some other reason, it probably won't
@@ -412,14 +414,14 @@ class Instagram(source.Source):
           abort=True,
           error_plain='Cannot publish comments on Instagram',
           error_html='<a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">Cannot publish comments</a> on Instagram. The Instagram API technically supports creating comments, but <a href="http://stackoverflow.com/a/26889101/682648">anecdotal</a> <a href="http://stackoverflow.com/a/20229275/682648">evidence</a> suggests they are very selective about which applications they approve to do so.')
-      content = self._content_for_create(obj).encode('utf-8')
+      content = self._content_for_create(obj)
       if preview:
         return source.creation_result(
           content=content,
           description='<span class="verb">comment</span> on <a href="%s">'
                       'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
 
-      self.urlopen(API_COMMENT_URL % base_id, data=urllib.urlencode({
+      self.urlopen(API_COMMENT_URL % base_id, data=urllib.parse.urlencode({
         'access_token': self.access_token,
         'text': content,
       }))
@@ -453,7 +455,7 @@ class Instagram(source.Source):
       logging.info('posting like for media id id=%s, url=%s',
                    base_id, base_url)
       # no response other than success/failure
-      self.urlopen(API_MEDIA_LIKES_URL % base_id, data=urllib.urlencode({
+      self.urlopen(API_MEDIA_LIKES_URL % base_id, data=urllib.parse.urlencode({
         'access_token': self.access_token
       }))
       # TODO use the stored user_json rather than looking it up each time.

@@ -5,6 +5,7 @@
 /.eggs/
 /*.egg-info
 /l
+/l3
 /local/
 /local3/
 circleci_token

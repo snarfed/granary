@@ -5,6 +5,9 @@ AS2: http://www.w3.org/TR/activitystreams-core/
 AS1: http://activitystrea.ms/specs/json/1.0/
      http://activitystrea.ms/specs/json/schema/activity-schema.html
 """
+from __future__ import unicode_literals
+from past.builtins import basestring
+
 import copy
 import logging
 
@@ -105,7 +108,7 @@ def from_as1(obj, type=None, context=CONTEXT):
     obj['location'] = from_as1(loc, type='Place', context=None)
 
   obj = util.trim_nulls(obj)
-  if obj.keys() == ['url']:
+  if list(obj.keys()) == ['url']:
     return obj['url']
 
   return obj

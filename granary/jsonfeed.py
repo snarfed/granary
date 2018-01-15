@@ -2,6 +2,10 @@
 
 JSON Feed spec: https://jsonfeed.org/version/1
 """
+from __future__ import unicode_literals
+from builtins import str
+from past.builtins import basestring
+
 import mimetypes
 
 import mf2util
@@ -139,7 +143,7 @@ def jsonfeed_to_activities(jsonfeed):
     'title': item.get('title'),
     'summary': item.get('summary'),
     'content': item.get('content_html') or item.get('content_text'),
-    'id': unicode(item.get('id') or ''),
+    'id': str(item.get('id') or ''),
     'published': item.get('date_published'),
     'updated': item.get('date_modified'),
     'url': item.get('url'),

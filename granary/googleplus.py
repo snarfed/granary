@@ -4,14 +4,17 @@ The Google+ API currently only returns public activities and comments, so the
 Audience Targeting 'to' field is always set to @public.
 https://developers.google.com/+/api/latest/activities/list#collection
 """
+from __future__ import absolute_import, division, unicode_literals
+from builtins import range
+
 import datetime
 import functools
 import itertools
 import json
 import re
 
-import appengine_config
-import source
+from . import appengine_config
+from . import source
 
 from apiclient.errors import HttpError
 from apiclient.http import BatchHttpRequest
@@ -128,7 +131,7 @@ class GooglePlus(source.Source):
         resp = call.execute(http=http)
         activities = resp.get('items', [])
         etag = resp.get('etag')
-    except HttpError, e:
+    except HttpError as e:
       if e.resp.status == 304:  # Not Modified, from a matching ETag
         activities = []
       else:
@@ -328,14 +331,14 @@ class GooglePlus(source.Source):
       html = re.sub(r'([,[])\s*([],])', r'\1null\2', html)
 
     data = json.loads(html)[0][7]
-    data = [d[6].values()[0] for d in data if len(d) >= 7 and d[6]]
+    data = [list(d[6].values())[0] for d in data if len(d) >= 7 and d[6]]
 
     activities = []
     for d in data:
       id = self.tag_uri(d[8])
       url = 'https://%s/%s' % (self.DOMAIN, d[21])  # d[132] is full url
       # posix timestamp in ms
-      published = datetime.datetime.utcfromtimestamp(d[5] / 1000).isoformat('T') + 'Z'
+      published = datetime.datetime.utcfromtimestamp(d[5] / 1000).isoformat(util.T) + 'Z'
 
       if d[69] and len(d[69]) >= 2 and d[69][1] and d[69][1][0]:
         # this is a like, reshare, etc

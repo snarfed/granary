@@ -2,11 +2,17 @@
 
 Microformats2 specs: http://microformats.org/wiki/microformats2
 """
-from collections import defaultdict
+from __future__ import absolute_import, unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.builtins import basestring
+
+from collections import defaultdict, OrderedDict
 import copy
 import itertools
 import logging
-import urlparse
+import urllib.parse
 import string
 import re
 import xml.sax.saxutils
@@ -21,7 +27,8 @@ from oauth_dropins.webutil.util import (
   get_urls,
   uniquify,
 )
-import source
+
+from . import source
 
 HENTRY = string.Template("""\
 <article class="$types">
@@ -366,7 +373,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
   def absolute_urls(prop):
     return [url for url in get_string_urls(props.get(prop, []))
             # filter out relative and invalid URLs (mf2py gives absolute urls)
-            if urlparse.urlparse(url).netloc]
+            if urllib.parse.urlparse(url).netloc]
 
   urls = props.get('url') and get_string_urls(props.get('url'))
 
@@ -738,11 +745,11 @@ def render_content(obj, include_location=True, synthesize_content=True,
     mentions.sort(key=lambda t: t['startIndex'])
     last_end = 0
     orig = util.WideUnicode(content)
-    content = util.WideUnicode(u'')
+    content = util.WideUnicode('')
     for tag in mentions:
       start = tag['startIndex']
       end = start + tag['length']
-      content = util.WideUnicode(u'%s%s<a href="%s">%s</a>' % (
+      content = util.WideUnicode('%s%s<a href="%s">%s</a>' % (
         content, orig[last_end:start], tag['url'], orig[start:end]))
       last_end = end
 
@@ -795,7 +802,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
             target.get('url', '#'), author.get('username'))
         else:
           # image looks bad in the simplified rendering
-          author = {k: v for k, v in author.iteritems() if k != 'image'}
+          author = {k: v for k, v in author.items() if k != 'image'}
           content += '%s <a href="%s">%s</a> by %s' % (
             verb, target.get('url', '#'),
             target.get('displayName', target.get('title', 'a post')),
@@ -918,13 +925,13 @@ def tags_to_html(tags, classname):
     tags: decoded JSON ActivityStreams objects.
     classname: class for span to enclose tags in
   """
-  urls = set()  # stores (url, displayName) tuples
+  urls = OrderedDict()  # stores (url, displayName) tuples
   for tag in tags:
     name = tag.get('displayName') or ''
-    urls.update((url, name) for url in object_urls(tag))
+    urls.update({(url, name): None for url in object_urls(tag)})
 
   return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, url, name)
-                 for url, name in urls)
+                 for url, name in urls.keys())
 
 
 def object_urls(obj):

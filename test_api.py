@@ -1,12 +1,13 @@
 """Unit tests for api.py.
 """
+from __future__ import unicode_literals
 import copy
 import json
 import socket
 
 from google.appengine.api import memcache
 import oauth_dropins.webutil.test
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil_appengine
 
 import api
 from granary import instagram
@@ -25,7 +26,7 @@ class FakeSource(source.Source):
     pass
 
 
-class HandlerTest(testutil.HandlerTest):
+class HandlerTest(testutil_appengine.HandlerTest):
 
   activities = [{'foo': 'bar'}]
 
@@ -193,7 +194,7 @@ class HandlerTest(testutil.HandlerTest):
   def test_html_format(self):
     resp = self.get_response('/fake?format=html')
     self.assertEquals(200, resp.status_int)
-    self.assertEquals('text/html', resp.headers['Content-Type'])
+    self.assertEquals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
   def test_unknown_format(self):
     resp = self.get_response('/fake?format=bad')
@@ -266,7 +267,7 @@ class HandlerTest(testutil.HandlerTest):
   def test_get_activities_connection_error(self):
     FakeSource.get_activities_response(
       None, start_index=0, count=api.ITEMS_PER_PAGE
-    ).AndRaise(socket.error(''))
+    ).AndRaise(socket.timeout(''))
     self.mox.ReplayAll()
     resp = api.application.get_response('/fake/@me')
     self.assertEquals(504, resp.status_int)

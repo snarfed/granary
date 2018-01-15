@@ -4,6 +4,7 @@ certifi==2017.7.27.1
 chardet==3.0.4
 coverage==4.0.3
 -e git+https://github.com/snarfed/gdata-python-client-1.git@1df4e1efea7e5cf2754bc7eec6c1ab48ab09e3b1#egg=gdata
+future==0.16.0
 google-api-python-client==1.6.3
 html2text==2018.1.9
 html5lib==0.9999999
@@ -14,6 +15,7 @@ Jinja2==2.10
 MarkupSafe==1.0
 mf2py==1.0.5
 -e git+https://github.com/snarfed/mf2util.git@992b2655be66a128bb40f847f3eba0ed955cadfe#egg=mf2util
+mox3==0.24.0
 mox==0.5.3
 -e git+git@github.com:snarfed/oauth-dropins.git@v1.11#egg=oauth_dropins
 oauth2client==4.1.2
@@ -30,5 +32,5 @@ six==1.10.0
 tweepy==3.3.0
 uritemplate==3.0.0
 urllib3==1.22
-webapp2==2.5.2
+webapp2==3.0.0b1
 WebOb==1.4.1

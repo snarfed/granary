@@ -4,6 +4,8 @@
 Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
+from __future__ import unicode_literals
+
 import re
 
 from oauth_dropins.webutil import testutil
@@ -12,15 +14,15 @@ import mf2py
 from granary import microformats2
 
 
-class Microformats2Test(testutil.HandlerTest):
+class Microformats2Test(testutil.TestCase):
 
   def test_post_type_discovery(self):
     for prop, verb in ('like-of', 'like'), ('repost-of', 'share'):
       obj = microformats2.json_to_object(
         {'type': ['h-entry'],
           'properties': {prop: ['http://foo/bar']}})
-      self.assertEquals('activity', obj['objectType'])
-      self.assertEquals(verb, obj['verb'])
+      self.assertEqual('activity', obj['objectType'])
+      self.assertEqual(verb, obj['verb'])
 
   def test_verb_require_of_suffix(self):
     for prop in 'like', 'repost':
@@ -32,7 +34,7 @@ class Microformats2Test(testutil.HandlerTest):
   def test_ignore_h_as(self):
     """https://github.com/snarfed/bridgy/issues/635"""
     obj = microformats2.json_to_object({'type': ['h-entry']})
-    self.assertEquals('note', obj['objectType'])
+    self.assertEqual('note', obj['objectType'])
 
   def test_html_content_and_summary(self):
     for expected_content, expected_summary, value in (
@@ -43,8 +45,8 @@ class Microformats2Test(testutil.HandlerTest):
         (None, None, {})):
       obj = microformats2.json_to_object({'properties': {'content': [value],
                                                          'summary': [value]}})
-      self.assertEquals(expected_content, obj.get('content'))
-      self.assertEquals(expected_summary, obj.get('summary'))
+      self.assertEqual(expected_content, obj.get('content'))
+      self.assertEqual(expected_summary, obj.get('summary'))
 
   def test_photo_property_is_not_url(self):
     """handle the case where someone (incorrectly) marks up the caption
@@ -53,7 +55,7 @@ class Microformats2Test(testutil.HandlerTest):
     mf2 = {'properties':
            {'photo': ['the caption', 'http://example.com/image.jpg']}}
     obj = microformats2.json_to_object(mf2)
-    self.assertEquals([{'url': 'http://example.com/image.jpg'}], obj['image'])
+    self.assertEqual([{'url': 'http://example.com/image.jpg'}], obj['image'])
 
   def test_photo_property_has_no_url(self):
     """handle the case where the photo property is *only* text, not a url"""
@@ -69,7 +71,7 @@ class Microformats2Test(testutil.HandlerTest):
     mf2 = {'properties':
            {'video': ['http://example.com/video.mp4']}}
     obj = microformats2.json_to_object(mf2)
-    self.assertEquals([{'url': 'http://example.com/video.mp4'}], obj['stream'])
+    self.assertEqual([{'url': 'http://example.com/video.mp4'}], obj['stream'])
 
   def test_nested_compound_url_object(self):
     mf2 = {'properties': {
@@ -84,10 +86,10 @@ class Microformats2Test(testutil.HandlerTest):
              }],
            }}
     obj = microformats2.json_to_object(mf2)
-    self.assertEquals('http://nested', obj['object']['url'])
+    self.assertEqual('http://nested', obj['object']['url'])
 
   def test_object_to_json_unescapes_html_entities(self):
-    self.assertEquals({
+    self.assertEqual({
       'type': ['h-entry'],
       'properties': {'content': [{
         'html': 'Entity &lt; <a href="http://my/link">link too</a>',
@@ -102,7 +104,7 @@ class Microformats2Test(testutil.HandlerTest):
      }))
 
   def test_object_to_json_note_with_in_reply_to(self):
-    self.assertEquals({
+    self.assertEqual({
       'type': ['h-entry'],
       'properties': {
         'content': [{
@@ -123,7 +125,7 @@ class Microformats2Test(testutil.HandlerTest):
       }}))
 
   def test_object_to_json_preserves_url_order(self):
-    self.assertEquals({
+    self.assertEqual({
       'type': ['h-card'],
       'properties': {
         'url': ['http://2', 'http://4', 'http://6'],
@@ -156,7 +158,7 @@ class Microformats2Test(testutil.HandlerTest):
         'content': '@hey great post',
       }
     })
-    self.assertEquals(re.sub('\n\s*', '\n', expected),
+    self.assertEqual(re.sub('\n\s*', '\n', expected),
                       re.sub('\n\s*', '\n', result))
 
   def test_render_content_link_with_image(self):
@@ -217,15 +219,16 @@ bar<br />
   def test_render_content_omits_tags_without_urls(self):
     self.assert_equals("""\
 foo
-<a class="tag" href="http://baj"></a>
 <a class="tag" href="http://baz">baz</a>
+<a class="tag" href="http://baj"></a>
 """, microformats2.render_content({
-        'content': 'foo',
-        'tags': [{'displayName': 'bar'},
-                 {'url': 'http://baz', 'displayName': 'baz'},
-                 {'url': 'http://baj'},
-               ],
-      }))
+      'content': 'foo',
+      'tags': [
+        {'displayName': 'bar'},
+        {'url': 'http://baz', 'displayName': 'baz'},
+        {'url': 'http://baj'},
+      ],
+    }))
 
   def test_render_content_location(self):
     self.assert_multiline_equals("""\
@@ -316,9 +319,9 @@ Shared <a href="#">a post</a> by foo
     First discovered in https://twitter.com/schnarfed/status/831552681210556416
     """
     self.assert_equals(
-      u'💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>)',
+      '💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>)',
       microformats2.render_content({
-        'content': u'💯💯💯 (by @itsmaeril)',
+        'content': '💯💯💯 (by @itsmaeril)',
         'tags': [{
           'displayName': 'Maeril',
           'objectType': 'person',
@@ -458,13 +461,13 @@ Shared <a href="#">a post</a> by foo
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
-        'content': [{'html': u'✁', 'value': u'✁'}],
+        'content': [{'html': '✁', 'value': '✁'}],
         'in-reply-to': ['https://orig/post'],
       },
     }, microformats2.object_to_json({
       'objectType': 'activity',
       'verb': 'react',
-      'content': u'✁',
+      'content': '✁',
       'object': {'url': 'https://orig/post'},
     }))
 
@@ -472,13 +475,13 @@ Shared <a href="#">a post</a> by foo
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
-        'content': [{'html': u'✁', 'value': u'✁'}],
+        'content': [{'html': '✁', 'value': '✁'}],
         'in-reply-to': ['https://orig/post/1', 'https://orig/post/2'],
       },
     }, microformats2.object_to_json({
       'objectType': 'activity',
       'verb': 'react',
-      'content': u'✁',
+      'content': '✁',
       'object': [
         {'url': 'https://orig/post/1'},
         {'url': 'https://orig/post/2'},
@@ -519,10 +522,10 @@ Shared <a href="#">a post</a> by foo
         (['nested'], [{'type': ['h-ok'], 'properties': {'url': [
             {'type': ['h-nested'], 'url': ['nested']}]}}]),
         ):
-      self.assertEquals(expected, microformats2.get_string_urls(objs))
+      self.assertEqual(expected, microformats2.get_string_urls(objs))
 
   def test_img_blank_alt(self):
-    self.assertEquals('<img class="u-photo" src="foo" alt="" />',
+    self.assertEqual('<img class="u-photo" src="foo" alt="" />',
                       microformats2.img('foo'))
 
   def test_json_to_html_no_properties_or_type(self):
@@ -546,7 +549,7 @@ Shared <a href="#">a post</a> by foo
           'value': 'Timeless Coffee Roasters',
         }],
       }})
-    self.assertEquals({
+    self.assertEqual({
       'objectType': 'place',
       'latitude': 50.820641,
       'longitude': -0.149522,
@@ -592,7 +595,7 @@ Shared <a href="#">a post</a> by foo
       'type': ['h-entry'],
       'properties': props,
     })
-    self.assertEquals({
+    self.assertEqual({
       'latitude': 50.820641,
       'longitude': -0.149522,
       'position': '+50.820641-000.149522/',
@@ -616,7 +619,7 @@ Shared <a href="#">a post</a> by foo
       },
     })
 
-    self.assertEquals([
+    self.assertEqual([
       {
         'objectType': 'person',
         'displayName': 'Kyle Mahan',
@@ -737,11 +740,11 @@ Shared <a href="#">a post</a> by foo
           ],
         }),
     ):
-      self.assertEquals(expected, microformats2.object_urls(actor))
+      self.assertEqual(expected, microformats2.object_urls(actor))
 
   def test_hcard_to_html_no_properties(self):
-    self.assertEquals('', microformats2.hcard_to_html({}))
-    self.assertEquals('', microformats2.hcard_to_html({'properties': {}}))
+    self.assertEqual('', microformats2.hcard_to_html({}))
+    self.assertEqual('', microformats2.hcard_to_html({'properties': {}}))
 
   def test_share_activity_to_json_html(self):
     """Should translate the full activity, not just the object."""

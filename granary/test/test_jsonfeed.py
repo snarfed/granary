@@ -1,12 +1,13 @@
 # coding=utf-8
 """Unit tests for jsonfeed.py."""
+from __future__ import unicode_literals
 
 from oauth_dropins.webutil import testutil
 
 from granary.jsonfeed import activities_to_jsonfeed, jsonfeed_to_activities
 
 
-class JsonFeedTest(testutil.HandlerTest):
+class JsonFeedTest(testutil.TestCase):
 
   def test_activities_to_jsonfeed_empty(self):
       self.assert_equals({
@@ -89,8 +90,7 @@ class JsonFeedTest(testutil.HandlerTest):
         activities_to_jsonfeed(bad)
 
   def test_jsonfeed_to_activities_empty(self):
-      self.assert_equals(([], {'objectType': 'person'}),
-                         jsonfeed_to_activities({}))
+    self.assert_equals(([], {'objectType': 'person'}), jsonfeed_to_activities({}))
 
   def test_not_jsonfeed(self):
     """Based on this JSON, which isn't JSON Feed:

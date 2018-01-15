@@ -1,5 +1,8 @@
 """Unit tests for canned data in testdata/.
 """
+from __future__ import unicode_literals
+from future.utils import bytes_to_native_str
+from past.builtins import basestring
 
 import glob
 import json
@@ -29,7 +32,7 @@ def read_json(filename):
   try:
     with open(filename) as f:
       return json.loads(f.read())
-  except Exception, e:
+  except Exception as e:
     e.args = ('%s: ' % filename,) + e.args
     raise
 
@@ -108,4 +111,5 @@ for src_ext, dst_exts, fn, excludes in mappings:
 os.chdir(prevdir)
 
 
-TestDataTest = type('TestDataTest', (testutil.HandlerTest,), test_funcs)
+TestDataTest = type(bytes_to_native_str(b'TestDataTest'), (testutil.TestCase,),
+                    test_funcs)

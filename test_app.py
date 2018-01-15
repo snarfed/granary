@@ -1,5 +1,6 @@
 """Unit tests for app.py.
 """
+from __future__ import unicode_literals
 import copy
 import httplib
 import json
@@ -9,7 +10,7 @@ import xml.sax.saxutils
 from google.appengine.api import memcache
 import mox
 import oauth_dropins.webutil.test
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil_appengine
 import requests
 
 import appengine_config
@@ -65,7 +66,7 @@ AS2_RESPONSE = {
 }
 
 MF2 = {'items': [{
-  'type': [u'h-entry'],
+  'type': ['h-entry'],
   'properties': {
     'content': [{
       'value': 'foo bar',
@@ -75,7 +76,7 @@ MF2 = {'items': [{
     'url': ['https://perma/link'],
   },
 }, {
-  'type': [u'h-entry'],
+  'type': ['h-entry'],
   'properties': {
     'content': [{
       'value': 'baz baj',
@@ -189,7 +190,7 @@ foo bar
 """
 
 
-class AppTest(testutil.HandlerTest):
+class AppTest(testutil_appengine.HandlerTest):
 
   @staticmethod
   def request_url(path):
@@ -528,7 +529,7 @@ not atom!
     self.assert_equals(400, resp.status_int)
 
   def test_url_fetch_fails(self):
-    self.expect_requests_get('http://my/posts.html').AndRaise(socket.error(''))
+    self.expect_requests_get('http://my/posts.html').AndRaise(socket.timeout(''))
     self.mox.ReplayAll()
     resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
     self.assert_equals(504, resp.status_int)

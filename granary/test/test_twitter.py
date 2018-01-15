@@ -1,15 +1,20 @@
 # coding=utf-8
 """Unit tests for twitter.py.
 """
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range, str, zip
+from past.builtins import basestring
 
+from collections import OrderedDict
 import copy
-import httplib
+import http.client
 import json
-import mox
+from mox3 import mox
 import requests
 import socket
-import urllib
-import urllib2
+import urllib.error, urllib.parse, urllib.request
 
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
@@ -237,12 +242,12 @@ OBJECT = {  # ActivityStreams
   }],
   'attachments': [{
     'objectType': 'image',
-    'image': {'url': u'http://p.twimg.com/picture2'},
+    'image': {'url': 'http://p.twimg.com/picture2'},
   }, {
-    'image': {'url': u'http://p.twimg.com/picture3'},
+    'image': {'url': 'http://p.twimg.com/picture3'},
   }, {
     'objectType': 'image',
-    'image': {'url': u'https://p.twimg.com/picture1'},
+    'image': {'url': 'https://p.twimg.com/picture1'},
   }],
 }
 ACTIVITY = {  # ActivityStreams
@@ -524,9 +529,9 @@ LIKES_FROM_HTML = [{  # ActivityStreams
     'id': tag_uri('c_foo'),
     'numeric_id': '23238890',
     'username': 'c_foo',
-    'displayName': u'Charles ☕ Foo',
+    'displayName': 'Charles ☕ Foo',
     'url': 'https://twitter.com/c_foo',
-    'image': {'url': u'https://pbs.twimg.com/profile_images/123/abc.jpg'},
+    'image': {'url': 'https://pbs.twimg.com/profile_images/123/abc.jpg'},
   },
 }]
 OBJECT_WITH_LIKES = copy.deepcopy(OBJECT)
@@ -546,7 +551,7 @@ QUOTE_TWEET = {
     'urls': [{
       'url': 'https://t.co/ww6HD8KroG',
       'expanded_url': 'https://twitter.com/snarfed_org/status/100',
-      'display_url': u'twitter.com/schnar…',
+      'display_url': 'twitter.com/schnar…',
       'indices': [18, 41],
     }],
   },
@@ -717,7 +722,7 @@ class TwitterTest(testutil.TestCase):
     if not url.startswith('http'):
       url = twitter.API_BASE + url
     if params:
-      url += '?' + urllib.urlencode(params)
+      url += '?' + urllib.parse.urlencode(params)
       kwargs.setdefault('data', '')
     if not isinstance(response, basestring):
       response=json.dumps(response)
@@ -744,14 +749,14 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_2],
-                       self.twitter.get_activities(start_index=1, count=1))
+                          self.twitter.get_activities(start_index=1, count=1))
 
   def test_get_activities_start_index_count_zero(self):
     self.expect_urlopen(API_TIMELINE % 0, [TWEET, TWEET_2])
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY, ACTIVITY_2],
-                       self.twitter.get_activities(start_index=0, count=0))
+                          self.twitter.get_activities(start_index=0, count=0))
 
   def test_get_activities_count_past_end(self):
     self.expect_urlopen(API_TIMELINE % 9, [TWEET])
@@ -843,7 +848,7 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_REPLIES],
-                       self.twitter.get_activities(fetch_replies=True, min_id='567'))
+                          self.twitter.get_activities(fetch_replies=True, min_id='567'))
 
   def test_get_activities_fetch_mentions(self):
     self.expect_urlopen(TIMELINE, [])
@@ -886,7 +891,7 @@ class TwitterTest(testutil.TestCase):
     twitter.QUOTE_SEARCH_BATCH_SIZE = 5  # reduce the batch size for testing
     # search for 8 tweets to make sure we split them up into groups of <= 5
     tweets = []
-    for id in xrange(1000, 1008):
+    for id in range(1000, 1008):
       tweet = copy.deepcopy(TWEET)
       tweet['id'] = id
       tweet['id_str'] = str(id)
@@ -898,13 +903,13 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen('account/verify_credentials.json',
                         {'screen_name': 'schnarfed'})
     self.expect_urlopen(twitter.API_SEARCH % {
-      'q': urllib.quote_plus('@schnarfed'),
+      'q': urllib.parse.quote_plus('@schnarfed'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
     # first search returns no results
     self.expect_urlopen(twitter.API_SEARCH % {
-      'q': urllib.quote_plus('1000 OR 1001 OR 1002 OR 1003 OR 1004'),
+      'q': urllib.parse.quote_plus('1000 OR 1001 OR 1002 OR 1003 OR 1004'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
@@ -914,7 +919,7 @@ class TwitterTest(testutil.TestCase):
     retweeted_quote_tweet = copy.deepcopy(RETWEETED_QUOTE_TWEET)
     retweeted_quote_tweet['quoted_status_id_str'] = '1006'
     self.expect_urlopen(twitter.API_SEARCH % {
-      'q': urllib.quote_plus('1005 OR 1006 OR 1007'),
+      'q': urllib.parse.quote_plus('1005 OR 1006 OR 1007'),
       'count': 100,
     } + '&since_id=567', {
       'statuses': [quote_tweet, retweeted_quote_tweet],
@@ -938,14 +943,14 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_SHARES],
-                       self.twitter.get_activities(fetch_shares=True, min_id='567'))
+                          self.twitter.get_activities(fetch_shares=True, min_id='567'))
 
   def test_get_activities_fetch_shares_no_retweets(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
     self.expect_urlopen(API_RETWEETS % '100'
-                       ).AndRaise(urllib2.HTTPError('url', 404, 'msg', {}, None))
+                       ).AndRaise(urllib.error.HTTPError('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
@@ -991,7 +996,7 @@ class TwitterTest(testutil.TestCase):
 
     cache = util.CacheDict()
     self.assert_equals([ACTIVITY_WITH_LIKES],
-                       self.twitter.get_activities(fetch_likes=True, cache=cache))
+                          self.twitter.get_activities(fetch_likes=True, cache=cache))
     self.assert_equals(1, cache['ATF 100'])
 
   def test_get_activities_favorites_404(self):
@@ -999,12 +1004,12 @@ class TwitterTest(testutil.TestCase):
     tweet['favorite_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
     self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100'
-      ).AndRaise(urllib2.HTTPError('url', 404, 'msg', {}, None))
+      ).AndRaise(urllib.error.HTTPError('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
     cache = util.CacheDict()
     self.assert_equals([ACTIVITY],
-                       self.twitter.get_activities(fetch_likes=True, cache=cache))
+                          self.twitter.get_activities(fetch_likes=True, cache=cache))
     self.assertNotIn('ATF 100', cache)
 
   def test_get_activities_fetch_likes_no_favorites(self):
@@ -1038,8 +1043,8 @@ class TwitterTest(testutil.TestCase):
 
     self.mox.ReplayAll()
     self.assert_equals(([ACTIVITY_WITH_SHARES] * twitter.RETWEET_LIMIT) +
-                       [ACTIVITY, ACTIVITY],
-                       self.twitter.get_activities(fetch_shares=True, min_id='567'))
+                          [ACTIVITY, ACTIVITY],
+                          self.twitter.get_activities(fetch_shares=True, min_id='567'))
 
   def test_get_activities_request_etag(self):
     self.expect_urlopen(TIMELINE, [], headers={'If-none-match': '"my etag"'})
@@ -1064,19 +1069,19 @@ class TwitterTest(testutil.TestCase):
     self.twitter.get_activities_response(min_id=135)
 
   def test_get_activities_retries(self):
-    for exc in (httplib.HTTPException('Deadline exceeded: foo'),
-                socket.error('asdf'),
-                urllib2.HTTPError('url', 501, 'msg', {}, None)):
+    for exc in (http.client.HTTPException('Deadline exceeded: foo'),
+                socket.timeout('asdf'),
+                urllib.error.HTTPError('url', 501, 'msg', {}, None)):
       for i in range(twitter.RETRIES):
         self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.expect_urlopen(TIMELINE, [])
       self.mox.ReplayAll()
-      self.assertEquals([], self.twitter.get_activities_response()['items'])
+      self.assertEqual([], self.twitter.get_activities_response()['items'])
       self.mox.ResetAll()
 
     # other exceptions shouldn't retry
-    for exc in (httplib.HTTPException('not a deadline'),
-                urllib2.HTTPError('url', 403, 'not a 5xx', {}, None)):
+    for exc in (http.client.HTTPException('not a deadline'),
+                urllib.error.HTTPError('url', 403, 'not a 5xx', {}, None)):
       self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.mox.ReplayAll()
       self.assertRaises(exc.__class__, self.twitter.get_activities_response)
@@ -1099,11 +1104,11 @@ class TwitterTest(testutil.TestCase):
       self.twitter.get_activities(group_id=source.SEARCH, search_query=None)
 
   def test_get_activities_search_with_unicode_char(self):
-    self.expect_urlopen(twitter.API_SEARCH % {'q': u'%E2%98%95+foo', 'count': 0},
+    self.expect_urlopen(twitter.API_SEARCH % {'q': '%E2%98%95+foo', 'count': 0},
                         {'statuses': []})
     self.mox.ReplayAll()
     self.assert_equals([], self.twitter.get_activities(
-        group_id=source.SEARCH, search_query=u'☕ foo'))
+        group_id=source.SEARCH, search_query='☕ foo'))
 
   def test_get_comment(self):
     self.expect_urlopen(API_STATUS % '123', TWEET)
@@ -1133,8 +1138,7 @@ class TwitterTest(testutil.TestCase):
       'next_cursor_str': '0',
     })
     self.mox.ReplayAll()
-    self.assert_equals([ACTOR, ACTOR_2, ACTOR_3],
-                       self.twitter.get_blocklist())
+    self.assert_equals([ACTOR, ACTOR_2, ACTOR_3], self.twitter.get_blocklist())
 
   def test_get_blocklist_rate_limited(self):
     self.expect_urlopen(API_BLOCKS % '-1', {
@@ -1151,14 +1155,14 @@ class TwitterTest(testutil.TestCase):
     with self.assertRaises(source.RateLimited) as e:
       self.twitter.get_blocklist()
 
-    self.assertEquals([ACTOR, ACTOR_2, ACTOR_3], e.exception.partial)
+    self.assertEqual([ACTOR, ACTOR_2, ACTOR_3], e.exception.partial)
 
   def test_get_blocklist_other_http_error(self):
     self.expect_urlopen(API_BLOCKS % '-1', status=406)
     self.mox.ReplayAll()
-    with self.assertRaises(urllib2.HTTPError) as e:
+    with self.assertRaises(urllib.error.HTTPError) as e:
       self.twitter.get_blocklist()
-    self.assertEquals(406, e.exception.code)
+    self.assertEqual(406, e.exception.code)
 
   def test_get_blocklist_ids(self):
     self.expect_urlopen(API_BLOCK_IDS % '-1', {
@@ -1187,7 +1191,7 @@ class TwitterTest(testutil.TestCase):
     with self.assertRaises(source.RateLimited) as e:
       self.twitter.get_blocklist_ids()
 
-    self.assertEquals(['1', '2', '4', '5'], e.exception.partial)
+    self.assertEqual(['1', '2', '4', '5'], e.exception.partial)
 
   def test_tweet_to_activity_full(self):
     self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
@@ -1207,7 +1211,7 @@ class TwitterTest(testutil.TestCase):
     quote_tweet = copy.deepcopy(QUOTE_TWEET)
     quote_tweet['entities']['urls'][0]['expanded_url'] = 'http://foo/bar'
 
-    self.assert_equals(u'I agree with this twitter.com/schnar…',
+    self.assert_equals('I agree with this twitter.com/schnar…',
                        self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
 
     del quote_tweet['entities']
@@ -1225,7 +1229,7 @@ class TwitterTest(testutil.TestCase):
     """
     obj = self.twitter.tweet_to_object({
       'id_str': '831552681210556416',
-      'text': u'💯💯💯 (by @itsmaeril) https://t.co/pWrOHzuHkP',
+      'text': '💯💯💯 (by @itsmaeril) https://t.co/pWrOHzuHkP',
       'entities': {
         'user_mentions': [{
           'screen_name': 'itsmaeril',
@@ -1237,9 +1241,9 @@ class TwitterTest(testutil.TestCase):
         }]
       },
     })
-    self.assert_equals(u'💯💯💯 (by @itsmaeril) ', obj['content'])
+    self.assert_equals('💯💯💯 (by @itsmaeril) ', obj['content'])
     self.assert_equals(
-      u'💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>) ',
+      '💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>) ',
       microformats2.render_content(obj).splitlines()[0])
 
   def test_tweet_to_object_full(self):
@@ -1254,7 +1258,7 @@ class TwitterTest(testutil.TestCase):
 
   def test_tweet_to_object_with_retweets(self):
     self.assert_equals(OBJECT_WITH_SHARES,
-                       self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
+                          self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
 
   def test_tweet_to_activity_display_text_range(self):
     self.assert_equals({
@@ -1318,13 +1322,13 @@ class TwitterTest(testutil.TestCase):
     obj = self.twitter.tweet_to_object(tweet)
     for tag in obj['tags']:
       if tag['displayName'] == 'Dan Shipper':
-        self.assertEquals(91, tag['startIndex'])
-        self.assertEquals(11, tag['length'])
+        self.assertEqual(91, tag['startIndex'])
+        self.assertEqual(11, tag['length'])
         break
     else:
       self.fail('Dan Shipper not found')
 
-    self.assertEquals('Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
+    self.assertEqual('Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
                       microformats2.render_content(obj))
 
   def test_tweet_to_object_retweet_with_entities(self):
@@ -1366,25 +1370,25 @@ class TwitterTest(testutil.TestCase):
       'displayName': 'Dan Shipper',
       'startIndex': 51,
       'length': 11,
-      }, {
+    }, {
       'objectType': 'article',
       'url': 'https://www.onename.io/',
       'displayName': 'onename.io',
       'startIndex': 63,
       'length': 10,
-      }], obj['tags'])
+    }], obj['tags'])
 
     self.assert_equals('RT <a href="https://twitter.com/orig">@orig</a>: a <a href="https://twitter.com/danshipper">@danshipper</a> <a href="https://www.onename.io/">onename.io</a> ok',
-                      microformats2.render_content(obj))
+                       microformats2.render_content(obj))
 
   def test_tweet_to_object_multiple_pictures_only_one_picture_link(self):
     self.assert_equals({
       'id': tag_uri('726480459488587776'),
       'objectType': 'note',
-      'content': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee ',
+      'content': '☑ Harley Davidson Museum® ☑ Schlitz .... ☑ Milwaukee ',
     }, self.twitter.tweet_to_object({
       'id_str': '726480459488587776',
-      'text': u'\u2611 Harley Davidson Museum\u00ae \u2611 Schlitz .... \u2611 Milwaukee https://t.co/6Ta5P8A2cs',
+      'text': '☑ Harley Davidson Museum® ☑ Schlitz .... ☑ Milwaukee https://t.co/6Ta5P8A2cs',
       'extended_entities': {
         'media': [{
           'id_str': '1',
@@ -1401,7 +1405,7 @@ class TwitterTest(testutil.TestCase):
     tweet.update({
       'in_reply_to_screen_name': 'other_user',
       'in_reply_to_status_id': 789,
-      })
+    })
     expected = [{
       'url' : 'https://twitter.com/other_user/status/789',
       'id' : tag_uri('789'),
@@ -1453,7 +1457,7 @@ class TwitterTest(testutil.TestCase):
 
   def test_tweet_to_activity_retweet_of_quote_tweet(self):
     self.assert_equals(QUOTE_SHARE,
-                       self.twitter.tweet_to_activity(RETWEETED_QUOTE_TWEET))
+                          self.twitter.tweet_to_activity(RETWEETED_QUOTE_TWEET))
 
   def test_protected_tweet_to_object(self):
     tweet = copy.deepcopy(TWEET)
@@ -1467,7 +1471,7 @@ class TwitterTest(testutil.TestCase):
       self.assert_equals(share, self.twitter.retweet_to_object(retweet))
 
     # not a retweet
-    self.assertEquals(None, self.twitter.retweet_to_object(TWEET))
+    self.assertEqual(None, self.twitter.retweet_to_object(TWEET))
 
   def test_video_tweet_to_object(self):
     tweet = copy.deepcopy(TWEET)
@@ -1522,12 +1526,12 @@ class TwitterTest(testutil.TestCase):
       'image': {'url': 'http://p.twimg.com/picture3'},
     }], obj['attachments'])
     self.assert_equals({'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
-                       obj['stream'])
+                          obj['stream'])
     self.assertNotIn('image', obj)
 
   def test_streaming_event_to_object(self):
     self.assert_equals(LIKE_OBJ,
-                       self.twitter.streaming_event_to_object(FAVORITE_EVENT))
+                          self.twitter.streaming_event_to_object(FAVORITE_EVENT))
 
     # not a favorite event
     follow = {
@@ -1536,7 +1540,7 @@ class TwitterTest(testutil.TestCase):
       'target': USER,
       'target_object': TWEET,
       }
-    self.assertEquals(None, self.twitter.streaming_event_to_object(follow))
+    self.assertEqual(None, self.twitter.streaming_event_to_object(follow))
 
   def test_favorites_html_to_likes(self):
     self.assert_equals([], self.twitter.favorites_html_to_likes(TWEET, ""))
@@ -1545,7 +1549,7 @@ class TwitterTest(testutil.TestCase):
 
     # https://console.cloud.google.com/errors/16941961690170721544
     for like in likes:
-      self.assertEquals(unicode, like['author']['displayName'].__class__)
+      self.assertTrue(isinstance(like['author']['displayName'], str))
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))
@@ -1582,14 +1586,13 @@ class TwitterTest(testutil.TestCase):
 
   def test_oauth(self):
     def check_headers(headers):
-      sig = dict(headers)['Authorization']
+      sig = dict(headers)['Authorization'].decode('utf-8')
       return (sig.startswith('OAuth ') and
               'oauth_token="key"' in sig and
               'oauth_signature=' in sig)
 
     self.expect_urlopen('users/show.json?screen_name=foo',
-      USER,
-      headers=mox.Func(check_headers))
+      USER, headers=mox.Func(check_headers))
     self.mox.ReplayAll()
 
     self.twitter.get_actor('foo')
@@ -1602,7 +1605,7 @@ class TwitterTest(testutil.TestCase):
     try:
       self.twitter.urlopen('xyz')
       self.fail('Expected HTTPError')
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       self.assertEqual(502, e.code)
 
   def test_get_activities_not_json(self):
@@ -1612,14 +1615,14 @@ class TwitterTest(testutil.TestCase):
     try:
       self.twitter.get_activities()
       self.fail('Expected HTTPError')
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       self.assertEqual(502, e.code)
 
   def test_create_tweet(self):
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
-    dots = u'…'
+    dots = '…'
     original = (
       'my status',
       'too long, will be ellipsized',
@@ -1682,8 +1685,8 @@ class TwitterTest(testutil.TestCase):
       self.assert_equals(tweet, self.twitter.create(obj).content)
 
       got = self.twitter.preview_create(obj)
-      self.assertEquals('<span class="verb">tweet</span>:', got.description)
-      self.assertEquals(preview, got.content)
+      self.assertEqual('<span class="verb">tweet</span>:', got.description)
+      self.assertEqual(preview, got.content)
 
   def test_tweet_truncate(self):
     """A bunch of tests to exercise the tweet shortening algorithm
@@ -1692,98 +1695,98 @@ class TwitterTest(testutil.TestCase):
     twitter.MAX_TWEET_LENGTH = 140
 
     orig = (
-      u'Hey #indieweb, the coming storm of webmention Spam may not be '
-      u'far away. Those of us that have input fields to send webmentions '
-      u'manually may already be getting them')
+      'Hey #indieweb, the coming storm of webmention Spam may not be '
+      'far away. Those of us that have input fields to send webmentions '
+      'manually may already be getting them')
     expected = (
-      u'Hey #indieweb, the coming storm of webmention Spam may not '
-      u'be far away. Those of us that have input fields to send… '
-      u'https://ben.thatmustbe.me/note/2015/1/31/1/')
+      'Hey #indieweb, the coming storm of webmention Spam may not '
+      'be far away. Those of us that have input fields to send… '
+      'https://ben.thatmustbe.me/note/2015/1/31/1/')
     result = self.twitter._truncate(
       orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/',
       source.INCLUDE_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = expected = (
-      u'Despite names,\n'
-      u'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
-      u'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
-      u'@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+      'Despite names,\n'
+      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
+      '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
     result = self.twitter._truncate(
       orig, 'http://tantek.com/1234', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = expected = (
-      u'@davewiner I stubbed a page on the wiki for '
-      u'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
-      u'welcome! @kevinmarks @julien51 @aaronpk')
+      '@davewiner I stubbed a page on the wiki for '
+      'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
+      'welcome! @kevinmarks @julien51 @aaronpk')
     result = self.twitter._truncate(
       orig, 'https://kylewm.com/5678', source.INCLUDE_IF_TRUNCATED,
       'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = expected = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), a url with a query '
-      u'string;foo.withknown.com/example?query=parameters')
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), a url with a query '
+      'string;foo.withknown.com/example?query=parameters')
     result = self.twitter._truncate(
       orig, 'https://foo.bar/', source.INCLUDE_IF_TRUNCATED, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     orig = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      u'long:foo.withknown.com/example?query=parameters')
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      'long:foo.withknown.com/example?query=parameters')
     expected = (
-      u'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      u'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      u'long:…')
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      'long:…')
     result = self.twitter._truncate(
       orig, 'http://foo.com/', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     # test case-insensitive link matching
     orig = (
-      u'The Telegram Bot API is the best bot API ever. Everyone should '
-      u'learn from it, especially Matrix.org, which currently requires a '
-      u'particular URL structure and registration files.')
+      'The Telegram Bot API is the best bot API ever. Everyone should '
+      'learn from it, especially Matrix.org, which currently requires a '
+      'particular URL structure and registration files.')
     expected = (
-      u'The Telegram Bot API is the best bot API ever. Everyone should learn '
-      u'from it, especially Matrix.org… '
-      u'https://unrelenting.technology/notes/2015-09-05-00-35-13')
+      'The Telegram Bot API is the best bot API ever. Everyone should learn '
+      'from it, especially Matrix.org… '
+      'https://unrelenting.technology/notes/2015-09-05-00-35-13')
     result = self.twitter._truncate(
       orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13',
       source.INCLUDE_IF_TRUNCATED,
       'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
-    orig = (u'Leaving this here for future reference. Turn on debug menu '
-      u'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu '
-      u'-bool true`')
-    expected = (u'Leaving this here for future reference. Turn on debug menu '
-      u'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu…')
+    orig = ('Leaving this here for future reference. Turn on debug menu '
+      'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu '
+      '-bool true`')
+    expected = ('Leaving this here for future reference. Turn on debug menu '
+      'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu…')
     result = self.twitter._truncate(orig, 'http://foo.com', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
-    orig = u'ok http://foo.co/bar ellipsize http://foo.co/baz'
-    expected = u'ok http://foo.co/bar ellipsize…'
+    orig = 'ok http://foo.co/bar ellipsize http://foo.co/baz'
+    expected = 'ok http://foo.co/bar ellipsize…'
     result = self.twitter._truncate(
       orig, 'http://foo.com', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
-    orig = u'too long\nextra whitespace\tbut should include url'
-    expected = u'too long… http://obj.ca'
+    orig = 'too long\nextra whitespace\tbut should include url'
+    expected = 'too long… http://obj.ca'
     result = self.twitter._truncate(
       orig, 'http://obj.ca', source.INCLUDE_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
-    orig = expected = u'trailing slash http://www.foo.co/'
+    orig = expected = 'trailing slash http://www.foo.co/'
     result = self.twitter._truncate(
       orig, 'http://www.foo.co/', source.OMIT_LINK, 'note')
-    self.assertEquals(expected, result)
+    self.assertEqual(expected, result)
 
   def test_no_ellipsize_real_tweet(self):
     orig = """\
@@ -1808,7 +1811,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
     actual_preview = self.twitter.preview_create(
       obj, include_link=source.OMIT_LINK).content
-    self.assertEquals(preview, actual_preview)
+    self.assertEqual(preview, actual_preview)
 
     self.twitter.create(obj, include_link=source.OMIT_LINK)
 
@@ -1824,14 +1827,14 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
             'far away. Those of us that have input fields to send webmentions '
             'manually may already be getting them')
 
-    content = (u'Hey #indieweb, the coming storm of webmention Spam may not '
-               u'be far away. Those of us that have input fields to send… '
-               u'https://ben.thatmustbe.me/note/2015/1/31/1/')
+    content = ('Hey #indieweb, the coming storm of webmention Spam may not '
+               'be far away. Those of us that have input fields to send… '
+               'https://ben.thatmustbe.me/note/2015/1/31/1/')
 
-    preview = (u'Hey <a href="https://twitter.com/hashtag/indieweb">#indieweb</a>, '
-               u'the coming storm of webmention Spam may not '
-               u'be far away. Those of us that have input fields to send… '
-               u'<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
+    preview = ('Hey <a href="https://twitter.com/hashtag/indieweb">#indieweb</a>, '
+               'the coming storm of webmention Spam may not '
+               'be far away. Those of us that have input fields to send… '
+               '<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
 
     self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
                         params={'status': content.encode('utf-8')})
@@ -1844,7 +1847,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
     self.twitter.create(obj, include_link=source.INCLUDE_LINK)
     actual_preview = self.twitter.preview_create(obj, include_link=source.INCLUDE_LINK).content
-    self.assertEquals(preview, actual_preview)
+    self.assertEqual(preview, actual_preview)
 
   def test_create_preview_dont_autolink_at_mentions_inside_urls(self):
     """Don't autolink @-mentions inside urls.
@@ -1853,9 +1856,9 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     """
     obj = copy.deepcopy(OBJECT)
     del obj['image']
-    obj['content'] = u'時空黑洞都出現了，非常歡樂！LOL https://medium.com/@abc/xyz'
-    self.assertEquals(
-      u'時空黑洞都出現了，非常歡樂！LOL <a href="https://medium.com/@abc/xyz">medium.com/@abc/xyz</a>',
+    obj['content'] = '時空黑洞都出現了，非常歡樂！LOL https://medium.com/@abc/xyz'
+    self.assertEqual(
+      '時空黑洞都出現了，非常歡樂！LOL <a href="https://medium.com/@abc/xyz">medium.com/@abc/xyz</a>',
       self.twitter.preview_create(obj).content)
 
   def test_tweet_article_has_different_format(self):
@@ -1867,7 +1870,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       'displayName': 'The Article Title',
       'url': 'http://example.com/article',
     }, include_link=source.INCLUDE_LINK).content
-    self.assertEquals(
+    self.assertEqual(
       'The Article Title: <a href="http://example.com/article">example.com/'
       'article</a>', preview)
 
@@ -1882,11 +1885,11 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
         'image': None,
         })
     result = self.twitter.preview_create(obj)
-    self.assertEquals('my summary', result.content)
+    self.assertEqual('my summary', result.content)
 
     del obj['summary']
     result = self.twitter.preview_create(obj)
-    self.assertEquals('my content', result.content)
+    self.assertEqual('my content', result.content)
 
     del obj['content']
     result = self.twitter.preview_create(obj)
@@ -1929,7 +1932,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
         })
     self.twitter.create(obj, include_link=source.INCLUDE_LINK)
     result = self.twitter.preview_create(obj, include_link=source.INCLUDE_LINK)
-    self.assertIn(u'too long… <a href="http://obj.ca">obj.ca</a>',
+    self.assertIn('too long… <a href="http://obj.ca">obj.ca</a>',
                   result.content)
 
   def test_create_tweet_include_link_if_truncated(self):
@@ -1937,15 +1940,15 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     twitter.TCO_LENGTH = 5
 
     cases = [(
-      u'too long\nextra whitespace\tbut should include url',
-      u'http://obj.ca',
-      u'too long… http://obj.ca',
-      u'too long… <a href="http://obj.ca">obj.ca</a>',
+      'too long\nextra whitespace\tbut should include url',
+      'http://obj.ca',
+      'too long… http://obj.ca',
+      'too long… <a href="http://obj.ca">obj.ca</a>',
     ), (
-      u'short and sweet',
-      u'http://obj.ca',
-      u'short and sweet',
-      u'short and sweet',
+      'short and sweet',
+      'http://obj.ca',
+      'short and sweet',
+      'short and sweet',
     )]
 
     for _, _, expected, _ in cases:
@@ -1971,35 +1974,31 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     newlines in the output.
     """
     obj = microformats2.json_to_object({
-      "type": ["h-entry"],
-      "properties": {
-        "author": [
-          {
-            "properties": {
-              "name": ["Tantek \u00c7elik"],
-              "photo": ["http://tantek.com/logo.jpg"],
-              "url": ["http://tantek.com/"]
-            },
-            "type": ["h-card"],
-            "value": "",
-          }
+      'type': ['h-entry'],
+      'properties': {
+        'author': [{
+          'properties': {
+            'name': ['Tantek Çelik'],
+            'photo': ['http://tantek.com/logo.jpg'],
+            'url': ['http://tantek.com/']
+          },
+          'type': ['h-card'],
+          'value': '',
+        }],
+        'content': [{
+          'html': 'https://instagram.com/p/9XVBIRA9cj/<br /><br />Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.',
+          'value': ' https://instagram.com/p/9XVBIRA9cj/Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.'
+        }],
+        'name': ['https://instagram.com/p/9XVBIRA9cj/Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.'],
+        'photo': ['https://igcdn-photos-b-a.akamaihd.net/hphotos-ak-xaf1/t51.2885-15/e35/12145332_1662314194043465_2009449288_n.jpg'],
+        'published': ['2015-10-27T19:48:00-0700'],
+        'syndication': [
+          'https://www.facebook.com/photo.php?fbid=10101948228396473',
+          'https://twitter.com/t/status/659200761427980288'
         ],
-        "content": [
-          {
-            "html": "https://instagram.com/p/9XVBIRA9cj/<br /><br />Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan.",
-            "value": " https://instagram.com/p/9XVBIRA9cj/Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan."
-          }
-        ],
-        "name": ["https://instagram.com/p/9XVBIRA9cj/Social Web session @W3C #TPAC2015 in Sapporo, Hokkaido, Japan."],
-        "photo": ["https://igcdn-photos-b-a.akamaihd.net/hphotos-ak-xaf1/t51.2885-15/e35/12145332_1662314194043465_2009449288_n.jpg"],
-        "published": ["2015-10-27T19:48:00-0700"],
-        "syndication": [
-          "https://www.facebook.com/photo.php?fbid=10101948228396473",
-          "https://twitter.com/t/status/659200761427980288"
-        ],
-        "uid": ["http://tantek.com/2015/300/t1/social-web-session-w3c-tpac2015"],
-        "updated": ["2015-10-27T19:48:00-0700"],
-        "url": ["http://tantek.com/2015/300/t1/social-web-session-w3c-tpac2015"],
+        'uid': ['http://tantek.com/2015/300/t1/social-web-session-w3c-tpac2015'],
+        'updated': ['2015-10-27T19:48:00-0700'],
+        'url': ['http://tantek.com/2015/300/t1/social-web-session-w3c-tpac2015'],
       },
     })
 
@@ -2099,11 +2098,11 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       )
 
     for _, _, status, _ in testdata:
-      self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={
-        'status': status,
-        'in_reply_to_status_id': 100,
-        'auto_populate_reply_metadata': 'true',
-      })
+      self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params=(
+        ('status', status),
+        ('in_reply_to_status_id', 100),
+        ('auto_populate_reply_metadata', 'true'),
+      ))
     self.mox.ReplayAll()
 
     tweet = copy.deepcopy(TWEET)
@@ -2119,7 +2118,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       self.assert_equals(tweet, self.twitter.create(obj).content)
 
       preview = self.twitter.preview_create(obj)
-      self.assertEquals(expected_preview, preview.content)
+      self.assertEqual(expected_preview, preview.content)
       self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
 
   def test_create_reply_objectType_comment(self):
@@ -2132,15 +2131,15 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
-    self.assertEquals('my content', preview.content)
+    self.assertEqual('my content', preview.content)
 
     # test create
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
-                        params={
-                          'status': 'my content',
-                          'in_reply_to_status_id': '100',
-                          'auto_populate_reply_metadata': 'true',
-                        })
+                        params=(
+                          ('status', 'my content'),
+                          ('in_reply_to_status_id', '100'),
+                          ('auto_populate_reply_metadata', 'true'),
+                        ))
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
                        self.twitter.create(obj).content)
@@ -2149,11 +2148,11 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     for i in range(3):
       self.expect_urlopen(
         twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
-        params={
-          'status': 'my content',
-          'in_reply_to_status_id': '100',
-          'auto_populate_reply_metadata': 'true',
-        })
+        params=(
+          ('status', 'my content'),
+          ('in_reply_to_status_id', '100'),
+          ('auto_populate_reply_metadata', 'true'),
+        ))
     self.mox.ReplayAll()
 
     for username, reply_to in ('me', 'me'), ('ME', 'ME'), ('Me', 'mE'):
@@ -2169,7 +2168,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       self.assertIn('@-reply</span> to <a href="%s">this tweet</a>:' %
                       obj['inReplyTo'][0]['url'],
                     preview.description)
-      self.assertEquals('my content', preview.content)
+      self.assertEqual('my content', preview.content)
 
       # test create
       self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
@@ -2179,8 +2178,8 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
-                        'type': 'like'},
-                       self.twitter.create(LIKES_FROM_HTML[0]).content)
+                           'type': 'like'},
+                          self.twitter.create(LIKES_FROM_HTML[0]).content)
 
     preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
     self.assertIn("""\
@@ -2195,8 +2194,8 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
-                        'type': 'like'},
-                       self.twitter.create(like).content)
+                           'type': 'like'},
+                          self.twitter.create(like).content)
 
     preview = self.twitter.preview_create(like)
     self.assertIn("""\
@@ -2232,10 +2231,10 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
     created = self.twitter.create(QUOTE_ACTIVITY['object'])
     self.assert_equals({'url': 'http://posted/tweet', 'type': 'post'},
-                       created.content, created)
+                          created.content, created)
 
     preview = self.twitter.preview_create(QUOTE_ACTIVITY['object'])
-    self.assertEquals('I agree with this <a href="https://twitter.com/snarfed_org/status/100">twitter.com/snarfed_org/st...</a>', preview.content)
+    self.assertEqual('I agree with this <a href="https://twitter.com/snarfed_org/status/100">twitter.com/snarfed_org/st...</a>', preview.content)
     self.assertIn("""\
 <span class="verb">quote</span>
 <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
@@ -2256,12 +2255,12 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     twitter.MAX_TWEET_LENGTH = 140
 
     self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
-        'status':(u'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
+        'status':('X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
       })
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(QUOTE_ACTIVITY['object'])
-    obj['content'] = u'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X'
+    obj['content'] = 'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X'
     created = self.twitter.create(obj)
 
   def test_create_unsupported_type(self):
@@ -2325,8 +2324,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, and…"""
     # test preview
     preview = self.twitter.preview_create(obj)
-    self.assertEquals('<span class="verb">tweet</span>:', preview.description)
-    self.assertEquals(ellipsized + '<br /><br />' +
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual(ellipsized + '<br /><br />' +
                       ' &nbsp; '.join('<img src="%s" />' % url
                                       for url in image_urls[:-1]),
                       preview.content)
@@ -2346,7 +2345,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                         })
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
-                       self.twitter.create(obj).content)
+                          self.twitter.create(obj).content)
 
   def test_create_reply_with_photo(self):
     obj = {
@@ -2359,7 +2358,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
-    self.assertEquals('my content<br /><br /><img src="http://my/picture" />',
+    self.assertEqual('my content<br /><br /><img src="http://my/picture" />',
                       preview.content)
 
     # test create
@@ -2369,15 +2368,15 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
-                        params={
-                          'status': 'my content',
-                          'in_reply_to_status_id': '100',
-                          'media_ids': '123',
-                          'auto_populate_reply_metadata': 'true',
-                        })
+                        params=OrderedDict((
+                          ('status', 'my content'),
+                          ('in_reply_to_status_id', '100'),
+                          ('auto_populate_reply_metadata', 'true'),
+                          ('media_ids', '123'),
+                        )))
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'comment'},
-                       self.twitter.create(obj).content)
+                          self.twitter.create(obj).content)
 
   def test_create_with_photo_no_content(self):
     obj = {
@@ -2387,8 +2386,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     # test preview
     preview = self.twitter.preview_create(obj)
-    self.assertEquals('<span class="verb">tweet</span>:', preview.description)
-    self.assertEquals('<br /><br /><img src="http://my/picture" />', preview.content)
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual('<br /><br /><img src="http://my/picture" />', preview.content)
 
     # test create
     self.expect_urlopen('http://my/picture', 'picture response')
@@ -2403,7 +2402,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                         })
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
-                       self.twitter.create(obj).content)
+                          self.twitter.create(obj).content)
 
   def test_create_with_photo_error(self):
     obj = {
@@ -2423,7 +2422,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                           'media_ids': '123',
                         }, status=403)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.twitter.create, obj)
+    self.assertRaises(urllib.error.HTTPError, self.twitter.create, obj)
 
   def test_create_with_photo_wrong_type(self):
     obj = {
@@ -2436,7 +2435,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     ret = self.twitter.create(obj)
     self.assertTrue(ret.abort)
     for msg in ret.error_plain, ret.error_html:
-      self.assertEquals('Twitter only supports JPG, PNG, GIF, and WEBP images; '
+      self.assertEqual('Twitter only supports JPG, PNG, GIF, and WEBP images; '
                         'http://my/picture.tiff looks like image/tiff', msg)
 
   def test_create_with_video(self):
@@ -2453,7 +2452,7 @@ the caption.\nextra long so we can check that it accounts for the pic-twitter-co
 the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok…"""
 
     # test preview
-    self.assertEquals(ellipsized +
+    self.assertEqual(ellipsized +
       '<br /><br /><video controls src="http://my/video">'
       '<a href="http://my/video">this video</a></video>',
       self.twitter.preview_create(obj).content)
@@ -2492,7 +2491,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/video', 'type': 'post'},
-                       self.twitter.create(obj).content)
+                          self.twitter.create(obj).content)
 
   def test_create_with_video_too_big(self):
     self.expect_urlopen(

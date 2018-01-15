@@ -33,6 +33,7 @@ Granary is a library and REST API that fetches and converts between a wide varie
 Here's how to get started:
 
 * Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/) Install with `pip install granary`.
+* Supports Python 2.7+ and 3.3+.
 * [Click here for getting started docs.](#using)
 * [Click here for reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
 * The REST API and demo app are deployed at [granary.io](https://granary.io/).
@@ -223,8 +224,12 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 1.12 - unreleased
+* Add Python 3 support! Granary now supports Python 2.7+ and 3.3+.
 * Instagram:
   * Fix scraping profile pages.
+
+This release is intentionally small and limited in scope to contain any impact of the Ptython 3 migration. It *should* be a noop for existing users, and we've tested thoroughly, but I'm sure there are still bugs. Please file issues if you notice anything broken!
+
 ### 1.11 - 2018-03-09
 * Add GitHub!
   * `get_activities()` supports issues and pull requests, including comments and reactions. It's currently based on notifications, so it's best effort, not comprehensive, and only includes recently active issues/PRs.

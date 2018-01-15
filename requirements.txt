@@ -1,11 +1,14 @@
 # Keep in sync with setup.py's install_requires!
 beautifulsoup4
+future
 html2text
 jinja2
 mf2py>=0.2.7
 mf2util>=0.5.0
+mox3>=0.24.0
 oauth-dropins>=1.11
 requests>=2.10.0
 requests-toolbelt>=0.6.2
 brevity>=0.2.16
 urllib3>=1.14
+webapp2>=3.0.0b1

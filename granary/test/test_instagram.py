@@ -1,15 +1,19 @@
+# coding=utf-8
 """Unit tests for instagram.py.
 """
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range, zip
+
 import copy
 import datetime
 import httplib2
 import json
 import logging
-import mox
-import StringIO
-import urllib
-import urllib2
-import urlparse
+from mox3 import mox
+import urllib.error, urllib.parse, urllib.request
+import httplib2
 
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
@@ -51,12 +55,12 @@ ACTOR = {  # ActivityStreams
 }
 COMMENTS = [{  # Instagram
   'created_time': '1349588757',
-  'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+  'text': '太可爱了。cute，very cute',
   'from': {
     'username': 'averygood',
     'profile_picture': 'http://picture/commenter',
     'id': '232927278',
-    'full_name': '\u5c0f\u6b63',
+    'full_name': '小正',
   },
   'id': '789',
 }]
@@ -156,11 +160,11 @@ COMMENT_OBJS = [{  # ActivityStreams
     'objectType': 'person',
     'id': tag_uri('232927278'),
     'username': 'averygood',
-    'displayName': '\u5c0f\u6b63',
+    'displayName': '小正',
     'image': {'url': 'http://picture/commenter'},
     'url': 'https://www.instagram.com/averygood/',
   },
-  'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+  'content': '太可爱了。cute，very cute',
   'id': tag_uri('789'),
   'published': '2012-10-07T05:45:57+00:00',
   'url': 'https://www.instagram.com/p/ABC123/#comment-789',
@@ -516,7 +520,7 @@ HTML_VIDEO_FULL = {
     'username': 'jc',
   },
   'edge_media_to_caption': {'edges': [{'node': {
-    'text': 'Eye of deer \ud83d\udc41 and #selfie from me',
+    'text': 'Eye of deer 👁 and #selfie from me',
   }}]},
   'edge_media_preview_like': {
     'edges': [],
@@ -528,11 +532,11 @@ HTML_VIDEO_FULL = {
         'id': '232927278',
         'profile_pic_url': 'http:\/\/picture\/commenter',
         'username': 'averygood',
-        'full_name': '\u5c0f\u6b63',
+        'full_name': '小正',
       },
       'id': '789',
       'created_at': 1349588757,
-      'text': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
+      'text': '太可爱了。cute，very cute',
     }}],
     'count': 1,
   },
@@ -843,6 +847,7 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
     'objectType': 'video',
     'author': HTML_ACTOR_PRIVATE,
     'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
+    'content': 'Eye of deer 👁 and #selfie from me',
     'id': tag_uri('789_456'),
     'published': '2016-01-17T13:15:52+00:00',
     'url': 'https://www.instagram.com/p/XYZ789/',
@@ -921,7 +926,7 @@ HTML_PHOTO_MISSING_HEADER = json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
 HTML_PHOTO_MISSING_FOOTER = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE)
 
 
-class InstagramTest(testutil.HandlerTest):
+class InstagramTest(testutil.TestCase):
 
   def setUp(self):
     super(InstagramTest, self).setUp()
@@ -960,7 +965,7 @@ class InstagramTest(testutil.HandlerTest):
                         json.dumps({'data': LIKES[0]}))
     self.mox.ReplayAll()
     self.assert_equals(
-      [ACTIVITY] + [LIKE_OBJS[0]],
+      [ACTIVITY, LIKE_OBJS[0]],
       self.instagram.get_activities(group_id=source.SELF, fetch_likes=True))
 
   def test_get_activities_passes_through_access_token(self):
@@ -999,7 +1004,7 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         'BAD REQUEST', status=400)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, self.instagram.get_activities,
+    self.assertRaises(urllib.error.HTTPError, self.instagram.get_activities,
                       activity_id='000')
 
   def test_get_activities_min_id(self):
@@ -1134,8 +1139,8 @@ class InstagramTest(testutil.HandlerTest):
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                     cookie='my cookie')
 
-    self.assertEquals('401 Unauthorized', cm.exception.message)
-    self.assertEquals(401, cm.exception.response.status_code)
+    self.assertEqual('401 Unauthorized', str(cm.exception))
+    self.assertEqual(401, cm.exception.response.status_code)
 
   def test_get_activities_scrape_activity_id(self):
     self.expect_requests_get(
@@ -1184,8 +1189,8 @@ class InstagramTest(testutil.HandlerTest):
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                     cookie='my cookie')
 
-    self.assertEquals('401 Unauthorized', cm.exception.message)
-    self.assertEquals(401, cm.exception.response.status_code)
+    self.assertEqual('401 Unauthorized', str(cm.exception))
+    self.assertEqual(401, cm.exception.response.status_code)
 
   def test_get_activities_scrape_options_not_implemented(self):
     for group_id in None, source.ALL, source.SEARCH:
@@ -1208,7 +1213,7 @@ class InstagramTest(testutil.HandlerTest):
     resp = self.instagram.get_activities_response(
       group_id=source.SELF, user_id='foo', scrape=True)
     self.assertIsNone(resp['actor'])
-    self.assertEquals([], resp['items'])
+    self.assertEqual([], resp['items'])
 
   def test_get_activities_scrape_error(self):
     self.expect_requests_get(instagram.HTML_BASE_URL,
@@ -1221,26 +1226,27 @@ class InstagramTest(testutil.HandlerTest):
       a = self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                         cookie='my cookie')
 
-    self.assertEquals(429, cm.exception.response.status_code)
+    self.assertEqual(429, cm.exception.response.status_code)
 
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
                         json.dumps({'data': VIDEO}))
     self.mox.ReplayAll()
-    self.assert_equals([VIDEO_ACTIVITY], self.instagram.get_activities(activity_id='5678'))
+    self.assert_equals([VIDEO_ACTIVITY],
+                          self.instagram.get_activities(activity_id='5678'))
 
   def test_get_comment(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
                         json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0],
-                       self.instagram.get_comment('789', activity_id='123_456'))
+                          self.instagram.get_comment('789', activity_id='123_456'))
 
   def test_get_comment_not_found(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
                         json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
-    self.assert_equals(None, self.instagram.get_comment('111', activity_id='123_456'))
+    self.assertIsNone(self.instagram.get_comment('111', activity_id='123_456'))
 
   def test_get_comment_scrape(self):
     self.expect_requests_get(
@@ -1250,12 +1256,12 @@ class InstagramTest(testutil.HandlerTest):
 
     ig = instagram.Instagram(scrape=True)
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0],
-                       ig.get_comment('789', activity_id='1208909509631101904_942513'))
+                          ig.get_comment('789', activity_id='1208909509631101904_942513'))
 
   def test_get_comment_with_activity(self):
     # skips API call
     self.assert_equals(COMMENT_OBJS[0],
-                       self.instagram.get_comment('789', activity=ACTIVITY))
+                          self.instagram.get_comment('789', activity=ACTIVITY))
 
   def test_get_like(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
@@ -1267,14 +1273,14 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
-    self.assert_equals(None, self.instagram.get_like('123', '000', 'xyz'))
+    self.assertIsNone(self.instagram.get_like('123', '000', 'xyz'))
 
   def test_get_like_no_activity(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         '{"meta":{"error_type":"APINotFoundError"}}',
                         status=400)
     self.mox.ReplayAll()
-    self.assert_equals(None, self.instagram.get_like('123', '000', '9'))
+    self.assertIsNone(self.instagram.get_like('123', '000', '9'))
 
   def test_get_like_scrape(self):
     self.expect_requests_get(
@@ -1284,7 +1290,7 @@ class InstagramTest(testutil.HandlerTest):
 
     ig = instagram.Instagram(scrape=True)
     self.assert_equals(LIKE_OBJS[0],
-                       ig.get_like('456', '1208909509631101904_942513', '8'))
+                          ig.get_like('456', '1208909509631101904_942513', '8'))
 
   def test_media_to_activity(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
@@ -1294,12 +1300,12 @@ class InstagramTest(testutil.HandlerTest):
     self.assert_equals(MEDIA_OBJ, obj)
 
     # check that the images are ordered the way we expect, largest to smallest
-    self.assertEquals(MEDIA_OBJ['attachments'][0]['image'],
+    self.assertEqual(MEDIA_OBJ['attachments'][0]['image'],
                       obj['attachments'][0]['image'])
 
   def test_media_to_object_with_likes(self):
     self.assert_equals(MEDIA_OBJ_WITH_LIKES,
-                       self.instagram.media_to_object(MEDIA_WITH_LIKES))
+                          self.instagram.media_to_object(MEDIA_WITH_LIKES))
 
   def test_comment_to_object(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
@@ -1379,8 +1385,8 @@ class InstagramTest(testutil.HandlerTest):
     del to_publish['url']
 
     self.mox.ReplayAll()
-    self.assert_equals(source.creation_result(LIKE_OBJS[0]),
-                       self.instagram.create(to_publish))
+    self.assertEqual(source.creation_result(LIKE_OBJS[0]),
+                     self.instagram.create(to_publish))
 
   def test_preview_comment(self):
     # comment obj doesn't have a url prior to publishing
@@ -1400,7 +1406,7 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_urlopen(
       'https://api.instagram.com/v1/media/123_456/comments',
       '{"meta":{"status":200}}',
-      data=urllib.urlencode({'access_token': self.instagram.access_token,
+      data=urllib.parse.urlencode({'access_token': self.instagram.access_token,
                              'text': COMMENTS[0]['text']}))
 
     self.mox.ReplayAll()
@@ -1411,7 +1417,7 @@ class InstagramTest(testutil.HandlerTest):
     # TODO instagram does not give back a comment object; not sure how to
     # get the comment id. for now, just check that creation was successful
     # self.assert_equals(source.creation_result(COMMENT_OBJS[0]),
-    #                   self.instagram.create(to_publish))
+    #                       self.instagram.create(to_publish))
     self.assertTrue(result.content)
     self.assertFalse(result.abort)
 
@@ -1420,7 +1426,7 @@ class InstagramTest(testutil.HandlerTest):
     # create comments with the API, with an unapproved app
     self.expect_urlopen(
       'https://api.instagram.com/v1/media/123_456/comments',
-      data=urllib.urlencode({'access_token': self.instagram.access_token,
+      data=urllib.parse.urlencode({'access_token': self.instagram.access_token,
                              'text': COMMENTS[0]['text']}),
       response='{"meta": {"code": 400, "error_type": u"OAuthPermissionsException", "error_message": "This request requires scope=comments, but this access token is not authorized with this scope. The user must re-authorize your application with scope=comments to be granted write permissions."}}',
       status=400)
@@ -1429,7 +1435,7 @@ class InstagramTest(testutil.HandlerTest):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    self.assertRaises(urllib2.HTTPError, instagram.Instagram(
+    self.assertRaises(urllib.error.HTTPError, instagram.Instagram(
       allow_comment_creation=True).create, to_publish)
 
   def test_create_comments_disabled(self):
@@ -1450,7 +1456,7 @@ class InstagramTest(testutil.HandlerTest):
     self.assertIn('Cannot', create.error_html)
 
   def test_base_object(self):
-    self.assertEquals({
+    self.assertEqual({
       'id': '123',
       'url': 'https://www.instagram.com/p/zHA5BLo1Mo/',
       }, self.instagram.base_object({
@@ -1459,7 +1465,7 @@ class InstagramTest(testutil.HandlerTest):
       }))
 
     # with only URL, we don't know id
-    self.assertEquals(
+    self.assertEqual(
       {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       self.instagram.base_object({
         'object': {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
@@ -1612,4 +1618,4 @@ class InstagramTest(testutil.HandlerTest):
         ('BDJ7Nr5Nxpa', 'BDJ7Nr5Nxpa'),
         ('BDJ7N_5Nxpa', 'BDJ7N_5Nxpa'),
     ):
-      self.assertEquals(shortcode, self.instagram.id_to_shortcode(id))
+      self.assertEqual(shortcode, self.instagram.id_to_shortcode(id))

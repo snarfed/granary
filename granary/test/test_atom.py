@@ -1,9 +1,10 @@
 # coding=utf-8
 """Unit tests for atom.py."""
+from __future__ import unicode_literals
 
 import copy
 
-import mox
+from mox3 import mox
 from oauth_dropins.webutil import testutil
 import requests
 
@@ -104,7 +105,7 @@ INSTAGRAM_ACTIVITY = {
 }
 
 
-class AtomTest(testutil.HandlerTest):
+class AtomTest(testutil.TestCase):
 
   def test_activities_to_atom(self):
     for test_module in test_facebook, test_instagram, test_twitter:
@@ -182,7 +183,7 @@ class AtomTest(testutil.HandlerTest):
       'object': {
         'id': 'reply-url',
         'url': 'reply-url',
-        'content': u'I hereby ☕ reply.',
+        'content': 'I hereby ☕ reply.',
         'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       },
     }
@@ -216,7 +217,7 @@ class AtomTest(testutil.HandlerTest):
     self.assert_equals({
       'objectType': 'activity',
       'object': {
-        'title': u'How quill’s editor looks',
+        'title': 'How quill’s editor looks',
       },
     }, atom.atom_to_activity(u"""\
 <?xml version='1.0' encoding='UTF-8'?>
@@ -628,7 +629,7 @@ going to Homebrew Website Club
 <uri>https://my.site/author</uri>
 <name>Tantek Çelik</name>
 </author>
-""".encode('utf-8'), got.encode('utf-8'), ignore_blanks=True)
+""", got, ignore_blanks=True)
 
   def test_media_tags_and_enclosures(self):
     got = atom.activities_to_atom([{
@@ -752,7 +753,7 @@ going to Homebrew Website Club
     }
 
     got = atom.activities_to_atom([activity], {})
-    self.assertEquals(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'), got)
+    self.assertEqual(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'), got)
     self.assert_multiline_in("""
 <link rel="enclosure" href="http://pics/1.jpg"
       type="image/jpeg" />

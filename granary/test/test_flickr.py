@@ -1,15 +1,18 @@
 # coding=utf-8
 """Unit tests for flickr.py
 """
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from past.builtins import basestring
 
 import copy
 import json
-import mox
+from mox3 import mox
 import requests
 import socket
-import urllib
-import urllib2
+import urllib.error, urllib.parse, urllib.request
 
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
@@ -649,13 +652,13 @@ LIKE_OBJ = {
 # uploads send oauth params along with the post data; it's useful to
 # be able to check that they exist, but ignore their values.
 IGNORED_OAUTH_PARAMS = [
-  ('oauth_nonce', mox.IsA(str)),
-  ('oauth_timestamp', mox.IsA(str)),
-  ('oauth_version', mox.IsA(str)),
-  ('oauth_signature_method', mox.IsA(str)),
-  ('oauth_consumer_key', mox.IsA(str)),
-  ('oauth_token', mox.IsA(str)),
-  ('oauth_signature', mox.IsA(str)),
+  ('oauth_nonce', mox.IgnoreArg()),
+  ('oauth_timestamp', mox.IgnoreArg()),
+  ('oauth_version', mox.IgnoreArg()),
+  ('oauth_signature_method', mox.IgnoreArg()),
+  ('oauth_consumer_key', mox.IgnoreArg()),
+  ('oauth_token', mox.IgnoreArg()),
+  ('oauth_signature', mox.IgnoreArg()),
 ]
 
 
@@ -675,7 +678,7 @@ class FlickrTest(testutil.TestCase):
     }
     full_params.update(params)
     return self.expect_urlopen('https://api.flickr.com/services/rest?'
-                               + urllib.urlencode(full_params), result)
+                               + urllib.parse.urlencode(full_params), result)
 
   def test_get_actor(self):
     self.expect_call_api_method('flickr.people.getInfo', {
@@ -839,7 +842,7 @@ class FlickrTest(testutil.TestCase):
     self.mox.ReplayAll()
     preview = self.flickr.preview_create(
       OBJECT, include_link=source.INCLUDE_LINK)
-    self.assertEquals('post', preview.description)
+    self.assertEqual('post', preview.description)
     self.assertIn('Photo #164', preview.content)
     self.assertIn(
       'First Homebrew Website Club in Gothenburg #IndieWeb',
@@ -915,7 +918,7 @@ class FlickrTest(testutil.TestCase):
       }, '{"stat": "ok"}')
 
     self.mox.ReplayAll()
-    self.assertEquals({
+    self.assertEqual({
       'id': '9876',
       'url': 'https://www.flickr.com/photos/kindofblue115/9876/',
       'type': 'post',
@@ -948,7 +951,7 @@ class FlickrTest(testutil.TestCase):
 """)
     self.mox.ReplayAll()
 
-    self.assertRaises(urllib2.HTTPError, self.flickr.create, OBJECT)
+    self.assertRaises(urllib.error.HTTPError, self.flickr.create, OBJECT)
 
   def test_create_video_success(self):
     self.flickr._user_id = '39216764@N00'
@@ -965,8 +968,8 @@ class FlickrTest(testutil.TestCase):
 
     # preview
     preview = self.flickr.preview_create(obj)
-    self.assertEquals('post', preview.description)
-    self.assertEquals(
+    self.assertEqual('post', preview.description)
+    self.assertEqual(
       '<div>check\nout</div>'
         '<video controls src="https://jeena.net/videos/xyz.mp4">'
         '<a href="https://jeena.net/videos/xyz.mp4">this video</a></video>',
@@ -1012,12 +1015,12 @@ class FlickrTest(testutil.TestCase):
       'https://up.flickr.com/services/upload',
       data=[('description', 'foo')] + IGNORED_OAUTH_PARAMS,
       files={'photo': 'video response'}
-    ).AndRaise(requests.exceptions.ConnectionError(socket.error(
+    ).AndRaise(requests.exceptions.ConnectionError(socket.timeout(
       'Request exceeds 10 MiB limit for URL: https://up.flickr.com/services/upload')))
     self.mox.ReplayAll()
 
     err = 'Sorry, photos and videos must be under 10MB.'
-    self.assert_equals(
+    self.assertEqual(
       source.creation_result(error_plain=err, error_html=err),
       self.flickr.create({
         'objectType': 'note',
@@ -1029,11 +1032,11 @@ class FlickrTest(testutil.TestCase):
   def test_preview_create_comment(self):
     preview = self.flickr.preview_create(
       REPLY_OBJ, include_link=source.INCLUDE_LINK)
-    self.assertEquals(
+    self.assertEqual(
       'comment on <a href="https://www.flickr.com/photos/marietta_wood_works/'
       '21904325000/in/contacts/">this photo</a>.',
       preview.description)
-    self.assertEquals(
+    self.assertEqual(
       'punkins!\n\n'
       '(Originally published at: https://kylewm.com/2015/11/punkins)',
       preview.content)
@@ -1062,10 +1065,10 @@ class FlickrTest(testutil.TestCase):
 
     reply_content = self.flickr.create(
       REPLY_OBJ, include_link=source.INCLUDE_LINK).content
-    self.assertEquals(
+    self.assertEqual(
       '4942564-21904325000-72157661220102352',
       reply_content.get('id'))
-    self.assertEquals(
+    self.assertEqual(
       'https://www.flickr.com/photos/marietta_wood_works/21904325000/'
       '#comment72157661220102352',
       reply_content.get('url'))
@@ -1074,7 +1077,7 @@ class FlickrTest(testutil.TestCase):
   def test_create_comment_encodes_unicode(self):
     self.expect_call_api_method('flickr.photos.comments.addComment', {
       'photo_id': '28733650665',
-      'comment_text': u'these ‘are smart’ quotes'.encode('utf-8'),
+      'comment_text': 'these ‘are smart’ quotes'.encode('utf-8'),
     }, json.dumps({
       'comment': {
         'id': '123456',
@@ -1085,13 +1088,13 @@ class FlickrTest(testutil.TestCase):
 
     reply_content = self.flickr.create({
       'objectType': 'comment',
-      'content': u'these ‘are smart’ quotes',
+      'content': 'these ‘are smart’ quotes',
       'inReplyTo': [{
         'url': 'https://www.flickr.com/photos/58071954@N08/28733650665/',
       }],
     }).content
-    self.assertEquals('123456', reply_content['id'])
-    self.assertEquals('https://www.flickr.com/comment/123456', reply_content['url'])
+    self.assertEqual('123456', reply_content['id'])
+    self.assertEqual('https://www.flickr.com/comment/123456', reply_content['url'])
 
   def test_create_favorite(self):
     """Favoriting a photo generates a URL using a fake fragment id
@@ -1105,7 +1108,7 @@ class FlickrTest(testutil.TestCase):
       json.dumps({'person': {'nsid': '39216764@N00'}}))
 
     self.mox.ReplayAll()
-    self.assertEquals({
+    self.assertEqual({
       'type': 'like',
       'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/#favorited-by-39216764@N00',
     }, self.flickr.create(LIKE_OBJ).content)

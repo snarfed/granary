@@ -9,21 +9,26 @@ activity's privacy settings. It's set to a group with alias @public or @private,
 or unset if unknown.
 http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
+from __future__ import absolute_import, unicode_literals
+from future import standard_library
+from future.utils import with_metaclass
+standard_library.install_aliases()
+from builtins import object, str
+
 import collections
 import copy
 import json
 import logging
 import mimetypes
 import re
-import urllib2
-import urlparse
+import urllib.error, urllib.parse, urllib.request
 import html2text
 
 from bs4 import BeautifulSoup
+from oauth_dropins.webutil import util
 import requests
 
-import appengine_config
-from oauth_dropins.webutil import util
+from . import appengine_config
 
 ME = '@me'
 SELF = '@self'
@@ -101,7 +106,7 @@ def load_json(body, url):
   except (ValueError, TypeError):
     msg = 'Non-JSON response! Returning synthetic HTTP 502.\n%s' % body
     logging.error(msg)
-    raise urllib2.HTTPError(url, 502, msg, {}, None)
+    raise urllib.error.HTTPError(url, 502, msg, {}, None)
 
 
 def creation_result(content=None, description=None, abort=False,
@@ -157,7 +162,7 @@ class SourceMeta(type):
     return cls
 
 
-class Source(object):
+class Source(with_metaclass(SourceMeta, object)):
   """Abstract base class for a source (e.g. Facebook, Twitter).
 
   Concrete subclasses must override the class constants below and implement
@@ -177,7 +182,6 @@ class Source(object):
   * HTML2TEXT_OPTIONS: dict mapping string html2text option names to values
     https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   """
-  __metaclass__ = SourceMeta
 
   POST_ID_RE = None
   HTML2TEXT_OPTIONS = {}
@@ -632,19 +636,20 @@ class Source(object):
     candidates += [match.expand(r'http://\1/\2') for match in
                    Source._PERMASHORTCITATION_RE.finditer(content)]
 
-    candidates = set(filter(None,
-      (util.clean_url(url) for url in candidates
-       # heuristic: ellipsized URLs are probably incomplete, so omit them.
-       if url and not url.endswith('...') and not url.endswith(u'…'))))
+    candidates = set(
+      util.clean_url(url) for url in candidates
+      # heuristic: ellipsized URLs are probably incomplete, so omit them.
+      if url and not url.endswith('...') and not url.endswith('…'))
 
     # check for redirect and add their final urls
     redirects = {}  # maps final URL to original URL for redirects
-    for url in list(candidates):
+    for url in candidates:
       resolved = util.follow_redirects(url, cache=cache, **kwargs)
       if (resolved.url != url and
           resolved.headers.get('content-type', '').startswith('text/html')):
         redirects[resolved.url] = url
-        candidates.add(resolved.url)
+
+    candidates.update(redirects.keys())
 
     # use domains to determine which URLs are original post links vs mentions
     originals = set()
@@ -868,7 +873,7 @@ class Source(object):
     Returns:
       string, or None
     """
-    return urlparse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
+    return urllib.parse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
   @classmethod
   def post_id(cls, url):
@@ -918,14 +923,14 @@ class Source(object):
       video = soup.video or soup.find(class_='u-video')
       if video:
         video.extract()
-        content = unicode(soup)
+        content = str(soup)
 
     if strip_quotations:
       quotations = soup.find_all(class_='u-quotation-of')
       if quotations:
         for q in quotations:
           q.extract()
-        content = unicode(soup)
+        content = str(soup)
 
     # compare to content with HTML tags stripped
     if summary == soup.get_text('').strip():
@@ -947,4 +952,4 @@ class Source(object):
     return summary or (
             (name or content) if prefer_name else
             (content or name)
-           ) or u''
+           ) or ''

@@ -66,7 +66,7 @@
   {% endfor %}
   {% set location = obj.location %}
   {% if location.latitude and location.longitude %}
-    <georss:point>{{ location.latitude }} {{location.longitude }}</georss:point>
+    <georss:point>{{ location.latitude|round(9) }} {{ location.longitude|round(9) }}</georss:point>
   {% endif %}
   {% if location.displayName %}
     <georss:featureName>{{ location.displayName }}</georss:featureName>

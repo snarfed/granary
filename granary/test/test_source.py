@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for source.py.
 """
+from __future__ import absolute_import, unicode_literals
+
 import copy
 import re
 
@@ -13,8 +15,6 @@ from granary import instagram
 from granary import source
 from granary.source import Source
 from granary import twitter
-import test_facebook
-import test_googleplus
 
 
 LIKES = [{
@@ -29,7 +29,7 @@ LIKES = [{
 REACTIONS = [{
   'id': 'tag:fake.com:apple',
   'verb': 'react',
-  'content': u'✁',
+  'content': '✁',
   'author': {'id': 'tag:fake.com:5'},
   'object': {'url': 'http://foo/like/5'},
 }]
@@ -89,6 +89,38 @@ EVENT_WITH_RSVPS.update({
   'invited': [INVITE['object']],
 })
 EVENT_ACTIVITY_WITH_RSVPS = {'object': EVENT_WITH_RSVPS}
+LIKE = {
+  'id': 'tag:fake.com:001_liked_by_222',
+  'url': 'http://plus.google.com/001#liked-by-222',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'http://plus.google.com/001'},
+  'author': {
+    'kind': 'plus#person',
+    'id': 'tag:fake.com:222',
+    'displayName': 'Alice',
+    'url': 'https://profiles.google.com/alice',
+    'image': {'url': 'https://alice/picture'},
+  },
+}
+RESHARER = {
+  'kind': 'plus#person',
+  'id': 'tag:fake.com:444',
+  'displayName': 'Bob',
+  'url': 'https://plus.google.com/bob',
+  'image': {'url': 'https://bob/picture'},
+}
+COMMENT = {
+  'objectType': 'comment',
+  'content': 'foo bar',
+  'id': 'tag:fake.com:547822715231468_6796480',
+  'published': '2012-12-05T00:58:26+00:00',
+  'url': 'https://www.facebook.com/547822715231468?comment_id=6796480',
+  'inReplyTo': [{
+    'id': 'tag:fake.com:547822715231468',
+    'url': 'https://www.facebook.com/547822715231468',
+  }],
+}
 
 
 class FakeSource(Source):
@@ -106,8 +138,8 @@ class SourceTest(testutil.TestCase):
   def check_original_post_discovery(self, obj, originals, mentions=None,
                                     **kwargs):
     got = Source.original_post_discovery({'object': obj}, **kwargs)
-    self.assertItemsEqual(originals, got[0])
-    self.assertItemsEqual(mentions or [], got[1])
+    self.assert_equals(originals, got[0])
+    self.assert_equals(mentions or [], got[1])
 
   def test_original_post_discovery(self):
     check = self.check_original_post_discovery
@@ -169,7 +201,7 @@ class SourceTest(testutil.TestCase):
           ['https://foo.com/1'])
 
     # exclude ellipsized URLs
-    for ellipsis in '...', u'…':
+    for ellipsis in '...', '…':
       url = 'foo.com/1' + ellipsis
       check({'content': 'x (%s)' % url,
              'attachments': [{'objectType': 'article', 'url': 'http://' + url}]},
@@ -177,7 +209,7 @@ class SourceTest(testutil.TestCase):
 
     # exclude ellipsized PSCs and PSLs
     for separator in '/', ' ':
-      for ellipsis in '...', u'…':
+      for ellipsis in '...', '…':
         check({'content': 'x (ttk.me%s123%s)' % (separator, ellipsis)}, [])
 
     # domains param
@@ -415,17 +447,18 @@ Watching  \t waves
 </cite>"""}, strip_quotations=True))
 
   def test_activity_changed(self):
-    fb_post = test_facebook.ACTIVITY
+    fb_post = copy.deepcopy(ACTIVITY)
+    fb_post['object']['updated'] = '2016-01-02T00:00:00+00:00'
     fb_post_edited = copy.deepcopy(fb_post)
     fb_post_edited['object']['updated'] = '2016-01-02T00:58:26+00:00'
 
-    fb_comment = test_facebook.COMMENT_OBJS[0]
+    fb_comment = COMMENT
     fb_comment_edited = copy.deepcopy(fb_comment)
     fb_comment_edited['published'] = '2016-01-02T00:58:26+00:00'
 
-    gp_like = test_googleplus.LIKE
+    gp_like = LIKE
     gp_like_edited = copy.deepcopy(gp_like)
-    gp_like_edited['author'] = test_googleplus.RESHARER
+    gp_like_edited['author'] = RESHARER
 
     for before, after in (({}, {}),
                           ({'x': 1}, {'y': 2}),
@@ -439,9 +472,9 @@ Watching  \t waves
     fb_comment_edited['content'] = 'new content'
     gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
 
-    fb_invite = test_facebook.INVITE_OBJ
+    fb_invite = INVITE
     self.assertEqual('invite', fb_invite['verb'])
-    fb_rsvp = test_facebook.RSVP_YES_OBJ
+    fb_rsvp = RSVP_YES
 
     for before, after in ((fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited),
@@ -450,14 +483,14 @@ Watching  \t waves
                                                    '%s\n%s' % (before, after))
 
   def test_sources_global(self):
-    self.assertEquals(facebook.Facebook, source.sources['facebook'])
-    self.assertEquals(googleplus.GooglePlus, source.sources['google+'])
-    self.assertEquals(instagram.Instagram, source.sources['instagram'])
-    self.assertEquals(twitter.Twitter, source.sources['twitter'])
+    self.assertEqual(facebook.Facebook, source.sources['facebook'])
+    self.assertEqual(googleplus.GooglePlus, source.sources['google+'])
+    self.assertEqual(instagram.Instagram, source.sources['instagram'])
+    self.assertEqual(twitter.Twitter, source.sources['twitter'])
 
   def test_post_id(self):
-    self.assertEquals('1', self.source.post_id('http://x/y/1'))
-    self.assertEquals('1', self.source.post_id('http://x/y/1/'))
+    self.assertEqual('1', self.source.post_id('http://x/y/1'))
+    self.assertEqual('1', self.source.post_id('http://x/y/1/'))
     self.assertIsNone(self.source.post_id('http://x/'))
     self.assertIsNone(self.source.post_id(''))
 
@@ -467,7 +500,7 @@ Watching  \t waves
 
     FakeSource.POST_ID_RE = re.compile('^a+$')
     self.assertIsNone(self.source.post_id('http://x/y/1'))
-    self.assertEquals('aaa', self.source.post_id('http://x/y/aaa'))
+    self.assertEqual('aaa', self.source.post_id('http://x/y/aaa'))
 
   def test_is_public(self):
     for obj in ({'to': [{'objectType': 'unknown'}]},
@@ -476,8 +509,8 @@ Watching  \t waves
                 {'to': [{'alias': 'xyz'},
                         {'objectType': 'unknown'}]},
                ):
-      self.assertIsNone(Source.is_public(obj), `obj`)
-      self.assertIsNone(Source.is_public({'object': obj}), `obj`)
+      self.assertIsNone(Source.is_public(obj), repr(obj))
+      self.assertIsNone(Source.is_public({'object': obj}), repr(obj))
 
     for obj in ({},
                 {'privacy': 'xyz'},
@@ -490,8 +523,8 @@ Watching  \t waves
                 {'to': [{'alias': '@public'},
                         {'alias': '@private'}]},
                ):
-      self.assertTrue(Source.is_public(obj), `obj`)
-      self.assertTrue(Source.is_public({'object': obj}), `obj`)
+      self.assertTrue(Source.is_public(obj), repr(obj))
+      self.assertTrue(Source.is_public({'object': obj}), repr(obj))
 
     for obj in ({'to': [{'objectType': 'group', 'alias': '@private'}]},
                 {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
@@ -502,5 +535,5 @@ Watching  \t waves
                         {'alias': 'xyz'},
                         {'alias': '@private'}]},
                ):
-      self.assertFalse(Source.is_public(obj), `obj`)
-      self.assertFalse(Source.is_public({'object': obj}), `obj`)
+      self.assertFalse(Source.is_public(obj), repr(obj))
+      self.assertFalse(Source.is_public({'object': obj}), repr(obj))

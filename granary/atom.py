@@ -2,11 +2,16 @@
 
 Atom spec: https://tools.ietf.org/html/rfc4287 (RIP atomenabled.org)
 """
+from __future__ import absolute_import, unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+
 import collections
 import mimetypes
 import os
 import re
-import urlparse
+import urllib.parse
 from xml.etree import ElementTree
 import xml.sax.saxutils
 
@@ -16,8 +21,8 @@ import mf2py
 import mf2util
 from oauth_dropins.webutil import util
 
-import microformats2
-import source
+from . import microformats2
+from . import source
 
 FEED_TEMPLATE = 'user_feed.atom'
 ENTRY_TEMPLATE = 'entry.atom'
@@ -60,9 +65,10 @@ def _text(elem, field=None):
     if ':' not in field:
       field = 'atom:' + field
     elem = elem.find(field, NAMESPACES)
+
   if elem is not None and elem.text:
     text = elem.text
-    if not isinstance(elem.text, unicode):
+    if not isinstance(elem.text, str):
       text = text.decode('utf-8')
     return text.strip()
 
@@ -96,7 +102,9 @@ class Defaulter(collections.defaultdict):
       for k, v in kwargs.items()})
 
   def __unicode__(self):
-    return super(Defaulter, self).__unicode__() if self else u''
+    return super(Defaulter, self).__unicode__() if self else ''
+
+  __str__ = __unicode__
 
   def __hash__(self):
     return super(Defaulter, self).__hash__() if self else None.__hash__()
@@ -177,7 +185,7 @@ def atom_to_activities(atom):
   Returns:
     list of ActivityStreams activity dicts
   """
-  assert isinstance(atom, unicode)
+  assert isinstance(atom, str)
   parser = ElementTree.XMLParser(encoding='UTF-8')
   feed = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(feed) != 'feed':
@@ -194,7 +202,7 @@ def atom_to_activity(atom):
   Returns:
     dict, ActivityStreams activity
   """
-  assert isinstance(atom, unicode)
+  assert isinstance(atom, str)
   parser = ElementTree.XMLParser(encoding='UTF-8')
   entry = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(entry) != 'entry':
@@ -385,10 +393,10 @@ def _prepare_activity(a, reader=True):
     if not image:
       continue
     url = image.get('url')
-    parsed = urlparse.urlparse(url)
+    parsed = urllib.parse.urlparse(url)
     scheme = parsed.scheme
     netloc = parsed.netloc
-    rest = urlparse.urlunparse(('', '') + parsed[2:])
+    rest = urllib.parse.urlunparse(('', '') + parsed[2:])
     img_src_re = re.compile(r"""src *= *['"] *((https?:)?//%s)?%s *['"]""" %
                             (re.escape(netloc), re.escape(rest)))
     if (url and url not in image_urls_seen and
@@ -410,6 +418,6 @@ def _prepare_activity(a, reader=True):
         obj[prop] += 'Z'
 
 def _remove_query_params(url):
-  parsed = list(urlparse.urlparse(url))
+  parsed = list(urllib.parse.urlparse(url))
   parsed[4] = ''
-  return urlparse.urlunparse(parsed)
+  return urllib.parse.urlunparse(parsed)

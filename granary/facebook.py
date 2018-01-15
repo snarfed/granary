@@ -10,8 +10,7 @@ https://developers.facebook.com/docs/reference/api/privacy-parameter/
 Retrieving @all activities from :meth:`get_activities()` (the default) currently
 returns an incomplete set of activities, ie *NOT* exactly the same set as your
 Facebook News Feed: https://www.facebook.com/help/327131014036297/
-"""
-"""
+
 This is complicated, and I still don't fully understand how or why they differ,
 but based on lots of experimenting and searching, it sounds like the current
 state is that you just can't reproduce the News Feed via Graph API's /me/home,
@@ -42,20 +41,23 @@ Random details:
 See the fql_stream_to_post() method below for code I used to experiment with the
 FQL stream table.
 """
+from __future__ import absolute_import, division, unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range, str, zip
+
 import collections
 import copy
 import itertools
 import json
 import logging
 import re
-import urllib
-import urllib2
-import urlparse
+import urllib.error, urllib.parse, urllib.request
 import mf2util
 
-import appengine_config
+from . import appengine_config
 from oauth_dropins.webutil import util
-import source
+from . import source
 
 # Since API v2.4, we need to explicitly ask for the fields we want from most API
 # endpoints with ?fields=...
@@ -176,13 +178,13 @@ RSVP_PUBLISH_ENDPOINTS = {
 }
 # https://developers.facebook.com/docs/graph-api/reference/post/reactions
 REACTION_CONTENT = {
-  'LOVE': u'❤️',
-  'WOW': u'😮',
-  'HAHA': u'😆',
-  'SAD': u'😢',
-  'ANGRY': u'😡',
-  'THANKFUL': u'🌼',  # https://github.com/snarfed/bridgy/issues/748
-  'PRIDE': u'🏳️‍🌈',
+  'LOVE': '❤️',
+  'WOW': '😮',
+  'HAHA': '😆',
+  'SAD': '😢',
+  'ANGRY': '😡',
+  'THANKFUL': '🌼',  # https://github.com/snarfed/bridgy/issues/748
+  'PRIDE': '🏳️‍🌈',
   # nothing for LIKE (it's a like :P) or for NONE
 }
 
@@ -306,7 +308,7 @@ class Facebook(source.Source):
         resp = self.urlopen(url, headers=headers, _as=None)
         etag = resp.info().get('ETag')
         posts = self._as(list, source.load_json(resp.read(), url))
-      except urllib2.HTTPError, e:
+      except urllib.error.HTTPError as e:
         if e.code == 304:  # Not Modified, from a matching ETag
           posts = []
         else:
@@ -432,7 +434,7 @@ class Facebook(source.Source):
         photo['privacy'] = 'custom'  # ie unknown
 
     return ([p for p in posts if not p.get('object_id')] +
-            posts_by_obj_id.values() + photos)
+            list(posts_by_obj_id.values()) + photos)
 
   def _split_id_requests(self, api_call, ids):
     """Splits an API call into multiple to stay under the MAX_IDS limit per call.
@@ -512,7 +514,7 @@ class Facebook(source.Source):
     """
     try:
       resp = self.urlopen(API_COMMENT % comment_id)
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       if e.code == 400 and '_' in comment_id:
         # Facebook may want us to ask for this without the other prefixed id(s)
         resp = self.urlopen(API_COMMENT % comment_id.split('_')[-1])
@@ -680,7 +682,7 @@ class Facebook(source.Source):
         '<a href="%s">%s</a>' % (
           tag.get('url'), tag.get('displayName') or 'User %s' % tag['id'])
         for tag in people)
-    msg_data = {'message': content.encode('utf-8')}
+    msg_data = collections.OrderedDict({'message': content.encode('utf-8')})
     if appengine_config.DEBUG:
       msg_data['privacy'] = json.dumps({'value': 'SELF'})
 
@@ -703,7 +705,7 @@ class Facebook(source.Source):
         if image_url:
           msg_data['attachment_url'] = image_url
         resp = self.urlopen(API_PUBLISH_COMMENT % base_id,
-                            data=urllib.urlencode(util.encode(msg_data)))
+                            data=urllib.parse.urlencode(util.msg_data))
         url = self.comment_url(base_id, resp['id'],
                                post_author_id=base_obj.get('author', {}).get('id'))
         resp.update({'url': url, 'type': 'comment'})
@@ -812,7 +814,7 @@ class Facebook(source.Source):
             # https://developers.facebook.com/docs/graph-api/reference/user/feed#pubfields
             msg_data['tags'] = ','.join(tag['id'] for tag in people)
 
-        resp = self.urlopen(api_call, data=urllib.urlencode(util.encode(msg_data)))
+        resp = self.urlopen(api_call, data=urllib.parse.urlencode(msg_data))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
         if video_url and not resp.get('success', True):
           msg = 'Video upload failed.'
@@ -858,7 +860,7 @@ class Facebook(source.Source):
         tag['id'] = id
         people[id] = tag
 
-    return people.values()
+    return list(people.values())
 
   def create_notification(self, user_id, text, link):
     """Sends the authenticated user a notification.
@@ -884,7 +886,7 @@ class Facebook(source.Source):
                                  appengine_config.FACEBOOK_APP_SECRET),
       }
     url = API_BASE + API_NOTIFICATION % user_id
-    resp = util.urlopen(urllib2.Request(url, data=urllib.urlencode(params)))
+    resp = util.urlopen(urllib.request.Request(url, data=urllib.parse.urlencode(params)))
     logging.debug('Response: %s %s', resp.getcode(), resp.read())
 
   def post_url(self, post):
@@ -960,8 +962,8 @@ class Facebook(source.Source):
         base_obj = self.user_to_actor(self.urlopen(base_id))
 
     try:
-      parsed = urlparse.urlparse(url)
-      params = urlparse.parse_qs(parsed.query)
+      parsed = urllib.parse.urlparse(url)
+      params = urllib.parse.parse_qs(parsed.query)
       assert parsed.path.startswith('/')
       path = parsed.path.strip('/')
       path_parts = path.split('/')
@@ -1022,7 +1024,7 @@ class Facebook(source.Source):
         # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
         base_obj['id'] = '%s_%s' % (author['numeric_id'], base_id)
 
-    except BaseException, e:
+    except BaseException as e:
       logging.exception(
         "Couldn't parse object URL %s : %s. Falling back to default logic.",
         url, e)
@@ -1759,7 +1761,7 @@ class Facebook(source.Source):
     log_url = url
     if self.access_token:
       url = util.add_query_params(url, [('access_token', self.access_token)])
-    resp = util.urlopen(urllib2.Request(url, **kwargs))
+    resp = util.urlopen(urllib.request.Request(url, **kwargs))
 
     if _as is None:
       return resp
@@ -1819,8 +1821,8 @@ class Facebook(source.Source):
     for url, resp in zip(urls, resps):
       code = int(resp.get('code', 0))
       body = resp.get('body')
-      if code / 100 in (4, 5):
-        raise urllib2.HTTPError(url, code, body, resp.get('headers'), None)
+      if code // 100 in (4, 5):
+        raise urllib.error.HTTPError(url, code, body, resp.get('headers'), None)
       bodies.append(body)
 
     return bodies
@@ -1863,7 +1865,7 @@ class Facebook(source.Source):
         req['headers'] = [{'name': n, 'value': v}
                           for n, v in req['headers'].items()]
 
-    data = 'batch=' + json.dumps(util.trim_nulls(requests),
+    data = 'batch=' + json.dumps(util.trim_nulls(requests), sort_keys=True,
                                  separators=(',', ':'))  # no whitespace
     resps = self.urlopen('', data=data, _as=list)
 
