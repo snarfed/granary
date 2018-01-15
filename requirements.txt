@@ -1,5 +1,6 @@
 # Keep in sync with setup.py's install_requires!
 beautifulsoup4
+brevity>=0.2.16
 future
 html2text
 jinja2

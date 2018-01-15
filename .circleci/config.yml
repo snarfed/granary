@@ -21,26 +21,29 @@ jobs:
           key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
 
       - run:
-          name: Install oauth-dropins and granary
+          name: Base dependencies
           command: |
+            apt-get install -y python3 google-cloud-sdk-app-engine-python-extras
             # use oauth-dropins master at head. (see pip install -e below.)
             cd /tmp
             git clone https://github.com/snarfed/oauth-dropins.git
-            cd oauth-dropins; git submodule sync; git submodule update --init
-            cd oauth_dropins/webutil; git checkout master; git pull
+            cd oauth-dropins; git submodule sync; git submodule update --init; git checkout python3
+            cd oauth_dropins/webutil; git fetch origin; git pull; git checkout python3
 
       - run:
-          name: Install dependencies
+          name: Python 3 dependencies
           command: |
-            apt-get install google-cloud-sdk-app-engine-python-extras
-
-            pip install virtualenv
-            virtualenv local
-            . local/bin/activate
-
+            apt-get install -y python3.4-venv
+            python3 -m venv local3
+            . local3/bin/activate
             pip install -r requirements.freeze.txt
             pip install -e /tmp/oauth-dropins/
-            pip install coverage coveralls  # for https://coveralls.io/
+
+      - run:
+          name: Test Python 3
+          command: |
+            . local3/bin/activate
+            PYTHONPATH= python3.6 -m unittest discover -s granary/test/
 
       - run:
           name: Test
@@ -48,13 +51,14 @@ jobs:
             . local/bin/activate
             python -m coverage run --source=. --omit=granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
             python -m coverage html -d /tmp/coverage_html
-            python ./instagram_live_test.py --debug
+            PYTHONPATH= python ./instagram_live_test.py --debug
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
 
       - save_cache:
           key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
           paths:
             - "local"
+            - "local3"
 
       - store_artifacts:
           path: /tmp/coverage_html
