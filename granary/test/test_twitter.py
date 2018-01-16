@@ -1617,7 +1617,7 @@ class TwitterTest(testutil.TestCase):
       'my status',
       'too long, will be ellipsized',
       'url shorten http://foo.co/bar',
-      'url http://foo.co/bar ellipsize http://foo.co/baz',
+      'url http://foo.co/bar ellipsyz http://foo.co/baz',
       'long url http://www.foo.co/bar/baz/baj/biff/boof',
       'trailing slash http://www.foo.co/',
       'fragment http://foo.co/#bar',
@@ -1631,7 +1631,7 @@ class TwitterTest(testutil.TestCase):
       'my status',
       'too long, will be' + dots,
       'url shorten http://foo.co/bar',
-      'url http://foo.co/bar ellipsize' + dots,
+      'url http://foo.co/bar ellipsyz' + dots,
       'long url http://www.foo.co/bar/baz/baj/biff/boof',
       'trailing slash http://www.foo.co/',
       'fragment http://foo.co/#bar',
@@ -1645,7 +1645,7 @@ class TwitterTest(testutil.TestCase):
       'my status',
       'too long, will be' + dots,
       'url shorten <a href="http://foo.co/bar">foo.co/bar</a>',
-      'url <a href="http://foo.co/bar">foo.co/bar</a> ellipsize' + dots,
+      'url <a href="http://foo.co/bar">foo.co/bar</a> ellipsyz' + dots,
       'long url <a href="http://www.foo.co/bar/baz/baj/biff/boof">foo.co/bar/baz/baj/bi...</a>',
       'trailing slash <a href="http://www.foo.co/">foo.co</a>',
       'fragment <a href="http://foo.co/#bar">foo.co/#bar</a>',
@@ -1761,8 +1761,8 @@ class TwitterTest(testutil.TestCase):
     twitter.MAX_TWEET_LENGTH = 20
     twitter.TCO_LENGTH = 5
 
-    orig = u'url http://foo.co/bar ellipsize http://foo.co/baz'
-    expected = u'url http://foo.co/bar ellipsize…'
+    orig = u'ok http://foo.co/bar ellipsize http://foo.co/baz'
+    expected = u'ok http://foo.co/bar ellipsize…'
     result = self.twitter._truncate(
       orig, 'http://foo.com', source.OMIT_LINK, 'note')
     self.assertEquals(expected, result)
@@ -2249,7 +2249,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     twitter.MAX_TWEET_LENGTH = 140
 
     self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
-        'status':(u'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
+        'status':(u'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
       })
     self.mox.ReplayAll()
 
