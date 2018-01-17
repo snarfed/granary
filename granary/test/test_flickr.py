@@ -267,7 +267,7 @@ ACTIVITY = {
     'created': '2010-11-26 17:50:30',
     'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/',
     'image': {'url': 'https://farm6.staticflickr.com/5246/5227922370_5f19cb9767_b.jpg'},
-    'published': '2010-12-03T01:15:21',
+    'published': '2010-12-03T01:15:21+00:00',
     'id': 'tag:flickr.com:5227922370',
     'tags': [{
       'url': 'https://www.flickr.com/search?tags=idyllwild',
@@ -286,7 +286,7 @@ ACTIVITY = {
   },
   'id': 'tag:flickr.com:5227922370',
   'flickr_id': '5227922370',
-  'published': '2010-12-03T01:15:21'
+  'published': '2010-12-03T01:15:21+00:00'
 }
 
 # favorites response corresponding to PHOTO_INFO above
@@ -351,8 +351,8 @@ COMMENT_OBJS = [{  # ActivityStreams
   },
   'content': 'Love this!',
   'id': tag_uri('4942564-5227922370-72157625845945286'),
-  'updated': '2011-01-17T18:24:03',
-  'published': '2011-01-17T18:24:03',
+  'updated': '2011-01-17T18:24:03+00:00',
+  'published': '2011-01-17T18:24:03+00:00',
   'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/#comment72157625845945286',
   'inReplyTo': [{
     'id': tag_uri('5227922370'),
@@ -490,7 +490,7 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
     'image': {
       'url': 'https://farm4.staticflickr.com/99/1234_22_b.jpg'
     },
-    'published': '2013-06-09T17:40:34',
+    'published': '2013-06-09T17:40:34+00:00',
     'id': 'tag:flickr.com:1234',
     'tags': [{
       'url': 'https://www.flickr.com/search?tags=tag1',
@@ -506,7 +506,7 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
   },
   'id': 'tag:flickr.com:1234',
   'flickr_id': '1234',
-  'published': '2013-06-09T17:40:34'
+  'published': '2013-06-09T17:40:34+00:00'
 }, {
   'verb': 'post',
   'actor': {'numeric_id': '6666'}, 'created': '2010-11-27 12:54:33',
@@ -519,7 +519,7 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
     'image': {
       'url': 'https://farm4.staticflickr.com/88/2345_33_b.jpg'
     },
-    'published': '2010-12-03T01:16:19',
+    'published': '2010-12-03T01:16:19+00:00',
     'id': 'tag:flickr.com:2345',
     'tags': [{
       'url': 'https://www.flickr.com/search?tags=tag1',
@@ -535,7 +535,7 @@ CONTACTS_PHOTOS_ACTIVITIES = [{
   },
   'id': 'tag:flickr.com:2345',
   'flickr_id': '2345',
-  'published': '2010-12-03T01:16:19'
+  'published': '2010-12-03T01:16:19+00:00',
 }]
 
 ACTOR = {

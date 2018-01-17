@@ -161,7 +161,7 @@ COMMENT_OBJS = [{  # ActivityStreams
   },
   'content': '\u592a\u53ef\u7231\u4e86\u3002cute\uff0cvery cute',
   'id': tag_uri('789'),
-  'published': '2012-10-07T05:45:57',
+  'published': '2012-10-07T05:45:57+00:00',
   'url': 'https://www.instagram.com/p/ABC123/#comment-789',
   'inReplyTo': [{'id': tag_uri('123_456')}],
   'to': [{'objectType':'group', 'alias':'@public'}],
@@ -171,7 +171,7 @@ MEDIA_OBJ = {  # ActivityStreams
   'author': ACTOR,
   'content': 'this picture -&gt; is #abc @foo #xyz',
   'id': tag_uri('123_456'),
-  'published': '2012-09-22T05:25:42',
+  'published': '2012-09-22T05:25:42+00:00',
   'url': 'https://www.instagram.com/p/ABC123/',
   'image': {'url': 'http://attach/image/big'},
   'to': [{'objectType':'group', 'alias':'@public'}],
@@ -237,7 +237,7 @@ MEDIA_OBJ = {  # ActivityStreams
 }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
-  'published': '2012-09-22T05:25:42',
+  'published': '2012-09-22T05:25:42+00:00',
   'id': tag_uri('123_456'),
   'url': 'https://www.instagram.com/p/ABC123/',
   'actor': ACTOR,
@@ -337,7 +337,7 @@ VIDEO_OBJ = {
     'totalItems': len(COMMENT_OBJS),
   },
   'to': [{'alias': '@public', 'objectType': 'group'}],
-  'published': '2010-07-17T04:29:43',
+  'published': '2010-07-17T04:29:43+00:00',
   'id': 'tag:instagram.com:123_456',
   'objectType': 'video'
 }
@@ -346,7 +346,7 @@ VIDEO_ACTIVITY = {
   'object': VIDEO_OBJ,
   'actor': ACTOR,
   'verb': 'post',
-  'published': '2010-07-17T04:29:43',
+  'published': '2010-07-17T04:29:43+00:00',
   'id': 'tag:instagram.com:123_456'
 }
 
@@ -366,7 +366,7 @@ ATOM = """\
 <subtitle>foo https://asdf.com bar</subtitle>
 
 <logo>http://picture/ryan</logo>
-<updated>2012-09-22T05:25:42Z</updated>
+<updated>2012-09-22T05:25:42+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>http://snarfed.org</uri>
@@ -422,8 +422,8 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
 
-  <published>2012-09-22T05:25:42Z</published>
-  <updated>2012-09-22T05:25:42Z</updated>
+  <published>2012-09-22T05:25:42+00:00</published>
+  <updated>2012-09-22T05:25:42+00:00</updated>
 
   <georss:point>37.3 -122.5</georss:point>
 
@@ -884,7 +884,7 @@ HTML_ACTOR = {
 HTML_PHOTO_ACTIVITY = {  # ActivityStreams
   # Photo
   'verb': 'post',
-  'published': '2016-01-17T20:46:33',
+  'published': '2016-01-17T20:46:33+00:00',
   'id': tag_uri('123_456'),
   'url': 'https://www.instagram.com/p/ABC123/',
   'actor': HTML_ACTOR,
@@ -893,7 +893,7 @@ HTML_PHOTO_ACTIVITY = {  # ActivityStreams
     'author': HTML_ACTOR,
     'content': 'Elvis hits out of RCA Studio B',
     'id': tag_uri('123_456'),
-    'published': '2016-01-17T20:46:33',
+    'published': '2016-01-17T20:46:33+00:00',
     'url': 'https://www.instagram.com/p/ABC123/',
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg'},
     'to': [{'objectType':'group', 'alias':'@public'}],
@@ -921,7 +921,7 @@ HTML_PHOTO_ACTIVITY_FULL['object']['tags'] = LIKE_OBJS
 HTML_VIDEO_ACTIVITY = {  # ActivityStreams
   # Video
   'verb': 'post',
-  'published': '2016-01-17T13:15:52',
+  'published': '2016-01-17T13:15:52+00:00',
   'id': tag_uri('789_456'),
   'url': 'https://www.instagram.com/p/XYZ789/',
   'actor': HTML_ACTOR,
@@ -930,7 +930,7 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
     'author': HTML_ACTOR,
     'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
     'id': tag_uri('789_456'),
-    'published': '2016-01-17T13:15:52',
+    'published': '2016-01-17T13:15:52+00:00',
     'url': 'https://www.instagram.com/p/XYZ789/',
     'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'},
     'to': [{'objectType':'group', 'alias':'@private'}],
