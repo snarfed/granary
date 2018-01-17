@@ -401,9 +401,13 @@ def _prepare_activity(a, reader=True):
   # make sure published and updated are strict RFC 3339 timestamps
   for prop in 'published', 'updated':
     val = obj.get(prop)
-    if val and '+' not in val and not val.endswith('Z'):
-      obj[prop] += 'Z'
-
+    if val:
+      obj[prop] = util.maybe_iso8601_to_rfc3339(val)
+      # Atom timestamps are even stricter than RFC 3339: they can't be naive ie
+      # time zone unaware. They must have either an offset or the Z suffix.
+      # https://www.feedvalidator.org/docs/error/InvalidRFC3339Date.html
+      if not util.TIMEZONE_OFFSET_RE.search(obj[prop]):
+        obj[prop] += 'Z'
 
 def _remove_query_params(url):
   parsed = list(urlparse.urlparse(url))

@@ -366,12 +366,15 @@ quoted text
 
   def test_updated_defaults_to_published(self):
     activities = [
-      {'object': {'published': '2013-12-27T17:25:55+00:00'}},
-      {'object': {'published': '2014-12-27T17:25:55+00:00'}},
+      {'object': {'published': '2013-12-27T17:25:55+02:00'}},
+      {'object': {'published': '2014-12-27 17:25:55-0800'}},
+      {'object': {'published': '2015-12-27 17:25:55'}},
     ]
 
     out = atom.activities_to_atom(activities, test_twitter.ACTOR, title='my title')
-    self.assert_multiline_in('<updated>2014-12-27T17:25:55+00:00</updated>', out)
+    self.assert_multiline_in('<updated>2013-12-27T17:25:55+02:00</updated>', out)
+    self.assert_multiline_in('<updated>2014-12-27T17:25:55-08:00</updated>', out)
+    self.assert_multiline_in('<updated>2015-12-27T17:25:55Z</updated>', out)
 
   def test_escape_urls(self):
     url = 'http://foo/bar?baz&baj'
