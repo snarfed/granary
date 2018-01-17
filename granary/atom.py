@@ -181,7 +181,7 @@ def atom_to_activities(atom):
   parser = ElementTree.XMLParser(encoding='UTF-8')
   feed = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(feed) != 'feed':
-    raise ValueError('Expected root entry tag; got %s' % feed.tag)
+    raise ValueError('Expected root feed tag; got %s' % feed.tag)
   return [_atom_to_activity(elem) for elem in feed if _tag(elem) == 'entry']
 
 

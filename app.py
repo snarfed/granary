@@ -168,6 +168,8 @@ class UrlHandler(api.Handler):
         activities = atom.atom_to_activities(body)
       except ElementTree.ParseError as e:
         raise exc.HTTPBadRequest('Could not parse %s as XML: %s' % (url, e))
+      except ValueError as e:
+        raise exc.HTTPBadRequest('Could not parse %s as Atom: %s' % (url, e))
     elif input == 'html':
       activities = microformats2.html_to_activities(body, url, actor)
     elif input in ('mf2-json', 'json-mf2'):

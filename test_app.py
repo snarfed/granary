@@ -473,6 +473,18 @@ baz baj
     self.assert_equals(400, resp.status_int)
     self.assertIn('Could not parse http://feed as XML: ', resp.body)
 
+  def test_url_atom_to_as1_not_atom(self):
+    self.expect_requests_get('http://feed', """\
+<?xml version="1.0" encoding="UTF-8"?>
+<rss>
+not atom!
+</rss>""")
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
+    self.assert_equals(400, resp.status_int)
+    self.assertIn('Could not parse http://feed as Atom: ', resp.body)
+
   def test_url_as1_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.
 
