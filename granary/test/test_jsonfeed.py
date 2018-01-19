@@ -45,47 +45,43 @@ class JsonFeedTest(testutil.HandlerTest):
         'image': [{'url': 'http://no/content'}],
       }], {}))
 
+  def test_activities_to_jsonfeed_name_is_not_title(self):
+      self.assert_equals([{
+        'image': 'http://no/content',
+        'content_text': '',
+      }], activities_to_jsonfeed([{
+        'image': [{'url': 'http://no/content'}],
+      }], {})['items'])
+
   def test_activities_to_jsonfeed_image_attachment(self):
-      self.assert_equals({
-        'version': 'https://jsonfeed.org/version/1',
-        'title': 'JSON Feed',
-        'items': [{
-          'content_text': '',
-          'attachments': [{
-            'url': 'http://pict/ure.jpg',
-            'mime_type': 'image/jpeg',
-          }],
+      self.assert_equals([{
+        'content_text': '',
+        'attachments': [{
+          'url': 'http://pict/ure.jpg',
+          'mime_type': 'image/jpeg',
         }],
-      }, activities_to_jsonfeed([{
+      }], activities_to_jsonfeed([{
         'attachments': [{'image': {'url': 'http://pict/ure.jpg'}}],
-      }], {}))
+      }], {})['items'])
 
   def test_activities_to_jsonfeed_ignore_other_attachment_types(self):
-      self.assert_equals({
-        'version': 'https://jsonfeed.org/version/1',
-        'title': 'JSON Feed',
-        'items': [{'content_text': ''}],
-      }, activities_to_jsonfeed([{
+      self.assert_equals([{'content_text': ''}], activities_to_jsonfeed([{
         'attachments': [{
-            'url': 'http://quoted/tweet',
-            'objectType': 'note',
-          }, {
-            'url': 'http://some/one',
-            'objectType': 'person',
-          }],
-      }], {}))
+          'url': 'http://quoted/tweet',
+          'objectType': 'note',
+        }, {
+          'url': 'http://some/one',
+          'objectType': 'person',
+        }],
+      }], {})['items'])
 
   def test_activities_to_jsonfeed_attachment_without_url(self):
-      self.assert_equals({
-        'version': 'https://jsonfeed.org/version/1',
-        'title': 'JSON Feed',
-        'items': [{'content_text': ''}],
-      }, activities_to_jsonfeed([{
+      self.assert_equals([{'content_text': ''}], activities_to_jsonfeed([{
         'attachments': [{
-            'content': 'foo',
-            'objectType': 'note',
-          }],
-      }], {}))
+          'content': 'foo',
+          'objectType': 'note',
+        }],
+      }], {})['items'])
 
   def test_activities_to_jsonfeed_not_list(self):
     for bad in None, 3, 'asdf', {'not': 'a list'}:
