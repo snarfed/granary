@@ -13,8 +13,7 @@ from granary import as2, jsonfeed, microformats2
 
 
 def filepairs(ext1, ext2s):
-  """Returns all matching pairs of filenames with the given extensions.
-  """
+  """Returns all matching pairs of filenames with the given extensions."""
   pairs = []
   for first in glob.glob('*.%s' % ext1):
     for ext2 in ext2s:
@@ -26,8 +25,7 @@ def filepairs(ext1, ext2s):
 
 
 def read_json(filename):
-  """Reads JSON from a file. Attaches the filename to exceptions.
-  """
+  """Reads JSON from a file. Attaches the filename to exceptions."""
   try:
     with open(filename) as f:
       return json.loads(f.read())
@@ -36,8 +34,17 @@ def read_json(filename):
     raise
 
 
+def read(filename):
+  """Reads a file, decoding JSON if possible."""
+  if os.path.splitext(filename)[1] in ('.html', '.xml'):
+    with open(filename) as f:
+      return f.read()
+  else:
+    return read_json(filename)
+
+
 def create_test_function(fn, original, expected):
-  """Create a simple test function that asserts fn(original) == expected"""
+  """Create a simple test function that asserts fn(original) == expected."""
   def test(self):
     got = fn(original)
     if isinstance(got, basestring) and isinstance(expected, basestring):
@@ -66,6 +73,8 @@ def jsonfeed_to_activity(jf):
   assert len(activities) == 1
   return activities[0]['object']
 
+def html_to_activity(html):
+  return microformats2.html_to_activities(html)[0]['object']
 
 # source extension, destination extension, conversion function, exclude prefix
 mappings = (
@@ -75,6 +84,8 @@ mappings = (
   ('mf2.json', ['mf2-from-json.html', 'mf2.html'], microformats2.json_to_html,
    # we do not format h-media photos properly in html
    ('note_with_composite_photo',)),
+  # not ready yet
+  # ('mf2.html', ['as-from-mf2.json', 'as.json'], html_to_activity, ()),
   ('as.json', ['feed-from-as.json', 'feed.json'], activity_to_jsonfeed, ()),
   ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, ()),
   ('as.json', ['as2-from-as.json', 'as2.json'], as2.from_as1, ()),
@@ -87,12 +98,8 @@ for src_ext, dst_exts, fn, excludes in mappings:
     if any(dst.startswith(exclude) for exclude in excludes):
       continue
 
-    if os.path.splitext(dst)[1] in ('.html', '.xml'):
-      expected = open(dst).read()
-    else:
-      expected = read_json(dst)
-    original = read_json(src)
-
+    expected = read(dst)
+    original = read(src)
     test_name = (
       'test_%s_%s' % (fn.__name__, src[:-len(src_ext)])
     ).replace('.', '_').replace('-', '_').strip('_')
