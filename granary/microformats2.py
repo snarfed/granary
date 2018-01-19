@@ -119,14 +119,18 @@ def get_html(val, keep_newlines=False):
     # https://github.com/snarfed/granary/issues/80
     # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
     html = val['html']
-    return html if keep_newlines else html.replace('\n', ' ')
+    if not keep_newlines:
+      html = html.replace('\n', ' ')
+    return html.strip()
 
   return get_text(val)
 
 
 def get_text(val):
   """Returns a plain text string value. See get_html."""
-  return (val.get('value') if isinstance(val, dict) else val) or ''
+  if isinstance(val, dict):
+    val = val.get('value')
+  return val.strip() if val else ''
 
 
 def activity_to_json(activity, **kwargs):

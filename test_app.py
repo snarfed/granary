@@ -20,7 +20,7 @@ AS1 = [{
   'objectType': 'activity',
   'verb': 'post',
   'object': {
-    'content': ' foo bar ',
+    'content': 'foo bar',
     'published': '2012-03-04T18:20:37+00:00',
     'url': 'https://perma/link',
   }
@@ -28,7 +28,7 @@ AS1 = [{
   'objectType': 'activity',
   'verb': 'post',
   'object': {
-    'content': ' baz baj ',
+    'content': 'baz baj',
   },
 }]
 AS1_RESPONSE = {
@@ -45,7 +45,7 @@ AS2 = [{
   '@context': 'https://www.w3.org/ns/activitystreams',
   'type': 'Create',
   'object': {
-    'content': ' foo bar ',
+    'content': 'foo bar',
     'published': '2012-03-04T18:20:37+00:00',
     'url': 'https://perma/link',
   }
@@ -53,7 +53,7 @@ AS2 = [{
   '@context': 'https://www.w3.org/ns/activitystreams',
   'type': 'Create',
   'object': {
-    'content': ' baz baj ',
+    'content': 'baz baj',
   },
 }]
 AS2_RESPONSE = {
@@ -68,8 +68,8 @@ MF2 = {'items': [{
   'type': [u'h-entry'],
   'properties': {
     'content': [{
-      'value': ' foo bar ',
-      'html': ' foo bar ',
+      'value': 'foo bar',
+      'html': 'foo bar',
     }],
     'published': ['2012-03-04T18:20:37+00:00'],
     'url': ['https://perma/link'],
@@ -78,8 +78,8 @@ MF2 = {'items': [{
   'type': [u'h-entry'],
   'properties': {
     'content': [{
-      'value': ' baz baj ',
-      'html': ' baz baj ',
+      'value': 'baz baj',
+      'html': 'baz baj',
     }],
   },
 }]}
@@ -90,10 +90,10 @@ JSONFEED = {
   'items': [{
     'url': 'https://perma/link',
     'id': 'https://perma/link',
-    'content_html': ' foo bar ',
+    'content_html': 'foo bar',
     'date_published': '2012-03-04T18:20:37+00:00',
   }, {
-    'content_html': ' baz baj ',
+    'content_html': 'baz baj',
   }],
 }
 
