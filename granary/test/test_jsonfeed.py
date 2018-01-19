@@ -47,10 +47,10 @@ class JsonFeedTest(testutil.HandlerTest):
 
   def test_activities_to_jsonfeed_name_is_not_title(self):
       self.assert_equals([{
-        'image': 'http://no/content',
-        'content_text': '',
+        'content_html': 'a microblog post',
       }], activities_to_jsonfeed([{
-        'image': [{'url': 'http://no/content'}],
+          'content': 'a microblog post',
+          'displayName': 'a microblog post',
       }], {})['items'])
 
   def test_activities_to_jsonfeed_image_attachment(self):

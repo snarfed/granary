@@ -4,6 +4,7 @@ JSON Feed spec: https://jsonfeed.org/version/1
 """
 import mimetypes
 
+import mf2util
 from oauth_dropins.webutil import util
 
 # allowed ActivityStreams objectTypes for attachments
@@ -47,13 +48,15 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     if obj.get('objectType') == 'person':
       continue
     author = obj.get('author', {})
+    content = obj.get('content')
+    obj_title = obj.get('title') or obj.get('displayName')
     item = {
       'id': obj.get('id') or obj.get('url'),
       'url': obj.get('url'),
       'image': image_url(obj),
-      'title': obj.get('title') or obj.get('displayName'),
+      'title': obj_title if mf2util.is_name_a_title(obj_title, content) else None,
       'summary': obj.get('summary'),
-      'content_html': obj.get('content'),
+      'content_html': content,
       'date_published': obj.get('published'),
       'date_modified': obj.get('updated'),
       'author': {
