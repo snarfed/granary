@@ -763,9 +763,6 @@ class Instagram(source.Source):
 
     # home page ie news feed
     for page in entry_data.get('FeedPage', []):
-      # old schema
-      medias.extend(page.get('feed', {}).get('media', {}).get('nodes', []))
-      # new schema
       edges = page.get('graphql', {}).get('user', {})\
                   .get('edge_web_feed_timeline', {}).get('edges', [])
       medias.extend(e.get('node') for e in edges
@@ -779,8 +776,7 @@ class Instagram(source.Source):
 
     # individual photo/video permalinks
     for page in entry_data.get('PostPage', []):
-      media = (page.get('media')  # old schema
-               or page.get('graphql', {}).get('shortcode_media'))  # new schema
+      media = page.get('graphql', {}).get('shortcode_media')
       if media:
         medias.append(media)
 
@@ -821,8 +817,7 @@ class Instagram(source.Source):
       'link': self.media_url(media.get('code') or media.get('shortcode')),
       'user': owner,
       'created_time': media.get('date') or media.get('taken_at_timestamp'),
-      'caption': {'text': media.get('caption') or  # old schema
-                          media.get('edge_media_to_caption', {})  # new schema
+      'caption': {'text': media.get('edge_media_to_caption', {})
                                .get('edges', [{}])[0].get('node', {}).get('text', '')},
       'images': {'standard_resolution': {
         'url': image_url.replace('\/', '/'),
@@ -841,15 +836,13 @@ class Instagram(source.Source):
 
     comments = media.get('comments') or media.get('edge_media_to_comment') or {}
     media['comments'] = {
-      'data': (comments.get('nodes') or  # old schema
-               [c.get('node') for c in comments.get('edges', [])]),  # new schema
+      'data': [c.get('node') for c in comments.get('edges', [])],
       'count': comments.get('count'),
     }
 
     likes = media.get('likes') or media.get('edge_media_preview_like') or {}
     media['likes'] = {
-      'data': [l.get('user') for l in likes.get('nodes', [])] or  # old schema
-              [l.get('node') for l in likes.get('edges', [])],    # new schema
+      'data': [l.get('node') for l in likes.get('edges', [])],
       'count': likes.get('count'),
     }
 
