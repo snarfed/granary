@@ -1428,6 +1428,33 @@ class InstagramTest(testutil.HandlerTest):
     _, actor = self.instagram.html_to_activities(HTML_PROFILE_PRIVATE_COMPLETE)
     self.assert_equals([{'objectType':'group', 'alias':'@private'}], actor['to'])
 
+  def test_html_to_activities_profile_fill_in_owner(self):
+    profile = copy.deepcopy(HTML_PROFILE)
+    user = profile['entry_data']['ProfilePage'][0]['user']
+    user['media']['nodes'][0]['owner'] = {
+      'id': user['id'],
+    }
+
+    activities, _ = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(profile) + HTML_FOOTER)
+    self.assertEqual(HTML_VIEWER_PUBLIC, activities[0]['actor'])
+    self.assertEqual(HTML_VIEWER_PUBLIC, activities[0]['object']['author'])
+
+  def test_html_to_activities_profile_wrong_id_dont_fill_in_owner(self):
+    profile = copy.deepcopy(HTML_PROFILE)
+    user = profile['entry_data']['ProfilePage'][0]['user']
+    other_id = user['id'] + '999'
+    user['media']['nodes'][0]['owner'] = {'id': other_id}
+
+    activities, _ = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(profile) + HTML_FOOTER)
+    expected = {
+      'id': tag_uri(other_id),
+      'objectType': 'person',
+    }
+    self.assertEqual(expected, activities[0]['actor'])
+    self.assertEqual(expected, activities[0]['object']['author'])
+
   def test_html_to_activities_photo(self):
     activities, viewer = self.instagram.html_to_activities(HTML_PHOTO_COMPLETE)
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], activities)

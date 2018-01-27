@@ -201,7 +201,7 @@ class HandlerTest(testutil.HandlerTest):
 
   def test_instagram_scrape_with_cookie(self):
     self.expect_requests_get(
-      instagram.HTML_BASE_URL, test_instagram.HTML_FEED_NEW_COMPLETE,
+      instagram.HTML_BASE_URL, test_instagram.HTML_FEED_COMPLETE,
       allow_redirects=False, headers={'Cookie': 'sessionid=c00k1e'})
     self.mox.ReplayAll()
     resp = api.application.get_response(

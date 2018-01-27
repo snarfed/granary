@@ -789,7 +789,7 @@ class Instagram(source.Source):
         medias.append(media)
 
     for media in util.trim_nulls(medias):
-      activities.append(self._json_media_node_to_activity(media))
+      activities.append(self._json_media_node_to_activity(media, user=profile_user))
 
     actor = None
     user = self._json_user_to_user(data.get('config', {}).get('viewer') or profile_user)
@@ -798,7 +798,7 @@ class Instagram(source.Source):
 
     return activities, actor
 
-  def _json_media_node_to_activity(self, media):#, user=None):
+  def _json_media_node_to_activity(self, media, user=None):
     """Converts Instagram HTML JSON media node to ActivityStreams activity.
 
     Args:
@@ -812,6 +812,8 @@ class Instagram(source.Source):
     # preprocess to make its field names match the API's
     owner = media.get('owner', {})
     owner_id = owner.get('id')
+    if user and user.get('id') == owner_id:
+      owner.update(user)
 
     dims = media.get('dimensions', {})
     image_url = media.get('display_src') or media.get('display_url') or ''

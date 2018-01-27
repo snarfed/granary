@@ -228,6 +228,8 @@ Changelog
   * Prefer HTTPS URLs for media images.
 * Facebook:
   * Try harder to find original (full) sized photo URLs, specifically `_o.jpg` files instead of `_s.jpg`.
+* Instagram:
+  * Extract more user (`author`) data from scraped profile pages.
 * microformats2, Atom:
   * Add enclosures for image attachments.
   * Bug fixes for rendering image, video, and audio attachments inside shares and attachments. De-dupe images.
