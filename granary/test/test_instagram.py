@@ -732,6 +732,8 @@ HTML_VIEWER = {
   'username': 'snarfed',
   'description': 'something or other',
 }
+HTML_VIEWER_PUBLIC = copy.deepcopy(HTML_VIEWER)
+HTML_VIEWER_PUBLIC['to'] = [{'alias': '@public', 'objectType': 'group'}]
 HTML_ACTOR = {
   'displayName': 'Jerry C',
   'id': tag_uri('456'),
@@ -739,7 +741,10 @@ HTML_ACTOR = {
   'objectType': 'person',
   'url': 'https://www.instagram.com/jc/',
   'username': 'jc',
+  'to': [{'alias': '@public', 'objectType': 'group'}],
 }
+HTML_ACTOR_PRIVATE = copy.deepcopy(HTML_ACTOR)
+HTML_ACTOR_PRIVATE['to'][0]['alias'] = '@private'
 HTML_PHOTO_ACTIVITY = {  # ActivityStreams
   # Photo
   'verb': 'post',
@@ -783,10 +788,10 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
   'published': '2016-01-17T13:15:52+00:00',
   'id': tag_uri('789_456'),
   'url': 'https://www.instagram.com/p/XYZ789/',
-  'actor': HTML_ACTOR,
+  'actor': HTML_ACTOR_PRIVATE,
   'object': {
     'objectType': 'video',
-    'author': HTML_ACTOR,
+    'author': HTML_ACTOR_PRIVATE,
     'content': 'Eye of deer \ud83d\udc41 and #selfie from me',
     'id': tag_uri('789_456'),
     'published': '2016-01-17T13:15:52+00:00',
@@ -888,7 +893,7 @@ class InstagramTest(testutil.HandlerTest):
     self.expect_requests_get(instagram.HTML_BASE_URL + 'foo/',
                              HTML_PROFILE_COMPLETE, allow_redirects=False)
     self.mox.ReplayAll()
-    self.assert_equals(HTML_VIEWER, instagram.Instagram(scrape=True).get_actor('foo'))
+    self.assert_equals(HTML_VIEWER_PUBLIC, instagram.Instagram(scrape=True).get_actor('foo'))
 
   def test_get_activities_self(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
@@ -983,7 +988,7 @@ class InstagramTest(testutil.HandlerTest):
     resp = self.instagram.get_activities_response(
       user_id='x', group_id=source.SELF, scrape=True)
     self.assert_equals(HTML_ACTIVITIES, resp['items'])
-    self.assert_equals(HTML_VIEWER, resp['actor'])
+    self.assert_equals(HTML_VIEWER_PUBLIC, resp['actor'])
 
   def test_get_activities_scrape_self_fetch_extras(self):
     self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
@@ -1417,7 +1422,7 @@ class InstagramTest(testutil.HandlerTest):
   def test_html_to_activities_profile(self):
     activities, viewer = self.instagram.html_to_activities(HTML_PROFILE_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES, activities)
-    self.assert_equals(HTML_VIEWER, viewer)
+    self.assert_equals(HTML_VIEWER_PUBLIC, viewer)
 
   def test_html_to_activities_profile_private(self):
     _, actor = self.instagram.html_to_activities(HTML_PROFILE_PRIVATE_COMPLETE)

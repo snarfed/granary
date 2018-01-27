@@ -662,6 +662,13 @@ class Instagram(source.Source):
     else:
       actor['url'] = self.user_url(username)
 
+    private = user.get('is_private')
+    if private is not None:
+      actor['to'] = [{
+        'objectType': 'group',
+        'alias': '@private' if private else '@public',
+      }]
+
     actor.update({
       'displayName': user.get('full_name') or username,
       'image': {'url': user.get('profile_picture')},
@@ -727,6 +734,7 @@ class Instagram(source.Source):
       tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
     """
     # extract JSON data blob
+    # (can also get just this JSON by adding ?__a=1 to any IG URL.)
     script_start = '<script type="text/javascript">window._sharedData = '
     start = html.find(script_start)
     if start == -1:
@@ -784,38 +792,32 @@ class Instagram(source.Source):
       activities.append(self._json_media_node_to_activity(media))
 
     actor = None
-    viewer = data.get('config', {}).get('viewer') or profile_user or None
-    if viewer:
-      profile = viewer.get('profile_pic_url')
-      if profile:
-        viewer['profile_picture'] = profile.replace('\/', '/')
-      website = viewer.get('external_url')
-      if website:
-        viewer['website'] = website.replace('\/', '/')
-      viewer.setdefault('bio', viewer.get('biography'))
-      actor = self.user_to_actor(viewer)
-      if viewer.get('is_private'):
-        actor['to'] = [{'objectType':'group', 'alias':'@private'}]
+    user = self._json_user_to_user(data.get('config', {}).get('viewer') or profile_user)
+    if user:
+      actor = self.user_to_actor(user)
 
     return activities, actor
 
-  def _json_media_node_to_activity(self, media):
+  def _json_media_node_to_activity(self, media):#, user=None):
     """Converts Instagram HTML JSON media node to ActivityStreams activity.
 
     Args:
       media: dict, subset of Instagram HTML JSON representing a single photo
         or video
+      user: top-level user object from Instagram HTML JSON, e.g. on a profile page
 
     Returns:
       dict, ActivityStreams activity
     """
     # preprocess to make its field names match the API's
-    dims = media.get('dimensions', {})
     owner = media.get('owner', {})
+    owner_id = owner.get('id')
+
+    dims = media.get('dimensions', {})
     image_url = media.get('display_src') or media.get('display_url') or ''
     media.update({
       'link': self.media_url(media.get('code') or media.get('shortcode')),
-      'user': owner,
+      'user': self._json_user_to_user(owner),
       'created_time': media.get('date') or media.get('taken_at_timestamp'),
       'caption': {'text': media.get('edge_media_to_caption', {})
                                .get('edges', [{}])[0].get('node', {}).get('text', '')},
@@ -878,3 +880,27 @@ class Instagram(source.Source):
 
     self.postprocess_object(obj)
     return super(Instagram, self).postprocess_activity(activity)
+
+  def _json_user_to_user(self, user):
+    """Converts an Instagram HTML JSON user to an API actor.
+
+    Args:
+      media: dict, HTML JSON user
+
+    Returns:
+      dict, API user object
+    """
+    if not user:
+      return None
+
+    if user.get('user'):
+      user = user['user']
+    profile = user.get('profile_pic_url')
+    if profile:
+      user['profile_picture'] = profile.replace('\/', '/')
+    website = user.get('external_url')
+    if website:
+      user['website'] = website.replace('\/', '/')
+    user.setdefault('bio', user.get('biography'))
+
+    return user
