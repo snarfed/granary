@@ -1,6 +1,7 @@
 granary
 =======
 
+The social web translator
 --------------
 
 Granary is a library and REST API that fetches and converts between a

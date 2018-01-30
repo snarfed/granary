@@ -19,7 +19,7 @@ class TestLoader(ScanningLoader):
 
 setup(name='granary',
       version='1.10',
-      description='Free yourself from silo API chaff and expose the sweet social data foodstuff inside in standard formats and protocols!',
+      description='The social web translator',
       long_description=open('README.rst').read(),
       url='https://github.com/snarfed/granary',
       packages=find_packages(),
