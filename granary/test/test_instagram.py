@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
 from builtins import range, zip
 
 import copy
@@ -11,10 +12,10 @@ import datetime
 import httplib2
 import json
 import logging
-from mox3 import mox
-import urllib.error, urllib.parse, urllib.request
 import httplib2
+import urllib.parse
 
+from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 import requests
@@ -1004,7 +1005,7 @@ class InstagramTest(testutil.TestCase):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         'BAD REQUEST', status=400)
     self.mox.ReplayAll()
-    self.assertRaises(urllib.error.HTTPError, self.instagram.get_activities,
+    self.assertRaises(urllib_error.HTTPError, self.instagram.get_activities,
                       activity_id='000')
 
   def test_get_activities_min_id(self):
@@ -1435,7 +1436,7 @@ class InstagramTest(testutil.TestCase):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    self.assertRaises(urllib.error.HTTPError, instagram.Instagram(
+    self.assertRaises(urllib_error.HTTPError, instagram.Instagram(
       allow_comment_creation=True).create, to_publish)
 
   def test_create_comments_disabled(self):

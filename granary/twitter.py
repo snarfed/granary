@@ -12,6 +12,7 @@ https://dev.twitter.com/docs/platform-objects/users
 from __future__ import absolute_import, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
 from builtins import range, str, zip
 
 import collections
@@ -23,7 +24,7 @@ import logging
 import mimetypes
 import re
 import socket
-import urllib.error, urllib.parse, urllib.request
+import urllib.parse, urllib.request
 
 from . import appengine_config
 
@@ -295,7 +296,7 @@ class Twitter(source.Source):
         if group_id == source.SEARCH:
           tweet_obj = tweet_obj.get('statuses', [])
         tweets = tweet_obj[start_index:]
-      except urllib.error.HTTPError as e:
+      except urllib_error.HTTPError as e:
         if e.code == 304:  # Not Modified, from a matching ETag
           tweets = []
         else:
@@ -343,7 +344,7 @@ class Twitter(source.Source):
 
           try:
             tweet['retweets'] = self.urlopen(url)
-          except urllib.error.URLError as e:
+          except urllib_error.URLError as e:
             code, _ = util.interpret_http_exception(e)
             if code != '404':  # 404 means the original tweet was deleted
               raise
@@ -372,7 +373,7 @@ class Twitter(source.Source):
           try:
             resp = util.urlopen(url).read()
             html = source.load_json(resp, url).get('htmlUsers', '')
-          except urllib.error.URLError as e:
+          except urllib_error.URLError as e:
             util.interpret_http_exception(e)  # just log it
             continue
           likes = self.favorites_html_to_likes(tweet, html)
@@ -593,7 +594,7 @@ class Twitter(source.Source):
     while cursor and cursor != '0':
       try:
         resp = self.urlopen(api_endpoint % cursor)
-      except urllib.error.HTTPError as e:
+      except urllib_error.HTTPError as e:
         if e.code in HTTP_RATE_LIMIT_CODES:
           raise source.RateLimited(str(e), partial=values)
         raise
@@ -1044,7 +1045,7 @@ class Twitter(source.Source):
             raise
         except socket.timeout as e:
           pass
-        except urllib.error.HTTPError as e:
+        except urllib_error.HTTPError as e:
           code, body = util.interpret_http_exception(e)
           if code is None or int(code) not in (500, 501, 502):
             raise

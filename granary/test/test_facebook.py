@@ -4,11 +4,12 @@
 from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
 from builtins import range, zip
 
 import copy
 import json
-import urllib.error, urllib.parse, urllib.request
+import urllib.parse
 
 from mox3 import mox
 from oauth_dropins.webutil import testutil
@@ -1327,7 +1328,7 @@ class FacebookTest(testutil.TestCase):
     try:
       self.fb.get_activities()
       assert False, 'expected HTTPError'
-    except urllib.error.HTTPError as e:
+    except urllib_error.HTTPError as e:
       self.assertEqual(502, e.code)
       self.assertEqual('Non-JSON response! Returning synthetic HTTP 502.\nnot json',
                        e.reason)
@@ -1593,7 +1594,7 @@ class FacebookTest(testutil.TestCase):
       '123?fields=id,message,from,created_time,message_tags,parent,attachment',
       {}, status=400)
     self.mox.ReplayAll()
-    self.assertRaises(urllib.error.HTTPError, self.fb.get_comment, '123')
+    self.assertRaises(urllib_error.HTTPError, self.fb.get_comment, '123')
 
   def test_get_comment_with_activity(self):
     # still makes the API call, since the comment might be paged out or nested
@@ -1634,7 +1635,7 @@ class FacebookTest(testutil.TestCase):
   def test_get_share_500s(self):
     self.expect_urlopen(API_SHARES % '1_2', {}, status=500)
     self.mox.ReplayAll()
-    self.assertRaises(urllib.error.HTTPError, self.fb.get_share, '1', '2', '_')
+    self.assertRaises(urllib_error.HTTPError, self.fb.get_share, '1', '2', '_')
 
   def test_get_share_with_activity(self):
     self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
@@ -2844,7 +2845,7 @@ cc Sam G, Michael M<br />""", preview.description)
     try:
       self.fb.urlopen_batch(('abc', 'def'))
       assert False, 'expected HTTPError'
-    except urllib.error.HTTPError as e:
+    except urllib_error.HTTPError as e:
       self.assertEqual(499, e.code)
       self.assertEqual('error body', e.reason)
 

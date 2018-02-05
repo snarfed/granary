@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
 from builtins import next
 from past.builtins import basestring
 
@@ -12,7 +13,7 @@ import json
 from mox3 import mox
 import requests
 import socket
-import urllib.error, urllib.parse, urllib.request
+import urllib.parse
 
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
@@ -951,7 +952,7 @@ class FlickrTest(testutil.TestCase):
 """)
     self.mox.ReplayAll()
 
-    self.assertRaises(urllib.error.HTTPError, self.flickr.create, OBJECT)
+    self.assertRaises(urllib_error.HTTPError, self.flickr.create, OBJECT)
 
   def test_create_video_success(self):
     self.flickr._user_id = '39216764@N00'

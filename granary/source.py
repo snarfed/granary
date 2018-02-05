@@ -11,8 +11,9 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
 from __future__ import absolute_import, unicode_literals
 from future import standard_library
-from future.utils import with_metaclass
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
+from future.utils import with_metaclass
 from builtins import object, str
 
 import collections
@@ -21,7 +22,7 @@ import json
 import logging
 import mimetypes
 import re
-import urllib.error, urllib.parse, urllib.request
+import urllib.parse
 import html2text
 
 from bs4 import BeautifulSoup
@@ -106,7 +107,7 @@ def load_json(body, url):
   except (ValueError, TypeError):
     msg = 'Non-JSON response! Returning synthetic HTTP 502.\n%s' % body
     logging.error(msg)
-    raise urllib.error.HTTPError(url, 502, msg, {}, None)
+    raise urllib_error.HTTPError(url, 502, msg, {}, None)
 
 
 def creation_result(content=None, description=None, abort=False,

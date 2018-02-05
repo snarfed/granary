@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
 from builtins import range, str, zip
 from past.builtins import basestring
 
@@ -14,7 +15,7 @@ import json
 from mox3 import mox
 import requests
 import socket
-import urllib.error, urllib.parse, urllib.request
+import urllib.parse
 
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
@@ -950,7 +951,7 @@ class TwitterTest(testutil.TestCase):
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
     self.expect_urlopen(API_RETWEETS % '100'
-                       ).AndRaise(urllib.error.HTTPError('url', 404, 'msg', {}, None))
+                       ).AndRaise(urllib_error.HTTPError('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
@@ -1004,7 +1005,7 @@ class TwitterTest(testutil.TestCase):
     tweet['favorite_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
     self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100'
-      ).AndRaise(urllib.error.HTTPError('url', 404, 'msg', {}, None))
+      ).AndRaise(urllib_error.HTTPError('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
     cache = util.CacheDict()
@@ -1071,7 +1072,7 @@ class TwitterTest(testutil.TestCase):
   def test_get_activities_retries(self):
     for exc in (http.client.HTTPException('Deadline exceeded: foo'),
                 socket.timeout('asdf'),
-                urllib.error.HTTPError('url', 501, 'msg', {}, None)):
+                urllib_error.HTTPError('url', 501, 'msg', {}, None)):
       for i in range(twitter.RETRIES):
         self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.expect_urlopen(TIMELINE, [])
@@ -1081,7 +1082,7 @@ class TwitterTest(testutil.TestCase):
 
     # other exceptions shouldn't retry
     for exc in (http.client.HTTPException('not a deadline'),
-                urllib.error.HTTPError('url', 403, 'not a 5xx', {}, None)):
+                urllib_error.HTTPError('url', 403, 'not a 5xx', {}, None)):
       self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.mox.ReplayAll()
       self.assertRaises(exc.__class__, self.twitter.get_activities_response)
@@ -1160,7 +1161,7 @@ class TwitterTest(testutil.TestCase):
   def test_get_blocklist_other_http_error(self):
     self.expect_urlopen(API_BLOCKS % '-1', status=406)
     self.mox.ReplayAll()
-    with self.assertRaises(urllib.error.HTTPError) as e:
+    with self.assertRaises(urllib_error.HTTPError) as e:
       self.twitter.get_blocklist()
     self.assertEqual(406, e.exception.code)
 
@@ -1605,7 +1606,7 @@ class TwitterTest(testutil.TestCase):
     try:
       self.twitter.urlopen('xyz')
       self.fail('Expected HTTPError')
-    except urllib.error.HTTPError as e:
+    except urllib_error.HTTPError as e:
       self.assertEqual(502, e.code)
 
   def test_get_activities_not_json(self):
@@ -1615,7 +1616,7 @@ class TwitterTest(testutil.TestCase):
     try:
       self.twitter.get_activities()
       self.fail('Expected HTTPError')
-    except urllib.error.HTTPError as e:
+    except urllib_error.HTTPError as e:
       self.assertEqual(502, e.code)
 
   def test_create_tweet(self):
@@ -2422,7 +2423,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                           'media_ids': '123',
                         }, status=403)
     self.mox.ReplayAll()
-    self.assertRaises(urllib.error.HTTPError, self.twitter.create, obj)
+    self.assertRaises(urllib_error.HTTPError, self.twitter.create, obj)
 
   def test_create_with_photo_wrong_type(self):
     obj = {

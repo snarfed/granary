@@ -44,6 +44,7 @@ FQL stream table.
 from __future__ import absolute_import, division, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
 from builtins import range, str, zip
 
 import collections
@@ -52,7 +53,7 @@ import itertools
 import json
 import logging
 import re
-import urllib.error, urllib.parse, urllib.request
+import urllib.parse, urllib.request
 import mf2util
 
 from . import appengine_config
@@ -308,7 +309,7 @@ class Facebook(source.Source):
         resp = self.urlopen(url, headers=headers, _as=None)
         etag = resp.info().get('ETag')
         posts = self._as(list, source.load_json(resp.read(), url))
-      except urllib.error.HTTPError as e:
+      except urllib_error.HTTPError as e:
         if e.code == 304:  # Not Modified, from a matching ETag
           posts = []
         else:
@@ -514,7 +515,7 @@ class Facebook(source.Source):
     """
     try:
       resp = self.urlopen(API_COMMENT % comment_id)
-    except urllib.error.HTTPError as e:
+    except urllib_error.HTTPError as e:
       if e.code == 400 and '_' in comment_id:
         # Facebook may want us to ask for this without the other prefixed id(s)
         resp = self.urlopen(API_COMMENT % comment_id.split('_')[-1])
@@ -1822,7 +1823,7 @@ class Facebook(source.Source):
       code = int(resp.get('code', 0))
       body = resp.get('body')
       if code // 100 in (4, 5):
-        raise urllib.error.HTTPError(url, code, body, resp.get('headers'), None)
+        raise urllib_error.HTTPError(url, code, body, resp.get('headers'), None)
       bodies.append(body)
 
     return bodies

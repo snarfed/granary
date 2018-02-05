@@ -13,6 +13,7 @@ when group_id=SELF.
 from __future__ import absolute_import, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
+from future.moves.urllib import error as urllib_error
 from builtins import next, str
 from past.builtins import basestring
 
@@ -26,7 +27,7 @@ import requests
 import sys
 import mf2py
 import mf2util
-import urllib.error, urllib.parse, urllib.request
+import urllib.parse
 
 from . import appengine_config
 
@@ -445,7 +446,7 @@ class Flickr(source.Source):
         obj['url'] = next(
           (u for u in urls if not u.startswith('https://www.flickr.com/')),
           None)
-      except urllib.error.URLError as e:
+      except urllib_error.URLError as e:
         logging.warning('could not fetch user homepage %s', profile_url)
 
     return self.postprocess_object(obj)
