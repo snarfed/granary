@@ -5,18 +5,12 @@ API docs:
 https://developer.github.com/v4/
 https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
 """
-import collections
-import copy
-import itertools
-import json
 import logging
 import re
-import urllib
-import urllib2
 import urlparse
-import mf2util
 
 import appengine_config
+from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil import util
 import source
 
@@ -42,12 +36,31 @@ query {
           issues(last: 10) {
             edges {
               node {
-                id
-                url
+                id url
               }
             }
           }
         }
+      }
+    }
+  }
+}
+"""
+GRAPHQL_ISSUE_OR_PR = """
+query {
+  repository(owner: "%(owner)s", name: "%(repo)s") {
+    issueOrPullRequest(number: %(number)s) {
+      id
+    }
+  }
+}
+"""
+GRAPHQL_ADD_COMMENT = """
+mutation {
+  addComment(input: {subjectId: "%(subject_id)s", body: "%(body)s"}) {
+    commentEdge {
+      node {
+        id url
       }
     }
   }
@@ -64,6 +77,9 @@ class GitHub(source.Source):
   DOMAIN = 'github.com'
   BASE_URL = 'https://github.com/'
   NAME = 'GitHub'
+  POST_ID_RE = re.compile('^[0-9]+$')
+  # https://github.com/moby/moby/issues/679#issuecomment-18307522
+  REPO_NAME_RE = re.compile('^[A-Za-z0-9_.-]+$')
 
   def __init__(self, access_token=None, user_id=None):
     """Constructor.
@@ -92,6 +108,17 @@ class GitHub(source.Source):
       user_id = 'me'
     return self.user_to_actor(self.urlopen(user_id))
 
+
+  def graphql(self, json):
+    """Makes a GraphQL API call.
+
+    Args:
+      json: GraphQL JSON payload with top-level 'query' or 'mutation' field
+
+    Returns: dict, parsed JSON response
+    """
+    return util.requests_post(oauth_github.API_GRAPHQL, json=json).json()['data']
+
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
@@ -99,30 +126,9 @@ class GitHub(source.Source):
                               fetch_shares=False, fetch_events=False,
                               fetch_mentions=False, search_query=None,
                               fetch_news=False, event_owner_id=None, **kwargs):
-    """Fetches posts and converts them to ActivityStreams activities.
+    """Fetches issues and comments and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details.
-
-    Likes, *top-level* replies (ie comments), and reactions are always included.
-    They come from the 'comments', 'likes', and 'reactions' fields in the Graph
-    API's Post object:
-    https://developers.github.com/docs/reference/api/post/
-
-    Threaded comments, ie comments in reply to other top-level comments, require
-    an additional API call, so they're only included if fetch_replies is True.
-
-    Mentions are never fetched or included because the API doesn't support
-    searching for them.
-    https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
-
-    Additional args:
-      fetch_news: boolean, whether to also fetch and include Open Graph news
-        stories (/USER/news.publishes). Requires the user_actions.news
-        permission. Background in https://github.com/snarfed/bridgy/issues/479
-      event_owner_id: string. if provided, only events owned by this user id
-        will be returned. avoids (but doesn't entirely prevent) processing big
-        non-indieweb events with tons of attendees that put us over app engine's
-        instance memory limit. https://github.com/snarfed/bridgy/issues/77
     """
     if search_query:
       raise NotImplementedError()
@@ -184,7 +190,7 @@ class GitHub(source.Source):
 
   def _create(self, obj, preview=None, include_link=source.OMIT_LINK,
               ignore_formatting=False):
-    """Creates a new post, comment, like, or RSVP.
+    """Creates a new issue or comment.
 
     https://developer.github.com/v4/guides/forming-calls/#about-mutations
     https://developer.github.com/v4/mutation/addcomment/
@@ -204,18 +210,44 @@ class GitHub(source.Source):
       for the newly created GitHub object.
     """
     assert preview in (False, True)
-    type = obj.get('objectType')
-    verb = obj.get('verb')
 
-    if type == 'comment':
-      pass
-    elif type == 'activity':
-      pass
+    type = source.object_type(obj)
+    if type and type not in ('activity', 'comment', 'note', 'article'):
+      return source.creation_result(
+        abort=False,
+        error_plain='Cannot publish type=%s, verb=%s to GitHub' % (type, verb))
+
+    # in_reply_to = obj.get('inReplyTo')
+    base_obj = self.base_object(obj)
+    base_url = base_obj.get('url')
+    if not base_url:  # or not in_reply_to
+      return source.creation_result(
+        abort=False, error_plain='GitHub must be in reply to repo, issue, or PR URL.')
+
+    parsed = urlparse.urlparse(base_url)
+    path = parsed.path.strip('/').split('/')
+
+    if len(path) == 2:
+      # new issue
+      raise NotImplementedError()
+
+    elif len(path) == 4 and path[2] in ('issues', 'pull'):
+      # comment
+      issue = self.graphql({'query': GRAPHQL_ISSUE_OR_PR % {
+        'owner': path[0],
+        'repo': path[1],
+        'number': path[3],
+      }})
+      resp = self.graphql({'mutation': GRAPHQL_ADD_COMMENT % {
+        'subject_id': issue['repository']['issueOrPullRequest']['id'],
+        # TODO: linkback
+        'body': self._content_for_create(obj, ignore_formatting=ignore_formatting),
+      }})['addComment']['commentEdge']['node']
+
     else:
       return source.creation_result(
         abort=False,
-        error_plain='Cannot publish type=%s, verb=%s to GitHub' % (type, verb),
-        error_html='Cannot publish type=%s, verb=%s to GitHub' % (type, verb))
+        error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
 
     return source.creation_result(resp)
 

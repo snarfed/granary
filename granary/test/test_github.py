@@ -3,10 +3,9 @@
 """
 import copy
 import json
-import urllib
-import urllib2
 
 import mox
+from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
@@ -99,7 +98,8 @@ issue: #123
   'publishedAt': '2018-01-30T19:11:03Z'
 }
 COMMENT = {  # GitHub
-  'id': '547822715231468_6796480',
+  'id': 'MDEwOlNQ==',
+  'url': 'https://github.com/foo/bar/123#issuecomment-456',
   'from': {
     'name': 'Ryan Barrett',
     'id': '212038'
@@ -118,32 +118,30 @@ COMMENT = {  # GitHub
 
 COMMENT_OBJ = {  # ActivityStreams
     'objectType': 'comment',
-    'author': {
-      'objectType': 'person',
-      'id': tag_uri('212038'),
-      'numeric_id': '212038',
-      'displayName': 'Ryan Barrett',
-      'image': {'url': 'https://graph.github.com/v2.10/212038/picture?type=large'},
-      'url': 'https://www.github.com/212038',
-    },
-    'content': 'cc Sam G, Michael M',
-    'id': tag_uri('547822715231468_6796480'),
-    'fb_id': '547822715231468_6796480',
+    # 'author': {
+    #   'objectType': 'person',
+    #   'id': tag_uri('212038'),
+    #   'numeric_id': '212038',
+    #   'displayName': 'Ryan Barrett',
+    #   'image': {'url': 'https://graph.github.com/v2.10/212038/picture?type=large'},
+    #   'url': 'https://www.github.com/212038',
+    # },
+    'content': 'i have something to say here',
+    'id': tag_uri('xyz'),
     'published': '2012-12-05T00:58:26+00:00',
-    'url': 'https://www.github.com/547822715231468?comment_id=6796480',
+    'url': 'https://github.com/foo/bar/pull/123#comment-xyz',
     'inReplyTo': [{
-      'id': tag_uri('547822715231468'),
-      'url': 'https://www.github.com/547822715231468',
+      'url': 'https://github.com/foo/bar/pull/123',
     }],
-    'to': [{'objectType':'group', 'alias':'@private'}],
-    'tags': [{
-        'objectType': 'person',
-        'id': tag_uri('221330'),
-        'url': 'https://www.github.com/221330',
-        'displayName': 'Sam G',
-        'startIndex': 3,
-        'length': 5,
-    }],
+    # 'to': [{'objectType':'group', 'alias':'@private'}],
+    # 'tags': [{
+    #     'objectType': 'person',
+    #     'id': tag_uri('221330'),
+    #     'url': 'https://www.github.com/221330',
+    #     'displayName': 'Sam G',
+    #     'startIndex': 3,
+    #     'length': 5,
+    # }],
 }
 ISSUE_OBJ = {  # ActivityStreams
   'objectType': 'image',
@@ -214,20 +212,16 @@ class GitHubTest(testutil.HandlerTest):
     self.batch = []
     self.batch_responses = []
 
-  def expect_graphql(self, url, response=None, **kwargs):
-    if not url.startswith('http'):
-      url = API_BASE + url
-    return super(GitHubTest, self).expect_urlopen(
-      url, response=json.dumps(response), **kwargs)
+  def expect_graphql(self, response=None, **kwargs):
+    return super(GitHubTest, self).expect_requests_post(
+      oauth_github.API_GRAPHQL, response=json.dumps(response), **kwargs)
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.gh.user_to_actor(USER))
 
-  # def test_user_to_actor_minimal(self):
-  #   actor = self.gh.user_to_actor({'id': '212038'})
-  #   self.assert_equals(tag_uri('212038'), actor['id'])
-  #   self.assert_equals('https://graph.github.com/v2.10/212038/picture?type=large',
-  #                      actor['image']['url'])
+  def test_user_to_actor_minimal(self):
+    actor = self.gh.user_to_actor({'id': '123'})
+    self.assert_equals(tag_uri('123'), actor['id'])
 
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.gh.user_to_actor({}))
@@ -400,24 +394,45 @@ class GitHubTest(testutil.HandlerTest):
   #   self.assertEquals('<span class="verb">post</span>:', preview.description)
   #   self.assertEquals('my msg<br /><br /><em>with <a href="https://www.github.com/234">Friend 1</a>, <a href="https://www.github.com/345">Friend 2</a>, <a href="https://www.github.com/456">Friend 3</a></em>', preview.content)
 
-  # def test_create_comment(self):
-  #   self.expect_urlopen('547822715231468/comments', {'id': '456_789'},
-  #                       data='message=my+cmt')
-  #   self.mox.ReplayAll()
+  def test_create_comment(self):
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ISSUE_OR_PR % {
+        'owner': 'foo',
+        'repo': 'bar',
+        'number': 123,
+      },
+    }, response={'data': {
+      'repository': {
+        'issueOrPullRequest': ISSUE,
+      },
+    }})
+    self.expect_graphql(json={
+      'mutation': github.GRAPHQL_ADD_COMMENT % {
+        'subject_id': ISSUE['id'],
+        'body': 'i have something to say here',
+      },
+    }, response={'data': {
+      'addComment': {
+        'commentEdge': {
+          'node': {
+            'id': '456',
+            'url': 'https://github.com/foo/bar/pull/123#comment-456',
+          },
+        },
+      },
+    }})
+    self.mox.ReplayAll()
 
-  #   obj = copy.deepcopy(COMMENT_OBJS[0])
-  #   # summary should override content
-  #   obj['summary'] = 'my cmt'
-  #   self.assert_equals({
-  #     'id': '456_789',
-  #     'url': 'https://www.github.com/547822715231468?comment_id=456_789',
-  #     'type': 'comment'
-  #   }, self.gh.create(obj).content)
+    result = self.gh.create(COMMENT_OBJ)
+    self.assert_equals({
+      'id': '456',
+      'url': 'https://github.com/foo/bar/pull/123#comment-456',
+    }, result.content, result)
 
-  #   preview = self.gh.preview_create(obj)
+  # def test_preview_comment(self):
+  #   preview = self.gh.preview_create(COMMENT_OBJ)
   #   self.assertEquals('my cmt', preview.content)
-  #   self.assertIn('<span class="verb">comment</span> on <a href="https://www.github.com/547822715231468">this post</a>:', preview.description)
-  #   self.assertIn('<div class="fb-post" data-href="https://www.github.com/547822715231468">', preview.description)
+  #   self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/123">foo/bar#123</a>:', preview.description)
 
   # def test_create_unsupported_type(self):
   #   for fn in self.gh.create, self.gh.preview_create:
