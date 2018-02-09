@@ -323,7 +323,7 @@ class GitHubTest(testutil.HandlerTest):
       },
     })
     self.expect_graphql(json={
-      'mutation': github.GRAPHQL_ADD_COMMENT % {
+      'query': github.GRAPHQL_ADD_COMMENT % {
         'subject_id': ISSUE['id'],
         'body': 'i have something to say here',
       },
@@ -352,23 +352,30 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_create_issue(self):
     resp = {
-      'id': '123',
-      'url': 'https://github.com/foo/bar/issues/123',
+      'id': '789999',
+      'number': '123',
+      'url': 'not this one',
+      'html_url': 'https://github.com/foo/bar/issues/123',
     }
 
-    self.expect_requests_post(github.REST_API_ISSUE % ('foo', 'bar'), data={
-        'title': 'i have an issue',
+    self.expect_requests_post(github.REST_API_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
         'body': ISSUE['body'].strip(),
       }, headers={
         'Authorization': 'token a-towkin',
       }, response=resp)
     self.mox.ReplayAll()
 
-    self.assert_equals(resp, self.gh.create(ISSUE_OBJ).content)
+    self.assert_equals({
+      'id': '789999',
+      'number': '123',
+      'url': 'https://github.com/foo/bar/issues/123',
+    }, self.gh.create(ISSUE_OBJ).content)
 
   def test_preview_issue(self):
     preview = self.gh.preview_create(ISSUE_OBJ)
-    self.assertEquals(ISSUE_OBJ['content'].strip(), preview.content)
+    self.assertEquals('<b>an issue title</b><hr>' + ISSUE_OBJ['content'].strip(),
+                      preview.content)
     self.assertIn('<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar">foo/bar</a>:', preview.description, preview)
 
   def test_create_comment_without_in_reply_to(self):

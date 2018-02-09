@@ -83,46 +83,48 @@ class GitHub(source.Source):
   # https://github.com/moby/moby/issues/679#issuecomment-18307522
   REPO_NAME_RE = re.compile('^[A-Za-z0-9_.-]+$')
 
-  def __init__(self, access_token=None, user_id=None):
+  def __init__(self, access_token=None):
     """Constructor.
-
-    If an OAuth access token is provided, it will be passed on to GitHub. This
-    will be necessary for some people and contact details, based on their
-    privacy settings.
 
     Args:
       access_token: string, optional OAuth access token
-      user_id: string, optional, current user's id (either global or app-scoped)
     """
     self.access_token = access_token
-    self.user_id = user_id
 
   def user_url(self, username):
     return self.BASE_URL + username
 
-  def graphql(self, json):
+  def graphql(self, graphql):
     """Makes a v4 GraphQL API call.
 
     Args:
-      json: GraphQL JSON payload with top-level 'query' or 'mutation' field
+      graphql: string GraphQL operation
 
     Returns: dict, parsed JSON response
     """
-    return util.requests_post(oauth_github.API_GRAPHQL, json=json, headers={
-      'Authorization': 'bearer %s' % self.access_token,
-    }, ).json()['data']
+    resp = util.requests_post(
+      oauth_github.API_GRAPHQL, json={'query': graphql},
+      headers={
+        'Authorization': 'bearer %s' % self.access_token,
+      })
+    resp.raise_for_status()
+    result = resp.json()
+    assert 'errors' not in result, result
+    return result['data']
 
   def rest(self, url, data):
     """Makes a v3 REST API call.
 
     Args:
-      json: GraphQL JSON payload with top-level 'query' or 'mutation' field
+      data: GraphQL JSON payload with top-level 'query' or 'mutation' field
 
     Returns: dict, parsed JSON response
     """
-    return util.requests_post(url, data=data, headers={
+    resp = util.requests_post(url, json=data, headers={
       'Authorization': 'token %s' % self.access_token,
-    }).json()
+    })
+    resp.raise_for_status()
+    return resp.json()
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -229,7 +231,8 @@ class GitHub(source.Source):
         abort=True,
         error_plain='You need an in-reply-to GitHub repo, issue, or PR URL.')
 
-    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
+    content = orig_content = self._content_for_create(
+      obj, ignore_formatting=ignore_formatting)
     url = obj.get('url')
     if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url
@@ -241,15 +244,19 @@ class GitHub(source.Source):
     if len(path) == 2:
       # new issue
       owner, repo = path
+      title = util.ellipsize(obj.get('displayName') or obj.get('title') or
+                             orig_content)
       if preview:
+        preview_content = '<b>%s</b><hr>%s' % (title, preview_content)
         return source.creation_result(content=preview_content, description="""\
-<span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:
-<br /><br />%s<br />""" % (base_url, owner, repo, preview_content))
+<span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:""" %
+            (base_url, owner, repo))
       else:
         resp = self.rest(REST_API_ISSUE % (owner, repo), {
-          'title': 'i have an issue',
+          'title': title,
           'body': content,
         })
+        resp['url'] = resp.pop('html_url')
         return source.creation_result(resp)
 
     elif len(path) == 4 and path[2] in ('issues', 'pull'):
@@ -257,14 +264,14 @@ class GitHub(source.Source):
       owner, repo, _, number = path
       if preview:
         return source.creation_result(content=preview_content, description="""\
-<span class="verb">comment</span> on <a href="%s">%s/%s#%s</a>:
-<br /><br />%s<br />""" % (base_url, owner, repo, number, preview_content))
+<span class="verb">comment</span> on <a href="%s">%s/%s#%s</a>:""" %
+            (base_url, owner, repo, number))
       else:  # create
-        issue = self.graphql({'query': GRAPHQL_ISSUE_OR_PR % locals()})
-        resp = self.graphql({'mutation': GRAPHQL_ADD_COMMENT % {
+        issue = self.graphql(GRAPHQL_ISSUE_OR_PR % locals())
+        resp = self.graphql(GRAPHQL_ADD_COMMENT % {
           'subject_id': issue['repository']['issueOrPullRequest']['id'],
           'body': content,
-        }})
+        })
         return source.creation_result(resp['addComment']['commentEdge']['node'])
 
     return source.creation_result(
