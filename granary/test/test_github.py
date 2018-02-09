@@ -371,12 +371,12 @@ class GitHubTest(testutil.HandlerTest):
     self.assertEquals(ISSUE_OBJ['content'].strip(), preview.content)
     self.assertIn('<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar">foo/bar</a>:', preview.description, preview)
 
-  # def test_create_comment_without_in_reply_to(self):
-  #   obj = copy.deepcopy(COMMENT_OBJS[0])
-  #   obj['inReplyTo'] = [{'url': 'http://foo.com/bar'}]
+  def test_create_comment_without_in_reply_to(self):
+    obj = copy.deepcopy(COMMENT_OBJ)
+    obj['inReplyTo'] = [{'url': 'http://foo.com/bar'}]
 
-  #   for fn in (self.gh.preview_create, self.gh.create):
-  #     preview = fn(obj)
-  #     self.assertTrue(preview.abort)
-  #     self.assertIn('Could not find a GitHub status to reply to', preview.error_plain)
-  #     self.assertIn('Could not find a GitHub status to', preview.error_html)
+    for fn in (self.gh.preview_create, self.gh.create):
+      result = fn(obj)
+      self.assertTrue(result.abort)
+      self.assertIn('You need an in-reply-to GitHub repo, issue, or PR URL.',
+                    result.error_plain)

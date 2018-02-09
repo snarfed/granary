@@ -100,17 +100,6 @@ class GitHub(source.Source):
   def user_url(self, username):
     return self.BASE_URL + username
 
-  def get_actor(self, user_id=None):
-    """Returns a user as a JSON ActivityStreams actor dict.
-
-    Args:
-      user_id: string id or username. Defaults to 'me', ie the current user.
-    """
-    if user_id is None:
-      user_id = 'me'
-    return self.user_to_actor(self.urlopen(user_id))
-
-
   def graphql(self, json):
     """Makes a v4 GraphQL API call.
 
@@ -237,7 +226,8 @@ class GitHub(source.Source):
     base_url = base_obj.get('url')
     if not base_url:  # or not in_reply_to
       return source.creation_result(
-        abort=False, error_plain='GitHub must be in reply to repo, issue, or PR URL.')
+        abort=True,
+        error_plain='You need an in-reply-to GitHub repo, issue, or PR URL.')
 
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     url = obj.get('url')
@@ -296,43 +286,7 @@ class GitHub(source.Source):
 
     obj['objectType'] = 'comment'
 
-    fb_id = comment.get('id')
-    obj['fb_id'] = fb_id
-    id = self.parse_id(fb_id, is_comment=True)
-    if not id.comment:
-      return None
-
-    post_id = id.post or post_id
-    post_author_id = id.user or post_author_id
-    if post_id:
-      obj.update({
-        'id': self.tag_uri('%s_%s' % (post_id, id.comment)),
-        'url': self.comment_url(post_id, id.comment, post_author_id=post_author_id),
-        'inReplyTo': [{
-          'id': self.tag_uri(post_id),
-          'url': self.post_url({'id': post_id, 'from': {'id': post_author_id}}),
-        }],
-      })
-
-      parent_id = comment.get('parent', {}).get('id')
-      if parent_id:
-        obj['inReplyTo'].append({
-          'id': self.tag_uri(parent_id),
-          'url': self.comment_url(post_id,
-                                  parent_id.split('_')[-1],  # strip POSTID_ prefix
-                                  post_author_id=post_author_id)
-        })
-
-    att = comment.get('attachment')
-    if (att and att.get('type') in
-         ('photo', 'animated_image_autoplay', 'animated_image_share') and
-        not obj.get('image')):
-      obj['image'] = {'url': att.get('media', {}).get('image', {}).get('src')}
-      obj.setdefault('attachments', []).append({
-        'objectType': 'image',
-        'image': obj['image'],
-        'url': att.get('url'),
-      })
+    # ...
 
     return self.postprocess_object(obj)
 
