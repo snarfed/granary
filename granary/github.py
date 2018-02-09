@@ -14,6 +14,7 @@ from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil import util
 import source
 
+REST_API_ISSUE = 'https://api.github.com/repos/%s/%s/issues'
 GRAPHQL_USER_ISSUES = """
 query {
   viewer {
@@ -110,14 +111,28 @@ class GitHub(source.Source):
 
 
   def graphql(self, json):
-    """Makes a GraphQL API call.
+    """Makes a v4 GraphQL API call.
 
     Args:
       json: GraphQL JSON payload with top-level 'query' or 'mutation' field
 
     Returns: dict, parsed JSON response
     """
-    return util.requests_post(oauth_github.API_GRAPHQL, json=json).json()['data']
+    return util.requests_post(oauth_github.API_GRAPHQL, json=json, headers={
+      'Authorization': 'bearer %s' % self.access_token,
+    }, ).json()['data']
+
+  def rest(self, url, data):
+    """Makes a v3 REST API call.
+
+    Args:
+      json: GraphQL JSON payload with top-level 'query' or 'mutation' field
+
+    Returns: dict, parsed JSON response
+    """
+    return util.requests_post(url, data=data, headers={
+      'Authorization': 'token %s' % self.access_token,
+    }).json()
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -234,13 +249,17 @@ class GitHub(source.Source):
     path = parsed.path.strip('/').split('/')
     if len(path) == 2:
       # new issue
+      owner, repo = path
       if preview:
-        owner, repo = path
         return source.creation_result(content=preview_content, description="""\
 <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:
 <br /><br />%s<br />""" % (base_url, owner, repo, preview_content))
       else:
-        raise NotImplementedError()
+        resp = self.rest(REST_API_ISSUE % (owner, repo), {
+          'title': 'i have an issue',
+          'body': content,
+        })
+        return source.creation_result(resp)
 
     elif len(path) == 4 and path[2] in ('issues', 'pull'):
       # comment

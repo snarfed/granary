@@ -174,13 +174,15 @@ class GitHubTest(testutil.HandlerTest):
 
   def setUp(self):
     super(GitHubTest, self).setUp()
-    self.gh = github.GitHub()
+    self.gh = github.GitHub('a-towkin')
     self.batch = []
     self.batch_responses = []
 
   def expect_graphql(self, response=None, **kwargs):
     return super(GitHubTest, self).expect_requests_post(
-      oauth_github.API_GRAPHQL, response=json.dumps({'data': response}), **kwargs)
+      oauth_github.API_GRAPHQL, headers={
+        'Authorization': 'bearer a-towkin',
+      }, response={'data': response}, **kwargs)
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.gh.user_to_actor(USER))
@@ -308,29 +310,6 @@ class GitHubTest(testutil.HandlerTest):
   # def test_comment_to_object_empty(self):
   #   self.assert_equals({}, self.gh.comment_to_object({}))
 
-  # def test_create_issue(self):
-  #   self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.urlencode({
-  #       'message': 'my msg',
-  #       'tags': '234,345,456',
-  #     }))
-  #   self.mox.ReplayAll()
-
-  #   obj = copy.deepcopy(POST_OBJ)
-  #   del obj['image']
-  #   obj.update({
-  #       'objectType': 'note',
-  #       'content': 'my msg',
-  #       })
-  #   self.assert_equals({
-  #     'id': '123_456',
-  #     'url': 'https://www.github.com/123/posts/456',
-  #     'type': 'post',
-  #   }, self.gh.create(obj).content)
-
-  #   preview = self.gh.preview_create(obj)
-  #   self.assertEquals('<span class="verb">post</span>:', preview.description)
-  #   self.assertEquals('my msg<br /><br /><em>with <a href="https://www.github.com/234">Friend 1</a>, <a href="https://www.github.com/345">Friend 2</a>, <a href="https://www.github.com/456">Friend 3</a></em>', preview.content)
-
   def test_create_comment(self):
     self.expect_graphql(json={
       'query': github.GRAPHQL_ISSUE_OR_PR % {
@@ -370,6 +349,22 @@ class GitHubTest(testutil.HandlerTest):
     preview = self.gh.preview_create(COMMENT_OBJ)
     self.assertEquals('i have something to say here', preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>:', preview.description, preview)
+
+  def test_create_issue(self):
+    resp = {
+      'id': '123',
+      'url': 'https://github.com/foo/bar/issues/123',
+    }
+
+    self.expect_requests_post(github.REST_API_ISSUE % ('foo', 'bar'), data={
+        'title': 'i have an issue',
+        'body': ISSUE['body'].strip(),
+      }, headers={
+        'Authorization': 'token a-towkin',
+      }, response=resp)
+    self.mox.ReplayAll()
+
+    self.assert_equals(resp, self.gh.create(ISSUE_OBJ).content)
 
   def test_preview_issue(self):
     preview = self.gh.preview_create(ISSUE_OBJ)
