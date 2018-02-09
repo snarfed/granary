@@ -371,13 +371,6 @@ class GitHubTest(testutil.HandlerTest):
     self.assertEquals(ISSUE_OBJ['content'].strip(), preview.content)
     self.assertIn('<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar">foo/bar</a>:', preview.description, preview)
 
-  # def test_create_unsupported_type(self):
-  #   for fn in self.gh.create, self.gh.preview_create:
-  #     result = fn({'objectType': 'activity', 'verb': 'share'})
-  #     self.assertTrue(result.abort)
-  #     self.assertIn('Cannot publish shares', result.error_plain)
-  #     self.assertIn('Cannot publish', result.error_html)
-
   # def test_create_comment_without_in_reply_to(self):
   #   obj = copy.deepcopy(COMMENT_OBJS[0])
   #   obj['inReplyTo'] = [{'url': 'http://foo.com/bar'}]

@@ -51,7 +51,8 @@ GRAPHQL_ISSUE_OR_PR = """
 query {
   repository(owner: "%(owner)s", name: "%(repo)s") {
     issueOrPullRequest(number: %(number)s) {
-      id
+      ... on Issue {id}
+      ... on PullRequest {id}
     }
   }
 }
