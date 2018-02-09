@@ -33,7 +33,7 @@ USER = {  # GitHub
 bar</div>""",
   'company': '@bridgy',
   'companyHTML': '<div><a href="https://github.com/bridgy" class="user-mention">bridgy</a></div>',
-  'createdAt': '2011-05-10T00:39:24Z'
+  'createdAt': '2011-05-10T00:39:24Z',
 }
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
@@ -58,13 +58,13 @@ ISSUE = {  # GitHub
   'url': 'https://github.com/metabase/metabase/issues/6824',
   'resourcePath': '/metabase/metabase/issues/6824',
   'repository': {
-    'id': 'MDEwOlJlcG9zaXRvcnkzMDIwMzkzNQ=='
+    'id': 'MDEwOlJlcG9zaXRvcnkzMDIwMzkzNQ==',
   },
   'author': {
     'avatarUrl': 'https://avatars2.githubusercontent.com/u/778068?v=4',
     'login': 'snarfed',
     'resourcePath': '/snarfed',
-    'url': 'https://github.com/snarfed'
+    'url': 'https://github.com/snarfed',
   },
   'title': 'an issue title',
   # note that newlines are \r\n in body but \n in bodyHTML and bodyText
@@ -94,19 +94,47 @@ issue: #123
   'locked': False,
   'closedAt': None,
   'createdAt': '2018-01-30T19:11:03Z',
-  'lastEditedAt': None,
-  'publishedAt': '2018-01-30T19:11:03Z'
+  'lastEditedAt': '2018-02-01T19:11:03Z',
+  'publishedAt': '2005-01-30T19:11:03Z',
+}
+ISSUE_OBJ = {  # ActivityStreams
+  'author': {
+    'objectType': 'person',
+    'username': 'snarfed',
+    'image': {'url': 'https://avatars2.githubusercontent.com/u/778068?v=4'},
+    'url': 'https://github.com/snarfed',
+  },
+  'title': 'an issue title',
+  'content': ISSUE['body'],
+  'id': tag_uri('MDU6SXNzdWUyOTI5MDI1NTI='),
+  'published': '2018-01-30T19:11:03+00:00',
+  'updated': '2018-02-01T19:11:03+00:00',
+  'url': 'https://github.com/metabase/metabase/issues/6824',
+  'to': [{'objectType':'group', 'alias':'@public'}],
+  'inReplyTo': [{
+    'url': 'https://github.com/foo/bar',
+  }],
+  'state': 'OPEN',
+  # 'replies': {
+  #   'items': [COMMENT_OBJ],
+  #   'totalItems': 1,
+  # }
 }
 COMMENT = {  # GitHub
   'id': 'MDEwOlNQ==',
   'url': 'https://github.com/foo/bar/123#issuecomment-456',
-  'from': {
-    'name': 'Ryan Barrett',
-    'id': '212038'
+  'author': {
+    'objectType': 'person',
+    'username': 'snarfed',
+    'image': {'url': 'https://avatars2.githubusercontent.com/u/778068?v=4'},
+    'url': 'https://github.com/snarfed',
   },
-  'message': 'i have something to say here',
-  'created_time': '2012-12-05T00:58:26+0000',
-  # 'privacy': {'value': 'FRIENDS'},
+  'body': 'i have something to say here',
+  'bodyHTML': 'i have something to say here',
+  'createdAt': '2018-01-30T19:11:03Z',
+  'lastEditedAt': '2018-02-01T19:11:03Z',
+  'publishedAt': '2005-01-30T19:11:03Z',
+  # TODO: public or private
 }
 
 COMMENT_OBJ = {  # ActivityStreams
@@ -126,28 +154,6 @@ COMMENT_OBJ = {  # ActivityStreams
     'url': 'https://github.com/foo/bar/pull/123',
   }],
   # 'to': [{'objectType':'group', 'alias':'@private'}],
-}
-ISSUE_OBJ = {  # ActivityStreams
-  'author': {
-    'objectType': 'person',
-    'id': tag_uri('212038'),
-    'displayName': 'Ryan Barrett',
-    'image': {'url': 'https://graph.github.com/v2.10/212038/picture?type=large'},
-    'url': 'https://www.github.com/212038',
-    },
-  'content': ISSUE['body'],
-  'id': tag_uri('10100176064482163'),
-  'published': '2012-03-04T18:20:37+00:00',
-  'updated': '2012-03-04T19:08:16+00:00',
-  'url': 'https://www.github.com/212038/posts/10100176064482163',
-  'to': [{'objectType':'group', 'alias':'@public'}],
-  'inReplyTo': [{
-    'url': 'https://github.com/foo/bar',
-  }],
-  'replies': {
-    'items': [COMMENT_OBJ],
-    'totalItems': 1,
-  }
 }
 ISSUE_ACTIVITY = {  # ActivityStreams
   'verb': 'post',
@@ -290,27 +296,6 @@ class GitHubTest(testutil.HandlerTest):
   #   self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
   #   self.mox.ReplayAll()
   #   self.assert_equals(COMMENT_OBJS[0], self.gh.get_comment('123_456'))
-
-  # def test_issue_to_activity_full(self):
-  #   self.assert_equals(ACTIVITY, self.gh.issue_to_activity(ISSUE))
-
-  # def test_issue_to_activity_minimal(self):
-  #   # just test that we don't crash
-  #   self.gh.issue_to_activity({'id': '123_456', 'message': 'asdf'})
-
-  # def test_issue_to_activity_empty(self):
-  #   # just test that we don't crash
-  #   self.gh.issue_to_activity({})
-
-  # def test_issue_to_object_full(self):
-  #   self.assert_equals(ISSUE_OBJ, self.gh.issue_to_object(ISSUE))
-
-  # def test_issue_to_object_minimal(self):
-  #   # just test that we don't crash
-  #   self.gh.issue_to_object({'id': '123_456', 'message': 'asdf'})
-
-  # def test_issue_to_object_empty(self):
-  #   self.assert_equals({}, self.gh.issue_to_object({}))
 
   # def test_comment_to_object_full(self):
   #   for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
