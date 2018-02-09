@@ -214,8 +214,7 @@ class GitHub(source.Source):
     type = source.object_type(obj)
     if type and type not in ('activity', 'comment', 'note', 'article'):
       return source.creation_result(
-        abort=False,
-        error_plain='Cannot publish type=%s, verb=%s to GitHub' % (type, verb))
+        abort=False, error_plain='Cannot publish %s to GitHub' % type)
 
     # in_reply_to = obj.get('inReplyTo')
     base_obj = self.base_object(obj)
@@ -224,32 +223,43 @@ class GitHub(source.Source):
       return source.creation_result(
         abort=False, error_plain='GitHub must be in reply to repo, issue, or PR URL.')
 
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
+    url = obj.get('url')
+    if include_link == source.INCLUDE_LINK and url:
+      content += '\n\n(Originally published at: %s)' % url
+    # TODO: render markdown
+    preview_content = content
+
     parsed = urlparse.urlparse(base_url)
     path = parsed.path.strip('/').split('/')
-
     if len(path) == 2:
       # new issue
-      raise NotImplementedError()
+      if preview:
+        owner, repo = path
+        return source.creation_result(content=preview_content, description="""\
+<span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:
+<br /><br />%s<br />""" % (base_url, owner, repo, preview_content))
+      else:
+        raise NotImplementedError()
 
     elif len(path) == 4 and path[2] in ('issues', 'pull'):
       # comment
-      issue = self.graphql({'query': GRAPHQL_ISSUE_OR_PR % {
-        'owner': path[0],
-        'repo': path[1],
-        'number': path[3],
-      }})
-      resp = self.graphql({'mutation': GRAPHQL_ADD_COMMENT % {
-        'subject_id': issue['repository']['issueOrPullRequest']['id'],
-        # TODO: linkback
-        'body': self._content_for_create(obj, ignore_formatting=ignore_formatting),
-      }})['addComment']['commentEdge']['node']
+      owner, repo, _, number = path
+      if preview:
+        return source.creation_result(content=preview_content, description="""\
+<span class="verb">comment</span> on <a href="%s">%s/%s#%s</a>:
+<br /><br />%s<br />""" % (base_url, owner, repo, number, preview_content))
+      else:  # create
+        issue = self.graphql({'query': GRAPHQL_ISSUE_OR_PR % locals()})
+        resp = self.graphql({'mutation': GRAPHQL_ADD_COMMENT % {
+          'subject_id': issue['repository']['issueOrPullRequest']['id'],
+          'body': content,
+        }})
+        return source.creation_result(resp['addComment']['commentEdge']['node'])
 
-    else:
-      return source.creation_result(
-        abort=False,
-        error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
-
-    return source.creation_result(resp)
+    return source.creation_result(
+      abort=False,
+      error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
 
   def post_to_activity(self, post):
     """Converts an issue to an activity.

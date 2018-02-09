@@ -223,6 +223,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 1.11 - unreleased
+* Add GitHub!
 * Twitter:
   * Prefer MP4 and other video/... content types to HLS (.m3u8) etc. [Background.](https://twittercommunity.com/t/retiring-mp4-video-output/66093)
   * Prefer HTTPS URLs for media images.
