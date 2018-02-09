@@ -112,7 +112,7 @@ ISSUE_OBJ = {  # ActivityStreams
   'url': 'https://github.com/metabase/metabase/issues/6824',
   'to': [{'objectType':'group', 'alias':'@public'}],
   'inReplyTo': [{
-    'url': 'https://github.com/foo/bar',
+    'url': 'https://github.com/foo/bar/issues',
   }],
   'state': 'OPEN',
   # 'replies': {
@@ -350,7 +350,13 @@ class GitHubTest(testutil.HandlerTest):
     self.assertEquals('i have something to say here', preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>:', preview.description, preview)
 
-  def test_create_issue(self):
+  def test_create_issue_repo_url(self):
+    self._test_create_issue('https://github.com/foo/bar')
+
+  def test_create_issue_issues_url(self):
+    self._test_create_issue('https://github.com/foo/bar/issues')
+
+  def _test_create_issue(self, in_reply_to):
     resp = {
       'id': '789999',
       'number': '123',
@@ -366,17 +372,24 @@ class GitHubTest(testutil.HandlerTest):
       }, response=resp)
     self.mox.ReplayAll()
 
+    obj = copy.deepcopy(ISSUE_OBJ)
+    obj['inReplyTo'][0]['url'] = in_reply_to
     self.assert_equals({
       'id': '789999',
       'number': '123',
       'url': 'https://github.com/foo/bar/issues/123',
-    }, self.gh.create(ISSUE_OBJ).content)
+    }, self.gh.create(obj).content)
 
   def test_preview_issue(self):
-    preview = self.gh.preview_create(ISSUE_OBJ)
-    self.assertEquals('<b>an issue title</b><hr>' + ISSUE_OBJ['content'].strip(),
-                      preview.content)
-    self.assertIn('<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar">foo/bar</a>:', preview.description, preview)
+    obj = copy.deepcopy(ISSUE_OBJ)
+    for url in 'https://github.com/foo/bar', 'https://github.com/foo/bar/issues':
+      obj['inReplyTo'][0]['url'] = url
+      preview = self.gh.preview_create(obj)
+      self.assertEquals('<b>an issue title</b><hr>' + ISSUE_OBJ['content'].strip(),
+                        preview.content)
+      self.assertIn(
+        '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a>:' % url,
+        preview.description, preview)
 
   def test_create_comment_without_in_reply_to(self):
     obj = copy.deepcopy(COMMENT_OBJ)

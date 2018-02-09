@@ -241,9 +241,9 @@ class GitHub(source.Source):
 
     parsed = urlparse.urlparse(base_url)
     path = parsed.path.strip('/').split('/')
-    if len(path) == 2:
+    if len(path) == 2 or (len(path) == 3 and path[2] == 'issues'):
       # new issue
-      owner, repo = path
+      owner, repo = path[:2]
       title = util.ellipsize(obj.get('displayName') or obj.get('title') or
                              orig_content)
       if preview:
