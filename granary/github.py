@@ -47,6 +47,13 @@ query {
   }
 }
 """
+GRAPHQL_REPO = """
+query {
+  repository(owner: "%(owner)s", name: "%(repo)s") {
+    id
+  }
+}
+"""
 GRAPHQL_ISSUE_OR_PR = """
 query {
   repository(owner: "%(owner)s", name: "%(repo)s") {
@@ -64,6 +71,15 @@ mutation {
       node {
         id url
       }
+    }
+  }
+}
+"""
+GRAPHQL_ADD_STAR = """
+mutation {
+  addStar(input: {starrableId: "%(starrable_id)s"}) {
+    starrable {
+      id
     }
   }
 }
@@ -219,14 +235,13 @@ class GitHub(source.Source):
     assert preview in (False, True)
 
     type = source.object_type(obj)
-    if type and type not in ('activity', 'comment', 'note', 'article'):
+    if type and type not in ('activity', 'comment', 'note', 'article', 'like'):
       return source.creation_result(
         abort=False, error_plain='Cannot publish %s to GitHub' % type)
 
-    # in_reply_to = obj.get('inReplyTo')
     base_obj = self.base_object(obj)
     base_url = base_obj.get('url')
-    if not base_url:  # or not in_reply_to
+    if not base_url:
       return source.creation_result(
         abort=True,
         error_plain='You need an in-reply-to GitHub repo, issue, or PR URL.')
@@ -241,23 +256,38 @@ class GitHub(source.Source):
 
     parsed = urlparse.urlparse(base_url)
     path = parsed.path.strip('/').split('/')
+    owner, repo = path[:2]
+
     if len(path) == 2 or (len(path) == 3 and path[2] == 'issues'):
-      # new issue
-      owner, repo = path[:2]
-      title = util.ellipsize(obj.get('displayName') or obj.get('title') or
-                             orig_content)
-      if preview:
-        preview_content = '<b>%s</b><hr>%s' % (title, preview_content)
-        return source.creation_result(content=preview_content, description="""\
-<span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:""" %
-            (base_url, owner, repo))
-      else:
-        resp = self.rest(REST_API_ISSUE % (owner, repo), {
-          'title': title,
-          'body': content,
-        })
-        resp['url'] = resp.pop('html_url')
-        return source.creation_result(resp)
+      if type == 'like':
+        if preview:
+          return source.creation_result(description="""\
+<span class="verb">star</span> <a href="%s">%s/%s</a>.""" %
+              (base_url, owner, repo))
+        else:
+          issue = self.graphql(GRAPHQL_REPO % locals())
+          resp = self.graphql(GRAPHQL_ADD_STAR % {
+            'starrable_id': issue['repository']['id'],
+          })
+          return source.creation_result({
+            'url': base_url + '/stargazers',
+          })
+
+      else:  # new issue
+        title = util.ellipsize(obj.get('displayName') or obj.get('title') or
+                               orig_content)
+        if preview:
+          preview_content = '<b>%s</b><hr>%s' % (title, preview_content)
+          return source.creation_result(content=preview_content, description="""\
+  <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:""" %
+              (base_url, owner, repo))
+        else:
+          resp = self.rest(REST_API_ISSUE % (owner, repo), {
+            'title': title,
+            'body': content,
+          })
+          resp['url'] = resp.pop('html_url')
+          return source.creation_result(resp)
 
     elif len(path) == 4 and path[2] in ('issues', 'pull'):
       # comment

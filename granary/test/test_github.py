@@ -155,18 +155,10 @@ COMMENT_OBJ = {  # ActivityStreams
   }],
   # 'to': [{'objectType':'group', 'alias':'@private'}],
 }
-ISSUE_ACTIVITY = {  # ActivityStreams
-  'verb': 'post',
-  'published': '2012-03-04T18:20:37+00:00',
-  'updated': '2012-03-04T19:08:16+00:00',
-  'id': tag_uri('10100176064482163'),
-  'url': 'https://www.github.com/212038/posts/10100176064482163',
-  'actor': ISSUE_OBJ['author'],
-  'object': ISSUE_OBJ,
-  'generator': {
-    'displayName': 'GitHub for Android',
-    'id': tag_uri('350685531728'),
-  },
+STAR_OBJ = {
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'https://github.com/foo/bar'},
 }
 
 
@@ -400,3 +392,37 @@ class GitHubTest(testutil.HandlerTest):
       self.assertTrue(result.abort)
       self.assertIn('You need an in-reply-to GitHub repo, issue, or PR URL.',
                     result.error_plain)
+
+  def test_create_star(self):
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_REPO % {
+        'owner': 'foo',
+        'repo': 'bar',
+      },
+    }, response={
+      'repository': {
+        'id': 'ABC123',
+      },
+    })
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ADD_STAR % {
+        'starrable_id': 'ABC123',
+      },
+    }, response={
+      'addStar': {
+        'starrable': {
+          'url': 'https://github.com/foo/bar/pull/123#comment-456',
+        },
+      },
+    })
+    self.mox.ReplayAll()
+
+    result = self.gh.create(STAR_OBJ)
+    self.assert_equals({
+      'url': 'https://github.com/foo/bar/stargazers',
+    }, result.content, result)
+
+  def test_preview_star(self):
+    preview = self.gh.preview_create(STAR_OBJ)
+    self.assertEquals('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
+
