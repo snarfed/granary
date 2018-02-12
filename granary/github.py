@@ -15,6 +15,7 @@ from oauth_dropins.webutil import util
 import source
 
 REST_API_ISSUE = 'https://api.github.com/repos/%s/%s/issues'
+REST_API_MARKDOWN = 'https://api.github.com/markdown'
 GRAPHQL_USER_ISSUES = """
 query {
   viewer {
@@ -140,7 +141,7 @@ class GitHub(source.Source):
       'Authorization': 'token %s' % self.access_token,
     })
     resp.raise_for_status()
-    return resp.json()
+    return resp
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -179,6 +180,25 @@ class GitHub(source.Source):
     """
     resp = self.urlopen(API_COMMENT % comment_id)
     return self.comment_to_object(resp, post_author_id=activity_author_id)
+
+  def render_markdown(self, markdown, owner, repo):
+    """Uses the GitHub API to render GitHub-flavored Markdown to HTML.
+
+    https://developer.github.com/v3/markdown/
+    https://github.github.com/gfm/
+
+    Args:
+      markdown: unicode string, input
+      owner and repo: strings, the repo to render in, for context. affects git
+        hashes #XXX for issues/PRs.
+
+    Returns: unicode string, rendered HTML
+    """
+    return self.rest(REST_API_MARKDOWN, {
+      'text': markdown,
+      'mode': 'gfm',
+      'context': '%s/%s' % (owner, repo),
+    }).text
 
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
     """Creates a new issue or comment.
@@ -251,15 +271,13 @@ class GitHub(source.Source):
     url = obj.get('url')
     if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url
-    # TODO: render markdown
-    preview_content = content
 
     parsed = urlparse.urlparse(base_url)
     path = parsed.path.strip('/').split('/')
     owner, repo = path[:2]
 
     if len(path) == 2 or (len(path) == 3 and path[2] == 'issues'):
-      if type == 'like':
+      if type == 'like':  # star
         if preview:
           return source.creation_result(description="""\
 <span class="verb">star</span> <a href="%s">%s/%s</a>.""" %
@@ -277,7 +295,8 @@ class GitHub(source.Source):
         title = util.ellipsize(obj.get('displayName') or obj.get('title') or
                                orig_content)
         if preview:
-          preview_content = '<b>%s</b><hr>%s' % (title, preview_content)
+          preview_content = '<b>%s</b><hr>%s' % (
+            title, self.render_markdown(content, owner, repo))
           return source.creation_result(content=preview_content, description="""\
   <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:""" %
               (base_url, owner, repo))
@@ -285,7 +304,7 @@ class GitHub(source.Source):
           resp = self.rest(REST_API_ISSUE % (owner, repo), {
             'title': title,
             'body': content,
-          })
+          }).json()
           resp['url'] = resp.pop('html_url')
           return source.creation_result(resp)
 
@@ -293,6 +312,7 @@ class GitHub(source.Source):
       # comment
       owner, repo, _, number = path
       if preview:
+        preview_content = self.render_markdown(content, owner, repo)
         return source.creation_result(content=preview_content, description="""\
 <span class="verb">comment</span> on <a href="%s">%s/%s#%s</a>:""" %
             (base_url, owner, repo, number))

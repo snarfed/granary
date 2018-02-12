@@ -171,10 +171,20 @@ class GitHubTest(testutil.HandlerTest):
     self.batch_responses = []
 
   def expect_graphql(self, response=None, **kwargs):
-    return super(GitHubTest, self).expect_requests_post(
-      oauth_github.API_GRAPHQL, headers={
+    return self.expect_requests_post(oauth_github.API_GRAPHQL, headers={
         'Authorization': 'bearer a-towkin',
       }, response={'data': response}, **kwargs)
+
+  def expect_markdown_render(self, body):
+    rendered = '<p>rendered!</p>'
+    self.expect_requests_post(github.REST_API_MARKDOWN, headers={
+      'Authorization': 'token a-towkin',
+    }, response=rendered, json={
+      'text': body,
+      'mode': 'gfm',
+      'context': 'foo/bar',
+    })
+    return rendered
 
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.gh.user_to_actor(USER))
@@ -338,8 +348,11 @@ class GitHubTest(testutil.HandlerTest):
     }, result.content, result)
 
   def test_preview_comment(self):
+    rendered = self.expect_markdown_render('i have something to say here')
+    self.mox.ReplayAll()
+
     preview = self.gh.preview_create(COMMENT_OBJ)
-    self.assertEquals('i have something to say here', preview.content, preview)
+    self.assertEquals(rendered, preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>:', preview.description, preview)
 
   def test_create_issue_repo_url(self):
@@ -349,19 +362,17 @@ class GitHubTest(testutil.HandlerTest):
     self._test_create_issue('https://github.com/foo/bar/issues')
 
   def _test_create_issue(self, in_reply_to):
-    resp = {
-      'id': '789999',
-      'number': '123',
-      'url': 'not this one',
-      'html_url': 'https://github.com/foo/bar/issues/123',
-    }
-
     self.expect_requests_post(github.REST_API_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE['body'].strip(),
       }, headers={
         'Authorization': 'token a-towkin',
-      }, response=resp)
+      }, response={
+        'id': '789999',
+        'number': '123',
+        'url': 'not this one',
+        'html_url': 'https://github.com/foo/bar/issues/123',
+      })
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(ISSUE_OBJ)
@@ -373,12 +384,15 @@ class GitHubTest(testutil.HandlerTest):
     }, self.gh.create(obj).content)
 
   def test_preview_issue(self):
+    for i in range(2):
+      rendered = self.expect_markdown_render(ISSUE['body'].strip())
+    self.mox.ReplayAll()
+
     obj = copy.deepcopy(ISSUE_OBJ)
     for url in 'https://github.com/foo/bar', 'https://github.com/foo/bar/issues':
       obj['inReplyTo'][0]['url'] = url
       preview = self.gh.preview_create(obj)
-      self.assertEquals('<b>an issue title</b><hr>' + ISSUE_OBJ['content'].strip(),
-                        preview.content)
+      self.assertEquals('<b>an issue title</b><hr>' + rendered, preview.content)
       self.assertIn(
         '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a>:' % url,
         preview.description, preview)
