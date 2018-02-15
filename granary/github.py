@@ -148,13 +148,13 @@ class GitHub(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None,
-                              fetch_news=False, event_owner_id=None, **kwargs):
+                              fetch_mentions=False, search_query=None, **kwargs):
     """Fetches issues and comments and converts them to ActivityStreams activities.
 
-    See method docstring in source.py for details.
+    See :meth:`Source.get_activities_response` for details.
     """
-    if search_query:
+    if (activity_id or fetch_replies or fetch_likes or fetch_shares or
+        fetch_events or fetch_mentions or search_query):
       raise NotImplementedError()
 
     activities = []
@@ -337,7 +337,7 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    obj = self.post_to_object(comment, type='comment')
+    obj = self.issue_to_object(comment, type='comment')
     if not obj:
       return obj
 
@@ -350,6 +350,11 @@ class GitHub(source.Source):
   def user_to_actor(self, user):
     """Converts a GitHub v4 user or actor to an ActivityStreams actor.
 
+    Handles both v4 GraphQL and v3 REST API user objects.
+
+    https://developer.github.com/v4/object/user/
+    https://developer.github.com/v3/users/
+
     Args:
       user: dict, decoded JSON GitHub user or actor
 
@@ -359,7 +364,7 @@ class GitHub(source.Source):
     if not user:
       return {}
 
-    id = user.get('id')
+    id = user.get('node_id') or user.get('id')
     username = user.get('login')
     bio = user.get('bio')
 
@@ -370,16 +375,20 @@ class GitHub(source.Source):
       'id': self.tag_uri(id),
       'username': username,
       'email': user.get('email'),
-      'published': util.maybe_iso8601_to_rfc3339(user.get('createdAt')),
+      'published': util.maybe_iso8601_to_rfc3339(user.get('createdAt') or
+                                                 user.get('created_at')),
       'description': bio,
       'summary': bio,
-      'image': {'url': user.get('avatarUrl')},
+      'image': {'url': user.get('avatarUrl') or user.get('avatar_url')},
       'location': {'displayName': user.get('location')},
     }
 
     # extract web site links. extract_links uniquifies and preserves order
     urls = sum((util.extract_links(user.get(field)) for field in
-                ('websiteUrl', 'bio')), [])
+                ('websiteUrl',  # GraphQL
+                 'blog',  # REST
+                 'bio',   # both
+                )), [])
     if urls:
       actor['url'] = urls[0]
       if len(urls) > 1:

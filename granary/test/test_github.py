@@ -17,12 +17,12 @@ from granary import source
 def tag_uri(name):
   return util.tag_uri('github.com', name)
 
-USER = {  # GitHub
+USER_GRAPHQL = {  # GitHub
+  'id': 'MDQ6VXNlcjc3ODA2OA==',
   'login': 'snarfed',
   'resourcePath': '/snarfed',
   'url': 'https://github.com/snarfed',
   'avatarUrl': 'https://avatars2.githubusercontent.com/u/778068?v=4',
-  'id': 'MDQ6VXNlcjc3ODA2OA==',
   'email': 'github@ryanb.org',
   'location': 'San Francisco',
   'name': 'Ryan Barrett',
@@ -31,9 +31,30 @@ USER = {  # GitHub
   'bioHTML': """\
 <div>foo <a href="https://brid.gy/" rel="nofollow">https://brid.gy/</a>
 bar</div>""",
-  'company': '@bridgy',
+  'company': 'Bridgy',
   'companyHTML': '<div><a href="https://github.com/bridgy" class="user-mention">bridgy</a></div>',
   'createdAt': '2011-05-10T00:39:24Z',
+}
+USER_REST = {  # GitHub
+  'id': 778068,
+  'node_id': 'MDQ6VXNlcjc3ODA2OA==',
+  'login': 'snarfed',
+  'avatar_url': 'https://avatars2.githubusercontent.com/u/778068?v=4',
+  'url': 'https://api.github.com/users/snarfed',
+  'html_url': 'https://github.com/snarfed',
+  'type': 'User',
+  'location': 'San Francisco',
+  'name': 'Ryan Barrett',
+  'blog': 'https://snarfed.org/',
+  'bio': 'foo https://brid.gy/\r\nbar',
+  'site_admin': False,
+  'company': 'Bridgy',
+  'email': 'github@ryanb.org',
+  'hireable': None,
+  'followers': 20,
+  'following': 1,
+  'created_at': '2011-05-10T00:39:24Z',
+  'updated_at': '2012-06-10T00:39:24Z',
 }
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
@@ -52,7 +73,7 @@ ACTOR = {  # ActivityStreams
   'summary': 'foo https://brid.gy/\r\nbar',
   'location': {'displayName': 'San Francisco'},
   }
-ISSUE = {  # GitHub
+ISSUE_GRAPHQL = {  # GitHub
   'id': 'MDU6SXNzdWUyOTI5MDI1NTI=',
   'number': 6824,
   'url': 'https://github.com/metabase/metabase/issues/6824',
@@ -97,6 +118,38 @@ issue: #123
   'lastEditedAt': '2018-02-01T19:11:03Z',
   'publishedAt': '2005-01-30T19:11:03Z',
 }
+ISSUE_REST = {
+  'id': 53289448,
+  'node_id': 'MDU6SXNzdWU1MzI4OTQ0OA==',
+  'number': 333,
+  'url': 'https://api.github.com/repos/snarfed/bridgy/issues/333',
+  'html_url': 'https://github.com/snarfed/bridgy/issues/333',
+  'title': 'add GitHub support',
+  'user': USER_REST,
+  'labels': [
+    {
+      'id': 281245471,
+      'name': 'new silo',
+      'color': 'fbca04',
+      'default': False,
+      'node_id': 'MDU6TGFiZWwyODEyNDU0NzE='
+    }
+  ],
+  'state': 'open',
+  'locked': False,
+  'assignee': None,
+  'assignees': [
+
+  ],
+  'milestone': None,
+  'comments': 20,
+  'created_at': '2015-01-03T01:12:37Z',
+  'updated_at': '2018-02-13T18:40:35Z',
+  'closed_at': None,
+  'author_association': 'OWNER',
+  'body': "...specifically, publish for POSSEing issues and issue comments and backfeed for issue comments. (anything else?)\n\nof all the \'add silo X\' feature requests we have, this is the one i'd use, and use a lot. i don't expect to implement it anytime soon, but i'd love to use it!\n\n(#326 - Instagram publish support for likes - is maybe the one other i'd use, but we already support IG backfeed, so it only half counts. :P)\n",
+  'closed_by': None,
+}
 ISSUE_OBJ = {  # ActivityStreams
   'author': {
     'objectType': 'person',
@@ -105,7 +158,7 @@ ISSUE_OBJ = {  # ActivityStreams
     'url': 'https://github.com/snarfed',
   },
   'title': 'an issue title',
-  'content': ISSUE['body'],
+  'content': ISSUE_GRAPHQL['body'],
   'id': tag_uri('MDU6SXNzdWUyOTI5MDI1NTI='),
   'published': '2018-01-30T19:11:03+00:00',
   'updated': '2018-02-01T19:11:03+00:00',
@@ -186,8 +239,11 @@ class GitHubTest(testutil.HandlerTest):
     })
     return rendered
 
-  def test_user_to_actor_full(self):
-    self.assert_equals(ACTOR, self.gh.user_to_actor(USER))
+  def test_user_to_actor_graphql(self):
+    self.assert_equals(ACTOR, self.gh.user_to_actor(USER_GRAPHQL))
+
+  def test_user_to_actor_rest(self):
+    self.assert_equals(ACTOR, self.gh.user_to_actor(USER_REST))
 
   def test_user_to_actor_minimal(self):
     actor = self.gh.user_to_actor({'id': '123'})
@@ -292,9 +348,25 @@ class GitHubTest(testutil.HandlerTest):
   #   activities = self.gh.get_activities(fetch_replies=True)
   #   self.assert_equals(...)
 
-  # def test_get_activities_search_not_implemented(self):
-  #   with self.assertRaises(NotImplementedError):
-  #     self.gh.get_activities(search_query='foo')
+  def test_get_activities_search_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.gh.get_activities(search_query='foo')
+
+  def test_get_activities_activity_id_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.gh.get_activities(activity_id='foo')
+
+  def test_get_activities_fetch_likes_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.gh.get_activities(fetch_likes='foo')
+
+  def test_get_activities_fetch_events_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.gh.get_activities(fetch_events='foo')
+
+  def test_get_activities_fetch_shares_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.gh.get_activities(fetch_shares='foo')
 
   # def test_get_comment(self):
   #   self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
@@ -321,12 +393,12 @@ class GitHubTest(testutil.HandlerTest):
       },
     }, response={
       'repository': {
-        'issueOrPullRequest': ISSUE,
+        'issueOrPullRequest': ISSUE_GRAPHQL,
       },
     })
     self.expect_graphql(json={
       'query': github.GRAPHQL_ADD_COMMENT % {
-        'subject_id': ISSUE['id'],
+        'subject_id': ISSUE_GRAPHQL['id'],
         'body': 'i have something to say here',
       },
     }, response={
@@ -364,7 +436,7 @@ class GitHubTest(testutil.HandlerTest):
   def _test_create_issue(self, in_reply_to):
     self.expect_requests_post(github.REST_API_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
-        'body': ISSUE['body'].strip(),
+        'body': ISSUE_GRAPHQL['body'].strip(),
       }, headers={
         'Authorization': 'token a-towkin',
       }, response={
@@ -385,7 +457,7 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_preview_issue(self):
     for i in range(2):
-      rendered = self.expect_markdown_render(ISSUE['body'].strip())
+      rendered = self.expect_markdown_render(ISSUE_GRAPHQL['body'].strip())
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(ISSUE_OBJ)

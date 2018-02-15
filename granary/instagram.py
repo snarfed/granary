@@ -159,7 +159,7 @@ class Instagram(source.Source):
         passing a shortcode as activity_id as well as the internal API id.
         http://developers.instagram.com/post/133424514006/instagram-platform-update
       cookie: string, only used if scrape=True
-      **: see :meth:`Source.get_activities_reponse`
+      **: see :meth:`Source.get_activities_response`
 
     Raises:
       InstagramAPIError
