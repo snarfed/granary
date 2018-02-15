@@ -75,41 +75,18 @@ ACTOR = {  # ActivityStreams
   }
 ISSUE_GRAPHQL = {  # GitHub
   'id': 'MDU6SXNzdWUyOTI5MDI1NTI=',
-  'number': 6824,
-  'url': 'https://github.com/metabase/metabase/issues/6824',
-  'resourcePath': '/metabase/metabase/issues/6824',
+  'number': 333,
+  'url': 'https://github.com/foo/bar/issues/333',
+  'resourcePath': '/foo/bar/issues/333',
   'repository': {
     'id': 'MDEwOlJlcG9zaXRvcnkzMDIwMzkzNQ==',
   },
-  'author': {
-    'avatarUrl': 'https://avatars2.githubusercontent.com/u/778068?v=4',
-    'login': 'snarfed',
-    'resourcePath': '/snarfed',
-    'url': 'https://github.com/snarfed',
-  },
+  'author': USER_GRAPHQL,
   'title': 'an issue title',
   # note that newlines are \r\n in body but \n in bodyHTML and bodyText
-  'body': """\
-foo bar baz\r
-[link](http://www.proficiencylabs.com/)\r
-@user mention\r
-hash: bf0076f377aeb9b1981118b6dd1e23779bd54502\r
-issue: #123\r
-""",
-  'bodyHTML': """\
-<p>foo bar baz
-<a href="http://www.proficiencylabs.com/" rel="nofollow">link</a>
-<a href="https://github.com/dshanske" class="user-mention">@user</a> mention
-hash: <a href=\"https://github.com/pfefferle/wordpress-semantic-linkbacks/commit/bf0076f377aeb9b1981118b6dd1e23779bd54502\" class=\"commit-link\"><tt>bf0076f</tt></a>
-issue: TODO
-</p>""",
-  'bodyText': """\
-foo bar baz
-link
-@user mention
-hash: bf0076f377aeb9b1981118b6dd1e23779bd54502
-issue: #123
-""",
+  'body': 'foo bar\r\nbaz',
+  'bodyHTML': '<p>foo bar\nbaz</p>',
+  'bodyText': 'foo bar\nbaz',
   'state': 'OPEN',
   'closed': False,
   'locked': False,
@@ -118,56 +95,45 @@ issue: #123
   'lastEditedAt': '2018-02-01T19:11:03Z',
   'publishedAt': '2005-01-30T19:11:03Z',
 }
-ISSUE_REST = {
+ISSUE_REST = {  # GitHub
   'id': 53289448,
-  'node_id': 'MDU6SXNzdWU1MzI4OTQ0OA==',
+  'node_id': 'MDU6SXNzdWUyOTI5MDI1NTI=',
   'number': 333,
-  'url': 'https://api.github.com/repos/snarfed/bridgy/issues/333',
-  'html_url': 'https://github.com/snarfed/bridgy/issues/333',
-  'title': 'add GitHub support',
+  'url': 'https://api.github.com/repos/foo/bar/issues/333',
+  'html_url': 'https://github.com/foo/bar/issues/333',
+  'title': 'an issue title',
   'user': USER_REST,
-  'labels': [
-    {
-      'id': 281245471,
-      'name': 'new silo',
-      'color': 'fbca04',
-      'default': False,
-      'node_id': 'MDU6TGFiZWwyODEyNDU0NzE='
-    }
-  ],
+  'body': 'foo bar\nbaz',
+  'labels': [{
+    'id': 281245471,
+    'node_id': 'MDU6TGFiZWwyODEyNDU0NzE=',
+    'name': 'new silo',
+    'color': 'fbca04',
+    'default': False,
+  }],
   'state': 'open',
   'locked': False,
   'assignee': None,
-  'assignees': [
-
-  ],
-  'milestone': None,
+  'assignees': [],
   'comments': 20,
-  'created_at': '2015-01-03T01:12:37Z',
-  'updated_at': '2018-02-13T18:40:35Z',
-  'closed_at': None,
+  'created_at': '2018-01-30T19:11:03Z',
+  'updated_at': '2018-02-01T19:11:03Z',
   'author_association': 'OWNER',
-  'body': "...specifically, publish for POSSEing issues and issue comments and backfeed for issue comments. (anything else?)\n\nof all the \'add silo X\' feature requests we have, this is the one i'd use, and use a lot. i don't expect to implement it anytime soon, but i'd love to use it!\n\n(#326 - Instagram publish support for likes - is maybe the one other i'd use, but we already support IG backfeed, so it only half counts. :P)\n",
-  'closed_by': None,
 }
 ISSUE_OBJ = {  # ActivityStreams
-  'author': {
-    'objectType': 'person',
-    'username': 'snarfed',
-    'image': {'url': 'https://avatars2.githubusercontent.com/u/778068?v=4'},
-    'url': 'https://github.com/snarfed',
-  },
-  'title': 'an issue title',
-  'content': ISSUE_GRAPHQL['body'],
+  'objectType': 'issue',
   'id': tag_uri('MDU6SXNzdWUyOTI5MDI1NTI='),
+  'url': 'https://github.com/foo/bar/issues/333',
+  'author': ACTOR,
+  'title': 'an issue title',
+  'content': 'foo bar\r\nbaz',
   'published': '2018-01-30T19:11:03+00:00',
   'updated': '2018-02-01T19:11:03+00:00',
-  'url': 'https://github.com/metabase/metabase/issues/6824',
-  'to': [{'objectType':'group', 'alias':'@public'}],
-  'inReplyTo': [{
-    'url': 'https://github.com/foo/bar/issues',
+  'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+  'tags': [{
+    'displayName': 'new silo',
+    'url': 'https://github.com/foo/bar/labels/new%20silo',
   }],
-  'state': 'OPEN',
   # 'replies': {
   #   'items': [COMMENT_OBJ],
   #   'totalItems': 1,
@@ -368,6 +334,26 @@ class GitHubTest(testutil.HandlerTest):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(fetch_shares='foo')
 
+  # def test_get_issue(self):
+  #   self.expect_urlopen(API_ISSUE % '123_456', ISSUES[0])
+  #   self.mox.ReplayAll()
+  #   self.assert_equals(ISSUE_OBJS[0], self.gh.get_issue('123_456'))
+
+  def test_issue_to_object_graphql(self):
+    obj = copy.deepcopy(ISSUE_OBJ)
+    del obj['tags']
+    self.assert_equals(obj, self.gh.issue_to_object(ISSUE_GRAPHQL))
+
+  def test_issue_to_object_rest(self):
+    self.assert_equals(ISSUE_OBJ, self.gh.issue_to_object(ISSUE_REST))
+
+  def test_issue_to_object_minimal(self):
+    # just test that we don't crash
+    self.gh.issue_to_object({'id': '123', 'body': 'asdf'})
+
+  def test_issue_to_object_empty(self):
+    self.assert_equals({}, self.gh.issue_to_object({}))
+
   # def test_get_comment(self):
   #   self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
   #   self.mox.ReplayAll()
@@ -436,7 +422,7 @@ class GitHubTest(testutil.HandlerTest):
   def _test_create_issue(self, in_reply_to):
     self.expect_requests_post(github.REST_API_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
-        'body': ISSUE_GRAPHQL['body'].strip(),
+        'body': ISSUE_OBJ['content'].strip(),
       }, headers={
         'Authorization': 'token a-towkin',
       }, response={
@@ -449,21 +435,25 @@ class GitHubTest(testutil.HandlerTest):
 
     obj = copy.deepcopy(ISSUE_OBJ)
     obj['inReplyTo'][0]['url'] = in_reply_to
+    result = self.gh.create(obj)
+
+    self.assertIsNone(result.error_plain, result)
     self.assert_equals({
       'id': '789999',
       'number': '123',
       'url': 'https://github.com/foo/bar/issues/123',
-    }, self.gh.create(obj).content)
+    }, result.content)
 
   def test_preview_issue(self):
     for i in range(2):
-      rendered = self.expect_markdown_render(ISSUE_GRAPHQL['body'].strip())
+      rendered = self.expect_markdown_render(ISSUE_OBJ['content'].strip())
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(ISSUE_OBJ)
     for url in 'https://github.com/foo/bar', 'https://github.com/foo/bar/issues':
       obj['inReplyTo'][0]['url'] = url
       preview = self.gh.preview_create(obj)
+      self.assertIsNone(preview.error_plain, preview)
       self.assertEquals('<b>an issue title</b><hr>' + rendered, preview.content)
       self.assertIn(
         '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a>:' % url,

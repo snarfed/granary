@@ -7,6 +7,7 @@ https://developer.github.com/apps/building-oauth-apps/authorization-options-for-
 """
 import logging
 import re
+import urllib
 import urlparse
 
 import appengine_config
@@ -255,7 +256,7 @@ class GitHub(source.Source):
     assert preview in (False, True)
 
     type = source.object_type(obj)
-    if type and type not in ('activity', 'comment', 'note', 'article', 'like'):
+    if type and type not in ('issue', 'comment', 'activity', 'note', 'article', 'like'):
       return source.creation_result(
         abort=False, error_plain='Cannot publish %s to GitHub' % type)
 
@@ -328,6 +329,46 @@ class GitHub(source.Source):
       abort=False,
       error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
 
+  def issue_to_object(self, issue):
+    """Converts a GitHub issue to an ActivityStreams actor.
+
+    Handles both v4 GraphQL and v3 REST API issue objects.
+
+    https://developer.github.com/v4/object/issue/
+    https://developer.github.com/v3/issues/
+
+    Args:
+      user: dict, decoded JSON GitHub issue
+
+    Returns:
+      an ActivityStreams actor dict, ready to be JSON-encoded
+    """
+    if not issue:
+      return {}
+
+    id = issue.get('node_id') or issue.get('id')
+    url = issue.get('html_url') or issue.get('url') or ''
+    repo_url = re.sub(r'/(issue|pull)s?/[0-9]+$', '', url)
+
+    obj = {
+      'objectType': 'issue',
+      'id': self.tag_uri(id),
+      'url': url,
+      'author': self.user_to_actor(issue.get('author') or issue.get('user')),
+      'title': issue.get('title'),
+      'published': util.maybe_iso8601_to_rfc3339(issue.get('createdAt') or
+                                                 issue.get('created_at')),
+      'updated': util.maybe_iso8601_to_rfc3339(issue.get('lastEditedAt') or
+                                               issue.get('updated_at')),
+      'content': issue.get('body'),
+      'inReplyTo': [{'url': repo_url + '/issues'}],
+      'tags': [{
+        'displayName': l['name'],
+        'url': '%s/labels/%s' % (repo_url, urllib.quote(l['name'])),
+      } for l in issue.get('labels', []) if l.get('name')],
+    }
+    return self.postprocess_object(obj)
+
   def comment_to_object(self, comment):
     """Converts a comment to an object.
 
@@ -348,7 +389,7 @@ class GitHub(source.Source):
     return self.postprocess_object(obj)
 
   def user_to_actor(self, user):
-    """Converts a GitHub v4 user or actor to an ActivityStreams actor.
+    """Converts a GitHub user to an ActivityStreams actor.
 
     Handles both v4 GraphQL and v3 REST API user objects.
 
@@ -356,7 +397,7 @@ class GitHub(source.Source):
     https://developer.github.com/v3/users/
 
     Args:
-      user: dict, decoded JSON GitHub user or actor
+      user: dict, decoded JSON GitHub user
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
@@ -394,4 +435,4 @@ class GitHub(source.Source):
       if len(urls) > 1:
         actor['urls'] = [{'value': u} for u in urls]
 
-    return util.trim_nulls(actor)
+    return self.postprocess_object(actor)
