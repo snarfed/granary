@@ -54,7 +54,6 @@ USER_REST = {  # GitHub
   'followers': 20,
   'following': 1,
   'created_at': '2011-05-10T00:39:24Z',
-  'updated_at': '2012-06-10T00:39:24Z',
 }
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
@@ -139,41 +138,42 @@ ISSUE_OBJ = {  # ActivityStreams
   #   'totalItems': 1,
   # }
 }
-COMMENT = {  # GitHub
+COMMENT_GRAPHQL = {  # GitHub
   'id': 'MDEwOlNQ==',
-  'url': 'https://github.com/foo/bar/123#issuecomment-456',
-  'author': {
-    'objectType': 'person',
-    'username': 'snarfed',
-    'image': {'url': 'https://avatars2.githubusercontent.com/u/778068?v=4'},
-    'url': 'https://github.com/snarfed',
-  },
+  'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
+  'author': USER_GRAPHQL,
   'body': 'i have something to say here',
   'bodyHTML': 'i have something to say here',
-  'createdAt': '2018-01-30T19:11:03Z',
-  'lastEditedAt': '2018-02-01T19:11:03Z',
+  'createdAt': '2015-07-23T18:47:58Z',
+  'lastEditedAt': '2015-07-23T19:47:58Z',
   'publishedAt': '2005-01-30T19:11:03Z',
-  # TODO: public or private
+}
+COMMENT_REST = {  # GitHub
+  'id': 456,
+  # comments don't yet have node_id, as of 2/14/2018
+  'html_url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
+  # note that these API endpoints still use /issues/, even for PRs
+  'url': 'https://api.github.com/repos/foo/bar/issues/comments/456',
+  'issue_url': 'https://api.github.com/repos/foo/bar/issues/123',
+  'user': USER_REST,
+  'created_at': '2015-07-23T18:47:58Z',
+  'updated_at': '2015-07-23T19:47:58Z',
+  'author_association': 'CONTRIBUTOR',  # or OWNER or NONE
+  'body': 'i have something to say here',
 }
 
 COMMENT_OBJ = {  # ActivityStreams
   'objectType': 'comment',
-  # 'author': {
-  #   'objectType': 'person',
-  #   'id': tag_uri('212038'),
-  #   'displayName': 'Ryan Barrett',
-  #   'image': {'url': 'https://graph.github.com/v2.10/212038/picture?type=large'},
-  #   'url': 'https://www.github.com/212038',
-  # },
-  'content': 'i have something to say here',
   'id': tag_uri('MDEwOlNQ=='),
+  'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
+  'author': ACTOR,
+  'content': 'i have something to say here',
   'published': '2012-12-05T00:58:26+00:00',
-  'url': 'https://github.com/foo/bar/pull/123#comment-xyz',
-  'inReplyTo': [{
-    'url': 'https://github.com/foo/bar/pull/123',
-  }],
-  # 'to': [{'objectType':'group', 'alias':'@private'}],
+  'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123'}],
+  'published': '2015-07-23T18:47:58+00:00',
+  'updated': '2015-07-23T19:47:58+00:00',
 }
+
 STAR_OBJ = {
   'objectType': 'activity',
   'verb': 'like',
@@ -359,16 +359,20 @@ class GitHubTest(testutil.HandlerTest):
   #   self.mox.ReplayAll()
   #   self.assert_equals(COMMENT_OBJS[0], self.gh.get_comment('123_456'))
 
-  # def test_comment_to_object_full(self):
-  #   for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
-  #     self.assert_equals(obj, self.gh.comment_to_object(cmt))
+  def test_comment_to_object_graphql(self):
+    self.assert_equals(COMMENT_OBJ, self.gh.comment_to_object(COMMENT_GRAPHQL))
 
-  # def test_comment_to_object_minimal(self):
-  #   # just test that we don't crash
-  #   self.gh.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
+  def test_comment_to_object_rest(self):
+    obj = copy.deepcopy(COMMENT_OBJ)
+    obj['id'] = tag_uri(COMMENT_REST['id'])
+    self.assert_equals(obj, self.gh.comment_to_object(COMMENT_REST))
 
-  # def test_comment_to_object_empty(self):
-  #   self.assert_equals({}, self.gh.comment_to_object({}))
+  def test_comment_to_object_minimal(self):
+    # just test that we don't crash
+    self.gh.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
+
+  def test_comment_to_object_empty(self):
+    self.assert_equals({}, self.gh.comment_to_object({}))
 
   def test_create_comment(self):
     self.expect_graphql(json={

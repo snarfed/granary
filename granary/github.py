@@ -329,8 +329,9 @@ class GitHub(source.Source):
       abort=False,
       error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
 
-  def issue_to_object(self, issue):
-    """Converts a GitHub issue to an ActivityStreams actor.
+  @classmethod
+  def issue_to_object(cls, issue):
+    """Converts a GitHub issue to ActivityStreams.
 
     Handles both v4 GraphQL and v3 REST API issue objects.
 
@@ -338,57 +339,55 @@ class GitHub(source.Source):
     https://developer.github.com/v3/issues/
 
     Args:
-      user: dict, decoded JSON GitHub issue
+      issue: dict, decoded JSON GitHub issue
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      an ActivityStreams object dict, ready to be JSON-encoded
     """
-    if not issue:
-      return {}
+    obj = cls._to_object(issue)
+    if not obj:
+      return obj
 
-    id = issue.get('node_id') or issue.get('id')
-    url = issue.get('html_url') or issue.get('url') or ''
-    repo_url = re.sub(r'/(issue|pull)s?/[0-9]+$', '', url)
+    repo_url = re.sub(r'/(issue|pull)s?/[0-9]+$', '', obj['url'])
 
-    obj = {
+    obj.update({
       'objectType': 'issue',
-      'id': self.tag_uri(id),
-      'url': url,
-      'author': self.user_to_actor(issue.get('author') or issue.get('user')),
-      'title': issue.get('title'),
-      'published': util.maybe_iso8601_to_rfc3339(issue.get('createdAt') or
-                                                 issue.get('created_at')),
-      'updated': util.maybe_iso8601_to_rfc3339(issue.get('lastEditedAt') or
-                                               issue.get('updated_at')),
-      'content': issue.get('body'),
       'inReplyTo': [{'url': repo_url + '/issues'}],
       'tags': [{
         'displayName': l['name'],
         'url': '%s/labels/%s' % (repo_url, urllib.quote(l['name'])),
       } for l in issue.get('labels', []) if l.get('name')],
-    }
-    return self.postprocess_object(obj)
+    })
+    return cls.postprocess_object(obj)
 
-  def comment_to_object(self, comment):
-    """Converts a comment to an object.
+  @classmethod
+  def comment_to_object(cls, comment):
+    """Converts a GitHub comment to ActivityStreams.
+
+    Handles both v4 GraphQL and v3 REST API issue objects.
+
+    https://developer.github.com/v4/object/issue/
+    https://developer.github.com/v3/issues/
 
     Args:
-      comment: dict, a decoded JSON comment
+      comment: dict, decoded JSON GitHub issue
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      an ActivityStreams comment dict, ready to be JSON-encoded
     """
-    obj = self.issue_to_object(comment, type='comment')
+    obj = cls._to_object(comment)
     if not obj:
       return obj
 
-    obj['objectType'] = 'comment'
+    obj.update({
+      'objectType': 'comment',
+      # url is e.g. https://github.com/foo/bar/pull/123#issuecomment-456
+      'inReplyTo': [{'url': util.fragmentless(obj['url'])}],
+    })
+    return cls.postprocess_object(obj)
 
-    # ...
-
-    return self.postprocess_object(obj)
-
-  def user_to_actor(self, user):
+  @classmethod
+  def user_to_actor(cls, user):
     """Converts a GitHub user to an ActivityStreams actor.
 
     Handles both v4 GraphQL and v3 REST API user objects.
@@ -402,27 +401,24 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
-    if not user:
-      return {}
+    actor = cls._to_object(user)
+    if not actor:
+      return actor
 
-    id = user.get('node_id') or user.get('id')
     username = user.get('login')
     bio = user.get('bio')
 
-    actor = {
+    actor.update({
       # TODO: orgs, bots
       'objectType': 'person',
       'displayName': user.get('name') or username,
-      'id': self.tag_uri(id),
       'username': username,
       'email': user.get('email'),
-      'published': util.maybe_iso8601_to_rfc3339(user.get('createdAt') or
-                                                 user.get('created_at')),
       'description': bio,
       'summary': bio,
       'image': {'url': user.get('avatarUrl') or user.get('avatar_url')},
       'location': {'displayName': user.get('location')},
-    }
+    })
 
     # extract web site links. extract_links uniquifies and preserves order
     urls = sum((util.extract_links(user.get(field)) for field in
@@ -435,4 +431,29 @@ class GitHub(source.Source):
       if len(urls) > 1:
         actor['urls'] = [{'value': u} for u in urls]
 
-    return self.postprocess_object(actor)
+    return cls.postprocess_object(actor)
+
+  @classmethod
+  def _to_object(cls, input):
+    """Starts to convert aHub GraphQL or REST API object to ActivityStreams.
+
+    Args:
+      input: dict, decoded JSON GraphQL or REST object
+
+    Returns:
+      an ActivityStreams object dict, ready to be JSON-encoded
+    """
+    if not input:
+      return {}
+
+    return {
+      'id': cls.tag_uri(input.get('node_id') or input.get('id')),
+      'url': input.get('html_url') or input.get('url') or '',
+      'author': cls.user_to_actor(input.get('author') or input.get('user')),
+      'title': input.get('title'),
+      'content': input.get('body'),
+      'published': util.maybe_iso8601_to_rfc3339(input.get('createdAt') or
+                                                 input.get('created_at')),
+      'updated': util.maybe_iso8601_to_rfc3339(input.get('lastEditedAt') or
+                                               input.get('updated_at')),
+    }
