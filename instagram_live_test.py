@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Instagram integration test against the live site.
 
-Just checks that fetching and converting snarfed's feed includes 12 activities,
+Just checks that fetching and converting snarfed's feed includes activities
 and all the expected fields are non-empty.
 
 https://github.com/snarfed/granary/issues/106
@@ -29,7 +29,7 @@ class InstagramTestLive(unittest.TestCase):
     self.assertTrue(resp['actor']['image']['url'])
 
     items = resp['items']
-    self.assertEqual(12, len(items))
+    self.assertEqual(24, len(items))
 
     found = set()
     for a in items:
