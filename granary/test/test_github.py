@@ -11,6 +11,10 @@ from oauth_dropins.webutil import util
 
 from granary import appengine_config
 from granary import github
+from granary.github import (
+  REST_API_COMMENTS,
+  REST_API_NOTIFICATIONS,
+)
 from granary import source
 
 # test data
@@ -54,6 +58,17 @@ USER_REST = {  # GitHub
   'followers': 20,
   'following': 1,
   'created_at': '2011-05-10T00:39:24Z',
+}
+ORGANIZATION_REST = {
+  'login': 'a_company',
+  'id': 789,
+  'type': 'Organization',
+  'site_admin': False,
+  'avatar_url': 'https://avatars0.githubusercontent.com/u/789?v=4',
+  'gravatar_id': '',
+  'url': 'https://api.github.com/users/color',
+  'html_url': 'https://github.com/color',
+  'repos_url': 'https://api.github.com/users/color/repos',
 }
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
@@ -133,11 +148,52 @@ ISSUE_OBJ = {  # ActivityStreams
     'displayName': 'new silo',
     'url': 'https://github.com/foo/bar/labels/new%20silo',
   }],
+}
   # 'replies': {
   #   'items': [COMMENT_OBJ],
   #   'totalItems': 1,
   # }
+PULL_REST = {  # GitHub
+  'id': 167930804,
+  'url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791',
+  'html_url': 'https://github.com/snarfed/bridgy/pull/791',
+  'issue_url': 'https://api.github.com/repos/snarfed/bridgy/issues/791',
+  'diff_url': 'https://github.com/snarfed/bridgy/pull/791.diff',
+  'patch_url': 'https://github.com/snarfed/bridgy/pull/791.patch',
+  'number': 791,
+  'state': 'closed',
+  'locked': False,
+  'title': 'Look for rel=me on the root of a domain when user logs in with a path.',
+  'user': USER_REST,
+  'body': '',
+  'created_at': '2018-02-08T10:24:32Z',
+  'updated_at': '2018-02-09T21:14:43Z',
+  'closed_at': '2018-02-09T21:14:43Z',
+  'merged_at': '2018-02-09T21:14:43Z',
+  'merge_commit_sha': '6a0c660915237c3753852bba090a4ac603e3e7cd',
+  'assignee': None,
+  'assignees': [],
+  'requested_reviewers': [],
+  'requested_teams': [],
+  'labels': [],
+  'milestone': None,
+  'commits_url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791/commits',
+  'review_comments_url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791/comments',
+  'review_comment_url': 'https://api.github.com/repos/snarfed/bridgy/pulls/comments{/number}',
+  'comments_url': 'https://api.github.com/repos/snarfed/bridgy/issues/791/comments',
+  'statuses_url': 'https://api.github.com/repos/snarfed/bridgy/statuses/678a4df6e3bf2f7068a58bb1485258985995ca67',
+  'head': {},  # contents of these elided...
+  'base': {},
+  'author_association': 'CONTRIBUTOR',
+  'merged': True,
+  'merged_by': USER_REST,
+  'comments': 1,
+  'review_comments': 5,
+  'commits': 2,
 }
+# Note that issue comments and top-level PR comments look identical, and even
+# use the same API endpoint, with */issue/*. (This doesn't include diff or
+# commit comments, which granary doesn't currently support.)
 COMMENT_GRAPHQL = {  # GitHub
   'id': 'MDEwOlNQ==',
   'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
@@ -152,7 +208,7 @@ COMMENT_REST = {  # GitHub
   'id': 456,
   # comments don't yet have node_id, as of 2/14/2018
   'html_url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
-  # note that these API endpoints still use /issues/, even for PRs
+  # these API endpoints below still use /issues/, even for PRs
   'url': 'https://api.github.com/repos/foo/bar/issues/comments/456',
   'issue_url': 'https://api.github.com/repos/foo/bar/issues/123',
   'user': USER_REST,
@@ -180,6 +236,34 @@ STAR_OBJ = {
   'object': {'url': 'https://github.com/foo/bar'},
 }
 
+REPO_REST = {
+  'id': 10226201,
+  'name': 'bar',
+  'full_name': 'foo/bar',
+  'owner': ORGANIZATION_REST,
+  'private': True,
+  'description': None,
+  'fork': False,
+  'html_url': 'https://github.com/foo/bar',
+  'url': 'https://api.github.com/repos/foo/bar',
+  'issues_url': 'https://api.github.com/repos/color/color/issues{/number}',
+  'pulls_url': 'https://api.github.com/repos/color/color/pulls{/number}',
+}
+NOTIFICATION_REST = {  # GitHub
+  'id': '302190598',
+  'unread': False,
+  'reason': 'review_requested',
+  'updated_at': '2018-02-12T19:17:58Z',
+  'last_read_at': '2018-02-12T20:55:10Z',
+  'repository': REPO_REST,
+  'url': 'https://api.github.com/notifications/threads/302190598',
+  'subject': {
+    'title': 'Foo bar baz',
+    'url': 'https://api.github.com/repos/foo/bar/pulls/123',
+    'latest_comment_url': 'https://api.github.com/repos/foo/bar/pulls/123',
+    'type': 'PullRequest',
+  },
+}
 
 class GitHubTest(testutil.HandlerTest):
 
@@ -193,6 +277,11 @@ class GitHubTest(testutil.HandlerTest):
     return self.expect_requests_post(oauth_github.API_GRAPHQL, headers={
         'Authorization': 'bearer a-towkin',
       }, response={'data': response}, **kwargs)
+
+  def expect_rest(self, url, response=None, **kwargs):
+    return self.expect_requests_get(url, headers={
+        'Authorization': 'token a-towkin',
+      }, response=response, **kwargs)
 
   def expect_markdown_render(self, body):
     rendered = '<p>rendered!</p>'
@@ -228,36 +317,30 @@ class GitHubTest(testutil.HandlerTest):
   #   self.mox.ReplayAll()
   #   self.assert_equals(ACTOR, self.gh.get_actor())
 
-  # def test_get_activities_defaults(self):
-  #   resp = {'data': [
-  #         {'id': '1_2', 'message': 'foo'},
-  #         {'id': '3_4', 'message': 'bar'},
-  #         ]}
-  #   self.expect_urlopen('me/home?offset=0', resp)
-  #   self.mox.ReplayAll()
+  def test_get_activities_defaults(self):
+    self.expect_rest(REST_API_NOTIFICATIONS, [
+      # we translate pulls to issues in these URLs to get the top-level comments
+      {'subject': {'url': 'https://api.github.com/repos/foo/bar/pulls/123'}},
+      {'subject': {'url': 'https://api.github.com/repos/foo/baz/issue/456'}},
+    ])
+    self.expect_rest('https://api.github.com/repos/foo/bar/pulls/123', ISSUE_REST)
+    # self.expect_rest(REST_API_COMMENTS % ('foo', 'bar', 123), [])
+    self.expect_rest('https://api.github.com/repos/foo/baz/issue/456', ISSUE_REST)
+    # self.expect_rest(REST_API_COMMENTS % ('foo', 'baz', 456),
+    #                  [COMMENT_REST, COMMENT_REST])
+    self.mox.ReplayAll()
 
-  #   self.assert_equals([
-  #       {'id': tag_uri('2'),
-  #        'object': {'content': 'foo',
-  #                   'id': tag_uri('2'),
-  #                   'objectType': 'note',
-  #                   'url': 'https://www.github.com/1/posts/2'},
-  #        'url': 'https://www.github.com/1/posts/2',
-  #        'verb': 'post'},
-  #       {'id': tag_uri('4'),
-  #        'object': {'content': 'bar',
-  #                   'id': tag_uri('4'),
-  #                   'objectType': 'note',
-  #                   'url': 'https://www.github.com/3/posts/4'},
-  #        'url': 'https://www.github.com/3/posts/4',
-  #        'verb': 'post'}],
-  #     self.gh.get_activities())
+    # issue_obj = copy.deepcopy(ISSUE_OBJ)
+    # objs[1]['replies'] = {
+    #   'items': [COMMENT_OBJ, COMMENT_OBJ],
+    #   'totalItems': 1,
+    # }
+    self.assert_equals([ISSUE_OBJ, ISSUE_OBJ], self.gh.get_activities())
 
-  # def test_get_activities_self_empty(self):
-  #   self.expect_urlopen(API_ME_POSTS, {})
-  #   self.expect_urlopen(API_PHOTOS_UPLOADED, {})
-  #   self.mox.ReplayAll()
-  #   self.assert_equals([], self.gh.get_activities(group_id=source.SELF))
+  def test_get_activities_self_empty(self):
+    self.expect_rest(REST_API_NOTIFICATIONS, [])
+    self.mox.ReplayAll()
+    self.assert_equals([], self.gh.get_activities())
 
   # def test_get_activities_activity_id_not_found(self):
   #   self.expect_urlopen(API_OBJECT % ('0', '0'), {
@@ -505,4 +588,3 @@ class GitHubTest(testutil.HandlerTest):
   def test_preview_star(self):
     preview = self.gh.preview_create(STAR_OBJ)
     self.assertEquals('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
-

@@ -15,8 +15,11 @@ from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil import util
 import source
 
-REST_API_ISSUE = 'https://api.github.com/repos/%s/%s/issues'
-REST_API_MARKDOWN = 'https://api.github.com/markdown'
+REST_API_BASE = 'https://api.github.com'
+REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
+REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
+REST_API_MARKDOWN = REST_API_BASE + '/markdown'
+REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications'
 GRAPHQL_USER_ISSUES = """
 query {
   viewer {
@@ -130,17 +133,21 @@ class GitHub(source.Source):
     assert 'errors' not in result, result
     return result['data']
 
-  def rest(self, url, data):
+  def rest(self, url, data=None):
     """Makes a v3 REST API call.
 
-    Args:
-      data: GraphQL JSON payload with top-level 'query' or 'mutation' field
+    Uses HTTP POST if data is provided, otherwise GET.
 
-    Returns: dict, parsed JSON response
+    Args:
+      data: dict, JSON payload for POST requests
+
+    Returns: `requests.Response`
     """
-    resp = util.requests_post(url, json=data, headers={
-      'Authorization': 'token %s' % self.access_token,
-    })
+    headers = {'Authorization': 'token %s' % self.access_token}
+    if data is None:
+      resp = util.requests_get(url, headers=headers)
+    else:
+      resp = util.requests_post(url, json=data, headers=headers)
     resp.raise_for_status()
     return resp
 
@@ -149,7 +156,8 @@ class GitHub(source.Source):
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None, **kwargs):
+                              fetch_mentions=False, search_query=None,
+                              public_only=True, **kwargs):
     """Fetches issues and comments and converts them to ActivityStreams activities.
 
     See :meth:`Source.get_activities_response` for details.
@@ -162,8 +170,20 @@ class GitHub(source.Source):
 
     if activity_id:
       pass
+
     else:
-      pass
+      notifs = self.rest(REST_API_NOTIFICATIONS).json()
+      for notif in notifs:
+        id = notif.get('id')
+        subject_url = notif.get('subject').get('url')
+        if not subject_url:
+          logging.info('Skipping thread %s, missing subject!', id)
+        split = subject_url.split('/')
+        if len(split) <= 2 or split[-2] != 'issues':
+          # TODO: pull requests with 'pulls' in subject URL
+          logging.info("Skipping thread %s with subject %s, only issues right now",
+                       id, subject_url)
+        activities.append(self.issue_to_object(self.rest(subject_url).json()))
 
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag
