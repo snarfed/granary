@@ -17,6 +17,7 @@ import source
 
 REST_API_BASE = 'https://api.github.com'
 REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
+# currently unused; we use 'comments_url' in the issue or PR instead
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
 REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications'
@@ -162,7 +163,7 @@ class GitHub(source.Source):
 
     See :meth:`Source.get_activities_response` for details.
     """
-    if (activity_id or fetch_replies or fetch_likes or fetch_shares or
+    if (activity_id or fetch_likes or fetch_shares or
         fetch_events or fetch_mentions or search_query):
       raise NotImplementedError()
 
@@ -183,7 +184,21 @@ class GitHub(source.Source):
           # TODO: pull requests with 'pulls' in subject URL
           logging.info("Skipping thread %s with subject %s, only issues right now",
                        id, subject_url)
-        activities.append(self.issue_to_object(self.rest(subject_url).json()))
+
+        issue = self.rest(subject_url).json()
+        obj = self.issue_to_object(issue)
+
+        comments_url = issue.get('comments_url')
+        if fetch_replies and comments_url:
+          comments = self.rest(comments_url).json()
+          comment_objs = list(util.trim_nulls(
+            self.comment_to_object(c) for c in comments))
+          obj['replies'] = {
+            'items': comment_objs,
+            'totalItems': len(comment_objs),
+          }
+
+        activities.append(obj)
 
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag

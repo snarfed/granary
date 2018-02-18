@@ -115,6 +115,7 @@ ISSUE_REST = {  # GitHub
   'number': 333,
   'url': 'https://api.github.com/repos/foo/bar/issues/333',
   'html_url': 'https://github.com/foo/bar/issues/333',
+  'comments_url': 'https://api.github.com/repos/foo/bar/issues/333/comments',
   'title': 'an issue title',
   'user': USER_REST,
   'body': 'foo bar\nbaz',
@@ -149,14 +150,11 @@ ISSUE_OBJ = {  # ActivityStreams
     'url': 'https://github.com/foo/bar/labels/new%20silo',
   }],
 }
-  # 'replies': {
-  #   'items': [COMMENT_OBJ],
-  #   'totalItems': 1,
-  # }
 PULL_REST = {  # GitHub
   'id': 167930804,
   'url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791',
   'html_url': 'https://github.com/snarfed/bridgy/pull/791',
+  'comments_url': 'https://api.github.com/repos/snarfed/bridgy/issues/791/comments',
   'issue_url': 'https://api.github.com/repos/snarfed/bridgy/issues/791',
   'diff_url': 'https://github.com/snarfed/bridgy/pull/791.diff',
   'patch_url': 'https://github.com/snarfed/bridgy/pull/791.patch',
@@ -220,7 +218,7 @@ COMMENT_REST = {  # GitHub
 
 COMMENT_OBJ = {  # ActivityStreams
   'objectType': 'comment',
-  'id': tag_uri('MDEwOlNQ=='),
+  'id': tag_uri(456),
   'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
   'author': ACTOR,
   'content': 'i have something to say here',
@@ -259,6 +257,7 @@ NOTIFICATION_REST = {  # GitHub
   'url': 'https://api.github.com/notifications/threads/302190598',
   'subject': {
     'title': 'Foo bar baz',
+    # TODO: we translate pulls to issues in these URLs to get the top-level comments
     'url': 'https://api.github.com/repos/foo/bar/pulls/123',
     'latest_comment_url': 'https://api.github.com/repos/foo/bar/pulls/123',
     'type': 'PullRequest',
@@ -318,24 +317,31 @@ class GitHubTest(testutil.HandlerTest):
   #   self.assert_equals(ACTOR, self.gh.get_actor())
 
   def test_get_activities_defaults(self):
-    self.expect_rest(REST_API_NOTIFICATIONS, [
-      # we translate pulls to issues in these URLs to get the top-level comments
-      {'subject': {'url': 'https://api.github.com/repos/foo/bar/pulls/123'}},
-      {'subject': {'url': 'https://api.github.com/repos/foo/baz/issue/456'}},
-    ])
-    self.expect_rest('https://api.github.com/repos/foo/bar/pulls/123', ISSUE_REST)
-    # self.expect_rest(REST_API_COMMENTS % ('foo', 'bar', 123), [])
-    self.expect_rest('https://api.github.com/repos/foo/baz/issue/456', ISSUE_REST)
-    # self.expect_rest(REST_API_COMMENTS % ('foo', 'baz', 456),
-    #                  [COMMENT_REST, COMMENT_REST])
+    notif2 = copy.deepcopy(NOTIFICATION_REST)
+    notif2.update({
+      'subject': {'url': 'https://api.github.com/repos/foo/baz/issue/456'},
+      # check that we don't fetch this since we don't pass fetch_replies
+      'comments_url': 'http://unused',
+    })
+    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_REST, notif2])
+    self.expect_rest(NOTIFICATION_REST['subject']['url'], ISSUE_REST)
+    self.expect_rest(notif2['subject']['url'], ISSUE_REST)
     self.mox.ReplayAll()
 
-    # issue_obj = copy.deepcopy(ISSUE_OBJ)
-    # objs[1]['replies'] = {
-    #   'items': [COMMENT_OBJ, COMMENT_OBJ],
-    #   'totalItems': 1,
-    # }
     self.assert_equals([ISSUE_OBJ, ISSUE_OBJ], self.gh.get_activities())
+
+  def test_get_activities_fetch_replies(self):
+    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_REST])
+    self.expect_rest(NOTIFICATION_REST['subject']['url'], ISSUE_REST)
+    self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(ISSUE_OBJ)
+    obj['replies'] = {
+      'items': [COMMENT_OBJ, COMMENT_OBJ],
+      'totalItems': 2,
+    }
+    self.assert_equals([obj], self.gh.get_activities(fetch_replies=True))
 
   def test_get_activities_self_empty(self):
     self.expect_rest(REST_API_NOTIFICATIONS, [])
@@ -378,24 +384,6 @@ class GitHubTest(testutil.HandlerTest):
   #   self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
   #   self.mox.ReplayAll()
   #   obj = self.gh.get_activities(activity_id='34', user_id='12')[0]['object']
-
-  # def test_get_activities_fetch_replies(self):
-  #   post2 = copy.deepcopy(POST)
-  #   post2['id'] = '222'
-  #   post3 = copy.deepcopy(POST)
-  #   post3['id'] = '333'
-  #   self.expect_urlopen('me/home?offset=0',
-  #                       {'data': [POST, post2, post3]})
-  #   self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163,222,333',
-  #     {'222': {'data': [{'id': '777', 'message': 'foo'},
-  #                       {'id': '888', 'message': 'bar'}]},
-  #      '333': {'data': [{'id': '999', 'message': 'baz'},
-  #                       {'id': COMMENTS[0]['id'], 'message': 'omitted!'}]},
-  #     })
-  #   self.mox.ReplayAll()
-
-  #   activities = self.gh.get_activities(fetch_replies=True)
-  #   self.assert_equals(...)
 
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
@@ -443,12 +431,12 @@ class GitHubTest(testutil.HandlerTest):
   #   self.assert_equals(COMMENT_OBJS[0], self.gh.get_comment('123_456'))
 
   def test_comment_to_object_graphql(self):
-    self.assert_equals(COMMENT_OBJ, self.gh.comment_to_object(COMMENT_GRAPHQL))
+    obj = copy.deepcopy(COMMENT_OBJ)
+    obj['id'] = tag_uri(COMMENT_GRAPHQL['id'])
+    self.assert_equals(obj, self.gh.comment_to_object(COMMENT_GRAPHQL))
 
   def test_comment_to_object_rest(self):
-    obj = copy.deepcopy(COMMENT_OBJ)
-    obj['id'] = tag_uri(COMMENT_REST['id'])
-    self.assert_equals(obj, self.gh.comment_to_object(COMMENT_REST))
+    self.assert_equals(COMMENT_OBJ, self.gh.comment_to_object(COMMENT_REST))
 
   def test_comment_to_object_minimal(self):
     # just test that we don't crash
