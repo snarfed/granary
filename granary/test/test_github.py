@@ -137,7 +137,7 @@ ISSUE_REST = {  # GitHub
 }
 ISSUE_OBJ = {  # ActivityStreams
   'objectType': 'issue',
-  'id': tag_uri('MDU6SXNzdWUyOTI5MDI1NTI='),
+  'id': tag_uri('foo_bar_MDU6SXNzdWUyOTI5MDI1NTI='),
   'url': 'https://github.com/foo/bar/issues/333',
   'author': ACTOR,
   'title': 'an issue title',
@@ -236,7 +236,7 @@ COMMENT_REST = {  # GitHub
 
 COMMENT_OBJ = {  # ActivityStreams
   'objectType': 'comment',
-  'id': tag_uri(456),
+  'id': tag_uri('foo_bar_456'),
   'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
   'author': ACTOR,
   'content': 'i have something to say here',
@@ -326,24 +326,28 @@ class GitHubTest(testutil.HandlerTest):
     notifs = [copy.deepcopy(NOTIFICATION_REST), copy.deepcopy(NOTIFICATION_REST)]
     del notifs[0]['repository']
     notifs[1].update({
-      'subject': {'url': 'https://api.github.com/repos/foo/baz/issue/456'},
+      'subject': {'url': 'https://api.github.com/repos/foo/baz/issues/456'},
       # check that we don't fetch this since we don't pass fetch_replies
       'comments_url': 'http://unused',
       'repository': {'private': False},
     })
 
     self.expect_rest(REST_API_NOTIFICATIONS, notifs)
-    for notif in notifs:
+    for notif in notifs[1:]:
       self.expect_rest(notif['subject']['url'], ISSUE_REST)
     self.mox.ReplayAll()
 
     obj_public_repo = copy.deepcopy(ISSUE_OBJ)
     obj_public_repo['to'] = [{'objectType': 'group', 'alias': '@public'}]
-    self.assert_equals([ISSUE_OBJ, obj_public_repo], self.gh.get_activities())
+    self.assert_equals([obj_public_repo], self.gh.get_activities())
 
   def test_get_activities_fetch_replies(self):
-    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_REST])
-    self.expect_rest(NOTIFICATION_REST['subject']['url'], ISSUE_REST)
+    notif = copy.deepcopy(NOTIFICATION_REST)
+    notif.update({
+      'subject': {'url': 'https://api.github.com/repos/foo/baz/issues/456'},
+    })
+    self.expect_rest(REST_API_NOTIFICATIONS, [notif])
+    self.expect_rest(notif['subject']['url'], ISSUE_REST)
     self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
     self.mox.ReplayAll()
 
@@ -446,7 +450,7 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_comment_to_object_graphql(self):
     obj = copy.deepcopy(COMMENT_OBJ)
-    obj['id'] = tag_uri(COMMENT_GRAPHQL['id'])
+    obj['id'] = tag_uri('foo_bar_' + COMMENT_GRAPHQL['id'])
     self.assert_equals(obj, self.gh.comment_to_object(COMMENT_GRAPHQL))
 
   def test_comment_to_object_rest(self):
@@ -454,7 +458,7 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_comment_to_object_minimal(self):
     # just test that we don't crash
-    self.gh.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
+    self.gh.comment_to_object({'id': '123', 'message': 'asdf'})
 
   def test_comment_to_object_empty(self):
     self.assert_equals({}, self.gh.comment_to_object({}))

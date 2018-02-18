@@ -20,7 +20,7 @@ REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
 # currently unused; we use 'comments_url' in the issue or PR instead
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
-REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications'
+REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
 GRAPHQL_USER_ISSUES = """
 query {
   viewer {
@@ -179,11 +179,13 @@ class GitHub(source.Source):
         subject_url = notif.get('subject').get('url')
         if not subject_url:
           logging.info('Skipping thread %s, missing subject!', id)
+          continue
         split = subject_url.split('/')
         if len(split) <= 2 or split[-2] != 'issues':
           # TODO: pull requests with 'pulls' in subject URL
           logging.info("Skipping thread %s with subject %s, only issues right now",
                        id, subject_url)
+          continue
 
         issue = self.rest(subject_url).json()
         obj = self.issue_to_object(issue)
@@ -315,8 +317,7 @@ class GitHub(source.Source):
     if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url
 
-    parsed = urlparse.urlparse(base_url)
-    path = parsed.path.strip('/').split('/')
+    path = urlparse.urlparse(base_url).path.strip('/').split('/')
     owner, repo = path[:2]
 
     if len(path) == 2 or (len(path) == 3 and path[2] == 'issues'):
@@ -386,7 +387,7 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    obj = cls._to_object(issue)
+    obj = cls._to_object(issue, repo_id=True)
     if not obj:
       return obj
 
@@ -417,7 +418,7 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams comment dict, ready to be JSON-encoded
     """
-    obj = cls._to_object(comment)
+    obj = cls._to_object(comment, repo_id=True)
     if not obj:
       return obj
 
@@ -476,11 +477,12 @@ class GitHub(source.Source):
     return cls.postprocess_object(actor)
 
   @classmethod
-  def _to_object(cls, input):
+  def _to_object(cls, input, repo_id=False):
     """Starts to convert aHub GraphQL or REST API object to ActivityStreams.
 
     Args:
       input: dict, decoded JSON GraphQL or REST object
+      repo_id: boolean, whether to inject repo owner and name into id
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
@@ -488,9 +490,17 @@ class GitHub(source.Source):
     if not input:
       return {}
 
+    id = input.get('node_id') or input.get('id')
+    url = input.get('html_url') or input.get('url') or ''
+    if repo_id and id and url:
+      # inject repo owner and name
+      path = urlparse.urlparse(url).path.strip('/').split('/')
+      owner, repo = path[:2]
+      id = '_'.join((owner, repo, str(id)))
+
     return {
-      'id': cls.tag_uri(input.get('node_id') or input.get('id')),
-      'url': input.get('html_url') or input.get('url') or '',
+      'id': cls.tag_uri(id),
+      'url': url,
       'author': cls.user_to_actor(input.get('author') or input.get('user')),
       'title': input.get('title'),
       'content': input.get('body'),
