@@ -155,18 +155,18 @@ REPO_REST = {
   'name': 'bridgy',
   'full_name': 'someone/bridgy',
   'homepage': 'https://brid.gy/',
-  'owner': ORGANIZATION,
-  'private': true,
+  'owner': ORGANIZATION_REST,
+  'private': True,
   'html_url': 'https://github.com/someone/bridgy',
   'url': 'https://api.github.com/repos/someone/bridgy',
   'issues_url': 'https://api.github.com/repos/color/color/issues{/number}',
   'pulls_url': 'https://api.github.com/repos/color/color/pulls{/number}',
   'description': 'Bridgy pulls comments and likes from social networks back to your web site. You can also use it to publish your posts to those networks.',
-  'fork': true,
+  'fork': True,
   'created_at': '2016-04-10T13:19:29Z',
   'updated_at': '2016-04-10T13:19:30Z',
   'git_url': 'git://github.com/someone/bridgy.git',
-  'archived': false,
+  'archived': False,
   # ...
 }
 PULL_REST = {  # GitHub
@@ -267,6 +267,7 @@ NOTIFICATION_REST = {  # GitHub
     'latest_comment_url': 'https://api.github.com/repos/foo/bar/pulls/123',
     'type': 'PullRequest',
   },
+  'repository': REPO_REST,
 }
 
 class GitHubTest(testutil.HandlerTest):
@@ -322,18 +323,23 @@ class GitHubTest(testutil.HandlerTest):
   #   self.assert_equals(ACTOR, self.gh.get_actor())
 
   def test_get_activities_defaults(self):
-    notif2 = copy.deepcopy(NOTIFICATION_REST)
-    notif2.update({
+    notifs = [copy.deepcopy(NOTIFICATION_REST), copy.deepcopy(NOTIFICATION_REST)]
+    del notifs[0]['repository']
+    notifs[1].update({
       'subject': {'url': 'https://api.github.com/repos/foo/baz/issue/456'},
       # check that we don't fetch this since we don't pass fetch_replies
       'comments_url': 'http://unused',
+      'repository': {'private': False},
     })
-    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_REST, notif2])
-    self.expect_rest(NOTIFICATION_REST['subject']['url'], ISSUE_REST)
-    self.expect_rest(notif2['subject']['url'], ISSUE_REST)
+
+    self.expect_rest(REST_API_NOTIFICATIONS, notifs)
+    for notif in notifs:
+      self.expect_rest(notif['subject']['url'], ISSUE_REST)
     self.mox.ReplayAll()
 
-    self.assert_equals([ISSUE_OBJ, ISSUE_OBJ], self.gh.get_activities())
+    obj_public_repo = copy.deepcopy(ISSUE_OBJ)
+    obj_public_repo['to'] = [{'objectType': 'group', 'alias': '@public'}]
+    self.assert_equals([ISSUE_OBJ, obj_public_repo], self.gh.get_activities())
 
   def test_get_activities_fetch_replies(self):
     self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_REST])
@@ -342,10 +348,13 @@ class GitHubTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(ISSUE_OBJ)
-    obj['replies'] = {
-      'items': [COMMENT_OBJ, COMMENT_OBJ],
-      'totalItems': 2,
-    }
+    obj.update({
+      'replies': {
+        'items': [COMMENT_OBJ, COMMENT_OBJ],
+        'totalItems': 2,
+      },
+      'to': [{'objectType': 'group', 'alias': '@private'}],
+    })
     self.assert_equals([obj], self.gh.get_activities(fetch_replies=True))
 
   def test_get_activities_self_empty(self):

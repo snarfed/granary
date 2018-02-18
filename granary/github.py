@@ -188,6 +188,13 @@ class GitHub(source.Source):
         issue = self.rest(subject_url).json()
         obj = self.issue_to_object(issue)
 
+        private = notif.get('repository', {}).get('private')
+        if private is not None:
+          obj['to'] = [{
+            'objectType': 'group',
+            'alias': '@private' if private else '@public',
+          }]
+
         comments_url = issue.get('comments_url')
         if fetch_replies and comments_url:
           comments = self.rest(comments_url).json()
