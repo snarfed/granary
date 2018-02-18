@@ -19,6 +19,7 @@ REST_API_BASE = 'https://api.github.com'
 REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
 # currently unused; we use 'comments_url' in the issue or PR instead
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
+REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
 REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
 GRAPHQL_USER_ISSUES = """
@@ -213,18 +214,16 @@ class GitHub(source.Source):
     response['etag'] = etag
     return response
 
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
-                  activity=None):
+  def get_comment(self, comment_id, **kwargs):
     """Returns an ActivityStreams comment object.
 
     Args:
-      comment_id: string comment id
-      activity_id: string activity id, optional
-      activity_author_id: string activity author id, optional
-      activity: activity object (optional)
+      comment_id: string comment id, of the form REPO-OWNER_REPO-NAME_ID,
+        e.g. snarfed_bridgy_123
     """
-    resp = self.urlopen(API_COMMENT % comment_id)
-    return self.comment_to_object(resp, post_author_id=activity_author_id)
+    parts = tuple(comment_id.split('_'))
+    comment = self.rest(REST_API_COMMENT % parts).json()
+    return self.comment_to_object(comment)
 
   def render_markdown(self, markdown, owner, repo):
     """Uses the GitHub API to render GitHub-flavored Markdown to HTML.

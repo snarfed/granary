@@ -12,6 +12,7 @@ from oauth_dropins.webutil import util
 from granary import appengine_config
 from granary import github
 from granary.github import (
+  REST_API_COMMENT,
   REST_API_COMMENTS,
   REST_API_NOTIFICATIONS,
 )
@@ -443,10 +444,10 @@ class GitHubTest(testutil.HandlerTest):
   def test_issue_to_object_empty(self):
     self.assert_equals({}, self.gh.issue_to_object({}))
 
-  # def test_get_comment(self):
-  #   self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(COMMENT_OBJS[0], self.gh.get_comment('123_456'))
+  def test_get_comment(self):
+    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 123), COMMENT_REST)
+    self.mox.ReplayAll()
+    self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo_bar_123'))
 
   def test_comment_to_object_graphql(self):
     obj = copy.deepcopy(COMMENT_OBJ)
