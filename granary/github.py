@@ -170,7 +170,7 @@ class GitHub(source.Source):
     activities = []
 
     if activity_id:
-      pass
+      raise NotImplementedError()
 
     else:
       notifs = self.rest(REST_API_NOTIFICATIONS).json()

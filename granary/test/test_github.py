@@ -150,6 +150,25 @@ ISSUE_OBJ = {  # ActivityStreams
     'url': 'https://github.com/foo/bar/labels/new%20silo',
   }],
 }
+REPO_REST = {
+  'id': 55900011,
+  'name': 'bridgy',
+  'full_name': 'someone/bridgy',
+  'homepage': 'https://brid.gy/',
+  'owner': ORGANIZATION,
+  'private': true,
+  'html_url': 'https://github.com/someone/bridgy',
+  'url': 'https://api.github.com/repos/someone/bridgy',
+  'issues_url': 'https://api.github.com/repos/color/color/issues{/number}',
+  'pulls_url': 'https://api.github.com/repos/color/color/pulls{/number}',
+  'description': 'Bridgy pulls comments and likes from social networks back to your web site. You can also use it to publish your posts to those networks.',
+  'fork': true,
+  'created_at': '2016-04-10T13:19:29Z',
+  'updated_at': '2016-04-10T13:19:30Z',
+  'git_url': 'git://github.com/someone/bridgy.git',
+  'archived': false,
+  # ...
+}
 PULL_REST = {  # GitHub
   'id': 167930804,
   'url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791',
@@ -185,9 +204,8 @@ PULL_REST = {  # GitHub
   'author_association': 'CONTRIBUTOR',
   'merged': True,
   'merged_by': USER_REST,
-  'comments': 1,
-  'review_comments': 5,
-  'commits': 2,
+  # this is in PR objects but not issues
+  'repo': REPO_REST,
 }
 # Note that issue comments and top-level PR comments look identical, and even
 # use the same API endpoint, with */issue/*. (This doesn't include diff or
@@ -234,19 +252,6 @@ STAR_OBJ = {
   'object': {'url': 'https://github.com/foo/bar'},
 }
 
-REPO_REST = {
-  'id': 10226201,
-  'name': 'bar',
-  'full_name': 'foo/bar',
-  'owner': ORGANIZATION_REST,
-  'private': True,
-  'description': None,
-  'fork': False,
-  'html_url': 'https://github.com/foo/bar',
-  'url': 'https://api.github.com/repos/foo/bar',
-  'issues_url': 'https://api.github.com/repos/color/color/issues{/number}',
-  'pulls_url': 'https://api.github.com/repos/color/color/pulls{/number}',
-}
 NOTIFICATION_REST = {  # GitHub
   'id': '302190598',
   'unread': False,
