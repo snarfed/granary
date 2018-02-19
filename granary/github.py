@@ -16,7 +16,8 @@ from oauth_dropins.webutil import util
 import source
 
 REST_API_BASE = 'https://api.github.com'
-REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
+REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues/%s'
+REST_API_CREATE_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
 # currently unused; we use 'comments_url' in the issue or PR instead
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
 REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
@@ -214,12 +215,26 @@ class GitHub(source.Source):
     response['etag'] = etag
     return response
 
+  def get_issue(self, issue_id, **kwargs):
+    """Returns an ActivityStreams issue object.
+
+    Args:
+      issue_id: string issue id, of the form REPO-OWNER_REPO-NAME_ID,
+        e.g. snarfed:bridgy:123
+    """
+    parts = tuple(issue_id.split(':'))
+    assert len(parts) == 3
+    issue = self.rest(REST_API_ISSUE % parts).json()
+    return self.issue_to_object(issue)
+
+  get_post = get_issue
+
   def get_comment(self, comment_id, **kwargs):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id, of the form REPO-OWNER_REPO-NAME_ID,
-        e.g. snarfed_bridgy_123
+        e.g. snarfed:bridgy:456789
     """
     parts = tuple(comment_id.split(':'))
     assert len(parts) == 3
@@ -345,7 +360,7 @@ class GitHub(source.Source):
   <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:""" %
               (base_url, owner, repo))
         else:
-          resp = self.rest(REST_API_ISSUE % (owner, repo), {
+          resp = self.rest(REST_API_CREATE_ISSUE % (owner, repo), {
             'title': title,
             'body': content,
           }).json()

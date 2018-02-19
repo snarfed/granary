@@ -14,6 +14,7 @@ from granary import github
 from granary.github import (
   REST_API_COMMENT,
   REST_API_COMMENTS,
+  REST_API_ISSUE,
   REST_API_NOTIFICATIONS,
 )
 from granary import source
@@ -424,10 +425,10 @@ class GitHubTest(testutil.HandlerTest):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(fetch_shares='foo')
 
-  # def test_get_issue(self):
-  #   self.expect_urlopen(API_ISSUE % '123_456', ISSUES[0])
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(ISSUE_OBJS[0], self.gh.get_issue('123_456'))
+  def test_get_issue(self):
+    self.expect_rest(REST_API_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
+    self.mox.ReplayAll()
+    self.assert_equals(ISSUE_OBJ, self.gh.get_issue('foo:bar:123'))
 
   def test_issue_to_object_graphql(self):
     obj = copy.deepcopy(ISSUE_OBJ)
@@ -514,7 +515,7 @@ class GitHubTest(testutil.HandlerTest):
     self._test_create_issue('https://github.com/foo/bar/issues')
 
   def _test_create_issue(self, in_reply_to):
-    self.expect_requests_post(github.REST_API_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
       }, headers={
