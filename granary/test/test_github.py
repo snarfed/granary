@@ -138,7 +138,7 @@ ISSUE_REST = {  # GitHub
 }
 ISSUE_OBJ = {  # ActivityStreams
   'objectType': 'issue',
-  'id': tag_uri('foo_bar_MDU6SXNzdWUyOTI5MDI1NTI='),
+  'id': tag_uri('foo:bar:MDU6SXNzdWUyOTI5MDI1NTI='),
   'url': 'https://github.com/foo/bar/issues/333',
   'author': ACTOR,
   'title': 'an issue title',
@@ -237,7 +237,7 @@ COMMENT_REST = {  # GitHub
 
 COMMENT_OBJ = {  # ActivityStreams
   'objectType': 'comment',
-  'id': tag_uri('foo_bar_456'),
+  'id': tag_uri('foo:bar:456'),
   'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
   'author': ACTOR,
   'content': 'i have something to say here',
@@ -447,11 +447,11 @@ class GitHubTest(testutil.HandlerTest):
   def test_get_comment(self):
     self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 123), COMMENT_REST)
     self.mox.ReplayAll()
-    self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo_bar_123'))
+    self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo:bar:123'))
 
   def test_comment_to_object_graphql(self):
     obj = copy.deepcopy(COMMENT_OBJ)
-    obj['id'] = tag_uri('foo_bar_' + COMMENT_GRAPHQL['id'])
+    obj['id'] = tag_uri('foo:bar:' + COMMENT_GRAPHQL['id'])
     self.assert_equals(obj, self.gh.comment_to_object(COMMENT_GRAPHQL))
 
   def test_comment_to_object_rest(self):

@@ -221,7 +221,8 @@ class GitHub(source.Source):
       comment_id: string comment id, of the form REPO-OWNER_REPO-NAME_ID,
         e.g. snarfed_bridgy_123
     """
-    parts = tuple(comment_id.split('_'))
+    parts = tuple(comment_id.split(':'))
+    assert len(parts) == 3
     comment = self.rest(REST_API_COMMENT % parts).json()
     return self.comment_to_object(comment)
 
@@ -495,7 +496,9 @@ class GitHub(source.Source):
       # inject repo owner and name
       path = urlparse.urlparse(url).path.strip('/').split('/')
       owner, repo = path[:2]
-      id = '_'.join((owner, repo, str(id)))
+      # join with : because github allows ., _, and - in repo names. (see
+      # REPO_NAME_RE.)
+      id = ':'.join((owner, repo, str(id)))
 
     return {
       'id': cls.tag_uri(id),
