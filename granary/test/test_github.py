@@ -139,7 +139,7 @@ ISSUE_REST = {  # GitHub
 }
 ISSUE_OBJ = {  # ActivityStreams
   'objectType': 'issue',
-  'id': tag_uri('foo:bar:MDU6SXNzdWUyOTI5MDI1NTI='),
+  'id': tag_uri('foo:bar:333'),
   'url': 'https://github.com/foo/bar/issues/333',
   'author': ACTOR,
   'title': 'an issue title',
@@ -368,6 +368,11 @@ class GitHubTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals([], self.gh.get_activities())
 
+  def test_get_activities_activity_id(self):
+    self.expect_rest(REST_API_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
+    self.mox.ReplayAll()
+    self.assert_equals([ISSUE_OBJ], self.gh.get_activities(activity_id='foo:bar:123'))
+
   # def test_get_activities_activity_id_not_found(self):
   #   self.expect_urlopen(API_OBJECT % ('0', '0'), {
   #     'error': {
@@ -400,18 +405,9 @@ class GitHubTest(testutil.HandlerTest):
   #   self.mox.ReplayAll()
   #   self.assert_equals([ACTIVITY], self.gh.get_activities(offset=9))
 
-  # def test_get_activities_activity_id_with_user_id(self):
-  #   self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
-  #   self.mox.ReplayAll()
-  #   obj = self.gh.get_activities(activity_id='34', user_id='12')[0]['object']
-
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(search_query='foo')
-
-  def test_get_activities_activity_id_not_implemented(self):
-    with self.assertRaises(NotImplementedError):
-      self.gh.get_activities(activity_id='foo')
 
   def test_get_activities_fetch_likes_not_implemented(self):
     with self.assertRaises(NotImplementedError):
@@ -424,11 +420,6 @@ class GitHubTest(testutil.HandlerTest):
   def test_get_activities_fetch_shares_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(fetch_shares='foo')
-
-  def test_get_issue(self):
-    self.expect_rest(REST_API_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
-    self.mox.ReplayAll()
-    self.assert_equals(ISSUE_OBJ, self.gh.get_issue('foo:bar:123'))
 
   def test_issue_to_object_graphql(self):
     obj = copy.deepcopy(ISSUE_OBJ)

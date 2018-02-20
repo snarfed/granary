@@ -163,16 +163,27 @@ class GitHub(source.Source):
                               public_only=True, **kwargs):
     """Fetches issues and comments and converts them to ActivityStreams activities.
 
+    *Not comprehensive!* Uses the notifications API (v3 REST).
+
+    https://developer.github.com/v3/activity/notifications/
+    https://developer.github.com/v3/issues/
+    https://developer.github.com/v3/issues/comments/
+
+    The notifications API call uses ETag and 304 Not Changed responses. The
+    issue comments API call uses a since= query parameter with the same value.
+
     See :meth:`Source.get_activities_response` for details.
     """
-    if (activity_id or fetch_likes or fetch_shares or
-        fetch_events or fetch_mentions or search_query):
+    if (fetch_likes or fetch_shares or fetch_events or fetch_mentions or search_query):
       raise NotImplementedError()
 
     activities = []
 
     if activity_id:
-      raise NotImplementedError()
+      parts = tuple(activity_id.split(':'))
+      assert len(parts) == 3
+      issue = self.rest(REST_API_ISSUE % parts).json()
+      activities = [self.issue_to_object(issue)]
 
     else:
       notifs = self.rest(REST_API_NOTIFICATIONS).json()
@@ -214,20 +225,6 @@ class GitHub(source.Source):
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag
     return response
-
-  def get_issue(self, issue_id, **kwargs):
-    """Returns an ActivityStreams issue object.
-
-    Args:
-      issue_id: string issue id, of the form REPO-OWNER_REPO-NAME_ID,
-        e.g. snarfed:bridgy:123
-    """
-    parts = tuple(issue_id.split(':'))
-    assert len(parts) == 3
-    issue = self.rest(REST_API_ISSUE % parts).json()
-    return self.issue_to_object(issue)
-
-  get_post = get_issue
 
   def get_comment(self, comment_id, **kwargs):
     """Returns an ActivityStreams comment object.
@@ -506,6 +503,7 @@ class GitHub(source.Source):
       return {}
 
     id = input.get('node_id') or input.get('id')
+    number = input.get('number')
     url = input.get('html_url') or input.get('url') or ''
     if repo_id and id and url:
       # inject repo owner and name
@@ -513,7 +511,7 @@ class GitHub(source.Source):
       owner, repo = path[:2]
       # join with : because github allows ., _, and - in repo names. (see
       # REPO_NAME_RE.)
-      id = ':'.join((owner, repo, str(id)))
+      id = ':'.join((owner, repo, str(number or id)))
 
     return {
       'id': cls.tag_uri(id),
