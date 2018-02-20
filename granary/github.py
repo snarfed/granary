@@ -198,10 +198,12 @@ class GitHub(source.Source):
       activities = [self.issue_to_object(issue)]
 
     else:
-      notifs = self.rest(REST_API_NOTIFICATIONS,
-                         headers={'If-Modified-Since': etag} if etag else None)
-      etag = notifs.headers.get('Last-Modified')
-      for notif in notifs.json():
+      resp = self.rest(REST_API_NOTIFICATIONS,
+                       headers={'If-Modified-Since': etag} if etag else None)
+      etag = resp.headers.get('Last-Modified')
+      notifs = [] if resp.status_code == 304 else resp.json()
+
+      for notif in notifs:
         id = notif.get('id')
         subject_url = notif.get('subject').get('url')
         if not subject_url:
@@ -210,7 +212,7 @@ class GitHub(source.Source):
         split = subject_url.split('/')
         if len(split) <= 2 or split[-2] != 'issues':
           # TODO: pull requests with 'pulls' in subject URL
-          logging.info("Skipping thread %s with subject %s, only issues right now",
+          logging.info('Skipping thread %s with subject %s, only issues right now',
                        id, subject_url)
           continue
 

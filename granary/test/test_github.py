@@ -390,6 +390,16 @@ class GitHubTest(testutil.HandlerTest):
     }, self.gh.get_activities_response(etag='Thu, 25 Oct 2012 15:16:27 GMT',
                                        fetch_replies=True))
 
+  def test_get_activities_etag_returns_304(self):
+    self.expect_rest(REST_API_NOTIFICATIONS, status_code=304,
+                     headers={'If-Modified-Since': 'Thu, 25 Oct 2012 15:16:27 GMT'},
+                     response_headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'})
+    self.mox.ReplayAll()
+
+    resp = self.gh.get_activities_response(etag='Thu, 25 Oct 2012 15:16:27 GMT',
+                                           fetch_replies=True)
+    self.assert_equals('Fri, 1 Jan 2099 12:00:00 GMT', resp['etag'])
+
   # def test_get_activities_activity_id_not_found(self):
   #   self.expect_urlopen(API_OBJECT % ('0', '0'), {
   #     'error': {
