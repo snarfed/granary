@@ -136,7 +136,7 @@ class GitHub(source.Source):
     assert 'errors' not in result, result
     return result['data']
 
-  def rest(self, url, data=None):
+  def rest(self, url, data=None, **kwargs):
     """Makes a v3 REST API call.
 
     Uses HTTP POST if data is provided, otherwise GET.
@@ -146,11 +146,13 @@ class GitHub(source.Source):
 
     Returns: `requests.Response`
     """
-    headers = {'Authorization': 'token %s' % self.access_token}
+    kwargs['headers'] = kwargs.get('headers') or {}
+    kwargs['headers'].update({'Authorization': 'token %s' % self.access_token})
+
     if data is None:
-      resp = util.requests_get(url, headers=headers)
+      resp = util.requests_get(url, **kwargs)
     else:
-      resp = util.requests_post(url, json=data, headers=headers)
+      resp = util.requests_post(url, json=data, **kwargs)
     resp.raise_for_status()
     return resp
 
@@ -186,8 +188,10 @@ class GitHub(source.Source):
       activities = [self.issue_to_object(issue)]
 
     else:
-      notifs = self.rest(REST_API_NOTIFICATIONS).json()
-      for notif in notifs:
+      notifs = self.rest(REST_API_NOTIFICATIONS,
+                         headers={'If-Modified-Since': etag} if etag else None)
+      etag = notifs.headers.get('Last-Modified')
+      for notif in notifs.json():
         id = notif.get('id')
         subject_url = notif.get('subject').get('url')
         if not subject_url:

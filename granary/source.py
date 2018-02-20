@@ -272,18 +272,19 @@ class Source(object):
 
     See :meth:`get_activities()` for args and kwargs.
     """
-    return {'startIndex': kwargs.get('start_index', 0),
-            'itemsPerPage': len(activities),
-            'totalResults': None if kwargs.get('activity_id') else len(activities),
-            # TODO: this is just for compatibility with
-            # http://activitystreamstester.appspot.com/
-            # the OpenSocial spec says to use entry instead, so switch back
-            # to that eventually
-            'items': activities,
-            'filtered': False,
-            'sorted': False,
-            'updatedSince': False,
-            }
+    return {
+      'startIndex': kwargs.get('start_index', 0),
+      'itemsPerPage': len(activities),
+      'totalResults': None if kwargs.get('activity_id') else len(activities),
+      # TODO: this is just for compatibility with
+      # http://activitystreamstester.appspot.com/
+      # the OpenSocial spec says to use entry instead, so switch back
+      # to that eventually
+      'items': activities,
+      'filtered': False,
+      'sorted': False,
+      'updatedSince': False,
+    }
 
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Creates a new object: a post, comment, like, share, or RSVP.

@@ -286,9 +286,8 @@ class GitHubTest(testutil.HandlerTest):
       }, response={'data': response}, **kwargs)
 
   def expect_rest(self, url, response=None, **kwargs):
-    return self.expect_requests_get(url, headers={
-        'Authorization': 'token a-towkin',
-      }, response=response, **kwargs)
+    kwargs.setdefault('headers', {}).update({'Authorization': 'token a-towkin'})
+    return self.expect_requests_get(url, response=response, **kwargs)
 
   def expect_markdown_render(self, body):
     rendered = '<p>rendered!</p>'
@@ -372,6 +371,22 @@ class GitHubTest(testutil.HandlerTest):
     self.expect_rest(REST_API_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
     self.mox.ReplayAll()
     self.assert_equals([ISSUE_OBJ], self.gh.get_activities(activity_id='foo:bar:123'))
+
+  def test_get_activities_etag(self):
+    self.expect_rest(REST_API_NOTIFICATIONS, [],
+                     headers={'If-Modified-Since': 'etag on request!'},
+                     response_headers={'Last-Modified': 'etag on response!'})
+    self.mox.ReplayAll()
+    self.assert_equals({
+      'etag': 'etag on response!',
+      'startIndex': 0,
+      'itemsPerPage': 0,
+      'totalResults': 0,
+      'items': [],
+      'filtered': False,
+      'sorted': False,
+      'updatedSince': False,
+    }, self.gh.get_activities_response(etag='etag on request!'))
 
   # def test_get_activities_activity_id_not_found(self):
   #   self.expect_urlopen(API_OBJECT % ('0', '0'), {
