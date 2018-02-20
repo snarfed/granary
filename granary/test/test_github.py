@@ -235,7 +235,6 @@ COMMENT_REST = {  # GitHub
   'author_association': 'CONTRIBUTOR',  # or OWNER or NONE
   'body': 'i have something to say here',
 }
-
 COMMENT_OBJ = {  # ActivityStreams
   'objectType': 'comment',
   'id': tag_uri('foo:bar:456'),
@@ -247,14 +246,19 @@ COMMENT_OBJ = {  # ActivityStreams
   'published': '2015-07-23T18:47:58+00:00',
   'updated': '2015-07-23T19:47:58+00:00',
 }
-
+ISSUE_OBJ_WITH_REPLIES = copy.deepcopy(ISSUE_OBJ)
+ISSUE_OBJ_WITH_REPLIES.update({
+  'replies': {
+    'items': [COMMENT_OBJ, COMMENT_OBJ],
+    'totalItems': 2,
+  },
+})
 STAR_OBJ = {
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'https://github.com/foo/bar'},
 }
-
-NOTIFICATION_REST = {  # GitHub
+NOTIFICATION_PULL_REST = {  # GitHub
   'id': '302190598',
   'unread': False,
   'reason': 'review_requested',
@@ -269,8 +273,11 @@ NOTIFICATION_REST = {  # GitHub
     'latest_comment_url': 'https://api.github.com/repos/foo/bar/pulls/123',
     'type': 'PullRequest',
   },
-  'repository': REPO_REST,
 }
+NOTIFICATION_ISSUE_REST = copy.deepcopy(NOTIFICATION_PULL_REST)
+NOTIFICATION_ISSUE_REST.update({
+  'subject': {'url': 'https://api.github.com/repos/foo/baz/issues/456'},
+})
 
 class GitHubTest(testutil.HandlerTest):
 
@@ -324,10 +331,10 @@ class GitHubTest(testutil.HandlerTest):
   #   self.assert_equals(ACTOR, self.gh.get_actor())
 
   def test_get_activities_defaults(self):
-    notifs = [copy.deepcopy(NOTIFICATION_REST), copy.deepcopy(NOTIFICATION_REST)]
+    notifs = [copy.deepcopy(NOTIFICATION_PULL_REST),
+              copy.deepcopy(NOTIFICATION_ISSUE_REST)]
     del notifs[0]['repository']
     notifs[1].update({
-      'subject': {'url': 'https://api.github.com/repos/foo/baz/issues/456'},
       # check that we don't fetch this since we don't pass fetch_replies
       'comments_url': 'http://unused',
       'repository': {'private': False},
@@ -335,7 +342,7 @@ class GitHubTest(testutil.HandlerTest):
 
     self.expect_rest(REST_API_NOTIFICATIONS, notifs)
     for notif in notifs[1:]:
-      self.expect_rest(notif['subject']['url'], ISSUE_REST)
+      self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
     self.mox.ReplayAll()
 
     obj_public_repo = copy.deepcopy(ISSUE_OBJ)
@@ -343,21 +350,13 @@ class GitHubTest(testutil.HandlerTest):
     self.assert_equals([obj_public_repo], self.gh.get_activities())
 
   def test_get_activities_fetch_replies(self):
-    notif = copy.deepcopy(NOTIFICATION_REST)
-    notif.update({
-      'subject': {'url': 'https://api.github.com/repos/foo/baz/issues/456'},
-    })
-    self.expect_rest(REST_API_NOTIFICATIONS, [notif])
-    self.expect_rest(notif['subject']['url'], ISSUE_REST)
+    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST])
+    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
     self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
     self.mox.ReplayAll()
 
-    obj = copy.deepcopy(ISSUE_OBJ)
+    obj = copy.deepcopy(ISSUE_OBJ_WITH_REPLIES)
     obj.update({
-      'replies': {
-        'items': [COMMENT_OBJ, COMMENT_OBJ],
-        'totalItems': 2,
-      },
       'to': [{'objectType': 'group', 'alias': '@private'}],
     })
     self.assert_equals([obj], self.gh.get_activities(fetch_replies=True))
