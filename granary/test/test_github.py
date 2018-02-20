@@ -252,6 +252,7 @@ ISSUE_OBJ_WITH_REPLIES.update({
     'items': [COMMENT_OBJ, COMMENT_OBJ],
     'totalItems': 2,
   },
+  'to': [{'objectType': 'group', 'alias': '@private'}],
 })
 STAR_OBJ = {
   'objectType': 'activity',
@@ -355,11 +356,8 @@ class GitHubTest(testutil.HandlerTest):
     self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
     self.mox.ReplayAll()
 
-    obj = copy.deepcopy(ISSUE_OBJ_WITH_REPLIES)
-    obj.update({
-      'to': [{'objectType': 'group', 'alias': '@private'}],
-    })
-    self.assert_equals([obj], self.gh.get_activities(fetch_replies=True))
+    self.assert_equals([ISSUE_OBJ_WITH_REPLIES],
+                       self.gh.get_activities(fetch_replies=True))
 
   def test_get_activities_self_empty(self):
     self.expect_rest(REST_API_NOTIFICATIONS, [])
@@ -371,21 +369,26 @@ class GitHubTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals([ISSUE_OBJ], self.gh.get_activities(activity_id='foo:bar:123'))
 
-  def test_get_activities_etag(self):
-    self.expect_rest(REST_API_NOTIFICATIONS, [],
-                     headers={'If-Modified-Since': 'etag on request!'},
-                     response_headers={'Last-Modified': 'etag on response!'})
+  def test_get_activities_etag_and_since(self):
+    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST],
+                     headers={'If-Modified-Since': 'Thu, 25 Oct 2012 15:16:27 GMT'},
+                     response_headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'})
+    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
+    self.expect_rest(ISSUE_REST['comments_url'] + '?since=2012-10-25T15:16:27Z',
+                     [COMMENT_REST, COMMENT_REST])
     self.mox.ReplayAll()
+
     self.assert_equals({
-      'etag': 'etag on response!',
+      'etag': 'Fri, 1 Jan 2099 12:00:00 GMT',
       'startIndex': 0,
-      'itemsPerPage': 0,
-      'totalResults': 0,
-      'items': [],
+      'itemsPerPage': 1,
+      'totalResults': 1,
+      'items': [ISSUE_OBJ_WITH_REPLIES],
       'filtered': False,
       'sorted': False,
       'updatedSince': False,
-    }, self.gh.get_activities_response(etag='etag on request!'))
+    }, self.gh.get_activities_response(etag='Thu, 25 Oct 2012 15:16:27 GMT',
+                                       fetch_replies=True))
 
   # def test_get_activities_activity_id_not_found(self):
   #   self.expect_urlopen(API_OBJECT % ('0', '0'), {

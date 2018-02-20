@@ -5,8 +5,10 @@ API docs:
 https://developer.github.com/v4/
 https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
 """
+import datetime
 import logging
 import re
+import rfc822
 import urllib
 import urlparse
 
@@ -165,19 +167,27 @@ class GitHub(source.Source):
                               public_only=True, **kwargs):
     """Fetches issues and comments and converts them to ActivityStreams activities.
 
+    See :meth:`Source.get_activities_response` for details.
+
     *Not comprehensive!* Uses the notifications API (v3 REST).
 
     https://developer.github.com/v3/activity/notifications/
     https://developer.github.com/v3/issues/
     https://developer.github.com/v3/issues/comments/
 
-    The notifications API call uses ETag and 304 Not Changed responses. The
-    issue comments API call uses a since= query parameter with the same value.
-
-    See :meth:`Source.get_activities_response` for details.
+    The notifications API call supports Last-Modified/If-Modified-Since headers
+    and 304 Not Changed responses. If provided, etag should be an RFC2822
+    timestamp, usually the exact value returned in a Last-Modified header. It
+    will also be passed to the comments API endpoint as the since= value
+    (converted to ISO 8601).
     """
     if (fetch_likes or fetch_shares or fetch_events or fetch_mentions or search_query):
       raise NotImplementedError()
+
+    since = None
+    etag_parsed = rfc822.parsedate(etag)
+    if etag_parsed:
+      since = datetime.datetime(*etag_parsed[:6])
 
     activities = []
 
@@ -216,6 +226,8 @@ class GitHub(source.Source):
 
         comments_url = issue.get('comments_url')
         if fetch_replies and comments_url:
+          if since:
+            comments_url += '?since=%s' % since.isoformat() + 'Z'
           comments = self.rest(comments_url).json()
           comment_objs = list(util.trim_nulls(
             self.comment_to_object(c) for c in comments))
