@@ -29,7 +29,7 @@ class InstagramTestLive(unittest.TestCase):
     self.assertTrue(resp['actor']['image']['url'])
 
     items = resp['items']
-    self.assertEqual(24, len(items))
+    self.assertGreaterEqual(12, len(items))
 
     found = set()
     for a in items:
