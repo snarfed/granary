@@ -173,18 +173,18 @@ REPO_REST = {
 }
 PULL_REST = {  # GitHub
   'id': 167930804,
-  'url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791',
-  'html_url': 'https://github.com/snarfed/bridgy/pull/791',
-  'comments_url': 'https://api.github.com/repos/snarfed/bridgy/issues/791/comments',
-  'issue_url': 'https://api.github.com/repos/snarfed/bridgy/issues/791',
-  'diff_url': 'https://github.com/snarfed/bridgy/pull/791.diff',
-  'patch_url': 'https://github.com/snarfed/bridgy/pull/791.patch',
-  'number': 791,
+  'number': 444,
+  'url': 'https://api.github.com/repos/foo/bar/pulls/444',
+  'html_url': 'https://github.com/foo/bar/pull/444',
+  'user': USER_REST,
+  'title': 'a PR to merge',
+  'body': 'a PR message',
+  'comments_url': 'https://api.github.com/repos/foo/bar/issues/444/comments',
+  'issue_url': 'https://api.github.com/repos/foo/bar/issues/444',
+  'diff_url': 'https://github.com/foo/bar/pull/444.diff',
+  'patch_url': 'https://github.com/foo/bar/pull/444.patch',
   'state': 'closed',
   'locked': False,
-  'title': 'Look for rel=me on the root of a domain when user logs in with a path.',
-  'user': USER_REST,
-  'body': '',
   'created_at': '2018-02-08T10:24:32Z',
   'updated_at': '2018-02-09T21:14:43Z',
   'closed_at': '2018-02-09T21:14:43Z',
@@ -196,11 +196,11 @@ PULL_REST = {  # GitHub
   'requested_teams': [],
   'labels': [],
   'milestone': None,
-  'commits_url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791/commits',
-  'review_comments_url': 'https://api.github.com/repos/snarfed/bridgy/pulls/791/comments',
-  'review_comment_url': 'https://api.github.com/repos/snarfed/bridgy/pulls/comments{/number}',
-  'comments_url': 'https://api.github.com/repos/snarfed/bridgy/issues/791/comments',
-  'statuses_url': 'https://api.github.com/repos/snarfed/bridgy/statuses/678a4df6e3bf2f7068a58bb1485258985995ca67',
+  'commits_url': 'https://api.github.com/repos/foo/bar/pulls/444/commits',
+  'review_comments_url': 'https://api.github.com/repos/foo/bar/pulls/444/comments',
+  'review_comment_url': 'https://api.github.com/repos/foo/bar/pulls/comments{/number}',
+  'comments_url': 'https://api.github.com/repos/foo/bar/issues/444/comments',
+  'statuses_url': 'https://api.github.com/repos/foo/bar/statuses/678a4df6e3bf2f7068a58bb1485258985995ca67',
   'head': {},  # contents of these elided...
   'base': {},
   'author_association': 'CONTRIBUTOR',
@@ -208,6 +208,17 @@ PULL_REST = {  # GitHub
   'merged_by': USER_REST,
   # this is in PR objects but not issues
   'repo': REPO_REST,
+}
+PULL_OBJ = {  # ActivityStreams
+  'objectType': 'pull-request',
+  'id': tag_uri('foo:bar:444'),
+  'url': 'https://github.com/foo/bar/pull/444',
+  'author': ACTOR,
+  'title': 'a PR to merge',
+  'content': 'a PR message',
+  'published': '2018-02-08T10:24:32+00:00',
+  'updated': '2018-02-09T21:14:43+00:00',
+  'inReplyTo': [{'url': 'https://github.com/foo/bar/tree/master'}],
 }
 # Note that issue comments and top-level PR comments look identical, and even
 # use the same API endpoint, with */issue/*. (This doesn't include diff or
@@ -267,6 +278,7 @@ NOTIFICATION_PULL_REST = {  # GitHub
   'last_read_at': '2018-02-12T20:55:10Z',
   'repository': REPO_REST,
   'url': 'https://api.github.com/notifications/threads/302190598',
+  'merged': False,
   'subject': {
     'title': 'Foo bar baz',
     # TODO: we translate pulls to issues in these URLs to get the top-level comments
@@ -342,13 +354,13 @@ class GitHubTest(testutil.HandlerTest):
     })
 
     self.expect_rest(REST_API_NOTIFICATIONS, notifs)
-    for notif in notifs[1:]:
-      self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
+    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], PULL_REST)
+    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
     self.mox.ReplayAll()
 
     obj_public_repo = copy.deepcopy(ISSUE_OBJ)
     obj_public_repo['to'] = [{'objectType': 'group', 'alias': '@public'}]
-    self.assert_equals([obj_public_repo], self.gh.get_activities())
+    self.assert_equals([PULL_OBJ, obj_public_repo], self.gh.get_activities())
 
   def test_get_activities_fetch_replies(self):
     self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST])
@@ -399,6 +411,7 @@ class GitHubTest(testutil.HandlerTest):
     resp = self.gh.get_activities_response(etag='Thu, 25 Oct 2012 15:16:27 GMT',
                                            fetch_replies=True)
     self.assert_equals('Fri, 1 Jan 2099 12:00:00 GMT', resp['etag'])
+    self.assert_equals([], resp['items'])
 
   # def test_get_activities_activity_id_not_found(self):
   #   self.expect_urlopen(API_OBJECT % ('0', '0'), {
@@ -455,6 +468,9 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_issue_to_object_rest(self):
     self.assert_equals(ISSUE_OBJ, self.gh.issue_to_object(ISSUE_REST))
+
+  def test_issue_to_object_pull_rest(self):
+    self.assert_equals(PULL_OBJ, self.gh.issue_to_object(PULL_REST))
 
   def test_issue_to_object_minimal(self):
     # just test that we don't crash

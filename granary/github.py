@@ -210,10 +210,10 @@ class GitHub(source.Source):
           logging.info('Skipping thread %s, missing subject!', id)
           continue
         split = subject_url.split('/')
-        if len(split) <= 2 or split[-2] != 'issues':
-          # TODO: pull requests with 'pulls' in subject URL
-          logging.info('Skipping thread %s with subject %s, only issues right now',
-                       id, subject_url)
+        if len(split) <= 2 or split[-2] not in ('issues', 'pulls'):
+          logging.info(
+            'Skipping thread %s with subject %s, only issues and PRs right now',
+            id, subject_url)
           continue
 
         issue = self.rest(subject_url).json()
@@ -404,15 +404,17 @@ class GitHub(source.Source):
 
   @classmethod
   def issue_to_object(cls, issue):
-    """Converts a GitHub issue to ActivityStreams.
+    """Converts a GitHub issue or pull request to ActivityStreams.
 
-    Handles both v4 GraphQL and v3 REST API issue objects.
+    Handles both v4 GraphQL and v3 REST API issue and PR objects.
 
     https://developer.github.com/v4/object/issue/
+    https://developer.github.com/v4/object/pullrequest/
     https://developer.github.com/v3/issues/
+    https://developer.github.com/v3/pulls/
 
     Args:
-      issue: dict, decoded JSON GitHub issue
+      issue: dict, decoded JSON GitHub issue or PR
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
@@ -422,16 +424,24 @@ class GitHub(source.Source):
       return obj
 
     repo_url = re.sub(r'/(issue|pull)s?/[0-9]+$', '', obj['url'])
+    if issue.get('merged') is not None:
+      type = 'pull-request'
+      in_reply_to = repo_url + '/tree/' + (issue.get('base', {}).get('ref') or 'master')
+    else:
+      type = 'issue'
+      in_reply_to = repo_url + '/issues'
 
     obj.update({
-      'objectType': 'issue',
-      'inReplyTo': [{'url': repo_url + '/issues'}],
+      'objectType': type,
+      'inReplyTo': [{'url': in_reply_to}],
       'tags': [{
         'displayName': l['name'],
         'url': '%s/labels/%s' % (repo_url, urllib.quote(l['name'])),
       } for l in issue.get('labels', []) if l.get('name')],
     })
     return cls.postprocess_object(obj)
+
+  pr_to_object = issue_to_object
 
   @classmethod
   def comment_to_object(cls, comment):
