@@ -683,6 +683,7 @@ class GitHubTest(testutil.HandlerTest):
     self.assert_equals({
       'id': 'DEF456',
       'url': 'https://github.com/foo/bar/pull/123#thumbs_up-by-snarfed',
+      'type': 'react',
     }, result.content, result)
 
   def test_preview_reaction(self):

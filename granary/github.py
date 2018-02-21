@@ -440,6 +440,7 @@ class GitHub(source.Source):
             'id': reacted['id'],
             'url': '%s#%s-by-%s' % (base_url, reacted['content'].lower(),
                                     reacted['user']['login']),
+            'type': 'react',
           })
         else:
           resp = self.graphql(GRAPHQL_ADD_COMMENT % {
