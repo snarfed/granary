@@ -94,6 +94,30 @@ mutation {
   }
 }
 """
+GRAPHQL_ADD_REACTION = """
+mutation {
+  addReaction(input: {subjectId: "%(subject_id)s", content: %(content)s}) {
+    reaction {
+      id content
+      user {login}
+    }
+  }
+}
+"""
+
+# key is GraphQL ReactionContent enum value, value is unicode emoji string.
+# https://developer.github.com/v4/enum/reactioncontent/
+# https://developer.github.com/v3/reactions/#reaction-types
+REACTION_CONTENT = {
+  'THUMBS_UP': u'👍',  # :+1:
+  'THUMBS_DOWN': u'👎',  # :-1:
+  'LAUGH': u'😆',  # :smile:
+  'CONFUSED': u'😕',  # :confused:
+  'HEART': u'❤️',  # :heart:
+  'HOORAY': u'🎉',  # :tada:
+}
+# inverted: keys are unicode emoji, values are enum strings.
+REACTION_ENUMS = {v: k for k, v in REACTION_CONTENT.items()}
 
 
 class GitHub(source.Source):
@@ -149,7 +173,12 @@ class GitHub(source.Source):
     Returns: `requests.Response`
     """
     kwargs['headers'] = kwargs.get('headers') or {}
-    kwargs['headers'].update({'Authorization': 'token %s' % self.access_token})
+    kwargs['headers'].update({
+      'Authorization': 'token %s' % self.access_token,
+      # # enable the beta Reactions API
+      # # https://developer.github.com/v3/reactions/
+      # 'Accept': 'application/vnd.github.squirrel-girl-preview+json',
+    })
 
     if data is None:
       resp = util.requests_get(url, **kwargs)
@@ -312,6 +341,7 @@ class GitHub(source.Source):
 
     https://developer.github.com/v4/guides/forming-calls/#about-mutations
     https://developer.github.com/v4/mutation/addcomment/
+    https://developer.github.com/v4/mutation/addreaction/
     https://developer.github.com/v3/issues/#create-an-issue
 
     Args:
@@ -383,20 +413,40 @@ class GitHub(source.Source):
           return source.creation_result(resp)
 
     elif len(path) == 4 and path[2] in ('issues', 'pull'):
-      # comment
+      # comment or reaction
       owner, repo, _, number = path
+      reaction = REACTION_ENUMS.get(orig_content)
+
       if preview:
-        preview_content = self.render_markdown(content, owner, repo)
-        return source.creation_result(content=preview_content, description="""\
-<span class="verb">comment</span> on <a href="%s">%s/%s#%s</a>:""" %
-            (base_url, owner, repo, number))
+        target_link = '<a href="%s">%s/%s#%s</a>' % (base_url, owner, repo, number)
+        if reaction:
+          preview_content = None
+          desc = u'<span class="verb">react %s</span> to %s.' % (
+            orig_content, target_link)
+        else:
+          preview_content = self.render_markdown(content, owner, repo)
+          desc = '<span class="verb">comment</span> on %s:' % target_link
+        return source.creation_result(content=preview_content, description=desc)
+
       else:  # create
         issue = self.graphql(GRAPHQL_ISSUE_OR_PR % locals())
-        resp = self.graphql(GRAPHQL_ADD_COMMENT % {
-          'subject_id': issue['repository']['issueOrPullRequest']['id'],
-          'body': content,
-        })
-        return source.creation_result(resp['addComment']['commentEdge']['node'])
+        if reaction:
+          resp = self.graphql(GRAPHQL_ADD_REACTION % {
+            'subject_id': issue['repository']['issueOrPullRequest']['id'],
+            'content': reaction,
+          })
+          reacted = resp['addReaction']['reaction']
+          return source.creation_result({
+            'id': reacted['id'],
+            'url': '%s#%s-by-%s' % (base_url, reacted['content'].lower(),
+                                    reacted['user']['login']),
+          })
+        else:
+          resp = self.graphql(GRAPHQL_ADD_COMMENT % {
+            'subject_id': issue['repository']['issueOrPullRequest']['id'],
+            'body': content,
+          })
+          return source.creation_result(resp['addComment']['commentEdge']['node'])
 
     return source.creation_result(
       abort=False,

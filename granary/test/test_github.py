@@ -12,6 +12,7 @@ from oauth_dropins.webutil import util
 from granary import appengine_config
 from granary import github
 from granary.github import (
+  REACTION_CONTENT,
   REST_API_COMMENT,
   REST_API_COMMENTS,
   REST_API_ISSUE,
@@ -265,6 +266,23 @@ ISSUE_OBJ_WITH_REPLIES.update({
   },
   'to': [{'objectType': 'group', 'alias': '@private'}],
 })
+REACTION_OBJ = {  # ActivityStreams
+  'id': tag_uri('foo:bar:123_thumbs_up_by_snarfed'),
+  'url': 'https://github.com/foo/bar/pull/123#thumbs_up-by-snarfed',
+  'objectType': 'activity',
+  'verb': 'react',
+  'author': ACTOR,
+  'content': REACTION_CONTENT['THUMBS_UP'],
+  'published': '2012-12-05T00:58:26+00:00',
+  'object': {'url': 'https://github.com/foo/bar/pull/123'},
+  'published': '2015-07-23T18:47:58+00:00',
+  'updated': '2015-07-23T19:47:58+00:00',
+}
+REACTION_OBJ_INPUT = {  # ActivityStreams, for create/preview
+  'objectType': 'comment',
+  'content': REACTION_CONTENT['THUMBS_UP'],
+  'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123'}],
+}
 STAR_OBJ = {
   'objectType': 'activity',
   'verb': 'like',
@@ -630,3 +648,43 @@ class GitHubTest(testutil.HandlerTest):
   def test_preview_star(self):
     preview = self.gh.preview_create(STAR_OBJ)
     self.assertEquals('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
+
+  def test_create_reaction(self):
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ISSUE_OR_PR % {
+        'owner': 'foo',
+        'repo': 'bar',
+        'number': 123,
+      },
+    }, response={
+      'repository': {
+        'issueOrPullRequest': ISSUE_GRAPHQL,
+      },
+    })
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ADD_REACTION % {
+        'subject_id': ISSUE_GRAPHQL['id'],
+        'content': 'THUMBS_UP',
+      },
+    }, response={
+      'addReaction': {
+        'reaction': {
+          'id': 'DEF456',
+          'content': 'THUMBS_UP',
+          'user': {
+            'login': 'snarfed',
+          },
+        },
+      },
+    })
+    self.mox.ReplayAll()
+
+    result = self.gh.create(REACTION_OBJ_INPUT)
+    self.assert_equals({
+      'id': 'DEF456',
+      'url': 'https://github.com/foo/bar/pull/123#thumbs_up-by-snarfed',
+    }, result.content, result)
+
+  def test_preview_reaction(self):
+    preview = self.gh.preview_create(REACTION_OBJ_INPUT)
+    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>.', preview.description)
