@@ -2491,19 +2491,19 @@ cc Sam G, Michael M<br />""", preview.description)
     obj = {
       'objectType': 'note',
       'content': 'my caption',
-      'image': {'url': 'http://my/picture'},
+      'image': {'url': u'http://my/picturé'},
     }
 
     # test preview
     preview = self.fb.preview_create(obj)
     self.assertEquals('<span class="verb">post</span>:', preview.description)
-    self.assertEquals('my caption<br /><br /><img src="http://my/picture" />',
+    self.assertEquals(u'my caption<br /><br /><img src="http://my/picturé" />',
                       preview.content)
 
     # test create
     self.expect_urlopen(API_ALBUMS % 'me', {'data': []})
     self.expect_urlopen(API_PUBLISH_PHOTO, {'id': '123_456'},
-                        data='url=http%3A%2F%2Fmy%2Fpicture&message=my+caption')
+                        data=u'url=http%3A%2F%2Fmy%2Fpictur%C3%A9&message=my+caption')
     self.mox.ReplayAll()
     self.assert_equals({
       'id': '123_456',

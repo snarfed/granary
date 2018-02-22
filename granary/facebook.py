@@ -699,7 +699,7 @@ class Facebook(source.Source):
         if image_url:
           msg_data['attachment_url'] = image_url
         resp = self.urlopen(API_PUBLISH_COMMENT % base_id,
-                            data=urllib.urlencode(msg_data))
+                            data=urllib.urlencode(util.encode(msg_data)))
         url = self.comment_url(base_id, resp['id'],
                                post_author_id=base_obj.get('author', {}).get('id'))
         resp.update({'url': url, 'type': 'comment'})
@@ -799,7 +799,7 @@ class Facebook(source.Source):
             # https://developers.facebook.com/docs/graph-api/reference/user/feed#pubfields
             msg_data['tags'] = ','.join(tag['id'] for tag in people)
 
-        resp = self.urlopen(api_call, data=urllib.urlencode(msg_data))
+        resp = self.urlopen(api_call, data=urllib.urlencode(util.encode(msg_data)))
         resp.update({'url': self.post_url(resp), 'type': 'post'})
         if video_url and not resp.get('success', True):
           msg = 'Video upload failed.'

@@ -231,6 +231,7 @@ Changelog
   * Prefer HTTPS URLs for media images.
 * Facebook:
   * Try harder to find original (full) sized photo URLs, specifically `_o.jpg` files instead of `_s.jpg`.
+  * `create()` bug fix for photo and image URLs with unicode characters.
 * Instagram:
   * Extract more user (`author`) data from scraped profile pages.
 * microformats2, Atom:
