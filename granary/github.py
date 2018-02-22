@@ -22,6 +22,7 @@ REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues/%s'
 REST_API_CREATE_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
 # currently unused; we use 'comments_url' in the issue or PR instead
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
+REST_API_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/%s/reactions'
 REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
 REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
@@ -105,19 +106,27 @@ mutation {
 }
 """
 
-# key is GraphQL ReactionContent enum value, value is unicode emoji string.
+# key is unicode emoji string, value is GraphQL ReactionContent enum value.
 # https://developer.github.com/v4/enum/reactioncontent/
 # https://developer.github.com/v3/reactions/#reaction-types
-REACTION_CONTENT = {
-  'THUMBS_UP': u'👍',  # :+1:
-  'THUMBS_DOWN': u'👎',  # :-1:
-  'LAUGH': u'😆',  # :smile:
-  'CONFUSED': u'😕',  # :confused:
-  'HEART': u'❤️',  # :heart:
-  'HOORAY': u'🎉',  # :tada:
+REACTIONS_GRAPHQL = {
+  u'👍': 'THUMBS_UP',
+  u'👎': 'THUMBS_DOWN',
+  u'😆': 'LAUGH',
+  u'😕': 'CONFUSED',
+  u'❤️': 'HEART',
+  u'🎉': 'HOORAY',
 }
-# inverted: keys are unicode emoji, values are enum strings.
-REACTION_ENUMS = {v: k for k, v in REACTION_CONTENT.items()}
+# key is 'content' field value, value is unicode emoji string.
+# https://developer.github.com/v3/reactions/#reaction-types
+REACTIONS_REST = {
+  '+1': u'👍',
+  '-1': u'👎',
+  'laugh': u'😆',
+  'confused': u'😕',
+  'heart': u'❤️',
+  'hooray': u'🎉',
+}
 
 
 class GitHub(source.Source):
@@ -175,9 +184,9 @@ class GitHub(source.Source):
     kwargs['headers'] = kwargs.get('headers') or {}
     kwargs['headers'].update({
       'Authorization': 'token %s' % self.access_token,
-      # # enable the beta Reactions API
-      # # https://developer.github.com/v3/reactions/
-      # 'Accept': 'application/vnd.github.squirrel-girl-preview+json',
+      # enable the beta Reactions API
+      # https://developer.github.com/v3/reactions/
+      'Accept': 'application/vnd.github.squirrel-girl-preview+json',
     })
 
     if data is None:
@@ -204,13 +213,16 @@ class GitHub(source.Source):
     https://developer.github.com/v3/issues/
     https://developer.github.com/v3/issues/comments/
 
+    fetch_likes determines whether emoji reactions are fetched:
+    https://help.github.com/articles/about-conversations-on-github#reacting-to-ideas-in-comments
+
     The notifications API call supports Last-Modified/If-Modified-Since headers
     and 304 Not Changed responses. If provided, etag should be an RFC2822
     timestamp, usually the exact value returned in a Last-Modified header. It
     will also be passed to the comments API endpoint as the since= value
     (converted to ISO 8601).
     """
-    if (fetch_likes or fetch_shares or fetch_events or fetch_mentions or search_query):
+    if fetch_shares or fetch_events or fetch_mentions or search_query:
       raise NotImplementedError()
 
     since = None
@@ -266,6 +278,12 @@ class GitHub(source.Source):
             'items': comment_objs,
             'totalItems': len(comment_objs),
           }
+
+        if fetch_likes:
+          issue_url = issue['url'].replace('pulls', 'issues')
+          reactions = self.rest(issue_url + '/reactions').json()
+          obj.setdefault('tags', []).extend(
+            self.reaction_to_object(r, obj) for r in reactions)
 
         activities.append(obj)
 
@@ -415,7 +433,7 @@ class GitHub(source.Source):
     elif len(path) == 4 and path[2] in ('issues', 'pull'):
       # comment or reaction
       owner, repo, _, number = path
-      reaction = REACTION_ENUMS.get(orig_content)
+      reaction = REACTIONS_GRAPHQL.get(orig_content)
 
       if preview:
         target_link = '<a href="%s">%s/%s#%s</a>' % (base_url, owner, repo, number)
@@ -517,6 +535,41 @@ class GitHub(source.Source):
       'objectType': 'comment',
       # url is e.g. https://github.com/foo/bar/pull/123#issuecomment-456
       'inReplyTo': [{'url': util.fragmentless(obj['url'])}],
+    })
+    return cls.postprocess_object(obj)
+
+  @classmethod
+  def reaction_to_object(cls, reaction, target):
+    """Converts a GitHub emoji reaction to ActivityStreams.
+
+    Handles v3 REST API reaction objects.
+
+    https://developer.github.com/v3/reactions/
+
+    Args:
+      reaction: dict, decoded v3 JSON GitHub reaction
+      target: dict, ActivityStreams object of reaction
+
+    Returns:
+      an ActivityStreams reaction dict, ready to be JSON-encoded
+    """
+    obj = cls._to_object(reaction)
+    if not obj:
+      return obj
+
+    content = REACTIONS_REST.get(reaction.get('content'))
+    enum = REACTIONS_GRAPHQL.get(content, '').lower()
+    author = cls.user_to_actor(reaction.get('user'))
+    username = author.get('username')
+
+    obj.update({
+      'objectType': 'activity',
+      'verb': 'react',
+      'id': target['id'] + '_%s_by_%s' % (enum, username),
+      'url': target['url'] + '#%s-by-%s' % (enum, username),
+      'author': author,
+      'content': content,
+      'object': {'url': target['url']},
     })
     return cls.postprocess_object(obj)
 

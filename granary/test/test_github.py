@@ -12,11 +12,12 @@ from oauth_dropins.webutil import util
 from granary import appengine_config
 from granary import github
 from granary.github import (
-  REACTION_CONTENT,
+  REACTIONS_REST,
   REST_API_COMMENT,
   REST_API_COMMENTS,
   REST_API_ISSUE,
   REST_API_NOTIFICATIONS,
+  REST_API_REACTIONS,
 )
 from granary import source
 
@@ -266,23 +267,32 @@ ISSUE_OBJ_WITH_REPLIES.update({
   },
   'to': [{'objectType': 'group', 'alias': '@private'}],
 })
+REACTION_REST = {  # GitHub v3
+  'id': 19894970,
+  'content': '+1',
+  'created_at': '2018-02-21T19:49:16Z',
+  'user': USER_REST,
+}
 REACTION_OBJ = {  # ActivityStreams
-  'id': tag_uri('foo:bar:123_thumbs_up_by_snarfed'),
-  'url': 'https://github.com/foo/bar/pull/123#thumbs_up-by-snarfed',
+  'id': tag_uri('foo:bar:333_thumbs_up_by_snarfed'),
+  'url': 'https://github.com/foo/bar/issues/333#thumbs_up-by-snarfed',
   'objectType': 'activity',
   'verb': 'react',
   'author': ACTOR,
-  'content': REACTION_CONTENT['THUMBS_UP'],
-  'published': '2012-12-05T00:58:26+00:00',
-  'object': {'url': 'https://github.com/foo/bar/pull/123'},
-  'published': '2015-07-23T18:47:58+00:00',
-  'updated': '2015-07-23T19:47:58+00:00',
+  'content': REACTIONS_REST['+1'],
+  'object': {'url': 'https://github.com/foo/bar/issues/333'},
+  'published': '2018-02-21T19:49:16+00:00',
 }
 REACTION_OBJ_INPUT = {  # ActivityStreams, for create/preview
   'objectType': 'comment',
-  'content': REACTION_CONTENT['THUMBS_UP'],
+  'content': REACTIONS_REST['+1'],
   'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123'}],
 }
+ISSUE_OBJ_WITH_REACTIONS = copy.deepcopy(ISSUE_OBJ)
+ISSUE_OBJ_WITH_REACTIONS.update({
+  'tags': ISSUE_OBJ['tags'] + [REACTION_OBJ, REACTION_OBJ],
+  'to': [{'objectType': 'group', 'alias': '@private'}],
+})
 STAR_OBJ = {
   'objectType': 'activity',
   'verb': 'like',
@@ -309,7 +319,10 @@ NOTIFICATION_ISSUE_REST = copy.deepcopy(NOTIFICATION_PULL_REST)
 NOTIFICATION_ISSUE_REST.update({
   'subject': {'url': 'https://api.github.com/repos/foo/baz/issues/456'},
 })
-
+EXPECTED_HEADERS = {
+  'Authorization': 'token a-towkin',
+  'Accept': 'application/vnd.github.squirrel-girl-preview+json',
+}
 class GitHubTest(testutil.HandlerTest):
 
   def setUp(self):
@@ -324,18 +337,17 @@ class GitHubTest(testutil.HandlerTest):
       }, response={'data': response}, **kwargs)
 
   def expect_rest(self, url, response=None, **kwargs):
-    kwargs.setdefault('headers', {}).update({'Authorization': 'token a-towkin'})
+    kwargs.setdefault('headers', {}).update(EXPECTED_HEADERS)
     return self.expect_requests_get(url, response=response, **kwargs)
 
   def expect_markdown_render(self, body):
     rendered = '<p>rendered!</p>'
-    self.expect_requests_post(github.REST_API_MARKDOWN, headers={
-      'Authorization': 'token a-towkin',
-    }, response=rendered, json={
-      'text': body,
-      'mode': 'gfm',
-      'context': 'foo/bar',
-    })
+    self.expect_requests_post(
+      github.REST_API_MARKDOWN, headers=EXPECTED_HEADERS, response=rendered, json={
+        'text': body,
+        'mode': 'gfm',
+        'context': 'foo/bar',
+      })
     return rendered
 
   def test_user_to_actor_graphql(self):
@@ -388,6 +400,21 @@ class GitHubTest(testutil.HandlerTest):
 
     self.assert_equals([ISSUE_OBJ_WITH_REPLIES],
                        self.gh.get_activities(fetch_replies=True))
+
+  def test_get_activities_fetch_likes(self):
+    self.expect_rest(REST_API_NOTIFICATIONS,
+                     [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
+    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], PULL_REST)
+    self.expect_rest(REST_API_REACTIONS % ('foo', 'bar', 444), [])
+    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
+    self.expect_rest(REST_API_REACTIONS % ('foo', 'bar', 333),
+                     [REACTION_REST, REACTION_REST])
+    self.mox.ReplayAll()
+
+    pull_obj = copy.deepcopy(PULL_OBJ)
+    pull_obj['to'] = [{'objectType': 'group', 'alias': '@private'}]
+    self.assert_equals([pull_obj, ISSUE_OBJ_WITH_REACTIONS],
+                       self.gh.get_activities(fetch_likes=True))
 
   def test_get_activities_self_empty(self):
     self.expect_rest(REST_API_NOTIFICATIONS, [])
@@ -467,10 +494,6 @@ class GitHubTest(testutil.HandlerTest):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(search_query='foo')
 
-  def test_get_activities_fetch_likes_not_implemented(self):
-    with self.assertRaises(NotImplementedError):
-      self.gh.get_activities(fetch_likes='foo')
-
   def test_get_activities_fetch_events_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(fetch_events='foo')
@@ -516,6 +539,10 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_comment_to_object_empty(self):
     self.assert_equals({}, self.gh.comment_to_object({}))
+
+  def test_reaction_to_object_rest(self):
+    self.assert_equals(REACTION_OBJ,
+                       self.gh.reaction_to_object(REACTION_REST, ISSUE_OBJ))
 
   def test_create_comment(self):
     self.expect_graphql(json={
@@ -570,14 +597,12 @@ class GitHubTest(testutil.HandlerTest):
     self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
-      }, headers={
-        'Authorization': 'token a-towkin',
       }, response={
         'id': '789999',
         'number': '123',
         'url': 'not this one',
         'html_url': 'https://github.com/foo/bar/issues/123',
-      })
+      }, headers=EXPECTED_HEADERS)
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(ISSUE_OBJ)

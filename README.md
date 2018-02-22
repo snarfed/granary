@@ -20,7 +20,7 @@ About
 
 Granary is a library and REST API that fetches and converts between a wide variety of data sources and formats:
 
-* Facebook, Flickr, Google+, Instagram, and Twitter native APIs
+* Facebook, Flickr, GitHub, Google+, Instagram, and Twitter native APIs
 * Instagram and Google+ scraped HTML
 * [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0
 * [microformats2](http://microformats.org/wiki/microformats2) HTML and JSON
@@ -245,7 +245,7 @@ Changelog
   * Omit title from items if it's the same as the content. (Often caused by microformats2's implied `p-name` logic.)
 
 ### 1.10 - 2017-12-10
-* Moved web site and REST API to granary.io! granary-demo.appspot.com now 301 redirects.
+* Moved web site and REST API to [granary.io](https://granary.io/)! [granary-demo.appspot.com](https://granary-demo.appspot.com/) now 301 redirects.
 * Twitter:
   * Update the publish character limit to 280. [Background.](https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425)
   * Fix a [bug in preview_create that auto-linked @-mentions inside URLs](https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800), e.g. Medium posts.
