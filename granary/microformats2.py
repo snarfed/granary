@@ -571,6 +571,12 @@ def json_to_html(obj, parent_props=None):
     content_classes.append('e-content')
     if not props.get('name'):
       content_classes.append('p-name')
+  else:
+    # if content is empty, set explicit blank name to prevent bad (old)
+    # microformats2 implied p-name handling.
+    # https://github.com/snarfed/granary/issues/131
+    if not props.get('name'):
+      props['name'] = ['']
 
   summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
              if prop.get('summary') else '')
@@ -939,7 +945,7 @@ def maybe_linked_name(props):
   name = prop.get('name')
   url = prop.get('url')
 
-  if name:
+  if name is not None:
     html = maybe_linked(name, url, linked_classname='p-name u-url',
                         unlinked_classname='p-name')
   else:

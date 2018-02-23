@@ -348,6 +348,7 @@ Shared <a href="#">a post</a> by foo
 <span class="p-name">a " b ' c</span>
 <img class="u-photo" src="author-img" alt="" />
 </span>
+<span class="p-name"></span>
 <div class="">
 </div>
 <img class="u-photo" src="att-img" alt="" />
@@ -445,7 +446,7 @@ Shared <a href="#">a post</a> by foo
 <article class="u-quotation-of h-cite">
 <span class="p-uid"></span>
 
-<a class="u-url" href="http://a">http://a</a>
+<a class="p-name u-url" href="http://a"></a>
 <div class="">
 
 </div>
