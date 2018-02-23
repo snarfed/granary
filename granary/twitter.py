@@ -234,6 +234,9 @@ class Twitter(source.Source):
     if group_id is None:
       group_id = source.FRIENDS
 
+    if user_id and user_id.startswith('@'):
+      user_id = user_id[1:]
+
     # nested function for lazily fetching the user object if we need it
     user = []
     def _user():

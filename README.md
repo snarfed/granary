@@ -229,6 +229,7 @@ Changelog
 * Twitter:
   * Prefer MP4 and other video/... content types to HLS (.m3u8) etc. [Background.](https://twittercommunity.com/t/retiring-mp4-video-output/66093)
   * Prefer HTTPS URLs for media images.
+  * `get_activities()`: Support @-prefixed usernames in `user_id`.
 * Facebook:
   * Try harder to find original (full) sized photo URLs, specifically `_o.jpg` files instead of `_s.jpg`.
   * `create()` bug fix for photo and image URLs with unicode characters.

@@ -796,11 +796,17 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([like_obj, ACTIVITY], got)
 
   def test_get_activities_for_screen_name(self):
-    self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': 'schnarfed'},
-                        [])
+    for _ in range(2):
+      self.expect_urlopen(API_USER_TIMELINE % {
+        'count': 0,
+        'screen_name': 'schnarfed',
+      }, [])
     self.mox.ReplayAll()
 
     self.assert_equals([], self.twitter.get_activities(user_id='schnarfed',
+                                                       group_id=source.SELF))
+    # @ prefix should also work
+    self.assert_equals([], self.twitter.get_activities(user_id='@schnarfed',
                                                        group_id=source.SELF))
 
   def test_get_activities_list_explicit_user(self):
@@ -811,7 +817,8 @@ class TwitterTest(testutil.TestCase):
     }, [])
     self.mox.ReplayAll()
 
-    self.assert_equals([], self.twitter.get_activities(group_id='testlist', user_id='schnarfed'))
+    self.assert_equals([], self.twitter.get_activities(group_id='testlist',
+                                                       user_id='schnarfed'))
 
   def test_get_activities_list_implicit_user(self):
     self.expect_urlopen('account/verify_credentials.json',
