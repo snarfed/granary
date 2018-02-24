@@ -50,7 +50,6 @@ INPUTS = (
   'jsonfeed',
   'mf2-json',
 )
-URL_CACHE_TIME = 5 * 60  # 5m
 SILO_DOMAINS = {cls.DOMAIN for cls in (
   Facebook,
   Flickr,
@@ -116,14 +115,13 @@ class DemoHandler(handlers.ModernHandler):
 class UrlHandler(api.Handler):
   """Handles URL requests from the interactive demo form on the front page.
 
-  Fetched URL data is cached for 5m. Cache key is 'U [URL]', value is dict with
-  'url' and 'body'. Background: https://github.com/snarfed/bridgy/issues/665
-
-  You can skip the cache by including a cache=false query param.
+  Responses are cached for 5m. You can skip the cache by including a cache=false
+  query param. Background: https://github.com/snarfed/bridgy/issues/665
   """
   handle_exception = handlers.handle_exception
 
   @api.canonicalize_domain
+  @handlers.memcache_response(api.RESPONSE_CACHE_TIME)
   def get(self):
     input = util.get_required_param(self, 'input')
     if input not in INPUTS:
@@ -187,35 +185,17 @@ class UrlHandler(api.Handler):
 
   def _fetch(self, url):
     """Fetches url and returns (string final url, unicode body)."""
-    # check if request is cached
-    cache = self.request.get('cache', '').lower() != 'false'
-    cache_key = 'U %s' % url
-    cached = memcache.get(cache_key) if cache else None
+    try:
+      resp = util.requests_get(url)
+    except (ValueError, requests.URLRequired) as e:
+      self.abort(400, str(e))
+      # other exceptions are handled by webutil.handlers.handle_exception(),
+      # which uses interpret_http_exception(), etc.
 
-    if cached:
-      logging.info('Serving cached response %r', cache_key)
-      url = cached['url']
-      body = cached['body']
-    else:
-      # fetch url
-      try:
-        resp = util.requests_get(url)
-      except (ValueError, requests.URLRequired) as e:
-        self.abort(400, str(e))
-        # other exceptions are handled by webutil.handlers.handle_exception(),
-        # which uses interpret_http_exception(), etc.
-
-      if url != resp.url:
-        url = resp.url
-        logging.info('Redirected to %s', url)
-      body = resp.text
-
-      if cache:
-        logging.info('Caching response in %r', cache_key)
-        try:
-          memcache.set(cache_key, {'url': url, 'body': body}, URL_CACHE_TIME)
-        except ValueError:
-          logging.warning('Response is too big for memcache!')
+    if url != resp.url:
+      url = resp.url
+      logging.info('Redirected to %s', url)
+    body = resp.text
 
     return url, body
 

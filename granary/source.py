@@ -172,7 +172,6 @@ class Source(object):
   """
   __metaclass__ = SourceMeta
 
-  RESPONSE_CACHE_TIME = 5 * 60  # 5m
   POST_ID_RE = None
 
   def user_url(self, user_id):
