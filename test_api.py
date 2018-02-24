@@ -239,12 +239,23 @@ class HandlerTest(testutil.HandlerTest):
     self.check_request('?count=999', count=api.ITEMS_PER_PAGE)
 
   def test_cache(self):
-    # first fetch populates the cache
-    first = self.get_response('/fake/123/@all/', '123', None)
+    FakeSource.get_activities_response('123', None, start_index=0, count=100,
+                                      ).AndReturn({'items': ['x']})
+    FakeSource.get_activities_response('123', None, start_index=0, count=100,
+                                      ).AndReturn({'items': ['a']})
+    self.mox.ReplayAll()
 
-    # second fetch should use the cache instead of fetching from the silo
-    second = api.application.get_response('/fake/123/@all/')
-    self.assert_equals(first.body, second.body)
+    # first fetches populate the cache. make sure query params are included in
+    # cache key.
+    first_x = api.application.get_response('/fake/123/@all/?x=y')
+    first_a = api.application.get_response('/fake/123/@all/?a=b')
+
+    # second fetches should use the cache instead of fetching from the silo
+    second_x = api.application.get_response('/fake/123/@all/?x=y')
+    self.assert_equals({'items': ['x']}, json.loads(second_x.body))
+
+    second_a = api.application.get_response('/fake/123/@all/?a=b')
+    self.assert_equals({'items': ['a']}, json.loads(second_a.body))
 
   def test_cache_false_query_param(self):
     first = self.get_response('/fake/123/@all/?cache=false', '123', None)

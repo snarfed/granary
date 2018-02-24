@@ -142,7 +142,7 @@ class Handler(handlers.ModernHandler):
     # check if request is cached
     cache = self.request.get('cache', '').lower() != 'false'
     if cache:
-      cache_key = 'R %s' % self.request.path
+      cache_key = 'R %s' % self.request.url
       cached = memcache.get(cache_key)
       if cached:
         logging.info('Serving cached response %r', cache_key)
