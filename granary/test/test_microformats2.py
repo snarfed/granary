@@ -743,6 +743,42 @@ Shared <a href="#">a post</a> by foo
     self.assertEquals('', microformats2.hcard_to_html({}))
     self.assertEquals('', microformats2.hcard_to_html({'properties': {}}))
 
+  def test_share_activity_to_json_html(self):
+    """Should translate the full activity, not just the object."""
+    share = {
+      'verb': 'share',
+      'actor': {'displayName': 'sharer'},
+      'object': {
+        'content': 'original',
+        'actor': {'displayName': 'author'},
+      },
+    }
+
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'author': [{
+          'type': ['h-card'],
+          'properties': {'name': ['sharer']},
+        }],
+        'repost-of': [{
+          'type': ['h-cite'],
+          'properties': {
+            'content': [{'html': 'original', 'value': 'original'}],
+            'author': [{
+              'type': ['h-card'],
+              'properties': {'name': ['author']},
+            }],
+          }
+        }],
+      },
+    }, microformats2.activity_to_json(share, synthesize_content=False))
+
+    self.assert_multiline_in("""\
+Shared <a href="#">a post</a> by   <span class="h-card">
+<span class="p-name">author</span>
+""", microformats2.activities_to_html([share]), ignore_blanks=True)
+
   def test_activities_to_html_like(self):
     self.assert_multiline_equals("""\
 <!DOCTYPE html>

@@ -45,7 +45,7 @@ RSVP_TO_EVENT = {
   'rsvp-interested': 'interested',
   'invite': 'invited',
 }
-VERBS_WITH_OBJECT = {'like', 'react', 'repost'} | set(RSVP_TO_EVENT.keys())
+VERBS_WITH_OBJECT = {'like', 'react', 'repost', 'share'} | set(RSVP_TO_EVENT.keys())
 
 HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')
 

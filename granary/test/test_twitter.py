@@ -383,37 +383,37 @@ RETWEETS = [{  # Twitter
 TWEET_WITH_RETWEETS = copy.deepcopy(TWEET)
 TWEET_WITH_RETWEETS['retweets'] = RETWEETS
 SHARES = [{  # ActivityStreams
-    'id': tag_uri('123'),
-    'url': 'https://twitter.com/alizz/status/123',
-    'objectType': 'activity',
-    'verb': 'share',
-    'object': {'url': 'https://twitter.com/foo/status/333'},
-    'author': {
-      'objectType': 'person',
-      'id': 'tag:twitter.com:alizz',
-      'username': 'alizz',
-      'displayName': 'Alice',
-      'url': 'https://twitter.com/alizz',
-      'image': {'url': 'http://alice/picture'},
-      },
-    'published': '2013-02-24T20:26:41+00:00',
-    }, {
-    'id': tag_uri('456'),
-    'url': 'https://twitter.com/bobbb/status/456',
-    'objectType': 'activity',
-    'verb': 'share',
-    'object': {'url': 'https://twitter.com/bar/status/666'},
-    'content': 'RT <a href="https://twitter.com/bar">@bar</a>: retweeted text',
-    'author': {
-      'objectType': 'person',
-      'id': 'tag:twitter.com:bobbb',
-      'username': 'bobbb',
-      'displayName': 'Bob',
-      'url': 'https://twitter.com/bobbb',
-      'image': {'url': 'http://bob/picture'},
-      },
-    'published': '2013-02-26T20:26:41+00:00',
-    }]
+  'id': tag_uri('123'),
+  'url': 'https://twitter.com/alizz/status/123',
+  'objectType': 'activity',
+  'verb': 'share',
+  'object': {'url': 'https://twitter.com/foo/status/333'},
+  'author': {
+    'objectType': 'person',
+    'id': 'tag:twitter.com:alizz',
+    'username': 'alizz',
+    'displayName': 'Alice',
+    'url': 'https://twitter.com/alizz',
+    'image': {'url': 'http://alice/picture'},
+  },
+  'published': '2013-02-24T20:26:41+00:00',
+}, {
+  'id': tag_uri('456'),
+  'url': 'https://twitter.com/bobbb/status/456',
+  'objectType': 'activity',
+  'verb': 'share',
+  'object': {'url': 'https://twitter.com/bar/status/666'},
+  'content': 'RT <a href="https://twitter.com/bar">@bar</a>: retweeted text',
+  'author': {
+    'objectType': 'person',
+    'id': 'tag:twitter.com:bobbb',
+    'username': 'bobbb',
+    'displayName': 'Bob',
+    'url': 'https://twitter.com/bobbb',
+    'image': {'url': 'http://bob/picture'},
+  },
+  'published': '2013-02-26T20:26:41+00:00',
+}]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
 OBJECT_WITH_SHARES['tags'] += SHARES
 ACTIVITY_WITH_SHARES = copy.deepcopy(ACTIVITY)

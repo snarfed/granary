@@ -143,7 +143,18 @@ def activity_to_json(activity, **kwargs):
   Returns:
     dict, decoded microformats2 JSON
   """
-  return object_to_json(activity.get('object') or activity, **kwargs)
+  return object_to_json(_activity_or_object(activity), **kwargs)
+
+
+def _activity_or_object(activity):
+  """Returns the base item we care about, activity or activity['object'].
+
+  Used in :func:`activity_to_json()` and :func:`activities_to_html()`.
+  """
+  if activity.get('object') and activity.get('verb') not in source.VERBS_WITH_OBJECT:
+    return activity['object']
+
+  return activity
 
 
 def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
@@ -473,11 +484,7 @@ def activities_to_html(activities):
 %s
 </body>
 </html>
-""" % '\n'.join(object_to_html(
-    a['object']
-    if a.get('object') and a.get('verb') not in source.VERBS_WITH_OBJECT
-    else a)
-  for a in activities)
+""" % '\n'.join(object_to_html(_activity_or_object(a)) for a in activities)
 
 
 def object_to_html(obj, parent_props=None, synthesize_content=True):
