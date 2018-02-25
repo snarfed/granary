@@ -616,6 +616,29 @@ class GitHubTest(testutil.HandlerTest):
       'url': 'https://github.com/foo/bar/issues/123',
     }, result.content)
 
+  def test_create_with_image_and_link(self):
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': '[bar](http://foo/) ![](https://baz/)',
+      }, response={
+        'html_url': 'https://github.com/foo/bar/issues/123',
+      }, headers=EXPECTED_HEADERS)
+    self.mox.ReplayAll()
+
+    result = self.gh.create({
+      'url': 'https://github.com/foo/bar/issues/333',
+      'title': 'an issue title',
+      'content': """
+<a href="http://foo/">bar</a>
+<img src="https://baz/" />
+""",
+      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+    })
+    self.assertIsNone(result.error_plain, result)
+    self.assert_equals({
+      'url': 'https://github.com/foo/bar/issues/123',
+    }, result.content)
+
   def test_preview_issue(self):
     for i in range(2):
       rendered = self.expect_markdown_render(ISSUE_OBJ['content'].strip())

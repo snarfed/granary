@@ -141,6 +141,11 @@ class GitHub(source.Source):
   POST_ID_RE = re.compile('^[0-9]+$')
   # https://github.com/moby/moby/issues/679#issuecomment-18307522
   REPO_NAME_RE = re.compile('^[A-Za-z0-9_.-]+$')
+  # https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
+  HTML2TEXT_OPTIONS = {
+    'ignore_images': False,
+    'ignore_links': False,
+  }
 
   def __init__(self, access_token=None):
     """Constructor.

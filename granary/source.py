@@ -66,14 +66,19 @@ class RateLimited(BaseException):
     super(RateLimited, self).__init__(*args, **kwargs)
 
 
-def html_to_text(html):
-  """Converts string html to string text with html2text."""
+def html_to_text(html, **kwargs):
+  """Converts string html to string text with html2text.
+
+  Args:
+    **kwargs: html2text options
+      https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
+  """
   if html:
     h = html2text.HTML2Text()
     h.unicode_snob = True
     h.body_width = 0  # don't wrap lines
-    h.ignore_links = True
-    h.ignore_images = True
+    h.ignore_links = kwargs.get('ignore_links', True)
+    h.ignore_images = kwargs.get('ignore_images', True)
 
     # hacky monkey patch fix for html2text escaping sequences that are
     # significant in markdown syntax. the X\\Y replacement depends on knowledge
@@ -169,10 +174,13 @@ class Source(object):
     placeholder for the post URL and (optionally) a %(content)s placeholder
     for the post content.
   * POST_ID_RE: regexp, optional, matches valid post ids. Used in post_id().
+  * HTML2TEXT_OPTIONS: dict mapping string html2text option names to values
+    https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   """
   __metaclass__ = SourceMeta
 
   POST_ID_RE = None
+  HTML2TEXT_OPTIONS = {}
 
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""
@@ -917,7 +925,7 @@ class Source(object):
     is_html = (bool(BeautifulSoup(content, 'html.parser').find()) or
                HTML_ENTITY_RE.search(content))
     if is_html and not ignore_formatting:
-      content = html_to_text(content)
+      content = html_to_text(content, **self.HTML2TEXT_OPTIONS)
     elif not is_html and ignore_formatting:
       content = re.sub(r'\s+', ' ', content)
 
