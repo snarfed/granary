@@ -528,12 +528,19 @@ quoted tweet with photo
   <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
 
   <id>http://my/post</id>
-  <title>my content</title>
+  <title>my content
+x
+y
+z</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 my content
+<pre>  x
+    y
+ z
+</pre>
 
   </div>
   </content>
@@ -561,7 +568,14 @@ my content
 
 <article class="h-entry">
 <a class="u-url" href="http://my/post" />
-<div class="e-content">my content</div>
+<div class="e-content">
+my content
+<pre>
+  x
+    y
+ z
+</pre>
+</div>
 </article>
 </div>
 """, 'https://my.site/feed'),

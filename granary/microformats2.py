@@ -103,7 +103,7 @@ def get_string_urls(objs):
   return urls
 
 
-def get_html(val, keep_newlines=False):
+def get_html(val):
   """Returns a string value that may have HTML markup.
 
   Args:
@@ -119,8 +119,6 @@ def get_html(val, keep_newlines=False):
     # https://github.com/snarfed/granary/issues/80
     # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
     html = val['html']
-    if not keep_newlines:
-      html = html.replace('\n', ' ')
     return html.strip()
 
   return get_text(val)
@@ -462,7 +460,14 @@ def html_to_activities(html, url=None, actor=None):
   parsed = mf2py.parse(doc=html, url=url)
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
-  return [{'object': json_to_object(item, actor=actor)} for item in items]
+
+  activities = []
+  for item in items:
+    obj = json_to_object(item, actor=actor)
+    obj['content_is_html'] = True
+    activities.append({'object': obj})
+
+  return activities
 
 
 def activities_to_html(activities):
@@ -571,7 +576,7 @@ def json_to_html(obj, parent_props=None):
         children.append(json_to_html(target, ['u-' + mftype + '-of']))
 
   # set up content and name
-  content_html = get_html(prop.get('content', {}), keep_newlines=True)
+  content_html = get_html(prop.get('content', {}))
   content_classes = []
 
   if content_html:
@@ -743,9 +748,10 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
     content += orig[last_end:]
 
-  # convert newlines to <br>s
-  # do this *after* linkifying tags so we don't have to shuffle indices over
-  content = content.replace('\n', '<br />\n')
+  if not obj.get('content_is_html'):
+    # convert newlines to <br>s
+    # do this *after* linkifying tags so we don't have to shuffle indices over
+    content = content.replace('\n', '<br />\n')
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
   # TODO: fix the bug in test_linkify_broken() in webutil/util_test.py, then

@@ -243,6 +243,7 @@ Changelog
   * Add `fetch_mf2` kwarg to `json_to_object()` for fetching additional pages over HTTP to determine authorship.
   * Generate explicit blank `p-name` in HTML to prevent old flawed [implied p-name handling](http://microformats.org/wiki/microformats2-implied-properties) [#131](https://github.com/snarfed/granary/issues/131).
   * Fix `share` verb handling in `activity_to_json()` and `activities_to_html()` [#134](https://github.com/snarfed/granary/issues/134).
+  * Remember which content contains HTML, preserve newlines in it, and don't translate those newlines to `<br>`s ([#130](https://github.com/snarfed/granary/issues/130)).
 * Atom:
   * Fix timezone bugs in `updated` and `published`.
 * JSON Feed:

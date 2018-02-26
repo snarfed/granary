@@ -641,11 +641,11 @@ Shared <a href="#">a post</a> by foo
       'properties': {'content': [{'value': 'asdf\nqwer'}]},
     }))
 
-  def test_json_to_object_drops_html_newlines(self):
-    """HTML newlines should be discarded."""
+  def test_json_to_object_keeps_html_newlines(self):
+    """HTML newlines should be preserved."""
     self.assert_equals({
       'objectType': 'note',
-      'content': 'asdf qwer',
+      'content': 'asdf\nqwer',
     }, microformats2.json_to_object({
       'properties': {'content': [{'html': 'asdf\nqwer', 'value': ''}]},
     }))
