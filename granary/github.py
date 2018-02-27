@@ -24,6 +24,7 @@ REST_API_CREATE_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
 REST_API_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/%s/reactions'
 REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
+REST_API_COMMENT_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/comments/%s/reactions'
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
 REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
 GRAPHQL_USER_ISSUES = """
@@ -127,14 +128,14 @@ REACTIONS_GRAPHQL = {
 # key is 'content' field value, value is unicode emoji string.
 # https://developer.github.com/v3/reactions/#reaction-types
 REACTIONS_REST = {
-  '+1': u'👍',
-  '-1': u'👎',
-  'laugh': u'😆',
-  'confused': u'😕',
-  'heart': u'❤️',
-  'hooray': u'🎉',
+  u'👍': '+1',
+  u'👎': '-1',
+  u'😆': 'laugh',
+  u'😕': 'confused',
+  u'❤️': 'heart',
+  u'🎉': 'hooray',
 }
-
+REACTIONS_REST_CHARS = {char: name for name, char, in REACTIONS_REST.items()}
 
 class GitHub(source.Source):
   """GitHub source class. See file docstring and Source class for details.
@@ -328,7 +329,7 @@ class GitHub(source.Source):
 
     Returns: unicode string, rendered HTML
     """
-    return self.rest(REST_API_MARKDOWN, {
+    return self.rest (REST_API_MARKDOWN, {
       'text': markdown,
       'mode': 'gfm',
       'context': '%s/%s' % (owner, repo),
@@ -452,7 +453,7 @@ class GitHub(source.Source):
       owner, repo, _, number = path
       if comment_id:
         comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id)).json()
-      reaction = REACTIONS_GRAPHQL.get(orig_content)
+      is_reaction = orig_content in REACTIONS_GRAPHQL
       issue = self.graphql(GRAPHQL_ISSUE_OR_PR % locals())['repository']['issueOrPullRequest']
 
       if preview:
@@ -463,7 +464,7 @@ class GitHub(source.Source):
           target_link = '<a href="%s">%s/%s#%s, <em>%s</em></a>' % (
             base_url, owner, repo, number, issue['title'])
 
-        if reaction:
+        if is_reaction:
           preview_content = None
           desc = u'<span class="verb">react %s</span> to %s.' % (
             orig_content, target_link)
@@ -473,18 +474,28 @@ class GitHub(source.Source):
         return source.creation_result(content=preview_content, description=desc)
 
       else:  # create
-        if reaction:
-          resp = self.graphql(GRAPHQL_ADD_REACTION % {
-            'subject_id': issue['id'],
-            'content': reaction,
-          })
-          reacted = resp['addReaction']['reaction']
+        if is_reaction:
+          if comment_id:
+            api_url = REST_API_COMMENT_REACTIONS % (owner, repo, comment_id)
+            reacted = self.rest(api_url, data={
+              'content': REACTIONS_REST.get(orig_content),
+            }).json()
+            url = base_url
+          else:
+            resp = self.graphql(GRAPHQL_ADD_REACTION % {
+              'subject_id': issue['id'],
+              'content': REACTIONS_GRAPHQL.get(orig_content),
+            })
+            reacted = resp['addReaction']['reaction']
+            url = '%s#%s-by-%s' % (base_url, reacted['content'].lower(),
+                                   reacted['user']['login'])
+
           return source.creation_result({
             'id': reacted['id'],
-            'url': '%s#%s-by-%s' % (base_url, reacted['content'].lower(),
-                                    reacted['user']['login']),
+            'url': url,
             'type': 'react',
           })
+
         else:
           resp = self.graphql(GRAPHQL_ADD_COMMENT % {
             'subject_id': issue['id'],
@@ -582,7 +593,7 @@ class GitHub(source.Source):
     if not obj:
       return obj
 
-    content = REACTIONS_REST.get(reaction.get('content'))
+    content = REACTIONS_REST_CHARS.get(reaction.get('content'))
     enum = REACTIONS_GRAPHQL.get(content, '').lower()
     author = cls.user_to_actor(reaction.get('user'))
     username = author.get('username')

@@ -12,8 +12,9 @@ from oauth_dropins.webutil import util
 from granary import appengine_config
 from granary import github
 from granary.github import (
-  REACTIONS_REST,
+  REACTIONS_REST_CHARS,
   REST_API_COMMENT,
+  REST_API_COMMENT_REACTIONS,
   REST_API_COMMENTS,
   REST_API_ISSUE,
   REST_API_NOTIFICATIONS,
@@ -279,18 +280,18 @@ REACTION_OBJ = {  # ActivityStreams
   'objectType': 'activity',
   'verb': 'react',
   'author': ACTOR,
-  'content': REACTIONS_REST['+1'],
+  'content': REACTIONS_REST_CHARS['+1'],
   'object': {'url': 'https://github.com/foo/bar/issues/333'},
   'published': '2018-02-21T19:49:16+00:00',
 }
 REACTION_OBJ_INPUT = {  # ActivityStreams, for create/preview
   'objectType': 'comment',
-  'content': REACTIONS_REST['+1'],
+  'content': REACTIONS_REST_CHARS['+1'],
   'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123'}],
 }
 COMMENT_REACTION_OBJ_INPUT = {  # ActivityStreams, for create/preview
   'objectType': 'comment',
-  'content': REACTIONS_REST['+1'],
+  'content': REACTIONS_REST_CHARS['+1'],
   'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123#issuecomment-456'}],
 }
 ISSUE_OBJ_WITH_REACTIONS = copy.deepcopy(ISSUE_OBJ)
@@ -355,6 +356,24 @@ class GitHubTest(testutil.HandlerTest):
     }, response={
       'repository': {
         'issueOrPullRequest': ISSUE_GRAPHQL,
+      },
+    })
+
+  def expect_graphql_add_reaction(self):
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ADD_REACTION % {
+        'subject_id': ISSUE_GRAPHQL['id'],
+        'content': 'THUMBS_UP',
+      },
+    }, response={
+      'addReaction': {
+        'reaction': {
+          'id': 'DEF456',
+          'content': 'THUMBS_UP',
+          'user': {
+            'login': 'snarfed',
+          },
+        },
       },
     })
 
@@ -718,22 +737,7 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_create_reaction_issue(self):
     self.expect_graphql_issue()
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ADD_REACTION % {
-        'subject_id': ISSUE_GRAPHQL['id'],
-        'content': 'THUMBS_UP',
-      },
-    }, response={
-      'addReaction': {
-        'reaction': {
-          'id': 'DEF456',
-          'content': 'THUMBS_UP',
-          'user': {
-            'login': 'snarfed',
-          },
-        },
-      },
-    })
+    self.expect_graphql_add_reaction()
     self.mox.ReplayAll()
 
     result = self.gh.create(REACTION_OBJ_INPUT)
@@ -752,28 +756,22 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_create_reaction_comment(self):
     self.expect_graphql_issue()
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ADD_REACTION % {
-        'subject_id': ISSUE_GRAPHQL['id'],
-        'content': 'THUMBS_UP',
-      },
-    }, response={
-      'addReaction': {
-        'reaction': {
-          'id': 'DEF456',
-          'content': 'THUMBS_UP',
-          'user': {
-            'login': 'snarfed',
-          },
-        },
-      },
-    })
+    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 456), COMMENT_REST)
+    self.expect_requests_post(
+      REST_API_COMMENT_REACTIONS % ('foo', 'bar', 456), headers=EXPECTED_HEADERS,
+      json={
+        'content': '+1',
+      }, response={
+        'id': 'DEF456',
+        'content': '+1',
+        'user': {'login': 'snarfed'},
+      })
     self.mox.ReplayAll()
 
-    result = self.gh.create(REACTION_OBJ_INPUT)
+    result = self.gh.create(COMMENT_REACTION_OBJ_INPUT)
     self.assert_equals({
       'id': 'DEF456',
-      'url': 'https://github.com/foo/bar/pull/123#thumbs_up-by-snarfed',
+      'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
       'type': 'react',
     }, result.content, result)
 
