@@ -8,10 +8,10 @@ var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
 
 function render_demo_request() {
   var site = get('site');
-  var user_id = get('user_id') || '@me';
+  var user_id = encodeURIComponent(get('user_id')) || '@me';
 
   var url = window.location.origin + '/' +
-      site + '/' + encodeURIComponent(user_id) + '/' +
+      site + '/' + user_id + '/' +
       get('group_id') + '/@app/' +
       (get('group_id') == '@search'
        ? '?search_query=' + encodeURIComponent(get('search_query')) + '&'

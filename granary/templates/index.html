@@ -172,12 +172,13 @@ to try it!
 <input type="hidden" name="cache" value="false" />
 <p><code>
 <label>/ {{ site }} / </label>
-{% if site == 'instagram' %}
+
 <input id="user_id" name="user_id" type="text" class="form-control"
-       placeholder="username" size="12" />
-{% else %}
-<label> me / </label>
-{% endif %}
+       {% if site == 'instagram' %} placeholder="username" size="12" required
+       {% else %} placeholder="username (optional)" size="19"
+       {% endif %} />
+<label> / </label>
+
 {% if site == 'facebook' %}
 <label> @self </label>
 <input type="hidden" id="group_id" name="group_id" value="@self" />
@@ -201,6 +202,7 @@ to try it!
   <input id="activity_id" name="activity_id" type="text" class="form-control"
          placeholder="activity id (optional)" size="12" />
 </span>
+
 ?
 <span id="search_query_span">
   <label for="search_query">search_query =</label>
@@ -218,6 +220,9 @@ to try it!
   <option value="mf2-json">mf2-json</option>
   <option value="jsonfeed">jsonfeed</option>
 </select>
+
+<br>
+&nbsp;
 {% if site == 'google+' %}
   <label for="auth_entity">&amp; auth_entity =</label>
   <input id="auth_entity" name="auth_entity" type="text" size="10"
@@ -246,6 +251,7 @@ to try it!
 {% endif %}
 </code>
 
+<br>
 <button type="submit" class="btn btn-default"
         onclick="render_demo_request()">GET</button>
 </p>
