@@ -288,6 +288,11 @@ REACTION_OBJ_INPUT = {  # ActivityStreams, for create/preview
   'content': REACTIONS_REST['+1'],
   'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123'}],
 }
+COMMENT_REACTION_OBJ_INPUT = {  # ActivityStreams, for create/preview
+  'objectType': 'comment',
+  'content': REACTIONS_REST['+1'],
+  'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123#issuecomment-456'}],
+}
 ISSUE_OBJ_WITH_REACTIONS = copy.deepcopy(ISSUE_OBJ)
 ISSUE_OBJ_WITH_REACTIONS.update({
   'tags': ISSUE_OBJ['tags'] + [REACTION_OBJ, REACTION_OBJ],
@@ -599,7 +604,7 @@ class GitHubTest(testutil.HandlerTest):
 
     preview = self.gh.preview_create(COMMENT_OBJ)
     self.assertEquals(rendered, preview.content, preview)
-    self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123 <em>an issue title</em></a>:', preview.description, preview)
+    self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>:', preview.description, preview)
 
   def test_create_issue_repo_url(self):
     self._test_create_issue('https://github.com/foo/bar')
@@ -743,7 +748,7 @@ class GitHubTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(REACTION_OBJ_INPUT)
-    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123 <em>an issue title</em></a>.', preview.description)
+    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>.', preview.description)
 
   def test_create_reaction_comment(self):
     self.expect_graphql_issue()
@@ -772,9 +777,10 @@ class GitHubTest(testutil.HandlerTest):
       'type': 'react',
     }, result.content, result)
 
-  def test_preview_reaction(self):
+  def test_preview_reaction_comment(self):
     self.expect_graphql_issue()
+    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 456), COMMENT_REST)
     self.mox.ReplayAll()
 
-    preview = self.gh.preview_create(REACTION_OBJ_INPUT)
-    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123 <em>an issue title</em></a>.', preview.description)
+    preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
+    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123#issuecomment-456">a comment on foo/bar#123, <em>i have something to say here</em></a>.', preview.description)

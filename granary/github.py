@@ -75,6 +75,13 @@ query {
   }
 }
 """
+GRAPHQL_COMMENT = """
+query {
+  node(id:"%(id)s") {
+    ... on IssueComment {body}
+  }
+}
+"""
 GRAPHQL_ADD_COMMENT = """
 mutation {
   addComment(input: {subjectId: "%(subject_id)s", body: "%(body)s"}) {
@@ -400,8 +407,13 @@ class GitHub(source.Source):
     if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url
 
-    path = urlparse.urlparse(base_url).path.strip('/').split('/')
+    parsed = urlparse.urlparse(base_url)
+    path = parsed.path.strip('/').split('/')
     owner, repo = path[:2]
+
+    comment_id = re.match(r'^issuecomment-([0-9]+)$', parsed.fragment)
+    if comment_id:
+      comment_id = comment_id.group(1)
 
     if len(path) == 2 or (len(path) == 3 and path[2] == 'issues'):
       if type == 'like':  # star
@@ -438,12 +450,19 @@ class GitHub(source.Source):
     elif len(path) == 4 and path[2] in ('issues', 'pull'):
       # comment or reaction
       owner, repo, _, number = path
+      if comment_id:
+        comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id)).json()
       reaction = REACTIONS_GRAPHQL.get(orig_content)
       issue = self.graphql(GRAPHQL_ISSUE_OR_PR % locals())['repository']['issueOrPullRequest']
 
       if preview:
-        target_link = '<a href="%s">%s/%s#%s <em>%s</em></a>' % (
-          base_url, owner, repo, number, issue['title'])
+        if comment_id:
+          target_link = '<a href="%s">a comment on %s/%s#%s, <em>%s</em></a>' % (
+            base_url, owner, repo, number, util.ellipsize(comment['body']))
+        else:
+          target_link = '<a href="%s">%s/%s#%s, <em>%s</em></a>' % (
+            base_url, owner, repo, number, issue['title'])
+
         if reaction:
           preview_content = None
           desc = u'<span class="verb">react %s</span> to %s.' % (
