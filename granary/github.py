@@ -69,8 +69,8 @@ GRAPHQL_ISSUE_OR_PR = """
 query {
   repository(owner: "%(owner)s", name: "%(repo)s") {
     issueOrPullRequest(number: %(number)s) {
-      ... on Issue {id}
-      ... on PullRequest {id}
+      ... on Issue {id title}
+      ... on PullRequest {id title}
     }
   }
 }
@@ -439,9 +439,11 @@ class GitHub(source.Source):
       # comment or reaction
       owner, repo, _, number = path
       reaction = REACTIONS_GRAPHQL.get(orig_content)
+      issue = self.graphql(GRAPHQL_ISSUE_OR_PR % locals())['repository']['issueOrPullRequest']
 
       if preview:
-        target_link = '<a href="%s">%s/%s#%s</a>' % (base_url, owner, repo, number)
+        target_link = '<a href="%s">%s/%s#%s <em>%s</em></a>' % (
+          base_url, owner, repo, number, issue['title'])
         if reaction:
           preview_content = None
           desc = u'<span class="verb">react %s</span> to %s.' % (
@@ -452,10 +454,9 @@ class GitHub(source.Source):
         return source.creation_result(content=preview_content, description=desc)
 
       else:  # create
-        issue = self.graphql(GRAPHQL_ISSUE_OR_PR % locals())
         if reaction:
           resp = self.graphql(GRAPHQL_ADD_REACTION % {
-            'subject_id': issue['repository']['issueOrPullRequest']['id'],
+            'subject_id': issue['id'],
             'content': reaction,
           })
           reacted = resp['addReaction']['reaction']
@@ -467,7 +468,7 @@ class GitHub(source.Source):
           })
         else:
           resp = self.graphql(GRAPHQL_ADD_COMMENT % {
-            'subject_id': issue['repository']['issueOrPullRequest']['id'],
+            'subject_id': issue['id'],
             'body': content,
           })
           return source.creation_result(resp['addComment']['commentEdge']['node'])

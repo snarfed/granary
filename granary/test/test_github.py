@@ -340,6 +340,19 @@ class GitHubTest(testutil.HandlerTest):
     kwargs.setdefault('headers', {}).update(EXPECTED_HEADERS)
     return self.expect_requests_get(url, response=response, **kwargs)
 
+  def expect_graphql_issue(self):
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ISSUE_OR_PR % {
+        'owner': 'foo',
+        'repo': 'bar',
+        'number': 123,
+      },
+    }, response={
+      'repository': {
+        'issueOrPullRequest': ISSUE_GRAPHQL,
+      },
+    })
+
   def expect_markdown_render(self, body):
     rendered = '<p>rendered!</p>'
     self.expect_requests_post(
@@ -580,12 +593,13 @@ class GitHubTest(testutil.HandlerTest):
     }, result.content, result)
 
   def test_preview_comment(self):
+    self.expect_graphql_issue()
     rendered = self.expect_markdown_render('i have something to say here')
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_OBJ)
     self.assertEquals(rendered, preview.content, preview)
-    self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>:', preview.description, preview)
+    self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123 <em>an issue title</em></a>:', preview.description, preview)
 
   def test_create_issue_repo_url(self):
     self._test_create_issue('https://github.com/foo/bar')
@@ -697,18 +711,42 @@ class GitHubTest(testutil.HandlerTest):
     preview = self.gh.preview_create(STAR_OBJ)
     self.assertEquals('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
 
-  def test_create_reaction(self):
+  def test_create_reaction_issue(self):
+    self.expect_graphql_issue()
     self.expect_graphql(json={
-      'query': github.GRAPHQL_ISSUE_OR_PR % {
-        'owner': 'foo',
-        'repo': 'bar',
-        'number': 123,
+      'query': github.GRAPHQL_ADD_REACTION % {
+        'subject_id': ISSUE_GRAPHQL['id'],
+        'content': 'THUMBS_UP',
       },
     }, response={
-      'repository': {
-        'issueOrPullRequest': ISSUE_GRAPHQL,
+      'addReaction': {
+        'reaction': {
+          'id': 'DEF456',
+          'content': 'THUMBS_UP',
+          'user': {
+            'login': 'snarfed',
+          },
+        },
       },
     })
+    self.mox.ReplayAll()
+
+    result = self.gh.create(REACTION_OBJ_INPUT)
+    self.assert_equals({
+      'id': 'DEF456',
+      'url': 'https://github.com/foo/bar/pull/123#thumbs_up-by-snarfed',
+      'type': 'react',
+    }, result.content, result)
+
+  def test_preview_reaction_issue(self):
+    self.expect_graphql_issue()
+    self.mox.ReplayAll()
+
+    preview = self.gh.preview_create(REACTION_OBJ_INPUT)
+    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123 <em>an issue title</em></a>.', preview.description)
+
+  def test_create_reaction_comment(self):
+    self.expect_graphql_issue()
     self.expect_graphql(json={
       'query': github.GRAPHQL_ADD_REACTION % {
         'subject_id': ISSUE_GRAPHQL['id'],
@@ -735,5 +773,8 @@ class GitHubTest(testutil.HandlerTest):
     }, result.content, result)
 
   def test_preview_reaction(self):
+    self.expect_graphql_issue()
+    self.mox.ReplayAll()
+
     preview = self.gh.preview_create(REACTION_OBJ_INPUT)
-    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>.', preview.description)
+    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123 <em>an issue title</em></a>.', preview.description)
