@@ -91,8 +91,10 @@ class DemoHandler(handlers.ModernHandler):
   @api.canonicalize_domain
   def get(self):
     site = util.get_required_param(self, 'site')
-    group = self.request.get('group_id') or source.ALL
     user = self.request.get('user_id') or source.ME
+    group = self.request.get('group_id') or source.ALL
+    if group == '@list':
+      group = util.get_required_param(self, 'list')
 
     activity_id = search_query = ''
     if group == source.SEARCH:

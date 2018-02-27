@@ -190,10 +190,14 @@ to try it!
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
   {% if site == 'twitter' %}
+    <option value="@list">@list</option>
     <option value="@search">@search</option>
     <option value="@blocks">@blocks</option>
   {% endif %}
 </select>
+
+<input id="list" name="list" type="text" class="form-control"
+       placeholder="list name" size="12" />
 {% endif %}
 
 <label>/ @app </label>
@@ -210,6 +214,7 @@ to try it!
          placeholder="search query" size="12" />
   &
 </span>
+
 <label for="format">format =</label>
 <select id="format" name="format">
   <option value="as2">as2</option>

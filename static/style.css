@@ -39,7 +39,7 @@
   background: linear-gradient(to bottom, white, #dddddd);
 }
 
-#search_query_span {
+#search_query_span, #list {
   display: none;
 }
 

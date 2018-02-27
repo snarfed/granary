@@ -10,10 +10,14 @@ function render_demo_request() {
   var site = get('site');
   var user_id = encodeURIComponent(get('user_id')) || '@me';
 
+  var group = get('group_id');
+  if (group == '@list') {
+    group = get('list');
+  }
+
   var url = window.location.origin + '/' +
-      site + '/' + user_id + '/' +
-      get('group_id') + '/@app/' +
-      (get('group_id') == '@search'
+      site + '/' + user_id + '/' + group + '/@app/' +
+      (group == '@search'
        ? '?search_query=' + encodeURIComponent(get('search_query')) + '&'
        : encodeURIComponent(get('activity_id')) + '?') +
       'format=' + get('format');
@@ -50,14 +54,20 @@ function update_form() {
   if (group) {
     activity = document.getElementById('activity_id_span');
     search = document.getElementById('search_query_span');
+    list = document.getElementById('list');
+
+    search.style.display = activity.style.display = list.style.display = 'none';
+    list.required = false;
+
     if (group.value == '@search') {
       search.style.display = 'inline';
-      activity.style.display  = 'none';
+    } else if (group.value == '@list') {
+      list.style.display = 'inline';
+      list.required = true;
     } else if (group.value == '@blocks') {
-      search.style.display = activity.style.display  = 'none';
+      /* hide activity id input */
     } else {
       activity.style.display = 'inline';
-      search.style.display = 'none';
     }
   }
 }
