@@ -400,7 +400,7 @@ class GitHub(source.Source):
     if not base_url:
       return source.creation_result(
         abort=True,
-        error_plain='You need an in-reply-to GitHub repo, issue, or PR URL.')
+        error_plain='You need an in-reply-to GitHub repo, issue, PR, or comment URL.')
 
     content = orig_content = self._content_for_create(
       obj, ignore_formatting=ignore_formatting)
@@ -415,6 +415,10 @@ class GitHub(source.Source):
     comment_id = re.match(r'^issuecomment-([0-9]+)$', parsed.fragment)
     if comment_id:
       comment_id = comment_id.group(1)
+    elif parsed.fragment:
+      return source.creation_result(
+        abort=True,
+        error_plain='You need an in-reply-to GitHub repo, issue, PR, or comment URL.')
 
     if len(path) == 2 or (len(path) == 3 and path[2] == 'issues'):
       if type == 'like':  # star

@@ -699,7 +699,17 @@ class GitHubTest(testutil.HandlerTest):
     for fn in (self.gh.preview_create, self.gh.create):
       result = fn(obj)
       self.assertTrue(result.abort)
-      self.assertIn('You need an in-reply-to GitHub repo, issue, or PR URL.',
+      self.assertIn('You need an in-reply-to GitHub repo, issue, PR, or comment URL.',
+                    result.error_plain)
+
+  def test_create_in_reply_to_bad_fragment(self):
+    obj = copy.deepcopy(COMMENT_OBJ)
+    obj['inReplyTo'] = [{'url': 'https://github.com/foo/bar/pull/123#bad-456'}]
+
+    for fn in (self.gh.preview_create, self.gh.create):
+      result = fn(obj)
+      self.assertTrue(result.abort)
+      self.assertIn('You need an in-reply-to GitHub repo, issue, PR, or comment URL.',
                     result.error_plain)
 
   def test_create_star(self):
