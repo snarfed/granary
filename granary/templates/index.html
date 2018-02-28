@@ -4,7 +4,7 @@
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <meta http-equiv="X-XRDS-Location"
         content="//{{ host }}/.well-known/host-meta.xrds" />
-  <script type="text/javascript" src="/static/demo.js?version=20151105"></script>
+  <script type="text/javascript" src="/static/demo.js"></script>
   <title>Granary</title>
   <meta name="viewport" content="width=device-width">
   <link rel="stylesheet" type="text/css" href="/oauth_dropins/static/bootstrap.min.css" />
@@ -34,6 +34,13 @@ function onHashChange() {
 window.addEventListener('hashchange', onHashChange);
 document.addEventListener('DOMContentLoaded', onHashChange);
 window.onload = update_form();
+
+function spinner(visibility) {
+  elems = document.getElementsByClassName('spinner');
+  for (i = 0; i < elems.length; i++) {
+    elems[i].style.visibility = visibility;
+  }
+}
 </script>
 
 <!--
@@ -167,7 +174,8 @@ to try it!
 
 
 {% if entity or site %}
-<form id="demo-form" action="/demo" method="get" target="results">
+<form id="demo-form" action="/demo" method="get" target="results"
+      onsubmit="spinner('visible')">
 <input type="hidden" id="site" name="site" value="{{ site }}" />
 <input type="hidden" name="cache" value="false" />
 <p><code>
@@ -259,12 +267,14 @@ to try it!
 <br>
 <button type="submit" class="btn btn-default"
         onclick="render_demo_request()">GET</button>
+<img id="demo-spinner" class="spinner" src="/static/spinner.gif" width="30" />
 </p>
 </form>
 {% endif %}
 
 {% if input %}
-<form id="url-form" action="/url" method="get" target="results">
+<form id="url-form" action="/url" method="get" target="results"
+      onsubmit="spinner('visible')">
 <p><code>
 <label>/ url ? input = </label>
 <select id="input" name="input">
@@ -298,14 +308,16 @@ to try it!
 <input type="hidden" name="cache" value="false" />
 <button type="submit" class="btn btn-default"
         onclick="render_url_request()">GET</button>
-</code></p>
+</code>
+<img id="url-spinner" class="spinner" src="/static/spinner.gif" width="30" />
+</p>
 </form>
 {% endif %}
 
 
 <div id="results">
 <p><code id="request"></code></p>
-<iframe name="results">
+<iframe name="results" onload="spinner('hidden')" onerror="spinner('hidden')">
 </iframe>
 </div>
 

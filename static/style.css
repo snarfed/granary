@@ -67,3 +67,7 @@ iframe {
   min-height: 40em;
   border: 0;
 }
+
+.spinner {
+  visibility: hidden;
+}
