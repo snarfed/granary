@@ -146,9 +146,14 @@ class GitHub(source.Source):
   DOMAIN = 'github.com'
   BASE_URL = 'https://github.com/'
   NAME = 'GitHub'
-  POST_ID_RE = re.compile('^[0-9]+$')
+  # username:repo:id
+  POST_ID_RE = re.compile(r'^[A-Za-z0-9-]+:[A-Za-z0-9_.-]+:[0-9]+$')
+  # https://github.com/shinnn/github-username-regex#readme
+  # (this slightly overspecifies; it allows multiple consecutive hyphens and
+  # leading/trailing hyphens. oh well.)
+  USER_NAME_RE = re.compile(r'^[A-Za-z0-9-]+$')
   # https://github.com/moby/moby/issues/679#issuecomment-18307522
-  REPO_NAME_RE = re.compile('^[A-Za-z0-9_.-]+$')
+  REPO_NAME_RE = re.compile(r'^[A-Za-z0-9_.-]+$')
   # https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   HTML2TEXT_OPTIONS = {
     'ignore_images': False,
@@ -165,6 +170,20 @@ class GitHub(source.Source):
 
   def user_url(self, username):
     return self.BASE_URL + username
+
+  @classmethod
+  def base_id(cls, url):
+    """Extracts and returns a USERNAME:REPO:ID id for an issue or PR.
+
+    Args:
+      url: string
+
+    Returns:
+      string, or None
+    """
+    parts = urlparse.urlparse(url).path.strip('/').split('/')
+    if len(parts) == 4 and util.is_int(parts[3]):
+      return ':'.join((parts[0], parts[1], parts[3]))
 
   def graphql(self, graphql):
     """Makes a v4 GraphQL API call.

@@ -387,6 +387,18 @@ class GitHubTest(testutil.HandlerTest):
       })
     return rendered
 
+  def test_base_id(self):
+    for url, expected in (
+        ('https://github.com/a/b/issues/1', 'a:b:1'),
+        ('https://github.com/a/b/pull/1', 'a:b:1'),
+        ('https://github.com/a/b/issues/1#', 'a:b:1'),
+        ('http://github.com/a/b/issues/1#issuecomment=2', 'a:b:1'),
+        ('http://github.com/a/b', None),
+        ('https://github.com/', None),
+        ('https://foo/bar', None),
+    ):
+      self.assertEquals(expected, self.gh.base_id(url))
+
   def test_user_to_actor_graphql(self):
     self.assert_equals(ACTOR, self.gh.user_to_actor(USER_GRAPHQL))
 
