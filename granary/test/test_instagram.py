@@ -2,13 +2,14 @@
 """
 import copy
 import datetime
+import httplib2
 import json
 import logging
 import mox
 import StringIO
 import urllib
 import urllib2
-import httplib2
+import urlparse
 
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
@@ -500,6 +501,7 @@ HTML_PHOTO_FULL = {
 
 HTML_VIDEO_FULL = {
   'id': '789',
+  '__typename': 'GraphVideo',
   'code': 'XYZ789',
   'location': None,
   'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
@@ -705,19 +707,63 @@ HTML_MULTI_PHOTO_PAGE = {  # eg https://www.instagram.com/p/BQ0mDB2gV_O/
   },
   'entry_data': {'PostPage': [{'graphql': {'shortcode_media': HTML_MULTI_PHOTO}}]},
 }
+# Returned by logged in https://www.instagram.com/ as of 2018-02-15 ish. nothing
+# really usable in this blob, so we have to fetch the preload link.
+HTML_USELESS_FEED = {
+  "activity_counts": {
+    # ...
+  },
+  "config": {
+    "csrf_token": "...",
+    # ...
+  },
+  "hostname": "www.instagram.com",
+  "nonce": "...",
+  "platform": "web",
+  "entry_data": {"FeedPage": [{"graphql": None,}]},
+  "qe": {
+    "004e9939": {
+      "g": "",
+      "p": None,
+    },
+    # ...
+  },
+}
+# eg https://www.instagram.com/graphql/query/?query_hash=d6f4...&variables={}
+HTML_PRELOAD_DATA = {
+  'data': {
+    'user': {
+      'edge_web_feed_timeline': {
+        'edges': [
+          {'node': HTML_PHOTO_FULL},
+          {'node': HTML_VIDEO_FULL},
+        ],
+        'page_info': {
+          'end_cursor': 'KGkA...==',
+          'has_next_page': True,
+        }
+      },
+      'id': '420973239',
+      'username': 'snarfed',
+      'profile_pic_url': 'https://scontent-ort2-1.cdninstagram.com/vp/a14b81a5e52a25f456b0e4253ee2949c/5B2DF84C/t51.2885-19/11373714_959073410822287_2004790583_a.jpg',
+    }
+  },
+  'status': 'ok',
+}
 
-
+HTML_PRELOAD_URL = '/graphql/query/?query_hash=cba321&variables={}'
 HTML_HEADER = """
 <!DOCTYPE html>
+<html>
 ...
 <link href="https://www.instagram.com/" rel="alternate" hreflang="x-default" />
+<link rel="preload" href="%s" as="fetch" type="application/json" crossorigin />
 ...
 <body>
-<script type="text/javascript">window._sharedData = """
+<script type="text/javascript">window._sharedData = """ % HTML_PRELOAD_URL
 HTML_FOOTER = """
 ;</script>
 <script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_Commons.js/907dcce6a88a.js" type="text/javascript"></script>
-<script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_FeedPage.js/d0ffd22d18b5.js" type="text/javascript"></script>
 ...
 </body>
 </html>
@@ -1519,6 +1565,20 @@ class InstagramTest(testutil.HandlerTest):
       },
     }) + HTML_FOOTER)
     self.assert_equals([], activities)
+    self.assertIsNone(viewer)
+
+  def test_html_to_activities_preload_fetch(self):
+    """https://github.com/snarfed/granary/issues/140"""
+    url = urlparse.urljoin(instagram.HTML_BASE_URL, HTML_PRELOAD_URL)
+    self.expect_requests_get(url, HTML_PRELOAD_DATA, allow_redirects=False,
+                             headers={'Cookie': 'abc123'})
+    self.mox.ReplayAll()
+
+    html = HTML_HEADER + json.dumps(HTML_USELESS_FEED) + HTML_FOOTER
+    activities, viewer = self.instagram.html_to_activities(html, cookie='abc123')
+
+    self.assert_equals([HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL],
+                       activities)
     self.assertIsNone(viewer)
 
   def test_id_to_shortcode(self):

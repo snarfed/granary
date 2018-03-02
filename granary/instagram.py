@@ -19,6 +19,7 @@ import urlparse
 import xml.sax.saxutils
 
 import appengine_config
+from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
 import requests
 import source
@@ -41,6 +42,8 @@ HTML_BASE_URL = (appengine_config.read('instagram_scrape_base') or
                  'https://www.instagram.com/')
 HTML_MEDIA = HTML_BASE_URL + 'p/%s/'
 HTML_PROFILE = HTML_BASE_URL + '%s/'
+HTML_PRELOAD_RE = re.compile(
+  r'^/graphql/query/\?query_hash=[^&]*&(amp;)?variables=(%7B%7D|{})$')
 
 # URL-safe base64 encoding. used in Instagram.id_to_shortcode()
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
@@ -274,7 +277,7 @@ class Instagram(source.Source):
     else:
       resp.raise_for_status()
 
-    activities, actor = self.html_to_activities(resp.text)
+    activities, actor = self.html_to_activities(resp.text, cookie=cookie)
 
     if fetch_extras and not activity_id:
       # batch get cached counts of comments and likes for all activities
@@ -301,7 +304,7 @@ class Instagram(source.Source):
           url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
           resp = util.requests_get(url)
           resp.raise_for_status()
-          full_activity, _ = self.html_to_activities(resp.text)
+          full_activity, _ = self.html_to_activities(resp.text, cookie=cookie)
           if full_activity:
             activities[i] = full_activity[0]
             cache_updates.update({likes_key: likes, comments_key: comments})
@@ -717,7 +720,7 @@ class Instagram(source.Source):
 
     return ''.join(reversed(chars))
 
-  def html_to_activities(self, html):
+  def html_to_activities(self, html, cookie=None):
     """Converts Instagram HTML to ActivityStreams activities.
 
     The input HTML may be from:
@@ -728,6 +731,8 @@ class Instagram(source.Source):
 
     Args:
       html: unicode string
+      cookie: string, optional sessionid cookie to be used for subsequent HTTP
+        fetches, if necessary.
 
     Returns:
       tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
@@ -786,6 +791,19 @@ class Instagram(source.Source):
       media = page.get('graphql', {}).get('shortcode_media')
       if media:
         medias.append(media)
+
+    if not medias:
+      # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
+      # no longer has any useful data. Need to do a second header link fetch.
+      soup = BeautifulSoup(html)
+      link = soup.find('link', href=HTML_PRELOAD_RE)
+      if link:
+        url = urlparse.urljoin(HTML_BASE_URL, link['href'])
+        headers = {'Cookie': cookie} if cookie else None
+        resp = util.requests_get(url, allow_redirects=False, headers=headers).json()
+        edges = resp.get('data', {}).get('user', {})\
+                    .get('edge_web_feed_timeline', {}).get('edges', [])
+        medias = [e.get('node') for e in edges]
 
     for media in util.trim_nulls(medias):
       activities.append(self._json_media_node_to_activity(media, user=profile_user))
