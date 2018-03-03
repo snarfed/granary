@@ -751,16 +751,20 @@ HTML_PRELOAD_DATA = {
   'status': 'ok',
 }
 
-HTML_PRELOAD_URL = '/graphql/query/?query_hash=cba321&variables={}'
-HTML_HEADER = """
+HTML_HEADER_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 ...
 <link href="https://www.instagram.com/" rel="alternate" hreflang="x-default" />
-<link rel="preload" href="%s" as="fetch" type="application/json" crossorigin />
+%s
 ...
 <body>
-<script type="text/javascript">window._sharedData = """ % HTML_PRELOAD_URL
+<script type="text/javascript">window._sharedData = """
+HTML_HEADER = HTML_HEADER_TEMPLATE % ''
+HTML_PRELOAD_URL = '/graphql/query/?query_hash=cba321&variables={}'
+HTML_HEADER_PRELOAD = HTML_HEADER_TEMPLATE % (
+  '<link rel="preload" href="%s" as="fetch" type="application/json" crossorigin />' %
+  HTML_PRELOAD_URL)
 HTML_FOOTER = """
 ;</script>
 <script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_Commons.js/907dcce6a88a.js" type="text/javascript"></script>
@@ -1574,7 +1578,7 @@ class InstagramTest(testutil.HandlerTest):
                              headers={'Cookie': 'abc123'})
     self.mox.ReplayAll()
 
-    html = HTML_HEADER + json.dumps(HTML_USELESS_FEED) + HTML_FOOTER
+    html = HTML_HEADER_PRELOAD + json.dumps(HTML_USELESS_FEED) + HTML_FOOTER
     activities, viewer = self.instagram.html_to_activities(html, cookie='abc123')
 
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL],
