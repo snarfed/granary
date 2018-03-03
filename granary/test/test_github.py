@@ -594,17 +594,7 @@ class GitHubTest(testutil.HandlerTest):
                        self.gh.reaction_to_object(REACTION_REST, ISSUE_OBJ))
 
   def test_create_comment(self):
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ISSUE_OR_PR % {
-        'owner': 'foo',
-        'repo': 'bar',
-        'number': 123,
-      },
-    }, response={
-      'repository': {
-        'issueOrPullRequest': ISSUE_GRAPHQL,
-      },
-    })
+    self.expect_graphql_issue()
     self.expect_graphql(json={
       'query': github.GRAPHQL_ADD_COMMENT % {
         'subject_id': ISSUE_GRAPHQL['id'],
@@ -636,6 +626,21 @@ class GitHubTest(testutil.HandlerTest):
     preview = self.gh.preview_create(COMMENT_OBJ)
     self.assertEquals(rendered, preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>:', preview.description, preview)
+
+  def test_create_comment_escape_quotes(self):
+    self.expect_graphql_issue()
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ADD_COMMENT % {
+        'subject_id': ISSUE_GRAPHQL['id'],
+        'body': r"""one ' two \" three""",
+      },
+    }, response={'addComment': {'commentEdge': {'node': {'foo': 'bar'}}}})
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(COMMENT_OBJ)
+    obj['content'] = """one ' two " three"""
+    result = self.gh.create(obj)
+    self.assert_equals({'foo': 'bar'}, result.content, result)
 
   def test_create_issue_repo_url(self):
     self._test_create_issue('https://github.com/foo/bar')

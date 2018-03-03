@@ -6,6 +6,7 @@ https://developer.github.com/v4/
 https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
 """
 import datetime
+import email.utils
 import logging
 import re
 import rfc822
@@ -185,7 +186,7 @@ class GitHub(source.Source):
     if len(parts) == 4 and util.is_int(parts[3]):
       return ':'.join((parts[0], parts[1], parts[3]))
 
-  def graphql(self, graphql):
+  def graphql(self, graphql, kwargs):
     """Makes a v4 GraphQL API call.
 
     Args:
@@ -193,8 +194,10 @@ class GitHub(source.Source):
 
     Returns: dict, parsed JSON response
     """
+    escaped = {k: (email.utils.quote(v) if isinstance(v, basestring) else v)
+               for k, v in kwargs.items()}
     resp = util.requests_post(
-      oauth_github.API_GRAPHQL, json={'query': graphql},
+      oauth_github.API_GRAPHQL, json={'query': graphql % escaped},
       headers={
         'Authorization': 'bearer %s' % self.access_token,
       })
@@ -446,8 +449,8 @@ class GitHub(source.Source):
 <span class="verb">star</span> <a href="%s">%s/%s</a>.""" %
               (base_url, owner, repo))
         else:
-          issue = self.graphql(GRAPHQL_REPO % locals())
-          resp = self.graphql(GRAPHQL_ADD_STAR % {
+          issue = self.graphql(GRAPHQL_REPO, locals())
+          resp = self.graphql(GRAPHQL_ADD_STAR, {
             'starrable_id': issue['repository']['id'],
           })
           return source.creation_result({
@@ -477,7 +480,8 @@ class GitHub(source.Source):
       if comment_id:
         comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id)).json()
       is_reaction = orig_content in REACTIONS_GRAPHQL
-      issue = self.graphql(GRAPHQL_ISSUE_OR_PR % locals())['repository']['issueOrPullRequest']
+      issue = self.graphql(GRAPHQL_ISSUE_OR_PR, locals()
+                          )['repository']['issueOrPullRequest']
 
       if preview:
         if comment_id:
@@ -505,7 +509,7 @@ class GitHub(source.Source):
             }).json()
             url = base_url
           else:
-            resp = self.graphql(GRAPHQL_ADD_REACTION % {
+            resp = self.graphql(GRAPHQL_ADD_REACTION, {
               'subject_id': issue['id'],
               'content': REACTIONS_GRAPHQL.get(orig_content),
             })
@@ -520,7 +524,7 @@ class GitHub(source.Source):
           })
 
         else:
-          resp = self.graphql(GRAPHQL_ADD_COMMENT % {
+          resp = self.graphql(GRAPHQL_ADD_COMMENT, {
             'subject_id': issue['id'],
             'body': content,
           })
