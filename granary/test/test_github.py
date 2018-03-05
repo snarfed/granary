@@ -605,7 +605,7 @@ class GitHubTest(testutil.HandlerTest):
         'commentEdge': {
           'node': {
             'id': '456',
-            'url': 'https://github.com/foo/bar/pull/123#comment-456',
+            'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
           },
         },
       },
@@ -615,7 +615,7 @@ class GitHubTest(testutil.HandlerTest):
     result = self.gh.create(COMMENT_OBJ)
     self.assert_equals({
       'id': '456',
-      'url': 'https://github.com/foo/bar/pull/123#comment-456',
+      'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
     }, result.content, result)
 
   def test_preview_comment(self):
@@ -747,7 +747,7 @@ class GitHubTest(testutil.HandlerTest):
     }, response={
       'addStar': {
         'starrable': {
-          'url': 'https://github.com/foo/bar/pull/123#comment-456',
+          'url': 'https://github.com/foo/bar',
         },
       },
     })
