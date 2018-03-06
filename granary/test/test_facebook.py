@@ -1473,7 +1473,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_fetch_news(self):
     self.expect_urlopen(API_ME_POSTS, {'data': [POST]})
-    self.expect_urlopen(API_NEWS_PUBLISHES, {'data': [FB_NEWS_PUBLISH]})
+    self.expect_urlopen(API_NEWS_PUBLISHES % 'me', {'data': [FB_NEWS_PUBLISH]})
     self.expect_urlopen(API_ME_PHOTOS, {})
     # should only fetch sharedposts for POST, not FB_NEWS_PUBLISH
     self.expect_urlopen(API_SHARES % '212038_10100176064482163', {})
@@ -1482,6 +1482,15 @@ class FacebookTest(testutil.HandlerTest):
     got = self.fb.get_activities(group_id=source.SELF, fetch_news=True,
                                  fetch_shares=True)
     self.assert_equals([ACTIVITY, FB_NEWS_PUBLISH_ACTIVITY], got)
+
+  def test_get_activities_user_id_fetch_news(self):
+    self.expect_urlopen(API_SELF_POSTS % ('567', 0), {'data': []})
+    self.expect_urlopen(API_NEWS_PUBLISHES % '567', {'data': [FB_NEWS_PUBLISH]})
+    self.expect_urlopen(API_PHOTOS_UPLOADED % '567', {})
+
+    self.mox.ReplayAll()
+    got = self.fb.get_activities(group_id=source.SELF, user_id='567', fetch_news=True)
+    self.assert_equals([FB_NEWS_PUBLISH_ACTIVITY], got)
 
   def test_get_activities_canonicalizes_ids_with_colons(self):
     """https://github.com/snarfed/bridgy/issues/305"""

@@ -93,7 +93,7 @@ API_USER_EVENTS = 'me/events?type=created&fields=rsvp_status,' + API_EVENT_FIELD
 API_USER_EVENTS_DECLINED = 'me/events?type=declined&fields=' + API_EVENT_FIELDS
 API_USER_EVENTS_NOT_REPLIED = 'me/events?type=not_replied&fields=' + API_EVENT_FIELDS
 # https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/
-API_NEWS_PUBLISHES = 'me/news.publishes?fields=' + API_POST_FIELDS
+API_NEWS_PUBLISHES = '%s/news.publishes?fields=' + API_POST_FIELDS
 API_PUBLISH_POST = 'me/feed'
 API_PUBLISH_COMMENT = '%s/comments'
 API_PUBLISH_LIKE = '%s/likes'
@@ -297,7 +297,8 @@ class Facebook(source.Source):
 
     else:
       url = API_SELF_POSTS if group_id == source.SELF else API_HOME
-      url = url % (user_id or 'me', start_index)
+      user_id = user_id or 'me'
+      url = url % (user_id, start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
       headers = {'If-None-Match': etag} if etag else {}
@@ -317,8 +318,8 @@ class Facebook(source.Source):
         # https://developers.facebook.com/docs/graph-api/making-multiple-requests
         # https://github.com/snarfed/bridgy/issues/44
         if fetch_news:
-          posts.extend(self.urlopen(API_NEWS_PUBLISHES, _as=list))
-        posts = self._merge_photos(posts, user_id or 'me')
+          posts.extend(self.urlopen(API_NEWS_PUBLISHES % user_id, _as=list))
+        posts = self._merge_photos(posts, user_id)
         if fetch_events:
           activities.extend(self._get_events(owner_id=event_owner_id))
       else:
