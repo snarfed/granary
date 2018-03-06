@@ -155,6 +155,20 @@ ISSUE_OBJ = {  # ActivityStreams
     'url': 'https://github.com/foo/bar/labels/new%20silo',
   }],
 }
+ISSUE_OBJ_WITH_LABELS = copy.deepcopy(ISSUE_OBJ)
+ISSUE_OBJ_WITH_LABELS.update({
+  'tags': [{
+    'objectType': 'person',
+    'url': 'https://github.com/someone/',
+  }, {
+    'url': 'https://flickr.com/a/repo',
+  }, {
+    'displayName': '  label_1 ',
+  }, {
+    'displayName': 'label 2\t\n',
+    'objectType': 'hashtag',
+  }],
+})
 REPO_REST = {
   'id': 55900011,
   'name': 'bridgy',
@@ -652,6 +666,7 @@ class GitHubTest(testutil.HandlerTest):
     self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
+        'labels': ['new silo'],
       }, response={
         'id': '789999',
         'number': '123',
@@ -675,6 +690,7 @@ class GitHubTest(testutil.HandlerTest):
     self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': '[bar](http://foo/) ![](https://baz/)',
+        'labels': [],
       }, response={
         'html_url': 'https://github.com/foo/bar/issues/123',
       }, headers=EXPECTED_HEADERS)
@@ -706,8 +722,31 @@ class GitHubTest(testutil.HandlerTest):
       self.assertIsNone(preview.error_plain, preview)
       self.assertEquals('<b>an issue title</b><hr>' + rendered, preview.content)
       self.assertIn(
-        '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a>:' % url,
+        '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a> and attempt to add label <span class="verb">new silo</span>:' % url,
         preview.description, preview)
+
+  def test_create_issue_tags_to_labels(self):
+    resp = {'html_url': 'http://done'}
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': ISSUE_OBJ['content'].strip(),
+        'labels': ['label_1', 'label 2'],
+      }, response=resp, headers=EXPECTED_HEADERS)
+    self.mox.ReplayAll()
+
+    result = self.gh.create(ISSUE_OBJ_WITH_LABELS)
+    self.assertIsNone(result.error_plain, result)
+    self.assert_equals({'url': 'http://done'}, result.content)
+
+  def test_preview_issue_tags_to_labels(self):
+    rendered = self.expect_markdown_render(ISSUE_OBJ_WITH_LABELS['content'].strip())
+    self.mox.ReplayAll()
+
+    preview = self.gh.preview_create(ISSUE_OBJ_WITH_LABELS)
+    self.assertIsNone(preview.error_plain, preview)
+    self.assertIn(
+      '<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar/issues">foo/bar</a> and attempt to add labels <span class="verb">label_1, label 2</span>:',
+      preview.description, preview)
 
   def test_create_comment_without_in_reply_to(self):
     obj = copy.deepcopy(COMMENT_OBJ)

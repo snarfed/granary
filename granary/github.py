@@ -392,6 +392,9 @@ class GitHub(source.Source):
               ignore_formatting=False):
     """Creates a new issue or comment.
 
+    Tags are converted to labels. If a tag doesn't atch an existing label, a new
+    label will be created for it. You must be a collaborator on the repo
+
     https://developer.github.com/v4/guides/forming-calls/#about-mutations
     https://developer.github.com/v4/mutation/addcomment/
     https://developer.github.com/v4/mutation/addreaction/
@@ -409,6 +412,7 @@ class GitHub(source.Source):
       If preview is True, the contents will be a unicode string HTML
       snippet. If False, it will be a dict with 'id' and 'url' keys
       for the newly created GitHub object.
+
     """
     assert preview in (False, True)
 
@@ -460,16 +464,23 @@ class GitHub(source.Source):
       else:  # new issue
         title = util.ellipsize(obj.get('displayName') or obj.get('title') or
                                orig_content)
+        labels = list(util.trim_nulls(
+          tag.get('displayName', '').strip() for tag in obj.get('tags', [])))
         if preview:
           preview_content = '<b>%s</b><hr>%s' % (
             title, self.render_markdown(content, owner, repo))
+          preview_labels = ''
+          if labels:
+            preview_labels = ' and attempt to add label%s <span class="verb">%s</span>' % (
+              's' if len(labels) > 1 else '', ', '.join(labels))
           return source.creation_result(content=preview_content, description="""\
-  <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>:""" %
-              (base_url, owner, repo))
+  <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>%s:""" %
+              (base_url, owner, repo, preview_labels))
         else:
           resp = self.rest(REST_API_CREATE_ISSUE % (owner, repo), {
             'title': title,
             'body': content,
+            'labels': labels,
           }).json()
           resp['url'] = resp.pop('html_url')
           return source.creation_result(resp)
