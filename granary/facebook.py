@@ -78,7 +78,7 @@ API_EVENT = '%s?fields=' + API_EVENT_FIELDS
 # https://developers.facebook.com/docs/graph-api/reference/user/home
 # https://github.com/snarfed/granary/issues/26
 API_HOME = '%s/home?offset=%d'
-API_PHOTOS_UPLOADED = 'me/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,reactions,shares,updated_time'
+API_PHOTOS_UPLOADED = '%s/photos?type=uploaded&fields=id,album,comments,created_time,from,images,likes,link,name,name_tags,object_id,page_story_id,picture,privacy,reactions,shares,updated_time'
 API_ALBUMS = '%s/albums?fields=id,count,created_time,from,link,name,privacy,type,updated_time'
 API_POST_FIELDS = 'id,application,caption,comments,created_time,description,from,likes,link,message,message_tags,name,object_id,parent_id,picture,place,privacy,reactions,sharedposts,shares,source,status_type,story,to,type,updated_time,with_tags'
 API_SELF_POSTS = '%s/feed?offset=%d&fields=' + API_POST_FIELDS
@@ -297,7 +297,7 @@ class Facebook(source.Source):
 
     else:
       url = API_SELF_POSTS if group_id == source.SELF else API_HOME
-      url = url % (user_id if user_id else 'me', start_index)
+      url = url % (user_id or 'me', start_index)
       if count:
         url = util.add_query_params(url, {'limit': count})
       headers = {'If-None-Match': etag} if etag else {}
@@ -318,7 +318,7 @@ class Facebook(source.Source):
         # https://github.com/snarfed/bridgy/issues/44
         if fetch_news:
           posts.extend(self.urlopen(API_NEWS_PUBLISHES, _as=list))
-        posts = self._merge_photos(posts)
+        posts = self._merge_photos(posts, user_id or 'me')
         if fetch_events:
           activities.extend(self._get_events(owner_id=event_owner_id))
       else:
@@ -377,7 +377,7 @@ class Facebook(source.Source):
     response['etag'] = etag
     return response
 
-  def _merge_photos(self, posts):
+  def _merge_photos(self, posts, user_id):
     """Fetches and merges photo objects into posts, replacing matching posts.
 
     Have to fetch uploaded photos manually since facebook sometimes collapses
@@ -394,10 +394,13 @@ class Facebook(source.Source):
 
     Args:
       posts: list of Facebook post object dicts
+      user_id: string Facebook user id
 
     Returns:
       new list of post and photo object dicts
     """
+    assert user_id
+
     posts_by_obj_id = {}
     for post in posts:
       obj_id = post.get('object_id')
@@ -410,7 +413,7 @@ class Facebook(source.Source):
 
     albums = None  # lazy loaded, maps facebook id to ActivityStreams object
 
-    photos = self.urlopen(API_PHOTOS_UPLOADED, _as=list)
+    photos = self.urlopen(API_PHOTOS_UPLOADED % user_id, _as=list)
     for photo in photos:
       album_id = photo.get('album', {}).get('id')
       post = posts_by_obj_id.pop(photo.get('id'), {})
@@ -422,7 +425,7 @@ class Facebook(source.Source):
         photo['privacy'] = privacy
       elif album_id:
         if albums is None:
-          albums = {a['id']: a for a in self.urlopen(API_ALBUMS % 'me', _as=list)}
+          albums = {a['id']: a for a in self.urlopen(API_ALBUMS % user_id, _as=list)}
         photo['privacy'] = albums.get(album_id, {}).get('privacy')
       else:
         photo['privacy'] = 'custom'  # ie unknown
@@ -556,7 +559,7 @@ class Facebook(source.Source):
     Returns:
       sequence of ActivityStream album object dicts
     """
-    url = API_ALBUMS % (user_id if user_id is not None else 'me')
+    url = API_ALBUMS % (user_id or 'me')
     return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
 
   def get_reaction(self, activity_user_id, activity_id, reaction_user_id,

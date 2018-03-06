@@ -12,14 +12,26 @@ from oauth_dropins.webutil import util
 
 from granary import appengine_config
 from granary import facebook
-from granary.facebook import \
-  API_ALBUMS, API_BASE, API_COMMENT, API_COMMENTS_ALL, API_EVENT, API_USER_EVENTS, \
-  API_NEWS_PUBLISHES, API_OBJECT, API_PHOTOS_UPLOADED, API_PUBLISH_PHOTO, \
-  API_PUBLISH_POST, API_SHARES, API_UPLOAD_VIDEO
+from granary.facebook import (
+  API_ALBUMS,
+  API_BASE,
+  API_COMMENT,
+  API_COMMENTS_ALL,
+  API_EVENT,
+  API_NEWS_PUBLISHES,
+  API_OBJECT,
+  API_PHOTOS_UPLOADED,
+  API_PUBLISH_PHOTO,
+  API_PUBLISH_POST,
+  API_SELF_POSTS,
+  API_SHARES,
+  API_UPLOAD_VIDEO,
+  API_USER_EVENTS,
+)
 from granary import source
 
-API_ME_POSTS = facebook.API_SELF_POSTS % ('me', 0)
-
+API_ME_POSTS = API_SELF_POSTS % ('me', 0)
+API_ME_PHOTOS = API_PHOTOS_UPLOADED % 'me'
 
 # test data
 def tag_uri(name):
@@ -1115,13 +1127,13 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_empty(self):
     self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_photo_and_event(self):
     self.expect_urlopen(API_ME_POSTS, {'data': [PHOTO_POST]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
+    self.expect_urlopen(API_ME_PHOTOS, {'data': [PHOTO]})
     self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
 
     self.mox.ReplayAll()
@@ -1130,9 +1142,7 @@ class FacebookTest(testutil.HandlerTest):
       self.fb.get_activities(group_id=source.SELF, fetch_events=True))
 
   def test_get_activities_self_merge_photos(self):
-    """
-    https://github.com/snarfed/bridgy/issues/562
-    """
+    """https://github.com/snarfed/bridgy/issues/562"""
     self.expect_urlopen(API_ME_POSTS, {'data': [
       {'id': '1', 'object_id': '11',   # has photo but no album
        'privacy': {'value': 'EVERYONE'}},
@@ -1143,7 +1153,7 @@ class FacebookTest(testutil.HandlerTest):
       {'id': '7', 'object_id': '77',   # ditto, and photo has no album
        'privacy': {'value': 'CUSTOM'}},
     ]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {'data': [
+    self.expect_urlopen(API_ME_PHOTOS, {'data': [
       {'id': '11'},
       {'id': '22', 'album': {'id': '222'}},  # no matching post
       {'id': '33', 'album': {'id': '333'}},  # no matching album
@@ -1168,15 +1178,25 @@ class FacebookTest(testutil.HandlerTest):
     ], [{k: v for k, v in activity['object'].items() if k in ('fb_id', 'to')}
         for activity in self.fb.get_activities(group_id=source.SELF)])
 
+  def test_get_activities_user_id_merge_photos(self):
+    self.expect_urlopen(API_SELF_POSTS % ('567', 0), {'data': []})
+    self.expect_urlopen(API_PHOTOS_UPLOADED % '567', {'data': [
+      {'album': {'id': '222'}},
+    ]})
+    self.expect_urlopen(API_ALBUMS % '567', {'data': []})
+
+    self.mox.ReplayAll()
+    self.assert_equals([], self.fb.get_activities(user_id='567', group_id=source.SELF))
+
   def test_get_activities_self_photos_returns_list(self):
     self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, [])
+    self.expect_urlopen(API_ME_PHOTOS, [])
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_owned_event_rsvps(self):
     self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
 
     self.mox.ReplayAll()
@@ -1185,7 +1205,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_unowned_event_no_rsvps(self):
     self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
 
     self.mox.ReplayAll()
@@ -1194,7 +1214,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_self_events_returns_list(self):
     self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.expect_urlopen(API_USER_EVENTS, [])
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
@@ -1373,7 +1393,7 @@ class FacebookTest(testutil.HandlerTest):
     activity = self.fb.post_to_activity(post)
 
     self.expect_urlopen(API_ME_POSTS, {'data': [post]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.mox.ReplayAll()
     self.assert_equals([activity], self.fb.get_activities(group_id=source.SELF))
 
@@ -1411,7 +1431,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_skips_extras_if_no_posts(self):
     self.expect_urlopen(API_ME_POSTS, {'data': []})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.mox.ReplayAll()
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
@@ -1420,12 +1440,12 @@ class FacebookTest(testutil.HandlerTest):
     # first call returns just notes
     self.expect_urlopen(API_ME_POSTS,
                         {'data': [FB_NOTE, FB_CREATED_NOTE]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
 
     # second call returns notes and link
     self.expect_urlopen(API_ME_POSTS,
                         {'data': [FB_NOTE, FB_CREATED_NOTE, FB_LINK]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.expect_urlopen(API_SHARES % '555', [])
     self.expect_urlopen(API_COMMENTS_ALL % '555', {})
 
@@ -1438,7 +1458,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_get_activities_matches_extras_with_correct_activity(self):
     self.expect_urlopen(API_ME_POSTS, {'data': [POST]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
     self.expect_urlopen(API_SHARES % '212038_10100176064482163',
                         {'212038_10100176064482163': {'data': [SHARE]}})
@@ -1454,7 +1474,7 @@ class FacebookTest(testutil.HandlerTest):
   def test_get_activities_self_fetch_news(self):
     self.expect_urlopen(API_ME_POSTS, {'data': [POST]})
     self.expect_urlopen(API_NEWS_PUBLISHES, {'data': [FB_NEWS_PUBLISH]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED, {})
+    self.expect_urlopen(API_ME_PHOTOS, {})
     # should only fetch sharedposts for POST, not FB_NEWS_PUBLISH
     self.expect_urlopen(API_SHARES % '212038_10100176064482163', {})
 
