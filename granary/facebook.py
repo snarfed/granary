@@ -758,6 +758,15 @@ class Facebook(source.Source):
         msg = 'Sorry, the Facebook API doesn\'t support creating "interested" RSVPs. Try a "maybe" RSVP instead!'
         return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
+      # can't RSVP to multi-instance aka recurring events
+      # https://developers.facebook.com/docs/graph-api/reference/event/#u_0_8
+      event = self.urlopen(API_EVENT % base_id)
+      if event.get('event_times'):
+        return source.creation_result(
+          abort=True,
+          error_plain="That's a recurring event. Please RSVP to a specific instance!",
+          error_html='<a href="%s">That\'s a recurring event.</a> Please RSVP to a specific instance!' % base_url)
+
       # TODO: event invites
       if preview:
         assert verb.startswith('rsvp-')
@@ -906,6 +915,20 @@ class Facebook(source.Source):
       post_id = post_author_id + '/posts/' + post_id
     return 'https://www.facebook.com/%s?comment_id=%s' % (post_id, comment_id)
 
+  @classmethod
+  def base_id(cls, url):
+    """Guesses the id of the object in the given URL.
+
+    Returns:
+      string, or None
+    """
+    params = urlparse.parse_qs(urlparse.urlparse(url).query)
+    event_id = params.get('event_time_id')
+    if event_id:
+      return event_id[0]
+
+    return super(Facebook, cls).base_id(url)
+
   def base_object(self, obj, verb=None, resolve_numeric_id=False):
     """Returns the 'base' silo object that an object operates on.
 
@@ -979,17 +1002,28 @@ class Facebook(source.Source):
         if set_id and set_id[0].startswith('a.'):
           base_obj['id'] = set_id[0].split('.')[1]
 
+      # single instances of recurring (aka multi-instance) event URLs look like this:
+      # https://www.facebook.com/events/123/?event_time_id=456
+      event_id = params.get('event_time_id')
+      if event_id:
+        event_id = event_id[0]
+        base_obj.update({
+          'id': event_id,
+          'numeric_id': event_id,
+          'url': self.object_url(event_id)
+        })
+
       comment_id = params.get('comment_id') or params.get('reply_comment_id')
       if comment_id:
         base_obj['id'] += '_' + comment_id[0]
         base_obj['objectType'] = 'comment'
 
-      if '_' not in base_id and author.get('numeric_id'):
+      if '_' not in base_id and author.get('numeric_id') and not event_id:
         # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
         base_obj['id'] = '%s_%s' % (author['numeric_id'], base_id)
 
     except BaseException, e:
-      logging.error(
+      logging.exception(
         "Couldn't parse object URL %s : %s. Falling back to default logic.",
         url, e)
 
