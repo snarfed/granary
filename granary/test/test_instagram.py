@@ -1585,6 +1585,19 @@ class InstagramTest(testutil.HandlerTest):
                        activities)
     self.assertIsNone(viewer)
 
+  def test_html_to_activities_preload_fetch_bad_json(self):
+    """https://console.cloud.google.com/errors/CP_w8ai-7JLfvAE"""
+    url = urlparse.urljoin(instagram.HTML_BASE_URL, HTML_PRELOAD_URL)
+    self.expect_requests_get(url, '{bad: ["json', allow_redirects=False,
+                             headers={'Cookie': 'abc123'})
+    self.mox.ReplayAll()
+
+    html = HTML_HEADER_PRELOAD + json.dumps(HTML_USELESS_FEED) + HTML_FOOTER
+    with self.assertRaises(requests.HTTPError) as cm:
+      self.instagram.html_to_activities(html, cookie='abc123')
+
+    self.assertEquals(504, cm.exception.response.status_code)
+
   def test_id_to_shortcode(self):
     for shortcode, id in (
         (None, None),

@@ -800,8 +800,18 @@ class Instagram(source.Source):
       if link:
         url = urlparse.urljoin(HTML_BASE_URL, link['href'])
         headers = {'Cookie': cookie} if cookie else None
-        resp = util.requests_get(url, allow_redirects=False, headers=headers).json()
-        edges = resp.get('data', {}).get('user', {})\
+        resp = util.requests_get(url, allow_redirects=False, headers=headers)
+
+        try:
+          data = resp.json()
+        except json_module.JSONDecodeError as e:
+          msg = "Couldn't decode response as JSON:\n%s" % resp.text
+          logging.exception(msg)
+          resp.status_code = 504
+          raise requests.HTTPError('504 Bad response from Instagram\n' + msg,
+                                   response=resp)
+
+        edges = data.get('data', {}).get('user', {})\
                     .get('edge_web_feed_timeline', {}).get('edges', [])
         medias = [e.get('node') for e in edges]
 
