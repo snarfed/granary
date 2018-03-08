@@ -321,6 +321,26 @@ EVENT = {  # Facebook; returned by /[event id] and in /[user]/events
   # maybes are often (always?) duplicated in interested
   'interested': {'data': [RSVP_MAYBE, RSVP_INTERESTED]},
 }
+MULTI_EVENT = {  # Facebook
+  'id': '2019666581591532',
+  'name': 'Silo Philosophy',
+  'description': 'During this extended weekend workshop...',
+  'start_time': '2018-03-08T09:00:00-0800',
+  'end_time': '2018-03-11T16:00:00-0700',
+  # This is the key field that distinguishes this event as a multi-instance (aka
+  # session) event. Fetching each of these "child" events by id returns
+  # normal-looking event objects.
+  # https://developers.facebook.com/docs/graph-api/reference/event/#u_0_8
+  'event_times': [{
+    'id': '2019666594924864',
+    'start_time': '2018-03-11T08:15:00-0700',
+    'end_time': '2018-03-11T16:00:00-0700',
+  }, {
+    'id': '2019666584924865',
+    'start_time': '2018-03-10T09:00:00-0800',
+    'end_time': '2018-03-10T17:00:00-0800',
+  }],
+}
 
 COMMENT_OBJS = [  # ActivityStreams
   {
@@ -772,6 +792,17 @@ EVENT_ACTIVITY = {  # ActivityStreams
   'id': tag_uri('145304994'),
   'url': 'https://www.facebook.com/145304994',
   'object': EVENT_OBJ,
+}
+MULTI_EVENT_OBJ = {  # ActivityStreams, TODO
+  #  Note that neither AS1 nor AS2 support recurring/multi-instance events.
+  'objectType': 'event',
+  'id': tag_uri('2019666581591532'),
+  'fb_id': '2019666581591532',
+  'url': 'https://www.facebook.com/2019666581591532',
+  'displayName': 'Silo Philosophy',
+  'content': 'During this extended weekend workshop...',
+  'startTime': '2018-03-08T09:00:00-0800',
+  'endTime': '2018-03-11T16:00:00-0700',
 }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
@@ -1938,6 +1969,10 @@ http://b http://c""",
 
   def test_event_to_object(self):
     self.assert_equals(EVENT_OBJ, self.fb.event_to_object(EVENT))
+
+  def test_multi_event_to_object(self):
+    # TODO: actually implement multi-instance events
+    self.assert_equals(MULTI_EVENT_OBJ, self.fb.event_to_object(MULTI_EVENT))
 
   def test_event_to_object_with_rsvps(self):
     obj = copy.deepcopy(EVENT_OBJ)

@@ -71,7 +71,7 @@ API_COMMENT = '%s?fields=' + API_COMMENTS_FIELDS
 #
 # asking for too many fields here causes 500s with either "unknown error" or
 # "ask for less info" errors. https://github.com/snarfed/bridgy/issues/664
-API_EVENT_FIELDS = 'id,attending,declined,description,end_time,interested,maybe,noreply,name,owner,picture,place,start_time,timezone,updated_time'
+API_EVENT_FIELDS = 'id,attending,declined,description,end_time,event_times,interested,maybe,noreply,name,owner,picture,place,start_time,timezone,updated_time'
 API_EVENT = '%s?fields=' + API_EVENT_FIELDS
 # /user/home requires the read_stream permission, which you probably don't have.
 # details in the file docstring.
