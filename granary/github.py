@@ -41,6 +41,13 @@ query {
   }
 }
 """
+GRAPHQL_REPO = """
+query {
+  repository(owner: "%(owner)s", name: "%(repo)s") {
+    id
+  }
+}
+"""
 GRAPHQL_REPO_ISSUES = """
 query {
   viewer {
@@ -60,10 +67,14 @@ query {
   }
 }
 """
-GRAPHQL_REPO = """
+GRAPHQL_REPO_LABELS = """
 query {
   repository(owner: "%(owner)s", name: "%(repo)s") {
-    id
+    labels(first:100) {
+      nodes {
+        name
+      }
+    }
   }
 }
 """
@@ -392,8 +403,9 @@ class GitHub(source.Source):
               ignore_formatting=False):
     """Creates a new issue or comment.
 
-    Tags are converted to labels. If a tag doesn't atch an existing label, a new
-    label will be created for it. You must be a collaborator on the repo
+    When creating a new issue, if the authenticated user is a collaborator on
+    the repo, tags that match existing labels are converted to those labels and
+    included.
 
     https://developer.github.com/v4/guides/forming-calls/#about-mutations
     https://developer.github.com/v4/mutation/addcomment/
@@ -464,8 +476,13 @@ class GitHub(source.Source):
       else:  # new issue
         title = util.ellipsize(obj.get('displayName') or obj.get('title') or
                                orig_content)
-        labels = list(util.trim_nulls(
+        labels_resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
+        existing_labels = set(node['name'] for node in
+                              labels_resp['repository']['labels']['nodes'])
+        labels = set(util.trim_nulls(
           tag.get('displayName', '').strip() for tag in obj.get('tags', [])))
+        labels &= existing_labels
+
         if preview:
           preview_content = '<b>%s</b><hr>%s' % (
             title, self.render_markdown(content, owner, repo))
@@ -480,7 +497,7 @@ class GitHub(source.Source):
           resp = self.rest(REST_API_CREATE_ISSUE % (owner, repo), {
             'title': title,
             'body': content,
-            'labels': labels,
+            'labels': list(labels),
           }).json()
           resp['url'] = resp.pop('html_url')
           return source.creation_result(resp)

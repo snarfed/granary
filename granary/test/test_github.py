@@ -167,6 +167,8 @@ ISSUE_OBJ_WITH_LABELS.update({
   }, {
     'displayName': 'label 2\t\n',
     'objectType': 'hashtag',
+  }, {
+    'displayName': 'label 3',
   }],
 })
 REPO_REST = {
@@ -370,6 +372,20 @@ class GitHubTest(testutil.HandlerTest):
     }, response={
       'repository': {
         'issueOrPullRequest': ISSUE_GRAPHQL,
+      },
+    })
+
+  def expect_graphql_get_labels(self, labels):
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_REPO_LABELS % {
+        'owner': 'foo',
+        'repo': 'bar',
+      },
+    }, response={
+      'repository': {
+        'labels': {
+          'nodes': [{'name': l} for l in labels],
+        },
       },
     })
 
@@ -663,10 +679,11 @@ class GitHubTest(testutil.HandlerTest):
     self._test_create_issue('https://github.com/foo/bar/issues')
 
   def _test_create_issue(self, in_reply_to):
+    self.expect_graphql_get_labels([])
     self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
-        'labels': ['new silo'],
+        'labels': [],
       }, response={
         'id': '789999',
         'number': '123',
@@ -687,6 +704,7 @@ class GitHubTest(testutil.HandlerTest):
     }, result.content)
 
   def test_create_with_image_and_link(self):
+    self.expect_graphql_get_labels([])
     self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': '[bar](http://foo/) ![](https://baz/)',
@@ -712,6 +730,7 @@ class GitHubTest(testutil.HandlerTest):
 
   def test_preview_issue(self):
     for i in range(2):
+      self.expect_graphql_get_labels(['new silo'])
       rendered = self.expect_markdown_render(ISSUE_OBJ['content'].strip())
     self.mox.ReplayAll()
 
@@ -726,11 +745,12 @@ class GitHubTest(testutil.HandlerTest):
         preview.description, preview)
 
   def test_create_issue_tags_to_labels(self):
+    self.expect_graphql_get_labels(['label_1', 'label 3'])
     resp = {'html_url': 'http://done'}
     self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
-        'labels': ['label_1', 'label 2'],
+        'labels': ['label_1', 'label 3'],
       }, response=resp, headers=EXPECTED_HEADERS)
     self.mox.ReplayAll()
 
@@ -739,13 +759,14 @@ class GitHubTest(testutil.HandlerTest):
     self.assert_equals({'url': 'http://done'}, result.content)
 
   def test_preview_issue_tags_to_labels(self):
+    self.expect_graphql_get_labels(['label_1', 'label 3'])
     rendered = self.expect_markdown_render(ISSUE_OBJ_WITH_LABELS['content'].strip())
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(ISSUE_OBJ_WITH_LABELS)
     self.assertIsNone(preview.error_plain, preview)
     self.assertIn(
-      '<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar/issues">foo/bar</a> and attempt to add labels <span class="verb">label_1, label 2</span>:',
+      '<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar/issues">foo/bar</a> and attempt to add labels <span class="verb">label_1, label 3</span>:',
       preview.description, preview)
 
   def test_create_comment_without_in_reply_to(self):
