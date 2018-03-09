@@ -270,6 +270,8 @@ class GitHub(source.Source):
 
     *Not comprehensive!* Uses the notifications API (v3 REST).
 
+    Also note that start_index and count are not currently supported.
+
     https://developer.github.com/v3/activity/notifications/
     https://developer.github.com/v3/issues/
     https://developer.github.com/v3/issues/comments/

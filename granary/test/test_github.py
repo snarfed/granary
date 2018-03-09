@@ -547,27 +547,6 @@ class GitHubTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals([], self.gh.get_activities(activity_id='a:b:1'))
 
-  # def test_get_activities_start_index_and_count(self):
-  #   self.expect_urlopen('me/home?offset=3&limit=5', {})
-  #   self.mox.ReplayAll()
-  #   self.gh.get_activities(start_index=3, count=5)
-
-  # def test_get_activities_start_index_count_zero(self):
-  #   self.expect_urlopen('me/home?offset=0', {'data': [POST, FB_NOTE]})
-  #   self.mox.ReplayAll()
-  #   self.assert_equals([ACTIVITY, FB_NOTE_ACTIVITY],
-  #                      self.gh.get_activities(start_index=0, count=0))
-
-  # def test_get_activities_count_past_end(self):
-  #   self.expect_urlopen('me/home?offset=0&limit=9', {'data': [POST]})
-  #   self.mox.ReplayAll()
-  #   self.assert_equals([ACTIVITY], self.gh.get_activities(count=9))
-
-  # def test_get_activities_start_index_past_end(self):
-  #   self.expect_urlopen('me/home?offset=0', {'data': [POST]})
-  #   self.mox.ReplayAll()
-  #   self.assert_equals([ACTIVITY], self.gh.get_activities(offset=9))
-
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(search_query='foo')
