@@ -539,16 +539,13 @@ class GitHubTest(testutil.HandlerTest):
     self.assert_equals('Fri, 1 Jan 2099 12:00:00 GMT', resp['etag'])
     self.assert_equals([], resp['items'])
 
-  # def test_get_activities_activity_id_not_found(self):
-  #   self.expect_urlopen(API_OBJECT % ('0', '0'), {
-  #     'error': {
-  #       'message': '(#803) Some of the aliases you requested do not exist: 0',
-  #       'type': 'OAuthException',
-  #       'code': 803
-  #     }
-  #   })
-  #   self.mox.ReplayAll()
-  #   self.assert_equals([], self.gh.get_activities(activity_id='0_0'))
+  def test_get_activities_activity_id_not_found(self):
+    self.expect_rest(REST_API_ISSUE % ('a', 'b', 1), {
+      'message': 'Not Found',
+      'documentation_url': 'https://developer.github.com/v3',
+    }, status_code=404)
+    self.mox.ReplayAll()
+    self.assert_equals([], self.gh.get_activities(activity_id='a:b:1'))
 
   # def test_get_activities_start_index_and_count(self):
   #   self.expect_urlopen('me/home?offset=3&limit=5', {})

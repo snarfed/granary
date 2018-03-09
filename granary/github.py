@@ -296,8 +296,15 @@ class GitHub(source.Source):
     if activity_id:
       parts = tuple(activity_id.split(':'))
       assert len(parts) == 3
-      issue = self.rest(REST_API_ISSUE % parts).json()
-      activities = [self.issue_to_object(issue)]
+      try:
+        issue = self.rest(REST_API_ISSUE % parts).json()
+        activities = [self.issue_to_object(issue)]
+      except BaseException as e:
+        code, body = util.interpret_http_exception(e)
+        if code == '404':
+          activities = []
+        else:
+          raise
 
     else:
       resp = self.rest(REST_API_NOTIFICATIONS,
