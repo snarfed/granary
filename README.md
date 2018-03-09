@@ -225,7 +225,7 @@ Changelog
 ### 1.11 - 2018-03-09
 * Add GitHub!
   * `get_activities()` supports issues and pull requests, including comments and reactions. It's currently based on notifications, so it's best effort, not comprehensive, and only includes recently active issues/PRs.
-  * `create()` and `preview_create()` support issues, comments, <a href="https://help.github.com/articles/about-stars">stars</a>Rs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">reactions</a>.
+  * `create()` and `preview_create()` support issues, comments, [stars](https://help.github.com/articles/about-stars), and [reactions](https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments).
 * Twitter:
   * Prefer MP4 and other video/... content types to HLS (.m3u8) etc. [Background.](https://twittercommunity.com/t/retiring-mp4-video-output/66093)
   * Prefer HTTPS URLs for media images.
@@ -237,6 +237,7 @@ Changelog
   * Fixed bug where `get_activities(user_id=...)` included the authenticated user's own recent photos, albums, and news publishes.
 * Instagram:
   * Extract more user (`author`) data from scraped profile pages.
+  * Fix home page feed scraping.
 * microformats2, Atom:
   * Add enclosures for image attachments.
   * Bug fixes for rendering image, video, and audio attachments inside shares and attachments. De-dupe images.
