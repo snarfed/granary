@@ -442,15 +442,17 @@ class GitHubTest(testutil.HandlerTest):
   def test_user_to_actor_empty(self):
     self.assert_equals({}, self.gh.user_to_actor({}))
 
-  # def test_get_actor(self):
-  #   self.expect_urlopen('foo', USER)
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(ACTOR, self.gh.get_actor('foo'))
+  def test_get_actor(self):
+    self.expect_graphql(json={'query': github.GRAPHQL_USER % {'login': 'foo'}},
+                        response={'user': USER_GRAPHQL})
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.gh.get_actor('foo'))
 
-  # def test_get_actor_default(self):
-  #   self.expect_urlopen('me', USER)
-  #   self.mox.ReplayAll()
-  #   self.assert_equals(ACTOR, self.gh.get_actor())
+  def test_get_actor_default(self):
+    self.expect_graphql(json={'query': github.GRAPHQL_VIEWER},
+                        response={'viewer': USER_GRAPHQL})
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.gh.get_actor())
 
   def test_get_activities_defaults(self):
     notifs = [copy.deepcopy(NOTIFICATION_PULL_REST),

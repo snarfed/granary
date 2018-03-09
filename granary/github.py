@@ -14,7 +14,6 @@ import urllib
 import urlparse
 
 import appengine_config
-from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil import util
 import source
 
@@ -28,6 +27,22 @@ REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
 REST_API_COMMENT_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/comments/%s/reactions'
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
 REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
+GRAPHQL_BASE = 'https://api.github.com/graphql'
+GRAPHQL_USER_FIELDS = 'id avatarUrl bio company createdAt location login name websiteUrl' # not email, it requires an additional oauth scope
+GRAPHQL_USER = """
+query {
+  user(login: "%(login)s") {
+    """ + GRAPHQL_USER_FIELDS + """
+  }
+}
+"""
+GRAPHQL_VIEWER = """
+query {
+  viewer {
+    """ + GRAPHQL_USER_FIELDS + """
+  }
+}
+"""
 GRAPHQL_USER_ISSUES = """
 query {
   viewer {
@@ -208,7 +223,7 @@ class GitHub(source.Source):
     escaped = {k: (email.utils.quote(v) if isinstance(v, basestring) else v)
                for k, v in kwargs.items()}
     resp = util.requests_post(
-      oauth_github.API_GRAPHQL, json={'query': graphql % escaped},
+      GRAPHQL_BASE, json={'query': graphql % escaped},
       headers={
         'Authorization': 'bearer %s' % self.access_token,
       })
@@ -337,12 +352,28 @@ class GitHub(source.Source):
     response['etag'] = etag
     return response
 
+  def get_actor(self, user_id=None):
+    """Fetches nd returns a user.
+
+    Args: user_id: string, defaults to current user
+
+    Returns: dict, ActivityStreams actor object
+    """
+    if user_id:
+      user = self.graphql(GRAPHQL_USER, {'login': user_id})['user']
+    else:
+      user = self.graphql(GRAPHQL_VIEWER, {})['viewer']
+
+    return self.user_to_actor(user)
+
   def get_comment(self, comment_id, **kwargs):
-    """Returns an ActivityStreams comment object.
+    """Fetches and returns a comment.
 
     Args:
       comment_id: string comment id, of the form REPO-OWNER_REPO-NAME_ID,
         e.g. snarfed:bridgy:456789
+
+    Returns: dict, an ActivityStreams comment object
     """
     parts = tuple(comment_id.split(':'))
     assert len(parts) == 3
