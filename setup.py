@@ -18,7 +18,7 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='1.10',
+      version='1.11',
       description='The social web translator',
       long_description=open('README.rst').read(),
       url='https://github.com/snarfed/granary',
@@ -44,7 +44,7 @@ setup(name='granary',
           'jinja2',
           'mf2py>=0.2.7',
           'mf2util>=0.5.0',
-          'oauth-dropins>=1.10',
+          'oauth-dropins>=1.11',
           'requests>=2.10.0',
           'requests-toolbelt>=0.6.2',
           'brevity>=0.2.14',

@@ -222,7 +222,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 1.11 - unreleased
+### 1.11 - 2018-03-09
 * Add GitHub!
   * `get_activities()` supports issues and pull requests, including comments and reactions. It's currently based on notifications, so it's best effort, not comprehensive, and only includes recently active issues/PRs.
   * `create()` and `preview_create()` support issues, comments, <a href="https://help.github.com/articles/about-stars">stars</a>Rs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">reactions</a>.
