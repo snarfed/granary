@@ -187,11 +187,16 @@ class Source(object):
     raise NotImplementedError()
 
   def get_actor(self, user_id=None):
-    """Returns the current user as a JSON ActivityStreams actor dict."""
+    """Fetches and returns a user.
+
+    Args: user_id: string, defaults to current user
+
+    Returns: dict, ActivityStreams actor object
+    """
     raise NotImplementedError()
 
   def get_activities(self, *args, **kwargs):
-    """Fetches and returns a list of ActivityStreams activities.
+    """Fetches and returns a list of activities.
 
     See get_activities_response() for args and kwargs.
 
@@ -339,7 +344,7 @@ class Source(object):
     raise NotImplementedError()
 
   def get_event(self, event_id):
-    """Returns a ActivityStreams event activity.
+    """Fetches and returns an event.
 
     Args:
       id: string, site-specific event id
@@ -351,7 +356,7 @@ class Source(object):
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
                   activity=None):
-    """Returns an ActivityStreams comment object.
+    """Fetches and returns a comment.
 
     Subclasses should override this.
 
@@ -362,13 +367,15 @@ class Source(object):
         sources (e.g. Facebook) to construct the comment permalink.
       activity: activity object, optional. May avoid an API call if provided.
 
+    Returns: dict, ActivityStreams comment object
+
     Raises:
       :class:`ValueError`: if any argument is invalid for this source
     """
     raise NotImplementedError()
 
   def get_like(self, activity_user_id, activity_id, like_user_id, activity=None):
-    """Returns an ActivityStreams 'like' activity object.
+    """Fetches and returns a 'like'.
 
     Default implementation that fetches the activity and its likes, then
     searches for a like by the given user. Subclasses should override this if
@@ -379,6 +386,8 @@ class Source(object):
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
       activity: activity object, optional. May avoid an API call if provided.
+
+    Returns: dict, ActivityStreams 'like' activity object
     """
     if not activity:
       activity = self._get_activity(activity_user_id, activity_id, fetch_likes=True)
@@ -386,7 +395,7 @@ class Source(object):
 
   def get_reaction(self, activity_user_id, activity_id, reaction_user_id,
                    reaction_id, activity=None):
-    """Returns an ActivityStreams 'reaction' activity object.
+    """Fetches and returns a 'reaction'.
 
     Default implementation that fetches the activity and its reactions, then
     searches for this specific reaction. Subclasses should override this if they
@@ -398,32 +407,38 @@ class Source(object):
       reaction_user_id: string id of the user who reacted
       reaction_id: string id of the reaction
       activity: activity object, optional. May avoid an API call if provided.
+
+    Returns: dict, ActivityStreams 'reaction' activity object
     """
     if not activity:
-      activity = self._get_activity(activity_user_id, activity_id)
+      activity = self._get_activity(activity_user_id, activity_id, fetch_likes=True)
     return self._get_tag(activity, 'react', reaction_user_id, reaction_id)
 
   def get_share(self, activity_user_id, activity_id, share_id, activity=None):
-    """Returns an ActivityStreams 'share' activity object.
+    """Fetches and returns a 'share'.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       share_id: string id of the share object or the user who shared it
       activity: activity object, optional. May avoid an API call if provided.
+
+    Returns: dict, an ActivityStreams 'share' activity object
     """
     if not activity:
       activity = self._get_activity(activity_user_id, activity_id, fetch_shares=True)
     return self._get_tag(activity, 'share', share_id)
 
   def get_rsvp(self, activity_user_id, event_id, user_id, event=None):
-    """Returns an ActivityStreams RSVP activity object.
+    """Fetches and returns an RSVP.
 
     Args:
       activity_user_id: string id of the user who posted the event. unused.
       event_id: string event id
       user_id: string user id
       event: AS event activity (optional)
+
+    Returns: dict, an ActivityStreams RSVP activity object
     """
     user_tag_id = self.tag_uri(user_id)
     if not event:
@@ -438,7 +453,7 @@ class Source(object):
           return rsvp
 
   def get_blocklist(self):
-    """Returns the current user's block list.
+    """Fetches and returns the current user's block list.
 
     ...ie the users that the current user is blocking. The exact semantics of
     "blocking" vary from silo to silo.

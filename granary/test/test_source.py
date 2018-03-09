@@ -258,8 +258,9 @@ class SourceTest(testutil.TestCase):
     self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
 
   def test_get_reaction(self):
-    self.source.get_activities(user_id='author', activity_id='activity'
-                               ).AndReturn([ACTIVITY])
+    self.source.get_activities(
+      user_id='author', activity_id='activity', fetch_likes=True
+      ).AndReturn([ACTIVITY])
     self.mox.ReplayAll()
     self.assert_equals(REACTIONS[0], self.source.get_reaction(
       'author', 'activity', '5', 'apple'))
@@ -270,8 +271,9 @@ class SourceTest(testutil.TestCase):
       'author', 'activity', '5', 'apple', activity=ACTIVITY))
 
   def test_get_reaction_not_found(self):
-    self.source.get_activities(user_id='author', activity_id='activity'
-                               ).AndReturn([ACTIVITY])
+    self.source.get_activities(
+      user_id='author', activity_id='activity', fetch_likes=True
+      ).AndReturn([ACTIVITY])
     self.mox.ReplayAll()
     self.assertIsNone(self.source.get_reaction('author', 'activity', '5', 'foo'))
 
