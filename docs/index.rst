@@ -1,13 +1,12 @@
 granary
 =======
 
-The social web translator
 --------------
 
 Granary is a library and REST API that fetches and converts between a
 wide variety of data sources and formats:
 
--  Facebook, Flickr, Google+, Instagram, and Twitter native APIs
+-  Facebook, Flickr, GitHub, Google+, Instagram, and Twitter native APIs
 -  Instagram and Google+ scraped HTML
 -  `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0
 -  `microformats2 <http://microformats.org/wiki/microformats2>`__ HTML
@@ -367,11 +366,85 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
+1.11 - 2018-03-09
+~~~~~~~~~~~~~~~~~
+
+-  Add GitHub!
+
+   -  ``get_activities()`` supports issues and pull requests, including
+      comments and reactions. It’s currently based on notifications, so
+      it’s best effort, not comprehensive, and only includes recently
+      active issues/PRs.
+   -  ``create()`` and ``preview_create()`` support issues, comments,
+      `stars <https://help.github.com/articles/about-stars>`__, and
+      `reactions <https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments>`__.
+
+-  Twitter:
+
+   -  Prefer MP4 and other video/… content types to HLS (.m3u8) etc.
+      `Background. <https://twittercommunity.com/t/retiring-mp4-video-output/66093>`__
+   -  Prefer HTTPS URLs for media images.
+   -  ``get_activities()``: Support @-prefixed usernames in ``user_id``.
+
+-  Facebook:
+
+   -  Support new `recurring aka multi-instance
+      events <https://stackoverflow.com/questions/45131646/decoding-recurring-events-from-facebook-open-graph-api>`__.
+      ``create()`` and ``preview_create()`` now only support RSVPs to
+      individual instances of multi-instance events, to match the
+      Facebook API itself.
+   -  Try harder to find original (full) sized photo URLs, specifically
+      ``_o.jpg`` files instead of ``_s.jpg``.
+   -  ``create()`` bug fix for photo and image URLs with unicode
+      characters.
+   -  Fixed bug where ``get_activities(user_id=...)`` included the
+      authenticated user’s own recent photos, albums, and news
+      publishes.
+
+-  Instagram:
+
+   -  Extract more user (``author``) data from scraped profile pages.
+   -  Fix home page feed scraping.
+
+-  microformats2, Atom:
+
+   -  Add enclosures for image attachments.
+   -  Bug fixes for rendering image, video, and audio attachments inside
+      shares and attachments. De-dupe images.
+
+-  microformats2:
+
+   -  Handle simple string-only author properties.
+   -  Add ``fetch_mf2`` kwarg to ``json_to_object()`` for fetching
+      additional pages over HTTP to determine authorship.
+   -  Generate explicit blank ``p-name`` in HTML to prevent old flawed
+      `implied p-name
+      handling <http://microformats.org/wiki/microformats2-implied-properties>`__
+      (`#131 <https://github.com/snarfed/granary/issues/131>`__).
+   -  Fix ``share`` verb handling in ``activity_to_json()`` and
+      ``activities_to_html()``
+      (`#134 <https://github.com/snarfed/granary/issues/134>`__).
+   -  Remember which content contains HTML, preserve newlines in it, and
+      don’t translate those newlines to ``<br>``\ s
+      (`#130 <https://github.com/snarfed/granary/issues/130>`__).
+
+-  Atom:
+
+   -  Fix timezone bugs in ``updated`` and ``published``.
+
+-  JSON Feed:
+
+   -  Omit title from items if it’s the same as the content. (Often
+      caused by microformats2’s implied ``p-name`` logic.)
+
+.. section-1:
+
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
 
--  Moved web site and REST API to granary.io! granary-demo.appspot.com
-   now 301 redirects.
+-  Moved web site and REST API to `granary.io <https://granary.io/>`__!
+   `granary-demo.appspot.com <https://granary-demo.appspot.com/>`__ now
+   301 redirects.
 -  Twitter:
 
    -  Update the publish character limit to 280.
@@ -403,7 +476,7 @@ Changelog
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. section-1:
+.. section-2:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -431,7 +504,7 @@ Changelog
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. section-2:
+.. section-3:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -511,7 +584,7 @@ Changelog
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. section-3:
+.. section-4:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -559,7 +632,7 @@ Changelog
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. section-4:
+.. section-5:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -593,7 +666,7 @@ Changelog
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. section-5:
+.. section-6:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -624,14 +697,14 @@ Changelog
 
    -  Bug fix: escape &s in attachments’ text (e.g. quote tweets).
 
-.. section-6:
+.. section-7:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. section-7:
+.. section-8:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -665,7 +738,7 @@ Changelog
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. section-8:
+.. section-9:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -673,7 +746,7 @@ Changelog
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. section-9:
+.. section-10:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -716,7 +789,7 @@ Changelog
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. section-10:
+.. section-11:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -772,7 +845,7 @@ Changelog
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. section-11:
+.. section-12:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -795,7 +868,7 @@ Changelog
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. section-12:
+.. section-13:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -803,7 +876,7 @@ Changelog
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. section-13:
+.. section-14:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~

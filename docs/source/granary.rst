@@ -6,6 +6,10 @@ Reference documentation.
 .. toctree::
     granary
 
+as2
+---
+.. automodule:: granary.as2
+
 atom
 ----
 .. automodule:: granary.atom
@@ -19,6 +23,10 @@ flickr
 ------
 .. automodule:: granary.flickr
 
+github
+------
+.. automodule:: granary.github
+
 googleplus
 ----------
 .. automodule:: granary.googleplus
@@ -26,6 +34,10 @@ googleplus
 instagram
 ---------
 .. automodule:: granary.instagram
+
+jsonfeed
+--------
+.. automodule:: granary.jsonfeed
 
 microformats2
 -------------
