@@ -1,5 +1,5 @@
 beautifulsoup4==4.4.1
-brevity==0.2.14
+brevity==0.2.16
 certifi==2017.7.27.1
 chardet==3.0.4
 coverage==4.0.3
@@ -15,7 +15,7 @@ MarkupSafe==1.0
 mf2py==1.0.5
 -e git+https://github.com/snarfed/mf2util.git@992b2655be66a128bb40f847f3eba0ed955cadfe#egg=mf2util
 mox==0.5.3
--e git+git@github.com:snarfed/oauth-dropins.git@0de5f2da6fbf345ceea262d23f9e40576e6ce7db#egg=oauth_dropins
+-e git+git@github.com:snarfed/oauth-dropins.git@v1.11#egg=oauth_dropins
 oauth2client==4.1.2
 oauthlib==2.0.2
 pyasn1==0.3.3
