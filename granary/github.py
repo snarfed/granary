@@ -15,11 +15,10 @@ import datetime
 import email.utils
 import logging
 import re
-import rfc822
 import urllib.parse
 
-from . import appengine_config
 from oauth_dropins.webutil import util
+from . import appengine_config
 from . import source
 
 REST_API_BASE = 'https://api.github.com'
@@ -294,7 +293,7 @@ class GitHub(source.Source):
       raise NotImplementedError()
 
     since = None
-    etag_parsed = rfc822.parsedate(etag)
+    etag_parsed = email.utils.parsedate(etag)
     if etag_parsed:
       since = datetime.datetime(*etag_parsed[:6])
 
@@ -526,7 +525,7 @@ class GitHub(source.Source):
                               labels_resp['repository']['labels']['nodes'])
         labels = set(util.trim_nulls(
           tag.get('displayName', '').strip() for tag in obj.get('tags', [])))
-        labels &= existing_labels
+        labels = sorted(labels & existing_labels)
 
         if preview:
           preview_content = '<b>%s</b><hr>%s' % (
@@ -542,7 +541,7 @@ class GitHub(source.Source):
           resp = self.rest(REST_API_CREATE_ISSUE % (owner, repo), {
             'title': title,
             'body': content,
-            'labels': list(labels),
+            'labels': labels,
           }).json()
           resp['url'] = resp.pop('html_url')
           return source.creation_result(resp)
@@ -786,7 +785,7 @@ class GitHub(source.Source):
       'url': url,
       'author': cls.user_to_actor(input.get('author') or input.get('user')),
       'title': input.get('title'),
-      'content': input.get('body'),
+      'content': input.get('body', '').replace('\r\n', '\n'),
       'published': util.maybe_iso8601_to_rfc3339(input.get('createdAt') or
                                                  input.get('created_at')),
       'updated': util.maybe_iso8601_to_rfc3339(input.get('lastEditedAt') or

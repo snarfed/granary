@@ -803,7 +803,7 @@ class Instagram(source.Source):
       soup = BeautifulSoup(html)
       link = soup.find('link', href=HTML_PRELOAD_RE)
       if link:
-        url = urlparse.urljoin(HTML_BASE_URL, link['href'])
+        url = urllib.parse.urljoin(HTML_BASE_URL, link['href'])
         headers = {'Cookie': cookie} if cookie else None
         resp = util.requests_get(url, allow_redirects=False, headers=headers)
 

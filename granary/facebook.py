@@ -706,7 +706,7 @@ class Facebook(source.Source):
         if image_url:
           msg_data['attachment_url'] = image_url
         resp = self.urlopen(API_PUBLISH_COMMENT % base_id,
-                            data=urllib.parse.urlencode(util.msg_data))
+                            data=urllib.parse.urlencode(msg_data))
         url = self.comment_url(base_id, resp['id'],
                                post_author_id=base_obj.get('author', {}).get('id'))
         resp.update({'url': url, 'type': 'comment'})
@@ -925,7 +925,7 @@ class Facebook(source.Source):
     Returns:
       string, or None
     """
-    params = urlparse.parse_qs(urlparse.urlparse(url).query)
+    params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
     event_id = params.get('event_time_id')
     if event_id:
       return event_id[0]

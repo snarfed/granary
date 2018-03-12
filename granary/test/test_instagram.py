@@ -1583,7 +1583,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_html_to_activities_preload_fetch(self):
     """https://github.com/snarfed/granary/issues/140"""
-    url = urlparse.urljoin(instagram.HTML_BASE_URL, HTML_PRELOAD_URL)
+    url = urllib.parse.urljoin(instagram.HTML_BASE_URL, HTML_PRELOAD_URL)
     self.expect_requests_get(url, HTML_PRELOAD_DATA, allow_redirects=False,
                              headers={'Cookie': 'abc123'})
     self.mox.ReplayAll()
@@ -1597,7 +1597,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_html_to_activities_preload_fetch_bad_json(self):
     """https://console.cloud.google.com/errors/CP_w8ai-7JLfvAE"""
-    url = urlparse.urljoin(instagram.HTML_BASE_URL, HTML_PRELOAD_URL)
+    url = urllib.parse.urljoin(instagram.HTML_BASE_URL, HTML_PRELOAD_URL)
     self.expect_requests_get(url, '{bad: ["json', allow_redirects=False,
                              headers={'Cookie': 'abc123'})
     self.mox.ReplayAll()

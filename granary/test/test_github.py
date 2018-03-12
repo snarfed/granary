@@ -4,14 +4,14 @@
 import copy
 import json
 
-import mox
-from oauth_dropins import github as oauth_github
+from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
 from granary import appengine_config
 from granary import github
 from granary.github import (
+  GRAPHQL_BASE,
   REACTIONS_REST_CHARS,
   REST_API_COMMENT,
   REST_API_COMMENT_REACTIONS,
@@ -146,7 +146,7 @@ ISSUE_OBJ = {  # ActivityStreams
   'url': 'https://github.com/foo/bar/issues/333',
   'author': ACTOR,
   'title': 'an issue title',
-  'content': 'foo bar\r\nbaz',
+  'content': 'foo bar\nbaz',
   'published': '2018-01-30T19:11:03+00:00',
   'updated': '2018-02-01T19:11:03+00:00',
   'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
@@ -345,7 +345,7 @@ EXPECTED_HEADERS = {
   'Authorization': 'token a-towkin',
   'Accept': 'application/vnd.github.squirrel-girl-preview+json',
 }
-class GitHubTest(testutil.HandlerTest):
+class GitHubTest(testutil.TestCase):
 
   def setUp(self):
     super(GitHubTest, self).setUp()
@@ -354,7 +354,7 @@ class GitHubTest(testutil.HandlerTest):
     self.batch_responses = []
 
   def expect_graphql(self, response=None, **kwargs):
-    return self.expect_requests_post(oauth_github.API_GRAPHQL, headers={
+    return self.expect_requests_post(GRAPHQL_BASE, headers={
         'Authorization': 'bearer a-towkin',
       }, response={'data': response}, **kwargs)
 
@@ -723,12 +723,12 @@ class GitHubTest(testutil.HandlerTest):
         preview.description, preview)
 
   def test_create_issue_tags_to_labels(self):
-    self.expect_graphql_get_labels(['label_1', 'label 3'])
+    self.expect_graphql_get_labels(['label 3', 'label_1'])
     resp = {'html_url': 'http://done'}
     self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
-        'labels': ['label_1', 'label 3'],
+        'labels': ['label 3', 'label_1'],
       }, response=resp, headers=EXPECTED_HEADERS)
     self.mox.ReplayAll()
 
@@ -744,7 +744,7 @@ class GitHubTest(testutil.HandlerTest):
     preview = self.gh.preview_create(ISSUE_OBJ_WITH_LABELS)
     self.assertIsNone(preview.error_plain, preview)
     self.assertIn(
-      '<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar/issues">foo/bar</a> and attempt to add labels <span class="verb">label_1, label 3</span>:',
+      '<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar/issues">foo/bar</a> and attempt to add labels <span class="verb">label 3, label_1</span>:',
       preview.description, preview)
 
   def test_create_comment_without_in_reply_to(self):

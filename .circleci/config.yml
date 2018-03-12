@@ -28,12 +28,12 @@ jobs:
             cd /tmp
             git clone https://github.com/snarfed/oauth-dropins.git
             cd oauth-dropins; git checkout python3; git submodule sync; git submodule update --init
-            cd oauth_dropins/webutil; git fetch origin; git pull
+            # cd oauth_dropins/webutil; git fetch origin; git pull
 
       - run:
           name: Python 3 dependencies
           command: |
-            apt-get install -y python3.4-venv
+            apt-get install -y python3-venv
             python3 -m venv local3
             . local3/bin/activate
             pip install -r requirements.freeze.txt
@@ -43,7 +43,7 @@ jobs:
           name: Test Python 3
           command: |
             . local3/bin/activate
-            PYTHONPATH= python3.6 -m unittest discover -s granary/test/
+            PYTHONPATH= python3 -m unittest discover -s granary/test/
 
       - run:
           name: Test
