@@ -5,17 +5,22 @@ API docs:
 https://developer.github.com/v4/
 https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
 """
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.builtins import basestring
+
 import datetime
 import email.utils
 import logging
 import re
 import rfc822
-import urllib
-import urlparse
+import urllib.parse
 
-import appengine_config
+from . import appengine_config
 from oauth_dropins.webutil import util
-import source
+from . import source
 
 REST_API_BASE = 'https://api.github.com'
 REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues/%s'
@@ -208,7 +213,7 @@ class GitHub(source.Source):
     Returns:
       string, or None
     """
-    parts = urlparse.urlparse(url).path.strip('/').split('/')
+    parts = urllib.parse.urlparse(url).path.strip('/').split('/')
     if len(parts) == 4 and util.is_int(parts[3]):
       return ':'.join((parts[0], parts[1], parts[3]))
 
@@ -486,7 +491,7 @@ class GitHub(source.Source):
     if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url
 
-    parsed = urlparse.urlparse(base_url)
+    parsed = urllib.parse.urlparse(base_url)
     path = parsed.path.strip('/').split('/')
     owner, repo = path[:2]
 
@@ -636,7 +641,7 @@ class GitHub(source.Source):
       'inReplyTo': [{'url': in_reply_to}],
       'tags': [{
         'displayName': l['name'],
-        'url': '%s/labels/%s' % (repo_url, urllib.quote(l['name'])),
+        'url': '%s/labels/%s' % (repo_url, urllib.parse.quote(l['name'])),
       } for l in issue.get('labels', []) if l.get('name')],
     })
     return cls.postprocess_object(obj)
@@ -770,7 +775,7 @@ class GitHub(source.Source):
     url = input.get('html_url') or input.get('url') or ''
     if repo_id and id and url:
       # inject repo owner and name
-      path = urlparse.urlparse(url).path.strip('/').split('/')
+      path = urllib.parse.urlparse(url).path.strip('/').split('/')
       owner, repo = path[:2]
       # join with : because github allows ., _, and - in repo names. (see
       # REPO_NAME_RE.)
