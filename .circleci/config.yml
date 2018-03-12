@@ -27,8 +27,8 @@ jobs:
             # use oauth-dropins master at head. (see pip install -e below.)
             cd /tmp
             git clone https://github.com/snarfed/oauth-dropins.git
-            cd oauth-dropins; git submodule sync; git submodule update --init; git checkout python3
-            cd oauth_dropins/webutil; git fetch origin; git pull; git checkout python3
+            cd oauth-dropins; git checkout python3; git submodule sync; git submodule update --init
+            cd oauth_dropins/webutil; git fetch origin; git pull
 
       - run:
           name: Python 3 dependencies
