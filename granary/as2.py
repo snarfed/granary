@@ -32,6 +32,7 @@ OBJECT_TYPE_TO_TYPE = {
   'video': 'Video',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
+TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 
 VERB_TO_TYPE = {
   'favorite': 'Like',
@@ -46,7 +47,7 @@ VERB_TO_TYPE = {
   'update': 'Update',
 }
 TYPE_TO_VERB = _invert(VERB_TO_TYPE)
-
+TYPE_TO_VERB['Like'] = 'like'  # disambiguate
 
 def from_as1(obj, type=None, context=CONTEXT):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.

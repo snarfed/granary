@@ -2072,11 +2072,12 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     result = self.twitter.preview_create(obj, include_link=source.OMIT_LINK)
     self.assertIn('37.83, -122.25', result.content)
 
-    self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={
-      'status': 'Checked in to Timeless Coffee Roasters',
-      'lat': '37.83',
-      'long': '-122.25',
-    })
+    self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params=(
+      # sorted; order matters.
+      ('lat', '37.83'),
+      ('long', '-122.25'),
+      ('status', 'Checked in to Timeless Coffee Roasters'),
+    ))
     self.mox.ReplayAll()
     self.twitter.create(obj, include_link=source.OMIT_LINK)
 
@@ -2100,9 +2101,10 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
     for _, _, status, _ in testdata:
       self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params=(
-        ('status', status),
-        ('in_reply_to_status_id', 100),
+        # sorted; order matters.
         ('auto_populate_reply_metadata', 'true'),
+        ('in_reply_to_status_id', 100),
+        ('status', status),
       ))
     self.mox.ReplayAll()
 
@@ -2137,9 +2139,10 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     # test create
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
                         params=(
-                          ('status', 'my content'),
-                          ('in_reply_to_status_id', '100'),
+                          # sorted; order matters.
                           ('auto_populate_reply_metadata', 'true'),
+                          ('in_reply_to_status_id', '100'),
+                          ('status', 'my content'),
                         ))
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
@@ -2150,9 +2153,10 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       self.expect_urlopen(
         twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
         params=(
-          ('status', 'my content'),
-          ('in_reply_to_status_id', '100'),
+          # sorted; order matters.
           ('auto_populate_reply_metadata', 'true'),
+          ('in_reply_to_status_id', '100'),
+          ('status', 'my content'),
         ))
     self.mox.ReplayAll()
 
@@ -2340,13 +2344,14 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                                 files={'media': content},
                                 headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
-                        params={
-                          'status': ellipsized.encode('utf-8'),
-                          'media_ids': '0,1,2,3',
-                        })
+                        params=(
+                          # sorted; order matters.
+                          ('media_ids', '0,1,2,3'),
+                          ('status', ellipsized.encode('utf-8')),
+                        ))
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
-                          self.twitter.create(obj).content)
+                       self.twitter.create(obj).content)
 
   def test_create_reply_with_photo(self):
     obj = {
@@ -2369,12 +2374,13 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
-                        params=OrderedDict((
-                          ('status', 'my content'),
-                          ('in_reply_to_status_id', '100'),
+                        params=(
+                          # sorted; order matters.
                           ('auto_populate_reply_metadata', 'true'),
+                          ('in_reply_to_status_id', '100'),
                           ('media_ids', '123'),
-                        )))
+                          ('status', 'my content'),
+                        ))
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'comment'},
                           self.twitter.create(obj).content)
@@ -2397,10 +2403,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
-                        params={
-                          'status': '',
-                          'media_ids': '123',
-                        })
+                        params=(
+                          # sorted; order matters.
+                          ('media_ids', '123'),
+                          ('status', ''),
+                        ))
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                           self.twitter.create(obj).content)
@@ -2418,10 +2425,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
-                        params={
-                          'status': 'my caption',
-                          'media_ids': '123',
-                        }, status=403)
+                        params=(
+                          # sorted; order matters.
+                          ('media_ids', '123'),
+                          ('status', 'my caption'),
+                        ), status=403)
     self.mox.ReplayAll()
     self.assertRaises(urllib_error.HTTPError, self.twitter.create, obj)
 
@@ -2485,10 +2493,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                         })
 
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/video'},
-                        params={
-                          'status': ellipsized.encode('utf-8'),
-                          'media_ids': '9',
-                        })
+                        params=(
+                          # sorted; order matters.
+                          ('media_ids', '9'),
+                          ('status', ellipsized.encode('utf-8')),
+                        ))
 
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/video', 'type': 'post'},

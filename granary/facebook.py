@@ -861,7 +861,7 @@ class Facebook(source.Source):
         tag['id'] = id
         people[id] = tag
 
-    return list(people.values())
+    return sorted(people.values(), key=lambda t: t['id'])
 
   def create_notification(self, user_id, text, link):
     """Sends the authenticated user a notification.
@@ -1864,7 +1864,7 @@ class Facebook(source.Source):
         req['method'] = 'GET'
       if 'headers' in req:
         req['headers'] = [{'name': n, 'value': v}
-                          for n, v in req['headers'].items()]
+                          for n, v in sorted(req['headers'].items())]
 
     data = 'batch=' + json.dumps(util.trim_nulls(requests), sort_keys=True,
                                  separators=(',', ':'))  # no whitespace

@@ -928,7 +928,10 @@ def tags_to_html(tags, classname):
   urls = OrderedDict()  # stores (url, displayName) tuples
   for tag in tags:
     name = tag.get('displayName') or ''
-    urls.update({(url, name): None for url in object_urls(tag)})
+    # loop through individually instead of using update() so that order is
+    # preserved.
+    for url in object_urls(tag):
+      urls[url, name] = None
 
   return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, url, name)
                  for url, name in urls.keys())

@@ -147,15 +147,15 @@ class HandlerTest(testutil_appengine.HandlerTest):
     self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
+<filtered>False</filtered>
 <items>
-<foo>bar</foo>
+  <foo>bar</foo>
 </items>
 <itemsPerPage>1</itemsPerPage>
-<updatedSince>False</updatedSince>
-<startIndex>0</startIndex>
 <sorted>False</sorted>
-<filtered>False</filtered>
+<startIndex>0</startIndex>
 <totalResults>9</totalResults>
+<updatedSince>False</updatedSince>
 </response>
 """, resp.body)
 

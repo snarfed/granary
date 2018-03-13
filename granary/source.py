@@ -44,13 +44,13 @@ OMIT_LINK = 'omit'
 INCLUDE_LINK = 'include'
 INCLUDE_IF_TRUNCATED = 'if truncated'
 
-RSVP_TO_EVENT = {
-  'rsvp-yes': 'attending',
-  'rsvp-no': 'notAttending',
-  'rsvp-maybe': 'maybeAttending',
-  'rsvp-interested': 'interested',
-  'invite': 'invited',
-}
+RSVP_TO_EVENT = collections.OrderedDict((  # in priority order
+  ('rsvp-yes', 'attending'),
+  ('rsvp-no', 'notAttending'),
+  ('rsvp-maybe', 'maybeAttending'),
+  ('rsvp-interested', 'interested'),
+  ('invite', 'invited'),
+))
 VERBS_WITH_OBJECT = {'like', 'react', 'repost', 'share'} | set(RSVP_TO_EVENT.keys())
 
 HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')

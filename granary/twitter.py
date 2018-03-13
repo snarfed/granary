@@ -844,7 +844,7 @@ class Twitter(source.Source):
         return source.creation_result(content=preview_content,
                                       description=preview_description)
       else:
-        resp = self.urlopen(API_POST_TWEET, data=urllib.parse.urlencode(data))
+        resp = self.urlopen(API_POST_TWEET, data=urllib.parse.urlencode(sorted(data)))
         resp['type'] = 'comment' if is_reply else 'post'
 
     elif (verb and verb.startswith('rsvp-')) or verb == 'invite':

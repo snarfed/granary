@@ -2239,10 +2239,12 @@ http://b http://c""",
     self.assert_equals(ALBUM_OBJ, self.fb.album_to_object(ALBUM))
 
   def test_create_post(self):
-    self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.parse.urlencode({
-        'message': 'my msg',
-        'tags': '234,345,456',
-      }))
+    self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'},
+                        data=urllib.parse.urlencode((
+                          # sorted; order matters.
+                          ('message', 'my msg'),
+                          ('tags', '234,345,456'),
+                        )))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(POST_OBJ)
@@ -2386,8 +2388,11 @@ http://b http://c""",
   def test_create_comment_with_photo(self):
     self.expect_urlopen(
       '547822715231468/comments', {'id': '456_789'},
-      data=urllib.parse.urlencode({'message': 'cc Sam G, Michael M',
-                             'attachment_url': 'http://pict/ure'}))
+      data=urllib.parse.urlencode((
+        # sorted; order matters.
+        ('message', 'cc Sam G, Michael M'),
+        ('attachment_url', 'http://pict/ure'),
+      )))
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
@@ -2851,8 +2856,8 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_urlopen_batch_full(self):
     self.expect_urlopen('',
-      data='batch=[{"headers":[{"name":"X","value":"Y"},'
-                              '{"name":"U","value":"V"}],'
+      data='batch=[{"headers":[{"name":"U","value":"V"},'
+                              '{"name":"X","value":"Y"}],'
                    '"method":"GET","relative_url":"abc"},'
                   '{"method":"GET","relative_url":"def"}]',
       response=[{'code': 200, 'body': '{"json": true}'},
