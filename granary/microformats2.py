@@ -925,7 +925,7 @@ def tags_to_html(tags, classname):
     tags: decoded JSON ActivityStreams objects.
     classname: class for span to enclose tags in
   """
-  urls = OrderedDict()  # stores (url, displayName) tuples
+  urls = {}  # stores (url, displayName) tuples
   for tag in tags:
     name = tag.get('displayName') or ''
     # loop through individually instead of using update() so that order is
@@ -934,7 +934,7 @@ def tags_to_html(tags, classname):
       urls[url, name] = None
 
   return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, url, name)
-                 for url, name in urls.keys())
+                 for url, name in sorted(urls.keys()))
 
 
 def object_urls(obj):

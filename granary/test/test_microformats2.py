@@ -219,8 +219,8 @@ bar<br />
   def test_render_content_omits_tags_without_urls(self):
     self.assert_equals("""\
 foo
-<a class="tag" href="http://baz">baz</a>
 <a class="tag" href="http://baj"></a>
+<a class="tag" href="http://baz">baz</a>
 """, microformats2.render_content({
       'content': 'foo',
       'tags': [

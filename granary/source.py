@@ -637,10 +637,10 @@ class Source(with_metaclass(SourceMeta, object)):
     candidates += [match.expand(r'http://\1/\2') for match in
                    Source._PERMASHORTCITATION_RE.finditer(content)]
 
-    candidates = set(
+    candidates = set(util.dedupe_urls(
       util.clean_url(url) for url in candidates
       # heuristic: ellipsized URLs are probably incomplete, so omit them.
-      if url and not url.endswith('...') and not url.endswith('…'))
+      if url and not url.endswith('...') and not url.endswith('…')))
 
     # check for redirect and add their final urls
     redirects = {}  # maps final URL to original URL for redirects
