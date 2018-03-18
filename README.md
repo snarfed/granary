@@ -222,6 +222,9 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 1.12 - unreleased
+* Instagram:
+  * Fix scraping profile pages.
 ### 1.11 - 2018-03-09
 * Add GitHub!
   * `get_activities()` supports issues and pull requests, including comments and reactions. It's currently based on notifications, so it's best effort, not comprehensive, and only includes recently active issues/PRs.

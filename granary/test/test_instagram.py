@@ -645,16 +645,17 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
     'viewer': None,
   },
   '...': '...',  # many of the same top-level fields as in HTML_FEED
-  'entry_data': {'ProfilePage': [{'user': {
+  'entry_data': {'ProfilePage': [{'graphql': {'user': {
     'external_url': 'http:\/\/snarfed.org',
     'is_private': False,
     'has_blocked_viewer': False,
     'is_verified': False,
     'blocked_by_viewer': False,
-    'media': {
-      'nodes': [
-        HTML_PHOTO,
-        HTML_VIDEO,
+    'edge_owner_to_timeline_media': {
+      'count': 1,
+      'edges': [
+        {'node': HTML_PHOTO},
+        {'node': HTML_VIDEO},
       ],
       'page_info': {
         'has_next_page': True,
@@ -662,7 +663,6 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
         'start_cursor': '1178482373937173104',
         'has_previous_page': False,
       },
-      'count': 471,
     },
     'full_name': 'Ryan B',
     'biography': 'something or other',
@@ -677,10 +677,10 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
     'follows': {'count': 295},
     'username': 'snarfed',
     'external_url': 'https:\/\/snarfed.org',
-  }}]},
+  }}}]},
 }
 HTML_PROFILE_PRIVATE = copy.deepcopy(HTML_PROFILE)
-HTML_PROFILE_PRIVATE['entry_data']['ProfilePage'][0]['user']['is_private'] = True
+HTML_PROFILE_PRIVATE['entry_data']['ProfilePage'][0]['graphql']['user']['is_private'] = True
 
 HTML_PHOTO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
   'config': {
@@ -710,21 +710,21 @@ HTML_MULTI_PHOTO_PAGE = {  # eg https://www.instagram.com/p/BQ0mDB2gV_O/
 # Returned by logged in https://www.instagram.com/ as of 2018-02-15 ish. nothing
 # really usable in this blob, so we have to fetch the preload link.
 HTML_USELESS_FEED = {
-  "activity_counts": {
+  'activity_counts': {
     # ...
   },
-  "config": {
-    "csrf_token": "...",
+  'config': {
+    'csrf_token': '...',
     # ...
   },
-  "hostname": "www.instagram.com",
-  "nonce": "...",
-  "platform": "web",
-  "entry_data": {"FeedPage": [{"graphql": None,}]},
-  "qe": {
-    "004e9939": {
-      "g": "",
-      "p": None,
+  'hostname': 'www.instagram.com',
+  'nonce': '...',
+  'platform': 'web',
+  'entry_data': {'FeedPage': [{'graphql': None,}]},
+  'qe': {
+    '004e9939': {
+      'g': '',
+      'p': None,
     },
     # ...
   },
@@ -1068,7 +1068,8 @@ class InstagramTest(testutil.HandlerTest):
 
     # third time, video comment count changes, like counts stay the same
     profile = copy.deepcopy(HTML_PROFILE)
-    profile['entry_data']['ProfilePage'][0]['user']['media']['nodes'][1]\
+    profile['entry_data']['ProfilePage'][0]['graphql']['user']\
+      ['edge_owner_to_timeline_media']['edges'][1]['node']\
       ['edge_media_to_comment']['count'] = 3
     self.expect_requests_get(instagram.HTML_BASE_URL + 'x/',
                              HTML_HEADER + json.dumps(profile) + HTML_FOOTER,
@@ -1480,8 +1481,8 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_html_to_activities_profile_fill_in_owner(self):
     profile = copy.deepcopy(HTML_PROFILE)
-    user = profile['entry_data']['ProfilePage'][0]['user']
-    user['media']['nodes'][0]['owner'] = {
+    user = profile['entry_data']['ProfilePage'][0]['graphql']['user']
+    user['edge_owner_to_timeline_media']['edges'][0]['node']['owner'] = {
       'id': user['id'],
     }
 
@@ -1492,9 +1493,11 @@ class InstagramTest(testutil.HandlerTest):
 
   def test_html_to_activities_profile_wrong_id_dont_fill_in_owner(self):
     profile = copy.deepcopy(HTML_PROFILE)
-    user = profile['entry_data']['ProfilePage'][0]['user']
+    user = profile['entry_data']['ProfilePage'][0]['graphql']['user']
     other_id = user['id'] + '999'
-    user['media']['nodes'][0]['owner'] = {'id': other_id}
+    user['edge_owner_to_timeline_media']['edges'][0]['node']['owner'] = {
+      'id': other_id,
+    }
 
     activities, _ = self.instagram.html_to_activities(
       HTML_HEADER + json.dumps(profile) + HTML_FOOTER)
@@ -1564,7 +1567,7 @@ class InstagramTest(testutil.HandlerTest):
             }
           }
         }],
-        'ProfilePage': {'user': None},
+        'ProfilePage': {'graphql': {'user': None}},
         'PostPage': None,
       },
     }) + HTML_FOOTER)

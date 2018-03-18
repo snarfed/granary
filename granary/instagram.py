@@ -783,8 +783,10 @@ class Instagram(source.Source):
 
     # profiles
     for page in entry_data.get('ProfilePage', []):
-      profile_user = page.get('user', {})
-      medias.extend(profile_user.get('media', {}).get('nodes', []))
+      profile_user = page.get('graphql', {}).get('user', {})
+      medias.extend(edge['node'] for edge in
+        profile_user.get('edge_owner_to_timeline_media', {}).get('edges', [])
+        if edge.get('node'))
 
     # individual photo/video permalinks
     for page in entry_data.get('PostPage', []):
