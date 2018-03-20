@@ -44,6 +44,7 @@ setup(name='granary',
       install_requires=[
           # Keep in sync with requirements.txt!
           'beautifulsoup4',
+          'future',
           'html2text',
           'jinja2',
           'mf2py>=0.2.7',
@@ -57,6 +58,7 @@ setup(name='granary',
       extras_require={
           'appengine-sdk': ['appengine-sdk >= 1.9.40.post0'],
       },
+      tests_require=['mox3>=0.24.0'],
       test_loader='setup:TestLoader',
       test_suite='granary.test',
 )
