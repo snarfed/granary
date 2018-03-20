@@ -52,7 +52,7 @@ setup(name='granary',
           'oauth-dropins>=1.11',
           'requests>=2.10.0',
           'requests-toolbelt>=0.6.2',
-          'brevity>=0.2.16',
+          'brevity>=0.2.17',
           'urllib3>=1.14',
       ],
       extras_require={
