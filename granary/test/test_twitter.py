@@ -1708,11 +1708,16 @@ class TwitterTest(testutil.TestCase):
       source.INCLUDE_LINK, 'note')
     self.assertEqual(expected, result)
 
-    orig = expected = (
+    orig = (
       'Despite names,\n'
       'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
       'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
       '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+    expected = (
+      'Despite names,\n'
+      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
+      '@iainspad @sashtown…')
     result = self.twitter._truncate(
       orig, 'http://tantek.com/1234', source.OMIT_LINK, 'note')
     self.assertEqual(expected, result)
@@ -1741,7 +1746,7 @@ class TwitterTest(testutil.TestCase):
     expected = (
       'This is a long tweet with (foo.com/parenthesized-urls) and urls '
       'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      'long:…')
+      'long…')
     result = self.twitter._truncate(
       orig, 'http://foo.com/', source.OMIT_LINK, 'note')
     self.assertEqual(expected, result)

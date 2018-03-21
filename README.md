@@ -227,6 +227,8 @@ Changelog
 * Add Python 3 support! Granary now requires either Python 2.7+ or Python 3.3+.
 * Instagram:
   * Fix scraping profile pages.
+* Twitter:
+  * Update character counting to handle Twitter change that now auto-links *all* ccTLDs. [Background.](https://github.com/kylewm/brevity/issues/8)
 
 This release is intentionally small and limited in scope to contain any impact of the Ptython 3 migration. It *should* be a noop for existing users, and we've tested thoroughly, but I'm sure there are still bugs. Please file issues if you notice anything broken!
 
