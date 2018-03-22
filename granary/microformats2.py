@@ -370,6 +370,12 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
   if rsvp:
     as_verb = 'rsvp-%s' % rsvp
 
+  # special case GitHub issues that are in-reply-to the repo or its issues URL
+  in_reply_tos = get_string_urls(props.get('in-reply-to', []))
+  for url in in_reply_tos:
+    if re.match(r'^https?://github.com/[^/]+/[^/]+(/issues)?/?$', url):
+      as_type = 'issue'
+
   def absolute_urls(prop):
     return [url for url in get_string_urls(props.get(prop, []))
             # filter out relative and invalid URLs (mf2py gives absolute urls)
@@ -440,14 +446,14 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       if t not in objects:
         objects.append(t)
     obj.update({
-        'object': objects[0] if len(objects) == 1 else objects,
-        'actor': author,
-        })
+      'object': objects[0] if len(objects) == 1 else objects,
+      'actor': author,
+    })
   else:
     obj.update({
-        'inReplyTo': [{'url': url} for url in get_string_urls(props.get('in-reply-to', []))],
-        'author': author,
-        })
+      'inReplyTo': [{'url': url} for url in in_reply_tos],
+      'author': author,
+    })
 
   return source.Source.postprocess_object(obj)
 

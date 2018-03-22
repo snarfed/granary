@@ -1,0 +1,7 @@
+{
+  "objectType": "comment",
+  "id": "tag:example.com,2001:6796480",
+  "url": "http://example.com/issue/6796480",
+  "content": "must be your hardware",
+  "inReplyTo": [{"url": "http://github.com/me/thing/issues/9"}]
+}
