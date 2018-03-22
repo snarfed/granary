@@ -17,6 +17,7 @@ import mf2util
 from oauth_dropins import (
   facebook,
   flickr,
+  github,
   googleplus,
   instagram,
   twitter,
@@ -36,6 +37,7 @@ from granary import (
 )
 from granary.facebook import Facebook
 from granary.flickr import Flickr
+from granary.github import GitHub
 from granary.googleplus import GooglePlus
 from granary.instagram import Instagram
 from granary.twitter import Twitter
@@ -53,6 +55,7 @@ INPUTS = (
 SILO_DOMAINS = {cls.DOMAIN for cls in (
   Facebook,
   Flickr,
+  GitHub,
   GooglePlus,
   Instagram,
   Twitter,
@@ -209,6 +212,8 @@ application = webapp2.WSGIApplication([
   ('/facebook/oauth_callback', facebook.CallbackHandler.to('/')),
   ('/flickr/start_auth', flickr.StartHandler.to('/flickr/oauth_callback')),
   ('/flickr/oauth_callback', flickr.CallbackHandler.to('/')),
+  ('/github/start_auth', github.StartHandler.to('/github/oauth_callback')),
+  ('/github/oauth_callback', github.CallbackHandler.to('/')),
   ('/google\\+/start_auth', googleplus.StartHandler.to('/google+/oauth_callback')),
   ('/google\\+/oauth_callback', googleplus.CallbackHandler.to('/')),
   ('/twitter/start_auth', twitter.StartHandler.to('/twitter/oauth_callback')),

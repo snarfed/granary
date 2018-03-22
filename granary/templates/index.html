@@ -83,7 +83,7 @@ to try it!
 <div class="login">
 <div class="row">
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6 col-lg-offset-1">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="post" action="/twitter/start_auth">
   <input type="image" class="shadow" alt="Twitter"
          src="/oauth_dropins/static/twitter.png" />
@@ -115,6 +115,14 @@ to try it!
 <form method="post" action="/flickr/start_auth">
   <input type="image" class="shadow" alt="Flickr"
          src="/oauth_dropins/static/flickr.png" />
+</form></div>
+
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<form method="post" action="/github/start_auth">
+  <input type="image" class="shadow" alt="GitHub"
+         src="/oauth_dropins/static/github_button_squared.png" />
+  <input name="scope" type="hidden"
+         value="notifications,public_repo">
 </form></div>
 
 <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6 col-lg-offset-1">
@@ -179,18 +187,21 @@ to try it!
 <input type="hidden" id="site" name="site" value="{{ site }}" />
 <input type="hidden" name="cache" value="false" />
 <p><code>
-<label>/ {{ site }} / </label>
+<label>/ {{ site }} </label>
 
+{% if site != 'github' %}
+<label>/ </label>
 <input id="user_id" name="user_id" type="text" class="form-control"
        {% if site == 'instagram' %} placeholder="username" size="12" required
        {% else %} placeholder="username (optional)" size="19"
        {% endif %} />
 <label> / </label>
+{% endif %}
 
 {% if site == 'facebook' %}
 <label> @self </label>
 <input type="hidden" id="group_id" name="group_id" value="@self" />
-{% else %}
+{% elif site != 'github' %}
 <select id="group_id" name="group_id" onchange="update_form()">
   {% if site != 'instagram' %}
     <option value="@all">@all</option>
@@ -234,8 +245,11 @@ to try it!
   <option value="jsonfeed">jsonfeed</option>
 </select>
 
+{% if site != 'github' %}
 <br>
 &nbsp;
+{% endif %}
+
 {% if site == 'google+' %}
   <label for="auth_entity">&amp; auth_entity =</label>
   <input id="auth_entity" name="auth_entity" type="text" size="10"

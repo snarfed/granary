@@ -41,6 +41,7 @@ from granary import (
   atom,
   facebook,
   flickr,
+  github,
   googleplus,
   instagram,
   jsonfeed,
@@ -117,6 +118,9 @@ class Handler(handlers.ModernHandler):
       src = flickr.Flickr(
         access_token_key=util.get_required_param(self, 'access_token_key'),
         access_token_secret=util.get_required_param(self, 'access_token_secret'))
+    elif site == 'github':
+      src = github.GitHub(
+        access_token=util.get_required_param(self, 'access_token'))
     elif site == 'instagram':
       src = instagram.Instagram(scrape=True)
     elif site == 'google+':
