@@ -1,0 +1,8 @@
+{
+  "objectType": "note",
+  "id": "tag:example.com,2011:note-123",
+  "tags": [{
+    "objectType": "hashtag",
+    "displayName": "foo"
+  }]
+}

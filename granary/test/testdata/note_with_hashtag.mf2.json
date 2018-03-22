@@ -1,0 +1,7 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "uid": ["tag:example.com,2011:note-123"],
+    "category": ["foo"]
+  }
+}

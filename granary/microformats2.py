@@ -257,12 +257,12 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   ret['properties']['category'] = []
   for tag in tags:
     if tag.get('objectType') == 'person':
-      cls = 'u-category h-card'
+      ret['properties']['category'].append(
+        object_to_json(tag, entry_class='u-category h-card'))
     elif tag.get('objectType') == 'hashtag':
-      cls = 'u-category'
-    else:
-      continue
-    ret['properties']['category'].append(object_to_json(tag, entry_class=cls))
+      name = tag.get('displayName')
+      if name:
+        ret['properties']['category'].append(name)
 
   # rsvp
   if is_rsvp:

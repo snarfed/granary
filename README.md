@@ -229,8 +229,10 @@ Changelog
   * Fix scraping profile pages.
 * Twitter:
   * Update character counting to handle Twitter change that now auto-links *all* ccTLDs. [Background.](https://github.com/kylewm/brevity/issues/8)
+* microformats2:
+  * `object_to_json()`: convert tags to simple strings in the `category` property, not full nested objects like `h-card`s ([#141](https://github.com/snarfed/granary/issues/141)).
 
-This release is intentionally small and limited in scope to contain any impact of the Ptython 3 migration. It *should* be a noop for existing users, and we've tested thoroughly, but I'm sure there are still bugs. Please file issues if you notice anything broken!
+This release is intentionally small and limited in scope to contain any impact of the Ptython 3 migration. It *should* be a noop for existing Python 2 users, and we've tested thoroughly, but I'm sure there are still bugs. Please file issues if you notice anything broken!
 
 ### 1.11 - 2018-03-09
 * Add GitHub!
