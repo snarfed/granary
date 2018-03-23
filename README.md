@@ -229,6 +229,8 @@ Changelog
   * Fix scraping profile pages.
 * Twitter:
   * Update character counting to handle Twitter change that now auto-links *all* ccTLDs. [Background.](https://github.com/kylewm/brevity/issues/8)
+* GitHub:
+  * Bug fix for `get_activities()` with deleted issues and repos.
 * microformats2:
   * `object_to_json()`: convert tags to simple strings in the `category` property, not full nested objects like `h-card`s ([#141](https://github.com/snarfed/granary/issues/141)).
   * Special case GitHub issues that are in-reply-to a repo or its `/issues` URL to be objectType `issue`.

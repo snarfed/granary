@@ -18,6 +18,7 @@ import re
 import urllib.parse
 
 from oauth_dropins.webutil import util
+import requests
 from . import appengine_config
 from . import source
 
@@ -331,7 +332,14 @@ class GitHub(source.Source):
             id, subject_url)
           continue
 
-        issue = self.rest(subject_url).json()
+        try:
+          issue = self.rest(subject_url).json()
+        except requests.HTTPError as e:
+          if e.response.status_code == 404:
+            util.interpret_http_exception(e)
+            continue  # the issue/PR or repo was (probably) deleted
+          raise
+
         obj = self.issue_to_object(issue)
 
         private = notif.get('repository', {}).get('private')

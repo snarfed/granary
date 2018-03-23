@@ -547,6 +547,17 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals([], self.gh.get_activities(activity_id='a:b:1'))
 
+  def test_get_activities_repo_not_found(self):
+    self.expect_rest(REST_API_NOTIFICATIONS,
+                     [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
+    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], '', status_code=404)
+    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
+    self.mox.ReplayAll()
+
+    obj_public_repo = copy.deepcopy(ISSUE_OBJ)
+    obj_public_repo['to'] = [{'objectType': 'group', 'alias': '@private'}]
+    self.assert_equals([obj_public_repo], self.gh.get_activities())
+
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(search_query='foo')
