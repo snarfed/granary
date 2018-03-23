@@ -96,10 +96,18 @@ def _as1_value(elem, field):
 # avoid conditionals in the template itself.
 # https://docs.djangoproject.com/en/1.8/ref/templates/language/#variables
 class Defaulter(collections.defaultdict):
-  def __init__(self, **kwargs):
-    super(Defaulter, self).__init__(Defaulter, **{
-      k: (Defaulter(**v) if isinstance(v, dict) else v)
-      for k, v in kwargs.items()})
+  def __init__(self, init={}):
+    super(Defaulter, self).__init__(
+      Defaulter, {k: self.__defaulter(v) for k, v in init.items()})
+
+  @classmethod
+  def __defaulter(cls, obj):
+    if isinstance(obj, dict):
+      return Defaulter(obj)
+    elif isinstance(obj, (tuple, list, set)):
+      return obj.__class__(cls.__defaulter(elem) for elem in obj)
+    else:
+      return obj
 
   def __unicode__(self):
     return super(Defaulter, self).__unicode__() if self else ''
@@ -141,9 +149,9 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   if actor is None:
     actor = {}
   return jinja_env.get_template(FEED_TEMPLATE).render(
-    actor=Defaulter(**actor),
+    actor=Defaulter(actor),
     host_url=host_url,
-    items=[Defaulter(**a) for a in activities],
+    items=[Defaulter(a) for a in activities],
     mimetypes=mimetypes,
     rels=rels or {},
     request_url=request_url,
@@ -169,7 +177,7 @@ def activity_to_atom(activity, xml_base=None, reader=True):
   """
   _prepare_activity(activity, reader=reader)
   return jinja_env.get_template(ENTRY_TEMPLATE).render(
-    activity=Defaulter(**activity),
+    activity=Defaulter(activity),
     mimetypes=mimetypes,
     VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
     xml_base=xml_base,

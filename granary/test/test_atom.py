@@ -806,3 +806,26 @@ going to Homebrew Website Club
 <email>mrs@foo.com</email>
 </author>
 """, atom.activities_to_atom([activity], {}), ignore_blanks=True)
+
+  def test_defaulter(self):
+    empty = atom.Defaulter()
+    d = atom.Defaulter({
+        'a': 'x',
+        'b': 3,
+        'c': None,
+        'd': {},
+        'e': [],
+        'f': {'1': 2, '3': {'4': 5}},
+        'g': {'1': '2', '3': ['5', 6, {'7': [{'8': 9}]}]},
+    })
+    self.assertEqual('x', d['a'])
+    self.assertIsNone(d['c'])
+    self.assertEqual(empty, d['z'])
+    self.assertEqual(empty, d['d']['z'])
+    self.assertEqual(2, d['f']['1'])
+    self.assertEqual(5, d['f']['3']['4'])
+    self.assertEqual(empty, d['f']['9'])
+    self.assertEqual(empty, d['g']['9'])
+    self.assertEqual(6, d['g']['3'][1])
+    self.assertEqual(empty, d['g']['3'][2]['9'])
+    self.assertEqual(empty, d['g']['3'][2]['7'][0]['9'])
