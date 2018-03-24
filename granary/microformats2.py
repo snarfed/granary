@@ -45,7 +45,7 @@ $author
 $attachments
 $event_times
 $location
-$people
+$categories
 $in_reply_tos
 $children
 $comments
@@ -613,11 +613,13 @@ def json_to_html(obj, parent_props=None):
   for name, fn in ('photo', img), ('video', vid), ('audio', aud):
     attachments.extend(fn(val) for val in props.get(name, []))
 
-  people = '\n'.join(
-    hcard_to_html(cat, ['u-category', 'h-card'])
-    for cat in props.get('category', [])
-    if 'h-card' in cat.get('type') and
-    not cat.get('startIndex'))  # mentions are already linkified in content
+  cats = props.get('category', [])
+  people = [
+    hcard_to_html(cat, ['u-category', 'h-card']) for cat in cats
+    if isinstance(cat, dict) and 'h-card' in cat.get('type')
+    and not cat.get('startIndex')]  # mentions are already linkified in content
+  tags = ['<span class="u-category">%s</span>' % cat
+          for cat in cats if isinstance(cat, basestring)]
 
   # comments
   # http://indiewebcamp.com/comment-presentation#How_to_markup
@@ -659,7 +661,7 @@ def json_to_html(obj, parent_props=None):
     types=' '.join(parent_props + types),
     author=hcard_to_html(author, ['p-author']),
     location=hcard_to_html(location, ['p-location']),
-    people=people,
+    categories='\n'.join(people + tags),
     attachments='\n'.join(attachments),
     in_reply_tos=in_reply_tos,
     invitees='\n'.join([hcard_to_html(i, ['p-invitee'])

@@ -234,6 +234,7 @@ Changelog
 * microformats2:
   * `object_to_json()`: convert tags to simple strings in the `category` property, not full nested objects like `h-card`s ([#141](https://github.com/snarfed/granary/issues/141)).
   * Special case GitHub issues that are in-reply-to a repo or its `/issues` URL to be objectType `issue`.
+  * Render simple string categories in HTML output.
 
 This release is intentionally small and limited in scope to contain any impact of the Ptython 3 migration. It *should* be a noop for existing Python 2 users, and we've tested thoroughly, but I'm sure there are still bugs. Please file issues if you notice anything broken!
 
