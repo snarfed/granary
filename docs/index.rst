@@ -24,6 +24,7 @@ Here’s how to get started:
 -  Granary is `available on
    PyPi. <https://pypi.python.org/pypi/granary/>`__ Install with
    ``pip install granary``.
+-  Supports Python 2.7+ and 3.3+.
 -  `Click here for getting started docs. <#using>`__
 -  `Click here for reference
    docs. <https://granary.readthedocs.io/en/latest/source/granary.html>`__
@@ -366,6 +367,41 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
+1.12 - 2018-03-24
+~~~~~~~~~~~~~~~~~
+
+-  Add Python 3 support! Granary now requires either Python 2.7+ or
+   Python 3.3+.
+-  Instagram:
+
+   -  Fix scraping profile pages.
+
+-  Twitter:
+
+   -  Update character counting to handle Twitter change that now
+      auto-links *all* ccTLDs.
+      `Background. <https://github.com/kylewm/brevity/issues/8>`__
+
+-  GitHub:
+
+   -  Bug fix for ``get_activities()`` with deleted issues and repos.
+
+-  microformats2:
+
+   -  ``object_to_json()``: convert tags to simple strings in the
+      ``category`` property, not full nested objects like ``h-card``\ s
+      (`#141 <https://github.com/snarfed/granary/issues/141>`__).
+   -  Special case GitHub issues that are in-reply-to a repo or its
+      ``/issues`` URL to be objectType ``issue``.
+   -  Render simple string categories in HTML output.
+
+This release is intentionally small and limited in scope to contain any
+impact of the Ptython 3 migration. It *should* be a noop for existing
+Python 2 users, and we’ve tested thoroughly, but I’m sure there are
+still bugs. Please file issues if you notice anything broken!
+
+.. section-1:
+
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
 
@@ -437,7 +473,7 @@ Changelog
    -  Omit title from items if it’s the same as the content. (Often
       caused by microformats2’s implied ``p-name`` logic.)
 
-.. section-1:
+.. section-2:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -476,7 +512,7 @@ Changelog
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. section-2:
+.. section-3:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -504,7 +540,7 @@ Changelog
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. section-3:
+.. section-4:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -584,7 +620,7 @@ Changelog
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. section-4:
+.. section-5:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -632,7 +668,7 @@ Changelog
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. section-5:
+.. section-6:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -666,7 +702,7 @@ Changelog
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. section-6:
+.. section-7:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -697,14 +733,14 @@ Changelog
 
    -  Bug fix: escape &s in attachments’ text (e.g. quote tweets).
 
-.. section-7:
+.. section-8:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. section-8:
+.. section-9:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -738,7 +774,7 @@ Changelog
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. section-9:
+.. section-10:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -746,7 +782,7 @@ Changelog
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. section-10:
+.. section-11:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -789,7 +825,7 @@ Changelog
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. section-11:
+.. section-12:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -845,7 +881,7 @@ Changelog
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. section-12:
+.. section-13:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -868,7 +904,7 @@ Changelog
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. section-13:
+.. section-14:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -876,7 +912,7 @@ Changelog
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. section-14:
+.. section-15:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~

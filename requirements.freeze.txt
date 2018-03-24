@@ -17,7 +17,7 @@ mf2py==1.0.5
 -e git+https://github.com/snarfed/mf2util.git@992b2655be66a128bb40f847f3eba0ed955cadfe#egg=mf2util
 mox3==0.24.0
 mox==0.5.3
--e git+git@github.com:snarfed/oauth-dropins.git@v1.11#egg=oauth_dropins
+-e git+git@github.com:snarfed/oauth-dropins.git@v1.12#egg=oauth_dropins
 oauth2client==4.1.2
 oauthlib==2.0.2
 pyasn1==0.3.3

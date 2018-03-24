@@ -223,7 +223,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 1.12 - unreleased
+### 1.12 - 2018-03-24
 * Add Python 3 support! Granary now requires either Python 2.7+ or Python 3.3+.
 * Instagram:
   * Fix scraping profile pages.
