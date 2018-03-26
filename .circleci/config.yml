@@ -59,7 +59,7 @@ jobs:
           name: Test Python 2
           command: |
             . local/bin/activate
-            python2 -m coverage run --source=. --omit=granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
+            python2 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/test/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
             python2 -m coverage html -d /tmp/coverage_html
             PYTHONPATH= python2 ./instagram_live_test.py --debug
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
