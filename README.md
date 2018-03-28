@@ -11,6 +11,7 @@ The social web translator. Fetches and converts data between social networks, HT
 * [Troubleshooting/FAQ](#troubleshootingfaq)
 * [Future work](#future-work)
 * [Development](#development)
+* [Release instructions](#release-instructions)
 * [Related work](#related-work)
 * [Changelog](#changelog)
 
@@ -201,6 +202,87 @@ end
 The docs are built with [Sphinx](http://sphinx-doc.org/), including [apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html), [autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and [napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration is in [`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py) To build them, first install Sphinx with `pip install sphinx`. (You may want to do this outside your virtualenv; if so, you'll need to reconfigure it to see system packages with `virtualenv --system-site-packages local`.) Then, run [`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
 
 [This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
+
+
+Release instructions
+---
+Here's how to package, test, and ship a new release. (Note that this is [largely duplicated in the oauth-dropins readme too](https://github.com/snarfed/oauth-dropins#release-instructions).)
+
+1. Run the unit tests.
+    ```sh
+    source local/bin/activate.csh
+    python2 -m unittest discover
+    deactivate
+
+    source local3/bin/activate.csh
+    python3 -m unittest discover -s granary/test/
+    deactivate
+    ```
+1. Bump the version number in `setup.py` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
+1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`.
+1. `git commit -m 'release vX.Y'`
+1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
+    ```sh
+    python setup.py clean build sdist
+    twine upload -r pypitest dist/granary-X.Y.tar.gz
+    ```
+1. Install from test.pypi.org, both Python 2 and 3.
+    ```sh
+    cd /tmp
+    virtualenv local
+    source local/bin/activate.csh
+    pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary
+    deactivate
+    ```
+    ```sh
+    python3 -m venv local3
+    source local3/bin/activate.csh
+    pip3 install --upgrade pip
+    pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary
+    deactivate
+    ```
+1. Smoke test that the code trivially loads and runs, in both Python 2 and 3.
+   ```sh
+    source local/bin/activate.csh
+    python2
+    # run test code below
+    deactivate
+    ```
+    ```sh
+    source local3/bin/activate.csh
+    python3
+    # run test code below
+    deactivate
+    ```
+    Test code to paste into the interpreter:
+    ```py
+    from granary import instagram
+    instagram.__file__  # check that it's in the virtualenv
+
+    i = instagram.Instagram()
+    a = i.get_activities(user_id='snarfed', group_id='@self', scrape=True)
+    print(json.dumps(a, indent=2))
+
+    from granary import atom
+    print(atom.activities_to_atom(a, {}))
+
+    from granary import github
+    g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
+    a2 = g.get_activities()
+    print(json.dumps(a2, indent=2))
+    ```
+1. Tag the release in git. In the tag message editor, delete the generated comments at bottom, leave the first line blank (to omit the release "title" in github), put `### Notable changes` on the second line, then copy and paste this version's changelog contents below it.
+    ```sh
+    git tag -a vX.Y --cleanup=verbatim
+    git push
+    git push --tags
+    ```
+1. [Click here to draft a new release on GitHub.](https://github.com/snarfed/granary/releases/new) Enter `vX.Y` in the _Tag version_ box. Leave _Release title_ empty. Copy `### Notable changes` and the changelog contents into the description text box.
+1. Upload to [pypi.org](https://pypi.org/)!
+    ```sh
+    python setup.py clean build sdist
+    twine upload dist/granary-X.Y.tar.gz
+    ```
 
 
 Related work
