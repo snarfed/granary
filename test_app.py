@@ -2,13 +2,11 @@
 """
 from __future__ import unicode_literals
 import copy
-import httplib
 import json
 import socket
 import xml.sax.saxutils
 
 from google.appengine.api import memcache
-import mox
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil_appengine
 import requests

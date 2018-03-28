@@ -1,6 +1,5 @@
 """Redirects from *-activitystreams.appspot.com to granary-demo.appspot.com.
 """
-import os
 import urlparse
 
 from google.appengine.api import app_identity

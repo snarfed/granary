@@ -25,10 +25,8 @@ http://atomenabled.org/developers/syndication/
 """
 import datetime
 import json
-import logging
 import urllib
 
-from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util

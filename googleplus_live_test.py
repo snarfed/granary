@@ -7,12 +7,10 @@ and all the expected fields are non-empty.
 https://github.com/snarfed/granary/issues/106
 """
 import logging
-import re
 import sys
 import unittest
 
 from granary import googleplus
-from granary.source import SELF
 import requests
 
 URL = 'https://plus.google.com/+RyanBarrett'

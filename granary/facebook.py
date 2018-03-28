@@ -49,7 +49,6 @@ from builtins import range, str, zip
 
 import collections
 import copy
-import itertools
 import json
 import logging
 import re
@@ -1759,7 +1758,6 @@ class Facebook(source.Source):
     """
     if not url.startswith('http'):
       url = API_BASE + url
-    log_url = url
     if self.access_token:
       url = util.add_query_params(url, [('access_token', self.access_token)])
     resp = util.urlopen(urllib.request.Request(url, **kwargs))

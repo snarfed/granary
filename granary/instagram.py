@@ -12,7 +12,6 @@ standard_library.install_aliases()
 from future.moves.urllib import error as urllib_error
 from past.builtins import basestring
 
-import datetime
 import itertools
 import json
 import logging
@@ -551,10 +550,10 @@ class Instagram(source.Source):
         'displayName': tag,
         # TODO: url
       } for tag in media.get('tags', [])] +
-      [self.user_to_actor(user.get('user'))
-       for user in media.get('users_in_photo', [])] +
-      [self.like_to_object(user, id, media.get('link'))
-       for user in media.get('likes', {}).get('data', [])] +
+      [self.user_to_actor(u.get('user'))
+       for u in media.get('users_in_photo', [])] +
+      [self.like_to_object(u, id, media.get('link'))
+       for u in media.get('likes', {}).get('data', [])] +
       [{
         'objectType': 'person',
         'id': self.tag_uri(mention.group(1)),
@@ -715,7 +714,6 @@ class Instagram(source.Source):
         return id
       id = int(parts[0])
 
-    A = ord('A')
     chars = []
     while id > 0:
       id, rem = divmod(id, 64)

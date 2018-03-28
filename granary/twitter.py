@@ -19,7 +19,6 @@ import collections
 import datetime
 import itertools
 import http.client
-import json
 import logging
 import mimetypes
 import re
@@ -29,7 +28,6 @@ import urllib.parse, urllib.request
 from . import appengine_config
 
 from bs4 import BeautifulSoup
-import requests
 import brevity
 
 from . import source
@@ -1037,7 +1035,7 @@ class Twitter(source.Source):
     if ('data' not in kwargs and not
         (isinstance(url, urllib.request.Request) and url.get_method() == 'POST')):
       # this is a GET. retry up to 3x if we deadline.
-      for attempt in range(RETRIES):
+      for _ in range(RETRIES):
         try:
           return request()
         except http.client.HTTPException as e:

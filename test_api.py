@@ -6,7 +6,6 @@ import json
 import socket
 
 from google.appengine.api import memcache
-import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil_appengine
 
 import api

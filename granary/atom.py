@@ -9,7 +9,6 @@ from builtins import str
 
 import collections
 import mimetypes
-import os
 import re
 import urllib.parse
 from xml.etree import ElementTree
@@ -402,17 +401,15 @@ def _prepare_activity(a, reader=True):
       continue
     url = image.get('url')
     parsed = urllib.parse.urlparse(url)
-    scheme = parsed.scheme
-    netloc = parsed.netloc
     rest = urllib.parse.urlunparse(('', '') + parsed[2:])
     img_src_re = re.compile(r"""src *= *['"] *((https?:)?//%s)?%s *['"]""" %
-                            (re.escape(netloc), re.escape(rest)))
+                            (re.escape(parsed.netloc), re.escape(rest)))
     if (url and url not in image_urls_seen and
         not img_src_re.search(obj['rendered_content'])):
       children.append(microformats2.img(url))
       image_urls_seen.add(url)
 
-  obj['rendered_children'] = [_encode_ampersands(html) for html in children]
+  obj['rendered_children'] = [_encode_ampersands(child) for child in children]
 
   # make sure published and updated are strict RFC 3339 timestamps
   for prop in 'published', 'updated':

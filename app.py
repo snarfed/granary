@@ -1,7 +1,5 @@
 """Serves the the front page, discovery files, and OAuth flows.
 """
-import copy
-import httplib
 import json
 import logging
 import urllib
@@ -10,7 +8,6 @@ from xml.etree import ElementTree
 
 import appengine_config
 
-from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import mf2py
 import mf2util
@@ -19,7 +16,6 @@ from oauth_dropins import (
   flickr,
   github,
   googleplus,
-  instagram,
   twitter,
 )
 from oauth_dropins.webutil import handlers, util
@@ -110,6 +106,7 @@ class DemoHandler(handlers.ModernHandler):
     params.update({
       'plaintext': 'true',
       'cache': 'false',
+      'search_query': search_query,
     })
 
     return self.redirect('/%s/%s/%s/@app/%s?%s' % (

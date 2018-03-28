@@ -18,21 +18,14 @@ from builtins import next, str
 from past.builtins import basestring
 
 import copy
-import datetime
-import functools
-import itertools
-import json
 import logging
 import requests
-import sys
 import mf2py
 import mf2util
 import urllib.parse
 
 from . import appengine_config
 
-from apiclient.errors import HttpError
-from apiclient.http import BatchHttpRequest
 from oauth_dropins.webutil import util
 from oauth_dropins import flickr_auth
 
@@ -446,7 +439,7 @@ class Flickr(source.Source):
         obj['url'] = next(
           (u for u in urls if not u.startswith('https://www.flickr.com/')),
           None)
-      except urllib_error.URLError as e:
+      except urllib_error.URLError:
         logging.warning('could not fetch user homepage %s', profile_url)
 
     return self.postprocess_object(obj)

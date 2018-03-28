@@ -155,7 +155,7 @@ class GooglePlus(source.Source):
       if fetch_replies and num_replies and num_replies != cached.get('AGC ' + id):
         call = self.auth_entity.api().comments().list(activityId=id, maxResults=500)
 
-        def set_comments(req_id, resp, exc, activity=None):
+        def set_comments(_, resp, exc, activity=None):
           obj = activity.get('object', {})
           if exc is None:
             obj['replies']['items'] = [
@@ -284,7 +284,7 @@ class GooglePlus(source.Source):
     call = self.auth_entity.api().people().listByActivity(
       activityId=id, collection=collection)
 
-    def set_tags(req_id, resp, exc):
+    def set_tags(_, resp, exc):
       if exc is None:
         tags = obj.setdefault('tags', [])
         for person in resp.get('items', []):

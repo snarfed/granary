@@ -20,14 +20,12 @@ import collections
 import copy
 import json
 import logging
-import mimetypes
 import re
 import urllib.parse
 import html2text
 
 from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
-import requests
 
 from . import appengine_config
 
@@ -445,7 +443,6 @@ class Source(with_metaclass(SourceMeta, object)):
 
     Returns: dict, an ActivityStreams RSVP activity object
     """
-    user_tag_id = self.tag_uri(user_id)
     if not event:
       event = self.get_event(event_id)
       if not event:
@@ -503,32 +500,6 @@ class Source(with_metaclass(SourceMeta, object)):
           (not tag_id or tag_id == tag.get('id')) and
           (author.get('id') == user_tag_id or author.get('numeric_id') == user_id)):
         return tag
-
-  def _fetch_like(self, activity):
-    """Fetches and injects likes into an activity, in place.
-
-    Subclasses should usually override.
-
-    Args:
-      activities: ActivityStreams activity dict
-
-    Returns:
-      dict: same activity
-    """
-    return activity
-
-  def _fetch_share(self, activity):
-    """Fetches and injects shares into an activity, in place.
-
-    Subclasses should usually override.
-
-    Args:
-      activities: ActivityStreams activity dict
-
-    Returns:
-      dict: same activity
-    """
-    return activity
 
   @staticmethod
   def postprocess_activity(activity):

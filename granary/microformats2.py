@@ -8,7 +8,7 @@ standard_library.install_aliases()
 from builtins import str
 from past.builtins import basestring
 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 import copy
 import itertools
 import logging
