@@ -305,6 +305,10 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 1.13 - unreleased
+* Twitter:
+  * Support ISO 8601 formatted created_at timestamps, which the [archive download uses](https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive), as well as RFC 2822 from the API.
+
 ### 1.12 - 2018-03-24
 * Add Python 3 support! Granary now requires either Python 2.7+ or Python 3.3+.
 * Instagram:

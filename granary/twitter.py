@@ -1138,10 +1138,19 @@ class Twitter(source.Source):
     if not id:
       return {}
 
+    created_at = tweet.get('created_at')
+    try:
+      published = self.rfc2822_to_iso8601(created_at)
+    except ValueError:
+      # this is probably already ISO 8601, likely from the archive export.
+      # https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive
+      # https://chat.indieweb.org/dev/2018-03-30#t1522442860737900
+      published = created_at
+
     obj = {
       'id': self.tag_uri(id),
       'objectType': 'note',
-      'published': self.rfc2822_to_iso8601(tweet.get('created_at')),
+      'published': published,
       'to': [],
     }
 

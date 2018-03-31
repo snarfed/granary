@@ -2536,3 +2536,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       self.assertTrue(ret.abort)
       for msg in ret.error_plain, ret.error_html:
         self.assertIn('Twitter only supports MP4 videos', msg)
+
+  def test_tweet_to_object_archive_date_format(self):
+    """Twitter archive created_at values are in a form of ISO 8601."""
+    tweet = copy.deepcopy(TWEET)
+    tweet['created_at'] = '2012-02-22 20:26:41 +0000'
+    obj = copy.deepcopy(OBJECT)
+    obj['published'] = '2012-02-22 20:26:41 +0000'
+    self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
