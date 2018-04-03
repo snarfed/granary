@@ -8,12 +8,14 @@ import socket
 from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine
 
-import api
 from granary import instagram
 from granary import source
 from granary.test import test_facebook
 from granary.test import test_instagram
 from granary.test import test_twitter
+
+import appengine_config
+import api
 
 
 class FakeSource(source.Source):
