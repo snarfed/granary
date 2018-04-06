@@ -1209,31 +1209,53 @@ class InstagramTest(testutil.TestCase):
     self.assertIsNone(resp['actor'])
     self.assertEqual([], resp['items'])
 
-  def test_get_activities_scrape_error(self):
+  def test_get_activities_scrape_rate_limited(self):
+    # first attempt: rate limited
     self.expect_requests_get(HTML_BASE_URL,
                              headers={'Cookie': 'sessionid=my cookie'},
                              allow_redirects=False, status_code=429)
+    # third attempt ignore rate limit lock. fourth limit is past lock.
+    for i in range(2):
+      self.expect_requests_get(HTML_BASE_URL + 'x/', HTML_PROFILE_COMPLETE,
+                               allow_redirects=False)
     self.mox.ReplayAll()
 
+    # first attempt makes the fetch, gets the 429 response, and sets the
+    # global rate limit lock. second attempt sees the lock and short circuits.
     with self.assertRaises(requests.HTTPError) as cm:
-      a = self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
-                                        cookie='my cookie')
+      self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
+                                    cookie='my cookie')
+      self.assertEqual(429, cm.exception.response.status_code)
 
-    self.assertEqual(429, cm.exception.response.status_code)
+    # second attempt sees the lock and short circuits, even though it's for a
+    # different path (profile vs front page).
+    with self.assertRaises(requests.HTTPError) as cm:
+      Instagram().get_activities(user_id='x', group_id=source.SELF,
+                                           scrape=True)
+      self.assertEqual(429, cm.exception.response.status_code)
+
+    self.assert_equals(HTML_ACTIVITIES, Instagram().get_activities(
+      user_id='x', group_id=source.SELF, scrape=True, ignore_rate_limit=True))
+
+    # move rate limit lock back beyond threshold, third attempt should try again.
+    instagram._last_rate_limited -= (instagram.RATE_LIMIT_BACKOFF +
+                                     datetime.timedelta(seconds=5))
+    self.assert_equals(HTML_ACTIVITIES, Instagram().get_activities(
+      user_id='x', group_id=source.SELF, scrape=True))
 
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
                         json.dumps({'data': VIDEO}))
     self.mox.ReplayAll()
     self.assert_equals([VIDEO_ACTIVITY],
-                          self.instagram.get_activities(activity_id='5678'))
+                       self.instagram.get_activities(activity_id='5678'))
 
   def test_get_comment(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
                         json.dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0],
-                          self.instagram.get_comment('789', activity_id='123_456'))
+                       self.instagram.get_comment('789', activity_id='123_456'))
 
   def test_get_comment_not_found(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',

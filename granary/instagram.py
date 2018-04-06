@@ -12,6 +12,7 @@ standard_library.install_aliases()
 from future.moves.urllib import error as urllib_error
 from past.builtins import basestring
 
+import datetime
 import itertools
 import json
 import logging
@@ -52,6 +53,10 @@ HTML_PRELOAD_RE = re.compile(
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
 
 MENTION_RE = re.compile(r'@([A-Za-z0-9._]+)')
+
+# global lock for backing off scraping due to rate limiting.
+RATE_LIMIT_BACKOFF = datetime.timedelta(seconds=5 * 60)
+_last_rate_limited = None
 
 
 class Instagram(source.Source):
@@ -130,7 +135,8 @@ class Instagram(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
                               fetch_mentions=False, search_query=None,
-                              scrape=False, cookie=None, **kwargs):
+                              scrape=False, cookie=None, ignore_rate_limit=False,
+                              **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
     See method docstring in source.py for details. app_id is ignored.
@@ -163,6 +169,8 @@ class Instagram(source.Source):
         passing a shortcode as activity_id as well as the internal API id.
         http://developers.instagram.com/post/133424514006/instagram-platform-update
       cookie: string, only used if scrape=True
+      ignore_rate_limit: boolean, for scraping, always make an HTTP request,
+        even if we've been rate limited recently
       **: see :meth:`Source.get_activities_response`
 
     Raises:
@@ -177,9 +185,26 @@ class Instagram(source.Source):
               (group_id == source.FRIENDS and cookie)):
         raise NotImplementedError(
           'Scraping only supports activity_id, user_id and group_id=@self, or cookie and group_id=@friends.')
-      return self._scrape(
-        user_id=user_id, group_id=group_id, activity_id=activity_id,
-        cookie=cookie, fetch_extras=fetch_replies or fetch_likes, cache=cache)
+      # cache rate limited responses and short circuit
+      global _last_rate_limited
+      now = datetime.datetime.now()
+      if not ignore_rate_limit and _last_rate_limited:
+        retry = _last_rate_limited + RATE_LIMIT_BACKOFF
+        if now < retry:
+          logging.info('Got rate limited at %s, waiting until %s to try again.',
+                       _last_rate_limited, retry)
+          raise requests.HTTPError('429 Unauthorized')
+
+      try:
+        return self._scrape(
+          user_id=user_id, group_id=group_id, activity_id=activity_id,
+          cookie=cookie, fetch_extras=fetch_replies or fetch_likes, cache=cache)
+      except Exception as e:
+        code, body = util.interpret_http_exception(e)
+        if not ignore_rate_limit and code in ('429', '503'):
+          logging.info('Got rate limited! Remembering for %s', str(RATE_LIMIT_BACKOFF))
+          _last_rate_limited = now
+        raise
 
     if user_id is None:
       user_id = 'self'
