@@ -56,7 +56,8 @@ MENTION_RE = re.compile(r'@([A-Za-z0-9._]+)')
 
 # global lock for backing off scraping due to rate limiting.
 RATE_LIMIT_BACKOFF = datetime.timedelta(seconds=5 * 60)
-_last_rate_limited = None
+_last_rate_limited = None      # datetime
+_last_rate_limited_exc = None  # requests.HTTPError
 
 
 class Instagram(source.Source):
@@ -186,14 +187,15 @@ class Instagram(source.Source):
         raise NotImplementedError(
           'Scraping only supports activity_id, user_id and group_id=@self, or cookie and group_id=@friends.')
       # cache rate limited responses and short circuit
-      global _last_rate_limited
+      global _last_rate_limited, _last_rate_limited_exc
       now = datetime.datetime.now()
       if not ignore_rate_limit and _last_rate_limited:
         retry = _last_rate_limited + RATE_LIMIT_BACKOFF
         if now < retry:
-          logging.info('Got rate limited at %s, waiting until %s to try again.',
+          logging.info('Remembered rate limit at %s, waiting until %s to try again.',
                        _last_rate_limited, retry)
-          raise requests.HTTPError('429 Unauthorized')
+          assert _last_rate_limited_exc
+          raise _last_rate_limited_exc
 
       try:
         return self._scrape(
@@ -204,6 +206,7 @@ class Instagram(source.Source):
         if not ignore_rate_limit and code in ('429', '503'):
           logging.info('Got rate limited! Remembering for %s', str(RATE_LIMIT_BACKOFF))
           _last_rate_limited = now
+          _last_rate_limited_exc = e
         raise
 
     if user_id is None:

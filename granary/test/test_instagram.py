@@ -1225,14 +1225,13 @@ class InstagramTest(testutil.TestCase):
     with self.assertRaises(requests.HTTPError) as cm:
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                     cookie='my cookie')
-      self.assertEqual(429, cm.exception.response.status_code)
+    self.assertEqual(429, cm.exception.response.status_code)
 
     # second attempt sees the lock and short circuits, even though it's for a
     # different path (profile vs front page).
     with self.assertRaises(requests.HTTPError) as cm:
-      Instagram().get_activities(user_id='x', group_id=source.SELF,
-                                           scrape=True)
-      self.assertEqual(429, cm.exception.response.status_code)
+      Instagram().get_activities(user_id='x', group_id=source.SELF, scrape=True)
+    self.assertEqual(429, cm.exception.response.status_code)
 
     self.assert_equals(HTML_ACTIVITIES, Instagram().get_activities(
       user_id='x', group_id=source.SELF, scrape=True, ignore_rate_limit=True))
