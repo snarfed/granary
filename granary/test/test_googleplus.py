@@ -22,6 +22,7 @@ from email.mime.multipart import MIMEMultipart
 import json
 import os
 
+from granary import appengine_config
 from apiclient import discovery
 from apiclient import http
 import httplib2
@@ -29,7 +30,6 @@ from oauth_dropins import googleplus as oauth_googleplus
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil import testutil
 
-from granary import appengine_config
 appengine_config.GOOGLE_CLIENT_ID = 'my client id'
 appengine_config.GOOGLE_CLIENT_SECRET = 'my client secret'
 from granary import googleplus

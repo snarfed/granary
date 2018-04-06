@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 import copy
 import re
 
+from granary import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 

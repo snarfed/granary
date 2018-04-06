@@ -6,12 +6,12 @@ import json
 import socket
 import xml.sax.saxutils
 
+import appengine_config
 from google.appengine.api import memcache
 import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil_appengine
 import requests
 
-import appengine_config
 import app
 
 

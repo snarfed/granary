@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import copy
 
+from granary import appengine_config
 from mox3 import mox
 from oauth_dropins.webutil import testutil
 import requests

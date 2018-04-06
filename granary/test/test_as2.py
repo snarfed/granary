@@ -6,6 +6,7 @@ for full testdata tests.
 """
 from __future__ import unicode_literals
 
+from granary import appengine_config
 from oauth_dropins.webutil import testutil
 
 from granary import as2

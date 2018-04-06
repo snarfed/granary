@@ -9,6 +9,7 @@ import json
 import logging
 import os
 
+from granary import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 

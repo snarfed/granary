@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 import re
 
+from granary import appengine_config
 from oauth_dropins.webutil import testutil
 import mf2py
 

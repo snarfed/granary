@@ -5,6 +5,7 @@ import copy
 import json
 import socket
 
+import appengine_config
 from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine
 
@@ -14,7 +15,6 @@ from granary.test import test_facebook
 from granary.test import test_instagram
 from granary.test import test_twitter
 
-import appengine_config
 import api
 
 
