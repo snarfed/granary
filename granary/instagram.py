@@ -835,7 +835,7 @@ class Instagram(source.Source):
 
         try:
           data = resp.json()
-        except json_module.JSONDecodeError as e:
+        except ValueError as e:
           msg = "Couldn't decode response as JSON:\n%s" % resp.text
           logging.exception(msg)
           resp.status_code = 504
