@@ -111,21 +111,23 @@ class Instagram(source.Source):
   def media_url(cls, shortcode):
     return '%sp/%s/' % (cls.BASE_URL, shortcode)
 
-  def get_actor(self, user_id=None):
+  def get_actor(self, user_id=None, **kwargs):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Args:
       user_id: string id or username. Defaults to 'self', ie the current user.
+      kwargs: if scraping, passed through to get_activities_response(). Raises
+        AssertionError if provided and not scraping.
 
-    Raises: InstagramAPIError
+    Raises: AssertionError, InstagramAPIError
     """
     if user_id is None:
       assert self.scrape is False, 'get_actor() requires user_id when scraping'
       user_id = 'self'
 
     if self.scrape:
-      return self.get_activities_response(group_id=source.SELF, user_id=user_id
-                                         ).get('actor')
+      return self.get_activities_response(
+        group_id=source.SELF, user_id=user_id, **kwargs).get('actor')
     else:
       return self.user_to_actor(util.trim_nulls(
         self.urlopen(API_USER_URL % user_id) or {}))
