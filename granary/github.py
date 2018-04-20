@@ -13,6 +13,7 @@ from past.builtins import basestring
 
 import datetime
 import email.utils
+import html
 import logging
 import re
 import urllib.parse
@@ -492,8 +493,9 @@ class GitHub(source.Source):
         abort=True,
         error_plain='You need an in-reply-to GitHub repo, issue, PR, or comment URL.')
 
-    content = orig_content = self._content_for_create(
-      obj, ignore_formatting=ignore_formatting)
+    content = orig_content = html.escape(
+      self._content_for_create(obj, ignore_formatting=ignore_formatting),
+      quote=False)
     url = obj.get('url')
     if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url

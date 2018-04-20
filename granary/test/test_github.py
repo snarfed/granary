@@ -704,7 +704,6 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.gh.create({
-      'url': 'https://github.com/foo/bar/issues/333',
       'title': 'an issue title',
       'content': """
 <a href="http://foo/">bar</a>
@@ -716,6 +715,26 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals({
       'url': 'https://github.com/foo/bar/issues/123',
     }, result.content)
+
+  def test_create_escape_html(self):
+    content = 'x &lt;data foo&gt; &amp; y'
+
+    self.expect_graphql_get_labels([])
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': content,
+        'labels': [],
+      }, response={
+        'html_url': 'https://github.com/foo/bar/issues/123',
+      }, headers=EXPECTED_HEADERS)
+    self.mox.ReplayAll()
+
+    result = self.gh.create({
+      'title': 'an issue title',
+      'content': content,
+      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+    })
+    self.assertIsNone(result.error_plain, result)
 
   def test_preview_issue(self):
     for i in range(2):
