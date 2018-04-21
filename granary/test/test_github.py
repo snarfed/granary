@@ -547,6 +547,11 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals([], self.gh.get_activities(activity_id='a:b:1'))
 
+  def test_get_activities_bad_activity_id(self):
+    for bad in 'no_colons', 'one:colon', 'fo:ur:col:ons':
+      with self.assertRaises(ValueError):
+        self.assert_equals([], self.gh.get_activities(activity_id=bad))
+
   def test_get_activities_repo_not_found(self):
     self.expect_rest(REST_API_NOTIFICATIONS,
                      [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
@@ -592,6 +597,11 @@ class GitHubTest(testutil.TestCase):
     self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 123), COMMENT_REST)
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo:bar:123'))
+
+  def test_get_activities_bad_comment_id(self):
+    for bad in 'no_colons', 'one:colon', 'fo:ur:col:ons':
+      with self.assertRaises(ValueError):
+        self.assert_equals([], self.gh.get_comment(bad))
 
   def test_comment_to_object_graphql(self):
     obj = copy.deepcopy(COMMENT_OBJ)

@@ -312,6 +312,7 @@ Changelog
   * Add global rate limiting lock for scraping. If a scraping HTTP request gets a 429 or 503 response, we refuse to make more requests for 5m, and instead short circuit and return the same error. This can be overridden with a new `ignore_rate_limit` kwarg to `get_activities()`.
 * GitHub:
   * Escape HTML characters (`<`, `>`, and `&`) in content in `create()` and `preview_create()` ([snarfed/bridgy#810](https://github.com/snarfed/bridgy/issues/810)).
+  * `get_activities()` and `get_comment()` now return `ValueError` instead of `AssertionError` on malformed `activity_id` and `comment_id` args, respectively.
 
 ### 1.12 - 2018-03-24
 * Add Python 3 support! Granary now requires either Python 2.7+ or Python 3.3+.

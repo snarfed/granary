@@ -303,7 +303,8 @@ class GitHub(source.Source):
 
     if activity_id:
       parts = tuple(activity_id.split(':'))
-      assert len(parts) == 3
+      if len(parts) != 3:
+        raise ValueError('GitHub activity ids must be of the form USER:REPO:ISSUE_OR_PR')
       try:
         issue = self.rest(REST_API_ISSUE % parts).json()
         activities = [self.issue_to_object(issue)]
@@ -398,7 +399,9 @@ class GitHub(source.Source):
     Returns: dict, an ActivityStreams comment object
     """
     parts = tuple(comment_id.split(':'))
-    assert len(parts) == 3
+    if len(parts) != 3:
+      raise ValueError('GitHub comment ids must be of the form USER:REPO:COMMENT_ID')
+
     comment = self.rest(REST_API_COMMENT % parts).json()
     return self.comment_to_object(comment)
 
