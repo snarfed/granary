@@ -42,14 +42,21 @@ OMIT_LINK = 'omit'
 INCLUDE_LINK = 'include'
 INCLUDE_IF_TRUNCATED = 'if truncated'
 
-RSVP_TO_EVENT = collections.OrderedDict((  # in priority order
+# maps each AS1 RSVP verb to the collection inside an event object that the
+# RSVPing actor would go into.
+RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
   ('rsvp-yes', 'attending'),
   ('rsvp-no', 'notAttending'),
   ('rsvp-maybe', 'maybeAttending'),
   ('rsvp-interested', 'interested'),
   ('invite', 'invited'),
 ))
-VERBS_WITH_OBJECT = {'like', 'react', 'repost', 'share'} | set(RSVP_TO_EVENT.keys())
+VERBS_WITH_OBJECT = {
+  'like',
+  'react',
+  'repost',
+  'share',
+} | set(RSVP_VERB_TO_COLLECTION.keys())
 
 HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')
 
@@ -682,7 +689,7 @@ class Source(with_metaclass(SourceMeta, object)):
       rsvps: sequence of ActivityStreams RSVP activity objects
     """
     for rsvp in rsvps:
-      field = RSVP_TO_EVENT.get(rsvp.get('verb'))
+      field = RSVP_VERB_TO_COLLECTION.get(rsvp.get('verb'))
       if field:
         event.setdefault(field, []).append(rsvp.get(
             'object' if field == 'invited' else 'actor'))
@@ -708,7 +715,7 @@ class Source(with_metaclass(SourceMeta, object)):
     author = event.get('author')
 
     rsvps = []
-    for verb, field in RSVP_TO_EVENT.items():
+    for verb, field in RSVP_VERB_TO_COLLECTION.items():
       for actor in event.get(field, []):
         rsvp = {'objectType': 'activity',
                 'verb': verb,
