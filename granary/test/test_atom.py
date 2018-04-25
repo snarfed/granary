@@ -632,6 +632,21 @@ going to Homebrew Website Club
 </author>
 """, got, ignore_blanks=True)
 
+  def test_html_to_atom_title_without_hfeed_name(self):
+    self.assert_multiline_in("""\
+<generator uri="https://github.com/snarfed/granary">granary</generator>
+<id>https://my.site/feed</id>
+<title>unmarked feed title</title>
+""", atom.html_to_atom("""\
+<div class="h-feed">
+  <span>unmarked feed title</span>
+  <article class="h-entry">
+    <p class="e-content">entry content</p>
+  </article>
+</div>
+""", 'https://my.site/feed'),
+    ignore_blanks=True)
+
   def test_media_tags_and_enclosures(self):
     got = atom.activities_to_atom([{
       'object': {

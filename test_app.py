@@ -304,7 +304,7 @@ class AppTest(testutil_appengine.HandlerTest):
     self.expect_requests_get('http://my/posts.html', HTML % {
       'body_class': ' class="h-feed"',
       'extra': """
-<span class="p-name">my title</span>
+<span>my title</span>
 <div class="p-author h-card">
   <a href="http://my/site">My Name</a>
   <img src="http://my/picture" />

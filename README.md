@@ -313,6 +313,8 @@ Changelog
 * GitHub:
   * Escape HTML characters (`<`, `>`, and `&`) in content in `create()` and `preview_create()` ([snarfed/bridgy#810](https://github.com/snarfed/bridgy/issues/810)).
   * `get_activities()` and `get_comment()` now return `ValueError` instead of `AssertionError` on malformed `activity_id` and `comment_id` args, respectively.
+* Atom:
+  * Shorten and ellipsize feed title when necessary ([#144](https://github.com/snarfed/granary/issues/144)).
 
 ### 1.12 - 2018-03-24
 * Add Python 3 support! Granary now requires either Python 2.7+ or Python 3.3+.

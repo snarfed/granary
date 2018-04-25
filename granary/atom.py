@@ -332,7 +332,7 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
   return activities_to_atom(
     microformats2.html_to_activities(html, url, actor),
     actor,
-    title=mf2util.interpret_feed(parsed, url).get('name'),
+    title=microformats2.get_title(parsed),
     xml_base=util.base_url(url),
     host_url=url,
     reader=reader)

@@ -157,7 +157,7 @@ class UrlHandler(api.Handler):
         return mf2py.parse(doc=doc, url=url)
 
       actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
-      title = mf2util.interpret_feed(mf2, url).get('name')
+      title = microformats2.get_title(mf2)
 
     if input in ('as1', 'activitystreams'):
       activities = body_items

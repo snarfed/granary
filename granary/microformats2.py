@@ -913,6 +913,21 @@ def find_author(parsed, **kwargs):
     }
 
 
+def get_title(mf2):
+  """Returns the author of a page as a ActivityStreams actor dict.
+
+  Args:
+    mf2: dict, parsed mf2 object (ie return value from mf2py.parse())
+
+  Returns: string title, possibly ellipsized
+  """
+  lines = mf2util.interpret_feed(mf2, '').get('name', '').splitlines()
+  if lines:
+    return util.ellipsize(lines[0])
+
+  return ''
+
+
 def first_props(props):
   """Converts a multiply-valued dict to singly valued.
 
