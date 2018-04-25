@@ -720,7 +720,7 @@ Shared <a href="#">a post</a> by foo
   }, microformats2.find_author(mf2py.parse(doc="""\
 <body class="h-entry">
 <div class="p-author h-card">
-<a href="http://li/nk">my name</a>
+<a class="p-name" href="http://li/nk">my name</a>
 <img class="u-photo" src="http://pic/ture" />
 </div>
 </body>
@@ -819,7 +819,6 @@ Shared <a href="#">a post</a> by   <span class="h-card">
           'in-reply-to': [{'value': 'https://another/post'}],
         }
       })
-
 
   def test_html_to_activities_brs_to_newlines(self):
     """Mostly tests that mf2py converts <br>s to \ns.
