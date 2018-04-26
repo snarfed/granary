@@ -871,10 +871,13 @@ class Facebook(source.Source):
     Args:
       user_id: string, username or user ID
       text: string, shown to the user in the notification
-      link: string URL, the user is redirected here when they click on the
-        notification
+      link: relative string URL, the user is redirected here when they click on
+        the notification. Note that only the path and query parameters are used!
+        they're combined with the domain in your Facebook app's Game App URL:
+        https://developers.facebook.com/docs/games/services/appnotifications#parameters
 
     Raises: urllib2.HTPPError
+
     """
     logging.debug('Sending Facebook notification: %r, %s', text, link)
     params = {
