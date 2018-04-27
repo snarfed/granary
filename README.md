@@ -313,6 +313,7 @@ Changelog
 * GitHub:
   * Escape HTML characters (`<`, `>`, and `&`) in content in `create()` and `preview_create()` ([snarfed/bridgy#810](https://github.com/snarfed/bridgy/issues/810)).
   * `get_activities()` and `get_comment()` now return `ValueError` instead of `AssertionError` on malformed `activity_id` and `comment_id` args, respectively.
+  * `get_activities()` bug fix for issues/PRs with no body text.
 * Atom:
   * Shorten and ellipsize feed title when necessary ([#144](https://github.com/snarfed/granary/issues/144)).
 

@@ -586,6 +586,13 @@ class GitHubTest(testutil.TestCase):
   def test_issue_to_object_pull_rest(self):
     self.assert_equals(PULL_OBJ, self.gh.issue_to_object(PULL_REST))
 
+  def test_issue_to_object_rest_body_none(self):
+    issue = copy.deepcopy(ISSUE_REST)
+    issue['body'] = None
+    obj = copy.deepcopy(ISSUE_OBJ)
+    del obj['content']
+    self.assert_equals(obj, self.gh.issue_to_object(issue))
+
   def test_issue_to_object_minimal(self):
     # just test that we don't crash
     self.gh.issue_to_object({'id': '123', 'body': 'asdf'})

@@ -706,7 +706,7 @@ class GitHub(source.Source):
       return obj
 
     content = REACTIONS_REST_CHARS.get(reaction.get('content'))
-    enum = REACTIONS_GRAPHQL.get(content, '').lower()
+    enum = (REACTIONS_GRAPHQL.get(content) or '').lower()
     author = cls.user_to_actor(reaction.get('user'))
     username = author.get('username')
 
@@ -798,7 +798,7 @@ class GitHub(source.Source):
       'url': url,
       'author': cls.user_to_actor(input.get('author') or input.get('user')),
       'title': input.get('title'),
-      'content': input.get('body', '').replace('\r\n', '\n'),
+      'content': (input.get('body') or '').replace('\r\n', '\n'),
       'published': util.maybe_iso8601_to_rfc3339(input.get('createdAt') or
                                                  input.get('created_at')),
       'updated': util.maybe_iso8601_to_rfc3339(input.get('lastEditedAt') or
