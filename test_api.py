@@ -7,6 +7,7 @@ import socket
 
 import appengine_config
 from google.appengine.api import memcache
+import oauth_dropins.webutil.test
 from oauth_dropins.webutil import testutil_appengine
 
 from granary import instagram
