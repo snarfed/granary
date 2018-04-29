@@ -308,6 +308,7 @@ Changelog
 ### 1.13 - unreleased
 * Twitter:
   * Support ISO 8601 formatted created_at timestamps, which the [archive download uses](https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive), as well as RFC 2822 from the API.
+  * `create()` and `preview_create()`: support RSVPs. Tweet them as normal tweets with the RSVP content. ([#](818))
 * Instagram:
   * Add global rate limiting lock for scraping. If a scraping HTTP request gets a 429 or 503 response, we refuse to make more requests for 5m, and instead short circuit and return the same error. This can be overridden with a new `ignore_rate_limit` kwarg to `get_activities()`.
 * GitHub:

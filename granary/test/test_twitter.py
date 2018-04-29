@@ -2273,12 +2273,35 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     obj['content'] = 'X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X'
     created = self.twitter.create(obj)
 
-  def test_create_unsupported_type(self):
+  def test_create_rsvp(self):
+    content = "i'm going to a thing"
+    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={'status': content})
+    self.mox.ReplayAll()
+
+    obj = {
+      'objectType': 'activity',
+      'verb': 'rsvp-yes',
+      'content': content,
+    }
+    result = self.twitter.create(obj)
+
+    preview = self.twitter.preview_create(obj)
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual(content, preview.content)
+
+  def test_create_rsvp_without_content_error(self):
     for fn in self.twitter.create, self.twitter.preview_create:
       result = fn({'objectType': 'activity', 'verb': 'rsvp-yes'})
-      self.assertTrue(result.abort)
-      self.assertIn('Cannot publish RSVPs', result.error_plain)
-      self.assertIn('not supported', result.error_html)
+      self.assertIsNone(result.content)
+      for msg in result.error_plain, result.error_html:
+        self.assertEqual('No content text found.', msg)
+
+  def test_create_unsupported_type_error(self):
+    for fn in self.twitter.create, self.twitter.preview_create:
+      result = fn({'objectType': 'activity', 'verb': 'react'})
+      self.assertIsNone(result.content)
+      for msg in result.error_plain, result.error_html:
+        self.assertIn('Cannot publish type=activity, verb=react', msg)
 
   def test_create_reply_without_in_reply_to(self):
     obj = {

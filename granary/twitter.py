@@ -665,6 +665,7 @@ class Twitter(source.Source):
     base_url = base_obj.get('url')
 
     is_reply = type == 'comment' or 'inReplyTo' in obj
+    is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
     image_urls = [image.get('url') for image in util.get_list(obj, 'image')]
     video_url = util.get_first(obj, 'stream', {}).get('url')
     has_media = (image_urls or video_url) and (type in ('note', 'article') or is_reply)
@@ -694,7 +695,7 @@ class Twitter(source.Source):
       strip_first_video_tag=bool(video_url), strip_quotations=bool(quote_tweet_url))
 
     if not content:
-      if type == 'activity':
+      if type == 'activity' and not is_rsvp:
         content = verb
       elif has_media:
         content = ''
@@ -791,7 +792,7 @@ class Twitter(source.Source):
         resp = self.urlopen(API_POST_RETWEET % base_id, data=data)
         resp['type'] = 'repost'
 
-    elif type in ('note', 'article') or is_reply:  # a tweet
+    elif type in ('note', 'article') or is_reply or is_rsvp:  # a tweet
       content = str(content).encode('utf-8')
       data = [('status', content)]
 
@@ -844,13 +845,6 @@ class Twitter(source.Source):
       else:
         resp = self.urlopen(API_POST_TWEET, data=urllib.parse.urlencode(sorted(data)))
         resp['type'] = 'comment' if is_reply else 'post'
-
-    elif (verb and verb.startswith('rsvp-')) or verb == 'invite':
-      return source.creation_result(
-        abort=True,
-        error_plain='Cannot publish RSVPs to Twitter.',
-        error_html='This looks like an <a href="http://indiewebcamp.com/rsvp">RSVP</a>. '
-        'Publishing events or RSVPs to Twitter is not supported.')
 
     else:
       return source.creation_result(
