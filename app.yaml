@@ -5,8 +5,10 @@
 threadsafe: true
 api_version: 1
 default_expiration: 1h
-
 runtime: python27
+
+includes:
+  - local/lib/python2.7/site-packages/oauth_dropins/webutil/app.common.yaml
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
@@ -57,11 +59,3 @@ handlers:
 - url: /.+
   script: api.application
   secure: always
-
-skip_files:
-- ^(.*/)?.*\.(c|cc|cpp|h|o|py[co]|so)$
-- ^(.*/)?.*/RCS/.*
-- ^(.*/)?\..*
-- ^(.*/)?.*\.bak$
-- ^(.*/)?(\.?coverage|debian|docs?|examples?|l|pydocs?|python3|ref|samples?|TAGS|tests?)/.*
-- ^local/lib/python2.7/site-packages/setuptools/script\ \(dev\)\.tmpl$
