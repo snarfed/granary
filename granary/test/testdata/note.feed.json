@@ -12,7 +12,7 @@
     "url": "http://example.com/blog-post-123",
     "image": "http://example.com/blog-post-123/image",
     "summary": "too cool to summarize",
-    "content_html": "A note. link too",
+    "content_html": "A note. link too<p><img src=\"http://example.com/blog-post-123/image\"/></p>",
     "date_published": "2012-02-22T20:26:41",
     "date_modified": "2013-10-25T10:31:30+00:00",
     "author": {
