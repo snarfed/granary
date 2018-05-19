@@ -57,7 +57,7 @@ class JsonFeedTest(testutil.TestCase):
 
   def test_activities_to_jsonfeed_image_attachment(self):
       self.assert_equals([{
-        'content_text': '',
+        'content_html': '\n<p>\n<img class="u-photo" src="http://pict/ure.jpg" alt="" />\n</p>',
         'attachments': [{
           'url': 'http://pict/ure.jpg',
           'mime_type': 'image/jpeg',
@@ -67,7 +67,9 @@ class JsonFeedTest(testutil.TestCase):
       }], {})['items'])
 
   def test_activities_to_jsonfeed_ignore_other_attachment_types(self):
-      self.assert_equals([{'content_text': ''}], activities_to_jsonfeed([{
+      self.assert_equals([{
+        'content_html': '\n<p>\n<a class="link" href="http://some/one">\n</a>\n</p>'
+      }], activities_to_jsonfeed([{
         'attachments': [{
           'url': 'http://quoted/tweet',
           'objectType': 'note',
