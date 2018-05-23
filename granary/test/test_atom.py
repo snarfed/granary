@@ -1,6 +1,6 @@
 # coding=utf-8
 """Unit tests for atom.py."""
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import copy
 
@@ -10,10 +10,9 @@ from oauth_dropins.webutil import testutil
 import requests
 
 from granary import atom
-
-import test_facebook
-import test_instagram
-import test_twitter
+from granary.test import test_facebook
+from granary.test import test_instagram
+from granary.test import test_twitter
 
 INSTAGRAM_ENTRY_BODY = u"""\
 <author>
