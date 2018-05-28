@@ -620,7 +620,7 @@ class GitHub(source.Source):
             })
             return source.creation_result(resp['addComment']['commentEdge']['node'])
           except ValueError as e:
-            return source.creation_result(abort=True, error_plain=unicode(e))
+            return source.creation_result(abort=True, error_plain=str(e))
 
     return source.creation_result(
       abort=False,
