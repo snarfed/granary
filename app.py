@@ -156,8 +156,11 @@ class UrlHandler(api.Handler):
         _, doc = self._fetch(url)
         return mf2py.parse(doc=doc, url=url)
 
-      actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
-      title = microformats2.get_title(mf2)
+      try:
+        actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
+        title = microformats2.get_title(mf2)
+      except (KeyError, ValueError) as e:
+        raise exc.HTTPBadRequest('Could not parse %s as %s: %s' % (url, input, e))
 
     if input in ('as1', 'activitystreams'):
       activities = body_items

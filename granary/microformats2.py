@@ -914,7 +914,7 @@ def find_author(parsed, **kwargs):
 
 
 def get_title(mf2):
-  """Returns the author of a page as a ActivityStreams actor dict.
+  """Returns an mf2 object's title, ie its name.
 
   Args:
     mf2: dict, parsed mf2 object (ie return value from mf2py.parse())

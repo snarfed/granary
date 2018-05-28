@@ -575,3 +575,27 @@ not atom!
     headers = resp.headers.getall('Link')
     self.assertIn('<http://a/hub>; rel="hub"', headers)
     self.assertIn('<%s>; rel="self"' % self_url, headers)
+
+
+  def test_bad_mf2_json_input_400s(self):
+    """If a user sends JSON Feed input, but claims it's mf2 JSON, return 400.
+
+    https://console.cloud.google.com/errors/COyl7MTulffpuAE
+    """
+    self.expect_requests_get('http://some/jf2', {
+      'data': {
+        'type': 'feed',
+        'items': [{
+          'type': 'entry',
+          'published': '2018-05-24T08:58:44+02:00',
+          'url': 'https://realize.be/notes/1463',
+          'content': {
+            'text': 'foo',
+            'html': '<p>bar</p>',
+        },
+      }],
+    }})
+    self.mox.ReplayAll()
+    resp = app.application.get_response('/url?url=http://some/jf2&input=mf2-json')
+    self.assert_equals(400, resp.status_int)
+
