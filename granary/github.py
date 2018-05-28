@@ -235,7 +235,12 @@ class GitHub(source.Source):
       })
     resp.raise_for_status()
     result = resp.json()
-    assert 'errors' not in result, result
+
+    errs = result.get('errors')
+    if errs:
+      logging.warning(result)
+      raise ValueError('\n'.join(e.get('message') for e in errs))
+
     return result['data']
 
   def rest(self, url, data=None, **kwargs):
@@ -418,7 +423,7 @@ class GitHub(source.Source):
 
     Returns: unicode string, rendered HTML
     """
-    return self.rest (REST_API_MARKDOWN, {
+    return self.rest(REST_API_MARKDOWN, {
       'text': markdown,
       'mode': 'gfm',
       'context': '%s/%s' % (owner, repo),
@@ -480,7 +485,6 @@ class GitHub(source.Source):
       If preview is True, the contents will be a unicode string HTML
       snippet. If False, it will be a dict with 'id' and 'url' keys
       for the newly created GitHub object.
-
     """
     assert preview in (False, True)
 
@@ -609,11 +613,14 @@ class GitHub(source.Source):
           })
 
         else:
-          resp = self.graphql(GRAPHQL_ADD_COMMENT, {
-            'subject_id': issue['id'],
-            'body': content,
-          })
-          return source.creation_result(resp['addComment']['commentEdge']['node'])
+          try:
+            resp = self.graphql(GRAPHQL_ADD_COMMENT, {
+              'subject_id': issue['id'],
+              'body': content,
+            })
+            return source.creation_result(resp['addComment']['commentEdge']['node'])
+          except ValueError as e:
+            return source.creation_result(abort=True, error_plain=unicode(e))
 
     return source.creation_result(
       abort=False,

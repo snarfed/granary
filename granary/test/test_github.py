@@ -795,6 +795,40 @@ class GitHubTest(testutil.TestCase):
       preview.description, preview)
 
   def test_create_comment_without_in_reply_to(self):
+    msg = 'Although you appear to have the correct authorization credentials,\nthe `whatwg` organization has enabled OAuth App access restrictions, meaning that data\naccess to third-parties is limited. For more information on these restrictions, including\nhow to whitelist this app, visit\nhttps://help.github.com/articles/restricting-access-to-your-organization-s-data/\n'
+
+    self.expect_graphql_issue()
+    self.expect_requests_post(
+      GRAPHQL_BASE,
+      headers={'Authorization': 'bearer a-towkin'},
+      json={
+        'query': github.GRAPHQL_ADD_COMMENT % {
+          'subject_id': ISSUE_GRAPHQL['id'],
+          'body': COMMENT_OBJ['content'],
+        },
+      },
+      # status_code=403,
+      response={
+        'errors': [
+          {
+            'path': ['addComment'],
+            'message': msg,
+            'type': 'FORBIDDEN',
+            'locations': [{'column': 3, 'line': 3}],
+          },
+        ],
+        'data': {
+          'addComment': None,
+        },
+      })
+    self.mox.ReplayAll()
+
+    result = self.gh.create(COMMENT_OBJ)
+    self.assertTrue(result.abort)
+    self.assertEquals(msg, result.error_plain)
+
+  def test_create_comment_org_access_forbidden(self):
+    """https://github.com/snarfed/bridgy/issues/824"""
     obj = copy.deepcopy(COMMENT_OBJ)
     obj['inReplyTo'] = [{'url': 'http://foo.com/bar'}]
 
