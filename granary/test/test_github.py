@@ -880,13 +880,21 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_reaction_issue(self):
     self.expect_graphql_issue()
-    self.expect_graphql_add_reaction()
+    self.expect_requests_post(
+      REST_API_REACTIONS % ('foo', 'bar', 123),
+      headers=EXPECTED_HEADERS,
+      json={'content': '+1'},
+      response={
+        'id': 456,
+        'content': '+1',
+        'user': {'login': 'snarfed'},
+      })
     self.mox.ReplayAll()
 
     result = self.gh.create(REACTION_OBJ_INPUT)
     self.assert_equals({
-      'id': 'DEF456',
-      'url': 'https://github.com/foo/bar/pull/123#thumbs_up-by-snarfed',
+      'id': 456,
+      'url': 'https://github.com/foo/bar/pull/123#+1-by-snarfed',
       'type': 'react',
     }, result.content, result)
 

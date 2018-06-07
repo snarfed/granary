@@ -590,6 +590,10 @@ class GitHub(source.Source):
         return source.creation_result(content=preview_content, description=desc)
 
       else:  # create
+        # we originally used the GraphQL API to create issue comments and
+        # reactions, but it often gets rejected against org repos due to access
+        # controls. oddly, the REST API works fine in those same cases.
+        # https://github.com/snarfed/bridgy/issues/824
         if is_reaction:
           if comment_id:
             api_url = REST_API_COMMENT_REACTIONS % (owner, repo, comment_id)
@@ -598,33 +602,28 @@ class GitHub(source.Source):
             }).json()
             url = base_url
           else:
-            resp = self.graphql(GRAPHQL_ADD_REACTION, {
-              'subject_id': issue['id'],
-              'content': REACTIONS_GRAPHQL.get(orig_content),
-            })
-            reacted = resp['addReaction']['reaction']
+            api_url = REST_API_REACTIONS % (owner, repo, number)
+            reacted = self.rest(api_url, data={
+              'content': REACTIONS_REST.get(orig_content),
+            }).json()
             url = '%s#%s-by-%s' % (base_url, reacted['content'].lower(),
                                    reacted['user']['login'])
 
           return source.creation_result({
-            'id': reacted['id'],
+            'id': reacted.get('id'),
             'url': url,
             'type': 'react',
           })
 
         else:
           try:
-            # we originally used the GraphQL API here, but it often gets
-            # rejected against org repos due to access controls. oddly, the REST
-            # API works fine in those same cases.
-            # https://github.com/snarfed/bridgy/issues/824
             api_url = REST_API_COMMENTS % (owner, repo, number)
             commented = self.rest(api_url, data={'body': content}).json()
             return source.creation_result({
-            'id': commented.get('id'),
-            'url': commented.get('html_url'),
-            'type': 'comment',
-          })
+              'id': commented.get('id'),
+              'url': commented.get('html_url'),
+              'type': 'comment',
+            })
           except ValueError as e:
             return source.creation_result(abort=True, error_plain=str(e))
 
