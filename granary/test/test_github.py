@@ -3,6 +3,7 @@
 """
 import copy
 import json
+from unittest import skip
 
 from mox3 import mox
 from oauth_dropins.webutil import testutil
@@ -631,26 +632,20 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_comment(self):
     self.expect_graphql_issue()
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ADD_COMMENT % {
-        'subject_id': ISSUE_GRAPHQL['id'],
+    self.expect_requests_post(
+      REST_API_COMMENTS % ('foo', 'bar', 123), headers=EXPECTED_HEADERS,
+      json={
         'body': 'i have something to say here',
-      },
-    }, response={
-      'addComment': {
-        'commentEdge': {
-          'node': {
-            'id': '456',
-            'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
-          },
-        },
-      },
-    })
+      }, response={
+        'id': 456,
+        'html_url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
+      })
     self.mox.ReplayAll()
 
     result = self.gh.create(COMMENT_OBJ)
     self.assert_equals({
-      'id': '456',
+      'type': 'comment',
+      'id': 456,
       'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
     }, result.content, result)
 
@@ -663,6 +658,7 @@ class GitHubTest(testutil.TestCase):
     self.assertEquals(rendered, preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>:', preview.description, preview)
 
+  @skip('only needed for GraphQL, and we currently use REST to create comments')
   def test_create_comment_escape_quotes(self):
     self.expect_graphql_issue()
     self.expect_graphql(json={
@@ -794,7 +790,8 @@ class GitHubTest(testutil.TestCase):
       '<span class="verb">create a new issue</span> on <a href="https://github.com/foo/bar/issues">foo/bar</a> and attempt to add labels <span class="verb">label 3, label_1</span>:',
       preview.description, preview)
 
-  def test_create_comment_without_in_reply_to(self):
+  @skip('only needed for GraphQL, and we currently use REST to create comments')
+  def test_create_comment_org_access_forbidden(self):
     msg = 'Although you appear to have the correct authorization credentials,\nthe `whatwg` organization has enabled OAuth App access restrictions, meaning that data\naccess to third-parties is limited. For more information on these restrictions, including\nhow to whitelist this app, visit\nhttps://help.github.com/articles/restricting-access-to-your-organization-s-data/\n'
 
     self.expect_graphql_issue()
@@ -827,7 +824,7 @@ class GitHubTest(testutil.TestCase):
     self.assertTrue(result.abort)
     self.assertEquals(msg, result.error_plain)
 
-  def test_create_comment_org_access_forbidden(self):
+  def test_create_comment_without_in_reply_to(self):
     """https://github.com/snarfed/bridgy/issues/824"""
     obj = copy.deepcopy(COMMENT_OBJ)
     obj['inReplyTo'] = [{'url': 'http://foo.com/bar'}]

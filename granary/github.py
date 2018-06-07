@@ -3,6 +3,7 @@
 
 API docs:
 https://developer.github.com/v4/
+https://developer.github.com/v3/
 https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
 """
 from __future__ import absolute_import
@@ -26,7 +27,6 @@ from . import source
 REST_API_BASE = 'https://api.github.com'
 REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues/%s'
 REST_API_CREATE_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
-# currently unused; we use 'comments_url' in the issue or PR instead
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
 REST_API_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/%s/reactions'
 REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
@@ -614,11 +614,17 @@ class GitHub(source.Source):
 
         else:
           try:
-            resp = self.graphql(GRAPHQL_ADD_COMMENT, {
-              'subject_id': issue['id'],
-              'body': content,
-            })
-            return source.creation_result(resp['addComment']['commentEdge']['node'])
+            # we originally used the GraphQL API here, but it often gets
+            # rejected against org repos due to access controls. oddly, the REST
+            # API works fine in those same cases.
+            # https://github.com/snarfed/bridgy/issues/824
+            api_url = REST_API_COMMENTS % (owner, repo, number)
+            commented = self.rest(api_url, data={'body': content}).json()
+            return source.creation_result({
+            'id': commented.get('id'),
+            'url': commented.get('html_url'),
+            'type': 'comment',
+          })
           except ValueError as e:
             return source.creation_result(abort=True, error_plain=str(e))
 
