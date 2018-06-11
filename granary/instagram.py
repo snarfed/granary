@@ -119,10 +119,11 @@ class Instagram(source.Source):
       kwargs: if scraping, passed through to get_activities_response(). Raises
         AssertionError if provided and not scraping.
 
-    Raises: AssertionError, InstagramAPIError
+    Raises: InstagramAPIError
     """
     if user_id is None:
-      assert self.scrape is False, 'get_actor() requires user_id when scraping'
+      if self.scrape:
+        return {}
       user_id = 'self'
 
     if self.scrape:
