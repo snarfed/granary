@@ -122,7 +122,7 @@ All query parameters are optional. `FORMAT` may be `json` (the default), `xml`, 
 
 Errors are returned with the appropriate HTTP response code, e.g. 403 for Unauthorized, with details in the response body.
 
-By default, responses are cached and reused for 5m without re-fetching the source data. (Instagram responses are cached for 60m.) You can prevent this by adding the `cache=false` query parameter to your request.
+By default, responses are cached and reused for 10m without re-fetching the source data. (Instagram responses are cached for 60m.) You can prevent this by adding the `cache=false` query parameter to your request.
 
 To use the REST API in an existing ActivityStreams client, you'll need to hard-code exceptions for the domains you want to use e.g. `facebook.com`, and redirect HTTP requests to the corresponding [endpoint above](#about).
 

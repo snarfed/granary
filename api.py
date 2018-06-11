@@ -53,7 +53,7 @@ XML_TEMPLATE = """\
 <response>%s</response>
 """
 ITEMS_PER_PAGE = 100
-RESPONSE_CACHE_TIME = datetime.timedelta(minutes=5)
+RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
 # default values for each part of the API request path except the site, e.g.
 # /twitter/@me/@self/@all/...
