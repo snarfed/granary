@@ -202,7 +202,7 @@ class Instagram(source.Source):
 
       try:
         return self._scrape(
-          user_id=user_id, group_id=group_id, activity_id=activity_id,
+          user_id=user_id, group_id=group_id, activity_id=activity_id, count=count,
           cookie=cookie, fetch_extras=fetch_replies or fetch_likes, cache=cache)
       except Exception as e:
         code, body = util.interpret_http_exception(e)
@@ -270,12 +270,13 @@ class Instagram(source.Source):
     return self.make_activities_base_response(activities)
 
   def _scrape(self, user_id=None, group_id=None, activity_id=None, cookie=None,
-              fetch_extras=False, cache=None, shortcode=None):
+              count=None, fetch_extras=False, cache=None, shortcode=None):
     """Scrapes a user's profile or feed and converts the media to activities.
 
     Args:
       user_id: string
       activity_id: string, e.g. '1020355224898358984_654594'
+      count: integer, number of activities to fetch and return, None for all
       fetch_extras: boolean
       cookie: string
       shortcode: string, e.g. '4pB6vEx87I'
@@ -305,12 +306,13 @@ class Instagram(source.Source):
       raise requests.HTTPError('401 Unauthorized', response=resp)
     elif resp.status_code == 404:
       if activity_id:
-        return self._scrape(shortcode=activity_id, cookie=cookie)
+        return self._scrape(shortcode=activity_id, cookie=cookie, count=count)
       # otherwise not found, fall through and return empty response
     else:
       resp.raise_for_status()
 
-    activities, actor = self.html_to_activities(resp.text, cookie=cookie)
+    activities, actor = self.html_to_activities(resp.text, cookie=cookie,
+                                                count=count)
 
     if fetch_extras and not activity_id:
       # batch get cached counts of comments and likes for all activities
@@ -337,7 +339,8 @@ class Instagram(source.Source):
           url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
           resp = util.requests_get(url)
           resp.raise_for_status()
-          full_activity, _ = self.html_to_activities(resp.text, cookie=cookie)
+          full_activity, _ = self.html_to_activities(resp.text, cookie=cookie,
+                                                     count=count)
           if full_activity:
             activities[i] = full_activity[0]
             cache_updates.update({likes_key: likes, comments_key: comments})
@@ -752,7 +755,7 @@ class Instagram(source.Source):
 
     return ''.join(reversed(chars))
 
-  def html_to_activities(self, html, cookie=None):
+  def html_to_activities(self, html, cookie=None, count=None):
     """Converts Instagram HTML to ActivityStreams activities.
 
     The input HTML may be from:
@@ -765,6 +768,7 @@ class Instagram(source.Source):
       html: unicode string
       cookie: string, optional sessionid cookie to be used for subsequent HTTP
         fetches, if necessary.
+      count: integer, number of activities to return, None for all
 
     Returns:
       tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
@@ -849,6 +853,8 @@ class Instagram(source.Source):
                     .get('edge_web_feed_timeline', {}).get('edges', [])
         medias = [e.get('node') for e in edges]
 
+    if count:
+      medias = medias[:count]
     for media in util.trim_nulls(medias):
       activities.append(self._json_media_node_to_activity(media, user=profile_user))
 

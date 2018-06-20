@@ -52,7 +52,8 @@ XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>%s</response>
 """
-ITEMS_PER_PAGE = 100
+ITEMS_PER_PAGE_MAX = 100
+ITEMS_PER_PAGE_DEFAULT = 10
 RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
 # default values for each part of the API request path except the site, e.g.
@@ -251,9 +252,9 @@ class Handler(handlers.ModernHandler):
     count = self.get_positive_int('count')
 
     if count == 0:
-      count = ITEMS_PER_PAGE - start_index
+      count = ITEMS_PER_PAGE_DEFAULT - start_index
     else:
-      count = min(count, ITEMS_PER_PAGE)
+      count = min(count, ITEMS_PER_PAGE_MAX)
 
     kwargs = {'start_index': start_index, 'count': count}
 

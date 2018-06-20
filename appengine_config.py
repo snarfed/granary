@@ -14,3 +14,15 @@ from granary.appengine_config import *
 # http://stackoverflow.com/questions/34574740
 from requests_toolbelt.adapters import appengine
 appengine.monkeypatch()
+
+def webapp_add_wsgi_middleware(app):
+  # # uncomment for app stats
+  # appstats_CALC_RPC_COSTS = True
+  # from google.appengine.ext.appstats import recording
+  # app = recording.appstats_wsgi_middleware(app)
+
+  # # uncomment for instance_info concurrent requests recording
+  # from oauth_dropins.webutil import instance_info
+  # app = instance_info.concurrent_requests_wsgi_middleware(app)
+
+  return app

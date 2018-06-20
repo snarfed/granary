@@ -44,7 +44,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
 
   def get_response(self, url, *args, **kwargs):
     start_index = kwargs.setdefault('start_index', 0)
-    kwargs.setdefault('count', api.ITEMS_PER_PAGE)
+    kwargs.setdefault('count', api.ITEMS_PER_PAGE_DEFAULT)
 
     FakeSource.get_activities_response(*args, **kwargs).AndReturn({
         'startIndex': start_index,
@@ -229,7 +229,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
     self.assertEquals(400, resp.status_int)
 
   def test_start_index(self):
-    expected_count = api.ITEMS_PER_PAGE - 2
+    expected_count = api.ITEMS_PER_PAGE_DEFAULT - 2
     self.check_request('?startIndex=2', start_index=2, count=expected_count)
 
   def test_count(self):
@@ -239,13 +239,15 @@ class HandlerTest(testutil_appengine.HandlerTest):
     self.check_request('?startIndex=4&count=5', start_index=4, count=5)
 
   def test_count_greater_than_items_per_page(self):
-    self.check_request('?count=999', count=api.ITEMS_PER_PAGE)
+    self.check_request('?count=999', count=api.ITEMS_PER_PAGE_MAX)
 
   def test_cache(self):
-    FakeSource.get_activities_response('123', None, start_index=0, count=100,
-                                      ).AndReturn({'items': ['x']})
-    FakeSource.get_activities_response('123', None, start_index=0, count=100,
-                                      ).AndReturn({'items': ['a']})
+    FakeSource.get_activities_response(
+      '123', None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT,
+    ).AndReturn({'items': ['x']})
+    FakeSource.get_activities_response(
+      '123', None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT,
+    ).AndReturn({'items': ['a']})
     self.mox.ReplayAll()
 
     # first fetches populate the cache. make sure query params are included in
@@ -268,7 +270,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
 
   def test_get_activities_connection_error(self):
     FakeSource.get_activities_response(
-      None, start_index=0, count=api.ITEMS_PER_PAGE
+      None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT
     ).AndRaise(socket.timeout(''))
     self.mox.ReplayAll()
     resp = api.application.get_response('/fake/@me')
