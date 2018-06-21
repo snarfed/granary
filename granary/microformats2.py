@@ -824,8 +824,9 @@ def render_content(obj, include_location=True, synthesize_content=True,
     break
 
   if render_attachments and obj.get('verb') == 'share':
-    atts = [a for a in obj.get('object', {}).get('attachments', [])
-            if a.get('objectType') not in ('note', 'article')]
+    atts = [att for att in itertools.chain.from_iterable(
+              o.get('attachments', []) for o in util.get_list(obj, 'object'))
+            if att.get('objectType') not in ('note', 'article')]
     content += _render_attachments(atts, obj)
 
   # location

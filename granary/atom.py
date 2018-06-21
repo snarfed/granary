@@ -145,8 +145,12 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   for a in activities:
     _prepare_activity(a, reader=reader)
 
+  updated = (util.get_first(activities[0], 'object', default={}).get('published', '')
+             if activities else '')
+
   if actor is None:
     actor = {}
+
   return jinja_env.get_template(FEED_TEMPLATE).render(
     actor=Defaulter(actor),
     host_url=host_url,
@@ -155,7 +159,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     rels=rels or {},
     request_url=request_url,
     title=title or 'User feed for ' + source.Source.actor_name(actor),
-    updated=activities[0]['object'].get('published', '') if activities else '',
+    updated=updated,
     VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
     xml_base=xml_base,
   )
@@ -349,11 +353,8 @@ def _prepare_activity(a, reader=True):
       Currently just includes location if True, not otherwise.
   """
   act_type = source.object_type(a)
-  if not act_type or act_type == 'post':
-    primary = a.get('object', {})
-  else:
-    primary = a
-  obj = a.setdefault('object', {})
+  obj = util.get_first(a, 'object', default={})
+  primary = obj if (not act_type or act_type == 'post') else a
 
   # Render content as HTML; escape &s
   obj['rendered_content'] = _encode_ampersands(microformats2.render_content(

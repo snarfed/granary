@@ -845,3 +845,24 @@ going to Homebrew Website Club
     self.assertEqual(6, d['g']['3'][1])
     self.assertEqual(empty, d['g']['3'][2]['9'])
     self.assertEqual(empty, d['g']['3'][2]['7'][0]['9'])
+
+  def test_multiple_objects_uses_first(self):
+    activity = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'url': 'https://martymcgui.re/2018/06/20/162314/',
+      'object': [{
+        'url': 'https://jonathanprozzi.net/indieweb/homebrew-website-club-baltimore-wednesday-june-27-2018/'
+      }, {
+        'objectType': 'note',
+        'displayName': 'Homebrew Website Club Baltimore: Wednesday June 27, 2018',
+        'url': 'https://jonathanprozzi.net/indieweb/homebrew-website-club-baltimore-wednesday-june-27-2018/'
+      }]
+    }
+    self.assert_multiline_in("""
+<content type="xhtml">
+<div xmlns="http://www.w3.org/1999/xhtml">
+<a href="https://jonathanprozzi.net/indieweb/homebrew-website-club-baltimore-wednesday-june-27-2018/">shared this.</a>
+</div>
+</content>
+""", atom.activities_to_atom([activity], {}), ignore_blanks=True)

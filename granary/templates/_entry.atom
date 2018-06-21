@@ -1,5 +1,5 @@
-{% set obj = activity.object %}
-{% set actor = activity.actor or activity.object.author %}
+{% set obj = activity.object if activity.object is mapping else activity.object[0] %}
+{% set actor = activity.actor or obj.author %}
 {% include "author.atom" %}
 
   {% if obj.objectType %}

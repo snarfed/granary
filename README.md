@@ -478,6 +478,9 @@ This release is intentionally small and limited in scope to contain any impact o
     hashtags, and comment text.
 * Atom:
     * Bug fix: escape &s in attachments' text (e.g. quote tweets).
+    * Bug fix: handle multiply valued 'object' fields in ActivityStreams 1 activities.
+* GitHub:
+    * Switch creating comments and reactions from GraphQL to REST API ([bridgy#824](https://github.com/snarfed/bridgy/issues/824).
 
 ### 1.4.1 - 2016-06-27
 * Bump oauth-dropins requirement to 1.4.
