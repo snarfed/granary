@@ -136,7 +136,7 @@ ATOM_CONTENT = """\
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       xml:base="http://my/">
-<generator uri="https://github.com/snarfed/granary">granary</generator>
+<generator uri="https://granary.io/">granary</generator>
 <id>http://my/posts.html</id>
 <title>my title</title>
 
@@ -148,6 +148,7 @@ ATOM_CONTENT = """\
  <name>My Name</name>
 </author>
 
+<link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
 <link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
@@ -348,6 +349,7 @@ class AppTest(testutil_appengine.HandlerTest):
  <name>Someone Else</name>
 </author>
 
+<link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="http://my/author" type="text/html" />
 <link rel="avatar" href="http://someone/picture" />
 <link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
@@ -380,6 +382,7 @@ class AppTest(testutil_appengine.HandlerTest):
  <uri>https://plus.google.com/+Author</uri>
 </author>
 
+<link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="https://plus.google.com/+Author" type="text/html" />
 <link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 

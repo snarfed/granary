@@ -378,6 +378,7 @@ This release is intentionally small and limited in scope to contain any impact o
 * Atom:
   * Add `atom_to_activities()` for converting full feed documents.
   * Add to REST API and web UI.
+  * Include source URL in `rel=alternate` link as well as actor/author URL ([#151](https://github.com/snarfed/granary/issues/151)).
 * JSON Feed:
   * Fix bug that omitted title in some cases ([#122](https://github.com/snarfed/granary/issues/122)).
 

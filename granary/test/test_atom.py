@@ -503,7 +503,7 @@ quoted tweet with photo
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       xml:base="https://my.site/">
-<generator uri="https://github.com/snarfed/granary">granary</generator>
+<generator uri="https://granary.io/">granary</generator>
 <id>https://my.site/feed</id>
 <title>my title</title>
 
@@ -515,6 +515,7 @@ quoted tweet with photo
  <name>My Name</name>
 </author>
 
+<link rel="alternate" href="https://my.site/feed" type="text/html" />
 <link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
 <link rel="self" href="https://my.site/feed" type="application/atom+xml" />
@@ -620,6 +621,7 @@ going to Homebrew Website Club
 <name>Tantek Çelik</name>
 </author>
 
+<link rel="alternate" href="https://my.site/" type="text/html" />
 <link rel="alternate" href="https://my.site/author" type="text/html" />
 <link rel="avatar" href="https://my.site/photo.jpg" />
 <link rel="self" href="https://my.site/" type="application/atom+xml" />
@@ -634,7 +636,7 @@ going to Homebrew Website Club
 
   def test_html_to_atom_title_without_hfeed_name(self):
     self.assert_multiline_in("""\
-<generator uri="https://github.com/snarfed/granary">granary</generator>
+<generator uri="https://granary.io/">granary</generator>
 <id>https://my.site/feed</id>
 <title>unmarked feed title</title>
 """, atom.html_to_atom("""\

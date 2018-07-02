@@ -6,7 +6,7 @@
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       {% if xml_base %}xml:base="{{ xml_base }}"{% endif %}>
-<generator uri="https://github.com/snarfed/granary">granary</generator>
+<generator uri="https://granary.io/">granary</generator>
 <id>{{ host_url }}</id>
 <title>{{ title }}</title>
 {% if actor.description %}
@@ -18,7 +18,10 @@
 <updated>{{ updated }}</updated>
 {% include "author.atom" %}
 
+<link rel="alternate" href="{{ host_url }}" type="text/html" />
+{% if actor.url and actor.url != host_url %}
 <link rel="alternate" href="{{ actor.url }}" type="text/html" />
+{% endif %}
 {% if actor.image.url %}
 <link rel="avatar" href="{{ actor.image.url }}" />
 {% endif %}
