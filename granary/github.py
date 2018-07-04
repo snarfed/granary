@@ -27,6 +27,7 @@ from . import source
 REST_API_BASE = 'https://api.github.com'
 REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues/%s'
 REST_API_CREATE_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
+REST_API_ISSUE_LABELS = REST_API_BASE + '/repos/%s/%s/issues/%s/labels'
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
 REST_API_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/%s/reactions'
 REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
@@ -537,12 +538,7 @@ class GitHub(source.Source):
       else:  # new issue
         title = util.ellipsize(obj.get('displayName') or obj.get('title') or
                                orig_content)
-        labels_resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
-        existing_labels = set(node['name'] for node in
-                              labels_resp['repository']['labels']['nodes'])
-        labels = set(util.trim_nulls(
-          tag.get('displayName', '').strip() for tag in obj.get('tags', [])))
-        labels = sorted(labels & existing_labels)
+        labels = self.existing_labels(obj.get('tags', []), owner, repo)
 
         if preview:
           preview_content = '<b>%s</b><hr>%s' % (
@@ -630,6 +626,20 @@ class GitHub(source.Source):
     return source.creation_result(
       abort=False,
       error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
+
+  def existing_labels(self, tags, owner, repo):
+    """Returns a subset of tags that exist as labels on a repo.
+
+    Args:
+      tags: sequence of strings
+      owner: string, GitHub username or org that owns the repo
+      repo: string
+    """
+    labels_resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
+    existing_labels = set(node['name'] for node in
+                          labels_resp['repository']['labels']['nodes'])
+    labels = set(util.trim_nulls(t.get('displayName', '').strip() for t in tags))
+    return sorted(labels & existing_labels)
 
   @classmethod
   def issue_to_object(cls, issue):
