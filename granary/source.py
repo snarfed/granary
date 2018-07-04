@@ -814,12 +814,8 @@ class Source(with_metaclass(SourceMeta, object)):
     # singular, but microformats2.json_to_object() sometimes returns activities
     # that have a list value, e.g. likes or reposts of multiple objects.
     candidates = []
-    for field in ('inReplyTo', 'object'):
-      objs = obj.get(field, [])
-      if isinstance(objs, dict):
-        candidates.append(objs)
-      else:
-        candidates += objs
+    for field in ('inReplyTo', 'object', 'target'):
+      candidates += util.get_list(obj, field)
 
     for base_obj in candidates:
       parsed_id = util.parse_tag_uri(base_obj.get('id', ''))

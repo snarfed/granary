@@ -375,6 +375,17 @@ class SourceTest(testutil.TestCase):
     self.assert_equals({'id': 'second', 'url': 'http://fake.com/second/'},
                        self.source.base_object(like))
 
+  def test_base_object_tag(self):
+    self.assert_equals({
+      'id': 'taggee',
+      'url': 'http://fake.com/taggee',
+    }, self.source.base_object({
+      'objectType': 'activity',
+      'verb': 'tag',
+      'object': {'displayName': 'one'},
+      'target': {'url': 'http://fake.com/taggee'},
+    }))
+
   def test_content_for_create(self):
     def cfc(base, extra, **kwargs):
       obj = base.copy()
