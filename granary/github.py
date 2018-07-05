@@ -634,7 +634,11 @@ class GitHub(source.Source):
             ('s' if len(labels) > 1 else ''), ', '.join(labels), issue_link))
       else:
         resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels).json()
-        return source.creation_result(resp)
+        return source.creation_result({
+          'id': resp.get('id'),
+          'url': base_url,
+          'type': 'tag',
+        })
 
     else:  # new issue
       if not (len(path) == 2 or (len(path) == 3 and path[2] == 'issues')):

@@ -960,7 +960,11 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.gh.create(TAG_ACTIVITY)
-    self.assert_equals(resp, result.content, result)
+    self.assert_equals({
+      'id': 'DEF456',
+      'url': 'https://github.com/foo/bar/issues/456',
+      'type': 'tag',
+    }, result.content, result)
 
   def test_preview_add_label(self):
     self.expect_graphql_get_labels(['one', 'two'])
