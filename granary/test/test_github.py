@@ -991,4 +991,4 @@ class GitHubTest(testutil.TestCase):
     activity['object'] = [{'displayName': 'three'}]
     result = self.gh.create(activity)
     self.assertTrue(result.abort)
-    self.assertEquals("""No tags in [three] matched <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>'s existing labels [two, one].""", result.error_html, result)
+    self.assertEquals("""No tags in [three] matched <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>'s existing labels [one, two].""", result.error_html, result)

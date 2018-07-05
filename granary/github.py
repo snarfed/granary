@@ -626,7 +626,7 @@ class GitHub(source.Source):
         return source.creation_result(
           abort=True,
           error_html="No tags in [%s] matched %s's existing labels [%s]." %
-            (', '.join(tags), issue_link, ', '.join(existing_labels)))
+            (', '.join(sorted(tags)), issue_link, ', '.join(sorted(existing_labels))))
 
       if preview:
         return source.creation_result(
