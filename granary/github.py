@@ -490,7 +490,8 @@ class GitHub(source.Source):
     assert preview in (False, True)
 
     type = source.object_type(obj)
-    if type and type not in ('issue', 'comment', 'activity', 'note', 'article', 'like'):
+    if type and type not in ('issue', 'comment', 'activity', 'note', 'article',
+                             'like', 'tag'):
       return source.creation_result(
         abort=False, error_plain='Cannot publish %s to GitHub' % type)
 
@@ -511,6 +512,8 @@ class GitHub(source.Source):
     parsed = urllib.parse.urlparse(base_url)
     path = parsed.path.strip('/').split('/')
     owner, repo = path[:2]
+    if len(path) == 4:
+      number = path[3]
 
     comment_id = re.match(r'^issuecomment-([0-9]+)$', parsed.fragment)
     if comment_id:
@@ -518,50 +521,14 @@ class GitHub(source.Source):
     elif parsed.fragment:
       return source.creation_result(
         abort=True,
-        error_plain='You need an in-reply-to GitHub repo, issue, PR, or comment URL.')
+        error_plain='Please remove the fragment #%s from your in-reply-to URL.' %
+          parsed.fragment)
 
-    if len(path) == 2 or (len(path) == 3 and path[2] == 'issues'):
-      if type == 'like':  # star
-        if preview:
-          return source.creation_result(description="""\
-<span class="verb">star</span> <a href="%s">%s/%s</a>.""" %
-              (base_url, owner, repo))
-        else:
-          issue = self.graphql(GRAPHQL_REPO, locals())
-          resp = self.graphql(GRAPHQL_ADD_STAR, {
-            'starrable_id': issue['repository']['id'],
-          })
-          return source.creation_result({
-            'url': base_url + '/stargazers',
-          })
+    if type == 'comment':  # comment or reaction
+      if not (len(path) == 4 and path[2] in ('issues', 'pull')):
+        return source.creation_result(
+          abort=True, error_plain='GitHub comment requires in-reply-to issue or PR URL.')
 
-      else:  # new issue
-        title = util.ellipsize(obj.get('displayName') or obj.get('title') or
-                               orig_content)
-        labels = self.existing_labels(obj.get('tags', []), owner, repo)
-
-        if preview:
-          preview_content = '<b>%s</b><hr>%s' % (
-            title, self.render_markdown(content, owner, repo))
-          preview_labels = ''
-          if labels:
-            preview_labels = ' and attempt to add label%s <span class="verb">%s</span>' % (
-              's' if len(labels) > 1 else '', ', '.join(labels))
-          return source.creation_result(content=preview_content, description="""\
-  <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>%s:""" %
-              (base_url, owner, repo, preview_labels))
-        else:
-          resp = self.rest(REST_API_CREATE_ISSUE % (owner, repo), {
-            'title': title,
-            'body': content,
-            'labels': labels,
-          }).json()
-          resp['url'] = resp.pop('html_url')
-          return source.creation_result(resp)
-
-    elif len(path) == 4 and path[2] in ('issues', 'pull'):
-      # comment or reaction
-      owner, repo, _, number = path
       if comment_id:
         comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id)).json()
       is_reaction = orig_content in REACTIONS_GRAPHQL
@@ -623,23 +590,97 @@ class GitHub(source.Source):
           except ValueError as e:
             return source.creation_result(abort=True, error_plain=str(e))
 
+    elif type == 'like':  # star
+      if not (len(path) == 2 or (len(path) == 3 and path[2] == 'issues')):
+        return source.creation_result(
+          abort=True, error_plain='GitHub like requires in-reply-to repo URL.')
+
+      if preview:
+        return source.creation_result(
+          description='<span class="verb">star</span> <a href="%s">%s/%s</a>.' %
+            (base_url, owner, repo))
+      else:
+        issue = self.graphql(GRAPHQL_REPO, locals())
+        resp = self.graphql(GRAPHQL_ADD_STAR, {
+          'starrable_id': issue['repository']['id'],
+        })
+        return source.creation_result({
+          'url': base_url + '/stargazers',
+        })
+
+    elif type == 'tag':  # add label
+      if not (len(path) == 4 and path[2] in ('issues', 'pull')):
+        return source.creation_result(
+          abort=True, error_plain='GitHub tag post requires tag-of issue or PR URL.')
+
+      tags = set(util.trim_nulls(t.get('displayName', '').strip()
+                                 for t in util.get_list(obj, 'object')))
+      if not tags:
+        return source.creation_result(
+          abort=True, error_plain='No tags found in tag post!')
+
+      existing_labels = self.existing_labels(owner, repo)
+      labels = sorted(tags & existing_labels)
+      issue_link = '<a href="%s">%s/%s#%s</a>' % (base_url, owner, repo, number)
+      if not labels:
+        return source.creation_result(
+          abort=True,
+          error_html="No tags in [%s] matched %s's existing labels [%s]." %
+            (', '.join(tags), issue_link, ', '.join(existing_labels)))
+
+      if preview:
+        return source.creation_result(
+          description='add label%s <span class="verb">%s</span> to %s.' % (
+            ('s' if len(labels) > 1 else ''), ', '.join(labels), issue_link))
+      else:
+        resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels).json()
+        return source.creation_result(resp)
+
+    else:  # new issue
+      if not (len(path) == 2 or (len(path) == 3 and path[2] == 'issues')):
+        return source.creation_result(
+          abort=True, error_plain='New GitHub issue requires in-reply-to repo URL')
+
+      title = util.ellipsize(obj.get('displayName') or obj.get('title') or
+                             orig_content)
+      tags = set(util.trim_nulls(t.get('displayName', '').strip()
+                                 for t in util.get_list(obj, 'tags')))
+      labels = sorted(tags & self.existing_labels(owner, repo))
+
+      if preview:
+        preview_content = '<b>%s</b><hr>%s' % (
+          title, self.render_markdown(content, owner, repo))
+        preview_labels = ''
+        if labels:
+          preview_labels = ' and attempt to add label%s <span class="verb">%s</span>' % (
+            's' if len(labels) > 1 else '', ', '.join(labels))
+        return source.creation_result(content=preview_content, description="""\
+<span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>%s:""" %
+            (base_url, owner, repo, preview_labels))
+      else:
+        resp = self.rest(REST_API_CREATE_ISSUE % (owner, repo), {
+          'title': title,
+          'body': content,
+          'labels': labels,
+        }).json()
+        resp['url'] = resp.pop('html_url')
+        return source.creation_result(resp)
+
     return source.creation_result(
       abort=False,
       error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
 
-  def existing_labels(self, tags, owner, repo):
-    """Returns a subset of tags that exist as labels on a repo.
+  def existing_labels(self, owner, repo):
+    """Fetches and returns a repo's labels.
 
     Args:
-      tags: sequence of strings
       owner: string, GitHub username or org that owns the repo
       repo: string
+
+    Returns: set of strings
     """
-    labels_resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
-    existing_labels = set(node['name'] for node in
-                          labels_resp['repository']['labels']['nodes'])
-    labels = set(util.trim_nulls(t.get('displayName', '').strip() for t in tags))
-    return sorted(labels & existing_labels)
+    resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
+    return set(node['name'] for node in resp['repository']['labels']['nodes'])
 
   @classmethod
   def issue_to_object(cls, issue):

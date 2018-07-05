@@ -18,6 +18,7 @@ from granary.github import (
   REST_API_COMMENT_REACTIONS,
   REST_API_COMMENTS,
   REST_API_ISSUE,
+  REST_API_ISSUE_LABELS,
   REST_API_NOTIFICATIONS,
   REST_API_REACTIONS,
 )
@@ -321,6 +322,15 @@ STAR_OBJ = {
   'verb': 'like',
   'object': {'url': 'https://github.com/foo/bar'},
 }
+TAG_ACTIVITY = {
+  'objectType': 'activity',
+  'verb': 'tag',
+  'object': [
+    {'displayName': 'one'},
+    {'displayName': 'three'},
+  ],
+  'target': {'url': 'https://github.com/foo/bar/issues/456'},
+}
 NOTIFICATION_PULL_REST = {  # GitHub
   'id': '302190598',
   'unread': False,
@@ -346,6 +356,8 @@ EXPECTED_HEADERS = {
   'Authorization': 'token a-towkin',
   'Accept': 'application/vnd.github.squirrel-girl-preview+json',
 }
+
+
 class GitHubTest(testutil.TestCase):
 
   def setUp(self):
@@ -842,7 +854,7 @@ class GitHubTest(testutil.TestCase):
     for fn in (self.gh.preview_create, self.gh.create):
       result = fn(obj)
       self.assertTrue(result.abort)
-      self.assertIn('You need an in-reply-to GitHub repo, issue, PR, or comment URL.',
+      self.assertIn('Please remove the fragment #bad-456 from your in-reply-to URL.',
                     result.error_plain)
 
   def test_create_star(self):
@@ -932,4 +944,47 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
-    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123#issuecomment-456">a comment on foo/bar#123, <em>i have something to say here</em></a>.', preview.description)
+    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123#issuecomment-456">a comment on foo/bar#123, <em>i have something to say here</em></a>.', preview.description, preview)
+
+  def test_create_add_label(self):
+    self.expect_graphql_get_labels(['one', 'two'])
+    resp = {
+      'id': 'DEF456',
+      'node_id': 'MDU6TGFiZWwyMDgwNDU5NDY=',
+      'name': 'an issue',
+      # ¯\_(ツ)_/¯ https://developer.github.com/v3/issues/labels/#add-labels-to-an-issue
+      'default': True,
+    }
+    self.expect_requests_post(REST_API_ISSUE_LABELS % ('foo', 'bar', 456),
+                              headers=EXPECTED_HEADERS, json=['one'], response=resp)
+    self.mox.ReplayAll()
+
+    result = self.gh.create(TAG_ACTIVITY)
+    self.assert_equals(resp, result.content, result)
+
+  def test_preview_add_label(self):
+    self.expect_graphql_get_labels(['one', 'two'])
+    self.mox.ReplayAll()
+
+    preview = self.gh.preview_create(TAG_ACTIVITY)
+    self.assertIsNone(preview.error_plain, preview)
+    self.assertEquals(
+      'add label <span class="verb">one</span> to <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>.',
+      preview.description, preview)
+
+  def test_create_add_label_no_tags(self):
+    activity = copy.deepcopy(TAG_ACTIVITY)
+    activity['object'] = []
+    result = self.gh.create(activity)
+    self.assertTrue(result.abort)
+    self.assertEquals('No tags found in tag post!', result.error_plain)
+
+  def test_create_add_label_no_matching(self):
+    self.expect_graphql_get_labels(['one', 'two'])
+    self.mox.ReplayAll()
+
+    activity = copy.deepcopy(TAG_ACTIVITY)
+    activity['object'] = [{'displayName': 'three'}]
+    result = self.gh.create(activity)
+    self.assertTrue(result.abort)
+    self.assertEquals("""No tags in [three] matched <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>'s existing labels [two, one].""", result.error_html, result)

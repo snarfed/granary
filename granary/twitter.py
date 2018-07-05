@@ -226,7 +226,7 @@ class Twitter(source.Source):
     get_activities(user_id='exampleuser', group_id='example-list').
 
     Twitter replies default to including a mention of the user they're replying
-    to, which overloads mentions a bit. When fetch_shares is True, we determine
+    to, which overloads mentions a bit. When fetch_mentions is True, we determine
     that a tweet mentions the current user if it @-mentions their username and:
 
     * it's not a reply, OR
