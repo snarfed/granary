@@ -13,6 +13,7 @@ from granary import appengine_config
 from granary import github
 from granary.github import (
   GRAPHQL_BASE,
+  GRAPHQL_COMMENT,
   REACTIONS_REST_CHARS,
   REST_API_COMMENT,
   REST_API_COMMENT_REACTIONS,
@@ -87,6 +88,7 @@ ACTOR = {  # ActivityStreams
   'urls': [
     {'value': 'https://snarfed.org/'},
     {'value': 'https://brid.gy/'},
+    {'value': 'https://github.com/snarfed'},
   ],
   'username': 'snarfed',
   'email': 'github@ryanb.org',
@@ -613,10 +615,19 @@ class GitHubTest(testutil.TestCase):
   def test_issue_to_object_empty(self):
     self.assert_equals({}, self.gh.issue_to_object({}))
 
-  def test_get_comment(self):
+  def test_get_comment_rest(self):
     self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 123), COMMENT_REST)
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo:bar:123'))
+
+  def test_get_comment_graphql(self):
+    self.expect_graphql(json={'query': GRAPHQL_COMMENT % {'id': 'abc'}},
+                        response={'node': COMMENT_GRAPHQL})
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(COMMENT_OBJ)
+    obj['id'] = 'tag:github.com:foo:bar:MDEwOlNQ=='
+    self.assert_equals(obj, self.gh.get_comment('foo:bar:abc'))
 
   def test_get_activities_bad_comment_id(self):
     for bad in 'no_colons', 'one:colon', 'fo:ur:col:ons':

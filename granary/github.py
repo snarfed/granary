@@ -35,7 +35,9 @@ REST_API_COMMENT_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/comments/%s/re
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
 REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
 GRAPHQL_BASE = 'https://api.github.com/graphql'
-GRAPHQL_USER_FIELDS = 'id avatarUrl bio company createdAt location login name websiteUrl' # not email, it requires an additional oauth scope
+GRAPHQL_BOT_FIELDS = 'id avatarUrl createdAt login url'
+GRAPHQL_ORG_FIELDS = 'id avatarUrl description location login name url websiteUrl'
+GRAPHQL_USER_FIELDS = 'id avatarUrl bio company createdAt location login name url websiteUrl' # not email, it requires an additional oauth scope
 GRAPHQL_USER = """
 query {
   user(login: "%(login)s") {
@@ -113,7 +115,14 @@ query {
 GRAPHQL_COMMENT = """
 query {
   node(id:"%(id)s") {
-    ... on IssueComment {body}
+    ... on IssueComment {
+      id url body createdAt
+      author {
+        ... on Bot {""" + GRAPHQL_BOT_FIELDS + """}
+        ... on Organization {""" + GRAPHQL_ORG_FIELDS + """}
+        ... on User {""" + GRAPHQL_USER_FIELDS + """}
+      }
+    }
   }
 }
 """
@@ -399,8 +408,8 @@ class GitHub(source.Source):
     """Fetches and returns a comment.
 
     Args:
-      comment_id: string comment id, of the form REPO-OWNER_REPO-NAME_ID,
-        e.g. snarfed:bridgy:456789
+      comment_id: string comment id (either REST or GraphQL), of the form
+        REPO-OWNER_REPO-NAME_ID, e.g. snarfed:bridgy:456789
 
     Returns: dict, an ActivityStreams comment object
     """
@@ -408,7 +417,11 @@ class GitHub(source.Source):
     if len(parts) != 3:
       raise ValueError('GitHub comment ids must be of the form USER:REPO:COMMENT_ID')
 
-    comment = self.rest(REST_API_COMMENT % parts).json()
+    if util.is_int(parts[2]):  # REST API id
+      comment = self.rest(REST_API_COMMENT % parts).json()
+    else:  # GraphQL node id
+      comment = self.graphql(GRAPHQL_COMMENT, {'id': parts[2]})['node']
+
     return self.comment_to_object(comment)
 
   def render_markdown(self, markdown, owner, repo):
@@ -808,7 +821,7 @@ class GitHub(source.Source):
       return actor
 
     username = user.get('login')
-    bio = user.get('bio')
+    desc = user.get('bio') or user.get('description')
 
     actor.update({
       # TODO: orgs, bots
@@ -816,18 +829,21 @@ class GitHub(source.Source):
       'displayName': user.get('name') or username,
       'username': username,
       'email': user.get('email'),
-      'description': bio,
-      'summary': bio,
-      'image': {'url': user.get('avatarUrl') or user.get('avatar_url')},
+      'description': desc,
+      'summary': desc,
+      'image': {'url': user.get('avatarUrl') or user.get('avatar_url') or user.get('url')},
       'location': {'displayName': user.get('location')},
     })
 
     # extract web site links. extract_links uniquifies and preserves order
-    urls = sum((util.extract_links(user.get(field)) for field in
-                ('websiteUrl',  # GraphQL
-                 'blog',  # REST
-                 'bio',   # both
-                )), [])
+    urls = sum((util.extract_links(user.get(field)) for field in (
+      'websiteUrl',  # GraphQL
+      'blog',  # REST
+      'bio',   # both
+      'html_url',  # REST
+      'url',  # both
+    )), [])
+    urls = [u for u in urls if util.domain_from_link(u) != 'api.github.com']
     if urls:
       actor['url'] = urls[0]
       if len(urls) > 1:
