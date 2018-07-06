@@ -648,9 +648,9 @@ class GitHub(source.Source):
       else:
         resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels).json()
         return source.creation_result({
-          'id': resp.get('id'),
           'url': base_url,
           'type': 'tag',
+          'tags': labels,
         })
 
     else:  # new issue

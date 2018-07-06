@@ -46,7 +46,7 @@ $attachments
 $event_times
 $location
 $categories
-$in_reply_tos
+$links
 $children
 $comments
 </article>
@@ -59,7 +59,7 @@ HCARD = string.Template("""\
     $photos
   </span>
 """)
-IN_REPLY_TO = string.Template('  <a class="u-in-reply-to" href="$url"></a>')
+LINK = string.Template('  <a class="u-$cls" href="$url"></a>')
 AS_TO_MF2_TYPE = {
   'event': ['h-event'],
   'person': ['h-card'],
@@ -76,6 +76,7 @@ MF2_TO_AS_TYPE_VERB = {
   'reply': ('comment', None),
   'repost': ('activity', 'share'),
   'rsvp': ('activity', None),  # json_to_object() will generate verb from rsvp
+  'tag': ('activity', 'tag'),
 }
 # ISO 6709 location string. http://en.wikipedia.org/wiki/ISO_6709
 ISO_6709_RE = re.compile(r'^([-+][0-9.]+)([-+][0-9.]+).*/$')
@@ -198,8 +199,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   summary = primary.get('summary')
   author = obj.get('author', obj.get('actor', {}))
 
-  in_reply_tos = obj.get(
-    'inReplyTo', obj.get('context', {}).get('inReplyTo', []))
+  in_reply_tos = obj.get('inReplyTo', obj.get('context', {}).get('inReplyTo', []))
   is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
   if (is_rsvp or obj_type == 'react') and obj.get('object'):
     objs = obj['object']
@@ -253,13 +253,18 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   }
 
   # hashtags and person tags
+  if obj_type == 'tag':
+    ret['properties']['tag-of'] = util.get_urls(obj, 'target')
+
   tags = obj.get('tags', []) or get_first(obj, 'object', {}).get('tags', [])
+  if not tags and obj_type == 'tag':
+    tags = util.get_list(obj, 'object')
   ret['properties']['category'] = []
   for tag in tags:
     if tag.get('objectType') == 'person':
       ret['properties']['category'].append(
         object_to_json(tag, entry_class='u-category h-card'))
-    elif tag.get('objectType') == 'hashtag':
+    elif tag.get('objectType') == 'hashtag' or obj_type == 'tag':
       name = tag.get('displayName')
       if name:
         ret['properties']['category'].append(name)
@@ -357,6 +362,10 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
   mf2_types = mf2.get('type') or []
   if 'h-geo' in mf2_types or 'p-location' in mf2_types:
     mf2_type = 'location'
+  elif 'tag-of' in props:
+    # TODO: remove once this is in mf2util
+    # https://github.com/kylewm/mf2util/issues/18
+    mf2_type = 'tag'
   else:
     # mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type
     # *is* a photo. so, special case photo type to fall through to underlying
@@ -449,6 +458,10 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       'object': objects[0] if len(objects) == 1 else objects,
       'actor': author,
     })
+    if as_verb == 'tag':
+      obj['target'] = {'url': prop['tag-of']}
+      assert not obj.get('object')
+      obj['object'] = obj.pop('tags')
   else:
     obj.update({
       'inReplyTo': [{'url': url} for url in in_reply_tos],
@@ -555,8 +568,11 @@ def json_to_html(obj, parent_props=None):
     return hcard_to_html(obj, parent_props)
 
   props = copy.copy(obj.get('properties', {}))
-  in_reply_tos = '\n'.join(IN_REPLY_TO.substitute(url=url)
-                           for url in get_string_urls(props.get('in-reply-to', [])))
+
+  links = []
+  for prop in 'in-reply-to', 'tag-of':
+    links.extend(LINK.substitute(cls=prop, url=url)
+                 for url in get_string_urls(props.get(prop, [])))
 
   prop = first_props(props)
   prop.setdefault('uid', '')
@@ -663,7 +679,7 @@ def json_to_html(obj, parent_props=None):
     location=hcard_to_html(location, ['p-location']),
     categories='\n'.join(people + tags),
     attachments='\n'.join(attachments),
-    in_reply_tos=in_reply_tos,
+    links='\n'.join(links),
     invitees='\n'.join([hcard_to_html(i, ['p-invitee'])
                         for i in props.get('invitee', [])]),
     content=content_html,

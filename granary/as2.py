@@ -25,6 +25,7 @@ OBJECT_TYPE_TO_TYPE = {
   'collection': 'Collection',
   'comment': 'Note',
   'event': 'Event',
+  'hashtag': 'Tag',  # not in AS2 spec; needed for correct round trip conversion
   'image': 'Image',
   'note': 'Note',
   'person': 'Person',
@@ -80,6 +81,10 @@ def from_as1(obj, type=None, context=CONTEXT):
             for elem in util.pop_list(obj, field)]
 
   images = all_from_as1('image', type='Image')
+  inner_objs = all_from_as1('object')
+  if len(inner_objs) == 1:
+    inner_objs = inner_objs[0]
+
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
@@ -89,7 +94,7 @@ def from_as1(obj, type=None, context=CONTEXT):
     'image': images,
     'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
                                   for orig in obj.get('inReplyTo', [])]),
-    'object': from_as1(obj.get('object'), context=None),
+    'object': inner_objs,
     'tag': all_from_as1('tags')
   })
 
@@ -158,6 +163,10 @@ def to_as1(obj, use_type=True):
     if as1_img not in images:
       images.append(as1_img)
 
+  inner_objs = all_to_as1('object')
+  if len(inner_objs) == 1:
+    inner_objs = inner_objs[0]
+
   obj.update({
     'displayName': obj.pop('name', None),
     'actor': to_as1(obj.get('actor')),
@@ -165,7 +174,7 @@ def to_as1(obj, use_type=True):
     'image': images,
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
-    'object': to_as1(obj.get('object')),
+    'object': inner_objs,
     'tags': all_to_as1('tag'),
   })
 

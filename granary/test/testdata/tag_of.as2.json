@@ -1,0 +1,9 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Add",
+  "object": [
+    {"name": "one", "type": "Tag"},
+    {"name": "two", "type": "Tag"}
+  ],
+  "target": {"url": "https://github.com/foo/bar/issues/456"}
+}

@@ -1,0 +1,12 @@
+{
+  "objectType": "activity",
+  "verb": "tag",
+  "object": [{
+    "objectType": "hashtag",
+    "displayName": "one"
+  }, {
+    "objectType": "hashtag",
+    "displayName": "two"
+  }],
+  "target": {"url": "https://github.com/foo/bar/issues/456"}
+}

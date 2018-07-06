@@ -972,9 +972,9 @@ class GitHubTest(testutil.TestCase):
 
     result = self.gh.create(TAG_ACTIVITY)
     self.assert_equals({
-      'id': 'DEF456',
       'url': 'https://github.com/foo/bar/issues/456',
       'type': 'tag',
+      'tags': ['one'],
     }, result.content, result)
 
   def test_preview_add_label(self):

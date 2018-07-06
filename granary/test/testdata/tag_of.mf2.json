@@ -1,0 +1,10 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "category": [
+      "one",
+      "two"
+    ],
+    "tag-of": ["https://github.com/foo/bar/issues/456"]
+  }
+}
