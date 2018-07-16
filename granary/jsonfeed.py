@@ -2,7 +2,7 @@
 
 JSON Feed spec: https://jsonfeed.org/version/1
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 from builtins import str
 from past.builtins import basestring
 
@@ -11,11 +11,10 @@ import mimetypes
 import mf2util
 from oauth_dropins.webutil import util
 
+from . import microformats2
+
 # allowed ActivityStreams objectTypes for attachments
 ATTACHMENT_TYPES = {'image', 'audio', 'video'}
-
-# format string for inserting a JSON Feed entry's image into its content_html
-HTML_IMAGE_TEMPLATE = '<p><img src="{}"/></p>'
 
 
 def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
@@ -55,18 +54,8 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     if obj.get('objectType') == 'person':
       continue
     author = obj.get('author', {})
-
-    content = obj.get('content')
-    # The JSON Feed spec (https://jsonfeed.org/version/1#items) says that the
-    # URL from the "image" property may also appear in "content_html", in which
-    # case it should be interpreted as the "main, featured image" of the
-    # post. It does not specify the behavior or semantics in the case that the
-    # image does *not* appear in "content_html", but currently at least one
-    # feed reader (Feedbin) will not display the image as part of the post
-    # content unless it is explicitly included in "content_html".
-    if content and image_url(obj):
-      content += HTML_IMAGE_TEMPLATE.format(image_url(obj))
-
+    content = microformats2.render_content(
+            obj, include_location=True, render_attachments=True)
     obj_title = obj.get('title') or obj.get('displayName')
     item = {
       'id': obj.get('id') or obj.get('url'),
@@ -152,26 +141,11 @@ def jsonfeed_to_activities(jsonfeed):
       as1['url'] = url
     return as1
 
-  def content(item):
-    if item.get('content_html'):
-      content = item.get('content_html')
-
-      # If the content_html ends with an <img> tag that could have been generated
-      # by Granary (and which is redundant with the entry's "image" property),
-      # remove that tag.
-      if item.get('image'):
-        image_html = HTML_IMAGE_TEMPLATE.format(item.get('image'))
-        if content.endswith(image_html):
-          content = content[:-len(image_html)]
-    else:
-      content = item.get('content_text')
-    return content
-
   activities = [{'object': {
     'objectType': 'article' if item.get('title') else 'note',
     'title': item.get('title'),
     'summary': item.get('summary'),
-    'content': content(item),
+    'content': item.get('content_html') or item.get('content_text'),
     'id': str(item.get('id') or ''),
     'published': item.get('date_published'),
     'updated': item.get('date_modified'),

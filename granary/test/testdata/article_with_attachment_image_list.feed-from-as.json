@@ -8,7 +8,7 @@
     "avatar": "http://example.com/martin/image"
   },
   "items": [{
-    "content_text": "",
+    "content_html": "\n<p>\n</p>",
     "attachments": [{
       "mime_type": "image/gif",
       "url": "http://a/pic.gif"
