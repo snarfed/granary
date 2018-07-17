@@ -808,3 +808,14 @@ Shared <a href="#">a post</a> by   <span class="h-card">
   'object': {'url': 'http://localhost/2017-10-01_mastodon-dev-6'},
   'actor': {'url': 'http://localhost:3000/users/ryan'},
 }]), ignore_blanks=True)
+
+  def test_combined_reply_and_tag_of_error(self):
+    """https://github.com/snarfed/bridgy/issues/832"""
+    with self.assertRaises(NotImplementedError):
+      microformats2.json_to_object({
+        'type': ['h-entry'],
+        'properties': {
+          'tag-of': [{'value': 'https://a/post'}],
+          'in-reply-to': [{'value': 'https://another/post'}],
+        }
+      })

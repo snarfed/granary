@@ -460,7 +460,9 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     })
     if as_verb == 'tag':
       obj['target'] = {'url': prop['tag-of']}
-      assert not obj.get('object')
+      if obj.get('object'):
+        raise NotImplementedError(
+          'Combined in-reply-to and tag-of is not yet supported.')
       obj['object'] = obj.pop('tags')
   else:
     obj.update({
