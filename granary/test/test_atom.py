@@ -534,7 +534,8 @@ quoted tweet with photo
   <title>my content
 x
 y
-z</title>
+z
+</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
@@ -638,7 +639,7 @@ going to Homebrew Website Club
     self.assert_multiline_in("""\
 <generator uri="https://granary.io/">granary</generator>
 <id>https://my.site/feed</id>
-<title>unmarked feed title</title>
+<title>User feed for Unknown</title>
 """, atom.html_to_atom("""\
 <div class="h-feed">
   <span>unmarked feed title</span>

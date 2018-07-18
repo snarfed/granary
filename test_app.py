@@ -138,7 +138,7 @@ ATOM_CONTENT = """\
       xml:base="http://my/">
 <generator uri="https://granary.io/">granary</generator>
 <id>http://my/posts.html</id>
-<title>my title</title>
+<title>User feed for My Name</title>
 
 <logo>http://my/picture</logo>
 <updated>2012-03-04T18:20:37+00:00</updated>
