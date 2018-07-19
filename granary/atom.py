@@ -329,9 +329,9 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
   if fetch_author:
     assert url, 'fetch_author=True requires url!'
 
-  parsed = mf2py.parse(doc=html, url=url)
+  parsed = mf2py.parse(doc=html, url=url, img_with_alt=True)
   actor = microformats2.find_author(
-    parsed, fetch_mf2_func=lambda url: mf2py.parse(url=url))
+    parsed, fetch_mf2_func=lambda url: mf2py.parse(url=url, img_with_alt=True))
 
   return activities_to_atom(
     microformats2.html_to_activities(html, url, actor),

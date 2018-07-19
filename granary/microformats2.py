@@ -24,6 +24,7 @@ from oauth_dropins.webutil.util import (
   dedupe_urls,
   get_first,
   get_list,
+  get_url,
   get_urls,
   uniquify,
 )
@@ -224,8 +225,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'summary': [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
-      'photo': dedupe_urls(get_urls(attachments, 'image', 'image') +
-                           get_urls(primary, 'image')),
+      # photo is special cased below, to handle alt
       'video': dedupe_urls(get_urls(attachments, 'video', 'stream') +
                            get_urls(primary, 'stream')),
       'audio': get_urls(attachments, 'audio', 'stream'),
@@ -251,6 +251,16 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
                                 entry_class=['u-quotation-of', 'h-cite'])
                  for a in attachments['note'] + attachments['article']]
   }
+
+  # photos, including alt text
+  photo_urls = set()
+  ret['properties']['photo'] = []
+  for image in get_list(attachments, 'image') + [primary]:
+    for url in get_urls(image, 'image'):
+      if url and url not in photo_urls:
+        photo_urls.add(url)
+        name = get_first(image, 'image', {}).get('displayName')
+        ret['properties']['photo'].append({'value': url, 'alt': name} if name else url)
 
   # hashtags and person tags
   if obj_type == 'tag':
@@ -345,7 +355,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     # the author h-card may be on another page. run full authorship algorithm:
     # https://indieweb.org/authorship
     def fetch(url):
-      return mf2py.parse(util.requests_get(url).text, url=url)
+      return mf2py.parse(util.requests_get(url).text, url=url, img_with_alt=True)
     author = mf2util.find_author(
       {'items': [mf2]}, hentry=mf2, fetch_mf2_func=fetch if fetch_mf2 else None)
     if author:
@@ -385,10 +395,9 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     if re.match(r'^https?://github.com/[^/]+/[^/]+(/issues)?/?$', url):
       as_type = 'issue'
 
-  def absolute_urls(prop):
-    return [url for url in get_string_urls(props.get(prop, []))
-            # filter out relative and invalid URLs (mf2py gives absolute urls)
-            if urllib.parse.urlparse(url).netloc]
+  def is_absolute(url):
+    """Filter out relative and invalid URLs (mf2py gives absolute urls)."""
+    return urllib.parse.urlparse(url).netloc
 
   urls = props.get('url') and get_string_urls(props.get('url'))
 
@@ -416,9 +425,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     'content': get_html(prop.get('content')),
     'url': urls[0] if urls else None,
     'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,
-    'image': [{'url': url} for url in
-              dedupe_urls(absolute_urls('photo') + absolute_urls('featured'))],
-    'stream': [{'url': url} for url in absolute_urls('video')],
+    # image is special cased below, to handle alt
+    'stream': [{'url': url} for url in get_string_urls(props.get('video', []))],
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     'tags': [{'objectType': 'hashtag', 'displayName': cat}
@@ -427,6 +435,20 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
              for cat in props.get('category', [])],
     'attachments': attachments,
   }
+
+  # images, including alt text
+  photo_urls = set()
+  obj['image'] = []
+  for photo in props.get('photo', []) + props.get('featured', []):
+    url = photo
+    alt = None
+    if isinstance(photo, dict):
+      photo = photo.get('properties') or photo
+      url = get_first(photo, 'value') or get_first(photo, 'url')
+      alt = get_first(photo, 'alt')
+    if url and url not in photo_urls and is_absolute(url):
+      photo_urls.add(url)
+      obj['image'].append({'url': url, 'displayName': alt})
 
   # mf2util uses the indieweb/mf2 location algorithm to collect location properties.
   interpreted = mf2util.interpret({'items': [mf2]}, None)
@@ -485,7 +507,7 @@ def html_to_activities(html, url=None, actor=None):
   Returns:
     list of ActivityStreams activity dicts
   """
-  parsed = mf2py.parse(doc=html, url=url)
+  parsed = mf2py.parse(doc=html, url=url, img_with_alt=True)
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
 
@@ -925,10 +947,13 @@ def find_author(parsed, **kwargs):
   """
   author = mf2util.find_author(parsed, 'http://123', **kwargs)
   if author:
+    photo = author.get('photo')
+    if isinstance(photo, dict):
+      photo = photo.get('url') or photo.get('value')
     return {
       'displayName': author.get('name'),
       'url': author.get('url'),
-      'image': {'url': author.get('photo')},
+      'image': {'url': photo},
     }
 
 
@@ -1028,12 +1053,16 @@ def img(src, alt=''):
   """Returns an <img> string with the given src, class, and alt.
 
   Args:
-    src: string, url of the image
+    src: string url or dict with value and (optionally) alt
     alt: string, alt attribute value, or None
 
   Returns:
     string
   """
+  if isinstance(src, dict):
+    assert not alt
+    alt = src.get('alt', '')
+    src = src.get('value')
   return '<img class="u-photo" src="%s" alt=%s />' % (
       src, xml.sax.saxutils.quoteattr(alt or ''))
 

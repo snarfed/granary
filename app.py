@@ -142,7 +142,7 @@ class UrlHandler(api.Handler):
 
     mf2 = None
     if input == 'html':
-      mf2 = mf2py.parse(doc=body, url=url)
+      mf2 = mf2py.parse(doc=body, url=url, img_with_alt=True)
     elif input in ('mf2-json', 'json-mf2'):
       mf2 = body_json
       mf2.setdefault('rels', {})  # mf2util expects rels
@@ -154,7 +154,7 @@ class UrlHandler(api.Handler):
         if util.domain_or_parent_in(urlparse.urlparse(url).netloc, SILO_DOMAINS):
           return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
         _, doc = self._fetch(url)
-        return mf2py.parse(doc=doc, url=url)
+        return mf2py.parse(doc=doc, url=url, img_with_alt=True)
 
       try:
         actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)

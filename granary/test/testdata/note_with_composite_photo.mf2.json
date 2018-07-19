@@ -6,8 +6,7 @@
             "properties": {
                 "name": ["The Photo Caption"],
                 "url": ["https://ben.thatmustbe.me/static/img.jpg"]
-            },
-            "value": "https://ben.thatmustbe.me/static/img.jpgThe Photo Caption"
+            }
         }],
         "name": [""]
     }

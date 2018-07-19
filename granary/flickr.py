@@ -432,7 +432,7 @@ class Flickr(source.Source):
     if profile_url:
       try:
         resp = util.urlopen(profile_url)
-        profile_json = mf2py.parse(doc=resp, url=profile_url)
+        profile_json = mf2py.parse(doc=resp, url=profile_url, img_with_alt=True)
         # personal site is likely the first non-flickr url
         urls = profile_json.get('rels', {}).get('me', [])
         obj['urls'] = [{'value': u} for u in urls]

@@ -320,6 +320,9 @@ Changelog
   * Improve GraphQL support for comments and users.
 * Atom:
   * Shorten and ellipsize feed title when necessary ([#144](https://github.com/snarfed/granary/issues/144)).
+* microformats2:
+  * Upgrade mf2py to improve a few things like [implied p-name detection](http://microformats.org/wiki/microformats2-implied-properties) and whitespace handling ([#142](https://github.com/snarfed/granary/issues/142), fixes [#145](https://github.com/snarfed/granary/issues/145), [snarfed/bridgy#756](https://github.com/snarfed/bridgy/issues/756), [snarfed/bridgy#828](https://github.com/snarfed/bridgy/issues/828)).
+  * Support `alt` attribute in `<img>` tags ([snarfed/bridgy#756](https://github.com/snarfed/bridgy/issues/756)).
 
 ### 1.12 - 2018-03-24
 * Add Python 3 support! Granary now requires either Python 2.7+ or Python 3.3+.
