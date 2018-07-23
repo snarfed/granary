@@ -117,7 +117,7 @@ class DemoHandler(handlers.ModernHandler):
 class UrlHandler(api.Handler):
   """Handles URL requests from the interactive demo form on the front page.
 
-  Responses are cached for 5m. You can skip the cache by including a cache=false
+  Responses are cached for 10m. You can skip the cache by including a cache=false
   query param. Background: https://github.com/snarfed/bridgy/issues/665
   """
   handle_exception = handlers.handle_exception
