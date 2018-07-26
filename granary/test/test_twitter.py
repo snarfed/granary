@@ -2360,7 +2360,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     preview = self.twitter.preview_create(obj)
     self.assertEqual('<span class="verb">tweet</span>:', preview.description)
     self.assertEqual(ellipsized + '<br /><br />' +
-                      ' &nbsp; '.join('<img src="%s" />' % url
+                      ' &nbsp; '.join('<img src="%s" alt="" />' % url
                                       for url in image_urls[:-1]),
                       preview.content)
 
@@ -2393,7 +2393,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertIn('<span class="verb">@-reply</span> to <a href="http://twitter.com/you/status/100">this tweet</a>:', preview.description)
-    self.assertEqual('my content<br /><br /><img src="http://my/picture" />',
+    self.assertEqual('my content<br /><br /><img src="http://my/picture" alt="" />',
                       preview.content)
 
     # test create
@@ -2423,7 +2423,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertEqual('<span class="verb">tweet</span>:', preview.description)
-    self.assertEqual('<br /><br /><img src="http://my/picture" />', preview.content)
+    self.assertEqual('<br /><br /><img src="http://my/picture" alt="" />',
+                     preview.content)
 
     # test create
     self.expect_urlopen('http://my/picture', 'picture response')
@@ -2475,6 +2476,41 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     for msg in ret.error_plain, ret.error_html:
       self.assertEqual('Twitter only supports JPG, PNG, GIF, and WEBP images; '
                         'http://my/picture.tiff looks like image/tiff', msg)
+
+  def test_create_with_photo_with_alt(self):
+    obj = {
+      'objectType': 'note',
+      'image': {
+        'url': 'http://my/picture.png',
+        'displayName': 'some alt text',
+      },
+    }
+
+    # test preview
+    preview = self.twitter.preview_create(obj)
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual('<br /><br /><img src="http://my/picture.png" alt="some alt text" />',
+                     preview.content)
+
+    # test create
+    self.expect_urlopen('http://my/picture.png', 'picture response')
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+                              json.dumps({'media_id_string': '123'}),
+                              files={'media': 'picture response'},
+                              headers=mox.IgnoreArg())
+    self.expect_requests_post(twitter.API_MEDIA_METADATA,
+                              json={'media_id': '123',
+                                    'alt_text': {'text': 'some alt text'}},
+                              headers=mox.IgnoreArg())
+    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+                        params=(
+                          # sorted; order matters.
+                          ('media_ids', '123'),
+                          ('status', ''),
+                        ))
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
+                       self.twitter.create(obj).content)
 
   def test_create_with_video(self):
     self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')

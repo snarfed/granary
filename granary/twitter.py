@@ -17,8 +17,9 @@ from builtins import range, str, zip
 
 import collections
 import datetime
-import itertools
 import http.client
+import itertools
+import json
 import logging
 import mimetypes
 import re
@@ -50,6 +51,7 @@ API_SEARCH = 'search/tweets.json?q=%(q)s&include_entities=true&tweet_mode=extend
 API_STATUS = 'statuses/show.json?id=%s&include_entities=true&tweet_mode=extended'
 API_TIMELINE = 'statuses/home_timeline.json?include_entities=true&tweet_mode=extended&count=%d'
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
+API_MEDIA_METADATA = 'https://upload.twitter.com/1.1/media/metadata/create.json'
 API_USER = 'users/show.json?screen_name=%s'
 API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&tweet_mode=extended&count=%(count)d&screen_name=%(screen_name)s'
 HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
@@ -666,9 +668,9 @@ class Twitter(source.Source):
 
     is_reply = type == 'comment' or 'inReplyTo' in obj
     is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
-    image_urls = [image.get('url') for image in util.get_list(obj, 'image')]
+    images = util.get_list(obj, 'image')
     video_url = util.get_first(obj, 'stream', {}).get('url')
-    has_media = (image_urls or video_url) and (type in ('note', 'article') or is_reply)
+    has_media = (images or video_url) and (type in ('note', 'article') or is_reply)
     lat = obj.get('location', {}).get('latitude')
     lng = obj.get('location', {}).get('longitude')
 
@@ -816,16 +818,17 @@ class Twitter(source.Source):
             return ret
           data.append(('media_ids', ret))
 
-      elif image_urls:
-        num_urls = len(image_urls)
-        if num_urls > MAX_MEDIA:
-          image_urls = image_urls[:MAX_MEDIA]
+      elif images:
+        num = len(images)
+        if num > MAX_MEDIA:
+          images = images[:MAX_MEDIA]
           logging.warning('Found %d photos! Only using the first %d: %r',
-                          num_urls, MAX_MEDIA, image_urls)
+                          num, MAX_MEDIA, images)
         preview_content += '<br /><br />' + ' &nbsp; '.join(
-          '<img src="%s" />' % url for url in image_urls)
+          '<img src="%s" alt="%s" />' % (img.get('url'), img.get('displayName', ''))
+                                         for img in images)
         if not preview:
-          ret = self.upload_images(image_urls)
+          ret = self.upload_images(images)
           if isinstance(ret, source.CreationResult):
             return ret
           data.append(('media_ids', ','.join(ret)))
@@ -895,19 +898,28 @@ class Twitter(source.Source):
 
     return truncated
 
-  def upload_images(self, urls):
+  def upload_images(self, images):
     """Uploads one or more images from web URLs.
 
     https://dev.twitter.com/rest/reference/post/media/upload
 
+    Note that files and JSON bodies in media POST API requests are *not*
+    included in OAuth signatures.
+    https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices
+
     Args:
-      urls: sequence of string URLs of images
+      images: sequence of AS image objects, eg:
+        [{'url': 'http://picture', 'displayName': 'a thing'}, ...]
 
     Returns:
-      list of string media ids
+      list of string media ids or :class:`CreationResult` on error
     """
     ids = []
-    for url in urls:
+    for image in images:
+      url = image.get('url')
+      if not url:
+        continue
+
       image_resp = util.urlopen(url)
       bad_type = self._check_mime_type(url, image_resp, IMAGE_MIME_TYPES,
                                        'JPG, PNG, GIF, and WEBP images')
@@ -921,7 +933,17 @@ class Twitter(source.Source):
                                 headers=headers)
       resp.raise_for_status()
       logging.info('Got: %s', resp.text)
-      ids.append(source.load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string'])
+      media_id = source.load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string']
+      ids.append(media_id)
+
+      alt = image.get('displayName')
+      if alt:
+        headers = twitter_auth.auth_header(
+          API_MEDIA_METADATA, self.access_token_key, self.access_token_secret, 'POST')
+        resp = util.requests_post(API_MEDIA_METADATA,
+                                  json={'media_id': media_id,'alt_text': {'text': alt}},
+                                  headers=headers)
+        logging.info('Got: %s', resp)
 
     return ids
 
