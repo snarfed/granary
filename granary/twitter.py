@@ -81,6 +81,8 @@ RETRIES = 3
 #   https://dev.twitter.com/rest/media/uploading-media#imagerecs
 # * Allowed video formats, max video size, and upload chunk size:
 #   https://dev.twitter.com/rest/public/uploading-media#keepinmind
+# * Max alt text length.
+#   https://developer.twitter.com/en/docs/media/upload-media/api-reference/opst-media-metadata-create
 #
 # Update by running help/configuration.json manually in
 # https://apigee.com/embed/console/twitter
@@ -96,6 +98,7 @@ VIDEO_MIME_TYPES = frozenset(('video/mp4',))
 MB = 1024 * 1024
 MAX_VIDEO_SIZE = 15 * MB
 UPLOAD_CHUNK_SIZE = 5 * MB
+MAX_ALT_LENGTH = 420
 
 # username requirements and limits:
 # https://support.twitter.com/articles/101299#error
@@ -938,6 +941,7 @@ class Twitter(source.Source):
 
       alt = image.get('displayName')
       if alt:
+        alt = util.ellipsize(alt, chars=MAX_ALT_LENGTH)
         headers = twitter_auth.auth_header(
           API_MEDIA_METADATA, self.access_token_key, self.access_token_secret, 'POST')
         resp = util.requests_post(API_MEDIA_METADATA,
