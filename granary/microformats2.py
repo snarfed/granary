@@ -327,7 +327,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
 
 def json_to_object(mf2, actor=None, fetch_mf2=False):
-  """Converts microformats2 JSON to an ActivityStreams object.
+  """Converts a single microformats2 JSON item to an ActivityStreams object.
+
+  Supports h-entry, h-event, h-card, and other single item times. Does *not* yet
+  support h-feed.
 
   Args:
     mf2: dict, decoded JSON microformats2 object
