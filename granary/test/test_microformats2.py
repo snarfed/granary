@@ -715,7 +715,6 @@ Shared <a href="#">a post</a> by foo
   def test_find_author(self):
     self.assert_equals({
     'displayName': 'my name',
-    'url': 'http://li/nk',
     'image': {'url': 'http://pic/ture'},
   }, microformats2.find_author(mf2py.parse(doc="""\
 <body class="h-entry">
