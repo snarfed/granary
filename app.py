@@ -210,7 +210,9 @@ class UrlHandler(api.Handler):
     body = resp.text
 
     length = resp.headers.get('Content-Length')
-    if not length or (util.is_int(length) and int(length) == 0):
+    if util.is_int(length):
+      length = int(length)
+    if not length:
       length = len(body)
     if length > MAX_HTTP_RESPONSE_SIZE:
       self.abort(HTTP_RESPONSE_TOO_BIG_STATUS_CODE,

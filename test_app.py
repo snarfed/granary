@@ -314,6 +314,8 @@ class AppTest(testutil_appengine.HandlerTest):
   <img src="http://my/picture" />
 </div>
 """,
+    }, response_headers={
+      'Content-Length': '123',
     })
     self.mox.ReplayAll()
 
