@@ -56,6 +56,12 @@ SILO_DOMAINS = {cls.DOMAIN for cls in (
   Instagram,
   Twitter,
 )}
+# Average HTML page size as of 2015-10-15 is 56K, so this is very generous and
+# conservative.
+# http://www.sitepoint.com/average-page-weight-increases-15-2014/
+# http://httparchive.org/interesting.php#bytesperpage
+MAX_HTTP_RESPONSE_SIZE = 1000000  # 1MB
+HTTP_RESPONSE_TOO_BIG_STATUS_CODE = 422  # Unprocessable Entity
 
 
 class FrontPageHandler(handlers.TemplateHandler):
@@ -191,7 +197,7 @@ class UrlHandler(api.Handler):
   def _fetch(self, url):
     """Fetches url and returns (string final url, unicode body)."""
     try:
-      resp = util.requests_get(url)
+      resp = util.requests_get(url, stream=True)
     except (ValueError, requests.URLRequired) as e:
       self.abort(400, str(e))
       # other exceptions are handled by webutil.handlers.handle_exception(),
@@ -200,7 +206,16 @@ class UrlHandler(api.Handler):
     if url != resp.url:
       url = resp.url
       logging.info('Redirected to %s', url)
+
     body = resp.text
+
+    length = resp.headers.get('Content-Length')
+    if not length or (util.is_int(length) and int(length) == 0):
+      length = len(body)
+    if length > MAX_HTTP_RESPONSE_SIZE:
+      self.abort(HTTP_RESPONSE_TOO_BIG_STATUS_CODE,
+                 'Content-Length %s for %s is larger than our limit of %s.' %
+                 (length, url, MAX_HTTP_RESPONSE_SIZE))
 
     return url, body
 

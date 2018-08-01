@@ -195,6 +195,9 @@ class AppTest(testutil_appengine.HandlerTest):
   def request_url(path):
     return '%s://%s%s' % (appengine_config.SCHEME, appengine_config.HOST, path)
 
+  def expect_requests_get(self, *args, **kwargs):
+    return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
+
   def test_url_as1_to_mf2_json(self):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
@@ -534,6 +537,14 @@ not atom!
     self.mox.ReplayAll()
     resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
     self.assert_equals(504, resp.status_int)
+
+  def test_url_response_too_big(self):
+    self.expect_requests_get('http://my/posts.html', response_headers={
+      'Content-Length': str(app.MAX_HTTP_RESPONSE_SIZE + 1),
+    })
+    self.mox.ReplayAll()
+    resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(app.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_int)
 
   def test_cache(self):
     self.expect_requests_get('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
