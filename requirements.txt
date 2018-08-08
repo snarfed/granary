@@ -4,10 +4,10 @@ brevity>=0.2.17
 future
 html2text
 jinja2
-mf2py>=1.1.1
+mf2py>=1.1.2
 mf2util>=0.5.0
 mox3>=0.24.0
-oauth-dropins>=1.12
+oauth-dropins>=1.13
 requests>=2.10.0
 requests-toolbelt>=0.6.2
 urllib3>=1.14

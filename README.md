@@ -223,7 +223,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. `git commit -m 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
     ```sh
-    python setup.py clean build sdist
+    python3 setup.py clean build sdist
     twine upload -r pypitest dist/granary-X.Y.tar.gz
     ```
 1. Install from test.pypi.org, both Python 2 and 3.
@@ -280,7 +280,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. [Click here to draft a new release on GitHub.](https://github.com/snarfed/granary/releases/new) Enter `vX.Y` in the _Tag version_ box. Leave _Release title_ empty. Copy `### Notable changes` and the changelog contents into the description text box.
 1. Upload to [pypi.org](https://pypi.org/)!
     ```sh
-    python setup.py clean build sdist
+    python3 setup.py clean build sdist
     twine upload dist/granary-X.Y.tar.gz
     ```
 

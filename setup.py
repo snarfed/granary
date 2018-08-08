@@ -18,7 +18,7 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='1.12',
+      version='1.13',
       description='The social web translator',
       long_description=open('README.md').read(),
       long_description_content_type='text/markdown',
@@ -51,7 +51,7 @@ setup(name='granary',
           'jinja2',
           'mf2py>=1.1.2',
           'mf2util>=0.5.0',
-          'oauth-dropins>=1.12',
+          'oauth-dropins>=1.13',
           'requests-toolbelt>=0.6.2',
           'requests>=2.10.0',
           'urllib3>=1.14',
