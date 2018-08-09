@@ -542,19 +542,18 @@ class GitHub(source.Source):
         return source.creation_result(
           abort=True, error_plain='GitHub comment requires in-reply-to issue or PR URL.')
 
-      if comment_id:
-        comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id)).json()
       is_reaction = orig_content in REACTIONS_GRAPHQL
-      issue = self.graphql(GRAPHQL_ISSUE_OR_PR, locals()
-                          )['repository']['issueOrPullRequest']
-
       if preview:
         if comment_id:
+          comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id)).json()
           target_link = '<a href="%s">a comment on %s/%s#%s, <em>%s</em></a>' % (
             base_url, owner, repo, number, util.ellipsize(comment['body']))
         else:
-          target_link = '<a href="%s">%s/%s#%s, <em>%s</em></a>' % (
-            base_url, owner, repo, number, issue['title'])
+          resp = self.graphql(GRAPHQL_ISSUE_OR_PR, locals())
+          issue = (resp.get('repository') or {}).get('issueOrPullRequest')
+          target_link = '<a href="%s">%s/%s#%s%s</a>' % (
+            base_url, owner, repo, number,
+            (', <em>%s</em>' % issue['title']) if issue else '')
 
         if is_reaction:
           preview_content = None

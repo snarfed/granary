@@ -654,7 +654,6 @@ class GitHubTest(testutil.TestCase):
                        self.gh.reaction_to_object(REACTION_REST, ISSUE_OBJ))
 
   def test_create_comment(self):
-    self.expect_graphql_issue()
     self.expect_requests_post(
       REST_API_COMMENTS % ('foo', 'bar', 123), headers=EXPECTED_HEADERS,
       json={
@@ -683,7 +682,6 @@ class GitHubTest(testutil.TestCase):
 
   @skip('only needed for GraphQL, and we currently use REST to create comments')
   def test_create_comment_escape_quotes(self):
-    self.expect_graphql_issue()
     self.expect_graphql(json={
       'query': github.GRAPHQL_ADD_COMMENT % {
         'subject_id': ISSUE_GRAPHQL['id'],
@@ -696,6 +694,26 @@ class GitHubTest(testutil.TestCase):
     obj['content'] = """one ' two " three"""
     result = self.gh.create(obj)
     self.assert_equals({'foo': 'bar'}, result.content, result)
+
+  def test_preview_comment_private_repo(self):
+    """eg the w3c/AB repo is private and returns repository: None
+    https://console.cloud.google.com/errors/CP2z6O3Hub755wE
+    """
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ISSUE_OR_PR % {
+        'owner': 'foo',
+        'repo': 'bar',
+        'number': 123,
+      },
+    }, response={
+      'repository': None,
+    })
+    rendered = self.expect_markdown_render('i have something to say here')
+    self.mox.ReplayAll()
+
+    preview = self.gh.preview_create(COMMENT_OBJ)
+    self.assertEquals(rendered, preview.content, preview)
+    self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>:', preview.description, preview)
 
   def test_create_issue_repo_url(self):
     self._test_create_issue('https://github.com/foo/bar')
@@ -846,7 +864,6 @@ class GitHubTest(testutil.TestCase):
   def test_create_comment_org_access_forbidden(self):
     msg = 'Although you appear to have the correct authorization credentials,\nthe `whatwg` organization has enabled OAuth App access restrictions, meaning that data\naccess to third-parties is limited. For more information on these restrictions, including\nhow to whitelist this app, visit\nhttps://help.github.com/articles/restricting-access-to-your-organization-s-data/\n'
 
-    self.expect_graphql_issue()
     self.expect_requests_post(
       GRAPHQL_BASE,
       headers={'Authorization': 'bearer a-towkin'},
@@ -931,7 +948,6 @@ class GitHubTest(testutil.TestCase):
     self.assertEquals('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
 
   def test_create_reaction_issue(self):
-    self.expect_graphql_issue()
     self.expect_requests_post(
       REST_API_REACTIONS % ('foo', 'bar', 123),
       headers=EXPECTED_HEADERS,
@@ -958,8 +974,6 @@ class GitHubTest(testutil.TestCase):
     self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>.', preview.description)
 
   def test_create_reaction_comment(self):
-    self.expect_graphql_issue()
-    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 456), COMMENT_REST)
     self.expect_requests_post(
       REST_API_COMMENT_REACTIONS % ('foo', 'bar', 456), headers=EXPECTED_HEADERS,
       json={
@@ -979,7 +993,6 @@ class GitHubTest(testutil.TestCase):
     }, result.content, result)
 
   def test_preview_reaction_comment(self):
-    self.expect_graphql_issue()
     self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 456), COMMENT_REST)
     self.mox.ReplayAll()
 
