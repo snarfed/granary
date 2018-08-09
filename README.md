@@ -305,7 +305,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 1.13 - unreleased
+### 1.13 - 2018-08-08
 * Twitter:
   * Support ISO 8601 formatted created_at timestamps, which the [archive download uses](https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive), as well as RFC 2822 from the API.
   * `create()` and `preview_create()`: support RSVPs. Tweet them as normal tweets with the RSVP content. ([snarfed/bridgy#818](https://github.com/snarfed/bridgy/issues/818))
