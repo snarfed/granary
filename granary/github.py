@@ -697,7 +697,12 @@ class GitHub(source.Source):
     Returns: set of strings
     """
     resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
-    return set(node['name'] for node in resp['repository']['labels']['nodes'])
+
+    repo = resp.get('repository')
+    if not repo:
+      return set()
+
+    return set(node['name'] for node in repo['labels']['nodes'])
 
   @classmethod
   def issue_to_object(cls, issue):

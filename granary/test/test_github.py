@@ -788,6 +788,35 @@ class GitHubTest(testutil.TestCase):
         '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a> and attempt to add label <span class="verb">new silo</span>:' % url,
         preview.description, preview)
 
+  def test_create_issue_private_repo(self):
+    """eg the w3c/AB repo is private and returns repository: None
+    https://console.cloud.google.com/errors/CMbUj5KyrvH69gE
+    """
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_REPO_LABELS % {
+        'owner': 'foo',
+        'repo': 'bar',
+      },
+    }, response={
+      'repository': None,
+    })
+
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': 'xyz',
+        'labels': [],
+      }, response={
+        'html_url': 'https://github.com/foo/bar/issues/123',
+      }, headers=EXPECTED_HEADERS)
+    self.mox.ReplayAll()
+
+    result = self.gh.create({
+      'title': 'an issue title',
+      'content': 'xyz',
+      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+    })
+    self.assertIsNone(result.error_plain, result)
+
   def test_create_issue_tags_to_labels(self):
     self.expect_graphql_get_labels(['label 3', 'label_1'])
     resp = {'html_url': 'http://done'}
