@@ -247,9 +247,15 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'start': [primary.get('startTime')],
       'end': [primary.get('endTime')],
     },
-    'children': [object_to_json(a, trim_nulls=False,
-                                entry_class=['u-quotation-of', 'h-cite'])
-                 for a in attachments['note'] + attachments['article']]
+    'children': (
+      # silly hack: i haven't found anywhere in AS1 or AS2 to indicate that
+      # something is being "quoted," like in a quote tweet, so i cheat and use
+      # extra knowledge here that quoted tweets are converted to note
+      # attachments, but URLs in the tweet text are converted to article tags.
+      [object_to_json(a, trim_nulls=False, entry_class=['u-quotation-of', 'h-cite'])
+       for a in attachments['note']] +
+      [object_to_json(a, trim_nulls=False, entry_class=['h-cite'])
+       for a in attachments['article']])
   }
 
   # photos, including alt text

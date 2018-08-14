@@ -431,7 +431,7 @@ Shared <a href="#">a post</a> by foo
       'type': ['u-quotation-of', 'h-cite'],
       'properties': {'url': ['http://p'], 'name': ['p']},
     }, {
-      'type': ['u-quotation-of', 'h-cite'],
+      'type': ['h-cite'],
       'properties': {'url': ['http://a']},
     }], microformats2.object_to_json(obj)['children'])
 
@@ -447,7 +447,7 @@ Shared <a href="#">a post</a> by foo
 
 </article>
 
-<article class="u-quotation-of h-cite">
+<article class="h-cite">
 <span class="p-uid"></span>
 
 <a class="p-name u-url" href="http://a"></a>
