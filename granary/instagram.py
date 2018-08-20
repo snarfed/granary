@@ -78,7 +78,8 @@ class Instagram(source.Source):
   </blockquote>
   """
 
-  def __init__(self, access_token=None, allow_comment_creation=False, scrape=False):
+  def __init__(self, access_token=None, allow_comment_creation=False,
+               scrape=False, cookie=None):
     """Constructor.
 
     If an OAuth access token is provided, it will be passed on to Instagram.
@@ -91,10 +92,13 @@ class Instagram(source.Source):
         useful if the app is not approved to create comments.
       scrape: boolean, whether to scrape instagram.com's HTML (True) or use
       the API (False)
+      cookie: string, optional sessionid cookie to use when scraping. *Currently
+        only used for likes!*
     """
     self.access_token = access_token
     self.allow_comment_creation = allow_comment_creation
     self.scrape = scrape
+    self.cookie = cookie
 
   def urlopen(self, url, **kwargs):
     """Wraps :func:`urllib2.urlopen()` and passes through the access token."""
@@ -191,6 +195,9 @@ class Instagram(source.Source):
               (group_id == source.FRIENDS and cookie)):
         raise NotImplementedError(
           'Scraping only supports activity_id, user_id and group_id=@self, or cookie and group_id=@friends.')
+      elif fetch_likes and not cookie and not self.cookie:
+        raise NotImplementedError('Scraping likes requires a cookie.')
+
       # cache rate limited responses and short circuit
       global _last_rate_limited, _last_rate_limited_exc
       now = datetime.datetime.now()
@@ -314,7 +321,6 @@ class Instagram(source.Source):
       resp.raise_for_status()
 
     activities, actor = self.html_to_activities(resp.text, cookie=cookie, count=count)
-
 
     if fetch_extras:
       # batch get cached counts of comments and likes for all activities
@@ -855,7 +861,7 @@ class Instagram(source.Source):
       likes = media.get('edge_media_preview_like') or {}
       if shortcode and fetch_extras and likes.get('count') and not likes.get('edges'):
         # extra GraphQL fetch to get likes, as of 8/2018
-        data = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
+        data = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie or self.cookie)
         likes['edges'] = data.get('data', {}).get('shortcode_media', {})\
                              .get('edge_liked_by', {}).get('edges', [])
       activities.append(self._json_media_node_to_activity(media, user=profile_user))
@@ -870,7 +876,12 @@ class Instagram(source.Source):
   @staticmethod
   def _scrape_json(url, cookie=None):
     """Fetches and returns JSON from www.instagram.com."""
-    headers = {'Cookie': cookie} if cookie else {}
+    headers = {}
+    if cookie:
+      if not cookie.startswith('sessionid='):
+        cookie = 'sessionid=' + cookie
+      headers = {'Cookie': cookie}
+
     resp = util.requests_get(url, allow_redirects=False, headers=headers)
     resp.raise_for_status()
 

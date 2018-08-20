@@ -10,6 +10,7 @@ import logging
 import sys
 import unittest
 
+from granary import appengine_config
 from granary import instagram
 from granary.source import SELF
 
@@ -19,7 +20,8 @@ USERNAME = 'snarfed'
 class InstagramTestLive(unittest.TestCase):
 
   def test_live(self):
-    resp = instagram.Instagram().get_activities_response(
+    ig = instagram.Instagram(cookie=appengine_config.INSTAGRAM_SESSIONID_COOKIE)
+    resp = ig.get_activities_response(
       user_id=USERNAME, group_id=SELF, scrape=True,
       fetch_replies=True, fetch_likes=True)
 
@@ -34,12 +36,13 @@ class InstagramTestLive(unittest.TestCase):
     found = set()
     for a in items:
       self.assertTrue(a['actor'])
+      obj = a['object']
       for field in 'id', 'url', 'attachments', 'author', 'image':
-        self.assertTrue(a['object'][field], field)
+        self.assertTrue([field], field)
       for field in 'content', 'replies', 'tags':
-        if a['object'].get(field):
+        if obj.get(field):
           found.add(field)
-      likes = [t for t in a.get('tags', []) if t.get('verb') == 'like']
+      likes = [t for t in obj.get('tags', []) if t.get('verb') == 'like']
       if likes:
         found.add('likes')
 
