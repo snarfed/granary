@@ -39,8 +39,11 @@ class InstagramTestLive(unittest.TestCase):
       for field in 'content', 'replies', 'tags':
         if a['object'].get(field):
           found.add(field)
+      likes = [t for t in a.get('tags', []) if t.get('verb') == 'like']
+      if likes:
+        found.add('likes')
 
-    for field in 'content', 'replies', 'tags':
+    for field in 'content', 'replies', 'tags', 'likes':
       self.assertIn(field, found)
 
 
