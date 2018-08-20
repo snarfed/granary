@@ -48,6 +48,8 @@ HTML_MEDIA = HTML_BASE_URL + 'p/%s/'
 HTML_PROFILE = HTML_BASE_URL + '%s/'
 HTML_PRELOAD_RE = re.compile(
   r'^/graphql/query/\?query_hash=[^&]*&(amp;)?variables=(%7B%7D|{})$')
+# https://github.com/snarfed/bridgy/issues/840
+HTML_LIKES_URL = HTML_BASE_URL + 'graphql/query/?query_hash=e0f59e4a1c8d78d0161873bc2ee7ec44&variables={"shortcode":"%s","include_reel":false,"first":24}'
 
 # URL-safe base64 encoding. used in Instagram.id_to_shortcode()
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
@@ -311,10 +313,10 @@ class Instagram(source.Source):
     else:
       resp.raise_for_status()
 
-    activities, actor = self.html_to_activities(resp.text, cookie=cookie,
-                                                count=count)
+    activities, actor = self.html_to_activities(resp.text, cookie=cookie, count=count)
 
-    if fetch_extras and not activity_id:
+
+    if fetch_extras:
       # batch get cached counts of comments and likes for all activities
       cached = {}
       # don't update the cache until the end, in case we hit an error before
@@ -336,11 +338,14 @@ class Instagram(source.Source):
 
         if (likes and likes != cached.get(likes_key) or
             comments and comments != cached.get(comments_key)):
-          url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
-          resp = util.requests_get(url)
-          resp.raise_for_status()
-          full_activity, _ = self.html_to_activities(resp.text, cookie=cookie,
-                                                     count=count)
+          if not activity_id and not shortcode:
+            url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
+            resp = util.requests_get(url)
+            resp.raise_for_status()
+          # otherwise resp is a fetch of just this activity; reuse it
+
+          full_activity, _ = self.html_to_activities(
+            resp.text, cookie=cookie, count=count, fetch_extras=fetch_extras)
           if full_activity:
             activities[i] = full_activity[0]
             cache_updates.update({likes_key: likes, comments_key: comments})
@@ -755,7 +760,7 @@ class Instagram(source.Source):
 
     return ''.join(reversed(chars))
 
-  def html_to_activities(self, html, cookie=None, count=None):
+  def html_to_activities(self, html, cookie=None, count=None, fetch_extras=False):
     """Converts Instagram HTML to ActivityStreams activities.
 
     The input HTML may be from:
@@ -769,6 +774,7 @@ class Instagram(source.Source):
       cookie: string, optional sessionid cookie to be used for subsequent HTTP
         fetches, if necessary.
       count: integer, number of activities to return, None for all
+      fetch_extras: whether to make extra HTTP fetches to get likes, etc.
 
     Returns:
       tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
@@ -837,18 +843,7 @@ class Instagram(source.Source):
       link = soup.find('link', href=HTML_PRELOAD_RE)
       if link:
         url = urllib.parse.urljoin(HTML_BASE_URL, link['href'])
-        headers = {'Cookie': cookie} if cookie else None
-        resp = util.requests_get(url, allow_redirects=False, headers=headers)
-
-        try:
-          data = resp.json()
-        except ValueError as e:
-          msg = "Couldn't decode response as JSON:\n%s" % resp.text
-          logging.exception(msg)
-          resp.status_code = 504
-          raise requests.HTTPError('504 Bad response from Instagram\n' + msg,
-                                   response=resp)
-
+        data = self._scrape_json(url, cookie=cookie)
         edges = data.get('data', {}).get('user', {})\
                     .get('edge_web_feed_timeline', {}).get('edges', [])
         medias = [e.get('node') for e in edges]
@@ -856,6 +851,13 @@ class Instagram(source.Source):
     if count:
       medias = medias[:count]
     for media in util.trim_nulls(medias):
+      shortcode = media.get('code') or media.get('shortcode')
+      likes = media.get('edge_media_preview_like') or {}
+      if shortcode and fetch_extras and likes.get('count') and not likes.get('edges'):
+        # extra GraphQL fetch to get likes, as of 8/2018
+        data = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
+        likes['edges'] = data.get('data', {}).get('shortcode_media', {})\
+                             .get('edge_liked_by', {}).get('edges', [])
       activities.append(self._json_media_node_to_activity(media, user=profile_user))
 
     actor = None
@@ -864,6 +866,22 @@ class Instagram(source.Source):
       actor = self.user_to_actor(user)
 
     return activities, actor
+
+  @staticmethod
+  def _scrape_json(url, cookie=None):
+    """Fetches and returns JSON from www.instagram.com."""
+    headers = {'Cookie': cookie} if cookie else {}
+    resp = util.requests_get(url, allow_redirects=False, headers=headers)
+    resp.raise_for_status()
+
+    try:
+      return resp.json()
+    except ValueError as e:
+      msg = "Couldn't decode response as JSON:\n%s" % resp.text
+      logging.exception(msg)
+      resp.status_code = 504
+      raise requests.HTTPError('504 Bad response from Instagram\n' + msg,
+                               response=resp)
 
   def _json_media_node_to_activity(self, media, user=None):
     """Converts Instagram HTML JSON media node to ActivityStreams activity.

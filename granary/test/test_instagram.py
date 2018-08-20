@@ -473,23 +473,8 @@ HTML_PHOTO_FULL = {
     'text': 'Elvis hits out of RCA Studio B',
   }}]},
   'edge_media_preview_like': {
-    'edges': [{
-      'node': {
-        'id': '8',
-        'profile_pic_url': 'http:\/\/alice\/picture',
-        'username': 'alizz',
-        'full_name': 'Alice',
-      }
-    }, {
-      'node': {
-        'id': '9',
-        'profile_pic_url': 'http:\/\/bob\/picture',
-        'username': 'bobbb',
-        'full_name': 'Bob',
-        'website': 'http://bob.com/',
-      }
-    }],
     'count': 5,
+    'edges': [],  # requires extra fetch as of ~8/2018, issue #840
   },
   'viewer_has_liked': False,
   'edge_media_to_comment': {
@@ -504,6 +489,39 @@ HTML_PHOTO_FULL = {
   },
   'dimensions': {'width': 1080, 'height': 1293},
   'taken_at_timestamp': 1453063593,
+}
+
+# individual likes need extra fetch as of 8/2018, to eg GET:
+# https://www.instagram.com/graphql/query/?query_hash=...&variables={"shortcode":"...","include_reel":false,"first":24}
+# (https://github.com/snarfed/bridgy/issues/840)
+HTML_PHOTO_LIKES_RESPONSE = {
+  'status': 'ok',
+  'data': {
+    'shortcode_media': {
+      'id': '1848262920796141768',
+      'shortcode': 'BmmWVV9lHjI',
+      'edge_liked_by': {
+        'count': 9,
+        'edges': [{
+          'node': {
+            'id': '8',
+            'profile_pic_url': 'http:\/\/alice\/picture',
+            'username': 'alizz',
+            'full_name': 'Alice',
+          },
+        }, {
+          'node': {
+            'id': '9',
+            'profile_pic_url': 'http:\/\/bob\/picture',
+            'username': 'bobbb',
+            'full_name': 'Bob',
+            'website': 'http://bob.com/',
+          },
+        }],  # ...
+        # 'page_info': {...},
+      },
+    },
+  },
 }
 
 HTML_VIDEO_FULL = {
@@ -837,7 +855,8 @@ HTML_PHOTO_ACTIVITY = {  # ActivityStreams
   },
 }
 HTML_PHOTO_ACTIVITY_FULL = copy.deepcopy(HTML_PHOTO_ACTIVITY)
-HTML_PHOTO_ACTIVITY_FULL['object']['tags'] = LIKE_OBJS
+HTML_PHOTO_ACTIVITY_LIKES = copy.deepcopy(HTML_PHOTO_ACTIVITY)
+HTML_PHOTO_ACTIVITY_LIKES['object']['tags'] = LIKE_OBJS
 
 HTML_VIDEO_ACTIVITY = {  # ActivityStreams
   # Video
@@ -918,6 +937,7 @@ HTML_MULTI_PHOTO_ACTIVITY['object']['attachments'] = [{
 
 HTML_ACTIVITIES = [HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY]
 HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
+HTML_ACTIVITIES_FULL_LIKES = [HTML_PHOTO_ACTIVITY_LIKES, HTML_VIDEO_ACTIVITY_FULL]
 
 HTML_FEED_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER
 HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
@@ -1052,10 +1072,15 @@ class InstagramTest(testutil.TestCase):
     self.expect_requests_get(HTML_BASE_URL + 'x/', HTML_PROFILE_COMPLETE,
                              allow_redirects=False)
     self.expect_requests_get(HTML_BASE_URL + 'p/ABC123/', HTML_PHOTO_COMPLETE)
+    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+                             HTML_PHOTO_LIKES_RESPONSE, allow_redirects=False,
+                             headers={})
     self.expect_requests_get(HTML_BASE_URL + 'p/XYZ789/', HTML_VIDEO_COMPLETE)
+    self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789',
+                             {}, allow_redirects=False, headers={})
 
     self.mox.ReplayAll()
-    self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
+    self.assert_equals(HTML_ACTIVITIES_FULL_LIKES, self.instagram.get_activities(
       user_id='x', group_id=source.SELF, fetch_likes=True, fetch_replies=True,
       scrape=True))
 
@@ -1064,7 +1089,12 @@ class InstagramTest(testutil.TestCase):
     self.expect_requests_get(HTML_BASE_URL + 'x/', HTML_PROFILE_COMPLETE,
                              allow_redirects=False)
     self.expect_requests_get(HTML_BASE_URL + 'p/ABC123/', HTML_PHOTO_COMPLETE)
+    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+                             HTML_PHOTO_LIKES_RESPONSE, allow_redirects=False,
+                             headers={})
     self.expect_requests_get(HTML_BASE_URL + 'p/XYZ789/', HTML_VIDEO_COMPLETE)
+    self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789',
+                             {}, allow_redirects=False, headers={})
 
     # second time, comment and like counts are unchanged, so no media page fetches
     self.expect_requests_get(HTML_BASE_URL + 'x/', HTML_PROFILE_COMPLETE,
@@ -1299,11 +1329,14 @@ class InstagramTest(testutil.TestCase):
   def test_get_like_scrape(self):
     self.expect_requests_get(HTML_BASE_URL + 'p/BDG6Ms_J0vQ/',
                              HTML_PHOTO_COMPLETE, allow_redirects=False)
+    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+                             HTML_PHOTO_LIKES_RESPONSE, allow_redirects=False,
+                             headers={})
     self.mox.ReplayAll()
 
     ig = Instagram(scrape=True)
     self.assert_equals(LIKE_OBJS[0],
-                          ig.get_like('456', '1208909509631101904_942513', '8'))
+                       ig.get_like('456', '1208909509631101904_942513', '8'))
 
   def test_media_to_activity(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
@@ -1526,9 +1559,21 @@ class InstagramTest(testutil.TestCase):
     self.assertEqual(expected, activities[0]['actor'])
     self.assertEqual(expected, activities[0]['object']['author'])
 
-  def test_html_to_activities_photo(self):
-    activities, viewer = self.instagram.html_to_activities(HTML_PHOTO_COMPLETE)
-    self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], activities)
+  def test_html_to_activities_photo_no_fetch_extras(self):
+    activities, viewer = self.instagram.html_to_activities(
+      HTML_PHOTO_COMPLETE, fetch_extras=False)
+    self.assert_equals([HTML_PHOTO_ACTIVITY], activities)
+    self.assertIsNone(viewer)
+
+  def test_html_to_activities_photo_fetch_extras(self):
+    self.expect_requests_get(
+      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
+      allow_redirects=False, headers={})
+    self.mox.ReplayAll()
+
+    activities, viewer = self.instagram.html_to_activities(
+      HTML_PHOTO_COMPLETE, fetch_extras=True)
+    self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
     self.assertIsNone(viewer)
 
   def test_html_to_activities_video(self):

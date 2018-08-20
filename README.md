@@ -306,6 +306,8 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 1.14 - unreleased
+* Instagram:
+  * Make extra HTTP fetch (with cookie) to get individual likes ([snarfed/bridgy#840](https://github.com/snarfed/bridgy/issues/840)).
 * GitHub:
   * `create`/`preview_create` bug fixes for issues and comments on private repos.
 * microformats2:
