@@ -311,7 +311,8 @@ Changelog
 * GitHub:
   * `create`/`preview_create` bug fixes for issues and comments on private repos.
 * microformats2:
-  * Only use quotation-of property for quote tweets, not URLs ([#155](https://github.com/snarfed/granary/issues/155)).
+  * Only use quotation-of property for quote tweets, not URLs. ([#155](https://github.com/snarfed/granary/issues/155))
+  * If a tag has startIndex/length, it gets linkified in the content, so don't also emit an mf2 child or HTML h-cite for it. ([#155](https://github.com/snarfed/granary/issues/155)
 
 ### 1.13 - 2018-08-08
 * Twitter:

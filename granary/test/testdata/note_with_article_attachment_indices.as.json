@@ -1,0 +1,12 @@
+{
+  "objectType": "note",
+  "id": "tag:example.com,2011:note-123",
+  "content": "hello foo",
+  "tags": [{
+    "objectType": "article",
+    "displayName": "foo",
+    "startIndex": 6,
+    "length": 9,
+    "url": "http:/xyz/foo"
+  }]
+}

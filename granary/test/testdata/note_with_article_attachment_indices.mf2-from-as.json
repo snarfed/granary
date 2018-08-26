@@ -1,0 +1,10 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "uid": ["tag:example.com,2011:note-123"],
+    "content": [{
+      "html": "hello <a href=\"http:/xyz/foo\">foo</a>",
+      "value": "hello foo"
+    }]
+  }
+}

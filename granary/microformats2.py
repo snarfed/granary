@@ -253,9 +253,9 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       # extra knowledge here that quoted tweets are converted to note
       # attachments, but URLs in the tweet text are converted to article tags.
       [object_to_json(a, trim_nulls=False, entry_class=['u-quotation-of', 'h-cite'])
-       for a in attachments['note']] +
+       for a in attachments['note'] if 'startIndex' not in a] +
       [object_to_json(a, trim_nulls=False, entry_class=['h-cite'])
-       for a in attachments['article']])
+       for a in attachments['article'] if 'startIndex' not in a])
   }
 
   # photos, including alt text
@@ -792,7 +792,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
       continue
     seen_ids.add(id)
 
-    if 'startIndex' in t and 'length' in t:
+    if 'startIndex' in t and 'length' in t and 'url' in t:
       mentions.append(t)
     else:
       tags.setdefault(source.object_type(t), []).append(t)
