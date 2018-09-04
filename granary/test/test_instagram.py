@@ -57,7 +57,7 @@ ACTOR = {  # ActivityStreams
 }
 COMMENTS = [{  # Instagram
   'created_time': '1349588757',
-  'text': '太可爱了。cute，very cute',
+  'text': '太可爱了。cute，@a_person, very cute',
   'from': {
     'username': 'averygood',
     'profile_picture': 'http://picture/commenter',
@@ -166,12 +166,20 @@ COMMENT_OBJS = [{  # ActivityStreams
     'image': {'url': 'http://picture/commenter'},
     'url': 'https://www.instagram.com/averygood/',
   },
-  'content': '太可爱了。cute，very cute',
+  'content': '太可爱了。cute，@a_person, very cute',
   'id': tag_uri('789'),
   'published': '2012-10-07T05:45:57+00:00',
   'url': 'https://www.instagram.com/p/ABC123/#comment-789',
   'inReplyTo': [{'id': tag_uri('123_456')}],
   'to': [{'objectType':'group', 'alias':'@public'}],
+  'tags': [{
+    'objectType': 'person',
+    'id': tag_uri('a_person'),
+    'displayName': 'a_person',
+    'url': 'https://www.instagram.com/a_person/',
+    'startIndex': 10,
+    'length': 9,
+  }],
 }]
 MEDIA_OBJ = {  # ActivityStreams
   'objectType': 'photo',
@@ -557,7 +565,7 @@ HTML_VIDEO_FULL = {
       },
       'id': '789',
       'created_at': 1349588757,
-      'text': '太可爱了。cute，very cute',
+      'text': '太可爱了。cute，@a_person, very cute',
     }}],
     'count': 1,
   },

@@ -599,14 +599,7 @@ class Instagram(source.Source):
        for u in media.get('users_in_photo', [])] +
       [self.like_to_object(u, id, media.get('link'))
        for u in media.get('likes', {}).get('data', [])] +
-      [{
-        'objectType': 'person',
-        'id': self.tag_uri(mention.group(1)),
-        'displayName': mention.group(1),
-        'url': self.user_url(mention.group(1)),
-        'startIndex': mention.start(),
-        'length': mention.end() - mention.start(),
-        } for mention in MENTION_RE.finditer(content)],
+      self._mention_tags_from_content(content)
     }
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
@@ -637,6 +630,17 @@ class Instagram(source.Source):
 
     return self.postprocess_object(object)
 
+  @classmethod
+  def _mention_tags_from_content(cls, content):
+    return [{
+      'objectType': 'person',
+      'id': cls.tag_uri(mention.group(1)),
+      'displayName': mention.group(1),
+      'url': cls.user_url(mention.group(1)),
+      'startIndex': mention.start(),
+      'length': mention.end() - mention.start(),
+    } for mention in MENTION_RE.finditer(content)]
+
   def comment_to_object(self, comment, media_id, media_url):
     """Converts a comment to an object.
 
@@ -648,6 +652,7 @@ class Instagram(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
+    content = comment.get('text') or ''
     return self.postprocess_object({
       'objectType': 'comment',
       'id': self.tag_uri(comment.get('id')),
@@ -655,9 +660,10 @@ class Instagram(source.Source):
       'url': '%s#comment-%s' % (media_url, comment.get('id')) if media_url else None,
       # TODO: add PST time zone
       'published': util.maybe_timestamp_to_rfc3339(comment.get('created_time')),
-      'content': comment.get('text'),
+      'content': content,
       'author': self.user_to_actor(comment.get('from')),
       'to': [{'objectType': 'group', 'alias': '@public'}],
+      'tags': self._mention_tags_from_content(content),
     })
 
   def like_to_object(self, liker, media_id, media_url):
