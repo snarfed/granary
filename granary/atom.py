@@ -17,7 +17,6 @@ import xml.sax.saxutils
 from bs4 import BeautifulSoup
 import jinja2
 import mf2py
-import mf2util
 from oauth_dropins.webutil import util
 
 from . import microformats2

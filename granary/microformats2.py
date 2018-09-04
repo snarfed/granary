@@ -24,7 +24,6 @@ from oauth_dropins.webutil.util import (
   dedupe_urls,
   get_first,
   get_list,
-  get_url,
   get_urls,
   uniquify,
 )

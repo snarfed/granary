@@ -10,7 +10,6 @@ import appengine_config
 
 from google.appengine.ext import ndb
 import mf2py
-import mf2util
 from oauth_dropins import (
   facebook,
   flickr,

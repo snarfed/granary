@@ -163,7 +163,6 @@ class Handler(handlers.ModernHandler):
       # atom needs actor
       args = [None if a in defaults else a  # handle default path elements
               for a, defaults in zip(args, PATH_DEFAULTS)]
-      user_id = args[0] if args else None
       actor = src.get_actor(user_id) if src else {}
 
     self.write_response(response, actor=actor, url=src.BASE_URL)

@@ -19,7 +19,6 @@ import collections
 import datetime
 import http.client
 import itertools
-import json
 import logging
 import mimetypes
 import re
@@ -679,7 +678,6 @@ class Twitter(source.Source):
 
     # prefer displayName over content for articles
     type = obj.get('objectType')
-    base_url = self.base_object(obj).get('url')
     prefer_content = type == 'note' or (base_url and (type == 'comment'
                                                       or obj.get('inReplyTo')))
     preview_description = ''
