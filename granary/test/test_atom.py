@@ -340,12 +340,21 @@ quoted text
     self.assertNotIn('a&b', out)
 
   def test_render_encodes_ampersands(self):
-    # only the one unencoded & in a&b should be encoded
-    activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}
+    activity = {
+      'object': {
+        # only the one unencoded & in a&b should be encoded
+        'content': 'X <y> http://z?w a&b c&amp;d e&gt;f',
+        'author': {
+          'displayName': 'Alice & Bob',
+          'url': 'http://alice/?and&bob',
+        },
+      },
+    }
 
     out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
     self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
+    self.assertNotIn('and&bob', out)
 
   def test_render_encodes_ampersands_in_quote_tweets(self):
     activity = {'object': {

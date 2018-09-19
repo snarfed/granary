@@ -1,10 +1,10 @@
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>{{ actor.url|safe }}</uri>
+ <uri>{{ actor.url }}</uri>
  {% if actor.displayName %}
  <name>{{ actor.displayName }}</name>
  {% endif %}
  {% if actor.email %}
- <email>{{ actor.email|safe }}</email>
+ <email>{{ actor.email }}</email>
  {% endif %}
 </author>
