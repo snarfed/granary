@@ -311,6 +311,7 @@ Changelog
   * Link @-mentions in comments as well as photo/video captions.
 * GitHub:
   * `create`/`preview_create` bug fixes for issues and comments on private repos.
+  * Handle HTTP 410 Gone responses from REST API, eg when a repo has been deleted or issues for the repo disabled.
 * microformats2:
   * Only use quotation-of property for quote tweets, not URLs. ([#155](https://github.com/snarfed/granary/issues/155))
   * If a tag has startIndex/length, it gets linkified in the content, so don't also emit an mf2 child or HTML h-cite for it. ([#155](https://github.com/snarfed/granary/issues/155)
