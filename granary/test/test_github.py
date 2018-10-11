@@ -555,10 +555,16 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals([], resp['items'])
 
   def test_get_activities_activity_id_not_found(self):
+    self._test_get_activities_activity_id_fails(404)
+
+  def test_get_activities_activity_id_deleted(self):
+    self._test_get_activities_activity_id_fails(410)
+
+  def _test_get_activities_activity_id_fails(self, status):
     self.expect_rest(REST_API_ISSUE % ('a', 'b', 1), {
       'message': 'Not Found',
       'documentation_url': 'https://developer.github.com/v3',
-    }, status_code=404)
+    }, status_code=status)
     self.mox.ReplayAll()
     self.assert_equals([], self.gh.get_activities(activity_id='a:b:1'))
 
@@ -567,10 +573,16 @@ class GitHubTest(testutil.TestCase):
       with self.assertRaises(ValueError):
         self.assert_equals([], self.gh.get_activities(activity_id=bad))
 
-  def test_get_activities_repo_not_found(self):
+  def test_get_activities_pr_not_found(self):
+    self._test_get_activities_pr_fails(404)
+
+  def test_get_activities_pr_deleted(self):
+    self._test_get_activities_pr_fails(410)
+
+  def _test_get_activities_pr_fails(self, status):
     self.expect_rest(REST_API_NOTIFICATIONS,
                      [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
-    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], '', status_code=404)
+    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], '', status_code=status)
     self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
     self.mox.ReplayAll()
 

@@ -325,7 +325,7 @@ class GitHub(source.Source):
         activities = [self.issue_to_object(issue)]
       except BaseException as e:
         code, body = util.interpret_http_exception(e)
-        if code == '404':
+        if code in ('404', '410'):
           activities = []
         else:
           raise
@@ -352,7 +352,7 @@ class GitHub(source.Source):
         try:
           issue = self.rest(subject_url).json()
         except requests.HTTPError as e:
-          if e.response.status_code == 404:
+          if e.response.status_code in (404, 410):
             util.interpret_http_exception(e)
             continue  # the issue/PR or repo was (probably) deleted
           raise
