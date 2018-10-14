@@ -10,9 +10,9 @@ from oauth_dropins.webutil import testutil
 import requests
 
 from granary import atom
-from granary.test import test_facebook
-from granary.test import test_instagram
-from granary.test import test_twitter
+from granary.tests import test_facebook
+from granary.tests import test_instagram
+from granary.tests import test_twitter
 
 INSTAGRAM_ENTRY_BODY = u"""\
 <author>

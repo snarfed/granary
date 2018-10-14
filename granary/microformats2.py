@@ -817,7 +817,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
     content = content.replace('\n', '<br />\n')
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
-  # TODO: fix the bug in test_linkify_broken() in webutil/util_test.py, then
+  # TODO: fix the bug in test_linkify_broken() in webutil/tests/test_util.py, then
   # uncomment this.
   # if content:
   #   content = util.linkify(content)

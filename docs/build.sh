@@ -11,7 +11,7 @@ cd `dirname $absfile`
 # only used to bootstrap. we've edited by hand since then so don't run any more
 # or it will overwrite them.
 # sphinx-apidoc -f -o source ../granary \
-#   ../granary/{appengine_config.py,test}
+#   ../granary/{appengine_config.py,tests}
 
 rm -f index.rst
 cat > index.rst <<EOF

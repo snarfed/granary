@@ -1,5 +1,5 @@
 {
- "-comment": "Used in googleplus_test.py. Fetched from https://www.googleapis.com/discovery/v1/apis/plus/v1/rest on 2013/1/5.",
+ "-comment": "Used in test_googleplus.py. Fetched from https://www.googleapis.com/discovery/v1/apis/plus/v1/rest on 2013/1/5.",
  "kind": "discovery#restDescription",
  "etag": "\"qMhxoRFWKZK4K3KdZJuqms1o3fc/uTNUsIyrlXE3F_OAnzONFFhzkso\"",
  "discoveryVersion": "v1",

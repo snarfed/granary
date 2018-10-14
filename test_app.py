@@ -8,7 +8,7 @@ import xml.sax.saxutils
 
 import appengine_config
 from google.appengine.api import memcache
-import oauth_dropins.webutil.test
+import oauth_dropins.webutil.tests
 from oauth_dropins.webutil import testutil_appengine
 import requests
 

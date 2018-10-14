@@ -7,14 +7,14 @@ import socket
 
 import appengine_config
 from google.appengine.api import memcache
-import oauth_dropins.webutil.test
+import oauth_dropins.webutil.tests
 from oauth_dropins.webutil import testutil_appengine
 
 from granary import instagram
 from granary import source
-from granary.test import test_facebook
-from granary.test import test_instagram
-from granary.test import test_twitter
+from granary.tests import test_facebook
+from granary.tests import test_instagram
+from granary.tests import test_twitter
 
 import api
 

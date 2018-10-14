@@ -13,8 +13,8 @@ from setuptools.command.test import ScanningLoader
 class TestLoader(ScanningLoader):
   def __init__(self, *args, **kwargs):
     super(ScanningLoader, self).__init__(*args, **kwargs)
-    # webutil/test/__init__.py makes App Engine SDK's bundled libraries importable.
-    import oauth_dropins.webutil.test
+    # webutil/tests/__init__.py makes App Engine SDK's bundled libraries importable.
+    import oauth_dropins.webutil.tests
 
 
 setup(name='granary',
@@ -61,5 +61,5 @@ setup(name='granary',
       },
       tests_require=['mox3>=0.24.0'],
       test_loader='setup:TestLoader',
-      test_suite='granary.test',
+      test_suite='granary.tests',
 )

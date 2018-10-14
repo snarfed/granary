@@ -1,7 +1,8 @@
 granary
 =======
 
---------------
+About
+-----
 
 Granary is a library and REST API that fetches and converts between a
 wide variety of data sources and formats:
@@ -51,49 +52,49 @@ Let’s start with an example. This code using the library:
 
 .. code:: python
 
-    from granary import twitter
-    ...
-    tw = twitter.Twitter(ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET)
-    tw.get_activities(group_id='@friends')
+   from granary import twitter
+   ...
+   tw = twitter.Twitter(ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET)
+   tw.get_activities(group_id='@friends')
 
 is equivalent to this ``HTTP GET`` request:
 
 ::
 
-    https://granary.io/twitter/@me/@friends/@app/
-      ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
+   https://granary.io/twitter/@me/@friends/@app/
+     ?access_token_key=ACCESS_TOKEN_KEY&access_token_secret=ACCESS_TOKEN_SECRET
 
 They return the authenticated user’s Twitter stream, ie tweets from the
 people they follow. Here’s the JSON output:
 
 .. code:: json
 
-    {
-      "itemsPerPage": 10,
-      "startIndex": 0,
-      "totalResults": 12,
-      "items": [{
-          "verb": "post",
-          "id": "tag:twitter.com,2013:374272979578150912",
-          "url": "http://twitter.com/evanpro/status/374272979578150912",
-          "content": "Getting stuff for barbecue tomorrow. No ribs left! Got some nice tenderloin though. (@ Metro Plus Famille Lemay) http://t.co/b2PLgiLJwP",
-          "actor": {
-          "username": "evanpro",
-            "displayName": "Evan Prodromou",
-            "description": "Prospector.",
-            "url": "http://twitter.com/evanpro",
-          },
-          "object": {
-            "tags": [{
-                "url": "http://4sq.com/1cw5vf6",
-                "startIndex": 113,
-                "length": 22,
-                "objectType": "article"
-              }, "..."],
-          },
-        }, "..."]
-      "..."
-    }
+   {
+     "itemsPerPage": 10,
+     "startIndex": 0,
+     "totalResults": 12,
+     "items": [{
+         "verb": "post",
+         "id": "tag:twitter.com,2013:374272979578150912",
+         "url": "http://twitter.com/evanpro/status/374272979578150912",
+         "content": "Getting stuff for barbecue tomorrow. No ribs left! Got some nice tenderloin though. (@ Metro Plus Famille Lemay) http://t.co/b2PLgiLJwP",
+         "actor": {
+         "username": "evanpro",
+           "displayName": "Evan Prodromou",
+           "description": "Prospector.",
+           "url": "http://twitter.com/evanpro",
+         },
+         "object": {
+           "tags": [{
+               "url": "http://4sq.com/1cw5vf6",
+               "startIndex": 113,
+               "length": 22,
+               "objectType": "article"
+             }, "..."],
+         },
+       }, "..."]
+     "..."
+   }
 
 The request parameters are the same for both, all optional: ``USER_ID``
 is a source-specific id or ``@me`` for the authenticated user.
@@ -148,7 +149,7 @@ Request paths are of the form:
 
 ::
 
-    /USER_ID/GROUP_ID/APP_ID/ACTIVITY_ID?startIndex=...&count=...&format=FORMAT&access_token=...
+   /USER_ID/GROUP_ID/APP_ID/ACTIVITY_ID?startIndex=...&count=...&format=FORMAT&access_token=...
 
 All query parameters are optional. ``FORMAT`` may be ``json`` (the
 default), ``xml``, or ``atom``, both of which return
@@ -161,7 +162,7 @@ params are `described above <#using>`__.
 Errors are returned with the appropriate HTTP response code, e.g. 403
 for Unauthorized, with details in the response body.
 
-By default, responses are cached and reused for 5m without re-fetching
+By default, responses are cached and reused for 10m without re-fetching
 the source data. (Instagram responses are cached for 60m.) You can
 prevent this by adding the ``cache=false`` query parameter to your
 request.
@@ -214,15 +215,15 @@ there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
 
 ::
 
-    bash: ./bin/easy_install: ...bad interpreter: No such file or directory
+   bash: ./bin/easy_install: ...bad interpreter: No such file or directory
 
-    ImportError: cannot import name certs
+   ImportError: cannot import name certs
 
-    ImportError: cannot import name tweepy
+   ImportError: cannot import name tweepy
 
-    File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
-      raise TweepError(e)
-    TweepError: must be _socket.socket, not socket
+   File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
+     raise TweepError(e)
+   TweepError: must be _socket.socket, not socket
 
 Future work
 -----------
@@ -254,10 +255,10 @@ run:
 
 .. code:: shell
 
-    virtualenv local
-    source local/bin/activate
-    pip install -r requirements.txt
-    python setup.py test
+   virtualenv local
+   source local/bin/activate
+   pip install -r requirements.txt
+   python setup.py test
 
 If you send a pull request, please include (or update) a test for the
 new functionality if possible! The tests require the `App Engine
@@ -276,7 +277,7 @@ To deploy:
 
 .. code:: shell
 
-    python -m unittest discover && gcloud -q app deploy granary-demo *.yaml
+   python -m unittest discover && gcloud -q app deploy granary-demo *.yaml
 
 To deploy `facebook-atom <https://github.com/snarfed/facebook-atom>`__,
 `twitter-atom <https://github.com/snarfed/twitter-atom>`__,
@@ -286,10 +287,10 @@ change:
 
 .. code:: shell
 
-    #!/bin/tcsh
-    foreach s (facebook-atom twitter-atom instagram-atom plusstreamfeed)
-      cd ~/src/$s && gcloud -q app deploy $s *.yaml
-    end
+   #!/bin/tcsh
+   foreach s (facebook-atom twitter-atom instagram-atom plusstreamfeed)
+     cd ~/src/$s && gcloud -q app deploy $s *.yaml
+   end
 
 The docs are built with `Sphinx <http://sphinx-doc.org/>`__, including
 `apidoc <http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html>`__,
@@ -306,6 +307,73 @@ reconfigure it to see system packages with
 `This ActivityStreams
 validator <http://activitystreamstester.appspot.com/>`__ is useful for
 manual testing.
+
+Release instructions
+--------------------
+
+Here’s how to package, test, and ship a new release. (Note that this is
+`largely duplicated in the oauth-dropins readme
+too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
+
+1.  Run the unit tests. \`sh source local/bin/activate.csh python2 -m
+    unittest discover deactivate
+
+    source local3/bin/activate.csh python3 -m unittest discover -s
+    granary/tests/ deactivate \``\`
+2.  Bump the version number in ``setup.py`` and ``docs/conf.py``.
+    ``git grep`` the old version number to make sure it only appears in
+    the changelog. Change the current changelog entry in ``README.md``
+    for this new version from *unreleased* to the current date.
+3.  Build the docs. If you added any new modules, add them to the
+    appropriate file(s) in ``docs/source/``. Then run
+    ``./docs/build.sh``.
+4.  ``git commit -m 'release vX.Y'``
+5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
+    ``sh  python3 setup.py clean build sdist  twine upload -r pypitest dist/granary-X.Y.tar.gz``
+6.  Install from test.pypi.org, both Python 2 and 3.
+    ``sh  cd /tmp  virtualenv local  source local/bin/activate.csh  pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary  deactivate``
+    ``sh  python3 -m venv local3  source local3/bin/activate.csh  pip3 install --upgrade pip  pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary  deactivate``
+7.  Smoke test that the code trivially loads and runs, in both Python 2
+    and 3.
+
+    .. code:: sh
+
+        source local/bin/activate.csh
+        python2
+        # run test code below
+        deactivate
+
+    .. code:: sh
+
+       source local3/bin/activate.csh
+       python3
+       # run test code below
+       deactivate
+
+    Test code to paste into the interpreter: \`py from granary import
+    instagram instagram.__file_\_ # check that it’s in the virtualenv
+
+    i = instagram.Instagram() a = i.get_activities(user_id=‘snarfed’,
+    group_id=‘@self’, scrape=True) print(json.dumps(a, indent=2))
+
+    from granary import atom print(atom.activities_to_atom(a, {}))
+
+    from granary import github g = github.GitHub(‘XXX’) # insert a
+    GitHub personal OAuth access token a2 = g.get_activities()
+    print(json.dumps(a2, indent=2)) \``\`
+8.  Tag the release in git. In the tag message editor, delete the
+    generated comments at bottom, leave the first line blank (to omit
+    the release “title” in github), put ``### Notable changes`` on the
+    second line, then copy and paste this version’s changelog contents
+    below it.
+    ``sh  git tag -a vX.Y --cleanup=verbatim  git push  git push --tags``
+9.  `Click here to draft a new release on
+    GitHub. <https://github.com/snarfed/granary/releases/new>`__ Enter
+    ``vX.Y`` in the *Tag version* box. Leave *Release title* empty. Copy
+    ``### Notable changes`` and the changelog contents into the
+    description text box.
+10. Upload to `pypi.org <https://pypi.org/>`__!
+    ``sh  python3 setup.py clean build sdist  twine upload dist/granary-X.Y.tar.gz``
 
 Related work
 ------------
@@ -367,6 +435,96 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
+1.14 - unreleased
+~~~~~~~~~~~~~~~~~
+
+-  Instagram:
+
+   -  Make extra HTTP fetch (with cookie) to get individual likes
+      (`snarfed/bridgy#840 <https://github.com/snarfed/bridgy/issues/840>`__).
+   -  Link @-mentions in comments as well as photo/video captions.
+
+-  GitHub:
+
+   -  ``create``/``preview_create`` bug fixes for issues and comments on
+      private repos.
+   -  Handle HTTP 410 Gone responses from REST API, eg when a repo has
+      been deleted or issues for the repo disabled.
+
+-  microformats2:
+
+   -  Only use quotation-of property for quote tweets, not URLs.
+      (`#155 <https://github.com/snarfed/granary/issues/155>`__)
+   -  If a tag has startIndex/length, it gets linkified in the content,
+      so don’t also emit an mf2 child or HTML h-cite for it.
+      (`#155 <https://github.com/snarfed/granary/issues/155>`__
+
+-  Atom:
+
+   -  Encode ``&``\ s in author URL and email address too. (Thanks
+      `sebsued <https://twitter.com/sebsued>`__!)
+
+1.13 - 2018-08-08
+~~~~~~~~~~~~~~~~~
+
+-  Twitter:
+
+   -  Support ISO 8601 formatted created_at timestamps, which the
+      `archive download
+      uses <https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive>`__,
+      as well as RFC 2822 from the API.
+   -  ``create()`` and ``preview_create()``: support RSVPs. Tweet them
+      as normal tweets with the RSVP content.
+      (`snarfed/bridgy#818 <https://github.com/snarfed/bridgy/issues/818>`__)
+   -  ``create()`` and ``preview_create()``: support alt text for
+      images, via AS1 ``displayName``.
+      (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
+
+-  Instagram:
+
+   -  Add global rate limiting lock for scraping. If a scraping HTTP
+      request gets a 429 or 503 response, we refuse to make more
+      requests for 5m, and instead short circuit and return the same
+      error. This can be overridden with a new ``ignore_rate_limit``
+      kwarg to ``get_activities()``.
+
+-  GitHub:
+
+   -  Add ``tag`` support to ``create``/``preview_create`` to add
+      label(s) to existing issues
+      (`snarfed/bridgy#811 <https://github.com/snarfed/bridgy/issues/811>`__).
+   -  Escape HTML characters (``<``, ``>``, and ``&``) in content in
+      ``create()`` and ``preview_create()``
+      (`snarfed/bridgy#810 <https://github.com/snarfed/bridgy/issues/810>`__).
+   -  ``get_activities()`` and ``get_comment()`` now return
+      ``ValueError`` instead of ``AssertionError`` on malformed
+      ``activity_id`` and ``comment_id`` args, respectively.
+   -  ``get_activities()`` bug fix for issues/PRs with no body text.
+   -  Switch from GraphQL to REST API for creating comments and
+      reactions, since GraphQL hits authorization errors on many org
+      repos.
+      (`snarfed/bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__)
+   -  Improve GraphQL support for comments and users.
+
+-  Atom:
+
+   -  Shorten and ellipsize feed title when necessary
+      (`#144 <https://github.com/snarfed/granary/issues/144>`__).
+
+-  microformats2:
+
+   -  Upgrade mf2py to improve a few things like `implied p-name
+      detection <http://microformats.org/wiki/microformats2-implied-properties>`__
+      and whitespace handling
+      (`#142 <https://github.com/snarfed/granary/issues/142>`__, fixes
+      `#145 <https://github.com/snarfed/granary/issues/145>`__,
+      `snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__,
+      `snarfed/bridgy#828 <https://github.com/snarfed/bridgy/issues/828>`__).
+   -  Support ``alt`` attribute in ``<img>`` tags
+      (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
+
+.. _section-1:
+
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
 
@@ -396,11 +554,11 @@ Changelog
    -  Render simple string categories in HTML output.
 
 This release is intentionally small and limited in scope to contain any
-impact of the Ptython 3 migration. It *should* be a noop for existing
+impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. section-1:
+.. _section-2:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -473,7 +631,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Omit title from items if it’s the same as the content. (Often
       caused by microformats2’s implied ``p-name`` logic.)
 
-.. section-2:
+.. _section-3:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -506,13 +664,16 @@ still bugs. Please file issues if you notice anything broken!
 
    -  Add ``atom_to_activities()`` for converting full feed documents.
    -  Add to REST API and web UI.
+   -  Include source URL in ``rel=alternate`` link as well as
+      actor/author URL
+      (`#151 <https://github.com/snarfed/granary/issues/151>`__).
 
 -  JSON Feed:
 
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. section-3:
+.. _section-4:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -540,7 +701,7 @@ still bugs. Please file issues if you notice anything broken!
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. section-4:
+.. _section-5:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -620,7 +781,7 @@ still bugs. Please file issues if you notice anything broken!
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. section-5:
+.. _section-6:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -668,7 +829,7 @@ still bugs. Please file issues if you notice anything broken!
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. section-6:
+.. _section-7:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -702,7 +863,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. section-7:
+.. _section-8:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -732,15 +893,22 @@ still bugs. Please file issues if you notice anything broken!
 -  Atom:
 
    -  Bug fix: escape &s in attachments’ text (e.g. quote tweets).
+   -  Bug fix: handle multiply valued ‘object’ fields in ActivityStreams
+      1 activities.
 
-.. section-8:
+-  GitHub:
+
+   -  Switch creating comments and reactions from GraphQL to REST API
+      (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
+
+.. _section-9:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. section-9:
+.. _section-10:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -774,7 +942,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. section-10:
+.. _section-11:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -782,7 +950,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. section-11:
+.. _section-12:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -825,7 +993,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. section-12:
+.. _section-13:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -881,7 +1049,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. section-13:
+.. _section-14:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -904,7 +1072,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. section-14:
+.. _section-15:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -912,7 +1080,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. section-15:
+.. _section-16:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~
