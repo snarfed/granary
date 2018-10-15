@@ -306,6 +306,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 1.14 - unreleased
+Add `delete()`. Currently includes Twitter support.
 * Instagram:
   * Make extra HTTP fetch (with cookie) to get individual likes ([snarfed/bridgy#840](https://github.com/snarfed/bridgy/issues/840)).
   * Link @-mentions in comments as well as photo/video captions.
@@ -317,6 +318,8 @@ Changelog
   * If a tag has startIndex/length, it gets linkified in the content, so don't also emit an mf2 child or HTML h-cite for it. ([#155](https://github.com/snarfed/granary/issues/155)
 * Atom:
   * Encode `&`s in author URL and email address too. (Thanks [sebsued](https://twitter.com/sebsued)!)
+* Twitter:
+  * Add `delete()` for deleting tweets.
 
 ### 1.13 - 2018-08-08
 * Twitter:

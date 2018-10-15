@@ -353,6 +353,20 @@ class Source(with_metaclass(SourceMeta, object)):
     """
     raise NotImplementedError()
 
+  def delete(self, id):
+    """Creates a new object: a post, comment, like, share, or RSVP.
+
+    Generally only supports objects that were authored by the authenticating
+    user.
+
+    Args:
+      id: silo object id
+
+    Returns:
+      dict, JSON response. May be empty.
+    """
+    raise NotImplementedError()
+
   def get_event(self, event_id):
     """Fetches and returns an event.
 

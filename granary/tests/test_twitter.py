@@ -2604,3 +2604,9 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     obj = copy.deepcopy(OBJECT)
     obj['published'] = '2012-02-22 20:26:41 +0000'
     self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
+
+  def test_delete(self):
+    resp = {'o': 'k'}
+    self.expect_urlopen(twitter.API_DELETE_TWEET % '789', resp, data='')
+    self.mox.ReplayAll()
+    self.assertEqual(resp, self.twitter.delete('789'))
