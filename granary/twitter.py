@@ -38,7 +38,8 @@ API_BASE = 'https://api.twitter.com/1.1/'
 API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
 API_BLOCKS = 'blocks/list.json?skip_status=true&count=5000&cursor=%s'
 API_CURRENT_USER = 'account/verify_credentials.json'
-API_DELETE_TWEET = 'statuses/destroy/%s.json'
+API_DELETE_TWEET = 'statuses/destroy.json'
+API_DELETE_FAVORITE = 'favorites/destroy.json'
 API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true&tweet_mode=extended'
 API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&tweet_mode=extended&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
 API_LOOKUP = 'statuses/lookup.json?id=%s&include_entities=true&tweet_mode=extended'
@@ -1050,7 +1051,7 @@ class Twitter(source.Source):
     Returns:
       dict, JSON response from Twitter API
     """
-    return self.urlopen(API_DELETE_TWEET % id, data='')
+    return self.urlopen(API_DELETE_TWEET, data=urllib.parse.urlencode({'id': id}))
 
   def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps :func:`urllib2.urlopen()` and adds an OAuth signature."""
