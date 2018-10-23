@@ -52,6 +52,7 @@ RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
   ('invite', 'invited'),
 ))
 VERBS_WITH_OBJECT = {
+  'follow',
   'like',
   'react',
   'repost',
