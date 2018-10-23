@@ -313,14 +313,16 @@ Add `delete()`. Currently includes Twitter support.
 * GitHub:
   * `create`/`preview_create` bug fixes for issues and comments on private repos.
   * Handle HTTP 410 Gone responses from REST API, eg when a repo has been deleted or issues for the repo disabled.
+* Twitter:
+  * Add `delete()` for deleting tweets.
 * microformats2:
   * Add [follow-of](https://indieweb.org/follow) support.
   * Only use quotation-of property for quote tweets, not URLs. ([#155](https://github.com/snarfed/granary/issues/155))
   * If a tag has startIndex/length, it gets linkified in the content, so don't also emit an mf2 child or HTML h-cite for it. ([#155](https://github.com/snarfed/granary/issues/155)
 * Atom:
   * Encode `&`s in author URL and email address too. (Thanks [sebsued](https://twitter.com/sebsued)!)
-* Twitter:
-  * Add `delete()` for deleting tweets.
+* AS2:
+  * Add `Follow` support.
 
 ### 1.13 - 2018-08-08
 * Twitter:

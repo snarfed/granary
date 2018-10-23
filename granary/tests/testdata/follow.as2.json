@@ -1,0 +1,8 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Follow",
+  "id": "tag:example.com,2001:98765",
+  "url": "http://example.com/this/follow",
+  "object": "http://followee",
+  "actor": "http://follower"
+}

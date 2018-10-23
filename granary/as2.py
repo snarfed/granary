@@ -37,6 +37,7 @@ TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 
 VERB_TO_TYPE = {
   'favorite': 'Like',
+  'follow': 'Follow',
   'invite': 'Invite',
   'like': 'Like',
   'post': 'Create',
