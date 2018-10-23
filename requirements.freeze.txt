@@ -20,8 +20,8 @@ mox==0.5.3
 -e git+git@github.com:snarfed/oauth-dropins.git@v1.13#egg=oauth_dropins
 oauth2client==4.1.2
 oauthlib==2.0.2
-pyasn1==0.3.3
-pyasn1-modules==0.1.1
+pyasn1==0.4.4
+pyasn1-modules==0.2.2
 python-tumblpy==1.0.4
 requests==2.19.1
 requests-oauthlib==0.8.0
