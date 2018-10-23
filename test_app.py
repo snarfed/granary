@@ -6,9 +6,19 @@ import json
 import socket
 import xml.sax.saxutils
 
-import appengine_config
-from google.appengine.api import memcache
+# webutil.tests must be imported before appengine_config!
+#
+# Both the App Engine SDK and the google-auth library (installed in our
+# virtualenv) provide the google package. This works locally, ie we can import
+# from both places, but doesn't work on Circle. Not sure why. This fixes that.
+#
+# Related:
+# https://github.com/googleapis/google-auth-library-python/issues/169#issuecomment-315417916
+# https://stackoverflow.com/questions/49194575
 import oauth_dropins.webutil.tests
+import appengine_config
+
+from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine
 import requests
 
