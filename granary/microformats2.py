@@ -68,6 +68,7 @@ AS_TO_MF2_TYPE = {
 MF2_TO_AS_TYPE_VERB = {
   'article': ('article', None),
   'event': ('event', None),
+  'follow': ('activity', 'follow'),
   'invite': ('activity', 'invite'),
   'like': ('activity', 'like'),
   'location': ('place', None),
@@ -293,7 +294,12 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     ret['properties']['invitee'] = [invitee]
 
   # like and repost mentions
-  for type, prop in ('favorite', 'like'), ('like', 'like'), ('share', 'repost'):
+  for type, prop in (
+      ('favorite', 'like'),
+      ('follow', 'follow'),
+      ('like', 'like'),
+      ('share', 'repost'),
+  ):
     if obj_type == type:
       # The ActivityStreams spec says the object property should always be a
       # single object, but it's useful to let it be a list, e.g. when a like has
@@ -384,6 +390,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     # TODO: remove once this is in mf2util
     # https://github.com/kylewm/mf2util/issues/18
     mf2_type = 'tag'
+  elif 'follow-of' in props: # ditto
+    mf2_type = 'follow'
   else:
     # mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type
     # *is* a photo. so, special case photo type to fall through to underlying
@@ -479,7 +487,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     objects = []
     for target in itertools.chain.from_iterable(
         props.get(field, []) for field in (
-          'like', 'like-of', 'repost', 'repost-of', 'in-reply-to', 'invitee')):
+          'follow-of', 'like', 'like-of', 'repost', 'repost-of', 'in-reply-to',
+          'invitee')):
       t = json_to_object(target) if isinstance(target, dict) else {'url': target}
       # eliminate duplicates from redundant backcompat properties
       if t not in objects:
