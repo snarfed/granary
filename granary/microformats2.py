@@ -627,9 +627,8 @@ def json_to_html(obj, parent_props=None):
 
   children = []
 
-  # if this post is itself a like or repost, link to its target(s).
-  for mftype in ['like', 'repost']:
-    # having like-of or repost-of makes this a like or repost.
+  # if this post is itself a follow, like, or repost, link to its target(s).
+  for mftype in ['follow', 'like', 'repost']:
     for target in props.get(mftype + '-of', []):
       if isinstance(target, basestring):
         children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))

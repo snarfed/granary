@@ -1,0 +1,14 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "uid": ["tag:example.com,2001:98765"],
+    "url": ["http://example.com/this/follow"],
+    "follow-of": ["http://followee"],
+    "author": [{
+      "type": ["h-card"],
+      "properties": {
+        "url": ["http://follower"]
+      }
+    }]
+  }
+}
