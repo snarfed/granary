@@ -2610,3 +2610,9 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.expect_urlopen(twitter.API_DELETE_TWEET, resp, params={'id': '789'})
     self.mox.ReplayAll()
     self.assertEqual(resp, self.twitter.delete('789'))
+
+  def test_preview_delete(self):
+    preview = self.twitter.preview_delete('123')
+    self.assertIn('<a href="https://twitter.com/_/status/123">this tweet</a>',
+                  preview.description)
+    self.assertIsNone(preview.content)

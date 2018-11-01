@@ -1053,6 +1053,18 @@ class Twitter(source.Source):
     """
     return self.urlopen(API_DELETE_TWEET, data=urllib.parse.urlencode({'id': id}))
 
+  def preview_delete(self, id):
+    """Previews deleting a tweet.
+
+    Args:
+      id: int or string, tweet id to delete
+    """
+    url = self.status_url(self.username or '_', id)
+    return source.creation_result(description="""\
+<span class="verb">delete</span>
+<a href="%s">this tweet</a>:
+%s""" % (url, self.embed_post({'url': url})))
+
   def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps :func:`urllib2.urlopen()` and adds an OAuth signature."""
     if not url.startswith('http'):
