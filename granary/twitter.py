@@ -1048,16 +1048,18 @@ class Twitter(source.Source):
     Args:
       id: int or string, tweet id to delete
 
-    Returns:
-      dict, JSON response from Twitter API
+    Returns: CreationResult, content is Twitter API response dict
     """
-    return self.urlopen(API_DELETE_TWEET, data=urllib.parse.urlencode({'id': id}))
+    resp = self.urlopen(API_DELETE_TWEET, data=urllib.parse.urlencode({'id': id}))
+    return source.creation_result(resp)
 
   def preview_delete(self, id):
     """Previews deleting a tweet.
 
     Args:
       id: int or string, tweet id to delete
+
+    Returns: CreationResult
     """
     url = self.status_url(self.username or '_', id)
     return source.creation_result(description="""\
