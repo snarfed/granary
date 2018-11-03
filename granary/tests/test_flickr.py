@@ -1131,3 +1131,28 @@ class FlickrTest(testutil.TestCase):
         'url': 'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
       },
     }, activity['object']['author'])
+
+  def test_delete(self):
+    self.expect_call_api_method('flickr.photos.delete', {'photo_id': '789'}, '')
+    self.expect_call_api_method(
+      'flickr.people.getLimits', {},
+      json.dumps({'person': {'nsid': '39216764@N00'}}))
+    self.mox.ReplayAll()
+
+    resp = self.flickr.delete('789')
+    self.assertEqual({
+      'type': 'delete',
+      'url': 'https://www.flickr.com/photos/39216764@N00/789/',
+    }, resp.content)
+
+  def test_preview_delete(self):
+    self.expect_call_api_method(
+      'flickr.people.getLimits', {},
+      json.dumps({'person': {'nsid': '39216764@N00'}}))
+    self.mox.ReplayAll()
+
+    preview = self.flickr.preview_delete('789')
+    self.assertEqual(
+      '<span class="verb">delete</span> <a href="https://www.flickr.com/photos/39216764@N00/789/">this photo</a>.',
+      preview.description)
+    self.assertIsNone(preview.content)

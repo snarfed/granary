@@ -311,6 +311,33 @@ class Flickr(source.Source):
           people[id] = tag
     return list(people.values())
 
+  def delete(self, id):
+    """Deletes a photo. The authenticated user must have created it.
+
+    Args:
+      id: int or string, photo id to delete
+
+    Returns: CreationResult, content is Flickr API response dict
+    """
+    # delete API call has no response
+    self.call_api_method('flickr.photos.delete', {'photo_id': id})
+    return source.creation_result({
+      'type': 'delete',
+      'url': self.photo_url(self.user_id(), id),
+    })
+
+  def preview_delete(self, id):
+    """Previews deleting a photo.
+
+    Args:
+      id: int or string, photo id to delete
+
+    Returns: CreationResult
+    """
+    return source.creation_result(
+      description='<span class="verb">delete</span> <a href="%s">this photo</a>.' %
+        self.photo_url(self.user_id(), id))
+
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
