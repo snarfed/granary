@@ -50,6 +50,11 @@ HTML_PRELOAD_RE = re.compile(
   r'^/graphql/query/\?query_hash=[^&]*&(amp;)?variables=(%7B%7D|{})$')
 # https://github.com/snarfed/bridgy/issues/840
 HTML_LIKES_URL = HTML_BASE_URL + 'graphql/query/?query_hash=e0f59e4a1c8d78d0161873bc2ee7ec44&variables={"shortcode":"%s","include_reel":false,"first":24}'
+HTML_DATA_RE = re.compile(r"""
+  <script\ type="text/javascript">
+  window\.(_sharedData\ =|__additionalDataLoaded\('feed',)\ *
+  (.+?)
+  \)?;</script>""", re.VERBOSE)
 
 # URL-safe base64 encoding. used in Instagram.id_to_shortcode()
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
@@ -793,9 +798,8 @@ class Instagram(source.Source):
     """
     # extract JSON data blob
     # (can also get just this JSON by adding ?__a=1 to any IG URL.)
-    script_start = '<script type="text/javascript">window._sharedData = '
-    start = html.find(script_start)
-    if start == -1:
+    matches = HTML_DATA_RE.findall(html)
+    if not matches:
       # Instagram sometimes returns 200 with incomplete HTML. often it stops at
       # the end of one of the <style> tags inside <head>. not sure why.
       logging.warning('JSON script tag not found!')
@@ -812,41 +816,38 @@ class Instagram(source.Source):
     except ImportError:
       json_module = json
 
-    start += len(script_start)
-    end = html.find(';</script>', start)
-    if end == -1:
-      # as mentioned above, Instagram sometimes returns 200 with incomplete HTML
-      logging.warning('JSON script close tag not found!')
-      return [], None
-    data = util.trim_nulls(json_module.loads(html[start:end]))
-
-    entry_data = data.get('entry_data', {})
-    activities = []
-
     # find media
     medias = []
     profile_user = None
 
-    # home page ie news feed
-    for page in entry_data.get('FeedPage', []):
-      edges = page.get('graphql', {}).get('user', {})\
-                  .get('edge_web_feed_timeline', {}).get('edges', [])
-      medias.extend(e.get('node') for e in edges
-                    if e.get('node', {}).get('__typename') not in
-                    ('GraphSuggestedUserFeedUnit',))
+    for match in matches:
+      data = util.trim_nulls(json_module.loads(match[1]))
+      entry_data = data.get('entry_data', {})
 
-    # profiles
-    for page in entry_data.get('ProfilePage', []):
-      profile_user = page.get('graphql', {}).get('user', {})
-      medias.extend(edge['node'] for edge in
-        profile_user.get('edge_owner_to_timeline_media', {}).get('edges', [])
-        if edge.get('node'))
+      # home page ie news feed
+      for page in entry_data.get('FeedPage', []):
+        edges = page.get('graphql', {}).get('user', {})\
+                    .get('edge_web_feed_timeline', {}).get('edges', [])
+        medias.extend(e.get('node') for e in edges
+                      if e.get('node', {}).get('__typename') not in
+                      ('GraphSuggestedUserFeedUnit',))
 
-    # individual photo/video permalinks
-    for page in entry_data.get('PostPage', []):
-      media = page.get('graphql', {}).get('shortcode_media')
-      if media:
-        medias.append(media)
+      if 'user' in data:
+        edges = data['user'].get('edge_web_feed_timeline', {}).get('edges', [])
+        medias.extend(e.get('node') for e in edges)
+
+      # profiles
+      for page in entry_data.get('ProfilePage', []):
+        profile_user = page.get('graphql', {}).get('user', {})
+        medias.extend(edge['node'] for edge in
+          profile_user.get('edge_owner_to_timeline_media', {}).get('edges', [])
+          if edge.get('node'))
+
+      # individual photo/video permalinks
+      for page in entry_data.get('PostPage', []):
+        media = page.get('graphql', {}).get('shortcode_media')
+        if media:
+          medias.append(media)
 
     if not medias:
       # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
@@ -862,6 +863,8 @@ class Instagram(source.Source):
 
     if count:
       medias = medias[:count]
+
+    activities = []
     for media in util.trim_nulls(medias):
       shortcode = media.get('code') or media.get('shortcode')
       likes = media.get('edge_media_preview_like') or {}

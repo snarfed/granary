@@ -792,13 +792,14 @@ HTML_HEADER_TEMPLATE = """
 %s
 ...
 <body>
-<script type="text/javascript">window._sharedData = """
-HTML_HEADER = HTML_HEADER_TEMPLATE % ''
+<script type="text/javascript">%s"""
+HTML_HEADER = HTML_HEADER_TEMPLATE % ('', 'window._sharedData = ')
 HTML_PRELOAD_URL = '/graphql/query/?query_hash=cba321&variables={}'
 HTML_HEADER_PRELOAD = HTML_HEADER_TEMPLATE % (
-  '<link rel="preload" href="%s" as="fetch" type="application/json" crossorigin />' %
-  HTML_PRELOAD_URL)
-HTML_FOOTER = """
+  ('<link rel="preload" href="%s" as="fetch" type="application/json" crossorigin />' %
+   HTML_PRELOAD_URL),
+  'window._sharedData = ')
+HTML_FOOTER = """\
 ;</script>
 <script src="//instagramstatic-a.akamaihd.net/h1/bundles/en_US_Commons.js/907dcce6a88a.js" type="text/javascript"></script>
 ...
@@ -948,6 +949,10 @@ HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
 HTML_ACTIVITIES_FULL_LIKES = [HTML_PHOTO_ACTIVITY_LIKES, HTML_VIDEO_ACTIVITY_FULL]
 
 HTML_FEED_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER
+
+HTML_HEADER_2 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('feed', ")
+HTML_FEED_COMPLETE_2 = HTML_HEADER_2 + json.dumps(HTML_PRELOAD_DATA['data']) + ')' + HTML_FOOTER
+
 HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
 HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
 HTML_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
@@ -1535,6 +1540,9 @@ class InstagramTest(testutil.TestCase):
     activities, viewer = self.instagram.html_to_activities(HTML_FEED_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
     self.assert_equals(HTML_VIEWER, viewer)
+
+    activities, viewer = self.instagram.html_to_activities(HTML_FEED_COMPLETE_2)
+    self.assert_equals(HTML_ACTIVITIES_FULL, activities)
 
   def test_html_to_activities_profile(self):
     activities, viewer = self.instagram.html_to_activities(HTML_PROFILE_COMPLETE)

@@ -309,6 +309,7 @@ Changelog
 Add `delete()`. Currently includes Twitter support.
 * Instagram:
   * Make extra HTTP fetch (with cookie) to get individual likes ([snarfed/bridgy#840](https://github.com/snarfed/bridgy/issues/840)).
+  * Update scraping logic to handle feed HTML changes.
   * Link @-mentions in comments as well as photo/video captions.
 * GitHub:
   * `create`/`preview_create` bug fixes for issues and comments on private repos.
