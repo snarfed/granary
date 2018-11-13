@@ -220,7 +220,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     ```
 1. Bump the version number in `setup.py` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
 1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`.
-1. `git commit -m 'release vX.Y'`
+1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
     ```sh
     python3 setup.py clean build sdist
@@ -280,7 +280,6 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. [Click here to draft a new release on GitHub.](https://github.com/snarfed/granary/releases/new) Enter `vX.Y` in the _Tag version_ box. Leave _Release title_ empty. Copy `### Notable changes` and the changelog contents into the description text box.
 1. Upload to [pypi.org](https://pypi.org/)!
     ```sh
-    python3 setup.py clean build sdist
     twine upload dist/granary-X.Y.tar.gz
     ```
 
@@ -305,8 +304,8 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 1.14 - unreleased
-Add `delete()`. Currently includes Twitter support.
+### 1.14 - 2018-11-12
+Add `delete()`. Currently includes Twitter and Flickr support.
 * Instagram:
   * Make extra HTTP fetch (with cookie) to get individual likes ([snarfed/bridgy#840](https://github.com/snarfed/bridgy/issues/840)).
   * Update scraping logic to handle feed HTML changes.
