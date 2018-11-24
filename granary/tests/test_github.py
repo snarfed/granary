@@ -1057,3 +1057,10 @@ class GitHubTest(testutil.TestCase):
     result = self.gh.create(activity)
     self.assertTrue(result.abort)
     self.assertEquals("""No tags in [three] matched <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>'s existing labels [one, two].""", result.error_html, result)
+
+  def test_create_preserves_linked_urls(self):
+    self.assert_equals(
+      'x [http://foo/bar](http://foo/bar) y',
+      self.gh._content_for_create({
+        'content': 'x <a href="http://foo/bar">http://foo/bar</a> y',
+      }))

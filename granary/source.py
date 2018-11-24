@@ -89,8 +89,10 @@ def html_to_text(html, **kwargs):
     h = html2text.HTML2Text()
     h.unicode_snob = True
     h.body_width = 0  # don't wrap lines
-    h.ignore_links = kwargs.get('ignore_links', True)
-    h.ignore_images = kwargs.get('ignore_images', True)
+    h.ignore_links = True
+    h.ignore_images = True
+    for key, val in kwargs.items():
+      setattr(h, key, val)
 
     # hacky monkey patch fix for html2text escaping sequences that are
     # significant in markdown syntax. the X\\Y replacement depends on knowledge

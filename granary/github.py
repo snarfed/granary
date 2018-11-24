@@ -201,6 +201,8 @@ class GitHub(source.Source):
   HTML2TEXT_OPTIONS = {
     'ignore_images': False,
     'ignore_links': False,
+    'protect_links': False,
+    'use_automatic_links': False,
   }
 
   def __init__(self, access_token=None):
