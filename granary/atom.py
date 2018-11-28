@@ -374,6 +374,12 @@ def _prepare_activity(a, reader=True):
   image_urls_seen = set()
   image_atts = []
 
+  # normalize actor images
+  for elem in a, obj:
+    actor = elem.get('actor')
+    if actor:
+      actor['image'] = util.get_first(actor, 'image')
+
   # normalize attachments, render attached notes/articles
   attachments = a.get('attachments') or obj.get('attachments') or []
   for att in attachments:
@@ -381,7 +387,8 @@ def _prepare_activity(a, reader=True):
     type = att.get('objectType')
 
     if type == 'image':
-      image_atts.append(util.get_first(att, 'image'))
+      att['image'] = util.get_first(att, 'image')
+      image_atts.append(att['image'])
       continue
 
     image_urls_seen |= set(util.get_urls(att, 'image'))

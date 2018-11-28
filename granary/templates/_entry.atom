@@ -76,10 +76,8 @@
 
   {% for att in obj.attachments %}
     {% if att.objectType in ('audio', 'video') and att.stream.url %}
-      <link rel="enclosure" href="{{ att.stream.url }}"
-            type="{{ mimetypes.guess_type(att.stream.url)[0] or '' }}" />
+      <link rel="enclosure" href="{{ att.stream.url }}" type="{{ mimetypes.guess_type(att.stream.url)[0] or '' }}" />
     {% elif att.objectType == 'image' and att.image.url %}
-      <link rel="enclosure" href="{{ att.image.url }}"
-            type="{{ mimetypes.guess_type(att.image.url)[0] or '' }}" />
+      <link rel="enclosure" href="{{ att.image.url }}" type="{{ mimetypes.guess_type(att.image.url)[0] or '' }}" />
     {% endif %}
   {% endfor %}

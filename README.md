@@ -304,6 +304,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 1.15 - unreleased
+* GitHub:
+  * Don't enclose bare URLs in`<`/`>` ([snarfed/bridgy#850](https://github.com/snarfed/bridgy/issues/850)).
+* Atom:
+  * Bug fix for actors and attachments with multiple image URLs.
 ### 1.14 - 2018-11-12
 Add `delete()`. Currently includes Twitter and Flickr support.
 * Instagram:

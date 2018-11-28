@@ -52,7 +52,8 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <updated>2012-09-22T05:25:42+00:00</updated>
   <georss:point>37.3 -122.5</georss:point>
   <georss:featureName>Le Truc</georss:featureName>
-  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />"""
+  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
+<link rel="enclosure" href="http://attach/image/big" type="" />"""
 INSTAGRAM_ENTRY = u"""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xml:lang="en-US"
@@ -684,10 +685,8 @@ going to Homebrew Website Club
 </p>
 """, got)
     self.assert_multiline_in("""\
-<link rel="enclosure" href="http://a/podcast.mp3"
-      type="audio/mpeg" />
-<link rel="enclosure" href="http://a/vidjo/1.mov"
-      type="video/quicktime" />
+<link rel="enclosure" href="http://a/podcast.mp3" type="audio/mpeg" />
+<link rel="enclosure" href="http://a/vidjo/1.mov" type="video/quicktime" />
 """, got, ignore_blanks=True)
     self.assertNotIn('unused', got)
 
@@ -782,8 +781,7 @@ going to Homebrew Website Club
     got = atom.activities_to_atom([activity], {})
     self.assertEqual(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'), got)
     self.assert_multiline_in("""
-<link rel="enclosure" href="http://pics/1.jpg"
-      type="image/jpeg" />
+<link rel="enclosure" href="http://pics/1.jpg" type="image/jpeg" />
 """, got)
     self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got, got)
 
@@ -877,3 +875,30 @@ going to Homebrew Website Club
 </div>
 </content>
 """, atom.activities_to_atom([activity], {}), ignore_blanks=True)
+
+  def test_image_lists(self):
+    activity = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'actor': {
+          'image': [{'url': 'http://pic'}],
+        },
+        'attachments': [{
+          'objectType': 'image',
+          'image': [{'url': 'http://att'}],
+        }],
+      },
+    }
+
+    def check():
+      got = atom.activity_to_atom(copy.deepcopy(activity), {})
+      self.assert_multiline_in('<img src="http://pic" />', got)
+      self.assert_multiline_in('<link rel="enclosure" href="http://att"', got)
+
+    check()
+
+    obj = activity['object']
+    obj['actor']['image'] = obj['actor']['image'][0]
+    obj['attachments'][0]['image'] = obj['attachments'][0]['image'][0]
+    check()
