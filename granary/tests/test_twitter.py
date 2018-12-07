@@ -88,11 +88,13 @@ ACTOR = {  # ActivityStreams
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
   'published': '2010-05-01T21:42:43+00:00',
-  'url': 'https://snarfed.org/',
-  'urls': [{'value': 'https://snarfed.org/'},
-           {'value': 'http://link/123'},
-           {'value': 'http://link/456'},
-           ],
+  'url': 'https://twitter.com/snarfed_org',
+  'urls': [
+    {'value': 'https://twitter.com/snarfed_org'},
+    {'value': 'https://snarfed.org/'},
+    {'value': 'http://link/123'},
+    {'value': 'http://link/456'},
+  ],
   'location': {'displayName': 'San Francisco'},
   'username': 'snarfed_org',
   'description': 'my description',
@@ -1559,10 +1561,6 @@ class TwitterTest(testutil.TestCase):
     del user['entities']
     actor = copy.deepcopy(ACTOR)
     del actor['urls']
-    actor['url'] = 'http://t.co/pUWU4S'
-    self.assert_equals(actor, self.twitter.user_to_actor(user))
-
-    del user['url']
     actor['url'] = 'https://twitter.com/snarfed_org'
     self.assert_equals(actor, self.twitter.user_to_actor(user))
 
