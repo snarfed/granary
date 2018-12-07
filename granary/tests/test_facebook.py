@@ -59,10 +59,12 @@ ACTOR = {  # ActivityStreams
   'id': tag_uri('snarfed.org'),
   'numeric_id': '212038',
   'updated': '2012-01-06T02:11:04+00:00',
-  'url': 'https://snarfed.org/',
-  'urls': [{'value': 'https://snarfed.org/'},
-           {'value': 'http://in.description.com'},
-           ],
+  'url': 'http://www.facebook.com/snarfed.org',
+  'urls': [
+    {'value': 'http://www.facebook.com/snarfed.org'},
+    {'value': 'https://snarfed.org/'},
+    {'value': 'http://in.description.com'},
+  ],
   'username': 'snarfed.org',
   'description': 'something about me http://in.description.com',
   'summary': 'something about me http://in.description.com',
@@ -102,11 +104,13 @@ PAGE_ACTOR = {  # ActivityStreams
   'username': 'CivicHallNYC',
   'numeric_id': '946432998716566',
   'displayName': 'Civic Hall',
-  'url': 'http://www.civichall.org',
-  'urls': [{'value': 'http://www.civichall.org'},
-           {'value': 'https://in.about.net'},
-           {'value': 'http://in.description.gov'},
-           ],
+  'url': 'https://www.facebook.com/CivicHallNYC',
+  'urls': [
+    {'value': 'https://www.facebook.com/CivicHallNYC'},
+    {'value': 'http://www.civichall.org'},
+    {'value': 'https://in.about.net'},
+    {'value': 'http://in.description.gov'},
+  ],
   'image': {'url': 'https://graph.facebook.com/v2.10/946432998716566/picture?type=large'},
   'summary': 'Introducing Civic Hall, a new home for civic technology and innovation, launching soon in New York City. https://in.about.net',
   'description': 'Civic Hall, a project of Personal Democracy Media, is a vibrant, collaborative, year-round community center and beautiful http://in.description.gov event space...',
@@ -1944,12 +1948,15 @@ x
 http://a
 y.com
 http://b http://c""",
-      'link': 'http://x',  # website overrides link
+      'link': 'http://x',
       })
-    self.assertEqual('http://a', actor['url'])
-    self.assertEqual(
-      [{'value': 'http://a'}, {'value': 'http://b'}, {'value': 'http://c'}],
-      actor['urls'])
+    self.assertEqual('http://x', actor['url'])
+    self.assertEqual([
+      {'value': 'http://x'},
+      {'value': 'http://a'},
+      {'value': 'http://b'},
+      {'value': 'http://c'},
+    ], actor['urls'])
 
     actor = self.fb.user_to_actor({
       'id': '123',

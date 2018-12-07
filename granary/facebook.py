@@ -1367,7 +1367,11 @@ class Facebook(source.Source):
     if not handle:
       return {}
 
-    # facebook implements this as a 302 redirect
+    # extract web site links. extract_links uniquifies and preserves order
+    urls = (util.extract_links(user.get('link')) or [self.user_url(handle)]) + sum(
+      (util.extract_links(user.get(field)) for field in
+       ('website', 'about', 'description')), [])
+
     actor = {
       # FB only returns the type field if you fetch the object with ?metadata=1
       # https://developers.facebook.com/docs/graph-api/using-graph-api#introspection
@@ -1378,7 +1382,9 @@ class Facebook(source.Source):
       'username': username,
       'description': user.get('description') or user.get('about'),
       'summary': user.get('about'),
-      }
+      'url': urls[0],
+      'urls': [{'value': u} for u in urls] if len(urls) > 1 else None,
+    }
 
     # numeric_id is our own custom field that always has the source's numeric
     # user id, if available.
@@ -1389,16 +1395,6 @@ class Facebook(source.Source):
           'url': '%s%s/picture?type=large' % (API_BASE, id),
         },
       })
-
-    # extract web site links. extract_links uniquifies and preserves order
-    urls = (sum((util.extract_links(user.get(field)) for field in
-                ('website', 'about', 'description')), []) or
-            util.extract_links(user.get('link')) or
-            [self.user_url(handle)])
-    if urls:
-      actor['url'] = urls[0]
-      if len(urls) > 1:
-        actor['urls'] = [{'value': u} for u in urls]
 
     location = user.get('location')
     if location:
