@@ -48,9 +48,12 @@ ACTOR = {  # ActivityStreams
   'objectType': 'person',
   'id': tag_uri('420973239'),
   'username': 'snarfed',
-  'url': 'http://snarfed.org',
-  'urls': [{'value': 'http://snarfed.org'},
-           {'value': 'https://asdf.com'}],
+  'url': 'https://www.instagram.com/snarfed/',
+  'urls': [
+    {'value': 'https://www.instagram.com/snarfed/'},
+    {'value': 'http://snarfed.org'},
+    {'value': 'https://asdf.com'},
+  ],
   'displayName': 'Ryan B',
   'image': {'url': 'http://picture/ryan'},
   'description': 'foo https://asdf.com bar',
@@ -224,9 +227,12 @@ MEDIA_OBJ = {  # ActivityStreams
     'objectType': 'person',
     'id': tag_uri('420973239'),
     'username': 'snarfed',
-    'url': 'http://snarfed.org',
-    'urls': [{'value': 'http://snarfed.org'},
-             {'value': 'https://asdf.com'}],
+    'url': 'https://www.instagram.com/snarfed/',
+    'urls': [
+      {'value': 'https://www.instagram.com/snarfed/'},
+      {'value': 'http://snarfed.org'},
+      {'value': 'https://asdf.com'},
+    ],
     'displayName': 'Ryan B',
     'image': {'url': 'http://picture/ryan'},
     'description': 'foo https://asdf.com bar',
@@ -303,7 +309,11 @@ LIKE_OBJS = [{  # ActivityStreams
       'id': tag_uri('9'),
       'displayName': 'Bob',
       'username': 'bobbb',
-      'url': 'http://bob.com/',
+      'url': 'https://www.instagram.com/bobbb/',
+      'urls': [
+        {'value': 'https://www.instagram.com/bobbb/'},
+        {'value': 'http://bob.com/'},
+      ],
       'image': {'url': 'http://bob/picture'},
       },
     },
@@ -813,7 +823,11 @@ HTML_VIEWER = {
   'id': tag_uri('420973239'),
   'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_a.jpg'},
   'objectType': 'person',
-  'url': 'https://snarfed.org',
+  'url': 'https://www.instagram.com/snarfed/',
+  'urls': [
+    {'value': 'https://www.instagram.com/snarfed/'},
+    {'value': 'https://snarfed.org'},
+  ],
   'username': 'snarfed',
   'description': 'something or other',
 }
@@ -1368,11 +1382,11 @@ class InstagramTest(testutil.TestCase):
 
     # check that the images are ordered the way we expect, largest to smallest
     self.assertEqual(MEDIA_OBJ['attachments'][0]['image'],
-                      obj['attachments'][0]['image'])
+                     obj['attachments'][0]['image'])
 
   def test_media_to_object_with_likes(self):
     self.assert_equals(MEDIA_OBJ_WITH_LIKES,
-                          self.instagram.media_to_object(MEDIA_WITH_LIKES))
+                       self.instagram.media_to_object(MEDIA_WITH_LIKES))
 
   def test_comment_to_object(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
@@ -1618,7 +1632,7 @@ class InstagramTest(testutil.TestCase):
       HTML_HEADER + json.dumps(data) + HTML_FOOTER)
 
     expected = copy.deepcopy(HTML_VIEWER)
-    expected['url'] = 'https://www.instagram.com/snarfed/'
+    del expected['urls']
     del expected['image']
     self.assert_equals(expected, viewer)
 

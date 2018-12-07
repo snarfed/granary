@@ -713,14 +713,12 @@ class Instagram(source.Source):
     if not id or not username:
       return actor
 
-    urls = sum((util.extract_links(user.get(field)) for field in ('website', 'bio')),
-               [])
-    if urls:
-      actor['url'] = urls[0]
-      if len(urls) > 1:
-        actor['urls'] = [{'value': u} for u in urls]
-    else:
-      actor['url'] = self.user_url(username)
+    urls = [self.user_url(username)] + sum(
+      (util.extract_links(user.get(field)) for field in ('website', 'bio')), [])
+    actor.update({
+      'url': urls[0],
+      'urls': [{'value': u} for u in urls] if len(urls) > 1 else None
+    })
 
     private = user.get('is_private')
     if private is not None:
