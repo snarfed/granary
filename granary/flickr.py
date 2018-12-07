@@ -460,12 +460,11 @@ class Flickr(source.Source):
       try:
         resp = util.urlopen(profile_url)
         profile_json = mf2py.parse(doc=resp, url=profile_url, img_with_alt=True)
-        # personal site is likely the first non-flickr url
         urls = profile_json.get('rels', {}).get('me', [])
-        obj['urls'] = [{'value': u} for u in urls]
-        obj['url'] = next(
-          (u for u in urls if not u.startswith('https://www.flickr.com/')),
-          None)
+        if urls:
+          obj['url'] = urls[0]
+        if len(urls) > 1:
+          obj['urls'] = [{'value': u} for u in urls]
       except urllib_error.URLError:
         logging.warning('could not fetch user homepage %s', profile_url)
 

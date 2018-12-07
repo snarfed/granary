@@ -551,7 +551,7 @@ ACTOR = {
   'id': 'tag:flickr.com:kylewm',
   'location': {'displayName': 'San Diego, CA, USA'},
   'description': 'Trying a little bit of everything',
-  'url': 'https://kylewm.com/',
+  'url': 'https://www.flickr.com/people/kindofblue115/',
   'urls': [
     {'value': 'https://www.flickr.com/people/kindofblue115/'},
     {'value': 'https://www.flickr.com/people/kindofblue115/contacts/'},
