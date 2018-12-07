@@ -843,11 +843,11 @@ class GitHub(source.Source):
 
     # extract web site links. extract_links uniquifies and preserves order
     urls = sum((util.extract_links(user.get(field)) for field in (
+      'html_url',  # REST
+      'url',  # both
       'websiteUrl',  # GraphQL
       'blog',  # REST
       'bio',   # both
-      'html_url',  # REST
-      'url',  # both
     )), [])
     urls = [u for u in urls if util.domain_from_link(u) != 'api.github.com']
     if urls:

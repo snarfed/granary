@@ -84,11 +84,11 @@ ACTOR = {  # ActivityStreams
   'image': {'url': 'https://avatars2.githubusercontent.com/u/778068?v=4'},
   'id': tag_uri('MDQ6VXNlcjc3ODA2OA=='),
   'published': '2011-05-10T00:39:24+00:00',
-  'url': 'https://snarfed.org/',
+  'url': 'https://github.com/snarfed',
   'urls': [
+    {'value': 'https://github.com/snarfed'},
     {'value': 'https://snarfed.org/'},
     {'value': 'https://brid.gy/'},
-    {'value': 'https://github.com/snarfed'},
   ],
   'username': 'snarfed',
   'email': 'github@ryanb.org',
