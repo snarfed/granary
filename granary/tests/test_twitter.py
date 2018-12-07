@@ -617,12 +617,12 @@ ATOM = """\
 <updated>2012-02-22T20:26:41+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>https://snarfed.org/</uri>
+ <uri>https://twitter.com/snarfed_org</uri>
  <name>Ryan Barrett</name>
 </author>
 
 <link rel="alternate" href="%(host_url)s" type="text/html" />
-<link rel="alternate" href="https://snarfed.org/" type="text/html" />
+<link rel="alternate" href="https://twitter.com/snarfed_org" type="text/html" />
 <link rel="avatar" href="http://a0.twimg.com/profile_images/866165047/ryan.jpg" />
 <link rel="self" href="%(request_url)s" type="application/atom+xml" />
 
@@ -630,7 +630,7 @@ ATOM = """\
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>https://snarfed.org/</uri>
+ <uri>https://twitter.com/snarfed_org</uri>
  <name>Ryan Barrett</name>
 </author>
 

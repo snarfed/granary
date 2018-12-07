@@ -394,12 +394,12 @@ ATOM = """\
 <updated>2012-09-22T05:25:42+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://snarfed.org</uri>
+ <uri>https://www.instagram.com/snarfed/</uri>
  <name>Ryan B</name>
 </author>
 
 <link rel="alternate" href="%(host_url)s" type="text/html" />
-<link rel="alternate" href="http://snarfed.org" type="text/html" />
+<link rel="alternate" href="https://www.instagram.com/snarfed/" type="text/html" />
 <link rel="avatar" href="http://picture/ryan" />
 <link rel="self" href="%(request_url)s" type="application/atom+xml" />
 
@@ -407,7 +407,7 @@ ATOM = """\
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://snarfed.org</uri>
+ <uri>https://www.instagram.com/snarfed/</uri>
  <name>Ryan B</name>
 </author>
 
@@ -438,10 +438,10 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <link rel="alternate" type="text/html" href="https://www.instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
 
-    <link rel="ostatus:attention" href="http://snarfed.org" />
-    <link rel="mentioned" href="http://snarfed.org" />
+    <link rel="ostatus:attention" href="https://www.instagram.com/snarfed/" />
+    <link rel="mentioned" href="https://www.instagram.com/snarfed/" />
 
-    <a href="http://snarfed.org">Ryan B</a>
+    <a href="https://www.instagram.com/snarfed/">Ryan B</a>
 
   <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
   <link rel="mentioned" href="https://www.instagram.com/foo/" />

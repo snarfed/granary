@@ -17,7 +17,7 @@ from granary.tests import test_twitter
 INSTAGRAM_ENTRY_BODY = u"""\
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>http://snarfed.org</uri>
+ <uri>https://www.instagram.com/snarfed/</uri>
  <name>Ryan B</name>
 </author>
 
@@ -42,9 +42,9 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 
   <link rel="alternate" type="text/html" href="https://www.instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
-    <link rel="ostatus:attention" href="http://snarfed.org" />
-    <link rel="mentioned" href="http://snarfed.org" />
-    <a href="http://snarfed.org">Ryan B</a>
+    <link rel="ostatus:attention" href="https://www.instagram.com/snarfed/" />
+    <link rel="mentioned" href="https://www.instagram.com/snarfed/" />
+    <a href="https://www.instagram.com/snarfed/">Ryan B</a>
   <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
   <link rel="mentioned" href="https://www.instagram.com/foo/" />
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
@@ -87,7 +87,7 @@ INSTAGRAM_ACTIVITY = {
   'actor': {
     'displayName': 'Ryan B',
     'objectType': 'person',
-    'url': 'http://snarfed.org',
+    'url': 'https://www.instagram.com/snarfed/',
   },
   'object': {
     'id': 'https://www.instagram.com/p/ABC123/',
