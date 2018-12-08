@@ -105,6 +105,7 @@ class GooglePlus(source.Source):
     if user_id is None:
       user_id = 'me'
 
+    api = self.auth_entity.api()
     http = self.auth_entity.http()
     if etag:
       # monkey patch the ETag header in because google-api-python-client doesn't
@@ -119,14 +120,14 @@ class GooglePlus(source.Source):
     # https://developers.google.com/+/api/latest/activities
     try:
       if activity_id:
-        call = self.auth_entity.api().activities().get(activityId=activity_id)
+        call = api.activities().get(activityId=activity_id)
         activities = [call.execute(http=http)]
       elif search_query:
-        call = self.auth_entity.api().activities().search(
+        call = api.activities().search(
           query=search_query, maxResults=min(count, SEARCH_MAX_RESULTS))
         activities = call.execute(http=http).get('items', [])
       else:
-        call = self.auth_entity.api().activities().list(
+        call = api.activities().list(
           userId=user_id, collection='public', maxResults=count)
         resp = call.execute(http=http)
         activities = resp.get('items', [])
@@ -147,13 +148,13 @@ class GooglePlus(source.Source):
 
     # prepare batch API requests for comments, likes and reshares
     # https://developers.google.com/api-client-library/python/guide/batch
-    batch = BatchHttpRequest()
+    batch = api.new_batch_http_request()
     for activity in activities:
       # comments
       id = activity['id']
       num_replies = activity.get('object', {}).get('replies', {}).get('totalItems')
       if fetch_replies and num_replies and num_replies != cached.get('AGC ' + id):
-        call = self.auth_entity.api().comments().list(activityId=id, maxResults=500)
+        call = api.comments().list(activityId=id, maxResults=500)
 
         def set_comments(_, resp, exc, activity=None):
           obj = activity.get('object', {})
