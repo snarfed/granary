@@ -618,7 +618,6 @@ HTML_MULTI_PHOTO.update({
       'node': {
         '__typename': 'GraphImage',
         'id': '1455954810972087680',
-        'shortcode': 'BQ0ly_FAyWA',
         'dimensions': {'height': 1080, 'width': 1080},
         'display_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
         'is_video': False,
@@ -951,7 +950,7 @@ HTML_MULTI_PHOTO_ACTIVITY['object']['attachments'] = [{
   }],
 }, {
   'objectType': 'image',
-  'url': 'https://www.instagram.com/p/BQ0ly_FAyWA/',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'image': [{
     'url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
     'width': 1080,

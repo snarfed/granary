@@ -116,11 +116,13 @@ class Instagram(source.Source):
 
   @classmethod
   def user_url(cls, username):
-    return '%s%s/' % (cls.BASE_URL, username)
+    if username:
+      return '%s%s/' % (cls.BASE_URL, username)
 
   @classmethod
   def media_url(cls, shortcode):
-    return '%sp/%s/' % (cls.BASE_URL, shortcode)
+    if shortcode:
+      return '%sp/%s/' % (cls.BASE_URL, shortcode)
 
   def get_actor(self, user_id=None, **kwargs):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -920,8 +922,9 @@ class Instagram(source.Source):
 
     dims = media.get('dimensions', {})
     image_url = media.get('display_src') or media.get('display_url') or ''
+    link = self.media_url(media.get('code') or media.get('shortcode'))
     media.update({
-      'link': self.media_url(media.get('code') or media.get('shortcode')),
+      'link': link,
       'user': self._json_user_to_user(owner),
       'created_time': media.get('date') or media.get('taken_at_timestamp'),
       'caption': {'text': media.get('edge_media_to_caption', {})
@@ -979,9 +982,13 @@ class Instagram(source.Source):
     # multi-photo
     children = media.get('edge_sidecar_to_children', {}).get('edges', [])
     if children:
-      obj['attachments'] = list(itertools.chain(*(
-        self._json_media_node_to_activity(child.get('node'))['object']['attachments']
-        for child in children)))
+      obj['attachments'] = []
+      for child in children:
+        child_activity = self._json_media_node_to_activity(child.get('node'))
+        for att in child_activity['object']['attachments']:
+          if not att.get('url'):
+            att['url'] = link
+          obj['attachments'].append(att)
 
     self.postprocess_object(obj)
     return super(Instagram, self).postprocess_activity(activity)

@@ -312,6 +312,8 @@ Changelog
 * Atom:
   * Bug fix for actors and attachments with multiple image URLs.
 * Google+: switch from deprecated global API endpoint to G+ endpoint. Background in [snarfed/bridgy#846](https://github.com/snarfed/bridgy/issues/846), [Google blog post](https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html) [and docs](https://developers.google.com/api-client-library/python/guide/batch).
+* Instagram:
+  * Fix individual photo/video link urls for multi-photo/video posts.
 
 ### 1.14 - 2018-11-12
 Add `delete()`. Currently includes Twitter and Flickr support.
