@@ -197,7 +197,7 @@ class UrlHandler(api.Handler):
     """Fetches url and returns (string final url, unicode body)."""
     try:
       resp = util.requests_get(url, stream=True)
-    except (ValueError, requests.URLRequired) as e:
+    except (ValueError, requests.URLRequired, requests.TooManyRedirects) as e:
       self.abort(400, str(e))
       # other exceptions are handled by webutil.handlers.handle_exception(),
       # which uses interpret_http_exception(), etc.

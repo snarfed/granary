@@ -308,12 +308,14 @@ Changelog
 * All silos:
   * Switch users' primary URLs from web site to silo profile ([#158](https://github.com/snarfed/granary/issues/158)).
 * GitHub:
-  * Don't enclose bare URLs in`<`/`>` ([snarfed/bridgy#850](https://github.com/snarfed/bridgy/issues/850)).
+  * Don't enclose bare URLs in `<`/`>` ([snarfed/bridgy#850](https://github.com/snarfed/bridgy/issues/850)).
 * Atom:
   * Bug fix for actors and attachments with multiple image URLs.
 * Google+: switch from deprecated global API endpoint to G+ endpoint. Background in [snarfed/bridgy#846](https://github.com/snarfed/bridgy/issues/846), [Google blog post](https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html) [and docs](https://developers.google.com/api-client-library/python/guide/batch).
 * Instagram:
   * Fix individual photo/video link urls for multi-photo/video posts.
+* `/url`: Return HTTP 400 when fetching the user's URL results in an infinite redirect.
+
 
 ### 1.14 - 2018-11-12
 Add `delete()`. Currently includes Twitter and Flickr support.
