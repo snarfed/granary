@@ -314,8 +314,8 @@ Changelog
 * Google+: switch from deprecated global API endpoint to G+ endpoint. Background in [snarfed/bridgy#846](https://github.com/snarfed/bridgy/issues/846), [Google blog post](https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html) [and docs](https://developers.google.com/api-client-library/python/guide/batch).
 * Instagram:
   * Fix individual photo/video link urls for multi-photo/video posts.
+  * Handle [user-provided alt text](https://instagram-press.com/blog/2018/11/28/creating-a-more-accessible-instagram/) ([#159](https://github.com/snarfed/granary/issues/159)).
 * `/url`: Return HTTP 400 when fetching the user's URL results in an infinite redirect.
-
 
 ### 1.14 - 2018-11-12
 Add `delete()`. Currently includes Twitter and Flickr support.
