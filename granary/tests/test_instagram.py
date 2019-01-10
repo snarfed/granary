@@ -620,6 +620,7 @@ HTML_MULTI_PHOTO.update({
         'id': '1455954810972087680',
         'dimensions': {'height': 1080, 'width': 1080},
         'display_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
+        'accessibility_caption': 'this is my alt text',
         'is_video': False,
         'edge_media_to_tagged_user': {'edges': []},
       },
@@ -953,6 +954,7 @@ HTML_MULTI_PHOTO_ACTIVITY['object']['attachments'] = [{
   'url': 'https://www.instagram.com/p/ABC123/',
   'image': [{
     'url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
+    'displayName': 'this is my alt text',
     'width': 1080,
     'height': 1080,
   }],
@@ -1622,6 +1624,19 @@ class InstagramTest(testutil.TestCase):
     activities, viewer = self.instagram.html_to_activities(HTML_MULTI_PHOTO_COMPLETE)
     self.assert_equals([HTML_MULTI_PHOTO_ACTIVITY], activities)
     self.assertIsNone(viewer)
+
+  def test_html_to_activities_multi_photo_omit_auto_alt_text(self):
+    multi = copy.deepcopy(HTML_MULTI_PHOTO_PAGE)
+    multi['entry_data']['PostPage'][0]['graphql']['shortcode_media']\
+        ['edge_sidecar_to_children']['edges'][1]['node']['accessibility_caption'] = \
+        instagram.AUTO_ALT_TEXT_PREFIXES[1] + 'foo bar'
+    html = HTML_HEADER + json.dumps(multi) + HTML_FOOTER
+
+    expected = copy.deepcopy(HTML_MULTI_PHOTO_ACTIVITY)
+    del expected['object']['attachments'][1]['image'][0]['displayName']
+
+    activities, _ = self.instagram.html_to_activities(html)
+    self.assert_equals([expected], activities)
 
   def test_html_to_activities_missing_profile_picture_external_url(self):
     data = copy.deepcopy(HTML_FEED)

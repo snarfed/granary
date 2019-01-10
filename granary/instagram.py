@@ -66,6 +66,11 @@ RATE_LIMIT_BACKOFF = datetime.timedelta(seconds=5 * 60)
 _last_rate_limited = None      # datetime
 _last_rate_limited_exc = None  # requests.HTTPError
 
+AUTO_ALT_TEXT_PREFIXES = (
+  'No photo description available.',
+  'Image may contain: ',
+)
+
 
 class Instagram(source.Source):
   """Instagram source class. See file docstring and Source class for details."""
@@ -608,6 +613,14 @@ class Instagram(source.Source):
        for u in media.get('likes', {}).get('data', [])] +
       self._mention_tags_from_content(content)
     }
+
+    # alt text
+    # https://instagram-press.com/blog/2018/11/28/creating-a-more-accessible-instagram/
+    alt = media.get('accessibility_caption')
+    if alt and not any(alt.startswith(prefix) for prefix in AUTO_ALT_TEXT_PREFIXES):
+      for att in object['attachments']:
+        for img in att.get('image', []):
+          img['displayName'] = alt
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
       image = media.get('images', {}).get(version)
