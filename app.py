@@ -230,8 +230,6 @@ application = webapp2.WSGIApplication([
   ('/flickr/oauth_callback', flickr.CallbackHandler.to('/')),
   ('/github/start_auth', github.StartHandler.to('/github/oauth_callback')),
   ('/github/oauth_callback', github.CallbackHandler.to('/')),
-  ('/google\\+/start_auth', googleplus.StartHandler.to('/google+/oauth_callback')),
-  ('/google\\+/oauth_callback', googleplus.CallbackHandler.to('/')),
   ('/twitter/start_auth', twitter.StartHandler.to('/twitter/oauth_callback')),
   ('/twitter/oauth_callback', twitter.CallbackHandler.to('/')),
   ('/url', UrlHandler),

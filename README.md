@@ -128,8 +128,6 @@ To use the REST API in an existing ActivityStreams client, you'll need to hard-c
 
 The web UI ([granary.io](https://granary.io/)) currently only fetches Facebook access tokens for users. If you want to use it to access a Facebook page, you'll need to get an access token manually with the [Graph API Explorer](https://developers.facebook.com/tools/explorer/) (click on the _Get To..._ drop-down) . Then, log into Facebook on [granary.io](https://granary.io/) and paste the page access token into the `access_token` text box.
 
-(Google+ pages [aren't supported in their API](https://github.com/snarfed/bridgy/issues/354).)
-
 
 Using the library
 ---

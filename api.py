@@ -40,7 +40,6 @@ from granary import (
   facebook,
   flickr,
   github,
-  googleplus,
   instagram,
   jsonfeed,
   microformats2,
@@ -122,9 +121,6 @@ class Handler(handlers.ModernHandler):
         access_token=util.get_required_param(self, 'access_token'))
     elif site == 'instagram':
       src = instagram.Instagram(scrape=True)
-    elif site == 'google+':
-      auth_entity = util.get_required_param(self, 'auth_entity')
-      src = googleplus.GooglePlus(auth_entity=ndb.Key(urlsafe=auth_entity).get())
     else:
       src_cls = source.sources.get(site)
       if not src_cls:

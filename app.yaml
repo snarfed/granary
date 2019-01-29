@@ -48,7 +48,7 @@ handlers:
   script: app.application
   secure: always
 
-- url: /(twitter|facebook|flickr|github|instagram|google\+)/(start_auth|oauth_callback)
+- url: /(twitter|facebook|flickr|github|instagram)/(start_auth|oauth_callback)
   script: app.application
   secure: always
 
