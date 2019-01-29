@@ -311,7 +311,9 @@ Changelog
   * Don't enclose bare URLs in `<`/`>` ([snarfed/bridgy#850](https://github.com/snarfed/bridgy/issues/850)).
 * Atom:
   * Bug fix for actors and attachments with multiple image URLs.
-* Google+: switch from deprecated global API endpoint to G+ endpoint. Background in [snarfed/bridgy#846](https://github.com/snarfed/bridgy/issues/846), [Google blog post](https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html) [and docs](https://developers.google.com/api-client-library/python/guide/batch).
+* Google+:
+  * Drop from web UI and API since [consumer Google+ is shutting down entirely](https://blog.google/technology/safety-security/expediting-changes-google-plus/) ([more](https://github.com/snarfed/bridgy/issues/846)).
+  * Switch from deprecated global API endpoint to G+ endpoint. Background in [snarfed/bridgy#846](https://github.com/snarfed/bridgy/issues/846), [Google blog post](https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html) [and docs](https://developers.google.com/api-client-library/python/guide/batch).
 * Instagram:
   * Fix individual photo/video link urls for multi-photo/video posts.
   * Handle [user-provided alt text](https://instagram-press.com/blog/2018/11/28/creating-a-more-accessible-instagram/) ([#159](https://github.com/snarfed/granary/issues/159)).

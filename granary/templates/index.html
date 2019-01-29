@@ -83,7 +83,7 @@ to try it!
 <div class="login">
 <div class="row">
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6 col-lg-offset-1">
 <form method="post" action="/twitter/start_auth">
   <input type="image" class="shadow" alt="Twitter"
          src="/oauth_dropins/static/twitter.png" />
@@ -96,12 +96,6 @@ to try it!
   <!-- https://developers.facebook.com/docs/reference/login/ -->
   <input name="scope" type="hidden"
          value="user_status,user_posts,user_photos,user_events">
-</form></div>
-
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<form method="post" action="/google+/start_auth">
-  <input type="image" class="shadow" alt="Google+"
-         src="/oauth_dropins/static/google_plus.png" />
 </form></div>
 
 <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
@@ -250,12 +244,7 @@ to try it!
 &nbsp;
 {% endif %}
 
-{% if site == 'google+' %}
-  <label for="auth_entity">&amp; auth_entity =</label>
-  <input id="auth_entity" name="auth_entity" type="text" size="10"
-         class="form-control" value="{{ auth_entity }}" />
-{% endif %}
-{% if access_token and site != 'google+' %}
+{% if access_token %}
   <label for="access_token">&amp; access_token =</label>
   <input id="access_token" name="access_token" type="text" size="10"
          class="form-control" value="{{ access_token }}" />
