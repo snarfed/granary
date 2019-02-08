@@ -303,6 +303,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 1.15 - unreleased
+* Add RSS 2.0 output! ([#124](https://github.com/snarfed/granary/issues/124))
 * All silos:
   * Switch users' primary URLs from web site to silo profile ([#158](https://github.com/snarfed/granary/issues/158)).
 * GitHub:

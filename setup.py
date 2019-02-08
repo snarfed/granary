@@ -46,6 +46,7 @@ setup(name='granary',
           # Keep in sync with requirements.txt!
           'beautifulsoup4',
           'brevity>=0.2.17',
+          'feedgen>=0.7.0',
           'future',
           'html2text',
           'jinja2',

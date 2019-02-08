@@ -1,0 +1,52 @@
+{
+  "items": [{
+    "type": ["h-feed"],
+    "lang": "en",
+    "properties": {
+      "name": ["Pawd Kaast"],
+      "summary": ["a pawd kaast by meee"],
+      "photo": ["https://cover/"],
+      "author": [{
+        "type": ["h-card"],
+        "properties": {
+            "name": ["Meee"],
+            "photo": ["https://photo/of/meee"],
+            "url": ["https://meee.com"],
+            "bio": [{
+              "html": "my <a>bio</a>",
+              "value": "my bio"
+            }]
+        },
+        "value": "Meeeeee"
+      }]
+    },
+    "children": [{
+      "type": ["h-entry"],
+      "properties": {
+        "url": ["http://a/podcast"],
+        "name": ["i'm ready to speak"],
+        "audio": ["http://a/podcast.mp3"],
+        "duration": ["328"],
+        "size": ["7.77mb"],
+        "summary": [{
+          "html": "something",
+          "value": "something"
+        }]
+      }
+    },
+    {
+      "type": ["h-entry"],
+      "properties": {
+        "name": ["i'm ready to perform"],
+        "url": ["http://a/vidjo"],
+        "video": ["http://a/vidjo.mov"],
+        "duration": ["428"],
+        "size": ["8.88mb"],
+        "summary": [{
+          "html": "other thing",
+          "value": "other thing"
+        }]
+      }
+    }]
+  }]
+}

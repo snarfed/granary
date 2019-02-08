@@ -13,7 +13,7 @@ from granary import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
-from granary import as2, jsonfeed, microformats2
+from granary import as2, jsonfeed, microformats2, rss
 
 
 def filepairs(ext1, ext2s):
@@ -80,6 +80,12 @@ def jsonfeed_to_activity(jf):
 def html_to_activity(html):
   return microformats2.html_to_activities(html)[0]['object']
 
+def rss_from_activities(activities):
+  return rss.from_activities(
+    activities, actor=ACTOR, title='Stuff', description='some stuff by meee',
+    feed_url='http://site/feed', home_page_url='http://site/',
+    image_url='http://site/logo.png').decode('utf-8')
+
 # source extension, destination extension, conversion function, exclude prefix
 mappings = (
   ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json, ()),
@@ -94,6 +100,7 @@ mappings = (
   ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, ()),
   ('as.json', ['as2-from-as.json', 'as2.json'], as2.from_as1, ()),
   ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, ()),
+  ('as.json', ['rss.xml'], rss_from_activities, ()),
 )
 
 test_funcs = {}
