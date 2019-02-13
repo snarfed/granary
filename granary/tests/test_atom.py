@@ -175,6 +175,19 @@ class AtomTest(testutil.TestCase):
         'object': obj,
       }), ignore_blanks=True)
 
+  def test_activity_to_atom_author_without_properties(self):
+    """https://console.cloud.google.com/errors/CMPawqSghuDquwE"""
+    self.assertIn('<title>foo</title>', atom.activity_to_atom({
+      'object': {
+        'title': 'foo',
+        'attachments': [{
+          'objectType': 'article',
+          'author': {
+            'objectType': 'person'
+          },
+        }],
+      }}))
+
   def test_atom_to_activity_reply(self):
     expected = {
       'objectType': 'activity',

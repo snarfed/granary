@@ -309,6 +309,7 @@ Changelog
   * Don't enclose bare URLs in `<`/`>` ([snarfed/bridgy#850](https://github.com/snarfed/bridgy/issues/850)).
 * Atom:
   * Bug fix for actors and attachments with multiple image URLs.
+  * Bug fix for attachment author objects with no properties.
 * Google+:
   * Drop from web UI and API since [consumer Google+ is shutting down entirely](https://blog.google/technology/safety-security/expediting-changes-google-plus/) ([more](https://github.com/snarfed/bridgy/issues/846)).
   * Switch from deprecated global API endpoint to G+ endpoint. Background in [snarfed/bridgy#846](https://github.com/snarfed/bridgy/issues/846), [Google blog post](https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html) [and docs](https://developers.google.com/api-client-library/python/guide/batch).

@@ -398,7 +398,7 @@ def _prepare_activity(a, reader=True):
       author = att.get('author')
       if author:
         name = microformats2.maybe_linked_name(
-          microformats2.object_to_json(author).get('properties', []))
+          microformats2.object_to_json(author).get('properties') or {})
         html = '%s: %s' % (name.strip(), html)
       children.append(html)
 
