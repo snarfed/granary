@@ -316,6 +316,8 @@ Changelog
 * Instagram:
   * Fix individual photo/video link urls for multi-photo/video posts.
   * Handle [user-provided alt text](https://instagram-press.com/blog/2018/11/28/creating-a-more-accessible-instagram/) ([#159](https://github.com/snarfed/granary/issues/159)).
+* Twitter:
+  * Update max video upload size from 5MB to 512MB ([#162](https://github.com/snarfed/granary/issues/162).
 * `/url`: Return HTTP 400 when fetching the user's URL results in an infinite redirect.
 
 ### 1.14 - 2018-11-12

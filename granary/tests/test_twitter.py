@@ -2575,8 +2575,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       'stream': {'url': 'http://my/video'},
     })
     self.assertTrue(ret.abort)
-    self.assertIn("larger than Twitter's 15MB limit.", ret.error_plain)
-    self.assertIn("larger than Twitter's 15MB limit.", ret.error_html)
+    self.assertIn("larger than Twitter's 512MB limit.", ret.error_plain)
+    self.assertIn("larger than Twitter's 512MB limit.", ret.error_html)
 
   def test_create_with_video_wrong_type(self):
     self.expect_urlopen('http://my/video', '',

@@ -97,7 +97,8 @@ IMAGE_MIME_TYPES = frozenset(('image/jpg', 'image/jpeg', 'image/png',
                               'image/gif', 'image/webp',))
 VIDEO_MIME_TYPES = frozenset(('video/mp4',))
 MB = 1024 * 1024
-MAX_VIDEO_SIZE = 15 * MB
+# https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices
+MAX_VIDEO_SIZE = 512 * MB
 UPLOAD_CHUNK_SIZE = 5 * MB
 MAX_ALT_LENGTH = 420
 
