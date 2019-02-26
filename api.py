@@ -207,14 +207,17 @@ class Handler(handlers.ModernHandler):
       reader = self.request.get('reader', 'true').lower()
       if reader not in ('true', 'false'):
         self.abort(400, 'reader param must be either true or false')
-      self.response.out.write(atom.activities_to_atom(
-        activities, actor,
-        host_url=url or self.request.host_url + '/',
-        request_url=self.request.url,
-        xml_base=util.base_url(url),
-        title=title,
-        rels={'hub': hub} if hub else None,
-        reader=(reader == 'true')))
+      try:
+        self.response.out.write(atom.activities_to_atom(
+          activities, actor,
+          host_url=url or self.request.host_url + '/',
+          request_url=self.request.url,
+          xml_base=util.base_url(url),
+          title=title,
+          rels={'hub': hub} if hub else None,
+          reader=(reader == 'true')))
+      except ValueError as e:
+        self.abort(400, str(e))
       self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
       if hub:
         self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
@@ -222,10 +225,13 @@ class Handler(handlers.ModernHandler):
       self.response.headers['Content-Type'] = 'application/rss+xml'
       if not title:
         title = 'Feed for %s' % url
-      self.response.out.write(rss.from_activities(
-        activities, actor, title=title,
-        feed_url=self.request.url, hfeed=hfeed,
-        home_page_url=util.base_url(url)))
+      try:
+        self.response.out.write(rss.from_activities(
+          activities, actor, title=title,
+          feed_url=self.request.url, hfeed=hfeed,
+          home_page_url=util.base_url(url)))
+      except ValueError as e:
+        self.abort(400, str(e))
     elif format in ('as1-xml', 'xml'):
       self.response.headers['Content-Type'] = 'application/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))

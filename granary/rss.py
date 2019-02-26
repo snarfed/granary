@@ -55,8 +55,8 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   fg.id(feed_url)
   assert feed_url
   fg.link(href=feed_url, rel='self')
-  fg.link(href=home_page_url, rel='alternate')
-  fg.title(title)
+  if home_page_url:
+    fg.link(href=home_page_url, rel='alternate')
   # TODO: parse language from lang attribute:
   # https://github.com/microformats/mf2py/issues/150
   fg.language('en')
@@ -71,7 +71,9 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   props = hfeed.get('properties') or {}
   content = microformats2.get_text(util.get_first(props, 'content', ''))
   summary = util.get_first(props, 'summary', '')
-  fg.description(content or summary or '-')  # required
+  desc = content or summary or '-'
+  fg.description(desc)  # required
+  fg.title(title or util.ellipsize(desc))  # required
 
   latest = None
   enclosures = False
@@ -92,8 +94,9 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     if content:
       item.content(content, type='CDATA')
 
-    item.category([{'term': t.displayName} for t in obj.get('tags', [])
-                  if t.displayName and t.verb not in ('like', 'react', 'share')])
+    item.category(
+      [{'term': t['displayName']} for t in obj.get('tags', [])
+       if t.get('displayName') and t.get('verb') not in ('like', 'react', 'share')])
 
     author = obj.get('author', {})
     item.author({
@@ -103,14 +106,18 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
 
     published = obj.get('published') or obj.get('updated')
     if published:
-      dt = mf2util.parse_datetime(published)
-      if not isinstance(dt, datetime):
-        dt = datetime.combine(dt, time.min)
-      if not dt.tzinfo:
-        dt = dt.replace(tzinfo=util.UTC)
-      item.published(dt)
-      if not latest or dt > latest:
-        latest = dt
+      try:
+        dt = mf2util.parse_datetime(published)
+        if not isinstance(dt, datetime):
+          dt = datetime.combine(dt, time.min)
+        if not dt.tzinfo:
+          dt = dt.replace(tzinfo=util.UTC)
+        item.published(dt)
+        if not latest or dt > latest:
+          latest = dt
+      except ValueError:  # bad datetime string
+        pass
+
 
     for att in obj.get('attachments', []):
       stream = util.get_first(att, 'stream') or att
@@ -140,4 +147,4 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   if latest:
     fg.lastBuildDate(latest)
 
-  return fg.rss_str(pretty=True).decode().replace(' length="REMOVEME"', '')
+  return fg.rss_str(pretty=True).decode('utf-8').replace(' length="REMOVEME"', '')

@@ -10,11 +10,17 @@
       "duration": 328
     },
     "objectType": "audio"
+  }],
+  "tags": [{
+    "displayName": "a tag"
+  }, {
+    "displayName": "not a tag",
+    "verb": "like"
   }]
 },
 {
   "url": "http://vidjo/post",
-  "objectType": "article",
+  "objectType": null,
   "displayName": "i'm ready to perform",
   "summary": "other thing",
   "updated": "2012-12-04",
