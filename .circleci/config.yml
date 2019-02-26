@@ -24,10 +24,11 @@ jobs:
           name: Base dependencies
           command: |
             apt-get install -y python3 google-cloud-sdk-app-engine-python-extras
-            # use oauth-dropins master at head. (see pip install -e below.)
+            # TEMPORARILY use oauth-dropins master at 1.14. (see pip install -e below.)
+            # TODO: switch back to head once granary 2.0 ships.
             cd /tmp
             git clone https://github.com/snarfed/oauth-dropins.git
-            cd oauth-dropins; git submodule sync; git submodule update --init
+            cd oauth-dropins; git checkout v1.14; git submodule sync; git submodule update --init
 
       - run:
           name: Python 3 dependencies

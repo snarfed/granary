@@ -2,7 +2,7 @@
 
 Docs:
 https://packaging.python.org/en/latest/distributing.html
-http://pythonhosted.org/setuptools/setuptools.html
+https://setuptools.readthedocs.io/
 
 Based on https://github.com/pypa/sampleproject/blob/master/setup.py
 """
@@ -51,7 +51,7 @@ setup(name='granary',
           'jinja2',
           'mf2py>=1.1.2',
           'mf2util>=0.5.0',
-          'oauth-dropins>=1.14',
+          'oauth-dropins>=1.14,<2.0',
           'requests-toolbelt>=0.6.2',
           'requests>=2.10.0',
           'urllib3>=1.14',
