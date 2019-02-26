@@ -81,16 +81,24 @@ def html_to_activity(html):
   return microformats2.html_to_activities(html)[0]['object']
 
 def rss_from_activities(activities):
+  hfeed = {
+    'properties': {
+      'content': [{'value': 'some stuff by meee'}],
+    },
+  }
   return rss.from_activities(
-    activities, actor=ACTOR, title='Stuff', description='some stuff by meee',
-    feed_url='http://site/feed', home_page_url='http://site/',
-    image_url='http://site/logo.png').decode('utf-8')
+    activities, actor=ACTOR, title='Stuff', feed_url='http://site/feed',
+    home_page_url='http://site/', hfeed=hfeed)
 
 # source extension, destination extension, conversion function, exclude prefix
 mappings = (
-  ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json, ()),
+  ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json,
+  # not ready yet
+   ('feed_with_audio_video')),
   ('as.json', ['mf2-from-as.html', 'mf2.html'], microformats2.object_to_html, ()),
-  ('mf2.json', ['as-from-mf2.json', 'as.json'], microformats2.json_to_object, ()),
+  ('mf2.json', ['as-from-mf2.json', 'as.json'], microformats2.json_to_object,
+  # not ready yet
+   ('feed_with_audio_video')),
   ('mf2.json', ['mf2-from-json.html', 'mf2.html'], microformats2.json_to_html,
    # we do not format h-media photos properly in html
    ('note_with_composite_photo',)),

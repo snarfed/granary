@@ -8,23 +8,23 @@
   <docs>http://www.rssboard.org/rss-specification</docs>
   <generator>granary</generator>
   <image>
-    <url>http://site/logo.png</url>
+    <url>http://example.com/martin/image</url>
     <title>Stuff</title>
     <link>http://site/</link>
   </image>
-  <lastBuildDate>Thu, 06 Dec 2012 00:58:26 +0000</lastBuildDate>
+  <language>en</language>
+  <lastBuildDate>Wed, 05 Dec 2012 00:58:26 +0700</lastBuildDate>
   <itunes:author>Martin Smith</itunes:author>
   <itunes:block>no</itunes:block>
-  <itunes:image href="http://site/logo.png"/>
   <itunes:explicit>no</itunes:explicit>
-  <itunes:subtitle>some stuff by meee</itunes:subtitle>
 
   <item>
     <title>i'm ready to perform</title>
     <link>http://vidjo/post</link>
     <description>other thing</description>
     <guid isPermaLink="true">http://vidjo/post</guid>
-    <enclosure url="http://a/vidjo.mov" length="0" type="video/quicktime"/>
+    <enclosure url="http://a/vidjo.mov" type="video/quicktime"/>
+    <pubDate>Tue, 04 Dec 2012 00:00:00 +0000</pubDate>
     <itunes:duration>428</itunes:duration>
   </item>
 
@@ -33,8 +33,8 @@
     <link>http://podcast/post</link>
     <description>&lt;p&gt;some HTML&lt;/p&gt;</description>
     <guid isPermaLink="true">http://podcast/post</guid>
-    <enclosure url="http://a/podcast.mp3" length="0" type="audio/mpeg"/>
-    <pubDate>Wed, 05 Dec 2012 00:58:26 +0000</pubDate>
+    <enclosure url="http://a/podcast.mp3" type="audio/mpeg"/>
+    <pubDate>Wed, 05 Dec 2012 00:58:26 +0700</pubDate>
     <itunes:duration>328</itunes:duration>
   </item>
 

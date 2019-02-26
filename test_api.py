@@ -208,6 +208,11 @@ class HandlerTest(testutil_appengine.HandlerTest):
     self.assertEquals(200, resp.status_int)
     self.assertEquals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
+  def test_rss_format(self):
+    resp = self.get_response('/fake?format=rss')
+    self.assertEquals(200, resp.status_int)
+    self.assertEquals('application/rss+xml; charset=utf-8', resp.headers['Content-Type'])
+
   def test_unknown_format(self):
     resp = self.get_response('/fake?format=bad')
     self.assertEquals(400, resp.status_int)

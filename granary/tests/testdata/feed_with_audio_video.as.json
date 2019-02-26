@@ -3,7 +3,7 @@
   "objectType": "article",
   "displayName": "i'm ready to speak",
   "content": "<p>some HTML</p>",
-  "published": "2012-12-05T00:58:26+00:00",
+  "published": "2012-12-05T00:58:26+07:00",
   "attachments": [{
     "stream": {
       "url": "http://a/podcast.mp3",
@@ -17,7 +17,7 @@
   "objectType": "article",
   "displayName": "i'm ready to perform",
   "summary": "other thing",
-  "updated": "2012-12-06T00:58:26+00:00",
+  "updated": "2012-12-04",
   "attachments": [{
     "stream": {
       "url": "http://a/vidjo.mov",

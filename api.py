@@ -43,6 +43,7 @@ from granary import (
   instagram,
   jsonfeed,
   microformats2,
+  rss,
   source,
   twitter,
 )
@@ -71,6 +72,7 @@ FORMATS = (
   'json-mf2',
   'jsonfeed',
   'mf2-json',
+  'rss',
   'xml',
 )
 
@@ -163,7 +165,8 @@ class Handler(handlers.ModernHandler):
 
     self.write_response(response, actor=actor, url=src.BASE_URL)
 
-  def write_response(self, response, actor=None, url=None, title=None):
+  def write_response(self, response, actor=None, url=None, title=None,
+                     hfeed=None):
     """Converts ActivityStreams activities and writes them out.
 
     Args:
@@ -172,7 +175,8 @@ class Handler(handlers.ModernHandler):
       actor: optional ActivityStreams actor dict for current user. Only used
         for Atom and JSON Feed output.
       url: the input URL
-      title: string, Used in Atom and JSON Feed output
+      title: string, used in feed output (Atom, JSON Feed, RSS)
+      hfeed: dict, parsed mf2 h-feed, if available
     """
     format = self.request.get('format') or self.request.get('output') or 'json'
     if format not in FORMATS:
@@ -214,6 +218,14 @@ class Handler(handlers.ModernHandler):
       self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
       if hub:
         self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
+    elif format == 'rss':
+      self.response.headers['Content-Type'] = 'application/rss+xml'
+      if not title:
+        title = 'Feed for %s' % url
+      self.response.out.write(rss.from_activities(
+        activities, actor, title=title,
+        feed_url=self.request.url, hfeed=hfeed,
+        home_page_url=util.base_url(url)))
     elif format in ('as1-xml', 'xml'):
       self.response.headers['Content-Type'] = 'application/xml'
       self.response.out.write(XML_TEMPLATE % util.to_xml(response))

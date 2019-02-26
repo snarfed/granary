@@ -10,6 +10,7 @@ import appengine_config
 
 from google.appengine.ext import ndb
 import mf2py
+import mf2util
 from oauth_dropins import (
   facebook,
   flickr,
@@ -154,6 +155,7 @@ class UrlHandler(api.Handler):
 
     actor = None
     title = None
+    hfeed = None
     if mf2:
       def fetch_mf2_func(url):
         if util.domain_or_parent_in(urlparse.urlparse(url).netloc, SILO_DOMAINS):
@@ -164,6 +166,7 @@ class UrlHandler(api.Handler):
       try:
         actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
         title = microformats2.get_title(mf2)
+        hfeed = mf2util.find_first_entry(mf2, ['h-feed'])
       except (KeyError, ValueError) as e:
         raise exc.HTTPBadRequest('Could not parse %s as %s: %s' % (url, input, e))
 
@@ -191,7 +194,7 @@ class UrlHandler(api.Handler):
         raise exc.HTTPBadRequest('Could not parse %s as JSON Feed' % url)
 
     self.write_response(source.Source.make_activities_base_response(activities),
-                        url=url, actor=actor, title=title)
+                        url=url, actor=actor, title=title, hfeed=hfeed)
 
   def _fetch(self, url):
     """Fetches url and returns (string final url, unicode body)."""

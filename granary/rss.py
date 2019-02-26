@@ -1,11 +1,21 @@
 """Convert between ActivityStreams and RSS 2.0.
 
 RSS 2.0 spec: http://www.rssboard.org/rss-specification
+
+Apple iTunes Podcasts feed requirements:
+https://help.apple.com/itc/podcasts_connect/#/itc1723472cb
+
+Notably:
+* Valid RSS 2.0.
+* Each podcast item requires <guid>.
+* Images should be JPEG or PNG, 1400x1400 to 3000x3000.
+* HTTP server that hosts assets and files should support range requests.
 """
 from __future__ import absolute_import, unicode_literals
 from builtins import str
 from past.builtins import basestring
 
+from datetime import date, datetime, time
 import mimetypes
 
 from feedgen.feed import FeedGenerator
@@ -18,18 +28,17 @@ from . import microformats2
 ENCLOSURE_TYPES = {'audio', 'video'}
 
 
-def from_activities(activities, actor=None, title=None, description=None,
-                    feed_url=None, home_page_url=None, image_url=None):
+def from_activities(activities, actor=None, title=None, feed_url=None,
+                    home_page_url=None, hfeed=None):
   """Converts ActivityStreams activities to an RSS 2.0 feed.
 
   Args:
     activities: sequence of ActivityStreams activity dicts
     actor: ActivityStreams actor dict, the author of the feed
     title: string, the feed title
-    description, the feed description
+    feed_url: string, the URL for this RSS feed
     home_page_url: string, the home page URL
-    # feed_url: the URL of this RSS feed, if any
-    image_url: the URL of an image representing this feed
+    hfeed: dict, parsed mf2 h-feed, if available
 
   Returns:
     unicode string with RSS 2.0 XML
@@ -44,15 +53,28 @@ def from_activities(activities, actor=None, title=None, description=None,
 
   fg = FeedGenerator()
   fg.id(feed_url)
+  assert feed_url
   fg.link(href=feed_url, rel='self')
   fg.link(href=home_page_url, rel='alternate')
   fg.title(title)
-  fg.description(description)
+  # TODO: parse language from lang attribute:
+  # https://github.com/microformats/mf2py/issues/150
+  fg.language('en')
   fg.generator('granary', uri='https://granary.io/')
-  if image_url:
-    fg.image(image_url)
+
+  hfeed = hfeed or {}
+  actor = actor or {}
+  image = util.get_url(hfeed, 'image') or util.get_url(actor, 'image')
+  if image:
+    fg.image(image)
+
+  props = hfeed.get('properties') or {}
+  content = microformats2.get_text(util.get_first(props, 'content', ''))
+  summary = util.get_first(props, 'summary', '')
+  fg.description(content or summary or '-')  # required
 
   latest = None
+  enclosures = False
   for activity in activities:
     obj = activity.get('object') or activity
     if obj.get('objectType') == 'person':
@@ -64,7 +86,7 @@ def from_activities(activities, actor=None, title=None, description=None,
     item.link(href=url)
     item.guid(url, permalink=True)
 
-    item.title(obj.get('title') or obj.get('displayName'))
+    item.title(obj.get('title') or obj.get('displayName') or '-')  # required
     content = microformats2.render_content(
       obj, include_location=True, render_attachments=False) or obj.get('summary')
     if content:
@@ -79,15 +101,17 @@ def from_activities(activities, actor=None, title=None, description=None,
       'uri': author.get('url'),
     })
 
-    for prop in 'published', 'updated':
-      val = obj.get(prop)
-      if val:
-        dt = util.parse_iso8601(val)
-        getattr(item, prop)(dt)
-        if not latest or dt > latest:
-          latest = dt
+    published = obj.get('published') or obj.get('updated')
+    if published:
+      dt = mf2util.parse_datetime(published)
+      if not isinstance(dt, datetime):
+        dt = datetime.combine(dt, time.min)
+      if not dt.tzinfo:
+        dt = dt.replace(tzinfo=util.UTC)
+      item.published(dt)
+      if not latest or dt > latest:
+        latest = dt
 
-    enclosures = False
     for att in obj.get('attachments', []):
       stream = util.get_first(att, 'stream') or att
       if not stream:
@@ -98,7 +122,7 @@ def from_activities(activities, actor=None, title=None, description=None,
       if (att.get('objectType') in ENCLOSURE_TYPES or
           mime and mime.split('/')[0] in ENCLOSURE_TYPES):
         enclosures = True
-        item.enclosure(url=url, type=mime) # TODO: length (bytes)
+        item.enclosure(url=url, type=mime, length='REMOVEME') # TODO: length (bytes)
 
         item.load_extension('podcast')
         duration = stream.get('duration')
@@ -107,15 +131,13 @@ def from_activities(activities, actor=None, title=None, description=None,
 
   if enclosures:
     fg.load_extension('podcast')
-    if actor:
-      fg.podcast.itunes_author(actor.get('displayName') or actor.get('username'))
-    fg.podcast.itunes_image(image_url)
-    if description:
-      fg.podcast.itunes_subtitle(description)
+    fg.podcast.itunes_author(actor.get('displayName') or actor.get('username'))
+    if summary:
+      fg.podcast.itunes_summary(summary)
     fg.podcast.itunes_explicit('no')
     fg.podcast.itunes_block(False)
 
   if latest:
-    fg.lastBuildDate(dt)
+    fg.lastBuildDate(latest)
 
-  return fg.rss_str(pretty=True)
+  return fg.rss_str(pretty=True).decode().replace(' length="REMOVEME"', '')
