@@ -296,14 +296,14 @@ to try it!
 </select>
 <label>& output = </label>
 <select id="output" name="output">
-  <option value="as2">as2</option>
-  <option value="as1">as1</option>
-  <option value="as1-xml">as1-xml</option>
-  <option value="atom">atom</option>
-  <option value="html">html</option>
-  <option value="mf2-json">mf2-json</option>
-  <option value="jsonfeed">jsonfeed</option>
-  <option value="rss">rss</option>
+  <option {% if output == "as2" %} selected {% endif %} value="as2">as2</option>
+  <option {% if output == "as1" %} selected {% endif %} value="as1">as1</option>
+  <option {% if output == "as1-xml" %} selected {% endif %} value="as1-xml">as1-xml</option>
+  <option {% if output == "atom" %} selected {% endif %} value="atom">atom</option>
+  <option {% if output == "html" %} selected {% endif %} value="html">html</option>
+  <option {% if output == "mf2-json" %} selected {% endif %} value="mf2-json">mf2-json</option>
+  <option {% if output == "jsonfeed" %} selected {% endif %} value="jsonfeed">jsonfeed</option>
+  <option {% if output == "rss" %} selected {% endif %} value="rss">rss</option>
 </select>
 <label>& url = </label>
 <input id="url" name="url" type="url" required class="form-control"
