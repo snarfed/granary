@@ -27,10 +27,6 @@ github
 ------
 .. automodule:: granary.github
 
-googleplus
-----------
-.. automodule:: granary.googleplus
-
 instagram
 ---------
 .. automodule:: granary.instagram

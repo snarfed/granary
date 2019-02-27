@@ -383,7 +383,7 @@ class AppTest(testutil_appengine.HandlerTest):
       'body_class': ' class="h-feed"',
       'extra': """
 <span class="p-name">my title</span>
-<a href="https://plus.google.com/+Author" rel="author"></a>,
+<a href="https://twitter.com/Author" rel="author"></a>,
 """
     })
     self.mox.ReplayAll()
@@ -394,18 +394,18 @@ class AppTest(testutil_appengine.HandlerTest):
     self.assert_multiline_in("""
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>https://plus.google.com/+Author</uri>
+ <uri>https://twitter.com/Author</uri>
 </author>
 
 <link rel="alternate" href="http://my/posts.html" type="text/html" />
-<link rel="alternate" href="https://plus.google.com/+Author" type="text/html" />
+<link rel="alternate" href="https://twitter.com/Author" type="text/html" />
 <link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>https://plus.google.com/+Author</uri>
+ <uri>https://twitter.com/Author</uri>
 </author>
 """, resp.body, ignore_blanks=True)
 

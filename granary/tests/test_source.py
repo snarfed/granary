@@ -11,7 +11,6 @@ from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
 from granary import facebook
-from granary import googleplus
 from granary import instagram
 from granary import source
 from granary.source import Source
@@ -496,7 +495,6 @@ Watching  \t waves
 
   def test_sources_global(self):
     self.assertEqual(facebook.Facebook, source.sources['facebook'])
-    self.assertEqual(googleplus.GooglePlus, source.sources['google+'])
     self.assertEqual(instagram.Instagram, source.sources['instagram'])
     self.assertEqual(twitter.Twitter, source.sources['twitter'])
 

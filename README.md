@@ -21,8 +21,8 @@ About
 
 Granary is a library and REST API that fetches and converts between a wide variety of data sources and formats:
 
-* Facebook, Flickr, GitHub, Google+, Instagram, and Twitter native APIs
-* Instagram and Google+ scraped HTML
+* Facebook, Flickr, GitHub, Instagram, and Twitter native APIs
+* Instagram scraped HTML
 * [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0 (JSON)
 * HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2)
 * [Atom](https://tools.ietf.org/html/rfc4287), [RSS 2.0](http://www.rssboard.org/rss-specification), [JSON Feed](https://jsonfeed.org/)
@@ -103,7 +103,7 @@ When using the `GROUP_ID` `@search` (for platforms that support it — currently
 
 Output data is [JSON Activity Streams 1.0](http://activitystrea.ms/specs/json/1.0/) objects wrapped in the [OpenSocial envelope](https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service), which puts the activities in the top-level `items` field as a list and adds the `itemsPerPage`, `totalCount`, etc. fields.
 
-Most Facebook requests and all Twitter, Google+, Instagram, and Flickr requests will need OAuth access tokens. If you're using Python on Google App Engine, [oauth-dropins](https://github.com/snarfed/oauth-dropins) is an easy way to add OAuth client flows for these sites. Otherwise, here are the sites' authentication docs: [Facebook](https://developers.facebook.com/docs/facebook-login/access-tokens/), [Flickr](https://www.flickr.com/services/api/auth.oauth.html), [Google+](https://developers.google.com/+/api/oauth#about), [Instagram](http://instagram.com/developer/authentication/), [Twitter](https://dev.twitter.com/docs/auth/3-legged-authorization).
+Most Facebook requests and all Twitter, Instagram, and Flickr requests will need OAuth access tokens. If you're using Python on Google App Engine, [oauth-dropins](https://github.com/snarfed/oauth-dropins) is an easy way to add OAuth client flows for these sites. Otherwise, here are the sites' authentication docs: [Facebook](https://developers.facebook.com/docs/facebook-login/access-tokens/), [Flickr](https://www.flickr.com/services/api/auth.oauth.html), [Instagram](http://instagram.com/developer/authentication/), [Twitter](https://dev.twitter.com/docs/auth/3-legged-authorization).
 
 If you get an access token and pass it along, it will be used to sign and authorize the underlying requests to the sources providers. See the demos on the REST API [endpoints above](#about) for examples.
 
@@ -294,13 +294,16 @@ Related work
 
 Facebook [used to](https://developers.facebook.com/blog/post/225/) [officially](https://developers.facebook.com/blog/post/2009/08/05/streamlining-the-open-stream-apis/) [support](https://groups.google.com/forum/#!topic/activity-streams/-b0LmeUExXY) ActivityStreams, but that's also dead.
 
-There are a number of products that download your social network data, normalize it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) is one, although the SSL certificate is currently out of date. [ThinkUp](http://web.archive.org/web/20161108212106/http://www.thinkup.com/) was an open source product, but shuttered on 18 July 2016. There's also the lifelogging/lifestream aggregator vein of projects that pull data from multiple source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good example. It doesn't include Facebook, Google+, or Instagram, but does include a number of smaller source sites. There are lots of others, e.g. the [Lifestream WordPress plugin](http://www.enthropia.com/labs/wp-lifestream/). Unfortunately, these are generally aimed at end users, not developers, and don't usually expose libraries or REST APIs.
+There are a number of products that download your social network data, normalize it, and let you query and visualize it. [SocialSafe](http://socialsafe.net/) is one, although the SSL certificate is currently out of date. [ThinkUp](http://web.archive.org/web/20161108212106/http://www.thinkup.com/) was an open source product, but shuttered on 18 July 2016. There's also the lifelogging/lifestream aggregator vein of projects that pull data from multiple source sites. [Storytlr](https://github.com/storytlr/storytlr) is a good example. It doesn't include Facebook, or Instagram, but does include a number of smaller source sites. There are lots of others, e.g. the [Lifestream WordPress plugin](http://www.enthropia.com/labs/wp-lifestream/). Unfortunately, these are generally aimed at end users, not developers, and don't usually expose libraries or REST APIs.
 
 On the open source side, there are many related projects. [php-mf2-shim](https://github.com/indieweb/php-mf2-shim) adds [microformats2](http://microformats.org/wiki/microformats2) to Facebook and Twitter's raw HTML. [sockethub](https://github.com/sockethub/sockethub) is a similar "polyglot" approach, but more focused on writing than reading.
 
 
 Changelog
 ---
+### 2.0 - unreleased
+_Breaking change_: drop Google+ since [it shuts down in March](https://developers.google.com/+/api-shutdown). Notably, this removes the `googleplus` module.
+
 ### 1.15 - 2019-02-28
 * Add RSS 2.0 output! ([#124](https://github.com/snarfed/granary/issues/124))
 * All silos:

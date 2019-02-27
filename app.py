@@ -15,7 +15,6 @@ from oauth_dropins import (
   facebook,
   flickr,
   github,
-  googleplus,
   twitter,
 )
 from oauth_dropins.webutil import handlers, util
@@ -34,7 +33,6 @@ from granary import (
 from granary.facebook import Facebook
 from granary.flickr import Flickr
 from granary.github import GitHub
-from granary.googleplus import GooglePlus
 from granary.instagram import Instagram
 from granary.twitter import Twitter
 
@@ -52,7 +50,6 @@ SILO_DOMAINS = {cls.DOMAIN for cls in (
   Facebook,
   Flickr,
   GitHub,
-  GooglePlus,
   Instagram,
   Twitter,
 )}
