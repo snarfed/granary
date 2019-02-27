@@ -43,6 +43,10 @@ microformats2
 -------------
 .. automodule:: granary.microformats2
 
+rss
+---
+.. automodule:: granary.rss
+
 source
 ------
 .. automodule:: granary.source
