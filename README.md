@@ -301,7 +301,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 1.15 - 2019-02-27
+### 1.15 - 2019-02-28
 * Add RSS 2.0 output! ([#124](https://github.com/snarfed/granary/issues/124))
 * All silos:
   * Switch users' primary URLs from web site to silo profile ([#158](https://github.com/snarfed/granary/issues/158)).
