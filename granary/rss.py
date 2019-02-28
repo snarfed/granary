@@ -124,8 +124,8 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       if not stream:
         continue
 
-      url = stream.get('url')
-      mime = mimetypes.guess_type(url)[0] if url else None
+      url = stream.get('url') or ''
+      mime = mimetypes.guess_type(url)[0] or ''
       if (att.get('objectType') in ENCLOSURE_TYPES or
           mime and mime.split('/')[0] in ENCLOSURE_TYPES):
         enclosures = True

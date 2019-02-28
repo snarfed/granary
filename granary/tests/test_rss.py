@@ -17,13 +17,31 @@ class RssTest(testutil.TestCase):
   <link>http://perma/link</link>
   <description>something</description>
   <guid isPermaLink="true">http://perma/link</guid>
-</item>
-    """,
+</item>""",
       rss.from_activities([{
         'url': 'http://perma/link',
         'objectType': 'article',
         'displayName': 'my post',
         'content': 'something',
         'published': '2019',
+      }], feed_url='http://this'),
+      ignore_blanks=True)
+
+  def test_from_activities_unknown_mime_type(self):
+    self.assert_multiline_in("""
+<item>
+<title>my post</title>
+<link>http://perma/link</link>
+<guid isPermaLink="true">http://perma/link</guid>
+<enclosure url="http://a/podcast.foo" type=""/>
+</item>""",
+      rss.from_activities([{
+        'url': 'http://perma/link',
+        'objectType': 'article',
+        'displayName': 'my post',
+        'attachments': [{
+          'objectType': 'video',
+          'stream': {'url': 'http://a/podcast.foo'},
+        }],
       }], feed_url='http://this'),
       ignore_blanks=True)
