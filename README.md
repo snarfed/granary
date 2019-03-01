@@ -301,7 +301,8 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 2.0 - unreleased
+### 2.0 - 2019-03-01
+
 _Breaking change_: drop Google+ since [it shuts down in March](https://developers.google.com/+/api-shutdown). Notably, this removes the `googleplus` module.
 
 ### 1.15 - 2019-02-28
