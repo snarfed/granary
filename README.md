@@ -221,21 +221,22 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
     ```sh
     python3 setup.py clean build sdist
-    twine upload -r pypitest dist/granary-X.Y.tar.gz
+    setenv ver vX.Y
+    twine upload -r pypitest dist/granary-$ver.tar.gz
     ```
 1. Install from test.pypi.org, both Python 2 and 3.
     ```sh
     cd /tmp
     virtualenv local
     source local/bin/activate.csh
-    pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary
+    pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
     deactivate
     ```
     ```sh
     python3 -m venv local3
     source local3/bin/activate.csh
     pip3 install --upgrade pip
-    pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary
+    pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
     deactivate
     ```
 1. Smoke test that the code trivially loads and runs, in both Python 2 and 3.
@@ -270,7 +271,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     ```
 1. Tag the release in git. In the tag message editor, delete the generated comments at bottom, leave the first line blank (to omit the release "title" in github), put `### Notable changes` on the second line, then copy and paste this version's changelog contents below it.
     ```sh
-    git tag -a vX.Y --cleanup=verbatim
+    git tag -a $ver --cleanup=verbatim
     git push
     git push --tags
     ```
