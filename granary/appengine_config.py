@@ -8,3 +8,5 @@ warnings.filterwarnings('ignore', module='bs4',
 warnings.filterwarnings('ignore', message='urllib3 is using URLFetch')
 warnings.filterwarnings('ignore',
                         message='URLFetch does not support granular timeout')
+warnings.filterwarnings('ignore',
+                        message='.*No parser was explicitly specified.*')
