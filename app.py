@@ -148,6 +148,10 @@ class UrlHandler(api.Handler):
       mf2 = mf2py.parse(doc=body, url=url, img_with_alt=True)
     elif input in ('mf2-json', 'json-mf2'):
       mf2 = body_json
+      if not hasattr(mf2, 'get'):
+        raise exc.HTTPBadRequest(
+          'Expected microformats2 JSON input to be dict, got %s' %
+          mf2.__class__.__name__)
       mf2.setdefault('rels', {})  # mf2util expects rels
 
     actor = None

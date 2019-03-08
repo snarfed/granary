@@ -536,6 +536,15 @@ not atom!
         '/url?url=http://my/posts&input=%s' % input)
       self.assert_equals(400, resp.status_int)
 
+  def test_url_json_input_not_dict(self):
+    self.expect_requests_get('http://my/posts', '[1, 2]').MultipleTimes()
+    self.mox.ReplayAll()
+
+    for input in 'json-mf2', 'jsonfeed':
+      resp = app.application.get_response(
+        '/url?url=http://my/posts&input=%s' % input)
+      self.assert_equals(400, resp.status_int)
+
   def test_url_bad_url(self):
     self.expect_requests_get('http://astralandopal.com\\'
                             ).AndRaise(requests.exceptions.MissingSchema('foo'))
