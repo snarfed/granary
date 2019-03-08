@@ -25,6 +25,7 @@ http://atomenabled.org/developers/syndication/
 """
 import datetime
 import json
+import logging
 import urllib
 
 from google.appengine.ext import ndb
@@ -185,29 +186,29 @@ class Handler(handlers.ModernHandler):
 
     activities = response['items']
 
-    if format in ('as1', 'json', 'activitystreams'):
-      # list of official MIME types:
-      # https://www.iana.org/assignments/media-types/media-types.xhtml
-      self.response.headers['Content-Type'] = \
-        'application/json' if format == 'json' else 'application/stream+json'
-      self.response.out.write(json.dumps(response, indent=2))
-    elif format == 'as2':
-      self.response.headers['Content-Type'] = 'application/activity+json'
-      response.update({
-        'items': [as2.from_as1(a) for a in activities],
-        'totalItems': response.pop('totalResults', None),
-        'updated': response.pop('updatedSince', None),
-        'filtered': None,
-        'sorted': None,
-      })
-      self.response.out.write(json.dumps(util.trim_nulls(response), indent=2))
-    elif format == 'atom':
-      self.response.headers['Content-Type'] = 'application/atom+xml'
-      hub = self.request.get('hub')
-      reader = self.request.get('reader', 'true').lower()
-      if reader not in ('true', 'false'):
-        self.abort(400, 'reader param must be either true or false')
-      try:
+    try:
+      if format in ('as1', 'json', 'activitystreams'):
+        # list of official MIME types:
+        # https://www.iana.org/assignments/media-types/media-types.xhtml
+        self.response.headers['Content-Type'] = \
+          'application/json' if format == 'json' else 'application/stream+json'
+        self.response.out.write(json.dumps(response, indent=2))
+      elif format == 'as2':
+        self.response.headers['Content-Type'] = 'application/activity+json'
+        response.update({
+          'items': [as2.from_as1(a) for a in activities],
+          'totalItems': response.pop('totalResults', None),
+          'updated': response.pop('updatedSince', None),
+          'filtered': None,
+          'sorted': None,
+        })
+        self.response.out.write(json.dumps(util.trim_nulls(response), indent=2))
+      elif format == 'atom':
+        self.response.headers['Content-Type'] = 'application/atom+xml'
+        hub = self.request.get('hub')
+        reader = self.request.get('reader', 'true').lower()
+        if reader not in ('true', 'false'):
+          self.abort(400, 'reader param must be either true or false')
         self.response.out.write(atom.activities_to_atom(
           activities, actor,
           host_url=url or self.request.host_url + '/',
@@ -216,40 +217,38 @@ class Handler(handlers.ModernHandler):
           title=title,
           rels={'hub': hub} if hub else None,
           reader=(reader == 'true')))
-      except ValueError as e:
-        self.abort(400, str(e))
-      self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
-      if hub:
-        self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
-    elif format == 'rss':
-      self.response.headers['Content-Type'] = 'application/rss+xml'
-      if not title:
-        title = 'Feed for %s' % url
-      try:
+        self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
+        if hub:
+          self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
+      elif format == 'rss':
+        self.response.headers['Content-Type'] = 'application/rss+xml'
+        if not title:
+          title = 'Feed for %s' % url
         self.response.out.write(rss.from_activities(
           activities, actor, title=title,
           feed_url=self.request.url, hfeed=hfeed,
           home_page_url=util.base_url(url)))
-      except ValueError as e:
-        self.abort(400, str(e))
-    elif format in ('as1-xml', 'xml'):
-      self.response.headers['Content-Type'] = 'application/xml'
-      self.response.out.write(XML_TEMPLATE % util.to_xml(response))
-    elif format == 'html':
-      self.response.headers['Content-Type'] = 'text/html'
-      self.response.out.write(microformats2.activities_to_html(activities))
-    elif format in ('mf2-json', 'json-mf2'):
-      self.response.headers['Content-Type'] = 'application/json'
-      items = [microformats2.activity_to_json(a) for a in activities]
-      self.response.out.write(json.dumps({'items': items}, indent=2))
-    elif format == 'jsonfeed':
-      self.response.headers['Content-Type'] = 'application/json'
-      try:
-        jf = jsonfeed.activities_to_jsonfeed(activities, actor=actor, title=title,
-                                             feed_url=self.request.url)
-      except TypeError as e:
-        raise exc.HTTPBadRequest('Unsupported input data: %s' % e)
-      self.response.out.write(json.dumps(jf, indent=2))
+      elif format in ('as1-xml', 'xml'):
+        self.response.headers['Content-Type'] = 'application/xml'
+        self.response.out.write(XML_TEMPLATE % util.to_xml(response))
+      elif format == 'html':
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(microformats2.activities_to_html(activities))
+      elif format in ('mf2-json', 'json-mf2'):
+        self.response.headers['Content-Type'] = 'application/json'
+        items = [microformats2.activity_to_json(a) for a in activities]
+        self.response.out.write(json.dumps({'items': items}, indent=2))
+      elif format == 'jsonfeed':
+        self.response.headers['Content-Type'] = 'application/json'
+        try:
+          jf = jsonfeed.activities_to_jsonfeed(activities, actor=actor, title=title,
+                                               feed_url=self.request.url)
+        except TypeError as e:
+          raise exc.HTTPBadRequest('Unsupported input data: %s' % e)
+        self.response.out.write(json.dumps(jf, indent=2))
+    except ValueError as e:
+      logging.warning('converting to output format failed', exc_info=True)
+      self.abort(400, 'Could not convert to %s: %s' % (format, str(e)))
 
     if 'plaintext' in self.request.params:
       # override response content type

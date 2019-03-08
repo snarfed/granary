@@ -118,7 +118,7 @@ def jsonfeed_to_activities(jsonfeed):
     ValueError, if jsonfeed isn't a valid JSON Feed dict
   """
   if not hasattr(jsonfeed, 'get'):
-    raise ValueError('Expected dict (or compatible), got %s' % jsonfeed.__class__)
+    raise ValueError('Expected dict (or compatible), got %s' % jsonfeed.__class__.__name__)
 
   author = jsonfeed.get('author', {})
   actor = {

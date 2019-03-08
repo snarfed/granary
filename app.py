@@ -171,28 +171,28 @@ class UrlHandler(api.Handler):
       except (KeyError, ValueError) as e:
         raise exc.HTTPBadRequest('Could not parse %s as %s: %s' % (url, input, e))
 
-    if input in ('as1', 'activitystreams'):
-      activities = body_items
-    elif input == 'as2':
-      activities = [as2.to_as1(obj) for obj in body_items]
-    elif input == 'atom':
-      try:
-        activities = atom.atom_to_activities(body)
-      except ElementTree.ParseError as e:
-        raise exc.HTTPBadRequest('Could not parse %s as XML: %s' % (url, e))
-      except ValueError as e:
-        raise exc.HTTPBadRequest('Could not parse %s as Atom: %s' % (url, e))
-    elif input == 'html':
-      activities = microformats2.html_to_activities(body, url, actor)
-    elif input in ('mf2-json', 'json-mf2'):
-      activities = [microformats2.json_to_object(item, actor=actor)
-                    for item in mf2.get('items', [])]
-    elif input == 'jsonfeed':
-      try:
+    try:
+      if input in ('as1', 'activitystreams'):
+        activities = body_items
+      elif input == 'as2':
+        activities = [as2.to_as1(obj) for obj in body_items]
+      elif input == 'atom':
+        try:
+          activities = atom.atom_to_activities(body)
+        except ElementTree.ParseError as e:
+          raise exc.HTTPBadRequest('Could not parse %s as XML: %s' % (url, e))
+        except ValueError as e:
+          raise exc.HTTPBadRequest('Could not parse %s as Atom: %s' % (url, e))
+      elif input == 'html':
+        activities = microformats2.html_to_activities(body, url, actor)
+      elif input in ('mf2-json', 'json-mf2'):
+        activities = [microformats2.json_to_object(item, actor=actor)
+                      for item in mf2.get('items', [])]
+      elif input == 'jsonfeed':
         activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
-      except ValueError as e:
-        logging.warning('jsonfeed_to_activities failed', exc_info=True)
-        raise exc.HTTPBadRequest('Could not parse %s as JSON Feed' % url)
+    except ValueError as e:
+      logging.warning('parsing input failed', exc_info=True)
+      self.abort(400, 'Could not parse %s as %s: %s' % (url, input, str(e)))
 
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=url, actor=actor, title=title, hfeed=hfeed)

@@ -300,7 +300,7 @@ class AppTest(testutil_appengine.HandlerTest):
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
     resp = app.application.get_response(path)
     self.assert_equals(400, resp.status_int)
-    self.assertIn('Could not parse http://my/feed.json as JSON Feed', resp.body)
+    self.assertIn('Could not parse http://my/feed.json as jsonfeed', resp.body)
 
   def test_url_json_mf2_to_html(self):
     self.expect_requests_get('http://my/posts.json', MF2)
@@ -540,10 +540,14 @@ not atom!
     self.expect_requests_get('http://my/posts', '[1, 2]').MultipleTimes()
     self.mox.ReplayAll()
 
-    for input in 'json-mf2', 'jsonfeed':
+    for input in 'as2', 'json-mf2', 'jsonfeed':
       resp = app.application.get_response(
         '/url?url=http://my/posts&input=%s' % input)
       self.assert_equals(400, resp.status_int)
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts&input=as1&output=as2')
+    self.assert_equals(400, resp.status_int)
 
   def test_url_bad_url(self):
     self.expect_requests_get('http://astralandopal.com\\'
