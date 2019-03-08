@@ -187,7 +187,7 @@ class UrlHandler(api.Handler):
       try:
         activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
       except ValueError as e:
-        logging.exception('jsonfeed_to_activities failed')
+        logging.warning('jsonfeed_to_activities failed', exc_info=True)
         raise exc.HTTPBadRequest('Could not parse %s as JSON Feed' % url)
 
     self.write_response(source.Source.make_activities_base_response(activities),

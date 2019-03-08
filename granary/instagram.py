@@ -284,7 +284,7 @@ class Instagram(source.Source):
         body_obj = {}
 
       if body_obj.get('meta', {}).get('error_type') == 'APINotFoundError':
-        logging.exception(body_obj.get('meta', {}).get('error_message'))
+        logging.warning(body_obj.get('meta', {}).get('error_message'), exc_info=True)
       else:
         raise e
 

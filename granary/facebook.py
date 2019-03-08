@@ -1028,9 +1028,9 @@ class Facebook(source.Source):
         base_obj['id'] = '%s_%s' % (author['numeric_id'], base_id)
 
     except BaseException as e:
-      logging.exception(
+      logging.warning(
         "Couldn't parse object URL %s : %s. Falling back to default logic.",
-        url, e)
+        url, e, exc_info=True)
 
     return base_obj
 
