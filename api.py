@@ -148,7 +148,12 @@ class Handler(handlers.ModernHandler):
     # get activities (etc)
     try:
       if len(args) >= 2 and args[1] == '@blocks':
-        response = {'items': src.get_blocklist()}
+        try:
+          response = {'items': src.get_blocklist()}
+        except source.RateLimited as e:
+          response = e.partial
+          if not response:
+            self.abort(429, str(e))
       else:
         response = src.get_activities_response(*args, **self.get_kwargs())
     except (NotImplementedError, ValueError) as e:
