@@ -27,6 +27,8 @@ OBJECT_TYPE_TO_TYPE = {
   'event': 'Event',
   'hashtag': 'Tag',  # not in AS2 spec; needed for correct round trip conversion
   'image': 'Image',
+  # not in AS1 spec; needed to identify mentions in eg Bridgy Fed
+  'mention': 'Mention',
   'note': 'Note',
   'person': 'Person',
   'place': 'Place',
@@ -102,8 +104,9 @@ def from_as1(obj, type=None, context=CONTEXT):
   if obj_type == 'person':
     # TODO: something better. (we don't know aspect ratio though.)
     obj['icon'] = images
-
-  if obj_type in ('audio', 'video'):
+  elif obj_type == 'mention':
+    obj['href'] = obj.pop('url', None)
+  elif obj_type in ('audio', 'video'):
     stream = util.pop_list(obj, 'stream')
     if stream:
       url = stream[0].get('url')
@@ -181,6 +184,8 @@ def to_as1(obj, use_type=True):
 
   if type in ('Audio', 'Video'):
     obj['stream'] = {'url': obj.pop('url', None)}
+  elif type == 'Mention':
+    obj['url'] = obj.pop('href', None)
 
   attrib = util.pop_list(obj, 'attributedTo')
   if attrib:
