@@ -113,8 +113,25 @@ class HandlerTest(testutil_appengine.HandlerTest):
 
     resp = api.application.get_response('/fake/123/@blocks/')
     self.assertEquals(200, resp.status_int)
-    self.assert_equals({'items': blocks},
-                       json.loads(resp.body))
+    self.assert_equals({'items': blocks}, json.loads(resp.body))
+
+  def test_blocks_rate_limited(self):
+    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
+    FakeSource.get_blocklist().AndRaise(source.RateLimited('foo', partial=[]))
+    self.mox.ReplayAll()
+
+    resp = api.application.get_response('/fake/123/@blocks/')
+    self.assertEquals(429, resp.status_int)
+
+  def test_blocks_rate_limited_partial(self):
+    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
+    blocks = [{'blockee': '1'}, {'blockee': '2'}]
+    FakeSource.get_blocklist().AndRaise(source.RateLimited('foo', partial=blocks))
+    self.mox.ReplayAll()
+
+    resp = api.application.get_response('/fake/123/@blocks/')
+    self.assertEquals(200, resp.status_int)
+    self.assert_equals({'items': blocks}, json.loads(resp.body))
 
   def test_group_id(self):
     self.check_request('/123/456', '123', '456')

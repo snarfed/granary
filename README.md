@@ -304,6 +304,8 @@ Changelog
 ---
 ### 2.1 - unreleased
 * Convert AS2 `Mention` tags to AS1 `objectType` `mention` (non-standard) and vice versa ([snarfed/bridgy-fed#46](https://github.com/snarfed/bridgy-fed/issues/46)).
+* Twitter:
+  * Bug fix for large block list fetches that get rate limited after a few successful requests.
 
 ### 2.0 - 2019-03-01
 

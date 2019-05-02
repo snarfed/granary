@@ -151,9 +151,9 @@ class Handler(handlers.ModernHandler):
         try:
           response = {'items': src.get_blocklist()}
         except source.RateLimited as e:
-          response = e.partial
-          if not response:
+          if not e.partial:
             self.abort(429, str(e))
+          response = {'items': e.partial}
       else:
         response = src.get_activities_response(*args, **self.get_kwargs())
     except (NotImplementedError, ValueError) as e:
