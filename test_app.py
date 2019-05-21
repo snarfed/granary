@@ -215,7 +215,7 @@ class AppTest(testutil_appengine.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=as1&output=mf2-json')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/json', resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
     self.assert_equals(MF2, json.loads(resp.body))
 
   def test_url_as1_to_as2(self):
@@ -287,7 +287,7 @@ class AppTest(testutil_appengine.HandlerTest):
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
     resp = app.application.get_response(path)
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/json', resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
 
     expected = copy.deepcopy(MF2)
     expected['items'][0]['properties']['uid'] = [JSONFEED['items'][0]['id']]
@@ -417,7 +417,7 @@ class AppTest(testutil_appengine.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.html&input=html&output=json-mf2')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/json', resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
 
     expected = copy.deepcopy(MF2)
     for obj in expected['items']:
