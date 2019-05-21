@@ -1615,6 +1615,20 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
     self.assertIsNone(viewer)
 
+  def test_html_to_activities_photo_edge_media_to_parent_comment(self):
+    """https://github.com/snarfed/granary/issues/164"""
+    self.expect_requests_get(
+      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
+      allow_redirects=False, headers={})
+    self.mox.ReplayAll()
+
+    page = copy.deepcopy(HTML_PHOTO_PAGE)
+    media = page['entry_data']['PostPage'][0]['graphql']['shortcode_media']
+    media['edge_media_to_parent_comment'] = media.pop('edge_media_to_comment')
+    activities, _ = self.instagram.html_to_activities(
+      HTML_HEADER + json.dumps(page) + HTML_FOOTER, fetch_extras=True)
+    self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
+
   def test_html_to_activities_video(self):
     activities, viewer = self.instagram.html_to_activities(HTML_VIDEO_COMPLETE)
     self.assert_equals([HTML_VIDEO_ACTIVITY_FULL], activities)

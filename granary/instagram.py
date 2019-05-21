@@ -957,7 +957,8 @@ class Instagram(source.Source):
     if id and owner_id:
       media['id'] = '%s_%s' % (id, owner_id)
 
-    comments = media.get('comments') or media.get('edge_media_to_comment') or {}
+    comments = (media.get('comments') or media.get('edge_media_to_comment') or
+                media.get('edge_media_to_parent_comment') or {})
     media['comments'] = {
       'data': [c.get('node') for c in comments.get('edges', [])],
       'count': comments.get('count'),
