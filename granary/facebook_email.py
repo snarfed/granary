@@ -24,44 +24,45 @@ now_fn = datetime.now
 def email_to_object(html):
   """Converts a Facebook HTML notification email to an AS1 object.
 
+  Returns: dict, AS1 object, or None if email html couldn't be parsed
+
   Arguments:
     html: string
   """
   soup = BeautifulSoup(html)
+  type = None
 
-  desc = _find_all_text(soup, 'commented on your')
-  if desc:
-    return _comment_to_object(soup, desc[0])
+  type = 'comment'
+  descs = _find_all_text(soup, 'commented on your')
 
+  if not descs:
+    type = 'like'
+    descs = _find_all_text(soup, 'likes your')
 
-def _comment_to_object(soup, desc):
-  """Converts a Facebook HTML comment notification email to an AS1 object.
+  if not descs:
+    return None
 
-  Arguments:
-    soup: BeautifulSoup
-    desc: Tag element of span with 'X commented on your post.'
-  """
-  links = desc.find_all('a')
-  name = links[0].get_text(strip=True)
-  profile_url = links[0]['href']
-  post_url = links[1]['href']
+  links = descs[0].find_all('a')
+  name_link = links[0]
+  name = name_link.get_text(strip=True)
+  profile_url = name_link['href']
+  post_url = _sanitize_url(links[1]['href'])
 
-  name_in_comment = soup.find_all('a', string=re.compile(name))[1]
-  picture = name_in_comment.find_previous('img')['src']
-  when = name_in_comment.find_next('td')
+  if type == 'comment':
+    # comment emails have a second section with a preview rendering of the
+    # comment, picture and date and comment text are there.
+    name_link = soup.find_all('a', string=re.compile(name))[1]
+
+  picture = name_link.find_previous('img')['src']
+  when = name_link.find_next('td')
   comment = when.find_next('span', class_='mb_text')
 
   # example email date/time string: 'December 14 at 12:35 PM'
   published = datetime.strptime(when.get_text(strip=True), '%B %d at %I:%M %p')\
                       .replace(year=now_fn().year)
 
-  return util.trim_nulls({
-    'objectType': 'comment',
-    'content': comment.get_text(strip=True),
+  obj = {
     'published': published.isoformat(util.T),
-    'inReplyTo': [{
-      'url': _sanitize_url(post_url),
-    }],
     'author': {
       'objectType': 'person',
       'displayName': name,
@@ -70,7 +71,23 @@ def _comment_to_object(soup, desc):
     },
     # XXX TODO
     'to': [{'objectType':'group', 'alias':'@public'}],
-  })
+  }
+
+
+  if type == 'comment':
+    obj.update({
+      'objectType': 'comment',
+      'content': comment.get_text(strip=True),
+      'inReplyTo': [{'url': post_url}],
+    })
+  elif type == 'like':
+    obj.update({
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': {'url': post_url},
+    })
+
+  return util.trim_nulls(obj)
 
 
 def _find_all_text(soup, text):
@@ -96,9 +113,11 @@ def _sanitize_url(url):
 
   Example profile:
   https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image
+  https://www.facebook.com/n/?snarfed.org&amp;lloc=actor_profile&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
 
-  Example post:
+  Example posts:
   https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
+  https://www.facebook.com/n/?permalink.php&amp;story_fbid=123&amp;id=456&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.2.34567890.ABCxyz&amp;n_m=recipient%40example.com
 
   Args:
     url: string
@@ -110,7 +129,7 @@ def _sanitize_url(url):
 
   parsed = urllib.parse.urlparse(url)
   parts = list(parsed)
-  if parsed.path == '/nd/':
+  if parsed.path in ('/nd/', '/n/'):
     new_path, query = xml.sax.saxutils.unescape(parsed.query).split('&', 1)
     new_query = [(k, v) for k, v in urllib.parse.parse_qsl(query)
                  if k in ('story_fbid', 'id')]
