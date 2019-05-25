@@ -8,6 +8,7 @@ from future.moves.urllib import error as urllib_error
 from builtins import range, zip
 
 import copy
+from datetime import datetime
 import json
 import urllib.parse
 
@@ -1051,6 +1052,226 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </feed>
 """
 
+# minimized from original
+COMMENT_EMAIL = """\
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional //EN">
+<html>
+  <head>
+    <title>Facebook
+    </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>...</style>
+  </head>
+  <body dir="ltr" bgcolor="#ffffff">
+    <table border="0" cellspacing="0" cellpadding="0" align="center" id="email_table">
+      <tr>
+        <td id="email_content">
+          <table border="0" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td height="1" colspan="3">
+                <span>Ryan Barrett wrote: &quot;test comment foo bar baz&quot;  -  Reply to this email to comment on this post.
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td width="32" align="left" valign="middle">
+                      <a href="https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">
+                        <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yL/r/vd4aB0GIe9z.png" width="32" height="32" />
+                      </a>
+                    </td>
+                    <td width="100%">
+                      <a href="https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">Facebook
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td>
+                      <span class="mb_text">
+                        <span class="mb_text">
+                          <a href="https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image">Ryan Barrett
+                          </a> commented on your
+                          <a href="https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">post
+                          </a>.
+                        </span>
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td>
+                            <table border="0" cellspacing="0" cellpadding="0">
+                              <tr>
+                                <td>
+                                  <a href="https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image">
+                                    <img src="https://scontent-atl3-1.xx.fbcdn.net/v/t1.0-1/p200x200/123_456_789_n.jpg?_nc_cat=105&amp;_nc_ht=scontent-atl3-1.xx&amp;oh=xyz&amp;oe=ABC" width="50" height="50" />
+                                  </a>
+                                </td>
+                                <td width="100%">
+                                  <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                                        <a href="https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image">Ryan Barrett
+                                        </a>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td>December 14 at 12:35 PM
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td colspan="3">
+                                  <span class="mb_text">test comment foo bar baz&nbsp;
+                                  </span>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+"""
+# minimized from original
+LIKE_EMAIL = """\
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional //EN">
+<html>
+  <head>
+    <title>Facebook
+    </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>...</style>
+  </head>
+  <body dir="ltr" bgcolor="#ffffff">
+    <table border="0" cellspacing="0" cellpadding="0" align="center" id="email_table">
+      <tr>
+        <td id="email_content">
+          <table border="0" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td height="1" colspan="3">
+                <span>        Ryan Barrett likes your post : &quot;Cérémonie d’enfermement d’une recluse&quot;. December 14 at 12:36 PM View    
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td width="32" align="left" valign="middle">
+                      <a href="https://www.facebook.com/n/?permalink.php&amp;story_fbid=123&amp;id=456&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">
+                        <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yL/r/vd4aB0GIe9z.png" width="32" height="32" />
+                      </a>
+                    </td>
+                    <td width="100%">
+                      <a href="https://www.facebook.com/n/?permalink.php&amp;story_fbid=123&amp;id=456&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">Facebook
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td>
+                      <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td>
+                            <table border="0" cellspacing="0" cellpadding="0">
+                              <tr>
+                                <td>
+                                  <a href="https://www.facebook.com/n/?snarfed.org&amp;lloc=actor_profile&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">
+                                    <img src="https://scontent-atl3-1.xx.fbcdn.net/v/t1.0-1/p200x200/123_456_789_n.jpg?_nc_cat=105&amp;_nc_ht=scontent-atl3-1.xx&amp;oh=xyz&amp;oe=ABC" width="50" height="50" />
+                                  </a>
+                                </td>
+                                <td width="100%">
+                                  <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                                        <span class="mb_text">
+                                          <a href="https://www.facebook.com/n/?snarfed.org&amp;lloc=actor_profile&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">Ryan Barrett
+                                          </a> likes your
+                                          <a href="https://www.facebook.com/n/?permalink.php&amp;story_fbid=123&amp;id=456&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.2.34567890.ABCxyz&amp;n_m=recipient%40example.com">post
+                                          </a>: &quot;Cérémonie d’enfermement d’une recluse&quot;.
+                                        </span>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td>
+                                        <span class="mb_text">December 14 at 12:36 PM
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      <table border="0" cellspacing="0" cellpadding="0">
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+         </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+"""
+# ActivityStreams
+EMAIL_ACTOR = {
+  'objectType': 'person',
+  'displayName': 'Ryan Barrett',
+  'image': {'url': 'https://scontent-atl3-1.xx.fbcdn.net/v/t1.0-1/p200x200/123_456_789_n.jpg?_nc_cat=105&_nc_ht=scontent-atl3-1.xx&oh=xyz&oe=ABC'},
+  'url': 'https://www.facebook.com/snarfed.org',
+}
+EMAIL_COMMENT_OBJ = {
+  'objectType': 'comment',
+  'author': EMAIL_ACTOR,
+  'content': 'test comment foo bar baz',
+  'published': '1999-12-14T12:35:00',
+  'inReplyTo': [{
+    'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456',
+  }],
+  'to': [{'objectType':'group', 'alias':'@public'}],
+}
+EMAIL_LIKE_OBJ = {
+  'objectType': 'activity',
+  'verb': 'like',
+  'author': EMAIL_ACTOR,
+  'published': '1999-12-14T12:36:00',
+  'object': {'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456'},
+  'to': [{'objectType':'group', 'alias':'@public'}],
+}
+
 
 class FacebookTest(testutil.TestCase):
 
@@ -1059,6 +1280,7 @@ class FacebookTest(testutil.TestCase):
     self.fb = facebook.Facebook()
     self.batch = []
     self.batch_responses = []
+    self.mox.StubOutWithMock(facebook, 'now_fn')
 
   def expect_urlopen(self, url, response=None, **kwargs):
     if not url.startswith('http'):
@@ -2889,3 +3111,13 @@ cc Sam G, Michael M<br />""", preview.description)
 
     self.assert_equals(resps, self.fb.urlopen_batch_full(
       [{'relative_url': 'abc'}, {'relative_url': 'def'}]))
+
+  def test_email_to_object_comment(self):
+    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+    self.assert_equals(EMAIL_COMMENT_OBJ, self.fb.email_to_object(COMMENT_EMAIL))
+
+  def test_email_to_object_like(self):
+    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+    self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_object(LIKE_EMAIL))
