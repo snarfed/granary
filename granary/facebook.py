@@ -1683,8 +1683,12 @@ class Facebook(source.Source):
     }
 
 
+    url_params = urllib.parse.parse_qs(urllib.parse.urlparse(post_url).query)
+    post_id = url_params['story_fbid'][0]
     if type == 'comment':
       obj.update({
+        # TODO: check that this works on urls to different  of posts, eg photos
+        'id': cls.tag_uri('%s_%s' % (post_id, url_params['comment_id'][0])),
         'objectType': 'comment',
         'content': comment.get_text(strip=True),
         'inReplyTo': [{'url': post_url}],
@@ -1693,6 +1697,8 @@ class Facebook(source.Source):
       obj.update({
         'objectType': 'activity',
         'verb': 'like',
+        # TODO: handle author URLs for users without usernames
+        'id': cls.tag_uri('%s_liked_by_%s' % (post_id, cls.base_id(obj['author']['url']))),
         'object': {'url': post_url},
       })
 
@@ -1741,7 +1747,7 @@ class Facebook(source.Source):
     if parsed.path in ('/nd/', '/n/'):
       new_path, query = xml.sax.saxutils.unescape(parsed.query).split('&', 1)
       new_query = [(k, v) for k, v in urllib.parse.parse_qsl(query)
-                   if k in ('story_fbid', 'id')]
+                   if k in ('story_fbid', 'id', 'comment_id')]
       parts[2] = new_path
       parts[4] = urllib.parse.urlencode(new_query)
 
