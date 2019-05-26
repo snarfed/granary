@@ -1642,16 +1642,16 @@ class Facebook(source.Source):
     type = None
 
     type = 'comment'
-    descs = cls._find_all_text(soup, 'commented on your')
+    descs = cls._find_all_text(soup, r'commented on( your)?')
 
     if not descs:
       type = 'like'
-      descs = cls._find_all_text(soup, 'likes your')
+      descs = cls._find_all_text(soup, r'likes your')
 
     if not descs:
       return None
 
-    links = descs[0].find_all('a')
+    links = descs[-1].find_all('a')
     name_link = links[0]
     name = name_link.get_text(strip=True)
     profile_url = name_link['href']
@@ -1664,7 +1664,9 @@ class Facebook(source.Source):
 
     picture = name_link.find_previous('img')['src']
     when = name_link.find_next('td')
-    comment = when.find_next('span', class_='mb_text')
+    comment = when.find_next('span', class_=re.compile(r'mb_text'))
+    if not comment:
+      return None
 
     # example email date/time string: 'December 14 at 12:35 PM'
     published = datetime.strptime(when.get_text(strip=True), '%B %d at %I:%M %p')\
@@ -1705,7 +1707,7 @@ class Facebook(source.Source):
     return util.trim_nulls(obj)
 
   @staticmethod
-  def _find_all_text(soup, text):
+  def _find_all_text(soup, regexp):
     """BeautifulSoup utility that searches for text and returns a Tag.
 
     I'd rather just use soup.find(string=...), but it returns a NavigableString
@@ -1714,10 +1716,11 @@ class Facebook(source.Source):
 
     Args:
       soup: BeautifulSoup
-      text: string, must match the target's text exactly after stripping whitespace
+      regexp: string, must match target's text after stripping whitespace
     """
-    return soup.find_all(lambda tag: text in
-                         (c.string.strip() for c in tag.contents if c.string))
+    regexp = re.compile(regexp)
+    return soup.find_all(lambda tag: any(regexp.match(c.string.strip())
+                                         for c in tag.contents if c.string))
 
   @staticmethod
   def _sanitize_url(url):
