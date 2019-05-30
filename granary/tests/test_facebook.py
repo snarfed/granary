@@ -1066,7 +1066,7 @@ COMMENT_EMAIL = """\
     <table border="0" cellspacing="0" cellpadding="0" align="center" id="email_table">
       <tr>
         <td id="email_content">
-          <table border="0" width="100%" cellspacing="0" cellpadding="0">
+          <table border="0" width="100" cellspacing="0" cellpadding="0">
             <tr>
               <td height="1" colspan="3">
                 <span>Ryan Barrett wrote: &quot;test comment foo bar baz&quot;  -  Reply to this email to comment on this post.
@@ -1075,15 +1075,15 @@ COMMENT_EMAIL = """\
             </tr>
             <tr>
               <td>
-                <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                <table border="0" width="100" cellspacing="0" cellpadding="0">
                   <tr>
                     <td width="32" align="left" valign="middle">
-                      <a href="https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">
+                      <a href="%(post_url)s">
                         <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yL/r/vd4aB0GIe9z.png" width="32" height="32" />
                       </a>
                     </td>
-                    <td width="100%">
-                      <a href="https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">Facebook
+                    <td width="100">
+                      <a href="%(post_url)s">Facebook
                       </a>
                     </td>
                   </tr>
@@ -1092,14 +1092,14 @@ COMMENT_EMAIL = """\
             </tr>
             <tr>
               <td>
-                <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                <table border="0" width="100" cellspacing="0" cellpadding="0">
                   <tr>
                     <td>
                       <span class="mb_text">
                         <span class="mb_text">
-                          <a href="https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image">Ryan Barrett
+                          <a href="%(profile_url)s">Ryan Barrett
                           </a> commented on your
-                          <a href="https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com">post
+                          <a href="%(post_url)s">post
                           </a>.
                         </span>
                       </span>
@@ -1107,21 +1107,21 @@ COMMENT_EMAIL = """\
                   </tr>
                   <tr>
                     <td>
-                      <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                      <table border="0" width="100" cellspacing="0" cellpadding="0">
                         <tr>
                           <td>
                             <table border="0" cellspacing="0" cellpadding="0">
                               <tr>
                                 <td>
-                                  <a href="https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image">
+                                  <a href="%(profile_url)s">
                                     <img src="https://scontent-atl3-1.xx.fbcdn.net/v/t1.0-1/p200x200/123_456_789_n.jpg?_nc_cat=105&amp;_nc_ht=scontent-atl3-1.xx&amp;oh=xyz&amp;oe=ABC" width="50" height="50" />
                                   </a>
                                 </td>
-                                <td width="100%">
+                                <td width="100">
                                   <table border="0" cellspacing="0" cellpadding="0">
                                     <tr>
                                       <td>
-                                        <a href="https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image">Ryan Barrett
+                                        <a href="%(profile_url)s">Ryan Barrett
                                         </a>
                                       </td>
                                     </tr>
@@ -1154,6 +1154,15 @@ COMMENT_EMAIL = """\
   </body>
 </html>
 """
+COMMENT_EMAIL_USER_ID = COMMENT_EMAIL % {
+  'post_url': 'https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
+  'profile_url': 'https://www.facebook.com/nd/?profile.php&amp;id=456&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
+}
+COMMENT_EMAIL_USERNAME = COMMENT_EMAIL % {
+  'post_url': 'https://www.facebook.com/nd/?snarfed.org%2Fposts%2F123&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
+  'profile_url': 'https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image',
+}
+
 # minimized from original
 LIKE_EMAIL = """\
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional //EN">
@@ -1247,16 +1256,18 @@ LIKE_EMAIL = """\
 </html>
 """
 # ActivityStreams
-EMAIL_ACTOR = {
+EMAIL_ACTOR_USER_ID = {
   'objectType': 'person',
   'displayName': 'Ryan Barrett',
   'image': {'url': 'https://scontent-atl3-1.xx.fbcdn.net/v/t1.0-1/p200x200/123_456_789_n.jpg?_nc_cat=105&_nc_ht=scontent-atl3-1.xx&oh=xyz&oe=ABC'},
-  'url': 'https://www.facebook.com/snarfed.org',
+  'url': 'https://www.facebook.com/profile.php?id=456',
 }
-EMAIL_COMMENT_OBJ = {
+EMAIL_ACTOR_USERNAME = copy.deepcopy(EMAIL_ACTOR_USER_ID)
+EMAIL_ACTOR_USERNAME['url'] = 'https://www.facebook.com/snarfed.org'
+EMAIL_COMMENT_OBJ_USER_ID = {
   'objectType': 'comment',
   'id': tag_uri('123_789'),
-  'author': EMAIL_ACTOR,
+  'author': EMAIL_ACTOR_USER_ID,
   'content': 'test comment foo bar baz',
   'published': '1999-12-14T12:35:00',
   'inReplyTo': [{
@@ -1264,12 +1275,17 @@ EMAIL_COMMENT_OBJ = {
   }],
   'to': [{'objectType':'group', 'alias':'@public'}],
 }
+EMAIL_COMMENT_OBJ_USERNAME = copy.deepcopy(EMAIL_COMMENT_OBJ_USER_ID)
+EMAIL_COMMENT_OBJ_USERNAME.update({
+  'inReplyTo': [{'url': 'https://www.facebook.com/snarfed.org/posts/123?comment_id=789'}],
+  'author': EMAIL_ACTOR_USERNAME,
+})
 EMAIL_LIKE_OBJ = {
   'objectType': 'activity',
   'verb': 'like',
   # XXX TODO
   'id': tag_uri('123_liked_by_snarfed.org'),
-  'author': EMAIL_ACTOR,
+  'author': EMAIL_ACTOR_USERNAME,
   'published': '1999-12-14T12:36:00',
   'object': {'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456'},
   'to': [{'objectType':'group', 'alias':'@public'}],
@@ -3115,17 +3131,25 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(resps, self.fb.urlopen_batch_full(
       [{'relative_url': 'abc'}, {'relative_url': 'def'}]))
 
-  def test_email_to_object_comment(self):
+  def test_email_to_object_comment_user_id(self):
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
-    self.assert_equals(EMAIL_COMMENT_OBJ, self.fb.email_to_object(COMMENT_EMAIL))
+    self.assert_equals(EMAIL_COMMENT_OBJ_USER_ID,
+                       self.fb.email_to_object(COMMENT_EMAIL_USER_ID))
+
+  def test_email_to_object_comment_username(self):
+    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME,
+                       self.fb.email_to_object(COMMENT_EMAIL_USERNAME))
 
   def test_email_to_object_comment_different_text(self):
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
     email = COMMENT_EMAIL.replace('commented on your', 'commented on')
-    self.assert_equals(EMAIL_COMMENT_OBJ, self.fb.email_to_object(COMMENT_EMAIL))
+    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME,
+                       self.fb.email_to_object(COMMENT_EMAIL_USERNAME))
 
   def test_email_to_object_like(self):
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))

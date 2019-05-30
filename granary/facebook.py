@@ -1684,12 +1684,17 @@ class Facebook(source.Source):
       'to': [{'objectType':'group', 'alias':'@public'}],
     }
 
+    url_parts = urllib.parse.urlparse(post_url)
+    path = url_parts.path.strip('/').split('/')
+    url_params = urllib.parse.parse_qs(url_parts.query)
+    if len(path) == 3 and path[1] == 'posts':
+      post_id = path[2]
+    else:
+      post_id = url_params['story_fbid'][0]
 
-    url_params = urllib.parse.parse_qs(urllib.parse.urlparse(post_url).query)
-    post_id = url_params['story_fbid'][0]
     if type == 'comment':
       obj.update({
-        # TODO: check that this works on urls to different  of posts, eg photos
+        # TODO: check that this works on urls to different types of posts, eg photos
         'id': cls.tag_uri('%s_%s' % (post_id, url_params['comment_id'][0])),
         'objectType': 'comment',
         'content': comment.get_text(strip=True),
@@ -1748,7 +1753,8 @@ class Facebook(source.Source):
     parsed = urllib.parse.urlparse(url)
     parts = list(parsed)
     if parsed.path in ('/nd/', '/n/'):
-      new_path, query = xml.sax.saxutils.unescape(parsed.query).split('&', 1)
+      new_path, query = urllib.parse.unquote(
+        xml.sax.saxutils.unescape(parsed.query)).split('&', 1)
       new_query = [(k, v) for k, v in urllib.parse.parse_qsl(query)
                    if k in ('story_fbid', 'id', 'comment_id')]
       parts[2] = new_path
