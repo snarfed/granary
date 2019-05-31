@@ -1655,7 +1655,8 @@ class Facebook(source.Source):
     name_link = links[0]
     name = name_link.get_text(strip=True)
     profile_url = name_link['href']
-    post_url = cls._sanitize_url(links[1]['href'])
+    resp_url = cls._sanitize_url(links[1]['href'])
+    post_url, comment_id = util.remove_query_param(resp_url, 'comment_id')
 
     if type == 'comment':
       # comment emails have a second section with a preview rendering of the
@@ -1684,7 +1685,7 @@ class Facebook(source.Source):
       'to': [{'objectType':'group', 'alias':'@public'}],
     }
 
-    url_parts = urllib.parse.urlparse(post_url)
+    url_parts = urllib.parse.urlparse(resp_url)
     path = url_parts.path.strip('/').split('/')
     url_params = urllib.parse.parse_qs(url_parts.query)
     if len(path) == 3 and path[1] == 'posts':
@@ -1695,17 +1696,20 @@ class Facebook(source.Source):
     if type == 'comment':
       obj.update({
         # TODO: check that this works on urls to different types of posts, eg photos
-        'id': cls.tag_uri('%s_%s' % (post_id, url_params['comment_id'][0])),
         'objectType': 'comment',
+        'id': cls.tag_uri('%s_%s' % (post_id, comment_id)),
+        'url': resp_url,
         'content': comment.get_text(strip=True),
         'inReplyTo': [{'url': post_url}],
       })
     elif type == 'like':
+      liker_id = cls.base_id(obj['author']['url'])
       obj.update({
         'objectType': 'activity',
         'verb': 'like',
         # TODO: handle author URLs for users without usernames
-        'id': cls.tag_uri('%s_liked_by_%s' % (post_id, cls.base_id(obj['author']['url']))),
+        'id': cls.tag_uri('%s_liked_by_%s' % (post_id, liker_id)),
+        'url': post_url + '#liked-by-%s' % liker_id,
         'object': {'url': post_url},
       })
 

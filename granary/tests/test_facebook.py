@@ -1267,24 +1267,26 @@ EMAIL_ACTOR_USERNAME['url'] = 'https://www.facebook.com/snarfed.org'
 EMAIL_COMMENT_OBJ_USER_ID = {
   'objectType': 'comment',
   'id': tag_uri('123_789'),
+  'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456&comment_id=789',
   'author': EMAIL_ACTOR_USER_ID,
   'content': 'test comment foo bar baz',
   'published': '1999-12-14T12:35:00',
   'inReplyTo': [{
-    'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456&comment_id=789',
+    'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456',
   }],
   'to': [{'objectType':'group', 'alias':'@public'}],
 }
 EMAIL_COMMENT_OBJ_USERNAME = copy.deepcopy(EMAIL_COMMENT_OBJ_USER_ID)
 EMAIL_COMMENT_OBJ_USERNAME.update({
-  'inReplyTo': [{'url': 'https://www.facebook.com/snarfed.org/posts/123?comment_id=789'}],
+  'url': 'https://www.facebook.com/snarfed.org/posts/123?comment_id=789',
+  'inReplyTo': [{'url': 'https://www.facebook.com/snarfed.org/posts/123'}],
   'author': EMAIL_ACTOR_USERNAME,
 })
 EMAIL_LIKE_OBJ = {
   'objectType': 'activity',
   'verb': 'like',
-  # XXX TODO
   'id': tag_uri('123_liked_by_snarfed.org'),
+  'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456#liked-by-snarfed.org',
   'author': EMAIL_ACTOR_USERNAME,
   'published': '1999-12-14T12:36:00',
   'object': {'url': 'https://www.facebook.com/permalink.php?story_fbid=123&id=456'},
