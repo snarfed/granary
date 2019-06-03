@@ -1402,6 +1402,22 @@ class TwitterTest(testutil.TestCase):
       },
     }))
 
+  def test_tweet_to_object_preserve_whitespace(self):
+    text = r"""\
+  ( •_•)                           (•_• ) 
+  ( ง )ง                           ୧( ୧ )
+   /︶\                             /︶\ """
+    tweet = {
+      'id_str': '1',
+      'full_text': text,
+    }
+    obj = {
+      'objectType': 'note',
+      'id': tag_uri('1'),
+      'content': text,
+    }
+    self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
+
   def test_reply_tweet_to_activity(self):
     tweet = copy.deepcopy(TWEET)
     tweet.update({
