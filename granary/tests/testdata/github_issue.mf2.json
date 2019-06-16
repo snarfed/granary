@@ -3,10 +3,7 @@
   "properties": {
     "uid": ["tag:example.com,2001:6796480"],
     "url": ["http://example.com/issue/6796480"],
-    "content": [{
-      "value": "must be your hardware",
-      "html": "must be your hardware"
-    }],
+    "content": ["must be your hardware"],
     "in-reply-to": ["http://github.com/me/thing/issues/9"]
   }
 }

@@ -108,10 +108,7 @@ class Microformats2Test(testutil.TestCase):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {
-        'content': [{
-          'html': '@hey great post',
-          'value': '@hey great post',
-        }],
+        'content': ['@hey great post'],
         'in-reply-to': ['http://reply/target'],
       },
     }, microformats2.object_to_json({
@@ -209,9 +206,9 @@ foo
 
   def test_render_content_converts_newlines_to_brs(self):
     self.assert_equals("""\
-foo<br />
-bar<br />
-<a href="http://baz">baz</a>
+<div style="white-space: pre">foo
+bar
+<a href="http://baz">baz</a></div>
 """, microformats2.render_content({
   'content': 'foo\nbar\nbaz',
   'tags': [{'url': 'http://baz', 'startIndex': 8, 'length': 3}]
@@ -462,7 +459,7 @@ Shared <a href="#">a post</a> by foo
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
-        'content': [{'html': '✁', 'value': '✁'}],
+        'content': ['✁'],
         'in-reply-to': ['https://orig/post'],
       },
     }, microformats2.object_to_json({
@@ -476,7 +473,7 @@ Shared <a href="#">a post</a> by foo
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
-        'content': [{'html': '✁', 'value': '✁'}],
+        'content': ['✁'],
         'in-reply-to': ['https://orig/post/1', 'https://orig/post/2'],
       },
     }, microformats2.object_to_json({
@@ -767,7 +764,7 @@ Shared <a href="#">a post</a> by foo
         'repost-of': [{
           'type': ['h-cite'],
           'properties': {
-            'content': [{'html': 'original', 'value': 'original'}],
+            'content': ['original'],
             'author': [{
               'type': ['h-card'],
               'properties': {'name': ['author']},

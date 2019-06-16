@@ -7,13 +7,10 @@
         "type": ["h-cite"],
         "properties": {
           "name": ["Author"],
-          "content": [{"html": "Repost inside h-cite", "value": "Repost inside h-cite"}],
+          "content": ["Repost inside h-cite"],
           "url": ["http://example.com/embedded-repost"]
         }
       }],
-    "content" : [{
-      "html" : "This is the main content.",
-      "value" : "This is the main content."
-    }]
+    "content" : ["This is the main content."]
   }
 }

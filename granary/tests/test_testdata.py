@@ -32,7 +32,7 @@ def read_json(filename):
   """Reads JSON from a file. Attaches the filename to exceptions."""
   try:
     with open(filename) as f:
-      return json.loads(f.read())
+      return json.loads(f.read(), strict=False)  # allows embedded newlines (etc)
   except Exception as e:
     e.args = ('%s: ' % filename,) + e.args
     raise

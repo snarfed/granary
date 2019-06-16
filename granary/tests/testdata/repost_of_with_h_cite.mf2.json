@@ -16,9 +16,6 @@
         }
       }
     ],
-    "content" : [{
-        "html" : "This is the main content.",
-        "value" : "This is the main content."
-      }]
+    "content" : ["This is the main content."]
   }
 }

@@ -123,12 +123,7 @@ def get_html(val):
     string or None
   """
   if isinstance(val, dict) and val.get('html'):
-    # this came from e-content, so newlines aren't meaningful. drop them so that
-    # we don't replace them with <br>s in render_content().
-    # https://github.com/snarfed/granary/issues/80
-    # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
-    html = val['html']
-    return html.strip()
+    return val['html'].strip()
 
   return get_text(val)
 
@@ -231,11 +226,6 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'audio': get_urls(attachments, 'audio', 'stream'),
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
-      'content': [{
-          'value': xml.sax.saxutils.unescape(primary.get('content', '')),
-          'html': render_content(primary, include_location=False,
-                                 synthesize_content=synthesize_content),
-      }],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
       'author': [object_to_json(
         author, trim_nulls=False, default_object_type='person')],
@@ -257,6 +247,17 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       [object_to_json(a, trim_nulls=False, entry_class=['h-cite'])
        for a in attachments['article'] if 'startIndex' not in a])
   }
+
+  # content. emulate e- vs p- microformats2 parsing: e- if there are HTML tags,
+  # otherwise p-.
+  # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
+  text = xml.sax.saxutils.unescape(primary.get('content', ''))
+  html = render_content(primary, include_location=False,
+                        synthesize_content=synthesize_content)
+  if '<' in html:
+    ret['properties']['content'] = [{'value': text, 'html': html}]
+  else:
+    ret['properties']['content'] = [text]
 
   # photos, including alt text
   photo_urls = set()
@@ -819,10 +820,12 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
     content += orig[last_end:]
 
-  if not obj.get('content_is_html'):
-    # convert newlines to <br>s
-    # do this *after* linkifying tags so we don't have to shuffle indices over
-    content = content.replace('\n', '<br />\n')
+  # is whitespace in this content meaningful? standard heuristic: if there are
+  # no HTML tags in it, and it has a newline, then assume yes.
+  # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
+  # https://github.com/snarfed/granary/issues/80
+  if content and not obj.get('content_is_html') and '\n' in content:
+    content = '<div style="white-space: pre">%s</div>' % content
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
   # TODO: fix the bug in test_linkify_broken() in webutil/tests/test_util.py, then

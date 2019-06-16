@@ -17,10 +17,7 @@
             "url": ["http://example.com/bob"]
           }
         }],
-        "content": [{
-          "html": "The original post",
-          "value": "The original post"
-        }],
+        "content": ["The original post"],
         "url": ["http://example.com/original/post"]
       }
     }],

@@ -1,18 +1,12 @@
 {
   "type": ["h-entry"],
   "properties": {
-    "content": [{
-      "html": "i hereby attach an article",
-      "value": "i hereby attach an article"
-    }]
+    "content": ["i hereby attach an article"]
   },
   "children": [{
     "type": ["h-cite"],
     "properties": {
-      "content": [{
-        "html": "this is being attached",
-        "value": "this is being attached"
-      }],
+      "content": ["this is being attached"],
       "url": ["http://att/post"]
     }
   }]

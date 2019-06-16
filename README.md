@@ -308,6 +308,8 @@ Changelog
   * Bug fix for large block list fetches that get rate limited after a few successful requests.
 * Instagram:
   * Update scraping to handle replies in new `edge_media_to_parent_comment` field ([#164](https://github.com/snarfed/granary/issues/164)).
+* microformats2:
+  * Revise whitespace handling; use `white-space: pre` CSS in HTML output.
 
 ### 2.0 - 2019-03-01
 
