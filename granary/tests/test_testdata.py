@@ -1,6 +1,7 @@
 """Unit tests for canned data in testdata/.
 """
 from __future__ import unicode_literals
+from builtins import open
 from future.utils import bytes_to_native_str
 from past.builtins import basestring
 
@@ -31,7 +32,7 @@ def filepairs(ext1, ext2s):
 def read_json(filename):
   """Reads JSON from a file. Attaches the filename to exceptions."""
   try:
-    with open(filename) as f:
+    with open(filename, encoding='utf-8') as f:
       return json.loads(f.read(), strict=False)  # allows embedded newlines (etc)
   except Exception as e:
     e.args = ('%s: ' % filename,) + e.args
@@ -41,7 +42,7 @@ def read_json(filename):
 def read(filename):
   """Reads a file, decoding JSON if possible."""
   if os.path.splitext(filename)[1] in ('.html', '.xml'):
-    with open(filename) as f:
+    with open(filename, encoding='utf-8') as f:
       return f.read()
   else:
     return read_json(filename)

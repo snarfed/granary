@@ -76,20 +76,14 @@ AS2_RESPONSE = {
 MF2 = {'items': [{
   'type': ['h-entry'],
   'properties': {
-    'content': [{
-      'value': 'foo bar',
-      'html': 'foo bar',
-    }],
+    'content': ['foo bar'],
     'published': ['2012-03-04T18:20:37+00:00'],
     'url': ['https://perma/link'],
   },
 }, {
   'type': ['h-entry'],
   'properties': {
-    'content': [{
-      'value': 'baz baj',
-      'html': 'baz baj',
-    }],
+    'content': ['baz baj'],
   },
 }]}
 
@@ -421,7 +415,7 @@ class AppTest(testutil_appengine.HandlerTest):
 
     expected = copy.deepcopy(MF2)
     for obj in expected['items']:
-      obj['properties']['name'] = [obj['properties']['content'][0]['value'].strip()]
+      obj['properties']['name'] = [obj['properties']['content'][0].strip()]
     self.assert_equals(expected, json.loads(resp.body))
 
   def test_url_html_to_html(self):
