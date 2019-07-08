@@ -57,6 +57,7 @@ import urllib.parse, urllib.request
 import xml.sax.saxutils
 
 from bs4 import BeautifulSoup
+import dateutil.parser
 import mf2util
 from oauth_dropins.webutil import util
 
@@ -1669,12 +1670,7 @@ class Facebook(source.Source):
     if not comment:
       return None
 
-    # example email date/time string: 'December 14 at 12:35 PM'
-    published = datetime.strptime(when.get_text(strip=True), '%B %d at %I:%M %p')\
-                        .replace(year=now_fn().year)
-
     obj = {
-      'published': published.isoformat(util.T),
       'author': {
         'objectType': 'person',
         'displayName': name,
@@ -1685,6 +1681,17 @@ class Facebook(source.Source):
       'to': [{'objectType':'group', 'alias':'@public'}],
     }
 
+    # try to parse datetime string. examples seen in the wild:
+    #   December 14 at 12:35 PM
+    #   5 July at 21:50
+    when = when.get_text(strip=True)
+    try:
+      parsed = dateutil.parser.parse(when, default=now_fn())
+      obj['published'] = parsed.isoformat(util.T)
+    except (ValueError, OverflowError):
+      logging.warning("Couldn't parse datetime string %r", when, exc_info=True)
+
+    # extract Facebook post ID from URL
     url_parts = urllib.parse.urlparse(resp_url)
     path = url_parts.path.strip('/').split('/')
     url_params = urllib.parse.parse_qs(url_parts.query)

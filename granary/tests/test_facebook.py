@@ -3152,6 +3152,28 @@ cc Sam G, Michael M<br />""", preview.description)
     email = COMMENT_EMAIL_USERNAME.replace('commented on your', 'commented on')
     self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_object(email))
 
+  def test_email_to_object_comment_different_datetime_format(self):
+    """https://console.cloud.google.com/errors/CKORxvuphMyeIw
+    """
+    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    email = COMMENT_EMAIL_USERNAME.replace('December 14 at 12:35 PM',
+                                           '14 December at 12:35')
+    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_object(email))
+
+  def test_email_to_object_comment_bad_datetime(self):
+    """https://console.cloud.google.com/errors/CKORxvuphMyeIw
+    """
+    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    email = COMMENT_EMAIL_USERNAME.replace('December 14 at 12:35 PM',
+                                           'asdf 29 qwert')
+    expected = copy.deepcopy(EMAIL_COMMENT_OBJ_USERNAME)
+    del expected['published']
+    self.assert_equals(expected, self.fb.email_to_object(email))
+
   def test_email_to_object_like(self):
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
