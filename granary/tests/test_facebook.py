@@ -3149,9 +3149,8 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    email = COMMENT_EMAIL.replace('commented on your', 'commented on')
-    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME,
-                       self.fb.email_to_object(COMMENT_EMAIL_USERNAME))
+    email = COMMENT_EMAIL_USERNAME.replace('commented on your', 'commented on')
+    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_object(email))
 
   def test_email_to_object_like(self):
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))
