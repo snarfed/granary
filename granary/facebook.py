@@ -1698,7 +1698,8 @@ class Facebook(source.Source):
     if len(path) == 3 and path[1] == 'posts':
       post_id = path[2]
     else:
-      post_id = url_params['story_fbid'][0]
+      post_id = (util.get_first(url_params, 'story_fbid') or
+                 util.get_first(url_params, 'fbid') or '')
 
     if type == 'comment':
       obj.update({
@@ -1752,6 +1753,7 @@ class Facebook(source.Source):
     Example posts:
     https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
     https://www.facebook.com/n/?permalink.php&amp;story_fbid=123&amp;id=456&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.2.34567890.ABCxyz&amp;n_m=recipient%40example.com
+    https://www.facebook.com/n/?photo.php&amp;fbid=123&amp;set=a.456&amp;type=3&amp;comment_id=789&amp;force_theater=true&amp;aref=123&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
 
     Args:
       url: string
@@ -1767,7 +1769,7 @@ class Facebook(source.Source):
       new_path, query = urllib.parse.unquote(
         xml.sax.saxutils.unescape(parsed.query)).split('&', 1)
       new_query = [(k, v) for k, v in urllib.parse.parse_qsl(query)
-                   if k in ('story_fbid', 'id', 'comment_id')]
+                   if k in ('story_fbid', 'fbid', 'id', 'comment_id')]
       parts[2] = new_path
       parts[4] = urllib.parse.urlencode(new_query)
 

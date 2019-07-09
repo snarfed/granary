@@ -1162,6 +1162,10 @@ COMMENT_EMAIL_USERNAME = COMMENT_EMAIL % {
   'post_url': 'https://www.facebook.com/nd/?snarfed.org%2Fposts%2F123&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
   'profile_url': 'https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image',
 }
+COMMENT_EMAIL_PHOTO = COMMENT_EMAIL % {
+  'post_url': 'https://www.facebook.com/n/?photo.php&amp;fbid=123&amp;set=a.456&amp;type=3&amp;comment_id=789&amp;force_theater=true&amp;aref=123&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
+  'profile_url': 'https://www.facebook.com/n/?profile.php&amp;id=456&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
+}
 
 # minimized from original
 LIKE_EMAIL = """\
@@ -3144,6 +3148,17 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
     self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME,
                        self.fb.email_to_object(COMMENT_EMAIL_USERNAME))
+
+  def test_email_to_object_photo_comment(self):
+    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+    expected = copy.deepcopy(EMAIL_COMMENT_OBJ_USER_ID)
+    expected.update({
+      'id': tag_uri('123_789'),
+      'url': 'https://www.facebook.com/photo.php?fbid=123&comment_id=789',
+      'inReplyTo': [{'url': 'https://www.facebook.com/photo.php?fbid=123'}],
+    })
+    self.assert_equals(expected, self.fb.email_to_object(COMMENT_EMAIL_PHOTO))
 
   def test_email_to_object_comment_different_text(self):
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))
