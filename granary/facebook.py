@@ -979,7 +979,15 @@ class Facebook(source.Source):
       path = parsed.path.strip('/')
       path_parts = path.split('/')
 
-      if len(path_parts) == 1:
+      if path == 'photo.php':
+        # photo URLs look like:
+        # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
+        # https://www.facebook.com/user/photos/a.12.34.56/78/?type=1&offset=0
+        fbids = params.get('fbid')
+        base_id = base_obj['id'] = fbids[0] if fbids else None
+
+      elif len(path_parts) == 1:
+        # maybe a profile/page URL?
         if not base_obj.get('objectType'):
           base_obj['objectType'] = 'person'  # or page
         if not base_id:
@@ -999,13 +1007,6 @@ class Facebook(source.Source):
         if util.is_int(author_id) and not author.get('numeric_id'):
           author['numeric_id'] = author_id
 
-      # photo URLs look like:
-      # https://www.facebook.com/photo.php?fbid=123&set=a.4.5.6&type=1
-      # https://www.facebook.com/user/photos/a.12.34.56/78/?type=1&offset=0
-      if path == 'photo.php':
-        fbids = params.get('fbid')
-        if fbids:
-          base_obj['id'] = fbids[0]
 
       # photo album URLs look like this:
       # https://www.facebook.com/media/set/?set=a.12.34.56

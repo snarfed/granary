@@ -2986,6 +2986,23 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals('123', got['id'])
     self.assert_equals('https://www.facebook.com/123', got['url'])
 
+  def test_base_object_photo_php(self):
+    self.assert_equals({
+      'id': '123',
+      'url': 'https://facebook.com/photo.php?fbid=123',
+      'author': {},
+    }, self.fb.base_object({
+      'object': {'url': 'https://facebook.com/photo.php?fbid=123'},
+    }))
+
+  def test_base_object_photo_php_no_fbid(self):
+    self.assert_equals({
+      'url': 'https://facebook.com/photo.php',
+      'author': {},
+    }, self.fb.base_object({
+      'object': {'url': 'https://facebook.com/photo.php'},
+    }))
+
   def test_base_id_recurring_event_instance(self):
     url = 'https://facebook.com/000?event_time_id=123'
     self.assert_equals('123', self.fb.base_id(url))
