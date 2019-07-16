@@ -125,6 +125,7 @@ COMMENT = {
 
 class FakeSource(Source):
   DOMAIN = 'fake.com'
+  EMBED_POST = 'foo %(url)s bar'
 
 
 class SourceTest(testutil.TestCase):
@@ -547,3 +548,11 @@ Watching  \t waves
                ):
       self.assertFalse(Source.is_public(obj), repr(obj))
       self.assertFalse(Source.is_public({'object': obj}), repr(obj))
+
+  def test_embed_post_escapes_url(self):
+    self.assert_equals('foo http://%3Ca%3Eb bar',
+                       self.source.embed_post({'url': 'http://<a>b'}))
+
+  def test_embed_post_checks_content_for_html(self):
+    with self.assertRaises(ValueError):
+      self.source.embed_post({'content': '<xyz>'})

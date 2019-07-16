@@ -22,9 +22,9 @@ import json
 import logging
 import re
 import urllib.parse
-import html2text
 
 from bs4 import BeautifulSoup
+import html2text
 from oauth_dropins.webutil import util
 
 from . import appengine_config
@@ -798,11 +798,27 @@ class Source(with_metaclass(SourceMeta, object)):
 
   @classmethod
   def embed_post(cls, obj):
-    """Returns the HTML string for embedding a post object."""
+    """Returns the HTML string for embedding a post object.
+
+    Args:
+      obj: AS1 dict with at least url, and optionally also content.
+
+    Returns: string, HTML
+
+    Raises: ValueError, if obj['content'] contains raw < or > characters.
+    """
     obj = copy.copy(obj)
     for field in 'url', 'content':
       if field not in obj:
         obj.setdefault(field, obj.get('object', {}).get(field, ''))
+
+    if '<' in obj['content'] or '>' in obj['content']:
+      raise ValueError("obj['content'] has unescaped < or > characters!")
+
+    # escape URL, but not with urllib.parse.quote, because it quotes a ton of
+    # chars we want to pass through, including most unicode chars.
+    obj['url'] = obj['url'].replace('<', '%3C').replace('>', '%3E')
+
     return cls.EMBED_POST % obj
 
   @classmethod
