@@ -776,6 +776,9 @@ class Instagram(source.Source):
     """
     if not id:
       return None
+    
+    if isinstance(id, dict):
+      id = id['id']
 
     if isinstance(id, basestring):
       parts = id.split('_')
