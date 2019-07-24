@@ -633,7 +633,7 @@ class Source(with_metaclass(SourceMeta, object)):
 
     # find all candidate URLs
     tags = [t.get('url') for t in obj.get('attachments', []) + obj.get('tags', [])
-            if t.get('objectType') in ('article', 'mention', None)]
+            if t.get('objectType') in ('article', 'mention', 'note', None)]
     candidates = tags + util.extract_links(content) + obj.get('upstreamDuplicates', [])
 
     # Permashortcitations (http://indiewebcamp.com/permashortcitation) are short
