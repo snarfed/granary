@@ -312,6 +312,8 @@ Changelog
   * Revise whitespace handling; use `white-space: pre` CSS in HTML output.
 * Facebook:
   * Bug fix: don't interpret `photo.php` as username in post URLs.
+* RSS:
+  * Default title to ellipsized content.
 
 ### 2.0 - 2019-03-01
 
