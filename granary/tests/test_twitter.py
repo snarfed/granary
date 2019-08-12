@@ -947,7 +947,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([ACTIVITY_WITH_SHARES],
                           self.twitter.get_activities(fetch_shares=True, min_id='567'))
 
-  def test_get_activities_fetch_shares_no_retweets(self):
+  def test_get_activities_fetch_shares_404s(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
@@ -957,7 +957,25 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
 
-  def test_get_activities_fetch_shares_404s(self):
+  def test_get_activities_fetch_shares_403s_error_code_200(self):
+    """https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329"""
+    tweet = copy.deepcopy(TWEET)
+    tweet['retweet_count'] = 1
+    self.expect_urlopen(TIMELINE, [tweet])
+
+    resp = json.dumps({
+      'errors': [{
+        'code': 200,
+        'message': 'Forbidden.',
+      }],
+    })
+    self.expect_urlopen(API_RETWEETS % '100'
+                       ).AndRaise(urllib_error.HTTPError('url', 403, resp, {}, None))
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
+
+  def test_get_activities_fetch_shares_no_retweets(self):
     self.expect_urlopen(TIMELINE, [TWEET])
     self.mox.ReplayAll()
 

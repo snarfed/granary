@@ -306,6 +306,7 @@ Changelog
 * Convert AS2 `Mention` tags to AS1 `objectType` `mention` (non-standard) and vice versa ([snarfed/bridgy-fed#46](https://github.com/snarfed/bridgy-fed/issues/46)).
 * Twitter:
   * Bug fix for large block list fetches that get rate limited after a few successful requests.
+  * Handle HTTP 403 + error code 200 when fetching retweets for a protected or otherwise unavailable tweet ([bridgy#688](https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329)).
 * Instagram:
   * Update scraping to handle replies in new `edge_media_to_parent_comment` field ([#164](https://github.com/snarfed/granary/issues/164)).
 * microformats2:

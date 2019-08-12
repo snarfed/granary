@@ -1,7 +1,7 @@
 # coding=utf-8
 """Twitter source class.
 
-Uses the v1.1 REST API: https://dev.twitter.com/docs/api
+Uses the v1.1 REST API: https://developer.twitter.com/en/docs/api-reference-index
 
 TODO: collections for twitter accounts; use as activity target?
 
@@ -19,6 +19,7 @@ import collections
 import datetime
 import http.client
 import itertools
+import json
 import logging
 import mimetypes
 import re
@@ -350,8 +351,14 @@ class Twitter(source.Source):
           try:
             tweet['retweets'] = self.urlopen(url)
           except urllib_error.URLError as e:
-            code, _ = util.interpret_http_exception(e)
-            if code != '404':  # 404 means the original tweet was deleted
+            code, body = util.interpret_http_exception(e)
+            try:
+              # duplicates code in interpret_http_exception :(
+              error_code = json.loads(body).get('errors')[0].get('code')
+            except BaseException:
+              error_code = None
+            if not (code == '404' or  # tweet was deleted
+                    (code == '403' and error_code == 200)):  # tweet is protected?
               raise
 
           retweet_calls += 1
