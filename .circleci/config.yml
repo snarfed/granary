@@ -61,7 +61,7 @@ jobs:
             PYTHONPATH=/usr/lib/google-cloud-sdk/platform/google_appengine:$PYTHONPATH python2 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/tests/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
             python2 -m coverage html -d /tmp/coverage_html
             PYTHONPATH= python2 ./instagram_live_test.py --debug
-            if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
+            if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls || true; fi
 
       - save_cache:
           key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
