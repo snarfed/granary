@@ -1,6 +1,7 @@
 """Convert ActivityStreams to microformats2 HTML and JSON.
 
 Microformats2 specs: http://microformats.org/wiki/microformats2
+ActivityStreams 1 specs: http://activitystrea.ms/specs/
 """
 from __future__ import absolute_import, unicode_literals
 from future import standard_library
