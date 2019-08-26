@@ -307,7 +307,6 @@ Changelog
 * Twitter:
   * Bug fix for large block list fetches that get rate limited after a few successful requests.
   * Handle HTTP 403 + error code 200 when fetching retweets for a protected or otherwise unavailable tweet ([bridgy#688](https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329)).
-  * Demote @-mentions from [person-tags](https://indieweb.org/person-tag) to [mentions](https://indieweb.org/mention). Specifically, this means they'll no longer get rendered with `u-category` mf2.
 * Instagram:
   * Update scraping to handle replies in new `edge_media_to_parent_comment` field ([#164](https://github.com/snarfed/granary/issues/164)).
 * microformats2:

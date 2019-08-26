@@ -212,14 +212,14 @@ OBJECT = {  # ActivityStreams
   },
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'tags': [{
-    'objectType': 'mention',
+    'objectType': 'person',
     'id': tag_uri('foo'),
     'url': 'https://twitter.com/foo',
     'displayName': 'Twitter',
     'startIndex': 0,
     'length': 8,
   }, {
-    'objectType': 'mention',
+    'objectType': 'person',
     'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
     'url': 'https://twitter.com/foo',
     'displayName': 'Picture.ly',
@@ -1289,7 +1289,7 @@ class TwitterTest(testutil.TestCase):
       # both tags are outside display_text_range, so they shouldn't have
       # startIndex or length
       'tags': [{
-        'objectType': 'mention',
+        'objectType': 'person',
         'id': tag_uri('OP'),
         'url': 'https://twitter.com/OP',
       }, {
@@ -1297,7 +1297,7 @@ class TwitterTest(testutil.TestCase):
         'url': 'http://full/quoted/tweet',
       }],
       'to': [{
-        'objectType': 'mention',
+        'objectType': 'person',
         'id': tag_uri('OP'),
         'url': 'https://twitter.com/OP',
       }],
@@ -1384,7 +1384,7 @@ class TwitterTest(testutil.TestCase):
 
     obj = self.twitter.tweet_to_object(tweet)
     self.assert_equals([{
-      'objectType': 'mention',
+      'objectType': 'person',
       'id': tag_uri('danshipper'),
       'url': 'https://twitter.com/danshipper',
       'displayName': 'Dan Shipper',
