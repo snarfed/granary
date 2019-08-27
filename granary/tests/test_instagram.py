@@ -983,6 +983,7 @@ class InstagramTest(testutil.TestCase):
   def setUp(self):
     super(InstagramTest, self).setUp()
     self.instagram = Instagram()
+    instagram._last_rate_limited = instagram._last_rate_limited_exc = None
 
   def test_get_actor(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/foo',
