@@ -313,6 +313,7 @@ Changelog
 * Instagram:
   * Disabled in the REST API entirely due to Instagram's aggressive rate limiting and blocking ([bridgy#655](https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427)).
   * Update scraping to handle replies in new `edge_media_to_parent_comment` field ([#164](https://github.com/snarfed/granary/issues/164)).
+  * Use cookie for all scraping HTTP requests, not just for likes.
 * microformats2:
   * Revise whitespace handling; use `white-space: pre` CSS in HTML output.
 * Facebook:

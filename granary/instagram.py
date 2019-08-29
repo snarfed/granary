@@ -102,8 +102,7 @@ class Instagram(source.Source):
         useful if the app is not approved to create comments.
       scrape: boolean, whether to scrape instagram.com's HTML (True) or use
       the API (False)
-      cookie: string, optional sessionid cookie to use when scraping. *Currently
-        only used for likes!*
+      cookie: string, optional sessionid cookie to use when scraping.
     """
     self.access_token = access_token
     self.allow_comment_creation = allow_comment_creation
@@ -202,12 +201,13 @@ class Instagram(source.Source):
       group_id = source.FRIENDS
 
     if scrape or self.scrape:
+      cookie = cookie or self.cookie
       if not (activity_id or
               (group_id == source.SELF and user_id) or
               (group_id == source.FRIENDS and cookie)):
         raise NotImplementedError(
           'Scraping only supports activity_id, user_id and group_id=@self, or cookie and group_id=@friends.')
-      elif fetch_likes and not cookie and not self.cookie:
+      elif fetch_likes and not cookie:
         raise NotImplementedError('Scraping likes requires a cookie.')
 
       # cache rate limited responses and short circuit
@@ -305,6 +305,7 @@ class Instagram(source.Source):
     Returns:
       dict activities API response
     """
+    cookie = cookie or self.cookie
     assert user_id or activity_id or shortcode or cookie
     assert not (activity_id and shortcode)
 
@@ -314,12 +315,13 @@ class Instagram(source.Source):
     url = (HTML_MEDIA % shortcode if shortcode
            else HTML_PROFILE % user_id if user_id and group_id == source.SELF
            else HTML_BASE_URL)
-    kwargs = {}
+    get_kwargs = {'allow_redirects': False}
     if cookie:
       if not cookie.startswith('sessionid='):
         cookie = 'sessionid=' + cookie
-      kwargs = {'headers': {'Cookie': cookie}}
-    resp = util.requests_get(url, allow_redirects=False, **kwargs)
+      get_kwargs['headers'] = {'Cookie': cookie}
+
+    resp = util.requests_get(url, **get_kwargs)
     if ((cookie and 'not-logged-in' in resp.text) or
         (resp.status_code in (301, 302) and
          '/accounts/login' in resp.headers.get('Location', ''))):
@@ -358,7 +360,7 @@ class Instagram(source.Source):
             comments and comments != cached.get(comments_key)):
           if not activity_id and not shortcode:
             url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
-            resp = util.requests_get(url)
+            resp = util.requests_get(url, **get_kwargs)
             resp.raise_for_status()
           # otherwise resp is a fetch of just this activity; reuse it
 
@@ -809,6 +811,7 @@ class Instagram(source.Source):
     Returns:
       tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
     """
+    cookie = cookie or self.cookie
     # extract JSON data blob
     # (can also get just this JSON by adding ?__a=1 to any IG URL.)
     matches = HTML_DATA_RE.findall(html)
@@ -883,7 +886,7 @@ class Instagram(source.Source):
       likes = media.get('edge_media_preview_like') or {}
       if shortcode and fetch_extras and likes.get('count') and not likes.get('edges'):
         # extra GraphQL fetch to get likes, as of 8/2018
-        data = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie or self.cookie)
+        data = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
         likes['edges'] = data.get('data', {}).get('shortcode_media', {})\
                              .get('edge_liked_by', {}).get('edges', [])
       activities.append(self._json_media_node_to_activity(media, user=profile_user))
