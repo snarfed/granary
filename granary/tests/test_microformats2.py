@@ -364,11 +364,11 @@ Shared <a href="#">a post</a> by foo
 
   def test_mention_and_hashtag(self):
     self.assert_equals("""
-<a class="p-category" href="http://c"></a>
-<a class="u-mention" href="http://m">m</a>""",
+<a class="p-category" href="http://c">c</a>
+<a class="u-mention" href="http://m"></a>""",
                        microformats2.render_content({
         'tags': [{'objectType': 'mention', 'url': 'http://m', 'displayName': 'm'},
-                 {'objectType': 'hashtag', 'url': 'http://c'}],
+                 {'objectType': 'hashtag', 'url': 'http://c', 'displayName': 'c'}],
       }))
 
   def test_tag_multiple_urls(self):

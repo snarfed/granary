@@ -902,7 +902,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
   # render the rest
   content += tags_to_html(tags.pop('hashtag', []), 'p-category')
-  content += tags_to_html(tags.pop('mention', []), 'u-mention')
+  content += tags_to_html(tags.pop('mention', []), 'u-mention', visible=False)
   content += tags_to_html(sum(tags.values(), []), 'tag')
 
   return content
@@ -1005,16 +1005,19 @@ def first_props(props):
   return {k: get_first(props, k, '') for k in props} if props else {}
 
 
-def tags_to_html(tags, classname):
+def tags_to_html(tags, classname, visible=True):
   """Returns an HTML string with links to the given tag objects.
 
   Args:
     tags: decoded JSON ActivityStreams objects.
     classname: class for span to enclose tags in
+    visible: boolean, whether to visibly include displayName
   """
   urls = {}  # stores (url, displayName) tuples
   for tag in tags:
-    name = tag.get('displayName') or ''
+    name = ''
+    if visible and tag.get('displayName'):
+      name = tag['displayName']
     # loop through individually instead of using update() so that order is
     # preserved.
     for url in object_urls(tag):
