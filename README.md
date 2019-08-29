@@ -125,6 +125,8 @@ By default, responses are cached and reused for 10m without re-fetching the sour
 
 To use the REST API in an existing ActivityStreams client, you'll need to hard-code exceptions for the domains you want to use e.g. `facebook.com`, and redirect HTTP requests to the corresponding [endpoint above](#about).
 
+Instagram is disabled in the REST API entirely, sadly, [due to their aggressive rate limiting and blocking](https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427).
+
 The web UI ([granary.io](https://granary.io/)) currently only fetches Facebook access tokens for users. If you want to use it to access a Facebook page, you'll need to get an access token manually with the [Graph API Explorer](https://developers.facebook.com/tools/explorer/) (click on the _Get To..._ drop-down) . Then, log into Facebook on [granary.io](https://granary.io/) and paste the page access token into the `access_token` text box.
 
 
@@ -308,6 +310,7 @@ Changelog
   * Bug fix for large block list fetches that get rate limited after a few successful requests.
   * Handle HTTP 403 + error code 200 when fetching retweets for a protected or otherwise unavailable tweet ([bridgy#688](https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329)).
 * Instagram:
+  * Disabled in the REST API entirely due to Instagram's aggressive rate limiting and blocking ([bridgy#655](https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427)).
   * Update scraping to handle replies in new `edge_media_to_parent_comment` field ([#164](https://github.com/snarfed/granary/issues/164)).
 * microformats2:
   * Revise whitespace handling; use `white-space: pre` CSS in HTML output.

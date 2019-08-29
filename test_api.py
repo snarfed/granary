@@ -240,7 +240,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
       allow_redirects=False, headers={'Cookie': 'sessionid=c00k1e'})
     self.mox.ReplayAll()
     resp = api.application.get_response(
-      '/instagram/@me/@friends/@app/?cookie=c00k1e')
+      '/instagram/@me/@friends/@app/?cookie=c00k1e&interactive=true')
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertEquals('application/json', resp.headers['Content-Type'])
     self.assert_equals(test_instagram.HTML_ACTIVITIES_FULL,
@@ -248,7 +248,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
 
   def test_instagram_scrape_without_cookie_error(self):
     resp = api.application.get_response(
-      '/instagram/@me/@friends/@app/?format=html&access_token=...')
+      '/instagram/@me/@friends/@app/?format=html&access_token=...&interactive=true')
     self.assert_equals(400, resp.status_int)
     self.assertIn('Scraping only supports activity_id', resp.body)
 

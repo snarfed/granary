@@ -123,7 +123,10 @@ class Handler(handlers.ModernHandler):
       src = github.GitHub(
         access_token=util.get_required_param(self, 'access_token'))
     elif site == 'instagram':
-      src = instagram.Instagram(scrape=True)
+      if self.request.get('interactive').lower() == 'true':
+        src = instagram.Instagram(scrape=True)
+      else:
+        self.abort(400, 'Sorry, Instagram is not currently available in the REST API. Try https://instagram-atom.appspot.com/ instead!')
     else:
       src_cls = source.sources.get(site)
       if not src_cls:

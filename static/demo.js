@@ -27,16 +27,20 @@ function render_demo_request() {
     url += '&cookie=' + cookie;
   }
 
-  if (site != 'instagram') {
+  var request = document.getElementById('request');
+  if (site == 'instagram') {
+    request.innerHTML = 'Instagram is available here in the web UI, <a href="https://granary.readthedocs.io/">and in the library</a>, <em>but not elsewhere (like feed readers)</em>. <a href="https://instagram-atom.appspot.com/">Try instagram-atom instead!</a>'
+    request.style.fontFamily = 'sans-serif';
+    request.style.fontSize = 'large';
+    request.style.color = 'lightcoral';
+  } else {
     for (i in OAUTH_INPUT_IDS) {
       elem = document.getElementById(OAUTH_INPUT_IDS[i]);
       if (elem && elem.value)
         url += '&' + elem.name + '=' + elem.value;
     }
+    request.innerHTML = 'GET <a href="' + url + '">' + url + '</a>';
   }
-
-  document.getElementById('request').innerHTML =
-    'GET <a href="' + url + '">' + url + '</a>';
 }
 
 function render_url_request() {

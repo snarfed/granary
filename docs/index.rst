@@ -172,6 +172,10 @@ to hard-code exceptions for the domains you want to use e.g.
 ``facebook.com``, and redirect HTTP requests to the corresponding
 `endpoint above <#about>`__.
 
+Instagram is disabled in the REST API entirely, sadly, `due to their
+aggressive rate limiting and
+blocking <https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427>`__.
+
 The web UI (`granary.io <https://granary.io/>`__) currently only fetches
 Facebook access tokens for users. If you want to use it to access a
 Facebook page, you’ll need to get an access token manually with the
@@ -326,10 +330,10 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``./docs/build.sh``.
 4.  ``git commit -am 'release vX.Y'``
 5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
-    ``sh  python3 setup.py clean build sdist  twine upload -r pypitest dist/granary-X.Y.tar.gz``
+    ``sh  python3 setup.py clean build sdist  setenv ver vX.Y  twine upload -r pypitest dist/granary-$ver.tar.gz``
 6.  Install from test.pypi.org, both Python 2 and 3.
-    ``sh  cd /tmp  virtualenv local  source local/bin/activate.csh  pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary  deactivate``
-    ``sh  python3 -m venv local3  source local3/bin/activate.csh  pip3 install --upgrade pip  pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary  deactivate``
+    ``sh  cd /tmp  virtualenv local  source local/bin/activate.csh  pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
+    ``sh  python3 -m venv local3  source local3/bin/activate.csh  pip3 install --upgrade pip  pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
 7.  Smoke test that the code trivially loads and runs, in both Python 2
     and 3.
 
@@ -363,7 +367,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     the release “title” in github), put ``### Notable changes`` on the
     second line, then copy and paste this version’s changelog contents
     below it.
-    ``sh  git tag -a vX.Y --cleanup=verbatim  git push  git push --tags``
+    ``sh  git tag -a $ver --cleanup=verbatim  git push  git push --tags``
 9.  `Click here to draft a new release on
     GitHub. <https://github.com/snarfed/granary/releases/new>`__ Enter
     ``vX.Y`` in the *Tag version* box. Leave *Release title* empty. Copy
@@ -430,6 +434,42 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+2.1 - unreleased
+~~~~~~~~~~~~~~~~
+
+-  Convert AS2 ``Mention`` tags to AS1 ``objectType`` ``mention``
+   (non-standard) and vice versa
+   (`snarfed/bridgy-fed#46 <https://github.com/snarfed/bridgy-fed/issues/46>`__).
+-  Twitter:
+
+   -  Bug fix for large block list fetches that get rate limited after a
+      few successful requests.
+   -  Handle HTTP 403 + error code 200 when fetching retweets for a
+      protected or otherwise unavailable tweet
+      (`bridgy#688 <https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329>`__).
+
+-  Instagram:
+
+   -  Disabled in the REST API entirely due to Instagram’s aggressive
+      rate limiting and blocking
+      (`bridgy#655 <https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427>`__).
+   -  Update scraping to handle replies in new
+      ``edge_media_to_parent_comment`` field
+      (`#164 <https://github.com/snarfed/granary/issues/164>`__).
+
+-  microformats2:
+
+   -  Revise whitespace handling; use ``white-space: pre`` CSS in HTML
+      output.
+
+-  Facebook:
+
+   -  Bug fix: don’t interpret ``photo.php`` as username in post URLs.
+
+-  RSS:
+
+   -  Default title to ellipsized content.
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
