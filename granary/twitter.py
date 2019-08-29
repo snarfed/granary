@@ -1265,7 +1265,7 @@ class Twitter(source.Source):
 
     # tags
     obj['tags'] = [
-      {'objectType': 'person',
+      {'objectType': 'mention',
        'id': self.tag_uri(t.get('screen_name')),
        'url': self.user_url(t.get('screen_name')),
        'displayName': t.get('name'),
@@ -1318,7 +1318,7 @@ class Twitter(source.Source):
                               if tweet.get('display_text_range')
                               else (0, len(text)))
       obj['to'].extend(tag for tag in obj['tags']
-                       if tag.get('objectType') == 'person'
+                       if tag.get('objectType') in ('person', 'mention')
                        and tag.get('indices')[1] <= text_start)
 
     # convert start/end indices to start/length, and replace t.co URLs with
