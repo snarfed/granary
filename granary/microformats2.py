@@ -769,7 +769,7 @@ def hcard_to_html(hcard, parent_props=None):
 
 
 def render_content(obj, include_location=True, synthesize_content=True,
-                   render_attachments=False):
+                   render_attachments=False, white_space_pre=True):
   """Renders the content of an ActivityStreams object as HTML.
 
   Includes tags, mentions, and non-note/article attachments. (Note/article
@@ -784,6 +784,9 @@ def render_content(obj, include_location=True, synthesize_content=True,
     include_location: whether to render location, if provided
     synthesize_content: whether to generate synthetic content if the object
       doesn't have its own, e.g. 'likes this.' or 'shared this.'
+    white_space_pre: boolean, whether to wrap in CSS white-space: pre. If False,
+      newlines will be converted to <br> tags instead. Background:
+      https://indiewebcamp.com/note#Indieweb_whitespace_thinking
 
   Returns:
     string, rendered HTML
@@ -826,7 +829,10 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
   # https://github.com/snarfed/granary/issues/80
   if content and not obj.get('content_is_html') and '\n' in content:
-    content = '<div style="white-space: pre">%s</div>' % content
+    if white_space_pre:
+      content = '<div style="white-space: pre">%s</div>' % content
+    else:
+      content = content.replace('\n', '<br />\n')
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
   # TODO: fix the bug in test_linkify_broken() in webutil/tests/test_util.py, then

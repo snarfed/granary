@@ -318,6 +318,8 @@ Changelog
   * Revise whitespace handling; use `white-space: pre` CSS in HTML output.
 * Facebook:
   * Bug fix: don't interpret `photo.php` as username in post URLs.
+* Atom:
+  * Switch from `white-space: pre` CSS back to converting newlines to `<br>`s because some feed readers ([eg NewsBlur](https://forum.newsblur.com/t/android-cant-read-line-pre-formatted-lines/6116)) follow it too strictly and don't even line wrap.
 * RSS:
   * Default title to ellipsized content.
 

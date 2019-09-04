@@ -357,7 +357,11 @@ def _prepare_activity(a, reader=True):
 
   # Render content as HTML; escape &s
   obj['rendered_content'] = _encode_ampersands(microformats2.render_content(
-    primary, include_location=reader, render_attachments=True))
+    primary, include_location=reader, render_attachments=True,
+    # Readers often obey CSS white-space: pre strictly and don't even line wrap,
+    # so don't use it.
+    # https://forum.newsblur.com/t/android-cant-read-line-pre-formatted-lines/6116
+    white_space_pre=False))
 
   # Make sure every activity has the title field, since Atom <entry> requires
   # the title element.

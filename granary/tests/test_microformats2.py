@@ -204,7 +204,7 @@ foo
 <img class="u-photo" src="http://2" alt="" />
 </p>""", microformats2.render_content(obj, render_attachments=True))
 
-  def test_render_content_converts_newlines_to_brs(self):
+  def test_render_content_newlines_default_white_space_pre(self):
     self.assert_equals("""\
 <div style="white-space: pre">foo
 bar
@@ -213,6 +213,16 @@ bar
   'content': 'foo\nbar\nbaz',
   'tags': [{'url': 'http://baz', 'startIndex': 8, 'length': 3}]
 }))
+
+  def test_render_content_convert_newlines_to_brs(self):
+    self.assert_equals("""\
+foo<br />
+bar<br />
+<a href="http://baz">baz</a>
+""", microformats2.render_content({
+  'content': 'foo\nbar\nbaz',
+  'tags': [{'url': 'http://baz', 'startIndex': 8, 'length': 3}]
+}, white_space_pre=False))
 
   def test_render_content_omits_tags_without_urls(self):
     self.assert_equals("""\
@@ -633,8 +643,8 @@ Shared <a href="#">a post</a> by foo
       },
     ], obj.get('tags'))
 
-  def test_json_to_object_converts_text_newlines_to_brs(self):
-    """Text newlines should be converted to <br>s."""
+  def test_json_to_object_text_newlines(self):
+    """Text newlines should not be converted to <br>s."""
     self.assert_equals({
       'objectType': 'note',
       'content': 'asdf\nqwer',
