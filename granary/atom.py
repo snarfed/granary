@@ -397,8 +397,9 @@ def _prepare_activity(a, reader=True):
 
     image_urls_seen |= set(util.get_urls(att, 'image'))
     if type in ('note', 'article'):
-      html = microformats2.render_content(att, include_location=reader,
-                                          render_attachments=True)
+      html = microformats2.render_content(
+        att, include_location=reader, render_attachments=True,
+        white_space_pre=False)
       author = att.get('author')
       if author:
         name = microformats2.maybe_linked_name(
