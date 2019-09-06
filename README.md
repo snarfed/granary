@@ -223,7 +223,8 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
     ```sh
     python3 setup.py clean build sdist
-    setenv ver vX.Y
+    setenv ver X.Y
+    source local/bin/activate.csh
     twine upload -r pypitest dist/granary-$ver.tar.gz
     ```
 1. Install from test.pypi.org, both Python 2 and 3.
@@ -231,6 +232,8 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     cd /tmp
     virtualenv local
     source local/bin/activate.csh
+    # mf2py 1.1.2 on test pypi is currently broken
+    pip install mf2py==1.1.2
     pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
     deactivate
     ```
@@ -238,6 +241,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     python3 -m venv local3
     source local3/bin/activate.csh
     pip3 install --upgrade pip
+    pip3 install mf2py==1.1.2
     pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
     deactivate
     ```
@@ -273,7 +277,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     ```
 1. Tag the release in git. In the tag message editor, delete the generated comments at bottom, leave the first line blank (to omit the release "title" in github), put `### Notable changes` on the second line, then copy and paste this version's changelog contents below it.
     ```sh
-    git tag -a $ver --cleanup=verbatim
+    git tag -a v$ver --cleanup=verbatim
     git push
     git push --tags
     ```
@@ -304,7 +308,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 2.1 - unreleased
+### 2.1 - 2019-09-04
 * Convert AS2 `Mention` tags to AS1 `objectType` `mention` (non-standard) and vice versa ([snarfed/bridgy-fed#46](https://github.com/snarfed/bridgy-fed/issues/46)).
 * Twitter:
   * Bug fix for large block list fetches that get rate limited after a few successful requests.

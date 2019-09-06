@@ -435,7 +435,7 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-2.1 - unreleased
+2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
 
 -  Convert AS2 ``Mention`` tags to AS1 ``objectType`` ``mention``
@@ -448,6 +448,10 @@ Changelog
    -  Handle HTTP 403 + error code 200 when fetching retweets for a
       protected or otherwise unavailable tweet
       (`bridgy#688 <https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329>`__).
+   -  Demote @-mentions from
+      `person-tags <https://indieweb.org/person-tag>`__ to
+      `mentions <https://indieweb.org/mention>`__. Specifically, this
+      means they’ll no longer get rendered with ``u-category`` mf2.
 
 -  Instagram:
 
@@ -457,6 +461,7 @@ Changelog
    -  Update scraping to handle replies in new
       ``edge_media_to_parent_comment`` field
       (`#164 <https://github.com/snarfed/granary/issues/164>`__).
+   -  Use cookie for all scraping HTTP requests, not just for likes.
 
 -  microformats2:
 
@@ -467,9 +472,18 @@ Changelog
 
    -  Bug fix: don’t interpret ``photo.php`` as username in post URLs.
 
+-  Atom:
+
+   -  Switch from ``white-space: pre`` CSS back to converting newlines
+      to ``<br>``\ s because some feed readers (`eg
+      NewsBlur <https://forum.newsblur.com/t/android-cant-read-line-pre-formatted-lines/6116>`__)
+      follow it too strictly and don’t even line wrap.
+
 -  RSS:
 
    -  Default title to ellipsized content.
+
+.. _section-1:
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
@@ -478,7 +492,7 @@ Changelog
 March <https://developers.google.com/+/api-shutdown>`__. Notably, this
 removes the ``googleplus`` module.
 
-.. _section-1:
+.. _section-2:
 
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
@@ -529,7 +543,7 @@ removes the ``googleplus`` module.
 -  ``/url``: Return HTTP 400 when fetching the user’s URL results in an
    infinite redirect.
 
-.. _section-2:
+.. _section-3:
 
 1.14 - 2018-11-12
 ~~~~~~~~~~~~~~~~~
@@ -556,7 +570,7 @@ Encode ``&``\ s in author URL and email address too. (Thanks
 `sebsued <https://twitter.com/sebsued>`__!) \* AS2: \* Add ``Follow``
 support.
 
-.. _section-3:
+.. _section-4:
 
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
@@ -617,7 +631,7 @@ support.
    -  Support ``alt`` attribute in ``<img>`` tags
       (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
-.. _section-4:
+.. _section-5:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
@@ -652,7 +666,7 @@ impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. _section-5:
+.. _section-6:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -725,7 +739,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Omit title from items if it’s the same as the content. (Often
       caused by microformats2’s implied ``p-name`` logic.)
 
-.. _section-6:
+.. _section-7:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -767,7 +781,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. _section-7:
+.. _section-8:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -795,7 +809,7 @@ still bugs. Please file issues if you notice anything broken!
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. _section-8:
+.. _section-9:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -875,7 +889,7 @@ still bugs. Please file issues if you notice anything broken!
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. _section-9:
+.. _section-10:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -923,7 +937,7 @@ still bugs. Please file issues if you notice anything broken!
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. _section-10:
+.. _section-11:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -957,7 +971,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. _section-11:
+.. _section-12:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -995,14 +1009,14 @@ still bugs. Please file issues if you notice anything broken!
    -  Switch creating comments and reactions from GraphQL to REST API
       (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
-.. _section-12:
+.. _section-13:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. _section-13:
+.. _section-14:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -1036,7 +1050,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. _section-14:
+.. _section-15:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -1044,7 +1058,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. _section-15:
+.. _section-16:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -1087,7 +1101,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. _section-16:
+.. _section-17:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -1143,7 +1157,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. _section-17:
+.. _section-18:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -1166,7 +1180,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. _section-18:
+.. _section-19:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -1174,7 +1188,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. _section-19:
+.. _section-20:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~

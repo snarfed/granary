@@ -18,7 +18,7 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='2.0',
+      version='2.1',
       description='The social web translator',
       long_description=open('README.md').read(),
       long_description_content_type='text/markdown',
