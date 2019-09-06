@@ -284,7 +284,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. [Click here to draft a new release on GitHub.](https://github.com/snarfed/granary/releases/new) Enter `vX.Y` in the _Tag version_ box. Leave _Release title_ empty. Copy `### Notable changes` and the changelog contents into the description text box.
 1. Upload to [pypi.org](https://pypi.org/)!
     ```sh
-    twine upload dist/granary-X.Y.tar.gz
+    twine upload dist/granary-$ver.tar.gz
     ```
 
 
