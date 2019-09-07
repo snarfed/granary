@@ -883,7 +883,8 @@ def render_content(obj, include_location=True, synthesize_content=True,
             hcard_to_html(object_to_json(author, default_object_type='person')),
           )
         content += render_content(target, include_location=include_location,
-                                  synthesize_content=synthesize_content)
+                                  synthesize_content=synthesize_content,
+                                  white_space_pre=white_space_pre)
       # only include the first context in the content (if there are
       # others, they'll be included as separate properties)
       break
