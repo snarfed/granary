@@ -861,7 +861,7 @@ class Facebook(source.Source):
     for tag in obj.get('tags', []):
       url = tag.get('url', '')
       id = url.split('/')[-1]
-      if (util.domain_from_link(url) == 'facebook.com' and util.is_int(id) and
+      if (util.domain_from_link(url) == self.DOMAIN and util.is_int(id) and
           tag.get('objectType') == 'person' and
           not tag.get('startIndex')):  # mentions are linkified separately
         tag = copy.copy(tag)
@@ -1123,7 +1123,7 @@ class Facebook(source.Source):
     gift = link.startswith('/gifts/')
 
     if link.startswith('/'):
-      link = 'https://www.facebook.com' + link
+      link = urllib.parse.urljoin(self.BASE_URL, link)
 
     if gift:
       object_type = 'product'
@@ -1732,8 +1732,8 @@ class Facebook(source.Source):
     return soup.find_all(lambda tag: any(regexp.match(c.string.strip())
                                          for c in tag.contents if c.string))
 
-  @staticmethod
-  def _sanitize_url(url):
+  @classmethod
+  def _sanitize_url(cls, url):
     """Normalizes a URL from a notification email.
 
     Specifically, removes the parts that only let the receiving user use it, and
@@ -1742,6 +1742,7 @@ class Facebook(source.Source):
     Example profile:
     https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image
     https://www.facebook.com/n/?snarfed.org&amp;lloc=actor_profile&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
+    https://m.facebook.com/story.php?story_fbid=10104372282388114&id=27301982&refid=17&_ft_=mf_story_key.123%3Atop_level_post_id.456%3Atl_objid.789%3Acontent_owner_id_new.012%3Athrowback_story_fbid.345%3Astory_location.4%3Astory_attachment_style.share%3Athid.678&__tn__=%2AW-R
 
     Example posts:
     https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
@@ -1753,18 +1754,21 @@ class Facebook(source.Source):
 
     Returns: string, sanitized URL
     """
-    if util.domain_from_link(url) != 'facebook.com':
+    if util.domain_from_link(url) != cls.DOMAIN:
       return url
 
     parsed = urllib.parse.urlparse(url)
     parts = list(parsed)
-    if parsed.path in ('/nd/', '/n/'):
-      new_path, query = urllib.parse.unquote(
-        xml.sax.saxutils.unescape(parsed.query)).split('&', 1)
+
+    if parsed.path in ('/nd/', '/n/', '/story.php'):
+      query = urllib.parse.unquote(xml.sax.saxutils.unescape(parsed.query))
+      if parsed.path in ('/nd/', '/n/'):
+        new_path, query = query.split('&', 1)
+        parts[2] = new_path
       new_query = [(k, v) for k, v in urllib.parse.parse_qsl(query)
                    if k in ('story_fbid', 'fbid', 'id', 'comment_id')]
-      parts[2] = new_path
       parts[4] = urllib.parse.urlencode(new_query)
+      parts[5] = ''  # fragment
 
     return urllib.parse.urlunparse(parts)
 
@@ -1800,12 +1804,32 @@ class Facebook(source.Source):
       children = story.find_all('div', recursive=False)
       story_body_container = story.find(class_='story_body_container')
       body_children = story_body_container.find_all('div', recursive=False)
+      content = body_children[1].get_text(' ', strip=True)
       footer = story_body_container.find_next_sibling('div')
       footer_children = footer.find_all('div', recursive=False)
-      content = body_children[1].get_text(' ', strip=True)
+
+      url = cls._find_all_text(footer, r'Full Story')[-1]['href']
+      url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
+      query = urllib.parse.urlparse(url).query
+      post_id = urllib.parse.parse_qs(query).get('story_fbid')
+      if post_id:
+        post_id = cls.tag_uri(post_id[0])
+
+      author = body_children[0].find('a')
+      username = urllib.parse.urlparse(author['href']).path.strip('/')
+
       obj = {
+        'objectType': 'note',
+        'id': post_id,
+        'url': url,
         'content': xml.sax.saxutils.escape(content),
         'published': cls._scraped_datetime(footer_children[0].find('abbr').get_text(strip=True)),
+        'author': {
+          'objectType': 'person',
+          'id': cls.tag_uri(username),
+          'url': urllib.parse.urljoin(cls.BASE_URL, username),
+          'displayName': author.get_text(' ', strip=True),
+        },
       }
 
       # likes/reactions

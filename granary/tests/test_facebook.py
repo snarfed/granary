@@ -3034,10 +3034,26 @@ cc Sam G, Michael M<br />""", preview.description)
 
     got = self.fb.m_html_timeline_to_activities(
       read_testdata('facebook.m.timeline.html'))
+
+    author = {
+      'objectType': 'person',
+      'id': tag_uri('gregorlove'),
+      'displayName': 'Gregor Morrill',
+      'url': 'https://www.facebook.com/gregorlove',
+    }
+
     self.assert_equals([{
+      'objectType': 'note',
+      'id': tag_uri('10104372282388114'),
+      'url': 'https://www.facebook.com/story.php?story_fbid=10104372282388114&id=27301982',
+      'author': author,
       'content': POST_OBJ['content'],
       'published': '1999-06-22T16:03:00',
     }, {
+      'objectType': 'note',
+      'id': tag_uri('10104354535433154'),
+      'url': 'https://www.facebook.com/story.php?story_fbid=10104354535433154&id=27301982',
+      'author': author,
       'content': 'Oh hi, Jeeves .',
       'published': '1999-06-13T16:50:00',
     }], got)
