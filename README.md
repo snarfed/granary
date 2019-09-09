@@ -308,6 +308,10 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 2.2 - unreleased
+* Facebook:
+  * Add `m_html_timeline_to_activities()` for scraping HTML from [m.facebook.com](https://m.facebook.com/).
+
 ### 2.1 - 2019-09-04
 * Convert AS2 `Mention` tags to AS1 `objectType` `mention` (non-standard) and vice versa ([snarfed/bridgy-fed#46](https://github.com/snarfed/bridgy-fed/issues/46)).
 * Twitter:

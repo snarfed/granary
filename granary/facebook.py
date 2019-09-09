@@ -1787,9 +1787,9 @@ class Facebook(source.Source):
       logging.warning("Couldn't parse datetime string %r", val, exc_info=True)
 
   @classmethod
-  def m_html_timeline_to_activities(cls, html):
+  def m_html_timeline_to_objects(cls, html):
     """
-    Converts HTML from an m.facebook.com profile aka timeline to AS1 activities.
+    Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
 
     Returns: sequence of dict AS1 activities
 
@@ -1800,13 +1800,18 @@ class Facebook(source.Source):
 
     objs = []
     storystream = soup.find(class_='storyStream')
-    for story in storystream.find_all('div', recursive=False):
-      children = story.find_all('div', recursive=False)
+    for story in cls._divs(storystream):
+      children = cls._divs(story)
       story_body_container = story.find(class_='story_body_container')
-      body_children = story_body_container.find_all('div', recursive=False)
+      body_children = cls._divs(story_body_container)
+
+      # TODO: distinguish between text elements with actual whitespace
+      # before/after and without. this adds space to all of them, including
+      # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
+      # (also apply any fix to m_html_post_to_object().)
       content = body_children[1].get_text(' ', strip=True)
       footer = story_body_container.find_next_sibling('div')
-      footer_children = footer.find_all('div', recursive=False)
+      footer_children = cls._divs(footer)
 
       url = cls._find_all_text(footer, r'Full Story')[-1]['href']
       url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
@@ -1815,32 +1820,79 @@ class Facebook(source.Source):
       if post_id:
         post_id = cls.tag_uri(post_id[0])
 
-      author = body_children[0].find('a')
-      username = urllib.parse.urlparse(author['href']).path.strip('/')
-
-      obj = {
+      objs.append({
         'objectType': 'note',
         'id': post_id,
         'url': url,
         'content': xml.sax.saxutils.escape(content),
         'published': cls._scraped_datetime(footer_children[0].find('abbr').get_text(strip=True)),
-        'author': {
-          'objectType': 'person',
-          'id': cls.tag_uri(username),
-          'url': urllib.parse.urljoin(cls.BASE_URL, username),
-          'displayName': author.get_text(' ', strip=True),
-        },
-      }
-
-      # likes/reactions
-      # footer[1][0][0]
-
-      # comments
-      # footer[1][0][2]
-
-      objs.append(obj)
+        'author': cls._m_html_author(story_body_container),
+      })
 
     return objs
+
+  @classmethod
+  def m_html_post_to_object(cls, html, url):
+    """
+    Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
+
+    Returns: sequence of dict AS1 activities
+
+    Arguments:
+      html: string
+      url: string, permalink URL of post
+    """
+    soup = BeautifulSoup(html)
+
+    view = soup.find(id='m_story_permalink_view')
+    body_parts = cls._divs(cls._divs(cls._divs(view)[0])[0])
+    content = cls._divs(body_parts[0])[1].get_text(' ', strip=True)
+
+    # TODO: unify with m_html_timeline_to_objects
+    url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
+    query = urllib.parse.urlparse(url).query
+    post_id = urllib.parse.parse_qs(query).get('story_fbid')
+    if post_id:
+      post_id = cls.tag_uri(post_id[0])
+
+    return {
+      'objectType': 'note',
+      'id': post_id,
+      'url': urllib.parse.urljoin(cls.BASE_URL, url),
+      'content': xml.sax.saxutils.escape(content),
+      'published': cls._scraped_datetime(body_parts[1].find('abbr').get_text(strip=True)),
+      'author': cls._m_html_author(body_parts[0]),
+    }
+
+  @classmethod
+  def _m_html_author(cls, soup):
+    """
+    Finds an author link in m.facebook.com HTML and converts it to AS1.
+
+    Returns: dict AS1 actor
+
+    Arguments:
+      soup: BeautifulSoup
+    """
+    author = soup.find('strong').find('a')
+    username = urllib.parse.urlparse(author['href']).path.strip('/')
+    return {
+      'objectType': 'person',
+      'id': cls.tag_uri(username),
+      'url': urllib.parse.urljoin(cls.BASE_URL, username),
+      'displayName': author.get_text(' ', strip=True),
+    }
+
+  @staticmethod
+  def _divs(tag):
+    """Returns all child divs of a given Tag.
+
+    Args:
+      soup: Tag
+
+    Returns: sequence of Tags
+    """
+    return tag.find_all('div', recursive=False)
 
   @staticmethod
   def parse_id(id, is_comment=False):

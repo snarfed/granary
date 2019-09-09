@@ -3032,8 +3032,7 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    got = self.fb.m_html_timeline_to_activities(
-      read_testdata('facebook.m.timeline.html'))
+    got = self.fb.m_html_timeline_to_objects(read_testdata('facebook.m.timeline.html'))
 
     author = {
       'objectType': 'person',
@@ -3057,3 +3056,29 @@ cc Sam G, Michael M<br />""", preview.description)
       'content': 'Oh hi, Jeeves .',
       'published': '1999-06-13T16:50:00',
     }], got)
+
+  def test_m_html_post_to_object(self):
+    """m.facebook.com HTML timeline based on:
+    https://m.facebook.com/gregorlove?v=timeline&lst=212038:27301982:1567778376
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=27301982&refid=17&_ft_=...&__tn__=%2AW-R'
+    got = self.fb.m_html_post_to_object(read_testdata('facebook.m.post.html'), url)
+
+    author = {
+      'objectType': 'person',
+      'id': tag_uri('gregorlove'),
+      'displayName': 'Gregor Morrill',
+      'url': 'https://www.facebook.com/gregorlove',
+    }
+
+    self.assert_equals({
+      'objectType': 'note',
+      'id': tag_uri('10104354535433154'),
+      'url': 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=27301982',
+      'author': author,
+      'content': 'Oh hi, Jeeves .',
+      'published': '1999-06-13T16:50:00',
+    }, got)
