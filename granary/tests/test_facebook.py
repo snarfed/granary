@@ -3068,24 +3068,38 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    ugly_url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
-    got = self.fb.m_html_post_to_object(read_testdata('facebook.m.post.html'), ugly_url)
-
-    author = {
+    ryan = {
       'objectType': 'person',
       'id': tag_uri('snarfed.org'),
       'displayName': 'Ryan Barrett',
       'url': 'https://www.facebook.com/snarfed.org',
     }
+    popsci = {
+      'displayName': 'Popular Science',
+      'id': tag_uri('popularscience'),
+      'objectType': 'person',
+      'url': 'https://www.facebook.com/popularscience',
+    }
+    alice = {
+      'objectType': 'person',
+      'id': tag_uri('alice'),
+      'displayName': 'Alice',
+      'url': 'https://www.facebook.com/alice',
+    }
+    bob = {
+      'objectType': 'person',
+      'id': tag_uri('bob'),
+      'displayName': 'Bob',
+      'url': 'https://www.facebook.com/bob',
+    }
 
     id = tag_uri('10104354535433154')
     url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038'
-
-    self.assert_equals({
+    expected = {
       'objectType': 'note',
       'id': id,
       'url': url,
-      'author': author,
+      'author': ryan,
       'content': 'Oh hi, Jeeves .',
       'published': '1999-06-13T16:50:00',
       'to': [{'objectType':'group', 'alias':'@public'}],
@@ -3097,12 +3111,7 @@ cc Sam G, Michael M<br />""", preview.description)
           'published': '1999-06-13T00:00:00',
           'content': '',
           'inReplyTo': [{'id': id, 'url': url}],
-          'author': {
-            'displayName': 'Popular Science',
-            'id': tag_uri('popularscience'),
-            'objectType': 'person',
-            'url': 'https://www.facebook.com/popularscience',
-          },
+          'author': popsci,
           'to': [{'alias': '@public', 'objectType': 'group'}],
         }, {
           'objectType': 'comment',
@@ -3111,12 +3120,7 @@ cc Sam G, Michael M<br />""", preview.description)
           'published': '1999-06-14T00:00:00',
           'content': 'What... the... hell?',
           'inReplyTo': [{'id': id, 'url': url}],
-          'author': {
-            'objectType': 'person',
-            'id': tag_uri('alice'),
-            'displayName': 'Alice',
-            'url': 'https://www.facebook.com/alice',
-          },
+          'author': alice,
           'to': [{'objectType':'group', 'alias':'@public'}],
         }, {
           'objectType': 'comment',
@@ -3125,14 +3129,39 @@ cc Sam G, Michael M<br />""", preview.description)
           'published': '1999-06-15T00:00:00',
           'content': 'Wat',
           'inReplyTo': [{'id': id, 'url': url}],
-          'author': {
-            'objectType': 'person',
-            'id': tag_uri('bob'),
-            'displayName': 'Bob',
-            'url': 'https://www.facebook.com/bob',
-          },
+          'author': bob,
           'to': [{'objectType':'group', 'alias':'@public'}],
         }],
         'totalItems': 3,
       },
-    }, got)
+      'tags': [],
+    }
+
+    ugly_url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
+    post = read_testdata('facebook.m.post.html')
+    self.assert_equals(expected, self.fb.m_html_post_to_object(post, ugly_url))
+
+    expected['tags'] = [{
+      'objectType': 'activity',
+      'verb': 'like',
+      'id': tag_uri('10104354535433154_liked_by_333'),
+      'url': url + '#liked-by-333',
+      'object': {'url': url},
+      'author':      {
+        'objectType': 'person',
+        'id': tag_uri('333'),
+        'displayName': 'Alice',
+        'url': 'https://www.facebook.com/333',
+      },
+    }, {
+      'objectType': 'activity',
+      'verb': 'react',
+      'id': tag_uri('10104354535433154_haha_by_bob'),
+      'url': url + '#haha-by-bob',
+      'content': '😆',
+      'object': {'url': url},
+      'author': bob,
+    }]
+    reactions = read_testdata('facebook.m.reactions.html')
+    self.assert_equals(expected, self.fb.m_html_post_to_object(
+      post, ugly_url, reactions_html=reactions))

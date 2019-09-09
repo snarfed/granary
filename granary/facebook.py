@@ -1841,15 +1841,16 @@ class Facebook(source.Source):
     return objs
 
   @classmethod
-  def m_html_post_to_object(cls, html, url):
+  def m_html_post_to_object(cls, html, url, reactions_html=None):
     """
     Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
 
     Returns: sequence of dict AS1 activities
 
     Arguments:
-      html: string
+      html: string, HTML from an m.facebook.com post permalink
       url: string, permalink URL of post
+      reactions_html: string, HTML from a m.facebook.com/ufi/reaction/profile/browser/ page
     """
     soup = BeautifulSoup(html)
 
@@ -1863,6 +1864,7 @@ class Facebook(source.Source):
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
     tag_post_id = cls.tag_uri(post_id)
 
+    # comments
     replies = []
     for comment in cls._divs(cls._divs(cls._divs(cls._divs(view)[1])[0])[3]):
       replies.append({
@@ -1877,6 +1879,31 @@ class Facebook(source.Source):
         'to': [{'objectType':'group', 'alias':'@public'}],
       })
 
+    # likes and reactions
+    tags = []
+    if reactions_html:
+      for reaction in BeautifulSoup(reactions_html).find_all('li'):
+        if reaction.get_text(' ', strip=True) == 'See More':
+          continue
+        imgs = reaction.find_all('img')
+        # TODO: profile pic is imgs[0]
+        type = imgs[1]['alt'].lower()
+        type_str = 'liked' if type == 'like' else type
+        author = cls._m_html_author(reaction, 'h3')
+        _, username = util.parse_tag_uri(author['id'])
+        tag = {
+          'objectType': 'activity',
+          'verb': 'like' if type == 'like' else 'react',
+          'id': cls.tag_uri('%s_%s_by_%s' % (post_id, type_str, username)),
+          'url': url + '#%s-by-%s' % (type_str, username),
+          'object': {'url': url},
+          'author': author,
+        }
+        if type != 'like':
+          tag['content'] = REACTION_CONTENT.get(type.upper())
+        tags.append(tag)
+
+    # post object
     return {
       'objectType': 'note',
       'id': tag_post_id,
@@ -1889,6 +1916,7 @@ class Facebook(source.Source):
         'items': replies,
         'totalItems': len(replies),
       },
+      'tags': tags,
     }
 
   @classmethod
@@ -1903,11 +1931,15 @@ class Facebook(source.Source):
       tag: optional, HTML tag surrounding <a>
     """
     author = soup.find(tag).find('a')
-    username = urllib.parse.urlparse(author['href']).path.strip('/')
+    parsed = urllib.parse.urlparse(author['href'])
+    path = parsed.path.strip('/')
+    id_or_username = (urllib.parse.parse_qs(parsed.query)['id'][0]
+                      if path == 'profile.php'
+                      else path)
     return {
       'objectType': 'person',
-      'id': cls.tag_uri(username),
-      'url': urllib.parse.urljoin(cls.BASE_URL, username),
+      'id': cls.tag_uri(id_or_username),
+      'url': urllib.parse.urljoin(cls.BASE_URL, id_or_username),
       'displayName': author.get_text(' ', strip=True),
     }
 
