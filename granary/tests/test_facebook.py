@@ -34,6 +34,8 @@ from granary.facebook import (
   API_SHARES,
   API_UPLOAD_VIDEO,
   API_USER_EVENTS,
+  Facebook,
+  M_HTML_BASE_URL,
 )
 from granary import source
 
@@ -1111,12 +1113,109 @@ EMAIL_LIKE_OBJ = {
   'to': [{'objectType':'group', 'alias':'@public'}],
 }
 
+M_HTML_TIMELINE = read_testdata('facebook.m.timeline.html')
+M_HTML_POST = read_testdata('facebook.m.post.html')
+M_HTML_REACTIONS = read_testdata('facebook.m.reactions.html')
+M_ACTOR = {
+  'objectType': 'person',
+  'id': tag_uri('snarfed.org'),
+  'displayName': 'Ryan Barrett',
+  'url': 'https://www.facebook.com/snarfed.org',
+}
+M_ALICE = {
+  'objectType': 'person',
+  'id': tag_uri('alice'),
+  'displayName': 'Alice',
+  'url': 'https://www.facebook.com/alice',
+}
+M_BOB = {
+  'objectType': 'person',
+  'id': tag_uri('bob'),
+  'displayName': 'Bob',
+  'url': 'https://www.facebook.com/bob',
+}
+M_POST_OBJS = [{
+  'objectType': 'note',
+  'id': tag_uri('123'),
+  'url': 'https://www.facebook.com/story.php?story_fbid=123&id=212038',
+  'author': M_ACTOR,
+  'content': POST_OBJ['content'],
+  'published': '1999-06-22T16:03:00',
+  'to': [{'objectType':'group', 'alias':'@public'}],
+}, {
+  'objectType': 'note',
+  'id': tag_uri('456'),
+  'url': 'https://www.facebook.com/story.php?story_fbid=456&id=212038',
+  'author': M_ACTOR,
+  'content': 'Oh hi, Jeeves .',
+  'published': '1999-06-13T16:50:00',
+  'to': [{'objectType':'group', 'alias':'@public'}],
+}]
+M_POST_OBJ_FULL = {
+  'objectType': 'note',
+  'id': tag_uri('456'),
+  'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
+  'author': M_ACTOR,
+  'content': 'Oh hi, Jeeves .',
+  'published': '1999-06-13T16:50:00',
+  'to': [{'objectType':'group', 'alias':'@public'}],
+  'replies': {
+    'items': [{
+      'objectType': 'comment',
+      'id': tag_uri('456_777'),
+      'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038&comment_id=777',
+      'published': '1999-06-14T00:00:00',
+      'content': 'What... the... hell?',
+      'inReplyTo': [{
+        'id': tag_uri('456'),
+        'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
+      }],
+      'author': M_ALICE,
+      'to': [{'objectType':'group', 'alias':'@public'}],
+    }, {
+      'objectType': 'comment',
+      'id': tag_uri('456_888'),
+      'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038&comment_id=888',
+      'published': '1999-06-15T00:00:00',
+      'content': 'Wat',
+      'inReplyTo': [{
+        'id': tag_uri('456'),
+        'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
+      }],
+      'author': M_BOB,
+      'to': [{'objectType':'group', 'alias':'@public'}],
+    }],
+    'totalItems': 2,
+  },
+  'tags': [{
+    'objectType': 'activity',
+    'verb': 'like',
+    'id': tag_uri('456_liked_by_333'),
+    'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038#liked-by-333',
+    'object': {'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038'},
+    'author':      {
+      'objectType': 'person',
+      'id': tag_uri('333'),
+      'displayName': 'Alice',
+      'url': 'https://www.facebook.com/333',
+    },
+  }, {
+    'objectType': 'activity',
+    'verb': 'react',
+    'id': tag_uri('456_haha_by_bob'),
+    'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038#haha-by-bob',
+    'content': '😆',
+    'object': {'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038'},
+    'author': M_BOB,
+  }],
+}
+
 
 class FacebookTest(testutil.TestCase):
 
   def setUp(self):
     super(FacebookTest, self).setUp()
-    self.fb = facebook.Facebook()
+    self.fb = Facebook()
     self.batch = []
     self.batch_responses = []
     self.mox.StubOutWithMock(facebook, 'now_fn')
@@ -1126,6 +1225,13 @@ class FacebookTest(testutil.TestCase):
       url = API_BASE + url
     return super(FacebookTest, self).expect_urlopen(
       url, response=json.dumps(response), **kwargs)
+
+  def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
+    kwargs.setdefault('allow_redirects', False)
+    if cookie:
+      kwargs.setdefault('headers', {})['Cookie'] = 'sessionid=' + cookie
+    url = urllib.parse.urljoin(M_HTML_BASE_URL, url)
+    return super(FacebookTest, self).expect_requests_get(url, resp, **kwargs)
 
   def expect_batch_req(self, url, response, status=200, headers={},
                        response_headers=None):
@@ -1325,7 +1431,7 @@ class FacebookTest(testutil.TestCase):
     self.expect_urlopen('me/home?offset=0&access_token=asdf', {"id": 123})
     self.mox.ReplayAll()
 
-    self.fb = facebook.Facebook(access_token='asdf')
+    self.fb = Facebook(access_token='asdf')
     self.fb.get_activities()
 
   def test_get_activities_activity_id_overrides_others(self):
@@ -2280,7 +2386,7 @@ http://b http://c""",
     # if we know the current user, and a post has blank privacy and is from
     # someone else, default to interpreting it as private.
     # https://github.com/snarfed/bridgy/issues/739#issuecomment-290118032 (etc)
-    fb = facebook.Facebook(user_id='123')
+    fb = Facebook(user_id='123')
     public = [{'objectType': 'group', 'alias':'@public'}]
     for input in (
         {'privacy': '', 'from': {}},
@@ -2824,7 +2930,7 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_parse_id(self):
     def check(expected, id, is_comment):
-      got = facebook.Facebook.parse_id(id, is_comment=is_comment)
+      got = Facebook.parse_id(id, is_comment=is_comment)
       self.assertEqual(facebook.FacebookId(*expected), got,
                         '%s %s, got %s' % (id, is_comment, got))
 
@@ -3033,135 +3139,23 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    got = self.fb.m_html_timeline_to_objects(read_testdata('facebook.m.timeline.html'))
-
-    author = {
-      'objectType': 'person',
-      'id': tag_uri('snarfed.org'),
-      'displayName': 'Ryan Barrett',
-      'url': 'https://www.facebook.com/snarfed.org',
-    }
-
-    self.assert_equals([{
-      'objectType': 'note',
-      'id': tag_uri('10104372282388114'),
-      'url': 'https://www.facebook.com/story.php?story_fbid=10104372282388114&id=212038',
-      'author': author,
-      'content': POST_OBJ['content'],
-      'published': '1999-06-22T16:03:00',
-      'to': [{'objectType':'group', 'alias':'@public'}],
-    }, {
-      'objectType': 'note',
-      'id': tag_uri('10104354535433154'),
-      'url': 'https://www.facebook.com/story.php?story_fbid=10104354535433154&id=212038',
-      'author': author,
-      'content': 'Oh hi, Jeeves .',
-      'published': '1999-06-13T16:50:00',
-      'to': [{'objectType':'group', 'alias':'@public'}],
-    }], got)
+    got = self.fb.m_html_timeline_to_objects(M_HTML_TIMELINE)
+    self.assert_equals(M_POST_OBJS, got)
 
   def test_m_html_post_to_object(self):
     """m.facebook.com HTML post.
 
-    Based on: https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038
+    Based on: https://m.facebook.com/story.php?story_fbid=456&id=212038
     """
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    ryan = {
-      'objectType': 'person',
-      'id': tag_uri('snarfed.org'),
-      'displayName': 'Ryan Barrett',
-      'url': 'https://www.facebook.com/snarfed.org',
-    }
-    popsci = {
-      'displayName': 'Popular Science',
-      'id': tag_uri('popularscience'),
-      'objectType': 'person',
-      'url': 'https://www.facebook.com/popularscience',
-    }
-    alice = {
-      'objectType': 'person',
-      'id': tag_uri('alice'),
-      'displayName': 'Alice',
-      'url': 'https://www.facebook.com/alice',
-    }
-    bob = {
-      'objectType': 'person',
-      'id': tag_uri('bob'),
-      'displayName': 'Bob',
-      'url': 'https://www.facebook.com/bob',
-    }
+    url = 'https://m.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
+    got = self.fb.m_html_post_to_object(M_HTML_POST, url,
+                                        reactions_html=M_HTML_REACTIONS)
+    self.assert_equals(M_POST_OBJ_FULL, got)
 
-    id = tag_uri('10104354535433154')
-    url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038'
-    expected = {
-      'objectType': 'note',
-      'id': id,
-      'url': url,
-      'author': ryan,
-      'content': 'Oh hi, Jeeves .',
-      'published': '1999-06-13T16:50:00',
-      'to': [{'objectType':'group', 'alias':'@public'}],
-      'replies': {
-        'items': [{
-          'objectType': 'comment',
-          'id': 'tag:facebook.com:10104354535433154_10104354543447094',
-          'url': 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&comment_id=10104354543447094',
-          'published': '1999-06-13T00:00:00',
-          'content': '',
-          'inReplyTo': [{'id': id, 'url': url}],
-          'author': popsci,
-          'to': [{'alias': '@public', 'objectType': 'group'}],
-        }, {
-          'objectType': 'comment',
-          'id': tag_uri('10104354535433154_10104355456647034'),
-          'url': url + '&comment_id=10104355456647034',
-          'published': '1999-06-14T00:00:00',
-          'content': 'What... the... hell?',
-          'inReplyTo': [{'id': id, 'url': url}],
-          'author': alice,
-          'to': [{'objectType':'group', 'alias':'@public'}],
-        }, {
-          'objectType': 'comment',
-          'id': tag_uri('10104354535433154_10104356012024054'),
-          'url': url + '&comment_id=10104356012024054',
-          'published': '1999-06-15T00:00:00',
-          'content': 'Wat',
-          'inReplyTo': [{'id': id, 'url': url}],
-          'author': bob,
-          'to': [{'objectType':'group', 'alias':'@public'}],
-        }],
-        'totalItems': 3,
-      },
-      'tags': [],
-    }
-
-    ugly_url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
-    post = read_testdata('facebook.m.post.html')
-    self.assert_equals(expected, self.fb.m_html_post_to_object(post, ugly_url))
-
-    expected['tags'] = [{
-      'objectType': 'activity',
-      'verb': 'like',
-      'id': tag_uri('10104354535433154_liked_by_333'),
-      'url': url + '#liked-by-333',
-      'object': {'url': url},
-      'author':      {
-        'objectType': 'person',
-        'id': tag_uri('333'),
-        'displayName': 'Alice',
-        'url': 'https://www.facebook.com/333',
-      },
-    }, {
-      'objectType': 'activity',
-      'verb': 'react',
-      'id': tag_uri('10104354535433154_haha_by_bob'),
-      'url': url + '#haha-by-bob',
-      'content': '😆',
-      'object': {'url': url},
-      'author': bob,
-    }]
-    reactions = read_testdata('facebook.m.reactions.html')
-    self.assert_equals(expected, self.fb.m_html_post_to_object(
-      post, ugly_url, reactions_html=reactions))
+    no_reactions = copy.deepcopy(M_POST_OBJ_FULL)
+    del no_reactions['tags']
+    got = self.fb.m_html_post_to_object(M_HTML_POST, url)
+    self.assert_equals(no_reactions, got)

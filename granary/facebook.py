@@ -129,6 +129,8 @@ API_UPLOAD_VIDEO = 'https://graph-video.facebook.com/v2.10/me/videos'
 
 MAX_IDS = 50  # for the ids query param
 
+M_HTML_BASE_URL = 'https://m.facebook.com/'
+
 # Maps Facebook Graph API type, status_type, or Open Graph data type to
 # ActivityStreams objectType.
 # https://developers.facebook.com/docs/graph-api/reference/post#fields
@@ -1864,9 +1866,22 @@ class Facebook(source.Source):
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
     tag_post_id = cls.tag_uri(post_id)
 
+    # post object
+    obj = {
+      'objectType': 'note',
+      'id': tag_post_id,
+      'url': url,
+      'content': xml.sax.saxutils.escape(content),
+      'published': cls._scraped_datetime(body_parts[1].find('abbr')),
+      'author': cls._m_html_author(body_parts[0]),
+      'to': [{'objectType':'group', 'alias':'@public'}],
+    }
+
     # comments
     replies = []
     for comment in cls._divs(cls._divs(cls._divs(cls._divs(view)[1])[0])[3]):
+      # TODO: images in replies, eg:
+      # https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&#10104354543447094
       replies.append({
         'objectType': 'comment',
         'id': cls._comment_id(post_id, comment['id']),
@@ -1879,9 +1894,15 @@ class Facebook(source.Source):
         'to': [{'objectType':'group', 'alias':'@public'}],
       })
 
+    if replies:
+      obj['replies'] = {
+        'items': replies,
+        'totalItems': len(replies),
+      }
+
     # likes and reactions
-    tags = []
     if reactions_html:
+      tags = []
       for reaction in BeautifulSoup(reactions_html).find_all('li'):
         if reaction.get_text(' ', strip=True) == 'See More':
           continue
@@ -1902,22 +1923,9 @@ class Facebook(source.Source):
         if type != 'like':
           tag['content'] = REACTION_CONTENT.get(type.upper())
         tags.append(tag)
+      obj['tags'] = tags
 
-    # post object
-    return {
-      'objectType': 'note',
-      'id': tag_post_id,
-      'url': url,
-      'content': xml.sax.saxutils.escape(content),
-      'published': cls._scraped_datetime(body_parts[1].find('abbr')),
-      'author': cls._m_html_author(body_parts[0]),
-      'to': [{'objectType':'group', 'alias':'@public'}],
-      'replies': {
-        'items': replies,
-        'totalItems': len(replies),
-      },
-      'tags': tags,
-    }
+    return obj
 
   @classmethod
   def _m_html_author(cls, soup, tag='strong'):
