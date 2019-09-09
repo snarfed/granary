@@ -1302,7 +1302,7 @@ class Facebook(source.Source):
     post_author_id = id.user or post_author_id
     if post_id:
       obj.update({
-        'id': self.tag_uri('%s_%s' % (post_id, id.comment)),
+        'id': self._comment_id(post_id, id.comment),
         'url': self.comment_url(post_id, id.comment, post_author_id=post_author_id),
         'inReplyTo': [{
           'id': self.tag_uri(post_id),
@@ -1331,6 +1331,10 @@ class Facebook(source.Source):
       })
 
     return self.postprocess_object(obj)
+
+  @classmethod
+  def _comment_id(cls, post_id, comment_id):
+    return cls.tag_uri('%s_%s' % (post_id, comment_id))
 
   def share_to_object(self, share):
     """Converts a share (from /OBJECT/sharedposts) to an object.
@@ -1682,7 +1686,7 @@ class Facebook(source.Source):
       'to': [{'objectType':'group', 'alias':'@public'}],
     }
 
-    obj['published'] = cls._scraped_datetime(when.get_text(strip=True))
+    obj['published'] = cls._scraped_datetime(when)
 
     # extract Facebook post ID from URL
     url_parts = urllib.parse.urlparse(resp_url)
@@ -1698,7 +1702,7 @@ class Facebook(source.Source):
       obj.update({
         # TODO: check that this works on urls to different types of posts, eg photos
         'objectType': 'comment',
-        'id': cls.tag_uri('%s_%s' % (post_id, comment_id)),
+        'id': cls._comment_id(post_id, comment_id),
         'url': resp_url,
         'content': comment.get_text(strip=True),
         'inReplyTo': [{'url': post_url}],
@@ -1773,18 +1777,21 @@ class Facebook(source.Source):
     return urllib.parse.urlunparse(parts)
 
   @staticmethod
-  def _scraped_datetime(val):
+  def _scraped_datetime(tag):
     """Tries to parse a datetime string scraped from HTML (web or email).
 
     Examples seen in the wild:
       December 14 at 12:35 PM
       5 July at 21:50
+
+    Args:
+      tag: BeautifulSoup Tag
     """
     try:
-      parsed = dateutil.parser.parse(val, default=now_fn())
+      parsed = dateutil.parser.parse(tag.get_text(strip=True), default=now_fn())
       return parsed.isoformat(util.T)
     except (ValueError, OverflowError):
-      logging.warning("Couldn't parse datetime string %r", val, exc_info=True)
+      logging.warning("Couldn't parse datetime string %r", tag, exc_info=True)
 
   @classmethod
   def m_html_timeline_to_objects(cls, html):
@@ -1814,6 +1821,7 @@ class Facebook(source.Source):
       footer_children = cls._divs(footer)
 
       url = cls._find_all_text(footer, r'Full Story')[-1]['href']
+      # TODO: replace m. with www.
       url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
       query = urllib.parse.urlparse(url).query
       post_id = urllib.parse.parse_qs(query).get('story_fbid')
@@ -1825,8 +1833,9 @@ class Facebook(source.Source):
         'id': post_id,
         'url': url,
         'content': xml.sax.saxutils.escape(content),
-        'published': cls._scraped_datetime(footer_children[0].find('abbr').get_text(strip=True)),
+        'published': cls._scraped_datetime(footer_children[0].find('abbr')),
         'author': cls._m_html_author(story_body_container),
+        'to': [{'objectType':'group', 'alias':'@public'}],
       })
 
     return objs
@@ -1851,21 +1860,39 @@ class Facebook(source.Source):
     # TODO: unify with m_html_timeline_to_objects
     url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
     query = urllib.parse.urlparse(url).query
-    post_id = urllib.parse.parse_qs(query).get('story_fbid')
-    if post_id:
-      post_id = cls.tag_uri(post_id[0])
+    post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
+    tag_post_id = cls.tag_uri(post_id)
+
+    replies = []
+    for comment in cls._divs(cls._divs(cls._divs(cls._divs(view)[1])[0])[3]):
+      replies.append({
+        'objectType': 'comment',
+        'id': cls._comment_id(post_id, comment['id']),
+        'url': util.add_query_params(url, {'comment_id': comment['id']}),
+        'content': xml.sax.saxutils.escape(
+          cls._divs(cls._divs(comment)[0])[0].get_text(' ', strip=True)),
+        'author': cls._m_html_author(comment, 'h3'),
+        'published': cls._scraped_datetime(comment.find('abbr')),
+        'inReplyTo': [{'id': tag_post_id, 'url': url}],
+        'to': [{'objectType':'group', 'alias':'@public'}],
+      })
 
     return {
       'objectType': 'note',
-      'id': post_id,
-      'url': urllib.parse.urljoin(cls.BASE_URL, url),
+      'id': tag_post_id,
+      'url': url,
       'content': xml.sax.saxutils.escape(content),
-      'published': cls._scraped_datetime(body_parts[1].find('abbr').get_text(strip=True)),
+      'published': cls._scraped_datetime(body_parts[1].find('abbr')),
       'author': cls._m_html_author(body_parts[0]),
+      'to': [{'objectType':'group', 'alias':'@public'}],
+      'replies': {
+        'items': replies,
+        'totalItems': len(replies),
+      },
     }
 
   @classmethod
-  def _m_html_author(cls, soup):
+  def _m_html_author(cls, soup, tag='strong'):
     """
     Finds an author link in m.facebook.com HTML and converts it to AS1.
 
@@ -1873,8 +1900,9 @@ class Facebook(source.Source):
 
     Arguments:
       soup: BeautifulSoup
+      tag: optional, HTML tag surrounding <a>
     """
-    author = soup.find('strong').find('a')
+    author = soup.find(tag).find('a')
     username = urllib.parse.urlparse(author['href']).path.strip('/')
     return {
       'objectType': 'person',

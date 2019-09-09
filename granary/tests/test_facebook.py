@@ -3026,8 +3026,9 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_object(LIKE_EMAIL))
 
   def test_m_html_timeline_to_activities(self):
-    """m.facebook.com HTML timeline based on:
-    https://m.facebook.com/gregorlove?v=timeline&lst=212038:27301982:1567778376
+    """m.facebook.com HTML timeline.
+
+    Based on: https://m.facebook.com/snarfed.org?v=timeline
     """
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
@@ -3036,49 +3037,102 @@ cc Sam G, Michael M<br />""", preview.description)
 
     author = {
       'objectType': 'person',
-      'id': tag_uri('gregorlove'),
-      'displayName': 'Gregor Morrill',
-      'url': 'https://www.facebook.com/gregorlove',
+      'id': tag_uri('snarfed.org'),
+      'displayName': 'Ryan Barrett',
+      'url': 'https://www.facebook.com/snarfed.org',
     }
 
     self.assert_equals([{
       'objectType': 'note',
       'id': tag_uri('10104372282388114'),
-      'url': 'https://www.facebook.com/story.php?story_fbid=10104372282388114&id=27301982',
+      'url': 'https://www.facebook.com/story.php?story_fbid=10104372282388114&id=212038',
       'author': author,
       'content': POST_OBJ['content'],
       'published': '1999-06-22T16:03:00',
+      'to': [{'objectType':'group', 'alias':'@public'}],
     }, {
       'objectType': 'note',
       'id': tag_uri('10104354535433154'),
-      'url': 'https://www.facebook.com/story.php?story_fbid=10104354535433154&id=27301982',
+      'url': 'https://www.facebook.com/story.php?story_fbid=10104354535433154&id=212038',
       'author': author,
       'content': 'Oh hi, Jeeves .',
       'published': '1999-06-13T16:50:00',
+      'to': [{'objectType':'group', 'alias':'@public'}],
     }], got)
 
   def test_m_html_post_to_object(self):
-    """m.facebook.com HTML timeline based on:
-    https://m.facebook.com/gregorlove?v=timeline&lst=212038:27301982:1567778376
+    """m.facebook.com HTML post.
+
+    Based on: https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038
     """
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=27301982&refid=17&_ft_=...&__tn__=%2AW-R'
-    got = self.fb.m_html_post_to_object(read_testdata('facebook.m.post.html'), url)
+    ugly_url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
+    got = self.fb.m_html_post_to_object(read_testdata('facebook.m.post.html'), ugly_url)
 
     author = {
       'objectType': 'person',
-      'id': tag_uri('gregorlove'),
-      'displayName': 'Gregor Morrill',
-      'url': 'https://www.facebook.com/gregorlove',
+      'id': tag_uri('snarfed.org'),
+      'displayName': 'Ryan Barrett',
+      'url': 'https://www.facebook.com/snarfed.org',
     }
+
+    id = tag_uri('10104354535433154')
+    url = 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038'
 
     self.assert_equals({
       'objectType': 'note',
-      'id': tag_uri('10104354535433154'),
-      'url': 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=27301982',
+      'id': id,
+      'url': url,
       'author': author,
       'content': 'Oh hi, Jeeves .',
       'published': '1999-06-13T16:50:00',
+      'to': [{'objectType':'group', 'alias':'@public'}],
+      'replies': {
+        'items': [{
+          'objectType': 'comment',
+          'id': 'tag:facebook.com:10104354535433154_10104354543447094',
+          'url': 'https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&comment_id=10104354543447094',
+          'published': '1999-06-13T00:00:00',
+          'content': '',
+          'inReplyTo': [{'id': id, 'url': url}],
+          'author': {
+            'displayName': 'Popular Science',
+            'id': tag_uri('popularscience'),
+            'objectType': 'person',
+            'url': 'https://www.facebook.com/popularscience',
+          },
+          'to': [{'alias': '@public', 'objectType': 'group'}],
+        }, {
+          'objectType': 'comment',
+          'id': tag_uri('10104354535433154_10104355456647034'),
+          'url': url + '&comment_id=10104355456647034',
+          'published': '1999-06-14T00:00:00',
+          'content': 'What... the... hell?',
+          'inReplyTo': [{'id': id, 'url': url}],
+          'author': {
+            'objectType': 'person',
+            'id': tag_uri('alice'),
+            'displayName': 'Alice',
+            'url': 'https://www.facebook.com/alice',
+          },
+          'to': [{'objectType':'group', 'alias':'@public'}],
+        }, {
+          'objectType': 'comment',
+          'id': tag_uri('10104354535433154_10104356012024054'),
+          'url': url + '&comment_id=10104356012024054',
+          'published': '1999-06-15T00:00:00',
+          'content': 'Wat',
+          'inReplyTo': [{'id': id, 'url': url}],
+          'author': {
+            'objectType': 'person',
+            'id': tag_uri('bob'),
+            'displayName': 'Bob',
+            'url': 'https://www.facebook.com/bob',
+          },
+          'to': [{'objectType':'group', 'alias':'@public'}],
+        }],
+        'totalItems': 3,
+      },
     }, got)
