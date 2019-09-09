@@ -1053,9 +1053,11 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 </feed>
 """
 
+def read_testdata(filename):
+  return appengine_config.read(os.path.join(os.path.dirname(__file__),
+                                            'testdata', filename))
 
-COMMENT_EMAIL = appengine_config.read(
-    os.path.join(os.path.dirname(__file__), 'testdata/facebook.comment.email.html'))
+COMMENT_EMAIL = read_testdata('facebook.comment.email.html')
 COMMENT_EMAIL_USER_ID = COMMENT_EMAIL % {
   'post_url': 'https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
   'profile_url': 'https://www.facebook.com/nd/?profile.php&amp;id=456&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
@@ -1069,8 +1071,7 @@ COMMENT_EMAIL_PHOTO = COMMENT_EMAIL % {
   'profile_url': 'https://www.facebook.com/n/?profile.php&amp;id=456&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com',
 }
 
-LIKE_EMAIL = appengine_config.read(
-    os.path.join(os.path.dirname(__file__), 'testdata/facebook.like.email.html'))
+LIKE_EMAIL = read_testdata('facebook.like.email.html')
 
 # ActivityStreams
 EMAIL_ACTOR_USER_ID = {
@@ -3023,3 +3024,20 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
     self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_object(LIKE_EMAIL))
+
+  def test_m_html_timeline_to_activities(self):
+    """m.facebook.com HTML timeline based on:
+    https://m.facebook.com/gregorlove?v=timeline&lst=212038:27301982:1567778376
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    got = self.fb.m_html_timeline_to_activities(
+      read_testdata('facebook.m.timeline.html'))
+    self.assert_equals([{
+      'content': POST_OBJ['content'],
+      'published': '1999-06-22T16:03:00',
+    }, {
+      'content': 'Oh hi, Jeeves .',
+      'published': '1999-06-13T16:50:00',
+    }], got)

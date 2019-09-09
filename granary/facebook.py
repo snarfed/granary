@@ -1682,15 +1682,7 @@ class Facebook(source.Source):
       'to': [{'objectType':'group', 'alias':'@public'}],
     }
 
-    # try to parse datetime string. examples seen in the wild:
-    #   December 14 at 12:35 PM
-    #   5 July at 21:50
-    when = when.get_text(strip=True)
-    try:
-      parsed = dateutil.parser.parse(when, default=now_fn())
-      obj['published'] = parsed.isoformat(util.T)
-    except (ValueError, OverflowError):
-      logging.warning("Couldn't parse datetime string %r", when, exc_info=True)
+    obj['published'] = cls._scraped_datetime(when.get_text(strip=True))
 
     # extract Facebook post ID from URL
     url_parts = urllib.parse.urlparse(resp_url)
@@ -1775,6 +1767,56 @@ class Facebook(source.Source):
       parts[4] = urllib.parse.urlencode(new_query)
 
     return urllib.parse.urlunparse(parts)
+
+  @staticmethod
+  def _scraped_datetime(val):
+    """Tries to parse a datetime string scraped from HTML (web or email).
+
+    Examples seen in the wild:
+      December 14 at 12:35 PM
+      5 July at 21:50
+    """
+    try:
+      parsed = dateutil.parser.parse(val, default=now_fn())
+      return parsed.isoformat(util.T)
+    except (ValueError, OverflowError):
+      logging.warning("Couldn't parse datetime string %r", val, exc_info=True)
+
+  @classmethod
+  def m_html_timeline_to_activities(cls, html):
+    """
+    Converts HTML from an m.facebook.com profile aka timeline to AS1 activities.
+
+    Returns: sequence of dict AS1 activities
+
+    Arguments:
+      html: string
+    """
+    soup = BeautifulSoup(html)
+
+    objs = []
+    storystream = soup.find(class_='storyStream')
+    for story in storystream.find_all('div', recursive=False):
+      children = story.find_all('div', recursive=False)
+      story_body_container = story.find(class_='story_body_container')
+      body_children = story_body_container.find_all('div', recursive=False)
+      footer = story_body_container.find_next_sibling('div')
+      footer_children = footer.find_all('div', recursive=False)
+      content = body_children[1].get_text(' ', strip=True)
+      obj = {
+        'content': xml.sax.saxutils.escape(content),
+        'published': cls._scraped_datetime(footer_children[0].find('abbr').get_text(strip=True)),
+      }
+
+      # likes/reactions
+      # footer[1][0][0]
+
+      # comments
+      # footer[1][0][2]
+
+      objs.append(obj)
+
+    return objs
 
   @staticmethod
   def parse_id(id, is_comment=False):
