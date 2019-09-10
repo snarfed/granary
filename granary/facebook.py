@@ -1912,6 +1912,10 @@ class Facebook(source.Source):
       cls._scraped_datetime(footer_children[0].find('abbr')),
       cls._m_html_author(story_body_container),
 
+      to = ({'objectType':'group', 'alias':'@public'}
+            if 'Public' in footer_children[0].stripped_strings
+            else {'objectType': 'unknown'})
+
       objs.append({
         'objectType': 'note',
         'id': cls.tag_uri(post_id),
@@ -1920,7 +1924,7 @@ class Facebook(source.Source):
         'content': xml.sax.saxutils.escape(content),
         'published': cls._scraped_datetime(footer_children[0].find('abbr')),
         'author': cls._m_html_author(story_body_container),
-        'to': [{'objectType':'group', 'alias':'@public'}],
+        'to': [to],
       })
 
     return objs
@@ -1947,6 +1951,10 @@ class Facebook(source.Source):
     query = urllib.parse.urlparse(url).query
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
 
+    to = ({'objectType':'group', 'alias':'@public'}
+          if 'Public' in body_parts[1].stripped_strings
+          else {'objectType': 'unknown'})
+
     # post object
     obj = {
       'objectType': 'note',
@@ -1956,7 +1964,7 @@ class Facebook(source.Source):
       'content': xml.sax.saxutils.escape(content),
       'published': cls._scraped_datetime(body_parts[1].find('abbr')),
       'author': cls._m_html_author(body_parts[0]),
-      'to': [{'objectType':'group', 'alias':'@public'}],
+      'to': [to],
     }
 
     # comments
@@ -1973,7 +1981,6 @@ class Facebook(source.Source):
         'author': cls._m_html_author(comment, 'h3'),
         'published': cls._scraped_datetime(comment.find('abbr')),
         'inReplyTo': [{'id': cls.tag_uri(post_id), 'url': url}],
-        'to': [{'objectType':'group', 'alias':'@public'}],
       })
 
     if replies:

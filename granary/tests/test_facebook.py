@@ -1142,7 +1142,7 @@ M_POST_OBJS = [{
   'author': M_ACTOR,
   'content': POST_OBJ['content'],
   'published': '1999-06-22T16:03:00',
-  'to': [{'objectType':'group', 'alias':'@public'}],
+  'to': [{'objectType': 'group', 'alias': '@public'}],
 }, {
   'objectType': 'note',
   'id': tag_uri('456'),
@@ -1151,7 +1151,7 @@ M_POST_OBJS = [{
   'author': M_ACTOR,
   'content': 'Oh hi, Jeeves .',
   'published': '1999-06-13T16:50:00',
-  'to': [{'objectType':'group', 'alias':'@public'}],
+  'to': [{'objectType': 'unknown'}],
 }]
 
 def M_REPLIES(post_id):
@@ -1167,7 +1167,6 @@ def M_REPLIES(post_id):
         'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
       }],
       'author': M_ALICE,
-      'to': [{'objectType':'group', 'alias':'@public'}],
     }, {
       'objectType': 'comment',
       'id': tag_uri(post_id + '_888'),
@@ -1179,7 +1178,6 @@ def M_REPLIES(post_id):
         'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
       }],
       'author': M_BOB,
-      'to': [{'objectType':'group', 'alias':'@public'}],
     }],
     'totalItems': 2,
   }
@@ -1766,8 +1764,9 @@ class FacebookTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     expected = copy.deepcopy(M_POST_OBJS_REPLIES_REACTIONS)
-    expected[0]['content'] = expected[1]['content']
-    expected[0]['published'] = expected[1]['published']
+    for field in 'content', 'published', 'to':
+      expected[0][field] = expected[1][field]
+
     activities = self.fbscrape.get_activities(user_id='212038', group_id=source.SELF,
                                               fetch_replies=True, fetch_likes=True)
     self.assert_equals(expected, [a['object'] for a in activities])
