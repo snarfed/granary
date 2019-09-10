@@ -1709,7 +1709,7 @@ class Facebook(source.Source):
         'image': {'url': picture},
         'url': cls._sanitize_url(profile_url),
       },
-      # XXX TODO
+      # TODO
       'to': [{'objectType':'group', 'alias':'@public'}],
     }
 
@@ -1788,6 +1788,7 @@ class Facebook(source.Source):
     if util.domain_from_link(url) != cls.DOMAIN:
       return url
 
+    url = url.replace(M_HTML_BASE_URL, cls.BASE_URL)
     parsed = urllib.parse.urlparse(url)
     parts = list(parsed)
 
@@ -1850,7 +1851,15 @@ class Facebook(source.Source):
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
       objs = self.m_html_timeline_to_objects(resp.text)
+      if fetch_replies:
+        # TODO: cache?
+        orig_objs = objs
+        objs = []
+        for obj in orig_objs:
+          resp = get(M_HTML_POST_URL, obj['fb_id'], user_id)
+          objs.append(self.m_html_post_to_object(resp.text, resp.url))
 
+    # TODO: cache?
     if fetch_likes:
       for obj in objs:
         resp = get(M_HTML_REACTIONS_URL, obj['fb_id'])
@@ -1864,43 +1873,6 @@ class Facebook(source.Source):
       'actor': obj.get('author'),
       'object': obj,
     }) for obj in objs]
-
-    # if fetch_extras:
-    #   # batch get cached counts of comments and likes for all activities
-    #   cached = {}
-    #   # don't update the cache until the end, in case we hit an error before
-    #   cache_updates = {}
-    #   if cache is not None:
-    #     keys = []
-    #     for activity in activities:
-    #       _, id = util.parse_tag_uri(activity['id'])
-    #       keys.extend(['AIL ' + id, 'AIC ' + id])
-    #     cached = cache.get_multi(keys)
-
-    #   for i, activity in enumerate(activities):
-    #     obj = activity['object']
-    #     _, id = util.parse_tag_uri(activity['id'])
-    #     likes = obj.get('ig_like_count') or 0
-    #     comments = obj.get('replies', {}).get('totalItems') or 0
-    #     likes_key = 'AIL %s' % id
-    #     comments_key = 'AIC %s' % id
-
-    #     if (likes and likes != cached.get(likes_key) or
-    #         comments and comments != cached.get(comments_key)):
-    #       if not activity_id and not shortcode:
-    #         url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
-    #         resp = util.requests_get(url, **get_kwargs)
-    #         resp.raise_for_status()
-    #       # otherwise resp is a fetch of just this activity; reuse it
-
-    #       full_activity, _ = self.html_to_activities(
-    #         resp.text, cookie=cookie, count=count, fetch_extras=fetch_extras)
-    #       if full_activity:
-    #         activities[i] = full_activity[0]
-    #         cache_updates.update({likes_key: likes, comments_key: comments})
-
-    #   if cache_updates and cache is not None:
-    #     cache.set_multi(cache_updates)
 
     resp = self.make_activities_base_response(activities)
     return resp
@@ -1933,7 +1905,6 @@ class Facebook(source.Source):
       footer_children = cls._divs(footer)
 
       url = cls._find_all_text(footer, r'Full Story')[-1]['href']
-      # TODO: replace m. with www.
       url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
       query = urllib.parse.urlparse(url).query
       post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
