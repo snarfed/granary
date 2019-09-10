@@ -130,7 +130,9 @@ API_UPLOAD_VIDEO = 'https://graph-video.facebook.com/v2.10/me/videos'
 MAX_IDS = 50  # for the ids query param
 
 M_HTML_BASE_URL = 'https://m.facebook.com/'
+M_HTML_TIMELINE_URL = '%s?v=timeline'
 M_HTML_POST_URL = 'story.php?story_fbid=%s&id=%s'
+M_HTML_REACTIONS_URL = 'ufi/reaction/profile/browser/?ft_ent_identifier=%s'
 
 # Maps Facebook Graph API type, status_type, or Open Graph data type to
 # ActivityStreams objectType.
@@ -1835,23 +1837,24 @@ class Facebook(source.Source):
     if not (user_id and self.cookie_c_user and self.cookie_xs):
       raise NotImplementedError('Scraping requires c_user and xs cookie and user_id.')
 
-    kwargs = {
-      'allow_redirects': False,
-      'headers': {'Cookie': 'c_user=%s; xs=%s' % (self.cookie_c_user, self.cookie_xs)},
-    }
+    def get(url, *params):
+      url = urllib.parse.urljoin(M_HTML_BASE_URL, url % params)
+      cookie = 'c_user=%s; xs=%s' % (self.cookie_c_user, self.cookie_xs)
+      resp = util.requests_get(url, allow_redirects=False, headers={'Cookie': cookie})
+      resp.raise_for_status()
+      return resp
 
     if activity_id:
-      url = urllib.parse.urljoin(M_HTML_BASE_URL,
-                                 M_HTML_POST_URL % (activity_id, user_id))
-      resp = util.requests_get(url, **kwargs)
-      resp.raise_for_status()
-      objs = [self.m_html_post_to_object(resp.text, url)]
+      resp = get(M_HTML_POST_URL, activity_id, user_id)
+      objs = [self.m_html_post_to_object(resp.text, resp.url)]
     else:
-      url = urllib.parse.urljoin(M_HTML_BASE_URL, user_id) + '?v=timeline'
-      resp = util.requests_get(url, **kwargs)
-      resp.raise_for_status()
+      resp = get(M_HTML_TIMELINE_URL, user_id)
       objs = self.m_html_timeline_to_objects(resp.text)
 
+    if fetch_likes:
+      for obj in objs:
+        resp = get(M_HTML_REACTIONS_URL, obj['fb_id'])
+        obj['tags'] = self.m_html_reactions_to_tags(resp.text, obj)
 
     activities = [self.postprocess_activity({
       'verb': 'post',
@@ -1933,16 +1936,15 @@ class Facebook(source.Source):
       # TODO: replace m. with www.
       url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
       query = urllib.parse.urlparse(url).query
-      post_id = urllib.parse.parse_qs(query).get('story_fbid')
-      if post_id:
-        post_id = cls.tag_uri(post_id[0])
+      post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
 
       cls._scraped_datetime(footer_children[0].find('abbr')),
       cls._m_html_author(story_body_container),
 
       objs.append({
         'objectType': 'note',
-        'id': post_id,
+        'id': cls.tag_uri(post_id),
+        'fb_id': post_id,
         'url': url,
         'content': xml.sax.saxutils.escape(content),
         'published': cls._scraped_datetime(footer_children[0].find('abbr')),
@@ -1953,7 +1955,7 @@ class Facebook(source.Source):
     return objs
 
   @classmethod
-  def m_html_post_to_object(cls, html, url, reactions_html=None):
+  def m_html_post_to_object(cls, html, url):
     """
     Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
 
@@ -1962,7 +1964,6 @@ class Facebook(source.Source):
     Arguments:
       html: string, HTML from an m.facebook.com post permalink
       url: string, permalink URL of post
-      reactions_html: string, HTML from a m.facebook.com/ufi/reaction/profile/browser/ page
     """
     soup = BeautifulSoup(html)
 
@@ -1974,12 +1975,12 @@ class Facebook(source.Source):
     url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
     query = urllib.parse.urlparse(url).query
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
-    tag_post_id = cls.tag_uri(post_id)
 
     # post object
     obj = {
       'objectType': 'note',
-      'id': tag_post_id,
+      'id': cls.tag_uri(post_id),
+      'fb_id': post_id,
       'url': url,
       'content': xml.sax.saxutils.escape(content),
       'published': cls._scraped_datetime(body_parts[1].find('abbr')),
@@ -2000,7 +2001,7 @@ class Facebook(source.Source):
           cls._divs(cls._divs(comment)[0])[0].get_text(' ', strip=True)),
         'author': cls._m_html_author(comment, 'h3'),
         'published': cls._scraped_datetime(comment.find('abbr')),
-        'inReplyTo': [{'id': tag_post_id, 'url': url}],
+        'inReplyTo': [{'id': cls.tag_uri(post_id), 'url': url}],
         'to': [{'objectType':'group', 'alias':'@public'}],
       })
 
@@ -2010,32 +2011,45 @@ class Facebook(source.Source):
         'totalItems': len(replies),
       }
 
-    # likes and reactions
-    if reactions_html:
-      tags = []
-      for reaction in BeautifulSoup(reactions_html).find_all('li'):
-        if reaction.get_text(' ', strip=True) == 'See More':
-          continue
-        imgs = reaction.find_all('img')
-        # TODO: profile pic is imgs[0]
-        type = imgs[1]['alt'].lower()
-        type_str = 'liked' if type == 'like' else type
-        author = cls._m_html_author(reaction, 'h3')
-        _, username = util.parse_tag_uri(author['id'])
-        tag = {
-          'objectType': 'activity',
-          'verb': 'like' if type == 'like' else 'react',
-          'id': cls.tag_uri('%s_%s_by_%s' % (post_id, type_str, username)),
-          'url': url + '#%s-by-%s' % (type_str, username),
-          'object': {'url': url},
-          'author': author,
-        }
-        if type != 'like':
-          tag['content'] = REACTION_CONTENT.get(type.upper())
-        tags.append(tag)
-      obj['tags'] = tags
-
     return obj
+
+  @classmethod
+  def m_html_reactions_to_tags(cls, html, post_obj):
+    """
+    Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
+
+    Returns: sequence of dict AS1 activities
+
+    Arguments:
+      html: string, HTML from an m.facebook.com/ufi/reaction/profile/browser/ page
+      url: string, permalink URL of post
+      post_obj: AS1 post object these reactions are for
+    """
+    soup = BeautifulSoup(html)
+
+    tags = []
+    for reaction in BeautifulSoup(html).find_all('li'):
+      if reaction.get_text(' ', strip=True) == 'See More':
+        continue
+      imgs = reaction.find_all('img')
+      # TODO: profile pic is imgs[0]
+      type = imgs[1]['alt'].lower()
+      type_str = 'liked' if type == 'like' else type
+      author = cls._m_html_author(reaction, 'h3')
+      _, username = util.parse_tag_uri(author['id'])
+      tag = {
+        'objectType': 'activity',
+        'verb': 'like' if type == 'like' else 'react',
+        'id': cls.tag_uri('%s_%s_by_%s' % (post_obj['fb_id'], type_str, username)),
+        'url': post_obj['url'] + '#%s-by-%s' % (type_str, username),
+        'object': {'url': post_obj['url']},
+        'author': author,
+      }
+      if type != 'like':
+        tag['content'] = REACTION_CONTENT.get(type.upper())
+      tags.append(tag)
+
+    return tags
 
   @classmethod
   def _m_html_author(cls, soup, tag='strong'):

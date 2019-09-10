@@ -1137,6 +1137,7 @@ M_BOB = {
 M_POST_OBJS = [{
   'objectType': 'note',
   'id': tag_uri('123'),
+  'fb_id': '123',
   'url': 'https://www.facebook.com/story.php?story_fbid=123&id=212038',
   'author': M_ACTOR,
   'content': POST_OBJ['content'],
@@ -1145,6 +1146,7 @@ M_POST_OBJS = [{
 }, {
   'objectType': 'note',
   'id': tag_uri('456'),
+  'fb_id': '456',
   'url': 'https://www.facebook.com/story.php?story_fbid=456&id=212038',
   'author': M_ACTOR,
   'content': 'Oh hi, Jeeves .',
@@ -1154,6 +1156,7 @@ M_POST_OBJS = [{
 M_POST_OBJ = {
   'objectType': 'note',
   'id': tag_uri('456'),
+  'fb_id': '456',
   'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
   'author': M_ACTOR,
   'content': 'Oh hi, Jeeves .',
@@ -1189,8 +1192,8 @@ M_POST_OBJ_REPLIES['replies'] = {
   }],
   'totalItems': 2,
 }
-M_POST_OBJ_REPLIES_LIKES = copy.deepcopy(M_POST_OBJ_REPLIES)
-M_POST_OBJ_REPLIES_LIKES['tags'] = [{
+M_POST_OBJ_REPLIES_REACTIONS = copy.deepcopy(M_POST_OBJ_REPLIES)
+M_POST_OBJ_REPLIES_REACTIONS['tags'] = [{
   'objectType': 'activity',
   'verb': 'like',
   'id': tag_uri('456_liked_by_333'),
@@ -1759,18 +1762,17 @@ class FacebookTest(testutil.TestCase):
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456')
     self.assert_equals([M_POST_OBJ_REPLIES], [a['object'] for a in activities])
 
-#   def test_get_activities_scrape_self_fetch_extras(self):
-#     self.expect_requests_get('x/', HTML_PROFILE_COMPLETE, cookie='kuky')
-#     self.expect_requests_get('p/ABC123/', HTML_PHOTO_COMPLETE, cookie='kuky')
-#     self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
-#                              HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
-#     self.expect_requests_get('p/XYZ789/', HTML_VIDEO_COMPLETE, cookie='kuky')
-#     self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789', {}, cookie='kuky')
+  def test_get_activities_scrape_post_fetch_likes(self):
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.expect_requests_get('story.php?story_fbid=456&id=212038', M_HTML_POST,
+                             cookie='c_user=CU; xs=XS')
+    self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
+                             M_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
+    self.mox.ReplayAll()
 
-#     self.mox.ReplayAll()
-#     self.assert_equals(HTML_ACTIVITIES_FULL_LIKES, self.instagram.get_activities(
-#       user_id='x', group_id=source.SELF, fetch_likes=True, fetch_replies=True,
-#       scrape=True, cookie='kuky'))
+    activities = self.fbscrape.get_activities(user_id='212038', activity_id='456',
+                                              fetch_likes=True)
+    self.assert_equals([M_POST_OBJ_REPLIES_REACTIONS], [a['object'] for a in activities])
 
 #   def test_get_activities_scrape_fetch_extras_cache(self):
 #     # first time, cache is cold
@@ -3244,6 +3246,10 @@ cc Sam G, Michael M<br />""", preview.description)
     got = self.fb.m_html_post_to_object(M_HTML_POST, url)
     self.assert_equals(M_POST_OBJ_REPLIES, got)
 
-    got = self.fb.m_html_post_to_object(M_HTML_POST, url,
-                                        reactions_html=M_HTML_REACTIONS)
-    self.assert_equals(M_POST_OBJ_REPLIES_LIKES, got)
+  def test_m_html_reactions_to_tags(self):
+    """m.facebook.com HTML reactions.
+
+    Based on: https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier=456
+    """
+    got = self.fb.m_html_reactions_to_tags(M_HTML_REACTIONS, M_POST_OBJ)
+    self.assert_equals(M_POST_OBJ_REPLIES_REACTIONS['tags'], got)
