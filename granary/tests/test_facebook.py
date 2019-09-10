@@ -1151,7 +1151,7 @@ M_POST_OBJS = [{
   'published': '1999-06-13T16:50:00',
   'to': [{'objectType':'group', 'alias':'@public'}],
 }]
-M_POST_OBJ_FULL = {
+M_POST_OBJ = {
   'objectType': 'note',
   'id': tag_uri('456'),
   'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
@@ -1159,56 +1159,58 @@ M_POST_OBJ_FULL = {
   'content': 'Oh hi, Jeeves .',
   'published': '1999-06-13T16:50:00',
   'to': [{'objectType':'group', 'alias':'@public'}],
-  'replies': {
-    'items': [{
-      'objectType': 'comment',
-      'id': tag_uri('456_777'),
-      'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038&comment_id=777',
-      'published': '1999-06-14T00:00:00',
-      'content': 'What... the... hell?',
-      'inReplyTo': [{
-        'id': tag_uri('456'),
-        'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
-      }],
-      'author': M_ALICE,
-      'to': [{'objectType':'group', 'alias':'@public'}],
-    }, {
-      'objectType': 'comment',
-      'id': tag_uri('456_888'),
-      'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038&comment_id=888',
-      'published': '1999-06-15T00:00:00',
-      'content': 'Wat',
-      'inReplyTo': [{
-        'id': tag_uri('456'),
-        'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
-      }],
-      'author': M_BOB,
-      'to': [{'objectType':'group', 'alias':'@public'}],
-    }],
-    'totalItems': 2,
-  },
-  'tags': [{
-    'objectType': 'activity',
-    'verb': 'like',
-    'id': tag_uri('456_liked_by_333'),
-    'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038#liked-by-333',
-    'object': {'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038'},
-    'author':      {
-      'objectType': 'person',
-      'id': tag_uri('333'),
-      'displayName': 'Alice',
-      'url': 'https://www.facebook.com/333',
-    },
-  }, {
-    'objectType': 'activity',
-    'verb': 'react',
-    'id': tag_uri('456_haha_by_bob'),
-    'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038#haha-by-bob',
-    'content': '😆',
-    'object': {'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038'},
-    'author': M_BOB,
-  }],
 }
+M_POST_OBJ_REPLIES = copy.deepcopy(M_POST_OBJ)
+M_POST_OBJ_REPLIES['replies'] = {
+  'items': [{
+    'objectType': 'comment',
+    'id': tag_uri('456_777'),
+    'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038&comment_id=777',
+    'published': '1999-06-14T00:00:00',
+    'content': 'What... the... hell?',
+    'inReplyTo': [{
+      'id': tag_uri('456'),
+      'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
+    }],
+    'author': M_ALICE,
+    'to': [{'objectType':'group', 'alias':'@public'}],
+  }, {
+    'objectType': 'comment',
+    'id': tag_uri('456_888'),
+    'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038&comment_id=888',
+    'published': '1999-06-15T00:00:00',
+    'content': 'Wat',
+    'inReplyTo': [{
+      'id': tag_uri('456'),
+      'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038',
+    }],
+    'author': M_BOB,
+    'to': [{'objectType':'group', 'alias':'@public'}],
+  }],
+  'totalItems': 2,
+}
+M_POST_OBJ_REPLIES_LIKES = copy.deepcopy(M_POST_OBJ_REPLIES)
+M_POST_OBJ_REPLIES_LIKES['tags'] = [{
+  'objectType': 'activity',
+  'verb': 'like',
+  'id': tag_uri('456_liked_by_333'),
+  'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038#liked-by-333',
+  'object': {'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038'},
+  'author':      {
+    'objectType': 'person',
+    'id': tag_uri('333'),
+    'displayName': 'Alice',
+    'url': 'https://www.facebook.com/333',
+  },
+}, {
+  'objectType': 'activity',
+  'verb': 'react',
+  'id': tag_uri('456_haha_by_bob'),
+  'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038#haha-by-bob',
+  'content': '😆',
+  'object': {'url': 'https://m.facebook.com/story.php?story_fbid=456&id=212038'},
+  'author': M_BOB,
+}]
 
 
 class FacebookTest(testutil.TestCase):
@@ -1216,6 +1218,7 @@ class FacebookTest(testutil.TestCase):
   def setUp(self):
     super(FacebookTest, self).setUp()
     self.fb = Facebook()
+    self.fbscrape = Facebook(scrape=True, cookie_c_user='CU', cookie_xs='XS')
     self.batch = []
     self.batch_responses = []
     self.mox.StubOutWithMock(facebook, 'now_fn')
@@ -1229,7 +1232,7 @@ class FacebookTest(testutil.TestCase):
   def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
     kwargs.setdefault('allow_redirects', False)
     if cookie:
-      kwargs.setdefault('headers', {})['Cookie'] = 'sessionid=' + cookie
+      kwargs.setdefault('headers', {})['Cookie'] = cookie
     url = urllib.parse.urljoin(M_HTML_BASE_URL, url)
     return super(FacebookTest, self).expect_requests_get(url, resp, **kwargs)
 
@@ -1737,6 +1740,93 @@ class FacebookTest(testutil.TestCase):
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.fb.get_activities(search_query='foo')
+
+  def test_get_activities_scrape_timeline(self):
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.expect_requests_get('x?v=timeline', M_HTML_TIMELINE,
+                             cookie='c_user=CU; xs=XS')
+    self.mox.ReplayAll()
+
+    activities = self.fbscrape.get_activities(user_id='x', group_id=source.SELF)
+    self.assert_equals(M_POST_OBJS, [a['object'] for a in activities])
+
+  def test_get_activities_scrape_post(self):
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.expect_requests_get('story.php?story_fbid=456&id=212038', M_HTML_POST,
+                             cookie='c_user=CU; xs=XS')
+    self.mox.ReplayAll()
+
+    activities = self.fbscrape.get_activities(user_id='212038', activity_id='456')
+    self.assert_equals([M_POST_OBJ_REPLIES], [a['object'] for a in activities])
+
+#   def test_get_activities_scrape_self_fetch_extras(self):
+#     self.expect_requests_get('x/', HTML_PROFILE_COMPLETE, cookie='kuky')
+#     self.expect_requests_get('p/ABC123/', HTML_PHOTO_COMPLETE, cookie='kuky')
+#     self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+#                              HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
+#     self.expect_requests_get('p/XYZ789/', HTML_VIDEO_COMPLETE, cookie='kuky')
+#     self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789', {}, cookie='kuky')
+
+#     self.mox.ReplayAll()
+#     self.assert_equals(HTML_ACTIVITIES_FULL_LIKES, self.instagram.get_activities(
+#       user_id='x', group_id=source.SELF, fetch_likes=True, fetch_replies=True,
+#       scrape=True, cookie='kuky'))
+
+#   def test_get_activities_scrape_fetch_extras_cache(self):
+#     # first time, cache is cold
+#     self.expect_requests_get('x/', HTML_PROFILE_COMPLETE, cookie='kuky')
+#     self.expect_requests_get('p/ABC123/', HTML_PHOTO_COMPLETE, cookie='kuky')
+#     self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+#                              HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
+#     self.expect_requests_get('p/XYZ789/', HTML_VIDEO_COMPLETE, cookie='kuky')
+#     self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789', {}, cookie='kuky')
+
+#     # second time, comment and like counts are unchanged, so no media page fetches
+#     self.expect_requests_get('x/', HTML_PROFILE_COMPLETE, cookie='kuky')
+
+#     # third time, video comment count changes, like counts stay the same
+#     profile = copy.deepcopy(HTML_PROFILE)
+#     profile['entry_data']['ProfilePage'][0]['graphql']['user']\
+#       ['edge_owner_to_timeline_media']['edges'][1]['node']\
+#       ['edge_media_to_comment']['count'] = 3
+#     self.expect_requests_get('x/',
+#                              HTML_HEADER + json.dumps(profile) + HTML_FOOTER,
+#                              cookie='kuky')
+#     video = copy.deepcopy(HTML_VIDEO_FULL)
+#     video['edge_media_to_comment']['count'] = 4
+#     self.expect_requests_get('p/XYZ789/',
+#                              HTML_HEADER + json.dumps(video) + HTML_FOOTER,
+#                              cookie='kuky')
+
+#     self.mox.ReplayAll()
+
+#     cache = util.CacheDict()
+#     for i in range(3):
+#       self.instagram.get_activities(user_id='x', group_id=source.SELF,
+#                                     fetch_likes=True, fetch_replies=True,
+#                                     scrape=True, cache=cache, cookie='kuky')
+
+#     self.assert_equals({
+#       'AIC 123_456': 0,  # photo
+#       'AIL 123_456': 5,
+#       'AIC 789_456': 1,  # video
+#       'AIL 789_456': 9,
+#     }, cache)
+
+#   def test_get_activities_scrape_missing_data(self):
+#     self.expect_requests_get('x/', """
+# <!DOCTYPE html>
+# <html><body>
+# </body></html>
+# """)
+#     self.mox.ReplayAll()
+#     self.assert_equals([], self.instagram.get_activities(
+#       user_id='x', group_id=source.SELF, scrape=True))
+
+#   def test_get_activities_scrape_fetch_likes_no_cookie_error(self):
+#     with self.assertRaises(NotImplementedError):
+#       self.instagram.get_activities(user_id='x', group_id=source.SELF,
+#                                     fetch_likes=True, scrape=True)
 
   def test_get_comment(self):
     self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
@@ -3151,11 +3241,9 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     url = 'https://m.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
+    got = self.fb.m_html_post_to_object(M_HTML_POST, url)
+    self.assert_equals(M_POST_OBJ_REPLIES, got)
+
     got = self.fb.m_html_post_to_object(M_HTML_POST, url,
                                         reactions_html=M_HTML_REACTIONS)
-    self.assert_equals(M_POST_OBJ_FULL, got)
-
-    no_reactions = copy.deepcopy(M_POST_OBJ_FULL)
-    del no_reactions['tags']
-    got = self.fb.m_html_post_to_object(M_HTML_POST, url)
-    self.assert_equals(no_reactions, got)
+    self.assert_equals(M_POST_OBJ_REPLIES_LIKES, got)

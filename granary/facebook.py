@@ -130,6 +130,7 @@ API_UPLOAD_VIDEO = 'https://graph-video.facebook.com/v2.10/me/videos'
 MAX_IDS = 50  # for the ids query param
 
 M_HTML_BASE_URL = 'https://m.facebook.com/'
+M_HTML_POST_URL = 'story.php?story_fbid=%s&id=%s'
 
 # Maps Facebook Graph API type, status_type, or Open Graph data type to
 # ActivityStreams objectType.
@@ -207,8 +208,11 @@ class Facebook(source.Source):
   Attributes:
     access_token: string, optional, OAuth access token
     user_id: string, optional, current user's id (either global or app-scoped)
+    scrape: boolean, whether to scrape m.facebook.com's HTML (True) or use
+      the API (False)
+    cookie_c_user: string, optional c_user cookie to use when scraping
+    cookie_xs: string, optional xs cookie to use when scraping
   """
-
   DOMAIN = 'facebook.com'
   BASE_URL = 'https://www.facebook.com/'
   NAME = 'Facebook'
@@ -227,19 +231,31 @@ class Facebook(source.Source):
   </div>
   """
 
-  def __init__(self, access_token=None, user_id=None):
+  def __init__(self, access_token=None, user_id=None, scrape=False,
+               cookie_c_user=None, cookie_xs=None):
     """Constructor.
 
     If an OAuth access token is provided, it will be passed on to Facebook. This
     will be necessary for some people and contact details, based on their
     privacy settings.
 
+    If scrape is True, cookie_c_user and cookie_xs must be provided.
+
     Args:
       access_token: string, optional OAuth access token
       user_id: string, optional, current user's id (either global or app-scoped)
+      scrape: boolean, whether to scrape m.facebook.com's HTML (True) or use
+        the API (False)
+      cookie_c_user: string, optional c_user cookie to use when scraping
+      cookie_xs: string, optional xs cookie to use when scraping
     """
+    if scrape:
+      assert cookie_c_user and cookie_xs
     self.access_token = access_token
     self.user_id = user_id
+    self.scrape = scrape
+    self.cookie_c_user = cookie_c_user
+    self.cookie_xs = cookie_xs
 
   def object_url(self, id):
     # Facebook always uses www. They redirect bare facebook.com URLs to it.
@@ -291,6 +307,13 @@ class Facebook(source.Source):
     """
     if search_query:
       raise NotImplementedError()
+
+    if self.scrape:
+      if not activity_id and not group_id == source.SELF:
+        raise NotImplementedError(
+          'Scraping requires either activity_id or group_id=@self.')
+      return self._scrape_m(user_id=user_id, activity_id=activity_id,
+                            fetch_replies=fetch_replies, fetch_likes=fetch_likes)
 
     activities = []
 
@@ -1795,6 +1818,90 @@ class Facebook(source.Source):
     except (ValueError, OverflowError):
       logging.warning("Couldn't parse datetime string %r", tag, exc_info=True)
 
+  def _scrape_m(self, user_id=None, activity_id=None, fetch_replies=False,
+                fetch_likes=False):
+    """Scrapes a user's timeline or a post and converts it to activities.
+
+    Args:
+      user_id: string
+      activity_id: string
+      fetch_replies: boolean
+      fetch_likes: boolean
+
+    Returns:
+      dict activities API response
+    """
+    user_id = user_id or self.user_id
+    if not (user_id and self.cookie_c_user and self.cookie_xs):
+      raise NotImplementedError('Scraping requires c_user and xs cookie and user_id.')
+
+    kwargs = {
+      'allow_redirects': False,
+      'headers': {'Cookie': 'c_user=%s; xs=%s' % (self.cookie_c_user, self.cookie_xs)},
+    }
+
+    if activity_id:
+      url = urllib.parse.urljoin(M_HTML_BASE_URL,
+                                 M_HTML_POST_URL % (activity_id, user_id))
+      resp = util.requests_get(url, **kwargs)
+      resp.raise_for_status()
+      objs = [self.m_html_post_to_object(resp.text, url)]
+    else:
+      url = urllib.parse.urljoin(M_HTML_BASE_URL, user_id) + '?v=timeline'
+      resp = util.requests_get(url, **kwargs)
+      resp.raise_for_status()
+      objs = self.m_html_timeline_to_objects(resp.text)
+
+
+    activities = [self.postprocess_activity({
+      'verb': 'post',
+      'published': obj.get('published'),
+      'id': obj['id'],
+      'url': obj.get('url'),
+      'actor': obj.get('author'),
+      'object': obj,
+    }) for obj in objs]
+
+    # if fetch_extras:
+    #   # batch get cached counts of comments and likes for all activities
+    #   cached = {}
+    #   # don't update the cache until the end, in case we hit an error before
+    #   cache_updates = {}
+    #   if cache is not None:
+    #     keys = []
+    #     for activity in activities:
+    #       _, id = util.parse_tag_uri(activity['id'])
+    #       keys.extend(['AIL ' + id, 'AIC ' + id])
+    #     cached = cache.get_multi(keys)
+
+    #   for i, activity in enumerate(activities):
+    #     obj = activity['object']
+    #     _, id = util.parse_tag_uri(activity['id'])
+    #     likes = obj.get('ig_like_count') or 0
+    #     comments = obj.get('replies', {}).get('totalItems') or 0
+    #     likes_key = 'AIL %s' % id
+    #     comments_key = 'AIC %s' % id
+
+    #     if (likes and likes != cached.get(likes_key) or
+    #         comments and comments != cached.get(comments_key)):
+    #       if not activity_id and not shortcode:
+    #         url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
+    #         resp = util.requests_get(url, **get_kwargs)
+    #         resp.raise_for_status()
+    #       # otherwise resp is a fetch of just this activity; reuse it
+
+    #       full_activity, _ = self.html_to_activities(
+    #         resp.text, cookie=cookie, count=count, fetch_extras=fetch_extras)
+    #       if full_activity:
+    #         activities[i] = full_activity[0]
+    #         cache_updates.update({likes_key: likes, comments_key: comments})
+
+    #   if cache_updates and cache is not None:
+    #     cache.set_multi(cache_updates)
+
+    resp = self.make_activities_base_response(activities)
+    return resp
+
   @classmethod
   def m_html_timeline_to_objects(cls, html):
     """
@@ -1829,6 +1936,9 @@ class Facebook(source.Source):
       post_id = urllib.parse.parse_qs(query).get('story_fbid')
       if post_id:
         post_id = cls.tag_uri(post_id[0])
+
+      cls._scraped_datetime(footer_children[0].find('abbr')),
+      cls._m_html_author(story_body_container),
 
       objs.append({
         'objectType': 'note',

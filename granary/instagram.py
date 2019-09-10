@@ -101,7 +101,7 @@ class Instagram(source.Source):
       allow_comment_creation: boolean, optionally disable comment creation,
         useful if the app is not approved to create comments.
       scrape: boolean, whether to scrape instagram.com's HTML (True) or use
-      the API (False)
+        the API (False)
       cookie: string, optional sessionid cookie to use when scraping.
     """
     self.access_token = access_token
