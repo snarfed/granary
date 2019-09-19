@@ -14,7 +14,7 @@ from __future__ import absolute_import, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
 from future.moves.urllib import error as urllib_error
-from builtins import next, str
+from builtins import str
 from past.builtins import basestring
 
 import copy

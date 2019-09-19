@@ -13,7 +13,6 @@ from future.moves.urllib import error as urllib_error
 from past.builtins import basestring
 
 import datetime
-import itertools
 import json
 import logging
 import operator

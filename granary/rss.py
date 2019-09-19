@@ -12,10 +12,9 @@ Notably:
 * HTTP server that hosts assets and files should support range requests.
 """
 from __future__ import absolute_import, unicode_literals
-from builtins import str
 from past.builtins import basestring
 
-from datetime import date, datetime, time
+from datetime import datetime, time
 import mimetypes
 
 from feedgen.feed import FeedGenerator

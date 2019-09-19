@@ -1892,7 +1892,6 @@ class Facebook(source.Source):
     objs = []
     storystream = soup.find(class_='storyStream')
     for story in cls._divs(storystream):
-      children = cls._divs(story)
       story_body_container = story.find(class_='story_body_container')
       body_children = cls._divs(story_body_container)
 
@@ -2006,7 +2005,7 @@ class Facebook(source.Source):
     soup = BeautifulSoup(html)
 
     tags = []
-    for reaction in BeautifulSoup(html).find_all('li'):
+    for reaction in soup.find_all('li'):
       if reaction.get_text(' ', strip=True) == 'See More':
         continue
       imgs = reaction.find_all('img')

@@ -89,11 +89,12 @@ def _as1_value(elem, field):
     return type.split('/')[-1]
 
 
-# Emulate Django template behavior that returns a special default value that
-# can continue to be referenced when an attribute or item lookup fails. Helps
-# avoid conditionals in the template itself.
-# https://docs.djangoproject.com/en/1.8/ref/templates/language/#variables
 class Defaulter(collections.defaultdict):
+  """Emulates Django template behavior that returns a special default value that
+  can continue to be referenced when an attribute or item lookup fails. Helps
+  avoid conditionals in the template itself.
+  https://docs.djangoproject.com/en/1.8/ref/templates/language/#variables
+  """
   def __init__(self, init={}):
     super(Defaulter, self).__init__(
       Defaulter, {k: self.__defaulter(v) for k, v in init.items()})
@@ -111,6 +112,7 @@ class Defaulter(collections.defaultdict):
     return super(Defaulter, self).__unicode__() if self else ''
 
   __str__ = __unicode__
+  __eq__ = collections.defaultdict.__eq__
 
   def __hash__(self):
     return super(Defaulter, self).__hash__() if self else None.__hash__()

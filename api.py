@@ -28,7 +28,6 @@ import json
 import logging
 import urllib
 
-from google.appengine.ext import ndb
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
 import webapp2
@@ -168,8 +167,6 @@ class Handler(handlers.ModernHandler):
     actor = response.get('actor')
     if not actor and self.request.get('format') == 'atom':
       # atom needs actor
-      args = [None if a in defaults else a  # handle default path elements
-              for a, defaults in zip(args, PATH_DEFAULTS)]
       actor = src.get_actor(user_id) if src else {}
 
     self.write_response(response, actor=actor, url=src.BASE_URL)
