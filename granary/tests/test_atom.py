@@ -750,16 +750,15 @@ going to Homebrew Website Club
 
     https://github.com/snarfed/granary/issues/113
     """
-    for url in 'http://pics/1.jpg?foo', '/1.jpg?foo':
-      activity = {
-        'object': {
-          'content': 'foo <img src="%s"> bar' % url,
-          'image': [
-            {"url": "http://pics/1.jpg?foo"},
-            {"url": "http://pics/2.jpg"},
-          ],
-        },
-      }
+    activity = {
+      'object': {
+        'content': 'foo <img src="/1.jpg?foo"> bar',
+        'image': [
+          {"url": "http://pics/1.jpg?foo"},
+          {"url": "http://pics/2.jpg"},
+        ],
+      },
+    }
 
     got = atom.activities_to_atom([activity], {})
     self.assertNotIn('<img class="u-photo" src="http://pics/1.jpg?foo" alt="" />', got)
@@ -778,7 +777,7 @@ going to Homebrew Website Club
       'object': {
         'content': 'foo bar',
         'image': [
-          {'url': 'http://pics/1.jpg'},
+          {'url': 'http://pics/1.jpg?x&y'},
           {'url': 'http://pics/2.jpg'},
         ],
         'attachments': [{
@@ -786,15 +785,15 @@ going to Homebrew Website Club
           'image': {'url': 'http://pics/2.jpg'},
         }, {
           'objectType': 'image',
-          'image': {'url': 'http://pics/1.jpg'},
+          'image': {'url': 'http://pics/1.jpg?x&y'},
         }],
       },
     }
 
     got = atom.activities_to_atom([activity], {})
-    self.assertEqual(1, got.count('<img class="u-photo" src="http://pics/1.jpg" alt="" />'), got)
+    self.assertEqual(1, got.count('<img class="u-photo" src="http://pics/1.jpg?x&amp;y" alt="" />'), got)
     self.assert_multiline_in("""
-<link rel="enclosure" href="http://pics/1.jpg" type="image/jpeg" />
+<link rel="enclosure" href="http://pics/1.jpg?x&amp;y" type="" />
 """, got)
     self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got, got)
 
