@@ -22,7 +22,6 @@ import urllib.parse, urllib.request
 import xml.sax.saxutils
 
 from . import appengine_config
-from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
 import requests
 from . import source
@@ -867,7 +866,7 @@ class Instagram(source.Source):
     if not medias:
       # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
       # no longer has any useful data. Need to do a second header link fetch.
-      soup = BeautifulSoup(html)
+      soup = util.parse_html(html)
       link = soup.find('link', href=HTML_PRELOAD_RE)
       if link:
         url = urllib.parse.urljoin(HTML_BASE_URL, link['href'])

@@ -563,7 +563,8 @@ z
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 my content
-<pre>  x
+<pre>
+  x
     y
  z
 </pre>
@@ -632,7 +633,7 @@ going to Homebrew Website Club
 """
 
     self.expect_requests_get(
-      'https://my.site/author', html, headers=mox.IgnoreArg(), timeout=None,
+      'https://my.site/author', html,
       response_headers={'content-type': 'text/html; charset=utf-8'})
     self.mox.ReplayAll()
 

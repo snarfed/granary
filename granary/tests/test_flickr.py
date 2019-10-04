@@ -686,7 +686,7 @@ class FlickrTest(testutil.TestCase):
       'user_id': '39216764@N00'
     }, json.dumps(PERSON_INFO))
 
-    self.expect_urlopen(
+    self.expect_requests_get(
       'https://www.flickr.com/people/kindofblue115/',
       PROFILE_HTML)
 
@@ -706,7 +706,7 @@ class FlickrTest(testutil.TestCase):
       'flickr.people.getInfo', {'user_id': '39216764@N00'},
       json.dumps(PERSON_INFO))
 
-    self.expect_urlopen(
+    self.expect_requests_get(
       'https://www.flickr.com/people/kindofblue115/',
       PROFILE_HTML)
 

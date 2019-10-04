@@ -56,7 +56,6 @@ import re
 import urllib.parse, urllib.request
 import xml.sax.saxutils
 
-from bs4 import BeautifulSoup
 import dateutil.parser
 import mf2util
 from oauth_dropins.webutil import util
@@ -1671,7 +1670,7 @@ class Facebook(source.Source):
     Arguments:
       html: string
     """
-    soup = BeautifulSoup(html)
+    soup = util.parse_html(html)
     type = None
 
     type = 'comment'
@@ -1887,7 +1886,7 @@ class Facebook(source.Source):
     Arguments:
       html: string
     """
-    soup = BeautifulSoup(html)
+    soup = util.parse_html(html)
 
     objs = []
     storystream = soup.find(class_='storyStream')
@@ -1939,7 +1938,7 @@ class Facebook(source.Source):
       html: string, HTML from an m.facebook.com post permalink
       url: string, permalink URL of post
     """
-    soup = BeautifulSoup(html)
+    soup = util.parse_html(html)
 
     view = soup.find(id='m_story_permalink_view')
     body_parts = cls._divs(cls._divs(cls._divs(view)[0])[0])
@@ -2002,7 +2001,7 @@ class Facebook(source.Source):
       url: string, permalink URL of post
       post_obj: AS1 post object these reactions are for
     """
-    soup = BeautifulSoup(html)
+    soup = util.parse_html(html)
 
     tags = []
     for reaction in soup.find_all('li'):

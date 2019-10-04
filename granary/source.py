@@ -936,7 +936,7 @@ class Source(with_metaclass(SourceMeta, object)):
     #
     # The catch is that it adds a '<html><head></head><body>' header and
     # '</body></html>' footer. ah well. harmless.
-    soup = BeautifulSoup(content)
+    soup = util.parse_html(content)
     if strip_first_video_tag:
       video = soup.video or soup.find(class_='u-video')
       if video:

@@ -18,7 +18,6 @@ import string
 import re
 import xml.sax.saxutils
 
-import mf2py
 import mf2util
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import (
@@ -370,10 +369,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
   else:
     # the author h-card may be on another page. run full authorship algorithm:
     # https://indieweb.org/authorship
-    def fetch(url):
-      return mf2py.parse(util.requests_get(url).text, url=url, img_with_alt=True)
-    author = mf2util.find_author(
-      {'items': [mf2]}, hentry=mf2, fetch_mf2_func=fetch if fetch_mf2 else None)
+    author = mf2util.find_author({'items': [mf2]}, hentry=mf2,
+                                 fetch_mf2_func=util.fetch_mf2 if fetch_mf2 else None)
     if author:
       author = {
         'objectType': 'person',
@@ -518,7 +515,7 @@ def html_to_activities(html, url=None, actor=None):
   """Converts a microformats2 HTML h-feed to ActivityStreams activities.
 
   Args:
-    html: string HTML
+    html: unicode string HTML or :class:`requests.Response`
     url: optional string URL that HTML came from
     actor: optional author AS actor object for all activities. usually comes
       from a rel="author" link.
@@ -526,7 +523,7 @@ def html_to_activities(html, url=None, actor=None):
   Returns:
     list of ActivityStreams activity dicts
   """
-  parsed = mf2py.parse(doc=html, url=url, img_with_alt=True)
+  parsed = util.parse_mf2(html, url=url)
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
 
@@ -969,7 +966,7 @@ def find_author(parsed, **kwargs):
   """Returns the author of a page as a ActivityStreams actor dict.
 
   Args:
-    parsed: return value from mf2py.parse()
+    parsed: dict, parsed mf2 object (ie return value from mf2py.parse())
     kwargs: passed through to mf2util.find_author()
   """
   author = mf2util.find_author(parsed, 'http://123', **kwargs)

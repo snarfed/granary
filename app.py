@@ -1,6 +1,5 @@
 """Serves the the front page, discovery files, and OAuth flows.
 """
-import json
 import logging
 import urllib
 import urlparse
@@ -9,7 +8,6 @@ from xml.etree import ElementTree
 import appengine_config
 
 from google.appengine.ext import ndb
-import mf2py
 import mf2util
 from oauth_dropins import (
   facebook,
@@ -53,12 +51,6 @@ SILO_DOMAINS = {cls.DOMAIN for cls in (
   Instagram,
   Twitter,
 )}
-# Average HTML page size as of 2015-10-15 is 56K, so this is very generous and
-# conservative.
-# http://www.sitepoint.com/average-page-weight-increases-15-2014/
-# http://httparchive.org/interesting.php#bytesperpage
-MAX_HTTP_RESPONSE_SIZE = 1000000  # 1MB
-HTTP_RESPONSE_TOO_BIG_STATUS_CODE = 422  # Unprocessable Entity
 
 
 class FrontPageHandler(handlers.TemplateHandler):
@@ -132,12 +124,13 @@ class UrlHandler(api.Handler):
     if input not in INPUTS:
       raise exc.HTTPBadRequest('Invalid input: %s, expected one of %r' %
                                (input, INPUTS))
-    url, body = self._fetch(util.get_required_param(self, 'url'))
+    resp = util.requests_get(util.get_required_param(self, 'url'), gateway=True)
+    url = resp.url
 
     # decode data
     if input in ('activitystreams', 'as1', 'as2', 'mf2-json', 'json-mf2', 'jsonfeed'):
       try:
-        body_json = json.loads(body)
+        body_json = resp.json()
         body_items = (body_json if isinstance(body_json, list)
                       else body_json.get('items') or [body_json])
       except (TypeError, ValueError):
@@ -145,7 +138,7 @@ class UrlHandler(api.Handler):
 
     mf2 = None
     if input == 'html':
-      mf2 = mf2py.parse(doc=body, url=url, img_with_alt=True)
+      mf2 = util.parse_mf2(resp)
     elif input in ('mf2-json', 'json-mf2'):
       mf2 = body_json
       if not hasattr(mf2, 'get'):
@@ -161,8 +154,7 @@ class UrlHandler(api.Handler):
       def fetch_mf2_func(url):
         if util.domain_or_parent_in(urlparse.urlparse(url).netloc, SILO_DOMAINS):
           return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
-        _, doc = self._fetch(url)
-        return mf2py.parse(doc=doc, url=url, img_with_alt=True)
+        return util.fetch_mf2(url, gateway=True)
 
       try:
         actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
@@ -178,13 +170,13 @@ class UrlHandler(api.Handler):
         activities = [as2.to_as1(obj) for obj in body_items]
       elif input == 'atom':
         try:
-          activities = atom.atom_to_activities(body)
+          activities = atom.atom_to_activities(resp.text)
         except ElementTree.ParseError as e:
           raise exc.HTTPBadRequest('Could not parse %s as XML: %s' % (url, e))
         except ValueError as e:
           raise exc.HTTPBadRequest('Could not parse %s as Atom: %s' % (url, e))
       elif input == 'html':
-        activities = microformats2.html_to_activities(body, url, actor)
+        activities = microformats2.html_to_activities(resp, url, actor)
       elif input in ('mf2-json', 'json-mf2'):
         activities = [microformats2.json_to_object(item, actor=actor)
                       for item in mf2.get('items', [])]
@@ -196,33 +188,6 @@ class UrlHandler(api.Handler):
 
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=url, actor=actor, title=title, hfeed=hfeed)
-
-  def _fetch(self, url):
-    """Fetches url and returns (string final url, unicode body)."""
-    try:
-      resp = util.requests_get(url, stream=True)
-    except (ValueError, requests.URLRequired, requests.TooManyRedirects) as e:
-      self.abort(400, str(e))
-      # other exceptions are handled by webutil.handlers.handle_exception(),
-      # which uses interpret_http_exception(), etc.
-
-    if url != resp.url:
-      url = resp.url
-      logging.info('Redirected to %s', url)
-
-    body = resp.text
-
-    length = resp.headers.get('Content-Length')
-    if util.is_int(length):
-      length = int(length)
-    if not length:
-      length = len(body)
-    if length > MAX_HTTP_RESPONSE_SIZE:
-      self.abort(HTTP_RESPONSE_TOO_BIG_STATUS_CODE,
-                 'Content-Length %s for %s is larger than our limit of %s.' %
-                 (length, url, MAX_HTTP_RESPONSE_SIZE))
-
-    return url, body
 
 
 application = webapp2.WSGIApplication([

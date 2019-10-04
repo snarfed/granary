@@ -28,7 +28,6 @@ import urllib.parse, urllib.request
 
 from . import appengine_config
 
-from bs4 import BeautifulSoup
 import brevity
 
 from . import source
@@ -1534,7 +1533,7 @@ class Twitter(source.Source):
     Returns:
       list of ActivityStreams like object dicts
     """
-    soup = BeautifulSoup(html)
+    soup = util.parse_html(html)
     likes = []
 
     for user in soup.find_all(class_='js-user-profile-link'):

@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for api.py.
 """
 from __future__ import unicode_literals
@@ -40,7 +41,7 @@ class FakeSource(source.Source):
 
 class HandlerTest(testutil_appengine.HandlerTest):
 
-  activities = [{'foo': 'bar'}]
+  activities = [{'foo': '☕ bar'}]
 
   def setUp(self):
     super(HandlerTest, self).setUp()
@@ -76,7 +77,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
         'startIndex': int(kwargs.get('start_index', 0)),
         'itemsPerPage': 1,
         'totalResults': 9,
-        'items': [{'foo': 'bar'}],
+        'items': [{'foo': '☕ bar'}],
         'filtered': False,
         'sorted': False,
         'updatedSince': False,
@@ -178,7 +179,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
 <response>
 <filtered>False</filtered>
 <items>
-  <foo>bar</foo>
+  <foo>☕ bar</foo>
 </items>
 <itemsPerPage>1</itemsPerPage>
 <sorted>False</sorted>
@@ -186,7 +187,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
 <totalResults>9</totalResults>
 <updatedSince>False</updatedSince>
 </response>
-""", resp.body)
+""", resp.text)
 
   def test_xml_format(self):
     resp = self.get_response('/fake?format=xml')
@@ -218,7 +219,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
           'host_url': 'http://fa.ke/',
           'base_url': 'http://fa.ke/',
         },
-        resp.body, ignore_blanks=True)
+        resp.text, ignore_blanks=True)
 
   def test_html_format(self):
     resp = self.get_response('/fake?format=html')
@@ -250,7 +251,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
     resp = api.application.get_response(
       '/instagram/@me/@friends/@app/?format=html&access_token=...&interactive=true')
     self.assert_equals(400, resp.status_int)
-    self.assertIn('Scraping only supports activity_id', resp.body)
+    self.assertIn('Scraping only supports activity_id', resp.text)
 
   def test_bad_start_index(self):
     resp = api.application.get_response('/fake?startIndex=foo')

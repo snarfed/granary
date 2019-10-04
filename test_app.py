@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for app.py.
 """
 from __future__ import unicode_literals
@@ -19,7 +20,7 @@ import oauth_dropins.webutil.tests
 import appengine_config
 
 from google.appengine.api import memcache
-from oauth_dropins.webutil import testutil_appengine
+from oauth_dropins.webutil import testutil_appengine, util
 import requests
 
 import app
@@ -29,7 +30,7 @@ AS1 = [{
   'objectType': 'activity',
   'verb': 'post',
   'object': {
-    'content': 'foo bar',
+    'content': 'foo ☕ bar',
     'published': '2012-03-04T18:20:37+00:00',
     'url': 'https://perma/link',
   }
@@ -54,7 +55,7 @@ AS2 = [{
   '@context': 'https://www.w3.org/ns/activitystreams',
   'type': 'Create',
   'object': {
-    'content': 'foo bar',
+    'content': 'foo ☕ bar',
     'published': '2012-03-04T18:20:37+00:00',
     'url': 'https://perma/link',
   }
@@ -76,7 +77,7 @@ AS2_RESPONSE = {
 MF2 = {'items': [{
   'type': ['h-entry'],
   'properties': {
-    'content': ['foo bar'],
+    'content': ['foo ☕ bar'],
     'published': ['2012-03-04T18:20:37+00:00'],
     'url': ['https://perma/link'],
   },
@@ -93,7 +94,7 @@ JSONFEED = {
   'items': [{
     'url': 'https://perma/link',
     'id': 'https://perma/link',
-    'content_html': 'foo bar',
+    'content_html': 'foo ☕ bar',
     'date_published': '2012-03-04T18:20:37+00:00',
   }, {
     'content_html': 'baz baj',
@@ -112,7 +113,7 @@ HTML = """\
 
   <a class="u-url" href="https://perma/link">https://perma/link</a>
   <div class="e-content p-name">
-foo bar
+foo ☕ bar
 </div>
 
 </article>
@@ -128,7 +129,6 @@ baz baj
 
 </body>
 </html>
-
 """
 
 ATOM_CONTENT = """\
@@ -168,14 +168,14 @@ ATOM_CONTENT = """\
   <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
 
   <id>https://perma/link</id>
-  <title>foo bar</title>
+  <title>foo ☕ bar</title>
 
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
 
 
-foo bar
+foo ☕ bar
 
   </div>
   </content>
@@ -294,7 +294,7 @@ class AppTest(testutil_appengine.HandlerTest):
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
     resp = app.application.get_response(path)
     self.assert_equals(400, resp.status_int)
-    self.assertIn('Could not parse http://my/feed.json as jsonfeed', resp.body)
+    self.assertIn('Could not parse http://my/feed.json as jsonfeed', resp.text)
 
   def test_url_json_mf2_to_html(self):
     self.expect_requests_get('http://my/posts.json', MF2)
@@ -306,7 +306,7 @@ class AppTest(testutil_appengine.HandlerTest):
     self.assert_multiline_equals(HTML % {
       'body_class': '',
       'extra': '',
-    }, resp.body, ignore_blanks=True)
+    }, resp.text, ignore_blanks=True)
 
   def test_url_html_to_atom(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
@@ -326,7 +326,7 @@ class AppTest(testutil_appengine.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_int)
-    self.assert_multiline_in(ATOM_CONTENT, resp.body, ignore_blanks=True)
+    self.assert_multiline_in(ATOM_CONTENT, resp.text, ignore_blanks=True)
 
   def test_url_html_to_atom_rel_author(self):
     """
@@ -370,7 +370,7 @@ class AppTest(testutil_appengine.HandlerTest):
  <uri>http://my/author</uri>
  <name>Someone Else</name>
 </author>
-""", resp.body, ignore_blanks=True)
+""", resp.text, ignore_blanks=True)
 
   def test_url_html_to_atom_skip_silo_rel_authors(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
@@ -401,7 +401,7 @@ class AppTest(testutil_appengine.HandlerTest):
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>https://twitter.com/Author</uri>
 </author>
-""", resp.body, ignore_blanks=True)
+""", resp.text, ignore_blanks=True)
 
   def test_url_html_to_json_mf2(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
@@ -430,17 +430,41 @@ class AppTest(testutil_appengine.HandlerTest):
 
     self.assert_multiline_in("""\
 <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
-<a class="p-name u-url" href="https://perma/link">foo bar</a>
+<a class="p-name u-url" href="https://perma/link">foo ☕ bar</a>
 <div class="e-content">
-foo bar
+foo ☕ bar
 </div>
-""", resp.body, ignore_blanks=True)
+""", resp.text, ignore_blanks=True)
     self.assert_multiline_in("""\
 <span class="p-name">baz baj</span>
 <div class="e-content">
 baz baj
 </div>
-""", resp.body, ignore_blanks=True)
+""", resp.text, ignore_blanks=True)
+
+  def test_url_html_meta_charset(self):
+    html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
+    self.expect_requests_get('http://my/posts.html', html, encoding='ISO-8859-1')
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html&input=html&output=html')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
+
+    self.assert_multiline_in("""\
+<time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
+<a class="p-name u-url" href="https://perma/link">foo ☕ bar</a>
+<div class="e-content">
+foo ☕ bar
+</div>
+""", resp.text, ignore_blanks=True)
+    self.assert_multiline_in("""\
+<span class="p-name">baz baj</span>
+<div class="e-content">
+baz baj
+</div>
+""", resp.text, ignore_blanks=True)
 
   def test_url_atom_to_as1(self):
     self.expect_requests_get('http://feed', ATOM_CONTENT + '</feed>\n')
@@ -462,8 +486,8 @@ baz baj
         'object': {
           'id': 'https://perma/link',
           'objectType': 'note',
-          'title': 'foo bar',
-          'content': 'foo bar',
+          'title': 'foo ☕ bar',
+          'content': 'foo ☕ bar',
           'published': '2012-03-04T18:20:37+00:00',
           'updated': '2012-03-04T18:20:37+00:00',
         },
@@ -482,7 +506,7 @@ baz baj
 
     resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_int)
-    self.assertIn('Could not parse http://feed as XML: ', resp.body)
+    self.assertIn('Could not parse http://feed as XML: ', resp.text)
 
   def test_url_atom_to_as1_not_atom(self):
     self.expect_requests_get('http://feed', """\
@@ -494,7 +518,7 @@ not atom!
 
     resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_int)
-    self.assertIn('Could not parse http://feed as Atom: ', resp.body)
+    self.assertIn('Could not parse http://feed as Atom: ', resp.text)
 
   def test_url_as1_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.
@@ -511,10 +535,10 @@ not atom!
 
     resp = app.application.get_response(
       '/url?url=http://my/posts.as&input=as1&output=atom&reader=false')
-    self.assert_equals(200, resp.status_int, resp.body)
-    self.assertNotIn('p-location', resp.body)
+    self.assert_equals(200, resp.status_int, resp.text)
+    self.assertNotIn('p-location', resp.text)
     self.assertNotIn('<a class="p-name u-url" href="http://my/place">My place</a>',
-                     resp.body)
+                     resp.text)
 
   def test_url_bad_input(self):
     resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')
@@ -559,11 +583,11 @@ not atom!
 
   def test_url_response_too_big(self):
     self.expect_requests_get('http://my/posts.html', response_headers={
-      'Content-Length': str(app.MAX_HTTP_RESPONSE_SIZE + 1),
+      'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
     })
     self.mox.ReplayAll()
     resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
-    self.assert_equals(app.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_int)
+    self.assert_equals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_int)
 
   def test_cache(self):
     self.expect_requests_get('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
@@ -601,9 +625,11 @@ not atom!
 
     self_url = 'http://localhost' + url
     self.assert_equals(200, resp.status_int)
-    self.assert_multiline_in('<link rel="hub" href="http://a/hub" />', resp.body)
+    self.assert_multiline_in('<link rel="hub" href="http://a/hub" />',
+                             resp.text)
     self.assert_multiline_in(
-      '<link rel="self" href="%s"' % xml.sax.saxutils.escape(self_url), resp.body)
+      '<link rel="self" href="%s"' % xml.sax.saxutils.escape(self_url),
+      resp.text)
 
     headers = resp.headers.getall('Link')
     self.assertIn('<http://a/hub>; rel="hub"', headers)

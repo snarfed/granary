@@ -14,9 +14,7 @@ import urllib.parse
 from xml.etree import ElementTree
 import xml.sax.saxutils
 
-from bs4 import BeautifulSoup
 import jinja2
-import mf2py
 from oauth_dropins.webutil import util
 
 from . import microformats2
@@ -318,7 +316,7 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
   """Converts microformats2 HTML to an Atom feed.
 
   Args:
-    html: string
+    html: unicode string
     url: string URL html came from, optional
     fetch_author: boolean, whether to make HTTP request to fetch rel-author link
     reader: boolean, whether the output will be rendered in a feed reader.
@@ -330,9 +328,8 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
   if fetch_author:
     assert url, 'fetch_author=True requires url!'
 
-  parsed = mf2py.parse(doc=html, url=url, img_with_alt=True)
-  actor = microformats2.find_author(
-    parsed, fetch_mf2_func=lambda url: mf2py.parse(url=url, img_with_alt=True))
+  parsed = util.parse_mf2(html, url=url)
+  actor = microformats2.find_author(parsed, fetch_mf2_func=util.fetch_mf2)
 
   return activities_to_atom(
     microformats2.html_to_activities(html, url, actor),
@@ -374,7 +371,7 @@ def _prepare_activity(a, reader=True):
 
   # strip HTML tags. the Atom spec says title is plain text:
   # http://atomenabled.org/developers/syndication/#requiredEntryElements
-  a['title'] = xml.sax.saxutils.escape(BeautifulSoup(a['title']).get_text(''))
+  a['title'] = xml.sax.saxutils.escape(util.parse_html(a['title']).get_text(''))
 
   children = []
   image_urls_seen = set()

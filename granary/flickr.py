@@ -20,7 +20,6 @@ from past.builtins import basestring
 import copy
 import logging
 import requests
-import mf2py
 import mf2util
 import urllib.parse
 
@@ -458,14 +457,14 @@ class Flickr(source.Source):
     profile_url = person.get('profileurl', {}).get('_content')
     if profile_url:
       try:
-        resp = util.urlopen(profile_url)
-        profile_json = mf2py.parse(doc=resp, url=profile_url, img_with_alt=True)
+        profile_json = util.fetch_mf2(url=profile_url)
         urls = profile_json.get('rels', {}).get('me', [])
         if urls:
           obj['url'] = urls[0]
         if len(urls) > 1:
           obj['urls'] = [{'value': u} for u in urls]
-      except urllib_error.URLError:
+      except requests.RequestException as e:
+        util.interpret_http_exception(e)
         logging.warning('could not fetch user homepage %s', profile_url)
 
     return self.postprocess_object(obj)
