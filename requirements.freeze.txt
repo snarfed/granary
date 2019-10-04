@@ -26,6 +26,7 @@ oauth2client==4.1.2
 oauthlib==3.0.1
 pyasn1==0.4.4
 pyasn1-modules==0.2.2
+PySocks==1.7.1
 python-dateutil==2.8.0
 python-tumblpy==1.0.4
 requests==2.22.0
@@ -34,7 +35,7 @@ requests-toolbelt==0.9.1
 rsa==3.4.2
 simplejson==3.7.3
 six==1.10.0
-tweepy==3.3.0
+tweepy==3.8.0
 uritemplate==3.0.0
 urllib3==1.25.2
 webapp2==3.0.0b1

@@ -35,7 +35,7 @@ jobs:
             apt-get install -y python3-venv
             python3 -m venv local3
             . local3/bin/activate
-            pip install -r requirements.freeze.txt
+            pip install -r requirements.freeze.txt -c requirements.freeze.py3.txt
             pip install -e /tmp/oauth-dropins/
 
       - run:

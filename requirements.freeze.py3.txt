@@ -1,0 +1,6 @@
+# Override versions of specific dependencies for python 3.
+
+# lxml only got python 3.7 support working in >=4.0.0, and the earliest version
+# i could find that would build and/or install cleanly on Debian 10 was 4.2.2.
+# https://stackoverflow.com/questions/53402747
+lxml==4.2.2
