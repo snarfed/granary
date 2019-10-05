@@ -5,7 +5,6 @@ feedgen>=0.7.0
 future
 html2text
 jinja2
-mf2py>=1.1.2
 mf2util>=0.5.0
 mox3>=0.24.0
 oauth-dropins>=1.14

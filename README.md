@@ -309,10 +309,14 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 2.2 - unreleased
+* Add Python 3.7 support, and improve overall Python 3 compatibility.
+* Update a number of dependencies.
 * Facebook:
   * Add `get_activities(scrape=True)` for scraping HTML from [m.facebook.com](https://m.facebook.com/). Requires `c_user` and `xs` cookies from a logged in session. ([snarfed/bridgy#886](https://github.com/snarfed/bridgy/issues/886)
 * Atom:
   * Bug fix for de-duping images in attachments.
+* RSS:
+  * Wrap all `<description>` element contents in `CDATA` sections.
 
 ### 2.1 - 2019-09-04
 * Convert AS2 `Mention` tags to AS1 `objectType` `mention` (non-standard) and vice versa ([snarfed/bridgy-fed#46](https://github.com/snarfed/bridgy-fed/issues/46)).

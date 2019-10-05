@@ -15,7 +15,7 @@ class RssTest(testutil.TestCase):
 <item>
   <title>my post</title>
   <link>http://perma/link</link>
-  <description>something</description>
+  <description><![CDATA[something]]></description>
   <guid isPermaLink="true">http://perma/link</guid>
 </item>""",
       rss.from_activities([{

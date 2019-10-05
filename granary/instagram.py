@@ -819,23 +819,12 @@ class Instagram(source.Source):
       logging.warning('JSON script tag not found!')
       return [], None
 
-    # App Engine's Python 2.7.5 json module doesn't support unpaired surrogate
-    # Unicode chars, so it chokes on some JSON docs. Monkey patch in simplejson
-    # to fix that.
-    # https://code.google.com/p/googleappengine/issues/detail?id=12823
-    # http://stackoverflow.com/questions/15236742
-    try:
-      import simplejson
-      json_module = simplejson
-    except ImportError:
-      json_module = json
-
     # find media
     medias = []
     profile_user = None
 
     for match in matches:
-      data = util.trim_nulls(json_module.loads(match[1]))
+      data = util.trim_nulls(json.loads(match[1]))
       entry_data = data.get('entry_data', {})
 
       # home page ie news feed
