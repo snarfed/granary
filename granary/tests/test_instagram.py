@@ -10,7 +10,6 @@ from builtins import range, zip
 import copy
 import datetime
 import httplib2
-import json
 import logging
 import httplib2
 import urllib.parse
@@ -19,6 +18,7 @@ from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 import requests
+import ujson as json
 
 from granary import instagram
 from granary.instagram import HTML_BASE_URL, Instagram

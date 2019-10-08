@@ -13,7 +13,6 @@ from future.moves.urllib import error as urllib_error
 from past.builtins import basestring
 
 import datetime
-import json
 import logging
 import operator
 import re
@@ -24,6 +23,8 @@ import xml.sax.saxutils
 from . import appengine_config
 from oauth_dropins.webutil import util
 import requests
+import ujson as json
+
 from . import source
 
 # Maps Instagram media type to ActivityStreams objectType.
@@ -898,7 +899,7 @@ class Instagram(source.Source):
     resp.raise_for_status()
 
     try:
-      return resp.json()
+      return json.loads(resp.text)
     except ValueError as e:
       msg = "Couldn't decode response as JSON:\n%s" % resp.text
       logging.exception(msg)

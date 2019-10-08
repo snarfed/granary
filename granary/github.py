@@ -20,7 +20,9 @@ import re
 import urllib.parse
 
 from oauth_dropins.webutil import util
+import ujson as json
 import requests
+
 from . import appengine_config
 from . import source
 
@@ -246,7 +248,7 @@ class GitHub(source.Source):
         'Authorization': 'bearer %s' % self.access_token,
       })
     resp.raise_for_status()
-    result = resp.json()
+    result = json.loads(resp.text)
 
     errs = result.get('errors')
     if errs:
@@ -255,15 +257,16 @@ class GitHub(source.Source):
 
     return result['data']
 
-  def rest(self, url, data=None, **kwargs):
+  def rest(self, url, data=None, parse_json=True, **kwargs):
     """Makes a v3 REST API call.
 
     Uses HTTP POST if data is provided, otherwise GET.
 
     Args:
       data: dict, JSON payload for POST requests
+      json: boolean, whether to parse the response body as JSON and return it as a dict. If False, returns a :class:`requests.Response` instead.
 
-    Returns: `requests.Response`
+    Returns: dict decoded from JSON response if json=True, otherwise :class:`requests.Response`
     """
     kwargs['headers'] = kwargs.get('headers') or {}
     kwargs['headers'].update({
@@ -278,7 +281,8 @@ class GitHub(source.Source):
     else:
       resp = util.requests_post(url, json=data, **kwargs)
     resp.raise_for_status()
-    return resp
+
+    return json.loads(resp.text) if parse_json else resp
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -323,7 +327,7 @@ class GitHub(source.Source):
       if len(parts) != 3:
         raise ValueError('GitHub activity ids must be of the form USER:REPO:ISSUE_OR_PR')
       try:
-        issue = self.rest(REST_API_ISSUE % parts).json()
+        issue = self.rest(REST_API_ISSUE % parts)
         activities = [self.issue_to_object(issue)]
       except BaseException as e:
         code, body = util.interpret_http_exception(e)
@@ -333,10 +337,10 @@ class GitHub(source.Source):
           raise
 
     else:
-      resp = self.rest(REST_API_NOTIFICATIONS,
+      resp = self.rest(REST_API_NOTIFICATIONS, parse_json=False,
                        headers={'If-Modified-Since': etag} if etag else None)
       etag = resp.headers.get('Last-Modified')
-      notifs = [] if resp.status_code == 304 else resp.json()
+      notifs = [] if resp.status_code == 304 else json.loads(resp.text)
 
       for notif in notifs:
         id = notif.get('id')
@@ -352,7 +356,7 @@ class GitHub(source.Source):
           continue
 
         try:
-          issue = self.rest(subject_url).json()
+          issue = self.rest(subject_url)
         except requests.HTTPError as e:
           if e.response.status_code in (404, 410):
             util.interpret_http_exception(e)
@@ -372,7 +376,7 @@ class GitHub(source.Source):
         if fetch_replies and comments_url:
           if since:
             comments_url += '?since=%s' % since.isoformat() + 'Z'
-          comments = self.rest(comments_url).json()
+          comments = self.rest(comments_url)
           comment_objs = list(util.trim_nulls(
             self.comment_to_object(c) for c in comments))
           obj['replies'] = {
@@ -382,7 +386,7 @@ class GitHub(source.Source):
 
         if fetch_likes:
           issue_url = issue['url'].replace('pulls', 'issues')
-          reactions = self.rest(issue_url + '/reactions').json()
+          reactions = self.rest(issue_url + '/reactions')
           obj.setdefault('tags', []).extend(
             self.reaction_to_object(r, obj) for r in reactions)
 
@@ -420,7 +424,7 @@ class GitHub(source.Source):
       raise ValueError('GitHub comment ids must be of the form USER:REPO:COMMENT_ID')
 
     if util.is_int(parts[2]):  # REST API id
-      comment = self.rest(REST_API_COMMENT % parts).json()
+      comment = self.rest(REST_API_COMMENT % parts)
     else:  # GraphQL node id
       comment = self.graphql(GRAPHQL_COMMENT, {'id': parts[2]})['node']
 
@@ -443,7 +447,7 @@ class GitHub(source.Source):
       'text': markdown,
       'mode': 'gfm',
       'context': '%s/%s' % (owner, repo),
-    }).text
+    }, parse_json=False).text
 
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
     """Creates a new issue or comment.
@@ -547,7 +551,7 @@ class GitHub(source.Source):
       is_reaction = orig_content in REACTIONS_GRAPHQL
       if preview:
         if comment_id:
-          comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id)).json()
+          comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id))
           target_link = '<a href="%s">a comment on %s/%s#%s, <em>%s</em></a>' % (
             base_url, owner, repo, number, util.ellipsize(comment['body']))
         else:
@@ -576,13 +580,13 @@ class GitHub(source.Source):
             api_url = REST_API_COMMENT_REACTIONS % (owner, repo, comment_id)
             reacted = self.rest(api_url, data={
               'content': REACTIONS_REST.get(orig_content),
-            }).json()
+            })
             url = base_url
           else:
             api_url = REST_API_REACTIONS % (owner, repo, number)
             reacted = self.rest(api_url, data={
               'content': REACTIONS_REST.get(orig_content),
-            }).json()
+            })
             url = '%s#%s-by-%s' % (base_url, reacted['content'].lower(),
                                    reacted['user']['login'])
 
@@ -595,7 +599,7 @@ class GitHub(source.Source):
         else:
           try:
             api_url = REST_API_COMMENTS % (owner, repo, number)
-            commented = self.rest(api_url, data={'body': content}).json()
+            commented = self.rest(api_url, data={'body': content})
             return source.creation_result({
               'id': commented.get('id'),
               'url': commented.get('html_url'),
@@ -647,7 +651,7 @@ class GitHub(source.Source):
           description='add label%s <span class="verb">%s</span> to %s.' % (
             ('s' if len(labels) > 1 else ''), ', '.join(labels), issue_link))
       else:
-        resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels).json()
+        resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels)
         return source.creation_result({
           'url': base_url,
           'type': 'tag',
@@ -680,7 +684,7 @@ class GitHub(source.Source):
           'title': title,
           'body': content,
           'labels': labels,
-        }).json()
+        })
         resp['url'] = resp.pop('html_url')
         return source.creation_result(resp)
 

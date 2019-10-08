@@ -18,7 +18,6 @@ from builtins import object, str
 
 import collections
 import copy
-import json
 import logging
 import re
 import urllib.parse
@@ -26,6 +25,7 @@ import urllib.parse
 from bs4 import BeautifulSoup
 import html2text
 from oauth_dropins.webutil import util
+import ujson as json
 
 from . import appengine_config
 

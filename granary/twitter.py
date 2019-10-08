@@ -19,7 +19,6 @@ import collections
 import datetime
 import http.client
 import itertools
-import json
 import logging
 import mimetypes
 import re
@@ -29,6 +28,7 @@ import urllib.parse, urllib.request
 from . import appengine_config
 
 import brevity
+import ujson as json
 
 from . import source
 from oauth_dropins import twitter_auth

@@ -50,7 +50,6 @@ from builtins import range, str, zip
 import collections
 import copy
 from datetime import datetime
-import json
 import logging
 import re
 import urllib.parse, urllib.request
@@ -59,6 +58,7 @@ import xml.sax.saxutils
 import dateutil.parser
 import mf2util
 from oauth_dropins.webutil import util
+import ujson as json
 
 from . import appengine_config
 from . import source
@@ -2303,8 +2303,7 @@ class Facebook(source.Source):
         req['headers'] = [{'name': n, 'value': v}
                           for n, v in sorted(req['headers'].items())]
 
-    data = 'batch=' + json.dumps(util.trim_nulls(requests), sort_keys=True,
-                                 separators=(',', ':'))  # no whitespace
+    data = 'batch=' + json.dumps(util.trim_nulls(requests), sort_keys=True)
     resps = self.urlopen('', data=data, _as=list)
 
     for resp in resps:

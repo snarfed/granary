@@ -330,10 +330,10 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``./docs/build.sh``.
 4.  ``git commit -am 'release vX.Y'``
 5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
-    ``sh  python3 setup.py clean build sdist  setenv ver vX.Y  twine upload -r pypitest dist/granary-$ver.tar.gz``
+    ``sh  python3 setup.py clean build sdist  setenv ver X.Y  source local/bin/activate.csh  twine upload -r pypitest dist/granary-$ver.tar.gz``
 6.  Install from test.pypi.org, both Python 2 and 3.
-    ``sh  cd /tmp  virtualenv local  source local/bin/activate.csh  pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
-    ``sh  python3 -m venv local3  source local3/bin/activate.csh  pip3 install --upgrade pip  pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
+    ``sh  cd /tmp  virtualenv local  source local/bin/activate.csh  # mf2py 1.1.2 on test pypi is currently broken  pip install mf2py==1.1.2  pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
+    ``sh  python3 -m venv local3  source local3/bin/activate.csh  pip3 install --upgrade pip  pip3 install mf2py==1.1.2  pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
 7.  Smoke test that the code trivially loads and runs, in both Python 2
     and 3.
 
@@ -367,14 +367,14 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     the release “title” in github), put ``### Notable changes`` on the
     second line, then copy and paste this version’s changelog contents
     below it.
-    ``sh  git tag -a $ver --cleanup=verbatim  git push  git push --tags``
+    ``sh  git tag -a v$ver --cleanup=verbatim  git push  git push --tags``
 9.  `Click here to draft a new release on
     GitHub. <https://github.com/snarfed/granary/releases/new>`__ Enter
     ``vX.Y`` in the *Tag version* box. Leave *Release title* empty. Copy
     ``### Notable changes`` and the changelog contents into the
     description text box.
 10. Upload to `pypi.org <https://pypi.org/>`__!
-    ``sh  twine upload dist/granary-X.Y.tar.gz``
+    ``sh  twine upload dist/granary-$ver.tar.gz``
 
 Related work
 ------------
@@ -434,6 +434,29 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+2.2 - unreleased
+~~~~~~~~~~~~~~~~
+
+-  Add Python 3.7 support, and improve overall Python 3 compatibility.
+-  Update a number of dependencies.
+-  Switch from Python’s built in ``json`` module to
+   `ujson <https://github.com/esnme/ultrajson/>`__ to speed up JSON
+   parsing and encoding.
+-  Facebook:
+
+   -  Add ``get_activities(scrape=True)`` for scraping HTML from
+      `m.facebook.com <https://m.facebook.com/>`__. Requires ``c_user``
+      and ``xs`` cookies from a logged in session.
+      (`snarfed/bridgy#886 <https://github.com/snarfed/bridgy/issues/886>`__
+
+-  Atom:
+
+   -  Bug fix for de-duping images in attachments.
+
+-  RSS:
+
+   -  Wrap all ``<description>`` element contents in ``CDATA`` sections.
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~

@@ -311,6 +311,7 @@ Changelog
 ### 2.2 - unreleased
 * Add Python 3.7 support, and improve overall Python 3 compatibility.
 * Update a number of dependencies.
+* Switch from Python's built in `json` module to [`ujson`](https://github.com/esnme/ultrajson/) to speed up JSON parsing and encoding.
 * Facebook:
   * Add `get_activities(scrape=True)` for scraping HTML from [m.facebook.com](https://m.facebook.com/). Requires `c_user` and `xs` cookies from a logged in session. ([snarfed/bridgy#886](https://github.com/snarfed/bridgy/issues/886)
 * Atom:

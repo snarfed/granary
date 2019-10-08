@@ -2,12 +2,12 @@
 """Unit tests for github.py.
 """
 import copy
-import json
 from unittest import skip
 
 from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+import ujson as json
 
 from granary import appengine_config
 from granary import github

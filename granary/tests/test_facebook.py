@@ -9,13 +9,13 @@ from builtins import range, zip
 
 import copy
 from datetime import datetime
-import json
 import os
 import urllib.parse
 
 from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+import ujson as json
 
 from granary import appengine_config
 from granary import facebook
@@ -227,8 +227,8 @@ POST = {  # Facebook
       'city': 'San Francisco',
       'state': 'CA',
       'country': 'United States',
-      'latitude': 37.728193717481,
-      'longitude': -122.493364235852,
+      'latitude': 37.7281937175,
+      'longitude': -122.4933642359,
     }
   },
   'type': 'photo',
@@ -544,8 +544,8 @@ POST_OBJ = {  # ActivityStreams
     'displayName': 'Lake Merced',
     'id': tag_uri('113785468632283'),
     'url': 'https://www.facebook.com/113785468632283',
-    'latitude': 37.728193717481,
-    'longitude': -122.493364235852,
+    'latitude': 37.7281937175,
+    'longitude': -122.4933642359,
     'position': '+37.728194-122.493364/',
     },
   'tags': [{

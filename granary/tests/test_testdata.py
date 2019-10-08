@@ -6,13 +6,13 @@ from future.utils import bytes_to_native_str
 from past.builtins import basestring
 
 import glob
-import json
 import logging
 import os
 
 from granary import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+import ujson as json
 
 from granary import as2, jsonfeed, microformats2, rss
 
@@ -33,7 +33,9 @@ def read_json(filename):
   """Reads JSON from a file. Attaches the filename to exceptions."""
   try:
     with open(filename, encoding='utf-8') as f:
-      return json.loads(f.read(), strict=False)  # allows embedded newlines (etc)
+      # note that ujson allows embedded newlines in strings, which we have in eg
+      # note_with_whitespace.as.json and frriends.
+      return json.loads(f.read())
   except Exception as e:
     e.args = ('%s: ' % filename,) + e.args
     raise

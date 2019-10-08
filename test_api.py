@@ -3,7 +3,6 @@
 """
 from __future__ import unicode_literals
 import copy
-import json
 import socket
 
 # webutil.tests must be imported before appengine_config!
@@ -20,6 +19,7 @@ import appengine_config
 
 from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine
+import ujson as json
 
 from granary import instagram
 from granary import source

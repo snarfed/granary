@@ -17,6 +17,7 @@ from oauth_dropins import (
 )
 from oauth_dropins.webutil import handlers, util
 import requests
+import ujson as json
 import webapp2
 from webob import exc
 
@@ -130,7 +131,7 @@ class UrlHandler(api.Handler):
     # decode data
     if input in ('activitystreams', 'as1', 'as2', 'mf2-json', 'json-mf2', 'jsonfeed'):
       try:
-        body_json = resp.json()
+        body_json = json.loads(resp.text)
         body_items = (body_json if isinstance(body_json, list)
                       else body_json.get('items') or [body_json])
       except (TypeError, ValueError):

@@ -9,15 +9,16 @@ from builtins import next
 from past.builtins import basestring
 
 import copy
-import json
 from mox3 import mox
-import requests
 import socket
 import urllib.parse
 
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+import requests
+import ujson as json
+
 from granary import flickr
 from granary import source
 

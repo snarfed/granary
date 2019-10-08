@@ -11,7 +11,6 @@ from past.builtins import basestring
 from collections import OrderedDict
 import copy
 import http.client
-import json
 from mox3 import mox
 import requests
 import socket
@@ -20,6 +19,7 @@ import urllib.parse
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+import ujson as json
 
 from granary import microformats2
 from granary import source

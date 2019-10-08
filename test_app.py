@@ -3,7 +3,6 @@
 """
 from __future__ import unicode_literals
 import copy
-import json
 import socket
 import xml.sax.saxutils
 
@@ -18,6 +17,7 @@ import xml.sax.saxutils
 # https://stackoverflow.com/questions/49194575
 import oauth_dropins.webutil.tests
 import appengine_config
+import ujson as json
 
 from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine, util

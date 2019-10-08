@@ -24,12 +24,12 @@ Atom format spec:
 http://atomenabled.org/developers/syndication/
 """
 import datetime
-import json
 import logging
 import urllib
 
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
+import ujson as json
 import webapp2
 from webob import exc
 
