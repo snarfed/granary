@@ -793,9 +793,7 @@ going to Homebrew Website Club
 
     got = atom.activities_to_atom([activity], {})
     self.assertEqual(1, got.count('<img class="u-photo" src="http://pics/1.jpg?x&amp;y" alt="" />'), got)
-    self.assert_multiline_in("""
-<link rel="enclosure" href="http://pics/1.jpg?x&amp;y" type="" />
-""", got)
+    self.assertIn('<link rel="enclosure" href="http://pics/1.jpg?x&amp;y"', got)
     self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got, got)
 
   def test_context_in_reply_to(self):
