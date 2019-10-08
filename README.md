@@ -314,6 +314,7 @@ Changelog
 * Switch from Python's built in `json` module to [`ujson`](https://github.com/esnme/ultrajson/) to speed up JSON parsing and encoding.
 * Facebook:
   * Add `get_activities(scrape=True)` for scraping HTML from [m.facebook.com](https://m.facebook.com/). Requires `c_user` and `xs` cookies from a logged in session. ([snarfed/bridgy#886](https://github.com/snarfed/bridgy/issues/886)
+  * [Upgrade Graph API version from 2.10 to 4.0.](https://developers.facebook.com/docs/graph-api/changelog)
 * Atom:
   * Bug fix for de-duping images in attachments.
 * RSS:

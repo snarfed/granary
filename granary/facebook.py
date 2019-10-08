@@ -67,7 +67,7 @@ from . import source
 # endpoints with ?fields=...
 # https://developers.facebook.com/docs/apps/changelog#v2_4_changes
 #   (see the Declarative Fields section)
-API_BASE = 'https://graph.facebook.com/v2.10/'
+API_BASE = 'https://graph.facebook.com/v4.0/'
 API_COMMENTS_FIELDS = 'id,message,from,created_time,message_tags,parent,attachment'
 API_COMMENTS_ALL = 'comments?filter=stream&ids=%s&fields=' + API_COMMENTS_FIELDS
 API_COMMENT = '%s?fields=' + API_COMMENTS_FIELDS
@@ -124,7 +124,7 @@ API_NOTIFICATION = '%s/notifications'
 
 # endpoint for uploading video. note the graph-video subdomain.
 # https://developers.facebook.com/docs/graph-api/video-uploads
-API_UPLOAD_VIDEO = 'https://graph-video.facebook.com/v2.10/me/videos'
+API_UPLOAD_VIDEO = 'https://graph-video.facebook.com/v4.0/me/videos'
 
 MAX_IDS = 50  # for the ids query param
 
