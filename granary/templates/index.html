@@ -84,7 +84,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <div class="login">
 <div class="row">
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6 col-lg-offset-1">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="post" action="/twitter/start_auth">
   <input type="image" class="shadow" alt="Twitter"
          src="/oauth_dropins/static/twitter.png" />
@@ -120,7 +120,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
          value="notifications,public_repo">
 </form></div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6 col-lg-offset-1">
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="get">
   <input type="image" class="shadow" alt="Microformats2"
          src="/static/microformats_button.png" />
@@ -153,6 +153,13 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <input type="image" class="shadow" alt="Atom" id="atom"
          src="/static/atom_button.png" height="60" />
   <input name="input" type="hidden" value="atom" />
+</form></div>
+
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<form method="get">
+  <input type="image" class="shadow" alt="RSS" id="rss"
+         src="/static/rss_button.png" height="50" />
+  <input name="input" type="hidden" value="rss" />
 </form></div>
 
 </div>
@@ -297,6 +304,8 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
           value="mf2-json">mf2-json</option>
   <option {% if input == "jsonfeed" %} selected {% endif %}
           value="jsonfeed">jsonfeed</option>
+  <option {% if input == "rss" %} selected {% endif %}
+          value="atom">rss</option>
 </select>
 <label>& output = </label>
 <select id="output" name="output">
