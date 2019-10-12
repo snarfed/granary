@@ -30,3 +30,18 @@ class ActivityStreams2Test(testutil.TestCase):
 
     with self.assertRaises(ValueError):
       as2.from_as1('z')
+
+  def test_to_as1_in_reply_to_string(self):
+    self._test_to_as1_in_reply_to('http://x.y/z')
+
+  def test_to_as1_in_reply_to_list(self):
+    self._test_to_as1_in_reply_to(['http://x.y/z'])
+
+  def _test_to_as1_in_reply_to(self, in_reply_to):
+    as1 = as2.to_as1({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'content': 'foo bar baz',
+      'inReplyTo': in_reply_to,
+    })
+    self.assertEqual([{'url': 'http://x.y/z'}], as1['inReplyTo'])
