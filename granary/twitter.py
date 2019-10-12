@@ -155,6 +155,10 @@ class Twitter(source.Source):
     approve=TWEET_URL_RE,
     reject=r'https://twitter\.com/.+\?protected_redirect=true')
 
+  # These use the Twitter-based defaults in Source.truncate() (and brevity).
+  # TRUNCATE_TEXT_LENGTH = None
+  # TRUNCATE_URL_LENGTH = None
+
   def __init__(self, access_token_key, access_token_secret, username=None):
     """Constructor.
 
