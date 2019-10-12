@@ -21,7 +21,7 @@ About
 
 Granary is a library and REST API that fetches and converts between a wide variety of data sources and formats:
 
-* Facebook, Flickr, GitHub, Instagram, and Twitter native APIs
+* Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native APIs
 * Instagram scraped HTML
 * [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0 (JSON)
 * HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2)
@@ -309,6 +309,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 2.2 - unreleased
+* Add Mastodon support!
 * Add Python 3.7 support, and improve overall Python 3 compatibility.
 * Update a number of dependencies.
 * Switch from Python's built in `json` module to [`ujson`](https://github.com/esnme/ultrajson/) to speed up JSON parsing and encoding.
