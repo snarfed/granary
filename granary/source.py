@@ -22,6 +22,7 @@ import logging
 import re
 import urllib.parse
 
+import brevity
 from bs4 import BeautifulSoup
 import html2text
 from oauth_dropins.webutil import util
@@ -190,10 +191,16 @@ class Source(with_metaclass(SourceMeta, object)):
   * POST_ID_RE: regexp, optional, matches valid post ids. Used in post_id().
   * HTML2TEXT_OPTIONS: dict mapping string html2text option names to values
     https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
+  * TRUNCATE_TEXT_LENGTH: integer, optional. Character limit to truncate to.
+        Defaults to Twitter's limit, 280 characters as of 2019-10-12.
+  * TRUNCATE_URL_LENGTH: integer, optional. Number of characters that URLs count
+        for. Defaults to Twitter's, 23 as of 2019-10-12.
   """
 
   POST_ID_RE = None
   HTML2TEXT_OPTIONS = {}
+  TRUNCATE_TEXT_LENGTH = None
+  TRUNCATE_URL_LENGTH = None
 
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""
@@ -971,3 +978,48 @@ class Source(with_metaclass(SourceMeta, object)):
             (name or content) if prefer_name else
             (content or name)
            ) or ''
+
+  def truncate(self, content, url, include_link, type=None, quote_url=None):
+    """Shorten text content to fit within a character limit.
+
+    Character limit and URL character length are taken from the
+    TRUNCATE_TEXT_LENGTH and TRUNCATE_URL_LENGTH class constants
+
+    Args:
+      content: string
+      url: string
+      include_link: string
+      type: string, optional: 'article', 'note', etc.
+      quote_url: string URL, optional. If provided, it will be appended to the
+        content, *after* truncating.
+
+    Return: string, the possibly shortened and ellipsized text
+    """
+    kwargs = {}
+
+    if quote_url:
+      kwargs['target_length'] = (
+        (self.TRUNCATE_TEXT_LENGTH or brevity.WEIGHTS['maxWeightedTweetLength']) -
+        (self.TRUNCATE_URL_LENGTH or brevity.WEIGHTS['transformedURLLength']) - 1)
+    elif self.TRUNCATE_TEXT_LENGTH is not None:
+      kwargs['target_length'] = self.TRUNCATE_TEXT_LENGTH
+
+    if self.TRUNCATE_URL_LENGTH is not None:
+      kwargs['link_length'] = self.TRUNCATE_URL_LENGTH
+
+    if include_link != OMIT_LINK:
+      kwargs['permalink'] = url  # only include when text is truncated
+
+    if include_link == INCLUDE_LINK:
+      kwargs['permashortlink'] = url  # always include
+
+    if type == 'article':
+      kwargs['format'] = brevity.FORMAT_ARTICLE
+
+    truncated = brevity.shorten(content, **kwargs)
+
+    if quote_url:
+      truncated += ' ' + quote_url
+
+    return truncated
+
