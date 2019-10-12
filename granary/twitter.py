@@ -27,7 +27,6 @@ import urllib.parse, urllib.request
 
 from . import appengine_config
 
-import brevity
 import ujson as json
 
 from . import source
@@ -754,8 +753,8 @@ class Twitter(source.Source):
 
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
-    content = self._truncate(content, obj.get('url'), include_link, type,
-                             quote_tweet=quote_tweet_url)
+    content = self.truncate(content, obj.get('url'), include_link, type=type,
+                            quote_url=quote_tweet_url)
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -872,41 +871,6 @@ class Twitter(source.Source):
       resp['url'] = base_url
 
     return source.creation_result(resp)
-
-  def _truncate(self, content, url, include_link, type, quote_tweet=None):
-    """Shorten tweet content to fit within the character limit.
-
-    Args:
-      content: string
-      url: string
-      include_link: string
-      type: string: 'article', 'note', etc.
-      quote_tweet: string URL, optional. If provided,
-        it will be appended to the content, *after* truncating.
-
-    Return: string, the possibly shortened and ellipsized tweet text
-    """
-    if type == 'article':
-      format = brevity.FORMAT_ARTICLE
-    else:
-      format = brevity.FORMAT_NOTE
-
-    target_length = MAX_TWEET_LENGTH
-    if quote_tweet:
-      target_length -= (TCO_LENGTH + 1)
-
-    truncated = brevity.shorten(
-      content,
-      # permalink is included only when the text is truncated
-      permalink=url if include_link != source.OMIT_LINK else None,
-      # permashortlink is always included
-      permashortlink=url if include_link == source.INCLUDE_LINK else None,
-      target_length=target_length, link_length=TCO_LENGTH, format=format)
-
-    if quote_tweet:
-      truncated += ' ' + quote_tweet
-
-    return truncated
 
   def upload_images(self, images):
     """Uploads one or more images from web URLs.

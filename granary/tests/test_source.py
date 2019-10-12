@@ -13,7 +13,12 @@ from oauth_dropins.webutil import util
 from granary import facebook
 from granary import instagram
 from granary import source
-from granary.source import Source
+from granary.source import (
+  INCLUDE_IF_TRUNCATED,
+  INCLUDE_LINK,
+  OMIT_LINK,
+  Source,
+)
 from granary import twitter
 
 
@@ -556,3 +561,96 @@ Watching  \t waves
   def test_embed_post_checks_content_for_html(self):
     with self.assertRaises(ValueError):
       self.source.embed_post({'content': '<xyz>'})
+
+  def test_truncate(self):
+    """A bunch of tests to exercise the text shortening algorithm."""
+    truncate = self.source.truncate
+    self.source.TRUNCATE_TEXT_LENGTH = 140
+
+    orig = (
+      'Hey #indieweb, the coming storm of webmention Spam may not be '
+      'far away. Those of us that have input fields to send webmentions '
+      'manually may already be getting them')
+    expected = (
+      'Hey #indieweb, the coming storm of webmention Spam may not '
+      'be far away. Those of us that have input fields to send… '
+      'https://ben.thatmustbe.me/note/2015/1/31/1/')
+    result = truncate(orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/',
+                      INCLUDE_LINK)
+    self.assertEqual(expected, result)
+
+    orig = (
+      'Despite names,\n'
+      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
+      '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
+    expected = (
+      'Despite names,\n'
+      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
+      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
+      '@iainspad @sashtown…')
+    result = truncate(orig, 'http://tantek.com/1234', OMIT_LINK)
+    self.assertEqual(expected, result)
+
+    orig = expected = (
+      '@davewiner I stubbed a page on the wiki for '
+      'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
+      'welcome! @kevinmarks @julien51 @aaronpk')
+    result = truncate(orig, 'https://kylewm.com/5678', INCLUDE_IF_TRUNCATED)
+    self.assertEqual(expected, result)
+
+    orig = expected = (
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), a url with a query '
+      'string;foo.withknown.com/example?query=parameters')
+    result = truncate(orig, 'https://foo.bar/', INCLUDE_IF_TRUNCATED)
+    self.assertEqual(expected, result)
+
+    orig = (
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      'long:foo.withknown.com/example?query=parameters')
+    expected = (
+      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
+      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
+      'long…')
+    result = truncate(orig, 'http://foo.com/', OMIT_LINK)
+    self.assertEqual(expected, result)
+
+    # test case-insensitive link matching
+    orig = (
+      'The Telegram Bot API is the best bot API ever. Everyone should '
+      'learn from it, especially Matrix.org, which currently requires a '
+      'particular URL structure and registration files.')
+    expected = (
+      'The Telegram Bot API is the best bot API ever. Everyone should learn '
+      'from it, especially Matrix.org… '
+      'https://unrelenting.technology/notes/2015-09-05-00-35-13')
+    result = truncate(orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13',
+                      INCLUDE_IF_TRUNCATED)
+    self.assertEqual(expected, result)
+
+    orig = ('Leaving this here for future reference. Turn on debug menu '
+      'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu '
+      '-bool true`')
+    expected = ('Leaving this here for future reference. Turn on debug menu '
+      'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu…')
+    result = truncate(orig, 'http://foo.com', OMIT_LINK)
+    self.assertEqual(expected, result)
+
+    self.source.TRUNCATE_TEXT_LENGTH = 20
+    self.source.TRUNCATE_URL_LENGTH = 5
+
+    orig = 'ok http://foo.co/bar ellipsize http://foo.co/baz'
+    expected = 'ok http://foo.co/bar ellipsize…'
+    result = truncate(orig, 'http://foo.com', OMIT_LINK)
+    self.assertEqual(expected, result)
+
+    orig = 'too long\nextra whitespace\tbut should include url'
+    expected = 'too long… http://obj.ca'
+    result = truncate(orig, 'http://obj.ca', INCLUDE_LINK)
+    self.assertEqual(expected, result)
+
+    orig = expected = 'trailing slash http://www.foo.co/'
+    result = truncate(orig, 'http://www.foo.co/', OMIT_LINK)
+    self.assertEqual(expected, result)

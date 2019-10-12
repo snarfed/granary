@@ -36,6 +36,7 @@ from granary.twitter import (
   API_TIMELINE,
   API_USER_TIMELINE,
   HTML_FAVORITES,
+  Twitter,
 )
 # test data
 def tag_uri(name):
@@ -712,13 +713,7 @@ class TwitterTest(testutil.TestCase):
     self.maxDiff = None
     appengine_config.TWITTER_APP_KEY = 'fake'
     appengine_config.TWITTER_APP_SECRET = 'fake'
-    self.orig_max_tweet_length = twitter.MAX_TWEET_LENGTH
-    self.orig_tco_length = twitter.TCO_LENGTH
     self.twitter = twitter.Twitter('key', 'secret')
-
-  def tearDown(self):
-    twitter.MAX_TWEET_LENGTH = self.orig_max_tweet_length
-    twitter.TCO_LENGTH = self.orig_tco_length
 
   def expect_urlopen(self, url, response=None, params=None, **kwargs):
     if not url.startswith('http'):
@@ -1651,8 +1646,8 @@ class TwitterTest(testutil.TestCase):
       self.assertEqual(502, e.code)
 
   def test_create_tweet(self):
-    twitter.MAX_TWEET_LENGTH = 20
-    twitter.TCO_LENGTH = 5
+    self.twitter.TRUNCATE_TEXT_LENGTH = 20
+    self.twitter.TRUNCATE_URL_LENGTH = 5
 
     dots = '…'
     original = (
@@ -1720,111 +1715,6 @@ class TwitterTest(testutil.TestCase):
       self.assertEqual('<span class="verb">tweet</span>:', got.description)
       self.assertEqual(preview, got.content)
 
-  def test_tweet_truncate(self):
-    """A bunch of tests to exercise the tweet shortening algorithm
-    """
-    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
-    twitter.MAX_TWEET_LENGTH = 140
-
-    orig = (
-      'Hey #indieweb, the coming storm of webmention Spam may not be '
-      'far away. Those of us that have input fields to send webmentions '
-      'manually may already be getting them')
-    expected = (
-      'Hey #indieweb, the coming storm of webmention Spam may not '
-      'be far away. Those of us that have input fields to send… '
-      'https://ben.thatmustbe.me/note/2015/1/31/1/')
-    result = self.twitter._truncate(
-      orig, 'https://ben.thatmustbe.me/note/2015/1/31/1/',
-      source.INCLUDE_LINK, 'note')
-    self.assertEqual(expected, result)
-
-    orig = (
-      'Despite names,\n'
-      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
-      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
-      '@iainspad @sashtown @thomatronic (ttk.me t4_81)')
-    expected = (
-      'Despite names,\n'
-      'ind.ie&indie.vc are NOT #indieweb @indiewebcamp\n'
-      'indiewebcamp.com/2014-review#Indie_Term_Re-use\n'
-      '@iainspad @sashtown…')
-    result = self.twitter._truncate(
-      orig, 'http://tantek.com/1234', source.OMIT_LINK, 'note')
-    self.assertEqual(expected, result)
-
-    orig = expected = (
-      '@davewiner I stubbed a page on the wiki for '
-      'https://indiewebcamp.com/River4. Edits/improvmnts from users are '
-      'welcome! @kevinmarks @julien51 @aaronpk')
-    result = self.twitter._truncate(
-      orig, 'https://kylewm.com/5678', source.INCLUDE_IF_TRUNCATED,
-      'note')
-    self.assertEqual(expected, result)
-
-    orig = expected = (
-      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      'that wikipedia.org/Contain_(Parentheses), a url with a query '
-      'string;foo.withknown.com/example?query=parameters')
-    result = self.twitter._truncate(
-      orig, 'https://foo.bar/', source.INCLUDE_IF_TRUNCATED, 'note')
-    self.assertEqual(expected, result)
-
-    orig = (
-      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      'long:foo.withknown.com/example?query=parameters')
-    expected = (
-      'This is a long tweet with (foo.com/parenthesized-urls) and urls '
-      'that wikipedia.org/Contain_(Parentheses), that is one charc too '
-      'long…')
-    result = self.twitter._truncate(
-      orig, 'http://foo.com/', source.OMIT_LINK, 'note')
-    self.assertEqual(expected, result)
-
-    # test case-insensitive link matching
-    orig = (
-      'The Telegram Bot API is the best bot API ever. Everyone should '
-      'learn from it, especially Matrix.org, which currently requires a '
-      'particular URL structure and registration files.')
-    expected = (
-      'The Telegram Bot API is the best bot API ever. Everyone should learn '
-      'from it, especially Matrix.org… '
-      'https://unrelenting.technology/notes/2015-09-05-00-35-13')
-    result = self.twitter._truncate(
-      orig, 'https://unrelenting.technology/notes/2015-09-05-00-35-13',
-      source.INCLUDE_IF_TRUNCATED,
-      'note')
-    self.assertEqual(expected, result)
-
-    orig = ('Leaving this here for future reference. Turn on debug menu '
-      'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu '
-      '-bool true`')
-    expected = ('Leaving this here for future reference. Turn on debug menu '
-      'in Mac App Store `defaults write com.apple.appstore ShowDebugMenu…')
-    result = self.twitter._truncate(orig, 'http://foo.com', source.OMIT_LINK, 'note')
-    self.assertEqual(expected, result)
-
-    twitter.MAX_TWEET_LENGTH = 20
-    twitter.TCO_LENGTH = 5
-
-    orig = 'ok http://foo.co/bar ellipsize http://foo.co/baz'
-    expected = 'ok http://foo.co/bar ellipsize…'
-    result = self.twitter._truncate(
-      orig, 'http://foo.com', source.OMIT_LINK, 'note')
-    self.assertEqual(expected, result)
-
-    orig = 'too long\nextra whitespace\tbut should include url'
-    expected = 'too long… http://obj.ca'
-    result = self.twitter._truncate(
-      orig, 'http://obj.ca', source.INCLUDE_LINK, 'note')
-    self.assertEqual(expected, result)
-
-    orig = expected = 'trailing slash http://www.foo.co/'
-    result = self.twitter._truncate(
-      orig, 'http://www.foo.co/', source.OMIT_LINK, 'note')
-    self.assertEqual(expected, result)
-
   def test_no_ellipsize_real_tweet(self):
     orig = """\
 Despite names,
@@ -1857,8 +1747,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     account for the ellipsis when determining where to truncate, it will
     truncate after 'send' and the result will be one char too long.
     """
-    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
-    twitter.MAX_TWEET_LENGTH = 140
+    self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
     orig = ('Hey #indieweb, the coming storm of webmention Spam may not be '
             'far away. Those of us that have input fields to send webmentions '
@@ -1954,8 +1843,8 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.assertIn('my\ncontent', result.content)
 
   def test_create_tweet_include_link(self):
-    twitter.MAX_TWEET_LENGTH = 20
-    twitter.TCO_LENGTH = 5
+    self.twitter.TRUNCATE_TEXT_LENGTH = 20
+    self.twitter.TRUNCATE_URL_LENGTH = 5
 
     self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
                         params={'status': 'too long… http://obj.ca'})
@@ -1973,8 +1862,8 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                   result.content)
 
   def test_create_tweet_include_link_if_truncated(self):
-    twitter.MAX_TWEET_LENGTH = 20
-    twitter.TCO_LENGTH = 5
+    self.twitter.TRUNCATE_TEXT_LENGTH = 20
+    self.twitter.TRUNCATE_URL_LENGTH = 5
 
     cases = [(
       'too long\nextra whitespace\tbut should include url',
@@ -2292,8 +2181,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     created = self.twitter.create(obj)
 
   def test_create_quote_tweet_truncated_content(self):
-    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
-    twitter.MAX_TWEET_LENGTH = 140
+    self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
     self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
         'status':('X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
@@ -2373,8 +2261,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       self.assertIn('Could not find a tweet to', preview.error_html)
 
   def test_create_with_multiple_photos(self):
-    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
-    twitter.MAX_TWEET_LENGTH = 140
+    self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
     image_urls = ['http://my/picture/%d' % i for i in range(twitter.MAX_MEDIA + 1)]
     obj = {
@@ -2543,8 +2430,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                        self.twitter.create(obj).content)
 
   def test_create_with_video(self):
-    self.mox.StubOutWithMock(twitter, 'MAX_TWEET_LENGTH')
-    twitter.MAX_TWEET_LENGTH = 140
+    self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
     obj = {
       'objectType': 'note',
