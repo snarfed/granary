@@ -5,6 +5,7 @@
   <meta http-equiv="X-XRDS-Location"
         content="//{{ host }}/.well-known/host-meta.xrds" />
   <script type="text/javascript" src="/static/demo.js"></script>
+  <script type="text/javascript" src="/oauth_dropins/static/util.js"></script>
   <title>Granary</title>
   <meta name="viewport" content="width=device-width">
   <link rel="stylesheet" type="text/css" href="/oauth_dropins/static/bootstrap.min.css" />
@@ -121,6 +122,17 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 </form></div>
 
 <div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<form method="post" action="/mastodon/start_auth">
+  <nobr>
+    <input type="url" name="instance" class="form-control" placeholder="Your instance" alt="Instance, eg mastodon.social" scheme="https" required style="max-width: 110px; height: 50px; display:inline;" />
+    <input type="image" class="shadow" title="Mastodon. Enter your instance, eg mastodon.social" alt="Mastodon" src="/oauth_dropins/static/mastodon_logo_button.png" style="background-color: #EBEBEB"/>
+  </nobr>
+</form></div>
+
+</div>
+<div class="row">
+
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
 <form method="get">
   <input type="image" class="shadow" alt="Microformats2"
          src="/static/microformats_button.png" />
@@ -190,6 +202,11 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <input type="hidden" name="cache" value="false" />
 <p><code>
 <label>/ {{ site }} </label>
+
+{% if site == 'mastodon' %}
+<input type="hidden" id="instance" name="instance" value="{{ entity.instance() }}" />
+<input type="hidden" id="username" name="username" value="{{ entity.username() }}" />
+{% endif %}
 
 {% if site != 'github' %}
 <label>/ </label>

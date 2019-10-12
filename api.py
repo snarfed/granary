@@ -42,6 +42,7 @@ from granary import (
   github,
   instagram,
   jsonfeed,
+  mastodon,
   microformats2,
   rss,
   source,
@@ -126,6 +127,10 @@ class Handler(handlers.ModernHandler):
         src = instagram.Instagram(scrape=True)
       else:
         self.abort(400, 'Sorry, Instagram is not currently available in the REST API. Try https://instagram-atom.appspot.com/ instead!')
+    elif site == 'mastodon':
+      src = mastodon.Mastodon(
+        instance=util.get_required_param(self, 'instance'),
+        username=util.get_required_param(self, 'username'))
     else:
       src_cls = source.sources.get(site)
       if not src_cls:

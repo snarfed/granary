@@ -13,6 +13,7 @@ from oauth_dropins import (
   facebook,
   flickr,
   github,
+  mastodon,
   twitter,
 )
 from oauth_dropins.webutil import handlers, util
@@ -32,6 +33,7 @@ from granary import (
 from granary.facebook import Facebook
 from granary.flickr import Flickr
 from granary.github import GitHub
+from granary.mastodon import Mastodon
 from granary.instagram import Instagram
 from granary.twitter import Twitter
 
@@ -200,6 +202,8 @@ application = webapp2.WSGIApplication([
   ('/flickr/oauth_callback', flickr.CallbackHandler.to('/')),
   ('/github/start_auth', github.StartHandler.to('/github/oauth_callback')),
   ('/github/oauth_callback', github.CallbackHandler.to('/')),
+  ('/mastodon/start_auth', mastodon.StartHandler.to('/mastodon/oauth_callback')),
+  ('/mastodon/oauth_callback', mastodon.CallbackHandler.to('/')),
   ('/twitter/start_auth', twitter.StartHandler.to('/twitter/oauth_callback')),
   ('/twitter/oauth_callback', twitter.CallbackHandler.to('/')),
   ('/url', UrlHandler),

@@ -7,7 +7,8 @@ About
 Granary is a library and REST API that fetches and converts between a
 wide variety of data sources and formats:
 
--  Facebook, Flickr, GitHub, Instagram, and Twitter native APIs
+-  Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native
+   APIs
 -  Instagram scraped HTML
 -  `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0 (JSON)
 -  HTML and JSON with
@@ -438,6 +439,7 @@ Changelog
 2.2 - unreleased
 ~~~~~~~~~~~~~~~~
 
+-  Add Mastodon support!
 -  Add Python 3.7 support, and improve overall Python 3 compatibility.
 -  Update a number of dependencies.
 -  Switch from Python’s built in ``json`` module to
@@ -449,6 +451,8 @@ Changelog
       `m.facebook.com <https://m.facebook.com/>`__. Requires ``c_user``
       and ``xs`` cookies from a logged in session.
       (`snarfed/bridgy#886 <https://github.com/snarfed/bridgy/issues/886>`__
+   -  `Upgrade Graph API version from 2.10 to
+      4.0. <https://developers.facebook.com/docs/graph-api/changelog>`__
 
 -  Atom:
 

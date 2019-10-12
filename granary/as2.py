@@ -13,6 +13,13 @@ import logging
 
 from oauth_dropins.webutil import util
 
+# ActivityPub Content-Type details:
+# https://www.w3.org/TR/activitypub/#retrieving-objects
+CONTENT_TYPE = 'application/activity+json'
+CONTENT_TYPE_LD = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+CONNEG_HEADERS = {
+    'Accept': '%s; q=0.9, %s; q=0.8' % (CONTENT_TYPE, CONTENT_TYPE_LD),
+}
 CONTEXT = 'https://www.w3.org/ns/activitystreams'
 
 
@@ -57,7 +64,7 @@ def from_as1(obj, type=None, context=CONTEXT):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.
 
   Args:
-    obj: dict, AS1 activity or object/
+    obj: dict, AS1 activity or object
     type: string, default type if type inference can't determine a type.
     context: string, included as @context
 
