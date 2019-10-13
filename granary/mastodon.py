@@ -19,6 +19,7 @@ from . import source
 
 API_STATUSES = '/api/v1/statuses'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
+API_REBLOG = '/api/v1/statuses/%s/reblog'
 
 
 class Mastodon(source.Source):
@@ -64,7 +65,8 @@ class Mastodon(source.Source):
     except BaseException as e:
       util.interpret_http_exception(e)
       raise
-    return resp
+
+    return json.loads(resp.text)
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -177,7 +179,7 @@ class Mastodon(source.Source):
       return source.creation_result(
         abort=True,
         error_plain='Could not find a toot on %s to reply to.' % self.DOMAIN,
-        error_html="""Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.""" % (self.instance, self.DOMAIN))
+        error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.' % (self.instance, self.DOMAIN))
 
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
@@ -196,34 +198,28 @@ class Mastodon(source.Source):
         return source.creation_result(
           abort=True,
           error_plain='Could not find a toot on %s to favorite.' % self.DOMAIN,
-          error_html="""Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/favorite">favorite</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.""" % (self.instance, self.DOMAIN))
+          error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/favorite">favorite</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.' % (self.instance, self.DOMAIN))
 
       if preview:
         preview_description += '<span class="verb">favorite</span> <a href="%s">this toot</a>.' % base_url
         return source.creation_result(description=preview_description)
       else:
-        self.api(API_FAVORITE % base_id)
-        resp = {'type': 'like'}
+        resp = self.api(API_FAVORITE % base_id)
+        resp['type'] = 'like'
 
-#     elif type == 'activity' and verb == 'share':
-#       if not base_url:
-#         return source.creation_result(
-#           abort=True,
-#           error_plain='Could not find a tweet to retweet.',
-#           error_html='Could not find a tweet to <a href="http://indiewebcamp.com/repost">retweet</a>. '
-#           'Check that your post has a repost-of link to a Twitter URL or to an original post that publishes a '
-#           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
+    elif type == 'activity' and verb == 'share':
+      if not base_url:
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a toot to boost.',
+          error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/repost">boost</a>. Check that your post has the right <a href="http://indiewebcamp.com/repost">repost-of</a> link.' % (self.instance, self.DOMAIN))
 
-#       if preview:
-#           preview_description += """\
-# <span class="verb">retweet</span>
-# <a href="%s">this tweet</a>:
-# %s""" % (base_url, self.embed_post(base_obj))
-#           return source.creation_result(description=preview_description)
-#       else:
-#         data = urllib.parse.urlencode({'id': base_id})
-#         resp = self.urlopen(API_POST_RETWEET % base_id, data=data)
-#         resp['type'] = 'repost'
+      if preview:
+          preview_description += '<span class="verb">boost</span> <a href="%s">this toot</a>.' % base_url
+          return source.creation_result(description=preview_description)
+      else:
+        resp = self.api(API_REBLOG % base_id)
+        resp['type'] = 'repost'
 
     elif type in ('note', 'article') or is_reply or is_rsvp:  # a post
       data = {'status': content}
@@ -262,7 +258,7 @@ class Mastodon(source.Source):
         return source.creation_result(content=preview_content,
                                       description=preview_description)
       else:
-        resp = json.loads(self.api(API_STATUSES, json=data).text)
+        resp = self.api(API_STATUSES, json=data)
 
     else:
       return source.creation_result(
