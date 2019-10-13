@@ -18,6 +18,7 @@ from . import as2
 from . import source
 
 API_STATUSES = '/api/v1/statuses'
+API_FAVORITE = '/api/v1/statuses/%s/favourite'
 
 
 class Mastodon(source.Source):
@@ -190,25 +191,19 @@ class Mastodon(source.Source):
     # preview_content = HASHTAG_RE.sub(
     #   r'\1<a href="https://twitter.com/hashtag/\2">#\2</a>', preview_content)
 
-#     if type == 'activity' and verb == 'like':
-#       if not base_url:
-#         return source.creation_result(
-#           abort=True,
-#           error_plain='Could not find a tweet to like.',
-#           error_html='Could not find a tweet to <a href="http://indiewebcamp.com/favorite">favorite</a>. '
-#           'Check that your post has a like-of link to a Twitter URL or to an original post that publishes a '
-#           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
+    if type == 'activity' and verb == 'like':
+      if not base_url:
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a toot on %s to favorite.' % self.DOMAIN,
+          error_html="""Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/favorite">favorite</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.""" % (self.instance, self.DOMAIN))
 
-#       if preview:
-#         preview_description += """\
-# <span class="verb">favorite</span>
-# <a href="%s">this tweet</a>:
-# %s""" % (base_url, self.embed_post(base_obj))
-#         return source.creation_result(description=preview_description)
-#       else:
-#         data = urllib.parse.urlencode({'id': base_id})
-#         self.urlopen(API_POST_FAVORITE, data=data)
-#         resp = {'type': 'like'}
+      if preview:
+        preview_description += '<span class="verb">favorite</span> <a href="%s">this toot</a>.' % base_url
+        return source.creation_result(description=preview_description)
+      else:
+        self.api(API_FAVORITE % base_id)
+        resp = {'type': 'like'}
 
 #     elif type == 'activity' and verb == 'share':
 #       if not base_url:
@@ -230,7 +225,7 @@ class Mastodon(source.Source):
 #         resp = self.urlopen(API_POST_RETWEET % base_id, data=data)
 #         resp['type'] = 'repost'
 
-    if type in ('note', 'article') or is_reply or is_rsvp:  # a post
+    elif type in ('note', 'article') or is_reply or is_rsvp:  # a post
       data = {'status': content}
 
       if is_reply:
