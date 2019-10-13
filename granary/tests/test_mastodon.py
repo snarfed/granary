@@ -13,6 +13,7 @@ from granary import appengine_config
 from granary import as2, mastodon
 from granary.mastodon import (
   API_FAVORITE,
+  API_MEDIA,
   API_REBLOG,
   API_STATUSES,
 )
@@ -37,6 +38,15 @@ SHARE = {
   'objectType': 'activity',
   'verb': 'share',
   'object': {'url': 'http://foo.com/@snarfed/123'},
+}
+NOTE_WITH_MEDIA = {
+  'objectType': 'note',
+  'content': 'foo ☕ bar',
+  'image': [
+    {'url': 'http://pic/1'},
+    {'url': 'http://pic/2', 'displayName': 'some alt text'},
+  ],
+  'stream': {'url': 'http://video/3'},
 }
 
 # Mastodon
@@ -150,3 +160,28 @@ class MastodonTest(testutil.TestCase):
   def test_preview_boost(self):
     preview = self.mastodon.preview_create(SHARE)
     self.assertEqual('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this toot</a>.', preview.description)
+
+  def test_preview_with_media(self):
+    preview = self.mastodon.preview_create(NOTE_WITH_MEDIA)
+    self.assertEqual('<span class="verb">toot</span>:', preview.description)
+    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://video/3"><a href="http://video/3">this video</a></video> &nbsp; <img src="http://pic/1" alt="" /> &nbsp; <img src="http://pic/2" alt="some alt text" />',
+                     preview.content)
+
+  def test_create_with_media(self):
+    self.expect_requests_get('http://pic/1', 'pic 1')
+    self.expect_api(API_MEDIA, {'id': 'a'}, files={'file': b'pic 1'})
+
+    self.expect_requests_get('http://pic/2', 'pic 2')
+    self.expect_api(API_MEDIA, {'id': 'b'}, files={'file': b'pic 2'})
+
+    self.expect_requests_get('http://video/3', 'vid 3')
+    self.expect_api(API_MEDIA, {'id': 'c'}, files={'file': b'vid 3'})
+
+    self.expect_api(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'media_ids': ['a', 'b', 'c'],
+    }, response=STATUS)
+    self.mox.ReplayAll()
+
+    result = self.mastodon.create(NOTE_WITH_MEDIA)
+    self.assert_equals(STATUS, result.content, result)
