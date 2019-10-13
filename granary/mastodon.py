@@ -45,6 +45,7 @@ class Mastodon(source.Source):
     """
     assert instance
     self.instance = instance
+    self.DOMAIN = util.domain_from_link(instance)
     self.username = username
     self.access_token = access_token
 
@@ -146,7 +147,7 @@ class Mastodon(source.Source):
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 
-    is_reply = type == 'comment' or 'inReplyTo' in obj
+    is_reply = type == 'comment' or obj.get('inReplyTo')
     is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
     # images = util.get_list(obj, 'image')
     # video_url = util.get_first(obj, 'stream', {}).get('url')
@@ -154,24 +155,11 @@ class Mastodon(source.Source):
 
     # prefer displayName over content for articles
     type = obj.get('objectType')
-    prefer_content = type == 'note' or (base_url and (type == 'comment'
-                                                      or obj.get('inReplyTo')))
+    prefer_content = type == 'note' or (base_url and is_reply)
     preview_description = ''
-    quote_tweet_url = None
-#     for att in obj.get('attachments', []):
-#       url = self.URL_CANONICALIZER(att.get('url', ''))
-#       if url and TWEET_URL_RE.match(url):
-#         quote_tweet_url = url
-#         preview_description += """\
-# <span class="verb">quote</span>
-# <a href="%s">this tweet</a>:<br>
-# %s
-# <br>and """ % (url, self.embed_post(att))
-#         break
-
     content = self._content_for_create(
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
-      # strip_first_video_tag=bool(video_url), strip_quotations=bool(quote_tweet_url))
+      # strip_first_video_tag=bool(video_url))
 
     if not content:
       if type == 'activity' and not is_rsvp:
@@ -184,45 +172,15 @@ class Mastodon(source.Source):
           error_plain='No content text found.',
           error_html='No content text found.')
 
-#     if is_reply and base_url:
-#       # Twitter *used* to require replies to include an @-mention of the
-#       # original tweet's author
-#       # https://dev.twitter.com/docs/api/1.1/post/statuses/update#api-param-in_reply_to_status_id
-#       # ...but now we use the auto_populate_reply_metadata query param instead:
-#       # https://dev.twitter.com/overview/api/upcoming-changes-to-tweets
-
-#       # the embed URL in the preview can't start with mobile. or www., so just
-#       # hard-code it to twitter.com. index #1 is netloc.
-#       parsed = urllib.parse.urlparse(base_url)
-#       parts = parsed.path.split('/')
-#       if len(parts) < 2 or not parts[1]:
-#         raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
-#       reply_to_prefix = '@%s ' % parts[1].lower()
-#       if content.lower().startswith(reply_to_prefix):
-#         content = content[len(reply_to_prefix):]
-
-#       parsed = list(parsed)
-#       parsed[1] = self.DOMAIN
-#       base_url = urllib.parse.urlunparse(parsed)
-
-#     # need a base_url with the tweet id for the embed HTML below. do this
-#     # *after* checking the real base_url for in-reply-to author username.
-#     if base_id and not base_url:
-#       base_url = 'https://twitter.com/-/statuses/' + base_id
-
-#     if is_reply and not base_url:
-#       return source.creation_result(
-#         abort=True,
-#         error_plain='Could not find a tweet to reply to.',
-#         error_html='Could not find a tweet to <a href="http://indiewebcamp.com/reply">reply to</a>. '
-#         'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
-#         'link a Twitter URL or to an original post that publishes a '
-#         '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
+    if is_reply and not base_url:
+      return source.creation_result(
+        abort=True,
+        error_plain='Could not find a toot on %s to reply to.' % self.DOMAIN,
+        error_html="""Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.""" % (self.instance, self.DOMAIN))
 
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
     content = self.truncate(content, obj.get('url'), include_link, type)
-                             # quote_tweet=quote_tweet_url)
 
     # linkify defaults to Twitter's link shortening behavior
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -276,10 +234,8 @@ class Mastodon(source.Source):
       data = {'status': content}
 
       if is_reply:
-        preview_description += """\
-<span class="verb">@-reply</span> to <a href="%s">this toot</a>:
-%s""" % (base_url, self.embed_post(base_obj))
-        data['in_reply_to_status_id'] = base_id
+        preview_description += '<span class="verb">reply</span> to <a href="%s">this toot</a>:' % base_url
+        data['in_reply_to_id'] = base_id
       else:
         preview_description += '<span class="verb">toot</span>:'
 
@@ -312,7 +268,6 @@ class Mastodon(source.Source):
                                       description=preview_description)
       else:
         resp = json.loads(self.api(API_STATUSES, json=data).text)
-        resp['type'] = 'comment' if is_reply else 'post'
 
     else:
       return source.creation_result(

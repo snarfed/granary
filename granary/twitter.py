@@ -752,7 +752,7 @@ class Twitter(source.Source):
         error_plain='Could not find a tweet to reply to.',
         error_html='Could not find a tweet to <a href="http://indiewebcamp.com/reply">reply to</a>. '
         'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
-        'link a Twitter URL or to an original post that publishes a '
+        'link to a Twitter URL or to an original post that publishes a '
         '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
     # truncate and ellipsize content if it's over the character
