@@ -12,10 +12,26 @@ import ujson as json
 from granary import appengine_config
 from granary import as2, mastodon
 from granary.mastodon import (
+  API_FAVORITE,
   API_STATUSES,
 )
 
 INSTANCE = 'http://foo.com'
+
+NOTE = {
+  'objectType': 'note',
+  'content': 'foo ☕ bar',
+}
+REPLY = {
+  'objectType': 'note',
+  'content': 'foo ☕ bar',
+  'inReplyTo': [{'url': 'http://foo.com/@other/123'}],
+}
+LIKE = {
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': 'http://foo.com/@snarfed/123'},
+}
 
 # Mastodon
 # https://docs.joinmastodon.org/api/entities/#account
@@ -107,15 +123,10 @@ class MastodonTest(testutil.TestCase):
     ], self.mastodon.get_activities())
 
   def test_create_status(self):
-    self.expect_api(API_STATUSES, json={
-      'status': 'foo ☕ bar'
-    }, response=STATUS)
+    self.expect_api(API_STATUSES, json={'status': 'foo ☕ bar'}, response=STATUS)
     self.mox.ReplayAll()
 
-    result = self.mastodon.create({
-      'objectType': 'note',
-      'content': 'foo ☕ bar',
-    })
+    result = self.mastodon.create(NOTE)
 
     expected = copy.deepcopy(STATUS)
     expected['type'] = 'post'
@@ -124,23 +135,15 @@ class MastodonTest(testutil.TestCase):
     self.assertIsNone(result.error_html)
 
   def test_preview_status(self):
-    got = self.mastodon.preview_create({
-      'objectType': 'note',
-      'content': 'foo ☕ bar',
-    })
+    got = self.mastodon.preview_create(NOTE)
     self.assertEqual('<span class="verb">toot</span>:', got.description)
     self.assertEqual('foo ☕ bar', got.content)
 
   def test_create_status(self):
-    self.expect_api(API_STATUSES, json={
-      'status': 'foo ☕ bar'
-    }, response=STATUS)
+    self.expect_api(API_STATUSES, json={'status': 'foo ☕ bar'}, response=STATUS)
     self.mox.ReplayAll()
 
-    result = self.mastodon.create({
-      'objectType': 'note',
-      'content': 'foo ☕ bar',
-    })
+    result = self.mastodon.create(NOTE)
 
     self.assert_equals(STATUS, result.content, result)
     self.assertIsNone(result.error_plain)
@@ -153,20 +156,29 @@ class MastodonTest(testutil.TestCase):
     }, response=STATUS)
     self.mox.ReplayAll()
 
-    result = self.mastodon.create({
-      'objectType': 'note',
-      'content': 'foo ☕ bar',
-      'inReplyTo': [{'url': 'http://foo.com/@other/123'}],
-    })
+    result = self.mastodon.create(REPLY)
     self.assert_equals(STATUS, result.content, result)
 
   def test_create_reply_other_instance(self):
     for fn in (self.mastodon.preview_create, self.mastodon.create):
       got = fn({
-        'objectType': 'note',
         'content': 'foo ☕ bar',
-        'inReplyTo': [{'url': 'http://bad/@xyz/123'}],
+        'inReplyTo': [{'url': 'http://bad/@other/123'}],
       })
-      self.assertTrue(got.abort)
+      self.assertTrue(got.abort, got)
       self.assertEqual('Could not find a toot on foo.com to reply to.',
                        got.error_plain)
+
+  def test_create_favorite(self):
+    self.expect_api(API_FAVORITE % '123')
+    self.mox.ReplayAll()
+
+    result = self.mastodon.create(LIKE)
+    self.assert_equals({
+      'type': 'like',
+      'url': 'http://foo.com/@snarfed/123',
+    }, result.content, result)
+
+  def test_preview_favorite(self):
+    preview = self.mastodon.preview_create(LIKE)
+    self.assertEqual('<span class="verb">favorite</span> <a href="http://foo.com/@snarfed/123">this toot</a>.', preview.description)
