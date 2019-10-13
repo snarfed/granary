@@ -130,3 +130,43 @@ class MastodonTest(testutil.TestCase):
     })
     self.assertEqual('<span class="verb">toot</span>:', got.description)
     self.assertEqual('foo ☕ bar', got.content)
+
+  def test_create_status(self):
+    self.expect_api(API_STATUSES, json={
+      'status': 'foo ☕ bar'
+    }, response=STATUS)
+    self.mox.ReplayAll()
+
+    result = self.mastodon.create({
+      'objectType': 'note',
+      'content': 'foo ☕ bar',
+    })
+
+    self.assert_equals(STATUS, result.content, result)
+    self.assertIsNone(result.error_plain)
+    self.assertIsNone(result.error_html)
+
+  def test_create_reply(self):
+    self.expect_api(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'in_reply_to_id': '123',
+    }, response=STATUS)
+    self.mox.ReplayAll()
+
+    result = self.mastodon.create({
+      'objectType': 'note',
+      'content': 'foo ☕ bar',
+      'inReplyTo': [{'url': 'http://foo.com/@other/123'}],
+    })
+    self.assert_equals(STATUS, result.content, result)
+
+  def test_create_reply_other_instance(self):
+    for fn in (self.mastodon.preview_create, self.mastodon.create):
+      got = fn({
+        'objectType': 'note',
+        'content': 'foo ☕ bar',
+        'inReplyTo': [{'url': 'http://bad/@xyz/123'}],
+      })
+      self.assertTrue(got.abort)
+      self.assertEqual('Could not find a toot on foo.com to reply to.',
+                       got.error_plain)
