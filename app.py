@@ -202,7 +202,8 @@ application = webapp2.WSGIApplication([
   ('/flickr/oauth_callback', flickr.CallbackHandler.to('/')),
   ('/github/start_auth', github.StartHandler.to('/github/oauth_callback')),
   ('/github/oauth_callback', github.CallbackHandler.to('/')),
-  ('/mastodon/start_auth', mastodon.StartHandler.to('/mastodon/oauth_callback')),
+  ('/mastodon/start_auth', mastodon.StartHandler.to(
+    '/mastodon/oauth_callback', app_name='granary', app_url='https://granary.io/')),
   ('/mastodon/oauth_callback', mastodon.CallbackHandler.to('/')),
   ('/twitter/start_auth', twitter.StartHandler.to('/twitter/oauth_callback')),
   ('/twitter/oauth_callback', twitter.CallbackHandler.to('/')),
