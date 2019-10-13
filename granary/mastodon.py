@@ -8,6 +8,7 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 
+import logging
 import urllib.parse
 
 from oauth_dropins.webutil import util
@@ -20,6 +21,10 @@ from . import source
 API_STATUSES = '/api/v1/statuses'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
+API_MEDIA = '/api/v1/media'
+
+# https://docs.joinmastodon.org/api/rest/media/#parameters
+MAX_ALT_LENGTH = 420
 
 
 class Mastodon(source.Source):
@@ -132,6 +137,8 @@ class Mastodon(source.Source):
 
     https://docs.joinmastodon.org/api/rest/statuses/
 
+    Heavily based on :meth:`Twitter._create`.
+
     Args:
       obj: ActivityStreams object
       preview: boolean
@@ -152,9 +159,9 @@ class Mastodon(source.Source):
 
     is_reply = type == 'comment' or obj.get('inReplyTo')
     is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
-    # images = util.get_list(obj, 'image')
-    # video_url = util.get_first(obj, 'stream', {}).get('url')
-    # has_media = (images or video_url) and (type in ('note', 'article') or is_reply)
+    images = util.get_list(obj, 'image')
+    videos = util.get_list(obj, 'stream')
+    has_media = (images or videos) and (type in ('note', 'article') or is_reply)
 
     # prefer displayName over content for articles
     type = obj.get('objectType')
@@ -162,13 +169,13 @@ class Mastodon(source.Source):
     preview_description = ''
     content = self._content_for_create(
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
-      # strip_first_video_tag=bool(video_url))
+      # TODO: convert strip_first_video_tag=bool(videos) to strip_all_video_tags
 
     if not content:
       if type == 'activity' and not is_rsvp:
         content = verb
-      # elif has_media:
-      #   content = ''
+      elif has_media:
+        content = ''
       else:
         return source.creation_result(
           abort=False,  # keep looking for things to publish,
@@ -181,8 +188,7 @@ class Mastodon(source.Source):
         error_plain='Could not find a toot on %s to reply to.' % self.DOMAIN,
         error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.' % (self.instance, self.DOMAIN))
 
-    # truncate and ellipsize content if it's over the character
-    # count. URLs will be t.co-wrapped, so include that when counting.
+    # truncate and ellipsize content if necessary
     content = self.truncate(content, obj.get('url'), include_link, type)
 
     # linkify defaults to Twitter's link shortening behavior
@@ -230,34 +236,24 @@ class Mastodon(source.Source):
       else:
         preview_description += '<span class="verb">toot</span>:'
 
-#       if video_url:
-#         preview_content += ('<br /><br /><video controls src="%s"><a href="%s">'
-#                             'this video</a></video>' % (video_url, video_url))
-#         if not preview:
-#           ret = self.upload_video(video_url)
-#           if isinstance(ret, source.CreationResult):
-#             return ret
-#           data.append(('media_ids', ret))
-
-#       elif images:
-#         num = len(images)
-#         if num > MAX_MEDIA:
-#           images = images[:MAX_MEDIA]
-#           logging.warning('Found %d photos! Only using the first %d: %r',
-#                           num, MAX_MEDIA, images)
-#         preview_content += '<br /><br />' + ' &nbsp; '.join(
-#           '<img src="%s" alt="%s" />' % (img.get('url'), img.get('displayName', ''))
-#                                          for img in images)
-#         if not preview:
-#           ret = self.upload_images(images)
-#           if isinstance(ret, source.CreationResult):
-#             return ret
-#           data.append(('media_ids', ','.join(ret)))
-
       if preview:
+        video_urls = [util.get_url(vid) for vid in videos]
+        media_previews = [
+          '<video controls src="%s"><a href="%s">this video</a></video>' % (url, url)
+          for url in video_urls
+        ] + [
+          '<img src="%s" alt="%s" />' % (util.get_url(img), img.get('displayName', ''))
+           for img in images
+        ]
+        if media_previews:
+          preview_content += '<br /><br />' + ' &nbsp; '.join(media_previews)
         return source.creation_result(content=preview_content,
                                       description=preview_description)
+
       else:
+        ids = self.upload_media(images + videos)
+        if ids:
+          data['media_ids'] = ids
         resp = self.api(API_STATUSES, json=data)
 
     else:
@@ -270,3 +266,36 @@ class Mastodon(source.Source):
       resp['url'] = base_url
 
     return source.creation_result(resp)
+
+  def upload_media(self, media):
+    """Uploads one or more images or videos from web URLs.
+
+    https://docs.joinmastodon.org/api/rest/media/
+
+    Args:
+      media: sequence of AS image or stream objects, eg:
+        [{'url': 'http://picture', 'displayName': 'a thing'}, ...]
+
+    Returns: list of string media ids for uploaded files
+    """
+    ids = []
+    for obj in media:
+      url = util.get_url(obj)
+      if not url:
+        continue
+
+      data = {}
+      alt = obj.get('displayName')
+      if alt:
+        data['description'] = util.ellipsize(alt, chars=MAX_ALT_LENGTH)
+
+      # TODO: mime type check?
+      with util.requests_get(url, stream=True) as fetch:
+        fetch.raise_for_status()
+        upload = self.api(API_MEDIA, files={'file': fetch.raw})
+
+      logging.info('Got: %s', upload)
+      media_id = upload['id']
+      ids.append(media_id)
+
+    return ids
