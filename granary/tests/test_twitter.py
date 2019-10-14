@@ -19,7 +19,7 @@ import urllib.parse
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import microformats2
 from granary import source
@@ -722,7 +722,7 @@ class TwitterTest(testutil.TestCase):
       url += '?' + urllib.parse.urlencode(params)
       kwargs.setdefault('data', '')
     if not isinstance(response, basestring):
-      response=json.dumps(response)
+      response=json_dumps(response)
     return super(TwitterTest, self).expect_urlopen(
       url, response=response, **kwargs)
 
@@ -958,7 +958,7 @@ class TwitterTest(testutil.TestCase):
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
 
-    resp = json.dumps({
+    resp = json_dumps({
       'errors': [{
         'code': 200,
         'message': 'Forbidden.',
@@ -2286,7 +2286,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       content = 'picture response %d' % i
       self.expect_urlopen(url, content)
       self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
-                                json.dumps({'media_id_string': str(i)}),
+                                json_dumps({'media_id_string': str(i)}),
                                 files={'media': content},
                                 headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
@@ -2316,7 +2316,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture', 'picture response')
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
-                              json.dumps({'media_id_string': '123'}),
+                              json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
@@ -2346,7 +2346,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture', 'picture response')
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
-                              json.dumps({'media_id_string': '123'}),
+                              json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
@@ -2368,7 +2368,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     self.expect_urlopen('http://my/picture', 'picture response')
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
-                              json.dumps({'media_id_string': '123'}),
+                              json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
@@ -2412,7 +2412,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture.png', 'picture response')
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
-                              json.dumps({'media_id_string': '123'}),
+                              json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
     self.expect_requests_post(twitter.API_MEDIA_METADATA,

@@ -16,8 +16,8 @@ import urllib.parse
 from oauth_dropins import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 
 from granary import flickr
 from granary import source
@@ -685,7 +685,7 @@ class FlickrTest(testutil.TestCase):
   def test_get_actor(self):
     self.expect_call_api_method('flickr.people.getInfo', {
       'user_id': '39216764@N00'
-    }, json.dumps(PERSON_INFO))
+    }, json_dumps(PERSON_INFO))
 
     self.expect_requests_get(
       'https://www.flickr.com/people/kindofblue115/',
@@ -697,7 +697,7 @@ class FlickrTest(testutil.TestCase):
   def test_get_actor_default(self):
     # extra call to find the user id
     self.expect_call_api_method(
-      'flickr.people.getLimits', {}, json.dumps({'person': {
+      'flickr.people.getLimits', {}, json_dumps({'person': {
         'nsid': '39216764@N00',
         'photos': {'maxdisplaypx': '1024', 'maxupload': '209715200'},
         'videos': {'maxduration': '180', 'maxupload': '1073741824'}
@@ -705,7 +705,7 @@ class FlickrTest(testutil.TestCase):
 
     self.expect_call_api_method(
       'flickr.people.getInfo', {'user_id': '39216764@N00'},
-      json.dumps(PERSON_INFO))
+      json_dumps(PERSON_INFO))
 
     self.expect_requests_get(
       'https://www.flickr.com/people/kindofblue115/',
@@ -719,7 +719,7 @@ class FlickrTest(testutil.TestCase):
       'flickr.photos.getContactsPhotos', {
         'extras': flickr.Flickr.API_EXTRAS,
         'per_page': 50,
-      }, json.dumps(CONTACTS_PHOTOS))
+      }, json_dumps(CONTACTS_PHOTOS))
 
     self.mox.ReplayAll()
     self.assert_equals(CONTACTS_PHOTOS_ACTIVITIES, self.flickr.get_activities())
@@ -728,7 +728,7 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method(
       'flickr.photos.getInfo', {
         'photo_id': '5227922370',
-      }, json.dumps(PHOTO_INFO))
+      }, json_dumps(PHOTO_INFO))
 
     self.mox.ReplayAll()
     self.assert_equals(
@@ -739,11 +739,11 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method(
       'flickr.photos.getInfo', {
         'photo_id': '5227922370',
-      }, json.dumps(PHOTO_INFO))
+      }, json_dumps(PHOTO_INFO))
 
     self.expect_call_api_method('flickr.photos.comments.getList', {
         'photo_id': '5227922370',
-    }, json.dumps(PHOTO_COMMENTS))
+    }, json_dumps(PHOTO_COMMENTS))
 
     self.mox.ReplayAll()
     self.assert_equals(
@@ -754,11 +754,11 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method(
       'flickr.photos.getInfo', {
         'photo_id': '5227922370',
-      }, json.dumps(PHOTO_INFO))
+      }, json_dumps(PHOTO_INFO))
 
     self.expect_call_api_method('flickr.photos.getFavorites', {
         'photo_id': '5227922370',
-    }, json.dumps(PHOTO_FAVORITES))
+    }, json_dumps(PHOTO_FAVORITES))
 
     self.mox.ReplayAll()
     self.assert_equals(
@@ -775,11 +775,11 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method(
       'flickr.photos.getInfo', {
         'photo_id': '5227922370',
-      }, json.dumps(PHOTO_INFO))
+      }, json_dumps(PHOTO_INFO))
 
     self.expect_call_api_method('flickr.photos.getFavorites', {
         'photo_id': '5227922370',
-    }, json.dumps(faves))
+    }, json_dumps(faves))
 
     self.mox.ReplayAll()
     resp = self.flickr.get_activities(
@@ -799,11 +799,11 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method(
       'flickr.photos.getInfo', {
         'photo_id': '5227922370',
-      }, json.dumps(PHOTO_INFO))
+      }, json_dumps(PHOTO_INFO))
 
     self.expect_call_api_method('flickr.photos.comments.getList', {
         'photo_id': '5227922370',
-    }, json.dumps(comments))
+    }, json_dumps(comments))
 
     self.mox.ReplayAll()
     resp = self.flickr.get_activities(
@@ -819,7 +819,7 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method(
       'flickr.photos.comments.getList', {
         'photo_id': '5227922370',
-      }, json.dumps(PHOTO_COMMENTS))
+      }, json_dumps(PHOTO_COMMENTS))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.flickr.get_comment(
       '4942564-5227922370-72157625845945286', '5227922370'))
@@ -837,7 +837,7 @@ class FlickrTest(testutil.TestCase):
                          ('https://flickr.com/photos/382@123/', '382@123')]:
       self.expect_call_api_method(
         'flickr.urls.lookupUser', {'url': url},
-        json.dumps({'user': {'id': user_id}}))
+        json_dumps({'user': {'id': user_id}}))
 
   def test_preview_create_photo(self):
     self._expect_lookup_users()
@@ -899,12 +899,12 @@ class FlickrTest(testutil.TestCase):
     # lookup user id
     self.expect_call_api_method(
       'flickr.people.getLimits', {},
-      json.dumps({'person': {'nsid': '39216764@N00'}}))
+      json_dumps({'person': {'nsid': '39216764@N00'}}))
 
     # lookup path alias
     self.expect_call_api_method(
       'flickr.people.getInfo', {'user_id': '39216764@N00'},
-      json.dumps({'person': {'nsid': '39216764@N00',
+      json_dumps({'person': {'nsid': '39216764@N00',
                              'path_alias': 'kindofblue115'}}))
 
     # add person tags
@@ -1048,7 +1048,7 @@ class FlickrTest(testutil.TestCase):
       'photo_id': '21904325000',
       'comment_text': 'punkins!\n\n'
       '(Originally published at: https://kylewm.com/2015/11/punkins)',
-    }, json.dumps({
+    }, json_dumps({
       'comment': {
         'id': '4942564-21904325000-72157661220102352',
         'author': '39216764@N00',
@@ -1080,7 +1080,7 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method('flickr.photos.comments.addComment', {
       'photo_id': '28733650665',
       'comment_text': 'these ‘are smart’ quotes'.encode('utf-8'),
-    }, json.dumps({
+    }, json_dumps({
       'comment': {
         'id': '123456',
         'permalink': 'https://www.flickr.com/comment/123456',
@@ -1103,11 +1103,11 @@ class FlickrTest(testutil.TestCase):
     """
     self.expect_call_api_method(
       'flickr.favorites.add', {'photo_id': '21904325000'},
-      json.dumps({'stat': 'ok'}))
+      json_dumps({'stat': 'ok'}))
 
     self.expect_call_api_method(
       'flickr.people.getLimits', {},
-      json.dumps({'person': {'nsid': '39216764@N00'}}))
+      json_dumps({'person': {'nsid': '39216764@N00'}}))
 
     self.mox.ReplayAll()
     self.assertEqual({
@@ -1137,7 +1137,7 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method('flickr.photos.delete', {'photo_id': '789'}, '')
     self.expect_call_api_method(
       'flickr.people.getLimits', {},
-      json.dumps({'person': {'nsid': '39216764@N00'}}))
+      json_dumps({'person': {'nsid': '39216764@N00'}}))
     self.mox.ReplayAll()
 
     resp = self.flickr.delete('789')
@@ -1149,7 +1149,7 @@ class FlickrTest(testutil.TestCase):
   def test_preview_delete(self):
     self.expect_call_api_method(
       'flickr.people.getLimits', {},
-      json.dumps({'person': {'nsid': '39216764@N00'}}))
+      json_dumps({'person': {'nsid': '39216764@N00'}}))
     self.mox.ReplayAll()
 
     preview = self.flickr.preview_delete('789')

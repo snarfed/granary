@@ -17,8 +17,8 @@ import urllib.parse
 from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 
 from granary import instagram
 from granary.instagram import HTML_BASE_URL, Instagram
@@ -964,18 +964,18 @@ HTML_ACTIVITIES = [HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY]
 HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
 HTML_ACTIVITIES_FULL_LIKES = [HTML_PHOTO_ACTIVITY_LIKES, HTML_VIDEO_ACTIVITY_FULL]
 
-HTML_FEED_COMPLETE = HTML_HEADER + json.dumps(HTML_FEED) + HTML_FOOTER
+HTML_FEED_COMPLETE = HTML_HEADER + json_dumps(HTML_FEED) + HTML_FOOTER
 
 HTML_HEADER_2 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('feed', ")
-HTML_FEED_COMPLETE_2 = HTML_HEADER_2 + json.dumps(HTML_PRELOAD_DATA['data']) + ')' + HTML_FOOTER
+HTML_FEED_COMPLETE_2 = HTML_HEADER_2 + json_dumps(HTML_PRELOAD_DATA['data']) + ')' + HTML_FOOTER
 
-HTML_PROFILE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE) + HTML_FOOTER
-HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json.dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
-HTML_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
-HTML_VIDEO_COMPLETE = HTML_HEADER + json.dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
-HTML_MULTI_PHOTO_COMPLETE = HTML_HEADER + json.dumps(HTML_MULTI_PHOTO_PAGE) + HTML_FOOTER
-HTML_PHOTO_MISSING_HEADER = json.dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
-HTML_PHOTO_MISSING_FOOTER = HTML_HEADER + json.dumps(HTML_PHOTO_PAGE)
+HTML_PROFILE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE) + HTML_FOOTER
+HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
+HTML_PHOTO_COMPLETE = HTML_HEADER + json_dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
+HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
+HTML_MULTI_PHOTO_COMPLETE = HTML_HEADER + json_dumps(HTML_MULTI_PHOTO_PAGE) + HTML_FOOTER
+HTML_PHOTO_MISSING_HEADER = json_dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
+HTML_PHOTO_MISSING_FOOTER = HTML_HEADER + json_dumps(HTML_PHOTO_PAGE)
 
 
 class InstagramTest(testutil.TestCase):
@@ -995,13 +995,13 @@ class InstagramTest(testutil.TestCase):
 
   def test_get_actor(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/foo',
-                        json.dumps({'data': USER}))
+                        json_dumps({'data': USER}))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.instagram.get_actor('foo'))
 
   def test_get_actor_default(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/self',
-                        json.dumps({'data': USER}))
+                        json_dumps({'data': USER}))
     self.mox.ReplayAll()
     self.assert_equals(ACTOR, self.instagram.get_actor())
 
@@ -1012,17 +1012,17 @@ class InstagramTest(testutil.TestCase):
 
   def test_get_activities_self(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
-                        json.dumps({'data': []}))
+                        json_dumps({'data': []}))
     self.mox.ReplayAll()
     self.assert_equals([], self.instagram.get_activities(group_id=source.SELF))
 
   def test_get_activities_self_fetch_likes(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
-                        json.dumps({'data': [MEDIA]}))
+                        json_dumps({'data': [MEDIA]}))
     self.expect_urlopen('https://api.instagram.com/v1/users/self/media/liked',
-                        json.dumps({'data': [MEDIA_WITH_LIKES]}))
+                        json_dumps({'data': [MEDIA_WITH_LIKES]}))
     self.expect_urlopen('https://api.instagram.com/v1/users/self',
-                        json.dumps({'data': LIKES[0]}))
+                        json_dumps({'data': LIKES[0]}))
     self.mox.ReplayAll()
     self.assert_equals(
       [ACTIVITY, LIKE_OBJS[0]],
@@ -1031,7 +1031,7 @@ class InstagramTest(testutil.TestCase):
   def test_get_activities_passes_through_access_token(self):
     self.expect_urlopen(
       'https://api.instagram.com/v1/users/self/feed?access_token=asdf',
-      json.dumps({'meta': {'code': 200}, 'data': []}))
+      json_dumps({'meta': {'code': 200}, 'data': []}))
     self.mox.ReplayAll()
 
     self.instagram = Instagram(access_token='asdf')
@@ -1039,7 +1039,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_get_activities_activity_id_shortcode(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        json.dumps({'data': MEDIA}))
+                        json_dumps({'data': MEDIA}))
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -1056,7 +1056,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_get_activities_with_likes(self):
     self.expect_urlopen('https://api.instagram.com/v1/users/self/feed',
-                        json.dumps({'data': [MEDIA_WITH_LIKES]}))
+                        json_dumps({'data': [MEDIA_WITH_LIKES]}))
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY_WITH_LIKES], self.instagram.get_activities())
 
@@ -1070,13 +1070,13 @@ class InstagramTest(testutil.TestCase):
   def test_get_activities_min_id(self):
     self.expect_urlopen(
       'https://api.instagram.com/v1/users/self/media/recent?min_id=135',
-      json.dumps({'data': []}))
+      json_dumps({'data': []}))
     self.mox.ReplayAll()
     self.instagram.get_activities(group_id=source.SELF, min_id='135')
 
   def test_get_activities_search(self):
     self.expect_urlopen('https://api.instagram.com/v1/tags/indieweb/media/recent',
-                        json.dumps({'data': [MEDIA]}))
+                        json_dumps({'data': [MEDIA]}))
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.instagram.get_activities(
       group_id=source.SEARCH, search_query='#indieweb'))
@@ -1133,12 +1133,12 @@ class InstagramTest(testutil.TestCase):
       ['edge_owner_to_timeline_media']['edges'][1]['node']\
       ['edge_media_to_comment']['count'] = 3
     self.expect_requests_get('x/',
-                             HTML_HEADER + json.dumps(profile) + HTML_FOOTER,
+                             HTML_HEADER + json_dumps(profile) + HTML_FOOTER,
                              cookie='kuky')
     video = copy.deepcopy(HTML_VIDEO_FULL)
     video['edge_media_to_comment']['count'] = 4
     self.expect_requests_get('p/XYZ789/',
-                             HTML_HEADER + json.dumps(video) + HTML_FOOTER,
+                             HTML_HEADER + json_dumps(video) + HTML_FOOTER,
                              cookie='kuky')
 
     self.mox.ReplayAll()
@@ -1293,21 +1293,21 @@ class InstagramTest(testutil.TestCase):
 
   def test_get_video(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/5678',
-                        json.dumps({'data': VIDEO}))
+                        json_dumps({'data': VIDEO}))
     self.mox.ReplayAll()
     self.assert_equals([VIDEO_ACTIVITY],
                        self.instagram.get_activities(activity_id='5678'))
 
   def test_get_comment(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
-                        json.dumps({'data': MEDIA}))
+                        json_dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0],
                        self.instagram.get_comment('789', activity_id='123_456'))
 
   def test_get_comment_not_found(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
-                        json.dumps({'data': MEDIA}))
+                        json_dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assertIsNone(self.instagram.get_comment('111', activity_id='123_456'))
 
@@ -1326,13 +1326,13 @@ class InstagramTest(testutil.TestCase):
 
   def test_get_like(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        json.dumps({'data': MEDIA_WITH_LIKES}))
+                        json_dumps({'data': MEDIA_WITH_LIKES}))
     self.mox.ReplayAll()
     self.assert_equals(LIKE_OBJS[1], self.instagram.get_like('123', '000', '9'))
 
   def test_get_like_not_found(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        json.dumps({'data': MEDIA}))
+                        json_dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assertIsNone(self.instagram.get_like('123', '000', 'xyz'))
 
@@ -1426,7 +1426,7 @@ class InstagramTest(testutil.TestCase):
   def test_create_like(self):
     self.expect_urlopen(
       'https://api.instagram.com/v1/media/shortcode/ABC123',
-      json.dumps({'data': MEDIA}))
+      json_dumps({'data': MEDIA}))
 
     self.expect_urlopen(
       'https://api.instagram.com/v1/media/123_456/likes',
@@ -1434,7 +1434,7 @@ class InstagramTest(testutil.TestCase):
 
     self.expect_urlopen(
       'https://api.instagram.com/v1/users/self',
-      json.dumps({'data': {
+      json_dumps({'data': {
         'id': '8',
         'username': 'alizz',
         'full_name': 'Alice',
@@ -1557,7 +1557,7 @@ class InstagramTest(testutil.TestCase):
     }
 
     activities, _ = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(profile) + HTML_FOOTER)
+      HTML_HEADER + json_dumps(profile) + HTML_FOOTER)
     self.assertEqual(HTML_VIEWER_PUBLIC, activities[0]['actor'])
     self.assertEqual(HTML_VIEWER_PUBLIC, activities[0]['object']['author'])
 
@@ -1570,7 +1570,7 @@ class InstagramTest(testutil.TestCase):
     }
 
     activities, _ = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(profile) + HTML_FOOTER)
+      HTML_HEADER + json_dumps(profile) + HTML_FOOTER)
     expected = {
       'id': tag_uri(other_id),
       'objectType': 'person',
@@ -1604,7 +1604,7 @@ class InstagramTest(testutil.TestCase):
     media = page['entry_data']['PostPage'][0]['graphql']['shortcode_media']
     media['edge_media_to_parent_comment'] = media.pop('edge_media_to_comment')
     activities, _ = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(page) + HTML_FOOTER, fetch_extras=True)
+      HTML_HEADER + json_dumps(page) + HTML_FOOTER, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
 
   def test_html_to_activities_video(self):
@@ -1622,7 +1622,7 @@ class InstagramTest(testutil.TestCase):
     multi['entry_data']['PostPage'][0]['graphql']['shortcode_media']\
         ['edge_sidecar_to_children']['edges'][1]['node']['accessibility_caption'] = \
         instagram.AUTO_ALT_TEXT_PREFIXES[1] + 'foo bar'
-    html = HTML_HEADER + json.dumps(multi) + HTML_FOOTER
+    html = HTML_HEADER + json_dumps(multi) + HTML_FOOTER
 
     expected = copy.deepcopy(HTML_MULTI_PHOTO_ACTIVITY)
     del expected['object']['attachments'][1]['image'][0]['displayName']
@@ -1635,7 +1635,7 @@ class InstagramTest(testutil.TestCase):
     data['config']['viewer']['profile_pic_url'] = None
     data['config']['viewer']['external_url'] = None
     _, viewer = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(data) + HTML_FOOTER)
+      HTML_HEADER + json_dumps(data) + HTML_FOOTER)
 
     expected = copy.deepcopy(HTML_VIEWER)
     del expected['urls']
@@ -1647,7 +1647,7 @@ class InstagramTest(testutil.TestCase):
     del data['entry_data']['FeedPage'][0]['graphql']['user']\
             ['edge_web_feed_timeline']['edges'][1]['node']['video_url']
     activities, _ = self.instagram.html_to_activities(
-      HTML_HEADER + json.dumps(data) + HTML_FOOTER)
+      HTML_HEADER + json_dumps(data) + HTML_FOOTER)
 
     expected = copy.deepcopy(HTML_ACTIVITIES_FULL)
     del expected[1]['object']['stream']
@@ -1665,7 +1665,7 @@ class InstagramTest(testutil.TestCase):
     self.assertIsNone(viewer)
 
   def test_html_to_activities_trims_nulls(self):
-    activities, viewer = self.instagram.html_to_activities(HTML_HEADER + json.dumps({
+    activities, viewer = self.instagram.html_to_activities(HTML_HEADER + json_dumps({
       'entry_data': {
         'FeedPage': [{
           'feed': {
@@ -1687,7 +1687,7 @@ class InstagramTest(testutil.TestCase):
     self.expect_requests_get(url, HTML_PRELOAD_DATA, cookie='kuky')
     self.mox.ReplayAll()
 
-    html = HTML_HEADER_PRELOAD + json.dumps(HTML_USELESS_FEED) + HTML_FOOTER
+    html = HTML_HEADER_PRELOAD + json_dumps(HTML_USELESS_FEED) + HTML_FOOTER
     activities, viewer = self.instagram.html_to_activities(html, cookie='kuky')
 
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL],
@@ -1700,7 +1700,7 @@ class InstagramTest(testutil.TestCase):
     self.expect_requests_get(url, '{bad: ["json', cookie='kuky')
     self.mox.ReplayAll()
 
-    html = HTML_HEADER_PRELOAD + json.dumps(HTML_USELESS_FEED) + HTML_FOOTER
+    html = HTML_HEADER_PRELOAD + json_dumps(HTML_USELESS_FEED) + HTML_FOOTER
     with self.assertRaises(requests.HTTPError) as cm:
       self.instagram.html_to_activities(html, cookie='kuky')
 

@@ -12,7 +12,7 @@ import logging
 import urllib.parse
 
 from oauth_dropins.webutil import util
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import appengine_config
 from . import as2
@@ -71,7 +71,7 @@ class Mastodon(source.Source):
       util.interpret_http_exception(e)
       raise
 
-    return json.loads(resp.text)
+    return json_loads(resp.text)
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -92,7 +92,7 @@ class Mastodon(source.Source):
                                '/users/%s/outbox?page=true' % self.username)
     resp = util.requests_get(url, headers=as2.CONNEG_HEADERS)
 
-    activities_as2 = json.loads(resp.text).get('orderedItems', [])
+    activities_as2 = json_loads(resp.text).get('orderedItems', [])
     activities_as1 = []
 
     for activity_as2 in activities_as2:
@@ -110,7 +110,7 @@ class Mastodon(source.Source):
           replies.raise_for_status()
           # TODO: should this be activity_as1['object']['replies']?
           activity_as1['replies'] = {
-            'items': [as2.to_as1(r) for r in json.loads(replies.text).get('items', [])],
+            'items': [as2.to_as1(r) for r in json_loads(replies.text).get('items', [])],
           }
 
       activities_as1.append(activity_as1)

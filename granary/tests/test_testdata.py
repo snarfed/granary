@@ -12,7 +12,7 @@ import os
 from granary import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import as2, jsonfeed, microformats2, rss
 
@@ -35,7 +35,7 @@ def read_json(filename):
     with open(filename, encoding='utf-8') as f:
       # note that ujson allows embedded newlines in strings, which we have in eg
       # note_with_whitespace.as.json and frriends.
-      return json.loads(f.read())
+      return json_loads(f.read())
   except Exception as e:
     e.args = ('%s: ' % filename,) + e.args
     raise

@@ -58,7 +58,7 @@ import xml.sax.saxutils
 import dateutil.parser
 import mf2util
 from oauth_dropins.webutil import util
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import appengine_config
 from . import source
@@ -718,7 +718,7 @@ class Facebook(source.Source):
         for tag in people)
     msg_data = collections.OrderedDict({'message': content.encode('utf-8')})
     if appengine_config.DEBUG:
-      msg_data['privacy'] = json.dumps({'value': 'SELF'})
+      msg_data['privacy'] = json_dumps({'value': 'SELF'})
 
     if type == 'comment':
       if not base_url:
@@ -840,7 +840,7 @@ class Facebook(source.Source):
           if people:
             # tags is JSON list of dicts with tag_uid fields
             # https://developers.facebook.com/docs/graph-api/reference/user/photos#Creating
-            msg_data['tags'] = json.dumps([{'tag_uid': tag['id']} for tag in people])
+            msg_data['tags'] = json_dumps([{'tag_uid': tag['id']} for tag in people])
         else:
           api_call = API_PUBLISH_POST
           if people:
@@ -1614,7 +1614,7 @@ class Facebook(source.Source):
     Here's example code to query FQL and pass the results to this method::
 
       resp = self.urlopen('https://graph.facebook.com/v2.0/fql?' + urllib.urlencode(
-          {'q': json.dumps({
+          {'q': json_dumps({
             'stream': '''\\
               SELECT actor_id, post_id, created_time, updated_time,
                 attachment, privacy, message, description
@@ -2303,7 +2303,7 @@ class Facebook(source.Source):
         req['headers'] = [{'name': n, 'value': v}
                           for n, v in sorted(req['headers'].items())]
 
-    data = 'batch=' + json.dumps(util.trim_nulls(requests), sort_keys=True)
+    data = 'batch=' + json_dumps(util.trim_nulls(requests), sort_keys=True)
     resps = self.urlopen('', data=data, _as=list)
 
     for resp in resps:
@@ -2313,7 +2313,7 @@ class Facebook(source.Source):
       body = resp.get('body')
       if body:
         try:
-          resp['body'] = json.loads(body)
+          resp['body'] = json_loads(body)
         except (ValueError, TypeError):
           pass
 
