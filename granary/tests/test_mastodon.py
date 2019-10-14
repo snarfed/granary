@@ -25,8 +25,8 @@ NOTE = {
   'content': 'foo ☕ bar',
 }
 REPLY = {
-  'objectType': 'note',
-  'content': 'foo ☕ bar',
+  'objectType': 'comment',
+  'content': 'reply ☕ baz',
   'inReplyTo': [{'url': 'http://foo.com/@other/123'}],
 }
 LIKE = {
@@ -48,6 +48,24 @@ NOTE_WITH_MEDIA = {
   ],
   'stream': {'url': 'http://video/3'},
 }
+
+NOTE_AS2 = {
+  'type': 'Note',
+  'content': 'foo ☕ bar',
+  'object': {
+    'replies': {
+      'type' : 'Collection',
+      'id' : 'http://foo.com/123/replies',
+    },
+  },
+}
+REPLY_AS2 = {
+  'type': 'Note',
+  'content': 'reply ☕ baz',
+  'inReplyTo': [{'url': 'http://foo.com/@other/123'}],
+}
+# ACTIVITIES_AS2 = []
+# ACTIVITIES_AS1 = [NOTE, REPLY, NOTE_WITH_MEDIA]
 
 # Mastodon
 # https://docs.joinmastodon.org/api/entities/#account
@@ -102,6 +120,19 @@ class MastodonTest(testutil.TestCase):
       {'content': 'bar baz'},
     ], self.mastodon.get_activities())
 
+  def test_get_activities_fetch_replies(self):
+    self.expect_requests_get('http://foo.com/users/alice/outbox?page=true',
+                             json.dumps({'orderedItems': [NOTE_AS2]}),
+                             headers=as2.CONNEG_HEADERS)
+    self.expect_requests_get('http://foo.com/123/replies?only_other_accounts=true',
+                             json.dumps({'items': [REPLY_AS2]}),
+                             headers=as2.CONNEG_HEADERS)
+    self.mox.ReplayAll()
+
+    expected = copy.deepcopy(NOTE)
+    expected['replies'] = {'items': [REPLY]}
+    self.assert_equals([expected], self.mastodon.get_activities(fetch_replies=True))
+
   def test_preview_status(self):
     got = self.mastodon.preview_create(NOTE)
     self.assertEqual('<span class="verb">toot</span>:', got.description)
@@ -119,7 +150,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_reply(self):
     self.expect_api(API_STATUSES, json={
-      'status': 'foo ☕ bar',
+      'status': 'reply ☕ baz',
       'in_reply_to_id': '123',
     }, response=STATUS)
     self.mox.ReplayAll()
