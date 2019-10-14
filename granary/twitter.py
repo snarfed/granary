@@ -27,11 +27,11 @@ import urllib.parse, urllib.request
 
 from . import appengine_config
 
-import ujson as json
-
-from . import source
 from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import json_dumps, json_loads
+
+from . import source
 
 API_BASE = 'https://api.twitter.com/1.1/'
 API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
@@ -356,7 +356,7 @@ class Twitter(source.Source):
             code, body = util.interpret_http_exception(e)
             try:
               # duplicates code in interpret_http_exception :(
-              error_code = json.loads(body).get('errors')[0].get('code')
+              error_code = json_loads(body).get('errors')[0].get('code')
             except BaseException:
               error_code = None
             if not (code == '404' or  # tweet was deleted

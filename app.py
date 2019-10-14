@@ -17,8 +17,8 @@ from oauth_dropins import (
   twitter,
 )
 from oauth_dropins.webutil import handlers, util
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 import webapp2
 from webob import exc
 
@@ -133,7 +133,7 @@ class UrlHandler(api.Handler):
     # decode data
     if input in ('activitystreams', 'as1', 'as2', 'mf2-json', 'json-mf2', 'jsonfeed'):
       try:
-        body_json = json.loads(resp.text)
+        body_json = json_loads(resp.text)
         body_items = (body_json if isinstance(body_json, list)
                       else body_json.get('items') or [body_json])
       except (TypeError, ValueError):

@@ -7,7 +7,7 @@ standard_library.install_aliases()
 import copy
 
 from oauth_dropins.webutil import testutil
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import appengine_config
 from granary import as2, mastodon
@@ -108,7 +108,7 @@ class MastodonTest(testutil.TestCase):
     return self.expect_requests_post(INSTANCE + path, response=response, **kwargs)
 
   def test_get_activities_defaults(self):
-    self.expect_requests_get('http://foo.com/users/alice/outbox?page=true', json.dumps({
+    self.expect_requests_get('http://foo.com/users/alice/outbox?page=true', json_dumps({
       'orderedItems': [
         {'content': 'foo bar'},
         {'content': 'bar baz'},
@@ -122,10 +122,10 @@ class MastodonTest(testutil.TestCase):
 
   def test_get_activities_fetch_replies(self):
     self.expect_requests_get('http://foo.com/users/alice/outbox?page=true',
-                             json.dumps({'orderedItems': [NOTE_AS2]}),
+                             json_dumps({'orderedItems': [NOTE_AS2]}),
                              headers=as2.CONNEG_HEADERS)
     self.expect_requests_get('http://foo.com/123/replies?only_other_accounts=true',
-                             json.dumps({'items': [REPLY_AS2]}),
+                             json_dumps({'items': [REPLY_AS2]}),
                              headers=as2.CONNEG_HEADERS)
     self.mox.ReplayAll()
 

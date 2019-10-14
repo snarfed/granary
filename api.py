@@ -29,7 +29,7 @@ import urllib
 
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 from webob import exc
 
@@ -202,7 +202,7 @@ class Handler(handlers.ModernHandler):
         # https://www.iana.org/assignments/media-types/media-types.xhtml
         self.response.headers['Content-Type'] = \
           'application/json' if format == 'json' else 'application/stream+json'
-        self.response.out.write(json.dumps(response, indent=2))
+        self.response.out.write(json_dumps(response, indent=2))
       elif format == 'as2':
         self.response.headers['Content-Type'] = 'application/activity+json'
         response.update({
@@ -212,7 +212,7 @@ class Handler(handlers.ModernHandler):
           'filtered': None,
           'sorted': None,
         })
-        self.response.out.write(json.dumps(util.trim_nulls(response), indent=2))
+        self.response.out.write(json_dumps(util.trim_nulls(response), indent=2))
       elif format == 'atom':
         self.response.headers['Content-Type'] = 'application/atom+xml'
         hub = self.request.get('hub')
@@ -247,7 +247,7 @@ class Handler(handlers.ModernHandler):
       elif format in ('mf2-json', 'json-mf2'):
         self.response.headers['Content-Type'] = 'application/mf2+json'
         items = [microformats2.activity_to_json(a) for a in activities]
-        self.response.out.write(json.dumps({'items': items}, indent=2))
+        self.response.out.write(json_dumps({'items': items}, indent=2))
       elif format == 'jsonfeed':
         self.response.headers['Content-Type'] = 'application/json'
         try:
@@ -255,7 +255,7 @@ class Handler(handlers.ModernHandler):
                                                feed_url=self.request.url)
         except TypeError as e:
           raise exc.HTTPBadRequest('Unsupported input data: %s' % e)
-        self.response.out.write(json.dumps(jf, indent=2))
+        self.response.out.write(json_dumps(jf, indent=2))
     except ValueError as e:
       logging.warning('converting to output format failed', exc_info=True)
       self.abort(400, 'Could not convert to %s: %s' % (format, str(e)))

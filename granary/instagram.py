@@ -22,8 +22,8 @@ import xml.sax.saxutils
 
 from . import appengine_config
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 
 from . import source
 
@@ -278,7 +278,7 @@ class Instagram(source.Source):
       # error. but if it's an error for some other reason, it probably won't
       # be properly formatted json.
       try:
-        body_obj = json.loads(body) if body else {}
+        body_obj = json_loads(body) if body else {}
       except ValueError:
         body_obj = {}
 
@@ -825,7 +825,7 @@ class Instagram(source.Source):
     profile_user = None
 
     for match in matches:
-      data = util.trim_nulls(json.loads(match[1]))
+      data = util.trim_nulls(json_loads(match[1]))
       entry_data = data.get('entry_data', {})
 
       # home page ie news feed
@@ -899,7 +899,7 @@ class Instagram(source.Source):
     resp.raise_for_status()
 
     try:
-      return json.loads(resp.text)
+      return json_loads(resp.text)
     except ValueError as e:
       msg = "Couldn't decode response as JSON:\n%s" % resp.text
       logging.exception(msg)

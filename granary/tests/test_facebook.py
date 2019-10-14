@@ -15,7 +15,7 @@ import urllib.parse
 from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import appengine_config
 from granary import facebook
@@ -1226,7 +1226,7 @@ class FacebookTest(testutil.TestCase):
     if not url.startswith('http'):
       url = API_BASE + url
     return super(FacebookTest, self).expect_urlopen(
-      url, response=json.dumps(response), **kwargs)
+      url, response=json_dumps(response), **kwargs)
 
   def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
     kwargs.setdefault('allow_redirects', False)
@@ -1244,14 +1244,14 @@ class FacebookTest(testutil.TestCase):
     })
     batch_responses.append(util.trim_nulls({
       'code': status,
-      'body': json.dumps(response),
+      'body': json_dumps(response),
       'headers': response_headers,
     }))
 
   def replay_batch(self):
     self.expect_urlopen(
       API_BASE,
-      data='batch=' + json.dumps(batch, separators=(',', ':')),
+      data='batch=' + json_dumps(batch, separators=(',', ':')),
       response=batch_responses)
     self.mox.ReplayAll()
 
@@ -2904,7 +2904,7 @@ cc Sam G, Michael M<br />""", preview.description)
       API_PUBLISH_PHOTO, {'id': '123_456'}, data=urllib.parse.urlencode((
         ('message', ''),
         ('url', 'http://my/picture'),
-        ('tags', json.dumps([{'tag_uid': '234'}, {'tag_uid': '345'}])),
+        ('tags', json_dumps([{'tag_uid': '234'}, {'tag_uid': '345'}])),
       )))
     self.mox.ReplayAll()
     self.assert_equals({

@@ -26,7 +26,7 @@ import brevity
 from bs4 import BeautifulSoup
 import html2text
 from oauth_dropins.webutil import util
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import appengine_config
 
@@ -112,7 +112,7 @@ def html_to_text(html, **kwargs):
 def load_json(body, url):
   """Utility method to parse a JSON string. Raises HTTPError 502 on failure."""
   try:
-    return json.loads(body)
+    return json_loads(body)
   except (ValueError, TypeError):
     msg = 'Non-JSON response! Returning synthetic HTTP 502.\n%s' % body
     logging.error(msg)

@@ -17,10 +17,10 @@ import xml.sax.saxutils
 # https://stackoverflow.com/questions/49194575
 import oauth_dropins.webutil.tests
 import appengine_config
-import ujson as json
 
 from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine, util
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
 import app
@@ -210,7 +210,7 @@ class AppTest(testutil_appengine.HandlerTest):
       '/url?url=http://my/posts.json&input=as1&output=mf2-json')
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
-    self.assert_equals(MF2, json.loads(resp.body))
+    self.assert_equals(MF2, json_loads(resp.body))
 
   def test_url_as1_to_as2(self):
     self.expect_requests_get('http://my/posts.json', AS1)
@@ -220,7 +220,7 @@ class AppTest(testutil_appengine.HandlerTest):
       '/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/activity+json', resp.headers['Content-Type'])
-    self.assert_equals(AS2_RESPONSE, json.loads(resp.body))
+    self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
 
   def test_url_as1_response_to_as2(self):
     self.expect_requests_get('http://my/posts.json', AS1_RESPONSE)
@@ -230,7 +230,7 @@ class AppTest(testutil_appengine.HandlerTest):
       '/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/activity+json', resp.headers['Content-Type'])
-    self.assert_equals(AS2_RESPONSE, json.loads(resp.body))
+    self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
 
   def test_url_as2_to_as1(self):
     self.expect_requests_get('http://my/posts.json', AS2)
@@ -240,7 +240,7 @@ class AppTest(testutil_appengine.HandlerTest):
       '/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/stream+json', resp.headers['Content-Type'])
-    self.assert_equals(AS1_RESPONSE, json.loads(resp.body))
+    self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
 
   def test_url_as2_response_to_as1(self):
     self.expect_requests_get('http://my/posts.json', AS2_RESPONSE)
@@ -250,7 +250,7 @@ class AppTest(testutil_appengine.HandlerTest):
       '/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/stream+json', resp.headers['Content-Type'])
-    self.assert_equals(AS1_RESPONSE, json.loads(resp.body))
+    self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
 
   def test_url_as1_to_jsonfeed(self):
     self.expect_requests_get('http://my/posts.json', AS1)
@@ -263,7 +263,7 @@ class AppTest(testutil_appengine.HandlerTest):
 
     expected = copy.deepcopy(JSONFEED)
     expected['feed_url'] = self.request_url(path)
-    self.assert_equals(expected, json.loads(resp.body))
+    self.assert_equals(expected, json_loads(resp.body))
 
     # TODO: drop?
   # def test_url_as1_to_jsonfeed_not_list(self):
@@ -285,7 +285,7 @@ class AppTest(testutil_appengine.HandlerTest):
 
     expected = copy.deepcopy(MF2)
     expected['items'][0]['properties']['uid'] = [JSONFEED['items'][0]['id']]
-    self.assert_equals(expected, json.loads(resp.body))
+    self.assert_equals(expected, json_loads(resp.body))
 
   def test_url_bad_jsonfeed(self):
     self.expect_requests_get('http://my/feed.json', ['not', 'jsonfeed'])
@@ -416,7 +416,7 @@ class AppTest(testutil_appengine.HandlerTest):
     expected = copy.deepcopy(MF2)
     for obj in expected['items']:
       obj['properties']['name'] = [obj['properties']['content'][0].strip()]
-    self.assert_equals(expected, json.loads(resp.body))
+    self.assert_equals(expected, json_loads(resp.body))
 
   def test_url_html_to_html(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
@@ -498,7 +498,7 @@ baz baj
       'sorted': False,
       'filtered': False,
       'updatedSince': False,
-    }, json.loads(resp.body))
+    }, json_loads(resp.body))
 
   def test_url_atom_to_as1_parse_error(self):
     self.expect_requests_get('http://feed', 'not valid xml')

@@ -19,7 +19,7 @@ import appengine_config
 
 from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import instagram
 from granary import source
@@ -82,7 +82,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
         'sorted': False,
         'updatedSince': False,
         },
-      json.loads(resp.body))
+      json_loads(resp.body))
     return resp
 
   def test_all_defaults(self):
@@ -114,7 +114,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
 
     resp = api.application.get_response('/fake/123/@blocks/')
     self.assertEquals(200, resp.status_int)
-    self.assert_equals({'items': blocks}, json.loads(resp.body))
+    self.assert_equals({'items': blocks}, json_loads(resp.body))
 
   def test_blocks_rate_limited(self):
     self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
@@ -132,7 +132,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
 
     resp = api.application.get_response('/fake/123/@blocks/')
     self.assertEquals(200, resp.status_int)
-    self.assert_equals({'items': blocks}, json.loads(resp.body))
+    self.assert_equals({'items': blocks}, json_loads(resp.body))
 
   def test_group_id(self):
     self.check_request('/123/456', '123', '456')
@@ -245,7 +245,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertEquals('application/json', resp.headers['Content-Type'])
     self.assert_equals(test_instagram.HTML_ACTIVITIES_FULL,
-                       json.loads(resp.body)['items'])
+                       json_loads(resp.body)['items'])
 
   def test_instagram_scrape_without_cookie_error(self):
     resp = api.application.get_response(
@@ -290,10 +290,10 @@ class HandlerTest(testutil_appengine.HandlerTest):
 
     # second fetches should use the cache instead of fetching from the silo
     second_x = api.application.get_response('/fake/123/@all/?x=y')
-    self.assert_equals({'items': ['x']}, json.loads(second_x.body))
+    self.assert_equals({'items': ['x']}, json_loads(second_x.body))
 
     second_a = api.application.get_response('/fake/123/@all/?a=b')
-    self.assert_equals({'items': ['a']}, json.loads(second_a.body))
+    self.assert_equals({'items': ['a']}, json_loads(second_a.body))
 
   def test_cache_false_query_param(self):
     first = self.get_response('/fake/123/@all/?cache=false', '123', None)
