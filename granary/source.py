@@ -838,10 +838,9 @@ class Source(with_metaclass(SourceMeta, object)):
    actor.get('image', {}).get('url'),
    actor.get('displayName'))
 
-  @classmethod
-  def tag_uri(cls, name):
+  def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
-    return util.tag_uri(cls.DOMAIN, name)
+    return util.tag_uri(self.DOMAIN, name)
 
   def base_object(self, obj):
     """Returns the 'base' silo object that an object operates on.

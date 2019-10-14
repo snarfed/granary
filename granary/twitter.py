@@ -1408,7 +1408,7 @@ class Twitter(source.Source):
     return best_url or variants[0].get('url')
 
   def user_to_actor(self, user):
-    """Converts a tweet to an activity.
+    """Converts a user to an actor.
 
     Args:
       user: dict, a decoded JSON Twitter user
