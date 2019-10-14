@@ -6,7 +6,7 @@ standard_library.install_aliases()
 
 import copy
 
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import appengine_config
@@ -17,6 +17,9 @@ from granary.mastodon import (
   API_REBLOG,
   API_STATUSES,
 )
+
+def tag_uri(name):
+  return util.tag_uri('foo.com', name)
 
 INSTANCE = 'http://foo.com'
 
@@ -64,18 +67,36 @@ REPLY_AS2 = {
   'content': 'reply ☕ baz',
   'inReplyTo': [{'url': 'http://foo.com/@other/123'}],
 }
-# ACTIVITIES_AS2 = []
-# ACTIVITIES_AS1 = [NOTE, REPLY, NOTE_WITH_MEDIA]
 
-# Mastodon
-# https://docs.joinmastodon.org/api/entities/#account
-ACCOUNT = {
+ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'id': '23507',
   'username': 'snarfed',
   'acct': 'snarfed',  # fully qualified if on a different instance
   'url': 'http://foo.com/@snarfed',
   'display_name': 'Ryan Barrett',
   'avatar': 'http://foo.com/snarfed.png',
+  'created_at': '2017-04-19T20:38:19.704Z',
+  'note': 'my note',
+  'fields': [{
+    'name': 'Web site',
+    'value': '<a href="https://snarfed.org" rel="me nofollow noopener" target="_blank"><span class="invisible">https://</span><span class="">snarfed.org</span><span class="invisible"></span></a>',
+    'verified_at': '2019-04-03T17:32:24.467+00:00',
+  }],
+}
+ACTOR = {  # ActivityStreams
+  'objectType': 'person',
+  'displayName': 'Ryan Barrett',
+  'username': 'snarfed',
+  'id': tag_uri('snarfed'),
+  'numeric_id': '23507',
+  'url': 'http://foo.com/@snarfed',
+  'urls': [
+    {'value': 'http://foo.com/@snarfed'},
+    {'value': 'https://snarfed.org'},
+  ],
+  'image': {'url': 'http://foo.com/snarfed.png'},
+  'description': 'my note',
+  'published': '2017-04-19T20:38:19.704Z',
 }
 
 # https://docs.joinmastodon.org/api/entities/#status
@@ -132,6 +153,9 @@ class MastodonTest(testutil.TestCase):
     expected = copy.deepcopy(NOTE)
     expected['replies'] = {'items': [REPLY]}
     self.assert_equals([expected], self.mastodon.get_activities(fetch_replies=True))
+
+  def test_account_to_actor(self):
+    self.assert_equals(ACTOR, self.mastodon.account_to_actor(ACCOUNT))
 
   def test_preview_status(self):
     got = self.mastodon.preview_create(NOTE)

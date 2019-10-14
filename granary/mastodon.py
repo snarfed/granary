@@ -51,7 +51,7 @@ class Mastodon(source.Source):
       access_token: string, optional OAuth access token
     """
     assert instance
-    self.instance = instance
+    self.instance = self.BASE_URL = instance
     self.DOMAIN = util.domain_from_link(instance)
     self.username = username
     self.access_token = access_token
@@ -116,6 +116,37 @@ class Mastodon(source.Source):
       activities_as1.append(activity_as1)
 
     return self.make_activities_base_response(util.trim_nulls(activities_as1))
+
+  def account_to_actor(self, account):
+    """Converts a Mastodon account to an AS1 actor.
+
+    Args:
+      actor: dict, Mastodon account
+
+    Returns: dict, AS1 actor
+    """
+    username = account.get('username')
+    if not username:
+      return {}
+
+    url = account.get('url')
+    # mastodon's 'Web site' fields are HTML links, so extract their URLs
+    web_sites = [util.parse_html(f.get('value')).find('a')['href']
+                 for f in account.get('fields', [])
+                 if f.get('name') == 'Web site']
+
+    return util.trim_nulls({
+      'objectType': 'person',
+      'id': self.tag_uri(username),
+      'numeric_id': account.get('id'),
+      'username': username,
+      'displayName': account.get('display_name') or username,
+      'url': url,
+      'urls': [{'value': u} for u in [url] + web_sites],
+      'image': {'url': account.get('avatar')},
+      'published': account.get('created_at'),
+      'description': account.get('note'),
+    })
 
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):
