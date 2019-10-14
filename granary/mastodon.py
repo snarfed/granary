@@ -117,6 +117,125 @@ class Mastodon(source.Source):
 
     return self.make_activities_base_response(util.trim_nulls(activities_as1))
 
+  def status_to_activity(self, status):
+    """Converts a status to an activity.
+
+    Args:
+      status: dict, a decoded JSON status
+
+    Returns:
+      an ActivityStreams activity dict, ready to be JSON-encoded
+    """
+    obj = self.status_to_object(status)
+    activity = {
+      'verb': 'post',
+      'published': obj.get('published'),
+      'id': obj.get('id'),
+      'url': obj.get('url'),
+      'actor': obj.get('author'),
+      'object': obj,
+      'context': {'inReplyTo': obj.get('inReplyTo')},
+      }
+
+    reblogged = status.get('reblogged')
+    if reblogged:
+      activity['verb'] = 'share'
+      activity['object'] = self.status_to_object(reblogged)
+
+    app = status.get('application')
+    if app:
+      activity['generator'] = {
+        'displayName': app.get('name'),
+        'url': app.get('url'),
+      }
+
+    return self.postprocess_activity(activity)
+
+  def status_to_object(self, status):
+    """Converts a status to an object.
+
+    Args:
+      status: dict, a decoded JSON status
+
+    Returns:
+      an ActivityStreams object dict, ready to be JSON-encoded
+    """
+    id = status.get('id')
+    if not id:
+      return {}
+
+    obj = {
+      'objectType': 'note',
+      'id': self.tag_uri(id),
+      'url': status.get('url'),
+      'published': status.get('created_at'),
+      'author': self.account_to_actor(status.get('account')),
+      'to': [{
+        'objectType': 'group',
+        'alias': '@' + status.get('visibility'),
+      }],
+    }
+
+    reblog = status.get('reblog')
+    base_status = reblog if reblog else status
+    content = util.WideUnicode(base_status.get('content') or '')
+
+    # TODO # media! into attachments.
+    # media = entities.get('media', [])
+    # if media:
+    #   types = {
+    #     'photo': 'image',
+    #     'video': 'video',
+    #     'animated_gif': 'video',
+    #   }
+    #   obj['attachments'] = [{
+    #       'objectType': types.get(m.get('type')),
+    #       'image': {'url': m.get('media_url_https') or m.get('media_url')},
+    #       'stream': {'url': self._video_url(m)},
+    #   } for m in media]
+
+    #   first = obj['attachments'][0]
+    #   if first['objectType'] == 'video':
+    #     obj['stream'] = first['stream']
+    #   else:
+    #     obj['image'] = first['image']
+
+    # tags
+    obj['tags'] = [{
+      'objectType': 'mention',
+      'id': self.tag_uri(t.get('id')),
+      'url': t.get('url'),
+      'displayName': t.get('username'),
+    } for t in status.get('mentions', [])] + [{
+      'objectType': 'hashtag',
+      'url': t.get('url'),
+      'displayName': t.get('name'),
+    } for t in status.get('tags', [])]
+
+    # 'Boosted @username:' prefix for retweets
+    if reblog and reblog.get('content'):
+      reblog_account = reblog.get('account')
+      content = 'Boosted <a href="%s">@%s</a>: ' % (
+        (reblog_account.get('url'), reblog_account.get('username'))) + content
+
+    obj.update({
+      'tags': [t for t in obj['tags'] if t['objectType'] != 'image'] +
+              [self.retweet_to_object(r) for r in status.get('retweets', [])],
+      'content': content,
+    })
+
+    # inReplyTo
+    reply_to_id = status.get('in_reply_to_id')
+    if reply_to_id:
+      obj['inReplyTo'] = [{
+        'id': self.tag_uri(reply_to_id),
+        # XXX TODO need to generate URL for in-reply-to status, but we don't
+        # have its author's username, just their account id
+        'url': urllib.parse.urljoin(self.instance, '/TODO/status/' + reply_to_id),
+      }]
+
+    return self.postprocess_object(obj)
+
   def account_to_actor(self, account):
     """Converts a Mastodon account to an AS1 actor.
 

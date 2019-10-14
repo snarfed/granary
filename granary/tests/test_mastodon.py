@@ -57,8 +57,8 @@ NOTE_AS2 = {
   'content': 'foo ☕ bar',
   'object': {
     'replies': {
-      'type' : 'Collection',
-      'id' : 'http://foo.com/123/replies',
+      'type': 'Collection',
+      'id': 'http://foo.com/123/replies',
     },
   },
 }
@@ -98,22 +98,76 @@ ACTOR = {  # ActivityStreams
   'description': 'my note',
   'published': '2017-04-19T20:38:19.704Z',
 }
-
-# https://docs.joinmastodon.org/api/entities/#status
-STATUS = {
+STATUS = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#status
   'id': '123',
   'url': 'http://foo.com/@snarfed/123',
   'uri': 'http://foo.com/users/snarfed/statuses/123',
   'account': ACCOUNT,
-  'in_reply_to_id': '456',
-  'in_reply_to_account_id': '11018',
-  'content': '<p>foo ☕ bar</p>',
+  'content': '<p>foo ☕ bar <a ...>@alice</a> <a ...>#IndieWeb</a></p>',
   'created_at': '2019-07-29T18:35:53.446Z',
   'replies_count': 1,
   'favourites_count': 0,
   'reblogs_count': 0,
   'visibility': 'public',
+  'mentions': [{
+    'username': 'alice',
+    'url': 'https://other/@alice',
+    'id': '11018',
+    'acct': 'alice@other',
+  }],
+  'tags': [{
+    'url': 'http://foo.com/tags/indieweb',
+    'name': 'indieweb'
+  }],
+  'application': {
+    'name': 'my app',
+    'url': 'http://app',
+  },
 }
+OBJECT = {  # ActivityStreams
+  'objectType': 'note',
+  'author': ACTOR,
+  'content': STATUS['content'],
+  'id': tag_uri('123'),
+  'published': STATUS['created_at'],
+  'url': STATUS['url'],
+  'to': [{'objectType': 'group', 'alias': '@public'}],
+  'tags': [{
+    'objectType': 'mention',
+    'id': tag_uri('11018'),
+    'url': 'https://other/@alice',
+    'displayName': 'alice',
+  }, {
+    'objectType': 'hashtag',
+    'url': 'http://foo.com/tags/indieweb',
+    'displayName': 'indieweb',
+  }],
+}
+ACTIVITY = {  # ActivityStreams
+  'verb': 'post',
+  'published': STATUS['created_at'],
+  'id': tag_uri('123'),
+  'url': STATUS['url'],
+  'actor': ACTOR,
+  'object': OBJECT,
+  'generator': {'displayName': 'my app', 'url': 'http://app'},
+}
+REPLY_STATUS = copy.deepcopy(STATUS)  # Mastodon
+REPLY_STATUS.update({
+  'in_reply_to_id': '456',
+  'in_reply_to_account_id': '11018',
+})
+REPLY_OBJECT = copy.deepcopy(OBJECT)  # ActivityStreams
+REPLY_OBJECT['inReplyTo'] = [{
+  'url': 'http://foo.com/TODO/status/456',
+  'id': tag_uri('456'),
+}]
+REPLY_ACTIVITY = copy.deepcopy(ACTIVITY)  # ActivityStreams
+REPLY_ACTIVITY.update({
+  'object': REPLY_OBJECT,
+  'context': {'inReplyTo': REPLY_OBJECT['inReplyTo']},
+})
+
 
 class MastodonTest(testutil.TestCase):
 
@@ -156,6 +210,18 @@ class MastodonTest(testutil.TestCase):
 
   def test_account_to_actor(self):
     self.assert_equals(ACTOR, self.mastodon.account_to_actor(ACCOUNT))
+
+  def test_status_to_object(self):
+    self.assert_equals(OBJECT, self.mastodon.status_to_object(STATUS))
+
+  def test_status_to_activity(self):
+    self.assert_equals(ACTIVITY, self.mastodon.status_to_activity(STATUS))
+
+  def test_reply_status_to_object(self):
+    self.assert_equals(REPLY_OBJECT, self.mastodon.status_to_object(REPLY_STATUS))
+
+  def test_reply_status_to_activity(self):
+    self.assert_equals(REPLY_ACTIVITY, self.mastodon.status_to_activity(REPLY_STATUS))
 
   def test_preview_status(self):
     got = self.mastodon.preview_create(NOTE)
