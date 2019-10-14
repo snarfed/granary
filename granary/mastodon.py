@@ -91,11 +91,31 @@ class Mastodon(source.Source):
     url = urllib.parse.urljoin(self.instance,
                                '/users/%s/outbox?page=true' % self.username)
     resp = util.requests_get(url, headers=as2.CONNEG_HEADERS)
-    activities = [as2.to_as1(a) for a in
-                  json.loads(resp.text).get('orderedItems', [])]
 
-    response = self.make_activities_base_response(util.trim_nulls(activities))
-    return response
+    activities_as2 = json.loads(resp.text).get('orderedItems', [])
+    activities_as1 = []
+
+    for activity_as2 in activities_as2:
+      obj_as2 = activity_as2.get('object')
+      replies = obj_as2.pop('replies', {}) if isinstance(obj_as2, dict) else None
+
+      activity_as1 = as2.to_as1(activity_as2)
+
+      if fetch_replies and replies:
+        replies_url = replies.get('id')
+        if replies_url:
+          replies = util.requests_get(
+            util.add_query_params(replies_url, {'only_other_accounts': 'true'}),
+            headers=as2.CONNEG_HEADERS)
+          replies.raise_for_status()
+          # TODO: should this be activity_as1['object']['replies']?
+          activity_as1['replies'] = {
+            'items': [as2.to_as1(r) for r in json.loads(replies.text).get('items', [])],
+          }
+
+      activities_as1.append(activity_as1)
+
+    return self.make_activities_base_response(util.trim_nulls(activities_as1))
 
   def create(self, obj, include_link=source.OMIT_LINK,
              ignore_formatting=False):
@@ -183,6 +203,15 @@ class Mastodon(source.Source):
           error_html='No content text found.')
 
     if is_reply and not base_url:
+      # TODO: support replies on federated (ie other) instances. details:
+      #
+      # https://mastodon.social/@jkreeftmeijer/101245063526942536
+      # "Got it. This is how federation works.
+      # You need the local ID for the status you’re replying to. https://mastodon.social/@jkreeftmeijer/101236371751163533 is posted on https://mastodon.social, but you need the ID from https://mastodon.technology/web/statuses/101236371815734043 when posting a reply on https://mastodon.technology, for example."
+      #
+      # https://mastodon.social/@jkreeftmeijer/101290086224931209
+      # "To get the local ID for a Mastodon status on another instance, use the search API (https://docs.joinmastodon.org/api/rest/search/), or the search bar in your web client.
+      # Searching for a status URL (like https://mastodon.social/@jkreeftmeijer/101236371751163533) returns the status on your instance, including the local ID."
       return source.creation_result(
         abort=True,
         error_plain='Could not find a toot on %s to reply to.' % self.DOMAIN,
