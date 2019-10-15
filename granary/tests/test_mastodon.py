@@ -167,6 +167,70 @@ REPLY_ACTIVITY.update({
   'object': REPLY_OBJECT,
   'context': {'inReplyTo': REPLY_OBJECT['inReplyTo']},
 })
+MEDIA_STATUS = copy.deepcopy(STATUS)  # Mastodon
+MEDIA_STATUS['media_attachments'] = [{
+  'id': '222',
+  'type': 'image',
+  'url': 'http://foo.com/image.jpg',
+  'description': None,
+  'meta': {
+     'small': {
+        'height': 202,
+        'size': '400x202',
+        'width': 400,
+        'aspect': 1.98019801980198
+     },
+     'original': {
+        'height': 536,
+        'aspect': 1.97761194029851,
+        'size': '1060x536',
+        'width': 1060
+     }
+  },
+}, {
+  'id': '444',
+  'type': 'gifv',
+  'url': 'http://foo.com/video.mp4',
+  'preview_url': 'http://foo.com/poster.png',
+  'description': 'a fun video',
+  'meta': {
+     'width': 640,
+     'height': 480,
+     'small': {
+        'width': 400,
+        'height': 300,
+        'aspect': 1.33333333333333,
+        'size': '400x300'
+     },
+     'aspect': 1.33333333333333,
+     'size': '640x480',
+     'duration': 6.13,
+     'fps': 30,
+     'original': {
+        'frame_rate': '30/1',
+        'duration': 6.134,
+        'bitrate': 166544,
+        'width': 640,
+        'height': 480
+     },
+     'length': '0:00:06.13'
+  },
+}]
+MEDIA_OBJECT = copy.deepcopy(OBJECT)
+MEDIA_OBJECT.update({
+  'image': {'url': 'http://foo.com/image.jpg'},
+  'attachments': [{
+    'objectType': 'image',
+    'id': tag_uri(222),
+    'image': {'url': 'http://foo.com/image.jpg'},
+  }, {
+    'objectType': 'video',
+    'id': tag_uri(444),
+    'displayName': 'a fun video',
+    'stream': {'url': 'http://foo.com/video.mp4'},
+    'image': {'url': 'http://foo.com/poster.png'},
+  }],
+})
 
 
 class MastodonTest(testutil.TestCase):
@@ -222,6 +286,9 @@ class MastodonTest(testutil.TestCase):
 
   def test_reply_status_to_activity(self):
     self.assert_equals(REPLY_ACTIVITY, self.mastodon.status_to_activity(REPLY_STATUS))
+
+  def test_status_with_media_to_object(self):
+    self.assert_equals(MEDIA_OBJECT, self.mastodon.status_to_object(MEDIA_STATUS))
 
   def test_preview_status(self):
     got = self.mastodon.preview_create(NOTE)

@@ -26,6 +26,15 @@ API_MEDIA = '/api/v1/media'
 # https://docs.joinmastodon.org/api/rest/media/#parameters
 MAX_ALT_LENGTH = 420
 
+# maps Mastodon media attachment type to AS1 objectType
+# https://docs.joinmastodon.org/api/entities/#type
+MEDIA_TYPES = {
+  'image': 'image',
+  'video': 'video',
+  'gifv': 'video',
+  'unknown': None,
+}
+
 
 class Mastodon(source.Source):
   """Mastodon source class. See file docstring and Source class for details.
@@ -170,6 +179,7 @@ class Mastodon(source.Source):
       'url': status.get('url'),
       'published': status.get('created_at'),
       'author': self.account_to_actor(status.get('account')),
+      'attachments': [],
       'to': [{
         'objectType': 'group',
         'alias': '@' + status.get('visibility'),
@@ -180,25 +190,30 @@ class Mastodon(source.Source):
     base_status = reblog if reblog else status
     content = util.WideUnicode(base_status.get('content') or '')
 
-    # TODO # media! into attachments.
-    # media = entities.get('media', [])
-    # if media:
-    #   types = {
-    #     'photo': 'image',
-    #     'video': 'video',
-    #     'animated_gif': 'video',
-    #   }
-    #   obj['attachments'] = [{
-    #       'objectType': types.get(m.get('type')),
-    #       'image': {'url': m.get('media_url_https') or m.get('media_url')},
-    #       'stream': {'url': self._video_url(m)},
-    #   } for m in media]
+    # media! into attachments.
+    for media in status.get('media_attachments', []):
+      type = media.get('type')
+      att = {
+        'id': self.tag_uri(media.get('id')),
+        'objectType': MEDIA_TYPES.get(type),
+        'displayName': media.get('description'),
+      }
+      url = media.get('url')
+      if type == 'image':
+        att['image'] = {'url': url}
+      elif type in ('gifv', 'video'):
+        att.update({
+          'stream': {'url': url},
+          'image': {'url': media.get('preview_url')},
+        })
+      obj['attachments'].append(att)
 
-    #   first = obj['attachments'][0]
-    #   if first['objectType'] == 'video':
-    #     obj['stream'] = first['stream']
-    #   else:
-    #     obj['image'] = first['image']
+    if obj['attachments']:
+      first = obj['attachments'][0]
+      if first['objectType'] == 'video':
+        obj['stream'] = first['stream']
+      else:
+        obj['image'] = first['image']
 
     # tags
     obj['tags'] = [{
