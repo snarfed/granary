@@ -15,13 +15,15 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import appengine_config
-from . import as2
 from . import source
 
-API_STATUSES = '/api/v1/statuses'
+API_ACCOUNT_STATUSES = '/api/v1/accounts/%s/statuses'
+API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
-API_REBLOG = '/api/v1/statuses/%s/reblog'
 API_MEDIA = '/api/v1/media'
+API_REBLOG = '/api/v1/statuses/%s/reblog'
+API_STATUSES = '/api/v1/statuses'
+API_VERIFY_CREDENTIALS = '/api/v1/accounts/verify_credentials'
 
 # https://docs.joinmastodon.org/api/rest/media/#parameters
 MAX_ALT_LENGTH = 420
@@ -41,6 +43,7 @@ class Mastodon(source.Source):
 
   Attributes:
     instance: string, base URL of Mastodon instance, eg https://mastodon.social/
+    user_id: integer, optional, current user's id (not username!) on this instance
     access_token: string, optional, OAuth access token
   """
   DOMAIN = 'N/A'
@@ -51,29 +54,44 @@ class Mastodon(source.Source):
   TRUNCATE_TEXT_LENGTH = 500
   TRUNCATE_URL_LENGTH = 23
 
-  def __init__(self, instance, username=None, access_token=None):
+  def __init__(self, instance, access_token, user_id=None):
     """Constructor.
+
+    If user_id is not provided, it will be fetched via the API.
 
     Args:
       instance: string, base URL of Mastodon instance, eg https://mastodon.social/
-      username: string, optional, current user's username on this instance
+      user_id: string or integer, optional, current user's id (not username!) on
+        this instance
       access_token: string, optional OAuth access token
     """
     assert instance
     self.instance = self.BASE_URL = instance
-    self.DOMAIN = util.domain_from_link(instance)
-    self.username = username
+    assert access_token
     self.access_token = access_token
+    self.DOMAIN = util.domain_from_link(instance)
+
+    if user_id:
+      self.user_id = user_id
+    else:
+      creds = self._get(API_VERIFY_CREDENTIALS)
+      self.user_id = creds['id']
 
   def user_url(self, username):
     return urllib.parse.urljoin(self.instance, '@' + username)
 
-  def api(self, path, *args, **kwargs):
+  def _get(self, *args, **kwargs):
+    return self._api(util.requests_get, *args, **kwargs)
+
+  def _post(self, *args, **kwargs):
+    return self._api(util.requests_post, *args, **kwargs)
+
+  def _api(self, fn, path, *args, **kwargs):
     headers = kwargs.setdefault('headers', {})
     headers['Authorization'] = 'Bearer ' + self.access_token
 
     url = urllib.parse.urljoin(self.instance, path)
-    resp = util.requests_post(url, *args, **kwargs)
+    resp = fn(url, *args, **kwargs)
     try:
       resp.raise_for_status()
     except BaseException as e:
@@ -95,36 +113,23 @@ class Mastodon(source.Source):
         group_id or user_id or activity_id):
       raise NotImplementedError()
 
-    assert self.username
-    # XXX TODO: brittle
-    url = urllib.parse.urljoin(self.instance,
-                               '/users/%s/outbox?page=true' % self.username)
-    resp = util.requests_get(url, headers=as2.CONNEG_HEADERS)
+    statuses = self._get(API_ACCOUNT_STATUSES % self.user_id)
+    activities = []
 
-    activities_as2 = json_loads(resp.text).get('orderedItems', [])
-    activities_as1 = []
+    for status in statuses:
+      activity = self.status_to_activity(status)
+      activities.append(activity)
 
-    for activity_as2 in activities_as2:
-      obj_as2 = activity_as2.get('object')
-      replies = obj_as2.pop('replies', {}) if isinstance(obj_as2, dict) else None
-
-      activity_as1 = as2.to_as1(activity_as2)
-
-      if fetch_replies and replies:
-        replies_url = replies.get('id')
-        if replies_url:
-          replies = util.requests_get(
-            util.add_query_params(replies_url, {'only_other_accounts': 'true'}),
-            headers=as2.CONNEG_HEADERS)
-          replies.raise_for_status()
-          # TODO: should this be activity_as1['object']['replies']?
-          activity_as1['replies'] = {
-            'items': [as2.to_as1(r) for r in json_loads(replies.text).get('items', [])],
+      id = status.get('id')
+      if id:
+        if fetch_replies:
+          context = self._get(API_CONTEXT % id)
+          activity['object']['replies'] = {
+            'items': [self.status_to_activity(reply)
+                      for reply in context.get('descendants', [])]
           }
 
-      activities_as1.append(activity_as1)
-
-    return self.make_activities_base_response(util.trim_nulls(activities_as1))
+    return self.make_activities_base_response(util.trim_nulls(activities))
 
   def status_to_activity(self, status):
     """Converts a status to an activity.
@@ -329,7 +334,7 @@ class Mastodon(source.Source):
 
     https://docs.joinmastodon.org/api/rest/statuses/
 
-    Heavily based on :meth:`Twitter._create`.
+    Based on :meth:`Twitter._create`.
 
     Args:
       obj: ActivityStreams object
@@ -411,7 +416,7 @@ class Mastodon(source.Source):
         preview_description += '<span class="verb">favorite</span> <a href="%s">this toot</a>.' % base_url
         return source.creation_result(description=preview_description)
       else:
-        resp = self.api(API_FAVORITE % base_id)
+        resp = self._post(API_FAVORITE % base_id)
         resp['type'] = 'like'
 
     elif type == 'activity' and verb == 'share':
@@ -425,7 +430,7 @@ class Mastodon(source.Source):
           preview_description += '<span class="verb">boost</span> <a href="%s">this toot</a>.' % base_url
           return source.creation_result(description=preview_description)
       else:
-        resp = self.api(API_REBLOG % base_id)
+        resp = self._post(API_REBLOG % base_id)
         resp['type'] = 'repost'
 
     elif type in ('note', 'article') or is_reply or is_rsvp:  # a post
@@ -455,7 +460,7 @@ class Mastodon(source.Source):
         ids = self.upload_media(images + videos)
         if ids:
           data['media_ids'] = ids
-        resp = self.api(API_STATUSES, json=data)
+        resp = self._post(API_STATUSES, json=data)
 
     else:
       return source.creation_result(
@@ -493,7 +498,7 @@ class Mastodon(source.Source):
       # TODO: mime type check?
       with util.requests_get(url, stream=True) as fetch:
         fetch.raise_for_status()
-        upload = self.api(API_MEDIA, files={'file': fetch.raw})
+        upload = self._post(API_MEDIA, files={'file': fetch.raw})
 
       logging.info('Got: %s', upload)
       media_id = upload['id']
