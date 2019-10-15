@@ -167,6 +167,32 @@ REPLY_ACTIVITY.update({
   'object': REPLY_OBJECT,
   'context': {'inReplyTo': REPLY_OBJECT['inReplyTo']},
 })
+REBLOG_STATUS = {  # Mastodon
+  'id': '789',
+  'url': 'http://foo.com/@bob/789',
+  'account': {
+    'id': '999',
+    'username': 'bob',
+    'url': 'http://foo.com/@bob',
+  },
+  'reblog': STATUS,
+}
+SHARE_ACTIVITY = {  # ActivityStreams
+  'objectType': 'activity',
+  'verb': 'share',
+  'id': tag_uri(789),
+  'url': 'http://foo.com/@bob/789',
+  'object': OBJECT,
+  'actor': {
+    'objectType': 'person',
+    'id': tag_uri('bob'),
+    'numeric_id': '999',
+    'username': 'bob',
+    'displayName': 'bob',
+    'url': 'http://foo.com/@bob',
+    'urls': [{'value': 'http://foo.com/@bob'}],
+  },
+}
 MEDIA_STATUS = copy.deepcopy(STATUS)  # Mastodon
 MEDIA_STATUS['media_attachments'] = [{
   'id': '222',
@@ -286,6 +312,9 @@ class MastodonTest(testutil.TestCase):
 
   def test_reply_status_to_activity(self):
     self.assert_equals(REPLY_ACTIVITY, self.mastodon.status_to_activity(REPLY_STATUS))
+
+  def test_reblog_status_to_activity(self):
+    self.assert_equals(SHARE_ACTIVITY, self.mastodon.status_to_activity(REBLOG_STATUS))
 
   def test_status_with_media_to_object(self):
     self.assert_equals(MEDIA_OBJECT, self.mastodon.status_to_object(MEDIA_STATUS))

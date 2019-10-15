@@ -146,10 +146,13 @@ class Mastodon(source.Source):
       'context': {'inReplyTo': obj.get('inReplyTo')},
       }
 
-    reblogged = status.get('reblogged')
+    reblogged = status.get('reblog')
     if reblogged:
-      activity['verb'] = 'share'
-      activity['object'] = self.status_to_object(reblogged)
+      activity.update({
+        'objectType': 'activity',
+        'verb': 'share',
+        'object': self.status_to_object(reblogged),
+      })
 
     app = status.get('application')
     if app:
@@ -180,10 +183,6 @@ class Mastodon(source.Source):
       'published': status.get('created_at'),
       'author': self.account_to_actor(status.get('account')),
       'attachments': [],
-      'to': [{
-        'objectType': 'group',
-        'alias': '@' + status.get('visibility'),
-      }],
     }
 
     reblog = status.get('reblog')
@@ -247,6 +246,14 @@ class Mastodon(source.Source):
         # XXX TODO need to generate URL for in-reply-to status, but we don't
         # have its author's username, just their account id
         'url': urllib.parse.urljoin(self.instance, '/TODO/status/' + reply_to_id),
+      }]
+
+    # to (ie visibility)
+    visibility = status.get('visibility')
+    if visibility:
+      obj['to'] = [{
+        'objectType': 'group',
+        'alias': '@' + visibility,
       }]
 
     return self.postprocess_object(obj)
