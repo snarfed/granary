@@ -3,6 +3,11 @@
 
 Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
+
+TODO:
+* caching
+* block lists
+
 """
 from __future__ import absolute_import
 from future import standard_library
@@ -17,6 +22,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from . import appengine_config
 from . import source
 
+API_ACCOUNT = '/api/v1/accounts/%s'
 API_ACCOUNT_STATUSES = '/api/v1/accounts/%s/statuses'
 API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
@@ -24,6 +30,7 @@ API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
 API_MEDIA = '/api/v1/media'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
 API_REBLOGGED_BY = '/api/v1/statuses/%s/reblogged_by'
+API_STATUS = '/api/v1/status/%s'
 API_STATUSES = '/api/v1/statuses'
 API_VERIFY_CREDENTIALS = '/api/v1/accounts/verify_credentials'
 
@@ -141,6 +148,31 @@ class Mastodon(source.Source):
 
     return self.make_activities_base_response(util.trim_nulls(activities))
 
+  def get_actor(self, user_id=None):
+    """Fetches and returns an account.
+
+    Args: user_id: string, defaults to current account
+
+    Returns: dict, ActivityStreams actor object
+    """
+    if user_id is None:
+      user_id = self.user_id
+    return self.account_to_actor(self._get(API_ACCOUNT % user_id))
+
+  def get_comment(self, comment_id, **kwargs):
+    """Fetches and returns a comment.
+
+    Args:
+      comment_id: string status id
+      **kwargs: unused
+
+    Returns: dict, ActivityStreams object
+
+    Raises:
+      :class:`ValueError`: if comment_id is invalid
+    """
+    return self.status_to_object(self._get(API_STATUS % comment_id))
+
   def status_to_activity(self, status):
     """Converts a status to an activity.
 
@@ -173,7 +205,7 @@ class Mastodon(source.Source):
     if app:
       activity['generator'] = {
         'displayName': app.get('name'),
-        'url': app.get('url'),
+        'url': app.get('website'),
       }
 
     return self.postprocess_activity(activity)
