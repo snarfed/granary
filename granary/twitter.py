@@ -1537,6 +1537,7 @@ class Twitter(source.Source):
     Returns:
       ActivityStreams object dict
     """
+    # TODO: unify with Mastodon._make_like()
     tweet_id = tweet.get('id_str')
     liker_id = liker.get('id_str')
     id = None
