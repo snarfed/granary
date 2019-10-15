@@ -1537,7 +1537,7 @@ class TwitterTest(testutil.TestCase):
             # this is an HLS video (playlist) with all the different variants.
             # we should ignore it.
             #
-            #     https://twittercommunity.com/t/retiring-mp4-video-output-support-on-august-1st-2016/66045
+            # https://twittercommunity.com/t/retiring-mp4-video-output-support-on-august-1st-2016/66045
             # https://twittercommunity.com/t/retiring-mp4-video-output/66093
             # https://twittercommunity.com/t/mp4-still-appears-despite-of-retiring-announcment/788
             'content_type': 'application/x-mpegURL',
