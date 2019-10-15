@@ -20,6 +20,7 @@ from . import source
 API_ACCOUNT_STATUSES = '/api/v1/accounts/%s/statuses'
 API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
+API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
 API_MEDIA = '/api/v1/media'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
 API_STATUSES = '/api/v1/statuses'
@@ -117,7 +118,7 @@ class Mastodon(source.Source):
     activities = []
 
     for status in statuses:
-      activity = self.status_to_activity(status)
+      activity = self.postprocess_activity(self.status_to_activity(status))
       activities.append(activity)
 
       id = status.get('id')
@@ -128,6 +129,10 @@ class Mastodon(source.Source):
             'items': [self.status_to_activity(reply)
                       for reply in context.get('descendants', [])]
           }
+        if fetch_likes:
+          likers = self._get(API_FAVORITED_BY % id)
+          activity['object']['tags'].extend(
+            self._make_like(status, l) for l in likers)
 
     return self.make_activities_base_response(util.trim_nulls(activities))
 
@@ -267,7 +272,7 @@ class Mastodon(source.Source):
     """Converts a Mastodon account to an AS1 actor.
 
     Args:
-      actor: dict, Mastodon account
+      account: dict, Mastodon account
 
     Returns: dict, AS1 actor
     """
@@ -294,8 +299,28 @@ class Mastodon(source.Source):
       'description': account.get('note'),
     })
 
-  def create(self, obj, include_link=source.OMIT_LINK,
-             ignore_formatting=False):
+  def _make_like(self, status, liker):
+    """Generates and returns a ActivityStreams like object.
+
+    Args:
+      status: dict, Mastodon status
+      liker: dict, Mastodon account
+
+    Returns: dict, AS1 like activity
+    """
+    # TODO: unify with Twitter._make_like()
+    url = status.get('url')
+    liker_id = liker.get('id')
+    return {
+      'id': self.tag_uri('%s_favorited_by_%s' % (status.get('id'), liker_id)),
+      'url': '%s#favorited-by-%s' % (url, liker_id),
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': {'url': url},
+      'author': self.account_to_actor(liker),
+    }
+
+  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
     """Creates a status (aka toot), reply, boost (aka reblog), or favorite.
 
     https://docs.joinmastodon.org/api/rest/statuses/

@@ -15,6 +15,7 @@ from granary.mastodon import (
   API_ACCOUNT_STATUSES,
   API_CONTEXT,
   API_FAVORITE,
+  API_FAVORITED_BY,
   API_MEDIA,
   API_REBLOG,
   API_STATUSES,
@@ -26,11 +27,6 @@ def tag_uri(name):
 
 INSTANCE = 'http://foo.com'
 
-LIKE = {
-  'objectType': 'activity',
-  'verb': 'like',
-  'object': {'url': 'http://foo.com/@snarfed/123'},
-}
 ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'id': '23507',
   'username': 'snarfed',
@@ -222,7 +218,14 @@ MEDIA_OBJECT.update({
 })
 MEDIA_ACTIVITY = copy.deepcopy(ACTIVITY)  # ActivityStreams
 MEDIA_ACTIVITY['object'] = MEDIA_OBJECT
-
+LIKE = {  # ActivityStreams
+  'id': tag_uri('123_favorited_by_23507'),
+  'url': OBJECT['url'] + '#favorited-by-23507',
+  'objectType': 'activity',
+  'verb': 'like',
+  'object': {'url': OBJECT['url']},
+  'author': ACTOR,
+}
 
 class MastodonTest(testutil.TestCase):
 
@@ -272,8 +275,20 @@ class MastodonTest(testutil.TestCase):
     }
     self.assert_equals([with_replies], self.mastodon.get_activities(fetch_replies=True))
 
+  def test_get_activities_fetch_likes(self):
+    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_FAVORITED_BY % STATUS['id'], [ACCOUNT, ACCOUNT])
+    self.mox.ReplayAll()
+
+    with_likes = copy.deepcopy(ACTIVITY)
+    with_likes['object']['tags'].extend([LIKE, LIKE])
+    self.assert_equals([with_likes], self.mastodon.get_activities(fetch_likes=True))
+
   def test_account_to_actor(self):
     self.assert_equals(ACTOR, self.mastodon.account_to_actor(ACCOUNT))
+
+  def test_make_like(self):
+    self.assert_equals(LIKE, self.mastodon._make_like(STATUS, ACCOUNT))
 
   def test_status_to_object(self):
     self.assert_equals(OBJECT, self.mastodon.status_to_object(STATUS))
