@@ -18,6 +18,7 @@ from granary.mastodon import (
   API_FAVORITED_BY,
   API_MEDIA,
   API_REBLOG,
+  API_REBLOGGED_BY,
   API_STATUSES,
   API_VERIFY_CREDENTIALS,
 )
@@ -56,6 +57,20 @@ ACTOR = {  # ActivityStreams
   'image': {'url': 'http://foo.com/snarfed.png'},
   'description': 'my note',
   'published': '2017-04-19T20:38:19.704Z',
+}
+ACCOUNT_BOB = {
+  'id': '999',
+  'username': 'bob',
+  'url': 'http://foo.com/@bob',
+}
+ACTOR_BOB = {
+  'objectType': 'person',
+  'id': tag_uri('bob'),
+  'numeric_id': '999',
+  'username': 'bob',
+  'displayName': 'bob',
+  'url': 'http://foo.com/@bob',
+  'urls': [{'value': 'http://foo.com/@bob'}],
 }
 STATUS = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#status
   'id': '123',
@@ -129,11 +144,7 @@ REPLY_ACTIVITY.update({
 REBLOG_STATUS = {  # Mastodon
   'id': '789',
   'url': 'http://foo.com/@bob/789',
-  'account': {
-    'id': '999',
-    'username': 'bob',
-    'url': 'http://foo.com/@bob',
-  },
+  'account': ACCOUNT_BOB,
   'reblog': STATUS,
 }
 SHARE_ACTIVITY = {  # ActivityStreams
@@ -142,15 +153,7 @@ SHARE_ACTIVITY = {  # ActivityStreams
   'id': tag_uri(789),
   'url': 'http://foo.com/@bob/789',
   'object': OBJECT,
-  'actor': {
-    'objectType': 'person',
-    'id': tag_uri('bob'),
-    'numeric_id': '999',
-    'username': 'bob',
-    'displayName': 'bob',
-    'url': 'http://foo.com/@bob',
-    'urls': [{'value': 'http://foo.com/@bob'}],
-  },
+  'actor': ACTOR_BOB,
 }
 MEDIA_STATUS = copy.deepcopy(STATUS)  # Mastodon
 MEDIA_STATUS['media_attachments'] = [{
@@ -226,6 +229,21 @@ LIKE = {  # ActivityStreams
   'object': {'url': OBJECT['url']},
   'author': ACTOR,
 }
+SHARE = {  # ActivityStreams
+  'id': tag_uri('123_reblogged_by_23507'),
+  'url': 'http://foo.com/@snarfed/123#reblogged-by-23507',
+  'objectType': 'activity',
+  'verb': 'share',
+  'object': {'url': 'http://foo.com/@snarfed/123'},
+  'author': ACTOR,
+}
+SHARE_BY_BOB = copy.deepcopy(SHARE)
+SHARE_BY_BOB.update({
+  'id': tag_uri('123_reblogged_by_999'),
+  'url': 'http://foo.com/@snarfed/123#reblogged-by-999',
+  'author': ACTOR_BOB,
+})
+
 
 class MastodonTest(testutil.TestCase):
 
@@ -284,8 +302,20 @@ class MastodonTest(testutil.TestCase):
     with_likes['object']['tags'].extend([LIKE, LIKE])
     self.assert_equals([with_likes], self.mastodon.get_activities(fetch_likes=True))
 
+  def test_get_activities_fetch_shares(self):
+    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_REBLOGGED_BY % STATUS['id'], [ACCOUNT, ACCOUNT_BOB])
+    self.mox.ReplayAll()
+
+    with_shares = copy.deepcopy(ACTIVITY)
+    with_shares['object']['tags'].extend([SHARE, SHARE_BY_BOB])
+    self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
+
   def test_account_to_actor(self):
     self.assert_equals(ACTOR, self.mastodon.account_to_actor(ACCOUNT))
+
+  def test_account_to_actor_bob(self):
+    self.assert_equals(ACTOR_BOB, self.mastodon.account_to_actor(ACCOUNT_BOB))
 
   def test_make_like(self):
     self.assert_equals(LIKE, self.mastodon._make_like(STATUS, ACCOUNT))

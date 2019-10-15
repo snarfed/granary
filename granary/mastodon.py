@@ -23,6 +23,7 @@ API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
 API_MEDIA = '/api/v1/media'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
+API_REBLOGGED_BY = '/api/v1/statuses/%s/reblogged_by'
 API_STATUSES = '/api/v1/statuses'
 API_VERIFY_CREDENTIALS = '/api/v1/accounts/verify_credentials'
 
@@ -110,7 +111,7 @@ class Mastodon(source.Source):
 
     See :meth:`Source.get_activities_response` for details.
     """
-    if (fetch_shares or fetch_events or fetch_mentions or search_query or
+    if (fetch_events or fetch_mentions or search_query or
         group_id or user_id or activity_id):
       raise NotImplementedError()
 
@@ -123,16 +124,20 @@ class Mastodon(source.Source):
 
       id = status.get('id')
       if id:
+        obj = activity['object']
         if fetch_replies:
           context = self._get(API_CONTEXT % id)
-          activity['object']['replies'] = {
+          obj['replies'] = {
             'items': [self.status_to_activity(reply)
                       for reply in context.get('descendants', [])]
           }
+        tags = obj.setdefault('tags', [])
         if fetch_likes:
           likers = self._get(API_FAVORITED_BY % id)
-          activity['object']['tags'].extend(
-            self._make_like(status, l) for l in likers)
+          tags.extend(self._make_like(status, l) for l in likers)
+        if fetch_shares:
+          sharers = self._get(API_REBLOGGED_BY % id)
+          tags.extend(self._make_share(status, s) for s in sharers)
 
     return self.make_activities_base_response(util.trim_nulls(activities))
 
@@ -154,7 +159,7 @@ class Mastodon(source.Source):
       'actor': obj.get('author'),
       'object': obj,
       'context': {'inReplyTo': obj.get('inReplyTo')},
-      }
+    }
 
     reblogged = status.get('reblog')
     if reblogged:
@@ -299,25 +304,34 @@ class Mastodon(source.Source):
       'description': account.get('note'),
     })
 
-  def _make_like(self, status, liker):
+  def _make_like(self, status, account):
+    return self._make_like_or_share(status, account, 'like')
+
+  def _make_share(self, status, account):
+    return self._make_like_or_share(status, account, 'share')
+
+  def _make_like_or_share(self, status, account, verb):
     """Generates and returns a ActivityStreams like object.
 
     Args:
       status: dict, Mastodon status
-      liker: dict, Mastodon account
+      account: dict, Mastodon account
+      verb: string, 'like' or 'share'
 
     Returns: dict, AS1 like activity
     """
     # TODO: unify with Twitter._make_like()
+    assert verb in ('like', 'share')
+    label = 'favorited' if verb == 'like' else 'reblogged'
     url = status.get('url')
-    liker_id = liker.get('id')
+    account_id = account.get('id')
     return {
-      'id': self.tag_uri('%s_favorited_by_%s' % (status.get('id'), liker_id)),
-      'url': '%s#favorited-by-%s' % (url, liker_id),
+      'id': self.tag_uri('%s_%s_by_%s' % (status.get('id'), label, account_id)),
+      'url': '%s#%s-by-%s' % (url, label, account_id),
       'objectType': 'activity',
-      'verb': 'like',
+      'verb': verb,
       'object': {'url': url},
-      'author': self.account_to_actor(liker),
+      'author': self.account_to_actor(account),
     }
 
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
