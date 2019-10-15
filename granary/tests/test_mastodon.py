@@ -12,6 +12,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from granary import appengine_config
 from granary import mastodon
 from granary.mastodon import (
+  API_ACCOUNT,
   API_ACCOUNT_STATUSES,
   API_CONTEXT,
   API_FAVORITE,
@@ -19,6 +20,7 @@ from granary.mastodon import (
   API_MEDIA,
   API_REBLOG,
   API_REBLOGGED_BY,
+  API_STATUS,
   API_STATUSES,
   API_VERIFY_CREDENTIALS,
 )
@@ -95,7 +97,7 @@ STATUS = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#status
   }],
   'application': {
     'name': 'my app',
-    'url': 'http://app',
+    'website': 'http://app',
   },
 }
 OBJECT = {  # ActivityStreams
@@ -310,6 +312,21 @@ class MastodonTest(testutil.TestCase):
     with_shares = copy.deepcopy(ACTIVITY)
     with_shares['object']['tags'].extend([SHARE, SHARE_BY_BOB])
     self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
+
+  def test_get_actor(self):
+    self.expect_get(API_ACCOUNT % 1, ACCOUNT)
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR, self.mastodon.get_actor(1))
+
+  def test_get_actor_current_user(self):
+    self.expect_get(API_ACCOUNT % ACCOUNT['id'], ACCOUNT_BOB)
+    self.mox.ReplayAll()
+    self.assert_equals(ACTOR_BOB, self.mastodon.get_actor())
+
+  def test_get_comment(self):
+    self.expect_get(API_STATUS % 1, STATUS)
+    self.mox.ReplayAll()
+    self.assert_equals(OBJECT, self.mastodon.get_comment(1))
 
   def test_account_to_actor(self):
     self.assert_equals(ACTOR, self.mastodon.account_to_actor(ACCOUNT))
