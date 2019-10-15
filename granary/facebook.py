@@ -1358,9 +1358,8 @@ class Facebook(source.Source):
 
     return self.postprocess_object(obj)
 
-  @classmethod
-  def _comment_id(cls, post_id, comment_id):
-    return cls.tag_uri('%s_%s' % (post_id, comment_id))
+  def _comment_id(self, post_id, comment_id):
+    return self.tag_uri('%s_%s' % (post_id, comment_id))
 
   def share_to_object(self, share):
     """Converts a share (from /OBJECT/sharedposts) to an object.
@@ -1661,8 +1660,7 @@ class Facebook(source.Source):
 
     return util.trim_nulls(post)
 
-  @classmethod
-  def email_to_object(cls, html):
+  def email_to_object(self, html):
     """Converts a Facebook HTML notification email to an AS1 object.
 
     Returns: dict, AS1 object, or None if email html couldn't be parsed
@@ -1674,11 +1672,11 @@ class Facebook(source.Source):
     type = None
 
     type = 'comment'
-    descs = cls._find_all_text(soup, r'commented on( your)?')
+    descs = self._find_all_text(soup, r'commented on( your)?')
 
     if not descs:
       type = 'like'
-      descs = cls._find_all_text(soup, r'likes your')
+      descs = self._find_all_text(soup, r'likes your')
 
     if not descs:
       return None
@@ -1687,7 +1685,7 @@ class Facebook(source.Source):
     name_link = links[0]
     name = name_link.get_text(strip=True)
     profile_url = name_link['href']
-    resp_url = cls._sanitize_url(links[1]['href'])
+    resp_url = self._sanitize_url(links[1]['href'])
     post_url, comment_id = util.remove_query_param(resp_url, 'comment_id')
 
     if type == 'comment':
@@ -1706,13 +1704,13 @@ class Facebook(source.Source):
         'objectType': 'person',
         'displayName': name,
         'image': {'url': picture},
-        'url': cls._sanitize_url(profile_url),
+        'url': self._sanitize_url(profile_url),
       },
       # TODO
       'to': [{'objectType':'group', 'alias':'@public'}],
     }
 
-    obj['published'] = cls._scraped_datetime(when)
+    obj['published'] = self._scraped_datetime(when)
 
     # extract Facebook post ID from URL
     url_parts = urllib.parse.urlparse(resp_url)
@@ -1728,18 +1726,18 @@ class Facebook(source.Source):
       obj.update({
         # TODO: check that this works on urls to different types of posts, eg photos
         'objectType': 'comment',
-        'id': cls._comment_id(post_id, comment_id),
+        'id': self._comment_id(post_id, comment_id),
         'url': resp_url,
         'content': comment.get_text(strip=True),
         'inReplyTo': [{'url': post_url}],
       })
     elif type == 'like':
-      liker_id = cls.base_id(obj['author']['url'])
+      liker_id = self.base_id(obj['author']['url'])
       obj.update({
         'objectType': 'activity',
         'verb': 'like',
         # TODO: handle author URLs for users without usernames
-        'id': cls.tag_uri('%s_liked_by_%s' % (post_id, liker_id)),
+        'id': self.tag_uri('%s_liked_by_%s' % (post_id, liker_id)),
         'url': post_url + '#liked-by-%s' % liker_id,
         'object': {'url': post_url},
       })
@@ -1876,8 +1874,7 @@ class Facebook(source.Source):
     resp = self.make_activities_base_response(activities)
     return resp
 
-  @classmethod
-  def m_html_timeline_to_objects(cls, html):
+  def m_html_timeline_to_objects(self, html):
     """
     Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
 
@@ -1890,9 +1887,9 @@ class Facebook(source.Source):
 
     objs = []
     storystream = soup.find(class_='storyStream')
-    for story in cls._divs(storystream):
+    for story in self._divs(storystream):
       story_body_container = story.find(class_='story_body_container')
-      body_children = cls._divs(story_body_container)
+      body_children = self._divs(story_body_container)
 
       # TODO: distinguish between text elements with actual whitespace
       # before/after and without. this adds space to all of them, including
@@ -1900,15 +1897,15 @@ class Facebook(source.Source):
       # (also apply any fix to m_html_post_to_object().)
       content = body_children[1].get_text(' ', strip=True)
       footer = story_body_container.find_next_sibling('div')
-      footer_children = cls._divs(footer)
+      footer_children = self._divs(footer)
 
-      url = cls._find_all_text(footer, r'Full Story')[-1]['href']
-      url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
+      url = self._find_all_text(footer, r'Full Story')[-1]['href']
+      url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
       query = urllib.parse.urlparse(url).query
       post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
 
-      cls._scraped_datetime(footer_children[0].find('abbr')),
-      cls._m_html_author(story_body_container),
+      self._scraped_datetime(footer_children[0].find('abbr')),
+      self._m_html_author(story_body_container),
 
       to = ({'objectType':'group', 'alias':'@public'}
             if 'Public' in footer_children[0].stripped_strings
@@ -1916,19 +1913,18 @@ class Facebook(source.Source):
 
       objs.append({
         'objectType': 'note',
-        'id': cls.tag_uri(post_id),
+        'id': self.tag_uri(post_id),
         'fb_id': post_id,
         'url': url,
         'content': xml.sax.saxutils.escape(content),
-        'published': cls._scraped_datetime(footer_children[0].find('abbr')),
-        'author': cls._m_html_author(story_body_container),
+        'published': self._scraped_datetime(footer_children[0].find('abbr')),
+        'author': self._m_html_author(story_body_container),
         'to': [to],
       })
 
     return objs
 
-  @classmethod
-  def m_html_post_to_object(cls, html, url):
+  def m_html_post_to_object(self, html, url):
     """
     Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
 
@@ -1941,11 +1937,11 @@ class Facebook(source.Source):
     soup = util.parse_html(html)
 
     view = soup.find(id='m_story_permalink_view')
-    body_parts = cls._divs(cls._divs(cls._divs(view)[0])[0])
-    content = cls._divs(body_parts[0])[1].get_text(' ', strip=True)
+    body_parts = self._divs(self._divs(self._divs(view)[0])[0])
+    content = self._divs(body_parts[0])[1].get_text(' ', strip=True)
 
     # TODO: unify with m_html_timeline_to_objects
-    url = cls._sanitize_url(urllib.parse.urljoin(cls.BASE_URL, url))
+    url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
     query = urllib.parse.urlparse(url).query
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
 
@@ -1956,29 +1952,29 @@ class Facebook(source.Source):
     # post object
     obj = {
       'objectType': 'note',
-      'id': cls.tag_uri(post_id),
+      'id': self.tag_uri(post_id),
       'fb_id': post_id,
       'url': url,
       'content': xml.sax.saxutils.escape(content),
-      'published': cls._scraped_datetime(body_parts[1].find('abbr')),
-      'author': cls._m_html_author(body_parts[0]),
+      'published': self._scraped_datetime(body_parts[1].find('abbr')),
+      'author': self._m_html_author(body_parts[0]),
       'to': [to],
     }
 
     # comments
     replies = []
-    for comment in cls._divs(cls._divs(cls._divs(cls._divs(view)[1])[0])[3]):
+    for comment in self._divs(self._divs(self._divs(self._divs(view)[1])[0])[3]):
       # TODO: images in replies, eg:
       # https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&#10104354543447094
       replies.append({
         'objectType': 'comment',
-        'id': cls._comment_id(post_id, comment['id']),
+        'id': self._comment_id(post_id, comment['id']),
         'url': util.add_query_params(url, {'comment_id': comment['id']}),
         'content': xml.sax.saxutils.escape(
-          cls._divs(cls._divs(comment)[0])[0].get_text(' ', strip=True)),
-        'author': cls._m_html_author(comment, 'h3'),
-        'published': cls._scraped_datetime(comment.find('abbr')),
-        'inReplyTo': [{'id': cls.tag_uri(post_id), 'url': url}],
+          self._divs(self._divs(comment)[0])[0].get_text(' ', strip=True)),
+        'author': self._m_html_author(comment, 'h3'),
+        'published': self._scraped_datetime(comment.find('abbr')),
+        'inReplyTo': [{'id': self.tag_uri(post_id), 'url': url}],
       })
 
     if replies:
@@ -1989,8 +1985,7 @@ class Facebook(source.Source):
 
     return obj
 
-  @classmethod
-  def m_html_reactions_to_tags(cls, html, post_obj):
+  def m_html_reactions_to_tags(self, html, post_obj):
     """
     Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
 
@@ -2011,12 +2006,12 @@ class Facebook(source.Source):
       # TODO: profile pic is imgs[0]
       type = imgs[1]['alt'].lower()
       type_str = 'liked' if type == 'like' else type
-      author = cls._m_html_author(reaction, 'h3')
+      author = self._m_html_author(reaction, 'h3')
       _, username = util.parse_tag_uri(author['id'])
       tag = {
         'objectType': 'activity',
         'verb': 'like' if type == 'like' else 'react',
-        'id': cls.tag_uri('%s_%s_by_%s' % (post_obj['fb_id'], type_str, username)),
+        'id': self.tag_uri('%s_%s_by_%s' % (post_obj['fb_id'], type_str, username)),
         'url': post_obj['url'] + '#%s-by-%s' % (type_str, username),
         'object': {'url': post_obj['url']},
         'author': author,
@@ -2027,8 +2022,7 @@ class Facebook(source.Source):
 
     return tags
 
-  @classmethod
-  def _m_html_author(cls, soup, tag='strong'):
+  def _m_html_author(self, soup, tag='strong'):
     """
     Finds an author link in m.facebook.com HTML and converts it to AS1.
 
@@ -2046,8 +2040,8 @@ class Facebook(source.Source):
                       else path)
     return {
       'objectType': 'person',
-      'id': cls.tag_uri(id_or_username),
-      'url': urllib.parse.urljoin(cls.BASE_URL, id_or_username),
+      'id': self.tag_uri(id_or_username),
+      'url': urllib.parse.urljoin(self.BASE_URL, id_or_username),
       'displayName': author.get_text(' ', strip=True),
     }
 

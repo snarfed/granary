@@ -651,13 +651,12 @@ class Instagram(source.Source):
 
     return self.postprocess_object(object)
 
-  @classmethod
-  def _mention_tags_from_content(cls, content):
+  def _mention_tags_from_content(self, content):
     return [{
       'objectType': 'person',
-      'id': cls.tag_uri(mention.group(1)),
+      'id': self.tag_uri(mention.group(1)),
       'displayName': mention.group(1),
-      'url': cls.user_url(mention.group(1)),
+      'url': self.user_url(mention.group(1)),
       'startIndex': mention.start(),
       'length': mention.end() - mention.start(),
     } for mention in MENTION_RE.finditer(content)]
