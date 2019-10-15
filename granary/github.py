@@ -709,8 +709,7 @@ class GitHub(source.Source):
 
     return set(node['name'] for node in repo['labels']['nodes'])
 
-  @classmethod
-  def issue_to_object(cls, issue):
+  def issue_to_object(self, issue):
     """Converts a GitHub issue or pull request to ActivityStreams.
 
     Handles both v4 GraphQL and v3 REST API issue and PR objects.
@@ -726,7 +725,7 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    obj = cls._to_object(issue, repo_id=True)
+    obj = self._to_object(issue, repo_id=True)
     if not obj:
       return obj
 
@@ -746,12 +745,11 @@ class GitHub(source.Source):
         'url': '%s/labels/%s' % (repo_url, urllib.parse.quote(l['name'])),
       } for l in issue.get('labels', []) if l.get('name')],
     })
-    return cls.postprocess_object(obj)
+    return self.postprocess_object(obj)
 
   pr_to_object = issue_to_object
 
-  @classmethod
-  def comment_to_object(cls, comment):
+  def comment_to_object(self, comment):
     """Converts a GitHub comment to ActivityStreams.
 
     Handles both v4 GraphQL and v3 REST API issue objects.
@@ -765,7 +763,7 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams comment dict, ready to be JSON-encoded
     """
-    obj = cls._to_object(comment, repo_id=True)
+    obj = self._to_object(comment, repo_id=True)
     if not obj:
       return obj
 
@@ -774,10 +772,9 @@ class GitHub(source.Source):
       # url is e.g. https://github.com/foo/bar/pull/123#issuecomment-456
       'inReplyTo': [{'url': util.fragmentless(obj['url'])}],
     })
-    return cls.postprocess_object(obj)
+    return self.postprocess_object(obj)
 
-  @classmethod
-  def reaction_to_object(cls, reaction, target):
+  def reaction_to_object(self, reaction, target):
     """Converts a GitHub emoji reaction to ActivityStreams.
 
     Handles v3 REST API reaction objects.
@@ -791,13 +788,13 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams reaction dict, ready to be JSON-encoded
     """
-    obj = cls._to_object(reaction)
+    obj = self._to_object(reaction)
     if not obj:
       return obj
 
     content = REACTIONS_REST_CHARS.get(reaction.get('content'))
     enum = (REACTIONS_GRAPHQL.get(content) or '').lower()
-    author = cls.user_to_actor(reaction.get('user'))
+    author = self.user_to_actor(reaction.get('user'))
     username = author.get('username')
 
     obj.update({
@@ -809,10 +806,9 @@ class GitHub(source.Source):
       'content': content,
       'object': {'url': target['url']},
     })
-    return cls.postprocess_object(obj)
+    return self.postprocess_object(obj)
 
-  @classmethod
-  def user_to_actor(cls, user):
+  def user_to_actor(self, user):
     """Converts a GitHub user to an ActivityStreams actor.
 
     Handles both v4 GraphQL and v3 REST API user objects.
@@ -826,7 +822,7 @@ class GitHub(source.Source):
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
-    actor = cls._to_object(user)
+    actor = self._to_object(user)
     if not actor:
       return actor
 
@@ -859,10 +855,9 @@ class GitHub(source.Source):
       if len(urls) > 1:
         actor['urls'] = [{'value': u} for u in urls]
 
-    return cls.postprocess_object(actor)
+    return self.postprocess_object(actor)
 
-  @classmethod
-  def _to_object(cls, input, repo_id=False):
+  def _to_object(self, input, repo_id=False):
     """Starts to convert aHub GraphQL or REST API object to ActivityStreams.
 
     Args:
@@ -887,9 +882,9 @@ class GitHub(source.Source):
       id = ':'.join((owner, repo, str(number or id)))
 
     return {
-      'id': cls.tag_uri(id),
+      'id': self.tag_uri(id),
       'url': url,
-      'author': cls.user_to_actor(input.get('author') or input.get('user')),
+      'author': self.user_to_actor(input.get('author') or input.get('user')),
       'title': input.get('title'),
       'content': (input.get('body') or '').replace('\r\n', '\n'),
       'published': util.maybe_iso8601_to_rfc3339(input.get('createdAt') or
