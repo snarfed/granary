@@ -356,11 +356,17 @@ class Mastodon(source.Source):
 
     is_reply = type == 'comment' or obj.get('inReplyTo')
     is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
-    images = util.get_list(obj, 'image')
-    videos = util.get_list(obj, 'stream')
+    atts = obj.get('attachments', [])
+    images = util.get_list(obj, 'image') + [
+      a for a in atts if a.get('objectType') == 'image' and util.get_url(a)]
+    videos = util.get_list(obj, 'stream') + [
+      a for a in atts if a.get('objectType') == 'video' and util.get_url(a, key='stream')]
     has_media = (images or videos) and (type in ('note', 'article') or is_reply)
 
     # prefer displayName over content for articles
+    #
+    # TODO: handle activities as well as objects? ie pull out ['object'] here if
+    # necessary?
     type = obj.get('objectType')
     prefer_content = type == 'note' or (base_url and is_reply)
     preview_description = ''
@@ -443,13 +449,16 @@ class Mastodon(source.Source):
         preview_description += '<span class="verb">toot</span>:'
 
       if preview:
-        video_urls = [util.get_url(vid) for vid in videos]
         media_previews = [
-          '<video controls src="%s"><a href="%s">this video</a></video>' % (url, url)
-          for url in video_urls
+          '<video controls src="%s"><a href="%s">%s</a></video>' %
+            (util.get_url(vid, key='stream'),
+             util.get_url(vid, key='stream'),
+             vid.get('displayName') or 'this video')
+          for vid in videos
         ] + [
-          '<img src="%s" alt="%s" />' % (util.get_url(img), img.get('displayName', ''))
-           for img in images
+          '<img src="%s" alt="%s" />' %
+            (util.get_url(img), img.get('displayName') or '')
+          for img in images
         ]
         if media_previews:
           preview_content += '<br /><br />' + ' &nbsp; '.join(media_previews)
@@ -486,7 +495,7 @@ class Mastodon(source.Source):
     """
     ids = []
     for obj in media:
-      url = util.get_url(obj)
+      url = util.get_url(obj, key='stream') or util.get_url(obj)
       if not url:
         continue
 

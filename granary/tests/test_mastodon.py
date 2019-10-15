@@ -26,35 +26,11 @@ def tag_uri(name):
 
 INSTANCE = 'http://foo.com'
 
-NOTE = {
-  'objectType': 'note',
-  'content': 'foo ☕ bar',
-}
-REPLY = {
-  'objectType': 'comment',
-  'content': 'reply ☕ baz',
-  'inReplyTo': [{'url': 'http://foo.com/@other/123'}],
-}
 LIKE = {
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'http://foo.com/@snarfed/123'},
 }
-SHARE = {
-  'objectType': 'activity',
-  'verb': 'share',
-  'object': {'url': 'http://foo.com/@snarfed/123'},
-}
-NOTE_WITH_MEDIA = {
-  'objectType': 'note',
-  'content': 'foo ☕ bar',
-  'image': [
-    {'url': 'http://pic/1'},
-    {'url': 'http://pic/2', 'displayName': 'some alt text'},
-  ],
-  'stream': {'url': 'http://video/3'},
-}
-
 ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'id': '23507',
   'username': 'snarfed',
@@ -318,15 +294,16 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals(MEDIA_OBJECT, self.mastodon.status_to_object(MEDIA_STATUS))
 
   def test_preview_status(self):
-    got = self.mastodon.preview_create(NOTE)
+    got = self.mastodon.preview_create(OBJECT)
     self.assertEqual('<span class="verb">toot</span>:', got.description)
-    self.assertEqual('foo ☕ bar', got.content)
+    self.assertEqual('foo ☕ bar @alice #IndieWeb', got.content)
 
   def test_create_status(self):
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'}, response=STATUS)
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar @alice #IndieWeb'},
+                     response=STATUS)
     self.mox.ReplayAll()
 
-    result = self.mastodon.create(NOTE)
+    result = self.mastodon.create(OBJECT)
 
     self.assert_equals(STATUS, result.content, result)
     self.assertIsNone(result.error_plain)
@@ -334,12 +311,12 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_reply(self):
     self.expect_post(API_STATUSES, json={
-      'status': 'reply ☕ baz',
-      'in_reply_to_id': '123',
+      'status': 'foo ☕ bar @alice #IndieWeb',
+      'in_reply_to_id': '456',
     }, response=STATUS)
     self.mox.ReplayAll()
 
-    result = self.mastodon.create(REPLY)
+    result = self.mastodon.create(REPLY_OBJECT)
     self.assert_equals(STATUS, result.content, result)
 
   def test_create_reply_other_instance(self):
@@ -364,39 +341,36 @@ class MastodonTest(testutil.TestCase):
     preview = self.mastodon.preview_create(LIKE)
     self.assertEqual('<span class="verb">favorite</span> <a href="http://foo.com/@snarfed/123">this toot</a>.', preview.description)
 
-  def test_create_boost(self):
+  def test_create_reblog(self):
     self.expect_post(API_REBLOG % '123', STATUS)
     self.mox.ReplayAll()
 
-    got = self.mastodon.create(SHARE).content
+    got = self.mastodon.create(SHARE_ACTIVITY).content
     self.assert_equals('repost', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123', got['url'])
 
-  def test_preview_boost(self):
-    preview = self.mastodon.preview_create(SHARE)
+  def test_preview_reblog(self):
+    preview = self.mastodon.preview_create(SHARE_ACTIVITY)
     self.assertEqual('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this toot</a>.', preview.description)
 
   def test_preview_with_media(self):
-    preview = self.mastodon.preview_create(NOTE_WITH_MEDIA)
+    preview = self.mastodon.preview_create(MEDIA_OBJECT)
     self.assertEqual('<span class="verb">toot</span>:', preview.description)
-    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://video/3"><a href="http://video/3">this video</a></video> &nbsp; <img src="http://pic/1" alt="" /> &nbsp; <img src="http://pic/2" alt="some alt text" />',
+    self.assertEqual('foo ☕ bar @alice #IndieWeb<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="" />',
                      preview.content)
 
   def test_create_with_media(self):
-    self.expect_requests_get('http://pic/1', 'pic 1')
+    self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
     self.expect_post(API_MEDIA, {'id': 'a'}, files={'file': b'pic 1'})
 
-    self.expect_requests_get('http://pic/2', 'pic 2')
+    self.expect_requests_get('http://foo.com/video.mp4', 'pic 2')
     self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 2'})
 
-    self.expect_requests_get('http://video/3', 'vid 3')
-    self.expect_post(API_MEDIA, {'id': 'c'}, files={'file': b'vid 3'})
-
     self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar',
-      'media_ids': ['a', 'b', 'c'],
+      'status': 'foo ☕ bar @alice #IndieWeb',
+      'media_ids': ['a', 'b'],
     }, response=STATUS)
     self.mox.ReplayAll()
 
-    result = self.mastodon.create(NOTE_WITH_MEDIA)
+    result = self.mastodon.create(MEDIA_OBJECT)
     self.assert_equals(STATUS, result.content, result)
