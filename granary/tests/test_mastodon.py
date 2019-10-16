@@ -11,6 +11,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import appengine_config
 from granary import mastodon
+from granary import source
 from granary.mastodon import (
   API_ACCOUNT,
   API_ACCOUNT_STATUSES,
@@ -21,8 +22,10 @@ from granary.mastodon import (
   API_NOTIFICATIONS,
   API_REBLOG,
   API_REBLOGGED_BY,
+  API_SEARCH,
   API_STATUS,
   API_STATUSES,
+  API_TIMELINE,
   API_VERIFY_CREDENTIALS,
 )
 
@@ -281,15 +284,19 @@ class MastodonTest(testutil.TestCase):
     self.assertEqual(ACCOUNT['id'], m.user_id)
 
   def test_get_activities_defaults(self):
-    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'],
-                    [STATUS, REPLY_STATUS, MEDIA_STATUS])
+    self.expect_get(API_TIMELINE, [STATUS, REPLY_STATUS, MEDIA_STATUS])
     self.mox.ReplayAll()
-
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities())
 
+  def test_get_activities_group_id_friends(self):
+    self.expect_get(API_TIMELINE, [STATUS, REPLY_STATUS, MEDIA_STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
+                       self.mastodon.get_activities(group_id=source.FRIENDS))
+
   def test_get_activities_fetch_replies(self):
-    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_TIMELINE, [STATUS])
     self.expect_get(API_CONTEXT % STATUS['id'], {
       'ancestors': [],
       'descendants': [REPLY_STATUS, REPLY_STATUS],
@@ -303,7 +310,7 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_replies], self.mastodon.get_activities(fetch_replies=True))
 
   def test_get_activities_fetch_likes(self):
-    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_TIMELINE, [STATUS])
     self.expect_get(API_FAVORITED_BY % STATUS['id'], [ACCOUNT, ACCOUNT])
     self.mox.ReplayAll()
 
@@ -312,7 +319,7 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_likes], self.mastodon.get_activities(fetch_likes=True))
 
   def test_get_activities_fetch_shares(self):
-    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_TIMELINE, [STATUS])
     self.expect_get(API_REBLOGGED_BY % STATUS['id'], [ACCOUNT, ACCOUNT_BOB])
     self.mox.ReplayAll()
 
@@ -321,13 +328,39 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
 
   def test_get_activities_fetch_mentions(self):
-    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_TIMELINE, [STATUS])
     self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], json={
       'exclude_types': ['follow', 'favourite', 'reblog'],
     })
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities(fetch_mentions=True))
+
+  def test_get_activities_activity_id(self):
+    self.expect_get(API_STATUS % '123', STATUS)
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.mastodon.get_activities(activity_id=123))
+
+  def test_get_activities_user_id(self):
+    self.expect_get(API_ACCOUNT_STATUSES % '456', [STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.mastodon.get_activities(
+      group_id=source.SELF, user_id=456))
+
+  def test_get_activities_search(self):
+    self.expect_get(API_SEARCH, params={'q': 'indieweb'},
+                    response={'statuses': [STATUS, MEDIA_STATUS]})
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
+        group_id=source.SEARCH, search_query='indieweb'))
+
+  def test_get_activities_search_no_query(self):
+    with self.assertRaises(ValueError):
+      self.mastodon.get_activities(group_id=source.SEARCH, search_query=None)
+
+  def test_get_activities_group_friends_user_id(self):
+    with self.assertRaises(ValueError):
+      self.mastodon.get_activities(group_id=source.FRIENDS, user_id='345')
 
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)

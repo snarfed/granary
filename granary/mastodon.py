@@ -5,11 +5,16 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
+* username in inReplyTo URLs
+* de-dupe media attachments
 * caching
 * block lists
 * embeds
 * delete
 * drop 'Web site' check in fields, accept all URLs
+* custom emoji. see ~/mastodon.status.custom-emoji.json
+*   https://docs.joinmastodon.org/api/entities/#emoji
+* reply, like, reblog remote toots
 """
 from __future__ import absolute_import
 from future import standard_library
@@ -33,8 +38,10 @@ API_MEDIA = '/api/v1/media'
 API_NOTIFICATIONS = '/api/v1/notifications'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
 API_REBLOGGED_BY = '/api/v1/statuses/%s/reblogged_by'
-API_STATUS = '/api/v1/status/%s'
+API_SEARCH = '/api/v2/search'
+API_STATUS = '/api/v1/statuses/%s'
 API_STATUSES = '/api/v1/statuses'
+API_TIMELINE = '/api/v1/timelines/home'
 API_VERIFY_CREDENTIALS = '/api/v1/accounts/verify_credentials'
 
 # https://docs.joinmastodon.org/api/rest/media/#parameters
@@ -121,15 +128,31 @@ class Mastodon(source.Source):
 
     See :meth:`Source.get_activities_response` for details.
     """
-    if group_id and group_id != source.SELF:
-      raise NotImplementedError('group_id not yet supported')
-    if fetch_events or search_query or user_id or activity_id:
+    if user_id and group_id in (source.FRIENDS, source.ALL):
+      raise ValueError("Mastodon doesn't support group_id %s with user_id" % group_id)
+
+    if not user_id:
+      user_id = self.user_id
+
+    if fetch_events:
       raise NotImplementedError()
 
-    statuses = self._get(API_ACCOUNT_STATUSES % self.user_id)
+    if activity_id:
+      statuses = [self._get(API_STATUS % activity_id)]
+    elif group_id == source.SELF:
+      statuses = self._get(API_ACCOUNT_STATUSES % user_id)
+    elif group_id in (None, source.FRIENDS):
+      statuses = self._get(API_TIMELINE)
+    elif group_id == source.SEARCH:
+      if not search_query:
+        raise ValueError('search requires search_query parameter')
+      statuses = self._get(API_SEARCH, params={'q': search_query}).get('statuses', [])
+    else:
+      statuses = self._get(API_ACCOUNT_STATUSES % user_id)
+
     activities = []
 
-    for status in statuses:
+    for status in statuses[:10]:  # XXX TODO REMOVE
       activity = self.postprocess_activity(self.status_to_activity(status))
       activities.append(activity)
 
