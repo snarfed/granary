@@ -18,6 +18,7 @@ from granary.mastodon import (
   API_FAVORITE,
   API_FAVORITED_BY,
   API_MEDIA,
+  API_NOTIFICATIONS,
   API_REBLOG,
   API_REBLOGGED_BY,
   API_STATUS,
@@ -245,7 +246,13 @@ SHARE_BY_BOB.update({
   'url': 'http://foo.com/@snarfed/123#reblogged-by-999',
   'author': ACTOR_BOB,
 })
-
+MENTION_NOTIFICATION = {  # Mastodon
+  'id': '555',
+  'type': 'mention',
+  'account': ACCOUNT_BOB,
+  'status': MEDIA_STATUS,
+  'created_at': '2019-10-15T00:23:37.969Z',
+}
 
 class MastodonTest(testutil.TestCase):
 
@@ -312,6 +319,15 @@ class MastodonTest(testutil.TestCase):
     with_shares = copy.deepcopy(ACTIVITY)
     with_shares['object']['tags'].extend([SHARE, SHARE_BY_BOB])
     self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
+
+  def test_get_activities_fetch_mentions(self):
+    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], json={
+      'exclude_types': ['follow', 'favourite', 'reblog'],
+    })
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY, MEDIA_ACTIVITY],
+                       self.mastodon.get_activities(fetch_mentions=True))
 
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)

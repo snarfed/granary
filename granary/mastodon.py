@@ -30,6 +30,7 @@ API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
 API_MEDIA = '/api/v1/media'
+API_NOTIFICATIONS = '/api/v1/notifications'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
 API_REBLOGGED_BY = '/api/v1/statuses/%s/reblogged_by'
 API_STATUS = '/api/v1/status/%s'
@@ -120,8 +121,9 @@ class Mastodon(source.Source):
 
     See :meth:`Source.get_activities_response` for details.
     """
-    if (fetch_events or fetch_mentions or search_query or
-        group_id or user_id or activity_id):
+    if group_id and group_id != source.SELF:
+      raise NotImplementedError('group_id not yet supported')
+    if fetch_events or search_query or user_id or activity_id:
       raise NotImplementedError()
 
     statuses = self._get(API_ACCOUNT_STATUSES % self.user_id)
@@ -141,12 +143,22 @@ class Mastodon(source.Source):
                       for reply in context.get('descendants', [])]
           }
         tags = obj.setdefault('tags', [])
+
         if fetch_likes:
           likers = self._get(API_FAVORITED_BY % id)
           tags.extend(self._make_like(status, l) for l in likers)
+
         if fetch_shares:
           sharers = self._get(API_REBLOGGED_BY % id)
           tags.extend(self._make_share(status, s) for s in sharers)
+
+    if fetch_mentions:
+      # https://docs.joinmastodon.org/api/rest/notifications/
+      notifs = self._get(API_NOTIFICATIONS, json={
+        'exclude_types': ['follow', 'favourite', 'reblog'],
+      })
+      activities.extend(self.status_to_activity(n.get('status')) for n in notifs
+                        if n.get('type') == 'mention')
 
     return self.make_activities_base_response(util.trim_nulls(activities))
 
