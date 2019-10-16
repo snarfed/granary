@@ -7,7 +7,9 @@ independent of AP. API docs: https://docs.joinmastodon.org/api/
 TODO:
 * caching
 * block lists
-
+* embeds
+* delete
+* drop 'Web site' check in fields, accept all URLs
 """
 from __future__ import absolute_import
 from future import standard_library
@@ -157,7 +159,7 @@ class Mastodon(source.Source):
     """
     if user_id is None:
       user_id = self.user_id
-    return self.account_to_actor(self._get(API_ACCOUNT % user_id))
+    return self.user_to_actor(self._get(API_ACCOUNT % user_id))
 
   def get_comment(self, comment_id, **kwargs):
     """Fetches and returns a comment.
@@ -228,7 +230,7 @@ class Mastodon(source.Source):
       'id': self.tag_uri(id),
       'url': status.get('url'),
       'published': status.get('created_at'),
-      'author': self.account_to_actor(status.get('account')),
+      'author': self.user_to_actor(status.get('account')),
       'attachments': [],
     }
 
@@ -305,7 +307,7 @@ class Mastodon(source.Source):
 
     return self.postprocess_object(obj)
 
-  def account_to_actor(self, account):
+  def user_to_actor(self, account):
     """Converts a Mastodon account to an AS1 actor.
 
     Args:
@@ -363,7 +365,7 @@ class Mastodon(source.Source):
       'objectType': 'activity',
       'verb': verb,
       'object': {'url': url},
-      'author': self.account_to_actor(account),
+      'author': self.user_to_actor(account),
     }
 
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):

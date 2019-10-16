@@ -328,11 +328,11 @@ class MastodonTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals(OBJECT, self.mastodon.get_comment(1))
 
-  def test_account_to_actor(self):
-    self.assert_equals(ACTOR, self.mastodon.account_to_actor(ACCOUNT))
+  def test_user_to_actor(self):
+    self.assert_equals(ACTOR, self.mastodon.user_to_actor(ACCOUNT))
 
-  def test_account_to_actor_bob(self):
-    self.assert_equals(ACTOR_BOB, self.mastodon.account_to_actor(ACCOUNT_BOB))
+  def test_user_to_actor_bob(self):
+    self.assert_equals(ACTOR_BOB, self.mastodon.user_to_actor(ACCOUNT_BOB))
 
   def test_make_like(self):
     self.assert_equals(LIKE, self.mastodon._make_like(STATUS, ACCOUNT))
