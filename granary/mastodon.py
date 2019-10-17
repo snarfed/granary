@@ -5,7 +5,7 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* username in inReplyTo URLs
+* get_activities(): start_index, count, min_id
 * de-dupe media attachments
 * caching
 * block lists
@@ -327,9 +327,7 @@ class Mastodon(source.Source):
     if reply_to_id:
       obj['inReplyTo'] = [{
         'id': self.tag_uri(reply_to_id),
-        # XXX TODO need to generate URL for in-reply-to status, but we don't
-        # have its author's username, just their account id
-        'url': urllib.parse.urljoin(self.instance, '/TODO/status/' + reply_to_id),
+        'url': urllib.parse.urljoin(self.instance, '/web/statuses/' + reply_to_id),
       }]
 
     # to (ie visibility)

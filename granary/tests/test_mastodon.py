@@ -139,7 +139,7 @@ REPLY_STATUS.update({
 })
 REPLY_OBJECT = copy.deepcopy(OBJECT)  # ActivityStreams
 REPLY_OBJECT['inReplyTo'] = [{
-  'url': 'http://foo.com/TODO/status/456',
+  'url': 'http://foo.com/web/statuses/456',
   'id': tag_uri('456'),
 }]
 REPLY_ACTIVITY = copy.deepcopy(ACTIVITY)  # ActivityStreams
@@ -341,11 +341,16 @@ class MastodonTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(activity_id=123))
 
-  def test_get_activities_user_id(self):
+  def test_get_activities_self_user_id(self):
     self.expect_get(API_ACCOUNT_STATUSES % '456', [STATUS])
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(
       group_id=source.SELF, user_id=456))
+
+  def test_get_activities_self_default_user(self):
+    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.mastodon.get_activities(group_id=source.SELF))
 
   def test_get_activities_search(self):
     self.expect_get(API_SEARCH, params={'q': 'indieweb'},
