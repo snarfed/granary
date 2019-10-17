@@ -354,9 +354,8 @@ class Mastodon(source.Source):
 
     url = account.get('url')
     # mastodon's 'Web site' fields are HTML links, so extract their URLs
-    web_sites = [util.parse_html(f.get('value')).find('a')['href']
-                 for f in account.get('fields', [])
-                 if f.get('name') == 'Web site']
+    web_sites = sum((util.extract_links(f.get('value'))
+                     for f in account.get('fields', [])), [])
 
     return util.trim_nulls({
       'objectType': 'person',

@@ -44,7 +44,7 @@ ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'created_at': '2017-04-19T20:38:19.704Z',
   'note': 'my note',
   'fields': [{
-    'name': 'Web site',
+    'name': 'foo',
     'value': '<a href="https://snarfed.org" rel="me nofollow noopener" target="_blank"><span class="invisible">https://</span><span class="">snarfed.org</span><span class="invisible"></span></a>',
     'verified_at': '2019-04-03T17:32:24.467+00:00',
   }],
