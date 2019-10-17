@@ -533,6 +533,7 @@ Watching  \t waves
                 {'to': []},
                 {'to': [{}]},
                 {'to': [{'objectType': 'group'}]},
+                {'to': [{'objectType': 'group', 'alias': '@unlisted'}]},
                 {'to': [{'objectType': 'group', 'alias': '@public'}]},
                 {'to': [{'objectType': 'group', 'alias': '@private'},
                         {'objectType': 'group', 'alias': '@public'}]},
