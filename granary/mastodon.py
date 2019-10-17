@@ -5,16 +5,17 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
+* embeds
+* custom emoji. see ~/mastodon.status.custom-emoji.json
+*   https://docs.joinmastodon.org/api/entities/#emoji
+* u-urls for remote reblogs etc are wrong, using local instance and id
+*   eg https://brid.gy/repost/mastodon/@snarfed@mastodon.technology/102979627878226278/66888
+* reply, like, reblog remote toots
 * get_activities(): start_index, count, min_id
 * de-dupe media attachments
 * caching
 * block lists
-* embeds
 * delete
-* drop 'Web site' check in fields, accept all URLs
-* custom emoji. see ~/mastodon.status.custom-emoji.json
-*   https://docs.joinmastodon.org/api/entities/#emoji
-* reply, like, reblog remote toots
 """
 from __future__ import absolute_import
 from future import standard_library
