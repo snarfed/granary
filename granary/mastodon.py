@@ -152,7 +152,7 @@ class Mastodon(source.Source):
 
     activities = []
 
-    for status in statuses[:10]:  # XXX TODO REMOVE
+    for status in statuses:
       activity = self.postprocess_activity(self.status_to_activity(status))
       activities.append(activity)
 
@@ -294,9 +294,9 @@ class Mastodon(source.Source):
     if obj['attachments']:
       first = obj['attachments'][0]
       if first['objectType'] == 'video':
-        obj['stream'] = first['stream']
+        obj['stream'] = first.get('stream')
       else:
-        obj['image'] = first['image']
+        obj['image'] = first.get('image')
 
     # tags
     obj['tags'] = [{
