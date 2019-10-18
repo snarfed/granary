@@ -5,7 +5,6 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* embeds
 * custom emoji. see ~/mastodon.status.custom-emoji.json
 *   https://docs.joinmastodon.org/api/entities/#emoji
 * u-urls for remote reblogs etc are wrong, using local instance and id
@@ -74,6 +73,17 @@ class Mastodon(source.Source):
   TRUNCATE_TEXT_LENGTH = 500
   TRUNCATE_URL_LENGTH = 23
 
+  # HTML snippet for embedding a tweet.
+  # https://dev.twitter.com/docs/embedded-tweets
+  EMBED_POST = """
+  <script src="https://mastodon.technology/embed.js" async="async"></script>
+  <br>
+  <iframe src="%s/embed" class="mastodon-embed shadow"
+          style="max-width: 100%%; border: 0" width="400"
+          allowfullscreen="allowfullscreen">
+  </iframe>
+  """
+
   def __init__(self, instance, access_token, user_id=None):
     """Constructor.
 
@@ -119,6 +129,17 @@ class Mastodon(source.Source):
       raise
 
     return json_loads(resp.text)
+
+  @classmethod
+  def embed_post(cls, obj):
+    """Returns the HTML string for embedding a toot.
+
+    Args:
+      obj: AS1 dict with at least url, and optionally also content.
+
+    Returns: string, HTML
+    """
+    return cls.EMBED_POST % obj['url']
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -525,7 +546,7 @@ class Mastodon(source.Source):
           error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/favorite">favorite</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.' % (self.instance, self.DOMAIN))
 
       if preview:
-        preview_description += '<span class="verb">favorite</span> <a href="%s">this toot</a>.' % base_url
+        preview_description += '<span class="verb">favorite</span> <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
         return source.creation_result(description=preview_description)
       else:
         resp = self._post(API_FAVORITE % base_id)
@@ -539,7 +560,7 @@ class Mastodon(source.Source):
           error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/repost">boost</a>. Check that your post has the right <a href="http://indiewebcamp.com/repost">repost-of</a> link.' % (self.instance, self.DOMAIN))
 
       if preview:
-          preview_description += '<span class="verb">boost</span> <a href="%s">this toot</a>.' % base_url
+          preview_description += '<span class="verb">boost</span> <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
           return source.creation_result(description=preview_description)
       else:
         resp = self._post(API_REBLOG % base_id)
@@ -549,7 +570,7 @@ class Mastodon(source.Source):
       data = {'status': content}
 
       if is_reply:
-        preview_description += '<span class="verb">reply</span> to <a href="%s">this toot</a>:' % base_url
+        preview_description += '<span class="verb">reply</span> to <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
         data['in_reply_to_id'] = base_id
       else:
         preview_description += '<span class="verb">toot</span>:'

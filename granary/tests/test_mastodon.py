@@ -455,7 +455,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_preview_favorite(self):
     preview = self.mastodon.preview_create(LIKE)
-    self.assertEqual('<span class="verb">favorite</span> <a href="http://foo.com/@snarfed/123">this toot</a>.', preview.description)
+    self.assertIn('<span class="verb">favorite</span> <a href="http://foo.com/@snarfed/123">this toot</a>: ', preview.description)
 
   def test_create_reblog(self):
     self.expect_post(API_REBLOG % '123', STATUS)
@@ -467,7 +467,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_preview_reblog(self):
     preview = self.mastodon.preview_create(SHARE_ACTIVITY)
-    self.assertEqual('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this toot</a>.', preview.description)
+    self.assertIn('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this toot</a>: ', preview.description)
 
   def test_preview_with_media(self):
     preview = self.mastodon.preview_create(MEDIA_OBJECT)
