@@ -130,7 +130,8 @@ class Handler(handlers.ModernHandler):
     elif site == 'mastodon':
       src = mastodon.Mastodon(
         instance=util.get_required_param(self, 'instance'),
-        username=util.get_required_param(self, 'username'))
+        access_token=util.get_required_param(self, 'access_token'),
+        user_id=util.get_required_param(self, 'user_id'))
     else:
       src_cls = source.sources.get(site)
       if not src_cls:

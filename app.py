@@ -193,19 +193,35 @@ class UrlHandler(api.Handler):
                         url=url, actor=actor, title=title, hfeed=hfeed)
 
 
+class MastodonStart(mastodon.StartHandler):
+  """Mastodon OAuth handler wrapper that handles URL discovery errors.
+
+  Used to catch when someone enters a Mastodon instance URL that doesn't exist
+  or isn't actually a Mastodon instance.
+  """
+  APP_NAME = 'granary'
+
+  def handle_exception(self, e, debug):
+    if isinstance(e, (ValueError, requests.RequestException, exc.HTTPException)):
+      logging.warning('', exc_info=True)
+      return self.redirect('/?%s#logins' % urllib.urlencode({'failure': str(e)}))
+
+    return super(MastodonStart, self).handle_exception(e, debug)
+
+
+
 application = webapp2.WSGIApplication([
   ('/', FrontPageHandler),
   ('/demo', DemoHandler),
   ('/facebook/start_auth', facebook.StartHandler.to('/facebook/oauth_callback')),
-  ('/facebook/oauth_callback', facebook.CallbackHandler.to('/')),
+  ('/facebook/oauth_callback', facebook.CallbackHandler.to('/#logins')),
   ('/flickr/start_auth', flickr.StartHandler.to('/flickr/oauth_callback')),
-  ('/flickr/oauth_callback', flickr.CallbackHandler.to('/')),
+  ('/flickr/oauth_callback', flickr.CallbackHandler.to('/#logins')),
   ('/github/start_auth', github.StartHandler.to('/github/oauth_callback')),
-  ('/github/oauth_callback', github.CallbackHandler.to('/')),
-  ('/mastodon/start_auth', mastodon.StartHandler.to(
-    '/mastodon/oauth_callback', app_name='granary', app_url='https://granary.io/')),
-  ('/mastodon/oauth_callback', mastodon.CallbackHandler.to('/')),
+  ('/github/oauth_callback', github.CallbackHandler.to('/#logins')),
+  ('/mastodon/start_auth', MastodonStart.to('/mastodon/oauth_callback')),
+  ('/mastodon/oauth_callback', mastodon.CallbackHandler.to('/#logins')),
   ('/twitter/start_auth', twitter.StartHandler.to('/twitter/oauth_callback')),
-  ('/twitter/oauth_callback', twitter.CallbackHandler.to('/')),
+  ('/twitter/oauth_callback', twitter.CallbackHandler.to('/#logins')),
   ('/url', UrlHandler),
 ] + handlers.HOST_META_ROUTES, debug=appengine_config.DEBUG)

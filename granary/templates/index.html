@@ -81,7 +81,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <!--
   -- oauth login buttons
   -->
-<br />
+<br id="logins" />
 <div class="login">
 <div class="row">
 
@@ -181,13 +181,19 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <!--
   -- interactive form
   -->
-{% if access_token or access_token_key or access_token_secret or input or site %}
+{% if access_token or access_token_key or access_token_secret or input or site
+     or declined or error or failure %}
 
 <div class="row">
 <p class="lead"><em>
-{% if declined or error %}
-<span style="color: red">Please accept the prompt to try the demo.</span>
-{% endif %}
+<span style="color: red">
+  {% if declined or error %}
+    Please accept the prompt to try the demo.
+  {% endif %}
+  {% if failure %}
+    Error: {{ failure }}</span>
+  {% endif %}
+</span>
 {% if entity %}
 <span style="color: green">
  Authenticated as {{ entity.user_display_name() }} on {{ entity.site_name() }}.</span>
@@ -206,14 +212,18 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 
 {% if site == 'mastodon' %}
 <input type="hidden" id="instance" name="instance" value="{{ entity.instance() }}" />
-<input type="hidden" id="username" name="username" value="{{ entity.username() }}" />
 {% endif %}
 
 {% if site != 'github' %}
 <label>/ </label>
 <input id="user_id" name="user_id" type="text" class="form-control"
-       {% if site == 'instagram' %} placeholder="username" size="12" required
-       {% else %} placeholder="username (optional)" size="19"
+       {% if site == 'instagram' %}
+         placeholder="username" size="12" required
+       {% else %}{% if site == 'mastodon' %}
+         value="{{ entity.user_id() }}" placeholder="user id" size="19" required
+       {% else %}
+         placeholder="username (optional)" size="19"
+       {% endif %}
        {% endif %} />
 <label> / </label>
 {% endif %}
