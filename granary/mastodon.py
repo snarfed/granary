@@ -5,7 +5,6 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* de-dupe media attachments
 * bridgy: remove profile url from [domain_]urls
 * reply, like, reblog remote toots
 * get_activities(): start_index, count, min_id
@@ -630,10 +629,12 @@ class Mastodon(source.Source):
 
     Returns: list of string media ids for uploaded files
     """
+    uploaded = set()  # URLs uploaded so far; for de-duping
     ids = []
+
     for obj in media:
       url = util.get_url(obj, key='stream') or util.get_url(obj)
-      if not url:
+      if not url or url in uploaded:
         continue
 
       data = {}
@@ -649,5 +650,6 @@ class Mastodon(source.Source):
       logging.info('Got: %s', upload)
       media_id = upload['id']
       ids.append(media_id)
+      uploaded.add(url)
 
     return ids
