@@ -64,19 +64,20 @@ ACTOR = {  # ActivityStreams
   'description': 'my note',
   'published': '2017-04-19T20:38:19.704Z',
 }
-ACCOUNT_BOB = {
+ACCOUNT_REMOTE = {
   'id': '999',
   'username': 'bob',
-  'url': 'http://foo.com/@bob',
+  'acct': 'bob@other.net',
+  'url': 'http://other.net/@bob',
 }
-ACTOR_BOB = {
+ACTOR_REMOTE = {
   'objectType': 'person',
-  'id': tag_uri('bob'),
+  'id': 'tag:other.net:bob',
   'numeric_id': '999',
   'username': 'bob',
-  'displayName': 'bob',
-  'url': 'http://foo.com/@bob',
-  'urls': [{'value': 'http://foo.com/@bob'}],
+  'displayName': 'bob@other.net',
+  'url': 'http://other.net/@bob',
+  'urls': [{'value': 'http://other.net/@bob'}],
 }
 STATUS = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#status
   'id': '123',
@@ -149,17 +150,17 @@ REPLY_ACTIVITY.update({
 })
 REBLOG_STATUS = {  # Mastodon
   'id': '789',
-  'url': 'http://foo.com/@bob/789',
-  'account': ACCOUNT_BOB,
+  'url': 'http://other.net/@bob/789',
+  'account': ACCOUNT_REMOTE,
   'reblog': STATUS,
 }
 SHARE_ACTIVITY = {  # ActivityStreams
   'objectType': 'activity',
   'verb': 'share',
   'id': tag_uri(789),
-  'url': 'http://foo.com/@bob/789',
+  'url': 'http://other.net/@bob/789',
   'object': OBJECT,
-  'actor': ACTOR_BOB,
+  'actor': ACTOR_REMOTE,
 }
 MEDIA_STATUS = copy.deepcopy(STATUS)  # Mastodon
 MEDIA_STATUS['media_attachments'] = [{
@@ -243,16 +244,16 @@ SHARE = {  # ActivityStreams
   'object': {'url': 'http://foo.com/@snarfed/123'},
   'author': ACTOR,
 }
-SHARE_BY_BOB = copy.deepcopy(SHARE)
-SHARE_BY_BOB.update({
+SHARE_BY_REMOTE = copy.deepcopy(SHARE)
+SHARE_BY_REMOTE.update({
   'id': tag_uri('123_reblogged_by_999'),
   'url': 'http://foo.com/@snarfed/123#reblogged-by-999',
-  'author': ACTOR_BOB,
+  'author': ACTOR_REMOTE,
 })
 MENTION_NOTIFICATION = {  # Mastodon
   'id': '555',
   'type': 'mention',
-  'account': ACCOUNT_BOB,
+  'account': ACCOUNT_REMOTE,
   'status': MEDIA_STATUS,
   'created_at': '2019-10-15T00:23:37.969Z',
 }
@@ -320,11 +321,11 @@ class MastodonTest(testutil.TestCase):
 
   def test_get_activities_fetch_shares(self):
     self.expect_get(API_TIMELINE, [STATUS])
-    self.expect_get(API_REBLOGGED_BY % STATUS['id'], [ACCOUNT, ACCOUNT_BOB])
+    self.expect_get(API_REBLOGGED_BY % STATUS['id'], [ACCOUNT, ACCOUNT_REMOTE])
     self.mox.ReplayAll()
 
     with_shares = copy.deepcopy(ACTIVITY)
-    with_shares['object']['tags'].extend([SHARE, SHARE_BY_BOB])
+    with_shares['object']['tags'].extend([SHARE, SHARE_BY_REMOTE])
     self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
 
   def test_get_activities_fetch_mentions(self):
@@ -373,9 +374,9 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals(ACTOR, self.mastodon.get_actor(1))
 
   def test_get_actor_current_user(self):
-    self.expect_get(API_ACCOUNT % ACCOUNT['id'], ACCOUNT_BOB)
+    self.expect_get(API_ACCOUNT % ACCOUNT['id'], ACCOUNT_REMOTE)
     self.mox.ReplayAll()
-    self.assert_equals(ACTOR_BOB, self.mastodon.get_actor())
+    self.assert_equals(ACTOR_REMOTE, self.mastodon.get_actor())
 
   def test_get_comment(self):
     self.expect_get(API_STATUS % 1, STATUS)
@@ -385,8 +386,15 @@ class MastodonTest(testutil.TestCase):
   def test_user_to_actor(self):
     self.assert_equals(ACTOR, self.mastodon.user_to_actor(ACCOUNT))
 
-  def test_user_to_actor_bob(self):
-    self.assert_equals(ACTOR_BOB, self.mastodon.user_to_actor(ACCOUNT_BOB))
+  def test_user_to_actor_remote(self):
+    self.assert_equals(ACTOR_REMOTE, self.mastodon.user_to_actor(ACCOUNT_REMOTE))
+
+  def test_user_to_actor_username_acct_conflict(self):
+    with self.assertRaises(ValueError):
+      self.mastodon.user_to_actor({
+        'username': 'alice',
+        'acct': 'eve@xyz',
+      })
 
   def test_make_like(self):
     self.assert_equals(LIKE, self.mastodon._make_like(STATUS, ACCOUNT))

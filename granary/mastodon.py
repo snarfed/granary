@@ -5,14 +5,13 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* custom emoji. see ~/mastodon.status.custom-emoji.json
-*   https://docs.joinmastodon.org/api/entities/#emoji
-* u-urls for remote reblogs etc are wrong, using local instance and id
-*   eg https://brid.gy/repost/mastodon/@snarfed@mastodon.technology/102979627878226278/66888
+* de-dupe media attachments
+* bridgy: remove profile url from [domain_]urls
 * reply, like, reblog remote toots
 * get_activities(): start_index, count, min_id
-* de-dupe media attachments
 * caching
+* custom emoji. see ~/mastodon.status.custom-emoji.json
+*   https://docs.joinmastodon.org/api/entities/#emoji
 * block lists
 * delete
 """
@@ -76,6 +75,7 @@ class Mastodon(source.Source):
   # HTML snippet for embedding a tweet.
   # https://dev.twitter.com/docs/embedded-tweets
   EMBED_POST = """
+  # TODO: use instance's JS
   <script src="https://mastodon.technology/embed.js" async="async"></script>
   <br>
   <iframe src="%s/embed" class="mastodon-embed shadow"
@@ -293,7 +293,6 @@ class Mastodon(source.Source):
 
     reblog = status.get('reblog')
     base_status = reblog if reblog else status
-    content = util.WideUnicode(base_status.get('content') or '')
 
     # media! into attachments.
     for media in status.get('media_attachments', []):
@@ -332,17 +331,13 @@ class Mastodon(source.Source):
       'displayName': t.get('name'),
     } for t in status.get('tags', [])]
 
-    # 'Boosted @username:' prefix for retweets
+    # 'Boosted @username:' prefix for reblogs
+    content = base_status.get('content') or ''
     if reblog and reblog.get('content'):
       reblog_account = reblog.get('account')
       content = 'Boosted <a href="%s">@%s</a>: ' % (
         (reblog_account.get('url'), reblog_account.get('username'))) + content
-
-    obj.update({
-      'tags': [t for t in obj['tags'] if t['objectType'] != 'image'] +
-              [self.retweet_to_object(r) for r in status.get('retweets', [])],
-      'content': content,
-    })
+    obj['content'] = util.WideUnicode(content)
 
     # inReplyTo
     reply_to_id = status.get('in_reply_to_id')
@@ -370,7 +365,22 @@ class Mastodon(source.Source):
 
     Returns: dict, AS1 actor
     """
+    domain = self.DOMAIN
     username = account.get('username')
+
+    # parse acct. it's just username for local accounts but fully qualified
+    # address for remote accounts, eg user@host.com.
+    acct = account.get('acct') or ''
+    split = acct.split('@')
+    if len(split) in (2, 3):
+      acct_username, acct_domain = split[-2:]
+      if acct_domain:
+        domain = acct_domain
+      if not username:
+        username = acct[-2]
+      elif acct_username and username != acct_username:
+        raise ValueError('username %s and acct %s conflict!' % (username, acct))
+
     if not username:
       return {}
 
@@ -381,10 +391,10 @@ class Mastodon(source.Source):
 
     return util.trim_nulls({
       'objectType': 'person',
-      'id': self.tag_uri(username),
+      'id': util.tag_uri(domain, username),
       'numeric_id': account.get('id'),
       'username': username,
-      'displayName': account.get('display_name') or username,
+      'displayName': account.get('display_name') or acct or username,
       'url': url,
       'urls': [{'value': u} for u in [url] + web_sites],
       'image': {'url': account.get('avatar')},
