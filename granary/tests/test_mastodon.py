@@ -302,19 +302,21 @@ class MastodonTest(testutil.TestCase):
     self.assertEqual(ACCOUNT['id'], m.user_id)
 
   def test_get_activities_defaults(self):
-    self.expect_get(API_TIMELINE, [STATUS, REPLY_STATUS, MEDIA_STATUS])
+    self.expect_get(API_TIMELINE, params={},
+                    response=[STATUS, REPLY_STATUS, MEDIA_STATUS])
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities())
 
   def test_get_activities_group_id_friends(self):
-    self.expect_get(API_TIMELINE, [STATUS, REPLY_STATUS, MEDIA_STATUS])
+    self.expect_get(API_TIMELINE, params={},
+                    response=[STATUS, REPLY_STATUS, MEDIA_STATUS])
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities(group_id=source.FRIENDS))
 
   def test_get_activities_fetch_replies(self):
-    self.expect_get(API_TIMELINE, [STATUS])
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
     self.expect_get(API_CONTEXT % STATUS['id'], {
       'ancestors': [],
       'descendants': [REPLY_STATUS, REPLY_STATUS],
@@ -328,7 +330,7 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_replies], self.mastodon.get_activities(fetch_replies=True))
 
   def test_get_activities_fetch_likes(self):
-    self.expect_get(API_TIMELINE, [STATUS])
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
     self.expect_get(API_FAVORITED_BY % STATUS['id'], [ACCOUNT, ACCOUNT])
     self.mox.ReplayAll()
 
@@ -337,7 +339,7 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_likes], self.mastodon.get_activities(fetch_likes=True))
 
   def test_get_activities_fetch_shares(self):
-    self.expect_get(API_TIMELINE, [STATUS])
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
     self.expect_get(API_REBLOGGED_BY % STATUS['id'], [ACCOUNT, ACCOUNT_REMOTE])
     self.mox.ReplayAll()
 
@@ -346,7 +348,7 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
 
   def test_get_activities_fetch_mentions(self):
-    self.expect_get(API_TIMELINE, [STATUS])
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
     self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], json={
       'exclude_types': ['follow', 'favourite', 'reblog'],
     })
@@ -360,19 +362,23 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(activity_id=123))
 
   def test_get_activities_self_user_id(self):
-    self.expect_get(API_ACCOUNT_STATUSES % '456', [STATUS])
+    self.expect_get(API_ACCOUNT_STATUSES % '456', params={}, response=[STATUS])
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(
       group_id=source.SELF, user_id=456))
 
   def test_get_activities_self_default_user(self):
-    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], [STATUS])
+    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], params={},
+                    response=[STATUS])
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(group_id=source.SELF))
 
   def test_get_activities_search(self):
-    self.expect_get(API_SEARCH, params={'q': 'indieweb'},
-                    response={'statuses': [STATUS, MEDIA_STATUS]})
+    self.expect_get(API_SEARCH, params={
+      'q': 'indieweb',
+      'offset': 0,
+      'limit': '',
+    }, response={'statuses': [STATUS, MEDIA_STATUS]})
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
         group_id=source.SEARCH, search_query='indieweb'))
@@ -384,6 +390,29 @@ class MastodonTest(testutil.TestCase):
   def test_get_activities_group_friends_user_id(self):
     with self.assertRaises(ValueError):
       self.mastodon.get_activities(group_id=source.FRIENDS, user_id='345')
+
+  def test_get_activities_start_index_count(self):
+    self.expect_get(API_TIMELINE, params={'limit': 2},
+                    response=[STATUS, REPLY_STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([REPLY_ACTIVITY],
+                       self.mastodon.get_activities(start_index=1, count=1))
+
+  def test_get_activities_start_index_count_zero(self):
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY],
+                       self.mastodon.get_activities(start_index=0, count=0))
+
+  def test_get_activities_count_past_end(self):
+    self.expect_get(API_TIMELINE, params={'limit': 9}, response=[STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.mastodon.get_activities(count=9))
+
+  def test_get_activities_start_index_past_end(self):
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([], self.mastodon.get_activities(start_index=9))
 
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)

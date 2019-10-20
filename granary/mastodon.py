@@ -9,6 +9,7 @@ TODO:
 * caching
 * custom emoji. see ~/mastodon.status.custom-emoji.json
 *   https://docs.joinmastodon.org/api/entities/#emoji
+*   use <img ... style="height: 1em">
 * block lists
 * delete
 * polls
@@ -141,7 +142,8 @@ class Mastodon(source.Source):
                               activity_id=None, fetch_replies=False,
                               fetch_likes=False, fetch_shares=False,
                               fetch_events=False, fetch_mentions=False,
-                              search_query=None, **kwargs):
+                              search_query=None, start_index=0, count=0,
+                              **kwargs):
     """Fetches toots and converts them to ActivityStreams activities.
 
     See :meth:`Source.get_activities_response` for details.
@@ -151,26 +153,31 @@ class Mastodon(source.Source):
 
     if not user_id:
       user_id = self.user_id
-
     if fetch_events:
       raise NotImplementedError()
 
+    params = {}
+    if count:
+      params['limit'] = count + start_index
+
     if activity_id:
       statuses = [self._get(API_STATUS % activity_id)]
-    elif group_id == source.SELF:
-      statuses = self._get(API_ACCOUNT_STATUSES % user_id)
     elif group_id in (None, source.FRIENDS):
-      statuses = self._get(API_TIMELINE)
+      statuses = self._get(API_TIMELINE, params=params)
     elif group_id == source.SEARCH:
       if not search_query:
         raise ValueError('search requires search_query parameter')
-      statuses = self._get(API_SEARCH, params={'q': search_query}).get('statuses', [])
-    else:
-      statuses = self._get(API_ACCOUNT_STATUSES % user_id)
+      statuses = self._get(API_SEARCH, params={
+        'q': search_query,
+        'offset': start_index,
+        'limit': count if count else '',
+      }).get('statuses', [])
+    else:  # eg group_id SELF
+      statuses = self._get(API_ACCOUNT_STATUSES % user_id, params=params)
 
     activities = []
 
-    for status in statuses:
+    for status in statuses[start_index:]:
       activity = self.postprocess_activity(self.status_to_activity(status))
       activities.append(activity)
 

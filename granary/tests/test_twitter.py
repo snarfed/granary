@@ -38,6 +38,7 @@ from granary.twitter import (
   HTML_FAVORITES,
   Twitter,
 )
+
 # test data
 def tag_uri(name):
   return util.tag_uri('twitter.com', name)
