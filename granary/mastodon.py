@@ -169,6 +169,7 @@ class Mastodon(source.Source):
         raise ValueError('search requires search_query parameter')
       statuses = self._get(API_SEARCH, params={
         'q': search_query,
+        'resolve': True,
         'offset': start_index,
         'limit': count if count else '',
       }).get('statuses', [])

@@ -238,9 +238,11 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   {% endif %}
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
+  {% if site in ('mastodon', 'twitter') %}
+    <option value="@search">@search</option>
+  {% endif %}
   {% if site == 'twitter' %}
     <option value="@list">@list</option>
-    <option value="@search">@search</option>
     <option value="@blocks">@blocks</option>
   {% endif %}
 </select>

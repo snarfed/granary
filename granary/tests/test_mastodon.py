@@ -376,6 +376,7 @@ class MastodonTest(testutil.TestCase):
   def test_get_activities_search(self):
     self.expect_get(API_SEARCH, params={
       'q': 'indieweb',
+      'resolve': True,
       'offset': 0,
       'limit': '',
     }, response={'statuses': [STATUS, MEDIA_STATUS]})
