@@ -133,6 +133,19 @@ ACTIVITY = {  # ActivityStreams
   'object': OBJECT,
   'generator': {'displayName': 'my app', 'url': 'http://app'},
 }
+STATUS_REMOTE = copy.deepcopy(STATUS)
+STATUS_REMOTE.update({
+  'id': '999',
+  'account': ACCOUNT_REMOTE,
+  'url': 'http://other.net/@bob/888',
+  'uri': 'http://other.net/users/bob/statuses/888',
+})
+OBJECT_REMOTE = copy.deepcopy(OBJECT)
+OBJECT_REMOTE.update({
+  'id': tag_uri('999'),
+  'author': ACTOR_REMOTE,
+  'url': 'http://other.net/@bob/888',
+})
 REPLY_STATUS = copy.deepcopy(STATUS)  # Mastodon
 REPLY_STATUS.update({
   'in_reply_to_id': '456',
@@ -236,6 +249,8 @@ LIKE = {  # ActivityStreams
   'object': {'url': OBJECT['url']},
   'author': ACTOR,
 }
+LIKE_REMOTE = copy.deepcopy(LIKE)
+LIKE_REMOTE['object']['url'] = OBJECT_REMOTE['url']
 SHARE = {  # ActivityStreams
   'id': tag_uri('123_reblogged_by_23507'),
   'url': 'http://foo.com/@snarfed/123#reblogged-by-23507',
@@ -244,6 +259,8 @@ SHARE = {  # ActivityStreams
   'object': {'url': 'http://foo.com/@snarfed/123'},
   'author': ACTOR,
 }
+SHARE_REMOTE = copy.deepcopy(SHARE)
+SHARE_REMOTE['object']['url'] = OBJECT_REMOTE['url']
 SHARE_BY_REMOTE = copy.deepcopy(SHARE)
 SHARE_BY_REMOTE.update({
   'id': tag_uri('123_reblogged_by_999'),
@@ -443,15 +460,74 @@ class MastodonTest(testutil.TestCase):
     result = self.mastodon.create(REPLY_OBJECT)
     self.assert_equals(STATUS, result.content, result)
 
-  def test_create_reply_other_instance(self):
-    for fn in (self.mastodon.preview_create, self.mastodon.create):
-      got = fn({
-        'content': 'foo ☕ bar',
-        'inReplyTo': [{'url': 'http://bad/@other/123'}],
-      })
-      self.assertTrue(got.abort, got)
-      self.assertEqual('Could not find a toot on foo.com to reply to.',
-                       got.error_plain)
+  def test_preview_reply(self):
+    preview = self.mastodon.preview_create(REPLY_OBJECT)
+    self.assertIn('<span class="verb">reply</span> to <a href="http://foo.com/web/statuses/456">this toot</a>: ', preview.description)
+    self.assert_equals('foo ☕ bar @alice #IndieWeb', preview.content)
+
+  def test_base_object_empty(self):
+    self.assert_equals({}, self.mastodon.base_object({'inReplyTo': []}))
+    self.assert_equals({}, self.mastodon.base_object({'object': {}}))
+    self.assert_equals({}, self.mastodon.base_object({'target': []}))
+
+  def test_base_object_local(self):
+    self.assert_equals({
+      'id': '123',
+      'url': 'http://foo.com/@xyz/123',
+    }, self.mastodon.base_object({
+      'object': {'url': 'http://foo.com/@xyz/123'},
+    }))
+
+  def test_base_object_two_remote(self):
+    bad = {'url': 'http://bad/456'}
+    remote = {'url': STATUS_REMOTE['uri']}
+
+    self.expect_get(API_SEARCH, params={'q': 'http://bad/456','resolve': True},
+                    status_code=404)
+    self.expect_get(API_SEARCH, params={'q': STATUS_REMOTE['uri'],'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.mox.ReplayAll()
+
+    expected = copy.deepcopy(OBJECT_REMOTE)
+    expected['id'] = STATUS_REMOTE['id']
+    self.assert_equals(expected, self.mastodon.base_object({
+      'inReplyTo': [bad, remote],
+    }))
+
+  def test_embed_post(self):
+    embed = self.mastodon.embed_post({'url': 'http://foo.com/bar'})
+    self.assertIn('<script src="http://foo.com/embed.js"', embed)
+    self.assertIn('<iframe src="http://foo.com/bar/embed"', embed)
+
+  def test_create_reply_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.expect_post(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'in_reply_to_id': STATUS_REMOTE['id'],
+    }, response=STATUS)
+    self.mox.ReplayAll()
+
+    got = self.mastodon.create({
+      'content': 'foo ☕ bar',
+      'inReplyTo': [{'url': url}],
+    })
+
+  def test_preview_reply_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.mox.ReplayAll()
+
+    preview = self.mastodon.preview_create({
+      'content': 'foo ☕ bar',
+      'inReplyTo': [{'url': url}],
+    })
+    self.assertIn(
+      '<span class="verb">reply</span> to <a href="%s">this toot</a>: ' % url,
+      preview.description)
+    self.assert_equals('foo ☕ bar', preview.content)
 
   def test_create_favorite(self):
     self.expect_post(API_FAVORITE % '123', STATUS)
@@ -465,6 +541,28 @@ class MastodonTest(testutil.TestCase):
     preview = self.mastodon.preview_create(LIKE)
     self.assertIn('<span class="verb">favorite</span> <a href="http://foo.com/@snarfed/123">this toot</a>: ', preview.description)
 
+  def test_create_favorite_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.expect_post(API_FAVORITE % '999', STATUS_REMOTE)
+    self.mox.ReplayAll()
+
+    got = self.mastodon.create(LIKE_REMOTE).content
+    self.assert_equals('like', got['type'])
+    self.assert_equals(url, got['url'])
+
+  def test_preview_favorite_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.mox.ReplayAll()
+
+    preview = self.mastodon.preview_create(LIKE_REMOTE)
+    self.assertIn(
+      '<span class="verb">favorite</span> <a href="%s">this toot</a>: ' % url,
+      preview.description)
+
   def test_create_reblog(self):
     self.expect_post(API_REBLOG % '123', STATUS)
     self.mox.ReplayAll()
@@ -476,6 +574,28 @@ class MastodonTest(testutil.TestCase):
   def test_preview_reblog(self):
     preview = self.mastodon.preview_create(SHARE_ACTIVITY)
     self.assertIn('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this toot</a>: ', preview.description)
+
+  def test_create_reblog_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.expect_post(API_REBLOG % '999', STATUS)
+    self.mox.ReplayAll()
+
+    got = self.mastodon.create(SHARE_REMOTE).content
+    self.assert_equals('repost', got['type'])
+    self.assert_equals('http://foo.com/@snarfed/123', got['url'])
+
+  def test_preview_reblog_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.mox.ReplayAll()
+
+    preview = self.mastodon.preview_create(SHARE_REMOTE)
+    self.assertIn(
+      '<span class="verb">boost</span> <a href="%s">this toot</a>: ' % url,
+      preview.description)
 
   def test_preview_with_media(self):
     preview = self.mastodon.preview_create(MEDIA_OBJECT)

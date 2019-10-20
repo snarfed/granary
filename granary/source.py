@@ -877,18 +877,22 @@ class Source(with_metaclass(SourceMeta, object)):
     else:
       return {}
 
-    base_obj = copy.deepcopy(base_obj)
-    id = base_obj.get('id')
-    url = base_obj.get('url')
+    return self._postprocess_base_object(base_obj)
+
+  @classmethod
+  def _postprocess_base_object(cls, obj):
+    obj = copy.deepcopy(obj)
+    id = obj.get('id')
+    url = obj.get('url')
 
     if id:
       parsed = util.parse_tag_uri(id)
       if parsed:
-        base_obj['id'] = parsed[1]
+        obj['id'] = parsed[1]
     elif url:
-      base_obj['id'] = self.base_id(url)
+      obj['id'] = cls.base_id(url)
 
-    return base_obj
+    return obj
 
   @classmethod
   def base_id(cls, url):

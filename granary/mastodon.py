@@ -5,14 +5,13 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* bridgy: remove profile url from [domain_]urls
-* reply, like, reblog remote toots
 * get_activities(): start_index, count, min_id
 * caching
 * custom emoji. see ~/mastodon.status.custom-emoji.json
 *   https://docs.joinmastodon.org/api/entities/#emoji
 * block lists
 * delete
+* polls
 """
 from __future__ import absolute_import
 from future import standard_library
@@ -23,6 +22,7 @@ import urllib.parse
 
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import requests
 
 from . import appengine_config
 from . import source
@@ -70,18 +70,6 @@ class Mastodon(source.Source):
   # https://docs.joinmastodon.org/usage/basics/#text
   TRUNCATE_TEXT_LENGTH = 500
   TRUNCATE_URL_LENGTH = 23
-
-  # HTML snippet for embedding a tweet.
-  # https://dev.twitter.com/docs/embedded-tweets
-  EMBED_POST = """
-  # TODO: use instance's JS
-  <script src="https://mastodon.technology/embed.js" async="async"></script>
-  <br>
-  <iframe src="%s/embed" class="mastodon-embed shadow"
-          style="max-width: 100%%; border: 0" width="400"
-          allowfullscreen="allowfullscreen">
-  </iframe>
-  """
 
   def __init__(self, instance, access_token, user_id=None):
     """Constructor.
@@ -133,12 +121,21 @@ class Mastodon(source.Source):
   def embed_post(cls, obj):
     """Returns the HTML string for embedding a toot.
 
+    https://dev.twitter.com/docs/embedded-tweets
+
     Args:
       obj: AS1 dict with at least url, and optionally also content.
 
     Returns: string, HTML
     """
-    return cls.EMBED_POST % obj['url']
+    return """
+  <script src="%s" async="async"></script>
+  <br>
+  <iframe src="%s/embed" class="mastodon-embed shadow"
+          style="max-width: 100%%; border: 0" width="400"
+          allowfullscreen="allowfullscreen">
+  </iframe>
+  """ % (urllib.parse.urljoin(obj['url'], '/embed.js'), obj['url'])
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -286,7 +283,7 @@ class Mastodon(source.Source):
       'id': self.tag_uri(id),
       'url': status.get('url'),
       'published': status.get('created_at'),
-      'author': self.user_to_actor(status.get('account')),
+      'author': self.user_to_actor(status.get('account') or {}),
       'attachments': [],
     }
 
@@ -522,19 +519,10 @@ class Mastodon(source.Source):
           error_html='No content text found.')
 
     if is_reply and not base_url:
-      # TODO: support replies on federated (ie other) instances. details:
-      #
-      # https://mastodon.social/@jkreeftmeijer/101245063526942536
-      # "Got it. This is how federation works.
-      # You need the local ID for the status you’re replying to. https://mastodon.social/@jkreeftmeijer/101236371751163533 is posted on https://mastodon.social, but you need the ID from https://mastodon.technology/web/statuses/101236371815734043 when posting a reply on https://mastodon.technology, for example."
-      #
-      # https://mastodon.social/@jkreeftmeijer/101290086224931209
-      # "To get the local ID for a Mastodon status on another instance, use the search API (https://docs.joinmastodon.org/api/rest/search/), or the search bar in your web client.
-      # Searching for a status URL (like https://mastodon.social/@jkreeftmeijer/101236371751163533) returns the status on your instance, including the local ID."
       return source.creation_result(
         abort=True,
-        error_plain='Could not find a toot on %s to reply to.' % self.DOMAIN,
-        error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.' % (self.instance, self.DOMAIN))
+        error_plain='Could not find a Mastodon toot to reply to.',
+        error_html='Could not find a Mastodon toot to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.')
 
     # truncate and ellipsize content if necessary
     content = self.truncate(content, obj.get('url'), include_link, type)
@@ -551,8 +539,8 @@ class Mastodon(source.Source):
       if not base_url:
         return source.creation_result(
           abort=True,
-          error_plain='Could not find a toot on %s to favorite.' % self.DOMAIN,
-          error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/favorite">favorite</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.' % (self.instance, self.DOMAIN))
+          error_plain='Could not find a Mastodon toot to favorite.',
+          error_html='Could not find a Mastodon toot on to <a href="http://indiewebcamp.com/favorite">favorite</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.')
 
       if preview:
         preview_description += '<span class="verb">favorite</span> <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
@@ -565,8 +553,8 @@ class Mastodon(source.Source):
       if not base_url:
         return source.creation_result(
           abort=True,
-          error_plain='Could not find a toot to boost.',
-          error_html='Could not find a toot on <a href="%s">%s</a> to <a href="http://indiewebcamp.com/repost">boost</a>. Check that your post has the right <a href="http://indiewebcamp.com/repost">repost-of</a> link.' % (self.instance, self.DOMAIN))
+          error_plain='Could not find a Mastodon toot to boost.',
+          error_html='Could not find a Mastodon toot to <a href="http://indiewebcamp.com/repost">boost</a>. Check that your post has the right <a href="http://indiewebcamp.com/repost">repost-of</a> link.')
 
       if preview:
           preview_description += '<span class="verb">boost</span> <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
@@ -617,6 +605,50 @@ class Mastodon(source.Source):
       resp['url'] = base_url
 
     return source.creation_result(resp)
+
+  def base_object(self, obj):
+    """Returns the 'base' Mastodon object that an object operates on.
+
+    If the object is a reply, boost, or favorite of a Mastodon post - on any
+    instance - this returns that post object. The id in the returned object is
+    the id of that remote post *on the local instance*. (As a Mastodon style id,
+    ie an integer in a string, *not* a tag URI.)
+
+    Uses Mastodon's search API on the local instance to determine whether a URL
+    is a Mastodon post, and if it is, to find or generate an id for it on the
+    local instance.
+
+    Discovered via https://mastodon.social/@jkreeftmeijer/101245063526942536
+
+    Args:
+      obj: ActivityStreams object
+
+    Returns:
+      dict, minimal ActivityStreams object. Usually has at least id; may
+      also have url, author, etc.
+    """
+    for field in ('inReplyTo', 'object', 'target'):
+      for base in util.get_list(obj, field):
+        # first, check if it's on local instance
+        url = util.get_url(base)
+        if url.startswith(self.instance):
+          return self._postprocess_base_object(base)
+
+        # nope; try mastodon's search API
+        try:
+          results = self._get(API_SEARCH, params={'q': url, 'resolve': True})
+        except requests.RequestException as e:
+          logging.info("%s URL %s doesn't look like Mastodon:", field, url)
+          continue
+
+        for status in results.get('statuses', []):
+          if url in (status.get('url'), status.get('uri')):
+            # found it!
+            base = self.status_to_object(status)
+            base['id'] = status['id']
+            return self._postprocess_base_object(base)
+
+    return {}
 
   def upload_media(self, media):
     """Uploads one or more images or videos from web URLs.
