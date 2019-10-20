@@ -5,7 +5,6 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* get_activities(): start_index, count, min_id
 * caching
 * custom emoji. see ~/mastodon.status.custom-emoji.json
 *   https://docs.joinmastodon.org/api/entities/#emoji
@@ -185,7 +184,7 @@ class Mastodon(source.Source):
       id = status.get('id')
       if id:
         obj = activity['object']
-        if fetch_replies:
+        if fetch_replies and status.get('replies_count'):
           context = self._get(API_CONTEXT % id)
           obj['replies'] = {
             'items': [self.status_to_activity(reply)
@@ -193,11 +192,11 @@ class Mastodon(source.Source):
           }
         tags = obj.setdefault('tags', [])
 
-        if fetch_likes:
+        if fetch_likes and status.get('favourites_count'):
           likers = self._get(API_FAVORITED_BY % id)
           tags.extend(self._make_like(status, l) for l in likers)
 
-        if fetch_shares:
+        if fetch_shares and status.get('reblogs_count'):
           sharers = self._get(API_REBLOGGED_BY % id)
           tags.extend(self._make_share(status, s) for s in sharers)
 

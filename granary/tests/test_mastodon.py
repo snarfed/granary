@@ -86,9 +86,6 @@ STATUS = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#status
   'account': ACCOUNT,
   'content': '<p>foo ☕ bar <a ...>@alice</a> <a ...>#IndieWeb</a></p>',
   'created_at': '2019-07-29T18:35:53.446Z',
-  'replies_count': 1,
-  'favourites_count': 0,
-  'reblogs_count': 0,
   'visibility': 'public',
   'mentions': [{
     'username': 'alice',
@@ -274,6 +271,13 @@ MENTION_NOTIFICATION = {  # Mastodon
   'status': MEDIA_STATUS,
   'created_at': '2019-10-15T00:23:37.969Z',
 }
+STATUS_WITH_COUNTS = copy.deepcopy(STATUS)
+STATUS_WITH_COUNTS.update({  # Mastodon
+  'replies_count': 1,
+  'favourites_count': 2,
+  'reblogs_count': 3,
+})
+
 
 class MastodonTest(testutil.TestCase):
 
@@ -316,7 +320,7 @@ class MastodonTest(testutil.TestCase):
                        self.mastodon.get_activities(group_id=source.FRIENDS))
 
   def test_get_activities_fetch_replies(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
     self.expect_get(API_CONTEXT % STATUS['id'], {
       'ancestors': [],
       'descendants': [REPLY_STATUS, REPLY_STATUS],
@@ -330,7 +334,7 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_replies], self.mastodon.get_activities(fetch_replies=True))
 
   def test_get_activities_fetch_likes(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
     self.expect_get(API_FAVORITED_BY % STATUS['id'], [ACCOUNT, ACCOUNT])
     self.mox.ReplayAll()
 
@@ -339,13 +343,19 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_likes], self.mastodon.get_activities(fetch_likes=True))
 
   def test_get_activities_fetch_shares(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
     self.expect_get(API_REBLOGGED_BY % STATUS['id'], [ACCOUNT, ACCOUNT_REMOTE])
     self.mox.ReplayAll()
 
     with_shares = copy.deepcopy(ACTIVITY)
     with_shares['object']['tags'].extend([SHARE, SHARE_BY_REMOTE])
     self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
+
+  def test_get_activities_fetch_replies_likes_shares_counts_zero(self):
+    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.mastodon.get_activities(
+      fetch_replies=True, fetch_likes=True, fetch_shares=True))
 
   def test_get_activities_fetch_mentions(self):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS])
