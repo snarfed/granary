@@ -331,7 +331,10 @@ class MastodonTest(testutil.TestCase):
     with_replies['object']['replies'] = {
         'items': [REPLY_ACTIVITY, REPLY_ACTIVITY],
     }
-    self.assert_equals([with_replies], self.mastodon.get_activities(fetch_replies=True))
+    cache = util.CacheDict()
+    self.assert_equals([with_replies], self.mastodon.get_activities(
+      fetch_replies=True, cache=cache))
+    self.assert_equals(1, cache['AMRE 123'])
 
   def test_get_activities_fetch_likes(self):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
@@ -340,7 +343,10 @@ class MastodonTest(testutil.TestCase):
 
     with_likes = copy.deepcopy(ACTIVITY)
     with_likes['object']['tags'].extend([LIKE, LIKE])
-    self.assert_equals([with_likes], self.mastodon.get_activities(fetch_likes=True))
+    cache = util.CacheDict()
+    self.assert_equals([with_likes], self.mastodon.get_activities(
+      fetch_likes=True, cache=cache))
+    self.assert_equals(2, cache['AMF 123'])
 
   def test_get_activities_fetch_shares(self):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
@@ -349,7 +355,10 @@ class MastodonTest(testutil.TestCase):
 
     with_shares = copy.deepcopy(ACTIVITY)
     with_shares['object']['tags'].extend([SHARE, SHARE_BY_REMOTE])
-    self.assert_equals([with_shares], self.mastodon.get_activities(fetch_shares=True))
+    cache = util.CacheDict()
+    self.assert_equals([with_shares], self.mastodon.get_activities(
+      fetch_shares=True, cache=cache))
+    self.assert_equals(3, cache['AMRB 123'])
 
   def test_get_activities_fetch_replies_likes_shares_counts_zero(self):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS])
@@ -424,6 +433,28 @@ class MastodonTest(testutil.TestCase):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS])
     self.mox.ReplayAll()
     self.assert_equals([], self.mastodon.get_activities(start_index=9))
+
+  def test_get_activities_fetch_cache(self):
+    statuses = [copy.deepcopy(STATUS), copy.deepcopy(STATUS)]
+    statuses[0]['id'] += '_a'
+    statuses[1]['id'] += '_b'
+
+    for count in (1, 2):
+      for s in statuses:
+        s['replies_count'] = s['reblogs_count'] = s['favourites_count'] = count
+      self.expect_get(API_TIMELINE, params={}, response=statuses)
+      for s in statuses:
+        self.expect_get(API_CONTEXT % s['id'], {})
+        self.expect_get(API_FAVORITED_BY % s['id'], {})
+        self.expect_get(API_REBLOGGED_BY % s['id'], [])
+      # shouldn't fetch this time because counts haven't changed
+      self.expect_get(API_TIMELINE, params={}, response=statuses)
+
+    self.mox.ReplayAll()
+    cache = util.CacheDict()
+    for i in range(4):
+      self.mastodon.get_activities(fetch_replies=True, fetch_shares=True,
+                                   fetch_likes=True, cache=cache)
 
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)

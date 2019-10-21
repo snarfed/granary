@@ -5,7 +5,6 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* caching
 * custom emoji. see ~/mastodon.status.custom-emoji.json
 *   https://docs.joinmastodon.org/api/entities/#emoji
 *   use <img ... style="height: 1em">
@@ -17,6 +16,7 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 
+import itertools
 import logging
 import urllib.parse
 
@@ -142,7 +142,7 @@ class Mastodon(source.Source):
                               fetch_likes=False, fetch_shares=False,
                               fetch_events=False, fetch_mentions=False,
                               search_query=None, start_index=0, count=0,
-                              **kwargs):
+                              cache=None, **kwargs):
     """Fetches toots and converts them to ActivityStreams activities.
 
     See :meth:`Source.get_activities_response` for details.
@@ -177,28 +177,45 @@ class Mastodon(source.Source):
 
     activities = []
 
+    # batch get memcached counts of favorites and retweets for all tweets
+    cached = {}
+    if cache is not None:
+      keys = itertools.product(('AMRE', 'AMF', 'AMRB'), [s['id'] for s in statuses])
+      cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
+    # only update the cache at the end, in case we hit an error before then
+    cache_updates = {}
+
+    # fetch extras if necessary
     for status in statuses[start_index:]:
       activity = self.postprocess_activity(self.status_to_activity(status))
       activities.append(activity)
 
       id = status.get('id')
-      if id:
-        obj = activity['object']
-        if fetch_replies and status.get('replies_count'):
-          context = self._get(API_CONTEXT % id)
-          obj['replies'] = {
-            'items': [self.status_to_activity(reply)
-                      for reply in context.get('descendants', [])]
-          }
-        tags = obj.setdefault('tags', [])
+      if not id:
+        continue
 
-        if fetch_likes and status.get('favourites_count'):
-          likers = self._get(API_FAVORITED_BY % id)
-          tags.extend(self._make_like(status, l) for l in likers)
+      obj = activity['object']
+      count = status.get('replies_count')
+      if fetch_replies and count and count != cached.get('AMRE ' + id):
+        context = self._get(API_CONTEXT % id)
+        obj['replies'] = {
+          'items': [self.status_to_activity(reply)
+                    for reply in context.get('descendants', [])]
+        }
+        cache_updates['AMRE ' + id] = count
 
-        if fetch_shares and status.get('reblogs_count'):
-          sharers = self._get(API_REBLOGGED_BY % id)
-          tags.extend(self._make_share(status, s) for s in sharers)
+      tags = obj.setdefault('tags', [])
+      count = status.get('favourites_count')
+      if fetch_likes and count and count != cached.get('AMF ' + id):
+        likers = self._get(API_FAVORITED_BY % id)
+        tags.extend(self._make_like(status, l) for l in likers)
+        cache_updates['AMF ' + id] = count
+
+      count = status.get('reblogs_count')
+      if fetch_shares and count and count != cached.get('AMRB ' + id):
+        sharers = self._get(API_REBLOGGED_BY % id)
+        tags.extend(self._make_share(status, s) for s in sharers)
+        cache_updates['AMRB ' + id] = count
 
     if fetch_mentions:
       # https://docs.joinmastodon.org/api/rest/notifications/
@@ -208,7 +225,10 @@ class Mastodon(source.Source):
       activities.extend(self.status_to_activity(n.get('status')) for n in notifs
                         if n.get('type') == 'mention')
 
-    return self.make_activities_base_response(util.trim_nulls(activities))
+    resp = self.make_activities_base_response(util.trim_nulls(activities))
+    if cache_updates and cache is not None:
+      cache.set_multi(cache_updates)
+    return resp
 
   def get_actor(self, user_id=None):
     """Fetches and returns an account.
