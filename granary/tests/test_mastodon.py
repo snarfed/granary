@@ -84,7 +84,7 @@ STATUS = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#status
   'url': 'http://foo.com/@snarfed/123',
   'uri': 'http://foo.com/users/snarfed/statuses/123',
   'account': ACCOUNT,
-  'content': '<p>foo ☕ bar <a ...>@alice</a> <a ...>#IndieWeb</a></p>',
+  'content': '<p>foo ☕ <a href="...">bar</a></p>',
   'created_at': '2019-07-29T18:35:53.446Z',
   'visibility': 'public',
   'mentions': [{
@@ -530,12 +530,26 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals(MEDIA_OBJECT, self.mastodon.status_to_object(MEDIA_STATUS))
 
   def test_preview_status(self):
-    got = self.mastodon.preview_create(OBJECT)
-    self.assertEqual('<span class="verb">toot</span>:', got.description)
-    self.assertEqual('foo ☕ bar @alice #IndieWeb', got.content)
+    self.mastodon.TRUNCATE_TEXT_LENGTH = 20
+    self.mastodon.TRUNCATE_URL_LENGTH = 5
+
+    for content, expected in (
+        ('foo ☕ bar', 'foo ☕ bar'),
+        ('too long, will be ellipsized', 'too long, will be…'),
+        ('<p>foo ☕ <a>bar</a></p>', 'foo ☕ bar'),
+        ('#Asdf ☕ bar', '<a href="http://foo.com/tags/Asdf">#Asdf</a> ☕ bar'),
+        ('foo ☕ @alice', 'foo ☕ <a href="http://foo.com/@alice">@alice</a>'),
+        ('foo @alice@x.com ☕', 'foo <a href="https://x.com/@alice">@alice</a> ☕'),
+        ('link asdf.com', 'link <a href="http://asdf.com">asdf.com</a>'),
+      ):
+      obj = copy.deepcopy(OBJECT)
+      obj['content'] = content
+      got = self.mastodon.preview_create(obj)
+      self.assertEqual('<span class="verb">toot</span>:', got.description)
+      self.assertEqual(expected, got.content)
 
   def test_create_status(self):
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar @alice #IndieWeb'},
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'},
                      response=STATUS)
     self.mox.ReplayAll()
 
@@ -547,7 +561,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_reply(self):
     self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar @alice #IndieWeb',
+      'status': 'foo ☕ bar',
       'in_reply_to_id': '456',
     }, response=STATUS)
     self.mox.ReplayAll()
@@ -558,7 +572,7 @@ class MastodonTest(testutil.TestCase):
   def test_preview_reply(self):
     preview = self.mastodon.preview_create(REPLY_OBJECT)
     self.assertIn('<span class="verb">reply</span> to <a href="http://foo.com/web/statuses/456">this toot</a>: ', preview.description)
-    self.assert_equals('foo ☕ bar @alice #IndieWeb', preview.content)
+    self.assert_equals('foo ☕ bar', preview.content)
 
   def test_base_object_empty(self):
     self.assert_equals({}, self.mastodon.base_object({'inReplyTo': []}))
@@ -699,7 +713,7 @@ class MastodonTest(testutil.TestCase):
   def test_preview_with_media(self):
     preview = self.mastodon.preview_create(MEDIA_OBJECT)
     self.assertEqual('<span class="verb">toot</span>:', preview.description)
-    self.assertEqual('foo ☕ bar @alice #IndieWeb<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="" />',
+    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="" />',
                      preview.content)
 
   def test_create_with_media(self):
@@ -710,7 +724,7 @@ class MastodonTest(testutil.TestCase):
     self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 2'})
 
     self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar @alice #IndieWeb',
+      'status': 'foo ☕ bar',
       'media_ids': ['a', 'b'],
     }, response=STATUS)
     self.mox.ReplayAll()

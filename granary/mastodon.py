@@ -3,11 +3,6 @@
 
 Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
-
-TODO:
-* linkify in publish
-* block lists (how to handle domain blocks?)
-* polls
 """
 from __future__ import absolute_import, unicode_literals
 from future import standard_library
@@ -51,6 +46,16 @@ MEDIA_TYPES = {
   'gifv': 'video',
   'unknown': None,
 }
+
+# copied from Mastodon's source on 2019-10-21, then revised the lookbehind
+# https://github.com/tootsuite/mastodon/blob/6bee7b820dcde6d487e93b8699d4aab3e49bedc4/app/models/account.rb#L52-L53
+USERNAME_RE = re.compile(r'[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?', re.IGNORECASE)
+MENTION_RE  = re.compile(r'(?<![\/\w])@((' + USERNAME_RE.pattern +
+                         ')(?:@[a-z0-9\.\-]+[a-z0-9]+)?)', re.IGNORECASE)
+
+# copied from twitter.py. if we need anything better, we could copy Mastodon's:
+# https://github.com/tootsuite/mastodon/blob/915f3712ae7ae44c0cbe50c9694c25e3ee87a540/app/models/tag.rb#L28-L30
+HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
 
 class Mastodon(source.Source):
@@ -568,16 +573,27 @@ class Mastodon(source.Source):
         error_html='Could not find a Mastodon toot to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.')
 
     # truncate and ellipsize content if necessary
+    # TODO: don't count domains in remote mentions.
+    # https://docs.joinmastodon.org/usage/basics/#text
     content = self.truncate(content, obj.get('url'), include_link, type)
 
-    # linkify defaults to Twitter's link shortening behavior
-    preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
-    # TODO
-    # preview_content = MENTION_RE.sub(
-    #   r'\1<a href="https://twitter.com/\2">@\2</a>', preview_content)
-    # preview_content = HASHTAG_RE.sub(
-    #   r'\1<a href="https://twitter.com/hashtag/\2">#\2</a>', preview_content)
+    # linkify user mentions
+    def linkify_mention(match):
+      split = match.group(1).split('@')
+      username = split[0]
+      instance = ('https://' + split[1]) if len(split) > 1 else self.instance
+      url = urllib.parse.urljoin(instance, '/@' + username)
+      return '<a href="%s">@%s</a>' % (url, username)
 
+    preview_content = MENTION_RE.sub(linkify_mention, content)
+
+    # linkify (defaults to twitter's behavior)
+    preview_content = util.linkify(preview_content, pretty=True, skip_bare_cc_tlds=True)
+    tags_url = urllib.parse.urljoin(self.instance, '/tags')
+    preview_content = HASHTAG_RE.sub(r'\1<a href="%s/\2">#\2</a>' % tags_url,
+                                     preview_content)
+
+    # switch on activity type
     if type == 'activity' and verb == 'like':
       if not base_url:
         return source.creation_result(
