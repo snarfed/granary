@@ -45,3 +45,17 @@ class RssTest(testutil.TestCase):
         }],
       }], feed_url='http://this'),
       ignore_blanks=True)
+
+  def test_item_with_two_enclosures(self):
+    got = rss.from_activities([{
+      # 'objectType': 'article',
+      'attachments': [{
+        'objectType': 'audio',
+        'stream': {'url': 'http://a/podcast.mp3'},
+      }, {
+        'objectType': 'video',
+        'stream': {'url': 'http://a/vidjo.mov'},
+      }],
+    }], feed_url='http://this')
+    self.assert_multiline_in('<enclosure url="http://a/podcast.mp3" type="audio/mpeg"/>', got)
+    self.assertNotIn('<enclosure url="http://a/vidjo.mov" type="video/quicktime"/>', got)

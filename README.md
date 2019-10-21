@@ -320,6 +320,7 @@ Changelog
   * Bug fix for de-duping images in attachments.
 * RSS:
   * Wrap all `<description>` element contents in `CDATA` sections.
+  * `from_activities()` bug fix: don't crash when converting multiple attachments to enclosures in a single item. (RSS only supports one enclosure per item, so we now only include the first, and log a warning if the activity has more.)
 
 ### 2.1 - 2019-09-04
 * Convert AS2 `Mention` tags to AS1 `objectType` `mention` (non-standard) and vice versa ([snarfed/bridgy-fed#46](https://github.com/snarfed/bridgy-fed/issues/46)).

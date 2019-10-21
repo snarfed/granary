@@ -15,6 +15,7 @@ from __future__ import absolute_import, unicode_literals
 from past.builtins import basestring
 
 from datetime import datetime, time
+import logging
 import mimetypes
 
 from feedgen.feed import FeedGenerator
@@ -75,7 +76,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   fg.title(title or util.ellipsize(desc))  # required
 
   latest = None
-  enclosures = False
+  feed_has_enclosure = False
   for activity in activities:
     obj = activity.get('object') or activity
     if obj.get('objectType') == 'person':
@@ -83,7 +84,8 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
 
     item = fg.add_entry()
     url = obj.get('url')
-    item.id(obj.get('id') or url)
+    id = obj.get('id') or url
+    item.id(id)
     item.link(href=url)
     item.guid(url, permalink=True)
 
@@ -119,6 +121,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
         pass
 
 
+    item_has_enclosure = False
     for att in obj.get('attachments', []):
       stream = util.get_first(att, 'stream') or att
       if not stream:
@@ -128,15 +131,19 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       mime = mimetypes.guess_type(url)[0] or ''
       if (att.get('objectType') in ENCLOSURE_TYPES or
           mime and mime.split('/')[0] in ENCLOSURE_TYPES):
-        enclosures = True
-        item.enclosure(url=url, type=mime, length='REMOVEME') # TODO: length (bytes)
+        if item_has_enclosure:
+          logging.info('Warning: item %s already has an RSS enclosure, skipping additional enclosure %s',
+                       id, url)
+          continue
 
+        item_has_enclosure = feed_has_enclosure = True
+        item.enclosure(url=url, type=mime, length='REMOVEME') # TODO: length (bytes)
         item.load_extension('podcast')
         duration = stream.get('duration')
         if duration:
           item.podcast.itunes_duration(duration)
 
-  if enclosures:
+  if feed_has_enclosure:
     fg.load_extension('podcast')
     fg.podcast.itunes_author(actor.get('displayName') or actor.get('username'))
     if summary:
