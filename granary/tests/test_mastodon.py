@@ -309,6 +309,9 @@ class MastodonTest(testutil.TestCase):
   def expect_post(self, *args, **kwargs):
     return self._expect_api(self.expect_requests_post, *args, **kwargs)
 
+  def expect_delete(self, *args, **kwargs):
+    return self._expect_api(self.expect_requests_delete, *args, **kwargs)
+
   def _expect_api(self, fn, path, response=None, **kwargs):
     kwargs.setdefault('headers', {}).update({
       'Authorization': 'Bearer towkin',
@@ -591,6 +594,10 @@ class MastodonTest(testutil.TestCase):
     self.assertIn('<script src="http://foo.com/embed.js"', embed)
     self.assertIn('<iframe src="http://foo.com/bar/embed"', embed)
 
+  def test_status_url(self):
+    self.assertEqual('http://foo.com/web/statuses/456',
+                     self.mastodon.status_url(456))
+
   def test_create_reply_remote(self):
     url = STATUS_REMOTE['url']
     self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
@@ -710,3 +717,19 @@ class MastodonTest(testutil.TestCase):
 
     result = self.mastodon.create(MEDIA_OBJECT)
     self.assert_equals(STATUS, result.content, result)
+
+  def test_delete(self):
+    self.expect_delete(API_STATUS % '456')
+    self.mox.ReplayAll()
+
+    result = self.mastodon.delete(456)
+    self.assert_equals({'url': 'http://foo.com/web/statuses/456'},
+                       result.content, result)
+    self.assertIsNone(result.error_plain)
+    self.assertIsNone(result.error_html)
+
+  def test_preview_delete(self):
+    got = self.mastodon.preview_delete('456')
+    self.assertIn('<span class="verb">delete</span> <a href="http://foo.com/web/statuses/456">this toot</a>.', got.description)
+    self.assertIsNone(got.error_plain)
+    self.assertIsNone(got.error_html)

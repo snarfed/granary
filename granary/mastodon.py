@@ -6,8 +6,7 @@ independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
 * linkify in publish
-* block lists
-* delete
+* block lists (how to handle domain blocks?)
 * polls
 """
 from __future__ import absolute_import, unicode_literals
@@ -102,6 +101,9 @@ class Mastodon(source.Source):
   def _post(self, *args, **kwargs):
     return self._api(util.requests_post, *args, **kwargs)
 
+  def _delete(self, *args, **kwargs):
+    return self._api(util.requests_delete, *args, **kwargs)
+
   def _api(self, fn, path, *args, **kwargs):
     headers = kwargs.setdefault('headers', {})
     headers['Authorization'] = 'Bearer ' + self.access_token
@@ -114,7 +116,10 @@ class Mastodon(source.Source):
       util.interpret_http_exception(e)
       raise
 
-    return json_loads(resp.text)
+    if fn == util.requests_delete:
+      return {}
+    else:
+      return json_loads(resp.text)
 
   @classmethod
   def embed_post(cls, obj):
@@ -688,6 +693,10 @@ class Mastodon(source.Source):
 
     return {}
 
+  def status_url(self, id):
+    """Returns the local instance URL for a status with a given id."""
+    return urllib.parse.urljoin(self.instance, '/web/statuses/%s' % id)
+
   def upload_media(self, media):
     """Uploads one or more images or videos from web URLs.
 
@@ -723,3 +732,28 @@ class Mastodon(source.Source):
       uploaded.add(url)
 
     return ids
+
+  def delete(self, id):
+    """Deletes a toot. The authenticated user must have authored it.
+
+    Args:
+      id: int or string, toot id (on local instance) to delete
+
+    Returns: CreationResult, content is dict with url and id fields
+    """
+    self._delete(API_STATUS % id)
+    return source.creation_result({'url': self.status_url(id)})
+
+  def preview_delete(self, id):
+    """Previews deleting a toot.
+
+    Args:
+      id: int or string, toot id (on local instance) to delete
+
+    Returns: CreationResult
+    """
+    # can't embed right now because embeds require standalone URL, eg
+    # http://foo.com/@user/123, and we don't have the username here.
+    return source.creation_result(
+      description='<span class="verb">delete</span> <a href="%s">this toot</a>.' %
+      self.status_url(id))
