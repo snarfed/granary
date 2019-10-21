@@ -5,19 +5,18 @@ Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
 
 TODO:
-* custom emoji. see ~/mastodon.status.custom-emoji.json
-*   https://docs.joinmastodon.org/api/entities/#emoji
-*   use <img ... style="height: 1em">
+* linkify in publish
 * block lists
 * delete
 * polls
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
 
 import itertools
 import logging
+import re
 import urllib.parse
 
 from oauth_dropins.webutil import util
@@ -354,12 +353,24 @@ class Mastodon(source.Source):
       'displayName': t.get('name'),
     } for t in status.get('tags', [])]
 
-    # 'Boosted @username:' prefix for reblogs
+    # content: insert images for custom emoji
+    # https://docs.joinmastodon.org/api/entities/#emoji
     content = base_status.get('content') or ''
+    for emoji in base_status.get('emojis', []):
+      shortcode = emoji.get('shortcode')
+      url = emoji.get('url')
+      if shortcode and url:
+        content = re.sub(
+          r'(^|[^\w]):%s:([^\w]|$)' % shortcode,
+          r'\1<img alt="%s" src="%s" style="height: 1em">\2' % (shortcode, url),
+          content)
+
+    # content: add 'Boosted @username:' prefix for reblogs
     if reblog and reblog.get('content'):
       reblog_account = reblog.get('account')
       content = 'Boosted <a href="%s">@%s</a>: ' % (
         (reblog_account.get('url'), reblog_account.get('username'))) + content
+
     obj['content'] = util.WideUnicode(content)
 
     # inReplyTo

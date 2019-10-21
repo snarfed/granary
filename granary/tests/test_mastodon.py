@@ -277,6 +277,23 @@ STATUS_WITH_COUNTS.update({  # Mastodon
   'favourites_count': 2,
   'reblogs_count': 3,
 })
+STATUS_WITH_EMOJI = copy.deepcopy(STATUS)
+STATUS_WITH_EMOJI.update({  # Mastodon
+  'content': '<p>foo ☕ <br>:one: bar</p> :two:',
+  'emojis': [{
+    'shortcode': 'one',
+    'visible_in_picker': True,
+    'url': 'http://foo.com/one',
+    'static_url': '...'
+  }, {
+    'shortcode': 'two',
+    'url': 'http://foo.com/two',
+  }],
+})
+OBJECT_WITH_EMOJI = copy.deepcopy(OBJECT)
+OBJECT_WITH_EMOJI['content'] = """\
+<p>foo ☕ <br><img alt="one" src="http://foo.com/one" style="height: 1em"> \
+bar</p> <img alt="two" src="http://foo.com/two" style="height: 1em">"""
 
 
 class MastodonTest(testutil.TestCase):
@@ -489,6 +506,10 @@ class MastodonTest(testutil.TestCase):
 
   def test_status_to_object(self):
     self.assert_equals(OBJECT, self.mastodon.status_to_object(STATUS))
+
+  def test_status_to_object_custom_emoji(self):
+    self.assert_equals(OBJECT_WITH_EMOJI,
+                       self.mastodon.status_to_object(STATUS_WITH_EMOJI))
 
   def test_status_to_activity(self):
     self.assert_equals(ACTIVITY, self.mastodon.status_to_activity(STATUS))
