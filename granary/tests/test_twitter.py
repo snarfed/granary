@@ -2285,7 +2285,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     for i, url in enumerate(image_urls[:-1]):
       content = 'picture response %d' % i
-      self.expect_urlopen(url, content)
+      self.expect_urlopen(url, content, response_headers={'Content-Length': 3})
       self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                                 json_dumps({'media_id_string': str(i)}),
                                 files={'media': content},
@@ -2315,7 +2315,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                       preview.content)
 
     # test create
-    self.expect_urlopen('http://my/picture', 'picture response')
+    self.expect_urlopen('http://my/picture', 'picture response',
+                        response_headers={'Content-Length': 3})
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -2345,7 +2346,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                      preview.content)
 
     # test create
-    self.expect_urlopen('http://my/picture', 'picture response')
+    self.expect_urlopen('http://my/picture', 'picture response',
+                        response_headers={'Content-Length': 3})
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -2367,7 +2369,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       'image': {'url': 'http://my/picture'},
     }
 
-    self.expect_urlopen('http://my/picture', 'picture response')
+    self.expect_urlopen('http://my/picture', 'picture response',
+                        response_headers={'Content-Length': 3})
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -2382,7 +2385,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.assertRaises(urllib_error.HTTPError, self.twitter.create, obj)
 
   def test_create_with_photo_upload_error(self):
-    self.expect_urlopen('http://my/picture', 'picture response')
+    self.expect_urlopen('http://my/picture', 'picture response',
+                        response_headers={'Content-Length': 3})
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg(),
@@ -2398,14 +2402,15 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       'objectType': 'note',
       'image': {'url': 'http://my/picture.tiff'},
     }
-    self.expect_urlopen('http://my/picture.tiff', '')
+    self.expect_urlopen('http://my/picture.tiff', '',
+                        response_headers={'Content-Length': 3})
     self.mox.ReplayAll()
 
     ret = self.twitter.create(obj)
     self.assertTrue(ret.abort)
     for msg in ret.error_plain, ret.error_html:
-      self.assertEqual('Twitter only supports JPG, PNG, GIF, and WEBP images; '
-                        'http://my/picture.tiff looks like image/tiff', msg)
+      self.assertIn('Twitter only supports JPG, PNG, GIF, and WEBP images;', msg)
+      self.assertIn('looks like image/tiff', msg)
 
   def test_create_with_photo_with_alt(self):
     obj = {
@@ -2423,7 +2428,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                      preview.content)
 
     # test create
-    self.expect_urlopen('http://my/picture.png', 'picture response')
+    self.expect_urlopen('http://my/picture.png', 'picture response',
+                        response_headers={'Content-Length': 3})
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -2442,8 +2448,23 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                        self.twitter.create(obj).content)
 
+  def test_create_with_photo_too_big(self):
+    self.expect_urlopen(
+      'http://my/picture.png', '',
+      response_headers={'Content-Length': twitter.MAX_IMAGE_SIZE + 1})
+    self.mox.ReplayAll()
+
+    # test create
+    got = self.twitter.create({
+      'objectType': 'note',
+      'image': {'url': 'http://my/picture.png'},
+    })
+    self.assertTrue(got.abort)
+    self.assertIn("larger than Twitter's 5MB limit:", got.error_plain)
+
   def test_create_with_photo_with_alt_error(self):
-    self.expect_urlopen('http://my/picture.png', 'picture response')
+    self.expect_urlopen('http://my/picture.png', 'picture response',
+                        response_headers={'Content-Length': 3})
     self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
@@ -2528,8 +2549,8 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       'stream': {'url': 'http://my/video'},
     })
     self.assertTrue(ret.abort)
-    self.assertIn("larger than Twitter's 512MB limit.", ret.error_plain)
-    self.assertIn("larger than Twitter's 512MB limit.", ret.error_html)
+    self.assertIn("larger than Twitter's 512MB limit:", ret.error_plain)
+    self.assertIn("larger than Twitter's 512MB limit:", ret.error_html)
 
   def test_create_with_video_wrong_type(self):
     self.expect_urlopen('http://my/video', '',

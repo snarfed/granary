@@ -97,6 +97,7 @@ IMAGE_MIME_TYPES = frozenset(('image/jpg', 'image/jpeg', 'image/png',
 VIDEO_MIME_TYPES = frozenset(('video/mp4',))
 MB = 1024 * 1024
 # https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices
+MAX_IMAGE_SIZE = 5 * MB
 MAX_VIDEO_SIZE = 512 * MB
 UPLOAD_CHUNK_SIZE = 5 * MB
 MAX_ALT_LENGTH = 420
@@ -899,10 +900,10 @@ class Twitter(source.Source):
         continue
 
       image_resp = util.urlopen(url)
-      bad_type = self._check_mime_type(url, image_resp, IMAGE_MIME_TYPES,
-                                       'JPG, PNG, GIF, and WEBP images')
-      if bad_type:
-        return bad_type
+      error = self._check_media(url, image_resp, IMAGE_MIME_TYPES,
+                                'JPG, PNG, GIF, and WEBP images', MAX_IMAGE_SIZE)
+      if error:
+        return error
 
       headers = twitter_auth.auth_header(
         API_UPLOAD_MEDIA, self.access_token_key, self.access_token_secret, 'POST')
@@ -946,26 +947,17 @@ class Twitter(source.Source):
       string media id or :class:`CreationResult` on error
     """
     video_resp = util.urlopen(url)
-    bad_type = self._check_mime_type(url, video_resp, VIDEO_MIME_TYPES, 'MP4 videos')
-    if bad_type:
-      return bad_type
-
-    length = video_resp.headers.get('Content-Length')
-    if not util.is_int(length):
-      msg = "Couldn't determine your video's size."
-      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
-
-    length = int(length)
-    if int(length) > MAX_VIDEO_SIZE:
-      msg = "Your %sMB video is larger than Twitter's %dMB limit." % (
-        length // MB, MAX_VIDEO_SIZE // MB)
-      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+    error = self._check_media(url, video_resp, VIDEO_MIME_TYPES, 'MP4 videos',
+                              MAX_VIDEO_SIZE)
+    if error:
+      return error
 
     # INIT
     media_id = self.urlopen(API_UPLOAD_MEDIA, data=urllib.parse.urlencode({
       'command': 'INIT',
       'media_type': 'video/mp4',
-      'total_bytes': length,
+      # _check_media checked that Content-Length is set
+      'total_bytes': video_resp.headers['Content-Length'],
     }))['media_id_string']
 
     # APPEND
@@ -997,26 +989,40 @@ class Twitter(source.Source):
     return media_id
 
   @staticmethod
-  def _check_mime_type(url, resp, allowed, label):
-    """Checks that a URL is in a set of allowed MIME type(s).
+  def _check_media(url, resp, types, label, max_size):
+    """Checks that an image or video is an allowed type and size.
 
     Args:
       url: string
       resp: urlopen result object
-      allowed: sequence of allowed string MIME types
-      label: human-readable description of the allowed MIME types, to be used in
-        an error message
+      types: sequence of allowed string MIME types
+      label: string, human-readable description of the allowed MIME types, to be
+        used in an error message
+      max_size: integer, maximum allowed size, in bytes
 
     Returns:
-      None if the url's MIME type is in the set, :class:`CreationResult`
-      with abort=True if it isn't
+      None if the url's type and size are valid, :class:`CreationResult`
+      with abort=True otherwise
     """
     type = resp.headers.get('Content-Type')
     if not type:
       type, _ = mimetypes.guess_type(url)
-    if type and type not in allowed:
-      msg = 'Twitter only supports %s; %s looks like %s' % (label, url, type)
+    if type and type not in types:
+      msg = 'Twitter only supports %s; %s looks like %s' % (
+        label, util.pretty_link(url), type)
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+
+    length = resp.headers.get('Content-Length')
+    if not util.is_int(length):
+      msg = "Couldn't determine the size of %s" % util.pretty_link(url)
+      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+
+    length = int(length)
+    if int(length) > max_size:
+      msg = "Your %.2fMB file is larger than Twitter's %dMB limit: %s" % (
+        length // MB, max_size // MB, util.pretty_link(url))
+      return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+
 
   def delete(self, id):
     """Deletes a tweet. The authenticated user must have authored it.
