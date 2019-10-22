@@ -922,7 +922,8 @@ class Twitter(source.Source):
         resp = util.requests_post(API_MEDIA_METADATA,
                                   json={'media_id': media_id,'alt_text': {'text': alt}},
                                   headers=headers)
-        logging.info('Got: %s', resp)
+        resp.raise_for_status()
+        logging.info('Got: %s', resp.text)
 
     return ids
 

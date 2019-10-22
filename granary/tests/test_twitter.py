@@ -2381,6 +2381,18 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.mox.ReplayAll()
     self.assertRaises(urllib_error.HTTPError, self.twitter.create, obj)
 
+  def test_create_with_photo_upload_error(self):
+    self.expect_urlopen('http://my/picture', 'picture response')
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+                              files={'media': 'picture response'},
+                              headers=mox.IgnoreArg(),
+                              status_code=400)
+    self.mox.ReplayAll()
+    self.assertRaises(requests.HTTPError, self.twitter.create, {
+      'objectType': 'note',
+      'image': {'url': 'http://my/picture'},
+    })
+
   def test_create_with_photo_wrong_type(self):
     obj = {
       'objectType': 'note',
@@ -2429,6 +2441,26 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/picture', 'type': 'post'},
                        self.twitter.create(obj).content)
+
+  def test_create_with_photo_with_alt_error(self):
+    self.expect_urlopen('http://my/picture.png', 'picture response')
+    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+                              json_dumps({'media_id_string': '123'}),
+                              files={'media': 'picture response'},
+                              headers=mox.IgnoreArg())
+    self.expect_requests_post(twitter.API_MEDIA_METADATA,
+                              json={'media_id': '123',
+                                    'alt_text': {'text': 'some alt text'}},
+                              headers=mox.IgnoreArg(),
+                              status_code=400)
+    self.mox.ReplayAll()
+    self.assertRaises(requests.HTTPError, self.twitter.create, {
+      'objectType': 'note',
+      'image': {
+        'url': 'http://my/picture.png',
+        'displayName': 'some alt text',
+      },
+    })
 
   def test_create_with_video(self):
     self.twitter.TRUNCATE_TEXT_LENGTH = 140
