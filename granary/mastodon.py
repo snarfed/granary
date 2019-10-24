@@ -353,7 +353,7 @@ class Mastodon(source.Source):
 
     # tags
     obj['tags'] = [{
-      'objectType': 'mention',
+      'objectType': 'person',
       'id': self.tag_uri(t.get('id')),
       'url': t.get('url'),
       'displayName': t.get('username'),

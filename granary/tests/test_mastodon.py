@@ -117,7 +117,7 @@ OBJECT = {  # ActivityStreams
   'url': STATUS['url'],
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'tags': [{
-    'objectType': 'mention',
+    'objectType': 'person',
     'id': tag_uri('11018'),
     'url': 'https://other/@alice',
     'displayName': 'alice',
