@@ -101,6 +101,12 @@ STATUS = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#status
     'name': 'my app',
     'website': 'http://app',
   },
+  'card': {
+     'url': 'https://an/article',
+     'title': 'my title',
+     'description': 'my description',
+     'image': 'https://an/image',
+  },
 }
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
@@ -119,6 +125,12 @@ OBJECT = {  # ActivityStreams
     'objectType': 'hashtag',
     'url': 'http://foo.com/tags/indieweb',
     'displayName': 'indieweb',
+  }, {
+    'objectType': 'article',
+    'url': 'https://an/article',
+    'displayName': 'my title',
+    'content': 'my description',
+    'image': {'url': 'https://an/image'},
   }],
 }
 ACTIVITY = {  # ActivityStreams

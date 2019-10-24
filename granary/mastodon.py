@@ -363,6 +363,16 @@ class Mastodon(source.Source):
       'displayName': t.get('name'),
     } for t in status.get('tags', [])]
 
+    card = status.get('card')
+    if card:
+      obj['tags'].append({
+        'objectType': 'article',
+        'url': card.get('url'),
+        'displayName': card.get('title'),
+        'content': card.get('description'),
+        'image': {'url': card.get('image')},
+      })
+
     # content: insert images for custom emoji
     # https://docs.joinmastodon.org/api/entities/#emoji
     content = base_status.get('content') or ''
