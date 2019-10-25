@@ -26,7 +26,7 @@
         "url": ["http://a/podcast"],
         "name": ["i'm ready to speak"],
         "audio": ["http://a/podcast.mp3"],
-        "duration": ["328"],
+        "length": ["PT5M28S"],
         "size": ["7.77mb"],
         "summary": [{
           "html": "something",

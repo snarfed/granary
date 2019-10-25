@@ -5,9 +5,11 @@
   "content": "something",
   "attachment": [{
     "type": "Audio",
-    "url": "http://a/podcast.mp3"
+    "url": "http://a/podcast.mp3",
+    "duration": "P0DT123S"
   }, {
     "type": "Video",
-    "url": "http://a/vidjo.mov"
+    "url": "http://a/vidjo.mov",
+    "duration": "P0DT123S"
   }]
 }

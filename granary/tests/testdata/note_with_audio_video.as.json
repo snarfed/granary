@@ -1,6 +1,5 @@
 {
-  "objectType": "article",
-  "title": "i'm ready to speak",
+  "objectType": "note",
   "content": "something",
   "attachments": [{
     "objectType": "audio",
@@ -14,5 +13,9 @@
       "url": "http://a/vidjo.mov",
       "duration": 123
     }
+  }],
+  "stream": [{
+    "url": "http://a/vidjo.mov",
+    "duration": 123
   }]
 }

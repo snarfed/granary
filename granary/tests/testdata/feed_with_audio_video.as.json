@@ -11,6 +11,10 @@
     },
     "objectType": "audio"
   }],
+  "stream": [{
+    "url": "http://a/podcast.mp3",
+    "duration": 328
+  }],
   "tags": [{
     "displayName": "a tag"
   }, {

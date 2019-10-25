@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from past.builtins import basestring
 
 import copy
+import datetime
 import logging
 
 from oauth_dropins.webutil import util
@@ -116,9 +117,15 @@ def from_as1(obj, type=None, context=CONTEXT):
   elif obj_type in ('audio', 'video'):
     stream = util.pop_list(obj, 'stream')
     if stream:
-      url = stream[0].get('url')
-      if url:
-        obj['url'] = url
+      obj['url'] = stream[0].get('url')
+      duration = stream[0].get('duration')
+      if duration:
+        try:
+          obj['duration'] = util.to_iso8601_duration(
+            datetime.timedelta(seconds=duration))
+        except TypeError:
+          logging.warning('Dropping unexpected duration %r; expected int, is %s',
+                          duration, duration.__class__)
 
   loc = obj.get('location')
   if loc:
@@ -190,7 +197,13 @@ def to_as1(obj, use_type=True):
   })
 
   if type in ('Audio', 'Video'):
-    obj['stream'] = {'url': obj.pop('url', None)}
+    duration = util.parse_iso8601_duration(obj.pop('duration', None))
+    if duration:
+      duration = duration.total_seconds()
+    obj['stream'] = {
+      'url': obj.pop('url', None),
+      'duration': duration or None,
+    }
   elif type == 'Mention':
     obj['url'] = obj.pop('href', None)
 

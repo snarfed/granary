@@ -207,6 +207,18 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     for elem in get_list(primary, prop):
       attachments[elem.get('objectType')].append(elem)
 
+  # prefer duration from object's stream, then first video, then first audio
+  duration = (
+      get_first(obj, 'stream') or
+      (get_first(obj, 'video') or get_first(obj, 'audio', {})).get('stream', {})
+    ).get('duration')
+  if duration is not None:
+    if util.is_int(duration):
+      duration = str(duration)
+    else:
+      logging('Ignoring duration %r; expected int, got %s', duration.__class__)
+      duration = None
+
   # construct mf2!
   ret = {
     'type': (AS_TO_MF2_TYPE.get(obj_type) or
@@ -224,6 +236,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'video': dedupe_urls(get_urls(attachments, 'video', 'stream') +
                            get_urls(primary, 'stream')),
       'audio': get_urls(attachments, 'audio', 'stream'),
+      'duration': [duration],
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
@@ -423,9 +436,29 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     if isinstance(quote, dict) and 'h-cite' in set(quote.get('type', []))]
 
   # audio and video
+  duration = prop.get('duration') or prop.get('length')
+  if duration:
+    if util.is_int(duration):
+      duration = int(duration)
+    else:
+      duration = util.parse_iso8601_duration(duration)
+      if duration:
+        duration = int(duration.total_seconds())
+      else:
+        logging.warning('Unknown format for length or duration %r', duration)
+
+  stream = None
   for type in 'audio', 'video':
-    attachments.extend({'objectType': type, 'stream': {'url': url}}
-                       for url in get_string_urls(props.get(type, [])))
+    atts = [{
+      'objectType': type,
+      'stream': {
+        'url': url,
+        'duration': duration,  # integer seconds
+      },
+    } for url in get_string_urls(props.get(type, []))]
+    attachments.extend(atts)
+    if atts:
+      stream = atts[0]['stream']
 
   obj = {
     'id': prop.get('uid'),
@@ -441,7 +474,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     'url': urls[0] if urls else None,
     'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,
     # image is special cased below, to handle alt
-    'stream': [{'url': url} for url in get_string_urls(props.get('video', []))],
+    'stream': [stream],
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     'tags': [{'objectType': 'hashtag', 'displayName': cat}
