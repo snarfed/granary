@@ -121,6 +121,9 @@ def from_as1(obj, type=None, context=CONTEXT):
       duration = stream[0].get('duration')
       if duration:
         try:
+          # ISO 8601 duration
+          # https://www.w3.org/TR/activitystreams-vocabulary/#dfn-duration
+          # https://en.wikipedia.org/wiki/ISO_8601#Durations
           obj['duration'] = util.to_iso8601_duration(
             datetime.timedelta(seconds=duration))
         except TypeError:

@@ -436,6 +436,11 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     if isinstance(quote, dict) and 'h-cite' in set(quote.get('type', []))]
 
   # audio and video
+  #
+  # the duration mf2 property is still emerging. examples in the wild use both
+  # integer seconds and ISO 8601 durations.
+  # https://indieweb.org/duration
+  # https://en.wikipedia.org/wiki/ISO_8601#Durations
   duration = prop.get('duration') or prop.get('length')
   if duration:
     if util.is_int(duration):
@@ -453,7 +458,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       'objectType': type,
       'stream': {
         'url': url,
-        'duration': duration,  # integer seconds
+        # integer seconds: http://activitystrea.ms/specs/json/1.0/#media-link
+        'duration': duration,
       },
     } for url in get_string_urls(props.get(type, []))]
     attachments.extend(atts)
