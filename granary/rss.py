@@ -137,7 +137,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
           continue
 
         item_has_enclosure = feed_has_enclosure = True
-        item.enclosure(url=url, type=mime, length='REMOVEME') # TODO: length (bytes)
+        item.enclosure(url=url, type=mime, length=str(stream.get('size', '')))
         item.load_extension('podcast')
         duration = stream.get('duration')
         if duration:
@@ -154,4 +154,4 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   if latest:
     fg.lastBuildDate(latest)
 
-  return fg.rss_str(pretty=True).decode('utf-8').replace(' length="REMOVEME"', '')
+  return fg.rss_str(pretty=True).decode('utf-8')

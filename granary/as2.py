@@ -117,7 +117,11 @@ def from_as1(obj, type=None, context=CONTEXT):
   elif obj_type in ('audio', 'video'):
     stream = util.pop_list(obj, 'stream')
     if stream:
-      obj['url'] = stream[0].get('url')
+      obj.update({
+        'url': stream[0].get('url'),
+        # file size in bytes. nonstandard, not in AS2 proper
+        'size': stream[0].get('size'),
+      })
       duration = stream[0].get('duration')
       if duration:
         try:
@@ -205,6 +209,8 @@ def to_as1(obj, use_type=True):
       duration = duration.total_seconds()
     obj['stream'] = {
       'url': obj.pop('url', None),
+      # file size in bytes. nonstandard, not in AS1 proper
+      'size': obj.pop('size', None),
       'duration': duration or None,
     }
   elif type == 'Mention':

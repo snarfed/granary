@@ -33,7 +33,7 @@ class RssTest(testutil.TestCase):
 <title>my post</title>
 <link>http://perma/link</link>
 <guid isPermaLink="true">http://perma/link</guid>
-<enclosure url="http://a/podcast.foo" type=""/>
+<enclosure url="http://a/podcast.foo" length="0" type=""/>
 </item>""",
       rss.from_activities([{
         'url': 'http://perma/link',
@@ -57,5 +57,7 @@ class RssTest(testutil.TestCase):
         'stream': {'url': 'http://a/vidjo.mov'},
       }],
     }], feed_url='http://this')
-    self.assert_multiline_in('<enclosure url="http://a/podcast.mp3" type="audio/mpeg"/>', got)
-    self.assertNotIn('<enclosure url="http://a/vidjo.mov" type="video/quicktime"/>', got)
+    self.assert_multiline_in(
+      '<enclosure url="http://a/podcast.mp3" length="0" type="audio/mpeg"/>', got)
+    self.assertNotIn(
+      '<enclosure url="http://a/vidjo.mov" length="0" type="video/quicktime"/>', got)

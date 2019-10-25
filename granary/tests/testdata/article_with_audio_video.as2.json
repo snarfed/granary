@@ -6,10 +6,12 @@
   "attachment": [{
     "type": "Audio",
     "url": "http://a/podcast.mp3",
-    "duration": "P0DT123S"
+    "duration": "P0DT123S",
+    "size": 45600
   }, {
     "type": "Video",
     "url": "http://a/vidjo.mov",
-    "duration": "P0DT123S"
+    "duration": "P0DT123S",
+    "size": 45600
   }]
 }

@@ -18,6 +18,7 @@ import string
 import re
 import xml.sax.saxutils
 
+import humanfriendly
 import mf2util
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import (
@@ -207,17 +208,23 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     for elem in get_list(primary, prop):
       attachments[elem.get('objectType')].append(elem)
 
-  # prefer duration from object's stream, then first video, then first audio
-  duration = (
-      get_first(obj, 'stream') or
-      (get_first(obj, 'video') or get_first(obj, 'audio', {})).get('stream', {})
-    ).get('duration')
+  # prefer duration and size from object's stream, then first video, then first
+  # audio
+  stream = (
+    get_first(obj, 'stream') or
+    (get_first(obj, 'video') or get_first(obj, 'audio', {}).get('stream', {})))
+
+  duration = stream.get('duration')
   if duration is not None:
     if util.is_int(duration):
       duration = str(duration)
     else:
       logging('Ignoring duration %r; expected int, got %s', duration.__class__)
       duration = None
+
+  size = stream.get('size')
+  if size:
+    size = humanfriendly.format_size(size)
 
   # construct mf2!
   ret = {
@@ -237,6 +244,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
                            get_urls(primary, 'stream')),
       'audio': get_urls(attachments, 'audio', 'stream'),
       'duration': [duration],
+      'size': [size],
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
@@ -452,6 +460,14 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       else:
         logging.warning('Unknown format for length or duration %r', duration)
 
+
+  size = prop.get('size')
+  if size:
+    try:
+      size = humanfriendly.parse_size(size)
+    except humanfriendly.InvalidSize:
+      logging.warning("Couldn't parse size %r", size)
+
   stream = None
   for type in 'audio', 'video':
     atts = [{
@@ -460,6 +476,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
         'url': url,
         # integer seconds: http://activitystrea.ms/specs/json/1.0/#media-link
         'duration': duration,
+        # file size in bytes. nonstandard, not in AS1 or AS2
+        'size': size,
       },
     } for url in get_string_urls(props.get(type, []))]
     attachments.extend(atts)

@@ -27,7 +27,7 @@
         "name": ["i'm ready to speak"],
         "audio": ["http://a/podcast.mp3"],
         "length": ["PT5M28S"],
-        "size": ["7.77mb"],
+        "size": ["7.77 mb"],
         "summary": [{
           "html": "something",
           "value": "something"
@@ -41,7 +41,7 @@
         "url": ["http://a/vidjo"],
         "video": ["http://a/vidjo.mov"],
         "duration": ["428"],
-        "size": ["8.88mb"],
+        "size": ["8.88MB"],
         "summary": [{
           "html": "other thing",
           "value": "other thing"

@@ -5,6 +5,7 @@
     "video": ["http://a/vidjo.mov"],
     "audio": ["http://a/podcast.mp3"],
     "length": ["123"],
+    "size": ["45.6 KB"],
     "content": [{
       "html": "something",
       "value": "something"

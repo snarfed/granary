@@ -7,13 +7,15 @@
   "attachments": [{
     "stream": {
       "url": "http://a/podcast.mp3",
-      "duration": 328
+      "duration": 328,
+      "size": 7770000
     },
     "objectType": "audio"
   }],
   "stream": [{
     "url": "http://a/podcast.mp3",
-    "duration": 328
+    "duration": 328,
+    "size": 7770000
   }],
   "tags": [{
     "displayName": "a tag"
@@ -31,12 +33,14 @@
   "attachments": [{
     "stream": {
       "url": "http://a/vidjo.mov",
-      "duration": 428
+      "duration": 428,
+      "size": 8880000
     },
     "objectType": "video"
   }],
   "stream": [{
     "url": "http://a/vidjo.mov",
-    "duration": 428
+    "duration": 428,
+    "size": 8880000
   }]
 }]

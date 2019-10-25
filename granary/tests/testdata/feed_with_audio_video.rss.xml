@@ -23,7 +23,7 @@
     <link>http://vidjo/post</link>
     <description><![CDATA[other thing]]></description>
     <guid isPermaLink="true">http://vidjo/post</guid>
-    <enclosure url="http://a/vidjo.mov" type="video/quicktime"/>
+    <enclosure url="http://a/vidjo.mov" length="8880000" type="video/quicktime"/>
     <pubDate>Tue, 04 Dec 2012 00:00:00 +0000</pubDate>
     <itunes:duration>428</itunes:duration>
   </item>
@@ -34,7 +34,7 @@
     <description><![CDATA[<p>some HTML</p>]]></description>
     <guid isPermaLink="true">http://podcast/post</guid>
     <category>a tag</category>
-    <enclosure url="http://a/podcast.mp3" type="audio/mpeg"/>
+    <enclosure url="http://a/podcast.mp3" length="7770000" type="audio/mpeg"/>
     <pubDate>Wed, 05 Dec 2012 00:58:26 +0700</pubDate>
     <itunes:duration>328</itunes:duration>
   </item>

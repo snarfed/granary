@@ -6,13 +6,15 @@
     "objectType": "audio",
     "stream": {
       "url": "http://a/podcast.mp3",
-      "duration": 123
+      "duration": 123,
+      "size": 45600
     }
   }, {
     "objectType": "video",
     "stream": {
       "url": "http://a/vidjo.mov",
-      "duration": 123
+      "duration": 123,
+      "size": 45600
     }
   }]
 }
