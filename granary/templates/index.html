@@ -44,15 +44,6 @@ function spinner(visibility) {
 }
 </script>
 
-<!--
-  -- github ribbon: https://github.com/blog/273-github-ribbons
-  -->
-<a href="https://github.com/snarfed/granary">
-  <img style="position: absolute; top: 0; right: 0; border: 0;"
-       src="//s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"
-       alt="Fork me on GitHub" />
-</a>
-
 <main class="tp-main">
 <div class="container">
 
@@ -84,93 +75,55 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <br id="logins" />
 <div class="login">
 <div class="row">
-
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<form method="post" action="/twitter/start_auth">
-  <input type="image" class="shadow" alt="Twitter"
-         src="/oauth_dropins/static/twitter.png" />
-</form></div>
-
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<form method="post" action="/facebook/start_auth">
-  <input type="image" class="shadow" alt="Facebook"
-         src="/oauth_dropins/static/facebook.png" />
-  <!-- https://developers.facebook.com/docs/reference/login/ -->
-  <input name="scope" type="hidden"
-         value="user_status,user_posts,user_photos,user_events">
-</form></div>
-
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<a href="/?site=instagram">
-  <input type="image" class="shadow" alt="Instagram"
-         src="/oauth_dropins/static/instagram.png" />
-</a>
+{{ twitter_html|safe }}
+{{ facebook_html|safe }}
+{{ instagram_html|safe }}
+{{ flickr_html|safe }}
+{{ github_html|safe }}
+{{ mastodon_html|safe }}
 </div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<form method="post" action="/flickr/start_auth">
-  <input type="image" class="shadow" alt="Flickr"
-         src="/oauth_dropins/static/flickr.png" />
-</form></div>
-
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<form method="post" action="/github/start_auth">
-  <input type="image" class="shadow" alt="GitHub"
-         src="/oauth_dropins/static/github_button_squared.png" />
-  <input name="scope" type="hidden"
-         value="notifications,public_repo">
-</form></div>
-
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
-<form method="post" action="/mastodon/start_auth">
-  <nobr>
-    <input type="url" name="instance" class="form-control" placeholder="Your instance" alt="Instance, eg mastodon.social" scheme="https" required style="max-width: 110px; height: 50px; display:inline;" />
-    <input type="image" class="shadow" title="Mastodon. Enter your instance, eg mastodon.social" alt="Mastodon" src="/oauth_dropins/static/mastodon_logo_button.png" style="background-color: #EBEBEB"/>
-    <input name="scope" type="hidden" value="read">
-  </nobr>
-</form></div>
-
-</div>
 <div class="row">
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get">
-  <input type="image" class="shadow" alt="Microformats2"
-         src="/static/microformats_button.png" />
+  <input type="image" class="shadow" title="Microformats2" height="50"
+         src="/static/microformats_2x.png"
+         style="background-color: #EEEEEE; padding: 5px" />
   <input name="input" type="hidden" value="mf2-json" />
 </form></div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get">
-  <input type="image" class="shadow" alt="ActivityStreams"
-         src="/static/activitystreams_button_small.png" />
+  <input type="image" class="shadow" title="ActivityStreams"
+         src="/static/activitystreams_logotype_2x.png" height="50" />
   <input name="input" type="hidden" value="activitystreams" />
 </form></div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get">
-  <input type="image" class="shadow" alt="JSON Feed"
-         src="/static/jsonfeed_button.png" height="45" />
+  <input type="image" class="shadow" title="JSON Feed"
+         src="/static/jsonfeed_button.png" height="50" />
   <input name="input" type="hidden" value="jsonfeed" />
 </form></div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get">
-  <input type="image" class="shadow" alt="HTML" id="html"
-         src="/static/html_button.png" height="60" />
+  <input type="image" class="shadow" title="HTML" id="html"
+         src="/static/html_button_2x.png" height="50" />
   <input name="input" type="hidden" value="html" />
 </form></div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get">
-  <input type="image" class="shadow" alt="Atom" id="atom"
-         src="/static/atom_button.png" height="60" />
+  <input type="image" class="shadow" title="Atom" id="atom"
+         src="/static/atom_button.png" height="50" style="background-color: #EEEEEE" />
   <input name="input" type="hidden" value="atom" />
 </form></div>
 
-<div class="col-lg-2 col-md-3 col-sm-4 col-xs-6">
+<div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get">
-  <input type="image" class="shadow" alt="RSS" id="rss"
+  <input type="image" class="shadow" title="RSS" id="rss"
          src="/static/rss_button.png" height="50" />
   <input name="input" type="hidden" value="rss" />
 </form></div>

@@ -1,5 +1,6 @@
 """Serves the the front page, discovery files, and OAuth flows.
 """
+import importlib
 import logging
 import urllib
 import urlparse
@@ -47,6 +48,18 @@ INPUTS = (
   'jsonfeed',
   'mf2-json',
 )
+SILOS = (
+  'facebook',
+  'flickr',
+  'github',
+  'instagram',
+  'mastodon',
+  'twitter',
+)
+OAUTHS = {  # maps oauth-dropins module name to module
+  name: importlib.import_module('oauth_dropins.%s' % name)
+  for name in SILOS
+}
 SILO_DOMAINS = {cls.DOMAIN for cls in (
   Facebook,
   Flickr,
@@ -54,6 +67,14 @@ SILO_DOMAINS = {cls.DOMAIN for cls in (
   Instagram,
   Twitter,
 )}
+SCOPE_OVERRIDES = {
+  # https://developers.facebook.com/docs/reference/login/
+  'facebook': 'user_status,user_posts,user_photos,user_events',
+  # https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/
+  'github': 'notifications,public_repo',
+  # https://docs.joinmastodon.org/api/permissions/
+  'mastodon': 'read',
+}
 
 
 class FrontPageHandler(handlers.TemplateHandler):
@@ -77,6 +98,15 @@ class FrontPageHandler(handlers.TemplateHandler):
 
     if entity:
       vars.setdefault('site', vars['entity'].site_name().lower())
+
+    vars.update({
+      silo + '_html': module.StartHandler.button_html(
+        '/%s/start_auth' % silo,
+        image_prefix='/oauth_dropins/static/',
+        outer_classes='col-lg-2 col-sm-4 col-xs-6',
+        scopes=SCOPE_OVERRIDES.get(silo, ''),
+      )
+      for silo, module in OAUTHS.items()})
 
     return vars
 
@@ -209,19 +239,16 @@ class MastodonStart(mastodon.StartHandler):
     return super(MastodonStart, self).handle_exception(e, debug)
 
 
+routes = []
+for silo, module in OAUTHS.items():
+  starter = MastodonStart if silo == 'mastodon' else module.StartHandler
+  routes.extend((
+    ('/%s/start_auth' % silo, starter.to('/%s/oauth_callback' % silo)),
+    ('/%s/oauth_callback' % silo, module.CallbackHandler.to('/#logins')),
+  ))
 
 application = webapp2.WSGIApplication([
   ('/', FrontPageHandler),
   ('/demo', DemoHandler),
-  ('/facebook/start_auth', facebook.StartHandler.to('/facebook/oauth_callback')),
-  ('/facebook/oauth_callback', facebook.CallbackHandler.to('/#logins')),
-  ('/flickr/start_auth', flickr.StartHandler.to('/flickr/oauth_callback')),
-  ('/flickr/oauth_callback', flickr.CallbackHandler.to('/#logins')),
-  ('/github/start_auth', github.StartHandler.to('/github/oauth_callback')),
-  ('/github/oauth_callback', github.CallbackHandler.to('/#logins')),
-  ('/mastodon/start_auth', MastodonStart.to('/mastodon/oauth_callback')),
-  ('/mastodon/oauth_callback', mastodon.CallbackHandler.to('/#logins')),
-  ('/twitter/start_auth', twitter.StartHandler.to('/twitter/oauth_callback')),
-  ('/twitter/oauth_callback', twitter.CallbackHandler.to('/#logins')),
   ('/url', UrlHandler),
-] + handlers.HOST_META_ROUTES, debug=appengine_config.DEBUG)
+] + routes + handlers.HOST_META_ROUTES, debug=appengine_config.DEBUG)
