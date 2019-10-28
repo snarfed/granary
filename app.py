@@ -103,7 +103,7 @@ class FrontPageHandler(handlers.TemplateHandler):
       silo + '_html': module.StartHandler.button_html(
         '/%s/start_auth' % silo,
         image_prefix='/oauth_dropins/static/',
-        outer_classes='col-lg-2 col-sm-4 col-xs-6',
+        form_classes='col-lg-2 col-sm-4 col-xs-6',
         scopes=SCOPE_OVERRIDES.get(silo, ''),
       )
       for silo, module in OAUTHS.items()})
