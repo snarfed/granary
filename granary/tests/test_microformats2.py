@@ -204,6 +204,51 @@ foo
 <img class="u-photo" src="http://2" alt="" />
 </p>""", microformats2.render_content(obj, render_attachments=True))
 
+  def test_render_content_render_image(self):
+    self.assert_equals("""\
+foo
+<p>
+<a class="link" href="http://obj">
+<img class="u-photo" src="http://1/" alt="" />
+</a>
+</p>
+""", microformats2.render_content({
+      'content': 'foo',
+      'url': 'http://obj',
+      'image': 'http://1',
+    }, render_image=True))
+
+  def test_render_content_render_image_dedupes_render_attachments(self):
+    self.assert_equals("""\
+foo
+<p>
+<a class="link" href="http://obj">
+<img class="u-photo" src="http://pic/1" alt="" />
+</a>
+</p>
+<p>
+<a class="link" href="http://obj">
+<img class="u-photo" src="http://pic/2" alt="" />
+</a>
+</p>
+<p>
+<a class="link" href="http://obj">
+<img class="u-photo" src="http://pic/3" alt="" />
+</a>
+</p>
+""", microformats2.render_content({
+      'content': 'foo',
+      'url': 'http://obj',
+      'image': [
+        {'url': 'http://pic/1'},
+        {'url': 'http://pic/2'},
+      ],
+      'attachments': [
+        {'objectType': 'image', 'image': {'url': 'http://pic/1'}},
+        {'objectType': 'image', 'image': {'url': 'http://pic/3'}},
+      ],
+    }, render_attachments=True, render_image=True))
+
   def test_render_content_newlines_default_white_space_pre(self):
     self.assert_equals("""\
 <div style="white-space: pre">foo

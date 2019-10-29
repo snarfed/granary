@@ -322,6 +322,7 @@ Changelog
   * Bug fix for de-duping images in attachments.
 * RSS:
   * Wrap all `<description>` element contents in `CDATA` sections.
+  * Render images in `<description>` with HTML `<img>` tags ([#175](https://github.com/snarfed/granary/issues/175).
   * `from_activities()` bug fix: don't crash when converting multiple attachments to enclosures in a single item. (RSS only supports one enclosure per item, so we now only include the first, and log a warning if the activity has more.)
 
 ### 2.1 - 2019-09-04

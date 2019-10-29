@@ -2,5 +2,10 @@
   "url": "http://a/note",
   "objectType": "note",
   "content": "something i have to say. and just long enough that it has to be ellipsized.",
-  "updated": "2012-12-04"
+  "updated": "2012-12-04",
+  "image": [{"url": "http://pic/1"}],
+  "attachments": [{
+    "objectType": "image",
+    "image": [{"url": "http://pic/2"}]
+  }]
 }]

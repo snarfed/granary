@@ -25,6 +25,7 @@ from oauth_dropins.webutil.util import (
   dedupe_urls,
   get_first,
   get_list,
+  get_url,
   get_urls,
   uniquify,
 )
@@ -823,7 +824,8 @@ def hcard_to_html(hcard, parent_props=None):
 
 
 def render_content(obj, include_location=True, synthesize_content=True,
-                   render_attachments=False, white_space_pre=True):
+                   render_attachments=False, render_image=False,
+                   white_space_pre=True):
   """Renders the content of an ActivityStreams object as HTML.
 
   Includes tags, mentions, and non-note/article attachments. (Note/article
@@ -835,9 +837,12 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
   Args:
     obj: decoded JSON ActivityStreams object
-    include_location: whether to render location, if provided
-    synthesize_content: whether to generate synthetic content if the object
-      doesn't have its own, e.g. 'likes this.' or 'shared this.'
+    include_location: boolean, whether to render location, if provided
+    synthesize_content: boolean, whether to generate synthetic content if the
+      object doesn't have its own, e.g. 'likes this.' or 'shared this.'
+    render_attachments: boolean, whether to render attachments, eg links,
+      images, audio, and video
+    render_image: boolean, whether to render the object's image(s)
     white_space_pre: boolean, whether to wrap in CSS white-space: pre. If False,
       newlines will be converted to <br> tags instead. Background:
       https://indiewebcamp.com/note#Indieweb_whitespace_thinking
@@ -894,11 +899,22 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # if content:
   #   content = util.linkify(content)
 
+  # the image field. may be multiply valued.
+  rendered_urls = set()
+  if render_image:
+    urls = get_urls(obj, 'image')
+    content += _render_attachments([{
+      'objectType': 'image',
+      'image': {'url': url},
+    } for url in urls], obj)
+    rendered_urls = set(urls)
+
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   if render_attachments:
     atts = [a for a in obj.get('attachments', [])
-            if a.get('objectType') not in ('note', 'article')]
+            if a.get('objectType') not in ('note', 'article')
+            and get_url(a, 'image') not in rendered_urls]
     content += _render_attachments(atts + tags.pop('article', []), obj)
 
   # generate share/like contexts if the activity does not have content

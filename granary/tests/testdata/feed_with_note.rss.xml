@@ -18,7 +18,17 @@
   <item>
     <title>something i have to say. and just long enough that it has to be...</title>
     <link>http://a/note</link>
-    <description><![CDATA[something i have to say. and just long enough that it has to be ellipsized.]]></description>
+    <description><![CDATA[something i have to say. and just long enough that it has to be ellipsized.
+<p>
+<a class="link" href="http://a/note">
+<img class="u-photo" src="http://pic/1" alt="" />
+</a>
+</p>
+<p>
+<a class="link" href="http://a/note">
+<img class="u-photo" src="http://pic/2" alt="" />
+</a>
+</p>]]></description>
     <guid isPermaLink="true">http://a/note</guid>
     <pubDate>Tue, 04 Dec 2012 00:00:00 +0000</pubDate>
   </item>

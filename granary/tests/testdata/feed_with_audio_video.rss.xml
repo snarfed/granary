@@ -21,7 +21,9 @@
   <item>
     <title>i'm ready to perform</title>
     <link>http://vidjo/post</link>
-    <description><![CDATA[other thing]]></description>
+    <description><![CDATA[
+    <p><video class="u-video" src="http://a/vidjo.mov" controls="controls" poster="">Your browser does not support the video tag. <a href="http://a/vidjo.mov">Click here to view directly. </a></video>
+    </p>]]></description>
     <guid isPermaLink="true">http://vidjo/post</guid>
     <enclosure url="http://a/vidjo.mov" length="8880000" type="video/quicktime"/>
     <pubDate>Tue, 04 Dec 2012 00:00:00 +0000</pubDate>
@@ -31,7 +33,9 @@
   <item>
     <title>i'm ready to speak</title>
     <link>http://podcast/post</link>
-    <description><![CDATA[<p>some HTML</p>]]></description>
+    <description><![CDATA[<p>some HTML</p>
+    <p><audio class="u-audio" src="http://a/podcast.mp3" controls="controls">Your browser does not support the audio tag. <a href="http://a/podcast.mp3">Click here to listen directly.</a></audio>
+    </p>]]></description>
     <guid isPermaLink="true">http://podcast/post</guid>
     <category>a tag</category>
     <enclosure url="http://a/podcast.mp3" length="7770000" type="audio/mpeg"/>

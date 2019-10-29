@@ -92,7 +92,9 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     item.title(obj.get('title') or obj.get('displayName') or
                util.ellipsize(obj.get('content', '-')))  # required
     content = microformats2.render_content(
-      obj, include_location=True, render_attachments=False) or obj.get('summary')
+      obj, include_location=True, render_attachments=True, render_image=True)
+    if not content:
+      content = obj.get('summary')
     if content:
       item.content(content, type='CDATA')
 
