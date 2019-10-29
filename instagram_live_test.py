@@ -23,7 +23,7 @@ class InstagramTestLive(unittest.TestCase):
     ig = instagram.Instagram(cookie=appengine_config.INSTAGRAM_SESSIONID_COOKIE)
     resp = ig.get_activities_response(
       user_id=USERNAME, group_id=SELF, scrape=True,
-      fetch_replies=True, fetch_likes=True)
+      fetch_replies=True, fetch_likes=True, count=10)
 
     for field in 'username', 'displayName', 'url', 'image', 'id':
       self.assertTrue(resp['actor'][field], field)
@@ -31,7 +31,7 @@ class InstagramTestLive(unittest.TestCase):
     self.assertTrue(resp['actor']['image']['url'])
 
     items = resp['items']
-    self.assertGreaterEqual(12, len(items))
+    self.assertGreaterEqual(10, len(items))
 
     found = set()
     for a in items:

@@ -736,12 +736,7 @@ HTML_PHOTO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
 }
 
 HTML_VIDEO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
-  'config': {
-    'csrf_token': 'xyz',
-    'viewer': None,
-  },
-  '...': '...',
-  'entry_data': {'PostPage': [{'graphql': {'shortcode_media': HTML_VIDEO_FULL}}]},
+  'graphql': {'shortcode_media': HTML_VIDEO_FULL},
 }
 
 HTML_MULTI_PHOTO_PAGE = {  # eg https://www.instagram.com/p/BQ0mDB2gV_O/
@@ -805,6 +800,8 @@ HTML_HEADER_TEMPLATE = """
 <body>
 <script type="text/javascript">%s"""
 HTML_HEADER = HTML_HEADER_TEMPLATE % ('', 'window._sharedData = ')
+HTML_HEADER_2 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('feed', ")
+HTML_HEADER_3 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('/p/B3Q5Fa8Ja4D/', ")
 HTML_PRELOAD_URL = '/graphql/query/?query_hash=cba321&variables={}'
 HTML_HEADER_PRELOAD = HTML_HEADER_TEMPLATE % (
   ('<link rel="preload" href="%s" as="fetch" type="application/json" crossorigin />' %
@@ -966,13 +963,12 @@ HTML_ACTIVITIES_FULL_LIKES = [HTML_PHOTO_ACTIVITY_LIKES, HTML_VIDEO_ACTIVITY_FUL
 
 HTML_FEED_COMPLETE = HTML_HEADER + json_dumps(HTML_FEED) + HTML_FOOTER
 
-HTML_HEADER_2 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('feed', ")
 HTML_FEED_COMPLETE_2 = HTML_HEADER_2 + json_dumps(HTML_PRELOAD_DATA['data']) + ')' + HTML_FOOTER
 
 HTML_PROFILE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE) + HTML_FOOTER
 HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
-HTML_PHOTO_COMPLETE = HTML_HEADER + json_dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
-HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
+HTML_PHOTO_COMPLETE = HTML_HEADER_3 + json_dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
+HTML_VIDEO_COMPLETE = HTML_HEADER_3 + json_dumps(HTML_VIDEO_PAGE) + HTML_FOOTER
 HTML_MULTI_PHOTO_COMPLETE = HTML_HEADER + json_dumps(HTML_MULTI_PHOTO_PAGE) + HTML_FOOTER
 HTML_PHOTO_MISSING_HEADER = json_dumps(HTML_PHOTO_PAGE) + HTML_FOOTER
 HTML_PHOTO_MISSING_FOOTER = HTML_HEADER + json_dumps(HTML_PHOTO_PAGE)

@@ -1,4 +1,4 @@
-![Granary](https://raw.github.com/snarfed/granary/master/static/granary_logo_128.png)
+<img src="https://raw.github.com/snarfed/granary/master/static/granary_logo_512.png" alt="Granary" width="128" />
 granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=master)](https://coveralls.io/github/snarfed/granary?branch=master)
 ===
 

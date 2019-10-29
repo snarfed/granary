@@ -47,11 +47,12 @@ HTML_MEDIA = HTML_BASE_URL + 'p/%s/'
 HTML_PROFILE = HTML_BASE_URL + '%s/'
 HTML_PRELOAD_RE = re.compile(
   r'^/graphql/query/\?query_hash=[^&]*&(amp;)?variables=(%7B%7D|{})$')
-# https://github.com/snarfed/bridgy/issues/840
-HTML_LIKES_URL = HTML_BASE_URL + 'graphql/query/?query_hash=e0f59e4a1c8d78d0161873bc2ee7ec44&variables={"shortcode":"%s","include_reel":false,"first":24}'
+# the query hash here comes (i think) from inside a .js file served by IG, so
+# we'd have to fetch and scrape that to get it dynamically. not worth it yet.
+HTML_LIKES_URL = HTML_BASE_URL + 'graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"%s","include_reel":false,"first":24}'
 HTML_DATA_RE = re.compile(r"""
   <script\ type="text/javascript">
-  window\.(_sharedData\ =|__additionalDataLoaded\('feed',)\ *
+  window\.(_sharedData\ =|__additionalDataLoaded\('[^']+',)\ *
   (.+?)
   \)?;</script>""", re.VERBOSE)
 
@@ -847,7 +848,7 @@ class Instagram(source.Source):
           if edge.get('node'))
 
       # individual photo/video permalinks
-      for page in entry_data.get('PostPage', []):
+      for page in [data] + entry_data.get('PostPage', []):
         media = page.get('graphql', {}).get('shortcode_media')
         if media:
           medias.append(media)
