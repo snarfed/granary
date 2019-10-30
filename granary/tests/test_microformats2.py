@@ -890,3 +890,15 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       'content_is_html': True,
       'displayName': 'foo bar\nbaz \n\n baj',
     }}], activities)
+
+  def test_size_to_bytes(self):
+    for input, expected in (
+        (None, None),
+        ('', None),
+        (123, 123),
+        ('123', 123),
+        ('  123\n  ', 123),
+        ('1.23 KB', 1230),
+        ('5 MB', 5000000),
+    ):
+      self.assertEqual(expected, microformats2.size_to_bytes(input), input)

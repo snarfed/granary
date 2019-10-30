@@ -45,6 +45,7 @@ $author
   $content
   </div>
 $attachments
+$sizes
 $event_times
 $location
 $categories
@@ -211,9 +212,11 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   # prefer duration and size from object's stream, then first video, then first
   # audio
-  stream = (
-    get_first(obj, 'stream') or
-    (get_first(obj, 'video') or get_first(obj, 'audio', {}).get('stream', {})))
+  stream = {}
+  for candidate in [obj] + attachments['video'] + attachments['audio']:
+    for stream in get_list(candidate, 'stream'):
+      if stream:
+        break
 
   duration = stream.get('duration')
   if duration is not None:
@@ -223,9 +226,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       logging('Ignoring duration %r; expected int, got %s', duration.__class__)
       duration = None
 
+  sizes = []
   size = stream.get('size')
   if size:
-    size = humanfriendly.format_size(size)
+    sizes = [str(size)]
 
   # construct mf2!
   ret = {
@@ -245,7 +249,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
                            get_urls(primary, 'stream')),
       'audio': get_urls(attachments, 'audio', 'stream'),
       'duration': [duration],
-      'size': [size],
+      'size': sizes,
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
       'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
@@ -462,14 +466,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
         logging.warning('Unknown format for length or duration %r', duration)
 
 
-  size = prop.get('size')
-  if size:
-    try:
-      size = humanfriendly.parse_size(size)
-    except humanfriendly.InvalidSize:
-      logging.warning("Couldn't parse size %r", size)
-
   stream = None
+  bytes = size_to_bytes(prop.get('size'))
   for type in 'audio', 'video':
     atts = [{
       'objectType': type,
@@ -478,7 +476,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
         # integer seconds: http://activitystrea.ms/specs/json/1.0/#media-link
         'duration': duration,
         # file size in bytes. nonstandard, not in AS1 or AS2
-        'size': size,
+        'size': bytes,
       },
     } for url in get_string_urls(props.get(type, []))]
     attachments.extend(atts)
@@ -719,13 +717,23 @@ def json_to_html(obj, parent_props=None):
   summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
              if prop.get('summary') else '')
 
-  # render attachments
+  # attachments
   # TODO: use photo alt property as alt text once mf2py handles that.
   # https://github.com/tommorris/mf2py/issues/83
   attachments = []
   for name, fn in ('photo', img), ('video', vid), ('audio', aud):
     attachments.extend(fn(val) for val in props.get(name, []))
 
+  # size(s)
+  # https://github.com/snarfed/granary/issues/169#issuecomment-547918405
+  sizes = []
+  for size in props.get('size', []):
+    bytes = size_to_bytes(size)
+    if size:
+      sizes.append('<data class="p-size" value="%s">%s</data>' %
+                   (bytes, humanfriendly.format_size(bytes)))
+
+  # categories
   cats = props.get('category', [])
   people = [
     hcard_to_html(cat, ['u-category', 'h-card']) for cat in cats
@@ -776,6 +784,7 @@ def json_to_html(obj, parent_props=None):
     location=hcard_to_html(location, ['p-location']),
     categories='\n'.join(people + tags),
     attachments='\n'.join(attachments),
+    sizes='\n'.join(sizes),
     links='\n'.join(links),
     invitees='\n'.join([hcard_to_html(i, ['p-invitee'])
                         for i in props.get('invitee', [])]),
@@ -1231,3 +1240,24 @@ def maybe_datetime(str, classname):
     return '<time class="%s" datetime="%s">%s</time>' % (classname, str, str)
   else:
     return ''
+
+
+def size_to_bytes(size):
+  """Converts a string file size to an integer number of bytes.
+
+  Args:
+    size, string, may be either integer bytes or human-readable approximation,
+      eg 7MB or 1.23 kb
+
+  Returns: integer, bytes, or None if size can't be parsed
+  """
+  if util.is_int(size):
+    return int(size)
+
+  if not size:
+    return None
+
+  try:
+    return humanfriendly.parse_size(size)
+  except humanfriendly.InvalidSize:
+    logging.debug("Couldn't parse size %r", size)

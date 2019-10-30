@@ -5,6 +5,6 @@
     "audio": ["http://a/podcast.mp3"],
     "video": ["http://a/vidjo.mov"],
     "duration": ["123"],
-    "size": ["4.57 KB"]
+    "size": ["4567"]
   }
 }

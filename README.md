@@ -312,7 +312,7 @@ Changelog
 * Add Python 3.7 support, and improve overall Python 3 compatibility.
 * Update a number of dependencies.
 * Switch from Python's built in `json` module to [`ujson`](https://github.com/esnme/ultrajson/) to speed up JSON parsing and encoding.
-* Add `duration` and `size` support to ActivityStreams 1 and 2, RSS, and microformats2 HTML and JSON. [microformats2 support is still emerging for both](https://indieweb.org/podcast#Brainstorming). Both integer seconds and [ISO 8601 string durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) are supported for `duration`. Integer bytes is used for `size` everywhere except microformats2, which uses human-readable strings, eg `5.1 MB`. ([#169](https://github.com/snarfed/granary/issues/169))
+* Add `duration` and `size` support to ActivityStreams 1 and 2, RSS, and microformats2 HTML and JSON. [microformats2 support is still emerging for both](https://indieweb.org/podcast#Brainstorming). Both integer seconds and [ISO 8601 string durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) are supported for `duration`. Integer bytes is used for `size` everywhere. microformats2 HTML also includes human-readable strings, eg `5.1 MB`. ([#169](https://github.com/snarfed/granary/issues/169))
 * Twitter:
   * `[preview]_create()`: detect attempts to upload [images over 5MB](https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices#image-specs) and return an error.
 * Facebook:
