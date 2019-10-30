@@ -506,6 +506,15 @@ class Source(with_metaclass(SourceMeta, object)):
     """
     raise NotImplementedError()
 
+  def get_blocklist_ids(self):
+    """Returns the current user's block list as a list of silo-specific user ids.
+
+    Returns:
+      sequence of user ids, not globally unique across other sources. May be
+        integers or strings.
+    """
+    raise NotImplementedError()
+
   def user_to_actor(self, user):
     """Converts a user to an actor.
 

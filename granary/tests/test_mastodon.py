@@ -15,6 +15,7 @@ from granary import source
 from granary.mastodon import (
   API_ACCOUNT,
   API_ACCOUNT_STATUSES,
+  API_BLOCKS,
   API_CONTEXT,
   API_FAVORITE,
   API_FAVORITED_BY,
@@ -759,3 +760,27 @@ class MastodonTest(testutil.TestCase):
     self.assertIn('<span class="verb">delete</span> <a href="http://foo.com/web/statuses/456">this toot</a>.', got.description)
     self.assertIsNone(got.error_plain)
     self.assertIsNone(got.error_html)
+
+  def test_get_blocklist_ids(self):
+    self.expect_get(API_BLOCKS, [
+      {'id': 1},
+      {'id': 2},
+    ])
+    self.mox.ReplayAll()
+    self.assert_equals([1, 2], self.mastodon.get_blocklist_ids())
+
+  def test_get_blocklist_ids_paging(self):
+    self.expect_get(API_BLOCKS, [
+      {'id': 1},
+      {'id': 2},
+    ], response_headers={
+      'Link': '<http://foo.com/prev>; rel="prev", <http://foo.com/next>; rel="next"',
+    })
+    self.expect_get('/next', [
+      {'id': 3},
+      {'id': 4},
+    ], response_headers={
+      'Link': '<http://foo.com/prev>; rel="prev"',
+    })
+    self.mox.ReplayAll()
+    self.assert_equals([1, 2, 3, 4], self.mastodon.get_blocklist_ids())

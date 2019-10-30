@@ -22,6 +22,7 @@ from . import source
 
 API_ACCOUNT = '/api/v1/accounts/%s'
 API_ACCOUNT_STATUSES = '/api/v1/accounts/%s/statuses'
+API_BLOCKS = '/api/v1/blocks?limit=1000'
 API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
@@ -109,7 +110,7 @@ class Mastodon(source.Source):
   def _delete(self, *args, **kwargs):
     return self._api(util.requests_delete, *args, **kwargs)
 
-  def _api(self, fn, path, *args, **kwargs):
+  def _api(self, fn, path, return_json=True, *args, **kwargs):
     headers = kwargs.setdefault('headers', {})
     headers['Authorization'] = 'Bearer ' + self.access_token
 
@@ -121,6 +122,8 @@ class Mastodon(source.Source):
       util.interpret_http_exception(e)
       raise
 
+    if not return_json:
+      return resp
     if fn == util.requests_delete:
       return {}
     else:
@@ -783,3 +786,23 @@ class Mastodon(source.Source):
     return source.creation_result(
       description='<span class="verb">delete</span> <a href="%s">this toot</a>.' %
       self.status_url(id))
+
+  def get_blocklist_ids(self):
+    """Returns the current user's block list as a list of integer account ids.
+
+    May make multiple API calls to fully fetch large block lists.
+    https://docs.joinmastodon.org/api/rest/blocks/#pagination
+
+    Returns:
+      sequence of integer Mastodon account ids on the current instance
+    """
+    ids = []
+    url = API_BLOCKS
+    while True:
+      resp = self._get(url, return_json=False)
+      ids.extend(util.trim_nulls([rel.get('id') for rel in json_loads(resp.text)]))
+      url = resp.links.get('next', {}).get('url')
+      if not url:
+        break
+
+    return ids
