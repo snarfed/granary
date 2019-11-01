@@ -939,7 +939,7 @@ class Source(with_metaclass(SourceMeta, object)):
       prefer_name: boolean, whether to prefer displayName to content
       strip_first_video_tag: if true, removes the first <video> tag. useful when
         it will be uploaded and attached to the post natively in the silo.
-      strip_first_video_tag: if true, removes .u-quotation-of tags. useful when
+      strip_quotations: if true, removes .u-quotation-of tags. useful when
         creating quote tweets.
 
     Returns:

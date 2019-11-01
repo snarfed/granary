@@ -475,7 +475,6 @@ class Mastodon(source.Source):
 
     Returns: dict, AS1 like activity
     """
-    # TODO: unify with Twitter._make_like()
     assert verb in ('like', 'share')
     label = 'favorited' if verb == 'like' else 'reblogged'
     url = status.get('url')
@@ -566,7 +565,6 @@ class Mastodon(source.Source):
     preview_description = ''
     content = self._content_for_create(
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
-      # TODO: convert strip_first_video_tag=bool(videos) to strip_all_video_tags
 
     if not content:
       if type == 'activity' and not is_rsvp:
