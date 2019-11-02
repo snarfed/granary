@@ -18,7 +18,7 @@ class TestLoader(ScanningLoader):
 
 
 setup(name='granary',
-      version='2.1',
+      version='2.2',
       description='The social web translator',
       long_description=open('README.md').read(),
       long_description_content_type='text/markdown',
@@ -50,7 +50,7 @@ setup(name='granary',
           'brevity>=0.2.17',
           'feedgen>=0.7.0',
           'future',
-          'html2text',
+          'html2text<=2019.8.11',  # 2019.9.26 drops Python 2 support
           'humanfriendly',
           'jinja2',
           'mf2util>=0.5.0',

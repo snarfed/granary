@@ -35,6 +35,10 @@ jsonfeed
 --------
 .. automodule:: granary.jsonfeed
 
+mastodon
+--------
+.. automodule:: granary.mastodon
+
 microformats2
 -------------
 .. automodule:: granary.microformats2

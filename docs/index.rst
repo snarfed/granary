@@ -1,8 +1,7 @@
 granary
 =======
 
-About
------
+--------------
 
 Granary is a library and REST API that fetches and converts between a
 wide variety of data sources and formats:
@@ -445,12 +444,27 @@ Changelog
 -  Switch from Python’s built in ``json`` module to
    `ujson <https://github.com/esnme/ultrajson/>`__ to speed up JSON
    parsing and encoding.
+-  Add ``duration`` and ``size`` support to ActivityStreams 1 and 2,
+   RSS, and microformats2 HTML and JSON. `microformats2 support is still
+   emerging for both <https://indieweb.org/podcast#Brainstorming>`__.
+   Both integer seconds and `ISO 8601 string
+   durations <https://en.wikipedia.org/wiki/ISO_8601#Durations>`__ are
+   supported for ``duration``. Integer bytes is used for ``size``
+   everywhere. microformats2 HTML also includes human-readable strings,
+   eg ``5.1 MB``.
+   (`#169 <https://github.com/snarfed/granary/issues/169>`__)
+-  Twitter:
+
+   -  ``[preview]_create()``: detect attempts to upload `images over
+      5MB <https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices#image-specs>`__
+      and return an error.
+
 -  Facebook:
 
    -  Add ``get_activities(scrape=True)`` for scraping HTML from
       `m.facebook.com <https://m.facebook.com/>`__. Requires ``c_user``
-      and ``xs`` cookies from a logged in session.
-      (`snarfed/bridgy#886 <https://github.com/snarfed/bridgy/issues/886>`__
+      and ``xs`` cookies from a logged in session
+      (`snarfed/bridgy#886 <https://github.com/snarfed/bridgy/issues/886>`__).
    -  `Upgrade Graph API version from 2.10 to
       4.0. <https://developers.facebook.com/docs/graph-api/changelog>`__
 
@@ -461,6 +475,12 @@ Changelog
 -  RSS:
 
    -  Wrap all ``<description>`` element contents in ``CDATA`` sections.
+   -  Render images in ``<description>`` with HTML ``<img>`` tags
+      (`#175 <https://github.com/snarfed/granary/issues/175>`__.
+   -  ``from_activities()`` bug fix: don’t crash when converting
+      multiple attachments to enclosures in a single item. (RSS only
+      supports one enclosure per item, so we now only include the first,
+      and log a warning if the activity has more.)
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~

@@ -21,7 +21,7 @@ About
 Granary is a library and REST API that fetches and converts between a wide variety of data sources and formats:
 
 * Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native APIs
-* Instagram scraped HTML
+* Instagram and Facebook scraped HTML
 * [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0 (JSON)
 * HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2)
 * [Atom](https://tools.ietf.org/html/rfc4287), [RSS 2.0](http://www.rssboard.org/rss-specification), [JSON Feed](https://jsonfeed.org/)
@@ -316,13 +316,13 @@ Changelog
 * Twitter:
   * `[preview]_create()`: detect attempts to upload [images over 5MB](https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices#image-specs) and return an error.
 * Facebook:
-  * Add `get_activities(scrape=True)` for scraping HTML from [m.facebook.com](https://m.facebook.com/). Requires `c_user` and `xs` cookies from a logged in session. ([snarfed/bridgy#886](https://github.com/snarfed/bridgy/issues/886))
+  * Add `get_activities(scrape=True)` for scraping HTML from [m.facebook.com](https://m.facebook.com/). Requires `c_user` and `xs` cookies from a logged in session ([snarfed/bridgy#886](https://github.com/snarfed/bridgy/issues/886)).
   * [Upgrade Graph API version from 2.10 to 4.0.](https://developers.facebook.com/docs/graph-api/changelog)
 * Atom:
   * Bug fix for de-duping images in attachments.
 * RSS:
   * Wrap all `<description>` element contents in `CDATA` sections.
-  * Render images in `<description>` with HTML `<img>` tags ([#175](https://github.com/snarfed/granary/issues/175).
+  * Render images in `<description>` with HTML `<img>` tags ([#175](https://github.com/snarfed/granary/issues/175)).
   * `from_activities()` bug fix: don't crash when converting multiple attachments to enclosures in a single item. (RSS only supports one enclosure per item, so we now only include the first, and log a warning if the activity has more.)
 
 ### 2.1 - 2019-09-04
