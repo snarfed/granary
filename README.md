@@ -307,7 +307,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 2.2 - unreleased
+### 2.2 - 2019-11-02
 * Add Mastodon support!
 * Add Python 3.7 support, and improve overall Python 3 compatibility.
 * Update a number of dependencies.
