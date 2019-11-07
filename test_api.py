@@ -17,7 +17,6 @@ import socket
 import oauth_dropins.webutil.tests
 import appengine_config
 
-from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -203,19 +202,18 @@ class HandlerTest(testutil_appengine.HandlerTest):
   def test_atom_format(self):
     for test_module in test_facebook, test_instagram, test_twitter:
       self.reset()
-      memcache.flush_all()
       self.mox.StubOutWithMock(FakeSource, 'get_actor')
       FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
       self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
       # include access_token param to check that it gets stripped
-      resp = self.get_response('/fake?format=atom&access_token=foo&a=b')
+      resp = self.get_response('/fake?format=atom&access_token=foo&a=b&cache=false')
       self.assertEquals(200, resp.status_int)
       self.assertEquals('application/atom+xml; charset=utf-8',
                         resp.headers['Content-Type'])
       self.assert_multiline_equals(
         test_module.ATOM % {
-          'request_url': 'http://localhost/fake?format=atom&amp;access_token=foo&amp;a=b',
+          'request_url': 'http://localhost/fake?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
           'host_url': 'http://fa.ke/',
           'base_url': 'http://fa.ke/',
         },
