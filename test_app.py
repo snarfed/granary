@@ -18,7 +18,6 @@ import xml.sax.saxutils
 import oauth_dropins.webutil.tests
 import appengine_config
 
-from google.appengine.api import memcache
 from oauth_dropins.webutil import testutil_appengine, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -603,16 +602,6 @@ not atom!
     self.assert_equals(200, first.status_int)
     self.assert_equals(first.body, second.body)
 
-  def test_skip_caching_big_responses(self):
-    self.mox.stubs.Set(memcache, 'MAX_VALUE_SIZE', 100)
-
-    self.expect_requests_get('http://my/posts.html', 'x' * 101)
-    self.mox.ReplayAll()
-
-    first = app.application.get_response('/url?url=http://my/posts.html&input=html')
-    self.assert_equals(200, first.status_int)
-
-
   def test_hub(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
       'body_class': '',
@@ -634,7 +623,6 @@ not atom!
     headers = resp.headers.getall('Link')
     self.assertIn('<http://a/hub>; rel="hub"', headers)
     self.assertIn('<%s>; rel="self"' % self_url, headers)
-
 
   def test_bad_mf2_json_input_400s(self):
     """If a user sends JSON Feed input, but claims it's mf2 JSON, return 400.
