@@ -313,6 +313,8 @@ Changelog
   * Add `itunes:image`, `itunes:author`, and `itunes:category`.
 * Atom:
   * Bug fix: extract feed image from `hfeed` correctly.
+* REST API:
+  * Add HTTP `HEAD` support.
 
 ### 2.2 - 2019-11-02
 * Add Mastodon support!

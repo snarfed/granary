@@ -56,6 +56,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
   def get_response(self, url, *args, **kwargs):
     start_index = kwargs.setdefault('start_index', 0)
     kwargs.setdefault('count', api.ITEMS_PER_PAGE_DEFAULT)
+    method = kwargs.pop('method', 'GET')
 
     FakeSource.get_activities_response(*args, **kwargs).AndReturn({
         'startIndex': start_index,
@@ -68,7 +69,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
         })
     self.mox.ReplayAll()
 
-    return api.application.get_response(url)
+    return api.application.get_response(url, method=method)
 
   def check_request(self, url, *args, **kwargs):
     resp = self.get_response('/fake' + url, *args, **kwargs)
@@ -307,3 +308,9 @@ class HandlerTest(testutil_appengine.HandlerTest):
     self.mox.ReplayAll()
     resp = api.application.get_response('/fake/@me')
     self.assertEquals(504, resp.status_int)
+
+  def test_http_head(self):
+    resp = self.get_response('/fake?format=html', method='HEAD')
+    self.assertEquals(200, resp.status_int)
+    self.assertEquals('text/html', resp.headers['Content-Type'])
+    self.assertEquals('', resp.body)

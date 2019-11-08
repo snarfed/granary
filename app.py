@@ -222,6 +222,8 @@ class UrlHandler(api.Handler):
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=url, actor=actor, title=title, hfeed=hfeed)
 
+  head = get
+
 
 class MastodonStart(mastodon.StartHandler):
   """Mastodon OAuth handler wrapper that handles URL discovery errors.

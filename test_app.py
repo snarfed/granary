@@ -670,3 +670,22 @@ not atom!
     resp = app.application.get_response('/url?url=http://some/jf2&input=mf2-json')
     self.assert_equals(400, resp.status_int)
 
+  def test_url_head(self):
+    self.expect_requests_get('http://my/posts.json', AS1)
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=as1&output=mf2-json', method='HEAD')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
+    self.assert_equals('', resp.body)
+
+  def test_url_head_bad_output(self):
+    self.expect_requests_get('http://my/posts.json', AS1)
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json&input=as1&output=foo', method='HEAD')
+    self.assert_equals(400, resp.status_int)
+    self.assert_equals('', resp.body)
+

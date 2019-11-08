@@ -62,20 +62,22 @@ RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
-FORMATS = (
-  'activitystreams',
-  'as1',
-  'as1-xml',
-  'as2',
-  'atom',
-  'html',
-  'json',
-  'json-mf2',
-  'jsonfeed',
-  'mf2-json',
-  'rss',
-  'xml',
-)
+# map granary format name to MIME type. list of official MIME types:
+# https://www.iana.org/assignments/media-types/media-types.xhtml
+FORMATS = {
+  'activitystreams': 'application/stream+json',
+  'as1': 'application/stream+json',
+  'as1-xml': 'application/xml',
+  'as2': 'application/activity+json',
+  'atom': 'application/atom+xml',
+  'html': 'text/html',
+  'json': 'application/json',
+  'json-mf2': 'application/mf2+json',
+  'jsonfeed': 'application/json',
+  'mf2-json': 'application/mf2+json',
+  'rss': 'application/rss+xml',
+  'xml': 'application/xml',
+}
 
 canonicalize_domain = handlers.redirect(
   ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io')
@@ -177,6 +179,8 @@ class Handler(handlers.ModernHandler):
 
     self.write_response(response, actor=actor, url=src.BASE_URL)
 
+  head = get
+
   def write_response(self, response, actor=None, url=None, title=None,
                      hfeed=None):
     """Converts ActivityStreams activities and writes them out.
@@ -195,17 +199,22 @@ class Handler(handlers.ModernHandler):
       raise exc.HTTPBadRequest('Invalid format: %s, expected one of %r' %
                                (format, FORMATS))
 
-    activities = response['items']
+    if 'plaintext' in self.request.params:
+      # override content type
+      self.response.headers['Content-Type'] = 'text/plain'
+    else:
+      content_type = FORMATS.get(format)
+      if content_type:
+        self.response.headers['Content-Type'] = content_type
 
+    if self.request.method == 'HEAD':
+      return
+
+    activities = response['items']
     try:
       if format in ('as1', 'json', 'activitystreams'):
-        # list of official MIME types:
-        # https://www.iana.org/assignments/media-types/media-types.xhtml
-        self.response.headers['Content-Type'] = \
-          'application/json' if format == 'json' else 'application/stream+json'
         self.response.out.write(json_dumps(response, indent=2))
       elif format == 'as2':
-        self.response.headers['Content-Type'] = 'application/activity+json'
         response.update({
           'items': [as2.from_as1(a) for a in activities],
           'totalItems': response.pop('totalResults', None),
@@ -215,7 +224,6 @@ class Handler(handlers.ModernHandler):
         })
         self.response.out.write(json_dumps(util.trim_nulls(response), indent=2))
       elif format == 'atom':
-        self.response.headers['Content-Type'] = 'application/atom+xml'
         hub = self.request.get('hub')
         reader = self.request.get('reader', 'true').lower()
         if reader not in ('true', 'false'):
@@ -236,7 +244,6 @@ class Handler(handlers.ModernHandler):
         if hub:
           self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
       elif format == 'rss':
-        self.response.headers['Content-Type'] = 'application/rss+xml'
         if not title:
           title = 'Feed for %s' % url
         self.response.out.write(rss.from_activities(
@@ -244,17 +251,13 @@ class Handler(handlers.ModernHandler):
           feed_url=self.request.url, hfeed=hfeed,
           home_page_url=util.base_url(url)))
       elif format in ('as1-xml', 'xml'):
-        self.response.headers['Content-Type'] = 'application/xml'
         self.response.out.write(XML_TEMPLATE % util.to_xml(response))
       elif format == 'html':
-        self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(microformats2.activities_to_html(activities))
       elif format in ('mf2-json', 'json-mf2'):
-        self.response.headers['Content-Type'] = 'application/mf2+json'
         items = [microformats2.activity_to_json(a) for a in activities]
         self.response.out.write(json_dumps({'items': items}, indent=2))
       elif format == 'jsonfeed':
-        self.response.headers['Content-Type'] = 'application/json'
         try:
           jf = jsonfeed.activities_to_jsonfeed(activities, actor=actor, title=title,
                                                feed_url=self.request.url)
@@ -264,10 +267,6 @@ class Handler(handlers.ModernHandler):
     except ValueError as e:
       logging.warning('converting to output format failed', exc_info=True)
       self.abort(400, 'Could not convert to %s: %s' % (format, str(e)))
-
-    if 'plaintext' in self.request.params:
-      # override response content type
-      self.response.headers['Content-Type'] = 'text/plain'
 
   def get_kwargs(self):
     """Extracts, normalizes and returns the kwargs for get_activities().
