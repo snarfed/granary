@@ -463,7 +463,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       if parsed:
         duration = int(parsed.total_seconds())
       else:
-        logging.warning('Unknown format for length or duration %r', duration)
+        logging.debug('Unknown format for length or duration %r', duration)
         duration = None
 
 
@@ -536,7 +536,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
             'longitude': float(lng),
           })
         except ValueError:
-          logging.warn(
+          logging.debug(
             'Could not convert latitude/longitude (%s, %s) to decimal', lat, lng)
 
   if as_type == 'activity':

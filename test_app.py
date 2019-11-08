@@ -543,6 +543,26 @@ not atom!
     self.assertNotIn('<a class="p-name u-url" href="http://my/place">My place</a>',
                      resp.text)
 
+  def test_url_as1_to_atom_if_missing_actor_use_hfeed(self):
+    mf2 = {'items': [{
+      'type': ['h-feed'],
+      'properties': {
+        'name': ['2toPonder'],
+        'summary': ['A Two Minute Podcast on Trends of Learning'],
+        'photo': ['https://foo/art.jpg'],
+      },
+      # no children
+    }]}
+    self.expect_requests_get('http://my/posts', mf2)
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts&input=json-mf2&output=atom')
+    self.assert_equals(200, resp.status_int, resp.text)
+    self.assertIn('<title>2toPonder</title>', resp.text)
+    self.assertIn('<logo>https://foo/art.jpg</logo>', resp.text)
+
+
   def test_url_bad_input(self):
     resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')
     self.assert_equals(400, resp.status_int)

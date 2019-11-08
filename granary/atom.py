@@ -141,6 +141,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   if request_url is None:
     request_url = host_url
 
+  _prepare_actor(actor)
   for a in activities:
     _prepare_activity(a, reader=reader)
 
@@ -377,11 +378,9 @@ def _prepare_activity(a, reader=True):
   image_urls_seen = set()
   image_atts = []
 
-  # normalize actor images
+  # normalize actors
   for elem in a, obj:
-    actor = elem.get('actor')
-    if actor:
-      actor['image'] = util.get_first(actor, 'image')
+    _prepare_actor(elem.get('actor'))
 
   # normalize attachments, render attached notes/articles
   attachments = a.get('attachments') or obj.get('attachments') or []
@@ -433,6 +432,19 @@ def _prepare_activity(a, reader=True):
       # https://www.feedvalidator.org/docs/error/InvalidRFC3339Date.html
       if not util.TIMEZONE_OFFSET_RE.search(obj[prop]):
         obj[prop] += 'Z'
+
+
+def _prepare_actor(actor):
+  """Preprocesses an AS1 actor to prepare it to be rendered as Atom.
+
+  Modifies actor in place.
+
+  Args:
+    actor: ActivityStreams 1 actor dict
+  """
+  if actor:
+    actor['image'] = util.get_first(actor, 'image')
+
 
 def _remove_query_params(url):
   parsed = list(urllib.parse.urlparse(url))

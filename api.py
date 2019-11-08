@@ -220,6 +220,10 @@ class Handler(handlers.ModernHandler):
         reader = self.request.get('reader', 'true').lower()
         if reader not in ('true', 'false'):
           self.abort(400, 'reader param must be either true or false')
+        if not actor and hfeed:
+          actor = microformats2.json_to_object({
+            'properties': hfeed.get('properties', {}),
+          })
         self.response.out.write(atom.activities_to_atom(
           activities, actor,
           host_url=url or self.request.host_url + '/',

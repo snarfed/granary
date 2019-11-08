@@ -310,6 +310,8 @@ Changelog
 ### 2.3 - unreleased
 * RSS:
   * Bug fix: extract feed image from `hfeed` correctly.
+* Atom:
+  * Bug fix: extract feed image from `hfeed` correctly.
 
 ### 2.2 - 2019-11-02
 * Add Mastodon support!
