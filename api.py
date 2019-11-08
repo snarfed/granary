@@ -92,8 +92,8 @@ class Handler(handlers.ModernHandler):
   """
   handle_exception = handlers.handle_exception
 
+  @handlers.cache_response(RESPONSE_CACHE_TIME)
   @canonicalize_domain
-  @handlers.memcache_response(RESPONSE_CACHE_TIME)
   def get(self):
     """Handles an API GET.
 

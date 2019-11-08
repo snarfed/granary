@@ -45,6 +45,7 @@ class HandlerTest(testutil_appengine.HandlerTest):
   def setUp(self):
     super(HandlerTest, self).setUp()
     self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    api.Handler.get.cache_clear()
 
   def reset(self):
     self.mox.UnsetStubs()

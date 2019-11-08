@@ -150,8 +150,8 @@ class UrlHandler(api.Handler):
   """
   handle_exception = handlers.handle_exception
 
+  @handlers.cache_response(api.RESPONSE_CACHE_TIME)
   @api.canonicalize_domain
-  @handlers.memcache_response(api.RESPONSE_CACHE_TIME)
   def get(self):
     input = util.get_required_param(self, 'input')
     if input not in INPUTS:

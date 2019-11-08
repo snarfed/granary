@@ -194,6 +194,10 @@ foo ☕ bar
 
 class AppTest(testutil_appengine.HandlerTest):
 
+  def setUp(self):
+    super(AppTest, self).setUp()
+    app.UrlHandler.get.cache_clear()
+
   @staticmethod
   def request_url(path):
     return '%s://%s%s' % (appengine_config.SCHEME, appengine_config.HOST, path)
