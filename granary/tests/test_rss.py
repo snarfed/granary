@@ -50,7 +50,6 @@ class RssTest(testutil.TestCase):
 
   def test_item_with_two_enclosures(self):
     got = rss.from_activities([{
-      # 'objectType': 'article',
       'attachments': [{
         'objectType': 'audio',
         'stream': {'url': 'http://a/podcast.mp3'},
@@ -63,3 +62,17 @@ class RssTest(testutil.TestCase):
       '<enclosure url="http://a/podcast.mp3" length="0" type="audio/mpeg"/>', got)
     self.assertNotIn(
       '<enclosure url="http://a/vidjo.mov" length="0" type="video/quicktime"/>', got)
+
+  def test_hfeed_photo(self):
+    got = rss.from_activities([], feed_url='http://this', hfeed={
+      'type': ['h-feed'],
+      'properties': {
+        'name': ['2toPonder'],
+        'photo': ['https://a/photo'],
+      }})
+    self.assert_multiline_in("""\
+<image>
+  <url>https://a/photo</url>
+  <title>-</title>
+  <link>http://this</link>
+</image>""", got)

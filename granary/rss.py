@@ -64,7 +64,8 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
 
   hfeed = hfeed or {}
   actor = actor or {}
-  image = util.get_url(hfeed, 'image') or util.get_url(actor, 'image')
+  image = (util.get_url(hfeed.get('properties', {}), 'photo') or
+           util.get_url(actor, 'image'))
   if image:
     fg.image(image)
 

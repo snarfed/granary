@@ -459,11 +459,12 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     if util.is_int(duration):
       duration = int(duration)
     else:
-      duration = util.parse_iso8601_duration(duration)
-      if duration:
-        duration = int(duration.total_seconds())
+      parsed = util.parse_iso8601_duration(duration)
+      if parsed:
+        duration = int(parsed.total_seconds())
       else:
         logging.warning('Unknown format for length or duration %r', duration)
+        duration = None
 
 
   stream = None

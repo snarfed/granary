@@ -307,6 +307,10 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 2.3 - unreleased
+* RSS:
+  * Bug fix: extract feed image from `hfeed` correctly.
+
 ### 2.2 - 2019-11-02
 * Add Mastodon support!
 * Add Python 3.7 support, and improve overall Python 3 compatibility.
