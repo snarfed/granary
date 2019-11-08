@@ -310,6 +310,7 @@ Changelog
 ### 2.3 - unreleased
 * RSS:
   * Bug fix: extract feed image from `hfeed` correctly.
+  * Add `itunes:image`, `itunes:author`, and `itunes:category`.
 * Atom:
   * Bug fix: extract feed image from `hfeed` correctly.
 

@@ -99,15 +99,17 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     if content:
       item.content(content, type='CDATA')
 
-    item.category(
-      [{'term': t['displayName']} for t in obj.get('tags', [])
-       if t.get('displayName') and t.get('verb') not in ('like', 'react', 'share')])
+    categories = [
+      {'term': t['displayName']} for t in obj.get('tags', [])
+      if t.get('displayName') and t.get('verb') not in ('like', 'react', 'share')]
+    item.category(categories)
 
     author = obj.get('author', {})
-    item.author({
+    author = {
       'name': author.get('displayName') or author.get('username'),
       'uri': author.get('url'),
-    })
+    }
+    item.author(author)
 
     published = obj.get('published') or obj.get('updated')
     if published:
@@ -153,6 +155,12 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       fg.podcast.itunes_summary(summary)
     fg.podcast.itunes_explicit('no')
     fg.podcast.itunes_block(False)
+    name = author.get('name')
+    if name:
+      fg.podcast.itunes_author(name)
+    if image:
+      fg.podcast.itunes_image(image)
+    fg.podcast.itunes_category(categories)
 
   if latest:
     fg.lastBuildDate(latest)
