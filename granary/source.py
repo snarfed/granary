@@ -635,10 +635,9 @@ class Source(with_metaclass(SourceMeta, object)):
       domains: optional sequence of domains. If provided, only links to these
         domains will be considered original and stored in upstreamDuplicates.
         (Permashortcitations are exempt.)
-      cache: optional, a cache object for storing resolved URL redirects. Passed
-        to follow_redirects().
       include_redirect_sources: boolean, whether to include URLs that redirect
         as well as their final destination URLs
+      cache: deprecated, unused
       kwargs: passed to requests.head() when following redirects
 
     Returns:
@@ -666,7 +665,7 @@ class Source(with_metaclass(SourceMeta, object)):
     # check for redirect and add their final urls
     redirects = {}  # maps final URL to original URL for redirects
     for url in candidates:
-      resolved = util.follow_redirects(url, cache=cache, **kwargs)
+      resolved = util.follow_redirects(url, **kwargs)
       if (resolved.url != url and
           resolved.headers.get('content-type', '').startswith('text/html')):
         redirects[resolved.url] = url
