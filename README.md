@@ -309,8 +309,9 @@ Changelog
 ---
 ### 2.3 - unreleased
 * RSS:
-  * Bug fix: extract feed image from `hfeed` correctly.
   * Add `itunes:image`, `itunes:author`, and `itunes:category`.
+  * Bug fix: extract feed image from `hfeed` correctly.
+  * Bug fix: don't crash on `article` or `mention` tags in items with enclosures.
 * Atom:
   * Bug fix: extract feed image from `hfeed` correctly.
 * REST API:

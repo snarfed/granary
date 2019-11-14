@@ -101,7 +101,9 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
 
     categories = [
       {'term': t['displayName']} for t in obj.get('tags', [])
-      if t.get('displayName') and t.get('verb') not in ('like', 'react', 'share')]
+      if t.get('displayName') and
+      t.get('verb') not in ('like', 'react', 'share') and
+      t.get('objectType') not in ('article', 'person', 'mention')]
     item.category(categories)
 
     author = obj.get('author', {})
