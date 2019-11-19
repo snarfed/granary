@@ -49,7 +49,7 @@ HTML_PRELOAD_RE = re.compile(
   r'^/graphql/query/\?query_hash=[^&]*&(amp;)?variables=(%7B%7D|{})$')
 # the query hash here comes (i think) from inside a .js file served by IG, so
 # we'd have to fetch and scrape that to get it dynamically. not worth it yet.
-HTML_LIKES_URL = HTML_BASE_URL + 'graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"%s","include_reel":false,"first":24}'
+HTML_LIKES_URL = HTML_BASE_URL + 'graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"%s","include_reel":false,"first":100}'
 HTML_DATA_RE = re.compile(r"""
   <script\ type="text/javascript">
   window\.(_sharedData\ =|__additionalDataLoaded\('[^']+',)\ *

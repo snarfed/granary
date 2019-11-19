@@ -308,6 +308,8 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 2.3 - unreleased
+* Instagram:
+  * Scraping: fetch 50 likes instead of 24. ([snarfed/bridgy#898](https://github.com/snarfed/bridgy/issues/898))
 * RSS:
   * Add `itunes:image`, `itunes:author`, and `itunes:category`.
   * Bug fix: extract feed image from `hfeed` correctly.
