@@ -18,7 +18,7 @@ import xml.sax.saxutils
 import oauth_dropins.webutil.tests
 import appengine_config
 
-from oauth_dropins.webutil import testutil_appengine, util
+from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
@@ -192,7 +192,7 @@ foo ☕ bar
 """
 
 
-class AppTest(testutil_appengine.HandlerTest):
+class AppTest(testutil.HandlerTest):
 
   def setUp(self):
     super(AppTest, self).setUp()

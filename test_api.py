@@ -17,7 +17,7 @@ import socket
 import oauth_dropins.webutil.tests
 import appengine_config
 
-from oauth_dropins.webutil import testutil_appengine
+from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import instagram
@@ -38,7 +38,7 @@ class FakeSource(source.Source):
     pass
 
 
-class HandlerTest(testutil_appengine.HandlerTest):
+class HandlerTest(testutil.HandlerTest):
 
   activities = [{'foo': '☕ bar'}]
 

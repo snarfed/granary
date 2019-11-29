@@ -40,7 +40,6 @@ python-dateutil==2.8.0
 python-mimeparse==1.6.0
 python-tumblpy==1.1.4
 requests-oauthlib==1.2.0
-requests-toolbelt==0.9.1
 requests==2.22.0
 rsa==4.0
 six==1.12.0  # App Engine's; see above

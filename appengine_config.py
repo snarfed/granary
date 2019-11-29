@@ -18,9 +18,3 @@ from types import ModuleType
 class DummyProcessing(ModuleType):
   pass
 sys.modules['multiprocessing'] = DummyProcessing
-
-# Make requests and urllib3 play nice with App Engine.
-# https://github.com/snarfed/bridgy/issues/396
-# http://stackoverflow.com/questions/34574740
-from requests_toolbelt.adapters import appengine
-appengine.monkeypatch()
