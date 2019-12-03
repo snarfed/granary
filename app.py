@@ -1,14 +1,16 @@
 """Serves the the front page, discovery files, and OAuth flows.
 """
+from __future__ import absolute_import, unicode_literals
+
 import importlib
 import logging
-import urllib
-import urlparse
+import urllib.parse
 from xml.etree import ElementTree
 
 import appengine_config
+from appengine_config import ndb_client
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 import mf2util
 from oauth_dropins import (
   facebook,
@@ -37,6 +39,8 @@ from granary.github import GitHub
 from granary.mastodon import Mastodon
 from granary.instagram import Instagram
 from granary.twitter import Twitter
+
+import api, cron
 
 INPUTS = (
   'activitystreams',
@@ -89,26 +93,27 @@ class FrontPageHandler(handlers.TemplateHandler):
     return 'granary/templates/index.html'
 
   def template_vars(self):
-    vars = dict(self.request.params)
+    with ndb_client.context():
+      vars = dict(self.request.params)
 
-    entity = None
-    key = vars.get('auth_entity')
-    if key:
-      entity = vars['entity'] = ndb.Key(urlsafe=key).get()
+      entity = None
+      key = vars.get('auth_entity')
+      if key:
+        entity = vars['entity'] = ndb.Key(urlsafe=key).get()
 
-    if entity:
-      vars.setdefault('site', vars['entity'].site_name().lower())
+      if entity:
+        vars.setdefault('site', vars['entity'].site_name().lower())
 
-    vars.update({
-      silo + '_html': module.StartHandler.button_html(
-        '/%s/start_auth' % silo,
-        image_prefix='/oauth_dropins/static/',
-        outer_classes='col-lg-2 col-sm-4 col-xs-6',
-        scopes=SCOPE_OVERRIDES.get(silo, ''),
-      )
-      for silo, module in OAUTHS.items()})
+      vars.update({
+        silo + '_html': module.StartHandler.button_html(
+          '/%s/start_auth' % silo,
+          image_prefix='/oauth_dropins/static/',
+          outer_classes='col-lg-2 col-sm-4 col-xs-6',
+          scopes=SCOPE_OVERRIDES.get(silo, ''),
+        )
+        for silo, module in OAUTHS.items()})
 
-    return vars
+      return vars
 
 
 class DemoHandler(handlers.ModernHandler):
@@ -125,9 +130,9 @@ class DemoHandler(handlers.ModernHandler):
 
     activity_id = search_query = ''
     if group == source.SEARCH:
-      search_query = self.request.get('search_query', '').encode('utf-8')
+      search_query = self.request.get('search_query', '')
     elif group != source.BLOCKS:
-      activity_id = self.request.get('activity_id', '').encode('utf-8')
+      activity_id = self.request.get('activity_id', '')
 
     # pass query params through
     params = dict(self.request.params.items())
@@ -138,8 +143,8 @@ class DemoHandler(handlers.ModernHandler):
     })
 
     return self.redirect('/%s/%s/%s/@app/%s?%s' % (
-      site, urllib.quote_plus(user.encode('utf-8')), group, activity_id,
-      urllib.urlencode(params)))
+      site, urllib.parse.quote_plus(user), group, activity_id,
+      urllib.parse.urlencode(params)))
 
 
 class UrlHandler(api.Handler):
@@ -185,7 +190,7 @@ class UrlHandler(api.Handler):
     hfeed = None
     if mf2:
       def fetch_mf2_func(url):
-        if util.domain_or_parent_in(urlparse.urlparse(url).netloc, SILO_DOMAINS):
+        if util.domain_or_parent_in(urllib.parse.urlparse(url).netloc, SILO_DOMAINS):
           return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
         return util.fetch_mf2(url, gateway=True)
 
@@ -236,15 +241,15 @@ class MastodonStart(mastodon.StartHandler):
   def handle_exception(self, e, debug):
     if isinstance(e, (ValueError, requests.RequestException, exc.HTTPException)):
       logging.warning('', exc_info=True)
-      return self.redirect('/?%s#logins' % urllib.urlencode({'failure': str(e)}))
+      return self.redirect('/?%s#logins' % urllib.parse.urlencode({'failure': str(e)}))
 
     return super(MastodonStart, self).handle_exception(e, debug)
 
 
-routes = []
+oauth_routes = []
 for silo, module in OAUTHS.items():
   starter = MastodonStart if silo == 'mastodon' else module.StartHandler
-  routes.extend((
+  oauth_routes.extend((
     ('/%s/start_auth' % silo, starter.to('/%s/oauth_callback' % silo)),
     ('/%s/oauth_callback' % silo, module.CallbackHandler.to('/#logins')),
   ))
@@ -253,4 +258,7 @@ application = webapp2.WSGIApplication([
   ('/', FrontPageHandler),
   ('/demo', DemoHandler),
   ('/url', UrlHandler),
-] + routes + handlers.HOST_META_ROUTES, debug=appengine_config.DEBUG)
+  ('/cron/build_circle', cron.BuildCircle),
+] + oauth_routes + handlers.HOST_META_ROUTES + [
+  ('.*', api.Handler),
+], debug=appengine_config.DEBUG)

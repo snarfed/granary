@@ -5,7 +5,7 @@ AS2: http://www.w3.org/TR/activitystreams-core/
 AS1: http://activitystrea.ms/specs/json/1.0/
      http://activitystrea.ms/specs/json/schema/activity-schema.html
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 from past.builtins import basestring
 
 import copy

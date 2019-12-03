@@ -212,7 +212,8 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=as1&output=mf2-json')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json; charset=utf-8',
+                       resp.headers['Content-Type'])
     self.assert_equals(MF2, json_loads(resp.body))
 
   def test_url_as1_to_as2(self):
@@ -222,7 +223,8 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/activity+json', resp.headers['Content-Type'])
+    self.assert_equals('application/activity+json; charset=utf-8',
+                       resp.headers['Content-Type'])
     self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
 
   def test_url_as1_response_to_as2(self):
@@ -232,7 +234,8 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/activity+json', resp.headers['Content-Type'])
+    self.assert_equals('application/activity+json; charset=utf-8',
+                       resp.headers['Content-Type'])
     self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
 
   def test_url_as2_to_as1(self):
@@ -242,7 +245,8 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals('application/stream+json; charset=utf-8',
+                       resp.headers['Content-Type'])
     self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
 
   def test_url_as2_response_to_as1(self):
@@ -252,7 +256,8 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals('application/stream+json; charset=utf-8',
+                       resp.headers['Content-Type'])
     self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
 
   def test_url_as1_to_jsonfeed(self):
@@ -262,7 +267,8 @@ class AppTest(testutil.HandlerTest):
     path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = app.application.get_response(path)
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/json', resp.headers['Content-Type'])
+    self.assert_equals('application/json; charset=utf-8',
+                       resp.headers['Content-Type'])
 
     expected = copy.deepcopy(JSONFEED)
     expected['feed_url'] = self.request_url(path)
@@ -284,7 +290,8 @@ class AppTest(testutil.HandlerTest):
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
     resp = app.application.get_response(path)
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json; charset=utf-8',
+                       resp.headers['Content-Type'])
 
     expected = copy.deepcopy(MF2)
     expected['items'][0]['properties']['uid'] = [JSONFEED['items'][0]['id']]
@@ -414,7 +421,8 @@ class AppTest(testutil.HandlerTest):
     resp = app.application.get_response(
       '/url?url=http://my/posts.html&input=html&output=json-mf2')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json; charset=utf-8',
+                       resp.headers['Content-Type'])
 
     expected = copy.deepcopy(MF2)
     for obj in expected['items']:
@@ -475,7 +483,8 @@ baz baj
 
     resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(200, resp.status_int)
-    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals('application/stream+json; charset=utf-8',
+                       resp.headers['Content-Type'])
     self.assert_equals({
       'items': [{
         'id': 'https://perma/link',
@@ -678,7 +687,7 @@ not atom!
       '/url?url=http://my/posts.json&input=as1&output=mf2-json', method='HEAD')
     self.assert_equals(200, resp.status_int)
     self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
-    self.assert_equals('', resp.body)
+    self.assert_equals('', resp.text)
 
   def test_url_head_bad_output(self):
     self.expect_requests_get('http://my/posts.json', AS1)
@@ -687,5 +696,5 @@ not atom!
     resp = app.application.get_response(
       '/url?url=http://my/posts.json&input=as1&output=foo', method='HEAD')
     self.assert_equals(400, resp.status_int)
-    self.assert_equals('', resp.body)
+    self.assert_equals('', resp.text)
 

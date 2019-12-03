@@ -717,7 +717,7 @@ class Facebook(source.Source):
           tag.get('url'), tag.get('displayName') or 'User %s' % tag['id'])
         for tag in people)
     msg_data = collections.OrderedDict({'message': content.encode('utf-8')})
-    if appengine_config.DEBUG:
+    if appengine_config.LOCAL:
       msg_data['privacy'] = json_dumps({'value': 'SELF'})
 
     if type == 'comment':

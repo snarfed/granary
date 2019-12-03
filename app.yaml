@@ -1,31 +1,16 @@
-# https://cloud.google.com/appengine/docs/standard/python/config/appref
+# https://cloud.google.com/appengine/docs/standard/python3/config/appref
 
 # application: granary-demo
 # version: 2
-threadsafe: true
-api_version: 1
 default_expiration: 1h
-runtime: python27
-
-includes:
-  - local/lib/python2.7/site-packages/oauth_dropins/webutil/app.common.yaml
+runtime: python37
+entrypoint: gunicorn -b :$PORT app:application
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
   max_idle_instances: 1
   max_concurrent_requests: 12
   max_pending_latency: 100ms  # default is 30
-
-libraries:
-# *not* jinja2 because app engine's built in is 2.6, so we bundle our own 2.10
-- name: lxml
-  version: latest
-- name: ssl
-  version: latest
-- name: ujson
-  version: latest
-- name: webob
-  version: latest
 
 handlers:
 - url: /(static/bootstrap.*\.css)
@@ -46,19 +31,6 @@ handlers:
 - url: /oauth_dropins/static
   static_dir: local/lib/python2.7/site-packages/oauth_dropins/static
 
-- url: /(demo|url|.well-known/.*)?
-  script: app.application
-  secure: always
-
-- url: /(twitter|facebook|flickr|github|instagram|mastodon)/(start_auth|oauth_callback)
-  script: app.application
-  secure: always
-
-- url: /cron/build_circle
-  script: cron.application
-  login: admin
-  secure: always
-
 - url: /.+
-  script: api.application
+  script: auto
   secure: always

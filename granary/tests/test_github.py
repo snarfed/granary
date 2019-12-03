@@ -442,7 +442,7 @@ class GitHubTest(testutil.TestCase):
         ('https://github.com/', None),
         ('https://foo/bar', None),
     ):
-      self.assertEquals(expected, self.gh.base_id(url))
+      self.assertEqual(expected, self.gh.base_id(url))
 
   def test_user_to_actor_graphql(self):
     self.assert_equals(ACTOR, self.gh.user_to_actor(USER_GRAPHQL))
@@ -689,7 +689,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_OBJ)
-    self.assertEquals(rendered, preview.content, preview)
+    self.assertEqual(rendered, preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>:', preview.description, preview)
 
   @skip('only needed for GraphQL, and we currently use REST to create comments')
@@ -724,7 +724,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_OBJ)
-    self.assertEquals(rendered, preview.content, preview)
+    self.assertEqual(rendered, preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>:', preview.description, preview)
 
   def test_create_issue_repo_url(self):
@@ -813,7 +813,7 @@ class GitHubTest(testutil.TestCase):
       obj['inReplyTo'][0]['url'] = url
       preview = self.gh.preview_create(obj)
       self.assertIsNone(preview.error_plain, preview)
-      self.assertEquals('<b>an issue title</b><hr>' + rendered, preview.content)
+      self.assertEqual('<b>an issue title</b><hr>' + rendered, preview.content)
       self.assertIn(
         '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a> and attempt to add label <span class="verb">new silo</span>:' % url,
         preview.description, preview)
@@ -903,7 +903,7 @@ class GitHubTest(testutil.TestCase):
 
     result = self.gh.create(COMMENT_OBJ)
     self.assertTrue(result.abort)
-    self.assertEquals(msg, result.error_plain)
+    self.assertEqual(msg, result.error_plain)
 
   def test_create_comment_without_in_reply_to(self):
     """https://github.com/snarfed/bridgy/issues/824"""
@@ -957,7 +957,7 @@ class GitHubTest(testutil.TestCase):
 
   def test_preview_star(self):
     preview = self.gh.preview_create(STAR_OBJ)
-    self.assertEquals('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
+    self.assertEqual('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
 
   def test_create_reaction_issue(self):
     self.expect_requests_post(
@@ -983,7 +983,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(REACTION_OBJ_INPUT)
-    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>.', preview.description)
+    self.assertEqual(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>.', preview.description)
 
   def test_create_reaction_comment(self):
     self.expect_requests_post(
@@ -1009,7 +1009,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
-    self.assertEquals(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123#issuecomment-456">a comment on foo/bar#123, <em>i have something to say here</em></a>.', preview.description, preview)
+    self.assertEqual(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123#issuecomment-456">a comment on foo/bar#123, <em>i have something to say here</em></a>.', preview.description, preview)
 
   def test_create_add_label(self):
     self.expect_graphql_get_labels(['one', 'two'])
@@ -1037,7 +1037,7 @@ class GitHubTest(testutil.TestCase):
 
     preview = self.gh.preview_create(TAG_ACTIVITY)
     self.assertIsNone(preview.error_plain, preview)
-    self.assertEquals(
+    self.assertEqual(
       'add label <span class="verb">one</span> to <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>.',
       preview.description, preview)
 
@@ -1046,7 +1046,7 @@ class GitHubTest(testutil.TestCase):
     activity['object'] = []
     result = self.gh.create(activity)
     self.assertTrue(result.abort)
-    self.assertEquals('No tags found in tag post!', result.error_plain)
+    self.assertEqual('No tags found in tag post!', result.error_plain)
 
   def test_create_add_label_no_matching(self):
     self.expect_graphql_get_labels(['one', 'two'])
@@ -1056,7 +1056,7 @@ class GitHubTest(testutil.TestCase):
     activity['object'] = [{'displayName': 'three'}]
     result = self.gh.create(activity)
     self.assertTrue(result.abort)
-    self.assertEquals("""No tags in [three] matched <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>'s existing labels [one, two].""", result.error_html, result)
+    self.assertEqual("""No tags in [three] matched <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>'s existing labels [one, two].""", result.error_html, result)
 
   def test_create_preserves_linked_urls(self):
     self.assert_equals(

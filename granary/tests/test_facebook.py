@@ -2769,11 +2769,11 @@ cc Sam G, Michael M<br />""", preview.description)
 
     expected = '<a href="https://www.facebook.com/234/">That\'s a recurring event.</a> Please RSVP to a specific instance!'
     self.assertTrue(result.abort)
-    self.assertEquals(expected, result.error_html)
+    self.assertEqual(expected, result.error_html)
 
     preview = self.fb.preview_create(rsvp)
     self.assertTrue(preview.abort)
-    self.assertEquals(expected, preview.error_html)
+    self.assertEqual(expected, preview.error_html)
 
   def test_create_rsvp_single_multi_instance_event_single_instance_url(self):
     """We should handle single-instance URLs of multi-instance aka recurring events.
@@ -2795,7 +2795,7 @@ cc Sam G, Michael M<br />""", preview.description)
                        created.content, '%s\n%s' % (created.content, rsvp))
 
     preview = self.fb.preview_create(rsvp)
-    self.assertEquals(
+    self.assertEqual(
       '<span class="verb">RSVP yes</span> to <a href="https://www.facebook.com/234">this event</a>.',
       preview.description)
 

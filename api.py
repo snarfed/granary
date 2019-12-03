@@ -25,7 +25,7 @@ http://atomenabled.org/developers/syndication/
 """
 import datetime
 import logging
-import urllib
+import urllib.parse
 
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil import util
@@ -103,7 +103,7 @@ class Handler(handlers.ModernHandler):
     where each element except site is an optional string object id.
     """
     # parse path
-    args = urllib.unquote(self.request.path).strip('/').split('/')
+    args = urllib.parse.unquote(self.request.path).strip('/').split('/')
     if not args or len(args) > MAX_PATH_LEN:
       raise exc.HTTPNotFound('Expected 1-%d path elements; found %d' %
                              (MAX_PATH_LEN, len(args)))
@@ -303,7 +303,3 @@ class Handler(handlers.ModernHandler):
     except (ValueError, AssertionError):
       raise exc.HTTPBadRequest('Invalid %s: %s (should be positive int)' %
                                (param, val))
-
-
-application = webapp2.WSGIApplication([('.*', Handler)],
-                                      debug=appengine_config.DEBUG)

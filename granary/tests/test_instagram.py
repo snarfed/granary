@@ -1700,7 +1700,7 @@ class InstagramTest(testutil.TestCase):
     with self.assertRaises(requests.HTTPError) as cm:
       self.instagram.html_to_activities(html, cookie='kuky')
 
-    self.assertEquals(504, cm.exception.response.status_code)
+    self.assertEqual(504, cm.exception.response.status_code)
 
   def test_id_to_shortcode(self):
     for shortcode, id in (

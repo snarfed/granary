@@ -168,19 +168,16 @@ Development
 ---
 Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with any questions.
 
-You'll need the [App Engine Python SDK](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python) version 1.9.15 or later (for [`vendor`](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring) support). Add it to your `$PYTHONPATH`, e.g. `export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine`, and then run:
+First, fork and clone this repo. Then, you'll need the [Google Cloud SDK](https://cloud.google.com/sdk/) with the `gcloud-appengine-python` and `gcloud-appengine-python-extras` [components](https://cloud.google.com/sdk/docs/components#additional_components). Once you have them, set up your environment by running these commands in the repo root directory:
 
 ```shell
 virtualenv local
-source local/bin/activate
+source local3/bin/activate
 pip install -r requirements.txt
 python setup.py test
 ```
 
-If you send a pull request, please include (or update) a test for the new functionality if possible! The tests require the [App Engine SDK](https://developers.google.com/appengine/downloads) or the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`) with the `gcloud-appengine-python` and `gcloud-appengine-python-extras` [components](https://cloud.google.com/sdk/docs/components#additional_components).
-
-If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with
-`pip install -e <path to oauth-dropins repo>`.
+If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with `pip install -e <path to oauth-dropins repo>`.
 
 To deploy:
 
@@ -208,10 +205,6 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 
 1. Run the unit tests.
     ```sh
-    source local/bin/activate.csh
-    python2 -m unittest discover
-    deactivate
-
     source local3/bin/activate.csh
     python3 -m unittest discover -s granary/tests/
     deactivate
@@ -223,19 +216,10 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     ```sh
     python3 setup.py clean build sdist
     setenv ver X.Y
-    source local/bin/activate.csh
+    source local3/bin/activate.csh
     twine upload -r pypitest dist/granary-$ver.tar.gz
     ```
-1. Install from test.pypi.org, both Python 2 and 3.
-    ```sh
-    cd /tmp
-    virtualenv local
-    source local/bin/activate.csh
-    # mf2py 1.1.2 on test pypi is currently broken
-    pip install mf2py==1.1.2
-    pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
-    deactivate
-    ```
+1. Install from test.pypi.org.
     ```sh
     python3 -m venv local3
     source local3/bin/activate.csh
@@ -244,14 +228,8 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
     deactivate
     ```
-1. Smoke test that the code trivially loads and runs, in both Python 2 and 3.
+1. Smoke test that the code trivially loads and runs.
    ```sh
-    source local/bin/activate.csh
-    python2
-    # run test code below
-    deactivate
-    ```
-    ```sh
     source local3/bin/activate.csh
     python3
     # run test code below
@@ -307,6 +285,10 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 3.0 - unreleased
+
+* Migrate demo app and API to the [App Engine Standard Python 3 runtime](https://cloud.google.com/appengine/docs/standard/python3/).
+
 ### 2.3 - unreleased
 * Instagram:
   * Scraping: fetch 50 likes instead of 24. ([snarfed/bridgy#898](https://github.com/snarfed/bridgy/issues/898))
