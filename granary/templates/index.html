@@ -125,7 +125,8 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <form method="get" action="#logins">
   <input type="image" class="shadow" title="RSS" id="rss"
          src="/static/rss_button.png" height="50" />
-  <input name="input" type="hidden" value="rss" />
+  <input name="input" type="hidden" value="html" />
+  <input name="output" type="hidden" value="rss" />
 </form></div>
 
 </div>
@@ -287,8 +288,6 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
           value="mf2-json">mf2-json</option>
   <option {% if input == "jsonfeed" %} selected {% endif %}
           value="jsonfeed">jsonfeed</option>
-  <option {% if input == "rss" %} selected {% endif %}
-          value="atom">rss</option>
 </select>
 <label>& output = </label>
 <select id="output" name="output">
