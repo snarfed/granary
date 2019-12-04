@@ -9,9 +9,7 @@ from builtins import range, zip
 
 import copy
 import datetime
-import httplib2
 import logging
-import httplib2
 import urllib.parse
 
 from mox3 import mox

@@ -1,16 +1,7 @@
-# Keep in sync with setup.py's install_requires!
-beautifulsoup4
-brevity>=0.2.17
-feedgen~=0.7
-future~=0.17
-google-cloud-ndb~=0.2
 gunicorn~=20.0
-html2text>=2019.8.11
-humanfriendly~=4.18
-jinja2~=2.10
-mf2util~=0.5
 mox3~=0.28
-oauth-dropins~=3.0
-python-dateutil~=2.8
-requests~=2.22
 webapp2>=3.0.0b1
+
+# this includes everything in setup.py's install_requires.
+# https://caremad.io/posts/2013/07/setup-vs-requirement/#developing-reusable-things-or-how-not-to-repeat-yourself
+-e .

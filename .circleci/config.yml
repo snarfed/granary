@@ -14,7 +14,7 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
 
       - run:
           name: Base dependencies
@@ -24,6 +24,7 @@ jobs:
             cd /tmp
             git clone https://github.com/snarfed/oauth-dropins.git
             cd oauth-dropins
+            # TODO: remove once we merge into master
             git checkout python3-ndb
             git submodule sync
             git submodule update --init
@@ -44,14 +45,13 @@ jobs:
           command: |
             . local3/bin/activate
             CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --consistency=1.0 < /dev/null >& /dev/null &
-            sleep 2s
+            sleep 5s
             DATASTORE_EMULATOR_HOST=localhost:8081 DATASTORE_DATASET=granary-demo python3 -m unittest discover -v
             kill %1
 
       - save_cache:
-          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
           paths:
-            - "local"
             - "local3"
 
       - store_artifacts:
