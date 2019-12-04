@@ -9,25 +9,24 @@ jobs:
     docker:
       # https://circleci.com/docs/2.0/google-container-engine/#selecting-a-base-image
       - image: google/cloud-sdk
-      - image: circleci/python:2.7
-
-    environment:
-      - PYTHONPATH: /usr/lib/google-cloud-sdk/platform/google_appengine
 
     steps:
       - checkout
 
       - restore_cache:
-          key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
+          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}
 
       - run:
           name: Base dependencies
           command: |
-            apt-get install -y python3 google-cloud-sdk-app-engine-python-extras
+            apt-get install -y python3
             # use oauth-dropins master at head. (see pip install -e below.)
             cd /tmp
             git clone https://github.com/snarfed/oauth-dropins.git
-            cd oauth-dropins; git submodule sync; git submodule update --init
+            cd oauth-dropins
+            git checkout python3-ndb
+            git submodule sync
+            git submodule update --init
 
       - run:
           name: Python 3 dependencies
@@ -36,36 +35,21 @@ jobs:
             apt-get install -y python3-venv python3-dev
             python3 -m venv local3
             . local3/bin/activate
-            pip install -r requirements.freeze.txt -c requirements.freeze.py3.txt
             pip install -e /tmp/oauth-dropins/
+            pip install -U -r requirements.txt
+            pip install coverage coveralls
 
       - run:
           name: Test Python 3
           command: |
             . local3/bin/activate
-            PYTHONPATH= python3 -m unittest discover -s granary/tests/
-
-      - run:
-          name: Python 2 dependencies
-          command: |
-            apt-get install -y python-virtualenv
-            virtualenv --python=python2 local
-            . local/bin/activate
-            pip install -r requirements.freeze.txt
-            pip install -e /tmp/oauth-dropins/
-            pip install coverage coveralls
-
-      - run:
-          name: Test Python 2
-          command: |
-            . local/bin/activate
-            PYTHONPATH=/usr/lib/google-cloud-sdk/platform/google_appengine:$PYTHONPATH python2 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/tests/\*,local/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
-            python2 -m coverage html -d /tmp/coverage_html
-            PYTHONPATH= python2 ./instagram_live_test.py --debug || true
-            if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls || true; fi
+            CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --consistency=1.0 < /dev/null >& /dev/null &
+            sleep 2s
+            DATASTORE_EMULATOR_HOST=localhost:8081 DATASTORE_DATASET=granary-demo python3 -m unittest discover -v
+            kill %1
 
       - save_cache:
-          key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
+          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}
           paths:
             - "local"
             - "local3"
