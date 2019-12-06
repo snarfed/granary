@@ -8,7 +8,6 @@ import urllib.parse
 from xml.etree import ElementTree
 
 import appengine_config
-from appengine_config import ndb_client
 
 from google.cloud import ndb
 import mf2util
@@ -93,27 +92,26 @@ class FrontPageHandler(handlers.TemplateHandler):
     return 'granary/templates/index.html'
 
   def template_vars(self):
-    with ndb_client.context():
-      vars = dict(self.request.params)
+    vars = dict(self.request.params)
 
-      entity = None
-      key = vars.get('auth_entity')
-      if key:
-        entity = vars['entity'] = ndb.Key(urlsafe=key).get()
+    entity = None
+    key = vars.get('auth_entity')
+    if key:
+      entity = vars['entity'] = ndb.Key(urlsafe=key).get()
 
-      if entity:
-        vars.setdefault('site', vars['entity'].site_name().lower())
+    if entity:
+      vars.setdefault('site', vars['entity'].site_name().lower())
 
-      vars.update({
-        silo + '_html': module.StartHandler.button_html(
-          '/%s/start_auth' % silo,
-          image_prefix='/oauth_dropins/static/',
-          outer_classes='col-lg-2 col-sm-4 col-xs-6',
-          scopes=SCOPE_OVERRIDES.get(silo, ''),
-        )
-        for silo, module in OAUTHS.items()})
+    vars.update({
+      silo + '_html': module.StartHandler.button_html(
+        '/%s/start_auth' % silo,
+        image_prefix='/oauth_dropins/static/',
+        outer_classes='col-lg-2 col-sm-4 col-xs-6',
+        scopes=SCOPE_OVERRIDES.get(silo, ''),
+      )
+      for silo, module in OAUTHS.items()})
 
-      return vars
+    return vars
 
 
 class DemoHandler(handlers.ModernHandler):
@@ -254,11 +252,11 @@ for silo, module in OAUTHS.items():
     ('/%s/oauth_callback' % silo, module.CallbackHandler.to('/#logins')),
   ))
 
-application = webapp2.WSGIApplication([
+application = handlers.ndb_context_middleware(webapp2.WSGIApplication([
   ('/', FrontPageHandler),
   ('/demo', DemoHandler),
   ('/url', UrlHandler),
   ('/cron/build_circle', cron.BuildCircle),
 ] + oauth_routes + handlers.HOST_META_ROUTES + [
   ('.*', api.Handler),
-], debug=appengine_config.DEBUG)
+], debug=appengine_config.DEBUG), client=appengine_config.ndb_client)
