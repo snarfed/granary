@@ -669,7 +669,7 @@ def json_to_html(obj, parent_props=None):
   links = []
   for prop in 'in-reply-to', 'tag-of':
     links.extend(LINK.substitute(cls=prop, url=url)
-                 for url in get_string_urls(props.get(prop, [])))
+                 for url in sorted(get_string_urls(props.get(prop, []))))
 
   prop = first_props(props)
   prop.setdefault('uid', '')

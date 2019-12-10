@@ -1273,7 +1273,7 @@ class Twitter(source.Source):
     obj['tags'].extend(indices_to_media.values())
 
     # sort tags by indices, since they need to be processed (below) in order.
-    obj['tags'].sort(key=lambda t: t.get('indices'))
+    obj['tags'].sort(key=lambda t: (t.get('indices') or []))
 
     # RT @username: prefix for retweets
     rt_prefix = ''
