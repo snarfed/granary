@@ -18,6 +18,7 @@ from builtins import object, str
 
 import collections
 import copy
+from html import unescape
 import logging
 import re
 import urllib.parse
@@ -106,7 +107,7 @@ def html_to_text(html, **kwargs):
 
     return '\n'.join(
       # strip trailing whitespace that html2text adds to ends of some lines
-      line.rstrip() for line in h.unescape(h.handle(html)).splitlines())
+      line.rstrip() for line in unescape(h.handle(html)).splitlines())
 
 
 def load_json(body, url):
