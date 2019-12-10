@@ -1,5 +1,9 @@
 from granary.appengine_config import *
 
+# Use lxml for BeautifulSoup explicitly.
+from oauth_dropins.webutil import util
+util.beautifulsoup_parser = 'lxml'
+
 # NDB client
 # https://googleapis.dev/python/python-ndb/latest/
 # TODO: make thread local?
