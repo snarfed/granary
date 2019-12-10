@@ -8,8 +8,13 @@ util.beautifulsoup_parser = 'lxml'
 # https://googleapis.dev/python/python-ndb/latest/
 # TODO: make thread local?
 # https://googleapis.dev/python/python-ndb/latest/migrating.html#setting-up-a-connection
+creds = None
+if DEBUG:
+  from google.auth.credentials import AnonymousCredentials
+  creds = AnonymousCredentials()
+
 from google.cloud import ndb
-ndb_client = ndb.Client()
+ndb_client = ndb.Client(credentials=creds)
 
 if DEBUG:
   # HACK! work around that the python 3 ndb lib doesn't support dev_appserver.py
