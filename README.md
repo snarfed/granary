@@ -287,9 +287,9 @@ Changelog
 ---
 ### 3.0 - unreleased
 
-* Migrate demo app and API to the [App Engine Standard Python 3 runtime](https://cloud.google.com/appengine/docs/standard/python3/).
-
-### 2.3 - unreleased
+_Breaking changes:_
+* _Python 2 is no longer supported!_ Including the [App Engine Standard Python 2 runtime](https://cloud.google.com/appengine/docs/standard/python/). On the plus side, the [App Engine Standard Python 3 runtime](https://cloud.google.com/appengine/docs/standard/python3/) is now supported! See this [list of differences](https://cloud.google.com/appengine/docs/standard/python3/python-differences) for more details.
+* Migrate demo app and API to the App Engine Standard Python 3 runtime.
 * Instagram:
   * Scraping: fetch 50 likes instead of 24. ([snarfed/bridgy#898](https://github.com/snarfed/bridgy/issues/898))
 * RSS:

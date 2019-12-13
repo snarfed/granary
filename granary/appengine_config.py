@@ -9,3 +9,6 @@ warnings.filterwarnings('ignore',
                         message='URLFetch does not support granular timeout')
 warnings.filterwarnings('ignore',
                         message='.*No parser was explicitly specified.*')
+if DEBUG:
+  warnings.filterwarnings('ignore', module='google.auth',
+    message='Your application has authenticated using end user credentials')

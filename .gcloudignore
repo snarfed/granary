@@ -15,6 +15,7 @@
 *.so
 .git*
 
+__pycache__/
 .coverage/
 .git*/
 coverage/
@@ -38,6 +39,3 @@ TAGS
 TAGS/
 test/
 tests/
-
-# drop if this doesn't break gcloud app deploy?
-# script (dev).tmpl

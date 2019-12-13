@@ -20,14 +20,6 @@ jobs:
           name: Base dependencies
           command: |
             apt-get install -y python3
-            # use oauth-dropins master at head. (see pip install -e below.)
-            cd /tmp
-            git clone https://github.com/snarfed/oauth-dropins.git
-            cd oauth-dropins
-            # TODO: remove once we merge into master
-            git checkout python3-ndb
-            git submodule sync
-            git submodule update --init
 
       - run:
           name: Python 3 dependencies
@@ -35,7 +27,6 @@ jobs:
             apt-get install -y python3-venv python3-dev
             python3 -m venv local3
             . local3/bin/activate
-            pip install -e /tmp/oauth-dropins/
             pip install -U -r requirements.txt
             pip install coverage coveralls
 
@@ -43,9 +34,9 @@ jobs:
           name: Test Python 3
           command: |
             . local3/bin/activate
-            CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --consistency=1.0 < /dev/null >& /dev/null &
+            CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
             sleep 5s
-            DATASTORE_EMULATOR_HOST=localhost:8081 DATASTORE_DATASET=granary-demo python3 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/tests/\*,local3/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
+            DATASTORE_EMULATOR_HOST=localhost:8089 DATASTORE_DATASET=granary-demo python3 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/tests/\*,local3/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
             kill %1
             PYTHONPATH= python ./instagram_live_test.py --debug || true
             python -m coverage html -d /tmp/coverage_html

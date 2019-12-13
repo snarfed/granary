@@ -1814,7 +1814,7 @@ class Facebook(source.Source):
     """
     try:
       parsed = dateutil.parser.parse(tag.get_text(strip=True), default=now_fn())
-      return parsed.isoformat(util.T)
+      return parsed.isoformat('T')
     except (ValueError, OverflowError):
       logging.warning("Couldn't parse datetime string %r", tag, exc_info=True)
 
