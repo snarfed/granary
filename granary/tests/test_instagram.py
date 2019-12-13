@@ -1,12 +1,6 @@
 # coding=utf-8
 """Unit tests for instagram.py.
 """
-from __future__ import unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from future.moves.urllib import error as urllib_error
-from builtins import range, zip
-
 import copy
 import datetime
 import logging
@@ -18,9 +12,9 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-from granary import instagram
-from granary.instagram import HTML_BASE_URL, Instagram
-from granary import source
+from .. import instagram
+from ..instagram import HTML_BASE_URL, Instagram
+from .. import source
 
 
 def tag_uri(name):
@@ -1058,7 +1052,7 @@ class InstagramTest(testutil.TestCase):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
                         'BAD REQUEST', status=400)
     self.mox.ReplayAll()
-    self.assertRaises(urllib_error.HTTPError, self.instagram.get_activities,
+    self.assertRaises(urllib.error.HTTPError, self.instagram.get_activities,
                       activity_id='000')
 
   def test_get_activities_min_id(self):
@@ -1490,7 +1484,7 @@ class InstagramTest(testutil.TestCase):
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
-    self.assertRaises(urllib_error.HTTPError, Instagram(
+    self.assertRaises(urllib.error.HTTPError, Instagram(
       allow_comment_creation=True).create, to_publish)
 
   def test_create_comments_disabled(self):

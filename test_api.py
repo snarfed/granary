@@ -1,7 +1,6 @@
 # coding=utf-8
 """Unit tests for api.py.
 """
-from __future__ import absolute_import, unicode_literals
 import copy
 import socket
 

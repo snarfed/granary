@@ -2,11 +2,6 @@
 
 Atom spec: https://tools.ietf.org/html/rfc4287 (RIP atomenabled.org)
 """
-from __future__ import absolute_import, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-
 import collections
 import mimetypes
 import re

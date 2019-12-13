@@ -1,13 +1,6 @@
 # coding=utf-8
 """Unit tests for flickr.py
 """
-from __future__ import unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from future.moves.urllib import error as urllib_error
-from builtins import next
-from past.builtins import basestring
-
 import copy
 from mox3 import mox
 import socket
@@ -19,8 +12,8 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-from granary import flickr
-from granary import source
+from .. import flickr
+from .. import source
 
 # test data
 def tag_uri(name):
@@ -953,7 +946,7 @@ class FlickrTest(testutil.TestCase):
 """)
     self.mox.ReplayAll()
 
-    self.assertRaises(urllib_error.HTTPError, self.flickr.create, OBJECT)
+    self.assertRaises(urllib.error.HTTPError, self.flickr.create, OBJECT)
 
   def test_create_video_success(self):
     self.flickr._user_id = '39216764@N00'

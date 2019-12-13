@@ -11,9 +11,6 @@ Notably:
 * Images should be JPEG or PNG, 1400x1400 to 3000x3000.
 * HTTP server that hosts assets and files should support range requests.
 """
-from __future__ import absolute_import, unicode_literals
-from past.builtins import basestring
-
 from datetime import datetime, time
 import logging
 import mimetypes
@@ -48,7 +45,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   except TypeError:
     raise TypeError('activities must be iterable')
 
-  if isinstance(activities, (dict, basestring)):
+  if isinstance(activities, (dict, str)):
     raise TypeError('activities may not be a dict or string')
 
   fg = FeedGenerator()

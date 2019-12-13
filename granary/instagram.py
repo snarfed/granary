@@ -6,12 +6,6 @@ http://help.instagram.com/448523408565555
 https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
 https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """
-from __future__ import absolute_import, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from future.moves.urllib import error as urllib_error
-from past.builtins import basestring
-
 import datetime
 import logging
 import operator
@@ -273,7 +267,7 @@ class Instagram(source.Source):
           activities += [self.like_to_object(user, l['id'], l['link'])
                          for l in liked]
 
-    except urllib_error.HTTPError as e:
+    except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # instagram api should give us back a json block describing the
       # error. but if it's an error for some other reason, it probably won't
@@ -778,7 +772,7 @@ class Instagram(source.Source):
     if not id:
       return None
 
-    if isinstance(id, basestring):
+    if isinstance(id, str):
       parts = id.split('_')
       if not util.is_int(parts[0]):
         return id

@@ -5,9 +5,6 @@ AS2: http://www.w3.org/TR/activitystreams-core/
 AS1: http://activitystrea.ms/specs/json/1.0/
      http://activitystrea.ms/specs/json/schema/activity-schema.html
 """
-from __future__ import absolute_import, unicode_literals
-from past.builtins import basestring
-
 import copy
 import datetime
 import logging
@@ -156,7 +153,7 @@ def to_as1(obj, use_type=True):
   """
   if not obj:
     return {}
-  elif isinstance(obj, basestring):
+  elif isinstance(obj, str):
     return {'url': obj}
   elif not isinstance(obj, dict):
     raise ValueError('Expected dict, got %r' % obj)
@@ -175,7 +172,7 @@ def to_as1(obj, use_type=True):
       obj['objectType'] = 'activity'
 
   def url_or_as1(val):
-    return {'url': val} if isinstance(val, basestring) else to_as1(val)
+    return {'url': val} if isinstance(val, str) else to_as1(val)
 
   def all_to_as1(field):
     return [to_as1(elem) for elem in util.pop_list(obj, field)]

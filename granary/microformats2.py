@@ -3,12 +3,6 @@
 Microformats2 specs: http://microformats.org/wiki/microformats2
 ActivityStreams 1 specs: http://activitystrea.ms/specs/
 """
-from __future__ import absolute_import, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from past.builtins import basestring
-
 from collections import defaultdict
 import copy
 import itertools
@@ -104,7 +98,7 @@ def get_string_urls(objs):
 
   urls = []
   for item in objs:
-    if isinstance(item, basestring):
+    if isinstance(item, str):
       urls.append(item)
     else:
       itemtype = [x for x in item.get('type', []) if x.startswith('h-')]
@@ -234,7 +228,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # construct mf2!
   ret = {
     'type': (AS_TO_MF2_TYPE.get(obj_type) or
-             [entry_class] if isinstance(entry_class, basestring)
+             [entry_class] if isinstance(entry_class, str)
              else list(entry_class)),
     'properties': {
       'uid': [obj.get('id') or ''],
@@ -502,7 +496,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
     'tags': [{'objectType': 'hashtag', 'displayName': cat}
-             if isinstance(cat, basestring)
+             if isinstance(cat, str)
              else json_to_object(cat)
              for cat in props.get('category', [])],
     'attachments': attachments,
@@ -695,7 +689,7 @@ def json_to_html(obj, parent_props=None):
   # if this post is itself a follow, like, or repost, link to its target(s).
   for mftype in ['follow', 'like', 'repost']:
     for target in props.get(mftype + '-of', []):
-      if isinstance(target, basestring):
+      if isinstance(target, str):
         children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))
       else:
         children.append(json_to_html(target, ['u-' + mftype + '-of']))
@@ -741,7 +735,7 @@ def json_to_html(obj, parent_props=None):
     if isinstance(cat, dict) and 'h-card' in cat.get('type')
     and not cat.get('startIndex')]  # mentions are already linkified in content
   tags = ['<span class="u-category">%s</span>' % cat
-          for cat in cats if isinstance(cat, basestring)]
+          for cat in cats if isinstance(cat, str)]
 
   # comments
   # http://indiewebcamp.com/comment-presentation#How_to_markup
@@ -764,7 +758,7 @@ def json_to_html(obj, parent_props=None):
 
   # location; make sure it's an object
   location = prop.get('location')
-  if isinstance(location, basestring):
+  if isinstance(location, str):
     location = {'properties': {'name': [location]}}
 
   # event times
@@ -1117,7 +1111,7 @@ def tags_to_html(tags, classname, visible=True):
 def object_urls(obj):
   """Returns an object's unique URLs, preserving order.
   """
-  if isinstance(obj, basestring):
+  if isinstance(obj, str):
     return obj
   return uniquify(util.trim_nulls(
     [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))

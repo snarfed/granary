@@ -1,25 +1,23 @@
 # coding=utf-8
 """Unit tests for source.py.
 """
-from __future__ import absolute_import, unicode_literals
-
 import copy
 import re
 
-from granary import appengine_config
+from .. import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
-from granary import facebook
-from granary import instagram
-from granary import source
-from granary.source import (
+from .. import facebook
+from .. import instagram
+from .. import source
+from ..source import (
   INCLUDE_IF_TRUNCATED,
   INCLUDE_LINK,
   OMIT_LINK,
   Source,
 )
-from granary import twitter
+from .. import twitter
 
 
 LIKES = [{

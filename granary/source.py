@@ -9,13 +9,6 @@ activity's privacy settings. It's set to a group with alias @public or @private,
 or unset if unknown.
 http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
-from __future__ import absolute_import, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from future.moves.urllib import error as urllib_error
-from future.utils import with_metaclass
-from builtins import object, str
-
 import collections
 import copy
 from html import unescape
@@ -117,7 +110,7 @@ def load_json(body, url):
   except (ValueError, TypeError):
     msg = 'Non-JSON response! Returning synthetic HTTP 502.\n%s' % body
     logging.error(msg)
-    raise urllib_error.HTTPError(url, 502, msg, {}, None)
+    raise urllib.error.HTTPError(url, 502, msg, {}, None)
 
 
 def creation_result(content=None, description=None, abort=False,
@@ -173,7 +166,7 @@ class SourceMeta(type):
     return cls
 
 
-class Source(with_metaclass(SourceMeta, object)):
+class Source(object, metaclass=SourceMeta):
   """Abstract base class for a source (e.g. Facebook, Twitter).
 
   Concrete subclasses must override the class constants below and implement

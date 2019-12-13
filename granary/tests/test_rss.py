@@ -1,11 +1,9 @@
 # coding=utf-8
 """Unit tests for rss.py."""
-from __future__ import absolute_import, unicode_literals
-
-from granary import appengine_config
+from .. import appengine_config
 from oauth_dropins.webutil import testutil
 
-from granary import rss
+from .. import rss
 
 
 class RssTest(testutil.TestCase):

@@ -1,6 +1,4 @@
 """Cron jobs. Currently just nightly CircleCI build."""
-from __future__ import absolute_import, unicode_literals
-
 import appengine_config
 
 import requests

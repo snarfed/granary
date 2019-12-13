@@ -10,13 +10,6 @@ API itself. Maybe use flickr.activity.userPhotos
 (https://www.flickr.com/services/api/flickr.activity.userPhotos.html)
 when group_id=SELF.
 """
-from __future__ import absolute_import, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from future.moves.urllib import error as urllib_error
-from builtins import str
-from past.builtins import basestring
-
 import copy
 import logging
 import requests
@@ -581,7 +574,7 @@ class Flickr(source.Source):
             tag.get('_content')),
           'displayName': tag.get('raw'),
         } for tag in photo.get('tags', {}).get('tag', [])]
-    elif isinstance(photo.get('tags'), basestring):
+    elif isinstance(photo.get('tags'), str):
       activity['object']['tags'] = [{
         'objectType': 'hashtag',
         'url': 'https://www.flickr.com/search?tags={}'.format(

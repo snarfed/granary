@@ -1,18 +1,16 @@
 # coding=utf-8
 """Unit tests for atom.py."""
-from __future__ import absolute_import, unicode_literals
-
 import copy
 
-from granary import appengine_config
+from .. import appengine_config
 from mox3 import mox
 from oauth_dropins.webutil import testutil
 import requests
 
-from granary import atom
-from granary.tests import test_facebook
-from granary.tests import test_instagram
-from granary.tests import test_twitter
+from .. import atom
+from . import test_facebook
+from . import test_instagram
+from . import test_twitter
 
 INSTAGRAM_ENTRY_BODY = u"""\
 <author>

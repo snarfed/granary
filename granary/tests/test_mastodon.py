@@ -1,18 +1,14 @@
 # coding=utf-8
 """Unit tests for mastodon.py."""
-from __future__ import unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-
 import copy
 
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from granary import appengine_config
-from granary import mastodon
-from granary import source
-from granary.mastodon import (
+from .. import appengine_config
+from .. import mastodon
+from .. import source
+from ..mastodon import (
   API_ACCOUNT,
   API_ACCOUNT_STATUSES,
   API_BLOCKS,

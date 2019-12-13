@@ -6,12 +6,6 @@ https://developer.github.com/v4/
 https://developer.github.com/v3/
 https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
 """
-from __future__ import absolute_import, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from past.builtins import basestring
-
 import datetime
 import email.utils
 import html
@@ -240,7 +234,7 @@ class GitHub(source.Source):
 
     Returns: dict, parsed JSON response
     """
-    escaped = {k: (email.utils.quote(v) if isinstance(v, basestring) else v)
+    escaped = {k: (email.utils.quote(v) if isinstance(v, str) else v)
                for k, v in kwargs.items()}
     resp = util.requests_post(
       GRAPHQL_BASE, json={'query': graphql % escaped},

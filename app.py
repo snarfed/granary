@@ -1,7 +1,5 @@
 """Serves the the front page, discovery files, and OAuth flows.
 """
-from __future__ import absolute_import, unicode_literals
-
 import importlib
 import logging
 import urllib.parse

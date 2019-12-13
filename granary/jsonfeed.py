@@ -2,10 +2,6 @@
 
 JSON Feed spec: https://jsonfeed.org/version/1
 """
-from __future__ import absolute_import, unicode_literals
-from builtins import str
-from past.builtins import basestring
-
 import mimetypes
 
 import mf2util
@@ -36,7 +32,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
   except TypeError:
     raise TypeError('activities must be iterable')
 
-  if isinstance(activities, (dict, basestring)):
+  if isinstance(activities, (dict, str)):
     raise TypeError('activities may not be a dict or string')
 
   def image_url(obj):

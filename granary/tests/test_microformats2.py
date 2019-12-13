@@ -4,15 +4,13 @@
 Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
-from __future__ import unicode_literals
-
 import re
 
-from granary import appengine_config
+from .. import appengine_config
 from oauth_dropins.webutil import testutil
 import mf2py
 
-from granary import microformats2
+from .. import microformats2
 
 
 class Microformats2Test(testutil.TestCase):

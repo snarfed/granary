@@ -1,20 +1,15 @@
 """Unit tests for canned data in testdata/.
 """
-from __future__ import unicode_literals
-from builtins import open
-from future.utils import bytes_to_native_str
-from past.builtins import basestring
-
 import glob
 import logging
 import os
 
-from granary import appengine_config
+from .. import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from granary import as2, jsonfeed, microformats2, rss
+from .. import as2, jsonfeed, microformats2, rss
 
 
 def filepairs(ext1, ext2s):
@@ -54,7 +49,7 @@ def create_test_function(fn, original, expected):
   """Create a simple test function that asserts fn(original) == expected."""
   def test(self):
     got = fn(original)
-    if isinstance(got, basestring) and isinstance(expected, basestring):
+    if isinstance(got, str) and isinstance(expected, str):
       return self.assert_multiline_equals(expected, got, ignore_blanks=True)
     else:
       return self.assert_equals(expected, got, in_order=True)
@@ -130,5 +125,4 @@ for src_ext, dst_exts, fn, excludes in mappings:
 os.chdir(prevdir)
 
 
-TestDataTest = type(bytes_to_native_str(b'TestDataTest'), (testutil.TestCase,),
-                    test_funcs)
+TestDataTest = type('TestDataTest', (testutil.TestCase,), test_funcs)

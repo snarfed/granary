@@ -1,7 +1,6 @@
 # coding=utf-8
 """Unit tests for app.py.
 """
-from __future__ import unicode_literals
 import copy
 import socket
 import xml.sax.saxutils

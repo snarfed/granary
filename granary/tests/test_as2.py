@@ -4,12 +4,10 @@
 Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
-from __future__ import unicode_literals
-
-from granary import appengine_config
+from .. import appengine_config
 from oauth_dropins.webutil import testutil
 
-from granary import as2
+from .. import as2
 
 
 class ActivityStreams2Test(testutil.TestCase):

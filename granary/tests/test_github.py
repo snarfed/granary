@@ -9,9 +9,9 @@ from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from granary import appengine_config
-from granary import github
-from granary.github import (
+from .. import appengine_config
+from .. import github
+from ..github import (
   GRAPHQL_BASE,
   GRAPHQL_COMMENT,
   REACTIONS_REST_CHARS,
@@ -23,7 +23,7 @@ from granary.github import (
   REST_API_NOTIFICATIONS,
   REST_API_REACTIONS,
 )
-from granary import source
+from .. import source
 
 # test data
 def tag_uri(name):
