@@ -3,7 +3,9 @@
 # application: granary-demo
 # default_expiration: 1h
 runtime: python37
-entrypoint: gunicorn -b :$PORT app:application
+
+# https://docs.gunicorn.org/en/latest/settings.html#timeout
+entrypoint: gunicorn --workers 1 --timeout 300 -b :$PORT app:application
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
