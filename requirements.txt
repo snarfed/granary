@@ -1,4 +1,5 @@
 git+https://github.com/snarfed/oauth-dropins.git@python3-ndb#egg=oauth_dropins
+google-cloud-logging~=1.14
 gunicorn~=20.0
 mox3~=0.28
 webapp2>=3.0.0b1
