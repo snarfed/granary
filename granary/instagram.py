@@ -278,7 +278,7 @@ class Instagram(source.Source):
         body_obj = {}
 
       if body_obj.get('meta', {}).get('error_type') == 'APINotFoundError':
-        logging.warning(body_obj.get('meta', {}).get('error_message'), exc_info=True)
+        logging.warning(body_obj.get('meta', {}).get('error_message'), stack_info=True)
       else:
         raise e
 
@@ -896,7 +896,7 @@ class Instagram(source.Source):
       return json_loads(resp.text)
     except ValueError as e:
       msg = "Couldn't decode response as JSON:\n%s" % resp.text
-      logging.exception(msg)
+      logging.error(msg, stack_info=True)
       resp.status_code = 504
       raise requests.HTTPError('504 Bad response from Instagram\n' + msg,
                                response=resp)

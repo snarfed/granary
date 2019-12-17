@@ -1059,7 +1059,7 @@ class Facebook(source.Source):
     except BaseException as e:
       logging.warning(
         "Couldn't parse object URL %s : %s. Falling back to default logic.",
-        url, e, exc_info=True)
+        url, e, stack_info=True)
 
     return base_obj
 
@@ -1810,7 +1810,7 @@ class Facebook(source.Source):
       parsed = dateutil.parser.parse(tag.get_text(strip=True), default=now_fn())
       return parsed.isoformat('T')
     except (ValueError, OverflowError):
-      logging.warning("Couldn't parse datetime string %r", tag, exc_info=True)
+      logging.warning("Couldn't parse datetime string %r", tag, stack_info=True)
 
   def _scrape_m(self, user_id=None, activity_id=None, fetch_replies=False,
                 fetch_likes=False):

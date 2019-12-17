@@ -217,7 +217,7 @@ class UrlHandler(api.Handler):
       elif input == 'jsonfeed':
         activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
     except ValueError as e:
-      logging.warning('parsing input failed', exc_info=True)
+      logging.warning('parsing input failed', stack_info=True)
       self.abort(400, 'Could not parse %s as %s: %s' % (url, input, str(e)))
 
     self.write_response(source.Source.make_activities_base_response(activities),
@@ -236,7 +236,7 @@ class MastodonStart(mastodon.StartHandler):
 
   def handle_exception(self, e, debug):
     if isinstance(e, (ValueError, requests.RequestException, exc.HTTPException)):
-      logging.warning('', exc_info=True)
+      logging.warning('', stack_info=True)
       return self.redirect('/?%s#logins' % urllib.parse.urlencode({'failure': str(e)}))
 
     return super(MastodonStart, self).handle_exception(e, debug)

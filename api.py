@@ -265,7 +265,7 @@ class Handler(handlers.ModernHandler):
           raise exc.HTTPBadRequest('Unsupported input data: %s' % e)
         self.response.out.write(json_dumps(jf, indent=2))
     except ValueError as e:
-      logging.warning('converting to output format failed', exc_info=True)
+      logging.warning('converting to output format failed', stack_info=True)
       self.abort(400, 'Could not convert to %s: %s' % (format, str(e)))
 
   def get_kwargs(self):
