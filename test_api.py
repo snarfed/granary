@@ -4,18 +4,6 @@
 import copy
 import socket
 
-# webutil.tests must be imported before appengine_config!
-#
-# Both the App Engine SDK and the google-auth library (installed in our
-# virtualenv) provide the google package. This works locally, ie we can import
-# from both places, but doesn't work on Circle. Not sure why. This fixes that.
-#
-# Related:
-# https://github.com/googleapis/google-auth-library-python/issues/169#issuecomment-315417916
-# https://stackoverflow.com/questions/49194575
-import oauth_dropins.webutil.tests
-import appengine_config
-
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.util import json_dumps, json_loads
 

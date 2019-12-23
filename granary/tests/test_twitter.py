@@ -8,7 +8,7 @@ import socket
 import urllib.parse
 
 from mox3 import mox
-from oauth_dropins import appengine_config
+from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -705,8 +705,8 @@ class TwitterTest(testutil.TestCase):
   def setUp(self):
     super(TwitterTest, self).setUp()
     self.maxDiff = None
-    appengine_config.TWITTER_APP_KEY = 'fake'
-    appengine_config.TWITTER_APP_SECRET = 'fake'
+    twitter_auth.TWITTER_APP_KEY = 'fake'
+    twitter_auth.TWITTER_APP_SECRET = 'fake'
     self.twitter = twitter.Twitter('key', 'secret')
 
   def expect_urlopen(self, url, response=None, params=None, **kwargs):

@@ -5,8 +5,6 @@ import logging
 import urllib.parse
 from xml.etree import ElementTree
 
-import appengine_config
-
 from google.cloud import ndb
 import mf2util
 from oauth_dropins import (
@@ -16,7 +14,12 @@ from oauth_dropins import (
   mastodon,
   twitter,
 )
-from oauth_dropins.webutil import handlers, util
+from oauth_dropins.webutil import (
+  appengine_config,
+  appengine_info,
+  handlers,
+  util,
+)
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 import webapp2
@@ -258,4 +261,4 @@ application = handlers.ndb_context_middleware(webapp2.WSGIApplication([
   ('/cron/build_circle', cron.BuildCircle),
 ] + oauth_routes + handlers.HOST_META_ROUTES + [
   ('.*', api.Handler),
-], debug=appengine_config.DEBUG), client=appengine_config.ndb_client)
+], debug=appengine_info.DEBUG), client=appengine_config.ndb_client)

@@ -19,8 +19,6 @@ import re
 import socket
 import urllib.parse, urllib.request
 
-from . import appengine_config
-
 from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads

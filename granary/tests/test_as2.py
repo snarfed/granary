@@ -4,7 +4,6 @@
 Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
-from .. import appengine_config
 from oauth_dropins.webutil import testutil
 
 from .. import as2

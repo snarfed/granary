@@ -1,6 +1,5 @@
 # coding=utf-8
 """Unit tests for jsonfeed.py."""
-from .. import appengine_config
 from oauth_dropins.webutil import testutil
 
 from ..jsonfeed import activities_to_jsonfeed, jsonfeed_to_activities

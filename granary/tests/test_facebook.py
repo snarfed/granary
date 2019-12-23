@@ -7,11 +7,11 @@ import os
 import urllib.parse
 
 from mox3 import mox
+import oauth_dropins.facebook
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from .. import appengine_config
 from .. import facebook
 from ..facebook import (
   API_ALBUMS,
@@ -1050,8 +1050,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 """
 
 def read_testdata(filename):
-  return appengine_config.read(os.path.join(os.path.dirname(__file__),
-                                            'testdata', filename))
+  return util.read(os.path.join(os.path.dirname(__file__), 'testdata', filename))
 
 COMMENT_EMAIL = read_testdata('facebook.comment.email.html')
 COMMENT_EMAIL_USER_ID = COMMENT_EMAIL % {
@@ -2929,8 +2928,8 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
 
   def test_create_notification(self):
-    appengine_config.FACEBOOK_APP_ID = 'my_app_id'
-    appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'
+    oauth_dropins.facebook.FACEBOOK_APP_ID = 'my_app_id'
+    oauth_dropins.facebook.FACEBOOK_APP_SECRET = 'my_app_secret'
     params = {
       'template': 'my text',
       'href': 'my link',

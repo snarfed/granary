@@ -6,7 +6,7 @@ from mox3 import mox
 import socket
 import urllib.parse
 
-from oauth_dropins import appengine_config
+from oauth_dropins import flickr_auth
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -661,8 +661,8 @@ class FlickrTest(testutil.TestCase):
 
   def setUp(self):
     super(FlickrTest, self).setUp()
-    appengine_config.FLICKR_APP_KEY = 'fake'
-    appengine_config.FLICKR_APP_SECRET = 'fake'
+    flickr_auth.FLICKR_APP_KEY = 'fake'
+    flickr_auth.FLICKR_APP_SECRET = 'fake'
     self.flickr = flickr.Flickr('key', 'secret')
 
   def expect_call_api_method(self, method, params, result):

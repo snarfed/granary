@@ -4,7 +4,6 @@ import glob
 import logging
 import os
 
-from .. import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads

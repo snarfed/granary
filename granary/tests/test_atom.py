@@ -2,7 +2,6 @@
 """Unit tests for atom.py."""
 import copy
 
-from .. import appengine_config
 from mox3 import mox
 from oauth_dropins.webutil import testutil
 import requests

@@ -10,7 +10,8 @@ import logging
 import sys
 import unittest
 
-from granary import appengine_config
+from oauth_dropins.webutil import util
+from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
 from granary import instagram
 from granary.source import SELF
 
@@ -20,7 +21,7 @@ USERNAME = 'snarfed'
 class InstagramTestLive(unittest.TestCase):
 
   def test_live(self):
-    ig = instagram.Instagram(cookie=appengine_config.INSTAGRAM_SESSIONID_COOKIE)
+    ig = instagram.Instagram(cookie=INSTAGRAM_SESSIONID_COOKIE)
     resp = ig.get_activities_response(
       user_id=USERNAME, group_id=SELF, scrape=True,
       fetch_replies=True, fetch_likes=True, count=10)

@@ -51,10 +51,10 @@ import xml.sax.saxutils
 
 import dateutil.parser
 import mf2util
+import oauth_dropins.facebook
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from . import appengine_config
 from . import source
 
 # Since API v2.4, we need to explicitly ask for the fields we want from most API
@@ -711,8 +711,6 @@ class Facebook(source.Source):
           tag.get('url'), tag.get('displayName') or 'User %s' % tag['id'])
         for tag in people)
     msg_data = collections.OrderedDict({'message': content.encode('utf-8')})
-    if appengine_config.LOCAL:
-      msg_data['privacy'] = json_dumps({'value': 'SELF'})
 
     if type == 'comment':
       if not base_url:
@@ -913,8 +911,8 @@ class Facebook(source.Source):
       'href': link,
       # this is a synthetic app access token.
       # https://developers.facebook.com/docs/facebook-login/access-tokens/#apptokens
-      'access_token': '%s|%s' % (appengine_config.FACEBOOK_APP_ID,
-                                 appengine_config.FACEBOOK_APP_SECRET),
+      'access_token': '%s|%s' % (oauth_dropins.facebook.FACEBOOK_APP_ID,
+                                 oauth_dropins.facebook.FACEBOOK_APP_SECRET),
       }
     url = API_BASE + API_NOTIFICATION % user_id
     resp = util.urlopen(urllib.request.Request(url, data=urllib.parse.urlencode(params)))

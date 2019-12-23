@@ -14,7 +14,6 @@ import string
 import urllib.parse, urllib.request
 import xml.sax.saxutils
 
-from . import appengine_config
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -35,8 +34,7 @@ API_MEDIA_POPULAR_URL = 'https://api.instagram.com/v1/media/popular'
 API_MEDIA_LIKES_URL = 'https://api.instagram.com/v1/media/%s/likes'
 API_COMMENT_URL = 'https://api.instagram.com/v1/media/%s/comments'
 
-HTML_BASE_URL = (appengine_config.read('instagram_scrape_base') or
-                 'https://www.instagram.com/')
+HTML_BASE_URL = util.read('instagram_scrape_base') or 'https://www.instagram.com/'
 HTML_MEDIA = HTML_BASE_URL + 'p/%s/'
 HTML_PROFILE = HTML_BASE_URL + '%s/'
 HTML_PRELOAD_RE = re.compile(

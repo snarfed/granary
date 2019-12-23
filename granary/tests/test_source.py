@@ -4,7 +4,6 @@
 import copy
 import re
 
-from .. import appengine_config
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 

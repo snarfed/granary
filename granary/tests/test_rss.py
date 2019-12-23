@@ -1,6 +1,5 @@
 # coding=utf-8
 """Unit tests for rss.py."""
-from .. import appengine_config
 from oauth_dropins.webutil import testutil
 
 from .. import rss

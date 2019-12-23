@@ -6,7 +6,6 @@ for full testdata tests.
 """
 import re
 
-from .. import appengine_config
 from oauth_dropins.webutil import testutil
 import mf2py
 

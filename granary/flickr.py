@@ -16,8 +16,6 @@ import requests
 import mf2util
 import urllib.parse
 
-from . import appengine_config
-
 from oauth_dropins.webutil import util
 from oauth_dropins import flickr_auth
 

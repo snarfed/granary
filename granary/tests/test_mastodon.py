@@ -5,7 +5,6 @@ import copy
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from .. import appengine_config
 from .. import mastodon
 from .. import source
 from ..mastodon import (

@@ -34,7 +34,6 @@ import webapp2
 from webob import exc
 
 from granary import (
-  appengine_config,
   as2,
   atom,
   facebook,

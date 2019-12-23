@@ -17,7 +17,6 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-from . import appengine_config
 from . import source
 
 REST_API_BASE = 'https://api.github.com'

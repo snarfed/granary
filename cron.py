@@ -1,10 +1,10 @@
 """Cron jobs. Currently just nightly CircleCI build."""
-import appengine_config
-
 import requests
 import webapp2
 
-CIRCLECI_TOKEN = appengine_config.read('circleci_token')
+from oauth_dropins.webutil import util
+
+CIRCLECI_TOKEN = util.read('circleci_token')
 
 
 class BuildCircle(webapp2.RequestHandler):
