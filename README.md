@@ -32,10 +32,11 @@ Granary is a library and REST API that fetches and converts between a wide varie
 Here's how to get started:
 
 * Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/) Install with `pip install granary`.
-* Supports Python 2.7+ and 3.3+.
 * [Click here for getting started docs.](#using)
 * [Click here for reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
 * The REST API and demo app are deployed at [granary.io](https://granary.io/).
+
+[Versions 3.0](https://pypi.org/project/oauth-dropins/2.2/) and above support App Engine's [Python 3 runtimes](https://cloud.google.com/appengine/docs/python/), both [Standard](https://cloud.google.com/appengine/docs/standard/python3/) and [Flexible](https://cloud.google.com/appengine/docs/flexible/python/). If you're on the [Python 2 runtime](https://cloud.google.com/appengine/docs/standard/python/), use [version 2.2](https://pypi.org/project/oauth-dropins/2.2/).
 
 License: This project is placed in the public domain.
 
@@ -288,7 +289,9 @@ Changelog
 ### 3.0 - unreleased
 
 _Breaking changes:_
-* _Python 2 is no longer supported!_ Including the [App Engine Standard Python 2 runtime](https://cloud.google.com/appengine/docs/standard/python/). On the plus side, the [App Engine Standard Python 3 runtime](https://cloud.google.com/appengine/docs/standard/python3/) is now supported! See this [list of differences](https://cloud.google.com/appengine/docs/standard/python3/python-differences) for more details.
+* _Python 2 is no longer supported!_ Including the [App Engine Standard Python 2 runtime](https://cloud.google.com/appengine/docs/standard/python/). On the plus side, the [Python 3 runtime](https://cloud.google.com/appengine/docs/standard/python3/) is now supported! See this [list of differences](https://cloud.google.com/appengine/docs/standard/python3/python-differences) for more details.
+
+Non-breaking changes:
 * Migrate demo app and API to the App Engine Standard Python 3 runtime.
 * Instagram:
   * Scraping: fetch 50 likes instead of 24. ([snarfed/bridgy#898](https://github.com/snarfed/bridgy/issues/898))
