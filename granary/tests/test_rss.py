@@ -73,3 +73,13 @@ class RssTest(testutil.TestCase):
   <title>-</title>
   <link>http://this</link>
 </image>""", got)
+
+  def test_html_title(self):
+    got = rss.from_activities([{
+        'objectType': 'article',
+        'content': '<x>A</x> <y> <z>B C</z>',
+      }], feed_url='http://this')
+    self.assert_multiline_in("""\
+<item>
+<title>A  B C</title>
+""", got)

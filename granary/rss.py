@@ -87,8 +87,13 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     item.link(href=url)
     item.guid(url, permalink=True)
 
-    item.title(obj.get('title') or obj.get('displayName') or
-               util.ellipsize(obj.get('content', '-')))  # required
+    # title (required)
+    title = (obj.get('title') or obj.get('displayName') or
+             util.ellipsize(obj.get('content', '-')))
+    # strip HTML tags
+    title = util.parse_html(title).get_text('').strip()
+    item.title(title)
+
     content = microformats2.render_content(
       obj, include_location=True, render_attachments=True, render_image=True)
     if not content:
