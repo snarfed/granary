@@ -112,6 +112,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     author = {
       'name': author.get('displayName') or author.get('username'),
       'uri': author.get('url'),
+      'email': author.get('email') or '-',
     }
     item.author(author)
 

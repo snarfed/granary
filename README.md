@@ -298,6 +298,7 @@ Non-breaking changes:
 * RSS:
   * Add `itunes:image`, `itunes:author`, and `itunes:category`.
   * Strip HTML from `title` element ([#177](https://github.com/snarfed/granary/issues/177)). [Background.](https://validator.w3.org/feed/docs/warning/ContainsHTML.html)
+  * Always include author in items ([#177](https://github.com/snarfed/granary/issues/177)).
   * Bug fix: extract feed image from `hfeed` correctly.
   * Bug fix: don't crash on `article` or `mention` tags in items with enclosures.
 * Atom:
