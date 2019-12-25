@@ -114,8 +114,7 @@ class Handler(handlers.ModernHandler):
         access_token_key=util.get_required_param(self, 'access_token_key'),
         access_token_secret=util.get_required_param(self, 'access_token_secret'))
     elif site == 'facebook':
-      src = facebook.Facebook(
-        access_token=util.get_required_param(self, 'access_token'))
+      self.abort(400, 'Sorry, Facebook is no longer available in the REST API. Try the library instead!')
     elif site == 'flickr':
       src = flickr.Flickr(
         access_token_key=util.get_required_param(self, 'access_token_key'),

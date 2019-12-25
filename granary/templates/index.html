@@ -76,7 +76,10 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <div class="login">
 <div class="row">
 {{ twitter_html|safe }}
-{{ facebook_html|safe }}
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <img src="/oauth_dropins/static/facebook_bw_2x.png" height="50" class="shadow"
+       title="Facebook is only supported in the library, not in the REST API or demo site here.">
+</div>
 {{ instagram_html|safe }}
 {{ flickr_html|safe }}
 {{ github_html|safe }}
