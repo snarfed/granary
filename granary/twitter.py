@@ -255,7 +255,7 @@ class Twitter(source.Source):
     activities = []
     if activity_id:
       self._validate_id(activity_id)
-      tweets = [self.urlopen(API_STATUS % activity_id)]
+      tweets = [self.urlopen(API_STATUS % int(activity_id))]
       total_count = len(tweets)
     else:
       if group_id == source.SELF:

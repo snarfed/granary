@@ -760,7 +760,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([], self.twitter.get_activities(start_index=9))
 
   def test_get_activities_activity_id(self):
-    self.expect_urlopen(API_STATUS % '000', TWEET)
+    self.expect_urlopen(API_STATUS % 0, TWEET)
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -772,6 +772,12 @@ class TwitterTest(testutil.TestCase):
     """https://github.com/snarfed/bridgy/issues/719"""
     self.assertRaises(ValueError, self.twitter.get_activities,
                       activity_id='123:abc')
+
+  def test_get_activities_activity_id_with_space(self):
+    self.expect_urlopen(API_STATUS % 0, TWEET)
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY], self.twitter.get_activities(
+        user_id='123', group_id='456', app_id='789', activity_id='000 '))
 
   def test_get_activities_self(self):
     self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': ''}, [])
