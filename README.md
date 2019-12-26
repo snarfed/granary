@@ -305,6 +305,8 @@ Non-breaking changes:
   * Bug fix: extract feed image from `hfeed` correctly.
 * REST API:
   * Add HTTP `HEAD` support.
+* GitHub:
+  * Publish: preserve `<code>` tags instead of converting them to \`s so that GitHub renders HTML entities like `&gt;` inside them instead of leaving them escaped. [Background.](https://chat.indieweb.org/dev/2019-12-24#t1577174464779200)
 * The `cache` kwarg to `Source.original_post_discovery()` now has no effect. `webutil.util.follow_redirects()` has its own built in caching now.
 
 ### 2.2 - 2019-11-02

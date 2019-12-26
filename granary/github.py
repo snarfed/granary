@@ -175,6 +175,24 @@ REACTIONS_REST = {
 }
 REACTIONS_REST_CHARS = {char: name for name, char, in REACTIONS_REST.items()}
 
+
+# preserve <code> elements instead of converting them to `s so that GitHub
+# renders HTML entities like &gt; inside them instead of leaving them escaped.
+# background: https://chat.indieweb.org/dev/2019-12-24#t1577174464779200
+CODE_PLACEHOLDER_START = '~~~BRIDGY-CODE-TAG-START~~~'
+CODE_PLACEHOLDER_END = '~~~BRIDGY-CODE-TAG-END~~~'
+
+def tag_callback_code_placeholders(self, tag, attrs, start):
+  if tag == 'code':
+    self.o(CODE_PLACEHOLDER_START if start else CODE_PLACEHOLDER_END)
+    return True
+
+
+def replace_code_placeholders(text):
+  return text.replace(CODE_PLACEHOLDER_START, '<code>')\
+             .replace(CODE_PLACEHOLDER_END, '</code>')
+
+
 class GitHub(source.Source):
   """GitHub source class. See file docstring and Source class for details.
 
@@ -198,6 +216,7 @@ class GitHub(source.Source):
     'ignore_links': False,
     'protect_links': False,
     'use_automatic_links': False,
+    'tag_callback': tag_callback_code_placeholders,
   }
 
   def __init__(self, access_token=None):
@@ -514,9 +533,9 @@ class GitHub(source.Source):
         abort=True,
         error_plain='You need an in-reply-to GitHub repo, issue, PR, or comment URL.')
 
-    content = orig_content = html.escape(
+    content = orig_content = replace_code_placeholders(html.escape(
       self._content_for_create(obj, ignore_formatting=ignore_formatting),
-      quote=False)
+      quote=False))
     url = obj.get('url')
     if include_link == source.INCLUDE_LINK and url:
       content += '\n\n(Originally published at: %s)' % url

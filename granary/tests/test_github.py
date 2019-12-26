@@ -801,6 +801,26 @@ class GitHubTest(testutil.TestCase):
     })
     self.assertIsNone(result.error_plain, result)
 
+  def test_create_doesnt_escape_html_inside_code_tag(self):
+    """https://github.com/indieweb/fragmention/issues/3"""
+    content = 'abc <code>&lt;div style="height: 10000px"&gt;&lt;/div&gt;</code> xyz'
+    self.expect_graphql_get_labels([])
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': content,
+        'labels': [],
+      }, response={
+        'html_url': 'https://github.com/foo/bar/issues/123',
+      }, headers=EXPECTED_HEADERS)
+    self.mox.ReplayAll()
+
+    result = self.gh.create({
+      'title': 'an issue title',
+      'content': content,
+      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+    })
+    self.assertIsNone(result.error_plain, result)
+
   def test_preview_issue(self):
     for i in range(2):
       self.expect_graphql_get_labels(['new silo'])
