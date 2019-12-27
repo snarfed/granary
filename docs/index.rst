@@ -281,7 +281,9 @@ locally:
 
 .. code:: shell
 
-   dev_appserver.py --log_level debug --enable_host_checking false --support_datastore_emulator --datastore_emulator_port=8089 --application=granary-demo app.yaml
+   dev_appserver.py --log_level debug --enable_host_checking false \
+     --support_datastore_emulator --datastore_emulator_port=8089 \
+     --application=granary-demo app.yaml
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
 granary home page!
@@ -430,35 +432,55 @@ Changelog
 3.0 - unreleased
 ~~~~~~~~~~~~~~~~
 
-*Breaking changes:* \* *Python 2 is no longer supported!* Including the
-`App Engine Standard Python 2
-runtime <https://cloud.google.com/appengine/docs/standard/python/>`__.
-On the plus side, the `Python 3
-runtime <https://cloud.google.com/appengine/docs/standard/python3/>`__
-is now supported! See this `list of
-differences <https://cloud.google.com/appengine/docs/standard/python3/python-differences>`__
-for more details.
+*Breaking changes:*
 
-Non-breaking changes: \* Migrate demo app and API to the App Engine
-Standard Python 3 runtime. \* Instagram: \* Scraping: fetch 50 likes
-instead of 24.
-(`snarfed/bridgy#898 <https://github.com/snarfed/bridgy/issues/898>`__)
-\* RSS: \* Add ``itunes:image``, ``itunes:author``, and
-``itunes:category``. \* Strip HTML from ``title`` element
-(`#177 <https://github.com/snarfed/granary/issues/177>`__).
-`Background. <https://validator.w3.org/feed/docs/warning/ContainsHTML.html>`__
-\* Always include author in items
-(`#177 <https://github.com/snarfed/granary/issues/177>`__). \* Bug fix:
-extract feed image from ``hfeed`` correctly. \* Bug fix: don’t crash on
-``article`` or ``mention`` tags in items with enclosures. \* Atom: \*
-Bug fix: extract feed image from ``hfeed`` correctly. \* REST API: \*
-Add HTTP ``HEAD`` support. \* GitHub: \* Publish: preserve ``<code>``
-tags instead of converting them to \`s so that GitHub renders HTML
-entities like ``&gt;`` inside them instead of leaving them escaped.
-`Background. <https://chat.indieweb.org/dev/2019-12-24#t1577174464779200>`__
-\* The ``cache`` kwarg to ``Source.original_post_discovery()`` now has
-no effect. ``webutil.util.follow_redirects()`` has its own built in
-caching now.
+-  *Python 2 is no longer supported!* Including the `App Engine Standard
+   Python 2
+   runtime <https://cloud.google.com/appengine/docs/standard/python/>`__.
+   On the plus side, the `Python 3
+   runtime <https://cloud.google.com/appengine/docs/standard/python3/>`__
+   is now supported! See this `list of
+   differences <https://cloud.google.com/appengine/docs/standard/python3/python-differences>`__
+   for more details.
+
+Non-breaking changes:
+
+-  Migrate demo app and API to the App Engine Standard Python 3 runtime.
+-  Instagram:
+
+   -  Scraping: fetch 50 likes instead of 24.
+      (`snarfed/bridgy#898 <https://github.com/snarfed/bridgy/issues/898>`__)
+
+-  RSS:
+
+   -  Add ``itunes:image``, ``itunes:author``, and ``itunes:category``.
+   -  Strip HTML from ``title`` element
+      (`#177 <https://github.com/snarfed/granary/issues/177>`__).
+      `Background. <https://validator.w3.org/feed/docs/warning/ContainsHTML.html>`__
+   -  Always include author in items
+      (`#177 <https://github.com/snarfed/granary/issues/177>`__).
+   -  Bug fix: extract feed image from ``hfeed`` correctly.
+   -  Bug fix: don’t crash on ``article`` or ``mention`` tags in items
+      with enclosures.
+
+-  Atom:
+
+   -  Bug fix: extract feed image from ``hfeed`` correctly.
+
+-  REST API:
+
+   -  Add HTTP ``HEAD`` support.
+
+-  GitHub:
+
+   -  Publish: preserve ``<code>`` tags instead of converting them to
+      \`s so that GitHub renders HTML entities like ``&gt;`` inside them
+      instead of leaving them escaped.
+      `Background. <https://chat.indieweb.org/dev/2019-12-24#t1577174464779200>`__
+
+-  The ``cache`` kwarg to ``Source.original_post_discovery()`` now has
+   no effect. ``webutil.util.follow_redirects()`` has its own built in
+   caching now.
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~

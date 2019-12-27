@@ -188,7 +188,9 @@ kill %1
 Finally, run this in the repo root directory to start the web app locally:
 
 ```shell
-dev_appserver.py --log_level debug --enable_host_checking false --support_datastore_emulator --datastore_emulator_port=8089 --application=granary-demo app.yaml
+dev_appserver.py --log_level debug --enable_host_checking false \
+  --support_datastore_emulator --datastore_emulator_port=8089 \
+  --application=granary-demo app.yaml
 ```
 
 Open [localhost:8080](http://localhost:8080/) and you should see the granary home page!
@@ -295,9 +297,11 @@ Changelog
 ### 3.0 - unreleased
 
 _Breaking changes:_
+
 * _Python 2 is no longer supported!_ Including the [App Engine Standard Python 2 runtime](https://cloud.google.com/appengine/docs/standard/python/). On the plus side, the [Python 3 runtime](https://cloud.google.com/appengine/docs/standard/python3/) is now supported! See this [list of differences](https://cloud.google.com/appengine/docs/standard/python3/python-differences) for more details.
 
 Non-breaking changes:
+
 * Migrate demo app and API to the App Engine Standard Python 3 runtime.
 * Instagram:
   * Scraping: fetch 50 likes instead of 24. ([snarfed/bridgy#898](https://github.com/snarfed/bridgy/issues/898))
