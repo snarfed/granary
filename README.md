@@ -172,27 +172,33 @@ Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with
 First, fork and clone this repo. Then, you'll need the [Google Cloud SDK](https://cloud.google.com/sdk/) with the `gcloud-appengine-python` and `gcloud-appengine-python-extras` [components](https://cloud.google.com/sdk/docs/components#additional_components). Once you have them, set up your environment by running these commands in the repo root directory:
 
 ```shell
-virtualenv local
+python3 -m venv local3
 source local3/bin/activate
 pip install -r requirements.txt
-python setup.py test
 ```
+
+Now, run the tests to check that everything is set up ok:
+
+```shell
+gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+python3 -m unittest discover
+kill %1
+```
+
+Finally, run this in the repo root directory to start the web app locally:
+
+```shell
+dev_appserver.py --log_level debug --enable_host_checking false --support_datastore_emulator --datastore_emulator_port=8089 --application=granary-demo app.yaml
+```
+
+Open [localhost:8080](http://localhost:8080/) and you should see the granary home page!
 
 If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with `pip install -e <path to oauth-dropins repo>`.
 
-To deploy:
+To deploy to production:
 
 ```shell
-python -m unittest discover && gcloud -q app deploy granary-demo *.yaml
-```
-
-To deploy [facebook-atom](https://github.com/snarfed/facebook-atom), [twitter-atom](https://github.com/snarfed/twitter-atom), [instagram-atom](https://github.com/snarfed/instagram-atom), and [plusstreamfeed](http://plusstreamfeed.appspot.com/) after a granary change:
-
-```shell
-#!/bin/tcsh
-foreach s (facebook-atom twitter-atom instagram-atom plusstreamfeed)
-  cd ~/src/$s && gcloud -q app deploy $s *.yaml
-end
+gcloud -q beta app deploy --no-cache granary-demo *.yaml
 ```
 
 The docs are built with [Sphinx](http://sphinx-doc.org/), including [apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html), [autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and [napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration is in [`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py) To build them, first install Sphinx with `pip install sphinx`. (You may want to do this outside your virtualenv; if so, you'll need to reconfigure it to see system packages with `virtualenv --system-site-packages local`.) Then, run [`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
