@@ -26,12 +26,21 @@ Here’s how to get started:
 -  Granary is `available on
    PyPi. <https://pypi.python.org/pypi/granary/>`__ Install with
    ``pip install granary``.
--  Supports Python 2.7+ and 3.3+.
 -  `Click here for getting started docs. <#using>`__
 -  `Click here for reference
    docs. <https://granary.readthedocs.io/en/latest/source/granary.html>`__
 -  The REST API and demo app are deployed at
    `granary.io <https://granary.io/>`__.
+
+`Versions 3.0 <https://pypi.org/project/oauth-dropins/2.2/>`__ and above
+support App Engine’s `Python 3
+runtimes <https://cloud.google.com/appengine/docs/python/>`__, both
+`Standard <https://cloud.google.com/appengine/docs/standard/python3/>`__
+and
+`Flexible <https://cloud.google.com/appengine/docs/flexible/python/>`__.
+If you’re on the `Python 2
+runtime <https://cloud.google.com/appengine/docs/standard/python/>`__,
+use `version 2.2 <https://pypi.org/project/oauth-dropins/2.2/>`__.
 
 License: This project is placed in the public domain.
 
@@ -246,52 +255,47 @@ Development
 Pull requests are welcome! Feel free to `ping
 me <http://snarfed.org/about>`__ with any questions.
 
-You’ll need the `App Engine Python
-SDK <https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python>`__
-version 1.9.15 or later (for
-`vendor <https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring>`__
-support). Add it to your ``$PYTHONPATH``, e.g.
-``export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine``, and then
-run:
+First, fork and clone this repo. Then, you’ll need the `Google Cloud
+SDK <https://cloud.google.com/sdk/>`__ with the
+``gcloud-appengine-python`` and ``gcloud-appengine-python-extras``
+`components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
+Once you have them, set up your environment by running these commands in
+the repo root directory:
 
 .. code:: shell
 
-   virtualenv local
-   source local/bin/activate
+   python3 -m venv local3
+   source local3/bin/activate
    pip install -r requirements.txt
-   python setup.py test
 
-If you send a pull request, please include (or update) a test for the
-new functionality if possible! The tests require the `App Engine
-SDK <https://developers.google.com/appengine/downloads>`__ or the
-`Google Cloud SDK <https://cloud.google.com/sdk/gcloud/>`__ (aka
-``gcloud``) with the ``gcloud-appengine-python`` and
-``gcloud-appengine-python-extras``
-`components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
+Now, run the tests to check that everything is set up ok:
+
+.. code:: shell
+
+   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+   python3 -m unittest discover
+   kill %1
+
+Finally, run this in the repo root directory to start the web app
+locally:
+
+.. code:: shell
+
+   dev_appserver.py --log_level debug --enable_host_checking false --support_datastore_emulator --datastore_emulator_port=8089 --application=granary-demo app.yaml
+
+Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
+granary home page!
 
 If you want to work on
 `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ at the same
 time, install it in “source” mode with
 ``pip install -e <path to oauth-dropins repo>``.
 
-To deploy:
+To deploy to production:
 
 .. code:: shell
 
-   python -m unittest discover && gcloud -q app deploy granary-demo *.yaml
-
-To deploy `facebook-atom <https://github.com/snarfed/facebook-atom>`__,
-`twitter-atom <https://github.com/snarfed/twitter-atom>`__,
-`instagram-atom <https://github.com/snarfed/instagram-atom>`__, and
-`plusstreamfeed <http://plusstreamfeed.appspot.com/>`__ after a granary
-change:
-
-.. code:: shell
-
-   #!/bin/tcsh
-   foreach s (facebook-atom twitter-atom instagram-atom plusstreamfeed)
-     cd ~/src/$s && gcloud -q app deploy $s *.yaml
-   end
+   gcloud -q beta app deploy --no-cache granary-demo *.yaml
 
 The docs are built with `Sphinx <http://sphinx-doc.org/>`__, including
 `apidoc <http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html>`__,
@@ -316,11 +320,8 @@ Here’s how to package, test, and ship a new release. (Note that this is
 `largely duplicated in the oauth-dropins readme
 too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
 
-1.  Run the unit tests. \`sh source local/bin/activate.csh python2 -m
-    unittest discover deactivate
-
-    source local3/bin/activate.csh python3 -m unittest discover -s
-    granary/tests/ deactivate \``\`
+1.  Run the unit tests.
+    ``sh  source local3/bin/activate.csh  python3 -m unittest discover -s granary/tests/  deactivate``
 2.  Bump the version number in ``setup.py`` and ``docs/conf.py``.
     ``git grep`` the old version number to make sure it only appears in
     the changelog. Change the current changelog entry in ``README.md``
@@ -330,26 +331,17 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``./docs/build.sh``.
 4.  ``git commit -am 'release vX.Y'``
 5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
-    ``sh  python3 setup.py clean build sdist  setenv ver X.Y  source local/bin/activate.csh  twine upload -r pypitest dist/granary-$ver.tar.gz``
-6.  Install from test.pypi.org, both Python 2 and 3.
-    ``sh  cd /tmp  virtualenv local  source local/bin/activate.csh  # mf2py 1.1.2 on test pypi is currently broken  pip install mf2py==1.1.2  pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
+    ``sh  python3 setup.py clean build sdist  setenv ver X.Y  source local3/bin/activate.csh  twine upload -r pypitest dist/granary-$ver.tar.gz``
+6.  Install from test.pypi.org.
     ``sh  python3 -m venv local3  source local3/bin/activate.csh  pip3 install --upgrade pip  pip3 install mf2py==1.1.2  pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
-7.  Smoke test that the code trivially loads and runs, in both Python 2
-    and 3.
+7.  Smoke test that the code trivially loads and runs.
 
     .. code:: sh
 
-        source local/bin/activate.csh
-        python2
+        source local3/bin/activate.csh
+        python3
         # run test code below
         deactivate
-
-    .. code:: sh
-
-       source local3/bin/activate.csh
-       python3
-       # run test code below
-       deactivate
 
     Test code to paste into the interpreter: \`py from granary import
     instagram instagram.__file_\_ # check that it’s in the virtualenv
@@ -434,6 +426,39 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+3.0 - unreleased
+~~~~~~~~~~~~~~~~
+
+*Breaking changes:* \* *Python 2 is no longer supported!* Including the
+`App Engine Standard Python 2
+runtime <https://cloud.google.com/appengine/docs/standard/python/>`__.
+On the plus side, the `Python 3
+runtime <https://cloud.google.com/appengine/docs/standard/python3/>`__
+is now supported! See this `list of
+differences <https://cloud.google.com/appengine/docs/standard/python3/python-differences>`__
+for more details.
+
+Non-breaking changes: \* Migrate demo app and API to the App Engine
+Standard Python 3 runtime. \* Instagram: \* Scraping: fetch 50 likes
+instead of 24.
+(`snarfed/bridgy#898 <https://github.com/snarfed/bridgy/issues/898>`__)
+\* RSS: \* Add ``itunes:image``, ``itunes:author``, and
+``itunes:category``. \* Strip HTML from ``title`` element
+(`#177 <https://github.com/snarfed/granary/issues/177>`__).
+`Background. <https://validator.w3.org/feed/docs/warning/ContainsHTML.html>`__
+\* Always include author in items
+(`#177 <https://github.com/snarfed/granary/issues/177>`__). \* Bug fix:
+extract feed image from ``hfeed`` correctly. \* Bug fix: don’t crash on
+``article`` or ``mention`` tags in items with enclosures. \* Atom: \*
+Bug fix: extract feed image from ``hfeed`` correctly. \* REST API: \*
+Add HTTP ``HEAD`` support. \* GitHub: \* Publish: preserve ``<code>``
+tags instead of converting them to \`s so that GitHub renders HTML
+entities like ``&gt;`` inside them instead of leaving them escaped.
+`Background. <https://chat.indieweb.org/dev/2019-12-24#t1577174464779200>`__
+\* The ``cache`` kwarg to ``Source.original_post_discovery()`` now has
+no effect. ``webutil.util.follow_redirects()`` has its own built in
+caching now.
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
