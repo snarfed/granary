@@ -43,6 +43,7 @@ from granary import (
   jsonfeed,
   mastodon,
   microformats2,
+  meetup,
   rss,
   source,
   twitter,
@@ -132,6 +133,10 @@ class Handler(handlers.ModernHandler):
         instance=util.get_required_param(self, 'instance'),
         access_token=util.get_required_param(self, 'access_token'),
         user_id=util.get_required_param(self, 'user_id'))
+    elif site == 'meetup':
+      src = meetup.Meetup(
+        access_token_key=util.get_required_param(self, 'access_token_key'),
+        access_token_secret=util.get_required_param(self, 'access_token_secret'))
     else:
       src_cls = source.sources.get(site)
       if not src_cls:

@@ -34,7 +34,7 @@ setup(name='granary',
           'Programming Language :: Python :: 3.7',
           'Topic :: Software Development :: Libraries :: Python Modules',
       ],
-      keywords='social facebook flickr github instagram twitter activitystreams html microformats2 mf2 atom rss jsonfeed',
+      keywords='social facebook flickr github instagram twitter activitystreams html microformats2 meetup mf2 atom rss jsonfeed',
       install_requires=[
           'beautifulsoup4~=4.8',
           'brevity>=0.2.17',
