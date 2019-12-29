@@ -23,3 +23,4 @@ instagram_sessionid_cookie
 linkedin_client_*
 twitter_app_*
 TAGS
+*.pyc
