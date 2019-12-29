@@ -37,6 +37,7 @@ from granary.facebook import Facebook
 from granary.flickr import Flickr
 from granary.github import GitHub
 from granary.mastodon import Mastodon
+from granary.meetup import Meetup
 from granary.instagram import Instagram
 from granary.twitter import Twitter
 
@@ -57,6 +58,7 @@ SILOS = (
   'github',
   'instagram',
   'mastodon',
+  'meetup',
   'twitter',
 )
 OAUTHS = {  # maps oauth-dropins module name to module
@@ -68,6 +70,7 @@ SILO_DOMAINS = {cls.DOMAIN for cls in (
   Flickr,
   GitHub,
   Instagram,
+  Meetup,
   Twitter,
 )}
 SCOPE_OVERRIDES = {
@@ -77,6 +80,8 @@ SCOPE_OVERRIDES = {
   'github': 'notifications,public_repo',
   # https://docs.joinmastodon.org/api/permissions/
   'mastodon': 'read',
+  # https://www.meetup.com/meetup_api/auth/#oauth2-scopes
+  'meetup': 'rsvp'
 }
 
 
