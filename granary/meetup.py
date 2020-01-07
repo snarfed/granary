@@ -3,6 +3,7 @@
 """
 
 from . import source
+import datetime
 import logging
 from oauth_dropins import meetup
 from oauth_dropins.webutil import util
@@ -99,3 +100,36 @@ class Meetup(source.Source):
 
     def return_error(self, msg):
         return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+
+    def user_to_actor(self, user):
+      """Converts a user to an actor.
+
+      Args:
+        user: dict, a decoded JSON Meetup user
+
+      Returns:
+        an ActivityStreams actor dict, ready to be JSON-encoded
+      """
+      user_id = user.get('id')
+      user_id_str = str(user_id)
+      published_s = round(user.get('joined') / 1000)
+      published_dt = datetime.datetime.utcfromtimestamp(published_s)
+      return util.trim_nulls({
+        'objectType': 'person',
+        'displayName': user.get('name'),
+        'image': {'url': user.get('photo', {}).get('photo_link')},
+        'id': self.tag_uri(user_id_str),
+        # numeric_id is our own custom field that always has the source's numeric
+        # user id, if available.
+        'numeric_id': user_id,
+        'published': published_dt.isoformat(),
+        'url': self.user_url(user_id_str),
+        'urls': None,
+        'location': {'displayName': user.get('localized_country_name')},
+        'username': user_id_str,
+        'description': None,
+        })
+
+    def user_url(self, user_id):
+      """Returns the URL for a user's profile."""
+      return 'https://www.meetup.com/members/%s/' % (user_id)
