@@ -127,8 +127,6 @@ class Instagram(source.Source):
       user_id: string id or username. Defaults to 'self', ie the current user.
       kwargs: if scraping, passed through to get_activities_response(). Raises
         AssertionError if provided and not scraping.
-
-    Raises: InstagramAPIError
     """
     if user_id is None:
       if self.scrape:
@@ -136,8 +134,10 @@ class Instagram(source.Source):
       user_id = 'self'
 
     if self.scrape:
-      return self.get_activities_response(
-        group_id=source.SELF, user_id=user_id, **kwargs).get('actor')
+      resp = self.get_activities_response(
+        group_id=source.SELF, user_id=user_id, **kwargs)
+      items = resp.get('items')
+      return items[0].get('actor') if items else {}
     else:
       return self.user_to_actor(util.trim_nulls(
         self.urlopen(API_USER_URL % user_id) or {}))
@@ -185,9 +185,6 @@ class Instagram(source.Source):
       ignore_rate_limit: boolean, for scraping, always make an HTTP request,
         even if we've been rate limited recently
       **: see :meth:`Source.get_activities_response`
-
-    Raises:
-      InstagramAPIError
     """
     if group_id is None:
       group_id = source.FRIENDS

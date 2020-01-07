@@ -305,6 +305,7 @@ Non-breaking changes:
 * Migrate demo app and API to the App Engine Standard Python 3 runtime.
 * Instagram:
   * Scraping: fetch 50 likes instead of 24. ([snarfed/bridgy#898](https://github.com/snarfed/bridgy/issues/898))
+  * Scraping bug fix for `get_actor()` with `user_id`.
 * RSS:
   * Add `itunes:image`, `itunes:author`, and `itunes:category`.
   * Strip HTML from `title` element ([#177](https://github.com/snarfed/granary/issues/177)). [Background.](https://validator.w3.org/feed/docs/warning/ContainsHTML.html)
