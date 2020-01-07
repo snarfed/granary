@@ -25,6 +25,45 @@ RSVP_ACTIVITY = {
             },
         }
 
+USER_JSON = {
+        "id": 189380737,
+        "name": "Jamie Tanna",
+        "email": "email@example.com",
+        "status": "active",
+        "joined": 1435825101000,
+        "city": "Nottingham",
+        "country": "gb",
+        "localized_country_name": "United Kingdom",
+        "state": "J9",
+        "lat": 52.95,
+        "lon": -1.18,
+        "photo": {
+            "id": 288326741,
+            "highres_link": "https://secure.meetupstatic.com/photos/member/6/8/7/5/highres_288326741.jpeg",
+            "photo_link": "https://secure.meetupstatic.com/photos/member/6/8/7/5/member_288326741.jpeg",
+            "thumb_link": "https://secure.meetupstatic.com/photos/member/6/8/7/5/thumb_288326741.jpeg",
+            "type": "member",
+            "base_url": "https://secure.meetupstatic.com"
+            },
+        "is_pro_admin": False
+        }
+
+ACTOR = {
+        'objectType': 'person',
+        'displayName': 'Jamie Tanna',
+        'image': {'url': 'https://secure.meetupstatic.com/photos/member/6/8/7/5/member_288326741.jpeg'},
+        'id': 'tag:meetup.com:189380737',
+        # numeric_id is our own custom field that always has the source's numeric
+        # user id, if available.
+        'numeric_id': 189380737,
+        'published': '2015-07-02T08:18:21',
+        'url': 'https://www.meetup.com/members/189380737/',
+        'urls': None,
+        'location': {'displayName': 'United Kingdom'},
+        'username': '189380737',
+        'description': None,
+        }
+
 class MeetupTest(testutil.TestCase):
 
     def setUp(self):
@@ -166,3 +205,9 @@ class MeetupTest(testutil.TestCase):
             self.assertTrue(result.abort)
             self.assertIn('Invalid Meetup.com event URL', result.error_plain)
             self.assertIn('Invalid Meetup.com event URL', result.error_html)
+
+    def test_user_to_actor(self):
+        self.assert_equals(ACTOR, self.meetup.user_to_actor(USER_JSON))
+
+    def test_user_url(self):
+        self.assert_equals('https://www.meetup.com/members/1234/', self.meetup.user_url(1234))
