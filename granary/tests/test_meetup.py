@@ -88,7 +88,7 @@ class MeetupTest(testutil.TestCase):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['verb'] = 'rsvp-yes'
         created = self.meetup.create(rsvp)
-        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-189380737', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -107,7 +107,7 @@ class MeetupTest(testutil.TestCase):
         rsvp['object'][0]['url'] = 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439'
         rsvp['verb'] = 'rsvp-yes'
         created = self.meetup.create(rsvp)
-        self.assert_equals({'url': 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-189380737', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -142,7 +142,7 @@ class MeetupTest(testutil.TestCase):
         rsvp['verb'] = 'rsvp-no'
         created = self.meetup.create(rsvp)
 
-        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-189380737', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -160,7 +160,7 @@ class MeetupTest(testutil.TestCase):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['object'][0]['url'] = 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/'
         created = self.meetup.create(rsvp)
-        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/#rsvp-by-189380737', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
