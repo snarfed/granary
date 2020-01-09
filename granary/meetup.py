@@ -93,9 +93,9 @@ class Meetup(source.Source):
             return source.creation_result(description=desc)
 
         create_resp = {
-                'url': '%(event_url)s#rsvp-by-%(user_id)s' % {
+                'url': '%(event_url)s#rsvp-by-%(url)s' % {
                     'event_url': event_url,
-                    'user_id': obj['actor']['numeric_id'],
+                    'url': urllib.parse.quote_plus(obj['actor']['url']),
                     },
                 'type': 'rsvp'
                 }
