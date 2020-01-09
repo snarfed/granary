@@ -65,7 +65,14 @@ class Meetup(source.Source):
         else:
             return self.return_error('Meetup.com syndication does not support %(verb)s' % {'verb': verb})
 
-        event_url = obj.get('inReplyTo')
+        # parse the in-reply-to out
+        url_containers = obj.get('object')
+        if not url_containers:
+            return self.return_error('missing an in-reply-to')
+        if not 'url' in url_containers[0]:
+            return self.return_error('missing an in-reply-to')
+
+        event_url = url_containers[0]['url']
         if not event_url:
             return self.return_error('missing an in-reply-to')
 
