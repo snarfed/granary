@@ -14,7 +14,11 @@ RSVP_ACTIVITY = {
         'id': tag_uri('145304994_rsvp_11500'),
         'objectType': 'activity',
         'verb': 'rsvp-yes',
-        'inReplyTo': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439',
+        'object': [
+          {
+            'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439',
+          }
+        ],
         'actor': {
             'objectType': 'person',
             'displayName': 'Jamie T',
@@ -100,7 +104,7 @@ class MeetupTest(testutil.TestCase):
         self.mox.ReplayAll()
 
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
-        rsvp['inReplyTo'] = 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439'
+        rsvp['object'][0]['url'] = 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439'
         rsvp['verb'] = 'rsvp-yes'
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-189380737', 'type': 'rsvp'},
@@ -154,7 +158,7 @@ class MeetupTest(testutil.TestCase):
         self.mox.ReplayAll()
 
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
-        rsvp['inReplyTo'] = 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/'
+        rsvp['object'][0]['url'] = 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/'
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/#rsvp-by-189380737', 'type': 'rsvp'},
                 created.content,
@@ -187,9 +191,36 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('Meetup.com syndication does not support post', result.error_plain)
         self.assertIn('Meetup.com syndication does not support post', result.error_html)
 
+    def test_create_rsvp_without_in_reply_to_object(self):
+        rsvp = copy.deepcopy(RSVP_ACTIVITY)
+        del rsvp['object']
+        result = self.meetup.create(rsvp)
+
+        self.assertTrue(result.abort)
+        self.assertIn('missing an in-reply-to', result.error_plain)
+        self.assertIn('missing an in-reply-to', result.error_html)
+
+    def test_create_rsvp_with_empty_in_reply_to_object(self):
+        rsvp = copy.deepcopy(RSVP_ACTIVITY)
+        rsvp['object'] = []
+        result = self.meetup.create(rsvp)
+
+        self.assertTrue(result.abort)
+        self.assertIn('missing an in-reply-to', result.error_plain)
+        self.assertIn('missing an in-reply-to', result.error_html)
+
+    def test_create_rsvp_with_in_reply_to_object_with_no_url_property(self):
+        rsvp = copy.deepcopy(RSVP_ACTIVITY)
+        rsvp['object'] = [{'not_url': 'foo'}] # TODO
+        result = self.meetup.create(rsvp)
+
+        self.assertTrue(result.abort)
+        self.assertIn('missing an in-reply-to', result.error_plain)
+        self.assertIn('missing an in-reply-to', result.error_html)
+
     def test_create_rsvp_without_in_reply_to(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
-        rsvp['inReplyTo'] = None
+        rsvp['object'][0]['url'] = None # TODO: no object
         result = self.meetup.create(rsvp)
 
         self.assertTrue(result.abort)
@@ -199,7 +230,7 @@ class MeetupTest(testutil.TestCase):
     def test_create_rsvp_with_invalid_url(self):
         for url in ['https://meetup.com/PHPMiNDS-in-Nottingham/', 'https://meetup.com/PHPMiNDS-in-Nottingham/events', 'https://meetup.com/PHPMiNDS-in-Nottingham/events/', 'https://meetup.com//events/264008439', 'https://www.eventbrite.com/e/indiewebcamp-amsterdam-tickets-68004881431/faked']:
             rsvp = copy.deepcopy(RSVP_ACTIVITY)
-            rsvp['inReplyTo'] = url
+            rsvp['object'][0]['url'] = url
             result = self.meetup.create(rsvp)
 
             self.assertTrue(result.abort)
