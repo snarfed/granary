@@ -185,10 +185,6 @@ class AppTest(testutil.HandlerTest):
     super(AppTest, self).setUp()
     app.UrlHandler.get.cache_clear()
 
-  @staticmethod
-  def request_url(path):
-    return '%s://%s%s' % (appengine_info.SCHEME, appengine_info.HOST, path)
-
   def expect_requests_get(self, *args, **kwargs):
     return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
 
@@ -258,7 +254,7 @@ class AppTest(testutil.HandlerTest):
                        resp.headers['Content-Type'])
 
     expected = copy.deepcopy(JSONFEED)
-    expected['feed_url'] = self.request_url(path)
+    expected['feed_url'] = 'http://localhost' + path
     self.assert_equals(expected, json_loads(resp.body))
 
     # TODO: drop?

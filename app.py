@@ -239,7 +239,8 @@ class MastodonStart(mastodon.StartHandler):
   Used to catch when someone enters a Mastodon instance URL that doesn't exist
   or isn't actually a Mastodon instance.
   """
-  APP_NAME = 'granary'
+  def app_name(self):
+    return 'granary'
 
   def handle_exception(self, e, debug):
     if isinstance(e, (ValueError, requests.RequestException, exc.HTTPException)):
