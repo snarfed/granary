@@ -125,6 +125,8 @@ def jsonfeed_to_activities(jsonfeed):
   }
 
   def attachment(jf):
+    if not hasattr(jf, 'get'):
+      raise ValueError('Expected attachment to be dict; got %s' % jf)
     url = jf.get('url')
     type = jf.get('mime_type', '').split('/')[0]
     as1 = {

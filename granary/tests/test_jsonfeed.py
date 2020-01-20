@@ -89,8 +89,17 @@ class JsonFeedTest(testutil.TestCase):
       with self.assertRaises(TypeError):
         activities_to_jsonfeed(bad)
 
-  def test_jsonfeed_to_activities_empty(self):
-    self.assert_equals(([], {'objectType': 'person'}), jsonfeed_to_activities({}))
+  def test_jsonfeed_to_activities_attachment_extra_list(self):
+    """Originally seen in:
+    https://console.cloud.google.com/errors/CPyvpeH077rvIg
+    https://www.macstories.net/feed/json
+    """
+    with self.assertRaises(ValueError):
+      jsonfeed_to_activities({
+        'items': [{
+          'attachments': [[{'content': 'foo'}]],
+        }]
+      })
 
   def test_not_jsonfeed(self):
     """Based on this JSON, which isn't JSON Feed:
