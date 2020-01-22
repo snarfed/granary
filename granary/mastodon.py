@@ -42,6 +42,9 @@ MEDIA_TYPES = {
   'gifv': 'video',
   'unknown': None,
 }
+# Not documented, but here's the Mastodon commit that added this limit:
+# https://github.com/tootsuite/mastodon/commit/5f511324b6#diff-11783d64d04391768226f7d45a610898R40
+MAX_MEDIA = 4
 
 # copied from Mastodon's source on 2019-10-21, then revised the lookbehind
 # https://github.com/tootsuite/mastodon/blob/6bee7b820dcde6d487e93b8699d4aab3e49bedc4/app/models/account.rb#L52-L53
@@ -545,10 +548,10 @@ class Mastodon(source.Source):
     is_reply = type == 'comment' or obj.get('inReplyTo')
     is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
     atts = obj.get('attachments', [])
-    images = util.get_list(obj, 'image') + [
-      a for a in atts if a.get('objectType') == 'image' and util.get_url(a)]
-    videos = util.get_list(obj, 'stream') + [
-      a for a in atts if a.get('objectType') == 'video' and util.get_url(a, key='stream')]
+    images = util.dedupe_urls(util.get_list(obj, 'image') +
+                              [a for a in atts if a.get('objectType') == 'image'])
+    videos = util.dedupe_urls([obj] + [a for a in atts if a.get('objectType') == 'video'],
+                              key='stream')
     has_media = (images or videos) and (type in ('note', 'article') or is_reply)
 
     # prefer displayName over content for articles
@@ -637,6 +640,13 @@ class Mastodon(source.Source):
       else:
         preview_description += '<span class="verb">toot</span>:'
 
+      num_media = len(videos) + len(images)
+      if num_media > MAX_MEDIA:
+        videos = videos[:MAX_MEDIA]
+        images = images[:max(MAX_MEDIA - len(videos), 0)]
+        logging.warning('Found %d media! Only using the first %d: %r',
+                        num_media, MAX_MEDIA, videos + images)
+
       if preview:
         media_previews = [
           '<video controls src="%s"><a href="%s">%s</a></video>' %
@@ -655,7 +665,7 @@ class Mastodon(source.Source):
                                       description=preview_description)
 
       else:
-        ids = self.upload_media(images + videos)
+        ids = self.upload_media(videos + images)
         if ids:
           data['media_ids'] = ids
         resp = self._post(API_STATUSES, json=data)

@@ -725,11 +725,11 @@ class MastodonTest(testutil.TestCase):
                      preview.content)
 
   def test_create_with_media(self):
-    self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
-    self.expect_post(API_MEDIA, {'id': 'a'}, files={'file': b'pic 1'})
-
     self.expect_requests_get('http://foo.com/video.mp4', 'pic 2')
-    self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 2'})
+    self.expect_post(API_MEDIA, {'id': 'a'}, files={'file': b'pic 2'})
+
+    self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
+    self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 1'})
 
     self.expect_post(API_STATUSES, json={
       'status': 'foo ☕ bar',
@@ -738,6 +738,43 @@ class MastodonTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.mastodon.create(MEDIA_OBJECT)
+    self.assert_equals(STATUS, result.content, result)
+
+  def test_create_with_too_many_media(self):
+    image_urls = ['http://my/picture/%d' % i for i in range(mastodon.MAX_MEDIA)]
+    obj = {
+      'objectType': 'note',
+      'stream': {'url': 'http://my/video'},
+      'image': [{'url': url} for url in image_urls],
+      # duplicate video and images to check that they're de-duped
+      'attachments': [{'objectType': 'video', 'stream': {'url': 'http://my/video'}}] +
+        [{'objectType': 'image', 'url': url} for url in image_urls],
+    }
+
+    # test preview
+    preview = self.mastodon.preview_create(obj)
+    self.assertEqual('<span class="verb">toot</span>:', preview.description)
+    self.assertEqual("""\
+<br /><br />\
+<video controls src="http://my/video"><a href="http://my/video">this video</a></video> \
+&nbsp; <img src="http://my/picture/0" alt="" /> \
+&nbsp; <img src="http://my/picture/1" alt="" /> \
+&nbsp; <img src="http://my/picture/2" alt="" />""",
+                     preview.content)
+
+    # test create
+    self.expect_requests_get('http://my/video', 'vid')
+    self.expect_post(API_MEDIA, {'id': '0'}, files={'file': b'vid'})
+    for i, url in enumerate(image_urls[:-1]):
+      self.expect_requests_get('http://my/picture/%d' % i, 'pic')
+      self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'})
+
+    self.expect_post(API_STATUSES, json={
+      'status': '',
+      'media_ids': ['0', '1', '2', '3'],
+    }, response=STATUS)
+    self.mox.ReplayAll()
+    result = self.mastodon.create(obj)
     self.assert_equals(STATUS, result.content, result)
 
   def test_delete(self):
