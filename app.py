@@ -43,6 +43,8 @@ from granary.twitter import Twitter
 
 import api, cron
 
+handlers.JINJA_ENV.loader.searchpath.append('granary')
+
 INPUTS = (
   'activitystreams',
   'as1',
