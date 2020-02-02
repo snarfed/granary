@@ -25,27 +25,30 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import source
 
+# common to all API calls that fetch tweets
+API_TWEET_PARAMS = '&include_entities=true&tweet_mode=extended&include_ext_alt_text=true'
+
 API_BASE = 'https://api.twitter.com/1.1/'
 API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
 API_BLOCKS = 'blocks/list.json?skip_status=true&count=5000&cursor=%s'
 API_CURRENT_USER = 'account/verify_credentials.json'
 API_DELETE_TWEET = 'statuses/destroy.json'
 API_DELETE_FAVORITE = 'favorites/destroy.json'
-API_FAVORITES = 'favorites/list.json?screen_name=%s&include_entities=true&tweet_mode=extended'
-API_LIST_TIMELINE = 'lists/statuses.json?include_entities=true&tweet_mode=extended&count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
-API_LOOKUP = 'statuses/lookup.json?id=%s&include_entities=true&tweet_mode=extended'
+API_FAVORITES = 'favorites/list.json?screen_name=%s'
+API_LIST_TIMELINE = 'lists/statuses.json?count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s' + API_TWEET_PARAMS
+API_LOOKUP = 'statuses/lookup.json?id=%s' + API_TWEET_PARAMS
 API_POST_FAVORITE = 'favorites/create.json'
 API_POST_MEDIA = 'statuses/update_with_media.json'
 API_POST_RETWEET = 'statuses/retweet/%s.json'
 API_POST_TWEET = 'statuses/update.json'
-API_RETWEETS = 'statuses/retweets.json?id=%s&tweet_mode=extended'
-API_SEARCH = 'search/tweets.json?q=%(q)s&include_entities=true&tweet_mode=extended&result_type=recent&count=%(count)d'
-API_STATUS = 'statuses/show.json?id=%s&include_entities=true&tweet_mode=extended'
-API_TIMELINE = 'statuses/home_timeline.json?include_entities=true&tweet_mode=extended&count=%d'
+API_RETWEETS = 'statuses/retweets.json?id=%s' + API_TWEET_PARAMS
+API_SEARCH = 'search/tweets.json?q=%(q)s&result_type=recent&count=%(count)d' + API_TWEET_PARAMS
+API_STATUS = 'statuses/show.json?id=%s' + API_TWEET_PARAMS
+API_TIMELINE = 'statuses/home_timeline.json?count=%d' + API_TWEET_PARAMS
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
 API_MEDIA_METADATA = 'https://upload.twitter.com/1.1/media/metadata/create.json'
 API_USER = 'users/show.json?screen_name=%s'
-API_USER_TIMELINE = 'statuses/user_timeline.json?include_entities=true&tweet_mode=extended&count=%(count)d&screen_name=%(screen_name)s'
+API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
 HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
 
 TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
@@ -1205,6 +1208,7 @@ class Twitter(source.Source):
           'objectType': types.get(m.get('type')),
           'image': {'url': m.get('media_url_https') or m.get('media_url')},
           'stream': {'url': self._video_url(m)},
+          'displayName': m.get('ext_alt_text'),
       } for m in media]
 
       first = obj['attachments'][0]

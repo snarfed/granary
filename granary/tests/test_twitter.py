@@ -137,7 +137,8 @@ TWEET = {
         'display_url': 'http://pic.twitter.com/1',
         'indices': [83, 102],
         'type': 'photo',
-      }, {
+        'ext_alt_text': 'the alt text',
+     }, {
         # duplicated in extended_entities; we should de-dupe
         'id': 'picture3',
         'media_url': 'http://p.twimg.com/picture3',
@@ -246,6 +247,7 @@ OBJECT = {  # ActivityStreams
   }, {
     'objectType': 'image',
     'image': {'url': 'https://p.twimg.com/picture1'},
+    'displayName': 'the alt text',
   }],
 }
 ACTIVITY = {  # ActivityStreams
@@ -650,7 +652,8 @@ ATOM = """\
 </p>
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
-<img class="u-photo" src="https://p.twimg.com/picture1" alt="" />
+<img class="u-photo" src="https://p.twimg.com/picture1" alt="the alt text" />
+<span class="name">the alt text</span>
 </a>
 </p>
 <p>  <span class="p-location h-card">

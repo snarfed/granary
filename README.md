@@ -306,6 +306,8 @@ Non-breaking changes:
 * Instagram:
   * Scraping: fetch 50 likes instead of 24. ([snarfed/bridgy#898](https://github.com/snarfed/bridgy/issues/898))
   * Scraping bug fix for `get_actor()` with `user_id`.
+* Twitter:
+  * Add [image alt text](https://blog.twitter.com/developer/en_us/a/2016/alt-text-support-for-twitter-cards-and-the-rest-api.html) support to `get_activites()` etc ([#183](https://github.com/snarfed/granary/issues/183)).
 * RSS:
   * Add `itunes:image`, `itunes:author`, and `itunes:category`.
   * Strip HTML from `title` element ([#177](https://github.com/snarfed/granary/issues/177)). [Background.](https://validator.w3.org/feed/docs/warning/ContainsHTML.html)
