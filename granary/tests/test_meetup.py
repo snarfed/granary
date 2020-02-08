@@ -111,6 +111,25 @@ class MeetupTest(testutil.TestCase):
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
+    def test_create_rsvp_yes_with_non_numeric_event_id(self):
+        self.expect_urlopen(
+                url='https://api.meetup.com/NottsJS/events/qhnpfqyzcblb/rsvps',
+                data='response=yes',
+                response=200,
+                headers={
+                    'Authorization': 'Bearer token-here'
+                    }
+                )
+        self.mox.ReplayAll()
+
+        rsvp = copy.deepcopy(RSVP_ACTIVITY)
+        rsvp['object'][0]['url'] = 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb'
+        rsvp['verb'] = 'rsvp-yes'
+        created = self.meetup.create(rsvp)
+        self.assert_equals({'url': 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
+                created.content,
+                '%s\n%s' % (created.content, rsvp))
+
     def test_preview_create_rsvp_yes(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['verb'] = 'rsvp-yes'
