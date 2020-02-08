@@ -15,7 +15,7 @@ API_RSVPS = '/%(urlname)s/events/%(event_id)s/rsvps'
 
 # We don't want to be too strict here with what a valid urlname and event_id
 # are because Meetup.com haven't documented it too well, and it may change
-EVENT_URL_RE = re.compile(r'https://(www\.|)meetup.com/([^/]+)/events/([0-9]+)/?$')
+EVENT_URL_RE = re.compile(r'https://(www\.|)meetup.com/([^/]+)/events/([^/]+)/?$')
 
 class Meetup(source.Source):
 
