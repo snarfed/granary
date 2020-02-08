@@ -54,7 +54,7 @@ class Meetup(source.Source):
     def _create(self, obj, preview=False, include_link=source.OMIT_LINK, ignore_formatting=False):
         if not preview in (False, True):
             return self.return_error('Invalid Preview parameter, must be True or False')
-        verb = obj.get('verb')
+        verb = source.object_type(obj)
         response = None
         if verb == 'rsvp-yes':
             response = 'yes'
