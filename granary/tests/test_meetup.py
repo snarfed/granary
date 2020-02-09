@@ -237,15 +237,6 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('missing an in-reply-to', result.error_plain)
         self.assertIn('missing an in-reply-to', result.error_html)
 
-    def test_create_rsvp_without_in_reply_to(self):
-        rsvp = copy.deepcopy(RSVP_ACTIVITY)
-        rsvp['object'][0]['url'] = None # TODO: no object
-        result = self.meetup.create(rsvp)
-
-        self.assertTrue(result.abort)
-        self.assertIn('missing an in-reply-to', result.error_plain)
-        self.assertIn('missing an in-reply-to', result.error_html)
-
     def test_create_rsvp_with_invalid_url(self):
         for url in ['https://meetup.com/PHPMiNDS-in-Nottingham/', 'https://meetup.com/PHPMiNDS-in-Nottingham/events', 'https://meetup.com/PHPMiNDS-in-Nottingham/events/', 'https://meetup.com//events/264008439']:
             rsvp = copy.deepcopy(RSVP_ACTIVITY)
