@@ -247,7 +247,7 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('missing an in-reply-to', result.error_html)
 
     def test_create_rsvp_with_invalid_url(self):
-        for url in ['https://meetup.com/PHPMiNDS-in-Nottingham/', 'https://meetup.com/PHPMiNDS-in-Nottingham/events', 'https://meetup.com/PHPMiNDS-in-Nottingham/events/', 'https://meetup.com//events/264008439', 'https://www.eventbrite.com/e/indiewebcamp-amsterdam-tickets-68004881431/faked']:
+        for url in ['https://meetup.com/PHPMiNDS-in-Nottingham/', 'https://meetup.com/PHPMiNDS-in-Nottingham/events', 'https://meetup.com/PHPMiNDS-in-Nottingham/events/', 'https://meetup.com//events/264008439']:
             rsvp = copy.deepcopy(RSVP_ACTIVITY)
             rsvp['object'][0]['url'] = url
             result = self.meetup.create(rsvp)
@@ -255,6 +255,16 @@ class MeetupTest(testutil.TestCase):
             self.assertTrue(result.abort)
             self.assertIn('Invalid Meetup.com event URL', result.error_plain)
             self.assertIn('Invalid Meetup.com event URL', result.error_html)
+
+    def test_create_rsvp_with_non_meetup_url(self):
+        rsvp = copy.deepcopy(RSVP_ACTIVITY)
+        rsvp['object'][0]['url'] = 'https://www.eventbrite.com/e/indiewebcamp-amsterdam-tickets-68004881431/faked'
+
+        result = self.meetup.create(rsvp)
+
+        self.assertTrue(result.abort)
+        self.assertIn('missing an in-reply-to', result.error_plain)
+        self.assertIn('missing an in-reply-to', result.error_html)
 
     def test_user_to_actor(self):
         self.assert_equals(ACTOR, self.meetup.user_to_actor(USER_JSON))
