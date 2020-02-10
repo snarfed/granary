@@ -323,7 +323,13 @@ Here’s how to package, test, and ship a new release. (Note that this is
 too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
 
 1.  Run the unit tests.
-    ``sh  source local3/bin/activate.csh  python3 -m unittest discover -s granary/tests/  deactivate``
+
+    .. code:: sh
+
+       source local3/bin/activate.csh
+       python3 -m unittest discover -s granary/tests/
+       deactivate
+
 2.  Bump the version number in ``setup.py`` and ``docs/conf.py``.
     ``git grep`` the old version number to make sure it only appears in
     the changelog. Change the current changelog entry in ``README.md``
@@ -333,42 +339,75 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``./docs/build.sh``.
 4.  ``git commit -am 'release vX.Y'``
 5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
-    ``sh  python3 setup.py clean build sdist  setenv ver X.Y  source local3/bin/activate.csh  twine upload -r pypitest dist/granary-$ver.tar.gz``
+
+    .. code:: sh
+
+       python3 setup.py clean build sdist
+       setenv ver X.Y
+       source local3/bin/activate.csh
+       twine upload -r pypitest dist/granary-$ver.tar.gz
+
 6.  Install from test.pypi.org.
-    ``sh  python3 -m venv local3  source local3/bin/activate.csh  pip3 install --upgrade pip  pip3 install mf2py==1.1.2  pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver  deactivate``
+
+    .. code:: sh
+
+       python3 -m venv local3
+       source local3/bin/activate.csh
+       pip3 install --upgrade pip
+       pip3 install mf2py==1.1.2
+       pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
+       deactivate
+
 7.  Smoke test that the code trivially loads and runs.
 
     .. code:: sh
 
-        source local3/bin/activate.csh
-        python3
-        # run test code below
-        deactivate
+       source local3/bin/activate.csh
+       python3
+       # run test code below
+       deactivate
 
-    Test code to paste into the interpreter: \`py from granary import
-    instagram instagram.__file_\_ # check that it’s in the virtualenv
+    Test code to paste into the interpreter:
 
-    i = instagram.Instagram() a = i.get_activities(user_id=‘snarfed’,
-    group_id=‘@self’, scrape=True) print(json.dumps(a, indent=2))
+    .. code:: py
 
-    from granary import atom print(atom.activities_to_atom(a, {}))
+       from granary import instagram
+       instagram.__file__  # check that it's in the virtualenv
 
-    from granary import github g = github.GitHub(‘XXX’) # insert a
-    GitHub personal OAuth access token a2 = g.get_activities()
-    print(json.dumps(a2, indent=2)) \``\`
+       i = instagram.Instagram()
+       a = i.get_activities(user_id='snarfed', group_id='@self', scrape=True)
+       print(json.dumps(a, indent=2))
+
+       from granary import atom
+       print(atom.activities_to_atom(a, {}))
+
+       from granary import github
+       g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
+       a2 = g.get_activities()
+       print(json.dumps(a2, indent=2))
+
 8.  Tag the release in git. In the tag message editor, delete the
     generated comments at bottom, leave the first line blank (to omit
     the release “title” in github), put ``### Notable changes`` on the
     second line, then copy and paste this version’s changelog contents
     below it.
-    ``sh  git tag -a v$ver --cleanup=verbatim  git push  git push --tags``
+
+    .. code:: sh
+
+       git tag -a v$ver --cleanup=verbatim
+       git push
+       git push --tags
+
 9.  `Click here to draft a new release on
     GitHub. <https://github.com/snarfed/granary/releases/new>`__ Enter
     ``vX.Y`` in the *Tag version* box. Leave *Release title* empty. Copy
     ``### Notable changes`` and the changelog contents into the
     description text box.
 10. Upload to `pypi.org <https://pypi.org/>`__!
-    ``sh  twine upload dist/granary-$ver.tar.gz``
+
+    .. code:: sh
+
+       twine upload dist/granary-$ver.tar.gz
 
 Related work
 ------------
@@ -450,6 +489,14 @@ Non-breaking changes:
 
    -  Scraping: fetch 50 likes instead of 24.
       (`snarfed/bridgy#898 <https://github.com/snarfed/bridgy/issues/898>`__)
+   -  Scraping bug fix for ``get_actor()`` with ``user_id``.
+
+-  Twitter:
+
+   -  Add `image alt
+      text <https://blog.twitter.com/developer/en_us/a/2016/alt-text-support-for-twitter-cards-and-the-rest-api.html>`__
+      support to ``get_activites()`` etc
+      (`#183 <https://github.com/snarfed/granary/issues/183>`__).
 
 -  RSS:
 
@@ -477,6 +524,10 @@ Non-breaking changes:
       \`s so that GitHub renders HTML entities like ``&gt;`` inside them
       instead of leaving them escaped.
       `Background. <https://chat.indieweb.org/dev/2019-12-24#t1577174464779200>`__
+
+-  JSON Feed:
+
+   -  Handle malformed attachments better.
 
 -  The ``cache`` kwarg to ``Source.original_post_discovery()`` now has
    no effect. ``webutil.util.follow_redirects()`` has its own built in

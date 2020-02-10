@@ -213,65 +213,65 @@ Release instructions
 Here's how to package, test, and ship a new release. (Note that this is [largely duplicated in the oauth-dropins readme too](https://github.com/snarfed/oauth-dropins#release-instructions).)
 
 1. Run the unit tests.
-    ```sh
-    source local3/bin/activate.csh
-    python3 -m unittest discover -s granary/tests/
-    deactivate
-    ```
+   ```sh
+   source local3/bin/activate.csh
+   python3 -m unittest discover -s granary/tests/
+   deactivate
+   ```
 1. Bump the version number in `setup.py` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
 1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`.
 1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
-    ```sh
-    python3 setup.py clean build sdist
-    setenv ver X.Y
-    source local3/bin/activate.csh
-    twine upload -r pypitest dist/granary-$ver.tar.gz
-    ```
+   ```sh
+   python3 setup.py clean build sdist
+   setenv ver X.Y
+   source local3/bin/activate.csh
+   twine upload -r pypitest dist/granary-$ver.tar.gz
+   ```
 1. Install from test.pypi.org.
-    ```sh
-    python3 -m venv local3
-    source local3/bin/activate.csh
-    pip3 install --upgrade pip
-    pip3 install mf2py==1.1.2
-    pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
-    deactivate
-    ```
+   ```sh
+   python3 -m venv local3
+   source local3/bin/activate.csh
+   pip3 install --upgrade pip
+   pip3 install mf2py==1.1.2
+   pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
+   deactivate
+   ```
 1. Smoke test that the code trivially loads and runs.
    ```sh
-    source local3/bin/activate.csh
-    python3
-    # run test code below
-    deactivate
-    ```
-    Test code to paste into the interpreter:
-    ```py
-    from granary import instagram
-    instagram.__file__  # check that it's in the virtualenv
+   source local3/bin/activate.csh
+   python3
+   # run test code below
+   deactivate
+   ```
+   Test code to paste into the interpreter:
+   ```py
+   from granary import instagram
+   instagram.__file__  # check that it's in the virtualenv
 
-    i = instagram.Instagram()
-    a = i.get_activities(user_id='snarfed', group_id='@self', scrape=True)
-    print(json.dumps(a, indent=2))
+   i = instagram.Instagram()
+   a = i.get_activities(user_id='snarfed', group_id='@self', scrape=True)
+   print(json.dumps(a, indent=2))
 
-    from granary import atom
-    print(atom.activities_to_atom(a, {}))
+   from granary import atom
+   print(atom.activities_to_atom(a, {}))
 
-    from granary import github
-    g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
-    a2 = g.get_activities()
-    print(json.dumps(a2, indent=2))
-    ```
+   from granary import github
+   g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
+   a2 = g.get_activities()
+   print(json.dumps(a2, indent=2))
+   ```
 1. Tag the release in git. In the tag message editor, delete the generated comments at bottom, leave the first line blank (to omit the release "title" in github), put `### Notable changes` on the second line, then copy and paste this version's changelog contents below it.
-    ```sh
-    git tag -a v$ver --cleanup=verbatim
-    git push
-    git push --tags
-    ```
+   ```sh
+   git tag -a v$ver --cleanup=verbatim
+   git push
+   git push --tags
+   ```
 1. [Click here to draft a new release on GitHub.](https://github.com/snarfed/granary/releases/new) Enter `vX.Y` in the _Tag version_ box. Leave _Release title_ empty. Copy `### Notable changes` and the changelog contents into the description text box.
 1. Upload to [pypi.org](https://pypi.org/)!
-    ```sh
-    twine upload dist/granary-$ver.tar.gz
-    ```
+   ```sh
+   twine upload dist/granary-$ver.tar.gz
+   ```
 
 
 Related work
