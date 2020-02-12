@@ -162,6 +162,8 @@ REACTIONS_GRAPHQL = {
   u'😕': 'CONFUSED',
   u'❤️': 'HEART',
   u'🎉': 'HOORAY',
+  u'🚀': 'ROCKET',
+  u'👀': 'EYES',
 }
 # key is 'content' field value, value is unicode emoji string.
 # https://developer.github.com/v3/reactions/#reaction-types
@@ -172,6 +174,8 @@ REACTIONS_REST = {
   u'😕': 'confused',
   u'❤️': 'heart',
   u'🎉': 'hooray',
+  u'🚀': 'rocket',
+  u'👀': 'eyes',
 }
 REACTIONS_REST_CHARS = {char: name for name, char, in REACTIONS_REST.items()}
 
