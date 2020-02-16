@@ -296,3 +296,6 @@ class MeetupTest(testutil.TestCase):
 
     def test_user_url(self):
         self.assert_equals('https://www.meetup.com/members/1234/', self.meetup.user_url(1234))
+
+    def test_embed_post(self):
+        self.assert_equals('<span class="verb">RSVP yes</span> to <a href="https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439">this event</a>.', Meetup.embed_post(RSVP_ACTIVITY))
