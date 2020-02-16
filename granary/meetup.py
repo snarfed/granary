@@ -121,10 +121,11 @@ class Meetup(source.Source):
       user_id_str = str(user_id)
       published_s = round(user.get('joined') / 1000)
       published_dt = datetime.datetime.utcfromtimestamp(published_s)
+      photo = user.get('photo', {}).get('photo_link', 'https://secure.meetupstatic.com/img/noPhoto_80.png')
       return util.trim_nulls({
         'objectType': 'person',
         'displayName': user.get('name'),
-        'image': {'url': user.get('photo', {}).get('photo_link')},
+        'image': {'url': photo},
         'id': self.tag_uri(user_id_str),
         # numeric_id is our own custom field that always has the source's numeric
         # user id, if available.

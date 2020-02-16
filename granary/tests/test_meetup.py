@@ -260,5 +260,39 @@ class MeetupTest(testutil.TestCase):
     def test_user_to_actor(self):
         self.assert_equals(ACTOR, self.meetup.user_to_actor(USER_JSON))
 
+    def test_user_to_actor_with_no_photo(self):
+        user_json = {
+                "id": 189380737,
+                "name": "Jamie Tanna",
+                "email": "email@example.com",
+                "status": "active",
+                "joined": 1435825101000,
+                "city": "Nottingham",
+                "country": "gb",
+                "localized_country_name": "United Kingdom",
+                "state": "J9",
+                "lat": 52.95,
+                "lon": -1.18,
+                "is_pro_admin": False
+                }
+
+        actor = {
+                'objectType': 'person',
+                'displayName': 'Jamie Tanna',
+                'image': {'url': 'https://secure.meetupstatic.com/img/noPhoto_80.png'},
+                'id': 'tag:meetup.com:189380737',
+                # numeric_id is our own custom field that always has the source's numeric
+                # user id, if available.
+                'numeric_id': 189380737,
+                'published': '2015-07-02T08:18:21',
+                'url': 'https://www.meetup.com/members/189380737/',
+                'urls': None,
+                'location': {'displayName': 'United Kingdom'},
+                'username': '189380737',
+                'description': None,
+                }
+
+        self.assert_equals(actor, self.meetup.user_to_actor(user_json))
+
     def test_user_url(self):
         self.assert_equals('https://www.meetup.com/members/1234/', self.meetup.user_url(1234))
