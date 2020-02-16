@@ -26,6 +26,21 @@ class Meetup(source.Source):
             domain=DOMAIN,
             approve=EVENT_URL_RE)
 
+    @classmethod
+    def embed_post(cls, obj):
+        """Returns the HTML string for embedding an RSVP from Meetup.com.
+
+        Args:
+          obj:
+          obj: AS1 dict with at least url, and optionally also content.
+
+        Returns: string, HTML
+        """
+        return '<span class="verb">RSVP %s</span> to <a href="%s">this event</a>.' % (
+                source.object_type(obj)[5:],
+                source.Source.base_object(cls, obj)['url']
+                )
+
     def __init__(self, access_token):
         self.access_token = access_token
         pass
@@ -88,9 +103,7 @@ class Meetup(source.Source):
         event_id = parsed_url_part.group(3)
 
         if preview:
-            desc = ('<span class="verb">RSVP %s</span> to <a href="%s">this event</a>.' %
-                    (verb[5:], event_url))
-            return source.creation_result(description=desc)
+            return source.creation_result(description=Meetup.embed_post(obj))
 
         create_resp = {
                 'url': '%(event_url)s#rsvp-by-%(url)s' % {
