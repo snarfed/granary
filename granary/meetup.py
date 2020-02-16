@@ -105,10 +105,14 @@ class Meetup(source.Source):
         if preview:
             return source.creation_result(description=Meetup.embed_post(obj))
 
+        post_url = obj.get('url')
+        if not post_url:
+            return self.return_error('Missing the post\'s url')
+
         create_resp = {
                 'url': '%(event_url)s#rsvp-by-%(url)s' % {
                     'event_url': event_url,
-                    'url': urllib.parse.quote_plus(obj['actor']['url']),
+                    'url': urllib.parse.quote_plus(post_url),
                     },
                 'type': 'rsvp'
                 }

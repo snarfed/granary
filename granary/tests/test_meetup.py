@@ -12,6 +12,7 @@ def tag_uri(name):
 
 RSVP_ACTIVITY = {
         'id': tag_uri('145304994_rsvp_11500'),
+        'url': 'http://localhost/post/wibble/',
         'objectType': 'activity',
         'verb': 'rsvp-yes',
         'object': [
@@ -88,7 +89,7 @@ class MeetupTest(testutil.TestCase):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['verb'] = 'rsvp-yes'
         created = self.meetup.create(rsvp)
-        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -107,7 +108,7 @@ class MeetupTest(testutil.TestCase):
         rsvp['object'][0]['url'] = 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439'
         rsvp['verb'] = 'rsvp-yes'
         created = self.meetup.create(rsvp)
-        self.assert_equals({'url': 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -126,7 +127,7 @@ class MeetupTest(testutil.TestCase):
         rsvp['object'][0]['url'] = 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb'
         rsvp['verb'] = 'rsvp-yes'
         created = self.meetup.create(rsvp)
-        self.assert_equals({'url': 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -161,7 +162,7 @@ class MeetupTest(testutil.TestCase):
         rsvp['verb'] = 'rsvp-no'
         created = self.meetup.create(rsvp)
 
-        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -179,7 +180,7 @@ class MeetupTest(testutil.TestCase):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['object'][0]['url'] = 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/'
         created = self.meetup.create(rsvp)
-        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/#rsvp-by-https%3A%2F%2Fwww.meetup.com%2Fmembers%2F189380737%2F', 'type': 'rsvp'},
+        self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 '%s\n%s' % (created.content, rsvp))
 
@@ -256,6 +257,16 @@ class MeetupTest(testutil.TestCase):
         self.assertTrue(result.abort)
         self.assertIn('missing an in-reply-to', result.error_plain)
         self.assertIn('missing an in-reply-to', result.error_html)
+
+    def test_create_rsvp_with_no_url(self):
+        rsvp = copy.deepcopy(RSVP_ACTIVITY)
+        rsvp['url'] = None
+
+        result = self.meetup.create(rsvp)
+
+        self.assertTrue(result.abort)
+        self.assertIn('Missing the post\'s url', result.error_plain)
+        self.assertIn('Missing the post\'s url', result.error_html)
 
     def test_user_to_actor(self):
         self.assert_equals(ACTOR, self.meetup.user_to_actor(USER_JSON))
