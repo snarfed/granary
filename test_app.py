@@ -460,6 +460,42 @@ baz baj
 </div>
 """, resp.text, ignore_blanks=True)
 
+  def test_url_html_fragment(self):
+    self.expect_requests_get('http://my/posts.html#def', """
+<div id="abc" class="h-entry"></div>
+<div class="h-entry"></div>
+<div id="def" class="h-entry"><div class="e-content">foo</div></div>
+""")
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html%23def&input=html&output=as1')
+    self.assert_equals(200, resp.status_int)
+    self.assert_equals([{'object': {
+      'objectType': 'note',
+      'content': 'foo',
+      'content_is_html': True,
+    }}], resp.json['items'])
+
+  def test_url_html_fragment_not_found(self):
+    self.expect_requests_get('http://my/posts.html#xyz', """
+<div id="abc" class="h-entry"></div>
+<div id="def" class="h-entry"><div class="e-content">foo</div></div>
+<div class="h-entry"></div>
+""")
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.html%23xyz&input=html&output=as1')
+    self.assert_equals(400, resp.status_int)
+    self.assertIn('Got fragment xyz but no element found with that id.', resp.text)
+
+  def test_url_fragment_not_html(self):
+    resp = app.application.get_response(
+      '/url?url=http://my/posts.json%23xyz&input=as2')
+    self.assert_equals(400, resp.status_int)
+    self.assertIn('URL fragments only supported with input=html.', resp.text)
+
   def test_url_atom_to_as1(self):
     self.expect_requests_get('http://feed', ATOM_CONTENT + '</feed>\n')
     self.mox.ReplayAll()

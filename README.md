@@ -318,6 +318,7 @@ Non-breaking changes:
   * Bug fix: extract feed image from `hfeed` correctly.
 * REST API:
   * Add HTTP `HEAD` support.
+  * Add support for URL fragments with `input=html`. If a fragment is provided, only that specific element is extracted and converted. ([#185](https://github.com/snarfed/granary/issues/185))
 * GitHub:
   * Publish: preserve `<code>` tags instead of converting them to \`s so that GitHub renders HTML entities like `&gt;` inside them instead of leaving them escaped. [Background.](https://chat.indieweb.org/dev/2019-12-24#t1577174464779200)
 * JSON Feed:

@@ -562,7 +562,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
   return source.Source.postprocess_object(obj)
 
 
-def html_to_activities(html, url=None, actor=None):
+def html_to_activities(html, url=None, actor=None, id=None):
   """Converts a microformats2 HTML h-feed to ActivityStreams activities.
 
   Args:
@@ -570,11 +570,13 @@ def html_to_activities(html, url=None, actor=None):
     url: optional string URL that HTML came from
     actor: optional author AS actor object for all activities. usually comes
       from a rel="author" link.
+    id: string, optional id of specific element to extract and parse. defaults
+      to the whole page.
 
   Returns:
     list of ActivityStreams activity dicts
   """
-  parsed = util.parse_mf2(html, url=url)
+  parsed = util.parse_mf2(html, url=url, id=id)
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
 

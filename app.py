@@ -167,8 +167,14 @@ class UrlHandler(api.Handler):
     if input not in INPUTS:
       raise exc.HTTPBadRequest('Invalid input: %s, expected one of %r' %
                                (input, INPUTS))
-    resp = util.requests_get(util.get_required_param(self, 'url'), gateway=True)
-    url = resp.url
+
+    orig_url = util.get_required_param(self, 'url')
+    fragment = urllib.parse.urlparse(orig_url).fragment
+    if fragment and input != 'html':
+        raise exc.HTTPBadRequest('URL fragments only supported with input=html.')
+
+    resp = util.requests_get(orig_url, gateway=True)
+    final_url = resp.url
 
     # decode data
     if input in ('activitystreams', 'as1', 'as2', 'mf2-json', 'json-mf2', 'jsonfeed'):
@@ -177,11 +183,13 @@ class UrlHandler(api.Handler):
         body_items = (body_json if isinstance(body_json, list)
                       else body_json.get('items') or [body_json])
       except (TypeError, ValueError):
-        raise exc.HTTPBadRequest('Could not decode %s as JSON' % url)
+        raise exc.HTTPBadRequest('Could not decode %s as JSON' % final_url)
 
     mf2 = None
     if input == 'html':
-      mf2 = util.parse_mf2(resp)
+      mf2 = util.parse_mf2(resp, id=fragment)
+      if id and not mf2:
+        raise exc.HTTPBadRequest('Got fragment %s but no element found with that id.' % fragment)
     elif input in ('mf2-json', 'json-mf2'):
       mf2 = body_json
       if not hasattr(mf2, 'get'):
@@ -204,7 +212,7 @@ class UrlHandler(api.Handler):
         title = microformats2.get_title(mf2)
         hfeed = mf2util.find_first_entry(mf2, ['h-feed'])
       except (KeyError, ValueError) as e:
-        raise exc.HTTPBadRequest('Could not parse %s as %s: %s' % (url, input, e))
+        raise exc.HTTPBadRequest('Could not parse %s as %s: %s' % (final_url, input, e))
 
     try:
       if input in ('as1', 'activitystreams'):
@@ -215,11 +223,12 @@ class UrlHandler(api.Handler):
         try:
           activities = atom.atom_to_activities(resp.text)
         except ElementTree.ParseError as e:
-          raise exc.HTTPBadRequest('Could not parse %s as XML: %s' % (url, e))
+          raise exc.HTTPBadRequest('Could not parse %s as XML: %s' % (final_url, e))
         except ValueError as e:
-          raise exc.HTTPBadRequest('Could not parse %s as Atom: %s' % (url, e))
+          raise exc.HTTPBadRequest('Could not parse %s as Atom: %s' % (final_url, e))
       elif input == 'html':
-        activities = microformats2.html_to_activities(resp, url, actor)
+        activities = microformats2.html_to_activities(resp, url=final_url,
+                                                      id=fragment, actor=actor)
       elif input in ('mf2-json', 'json-mf2'):
         activities = [microformats2.json_to_object(item, actor=actor)
                       for item in mf2.get('items', [])]
@@ -227,10 +236,10 @@ class UrlHandler(api.Handler):
         activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
     except ValueError as e:
       logging.warning('parsing input failed', stack_info=True)
-      self.abort(400, 'Could not parse %s as %s: %s' % (url, input, str(e)))
+      self.abort(400, 'Could not parse %s as %s: %s' % (final_url, input, str(e)))
 
     self.write_response(source.Source.make_activities_base_response(activities),
-                        url=url, actor=actor, title=title, hfeed=hfeed)
+                        url=final_url, actor=actor, title=title, hfeed=hfeed)
 
   head = get
 
