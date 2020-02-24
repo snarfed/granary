@@ -45,6 +45,14 @@ class RssTest(testutil.TestCase):
 <enclosure url="http://a/podcast.foo" length="0" type=""/>
 </item>""", got, ignore_blanks=True)
 
+  def test_from_activities_published_updated_bad_type(self):
+    for field in 'published', 'updated':
+      got = rss.from_activities([{
+        field: {'a': 3},
+        'content': 'foo bar',
+      }], feed_url='http://this')
+      self.assertNotIn(field, got)
+
   def test_item_with_two_enclosures(self):
     got = rss.from_activities([{
       'attachments': [{

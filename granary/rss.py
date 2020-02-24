@@ -117,7 +117,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     item.author(author)
 
     published = obj.get('published') or obj.get('updated')
-    if published:
+    if published and isinstance(published, str):
       try:
         dt = mf2util.parse_datetime(published)
         if not isinstance(dt, datetime):
