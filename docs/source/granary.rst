@@ -39,6 +39,10 @@ mastodon
 --------
 .. automodule:: granary.mastodon
 
+meetup
+------
+.. automodule:: granary.meetup
+
 microformats2
 -------------
 .. automodule:: granary.microformats2

@@ -517,6 +517,10 @@ Non-breaking changes:
 -  REST API:
 
    -  Add HTTP ``HEAD`` support.
+   -  Add support for URL fragments with ``input=html``. If a fragment
+      is provided, only that specific element is extracted and
+      converted.
+      (`#185 <https://github.com/snarfed/granary/issues/185>`__)
 
 -  GitHub:
 
@@ -532,6 +536,7 @@ Non-breaking changes:
 -  The ``cache`` kwarg to ``Source.original_post_discovery()`` now has
    no effect. ``webutil.util.follow_redirects()`` has its own built in
    caching now.
+-  Added Meetup.com support for publishing RSVPs.
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
