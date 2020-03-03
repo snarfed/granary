@@ -119,6 +119,23 @@ class Microformats2Test(testutil.TestCase):
         }],
       }}))
 
+  def test_object_to_json_context_string(self):
+    """Can happen for objects converted from AS2.
+
+    e.g. https://console.cloud.google.com/errors/CLWDpPG37eirUw
+    """
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['@hey great post'],
+        # 'in-reply-to': ['http://reply/target'],
+      },
+    }, microformats2.object_to_json({
+      'verb': 'post',
+      'object': {'content': '@hey great post'},
+      'context': 'http://foo/bar',
+      }))
+
   def test_object_to_json_preserves_url_order(self):
     self.assertEqual({
       'type': ['h-card'],

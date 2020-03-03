@@ -192,7 +192,12 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   summary = primary.get('summary')
   author = obj.get('author', obj.get('actor', {}))
 
-  in_reply_tos = obj.get('inReplyTo', obj.get('context', {}).get('inReplyTo', []))
+  in_reply_tos = obj.get('inReplyTo') or []
+  if not in_reply_tos:
+    context = obj.get('context')
+    if context and isinstance(context, dict):
+      in_reply_tos = context.get('inReplyTo') or []
+
   is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
   if (is_rsvp or obj_type == 'react') and obj.get('object'):
     objs = obj['object']
