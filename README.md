@@ -172,9 +172,11 @@ Pull requests are welcome! Feel free to [ping me](http://snarfed.org/about) with
 First, fork and clone this repo. Then, you'll need the [Google Cloud SDK](https://cloud.google.com/sdk/) with the `gcloud-appengine-python` and `gcloud-appengine-python-extras` [components](https://cloud.google.com/sdk/docs/components#additional_components). Once you have them, set up your environment by running these commands in the repo root directory:
 
 ```shell
+gcloud config set project granary-demo
 python3 -m venv local3
 source local3/bin/activate
 pip install -r requirements.txt
+ln -s local3/lib/python3*/site-packages/oauth_dropins
 ```
 
 Now, run the tests to check that everything is set up ok:
@@ -195,7 +197,7 @@ dev_appserver.py --log_level debug --enable_host_checking false \
 
 Open [localhost:8080](http://localhost:8080/) and you should see the granary home page!
 
-If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with `pip install -e <path to oauth-dropins repo>`.
+If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with `pip install -e <path to oauth-dropins repo>`. You'll also need to update the `oauth_dropins` symlink, which is needed for serving static file assets in dev_appserver: `ln -sf <path-to-oauth-dropins-repo>/oauth_dropins`.
 
 To deploy to production:
 
