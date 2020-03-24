@@ -217,8 +217,8 @@ class MeetupTest(testutil.TestCase):
         result = self.meetup.create(rsvp)
 
         self.assertTrue(result.abort)
-        self.assertIn('missing an in-reply-to', result.error_plain)
-        self.assertIn('missing an in-reply-to', result.error_html)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_plain)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
 
     def test_create_rsvp_with_empty_in_reply_to_object(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
@@ -226,8 +226,8 @@ class MeetupTest(testutil.TestCase):
         result = self.meetup.create(rsvp)
 
         self.assertTrue(result.abort)
-        self.assertIn('missing an in-reply-to', result.error_plain)
-        self.assertIn('missing an in-reply-to', result.error_html)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_plain)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
 
     def test_create_rsvp_with_in_reply_to_object_with_no_url_property(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
@@ -235,8 +235,8 @@ class MeetupTest(testutil.TestCase):
         result = self.meetup.create(rsvp)
 
         self.assertTrue(result.abort)
-        self.assertIn('missing an in-reply-to', result.error_plain)
-        self.assertIn('missing an in-reply-to', result.error_html)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_plain)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
 
     def test_create_rsvp_with_invalid_url(self):
         for url in ['https://meetup.com/PHPMiNDS-in-Nottingham/', 'https://meetup.com/PHPMiNDS-in-Nottingham/events', 'https://meetup.com/PHPMiNDS-in-Nottingham/events/', 'https://meetup.com//events/264008439']:
@@ -255,8 +255,8 @@ class MeetupTest(testutil.TestCase):
         result = self.meetup.create(rsvp)
 
         self.assertTrue(result.abort)
-        self.assertIn('missing an in-reply-to', result.error_plain)
-        self.assertIn('missing an in-reply-to', result.error_html)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_plain)
+        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
 
     def test_create_rsvp_with_no_url(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
