@@ -83,7 +83,7 @@ class Meetup(source.Source):
         # parse the in-reply-to out
         url_containers = self.base_object(obj)
         if not url_containers:
-            return self.return_error('missing an in-reply-to')
+            return self.return_error('RSVP not to Meetup.com or missing in-reply-to')
         if not 'url' in url_containers:
             return self.return_error('missing an in-reply-to')
 
