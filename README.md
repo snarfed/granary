@@ -327,6 +327,7 @@ Non-breaking changes:
   * Handle malformed attachments better.
 * microformats2:
   * Don't crash on string `context` fields.
+  * `html_to_activities()`: limit to `h-entry`, `h-event`, and `h-cite` items ([#192](https://github.com/snarfed/granary/issues/192)).
 * The `cache` kwarg to `Source.original_post_discovery()` now has no effect. `webutil.util.follow_redirects()` has its own built in caching now.
 * Added Meetup.com support for publishing RSVPs.
 

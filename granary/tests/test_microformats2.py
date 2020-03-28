@@ -905,6 +905,15 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       'displayName': 'foo bar\nbaz \n\n baj',
     }}], activities)
 
+  def test_html_to_activities_filters_items(self):
+    """Check that we omit h-cards inside h-feeds."""
+    self.assert_equals([], microformats2.html_to_activities("""\
+<div class="h-feed">
+  <article class="h-card">
+    <a href="http://foo">bar</a>
+  </article>
+</div>"""))
+
   def test_size_to_bytes(self):
     for input, expected in (
         (None, None),

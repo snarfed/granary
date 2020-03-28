@@ -587,9 +587,11 @@ def html_to_activities(html, url=None, actor=None, id=None):
 
   activities = []
   for item in items:
-    obj = json_to_object(item, actor=actor)
-    obj['content_is_html'] = True
-    activities.append({'object': obj})
+    types = item.get('type', [])
+    if 'h-entry' in types or 'h-event' in types or 'h-cite' in types:
+      obj = json_to_object(item, actor=actor)
+      obj['content_is_html'] = True
+      activities.append({'object': obj})
 
   return activities
 
