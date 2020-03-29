@@ -299,7 +299,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 3.0 - unreleased
+### 3.1 - _unreleased_
+
+* N/A
+
+### 3.0 - 2020-04-08
 
 _Breaking changes:_
 

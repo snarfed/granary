@@ -177,8 +177,8 @@ prevent this by adding the ``cache=false`` query parameter to your
 request.
 
 To use the REST API in an existing ActivityStreams client, you’ll need
-to hard-code exceptions for the domains you want to use e.g.
-``facebook.com``, and redirect HTTP requests to the corresponding
+to hard-code exceptions for the domains you want to use
+e.g. \ ``facebook.com``, and redirect HTTP requests to the corresponding
 `endpoint above <#about>`__.
 
 Instagram is disabled in the REST API entirely, sadly, `due to their
@@ -264,9 +264,11 @@ the repo root directory:
 
 .. code:: shell
 
+   gcloud config set project granary-demo
    python3 -m venv local3
    source local3/bin/activate
    pip install -r requirements.txt
+   ln -s local3/lib/python3*/site-packages/oauth_dropins
 
 Now, run the tests to check that everything is set up ok:
 
@@ -291,7 +293,10 @@ granary home page!
 If you want to work on
 `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ at the same
 time, install it in “source” mode with
-``pip install -e <path to oauth-dropins repo>``.
+``pip install -e <path to oauth-dropins repo>``. You’ll also need to
+update the ``oauth_dropins`` symlink, which is needed for serving static
+file assets in dev_appserver:
+``ln -sf <path-to-oauth-dropins-repo>/oauth_dropins``.
 
 To deploy to production:
 
@@ -327,7 +332,10 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     .. code:: sh
 
        source local3/bin/activate.csh
-       python3 -m unittest discover -s granary/tests/
+       CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+       sleep 5
+       python3 -m unittest discover
+       kill %1
        deactivate
 
 2.  Bump the version number in ``setup.py`` and ``docs/conf.py``.
@@ -336,7 +344,8 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     for this new version from *unreleased* to the current date.
 3.  Build the docs. If you added any new modules, add them to the
     appropriate file(s) in ``docs/source/``. Then run
-    ``./docs/build.sh``.
+    ``./docs/build.sh``. Check that the generated HTML looks fine by
+    opening ``docs/_build/html/index.html`` and looking around.
 4.  ``git commit -am 'release vX.Y'``
 5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
 
@@ -468,7 +477,12 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-3.0 - unreleased
+3.1 - *unreleased*
+~~~~~~~~~~~~~~~~~~
+
+-  N/A
+
+3.0 - 2020-04-07
 ~~~~~~~~~~~~~~~~
 
 *Breaking changes:*
@@ -533,10 +547,19 @@ Non-breaking changes:
 
    -  Handle malformed attachments better.
 
+-  microformats2:
+
+   -  Don’t crash on string ``context`` fields.
+   -  ``html_to_activities()``: limit to ``h-entry``, ``h-event``, and
+      ``h-cite`` items
+      (`#192 <https://github.com/snarfed/granary/issues/192>`__).
+
 -  The ``cache`` kwarg to ``Source.original_post_discovery()`` now has
    no effect. ``webutil.util.follow_redirects()`` has its own built in
    caching now.
 -  Added Meetup.com support for publishing RSVPs.
+
+.. _section-1:
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
@@ -585,7 +608,7 @@ Non-breaking changes:
       supports one enclosure per item, so we now only include the first,
       and log a warning if the activity has more.)
 
-.. _section-1:
+.. _section-2:
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
@@ -635,7 +658,7 @@ Non-breaking changes:
 
    -  Default title to ellipsized content.
 
-.. _section-2:
+.. _section-3:
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
@@ -644,7 +667,7 @@ Non-breaking changes:
 March <https://developers.google.com/+/api-shutdown>`__. Notably, this
 removes the ``googleplus`` module.
 
-.. _section-3:
+.. _section-4:
 
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
@@ -695,7 +718,7 @@ removes the ``googleplus`` module.
 -  ``/url``: Return HTTP 400 when fetching the user’s URL results in an
    infinite redirect.
 
-.. _section-4:
+.. _section-5:
 
 1.14 - 2018-11-12
 ~~~~~~~~~~~~~~~~~
@@ -722,7 +745,7 @@ Encode ``&``\ s in author URL and email address too. (Thanks
 `sebsued <https://twitter.com/sebsued>`__!) \* AS2: \* Add ``Follow``
 support.
 
-.. _section-5:
+.. _section-6:
 
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
@@ -783,7 +806,7 @@ support.
    -  Support ``alt`` attribute in ``<img>`` tags
       (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
-.. _section-6:
+.. _section-7:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
@@ -818,7 +841,7 @@ impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. _section-7:
+.. _section-8:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -891,7 +914,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Omit title from items if it’s the same as the content. (Often
       caused by microformats2’s implied ``p-name`` logic.)
 
-.. _section-8:
+.. _section-9:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -933,7 +956,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. _section-9:
+.. _section-10:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -961,7 +984,7 @@ still bugs. Please file issues if you notice anything broken!
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. _section-10:
+.. _section-11:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -1041,7 +1064,7 @@ still bugs. Please file issues if you notice anything broken!
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. _section-11:
+.. _section-12:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -1089,7 +1112,7 @@ still bugs. Please file issues if you notice anything broken!
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. _section-12:
+.. _section-13:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -1123,7 +1146,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. _section-13:
+.. _section-14:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -1161,14 +1184,14 @@ still bugs. Please file issues if you notice anything broken!
    -  Switch creating comments and reactions from GraphQL to REST API
       (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
-.. _section-14:
+.. _section-15:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. _section-15:
+.. _section-16:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -1202,7 +1225,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. _section-16:
+.. _section-17:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -1210,7 +1233,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. _section-17:
+.. _section-18:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -1253,7 +1276,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. _section-18:
+.. _section-19:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -1268,9 +1291,9 @@ still bugs. Please file issues if you notice anything broken!
 -  Improved post type discovery (using mf2util).
 -  Extract user web site links from all fields in profile
    (e.g. description/bio).
--  Add fabricated fragments to comment/like permalinks (e.g.
-   #liked-by-user123) so that object urls are always unique (multiple
-   silos).
+-  Add fabricated fragments to comment/like permalinks
+   (e.g. #liked-by-user123) so that object urls are always unique
+   (multiple silos).
 -  Improve formatting/whitespace support in create/preview (multiple
    silos).
 -  Google+:
@@ -1309,7 +1332,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. _section-19:
+.. _section-20:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -1332,7 +1355,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. _section-20:
+.. _section-21:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -1340,7 +1363,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. _section-21:
+.. _section-22:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~
