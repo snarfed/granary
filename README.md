@@ -217,7 +217,10 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Run the unit tests.
    ```sh
    source local3/bin/activate.csh
-   python3 -m unittest discover -s granary/tests/
+   CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+   sleep 5
+   python3 -m unittest discover
+   kill %1
    deactivate
    ```
 1. Bump the version number in `setup.py` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
