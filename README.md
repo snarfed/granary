@@ -237,6 +237,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    ```sh
    python3 -m venv local3
    source local3/bin/activate.csh
+   pip3 uninstall granary # make sure we force Pip to use the uploaded version
    pip3 install --upgrade pip
    pip3 install mf2py==1.1.2
    pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
