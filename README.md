@@ -217,11 +217,14 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Run the unit tests.
    ```sh
    source local3/bin/activate.csh
-   python3 -m unittest discover -s granary/tests/
+   CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+   sleep 5
+   python3 -m unittest discover
+   kill %1
    deactivate
    ```
 1. Bump the version number in `setup.py` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
-1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`.
+1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`. Check that the generated HTML looks fine by opening `docs/_build/html/index.html` and looking around.
 1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
    ```sh
@@ -234,6 +237,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    ```sh
    python3 -m venv local3
    source local3/bin/activate.csh
+   pip3 uninstall granary # make sure we force Pip to use the uploaded version
    pip3 install --upgrade pip
    pip3 install mf2py==1.1.2
    pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
@@ -248,6 +252,8 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    ```
    Test code to paste into the interpreter:
    ```py
+   import json
+
    from granary import instagram
    instagram.__file__  # check that it's in the virtualenv
 
@@ -296,7 +302,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 3.0 - unreleased
+### 3.1 - _unreleased_
+
+* N/A
+
+### 3.0 - 2020-04-08
 
 _Breaking changes:_
 
