@@ -252,6 +252,8 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    ```
    Test code to paste into the interpreter:
    ```py
+   import json
+
    from granary import instagram
    instagram.__file__  # check that it's in the virtualenv
 
