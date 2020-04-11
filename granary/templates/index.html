@@ -84,9 +84,19 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 {{ flickr_html|safe }}
 {{ github_html|safe }}
 {{ mastodon_html|safe }}
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <img src="/oauth_dropins/static/meetup_bw_2x.png" height="50" class="shadow"
+       title="Meetup is only supported in the library, not in the REST API or demo site here."
+       style="background-color: #EEEEEE; padding: 10px" />
 </div>
+{{ pixelfed_html|safe }}
 
-<div class="row">
+<div class="col-lg-2 col-sm-4 col-xs-6">
+<form method="get" action="#logins">
+  <input type="image" class="shadow" title="ActivityStreams"
+         src="/static/activitystreams_logotype_2x.png" height="50" />
+  <input name="input" type="hidden" value="activitystreams" />
+</form></div>
 
 <div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get" action="#logins">
@@ -94,13 +104,6 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
          src="/static/microformats_2x.png"
          style="background-color: #EEEEEE; padding: 5px" />
   <input name="input" type="hidden" value="mf2-json" />
-</form></div>
-
-<div class="col-lg-2 col-sm-4 col-xs-6">
-<form method="get" action="#logins">
-  <input type="image" class="shadow" title="ActivityStreams"
-         src="/static/activitystreams_logotype_2x.png" height="50" />
-  <input name="input" type="hidden" value="activitystreams" />
 </form></div>
 
 <div class="col-lg-2 col-sm-4 col-xs-6">
@@ -132,13 +135,6 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <input name="output" type="hidden" value="rss" />
 </form></div>
 
-</div>
-</div>
-
-<div class="row">
-<div class="col-lg-2 col-sm-4 col-xs-6">
-  <img src="/oauth_dropins/static/meetup_2x.png" height="50" class="shadow"
-       title="Meetup is only supported in the library, not in the REST API or demo site here.">
 </div>
 </div>
 
@@ -174,7 +170,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <p><code>
 <label>/ {{ site }} </label>
 
-{% if site == 'mastodon' %}
+{% if site in ('mastodon', 'pixelfed') %}
 <input type="hidden" id="instance" name="instance" value="{{ entity.instance() }}" />
 {% endif %}
 
@@ -183,7 +179,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <input id="user_id" name="user_id" type="text" class="form-control"
        {% if site == 'instagram' %}
          placeholder="username" size="12" required
-       {% else %}{% if site == 'mastodon' %}
+       {% else %}{% if site in ('mastodon', 'pixelfed') %}
          value="{{ entity.user_id() }}" placeholder="user id" size="19" required
        {% else %}
          placeholder="username (optional)" size="19"
@@ -202,7 +198,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   {% endif %}
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
-  {% if site in ('mastodon', 'twitter') %}
+  {% if site in ('mastodon', 'pixelfed', 'twitter') %}
     <option value="@search">@search</option>
   {% endif %}
   {% if site == 'twitter' %}

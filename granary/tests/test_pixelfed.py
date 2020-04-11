@@ -1,0 +1,37 @@
+# coding=utf-8
+"""Unit tests for pixelfed.py."""
+import copy
+
+from oauth_dropins.webutil import testutil, util
+from oauth_dropins.webutil.util import json_dumps, json_loads
+
+from .. import mastodon, pixelfed
+from . import test_mastodon
+
+
+ACCOUNT = copy.deepcopy(test_mastodon.ACCOUNT)
+ACCOUNT.update({
+  'fields': None,
+  'created_at': 1492634299.704,
+})
+
+ACTOR = copy.deepcopy(test_mastodon.ACTOR)
+ACTOR['urls'] = [{'value': 'http://foo.com/@snarfed'}]
+
+REPLY_STATUS = copy.deepcopy(test_mastodon.REPLY_STATUS)
+REPLY_STATUS['in_reply_to_id'] = int(REPLY_STATUS['in_reply_to_id'])
+
+
+class PixelfedTest(testutil.TestCase):
+
+  def setUp(self):
+    super(PixelfedTest, self).setUp()
+    self.pixelfed = pixelfed.Pixelfed(
+      test_mastodon.INSTANCE, user_id=ACCOUNT['id'], access_token='towkin')
+
+  def test_user_to_actor_fields_null(self):
+    self.assertEquals(ACTOR, self.pixelfed.user_to_actor(ACCOUNT))
+
+  def test_reply_status_to_object(self):
+    self.assert_equals(test_mastodon.REPLY_OBJECT,
+                       self.pixelfed.status_to_object(REPLY_STATUS))

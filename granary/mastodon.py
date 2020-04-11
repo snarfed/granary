@@ -187,7 +187,7 @@ class Mastodon(source.Source):
 
     activities = []
 
-    # batch get memcached counts of favorites and retweets for all tweets
+    # batch get memcached counts of likes, boosts, etc
     cached = {}
     if cache is not None:
       keys = itertools.product(('AMRE', 'AMF', 'AMRB'), [s['id'] for s in statuses])
@@ -399,7 +399,8 @@ class Mastodon(source.Source):
     if reply_to_id:
       obj['inReplyTo'] = [{
         'id': self.tag_uri(reply_to_id),
-        'url': urllib.parse.urljoin(self.instance, '/web/statuses/' + reply_to_id),
+        # Mastodon's in_reply_to_id is str, Pixelfed's is int.
+        'url': urllib.parse.urljoin(self.instance, '/web/statuses/' + str(reply_to_id)),
       }]
 
     # to (ie visibility)
@@ -442,7 +443,12 @@ class Mastodon(source.Source):
     url = account.get('url')
     # mastodon's 'Web site' fields are HTML links, so extract their URLs
     web_sites = sum((util.extract_links(f.get('value'))
-                     for f in account.get('fields', [])), [])
+                     for f in (account.get('fields') or [])), [])
+
+    # account.created_at is string ISO8601 in Mastodon, int timestamp in Pixelfed
+    published = account.get('created_at')
+    if util.is_int(published) or util.is_float(published):
+      published = util.maybe_timestamp_to_iso8601(published)
 
     return util.trim_nulls({
       'objectType': 'person',
@@ -453,7 +459,7 @@ class Mastodon(source.Source):
       'url': url,
       'urls': [{'value': u} for u in [url] + web_sites],
       'image': {'url': account.get('avatar')},
-      'published': account.get('created_at'),
+      'published': published,
       'description': account.get('note'),
     })
 

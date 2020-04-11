@@ -12,6 +12,7 @@ from oauth_dropins import (
   flickr,
   github,
   mastodon,
+  pixelfed,
   twitter,
 )
 from oauth_dropins.webutil import (
@@ -38,6 +39,7 @@ from granary.flickr import Flickr
 from granary.github import GitHub
 from granary.mastodon import Mastodon
 from granary.meetup import Meetup
+from granary.pixelfed import Pixelfed
 from granary.instagram import Instagram
 from granary.twitter import Twitter
 
@@ -60,6 +62,7 @@ SILOS = (
   'github',
   'instagram',
   'mastodon',
+  'pixelfed',
   'meetup',
   'twitter',
 )
@@ -83,7 +86,9 @@ SCOPE_OVERRIDES = {
   # https://docs.joinmastodon.org/api/permissions/
   'mastodon': 'read',
   # https://www.meetup.com/meetup_api/auth/#oauth2-scopes
-  'meetup': 'rsvp'
+  'meetup': 'rsvp',
+  # https://docs.pixelfed.org/technical-documentation/api-v1.html
+  'pixelfed': 'read',
 }
 
 
@@ -244,11 +249,11 @@ class UrlHandler(api.Handler):
   head = get
 
 
-class MastodonStart(mastodon.StartHandler):
-  """Mastodon OAuth handler wrapper that handles URL discovery errors.
+class StartMixin():
+  """OAuth handler mixin that handles URL discovery errors.
 
-  Used to catch when someone enters a Mastodon instance URL that doesn't exist
-  or isn't actually a Mastodon instance.
+  Used to catch when eg someone enters a Mastodon instance URL that doesn't
+  exist or isn't actually a Mastodon instance.
   """
   def app_name(self):
     return 'granary'
@@ -258,12 +263,21 @@ class MastodonStart(mastodon.StartHandler):
       logging.warning('', stack_info=True)
       return self.redirect('/?%s#logins' % urllib.parse.urlencode({'failure': str(e)}))
 
-    return super(MastodonStart, self).handle_exception(e, debug)
+    return super(StartMixin, self).handle_exception(e, debug)
+
+
+class MastodonStart(StartMixin, mastodon.StartHandler):
+  pass
+
+class PixelfedStart(StartMixin, pixelfed.StartHandler):
+  pass
 
 
 oauth_routes = []
 for silo, module in OAUTHS.items():
-  starter = MastodonStart if silo == 'mastodon' else module.StartHandler
+  starter = (MastodonStart if silo == 'mastodon'
+             else PixelfedStart if silo == 'pixelfed'
+             else module.StartHandler)
   oauth_routes.extend((
     ('/%s/start_auth' % silo, starter.to('/%s/oauth_callback' % silo)),
     ('/%s/oauth_callback' % silo, module.CallbackHandler.to('/#logins')),

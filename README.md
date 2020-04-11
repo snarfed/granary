@@ -306,7 +306,7 @@ Changelog
 ---
 ### 3.1 - _unreleased_
 
-* N/A
+* Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
 
 ### 3.0 - 2020-04-08
 
