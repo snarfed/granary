@@ -18,8 +18,8 @@ class Reddit(source.Source):
     BASE_URL = 'https://reddit.com/'
     NAME = 'reddit'
 
-    def __init__(auth_entity, **kwargs):
-        api = get_reddit_api(auth_entity)
+    def __init__(self, refresh_token):
+        self.refresh_token = refresh_token
 
 
     def submission_to_activity(self, subm):
@@ -31,12 +31,19 @@ class Reddit(source.Source):
         Returns:
           an ActivityStreams activity dict, ready to be JSON-encoded
         """
+        attribute_list = ['comment_karma',
+                          'created_utc',
+                          'id',
+                          'name',
+                          'link_karma',
+                          'icon_img']
+        actor = {a:getattr(subm.author,a) for a in attribute_list}
+        actor['username']=actor['name']
         activity = {
           'verb': 'post',
-          'published': subm.created_utc,
           'id': subm.id,
           'url': subm.url,
-          'actor': subm.author,
+          'actor': actor,
           }
 
         return self.postprocess_activity(activity)
@@ -60,12 +67,17 @@ class Reddit(source.Source):
             logging.info('user_id not supported')
 
         activities = []
-        r = reddit.get_api(self.refresh_token)
+        r = reddit.get_reddit_api(self.refresh_token)
+        r.read_only = True
 
+        logging.info(activity_id)
         if activity_id:
-            submission = r.get_submission(submission_id=activity_id)
+            subm = r.submission(id=activity_id)
 
-        submission_activity = self.submission_to_activity(submission)
+        logging.info(subm.title)
+        logging.info(dir(subm))
+        # logging.info(subm.title)
+        submission_activity = self.submission_to_activity(subm)
 
         activities.append(submission_activity)
 

@@ -144,6 +144,8 @@ class Handler(handlers.ModernHandler):
         instance=util.get_required_param(self, 'instance'),
         access_token=util.get_required_param(self, 'access_token'),
         user_id=util.get_required_param(self, 'user_id'))
+    elif site == 'reddit':
+      src = reddit.Reddit(refresh_token='123')
     else:
       src_cls = source.sources.get(site)
       if not src_cls:
