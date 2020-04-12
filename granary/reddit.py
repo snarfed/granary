@@ -70,13 +70,9 @@ class Reddit(source.Source):
         r = reddit.get_reddit_api(self.refresh_token)
         r.read_only = True
 
-        logging.info(activity_id)
         if activity_id:
             subm = r.submission(id=activity_id)
 
-        logging.info(subm.title)
-        logging.info(dir(subm))
-        # logging.info(subm.title)
         submission_activity = self.submission_to_activity(subm)
 
         activities.append(submission_activity)
