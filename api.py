@@ -45,6 +45,7 @@ from granary import (
   microformats2,
   pixelfed,
   meetup,
+  reddit,
   rss,
   source,
   twitter,
