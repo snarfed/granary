@@ -14,6 +14,7 @@ from oauth_dropins import (
   mastodon,
   pixelfed,
   twitter,
+  reddit,
 )
 from oauth_dropins.webutil import (
   appengine_config,
@@ -42,6 +43,7 @@ from granary.meetup import Meetup
 from granary.pixelfed import Pixelfed
 from granary.instagram import Instagram
 from granary.twitter import Twitter
+from granary.reddit import Reddit
 
 import api, cron
 
@@ -65,6 +67,7 @@ SILOS = (
   'pixelfed',
   'meetup',
   'twitter',
+  'reddit',
 )
 OAUTHS = {  # maps oauth-dropins module name to module
   name: importlib.import_module('oauth_dropins.%s' % name)
