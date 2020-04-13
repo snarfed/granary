@@ -197,7 +197,7 @@ dev_appserver.py --log_level debug --enable_host_checking false \
 
 Open [localhost:8080](http://localhost:8080/) and you should see the granary home page!
 
-If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with `pip install -e <path to oauth-dropins repo>`. You'll also need to update the `oauth_dropins` symlink, which is needed for serving static file assets in dev_appserver: `ln -sf <path-to-oauth-dropins-repo>/oauth_dropins`.
+If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with `pip install -e <path to oauth-dropins repo>`. You'll also need to update the `oauth_dropins` symlink, which is needed for serving static file assets in dev_appserver: `ln -sf <path-to-oauth-dropins-repo>/oauth_dropins`.  To test it with dev_appserver you also need to replace the line in requirements.txt from `git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins` to `<path-to-oauth-dropins-repo>`.
 
 To deploy to production:
 
