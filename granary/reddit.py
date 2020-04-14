@@ -1,5 +1,11 @@
 # coding=utf-8
 """reddit.com source class.
+
+reddit API docs:
+https://github.com/reddit-archive/reddit/wiki/API
+https://www.reddit.com/dev/apis
+praw API docs:
+https://praw.readthedocs.io/en/v3.6.0/pages/oauth.html
 """
 
 from . import source
