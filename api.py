@@ -145,7 +145,7 @@ class Handler(handlers.ModernHandler):
         access_token=util.get_required_param(self, 'access_token'),
         user_id=util.get_required_param(self, 'user_id'))
     elif site == 'reddit':
-      src = reddit.Reddit(refresh_token='123') # the refresh_roken should be returned but is not appearing
+      src = reddit.Reddit(refresh_token=util.get_required_param(self, 'refresh_token')) # the refresh_roken should be returned but is not appearing
     else:
       src_cls = source.sources.get(site)
       if not src_cls:
