@@ -35,7 +35,7 @@ class Reddit(source.Source):
   def __init__(self, refresh_token):
     self.refresh_token = refresh_token
 
-  def redditor_to_actor(self, user):
+  def user_to_actor(self, user):
     """Converts a praw Redditor to an actor.
     https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
 
@@ -57,7 +57,7 @@ class Reddit(source.Source):
       user_url = self.BASE_URL + user.subreddit.get('url')
       urls = [user_url]
       description = user.subreddit['public_description']
-      profile_urls = webutil.util.extract_links(description)
+      profile_urls = util.extract_links(description)
       urls += util.trim_nulls(profile_urls)
     else:
       urls = [self.BASE_URL + '/user/' + username]
@@ -80,13 +80,13 @@ class Reddit(source.Source):
       })
 
 
-  def praw_to_object(self, thng, typ):
+  def praw_to_object(self, thing, type):
     """
-    Converts a tweet to an object.
+    Converts a praw object to an object.
 
     Args:
       thng: a praw object, Sumbission or Comment
-      typ: string to denote whether to get submission or comment content
+      type: string to denote whether to get submission or comment content
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
@@ -95,11 +95,11 @@ class Reddit(source.Source):
 
     # always prefer id_str over id to avoid any chance of integer overflow.
     # usually shouldn't matter in Python, but still.
-    id = thng.id
+    id = thing.id
     if not id:
       return {}
 
-    published = util.maybe_timestamp_to_iso8601(thng.created_utc)
+    published = util.maybe_timestamp_to_iso8601(thing.created_utc)
 
     obj = {
       'id': self.tag_uri(id),
@@ -108,9 +108,9 @@ class Reddit(source.Source):
       'to': [],
       }
 
-    user = thng.author
+    user = thing.author
     if user:
-      obj['author'] = self.redditor_to_actor(user)
+      obj['author'] = self.user_to_actor(user)
       username = obj['author'].get('username')
 
     obj['to'].append({
@@ -118,35 +118,35 @@ class Reddit(source.Source):
       'alias': '@public',
       })
 
-    obj['url'] = self.BASE_URL+thng.permalink
+    obj['url'] = self.BASE_URL + thing.permalink
 
-    if typ=='submission':
-      obj['content'] = thng.title
-    elif typ=='comment':
-      obj['content'] = thng.body
+    if type == 'submission':
+      obj['content'] = thing.title
+    elif type == 'comment':
+      obj['content'] = thing.body
 
     return self.postprocess_object(obj)
 
 
-  def praw_to_activity(self, thng, typ):
+  def praw_to_activity(self, thing, type):
     """Converts a praw submission or comment to an activity.
     https://praw.readthedocs.io/en/latest/code_overview/models/submission.html
     https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
 
     Args:
       thng: a praw object, Sumbission or Comment
-      typ: string to denote whether to get submission or comment content
+      type: string to denote whether to get submission or comment content
 
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    obj = self.praw_to_object(thng, typ)
+    obj = self.praw_to_object(thing, type)
     actor = obj['author']
 
     activity = {
       'verb': 'post',
-      'id': thng.id,
-      'url': self.BASE_URL + thng.permalink,
+      'id': thing.id,
+      'url': self.BASE_URL + thing.permalink,
       'actor': actor,
       'object': obj
       }
