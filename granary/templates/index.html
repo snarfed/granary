@@ -265,6 +265,12 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <input id="access_token_secret" name="access_token_secret" type="text" size="10"
          class="form-control" value="{{ access_token_secret }}" />
 {% endif %}
+{% if refresh_token %}
+  <label for="refresh_token">&amp; refresh_token =</label>
+  <input id="refresh_token" name="refresh_token" type="text" size="10"
+         class="form-control" value="{{ refresh_token }}" />
+{% endif %}
+
 
 {% if site == 'instagram' %}
 <nobr>
