@@ -17,26 +17,18 @@ import urllib.parse, urllib.request
 
 import praw
 
-if appengine_info.DEBUG:
-  REDDIT_APP_KEY = util.read('reddit_app_key_local')
-  REDDIT_APP_SECRET = util.read('reddit_app_secret_local')
-else:
-  REDDIT_APP_KEY = util.read('reddit_app_key')
-  REDDIT_APP_SECRET = util.read('reddit_app_secret')
-
-
 def get_reddit_api(refresh_token):
-  return praw.Reddit(client_id=REDDIT_APP_KEY,
-             client_secret=REDDIT_APP_SECRET,
-             refresh_token=refresh_token,
-             user_agent='oauth-dropin reddit api')
+  return praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
+                     client_secret=reddit.REDDIT_APP_SECRET,
+                     refresh_token=refresh_token,
+                     user_agent='oauth-dropin reddit api')
 
 
 class Reddit(source.Source):
 
   DOMAIN = 'reddit.com'
   BASE_URL = 'https://reddit.com'
-  NAME = 'reddit'
+  NAME = 'Reddit'
 
   def __init__(self, refresh_token):
     self.refresh_token = refresh_token
@@ -62,7 +54,7 @@ class Reddit(source.Source):
     if user.subreddit:
       user_url = self.BASE_URL + user.subreddit.get('url')
       urls = [user_url]
-      description = user.subreddit['public_description']
+      description = user.subreddit.get('public_description')
       profile_urls = util.extract_links(description)
       urls += util.trim_nulls(profile_urls)
     else:
@@ -91,7 +83,7 @@ class Reddit(source.Source):
     Converts a praw object to an object.
 
     Args:
-      thng: a praw object, Sumbission or Comment
+      thing: a praw object, Submission or Comment
       type: string to denote whether to get submission or comment content
 
     Returns:
@@ -99,8 +91,6 @@ class Reddit(source.Source):
       """
     obj = {}
 
-    # always prefer id_str over id to avoid any chance of integer overflow.
-    # usually shouldn't matter in Python, but still.
     id = thing.id
     if not id:
       return {}
@@ -140,14 +130,14 @@ class Reddit(source.Source):
     https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
 
     Args:
-      thng: a praw object, Sumbission or Comment
+      thing: a praw object, Submission or Comment
       type: string to denote whether to get submission or comment content
 
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
     obj = self.praw_to_object(thing, type)
-    actor = obj['author']
+    actor = obj.get('author')
 
     activity = {
       'verb': 'post',
@@ -171,7 +161,7 @@ class Reddit(source.Source):
       same activities list
     """
     for activity in activities:
-      subm = r.submission(id=activity['id'])
+      subm = r.submission(id=activity.get('id'))
 
       # for v0 we will use just the top level comments because threading is hard
       subm.comments.replace_more()
@@ -179,18 +169,18 @@ class Reddit(source.Source):
       for top_level_comment in subm.comments:
         replies.append(self.praw_to_activity(top_level_comment, 'comment'))
 
-      items = [r['object'] for r in replies]
+      items = [r.get('object') for r in replies]
       activity['object']['replies'] = {
         'items': items,
         'totalItems': len(items),
         }
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
-                activity_id=None, start_index=0, count=0,
-                etag=None, min_id=None, cache=None,
-                fetch_replies=False, fetch_likes=False,
-                fetch_shares=False, fetch_events=False,
-                fetch_mentions=False, search_query=None, **kwargs):
+                              activity_id=None, start_index=0, count=0,
+                              etag=None, min_id=None, cache=None,
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False, fetch_events=False,
+                              fetch_mentions=False, search_query=None, **kwargs):
     """
     Fetches reddit submissions and ActivityStreams activities.
 
