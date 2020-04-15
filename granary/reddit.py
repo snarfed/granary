@@ -80,7 +80,7 @@ class Reddit(source.Source):
 
   def praw_to_object(self, thing, type):
     """
-    Converts a praw object to an object.
+    Converts a praw object to an object. currently only returns public content
 
     Args:
       thing: a praw object, Submission or Comment
@@ -101,18 +101,16 @@ class Reddit(source.Source):
       'id': self.tag_uri(id),
       'objectType': 'note',
       'published': published,
-      'to': [],
+      'to': [{
+        'objectType': 'group',
+        'alias': '@public',
+        }],
       }
 
     user = thing.author
     if user:
       obj['author'] = self.user_to_actor(user)
       username = obj['author'].get('username')
-
-    obj['to'].append({
-      'objectType': 'group',
-      'alias': '@public',
-      })
 
     obj['url'] = self.BASE_URL + thing.permalink
 
