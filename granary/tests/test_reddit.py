@@ -113,8 +113,8 @@ class RedditTest(testutil.TestCase):
     super(RedditTest, self).setUp()
     self.reddit = reddit.Reddit('token-here')
 
-  def test_user_to_actor(self):
-    self.assert_equals(ACTOR, self.reddit.user_to_actor(FakeRedditor()))
+  def test_praw_to_actor(self):
+    self.assert_equals(ACTOR, self.reddit.praw_to_actor(FakeRedditor()))
 
   def test_submission_to_activity(self):
     fake_activities = [self.reddit.praw_to_activity(FakeSubmission(FakeRedditor()),type='submission')]
