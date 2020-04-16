@@ -33,7 +33,7 @@ class Reddit(source.Source):
   def __init__(self, refresh_token):
     self.refresh_token = refresh_token
 
-  def user_to_actor(self, user):
+  def praw_to_actor(self, praw_user):
     """Converts a praw Redditor to an actor.
     https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
 
@@ -43,7 +43,19 @@ class Reddit(source.Source):
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
-    username = user.name
+    user = reddit.praw_to_user(praw_user)
+    return self.user_to_actor(user)
+
+  def user_to_actor(self, user):
+    """Converts a dict user to an actor.
+
+    Args:
+      user: json user
+
+    Returns:
+      an ActivityStreams actor dict, ready to be JSON-encoded
+    """
+    username = user.get('name')
     if not username:
       return {}
 
@@ -51,16 +63,17 @@ class Reddit(source.Source):
     # trying my best to grab all the urls from the profile description
 
     description = ''
-    if user.subreddit:
-      user_url = self.BASE_URL + user.subreddit.get('url')
+    subreddit = user.get('subreddit')
+    if subreddit:
+      user_url = self.BASE_URL + subreddit.get('url')
       urls = [user_url]
-      description = user.subreddit.get('public_description')
+      description = subreddit.get('public_description')
       profile_urls = util.extract_links(description)
       urls += util.trim_nulls(profile_urls)
     else:
       urls = [self.BASE_URL + '/user/' + username]
 
-    image = user.icon_img
+    image = user.get('icon_img')
 
     return util.trim_nulls({
       'objectType': 'person',
@@ -69,8 +82,8 @@ class Reddit(source.Source):
       'id': self.tag_uri(username),
       # numeric_id is our own custom field that always has the source's numeric
       # user id, if available.
-      'numeric_id': user.id,
-      'published': util.maybe_timestamp_to_iso8601(user.created_utc),
+      'numeric_id': user.get('id'),
+      'published': util.maybe_timestamp_to_iso8601(user.get('created_utc')),
       'url': urls[0],
       'urls': [{'value': u} for u in urls] if len(urls) > 1 else None,
       'username': username,
@@ -109,7 +122,7 @@ class Reddit(source.Source):
 
     user = thing.author
     if user:
-      obj['author'] = self.user_to_actor(user)
+      obj['author'] = self.praw_to_actor(user)
       username = obj['author'].get('username')
 
     obj['url'] = self.BASE_URL + thing.permalink
@@ -204,3 +217,6 @@ class Reddit(source.Source):
 
     return self.make_activities_base_response(activities)
 
+  def user_url(self, username):
+    """Returns the Twitter URL for a given user."""
+    return 'https://%s/user/%s' % (self.DOMAIN, username)
