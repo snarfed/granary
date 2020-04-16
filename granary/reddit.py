@@ -218,5 +218,5 @@ class Reddit(source.Source):
     return self.make_activities_base_response(activities)
 
   def user_url(self, username):
-    """Returns the Twitter URL for a given user."""
+    """Returns the Reddit URL for a given user."""
     return 'https://%s/user/%s' % (self.DOMAIN, username)
