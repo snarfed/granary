@@ -46,7 +46,6 @@ class FakeComment():
   permalink = '/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/fgpvzfw/'
   created_utc = 1581013069.0
   body = 'The ultimate purpose of Reddit will be the testing ground for passing the Turing test. Then we can all quit the internet.'
-  selftext = 'I was trying to make a reddit reply bot with GPT-2 to see if it could pass as a human on reddit. I wrote up a [results overview](https://www.bonkerfield.org/2020/02/combining-gpt-2-and-bert/) and a [tutorial post](https://www.bonkerfield.org/2020/02/reddit-bot-gpt2-bert/) to explain how it works.'
 
   def __init__(self, fake_submission, fake_redditor):
     self._parent = fake_submission
