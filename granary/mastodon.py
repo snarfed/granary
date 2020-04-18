@@ -68,6 +68,12 @@ class Mastodon(source.Source):
   DOMAIN = 'N/A'
   BASE_URL = 'N/A'
   NAME = 'Mastodon'
+  TYPE_LABELS = {
+    'post': 'toot',
+    'comment': 'reply',
+    'repost': 'boost',
+    'like': 'favorite',
+  }
 
   # https://docs.joinmastodon.org/usage/basics/#text
   TRUNCATE_TEXT_LENGTH = 500
@@ -141,11 +147,11 @@ class Mastodon(source.Source):
     return """
   <script src="%s" async="async"></script>
   <br>
-  <iframe src="%s/embed" class="mastodon-embed shadow"
+  <iframe src="%s/embed" class="%s-embed shadow"
           style="max-width: 100%%; border: 0" width="400"
           allowfullscreen="allowfullscreen">
   </iframe>
-  """ % (urllib.parse.urljoin(obj['url'], '/embed.js'), obj['url'])
+  """ % (urllib.parse.urljoin(obj['url'], '/embed.js'), obj['url'], cls.NAME.lower())
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -158,7 +164,8 @@ class Mastodon(source.Source):
     See :meth:`Source.get_activities_response` for details.
     """
     if user_id and group_id in (source.FRIENDS, source.ALL):
-      raise ValueError("Mastodon doesn't support group_id %s with user_id" % group_id)
+      raise ValueError("%s doesn't support group_id %s with user_id" %
+                       (self.NAME, group_id))
 
     if not user_id:
       user_id = self.user_id
@@ -581,11 +588,12 @@ class Mastodon(source.Source):
           error_plain='No content text found.',
           error_html='No content text found.')
 
+    post_label = '%s %s' % (self.NAME, self.TYPE_LABELS['post'])
     if is_reply and not base_url:
       return source.creation_result(
         abort=True,
-        error_plain='Could not find a Mastodon toot to reply to.',
-        error_html='Could not find a Mastodon toot to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.')
+        error_plain='Could not find a %s to reply to.' % post_label,
+        error_html='Could not find a %s to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.' % post_label)
 
     # truncate and ellipsize content if necessary
     # TODO: don't count domains in remote mentions.
@@ -613,11 +621,11 @@ class Mastodon(source.Source):
       if not base_url:
         return source.creation_result(
           abort=True,
-          error_plain='Could not find a Mastodon toot to favorite.',
-          error_html='Could not find a Mastodon toot on to <a href="http://indiewebcamp.com/favorite">favorite</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.')
+          error_plain='Could not find a %s to %s.' % (post_label, self.TYPE_LABELS['like']),
+          error_html='Could not find a %s to <a href="http://indiewebcamp.com/like">%s</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.' % (post_label, self.TYPE_LABELS['like']))
 
       if preview:
-        preview_description += '<span class="verb">favorite</span> <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
+        preview_description += '<span class="verb">%s</span> <a href="%s">this %s</a>: %s' % (self.TYPE_LABELS['like'], base_url, self.TYPE_LABELS['post'], self.embed_post(base_obj))
         return source.creation_result(description=preview_description)
       else:
         resp = self._post(API_FAVORITE % base_id)
@@ -627,11 +635,11 @@ class Mastodon(source.Source):
       if not base_url:
         return source.creation_result(
           abort=True,
-          error_plain='Could not find a Mastodon toot to boost.',
-          error_html='Could not find a Mastodon toot to <a href="http://indiewebcamp.com/repost">boost</a>. Check that your post has the right <a href="http://indiewebcamp.com/repost">repost-of</a> link.')
+          error_plain='Could not find a %s to %s.' % (post_label, self.TYPE_LABELS['repost']),
+          error_html='Could not find a %s to <a href="http://indiewebcamp.com/repost">%s</a>. Check that your post has the right <a href="http://indiewebcamp.com/repost">repost-of</a> link.' % (post_label, self.TYPE_LABELS['repost']))
 
       if preview:
-          preview_description += '<span class="verb">boost</span> <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
+          preview_description += '<span class="verb">%s</span> <a href="%s">this %s</a>: %s' % (self.TYPE_LABELS['repost'], base_url, self.TYPE_LABELS['post'], self.embed_post(base_obj))
           return source.creation_result(description=preview_description)
       else:
         resp = self._post(API_REBLOG % base_id)
@@ -641,10 +649,10 @@ class Mastodon(source.Source):
       data = {'status': content}
 
       if is_reply:
-        preview_description += '<span class="verb">reply</span> to <a href="%s">this toot</a>: %s' % (base_url, self.embed_post(base_obj))
+        preview_description += 'add a <span class="verb">%s</span> to <a href="%s">this %s</a>: %s' % (self.TYPE_LABELS['comment'], base_url, self.TYPE_LABELS['post'], self.embed_post(base_obj))
         data['in_reply_to_id'] = base_id
       else:
-        preview_description += '<span class="verb">toot</span>:'
+        preview_description += '<span class="verb">%s</span>:' % self.TYPE_LABELS['post']
 
       num_media = len(videos) + len(images)
       if num_media > MAX_MEDIA:
