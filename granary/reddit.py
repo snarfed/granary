@@ -133,7 +133,6 @@ class Reddit(source.Source):
           {'objectType': 'article',
            'url': t,
            'displayName': t,
-           'indices': None,
            } for t in util.extract_links(thing.selftext)
         ]
     elif type == 'comment':
