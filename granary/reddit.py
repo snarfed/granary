@@ -129,8 +129,21 @@ class Reddit(source.Source):
 
     if type == 'submission':
       obj['content'] = thing.title
+      obj['tags'] = [
+          {'objectType': 'article',
+           'url': t,
+           'displayName': t,
+           'indices': None,
+           } for t in util.extract_links(thing.selftext)
+        ]
     elif type == 'comment':
       obj['content'] = thing.body
+      reply_to = thing.parent()
+      if reply_to:
+        obj['inReplyTo'] = [{
+          'id': self.tag_uri(reply_to.id),
+          'url': self.BASE_URL + reply_to.permalink,
+          }]
 
     return self.postprocess_object(obj)
 
