@@ -40,7 +40,7 @@ class FakeSubmission():
 
 
 class FakeComment():
-  """ to mock https://praw.readthedocs.io/en/latest/code_overview/models/submission.html
+  """ to mock https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
   """
   id = 'fgpvzfw'
   permalink = '/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/fgpvzfw/'
