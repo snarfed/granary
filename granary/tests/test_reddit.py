@@ -142,7 +142,7 @@ COMMENT_OBJECT = {
       'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/'
     }
   ],
-  'objectType': 'note',
+  'objectType': 'comment',
   'published': '2020-02-06T18:17:49Z',
   'to': [{'alias': '@public', 'objectType': 'group'}],
   'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/fgpvzfw/'

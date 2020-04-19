@@ -112,7 +112,6 @@ class Reddit(source.Source):
 
     obj = {
       'id': self.tag_uri(id),
-      'objectType': 'note',
       'published': published,
       'to': [{
         'objectType': 'group',
@@ -129,6 +128,7 @@ class Reddit(source.Source):
 
     if type == 'submission':
       obj['content'] = thing.title
+      obj['objectType'] = 'note'
       obj['tags'] = [
           {'objectType': 'article',
            'url': t,
@@ -137,6 +137,7 @@ class Reddit(source.Source):
         ]
     elif type == 'comment':
       obj['content'] = thing.body
+      obj['objectType'] = 'comment'
       reply_to = thing.parent()
       if reply_to:
         obj['inReplyTo'] = [{
