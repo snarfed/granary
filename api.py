@@ -240,10 +240,6 @@ class Handler(handlers.ModernHandler):
         reader = self.request.get('reader', 'true').lower()
         if reader not in ('true', 'false'):
           self.abort(400, 'reader param must be either true or false')
-        if not actor and hfeed:
-          actor = microformats2.json_to_object({
-            'properties': hfeed.get('properties', {}),
-          })
         self.response.out.write(atom.activities_to_atom(
           activities, actor,
           host_url=url or self.request.host_url + '/',
@@ -260,7 +256,7 @@ class Handler(handlers.ModernHandler):
           title = 'Feed for %s' % url
         self.response.out.write(rss.from_activities(
           activities, actor, title=title,
-          feed_url=self.request.url, hfeed=hfeed,
+          feed_url=self.request.url, hfeed=hfeed, actor=actor,
           home_page_url=util.base_url(url)))
       elif format in ('as1-xml', 'xml'):
         self.response.out.write(XML_TEMPLATE % util.to_xml(response))

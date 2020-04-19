@@ -193,9 +193,10 @@ class UrlHandler(api.Handler):
       except (TypeError, ValueError):
         raise exc.HTTPBadRequest('Could not decode %s as JSON' % final_url)
 
-    mf2 = None
+    soup = mf2 = None
     if input == 'html':
-      mf2 = util.parse_mf2(resp, id=fragment)
+      soup = util.parse_html(resp)
+      mf2 = util.parse_mf2(soup, id=fragment)
       if id and not mf2:
         raise exc.HTTPBadRequest('Got fragment %s but no element found with that id.' % fragment)
     elif input in ('mf2-json', 'json-mf2'):
@@ -206,18 +207,11 @@ class UrlHandler(api.Handler):
           mf2.__class__.__name__)
       mf2.setdefault('rels', {})  # mf2util expects rels
 
-    actor = None
-    title = None
-    hfeed = None
-    if mf2:
-      def fetch_mf2_func(url):
-        if util.domain_or_parent_in(urllib.parse.urlparse(url).netloc, SILO_DOMAINS):
-          return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
-        return util.fetch_mf2(url, gateway=True)
-
+    actor = title = hfeed = None
+    if soup:
       try:
-        actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
-        title = microformats2.get_title(mf2)
+        actor = microformats2.find_feed_author(soup, url=final_url, mf2=mf2)
+        title = actor.get('displayName')
         hfeed = mf2util.find_first_entry(mf2, ['h-feed'])
       except (KeyError, ValueError) as e:
         raise exc.HTTPBadRequest('Could not parse %s as %s: %s' % (final_url, input, e))

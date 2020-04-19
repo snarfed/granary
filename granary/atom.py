@@ -324,13 +324,14 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
   if fetch_author:
     assert url, 'fetch_author=True requires url!'
 
-  parsed = util.parse_mf2(html, url=url)
-  actor = microformats2.find_author(parsed, fetch_mf2_func=util.fetch_mf2)
+  soup = util.parse_html(html)
+  actor = microformats2.find_feed_author(soup, url=url)
+  mf2 = util.parse_mf2(soup, url=url)
 
   return activities_to_atom(
     microformats2.html_to_activities(html, url, actor),
     actor,
-    title=microformats2.get_title(parsed),
+    title=microformats2.html_title(soup),
     xml_base=util.base_url(url),
     host_url=url,
     reader=reader)

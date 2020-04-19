@@ -1055,16 +1055,59 @@ def find_author(parsed, **kwargs):
     parsed: dict, parsed mf2 object (ie return value from mf2py.parse())
     kwargs: passed through to mf2util.find_author()
   """
-  author = mf2util.find_author(parsed, 'http://123', **kwargs)
-  if author:
-    photo = author.get('photo')
-    if isinstance(photo, dict):
-      photo = photo.get('url') or photo.get('value')
-    return {
-      'displayName': author.get('name'),
-      'url': author.get('url'),
-      'image': {'url': photo},
-    }
+  return author_to_actor(mf2util.find_author(parsed, 'http://123', **kwargs))
+
+
+def find_feed_author(soup, url=None, mf2=None):
+  """Returns the author of a feed page as a ActivityStreams actor dict.
+
+  Args:
+    soup: :class:`bs4.BeautifulSoup`, parsed HTML page
+    url: str, optional, URL of feed page
+    mf2: dict, optional, parsed mf2 object (ie return value from mf2py.parse())
+
+  Returns: dict, AS actor
+  """
+  actor = {}
+
+  if not mf2:
+    mf2 = util.parse_mf2(soup)
+
+  feed = mf2util.find_first_entry(mf2, ['h-feed'])
+  if feed:
+    author = util.get_first(feed.get('properties', {}), 'author') or feed
+    actor = author_to_actor(mf2util.parse_author(author), ellipsize=True)
+
+  if not actor.get('displayName'):
+    actor['displayName'] = html_title(soup)
+
+  if not actor.get('url'):
+    actor['url'] = url
+
+  return actor
+
+
+def author_to_actor(author, ellipsize=False):
+  """Converts an mf2 author to an ActivityStreams actor.
+
+  Args:
+    author: dict, parsed mf2 author object, or None
+    ellipsize: boolean, whether to ellipsize the name if it's too long
+
+  Returns: dict, AS actor
+  """
+  if not author:
+    return {}
+
+  prop = first_props(author.get('properties', {}))
+  photo = prop.get('photo')
+  if isinstance(photo, dict):
+    photo = photo.get('url') or photo.get('value')
+  return {
+    'displayName': prop.get('name'),
+    'url': prop.get('url'),
+    'image': {'url': photo},
+  }
 
 
 def get_title(mf2):
@@ -1080,6 +1123,19 @@ def get_title(mf2):
     return util.ellipsize(lines[0])
 
   return ''
+
+
+def html_title(soup):
+  """Returns the HTML <title> element's text contents, as a string, or None.
+
+  Args:
+    soup: :class:`bs4.BeautifulSoup`, parsed HTML page
+  """
+  head = soup.head
+  if head:
+    title = head.title
+    if title:
+      return title.string
 
 
 def first_props(props):

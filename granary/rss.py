@@ -60,9 +60,10 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   fg.generator('granary', uri='https://granary.io/')
 
   hfeed = hfeed or {}
-  actor = actor or {}
-  image = (util.get_url(hfeed.get('properties', {}), 'photo') or
-           util.get_url(actor, 'image'))
+  # XXX TODO
+  # actor = actor or microformats2.find_feed_author(hfeed) or {}
+  image = (util.get_url(actor, 'image') or
+           util.get_url(hfeed.get('properties', {}), 'photo'))
   if image:
     fg.image(image)
 

@@ -655,6 +655,40 @@ going to Homebrew Website Club
 </author>
 """, got, ignore_blanks=True)
 
+  def test_html_to_atom_hfeed_u_url(self):
+    self.assert_multiline_in("""\
+<id>http://u/url</id>
+<title>Page title</title>
+""", atom.html_to_atom("""\
+<html>
+<head><title>Page title</title></head>
+<div class="h-feed">
+  <a class="u-url" href="http://u/url"></a>
+  <article class="h-entry">
+    <p class="e-content">entry content</p>
+  </article>
+</div>
+</html>
+""", 'https://my.site/feed'),
+    ignore_blanks=True)
+
+  def test_html_to_atom_title_page_url(self):
+    self.assert_multiline_in("""\
+<id>http://my.site/feed</id>
+<title>Page title</title>
+""", atom.html_to_atom("""\
+<html>
+<head><title>Page title</title></head>
+<div class="h-feed">
+  <span>unmarked feed title</span>
+  <article class="h-entry">
+    <p class="e-content">entry content</p>
+  </article>
+</div>
+</html>
+""", 'https://my.site/feed'),
+    ignore_blanks=True)
+
   def test_html_to_atom_title_without_hfeed_name(self):
     self.assert_multiline_in("""\
 <generator uri="https://granary.io/">granary</generator>
