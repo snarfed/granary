@@ -229,6 +229,21 @@ class Reddit(source.Source):
 
     return self.make_activities_base_response(activities)
 
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
+                  activity=None):
+    """Returns an ActivityStreams comment object.
+
+    Args:
+      comment_id: string comment id
+      activity_id: string activity id, Ignored
+      activity_author_id: string activity author id. Ignored.
+      activity: activity object, Ignored
+    """
+    r = get_reddit_api(self.refresh_token)
+    r.read_only = True
+    com = r.comment(id=comment_id)
+    return self.praw_to_object(com, 'comment')
+
   def user_url(self, username):
     """Returns the Reddit URL for a given user."""
     return 'https://%s/user/%s' % (self.DOMAIN, username)
