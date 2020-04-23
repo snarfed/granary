@@ -130,6 +130,11 @@ class FakeSource(Source):
   EMBED_POST = 'foo %(url)s bar'
 
 
+class FakeHTMLSource(Source):
+  DOMAIN = 'fake.com'
+  EMBED_POST = '%(content)s'
+
+
 class SourceTest(testutil.TestCase):
 
   def setUp(self):
@@ -556,9 +561,9 @@ Watching  \t waves
     self.assert_equals('foo http://%3Ca%3Eb bar',
                        self.source.embed_post({'url': 'http://<a>b'}))
 
-  def test_embed_post_checks_content_for_html(self):
-    with self.assertRaises(ValueError):
-      self.source.embed_post({'content': '<xyz>'})
+  def test_embed_post_escapes_html(self):
+    self.assert_equals('x &gt; 2 &amp;&amp; x &lt; 7',
+      FakeHTMLSource().embed_post({'content': 'x > 2 && x < 7' }))
 
   def test_truncate(self):
     """A bunch of tests to exercise the text shortening algorithm."""

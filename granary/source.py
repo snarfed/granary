@@ -11,7 +11,7 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
 import collections
 import copy
-from html import unescape
+from html import escape, unescape
 import logging
 import re
 import urllib.parse
@@ -811,16 +811,15 @@ class Source(object, metaclass=SourceMeta):
       obj: AS1 dict with at least url, and optionally also content.
 
     Returns: string, HTML
-
-    Raises: ValueError, if obj['content'] contains raw < or > characters.
     """
     obj = copy.copy(obj)
     for field in 'url', 'content':
       if field not in obj:
         obj.setdefault(field, obj.get('object', {}).get(field, ''))
 
-    if '<' in obj['content'] or '>' in obj['content']:
-      raise ValueError("obj['content'] has unescaped < or > characters!")
+    # allow HTML in posts to be rendered safely, avoiding risk of XSS, but
+    # allowing posts that could contain HTML to be allowed
+    obj['content'] = escape(obj['content'])
 
     # escape URL, but not with urllib.parse.quote, because it quotes a ton of
     # chars we want to pass through, including most unicode chars.
