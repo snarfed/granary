@@ -488,6 +488,11 @@ Watching  \t waves
       self.assertFalse(self.source.activity_changed(before, after, log=True),
                                                     '%s\n%s' % (before, after))
 
+    fb_comment_edited_inReplyTo = copy.deepcopy(fb_comment_edited)
+    fb_comment_edited_inReplyTo['inReplyTo'].append({
+      'id': 'tag:fake.com:000000000000000',
+      'url': 'https://www.facebook.com/000000000000000',
+    })
     fb_comment_edited['content'] = 'new content'
     gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
 
@@ -496,6 +501,7 @@ Watching  \t waves
     fb_rsvp = RSVP_YES
 
     for before, after in ((fb_comment, fb_comment_edited),
+                          (fb_comment, fb_comment_edited_inReplyTo),
                           (gp_like, gp_like_edited),
                           (fb_invite, fb_rsvp)):
       self.assertTrue(self.source.activity_changed(before, after, log=True),

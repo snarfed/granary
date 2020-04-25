@@ -801,7 +801,7 @@ class Source(object, metaclass=SourceMeta):
     return any(changed(before, after, field, 'activity') or
                changed(obj_b, obj_a, field, 'activity[object]')
                for field in ('objectType', 'verb', 'to', 'content', 'location',
-                             'image'))
+                             'image', 'inReplyTo'))
 
   @classmethod
   def embed_post(cls, obj):
