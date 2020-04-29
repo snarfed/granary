@@ -166,11 +166,25 @@ ACTOR = {
   'description': 'https://bonkerfield.org https://viewfoil.bonkerfield.org',
   }
 
+MISSING_ACTOR = {
+  'displayName': 'user_not_found',
+  'id': 'tag:reddit.com:user_not_found',
+  'image': {'url': 'null_img'},
+  'numeric_id': 'null_id',
+  'objectType': 'person',
+  'url': 'https://reddit.com/user/user_not_found',
+  'username': 'user_not_found'
+  }
+
+
 class RedditTest(testutil.TestCase):
 
   def setUp(self):
     super(RedditTest, self).setUp()
     self.reddit = reddit.Reddit('token-here')
+
+  def test_missing_user_to_actor(self):
+    self.assert_equals(MISSING_ACTOR, self.reddit.user_to_actor(self.reddit.missing_user))
 
   def test_praw_to_actor(self):
     self.assert_equals(ACTOR, self.reddit.praw_to_actor(FakeRedditor()))
