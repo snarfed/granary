@@ -138,7 +138,7 @@ class Reddit(source.Source):
            } for t in util.extract_links(thing.selftext)
         ]
     elif type == 'comment':
-      obj['content'] = thing.body
+      obj['content'] = thing.body_html
       obj['objectType'] = 'comment'
       reply_to = thing.parent()
       if reply_to:

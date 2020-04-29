@@ -33,7 +33,7 @@ class FakeSubmission():
   permalink = '/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/'
   created_utc = 1581007919.0
   title = '[P] GPT-2 + BERT reddit replier. I built a system that generates replies by taking output from GPT-2 and using BERT models to select the most realistic replies. People on r/artificial replied to it as if it were a person.'
-  selftext = 'I was trying to make a reddit reply bot with GPT-2 to see if it could pass as a human on reddit. I wrote up a [results overview](https://www.bonkerfield.org/2020/02/combining-gpt-2-and-bert/) and a [tutorial post](https://www.bonkerfield.org/2020/02/reddit-bot-gpt2-bert/) to explain how it works.'
+  selftext = '<!-- SC_OFF --><div class="md"><p>I was trying to make a reddit reply bot with GPT-2 to see if it could pass as a human on reddit. I wrote up a <a href="https://www.bonkerfield.org/2020/02/combining-gpt-2-and-bert/">results overview</a> and a <a href="https://www.bonkerfield.org/2020/02/reddit-bot-gpt2-bert/">tutorial post</a> to explain how it works.'
 
   def __init__(self, fake_redditor):
     self.author = fake_redditor
@@ -45,7 +45,7 @@ class FakeComment():
   id = 'fgpvzfw'
   permalink = '/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/fgpvzfw/'
   created_utc = 1581013069.0
-  body = 'The ultimate purpose of Reddit will be the testing ground for passing the Turing test. Then we can all quit the internet.'
+  body_html = '<div class="md"><p>The ultimate purpose of Reddit will be the testing ground for passing the Turing test. Then we can all quit the internet.</p>\n</div>'
 
   def __init__(self, fake_submission, fake_redditor):
     self._parent = fake_submission
@@ -134,7 +134,7 @@ COMMENT_OBJECT = {
     ],
     'username': 'bonkerfield'
   },
-  'content': 'The ultimate purpose of Reddit will be the testing ground for passing the Turing test. Then we can all quit the internet.',
+  'content': '<div class="md"><p>The ultimate purpose of Reddit will be the testing ground for passing the Turing test. Then we can all quit the internet.</p>\n</div>',
   'id': 'tag:reddit.com:fgpvzfw',
   'inReplyTo': [
     {
