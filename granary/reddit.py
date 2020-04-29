@@ -18,6 +18,7 @@ import re
 import urllib.parse, urllib.request
 
 import praw
+from prawcore.exceptions import NotFound
 
 def get_reddit_api(refresh_token):
   return praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
@@ -32,6 +33,14 @@ class Reddit(source.Source):
   BASE_URL = 'https://reddit.com'
   NAME = 'Reddit'
 
+  missing_user = {
+    'name': 'user_not_found',
+    'subreddit': None,
+    'icon_img': 'null_img',
+    'id': 'null_id',
+    'created_utc': None
+  }
+
   def __init__(self, refresh_token):
     self.refresh_token = refresh_token
 
@@ -45,7 +54,10 @@ class Reddit(source.Source):
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
-    user = reddit.praw_to_user(praw_user)
+    try:
+      user = reddit.praw_to_user(praw_user)
+    except NotFound:
+      user = missing_user
     return self.user_to_actor(user)
 
   def user_to_actor(self, user):
