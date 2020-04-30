@@ -21,6 +21,7 @@ instagram_scrape_base
 instagram_sessionid_cookie
 linkedin_client_*
 meetup_client_*
+reddit_app_*
 twitter_app_*
 TAGS
 *.pyc
