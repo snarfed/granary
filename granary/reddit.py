@@ -49,9 +49,9 @@ class Reddit(source.Source):
     """
     try:
       user = reddit.praw_to_user(praw_user)
-      return self.user_to_actor(user)
     except NotFound:
       return {}
+    return self.user_to_actor(user)
 
   def user_to_actor(self, user):
     """Converts a dict user to an actor.
