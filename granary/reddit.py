@@ -46,6 +46,7 @@ class Reddit(source.Source):
 
   def praw_to_actor(self, praw_user):
     """Converts a praw Redditor to an actor.
+    Note that praw_to_user funciton makes external calls to fetch data from reddit API
     https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
 
     Args:
@@ -108,6 +109,7 @@ class Reddit(source.Source):
   def praw_to_object(self, thing, type):
     """
     Converts a praw object to an object. currently only returns public content
+    Note that this will make external API calls to lazily load some attrs
 
     Args:
       thing: a praw object, Submission or Comment
@@ -166,6 +168,7 @@ class Reddit(source.Source):
     """Converts a praw submission or comment to an activity.
     https://praw.readthedocs.io/en/latest/code_overview/models/submission.html
     https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
+    Note that this will make external API calls to lazily load some attrs
 
     Args:
       thing: a praw object, Submission or Comment
