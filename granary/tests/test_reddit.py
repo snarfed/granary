@@ -13,6 +13,7 @@ class FakeRedditor():
   """
   id = '59ucsixw'
   name = 'bonkerfield'
+  is_suspended = False
   subreddit = {
     'display_name': 'u_bonkerfield',
     'title': '',
@@ -32,6 +33,7 @@ class FakeMissingRedditor():
   """
 
   name = 'mr_missing'
+  is_suspended = False
 
   @property
   def subreddit(self):
