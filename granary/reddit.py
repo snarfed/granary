@@ -112,11 +112,11 @@ class Reddit(source.Source):
       """
     obj = {}
 
-    id = getattr(thing,'id',None)
+    id = getattr(thing, 'id', None)
     if not id:
       return {}
 
-    published = util.maybe_timestamp_to_iso8601(getattr(thing,'created_utc',None))
+    published = util.maybe_timestamp_to_iso8601(getattr(thing, 'created_utc', None))
 
     obj = {
       'id': self.tag_uri(id),
@@ -127,7 +127,7 @@ class Reddit(source.Source):
         }],
       }
 
-    user = getattr(thing,'author',None)
+    user = getattr(thing, 'author', None)
     if user:
       obj['author'] = self.praw_to_actor(user)
       username = obj['author'].get('username')
@@ -135,22 +135,22 @@ class Reddit(source.Source):
     obj['url'] = self.BASE_URL + thing.permalink
 
     if type == 'submission':
-      obj['content'] = getattr(thing,'title',None)
+      obj['content'] = getattr(thing, 'title', None)
       obj['objectType'] = 'note'
       obj['tags'] = [
           {'objectType': 'article',
            'url': t,
            'displayName': t,
-           } for t in util.extract_links(getattr(thing,'selftext',None))
+           } for t in util.extract_links(getattr(thing, 'selftext', None))
         ]
     elif type == 'comment':
-      obj['content'] = getattr(thing,'body_html',None)
+      obj['content'] = getattr(thing, 'body_html', None)
       obj['objectType'] = 'comment'
       reply_to = thing.parent()
       if reply_to:
         obj['inReplyTo'] = [{
-          'id': self.tag_uri(getattr(reply_to,'id',None)),
-          'url': self.BASE_URL + getattr(reply_to,'permalink',None),
+          'id': self.tag_uri(getattr(reply_to, 'id', None)),
+          'url': self.BASE_URL + getattr(reply_to, 'permalink', None),
           }]
 
     return self.postprocess_object(obj)
@@ -172,14 +172,14 @@ class Reddit(source.Source):
     obj = self.praw_to_object(thing, type)
     actor = obj.get('author')
 
-    id = getattr(thing,'id',None)
+    id = getattr(thing, 'id', None)
     if not id:
       return {}
 
     activity = {
       'verb': 'post',
       'id': id,
-      'url': self.BASE_URL + getattr(thing,'permalink',None),
+      'url': self.BASE_URL + getattr(thing, 'permalink', None),
       'actor': actor,
       'object': obj
       }
@@ -203,7 +203,7 @@ class Reddit(source.Source):
       # for v0 we will use just the top level comments because threading is hard
       subm.comments.replace_more()
       replies = []
-      for top_level_comment in getattr(subm,'comments',None):
+      for top_level_comment in getattr(subm, 'comments', None):
         replies.append(self.praw_to_activity(top_level_comment, 'comment'))
 
       items = [r.get('object') for r in replies]
