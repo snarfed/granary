@@ -112,7 +112,7 @@ class Reddit(source.Source):
       """
     obj = {}
 
-    id = thing.id
+    id = getattr(thing,'id',None)
     if not id:
       return {}
 
@@ -171,10 +171,13 @@ class Reddit(source.Source):
     """
     obj = self.praw_to_object(thing, type)
     actor = obj.get('author')
+    id = getattr(thing,'id',None)
+    if not id:
+      return {}
 
     activity = {
       'verb': 'post',
-      'id': thing.id,
+      'id': id,
       'url': self.BASE_URL + thing.permalink,
       'actor': actor,
       'object': obj
