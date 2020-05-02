@@ -112,7 +112,10 @@ class Reddit(source.Source):
       """
     obj = {}
 
-    id = getattr(thing,'id',None)
+    if any([not hasattr(thing,a) for a in ['id','author','permalink']]):
+      return {}
+
+    id = thing.id
     if not id:
       return {}
 
@@ -135,6 +138,8 @@ class Reddit(source.Source):
     obj['url'] = self.BASE_URL + thing.permalink
 
     if type == 'submission':
+      if any([not hasattr(thing,a) for a in ['title','selftext']]):
+        return {}
       obj['content'] = thing.title
       obj['objectType'] = 'note'
       obj['tags'] = [
@@ -144,6 +149,8 @@ class Reddit(source.Source):
            } for t in util.extract_links(thing.selftext)
         ]
     elif type == 'comment':
+      if not hasattr(thing,'body_html'):
+        return {}
       obj['content'] = thing.body_html
       obj['objectType'] = 'comment'
       reply_to = thing.parent()
@@ -171,6 +178,8 @@ class Reddit(source.Source):
     """
     obj = self.praw_to_object(thing, type)
     actor = obj.get('author')
+    if any([not hasattr(thing,a) for a in ['id','permalink']]):
+      return {}
     id = getattr(thing,'id',None)
     if not id:
       return {}
