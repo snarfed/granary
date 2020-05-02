@@ -39,14 +39,6 @@ class FakeMissingRedditor():
       status_code = '404'
     raise NotFound(FakeResponse())
 
-class FakeSuspendedRedditor():
-  """ to mock https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
-  """
-
-  name = 'mr_suspended'
-  is_suspended = True
-
-
 class FakeRedditorBroken():
   """ to test when Redditor object has no attributes
   """
@@ -64,11 +56,6 @@ class FakeSubmission():
   def __init__(self, fake_redditor):
     self.author = fake_redditor
 
-class FakeSubmissionBroken():
-  """ to test when Submission object has no attributes
-  """
-  pass
-
 class FakeComment():
   """ to mock https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
   """
@@ -83,11 +70,6 @@ class FakeComment():
 
   def parent(self):
     return self._parent
-
-class FakeCommentBroken():
-  """ to test when Comment object has no attributes
-  """
-  pass
 
 ACTIVITY = {
   'filtered': False,
@@ -212,13 +194,13 @@ class RedditTest(testutil.TestCase):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(FakeMissingRedditor()))
 
   def test_suspended_user_to_actor(self):
-    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(FakeSuspendedRedditor()))
+    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(util.Struct(name='mr_suspended', is_suspended=True)))
 
   def test_praw_to_actor(self):
     self.assert_equals(ACTOR, self.reddit.praw_to_actor(FakeRedditor()))
 
   def test_broken_praw_to_actor(self):
-    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(FakeRedditorBroken()))
+    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(util.Struct()))
 
   def test_praw_to_comment(self):
     fake_author = FakeRedditor()
@@ -226,11 +208,11 @@ class RedditTest(testutil.TestCase):
     self.assert_equals(COMMENT_OBJECT, self.reddit.praw_to_object(FakeComment(fake_sub,fake_author),'comment'))
 
   def test_broken_praw_to_comment(self):
-    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_object(FakeCommentBroken(),'comment'))
+    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_object(util.Struct(),'comment'))
 
   def test_submission_to_activity(self):
     fake_activities = [self.reddit.praw_to_activity(FakeSubmission(FakeRedditor()),type='submission')]
     self.assert_equals(ACTIVITY, self.reddit.make_activities_base_response(fake_activities))
 
   def test_broken_submission_to_object(self):
-    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_activity(FakeSubmissionBroken(),type='submission'))
+    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_activity(util.Struct(),type='submission'))
