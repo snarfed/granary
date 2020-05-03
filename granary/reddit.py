@@ -20,13 +20,6 @@ import urllib.parse, urllib.request
 import praw
 from prawcore.exceptions import NotFound
 
-def get_reddit_api(refresh_token):
-  return praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
-                     client_secret=reddit.REDDIT_APP_SECRET,
-                     refresh_token=refresh_token,
-                     user_agent='oauth-dropin reddit api')
-
-
 class Reddit(source.Source):
 
   DOMAIN = 'reddit.com'
@@ -35,6 +28,15 @@ class Reddit(source.Source):
 
   def __init__(self, refresh_token):
     self.refresh_token = refresh_token
+    self.reddit_api = None
+
+  def get_reddit_api():
+    if not self.reddit_api:
+      self.reddit_api = praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
+                                    client_secret=reddit.REDDIT_APP_SECRET,
+                                    refresh_token=self.refresh_token,
+                                    user_agent='oauth-dropin reddit api')
+    return self.reddit_api
 
   def praw_to_actor(self, praw_user):
     """Converts a praw Redditor to an actor.
@@ -226,7 +228,7 @@ class Reddit(source.Source):
 
     activities = []
 
-    r = get_reddit_api(self.refresh_token)
+    r = self.get_reddit_api()
     r.read_only = True
 
     if activity_id:
@@ -253,7 +255,7 @@ class Reddit(source.Source):
       activity_author_id: string activity author id. Ignored.
       activity: activity object, Ignored
     """
-    r = get_reddit_api(self.refresh_token)
+    r = self.get_reddit_api()
     r.read_only = True
     com = r.comment(id=comment_id)
     return self.praw_to_object(com, 'comment')
