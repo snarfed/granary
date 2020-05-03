@@ -30,7 +30,7 @@ class Reddit(source.Source):
     self.refresh_token = refresh_token
     self.reddit_api = None
 
-  def get_reddit_api():
+  def get_reddit_api(self):
     if not self.reddit_api:
       self.reddit_api = praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
                                     client_secret=reddit.REDDIT_APP_SECRET,
