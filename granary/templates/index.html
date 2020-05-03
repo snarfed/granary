@@ -199,7 +199,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   {% endif %}
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
-  {% if site in ('mastodon', 'pixelfed', 'twitter') %}
+  {% if site in ('mastodon', 'pixelfed', 'reddit', 'twitter') %}
     <option value="@search">@search</option>
   {% endif %}
   {% if site == 'twitter' %}
