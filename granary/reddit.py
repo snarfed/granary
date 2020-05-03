@@ -235,7 +235,7 @@ class Reddit(source.Source):
 
     if search_query:
       sr = r.subreddit("all")
-      subms = sr.search(search_query)
+      subms = sr.search(f'"{search_query}"', sort='new')
       activities.extend([self.praw_to_activity(subm, 'submission') for subm in subms])
 
     if fetch_replies:
