@@ -803,6 +803,27 @@ class Source(object, metaclass=SourceMeta):
                for field in ('objectType', 'verb', 'to', 'content', 'location',
                              'image', 'inReplyTo'))
 
+  @staticmethod
+  def append_in_reply_to(before, after):
+    """appends the inReplyTos from the before object to the after object, in place
+
+    Args:
+      before, after: dicts, ActivityStreams activities or objects
+    """
+    obj_b = before.get('object', before)
+    obj_a = after.get('object', after)
+
+    if obj_b and obj_a:
+      reply_b = obj_b.get('inReplyTo')
+      reply_a = obj_a.get('inReplyTo')
+      if reply_b and reply_a:
+        reply_new = reply_a + [i for i in reply_b if i not in reply_a]
+        # test to see whether after is activity or
+        if 'object' in after:
+          after['object']['inReplyTo'] = reply_new
+        else:
+          after['inReplyTo'] = reply_new
+
   @classmethod
   def embed_post(cls, obj):
     """Returns the HTML string for embedding a post object.

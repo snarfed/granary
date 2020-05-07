@@ -507,6 +507,21 @@ Watching  \t waves
       self.assertTrue(self.source.activity_changed(before, after, log=True),
                                                    '%s\n%s' % (before, after))
 
+  def test_append_in_reply_to(self):
+    fb_comment_before = copy.deepcopy(COMMENT)
+    fb_comment_after_same = copy.deepcopy(fb_comment_before)
+    self.source.append_in_reply_to(fb_comment_before,fb_comment_after_same)
+    self.assertEqual(COMMENT,fb_comment_before)
+    self.assertEqual(COMMENT,fb_comment_after_same)
+
+    fb_comment_after_diff = copy.deepcopy(fb_comment_before)
+    fb_comment_after_targ = copy.deepcopy(fb_comment_before)
+    fb_comment_after_diff['inReplyTo'] = ['new']
+    fb_comment_after_targ['inReplyTo'] = fb_comment_after_diff.get('inReplyTo')+fb_comment_before.get('inReplyTo')
+    self.source.append_in_reply_to(fb_comment_before,fb_comment_after_diff)
+    self.assertEqual(fb_comment_after_targ,fb_comment_after_diff)
+
+
   def test_sources_global(self):
     self.assertEqual(facebook.Facebook, source.sources['facebook'])
     self.assertEqual(instagram.Instagram, source.sources['instagram'])
