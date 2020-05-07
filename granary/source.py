@@ -814,15 +814,10 @@ class Source(object, metaclass=SourceMeta):
     obj_a = after.get('object', after)
 
     if obj_b and obj_a:
-      reply_b = obj_b.get('inReplyTo')
-      reply_a = obj_a.get('inReplyTo')
+      reply_b = util.get_list(obj_b,'inReplyTo')
+      reply_a = util.get_list(obj_a,'inReplyTo')
       if reply_b and reply_a:
-        reply_new = reply_a + [i for i in reply_b if i not in reply_a]
-        # test to see whether after is activity or
-        if 'object' in after:
-          after['object']['inReplyTo'] = reply_new
-        else:
-          after['inReplyTo'] = reply_new
+        obj_a['inReplyTo'] = util.dedupe_urls(reply_a + reply_b)
 
   @classmethod
   def embed_post(cls, obj):
