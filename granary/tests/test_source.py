@@ -488,6 +488,11 @@ Watching  \t waves
       self.assertFalse(self.source.activity_changed(before, after, log=True),
                                                     '%s\n%s' % (before, after))
 
+    fb_comment_edited_inReplyTo = copy.deepcopy(fb_comment_edited)
+    fb_comment_edited_inReplyTo['inReplyTo'].append({
+      'id': 'tag:fake.com:000000000000000',
+      'url': 'https://www.facebook.com/000000000000000',
+    })
     fb_comment_edited['content'] = 'new content'
     gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
 
@@ -496,10 +501,26 @@ Watching  \t waves
     fb_rsvp = RSVP_YES
 
     for before, after in ((fb_comment, fb_comment_edited),
+                          (fb_comment, fb_comment_edited_inReplyTo),
                           (gp_like, gp_like_edited),
                           (fb_invite, fb_rsvp)):
       self.assertTrue(self.source.activity_changed(before, after, log=True),
                                                    '%s\n%s' % (before, after))
+
+  def test_append_in_reply_to(self):
+    fb_comment_before = copy.deepcopy(COMMENT)
+    fb_comment_after_same = copy.deepcopy(fb_comment_before)
+    self.source.append_in_reply_to(fb_comment_before,fb_comment_after_same)
+    self.assertEqual(COMMENT,fb_comment_before)
+    self.assertEqual(COMMENT,fb_comment_after_same)
+
+    fb_comment_after_diff = copy.deepcopy(fb_comment_before)
+    fb_comment_after_targ = copy.deepcopy(fb_comment_before)
+    fb_comment_after_diff['inReplyTo'] = ['new']
+    fb_comment_after_targ['inReplyTo'] = fb_comment_after_diff.get('inReplyTo')+fb_comment_before.get('inReplyTo')
+    self.source.append_in_reply_to(fb_comment_before,fb_comment_after_diff)
+    self.assertEqual(fb_comment_after_targ,fb_comment_after_diff)
+
 
   def test_sources_global(self):
     self.assertEqual(facebook.Facebook, source.sources['facebook'])

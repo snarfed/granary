@@ -801,7 +801,22 @@ class Source(object, metaclass=SourceMeta):
     return any(changed(before, after, field, 'activity') or
                changed(obj_b, obj_a, field, 'activity[object]')
                for field in ('objectType', 'verb', 'to', 'content', 'location',
-                             'image'))
+                             'image', 'inReplyTo'))
+
+  @staticmethod
+  def append_in_reply_to(before, after):
+    """appends the inReplyTos from the before object to the after object, in place
+
+    Args:
+      before, after: dicts, ActivityStreams activities or objects
+    """
+    obj_b = before.get('object', before)
+    obj_a = after.get('object', after)
+
+    if obj_b and obj_a:
+      reply_b = util.get_list(obj_b,'inReplyTo')
+      reply_a = util.get_list(obj_a,'inReplyTo')
+      obj_a['inReplyTo'] = util.dedupe_urls(reply_a + reply_b)
 
   @classmethod
   def embed_post(cls, obj):
