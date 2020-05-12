@@ -816,8 +816,7 @@ class Source(object, metaclass=SourceMeta):
     if obj_b and obj_a:
       reply_b = util.get_list(obj_b,'inReplyTo')
       reply_a = util.get_list(obj_a,'inReplyTo')
-      if reply_b and reply_a:
-        obj_a['inReplyTo'] = util.dedupe_urls(reply_a + reply_b)
+      obj_a['inReplyTo'] = util.dedupe_urls(reply_a + reply_b)
 
   @classmethod
   def embed_post(cls, obj):
