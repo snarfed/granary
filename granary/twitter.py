@@ -3,8 +3,6 @@
 
 Uses the v1.1 REST API: https://developer.twitter.com/en/docs/api-reference-index
 
-TODO: collections for twitter accounts; use as activity target?
-
 The Audience Targeting 'to' field is set to @public or @private based on whether
 the tweet author's 'protected' field is true or false.
 https://dev.twitter.com/docs/platform-objects/users
@@ -932,8 +930,7 @@ class Twitter(source.Source):
     * command=APPEND for each 5MB block, up to 15MB total
     * command=FINALIZE
 
-    https://dev.twitter.com/rest/reference/post/media/upload-chunked
-    https://dev.twitter.com/rest/public/uploading-media#chunkedupload
+    https://developer.twitter.com/en/docs/media/upload-media/uploading-media/chunked-media-upload
 
     Args:
       url: string URL of images
