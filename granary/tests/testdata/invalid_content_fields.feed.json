@@ -1,0 +1,14 @@
+{
+  "version": "https://jsonfeed.org/version/1",
+  "title": "my title",
+  "author": {
+    "name": "Martin Smith",
+    "url": "http://example.com/martin",
+    "avatar": "http://example.com/martin/image"
+  },
+  "items": [{
+    "id": "tag:example.com:123",
+    "content_html": ["foo"],
+    "content_text": ["bar"],
+  }]
+}

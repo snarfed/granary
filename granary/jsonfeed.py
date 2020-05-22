@@ -143,7 +143,7 @@ def jsonfeed_to_activities(jsonfeed):
     'objectType': 'article' if item.get('title') else 'note',
     'title': item.get('title'),
     'summary': item.get('summary'),
-    'content': item.get('content_html') or item.get('content_text'),
+    'content': util.get_first(item, 'content_html') or util.get_first(item, 'content_text'),
     'id': str(item.get('id') or ''),
     'published': item.get('date_published'),
     'updated': item.get('date_modified'),
