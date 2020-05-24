@@ -309,6 +309,8 @@ Changelog
 * Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
 * JSON Feed:
   * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
+* HTML/microformats2:
+  * Add `aria-hidden="true"` to empty links ([bridgy#947](https://github.com/snarfed/bridgy/issues/947)).
 
 ### 3.0 - 2020-04-08
 

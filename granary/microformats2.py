@@ -1113,7 +1113,8 @@ def tags_to_html(tags, classname, visible=True):
     for url in object_urls(tag):
       urls[url, name] = None
 
-  return ''.join('\n<a class="%s" href="%s">%s</a>' % (classname, url, name)
+  return ''.join('\n<a class="%s" %shref="%s">%s</a>' %
+                 (classname, '' if name else 'aria-hidden="true" ', url, name)
                  for url, name in sorted(urls.keys()))
 
 

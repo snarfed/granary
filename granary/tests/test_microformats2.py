@@ -286,7 +286,7 @@ bar<br />
   def test_render_content_omits_tags_without_urls(self):
     self.assert_equals("""\
 foo
-<a class="tag" href="http://baj"></a>
+<a class="tag" aria-hidden="true" href="http://baj"></a>
 <a class="tag" href="http://baz">baz</a>
 """, microformats2.render_content({
       'content': 'foo',
@@ -434,7 +434,7 @@ Shared <a href="#">a post</a> by foo
   def test_mention_and_hashtag(self):
     self.assert_equals("""
 <a class="p-category" href="http://c">c</a>
-<a class="u-mention" href="http://m"></a>""",
+<a class="u-mention" aria-hidden="true" href="http://m"></a>""",
                        microformats2.render_content({
         'tags': [{'objectType': 'mention', 'url': 'http://m', 'displayName': 'm'},
                  {'objectType': 'hashtag', 'url': 'http://c', 'displayName': 'c'}],
@@ -443,8 +443,8 @@ Shared <a href="#">a post</a> by foo
   def test_tag_multiple_urls(self):
     expected_urls = ['http://1', 'https://2']
     expected_html = """
-<a class="tag" href="http://1"></a>
-<a class="tag" href="https://2"></a>
+<a class="tag" aria-hidden="true" href="http://1"></a>
+<a class="tag" aria-hidden="true" href="https://2"></a>
 """
     for tag in ({'url': 'http://1',
                   'urls': [{'value': 'http://1'}, {'value': 'https://2'}]},
@@ -482,7 +482,7 @@ Shared <a href="#">a post</a> by foo
             'url': ['http://p'],
           },
         }],
-        'content': [{'html': '\n<a class="tag" href="http://x"></a>'}],
+        'content': [{'html': '\n<a class="tag" aria-hidden="true" href="http://x"></a>'}],
       },
     }, microformats2.object_to_json(obj))
 
