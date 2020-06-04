@@ -379,23 +379,12 @@ class Twitter(source.Source):
         id = tweet['id_str']
         count = tweet.get('favorite_count')
         if self.is_public(activity) and count and count != cached.get('ATF ' + id):
-          if tweet.get('user', {}).get('screen_name') == 'islayblog':
-            resp = util.requests_get(
-              'https://api.twitter.com/2/timeline/liked_by.json?tweet_mode=extended&include_entities=true&include_user_entities=true&tweet_id=%s&count=80' % id,
-              headers=SCRAPE_HEADERS)
-            resp.raise_for_status()
-            likes = [self._make_like(tweet, author) for author in
-                     resp.json()['globalObjects']['users'].values()]
-
-          else:  # not a beta user
-            url = HTML_FAVORITES % id
-            try:
-              resp = util.urlopen(url).read()
-              html = source.load_json(resp, url).get('htmlUsers', '')
-            except urllib.error.URLError as e:
-              util.interpret_http_exception(e)  # just log it
-              continue
-            likes = self.favorites_html_to_likes(tweet, html)
+          resp = util.requests_get(
+            'https://api.twitter.com/2/timeline/liked_by.json?tweet_mode=extended&include_entities=true&include_user_entities=true&tweet_id=%s&count=80' % id,
+            headers=SCRAPE_HEADERS)
+          resp.raise_for_status()
+          likes = [self._make_like(tweet, author) for author in
+                   resp.json()['globalObjects']['users'].values()]
 
           activity['object'].setdefault('tags', []).extend(likes)
           cache_updates['ATF ' + id] = count

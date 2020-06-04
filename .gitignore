@@ -23,5 +23,6 @@ linkedin_client_*
 meetup_client_*
 reddit_app_*
 twitter_app_*
+twitter_scrape_headers*
 TAGS
 *.pyc
