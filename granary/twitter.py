@@ -20,6 +20,7 @@ import urllib.parse, urllib.request
 from oauth_dropins import twitter_auth
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from requests import RequestException
 
 from . import source
 
@@ -47,7 +48,7 @@ API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
 API_MEDIA_METADATA = 'https://upload.twitter.com/1.1/media/metadata/create.json'
 API_USER = 'users/show.json?screen_name=%s'
 API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
-HTML_FAVORITES = 'https://twitter.com/i/activity/favorited_popup?id=%s'
+SCRAPE_LIKES_URL = 'https://api.twitter.com/2/timeline/liked_by.json?tweet_mode=extended&include_user_entities=true&tweet_id=%s&count=80'
 
 TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
 HTTP_RATE_LIMIT_CODES = (429, 503)
@@ -105,8 +106,6 @@ MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(\w{1,15})\b', re.UNICODE)
 # http://stackoverflow.com/questions/8451846
 HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
-SCRAPE_HEADERS = json_loads(util.read('twitter_scrape_headers.json'))
-
 
 class OffsetTzinfo(datetime.tzinfo):
   """A simple, DST-unaware tzinfo from given utc offset in seconds.
@@ -155,7 +154,8 @@ class Twitter(source.Source):
   # TRUNCATE_TEXT_LENGTH = None
   # TRUNCATE_URL_LENGTH = None
 
-  def __init__(self, access_token_key, access_token_secret, username=None):
+  def __init__(self, access_token_key, access_token_secret, username=None,
+               scrape_headers=None):
     """Constructor.
 
     Twitter now requires authentication in v1.1 of their API. You can get an
@@ -165,10 +165,13 @@ class Twitter(source.Source):
       access_token_key: string, OAuth access token key
       access_token_secret: string, OAuth access token secret
       username: string, optional, the current user. Used in e.g. preview/create.
+      scrape_headers: dict, optional, with string HTTP header keys and values to
+        use when scraping likes
     """
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
     self.username = username
+    self.scrape_headers = scrape_headers
 
   def get_actor(self, screen_name=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -205,7 +208,7 @@ class Twitter(source.Source):
     "I've confirmed with our team that we're not explicitly supporting this
     family of features."
 
-    Likes (ie favorites) are scraped from twitter.com HTML, since Twitter's REST
+    Likes (nee favorites) are scraped from twitter.com, since Twitter's REST
     API doesn't offer a way to fetch them. You can also get them from the
     Streaming API, though, and convert them with streaming_event_to_object().
     https://dev.twitter.com/docs/streaming-apis/messages#Events_event
@@ -238,7 +241,14 @@ class Twitter(source.Source):
     * it's not a reply, OR
     * it's a reply, but not to the current user, AND
       * the tweet it's replying to doesn't @-mention the current user
+
+    Raises:
+      NotImplementedError: if fetch_likes is True but scrape_headers was not
+        provided to the constructor.
     """
+    if fetch_likes and not self.scrape_headers:
+        raise NotImplementedError('fetch_likes requires scrape_headers')
+
     if group_id is None:
       group_id = source.FRIENDS
 
@@ -379,13 +389,16 @@ class Twitter(source.Source):
         id = tweet['id_str']
         count = tweet.get('favorite_count')
         if self.is_public(activity) and count and count != cached.get('ATF ' + id):
-          resp = util.requests_get(
-            'https://api.twitter.com/2/timeline/liked_by.json?tweet_mode=extended&include_entities=true&include_user_entities=true&tweet_id=%s&count=80' % id,
-            headers=SCRAPE_HEADERS)
-          resp.raise_for_status()
-          likes = [self._make_like(tweet, author) for author in
-                   resp.json()['globalObjects']['users'].values()]
+          try:
+            resp = util.requests_get(SCRAPE_LIKES_URL % id,
+                                     headers=self.scrape_headers)
+            resp.raise_for_status()
+          except RequestException as e:
+            util.interpret_http_exception(e)  # just log it
+            continue
 
+          likes = [self._make_like(tweet, author) for author in
+                   resp.json().get('globalObjects', {}).get('users', {}).values()]
           activity['object'].setdefault('tags', []).extend(likes)
           cache_updates['ATF ' + id] = count
 
@@ -1490,44 +1503,6 @@ class Twitter(source.Source):
       obj = self._make_like(tweet, source)
       obj['published'] = self.rfc2822_to_iso8601(event.get('created_at'))
       return obj
-
-  def favorites_html_to_likes(self, tweet, html):
-    """Converts the HTML from a favorited_popup request to like objects.
-
-    e.g. https://twitter.com/i/activity/favorited_popup?id=434753879708672001
-
-    Args:
-      html: string
-      tweet: Twitter API object for the tweet
-
-    Returns:
-      list of ActivityStreams like object dicts
-    """
-    soup = util.parse_html(html)
-    likes = []
-
-    for user in soup.find_all(class_='js-user-profile-link'):
-      username = user.find(class_='username')
-      if not username:
-        continue
-      username = str(username.get_text(''))
-      if username.startswith('@'):
-        username = username[1:]
-
-      img = user.find(class_='js-action-profile-avatar') or {}
-      author = {
-        'id_str': img.get('data-user-id'),
-        'screen_name': username,
-        'profile_image_url': img.get('src'),
-        }
-
-      fullname = user.find(class_='fullname')
-      if fullname:
-        author['name'] = fullname.get_text(' ', strip=True)
-
-      likes.append(self._make_like(tweet, author))
-
-    return likes
 
   def _make_like(self, tweet, liker):
     """Generates and returns a ActivityStreams like object.

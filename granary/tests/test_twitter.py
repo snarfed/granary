@@ -13,6 +13,7 @@ from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
+from requests import RequestException
 
 from .. import microformats2
 from .. import source
@@ -28,7 +29,7 @@ from ..twitter import (
   API_STATUS,
   API_TIMELINE,
   API_USER_TIMELINE,
-  HTML_FAVORITES,
+  SCRAPE_LIKES_URL,
   Twitter,
 )
 
@@ -448,50 +449,30 @@ LIKE_OBJ = {  # ActivityStreams
     'url': 'https://twitter.com/eve',
     },
   'published': '2013-12-27T17:25:55+00:00',
+}
+LIKES_SCRAPED = {
+  'globalObjects': {
+    'tweets': None,
+    'users': {
+      '353': {
+        'id_str': '353',
+        'name': 'George',
+        'screen_name': 'ge',
+        'profile_image_url_https': 'https://twimg/353',
+      },
+      '???': {
+        'screen_name': 'jo',
+      },
+      '23238890': {
+        'id_str': '23238890',
+        'name': 'Charles ☕ Foo',
+        'screen_name': 'c_foo',
+        'profile_image_url_https': 'https://pbs.twimg.com/profile_images/123/abc.jpg',
+      },
+    }
   }
-FAVORITES_HTML = u"""  # Twitter, from /i/activity/favorited_popup?id=...
-<ol class="activity-popup-users">
-    <li class="js-stream-item stream-item stream-item
-" data-item-id="353" id="stream-item-user-353" data-item-type="user">
-  <!-- snipped <div class="account"... -->
-
-  <!-- new HTML, as of at least 2017-03-23, wraps username in <b> -->
-  <div class="content">
-        <div class="stream-item-header">
-          <a class="account-group js-user-profile-link" href="/ge" >
-            <img class="avatar js-action-profile-avatar " src="https://twimg/353" alt="" data-user-id="353"/>
-            <strong class="fullname js-action-profile-name">George</strong>
-              <span class="username u-dir" dir="ltr">@<b>ge</b></span></a>
-        </div>
-      </div>
-    </div>
-    </li>
-
-  <li class="js-stream-item stream-item stream-item">
-    <!-- snipped <div class="account"... -->
-    <div class="content">
-      <div class="stream-item-header">
-        <a class="account-group js-user-profile-link" href="/ge" >
-          <span class="username u-dir" dir="ltr">@<b>jo</b></span></a>
-      </div>
-    </div>
-  </li>
-
-  <!-- old HTML, has js-action-profile-name -->
-  <li class="js-stream-item stream-item stream-item">
-    <div class="content">
-      <div class="stream-item-header">
-        <a class="account-group js-user-profile-link" href="/c_foo" >
-          <img class="avatar js-action-profile-avatar  " src="https://pbs.twimg.com/profile_images/123/abc_normal.jpg" alt="" data-user-id="23238890"/>
-          <strong class="fullname js-action-profile-name">Charles <span class="Emoji Emoji--forLinks" style="background-image:url('https://abs.twimg.com/emoji/v2/72x72/000.png')" title="Hot beverage" aria-label="Emoji: Hot beverage">&nbsp;</span><span class="visuallyhidden" aria-hidden="true">☕</span> Foo</strong>
-            <span class="username js-action-profile-name">@c_foo</span>
-        </a>
-      </div>
-    </div>
-  </li>
-</ol>
-"""
-LIKES_FROM_HTML = [{  # ActivityStreams
+}
+LIKE_OBJECTS = [{  # ActivityStreams
   'id': tag_uri('100_favorited_by_353'),
   'url': 'https://twitter.com/snarfed_org/status/100#favorited-by-353',
   'objectType': 'activity',
@@ -535,7 +516,7 @@ LIKES_FROM_HTML = [{  # ActivityStreams
   },
 }]
 OBJECT_WITH_LIKES = copy.deepcopy(OBJECT)
-OBJECT_WITH_LIKES['tags'] += LIKES_FROM_HTML
+OBJECT_WITH_LIKES['tags'] += LIKE_OBJECTS
 ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
 ACTIVITY_WITH_LIKES['object'] = OBJECT_WITH_LIKES
 
@@ -795,6 +776,7 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': ''}, [TWEET])
     self.mox.ReplayAll()
 
+    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     got = self.twitter.get_activities(group_id=source.SELF, fetch_likes=True)
     like_obj = copy.copy(LIKE_OBJ)
     del like_obj['published']
@@ -993,41 +975,49 @@ class TwitterTest(testutil.TestCase):
       self.expect_urlopen(TIMELINE, tweets)
       self.expect_urlopen(API_RETWEETS % '100_a', [])
       self.expect_urlopen(API_RETWEETS % '100_b', [])
-      self.expect_urlopen(HTML_FAVORITES % '100_a', {})
-      self.expect_urlopen(HTML_FAVORITES % '100_b', {})
+      self.expect_requests_get(SCRAPE_LIKES_URL % '100_a', {}, headers={'x': 'y'})
+      self.expect_requests_get(
+        SCRAPE_LIKES_URL % '100_b', {'globalObjects': {'users': {}}},
+        headers={'x': 'y'})
       # shouldn't fetch this time because counts haven't changed
       self.expect_urlopen(TIMELINE, tweets)
 
     self.mox.ReplayAll()
+    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     cache = util.CacheDict()
     for i in range(4):
       self.twitter.get_activities(fetch_shares=True, fetch_likes=True,
                                   cache=cache)
 
+  def test_get_activities_fetch_likes_no_scrape_headers(self):
+    with self.assertRaises(NotImplementedError):
+      self.twitter.get_activities(fetch_likes=True)
+
   def test_get_activities_fetch_likes(self):
     tweet = copy.deepcopy(TWEET)
     tweet['favorite_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
-    self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100',
-      {'htmlUsers': FAVORITES_HTML})
-    self.mox.ReplayAll()
+    self.expect_requests_get(SCRAPE_LIKES_URL % 100, LIKES_SCRAPED, headers={'x': 'y'})
 
+    self.mox.ReplayAll()
+    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     cache = util.CacheDict()
     self.assert_equals([ACTIVITY_WITH_LIKES],
-                          self.twitter.get_activities(fetch_likes=True, cache=cache))
+                       self.twitter.get_activities(fetch_likes=True, cache=cache))
     self.assert_equals(1, cache['ATF 100'])
 
   def test_get_activities_favorites_404(self):
     tweet = copy.deepcopy(TWEET)
     tweet['favorite_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet])
-    self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100'
-      ).AndRaise(urllib.error.HTTPError('url', 404, 'msg', {}, None))
+    self.expect_requests_get(SCRAPE_LIKES_URL % 100, headers={'x': 'y'}).AndRaise(
+      RequestException('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
     cache = util.CacheDict()
+    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     self.assert_equals([ACTIVITY],
-                          self.twitter.get_activities(fetch_likes=True, cache=cache))
+                       self.twitter.get_activities(fetch_likes=True, cache=cache))
     self.assertNotIn('ATF 100', cache)
 
   def test_get_activities_fetch_likes_no_favorites(self):
@@ -1035,6 +1025,7 @@ class TwitterTest(testutil.TestCase):
     # we should only ask the API for retweets when favorites_count > 0
     self.mox.ReplayAll()
 
+    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_likes=True))
 
   def test_get_activities_private_activity_skips_fetch_likes_and_retweets(self):
@@ -1048,6 +1039,7 @@ class TwitterTest(testutil.TestCase):
 
     activity = copy.deepcopy(ACTIVITY)
     activity['object']['to'][0]['alias'] = '@private'
+    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     self.assert_equals([activity], self.twitter.get_activities(
       fetch_likes=True, fetch_shares=True))
 
@@ -1576,15 +1568,6 @@ class TwitterTest(testutil.TestCase):
       }
     self.assertEqual(None, self.twitter.streaming_event_to_object(follow))
 
-  def test_favorites_html_to_likes(self):
-    self.assert_equals([], self.twitter.favorites_html_to_likes(TWEET, ""))
-    likes = self.twitter.favorites_html_to_likes(TWEET, FAVORITES_HTML)
-    self.assert_equals(LIKES_FROM_HTML, likes)
-
-    # https://console.cloud.google.com/errors/16941961690170721544
-    for like in likes:
-      self.assertTrue(isinstance(like['author']['displayName'], str))
-
   def test_user_to_actor_full(self):
     self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))
 
@@ -2112,16 +2095,16 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
                            'type': 'like'},
-                          self.twitter.create(LIKES_FROM_HTML[0]).content)
+                          self.twitter.create(LIKE_OBJECTS[0]).content)
 
-    preview = self.twitter.preview_create(LIKES_FROM_HTML[0])
+    preview = self.twitter.preview_create(LIKE_OBJECTS[0])
     self.assertIn("""\
 <span class="verb">favorite</span>
 <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
                   preview.description)
 
   def test_create_favorite_of_video_url(self):
-    like = copy.deepcopy(LIKES_FROM_HTML[0])
+    like = copy.deepcopy(LIKE_OBJECTS[0])
     like['object']['url'] = 'https://twitter.com/snarfed_org/status/100/video/1'
 
     self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
