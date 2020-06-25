@@ -629,6 +629,7 @@ class Mastodon(source.Source):
         return source.creation_result(description=preview_description)
       else:
         resp = self._post(API_FAVORITE % base_id)
+        resp['url'] += '#favorited-by-%s' % self.user_id
         resp['type'] = 'like'
 
     elif type == 'activity' and verb == 'share':

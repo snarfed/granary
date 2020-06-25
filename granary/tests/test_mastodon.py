@@ -656,7 +656,7 @@ class MastodonTest(testutil.TestCase):
 
     got = self.mastodon.create(LIKE).content
     self.assert_equals('like', got['type'])
-    self.assert_equals('http://foo.com/@snarfed/123', got['url'])
+    self.assert_equals('http://foo.com/@snarfed/123#favorited-by-23507', got['url'])
 
   def test_preview_favorite(self):
     preview = self.mastodon.preview_create(LIKE)
@@ -671,7 +671,7 @@ class MastodonTest(testutil.TestCase):
 
     got = self.mastodon.create(LIKE_REMOTE).content
     self.assert_equals('like', got['type'])
-    self.assert_equals(url, got['url'])
+    self.assert_equals(url + '#favorited-by-23507', got['url'])
 
   def test_preview_favorite_remote(self):
     url = STATUS_REMOTE['url']
