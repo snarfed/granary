@@ -3,6 +3,9 @@
 
 Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
 independent of AP. API docs: https://docs.joinmastodon.org/api/
+
+May also be used for services with Mastodon-compatible APIs, eg Pleroma:
+https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_responses/
 """
 import itertools
 import logging
@@ -30,6 +33,9 @@ API_STATUS = '/api/v1/statuses/%s'
 API_STATUSES = '/api/v1/statuses'
 API_TIMELINE = '/api/v1/timelines/home'
 API_VERIFY_CREDENTIALS = '/api/v1/accounts/verify_credentials'
+
+# https://docs.joinmastodon.org/usage/basics/#text
+DEFAULT_TRUNCATE_TEXT_LENGTH = 500
 
 # https://docs.joinmastodon.org/api/rest/media/#parameters
 MAX_ALT_LENGTH = 420
@@ -75,11 +81,11 @@ class Mastodon(source.Source):
     'like': 'favorite',
   }
 
-  # https://docs.joinmastodon.org/usage/basics/#text
-  TRUNCATE_TEXT_LENGTH = 500
+  # TRUNCATE_TEXT_LENGTH is set in the constructor
   TRUNCATE_URL_LENGTH = 23
 
-  def __init__(self, instance, access_token, user_id=None):
+  def __init__(self, instance, access_token, user_id=None,
+               truncate_text_length=None):
     """Constructor.
 
     If user_id is not provided, it will be fetched via the API.
@@ -89,11 +95,16 @@ class Mastodon(source.Source):
       user_id: string or integer, optional, current user's id (not username!) on
         this instance
       access_token: string, optional OAuth access token
+      truncate_text_length: int, optional character limit for toots, overrides
+        the default of 500
     """
     assert instance
     self.instance = self.BASE_URL = instance
     assert access_token
     self.access_token = access_token
+    self.TRUNCATE_TEXT_LENGTH = (
+      truncate_text_length if truncate_text_length is not None
+      else DEFAULT_TRUNCATE_TEXT_LENGTH)
     self.DOMAIN = util.domain_from_link(instance)
 
     if user_id:

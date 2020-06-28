@@ -724,6 +724,18 @@ class MastodonTest(testutil.TestCase):
     self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="" />',
                      preview.content)
 
+  def test_preview_create_override_truncate_text_length(self):
+    m = mastodon.Mastodon(INSTANCE, access_token='towkin',
+                          user_id=ACCOUNT['id'], truncate_text_length=8)
+    got = m.preview_create(OBJECT)
+    self.assertEqual('foo ☕…', got.content)
+
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕…'}, response=STATUS)
+    self.mox.ReplayAll()
+
+    result = m.create(OBJECT)
+    self.assert_equals(STATUS, result.content, result)
+
   def test_create_with_media(self):
     self.expect_requests_get('http://foo.com/video.mp4', 'pic 2')
     self.expect_post(API_MEDIA, {'id': 'a'}, files={'file': b'pic 2'})
