@@ -937,11 +937,21 @@ class Instagram(source.Source):
     if id and owner_id:
       media['id'] = '%s_%s' % (id, owner_id)
 
-    comments = (media.get('comments') or media.get('edge_media_to_comment') or
-                media.get('edge_media_to_parent_comment') or {})
+    comments_edge = (media.get('comments') or media.get('edge_media_to_comment') or
+                     media.get('edge_media_to_parent_comment') or {})
+    comments = [c.get('node') for c in comments_edge.get('edges', [])]
+    count = comments_edge.get('count')
+    for comment in comments:
+      threaded = comment.get('edge_threaded_comments')
+      if threaded:
+        comments += [c.get('node') for c in threaded.get('edges', [])]
+        threaded_count = threaded.get('count')
+        if threaded_count:
+          count = count + threaded_count if count else threaded_count
+
     media['comments'] = {
-      'data': [c.get('node') for c in comments.get('edges', [])],
-      'count': comments.get('count'),
+      'data': comments,
+      'count': count,
     }
 
     likes = media.get('likes') or media.get('edge_media_preview_like') or {}

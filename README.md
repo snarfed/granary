@@ -313,6 +313,8 @@ Changelog
   * Add `aria-hidden="true"` to empty links ([bridgy#947](https://github.com/snarfed/bridgy/issues/947)).
 * GitHub:
   * Handle [HTTP 451 Unavailable for Legal Reasons](https://en.wikipedia.org/wiki/HTTP_451) responses ([eg for DMCA takedowns](https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/)) gracefully.
+* Instagram:
+  * Include threaded (ie nested) comments in scraping ([bridgy#958](https://github.com/snarfed/bridgy/issues/958)).
 
 ### 3.0 - 2020-04-08
 

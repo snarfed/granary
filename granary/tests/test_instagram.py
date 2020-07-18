@@ -569,17 +569,49 @@ HTML_VIDEO_FULL = {
       'id': '789',
       'created_at': 1349588757,
       'text': '太可爱了。cute，@a_person, very cute',
+      'edge_threaded_comments': {
+        'count': 1,
+        'edges': [{
+          'node': {
+            'id': '020',
+            'text': 'hah, i have no tips whatsoever',
+            'created_at': 1594392712,
+            'owner': {
+              'id': '420973239',
+              'profile_pic_url': 'http:\/\/picture\/commenter/2',
+              'username': 'someone',
+            },
+          }
+        }],
+      },
     }}],
-    'count': 1,
+    'count':  1,
   },
-  'edge_media_to_tagged_user': {
-    'edges': [{'node': {
-      'user': {'username': 'ap'},
-      'x': 0.4657777507,
-      'y': 0.4284444173},
+  'edge_media_to_tagged_user':  {
+    'edges':  [{'node':  {
+      'user':  {'username':  'ap'},
+      'x':  0.4657777507,
+      'y':  0.4284444173},
     }],
   },
-  'taken_at_timestamp': 1453036552,
+  'taken_at_timestamp':  1453036552,
+}
+HTML_VIDEO_EXTRA_COMMENT_OBJ = {  # ActivityStreams
+  'objectType': 'comment',
+  'author': {
+    'objectType': 'person',
+    'id': tag_uri('420973239'),
+    'displayName': 'someone',
+    'username': 'someone',
+    'image': {'url': 'http://picture/commenter/2'},
+    'url': 'https://www.instagram.com/someone/',
+  },
+  'content': 'hah, i have no tips whatsoever',
+  'id': tag_uri('020'),
+  'published': '2020-07-10T14:51:52+00:00',
+  'url': 'https://www.instagram.com/p/XYZ789/#comment-020',
+  'inReplyTo': [{'id': tag_uri('789_456')}],
+  'to': [{'objectType':'group', 'alias':'@public'}],
 }
 
 HTML_VIDEO = copy.deepcopy(HTML_VIDEO_FULL)
@@ -916,8 +948,8 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
 }
 HTML_VIDEO_ACTIVITY_FULL = copy.deepcopy(HTML_VIDEO_ACTIVITY)
 HTML_VIDEO_ACTIVITY_FULL['object']['replies'] = {
-  'items': copy.deepcopy(COMMENT_OBJS),
-  'totalItems': len(COMMENT_OBJS),
+  'items': copy.deepcopy(COMMENT_OBJS) + [HTML_VIDEO_EXTRA_COMMENT_OBJ],
+  'totalItems': len(COMMENT_OBJS) + 1,
 }
 HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0].update({
   'url': 'https://www.instagram.com/p/XYZ789/#comment-789',
@@ -1305,7 +1337,7 @@ class InstagramTest(testutil.TestCase):
 
     ig = Instagram(scrape=True)
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0],
-                          ig.get_comment('789', activity_id='1208909509631101904_942513'))
+                       ig.get_comment('789', activity_id='1208909509631101904_942513'))
 
   def test_get_comment_with_activity(self):
     # skips API call
