@@ -559,6 +559,9 @@ class GitHubTest(testutil.TestCase):
   def test_get_activities_activity_id_deleted(self):
     self._test_get_activities_activity_id_fails(410)
 
+  def test_get_activities_activity_id_unavailable_for_legal_reasons(self):
+    self._test_get_activities_activity_id_fails(451)
+
   def _test_get_activities_activity_id_fails(self, status):
     self.expect_rest(REST_API_ISSUE % ('a', 'b', 1), {
       'message': 'Not Found',
@@ -577,6 +580,9 @@ class GitHubTest(testutil.TestCase):
 
   def test_get_activities_pr_deleted(self):
     self._test_get_activities_pr_fails(410)
+
+  def test_get_activities_pr_unavailable_for_legal_reasons(self):
+    self._test_get_activities_pr_fails(451)
 
   def _test_get_activities_pr_fails(self, status):
     self.expect_rest(REST_API_NOTIFICATIONS,

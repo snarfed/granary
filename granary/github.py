@@ -186,6 +186,12 @@ REACTIONS_REST_CHARS = {char: name for name, char, in REACTIONS_REST.items()}
 CODE_PLACEHOLDER_START = '~~~BRIDGY-CODE-TAG-START~~~'
 CODE_PLACEHOLDER_END = '~~~BRIDGY-CODE-TAG-END~~~'
 
+HTTP_NON_FATAL_CODES = (
+  404,  # issue/PR or repo was probably deleted
+  410,  # ditto
+  451,  # Unavailable for Legal Reasons, eg DMCA takedown
+)
+
 def tag_callback_code_placeholders(self, tag, attrs, start):
   if tag == 'code':
     self.o(CODE_PLACEHOLDER_START if start else CODE_PLACEHOLDER_END)
@@ -222,6 +228,7 @@ class GitHub(source.Source):
     'use_automatic_links': False,
     'tag_callback': tag_callback_code_placeholders,
   }
+
 
   def __init__(self, access_token=None):
     """Constructor.
@@ -347,7 +354,7 @@ class GitHub(source.Source):
         activities = [self.issue_to_object(issue)]
       except BaseException as e:
         code, body = util.interpret_http_exception(e)
-        if code in ('404', '410'):
+        if util.is_int(code) and int(code) in HTTP_NON_FATAL_CODES:
           activities = []
         else:
           raise
@@ -374,9 +381,9 @@ class GitHub(source.Source):
         try:
           issue = self.rest(subject_url)
         except requests.HTTPError as e:
-          if e.response.status_code in (404, 410):
+          if e.response.status_code in HTTP_NON_FATAL_CODES:
             util.interpret_http_exception(e)
-            continue  # the issue/PR or repo was (probably) deleted
+            continue
           raise
 
         obj = self.issue_to_object(issue)
