@@ -173,10 +173,10 @@ First, fork and clone this repo. Then, you'll need the [Google Cloud SDK](https:
 
 ```shell
 gcloud config set project granary-demo
-python3 -m venv local3
-source local3/bin/activate
+ipython3 -m venv local
+source local/bin/activate
 pip install -r requirements.txt
-ln -s local3/lib/python3*/site-packages/oauth_dropins
+ln -s local/lib/python3*/site-packages/oauth_dropins
 ```
 
 Now, run the tests to check that everything is set up ok:
@@ -216,7 +216,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 
 1. Run the unit tests.
    ```sh
-   source local3/bin/activate.csh
+   source local/bin/activate.csh
    CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
    sleep 5
    python3 -m unittest discover
@@ -230,13 +230,13 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    ```sh
    python3 setup.py clean build sdist
    setenv ver X.Y
-   source local3/bin/activate.csh
+   source local/bin/activate.csh
    twine upload -r pypitest dist/granary-$ver.tar.gz
    ```
 1. Install from test.pypi.org.
    ```sh
-   python3 -m venv local3
-   source local3/bin/activate.csh
+   python3 -m venv local
+   source local/bin/activate.csh
    pip3 uninstall granary # make sure we force Pip to use the uploaded version
    pip3 install --upgrade pip
    pip3 install mf2py==1.1.2
@@ -245,7 +245,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    ```
 1. Smoke test that the code trivially loads and runs.
    ```sh
-   source local3/bin/activate.csh
+   source local/bin/activate.csh
    python3
    # run test code below
    deactivate
