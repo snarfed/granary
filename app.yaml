@@ -2,7 +2,7 @@
 
 # application: granary-demo
 # default_expiration: 1h
-runtime: python37
+runtime: python38
 
 # https://cloud.google.com/appengine/docs/standard/python3/runtime#entrypoint_best_practices
 # https://docs.gunicorn.org/en/latest/settings.html#timeout
@@ -33,6 +33,6 @@ handlers:
 - url: /oauth_dropins/static
   static_dir: oauth_dropins/static
 
-- url: /.+
+- url: .*
   script: auto
   secure: always
