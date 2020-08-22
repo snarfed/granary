@@ -819,6 +819,17 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([], self.twitter.get_activities(group_id='testlist'))
 
+  def test_get_activities_list_url_encode(self):
+    self.expect_urlopen(API_LIST_TIMELINE % {
+      'count': 0,
+      'slug': 'foo%20%26bar',
+      'owner_screen_name': 'schnarfed',
+    }, [])
+    self.mox.ReplayAll()
+
+    self.assert_equals([], self.twitter.get_activities(
+      group_id='foo &bar', user_id='schnarfed'))
+
   def test_get_activities_fetch_replies(self):
     self.expect_urlopen(TIMELINE, [TWEET])
 

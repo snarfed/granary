@@ -297,7 +297,7 @@ class Twitter(source.Source):
           user_id = _user().get('screen_name')
         url = API_LIST_TIMELINE % {
           'count': count,
-          'slug': group_id,
+          'slug': urllib.parse.quote(group_id),
           'owner_screen_name': user_id,
         }
 
