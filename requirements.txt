@@ -12,4 +12,4 @@ webapp2>=3.0.0b1
 
 # this includes everything in setup.py's install_requires.
 # https://caremad.io/posts/2013/07/setup-vs-requirement/#developing-reusable-things-or-how-not-to-repeat-yourself
--e .
+.

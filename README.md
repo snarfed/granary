@@ -306,6 +306,7 @@ Changelog
 ---
 ### 3.1 - _unreleased_
 
+* Add Python 3.8 support.
 * Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
 * JSON Feed:
   * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
