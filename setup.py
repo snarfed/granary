@@ -50,5 +50,5 @@ setup(name='granary',
           'python-dateutil~=2.8',
           'requests~=2.22',
       ],
-      tests_require=['mox3~=0.28'],
+      tests_require=['mox3>=0.28,<2.0'],
 )
