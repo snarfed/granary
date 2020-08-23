@@ -306,7 +306,7 @@ Changelog
 ---
 ### 3.1 - _unreleased_
 
-* Add Python 3.8 support.
+* Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the minimum required version.
 * Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
 * JSON Feed:
   * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
