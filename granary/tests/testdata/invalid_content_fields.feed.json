@@ -9,6 +9,6 @@
   "items": [{
     "id": "tag:example.com:123",
     "content_html": ["foo"],
-    "content_text": ["bar"],
+    "content_text": ["bar"]
   }]
 }
