@@ -7,7 +7,7 @@
 git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins
 google-cloud-logging~=1.15
 gunicorn~=20.0
-mox3~=0.28
+mox3~=1.1
 webapp2>=3.0.0b1
 
 # this includes everything in setup.py's install_requires.
