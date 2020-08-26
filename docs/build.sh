@@ -28,7 +28,7 @@ tail -n +19 ../README.md \
   | sed -E 's/```/`/; s/`` </ </' \
   >> index.rst
 
-source ../local3/bin/activate
+source ../local/bin/activate
 
 # Run sphinx in the virtualenv's python interpreter so it can import packages
 # installed in the virtualenv.
