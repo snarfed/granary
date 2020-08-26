@@ -110,6 +110,9 @@ class Handler(handlers.ModernHandler):
       raise exc.HTTPNotFound('Expected 1-%d path elements; found %d' %
                              (MAX_PATH_LEN, len(args)))
 
+    if len(args) > 1 and args[1] == 'nederland20':
+      return self.abort(401, 'To protect our users from spam and other malicious activity, this account is temporarily locked. Please log in to https://twitter.com to unlock your account.')
+
     # make source instance
     site = args.pop(0)
     if site == 'twitter':
