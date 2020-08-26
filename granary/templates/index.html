@@ -77,17 +77,24 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <div class="row">
 {{ twitter_html|safe }}
 <div class="col-lg-2 col-sm-4 col-xs-6">
-  <img src="/oauth_dropins/static/facebook_bw_2x.png" height="50" class="shadow"
-       title="Facebook is only supported in the library, not in the REST API or demo site here.">
+  <a href="#" onclick="alert('Facebook is available in the library, but not in the REST API or demo app here. Sorry for the inconvenience!')">
+    <img class="shadow" src="/oauth_dropins/static/facebook_2x.png" height="50" />
+  </a>
 </div>
-{{ instagram_html|safe }}
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <a href="/?site=instagram">
+    <img class="shadow" src="/oauth_dropins/static/instagram_2x.png" height="50"
+         style="background-color: #EEEEEE; padding: 5px; padding-top: 8px; padding-bottom: 2px">
+  </a>
+</div>
 {{ flickr_html|safe }}
 {{ github_html|safe }}
 {{ mastodon_html|safe }}
 <div class="col-lg-2 col-sm-4 col-xs-6">
-  <img src="/oauth_dropins/static/meetup_bw_2x.png" height="50" class="shadow"
-       title="Meetup is only supported in the library, not in the REST API or demo site here."
-       style="background-color: #EEEEEE; padding: 10px" />
+  <a href="#" onclick="alert('Meetup is available in the library, but not in the REST API or demo app here. Sorry for the inconvenience!')">
+    <img class="shadow" src="/oauth_dropins/static/meetup_2x.png" height="50"
+         style="background-color: #EEEEEE; padding: 10px" />
+  </a>
 </div>
 {{ pixelfed_html|safe }}
 {{ reddit_html|safe }}
