@@ -738,11 +738,11 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_with_media(self):
     self.expect_requests_get('http://foo.com/video.mp4', 'pic 2')
-    self.expect_post(API_MEDIA, {'id': 'a'}, files={'file': b'pic 2'})
+    self.expect_post(API_MEDIA, {'id': 'a'}, files={'file': b'pic 2'},
+                     json={'description': 'a fun video'})
 
     self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
-    self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 1'})
-
+    self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 1'}, json={})
     self.expect_post(API_STATUSES, json={
       'status': 'foo ☕ bar',
       'media_ids': ['a', 'b'],
@@ -776,10 +776,10 @@ class MastodonTest(testutil.TestCase):
 
     # test create
     self.expect_requests_get('http://my/video', 'vid')
-    self.expect_post(API_MEDIA, {'id': '0'}, files={'file': b'vid'})
+    self.expect_post(API_MEDIA, {'id': '0'}, files={'file': b'vid'}, json={})
     for i, url in enumerate(image_urls[:-1]):
       self.expect_requests_get('http://my/picture/%d' % i, 'pic')
-      self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'})
+      self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'}, json={})
 
     self.expect_post(API_STATUSES, json={
       'status': '',

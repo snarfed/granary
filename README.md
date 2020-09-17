@@ -318,6 +318,8 @@ Changelog
   * Include threaded (ie nested) comments in scraping ([bridgy#958](https://github.com/snarfed/bridgy/issues/958)).
 * Twitter:
   * Bug fix: URL-encode list names in API calls.
+* Mastodon:
+  * Bug fix for alt text with image attachments ([bridgy#975](https://github.com/snarfed/bridgy/issues/975)).
 
 ### 3.0 - 2020-04-08
 

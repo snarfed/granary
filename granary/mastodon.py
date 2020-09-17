@@ -782,7 +782,7 @@ class Mastodon(source.Source):
       # TODO: mime type check?
       with util.requests_get(url, stream=True) as fetch:
         fetch.raise_for_status()
-        upload = self._post(API_MEDIA, files={'file': fetch.raw})
+        upload = self._post(API_MEDIA, files={'file': fetch.raw}, json=data)
 
       logging.info('Got: %s', upload)
       media_id = upload['id']
