@@ -420,16 +420,26 @@ class MastodonTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(group_id=source.SELF))
 
-  def test_get_activities_search(self):
+  def test_get_activities_search_without_count(self):
     self.expect_get(API_SEARCH, params={
       'q': 'indieweb',
       'resolve': True,
       'offset': 0,
-      'limit': '',
     }, response={'statuses': [STATUS, MEDIA_STATUS]})
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
         group_id=source.SEARCH, search_query='indieweb'))
+
+  def test_get_activities_search_with_count(self):
+    self.expect_get(API_SEARCH, params={
+      'q': 'indieweb',
+      'resolve': True,
+      'offset': 0,
+      'limit': 123,
+    }, response={'statuses': [STATUS, MEDIA_STATUS]})
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
+        group_id=source.SEARCH, search_query='indieweb', count=123))
 
   def test_get_activities_search_no_query(self):
     with self.assertRaises(ValueError):

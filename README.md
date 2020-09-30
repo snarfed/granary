@@ -320,6 +320,7 @@ Changelog
   * Bug fix: URL-encode list names in API calls.
 * Mastodon:
   * Bug fix for alt text with image attachments ([bridgy#975](https://github.com/snarfed/bridgy/issues/975)).
+  * Omit empty `limit` param [for compatibility with Pleroma](https://git.pleroma.social/pleroma/pleroma/-/issues/2198) ([bridgy#977](https://github.com/snarfed/bridgy/issues/977)).
 
 ### 3.0 - 2020-04-08
 

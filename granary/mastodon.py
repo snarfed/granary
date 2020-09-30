@@ -198,7 +198,7 @@ class Mastodon(source.Source):
         'q': search_query,
         'resolve': True,
         'offset': start_index,
-        'limit': count if count else '',
+        **params,
       }).get('statuses', [])
     else:  # eg group_id SELF
       statuses = self._get(API_ACCOUNT_STATUSES % user_id, params=params)
