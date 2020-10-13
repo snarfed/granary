@@ -108,7 +108,7 @@ ACTIVITY = {
           ],
           'username': 'bonkerfield'
         },
-        'content': '[P] GPT-2 + BERT reddit replier. I built a system that generates replies by taking output from GPT-2 and using BERT models to select the most realistic replies. People on r/artificial replied to it as if it were a person.',
+        'name': '[P] GPT-2 + BERT reddit replier. I built a system that generates replies by taking output from GPT-2 and using BERT models to select the most realistic replies. People on r/artificial replied to it as if it were a person.',
         'id': 'tag:reddit.com:ezv3f2',
         'objectType': 'note',
         'published': '2020-02-06T16:51:59Z',

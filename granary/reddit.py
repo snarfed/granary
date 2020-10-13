@@ -137,7 +137,7 @@ class Reddit(source.Source):
     obj['url'] = self.BASE_URL + thing.permalink
 
     if type == 'submission':
-      obj['content'] = getattr(thing, 'title', None)
+      obj['name'] = getattr(thing, 'title', None)
       obj['objectType'] = 'note'
       obj['tags'] = [
           {'objectType': 'article',
