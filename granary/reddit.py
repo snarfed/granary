@@ -138,6 +138,7 @@ class Reddit(source.Source):
 
     if type == 'submission':
       obj['name'] = getattr(thing, 'title', None)
+      obj['content'] = getattr(thing, 'selftext', None)
       obj['objectType'] = 'note'
       obj['tags'] = [
           {'objectType': 'article',
