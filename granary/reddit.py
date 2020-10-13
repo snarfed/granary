@@ -146,6 +146,11 @@ class Reddit(source.Source):
            'displayName': t,
            } for t in util.extract_links(getattr(thing, 'selftext', None))
         ]
+
+      if getattr(thing, 'url', None):
+          obj['objectType'] = 'bookmark'
+          obj['targetUrl'] = getattr(thing, 'url')
+
     elif type == 'comment':
       obj['content'] = getattr(thing, 'body_html', None)
       obj['objectType'] = 'comment'
