@@ -137,7 +137,8 @@ class Reddit(source.Source):
     obj['url'] = self.BASE_URL + thing.permalink
 
     if type == 'submission':
-      obj['content'] = getattr(thing, 'title', None)
+      obj['name'] = getattr(thing, 'title', None)
+      obj['content'] = getattr(thing, 'selftext', None)
       obj['objectType'] = 'note'
       obj['tags'] = [
           {'objectType': 'article',
@@ -145,6 +146,11 @@ class Reddit(source.Source):
            'displayName': t,
            } for t in util.extract_links(getattr(thing, 'selftext', None))
         ]
+
+      if getattr(thing, 'url', None):
+          obj['objectType'] = 'bookmark'
+          obj['targetUrl'] = getattr(thing, 'url')
+
     elif type == 'comment':
       obj['content'] = getattr(thing, 'body_html', None)
       obj['objectType'] = 'comment'

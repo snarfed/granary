@@ -71,7 +71,7 @@ class FakeComment():
   def parent(self):
     return self._parent
 
-ACTIVITY = {
+ACTIVITY_WITH_SELFTEXT = {
   'filtered': False,
   'items': [
     {'actor':
@@ -108,7 +108,8 @@ ACTIVITY = {
           ],
           'username': 'bonkerfield'
         },
-        'content': '[P] GPT-2 + BERT reddit replier. I built a system that generates replies by taking output from GPT-2 and using BERT models to select the most realistic replies. People on r/artificial replied to it as if it were a person.',
+        'name': '[P] GPT-2 + BERT reddit replier. I built a system that generates replies by taking output from GPT-2 and using BERT models to select the most realistic replies. People on r/artificial replied to it as if it were a person.',
+        'content': '<!-- SC_OFF --><div class="md"><p>I was trying to make a reddit reply bot with GPT-2 to see if it could pass as a human on reddit. I wrote up a <a href="https://www.bonkerfield.org/2020/02/combining-gpt-2-and-bert/">results overview</a> and a <a href="https://www.bonkerfield.org/2020/02/reddit-bot-gpt2-bert/">tutorial post</a> to explain how it works.',
         'id': 'tag:reddit.com:ezv3f2',
         'objectType': 'note',
         'published': '2020-02-06T16:51:59Z',
@@ -120,6 +121,61 @@ ACTIVITY = {
           'objectType': 'article',
           'url': 'https://www.bonkerfield.org/2020/02/reddit-bot-gpt2-bert/'}
         ],
+        'to': [{'alias': '@public', 'objectType': 'group'}],
+        'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/'},
+        'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/',
+        'verb': 'post'
+      }
+    ],
+    'itemsPerPage': 1,
+    'sorted': False,
+    'startIndex': 0,
+    'totalResults': 1,
+    'updatedSince': False
+  }
+
+ACTIVITY_WITH_LINK = {
+  'filtered': False,
+  'items': [
+    {'actor':
+      {'description': 'https://bonkerfield.org https://viewfoil.bonkerfield.org',
+        'displayName': 'bonkerfield',
+        'id': 'tag:reddit.com:bonkerfield',
+        'image': {'url': 'https://styles.redditmedia.com/t5_2az095/styles/profileIcon_ek6onop1xbf41.png'},
+        'numeric_id': '59ucsixw',
+        'objectType': 'person',
+        'published': '2019-12-21T17:40:11Z',
+        'url': 'https://reddit.com/user/bonkerfield/',
+        'urls': [
+          {'value': 'https://reddit.com/user/bonkerfield/'},
+          {'value': 'https://bonkerfield.org'},
+          {'value': 'https://viewfoil.bonkerfield.org'}
+        ],
+        'username': 'bonkerfield'
+      },
+    'id': 'ezv3f2',
+    'object':
+      {'author':
+        {'description': 'https://bonkerfield.org https://viewfoil.bonkerfield.org',
+          'displayName': 'bonkerfield',
+          'id': 'tag:reddit.com:bonkerfield',
+          'image': {'url': 'https://styles.redditmedia.com/t5_2az095/styles/profileIcon_ek6onop1xbf41.png'},
+          'numeric_id': '59ucsixw',
+          'objectType': 'person',
+          'published': '2019-12-21T17:40:11Z',
+          'url': 'https://reddit.com/user/bonkerfield/',
+          'urls': [
+            {'value': 'https://reddit.com/user/bonkerfield/'},
+            {'value': 'https://bonkerfield.org'},
+            {'value': 'https://viewfoil.bonkerfield.org'}
+          ],
+          'username': 'bonkerfield'
+        },
+        'name': '[P] GPT-2 + BERT reddit replier. I built a system that generates replies by taking output from GPT-2 and using BERT models to select the most realistic replies. People on r/artificial replied to it as if it were a person.',
+        'targetUrl': 'https://reddit.com/ezv3f2',
+        'id': 'tag:reddit.com:ezv3f2',
+        'objectType': 'bookmark',
+        'published': '2020-02-06T16:51:59Z',
         'to': [{'alias': '@public', 'objectType': 'group'}],
         'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/'},
         'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/',
@@ -210,9 +266,16 @@ class RedditTest(testutil.TestCase):
   def test_broken_praw_to_comment(self):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_object(util.Struct(),'comment'))
 
-  def test_submission_to_activity(self):
+  def test_submission_to_activity_with_link(self):
+    submission = FakeSubmission(FakeRedditor())
+    submission.selftext = ''
+    submission.url = 'https://reddit.com/ezv3f2'
+    fake_activities = [self.reddit.praw_to_activity(submission,type='submission')]
+    self.assert_equals(ACTIVITY_WITH_LINK, self.reddit.make_activities_base_response(fake_activities))
+
+  def test_submission_to_activity_with_selftext(self):
     fake_activities = [self.reddit.praw_to_activity(FakeSubmission(FakeRedditor()),type='submission')]
-    self.assert_equals(ACTIVITY, self.reddit.make_activities_base_response(fake_activities))
+    self.assert_equals(ACTIVITY_WITH_SELFTEXT, self.reddit.make_activities_base_response(fake_activities))
 
   def test_broken_submission_to_object(self):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_activity(util.Struct(),type='submission'))
