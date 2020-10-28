@@ -7,7 +7,7 @@ https://www.reddit.com/dev/api
 https://www.reddit.com/prefs/apps
 
 praw API docs:
-https://praw.readthedocs.io/en/v3.6.0/pages/oauth.html
+https://praw.readthedocs.io/
 """
 
 from . import source
@@ -250,6 +250,15 @@ class Reddit(source.Source):
       self.fetch_replies(r, activities)
 
     return self.make_activities_base_response(activities)
+
+  def get_actor(self, user_id=None):
+    """PLACEHOLDER. Returns an empty dict.
+
+    Only here because the granary.io API needs this to emit Atom data.
+
+    TODO: implement.
+    """
+    return {}
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
                   activity=None):
