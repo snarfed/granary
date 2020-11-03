@@ -71,15 +71,17 @@ class RateLimited(BaseException):
     super(RateLimited, self).__init__(*args, **kwargs)
 
 
-def html_to_text(html, **kwargs):
+def html_to_text(html, baseurl='', **kwargs):
   """Converts string html to string text with html2text.
 
   Args:
+    baseurl: str, base URL to use when resolving relative URLs. Passed through
+      to HTML2Text().
     **kwargs: html2text options
       https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   """
   if html:
-    h = html2text.HTML2Text()
+    h = html2text.HTML2Text(baseurl=baseurl)
     h.unicode_snob = True
     h.body_width = 0  # don't wrap lines
     h.ignore_links = True
@@ -987,7 +989,8 @@ class Source(object, metaclass=SourceMeta):
     is_html = (bool(BeautifulSoup(content, 'html.parser').find()) or
                HTML_ENTITY_RE.search(content))
     if is_html and not ignore_formatting:
-      content = html_to_text(content, **self.HTML2TEXT_OPTIONS)
+      content = html_to_text(content, baseurl=(obj.get('url') or ''),
+                             **self.HTML2TEXT_OPTIONS)
     elif not is_html and ignore_formatting:
       content = re.sub(r'\s+', ' ', content)
 

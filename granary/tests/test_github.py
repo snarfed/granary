@@ -787,6 +787,28 @@ class GitHubTest(testutil.TestCase):
       'url': 'https://github.com/foo/bar/issues/123',
     }, result.content)
 
+  def test_create_with_relative_image_and_link(self):
+    self.expect_graphql_get_labels([])
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': '[foo](http://site/post/foo) ![](http://site/bar/baz)',
+        'labels': [],
+      }, response={
+        'html_url': 'https://github.com/foo/bar/issues/123',
+      }, headers=EXPECTED_HEADERS)
+    self.mox.ReplayAll()
+
+    result = self.gh.create({
+      'url': 'http://site/post/xyz',
+      'title': 'an issue title',
+      'content': """
+<a href="foo">foo</a>
+<img src="/bar/baz" />
+""",
+      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+    })
+    self.assertIsNone(result.error_plain, result)
+
   def test_create_escape_html(self):
     content = 'x &lt;data foo&gt; &amp; y'
 
