@@ -180,11 +180,12 @@ REACTIONS_REST = {
 REACTIONS_REST_CHARS = {char: name for name, char, in REACTIONS_REST.items()}
 
 
-# preserve <code> elements instead of converting them to `s so that GitHub
-# renders HTML entities like &gt; inside them instead of leaving them escaped.
-# background: https://chat.indieweb.org/dev/2019-12-24#t1577174464779200
-CODE_PLACEHOLDER_START = '~~~BRIDGY-CODE-TAG-START~~~'
-CODE_PLACEHOLDER_END = '~~~BRIDGY-CODE-TAG-END~~~'
+# preserve some HTML elements instead of converting them. eg <code> so that
+# GitHub renders HTML entities like &gt; inside them instead of leaving them
+# escaped. background:
+# https://chat.indieweb.org/dev/2019-12-24#t1577174464779200
+# https://github.com/snarfed/bridgy/issues/957
+PRESERVE_TAGS = ('code', 'blockquote')
 
 HTTP_NON_FATAL_CODES = (
   404,  # issue/PR or repo was probably deleted
@@ -192,15 +193,18 @@ HTTP_NON_FATAL_CODES = (
   451,  # Unavailable for Legal Reasons, eg DMCA takedown
 )
 
-def tag_callback_code_placeholders(self, tag, attrs, start):
-  if tag == 'code':
-    self.o(CODE_PLACEHOLDER_START if start else CODE_PLACEHOLDER_END)
+def tag_placeholders(self, tag, attrs, start):
+  if tag in PRESERVE_TAGS:
+    self.o(f'~~~BRIDGY-{tag}-TAG-START~~~' if start else f'~~~BRIDGY-{tag}-TAG-END~~~')
     return True
 
 
-def replace_code_placeholders(text):
-  return text.replace(CODE_PLACEHOLDER_START, '<code>')\
-             .replace(CODE_PLACEHOLDER_END, '</code>')
+def replace_placeholders(text):
+  for tag in PRESERVE_TAGS:
+    text = text.replace(f'~~~BRIDGY-{tag}-TAG-START~~~', f'<{tag}>')\
+               .replace(f'~~~BRIDGY-{tag}-TAG-END~~~', f'</{tag}>')
+
+  return text
 
 
 class GitHub(source.Source):
@@ -226,7 +230,7 @@ class GitHub(source.Source):
     'ignore_links': False,
     'protect_links': False,
     'use_automatic_links': False,
-    'tag_callback': tag_callback_code_placeholders,
+    'tag_callback': tag_placeholders,
   }
 
 
@@ -544,7 +548,7 @@ class GitHub(source.Source):
         abort=True,
         error_plain='You need an in-reply-to GitHub repo, issue, PR, or comment URL.')
 
-    content = orig_content = replace_code_placeholders(html.escape(
+    content = orig_content = replace_placeholders(html.escape(
       self._content_for_create(obj, ignore_formatting=ignore_formatting),
       quote=False))
     url = obj.get('url')

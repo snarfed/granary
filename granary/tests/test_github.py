@@ -849,6 +849,25 @@ class GitHubTest(testutil.TestCase):
     })
     self.assertIsNone(result.error_plain, result)
 
+  def test_create_blockquote(self):
+    content = 'x <blockquote>y</blockquote>'
+    self.expect_graphql_get_labels([])
+    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': content,
+        'labels': [],
+      }, response={
+        'html_url': 'https://github.com/foo/bar/issues/123',
+      }, headers=EXPECTED_HEADERS)
+    self.mox.ReplayAll()
+
+    result = self.gh.create({
+      'title': 'an issue title',
+      'content': content,
+      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+    })
+    self.assertIsNone(result.error_plain, result)
+
   def test_preview_issue(self):
     for i in range(2):
       self.expect_graphql_get_labels(['new silo'])
@@ -864,6 +883,21 @@ class GitHubTest(testutil.TestCase):
       self.assertIn(
         '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a> and attempt to add label <span class="verb">new silo</span>:' % url,
         preview.description, preview)
+
+  def test_preview_blockquote(self):
+    content = 'x <blockquote>y</blockquote>'
+    self.expect_graphql_get_labels(['new silo'])
+    rendered = self.expect_markdown_render(content.strip())
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(ISSUE_OBJ)
+    preview = self.gh.preview_create({
+      'title': 'an issue title',
+      'content': content,
+      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+    })
+    self.assertIsNone(preview.error_plain, preview)
+    self.assertEqual('<b>an issue title</b><hr>' + rendered, preview.content)
 
   def test_create_issue_private_repo(self):
     """eg the w3c/AB repo is private and returns repository: None
