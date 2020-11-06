@@ -311,9 +311,10 @@ class Instagram(source.Source):
       get_kwargs['headers'] = {'Cookie': cookie}
 
     resp = util.requests_get(url, **get_kwargs)
+    location = resp.headers.get('Location', '')
     if ((cookie and 'not-logged-in' in resp.text) or
         (resp.status_code in (301, 302) and
-         '/accounts/login' in resp.headers.get('Location', ''))):
+         ('/accounts/login' in location or '/challenge/' in location))):
       resp.status_code = 401
       raise requests.HTTPError('401 Unauthorized', response=resp)
     elif resp.status_code == 404:
