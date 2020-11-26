@@ -30,7 +30,7 @@ class PixelfedTest(testutil.TestCase):
       test_mastodon.INSTANCE, user_id=ACCOUNT['id'], access_token='towkin')
 
   def test_user_to_actor_fields_null(self):
-    self.assertEquals(ACTOR, self.pixelfed.user_to_actor(ACCOUNT))
+    self.assertEqual(ACTOR, self.pixelfed.user_to_actor(ACCOUNT))
 
   def test_reply_status_to_object(self):
     self.assert_equals(test_mastodon.REPLY_OBJECT,
