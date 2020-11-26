@@ -217,7 +217,7 @@ class Instagram(source.Source):
           cookie=cookie, fetch_extras=fetch_replies or fetch_likes, cache=cache)
       except Exception as e:
         code, body = util.interpret_http_exception(e)
-        if not ignore_rate_limit and code in ('401', '429', '503'):
+        if not ignore_rate_limit and code in ('302', '401', '429', '503'):
           logging.info('Got rate limited! Remembering for %s', str(RATE_LIMIT_BACKOFF))
           _last_rate_limited = now
           _last_rate_limited_exc = e
