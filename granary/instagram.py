@@ -47,6 +47,7 @@ HTML_DATA_RE = re.compile(r"""
   window\.(_sharedData\ =|__additionalDataLoaded\('[^']+',)\ *
   (.+?)
   \)?;</script>""", re.VERBOSE)
+HTML_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:82.0) Gecko/20100101 Firefox/82.0'
 
 # URL-safe base64 encoding. used in Instagram.id_to_shortcode()
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
@@ -308,7 +309,7 @@ class Instagram(source.Source):
     if cookie:
       if not cookie.startswith('sessionid='):
         cookie = 'sessionid=' + cookie
-      get_kwargs['headers'] = {'Cookie': cookie}
+      get_kwargs['headers'] = {'Cookie': cookie, 'User-Agent': HTML_USER_AGENT}
 
     resp = util.requests_get(url, **get_kwargs)
     location = resp.headers.get('Location', '')
@@ -883,7 +884,7 @@ class Instagram(source.Source):
     if cookie:
       if not cookie.startswith('sessionid='):
         cookie = 'sessionid=' + cookie
-      headers = {'Cookie': cookie}
+      headers = {'Cookie': cookie, 'User-Agent': HTML_USER_AGENT}
 
     resp = util.requests_get(url, allow_redirects=False, headers=headers)
     resp.raise_for_status()
