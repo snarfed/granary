@@ -644,6 +644,18 @@ LIKE_OBJ = {
   'verb': 'like',
 }
 
+TAG_REPLY_ACTIVITY = {
+  'objectType': 'activity',
+  'verb': 'tag',
+  'object': [
+    {'displayName': 'foo'},
+    {'displayName': 'bar'},
+  ],
+  'target': {
+    'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/',
+  },
+}
+
 # uploads send oauth params along with the post data; it's useful to
 # be able to check that they exist, but ignore their values.
 IGNORED_OAUTH_PARAMS = [
@@ -1125,6 +1137,23 @@ class FlickrTest(testutil.TestCase):
         'url': 'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
       },
     }, activity['object']['author'])
+
+  def test_create_and_preview_tag_reply(self):
+    preview = self.flickr.preview_create(TAG_REPLY_ACTIVITY)
+    self.assertIn('add the tags <em>bar</em>, <em>foo</em>', preview.description)
+
+    self.expect_call_api_method(
+      'flickr.photos.addTags', {'photo_id': '21904325000', 'tags': 'bar foo'}, '')
+    self.expect_call_api_method(
+      'flickr.people.getLimits', {},
+      json_dumps({'person': {'nsid': '39216764@N00'}}))
+    self.mox.ReplayAll()
+
+    self.assertEqual({
+      'type': 'tag',
+      'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/#tagged-by-39216764@N00',
+      'tags': ['bar', 'foo'],
+    }, self.flickr.create(TAG_REPLY_ACTIVITY).content)
 
   def test_delete(self):
     self.expect_call_api_method('flickr.photos.delete', {'photo_id': '789'}, '')

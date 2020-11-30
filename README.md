@@ -308,6 +308,8 @@ Changelog
 
 * Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the minimum required version.
 * Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
+* Flickr:
+  * Add support for adding tags to existing photos ([bridgy#857](https://github.com/snarfed/bridgy/issues/857)).
 * JSON Feed:
   * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
 * HTML/microformats2:

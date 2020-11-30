@@ -217,6 +217,47 @@ class Flickr(source.Source):
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 
+    if type == 'tag':
+      if not base_id:
+        return source.creation_result(
+          abort=True,
+          error_plain='Could not find a photo to tag.',
+          error_html='Could not find a photo to <a href="http://indiewebcamp.com/tag-reply">tag</a>. '
+          'Check that your post has a <a href="http://indiewebcamp.com/https://indieweb.org/tag-reply#How_to_post_a_tag-reply">tag-of</a> '
+          'link to a Flickr photo or to an original post that publishes a '
+          '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Flickr.')
+
+      tags = sorted(set(util.trim_nulls(t.get('displayName', '').strip()
+                                        for t in util.get_list(obj, 'object'))))
+      if not tags:
+        return source.creation_result(
+          abort=True,
+          error_plain='No tags found (with p-category) in tag-of post.',
+          error_html='No <a href="https://indieweb.org/tags">tags</a> found (with p-category) in <a href="https://indieweb.org/tag-reply#How_to_post_a_tag-reply">tag-of post</a>.')
+
+      if preview:
+        return source.creation_result(
+          content=content,
+          description='add the tag%s %s to <a href="%s">this photo</a>.' %
+            ('s' if len(tags) > 1 else '',
+             ', '.join('<em>%s</em>' % tag for tag in tags), base_url))
+
+      resp = self.call_api_method('flickr.photos.addTags', {
+        'photo_id': base_id,
+        # multiply valued fields are space separated. not easy to find in the
+        # Flickr API docs, this is the closest I found:
+        # https://www.flickr.com/services/api/upload.api.html#yui_3_11_0_1_1606756373916_317
+        'tags': ' '.join(tags),
+      })
+      if not resp:
+        resp = {}
+      resp.update({
+        'type': 'tag',
+        'url': '%s#tagged-by-%s' % (base_url, self.user_id()),
+        'tags': tags,
+      })
+      return source.creation_result(resp)
+
     # maybe a comment on a flickr photo?
     if type == 'comment' or obj.get('inReplyTo'):
       if not base_id:
