@@ -323,6 +323,8 @@ Changelog
 * Mastodon:
   * Bug fix for alt text with image attachments ([bridgy#975](https://github.com/snarfed/bridgy/issues/975)).
   * Omit empty `limit` param [for compatibility with Pleroma](https://git.pleroma.social/pleroma/pleroma/-/issues/2198) ([bridgy#977](https://github.com/snarfed/bridgy/issues/977)).
+* Meetup:
+  * `create()`: handle API errors and return the error message in the `CreationResult` ([bridgy#921](https://github.com/snarfed/bridgy/issues/921)).
 
 ### 3.0 - 2020-04-08
 

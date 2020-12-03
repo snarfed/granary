@@ -1,10 +1,11 @@
+"""Tests for meetup.py."""
+import copy
+
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
-
+from oauth_dropins.webutil.util import json_dumps
 from granary.meetup import Meetup
 
-import copy
-import json
 
 # test data
 def tag_uri(name):
@@ -79,7 +80,7 @@ class MeetupTest(testutil.TestCase):
         self.expect_urlopen(
                 url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
                 data='response=yes',
-                response=200,
+                response='',
                 headers={
                     'Authorization': 'Bearer token-here'
                     }
@@ -97,7 +98,7 @@ class MeetupTest(testutil.TestCase):
         self.expect_urlopen(
                 url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
                 data='response=yes',
-                response=200,
+                response='',
                 headers={
                     'Authorization': 'Bearer token-here'
                     }
@@ -116,7 +117,7 @@ class MeetupTest(testutil.TestCase):
         self.expect_urlopen(
                 url='https://api.meetup.com/NottsJS/events/qhnpfqyzcblb/rsvps',
                 data='response=yes',
-                response=200,
+                response='',
                 headers={
                     'Authorization': 'Bearer token-here'
                     }
@@ -139,7 +140,7 @@ class MeetupTest(testutil.TestCase):
                           '<a href="https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439">this event</a>.',
                           preview.description)
 
-    def test__create_rsvp_invalid_preview_parameter(self):
+    def test_create_rsvp_invalid_preview_parameter(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['verb'] = 'rsvp-yes'
         result = self.meetup._create(rsvp, preview=None)
@@ -151,7 +152,7 @@ class MeetupTest(testutil.TestCase):
         self.expect_urlopen(
                 url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
                 data='response=no',
-                response=200,
+                response='',
                 headers={
                     'Authorization': 'Bearer token-here'
                     }
@@ -170,7 +171,7 @@ class MeetupTest(testutil.TestCase):
         self.expect_urlopen(
                 url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
                 data='response=yes',
-                response=200,
+                response='',
                 headers={
                     'Authorization': 'Bearer token-here'
                     }
@@ -230,13 +231,19 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
 
     def test_create_rsvp_with_in_reply_to_object_with_no_url_property(self):
-        rsvp = copy.deepcopy(RSVP_ACTIVITY)
-        rsvp['object'] = [{'not_url': 'foo'}] # TODO
-        result = self.meetup.create(rsvp)
+        self.expect_urlopen(
+            url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
+            data='response=yes',
+            status=498,
+            response=json_dumps({'errors': [{'code':'0', 'message':'foo biff'}]}),
+            headers={'Authorization': 'Bearer token-here'},
+        )
+        self.mox.ReplayAll()
 
+        result = self.meetup.create(RSVP_ACTIVITY)
         self.assertTrue(result.abort)
-        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_plain)
-        self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
+        self.assertIn('From Meetup: 498 error: foo biff', result.error_plain)
+        self.assertIn('From Meetup: 498 error: foo biff', result.error_html)
 
     def test_create_rsvp_with_invalid_url(self):
         for url in ['https://meetup.com/PHPMiNDS-in-Nottingham/', 'https://meetup.com/PHPMiNDS-in-Nottingham/events', 'https://meetup.com/PHPMiNDS-in-Nottingham/events/', 'https://meetup.com//events/264008439']:
@@ -259,6 +266,16 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
 
     def test_create_rsvp_with_no_url(self):
+        rsvp = copy.deepcopy(RSVP_ACTIVITY)
+        rsvp['url'] = None
+
+        result = self.meetup.create(rsvp)
+
+        self.assertTrue(result.abort)
+        self.assertIn('Missing the post\'s url', result.error_plain)
+        self.assertIn('Missing the post\'s url', result.error_html)
+
+    def test_create_rsvp_api_error(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['url'] = None
 

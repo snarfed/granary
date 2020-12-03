@@ -7,8 +7,9 @@ import datetime
 import logging
 from oauth_dropins import meetup
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import json_loads
 import re
-import urllib.parse, urllib.request
+import urllib.error, urllib.parse, urllib.request
 
 API_BASE = 'https://api.meetup.com'
 API_RSVPS = '/%(urlname)s/events/%(event_id)s/rsvps'
@@ -117,10 +118,17 @@ class Meetup(source.Source):
                 'type': 'rsvp'
                 }
 
-        resp = self.post_rsvp(urlname, event_id, response)
-        logging.debug('Response: %s %s', resp.getcode(), resp.read())
-
-        return source.creation_result(create_resp)
+        try:
+            resp = self.post_rsvp(urlname, event_id, response)
+            logging.debug('Response: %s %s', resp.getcode(), resp.read())
+            return source.creation_result(create_resp)
+        except urllib.error.HTTPError as e:
+            code, body = util.interpret_http_exception(e)
+            try:
+                msg = json_loads(body)['errors'][0]['message']
+            except BaseException:
+                msg = body
+            return self.return_error(f'From Meetup: {code} error: {msg}')
 
     def return_error(self, msg):
         return source.creation_result(abort=True, error_plain=msg, error_html=msg)
