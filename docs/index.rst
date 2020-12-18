@@ -178,7 +178,7 @@ request.
 
 To use the REST API in an existing ActivityStreams client, you’ll need
 to hard-code exceptions for the domains you want to use
-e.g. \ ``facebook.com``, and redirect HTTP requests to the corresponding
+e.g. ``facebook.com``, and redirect HTTP requests to the corresponding
 `endpoint above <#about>`__.
 
 Instagram is disabled in the REST API entirely, sadly, `due to their
@@ -265,10 +265,10 @@ the repo root directory:
 .. code:: shell
 
    gcloud config set project granary-demo
-   python3 -m venv local3
-   source local3/bin/activate
+   python3 -m venv local
+   source local/bin/activate
    pip install -r requirements.txt
-   ln -s local3/lib/python3*/site-packages/oauth_dropins
+   ln -s local/lib/python3*/site-packages/oauth_dropins
 
 Now, run the tests to check that everything is set up ok:
 
@@ -296,7 +296,12 @@ time, install it in “source” mode with
 ``pip install -e <path to oauth-dropins repo>``. You’ll also need to
 update the ``oauth_dropins`` symlink, which is needed for serving static
 file assets in dev_appserver:
-``ln -sf <path-to-oauth-dropins-repo>/oauth_dropins``.
+``ln -sf <path-to-oauth-dropins-repo>/oauth_dropins``. To test it with
+dev_appserver you also need to replace the line in requirements.txt from
+``git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins``
+to ``<path-to-oauth-dropins-repo>`` (an alternative workaround for
+dev_appserver.py can be found
+`here <https://issuetracker.google.com/issues/144150446>`__.
 
 To deploy to production:
 
@@ -331,7 +336,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
 
     .. code:: sh
 
-       source local3/bin/activate.csh
+       source local/bin/activate.csh
        CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
        sleep 5
        python3 -m unittest discover
@@ -342,26 +347,30 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``git grep`` the old version number to make sure it only appears in
     the changelog. Change the current changelog entry in ``README.md``
     for this new version from *unreleased* to the current date.
+
 3.  Build the docs. If you added any new modules, add them to the
     appropriate file(s) in ``docs/source/``. Then run
     ``./docs/build.sh``. Check that the generated HTML looks fine by
     opening ``docs/_build/html/index.html`` and looking around.
+
 4.  ``git commit -am 'release vX.Y'``
+
 5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
 
     .. code:: sh
 
        python3 setup.py clean build sdist
        setenv ver X.Y
-       source local3/bin/activate.csh
+       source local/bin/activate.csh
        twine upload -r pypitest dist/granary-$ver.tar.gz
 
 6.  Install from test.pypi.org.
 
     .. code:: sh
 
-       python3 -m venv local3
-       source local3/bin/activate.csh
+       python3 -m venv local
+       source local/bin/activate.csh
+       pip3 uninstall granary # make sure we force Pip to use the uploaded version
        pip3 install --upgrade pip
        pip3 install mf2py==1.1.2
        pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
@@ -371,7 +380,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
 
     .. code:: sh
 
-       source local3/bin/activate.csh
+       source local/bin/activate.csh
        python3
        # run test code below
        deactivate
@@ -379,6 +388,8 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     Test code to paste into the interpreter:
 
     .. code:: py
+
+       import json
 
        from granary import instagram
        instagram.__file__  # check that it's in the virtualenv
@@ -412,11 +423,21 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``vX.Y`` in the *Tag version* box. Leave *Release title* empty. Copy
     ``### Notable changes`` and the changelog contents into the
     description text box.
+
 10. Upload to `pypi.org <https://pypi.org/>`__!
 
     .. code:: sh
 
        twine upload dist/granary-$ver.tar.gz
+
+11. `Build the docs on Read the
+    Docs <https://readthedocs.org/projects/granary/builds/>`__: first
+    choose *latest* in the drop-down, then click *Build Version*.
+
+12. On the `Versions
+    page <https://readthedocs.org/projects/oauth-dropins/versions/>`__,
+    check that the new version is active, If it’s not, activate it in
+    the *Activate a Version* section.
 
 Related work
 ------------
@@ -480,9 +501,57 @@ Changelog
 3.1 - *unreleased*
 ~~~~~~~~~~~~~~~~~~
 
--  N/A
+-  Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the
+   minimum required version.
+-  Add `Pixelfed <https://pixelfed.org/>`__! Heavily based on Mastodon.
+-  Flickr:
 
-3.0 - 2020-04-07
+   -  Add support for adding tags to existing photos
+      (`bridgy#857 <https://github.com/snarfed/bridgy/issues/857>`__).
+
+-  JSON Feed:
+
+   -  Gracefully handle when ``content_html`` and ``content_text`` are
+      `incorrectly <https://jsonfeed.org/version/1#items>`__ lists
+      instead of strings.
+
+-  HTML/microformats2:
+
+   -  Add ``aria-hidden="true"`` to empty links
+      (`bridgy#947 <https://github.com/snarfed/bridgy/issues/947>`__).
+
+-  GitHub:
+
+   -  Handle `HTTP 451 Unavailable for Legal
+      Reasons <https://en.wikipedia.org/wiki/HTTP_451>`__ responses (`eg
+      for DMCA
+      takedowns <https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/>`__)
+      gracefully.
+
+-  Instagram:
+
+   -  Include threaded (ie nested) comments in scraping
+      (`bridgy#958 <https://github.com/snarfed/bridgy/issues/958>`__).
+
+-  Twitter:
+
+   -  Bug fix: URL-encode list names in API calls.
+
+-  Mastodon:
+
+   -  Bug fix for alt text with image attachments
+      (`bridgy#975 <https://github.com/snarfed/bridgy/issues/975>`__).
+   -  Omit empty ``limit`` param `for compatibility with
+      Pleroma <https://git.pleroma.social/pleroma/pleroma/-/issues/2198>`__
+      (`bridgy#977 <https://github.com/snarfed/bridgy/issues/977>`__).
+
+-  Meetup:
+
+   -  ``create()``: handle API errors and return the error message in
+      the ``CreationResult``
+      (`bridgy#921 <https://github.com/snarfed/bridgy/issues/921>`__).
+
+3.0 - 2020-04-08
 ~~~~~~~~~~~~~~~~
 
 *Breaking changes:*

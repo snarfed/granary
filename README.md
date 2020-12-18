@@ -173,7 +173,7 @@ First, fork and clone this repo. Then, you'll need the [Google Cloud SDK](https:
 
 ```shell
 gcloud config set project granary-demo
-ipython3 -m venv local
+python3 -m venv local
 source local/bin/activate
 pip install -r requirements.txt
 ln -s local/lib/python3*/site-packages/oauth_dropins
