@@ -554,11 +554,11 @@ class Instagram(source.Source):
       an ActivityStreams object dict, ready to be JSON-encoded
     """
     id = media.get('id')
-
     user = media.get('user', {})
     content = xml.sax.saxutils.escape(media.get('caption', {}).get('text', ''))
     object = {
       'id': self.tag_uri(id),
+      'ig_shortcode': media.get('code') or media.get('shortcode'),
       # TODO: detect videos. (the type field is in the JSON respose but not
       # propagated into the Media object.)
       'objectType': OBJECT_TYPES.get(media.get('type', 'image'), 'photo'),
