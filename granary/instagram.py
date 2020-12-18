@@ -965,7 +965,8 @@ class Instagram(source.Source):
     for obj in [media] + media['comments']['data'] + media['likes']['data']:
       obj.setdefault('user', obj.get('owner') or {})
       user = obj['user'] or obj
-      user['profile_picture'] = user.get('profile_pic_url', '').replace('\/', '/')
+      if not user.get('profile_picture'):
+        user['profile_picture'] = user.get('profile_pic_url', '').replace('\/', '/')
 
     for c in media['comments']['data']:
       c['from'] = c['user']
