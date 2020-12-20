@@ -814,6 +814,7 @@ class Instagram(source.Source):
     # find media
     medias = []
     profile_user = None
+    viewer_user = None
 
     for match in matches:
       data = util.trim_nulls(json_loads(match[1]))
@@ -831,12 +832,15 @@ class Instagram(source.Source):
         edges = data['user'].get('edge_web_feed_timeline', {}).get('edges', [])
         medias.extend(e.get('node') for e in edges)
 
-      # profiles
+      # user profiles
       for page in entry_data.get('ProfilePage', []):
         profile_user = page.get('graphql', {}).get('user', {})
         medias.extend(edge['node'] for edge in
           profile_user.get('edge_owner_to_timeline_media', {}).get('edges', [])
           if edge.get('node'))
+
+      if not viewer_user:
+        viewer_user = data.get('config', {}).get('viewer')
 
       # individual photo/video permalinks
       for page in [data] + entry_data.get('PostPage', []):
@@ -871,7 +875,7 @@ class Instagram(source.Source):
       activities.append(self._json_media_node_to_activity(media, user=profile_user))
 
     actor = None
-    user = self._json_user_to_user(data.get('config', {}).get('viewer') or profile_user)
+    user = self._json_user_to_user(viewer_user or profile_user)
     if user:
       actor = self.user_to_actor(user)
 
