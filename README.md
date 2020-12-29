@@ -320,6 +320,7 @@ Changelog
   * Include threaded (ie nested) comments in scraping ([bridgy#958](https://github.com/snarfed/bridgy/issues/958)).
 * Twitter:
   * Bug fix: URL-encode list names in API calls.
+  * Bug fix: propagate alt text into AS1 `photo.displayName` so that it gets all the way into microformats2 JSON and HTML ([#183](https://github.com/snarfed/granary/issues/183)).
 * Mastodon:
   * Bug fix for alt text with image attachments ([bridgy#975](https://github.com/snarfed/bridgy/issues/975)).
   * Omit empty `limit` param [for compatibility with Pleroma](https://git.pleroma.social/pleroma/pleroma/-/issues/2198) ([bridgy#977](https://github.com/snarfed/bridgy/issues/977)).

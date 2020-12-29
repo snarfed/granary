@@ -409,8 +409,6 @@ Shared <a href="#">a post</a> by foo
         'displayName': 'd & e'}],
     }
 
-    # TODO: test that img alt gets displayName 'd & e' once mf2py handles that.
-    # https://github.com/tommorris/mf2py/issues/83
     self.assert_multiline_equals("""\
 <article class="h-entry">
 <span class="p-uid"></span>

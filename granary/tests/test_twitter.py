@@ -247,7 +247,10 @@ OBJECT = {  # ActivityStreams
     'image': {'url': 'http://p.twimg.com/picture3'},
   }, {
     'objectType': 'image',
-    'image': {'url': 'https://p.twimg.com/picture1'},
+    'image': {
+      'url': 'https://p.twimg.com/picture1',
+      'displayName': 'the alt text',
+    },
     'displayName': 'the alt text',
   }],
 }

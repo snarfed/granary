@@ -1217,7 +1217,10 @@ class Twitter(source.Source):
       }
       obj['attachments'] = [{
           'objectType': types.get(m.get('type')),
-          'image': {'url': m.get('media_url_https') or m.get('media_url')},
+          'image': {
+            'url': m.get('media_url_https') or m.get('media_url'),
+            'displayName': m.get('ext_alt_text'),
+          },
           'stream': {'url': self._video_url(m)},
           'displayName': m.get('ext_alt_text'),
       } for m in media]
