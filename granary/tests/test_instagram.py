@@ -667,20 +667,21 @@ HTML_SUGGESTED_USERS = {
   '__typename': 'GraphSuggestedUserFeedUnit',
 }
 
+HTML_VIEWER_CONFIG = {
+  'csrf_token': '...',
+  'viewer': {
+    'external_url': 'https:\/\/snarfed.org',
+    'biography': 'something or other',
+    'id': '420973239',
+    'full_name': 'Ryan B',
+    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
+    'has_profile_pic': True,
+    'username': 'snarfed',
+  },
+}
 HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
   'environment_switcher_visible_server_guess': True,
-  'config': {
-    'csrf_token': '...',
-    'viewer': {
-      'external_url': 'https:\/\/snarfed.org',
-      'biography': 'something or other',
-      'id': '420973239',
-      'full_name': 'Ryan B',
-      'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
-      'has_profile_pic': True,
-      'username': 'snarfed',
-    }
-  },
+  'config': HTML_VIEWER_CONFIG,
   'display_properties_server_guess': {'pixel_ratio': 2.0, 'viewport_width': 1280},
   'qe': {'su': {'g': 'control', 'p': {'enabled': 'false'}}},
   'hostname': 'www.instagram.com',
