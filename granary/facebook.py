@@ -122,7 +122,7 @@ API_UPLOAD_VIDEO = 'https://graph-video.facebook.com/v4.0/me/videos'
 
 MAX_IDS = 50  # for the ids query param
 
-M_HTML_BASE_URL = 'https://m.facebook.com/'
+M_HTML_BASE_URL = 'https://mbasic.facebook.com/'
 M_HTML_TIMELINE_URL = '%s?v=timeline'
 M_HTML_POST_URL = 'story.php?story_fbid=%s&id=%s'
 M_HTML_REACTIONS_URL = 'ufi/reaction/profile/browser/?ft_ent_identifier=%s'
@@ -203,7 +203,7 @@ class Facebook(source.Source):
   Attributes:
     access_token: string, optional, OAuth access token
     user_id: string, optional, current user's id (either global or app-scoped)
-    scrape: boolean, whether to scrape m.facebook.com's HTML (True) or use
+    scrape: boolean, whether to scrape mbasic.facebook.com's HTML (True) or use
       the API (False)
     cookie_c_user: string, optional c_user cookie to use when scraping
     cookie_xs: string, optional xs cookie to use when scraping
@@ -239,8 +239,8 @@ class Facebook(source.Source):
     Args:
       access_token: string, optional OAuth access token
       user_id: string, optional, current user's id (either global or app-scoped)
-      scrape: boolean, whether to scrape m.facebook.com's HTML (True) or use
-        the API (False)
+      scrape: boolean, whether to scrape mbasic.facebook.com's HTML (True) or
+        use the API (False)
       cookie_c_user: string, optional c_user cookie to use when scraping
       cookie_xs: string, optional xs cookie to use when scraping
     """
@@ -1762,7 +1762,7 @@ class Facebook(source.Source):
     Example profile:
     https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image
     https://www.facebook.com/n/?snarfed.org&amp;lloc=actor_profile&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
-    https://m.facebook.com/story.php?story_fbid=10104372282388114&id=27301982&refid=17&_ft_=mf_story_key.123%3Atop_level_post_id.456%3Atl_objid.789%3Acontent_owner_id_new.012%3Athrowback_story_fbid.345%3Astory_location.4%3Astory_attachment_style.share%3Athid.678&__tn__=%2AW-R
+    https://mbasic.facebook.com/story.php?story_fbid=10104372282388114&id=27301982&refid=17&_ft_=mf_story_key.123%3Atop_level_post_id.456%3Atl_objid.789%3Acontent_owner_id_new.012%3Athrowback_story_fbid.345%3Astory_location.4%3Astory_attachment_style.share%3Athid.678&__tn__=%2AW-R
 
     Example posts:
     https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
@@ -1774,7 +1774,7 @@ class Facebook(source.Source):
 
     Returns: string, sanitized URL
     """
-    if util.domain_from_link(url) != cls.DOMAIN:
+    if util.domain_from_link(url) != cls.DOMAIN and not url.startswith(M_HTML_BASE_URL):
       return url
 
     url = url.replace(M_HTML_BASE_URL, cls.BASE_URL)
@@ -1868,7 +1868,7 @@ class Facebook(source.Source):
 
   def m_html_timeline_to_objects(self, html):
     """
-    Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
+    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
 
     Returns: sequence of dict AS1 activities
 
@@ -1918,12 +1918,12 @@ class Facebook(source.Source):
 
   def m_html_post_to_object(self, html, url):
     """
-    Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
+    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
 
     Returns: sequence of dict AS1 activities
 
     Arguments:
-      html: string, HTML from an m.facebook.com post permalink
+      html: string, HTML from an mbasic.facebook.com post permalink
       url: string, permalink URL of post
     """
     soup = util.parse_html(html)
@@ -1957,7 +1957,7 @@ class Facebook(source.Source):
     replies = []
     for comment in self._divs(self._divs(self._divs(self._divs(view)[1])[0])[3]):
       # TODO: images in replies, eg:
-      # https://m.facebook.com/story.php?story_fbid=10104354535433154&id=212038&#10104354543447094
+      # https://mbasic.facebook.com/story.php?story_fbid=10104354535433154&id=212038&#10104354543447094
       replies.append({
         'objectType': 'comment',
         'id': self._comment_id(post_id, comment['id']),
@@ -1979,12 +1979,12 @@ class Facebook(source.Source):
 
   def m_html_reactions_to_tags(self, html, post_obj):
     """
-    Converts HTML from an m.facebook.com profile aka timeline to AS1 objects.
+    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
 
     Returns: sequence of dict AS1 activities
 
     Arguments:
-      html: string, HTML from an m.facebook.com/ufi/reaction/profile/browser/ page
+      html: string, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
       url: string, permalink URL of post
       post_obj: AS1 post object these reactions are for
     """
@@ -2016,7 +2016,7 @@ class Facebook(source.Source):
 
   def _m_html_author(self, soup, tag='strong'):
     """
-    Finds an author link in m.facebook.com HTML and converts it to AS1.
+    Finds an author link in mbasic.facebook.com HTML and converts it to AS1.
 
     Returns: dict AS1 actor
 

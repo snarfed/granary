@@ -3180,9 +3180,9 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_object(LIKE_EMAIL))
 
   def test_m_html_timeline_to_activities(self):
-    """m.facebook.com HTML timeline.
+    """mbasic.facebook.com HTML timeline.
 
-    Based on: https://m.facebook.com/snarfed.org?v=timeline
+    Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
     """
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
@@ -3191,21 +3191,21 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(M_POST_OBJS, got)
 
   def test_m_html_post_to_object(self):
-    """m.facebook.com HTML post.
+    """mbasic.facebook.com HTML post.
 
-    Based on: https://m.facebook.com/story.php?story_fbid=456&id=212038
+    Based on: https://mbasic.facebook.com/story.php?story_fbid=456&id=212038
     """
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    url = 'https://m.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
+    url = 'https://mbasic.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
     got = self.fb.m_html_post_to_object(M_HTML_POST, url)
     self.assert_equals(M_POST_OBJS_REPLIES[1], got)
 
   def test_m_html_reactions_to_tags(self):
-    """m.facebook.com HTML reactions.
+    """mbasic.facebook.com HTML reactions.
 
-    Based on: https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier=456
+    Based on: https://mbasic.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier=456
     """
     got = self.fb.m_html_reactions_to_tags(M_HTML_REACTIONS, M_POST_OBJS[0])
     self.assert_equals(M_REACTION_TAGS('123'), got)
