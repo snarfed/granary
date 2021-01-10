@@ -314,6 +314,7 @@ Changelog
   * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
 * HTML/microformats2:
   * Add `aria-hidden="true"` to empty links ([bridgy#947](https://github.com/snarfed/bridgy/issues/947)).
+  * Bug fix: escape `&`, `<`, and `>` characters in bare mf2 `content` properties ([aaronpk/XRay#102](https://github.com/aaronpk/XRay/issues/102)).
 * GitHub:
   * Handle [HTTP 451 Unavailable for Legal Reasons](https://en.wikipedia.org/wiki/HTTP_451) responses ([eg for DMCA takedowns](https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/)) gracefully.
 * Instagram:

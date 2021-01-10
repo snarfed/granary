@@ -1,0 +1,7 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "url": ["https://twitter.com/simonw/status/1341785945364811776"],
+    "content": ["The \"Let's use client-side JavaScript rendering for everything! A web page should be a single <script> tag!\" crowd have held the developer marketing advantage for far too long"]
+  }
+}

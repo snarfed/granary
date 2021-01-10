@@ -5,6 +5,7 @@ ActivityStreams 1 specs: http://activitystrea.ms/specs/
 """
 from collections import defaultdict
 import copy
+import html
 import itertools
 import logging
 import urllib.parse
@@ -122,7 +123,7 @@ def get_html(val):
   if isinstance(val, dict) and val.get('html'):
     return val['html'].strip()
 
-  return get_text(val)
+  return html.escape(get_text(val), quote=False)
 
 
 def get_text(val):

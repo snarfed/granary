@@ -91,11 +91,11 @@ def rss_from_activities(activities):
 mappings = (
   ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json,
   # doesn't handle h-feed yet
-   ('feed_with_audio_video')),
+   ('feed_with_audio_video',)),
   ('as.json', ['mf2-from-as.html', 'mf2.html'], microformats2.object_to_html, ()),
   ('mf2.json', ['as-from-mf2.json', 'as.json'], microformats2.json_to_object,
   # doesn't handle h-feed yet
-   ('feed_with_audio_video')),
+   ('feed_with_audio_video',)),
   ('mf2.json', ['mf2-from-json.html', 'mf2.html'], microformats2.json_to_html,
    # we do not format h-media photos properly in html
    ('note_with_composite_photo',)),
