@@ -1,7 +1,7 @@
 {
   "@context": "https://www.w3.org/ns/activitystreams",
   "type": "Article",
-  "title": "i'm ready to speak",
+  "name": "i'm ready to speak",
   "content": "something",
   "attachment": [{
     "type": "Audio",
@@ -13,5 +13,10 @@
     "url": "http://a/vidjo.mov",
     "duration": "P0DT123S",
     "size": 45678
+  }],
+  "stream": [{
+    "duration": 123,
+    "size": 45678,
+    "url": "http://a/vidjo.mov"
   }]
 }

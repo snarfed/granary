@@ -2,10 +2,7 @@
   "type": ["h-entry"],
   "properties": {
     "name": ["article abc"],
-    "content": [{
-      "value": "foo bar",
-      "html": "foo bar"
-    }],
+    "content": ["foo bar"],
     "url": ["http://example.com/article-abc"],
     "comment": [{
       "type": ["h-cite"],
@@ -14,7 +11,7 @@
           "type": ["h-card"],
           "properties": {"name": ["Alice"], "url": ["http://example.com/alice"]}
         }],
-        "content": [{"value": "I concur.", "html": "I concur."}],
+        "content": ["I concur."],
         "in-reply-to": ["http://example.com/article-abc"]
       }
     }, {
@@ -22,8 +19,7 @@
       "properties": {
         "url": ["http://example.com/comment/2"],
         "name": ["second comment name"],
-        "content": [{"value": "And I, as well, in addition. Too.",
-                     "html": "And I, as well, in addition. Too."}],
+        "content": ["And I, as well, in addition. Too."],
         "in-reply-to": ["http://example.com/article-def",
                         "http://example.com/article-ghi"]
       }

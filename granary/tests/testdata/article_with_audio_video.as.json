@@ -1,6 +1,6 @@
 {
   "objectType": "article",
-  "title": "i'm ready to speak",
+  "displayName": "i'm ready to speak",
   "content": "something",
   "attachments": [{
     "objectType": "audio",
@@ -16,5 +16,10 @@
       "duration": 123,
       "size": 45678
     }
+  }],
+  "stream": [{
+    "duration": 123,
+    "size": 45678,
+    "url": "http://a/vidjo.mov"
   }]
 }

@@ -6,10 +6,7 @@
     "summary": ["it's happening!"],
     "url": ["http://example.com/event-xyz"],
     "published": ["2017-01-22T01:29:15+00:00"],
-    "content": [{
-      "html": "this event is gonna be great",
-      "value": "this event is gonna be great"
-    }],
+    "content": ["this event is gonna be great"],
     "start": ["2017-07-12 17:30"],
     "end": ["2017-07-12 19:30"],
     "location": [{

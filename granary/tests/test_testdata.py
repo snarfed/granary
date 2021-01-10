@@ -87,7 +87,10 @@ def rss_from_activities(activities):
     activities, actor=ACTOR, title='Stuff', feed_url='http://site/feed',
     home_page_url='http://site/', hfeed=hfeed)
 
-# source extension, destination extension, conversion function, exclude prefix
+# source extension, destination extension, conversion function, exclude prefix.
+# destinations take precedence in the order they appear. only the first (source,
+# dest) pair for a given prefix is tested. this is how eg mf2-from-as.json gets
+# tested even if as.json exists.
 mappings = (
   ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json,
   # doesn't handle h-feed yet
