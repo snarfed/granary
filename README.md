@@ -327,6 +327,8 @@ Changelog
   * Omit empty `limit` param [for compatibility with Pleroma](https://git.pleroma.social/pleroma/pleroma/-/issues/2198) ([bridgy#977](https://github.com/snarfed/bridgy/issues/977)).
 * Meetup:
   * `create()`: handle API errors and return the error message in the `CreationResult` ([bridgy#921](https://github.com/snarfed/bridgy/issues/921)).
+* Facebook:
+  * Scraping now uses [mbasic.facebook.com](https://mbasic.facebook.com/) instead of [m.facebook.com](https://m.facebook.com/).
 
 ### 3.0 - 2020-04-08
 

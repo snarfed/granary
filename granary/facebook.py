@@ -1805,10 +1805,12 @@ class Facebook(source.Source):
       tag: BeautifulSoup Tag
     """
     try:
+      # sadly using parse(fuzzy=True) here makes too many mistakes on relative
+      # time strings seen on mbasic, eg '22 hrs [ago]', 'Yesterday at 12:34 PM'
       parsed = dateutil.parser.parse(tag.get_text(strip=True), default=now_fn())
       return parsed.isoformat('T')
     except (ValueError, OverflowError):
-      logging.warning("Couldn't parse datetime string %r", tag, stack_info=True)
+      logging.debug("Couldn't parse datetime string %r", tag)
 
   def _scrape_m(self, user_id=None, activity_id=None, fetch_replies=False,
                 fetch_likes=False):
@@ -1870,37 +1872,43 @@ class Facebook(source.Source):
     """
     Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
 
-    Returns: sequence of dict AS1 activities
-
-    Arguments:
+    Args:
       html: string
+
+    Returns: sequence of dict AS1 activities
     """
     soup = util.parse_html(html)
 
     objs = []
-    storystream = soup.find(class_='storyStream')
-    for story in self._divs(storystream):
-      story_body_container = story.find(class_='story_body_container')
-      body_children = self._divs(story_body_container)
+    for post in soup.find_all(('article', 'div'), id=re.compile('u_0_.')):
+      permalink = post.find(href=re.compile(r'^/story\.php\?'))
+      if not permalink:
+        logging.debug('Skipping one due to missing permalink')
+        continue
+
+      url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, permalink['href']))
+      query = urllib.parse.urlparse(url).query
+      post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
 
       # TODO: distinguish between text elements with actual whitespace
       # before/after and without. this adds space to all of them, including
       # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
       # (also apply any fix to m_html_post_to_object().)
-      content = body_children[1].get_text(' ', strip=True)
-      footer = story_body_container.find_next_sibling('div')
-      footer_children = self._divs(footer)
+      try:
+        content = self._divs(self._divs(post)[0])[0]
+      except IndexError:
+        logging.debug('Skipping due to non-post format (searching for content)')
+        continue
 
-      url = self._find_all_text(footer, r'Full Story')[-1]['href']
-      url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
-      query = urllib.parse.urlparse(url).query
-      post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
+      author = self._m_html_author(post)
+      if not author:
+        logging.debug('Skipping due to missing author')
+        continue
 
-      self._scraped_datetime(footer_children[0].find('abbr')),
-      self._m_html_author(story_body_container),
+      footer = post.footer
 
       to = ({'objectType':'group', 'alias':'@public'}
-            if 'Public' in footer_children[0].stripped_strings
+            if 'Public' in footer.stripped_strings
             else {'objectType': 'unknown'})
 
       objs.append({
@@ -1908,9 +1916,9 @@ class Facebook(source.Source):
         'id': self.tag_uri(post_id),
         'fb_id': post_id,
         'url': url,
-        'content': xml.sax.saxutils.escape(content),
-        'published': self._scraped_datetime(footer_children[0].find('abbr')),
-        'author': self._m_html_author(story_body_container),
+        'content': xml.sax.saxutils.escape(content.get_text(' ', strip=True)),
+        'published': self._scraped_datetime(footer.abbr),
+        'author': author,
         'to': [to],
       })
 
@@ -1918,19 +1926,19 @@ class Facebook(source.Source):
 
   def m_html_post_to_object(self, html, url):
     """
-    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
+    Converts HTML from an mbasic.facebook.com post page to an AS1 object.
 
-    Returns: sequence of dict AS1 activities
-
-    Arguments:
+    Args:
       html: string, HTML from an mbasic.facebook.com post permalink
       url: string, permalink URL of post
+
+    Returns: dict, AS1 object
     """
     soup = util.parse_html(html)
 
     view = soup.find(id='m_story_permalink_view')
-    body_parts = self._divs(self._divs(self._divs(view)[0])[0])
-    content = self._divs(body_parts[0])[1].get_text(' ', strip=True)
+    body_parts = self._divs(self._divs(view)[0])[0]
+    content = self._divs(self._divs(body_parts)[0])[0].get_text(' ', strip=True)
 
     # TODO: unify with m_html_timeline_to_objects
     url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
@@ -1938,7 +1946,7 @@ class Facebook(source.Source):
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
 
     to = ({'objectType':'group', 'alias':'@public'}
-          if 'Public' in body_parts[1].stripped_strings
+          if 'Public' in body_parts.find('footer').stripped_strings
           else {'objectType': 'unknown'})
 
     # post object
@@ -1948,14 +1956,14 @@ class Facebook(source.Source):
       'fb_id': post_id,
       'url': url,
       'content': xml.sax.saxutils.escape(content),
-      'published': self._scraped_datetime(body_parts[1].find('abbr')),
-      'author': self._m_html_author(body_parts[0]),
+      'published': self._scraped_datetime(body_parts.find('abbr')),
+      'author': self._m_html_author(body_parts.find('header')),
       'to': [to],
     }
 
     # comments
     replies = []
-    for comment in self._divs(self._divs(self._divs(self._divs(view)[1])[0])[3]):
+    for comment in soup.find_all(class_='cx', id=re.compile(r'^\d+$')):
       # TODO: images in replies, eg:
       # https://mbasic.facebook.com/story.php?story_fbid=10104354535433154&id=212038&#10104354543447094
       replies.append({
@@ -1981,12 +1989,12 @@ class Facebook(source.Source):
     """
     Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
 
-    Returns: sequence of dict AS1 activities
-
-    Arguments:
+    Args:
       html: string, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
       url: string, permalink URL of post
       post_obj: AS1 post object these reactions are for
+
+    Returns: sequence of dict AS1 activities
     """
     soup = util.parse_html(html)
 
@@ -2018,13 +2026,17 @@ class Facebook(source.Source):
     """
     Finds an author link in mbasic.facebook.com HTML and converts it to AS1.
 
-    Returns: dict AS1 actor
-
-    Arguments:
+    Args:
       soup: BeautifulSoup
       tag: optional, HTML tag surrounding <a>
+
+    Returns: dict AS1 actor
     """
-    author = soup.find(tag).find('a')
+    author = soup.find(tag)
+    if not author:
+      return {}
+
+    author = author.find('a')
     parsed = urllib.parse.urlparse(author['href'])
     path = parsed.path.strip('/')
     id_or_username = (urllib.parse.parse_qs(parsed.query)['id'][0]

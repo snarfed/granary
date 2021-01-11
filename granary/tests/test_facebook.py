@@ -1106,79 +1106,77 @@ EMAIL_LIKE_OBJ = {
   'to': [{'objectType':'group', 'alias':'@public'}],
 }
 
-M_HTML_TIMELINE = read_testdata('facebook.m.timeline.html')
-M_HTML_POST = read_testdata('facebook.m.post.html')
-M_HTML_REACTIONS = read_testdata('facebook.m.reactions.html')
-M_ACTOR = {
+MBASIC_HTML_TIMELINE = read_testdata('facebook.mbasic.feed.html')
+MBASIC_HTML_POST = read_testdata('facebook.mbasic.post.html')
+MBASIC_HTML_REACTIONS = read_testdata('facebook.mbasic.reactions.html')
+MBASIC_ACTOR = {
   'objectType': 'person',
   'id': tag_uri('snarfed.org'),
   'displayName': 'Ryan Barrett',
   'url': 'https://www.facebook.com/snarfed.org',
 }
-M_ALICE = {
+MBASIC_ALICE = {
   'objectType': 'person',
   'id': tag_uri('alice'),
   'displayName': 'Alice',
   'url': 'https://www.facebook.com/alice',
 }
-M_BOB = {
+MBASIC_BOB = {
   'objectType': 'person',
   'id': tag_uri('bob'),
   'displayName': 'Bob',
   'url': 'https://www.facebook.com/bob',
 }
-M_POST_OBJS = [{
+MBASIC_POST_OBJS = [{
   'objectType': 'note',
   'id': tag_uri('123'),
   'fb_id': '123',
   'url': 'https://www.facebook.com/story.php?story_fbid=123&id=212038',
-  'author': M_ACTOR,
+  'author': MBASIC_ACTOR,
   'content': POST_OBJ['content'],
-  'published': '1999-06-22T16:03:00',
   'to': [{'objectType': 'group', 'alias': '@public'}],
+  'published': '1999-12-22T20:41:00',
 }, {
   'objectType': 'note',
   'id': tag_uri('456'),
   'fb_id': '456',
   'url': 'https://www.facebook.com/story.php?story_fbid=456&id=212038',
-  'author': M_ACTOR,
+  'author': MBASIC_ACTOR,
   'content': 'Oh hi, Jeeves .',
-  'published': '1999-06-13T16:50:00',
   'to': [{'objectType': 'unknown'}],
 }]
 
-def M_REPLIES(post_id):
+def MBASIC_REPLIES(post_id):
   return {
     'items': [{
       'objectType': 'comment',
       'id': tag_uri(post_id + '_777'),
       'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038&comment_id=777' % post_id,
       'published': '1999-06-14T00:00:00',
-      'content': 'What... the... hell?',
+      'content': 'What...the...?',
       'inReplyTo': [{
         'id': tag_uri(post_id),
         'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
       }],
-      'author': M_ALICE,
+      'author': MBASIC_ALICE,
     }, {
       'objectType': 'comment',
       'id': tag_uri(post_id + '_888'),
       'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038&comment_id=888' % post_id,
-      'published': '1999-06-15T00:00:00',
       'content': 'Wat',
       'inReplyTo': [{
         'id': tag_uri(post_id),
         'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
       }],
-      'author': M_BOB,
+      'author': MBASIC_BOB,
     }],
     'totalItems': 2,
   }
-M_POST_OBJS_REPLIES = copy.deepcopy(M_POST_OBJS)
-for obj in M_POST_OBJS_REPLIES:
-  obj['replies'] = M_REPLIES(obj['fb_id'])
+MBASIC_POST_OBJS_REPLIES = copy.deepcopy(MBASIC_POST_OBJS)
+for obj in MBASIC_POST_OBJS_REPLIES:
+  obj['replies'] = MBASIC_REPLIES(obj['fb_id'])
 
-def M_REACTION_TAGS(post_id):
+def MBASIC_REACTION_TAGS(post_id):
   return [{
     'objectType': 'activity',
     'verb': 'like',
@@ -1198,11 +1196,11 @@ def M_REACTION_TAGS(post_id):
     'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038#haha-by-bob' % post_id,
     'content': '😆',
     'object': {'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id},
-    'author': M_BOB,
+    'author': MBASIC_BOB,
   }]
-M_POST_OBJS_REPLIES_REACTIONS = copy.deepcopy(M_POST_OBJS_REPLIES)
-for obj in M_POST_OBJS_REPLIES_REACTIONS:
-  obj['tags'] = M_REACTION_TAGS(obj['fb_id'])
+MBASIC_POST_OBJS_REPLIES_REACTIONS = copy.deepcopy(MBASIC_POST_OBJS_REPLIES)
+for obj in MBASIC_POST_OBJS_REPLIES_REACTIONS:
+  obj['tags'] = MBASIC_REACTION_TAGS(obj['fb_id'])
 
 
 class FacebookTest(testutil.TestCase):
@@ -1735,30 +1733,31 @@ class FacebookTest(testutil.TestCase):
 
   def test_get_activities_scrape_timeline(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('x?v=timeline', M_HTML_TIMELINE,
+    self.expect_requests_get('x?v=timeline', MBASIC_HTML_TIMELINE,
                              cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
 
     activities = self.fbscrape.get_activities(user_id='x', group_id=source.SELF)
-    self.assert_equals(M_POST_OBJS, [a['object'] for a in activities])
+    self.assert_equals(MBASIC_POST_OBJS, [a['object'] for a in activities])
 
   def test_get_activities_scrape_timeline_fetch_replies_likes(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('212038?v=timeline', M_HTML_TIMELINE,
+    self.expect_requests_get('212038?v=timeline', MBASIC_HTML_TIMELINE,
                              cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('story.php?story_fbid=123&id=212038', M_HTML_POST,
+    self.expect_requests_get('story.php?story_fbid=123&id=212038', MBASIC_HTML_POST,
                              cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('story.php?story_fbid=456&id=212038', M_HTML_POST,
+    self.expect_requests_get('story.php?story_fbid=456&id=212038', MBASIC_HTML_POST,
                              cookie='c_user=CU; xs=XS')
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=123',
-                             M_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
+                             MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
-                             M_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
+                             MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
 
-    expected = copy.deepcopy(M_POST_OBJS_REPLIES_REACTIONS)
-    for field in 'content', 'published', 'to':
-      expected[0][field] = expected[1][field]
+    expected = copy.deepcopy(MBASIC_POST_OBJS_REPLIES_REACTIONS)
+    del expected[0]['published']
+    expected[0]['content'] = expected[1]['content']
+    expected[0]['to'] = expected[1]['to']
 
     activities = self.fbscrape.get_activities(user_id='212038', group_id=source.SELF,
                                               fetch_replies=True, fetch_likes=True)
@@ -1766,24 +1765,24 @@ class FacebookTest(testutil.TestCase):
 
   def test_get_activities_scrape_post(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('story.php?story_fbid=456&id=212038', M_HTML_POST,
+    self.expect_requests_get('story.php?story_fbid=456&id=212038', MBASIC_HTML_POST,
                              cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456')
-    self.assert_equals([M_POST_OBJS_REPLIES[1]], [a['object'] for a in activities])
+    self.assert_equals([MBASIC_POST_OBJS_REPLIES[1]], [a['object'] for a in activities])
 
   def test_get_activities_scrape_post_fetch_likes(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('story.php?story_fbid=456&id=212038', M_HTML_POST,
+    self.expect_requests_get('story.php?story_fbid=456&id=212038', MBASIC_HTML_POST,
                              cookie='c_user=CU; xs=XS')
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
-                             M_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
+                             MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456',
                                               fetch_likes=True)
-    self.assert_equals([M_POST_OBJS_REPLIES_REACTIONS[1]],
+    self.assert_equals([MBASIC_POST_OBJS_REPLIES_REACTIONS[1]],
                        [a['object'] for a in activities])
 
   def test_get_comment(self):
@@ -3187,8 +3186,8 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    got = self.fb.m_html_timeline_to_objects(M_HTML_TIMELINE)
-    self.assert_equals(M_POST_OBJS, got)
+    got = self.fb.m_html_timeline_to_objects(MBASIC_HTML_TIMELINE)
+    self.assert_equals(MBASIC_POST_OBJS, got)
 
   def test_m_html_post_to_object(self):
     """mbasic.facebook.com HTML post.
@@ -3199,13 +3198,13 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     url = 'https://mbasic.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
-    got = self.fb.m_html_post_to_object(M_HTML_POST, url)
-    self.assert_equals(M_POST_OBJS_REPLIES[1], got)
+    got = self.fb.m_html_post_to_object(MBASIC_HTML_POST, url)
+    self.assert_equals(MBASIC_POST_OBJS_REPLIES[1], got)
 
   def test_m_html_reactions_to_tags(self):
     """mbasic.facebook.com HTML reactions.
 
     Based on: https://mbasic.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier=456
     """
-    got = self.fb.m_html_reactions_to_tags(M_HTML_REACTIONS, M_POST_OBJS[0])
-    self.assert_equals(M_REACTION_TAGS('123'), got)
+    got = self.fb.m_html_reactions_to_tags(MBASIC_HTML_REACTIONS, MBASIC_POST_OBJS[0])
+    self.assert_equals(MBASIC_REACTION_TAGS('123'), got)
