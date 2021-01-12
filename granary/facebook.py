@@ -1906,6 +1906,9 @@ class Facebook(source.Source):
         continue
 
       footer = post.footer
+      if not footer:
+        logging.debug('Skipping due to missing footer')
+        continue
 
       to = ({'objectType':'group', 'alias':'@public'}
             if 'Public' in footer.stripped_strings
