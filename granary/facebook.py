@@ -1895,7 +1895,7 @@ class Facebook(source.Source):
       # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
       # (also apply any fix to m_html_post_to_object().)
       try:
-        content = self._divs(self._divs(post)[0])[0]
+        content = self._div(post, 0, 0)
       except IndexError:
         logging.debug('Skipping due to non-post format (searching for content)')
         continue
@@ -1940,8 +1940,8 @@ class Facebook(source.Source):
     soup = util.parse_html(html)
 
     view = soup.find(id='m_story_permalink_view')
-    body_parts = self._divs(self._divs(view)[0])[0]
-    content = self._divs(self._divs(body_parts)[0])[0].get_text(' ', strip=True)
+    body_parts = self._div(view, 0, 0)
+    content = self._div_text(body_parts, 0, 0)
 
     # TODO: unify with m_html_timeline_to_objects
     url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
@@ -1973,8 +1973,7 @@ class Facebook(source.Source):
         'objectType': 'comment',
         'id': self._comment_id(post_id, comment['id']),
         'url': util.add_query_params(url, {'comment_id': comment['id']}),
-        'content': xml.sax.saxutils.escape(
-          self._divs(self._divs(comment)[0])[0].get_text(' ', strip=True)),
+        'content': xml.sax.saxutils.escape(self._div_text(comment, 0, 0)),
         'author': self._m_html_author(comment, 'h3'),
         'published': self._scraped_datetime(comment.find('abbr')),
         'inReplyTo': [{'id': self.tag_uri(post_id), 'url': url}],
@@ -2053,15 +2052,36 @@ class Facebook(source.Source):
     }
 
   @staticmethod
-  def _divs(tag):
-    """Returns all child divs of a given Tag.
+  def _div(tag, *args):
+    """Returns a descendant div via a given path of divs.
 
     Args:
-      soup: Tag
+      *args: div indexes to navigate down. eg [1, 0, 2] means the second div
+        child of tag, then that div's first div child, then that div's third
+        div child.
 
-    Returns: sequence of Tags
+    Returns: Tag, or None if the given path doesn't exist
     """
-    return tag.find_all('div', recursive=False)
+    assert args
+
+    try:
+      for index in args:
+        tag = tag.find_all('div', recursive=False)[index]
+      return tag
+    except IndexError:
+      return None
+
+  @staticmethod
+  def _div_text(tag, *args):
+    """Returns the text inside a div returned by _get_div().
+
+    Args:
+      *args: see _div()
+
+    Returns: str, or None if the given path doesn't exist
+    """
+    div = Facebook._div(tag, *args)
+    return div.get_text(' ', strip=True) if div else None
 
   @staticmethod
   def parse_id(id, is_comment=False):
