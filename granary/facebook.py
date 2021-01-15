@@ -2071,6 +2071,12 @@ class Facebook(source.Source):
       actor.update(self._profile_url_to_actor(profile['href']))
       actor['urls'].insert(0, {'value': actor['url']})
 
+      # lst param is '[logged in user id]:[displayed user id]:[unknown]'
+      from urllib.parse import urlparse, parse_qs, unquote
+      lst = parse_qs(urlparse(profile['href']).query).get('lst')
+      if lst:
+        actor['numeric_id'] = unquote(lst[0]).split(':')[0]
+
     return util.trim_nulls(actor)
 
   def _m_html_author(self, soup, tag='strong'):

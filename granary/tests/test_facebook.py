@@ -1118,6 +1118,7 @@ MBASIC_ACTOR = {
 }
 MBASIC_ABOUT_ACTOR = copy.deepcopy(MBASIC_ACTOR)
 MBASIC_ABOUT_ACTOR.update({
+  'numeric_id': '212038',
   'summary': 'No longer here. Follow me on snarfed.org!',
   'description': 'foo bar',
   'urls': [
