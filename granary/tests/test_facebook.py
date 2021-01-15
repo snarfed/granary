@@ -1109,12 +1109,22 @@ EMAIL_LIKE_OBJ = {
 MBASIC_HTML_TIMELINE = read_testdata('facebook.mbasic.feed.html')
 MBASIC_HTML_POST = read_testdata('facebook.mbasic.post.html')
 MBASIC_HTML_REACTIONS = read_testdata('facebook.mbasic.reactions.html')
+MBASIC_HTML_ABOUT = read_testdata('facebook.mbasic.about.html')
 MBASIC_ACTOR = {
   'objectType': 'person',
   'id': tag_uri('snarfed.org'),
   'displayName': 'Ryan Barrett',
   'url': 'https://www.facebook.com/snarfed.org',
 }
+MBASIC_ABOUT_ACTOR = copy.deepcopy(MBASIC_ACTOR)
+MBASIC_ABOUT_ACTOR.update({
+  'summary': 'No longer here. Follow me on snarfed.org!',
+  'description': 'foo bar',
+  'urls': [
+    {'value': 'https://www.facebook.com/snarfed.org'},
+    {'value': 'https://snarfed.org/'},
+  ],
+})
 MBASIC_ALICE = {
   'objectType': 'person',
   'id': tag_uri('alice'),
@@ -3208,3 +3218,11 @@ cc Sam G, Michael M<br />""", preview.description)
     """
     got = self.fb.m_html_reactions_to_tags(MBASIC_HTML_REACTIONS, MBASIC_POST_OBJS[0])
     self.assert_equals(MBASIC_REACTION_TAGS('123'), got)
+
+  def test_m_html_about_to_actor(self):
+    """mbasic.facebook.com HTML profile about page.
+
+    Based on: https://mbasic.facebook.com/snarfed.org
+    """
+    got = self.fb.m_html_about_to_actor(MBASIC_HTML_ABOUT)
+    self.assert_equals(MBASIC_ABOUT_ACTOR, got)

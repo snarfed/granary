@@ -2024,6 +2024,55 @@ class Facebook(source.Source):
 
     return tags
 
+  def m_html_about_to_actor(self, html):
+    """
+    Converts HTML from an mbasic.facebook.com profile about page to an AS1 actor.
+
+    Args:
+      html: string, HTML from an mbasic.facebook.com post permalink
+
+    Returns: dict, AS1 actor
+    """
+    soup = util.parse_html(html)
+    root = soup.find(id='root')
+
+    website = None
+    website_label = root.find('a', href='/editprofile.php?type=contact&edit=website')
+    if website_label:
+      website = (website_label.find_parent('td').find_next_sibling('td')
+                 .get_text(' ', strip=True))
+
+    summary_div = self._div(root, 0, 0, 1, 1)
+    # if this is the logged in user, there will be an extra div and an Edit Bio
+    # link after it
+    summary = (self._div(summary_div, 0) or summary_div).get_text(' ', strip=True)
+
+    # confusingly, the HTML has this as id=bio in HTML, but UI calls it "About
+    # [name]" and calls the summary snippet above "bio" instead.
+    about = None
+    bio = root.find(id='bio')
+    if bio:
+      for edit_link in bio.find_all(
+          'a', href=re.compile(r'^/profile/edit/infotab/section/forms/\?section=bio')):
+        edit_link.clear()
+      bio = self._div_text(bio, 0, 0)
+
+    actor = {
+      'objectType': 'person',
+      'displayName': soup.title.get_text(' ', strip=True),
+      'summary': summary,
+      'description': bio,
+      'urls': [{'value': url} for url in
+               sum((util.extract_links(val) for val in (website, summary, about)), [])],
+    }
+
+    profile = root.find('a', href=re.compile(r'[?&]v=timeline'))
+    if profile:
+      actor.update(self._profile_url_to_actor(profile['href']))
+      actor['urls'].insert(0, {'value': actor['url']})
+
+    return util.trim_nulls(actor)
+
   def _m_html_author(self, soup, tag='strong'):
     """
     Finds an author link in mbasic.facebook.com HTML and converts it to AS1.
@@ -2039,7 +2088,21 @@ class Facebook(source.Source):
       return {}
 
     author = author.find('a')
-    parsed = urllib.parse.urlparse(author['href'])
+    actor = self._profile_url_to_actor(author['href'])
+    actor['displayName'] = author.get_text(' ', strip=True)
+
+    return actor
+
+  def _profile_url_to_actor(self, url):
+    """
+    Converts a profile URL to an AS1 actor.
+
+    Args:
+      url: str
+
+    Returns: dict AS1 actor
+    """
+    parsed = urllib.parse.urlparse(url)
     path = parsed.path.strip('/')
     id_or_username = (urllib.parse.parse_qs(parsed.query)['id'][0]
                       if path == 'profile.php'
@@ -2048,7 +2111,6 @@ class Facebook(source.Source):
       'objectType': 'person',
       'id': self.tag_uri(id_or_username),
       'url': urllib.parse.urljoin(self.BASE_URL, id_or_username),
-      'displayName': author.get_text(' ', strip=True),
     }
 
   @staticmethod
