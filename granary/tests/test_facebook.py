@@ -1160,6 +1160,7 @@ MBASIC_POST_ACTIVITIES = [{
   'objectType': 'activity',
   'verb': 'post',
   'id': obj['id'],
+  'fb_id': obj['fb_id'],
   'url': obj['url'],
   'actor': obj['author'],
   'object': obj,
@@ -3231,13 +3232,14 @@ cc Sam G, Michael M<br />""", preview.description)
     got = self.fb.scraped_to_object(MBASIC_HTML_POST, url)
     self.assert_equals(MBASIC_POST_OBJS_REPLIES[1], got)
 
-  def test_scraped_to_reactions(self):
+  def test_merge_scraped_reactions(self):
     """mbasic.facebook.com HTML reactions.
 
     Based on: https://mbasic.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier=456
     """
-    got = self.fb.scraped_to_reactions(MBASIC_HTML_REACTIONS, MBASIC_POST_OBJS[0])
-    self.assert_equals(MBASIC_REACTION_TAGS('123'), got)
+    activity = copy.deepcopy(MBASIC_POST_ACTIVITIES[0])
+    self.fb.merge_scraped_reactions(MBASIC_HTML_REACTIONS, activity)
+    self.assert_equals(MBASIC_REACTION_TAGS('123'), activity['object']['tags'])
 
   def test_scraped_to_actor(self):
     """mbasic.facebook.com HTML profile about page.

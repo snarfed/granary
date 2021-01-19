@@ -13,6 +13,7 @@ import collections
 import copy
 from html import escape, unescape
 import logging
+from operator import itemgetter
 import re
 import urllib.parse
 
@@ -154,6 +155,21 @@ def object_type(obj):
   """
   type = obj.get('objectType')
   return type if type and type != 'activity' else obj.get('verb')
+
+
+def merge_by_id(obj, field, new):
+  """Merges new items by id into a field in an existing AS1 object.
+
+  Merges new items by id into the given field. If it exists, it must be a list.
+  Requires all existing and new items in the field to have ids.
+
+  Args:
+    obj: dict, AS1 object
+    field: str, name of field to merge new items into
+    new: sequence of AS1 dicts
+  """
+  merged = {o['id']: o for o in obj.get(field, []) + new}
+  obj[field] = sorted(merged.values(), key=itemgetter('id'))
 
 
 class SourceMeta(type):
@@ -322,7 +338,7 @@ class Source(object, metaclass=SourceMeta):
     sources with APIs that are restricted or have difficult approval processes.
 
     Args:
-      scraped: unicode string
+      scraped: str, scraped data
       cookie: string, optional cookie to be used for subsequent HTTP
         fetches, if necessary.
       count: integer, number of activities to return, None for all
@@ -333,15 +349,16 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  def scraped_to_reactions(self, scraped, post_id=None):
-    """Converts scraped HTML (or JSON, etc) to AS replies and reaction tags.
+  def merge_scraped_reactions(self, scraped, activity):
+    """Converts and merges scraped likes and reactions into an activity.
+
+    New likes and emoji reactions are added to the activity in 'tags'.
+    Existing likes and emoji reactions in 'tags' are ignored.
 
     Args:
-      scraped: unicode string
-      post_id: silo post id
-
-    Returns:
-      tuple: ([AS 'like' tags], [AS reply objects with emoji reactions])
+      scraped: dict or str, HTML (or JSON etc) with likes and/or emoji
+        reactions
+      activity: dict, AS activity to merge these reactions into
     """
     raise NotImplementedError()
 

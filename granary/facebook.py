@@ -1838,39 +1838,31 @@ class Facebook(source.Source):
 
     if activity_id:
       resp = get(M_HTML_POST_URL, activity_id, user_id)
-      objs = [self.scraped_to_object(resp.text, resp.url)]
+      activities = [self.scraped_to_activity(resp.text, resp.url)]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
-      objs = self.scraped_to_objects(resp.text)
+      activities = self.scraped_to_activities(resp.text)
       if fetch_replies:
+        # fetch and convert individual post permalinks
         # TODO: cache?
-        orig_objs = objs
-        objs = []
-        for obj in orig_objs:
-          resp = get(M_HTML_POST_URL, obj['fb_id'], user_id)
-          objs.append(self.scraped_to_object(resp.text, resp.url))
+        fbids = [a['fb_id'] for a in activities]
+        activities = []
+        for id in fbids:
+          resp = get(M_HTML_POST_URL, id, user_id)
+          activities.append(self.scraped_to_activity(resp.text, resp.url))
 
-    # TODO: cache?
     if fetch_likes:
-      for obj in objs:
-        resp = get(M_HTML_REACTIONS_URL, obj['fb_id'])
-        obj['tags'] = self.scraped_to_reactions(resp.text, obj)
+      # fetch and convert likes
+      # TODO: cache?
+      for activity in activities:
+        resp = get(M_HTML_REACTIONS_URL, activity['fb_id'])
+        self.merge_scraped_reactions(resp.text, activity)
 
-    activities = [self.postprocess_activity({
-      'verb': 'post',
-      'published': obj.get('published'),
-      'id': obj['id'],
-      'url': obj.get('url'),
-      'actor': obj.get('author'),
-      'object': obj,
-    }) for obj in objs]
-
-    resp = self.make_activities_base_response(activities)
-    return resp
+    return self.make_activities_base_response(activities)
 
   def scraped_to_activities(self, html):
     """
-    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
+    Converts HTML from an mbasic.facebook.com profile timeline to AS1 activities.
 
     Args:
       html: string
@@ -1880,7 +1872,8 @@ class Facebook(source.Source):
     return util.trim_nulls([{
       'objectType': 'activity',
       'verb': 'post',
-      'id': obj.get('id'),
+      'id': obj['id'],
+      'fb_id': obj.get('fb_id'),
       'url': obj.get('url'),
       'actor': obj.get('author'),
       'object': obj,
@@ -1888,7 +1881,7 @@ class Facebook(source.Source):
 
   def scraped_to_objects(self, html):
     """
-    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
+    Converts HTML from an mbasic.facebook.com profile timeline to AS1 objects.
 
     Args:
       html: string
@@ -1944,6 +1937,27 @@ class Facebook(source.Source):
       })
 
     return objs
+
+  def scraped_to_activity(self, html, url):
+    """
+    Converts HTML from an mbasic.facebook.com post page to an AS1 activity.
+
+    Args:
+      html: string, HTML from an mbasic.facebook.com post permalink
+      url: string, permalink URL of post
+
+    Returns: dict, AS1 activity
+    """
+    obj = self.scraped_to_object(html, url)
+    return util.trim_nulls({
+      'objectType': 'activity',
+      'verb': 'post',
+      'id': obj['id'],
+      'fb_id': obj.get('fb_id'),
+      'url': obj.get('url'),
+      'actor': obj.get('author'),
+      'object': obj,
+    })
 
   def scraped_to_object(self, html, url):
     """
@@ -2005,16 +2019,15 @@ class Facebook(source.Source):
 
     return obj
 
-  def scraped_to_reactions(self, html, post_obj):
-    """
-    Converts HTML reactions from mbasic.facebook.com to AS1 replies and tags.
+  def merge_scraped_reactions(self, html, activity):
+    """Converts and merges scraped likes and reactions into an activity.
+
+    New likes and emoji reactions are added to the activity in 'tags'.
+    Existing likes and emoji reactions in 'tags' are ignored.
 
     Args:
       html: string, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
-      url: string, permalink URL of post
-      post_obj: AS1 post object these reactions are for
-
-    Returns: sequence of dict AS1 activities
+      activity: dict, AS activity to merge these reactions into
     """
     soup = util.parse_html(html)
 
@@ -2031,16 +2044,16 @@ class Facebook(source.Source):
       tag = {
         'objectType': 'activity',
         'verb': 'like' if type == 'like' else 'react',
-        'id': self.tag_uri('%s_%s_by_%s' % (post_obj['fb_id'], type_str, username)),
-        'url': post_obj['url'] + '#%s-by-%s' % (type_str, username),
-        'object': {'url': post_obj['url']},
+        'id': self.tag_uri('%s_%s_by_%s' % (activity['fb_id'], type_str, username)),
+        'url': activity['url'] + '#%s-by-%s' % (type_str, username),
+        'object': {'url': activity['url']},
         'author': author,
       }
       if type != 'like':
         tag['content'] = REACTION_CONTENT.get(type.upper())
       tags.append(tag)
 
-    return tags
+    source.merge_by_id(activity['object'], 'tags', tags)
 
   def scraped_to_actor(self, html):
     """

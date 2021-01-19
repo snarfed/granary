@@ -1729,6 +1729,11 @@ class InstagramTest(testutil.TestCase):
 
     self.assertEqual(504, cm.exception.response.status_code)
 
+  def test_merge_scraped_reactions(self):
+    activity = copy.deepcopy(HTML_PHOTO_ACTIVITY)
+    self.instagram.merge_scraped_reactions(HTML_PHOTO_LIKES_RESPONSE, activity)
+    self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
+
   def test_id_to_shortcode(self):
     for shortcode, id in (
         (None, None),

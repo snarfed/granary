@@ -878,11 +878,7 @@ class Instagram(source.Source):
       if shortcode and fetch_extras and likes.get('count') and not likes.get('edges'):
         # extra GraphQL fetch to get likes, as of 8/2018
         likes_json = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
-        likes, reactions = self.scraped_to_reactions(likes_json, post_id=media['id'])
-        activity['object'].setdefault('tags', []).extend(likes)
-        replies = activity['object'].setdefault('replies', [])
-        replies.setdefault('items', []).extend(reactions)
-        replies['totalItems'] = len(replies['items'])
+        self.merge_scraped_reactions(likes_json, activity)
 
       activities.append(util.trim_nulls(activity))
 
@@ -895,27 +891,23 @@ class Instagram(source.Source):
 
   html_to_activities = scraped_to_activities
 
-  def scraped_to_reactions(self, scraped, post_id=None):
-    """Converts scraped JSON likes to AS reaction tags.
+  def merge_scraped_reactions(self, scraped, activity):
+    """Converts and merges scraped likes and reactions into an activity.
+
+    New likes and emoji reactions are added to the activity in 'tags'.
+    Existing likes and emoji reactions in 'tags' are ignored.
 
     Args:
-      scraped: dict, JSON likes
-      post_id: Instagram media id, in '[MEDIA ID]_[OWNER_ID]' format
-
-    Returns:
-      tuple: ([AS 'like' tags], [AS reply objects with emoji reactions])
+      scraped: dict, scraped JSON likes
+      activity: dict, AS activity to merge these reactions into
     """
     media = scraped.get('data', {}).get('shortcode_media', {})
-    if not media:
-      return [], []
-
-    id = post_id or media['id']
-    shortcode = media['shortcode']
-    media_url = self.media_url(shortcode)
-
-    tags = [self.like_to_object(like.get('node', {}), id, media_url)
-            for like in media.get('edge_liked_by', {}).get('edges', [])]
-    return tags, []
+    if media:
+      id = util.parse_tag_uri(activity['id'])[1]
+      media_url = self.media_url(media['shortcode'])
+      likes = [self.like_to_object(like.get('node', {}), id, media_url)
+               for like in media.get('edge_liked_by', {}).get('edges', [])]
+      source.merge_by_id(activity['object'], 'tags', likes)
 
   @staticmethod
   def _scrape_json(url, cookie=None):
