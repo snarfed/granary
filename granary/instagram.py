@@ -325,7 +325,8 @@ class Instagram(source.Source):
     else:
       resp.raise_for_status()
 
-    activities, actor = self.html_to_activities(resp.text, cookie=cookie, count=count)
+    activities, actor = self.scraped_to_activities(resp.text, cookie=cookie,
+                                                   count=count)
 
     if fetch_extras:
       # batch get cached counts of comments and likes for all activities
@@ -355,7 +356,7 @@ class Instagram(source.Source):
             resp.raise_for_status()
           # otherwise resp is a fetch of just this activity; reuse it
 
-          full_activity, _ = self.html_to_activities(
+          full_activity, _ = self.scraped_to_activities(
             resp.text, cookie=cookie, count=count, fetch_extras=fetch_extras)
           if full_activity:
             activities[i] = full_activity[0]
@@ -601,9 +602,10 @@ class Instagram(source.Source):
         # TODO: url
       } for tag in media.get('tags', [])] +
       [self.user_to_actor(u.get('user'))
-       for u in media.get('users_in_photo', [])] +
+      for u in media.get('users_in_photo', [])] +
       [self.like_to_object(u, id, media.get('link'))
        for u in media.get('likes', {}).get('data', [])] +
+
       self._mention_tags_from_content(content)
     }
 
@@ -734,9 +736,11 @@ class Instagram(source.Source):
         'alias': '@private' if private else '@public',
       }]
 
+    pic_url = user.get('profile_picture') or user.get('profile_pic_url') or ''
+
     actor.update({
       'displayName': user.get('full_name') or username,
-      'image': {'url': user.get('profile_picture')},
+      'image': {'url': pic_url.replace('\/', '/')},
       'description': user.get('bio')
     })
 
@@ -782,8 +786,9 @@ class Instagram(source.Source):
 
     return ''.join(reversed(chars))
 
-  def html_to_activities(self, html, cookie=None, count=None, fetch_extras=False):
-    """Converts Instagram HTML to ActivityStreams activities.
+  def scraped_to_activities(self, html, cookie=None, count=None,
+                            fetch_extras=False):
+    """Converts scraped Instagram HTML to ActivityStreams activities.
 
     The input HTML may be from:
 
@@ -865,14 +870,21 @@ class Instagram(source.Source):
 
     activities = []
     for media in util.trim_nulls(medias):
+      activity = self._json_media_node_to_activity(media, user=profile_user)
+
+      # likes
       shortcode = media.get('code') or media.get('shortcode')
       likes = media.get('edge_media_preview_like') or {}
       if shortcode and fetch_extras and likes.get('count') and not likes.get('edges'):
         # extra GraphQL fetch to get likes, as of 8/2018
-        data = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
-        likes['edges'] = data.get('data', {}).get('shortcode_media', {})\
-                             .get('edge_liked_by', {}).get('edges', [])
-      activities.append(self._json_media_node_to_activity(media, user=profile_user))
+        likes_json = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
+        likes, reactions = self.scraped_to_reactions(likes_json, post_id=media['id'])
+        activity['object'].setdefault('tags', []).extend(likes)
+        replies = activity['object'].setdefault('replies', [])
+        replies.setdefault('items', []).extend(reactions)
+        replies['totalItems'] = len(replies['items'])
+
+      activities.append(util.trim_nulls(activity))
 
     actor = None
     user = self._json_user_to_user(viewer_user or profile_user)
@@ -880,6 +892,30 @@ class Instagram(source.Source):
       actor = self.user_to_actor(user)
 
     return activities, actor
+
+  html_to_activities = scraped_to_activities
+
+  def scraped_to_reactions(self, scraped, post_id=None):
+    """Converts scraped JSON likes to AS reaction tags.
+
+    Args:
+      scraped: dict, JSON likes
+      post_id: Instagram media id, in '[MEDIA ID]_[OWNER_ID]' format
+
+    Returns:
+      tuple: ([AS 'like' tags], [AS reply objects with emoji reactions])
+    """
+    media = scraped.get('data', {}).get('shortcode_media', {})
+    if not media:
+      return [], []
+
+    id = post_id or media['id']
+    shortcode = media['shortcode']
+    media_url = self.media_url(shortcode)
+
+    tags = [self.like_to_object(like.get('node', {}), id, media_url)
+            for like in media.get('edge_liked_by', {}).get('edges', [])]
+    return tags, []
 
   @staticmethod
   def _scrape_json(url, cookie=None):

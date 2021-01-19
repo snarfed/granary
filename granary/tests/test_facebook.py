@@ -1156,6 +1156,14 @@ MBASIC_POST_OBJS = [{
   'content': 'Oh hi, Jeeves .',
   'to': [{'objectType': 'unknown'}],
 }]
+MBASIC_POST_ACTIVITIES = [{
+  'objectType': 'activity',
+  'verb': 'post',
+  'id': obj['id'],
+  'url': obj['url'],
+  'actor': obj['author'],
+  'object': obj,
+} for obj in MBASIC_POST_OBJS]
 
 def MBASIC_REPLIES(post_id):
   return {
@@ -3189,7 +3197,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
     self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_object(LIKE_EMAIL))
 
-  def test_m_html_timeline_to_activities(self):
+  def test_scraped_to_activities(self):
     """mbasic.facebook.com HTML timeline.
 
     Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
@@ -3197,10 +3205,21 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    got = self.fb.m_html_timeline_to_objects(MBASIC_HTML_TIMELINE)
+    got = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
+    self.assert_equals(MBASIC_POST_ACTIVITIES, got)
+
+  def test_scraped_to_objects(self):
+    """mbasic.facebook.com HTML timeline.
+
+    Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    got = self.fb.scraped_to_objects(MBASIC_HTML_TIMELINE)
     self.assert_equals(MBASIC_POST_OBJS, got)
 
-  def test_m_html_post_to_object(self):
+  def test_scraped_to_object(self):
     """mbasic.facebook.com HTML post.
 
     Based on: https://mbasic.facebook.com/story.php?story_fbid=456&id=212038
@@ -3209,21 +3228,21 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     url = 'https://mbasic.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
-    got = self.fb.m_html_post_to_object(MBASIC_HTML_POST, url)
+    got = self.fb.scraped_to_object(MBASIC_HTML_POST, url)
     self.assert_equals(MBASIC_POST_OBJS_REPLIES[1], got)
 
-  def test_m_html_reactions_to_tags(self):
+  def test_scraped_to_reactions(self):
     """mbasic.facebook.com HTML reactions.
 
     Based on: https://mbasic.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier=456
     """
-    got = self.fb.m_html_reactions_to_tags(MBASIC_HTML_REACTIONS, MBASIC_POST_OBJS[0])
+    got = self.fb.scraped_to_reactions(MBASIC_HTML_REACTIONS, MBASIC_POST_OBJS[0])
     self.assert_equals(MBASIC_REACTION_TAGS('123'), got)
 
-  def test_m_html_about_to_actor(self):
+  def test_scraped_to_actor(self):
     """mbasic.facebook.com HTML profile about page.
 
     Based on: https://mbasic.facebook.com/snarfed.org
     """
-    got = self.fb.m_html_about_to_actor(MBASIC_HTML_ABOUT)
+    got = self.fb.scraped_to_actor(MBASIC_HTML_ABOUT)
     self.assert_equals(MBASIC_ABOUT_ACTOR, got)

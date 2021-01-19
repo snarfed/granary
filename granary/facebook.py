@@ -1838,23 +1838,23 @@ class Facebook(source.Source):
 
     if activity_id:
       resp = get(M_HTML_POST_URL, activity_id, user_id)
-      objs = [self.m_html_post_to_object(resp.text, resp.url)]
+      objs = [self.scraped_to_object(resp.text, resp.url)]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
-      objs = self.m_html_timeline_to_objects(resp.text)
+      objs = self.scraped_to_objects(resp.text)
       if fetch_replies:
         # TODO: cache?
         orig_objs = objs
         objs = []
         for obj in orig_objs:
           resp = get(M_HTML_POST_URL, obj['fb_id'], user_id)
-          objs.append(self.m_html_post_to_object(resp.text, resp.url))
+          objs.append(self.scraped_to_object(resp.text, resp.url))
 
     # TODO: cache?
     if fetch_likes:
       for obj in objs:
         resp = get(M_HTML_REACTIONS_URL, obj['fb_id'])
-        obj['tags'] = self.m_html_reactions_to_tags(resp.text, obj)
+        obj['tags'] = self.scraped_to_reactions(resp.text, obj)
 
     activities = [self.postprocess_activity({
       'verb': 'post',
@@ -1868,7 +1868,25 @@ class Facebook(source.Source):
     resp = self.make_activities_base_response(activities)
     return resp
 
-  def m_html_timeline_to_objects(self, html):
+  def scraped_to_activities(self, html):
+    """
+    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
+
+    Args:
+      html: string
+
+    Returns: sequence of dict AS1 activities
+    """
+    return util.trim_nulls([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'id': obj.get('id'),
+      'url': obj.get('url'),
+      'actor': obj.get('author'),
+      'object': obj,
+    } for obj in self.scraped_to_objects(html)])
+
+  def scraped_to_objects(self, html):
     """
     Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
 
@@ -1893,7 +1911,7 @@ class Facebook(source.Source):
       # TODO: distinguish between text elements with actual whitespace
       # before/after and without. this adds space to all of them, including
       # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
-      # (also apply any fix to m_html_post_to_object().)
+      # (also apply any fix to scraped_to_object().)
       try:
         content = self._div(post, 0, 0)
       except IndexError:
@@ -1927,7 +1945,7 @@ class Facebook(source.Source):
 
     return objs
 
-  def m_html_post_to_object(self, html, url):
+  def scraped_to_object(self, html, url):
     """
     Converts HTML from an mbasic.facebook.com post page to an AS1 object.
 
@@ -1943,7 +1961,7 @@ class Facebook(source.Source):
     body_parts = self._div(view, 0, 0)
     content = self._div_text(body_parts, 0, 0)
 
-    # TODO: unify with m_html_timeline_to_objects
+    # TODO: unify with scraped_to_objects
     url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
     query = urllib.parse.urlparse(url).query
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
@@ -1987,9 +2005,9 @@ class Facebook(source.Source):
 
     return obj
 
-  def m_html_reactions_to_tags(self, html, post_obj):
+  def scraped_to_reactions(self, html, post_obj):
     """
-    Converts HTML from an mbasic.facebook.com profile aka timeline to AS1 objects.
+    Converts HTML reactions from mbasic.facebook.com to AS1 replies and tags.
 
     Args:
       html: string, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
@@ -2024,7 +2042,7 @@ class Facebook(source.Source):
 
     return tags
 
-  def m_html_about_to_actor(self, html):
+  def scraped_to_actor(self, html):
     """
     Converts HTML from an mbasic.facebook.com profile about page to an AS1 actor.
 

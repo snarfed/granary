@@ -219,12 +219,12 @@ class Source(object, metaclass=SourceMeta):
     """
     return self.get_activities_response(*args, **kwargs)['items']
 
-  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
-                              activity_id=None, start_index=0, count=0,
-                              etag=None, min_id=None, cache=None,
-                              fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None, **kwargs):
+  def get_activities_response(
+      self, user_id=None, group_id=None, app_id=None, activity_id=None,
+      start_index=0, count=0, etag=None, min_id=None, cache=None,
+      fetch_replies=False, fetch_likes=False, fetch_shares=False,
+      fetch_events=False, fetch_mentions=False, search_query=None, scrape=False,
+      **kwargs):
     """Fetches and returns ActivityStreams activities and response details.
 
     Subclasses should override this. See :meth:`get_activities()` for an
@@ -267,7 +267,9 @@ class Source(object, metaclass=SourceMeta):
       fetch_events: boolean, whether to fetch the user's events also
       fetch_mentions: boolean, whether to fetch posts that mention the user
       search_query: string, an optional search query, only for use with
-         @search group_id
+        @search group_id
+      scrape: boolean, whether to scrape activities from HTML (etc) instead of
+        using an API. Not supported by all sources.
       kwargs: some sources accept extra kwargs. See their docs for details.
 
     Returns:
@@ -311,6 +313,37 @@ class Source(object, metaclass=SourceMeta):
       'sorted': False,
       'updatedSince': False,
     }
+
+  def scraped_to_activities(self, scraped, cookie=None, count=None,
+                            fetch_extras=False):
+    """Converts scraped HTML (or JSON, etc) to AS activities.
+
+    Used for scraping data from the web instead of using an API. Useful for
+    sources with APIs that are restricted or have difficult approval processes.
+
+    Args:
+      scraped: unicode string
+      cookie: string, optional cookie to be used for subsequent HTTP
+        fetches, if necessary.
+      count: integer, number of activities to return, None for all
+      fetch_extras: whether to make extra HTTP fetches to get likes, etc.
+
+    Returns:
+      tuple: ([AS activities], AS logged in actor (ie viewer))
+    """
+    raise NotImplementedError()
+
+  def scraped_to_reactions(self, scraped, post_id=None):
+    """Converts scraped HTML (or JSON, etc) to AS replies and reaction tags.
+
+    Args:
+      scraped: unicode string
+      post_id: silo post id
+
+    Returns:
+      tuple: ([AS 'like' tags], [AS reply objects with emoji reactions])
+    """
+    raise NotImplementedError()
 
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Creates a new object: a post, comment, like, share, or RSVP.
