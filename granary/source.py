@@ -374,8 +374,7 @@ class Source(object, metaclass=SourceMeta):
     Existing likes and emoji reactions in 'tags' are ignored.
 
     Args:
-      scraped: dict or str, HTML (or JSON etc) with likes and/or emoji
-        reactions
+      scraped: str, HTML or JSON with likes and/or emoji reactions
       activity: dict, AS activity to merge these reactions into
     """
     raise NotImplementedError()

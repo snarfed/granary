@@ -895,8 +895,8 @@ class Instagram(source.Source):
     """Converts HTML from photo/video permalink page to an AS1 activity.
 
     Args:
-      html: string, HTML from an mbasic.facebook.com post permalink
-      url: string, permalink URL of post
+      html: string, HTML from a photo/video page on instagram.com
+      url: unused
       kwargs: passed through to scraped_to_activities
 
     Returns: dict, AS1 activity, or None if html couldn't be parsed
@@ -911,9 +911,12 @@ class Instagram(source.Source):
     Existing likes and emoji reactions in 'tags' are ignored.
 
     Args:
-      scraped: dict, scraped JSON likes
+      scraped: str or dict, scraped JSON likes
       activity: dict, AS activity to merge these reactions into
     """
+    if isinstance(scraped, str):
+      scraped = json_loads(scraped)
+
     media = scraped.get('data', {}).get('shortcode_media', {})
     if media:
       id = util.parse_tag_uri(activity['id'])[1]
