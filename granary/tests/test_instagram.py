@@ -1617,6 +1617,20 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
     self.assertIsNone(viewer)
 
+  def test_scraped_to_activity_photo_no_fetch_extras(self):
+    activity = self.instagram.scraped_to_activity(
+      HTML_PHOTO_COMPLETE, 'unused', fetch_extras=False)
+    self.assert_equals(HTML_PHOTO_ACTIVITY, activity)
+
+  def test_scraped_to_activity_photo_fetch_extras(self):
+    self.expect_requests_get(
+      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE, headers={})
+    self.mox.ReplayAll()
+
+    activity = self.instagram.scraped_to_activity(
+      HTML_PHOTO_COMPLETE, 'unused', fetch_extras=True)
+    self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
+
   def test_scraped_to_activities_photo_edge_media_to_parent_comment(self):
     """https://github.com/snarfed/granary/issues/164"""
     self.expect_requests_get(

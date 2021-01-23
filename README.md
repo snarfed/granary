@@ -308,7 +308,7 @@ Changelog
 
 * Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the minimum required version.
 * Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
-* Standardize Instagram's and Facebook's scraping into new common `Source.scraped_to_activities()` and `Source.merge_scraped_reactions()`  methods.
+* Standardize Instagram's and Facebook's scraping into new common `scraped_to_activities()`, `scraped_to_activity()`, and `merge_scraped_reactions()` methods.
 * Flickr:
   * Add support for adding tags to existing photos ([bridgy#857](https://github.com/snarfed/bridgy/issues/857)).
 * JSON Feed:

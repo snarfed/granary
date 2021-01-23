@@ -891,6 +891,19 @@ class Instagram(source.Source):
 
   html_to_activities = scraped_to_activities
 
+  def scraped_to_activity(self, html, url, **kwargs):
+    """Converts HTML from photo/video permalink page to an AS1 activity.
+
+    Args:
+      html: string, HTML from an mbasic.facebook.com post permalink
+      url: string, permalink URL of post
+      kwargs: passed through to scraped_to_activities
+
+    Returns: dict, AS1 activity, or None if html couldn't be parsed
+    """
+    activities, _ = self.scraped_to_activities(html, **kwargs)
+    return activities[0] if activities else None
+
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 

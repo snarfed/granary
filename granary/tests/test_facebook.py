@@ -1193,7 +1193,8 @@ def MBASIC_REPLIES(post_id):
     'totalItems': 2,
   }
 MBASIC_POST_OBJS_REPLIES = copy.deepcopy(MBASIC_POST_OBJS)
-for obj in MBASIC_POST_OBJS_REPLIES:
+MBASIC_POST_ACTIVITIES_REPLIES = copy.deepcopy(MBASIC_POST_ACTIVITIES)
+for obj in MBASIC_POST_OBJS_REPLIES + [a['object'] for a in MBASIC_POST_ACTIVITIES_REPLIES]:
   obj['replies'] = MBASIC_REPLIES(obj['fb_id'])
 
 def MBASIC_REACTION_TAGS(post_id):
@@ -3219,6 +3220,19 @@ cc Sam G, Michael M<br />""", preview.description)
 
     got = self.fb.scraped_to_objects(MBASIC_HTML_TIMELINE)
     self.assert_equals(MBASIC_POST_OBJS, got)
+
+
+  def test_scraped_to_activity(self):
+    """mbasic.facebook.com HTML post.
+
+    Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    url = 'https://mbasic.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
+    got = self.fb.scraped_to_activity(MBASIC_HTML_POST, url)
+    self.assert_equals(MBASIC_POST_ACTIVITIES_REPLIES[1], got)
 
   def test_scraped_to_object(self):
     """mbasic.facebook.com HTML post.

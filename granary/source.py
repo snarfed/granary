@@ -330,22 +330,40 @@ class Source(object, metaclass=SourceMeta):
       'updatedSince': False,
     }
 
-  def scraped_to_activities(self, scraped, cookie=None, count=None,
-                            fetch_extras=False):
+  def scraped_to_activities(self, scraped, count=None, fetch_extras=False,
+                            cookie=None):
     """Converts scraped HTML (or JSON, etc) to AS activities.
 
     Used for scraping data from the web instead of using an API. Useful for
     sources with APIs that are restricted or have difficult approval processes.
 
     Args:
-      scraped: str, scraped data
-      cookie: string, optional cookie to be used for subsequent HTTP
-        fetches, if necessary.
+      scraped: str, scraped data from a feed of posts
       count: integer, number of activities to return, None for all
       fetch_extras: whether to make extra HTTP fetches to get likes, etc.
+      cookie: string, optional cookie to be used for subsequent HTTP
+        fetches, if necessary.
 
     Returns:
       tuple: ([AS activities], AS logged in actor (ie viewer))
+    """
+    raise NotImplementedError()
+
+  def scraped_to_activity(self, scraped):
+    """Converts scraped HTML (or JSON, etc) to a single AS activity.
+
+    Used for scraping data from the web instead of using an API. Useful for
+    sources with APIs that are restricted or have difficult approval processes.
+
+    Args:
+      scraped: str, scraped data from a single post permalink
+      count: integer, number of activities to return, None for all
+      fetch_extras: whether to make extra HTTP fetches to get likes, etc.
+      cookie: string, optional cookie to be used for subsequent HTTP
+        fetches, if necessary.
+
+    Returns:
+      tuple: (AS activity, AS logged in actor (ie viewer))
     """
     raise NotImplementedError()
 

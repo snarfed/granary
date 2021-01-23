@@ -1860,12 +1860,13 @@ class Facebook(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def scraped_to_activities(self, html):
+  def scraped_to_activities(self, html, **kwargs):
     """
     Converts HTML from an mbasic.facebook.com profile timeline to AS1 activities.
 
     Args:
       html: string
+      kwargs: unused
 
     Returns: sequence of dict AS1 activities
     """
@@ -1938,13 +1939,14 @@ class Facebook(source.Source):
 
     return objs
 
-  def scraped_to_activity(self, html, url):
+  def scraped_to_activity(self, html, url, **kwargs):
     """
     Converts HTML from an mbasic.facebook.com post page to an AS1 activity.
 
     Args:
       html: string, HTML from an mbasic.facebook.com post permalink
       url: string, permalink URL of post
+      kwargs: unused
 
     Returns: dict, AS1 activity
     """
