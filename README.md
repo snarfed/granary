@@ -309,27 +309,29 @@ Changelog
 * Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the minimum required version.
 * Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
 * Standardize Instagram's and Facebook's scraping into new common `scraped_to_activities()`, `scraped_to_activity()`, and `merge_scraped_reactions()` methods.
+* REST API:
+  * Bug fix: URL-encode Unicode characters in `Link` HTTP headers (eg `rel=self`, `rel=header`).
+* Facebook:
+  * Scraping now uses [mbasic.facebook.com](https://mbasic.facebook.com/) instead of [m.facebook.com](https://m.facebook.com/).
 * Flickr:
   * Add support for adding tags to existing photos ([bridgy#857](https://github.com/snarfed/bridgy/issues/857)).
-* JSON Feed:
-  * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
+* GitHub:
+  * Handle [HTTP 451 Unavailable for Legal Reasons](https://en.wikipedia.org/wiki/HTTP_451) responses ([eg for DMCA takedowns](https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/)) gracefully.
 * HTML/microformats2:
   * Add `aria-hidden="true"` to empty links ([bridgy#947](https://github.com/snarfed/bridgy/issues/947)).
   * Bug fix: escape `&`, `<`, and `>` characters in bare mf2 `content` properties ([aaronpk/XRay#102](https://github.com/aaronpk/XRay/issues/102)).
-* GitHub:
-  * Handle [HTTP 451 Unavailable for Legal Reasons](https://en.wikipedia.org/wiki/HTTP_451) responses ([eg for DMCA takedowns](https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/)) gracefully.
+* JSON Feed:
+  * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
 * Instagram:
   * Include threaded (ie nested) comments in scraping ([bridgy#958](https://github.com/snarfed/bridgy/issues/958)).
-* Twitter:
-  * Bug fix: URL-encode list names in API calls.
-  * Bug fix: propagate alt text into AS1 `photo.displayName` so that it gets all the way into microformats2 JSON and HTML ([#183](https://github.com/snarfed/granary/issues/183)).
 * Mastodon:
   * Bug fix for alt text with image attachments ([bridgy#975](https://github.com/snarfed/bridgy/issues/975)).
   * Omit empty `limit` param [for compatibility with Pleroma](https://git.pleroma.social/pleroma/pleroma/-/issues/2198) ([bridgy#977](https://github.com/snarfed/bridgy/issues/977)).
 * Meetup:
   * `create()`: handle API errors and return the error message in the `CreationResult` ([bridgy#921](https://github.com/snarfed/bridgy/issues/921)).
-* Facebook:
-  * Scraping now uses [mbasic.facebook.com](https://mbasic.facebook.com/) instead of [m.facebook.com](https://m.facebook.com/).
+* Twitter:
+  * Bug fix: URL-encode list names in API calls.
+  * Bug fix: propagate alt text into AS1 `photo.displayName` so that it gets all the way into microformats2 JSON and HTML ([#183](https://github.com/snarfed/granary/issues/183)).
 
 ### 3.0 - 2020-04-08
 

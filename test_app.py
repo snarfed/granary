@@ -676,6 +676,17 @@ not atom!
     self.assertIn('<http://a/hub>; rel="hub"', headers)
     self.assertIn('<%s>; rel="self"' % self_url, headers)
 
+  def test_encode_urls_in_link_headers(self):
+    self.expect_requests_get('http://my/as1', AS1)
+    self.mox.ReplayAll()
+
+    url = '/url?url=http://my/as1&input=as1&output=atom&hub=http://a/%E2%98%95'
+    resp = app.application.get_response(url)
+    self.assertCountEqual(
+      ('<http://a/%E2%98%95>; rel="hub"',
+       '<http://localhost/url?url=http://my/as1&input=as1&output=atom&hub=http://a/%E2%98%95>; rel="self"'),
+      resp.headers.getall('Link'))
+
   def test_bad_mf2_json_input_400s(self):
     """If a user sends JSON Feed input, but claims it's mf2 JSON, return 400.
 

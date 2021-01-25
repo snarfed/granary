@@ -255,9 +255,10 @@ class Handler(handlers.ModernHandler):
           title=title,
           rels={'hub': hub} if hub else None,
           reader=(reader == 'true')))
-        self.response.headers.add('Link', str('<%s>; rel="self"' % self.request.url))
+        self.response.headers.add('Link', '<%s>; rel="self"' %
+                                  util.quote_path(self.request.url))
         if hub:
-          self.response.headers.add('Link', str('<%s>; rel="hub"' % hub))
+          self.response.headers.add('Link', '<%s>; rel="hub"' % util.quote_path(hub))
       elif format == 'rss':
         if not title:
           title = 'Feed for %s' % url
