@@ -3252,8 +3252,10 @@ cc Sam G, Michael M<br />""", preview.description)
     Based on: https://mbasic.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier=456
     """
     activity = copy.deepcopy(MBASIC_POST_ACTIVITIES[0])
-    self.fb.merge_scraped_reactions(MBASIC_HTML_REACTIONS, activity)
-    self.assert_equals(MBASIC_REACTION_TAGS('123'), activity['object']['tags'])
+    got = self.fb.merge_scraped_reactions(MBASIC_HTML_REACTIONS, activity)
+    expected = MBASIC_REACTION_TAGS('123')
+    self.assert_equals(expected, got)
+    self.assert_equals(expected, activity['object']['tags'])
 
   def test_scraped_to_actor(self):
     """mbasic.facebook.com HTML profile about page.

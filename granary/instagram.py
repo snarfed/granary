@@ -913,6 +913,9 @@ class Instagram(source.Source):
     Args:
       scraped: str or dict, scraped JSON likes
       activity: dict, AS activity to merge these reactions into
+
+    Returns:
+      list of dict AS like tag objects converted from scraped
     """
     if isinstance(scraped, str):
       scraped = json_loads(scraped)
@@ -924,6 +927,9 @@ class Instagram(source.Source):
       likes = [self.like_to_object(like.get('node', {}), id, media_url)
                for like in media.get('edge_liked_by', {}).get('edges', [])]
       source.merge_by_id(activity['object'], 'tags', likes)
+      return likes
+
+    return []
 
   @staticmethod
   def _scrape_json(url, cookie=None):

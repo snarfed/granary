@@ -363,7 +363,7 @@ class Source(object, metaclass=SourceMeta):
         fetches, if necessary.
 
     Returns:
-      tuple: (AS activity, AS logged in actor (ie viewer))
+      tuple: (AS activity or None, AS logged in actor (ie viewer))
     """
     raise NotImplementedError()
 
@@ -376,6 +376,9 @@ class Source(object, metaclass=SourceMeta):
     Args:
       scraped: str, HTML or JSON with likes and/or emoji reactions
       activity: dict, AS activity to merge these reactions into
+
+    Returns:
+      list of dict AS like/react tag objects converted from scraped
     """
     raise NotImplementedError()
 

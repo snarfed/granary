@@ -2030,6 +2030,9 @@ class Facebook(source.Source):
     Args:
       html: string, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
       activity: dict, AS activity to merge these reactions into
+
+    Returns:
+      list of dict AS like/react tag objects converted from scraped
     """
     soup = util.parse_html(html)
 
@@ -2056,6 +2059,7 @@ class Facebook(source.Source):
       tags.append(tag)
 
     source.merge_by_id(activity['object'], 'tags', tags)
+    return tags
 
   def scraped_to_actor(self, html):
     """
