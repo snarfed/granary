@@ -899,10 +899,11 @@ class Instagram(source.Source):
       url: unused
       kwargs: passed through to scraped_to_activities
 
-    Returns: dict, AS1 activity, or None if html couldn't be parsed
+    Returns:
+      tuple: (AS activity or None, AS logged in actor (ie viewer))
     """
-    activities, _ = self.scraped_to_activities(html, **kwargs)
-    return activities[0] if activities else None
+    activities, actor = self.scraped_to_activities(html, **kwargs)
+    return (activities[0] if activities else None), actor
 
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.

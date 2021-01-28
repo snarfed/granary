@@ -1618,18 +1618,28 @@ class InstagramTest(testutil.TestCase):
     self.assertIsNone(viewer)
 
   def test_scraped_to_activity_photo_no_fetch_extras(self):
-    activity = self.instagram.scraped_to_activity(
-      HTML_PHOTO_COMPLETE, 'unused', fetch_extras=False)
-    self.assert_equals(HTML_PHOTO_ACTIVITY, activity)
+    self.assert_equals(
+      (HTML_PHOTO_ACTIVITY, None),
+      self.instagram.scraped_to_activity(HTML_PHOTO_COMPLETE, 'unused',
+                                         fetch_extras=False))
+
+  def test_scraped_to_activity_photo_with_viewer(self):
+    page = copy.deepcopy(HTML_PHOTO_PAGE)
+    page['config'] = HTML_VIEWER_CONFIG
+    html = HTML_HEADER + json_dumps(page) + HTML_FOOTER
+
+    self.assert_equals((HTML_PHOTO_ACTIVITY, HTML_VIEWER),
+                       self.instagram.scraped_to_activity(html, 'unused'))
 
   def test_scraped_to_activity_photo_fetch_extras(self):
     self.expect_requests_get(
       instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE, headers={})
     self.mox.ReplayAll()
 
-    activity = self.instagram.scraped_to_activity(
+    activity, actor = self.instagram.scraped_to_activity(
       HTML_PHOTO_COMPLETE, 'unused', fetch_extras=True)
     self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
+    self.assertIsNone(actor)
 
   def test_scraped_to_activities_photo_edge_media_to_parent_comment(self):
     """https://github.com/snarfed/granary/issues/164"""
