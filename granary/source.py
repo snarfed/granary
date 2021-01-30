@@ -364,6 +364,16 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
+  def scraped_to_actor(self, scraped):
+    """Converts HTML from a profile page to an AS1 actor.
+
+    Args:
+      html: string, HTML from a profile page
+
+    Returns: dict, AS1 actor
+    """
+    raise NotImplementedError()
+
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 

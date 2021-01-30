@@ -903,7 +903,6 @@ class Facebook(source.Source):
         https://developers.facebook.com/docs/games/services/appnotifications#parameters
 
     Raises: urllib2.HTPPError
-
     """
     logging.debug('Sending Facebook notification: %r, %s', text, link)
     params = {
@@ -1838,10 +1837,10 @@ class Facebook(source.Source):
 
     if activity_id:
       resp = get(M_HTML_POST_URL, activity_id, user_id)
-      activities = [self.scraped_to_activity(resp.text, resp.url)]
+      activities = [self.scraped_to_activity(resp.text, resp.url)[0]]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
-      activities = self.scraped_to_activities(resp.text)
+      activities, _ = self.scraped_to_activities(resp.text)
       if fetch_replies:
         # fetch and convert individual post permalinks
         # TODO: cache?
@@ -1849,7 +1848,7 @@ class Facebook(source.Source):
         activities = []
         for id in fbids:
           resp = get(M_HTML_POST_URL, id, user_id)
-          activities.append(self.scraped_to_activity(resp.text, resp.url))
+          activities.append(self.scraped_to_activity(resp.text, resp.url)[0])
 
     if fetch_likes:
       # fetch and convert likes
@@ -1861,37 +1860,17 @@ class Facebook(source.Source):
     return self.make_activities_base_response(activities)
 
   def scraped_to_activities(self, html, **kwargs):
-    """
-    Converts HTML from an mbasic.facebook.com profile timeline to AS1 activities.
+    """Converts HTML from an mbasic.facebook.com timeline to AS1 activities.
 
     Args:
       html: string
       kwargs: unused
 
-    Returns: sequence of dict AS1 activities
-    """
-    return util.trim_nulls([{
-      'objectType': 'activity',
-      'verb': 'post',
-      'id': obj['id'],
-      'fb_id': obj.get('fb_id'),
-      'url': obj.get('url'),
-      'actor': obj.get('author'),
-      'object': obj,
-    } for obj in self.scraped_to_objects(html)])
-
-  def scraped_to_objects(self, html):
-    """
-    Converts HTML from an mbasic.facebook.com profile timeline to AS1 objects.
-
-    Args:
-      html: string
-
-    Returns: sequence of dict AS1 activities
+    Returns: tuple: ([AS activities], AS logged in actor (ie viewer))
     """
     soup = util.parse_html(html)
 
-    objs = []
+    activities = []
     for post in soup.find_all(('article', 'div'), id=re.compile('u_0_.')):
       permalink = post.find(href=re.compile(r'^/story\.php\?'))
       if not permalink:
@@ -1905,7 +1884,7 @@ class Facebook(source.Source):
       # TODO: distinguish between text elements with actual whitespace
       # before/after and without. this adds space to all of them, including
       # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
-      # (also apply any fix to scraped_to_object().)
+      # (also apply any fix to scraped_to_activity().)
       try:
         content = self._div(post, 0, 0)
       except IndexError:
@@ -1925,51 +1904,38 @@ class Facebook(source.Source):
       to = ({'objectType':'group', 'alias':'@public'}
             if 'Public' in footer.stripped_strings
             else {'objectType': 'unknown'})
+      id = self.tag_uri(post_id)
 
-      objs.append({
-        'objectType': 'note',
-        'id': self.tag_uri(post_id),
+      activities.append({
+        'objectType': 'activity',
+        'verb': 'post',
+        'id': id,
         'fb_id': post_id,
         'url': url,
-        'content': xml.sax.saxutils.escape(content.get_text(' ', strip=True)),
-        'published': self._scraped_datetime(footer.abbr),
-        'author': author,
-        'to': [to],
+        'actor': author,
+        'object': {
+          'objectType': 'note',
+          'id': id,
+          'fb_id': post_id,
+          'url': url,
+          'content': xml.sax.saxutils.escape(content.get_text(' ', strip=True)),
+          'published': self._scraped_datetime(footer.abbr),
+          'author': author,
+          'to': [to],
+        },
       })
 
-    return objs
+    return util.trim_nulls(activities), None
 
-  def scraped_to_activity(self, html, url, **kwargs):
-    """
-    Converts HTML from an mbasic.facebook.com post page to an AS1 activity.
+  def scraped_to_activity(self, html, url):
+    """Converts HTML from an mbasic.facebook.com post page to an AS1 activity.
 
     Args:
       html: string, HTML from an mbasic.facebook.com post permalink
       url: string, permalink URL of post
       kwargs: unused
 
-    Returns: dict, AS1 activity
-    """
-    obj = self.scraped_to_object(html, url)
-    return util.trim_nulls({
-      'objectType': 'activity',
-      'verb': 'post',
-      'id': obj['id'],
-      'fb_id': obj.get('fb_id'),
-      'url': obj.get('url'),
-      'actor': obj.get('author'),
-      'object': obj,
-    })
-
-  def scraped_to_object(self, html, url):
-    """
-    Converts HTML from an mbasic.facebook.com post page to an AS1 object.
-
-    Args:
-      html: string, HTML from an mbasic.facebook.com post permalink
-      url: string, permalink URL of post
-
-    Returns: dict, AS1 object
+    Returns: tuple: (dict AS activity or None, AS logged in actor (ie viewer))
     """
     soup = util.parse_html(html)
 
@@ -1977,7 +1943,7 @@ class Facebook(source.Source):
     body_parts = self._div(view, 0, 0)
     content = self._div_text(body_parts, 0, 0)
 
-    # TODO: unify with scraped_to_objects
+    # TODO: unify with scraped_to_activities
     url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
     query = urllib.parse.urlparse(url).query
     post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
@@ -1985,17 +1951,27 @@ class Facebook(source.Source):
     to = ({'objectType':'group', 'alias':'@public'}
           if 'Public' in body_parts.find('footer').stripped_strings
           else {'objectType': 'unknown'})
+    author = self._m_html_author(body_parts.find('header'))
+    id = self.tag_uri(post_id)
 
-    # post object
-    obj = {
-      'objectType': 'note',
-      'id': self.tag_uri(post_id),
+    # post activity
+    activity = {
+      'objectType': 'activity',
+      'verb': 'post',
+      'id': id,
       'fb_id': post_id,
       'url': url,
-      'content': xml.sax.saxutils.escape(content),
-      'published': self._scraped_datetime(body_parts.find('abbr')),
-      'author': self._m_html_author(body_parts.find('header')),
-      'to': [to],
+      'actor': author,
+      'object': {
+        'objectType': 'note',
+        'id': id,
+        'fb_id': post_id,
+        'url': url,
+        'content': xml.sax.saxutils.escape(content),
+        'published': self._scraped_datetime(body_parts.find('abbr')),
+        'author': author,
+        'to': [to],
+      },
     }
 
     # comments
@@ -2014,12 +1990,12 @@ class Facebook(source.Source):
       })
 
     if replies:
-      obj['replies'] = {
+      activity['object']['replies'] = {
         'items': replies,
         'totalItems': len(replies),
       }
 
-    return obj
+    return util.trim_nulls(activity), None
 
   def merge_scraped_reactions(self, html, activity):
     """Converts and merges scraped likes and reactions into an activity.
@@ -2062,8 +2038,7 @@ class Facebook(source.Source):
     return tags
 
   def scraped_to_actor(self, html):
-    """
-    Converts HTML from an mbasic.facebook.com profile about page to an AS1 actor.
+    """Converts HTML from an mbasic.facebook.com profile about page to an AS1 actor.
 
     Args:
       html: string, HTML from an mbasic.facebook.com post permalink

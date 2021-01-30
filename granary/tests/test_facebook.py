@@ -3207,20 +3207,8 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    got = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
+    got, _ = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
     self.assert_equals(MBASIC_POST_ACTIVITIES, got)
-
-  def test_scraped_to_objects(self):
-    """mbasic.facebook.com HTML timeline.
-
-    Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
-    """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
-    got = self.fb.scraped_to_objects(MBASIC_HTML_TIMELINE)
-    self.assert_equals(MBASIC_POST_OBJS, got)
-
 
   def test_scraped_to_activity(self):
     """mbasic.facebook.com HTML post.
@@ -3231,20 +3219,8 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     url = 'https://mbasic.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
-    got = self.fb.scraped_to_activity(MBASIC_HTML_POST, url)
+    got, _ = self.fb.scraped_to_activity(MBASIC_HTML_POST, url)
     self.assert_equals(MBASIC_POST_ACTIVITIES_REPLIES[1], got)
-
-  def test_scraped_to_object(self):
-    """mbasic.facebook.com HTML post.
-
-    Based on: https://mbasic.facebook.com/story.php?story_fbid=456&id=212038
-    """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
-    url = 'https://mbasic.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
-    got = self.fb.scraped_to_object(MBASIC_HTML_POST, url)
-    self.assert_equals(MBASIC_POST_OBJS_REPLIES[1], got)
 
   def test_merge_scraped_reactions(self):
     """mbasic.facebook.com HTML reactions.
@@ -3262,5 +3238,5 @@ cc Sam G, Michael M<br />""", preview.description)
 
     Based on: https://mbasic.facebook.com/snarfed.org
     """
-    got = self.fb.scraped_to_actor(MBASIC_HTML_ABOUT)
-    self.assert_equals(MBASIC_ABOUT_ACTOR, got)
+    self.assert_equals(MBASIC_ABOUT_ACTOR,
+                       self.fb.scraped_to_actor(MBASIC_HTML_ABOUT))
