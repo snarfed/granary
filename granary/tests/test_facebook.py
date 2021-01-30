@@ -1113,11 +1113,13 @@ MBASIC_HTML_ABOUT = read_testdata('facebook.mbasic.about.html')
 MBASIC_ACTOR = {
   'objectType': 'person',
   'id': tag_uri('snarfed.org'),
+  'username': 'snarfed.org',
   'displayName': 'Ryan Barrett',
   'url': 'https://www.facebook.com/snarfed.org',
 }
 MBASIC_ABOUT_ACTOR = copy.deepcopy(MBASIC_ACTOR)
 MBASIC_ABOUT_ACTOR.update({
+  'id': tag_uri('212038'),
   'numeric_id': '212038',
   'summary': 'No longer here. Follow me on snarfed.org!',
   'description': 'foo bar',
@@ -1129,12 +1131,14 @@ MBASIC_ABOUT_ACTOR.update({
 MBASIC_ALICE = {
   'objectType': 'person',
   'id': tag_uri('alice'),
+  'username': 'alice',
   'displayName': 'Alice',
   'url': 'https://www.facebook.com/alice',
 }
 MBASIC_BOB = {
   'objectType': 'person',
   'id': tag_uri('bob'),
+  'username': 'bob',
   'displayName': 'Bob',
   'url': 'https://www.facebook.com/bob',
 }

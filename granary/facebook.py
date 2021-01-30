@@ -1049,14 +1049,15 @@ class Facebook(source.Source):
         base_obj['id'] += '_' + comment_id[0]
         base_obj['objectType'] = 'comment'
 
-      if '_' not in base_id and author.get('numeric_id') and not event_id:
+      if (base_id and '_' not in base_id and
+          author.get('numeric_id') and not event_id):
         # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
         base_obj['id'] = '%s_%s' % (author['numeric_id'], base_id)
 
     except BaseException as e:
       logging.warning(
         "Couldn't parse object URL %s : %s. Falling back to default logic.",
-        url, e, stack_info=True)
+        url, e, exc_info=True)
 
     return base_obj
 
@@ -2087,7 +2088,11 @@ class Facebook(source.Source):
       from urllib.parse import urlparse, parse_qs, unquote
       lst = parse_qs(urlparse(profile['href']).query).get('lst')
       if lst:
-        actor['numeric_id'] = unquote(lst[0]).split(':')[0]
+        id = unquote(lst[0]).split(':')[0]
+        actor.update({
+          'id': self.tag_uri(id),
+          'numeric_id': id,
+        })
 
     return util.trim_nulls(actor)
 
@@ -2122,13 +2127,18 @@ class Facebook(source.Source):
     """
     parsed = urllib.parse.urlparse(url)
     path = parsed.path.strip('/')
-    id_or_username = (urllib.parse.parse_qs(parsed.query)['id'][0]
-                      if path == 'profile.php'
-                      else path)
+    if path == 'profile.php':
+      id = urllib.parse.parse_qs(parsed.query)['id'][0]
+      username = None
+    else:
+      id = None
+      username = path
+
     return {
       'objectType': 'person',
-      'id': self.tag_uri(id_or_username),
-      'url': urllib.parse.urljoin(self.BASE_URL, id_or_username),
+      'id': self.tag_uri(id or username),
+      'url': urllib.parse.urljoin(self.BASE_URL, id or username),
+      'username': username,
     }
 
   @staticmethod
