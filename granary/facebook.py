@@ -2070,14 +2070,23 @@ class Facebook(source.Source):
         edit_link.clear()
       bio = self._div_text(bio, 0, 0)
 
+    # name, profile picture
+    name = soup.title.get_text(' ', strip=True)
+
     actor = {
       'objectType': 'person',
-      'displayName': soup.title.get_text(' ', strip=True),
+      'displayName': name,
       'summary': summary,
       'description': bio,
       'urls': [{'value': url} for url in
                sum((util.extract_links(val) for val in (website, summary, about)), [])],
     }
+
+    # profile picture
+    if name:
+      img = soup.find('img', alt=re.compile(f'^{name},.*'))
+      if img:
+        actor['image'] = {'url': img['src']}
 
     profile = root.find('a', href=re.compile(r'[?&]v=timeline'))
     if profile:
