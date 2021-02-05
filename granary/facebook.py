@@ -1940,7 +1940,13 @@ class Facebook(source.Source):
     soup = util.parse_html(scraped)
 
     view = soup.find(id='m_story_permalink_view')
+    if not view:
+      return None, None
+
     body_parts = self._div(view, 0, 0)
+    if not body_parts:
+      return None, None
+
     content = self._div_text(body_parts, 0, 0)
     author = self._m_html_author(body_parts.find('header'))
 

@@ -3227,6 +3227,11 @@ cc Sam G, Michael M<br />""", preview.description)
     got, _ = self.fb.scraped_to_activity(MBASIC_HTML_POST)
     self.assert_equals(MBASIC_POST_ACTIVITIES_REPLIES[1], got)
 
+  def test_scraped_to_activity_empty(self):
+    self.assertEqual((None, None), self.fb.scraped_to_activity("""\
+<!DOCTYPE html>
+<html><body></body></html>"""))
+
   def test_merge_scraped_reactions(self):
     """mbasic.facebook.com HTML reactions.
 
