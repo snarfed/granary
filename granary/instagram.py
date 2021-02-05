@@ -891,12 +891,11 @@ class Instagram(source.Source):
 
   html_to_activities = scraped_to_activities
 
-  def scraped_to_activity(self, html, url, **kwargs):
+  def scraped_to_activity(self, html, **kwargs):
     """Converts HTML from photo/video permalink page to an AS1 activity.
 
     Args:
       html: string, HTML from a photo/video page on instagram.com
-      url: unused
       kwargs: passed through to scraped_to_activities
 
     Returns:

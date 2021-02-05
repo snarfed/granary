@@ -1620,8 +1620,7 @@ class InstagramTest(testutil.TestCase):
   def test_scraped_to_activity_photo_no_fetch_extras(self):
     self.assert_equals(
       (HTML_PHOTO_ACTIVITY, None),
-      self.instagram.scraped_to_activity(HTML_PHOTO_COMPLETE, 'unused',
-                                         fetch_extras=False))
+      self.instagram.scraped_to_activity(HTML_PHOTO_COMPLETE, fetch_extras=False))
 
   def test_scraped_to_activity_photo_with_viewer(self):
     page = copy.deepcopy(HTML_PHOTO_PAGE)
@@ -1629,7 +1628,7 @@ class InstagramTest(testutil.TestCase):
     html = HTML_HEADER + json_dumps(page) + HTML_FOOTER
 
     self.assert_equals((HTML_PHOTO_ACTIVITY, HTML_VIEWER),
-                       self.instagram.scraped_to_activity(html, 'unused'))
+                       self.instagram.scraped_to_activity(html))
 
   def test_scraped_to_activity_photo_fetch_extras(self):
     self.expect_requests_get(
@@ -1637,7 +1636,7 @@ class InstagramTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     activity, actor = self.instagram.scraped_to_activity(
-      HTML_PHOTO_COMPLETE, 'unused', fetch_extras=True)
+      HTML_PHOTO_COMPLETE, fetch_extras=True)
     self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
     self.assertIsNone(actor)
 

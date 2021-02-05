@@ -44,10 +44,10 @@ FQL stream table.
 import collections
 import copy
 from datetime import datetime
+import html
 import logging
 import re
 import urllib.error, urllib.parse, urllib.request
-import xml.sax.saxutils
 
 import dateutil.parser
 import mf2util
@@ -1782,7 +1782,7 @@ class Facebook(source.Source):
     parts = list(parsed)
 
     if parsed.path in ('/nd/', '/n/', '/story.php'):
-      query = urllib.parse.unquote(xml.sax.saxutils.unescape(parsed.query))
+      query = urllib.parse.unquote(html.unescape(parsed.query))
       if parsed.path in ('/nd/', '/n/'):
         new_path, query = query.split('&', 1)
         parts[2] = new_path
@@ -1838,7 +1838,7 @@ class Facebook(source.Source):
 
     if activity_id:
       resp = get(M_HTML_POST_URL, activity_id, user_id)
-      activities = [self.scraped_to_activity(resp.text, resp.url)[0]]
+      activities = [self.scraped_to_activity(resp.text)[0]]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
       activities, _ = self.scraped_to_activities(resp.text)
@@ -1849,7 +1849,7 @@ class Facebook(source.Source):
         activities = []
         for id in fbids:
           resp = get(M_HTML_POST_URL, id, user_id)
-          activities.append(self.scraped_to_activity(resp.text, resp.url)[0])
+          activities.append(self.scraped_to_activity(resp.text)[0])
 
     if fetch_likes:
       # fetch and convert likes
@@ -1860,16 +1860,16 @@ class Facebook(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def scraped_to_activities(self, html, **kwargs):
+  def scraped_to_activities(self, scraped, **kwargs):
     """Converts HTML from an mbasic.facebook.com timeline to AS1 activities.
 
     Args:
-      html: string
+      scraped: str, HTML
       kwargs: unused
 
     Returns: tuple: ([AS activities], AS logged in actor (ie viewer))
     """
-    soup = util.parse_html(html)
+    soup = util.parse_html(scraped)
 
     activities = []
     for post in soup.find_all(('article', 'div'), id=re.compile('u_0_.')):
@@ -1919,7 +1919,7 @@ class Facebook(source.Source):
           'id': id,
           'fb_id': post_id,
           'url': url,
-          'content': xml.sax.saxutils.escape(content.get_text(' ', strip=True)),
+          'content': html.escape(content.get_text(' ', strip=True)),
           'published': self._scraped_datetime(footer.abbr),
           'author': author,
           'to': [to],
@@ -1928,52 +1928,61 @@ class Facebook(source.Source):
 
     return util.trim_nulls(activities), None
 
-  def scraped_to_activity(self, html, url):
+  def scraped_to_activity(self, scraped):
     """Converts HTML from an mbasic.facebook.com post page to an AS1 activity.
 
     Args:
-      html: string, HTML from an mbasic.facebook.com post permalink
-      url: string, permalink URL of post
+      scraped: str, HTML from an mbasic.facebook.com post permalink
       kwargs: unused
 
     Returns: tuple: (dict AS activity or None, AS logged in actor (ie viewer))
     """
-    soup = util.parse_html(html)
+    soup = util.parse_html(scraped)
 
     view = soup.find(id='m_story_permalink_view')
     body_parts = self._div(view, 0, 0)
     content = self._div_text(body_parts, 0, 0)
-
-    # TODO: unify with scraped_to_activities
-    url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, url))
-    query = urllib.parse.urlparse(url).query
-    post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
-
-    to = ({'objectType':'group', 'alias':'@public'}
-          if 'Public' in body_parts.find('footer').stripped_strings
-          else {'objectType': 'unknown'})
     author = self._m_html_author(body_parts.find('header'))
-    id = self.tag_uri(post_id)
 
     # post activity
     activity = {
       'objectType': 'activity',
       'verb': 'post',
-      'id': id,
-      'fb_id': post_id,
-      'url': url,
       'actor': author,
       'object': {
         'objectType': 'note',
+        'content': html.escape(content),
+        'published': self._scraped_datetime(body_parts.find('abbr')),
+        'author': author,
+        'to': [{'objectType':'group', 'alias':'@public'}
+               if 'Public' in body_parts.find('footer').stripped_strings
+               else {'objectType': 'unknown'}],
+      },
+    }
+
+    # TODO: unify with scraped_to_activities
+    data_ft_div = soup.find(attrs={
+      'data-ft': re.compile('mf_story_key|top_level_post_id'),
+    })
+    if data_ft_div:
+      data_ft = json_loads(html.unescape(data_ft_div['data-ft']))
+      post_id = data_ft.get('mf_story_key') or data_ft.get('top_level_post_id')
+      owner_id = (data_ft.get('content_owner_id_new')
+                  if 'mf_story_key' in data_ft  # this post is from a user
+                  else data_ft.get('page_id'))  # this post is from a group
+      id = self.tag_uri(post_id)
+      url = f'{self.BASE_URL}story.php?story_fbid={post_id}&id={owner_id}'
+
+      activity.update({
         'id': id,
         'fb_id': post_id,
         'url': url,
-        'content': xml.sax.saxutils.escape(content),
-        'published': self._scraped_datetime(body_parts.find('abbr')),
-        'author': author,
-        'to': [to],
-      },
-    }
+      })
+      activity['object'].update({
+        'id': id,
+        'fb_id': post_id,
+        'url': url,
+      })
 
     # comments
     replies = []
@@ -1984,7 +1993,7 @@ class Facebook(source.Source):
         'objectType': 'comment',
         'id': self._comment_id(post_id, comment['id']),
         'url': util.add_query_params(url, {'comment_id': comment['id']}),
-        'content': xml.sax.saxutils.escape(self._div_text(comment, 0, 0)),
+        'content': html.escape(self._div_text(comment, 0, 0)),
         'author': self._m_html_author(comment, 'h3'),
         'published': self._scraped_datetime(comment.find('abbr')),
         'inReplyTo': [{'id': self.tag_uri(post_id), 'url': url}],
@@ -1998,20 +2007,20 @@ class Facebook(source.Source):
 
     return util.trim_nulls(activity), None
 
-  def merge_scraped_reactions(self, html, activity):
+  def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 
     New likes and emoji reactions are added to the activity in 'tags'.
     Existing likes and emoji reactions in 'tags' are ignored.
 
     Args:
-      html: string, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
+      scraped: str, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
       activity: dict, AS activity to merge these reactions into
 
     Returns:
       list of dict AS like/react tag objects converted from scraped
     """
-    soup = util.parse_html(html)
+    soup = util.parse_html(scraped)
 
     tags = []
     for reaction in soup.find_all('li'):
@@ -2038,15 +2047,15 @@ class Facebook(source.Source):
     source.merge_by_id(activity['object'], 'tags', tags)
     return tags
 
-  def scraped_to_actor(self, html):
+  def scraped_to_actor(self, scraped):
     """Converts HTML from an mbasic.facebook.com profile about page to an AS1 actor.
 
     Args:
-      html: string, HTML from an mbasic.facebook.com post permalink
+      scraped: str, HTML from an mbasic.facebook.com post permalink
 
     Returns: dict, AS1 actor
     """
-    soup = util.parse_html(html)
+    soup = util.parse_html(scraped)
     root = soup.find(id='root')
 
     website = None

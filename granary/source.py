@@ -349,7 +349,7 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  def scraped_to_activity(self, scraped, url):
+  def scraped_to_activity(self, scraped):
     """Converts scraped HTML (or JSON, etc) to a single AS activity.
 
     Used for scraping data from the web instead of using an API. Useful for
@@ -357,7 +357,6 @@ class Source(object, metaclass=SourceMeta):
 
     Args:
       scraped: str, scraped data from a single post permalink
-      url: str, original URL for this post
 
     Returns:
       tuple: (AS activity or None, AS logged in actor (ie viewer))

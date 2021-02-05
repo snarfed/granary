@@ -1770,7 +1770,8 @@ class FacebookTest(testutil.TestCase):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.expect_requests_get('212038?v=timeline', MBASIC_HTML_TIMELINE,
                              cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('story.php?story_fbid=123&id=212038', MBASIC_HTML_POST,
+    self.expect_requests_get('story.php?story_fbid=123&id=212038',
+                             MBASIC_HTML_POST.replace('456', '123'),
                              cookie='c_user=CU; xs=XS')
     self.expect_requests_get('story.php?story_fbid=456&id=212038', MBASIC_HTML_POST,
                              cookie='c_user=CU; xs=XS')
@@ -3223,8 +3224,7 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    url = 'https://mbasic.facebook.com/story.php?story_fbid=456&id=212038&refid=17&_ft_=...&__tn__=%2AW-R'
-    got, _ = self.fb.scraped_to_activity(MBASIC_HTML_POST, url)
+    got, _ = self.fb.scraped_to_activity(MBASIC_HTML_POST)
     self.assert_equals(MBASIC_POST_ACTIVITIES_REPLIES[1], got)
 
   def test_merge_scraped_reactions(self):
