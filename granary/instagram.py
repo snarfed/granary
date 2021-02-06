@@ -904,6 +904,16 @@ class Instagram(source.Source):
     activities, actor = self.scraped_to_activities(html, **kwargs)
     return (activities[0] if activities else None), actor
 
+  def scraped_to_actor(self, html, **kwargs):
+    """Extracts and returns the logged in actor from any Instagram HTML.
+
+    Args:
+      html: unicode string
+
+    Returns: dict, AS1 actor
+    """
+    return self.scraped_to_activities(html, **kwargs)[1]
+
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 

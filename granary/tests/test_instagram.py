@@ -1759,6 +1759,11 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals(LIKE_OBJS, got)
     self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
 
+  def test_scraped_to_actor(self):
+    self.assert_equals(HTML_VIEWER_PUBLIC,
+                       self.instagram.scraped_to_actor(HTML_PROFILE_COMPLETE))
+    self.assertIsNone(self.instagram.scraped_to_actor(HTML_VIDEO_COMPLETE))
+
   def test_id_to_shortcode(self):
     for shortcode, id in (
         (None, None),
