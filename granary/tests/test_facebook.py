@@ -1108,6 +1108,7 @@ EMAIL_LIKE_OBJ = {
 
 MBASIC_HTML_TIMELINE = read_testdata('facebook.mbasic.feed.html')
 MBASIC_HTML_POST = read_testdata('facebook.mbasic.post.html')
+MBASIC_HTML_PROFILE = read_testdata('facebook.mbasic.profile.html')
 MBASIC_HTML_REACTIONS = read_testdata('facebook.mbasic.reactions.html')
 MBASIC_HTML_ABOUT = read_testdata('facebook.mbasic.about.html')
 MBASIC_ACTOR = {
@@ -1211,6 +1212,7 @@ def MBASIC_REACTION_TAGS(post_id):
     'author':      {
       'objectType': 'person',
       'id': tag_uri('333'),
+      'numeric_id': '333',
       'displayName': 'Alice',
       'url': 'https://www.facebook.com/333',
     },
@@ -1226,6 +1228,16 @@ def MBASIC_REACTION_TAGS(post_id):
 MBASIC_ACTIVITIES_REPLIES_REACTIONS = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES)
 for a in MBASIC_ACTIVITIES_REPLIES_REACTIONS:
   a['object']['tags'] = MBASIC_REACTION_TAGS(a['fb_id'])
+
+MBASIC_PROFILE_ACTIVITIES = copy.deepcopy(MBASIC_ACTIVITIES)
+for a in MBASIC_PROFILE_ACTIVITIES:
+  a['actor'] = a['object']['author'] = {
+    'objectType': 'person',
+    'displayName': 'Ryan Barrett',
+    'id': 'tag:facebook.com:212038',
+    'numeric_id': '212038',
+    'url': 'https://www.facebook.com/212038',
+  }
 
 
 class FacebookTest(testutil.TestCase):
@@ -3214,6 +3226,18 @@ cc Sam G, Michael M<br />""", preview.description)
 
     got, _ = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
     self.assert_equals(MBASIC_ACTIVITIES, got)
+
+  def test_scraped_to_activities_profile(self):
+    """mbasic.facebook.com HTML profile.
+
+    Based on: https://mbasic.facebook.com/profile.php?lst=100009447618341%3A100009447618341%3A1612671708
+    (Snoøpy Barrett, while logged in as that account)
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    got, _ = self.fb.scraped_to_activities(MBASIC_HTML_PROFILE)
+    self.assert_equals(MBASIC_PROFILE_ACTIVITIES, got)
 
   def test_scraped_to_activity(self):
     """mbasic.facebook.com HTML post.

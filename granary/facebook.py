@@ -2108,16 +2108,6 @@ class Facebook(source.Source):
       actor.update(self._profile_url_to_actor(profile['href']))
       actor['urls'].insert(0, {'value': actor['url']})
 
-      # lst param is '[logged in user id]:[displayed user id]:[unknown]'
-      from urllib.parse import urlparse, parse_qs, unquote
-      lst = parse_qs(urlparse(profile['href']).query).get('lst')
-      if lst:
-        id = unquote(lst[0]).split(':')[0]
-        actor.update({
-          'id': self.tag_uri(id),
-          'numeric_id': id,
-        })
-
     return util.trim_nulls(actor)
 
   def _m_html_author(self, soup, tag='strong'):
@@ -2147,23 +2137,35 @@ class Facebook(source.Source):
     Args:
       url: str
 
-    Returns: dict AS1 actor
+    Returns: dict AS1 actor, or {} if the profile URL can't be parsed
     """
     parsed = urllib.parse.urlparse(url)
     path = parsed.path.strip('/')
-    if path == 'profile.php':
-      id = urllib.parse.parse_qs(parsed.query)['id'][0]
-      username = None
-    else:
-      id = None
+    params = urllib.parse.parse_qs(parsed.query)
+
+    id = params.get('id')
+    if id:
+      id = id[0]
+
+    lst = params.get('lst')
+    if lst:
+      # lst param is '[logged in user id]:[displayed user id]:[unknown]'
+      id = urllib.parse.unquote(lst[0]).split(':')[1]
+
+    username = None
+    if not path.endswith('.php'):
       username = path
 
-    return {
-      'objectType': 'person',
-      'id': self.tag_uri(id or username),
-      'url': urllib.parse.urljoin(self.BASE_URL, id or username),
-      'username': username,
-    }
+    if id or username:
+      return {
+        'objectType': 'person',
+        'id': self.tag_uri(id or username),
+        'numeric_id': id,
+        'url': urllib.parse.urljoin(self.BASE_URL, username or id),
+        'username': username,
+      }
+
+    return {}
 
   @staticmethod
   def _div(tag, *args):
