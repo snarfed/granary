@@ -1161,6 +1161,8 @@ MBASIC_OBJS = [{
   'author': MBASIC_ACTOR,
   'content': 'Oh hi, Jeeves .',
   'to': [{'objectType': 'unknown'}],
+  'replies': {'totalItems': 55},
+  'fb_reaction_count': 145,
 }]
 MBASIC_ACTIVITIES = [{
   'objectType': 'activity',
@@ -1238,6 +1240,12 @@ for a in MBASIC_PROFILE_ACTIVITIES:
     'numeric_id': '212038',
     'url': 'https://www.facebook.com/212038',
   }
+
+MBASIC_ACTIVITY = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES[1])
+del MBASIC_ACTIVITY['object']['fb_reaction_count']
+
+MBASIC_ACTIVITY_REACTIONS = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES_REACTIONS[1])
+del MBASIC_ACTIVITY_REACTIONS['object']['fb_reaction_count']
 
 
 class FacebookTest(testutil.TestCase):
@@ -1793,10 +1801,12 @@ class FacebookTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     expected = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES_REACTIONS)
-    obj = expected[0]['object']
-    del obj['published']
-    obj['content'] = expected[1]['object']['content']
-    obj['to'] = expected[1]['object']['to']
+    obj_123 = expected[0]['object']
+    obj_456 = expected[1]['object']
+    del obj_123['published']
+    obj_456.pop('fb_reaction_count', None)
+    obj_123['content'] = obj_456['content']
+    obj_123['to'] = obj_456['to']
 
     activities = self.fbscrape.get_activities(user_id='212038', group_id=source.SELF,
                                               fetch_replies=True, fetch_likes=True)
@@ -1809,7 +1819,7 @@ class FacebookTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456')
-    self.assert_equals([MBASIC_ACTIVITIES_REPLIES[1]], activities)
+    self.assert_equals([MBASIC_ACTIVITY], activities)
 
   def test_get_activities_scrape_post_fetch_likes(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
@@ -1821,7 +1831,7 @@ class FacebookTest(testutil.TestCase):
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456',
                                               fetch_likes=True)
-    self.assert_equals([MBASIC_ACTIVITIES_REPLIES_REACTIONS[1]], activities)
+    self.assert_equals([MBASIC_ACTIVITY_REACTIONS], activities)
 
   def test_get_comment(self):
     self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
@@ -3248,7 +3258,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     got, _ = self.fb.scraped_to_activity(MBASIC_HTML_POST)
-    self.assert_equals(MBASIC_ACTIVITIES_REPLIES[1], got)
+    self.assert_equals(MBASIC_ACTIVITY, got)
 
   def test_scraped_to_activity_empty(self):
     self.assertEqual((None, None), self.fb.scraped_to_activity("""\

@@ -1907,6 +1907,25 @@ class Facebook(source.Source):
             else {'objectType': 'unknown'})
       id = self.tag_uri(post_id)
 
+      # comment count
+      # TODO: internationalize this :/
+      comments_count = None
+      comments_link = post.find('a', string=re.compile('Comment'))
+      if comments_link:
+        tokens = comments_link.string.split()
+        if tokens and util.is_int(tokens[0]):
+          comments_count = int(tokens[0])
+
+      # reaction count
+      reactions_count = None
+      react_link = post.find('a', href=re.compile('^/reactions/picker/'))
+      if react_link:
+        prev = react_link.find_previous_siblings('a')
+        if prev:
+          count_text = prev[-1].get_text(' ', strip=True)
+          if util.is_int(count_text):
+            reactions_count = int(count_text)
+
       activities.append({
         'objectType': 'activity',
         'verb': 'post',
@@ -1923,6 +1942,8 @@ class Facebook(source.Source):
           'published': self._scraped_datetime(footer.abbr),
           'author': author,
           'to': [to],
+          'replies': {'totalItems': comments_count},
+          'fb_reaction_count': reactions_count,
         },
       })
 
