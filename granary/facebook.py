@@ -2057,8 +2057,12 @@ class Facebook(source.Source):
       # TODO: profile pic is imgs[0]
       type = imgs[1]['alt'].lower()
       type_str = 'liked' if type == 'like' else type
+
       author = self._m_html_author(reaction, 'h3')
+      if 'id' not in author:
+        continue
       _, username = util.parse_tag_uri(author['id'])
+
       tag = {
         'objectType': 'activity',
         'verb': 'like' if type == 'like' else 'react',
