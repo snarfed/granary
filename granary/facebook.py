@@ -1804,6 +1804,9 @@ class Facebook(source.Source):
     Args:
       tag: BeautifulSoup Tag
     """
+    if not tag:
+      return None
+
     try:
       # sadly using parse(fuzzy=True) here makes too many mistakes on relative
       # time strings seen on mbasic, eg '22 hrs [ago]', 'Yesterday at 12:34 PM'
@@ -1961,15 +1964,35 @@ class Facebook(source.Source):
     soup = util.parse_html(scraped)
 
     view = soup.find(id='m_story_permalink_view')
-    if not view:
-      return None, None
+    photo = soup.find(id='MPhotoContent')
+    body_parts = None
 
-    body_parts = self._div(view, 0, 0)
+    if view:
+      body_parts = self._div(view, 0, 0)
+    elif photo:
+      body_parts = self._div(photo, 0)
+
     if not body_parts:
       return None, None
 
     content = self._div_text(body_parts, 0, 0)
-    author = self._m_html_author(body_parts.find('header'))
+
+    # author
+    author = None
+    header = body_parts.find('header')
+    actor_link = body_parts.find('a', class_='actor-link')
+    if header:
+      author = self._m_html_author(header)
+    elif actor_link:
+      author = self._profile_url_to_actor(actor_link['href'])
+      author['displayName'] = actor_link.get_text(' ', strip=True)
+
+    published = body_parts.find('abbr')
+
+    # privacy
+    footer = body_parts.find('footer')
+    if not footer and published:
+      footer = published.parent
 
     # post activity
     activity = {
@@ -1979,37 +2002,55 @@ class Facebook(source.Source):
       'object': {
         'objectType': 'note',
         'content': html.escape(content),
-        'published': self._scraped_datetime(body_parts.find('abbr')),
+        'published': self._scraped_datetime(published),
         'author': author,
         'to': [{'objectType':'group', 'alias':'@public'}
-               if 'Public' in body_parts.find('footer').stripped_strings
+               if footer and 'Public' in footer.stripped_strings
                else {'objectType': 'unknown'}],
       },
     }
+
+    # photo
+    action_bar = soup.find(id='MPhotoActionbar')
+    if action_bar:
+      photo = action_bar.find_previous_sibling('div')
+      if photo:
+        img = photo.find('img')
+        if img:
+          activity['object'].update({
+            'objectType': 'photo',
+            'image': {
+              'url': img.get('src'),
+              'displayName': img.get('alt'),
+            }
+          })
 
     # TODO: unify with scraped_to_activities
     data_ft_div = soup.find(attrs={
       'data-ft': re.compile('mf_story_key|top_level_post_id'),
     })
+    comment_form = soup.find('form', action=re.compile('^/a/comment.php'))
     if data_ft_div:
       data_ft = json_loads(html.unescape(data_ft_div['data-ft']))
       post_id = data_ft.get('mf_story_key') or data_ft.get('top_level_post_id')
       owner_id = (data_ft.get('content_owner_id_new')
                   if 'mf_story_key' in data_ft  # this post is from a user
                   else data_ft.get('page_id'))  # this post is from a group
-      id = self.tag_uri(post_id)
-      url = f'{self.BASE_URL}story.php?story_fbid={post_id}&id={owner_id}'
+    elif comment_form:
+      query = urllib.parse.urlparse(comment_form['action']).query
+      parsed = urllib.parse.parse_qs(query)
+      post_id = parsed['ft_ent_identifier'][0]
+      owner_id = parsed['av'][0]
+    else:
+      return activity, None
 
-      activity.update({
-        'id': id,
-        'fb_id': post_id,
-        'url': url,
-      })
-      activity['object'].update({
-        'id': id,
-        'fb_id': post_id,
-        'url': url,
-      })
+    ids = {
+      'id': self.tag_uri(post_id),
+      'fb_id': post_id,
+      'url': f'{self.BASE_URL}story.php?story_fbid={post_id}&id={owner_id}',
+    }
+    activity.update(ids)
+    activity['object'].update(ids)
 
     # comments
     replies = []
@@ -2019,11 +2060,11 @@ class Facebook(source.Source):
       replies.append({
         'objectType': 'comment',
         'id': self._comment_id(post_id, comment['id']),
-        'url': util.add_query_params(url, {'comment_id': comment['id']}),
+        'url': util.add_query_params(ids['url'], {'comment_id': comment['id']}),
         'content': html.escape(self._div_text(comment, 0, 0)),
         'author': self._m_html_author(comment, 'h3'),
         'published': self._scraped_datetime(comment.find('abbr')),
-        'inReplyTo': [{'id': self.tag_uri(post_id), 'url': url}],
+        'inReplyTo': [{'id': ids['id'], 'url': ids['url']}],
       })
 
     if replies:
@@ -2151,6 +2192,9 @@ class Facebook(source.Source):
 
     Returns: dict AS1 actor
     """
+    if not soup:
+      return {}
+
     author = soup.find(tag)
     if not author:
       return {}

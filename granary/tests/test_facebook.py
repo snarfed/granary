@@ -1108,6 +1108,7 @@ EMAIL_LIKE_OBJ = {
 
 MBASIC_HTML_TIMELINE = read_testdata('facebook.mbasic.feed.html')
 MBASIC_HTML_POST = read_testdata('facebook.mbasic.post.html')
+MBASIC_HTML_PHOTO_POST = read_testdata('facebook.mbasic.photo_post.html')
 MBASIC_HTML_PROFILE = read_testdata('facebook.mbasic.profile.html')
 MBASIC_HTML_REACTIONS = read_testdata('facebook.mbasic.reactions.html')
 MBASIC_HTML_ABOUT = read_testdata('facebook.mbasic.about.html')
@@ -1174,6 +1175,46 @@ MBASIC_ACTIVITIES = [{
   'actor': obj['author'],
   'object': obj,
 } for obj in MBASIC_OBJS]
+
+MBASIC_PHOTO_ACTIVITY = {
+  'objectType': 'activity',
+  'verb': 'post',
+  'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
+  'id': 'tag:facebook.com:2017433665248201',
+  'fb_id': '2017433665248201',
+  'actor': {'displayName': 'Snoøpy Barrett'},
+  'object': {
+    'objectType': 'photo',
+    'id': 'tag:facebook.com:2017433665248201',
+    'fb_id': '2017433665248201',
+    'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
+    'to': [{'alias': '@public', 'objectType': 'group'}],
+    'author': {'displayName': 'Snoøpy Barrett'},
+    'content': 'Cérémonie d’enfermement d’une recluse',
+    'image': {'displayName': 'No photo description available.',
+              'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/28378630_2017433665248201_4279440600419964376_n.jpg?...'},
+    'published': '2018-02-22T00:00:00',
+    'replies': {
+      'items': [{
+        'author': {
+          'objectType': 'person',
+          'id': 'tag:facebook.com:snarfed.org',
+          'url': 'https://www.facebook.com/snarfed.org',
+          'displayName': 'Ryan Barrett',
+          'username': 'snarfed.org',
+        },
+        'content': 'Testing foo bar',
+        'id': 'tag:facebook.com:2017433665248201_2921985358126356',
+        'inReplyTo': [{
+          'id': 'tag:facebook.com:2017433665248201',
+          'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
+        }],
+        'objectType': 'comment',
+        'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341&comment_id=2921985358126356'}],
+      'totalItems': 1,
+    },
+  },
+}
 
 def MBASIC_REPLIES(post_id):
   return {
@@ -3265,6 +3306,17 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assertEqual((None, None), self.fb.scraped_to_activity("""\
 <!DOCTYPE html>
 <html><body></body></html>"""))
+
+  def test_scraped_to_activity_photo(self):
+    """mbasic.facebook.com HTML photo post.
+
+    Based on: https://mbasic.facebook.com/photo.php?fbid=2017433665248201&id=100009447618341
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    got, _ = self.fb.scraped_to_activity(MBASIC_HTML_PHOTO_POST)
+    self.assert_equals(MBASIC_PHOTO_ACTIVITY, got)
 
   def test_merge_scraped_reactions(self):
     """mbasic.facebook.com HTML reactions.
