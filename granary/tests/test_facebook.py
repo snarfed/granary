@@ -3283,3 +3283,12 @@ cc Sam G, Michael M<br />""", preview.description)
     """
     self.assert_equals(MBASIC_ABOUT_ACTOR,
                        self.fb.scraped_to_actor(MBASIC_HTML_ABOUT))
+
+  def test_scraped_to_actor_no_summary(self):
+    soup = util.parse_html(MBASIC_HTML_ABOUT)
+    summary = soup.find('div', class_='cq cr')
+    summary.extract()
+
+    expected = copy.deepcopy(MBASIC_ABOUT_ACTOR)
+    del expected['summary']
+    self.assert_equals(expected, self.fb.scraped_to_actor(str(soup)))

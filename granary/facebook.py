@@ -2091,10 +2091,14 @@ class Facebook(source.Source):
       website = (website_label.find_parent('td').find_next_sibling('td')
                  .get_text(' ', strip=True))
 
+    # summary/tagline
     summary_div = self._div(root, 0, 0, 1, 1)
     # if this is the logged in user, there will be an extra div and an Edit Bio
     # link after it
-    summary = (self._div(summary_div, 0) or summary_div).get_text(' ', strip=True)
+    summary = ''
+    if summary_div:
+      summary = (self._div(summary_div, 0) or summary_div
+                 ).get_text(' ', strip=True)
 
     # confusingly, the HTML has this as id=bio in HTML, but UI calls it "About
     # [name]" and calls the summary snippet above "bio" instead.
@@ -2112,8 +2116,8 @@ class Facebook(source.Source):
     actor = {
       'objectType': 'person',
       'displayName': name,
-      'summary': summary,
       'description': bio,
+      'summary': summary,
       'urls': [{'value': url} for url in
                sum((util.extract_links(val) for val in (website, summary, about)), [])],
     }
