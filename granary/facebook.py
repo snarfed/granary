@@ -2013,7 +2013,7 @@ class Facebook(source.Source):
 
     # comments
     replies = []
-    for comment in soup.find_all(class_='cx', id=re.compile(r'^\d+$')):
+    for comment in soup.find_all(id=re.compile(r'^\d+$')):
       # TODO: images in replies, eg:
       # https://mbasic.facebook.com/story.php?story_fbid=10104354535433154&id=212038&#10104354543447094
       replies.append({
