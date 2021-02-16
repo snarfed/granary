@@ -2085,12 +2085,6 @@ class Facebook(source.Source):
     soup = util.parse_html(scraped)
     root = soup.find(id='root')
 
-    website = None
-    website_label = root.find('a', href='/editprofile.php?type=contact&edit=website')
-    if website_label:
-      website = (website_label.find_parent('td').find_next_sibling('td')
-                 .get_text(' ', strip=True))
-
     # summary/tagline
     summary_div = self._div(root, 0, 0, 1, 1)
     # if this is the logged in user, there will be an extra div and an Edit Bio
@@ -2110,6 +2104,15 @@ class Facebook(source.Source):
         edit_link.clear()
       bio = self._div_text(bio, 0, 0)
 
+    # web sites
+    websites = []
+    for label in root.find_all('a', href=re.compile(
+        '^/editprofile.php\?type=contact&edit=website')):
+      websites.append(label.find_parent('td').find_next_sibling('td')
+                      .get_text(' ', strip=True))
+
+    websites += util.extract_links(summary) + util.extract_links(about)
+
     # name, profile picture
     name = soup.title.get_text(' ', strip=True)
 
@@ -2118,8 +2121,7 @@ class Facebook(source.Source):
       'displayName': name,
       'description': bio,
       'summary': summary,
-      'urls': [{'value': url} for url in
-               sum((util.extract_links(val) for val in (website, summary, about)), [])],
+      'urls': [{'value': url} for url in websites],
     }
 
     # profile picture

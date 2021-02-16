@@ -1127,6 +1127,7 @@ MBASIC_ABOUT_ACTOR.update({
   'urls': [
     {'value': 'https://www.facebook.com/snarfed.org'},
     {'value': 'https://snarfed.org/'},
+    {'value': 'https://foo.bar/'},
   ],
   'image': {'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-1/cp0/e15/q65/p74x74/39610935_10104076860151373_4179282966062563328_o.jpg?...'},
 })
