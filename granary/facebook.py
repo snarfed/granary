@@ -1975,7 +1975,7 @@ class Facebook(source.Source):
     if not body_parts:
       return None, None
 
-    content = self._div_text(body_parts, 0, 0)
+    content = self._div_text(body_parts, 0, 0) or ''
 
     # author
     author = None
@@ -2129,6 +2129,8 @@ class Facebook(source.Source):
     """
     soup = util.parse_html(scraped)
     root = soup.find(id='root')
+    if not root:
+      return None
 
     # summary/tagline
     summary_div = self._div(root, 0, 0, 1, 1)

@@ -3345,3 +3345,10 @@ cc Sam G, Michael M<br />""", preview.description)
     expected = copy.deepcopy(MBASIC_ABOUT_ACTOR)
     del expected['summary']
     self.assert_equals(expected, self.fb.scraped_to_actor(str(soup)))
+
+  def test_scraped_to_actor_bad(self):
+    """mbasic.facebook.com HTML profile about page.
+
+    Based on: https://mbasic.facebook.com/snarfed.org
+    """
+    self.assertIsNone(self.fb.scraped_to_actor('<html><body></body></html>'))
