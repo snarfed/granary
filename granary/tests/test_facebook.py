@@ -3329,6 +3329,13 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(expected, got)
     self.assert_equals(expected, activity['object']['tags'])
 
+  def test_merge_scraped_reactions_img(self):
+    activity = {'object': {'replies': {}}}
+    self.assertEquals([], self.fb.merge_scraped_reactions("""\
+<html><body><ul><li></li></ul></body></html>
+""", activity))
+    self.assertEquals({}, activity['object']['replies'])
+
   def test_scraped_to_actor(self):
     """mbasic.facebook.com HTML profile about page.
 

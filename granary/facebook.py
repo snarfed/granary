@@ -2095,6 +2095,8 @@ class Facebook(source.Source):
       if reaction.get_text(' ', strip=True) == 'See More':
         continue
       imgs = reaction.find_all('img')
+      if len(imgs) < 2:
+        continue
       # TODO: profile pic is imgs[0]
       type = imgs[1]['alt'].lower()
       type_str = 'liked' if type == 'like' else type
