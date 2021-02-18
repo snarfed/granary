@@ -3279,6 +3279,18 @@ cc Sam G, Michael M<br />""", preview.description)
     got, _ = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
     self.assert_equals(MBASIC_ACTIVITIES, got)
 
+  def test_scraped_to_activities_no_content(self):
+    soup = util.parse_html(MBASIC_HTML_TIMELINE)
+    soup.find(class_='ea').extract()
+
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    expected = copy.deepcopy(MBASIC_ACTIVITIES)
+    del expected[0]['object']['content']
+    got, _ = self.fb.scraped_to_activities(str(soup))
+    self.assert_equals(expected, got)
+
   def test_scraped_to_activities_profile(self):
     """mbasic.facebook.com HTML profile.
 
@@ -3331,10 +3343,10 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_merge_scraped_reactions_img(self):
     activity = {'object': {'replies': {}}}
-    self.assertEquals([], self.fb.merge_scraped_reactions("""\
+    self.assertEqual([], self.fb.merge_scraped_reactions("""\
 <html><body><ul><li></li></ul></body></html>
 """, activity))
-    self.assertEquals({}, activity['object']['replies'])
+    self.assertEqual({}, activity['object']['replies'])
 
   def test_scraped_to_actor(self):
     """mbasic.facebook.com HTML profile about page.

@@ -1890,7 +1890,7 @@ class Facebook(source.Source):
       # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
       # (also apply any fix to scraped_to_activity().)
       try:
-        content = self._div(post, 0, 0)
+        content = self._div_text(post, 0, 0) or ''
       except IndexError:
         logging.debug('Skipping due to non-post format (searching for content)')
         continue
@@ -1941,7 +1941,7 @@ class Facebook(source.Source):
           'id': id,
           'fb_id': post_id,
           'url': url,
-          'content': html.escape(content.get_text(' ', strip=True)),
+          'content': html.escape(content),
           'published': self._scraped_datetime(footer.abbr),
           'author': author,
           'to': [to],
