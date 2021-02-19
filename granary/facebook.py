@@ -1883,12 +1883,15 @@ class Facebook(source.Source):
 
       url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, permalink['href']))
       query = urllib.parse.urlparse(url).query
-      post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
+      parsed = urllib.parse.parse_qs(query)
+      post_id = parsed['story_fbid'][0]
+      owner_id = parsed['id'][0]
 
       author = self._m_html_author(post)
       if not author:
         logging.debug('Skipping due to missing author')
         continue
+      author['id'] = self.tag_uri(owner_id)
 
       footer = post.footer
       if not footer:
@@ -2039,6 +2042,10 @@ class Facebook(source.Source):
     }
     activity.update(ids)
     activity['object'].update(ids)
+
+    author['id'] = self.tag_uri(owner_id)
+    if not author.get('url'):
+      author['url'] = urllib.parse.urljoin(self.BASE_URL, owner_id)
 
     # comments
     replies = []

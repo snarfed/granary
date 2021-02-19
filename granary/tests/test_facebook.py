@@ -1114,14 +1114,13 @@ MBASIC_HTML_REACTIONS = read_testdata('facebook.mbasic.reactions.html')
 MBASIC_HTML_ABOUT = read_testdata('facebook.mbasic.about.html')
 MBASIC_ACTOR = {
   'objectType': 'person',
-  'id': tag_uri('snarfed.org'),
+  'id': tag_uri('212038'),
   'username': 'snarfed.org',
   'displayName': 'Ryan Barrett',
   'url': 'https://www.facebook.com/snarfed.org',
 }
 MBASIC_ABOUT_ACTOR = copy.deepcopy(MBASIC_ACTOR)
 MBASIC_ABOUT_ACTOR.update({
-  'id': tag_uri('212038'),
   'numeric_id': '212038',
   'summary': 'No longer here. Follow me on snarfed.org!',
   'description': 'foo bar',
@@ -1182,14 +1181,22 @@ MBASIC_PHOTO_ACTIVITY = {
   'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
   'id': 'tag:facebook.com:2017433665248201',
   'fb_id': '2017433665248201',
-  'actor': {'displayName': 'Snoøpy Barrett'},
+  'actor': {
+    'id': 'tag:facebook.com:100009447618341',
+    'url': 'https://www.facebook.com/100009447618341',
+    'displayName': 'Snoøpy Barrett',
+  },
   'object': {
     'objectType': 'photo',
     'id': 'tag:facebook.com:2017433665248201',
     'fb_id': '2017433665248201',
     'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
     'to': [{'alias': '@public', 'objectType': 'group'}],
-    'author': {'displayName': 'Snoøpy Barrett'},
+    'author': {
+      'id': 'tag:facebook.com:100009447618341',
+      'url': 'https://www.facebook.com/100009447618341',
+      'displayName': 'Snoøpy Barrett',
+    },
     'content': 'Cérémonie d’enfermement d’une recluse',
     'image': {'displayName': 'No photo description available.',
               'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/28378630_2017433665248201_4279440600419964376_n.jpg?...'},
