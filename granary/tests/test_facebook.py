@@ -1161,7 +1161,7 @@ MBASIC_OBJS = [{
   'fb_id': '456',
   'url': 'https://www.facebook.com/story.php?story_fbid=456&id=212038',
   'author': MBASIC_ACTOR,
-  'content': 'Oh hi, Jeeves .',
+  'content': 'Oh hi, Jeeves . ( https://di5.us/b/Y4 )',
   'to': [{'objectType': 'unknown'}],
   'replies': {'totalItems': 55},
   'fb_reaction_count': 145,

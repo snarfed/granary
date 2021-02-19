@@ -1885,16 +1885,6 @@ class Facebook(source.Source):
       query = urllib.parse.urlparse(url).query
       post_id = urllib.parse.parse_qs(query).get('story_fbid')[0]
 
-      # TODO: distinguish between text elements with actual whitespace
-      # before/after and without. this adds space to all of them, including
-      # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
-      # (also apply any fix to scraped_to_activity().)
-      try:
-        content = self._div_text(post, 0, 0) or ''
-      except IndexError:
-        logging.debug('Skipping due to non-post format (searching for content)')
-        continue
-
       author = self._m_html_author(post)
       if not author:
         logging.debug('Skipping due to missing author')
@@ -1941,7 +1931,7 @@ class Facebook(source.Source):
           'id': id,
           'fb_id': post_id,
           'url': url,
-          'content': html.escape(content),
+          'content': self._scraped_content(post),
           'published': self._scraped_datetime(footer.abbr),
           'author': author,
           'to': [to],
@@ -1975,8 +1965,6 @@ class Facebook(source.Source):
     if not body_parts:
       return None, None
 
-    content = self._div_text(body_parts, 0, 0) or ''
-
     # author
     author = None
     header = body_parts.find('header')
@@ -2001,7 +1989,7 @@ class Facebook(source.Source):
       'actor': author,
       'object': {
         'objectType': 'note',
-        'content': html.escape(content),
+        'content': self._scraped_content(body_parts),
         'published': self._scraped_datetime(published),
         'author': author,
         'to': [{'objectType':'group', 'alias':'@public'}
@@ -2061,7 +2049,7 @@ class Facebook(source.Source):
         'objectType': 'comment',
         'id': self._comment_id(post_id, comment['id']),
         'url': util.add_query_params(ids['url'], {'comment_id': comment['id']}),
-        'content': html.escape(self._div_text(comment, 0, 0)),
+        'content': self._scraped_content(comment),
         'author': self._m_html_author(comment, 'h3'),
         'published': self._scraped_datetime(comment.find('abbr')),
         'inReplyTo': [{'id': ids['id'], 'url': ids['url']}],
@@ -2185,6 +2173,35 @@ class Facebook(source.Source):
       actor['urls'].insert(0, {'value': actor['url']})
 
     return util.trim_nulls(actor)
+
+  @staticmethod
+  def _scraped_content(tag):
+    """Extract and process content.
+
+    Args:
+      tag: BeautifulSoup Tag
+
+    Returns: string
+    """
+      # TODO: distinguish between text elements with actual whitespace
+      # before/after and without. this adds space to all of them, including
+      # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
+      # (also apply any fix to scraped_to_activity().)
+    try:
+      content_div = Facebook._div(tag, 0, 0)
+    except IndexError:
+      logging.debug('Skipping due to non-post format (searching for content)')
+      return ''
+
+    if not content_div:
+      return ''
+
+    # join embedded links without whitespace
+    for link in content_div.find_all(
+        'a', href=re.compile('^https://lm.facebook.com/l.php')):
+      link.replace_with(link.get_text('', strip=True))
+
+    return html.escape(content_div.get_text(' ', strip=True))
 
   def _m_html_author(self, soup, tag='strong'):
     """
