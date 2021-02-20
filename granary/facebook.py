@@ -1956,15 +1956,19 @@ class Facebook(source.Source):
     """
     soup = util.parse_html(scraped)
 
-    view = soup.find(id='m_story_permalink_view')
-    photo = soup.find(id='MPhotoContent')
-    body_parts = None
+    view = soup.find(id='m_story_permalink_view') or soup.find(id='MPhotoContent')
+    if not view:
+      return None, None
 
-    if view:
-      body_parts = self._div(view, 0, 0)
-    elif photo:
-      body_parts = self._div(photo, 0)
+    published = view.find('abbr')
+    footer = view.find('footer')
+    if not footer and published:
+      footer = published.parent.parent
 
+    if view['id'] == 'MPhotoContent':
+      body_parts = self._div(view, 0)
+    else:
+      body_parts = footer.find_previous_sibling('div')
     if not body_parts:
       return None, None
 
@@ -1977,13 +1981,6 @@ class Facebook(source.Source):
     elif actor_link:
       author = self._profile_url_to_actor(actor_link['href'])
       author['displayName'] = actor_link.get_text(' ', strip=True)
-
-    published = body_parts.find('abbr')
-
-    # privacy
-    footer = (view or photo).find('footer')
-    if not footer and published:
-      footer = published.parent
 
     # post activity
     activity = {
@@ -2190,10 +2187,10 @@ class Facebook(source.Source):
 
     Returns: string
     """
-      # TODO: distinguish between text elements with actual whitespace
-      # before/after and without. this adds space to all of them, including
-      # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
-      # (also apply any fix to scraped_to_activity().)
+    # TODO: distinguish between text elements with actual whitespace
+    # before/after and without. this adds space to all of them, including
+    # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
+    # (also apply any fix to scraped_to_activity().)
     try:
       content_div = Facebook._div(tag, 0, 0)
     except IndexError:

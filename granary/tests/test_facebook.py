@@ -3353,6 +3353,52 @@ cc Sam G, Michael M<br />""", preview.description)
     got, _ = self.fb.scraped_to_activity(str(soup))
     self.assert_equals(expected, got)
 
+  def test_scraped_to_activity_extra_header_div(self):
+    """Extra "Who can see this?" header div on top of post when logged in.
+
+    Based on https://mbasic.facebook.com/story.php?story_fbid=10101880564410695&id=5410052
+    *but when logged in as post author!*
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    soup = util.parse_html(MBASIC_HTML_POST)
+    soup.find(id='u_0_1').insert_before(util.parse_html("""\
+    <div>
+      <a href="https://mbasic.facebook.com/story.php?story_fbid=x10101880564410695&amp;id=5410052&amp;fa=1&amp;refid=52" id="u_0_4_ov">
+        <div class="ba">
+          <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yl/r/zacZn9dO79r.png" class="bb s" width="16" height="16"> Who can see this?
+        </div>
+      </a>
+      <table class="l bc" role="presentation" title="Your Post Is Public" style="display:none" id="u_0_5_oB">
+        <tbody>
+          <tr>
+            <td class="bd n be">
+              <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yx/r/6GV3Lvo4ZHk.png" class="bf bg s" width="20" height="20">
+              </td>
+            <td class="t be">
+              <div>
+                <h3>Your Post Is Public
+                </h3>
+                <div class="bh">This means anyone can like, share or comment on it. You can change this in the menu on your post.
+                  <a class="bi" href="/about/basics/how-others-interact-with-you/comments-and-likes/" target="_blank">Learn more
+                  </a>.
+                </div>
+              </div>
+            </td>
+            <td class="n be">
+              <a aria-label="Close" class="bj" href="/privacy/full_index/edu/?surface=mbasic_permalink&amp;client_time=1613785796&amp;dismissed&amp;redirect_uri=...&amp;refid=52" id="u_0_6_ie">&nbsp;×&nbsp;
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    """))
+
+    got, _ = self.fb.scraped_to_activity(str(soup))
+    self.assert_equals(MBASIC_ACTIVITY, got)
+
   def test_merge_scraped_reactions(self):
     """mbasic.facebook.com HTML reactions.
 
