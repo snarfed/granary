@@ -1981,7 +1981,7 @@ class Facebook(source.Source):
     published = body_parts.find('abbr')
 
     # privacy
-    footer = body_parts.find('footer')
+    footer = (view or photo).find('footer')
     if not footer and published:
       footer = published.parent
 
