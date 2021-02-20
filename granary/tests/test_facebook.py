@@ -3337,6 +3337,22 @@ cc Sam G, Michael M<br />""", preview.description)
     got, _ = self.fb.scraped_to_activity(MBASIC_HTML_PHOTO_POST)
     self.assert_equals(MBASIC_PHOTO_ACTIVITY, got)
 
+  def test_scraped_to_activity_no_actor_link(self):
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    soup = util.parse_html(MBASIC_HTML_POST)
+    soup.find('header').extract()
+
+    expected = copy.deepcopy(MBASIC_ACTIVITY)
+    expected['actor'] = expected['object']['author'] = {
+      'id': tag_uri('212038'),
+      'url': 'https://www.facebook.com/212038',
+    }
+
+    got, _ = self.fb.scraped_to_activity(str(soup))
+    self.assert_equals(expected, got)
+
   def test_merge_scraped_reactions(self):
     """mbasic.facebook.com HTML reactions.
 

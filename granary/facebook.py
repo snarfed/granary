@@ -1969,7 +1969,7 @@ class Facebook(source.Source):
       return None, None
 
     # author
-    author = None
+    author = {}
     header = body_parts.find('header')
     actor_link = body_parts.find('a', class_='actor-link')
     if header:
@@ -2024,9 +2024,9 @@ class Facebook(source.Source):
     if data_ft_div:
       data_ft = json_loads(html.unescape(data_ft_div['data-ft']))
       post_id = data_ft.get('mf_story_key') or data_ft.get('top_level_post_id')
-      owner_id = (data_ft.get('content_owner_id_new')
-                  if 'mf_story_key' in data_ft  # this post is from a user
-                  else data_ft.get('page_id'))  # this post is from a group
+      owner_id = str(data_ft.get('content_owner_id_new')
+                     if 'mf_story_key' in data_ft  # this post is from a user
+                     else data_ft.get('page_id'))  # this post is from a group
     elif comment_form:
       query = urllib.parse.urlparse(comment_form['action']).query
       parsed = urllib.parse.parse_qs(query)
