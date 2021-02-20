@@ -1250,8 +1250,17 @@ def MBASIC_REPLIES(post_id):
     'totalItems': 2,
   }
 MBASIC_ACTIVITIES_REPLIES = copy.deepcopy(MBASIC_ACTIVITIES)
+
 for a in MBASIC_ACTIVITIES_REPLIES:
-  a['object']['replies'] = MBASIC_REPLIES(a['fb_id'])
+  a['object'].update({
+    'replies': MBASIC_REPLIES(a['fb_id']),
+    'attachments': [{
+      'objectType': 'article',
+      'displayName': 'Chris Aldrich',
+      'url': 'https://boffosocko.com/2019/06/21/55756260/',
+      'image': {'url': 'https://boffosocko.com/wp-content/uploads/2014/03/norbert-weiner-teaching.jpg'},
+    }],
+  })
 
 def MBASIC_REACTION_TAGS(post_id):
   return [{

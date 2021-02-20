@@ -2032,6 +2032,7 @@ class Facebook(source.Source):
     else:
       return activity, None
 
+    # numeric ids
     ids = {
       'id': self.tag_uri(post_id),
       'fb_id': post_id,
@@ -2043,6 +2044,22 @@ class Facebook(source.Source):
     author['id'] = self.tag_uri(owner_id)
     if not author.get('url'):
       author['url'] = urllib.parse.urljoin(self.BASE_URL, owner_id)
+
+    # link attachments
+    activity['object']['attachments'] = []
+    for div in body_parts.find_all('div', recursive=False)[1:]:
+      for link in div.find_all(
+          'a', href=re.compile('^https://lm.facebook.com/l.php')):
+        url = self._unwrap_link(link)
+        if url:
+          img = div.find('img')
+          name = div.find('h3')
+          activity['object']['attachments'].append({
+            'objectType': 'article',
+            'url': url,
+            'displayName': name.get_text(' ', strip=True) if name else None,
+            'image': {'url': self._unwrap_link(img)},
+          })
 
     # comments
     replies = []
@@ -2203,9 +2220,30 @@ class Facebook(source.Source):
     # join embedded links without whitespace
     for link in content_div.find_all(
         'a', href=re.compile('^https://lm.facebook.com/l.php')):
-      link.replace_with(link.get_text('', strip=True))
+      link.replace_with(Facebook._unwrap_link(link))
 
     return html.escape(content_div.get_text(' ', strip=True))
+
+  @staticmethod
+  def _unwrap_link(tag):
+    """Extracts the destination URL from a wrapped link.
+
+    Currently supported:
+
+    https://lm.facebook.com/l.php?u=...  (links)
+    https://external-sjc3-1.xx.fbcdn.net/safe_image.php?url=...  (images)
+
+    Args:
+      tag: BeautifulSoup a or img tag
+
+    Returns: string URL, or None
+    """
+    if tag:
+      query = urllib.parse.parse_qs(
+        urllib.parse.urlparse(tag.get('href') or tag.get('src')).query)
+      url = query.get('u') or query.get('url')
+      if url:
+        return util.remove_query_param(url[0], 'fbclid')[0]
 
   def _m_html_author(self, soup, tag='strong'):
     """
