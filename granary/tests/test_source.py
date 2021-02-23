@@ -244,6 +244,9 @@ class SourceTest(testutil.TestCase):
            'tags': [{'url': 'http://bad]'}]},
           [])
 
+    # bookmarks should include targetUrl
+    check({'targetUrl': 'http://or.ig/'}, ['http://or.ig/'])
+
   def test_original_post_discovery_follow_redirects(self):
     self.expect_requests_head('http://other/link',
                               redirected_url='http://other/link/redirected'
