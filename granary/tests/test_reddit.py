@@ -279,3 +279,8 @@ class RedditTest(testutil.TestCase):
 
   def test_broken_submission_to_object(self):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_activity(util.Struct(),type='submission'))
+
+  def test_post_id(self):
+    self.assert_equals(
+      'lhzukq',
+      self.reddit.post_id('https://www.reddit.com/r/CoilCommunity/comments/lhzukq/thoughts_on_coil/'))

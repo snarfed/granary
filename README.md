@@ -332,6 +332,8 @@ Changelog
 * Twitter:
   * Bug fix: URL-encode list names in API calls.
   * Bug fix: propagate alt text into AS1 `photo.displayName` so that it gets all the way into microformats2 JSON and HTML ([#183](https://github.com/snarfed/granary/issues/183)).
+* Reddit:
+  * Fix `post_id()`.
 
 ### 3.0 - 2020-04-08
 

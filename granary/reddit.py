@@ -38,6 +38,17 @@ class Reddit(source.Source):
                                     user_agent='oauth-dropin reddit api')
     return self.reddit_api
 
+  @classmethod
+  def post_id(self, url):
+    """Guesses the post id of the given URL.
+
+    Returns:
+      string, or None
+    """
+    path_parts = urllib.parse.urlparse(url).path.rstrip('/').split('/')
+    if len(path_parts) >= 2:
+      return path_parts[-2]
+
   def praw_to_actor(self, praw_user):
     """Converts a praw Redditor to an actor.
     Note that praw_to_user funciton makes external calls to fetch data from reddit API
