@@ -1,12 +1,12 @@
 # coding=utf-8
-"""reddit.com source class.
+"""Reddit source class.
 
-reddit API docs:
+Reddit API docs:
 https://github.com/reddit-archive/reddit/wiki/API
 https://www.reddit.com/dev/api
 https://www.reddit.com/prefs/apps
 
-praw API docs:
+PRAW API docs:
 https://praw.readthedocs.io/
 """
 
@@ -19,6 +19,7 @@ import urllib.parse, urllib.request
 
 import praw
 from prawcore.exceptions import NotFound
+
 
 class Reddit(source.Source):
 
@@ -35,12 +36,15 @@ class Reddit(source.Source):
       self.reddit_api = praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
                                     client_secret=reddit.REDDIT_APP_SECRET,
                                     refresh_token=self.refresh_token,
-                                    user_agent='oauth-dropin reddit api')
+                                    user_agent='granary (https://granary.io/)')
     return self.reddit_api
 
   @classmethod
   def post_id(self, url):
     """Guesses the post id of the given URL.
+
+    Args:
+      url: string
 
     Returns:
       string, or None
@@ -50,12 +54,14 @@ class Reddit(source.Source):
       return path_parts[-2]
 
   def praw_to_actor(self, praw_user):
-    """Converts a praw Redditor to an actor.
-    Note that praw_to_user funciton makes external calls to fetch data from reddit API
+    """Converts a PRAW Redditor to an actor.
+
+    Makes external calls to fetch data from the Reddit API.
+
     https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
 
     Args:
-      user: praw Redditor object
+      user: PRAW Redditor object
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
@@ -64,13 +70,14 @@ class Reddit(source.Source):
       user = reddit.praw_to_user(praw_user)
     except NotFound:
       return {}
+
     return self.user_to_actor(user)
 
   def user_to_actor(self, user):
     """Converts a dict user to an actor.
 
     Args:
-      user: json user
+      user: JSON user
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
@@ -106,63 +113,61 @@ class Reddit(source.Source):
       'urls': [{'value': u} for u in urls] if len(urls) > 1 else None,
       'username': username,
       'description': description,
-      })
-
+    })
 
   def praw_to_object(self, thing, type):
-    """
-    Converts a praw object to an object. currently only returns public content
-    Note that this will make external API calls to lazily load some attrs
+    """Converts a PRAW object to an AS1 object.
+
+    Currently only returns public content.
+
+    Note that this will make external API calls to lazily load some attributes.
 
     Args:
-      thing: a praw object, Submission or Comment
+      thing: a PRAW object, Submission or Comment
       type: string to denote whether to get submission or comment content
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
       """
-    obj = {}
-
     id = getattr(thing, 'id', None)
     if not id:
       return {}
 
     published = util.maybe_timestamp_to_iso8601(getattr(thing, 'created_utc', None))
-
     obj = {
       'id': self.tag_uri(id),
+      'url': self.BASE_URL + thing.permalink,
       'published': published,
       'to': [{
         'objectType': 'group',
         'alias': '@public',
-        }],
-      }
+      }],
+    }
 
     user = getattr(thing, 'author', None)
     if user:
       obj['author'] = self.praw_to_actor(user)
       username = obj['author'].get('username')
 
-    obj['url'] = self.BASE_URL + thing.permalink
-
     if type == 'submission':
+      content = getattr(thing, 'selftext', None)
       obj.update({
         'displayName': getattr(thing, 'title', None),
-        'content': getattr(thing, 'selftext', None),
+        'content': content,
         'objectType': 'note',
         'tags': [{
           'objectType': 'article',
           'url': t,
           'displayName': t,
-        } for t in util.extract_links(getattr(thing, 'selftext', None))],
+        } for t in util.extract_links(content)],
       })
 
       url = getattr(thing, 'url', None)
       if url:
-          obj.update({
-            'objectType': 'bookmark',
-            'targetUrl': url,
-          })
+        obj.update({
+          'objectType': 'bookmark',
+          'targetUrl': url,
+        })
 
     elif type == 'comment':
       obj.update({
@@ -174,52 +179,47 @@ class Reddit(source.Source):
         obj['inReplyTo'] = [{
           'id': self.tag_uri(getattr(reply_to, 'id', None)),
           'url': self.BASE_URL + getattr(reply_to, 'permalink', None),
-          }]
+        }]
 
     return self.postprocess_object(obj)
 
-
   def praw_to_activity(self, thing, type):
-    """Converts a praw submission or comment to an activity.
+    """Converts a PRAW submission or comment to an activity.
+
+    Note that this will make external API calls to lazily load some attributes.
+
     https://praw.readthedocs.io/en/latest/code_overview/models/submission.html
     https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
-    Note that this will make external API calls to lazily load some attrs
 
     Args:
-      thing: a praw object, Submission or Comment
+      thing: a PRAW object, Submission or Comment
       type: string to denote whether to get submission or comment content
 
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    obj = self.praw_to_object(thing, type)
-    actor = obj.get('author')
-
     id = getattr(thing, 'id', None)
     if not id:
       return {}
 
+    obj = self.praw_to_object(thing, type)
     activity = {
       'verb': 'post',
       # TODO: tag URI here!
       'id': id,
       'url': self.BASE_URL + getattr(thing, 'permalink', None),
-      'actor': actor,
-      'object': obj
-      }
-
+      'actor': obj.get('author'),
+      'object': obj,
+    }
     return self.postprocess_activity(activity)
 
   def fetch_replies(self, r, activities):
-    """Fetches and injects reddit comments into a list of activities, in place.
+    """Fetches and injects comments into a list of activities, in place.
 
     limitations: Only includes top level comments
     Args:
-      r: praw api object for querying submissions in activities
+      r: PRAW API object for querying submissions in activities
       activities: list of activity dicts
-
-    Returns:
-      same activities list
     """
     for activity in activities:
       subm = r.submission(id=activity.get('id'))
@@ -234,7 +234,7 @@ class Reddit(source.Source):
       activity['object']['replies'] = {
         'items': items,
         'totalItems': len(items),
-        }
+      }
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -242,12 +242,10 @@ class Reddit(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
                               fetch_mentions=False, search_query=None, **kwargs):
-    """
-    Fetches reddit submissions and ActivityStreams activities.
+    """Fetches submissions and ActivityStreams activities.
 
-    Currently only implements activity_id, search_query and fetch_replies
+    Currently only implements activity_id, search_query and fetch_replies.
     """
-
     activities = []
 
     r = self.get_reddit_api()
@@ -288,8 +286,7 @@ class Reddit(source.Source):
     """
     r = self.get_reddit_api()
     r.read_only = True
-    com = r.comment(id=comment_id)
-    return self.praw_to_object(com, 'comment')
+    return self.praw_to_object(r.comment(id=comment_id), 'comment')
 
   def user_url(self, username):
     """Returns the Reddit URL for a given user."""
