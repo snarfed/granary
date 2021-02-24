@@ -79,9 +79,7 @@ class Reddit(source.Source):
     if not username:
       return {}
 
-
     # trying my best to grab all the urls from the profile description
-
     description = ''
     subreddit = user.get('subreddit')
     if subreddit:
@@ -148,23 +146,29 @@ class Reddit(source.Source):
     obj['url'] = self.BASE_URL + thing.permalink
 
     if type == 'submission':
-      obj['name'] = getattr(thing, 'title', None)
-      obj['content'] = getattr(thing, 'selftext', None)
-      obj['objectType'] = 'note'
-      obj['tags'] = [
-          {'objectType': 'article',
-           'url': t,
-           'displayName': t,
-           } for t in util.extract_links(getattr(thing, 'selftext', None))
-        ]
+      obj.update({
+        'displayName': getattr(thing, 'title', None),
+        'content': getattr(thing, 'selftext', None),
+        'objectType': 'note',
+        'tags': [{
+          'objectType': 'article',
+          'url': t,
+          'displayName': t,
+        } for t in util.extract_links(getattr(thing, 'selftext', None))],
+      })
 
-      if getattr(thing, 'url', None):
-          obj['objectType'] = 'bookmark'
-          obj['targetUrl'] = getattr(thing, 'url')
+      url = getattr(thing, 'url', None)
+      if url:
+          obj.update({
+            'objectType': 'bookmark',
+            'targetUrl': url,
+          })
 
     elif type == 'comment':
-      obj['content'] = getattr(thing, 'body_html', None)
-      obj['objectType'] = 'comment'
+      obj.update({
+        'content': getattr(thing, 'body_html', None),
+        'objectType': 'comment',
+      })
       reply_to = thing.parent()
       if reply_to:
         obj['inReplyTo'] = [{
@@ -197,6 +201,7 @@ class Reddit(source.Source):
 
     activity = {
       'verb': 'post',
+      # TODO: tag URI here!
       'id': id,
       'url': self.BASE_URL + getattr(thing, 'permalink', None),
       'actor': actor,
