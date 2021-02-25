@@ -37,6 +37,8 @@ class Reddit(source.Source):
                                     client_secret=reddit.REDDIT_APP_SECRET,
                                     refresh_token=self.refresh_token,
                                     user_agent='granary (https://granary.io/)')
+      self.reddit_api.read_only = True
+
     return self.reddit_api
 
   @classmethod
@@ -227,7 +229,7 @@ class Reddit(source.Source):
       # for v0 we will use just the top level comments because threading is hard
       subm.comments.replace_more()
       replies = []
-      for top_level_comment in getattr(subm, 'comments', None):
+      for top_level_comment in subm.comments:
         replies.append(self.praw_to_activity(top_level_comment, 'comment'))
 
       items = [r.get('object') for r in replies]
@@ -247,18 +249,17 @@ class Reddit(source.Source):
     Currently only implements activity_id, search_query and fetch_replies.
     """
     activities = []
-
     r = self.get_reddit_api()
-    r.read_only = True
 
     if activity_id:
       subm = r.submission(id=activity_id)
       activities.append(self.praw_to_activity(subm, 'submission'))
-
-    if search_query:
-      sr = r.subreddit("all")
+    elif search_query:
+      sr = r.subreddit('all')
       subms = sr.search(search_query, sort='new')
       activities.extend([self.praw_to_activity(subm, 'submission') for subm in subms])
+    else:
+      raise NotImplementedError('currently requires either activity_id or search_query')
 
     if fetch_replies:
       self.fetch_replies(r, activities)
@@ -285,7 +286,6 @@ class Reddit(source.Source):
       activity: activity object, Ignored
     """
     r = self.get_reddit_api()
-    r.read_only = True
     return self.praw_to_object(r.comment(id=comment_id), 'comment')
 
   def user_url(self, username):

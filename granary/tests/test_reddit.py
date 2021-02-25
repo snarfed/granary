@@ -1,11 +1,17 @@
 # coding=utf-8
 """Unit tests for reddit.py.
 """
+import copy
+
+from mox3 import mox
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
 from granary import reddit
 
+import praw
+import praw.models
+from praw.models.comment_forest import CommentForest
 from prawcore.exceptions import NotFound
 
 
@@ -32,7 +38,6 @@ class FakeRedditor():
 class FakeMissingRedditor():
   """ to mock https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
   """
-
   name = 'ms_missing'
 
   @property
@@ -40,12 +45,6 @@ class FakeMissingRedditor():
     class FakeResponse():
       status_code = '404'
     raise NotFound(FakeResponse())
-
-
-class FakeRedditorBroken():
-  """ to test when Redditor object has no attributes
-  """
-  pass
 
 
 class FakeSubmission():
@@ -153,6 +152,12 @@ COMMENT_OBJECT = {
   'to': [{'alias': '@public', 'objectType': 'group'}],
 }
 
+ACTIVITY_WITH_COMMENT = copy.deepcopy(ACTIVITY_WITH_SELFTEXT)
+ACTIVITY_WITH_COMMENT['object']['replies'] = {
+  'items': [COMMENT_OBJECT],
+  'totalItems': 1,
+}
+
 MISSING_OBJECT = {}
 
 
@@ -161,6 +166,14 @@ class RedditTest(testutil.TestCase):
   def setUp(self):
     super(RedditTest, self).setUp()
     self.reddit = reddit.Reddit('token-here')
+    self.api = self.reddit.reddit_api = self.mox.CreateMockAnything(praw.Reddit)
+
+    self.submission_selftext = FakeSubmission(FakeRedditor())
+    self.comment = FakeComment(self.submission_selftext, FakeRedditor())
+
+    self.submission_link = FakeSubmission(FakeRedditor())
+    self.submission_link.selftext = ''
+    self.submission_link.url = 'https://reddit.com/ezv3f2'
 
   def test_missing_user_to_actor(self):
     self.assert_equals(MISSING_OBJECT,
@@ -177,28 +190,22 @@ class RedditTest(testutil.TestCase):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(util.Struct()))
 
   def test_praw_to_comment(self):
-    author = FakeRedditor()
-    sub = FakeSubmission(author)
-    comment = FakeComment(sub, author)
     self.assert_equals(COMMENT_OBJECT,
-                       self.reddit.praw_to_object(comment, 'comment'))
+                       self.reddit.praw_to_object(self.comment, 'comment'))
 
   def test_broken_praw_to_comment(self):
     self.assert_equals(MISSING_OBJECT,
                        self.reddit.praw_to_object(util.Struct(), 'comment'))
 
   def test_submission_to_activity_with_link(self):
-    submission = FakeSubmission(FakeRedditor())
-    submission.selftext = ''
-    submission.url = 'https://reddit.com/ezv3f2'
     self.assert_equals(
       ACTIVITY_WITH_LINK,
-      self.reddit.praw_to_activity(submission, type='submission'))
+      self.reddit.praw_to_activity(self.submission_link, type='submission'))
 
   def test_submission_to_activity_with_selftext(self):
     self.assert_equals(
       ACTIVITY_WITH_SELFTEXT,
-      self.reddit.praw_to_activity(FakeSubmission(FakeRedditor()), type='submission'))
+      self.reddit.praw_to_activity(self.submission_selftext, type='submission'))
 
   def test_broken_submission_to_object(self):
     self.assert_equals(MISSING_OBJECT,
@@ -208,3 +215,37 @@ class RedditTest(testutil.TestCase):
     self.assert_equals(
       'lhzukq',
       self.reddit.post_id('https://www.reddit.com/r/xyz/comments/lhzukq/abc/'))
+
+  def test_get_activities_activity_id(self):
+    self.api.submission(id='abc').AndReturn(self.submission_selftext)
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY_WITH_SELFTEXT],
+                       self.reddit.get_activities(activity_id='abc'))
+
+  def test_get_activities_search_query(self):
+    subreddit = self.mox.CreateMock(praw.models.Subreddit)
+    self.mox.StubOutWithMock(self.api, 'subreddit')
+    self.api.subreddit('all').AndReturn(subreddit)
+    subreddit.search('foo bar', sort='new').AndReturn(
+      [self.submission_selftext, self.submission_link])
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
+                       self.reddit.get_activities(search_query='foo bar'))
+
+  def test_get_activities_fetch_replies(self):
+    self.api.submission(id='ezv3f2').MultipleTimes().AndReturn(self.submission_selftext)
+    self.submission_selftext.comments = CommentForest(self.submission_selftext,
+                                                      comments=[self.comment])
+    self.mox.StubOutWithMock(self.submission_selftext.comments, 'replace_more')
+    self.submission_selftext.comments.replace_more()
+    self.mox.ReplayAll()
+
+    self.assert_equals(
+      [ACTIVITY_WITH_COMMENT],
+      self.reddit.get_activities(activity_id='ezv3f2', fetch_replies=True))
+
+  def test_get_activities_no_activity_id_or_search(self):
+    with self.assertRaises(NotImplementedError):
+      self.reddit.get_activities()

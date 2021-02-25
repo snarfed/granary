@@ -926,6 +926,9 @@ class Instagram(source.Source):
 
     Returns:
       list of dict AS like tag objects converted from scraped
+
+    Raises:
+      ValueError: if scraped is not valid JSON
     """
     if isinstance(scraped, str):
       scraped = json_loads(scraped)
