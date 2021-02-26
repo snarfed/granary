@@ -28,8 +28,8 @@ class Pixelfed(mastodon.Mastodon):
     return urllib.parse.urljoin(self.instance, '/p/%s/%s' % (
       urllib.parse.quote(username), id))
 
-  def get_activities_response(self, **kwargs):
+  def get_activities_response(self, *args, **kwargs):
     if kwargs.get('fetch_mentions'):
       logging.info("Ignoring fetch_mentions=True since Pixelfed doesn't yet support notifications")
       kwargs['fetch_mentions'] = False
-    return super().get_activities_response(**kwargs)
+    return super().get_activities_response(*args, **kwargs)
