@@ -200,22 +200,20 @@ class Reddit(source.Source):
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    id = getattr(thing, 'id', None)
-    if not id:
+    obj = self.praw_to_object(thing, type)
+    if not obj:
       return {}
 
-    obj = self.praw_to_object(thing, type)
     activity = {
       'verb': 'post',
-      # TODO: tag URI here!
-      'id': id,
+      'id': obj['id'],
       'url': self.BASE_URL + getattr(thing, 'permalink', None),
       'actor': obj.get('author'),
       'object': obj,
     }
     return self.postprocess_activity(activity)
 
-  def fetch_replies(self, r, activities):
+  def _fetch_replies(self, r, activities):
     """Fetches and injects comments into a list of activities, in place.
 
     limitations: Only includes top level comments
@@ -224,9 +222,10 @@ class Reddit(source.Source):
       activities: list of activity dicts
     """
     for activity in activities:
-      subm = r.submission(id=activity.get('id'))
+      subm = r.submission(id=util.parse_tag_uri(activity.get('id'))[1])
 
-      # for v0 we will use just the top level comments because threading is hard
+      # for v0 we will use just the top level comments because threading is hard.
+      # feature request: https://github.com/snarfed/bridgy/issues/1014
       subm.comments.replace_more()
       replies = []
       for top_level_comment in subm.comments:
@@ -260,7 +259,7 @@ class Reddit(source.Source):
       activities.extend([self.praw_to_activity(subm, 'submission') for subm in subms])
 
     if fetch_replies:
-      self.fetch_replies(r, activities)
+      self._fetch_replies(r, activities)
 
     return self.make_activities_base_response(activities)
 

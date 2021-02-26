@@ -95,7 +95,7 @@ ACTOR = {
 
 ACTIVITY_WITH_SELFTEXT = {
   'verb': 'post',
-  'id': 'ezv3f2',
+  'id': 'tag:reddit.com:ezv3f2',
   'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/',
   'title': '[P] GPT-2 + BERT reddit replier',
   'actor': ACTOR,
@@ -122,7 +122,7 @@ ACTIVITY_WITH_SELFTEXT = {
 
 ACTIVITY_WITH_LINK ={
   'verb': 'post',
-  'id': 'ezv3f2',
+  'id': 'tag:reddit.com:ezv3f2',
   'url': 'https://reddit.com/r/MachineLearning/comments/ezv3f2/p_gpt2_bert_reddit_replier_i_built_a_system_that/',
   'title': '[P] GPT-2 + BERT reddit replier',
   'actor': ACTOR,

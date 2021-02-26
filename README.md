@@ -335,6 +335,7 @@ Changelog
 * Reddit:
   * Fix `post_id()`.
   * Bug fix: use 'displayName' instead of 'name' in AS1 objects for submissions.
+  * Bug fix: use tag URIs for activity ids.
 
 ### 3.0 - 2020-04-08
 
