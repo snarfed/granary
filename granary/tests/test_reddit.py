@@ -245,7 +245,3 @@ class RedditTest(testutil.TestCase):
     self.assert_equals(
       [ACTIVITY_WITH_COMMENT],
       self.reddit.get_activities(activity_id='ezv3f2', fetch_replies=True))
-
-  def test_get_activities_no_activity_id_or_search(self):
-    with self.assertRaises(NotImplementedError):
-      self.reddit.get_activities()

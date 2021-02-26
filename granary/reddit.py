@@ -258,8 +258,6 @@ class Reddit(source.Source):
       sr = r.subreddit('all')
       subms = sr.search(search_query, sort='new')
       activities.extend([self.praw_to_activity(subm, 'submission') for subm in subms])
-    else:
-      raise NotImplementedError('currently requires either activity_id or search_query')
 
     if fetch_replies:
       self.fetch_replies(r, activities)
