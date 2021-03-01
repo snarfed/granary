@@ -8,7 +8,7 @@ var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
 
 function render_demo_request() {
   var site = get('site');
-  var user_id = encodeURIComponent(get('user_id')) || '@me';
+  var user_id = get('user_id') || '@me';
 
   var group = get('group_id');
   if (group == '@list') {
@@ -18,8 +18,8 @@ function render_demo_request() {
   var url = window.location.origin + '/' +
       site + '/' + user_id + '/' + group + '/@app/' +
       (group == '@search'
-       ? '?search_query=' + encodeURIComponent(get('search_query')) + '&'
-       : encodeURIComponent(get('activity_id')) + '?') +
+       ? '?search_query=' + get('search_query') + '&'
+       : get('activity_id') + '?') +
       'format=' + get('format');
 
   cookie = get('cookie');
@@ -37,7 +37,7 @@ function render_demo_request() {
     for (i in OAUTH_INPUT_IDS) {
       elem = document.getElementById(OAUTH_INPUT_IDS[i]);
       if (elem && elem.value)
-        url += '&' + elem.name + '=' + elem.value;
+        url += '&' + elem.name + '=' + get(OAUTH_INPUT_IDS[i]);
     }
     request.innerHTML = 'GET <a href="' + url + '">' + url + '</a>';
   }
@@ -47,7 +47,7 @@ function render_url_request() {
   var url = window.location.origin + '/url'
       + '?input=' + get('input')
       + '&output=' + get('output')
-      + '&url=' + encodeURIComponent(get('url'));
+      + '&url=' + get('url');
 
   document.getElementById('request').innerHTML =
     'GET <a href="' + url + '">' + url + '</a>';
@@ -78,5 +78,5 @@ function update_form() {
 
 function get(id) {
   var elem = document.getElementById(id);
-  return elem ? elem.value : '';
+  return elem ? encodeURIComponent(elem.value) : '';
 }
