@@ -317,6 +317,7 @@ Changelog
   * Add support for adding tags to existing photos ([bridgy#857](https://github.com/snarfed/bridgy/issues/857)).
 * GitHub:
   * Handle [HTTP 451 Unavailable for Legal Reasons](https://en.wikipedia.org/wiki/HTTP_451) responses ([eg for DMCA takedowns](https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/)) gracefully.
+  * Add create/preview support for reactions on pull review request comments (ie URLs with `#discussion_r...` fragments).
 * HTML/microformats2:
   * Add `aria-hidden="true"` to empty links ([bridgy#947](https://github.com/snarfed/bridgy/issues/947)).
   * Bug fix: escape `&`, `<`, and `>` characters in bare mf2 `content` properties ([aaronpk/XRay#102](https://github.com/aaronpk/XRay/issues/102)).

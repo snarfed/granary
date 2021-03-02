@@ -25,8 +25,8 @@ REST_API_CREATE_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
 REST_API_ISSUE_LABELS = REST_API_BASE + '/repos/%s/%s/issues/%s/labels'
 REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
 REST_API_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/%s/reactions'
-REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/issues/comments/%s'
-REST_API_COMMENT_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/comments/%s/reactions'
+REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/%s/comments/%s'
+REST_API_COMMENT_REACTIONS = REST_API_BASE + '/repos/%s/%s/%s/comments/%s/reactions'
 REST_API_MARKDOWN = REST_API_BASE + '/markdown'
 REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
 GRAPHQL_BASE = 'https://api.github.com/graphql'
@@ -446,14 +446,16 @@ class GitHub(source.Source):
 
     Returns: dict, an ActivityStreams comment object
     """
-    parts = tuple(comment_id.split(':'))
+    parts = comment_id.split(':')
     if len(parts) != 3:
       raise ValueError('GitHub comment ids must be of the form USER:REPO:COMMENT_ID')
 
-    if util.is_int(parts[2]):  # REST API id
-      comment = self.rest(REST_API_COMMENT % parts)
+    id = parts[-1]
+    if util.is_int(id):  # REST API id
+      parts.insert(2, 'issues')
+      comment = self.rest(REST_API_COMMENT % tuple(parts))
     else:  # GraphQL node id
-      comment = self.graphql(GRAPHQL_COMMENT, {'id': parts[2]})['node']
+      comment = self.graphql(GRAPHQL_COMMENT, {'id': id})['node']
 
     return self.comment_to_object(comment)
 
@@ -561,9 +563,14 @@ class GitHub(source.Source):
     if len(path) == 4:
       number = path[3]
 
-    comment_id = re.match(r'^issuecomment-([0-9]+)$', parsed.fragment)
+    # TODO: support #pullrequestreview-* URLs for top-level PR comments too.
+    # Haven't yet gotten those to work via either the issues or pulls APIs.
+    # https://github.com/snarfed/bridgy/issues/955#issuecomment-788478848
+    comment_id = re.match(r'^(discussion_r|issuecomment-)([0-9]+)$', parsed.fragment)
+    comment_type = None
     if comment_id:
-      comment_id = comment_id.group(1)
+      comment_type = 'issues' if comment_id.group(1) == 'issuecomment-' else 'pulls'
+      comment_id = comment_id.group(2)
     elif parsed.fragment:
       return source.creation_result(
         abort=True,
@@ -578,7 +585,8 @@ class GitHub(source.Source):
       is_reaction = orig_content in REACTIONS_GRAPHQL
       if preview:
         if comment_id:
-          comment = self.rest(REST_API_COMMENT % (owner, repo, comment_id))
+          comment = self.rest(REST_API_COMMENT % (owner, repo, comment_type,
+                                                  comment_id))
           target_link = '<a href="%s">a comment on %s/%s#%s, <em>%s</em></a>' % (
             base_url, owner, repo, number, util.ellipsize(comment['body']))
         else:
@@ -604,7 +612,8 @@ class GitHub(source.Source):
         # https://github.com/snarfed/bridgy/issues/824
         if is_reaction:
           if comment_id:
-            api_url = REST_API_COMMENT_REACTIONS % (owner, repo, comment_id)
+            api_url = REST_API_COMMENT_REACTIONS % (owner, repo, comment_type,
+                                                    comment_id)
             reacted = self.rest(api_url, data={
               'content': REACTIONS_REST.get(orig_content),
             })

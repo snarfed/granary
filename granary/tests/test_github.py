@@ -633,7 +633,7 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals({}, self.gh.issue_to_object({}))
 
   def test_get_comment_rest(self):
-    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 123), COMMENT_REST)
+    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 'issues', 123), COMMENT_REST)
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo:bar:123'))
 
@@ -1066,9 +1066,10 @@ class GitHubTest(testutil.TestCase):
     preview = self.gh.preview_create(REACTION_OBJ_INPUT)
     self.assertEqual(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>.', preview.description)
 
-  def test_create_reaction_comment(self):
+  def test_create_reaction_issue_comment(self):
     self.expect_requests_post(
-      REST_API_COMMENT_REACTIONS % ('foo', 'bar', 456), headers=EXPECTED_HEADERS,
+      REST_API_COMMENT_REACTIONS % ('foo', 'bar', 'issues', 456),
+      headers=EXPECTED_HEADERS,
       json={
         'content': '+1',
       }, response={
@@ -1085,8 +1086,8 @@ class GitHubTest(testutil.TestCase):
       'type': 'react',
     }, result.content, result)
 
-  def test_preview_reaction_comment(self):
-    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 456), COMMENT_REST)
+  def test_preview_reaction_issue_comment(self):
+    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 'issues', 456), COMMENT_REST)
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
