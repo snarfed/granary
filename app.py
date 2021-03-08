@@ -155,9 +155,9 @@ class DemoHandler(handlers.ModernHandler):
       'search_query': search_query,
     })
 
-    return self.redirect('/%s/%s/%s/@app/%s?%s' % (
-      site, urllib.parse.quote_plus(user), group, activity_id,
-      urllib.parse.urlencode(params)))
+    path = '/'.join(urllib.parse.quote_plus(part, safe='@')
+                    for part in (site, user, group, '@app', activity_id))
+    return self.redirect(f'/{path}?{urllib.parse.urlencode(params)}')
 
 
 class UrlHandler(api.Handler):

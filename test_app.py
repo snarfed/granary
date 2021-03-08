@@ -728,3 +728,31 @@ not atom!
     self.assert_equals(400, resp.status_int)
     self.assert_equals('', resp.text)
 
+  def test_demo(self):
+    resp = app.application.get_response(
+      '/demo?site=sayt&user_id=me&group_id=@groop&activity_id=123')
+    self.assert_equals(302, resp.status_int, resp.text)
+    self.assert_equals('http://localhost/sayt/me/@groop/@app/123?site=sayt&user_id=me&group_id=%40groop&activity_id=123&plaintext=true&cache=false&search_query=',
+                       resp.headers['Location'])
+
+  def test_demo_search(self):
+    resp = app.application.get_response(
+      '/demo?site=sayt&user_id=me&group_id=@search&search_query=foo')
+    self.assert_equals(302, resp.status_int, resp.text)
+    self.assert_equals('http://localhost/sayt/me/@search/@app/?site=sayt&user_id=me&group_id=%40search&search_query=foo&plaintext=true&cache=false',
+                       resp.headers['Location'])
+
+  def test_demo_list(self):
+    resp = app.application.get_response(
+      '/demo?site=sayt&user_id=me&group_id=@list&list=ly%E2%98%95zt')
+    self.assert_equals(302, resp.status_int, resp.text)
+    self.assert_equals('http://localhost/sayt/me/ly%E2%98%95zt/@app/?site=sayt&user_id=me&group_id=%40list&list=ly%E2%98%95zt&plaintext=true&cache=false&search_query=',
+                       resp.headers['Location'])
+
+  def test_demo_non_ascii_params(self):
+    # %E2%98%95 is ☕
+    resp = app.application.get_response(
+      '/demo?site=%E2%98%95&user_id=%E2%98%95&group_id=%E2%98%95&activity_id=%E2%98%95&search_query=%E2%98%95&format=%E2%98%95')
+    self.assert_equals(302, resp.status_int, resp.text)
+    self.assert_equals('http://localhost/%E2%98%95/%E2%98%95/%E2%98%95/@app/%E2%98%95?site=%E2%98%95&user_id=%E2%98%95&group_id=%E2%98%95&activity_id=%E2%98%95&search_query=&format=%E2%98%95&plaintext=true&cache=false',
+                       resp.headers['Location'])
