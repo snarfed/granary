@@ -1,0 +1,15 @@
+{
+  "version": "https://jsonfeed.org/version/1",
+  "title": "JSON Feed",
+  "items": [{
+    "attachments": [
+      {"url": "bar.mp3", "mime_type": "audio/mp3"},
+      {"url": "baz", "title": "bazzz"}
+    ]
+  }],
+  "author": {
+    "name": "Martin Smith",
+    "url": "http://example.com/martin",
+    "avatar": "http://example.com/martin/image"
+  }
+}

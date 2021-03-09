@@ -1,0 +1,7 @@
+{
+  "objectType": "note",
+  "attachments": [
+    {"objectType": "audio", "stream": {"url": "bar.mp3"}},
+    {"title": "bazzz", "url": "baz"}
+  ]
+}
