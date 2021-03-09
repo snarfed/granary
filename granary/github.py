@@ -894,7 +894,7 @@ class GitHub(source.Source):
     return self.postprocess_object(actor)
 
   def _to_object(self, input, repo_id=False):
-    """Starts to convert aHub GraphQL or REST API object to ActivityStreams.
+    """Starts to convert a GraphQL or REST API object to ActivityStreams.
 
     Args:
       input: dict, decoded JSON GraphQL or REST object
