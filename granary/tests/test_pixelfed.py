@@ -35,3 +35,21 @@ class PixelfedTest(testutil.TestCase):
   def test_reply_status_to_object(self):
     self.assert_equals(test_mastodon.REPLY_OBJECT,
                        self.pixelfed.status_to_object(REPLY_STATUS))
+
+  def test_user_url(self):
+    self.assert_equals('http://foo.com/bar', self.pixelfed.user_url('bar'))
+
+  def test_status_url(self):
+    self.assert_equals('http://foo.com/p/bar/123',
+                       self.pixelfed.status_url('bar', 123))
+
+  def test_get_activities_fetch_mentions(self):
+    self.expect_requests_get(
+      test_mastodon.INSTANCE + test_mastodon.API_TIMELINE,
+      params={},
+      response=[REPLY_STATUS],
+      headers={'Authorization': 'Bearer towkin'})
+    self.mox.ReplayAll()
+
+    self.assert_equals([test_mastodon.REPLY_ACTIVITY],
+                       self.pixelfed.get_activities(fetch_mentions=True))

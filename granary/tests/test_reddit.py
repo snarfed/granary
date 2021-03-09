@@ -175,6 +175,9 @@ class RedditTest(testutil.TestCase):
     self.submission_link.selftext = ''
     self.submission_link.url = 'https://reddit.com/ezv3f2'
 
+  def test_user_url(self):
+    self.assert_equals('https://reddit.com/user/foo', self.reddit.user_url('foo'))
+
   def test_missing_user_to_actor(self):
     self.assert_equals(MISSING_OBJECT,
                        self.reddit.praw_to_actor(FakeMissingRedditor()))
@@ -188,6 +191,15 @@ class RedditTest(testutil.TestCase):
 
   def test_broken_praw_to_actor(self):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(util.Struct()))
+
+  def test_praw_to_actor_no_subreddit(self):
+    redditor = FakeRedditor()
+    redditor.subreddit = None
+    expected = copy.deepcopy(ACTOR)
+    del expected['description']
+    del expected['urls']
+    expected['url'] = 'https://reddit.com/user/bonkerfield'  # note no trailing /
+    self.assert_equals(expected, self.reddit.praw_to_actor(redditor))
 
   def test_praw_to_comment(self):
     self.assert_equals(COMMENT_OBJECT,
@@ -245,3 +257,9 @@ class RedditTest(testutil.TestCase):
     self.assert_equals(
       [ACTIVITY_WITH_COMMENT],
       self.reddit.get_activities(activity_id='ezv3f2', fetch_replies=True))
+
+  def test_get_comment(self):
+    self.api.comment(id='xyz').AndReturn(self.comment)
+    self.mox.ReplayAll()
+
+    self.assert_equals(COMMENT_OBJECT, self.reddit.get_comment('xyz'))
