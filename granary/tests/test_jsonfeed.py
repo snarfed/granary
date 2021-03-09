@@ -89,24 +89,6 @@ class JsonFeedTest(testutil.TestCase):
       with self.assertRaises(TypeError):
         activities_to_jsonfeed(bad)
 
-  def test_activities_to_jsonfeed_attachment(self):
-    got = activities_to_jsonfeed([{
-      'attachments': [
-        {'url': 'foo.zip'},
-        {'title': 'bar', 'image': {'url': 'bar.jpg'}},
-        {'objectType': 'video', 'stream': {'url': 'baz'}},
-      ],
-    }], {})['items']
-    self.assert_equals(1, len(got))
-    self.assert_equals([
-      {'url': 'bar.jpg', 'mime_type': 'image/jpeg', 'title': 'bar'},
-      {'url': 'baz'},
-    ], got[0]['attachments'])
-
-    content = got[0]['content_html']
-    self.assertIn('<img class="u-photo" src="bar.jpg" alt="" />', content)
-    self.assertIn('<video class="u-video" src="baz"', content)
-
   def test_jsonfeed_to_activities_attachment_extra_list(self):
     """Originally seen in:
     https://console.cloud.google.com/errors/CPyvpeH077rvIg
