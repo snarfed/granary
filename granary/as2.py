@@ -185,13 +185,20 @@ def to_as1(obj, use_type=True):
     if as1_img not in images:
       images.append(as1_img)
 
+  # inner objects
   inner_objs = all_to_as1('object')
+  actor = to_as1(obj.get('actor', {}))
+
+  if type == 'Create':
+    for inner_obj in inner_objs:
+      inner_obj.setdefault('author', {}).update(actor)
+
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
 
   obj.update({
     'displayName': obj.pop('name', None),
-    'actor': to_as1(obj.get('actor')),
+    'actor': actor,
     'attachments': all_to_as1('attachment'),
     'image': images,
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
@@ -200,6 +207,7 @@ def to_as1(obj, use_type=True):
     'tags': all_to_as1('tag'),
   })
 
+  # media
   if type in ('Audio', 'Video'):
     duration = util.parse_iso8601_duration(obj.pop('duration', None))
     if duration:
@@ -213,11 +221,12 @@ def to_as1(obj, use_type=True):
   elif type == 'Mention':
     obj['url'] = obj.pop('href', None)
 
+  # object author
   attrib = util.pop_list(obj, 'attributedTo')
   if attrib:
     if len(attrib) > 1:
       logging.warning('ActivityStreams 1 only supports single author; '
                       'dropping extra attributedTo values: %s' % attrib[1:])
-    obj['author'] = to_as1(attrib[0])
+    obj.setdefault('author', {}).update(to_as1(attrib[0]))
 
   return util.trim_nulls(obj)

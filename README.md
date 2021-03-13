@@ -337,6 +337,8 @@ Changelog
   * Fix `post_id()`.
   * Bug fix: use 'displayName' instead of 'name' in AS1 objects for submissions.
   * Bug fix: use tag URIs for activity ids.
+* ActivityStreams 2:
+  * `to_as1()`: for `Create` activities, include the activity actor's data in the object's author ([snarfed/bridgy-fed#75](https://github.com/snarfed/bridgy-fed/issues/75)).
 
 ### 3.0 - 2020-04-08
 
