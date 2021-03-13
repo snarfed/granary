@@ -63,6 +63,7 @@ os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
 ACTOR = read_json('actor.as.json')
 del ACTOR['id']
+del ACTOR['username']
 
 # wrap jsonfeed functions to add/remove actors and wrap/unwrap activities
 def activity_to_jsonfeed(obj):

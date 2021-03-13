@@ -4,6 +4,7 @@
     "uid": ["tag:example.com,2011:martin"],
     "name": ["Martin Smith"],
     "url": ["http://example.com/martin"],
-    "photo": ["http://example.com/martin/image"]
+    "photo": ["http://example.com/martin/image"],
+    "nickname": ["yoozer"]
   }
 }

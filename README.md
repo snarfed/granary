@@ -321,6 +321,7 @@ Changelog
 * HTML/microformats2:
   * Add `aria-hidden="true"` to empty links ([bridgy#947](https://github.com/snarfed/bridgy/issues/947)).
   * Bug fix: escape `&`, `<`, and `>` characters in bare mf2 `content` properties ([aaronpk/XRay#102](https://github.com/aaronpk/XRay/issues/102)).
+  * `json_to_object()`: convert `nickname` to `username`.
 * JSON Feed:
   * Gracefully handle when `content_html` and `content_text` are [incorrectly](https://jsonfeed.org/version/1#items) lists instead of strings.
 * Instagram:
@@ -339,6 +340,8 @@ Changelog
   * Bug fix: use tag URIs for activity ids.
 * ActivityStreams 2:
   * `to_as1()`: for `Create` activities, include the activity actor's data in the object's author ([snarfed/bridgy-fed#75](https://github.com/snarfed/bridgy-fed/issues/75)).
+  * `to_as1()`: convert `preferredUsername` to `username`.
+  * `from_as1()`: convert `username` to `preferredUsername`.
 
 ### 3.0 - 2020-04-08
 

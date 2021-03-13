@@ -103,7 +103,8 @@ def from_as1(obj, type=None, context=CONTEXT):
     'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
                                   for orig in obj.get('inReplyTo', [])]),
     'object': inner_objs,
-    'tag': all_from_as1('tags')
+    'tag': all_from_as1('tags'),
+    'preferredUsername': obj.pop('username', None),
   })
 
   if obj_type == 'person':
@@ -198,6 +199,7 @@ def to_as1(obj, use_type=True):
 
   obj.update({
     'displayName': obj.pop('name', None),
+    'username': obj.pop('preferredUsername', None),
     'actor': actor,
     'attachments': all_to_as1('attachment'),
     'image': images,

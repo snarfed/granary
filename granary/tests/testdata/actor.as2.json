@@ -5,5 +5,6 @@
   "url": "http://example.com/martin",
   "name": "Martin Smith",
   "icon": [{"type": "Image", "url": "http://example.com/martin/image"}],
-  "image": [{"type": "Image", "url": "http://example.com/martin/image"}]
+  "image": [{"type": "Image", "url": "http://example.com/martin/image"}],
+  "preferredUsername": "yoozer"
 }

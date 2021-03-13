@@ -493,6 +493,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     'startTime': prop.get('start'),
     'endTime': prop.get('end'),
     'displayName': get_text(prop.get('name')),
+    'username': prop.get('nickname'),
     'summary': get_text(prop.get('summary')),
     'content': get_html(prop.get('content')),
     'url': urls[0] if urls else None,
