@@ -181,13 +181,14 @@ RSVP_PUBLISH_ENDPOINTS = {
 }
 # https://developers.facebook.com/docs/graph-api/reference/post/reactions
 REACTION_CONTENT = {
-  'LOVE': '❤️',
-  'WOW': '😮',
-  'HAHA': '😆',
-  'SAD': '😢',
   'ANGRY': '😡',
-  'THANKFUL': '🌼',  # https://github.com/snarfed/bridgy/issues/748
+  'CARE': '🤗',
+  'HAHA': '😆',
+  'LOVE': '❤️',
   'PRIDE': '🏳️‍🌈',
+  'SAD': '😢',
+  'THANKFUL': '🌼',  # https://github.com/snarfed/bridgy/issues/748
+  'WOW': '😮',
   # nothing for LIKE (it's a like :P) or for NONE
 }
 
@@ -602,7 +603,7 @@ class Facebook(source.Source):
       activity_id: string activity id
       reaction_user_id: string id of the user who reacted
       reaction_id: string id of the reaction. one of:
-        'love', 'wow', 'haha', 'sad', 'angry'
+        'love', 'wow', 'haha', 'sad', 'angry', 'thankful', 'pride', 'care
       activity: activity object (optional)
     """
     if '_' not in reaction_id:  # handle just name of reaction type
