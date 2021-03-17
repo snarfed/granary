@@ -309,6 +309,8 @@ Changelog
 * Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the minimum required version.
 * Add [Pixelfed](https://pixelfed.org/)! Heavily based on Mastodon.
 * Standardize Instagram's and Facebook's scraping into new common `scraped_to_activities()`, `scraped_to_activity()`, and `merge_scraped_reactions()` methods.
+* Atom:
+  * Add the `summary` element ([#157](https://github.com/snarfed/granary/issues/157)).
 * REST API:
   * Bug fix: URL-encode Unicode characters in `Link` HTTP headers (eg `rel=self`, `rel=header`).
 * Facebook:

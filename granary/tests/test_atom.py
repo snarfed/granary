@@ -910,3 +910,19 @@ going to Homebrew Website Club
     obj['actor']['image'] = obj['actor']['image'][0]
     obj['attachments'][0]['image'] = obj['attachments'][0]['image'][0]
     check()
+
+  def test_summary(self):
+    """inReplyTo should be translated to thr:in-reply-to."""
+    activity = {'object': {
+      'summary': 'foo',
+      'content': 'bar',
+    }}
+
+    self.assert_multiline_in("""\
+<summary>foo</summary>
+<content type="xhtml">
+<div xmlns="http://www.w3.org/1999/xhtml">
+bar
+</div>
+</content>
+""", atom.activities_to_atom([activity], {}), ignore_blanks=True)

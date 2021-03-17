@@ -10,6 +10,10 @@
   <id>{{ url }}</id>
   <title>{{ activity.title|safe }}</title>
 
+  {% if obj.summary %}
+    <summary>{{ obj.summary|safe }}</summary>
+  {% endif %}
+
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 {% if obj.actor %}
