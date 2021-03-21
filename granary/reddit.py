@@ -22,10 +22,12 @@ from prawcore.exceptions import NotFound
 
 
 class Reddit(source.Source):
+  """Reddit source class. See file docstring and Source class for details."""
 
   DOMAIN = 'reddit.com'
   BASE_URL = 'https://reddit.com'
   NAME = 'Reddit'
+  OPTIMIZED_COMMENTS = True
 
   def __init__(self, refresh_token):
     self.refresh_token = refresh_token

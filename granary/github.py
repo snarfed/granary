@@ -232,7 +232,7 @@ class GitHub(source.Source):
     'use_automatic_links': False,
     'tag_callback': tag_placeholders,
   }
-
+  OPTIMIZED_COMMENTS = True
 
   def __init__(self, access_token=None):
     """Constructor.

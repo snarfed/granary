@@ -27,6 +27,7 @@ class Flickr(source.Source):
   DOMAIN = 'flickr.com'
   BASE_URL = 'https://www.flickr.com/'
   NAME = 'Flickr'
+  OPTIMIZED_COMMENTS = False
 
   API_EXTRAS = ','.join(('date_upload', 'date_taken', 'views', 'media',
                          'description', 'tags', 'machine_tags', 'geo',

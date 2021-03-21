@@ -72,6 +72,7 @@ class Instagram(source.Source):
   BASE_URL = 'https://www.instagram.com/'
   NAME = 'Instagram'
   FRONT_PAGE_TEMPLATE = 'templates/instagram_index.html'
+  OPTIMIZED_COMMENTS = False
 
   EMBED_POST = """
   <script async defer src="//platform.instagram.com/en_US/embeds.js"></script>

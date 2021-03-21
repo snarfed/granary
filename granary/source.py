@@ -205,12 +205,15 @@ class Source(object, metaclass=SourceMeta):
         Defaults to Twitter's limit, 280 characters as of 2019-10-12.
   * TRUNCATE_URL_LENGTH: integer, optional. Number of characters that URLs count
         for. Defaults to Twitter's, 23 as of 2019-10-12.
+  * OPTIMIZED_COMMENTS: boolean, whether :meth:`get_comment()` is optimized and
+    only fetches the requested comment. If False, :meth:`get_comment()` fetches
+    many or all of the post's comments to find the requested one.
   """
-
   POST_ID_RE = None
   HTML2TEXT_OPTIONS = {}
   TRUNCATE_TEXT_LENGTH = None
   TRUNCATE_URL_LENGTH = None
+  OPTIMIZED_COMMENTS = False
 
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""

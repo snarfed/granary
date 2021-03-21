@@ -214,6 +214,7 @@ class Facebook(source.Source):
   NAME = 'Facebook'
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
   POST_ID_RE = re.compile('^[0-9_:]+$')  # see parse_id() for gory details
+  OPTIMIZED_COMMENTS = True
 
   # HTML snippet for embedding a post.
   # https://developers.facebook.com/docs/plugins/embedded-posts/
