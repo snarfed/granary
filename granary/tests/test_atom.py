@@ -914,12 +914,12 @@ going to Homebrew Website Club
   def test_summary(self):
     """inReplyTo should be translated to thr:in-reply-to."""
     activity = {'object': {
-      'summary': 'foo',
+      'summary': 'foo &',
       'content': 'bar',
     }}
 
     self.assert_multiline_in("""\
-<summary>foo</summary>
+<summary>foo &amp;</summary>
 <content type="xhtml">
 <div xmlns="http://www.w3.org/1999/xhtml">
 bar

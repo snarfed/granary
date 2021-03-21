@@ -11,7 +11,7 @@
   <title>{{ activity.title|safe }}</title>
 
   {% if obj.summary %}
-    <summary>{{ obj.summary|safe }}</summary>
+    <summary>{{ obj.summary }}</summary>
   {% endif %}
 
   <content type="xhtml">
