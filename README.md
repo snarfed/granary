@@ -344,6 +344,7 @@ Changelog
   * `to_as1()`: for `Create` activities, include the activity actor's data in the object's author ([snarfed/bridgy-fed#75](https://github.com/snarfed/bridgy-fed/issues/75)).
   * `to_as1()`: convert `preferredUsername` to `username`.
   * `from_as1()`: convert `username` to `preferredUsername`.
+  * `from_as1()`: bug fix, make `context` kwarg actually work.
 
 ### 3.0 - 2020-04-08
 

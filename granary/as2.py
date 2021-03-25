@@ -82,7 +82,7 @@ def from_as1(obj, type=None, context=CONTEXT):
           type)
 
   if context:
-    obj['@context'] = CONTEXT
+    obj['@context'] = context
 
   def all_from_as1(field, type=None):
     return [from_as1(elem, type=type, context=None)

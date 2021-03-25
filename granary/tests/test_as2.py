@@ -19,6 +19,12 @@ class ActivityStreams2Test(testutil.TestCase):
     self.assertEqual({}, as2.to_as1(None))
     self.assertEqual({}, as2.to_as1({}))
 
+  def test_from_as1_context(self):
+    self.assertEqual({
+      'id': 'foo',
+      '@context': 'bar',
+    }, as2.from_as1({'id': 'foo'}, context='bar'))
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
