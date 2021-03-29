@@ -376,13 +376,14 @@ class Instagram(source.Source):
 
     Args:
       comment_id: string comment id
-      activity_id: string activity id, required
+      activity_id: string activity id, optional
       activity_author_id: string activity author id. Ignored.
       activity: activity object, optional. Avoids fetching the activity.
     """
     if not activity:
       activity = self._get_activity(None, activity_id)
     if activity:
+      # TODO: unify with instagram, maybe in source.get_comment()
       tag_id = self.tag_uri(comment_id)
       for reply in activity.get('object', {}).get('replies', {}).get('items', []):
         if reply.get('id') == tag_id:

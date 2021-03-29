@@ -317,6 +317,7 @@ Changelog
   * Scraping now uses [mbasic.facebook.com](https://mbasic.facebook.com/) instead of [m.facebook.com](https://m.facebook.com/).
 * Flickr:
   * Add support for adding tags to existing photos ([bridgy#857](https://github.com/snarfed/bridgy/issues/857)).
+  * `get_comment()`: skip fetching comments from API if `activity` kwarg is provided and contains the requested comment.
 * GitHub:
   * Handle [HTTP 451 Unavailable for Legal Reasons](https://en.wikipedia.org/wiki/HTTP_451) responses ([eg for DMCA takedowns](https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/)) gracefully.
   * Add create/preview support for reactions on pull review request comments (ie URLs with `#discussion_r...` fragments).

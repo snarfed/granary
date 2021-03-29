@@ -502,16 +502,24 @@ class Flickr(source.Source):
 
     return self.postprocess_object(obj)
 
-  def get_comment(self, comment_id, activity_id, activity_author_id=None,
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
                   activity=None):
     """Returns an ActivityStreams comment object.
 
     Args:
       comment_id: string comment id
-      activity_id: string activity id, required
+      activity_id: string activity id, optional
       activity_author_id: string activity author id, ignored
-      activity: activity object (optional)
+      activity: activity object, optional. Avoids fetching the activity.
     """
+    if activity:
+      # TODO: unify with instagram, maybe in source.get_comment()
+      logging.debug('Looking for comment in inline activity')
+      tag_id = self.tag_uri(comment_id)
+      for reply in activity.get('object', {}).get('replies', {}).get('items', []):
+        if reply.get('id') == tag_id:
+          return reply
+
     resp = self.call_api_method('flickr.photos.comments.getList', {
       'photo_id': activity_id,
     })

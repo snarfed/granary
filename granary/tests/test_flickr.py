@@ -321,7 +321,7 @@ PHOTO_COMMENTS = {
     'photo_id': '5227922370',
     'comment': [
       {
-        'id': '4942564-5227922370-72157625845945286',
+        'id': '4942564',
         'author': '36398523@N00',
         'authorname': 'if winter ends',
         'iconserver': '108',
@@ -348,7 +348,7 @@ COMMENT_OBJS = [{  # ActivityStreams
     'url': 'https://www.flickr.com/people/if_winter_ends/',
   },
   'content': 'Love this!',
-  'id': tag_uri('4942564-5227922370-72157625845945286'),
+  'id': tag_uri('4942564'),
   'updated': '2011-01-17T18:24:03+00:00',
   'published': '2011-01-17T18:24:03+00:00',
   'url': 'https://www.flickr.com/photos/kindofblue115/5227922370/#comment72157625845945286',
@@ -827,7 +827,12 @@ class FlickrTest(testutil.TestCase):
       }, json_dumps(PHOTO_COMMENTS))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0], self.flickr.get_comment(
-      '4942564-5227922370-72157625845945286', '5227922370'))
+      '4942564', '5227922370'))
+
+  def test_get_comment_with_activity(self):
+    # skips API call
+    got = self.flickr.get_comment('4942564', activity=ACTIVITY_WITH_COMMENTS)
+    self.assert_equals(COMMENT_OBJS[0], got)
 
   def test_search_raises_not_implemented(self):
     with self.assertRaises(NotImplementedError):
