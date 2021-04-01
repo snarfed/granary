@@ -175,6 +175,8 @@ class RedditTest(testutil.TestCase):
     self.submission_link.selftext = ''
     self.submission_link.url = 'https://reddit.com/ezv3f2'
 
+    reddit.user_cache.clear()
+
   def test_user_url(self):
     self.assert_equals('https://reddit.com/user/foo', self.reddit.user_url('foo'))
 

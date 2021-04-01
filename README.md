@@ -338,7 +338,9 @@ Changelog
   * Bug fix: URL-encode list names in API calls.
   * Bug fix: propagate alt text into AS1 `photo.displayName` so that it gets all the way into microformats2 JSON and HTML ([#183](https://github.com/snarfed/granary/issues/183)).
 * Reddit:
-  * Fix `post_id()`.
+  * Implement `post_id()`.
+  * Cache user data fetched from the API for 5m to avoid repeating user profile API requests ([bridgy#1021](https://github.com/snarfed/bridgy/issues/1021)).
+    when fetching multiple comments or posts from the same author
   * Bug fix: use 'displayName' instead of 'name' in AS1 objects for submissions.
   * Bug fix: use tag URIs for activity ids.
 * ActivityStreams 2:

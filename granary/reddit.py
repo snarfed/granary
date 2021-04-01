@@ -9,16 +9,23 @@ https://www.reddit.com/prefs/apps
 PRAW API docs:
 https://praw.readthedocs.io/
 """
-
-from . import source
 import logging
-from oauth_dropins import reddit
-from oauth_dropins.webutil import appengine_info, util
+import operator
 import re
 import urllib.parse, urllib.request
+import threading
 
+from cachetools import cachedmethod, TTLCache
+from oauth_dropins import reddit
+from oauth_dropins.webutil import appengine_info, util
 import praw
 from prawcore.exceptions import NotFound
+
+from . import source
+
+USER_CACHE_TIME = 5 * 60  # 5 minute expiration, in seconds
+user_cache = TTLCache(1000, USER_CACHE_TIME)
+user_cache_lock = threading.RLock()
 
 
 class Reddit(source.Source):
@@ -57,12 +64,22 @@ class Reddit(source.Source):
     if len(path_parts) >= 2:
       return path_parts[-2]
 
+  @cachedmethod(lambda self: user_cache, lock=lambda self: user_cache_lock,
+                key=lambda user: getattr(user, 'name', None))
   def praw_to_actor(self, praw_user):
     """Converts a PRAW Redditor to an actor.
 
     Makes external calls to fetch data from the Reddit API.
 
     https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
+
+    Caches fetched user data for 5m to avoid repeating user profile API requests
+    when fetching multiple comments or posts from the same author. Background:
+    https://github.com/snarfed/bridgy/issues/1021
+
+    Ideally this would be part of PRAW, but they seem uninterested:
+    https://github.com/praw-dev/praw/issues/131
+    https://github.com/praw-dev/praw/issues/1140
 
     Args:
       user: PRAW Redditor object
