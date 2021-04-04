@@ -47,6 +47,14 @@ microformats2
 -------------
 .. automodule:: granary.microformats2
 
+pixelfed
+--------
+.. automodule:: granary.pixelfed
+
+reddit
+------
+.. automodule:: granary.reddit
+
 rss
 ---
 .. automodule:: granary.rss

@@ -348,14 +348,18 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     the changelog. Change the current changelog entry in ``README.md``
     for this new version from *unreleased* to the current date.
 
-3.  Build the docs. If you added any new modules, add them to the
+3.  Bump the ``oauth-dropins`` version specifier in ``setup.py`` to the
+    most recent version, usually the same version number as this granary
+    release.
+
+4.  Build the docs. If you added any new modules, add them to the
     appropriate file(s) in ``docs/source/``. Then run
     ``./docs/build.sh``. Check that the generated HTML looks fine by
     opening ``docs/_build/html/index.html`` and looking around.
 
-4.  ``git commit -am 'release vX.Y'``
+5.  ``git commit -am 'release vX.Y'``
 
-5.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
+6.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
 
     .. code:: sh
 
@@ -364,7 +368,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
        source local/bin/activate.csh
        twine upload -r pypitest dist/granary-$ver.tar.gz
 
-6.  Install from test.pypi.org.
+7.  Install from test.pypi.org.
 
     .. code:: sh
 
@@ -376,7 +380,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
        pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
        deactivate
 
-7.  Smoke test that the code trivially loads and runs.
+8.  Smoke test that the code trivially loads and runs.
 
     .. code:: sh
 
@@ -406,7 +410,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
        a2 = g.get_activities()
        print(json.dumps(a2, indent=2))
 
-8.  Tag the release in git. In the tag message editor, delete the
+9.  Tag the release in git. In the tag message editor, delete the
     generated comments at bottom, leave the first line blank (to omit
     the release “title” in github), put ``### Notable changes`` on the
     second line, then copy and paste this version’s changelog contents
@@ -418,23 +422,23 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
        git push
        git push --tags
 
-9.  `Click here to draft a new release on
+10. `Click here to draft a new release on
     GitHub. <https://github.com/snarfed/granary/releases/new>`__ Enter
     ``vX.Y`` in the *Tag version* box. Leave *Release title* empty. Copy
     ``### Notable changes`` and the changelog contents into the
     description text box.
 
-10. Upload to `pypi.org <https://pypi.org/>`__!
+11. Upload to `pypi.org <https://pypi.org/>`__!
 
     .. code:: sh
 
        twine upload dist/granary-$ver.tar.gz
 
-11. `Build the docs on Read the
+12. `Build the docs on Read the
     Docs <https://readthedocs.org/projects/granary/builds/>`__: first
     choose *latest* in the drop-down, then click *Build Version*.
 
-12. On the `Versions
+13. On the `Versions
     page <https://readthedocs.org/projects/oauth-dropins/versions/>`__,
     check that the new version is active, If it’s not, activate it in
     the *Activate a Version* section.
@@ -498,27 +502,37 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-3.1 - *unreleased*
-~~~~~~~~~~~~~~~~~~
+3.1 - 2021-04-03
+~~~~~~~~~~~~~~~~
 
 -  Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the
    minimum required version.
 -  Add `Pixelfed <https://pixelfed.org/>`__! Heavily based on Mastodon.
+-  Standardize Instagram’s and Facebook’s scraping into new common
+   ``scraped_to_activities()``, ``scraped_to_activity()``, and
+   ``merge_scraped_reactions()`` methods.
+-  Atom:
+
+   -  Add the ``summary`` element
+      (`#157 <https://github.com/snarfed/granary/issues/157>`__).
+
+-  REST API:
+
+   -  Bug fix: URL-encode Unicode characters in ``Link`` HTTP headers
+      (eg ``rel=self``, ``rel=header``).
+
+-  Facebook:
+
+   -  Scraping now uses
+      `mbasic.facebook.com <https://mbasic.facebook.com/>`__ instead of
+      `m.facebook.com <https://m.facebook.com/>`__.
+
 -  Flickr:
 
    -  Add support for adding tags to existing photos
       (`bridgy#857 <https://github.com/snarfed/bridgy/issues/857>`__).
-
--  JSON Feed:
-
-   -  Gracefully handle when ``content_html`` and ``content_text`` are
-      `incorrectly <https://jsonfeed.org/version/1#items>`__ lists
-      instead of strings.
-
--  HTML/microformats2:
-
-   -  Add ``aria-hidden="true"`` to empty links
-      (`bridgy#947 <https://github.com/snarfed/bridgy/issues/947>`__).
+   -  ``get_comment()``: skip fetching comments from API if ``activity``
+      kwarg is provided and contains the requested comment.
 
 -  GitHub:
 
@@ -527,15 +541,28 @@ Changelog
       for DMCA
       takedowns <https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/>`__)
       gracefully.
+   -  Add create/preview support for reactions on pull review request
+      comments (ie URLs with ``#discussion_r...`` fragments).
+
+-  HTML/microformats2:
+
+   -  Add ``aria-hidden="true"`` to empty links
+      (`bridgy#947 <https://github.com/snarfed/bridgy/issues/947>`__).
+   -  Bug fix: escape ``&``, ``<``, and ``>`` characters in bare mf2
+      ``content`` properties
+      (`aaronpk/XRay#102 <https://github.com/aaronpk/XRay/issues/102>`__).
+   -  ``json_to_object()``: convert ``nickname`` to ``username``.
+
+-  JSON Feed:
+
+   -  Gracefully handle when ``content_html`` and ``content_text`` are
+      `incorrectly <https://jsonfeed.org/version/1#items>`__ lists
+      instead of strings.
 
 -  Instagram:
 
    -  Include threaded (ie nested) comments in scraping
       (`bridgy#958 <https://github.com/snarfed/bridgy/issues/958>`__).
-
--  Twitter:
-
-   -  Bug fix: URL-encode list names in API calls.
 
 -  Mastodon:
 
@@ -550,6 +577,35 @@ Changelog
    -  ``create()``: handle API errors and return the error message in
       the ``CreationResult``
       (`bridgy#921 <https://github.com/snarfed/bridgy/issues/921>`__).
+
+-  Twitter:
+
+   -  Bug fix: URL-encode list names in API calls.
+   -  Bug fix: propagate alt text into AS1 ``photo.displayName`` so that
+      it gets all the way into microformats2 JSON and HTML
+      (`#183 <https://github.com/snarfed/granary/issues/183>`__).
+
+-  Reddit:
+
+   -  Implement ``post_id()``.
+   -  Cache user data fetched from the API for 5m to avoid repeating
+      user profile API requests
+      (`bridgy#1021 <https://github.com/snarfed/bridgy/issues/1021>`__).
+      when fetching multiple comments or posts from the same author
+   -  Bug fix: use ‘displayName’ instead of ‘name’ in AS1 objects for
+      submissions.
+   -  Bug fix: use tag URIs for activity ids.
+
+-  ActivityStreams 2:
+
+   -  ``to_as1()``: for ``Create`` activities, include the activity
+      actor’s data in the object’s author
+      (`snarfed/bridgy-fed#75 <https://github.com/snarfed/bridgy-fed/issues/75>`__).
+   -  ``to_as1()``: convert ``preferredUsername`` to ``username``.
+   -  ``from_as1()``: convert ``username`` to ``preferredUsername``.
+   -  ``from_as1()``: bug fix, make ``context`` kwarg actually work.
+
+.. _section-1:
 
 3.0 - 2020-04-08
 ~~~~~~~~~~~~~~~~
@@ -628,7 +684,7 @@ Non-breaking changes:
    caching now.
 -  Added Meetup.com support for publishing RSVPs.
 
-.. _section-1:
+.. _section-2:
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
@@ -677,7 +733,7 @@ Non-breaking changes:
       supports one enclosure per item, so we now only include the first,
       and log a warning if the activity has more.)
 
-.. _section-2:
+.. _section-3:
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
@@ -727,7 +783,7 @@ Non-breaking changes:
 
    -  Default title to ellipsized content.
 
-.. _section-3:
+.. _section-4:
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
@@ -736,7 +792,7 @@ Non-breaking changes:
 March <https://developers.google.com/+/api-shutdown>`__. Notably, this
 removes the ``googleplus`` module.
 
-.. _section-4:
+.. _section-5:
 
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
@@ -787,7 +843,7 @@ removes the ``googleplus`` module.
 -  ``/url``: Return HTTP 400 when fetching the user’s URL results in an
    infinite redirect.
 
-.. _section-5:
+.. _section-6:
 
 1.14 - 2018-11-12
 ~~~~~~~~~~~~~~~~~
@@ -814,7 +870,7 @@ Encode ``&``\ s in author URL and email address too. (Thanks
 `sebsued <https://twitter.com/sebsued>`__!) \* AS2: \* Add ``Follow``
 support.
 
-.. _section-6:
+.. _section-7:
 
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
@@ -875,7 +931,7 @@ support.
    -  Support ``alt`` attribute in ``<img>`` tags
       (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
-.. _section-7:
+.. _section-8:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
@@ -910,7 +966,7 @@ impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. _section-8:
+.. _section-9:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -983,7 +1039,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Omit title from items if it’s the same as the content. (Often
       caused by microformats2’s implied ``p-name`` logic.)
 
-.. _section-9:
+.. _section-10:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -1025,7 +1081,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. _section-10:
+.. _section-11:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -1053,7 +1109,7 @@ still bugs. Please file issues if you notice anything broken!
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. _section-11:
+.. _section-12:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -1133,7 +1189,7 @@ still bugs. Please file issues if you notice anything broken!
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. _section-12:
+.. _section-13:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -1181,7 +1237,7 @@ still bugs. Please file issues if you notice anything broken!
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. _section-13:
+.. _section-14:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -1215,7 +1271,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. _section-14:
+.. _section-15:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -1253,14 +1309,14 @@ still bugs. Please file issues if you notice anything broken!
    -  Switch creating comments and reactions from GraphQL to REST API
       (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
-.. _section-15:
+.. _section-16:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. _section-16:
+.. _section-17:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -1294,7 +1350,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. _section-17:
+.. _section-18:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -1302,7 +1358,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. _section-18:
+.. _section-19:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -1345,7 +1401,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. _section-19:
+.. _section-20:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -1401,7 +1457,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. _section-20:
+.. _section-21:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -1424,7 +1480,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. _section-21:
+.. _section-22:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -1432,7 +1488,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. _section-22:
+.. _section-23:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~
