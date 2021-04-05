@@ -403,6 +403,18 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities(fetch_mentions=True))
 
+  def test_get_activities_fetch_mentions_null_status(self):
+    """https://console.cloud.google.com/errors/CNvulo670obn4AE"""
+    self.expect_get(API_TIMELINE, params={}, response=[])
+
+    notif = copy.deepcopy(MENTION_NOTIFICATION)
+    notif['status'] = None
+    self.expect_get(API_NOTIFICATIONS, [notif], json={
+      'exclude_types': ['follow', 'favourite', 'reblog'],
+    })
+    self.mox.ReplayAll()
+    self.assert_equals([], self.mastodon.get_activities(fetch_mentions=True))
+
   def test_get_activities_activity_id(self):
     self.expect_get(API_STATUS % '123', STATUS)
     self.mox.ReplayAll()

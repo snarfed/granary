@@ -250,8 +250,8 @@ class Mastodon(source.Source):
       notifs = self._get(API_NOTIFICATIONS, json={
         'exclude_types': ['follow', 'favourite', 'reblog'],
       })
-      activities.extend(self.status_to_activity(n.get('status')) for n in notifs
-                        if n.get('type') == 'mention')
+      activities.extend(self.status_to_activity(n['status']) for n in notifs
+                        if n.get('status') and n.get('type') == 'mention')
 
     resp = self.make_activities_base_response(util.trim_nulls(activities))
     if cache_updates and cache is not None:
