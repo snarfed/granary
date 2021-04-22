@@ -12,7 +12,7 @@ entrypoint: gunicorn --workers 1 --timeout 300 -b :$PORT app:application
 automatic_scaling:
   max_idle_instances: 1
   max_concurrent_requests: 12
-  max_pending_latency: 100ms  # default is 30
+  max_pending_latency: 300ms  # default is 30
 
 handlers:
 - url: /(static/bootstrap.*\.css)
