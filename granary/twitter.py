@@ -1191,8 +1191,14 @@ class Twitter(source.Source):
     retweeted = tweet.get('retweeted_status')
     base_tweet = retweeted if retweeted else tweet
     entities = self._get_entities(base_tweet)
-    text = util.WideUnicode(base_tweet.get('text') or '')
 
+    # text content
+    text = util.WideUnicode(
+      base_tweet.get('full_text') or base_tweet.get('text') or '')
+    text_start, text_end = (base_tweet.get('display_text_range')
+                            or (0, len(text)))
+
+    # author
     user = tweet.get('user')
     if user:
       obj['author'] = self.user_to_actor(user)
@@ -1238,15 +1244,19 @@ class Twitter(source.Source):
     if quoted:
       quoted_obj = self.tweet_to_object(quoted)
       obj.setdefault('attachments', []).append(quoted_obj)
-      quoted_url = quoted_obj.get('url')
+      quoted_url = (quoted_obj.get('url') or
+                    tweet.get('quoted_status_permalink', {}).get('expanded'))
 
-      # remove quoted tweet URL from text
+      # remove quoted tweet URL from text, tags
       url_entities = entities.get('urls', [])
       for i, entity in enumerate(url_entities):
         indices = entity.get('indices')
         if indices and entity.get('expanded_url') == quoted_url:
-          text = text[:indices[0]] + text[indices[1]:]
+          start, end = indices
+          text = text[:start] + text[end:]
           del url_entities[i]
+          if start >= text_start and end <= text_end:
+            text_end -= (end - start)
 
     # tags
     obj['tags'] = [
@@ -1292,22 +1302,13 @@ class Twitter(source.Source):
       rt_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
         (retweeted.get('user', {}).get('screen_name'),) * 2)
 
-    # text content. linkify entities. convert start/end indices to start/length,
-    # and replace t.co URLs with real "display" URLs.
-    text_start, text_end = (0, len(text))
+    # person mentions
+    obj['to'].extend(tag for tag in obj['tags']
+                     if tag.get('objectType') in ('person', 'mention')
+                     and tag.get('indices')[1] <= text_start)
 
-    full_text = base_tweet.get('full_text')
-    if full_text:
-      text = util.WideUnicode(full_text)
-      text_start, text_end = (tweet['display_text_range']
-                              if tweet.get('display_text_range')
-                              else (0, len(text)))
-      obj['to'].extend(tag for tag in obj['tags']
-                       if tag.get('objectType') in ('person', 'mention')
-                       and tag.get('indices')[1] <= text_start)
-
-    # convert start/end indices to start/length, and replace t.co URLs with
-    # real "display" URLs.
+    # linkify entities. convert start/end indices to start/length, and replace
+    # t.co URLs with real "display" URLs.
     content = util.WideUnicode(rt_prefix + text[text_start:text_end])
     offset = len(rt_prefix) - text_start
     for t in obj['tags']:
@@ -1352,9 +1353,9 @@ class Twitter(source.Source):
     reply_to_id = tweet.get('in_reply_to_status_id')
     if reply_to_id and reply_to_screenname:
       obj['inReplyTo'] = [{
-          'id': self.tag_uri(reply_to_id),
-          'url': self.status_url(reply_to_screenname, reply_to_id),
-          }]
+        'id': self.tag_uri(reply_to_id),
+        'url': self.status_url(reply_to_screenname, reply_to_id),
+      }]
 
     return self.postprocess_object(obj)
 

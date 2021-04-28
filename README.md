@@ -307,6 +307,8 @@ Changelog
 ### 3.2 - unreleased
 * Mastodon:
   * Bug fix for `get_activities()` with `fetch_mentions=True`: handle notifications with `status: null`. Maybe happens when a status is deleted?
+* Twitter:
+  * Bug fixes for removing t.co links to quoted tweets.
 
 ### 3.1 - 2021-04-03
 

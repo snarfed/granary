@@ -1242,6 +1242,93 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals('I agree with this https://t.co/ww6HD8KroG',
                        self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
 
+  def test_remove_quote_tweet_link(self):
+    """https://twitter.com/orbuch/status/1386432051751030788"""
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'tag:twitter.com:1386432051751030788',
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'tag:twitter.com:1386425010223423490',
+        'url': 'https://twitter.com/drvolts/status/1386425010223423490',
+        'author': {
+          'objectType': 'person',
+          'id': 'tag:twitter.com:drvolts',
+          'numeric_id': '22737278',
+          'displayName': 'drvolts',
+          'url': 'https://twitter.com/drvolts',
+          'username': 'drvolts',
+        },
+      }],
+    }, self.twitter.tweet_to_object({
+      'id_str' : '1386432051751030788',
+      'full_text' : 'https://t.co/kp2kgqV7Yx',
+      'entities' : {
+        'urls' : [{
+          'url' : 'https://t.co/kp2kgqV7Yx',
+          'display_url' : 'twitter.com/drvolts/status…',
+          'expanded_url' : 'https://twitter.com/drvolts/status/1386425010223423490',
+          'indices' : [0, 23]
+        }],
+      },
+      'quoted_status' : {
+        'id_str' : '1386425010223423490',
+        'user' : {
+          'screen_name' : 'drvolts',
+          'id_str' : '22737278',
+          'url' : 'https://t.co/SjJyrHY9Mx',
+        },
+      },
+    }))
+
+  def test_remove_quote_tweet_link_with_photo(self):
+    """https://twitter.com/bradfitz/status/1382912988835848199"""
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'tag:twitter.com:1382912988835848199',
+      'content': "Kid isn't quite to chess yet, but working on the simul puzzles... ",
+      'image': {'url': 'https://pbs.twimg.com/media/EzEX1VJVEAYK9tp.jpg'},
+      'attachments': [{
+        'image': {'url': 'https://pbs.twimg.com/media/EzEX1VJVEAYK9tp.jpg'},
+        'objectType': 'image',
+      }, {
+        'objectType': 'note',
+        'id': 'tag:twitter.com:1382705862263853066',
+        'content': 'Kasparov in simul play in the 1980s.',
+      }],
+    } , self.twitter.tweet_to_object({
+      'id_str' : '1382912988835848199',
+      'full_text' : "Kid isn't quite to chess yet, but working on the simul puzzles... https://t.co/gXs8YWcWOM https://t.co/7BfZyXQn4q",
+      'display_text_range' : [0, 89],
+      'entities' : {
+        'media' : [{
+          'display_url' : 'pic.twitter.com/7BfZyXQn4q',
+          'expanded_url' : 'https://twitter.com/bradfitz/status/1382912988835848199/photo/1',
+          'id_str' : '1382912765556232198',
+          'indices' : [90, 113],
+          'media_url_https' : 'https://pbs.twimg.com/media/EzEX1VJVEAYK9tp.jpg',
+          'type' : 'photo',
+          'url' : 'https://t.co/7BfZyXQn4q',
+        }],
+        'urls' : [{
+          'display_url' : 'twitter.com/olimpiuurcan/s…',
+          'expanded_url' : 'https://twitter.com/olimpiuurcan/status/1382705862263853066',
+          'indices' : [66, 89],
+          'url' : 'https://t.co/gXs8YWcWOM',
+        }],
+      },
+      'is_quote_status' : True,
+      'quoted_status_id_str' : '1382705862263853066',
+      'quoted_status' : {
+        'display_text_range' : [0, 36],
+        'full_text' : 'Kasparov in simul play in the 1980s. https://t.co/gXJ088nBKU',
+        'id_str' : '1382705862263853066',
+      },
+      'quoted_status_permalink' : {
+        'expanded' : 'https://twitter.com/olimpiuurcan/status/1382705862263853066',
+      },
+    }))
+
   def test_tweet_to_object_unicode_high_code_points(self):
     """Test Unicode high code point chars.
 
