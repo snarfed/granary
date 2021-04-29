@@ -127,6 +127,10 @@ M_HTML_TIMELINE_URL = '%s?v=timeline'
 M_HTML_POST_URL = 'story.php?story_fbid=%s&id=%s'
 M_HTML_REACTIONS_URL = 'ufi/reaction/profile/browser/?ft_ent_identifier=%s'
 
+# Use a modern browser user agent so that we get modern HTML tags like article
+# and footer, which we then use to scrape.
+SCRAPE_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:88.0) Gecko/20100101 Firefox/88.0'
+
 # Maps Facebook Graph API type, status_type, or Open Graph data type to
 # ActivityStreams objectType.
 # https://developers.facebook.com/docs/graph-api/reference/post#fields
@@ -306,9 +310,6 @@ class Facebook(source.Source):
       raise NotImplementedError()
 
     if self.scrape:
-      if not activity_id and not group_id == source.SELF:
-        raise NotImplementedError(
-          'Scraping requires either activity_id or group_id=@self.')
       return self._scrape_m(user_id=user_id, activity_id=activity_id,
                             fetch_replies=fetch_replies, fetch_likes=fetch_likes)
 
@@ -1830,14 +1831,17 @@ class Facebook(source.Source):
     Returns:
       dict activities API response
     """
-    user_id = user_id or self.user_id
-    if not (user_id and self.cookie_c_user and self.cookie_xs):
-      raise NotImplementedError('Scraping requires c_user and xs cookie and user_id.')
+    user_id = user_id or self.user_id or ''
+    if not (self.cookie_c_user and self.cookie_xs):
+      raise NotImplementedError('Scraping requires c_user and xs cookies.')
 
     def get(url, *params):
       url = urllib.parse.urljoin(M_HTML_BASE_URL, url % params)
       cookie = 'c_user=%s; xs=%s' % (self.cookie_c_user, self.cookie_xs)
-      resp = util.requests_get(url, allow_redirects=False, headers={'Cookie': cookie})
+      resp = util.requests_get(url, allow_redirects=False, headers={
+        'Cookie': cookie,
+        'User-Agent': SCRAPE_USER_AGENT,
+      })
       resp.raise_for_status()
       return resp
 
@@ -1877,7 +1881,7 @@ class Facebook(source.Source):
     soup = util.parse_html(scraped)
 
     activities = []
-    for post in soup.find_all(('article', 'div'), id=re.compile('u_0_.')):
+    for post in soup.find_all(('article', 'div'), id=re.compile('u_0_.+')):
       permalink = post.find(href=re.compile(r'^/story\.php\?'))
       if not permalink:
         logging.debug('Skipping one due to missing permalink')
