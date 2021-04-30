@@ -1909,6 +1909,8 @@ class Facebook(source.Source):
             else {'objectType': 'unknown'})
       id = self.tag_uri(post_id)
 
+      # pictures and videos. (remove from post so any text, eg "Play Video,"
+      # isn't included in the content.)
       attachments = []
       for a in post.find_all('a', href=re.compile(r'^/photo\.php\?')):
         if a.img:
@@ -1920,6 +1922,15 @@ class Facebook(source.Source):
               'url': a.img.get('src'),
               'displayName': alt,
             }})
+        a.extract()
+      for a in post.find_all('a', href=re.compile(r'^/video_redirect/\?')):
+        vid = urllib.parse.parse_qs(urllib.parse.urlparse(a['href']).query).get('src')
+        attachments.append({
+          'objectType': 'video',
+          'stream': {'url': vid[0] if vid else None},
+          'image': {'url': a.img.get('src') if a.img else None},
+        })
+        a.extract()
 
       # comment count
       # TODO: internationalize this :/

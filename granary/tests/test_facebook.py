@@ -1154,6 +1154,11 @@ MBASIC_OBJS = [{
   'content': POST_OBJ['content'],
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'published': '1999-12-22T20:41:00',
+  'attachments': [{
+    'objectType': 'video',
+    'stream': {'url': 'https://video-sjc3-1.xx.fbcdn.net/v/t42.1790-2/99_88_77_n.mp4?_nc_cat=100&...'},
+    'image': {'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t15.5256-10/cp0/e15/q65/p320x320/99_88_77_n.jpg?_nc_cat=...'},
+  }],
 }, {
   'objectType': 'note',
   'id': tag_uri('456'),
@@ -1303,7 +1308,6 @@ for a in MBASIC_ACTIVITIES_REPLIES_REACTIONS:
   a['object']['tags'] = MBASIC_REACTION_TAGS(a['fb_id'])
 
 MBASIC_PROFILE_ACTIVITIES = copy.deepcopy(MBASIC_ACTIVITIES)
-del MBASIC_PROFILE_ACTIVITIES[1]['object']['attachments']
 for a in MBASIC_PROFILE_ACTIVITIES:
   a['actor'] = a['object']['author'] = {
     'objectType': 'person',
@@ -1312,6 +1316,7 @@ for a in MBASIC_PROFILE_ACTIVITIES:
     'numeric_id': '212038',
     'url': 'https://www.facebook.com/212038',
   }
+  del a['object']['attachments']
 
 MBASIC_ACTIVITY = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES[1])
 del MBASIC_ACTIVITY['object']['fb_reaction_count']
