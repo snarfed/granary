@@ -1909,6 +1909,18 @@ class Facebook(source.Source):
             else {'objectType': 'unknown'})
       id = self.tag_uri(post_id)
 
+      attachments = []
+      for a in post.find_all('a', href=re.compile(r'^/photo\.php\?')):
+        if a.img:
+          alt = a.img.get('alt')
+          attachments.append({
+            'objectType': 'image',
+            'displayName': alt,
+            'image': {
+              'url': a.img.get('src'),
+              'displayName': alt,
+            }})
+
       # comment count
       # TODO: internationalize this :/
       comments_count = None
@@ -1946,6 +1958,7 @@ class Facebook(source.Source):
           'to': [to],
           'replies': {'totalItems': comments_count},
           'fb_reaction_count': reactions_count,
+          'attachments': attachments,
         },
       })
 

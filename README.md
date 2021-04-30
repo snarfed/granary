@@ -305,6 +305,8 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 3.2 - unreleased
+* Facebook:
+  * Scraping: handle pictures in posts in timeline/news feed pages.
 * Mastodon:
   * Bug fix for `get_activities()` with `fetch_mentions=True`: handle notifications with `status: null`. Maybe happens when a status is deleted?
 * Twitter:

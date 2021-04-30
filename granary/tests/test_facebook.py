@@ -1164,6 +1164,19 @@ MBASIC_OBJS = [{
   'to': [{'objectType': 'unknown'}],
   'replies': {'totalItems': 55},
   'fb_reaction_count': 145,
+  'attachments': [{
+    'objectType': 'image',
+    'image': {
+      'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-0/cp0/e15/q65/s206x206/x_y_z_o.jpg',
+      'displayName': 'Image may contain: sky, tree, twilight, outdoor and nature',
+    },
+    'displayName': 'Image may contain: sky, tree, twilight, outdoor and nature',
+  }, {
+    'objectType': 'image',
+    'image': {
+      'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-0/cp0/e15/z32/s206x206/x_y_z_o.jpg',
+    },
+  }],
 }]
 MBASIC_ACTIVITIES = [{
   'objectType': 'activity',
@@ -1290,6 +1303,7 @@ for a in MBASIC_ACTIVITIES_REPLIES_REACTIONS:
   a['object']['tags'] = MBASIC_REACTION_TAGS(a['fb_id'])
 
 MBASIC_PROFILE_ACTIVITIES = copy.deepcopy(MBASIC_ACTIVITIES)
+del MBASIC_PROFILE_ACTIVITIES[1]['object']['attachments']
 for a in MBASIC_PROFILE_ACTIVITIES:
   a['actor'] = a['object']['author'] = {
     'objectType': 'person',
