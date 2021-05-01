@@ -1158,6 +1158,11 @@ MBASIC_OBJS = [{
     'objectType': 'video',
     'stream': {'url': 'https://video-sjc3-1.xx.fbcdn.net/v/t42.1790-2/99_88_77_n.mp4?_nc_cat=100&...'},
     'image': {'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t15.5256-10/cp0/e15/q65/p320x320/99_88_77_n.jpg?_nc_cat=...'},
+  }, {
+    'objectType': 'article',
+    'url': 'https://a.link/foo',
+    'displayName': 'Episode 1 — Foo',
+    'image': {'url': 'https://a.link/pic'},
   }],
 }, {
   'objectType': 'note',

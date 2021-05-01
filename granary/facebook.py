@@ -1932,6 +1932,9 @@ class Facebook(source.Source):
         })
         a.extract()
 
+      # link attachments
+      attachments.extend(self._scrape_attachments(post))
+
       # comment count
       # TODO: internationalize this :/
       comments_count = None
@@ -2078,18 +2081,7 @@ class Facebook(source.Source):
     # link attachments
     activity['object']['attachments'] = []
     for div in body_parts.find_all('div', recursive=False)[1:]:
-      for link in div.find_all(
-          'a', href=re.compile('^https://lm.facebook.com/l.php')):
-        url = self._unwrap_link(link)
-        if url:
-          img = div.find('img')
-          name = div.find('h3')
-          activity['object']['attachments'].append({
-            'objectType': 'article',
-            'url': url,
-            'displayName': name.get_text(' ', strip=True) if name else None,
-            'image': {'url': self._unwrap_link(img)},
-          })
+      activity['object']['attachments'].extend(self._scrape_attachments(div))
 
     # comments
     replies = []
@@ -2253,6 +2245,32 @@ class Facebook(source.Source):
       link.replace_with(Facebook._unwrap_link(link))
 
     return html.escape(content_div.get_text(' ', strip=True))
+
+  @classmethod
+  def _scrape_attachments(cls, tag):
+    """Extracts link attachments from a post.
+
+    Args:
+      tag: BeautifulSoup a or img tag
+
+    Returns: list of AS1 attachment objects
+    """
+    atts = []
+    for link in tag.find_all('a', href=re.compile('^https://lm.facebook.com/l.php')):
+      url = cls._unwrap_link(link)
+      name = link.h3
+      img = link.img
+      # all links in post text are wrapped, so check h3 and img so that we only
+      # trigger on actual attachments
+      if url and name and img:
+        atts.append({
+          'objectType': 'article',
+          'url': url,
+          'displayName': name.get_text(' ', strip=True),
+          'image': {'url': cls._unwrap_link(img)},
+        })
+
+    return atts
 
   @staticmethod
   def _unwrap_link(tag):
