@@ -1,45 +1,7 @@
 # coding=utf-8
-"""Facebook source class. Uses the Graph API.
+"""Facebook source class. Supports both Graph API and scraping HTML.
 
 https://developers.facebook.com/docs/graph-api/using-graph-api/
-
-The Audience Targeting 'to' field is set to @public or @private based on whether
-the Facebook object's 'privacy' field is 'EVERYONE' or anything else.
-https://developers.facebook.com/docs/reference/api/privacy-parameter/
-
-Retrieving @all activities from :meth:`get_activities()` (the default) currently
-returns an incomplete set of activities, ie *NOT* exactly the same set as your
-Facebook News Feed: https://www.facebook.com/help/327131014036297/
-
-This is complicated, and I still don't fully understand how or why they differ,
-but based on lots of experimenting and searching, it sounds like the current
-state is that you just can't reproduce the News Feed via Graph API's /me/home,
-FQL's stream table, or any other Facebook API, full stop. :(
-
-Random details:
-
-- My access tokens have the read_stream permission.
-  https://developers.facebook.com/docs/facebook-login/permissions#reference-read_stream
-
-- Lots of FUD on Stack Overflow, etc. that permissions might be the root cause.
-  Non-public posts, photos, etc from your friends may not be exposed to an app
-  if they haven't added it themselves. Doesn't seem true empirically, since
-  get_activities() does return some non-public posts.
-
-- I tried lots of different values for stream_filter/filter_key, both Graph API
-  and FQL. No luck.
-  https://developers.facebook.com/docs/reference/fql/stream_filter/
-
-- Back in 4/2012, an FB engineer posted on SO that this is expected, and that
-  Graph API and FQL shouldn't differ: http://stackoverflow.com/a/10157136/186123
-
-- The API docs *used* to say, "Note: /me/home retrieves an outdated view of the
-  News Feed. This is currently a known issue and we don't have any near term
-  plans to bring them back up into parity."
-  (from old dead https://developers.facebook.com/docs/reference/api/#searching )
-
-See the fql_stream_to_post() method below for code I used to experiment with the
-FQL stream table.
 """
 import collections
 import copy
