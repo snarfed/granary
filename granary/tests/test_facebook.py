@@ -990,7 +990,6 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 <p>
 <a class="link" href="http://my.link/">
 <img class="u-photo" src="https://fbcdn-photos-a.akamaihd.net/abc_xyz_o.jpg" alt="my link name" />
-<span class="name">my link name</span>
 </a>
 <span class="summary">my link caption</span>
 </p>

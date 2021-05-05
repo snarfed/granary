@@ -1022,10 +1022,11 @@ def _render_attachments(attachments, obj):
     open_a_tag = False
     content += '\n<p>'
 
-    if att.get('objectType') == 'video':
+    type = att.get('objectType')
+    if type == 'video':
       if stream:
         content += vid(stream, poster=image)
-    elif att.get('objectType') == 'audio':
+    elif type == 'audio':
       if stream:
         content += aud(stream)
     else:
@@ -1036,7 +1037,7 @@ def _render_attachments(attachments, obj):
       if image:
         content += '\n' + img(image, name)
 
-    if name:
+    if name and type != 'image':
       content += '\n<span class="name">%s</span>' % name
 
     if open_a_tag:

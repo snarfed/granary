@@ -637,7 +637,6 @@ ATOM = """\
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="u-photo" src="https://p.twimg.com/picture1" alt="the alt text" />
-<span class="name">the alt text</span>
 </a>
 </p>
 <p>  <span class="p-location h-card">

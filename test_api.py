@@ -193,23 +193,24 @@ class HandlerTest(testutil.HandlerTest):
 
   def test_atom_format(self):
     for test_module in test_facebook, test_instagram, test_twitter:
-      self.reset()
-      self.mox.StubOutWithMock(FakeSource, 'get_actor')
-      FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
-      self.activities = [copy.deepcopy(test_module.ACTIVITY)]
+      with self.subTest(test_module):
+        self.reset()
+        self.mox.StubOutWithMock(FakeSource, 'get_actor')
+        FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
+        self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
-      # include access_token param to check that it gets stripped
-      resp = self.get_response('/fake?format=atom&access_token=foo&a=b&cache=false')
-      self.assertEqual(200, resp.status_int)
-      self.assertEqual('application/atom+xml; charset=utf-8',
-                        resp.headers['Content-Type'])
-      self.assert_multiline_equals(
-        test_module.ATOM % {
-          'request_url': 'http://localhost/fake?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
-          'host_url': 'http://fa.ke/',
-          'base_url': 'http://fa.ke/',
-        },
-        resp.text, ignore_blanks=True)
+        # include access_token param to check that it gets stripped
+        resp = self.get_response('/fake?format=atom&access_token=foo&a=b&cache=false')
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual('application/atom+xml; charset=utf-8',
+                          resp.headers['Content-Type'])
+        self.assert_multiline_equals(
+          test_module.ATOM % {
+            'request_url': 'http://localhost/fake?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
+            'host_url': 'http://fa.ke/',
+            'base_url': 'http://fa.ke/',
+          },
+          resp.text, ignore_blanks=True)
 
   def test_html_format(self):
     resp = self.get_response('/fake?format=html')

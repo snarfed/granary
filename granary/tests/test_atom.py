@@ -107,23 +107,24 @@ class AtomTest(testutil.TestCase):
 
   def test_activities_to_atom(self):
     for test_module in test_facebook, test_instagram, test_twitter:
-      request_url = 'http://request/url?access_token=foo'
-      host_url = 'http://host/url'
-      base_url = 'http://base/url'
-      self.assert_multiline_equals(
-        test_module.ATOM % {
-          'request_url': request_url,
-          'host_url': host_url,
-          'base_url': base_url,
-        },
-        atom.activities_to_atom(
-          [copy.deepcopy(test_module.ACTIVITY)],
-          test_module.ACTOR,
-          request_url=request_url,
-          host_url=host_url,
-          xml_base=base_url
-        ),
-        ignore_blanks=True)
+      with self.subTest(test_module):
+        request_url = 'http://request/url?access_token=foo'
+        host_url = 'http://host/url'
+        base_url = 'http://base/url'
+        self.assert_multiline_equals(
+          test_module.ATOM % {
+            'request_url': request_url,
+            'host_url': host_url,
+            'base_url': base_url,
+          },
+          atom.activities_to_atom(
+            [copy.deepcopy(test_module.ACTIVITY)],
+            test_module.ACTOR,
+            request_url=request_url,
+            host_url=host_url,
+            xml_base=base_url
+          ),
+          ignore_blanks=True)
 
   def test_activity_to_atom(self):
     self.assert_multiline_equals(

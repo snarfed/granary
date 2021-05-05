@@ -426,7 +426,6 @@ Shared <a href="#">a post</a> by foo
     self.assert_multiline_equals("""\
 <p>
 <img class="u-photo" src="att-img" alt="d &amp; e" />
-<span class="name">d & e</span>
 </p>""", content, ignore_blanks=True)
 
   def test_mention_and_hashtag(self):

@@ -309,6 +309,8 @@ Changelog
   * Scraping: handle pictures, videos, and link attachments in posts in timeline/news feed pages.
 * Mastodon:
   * Bug fix for `get_activities()` with `fetch_mentions=True`: handle notifications with `status: null`. Maybe happens when a status is deleted?
+* microformats2:
+  * Stop rendering `image.displayName` as visible text in HTML, since it's already in the `<img>`'s `alt` attribute.
 * Twitter:
   * Bug fixes for removing t.co links to quoted tweets.
 
