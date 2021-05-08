@@ -306,7 +306,7 @@ Changelog
 ---
 ### 3.2 - unreleased
 * Facebook:
-  * Scraping: handle pictures, videos, and link attachments in posts in timeline/news feed pages.
+  * Scraping: handle pictures, videos, link attachments, and text links in timeline/news feed posts.
 * Mastodon:
   * Bug fix for `get_activities()` with `fetch_mentions=True`: handle notifications with `status: null`. Maybe happens when a status is deleted?
 * microformats2:

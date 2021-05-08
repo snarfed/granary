@@ -1150,7 +1150,8 @@ MBASIC_OBJS = [{
   'fb_id': '123',
   'url': 'https://www.facebook.com/story.php?story_fbid=123&id=212038',
   'author': MBASIC_ACTOR,
-  'content': POST_OBJ['content'],
+  'content': """<p>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.
+                          </p>""",
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'published': '1999-12-22T20:41:00',
   'attachments': [{
@@ -1169,7 +1170,10 @@ MBASIC_OBJS = [{
   'fb_id': '456',
   'url': 'https://www.facebook.com/story.php?story_fbid=456&id=212038',
   'author': MBASIC_ACTOR,
-  'content': 'Oh hi, Jeeves . ( https://di5.us/b/Y4 )',
+  'content': """<p>Oh hi,
+                        <a href="/popularscience?refid=52&amp;_ft_=...&amp;__tn__=%2As-R">Jeeves
+                        </a>. (<a href="https://di5.us/b/Y4">di5.us/b/Y4</a>)
+                        </p>""",
   'to': [{'objectType': 'unknown'}],
   'replies': {'totalItems': 55},
   'fb_reaction_count': 145,
@@ -1219,7 +1223,10 @@ MBASIC_PHOTO_ACTIVITY = {
       'url': 'https://www.facebook.com/100009447618341',
       'displayName': 'Snoøpy Barrett',
     },
-    'content': 'Cérémonie d’enfermement d’une recluse',
+    'content': """<div class="_2vj8">Cérémonie d’enfermement d’une recluse
+                          <div class="_2vj9" id="voice_replace_id">
+</div>
+</div>""",
     'image': {'displayName': 'No photo description available.',
               'url': 'https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/28378630_2017433665248201_4279440600419964376_n.jpg?...'},
     'published': '2018-02-22T00:00:00',
@@ -1232,7 +1239,8 @@ MBASIC_PHOTO_ACTIVITY = {
           'displayName': 'Ryan Barrett',
           'username': 'snarfed.org',
         },
-        'content': 'Testing foo bar',
+        'content': """<div class="_14ye">Testing foo bar
+                                </div>""",
         'id': 'tag:facebook.com:2017433665248201_2921985358126356',
         'inReplyTo': [{
           'id': 'tag:facebook.com:2017433665248201',
@@ -1252,7 +1260,8 @@ def MBASIC_REPLIES(post_id):
       'id': tag_uri(post_id + '_777'),
       'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038&comment_id=777' % post_id,
       'published': '1999-06-14T00:00:00',
-      'content': 'What...the...?',
+      'content': """<div class="da">What...the...?
+                        </div>""",
       'inReplyTo': [{
         'id': tag_uri(post_id),
         'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
@@ -1262,7 +1271,13 @@ def MBASIC_REPLIES(post_id):
       'objectType': 'comment',
       'id': tag_uri(post_id + '_888'),
       'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038&comment_id=888' % post_id,
-      'content': 'Wat',
+      'content': """<div class="da">Wat
+                          <span class="dk dl" title="neutral emoticon">
+<img alt="" class="s" height="16" role="presentation" src="https://static.xx.fbcdn.net/images/emoji.php/v9/t6d/1/16/1f610.png" width="16"/>
+<span aria-hidden="true" class="dm">
+</span>
+</span>
+</div>""",
       'inReplyTo': [{
         'id': tag_uri(post_id),
         'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
@@ -1312,6 +1327,11 @@ for a in MBASIC_ACTIVITIES_REPLIES_REACTIONS:
   a['object']['tags'] = MBASIC_REACTION_TAGS(a['fb_id'])
 
 MBASIC_PROFILE_ACTIVITIES = copy.deepcopy(MBASIC_ACTIVITIES)
+MBASIC_PROFILE_ACTIVITIES[0]['object']['content'] = """<span>
+<p>
+</p><div>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.
+</div>
+</span>"""
 for a in MBASIC_PROFILE_ACTIVITIES:
   a['actor'] = a['object']['author'] = {
     'objectType': 'person',
@@ -3326,7 +3346,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     expected = copy.deepcopy(MBASIC_ACTIVITIES)
-    del expected[0]['object']['content']
+    expected[0]['object']['content'] = '<div class="widePic">\n\n</div>'
     got, _ = self.fb.scraped_to_activities(str(soup))
     self.assert_equals(expected, got)
 

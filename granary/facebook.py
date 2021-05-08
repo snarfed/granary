@@ -11,6 +11,7 @@ import logging
 import re
 import urllib.error, urllib.parse, urllib.request
 
+from bs4.element import NavigableString, Tag
 import dateutil.parser
 import mf2util
 import oauth_dropins.facebook
@@ -2179,8 +2180,8 @@ class Facebook(source.Source):
 
     return util.trim_nulls(actor)
 
-  @staticmethod
-  def _scraped_content(tag):
+  @classmethod
+  def _scraped_content(cls, tag):
     """Extract and process content.
 
     Args:
@@ -2193,20 +2194,35 @@ class Facebook(source.Source):
     # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
     # (also apply any fix to scraped_to_activity().)
     try:
-      content_div = Facebook._div(tag, 0, 0)
+      content = cls._div(tag, 0, 0)
     except IndexError:
       logging.debug('Skipping due to non-post format (searching for content)')
       return ''
 
-    if not content_div:
+    if not content:
       return ''
 
-    # join embedded links without whitespace
-    for link in content_div.find_all(
-        'a', href=re.compile('^https://lm.facebook.com/l.php')):
-      link.replace_with(Facebook._unwrap_link(link))
+    # remove outer tags
+    while content.name in ('div', 'span', 'p'):
+      elems = [t for t in content.contents if not
+               (isinstance(t, NavigableString) and t.string.strip() == '')]
+      if len(elems) == 1 and isinstance(elems[0], Tag):
+        content = elems[0]
+      else:
+        break
 
-    return html.escape(content_div.get_text(' ', strip=True))
+    # join embedded links without whitespace
+    for link in content.find_all(
+        'a', href=re.compile(r'^https://lm\.facebook\.com/l\.php')):
+      new_link = util.pretty_link(cls._unwrap_link(link))
+      link.replace_with(util.parse_html(new_link).a)
+
+    # remove Facebook's "... More" when content is ellipsized
+    more = content.find('a', href=re.compile(r'^/story\.php'), string='More')
+    if more:
+      more.extract()
+
+    return str(content)
 
   @classmethod
   def _scrape_attachments(cls, tag):
