@@ -1420,14 +1420,14 @@ class TwitterTest(testutil.TestCase):
             'expanded_url': 'https://www.onename.io/',
             'display_url': 'onename.io',
             'indices': [71, 94],
-            }],
+        }],
         'user_mentions': [{
-            'screen_name': 'danshipper',
-            'name': 'Dan Shipper',
-            'indices': [115, 126],
-            }],
-        },
-      }
+          'screen_name': 'danshipper',
+          'name': 'Dan Shipper',
+          'indices': [115, 126],
+        }],
+      },
+    }
 
     obj = self.twitter.tweet_to_object(tweet)
     for tag in obj['tags']:
@@ -1440,6 +1440,41 @@ class TwitterTest(testutil.TestCase):
 
     self.assertEqual('Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
                       microformats2.render_content(obj))
+
+  def test_tweet_to_object_multiple_entities_for_same_url(self):
+    self.assertEqual({
+      'content': 'a-link a-link',
+      'id': 'tag:twitter.com:123',
+      'objectType': 'note',
+      'tags': [{
+        'objectType': 'article',
+        'url': 'https://a/link',
+        'displayName': 'a-link',
+        'startIndex': 0,
+        'length': 6,
+      }, {
+        'objectType': 'article',
+        'url': 'https://a/link',
+        'displayName': 'a-link',
+        'startIndex': 7,
+        'length': 6,
+      }]}, self.twitter.tweet_to_object({
+        'id_str': '123',
+        'full_text': 'http://t.co/1 http://t.co/1',
+        'entities': {
+          'urls': [{
+            'url': 'http://t.co/1',
+            'expanded_url': 'https://a/link',
+            'display_url': 'a-link',
+            'indices': [0, 13],
+          }, {
+            'url': 'http://t.co/1',
+            'expanded_url': 'https://a/link',
+            'display_url': 'a-link',
+            'indices': [14, 27],
+          }],
+        },
+      }))
 
   def test_tweet_to_object_retweet_with_entities(self):
     """Retweets with entities should use the entities in the retweet object."""
@@ -1601,12 +1636,15 @@ class TwitterTest(testutil.TestCase):
 
   def test_video_tweet_to_object(self):
     tweet = copy.deepcopy(TWEET)
+    media = tweet['entities']['media'][0]
+
     # extended_entities has full video data and type 'video'. entities just has
     # image URLs and incorrect type 'photo'. details:
     # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
     tweet['extended_entities'] = {
       'media': [{
-        'id': TWEET['entities']['media'][0]['id'],  # check de-duping
+        'id': media['id'],     # check de-duping
+        'indices': media['indices'],
         'media_url': 'http://pbs.twimg.com/tweet_video_thumb/9182.jpg',
         'media_url_https': 'https://pbs.twimg.com/tweet_video_thumb/9182.jpg',
         'url': 'https://t.co/YUY4GGWKbP',

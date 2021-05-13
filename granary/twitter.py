@@ -1307,8 +1307,7 @@ class Twitter(source.Source):
                      if tag.get('objectType') in ('person', 'mention')
                      and tag.get('indices')[1] <= text_start)
 
-    # linkify entities. convert start/end indices to start/length, and replace
-    # t.co URLs with real "display" URLs.
+    # replace entities with display URLs, convert start/end indices to start/length
     content = util.WideUnicode(rt_prefix + text[text_start:text_end])
     offset = len(rt_prefix) - text_start
     for t in obj['tags']:
@@ -1374,14 +1373,16 @@ class Twitter(source.Source):
     """
     entities = collections.defaultdict(list)
 
-    # maps kind to set of id_str, url, and text values we've seen, for de-duping
+    # maps kind to set of id_str, url, and text values we've seen, with indices,
+    # for de-duping
     seen_ids = collections.defaultdict(set)
 
     for field in 'extended_entities', 'entities':  # prefer extended_entities!
       # kind is media, urls, hashtags, user_mentions, symbols, etc
       for kind, values in tweet.get(field, {}).items():
         for v in values:
-          id = v.get('id_str') or v.get('id') or v.get('url') or v.get('text')
+          id = (v.get('id_str') or v.get('id') or v.get('url') or v.get('text'),
+                tuple(v.get('indices') or []))
           if id:
             if id in seen_ids[kind]:
               continue

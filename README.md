@@ -313,6 +313,7 @@ Changelog
   * Stop rendering `image.displayName` as visible text in HTML, since it's already in the `<img>`'s `alt` attribute.
 * Twitter:
   * Bug fixes for removing t.co links to quoted tweets.
+  * Bug fix for multiple instances of the same link in tweet text.
 
 ### 3.1 - 2021-04-03
 
