@@ -1383,7 +1383,7 @@ class Twitter(source.Source):
         for v in values:
           id = (v.get('id_str') or v.get('id') or v.get('url') or v.get('text'),
                 tuple(v.get('indices') or []))
-          if id:
+          if id[0] or id[1]:
             if id in seen_ids[kind]:
               continue
             seen_ids[kind].add(id)
