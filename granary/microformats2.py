@@ -65,6 +65,7 @@ AS_TO_MF2_TYPE = {
 }
 MF2_TO_AS_TYPE_VERB = {
   'article': ('article', None),
+  'bookmark': ('activity', 'post'),
   'event': ('event', None),
   'follow': ('activity', 'follow'),
   'invite': ('activity', 'invite'),
@@ -344,6 +345,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
         object_to_json(t, trim_nulls=False, entry_class='h-cite')
         for t in tags if source.object_type(t) == type]
 
+  # bookmarks
+  if obj_type == 'bookmark':
+    ret['properties']['bookmark-of'] = [primary.get('targetUrl')]
+
   # latitude & longitude
   lat = long = None
   position = ISO_6709_RE.match(primary.get('position') or '')
@@ -417,6 +422,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     mf2_type = 'tag'
   elif 'follow-of' in props: # ditto
     mf2_type = 'follow'
+  elif 'bookmark-of' in props: # ditto
+    mf2_type = 'bookmark'
   else:
     # mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type
     # *is* a photo. so, special case photo type to fall through to underlying
@@ -550,6 +557,11 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       # eliminate duplicates from redundant backcompat properties
       if t not in objects:
         objects.append(t)
+
+    bookmark = prop.get('bookmark-of')
+    if bookmark:
+      objects.append({'objectType': 'bookmark', 'targetUrl': bookmark})
+
     obj.update({
       'object': objects[0] if len(objects) == 1 else objects,
       'actor': author,
@@ -560,6 +572,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
         raise NotImplementedError(
           'Combined in-reply-to and tag-of is not yet supported.')
       obj['object'] = obj.pop('tags')
+
   else:
     obj.update({
       'inReplyTo': [{'url': url} for url in in_reply_tos],
@@ -865,6 +878,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   Returns:
     string, rendered HTML
   """
+  obj_type = source.object_type(obj)
   content = obj.get('content', '')
 
   # extract tags. preserve order but de-dupe, ie don't include a tag more than
@@ -924,6 +938,12 @@ def render_content(obj, include_location=True, synthesize_content=True,
     } for url in urls], obj)
     rendered_urls = set(urls)
 
+  # bookmarked URL
+  targetUrl = obj.get('targetUrl')
+  if obj_type == 'bookmark' and targetUrl:
+    content += '\nBookmark: %s' % util.pretty_link(
+      targetUrl, attrs={'class': 'u-bookmark-of'})
+
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   if render_attachments:
@@ -934,7 +954,6 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
   # generate share/like contexts if the activity does not have content
   # of its own
-  obj_type = source.object_type(obj)
   for as_type, verb in (
       ('favorite', 'Favorites'), ('like', 'Likes'), ('share', 'Shared')):
     if (not synthesize_content or obj_type != as_type or 'object' not in obj or

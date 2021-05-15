@@ -1,0 +1,10 @@
+{
+  "objectType": "activity",
+  "verb": "post",
+  "id": "tag:example.com,2001:3344",
+  "content": "Bookmark: <a class=\"u-bookmark-of\" href=\"http://example.com/post\">example.com/post</a>",
+  "object": {
+    "objectType": "bookmark",
+    "targetUrl": "http://example.com/post"
+  }
+}

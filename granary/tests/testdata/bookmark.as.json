@@ -1,0 +1,9 @@
+{
+  "objectType": "activity",
+  "verb": "post",
+  "id": "tag:example.com,2001:3344",
+  "object": {
+    "objectType": "bookmark",
+    "targetUrl": "http://example.com/post"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "uid": ["tag:example.com,2001:3344"],
+    "bookmark-of": ["http://example.com/post"],
+    "content": [{
+      "html": "\nBookmark: <a class=\"u-bookmark-of\" href=\"http://example.com/post\">example.com/post</a>"
+    }]
+  }
+}
