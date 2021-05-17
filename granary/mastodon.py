@@ -582,7 +582,6 @@ class Mastodon(source.Source):
     #
     # TODO: handle activities as well as objects? ie pull out ['object'] here if
     # necessary?
-    type = obj.get('objectType')
     prefer_content = type == 'note' or (base_url and is_reply)
     preview_description = ''
     content = self._content_for_create(
@@ -657,7 +656,8 @@ class Mastodon(source.Source):
         resp = self._post(API_REBLOG % base_id)
         resp['type'] = 'repost'
 
-    elif type in ('note', 'article') or is_reply or is_rsvp:  # a post
+    elif (type in ('note', 'article') or is_reply or is_rsvp or
+          (type == 'activity' and verb == 'post')):  # probably a bookmark
       data = {'status': content}
 
       if is_reply:
@@ -730,8 +730,11 @@ class Mastodon(source.Source):
     """
     for field in ('inReplyTo', 'object', 'target'):
       for base in util.get_list(obj, field):
-        # first, check if it's on local instance
         url = util.get_url(base)
+        if not url:
+          return {}
+
+        # first, check if it's on local instance
         if url.startswith(self.instance):
           return self._postprocess_base_object(base)
 

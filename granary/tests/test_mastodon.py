@@ -589,6 +589,25 @@ class MastodonTest(testutil.TestCase):
     self.assertIsNone(result.error_plain)
     self.assertIsNone(result.error_html)
 
+  def test_create_bookmark(self):
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'},
+                     response=STATUS)
+    self.mox.ReplayAll()
+
+    result = self.mastodon.create({
+      "objectType": "activity",
+      "verb": "post",
+      "content": 'foo ☕ bar',
+      "object": {
+        "objectType": "bookmark",
+        "targetUrl": "https://example.com/foo"
+      }
+    })
+
+    self.assert_equals(STATUS, result.content, result)
+    self.assertIsNone(result.error_plain)
+    self.assertIsNone(result.error_html)
+
   def test_create_reply(self):
     self.expect_post(API_STATUSES, json={
       'status': 'foo ☕ bar',
@@ -615,6 +634,19 @@ class MastodonTest(testutil.TestCase):
       'url': 'http://foo.com/@xyz/123',
     }, self.mastodon.base_object({
       'object': {'url': 'http://foo.com/@xyz/123'},
+    }))
+
+  def test_base_object_no_url(self):
+    self.assert_equals({}, self.mastodon.base_object({
+      'object': {'foo': 'bar'},
+    }))
+
+  def test_base_object_bookmark(self):
+    self.assert_equals({}, self.mastodon.base_object({
+      'object': {
+        'objectType': 'bookmark',
+        'targetUrl': 'http://bar.com/baz',
+      },
     }))
 
   def test_base_object_two_remote(self):

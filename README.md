@@ -309,6 +309,7 @@ Changelog
   * Scraping: handle pictures, videos, link attachments, and text links in timeline/news feed posts.
 * Mastodon:
   * Bug fix for `get_activities()` with `fetch_mentions=True`: handle notifications with `status: null`. Maybe happens when a status is deleted?
+  * `create`/`preview_create`: support bookmarks. (Nothing special happens with them; their `content` is posted as a normal toot.)
 * microformats2:
   * Stop rendering `image.displayName` as visible text in HTML, since it's already in the `<img>`'s `alt` attribute.
   * Add [`bookmark-of`](https://indieweb.org/bookmark#How_to_markup) support.
