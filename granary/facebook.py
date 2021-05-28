@@ -1867,8 +1867,11 @@ class Facebook(source.Source):
         logging.debug('Skipping due to missing footer')
         continue
 
-      to = ({'objectType':'group', 'alias':'@public'}
-            if 'Public' in footer.stripped_strings
+      public = footer and ('Public' in footer.stripped_strings or
+                           # https://github.com/snarfed/bridgy/issues/1036
+                           'Доступно всем' in footer.stripped_strings)
+
+      to = ({'objectType':'group', 'alias':'@public'} if public
             else {'objectType': 'unknown'})
       id = self.tag_uri(post_id)
 
@@ -1978,6 +1981,11 @@ class Facebook(source.Source):
       author = self._profile_url_to_actor(actor_link['href'])
       author['displayName'] = actor_link.get_text(' ', strip=True)
 
+    # visibility
+    public = footer and ('Public' in footer.stripped_strings or
+                         # https://github.com/snarfed/bridgy/issues/1036
+                         'Доступно всем' in footer.stripped_strings)
+
     # post activity
     activity = {
       'objectType': 'activity',
@@ -1988,8 +1996,7 @@ class Facebook(source.Source):
         'content': self._scraped_content(body_parts),
         'published': self._scraped_datetime(published),
         'author': author,
-        'to': [{'objectType':'group', 'alias':'@public'}
-               if footer and 'Public' in footer.stripped_strings
+        'to': [{'objectType':'group', 'alias':'@public'} if public
                else {'objectType': 'unknown'}],
       },
     }
