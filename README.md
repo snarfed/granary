@@ -313,6 +313,7 @@ Changelog
 * microformats2:
   * Stop rendering `image.displayName` as visible text in HTML, since it's already in the `<img>`'s `alt` attribute.
   * Add [`bookmark-of`](https://indieweb.org/bookmark#How_to_markup) support.
+  * Add `prefix_image_urls()` function.
 * Twitter:
   * Bug fixes for removing t.co links to quoted tweets.
   * Bug fix for multiple instances of the same link in tweet text.

@@ -1288,3 +1288,28 @@ def size_to_bytes(size):
     return humanfriendly.parse_size(size)
   except humanfriendly.InvalidSize:
     logging.debug("Couldn't parse size %r", size)
+
+
+def prefix_image_urls(activity, prefix):
+  """Adds a prefix to all image url fields, eg to inject a caching proxy.
+
+  Skips any image url fields that already start with the prefix. URLs are *not*
+  URL-encode before adding the prefix. (This is currently used with
+  https://cloudimage.io/ , which doesn't URL-decode.)
+
+  Args:
+    activity: dict, AS1 activity. Modified in place.
+    prefix: string
+  """
+  obj = activity.get('object', {})
+  for elem in ([obj, obj.get('author'), activity.get('actor')] +
+               obj.get('replies', {}).get('items', []) +
+               obj.get('attachments', []) +
+               obj.get('tags', [])):
+    if elem:
+      for img in util.get_list(elem, 'image'):
+        url = img.get('url')
+        if url and not url.startswith(prefix):
+          # Note that url isn't URL-encoded here, that's intentional.
+          # cloudimage.io doesn't decode it.
+          img['url'] = prefix + url
