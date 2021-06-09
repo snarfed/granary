@@ -1301,11 +1301,11 @@ def prefix_image_urls(activity, prefix):
     activity: dict, AS1 activity. Modified in place.
     prefix: string
   """
-  obj = activity.get('object', {})
-  for elem in ([obj, obj.get('author'), activity.get('actor')] +
-               obj.get('replies', {}).get('items', []) +
-               obj.get('attachments', []) +
-               obj.get('tags', [])):
+  a = activity
+  for elem in ([a, a.get('object'), a.get('author'), a.get('actor')] +
+               a.get('replies', {}).get('items', []) +
+               a.get('attachments', []) +
+               a.get('tags', [])):
     if elem:
       for img in util.get_list(elem, 'image'):
         url = img.get('url')
@@ -1313,3 +1313,5 @@ def prefix_image_urls(activity, prefix):
           # Note that url isn't URL-encoded here, that's intentional.
           # cloudimage.io doesn't decode it.
           img['url'] = prefix + url
+      if elem is not a:
+        prefix_image_urls(elem, prefix)

@@ -4,6 +4,7 @@
 Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
+import copy
 import re
 
 from oauth_dropins.webutil import testutil
@@ -938,26 +939,26 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       self.assertEqual(expected, microformats2.size_to_bytes(input), input)
 
   def test_prefix_image_urls(self):
-    IMG = {'image': {'url': 'xyz'}}
-    PRE = {'image': {'url': 'abcxyz'}}
+    IMG = lambda: copy.deepcopy({'image': {'url': 'xyz'}})
+    PRE = lambda: copy.deepcopy({'image': {'url': 'abcxyz'}})
 
     activity = {
-      'actor': IMG,
+      'actor': IMG(),
       'object': {
-        'author': IMG,
-        'replies': {'items': [IMG, IMG]},
-        'attachments': [IMG],
-        'tags': [IMG],
+        'author': IMG(),
+        'replies': {'items': [IMG(), IMG(), PRE()]},
+        'attachments': [IMG(), {'author': IMG()}],
+        'tags': [IMG(), {'actor': IMG()}],
       },
     }
     microformats2.prefix_image_urls(activity, 'abc')
 
     self.assert_equals({
-      'actor': PRE,
+      'actor': PRE(),
       'object': {
-        'author': PRE,
-        'replies': {'items': [PRE, PRE]},
-        'attachments': [PRE],
-        'tags': [PRE],
+        'author': PRE(),
+        'replies': {'items': [PRE(), PRE(), PRE()]},
+        'attachments': [PRE(), {'author': PRE()}],
+        'tags': [PRE(), {'actor': PRE()}],
       },
     }, activity)
