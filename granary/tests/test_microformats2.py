@@ -573,6 +573,20 @@ Shared <a href="#">a post</a> by foo
     """
     self.assert_equals({}, microformats2.object_to_json('foo bar'))
 
+  def test_object_to_json_content_null(self):
+    """https://console.cloud.google.com/errors/CNzPuIvvlbbd3QE"""
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'uid': ['tag:fake.com:10157']
+      },
+    }, microformats2.object_to_json({
+      'objectType': 'activity',
+      'verb': 'react',
+      'id': 'tag:fake.com:10157',
+      'content': None,
+    }))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),

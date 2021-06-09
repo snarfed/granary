@@ -278,7 +278,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # content. emulate e- vs p- microformats2 parsing: e- if there are HTML tags,
   # otherwise p-.
   # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
-  text = xml.sax.saxutils.unescape(primary.get('content', ''))
+  text = xml.sax.saxutils.unescape(primary.get('content') or '')
   html = render_content(primary, include_location=False,
                         synthesize_content=synthesize_content)
   if '<' in html:
@@ -879,7 +879,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
     string, rendered HTML
   """
   obj_type = source.object_type(obj)
-  content = obj.get('content', '')
+  content = obj.get('content') or ''
 
   # extract tags. preserve order but de-dupe, ie don't include a tag more than
   # once.
@@ -1035,7 +1035,7 @@ def _render_attachments(attachments, obj):
   content = ''
 
   for att in attachments:
-    name = att.get('displayName', '')
+    name = att.get('displayName') or ''
     stream = get_first(att, 'stream', {}).get('url') or ''
     image = get_first(att, 'image', {}).get('url') or ''
     open_a_tag = False
@@ -1197,7 +1197,7 @@ def img(src, alt=''):
   """
   if isinstance(src, dict):
     assert not alt
-    alt = src.get('alt', '')
+    alt = src.get('alt') or ''
     src = src.get('value')
   return '<img class="u-photo" src="%s" alt=%s />' % (
       src, xml.sax.saxutils.quoteattr(alt or ''))
