@@ -2633,6 +2633,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                         params={
                           'command': 'INIT',
                           'media_type': 'video/mp4',
+                          'media_category': 'tweet_video',
                           'total_bytes': len(content),
                         })
 

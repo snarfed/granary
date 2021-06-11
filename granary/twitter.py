@@ -963,6 +963,8 @@ class Twitter(source.Source):
     media_id = self.urlopen(API_UPLOAD_MEDIA, data=urllib.parse.urlencode({
       'command': 'INIT',
       'media_type': 'video/mp4',
+      # https://twittercommunity.com/t/large-file-can-not-be-finalized-synchronously/82929/3
+      'media_category': 'tweet_video',
       # _check_media checked that Content-Length is set
       'total_bytes': video_resp.headers['Content-Length'],
     }))['media_id_string']
