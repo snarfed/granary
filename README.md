@@ -316,9 +316,9 @@ Changelog
   * Add `prefix_image_urls()` function.
   * Handle null `content` in AS1/2 objects.
 * Twitter:
+  * `create`/`preview`: [support large videos](https://twittercommunity.com/t/large-file-can-not-be-finalized-synchronously/82929/3) via async upload. We now pass `media_category=tweet_video` to the chunked upload `INIT` stage, and then make blocking `STATUS` calls until the video is finished processing. ([bridgy#1043](https://github.com/snarfed/bridgy/issues/1043))
   * Bug fixes for removing t.co links to quoted tweets.
   * Bug fix for multiple instances of the same link in tweet text.
-  * Pass `media_category=tweet_video` to `INIT` stage of chunked upload for video [to support large videos](https://twittercommunity.com/t/large-file-can-not-be-finalized-synchronously/82929/3).
 
 ### 3.1 - 2021-04-03
 

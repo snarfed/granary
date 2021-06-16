@@ -15,6 +15,7 @@ import logging
 import mimetypes
 import re
 import socket
+import time
 import urllib.parse, urllib.request
 
 from oauth_dropins import twitter_auth
@@ -45,6 +46,8 @@ API_SEARCH = 'search/tweets.json?q=%(q)s&result_type=recent&count=%(count)d' + A
 API_STATUS = 'statuses/show.json?id=%s' + API_TWEET_PARAMS
 API_TIMELINE = 'statuses/home_timeline.json?count=%d' + API_TWEET_PARAMS
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
+API_MEDIA_STATUS_MAX_DELAY_SECS = 30
+API_MEDIA_STATUS_MAX_POLLS = 20
 API_MEDIA_METADATA = 'https://upload.twitter.com/1.1/media/metadata/create.json'
 API_USER = 'users/show.json?screen_name=%s'
 API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
@@ -105,6 +108,9 @@ MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(\w{1,15})\b', re.UNICODE)
 # https://support.twitter.com/articles/370610
 # http://stackoverflow.com/questions/8451846
 HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
+
+# alias allows unit tests to mock this function
+sleep_fn = time.sleep
 
 
 class OffsetTzinfo(datetime.tzinfo):
@@ -990,12 +996,36 @@ class Twitter(source.Source):
       i += 1
 
     # FINALIZE
-    self.urlopen(API_UPLOAD_MEDIA, data=urllib.parse.urlencode({
+    resp = self.urlopen(API_UPLOAD_MEDIA, data=urllib.parse.urlencode({
       'command': 'FINALIZE',
       'media_id': media_id,
     }))
 
-    return media_id
+    total_delay = 0
+    for i in range(API_MEDIA_STATUS_MAX_POLLS):
+      info = resp.get('processing_info', {})
+      state = info.get('state')
+      if not state or state == 'succeeded':
+        return media_id
+      elif state == 'failed':
+        # TODO test
+        return source.creation_result(abort=True, error_plain=str(info.get('error')))
+
+      # STATUS
+      delay = min(info.get('check_after_secs', 0),
+                  API_MEDIA_STATUS_MAX_DELAY_SECS)
+      total_delay += delay
+      logging.info(f'video still processing, waiting {delay}s to check status')
+      sleep_fn(delay)
+
+      params = urllib.parse.urlencode({
+        'command': 'STATUS',
+        'media_id': media_id,
+      })
+      resp = self.urlopen(f'{API_UPLOAD_MEDIA}?{params}')
+
+    msg = f'Twitter still processing uploaded video after {total_delay}s'
+    return source.creation_result(abort=True, error_plain=msg)
 
   @staticmethod
   def _check_media(url, resp, types, label, max_size):

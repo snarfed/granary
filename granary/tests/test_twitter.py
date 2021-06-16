@@ -2606,6 +2606,77 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       },
     })
 
+  def test_create_with_video_wait_for_processing(self):
+    self.twitter.TRUNCATE_TEXT_LENGTH = 140
+
+    obj = {
+      'objectType': 'note',
+      'content': """\
+the caption.\nextra long so we can check that it accounts for the pic-twitter-com link. <video xyz>should be removed. </video> almost at 140 chars, just type a little more, ok done.""",
+      'stream': {'url': 'http://my/video'},
+    }
+    ellipsized = u"""\
+the caption. extra long so we can check that it accounts for the pic-twitter-com link. almost at 140 chars, just type a little more, ok…"""
+
+    # test create
+    content = 'video response'
+    self.expect_urlopen('http://my/video', content,
+                        response_headers={'Content-Length': len(content)})
+
+    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, {'media_id_string': '9'},
+                        params={
+                          'command': 'INIT',
+                          'media_type': 'video/mp4',
+                          'media_category': 'tweet_video',
+                          'total_bytes': len(content),
+                        })
+
+    twitter.UPLOAD_CHUNK_SIZE = 5
+    for i, chunk in (0, 'video'), (1, ' resp'), (2, 'onse'):
+      self.expect_requests_post(
+        twitter.API_UPLOAD_MEDIA, '',
+        data={'command': 'APPEND', 'media_id': '9', 'segment_index': i},
+        files={'media': chunk},
+        headers=mox.IgnoreArg())
+
+    resp = {
+      'media_id': 9,
+      'media_id_string': '9',
+      'processing_info': {
+        'state': 'pending',
+        'check_after_secs': 5,
+      }
+    }
+    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, resp, params={
+      'command': 'FINALIZE',
+      'media_id': '9',
+    })
+    self.mox.StubOutWithMock(twitter, 'sleep_fn')
+    twitter.sleep_fn(5)
+
+    resp['processing_info'] = {
+      'state': 'in_progress',
+      'check_after_secs': 9999,
+    }
+    self.expect_urlopen(twitter.API_UPLOAD_MEDIA + '?command=STATUS&media_id=9', resp)
+    twitter.sleep_fn(twitter.API_MEDIA_STATUS_MAX_DELAY_SECS)
+
+    resp['processing_info'] = {
+      'state': 'succeeded',
+    }
+    self.expect_urlopen(twitter.API_UPLOAD_MEDIA + '?command=STATUS&media_id=9', resp)
+
+    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/video'},
+                        params=(
+                          # sorted; order matters.
+                          ('media_ids', '9'),
+                          ('status', ellipsized.encode('utf-8')),
+                        ))
+
+    self.mox.ReplayAll()
+    self.assert_equals({'url': 'http://posted/video', 'type': 'post'},
+                       self.twitter.create(obj).content)
+
   def test_create_with_video(self):
     self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
@@ -2645,11 +2716,14 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
         files={'media': chunk},
         headers=mox.IgnoreArg())
 
-    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, {},
-                        params={
-                          'command': 'FINALIZE',
-                          'media_id': '9',
-                        })
+    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, {
+      'media_id': 9,
+      'media_id_string': '9',
+      'size': 11065,
+    }, params={
+      'command': 'FINALIZE',
+      'media_id': '9',
+    })
 
     self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/video'},
                         params=(
@@ -2660,7 +2734,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     self.mox.ReplayAll()
     self.assert_equals({'url': 'http://posted/video', 'type': 'post'},
-                          self.twitter.create(obj).content)
+                       self.twitter.create(obj).content)
 
   def test_create_with_video_too_big(self):
     self.expect_urlopen(
