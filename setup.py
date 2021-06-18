@@ -3,6 +3,7 @@
 Docs:
 https://packaging.python.org/en/latest/distributing.html
 https://setuptools.readthedocs.io/
+https://www.python.org/dev/peps/pep-0440/#version-specifiers
 
 Based on https://github.com/pypa/sampleproject/blob/master/setup.py
 """

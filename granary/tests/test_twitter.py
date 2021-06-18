@@ -2384,6 +2384,26 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       self.assertIn('Could not find a tweet to retweet', preview.error_plain)
       self.assertIn('Could not find a tweet to', preview.error_html)
 
+  def test_create_bookmark(self):
+    content = "i'm bookmarking a thing"
+    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={'status': content})
+    self.mox.ReplayAll()
+
+    activity = {
+      "objectType": "activity",
+      "verb": "post",
+      "content": content,
+      "object": {
+        "objectType": "bookmark",
+        "targetUrl": "https://example.com/foo"
+      }
+    }
+    self.twitter.create(activity)
+
+    preview = self.twitter.preview_create(activity)
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual(content, preview.content)
+
   def test_create_with_multiple_photos(self):
     self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
@@ -2784,3 +2804,17 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.assertIn('<a href="https://twitter.com/_/status/123">this tweet</a>',
                   preview.description)
     self.assertIsNone(preview.content)
+
+  def test_base_object_no_url(self):
+    self.assert_equals({}, self.twitter.base_object({
+      'object': {'foo': 'bar'},
+    }))
+
+  def test_base_object_bookmark(self):
+    self.assert_equals({}, self.twitter.base_object({
+      'object': {
+        'objectType': 'bookmark',
+        'targetUrl': 'http://bar.com/baz',
+      },
+    }))
+

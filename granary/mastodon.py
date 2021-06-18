@@ -34,14 +34,14 @@ API_STATUSES = '/api/v1/statuses'
 API_TIMELINE = '/api/v1/timelines/home'
 API_VERIFY_CREDENTIALS = '/api/v1/accounts/verify_credentials'
 
-# https://docs.joinmastodon.org/usage/basics/#text
+# https://docs.joinmastodon.org/user/posting/#text
 DEFAULT_TRUNCATE_TEXT_LENGTH = 500
 
-# https://docs.joinmastodon.org/api/rest/media/#parameters
+# https://docs.joinmastodon.org/methods/statuses/media/
 MAX_ALT_LENGTH = 420
 
 # maps Mastodon media attachment type to AS1 objectType
-# https://docs.joinmastodon.org/api/entities/#type
+# https://docs.joinmastodon.org/entities/attachment/#type
 MEDIA_TYPES = {
   'image': 'image',
   'video': 'video',
@@ -246,7 +246,7 @@ class Mastodon(source.Source):
         cache_updates['AMRB ' + id] = count
 
     if fetch_mentions:
-      # https://docs.joinmastodon.org/api/rest/notifications/
+      # https://docs.joinmastodon.org/methods/notifications/
       notifs = self._get(API_NOTIFICATIONS, json={
         'exclude_types': ['follow', 'favourite', 'reblog'],
       })
@@ -393,7 +393,7 @@ class Mastodon(source.Source):
       })
 
     # content: insert images for custom emoji
-    # https://docs.joinmastodon.org/api/entities/#emoji
+    # https://docs.joinmastodon.org/entities/emoji/
     content = base_status.get('content') or ''
     for emoji in base_status.get('emojis', []):
       shortcode = emoji.get('shortcode')
@@ -513,7 +513,7 @@ class Mastodon(source.Source):
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
     """Creates a status (aka toot), reply, boost (aka reblog), or favorite.
 
-    https://docs.joinmastodon.org/api/rest/statuses/
+    https://docs.joinmastodon.org/methods/statuses/
 
     Args:
       obj: ActivityStreams object
@@ -530,7 +530,7 @@ class Mastodon(source.Source):
                      ignore_formatting=False):
     """Preview creating a status (aka toot), reply, boost (aka reblog), or favorite.
 
-    https://docs.joinmastodon.org/api/rest/statuses/
+    https://docs.joinmastodon.org/methods/statuses/
 
     Args:
       obj: ActivityStreams object
@@ -547,7 +547,7 @@ class Mastodon(source.Source):
               ignore_formatting=False):
     """Creates or previews a status (aka toot), reply, boost (aka reblog), or favorite.
 
-    https://docs.joinmastodon.org/api/rest/statuses/
+    https://docs.joinmastodon.org/methods/statuses/
 
     Based on :meth:`Twitter._create`.
 
@@ -607,7 +607,7 @@ class Mastodon(source.Source):
 
     # truncate and ellipsize content if necessary
     # TODO: don't count domains in remote mentions.
-    # https://docs.joinmastodon.org/usage/basics/#text
+    # https://docs.joinmastodon.org/user/posting/#text
     content = self.truncate(content, obj.get('url'), include_link, type)
 
     # linkify user mentions
@@ -761,7 +761,8 @@ class Mastodon(source.Source):
   def upload_media(self, media):
     """Uploads one or more images or videos from web URLs.
 
-    https://docs.joinmastodon.org/api/rest/media/
+    https://docs.joinmastodon.org/methods/statuses/media/
+    https://docs.joinmastodon.org/user/posting/#attachments
 
     Args:
       media: sequence of AS image or stream objects, eg:
@@ -823,7 +824,7 @@ class Mastodon(source.Source):
     """Returns the current user's block list as a list of integer account ids.
 
     May make multiple API calls to fully fetch large block lists.
-    https://docs.joinmastodon.org/api/rest/blocks/#pagination
+    https://docs.joinmastodon.org/methods/accounts/blocks/
 
     Returns:
       sequence of integer Mastodon account ids on the current instance

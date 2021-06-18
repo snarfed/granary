@@ -822,7 +822,8 @@ class Twitter(source.Source):
         resp = self.urlopen(API_POST_RETWEET % base_id, data=data)
         resp['type'] = 'repost'
 
-    elif type in ('note', 'article') or is_reply or is_rsvp:  # a tweet
+    elif (type in ('note', 'article') or is_reply or is_rsvp or
+          (type == 'activity' and verb == 'post')):  # probably a bookmark
       content = str(content).encode('utf-8')
       data = [('status', content)]
 
