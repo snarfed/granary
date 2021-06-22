@@ -15,23 +15,23 @@ from praw.models.comment_forest import CommentForest
 from prawcore.exceptions import NotFound
 
 
+class FakeUserSubreddit():
+  """ to mock https://praw.readthedocs.io/en/latest/code_overview/other/usersubreddit.html
+  """
+  id = 'abc123'
+  display_name = 'u_bonkerfield'
+  name = 'Human readable?'
+  description = 'foo bar'
+  public_description = 'https://bonkerfield.org https://viewfoil.bonkerfield.org'
+
+
 class FakeRedditor():
   """ to mock https://praw.readthedocs.io/en/latest/code_overview/models/redditor.html
   """
   id = '59ucsixw'
   name = 'bonkerfield'
-  subreddit = {
-    'display_name': 'u_bonkerfield',
-    'title': '',
-    'icon_img': 'https://styles.redditmedia.com/t5_2az095/styles/profileIcon_ek6onop1xbf41.png',
-    'display_name_prefixed': 'u/bonkerfield',
-    'name': 't5_2az095',
-    'url': '/user/bonkerfield/',
-    'public_description': 'https://bonkerfield.org https://viewfoil.bonkerfield.org',
-    }
-
+  subreddit = FakeUserSubreddit()
   icon_img = 'https://styles.redditmedia.com/t5_2az095/styles/profileIcon_ek6onop1xbf41.png'
-
   created_utc = 1576950011.0
 
 
@@ -200,7 +200,7 @@ class RedditTest(testutil.TestCase):
     expected = copy.deepcopy(ACTOR)
     del expected['description']
     del expected['urls']
-    expected['url'] = 'https://reddit.com/user/bonkerfield'  # note no trailing /
+    expected['url'] = 'https://reddit.com/user/bonkerfield/'
     self.assert_equals(expected, self.reddit.praw_to_actor(redditor))
 
   def test_praw_to_comment(self):

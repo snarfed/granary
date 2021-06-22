@@ -108,16 +108,16 @@ class Reddit(source.Source):
       return {}
 
     # trying my best to grab all the urls from the profile description
-    description = ''
+    urls = [f'{self.BASE_URL}/user/{username}/']
+    description = None
+
     subreddit = user.get('subreddit')
     if subreddit:
-      user_url = self.BASE_URL + subreddit.get('url')
-      urls = [user_url]
-      description = subreddit.get('public_description')
-      profile_urls = util.extract_links(description)
-      urls += util.trim_nulls(profile_urls)
-    else:
-      urls = [self.BASE_URL + '/user/' + username]
+      url = subreddit.get('url')
+      if url:
+        urls.append(self.BASE_URL + url)
+      description = subreddit.get('description')
+      urls += util.trim_nulls(util.extract_links(description))
 
     image = user.get('icon_img')
 
