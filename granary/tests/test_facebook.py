@@ -3451,6 +3451,20 @@ cc Sam G, Michael M<br />""", preview.description)
     got, _ = self.fb.scraped_to_activity(str(soup))
     self.assert_equals(MBASIC_ACTIVITY, got)
 
+  def test_scraped_to_activity_extra_div_before_footer(self):
+    """Blank (effectively) div before footer.
+
+    Based on https://mbasic.facebook.com/story.php?story_fbid=10157876416367085&id=722007084
+    """
+    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    soup = util.parse_html(MBASIC_HTML_POST)
+    soup.footer.insert_before(util.parse_html('<div class="ce"><div></div></div>'))
+
+    got, _ = self.fb.scraped_to_activity(str(soup))
+    self.assert_equals(MBASIC_ACTIVITY, got)
+
   def test_merge_scraped_reactions(self):
     """mbasic.facebook.com HTML reactions.
 

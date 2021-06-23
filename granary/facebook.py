@@ -1968,6 +1968,10 @@ class Facebook(source.Source):
       body_parts = self._div(view, 0)
     else:
       body_parts = footer.find_previous_sibling('div')
+      if not body_parts.get_text('', strip=True):
+        body_parts = body_parts.find_previous_sibling('div')
+      print('@@@')
+      print(body_parts)
     if not body_parts:
       return None, None
 
