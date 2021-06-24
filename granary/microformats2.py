@@ -1315,3 +1315,21 @@ def prefix_image_urls(activity, prefix):
           img['url'] = prefix + url
       if elem is not a:
         prefix_image_urls(elem, prefix)
+
+
+# TODO: unify
+def prefix_video_urls(activity, prefix):
+  a = activity
+  for elem in ([a, a.get('object'), a.get('author'), a.get('actor')] +
+               a.get('replies', {}).get('items', []) +
+               a.get('attachments', []) +
+               a.get('tags', [])):
+    if elem:
+      for stream in util.get_list(elem, 'stream'):
+        url = stream.get('url')
+        if url and not url.startswith(prefix):
+          # Note that url isn't URL-encoded here, that's intentional.
+          # The caching-proxy Cloudflare worker doesn't decode it.
+          stream['url'] = prefix + url
+      if elem is not a:
+        prefix_video_urls(elem, prefix)
