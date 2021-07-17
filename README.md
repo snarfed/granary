@@ -305,6 +305,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 ### 3.2 - unreleased
+* `Source.original_post_discovery`: add new `include_reserved_hosts` kwarg, defaults to `True`.
 * Facebook:
   * Scraping: handle pictures, videos, link attachments, and text links in timeline/news feed posts.
 * Mastodon:

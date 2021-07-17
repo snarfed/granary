@@ -689,8 +689,9 @@ class Source(object, metaclass=SourceMeta):
   _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
   @staticmethod
-  def original_post_discovery(activity, domains=None, cache=None,
-                              include_redirect_sources=True, **kwargs):
+  def original_post_discovery(
+      activity, domains=None, cache=None, include_redirect_sources=True,
+      include_reserved_hosts=True, **kwargs):
     """Discovers original post links.
 
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
@@ -710,6 +711,9 @@ class Source(object, metaclass=SourceMeta):
         (Permashortcitations are exempt.)
       include_redirect_sources: boolean, whether to include URLs that redirect
         as well as their final destination URLs
+      include_reserved_hosts: boolean, whether to include domains on reserved
+        TLDs (eg foo.example) and local hosts (eg http://foo.local/,
+        http://my-server/)
       cache: deprecated, unused
       kwargs: passed to requests.head() when following redirects
 
@@ -755,7 +759,14 @@ class Source(object, metaclass=SourceMeta):
         # this is a redirected original URL. postpone and handle it when we hit
         # its final URL so that we know the final domain.
         continue
+
       domain = util.domain_from_link(url)
+
+      if not include_reserved_hosts:
+        if ('.' not in domain or
+            domain.split('.')[-1] in (util.RESERVED_TLDS | util.LOCAL_TLDS)):
+          continue
+
       which = (originals if not domains or util.domain_or_parent_in(domain, domains)
                else mentions)
       which.add(url)

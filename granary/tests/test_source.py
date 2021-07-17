@@ -269,6 +269,14 @@ class SourceTest(testutil.TestCase):
     check(obj, ['http://or.ig/post/redirected', 'http://other/link/redirected'],
           include_redirect_sources=False)
 
+  def test_original_post_discovery_include_reserved_hosts(self):
+    obj = {
+      'content': 'http://other/link https://x.test/ http://y.local/path',
+      'upstreamDuplicates': ['http://localhost', 'http://sho.rt/post'],
+    }
+    self.check_original_post_discovery(
+      obj, ['http://sho.rt/post'], include_reserved_hosts=False)
+
   def test_get_like(self):
     self.source.get_activities(user_id='author', activity_id='activity',
                                fetch_likes=True).AndReturn([ACTIVITY])
