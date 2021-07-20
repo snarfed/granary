@@ -1,9 +1,0 @@
-application: facebook-activitystreams
-version: 1
-api_version: 1
-runtime: python27
-threadsafe: true
-
-handlers:
-- url: /.*
-  script: app.application
