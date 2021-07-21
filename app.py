@@ -120,7 +120,7 @@ class FrontPageHandler(handlers.TemplateHandler):
     vars.update({
       silo + '_html': module.StartHandler.button_html(
         '/%s/start_auth' % silo,
-        image_prefix='/oauth_dropins/static/',
+        image_prefix='/oauth_dropins_static/',
         outer_classes='col-lg-2 col-sm-4 col-xs-6',
         scopes=SCOPE_OVERRIDES.get(silo, ''),
       )
