@@ -558,9 +558,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       if t not in objects:
         objects.append(t)
 
-    bookmark = prop.get('bookmark-of')
-    if bookmark:
-      objects.append({'objectType': 'bookmark', 'targetUrl': bookmark})
+    objects.extend({'objectType': 'bookmark', 'targetUrl': url}
+                   for url in get_string_urls(props.get('bookmark-of', [])))
 
     obj.update({
       'object': objects[0] if len(objects) == 1 else objects,

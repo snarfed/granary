@@ -210,6 +210,7 @@ class UrlHandler(api.Handler):
     title = None
     hfeed = None
     if mf2:
+      logging.info(f'Got mf2: {json_dumps(mf2, indent=2)}')
       def fetch_mf2_func(url):
         if util.domain_or_parent_in(urllib.parse.urlparse(url).netloc, SILO_DOMAINS):
           return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
@@ -245,6 +246,8 @@ class UrlHandler(api.Handler):
     except ValueError as e:
       logging.warning('parsing input failed', stack_info=True)
       self.abort(400, 'Could not parse %s as %s: %s' % (final_url, input, str(e)))
+
+    logging.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
 
     self.write_response(source.Source.make_activities_base_response(activities),
                         url=final_url, actor=actor, title=title, hfeed=hfeed)

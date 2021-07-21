@@ -186,11 +186,14 @@ class Handler(handlers.ModernHandler):
       # other exceptions are handled by webutil.handlers.handle_exception(),
       # which uses interpret_http_exception(), etc.
 
+    logging.info(f'Got activities: {json_dumps(response, indent=2)}')
+
     # fetch actor if necessary
     actor = response.get('actor')
     if not actor and self.request.get('format') == 'atom':
       # atom needs actor
       actor = src.get_actor(user_id) if src else {}
+      logging.info(f'Got actor: {json_dumps(actor, indent=2)}')
 
     self.write_response(response, actor=actor, url=src.BASE_URL)
 

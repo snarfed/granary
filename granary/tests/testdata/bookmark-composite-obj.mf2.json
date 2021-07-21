@@ -1,0 +1,14 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "uid": ["tag:example.com,2001:3344"],
+    "bookmark-of": [{
+      "type": ["h-cite"],
+      "properties": {
+        "url": ["http://example.com/post"],
+        "name": ["Bookmarked this!"]
+      },
+      "value": "http://example.com/post"
+    }]
+  }
+}

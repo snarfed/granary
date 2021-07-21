@@ -316,6 +316,7 @@ Changelog
   * Add [`bookmark-of`](https://indieweb.org/bookmark#How_to_markup) support.
   * Add `prefix_image_urls()` function.
   * Handle null `content` in AS1/2 objects.
+  * `json_to_object` bug fix for composite `bookmark-of` properties.
 * Twitter:
   * `create`/`preview`: [support large videos](https://twittercommunity.com/t/large-file-can-not-be-finalized-synchronously/82929/3) via async upload. We now pass `media_category=tweet_video` to the chunked upload `INIT` stage, and then make blocking `STATUS` calls until the video is finished processing. ([bridgy#1043](https://github.com/snarfed/bridgy/issues/1043))
   * `create`/`preview`: allow bookmarks. ([bridgy#1045](https://github.com/snarfed/bridgy/issues/1045))
