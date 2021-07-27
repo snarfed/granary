@@ -96,8 +96,16 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
          style="background-color: #EEEEEE; padding: 10px" />
   </a>
 </div>
+
 {{ pixelfed_html|safe }}
-{{ reddit_html|safe }}
+
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <a href="#" onclick="alert('Reddit is temporarily disabled. Sorry for the inconvenience!')">
+    <img title="Reddit" class="shadow" src="/oauth_dropins_static/reddit_2x.png"
+           style="background-color: #CEE3F8; padding: 10px;
+                  filter: grayscale(100%) contrast(40%) brightness(130%)"
+           height="50" />
+</div>
 
 <div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get" action="#logins">
