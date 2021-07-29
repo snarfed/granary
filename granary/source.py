@@ -738,8 +738,9 @@ class Source(object, metaclass=SourceMeta):
 
     candidates = set(util.dedupe_urls(
       util.clean_url(url) for url in candidates
+      if url and (url.startswith('http://') or url.startswith('https://')) and
       # heuristic: ellipsized URLs are probably incomplete, so omit them.
-      if url and not url.endswith('...') and not url.endswith('…')))
+      not url.endswith('...') and not url.endswith('…')))
 
     # check for redirect and add their final urls
     redirects = {}  # maps final URL to original URL for redirects
@@ -761,6 +762,8 @@ class Source(object, metaclass=SourceMeta):
         continue
 
       domain = util.domain_from_link(url)
+      if not domain:
+        continue
 
       if not include_reserved_hosts:
         if ('.' not in domain or

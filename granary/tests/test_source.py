@@ -269,7 +269,32 @@ class SourceTest(testutil.TestCase):
     check(obj, ['http://or.ig/post/redirected', 'http://other/link/redirected'],
           include_redirect_sources=False)
 
-  def test_original_post_discovery_include_reserved_hosts(self):
+  def test_original_post_discovery_excludes(self):
+    """Should exclude reserved hosts, non-http(s) URLs, and missing domains."""
+    obj = {
+      'content': 'foo',
+      'upstreamDuplicates': [
+        'http://sho.rt/post',
+        # local
+        'http://localhost',
+        'http://other/link',
+        'http://y.local/path'
+        # reserved
+        'https://x.test/',
+        # not http
+        'file://foo.com/Ryan/.npmrc'
+        'git@github.com:snarfed/granary.git',
+        '/home/ryan/foo',
+        'mailto:x@y.z',
+        # missing domain
+        'http:///foo/bar',
+        'file:///Users/Ryan/.npmrc',
+      ],
+    }
+    self.check_original_post_discovery(
+      obj, ['http://sho.rt/post'], include_reserved_hosts=False)
+
+  def test_original_post_discovery_exclude__hosts(self):
     obj = {
       'content': 'http://other/link https://x.test/ http://y.local/path',
       'upstreamDuplicates': ['http://localhost', 'http://sho.rt/post'],
