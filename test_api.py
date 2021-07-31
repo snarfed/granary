@@ -5,7 +5,6 @@ import copy
 import socket
 
 from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from granary import instagram
 from granary import source
@@ -13,7 +12,11 @@ from granary.tests import test_facebook
 from granary.tests import test_instagram
 from granary.tests import test_twitter
 
-import api, app
+import app
+app.SILOS.append('fake')  # must happen before importing api
+import api
+
+client = app.app.test_client()
 
 
 class FakeSource(source.Source):
@@ -25,14 +28,15 @@ class FakeSource(source.Source):
     pass
 
 
-class HandlerTest(testutil.HandlerTest):
+class ApiTest(testutil.TestCase):
 
   activities = [{'foo': '☕ bar'}]
 
   def setUp(self):
-    super(HandlerTest, self).setUp()
+    super(ApiTest, self).setUp()
+    app.app.testing = True
     self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    api.Handler.get.cache_clear()
+    app.cache.clear()
 
   def reset(self):
     self.mox.UnsetStubs()
@@ -56,11 +60,11 @@ class HandlerTest(testutil.HandlerTest):
         })
     self.mox.ReplayAll()
 
-    return app.application.get_response(url, method=method)
+    return client.open(url, method=method)
 
   def check_request(self, url, *args, **kwargs):
     resp = self.get_response('/fake' + url, *args, **kwargs)
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assert_equals({
         'startIndex': int(kwargs.get('start_index', 0)),
         'itemsPerPage': 1,
@@ -69,24 +73,23 @@ class HandlerTest(testutil.HandlerTest):
         'filtered': False,
         'sorted': False,
         'updatedSince': False,
-        },
-      json_loads(resp.body))
+        }, resp.json)
     return resp
 
   def test_all_defaults(self):
-    self.check_request('/')
+    self.check_request('////')
 
   def test_me(self):
-    self.check_request('/@me', None)
+    self.check_request('/@me///', None)
 
   def test_user_id(self):
-    self.check_request('/123/', '123')
+    self.check_request('/123///', '123')
 
   def test_user_id_tag_uri(self):
-    self.check_request('/tag:fa.ke:123/', '123')
+    self.check_request('/tag:fa.ke:123///', '123')
 
   def test_all(self):
-    self.check_request('/123/@all/', '123', None)
+    self.check_request('/123/@all//', '123', None)
 
   def test_friends(self):
     self.check_request('/123/@friends/', '123', None)
@@ -100,17 +103,17 @@ class HandlerTest(testutil.HandlerTest):
     FakeSource.get_blocklist().AndReturn(blocks)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/fake/123/@blocks/')
-    self.assertEqual(200, resp.status_int)
-    self.assert_equals({'items': blocks}, json_loads(resp.body))
+    resp = client.get('/fake/123/@blocks/')
+    self.assertEqual(200, resp.status_code)
+    self.assert_equals({'items': blocks}, resp.json)
 
   def test_blocks_rate_limited(self):
     self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
     FakeSource.get_blocklist().AndRaise(source.RateLimited('foo', partial=[]))
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/fake/123/@blocks/')
-    self.assertEqual(429, resp.status_int)
+    resp = client.get('/fake/123/@blocks/')
+    self.assertEqual(429, resp.status_code)
 
   def test_blocks_rate_limited_partial(self):
     self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
@@ -118,9 +121,9 @@ class HandlerTest(testutil.HandlerTest):
     FakeSource.get_blocklist().AndRaise(source.RateLimited('foo', partial=blocks))
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/fake/123/@blocks/')
-    self.assertEqual(200, resp.status_int)
-    self.assert_equals({'items': blocks}, json_loads(resp.body))
+    resp = client.get('/fake/123/@blocks/')
+    self.assertEqual(200, resp.status_code)
+    self.assert_equals({'items': blocks}, resp.json)
 
   def test_group_id(self):
     self.check_request('/123/456', '123', '456')
@@ -142,9 +145,8 @@ class HandlerTest(testutil.HandlerTest):
                        '123', '456', '789', '000')
 
   def test_activity_id_tag_uri_wrong_domain(self):
-    resp = app.application.get_response(
-      '/fake/123/456/789/tag:foo.bar:000/')
-    self.assertEqual(400, resp.status_int)
+    resp = client.get('/fake/123/456/789/tag:foo.bar:000/')
+    self.assertEqual(400, resp.status_code)
 
   def test_defaults_and_activity_id(self):
     self.check_request('/@me/@all/@app/000/', None, None, None, '000')
@@ -161,7 +163,7 @@ class HandlerTest(testutil.HandlerTest):
 
   def test_as1_xml_format(self):
     resp = self.get_response('/fake?format=as1-xml')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('application/xml; charset=utf-8',
                       resp.headers['Content-Type'])
     self.assert_multiline_equals("""\
@@ -177,17 +179,17 @@ class HandlerTest(testutil.HandlerTest):
 <totalResults>9</totalResults>
 <updatedSince>False</updatedSince>
 </response>
-""", resp.text)
+""", resp.get_data(as_text=True))
 
   def test_xml_format(self):
     resp = self.get_response('/fake?format=xml')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('application/xml; charset=utf-8',
                       resp.headers['Content-Type'])
 
   def test_as2_format(self):
     resp = self.get_response('/fake?format=as2')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('application/activity+json; charset=utf-8',
                      resp.headers['Content-Type'])
 
@@ -201,7 +203,7 @@ class HandlerTest(testutil.HandlerTest):
 
         # include access_token param to check that it gets stripped
         resp = self.get_response('/fake?format=atom&access_token=foo&a=b&cache=false')
-        self.assertEqual(200, resp.status_int)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual('application/atom+xml; charset=utf-8',
                           resp.headers['Content-Type'])
         self.assert_multiline_equals(
@@ -210,48 +212,48 @@ class HandlerTest(testutil.HandlerTest):
             'host_url': 'http://fa.ke/',
             'base_url': 'http://fa.ke/',
           },
-          resp.text, ignore_blanks=True)
+          resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_html_format(self):
     resp = self.get_response('/fake?format=html')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('text/html; charset=utf-8', resp.headers['Content-Type'])
 
   def test_rss_format(self):
     resp = self.get_response('/fake?format=rss')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('application/rss+xml; charset=utf-8', resp.headers['Content-Type'])
 
   def test_unknown_format(self):
     resp = self.get_response('/fake?format=bad')
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(400, resp.status_code)
 
   def test_instagram_scrape_with_cookie(self):
     self.expect_requests_get(
       instagram.HTML_BASE_URL, test_instagram.HTML_FEED_COMPLETE,
       allow_redirects=False, headers={'Cookie': 'sessionid=c00k1e'})
     self.mox.ReplayAll()
-    resp = app.application.get_response(
+    resp = client.get(
       '/instagram/@me/@friends/@app/?cookie=c00k1e&interactive=true')
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('application/json; charset=utf-8',
                      resp.headers['Content-Type'])
     self.assert_equals(test_instagram.HTML_ACTIVITIES_FULL,
-                       json_loads(resp.body)['items'])
+                       resp.json['items'])
 
   def test_instagram_scrape_without_cookie_error(self):
-    resp = app.application.get_response(
+    resp = client.get(
       '/instagram/@me/@friends/@app/?format=html&access_token=...&interactive=true')
-    self.assert_equals(400, resp.status_int)
-    self.assertIn('Scraping only supports activity_id', resp.text)
+    self.assert_equals(400, resp.status_code)
+    self.assertIn('Scraping only supports activity_id', resp.get_data(as_text=True))
 
   def test_bad_start_index(self):
-    resp = app.application.get_response('/fake?startIndex=foo')
-    self.assertEqual(400, resp.status_int)
+    resp = client.get('/fake?startIndex=foo')
+    self.assertEqual(400, resp.status_code)
 
   def test_bad_count(self):
-    resp = app.application.get_response('/fake?count=-1')
-    self.assertEqual(400, resp.status_int)
+    resp = client.get('/fake?count=-1')
+    self.assertEqual(400, resp.status_code)
 
   def test_start_index(self):
     expected_count = api.ITEMS_PER_PAGE_DEFAULT - 2
@@ -277,32 +279,32 @@ class HandlerTest(testutil.HandlerTest):
 
     # first fetches populate the cache. make sure query params are included in
     # cache key.
-    first_x = app.application.get_response('/fake/123/@all/?x=y')
-    first_a = app.application.get_response('/fake/123/@all/?a=b')
+    first_x = client.get('/fake/123/@all/?x=y')
+    first_a = client.get('/fake/123/@all/?a=b')
 
     # second fetches should use the cache instead of fetching from the silo
-    second_x = app.application.get_response('/fake/123/@all/?x=y')
-    self.assert_equals({'items': ['x']}, json_loads(second_x.body))
+    second_x = client.get('/fake/123/@all/?x=y')
+    self.assert_equals({'items': ['x']}, second_x.json)
 
-    second_a = app.application.get_response('/fake/123/@all/?a=b')
-    self.assert_equals({'items': ['a']}, json_loads(second_a.body))
+    second_a = client.get('/fake/123/@all/?a=b')
+    self.assert_equals({'items': ['a']}, second_a.json)
 
   def test_cache_false_query_param(self):
     first = self.get_response('/fake/123/@all/?cache=false', '123', None)
     self.reset()
     second = self.get_response('/fake/123/@all/?cache=false', '123', None)
-    self.assert_equals(first.body, second.body)
+    self.assert_equals(first.get_data(), second.get_data())
 
   def test_get_activities_connection_error(self):
     FakeSource.get_activities_response(
       None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT
     ).AndRaise(socket.timeout(''))
     self.mox.ReplayAll()
-    resp = app.application.get_response('/fake/@me')
-    self.assertEqual(504, resp.status_int)
+    resp = client.get('/fake/@me')
+    self.assertEqual(504, resp.status_code)
 
   def test_http_head(self):
     resp = self.get_response('/fake?format=html', method='HEAD')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('text/html', resp.headers['Content-Type'])
-    self.assertEqual('', resp.text)
+    self.assertEqual('', resp.get_data(as_text=True))

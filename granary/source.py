@@ -30,6 +30,7 @@ FRIENDS = '@friends'
 APP = '@app'
 SEARCH = '@search'
 BLOCKS = '@blocks'
+GROUPS = (ME, SELF, ALL, FRIENDS, APP, SEARCH, BLOCKS)
 
 # values for create's include_link param
 OMIT_LINK = 'omit'

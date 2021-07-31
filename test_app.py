@@ -9,8 +9,9 @@ from oauth_dropins.webutil import appengine_info, testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-import app
+import app, cache
 
+client = app.test_client()
 
 AS1 = [{
   'objectType': 'activity',
@@ -159,8 +160,6 @@ ATOM_CONTENT = """\
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
 
-
-
 foo ☕ bar
 
   </div>
@@ -179,11 +178,11 @@ foo ☕ bar
 """
 
 
-class AppTest(testutil.HandlerTest):
+class AppTest(testutil.TestCase):
 
   def setUp(self):
     super(AppTest, self).setUp()
-    app.UrlHandler.get.cache_clear()
+    cache.clear()
 
   def expect_requests_get(self, *args, **kwargs):
     return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
@@ -192,9 +191,8 @@ class AppTest(testutil.HandlerTest):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=as1&output=mf2-json')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.json&input=as1&output=mf2-json')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/mf2+json; charset=utf-8',
                        resp.headers['Content-Type'])
     self.assert_equals(MF2, json_loads(resp.body))
@@ -203,9 +201,8 @@ class AppTest(testutil.HandlerTest):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=as1&output=as2')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.json&input=as1&output=as2')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/activity+json; charset=utf-8',
                        resp.headers['Content-Type'])
     self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
@@ -214,9 +211,8 @@ class AppTest(testutil.HandlerTest):
     self.expect_requests_get('http://my/posts.json', AS1_RESPONSE)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=as1&output=as2')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.json&input=as1&output=as2')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/activity+json; charset=utf-8',
                        resp.headers['Content-Type'])
     self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
@@ -225,9 +221,8 @@ class AppTest(testutil.HandlerTest):
     self.expect_requests_get('http://my/posts.json', AS2)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=as2&output=as1')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/stream+json; charset=utf-8',
                        resp.headers['Content-Type'])
     self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
@@ -236,9 +231,8 @@ class AppTest(testutil.HandlerTest):
     self.expect_requests_get('http://my/posts.json', AS2_RESPONSE)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=as2&output=as1')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/stream+json; charset=utf-8',
                        resp.headers['Content-Type'])
     self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
@@ -248,8 +242,8 @@ class AppTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
-    resp = app.application.get_response(path)
-    self.assert_equals(200, resp.status_int)
+    resp = client.get(path)
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/json; charset=utf-8',
                        resp.headers['Content-Type'])
 
@@ -262,17 +256,17 @@ class AppTest(testutil.HandlerTest):
   #   self.expect_requests_get('http://my/posts.json', {'foo': 'bar'})
   #   self.mox.ReplayAll()
 
-  #   resp = app.application.get_response(
+  #   resp = client.get(
   #     '/url?url=http://my/posts.json&input=as1&output=jsonfeed')
-  #   self.assert_equals(400, resp.status_int)
+  #   self.assert_equals(400, resp.status_code)
 
   def test_url_jsonfeed_to_json_mf2(self):
     self.expect_requests_get('http://my/feed.json', JSONFEED)
     self.mox.ReplayAll()
 
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
-    resp = app.application.get_response(path)
-    self.assert_equals(200, resp.status_int)
+    resp = client.get(path)
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/mf2+json; charset=utf-8',
                        resp.headers['Content-Type'])
 
@@ -285,21 +279,21 @@ class AppTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
-    resp = app.application.get_response(path)
-    self.assert_equals(400, resp.status_int)
-    self.assertIn('Could not parse http://my/feed.json as jsonfeed', resp.text)
+    resp = client.get(path)
+    self.assert_equals(400, resp.status_code)
+    self.assertIn('Could not parse http://my/feed.json as jsonfeed',
+                  resp.get_data(as_text=True))
 
   def test_url_json_mf2_to_html(self):
     self.expect_requests_get('http://my/posts.json', MF2)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=json-mf2&output=html')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.json&input=json-mf2&output=html')
+    self.assert_equals(200, resp.status_code)
     self.assert_multiline_equals(HTML % {
       'body_class': '',
       'extra': '',
-    }, resp.text, ignore_blanks=True)
+    }, resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_to_atom(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
@@ -316,10 +310,10 @@ class AppTest(testutil.HandlerTest):
     })
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html&input=html&output=atom')
-    self.assert_equals(200, resp.status_int)
-    self.assert_multiline_in(ATOM_CONTENT, resp.text, ignore_blanks=True)
+    resp = client.get('/url?url=http://my/posts.html&input=html&output=atom')
+    self.assert_equals(200, resp.status_code)
+    self.assert_multiline_in(ATOM_CONTENT, resp.get_data(as_text=True),
+                             ignore_blanks=True)
 
   def test_url_html_to_atom_rel_author(self):
     """
@@ -341,9 +335,8 @@ class AppTest(testutil.HandlerTest):
 """, timeout=15)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html&input=html&output=atom')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html&input=html&output=atom')
+    self.assert_equals(200, resp.status_code)
     self.assert_multiline_in("""
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -363,7 +356,7 @@ class AppTest(testutil.HandlerTest):
  <uri>http://my/author</uri>
  <name>Someone Else</name>
 </author>
-""", resp.text, ignore_blanks=True)
+""", resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_to_atom_skip_silo_rel_authors(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
@@ -375,9 +368,8 @@ class AppTest(testutil.HandlerTest):
     })
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html&input=html&output=atom')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html&input=html&output=atom')
+    self.assert_equals(200, resp.status_code)
     self.assert_multiline_in("""
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
@@ -394,16 +386,15 @@ class AppTest(testutil.HandlerTest):
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>https://twitter.com/Author</uri>
 </author>
-""", resp.text, ignore_blanks=True)
+""", resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_to_json_mf2(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
     self.expect_requests_get('http://my/posts.html', html)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html&input=html&output=json-mf2')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html&input=html&output=json-mf2')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/mf2+json; charset=utf-8',
                        resp.headers['Content-Type'])
 
@@ -417,9 +408,8 @@ class AppTest(testutil.HandlerTest):
     self.expect_requests_get('http://my/posts.html', html)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html&input=html&output=html')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
@@ -428,22 +418,21 @@ class AppTest(testutil.HandlerTest):
 <div class="e-content">
 foo ☕ bar
 </div>
-""", resp.text, ignore_blanks=True)
+""", resp.get_data(as_text=True), ignore_blanks=True)
     self.assert_multiline_in("""\
 <span class="p-name">baz baj</span>
 <div class="e-content">
 baz baj
 </div>
-""", resp.text, ignore_blanks=True)
+""", resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_meta_charset(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
     self.expect_requests_get('http://my/posts.html', html, encoding='ISO-8859-1')
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html&input=html&output=html')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
@@ -452,13 +441,13 @@ baz baj
 <div class="e-content">
 foo ☕ bar
 </div>
-""", resp.text, ignore_blanks=True)
+""", resp.get_data(as_text=True), ignore_blanks=True)
     self.assert_multiline_in("""\
 <span class="p-name">baz baj</span>
 <div class="e-content">
 baz baj
 </div>
-""", resp.text, ignore_blanks=True)
+""", resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_fragment(self):
     self.expect_requests_get('http://my/posts.html#def', """
@@ -468,9 +457,8 @@ baz baj
 """)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html%23def&input=html&output=as1')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html%23def&input=html&output=as1')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals([{'object': {
       'objectType': 'note',
       'content': 'foo',
@@ -485,23 +473,23 @@ baz baj
 """)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.html%23xyz&input=html&output=as1')
-    self.assert_equals(400, resp.status_int)
-    self.assertIn('Got fragment xyz but no element found with that id.', resp.text)
+    resp = client.get('/url?url=http://my/posts.html%23xyz&input=html&output=as1')
+    self.assert_equals(400, resp.status_code)
+    self.assertIn('Got fragment xyz but no element found with that id.',
+                  resp.get_data(as_text=True))
 
   def test_url_fragment_not_html(self):
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json%23xyz&input=as2')
-    self.assert_equals(400, resp.status_int)
-    self.assertIn('URL fragments only supported with input=html.', resp.text)
+    resp = client.get('/url?url=http://my/posts.json%23xyz&input=as2')
+    self.assert_equals(400, resp.status_code)
+    self.assertIn('URL fragments only supported with input=html.',
+                  resp.get_data(as_text=True))
 
   def test_url_atom_to_as1(self):
     self.expect_requests_get('http://feed', ATOM_CONTENT + '</feed>\n')
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
-    self.assert_equals(200, resp.status_int)
+    resp = client.get('/url?url=http://feed&input=atom&output=as1')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/stream+json; charset=utf-8',
                        resp.headers['Content-Type'])
     self.assert_equals({
@@ -535,9 +523,10 @@ baz baj
     self.expect_requests_get('http://feed', 'not valid xml')
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
-    self.assert_equals(400, resp.status_int)
-    self.assertIn('Could not parse http://feed as XML: ', resp.text)
+    resp = client.get('/url?url=http://feed&input=atom&output=as1')
+    self.assert_equals(400, resp.status_code)
+    self.assertIn('Could not parse http://feed as XML: ',
+                  resp.get_data(as_text=True))
 
   def test_url_atom_to_as1_not_atom(self):
     self.expect_requests_get('http://feed', """\
@@ -547,9 +536,10 @@ not atom!
 </rss>""")
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/url?url=http://feed&input=atom&output=as1')
-    self.assert_equals(400, resp.status_int)
-    self.assertIn('Could not parse http://feed as Atom: ', resp.text)
+    resp = client.get('/url?url=http://feed&input=atom&output=as1')
+    self.assert_equals(400, resp.status_code)
+    self.assertIn('Could not parse http://feed as Atom: ',
+                  resp.get_data(as_text=True))
 
   def test_url_as1_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.
@@ -564,12 +554,11 @@ not atom!
     self.expect_requests_get('http://my/posts.as', [activity])
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.as&input=as1&output=atom&reader=false')
-    self.assert_equals(200, resp.status_int, resp.text)
-    self.assertNotIn('p-location', resp.text)
+    resp = client.get('/url?url=http://my/posts.as&input=as1&output=atom&reader=false')
+    self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
+    self.assertNotIn('p-location', resp.get_data(as_text=True))
     self.assertNotIn('<a class="p-name u-url" href="http://my/place">My place</a>',
-                     resp.text)
+                     resp.get_data(as_text=True))
 
   def test_url_as1_to_atom_if_missing_actor_use_hfeed(self):
     mf2 = {'items': [{
@@ -584,16 +573,15 @@ not atom!
     self.expect_requests_get('http://my/posts', mf2)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts&input=json-mf2&output=atom')
-    self.assert_equals(200, resp.status_int, resp.text)
-    self.assertIn('<title>2toPonder</title>', resp.text)
-    self.assertIn('<logo>https://foo/art.jpg</logo>', resp.text)
+    resp = client.get('/url?url=http://my/posts&input=json-mf2&output=atom')
+    self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn('<title>2toPonder</title>', resp.get_data(as_text=True))
+    self.assertIn('<logo>https://foo/art.jpg</logo>', resp.get_data(as_text=True))
 
 
   def test_url_bad_input(self):
-    resp = app.application.get_response('/url?url=http://my/posts.json&input=foo')
-    self.assert_equals(400, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.json&input=foo')
+    self.assert_equals(400, resp.status_code)
 
   def test_url_input_not_json(self):
     self.expect_requests_get('http://my/posts', '<html><body>not JSON</body></html>'
@@ -601,44 +589,40 @@ not atom!
     self.mox.ReplayAll()
 
     for input in 'as1', 'as2', 'activitystreams', 'json-mf2', 'jsonfeed':
-      resp = app.application.get_response(
-        '/url?url=http://my/posts&input=%s' % input)
-      self.assert_equals(400, resp.status_int)
+      resp = client.get('/url?url=http://my/posts&input=%s' % input)
+      self.assert_equals(400, resp.status_code)
 
   def test_url_json_input_not_dict(self):
     self.expect_requests_get('http://my/posts', '[1, 2]').MultipleTimes()
     self.mox.ReplayAll()
 
     for input in 'as2', 'json-mf2', 'jsonfeed':
-      resp = app.application.get_response(
-        '/url?url=http://my/posts&input=%s' % input)
-      self.assert_equals(400, resp.status_int)
+      resp = client.get('/url?url=http://my/posts&input=%s' % input)
+      self.assert_equals(400, resp.status_code)
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts&input=as1&output=as2')
-    self.assert_equals(400, resp.status_int)
+    resp = client.get('/url?url=http://my/posts&input=as1&output=as2')
+    self.assert_equals(400, resp.status_code)
 
   def test_url_bad_url(self):
     self.expect_requests_get('http://astralandopal.com\\'
                             ).AndRaise(requests.exceptions.MissingSchema('foo'))
     self.mox.ReplayAll()
-    resp = app.application.get_response(
-      '/url?url=http://astralandopal.com\\&input=html')
-    self.assert_equals(400, resp.status_int)
+    resp = client.get('/url?url=http://astralandopal.com\\&input=html')
+    self.assert_equals(400, resp.status_code)
 
   def test_url_fetch_fails(self):
     self.expect_requests_get('http://my/posts.html').AndRaise(socket.timeout(''))
     self.mox.ReplayAll()
-    resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
-    self.assert_equals(504, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(504, resp.status_code)
 
   def test_url_response_too_big(self):
     self.expect_requests_get('http://my/posts.html', response_headers={
       'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
     })
     self.mox.ReplayAll()
-    resp = app.application.get_response('/url?url=http://my/posts.html&input=html')
-    self.assert_equals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_int)
+    resp = client.get('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
 
   def test_cache(self):
     self.expect_requests_get('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
@@ -646,12 +630,12 @@ not atom!
 
     # first fetch populates the cache
     url = '/url?url=http://my/posts.html&input=html'
-    first = app.application.get_response(url)
-    self.assert_equals(200, first.status_int)
+    first = client.get(url)
+    self.assert_equals(200, first.status_code)
 
     # second fetch should use the cache instead of fetching from the silo
-    second = app.application.get_response(url)
-    self.assert_equals(200, first.status_int)
+    second = client.get(url)
+    self.assert_equals(200, first.status_code)
     self.assert_equals(first.body, second.body)
 
   def test_hub(self):
@@ -662,15 +646,15 @@ not atom!
     self.mox.ReplayAll()
 
     url = '/url?url=http://my/posts.html&input=html&output=atom&hub=http://a/hub'
-    resp = app.application.get_response(url)
+    resp = client.get(url)
 
     self_url = 'http://localhost' + url
-    self.assert_equals(200, resp.status_int)
+    self.assert_equals(200, resp.status_code)
     self.assert_multiline_in('<link rel="hub" href="http://a/hub" />',
-                             resp.text)
+                             resp.get_data(as_text=True))
     self.assert_multiline_in(
       '<link rel="self" href="%s"' % xml.sax.saxutils.escape(self_url),
-      resp.text)
+      resp.get_data(as_text=True))
 
     headers = resp.headers.getall('Link')
     self.assertIn('<http://a/hub>; rel="hub"', headers)
@@ -681,7 +665,7 @@ not atom!
     self.mox.ReplayAll()
 
     url = '/url?url=http://my/as1&input=as1&output=atom&hub=http://a/%E2%98%95'
-    resp = app.application.get_response(url)
+    resp = client.get(url)
     self.assertCountEqual(
       ('<http://a/%E2%98%95>; rel="hub"',
        '<http://localhost/url?url=http://my/as1&input=as1&output=atom&hub=http://a/%E2%98%95>; rel="self"'),
@@ -706,53 +690,48 @@ not atom!
       }],
     }})
     self.mox.ReplayAll()
-    resp = app.application.get_response('/url?url=http://some/jf2&input=mf2-json')
-    self.assert_equals(400, resp.status_int)
+    resp = client.get('/url?url=http://some/jf2&input=mf2-json')
+    self.assert_equals(400, resp.status_code)
 
   def test_url_head(self):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=as1&output=mf2-json', method='HEAD')
-    self.assert_equals(200, resp.status_int)
+    resp = client.head('/url?url=http://my/posts.json&input=as1&output=mf2-json')
+    self.assert_equals(200, resp.status_code)
     self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
-    self.assert_equals('', resp.text)
+    self.assert_equals('', resp.get_data(as_text=True))
 
   def test_url_head_bad_output(self):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response(
-      '/url?url=http://my/posts.json&input=as1&output=foo', method='HEAD')
-    self.assert_equals(400, resp.status_int)
-    self.assert_equals('', resp.text)
+    resp = client.head('/url?url=http://my/posts.json&input=as1&output=foo')
+    self.assert_equals(400, resp.status_code)
+    self.assert_equals('', resp.get_data(as_text=True))
 
   def test_demo(self):
-    resp = app.application.get_response(
-      '/demo?site=sayt&user_id=me&group_id=@groop&activity_id=123')
-    self.assert_equals(302, resp.status_int, resp.text)
+    resp = client.get('/demo?site=sayt&user_id=me&group_id=@groop&activity_id=123')
+    self.assert_equals(302, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals('http://localhost/sayt/me/@groop/@app/123?site=sayt&user_id=me&group_id=%40groop&activity_id=123&plaintext=true&cache=false&search_query=',
                        resp.headers['Location'])
 
   def test_demo_search(self):
-    resp = app.application.get_response(
-      '/demo?site=sayt&user_id=me&group_id=@search&search_query=foo')
-    self.assert_equals(302, resp.status_int, resp.text)
+    resp = client.get('/demo?site=sayt&user_id=me&group_id=@search&search_query=foo')
+    self.assert_equals(302, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals('http://localhost/sayt/me/@search/@app/?site=sayt&user_id=me&group_id=%40search&search_query=foo&plaintext=true&cache=false',
                        resp.headers['Location'])
 
   def test_demo_list(self):
-    resp = app.application.get_response(
-      '/demo?site=sayt&user_id=me&group_id=@list&list=ly%E2%98%95zt')
-    self.assert_equals(302, resp.status_int, resp.text)
+    resp = client.get('/demo?site=sayt&user_id=me&group_id=@list&list=ly%E2%98%95zt')
+    self.assert_equals(302, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals('http://localhost/sayt/me/ly%E2%98%95zt/@app/?site=sayt&user_id=me&group_id=%40list&list=ly%E2%98%95zt&plaintext=true&cache=false&search_query=',
                        resp.headers['Location'])
 
   def test_demo_non_ascii_params(self):
     # %E2%98%95 is ☕
-    resp = app.application.get_response(
+    resp = client.get(
       '/demo?site=%E2%98%95&user_id=%E2%98%95&group_id=%E2%98%95&activity_id=%E2%98%95&search_query=%E2%98%95&format=%E2%98%95')
-    self.assert_equals(302, resp.status_int, resp.text)
+    self.assert_equals(302, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals('http://localhost/%E2%98%95/%E2%98%95/%E2%98%95/@app/%E2%98%95?site=%E2%98%95&user_id=%E2%98%95&group_id=%E2%98%95&activity_id=%E2%98%95&search_query=&format=%E2%98%95&plaintext=true&cache=false',
                        resp.headers['Location'])
