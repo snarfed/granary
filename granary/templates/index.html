@@ -76,30 +76,10 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <div class="login">
 <div class="row">
 {{ twitter_html|safe }}
-<div class="col-lg-2 col-sm-4 col-xs-6">
-  <a href="#" onclick="alert('Facebook is available in the library, but not in the REST API or demo app here. Sorry for the inconvenience!')">
-    <img class="shadow" src="/oauth_dropins_static/facebook_2x.png" height="50" />
-  </a>
-</div>
-<div class="col-lg-2 col-sm-4 col-xs-6">
-  <a href="/?site=instagram">
-    <img class="shadow" src="/oauth_dropins_static/instagram_2x.png" height="50"
-         style="background-color: #EEEEEE; padding: 5px; padding-top: 8px; padding-bottom: 2px">
-  </a>
-</div>
 {{ flickr_html|safe }}
 {{ github_html|safe }}
 {{ mastodon_html|safe }}
-<div class="col-lg-2 col-sm-4 col-xs-6">
-  <a href="#" onclick="alert('Meetup is available in the library, but not in the REST API or demo app here. Sorry for the inconvenience!')">
-    <img class="shadow" src="/oauth_dropins_static/meetup_2x.png" height="50"
-         style="background-color: #EEEEEE; padding: 10px" />
-  </a>
-</div>
 {{ pixelfed_html|safe }}
-{{ reddit_html|safe }}
-
-<div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get" action="#logins">
   <input type="image" class="shadow" title="ActivityStreams"
          src="/static/activitystreams_logotype_2x.png" height="50" />
@@ -340,6 +320,41 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <p><code id="request"></code></p>
 <iframe name="results" onload="spinner('hidden')" onerror="spinner('hidden')">
 </iframe>
+</div>
+
+
+{% else %}
+<!--
+  -- not showing interactive form
+  -->
+<p class="lead">
+These are available in the library, but not here:
+</p>
+
+<div class="row">
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <a href="https://granary.readthedocs.io/en/latest/source/granary.html#module-granary.facebook">
+    <img class="shadow" src="/oauth_dropins_static/facebook_2x.png" height="50" />
+  </a>
+</div>
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <a href="https://granary.readthedocs.io/en/latest/source/granary.html#module-granary.instagram">
+    <img class="shadow" src="/oauth_dropins_static/instagram_2x.png" height="50"
+         style="background-color: #EEEEEE; padding: 5px; padding-top: 8px; padding-bottom: 2px" />
+  </a>
+</div>
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <a href="https://granary.readthedocs.io/en/latest/source/granary.html#module-granary.meetup">
+    <img class="shadow" src="/oauth_dropins_static/meetup_2x.png" height="50"
+         style="background-color: #EEEEEE; padding: 10px" />
+  </a>
+</div>
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <a href="https://granary.readthedocs.io/en/latest/source/granary.html#module-granary.reddit">
+    <img class="shadow" src="/oauth_dropins_static/reddit_2x.png" height="50"
+         style="background-color: #CEE3F8; padding: 10px;" />
+  </a>
+</div>
 </div>
 
 {% endif %}

@@ -5,11 +5,10 @@ import copy
 import socket
 import xml.sax.saxutils
 
-from oauth_dropins.webutil import appengine_info, testutil, util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil import testutil, util
 import requests
 
-import app, cache
+from app import app, cache
 
 client = app.test_client()
 
@@ -142,7 +141,7 @@ ATOM_CONTENT = """\
 <link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
-<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
@@ -193,9 +192,8 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.json&input=as1&output=mf2-json')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/mf2+json; charset=utf-8',
-                       resp.headers['Content-Type'])
-    self.assert_equals(MF2, json_loads(resp.body))
+    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
+    self.assert_equals(MF2, resp.json)
 
   def test_url_as1_to_as2(self):
     self.expect_requests_get('http://my/posts.json', AS1)
@@ -203,9 +201,8 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/activity+json; charset=utf-8',
-                       resp.headers['Content-Type'])
-    self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
+    self.assert_equals('application/activity+json', resp.headers['Content-Type'])
+    self.assert_equals(AS2_RESPONSE, resp.json)
 
   def test_url_as1_response_to_as2(self):
     self.expect_requests_get('http://my/posts.json', AS1_RESPONSE)
@@ -213,9 +210,9 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/activity+json; charset=utf-8',
+    self.assert_equals('application/activity+json',
                        resp.headers['Content-Type'])
-    self.assert_equals(AS2_RESPONSE, json_loads(resp.body))
+    self.assert_equals(AS2_RESPONSE, resp.json)
 
   def test_url_as2_to_as1(self):
     self.expect_requests_get('http://my/posts.json', AS2)
@@ -223,9 +220,8 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/stream+json; charset=utf-8',
-                       resp.headers['Content-Type'])
-    self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals(AS1_RESPONSE, resp.json)
 
   def test_url_as2_response_to_as1(self):
     self.expect_requests_get('http://my/posts.json', AS2_RESPONSE)
@@ -233,23 +229,21 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/stream+json; charset=utf-8',
-                       resp.headers['Content-Type'])
-    self.assert_equals(AS1_RESPONSE, json_loads(resp.body))
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals(AS1_RESPONSE, resp.json)
 
   def test_url_as1_to_jsonfeed(self):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
-    path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
+    path = '/url?url=http:%2F%2Fmy%2Fposts.json&input=as1&output=jsonfeed'
     resp = client.get(path)
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/json; charset=utf-8',
-                       resp.headers['Content-Type'])
+    self.assert_equals('application/json', resp.headers['Content-Type'])
 
     expected = copy.deepcopy(JSONFEED)
     expected['feed_url'] = 'http://localhost' + path
-    self.assert_equals(expected, json_loads(resp.body))
+    self.assert_equals(expected, resp.json)
 
     # TODO: drop?
   # def test_url_as1_to_jsonfeed_not_list(self):
@@ -267,12 +261,11 @@ class AppTest(testutil.TestCase):
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
     resp = client.get(path)
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/mf2+json; charset=utf-8',
-                       resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
 
     expected = copy.deepcopy(MF2)
     expected['items'][0]['properties']['uid'] = [JSONFEED['items'][0]['id']]
-    self.assert_equals(expected, json_loads(resp.body))
+    self.assert_equals(expected, resp.json)
 
   def test_url_bad_jsonfeed(self):
     self.expect_requests_get('http://my/feed.json', ['not', 'jsonfeed'])
@@ -347,7 +340,7 @@ class AppTest(testutil.TestCase):
 <link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="http://my/author" type="text/html" />
 <link rel="avatar" href="http://someone/picture" />
-<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
@@ -378,7 +371,7 @@ class AppTest(testutil.TestCase):
 
 <link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="https://twitter.com/Author" type="text/html" />
-<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
@@ -395,13 +388,12 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=json-mf2')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/mf2+json; charset=utf-8',
-                       resp.headers['Content-Type'])
+    self.assert_equals('application/mf2+json', resp.headers['Content-Type'])
 
     expected = copy.deepcopy(MF2)
     for obj in expected['items']:
       obj['properties']['name'] = [obj['properties']['content'][0].strip()]
-    self.assert_equals(expected, json_loads(resp.body))
+    self.assert_equals(expected, resp.json)
 
   def test_url_html_to_html(self):
     html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
@@ -410,7 +402,7 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
+    self.assert_equals('text/html', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
 <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
@@ -433,7 +425,7 @@ baz baj
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
+    self.assert_equals('text/html', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
 <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
@@ -490,8 +482,7 @@ baz baj
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/stream+json; charset=utf-8',
-                       resp.headers['Content-Type'])
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
     self.assert_equals({
       'items': [{
         'id': 'https://perma/link',
@@ -517,7 +508,7 @@ baz baj
       'sorted': False,
       'filtered': False,
       'updatedSince': False,
-    }, json_loads(resp.body))
+    }, resp.json)
 
   def test_url_atom_to_as1_parse_error(self):
     self.expect_requests_get('http://feed', 'not valid xml')
@@ -636,7 +627,7 @@ not atom!
     # second fetch should use the cache instead of fetching from the silo
     second = client.get(url)
     self.assert_equals(200, first.status_code)
-    self.assert_equals(first.body, second.body)
+    self.assert_equals(first.get_data(), second.get_data())
 
   def test_hub(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
@@ -653,12 +644,13 @@ not atom!
     self.assert_multiline_in('<link rel="hub" href="http://a/hub" />',
                              resp.get_data(as_text=True))
     self.assert_multiline_in(
-      '<link rel="self" href="%s"' % xml.sax.saxutils.escape(self_url),
+      '<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom&amp;hub=http:%2F%2Fa%2Fhub"',
       resp.get_data(as_text=True))
 
-    headers = resp.headers.getall('Link')
-    self.assertIn('<http://a/hub>; rel="hub"', headers)
-    self.assertIn('<%s>; rel="self"' % self_url, headers)
+    self.assertCountEqual((
+      '<http://a/hub>; rel="hub"',
+      '<http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&input=html&output=atom&hub=http:%2F%2Fa%2Fhub>; rel="self"',
+    ), resp.headers.getlist('Link'))
 
   def test_encode_urls_in_link_headers(self):
     self.expect_requests_get('http://my/as1', AS1)
@@ -668,8 +660,8 @@ not atom!
     resp = client.get(url)
     self.assertCountEqual(
       ('<http://a/%E2%98%95>; rel="hub"',
-       '<http://localhost/url?url=http://my/as1&input=as1&output=atom&hub=http://a/%E2%98%95>; rel="self"'),
-      resp.headers.getall('Link'))
+       '<http://localhost/url?url=http:%2F%2Fmy%2Fas1&input=as1&output=atom&hub=http:%2F%2Fa%2F%E2%98%95>; rel="self"'),
+      resp.headers.getlist('Link'))
 
   def test_bad_mf2_json_input_400s(self):
     """If a user sends JSON Feed input, but claims it's mf2 JSON, return 400.

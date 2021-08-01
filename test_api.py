@@ -299,5 +299,5 @@ class ApiTest(testutil.TestCase):
   def test_http_head(self):
     resp = self.get_response('/fake/?format=html', method='HEAD')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('text/html; charset=utf-8', resp.headers['Content-Type'])
+    self.assertEqual('text/html', resp.headers['Content-Type'])
     self.assertEqual('', resp.get_data(as_text=True))

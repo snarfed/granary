@@ -118,7 +118,7 @@ RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
 
 app = Flask('bridgy-fed')
-app.template_folder = './templates'
+app.template_folder = './granary/templates'
 app.config.from_mapping(
     ENV='development' if appengine_info.DEBUG else 'PRODUCTION',
     CACHE_TYPE='SimpleCache',
@@ -149,7 +149,7 @@ def front_page():
       vars.setdefault('site', vars['entity'].site_name().lower())
 
   vars.update({
-    silo + '_html': module.StartHandler.button_html(
+    silo + '_html': module.Start.button_html(
       '/%s/start_auth' % silo,
       image_prefix='/oauth_dropins_static/',
       outer_classes='col-lg-2 col-sm-4 col-xs-6',
@@ -157,7 +157,7 @@ def front_page():
     )
     for silo, module in OAUTHS.items()})
 
-  return render_template('granary/templates/index.html')
+  return render_template('index.html', **vars)
 
 
 # TODO
@@ -311,7 +311,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
       headers['Content-Type'] = content_type
 
   if request.method == 'HEAD':
-    return ''
+    return '', headers
 
   activities = response['items']
   try:
@@ -338,9 +338,12 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
           'properties': hfeed.get('properties', {}),
         })
 
-      headers['Link'] = [f'<{util.quote_path(request.url)}>; rel="self"']
+      # encode/quote Unicode chars in URLs; only ASCII is safe in HTTP headers
+      link_self = urllib.parse.quote(request.url, safe=':/?&=%')
+      headers['Link'] = [f'<{link_self}>; rel="self"']
       if hub:
-        headers['Link'].append(f'<{util.quote_path(hub)}>; rel="hub"')
+        link_hub = urllib.parse.quote(hub, safe=':/?&=')
+        headers['Link'].append(f'<{link_hub}>; rel="hub"')
 
       return atom.activities_to_atom(
         activities, actor,
@@ -391,3 +394,5 @@ for silo, module in OAUTHS.items():
   app.add_url_rule(start, view_func=module.Start.as_view(start, callback),
                    methods=['POST'])
   app.add_url_rule(callback, view_func=module.Callback.as_view(callback, '/#logins'))
+
+import api
