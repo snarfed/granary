@@ -23,14 +23,14 @@ import html2text
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+APP = '@app'
 ME = '@me'
 SELF = '@self'
 ALL = '@all'
 FRIENDS = '@friends'
-APP = '@app'
 SEARCH = '@search'
 BLOCKS = '@blocks'
-GROUPS = (ME, SELF, ALL, FRIENDS, APP, SEARCH, BLOCKS)
+GROUPS = (ME, SELF, ALL, FRIENDS, SEARCH, BLOCKS)
 
 # values for create's include_link param
 OMIT_LINK = 'omit'

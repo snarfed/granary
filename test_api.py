@@ -77,19 +77,19 @@ class ApiTest(testutil.TestCase):
     return resp
 
   def test_all_defaults(self):
-    self.check_request('////')
+    self.check_request('/')
 
   def test_me(self):
-    self.check_request('/@me///', None)
+    self.check_request('/@me', None)
 
   def test_user_id(self):
-    self.check_request('/123///', '123')
+    self.check_request('/123', '123')
 
   def test_user_id_tag_uri(self):
-    self.check_request('/tag:fa.ke:123///', '123')
+    self.check_request('/tag:fa.ke:123', '123')
 
   def test_all(self):
-    self.check_request('/123/@all//', '123', None)
+    self.check_request('/123/@all', '123', None)
 
   def test_friends(self):
     self.check_request('/123/@friends/', '123', None)
@@ -153,19 +153,16 @@ class ApiTest(testutil.TestCase):
 
   def test_as1_format(self):
     resp = self.check_request('/@me/?format=as1', None)
-    self.assertEqual('application/stream+json; charset=utf-8',
-                     resp.headers['Content-Type'])
+    self.assertEqual('application/stream+json', resp.headers['Content-Type'])
 
   def test_json_format(self):
     resp = self.check_request('/@me/?format=json', None)
-    self.assertEqual('application/json; charset=utf-8',
-                     resp.headers['Content-Type'])
+    self.assertEqual('application/json', resp.headers['Content-Type'])
 
   def test_as1_xml_format(self):
-    resp = self.get_response('/fake?format=as1-xml')
+    resp = self.get_response('/fake/?format=as1-xml')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('application/xml; charset=utf-8',
-                      resp.headers['Content-Type'])
+    self.assertEqual('application/xml', resp.headers['Content-Type'])
     self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
@@ -182,16 +179,14 @@ class ApiTest(testutil.TestCase):
 """, resp.get_data(as_text=True))
 
   def test_xml_format(self):
-    resp = self.get_response('/fake?format=xml')
+    resp = self.get_response('/fake/?format=xml')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('application/xml; charset=utf-8',
-                      resp.headers['Content-Type'])
+    self.assertEqual('application/xml', resp.headers['Content-Type'])
 
   def test_as2_format(self):
-    resp = self.get_response('/fake?format=as2')
+    resp = self.get_response('/fake/?format=as2')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('application/activity+json; charset=utf-8',
-                     resp.headers['Content-Type'])
+    self.assertEqual('application/activity+json', resp.headers['Content-Type'])
 
   def test_atom_format(self):
     for test_module in test_facebook, test_instagram, test_twitter:
@@ -202,30 +197,29 @@ class ApiTest(testutil.TestCase):
         self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
         # include access_token param to check that it gets stripped
-        resp = self.get_response('/fake?format=atom&access_token=foo&a=b&cache=false')
+        resp = self.get_response('/fake/?format=atom&access_token=foo&a=b&cache=false')
         self.assertEqual(200, resp.status_code)
-        self.assertEqual('application/atom+xml; charset=utf-8',
-                          resp.headers['Content-Type'])
+        self.assertEqual('application/atom+xml', resp.headers['Content-Type'])
         self.assert_multiline_equals(
           test_module.ATOM % {
-            'request_url': 'http://localhost/fake?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
+            'request_url': 'http://localhost/fake/?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
             'host_url': 'http://fa.ke/',
             'base_url': 'http://fa.ke/',
           },
           resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_html_format(self):
-    resp = self.get_response('/fake?format=html')
+    resp = self.get_response('/fake/?format=html')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('text/html; charset=utf-8', resp.headers['Content-Type'])
+    self.assertEqual('text/html', resp.headers['Content-Type'])
 
   def test_rss_format(self):
-    resp = self.get_response('/fake?format=rss')
+    resp = self.get_response('/fake/?format=rss')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('application/rss+xml; charset=utf-8', resp.headers['Content-Type'])
+    self.assertEqual('application/rss+xml', resp.headers['Content-Type'])
 
   def test_unknown_format(self):
-    resp = self.get_response('/fake?format=bad')
+    resp = self.get_response('/fake/?format=bad')
     self.assertEqual(400, resp.status_code)
 
   def test_instagram_scrape_with_cookie(self):
@@ -236,8 +230,7 @@ class ApiTest(testutil.TestCase):
     resp = client.get(
       '/instagram/@me/@friends/@app/?cookie=c00k1e&interactive=true')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual('application/json; charset=utf-8',
-                     resp.headers['Content-Type'])
+    self.assertEqual('application/json', resp.headers['Content-Type'])
     self.assert_equals(test_instagram.HTML_ACTIVITIES_FULL,
                        resp.json['items'])
 
@@ -248,25 +241,25 @@ class ApiTest(testutil.TestCase):
     self.assertIn('Scraping only supports activity_id', resp.get_data(as_text=True))
 
   def test_bad_start_index(self):
-    resp = client.get('/fake?startIndex=foo')
+    resp = client.get('/fake/?startIndex=foo')
     self.assertEqual(400, resp.status_code)
 
   def test_bad_count(self):
-    resp = client.get('/fake?count=-1')
+    resp = client.get('/fake/?count=-1')
     self.assertEqual(400, resp.status_code)
 
   def test_start_index(self):
     expected_count = api.ITEMS_PER_PAGE_DEFAULT - 2
-    self.check_request('?startIndex=2', start_index=2, count=expected_count)
+    self.check_request('/?startIndex=2', start_index=2, count=expected_count)
 
   def test_count(self):
-    self.check_request('?count=3', count=3)
+    self.check_request('/?count=3', count=3)
 
   def test_start_index_and_count(self):
-    self.check_request('?startIndex=4&count=5', start_index=4, count=5)
+    self.check_request('/?startIndex=4&count=5', start_index=4, count=5)
 
   def test_count_greater_than_items_per_page(self):
-    self.check_request('?count=999', count=api.ITEMS_PER_PAGE_MAX)
+    self.check_request('/?count=999', count=api.ITEMS_PER_PAGE_MAX)
 
   def test_cache(self):
     FakeSource.get_activities_response(
@@ -304,7 +297,7 @@ class ApiTest(testutil.TestCase):
     self.assertEqual(504, resp.status_code)
 
   def test_http_head(self):
-    resp = self.get_response('/fake?format=html', method='HEAD')
+    resp = self.get_response('/fake/?format=html', method='HEAD')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('text/html', resp.headers['Content-Type'])
+    self.assertEqual('text/html; charset=utf-8', resp.headers['Content-Type'])
     self.assertEqual('', resp.get_data(as_text=True))

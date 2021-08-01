@@ -4,10 +4,10 @@ Implements the OpenSocial ActivityStreams REST API:
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
 
-Request paths are of the form /user_id/group_id/app_id/activity_id, where
-each element is optional. user_id may be @me. group_id may be @all, @friends
-(currently identical to @all), or @self. app_id may be @app, but it doesn't
-matter, it's currently ignored.
+Request paths are of the form /user_id/group_id/app_id/activity_id, where each
+element is optional. user_id may be @me. group_id may be @all, @friends
+(currently identical to @all), @self, @me, @search, or @blocks. app_id may be
+@app, but it doesn't matter, it's currently ignored.
 
 The supported query parameters are startIndex and count, which are handled as
 described in OpenSocial (above) and OpenSearch.
@@ -22,8 +22,10 @@ http://activitystrea.ms/specs/
 
 Atom format spec:
 http://atomenabled.org/developers/syndication/
+
 """
 import logging
+import urllib.parse
 
 from flask import abort, request
 from oauth_dropins.webutil import flask_util, util
@@ -50,45 +52,38 @@ from granary import (
 )
 from granary.source import GROUPS
 
-XML_TEMPLATE = """\
-<?xml version="1.0" encoding="UTF-8"?>
-<response>%s</response>
-"""
 ITEMS_PER_PAGE_MAX = 100
 ITEMS_PER_PAGE_DEFAULT = 10
+
+# default values for each part of the API request path except the site, e.g.
+# /twitter/@me/@self/@all/...
+PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
+MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
 
 # TODO
 # canonicalize_domain = handlers.redirect(
 #   ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io')
 
-print('@',  f'/<any({",".join(app.SILOS)}):site>'
-   '/<user_id>'
-   f'/<any({",".join(source.GROUPS)}):group>'
-   '/<app_id>'
-   '/<activity_id>',
-)
-@app.app.route(
-  f'/<any({",".join(app.SILOS)}):site>'
-   '/<user_id>'
-   f'/<any({",".join(source.GROUPS)}):group>'
-   '/<app_id>'
-   '/<activity_id>',
-  methods=('GET', 'HEAD'),
-  defaults={
-    'user_id': source.ME,
-    'group': source.ALL,
-    'app_id': source.APP,
-    'activity_id': None,
-  },
-  merge_slashes=False)
+SILOS = ','.join(app.SILOS)
+@app.app.route(f'/<any({SILOS}):site>/<path:path>', methods=('GET', 'HEAD'))
+@app.app.route(f'/<any({SILOS}):site>/', methods=('GET', 'HEAD'),
+               defaults={'path': None})
 @flask_util.cached(app.cache, app.RESPONSE_CACHE_TIME)
-def api(site, user_id, group, app_id, activity_id):
+def api(site, path):
   """Handles an API GET.
 
   Request path is of the form /site/user_id/group_id/app_id/activity_id ,
   where each element except site is an optional string object id.
   """
+  # parse path
+  if not path:
+    args = []
+  else:
+    args = urllib.parse.unquote(path).strip('/').split('/')
+    if len(args) > MAX_PATH_LEN:
+      return f'Expected max {MAX_PATH_LEN} path elements; found {len(args) + 1}', 404
+
   # make source instance
   if site == 'twitter':
     src = twitter.Twitter(
@@ -107,7 +102,7 @@ def api(site, user_id, group, app_id, activity_id):
     if request.args.get('interactive').lower() == 'true':
       src = instagram.Instagram(scrape=True)
     else:
-      return abort(400, 'Sorry, Instagram is not currently available in the REST API. Try https://instagram-atom.appspot.com/ instead!')
+      return abort(400, 'Sorry, Instagram is not currently available in the REST API. Try the library instead!')
   elif site == 'mastodon':
     src = mastodon.Mastodon(
       instance=flask_util.get_required_param('instance'),
@@ -126,8 +121,6 @@ def api(site, user_id, group, app_id, activity_id):
     src = reddit.Reddit(refresh_token=flask_util.get_required_param('refresh_token')) # the refresh_roken should be returned but is not appearing
   else:
     src_cls = source.sources.get(site)
-    if not src_cls:
-      raise exc.HTTPNotFound('Unknown site %r' % site)
     src = src_cls(**request.args)
 
   # decode tag URI ids
@@ -139,6 +132,11 @@ def api(site, user_id, group, app_id, activity_id):
         raise BadRequest('Expected domain %s in tag URI %s, found %s' %
                                  (src.DOMAIN, arg, domain))
       args[i] = id
+
+  # handle default path elements
+  args = [None if a in defaults else a
+          for a, defaults in zip(args, PATH_DEFAULTS)]
+  user_id = args[0] if args else None
 
   # get activities (etc)
   try:

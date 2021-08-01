@@ -35,6 +35,7 @@ from granary import (
   atom,
   jsonfeed,
   microformats2,
+  rss,
   source,
 )
 from granary.facebook import Facebook
@@ -108,6 +109,10 @@ FORMATS = {
   'rss': 'application/rss+xml',
   'xml': 'application/xml',
 }
+XML_TEMPLATE = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<response>%s</response>
+"""
 
 RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
@@ -333,7 +338,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
           'properties': hfeed.get('properties', {}),
         })
 
-      headers = {'Link': [f'<{util.quote_path(request.url)}>; rel="self"']}
+      headers['Link'] = [f'<{util.quote_path(request.url)}>; rel="self"']
       if hub:
         headers['Link'].append(f'<{util.quote_path(hub)}>; rel="hub"')
 
