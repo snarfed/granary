@@ -128,14 +128,14 @@ app.config.from_mapping(
 app.url_map.converters['regex'] = flask_util.RegexConverter
 app.after_request(flask_util.default_modern_headers)
 app.register_error_handler(Exception, flask_util.handle_exception)
+app.before_request(flask_util.canonicalize_domain(
+  ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io'))
 
 app.wsgi_app = handlers.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
 
 cache = Cache(app)
 
-# TODO
-# @api.canonicalize_domain
 
 @app.route('/')
 def front_page():
@@ -159,9 +159,6 @@ def front_page():
 
   return render_template('index.html', **vars)
 
-
-# TODO
-# @api.canonicalize_domain
 
 @app.route('/demo')
 def demo():
@@ -190,9 +187,6 @@ def demo():
                   for part in (site, user, group, '@app', activity_id))
   return redirect(f'/{path}?{urllib.parse.urlencode(params)}')
 
-
-# TODO
-# @api.canonicalize_domain
 
 @app.route('/url', methods=('GET', 'HEAD'))
 @flask_util.cached(cache, RESPONSE_CACHE_TIME)

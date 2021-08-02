@@ -61,10 +61,6 @@ PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
 
-# TODO
-# canonicalize_domain = handlers.redirect(
-#   ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io')
-
 SILOS = ','.join(app.SILOS)
 @app.app.route(f'/<any({SILOS}):site>/<path:path>', methods=('GET', 'HEAD'))
 @app.app.route(f'/<any({SILOS}):site>/', methods=('GET', 'HEAD'),
