@@ -12,9 +12,8 @@ from granary.tests import test_facebook
 from granary.tests import test_instagram
 from granary.tests import test_twitter
 
-import app
-app.SILOS.append('fake')  # must happen before importing api
 import api
+import app
 
 client = app.app.test_client()
 
@@ -301,3 +300,8 @@ class ApiTest(testutil.TestCase):
     self.assertEqual(200, resp.status_code)
     self.assertEqual('text/html', resp.headers['Content-Type'])
     self.assertEqual('', resp.get_data(as_text=True))
+
+  def test_unknown_site(self):
+    resp = client.get('/bad/')
+    self.assertEqual(404, resp.status_code)
+    self.assertEqual('Unknown site bad', resp.get_data(as_text=True))

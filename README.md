@@ -322,6 +322,7 @@ Changelog
   * `create`/`preview`: allow bookmarks. ([bridgy#1045](https://github.com/snarfed/bridgy/issues/1045))
   * Bug fixes for removing t.co links to quoted tweets.
   * Bug fix for multiple instances of the same link in tweet text.
+* REST API: ported web framework from webapp2 to Flask. No user-visible behavior change expected.
 
 ### 3.1 - 2021-04-03
 

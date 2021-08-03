@@ -61,12 +61,9 @@ PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
 
-SILOS = ','.join(app.SILOS)
-@app.app.route(f'/<any({SILOS}):site>/<path:path>', methods=('GET', 'HEAD'))
-@app.app.route(f'/<any({SILOS}):site>/', methods=('GET', 'HEAD'),
-               defaults={'path': None})
+@app.app.route(f'/<path:path>', methods=('GET', 'HEAD'))
 @flask_util.cached(app.cache, app.RESPONSE_CACHE_TIME)
-def api(site, path):
+def api(path):
   """Handles an API GET.
 
   Request path is of the form /site/user_id/group_id/app_id/activity_id ,
@@ -81,6 +78,7 @@ def api(site, path):
       return f'Expected max {MAX_PATH_LEN} path elements; found {len(args) + 1}', 404
 
   # make source instance
+  site = args.pop(0)
   if site == 'twitter':
     src = twitter.Twitter(
       access_token_key=flask_util.get_required_param('access_token_key'),
@@ -117,6 +115,8 @@ def api(site, path):
     src = reddit.Reddit(refresh_token=flask_util.get_required_param('refresh_token')) # the refresh_roken should be returned but is not appearing
   else:
     src_cls = source.sources.get(site)
+    if not src_cls:
+      return f'Unknown site {site}', 404
     src = src_cls(**request.args)
 
   # decode tag URI ids
