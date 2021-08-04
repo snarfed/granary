@@ -202,6 +202,10 @@ def url():
                              (input, INPUTS))
 
   orig_url = flask_util.get_required_param('url')
+  # TODO: revert once v2.jacky.wtf is back up
+  if orig_url.startswith('https://v2.jacky.wtf'):
+    return 'Sorry, v2.jacky.wtf is down right now.', 502
+
   fragment = urllib.parse.urlparse(orig_url).fragment
   if fragment and input != 'html':
       raise BadRequest('URL fragments only supported with input=html.')
