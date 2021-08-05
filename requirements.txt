@@ -10,7 +10,6 @@ flask-caching~=1.10.1
 google-cloud-logging~=2.6.0
 gunicorn~=20.1
 mox3~=1.1
-webapp2>=3.0.0b1
 
 # this includes everything in setup.py's install_requires.
 # https://caremad.io/posts/2013/07/setup-vs-requirement/#developing-reusable-things-or-how-not-to-repeat-yourself

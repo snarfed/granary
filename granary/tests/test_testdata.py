@@ -54,8 +54,6 @@ def create_test_function(fn, original, expected):
       return self.assert_equals(expected, got, in_order=True)
   return test
 
-# TODO: use a handler with an HTTPS request so that URL schemes are converted
-# self.handler.request = webapp2.Request.blank('/', base_url='https://foo')
 
 # All test data files live in testdata/.
 prevdir = os.getcwd()

@@ -328,6 +328,5 @@ intersphinx_mapping = {
   'python': ('https://docs.python.org/3/', None),
   'requests': ('https://requests.readthedocs.io/en/stable/', None),
   'urllib3': ('https://urllib3.readthedocs.io/en/latest', None),
-  'webapp2': ('https://webapp2.readthedocs.io/en/latest', None),
   'webob': ('https://webob.readthedocs.io/en/latest', None),
 }
