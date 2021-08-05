@@ -83,8 +83,8 @@ def api(path):
     src = twitter.Twitter(
       access_token_key=flask_util.get_required_param('access_token_key'),
       access_token_secret=flask_util.get_required_param('access_token_secret'))
-  elif site == 'facebook':
-    return abort(400, 'Sorry, Facebook is no longer available in the REST API. Try the library instead!')
+  elif site in ('facebook', 'instagram'):
+    return f'Sorry, {site.upper()} is not available in the REST API. Try the library instead!', 400
   elif site == 'flickr':
     src = flickr.Flickr(
       access_token_key=flask_util.get_required_param('access_token_key'),
@@ -92,11 +92,6 @@ def api(path):
   elif site == 'github':
     src = github.GitHub(
       access_token=flask_util.get_required_param('access_token'))
-  elif site == 'instagram':
-    if request.args.get('interactive').lower() == 'true':
-      src = instagram.Instagram(scrape=True)
-    else:
-      return abort(400, 'Sorry, Instagram is not currently available in the REST API. Try the library instead!')
   elif site == 'mastodon':
     src = mastodon.Mastodon(
       instance=flask_util.get_required_param('instance'),

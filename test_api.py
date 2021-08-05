@@ -221,23 +221,9 @@ class ApiTest(testutil.TestCase):
     resp = self.get_response('/fake/?format=bad')
     self.assertEqual(400, resp.status_code)
 
-  def test_instagram_scrape_with_cookie(self):
-    self.expect_requests_get(
-      instagram.HTML_BASE_URL, test_instagram.HTML_FEED_COMPLETE,
-      allow_redirects=False, headers={'Cookie': 'sessionid=c00k1e'})
-    self.mox.ReplayAll()
-    resp = client.get(
-      '/instagram/@me/@friends/@app/?cookie=c00k1e&interactive=true')
-    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual('application/json', resp.headers['Content-Type'])
-    self.assert_equals(test_instagram.HTML_ACTIVITIES_FULL,
-                       resp.json['items'])
-
-  def test_instagram_scrape_without_cookie_error(self):
-    resp = client.get(
-      '/instagram/@me/@friends/@app/?format=html&access_token=...&interactive=true')
+  def test_instagram_blocked(self):
+    resp = client.get('/instagram/@me/@friends/@app/?interactive=true')
     self.assert_equals(400, resp.status_code)
-    self.assertIn('Scraping only supports activity_id', resp.get_data(as_text=True))
 
   def test_bad_start_index(self):
     resp = client.get('/fake/?startIndex=foo')
