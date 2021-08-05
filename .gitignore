@@ -10,6 +10,7 @@
 /oauth_dropins_static
 circleci_token
 datastore.dat
+flask_secret_key
 oauth_client_secret
 plus-dogfood.json
 private_notes

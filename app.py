@@ -23,7 +23,6 @@ from oauth_dropins.webutil import (
   appengine_config,
   appengine_info,
   flask_util,
-  handlers,
   util,
 )
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -131,7 +130,7 @@ app.register_error_handler(Exception, flask_util.handle_exception)
 app.before_request(flask_util.canonicalize_domain(
   ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io'))
 
-app.wsgi_app = handlers.ndb_context_middleware(
+app.wsgi_app = flask_util.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
 
 cache = Cache(app)
