@@ -162,11 +162,11 @@ def front_page():
 @app.route('/demo')
 def demo():
   """Handles silo requests from the interactive demo form on the front page."""
-  site = flask_util.get_required_param('site')
+  site = request.values['site']
   user = request.args.get('user_id', '')
   group = request.args.get('group_id', '')
   if group == '@list':
-    group = flask_util.get_required_param('list')
+    group = request.values['list']
 
   activity_id = search_query = ''
   if group == source.SEARCH:
@@ -195,12 +195,12 @@ def url():
   Responses are cached for 10m. You can skip the cache by including a cache=false
   query param. Background: https://github.com/snarfed/bridgy/issues/665
   """
-  input = flask_util.get_required_param('input')
+  input = request.values['input']
   if input not in INPUTS:
     raise BadRequest('Invalid input: %s, expected one of %r' %
                              (input, INPUTS))
 
-  orig_url = flask_util.get_required_param('url')
+  orig_url = request.values['url']
   # TODO: revert once v2.jacky.wtf is back up
   if orig_url.startswith('https://v2.jacky.wtf'):
     return 'Sorry, v2.jacky.wtf is down right now.', 502

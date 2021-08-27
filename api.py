@@ -81,33 +81,33 @@ def api(path):
   site = args.pop(0)
   if site == 'twitter':
     src = twitter.Twitter(
-      access_token_key=flask_util.get_required_param('access_token_key'),
-      access_token_secret=flask_util.get_required_param('access_token_secret'))
+      access_token_key=request.values['access_token_key'],
+      access_token_secret=request.values['access_token_secret'])
   elif site in ('facebook', 'instagram'):
     return f'Sorry, {site.upper()} is not available in the REST API. Try the library instead!', 400
   elif site == 'flickr':
     src = flickr.Flickr(
-      access_token_key=flask_util.get_required_param('access_token_key'),
-      access_token_secret=flask_util.get_required_param('access_token_secret'))
+      access_token_key=request.values['access_token_key'],
+      access_token_secret=request.values['access_token_secret'])
   elif site == 'github':
     src = github.GitHub(
-      access_token=flask_util.get_required_param('access_token'))
+      access_token=request.values['access_token'])
   elif site == 'mastodon':
     src = mastodon.Mastodon(
-      instance=flask_util.get_required_param('instance'),
-      access_token=flask_util.get_required_param('access_token'),
-      user_id=flask_util.get_required_param('user_id'))
+      instance=request.values['instance'],
+      access_token=request.values['access_token'],
+      user_id=request.values['user_id'])
   elif site == 'meetup':
     src = meetup.Meetup(
-      access_token_key=flask_util.get_required_param('access_token_key'),
-      access_token_secret=flask_util.get_required_param('access_token_secret'))
+      access_token_key=request.values['access_token_key'],
+      access_token_secret=request.values['access_token_secret'])
   elif site == 'pixelfed':
     src = pixelfed.Pixelfed(
-      instance=flask_util.get_required_param('instance'),
-      access_token=flask_util.get_required_param('access_token'),
-      user_id=flask_util.get_required_param('user_id'))
+      instance=request.values['instance'],
+      access_token=request.values['access_token'],
+      user_id=request.values['user_id'])
   elif site == 'reddit':
-    src = reddit.Reddit(refresh_token=flask_util.get_required_param('refresh_token')) # the refresh_roken should be returned but is not appearing
+    src = reddit.Reddit(refresh_token=request.values['refresh_token']) # the refresh_roken should be returned but is not appearing
   else:
     src_cls = source.sources.get(site)
     if not src_cls:
