@@ -2285,7 +2285,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
     created = self.twitter.create(QUOTE_ACTIVITY['object'])
     self.assert_equals({'url': 'http://posted/tweet', 'type': 'post'},
-                          created.content, created)
+                       created.content, created)
 
     preview = self.twitter.preview_create(QUOTE_ACTIVITY['object'])
     self.assertEqual('I agree with this <a href="https://twitter.com/snarfed_org/status/100">twitter.com/snarfed_org/st...</a>', preview.content)
@@ -2346,18 +2346,24 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       for msg in result.error_plain, result.error_html:
         self.assertIn('Cannot publish type=activity, verb=react', msg)
 
-  def test_create_reply_without_in_reply_to(self):
+  def test_create_non_twitter_reply(self):
+    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={'status': 'I reply!'})
+    self.mox.ReplayAll()
+
     obj = {
       'objectType': 'comment',
       'inReplyTo': [{'url': 'http://foo.com/bar'},
                     {'url': 'http://baz.com/bat'}],
-      'content': '@foo reply'
+      'content': 'I reply!'
     }
-    for fn in (self.twitter.preview_create, self.twitter.create):
-      preview = fn(obj)
-      self.assertTrue(preview.abort)
-      self.assertIn('Could not find a tweet to reply to', preview.error_plain)
-      self.assertIn('Could not find a tweet to', preview.error_html)
+
+    created = self.twitter.create(obj)
+    self.assertFalse(created.abort)
+    self.assert_equals({'type': 'post'}, created.content)
+
+    preview = self.twitter.preview_create(obj)
+    self.assertEqual('<span class="verb">tweet</span>:', preview.description)
+    self.assertEqual('I reply!', preview.content)
 
   def test_create_like_without_object(self):
     obj = {

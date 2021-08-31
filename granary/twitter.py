@@ -761,15 +761,6 @@ class Twitter(source.Source):
     if base_id and not base_url:
       base_url = 'https://twitter.com/-/statuses/' + base_id
 
-    if is_reply and not base_url:
-      return source.creation_result(
-        abort=True,
-        error_plain='Could not find a tweet to reply to.',
-        error_html='Could not find a tweet to <a href="http://indiewebcamp.com/reply">reply to</a>. '
-        'Check that your post has an <a href="http://indiewebcamp.com/comment">in-reply-to</a> '
-        'link to a Twitter URL or to an original post that publishes a '
-        '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
-
     # truncate and ellipsize content if it's over the character
     # count. URLs will be t.co-wrapped, so include that when counting.
     content = self.truncate(content, obj.get('url'), include_link, type=type,
@@ -827,7 +818,7 @@ class Twitter(source.Source):
       content = str(content).encode('utf-8')
       data = [('status', content)]
 
-      if is_reply:
+      if is_reply and base_url:
         preview_description += """\
 <span class="verb">@-reply</span> to <a href="%s">this tweet</a>:
 %s""" % (base_url, self.embed_post(base_obj))
@@ -876,7 +867,7 @@ class Twitter(source.Source):
                                       description=preview_description)
       else:
         resp = self.urlopen(API_POST_TWEET, data=urllib.parse.urlencode(sorted(data)))
-        resp['type'] = 'comment' if is_reply else 'post'
+        resp['type'] = 'comment' if is_reply and base_url else 'post'
 
     else:
       return source.creation_result(
