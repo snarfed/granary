@@ -118,12 +118,7 @@ RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
 app = Flask('bridgy-fed')
 app.template_folder = './granary/templates'
-app.config.from_mapping(
-    ENV='development' if appengine_info.DEBUG else 'PRODUCTION',
-    CACHE_TYPE='SimpleCache',
-    SECRET_KEY=util.read('flask_secret_key'),
-    JSONIFY_PRETTYPRINT_REGULAR=True,
-)
+app.config.from_pyfile('config.py')
 app.url_map.converters['regex'] = flask_util.RegexConverter
 app.after_request(flask_util.default_modern_headers)
 app.register_error_handler(Exception, flask_util.handle_exception)

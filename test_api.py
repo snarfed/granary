@@ -13,9 +13,9 @@ from granary.tests import test_instagram
 from granary.tests import test_twitter
 
 import api
-import app
+from app import app, cache
 
-client = app.app.test_client()
+client = app.test_client()
 
 
 class FakeSource(source.Source):
@@ -33,9 +33,9 @@ class ApiTest(testutil.TestCase):
 
   def setUp(self):
     super(ApiTest, self).setUp()
-    app.app.testing = True
+    app.testing = True
     self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    app.cache.clear()
+    cache.clear()
 
   def reset(self):
     self.mox.UnsetStubs()
@@ -246,6 +246,7 @@ class ApiTest(testutil.TestCase):
   def test_count_greater_than_items_per_page(self):
     self.check_request('/?count=999', count=api.ITEMS_PER_PAGE_MAX)
 
+  @testutil.enable_flask_caching(app, cache)
   def test_cache(self):
     FakeSource.get_activities_response(
       '123', None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT,
