@@ -323,6 +323,7 @@ Changelog
   * `create`/`preview`: allow non-Twitter replies, ie activities that include `inReplyTo` URLs even if none of them point to a tweet. ([bridgy#1063](https://github.com/snarfed/bridgy/issues/1063))
   * Bug fixes for removing t.co links to quoted tweets.
   * Bug fix for multiple instances of the same link in tweet text.
+  * `get_activities()`: raise `ValueError` on invalid `user_id`.
 * REST API: ported web framework from webapp2 to Flask. No user-visible behavior change expected.
 
 ### 3.1 - 2021-04-03

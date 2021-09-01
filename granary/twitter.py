@@ -102,7 +102,9 @@ MAX_ALT_LENGTH = 420
 # username requirements and limits:
 # https://support.twitter.com/articles/101299#error
 # http://stackoverflow.com/a/13396934/186123
-MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(\w{1,15})\b', re.UNICODE)
+USERNAME = r'\w{1,15}'
+USERNAME_RE = re.compile(USERNAME + '$')
+MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(' + USERNAME + r')\b', re.UNICODE)
 
 # hashtag requirements and limits:
 # https://support.twitter.com/articles/370610
@@ -259,8 +261,11 @@ class Twitter(source.Source):
     if group_id is None:
       group_id = source.FRIENDS
 
-    if user_id and user_id.startswith('@'):
-      user_id = user_id[1:]
+    if user_id:
+      if user_id.startswith('@'):
+        user_id = user_id[1:]
+      if not USERNAME_RE.match(user_id):
+        raise ValueError(f'Invalid Twitter username: {user_id}')
 
     # nested function for lazily fetching the user object if we need it
     user = []

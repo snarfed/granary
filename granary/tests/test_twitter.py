@@ -754,6 +754,11 @@ class TwitterTest(testutil.TestCase):
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
 
+  def test_get_activities_bad_user_id(self):
+    """https://console.cloud.google.com/errors/CKWWrPrqy-21NQ"""
+    self.assertRaises(ValueError, self.twitter.get_activities,
+                      user_id='Foo Bar')
+
   def test_get_activities_bad_activity_id(self):
     """https://github.com/snarfed/bridgy/issues/719"""
     self.assertRaises(ValueError, self.twitter.get_activities,
