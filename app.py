@@ -267,7 +267,7 @@ def url():
     elif input == 'jsonfeed':
       activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
   except ValueError as e:
-    logging.warning('parsing input failed', stack_info=True)
+    logging.warning('parsing input failed', exc_info=True)
     return abort(400, 'Could not parse %s as %s: %s' % (final_url, input, str(e)))
 
   logging.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
@@ -375,7 +375,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
         raise BadRequest('Unsupported input data: %s' % e)
 
   except ValueError as e:
-    logging.warning('converting to output format failed', stack_info=True)
+    logging.warning('converting to output format failed', exc_info=True)
     return abort(400, 'Could not convert to %s: %s' % (format, str(e)))
 
 
