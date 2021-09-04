@@ -193,6 +193,7 @@ HTTP_NON_FATAL_CODES = (
   451,  # Unavailable for Legal Reasons, eg DMCA takedown
 )
 
+
 def tag_placeholders(self, tag, attrs, start):
   if tag in PRESERVE_TAGS:
     self.o(f'~~~BRIDGY-{tag}-TAG-START~~~' if start else f'~~~BRIDGY-{tag}-TAG-END~~~')

@@ -112,7 +112,7 @@ OBJECT_TYPES = {
   'post': 'note',
   'user': 'person',
   'website': 'article',
-  }
+}
 
 # Maps Facebook Graph API post type *and ActivityStreams objectType* to
 # ActivityStreams verb.
@@ -878,7 +878,7 @@ class Facebook(source.Source):
       # https://developers.facebook.com/docs/facebook-login/access-tokens/#apptokens
       'access_token': '%s|%s' % (oauth_dropins.facebook.FACEBOOK_APP_ID,
                                  oauth_dropins.facebook.FACEBOOK_APP_SECRET),
-      }
+    }
     url = API_BASE + API_NOTIFICATION % user_id
     resp = util.urlopen(urllib.request.Request(url, data=urllib.parse.urlencode(params)))
     logging.debug('Response: %s %s', resp.getcode(), resp.read())
@@ -990,7 +990,6 @@ class Facebook(source.Source):
         if util.is_int(author_id) and not author.get('numeric_id'):
           author['numeric_id'] = author_id
 
-
       # photo album URLs look like this:
       # https://www.facebook.com/media/set/?set=a.12.34.56
       # c.f. http://stackoverflow.com/questions/18549744
@@ -1048,7 +1047,7 @@ class Facebook(source.Source):
       'url': self.post_url(post),
       'actor': obj.get('author'),
       'object': obj,
-      }
+    }
 
     post_id = self.parse_id(activity['fb_id']).post
     if post_id:
@@ -1059,7 +1058,7 @@ class Facebook(source.Source):
       activity['generator'] = {
         'displayName': application.get('name'),
         'id': self.tag_uri(application.get('id')),
-        }
+      }
     return self.postprocess_activity(activity)
 
   def post_to_object(self, post, type=None):
@@ -1137,7 +1136,7 @@ class Facebook(source.Source):
       'fb_object_id': post.get('object_id'),
       'fb_object_for_ids': post.get('object_for_ids'),
       'to': self.privacy_to_to(post, type=type),
-      }
+    }
 
     # message_tags is a dict in most post types, but a list in some other object
     # types, e.g. comments.
@@ -1233,7 +1232,7 @@ class Facebook(source.Source):
         'displayName': place.get('name'),
         'id': self.tag_uri(place_id),
         'url': self.object_url(place_id),
-        }
+      }
       location = place.get('location', None)
       if isinstance(location, dict):
         lat = location.get('latitude')
@@ -1253,7 +1252,7 @@ class Facebook(source.Source):
       obj['replies'] = {
         'items': items,
         'totalItems': len(items),
-        }
+      }
 
     return self.postprocess_object(obj)
 
@@ -1467,14 +1466,14 @@ class Facebook(source.Source):
     obj = {
       'objectType': 'activity',
       'verb': verb,
-      }
+    }
     if verb == 'invite':
       invitee = self.user_to_actor(rsvp)
       invitee['objectType'] = 'person'
       obj.update({
-          'object': invitee,
-          'actor': self.user_to_actor(event.get('owner')) if event else None,
-          })
+        'object': invitee,
+        'actor': self.user_to_actor(event.get('owner')) if event else None,
+      })
     else:
       obj['actor'] = self.user_to_actor(rsvp)
 
@@ -1598,7 +1597,7 @@ class Facebook(source.Source):
       'object_id': stream.pop('fb_object_id', None),
       'from': actor or {'id': stream.pop('actor_id', None)},
       # message, description, name, created_time, updated_time are left in place
-      })
+    })
 
     # attachments
     att = stream.pop('attachment', {})
@@ -1665,7 +1664,7 @@ class Facebook(source.Source):
         'url': self._sanitize_url(profile_url),
       },
       # TODO
-      'to': [{'objectType':'group', 'alias':'@public'}],
+      'to': [{'objectType': 'group', 'alias': '@public'}],
     }
 
     obj['published'] = self._scraped_datetime(when)
@@ -1871,7 +1870,7 @@ class Facebook(source.Source):
                            # https://github.com/snarfed/bridgy/issues/1036
                            'Доступно всем' in footer.stripped_strings)
 
-      to = ({'objectType':'group', 'alias':'@public'} if public
+      to = ({'objectType': 'group', 'alias': '@public'} if public
             else {'objectType': 'unknown'})
       id = self.tag_uri(post_id)
 
@@ -1998,7 +1997,7 @@ class Facebook(source.Source):
         'content': self._scraped_content(body_parts),
         'published': self._scraped_datetime(published),
         'author': author,
-        'to': [{'objectType':'group', 'alias':'@public'} if public
+        'to': [{'objectType': 'group', 'alias': '@public'} if public
                else {'objectType': 'unknown'}],
       },
     }

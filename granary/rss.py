@@ -130,7 +130,6 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       except ValueError:  # bad datetime string
         pass
 
-
     item_has_enclosure = False
     for att in obj.get('attachments', []):
       stream = util.get_first(att, 'stream') or att

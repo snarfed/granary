@@ -543,7 +543,7 @@ class Instagram(source.Source):
       'url': object.get('url'),
       'actor': object.get('author'),
       'object': object,
-      }
+    }
 
     return self.postprocess_activity(activity)
 
@@ -604,7 +604,7 @@ class Instagram(source.Source):
         # TODO: url
       } for tag in media.get('tags', [])] +
       [self.user_to_actor(u.get('user'))
-      for u in media.get('users_in_photo', [])] +
+       for u in media.get('users_in_photo', [])] +
       [self.like_to_object(u, id, media.get('link'))
        for u in media.get('likes', {}).get('data', [])] +
 
@@ -742,7 +742,7 @@ class Instagram(source.Source):
 
     actor.update({
       'displayName': user.get('full_name') or username,
-      'image': {'url': pic_url.replace('\/', '/')},
+      'image': {'url': pic_url.replace(r'\/', '/')},
       'description': user.get('bio')
     })
 
@@ -960,7 +960,7 @@ class Instagram(source.Source):
 
     try:
       return json_loads(resp.text)
-    except ValueError as e:
+    except ValueError:
       msg = "Couldn't decode response as JSON:\n%s" % resp.text
       logging.error(msg, exc_info=True)
       resp.status_code = 504
@@ -994,7 +994,7 @@ class Instagram(source.Source):
       'caption': {'text': media.get('edge_media_to_caption', {})
                                .get('edges', [{}])[0].get('node', {}).get('text', '')},
       'images': {'standard_resolution': {
-        'url': image_url.replace('\/', '/'),
+        'url': image_url.replace(r'\/', '/'),
         'width': dims.get('width'),
         'height': dims.get('height'),
       }},
@@ -1035,7 +1035,7 @@ class Instagram(source.Source):
       obj.setdefault('user', obj.get('owner') or {})
       user = obj['user'] or obj
       if not user.get('profile_picture'):
-        user['profile_picture'] = user.get('profile_pic_url', '').replace('\/', '/')
+        user['profile_picture'] = user.get('profile_pic_url', '').replace(r'\/', '/')
 
     for c in media['comments']['data']:
       c['from'] = c['user']
@@ -1045,7 +1045,7 @@ class Instagram(source.Source):
       media.update({
         'type': 'video',
         'videos': {'standard_resolution': {
-          'url': media.get('video_url', '').replace('\/', '/'),
+          'url': media.get('video_url', '').replace(r'\/', '/'),
           'width': dims.get('width'),
           'height': dims.get('height'),
         }},
@@ -1085,10 +1085,10 @@ class Instagram(source.Source):
       user = user['user']
     profile = user.get('profile_pic_url')
     if profile:
-      user['profile_picture'] = profile.replace('\/', '/')
+      user['profile_picture'] = profile.replace(r'\/', '/')
     website = user.get('external_url')
     if website:
-      user['website'] = website.replace('\/', '/')
+      user['website'] = website.replace(r'\/', '/')
     user.setdefault('bio', user.get('biography'))
 
     return user

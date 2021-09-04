@@ -269,6 +269,7 @@ class Twitter(source.Source):
 
     # nested function for lazily fetching the user object if we need it
     user = []
+
     def _user():
       if not user:
         user.append(self.urlopen(API_USER % user_id if user_id else API_CURRENT_USER))
@@ -480,7 +481,7 @@ class Twitter(source.Source):
       activity['object']['replies'] = {
         'items': items,
         'totalItems': len(items),
-        }
+      }
 
   def fetch_mentions(self, username, tweets, min_id=None):
     """Fetches a user's @-mentions and returns them as ActivityStreams.
@@ -931,9 +932,10 @@ class Twitter(source.Source):
         alt = util.ellipsize(alt, chars=MAX_ALT_LENGTH)
         headers = twitter_auth.auth_header(
           API_MEDIA_METADATA, self.access_token_key, self.access_token_secret, 'POST')
-        resp = util.requests_post(API_MEDIA_METADATA,
-                                  json={'media_id': media_id,'alt_text': {'text': alt}},
-                                  headers=headers)
+        resp = util.requests_post(
+          API_MEDIA_METADATA,
+          json={'media_id': media_id, 'alt_text': {'text': alt}},
+          headers=headers)
         resp.raise_for_status()
         logging.info('Got: %s', resp.text)
 
@@ -1059,7 +1061,6 @@ class Twitter(source.Source):
         length // MB, max_size // MB, util.pretty_link(url))
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
-
   def delete(self, id):
     """Deletes a tweet. The authenticated user must have authored it.
 
@@ -1104,7 +1105,7 @@ class Twitter(source.Source):
         except http.client.HTTPException as e:
           if not str(e).startswith('Deadline exceeded'):
             raise
-        except socket.timeout as e:
+        except socket.timeout:
           pass
         except urllib.error.HTTPError as e:
           code, body = util.interpret_http_exception(e)
@@ -1164,7 +1165,7 @@ class Twitter(source.Source):
       'url': obj.get('url'),
       'actor': obj.get('author'),
       'object': obj,
-      }
+    }
 
     retweeted = tweet.get('retweeted_status')
     if retweeted:
@@ -1365,7 +1366,7 @@ class Twitter(source.Source):
       obj['location'] = {
         'displayName': place.get('full_name'),
         'id': self.tag_uri(place.get('id')),
-        }
+      }
 
       # place['url'] is a JSON API url, not useful for end users. get the
       # lat/lon from geo instead.
@@ -1493,7 +1494,7 @@ class Twitter(source.Source):
       'location': {'displayName': user.get('location')},
       'username': username,
       'description': user.get('description'),
-      })
+    })
 
   def retweet_to_object(self, retweet):
     """Converts a retweet to a share activity object.
@@ -1513,7 +1514,7 @@ class Twitter(source.Source):
         'objectType': 'activity',
         'verb': 'share',
         'object': {'url': self.tweet_url(orig)},
-        })
+    })
     if 'tags' in share:
       # the existing tags apply to the original tweet's text, which we replaced
       del share['tags']
@@ -1566,7 +1567,7 @@ class Twitter(source.Source):
         'verb': 'like',
         'object': {'url': obj_url},
         'author': self.user_to_actor(liker),
-        })
+    })
 
   @staticmethod
   def rfc2822_to_iso8601(time_str):
@@ -1583,9 +1584,9 @@ class Twitter(source.Source):
 
     without_timezone = re.sub(' [+-][0-9]{4} ', ' ', time_str)
     timezone = re.search('[+-][0-9]{4}', time_str).group(0)
-    ## convert offset to seconds
+    # convert offset to seconds
     offset = 3600 * int(timezone[1:3]) + 60 * int(timezone[3:])
-    ## negative offset
+    # negative offset
     if timezone[0] == '-':
       offset = -offset
 

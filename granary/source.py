@@ -62,6 +62,7 @@ sources = {}
 CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
 
+
 class RateLimited(BaseException):
   """Raised when an API rate limits us, and we may have a partial result.
 
@@ -912,8 +913,8 @@ class Source(object, metaclass=SourceMeta):
     obj_a = after.get('object', after)
 
     if obj_b and obj_a:
-      reply_b = util.get_list(obj_b,'inReplyTo')
-      reply_a = util.get_list(obj_a,'inReplyTo')
+      reply_b = util.get_list(obj_b, 'inReplyTo')
+      reply_a = util.get_list(obj_a, 'inReplyTo')
       obj_a['inReplyTo'] = util.dedupe_urls(reply_a + reply_b)
 
   @classmethod
@@ -946,9 +947,9 @@ class Source(object, metaclass=SourceMeta):
     return """
 <a class="h-card" href="%s">
  <img class="profile u-photo" src="%s" width="32px" /> %s</a>""" % (
-   actor.get('url'),
-   actor.get('image', {}).get('url'),
-   actor.get('displayName'))
+     actor.get('url'),
+     actor.get('image', {}).get('url'),
+     actor.get('displayName'))
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
@@ -1090,10 +1091,9 @@ class Source(object, metaclass=SourceMeta):
     elif not is_html and ignore_formatting:
       content = re.sub(r'\s+', ' ', content)
 
-    return summary or (
-            (name or content) if prefer_name else
-            (content or name)
-           ) or ''
+    return summary or ((name or content) if prefer_name else
+                       (content or name)
+                       ) or ''
 
   def truncate(self, content, url, include_link, type=None, quote_url=None):
     """Shorten text content to fit within a character limit.
@@ -1138,4 +1138,3 @@ class Source(object, metaclass=SourceMeta):
       truncated += ' ' + quote_url
 
     return truncated
-

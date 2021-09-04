@@ -420,9 +420,9 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     # TODO: remove once this is in mf2util
     # https://github.com/kylewm/mf2util/issues/18
     mf2_type = 'tag'
-  elif 'follow-of' in props: # ditto
+  elif 'follow-of' in props:  # ditto
     mf2_type = 'follow'
-  elif 'bookmark-of' in props: # ditto
+  elif 'bookmark-of' in props:  # ditto
     mf2_type = 'bookmark'
   else:
     # mf2 'photo' type is a note or article *with* a photo, but AS 'photo' type
@@ -472,7 +472,6 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       else:
         logging.debug('Unknown format for length or duration %r', duration)
         duration = None
-
 
   stream = None
   bytes = size_to_bytes(prop.get('size'))
@@ -974,7 +973,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
         author = target.get('author', target.get('actor', {}))
         # special case for twitter RT's
         if obj_type == 'share' and 'url' in obj and re.search(
-                '^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
+            r'^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
           content += 'RT <a href="%s">@%s</a> ' % (
             target.get('url', '#'), author.get('username'))
         else:

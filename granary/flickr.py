@@ -21,6 +21,7 @@ from oauth_dropins import flickr_auth
 
 from . import source
 
+
 class Flickr(source.Source):
   """Flickr source class. See file docstring and Source class for details."""
 

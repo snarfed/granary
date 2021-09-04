@@ -51,7 +51,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
       continue
     author = obj.get('author', {})
     content = microformats2.render_content(
-            obj, include_location=True, render_attachments=True)
+      obj, include_location=True, render_attachments=True)
     obj_title = obj.get('title') or obj.get('displayName')
     item = {
       'id': obj.get('id') or obj.get('url'),
@@ -148,7 +148,7 @@ def jsonfeed_to_activities(jsonfeed):
     'published': item.get('date_published'),
     'updated': item.get('date_modified'),
     'url': item.get('url'),
-    'image': [{'url':  item.get('image')}],
+    'image': [{'url': item.get('image')}],
     'author': {
       'displayName': item.get('author', {}).get('name'),
       'image': [{'url': item.get('author', {}).get('avatar')}]

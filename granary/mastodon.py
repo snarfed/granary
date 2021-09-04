@@ -56,7 +56,7 @@ MAX_MEDIA = 4
 # https://github.com/tootsuite/mastodon/blob/6bee7b820dcde6d487e93b8699d4aab3e49bedc4/app/models/account.rb#L52-L53
 USERNAME_RE = re.compile(r'[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?', re.IGNORECASE)
 MENTION_RE  = re.compile(r'(?<![\/\w])@((' + USERNAME_RE.pattern +
-                         ')(?:@[a-z0-9\.\-]+[a-z0-9]+)?)', re.IGNORECASE)
+                         r')(?:@[a-z0-9\.\-]+[a-z0-9]+)?)', re.IGNORECASE)
 
 # copied from twitter.py. if we need anything better, we could copy Mastodon's:
 # https://github.com/tootsuite/mastodon/blob/915f3712ae7ae44c0cbe50c9694c25e3ee87a540/app/models/tag.rb#L28-L30
@@ -741,7 +741,7 @@ class Mastodon(source.Source):
         # nope; try mastodon's search API
         try:
           results = self._get(API_SEARCH, params={'q': url, 'resolve': True})
-        except requests.RequestException as e:
+        except requests.RequestException:
           logging.info("%s URL %s doesn't look like Mastodon:", field, url)
           continue
 

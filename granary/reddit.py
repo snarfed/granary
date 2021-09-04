@@ -9,15 +9,12 @@ https://www.reddit.com/prefs/apps
 PRAW API docs:
 https://praw.readthedocs.io/
 """
-import logging
-import operator
-import re
 import urllib.parse, urllib.request
 import threading
 
 from cachetools import cachedmethod, TTLCache
 from oauth_dropins import reddit
-from oauth_dropins.webutil import appengine_info, util
+from oauth_dropins.webutil import util
 import praw
 from prawcore.exceptions import NotFound
 
@@ -168,7 +165,6 @@ class Reddit(source.Source):
     user = getattr(thing, 'author', None)
     if user:
       obj['author'] = self.praw_to_actor(user)
-      username = obj['author'].get('username')
 
     if type == 'submission':
       content = getattr(thing, 'selftext', None)
