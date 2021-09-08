@@ -11,7 +11,7 @@ function render_demo_request() {
   var user_id = get('user_id') || '@me';
 
   var group = get('group_id');
-  if (group == '@list') {
+  if (group == '@list' || group == '%40list') {
     group = get('list');
   }
 
