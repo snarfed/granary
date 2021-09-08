@@ -23,6 +23,7 @@ from ..twitter import (
   API_BLOCKS,
   API_FAVORITES,
   API_LIST_TIMELINE,
+  API_LIST_ID_TIMELINE,
   API_LOOKUP,
   API_RETWEETS,
   API_SEARCH,
@@ -836,6 +837,15 @@ class TwitterTest(testutil.TestCase):
 
     self.assert_equals([], self.twitter.get_activities(
       group_id='foo &bar', user_id='schnarfed'))
+
+  def test_get_activities_list_id(self):
+    self.expect_urlopen(API_LIST_ID_TIMELINE % {
+      'count': 0,
+      'list_id': '123',
+    }, [])
+    self.mox.ReplayAll()
+
+    self.assert_equals([], self.twitter.get_activities(group_id='123'))
 
   def test_get_activities_fetch_replies(self):
     self.expect_urlopen(TIMELINE, [TWEET])

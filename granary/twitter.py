@@ -36,6 +36,7 @@ API_DELETE_TWEET = 'statuses/destroy.json'
 API_DELETE_FAVORITE = 'favorites/destroy.json'
 API_FAVORITES = 'favorites/list.json?screen_name=%s'
 API_LIST_TIMELINE = 'lists/statuses.json?count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s' + API_TWEET_PARAMS
+API_LIST_ID_TIMELINE = 'lists/statuses.json?count=%(count)d&list_id=%(list_id)s' + API_TWEET_PARAMS
 API_LOOKUP = 'statuses/lookup.json?id=%s' + API_TWEET_PARAMS
 API_POST_FAVORITE = 'favorites/create.json'
 API_POST_MEDIA = 'statuses/update_with_media.json'
@@ -306,13 +307,21 @@ class Twitter(source.Source):
       elif group_id in (source.FRIENDS, source.ALL):
         url = API_TIMELINE % (count)
       else:
-        if not user_id:
-          user_id = _user().get('screen_name')
-        url = API_LIST_TIMELINE % {
-          'count': count,
-          'slug': urllib.parse.quote(group_id),
-          'owner_screen_name': user_id,
-        }
+        if util.is_int(group_id):
+          # it's a list id
+          url = API_LIST_ID_TIMELINE % {
+            'count': count,
+            'list_id': group_id,
+          }
+        else:
+          # it's a list slug
+          if not user_id:
+            user_id = _user().get('screen_name')
+          url = API_LIST_TIMELINE % {
+            'count': count,
+            'slug': urllib.parse.quote(group_id),
+            'owner_screen_name': user_id,
+          }
 
       headers = {'If-None-Match': etag} if etag else {}
       total_count = None

@@ -321,6 +321,7 @@ Changelog
   * `create`/`preview`: [support large videos](https://twittercommunity.com/t/large-file-can-not-be-finalized-synchronously/82929/3) via async upload. We now pass `media_category=tweet_video` to the chunked upload `INIT` stage, and then make blocking `STATUS` calls until the video is finished processing. ([bridgy#1043](https://github.com/snarfed/bridgy/issues/1043))
   * `create`/`preview`: allow bookmarks. ([bridgy#1045](https://github.com/snarfed/bridgy/issues/1045))
   * `create`/`preview`: allow non-Twitter replies, ie activities that include `inReplyTo` URLs even if none of them point to a tweet. ([bridgy#1063](https://github.com/snarfed/bridgy/issues/1063))
+  * `get_activities`: support list ids as well as slugs.
   * Bug fixes for removing t.co links to quoted tweets.
   * Bug fix for multiple instances of the same link in tweet text.
   * `get_activities()`: raise `ValueError` on invalid `user_id`.
