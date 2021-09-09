@@ -196,9 +196,9 @@ def url():
                              (input, INPUTS))
 
   orig_url = request.values['url']
-  # TODO: revert once v2.jacky.wtf is back up
-  if orig_url.startswith('https://v2.jacky.wtf'):
-    return 'Sorry, v2.jacky.wtf is down right now.', 502
+  # TODO: revert if/when it's back up
+  if orig_url.startswith('https://rss-bridge.netlib.re/'):
+    return 'Sorry, rss-bridge.netlib.re is down right now.', 502
 
   fragment = urllib.parse.urlparse(orig_url).fragment
   if fragment and input != 'html':
