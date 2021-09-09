@@ -40,7 +40,6 @@ class Meetup(source.Source):
 
   def __init__(self, access_token):
     self.access_token = access_token
-    pass
 
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
     return self._create(obj, False, include_link, ignore_formatting)
@@ -72,7 +71,7 @@ class Meetup(source.Source):
       response = 'yes'
     elif verb == 'rsvp-no':
       response = 'no'
-    elif verb == 'rsvp-maybe' or verb == 'rsvp-interested':
+    elif verb in ['rsvp-maybe', 'rsvp-interested']:
       return self.return_error('Meetup.com does not support %(verb)s' % {'verb': verb})
     else:
       return self.return_error('Meetup.com syndication does not support %(verb)s' % {'verb': verb})

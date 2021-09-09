@@ -343,11 +343,8 @@ class GitHub(source.Source):
     if fetch_shares or fetch_events or fetch_mentions or search_query:
       raise NotImplementedError()
 
-    since = None
     etag_parsed = email.utils.parsedate(etag)
-    if etag_parsed:
-      since = datetime.datetime(*etag_parsed[:6])
-
+    since = datetime.datetime(*etag_parsed[:6]) if etag_parsed else None
     activities = []
 
     if activity_id:
@@ -578,8 +575,8 @@ class GitHub(source.Source):
         error_plain='Please remove the fragment #%s from your in-reply-to URL.' %
           parsed.fragment)
 
-    if type == 'comment':  # comment or reaction
-      if not (len(path) == 4 and path[2] in ('issues', 'pull')):
+    if type == 'comment':# comment or reaction
+      if len(path) != 4 or path[2] not in ('issues', 'pull'):
         return source.creation_result(
           abort=True, error_plain='GitHub comment requires in-reply-to issue or PR URL.')
 
@@ -645,8 +642,8 @@ class GitHub(source.Source):
           except ValueError as e:
             return source.creation_result(abort=True, error_plain=str(e))
 
-    elif type == 'like':  # star
-      if not (len(path) == 2 or (len(path) == 3 and path[2] == 'issues')):
+    elif type == 'like':# star
+      if len(path) != 2 and (len(path) != 3 or path[2] != 'issues'):
         return source.creation_result(
           abort=True, error_plain='GitHub like requires in-reply-to repo URL.')
 
@@ -654,17 +651,16 @@ class GitHub(source.Source):
         return source.creation_result(
           description='<span class="verb">star</span> <a href="%s">%s/%s</a>.' %
             (base_url, owner, repo))
-      else:
-        issue = self.graphql(GRAPHQL_REPO, locals())
-        resp = self.graphql(GRAPHQL_ADD_STAR, {
-          'starrable_id': issue['repository']['id'],
-        })
-        return source.creation_result({
-          'url': base_url + '/stargazers',
-        })
+      issue = self.graphql(GRAPHQL_REPO, locals())
+      resp = self.graphql(GRAPHQL_ADD_STAR, {
+        'starrable_id': issue['repository']['id'],
+      })
+      return source.creation_result({
+        'url': base_url + '/stargazers',
+      })
 
-    elif type == 'tag':  # add label
-      if not (len(path) == 4 and path[2] in ('issues', 'pull')):
+    elif type == 'tag':# add label
+      if len(path) != 4 or path[2] not in ('issues', 'pull'):
         return source.creation_result(
           abort=True, error_plain='GitHub tag post requires tag-of issue or PR URL.')
 
@@ -687,16 +683,15 @@ class GitHub(source.Source):
         return source.creation_result(
           description='add label%s <span class="verb">%s</span> to %s.' % (
             ('s' if len(labels) > 1 else ''), ', '.join(labels), issue_link))
-      else:
-        resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels)
-        return source.creation_result({
-          'url': base_url,
-          'type': 'tag',
-          'tags': labels,
-        })
+      resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels)
+      return source.creation_result({
+        'url': base_url,
+        'type': 'tag',
+        'tags': labels,
+      })
 
-    else:  # new issue
-      if not (len(path) == 2 or (len(path) == 3 and path[2] == 'issues')):
+    else:# new issue
+      if len(path) != 2 and (len(path) != 3 or path[2] != 'issues'):
         return source.creation_result(
           abort=True, error_plain='New GitHub issue requires in-reply-to repo URL')
 
@@ -744,7 +739,7 @@ class GitHub(source.Source):
     if not repo:
       return set()
 
-    return set(node['name'] for node in repo['labels']['nodes'])
+    return {node['name'] for node in repo['labels']['nodes']}
 
   def issue_to_object(self, issue):
     """Converts a GitHub issue or pull request to ActivityStreams.

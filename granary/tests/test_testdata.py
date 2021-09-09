@@ -37,11 +37,11 @@ def read_json(filename):
 
 def read(filename):
   """Reads a file, decoding JSON if possible."""
-  if os.path.splitext(filename)[1] in ('.html', '.xml'):
-    with open(filename, encoding='utf-8') as f:
-      return f.read()
-  else:
+  if os.path.splitext(filename)[1] not in ('.html', '.xml'):
     return read_json(filename)
+
+  with open(filename, encoding='utf-8') as f:
+    return f.read()
 
 
 def create_test_function(fn, original, expected):

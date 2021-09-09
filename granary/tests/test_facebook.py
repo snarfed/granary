@@ -2900,7 +2900,7 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp_multi_instance_event_error(self):
     """Facebook API doesn't allow RSVPing to multi-instance aka recurring events."""
-    for i in range(2):
+    for _ in range(2):
       self.expect_urlopen(API_EVENT % '234', MULTI_EVENT)
     self.mox.ReplayAll()
 
@@ -3157,7 +3157,7 @@ cc Sam G, Michael M<br />""", preview.description)
       check(expected, id, True)
 
   def test_resolve_object_id(self):
-    for i in range(3):
+    for _ in range(3):
       self.expect_urlopen(API_OBJECT % ('111', '222'),
                           {'id': '0', 'object_id': '333'})
     self.mox.ReplayAll()

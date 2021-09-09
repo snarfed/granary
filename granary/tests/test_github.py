@@ -193,43 +193,44 @@ REPO_REST = {
   'archived': False,
   # ...
 }
-PULL_REST = {  # GitHub
-  'id': 167930804,
-  'number': 444,
-  'url': 'https://api.github.com/repos/foo/bar/pulls/444',
-  'html_url': 'https://github.com/foo/bar/pull/444',
-  'user': USER_REST,
-  'title': 'a PR to merge',
-  'body': 'a PR message',
-  'comments_url': 'https://api.github.com/repos/foo/bar/issues/444/comments',
-  'issue_url': 'https://api.github.com/repos/foo/bar/issues/444',
-  'diff_url': 'https://github.com/foo/bar/pull/444.diff',
-  'patch_url': 'https://github.com/foo/bar/pull/444.patch',
-  'state': 'closed',
-  'locked': False,
-  'created_at': '2018-02-08T10:24:32Z',
-  'updated_at': '2018-02-09T21:14:43Z',
-  'closed_at': '2018-02-09T21:14:43Z',
-  'merged_at': '2018-02-09T21:14:43Z',
-  'merge_commit_sha': '6a0c660915237c3753852bba090a4ac603e3e7cd',
-  'assignee': None,
-  'assignees': [],
-  'requested_reviewers': [],
-  'requested_teams': [],
-  'labels': [],
-  'milestone': None,
-  'commits_url': 'https://api.github.com/repos/foo/bar/pulls/444/commits',
-  'review_comments_url': 'https://api.github.com/repos/foo/bar/pulls/444/comments',
-  'review_comment_url': 'https://api.github.com/repos/foo/bar/pulls/comments{/number}',
-  'comments_url': 'https://api.github.com/repos/foo/bar/issues/444/comments',
-  'statuses_url': 'https://api.github.com/repos/foo/bar/statuses/678a4df6e3bf2f7068a58bb1485258985995ca67',
-  'head': {},  # contents of these elided...
-  'base': {},
-  'author_association': 'CONTRIBUTOR',
-  'merged': True,
-  'merged_by': USER_REST,
-  # this is in PR objects but not issues
-  'repo': REPO_REST,
+PULL_REST = {
+    'id': 167930804,
+    'number': 444,
+    'url': 'https://api.github.com/repos/foo/bar/pulls/444',
+    'html_url': 'https://github.com/foo/bar/pull/444',
+    'user': USER_REST,
+    'title': 'a PR to merge',
+    'body': 'a PR message',
+    'issue_url': 'https://api.github.com/repos/foo/bar/issues/444',
+    'diff_url': 'https://github.com/foo/bar/pull/444.diff',
+    'patch_url': 'https://github.com/foo/bar/pull/444.patch',
+    'state': 'closed',
+    'locked': False,
+    'created_at': '2018-02-08T10:24:32Z',
+    'updated_at': '2018-02-09T21:14:43Z',
+    'closed_at': '2018-02-09T21:14:43Z',
+    'merged_at': '2018-02-09T21:14:43Z',
+    'merge_commit_sha': '6a0c660915237c3753852bba090a4ac603e3e7cd',
+    'assignee': None,
+    'assignees': [],
+    'requested_reviewers': [],
+    'requested_teams': [],
+    'labels': [],
+    'milestone': None,
+    'commits_url': 'https://api.github.com/repos/foo/bar/pulls/444/commits',
+    'review_comments_url':
+    'https://api.github.com/repos/foo/bar/pulls/444/comments',
+    'review_comment_url':
+    'https://api.github.com/repos/foo/bar/pulls/comments{/number}',
+    'comments_url': 'https://api.github.com/repos/foo/bar/issues/444/comments',
+    'statuses_url':
+    'https://api.github.com/repos/foo/bar/statuses/678a4df6e3bf2f7068a58bb1485258985995ca67',
+    'head': {},
+    'base': {},
+    'author_association': 'CONTRIBUTOR',
+    'merged': True,
+    'merged_by': USER_REST,
+    'repo': REPO_REST,
 }
 PULL_OBJ = {  # ActivityStreams
   'objectType': 'pull-request',
@@ -268,16 +269,17 @@ COMMENT_REST = {  # GitHub
   'author_association': 'CONTRIBUTOR',  # or OWNER or NONE
   'body': 'i have something to say here',
 }
-COMMENT_OBJ = {  # ActivityStreams
-  'objectType': 'comment',
-  'id': tag_uri('foo:bar:456'),
-  'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
-  'author': ACTOR,
-  'content': 'i have something to say here',
-  'published': '2012-12-05T00:58:26+00:00',
-  'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123'}],
-  'published': '2015-07-23T18:47:58+00:00',
-  'updated': '2015-07-23T19:47:58+00:00',
+COMMENT_OBJ = {
+    'objectType': 'comment',
+    'id': tag_uri('foo:bar:456'),
+    'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
+    'author': ACTOR,
+    'content': 'i have something to say here',
+    'inReplyTo': [{
+        'url': 'https://github.com/foo/bar/pull/123'
+    }],
+    'published': '2015-07-23T18:47:58+00:00',
+    'updated': '2015-07-23T19:47:58+00:00',
 }
 ISSUE_OBJ_WITH_REPLIES = copy.deepcopy(ISSUE_OBJ)
 ISSUE_OBJ_WITH_REPLIES.update({
@@ -869,7 +871,7 @@ class GitHubTest(testutil.TestCase):
     self.assertIsNone(result.error_plain, result)
 
   def test_preview_issue(self):
-    for i in range(2):
+    for _ in range(2):
       self.expect_graphql_get_labels(['new silo'])
       rendered = self.expect_markdown_render(ISSUE_OBJ['content'].strip())
     self.mox.ReplayAll()

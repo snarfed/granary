@@ -561,8 +561,8 @@ class Source(object, metaclass=SourceMeta):
     """
     if not event:
       event = self.get_event(event_id)
-      if not event:
-        return None
+    if not event:
+      return None
 
     for rsvp in self.get_rsvps_from_event(event['object']):
       for field in 'actor', 'object':
@@ -662,7 +662,7 @@ class Source(object, metaclass=SourceMeta):
           activity['title'] = obj_name
         elif verb and (obj_name or obj_type):
           app = activity.get('generator', {}).get('displayName')
-          name = obj_name if obj_name else 'a %s' % (obj_type or 'unknown')
+          name = obj_name or 'a %s' % (obj_type or 'unknown')
           app = ' on %s' % app if app else ''
           activity['title'] = '%s %s %s%s.' % (actor_name, verb or 'posted',
                                                name, app)
@@ -767,10 +767,10 @@ class Source(object, metaclass=SourceMeta):
       if not domain:
         continue
 
-      if not include_reserved_hosts:
-        if ('.' not in domain or
-            domain.split('.')[-1] in (util.RESERVED_TLDS | util.LOCAL_TLDS)):
-          continue
+      if not include_reserved_hosts and (
+          ('.' not in domain
+           or domain.split('.')[-1] in (util.RESERVED_TLDS | util.LOCAL_TLDS))):
+        continue
 
       which = (originals if not domains or util.domain_or_parent_in(domain, domains)
                else mentions)
@@ -808,10 +808,8 @@ class Source(object, metaclass=SourceMeta):
     to = obj.get('to') or obj.get('object', {}).get('to') or []
     aliases = util.trim_nulls([t.get('alias') for t in to])
     object_types = util.trim_nulls([t.get('objectType') for t in to])
-    return (True if '@public' in aliases or '@unlisted' in aliases
-            else None if 'unknown' in object_types
-            else False if aliases
-            else True)
+    return (True if '@public' in aliases or '@unlisted' in aliases else
+            None if 'unknown' in object_types else not aliases)
 
   @staticmethod
   def add_rsvps_to_event(event, rsvps):

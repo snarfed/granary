@@ -1167,7 +1167,7 @@ class InstagramTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     cache = util.CacheDict()
-    for i in range(3):
+    for _ in range(3):
       self.instagram.get_activities(user_id='x', group_id=source.SELF,
                                     fetch_likes=True, fetch_replies=True,
                                     scrape=True, cache=cache, cookie='kuky')
@@ -1288,7 +1288,7 @@ class InstagramTest(testutil.TestCase):
     # first attempt: rate limited
     self.expect_requests_get(HTML_BASE_URL, status_code=429, cookie='kuky')
     # third attempt ignore rate limit lock. fourth limit is past lock.
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('x/', HTML_PROFILE_COMPLETE)
     self.mox.ReplayAll()
 

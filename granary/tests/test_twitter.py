@@ -1013,7 +1013,7 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     cache = util.CacheDict()
-    for i in range(4):
+    for _ in range(4):
       self.twitter.get_activities(fetch_shares=True, fetch_likes=True,
                                   cache=cache)
 
@@ -1076,7 +1076,7 @@ class TwitterTest(testutil.TestCase):
     tweet['retweet_count'] = 1
     self.expect_urlopen(TIMELINE, [tweet] * (twitter.RETWEET_LIMIT + 2))
 
-    for i in range(twitter.RETWEET_LIMIT):
+    for _ in range(twitter.RETWEET_LIMIT):
       self.expect_urlopen(API_RETWEETS % 100 + '&since_id=567', RETWEETS)
 
     self.mox.ReplayAll()
@@ -1110,7 +1110,7 @@ class TwitterTest(testutil.TestCase):
     for exc in (http.client.HTTPException('Deadline exceeded: foo'),
                 socket.timeout('asdf'),
                 urllib.error.HTTPError('url', 501, 'msg', {}, None)):
-      for i in range(twitter.RETRIES):
+      for _ in range(twitter.RETRIES):
         self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.expect_urlopen(TIMELINE, [])
       self.mox.ReplayAll()
@@ -2213,7 +2213,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                        self.twitter.create(obj).content)
 
   def test_create_reply_to_self_omits_mention(self):
-    for i in range(3):
+    for _ in range(3):
       self.expect_urlopen(
         twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
         params=(

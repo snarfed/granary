@@ -61,7 +61,7 @@ PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
 
-@app.app.route(f'/<path:path>', methods=('GET', 'HEAD'))
+@app.app.route('/<path:path>', methods=('GET', 'HEAD'))
 @flask_util.cached(app.cache, app.RESPONSE_CACHE_TIME)
 def api(path):
   """Handles an API GET.

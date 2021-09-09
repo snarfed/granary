@@ -647,7 +647,7 @@ class Facebook(source.Source):
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting,
                                        strip_first_video_tag=bool(video_url))
 
-    if not content and not (video_url or image_url):
+    if not content and not video_url and not image_url:
       if type == 'activity':
         content = verb
       else:
@@ -776,41 +776,40 @@ class Facebook(source.Source):
       if preview:
         return source.creation_result(content=preview_content,
                                       description='<span class="verb">post</span>:')
+      if video_url:
+        api_call = API_UPLOAD_VIDEO
+        msg_data.update({
+          'file_url': video_url,
+          'description': msg_data.pop('message', ''),
+        })
+      elif image_url:
+        api_call = API_PUBLISH_PHOTO
+        msg_data['url'] = image_url
+        # use Timeline Photos album, if we can find it, since it keeps photo
+        # posts separate instead of consolidating them into a single "X added
+        # n new photos..." post.
+        # https://github.com/snarfed/bridgy/issues/571
+        for album in self.urlopen(API_ALBUMS % 'me', _as=list):
+          id = album.get('id')
+          if id and album.get('type') == 'wall':
+            api_call = API_PUBLISH_ALBUM_PHOTO % id
+            break
+        if people:
+          # tags is JSON list of dicts with tag_uid fields
+          # https://developers.facebook.com/docs/graph-api/reference/user/photos#Creating
+          msg_data['tags'] = json_dumps([{'tag_uid': tag['id']} for tag in people])
       else:
-        if video_url:
-          api_call = API_UPLOAD_VIDEO
-          msg_data.update({
-            'file_url': video_url,
-            'description': msg_data.pop('message', ''),
-          })
-        elif image_url:
-          api_call = API_PUBLISH_PHOTO
-          msg_data['url'] = image_url
-          # use Timeline Photos album, if we can find it, since it keeps photo
-          # posts separate instead of consolidating them into a single "X added
-          # n new photos..." post.
-          # https://github.com/snarfed/bridgy/issues/571
-          for album in self.urlopen(API_ALBUMS % 'me', _as=list):
-            id = album.get('id')
-            if id and album.get('type') == 'wall':
-              api_call = API_PUBLISH_ALBUM_PHOTO % id
-              break
-          if people:
-            # tags is JSON list of dicts with tag_uid fields
-            # https://developers.facebook.com/docs/graph-api/reference/user/photos#Creating
-            msg_data['tags'] = json_dumps([{'tag_uid': tag['id']} for tag in people])
-        else:
-          api_call = API_PUBLISH_POST
-          if people:
-            # tags is comma-separated user id string
-            # https://developers.facebook.com/docs/graph-api/reference/user/feed#pubfields
-            msg_data['tags'] = ','.join(tag['id'] for tag in people)
+        api_call = API_PUBLISH_POST
+        if people:
+          # tags is comma-separated user id string
+          # https://developers.facebook.com/docs/graph-api/reference/user/feed#pubfields
+          msg_data['tags'] = ','.join(tag['id'] for tag in people)
 
-        resp = self.urlopen(api_call, data=urllib.parse.urlencode(msg_data))
-        resp.update({'url': self.post_url(resp), 'type': 'post'})
-        if video_url and not resp.get('success', True):
-          msg = 'Video upload failed.'
-          return source.creation_result(abort=True, error_plain=msg, error_html=msg)
+      resp = self.urlopen(api_call, data=urllib.parse.urlencode(msg_data))
+      resp.update({'url': self.post_url(resp), 'type': 'post'})
+      if video_url and not resp.get('success', True):
+        msg = 'Video upload failed.'
+        return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
     elif type == 'activity' and verb == 'share':
       return source.creation_result(
@@ -1117,11 +1116,8 @@ class Facebook(source.Source):
         object_type = 'note'
 
     id = self.parse_id(fb_id, is_comment=(type == 'comment'))
-    if type == 'comment' and not id.comment:
+    if type == 'comment' and not id.comment or type != 'comment' and not id.post:
       return {}
-    elif type != 'comment' and not id.post:
-      return {}
-
     obj = {
       'id': self.tag_uri(id.post),
       'fb_id': fb_id,
@@ -1193,8 +1189,7 @@ class Facebook(source.Source):
                     key=lambda t: t['startIndex'])
 
       entities = {'<': '&lt;', '>': '&gt;', '&': '&amp;'}
-      i = 0
-      while i < len(content):
+      for i in range(len(content)):
         if tags and tags[0]['startIndex'] == i:
           tags.pop(0)
         entity = entities.get(content[i])
@@ -1202,19 +1197,19 @@ class Facebook(source.Source):
           content = util.WideUnicode(content[:i] + entity + content[i + 1:])
           for tag in tags:
             tag['startIndex'] += len(entity) - 1
-        i += 1
-
       assert not tags
       obj['content'] = content
 
     # is there an attachment? prefer to represent it as a picture (ie image
     # object), but if not, fall back to a link.
     att = {
-      'url': link if link else url,
-      'image': {'url': picture},
-      'displayName': post.get('name'),
-      'summary': post.get('caption'),
-      'content': post.get('description'),
+        'url': link or url,
+        'image': {
+            'url': picture
+        },
+        'displayName': post.get('name'),
+        'summary': post.get('caption'),
+        'content': post.get('description'),
     }
 
     if post_type == 'photo' or status_type == 'added_photos':

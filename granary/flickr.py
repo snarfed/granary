@@ -183,12 +183,11 @@ class Flickr(source.Source):
       try:
         resp = self.upload(params, file)
       except requests.exceptions.ConnectionError as e:
-        if str(e.args[0]).startswith('Request exceeds 10 MiB limit'):
-          msg = 'Sorry, photos and videos must be under 10MB.'
-          return source.creation_result(error_plain=msg, error_html=msg)
-        else:
+        if not str(e.args[0]).startswith('Request exceeds 10 MiB limit'):
           raise
 
+        msg = 'Sorry, photos and videos must be under 10MB.'
+        return source.creation_result(error_plain=msg, error_html=msg)
       photo_id = resp.get('id')
       resp.update({
         'type': 'post',
@@ -424,12 +423,13 @@ class Flickr(source.Source):
       # gives all recent comments and faves, instead of hitting the API for
       # each photo
       if fetch_replies:
-        replies = []
         comments_resp = self.call_api_method('flickr.photos.comments.getList', {
           'photo_id': photo.get('id'),
         })
-        for comment in comments_resp.get('comments', {}).get('comment', []):
-          replies.append(self.comment_to_object(comment, photo.get('id')))
+        replies = [
+            self.comment_to_object(comment, photo.get('id'))
+            for comment in comments_resp.get('comments', {}).get('comment', [])
+        ]
         activity['object']['replies'] = {
           'items': replies,
           'totalItems': len(replies),

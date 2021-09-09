@@ -135,14 +135,14 @@ class Instagram(source.Source):
         return {}
       user_id = 'self'
 
-    if self.scrape:
-      resp = self.get_activities_response(
-        group_id=source.SELF, user_id=user_id, **kwargs)
-      items = resp.get('items')
-      return items[0].get('actor') if items else {}
-    else:
+    if not self.scrape:
       return self.user_to_actor(util.trim_nulls(
         self.urlopen(API_USER_URL % user_id) or {}))
+
+    resp = self.get_activities_response(
+      group_id=source.SELF, user_id=user_id, **kwargs)
+    items = resp.get('items')
+    return items[0].get('actor') if items else {}
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -884,11 +884,8 @@ class Instagram(source.Source):
 
       activities.append(util.trim_nulls(activity))
 
-    actor = None
     user = self._json_user_to_user(viewer_user or profile_user)
-    if user:
-      actor = self.user_to_actor(user)
-
+    actor = self.user_to_actor(user) if user else None
     return activities, actor
 
   html_to_activities = scraped_to_activities
