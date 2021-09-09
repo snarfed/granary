@@ -242,10 +242,8 @@ class Reddit(source.Source):
       # for v0 we will use just the top level comments because threading is hard.
       # feature request: https://github.com/snarfed/bridgy/issues/1014
       subm.comments.replace_more()
-      replies = []
-      for top_level_comment in subm.comments:
-        replies.append(self.praw_to_activity(top_level_comment, 'comment'))
-
+      replies = [self.praw_to_activity(top_level_comment, 'comment')
+                 for top_level_comment in subm.comments]
       items = [r.get('object') for r in replies]
       activity['object']['replies'] = {
         'items': items,

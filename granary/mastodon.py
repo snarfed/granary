@@ -343,7 +343,7 @@ class Mastodon(source.Source):
     }
 
     reblog = status.get('reblog')
-    base_status = reblog if reblog else status
+    base_status = reblog or status
 
     # media! into attachments.
     for media in status.get('media_attachments', []):

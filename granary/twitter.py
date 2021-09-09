@@ -189,10 +189,7 @@ class Twitter(source.Source):
     Args:
       screen_name: string username. Defaults to the current user.
     """
-    if screen_name is None:
-      url = API_CURRENT_USER
-    else:
-      url = API_USER % screen_name
+    url = API_CURRENT_USER if screen_name is None else API_USER % screen_name
     return self.user_to_actor(self.urlopen(url))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
@@ -880,9 +877,8 @@ class Twitter(source.Source):
       if preview:
         return source.creation_result(content=preview_content,
                                       description=preview_description)
-      else:
-        resp = self.urlopen(API_POST_TWEET, data=urllib.parse.urlencode(sorted(data)))
-        resp['type'] = 'comment' if is_reply and base_url else 'post'
+      resp = self.urlopen(API_POST_TWEET, data=urllib.parse.urlencode(sorted(data)))
+      resp['type'] = 'comment' if is_reply and base_url else 'post'
 
     else:
       return source.creation_result(
@@ -1010,7 +1006,7 @@ class Twitter(source.Source):
     }))
 
     total_delay = 0
-    for i in range(API_MEDIA_STATUS_MAX_POLLS):
+    for _ in range(API_MEDIA_STATUS_MAX_POLLS):
       info = resp.get('processing_info', {})
       state = info.get('state')
       if not state or state == 'succeeded':
@@ -1228,7 +1224,7 @@ class Twitter(source.Source):
     }
 
     retweeted = tweet.get('retweeted_status')
-    base_tweet = retweeted if retweeted else tweet
+    base_tweet = retweeted or tweet
     entities = self._get_entities(base_tweet)
 
     # text content

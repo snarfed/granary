@@ -343,11 +343,8 @@ class GitHub(source.Source):
     if fetch_shares or fetch_events or fetch_mentions or search_query:
       raise NotImplementedError()
 
-    since = None
     etag_parsed = email.utils.parsedate(etag)
-    if etag_parsed:
-      since = datetime.datetime(*etag_parsed[:6])
-
+    since = datetime.datetime(*etag_parsed[:6]) if etag_parsed else None
     activities = []
 
     if activity_id:
@@ -654,14 +651,14 @@ class GitHub(source.Source):
         return source.creation_result(
           description='<span class="verb">star</span> <a href="%s">%s/%s</a>.' %
             (base_url, owner, repo))
-      else:
-        issue = self.graphql(GRAPHQL_REPO, locals())
-        resp = self.graphql(GRAPHQL_ADD_STAR, {
-          'starrable_id': issue['repository']['id'],
-        })
-        return source.creation_result({
-          'url': base_url + '/stargazers',
-        })
+
+      issue = self.graphql(GRAPHQL_REPO, locals())
+      resp = self.graphql(GRAPHQL_ADD_STAR, {
+        'starrable_id': issue['repository']['id'],
+      })
+      return source.creation_result({
+        'url': base_url + '/stargazers',
+      })
 
     elif type == 'tag':  # add label
       if not (len(path) == 4 and path[2] in ('issues', 'pull')):
@@ -687,13 +684,13 @@ class GitHub(source.Source):
         return source.creation_result(
           description='add label%s <span class="verb">%s</span> to %s.' % (
             ('s' if len(labels) > 1 else ''), ', '.join(labels), issue_link))
-      else:
-        resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels)
-        return source.creation_result({
-          'url': base_url,
-          'type': 'tag',
-          'tags': labels,
-        })
+
+      resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels)
+      return source.creation_result({
+        'url': base_url,
+        'type': 'tag',
+        'tags': labels,
+      })
 
     else:  # new issue
       if not (len(path) == 2 or (len(path) == 3 and path[2] == 'issues')):
@@ -744,7 +741,7 @@ class GitHub(source.Source):
     if not repo:
       return set()
 
-    return set(node['name'] for node in repo['labels']['nodes'])
+    return {node['name'] for node in repo['labels']['nodes']}
 
   def issue_to_object(self, issue):
     """Converts a GitHub issue or pull request to ActivityStreams.

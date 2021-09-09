@@ -201,7 +201,6 @@ PULL_REST = {  # GitHub
   'user': USER_REST,
   'title': 'a PR to merge',
   'body': 'a PR message',
-  'comments_url': 'https://api.github.com/repos/foo/bar/issues/444/comments',
   'issue_url': 'https://api.github.com/repos/foo/bar/issues/444',
   'diff_url': 'https://github.com/foo/bar/pull/444.diff',
   'patch_url': 'https://github.com/foo/bar/pull/444.patch',
@@ -274,7 +273,6 @@ COMMENT_OBJ = {  # ActivityStreams
   'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
   'author': ACTOR,
   'content': 'i have something to say here',
-  'published': '2012-12-05T00:58:26+00:00',
   'inReplyTo': [{'url': 'https://github.com/foo/bar/pull/123'}],
   'published': '2015-07-23T18:47:58+00:00',
   'updated': '2015-07-23T19:47:58+00:00',
@@ -869,7 +867,7 @@ class GitHubTest(testutil.TestCase):
     self.assertIsNone(result.error_plain, result)
 
   def test_preview_issue(self):
-    for i in range(2):
+    for _ in range(2):
       self.expect_graphql_get_labels(['new silo'])
       rendered = self.expect_markdown_render(ISSUE_OBJ['content'].strip())
     self.mox.ReplayAll()

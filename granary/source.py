@@ -662,7 +662,7 @@ class Source(object, metaclass=SourceMeta):
           activity['title'] = obj_name
         elif verb and (obj_name or obj_type):
           app = activity.get('generator', {}).get('displayName')
-          name = obj_name if obj_name else 'a %s' % (obj_type or 'unknown')
+          name = obj_name or 'a %s' % (obj_type or 'unknown')
           app = ' on %s' % app if app else ''
           activity['title'] = '%s %s %s%s.' % (actor_name, verb or 'posted',
                                                name, app)
@@ -767,10 +767,10 @@ class Source(object, metaclass=SourceMeta):
       if not domain:
         continue
 
-      if not include_reserved_hosts:
-        if ('.' not in domain or
-            domain.split('.')[-1] in (util.RESERVED_TLDS | util.LOCAL_TLDS)):
-          continue
+      if not include_reserved_hosts and (
+          ('.' not in domain
+           or domain.split('.')[-1] in (util.RESERVED_TLDS | util.LOCAL_TLDS))):
+        continue
 
       which = (originals if not domains or util.domain_or_parent_in(domain, domains)
                else mentions)

@@ -227,10 +227,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       logging('Ignoring duration %r; expected int, got %s', duration.__class__)
       duration = None
 
-  sizes = []
   size = stream.get('size')
-  if size:
-    sizes = [str(size)]
+  sizes = [str(size)] if size else []
 
   # construct mf2!
   ret = {

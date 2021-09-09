@@ -502,7 +502,7 @@ class MastodonTest(testutil.TestCase):
 
     self.mox.ReplayAll()
     cache = util.CacheDict()
-    for i in range(4):
+    for _ in range(4):
       self.mastodon.get_activities(fetch_replies=True, fetch_shares=True,
                                    fetch_likes=True, cache=cache)
 
