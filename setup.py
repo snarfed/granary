@@ -11,7 +11,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='granary',
-      version='3.1',
+      version='3.2',
       description='The social web translator',
       long_description=open('README.md').read(),
       long_description_content_type='text/markdown',
@@ -44,7 +44,7 @@ setup(name='granary',
           'humanfriendly>=4.18,<10.0',
           'jinja2>=2.10,<4.0',
           'mf2util>=0.5.0',
-          'oauth-dropins>=3.1',
+          'oauth-dropins>=4.0',
           'praw>=7.3.0,<8.0',
           'python-dateutil~=2.8',
           'requests~=2.22',
