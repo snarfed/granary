@@ -27,7 +27,7 @@ from oauth_dropins.webutil import (
 )
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, HTTPException
 
 from granary import (
   as2,
@@ -183,7 +183,7 @@ def demo():
 
 
 @app.route('/url', methods=('GET', 'HEAD'))
-@flask_util.cached(cache, RESPONSE_CACHE_TIME)
+@flask_util.cached(cache, RESPONSE_CACHE_TIME, http_5xx=True)
 def url():
   """Handles URL requests from the interactive demo form on the front page.
 
@@ -204,7 +204,12 @@ def url():
   if fragment and input != 'html':
       raise BadRequest('URL fragments only supported with input=html.')
 
-  resp = util.requests_get(orig_url, gateway=True)
+  try:
+    resp = util.requests_get(orig_url, gateway=True)
+  except HTTPException as e:
+    # do this manually so that 504s for timeouts get cached
+    return flask_util.handle_exception(e)
+
   final_url = resp.url
 
   # decode data
