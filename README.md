@@ -254,21 +254,15 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    Test code to paste into the interpreter:
    ```py
    import json
+   from granary import github
+   github.__file__  # check that it's in the virtualenv
 
-   from granary import instagram
-   instagram.__file__  # check that it's in the virtualenv
-
-   i = instagram.Instagram()
-   a = i.get_activities(user_id='snarfed', group_id='@self', scrape=True)
+   g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
+   a = g.get_activities()
    print(json.dumps(a, indent=2))
 
    from granary import atom
    print(atom.activities_to_atom(a, {}))
-
-   from granary import github
-   g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
-   a2 = g.get_activities()
-   print(json.dumps(a2, indent=2))
    ```
 1. Tag the release in git. In the tag message editor, delete the generated comments at bottom, leave the first line blank (to omit the release "title" in github), put `### Notable changes` on the second line, then copy and paste this version's changelog contents below it.
    ```sh
