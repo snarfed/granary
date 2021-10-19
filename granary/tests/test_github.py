@@ -14,13 +14,13 @@ from ..github import (
   GRAPHQL_BASE,
   GRAPHQL_COMMENT,
   REACTIONS_REST_CHARS,
-  REST_API_COMMENT,
-  REST_API_COMMENT_REACTIONS,
-  REST_API_COMMENTS,
-  REST_API_ISSUE,
-  REST_API_ISSUE_LABELS,
-  REST_API_NOTIFICATIONS,
-  REST_API_REACTIONS,
+  REST_COMMENT,
+  REST_COMMENT_REACTIONS,
+  REST_COMMENTS,
+  REST_ISSUE,
+  REST_ISSUE_LABELS,
+  REST_NOTIFICATIONS,
+  REST_REACTIONS,
 )
 from .. import source
 
@@ -422,7 +422,7 @@ class GitHubTest(testutil.TestCase):
   def expect_markdown_render(self, body):
     rendered = '<p>rendered!</p>'
     self.expect_requests_post(
-      github.REST_API_MARKDOWN, headers=EXPECTED_HEADERS, response=rendered, json={
+      github.REST_MARKDOWN, headers=EXPECTED_HEADERS, response=rendered, json={
         'text': body,
         'mode': 'gfm',
         'context': 'foo/bar',
@@ -476,7 +476,7 @@ class GitHubTest(testutil.TestCase):
       'repository': {'private': False},
     })
 
-    self.expect_rest(REST_API_NOTIFICATIONS, notifs)
+    self.expect_rest(REST_NOTIFICATIONS, notifs)
     self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], PULL_REST)
     self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
     self.mox.ReplayAll()
@@ -486,7 +486,7 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals([PULL_OBJ, obj_public_repo], self.gh.get_activities())
 
   def test_get_activities_fetch_replies(self):
-    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST])
+    self.expect_rest(REST_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST])
     self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
     self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
     self.mox.ReplayAll()
@@ -495,12 +495,12 @@ class GitHubTest(testutil.TestCase):
                        self.gh.get_activities(fetch_replies=True))
 
   def test_get_activities_fetch_likes(self):
-    self.expect_rest(REST_API_NOTIFICATIONS,
+    self.expect_rest(REST_NOTIFICATIONS,
                      [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
     self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], PULL_REST)
-    self.expect_rest(REST_API_REACTIONS % ('foo', 'bar', 444), [])
+    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 444), [])
     self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
-    self.expect_rest(REST_API_REACTIONS % ('foo', 'bar', 333),
+    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 333),
                      [REACTION_REST, REACTION_REST])
     self.mox.ReplayAll()
 
@@ -510,17 +510,17 @@ class GitHubTest(testutil.TestCase):
                        self.gh.get_activities(fetch_likes=True))
 
   def test_get_activities_self_empty(self):
-    self.expect_rest(REST_API_NOTIFICATIONS, [])
+    self.expect_rest(REST_NOTIFICATIONS, [])
     self.mox.ReplayAll()
     self.assert_equals([], self.gh.get_activities())
 
   def test_get_activities_activity_id(self):
-    self.expect_rest(REST_API_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
+    self.expect_rest(REST_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
     self.mox.ReplayAll()
     self.assert_equals([ISSUE_OBJ], self.gh.get_activities(activity_id='foo:bar:123'))
 
   def test_get_activities_etag_and_since(self):
-    self.expect_rest(REST_API_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST],
+    self.expect_rest(REST_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST],
                      headers={'If-Modified-Since': 'Thu, 25 Oct 2012 15:16:27 GMT'},
                      response_headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'})
     self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
@@ -541,7 +541,7 @@ class GitHubTest(testutil.TestCase):
                                        fetch_replies=True))
 
   def test_get_activities_etag_returns_304(self):
-    self.expect_rest(REST_API_NOTIFICATIONS, status_code=304,
+    self.expect_rest(REST_NOTIFICATIONS, status_code=304,
                      headers={'If-Modified-Since': 'Thu, 25 Oct 2012 15:16:27 GMT'},
                      response_headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'})
     self.mox.ReplayAll()
@@ -561,7 +561,7 @@ class GitHubTest(testutil.TestCase):
     self._test_get_activities_activity_id_fails(451)
 
   def _test_get_activities_activity_id_fails(self, status):
-    self.expect_rest(REST_API_ISSUE % ('a', 'b', 1), {
+    self.expect_rest(REST_ISSUE % ('a', 'b', 1), {
       'message': 'Not Found',
       'documentation_url': 'https://developer.github.com/v3',
     }, status_code=status)
@@ -583,7 +583,7 @@ class GitHubTest(testutil.TestCase):
     self._test_get_activities_pr_fails(451)
 
   def _test_get_activities_pr_fails(self, status):
-    self.expect_rest(REST_API_NOTIFICATIONS,
+    self.expect_rest(REST_NOTIFICATIONS,
                      [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
     self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], '', status_code=status)
     self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
@@ -631,7 +631,7 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals({}, self.gh.issue_to_object({}))
 
   def test_get_comment_rest(self):
-    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 'issues', 123), COMMENT_REST)
+    self.expect_rest(REST_COMMENT % ('foo', 'bar', 'issues', 123), COMMENT_REST)
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo:bar:123'))
 
@@ -670,7 +670,7 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_comment(self):
     self.expect_requests_post(
-      REST_API_COMMENTS % ('foo', 'bar', 123), headers=EXPECTED_HEADERS,
+      REST_COMMENTS % ('foo', 'bar', 123), headers=EXPECTED_HEADERS,
       json={
         'body': 'i have something to say here',
       }, response={
@@ -738,7 +738,7 @@ class GitHubTest(testutil.TestCase):
 
   def _test_create_issue(self, in_reply_to):
     self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
         'labels': [],
@@ -763,7 +763,7 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_with_image_and_link(self):
     self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': '[bar](http://foo/) ![](https://baz/)',
         'labels': [],
@@ -787,7 +787,7 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_with_relative_image_and_link(self):
     self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': '[foo](http://site/post/foo) ![](http://site/bar/baz)',
         'labels': [],
@@ -811,7 +811,7 @@ class GitHubTest(testutil.TestCase):
     content = 'x &lt;data foo&gt; &amp; y'
 
     self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': content,
         'labels': [],
@@ -831,7 +831,7 @@ class GitHubTest(testutil.TestCase):
     """https://github.com/indieweb/fragmention/issues/3"""
     content = 'abc <code>&lt;div style="height: 10000px"&gt;&lt;/div&gt;</code> xyz'
     self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': content,
         'labels': [],
@@ -850,7 +850,7 @@ class GitHubTest(testutil.TestCase):
   def test_create_blockquote(self):
     content = 'x <blockquote>y</blockquote>'
     self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': content,
         'labels': [],
@@ -910,7 +910,7 @@ class GitHubTest(testutil.TestCase):
       'repository': None,
     })
 
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': 'xyz',
         'labels': [],
@@ -929,7 +929,7 @@ class GitHubTest(testutil.TestCase):
   def test_create_issue_tags_to_labels(self):
     self.expect_graphql_get_labels(['label 3', 'label_1'])
     resp = {'html_url': 'http://done'}
-    self.expect_requests_post(github.REST_API_CREATE_ISSUE % ('foo', 'bar'), json={
+    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
         'title': 'an issue title',
         'body': ISSUE_OBJ['content'].strip(),
         'labels': ['label 3', 'label_1'],
@@ -1040,7 +1040,7 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_reaction_issue(self):
     self.expect_requests_post(
-      REST_API_REACTIONS % ('foo', 'bar', 123),
+      REST_REACTIONS % ('foo', 'bar', 123),
       headers=EXPECTED_HEADERS,
       json={'content': '+1'},
       response={
@@ -1066,7 +1066,7 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_reaction_issue_comment(self):
     self.expect_requests_post(
-      REST_API_COMMENT_REACTIONS % ('foo', 'bar', 'issues', 456),
+      REST_COMMENT_REACTIONS % ('foo', 'bar', 'issues', 456),
       headers=EXPECTED_HEADERS,
       json={
         'content': '+1',
@@ -1085,7 +1085,7 @@ class GitHubTest(testutil.TestCase):
     }, result.content, result)
 
   def test_preview_reaction_issue_comment(self):
-    self.expect_rest(REST_API_COMMENT % ('foo', 'bar', 'issues', 456), COMMENT_REST)
+    self.expect_rest(REST_COMMENT % ('foo', 'bar', 'issues', 456), COMMENT_REST)
     self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
@@ -1100,7 +1100,7 @@ class GitHubTest(testutil.TestCase):
       # ¯\_(ツ)_/¯ https://developer.github.com/v3/issues/labels/#add-labels-to-an-issue
       'default': True,
     }
-    self.expect_requests_post(REST_API_ISSUE_LABELS % ('foo', 'bar', 456),
+    self.expect_requests_post(REST_ISSUE_LABELS % ('foo', 'bar', 456),
                               headers=EXPECTED_HEADERS, json=['one'], response=resp)
     self.mox.ReplayAll()
 

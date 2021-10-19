@@ -19,16 +19,16 @@ import requests
 
 from . import source
 
-REST_API_BASE = 'https://api.github.com'
-REST_API_ISSUE = REST_API_BASE + '/repos/%s/%s/issues/%s'
-REST_API_CREATE_ISSUE = REST_API_BASE + '/repos/%s/%s/issues'
-REST_API_ISSUE_LABELS = REST_API_BASE + '/repos/%s/%s/issues/%s/labels'
-REST_API_COMMENTS = REST_API_BASE + '/repos/%s/%s/issues/%s/comments'
-REST_API_REACTIONS = REST_API_BASE + '/repos/%s/%s/issues/%s/reactions'
-REST_API_COMMENT = REST_API_BASE + '/repos/%s/%s/%s/comments/%s'
-REST_API_COMMENT_REACTIONS = REST_API_BASE + '/repos/%s/%s/%s/comments/%s/reactions'
-REST_API_MARKDOWN = REST_API_BASE + '/markdown'
-REST_API_NOTIFICATIONS = REST_API_BASE + '/notifications?all=true&participating=true'
+REST_BASE = 'https://api.github.com'
+REST_ISSUE = REST_BASE + '/repos/%s/%s/issues/%s'
+REST_CREATE_ISSUE = REST_BASE + '/repos/%s/%s/issues'
+REST_ISSUE_LABELS = REST_BASE + '/repos/%s/%s/issues/%s/labels'
+REST_COMMENTS = REST_BASE + '/repos/%s/%s/issues/%s/comments'
+REST_REACTIONS = REST_BASE + '/repos/%s/%s/issues/%s/reactions'
+REST_COMMENT = REST_BASE + '/repos/%s/%s/%s/comments/%s'
+REST_COMMENT_REACTIONS = REST_BASE + '/repos/%s/%s/%s/comments/%s/reactions'
+REST_MARKDOWN = REST_BASE + '/markdown'
+REST_NOTIFICATIONS = REST_BASE + '/notifications?all=true&participating=true'
 GRAPHQL_BASE = 'https://api.github.com/graphql'
 GRAPHQL_BOT_FIELDS = 'id avatarUrl createdAt login url'
 GRAPHQL_ORG_FIELDS = 'id avatarUrl description location login name url websiteUrl'
@@ -352,7 +352,7 @@ class GitHub(source.Source):
       if len(parts) != 3:
         raise ValueError('GitHub activity ids must be of the form USER:REPO:ISSUE_OR_PR')
       try:
-        issue = self.rest(REST_API_ISSUE % parts)
+        issue = self.rest(REST_ISSUE % parts)
         activities = [self.issue_to_object(issue)]
       except BaseException as e:
         code, body = util.interpret_http_exception(e)
@@ -362,7 +362,7 @@ class GitHub(source.Source):
           raise
 
     else:
-      resp = self.rest(REST_API_NOTIFICATIONS, parse_json=False,
+      resp = self.rest(REST_NOTIFICATIONS, parse_json=False,
                        headers={'If-Modified-Since': etag} if etag else None)
       etag = resp.headers.get('Last-Modified')
       notifs = [] if resp.status_code == 304 else json_loads(resp.text)
@@ -451,7 +451,7 @@ class GitHub(source.Source):
     id = parts[-1]
     if util.is_int(id):  # REST API id
       parts.insert(2, 'issues')
-      comment = self.rest(REST_API_COMMENT % tuple(parts))
+      comment = self.rest(REST_COMMENT % tuple(parts))
     else:  # GraphQL node id
       comment = self.graphql(GRAPHQL_COMMENT, {'id': id})['node']
 
@@ -470,7 +470,7 @@ class GitHub(source.Source):
 
     Returns: unicode string, rendered HTML
     """
-    return self.rest(REST_API_MARKDOWN, {
+    return self.rest(REST_MARKDOWN, {
       'text': markdown,
       'mode': 'gfm',
       'context': '%s/%s' % (owner, repo),
@@ -583,7 +583,7 @@ class GitHub(source.Source):
       is_reaction = orig_content in REACTIONS_GRAPHQL
       if preview:
         if comment_id:
-          comment = self.rest(REST_API_COMMENT % (owner, repo, comment_type,
+          comment = self.rest(REST_COMMENT % (owner, repo, comment_type,
                                                   comment_id))
           target_link = '<a href="%s">a comment on %s/%s#%s, <em>%s</em></a>' % (
             base_url, owner, repo, number, util.ellipsize(comment['body']))
@@ -610,14 +610,14 @@ class GitHub(source.Source):
         # https://github.com/snarfed/bridgy/issues/824
         if is_reaction:
           if comment_id:
-            api_url = REST_API_COMMENT_REACTIONS % (owner, repo, comment_type,
+            api_url = REST_COMMENT_REACTIONS % (owner, repo, comment_type,
                                                     comment_id)
             reacted = self.rest(api_url, data={
               'content': REACTIONS_REST.get(orig_content),
             })
             url = base_url
           else:
-            api_url = REST_API_REACTIONS % (owner, repo, number)
+            api_url = REST_REACTIONS % (owner, repo, number)
             reacted = self.rest(api_url, data={
               'content': REACTIONS_REST.get(orig_content),
             })
@@ -632,7 +632,7 @@ class GitHub(source.Source):
 
         else:
           try:
-            api_url = REST_API_COMMENTS % (owner, repo, number)
+            api_url = REST_COMMENTS % (owner, repo, number)
             commented = self.rest(api_url, data={'body': content})
             return source.creation_result({
               'id': commented.get('id'),
@@ -685,7 +685,7 @@ class GitHub(source.Source):
           description='add label%s <span class="verb">%s</span> to %s.' % (
             ('s' if len(labels) > 1 else ''), ', '.join(labels), issue_link))
 
-      resp = self.rest(REST_API_ISSUE_LABELS % (owner, repo, number), labels)
+      resp = self.rest(REST_ISSUE_LABELS % (owner, repo, number), labels)
       return source.creation_result({
         'url': base_url,
         'type': 'tag',
@@ -714,7 +714,7 @@ class GitHub(source.Source):
 <span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>%s:""" %
             (base_url, owner, repo, preview_labels))
       else:
-        resp = self.rest(REST_API_CREATE_ISSUE % (owner, repo), {
+        resp = self.rest(REST_CREATE_ISSUE % (owner, repo), {
           'title': title,
           'body': content,
           'labels': labels,
