@@ -279,30 +279,24 @@ Now, run the tests to check that everything is set up ok:
    kill %1
 
 Finally, run this in the repo root directory to start the web app
-locally:
+locally in `app_server <https://github.com/XeoN-GHMB/app_server>`__
+(`which also serves the static file
+handlers <https://groups.google.com/d/topic/google-appengine/BJDE8y2KISM/discussion>`__):
 
 .. code:: shell
 
-   dev_appserver.py --log_level debug --enable_host_checking false \
-     --support_datastore_emulator --datastore_emulator_port=8089 \
-     --application=granary-demo app.yaml
+   app_server -A oauth-dropins .
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
 granary home page!
 
 If you want to work on
 `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ at the same
-time, install it in “source” mode with
+time, install it in editable mode with
 ``pip install -e <path to oauth-dropins repo>``. You’ll also need to
 update the ``oauth_dropins_static`` symlink, which is needed for serving
-static file assets in dev_appserver:
+static file handlers locally:
 ``ln -sf <path-to-oauth-dropins-repo>/oauth_dropins/static oauth_dropins_static``.
-To test it with dev_appserver you also need to replace the line in
-requirements.txt from
-``git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins``
-to ``-e <path-to-oauth-dropins-repo>`` (an alternative workaround for
-dev_appserver.py can be found
-`here <https://issuetracker.google.com/issues/144150446>`__.
 
 To deploy to production:
 
@@ -350,8 +344,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     for this new version from *unreleased* to the current date.
 
 3.  Bump the ``oauth-dropins`` version specifier in ``setup.py`` to the
-    most recent version, usually the same version number as this granary
-    release.
+    most recent version.
 
 4.  Build the docs. If you added any new modules, add them to the
     appropriate file(s) in ``docs/source/``. Then run
@@ -395,21 +388,15 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     .. code:: py
 
        import json
+       from granary import github
+       github.__file__  # check that it's in the virtualenv
 
-       from granary import instagram
-       instagram.__file__  # check that it's in the virtualenv
-
-       i = instagram.Instagram()
-       a = i.get_activities(user_id='snarfed', group_id='@self', scrape=True)
+       g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
+       a = g.get_activities()
        print(json.dumps(a, indent=2))
 
        from granary import atom
        print(atom.activities_to_atom(a, {}))
-
-       from granary import github
-       g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
-       a2 = g.get_activities()
-       print(json.dumps(a2, indent=2))
 
 9.  Tag the release in git. In the tag message editor, delete the
     generated comments at bottom, leave the first line blank (to omit
