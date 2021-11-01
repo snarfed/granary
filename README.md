@@ -187,17 +187,15 @@ python3 -m unittest discover
 kill %1
 ```
 
-Finally, run this in the repo root directory to start the web app locally:
+Finally, run this in the repo root directory to start the web app locally in [`app_server`](https://github.com/XeoN-GHMB/app_server) ([which also serves the static file handlers](https://groups.google.com/d/topic/google-appengine/BJDE8y2KISM/discussion)):
 
 ```shell
-dev_appserver.py --log_level debug --enable_host_checking false \
-  --support_datastore_emulator --datastore_emulator_port=8089 \
-  --application=granary-demo app.yaml
+app_server -A oauth-dropins .
 ```
 
 Open [localhost:8080](http://localhost:8080/) and you should see the granary home page!
 
-If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in "source" mode with `pip install -e <path to oauth-dropins repo>`. You'll also need to update the `oauth_dropins_static` symlink, which is needed for serving static file assets in dev_appserver: `ln -sf <path-to-oauth-dropins-repo>/oauth_dropins/static oauth_dropins_static`.  To test it with dev_appserver you also need to replace the line in requirements.txt from `git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins` to `-e <path-to-oauth-dropins-repo>` (an alternative workaround for dev_appserver.py can be found [here](https://issuetracker.google.com/issues/144150446).
+If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time, install it in editable mode with `pip install -e <path to oauth-dropins repo>`. You'll also need to update the `oauth_dropins_static` symlink, which is needed for serving static file handlers locally: `ln -sf <path-to-oauth-dropins-repo>/oauth_dropins/static oauth_dropins_static`.
 
 To deploy to production:
 
