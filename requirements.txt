@@ -5,7 +5,7 @@
 #
 # Use this to bust that cache: gcloud -q beta app deploy --no-cache ...
 git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
-app-server~=0.7.0
+app-server~=0.7.0; python_version>="3.8"
 flask~=2.0.2
 flask-caching~=1.10.1
 google-cloud-logging~=2.6.0
