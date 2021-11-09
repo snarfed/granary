@@ -8,6 +8,7 @@
 *.c
 *.cc
 *.cpp
+*.egg-info
 *.h
 *.o
 *.pyc
@@ -18,8 +19,11 @@
 __pycache__/
 .coverage/
 .git*/
+browser-extension/
+build/
 coverage/
 debian/
+dist/
 doc/
 docs/
 example/
@@ -29,6 +33,9 @@ l3/
 local/
 local3/
 local3.7/
+.mypy_cache/
+node_modules
+package-lock.json
 pydoc/
 pydocs/
 python3/
@@ -36,7 +43,9 @@ RCS/
 ref/
 sample/
 samples/
+service_account_creds.json
 TAGS
 TAGS/
 test/
 tests/
+yarn.lock
