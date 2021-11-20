@@ -1355,8 +1355,6 @@ class FacebookTest(testutil.TestCase):
     super(FacebookTest, self).setUp()
     self.fb = Facebook()
     self.fbscrape = Facebook(scrape=True, cookie_c_user='CU', cookie_xs='XS')
-    self.batch = []
-    self.batch_responses = []
     self.mox.StubOutWithMock(facebook, 'now_fn')
 
   def expect_urlopen(self, url, response=None, **kwargs):
@@ -1371,26 +1369,6 @@ class FacebookTest(testutil.TestCase):
       kwargs.setdefault('headers', {})['Cookie'] = cookie
     url = urllib.parse.urljoin(M_HTML_BASE_URL, url)
     return super(FacebookTest, self).expect_requests_get(url, resp, **kwargs)
-
-  def expect_batch_req(self, url, response, status=200, headers={},
-                       response_headers=None):
-    batch.append({
-      'method': 'GET',
-      'relative_url': url,
-      'headers': [{'name': n, 'value': v} for n, v in headers.items()],
-    })
-    batch_responses.append(util.trim_nulls({
-      'code': status,
-      'body': json_dumps(response),
-      'headers': response_headers,
-    }))
-
-  def replay_batch(self):
-    self.expect_urlopen(
-      API_BASE,
-      data='batch=' + json_dumps(batch, separators=(',', ':')),
-      response=batch_responses)
-    self.mox.ReplayAll()
 
   def test_get_actor(self):
     self.expect_urlopen('foo', USER)
