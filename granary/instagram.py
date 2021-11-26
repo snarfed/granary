@@ -7,6 +7,7 @@ https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
 https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """
 import datetime
+import itertools
 import logging
 import operator
 import re
@@ -383,7 +384,7 @@ class Instagram(source.Source):
     if not activity:
       activity = self._get_activity(None, activity_id)
     if activity:
-      # TODO: unify with instagram, maybe in source.get_comment()
+      # TODO: unify with flickr, maybe in source.get_comment()
       tag_id = self.tag_uri(comment_id)
       for reply in activity.get('object', {}).get('replies', {}).get('items', []):
         if reply.get('id') == tag_id:
@@ -569,10 +570,7 @@ class Instagram(source.Source):
       'author': self.user_to_actor(user),
       'content': content,
       'url': media.get('link'),
-      'to': [{
-        'objectType': 'group',
-        'alias': '@private' if user.get('is_private') else '@public',
-      }],
+      'to': self._is_private_to_to(user, default_public=True),
       'attachments': [{
         'objectType': 'video' if 'videos' in media else 'image',
         'url': media.get('link'),
@@ -607,7 +605,6 @@ class Instagram(source.Source):
        for u in media.get('users_in_photo', [])] +
       [self.like_to_object(u, id, media.get('link'))
        for u in media.get('likes', {}).get('data', [])] +
-
       self._mention_tags_from_content(content)
     }
 
@@ -621,14 +618,14 @@ class Instagram(source.Source):
 
     for version in ('standard_resolution', 'low_resolution', 'thumbnail'):
       image = media.get('images', {}).get(version)
-      if image:
-        object['image'] = {'url': image.get('url')}
+      if image and image.get('url'):
+        object['image'] = image
         break
 
     for version in ('standard_resolution', 'low_resolution', 'low_bandwidth'):
       video = media.get('videos', {}).get(version)
-      if video:
-        object['stream'] = {'url': video.get('url')}
+      if video and video.get('url'):
+        object['stream'] = video
         break
 
     # http://instagram.com/developer/endpoints/locations/
@@ -720,9 +717,8 @@ class Instagram(source.Source):
       'id': self.tag_uri(id or username),
       'username': username,
       'objectType': 'person',
+      'to': self._is_private_to_to(user),
     }
-    if not id or not username:
-      return actor
 
     urls = [self.user_url(username)] + sum(
       (util.extract_links(user.get(field)) for field in ('website', 'bio')), [])
@@ -730,13 +726,6 @@ class Instagram(source.Source):
       'url': urls[0],
       'urls': [{'value': u} for u in urls] if len(urls) > 1 else None
     })
-
-    private = user.get('is_private')
-    if private is not None:
-      actor['to'] = [{
-        'objectType': 'group',
-        'alias': '@private' if private else '@public',
-      }]
 
     pic_url = user.get('profile_picture') or user.get('profile_pic_url') or ''
 
@@ -788,6 +777,17 @@ class Instagram(source.Source):
 
     return ''.join(reversed(chars))
 
+  @staticmethod
+  def _is_private_to_to(obj, default_public=False):
+    """Generates an AS 'to' field from an Instagram 'is_private' field."""
+    private = obj.get('is_private')
+    if private is not None or default_public:
+      return [{
+        'objectType': 'group',
+        'alias': '@private' if private else '@public',
+      }]
+
+
   def scraped_to_activities(self, html, cookie=None, count=None,
                             fetch_extras=False):
     """Converts scraped Instagram HTML to ActivityStreams activities.
@@ -820,6 +820,7 @@ class Instagram(source.Source):
 
     # find media
     medias = []
+    feed_v2_items = []
     profile_user = None
     viewer_user = None
 
@@ -834,6 +835,9 @@ class Instagram(source.Source):
         medias.extend(e.get('node') for e in edges
                       if e.get('node', {}).get('__typename') not in
                       ('GraphSuggestedUserFeedUnit',))
+
+      # feed v2
+      feed_v2_items.extend(data.get('feed_items', []))
 
       if 'user' in data:
         edges = data['user'].get('edge_web_feed_timeline', {}).get('edges', [])
@@ -855,7 +859,7 @@ class Instagram(source.Source):
         if media:
           medias.append(media)
 
-    if not medias:
+    if not medias and not feed_v2_items:
       # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
       # no longer has any useful data. Need to do a second header link fetch.
       soup = util.parse_html(html)
@@ -871,6 +875,7 @@ class Instagram(source.Source):
       medias = medias[:count]
 
     activities = []
+
     for media in util.trim_nulls(medias):
       activity = self._json_media_node_to_activity(media, user=profile_user)
 
@@ -883,6 +888,11 @@ class Instagram(source.Source):
         self.merge_scraped_reactions(likes_json, activity)
 
       activities.append(util.trim_nulls(activity))
+
+    for item in feed_v2_items:
+      media = item.get('media_or_ad')
+      if media:
+        activities.append(util.trim_nulls(self._feed_v2_item_to_activity(media)))
 
     user = self._json_user_to_user(viewer_user or profile_user)
     actor = self.user_to_actor(user) if user else None
@@ -1062,6 +1072,143 @@ class Instagram(source.Source):
           if not att.get('url'):
             att['url'] = link
           obj['attachments'].append(att)
+
+    self.postprocess_object(obj)
+    return super(Instagram, self).postprocess_activity(activity)
+
+  def _feed_v2_user_to_actor(self, user):
+    if not user:
+      return {}
+
+    username = user.get('username')
+    return {
+      'objectType': 'person',
+      'id': self.tag_uri(user.get('pk') or username),
+      'username': user.get('username'),
+      'url': self.user_url(username),
+      'displayName': user.get('full_name') or username,
+      'image': {'url': user.get('profile_pic_url')},
+      'to': self._is_private_to_to(user),
+    }
+
+  def _feed_v2_item_to_activity(self, item):
+    """Converts Instagram HTML JSON feed_v2 item to ActivityStreams activity.
+
+    Args:
+      media: dict, item from a feed_v2 JSON
+
+    Returns:
+      dict, ActivityStreams activity
+    """
+    user = item.get('user')
+    actor = self._feed_v2_user_to_actor(user)
+    obj_id = self.tag_uri(f'{item.get("pk")}_{user.get("pk")}')
+    media_url = self.media_url(item.get('code'))
+    caption = item.get('caption', {})
+
+    # media
+    attachments = []
+    image = stream = None
+    for media in (item.get('carousel_media') or [item]):
+      images = sorted(  # sort by size, descending
+        media.get('image_versions2', {}).get('candidates', []),
+        key=operator.itemgetter('width'), reverse=True)
+      if images and not image:
+        image = images[0]
+
+      if media.get('video_versions'):
+        streams = sorted(  # sort by size, descending
+            ({k: v for k, v in vid.items() if k in ('url', 'width', 'height')}
+             for vid in media['video_versions']),
+            key=operator.itemgetter('width'), reverse=True)
+        attachments.append({
+          'objectType': 'video',
+          'url': media_url,
+          'stream': streams,
+          'image': images,
+        })
+        if not stream:
+          stream = streams[0]
+
+      elif images:
+        attachments.append({
+          'objectType': 'image',
+          'url': media_url,
+          'image': images,
+        })
+
+    # comments
+    replies = []
+    for cmt in item.get('comments', []):
+      cmt_id = self.tag_uri(cmt.get('pk'))
+      content = cmt.get('text') or ''
+      reply = {
+        'objectType': 'comment',
+        'id': cmt_id,
+        'url': '%s#comment-%s' % (media_url, cmt.get('pk')) if media_url else None,
+        'author': self._feed_v2_user_to_actor(cmt.get('user')),
+        'content': content,
+        'published': util.maybe_timestamp_to_rfc3339(cmt.get('created_at')),
+        'inReplyTo': [{'id': obj_id}],
+        'tags': self._mention_tags_from_content(content),
+        'to': [{'objectType': 'group', 'alias': '@public'}],
+      }
+      parent = cmt.get('parent_comment_id')
+      if parent:
+        reply['inReplyTo'].append({'id': cmt_id})
+      replies.append(reply)
+
+    # object
+    content = caption.get('text') or ''
+    obj = {
+      'id': obj_id,
+      'ig_shortcode': item.get('code'),
+      'objectType': 'video' if stream else 'photo' if image else None,
+      'url': media_url,
+      'author': actor,
+      'content': content,
+      'published': util.maybe_timestamp_to_rfc3339(
+        caption.get('created_at') or item.get('taken_at')),
+      'to': actor['to'],
+      'attachments': attachments,
+      'image': image,
+      'stream': stream,
+      'ig_like_count': item.get('like_count'),
+      'replies': {
+        'items': replies,
+        'totalItems': len(replies),
+      },
+    }
+
+    # person tags and mentions
+    obj['tags'] = list(util.trim_nulls(
+      self._feed_v2_user_to_actor(tag.get('user')) for tag in
+      itertools.chain(*item.get('usertags', {}).values())))
+    obj['tags'].extend(self._mention_tags_from_content(content))
+
+    # location
+    loc = item.get('location')
+    if loc:
+      loc_pk = loc.get('pk')
+      obj['location'] = {
+        'id': self.tag_uri(loc_pk),
+        'displayName': loc.get('name') or loc.get('short_name'),
+        'latitude': loc.get('lat'),
+        'longitude': loc.get('lng'),
+        'address': {'formatted': loc.get('address')},
+        'url': (f'https://instagram.com/explore/locations/{loc_pk}/'
+                if loc_pk else None),
+      }
+
+    # activity
+    activity = {
+      'verb': 'post',
+      'id': obj['id'],
+      'url': media_url,
+      'published': obj['published'],
+      'object': obj,
+      'actor': actor,
+    }
 
     self.postprocess_object(obj)
     return super(Instagram, self).postprocess_activity(activity)

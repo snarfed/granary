@@ -298,6 +298,8 @@ Changelog
 ---
 ### 3.2 - 2021-09-15
 * `Source.original_post_discovery`: add new `include_reserved_hosts` kwarg, defaults to `True`.
+* Instagram:
+  * Update scraping to handle new `feed_v2` JSON format.
 * Facebook:
   * Scraping: handle pictures, videos, link attachments, and text links in timeline/news feed posts.
 * Mastodon:

@@ -59,7 +59,7 @@ COMMENTS = [{  # Instagram
     'id': '232927278',
     'full_name': '小正',
   },
-  'id': '789',
+  'id': '110',
 }]
 MEDIA = {  # Instagram
   'id': '123_456',
@@ -162,9 +162,9 @@ COMMENT_OBJS = [{  # ActivityStreams
     'url': 'https://www.instagram.com/averygood/',
   },
   'content': '太可爱了。cute，@a_person, very cute',
-  'id': tag_uri('789'),
+  'id': tag_uri('110'),
   'published': '2012-10-07T05:45:57+00:00',
-  'url': 'https://www.instagram.com/p/ABC123/#comment-789',
+  'url': 'https://www.instagram.com/p/ABC123/#comment-110',
   'inReplyTo': [{'id': tag_uri('123_456')}],
   'to': [{'objectType':'group', 'alias':'@public'}],
   'tags': [{
@@ -183,7 +183,11 @@ MEDIA_OBJ = {  # ActivityStreams
   'id': tag_uri('123_456'),
   'published': '2012-09-22T05:25:42+00:00',
   'url': 'https://www.instagram.com/p/ABC123/',
-  'image': {'url': 'http://attach/image/big'},
+  'image': {
+    'url': 'http://attach/image/big',
+    'width': 612,
+    'height': 612,
+  },
   'to': [{'objectType':'group', 'alias':'@public'}],
   'location': {
     'id': tag_uri('520640'),
@@ -342,10 +346,14 @@ VIDEO_OBJ = {
     'objectType': 'video'
   }],
   'stream': {
-    'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_101.mp4'
+    'url': 'http://distilleryvesper9-13.ak.instagram.com/090d06dad9cd11e2aa0912313817975d_101.mp4',
+    'width': 640,
+    'height': 640
   },
   'image': {
-    'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_7.jpg'
+    'url': 'http://distilleryimage2.ak.instagram.com/11f75f1cd9cc11e2a0fd22000aa8039a_7.jpg',
+    'width': 612,
+    'height': 612
   },
   'author': ACTOR,
   'url': 'https://www.instagram.com/p/ABC123/',
@@ -566,14 +574,14 @@ HTML_VIDEO_FULL = {
         'username': 'averygood',
         'full_name': '小正',
       },
-      'id': '789',
+      'id': '110',
       'created_at': 1349588757,
       'text': '太可爱了。cute，@a_person, very cute',
       'edge_threaded_comments': {
         'count': 1,
         'edges': [{
           'node': {
-            'id': '020',
+            'id': '220',
             'text': 'hah, i have no tips whatsoever',
             'created_at': 1594392712,
             'owner': {
@@ -607,9 +615,9 @@ HTML_VIDEO_EXTRA_COMMENT_OBJ = {  # ActivityStreams
     'url': 'https://www.instagram.com/someone/',
   },
   'content': 'hah, i have no tips whatsoever',
-  'id': tag_uri('020'),
+  'id': tag_uri('220'),
   'published': '2020-07-10T14:51:52+00:00',
-  'url': 'https://www.instagram.com/p/XYZ789/#comment-020',
+  'url': 'https://www.instagram.com/p/XYZ789/#comment-220',
   'inReplyTo': [{'id': tag_uri('789_456')}],
   'to': [{'objectType':'group', 'alias':'@public'}],
 }
@@ -706,6 +714,179 @@ HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
       ],
     },
   }}}]},
+}
+
+# Included with window.__additionalDataLoaded('feed_v2', ...)
+# Extraced from https://www.instagram.com/ on 2021-11-24
+HTML_FEED_V2 = {
+  'hide_like_and_view_counts': 0,
+  'is_direct_v2_enabled': True,
+  'items': None,
+  'num_results': 12,
+  'status': 'ok',
+
+  'feed_items': [
+    # HTML_PHOTO_FULL
+    {
+      'media_or_ad': {
+        'taken_at': 1450063593,
+        'pk': 123,
+        'id': '123_456',
+        'media_type': 1,  # image?
+        'code': 'ABC123',
+        'filter_type': 0,
+        'product_type': 'feed',
+
+        'user': {
+          'pk': 456,
+          'username': 'jc',
+          'full_name': 'Jerry C',
+          'is_private': False,
+          'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
+          'is_verified': False,
+        },
+
+        'caption': {
+          'pk': 777,
+          'text': 'Elvis hits out of RCA Studio B',
+          'type': 1,
+          'created_at': 1453063593,
+          'created_at_utc': 1453063593,
+          'content_type': 'comment',
+          # 'user': {...}
+        },
+        'image_versions2': {
+         'candidates': [{
+           'width': 1080,
+           'height': 1293,
+           'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg',
+         },
+         # ...
+         ]
+        },
+        'original_width': 1080,
+        'original_height': 1293,
+
+        'location': {
+          'name': 'RCA Studio B',
+          'short_name': 'RCA foo',
+          'pk': 345924646,
+          'address': '123 A St',
+          'city': 'B, California',
+          'lng': -121.1,
+          'lat': 38.2,
+        },
+
+        'like_count': 5,
+        'like_and_view_counts_disabled': False,
+        'comment_likes_enabled': True,
+        'has_more_comments': True,
+        'preview_comments': [],
+        'comments': [],
+        'comment_count': 0,
+      }
+    },
+
+    # HTML_VIDEO_FULL
+    {
+      'media_or_ad': {
+        'pk': 789,
+        'id': '789',
+        'code': 'XYZ789',
+        'media_type': 2,  # video?
+        'has_audio': True,
+        'is_unified_video': True,
+        'product_type': 'igtv',
+
+        'user': {
+          'pk': 456,
+          'username': 'jc',
+          'full_name': 'Jerry C',
+          'is_private': True,
+          'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
+          'is_verified': False,
+        },
+
+        'caption': {
+          'pk': 999,
+          'text': 'Eye of deer 👁 and #selfie from me',
+          'type': 1,
+          'created_at': 1453036552,
+          'created_at_utc': 1453036552,
+          'content_type': 'comment',
+          # 'user': {...}
+        },
+
+        'video_duration': 30.0,
+        'video_versions': [{
+          'type': 101,
+          'width': 640,
+          'height': 640,
+          'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
+          'id': '6099'
+        }],
+
+        'image_versions2': {
+          'candidates': [
+            {
+              'width': 640,
+              'height': 640,
+              'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'
+            },
+            # ...
+          ]},
+
+        'comments': [{
+          'pk': 110,
+          'media_id': 789,
+          'user_id': 232927278,
+          'text': '太可爱了。cute，@a_person, very cute',
+          'type': 0,
+          'created_at': 1349588757,
+          'created_at_utc': 1349588757,
+          'content_type': 'comment',
+          'user': {
+            'pk': 232927278,
+            'username': 'averygood',
+            'full_name': '小正',
+            'profile_pic_url': 'http://picture/commenter',
+          },
+        }, {
+          'pk': 220,
+          'parent_comment_id': 110,
+          'media_id': 789,
+          'user_id': 13539831,
+          'text': 'hah, i have no tips whatsoever',
+          'type': 2,
+          'created_at': 1594392712,
+          'created_at_utc': 1594392712,
+          'content_type': 'comment',
+          'user': {
+            'pk': 420973239,
+            'username': 'someone',
+            'profile_pic_url': 'http://picture/commenter/2',
+          },
+        }],
+
+        'like_count': 9,
+
+        'usertags': {
+          'in': [
+            {
+              'user': {
+                # 'pk': 654,
+                'username': 'ap',
+                # 'full_name': 'A P',
+                # 'is_private': False,
+                # 'profile_pic_url': 'https://scontent-sjc3-1.cdninstagram.com/v/t51.2885-19/s150x150/654_33_22_n.jpg?...',
+                # 'profile_pic_id': '2629_654',
+              },
+            },
+          ],
+        },
+      },
+    },
+  ]
 }
 
 HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
@@ -881,7 +1062,11 @@ HTML_PHOTO_ACTIVITY = {  # ActivityStreams
     'ig_shortcode': 'ABC123',
     'published': '2016-01-17T20:46:33+00:00',
     'url': 'https://www.instagram.com/p/ABC123/',
-    'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg'},
+    'image': {
+      'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg',
+      'width': 1080,
+      'height': 1293,
+    },
     'to': [{'objectType':'group', 'alias':'@public'}],
     'location': {
       'id': tag_uri('345924646'),
@@ -921,12 +1106,18 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
     'ig_shortcode': 'XYZ789',
     'published': '2016-01-17T13:15:52+00:00',
     'url': 'https://www.instagram.com/p/XYZ789/',
-    'image': {'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'},
+    'image': {
+      'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg',
+      'width': 640,
+      'height': 640,
+    },
     'to': [{'objectType':'group', 'alias':'@private'}],
     'replies': {'totalItems': 1},
     'ig_like_count': 9,
     'stream': {
       'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
+      'width': 640,
+      'height': 640,
     },
     'attachments': [{
       'objectType': 'video',
@@ -946,6 +1137,8 @@ HTML_VIDEO_ACTIVITY = {  # ActivityStreams
       'objectType': 'person',
       'id': tag_uri('ap'),
       'username': 'ap',
+      'displayName': 'ap',
+      'url': 'https://www.instagram.com/ap/',
     }],
   },
 }
@@ -955,7 +1148,7 @@ HTML_VIDEO_ACTIVITY_FULL['object']['replies'] = {
   'totalItems': len(COMMENT_OBJS) + 1,
 }
 HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0].update({
-  'url': 'https://www.instagram.com/p/XYZ789/#comment-789',
+  'url': 'https://www.instagram.com/p/XYZ789/#comment-110',
   'inReplyTo': [{'id': tag_uri('789_456')}],
 })
 
@@ -991,6 +1184,18 @@ HTML_ACTIVITIES_FULL_LIKES = [HTML_PHOTO_ACTIVITY_LIKES, HTML_VIDEO_ACTIVITY_FUL
 HTML_FEED_COMPLETE = HTML_HEADER + json_dumps(HTML_FEED) + HTML_FOOTER
 
 HTML_FEED_COMPLETE_2 = HTML_HEADER_2 + json_dumps(HTML_PRELOAD_DATA['data']) + ')' + HTML_FOOTER
+
+HTML_FEED_COMPLETE_V2 = HTML_HEADER + json_dumps(HTML_FEED_V2) + HTML_FOOTER
+HTML_ACTIVITIES_FULL_V2 = copy.deepcopy(HTML_ACTIVITIES_FULL)
+HTML_ACTIVITIES_FULL_V2[1]['object']['replies']['items'][1]['inReplyTo'].append(
+  {'id': tag_uri('220')})
+HTML_ACTIVITIES_FULL_V2[0]['object']['location'].update({
+  'latitude': 38.2,
+  'longitude': -121.1,
+  'position': '+38.200000-121.100000/',
+  'address': {'formatted': '123 A St'},
+})
+
 
 HTML_PROFILE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE) + HTML_FOOTER
 HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
@@ -1326,7 +1531,7 @@ class InstagramTest(testutil.TestCase):
                         json_dumps({'data': MEDIA}))
     self.mox.ReplayAll()
     self.assert_equals(COMMENT_OBJS[0],
-                       self.instagram.get_comment('789', activity_id='123_456'))
+                       self.instagram.get_comment('110', activity_id='123_456'))
 
   def test_get_comment_not_found(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
@@ -1340,12 +1545,12 @@ class InstagramTest(testutil.TestCase):
 
     ig = Instagram(scrape=True)
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0],
-                       ig.get_comment('789', activity_id='1208909509631101904_942513'))
+                       ig.get_comment('110', activity_id='1208909509631101904_942513'))
 
   def test_get_comment_with_activity(self):
     # skips API call
     self.assert_equals(COMMENT_OBJS[0],
-                          self.instagram.get_comment('789', activity=ACTIVITY))
+                          self.instagram.get_comment('110', activity=ACTIVITY))
 
   def test_get_like(self):
     self.expect_urlopen('https://api.instagram.com/v1/media/000',
@@ -1432,7 +1637,9 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals({
       'id': tag_uri('snarfed'),
       'username': 'snarfed',
+      'displayName': 'snarfed',
       'objectType': 'person',
+      'url': 'https://www.instagram.com/snarfed/',
     }, self.instagram.user_to_actor({'username': 'snarfed'}))
 
   def test_preview_like(self):
@@ -1562,6 +1769,11 @@ class InstagramTest(testutil.TestCase):
 
     activities, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_2)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
+
+  def test_scraped_to_activities_feed_v2(self):
+    activities, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_V2)
+    self.assert_equals(HTML_ACTIVITIES_FULL_V2, activities)
+    self.assertIsNone(viewer)
 
   def test_scraped_to_activities_profile(self):
     activities, viewer = self.instagram.scraped_to_activities(HTML_PROFILE_COMPLETE)
