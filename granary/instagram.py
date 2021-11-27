@@ -1110,31 +1110,28 @@ class Instagram(source.Source):
     attachments = []
     image = stream = None
     for media in (item.get('carousel_media') or [item]):
-      images = sorted(  # sort by size, descending
-        media.get('image_versions2', {}).get('candidates', []),
-        key=operator.itemgetter('width'), reverse=True)
-      if images and not image:
-        image = images[0]
+      image = None
+      images = media.get('image_versions2', {}).get('candidates')
+      if images:
+        image = max(images, key=operator.itemgetter('width'))
 
       if media.get('video_versions'):
-        streams = sorted(  # sort by size, descending
+        stream = max(
             ({k: v for k, v in vid.items() if k in ('url', 'width', 'height')}
              for vid in media['video_versions']),
-            key=operator.itemgetter('width'), reverse=True)
+            key=operator.itemgetter('width'))
         attachments.append({
           'objectType': 'video',
           'url': media_url,
-          'stream': streams,
-          'image': images,
+          'stream': [stream],
+          'image': [image],
         })
-        if not stream:
-          stream = streams[0]
 
-      elif images:
+      elif image:
         attachments.append({
           'objectType': 'image',
           'url': media_url,
-          'image': images,
+          'image': [image],
         })
 
     # comments
