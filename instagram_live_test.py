@@ -13,7 +13,7 @@ import unittest
 from oauth_dropins.webutil import util
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
 from granary import instagram
-from granary.source import SELF
+from granary.source import FRIENDS, SELF
 
 USERNAME = 'snarfed'
 
@@ -22,33 +22,35 @@ class InstagramTestLive(unittest.TestCase):
 
   def test_live(self):
     ig = instagram.Instagram(cookie=INSTAGRAM_SESSIONID_COOKIE)
-    resp = ig.get_activities_response(
-      user_id=USERNAME, group_id=SELF, scrape=True,
-      fetch_replies=True, fetch_likes=True, count=3)
 
-    for field in 'username', 'displayName', 'url', 'image', 'id':
-      self.assertTrue(resp['actor'][field], field)
+    for kwargs in ({'user_id': USERNAME, 'group_id': SELF},
+                 {'group_id': FRIENDS}):
+      resp = ig.get_activities_response(scrape=True, fetch_replies=True,
+                                        fetch_likes=True, count=3, **kwargs)
 
-    self.assertTrue(resp['actor']['image']['url'])
+      for field in 'username', 'displayName', 'url', 'image', 'id':
+        self.assertTrue(resp['actor'][field], field)
 
-    items = resp['items']
-    self.assertGreaterEqual(3, len(items))
+      self.assertTrue(resp['actor']['image']['url'])
 
-    found = set()
-    for a in items:
-      self.assertTrue(a['actor'])
-      obj = a['object']
-      for field in 'id', 'url', 'attachments', 'author', 'image':
-        self.assertTrue([field], field)
-      for field in 'content', 'replies', 'tags':
-        if obj.get(field):
-          found.add(field)
-      likes = [t for t in obj.get('tags', []) if t.get('verb') == 'like']
-      if likes:
-        found.add('likes')
+      items = resp['items']
+      self.assertGreaterEqual(3, len(items))
 
-    for field in 'content', 'replies', 'tags', 'likes':
-      self.assertIn(field, found)
+      found = set()
+      for a in items:
+        self.assertTrue(a['actor'])
+        obj = a['object']
+        for field in 'id', 'url', 'attachments', 'author', 'image':
+          self.assertTrue([field], field)
+        for field in 'content', 'replies', 'tags':
+          if obj.get(field):
+            found.add(field)
+            likes = [t for t in obj.get('tags', []) if t.get('verb') == 'like']
+        if likes:
+          found.add('likes')
+
+      for field in 'content', 'replies', 'tags', 'likes':
+        self.assertIn(field, found)
 
 
 if __name__ == '__main__':
