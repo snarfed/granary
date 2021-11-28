@@ -891,7 +891,7 @@ class Instagram(source.Source):
 
     for item in feed_v2_items:
       media = item.get('media_or_ad')
-      if media:
+      if media and (not count or len(activities) < count):
         activities.append(util.trim_nulls(self._feed_v2_item_to_activity(media)))
 
     user = self._json_user_to_user(viewer_user or profile_user)
