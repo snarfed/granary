@@ -2241,7 +2241,7 @@ class Facebook(source.Source):
     Returns: list of AS1 attachment objects
     """
     atts = []
-    for link in tag.find_all('a', href=re.compile('^https://lm.facebook.com/l.php')):
+    for link in tag.find_all('a', href=re.compile(r'^https://lm\.facebook\.com/l\.php')):
       url = cls._unwrap_link(link)
       name = link.h3
       img = link.img
