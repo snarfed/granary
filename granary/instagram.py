@@ -838,6 +838,7 @@ class Instagram(source.Source):
 
       # feed v2
       feed_v2_items.extend(data.get('feed_items', []))
+      feed_v2_items.extend(data.get('items', []))
 
       if 'user' in data:
         edges = data['user'].get('edge_web_feed_timeline', {}).get('edges', [])
@@ -890,7 +891,7 @@ class Instagram(source.Source):
       activities.append(util.trim_nulls(activity))
 
     for item in feed_v2_items:
-      media = item.get('media_or_ad')
+      media = item.get('media_or_ad') or item
       if media and (not count or len(activities) < count):
         activities.append(util.trim_nulls(self._feed_v2_item_to_activity(media)))
 

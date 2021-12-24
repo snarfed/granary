@@ -717,176 +717,172 @@ HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
 }
 
 # Included with window.__additionalDataLoaded('feed_v2', ...)
-# Extraced from https://www.instagram.com/ on 2021-11-24
+# Extracted from https://www.instagram.com/ on 2021-11-24
+HTML_PHOTO_V2_FULL = {
+  'taken_at': 1450063593,
+  'pk': 123,
+  'id': '123_456',
+  'media_type': 1,  # image?
+  'code': 'ABC123',
+  'filter_type': 0,
+  'product_type': 'feed',
+
+  'user': {
+    'pk': 456,
+    'username': 'jc',
+    'full_name': 'Jerry C',
+    'is_private': False,
+    'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
+    'is_verified': False,
+  },
+
+  'caption': {
+    'pk': 777,
+    'text': 'Elvis hits out of RCA Studio B',
+    'type': 1,
+    'created_at': 1453063593,
+    'created_at_utc': 1453063593,
+    'content_type': 'comment',
+    # 'user': {...}
+  },
+  'image_versions2': {
+   'candidates': [{
+     'width': 1080,
+     'height': 1293,
+     'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg',
+   },
+   # ...
+   ]
+  },
+  'original_width': 1080,
+  'original_height': 1293,
+
+  'location': {
+    'name': 'RCA Studio B',
+    'short_name': 'RCA foo',
+    'pk': 345924646,
+    'address': '123 A St',
+    'city': 'B, California',
+    'lng': -121.1,
+    'lat': 38.2,
+  },
+
+  'like_count': 5,
+  'like_and_view_counts_disabled': False,
+  'comment_likes_enabled': True,
+  'has_more_comments': True,
+  'preview_comments': [],
+  'comments': [],
+  'comment_count': 0,
+}
+
+HTML_VIDEO_V2_FULL = {
+  'pk': 789,
+  'id': '789',
+  'code': 'XYZ789',
+  'media_type': 2,  # video?
+  'has_audio': True,
+  'is_unified_video': True,
+  'product_type': 'igtv',
+
+  'user': {
+    'pk': 456,
+    'username': 'jc',
+    'full_name': 'Jerry C',
+    'is_private': True,
+    'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
+    'is_verified': False,
+  },
+
+  'caption': {
+    'pk': 999,
+    'text': 'Eye of deer 👁 and #selfie from me',
+    'type': 1,
+    'created_at': 1453036552,
+    'created_at_utc': 1453036552,
+    'content_type': 'comment',
+    # 'user': {...}
+  },
+
+  'video_duration': 30.0,
+  'video_versions': [{
+    'type': 101,
+    'width': 640,
+    'height': 640,
+    'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
+    'id': '6099'
+  }],
+
+  'image_versions2': {
+    'candidates': [
+      {
+        'width': 640,
+        'height': 640,
+        'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'
+      },
+      # ...
+    ]},
+
+  'comments': [{
+    'pk': 110,
+    'media_id': 789,
+    'user_id': 232927278,
+    'text': '太可爱了。cute，@a_person, very cute',
+    'type': 0,
+    'created_at': 1349588757,
+    'created_at_utc': 1349588757,
+    'content_type': 'comment',
+    'user': {
+      'pk': 232927278,
+      'username': 'averygood',
+      'full_name': '小正',
+      'profile_pic_url': 'http://picture/commenter',
+    },
+  }, {
+    'pk': 220,
+    'parent_comment_id': 110,
+    'media_id': 789,
+    'user_id': 13539831,
+    'text': 'hah, i have no tips whatsoever',
+    'type': 2,
+    'created_at': 1594392712,
+    'created_at_utc': 1594392712,
+    'content_type': 'comment',
+    'user': {
+      'pk': 420973239,
+      'username': 'someone',
+      'profile_pic_url': 'http://picture/commenter/2',
+    },
+  }],
+
+  'like_count': 9,
+
+  'usertags': {
+    'in': [
+      {
+        'user': {
+          # 'pk': 654,
+          'username': 'ap',
+          # 'full_name': 'A P',
+          # 'is_private': False,
+          # 'profile_pic_url': 'https://scontent-sjc3-1.cdninstagram.com/v/t51.2885-19/s150x150/654_33_22_n.jpg?...',
+          # 'profile_pic_id': '2629_654',
+        },
+      },
+    ],
+  },
+}
+
 HTML_FEED_V2 = {
   'hide_like_and_view_counts': 0,
   'is_direct_v2_enabled': True,
   'items': None,
   'num_results': 12,
   'status': 'ok',
-
   'feed_items': [
-    # HTML_PHOTO_FULL
-    {
-      'media_or_ad': {
-        'taken_at': 1450063593,
-        'pk': 123,
-        'id': '123_456',
-        'media_type': 1,  # image?
-        'code': 'ABC123',
-        'filter_type': 0,
-        'product_type': 'feed',
-
-        'user': {
-          'pk': 456,
-          'username': 'jc',
-          'full_name': 'Jerry C',
-          'is_private': False,
-          'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
-          'is_verified': False,
-        },
-
-        'caption': {
-          'pk': 777,
-          'text': 'Elvis hits out of RCA Studio B',
-          'type': 1,
-          'created_at': 1453063593,
-          'created_at_utc': 1453063593,
-          'content_type': 'comment',
-          # 'user': {...}
-        },
-        'image_versions2': {
-         'candidates': [{
-           'width': 1080,
-           'height': 1293,
-           'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg',
-         },
-         # ...
-         ]
-        },
-        'original_width': 1080,
-        'original_height': 1293,
-
-        'location': {
-          'name': 'RCA Studio B',
-          'short_name': 'RCA foo',
-          'pk': 345924646,
-          'address': '123 A St',
-          'city': 'B, California',
-          'lng': -121.1,
-          'lat': 38.2,
-        },
-
-        'like_count': 5,
-        'like_and_view_counts_disabled': False,
-        'comment_likes_enabled': True,
-        'has_more_comments': True,
-        'preview_comments': [],
-        'comments': [],
-        'comment_count': 0,
-      }
-    },
-
-    # HTML_VIDEO_FULL
-    {
-      'media_or_ad': {
-        'pk': 789,
-        'id': '789',
-        'code': 'XYZ789',
-        'media_type': 2,  # video?
-        'has_audio': True,
-        'is_unified_video': True,
-        'product_type': 'igtv',
-
-        'user': {
-          'pk': 456,
-          'username': 'jc',
-          'full_name': 'Jerry C',
-          'is_private': True,
-          'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
-          'is_verified': False,
-        },
-
-        'caption': {
-          'pk': 999,
-          'text': 'Eye of deer 👁 and #selfie from me',
-          'type': 1,
-          'created_at': 1453036552,
-          'created_at_utc': 1453036552,
-          'content_type': 'comment',
-          # 'user': {...}
-        },
-
-        'video_duration': 30.0,
-        'video_versions': [{
-          'type': 101,
-          'width': 640,
-          'height': 640,
-          'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
-          'id': '6099'
-        }],
-
-        'image_versions2': {
-          'candidates': [
-            {
-              'width': 640,
-              'height': 640,
-              'url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg'
-            },
-            # ...
-          ]},
-
-        'comments': [{
-          'pk': 110,
-          'media_id': 789,
-          'user_id': 232927278,
-          'text': '太可爱了。cute，@a_person, very cute',
-          'type': 0,
-          'created_at': 1349588757,
-          'created_at_utc': 1349588757,
-          'content_type': 'comment',
-          'user': {
-            'pk': 232927278,
-            'username': 'averygood',
-            'full_name': '小正',
-            'profile_pic_url': 'http://picture/commenter',
-          },
-        }, {
-          'pk': 220,
-          'parent_comment_id': 110,
-          'media_id': 789,
-          'user_id': 13539831,
-          'text': 'hah, i have no tips whatsoever',
-          'type': 2,
-          'created_at': 1594392712,
-          'created_at_utc': 1594392712,
-          'content_type': 'comment',
-          'user': {
-            'pk': 420973239,
-            'username': 'someone',
-            'profile_pic_url': 'http://picture/commenter/2',
-          },
-        }],
-
-        'like_count': 9,
-
-        'usertags': {
-          'in': [
-            {
-              'user': {
-                # 'pk': 654,
-                'username': 'ap',
-                # 'full_name': 'A P',
-                # 'is_private': False,
-                # 'profile_pic_url': 'https://scontent-sjc3-1.cdninstagram.com/v/t51.2885-19/s150x150/654_33_22_n.jpg?...',
-                # 'profile_pic_id': '2629_654',
-              },
-            },
-          ],
-        },
-      },
-    },
-  ]
+    {'media_or_ad': HTML_PHOTO_V2_FULL},
+    {'media_or_ad': HTML_VIDEO_V2_FULL},
+  ],
 }
 
 HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
@@ -1186,16 +1182,17 @@ HTML_FEED_COMPLETE = HTML_HEADER + json_dumps(HTML_FEED) + HTML_FOOTER
 HTML_FEED_COMPLETE_2 = HTML_HEADER_2 + json_dumps(HTML_PRELOAD_DATA['data']) + ')' + HTML_FOOTER
 
 HTML_FEED_COMPLETE_V2 = HTML_HEADER + json_dumps(HTML_FEED_V2) + HTML_FOOTER
-HTML_ACTIVITIES_FULL_V2 = copy.deepcopy(HTML_ACTIVITIES_FULL)
-HTML_ACTIVITIES_FULL_V2[1]['object']['replies']['items'][1]['inReplyTo'].append(
-  {'id': tag_uri('220')})
-HTML_ACTIVITIES_FULL_V2[0]['object']['location'].update({
+HTML_PHOTO_ACTIVITY_V2_FULL = copy.deepcopy(HTML_PHOTO_ACTIVITY_FULL)
+HTML_PHOTO_ACTIVITY_V2_FULL['object']['location'].update({
   'latitude': 38.2,
   'longitude': -121.1,
   'position': '+38.200000-121.100000/',
   'address': {'formatted': '123 A St'},
 })
-
+HTML_VIDEO_ACTIVITY_V2_FULL = copy.deepcopy(HTML_VIDEO_ACTIVITY_FULL)
+HTML_VIDEO_ACTIVITY_V2_FULL['object']['replies']['items'][1]['inReplyTo'].append(
+  {'id': tag_uri('220')})
+HTML_ACTIVITIES_FULL_V2 = [HTML_PHOTO_ACTIVITY_V2_FULL, HTML_VIDEO_ACTIVITY_V2_FULL]
 
 HTML_PROFILE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE) + HTML_FOOTER
 HTML_PROFILE_PRIVATE_COMPLETE = HTML_HEADER + json_dumps(HTML_PROFILE_PRIVATE) + HTML_FOOTER
@@ -1887,6 +1884,18 @@ class InstagramTest(testutil.TestCase):
 
     activities, _ = self.instagram.scraped_to_activities(html)
     self.assert_equals([expected], activities)
+
+  def test_scraped_to_activities_photo_v2(self):
+    html = HTML_HEADER_3 + json_dumps({'items': [HTML_PHOTO_V2_FULL]}) + HTML_FOOTER
+    activities, viewer = self.instagram.scraped_to_activities(html)
+    self.assert_equals([HTML_PHOTO_ACTIVITY_V2_FULL], activities)
+    self.assertIsNone(viewer)
+
+  def test_scraped_to_activities_video_v2(self):
+    html = HTML_HEADER_3 + json_dumps({'items': [HTML_VIDEO_V2_FULL]}) + HTML_FOOTER
+    activities, viewer = self.instagram.scraped_to_activities(html)
+    self.assert_equals([HTML_VIDEO_ACTIVITY_V2_FULL], activities)
+    self.assertIsNone(viewer)
 
   def test_scraped_to_activities_missing_profile_picture_external_url(self):
     data = copy.deepcopy(HTML_FEED)
