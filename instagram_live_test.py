@@ -37,20 +37,30 @@ class InstagramTestLive(unittest.TestCase):
       self.assertEqual(3, len(items))
 
       found = set()
-      for a in items:
-        self.assertTrue(a['actor'])
-        obj = a['object']
-        for field in 'id', 'url', 'attachments', 'author', 'image':
-          self.assertTrue([field], field)
+      for item in items:
+        self.check_item(item)
         for field in 'content', 'replies', 'tags':
-          if obj.get(field):
+          if item['object'].get(field):
             found.add(field)
-            likes = [t for t in obj.get('tags', []) if t.get('verb') == 'like']
-        if likes:
+        if self.likes(item):
           found.add('likes')
 
       for field in 'content', 'replies', 'tags', 'likes':
         self.assertIn(field, found)
+
+    photo = ig.get_activities(scrape=True, fetch_likes=True, fetch_replies=True,
+                              activity_id='byuvjTsqJo')[0]
+    self.check_item(photo)
+    self.assertEqual(1, len(photo['object']['replies']['items']))
+    self.assertEqual(6, len(self.likes(photo)))
+
+  def likes(self, item):
+    return [t for t in item['object'].get('tags', []) if t.get('verb') == 'like']
+
+  def check_item(self, item):
+    self.assertTrue(item['actor'])
+    for field in 'id', 'url', 'attachments', 'author', 'image':
+      self.assertIn(field, item['object'], field)
 
 
 if __name__ == '__main__':
