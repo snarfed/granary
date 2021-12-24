@@ -880,11 +880,11 @@ class Instagram(source.Source):
     for media in util.trim_nulls(medias):
       activity = self._json_media_node_to_activity(media, user=profile_user)
 
-      # likes
+      # extra GraphQL fetch for likes
       shortcode = media.get('code') or media.get('shortcode')
       likes = media.get('edge_media_preview_like') or {}
-      if shortcode and fetch_extras and likes.get('count') and not likes.get('edges'):
-        # extra GraphQL fetch to get likes, as of 8/2018
+      if (shortcode and fetch_extras and likes.get('count') and
+          len(likes.get('edges', [])) < likes.get('count')):
         likes_json = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
         self.merge_scraped_reactions(likes_json, activity)
 
@@ -893,7 +893,13 @@ class Instagram(source.Source):
     for item in feed_v2_items:
       media = item.get('media_or_ad') or item
       if media and (not count or len(activities) < count):
-        activities.append(util.trim_nulls(self._feed_v2_item_to_activity(media)))
+        activity = util.trim_nulls(self._feed_v2_item_to_activity(media))
+        activities.append(activity)
+        # extra GraphQL fetch for likes
+        shortcode = activity['object'].get('ig_shortcode')
+        if shortcode and fetch_extras and media.get('like_count'):
+          likes_json = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
+          self.merge_scraped_reactions(likes_json, activity)
 
     user = self._json_user_to_user(viewer_user or profile_user)
     actor = self.user_to_actor(user) if user else None

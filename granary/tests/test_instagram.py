@@ -1189,6 +1189,8 @@ HTML_PHOTO_ACTIVITY_V2_FULL['object']['location'].update({
   'position': '+38.200000-121.100000/',
   'address': {'formatted': '123 A St'},
 })
+HTML_PHOTO_ACTIVITY_V2_LIKES = copy.deepcopy(HTML_PHOTO_ACTIVITY_V2_FULL)
+HTML_PHOTO_ACTIVITY_V2_LIKES['object']['tags'] = LIKE_OBJS
 HTML_VIDEO_ACTIVITY_V2_FULL = copy.deepcopy(HTML_VIDEO_ACTIVITY_FULL)
 HTML_VIDEO_ACTIVITY_V2_FULL['object']['replies']['items'][1]['inReplyTo'].append(
   {'id': tag_uri('220')})
@@ -1896,6 +1898,15 @@ class InstagramTest(testutil.TestCase):
     activities, viewer = self.instagram.scraped_to_activities(html)
     self.assert_equals([HTML_VIDEO_ACTIVITY_V2_FULL], activities)
     self.assertIsNone(viewer)
+
+  def test_scraped_to_activities_photo_v2_fetch_extras(self):
+    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+                             HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
+    self.mox.ReplayAll()
+    ig = Instagram(scrape=True, cookie='kuky')
+    html = HTML_HEADER_2 + json_dumps({'items': [HTML_PHOTO_V2_FULL]}) + HTML_FOOTER
+    activities, _ = ig.scraped_to_activities(html, fetch_extras=True)
+    self.assert_equals([HTML_PHOTO_ACTIVITY_V2_LIKES], activities)
 
   def test_scraped_to_activities_missing_profile_picture_external_url(self):
     data = copy.deepcopy(HTML_FEED)
