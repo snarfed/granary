@@ -77,7 +77,7 @@ def _as1_value(elem, field):
 
   Returns: string or None
   """
-  type = _text(elem, 'activity:%s' % field)
+  type = _text(elem, f'activity:{field}')
   if type:
     return type.split('/')[-1]
 
@@ -195,7 +195,7 @@ def atom_to_activities(atom):
   parser = ElementTree.XMLParser(encoding='UTF-8')
   feed = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(feed) != 'feed':
-    raise ValueError('Expected root feed tag; got %s' % feed.tag)
+    raise ValueError(f'Expected root feed tag; got {feed.tag}')
   return [_atom_to_activity(elem) for elem in feed if _tag(elem) == 'entry']
 
 
@@ -212,7 +212,7 @@ def atom_to_activity(atom):
   parser = ElementTree.XMLParser(encoding='UTF-8')
   entry = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(entry) != 'entry':
-    raise ValueError('Expected root entry tag; got %s' % entry.tag)
+    raise ValueError(f'Expected root entry tag; got {entry.tag}')
   return _atom_to_activity(entry)
 
 
@@ -397,7 +397,7 @@ def _prepare_activity(a, reader=True):
       if author:
         name = microformats2.maybe_linked_name(
           microformats2.object_to_json(author).get('properties') or {})
-        html = '%s: %s' % (name.strip(), html)
+        html = f'{name.strip()}: {html}'
       children.append(html)
 
   # render image(s) that we haven't already seen

@@ -1258,19 +1258,19 @@ def MBASIC_REPLIES(post_id):
     'items': [{
       'objectType': 'comment',
       'id': tag_uri(post_id + '_777'),
-      'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038&comment_id=777' % post_id,
+      'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038&comment_id=777',
       'published': '1999-06-14T00:00:00',
       'content': """<div class="da">What...the...?
                         </div>""",
       'inReplyTo': [{
         'id': tag_uri(post_id),
-        'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
+        'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038',
       }],
       'author': MBASIC_ALICE,
     }, {
       'objectType': 'comment',
       'id': tag_uri(post_id + '_888'),
-      'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038&comment_id=888' % post_id,
+      'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038&comment_id=888',
       'content': """<div class="da">Wat
                           <span class="dk dl" title="neutral emoticon">
 <img alt="" class="s" height="16" role="presentation" src="https://static.xx.fbcdn.net/images/emoji.php/v9/t6d/1/16/1f610.png" width="16"/>
@@ -1280,7 +1280,7 @@ def MBASIC_REPLIES(post_id):
 </div>""",
       'inReplyTo': [{
         'id': tag_uri(post_id),
-        'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id,
+        'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038',
       }],
       'author': MBASIC_BOB,
     }],
@@ -1303,9 +1303,9 @@ def MBASIC_REACTION_TAGS(post_id):
   return [{
     'objectType': 'activity',
     'verb': 'like',
-    'id': tag_uri('%s_liked_by_333' % post_id),
-    'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038#liked-by-333' % post_id,
-    'object': {'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id},
+    'id': tag_uri(f'{post_id}_liked_by_333'),
+    'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038#liked-by-333',
+    'object': {'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038'},
     'author':      {
       'objectType': 'person',
       'id': tag_uri('333'),
@@ -1316,10 +1316,10 @@ def MBASIC_REACTION_TAGS(post_id):
   }, {
     'objectType': 'activity',
     'verb': 'react',
-    'id': tag_uri('%s_haha_by_bob' % post_id),
-    'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038#haha-by-bob' % post_id,
+    'id': tag_uri(f'{post_id}_haha_by_bob'),
+    'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038#haha-by-bob',
     'content': '😆',
-    'object': {'url': 'https://www.facebook.com/story.php?story_fbid=%s&id=212038' % post_id},
+    'object': {'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038'},
     'author': MBASIC_BOB,
   }]
 MBASIC_ACTIVITIES_REPLIES_REACTIONS = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES)
@@ -2851,7 +2851,7 @@ cc Sam G, Michael M<br />""", preview.description)
       created = self.fb.create(rsvp)
       self.assert_equals({'url': 'https://www.facebook.com/234/', 'type': 'rsvp'},
                          created.content,
-                         '%s\n%s' % (created.content, rsvp))
+                         f'{created.content}\n{rsvp}')
 
     preview = self.fb.preview_create(rsvp)
     self.assertEqual('<span class="verb">RSVP maybe</span> to '
@@ -2911,7 +2911,7 @@ cc Sam G, Michael M<br />""", preview.description)
 
     created = self.fb.create(rsvp)
     self.assert_equals({'url': 'https://www.facebook.com/234', 'type': 'rsvp'},
-                       created.content, '%s\n%s' % (created.content, rsvp))
+                       created.content, f'{created.content}\n{rsvp}')
 
     preview = self.fb.preview_create(rsvp)
     self.assertEqual(
@@ -3106,7 +3106,7 @@ cc Sam G, Michael M<br />""", preview.description)
     def check(expected, id, is_comment):
       got = Facebook.parse_id(id, is_comment=is_comment)
       self.assertEqual(facebook.FacebookId(*expected), got,
-                        '%s %s, got %s' % (id, is_comment, got))
+                        f'{id} {is_comment}, got {got}')
 
     blank = facebook.FacebookId(None, None, None)
 

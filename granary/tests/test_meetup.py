@@ -92,7 +92,7 @@ class MeetupTest(testutil.TestCase):
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
-                '%s\n%s' % (created.content, rsvp))
+                f'{created.content}\n{rsvp}')
 
     def test_create_rsvp_yes_with_www(self):
         self.expect_urlopen(
@@ -111,7 +111,7 @@ class MeetupTest(testutil.TestCase):
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
-                '%s\n%s' % (created.content, rsvp))
+                f'{created.content}\n{rsvp}')
 
     def test_create_rsvp_yes_with_non_numeric_event_id(self):
         self.expect_urlopen(
@@ -130,7 +130,7 @@ class MeetupTest(testutil.TestCase):
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
-                '%s\n%s' % (created.content, rsvp))
+                f'{created.content}\n{rsvp}')
 
     def test_preview_create_rsvp_yes(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
@@ -165,7 +165,7 @@ class MeetupTest(testutil.TestCase):
 
         self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
-                '%s\n%s' % (created.content, rsvp))
+                f'{created.content}\n{rsvp}')
 
     def test_create_rsvp_handles_url_with_trailing_slash(self):
         self.expect_urlopen(
@@ -183,7 +183,7 @@ class MeetupTest(testutil.TestCase):
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
-                '%s\n%s' % (created.content, rsvp))
+                f'{created.content}\n{rsvp}')
 
     def test_create_rsvp_does_not_support_rsvp_interested(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)

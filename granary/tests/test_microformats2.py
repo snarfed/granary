@@ -320,7 +320,7 @@ foo
         'verb': verb,
         'object': {'url': 'http://orig/post'},
       }
-      self.assert_equals('<a href="http://orig/post">%s this.</a>' % phrase,
+      self.assert_equals(f'<a href="http://orig/post">{phrase} this.</a>',
                          microformats2.render_content(obj, synthesize_content=True))
       self.assert_equals('',
                          microformats2.render_content(obj, synthesize_content=False))

@@ -34,9 +34,7 @@ class Meetup(source.Source):
 
     Returns: string, HTML
     """
-    return '<span class="verb">RSVP %s</span> to <a href="%s">this event</a>.' % (
-        source.object_type(obj)[5:],
-        source.Source.base_object(cls, obj)['url'])
+    return f"<span class=\"verb\">RSVP {source.object_type(obj)[5:]}</span> to <a href=\"{source.Source.base_object(cls, obj)['url']}\">this event</a>."
 
   def __init__(self, access_token):
     self.access_token = access_token
@@ -52,14 +50,8 @@ class Meetup(source.Source):
       'urlname': urlname,
       'event_id': event_id,
     }
-    params = 'response=%(response)s' % {
-      'response': response,
-    }
-    logging.debug('Creating RSVP=%(rsvp)s for %(urlname)s %(event_id)s' % {
-      'rsvp': response,
-      'urlname': urlname,
-      'event_id': event_id,
-    })
+    params = f'response={response}'
+    logging.debug(f'Creating RSVP={response} for {urlname} {event_id}')
     return meetup.urlopen_bearer_token(url, self.access_token, data=params)
 
   def _create(self, obj, preview=False, include_link=source.OMIT_LINK, ignore_formatting=False):
@@ -72,9 +64,9 @@ class Meetup(source.Source):
     elif verb == 'rsvp-no':
       response = 'no'
     elif verb in ('rsvp-maybe', 'rsvp-interested'):
-      return self.return_error('Meetup.com does not support %(verb)s' % {'verb': verb})
+      return self.return_error(f'Meetup.com does not support {verb}')
     else:
-      return self.return_error('Meetup.com syndication does not support %(verb)s' % {'verb': verb})
+      return self.return_error(f'Meetup.com syndication does not support {verb}')
 
     # parse the in-reply-to out
     url_containers = self.base_object(obj)
@@ -106,10 +98,7 @@ class Meetup(source.Source):
       return self.return_error('Missing the post\'s url')
 
     create_resp = {
-      'url': '%(event_url)s#rsvp-by-%(url)s' % {
-        'event_url': event_url,
-        'url': urllib.parse.quote_plus(post_url),
-      },
+      'url': f'{event_url}#rsvp-by-{urllib.parse.quote_plus(post_url)}',
       'type': 'rsvp'
     }
 
@@ -160,4 +149,4 @@ class Meetup(source.Source):
 
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""
-    return 'https://www.meetup.com/members/%s/' % (user_id)
+    return f'https://www.meetup.com/members/{user_id}/'

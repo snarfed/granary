@@ -151,15 +151,14 @@ class AtomTest(testutil.TestCase):
         'objectType': 'activity',
         'verb': 'like',
         'object': as_obj,
-      }, atom.atom_to_activity(u"""\
-<?xml version="1.0" encoding="UTF-8"?>
+      }, atom.atom_to_activity(f"""<?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/">
 <uri>like-url</uri>
 <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
-<activity:object>%s</activity:object>
+<activity:object>{atom_obj}</activity:object>
 </entry>
-""" % atom_obj))
+"""))
 
   def test_activity_to_atom_like(self):
     for obj in {'id': 'foo', 'url': 'foo'}, {'id': 'foo'}, {'url': 'foo'}:

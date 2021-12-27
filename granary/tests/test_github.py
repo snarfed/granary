@@ -879,7 +879,7 @@ class GitHubTest(testutil.TestCase):
       self.assertIsNone(preview.error_plain, preview)
       self.assertEqual('<b>an issue title</b><hr>' + rendered, preview.content)
       self.assertIn(
-        '<span class="verb">create a new issue</span> on <a href="%s">foo/bar</a> and attempt to add label <span class="verb">new silo</span>:' % url,
+        f'<span class="verb">create a new issue</span> on <a href="{url}">foo/bar</a> and attempt to add label <span class="verb">new silo</span>:',
         preview.description, preview)
 
   def test_preview_blockquote(self):

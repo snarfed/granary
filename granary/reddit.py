@@ -300,4 +300,4 @@ class Reddit(source.Source):
 
   def user_url(self, username):
     """Returns the Reddit URL for a given user."""
-    return 'https://%s/user/%s' % (self.DOMAIN, username)
+    return f'https://{self.DOMAIN}/user/{username}'

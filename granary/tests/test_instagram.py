@@ -1006,8 +1006,7 @@ HTML_HEADER_2 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('feed
 HTML_HEADER_3 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('/p/B3Q5Fa8Ja4D/', ")
 HTML_PRELOAD_URL = '/graphql/query/?query_hash=cba321&variables={}'
 HTML_HEADER_PRELOAD = HTML_HEADER_TEMPLATE % (
-  ('<link rel="preload" href="%s" as="fetch" type="application/json" crossorigin />' %
-   HTML_PRELOAD_URL),
+  f'<link rel="preload" href="{HTML_PRELOAD_URL}" as="fetch" type="application/json" crossorigin />',
   'window._sharedData = ')
 HTML_FOOTER = """\
 ;</script>

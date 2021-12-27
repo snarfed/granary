@@ -211,14 +211,14 @@ class SourceTest(testutil.TestCase):
     # exclude ellipsized URLs
     for ellipsis in '...', '…':
       url = 'foo.com/1' + ellipsis
-      check({'content': 'x (%s)' % url,
+      check({'content': f'x ({url})',
              'attachments': [{'objectType': 'article', 'url': 'http://' + url}]},
             [])
 
     # exclude ellipsized PSCs and PSLs
     for separator in '/', ' ':
       for ellipsis in '...', '…':
-        check({'content': 'x (ttk.me%s123%s)' % (separator, ellipsis)}, [])
+        check({'content': f'x (ttk.me{separator}123{ellipsis})'}, [])
 
     # domains param
     obj = {
@@ -522,7 +522,7 @@ Watching  \t waves
                           (fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited)):
       self.assertFalse(self.source.activity_changed(before, after, log=True),
-                                                    '%s\n%s' % (before, after))
+                                                    f'{before}\n{after}')
 
     fb_comment_edited_inReplyTo = copy.deepcopy(fb_comment_edited)
     fb_comment_edited_inReplyTo['inReplyTo'].append({
@@ -541,7 +541,7 @@ Watching  \t waves
                           (gp_like, gp_like_edited),
                           (fb_invite, fb_rsvp)):
       self.assertTrue(self.source.activity_changed(before, after, log=True),
-                                                   '%s\n%s' % (before, after))
+                                                   f'{before}\n{after}')
 
   def test_append_in_reply_to(self):
     fb_comment_before = copy.deepcopy(COMMENT)

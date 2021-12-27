@@ -14,7 +14,7 @@ from .. import as2, jsonfeed, microformats2, rss
 def filepairs(ext1, ext2s):
   """Returns all matching pairs of filenames with the given extensions."""
   pairs = []
-  for first in glob.glob('*.%s' % ext1):
+  for first in glob.glob(f'*.{ext1}'):
     for ext2 in ext2s:
       second = first[:-len(ext1)] + ext2
       if os.path.isfile(second):
@@ -31,7 +31,7 @@ def read_json(filename):
       # note_with_whitespace.as.json and frriends.
       return json_loads(f.read())
   except Exception as e:
-    e.args = ('%s: ' % filename,) + e.args
+    e.args = (f'{filename}: ',) + e.args
     raise
 
 
@@ -119,7 +119,7 @@ for src_ext, dst_exts, fn, excludes in mappings:
     expected = read(dst)
     original = read(src)
     test_name = (
-      'test_%s_%s' % (fn.__name__, src[:-len(src_ext)])
+      f'test_{fn.__name__}_{src[:-len(src_ext)]}'
     ).replace('.', '_').replace('-', '_').strip('_')
     test_funcs[test_name] = create_test_function(fn, original, expected)
 

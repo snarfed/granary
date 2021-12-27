@@ -700,7 +700,7 @@ class MastodonTest(testutil.TestCase):
       'inReplyTo': [{'url': url}],
     })
     self.assertIn(
-      '<span class="verb">reply</span> to <a href="%s">this toot</a>: ' % url,
+      f'<span class="verb">reply</span> to <a href="{url}">this toot</a>: ',
       preview.description)
     self.assert_equals('foo ☕ bar', preview.content)
 
@@ -735,7 +735,7 @@ class MastodonTest(testutil.TestCase):
 
     preview = self.mastodon.preview_create(LIKE_REMOTE)
     self.assertIn(
-      '<span class="verb">favorite</span> <a href="%s">this toot</a>: ' % url,
+      f'<span class="verb">favorite</span> <a href="{url}">this toot</a>: ',
       preview.description)
 
   def test_create_reblog(self):
@@ -769,7 +769,7 @@ class MastodonTest(testutil.TestCase):
 
     preview = self.mastodon.preview_create(SHARE_REMOTE)
     self.assertIn(
-      '<span class="verb">boost</span> <a href="%s">this toot</a>: ' % url,
+      f'<span class="verb">boost</span> <a href="{url}">this toot</a>: ',
       preview.description)
 
   def test_preview_with_media(self):
@@ -807,7 +807,7 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals(STATUS, result.content, result)
 
   def test_create_with_too_many_media(self):
-    image_urls = ['http://my/picture/%d' % i for i in range(mastodon.MAX_MEDIA)]
+    image_urls = [f'http://my/picture/{i}' for i in range(mastodon.MAX_MEDIA)]
     obj = {
       'objectType': 'note',
       'stream': {'url': 'http://my/video'},
@@ -832,7 +832,7 @@ class MastodonTest(testutil.TestCase):
     self.expect_requests_get('http://my/video', 'vid')
     self.expect_post(API_MEDIA, {'id': '0'}, files={'file': b'vid'}, data={})
     for i, url in enumerate(image_urls[:-1]):
-      self.expect_requests_get('http://my/picture/%d' % i, 'pic')
+      self.expect_requests_get(f'http://my/picture/{i}', 'pic')
       self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'}, data={})
 
     self.expect_post(API_STATUSES, json={

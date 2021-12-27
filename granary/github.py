@@ -273,7 +273,7 @@ class GitHub(source.Source):
     resp = util.requests_post(
       GRAPHQL_BASE, json={'query': graphql % escaped},
       headers={
-        'Authorization': 'bearer %s' % self.access_token,
+        'Authorization': f'bearer {self.access_token}',
       })
     resp.raise_for_status()
     result = json_loads(resp.text)
@@ -298,7 +298,7 @@ class GitHub(source.Source):
     """
     kwargs['headers'] = kwargs.get('headers') or {}
     kwargs['headers'].update({
-      'Authorization': 'token %s' % self.access_token,
+      'Authorization': f'token {self.access_token}',
       # enable the beta Reactions API
       # https://developer.github.com/v3/reactions/
       'Accept': 'application/vnd.github.squirrel-girl-preview+json',
@@ -400,7 +400,7 @@ class GitHub(source.Source):
         comments_url = issue.get('comments_url')
         if fetch_replies and comments_url:
           if since:
-            comments_url += '?since=%s' % since.isoformat() + 'Z'
+            comments_url += f'?since={since.isoformat()}' + 'Z'
           comments = self.rest(comments_url)
           comment_objs = list(util.trim_nulls(
             self.comment_to_object(c) for c in comments))
@@ -473,7 +473,7 @@ class GitHub(source.Source):
     return self.rest(REST_MARKDOWN, {
       'text': markdown,
       'mode': 'gfm',
-      'context': '%s/%s' % (owner, repo),
+      'context': f'{owner}/{repo}',
     }, parse_json=False).text
 
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
@@ -539,7 +539,7 @@ class GitHub(source.Source):
     if type and type not in ('issue', 'comment', 'activity', 'note', 'article',
                              'like', 'tag'):
       return source.creation_result(
-        abort=False, error_plain='Cannot publish %s to GitHub' % type)
+        abort=False, error_plain=f'Cannot publish {type} to GitHub')
 
     base_obj = self.base_object(obj)
     base_url = base_obj.get('url')
@@ -553,7 +553,7 @@ class GitHub(source.Source):
       quote=False))
     url = obj.get('url')
     if include_link == source.INCLUDE_LINK and url:
-      content += '\n\n(Originally published at: %s)' % url
+      content += f'\n\n(Originally published at: {url})'
 
     parsed = urllib.parse.urlparse(base_url)
     path = parsed.path.strip('/').split('/')
@@ -572,8 +572,7 @@ class GitHub(source.Source):
     elif parsed.fragment:
       return source.creation_result(
         abort=True,
-        error_plain='Please remove the fragment #%s from your in-reply-to URL.' %
-          parsed.fragment)
+        error_plain=f'Please remove the fragment #{parsed.fragment} from your in-reply-to URL.')
 
     if type == 'comment':  # comment or reaction
       if not (len(path) == 4 and path[2] in ('issues', 'pull')):
@@ -585,8 +584,7 @@ class GitHub(source.Source):
         if comment_id:
           comment = self.rest(REST_COMMENT % (owner, repo, comment_type,
                                                   comment_id))
-          target_link = '<a href="%s">a comment on %s/%s#%s, <em>%s</em></a>' % (
-            base_url, owner, repo, number, util.ellipsize(comment['body']))
+          target_link = f"<a href=\"{base_url}\">a comment on {owner}/{repo}#{number}, <em>{util.ellipsize(comment['body'])}</em></a>"
         else:
           resp = self.graphql(GRAPHQL_ISSUE_OR_PR, locals())
           issue = (resp.get('repository') or {}).get('issueOrPullRequest')
@@ -596,11 +594,10 @@ class GitHub(source.Source):
 
         if is_reaction:
           preview_content = None
-          desc = u'<span class="verb">react %s</span> to %s.' % (
-            orig_content, target_link)
+          desc = f'<span class="verb">react {orig_content}</span> to {target_link}.'
         else:
           preview_content = self.render_markdown(content, owner, repo)
-          desc = '<span class="verb">comment</span> on %s:' % target_link
+          desc = f'<span class="verb">comment</span> on {target_link}:'
         return source.creation_result(content=preview_content, description=desc)
 
       else:  # create
@@ -621,8 +618,7 @@ class GitHub(source.Source):
             reacted = self.rest(api_url, data={
               'content': REACTIONS_REST.get(orig_content),
             })
-            url = '%s#%s-by-%s' % (base_url, reacted['content'].lower(),
-                                   reacted['user']['login'])
+            url = f"{base_url}#{reacted['content'].lower()}-by-{reacted['user']['login']}"
 
           return source.creation_result({
             'id': reacted.get('id'),
@@ -649,8 +645,7 @@ class GitHub(source.Source):
 
       if preview:
         return source.creation_result(
-          description='<span class="verb">star</span> <a href="%s">%s/%s</a>.' %
-            (base_url, owner, repo))
+          description=f'<span class="verb">star</span> <a href="{base_url}">{owner}/{repo}</a>.')
 
       issue = self.graphql(GRAPHQL_REPO, locals())
       resp = self.graphql(GRAPHQL_ADD_STAR, {
@@ -673,17 +668,15 @@ class GitHub(source.Source):
 
       existing_labels = self.existing_labels(owner, repo)
       labels = sorted(tags & existing_labels)
-      issue_link = '<a href="%s">%s/%s#%s</a>' % (base_url, owner, repo, number)
+      issue_link = f'<a href="{base_url}">{owner}/{repo}#{number}</a>'
       if not labels:
         return source.creation_result(
           abort=True,
-          error_html="No tags in [%s] matched %s's existing labels [%s]." %
-            (', '.join(sorted(tags)), issue_link, ', '.join(sorted(existing_labels))))
+          error_html=f"No tags in [{', '.join(sorted(tags))}] matched {issue_link}'s existing labels [{', '.join(sorted(existing_labels))}].")
 
       if preview:
         return source.creation_result(
-          description='add label%s <span class="verb">%s</span> to %s.' % (
-            ('s' if len(labels) > 1 else ''), ', '.join(labels), issue_link))
+          description=f"add label{'s' if len(labels) > 1 else ''} <span class=\"verb\">{', '.join(labels)}</span> to {issue_link}.")
 
       resp = self.rest(REST_ISSUE_LABELS % (owner, repo, number), labels)
       return source.creation_result({
@@ -704,15 +697,11 @@ class GitHub(source.Source):
       labels = sorted(tags & self.existing_labels(owner, repo))
 
       if preview:
-        preview_content = '<b>%s</b><hr>%s' % (
-          title, self.render_markdown(content, owner, repo))
+        preview_content = f'<b>{title}</b><hr>{self.render_markdown(content, owner, repo)}'
         preview_labels = ''
         if labels:
-          preview_labels = ' and attempt to add label%s <span class="verb">%s</span>' % (
-            's' if len(labels) > 1 else '', ', '.join(labels))
-        return source.creation_result(content=preview_content, description="""\
-<span class="verb">create a new issue</span> on <a href="%s">%s/%s</a>%s:""" %
-            (base_url, owner, repo, preview_labels))
+          preview_labels = f" and attempt to add label{'s' if len(labels) > 1 else ''} <span class=\"verb\">{', '.join(labels)}</span>"
+        return source.creation_result(content=preview_content, description=f"""<span class="verb">create a new issue</span> on <a href="{base_url}">{owner}/{repo}</a>{preview_labels}:""")
       else:
         resp = self.rest(REST_CREATE_ISSUE % (owner, repo), {
           'title': title,
@@ -724,7 +713,7 @@ class GitHub(source.Source):
 
     return source.creation_result(
       abort=False,
-      error_plain="%s doesn't look like a GitHub repo, issue, or PR URL." % base_url)
+      error_plain=f"{base_url} doesn't look like a GitHub repo, issue, or PR URL.")
 
   def existing_labels(self, owner, repo):
     """Fetches and returns a repo's labels.
@@ -776,7 +765,7 @@ class GitHub(source.Source):
       'inReplyTo': [{'url': in_reply_to}],
       'tags': [{
         'displayName': l['name'],
-        'url': '%s/labels/%s' % (repo_url, urllib.parse.quote(l['name'])),
+        'url': f"{repo_url}/labels/{urllib.parse.quote(l['name'])}",
       } for l in issue.get('labels', []) if l.get('name')],
     })
     return self.postprocess_object(obj)
@@ -834,8 +823,8 @@ class GitHub(source.Source):
     obj.update({
       'objectType': 'activity',
       'verb': 'react',
-      'id': target['id'] + '_%s_by_%s' % (enum, username),
-      'url': target['url'] + '#%s-by-%s' % (enum, username),
+      'id': target['id'] + f'_{enum}_by_{username}',
+      'url': target['url'] + f'#{enum}-by-{username}',
       'author': author,
       'content': content,
       'object': {'url': target['url']},

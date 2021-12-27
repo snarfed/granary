@@ -69,7 +69,7 @@ SILOS = [
   'reddit',
 ]
 OAUTHS = {  # maps oauth-dropins module name to module
-  name: importlib.import_module('oauth_dropins.%s' % name)
+  name: importlib.import_module(f'oauth_dropins.{name}')
   for name in SILOS
 }
 SILO_DOMAINS = {cls.DOMAIN for cls in (
@@ -144,7 +144,7 @@ def front_page():
 
   vars.update({
     silo + '_html': module.Start.button_html(
-      '/%s/start_auth' % silo,
+      f'/{silo}/start_auth',
       image_prefix='/oauth_dropins_static/',
       outer_classes='col-lg-2 col-sm-4 col-xs-6',
       scopes=SCOPE_OVERRIDES.get(silo, ''),
@@ -192,8 +192,7 @@ def url():
   """
   input = request.values['input']
   if input not in INPUTS:
-    raise BadRequest('Invalid input: %s, expected one of %r' %
-                             (input, INPUTS))
+    raise BadRequest(f'Invalid input: {input}, expected one of {INPUTS!r}')
 
   orig_url = request.values['url']
   # TODO: revert if/when it's back up
@@ -219,19 +218,18 @@ def url():
       body_items = (body_json if isinstance(body_json, list)
                     else body_json.get('items') or [body_json])
     except (TypeError, ValueError):
-      raise BadRequest('Could not decode %s as JSON' % final_url)
+      raise BadRequest(f'Could not decode {final_url} as JSON')
 
   mf2 = None
   if input == 'html':
     mf2 = util.parse_mf2(resp, id=fragment)
     if id and not mf2:
-      raise BadRequest('Got fragment %s but no element found with that id.' % fragment)
+      raise BadRequest(f'Got fragment {fragment} but no element found with that id.')
   elif input in ('mf2-json', 'json-mf2'):
     mf2 = body_json
     if not hasattr(mf2, 'get'):
       raise BadRequest(
-        'Expected microformats2 JSON input to be dict, got %s' %
-        mf2.__class__.__name__)
+        f'Expected microformats2 JSON input to be dict, got {mf2.__class__.__name__}')
     mf2.setdefault('rels', {})  # mf2util expects rels
 
   actor = None
@@ -249,7 +247,7 @@ def url():
       title = microformats2.get_title(mf2)
       hfeed = mf2util.find_first_entry(mf2, ['h-feed'])
     except (KeyError, ValueError) as e:
-      raise BadRequest('Could not parse %s as %s: %s' % (final_url, input, e))
+      raise BadRequest(f'Could not parse {final_url} as {input}: {e}')
 
   try:
     if input in ('as1', 'activitystreams'):
@@ -260,9 +258,9 @@ def url():
       try:
         activities = atom.atom_to_activities(resp.text)
       except ElementTree.ParseError as e:
-        raise BadRequest('Could not parse %s as XML: %s' % (final_url, e))
+        raise BadRequest(f'Could not parse {final_url} as XML: {e}')
       except ValueError as e:
-        raise BadRequest('Could not parse %s as Atom: %s' % (final_url, e))
+        raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
     elif input == 'html':
       activities = microformats2.html_to_activities(resp, url=final_url,
                                                     id=fragment, actor=actor)
@@ -273,7 +271,7 @@ def url():
       activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
   except ValueError as e:
     logging.warning('parsing input failed', exc_info=True)
-    return abort(400, 'Could not parse %s as %s: %s' % (final_url, input, str(e)))
+    return abort(400, f'Could not parse {final_url} as {input}: {str(e)}')
 
   logging.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
 
@@ -295,8 +293,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
   """
   format = request.args.get('format') or request.args.get('output') or 'json'
   if format not in FORMATS:
-    raise BadRequest('Invalid format: %s, expected one of %r' %
-                             (format, FORMATS))
+    raise BadRequest(f'Invalid format: {format}, expected one of {FORMATS!r}')
 
   headers = {}
   if 'plaintext' in request.args:
@@ -354,7 +351,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
 
     elif format == 'rss':
       if not title:
-        title = 'Feed for %s' % url
+        title = f'Feed for {url}'
       return rss.from_activities(
         activities, actor, title=title,
         feed_url=request.url, hfeed=hfeed,
@@ -377,11 +374,11 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
           activities, actor=actor, title=title, feed_url=request.url,
         ), headers
       except TypeError as e:
-        raise BadRequest('Unsupported input data: %s' % e)
+        raise BadRequest(f'Unsupported input data: {e}')
 
   except ValueError as e:
     logging.warning('converting to output format failed', exc_info=True)
-    return abort(400, 'Could not convert to %s: %s' % (format, str(e)))
+    return abort(400, f'Could not convert to {format}: {str(e)}')
 
 
 oauth_routes = []

@@ -116,12 +116,12 @@ class Instagram(source.Source):
   @classmethod
   def user_url(cls, username):
     if username:
-      return '%s%s/' % (cls.BASE_URL, username)
+      return f'{cls.BASE_URL}{username}/'
 
   @classmethod
   def media_url(cls, shortcode):
     if shortcode:
-      return '%sp/%s/' % (cls.BASE_URL, shortcode)
+      return f'{cls.BASE_URL}p/{shortcode}/'
 
   def get_actor(self, user_id=None, **kwargs):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -347,8 +347,8 @@ class Instagram(source.Source):
         _, id = util.parse_tag_uri(activity['id'])
         likes = obj.get('ig_like_count') or 0
         comments = obj.get('replies', {}).get('totalItems') or 0
-        likes_key = 'AIL %s' % id
-        comments_key = 'AIC %s' % id
+        likes_key = f'AIL {id}'
+        comments_key = f'AIC {id}'
 
         if (likes and likes != cached.get(likes_key) or
             comments and comments != cached.get(comments_key)):
@@ -472,8 +472,7 @@ class Instagram(source.Source):
       if preview:
         return source.creation_result(
           content=content,
-          description='<span class="verb">comment</span> on <a href="%s">'
-                      'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
+          description=f'<span class="verb">comment</span> on <a href="{base_url}">this post</a>:\n{self.embed_post(base_obj)}')
 
       self.urlopen(API_COMMENT_URL % base_id, data=urllib.parse.urlencode({
         'access_token': self.access_token,
@@ -496,8 +495,7 @@ class Instagram(source.Source):
 
       if preview:
         return source.creation_result(
-          description='<span class="verb">like</span> <a href="%s">'
-                      'this post</a>:\n%s' % (base_url, self.embed_post(base_obj)))
+          description=f'<span class="verb">like</span> <a href="{base_url}">this post</a>:\n{self.embed_post(base_obj)}')
 
       if not base_id:
         shortcode = self.post_id(base_url)
@@ -638,8 +636,7 @@ class Instagram(source.Source):
         'longitude': media_loc.get('point', {}).get('longitude'),
         'address': {'formatted': media_loc.get('street_address')},
         'url': (media_loc.get('id')
-                and 'https://instagram.com/explore/locations/%s/'
-                % media_loc.get('id')),
+                and f"https://instagram.com/explore/locations/{media_loc.get('id')}/"),
       }
 
     return self.postprocess_object(object)
@@ -670,7 +667,7 @@ class Instagram(source.Source):
       'objectType': 'comment',
       'id': self.tag_uri(comment.get('id')),
       'inReplyTo': [{'id': self.tag_uri(media_id)}],
-      'url': '%s#comment-%s' % (media_url, comment.get('id')) if media_url else None,
+      'url': f"{media_url}#comment-{comment.get('id')}" if media_url else None,
       # TODO: add PST time zone
       'published': util.maybe_timestamp_to_rfc3339(comment.get('created_time')),
       'content': content,
@@ -691,8 +688,8 @@ class Instagram(source.Source):
       an ActivityStreams object dict, ready to be JSON-encoded
     """
     return self.postprocess_object({
-        'id': self.tag_uri('%s_liked_by_%s' % (media_id, liker.get('id'))),
-        'url': '%s#liked-by-%s' % (media_url, liker.get('id')) if media_url else None,
+        'id': self.tag_uri(f"{media_id}_liked_by_{liker.get('id')}"),
+        'url': f"{media_url}#liked-by-{liker.get('id')}" if media_url else None,
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': media_url},
@@ -975,7 +972,7 @@ class Instagram(source.Source):
     try:
       return json_loads(resp.text)
     except ValueError:
-      msg = "Couldn't decode response as JSON:\n%s" % resp.text
+      msg = f"Couldn't decode response as JSON:\n{resp.text}"
       logging.error(msg, exc_info=True)
       resp.status_code = 504
       raise requests.HTTPError('504 Bad response from Instagram\n' + msg,
@@ -1020,7 +1017,7 @@ class Instagram(source.Source):
     id = media.get('id')
     owner_id = owner.get('id')
     if id and owner_id:
-      media['id'] = '%s_%s' % (id, owner_id)
+      media['id'] = f'{id}_{owner_id}'
 
     comments_edge = (media.get('comments') or media.get('edge_media_to_comment') or
                      media.get('edge_media_to_parent_comment') or {})
@@ -1149,7 +1146,7 @@ class Instagram(source.Source):
       reply = {
         'objectType': 'comment',
         'id': cmt_id,
-        'url': '%s#comment-%s' % (media_url, cmt.get('pk')) if media_url else None,
+        'url': f"{media_url}#comment-{cmt.get('pk')}" if media_url else None,
         'author': self._feed_v2_user_to_actor(cmt.get('user')),
         'content': content,
         'published': util.maybe_timestamp_to_rfc3339(cmt.get('created_at')),

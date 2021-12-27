@@ -580,7 +580,7 @@ not atom!
     self.mox.ReplayAll()
 
     for input in 'as1', 'as2', 'activitystreams', 'json-mf2', 'jsonfeed':
-      resp = client.get('/url?url=http://my/posts&input=%s' % input)
+      resp = client.get(f'/url?url=http://my/posts&input={input}')
       self.assert_equals(400, resp.status_code)
 
   def test_url_json_input_not_dict(self):
@@ -588,7 +588,7 @@ not atom!
     self.mox.ReplayAll()
 
     for input in 'as2', 'json-mf2', 'jsonfeed':
-      resp = client.get('/url?url=http://my/posts&input=%s' % input)
+      resp = client.get(f'/url?url=http://my/posts&input={input}')
       self.assert_equals(400, resp.status_code)
 
     resp = client.get('/url?url=http://my/posts&input=as1&output=as2')

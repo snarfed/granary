@@ -223,7 +223,7 @@ class Facebook(source.Source):
 
   def object_url(self, id):
     # Facebook always uses www. They redirect bare facebook.com URLs to it.
-    return 'https://www.facebook.com/%s' % id
+    return f'https://www.facebook.com/{id}'
 
   user_url = object_url
 
@@ -526,7 +526,7 @@ class Facebook(source.Source):
       share_id: string id of the share object
       activity: activity object (optional)
     """
-    orig_id = '%s_%s' % (activity_user_id, activity_id)
+    orig_id = f'{activity_user_id}_{activity_id}'
 
     # shares sometimes 400, not sure why.
     # https://github.com/snarfed/bridgy/issues/348
@@ -572,7 +572,7 @@ class Facebook(source.Source):
       activity: activity object (optional)
     """
     if '_' not in reaction_id:  # handle just name of reaction type
-      reaction_id = '%s_%s_by_%s' % (activity_id, reaction_id, reaction_user_id)
+      reaction_id = f'{activity_id}_{reaction_id}_by_{reaction_user_id}'
     return super(Facebook, self).get_reaction(
       activity_user_id, activity_id, reaction_user_id, reaction_id, activity=activity)
 
@@ -664,13 +664,12 @@ class Facebook(source.Source):
 
     url = obj.get('url')
     if include_link == source.INCLUDE_LINK and url:
-      content += '\n\n(Originally published at: %s)' % url
+      content += f'\n\n(Originally published at: {url})'
     preview_content = util.linkify(content)
     if video_url:
-      preview_content += ('<br /><br /><video controls src="%s"><a href="%s">'
-                          'this video</a></video>' % (video_url, video_url))
+      preview_content += f'<br /><br /><video controls src="{video_url}"><a href="{video_url}">this video</a></video>'
     elif image_url:
-      preview_content += '<br /><br /><img src="%s" />' % image_url
+      preview_content += f'<br /><br /><img src="{image_url}" />'
     if people:
       preview_content += '<br /><br /><em>with %s</em>' % ', '.join(
         '<a href="%s">%s</a>' % (
@@ -689,9 +688,8 @@ class Facebook(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Facebook.')
 
       if preview:
-        desc = """\
-<span class="verb">comment</span> on <a href="%s">this post</a>:
-<br /><br />%s<br />""" % (base_url, self.embed_post(base_obj))
+        desc = f"""<span class="verb">comment</span> on <a href="{base_url}">this post</a>:
+<br /><br />{self.embed_post(base_obj)}<br />"""
         return source.creation_result(content=preview_content, description=desc)
       else:
         if image_url:
@@ -725,11 +723,9 @@ class Facebook(source.Source):
           author = comment.get('author', '')
           if author:
             author = self.embed_actor(author) + ':\n'
-          desc += '<a href="%s">this comment</a>:\n<br /><br />%s%s<br />' % (
-            base_url, author, comment.get('content'))
+          desc += f"<a href=\"{base_url}\">this comment</a>:\n<br /><br />{author}{comment.get('content')}<br />"
         else:
-          desc += '<a href="%s">this post</a>:\n<br /><br />%s<br />' % (
-            base_url, self.embed_post(base_obj))
+          desc += f'<a href="{base_url}">this post</a>:\n<br /><br />{self.embed_post(base_obj)}<br />'
         return source.creation_result(description=desc)
 
       else:
@@ -764,8 +760,7 @@ class Facebook(source.Source):
       # TODO: event invites
       if preview:
         assert verb.startswith('rsvp-')
-        desc = ('<span class="verb">RSVP %s</span> to <a href="%s">this event</a>.' %
-                (verb[5:], base_url))
+        desc = f'<span class="verb">RSVP {verb[5:]}</span> to <a href="{base_url}">this event</a>.'
         return source.creation_result(description=desc)
       else:
         resp = self.urlopen(RSVP_PUBLISH_ENDPOINTS[verb] % base_id, data='')
@@ -822,8 +817,8 @@ class Facebook(source.Source):
     else:
       return source.creation_result(
         abort=False,
-        error_plain='Cannot publish type=%s, verb=%s to Facebook' % (type, verb),
-        error_html='Cannot publish type=%s, verb=%s to Facebook' % (type, verb))
+        error_plain=f'Cannot publish type={type}, verb={verb} to Facebook',
+        error_html=f'Cannot publish type={type}, verb={verb} to Facebook')
 
     if 'url' not in resp:
       resp['url'] = base_url
@@ -875,8 +870,7 @@ class Facebook(source.Source):
       'href': link,
       # this is a synthetic app access token.
       # https://developers.facebook.com/docs/facebook-login/access-tokens/#apptokens
-      'access_token': '%s|%s' % (oauth_dropins.facebook.FACEBOOK_APP_ID,
-                                 oauth_dropins.facebook.FACEBOOK_APP_SECRET),
+      'access_token': f'{oauth_dropins.facebook.FACEBOOK_APP_ID}|{oauth_dropins.facebook.FACEBOOK_APP_SECRET}',
     }
     url = API_BASE + API_NOTIFICATION % user_id
     resp = util.urlopen(urllib.request.Request(url, data=urllib.parse.urlencode(params)))
@@ -895,7 +889,7 @@ class Facebook(source.Source):
     id = self.parse_id(fb_id)
     author_id = id.user or post.get('from', {}).get('id')
     if author_id and id.post:
-      return 'https://www.facebook.com/%s/posts/%s' % (author_id, id.post)
+      return f'https://www.facebook.com/{author_id}/posts/{id.post}'
 
     return self.object_url(fb_id)
 
@@ -908,7 +902,7 @@ class Facebook(source.Source):
     """
     if post_author_id:
       post_id = post_author_id + '/posts/' + post_id
-    return 'https://www.facebook.com/%s?comment_id=%s' % (post_id, comment_id)
+    return f'https://www.facebook.com/{post_id}?comment_id={comment_id}'
 
   @classmethod
   def base_id(cls, url):
@@ -1016,7 +1010,7 @@ class Facebook(source.Source):
       if (base_id and '_' not in base_id and
           author.get('numeric_id') and not event_id):
         # add author user id prefix. https://github.com/snarfed/bridgy/issues/229
-        base_obj['id'] = '%s_%s' % (author['numeric_id'], base_id)
+        base_obj['id'] = f"{author['numeric_id']}_{base_id}"
 
     except BaseException as e:
       logging.warning(
@@ -1159,8 +1153,8 @@ class Facebook(source.Source):
     }) for t in tags]
 
     obj['tags'] += [self.postprocess_object({
-      'id': '%s_liked_by_%s' % (obj['id'], like.get('id')),
-      'url': url + '#liked-by-%s' % like.get('id'),
+      'id': f"{obj['id']}_liked_by_{like.get('id')}",
+      'url': url + f"#liked-by-{like.get('id')}",
       'objectType': 'activity',
       'verb': 'like',
       'object': {'url': url},
@@ -1174,8 +1168,8 @@ class Facebook(source.Source):
       if content:
         type = type.lower()
         obj['tags'].append(self.postprocess_object({
-          'id': '%s_%s_by_%s' % (obj['id'], type, id),
-          'url': url + '#%s-by-%s' % (type, id),
+          'id': f"{obj['id']}_{type}_by_{id}",
+          'url': url + f'#{type}-by-{id}',
           'objectType': 'activity',
           'verb': 'react',
           'content': content,
@@ -1315,7 +1309,7 @@ class Facebook(source.Source):
     return self.postprocess_object(obj)
 
   def _comment_id(self, post_id, comment_id):
-    return self.tag_uri('%s_%s' % (post_id, comment_id))
+    return self.tag_uri(f'{post_id}_{comment_id}')
 
   def share_to_object(self, share):
     """Converts a share (from /OBJECT/sharedposts) to an object.
@@ -1386,7 +1380,7 @@ class Facebook(source.Source):
       actor.update({
         'numeric_id': id,
         'image': {
-          'url': '%s%s/picture?type=large' % (API_BASE, id),
+          'url': f'{API_BASE}{id}/picture?type=large',
         },
       })
 
@@ -1480,8 +1474,8 @@ class Facebook(source.Source):
       user_id = rsvp.get('id')
       event_id = event.get('id')
       if event_id and user_id:
-        obj['id'] = self.tag_uri('%s_rsvp_%s' % (event_id, user_id))
-        obj['url'] = '%s#%s' % (self.object_url(event_id), user_id)
+        obj['id'] = self.tag_uri(f'{event_id}_rsvp_{user_id}')
+        obj['url'] = f'{self.object_url(event_id)}#{user_id}'
 
     return self.postprocess_object(obj)
 
@@ -1693,8 +1687,8 @@ class Facebook(source.Source):
         'objectType': 'activity',
         'verb': 'like',
         # TODO: handle author URLs for users without usernames
-        'id': self.tag_uri('%s_liked_by_%s' % (post_id, liker_id)),
-        'url': post_url + '#liked-by-%s' % liker_id,
+        'id': self.tag_uri(f'{post_id}_liked_by_{liker_id}'),
+        'url': post_url + f'#liked-by-{liker_id}',
         'object': {'url': post_url},
       })
 
@@ -1798,7 +1792,7 @@ class Facebook(source.Source):
 
     def get(url, *params):
       url = urllib.parse.urljoin(M_HTML_BASE_URL, url % params)
-      cookie = 'c_user=%s; xs=%s' % (self.cookie_c_user, self.cookie_xs)
+      cookie = f'c_user={self.cookie_c_user}; xs={self.cookie_xs}'
       resp = util.requests_get(url, allow_redirects=False, headers={
         'Cookie': cookie,
         'User-Agent': SCRAPE_USER_AGENT,
@@ -2110,8 +2104,8 @@ class Facebook(source.Source):
       tag = {
         'objectType': 'activity',
         'verb': 'like' if type == 'like' else 'react',
-        'id': self.tag_uri('%s_%s_by_%s' % (activity['fb_id'], type_str, username)),
-        'url': activity['url'] + '#%s-by-%s' % (type_str, username),
+        'id': self.tag_uri(f"{activity['fb_id']}_{type_str}_by_{username}"),
+        'url': activity['url'] + f'#{type_str}-by-{username}',
         'object': {'url': activity['url']},
         'author': author,
       }

@@ -120,8 +120,7 @@ def api(path):
     if parsed:
       domain, id = parsed
       if domain != src.DOMAIN:
-        raise BadRequest('Expected domain %s in tag URI %s, found %s' %
-                                 (src.DOMAIN, arg, domain))
+        raise BadRequest(f'Expected domain {src.DOMAIN} in tag URI {arg}, found {domain}')
       args[i] = id
 
   # handle default path elements
@@ -191,5 +190,4 @@ def get_positive_int(param):
     assert val >= 0
     return val
   except (ValueError, AssertionError):
-    raise BadRequest('Invalid %s: %s (should be positive int)' %
-                             (param, val))
+    raise BadRequest(f'Invalid {param}: {val} (should be positive int)')

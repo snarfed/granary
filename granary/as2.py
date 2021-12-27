@@ -16,7 +16,7 @@ from oauth_dropins.webutil import util
 CONTENT_TYPE = 'application/activity+json'
 CONTENT_TYPE_LD = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
 CONNEG_HEADERS = {
-    'Accept': '%s; q=0.9, %s; q=0.8' % (CONTENT_TYPE, CONTENT_TYPE_LD),
+    'Accept': f'{CONTENT_TYPE}; q=0.9, {CONTENT_TYPE_LD}; q=0.8',
 }
 CONTEXT = 'https://www.w3.org/ns/activitystreams'
 
@@ -72,7 +72,7 @@ def from_as1(obj, type=None, context=CONTEXT):
   if not obj:
     return {}
   elif not isinstance(obj, dict):
-    raise ValueError('Expected dict, got %r' % obj)
+    raise ValueError(f'Expected dict, got {obj!r}')
 
   obj = copy.deepcopy(obj)
 
@@ -158,7 +158,7 @@ def to_as1(obj, use_type=True):
   elif isinstance(obj, str):
     return {'url': obj}
   elif not isinstance(obj, dict):
-    raise ValueError('Expected dict, got %r' % obj)
+    raise ValueError(f'Expected dict, got {obj!r}')
 
   obj = copy.deepcopy(obj)
 
@@ -228,8 +228,7 @@ def to_as1(obj, use_type=True):
   attrib = util.pop_list(obj, 'attributedTo')
   if attrib:
     if len(attrib) > 1:
-      logging.warning('ActivityStreams 1 only supports single author; '
-                      'dropping extra attributedTo values: %s' % attrib[1:])
+      logging.warning(f'ActivityStreams 1 only supports single author; dropping extra attributedTo values: {attrib[1:]}')
     obj.setdefault('author', {}).update(to_as1(attrib[0]))
 
   return util.trim_nulls(obj)

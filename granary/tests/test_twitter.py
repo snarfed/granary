@@ -2229,13 +2229,12 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       obj = {
         'objectType': 'comment',
         'content': 'my content',
-        'inReplyTo': [{'url': 'http://twitter.com/%s/status/100' % reply_to}],
+        'inReplyTo': [{'url': f'http://twitter.com/{reply_to}/status/100'}],
       }
 
       # test preview
       preview = tw.preview_create(obj)
-      self.assertIn('@-reply</span> to <a href="%s">this tweet</a>:' %
-                      obj['inReplyTo'][0]['url'],
+      self.assertIn(f"@-reply</span> to <a href=\"{obj['inReplyTo'][0]['url']}\">this tweet</a>:",
                     preview.description)
       self.assertEqual('my content', preview.content)
 
@@ -2428,7 +2427,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
   def test_create_with_multiple_photos(self):
     self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
-    image_urls = ['http://my/picture/%d' % i for i in range(twitter.MAX_MEDIA + 1)]
+    image_urls = [f'http://my/picture/{i}' for i in range(twitter.MAX_MEDIA + 1)]
     obj = {
       'objectType': 'note',
       'content': """\
@@ -2442,13 +2441,13 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     preview = self.twitter.preview_create(obj)
     self.assertEqual('<span class="verb">tweet</span>:', preview.description)
     self.assertEqual(ellipsized + '<br /><br />' +
-                      ' &nbsp; '.join('<img src="%s" alt="" />' % url
+                      ' &nbsp; '.join(f'<img src="{url}" alt="" />'
                                       for url in image_urls[:-1]),
                       preview.content)
 
     # test create
     for i, url in enumerate(image_urls[:-1]):
-      content = 'picture response %d' % i
+      content = f'picture response {i}'
       self.expect_urlopen(url, content, response_headers={'Content-Length': 3})
       self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
                                 json_dumps({'media_id_string': str(i)}),

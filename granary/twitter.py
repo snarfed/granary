@@ -339,7 +339,7 @@ class Twitter(source.Source):
     cached = {}
     if cache is not None:
       keys = itertools.product(('ATR', 'ATF'), [t['id_str'] for t in tweets])
-      cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
+      cached = cache.get_multi(f'{prefix} {id}' for prefix, id in keys)
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
@@ -353,8 +353,7 @@ class Twitter(source.Source):
         if tweet.get('retweeted') or tweet.get('user', {}).get('protected'):
           continue
         elif retweet_calls >= RETWEET_LIMIT:
-          logging.warning("Hit Twitter's retweet rate limit (%d) with more to "
-                          "fetch! Results will be incomplete!" % RETWEET_LIMIT)
+          logging.warning(f"Hit Twitter's retweet rate limit ({RETWEET_LIMIT}) with more to fetch! Results will be incomplete!")
           break
 
         # store retweets in the 'retweets' field, which is handled by
@@ -725,11 +724,10 @@ class Twitter(source.Source):
       url = self.URL_CANONICALIZER(att.get('url', ''))
       if url and TWEET_URL_RE.match(url):
         quote_tweet_url = url
-        preview_description += """\
-<span class="verb">quote</span>
-<a href="%s">this tweet</a>:<br>
-%s
-<br>and """ % (url, self.embed_post(att))
+        preview_description += f"""<span class="verb">quote</span>
+<a href="{url}">this tweet</a>:<br>
+{self.embed_post(att)}
+<br>and """
         break
 
     content = self._content_for_create(
@@ -759,8 +757,8 @@ class Twitter(source.Source):
       parsed = urllib.parse.urlparse(base_url)
       parts = parsed.path.split('/')
       if len(parts) < 2 or not parts[1]:
-        raise ValueError('Could not determine author of in-reply-to URL %s' % base_url)
-      reply_to_prefix = '@%s ' % parts[1].lower()
+        raise ValueError(f'Could not determine author of in-reply-to URL {base_url}')
+      reply_to_prefix = f'@{parts[1].lower()} '
       if content.lower().startswith(reply_to_prefix):
         content = content[len(reply_to_prefix):]
 
@@ -795,10 +793,9 @@ class Twitter(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-        preview_description += """\
-<span class="verb">favorite</span>
-<a href="%s">this tweet</a>:
-%s""" % (base_url, self.embed_post(base_obj))
+        preview_description += f"""<span class="verb">favorite</span>
+<a href="{base_url}">this tweet</a>:
+{self.embed_post(base_obj)}"""
         return source.creation_result(description=preview_description)
       else:
         data = urllib.parse.urlencode({'id': base_id})
@@ -815,10 +812,9 @@ class Twitter(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-          preview_description += """\
-<span class="verb">retweet</span>
-<a href="%s">this tweet</a>:
-%s""" % (base_url, self.embed_post(base_obj))
+          preview_description += f"""<span class="verb">retweet</span>
+<a href="{base_url}">this tweet</a>:
+{self.embed_post(base_obj)}"""
           return source.creation_result(description=preview_description)
       else:
         data = urllib.parse.urlencode({'id': base_id})
@@ -831,9 +827,8 @@ class Twitter(source.Source):
       data = [('status', content)]
 
       if is_reply and base_url:
-        preview_description += """\
-<span class="verb">@-reply</span> to <a href="%s">this tweet</a>:
-%s""" % (base_url, self.embed_post(base_obj))
+        preview_description += f"""<span class="verb">@-reply</span> to <a href="{base_url}">this tweet</a>:
+{self.embed_post(base_obj)}"""
         data.extend([
           ('in_reply_to_status_id', base_id),
           ('auto_populate_reply_metadata', 'true'),
@@ -842,8 +837,7 @@ class Twitter(source.Source):
         preview_description += '<span class="verb">tweet</span>:'
 
       if video_url:
-        preview_content += ('<br /><br /><video controls src="%s"><a href="%s">'
-                            'this video</a></video>' % (video_url, video_url))
+        preview_content += f'<br /><br /><video controls src="{video_url}"><a href="{video_url}">this video</a></video>'
         if not preview:
           ret = self.upload_video(video_url)
           if isinstance(ret, source.CreationResult):
@@ -857,7 +851,7 @@ class Twitter(source.Source):
           logging.warning('Found %d photos! Only using the first %d: %r',
                           num, MAX_MEDIA, images)
         preview_content += '<br /><br />' + ' &nbsp; '.join(
-          '<img src="%s" alt="%s" />' % (img.get('url'), img.get('displayName', ''))
+          f"<img src=\"{img.get('url')}\" alt=\"{img.get('displayName', '')}\" />"
                                          for img in images)
         if not preview:
           ret = self.upload_images(images)
@@ -867,8 +861,7 @@ class Twitter(source.Source):
 
       if lat and lng:
         preview_content += (
-          '<div>at <a href="https://maps.google.com/maps?q=%s,%s">'
-          '%s, %s</a></div>' % (lat, lng, lat, lng))
+          f'<div>at <a href="https://maps.google.com/maps?q={lat},{lng}">{lat}, {lng}</a></div>')
         data.extend([
           ('lat', lat),
           ('long', lng),
@@ -883,8 +876,8 @@ class Twitter(source.Source):
     else:
       return source.creation_result(
         abort=False,
-        error_plain='Cannot publish type=%s, verb=%s to Twitter' % (type, verb),
-        error_html='Cannot publish type=%s, verb=%s to Twitter' % (type, verb))
+        error_plain=f'Cannot publish type={type}, verb={verb} to Twitter',
+        error_html=f'Cannot publish type={type}, verb={verb} to Twitter')
 
     id_str = resp.get('id_str')
     if id_str:
@@ -1051,19 +1044,17 @@ class Twitter(source.Source):
     if not type:
       type, _ = mimetypes.guess_type(url)
     if type and type not in types:
-      msg = 'Twitter only supports %s; %s looks like %s' % (
-        label, util.pretty_link(url), type)
+      msg = f'Twitter only supports {label}; {util.pretty_link(url)} looks like {type}'
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
     length = resp.headers.get('Content-Length')
     if not util.is_int(length):
-      msg = "Couldn't determine the size of %s" % util.pretty_link(url)
+      msg = f"Couldn't determine the size of {util.pretty_link(url)}"
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
     length = int(length)
     if int(length) > max_size:
-      msg = "Your %.2fMB file is larger than Twitter's %dMB limit: %s" % (
-        length // MB, max_size // MB, util.pretty_link(url))
+      msg = f"Your {length // MB:.2f}MB file is larger than Twitter's {max_size // MB}MB limit: {util.pretty_link(url)}"
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
   def delete(self, id):
@@ -1086,10 +1077,9 @@ class Twitter(source.Source):
     Returns: CreationResult
     """
     url = self.status_url(self.username or '_', id)
-    return source.creation_result(description="""\
-<span class="verb">delete</span>
-<a href="%s">this tweet</a>:
-%s""" % (url, self.embed_post({'url': url})))
+    return source.creation_result(description=f"""<span class="verb">delete</span>
+<a href="{url}">this tweet</a>:
+{self.embed_post({'url': url})}""")
 
   def urlopen(self, url, parse_response=True, **kwargs):
     """Wraps :func:`urllib2.urlopen()` and adds an OAuth signature."""
@@ -1562,8 +1552,8 @@ class Twitter(source.Source):
     url = obj_url = self.tweet_url(tweet)
 
     if liker_id:
-      id = self.tag_uri('%s_favorited_by_%s' % (tweet_id, liker_id))
-      url += '#favorited-by-%s' % liker_id
+      id = self.tag_uri(f'{tweet_id}_favorited_by_{liker_id}')
+      url += f'#favorited-by-{liker_id}'
 
     return self.postprocess_object({
         'id': id,
@@ -1600,11 +1590,11 @@ class Twitter(source.Source):
 
   def user_url(self, username):
     """Returns the Twitter URL for a given user."""
-    return 'https://%s/%s' % (self.DOMAIN, username)
+    return f'https://{self.DOMAIN}/{username}'
 
   def status_url(self, username, id):
     """Returns the Twitter URL for a tweet from a given user with a given id."""
-    return '%s/status/%s' % (self.user_url(username), id)
+    return f'{self.user_url(username)}/status/{id}'
 
   def tweet_url(self, tweet):
     """Returns the Twitter URL for a tweet given a tweet object."""
@@ -1614,4 +1604,4 @@ class Twitter(source.Source):
   @staticmethod
   def _validate_id(id):
       if not util.is_int(id):
-        raise ValueError('Twitter ids must be integers; got %s' % id)
+        raise ValueError(f'Twitter ids must be integers; got {id}')

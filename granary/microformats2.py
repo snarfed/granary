@@ -433,7 +433,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
 
   as_type, as_verb = MF2_TO_AS_TYPE_VERB.get(mf2_type, (None, None))
   if rsvp:
-    as_verb = 'rsvp-%s' % rsvp
+    as_verb = f'rsvp-{rsvp}'
 
   # special case GitHub issues that are in-reply-to the repo or its issues URL
   in_reply_tos = get_string_urls(props.get('in-reply-to', []))
@@ -698,8 +698,7 @@ def json_to_html(obj, parent_props=None):
       props['name'] = [{'yes': 'is attending.',
                         'no': 'is not attending.',
                         'maybe': 'might attend.'}.get(rsvp)]
-    props['name'][0] = '<data class="p-rsvp" value="%s">%s</data>' % (
-      rsvp, props['name'][0])
+    props['name'][0] = f"<data class=\"p-rsvp\" value=\"{rsvp}\">{props['name'][0]}</data>"
 
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
@@ -710,7 +709,7 @@ def json_to_html(obj, parent_props=None):
   for mftype in ['follow', 'like', 'repost']:
     for target in props.get(mftype + '-of', []):
       if isinstance(target, str):
-        children.append('<a class="u-%s-of" href="%s"></a>' % (mftype, target))
+        children.append(f'<a class="u-{mftype}-of" href="{target}"></a>')
       else:
         children.append(json_to_html(target, ['u-' + mftype + '-of']))
 
@@ -729,7 +728,7 @@ def json_to_html(obj, parent_props=None):
     if not props.get('name'):
       props['name'] = ['']
 
-  summary = ('<div class="p-summary">%s</div>' % prop.get('summary')
+  summary = (f"<div class=\"p-summary\">{prop.get('summary')}</div>"
              if prop.get('summary') else '')
 
   # attachments
@@ -745,8 +744,7 @@ def json_to_html(obj, parent_props=None):
   for size in props.get('size', []):
     bytes = size_to_bytes(size)
     if size:
-      sizes.append('<data class="p-size" value="%s">%s</data>' %
-                   (bytes, humanfriendly.format_size(bytes)))
+      sizes.append(f'<data class="p-size" value="{bytes}">{humanfriendly.format_size(bytes)}</data>')
 
   # categories
   cats = props.get('category', [])
@@ -754,7 +752,7 @@ def json_to_html(obj, parent_props=None):
     hcard_to_html(cat, ['u-category', 'h-card']) for cat in cats
     if isinstance(cat, dict) and 'h-card' in cat.get('type')
     and not cat.get('startIndex')]  # mentions are already linkified in content
-  tags = ['<span class="u-category">%s</span>' % cat
+  tags = [f'<span class="u-category">{cat}</span>'
           for cat in cats if isinstance(cat, str)]
 
   # comments
@@ -785,10 +783,10 @@ def json_to_html(obj, parent_props=None):
   event_times = []
   start = props.get('start', [])
   end = props.get('end', [])
-  event_times += ['  <time class="dt-start">%s</time>' % time for time in start]
+  event_times += [f'  <time class="dt-start">{time}</time>' for time in start]
   if start and end:
     event_times.append('  to')
-  event_times += ['  <time class="dt-end">%s</time>' % time for time in end]
+  event_times += [f'  <time class="dt-end">{time}</time>' for time in end]
 
   return HENTRY.substitute(
     prop,
@@ -836,12 +834,12 @@ def hcard_to_html(hcard, parent_props=None):
 
   return HCARD.substitute(
     types=' '.join(uniquify(parent_props + hcard.get('type', []))),
-    ids='\n'.join(['<data class="p-uid" value="%s"></data>' % uid
+    ids='\n'.join([f'<data class="p-uid" value="{uid}"></data>'
                    for uid in props.get('uid', []) if uid] +
-                  ['<data class="p-numeric-id" value="%s"></data>' % nid
+                  [f'<data class="p-numeric-id" value="{nid}"></data>'
                    for nid in props.get('numeric-id', []) if nid]),
     linked_name=maybe_linked_name(props),
-    nicknames='\n'.join('<span class="p-nickname">%s</span>' % nick
+    nicknames='\n'.join(f'<span class="p-nickname">{nick}</span>'
                         for nick in props.get('nickname', []) if nick),
     photos='\n'.join(img(photo) for photo in props.get('photo', []) if photo),
   )
@@ -902,8 +900,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
     for tag in mentions:
       start = tag['startIndex']
       end = start + tag['length']
-      content = util.WideUnicode('%s%s<a href="%s">%s</a>' % (
-        content, orig[last_end:start], tag['url'], orig[start:end]))
+      content = util.WideUnicode(f"{content}{orig[last_end:start]}<a href=\"{tag['url']}\">{orig[start:end]}</a>")
       last_end = end
 
     content += orig[last_end:]
@@ -914,7 +911,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # https://github.com/snarfed/granary/issues/80
   if content and not obj.get('content_is_html') and '\n' in content:
     if white_space_pre:
-      content = '<div style="white-space: pre">%s</div>' % content
+      content = f'<div style="white-space: pre">{content}</div>'
     else:
       content = content.replace('\n', '<br />\n')
 
@@ -937,8 +934,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # bookmarked URL
   targetUrl = obj.get('targetUrl')
   if obj_type == 'bookmark' and targetUrl:
-    content += '\nBookmark: %s' % util.pretty_link(
-      targetUrl, attrs={'class': 'u-bookmark-of'})
+    content += f"\nBookmark: {util.pretty_link(targetUrl, attrs={'class': 'u-bookmark-of'})}"
 
   # attachments, e.g. links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
@@ -964,24 +960,18 @@ def render_content(obj, include_location=True, synthesize_content=True,
       # sometimes likes don't have enough content to render anything
       # interesting
       if 'url' in target and set(target) <= set(['url', 'objectType']):
-        content += '<a href="%s">%s this.</a>' % (
-          target.get('url'), verb.lower())
+        content += f"<a href=\"{target.get('url')}\">{verb.lower()} this.</a>"
 
       else:
         author = target.get('author', target.get('actor', {}))
         # special case for twitter RT's
         if obj_type == 'share' and 'url' in obj and re.search(
             r'^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
-          content += 'RT <a href="%s">@%s</a> ' % (
-            target.get('url', '#'), author.get('username'))
+          content += f"RT <a href=\"{target.get('url', '#')}\">@{author.get('username')}</a> "
         else:
           # image looks bad in the simplified rendering
           author = {k: v for k, v in author.items() if k != 'image'}
-          content += '%s <a href="%s">%s</a> by %s' % (
-            verb, target.get('url', '#'),
-            target.get('displayName', target.get('title', 'a post')),
-            hcard_to_html(object_to_json(author, default_object_type='person')),
-          )
+          content += f"{verb} <a href=\"{target.get('url', '#')}\">{target.get('displayName', target.get('title', 'a post'))}</a> by {hcard_to_html(object_to_json(author, default_object_type='person'))}"
         content += render_content(target, include_location=include_location,
                                   synthesize_content=synthesize_content,
                                   white_space_pre=white_space_pre)
@@ -999,9 +989,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # location
   loc = obj.get('location')
   if include_location and loc:
-    content += '\n<p>%s</p>' % hcard_to_html(
-      object_to_json(loc, default_object_type='place'),
-      parent_props=['p-location'])
+    content += f"\n<p>{hcard_to_html(object_to_json(loc, default_object_type='place'), parent_props=['p-location'])}</p>"
 
   # these are rendered manually in json_to_html()
   for type in 'like', 'share', 'react', 'person':
@@ -1047,20 +1035,20 @@ def _render_attachments(attachments, obj):
     else:
       url = att.get('url') or obj.get('url')
       if url:
-        content += '\n<a class="link" href="%s">' % url
+        content += f'\n<a class="link" href="{url}">'
         open_a_tag = True
       if image:
         content += '\n' + img(image, name)
 
     if name and type != 'image':
-      content += '\n<span class="name">%s</span>' % name
+      content += f'\n<span class="name">{name}</span>'
 
     if open_a_tag:
       content += '\n</a>'
 
     summary = att.get('summary')
     if summary and summary != name:
-      content += '\n<span class="summary">%s</span>' % summary
+      content += f'\n<span class="summary">{summary}</span>'
     content += '\n</p>'
 
   return content
@@ -1195,8 +1183,7 @@ def img(src, alt=''):
     assert not alt
     alt = src.get('alt') or ''
     src = src.get('value')
-  return '<img class="u-photo" src="%s" alt=%s />' % (
-      src, xml.sax.saxutils.quoteattr(alt or ''))
+  return f"<img class=\"u-photo\" src=\"{src}\" alt={xml.sax.saxutils.quoteattr(alt or '')} />"
 
 
 def vid(src, poster=''):
@@ -1209,12 +1196,11 @@ def vid(src, poster=''):
   Returns:
     string
   """
-  poster_img = '<img src="%s" />' % poster if poster else ''
+  poster_img = f'<img src="{poster}" />' if poster else ''
 
   # include ="controls" value since this HTML is also used in the Atom
   # template, which has to validate as XML.
-  return '<video class="u-video" src="%s" controls="controls" poster="%s">Your browser does not support the video tag. <a href="%s">Click here to view directly. %s</a></video>' % (
-    src, poster, src, poster_img)
+  return f'<video class="u-video" src="{src}" controls="controls" poster="{poster}">Your browser does not support the video tag. <a href="{src}">Click here to view directly. {poster_img}</a></video>'
 
 
 def aud(src):
@@ -1226,7 +1212,7 @@ def aud(src):
   Returns:
     string
   """
-  return '<audio class="u-audio" src="%s" controls="controls">Your browser does not support the audio tag. <a href="%s">Click here to listen directly.</a></audio>' % (src, src)
+  return f'<audio class="u-audio" src="{src}" controls="controls">Your browser does not support the audio tag. <a href="{src}">Click here to listen directly.</a></audio>'
 
 
 def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
@@ -1242,10 +1228,10 @@ def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
     string
   """
   if url:
-    classname = ' class="%s"' % linked_classname if linked_classname else ''
-    return '<a%s href="%s">%s</a>' % (classname, url, text)
+    classname = f' class="{linked_classname}"' if linked_classname else ''
+    return f'<a{classname} href="{url}">{text}</a>'
   if unlinked_classname:
-    return '<span class="%s">%s</span>' % (unlinked_classname, text)
+    return f'<span class="{unlinked_classname}">{text}</span>'
   return text
 
 
@@ -1260,7 +1246,7 @@ def maybe_datetime(str, classname):
     string
   """
   if str:
-    return '<time class="%s" datetime="%s">%s</time>' % (classname, str, str)
+    return f'<time class="{classname}" datetime="{str}">{str}</time>'
   else:
     return ''
 

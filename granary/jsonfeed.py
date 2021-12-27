@@ -114,7 +114,7 @@ def jsonfeed_to_activities(jsonfeed):
     ValueError, if jsonfeed isn't a valid JSON Feed dict
   """
   if not hasattr(jsonfeed, 'get'):
-    raise ValueError('Expected dict (or compatible), got %s' % jsonfeed.__class__.__name__)
+    raise ValueError(f'Expected dict (or compatible), got {jsonfeed.__class__.__name__}')
 
   author = jsonfeed.get('author', {})
   actor = {
@@ -126,7 +126,7 @@ def jsonfeed_to_activities(jsonfeed):
 
   def attachment(jf):
     if not hasattr(jf, 'get'):
-      raise ValueError('Expected attachment to be dict; got %s' % jf)
+      raise ValueError(f'Expected attachment to be dict; got {jf}')
     url = jf.get('url')
     type = jf.get('mime_type', '').split('/')[0]
     as1 = {

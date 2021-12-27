@@ -155,14 +155,14 @@ class Mastodon(source.Source):
 
     Returns: string, HTML
     """
-    return """
-  <script src="%s" async="async"></script>
+    return f"""
+  <script src="{urllib.parse.urljoin(obj['url'], '/embed.js')}" async="async"></script>
   <br>
-  <iframe src="%s/embed" class="%s-embed shadow"
-          style="max-width: 100%%; border: 0" width="400"
+  <iframe src="{obj['url']}/embed" class="{cls.NAME.lower()}-embed shadow"
+          style="max-width: 100%; border: 0" width="400"
           allowfullscreen="allowfullscreen">
   </iframe>
-  """ % (urllib.parse.urljoin(obj['url'], '/embed.js'), obj['url'], cls.NAME.lower())
+  """
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -175,8 +175,7 @@ class Mastodon(source.Source):
     See :meth:`Source.get_activities_response` for details.
     """
     if user_id and group_id in (source.FRIENDS, source.ALL):
-      raise ValueError("%s doesn't support group_id %s with user_id" %
-                       (self.NAME, group_id))
+      raise ValueError(f"{self.NAME} doesn't support group_id {group_id} with user_id")
 
     if not user_id:
       user_id = self.user_id
@@ -209,7 +208,7 @@ class Mastodon(source.Source):
     cached = {}
     if cache is not None:
       keys = itertools.product(('AMRE', 'AMF', 'AMRB'), [s['id'] for s in statuses])
-      cached = cache.get_multi('%s %s' % (prefix, id) for prefix, id in keys)
+      cached = cache.get_multi(f'{prefix} {id}' for prefix, id in keys)
     # only update the cache at the end, in case we hit an error before then
     cache_updates = {}
 
@@ -407,8 +406,7 @@ class Mastodon(source.Source):
     # content: add 'Boosted @username:' prefix for reblogs
     if reblog and reblog.get('content'):
       reblog_account = reblog.get('account')
-      content = 'Boosted <a href="%s">@%s</a>: ' % (
-        (reblog_account.get('url'), reblog_account.get('username'))) + content
+      content = f"Boosted <a href=\"{reblog_account.get('url')}\">@{reblog_account.get('username')}</a>: " + content
 
     obj['content'] = util.WideUnicode(content)
 
@@ -453,7 +451,7 @@ class Mastodon(source.Source):
       if not username:
         username = acct[-2]
       elif acct_username and username != acct_username:
-        raise ValueError('username %s and acct %s conflict!' % (username, acct))
+        raise ValueError(f'username {username} and acct {acct} conflict!')
 
     if not username:
       return {}
@@ -502,8 +500,8 @@ class Mastodon(source.Source):
     url = status.get('url')
     account_id = account.get('id')
     return {
-      'id': self.tag_uri('%s_%s_by_%s' % (status.get('id'), label, account_id)),
-      'url': '%s#%s-by-%s' % (url, label, account_id),
+      'id': self.tag_uri(f"{status.get('id')}_{label}_by_{account_id}"),
+      'url': f'{url}#{label}-by-{account_id}',
       'objectType': 'activity',
       'verb': verb,
       'object': {'url': url},
@@ -598,12 +596,12 @@ class Mastodon(source.Source):
           error_plain='No content text found.',
           error_html='No content text found.')
 
-    post_label = '%s %s' % (self.NAME, self.TYPE_LABELS['post'])
+    post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
     if is_reply and not base_url:
       return source.creation_result(
         abort=True,
-        error_plain='Could not find a %s to reply to.' % post_label,
-        error_html='Could not find a %s to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.' % post_label)
+        error_plain=f'Could not find a {post_label} to reply to.',
+        error_html=f'Could not find a {post_label} to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.')
 
     # truncate and ellipsize content if necessary
     # TODO: don't count domains in remote mentions.
@@ -616,7 +614,7 @@ class Mastodon(source.Source):
       username = split[0]
       instance = ('https://' + split[1]) if len(split) > 1 else self.instance
       url = urllib.parse.urljoin(instance, '/@' + username)
-      return '<a href="%s">@%s</a>' % (url, username)
+      return f'<a href="{url}">@{username}</a>'
 
     preview_content = MENTION_RE.sub(linkify_mention, content)
 
@@ -631,26 +629,26 @@ class Mastodon(source.Source):
       if not base_url:
         return source.creation_result(
           abort=True,
-          error_plain='Could not find a %s to %s.' % (post_label, self.TYPE_LABELS['like']),
-          error_html='Could not find a %s to <a href="http://indiewebcamp.com/like">%s</a>. Check that your post has the right <a href="http://indiewebcamp.com/like">u-like-of link</a>.' % (post_label, self.TYPE_LABELS['like']))
+          error_plain=f"Could not find a {post_label} to {self.TYPE_LABELS['like']}.",
+          error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/like\">{self.TYPE_LABELS['like']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/like\">u-like-of link</a>.")
 
       if preview:
-        preview_description += '<span class="verb">%s</span> <a href="%s">this %s</a>: %s' % (self.TYPE_LABELS['like'], base_url, self.TYPE_LABELS['post'], self.embed_post(base_obj))
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
         return source.creation_result(description=preview_description)
       else:
         resp = self._post(API_FAVORITE % base_id)
-        resp['url'] += '#favorited-by-%s' % self.user_id
+        resp['url'] += f'#favorited-by-{self.user_id}'
         resp['type'] = 'like'
 
     elif type == 'activity' and verb == 'share':
       if not base_url:
         return source.creation_result(
           abort=True,
-          error_plain='Could not find a %s to %s.' % (post_label, self.TYPE_LABELS['repost']),
-          error_html='Could not find a %s to <a href="http://indiewebcamp.com/repost">%s</a>. Check that your post has the right <a href="http://indiewebcamp.com/repost">repost-of</a> link.' % (post_label, self.TYPE_LABELS['repost']))
+          error_plain=f"Could not find a {post_label} to {self.TYPE_LABELS['repost']}.",
+          error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/repost\">{self.TYPE_LABELS['repost']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/repost\">repost-of</a> link.")
 
       if preview:
-          preview_description += '<span class="verb">%s</span> <a href="%s">this %s</a>: %s' % (self.TYPE_LABELS['repost'], base_url, self.TYPE_LABELS['post'], self.embed_post(base_obj))
+          preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
           return source.creation_result(description=preview_description)
       else:
         resp = self._post(API_REBLOG % base_id)
@@ -661,10 +659,10 @@ class Mastodon(source.Source):
       data = {'status': content}
 
       if is_reply:
-        preview_description += 'add a <span class="verb">%s</span> to <a href="%s">this %s</a>: %s' % (self.TYPE_LABELS['comment'], base_url, self.TYPE_LABELS['post'], self.embed_post(base_obj))
+        preview_description += f"add a <span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
         data['in_reply_to_id'] = base_id
       else:
-        preview_description += '<span class="verb">%s</span>:' % self.TYPE_LABELS['post']
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
 
       num_media = len(videos) + len(images)
       if num_media > MAX_MEDIA:
@@ -675,14 +673,10 @@ class Mastodon(source.Source):
 
       if preview:
         media_previews = [
-          '<video controls src="%s"><a href="%s">%s</a></video>' %
-            (util.get_url(vid, key='stream'),
-             util.get_url(vid, key='stream'),
-             vid.get('displayName') or 'this video')
+          f"<video controls src=\"{util.get_url(vid, key='stream')}\"><a href=\"{util.get_url(vid, key='stream')}\">{vid.get('displayName') or 'this video'}</a></video>"
           for vid in videos
         ] + [
-          '<img src="%s" alt="%s" />' %
-            (util.get_url(img), img.get('displayName') or '')
+          f"<img src=\"{util.get_url(img)}\" alt=\"{img.get('displayName') or ''}\" />"
           for img in images
         ]
         if media_previews:
@@ -699,8 +693,8 @@ class Mastodon(source.Source):
     else:
       return source.creation_result(
         abort=False,
-        error_plain='Cannot publish type=%s, verb=%s to Mastodon' % (type, verb),
-        error_html='Cannot publish type=%s, verb=%s to Mastodon' % (type, verb))
+        error_plain=f'Cannot publish type={type}, verb={verb} to Mastodon',
+        error_html=f'Cannot publish type={type}, verb={verb} to Mastodon')
 
     if 'url' not in resp:
       resp['url'] = base_url
@@ -756,7 +750,7 @@ class Mastodon(source.Source):
 
   def status_url(self, id):
     """Returns the local instance URL for a status with a given id."""
-    return urllib.parse.urljoin(self.instance, '/web/statuses/%s' % id)
+    return urllib.parse.urljoin(self.instance, f'/web/statuses/{id}')
 
   def upload_media(self, media):
     """Uploads one or more images or videos from web URLs.
@@ -817,8 +811,7 @@ class Mastodon(source.Source):
     # can't embed right now because embeds require standalone URL, eg
     # http://foo.com/@user/123, and we don't have the username here.
     return source.creation_result(
-      description='<span class="verb">delete</span> <a href="%s">this toot</a>.' %
-      self.status_url(id))
+      description=f'<span class="verb">delete</span> <a href="{self.status_url(id)}">this toot</a>.')
 
   def get_blocklist_ids(self):
     """Returns the current user's block list as a list of integer account ids.

@@ -121,7 +121,7 @@ class Flickr(source.Source):
     # photo, comment, or like
     type = source.object_type(obj)
     logging.debug('publishing object type %s to Flickr', type)
-    link_text = '(Originally published at: %s)' % obj.get('url')
+    link_text = f"(Originally published at: {obj.get('url')})"
 
     image_url = util.get_first(obj, 'image', {}).get('url')
     video_url = util.get_first(obj, 'stream', {}).get('url')
@@ -149,24 +149,23 @@ class Flickr(source.Source):
       if preview:
         preview_content = ''
         if name:
-          preview_content += '<h4>%s</h4>' % name
+          preview_content += f'<h4>{name}</h4>'
         if content:
-          preview_content += '<div>%s</div>' % content
+          preview_content += f'<div>{content}</div>'
         if hashtags:
-          preview_content += '<div> %s</div>' % ' '.join('#' + t for t in hashtags)
+          preview_content += f"<div> {' '.join('#' + t for t in hashtags)}</div>"
         if people:
           preview_content += '<div> with %s</div>' % ', '.join(
             ('<a href="%s">%s</a>' % (
               p.get('url'), p.get('displayName') or 'User %s' % p.get('id'))
              for p in people))
         if lat and lng:
-          preview_content += '<div> at <a href="https://maps.google.com/maps?q=%s,%s">%s, %s</a></div>' % (lat, lng, lat, lng)
+          preview_content += f'<div> at <a href="https://maps.google.com/maps?q={lat},{lng}">{lat}, {lng}</a></div>'
 
         if video_url:
-          preview_content += ('<video controls src="%s"><a href="%s">this video'
-                              '</a></video>' % (video_url, video_url))
+          preview_content += f'<video controls src="{video_url}"><a href="{video_url}">this video</a></video>'
         else:
-          preview_content += '<img src="%s" />' % image_url
+          preview_content += f'<img src="{image_url}" />'
 
         return source.creation_result(content=preview_content, description='post')
 
@@ -176,7 +175,7 @@ class Flickr(source.Source):
       if content:
         params.append(('description', content.encode('utf-8')))
       if hashtags:
-        params.append(('tags', ','.join(('"%s"' % t if ' ' in t else t)
+        params.append(('tags', ','.join((f'"{t}"' if ' ' in t else t)
                                         for t in hashtags)))
 
       file = util.urlopen(video_url or image_url)
@@ -255,7 +254,7 @@ class Flickr(source.Source):
         resp = {}
       resp.update({
         'type': 'tag',
-        'url': '%s#tagged-by-%s' % (base_url, self.user_id()),
+        'url': f'{base_url}#tagged-by-{self.user_id()}',
         'tags': tags,
       })
       return source.creation_result(resp)
@@ -276,7 +275,7 @@ class Flickr(source.Source):
       if preview:
         return source.creation_result(
           content=content,
-          description='comment on <a href="%s">this photo</a>.' % base_url)
+          description=f'comment on <a href="{base_url}">this photo</a>.')
 
       resp = self.call_api_method('flickr.photos.comments.addComment', {
         'photo_id': base_id,
@@ -300,7 +299,7 @@ class Flickr(source.Source):
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Flickr.')
       if preview:
         return source.creation_result(
-          description='favorite <a href="%s">this photo</a>.' % base_url)
+          description=f'favorite <a href="{base_url}">this photo</a>.')
 
       # this method doesn't return any data
       self.call_api_method('flickr.favorites.add', {
@@ -310,13 +309,13 @@ class Flickr(source.Source):
       # info like "/in/contacts/")
       return source.creation_result({
         'type': 'like',
-        'url': '%s#favorited-by-%s' % (base_url, self.user_id()),
+        'url': f'{base_url}#favorited-by-{self.user_id()}',
       })
 
     return source.creation_result(
       abort=False,
-      error_plain='Cannot publish type=%s to Flickr.' % type,
-      error_html='Cannot publish type=%s to Flickr.' % type)
+      error_plain=f'Cannot publish type={type} to Flickr.',
+      error_html=f'Cannot publish type={type} to Flickr.')
 
   def _get_person_tags(self, obj):
     """Extract person tags that refer to Flickr users.
@@ -368,8 +367,7 @@ class Flickr(source.Source):
     Returns: CreationResult
     """
     return source.creation_result(
-      description='<span class="verb">delete</span> <a href="%s">this photo</a>.' %
-        self.photo_url(self.user_id(), id))
+      description=f'<span class="verb">delete</span> <a href="{self.photo_url(self.user_id(), id)}">this photo</a>.')
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -627,8 +625,7 @@ class Flickr(source.Source):
     elif isinstance(photo.get('tags'), str):
       activity['object']['tags'] = [{
         'objectType': 'hashtag',
-        'url': 'https://www.flickr.com/search?tags={}'.format(
-          tag.strip()),
+        'url': f'https://www.flickr.com/search?tags={tag.strip()}',
         'displayName': tag.strip(),
       } for tag in photo.get('tags').split(' ') if tag.strip()]
 
@@ -722,8 +719,7 @@ class Flickr(source.Source):
     """
     if server == 0:
       return 'https://www.flickr.com/images/buddyicon.gif'
-    return 'https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg'.format(
-      farm, server, author)
+    return f'https://farm{farm}.staticflickr.com/{server}/buddyicons/{author}.jpg'
 
   def user_id(self):
     """Get the nsid of the currently authorized user. The first time this
@@ -764,7 +760,7 @@ class Flickr(source.Source):
     Returns:
       string, a profile URL
     """
-    return user_id and 'https://www.flickr.com/people/%s/' % user_id
+    return user_id and f'https://www.flickr.com/people/{user_id}/'
 
   def photo_url(self, user_id, photo_id):
     """Construct a url for a photo given user id and the photo id
@@ -775,7 +771,7 @@ class Flickr(source.Source):
     Returns:
       string, the photo URL
     """
-    return 'https://www.flickr.com/photos/%s/%s/' % (user_id, photo_id)
+    return f'https://www.flickr.com/photos/{user_id}/{photo_id}/'
 
   @classmethod
   def base_id(cls, url):

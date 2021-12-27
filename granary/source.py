@@ -111,7 +111,7 @@ def load_json(body, url):
   try:
     return json_loads(body)
   except (ValueError, TypeError):
-    msg = 'Non-JSON response! Returning synthetic HTTP 502.\n%s' % body
+    msg = f'Non-JSON response! Returning synthetic HTTP 502.\n{body}'
     logging.error(msg)
     raise urllib.error.HTTPError(url, 502, msg, {}, None)
 
@@ -663,9 +663,8 @@ class Source(object, metaclass=SourceMeta):
         elif verb and (obj_name or obj_type):
           app = activity.get('generator', {}).get('displayName')
           name = obj_name or 'a %s' % (obj_type or 'unknown')
-          app = ' on %s' % app if app else ''
-          activity['title'] = '%s %s %s%s.' % (actor_name, verb or 'posted',
-                                               name, app)
+          app = f' on {app}' if app else ''
+          activity['title'] = f"{actor_name} {verb or 'posted'} {name}{app}."
 
     return util.trim_nulls(activity)
 
@@ -858,7 +857,7 @@ class Source(object, metaclass=SourceMeta):
 
         if event_id and 'id' in actor:
           _, actor_id = util.parse_tag_uri(actor['id'])
-          rsvp['id'] = util.tag_uri(domain, '%s_rsvp_%s' % (event_id, actor_id))
+          rsvp['id'] = util.tag_uri(domain, f'{event_id}_rsvp_{actor_id}')
           if url:
             rsvp['url'] = '#'.join((url, actor_id))
 
@@ -944,12 +943,9 @@ class Source(object, metaclass=SourceMeta):
   @classmethod
   def embed_actor(cls, actor):
     """Returns the HTML string for embedding an actor object."""
-    return """
-<a class="h-card" href="%s">
- <img class="profile u-photo" src="%s" width="32px" /> %s</a>""" % (
-     actor.get('url'),
-     actor.get('image', {}).get('url'),
-     actor.get('displayName'))
+    return f"""
+<a class="h-card" href="{actor.get('url')}">
+ <img class="profile u-photo" src="{actor.get('image', {}).get('url')}" width="32px" /> {actor.get('displayName')}</a>"""
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
