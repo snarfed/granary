@@ -286,7 +286,7 @@ class Facebook(source.Source):
         user_id, activity_id = activity_id.split('_', 1)
       post = self.urlopen(API_OBJECT % (user_id, activity_id))
       if post.get('error'):
-        logging.warning("Couldn't fetch object %s: %s", activity_id, post)
+        logging.warning(f"Couldn't fetch object {activity_id}: {post}")
         posts = []
       else:
         posts = [post]
@@ -404,8 +404,7 @@ class Facebook(source.Source):
       if obj_id:
         existing = posts_by_obj_id.get(obj_id)
         if existing:
-          logging.warning('merging posts for object_id %s: overwriting %s with %s!',
-                          obj_id, existing.get('id'), post.get('id'))
+          logging.warning(f"merging posts for object_id {obj_id}: overwriting {existing.get('id')} with {post.get('id')}!")
         posts_by_obj_id[obj_id] = post
 
     albums = None  # lazy loaded, maps facebook id to ActivityStreams object
@@ -485,13 +484,13 @@ class Facebook(source.Source):
       event = self.urlopen(API_EVENT % event_id)
 
     if not event or event.get('error'):
-      logging.warning("Couldn't fetch event %s: %s", event_id, event)
+      logging.warning(f"Couldn't fetch event {event_id}: {event}")
       return None
 
     event_owner_id = event.get('owner', {}).get('id')
     if owner_id and event_owner_id != owner_id:
-      logging.info('Ignoring event %s owned by user id %s instead of %s',
-                   event.get('name') or event.get('id'), event_owner_id, owner_id)
+      label = event.get('name') or event.get('id')
+      logging.info(f'Ignoring event {label} owned by user id {event_owner_id} instead of {owner_id}')
       return None
 
     return self.event_to_activity(event)
@@ -864,7 +863,7 @@ class Facebook(source.Source):
 
     Raises: urllib2.HTPPError
     """
-    logging.debug('Sending Facebook notification: %r, %s', text, link)
+    logging.debug(f'Sending Facebook notification: {text!r}, {link}')
     params = {
       'template': text,
       'href': link,
@@ -874,7 +873,7 @@ class Facebook(source.Source):
     }
     url = API_BASE + API_NOTIFICATION % user_id
     resp = util.urlopen(urllib.request.Request(url, data=urllib.parse.urlencode(params)))
-    logging.debug('Response: %s %s', resp.getcode(), resp.read())
+    logging.debug(f'Response: {resp.getcode()} {resp.read()}')
 
   def post_url(self, post):
     """Returns a short Facebook URL for a post.
@@ -1771,7 +1770,7 @@ class Facebook(source.Source):
       parsed = dateutil.parser.parse(tag.get_text(strip=True), default=now_fn())
       return parsed.isoformat('T')
     except (ValueError, OverflowError):
-      logging.debug("Couldn't parse datetime string %r", tag)
+      logging.debug(f"Couldn't parse datetime string {tag!r}")
 
   def _scrape_m(self, user_id=None, activity_id=None, fetch_replies=False,
                 fetch_likes=False):
@@ -2444,7 +2443,7 @@ class Facebook(source.Source):
         fbid = blank
 
     if fbid == blank:
-      logging.error('Cowardly refusing Facebook id with unknown format: %s', id)
+      logging.error(f'Cowardly refusing Facebook id with unknown format: {id}')
 
     return fbid
 
@@ -2484,7 +2483,7 @@ class Facebook(source.Source):
       post = self.urlopen(API_OBJECT % (user_id, post_id))
       resolved = post.get('object_id')
       if resolved:
-        logging.info('Resolved Facebook post id %r to %r.', post_id, resolved)
+        logging.info(f'Resolved Facebook post id {post_id!r} to {resolved!r}.')
         return str(resolved)
 
   def urlopen(self, url, _as=dict, **kwargs):
@@ -2510,7 +2509,7 @@ class Facebook(source.Source):
     try:
       return self._as(_as, source.load_json(body, url))
     except ValueError:  # couldn't parse JSON
-      logging.debug('Response: %s %s', resp.getcode(), body)
+      logging.debug(f'Response: {resp.getcode()} {body}')
       raise
 
   @staticmethod
@@ -2532,12 +2531,12 @@ class Facebook(source.Source):
       if isinstance(resp, dict):
         resp = resp.get('data', [])
       else:
-        logging.warning('Expected dict response with `data` field, got %s', resp)
+        logging.warning(f'Expected dict response with `data` field, got {resp}')
 
     if isinstance(resp, type):
       return resp
     else:
-      logging.warning('Expected %s response, got %s', type, resp)
+      logging.warning(f'Expected {type} response, got {resp}')
       return type()
 
   def urlopen_batch(self, urls):

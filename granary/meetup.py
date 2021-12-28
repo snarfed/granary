@@ -104,7 +104,7 @@ class Meetup(source.Source):
 
     try:
       resp = self.post_rsvp(urlname, event_id, response)
-      logging.debug('Response: %s %s', resp.getcode(), resp.read())
+      logging.debug(f'Response: {resp.getcode()} {resp.read()}')
       return source.creation_result(create_resp)
     except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)

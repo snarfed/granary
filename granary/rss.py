@@ -141,8 +141,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       if (att.get('objectType') in ENCLOSURE_TYPES or
           mime and mime.split('/')[0] in ENCLOSURE_TYPES):
         if item_has_enclosure:
-          logging.info('Warning: item %s already has an RSS enclosure, skipping additional enclosure %s',
-                       id, url)
+          logging.info(f'Warning: item {id} already has an RSS enclosure, skipping additional enclosure {url}')
           continue
 
         item_has_enclosure = feed_has_enclosure = True

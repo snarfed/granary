@@ -778,8 +778,7 @@ class Source(object, metaclass=SourceMeta):
       if redirected_from and include_redirect_sources:
         which.add(redirected_from)
 
-    logging.info('Original post discovery found original posts %s, mentions %s',
-                 originals, mentions)
+    logging.info(f'Original post discovery found original posts {originals}, mentions {mentions}')
     return originals, mentions
 
   @staticmethod
@@ -891,7 +890,7 @@ class Source(object, metaclass=SourceMeta):
       a_val = a.get(field)
       if b_val != a_val and (a_val or b_val):
         if log:
-          logging.debug('%s[%s] %s => %s', label, field, b_val, a_val)
+          logging.debug(f'{label}[{field}] {b_val} => {a_val}')
         return True
 
     obj_b = before.get('object', {})

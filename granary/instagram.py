@@ -208,8 +208,7 @@ class Instagram(source.Source):
       if not ignore_rate_limit and _last_rate_limited:
         retry = _last_rate_limited + RATE_LIMIT_BACKOFF
         if now < retry:
-          logging.info('Remembered rate limit at %s, waiting until %s to try again.',
-                       _last_rate_limited, retry)
+          logging.info(f'Remembered rate limit at {_last_rate_limited}, waiting until {retry} to try again.')
           assert _last_rate_limited_exc
           raise _last_rate_limited_exc
 
@@ -220,7 +219,7 @@ class Instagram(source.Source):
       except Exception as e:
         code, body = util.interpret_http_exception(e)
         if not ignore_rate_limit and code in ('302', '401', '429', '503'):
-          logging.info('Got rate limited! Remembering for %s', str(RATE_LIMIT_BACKOFF))
+          logging.info(f'Got rate limited! Remembering for {RATE_LIMIT_BACKOFF}')
           _last_rate_limited = now
           _last_rate_limited_exc = e
         raise
@@ -499,13 +498,12 @@ class Instagram(source.Source):
 
       if not base_id:
         shortcode = self.post_id(base_url)
-        logging.debug('looking up media by shortcode %s', shortcode)
+        logging.debug(f'looking up media by shortcode {shortcode}')
         media_entry = self.urlopen(API_MEDIA_SHORTCODE_URL % shortcode) or {}
         base_id = media_entry.get('id')
         base_url = media_entry.get('link')
 
-      logging.info('posting like for media id id=%s, url=%s',
-                   base_id, base_url)
+      logging.info(f'posting like for media id id={base_id}, url={base_url}')
       # no response other than success/failure
       self.urlopen(API_MEDIA_LIKES_URL % base_id, data=urllib.parse.urlencode({
         'access_token': self.access_token

@@ -130,8 +130,7 @@ def from_as1(obj, type=None, context=CONTEXT):
           obj['duration'] = util.to_iso8601_duration(
             datetime.timedelta(seconds=duration))
         except TypeError:
-          logging.warning('Dropping unexpected duration %r; expected int, is %s',
-                          duration, duration.__class__)
+          logging.warning(f'Dropping unexpected duration {duration!r}; expected int, is {duration.__class__}')
 
   loc = obj.get('location')
   if loc:

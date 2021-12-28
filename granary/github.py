@@ -371,7 +371,7 @@ class GitHub(source.Source):
         id = notif.get('id')
         subject_url = notif.get('subject').get('url')
         if not subject_url:
-          logging.info('Skipping thread %s, missing subject!', id)
+          logging.info(f'Skipping thread {id}, missing subject!')
           continue
         split = subject_url.split('/')
         if len(split) <= 2 or split[-2] not in ('issues', 'pulls'):

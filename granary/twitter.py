@@ -848,8 +848,7 @@ class Twitter(source.Source):
         num = len(images)
         if num > MAX_MEDIA:
           images = images[:MAX_MEDIA]
-          logging.warning('Found %d photos! Only using the first %d: %r',
-                          num, MAX_MEDIA, images)
+          logging.warning(f'Found {num} photos! Only using the first {MAX_MEDIA}: {images}')
         preview_content += '<br /><br />' + ' &nbsp; '.join(
           f"<img src=\"{img.get('url')}\" alt=\"{img.get('displayName', '')}\" />"
                                          for img in images)
@@ -921,7 +920,7 @@ class Twitter(source.Source):
                                 files={'media': image_resp},
                                 headers=headers)
       resp.raise_for_status()
-      logging.info('Got: %s', resp.text)
+      logging.info(f'Got: {resp.text}')
       media_id = source.load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string']
       ids.append(media_id)
 
@@ -935,7 +934,7 @@ class Twitter(source.Source):
           json={'media_id': media_id, 'alt_text': {'text': alt}},
           headers=headers)
         resp.raise_for_status()
-        logging.info('Got: %s', resp.text)
+        logging.info(f'Got: {resp.text}')
 
     return ids
 

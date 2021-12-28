@@ -468,7 +468,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       if parsed:
         duration = int(parsed.total_seconds())
       else:
-        logging.debug('Unknown format for length or duration %r', duration)
+        logging.debug(f'Unknown format for length or duration {duration!r}')
         duration = None
 
   stream = None
@@ -1269,7 +1269,7 @@ def size_to_bytes(size):
   try:
     return humanfriendly.parse_size(size)
   except humanfriendly.InvalidSize:
-    logging.debug("Couldn't parse size %r", size)
+    logging.debug(f"Couldn't parse size {size!r}")
 
 
 def prefix_image_urls(activity, prefix):

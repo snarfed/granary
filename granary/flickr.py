@@ -120,7 +120,7 @@ class Flickr(source.Source):
     """
     # photo, comment, or like
     type = source.object_type(obj)
-    logging.debug('publishing object type %s to Flickr', type)
+    logging.debug(f'publishing object type {type} to Flickr')
     link_text = f"(Originally published at: {obj.get('url')})"
 
     image_url = util.get_first(obj, 'image', {}).get('url')
@@ -498,7 +498,7 @@ class Flickr(source.Source):
           obj['urls'] = [{'value': u} for u in urls]
       except requests.RequestException as e:
         util.interpret_http_exception(e)
-        logging.warning('could not fetch user homepage %s', profile_url)
+        logging.warning(f'could not fetch user homepage {profile_url}')
 
     return self.postprocess_object(obj)
 
@@ -524,11 +524,11 @@ class Flickr(source.Source):
       'photo_id': activity_id,
     })
     for comment in resp.get('comments', {}).get('comment', []):
-      logging.debug('checking comment id %s', comment.get('id'))
+      logging.debug(f"checking comment id {comment.get('id')}")
       # comment id is the in form ###-postid-commentid
       if (comment.get('id') == comment_id or
           comment.get('id').split('-')[-1] == comment_id):
-        logging.debug('found comment matching %s', comment_id)
+        logging.debug(f'found comment matching {comment_id}')
         return self.comment_to_object(comment, activity_id)
 
   def photo_to_activity(self, photo):
