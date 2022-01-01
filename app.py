@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 
 from flask import abort, Flask, redirect, render_template, request
 from flask_caching import Cache
+import flask_gae_static
 from google.cloud import ndb
 import mf2util
 from oauth_dropins import (
@@ -124,6 +125,7 @@ app.after_request(flask_util.default_modern_headers)
 app.register_error_handler(Exception, flask_util.handle_exception)
 app.before_request(flask_util.canonicalize_domain(
   ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io'))
+flask_gae_static.init_app(app)
 
 app.wsgi_app = flask_util.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
