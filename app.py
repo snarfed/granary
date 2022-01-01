@@ -1,6 +1,7 @@
 """Serves the the front page, discovery files, and OAuth flows.
 """
 import datetime
+import functools
 import importlib
 import logging
 import urllib.parse
@@ -117,7 +118,7 @@ XML_TEMPLATE = """\
 RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
 
-app = Flask('bridgy-fed')
+app = Flask(__name__)
 app.template_folder = './granary/templates'
 app.config.from_pyfile('config.py')
 app.url_map.converters['regex'] = flask_util.RegexConverter
@@ -383,12 +384,30 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
     return abort(400, f'Could not convert to {format}: {str(e)}')
 
 
+def handle_discovery_errors(fn):
+  """A wrapper that handles URL discovery errors.
+
+  Used to catch Mastodon and IndieAuth connection failures, etc. Based on
+  oauth-dropins's app.handle_discovery_errors.
+  """
+  @functools.wraps(fn)
+  def wrapped(*args, **kwargs):
+    try:
+      return fn(*args, **kwargs)
+    except (ValueError, requests.RequestException) as e:
+      logging.warning('', exc_info=True)
+      return redirect('/?' + urllib.parse.urlencode({'failure': str(e)}))
+
+  return wrapped
+
+
 oauth_routes = []
 for silo, module in OAUTHS.items():
   start = f'/{silo}/start_auth'
   callback = f'/{silo}/oauth_callback'
-  app.add_url_rule(start, view_func=module.Start.as_view(start, callback),
-                   methods=['POST'])
-  app.add_url_rule(callback, view_func=module.Callback.as_view(callback, '/#logins'))
+  start_fn = handle_discovery_errors(module.Start.as_view(start, callback))
+  app.add_url_rule(start, view_func=start_fn, methods=['POST'])
+  callback_fn = handle_discovery_errors(module.Callback.as_view(callback, '/#logins'))
+  app.add_url_rule(callback, view_func=callback_fn)
 
 import api
