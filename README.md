@@ -184,13 +184,12 @@ Now, run the tests to check that everything is set up ok:
 ```shell
 gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
 python3 -m unittest discover
-kill %1
 ```
 
 Finally, run the web app locally with [`flask run`](https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server):
 
 ```shell
-env FLASK_ENV=development flask run -p 8080
+env GAE_ENV=localdev flask run -p 8080
 ```
 
 Open [localhost:8080](http://localhost:8080/) and you should see the granary home page!
