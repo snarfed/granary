@@ -21,6 +21,7 @@ setup(name='granary',
       author='Ryan Barrett',
       author_email='granary@ryanb.org',
       license='Public domain',
+      python_requires='>=3.6',
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',
