@@ -1102,9 +1102,13 @@ class Instagram(source.Source):
     Returns:
       dict, ActivityStreams activity
     """
-    user = item.get('user')
+    user = item.get('user') or {}
     actor = self._feed_v2_user_to_actor(user)
-    obj_id = self.tag_uri(f'{item.get("pk")}_{user.get("pk")}')
+
+    item_pk = item.get("pk")
+    user_pk = user.get("pk")
+    obj_id = self.tag_uri(f'{item_pk}_{user_pk}' if user_pk else item_pk)
+
     media_url = self.media_url(item.get('code'))
     caption = item.get('caption', {})
 
@@ -1168,7 +1172,7 @@ class Instagram(source.Source):
       'content': content,
       'published': util.maybe_timestamp_to_rfc3339(
         caption.get('created_at') or item.get('taken_at')),
-      'to': actor['to'],
+      'to': actor.get('to'),
       'attachments': attachments,
       'image': image,
       'stream': stream,

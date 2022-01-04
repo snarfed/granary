@@ -1907,6 +1907,20 @@ class InstagramTest(testutil.TestCase):
     activities, _ = ig.scraped_to_activities(html, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_V2_LIKES], activities)
 
+  def test_scraped_to_activities_photo_v2_no_user(self):
+    photo = copy.deepcopy(HTML_PHOTO_V2_FULL)
+    del photo['user']
+    html = HTML_HEADER_3 + json_dumps({'items': [photo]}) + HTML_FOOTER
+    activities, viewer = self.instagram.scraped_to_activities(html)
+
+    activity = copy.deepcopy(HTML_PHOTO_ACTIVITY_V2_FULL)
+    activity['object']['id'] = activity['id'] = 'tag:instagram.com:123'
+    del activity['actor']
+    del activity['object']['author']
+    del activity['object']['to']
+    self.assert_equals([activity], activities)
+    self.assertIsNone(viewer)
+
   def test_scraped_to_activities_missing_profile_picture_external_url(self):
     data = copy.deepcopy(HTML_FEED)
     data['config']['viewer']['profile_pic_url'] = None
