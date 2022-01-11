@@ -160,11 +160,12 @@ def to_as1(obj, use_type=True):
     raise ValueError(f'Expected dict, got {obj!r}')
 
   obj = copy.deepcopy(obj)
-
   obj.pop('@context', None)
 
   type = obj.pop('type', None)
   if use_type:
+    if type and not isinstance(type, str):
+      raise ValueError(f'Expected type to be string, got {type!r}')
     obj['objectType'] = TYPE_TO_OBJECT_TYPE.get(type)
     obj['verb'] = TYPE_TO_VERB.get(type)
     if obj.get('inReplyTo') and obj['objectType'] in ('note', 'article'):

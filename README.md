@@ -300,6 +300,8 @@ Changelog
 * Drop Python 3.5 support. Python 3.6 is now the minimum required version.
 * Instagram:
   * Scraping: handle media items with no `user` object.
+* AS2:
+  * Handle error when `type` isn't a string.
 
 ### 3.2 - 2021-09-15
 * `Source.original_post_discovery`: add new `include_reserved_hosts` kwarg, defaults to `True`.

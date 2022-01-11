@@ -34,6 +34,10 @@ class ActivityStreams2Test(testutil.TestCase):
     with self.assertRaises(ValueError):
       as2.from_as1('z')
 
+    with self.assertRaises(ValueError):
+      # wrongly trying to parse mf2 JSON as AS2
+      as2.to_as1({'type': ['h-card']})
+
   def test_to_as1_in_reply_to_string(self):
     self._test_to_as1_in_reply_to('http://x.y/z')
 
