@@ -14,7 +14,11 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: venv-7-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
+          keys:
+            - venv-8-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
+            - venv-8-{{ .Branch }}-{{ checksum "requirements.txt" }}
+            - venv-8-{{ .Branch }}
+            - venv-8
 
       - run:
           name: Install dependencies
@@ -27,7 +31,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --host-port=:8089 --no-store-on-disk --consistency=1.0 --quiet &
+            CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
             sleep 5s
             python3 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/tests/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
             kill %1
@@ -36,7 +40,7 @@ jobs:
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls || true; fi
 
       - save_cache:
-          key: venv-7-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
+          key: venv-8-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
           paths:
             - "/usr/local/lib/python3.7/dist-packages/"
 
