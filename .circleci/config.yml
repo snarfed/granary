@@ -4,6 +4,14 @@
 # https://circleci.com/docs/2.0/sample-config/
 version: 2.1
 
+triggers:
+  - schedule:
+      cron: "41 2 * * *"  # nightly
+      filters:
+        branches:
+          only:
+            - main
+
 jobs:
   build:
     docker:
