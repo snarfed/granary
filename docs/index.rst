@@ -276,16 +276,13 @@ Now, run the tests to check that everything is set up ok:
 
    gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
    python3 -m unittest discover
-   kill %1
 
-Finally, run this in the repo root directory to start the web app
-locally in `app_server <https://github.com/XeoN-GHMB/app_server>`__
-(`which also serves the static file
-handlers <https://groups.google.com/d/topic/google-appengine/BJDE8y2KISM/discussion>`__):
+Finally, run the web app locally with
+`flask run <https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server>`__:
 
 .. code:: shell
 
-   app_server -A oauth-dropins .
+   GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
 granary home page!
@@ -489,11 +486,28 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
+3.3 - unreleased
+~~~~~~~~~~~~~~~~
+
+-  Drop Python 3.5 support. Python 3.6 is now the minimum required
+   version.
+-  Instagram:
+
+   -  Scraping: handle media items with no ``user`` object.
+
+-  AS2:
+
+   -  Handle error when ``type`` isn’t a string.
+
 3.2 - 2021-09-15
 ~~~~~~~~~~~~~~~~
 
 -  ``Source.original_post_discovery``: add new
    ``include_reserved_hosts`` kwarg, defaults to ``True``.
+-  Instagram:
+
+   -  Update scraping to handle new ``feed_v2`` JSON format.
+
 -  Facebook:
 
    -  Scraping: handle pictures, videos, link attachments, and text

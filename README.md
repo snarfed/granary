@@ -189,7 +189,7 @@ python3 -m unittest discover
 Finally, run the web app locally with [`flask run`](https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server):
 
 ```shell
-env GAE_ENV=localdev flask run -p 8080
+GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 ```
 
 Open [localhost:8080](http://localhost:8080/) and you should see the granary home page!
