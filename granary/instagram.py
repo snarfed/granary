@@ -43,12 +43,17 @@ HTML_PRELOAD_RE = re.compile(
 # the query hash here comes (i think) from inside a .js file served by IG, so
 # we'd have to fetch and scrape that to get it dynamically. not worth it yet.
 HTML_LIKES_URL = HTML_BASE_URL + 'graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"%s","include_reel":false,"first":100}'
+HTML_COMMENTS_URL = 'https://i.instagram.com/api/v1/media/%s/comments/?can_support_threading=true&permalink_enabled=false'
+
 HTML_DATA_RE = re.compile(r"""
   <script\ type="text/javascript">
   window\.(_sharedData\ =|__additionalDataLoaded\('[^']+',)\ *
   (.+?)
   \)?;</script>""", re.VERBOSE)
-HTML_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:82.0) Gecko/20100101 Firefox/82.0'
+HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:96.0) Gecko/20100101 Firefox/96.0',
+  'X-IG-App-ID': '936619743392459',  # desktop web
+}
 
 # URL-safe base64 encoding. used in Instagram.id_to_shortcode()
 BASE64 = string.ascii_uppercase + string.ascii_lowercase + string.digits + '-_'
@@ -310,7 +315,7 @@ class Instagram(source.Source):
     if cookie:
       if not cookie.startswith('sessionid='):
         cookie = 'sessionid=' + cookie
-      get_kwargs['headers'] = {'Cookie': cookie, 'User-Agent': HTML_USER_AGENT}
+      get_kwargs['headers'] = {'Cookie': cookie, **HEADERS}
 
     resp = util.requests_get(url, **get_kwargs)
     location = resp.headers.get('Location', '')
@@ -888,8 +893,15 @@ class Instagram(source.Source):
     for item in feed_v2_items:
       media = item.get('media_or_ad') or item
       if media and (not count or len(activities) < count):
+        pk = media.get('pk')
+        if pk and media.get('comment_count') and not media.get('comments'):
+          # extra API fetch for comments
+          comments_json = self._scrape_json(HTML_COMMENTS_URL % pk, cookie=cookie)
+          media['comments'] = comments_json.get('comments')
+
         activity = util.trim_nulls(self._feed_v2_item_to_activity(media))
         activities.append(activity)
+
         # extra GraphQL fetch for likes
         shortcode = activity['object'].get('ig_shortcode')
         if shortcode and fetch_extras and media.get('like_count'):
@@ -962,7 +974,7 @@ class Instagram(source.Source):
     if cookie:
       if not cookie.startswith('sessionid='):
         cookie = 'sessionid=' + cookie
-      headers = {'Cookie': cookie, 'User-Agent': HTML_USER_AGENT}
+      headers = {'Cookie': cookie, **HEADERS}
 
     resp = util.requests_get(url, allow_redirects=False, headers=headers)
     resp.raise_for_status()

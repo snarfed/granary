@@ -823,6 +823,7 @@ HTML_VIDEO_V2_FULL = {
       # ...
     ]},
 
+  'comment_count': 2,
   'comments': [{
     'pk': 110,
     'media_id': 789,
@@ -871,6 +872,16 @@ HTML_VIDEO_V2_FULL = {
       },
     ],
   },
+}
+
+# comments need extra fetch with media id (not shortcode) as of 1/2022, eg GET:
+# https://i.instagram.com/api/v1/media/500668086457901672/comments/?can_support_threading=true&permalink_enabled=false
+HTML_VIDEO_V2_COMMENTS_RESPONSE = {
+  'caption': HTML_VIDEO_V2_FULL['caption'],
+  'comment_count': HTML_VIDEO_V2_FULL['comment_count'],
+  'comments': HTML_VIDEO_V2_FULL['comments'],
+  'comment_likes_enabled': True,
+  'preview_comments': [],
 }
 
 HTML_FEED_V2 = {
@@ -1215,7 +1226,7 @@ class InstagramTest(testutil.TestCase):
     kwargs.setdefault('allow_redirects', False)
     if cookie:
       kwargs.setdefault('headers', {})['Cookie'] = 'sessionid=' + cookie
-    if not url.startswith(HTML_BASE_URL):
+    if not url.startswith('http'):
       url = HTML_BASE_URL + url
     return super(InstagramTest, self).expect_requests_get(url, resp, **kwargs)
 
@@ -1898,7 +1909,7 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals([HTML_VIDEO_ACTIVITY_V2_FULL], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_photo_v2_fetch_extras(self):
+  def test_scraped_to_activities_photos_v2_fetch_extras(self):
     self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
                              HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
     self.mox.ReplayAll()
@@ -1906,6 +1917,20 @@ class InstagramTest(testutil.TestCase):
     html = HTML_HEADER_2 + json_dumps({'items': [HTML_PHOTO_V2_FULL]}) + HTML_FOOTER
     activities, _ = ig.scraped_to_activities(html, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_V2_LIKES], activities)
+
+  def test_scraped_to_activities_video_v2_fetch_comments(self):
+    self.expect_requests_get(instagram.HTML_COMMENTS_URL % '789',
+                             HTML_VIDEO_V2_COMMENTS_RESPONSE, cookie='kuky')
+    self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789',
+                             {}, cookie='kuky')
+    self.mox.ReplayAll()
+
+    video_empty_comments = copy.deepcopy(HTML_VIDEO_V2_FULL)
+    video_empty_comments['comments'] = []
+    ig = Instagram(scrape=True, cookie='kuky')
+    html = HTML_HEADER_2 + json_dumps({'items': [video_empty_comments]}) + HTML_FOOTER
+    activities, _ = ig.scraped_to_activities(html, fetch_extras=True)
+    self.assert_equals([HTML_VIDEO_ACTIVITY_V2_FULL], activities)
 
   def test_scraped_to_activities_photo_v2_no_user(self):
     photo = copy.deepcopy(HTML_PHOTO_V2_FULL)
