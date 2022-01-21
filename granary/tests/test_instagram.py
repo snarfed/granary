@@ -874,6 +874,9 @@ HTML_VIDEO_V2_FULL = {
   },
 }
 
+HTML_VIDEO_V2 = copy.deepcopy(HTML_VIDEO_V2_FULL)
+HTML_VIDEO_V2['comments'] = []
+
 # comments need extra fetch with media id (not shortcode) as of 1/2022, eg GET:
 # https://i.instagram.com/api/v1/media/500668086457901672/comments/?can_support_threading=true&permalink_enabled=false
 HTML_VIDEO_V2_COMMENTS_RESPONSE = {
@@ -1907,6 +1910,15 @@ class InstagramTest(testutil.TestCase):
     html = HTML_HEADER_3 + json_dumps({'items': [HTML_VIDEO_V2_FULL]}) + HTML_FOOTER
     activities, viewer = self.instagram.scraped_to_activities(html)
     self.assert_equals([HTML_VIDEO_ACTIVITY_V2_FULL], activities)
+    self.assertIsNone(viewer)
+
+  def test_scraped_to_activities_video_v2_no_fetch_extras(self):
+    html = HTML_HEADER_3 + json_dumps({'items': [HTML_VIDEO_V2]}) + HTML_FOOTER
+    activities, viewer = self.instagram.scraped_to_activities(html, fetch_extras=False)
+
+    expected = copy.deepcopy(HTML_VIDEO_ACTIVITY)
+    expected['object']['replies']['totalItems'] = 2
+    self.assert_equals([expected], activities)
     self.assertIsNone(viewer)
 
   def test_scraped_to_activities_photos_v2_fetch_extras(self):

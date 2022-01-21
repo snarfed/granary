@@ -894,7 +894,8 @@ class Instagram(source.Source):
       media = item.get('media_or_ad') or item
       if media and (not count or len(activities) < count):
         pk = media.get('pk')
-        if pk and media.get('comment_count') and not media.get('comments'):
+        if (pk and fetch_extras and media.get('comment_count') and
+            not media.get('comments')):
           # extra API fetch for comments
           comments_json = self._scrape_json(HTML_COMMENTS_URL % pk, cookie=cookie)
           media['comments'] = comments_json.get('comments')
@@ -1191,7 +1192,7 @@ class Instagram(source.Source):
       'ig_like_count': item.get('like_count'),
       'replies': {
         'items': replies,
-        'totalItems': len(replies),
+        'totalItems': item.get('comment_count') or len(replies),
       },
     }
 
