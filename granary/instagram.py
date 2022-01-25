@@ -893,15 +893,15 @@ class Instagram(source.Source):
     for item in feed_v2_items:
       media = item.get('media_or_ad') or item
       if media and (not count or len(activities) < count):
+        activity = util.trim_nulls(self._feed_v2_item_to_activity(media))
+        activities.append(activity)
+
+        # extra API fetch for comments
         pk = media.get('pk')
         if (pk and fetch_extras and media.get('comment_count') and
             not media.get('comments')):
-          # extra API fetch for comments
           comments_json = self._scrape_json(HTML_COMMENTS_URL % pk, cookie=cookie)
-          media['comments'] = comments_json.get('comments')
-
-        activity = util.trim_nulls(self._feed_v2_item_to_activity(media))
-        activities.append(activity)
+          self.merge_scraped_comments(comments_json, activity)
 
         # extra GraphQL fetch for likes
         shortcode = activity['object'].get('ig_shortcode')
@@ -938,6 +938,53 @@ class Instagram(source.Source):
     """
     return self.scraped_to_activities(html, **kwargs)[1]
 
+  def merge_scraped_comments(self, scraped, activity):
+    """Converts and merges scraped comments (replies) into an activity.
+
+    Args:
+      scraped: str or sequence, scraped JSON comments
+      activity: dict, AS activity to merge these comments into
+
+    Returns:
+      list of dict AS comment objects converted from scraped
+
+    Raises:
+      ValueError: if scraped is not valid JSON
+    """
+    if isinstance(scraped, str):
+      scraped = json_loads(scraped)
+
+    obj = activity['object']
+    url = obj.get('url') or activity.get('url')
+    obj_id = obj.get('id') or activity.get('id')
+
+    replies = []
+    for cmt in scraped.get('comments', []):
+      cmt_id = self.tag_uri(cmt.get('pk'))
+      content = cmt.get('text') or ''
+      reply = {
+        'objectType': 'comment',
+        'id': cmt_id,
+        'url': f"{url}#comment-{cmt.get('pk')}" if url else None,
+        'author': self._feed_v2_user_to_actor(cmt.get('user')),
+        'content': content,
+        'published': util.maybe_timestamp_to_rfc3339(cmt.get('created_at')),
+        'inReplyTo': [{'id': obj_id}],
+        'tags': self._mention_tags_from_content(content),
+        'to': [{'objectType': 'group', 'alias': '@public'}],
+      }
+      parent = cmt.get('parent_comment_id')
+      if parent:
+        reply['inReplyTo'].append({'id': cmt_id})
+      replies.append(util.trim_nulls(reply))
+
+    obj_replies = obj.setdefault('replies', {})
+    source.merge_by_id(obj_replies, 'items', replies)
+    obj_replies['totalItems'] = max(scraped.get('comment_count'),
+                                    obj_replies.get('totalItems'),
+                                    len(obj_replies['items']))
+    return replies
+
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 
@@ -961,8 +1008,9 @@ class Instagram(source.Source):
     if media:
       id = util.parse_tag_uri(activity['id'])[1]
       media_url = self.media_url(media['shortcode'])
-      likes = [self.like_to_object(like.get('node', {}), id, media_url)
-               for like in media.get('edge_liked_by', {}).get('edges', [])]
+      likes = util.trim_nulls(
+        [self.like_to_object(like.get('node', {}), id, media_url)
+         for like in media.get('edge_liked_by', {}).get('edges', [])])
       source.merge_by_id(activity['object'], 'tags', likes)
       return likes
 
@@ -1109,6 +1157,10 @@ class Instagram(source.Source):
   def _feed_v2_item_to_activity(self, item):
     """Converts Instagram HTML JSON feed_v2 item to ActivityStreams activity.
 
+    Note that this ignores comments and likes! See
+    :meth:`Instagram.merge_scraped_comments`, :meth:`Instagram.merge_scraped_reactions`,
+    and the end of :meth:`Instagram.scraped_to_activities` for those.
+
     Args:
       media: dict, item from a feed_v2 JSON
 
@@ -1153,27 +1205,6 @@ class Instagram(source.Source):
           'image': [image],
         })
 
-    # comments
-    replies = []
-    for cmt in item.get('comments', []):
-      cmt_id = self.tag_uri(cmt.get('pk'))
-      content = cmt.get('text') or ''
-      reply = {
-        'objectType': 'comment',
-        'id': cmt_id,
-        'url': f"{media_url}#comment-{cmt.get('pk')}" if media_url else None,
-        'author': self._feed_v2_user_to_actor(cmt.get('user')),
-        'content': content,
-        'published': util.maybe_timestamp_to_rfc3339(cmt.get('created_at')),
-        'inReplyTo': [{'id': obj_id}],
-        'tags': self._mention_tags_from_content(content),
-        'to': [{'objectType': 'group', 'alias': '@public'}],
-      }
-      parent = cmt.get('parent_comment_id')
-      if parent:
-        reply['inReplyTo'].append({'id': cmt_id})
-      replies.append(reply)
-
     # object
     content = caption.get('text') or ''
     obj = {
@@ -1190,10 +1221,6 @@ class Instagram(source.Source):
       'image': image,
       'stream': stream,
       'ig_like_count': item.get('like_count'),
-      'replies': {
-        'items': replies,
-        'totalItems': item.get('comment_count') or len(replies),
-      },
     }
 
     # person tags and mentions

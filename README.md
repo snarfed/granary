@@ -298,8 +298,9 @@ Changelog
 ### 3.3 - unreleased
 
 * Drop Python 3.5 support. Python 3.6 is now the minimum required version.
-* Instagram:
-  * Scraping: handle media items with no `user` object, add new fetch for comments.
+* Instagram (scraping):
+  * Handle media items with no `user` object, add new fetch for comments.
+  * Add `Instagram.merge_scraped_comments()`.
 * AS2:
   * Handle error when `type` isn't a string.
 

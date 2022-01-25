@@ -2034,6 +2034,15 @@ class InstagramTest(testutil.TestCase):
 
     self.assertEqual(504, cm.exception.response.status_code)
 
+  def test_merge_scraped_comments(self):
+    activity = copy.deepcopy(HTML_VIDEO_ACTIVITY)
+    got = self.instagram.merge_scraped_comments(
+      json_dumps(HTML_VIDEO_V2_COMMENTS_RESPONSE), activity)
+
+    expected = copy.deepcopy(HTML_VIDEO_ACTIVITY_V2_FULL)
+    self.assert_equals(HTML_VIDEO_ACTIVITY_V2_FULL['object']['replies']['items'], got)
+    self.assert_equals(HTML_VIDEO_ACTIVITY_V2_FULL, activity)
+
   def test_merge_scraped_reactions(self):
     activity = copy.deepcopy(HTML_PHOTO_ACTIVITY)
     got = self.instagram.merge_scraped_reactions(
