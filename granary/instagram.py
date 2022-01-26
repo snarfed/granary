@@ -895,6 +895,7 @@ class Instagram(source.Source):
       if media and (not count or len(activities) < count):
         activity = util.trim_nulls(self._feed_v2_item_to_activity(media))
         activities.append(activity)
+        self.merge_scraped_comments(media, activity)
 
         # extra API fetch for comments
         pk = media.get('pk')
@@ -979,10 +980,12 @@ class Instagram(source.Source):
       replies.append(util.trim_nulls(reply))
 
     obj_replies = obj.setdefault('replies', {})
-    source.merge_by_id(obj_replies, 'items', replies)
-    obj_replies['totalItems'] = max(scraped.get('comment_count'),
-                                    obj_replies.get('totalItems'),
-                                    len(obj_replies['items']))
+    if replies:
+      source.merge_by_id(obj_replies, 'items', replies)
+
+    obj_replies['totalItems'] = max(scraped.get('comment_count', 0),
+                                    obj_replies.get('totalItems', 0),
+                                    len(obj_replies.get('items', [])))
     return replies
 
   def merge_scraped_reactions(self, scraped, activity):
