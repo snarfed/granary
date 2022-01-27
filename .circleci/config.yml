@@ -25,6 +25,8 @@ jobs:
           command: |
             pip install -U pip
             pip -V
+            # make sure we install this at head, below
+            pip uninstall -y oauth-dropins
             pip install -U -r requirements.txt
             pip install coverage coveralls
 

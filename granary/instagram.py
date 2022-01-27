@@ -50,6 +50,7 @@ HTML_DATA_RE = re.compile(r"""
   window\.(_sharedData\ =|__additionalDataLoaded\('[^']+',)\ *
   (.+?)
   \)?;</script>""", re.VERBOSE)
+# duplicated in bridgy/browser-extension/instagram.js
 HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:96.0) Gecko/20100101 Firefox/96.0',
   'X-IG-App-ID': '936619743392459',  # desktop web
