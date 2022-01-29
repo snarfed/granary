@@ -1247,9 +1247,6 @@ class InstagramTest(testutil.TestCase):
 
   def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
     kwargs.setdefault('allow_redirects', False)
-
-    
-    
     if cookie:
       # instagram scraper sets USER-AGENT and App ID headers when cookie that
       # begins with sessionid= is set
