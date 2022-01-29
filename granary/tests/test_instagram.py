@@ -13,7 +13,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
 from .. import instagram
-from ..instagram import HTML_BASE_URL, Instagram
+from ..instagram import HTML_BASE_URL, Instagram, HEADERS
 from .. import source
 
 
@@ -1247,8 +1247,13 @@ class InstagramTest(testutil.TestCase):
 
   def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
     kwargs.setdefault('allow_redirects', False)
+
+    
+    
     if cookie:
-      kwargs.setdefault('headers', {})['Cookie'] = 'sessionid=' + cookie
+      # instagram scraper sets USER-AGENT and App ID headers when cookie that
+      # begins with sessionid= is set
+      kwargs.setdefault('headers', HEADERS)['Cookie'] = 'sessionid=' + cookie
     if not url.startswith('http'):
       url = HTML_BASE_URL + url
     return super(InstagramTest, self).expect_requests_get(url, resp, **kwargs)
