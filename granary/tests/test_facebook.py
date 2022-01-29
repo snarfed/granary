@@ -30,6 +30,7 @@ from ..facebook import (
   API_USER_EVENTS,
   Facebook,
   M_HTML_BASE_URL,
+  SCRAPE_USER_AGENT
 )
 from .. import source
 
@@ -1365,8 +1366,10 @@ class FacebookTest(testutil.TestCase):
 
   def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
     kwargs.setdefault('allow_redirects', False)
+    # override user agent for facebook scraping (specific to facebook tests)
+    kwargs.setdefault('headers', {})['User-Agent'] = SCRAPE_USER_AGENT
     if cookie:
-      kwargs.setdefault('headers', {})['Cookie'] = cookie
+      kwargs['headers']['Cookie'] = cookie
     url = urllib.parse.urljoin(M_HTML_BASE_URL, url)
     return super(FacebookTest, self).expect_requests_get(url, resp, **kwargs)
 
