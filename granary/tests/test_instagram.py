@@ -649,33 +649,47 @@ del HTML_PHOTO['edge_media_to_comment']['edges']
 
 # based on https://www.instagram.com/p/BQ0mDB2gV_O/
 HTML_MULTI_PHOTO = copy.deepcopy(HTML_PHOTO)
-HTML_MULTI_PHOTO.update({
-  'edge_sidecar_to_children': {
-    'edges': [{
-      'node': {
-        '__typename': 'GraphVideo',
-        'id': '1455954809369749561',
-        'shortcode': 'BQ0ly9lgWg5',
-        'dimensions': {'height': 640, 'width': 640},
-        'display_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s640x640/e15/16789781_644256779091860_6907514546886279168_n.jpg',
-        'video_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t50.2886-16/16914332_634350210109260_5674637823722913792_n.mp4',
-        'video_view_count': 0,
-        'is_video': True,
-        'edge_media_to_tagged_user': {'edges': []},
-      },
-    }, {
-      'node': {
-        '__typename': 'GraphImage',
-        'id': '1455954810972087680',
-        'dimensions': {'height': 1080, 'width': 1080},
-        'display_url': 'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
-        'accessibility_caption': 'this is my alt text',
-        'is_video': False,
-        'edge_media_to_tagged_user': {'edges': []},
-      },
-    }],
-  },
-})
+HTML_MULTI_PHOTO['edge_sidecar_to_children'] = {
+    'edges': [
+        {
+            'node': {
+                '__typename': 'GraphVideo',
+                'id': '1455954809369749561',
+                'shortcode': 'BQ0ly9lgWg5',
+                'dimensions': {
+                    'height': 640,
+                    'width': 640
+                },
+                'display_url':
+                'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s640x640/e15/16789781_644256779091860_6907514546886279168_n.jpg',
+                'video_url':
+                'https://instagram.fsnc1-2.fna.fbcdn.net/t50.2886-16/16914332_634350210109260_5674637823722913792_n.mp4',
+                'video_view_count': 0,
+                'is_video': True,
+                'edge_media_to_tagged_user': {
+                    'edges': []
+                },
+            },
+        },
+        {
+            'node': {
+                '__typename': 'GraphImage',
+                'id': '1455954810972087680',
+                'dimensions': {
+                    'height': 1080,
+                    'width': 1080
+                },
+                'display_url':
+                'https://instagram.fsnc1-2.fna.fbcdn.net/t51.2885-15/s1080x1080/e35/16906679_776417269184045_871950675452362752_n.jpg',
+                'accessibility_caption': 'this is my alt text',
+                'is_video': False,
+                'edge_media_to_tagged_user': {
+                    'edges': []
+                },
+            },
+        },
+    ],
+}
 
 HTML_SUGGESTED_USERS = {
   'suggested_users': [{
