@@ -52,7 +52,7 @@ class InstagramTestLive(unittest.TestCase):
                               activity_id='byuvjTsqJo')[0]
     self.check_item(photo)
     self.assertEqual(1, len(photo['object']['replies']['items']))
-    self.assertEqual(7, len(self.likes(photo)))
+    self.assertEqual(6, len(self.likes(photo)))
 
   def likes(self, item):
     return [t for t in item['object'].get('tags', []) if t.get('verb') == 'like']

@@ -543,6 +543,23 @@ HTML_PHOTO_LIKES_RESPONSE = {
   },
 }
 
+# v2 likes in v2 item 'likers' field
+HTML_LIKES_V2 = [{
+  'pk': 8,
+  'username': 'alizz',
+  'full_name': 'Alice',
+  # commented out to match LIKE_OBJS, but it is there in IG
+  # 'is_private': False,
+  'profile_pic_id': '777_8',
+  'profile_pic_url': 'http://alice/picture',
+}, {
+  'pk': 9,
+  'username': 'bobbb',
+  'full_name': 'Bob',
+  'profile_pic_id': '7777_9',
+  'profile_pic_url': 'http://bob/picture',
+}]
+
 HTML_VIDEO_FULL = {
   'id': '789',
   '__typename': 'GraphVideo',
@@ -775,6 +792,9 @@ HTML_PHOTO_V2_FULL = {
   'comments': [],
   'comment_count': 0,
 }
+
+HTML_PHOTO_V2_LIKES = copy.deepcopy(HTML_PHOTO_V2_FULL)
+HTML_PHOTO_V2_LIKES['likers'] = HTML_LIKES_V2
 
 HTML_VIDEO_V2_FULL = {
   'pk': 789,
@@ -1904,6 +1924,15 @@ class InstagramTest(testutil.TestCase):
     html = HTML_HEADER_3 + json_dumps({'items': [HTML_PHOTO_V2_FULL]}) + HTML_FOOTER
     activities, viewer = self.instagram.scraped_to_activities(html)
     self.assert_equals([HTML_PHOTO_ACTIVITY_V2_FULL], activities)
+
+  def test_scraped_to_activities_photo_v2_likes(self):
+    html = HTML_HEADER_3 + json_dumps({'items': [HTML_PHOTO_V2_LIKES]}) + HTML_FOOTER
+    activities, viewer = self.instagram.scraped_to_activities(html)
+
+    expected = copy.deepcopy(HTML_PHOTO_ACTIVITY_V2_LIKES)
+    # v2 likes don't have user website field
+    del expected['object']['tags'][1]['author']['urls']
+    self.assert_equals([expected], activities)
     self.assertIsNone(viewer)
 
   def test_scraped_to_activities_video_v2(self):

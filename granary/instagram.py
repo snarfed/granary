@@ -691,13 +691,16 @@ class Instagram(source.Source):
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
+    id = liker.get('id')  # v1
+    pk = liker.get('pk')  # v2
+
     return self.postprocess_object({
-        'id': self.tag_uri(f"{media_id}_liked_by_{liker.get('id')}"),
-        'url': f"{media_url}#liked-by-{liker.get('id')}" if media_url else None,
+        'id': self.tag_uri(f"{media_id}_liked_by_{id or pk}"),
+        'url': f"{media_url}#liked-by-{id or pk}" if media_url else None,
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': media_url},
-        'author': self.user_to_actor(liker),
+        'author': self.user_to_actor(liker) if id else self._feed_v2_user_to_actor(liker),
     })
 
   def user_to_actor(self, user):
@@ -894,9 +897,9 @@ class Instagram(source.Source):
     for item in feed_v2_items:
       media = item.get('media_or_ad') or item
       if media and (not count or len(activities) < count):
-        activity = util.trim_nulls(self._feed_v2_item_to_activity(media))
-        activities.append(activity)
+        activity = self._feed_v2_item_to_activity(media)
         self.merge_scraped_comments(media, activity)
+        self.merge_scraped_reactions({'data': {'shortcode_media': media}}, activity)
 
         # extra API fetch for comments
         pk = media.get('pk')
@@ -907,9 +910,12 @@ class Instagram(source.Source):
 
         # extra GraphQL fetch for likes
         shortcode = activity['object'].get('ig_shortcode')
-        if shortcode and fetch_extras and media.get('like_count'):
+        if (shortcode and fetch_extras and media.get('like_count') and
+            not media.get('likers')):
           likes_json = self._scrape_json(HTML_LIKES_URL % shortcode, cookie=cookie)
           self.merge_scraped_reactions(likes_json, activity)
+
+        activities.append(util.trim_nulls(activity))
 
     user = self._json_user_to_user(viewer_user or profile_user)
     actor = self.user_to_actor(user) if user else None
@@ -995,6 +1001,8 @@ class Instagram(source.Source):
     New likes and emoji reactions are added to the activity in 'tags'.
     Existing likes and emoji reactions in 'tags' are ignored.
 
+    Supports both legacy and v2 Instagram JSON.
+
     Args:
       scraped: str or dict, scraped JSON likes
       activity: dict, AS activity to merge these reactions into
@@ -1011,12 +1019,16 @@ class Instagram(source.Source):
     media = scraped.get('data', {}).get('shortcode_media', {})
     if media:
       id = util.parse_tag_uri(activity['id'])[1]
-      media_url = self.media_url(media['shortcode'])
-      likes = util.trim_nulls(
-        [self.like_to_object(like.get('node', {}), id, media_url)
-         for like in media.get('edge_liked_by', {}).get('edges', [])])
-      source.merge_by_id(activity['object'], 'tags', likes)
-      return likes
+      obj = activity['object']
+      shortcode = media.get('shortcode')
+      media_url = self.media_url(shortcode) if shortcode else obj.get('url')
+      likers = [l.get('node', {}) for l in
+                media.get('edge_liked_by', {}).get('edges', [])]  # v1
+      likers.extend(media.get('likers', []))  # v2
+      like_tags = util.trim_nulls(
+        [self.like_to_object(l, id, media_url) for l in likers])
+      source.merge_by_id(obj, 'tags', like_tags)
+      return like_tags
 
     return []
 
