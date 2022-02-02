@@ -298,6 +298,7 @@ Changelog
 ### 3.3 - unreleased
 
 * Drop Python 3.5 support. Python 3.6 is now the minimum required version.
+* Add new `include_shares` kwarg to `get_activities`, implemented for Twitter and Mastodon. Defaults to `True`. If `False`, shares (retweets in Twitter, boosts in Mastodon) will be discarded and not returned.
 * Instagram (scraping):
   * Handle media items with no `user` object, add new fetch for comments.
   * Add `Instagram.merge_scraped_comments()`.

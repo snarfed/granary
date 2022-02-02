@@ -945,6 +945,13 @@ class TwitterTest(testutil.TestCase):
     # shouldn't include RT of quote tweet
     self.assertNotIn('tag:twitter.com:6789', [a.get('id') for a in got])
 
+  def test_get_activities_include_shares_false(self):
+    self.expect_urlopen(TIMELINE, [TWEET] + RETWEETS + [TWEET_2])
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY, ACTIVITY_2],
+                       self.twitter.get_activities(include_shares=False))
+
   def test_get_activities_fetch_shares(self):
     tweet = copy.deepcopy(TWEET)
     tweet['retweet_count'] = 1

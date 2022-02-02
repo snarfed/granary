@@ -167,9 +167,9 @@ class Mastodon(source.Source):
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
                               fetch_likes=False, fetch_shares=False,
-                              fetch_events=False, fetch_mentions=False,
-                              search_query=None, start_index=0, count=0,
-                              cache=None, **kwargs):
+                              include_shares=True, fetch_events=False,
+                              fetch_mentions=False, search_query=None,
+                              start_index=0, count=0, cache=None, **kwargs):
     """Fetches toots and converts them to ActivityStreams activities.
 
     See :meth:`Source.get_activities_response` for details.
@@ -214,6 +214,8 @@ class Mastodon(source.Source):
 
     # fetch extras if necessary
     for status in statuses[start_index:]:
+      if not include_shares and status.get('reblog'):
+        continue
       activity = self.postprocess_activity(self.status_to_activity(status))
       activities.append(activity)
 

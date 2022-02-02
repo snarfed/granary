@@ -347,6 +347,13 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities(group_id=source.FRIENDS))
 
+  def test_get_activities_include_shares_false(self):
+    self.expect_get(API_TIMELINE, params={},
+                    response=[STATUS, REBLOG_STATUS, REPLY_STATUS])
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY, REPLY_ACTIVITY],
+                       self.mastodon.get_activities(include_shares=False))
+
   def test_get_activities_fetch_replies(self):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
     self.expect_get(API_CONTEXT % STATUS['id'], {

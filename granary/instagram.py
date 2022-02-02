@@ -175,7 +175,7 @@ class Instagram(source.Source):
     searching for them.
     https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
 
-    Shares are never fetched included since there is no share feature.
+    Shares are never fetched or included since there is no share feature.
 
     Instagram only supports search over hashtags, so if search_query is set, it
     must begin with #.

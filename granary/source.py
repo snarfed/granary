@@ -244,8 +244,8 @@ class Source(object, metaclass=SourceMeta):
       self, user_id=None, group_id=None, app_id=None, activity_id=None,
       start_index=0, count=0, etag=None, min_id=None, cache=None,
       fetch_replies=False, fetch_likes=False, fetch_shares=False,
-      fetch_events=False, fetch_mentions=False, search_query=None, scrape=False,
-      **kwargs):
+      include_shares=True, fetch_events=False, fetch_mentions=False,
+      search_query=None, scrape=False, **kwargs):
     """Fetches and returns ActivityStreams activities and response details.
 
     Subclasses should override this. See :meth:`get_activities()` for an
@@ -284,6 +284,7 @@ class Source(object, metaclass=SourceMeta):
         Used to cache data that's expensive to regenerate, e.g. API calls.
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
+      include_shares: boolean, whether to include share activities
       fetch_shares: boolean, whether to fetch each activity's shares also
       fetch_events: boolean, whether to fetch the user's events also
       fetch_mentions: boolean, whether to fetch posts that mention the user

@@ -196,8 +196,9 @@ class Twitter(source.Source):
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, fetch_events=False,
-                              fetch_mentions=False, search_query=None, **kwargs):
+                              fetch_shares=False, include_shares=False,
+                              fetch_events=False, fetch_mentions=False,
+                              search_query=None, scrape=False, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -389,6 +390,9 @@ class Twitter(source.Source):
 
           retweet_calls += 1
           cache_updates['ATR ' + id] = count
+
+    if not include_shares:
+      tweets = [t for t in tweets if not t.get('retweeted_status')]
 
     tweet_activities = [self.tweet_to_activity(t) for t in tweets]
 
