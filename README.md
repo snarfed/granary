@@ -123,11 +123,11 @@ Errors are returned with the appropriate HTTP response code, e.g. 403 for Unauth
 
 By default, responses are cached and reused for 10m without re-fetching the source data. (Instagram responses are cached for 60m.) You can prevent this by adding the `cache=false` query parameter to your request.
 
+Include the `shares=false` query parameter to omit shares, eg Twitter retweets, from the results.
+
 To use the REST API in an existing ActivityStreams client, you'll need to hard-code exceptions for the domains you want to use e.g. `facebook.com`, and redirect HTTP requests to the corresponding [endpoint above](#about).
 
-Instagram is disabled in the REST API entirely, sadly, [due to their aggressive rate limiting and blocking](https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427).
-
-The web UI ([granary.io](https://granary.io/)) currently only fetches Facebook access tokens for users. If you want to use it to access a Facebook page, you'll need to get an access token manually with the [Graph API Explorer](https://developers.facebook.com/tools/explorer/) (click on the _Get To..._ drop-down) . Then, log into Facebook on [granary.io](https://granary.io/) and paste the page access token into the `access_token` text box.
+Facebook and Instagram are disabled in the REST API entirely, sadly.
 
 
 Using the library
@@ -298,11 +298,11 @@ Changelog
 ### 3.3 - unreleased
 
 * Drop Python 3.5 support. Python 3.6 is now the minimum required version.
-* Add new `include_shares` kwarg to `get_activities`, implemented for Twitter and Mastodon. Defaults to `True`. If `False`, shares (retweets in Twitter, boosts in Mastodon) will be discarded and not returned.
+* Add new `include_shares` kwarg to `get_activities`, implemented for Twitter and Mastodon. Defaults to `True`. If `False`, shares (retweets in Twitter, boosts in Mastodon) will be discarded and not returned. Also add a corresponding `shares` query param to the REST API.
 * Instagram (scraping):
   * Handle media items with no `user` object, add new fetch for comments.
   * Add `Instagram.merge_scraped_comments()`.
-* AS2:
+* ActivityStreams 2:
   * Handle error when `type` isn't a string.
 
 ### 3.2 - 2021-09-15

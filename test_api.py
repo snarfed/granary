@@ -274,6 +274,10 @@ class ApiTest(testutil.TestCase):
     second = self.get_response('/fake/123/@all/?cache=false', '123', None)
     self.assert_equals(first.get_data(), second.get_data())
 
+  def test_shares_false_query_param(self):
+    # just test that the query param gets translated to the include_shares kwarg
+    self.get_response('/fake/?shares=false', include_shares=False)
+
   def test_get_activities_connection_error(self):
     FakeSource.get_activities_response(
       None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT

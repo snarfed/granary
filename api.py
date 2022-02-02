@@ -1,8 +1,8 @@
 """API view.
 
 Implements the OpenSocial ActivityStreams REST API:
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
-http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
+https://opensocial.github.io/spec/2.5.1/Social-API-Server.xml#ActivityStreams-Service
+https://opensocial.github.io/spec/2.5.1/Core-API-Server.xml
 
 Request paths are of the form /user_id/group_id/app_id/activity_id, where each
 element is optional. user_id may be @me. group_id may be @all, @friends
@@ -179,6 +179,10 @@ def get_kwargs():
   cookie = request.args.get('cookie')
   if cookie:
     kwargs['cookie'] = cookie
+
+  shares = request.values.get('shares')
+  if shares:
+    kwargs['include_shares'] = shares.lower() != 'false'
 
   return kwargs
 
