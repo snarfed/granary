@@ -230,6 +230,15 @@ class RedditTest(testutil.TestCase):
       'lhzukq',
       self.reddit.post_id('https://www.reddit.com/r/xyz/comments/lhzukq/abc/'))
 
+  # TODO
+  # def test_get_activities_default_user(self):
+  #   self.api.user.me().submissions.new(limit=None).AndReturn(
+  #     [self.submission_selftext, self.submission_link])
+  #   self.mox.ReplayAll()
+
+  #   self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
+  #                      self.reddit.get_activities())
+
   def test_get_activities_activity_id(self):
     self.api.submission(id='abc').AndReturn(self.submission_selftext)
     self.mox.ReplayAll()
@@ -241,7 +250,7 @@ class RedditTest(testutil.TestCase):
     subreddit = self.mox.CreateMock(praw.models.Subreddit)
     self.mox.StubOutWithMock(self.api, 'subreddit')
     self.api.subreddit('all').AndReturn(subreddit)
-    subreddit.search('foo bar', sort='new').AndReturn(
+    subreddit.search('foo bar', sort='new', limit=None).AndReturn(
       [self.submission_selftext, self.submission_link])
     self.mox.ReplayAll()
 

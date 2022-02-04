@@ -251,7 +251,7 @@ class Reddit(source.Source):
       }
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
-                              activity_id=None, start_index=0, count=0,
+                              activity_id=None, start_index=0, count=None,
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, fetch_events=False,
@@ -260,16 +260,21 @@ class Reddit(source.Source):
 
     Currently only implements activity_id, search_query and fetch_replies.
     """
-    activities = []
     r = self.get_reddit_api()
 
     if activity_id:
-      subm = r.submission(id=activity_id)
-      activities.append(self.praw_to_activity(subm, 'submission'))
+      submissions = [r.submission(id=activity_id)]
     elif search_query:
-      sr = r.subreddit('all')
-      subms = sr.search(search_query, sort='new')
-      activities.extend([self.praw_to_activity(subm, 'submission') for subm in subms])
+      submissions = r.subreddit('all').search(search_query, sort='new', limit=count)
+    else:
+      # Oddly user.me() returns None when in read only mode
+      # https://praw.readthedocs.io/en/stable/code_overview/reddit/user.html#praw.models.User.me
+      r.read_only = False
+      redditor = r.redditor(user_id) if user_id else r.user.me()
+      r.read_only = True
+      submissions = redditor.submissions.new(limit=count)
+
+    activities = [self.praw_to_activity(s, 'submission') for s in submissions]
 
     if fetch_replies:
       self._fetch_replies(r, activities)
