@@ -1,10 +1,9 @@
 granary package
-===============
+---------------
 
 Reference documentation.
 
-.. toctree::
-    granary
+.. contents::
 
 as2
 ---

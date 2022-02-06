@@ -32,11 +32,10 @@ Granary is a library and REST API that fetches and converts between a wide varie
 Here's how to get started:
 
 * Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/) Install with `pip install granary`.
-* [Click here for getting started docs.](#using)
-* [Click here for reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
-* The REST API and demo app are deployed at [granary.io](https://granary.io/).
-
-[Versions 3.0](https://pypi.org/project/oauth-dropins/2.2/) and above support App Engine's [Python 3 runtimes](https://cloud.google.com/appengine/docs/python/), both [Standard](https://cloud.google.com/appengine/docs/standard/python3/) and [Flexible](https://cloud.google.com/appengine/docs/flexible/python/). If you're on the [Python 2 runtime](https://cloud.google.com/appengine/docs/standard/python/), use [version 2.2](https://pypi.org/project/oauth-dropins/2.2/).
+* [Getting started docs.](#using)
+* [Reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
+* REST API and demo app at [granary.io](https://granary.io/).
+* [Source code on GitHub.](https://github.com/snarfed/granary/)
 
 License: This project is placed in the public domain.
 
@@ -44,11 +43,7 @@ License: This project is placed in the public domain.
 Using
 ---
 
-All dependencies are handled by pip and enumerated in [requirements.txt](https://github.com/snarfed/granary/blob/master/requirements.txt). We recommend that you install with pip in a [`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/). ([App Engine details.](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring))
-
-The library and REST API are both based on the [OpenSocial Activity Streams service](https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service).
-
-Let's start with an example. This code using the library:
+The library and REST API are both based on the [OpenSocial Activity Streams service](https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service). Let's start with an example. This code using the library:
 
 ```python
 from granary import twitter

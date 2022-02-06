@@ -19,11 +19,11 @@ cd `dirname $absfile`
 rm -f index.rst
 cat > index.rst <<EOF
 granary
-=======
+-------
 
 EOF
 
-tail -n +19 ../README.md \
+tail -n +21 ../README.md \
   | pandoc --from=markdown --to=rst \
   | sed -E 's/```/`/; s/`` </ </' \
   >> index.rst

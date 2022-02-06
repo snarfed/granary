@@ -1,7 +1,5 @@
 granary
-=======
-
---------------
+-------
 
 Granary is a library and REST API that fetches and converts between a
 wide variety of data sources and formats:
@@ -26,38 +24,20 @@ Here’s how to get started:
 -  Granary is `available on
    PyPi. <https://pypi.python.org/pypi/granary/>`__ Install with
    ``pip install granary``.
--  `Click here for getting started docs. <#using>`__
--  `Click here for reference
+-  `Getting started docs. <#using>`__
+-  `Reference
    docs. <https://granary.readthedocs.io/en/latest/source/granary.html>`__
--  The REST API and demo app are deployed at
-   `granary.io <https://granary.io/>`__.
-
-`Versions 3.0 <https://pypi.org/project/oauth-dropins/2.2/>`__ and above
-support App Engine’s `Python 3
-runtimes <https://cloud.google.com/appengine/docs/python/>`__, both
-`Standard <https://cloud.google.com/appengine/docs/standard/python3/>`__
-and
-`Flexible <https://cloud.google.com/appengine/docs/flexible/python/>`__.
-If you’re on the `Python 2
-runtime <https://cloud.google.com/appengine/docs/standard/python/>`__,
-use `version 2.2 <https://pypi.org/project/oauth-dropins/2.2/>`__.
+-  REST API and demo app at `granary.io <https://granary.io/>`__.
+-  `Source code on GitHub. <https://github.com/snarfed/granary/>`__
 
 License: This project is placed in the public domain.
 
 Using
 -----
 
-All dependencies are handled by pip and enumerated in
-`requirements.txt <https://github.com/snarfed/granary/blob/master/requirements.txt>`__.
-We recommend that you install with pip in a
-`virtualenv <http://docs.python-guide.org/en/latest/dev/virtualenvs/>`__.
-(`App Engine
-details. <https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring>`__)
-
 The library and REST API are both based on the `OpenSocial Activity
 Streams
 service <https://opensocial.github.io/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service>`__.
-
 Let’s start with an example. This code using the library:
 
 .. code:: python
@@ -176,22 +156,15 @@ the source data. (Instagram responses are cached for 60m.) You can
 prevent this by adding the ``cache=false`` query parameter to your
 request.
 
+Include the ``shares=false`` query parameter to omit shares, eg Twitter
+retweets, from the results.
+
 To use the REST API in an existing ActivityStreams client, you’ll need
 to hard-code exceptions for the domains you want to use
 e.g. ``facebook.com``, and redirect HTTP requests to the corresponding
 `endpoint above <#about>`__.
 
-Instagram is disabled in the REST API entirely, sadly, `due to their
-aggressive rate limiting and
-blocking <https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427>`__.
-
-The web UI (`granary.io <https://granary.io/>`__) currently only fetches
-Facebook access tokens for users. If you want to use it to access a
-Facebook page, you’ll need to get an access token manually with the
-`Graph API Explorer <https://developers.facebook.com/tools/explorer/>`__
-(click on the *Get To…* drop-down) . Then, log into Facebook on
-`granary.io <https://granary.io/>`__ and paste the page access token
-into the ``access_token`` text box.
+Facebook and Instagram are disabled in the REST API entirely, sadly.
 
 Using the library
 -----------------
@@ -491,13 +464,25 @@ Changelog
 
 -  Drop Python 3.5 support. Python 3.6 is now the minimum required
    version.
--  Instagram:
+-  Add new ``include_shares`` kwarg to ``get_activities``, implemented
+   for Twitter and Mastodon. Defaults to ``True``. If ``False``, shares
+   (retweets in Twitter, boosts in Mastodon) will be discarded and not
+   returned. Also add a corresponding ``shares`` query param to the REST
+   API.
+-  Instagram (scraping):
 
-   -  Scraping: handle media items with no ``user`` object.
+   -  Handle media items with no ``user`` object, add new fetch for
+      comments.
+   -  Add ``Instagram.merge_scraped_comments()``.
 
--  AS2:
+-  ActivityStreams 2:
 
    -  Handle error when ``type`` isn’t a string.
+
+-  Reddit:
+
+   -  Implement ``get_activities()`` to fetch posts by the current user
+      or a user specified with ``user_id``.
 
 3.2 - 2021-09-15
 ~~~~~~~~~~~~~~~~

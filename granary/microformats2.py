@@ -1255,8 +1255,8 @@ def size_to_bytes(size):
   """Converts a string file size to an integer number of bytes.
 
   Args:
-    size, string, may be either integer bytes or human-readable approximation,
-      eg 7MB or 1.23 kb
+    size: string, may be either integer bytes or human-readable approximation,
+          eg 7MB or 1.23 kb
 
   Returns: integer, bytes, or None if size can't be parsed
   """
