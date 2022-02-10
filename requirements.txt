@@ -1,3 +1,6 @@
+# These requirements are for the demo app at https://granary.io/ , *not* the
+# library! The library's dependencies are specified in setup.py.
+#
 # Note that App Engine / Cloud Build's default pip cache is overly aggressive
 # with GitHub dependency URLs like these. If I push a new commit to the branch
 # in one of these URLs, Cloud Build still uses the old cached version.
