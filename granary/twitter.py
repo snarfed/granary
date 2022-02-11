@@ -25,6 +25,8 @@ from requests import RequestException
 
 from . import source
 
+logger = logging.getLogger(__name__)
+
 # common to all API calls that fetch tweets
 API_TWEET_PARAMS = '&include_entities=true&tweet_mode=extended&include_ext_alt_text=true'
 
@@ -354,7 +356,7 @@ class Twitter(source.Source):
         if tweet.get('retweeted') or tweet.get('user', {}).get('protected'):
           continue
         elif retweet_calls >= RETWEET_LIMIT:
-          logging.warning(f"Hit Twitter's retweet rate limit ({RETWEET_LIMIT}) with more to fetch! Results will be incomplete!")
+          logger.warning(f"Hit Twitter's retweet rate limit ({RETWEET_LIMIT}) with more to fetch! Results will be incomplete!")
           break
 
         # store retweets in the 'retweets' field, which is handled by
@@ -852,7 +854,7 @@ class Twitter(source.Source):
         num = len(images)
         if num > MAX_MEDIA:
           images = images[:MAX_MEDIA]
-          logging.warning(f'Found {num} photos! Only using the first {MAX_MEDIA}: {images}')
+          logger.warning(f'Found {num} photos! Only using the first {MAX_MEDIA}: {images}')
         preview_content += '<br /><br />' + ' &nbsp; '.join(
           f"<img src=\"{img.get('url')}\" alt=\"{img.get('displayName', '')}\" />"
                                          for img in images)
@@ -924,7 +926,7 @@ class Twitter(source.Source):
                                 files={'media': image_resp},
                                 headers=headers)
       resp.raise_for_status()
-      logging.info(f'Got: {resp.text}')
+      logger.info(f'Got: {resp.text}')
       media_id = source.load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string']
       ids.append(media_id)
 
@@ -938,7 +940,7 @@ class Twitter(source.Source):
           json={'media_id': media_id, 'alt_text': {'text': alt}},
           headers=headers)
         resp.raise_for_status()
-        logging.info(f'Got: {resp.text}')
+        logger.info(f'Got: {resp.text}')
 
     return ids
 
@@ -1015,7 +1017,7 @@ class Twitter(source.Source):
       delay = min(info.get('check_after_secs', 0),
                   API_MEDIA_STATUS_MAX_DELAY_SECS)
       total_delay += delay
-      logging.info(f'video still processing, waiting {delay}s to check status')
+      logger.info(f'video still processing, waiting {delay}s to check status')
       sleep_fn(delay)
 
       params = urllib.parse.urlencode({
@@ -1109,7 +1111,7 @@ class Twitter(source.Source):
           code, body = util.interpret_http_exception(e)
           if code is None or int(code) not in (500, 501, 502):
             raise
-        logging.info('Twitter API call failed! Retrying...')
+        logger.info('Twitter API call failed! Retrying...')
 
     # last try. if it deadlines, let the exception bubble up.
     return request()
@@ -1140,7 +1142,7 @@ class Twitter(source.Source):
           parsed[2] = '/'.join(parts[:-2])
           base_obj['url'] = urllib.parse.urlunparse(parsed)
       except BaseException as e:
-        logging.error(
+        logger.error(
           "Couldn't parse object URL %s : %s. Falling back to default logic.",
           url, e)
 

@@ -52,6 +52,8 @@ from granary import (
 )
 from granary.source import GROUPS
 
+logger = logging.getLogger(__name__)
+
 ITEMS_PER_PAGE_MAX = 100
 ITEMS_PER_PAGE_DEFAULT = 10
 
@@ -144,14 +146,14 @@ def api(path):
     # other exceptions are handled by webutil.handlers.handle_exception(),
     # which uses interpret_http_exception(), etc.
 
-  logging.info(f'Got activities: {json_dumps(response, indent=2)}')
+  logger.info(f'Got activities: {json_dumps(response, indent=2)}')
 
   # fetch actor if necessary
   actor = response.get('actor')
   if not actor and request.args.get('format') == 'atom':
     # atom needs actor
     actor = src.get_actor(user_id) if src else {}
-    logging.info(f'Got actor: {json_dumps(actor, indent=2)}')
+    logger.info(f'Got actor: {json_dumps(actor, indent=2)}')
 
   return app.make_response(response, actor=actor, url=src.BASE_URL)
 

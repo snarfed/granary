@@ -18,6 +18,8 @@ import requests
 
 from . import source
 
+logger = logging.getLogger(__name__)
+
 API_ACCOUNT = '/api/v1/accounts/%s'
 API_ACCOUNT_STATUSES = '/api/v1/accounts/%s/statuses'
 API_BLOCKS = '/api/v1/blocks?limit=1000'
@@ -670,7 +672,7 @@ class Mastodon(source.Source):
       if num_media > MAX_MEDIA:
         videos = videos[:MAX_MEDIA]
         images = images[:max(MAX_MEDIA - len(videos), 0)]
-        logging.warning(f'Found %d media! Only using the first {MAX_MEDIA}: {videos + images!r}', num_media)
+        logger.warning(f'Found %d media! Only using the first {MAX_MEDIA}: {videos + images!r}', num_media)
 
       if preview:
         media_previews = [
@@ -737,7 +739,7 @@ class Mastodon(source.Source):
         try:
           results = self._get(API_SEARCH, params={'q': url, 'resolve': True})
         except requests.RequestException:
-          logging.info(f"{field} URL {url} doesn't look like Mastodon:")
+          logger.info(f"{field} URL {url} doesn't look like Mastodon:")
           continue
 
         for status in results.get('statuses', []):
@@ -783,7 +785,7 @@ class Mastodon(source.Source):
         fetch.raise_for_status()
         upload = self._post(API_MEDIA, files={'file': fetch.raw}, data=data)
 
-      logging.info(f'Got: {upload}')
+      logger.info(f'Got: {upload}')
       media_id = upload['id']
       ids.append(media_id)
       uploaded.add(url)

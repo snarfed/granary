@@ -27,6 +27,8 @@ from oauth_dropins.webutil.util import (
 
 from . import source
 
+logger = logging.getLogger(__name__)
+
 HENTRY = string.Template("""\
 <article class="$types">
   <span class="p-uid">$uid</span>
@@ -468,7 +470,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       if parsed:
         duration = int(parsed.total_seconds())
       else:
-        logging.debug(f'Unknown format for length or duration {duration!r}')
+        logger.debug(f'Unknown format for length or duration {duration!r}')
         duration = None
 
   stream = None
@@ -541,7 +543,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
             'longitude': float(lng),
           })
         except ValueError:
-          logging.debug(
+          logger.debug(
             'Could not convert latitude/longitude (%s, %s) to decimal', lat, lng)
 
   if as_type == 'activity':
@@ -1269,7 +1271,7 @@ def size_to_bytes(size):
   try:
     return humanfriendly.parse_size(size)
   except humanfriendly.InvalidSize:
-    logging.debug(f"Couldn't parse size {size!r}")
+    logger.debug(f"Couldn't parse size {size!r}")
 
 
 def prefix_image_urls(activity, prefix):

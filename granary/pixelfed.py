@@ -9,6 +9,8 @@ import urllib
 
 from . import mastodon
 
+logger = logging.getLogger(__name__)
+
 
 class Pixelfed(mastodon.Mastodon):
   """Pixelfed source class."""
@@ -29,6 +31,6 @@ class Pixelfed(mastodon.Mastodon):
 
   def get_activities_response(self, *args, **kwargs):
     if kwargs.get('fetch_mentions'):
-      logging.info("Ignoring fetch_mentions=True since Pixelfed doesn't yet support notifications")
+      logger.info("Ignoring fetch_mentions=True since Pixelfed doesn't yet support notifications")
       kwargs['fetch_mentions'] = False
     return super().get_activities_response(*args, **kwargs)

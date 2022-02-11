@@ -20,6 +20,8 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import source
 
+logger = logging.getLogger(__name__)
+
 # Since API v2.4, we need to explicitly ask for the fields we want from most API
 # endpoints with ?fields=...
 # https://developers.facebook.com/docs/apps/changelog#v2_4_changes
@@ -286,7 +288,7 @@ class Facebook(source.Source):
         user_id, activity_id = activity_id.split('_', 1)
       post = self.urlopen(API_OBJECT % (user_id, activity_id))
       if post.get('error'):
-        logging.warning(f"Couldn't fetch object {activity_id}: {post}")
+        logger.warning(f"Couldn't fetch object {activity_id}: {post}")
         posts = []
       else:
         posts = [post]
@@ -404,7 +406,7 @@ class Facebook(source.Source):
       if obj_id:
         existing = posts_by_obj_id.get(obj_id)
         if existing:
-          logging.warning(f"merging posts for object_id {obj_id}: overwriting {existing.get('id')} with {post.get('id')}!")
+          logger.warning(f"merging posts for object_id {obj_id}: overwriting {existing.get('id')} with {post.get('id')}!")
         posts_by_obj_id[obj_id] = post
 
     albums = None  # lazy loaded, maps facebook id to ActivityStreams object
@@ -484,13 +486,13 @@ class Facebook(source.Source):
       event = self.urlopen(API_EVENT % event_id)
 
     if not event or event.get('error'):
-      logging.warning(f"Couldn't fetch event {event_id}: {event}")
+      logger.warning(f"Couldn't fetch event {event_id}: {event}")
       return None
 
     event_owner_id = event.get('owner', {}).get('id')
     if owner_id and event_owner_id != owner_id:
       label = event.get('name') or event.get('id')
-      logging.info(f'Ignoring event {label} owned by user id {event_owner_id} instead of {owner_id}')
+      logger.info(f'Ignoring event {label} owned by user id {event_owner_id} instead of {owner_id}')
       return None
 
     return self.event_to_activity(event)
@@ -863,7 +865,7 @@ class Facebook(source.Source):
 
     Raises: urllib2.HTPPError
     """
-    logging.debug(f'Sending Facebook notification: {text!r}, {link}')
+    logger.debug(f'Sending Facebook notification: {text!r}, {link}')
     params = {
       'template': text,
       'href': link,
@@ -873,7 +875,7 @@ class Facebook(source.Source):
     }
     url = API_BASE + API_NOTIFICATION % user_id
     resp = util.urlopen(urllib.request.Request(url, data=urllib.parse.urlencode(params)))
-    logging.debug(f'Response: {resp.getcode()} {resp.read()}')
+    logger.debug(f'Response: {resp.getcode()} {resp.read()}')
 
   def post_url(self, post):
     """Returns a short Facebook URL for a post.
@@ -1012,7 +1014,7 @@ class Facebook(source.Source):
         base_obj['id'] = f"{author['numeric_id']}_{base_id}"
 
     except BaseException as e:
-      logging.warning(
+      logger.warning(
         "Couldn't parse object URL %s : %s. Falling back to default logic.",
         url, e, exc_info=True)
 
@@ -1770,7 +1772,7 @@ class Facebook(source.Source):
       parsed = dateutil.parser.parse(tag.get_text(strip=True), default=now_fn())
       return parsed.isoformat('T')
     except (ValueError, OverflowError):
-      logging.debug(f"Couldn't parse datetime string {tag!r}")
+      logger.debug(f"Couldn't parse datetime string {tag!r}")
 
   def _scrape_m(self, user_id=None, activity_id=None, fetch_replies=False,
                 fetch_likes=False):
@@ -1838,7 +1840,7 @@ class Facebook(source.Source):
     for post in soup.find_all(('article', 'div'), id=re.compile('u_0_.+')):
       permalink = post.find(href=re.compile(r'^/story\.php\?'))
       if not permalink:
-        logging.debug('Skipping one due to missing permalink')
+        logger.debug('Skipping one due to missing permalink')
         continue
 
       url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, permalink['href']))
@@ -1849,13 +1851,13 @@ class Facebook(source.Source):
 
       author = self._m_html_author(post)
       if not author:
-        logging.debug('Skipping due to missing author')
+        logger.debug('Skipping due to missing author')
         continue
       author['id'] = self.tag_uri(owner_id)
 
       footer = post.footer
       if not footer:
-        logging.debug('Skipping due to missing footer')
+        logger.debug('Skipping due to missing footer')
         continue
 
       public = footer and ('Public' in footer.stripped_strings or
@@ -2196,7 +2198,7 @@ class Facebook(source.Source):
     try:
       content = cls._div(tag, 0, 0)
     except IndexError:
-      logging.debug('Skipping due to non-post format (searching for content)')
+      logger.debug('Skipping due to non-post format (searching for content)')
       return ''
 
     if not content:
@@ -2443,7 +2445,7 @@ class Facebook(source.Source):
         fbid = blank
 
     if fbid == blank:
-      logging.error(f'Cowardly refusing Facebook id with unknown format: {id}')
+      logger.error(f'Cowardly refusing Facebook id with unknown format: {id}')
 
     return fbid
 
@@ -2483,7 +2485,7 @@ class Facebook(source.Source):
       post = self.urlopen(API_OBJECT % (user_id, post_id))
       resolved = post.get('object_id')
       if resolved:
-        logging.info(f'Resolved Facebook post id {post_id!r} to {resolved!r}.')
+        logger.info(f'Resolved Facebook post id {post_id!r} to {resolved!r}.')
         return str(resolved)
 
   def urlopen(self, url, _as=dict, **kwargs):
@@ -2509,7 +2511,7 @@ class Facebook(source.Source):
     try:
       return self._as(_as, source.load_json(body, url))
     except ValueError:  # couldn't parse JSON
-      logging.debug(f'Response: {resp.getcode()} {body}')
+      logger.debug(f'Response: {resp.getcode()} {body}')
       raise
 
   @staticmethod
@@ -2531,12 +2533,12 @@ class Facebook(source.Source):
       if isinstance(resp, dict):
         resp = resp.get('data', [])
       else:
-        logging.warning(f'Expected dict response with `data` field, got {resp}')
+        logger.warning(f'Expected dict response with `data` field, got {resp}')
 
     if isinstance(resp, type):
       return resp
     else:
-      logging.warning(f'Expected {type} response, got {resp}')
+      logger.warning(f'Expected {type} response, got {resp}')
       return type()
 
   def urlopen_batch(self, urls):

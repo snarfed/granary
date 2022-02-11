@@ -11,6 +11,8 @@ from oauth_dropins.webutil.util import json_loads
 import re
 import urllib.error, urllib.parse, urllib.request
 
+logger = logging.getLogger(__name__)
+
 API_BASE = 'https://api.meetup.com'
 API_RSVPS = '/%(urlname)s/events/%(event_id)s/rsvps'
 
@@ -51,7 +53,7 @@ class Meetup(source.Source):
       'event_id': event_id,
     }
     params = f'response={response}'
-    logging.debug(f'Creating RSVP={response} for {urlname} {event_id}')
+    logger.debug(f'Creating RSVP={response} for {urlname} {event_id}')
     return meetup.urlopen_bearer_token(url, self.access_token, data=params)
 
   def _create(self, obj, preview=False, include_link=source.OMIT_LINK, ignore_formatting=False):
@@ -104,7 +106,7 @@ class Meetup(source.Source):
 
     try:
       resp = self.post_rsvp(urlname, event_id, response)
-      logging.debug(f'Response: {resp.getcode()} {resp.read()}')
+      logger.debug(f'Response: {resp.getcode()} {resp.read()}')
       return source.creation_result(create_resp)
     except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)

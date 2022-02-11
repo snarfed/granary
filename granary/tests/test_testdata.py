@@ -10,6 +10,8 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from .. import as2, jsonfeed, microformats2, rss
 
+logger = logging.getLogger(__name__)
+
 
 def filepairs(ext1, ext2s):
   """Returns all matching pairs of filenames with the given extensions."""

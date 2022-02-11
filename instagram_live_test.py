@@ -15,6 +15,8 @@ from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
 from granary import instagram
 from granary.source import FRIENDS, SELF
 
+logger = logging.getLogger(__name__)
+
 USERNAME = 'snarfed'
 
 

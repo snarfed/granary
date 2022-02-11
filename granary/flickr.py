@@ -21,6 +21,8 @@ from oauth_dropins import flickr_auth
 
 from . import source
 
+logger = logging.getLogger(__name__)
+
 
 class Flickr(source.Source):
   """Flickr source class. See file docstring and Source class for details."""
@@ -120,7 +122,7 @@ class Flickr(source.Source):
     """
     # photo, comment, or like
     type = source.object_type(obj)
-    logging.debug(f'publishing object type {type} to Flickr')
+    logger.debug(f'publishing object type {type} to Flickr')
     link_text = f"(Originally published at: {obj.get('url')})"
 
     image_url = util.get_first(obj, 'image', {}).get('url')
@@ -498,7 +500,7 @@ class Flickr(source.Source):
           obj['urls'] = [{'value': u} for u in urls]
       except requests.RequestException as e:
         util.interpret_http_exception(e)
-        logging.warning(f'could not fetch user homepage {profile_url}')
+        logger.warning(f'could not fetch user homepage {profile_url}')
 
     return self.postprocess_object(obj)
 
@@ -514,7 +516,7 @@ class Flickr(source.Source):
     """
     if activity:
       # TODO: unify with instagram, maybe in source.get_comment()
-      logging.debug('Looking for comment in inline activity')
+      logger.debug('Looking for comment in inline activity')
       tag_id = self.tag_uri(comment_id)
       for reply in activity.get('object', {}).get('replies', {}).get('items', []):
         if reply.get('id') == tag_id:
@@ -524,11 +526,11 @@ class Flickr(source.Source):
       'photo_id': activity_id,
     })
     for comment in resp.get('comments', {}).get('comment', []):
-      logging.debug(f"checking comment id {comment.get('id')}")
+      logger.debug(f"checking comment id {comment.get('id')}")
       # comment id is the in form ###-postid-commentid
       if (comment.get('id') == comment_id or
           comment.get('id').split('-')[-1] == comment_id):
-        logging.debug(f'found comment matching {comment_id}')
+        logger.debug(f'found comment matching {comment_id}')
         return self.comment_to_object(comment, activity_id)
 
   def photo_to_activity(self, photo):

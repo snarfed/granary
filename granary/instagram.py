@@ -21,6 +21,8 @@ import requests
 
 from . import source
 
+logger = logging.getLogger(__name__)
+
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
 
@@ -214,7 +216,7 @@ class Instagram(source.Source):
       if not ignore_rate_limit and _last_rate_limited:
         retry = _last_rate_limited + RATE_LIMIT_BACKOFF
         if now < retry:
-          logging.info(f'Remembered rate limit at {_last_rate_limited}, waiting until {retry} to try again.')
+          logger.info(f'Remembered rate limit at {_last_rate_limited}, waiting until {retry} to try again.')
           assert _last_rate_limited_exc
           raise _last_rate_limited_exc
 
@@ -225,7 +227,7 @@ class Instagram(source.Source):
       except Exception as e:
         code, body = util.interpret_http_exception(e)
         if not ignore_rate_limit and code in ('302', '401', '429', '503'):
-          logging.info(f'Got rate limited! Remembering for {RATE_LIMIT_BACKOFF}')
+          logger.info(f'Got rate limited! Remembering for {RATE_LIMIT_BACKOFF}')
           _last_rate_limited = now
           _last_rate_limited_exc = e
         raise
@@ -281,7 +283,7 @@ class Instagram(source.Source):
         body_obj = {}
 
       if body_obj.get('meta', {}).get('error_type') == 'APINotFoundError':
-        logging.warning(body_obj.get('meta', {}).get('error_message'), exc_info=True)
+        logger.warning(body_obj.get('meta', {}).get('error_message'), exc_info=True)
       else:
         raise e
 
@@ -461,7 +463,7 @@ class Instagram(source.Source):
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 
-    logging.debug(
+    logger.debug(
       'instagram create request with type=%s, verb=%s, id=%s, url=%s',
       type, verb, base_id, base_url)
 
@@ -504,12 +506,12 @@ class Instagram(source.Source):
 
       if not base_id:
         shortcode = self.post_id(base_url)
-        logging.debug(f'looking up media by shortcode {shortcode}')
+        logger.debug(f'looking up media by shortcode {shortcode}')
         media_entry = self.urlopen(API_MEDIA_SHORTCODE_URL % shortcode) or {}
         base_id = media_entry.get('id')
         base_url = media_entry.get('link')
 
-      logging.info(f'posting like for media id id={base_id}, url={base_url}')
+      logger.info(f'posting like for media id id={base_id}, url={base_url}')
       # no response other than success/failure
       self.urlopen(API_MEDIA_LIKES_URL % base_id, data=urllib.parse.urlencode({
         'access_token': self.access_token
@@ -819,7 +821,7 @@ class Instagram(source.Source):
     if not matches:
       # Instagram sometimes returns 200 with incomplete HTML. often it stops at
       # the end of one of the <style> tags inside <head>. not sure why.
-      logging.warning('JSON script tag not found!')
+      logger.warning('JSON script tag not found!')
       return [], None
 
     # find media
@@ -1048,7 +1050,7 @@ class Instagram(source.Source):
       return json_loads(resp.text)
     except ValueError:
       msg = f"Couldn't decode response as JSON:\n{resp.text}"
-      logging.error(msg, exc_info=True)
+      logger.error(msg, exc_info=True)
       resp.status_code = 504
       raise requests.HTTPError('504 Bad response from Instagram\n' + msg,
                                response=resp)

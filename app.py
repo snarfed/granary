@@ -49,6 +49,7 @@ from granary.instagram import Instagram
 from granary.twitter import Twitter
 from granary.reddit import Reddit
 
+logger = logging.getLogger(__name__)
 
 INPUTS = (
   'activitystreams',
@@ -239,7 +240,7 @@ def url():
   title = None
   hfeed = None
   if mf2:
-    logging.info(f'Got mf2: {json_dumps(mf2, indent=2)}')
+    logger.info(f'Got mf2: {json_dumps(mf2, indent=2)}')
     def fetch_mf2_func(url):
       if util.domain_or_parent_in(urllib.parse.urlparse(url).netloc, SILO_DOMAINS):
         return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
@@ -273,10 +274,10 @@ def url():
     elif input == 'jsonfeed':
       activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
   except ValueError as e:
-    logging.warning('parsing input failed', exc_info=True)
+    logger.warning('parsing input failed', exc_info=True)
     return abort(400, f'Could not parse {final_url} as {input}: {str(e)}')
 
-  logging.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
+  logger.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
 
   return make_response(source.Source.make_activities_base_response(activities),
                        url=final_url, actor=actor, title=title, hfeed=hfeed)
@@ -380,7 +381,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
         raise BadRequest(f'Unsupported input data: {e}')
 
   except ValueError as e:
-    logging.warning('converting to output format failed', exc_info=True)
+    logger.warning('converting to output format failed', exc_info=True)
     return abort(400, f'Could not convert to {format}: {str(e)}')
 
 
@@ -395,7 +396,7 @@ def handle_discovery_errors(fn):
     try:
       return fn(*args, **kwargs)
     except (ValueError, requests.RequestException) as e:
-      logging.warning('', exc_info=True)
+      logger.warning('', exc_info=True)
       return redirect('/?' + urllib.parse.urlencode({'failure': str(e)}))
 
   return wrapped

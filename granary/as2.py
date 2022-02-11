@@ -11,6 +11,8 @@ import logging
 
 from oauth_dropins.webutil import util
 
+logger = logging.getLogger(__name__)
+
 # ActivityPub Content-Type details:
 # https://www.w3.org/TR/activitypub/#retrieving-objects
 CONTENT_TYPE = 'application/activity+json'
@@ -130,7 +132,7 @@ def from_as1(obj, type=None, context=CONTEXT):
           obj['duration'] = util.to_iso8601_duration(
             datetime.timedelta(seconds=duration))
         except TypeError:
-          logging.warning(f'Dropping unexpected duration {duration!r}; expected int, is {duration.__class__}')
+          logger.warning(f'Dropping unexpected duration {duration!r}; expected int, is {duration.__class__}')
 
   loc = obj.get('location')
   if loc:
@@ -228,7 +230,7 @@ def to_as1(obj, use_type=True):
   attrib = util.pop_list(obj, 'attributedTo')
   if attrib:
     if len(attrib) > 1:
-      logging.warning(f'ActivityStreams 1 only supports single author; dropping extra attributedTo values: {attrib[1:]}')
+      logger.warning(f'ActivityStreams 1 only supports single author; dropping extra attributedTo values: {attrib[1:]}')
     obj.setdefault('author', {}).update(to_as1(attrib[0]))
 
   return util.trim_nulls(obj)

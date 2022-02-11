@@ -21,6 +21,8 @@ from oauth_dropins.webutil import util
 
 from . import microformats2
 
+logger = logging.getLogger(__name__)
+
 # allowed ActivityStreams objectTypes for media enclosures
 ENCLOSURE_TYPES = {'audio', 'video'}
 
@@ -141,7 +143,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       if (att.get('objectType') in ENCLOSURE_TYPES or
           mime and mime.split('/')[0] in ENCLOSURE_TYPES):
         if item_has_enclosure:
-          logging.info(f'Warning: item {id} already has an RSS enclosure, skipping additional enclosure {url}')
+          logger.info(f'Warning: item {id} already has an RSS enclosure, skipping additional enclosure {url}')
           continue
 
         item_has_enclosure = feed_has_enclosure = True

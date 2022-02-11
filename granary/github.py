@@ -19,6 +19,8 @@ import requests
 
 from . import source
 
+logger = logging.getLogger(__name__)
+
 REST_BASE = 'https://api.github.com'
 REST_ISSUE = REST_BASE + '/repos/%s/%s/issues/%s'
 REST_CREATE_ISSUE = REST_BASE + '/repos/%s/%s/issues'
@@ -280,7 +282,7 @@ class GitHub(source.Source):
 
     errs = result.get('errors')
     if errs:
-      logging.warning(result)
+      logger.warning(result)
       raise ValueError('\n'.join(e.get('message') for e in errs))
 
     return result['data']
@@ -371,11 +373,11 @@ class GitHub(source.Source):
         id = notif.get('id')
         subject_url = notif.get('subject').get('url')
         if not subject_url:
-          logging.info(f'Skipping thread {id}, missing subject!')
+          logger.info(f'Skipping thread {id}, missing subject!')
           continue
         split = subject_url.split('/')
         if len(split) <= 2 or split[-2] not in ('issues', 'pulls'):
-          logging.info(
+          logger.info(
             'Skipping thread %s with subject %s, only issues and PRs right now',
             id, subject_url)
           continue

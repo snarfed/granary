@@ -23,6 +23,8 @@ import html2text
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+logger = logging.getLogger(__name__)
+
 APP = '@app'
 ME = '@me'
 SELF = '@self'
@@ -112,7 +114,7 @@ def load_json(body, url):
     return json_loads(body)
   except (ValueError, TypeError):
     msg = f'Non-JSON response! Returning synthetic HTTP 502.\n{body}'
-    logging.error(msg)
+    logger.error(msg)
     raise urllib.error.HTTPError(url, 502, msg, {}, None)
 
 
@@ -779,7 +781,7 @@ class Source(object, metaclass=SourceMeta):
       if redirected_from and include_redirect_sources:
         which.add(redirected_from)
 
-    logging.info(f'Original post discovery found original posts {originals}, mentions {mentions}')
+    logger.info(f'Original post discovery found original posts {originals}, mentions {mentions}')
     return originals, mentions
 
   @staticmethod
@@ -891,7 +893,7 @@ class Source(object, metaclass=SourceMeta):
       a_val = a.get(field)
       if b_val != a_val and (a_val or b_val):
         if log:
-          logging.debug(f'{label}[{field}] {b_val} => {a_val}')
+          logger.debug(f'{label}[{field}] {b_val} => {a_val}')
         return True
 
     obj_b = before.get('object', {})

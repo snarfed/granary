@@ -16,6 +16,8 @@ from .. import instagram
 from ..instagram import HTML_BASE_URL, Instagram, HEADERS
 from .. import source
 
+logger = logging.getLogger(__name__)
+
 
 def tag_uri(name):
   return util.tag_uri('instagram.com', name)
