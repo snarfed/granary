@@ -2291,6 +2291,9 @@ class Facebook(source.Source):
       return {}
 
     author = author.find('a')
+    url = author.get('href')
+    if not url:
+      return {}
     actor = self._profile_url_to_actor(author['href'])
     actor['displayName'] = author.get_text(' ', strip=True)
 

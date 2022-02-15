@@ -301,6 +301,8 @@ Changelog
   * Handle error when `type` isn't a string.
 * Reddit:
   * Implement `get_activities()` to fetch posts by the current user or a user specified with `user_id`.
+* Facebook:
+  * Miscellaneous scraping bug fixes.
 
 ### 3.2 - 2021-09-15
 * `Source.original_post_discovery`: add new `include_reserved_hosts` kwarg, defaults to `True`.

@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 import urllib.parse
 
+from bs4.element import NavigableString
 from mox3 import mox
 import oauth_dropins.facebook
 from oauth_dropins.webutil import testutil
@@ -3487,3 +3488,8 @@ cc Sam G, Michael M<br />""", preview.description)
     Based on: https://mbasic.facebook.com/snarfed.org
     """
     self.assertIsNone(self.fb.scraped_to_actor('<html><body></body></html>'))
+
+  def test_m_html_author_no_profile_url(self):
+    soup = util.parse_html(MBASIC_HTML_POST)
+    del soup.strong.a['href']
+    self.assert_equals({}, self.fb._m_html_author(soup))
