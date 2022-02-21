@@ -61,7 +61,7 @@ proto-plus==1.20.1
 protobuf==3.19.4
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pymemcache==3.5.0
+pymemcache==3.5.1
 pyparsing==3.0.7
 python-dateutil==2.8.2
 python-tumblpy==1.1.4
