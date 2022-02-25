@@ -303,6 +303,7 @@ Changelog
   * Implement `get_activities()` to fetch posts by the current user or a user specified with `user_id`.
 * Facebook:
   * Miscellaneous scraping bug fixes.
+  * Add `log_html` kwarg to `get_activities` for scraping; defaults to False.
 
 ### 3.2 - 2021-09-15
 * `Source.original_post_discovery`: add new `include_reserved_hosts` kwarg, defaults to `True`.

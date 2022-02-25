@@ -276,7 +276,8 @@ class Facebook(source.Source):
 
     if self.scrape:
       return self._scrape_m(user_id=user_id, activity_id=activity_id,
-                            fetch_replies=fetch_replies, fetch_likes=fetch_likes)
+                            fetch_replies=fetch_replies, fetch_likes=fetch_likes,
+                            **kwargs)
 
     activities = []
 
@@ -1775,7 +1776,7 @@ class Facebook(source.Source):
       logger.debug(f"Couldn't parse datetime string {tag!r}")
 
   def _scrape_m(self, user_id=None, activity_id=None, fetch_replies=False,
-                fetch_likes=False):
+                fetch_likes=False, log_html=False):
     """Scrapes a user's timeline or a post and converts it to activities.
 
     Args:
@@ -1783,6 +1784,7 @@ class Facebook(source.Source):
       activity_id: string
       fetch_replies: boolean
       fetch_likes: boolean
+      log_html: boolean
 
     Returns:
       dict activities API response
@@ -1798,6 +1800,8 @@ class Facebook(source.Source):
         'Cookie': cookie,
         'User-Agent': SCRAPE_USER_AGENT,
       })
+      if log_html:
+        logging.info(resp.text)
       resp.raise_for_status()
       return resp
 
