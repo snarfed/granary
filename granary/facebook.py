@@ -1776,7 +1776,7 @@ class Facebook(source.Source):
       logger.debug(f"Couldn't parse datetime string {tag!r}")
 
   def _scrape_m(self, user_id=None, activity_id=None, fetch_replies=False,
-                fetch_likes=False, log_html=False):
+                fetch_likes=False, **kwargs):
     """Scrapes a user's timeline or a post and converts it to activities.
 
     Args:
@@ -1784,7 +1784,7 @@ class Facebook(source.Source):
       activity_id: string
       fetch_replies: boolean
       fetch_likes: boolean
-      log_html: boolean
+      kwargs: passed through to scraped_to_activit[y/ies]
 
     Returns:
       dict activities API response
@@ -1800,17 +1800,15 @@ class Facebook(source.Source):
         'Cookie': cookie,
         'User-Agent': SCRAPE_USER_AGENT,
       })
-      if log_html:
-        logging.info(resp.text)
       resp.raise_for_status()
       return resp
 
     if activity_id:
       resp = get(M_HTML_POST_URL, activity_id, user_id)
-      activities = [self.scraped_to_activity(resp.text)[0]]
+      activities = [self.scraped_to_activity(resp.text, **kwargs)[0]]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
-      activities, _ = self.scraped_to_activities(resp.text)
+      activities, _ = self.scraped_to_activities(resp.text, **kwargs)
       if fetch_replies:
         # fetch and convert individual post permalinks
         # TODO: cache?
@@ -1829,16 +1827,19 @@ class Facebook(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def scraped_to_activities(self, scraped, **kwargs):
+  def scraped_to_activities(self, scraped, log_html=False, **kwargs):
     """Converts HTML from an mbasic.facebook.com timeline to AS1 activities.
 
     Args:
       scraped: str, HTML
+      log_html: boolean
       kwargs: unused
 
     Returns: tuple: ([AS activities], AS logged in actor (ie viewer))
     """
     soup = util.parse_html(scraped)
+    if log_html:
+      logging.info(soup.prettify())
 
     activities = []
     for post in soup.find_all(('article', 'div'), id=re.compile('u_0_.+')):
@@ -1941,16 +1942,19 @@ class Facebook(source.Source):
 
     return util.trim_nulls(activities), None
 
-  def scraped_to_activity(self, scraped):
+  def scraped_to_activity(self, scraped, log_html=False, **kwargs):
     """Converts HTML from an mbasic.facebook.com post page to an AS1 activity.
 
     Args:
       scraped: str, HTML from an mbasic.facebook.com post permalink
+      log_html: boolean
       kwargs: unused
 
     Returns: tuple: (dict AS activity or None, AS logged in actor (ie viewer))
     """
     soup = util.parse_html(scraped)
+    if log_html:
+      logging.info(soup.prettify())
 
     view = soup.find(id='m_story_permalink_view') or soup.find(id='MPhotoContent')
     if not view:
