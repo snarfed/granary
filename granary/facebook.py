@@ -1848,6 +1848,11 @@ class Facebook(source.Source):
         logger.debug('Skipping one due to missing permalink')
         continue
 
+      header = post.find('header')
+      if header and 'Suggested for you' in header.stripped_strings:
+        logger.debug('Skipping "Suggested for you"')
+        continue
+
       url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, permalink['href']))
       query = urllib.parse.urlparse(url).query
       parsed = urllib.parse.parse_qs(query)
