@@ -305,6 +305,8 @@ Changelog
   * Skip "Suggested for you" posts.
   * Add `log_html` kwarg to `get_activities`; defaults to False.
   * Miscellaneous bug fixes.
+* JSONFeed:
+  * Handle malformed `items.author` element.
 
 ### 3.2 - 2021-09-15
 * `Source.original_post_discovery`: add new `include_reserved_hosts` kwarg, defaults to `True`.

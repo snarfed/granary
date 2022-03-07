@@ -34,19 +34,14 @@ from werkzeug.exceptions import BadRequest
 
 import app
 from granary import (
-  as2,
-  atom,
   facebook,
   flickr,
   github,
   instagram,
-  jsonfeed,
   mastodon,
-  microformats2,
   pixelfed,
   meetup,
   reddit,
-  rss,
   source,
   twitter,
 )

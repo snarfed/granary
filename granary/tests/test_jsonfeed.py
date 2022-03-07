@@ -120,3 +120,11 @@ class JsonFeedTest(testutil.TestCase):
         'document': 'http://blogs.adobe.com/adobemarketingcloudjapan/2017/07/11/adi-voice-report/',
         'iconUrl': 'http://blogs.adobe.com/adobemarketingcloudjapan/files/2017/07/1046x616_Voice-Assistants-Are-Poised-To-Be-The-Next-Tech-Disruptor-Static-1024x603.jpg'
       }])
+
+  def test_author_not_dict(self):
+    """Based on output from https://rss2json.com/
+
+    https://console.cloud.google.com/errors/detail/COO65cat_4niTQ?project=granary-demo
+    """
+    with self.assertRaises(ValueError):
+      jsonfeed_to_activities({'items': [{'author': 'Ms. Foo'}]})

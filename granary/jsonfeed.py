@@ -126,7 +126,7 @@ def jsonfeed_to_activities(jsonfeed):
 
   def attachment(jf):
     if not hasattr(jf, 'get'):
-      raise ValueError(f'Expected attachment to be dict; got {jf}')
+      raise ValueError(f'Expected attachment to be dict; got {jf!r}')
     url = jf.get('url')
     type = jf.get('mime_type', '').split('/')[0]
     as1 = {
@@ -139,21 +139,26 @@ def jsonfeed_to_activities(jsonfeed):
       as1['url'] = url
     return as1
 
-  activities = [{'object': {
-    'objectType': 'article' if item.get('title') else 'note',
-    'title': item.get('title'),
-    'summary': item.get('summary'),
-    'content': util.get_first(item, 'content_html') or util.get_first(item, 'content_text'),
-    'id': str(item.get('id') or ''),
-    'published': item.get('date_published'),
-    'updated': item.get('date_modified'),
-    'url': item.get('url'),
-    'image': [{'url': item.get('image')}],
-    'author': {
-      'displayName': item.get('author', {}).get('name'),
-      'image': [{'url': item.get('author', {}).get('avatar')}]
-    },
-    'attachments': [attachment(a) for a in item.get('attachments', [])],
-  }} for item in jsonfeed.get('items', [])]
+  activities = []
+  for item in jsonfeed.get('items', []):
+    author = item.get('author', {})
+    if not isinstance(author, dict):
+      raise ValueError(f'Expected author to be dict; got {author!r}')
+    activities.append({'object': {
+      'objectType': 'article' if item.get('title') else 'note',
+      'title': item.get('title'),
+      'summary': item.get('summary'),
+      'content': util.get_first(item, 'content_html') or util.get_first(item, 'content_text'),
+      'id': str(item.get('id') or ''),
+      'published': item.get('date_published'),
+      'updated': item.get('date_modified'),
+      'url': item.get('url'),
+      'image': [{'url': item.get('image')}],
+      'author': {
+        'displayName': author.get('name'),
+        'image': [{'url': author.get('avatar')}]
+      },
+      'attachments': [attachment(a) for a in item.get('attachments', [])],
+    }})
 
   return (util.trim_nulls(activities), util.trim_nulls(actor))
