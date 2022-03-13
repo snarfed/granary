@@ -60,6 +60,7 @@ INPUTS = (
   'json-mf2',
   'jsonfeed',
   'mf2-json',
+  'rss',
 )
 SILOS = [
   'flickr',
@@ -274,6 +275,13 @@ def url():
                     for item in mf2.get('items', [])]
     elif input == 'jsonfeed':
       activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
+    elif input == 'rss':
+      try:
+        activities = rss.to_activities(resp.text)
+      except ElementTree.ParseError as e:
+        raise BadRequest(f'Could not parse {final_url} as XML: {e}')
+      except ValueError as e:
+        raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
   except ValueError as e:
     logger.warning('parsing input failed', exc_info=True)
     return abort(400, f'Could not parse {final_url} as {input}: {str(e)}')

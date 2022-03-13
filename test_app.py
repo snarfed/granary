@@ -2,10 +2,12 @@
 """Unit tests for app.py.
 """
 import copy
+import os.path
 import socket
 import xml.sax.saxutils
 
 from oauth_dropins.webutil import testutil, util
+from oauth_dropins.webutil.util import json_loads
 import requests
 
 from app import app, cache
@@ -175,6 +177,12 @@ foo ☕ bar
 
 </entry>
 """
+
+
+RSS_CONTENT = util.read(os.path.join(
+  os.path.dirname(__file__), 'granary/tests/testdata/feed_with_note.rss.xml'))
+RSS_ACTIVITIES = json_loads(util.read(os.path.join(
+  os.path.dirname(__file__), 'granary/tests/testdata/feed_with_note.as-from-rss.json')))
 
 
 class AppTest(testutil.TestCase):
@@ -531,6 +539,37 @@ not atom!
     self.assert_equals(400, resp.status_code)
     self.assertIn('Could not parse http://feed as Atom: ',
                   resp.get_data(as_text=True))
+
+  def test_url_rss_to_as1(self):
+    self.expect_requests_get('http://feed', RSS_CONTENT)
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://feed&input=rss&output=as1')
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals(RSS_ACTIVITIES, [a['object'] for a in resp.json['items']])
+
+  def test_url_rss_to_as1_parse_error(self):
+    """feedparser.parse returns empty on bad input RSS."""
+    self.expect_requests_get('http://feed', 'not valid xml')
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://feed&input=rss&output=as1')
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals([], resp.json['items'])
+
+  def test_url_rss_to_as1_not_rss(self):
+    """feedparser.parse returns empty on bad input RSS."""
+    self.expect_requests_get('http://feed', """\
+<?xml version="1.0" encoding="UTF-8"?>
+<atom>
+not RSS!
+</atom>""")
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://feed&input=rss&output=as1')
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals([], resp.json['items'])
 
   def test_url_as1_to_atom_reader_false(self):
     """reader=false should omit location in Atom output.
