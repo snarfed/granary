@@ -15,7 +15,9 @@ from datetime import datetime, time
 import logging
 import mimetypes
 
+import dateutil.parser
 from feedgen.feed import FeedGenerator
+import feedparser
 import mf2util
 from oauth_dropins.webutil import util
 
@@ -171,3 +173,48 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     fg.lastBuildDate(latest)
 
   return fg.rss_str(pretty=True).decode('utf-8')
+
+
+def to_activities(rss):
+  """Converts an RSS feed to ActivityStreams 1 activities.
+
+  Args:
+    rss: unicode string, RSS document with top-level <rss> element
+
+  Returns:
+    list of ActivityStreams activity dicts
+  """
+  # TODO: channel and author info?
+  parsed = feedparser.parse(rss)
+  activities = []
+
+  def iso_datetime(field):
+    # check for existence because feedparser returns 'published' for 'updated'
+    # when you [] or .get() it.
+    if field in entry:
+      try:
+        return dateutil.parser.parse(entry[field]).isoformat()
+      except (TypeError, dateutil.parser.ParserError):
+        return None
+
+  for entry in parsed.get('entries', []):
+    id = entry.get('id')
+    uri = entry.get('uri') or entry.get('link')
+    activities.append({
+      'objectType': 'activity',
+      'verb': 'create',
+      'id': id,
+      'url': uri,
+      'object': {
+        'objectType': 'article',
+        'id': id or uri,
+        'url': uri,
+        'displayName': entry.get('title'),
+        'content': entry.get('content') or entry.get('description'),
+        'published': iso_datetime('published'),
+        'updated': iso_datetime('updated'),
+        'tags': [{'displayName': tag.get('term') for tag in entry.get('tags', [])}],
+      },
+    })
+
+  return util.trim_nulls(activities)

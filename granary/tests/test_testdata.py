@@ -30,7 +30,7 @@ def read_json(filename):
   try:
     with open(filename, encoding='utf-8') as f:
       # note that ujson allows embedded newlines in strings, which we have in eg
-      # note_with_whitespace.as.json and frriends.
+      # note_with_whitespace.as.json and friends.
       return json_loads(f.read())
   except Exception as e:
     e.args = (f'{filename}: ',) + e.args
@@ -88,6 +88,9 @@ def rss_from_activities(activities):
     activities, actor=ACTOR, title='Stuff', feed_url='http://site/feed',
     home_page_url='http://site/', hfeed=hfeed)
 
+def rss_to_objects(feed):
+  return [a['object'] for a in rss.to_activities(feed)]
+
 # source extension, destination extension, conversion function, exclude prefix.
 # destinations take precedence in the order they appear. only the first (source,
 # dest) pair for a given prefix is tested. this is how eg mf2-from-as.json gets
@@ -110,6 +113,7 @@ mappings = (
   ('as.json', ['as2-from-as.json', 'as2.json'], as2.from_as1, ()),
   ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, ()),
   ('as.json', ['rss.xml'], rss_from_activities, ()),
+  ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, ()),
 )
 
 test_funcs = {}
