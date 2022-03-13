@@ -190,7 +190,7 @@ def to_activities(rss):
 
   def iso_datetime(field):
     # check for existence because feedparser returns 'published' for 'updated'
-    # when you [] or .get() it.
+    # when you [] or .get() it
     if field in entry:
       try:
         return dateutil.parser.parse(entry[field]).isoformat()
@@ -200,6 +200,18 @@ def to_activities(rss):
   for entry in parsed.get('entries', []):
     id = entry.get('id')
     uri = entry.get('uri') or entry.get('link')
+
+    attachments = []
+    for e in entry.get('enclosures', []):
+      url = e.get('href')
+      if url:
+        mime = e.get('type') or mimetypes.guess_type(url)[0] or ''
+        type = mime.split('/')[0]
+        attachments.append({
+          'stream': {'url': url},
+          'objectType': type if type in ENCLOSURE_TYPES else None,
+        })
+
     activities.append({
       'objectType': 'activity',
       'verb': 'create',
@@ -214,6 +226,8 @@ def to_activities(rss):
         'published': iso_datetime('published'),
         'updated': iso_datetime('updated'),
         'tags': [{'displayName': tag.get('term') for tag in entry.get('tags', [])}],
+        'attachments': attachments,
+        'stream': [a['stream'] for a in attachments],
       },
     })
 

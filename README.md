@@ -293,6 +293,8 @@ Changelog
 ### 3.3 - unreleased
 
 * Drop Python 3.5 support. Python 3.6 is now the minimum required version.
+* RSS:
+  * Add support for RSS input via new `rss.to_activities` function.
 * Add new `include_shares` kwarg to `get_activities`, implemented for Twitter and Mastodon. Defaults to `True`. If `False`, shares (retweets in Twitter, boosts in Mastodon) will be discarded and not returned. Also add a corresponding `shares` query param to the REST API.
 * Instagram (scraping):
   * Handle media items with no `user` object, add new fetch for comments.
