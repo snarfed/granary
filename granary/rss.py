@@ -197,6 +197,9 @@ def to_activities(rss):
       except (TypeError, dateutil.parser.ParserError):
         return None
 
+  def as_int(val):
+    return int(val) if util.is_int(val) else val
+
   for entry in parsed.get('entries', []):
     id = entry.get('id')
     uri = entry.get('uri') or entry.get('link')
@@ -208,7 +211,11 @@ def to_activities(rss):
         mime = e.get('type') or mimetypes.guess_type(url)[0] or ''
         type = mime.split('/')[0]
         attachments.append({
-          'stream': {'url': url},
+          'stream': {
+            'url': url,
+            'size': as_int(e.get('length')),
+            'duration': as_int(entry.get('itunes_duration')),
+          },
           'objectType': type if type in ENCLOSURE_TYPES else None,
         })
 
