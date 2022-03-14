@@ -246,7 +246,7 @@ def to_activities(rss):
         'id': id or uri,
         'url': uri,
         'displayName': entry.get('title'),
-        'content': entry.get('content') or entry.get('description'),
+        'content': entry.get('content', [{}])[0].get('value') or entry.get('description'),
         'published': iso_datetime('published'),
         'updated': iso_datetime('updated'),
         'author': author,
