@@ -1,0 +1,19 @@
+[{
+  "objectType": "article",
+  "content": "foo",
+  "author": {
+    "displayName": "Stuff",
+    "url": "http://site/",
+    "summary": "some stuff by meee",
+    "image": [{
+      "url": "http://example.com/martin/image"
+    }]
+  }
+}, {
+  "objectType": "article",
+  "content": "bar",
+  "author": {
+    "displayName": "Ms Alice",
+    "email": "alice@example.com"
+  }
+}]

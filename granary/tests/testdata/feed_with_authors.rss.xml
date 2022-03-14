@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+<channel>
+  <title>Stuff</title>
+  <link>http://site/</link>
+  <description>some stuff by meee</description>
+  <docs>http://www.rssboard.org/rss-specification</docs>
+  <generator>granary</generator>
+  <image>
+    <url>http://example.com/martin/image</url>
+    <title>Stuff</title>
+    <link>http://site/</link>
+  </image>
+  <language>en</language>
+  <lastBuildDate>Tue, 04 Dec 2012 00:00:00 +0000</lastBuildDate>
+
+  <item>
+    <description>foo</description>
+  </item>
+
+  <item>
+    <description>bar</description>
+    <author>alice@example.com</author>
+    <dc:creator>Ms Alice</dc:creator>
+  </item>
+
+</channel>
+</rss>

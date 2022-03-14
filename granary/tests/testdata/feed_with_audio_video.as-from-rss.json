@@ -17,7 +17,8 @@
     "url": "http://a/vidjo.mov",
     "duration": 428,
     "size": 8880000
-  }]
+  }],
+  "author": {"displayName": "-"}
 },
 {
   "id": "http://podcast/post",
@@ -41,5 +42,6 @@
     "url": "http://a/podcast.mp3",
     "duration": 328,
     "size": 7770000
-  }]
+  }],
+  "author": {"displayName": "-"}
 }]

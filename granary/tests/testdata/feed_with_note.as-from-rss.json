@@ -4,5 +4,6 @@
   "objectType": "article",
   "displayName": "something i have to say. and just long enough that it has to be...",
   "content": "something i have to say. and just long enough that it has to be ellipsized.\n<p>\n<a class=\"link\" href=\"http://a/note\">\n<img alt=\"\" class=\"u-photo\" src=\"http://pic/1\" />\n</a>\n</p>\n<p>\n<a class=\"link\" href=\"http://a/note\">\n<img alt=\"\" class=\"u-photo\" src=\"http://pic/2\" />\n</a>\n</p>",
-  "published": "2012-12-04T00:00:00+00:00"
+  "published": "2012-12-04T00:00:00+00:00",
+  "author": {"displayName": "-"}
 }]

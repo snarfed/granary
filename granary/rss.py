@@ -184,9 +184,16 @@ def to_activities(rss):
   Returns:
     list of ActivityStreams activity dicts
   """
-  # TODO: channel and author info?
   parsed = feedparser.parse(rss)
   activities = []
+
+  feed = parsed.get('feed', {})
+  actor = {
+    'displayName': feed.get('title'),
+    'url': feed.get('link'),
+    'summary': feed.get('info') or feed.get('description'),
+    'image': [{'url': feed.get('image', {}).get('href') or feed.get('logo')}],
+  }
 
   def iso_datetime(field):
     # check for existence because feedparser returns 'published' for 'updated'
@@ -219,11 +226,21 @@ def to_activities(rss):
           'objectType': type if type in ENCLOSURE_TYPES else None,
         })
 
+    detail = entry.get('author_detail', {})
+    author = util.trim_nulls({
+      'displayName': detail.get('name') or entry.get('author'),
+      'url': detail.get('href'),
+      'email': detail.get('email'),
+    })
+    if not author:
+      author = actor
+
     activities.append({
       'objectType': 'activity',
       'verb': 'create',
       'id': id,
       'url': uri,
+      'actor': author,
       'object': {
         'objectType': 'article',
         'id': id or uri,
@@ -232,6 +249,7 @@ def to_activities(rss):
         'content': entry.get('content') or entry.get('description'),
         'published': iso_datetime('published'),
         'updated': iso_datetime('updated'),
+        'author': author,
         'tags': [{'displayName': tag.get('term') for tag in entry.get('tags', [])}],
         'attachments': attachments,
         'stream': [a['stream'] for a in attachments],
