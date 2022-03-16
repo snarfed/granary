@@ -60,12 +60,13 @@ class InstagramTestLive(unittest.TestCase):
     return [t for t in item['object'].get('tags', []) if t.get('verb') == 'like']
 
   def check_item(self, item):
-    self.assertTrue(item['actor'])
+    self.assertTrue(item.get('actor'), item)
     for field in 'id', 'url', 'attachments', 'author', 'image':
-      self.assertIn(field, item['object'], field)
+      self.assertIn(field, item.get('object'), item)
 
 
 if __name__ == '__main__':
+  logging.basicConfig()
   if '--debug' in sys.argv:
     sys.argv.remove('--debug')
     logging.getLogger().setLevel(logging.DEBUG)
