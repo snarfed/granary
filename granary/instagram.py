@@ -23,14 +23,6 @@ from . import source
 
 logger = logging.getLogger(__name__)
 
-scrapes = 0
-
-def write_scrape(resp, ext):
-  global scrapes
-  with open(f'/Users/ryan/ig.{scrapes}.{ext}', 'w') as f:
-    f.write(resp.text)
-  scrapes += 1
-
 # Maps Instagram media type to ActivityStreams objectType.
 OBJECT_TYPES = {'image': 'photo', 'video': 'video'}
 
@@ -329,9 +321,6 @@ class Instagram(source.Source):
       get_kwargs['headers'] = {'Cookie': cookie, **HEADERS}
 
     resp = util.requests_get(url, **get_kwargs)
-
-    write_scrape(resp, 'html')
-
     location = resp.headers.get('Location', '')
     if ((cookie and 'not-logged-in' in resp.text) or
         (resp.status_code in (301, 302) and
@@ -373,7 +362,6 @@ class Instagram(source.Source):
           if not activity_id and not shortcode:
             url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
             resp = util.requests_get(url, **get_kwargs)
-            write_scrape(resp, 'html')
             resp.raise_for_status()
           # otherwise resp is a fetch of just this activity; reuse it
 
@@ -1056,7 +1044,6 @@ class Instagram(source.Source):
       headers = {'Cookie': cookie, **HEADERS}
 
     resp = util.requests_get(url, allow_redirects=False, headers=headers)
-    write_scrape(resp, 'json')
     resp.raise_for_status()
 
     try:
