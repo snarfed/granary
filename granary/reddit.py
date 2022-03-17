@@ -42,7 +42,7 @@ class Reddit(source.Source):
       self.reddit_api = praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
                                     client_secret=reddit.REDDIT_APP_SECRET,
                                     refresh_token=self.refresh_token,
-                                    user_agent='granary (https://granary.io/)')
+                                    user_agent=util.user_agent)
       self.reddit_api.read_only = True
 
     return self.reddit_api
