@@ -969,7 +969,7 @@ class Instagram(source.Source):
     obj_id = obj.get('id') or activity.get('id')
 
     replies = []
-    for cmt in scraped.get('comments', []):
+    for cmt in scraped.get('comments') or []:
       cmt_id = self.tag_uri(cmt.get('pk'))
       content = cmt.get('text') or ''
       reply = {
