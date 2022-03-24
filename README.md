@@ -290,9 +290,14 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 3.3 - unreleased
+### 4.0 - 2022-03-23
+
+_Breaking changes:_
 
 * Drop Python 3.5 support. Python 3.6 is now the minimum required version.
+
+_Non-breaking changes:_
+
 * RSS:
   * Add support for RSS input via new `rss.to_activities` function.
 * Add new `include_shares` kwarg to `get_activities`, implemented for Twitter and Mastodon. Defaults to `True`. If `False`, shares (retweets in Twitter, boosts in Mastodon) will be discarded and not returned. Also add a corresponding `shares` query param to the REST API.
