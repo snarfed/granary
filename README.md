@@ -290,6 +290,8 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 4.1 - unreleased
+
 ### 4.0 - 2022-03-23
 
 _Breaking changes:_
