@@ -1,0 +1,6 @@
+{
+  "objectType": "activity",
+  "verb": "like",
+  "object": {"url": "http://example.com/original/post"},
+  "summary": "something special"
+}
