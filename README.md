@@ -292,6 +292,11 @@ Changelog
 ---
 ### 4.1 - unreleased
 
+- _Non-breaking changes_
+
+* Twitter
+  * Correctly trim Twitter alt text
+
 ### 4.0 - 2022-03-23
 
 _Breaking changes:_
