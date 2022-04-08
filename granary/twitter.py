@@ -932,7 +932,7 @@ class Twitter(source.Source):
 
       alt = image.get('displayName')
       if alt:
-        alt = util.ellipsize(alt, chars=MAX_ALT_LENGTH)
+        alt = util.ellipsize(alt, words=1000, chars=MAX_ALT_LENGTH)
         headers = twitter_auth.auth_header(
           API_MEDIA_METADATA, self.access_token_key, self.access_token_secret, 'POST')
         resp = util.requests_post(
