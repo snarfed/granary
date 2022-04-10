@@ -2701,7 +2701,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test preview
     preview = self.twitter.preview_create(obj)
     self.assertEqual('<span class="verb">tweet</span>:', preview.description)
-    self.assertEqual('<br /><br /><img src="http://my/picture.png" alt="1a871f1abf22f3963bcf65f9bf9084d85c70d23f59d36b21c9776cf4e8e5919150e753e20c39afb353ca0253062794f931468e48c111fdc9549eba886717f8578ba92ef237b762663195ba73ab61339795a7e902e90548813c77cfa9381e459ec0dd04d6122b00e75906cf52363a1f61d6c70df6631020bc102e28c4c9895302fbcc19f4912c5a71334d09c84d279ec9deb1e6b23cb82a5ed7145c9d6320c04dbc2f0a9a0b99a61fd4e807782af4e13567db8759be6e5543c9da3c9ba72ca29266fca72652d29d961939961fb1acd622d0b and this extra bit will be trimmed" />',
+    self.assertEqual('<br /><br /><img src="http://my/picture.png" alt="1a871f1abf22f3963bcf65f9bf9084d85c70d23f59d36b21c9776cf4e8e5919150e753e20c39afb353ca0253062794f931468e48c111fdc9549eba886717f8578ba92ef237b762663195ba73ab61339795a7e902e90548813c77cfa9381e459ec0dd04d6122b00e75906cf52363a1f61d6c70df6631020bc102e28c4c9895302fbcc19f4912c5a71334d09c84d279ec9deb1e6b23cb82a5ed7145c9d6320c04dbc2f0a9a0b99a61fd4e807782af4e13567db8759be6e5543c9da3c9ba72ca29266fca72652d29d961939961fb1acd622d..." />',
                      preview.content)
 
     # test create

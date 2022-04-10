@@ -856,7 +856,7 @@ class Twitter(source.Source):
           images = images[:MAX_MEDIA]
           logger.warning(f'Found {num} photos! Only using the first {MAX_MEDIA}: {images}')
         preview_content += '<br /><br />' + ' &nbsp; '.join(
-          f"<img src=\"{img.get('url')}\" alt=\"{img.get('displayName', '')}\" />"
+          f"<img src=\"{img.get('url')}\" alt=\"{util.ellipsize(img.get('displayName', ''), words=1000, chars=MAX_ALT_LENGTH)}\" />"
                                          for img in images)
         if not preview:
           ret = self.upload_images(images)
