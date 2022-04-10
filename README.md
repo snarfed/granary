@@ -295,6 +295,7 @@ Changelog
 - _Non-breaking changes_
 
 * Twitter
+  * Trim alt text in line between post preview and creation
   * Correctly trim Twitter alt text
 
 ### 4.0 - 2022-03-23
