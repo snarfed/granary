@@ -8,12 +8,14 @@ https://github.com/snarfed/granary/issues/106
 """
 import logging
 import sys
+import time
 import unittest
 
 from oauth_dropins.webutil import util
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
 from granary import instagram
 from granary.source import FRIENDS, SELF
+from requests.exceptions import HTTPError, ReadTimeout
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,19 @@ USERNAME = 'snarfed'
 class InstagramTestLive(unittest.TestCase):
 
   def test_live(self):
+    # sometimes IG rate limits or blocks us, so retry with increasing backoff
+    for delay_min in (.5, 1, 5, 10, None):
+      try:
+        self._test_live()
+        return
+      except (AssertionError, HTTPError, ReadTimeout):
+        if delay_min:
+          logging.exception(f'Failed, probably due to IG rate limiting, retrying in {delay_min}m.')
+          time.sleep(delay_min * 60)
+
+    self.fail('All retries failed.')
+
+  def _test_live(self):
     ig = instagram.Instagram(cookie=INSTAGRAM_SESSIONID_COOKIE)
 
     for kwargs in ({'user_id': USERNAME, 'group_id': SELF},
