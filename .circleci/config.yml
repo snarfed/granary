@@ -32,6 +32,7 @@ jobs:
 
       - run:
           name: Run tests
+          no_output_timeout: 30m
           command: |
             CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
             sleep 5s
