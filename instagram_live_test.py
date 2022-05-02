@@ -31,8 +31,8 @@ class InstagramTestLive(unittest.TestCase):
         self._test_live()
         return
       except (AssertionError, HTTPError, ReadTimeout):
+        logging.exception(f'Failed, probably due to IG rate limiting, retrying in {delay_min}m.')
         if delay_min:
-          logging.exception(f'Failed, probably due to IG rate limiting, retrying in {delay_min}m.')
           time.sleep(delay_min * 60)
 
     self.fail('All retries failed.')
