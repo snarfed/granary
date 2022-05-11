@@ -11,7 +11,7 @@ Notably:
 * Images should be JPEG or PNG, 1400x1400 to 3000x3000.
 * HTTP server that hosts assets and files should support range requests.
 """
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 import logging
 import mimetypes
 
@@ -127,7 +127,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
         if not isinstance(dt, datetime):
           dt = datetime.combine(dt, time.min)
         if not dt.tzinfo:
-          dt = dt.replace(tzinfo=util.UTC)
+          dt = dt.replace(tzinfo=timezone.utc)
         item.published(dt)
         if not latest or dt > latest:
           latest = dt
