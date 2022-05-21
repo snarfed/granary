@@ -1,11 +1,10 @@
 # coding=utf-8
 """Twitter source class.
 
-Uses the v1.1 REST API: https://developer.twitter.com/en/docs/api-reference-index
+Uses the v2 API: https://developer.twitter.com/en/docs/twitter-api
 
 The Audience Targeting 'to' field is set to @public or @private based on whether
 the tweet author's 'protected' field is true or false.
-https://dev.twitter.com/docs/platform-objects/users
 """
 import collections
 import datetime
@@ -29,9 +28,28 @@ from . import source
 logger = logging.getLogger(__name__)
 
 # common to all API calls that fetch tweets
-API_TWEET_PARAMS = '&include_entities=true&tweet_mode=extended&include_ext_alt_text=true'
+API_TWEET_FIELDS = ','.join((
+  'attachments',
+  'author_id',
+  'conversation_id',
+  'created_at',
+  'entities',
+  'geo',
+  'id',
+  'in_reply_to_user_id',
+  'referenced_tweets',
+  'source',
+  'text',
+))
+# XXX TODO: remove
+API_TWEET_PARAMS = ''
 
-API_BASE = 'https://api.twitter.com/1.1/'
+API_BASE = 'https://api.twitter.com/2/'
+
+# v2
+API_TWEETS = f'tweets?ids=%s&tweet.fields={API_TWEET_FIELDS}'
+
+
 API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
 API_BLOCKS = 'blocks/list.json?skip_status=true&count=5000&cursor=%s'
 API_CURRENT_USER = 'account/verify_credentials.json'
@@ -40,14 +58,12 @@ API_DELETE_FAVORITE = 'favorites/destroy.json'
 API_FAVORITES = 'favorites/list.json?screen_name=%s'
 API_LIST_TIMELINE = 'lists/statuses.json?count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s' + API_TWEET_PARAMS
 API_LIST_ID_TIMELINE = 'lists/statuses.json?count=%(count)d&list_id=%(list_id)s' + API_TWEET_PARAMS
-API_LOOKUP = 'statuses/lookup.json?id=%s' + API_TWEET_PARAMS
 API_POST_FAVORITE = 'favorites/create.json'
 API_POST_MEDIA = 'statuses/update_with_media.json'
 API_POST_RETWEET = 'statuses/retweet/%s.json'
 API_POST_TWEET = 'statuses/update.json'
 API_RETWEETS = 'statuses/retweets.json?id=%s' + API_TWEET_PARAMS
 API_SEARCH = 'search/tweets.json?q=%(q)s&result_type=recent&count=%(count)d' + API_TWEET_PARAMS
-API_STATUS = 'statuses/show.json?id=%s' + API_TWEET_PARAMS
 API_TIMELINE = 'statuses/home_timeline.json?count=%d' + API_TWEET_PARAMS
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
 API_MEDIA_STATUS_MAX_DELAY_SECS = 30
@@ -117,6 +133,14 @@ HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
 # alias allows unit tests to mock this function
 sleep_fn = time.sleep
+
+
+def get_first(obj, key, **kwargs):
+  """Variant of util.get_first() that allows filtering by field values."""
+  if obj:
+    for elem in obj.get(key, []):
+      if all(elem.get(field) == val for field, val in kwargs.items()):
+        return elem
 
 
 class OffsetTzinfo(datetime.tzinfo):
@@ -201,6 +225,8 @@ class Twitter(source.Source):
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, include_shares=True,
                               fetch_events=False, fetch_mentions=False,
+                              ## XXX TODO: expansions=attachments.media_keys
+                              fetch_media=False,
                               search_query=None, scrape=False, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
@@ -283,7 +309,7 @@ class Twitter(source.Source):
     activities = []
     if activity_id:
       self._validate_id(activity_id)
-      tweets = [self.urlopen(API_STATUS % int(activity_id))]
+      tweets = [self.urlopen(API_TWEETS % int(activity_id))]
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
@@ -572,7 +598,7 @@ class Twitter(source.Source):
     """
     self._validate_id(comment_id)
     url = API_STATUS % comment_id
-    return self.tweet_to_object(self.urlopen(url))
+    return self.tweet_to_activity(self.urlopen(url))
 
   def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Returns an ActivityStreams 'share' activity object.
@@ -585,7 +611,7 @@ class Twitter(source.Source):
     """
     self._validate_id(share_id)
     url = API_STATUS % share_id
-    return self.retweet_to_object(self.urlopen(url))
+    return self.tweet_to_activity(self.urlopen(url))
 
   def get_blocklist(self):
     """Returns the current user's block list.
@@ -1089,7 +1115,16 @@ class Twitter(source.Source):
     def request():
       resp = twitter_auth.signed_urlopen(
         url, self.access_token_key, self.access_token_secret, **kwargs)
-      return source.load_json(resp.read(), url) if parse_response else resp
+      if not parse_response:
+        return resp
+      ret = source.load_json(resp.read(), url)
+
+      # https://developer.twitter.com/en/support/twitter-api/error-troubleshooting
+      errs = ret.get('errors')
+      if errs:
+        raise RuntimeError(ret)
+
+      return ret
 
     if ('data' not in kwargs and not
         (isinstance(url, urllib.request.Request) and url.get_method() == 'POST')):
@@ -1143,16 +1178,17 @@ class Twitter(source.Source):
 
     return base_obj
 
-  def tweet_to_activity(self, tweet):
+  def tweet_to_activity(self, data, includes=None):
     """Converts a tweet to an activity.
 
     Args:
-      tweet: dict, a decoded JSON tweet
+      data: dict, Twitter v2 API tweet data object
+      includes: list of Twitter v2 API expansion objects
 
     Returns:
       an ActivityStreams activity dict, ready to be JSON-encoded
     """
-    obj = self.tweet_to_object(tweet)
+    obj = self.tweet_to_object(data, includes=includes)
     activity = {
       'verb': 'post',
       'published': obj.get('published'),
@@ -1160,87 +1196,59 @@ class Twitter(source.Source):
       'url': obj.get('url'),
       'actor': obj.get('author'),
       'object': obj,
+      'context': {'inReplyTo': obj.get('inReplyTo')},  # may be empty
+      'generator': {'displayName': data.get('source')},
     }
 
-    retweeted = tweet.get('retweeted_status')
+    retweeted = get_first(data, 'referenced_tweets', type='retweeted')
     if retweeted:
-      activity['verb'] = 'share'
-      activity['object'] = self.tweet_to_object(retweeted)
-
-    in_reply_to = obj.get('inReplyTo')
-    if in_reply_to:
-      activity['context'] = {'inReplyTo': in_reply_to}
-
-    # yes, the source field has an embedded HTML link. bleh.
-    # https://dev.twitter.com/docs/api/1.1/get/statuses/show/
-    parsed = re.search('<a href="([^"]+)".*>(.+)</a>', tweet.get('source', ''))
-    if parsed:
-      url, name = parsed.groups()
-      activity['generator'] = {'displayName': name, 'url': url}
+      activity.update({
+        'verb': 'share',
+        'object': self.tweet_to_object(get_first(includes, 'tweets', id=retweeted['id'])),
+      })
 
     return self.postprocess_activity(activity)
 
-  def tweet_to_object(self, tweet):
+  def tweet_to_object(self, data, includes=None):
     """Converts a tweet to an object.
 
+    https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/tweet
+
     Args:
-      tweet: dict, a decoded JSON tweet
+      data: dict, Twitter v2 API tweet data object
+      includes: list of Twitter v2 API expansion objects
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
     """
-    obj = {}
-
-    # always prefer id_str over id to avoid any chance of integer overflow.
-    # usually shouldn't matter in Python, but still.
-    id = tweet.get('id_str')
+    id = data.get('id')
     if not id:
       return {}
-
-    created_at = tweet.get('created_at')
-    try:
-      published = self.rfc2822_to_iso8601(created_at)
-    except ValueError:
-      # this is probably already ISO 8601, likely from the archive export.
-      # https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive
-      # https://chat.indieweb.org/dev/2018-03-30#t1522442860737900
-      published = created_at
 
     obj = {
       'id': self.tag_uri(id),
       'objectType': 'note',
-      'published': published,
-      'to': [],
+      'published': data.get('created_at'),
     }
 
-    retweeted = tweet.get('retweeted_status')
-    base_tweet = retweeted or tweet
-    entities = self._get_entities(base_tweet)
-
-    # text content
-    text = util.WideUnicode(
-      base_tweet.get('full_text') or base_tweet.get('text') or '')
-    text_start, text_end = (base_tweet.get('display_text_range')
-                            or (0, len(text)))
-
     # author
-    user = tweet.get('user')
-    if user:
-      obj['author'] = self.user_to_actor(user)
-      username = obj['author'].get('username')
-      if username:
-        obj['url'] = self.status_url(username, id)
+    author_id = data.get('author_id')
+    user = get_first(includes, 'users', id=author_id) or {}
+    if author_id and user:
+      obj['author'] = self.user_to_actor(user) or {}
+      obj['url'] = self.status_url(obj['author'].get('username') or author_id, id)
 
       protected = user.get('protected')
       if protected is not None:
-        obj['to'].append({
+        obj['to'] = [{
           'objectType': 'group',
           'alias': '@public' if not protected else '@private',
-        })
+        }]
 
     # media! into attachments.
-    # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
-    media = entities.get('media', [])
+    # XXX TODO video URLs aren't currently available in v2 API :(
+    # https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/media
+    media = util.get_list(includes, 'media')
     if media:
       types = {
         'photo': 'image',
@@ -1248,13 +1256,14 @@ class Twitter(source.Source):
         'animated_gif': 'video',
       }
       obj['attachments'] = [{
-          'objectType': types.get(m.get('type')),
-          'image': {
-            'url': m.get('media_url_https') or m.get('media_url'),
-            'displayName': m.get('ext_alt_text'),
-          },
-          'stream': {'url': self._video_url(m)},
-          'displayName': m.get('ext_alt_text'),
+        'id': self.tag_uri(m.get('media_key')),
+        'objectType': types.get(m.get('type')),
+        'image': {
+          'url': m.get('url'),
+          'displayName': m.get('alt_text'),
+        },
+        'stream': {'url': self._video_url(m)},
+        'displayName': m.get('alt_text'),
       } for m in media]
 
       first = obj['attachments'][0]
@@ -1264,99 +1273,61 @@ class Twitter(source.Source):
         obj['image'] = first['image']
 
     # if this tweet is quoting another tweet, include it as an attachment
-    quoted = tweet.get('quoted_status')
-    quoted_url = None
+    quoted = get_first(data, 'referenced_tweets', type='quoted')
     if quoted:
-      quoted_obj = self.tweet_to_object(quoted)
+      quoted_tweet = get_first(includes, 'tweets', id=quoted.get('id'))
+      quoted_obj = self.tweet_to_object(quoted_tweet or quoted, includes=includes)
       obj.setdefault('attachments', []).append(quoted_obj)
-      quoted_url = (quoted_obj.get('url') or
-                    tweet.get('quoted_status_permalink', {}).get('expanded'))
-
-      # remove quoted tweet URL from text, tags
-      url_entities = entities.get('urls', [])
-      for i, entity in enumerate(url_entities):
-        indices = entity.get('indices')
-        if indices and entity.get('expanded_url') == quoted_url:
-          start, end = indices
-          text = text[:start] + text[end:]
-          del url_entities[i]
-          if start >= text_start and end <= text_end:
-            text_end -= (end - start)
 
     # tags
+    entities = data.get('entities') or {}
     obj['tags'] = [
       {'objectType': 'mention',
-       'id': self.tag_uri(t.get('screen_name')),
-       'url': self.user_url(t.get('screen_name')),
-       'displayName': t.get('name'),
-       'indices': t.get('indices')
-       } for t in entities.get('user_mentions', [])
+       'id': self.tag_uri(t.get('username')),
+       'url': self.user_url(t.get('username')),
+       'displayName': t.get('username'),
+       'indices': [t.get('start'), t.get('end')],
+       } for t in entities.get('mentions', [])
     ] + [
       {'objectType': 'hashtag',
-       'url': 'https://twitter.com/search?q=%23' + t.get('text'),
-       'indices': t.get('indices'),
+       'url': 'https://twitter.com/search?q=%23' + t.get('tag'),
+       'indices': [t.get('start'), t.get('end')],
        } for t in entities.get('hashtags', [])
     ] + [
       {'objectType': 'article',
        'url': t.get('expanded_url'),
        'displayName': t.get('display_url'),
-       'indices': t.get('indices'),
+       'title': t.get('title'),
+       'content': t.get('description'),
+       'indices': [t.get('start'), t.get('end')],
        } for t in entities.get('urls', [])
     ]
-
-    # media. these are only temporary, to get rid of the image t.co links. the tag
-    # elements are removed farther down below.
-    #
-    # when there are multiple, twitter usually (always?) only adds a single
-    # media link to the end of the tweet text, and all of the media objects will
-    # have the same indices. so de-dupe based on indices.
-    indices_to_media = {
-      tuple(t['indices']): {
-        'objectType': 'image',
-        'displayName': '',
-        'indices': t['indices'],
-      } for t in media if t.get('indices')}
-    obj['tags'].extend(indices_to_media.values())
 
     # sort tags by indices, since they need to be processed (below) in order.
     obj['tags'].sort(key=lambda t: (t.get('indices') or []))
 
-    # RT @username: prefix for retweets
-    rt_prefix = ''
-    if retweeted and retweeted.get('text'):
-      rt_prefix = 'RT <a href="https://twitter.com/%s">@%s</a>: ' % (
-        (retweeted.get('user', {}).get('screen_name'),) * 2)
-
-    # person mentions
-    obj['to'].extend(tag for tag in obj['tags']
-                     if tag.get('objectType') in ('person', 'mention')
-                     and tag.get('indices')[1] <= text_start)
-
-    # replace entities with display URLs, convert start/end indices to start/length
-    content = util.WideUnicode(rt_prefix + text[text_start:text_end])
-    offset = len(rt_prefix) - text_start
+    # construct HTML text content. replace entities with display URLs, convert
+    # start/end indices to start/length.
+    content = util.WideUnicode(data.get('text') or '')
+    offset = 0
     for t in obj['tags']:
       start, end = t.pop('indices', None) or (0, 0)
-      if start >= text_start and end <= text_end:
-        start += offset
-        end += offset
-        length = end - start
-        if t['objectType'] in ('article', 'image'):
-          tag_text = t.get('displayName', t.get('url'))
-          if tag_text is not None:
-            content = util.WideUnicode(content[:start] + tag_text + content[end:])
-            offset += len(tag_text) - length
-            length = len(tag_text)
-        t.update({'startIndex': start, 'length': length})
+      length = end - start
+      start += offset
+      end += offset
+      if t['objectType'] in ('article', 'image'):
+        tag_text = t.get('displayName', t.get('url'))
+        if tag_text is not None:
+          assert start <= len(content) and end <= len(content), (tag_text, start, end)
+          content = util.WideUnicode(content[:start] + tag_text + content[end:])
+          offset += len(tag_text) - length
+          length = len(tag_text)
+      t.update({'startIndex': start, 'length': length})
 
-    obj.update({
-      'tags': [t for t in obj['tags'] if t['objectType'] != 'image'] +
-              [self.retweet_to_object(r) for r in tweet.get('retweets', [])],
-      'content': content,
-    })
+    obj['content'] = content
 
     # location
-    place = tweet.get('place')
+    place = get_first(includes, 'places')
     if place:
       obj['location'] = {
         'displayName': place.get('full_name'),
@@ -1365,56 +1336,26 @@ class Twitter(source.Source):
 
       # place['url'] is a JSON API url, not useful for end users. get the
       # lat/lon from geo instead.
-      geo = tweet.get('geo')
-      if geo:
-        coords = geo.get('coordinates')
-        if coords:
-          obj['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
-                                    tuple(coords))
+      bbox = place.get('geo', {}).get('bbox')
+      if bbox:
+        obj['location']['url'] = ('https://maps.google.com/maps?q=%s,%s' %
+                                  tuple(bbox[:2]))
 
     # inReplyTo
-    reply_to_screenname = tweet.get('in_reply_to_screen_name')
-    reply_to_id = tweet.get('in_reply_to_status_id')
-    if reply_to_id and reply_to_screenname:
-      obj['inReplyTo'] = [{
-        'id': self.tag_uri(reply_to_id),
-        'url': self.status_url(reply_to_screenname, reply_to_id),
-      }]
+    replied = get_first(data, 'referenced_tweets', type='replied_to')
+    re_user_id = data.get('in_reply_to_user_id')
+    if replied and re_user_id:
+      re_id = replied.get('id')
+      if re_id:
+        re_tweet = get_first(includes, 'tweets', id=re_id)
+        re_user = get_first(includes, 'users', id=re_user_id) or {}
+        obj['inReplyTo'] = [{
+          'id': self.tag_uri(re_id),
+          'url': self.status_url(re_user.get('username') or re_user_id, re_id),
+        }]
+        # XXX TODO: do we need to add replied user to obj['to']?
 
     return self.postprocess_object(obj)
-
-  @staticmethod
-  def _get_entities(tweet):
-    """Merges and returns a tweet's entities and extended_entities.
-
-    Most entities are in the entities field - urls, hashtags, user_mentions,
-    symbols, etc. Media are special though: extended_entities is always
-    preferred. It has videos, animated gifs, and multiple photos. entities only
-    has one photo at most, either the first or a thumbnail from the video, and
-    its type is always 'photo' even for videos and animated gifs. (The id and
-    id_str will be the same.) So ignore it unless extended_entities is missing.
-
-    https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
-    """
-    entities = collections.defaultdict(list)
-
-    # maps kind to set of id_str, url, and text values we've seen, with indices,
-    # for de-duping
-    seen_ids = collections.defaultdict(set)
-
-    for field in 'extended_entities', 'entities':  # prefer extended_entities!
-      # kind is media, urls, hashtags, user_mentions, symbols, etc
-      for kind, values in tweet.get(field, {}).items():
-        for v in values:
-          id = (v.get('id_str') or v.get('id') or v.get('url') or v.get('text'),
-                tuple(v.get('indices') or []))
-          if id[0] or id[1]:
-            if id in seen_ids[kind]:
-              continue
-            seen_ids[kind].add(id)
-          entities[kind].append(v)
-
-    return entities
 
   def _video_url(self, media):
     """Returns the best video URL from a media object.
@@ -1452,68 +1393,47 @@ class Twitter(source.Source):
 
     return best_url or variants[0].get('url')
 
-  def user_to_actor(self, user):
+  def user_to_actor(self, data, includes=None):
     """Converts a user to an actor.
 
+    https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/user
+
     Args:
-      user: dict, a decoded JSON Twitter user
+      data: dict, Twitter v2 API user data object
+      includes: list of Twitter v2 API expansion objects
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
-    username = user.get('screen_name')
+    username = data.get('username')
     if not username:
       return {}
 
     urls = [self.user_url(username)] + util.trim_nulls(
       [e.get('expanded_url') for e in itertools.chain(
-        *(user.get('entities', {}).get(field, {}).get('urls', [])
+        *(data.get('entities', {}).get(field, {}).get('urls', [])
           for field in ('url', 'description')))])
 
-    image = user.get('profile_image_url_https') or user.get('profile_image_url')
+    image = data.get('profile_image_url')
     if image:
-      # remove _normal for a ~256x256 avatar rather than ~48x48
+      # remove _normal for a ~256x256 (or higher) avatar rather than ~48x48
       image = image.replace('_normal.', '.', 1)
 
     return util.trim_nulls({
       'objectType': 'person',
-      'displayName': user.get('name') or username,
+      'displayName': data.get('name') or username,
       'image': {'url': image},
       'id': self.tag_uri(username),
       # numeric_id is our own custom field that always has the source's numeric
       # user id, if available.
-      'numeric_id': user.get('id_str'),
-      'published': self.rfc2822_to_iso8601(user.get('created_at')),
+      'numeric_id': data.get('id'),
+      'published': data.get('created_at'),
       'url': urls[0],
       'urls': [{'value': u} for u in urls] if len(urls) > 1 else None,
-      'location': {'displayName': user.get('location')},
+      'location': {'displayName': data.get('location')},
       'username': username,
-      'description': user.get('description'),
+      'description': data.get('description'),
     })
-
-  def retweet_to_object(self, retweet):
-    """Converts a retweet to a share activity object.
-
-    Args:
-      retweet: dict, a decoded JSON tweet
-
-    Returns:
-      an ActivityStreams object dict
-    """
-    orig = retweet.get('retweeted_status')
-    if not orig:
-      return None
-
-    share = self.tweet_to_object(retweet)
-    share.update({
-        'objectType': 'activity',
-        'verb': 'share',
-        'object': {'url': self.tweet_url(orig)},
-    })
-    if 'tags' in share:
-      # the existing tags apply to the original tweet's text, which we replaced
-      del share['tags']
-    return self.postprocess_object(share)
 
   def streaming_event_to_object(self, event):
     """Converts a Streaming API event to an object.
@@ -1532,7 +1452,7 @@ class Twitter(source.Source):
     tweet = event.get('target_object')
     if event.get('event') == 'favorite' and source and tweet:
       obj = self._make_like(tweet, source)
-      obj['published'] = self.rfc2822_to_iso8601(event.get('created_at'))
+      obj['published'] = event.get('created_at')
       return obj
 
   def _make_like(self, tweet, liker):
@@ -1546,8 +1466,8 @@ class Twitter(source.Source):
       ActivityStreams object dict
     """
     # TODO: unify with Mastodon._make_like()
-    tweet_id = tweet.get('id_str')
-    liker_id = liker.get('id_str')
+    tweet_id = tweet.get('id')
+    liker_id = liker.get('id')
     id = None
     url = obj_url = self.tweet_url(tweet)
 
@@ -1564,30 +1484,6 @@ class Twitter(source.Source):
         'author': self.user_to_actor(liker),
     })
 
-  @staticmethod
-  def rfc2822_to_iso8601(time_str):
-    """Converts a timestamp string from RFC 2822 format to ISO 8601.
-
-    Example RFC 2822 timestamp string generated by Twitter:
-      'Wed May 23 06:01:13 +0000 2007'
-
-    Resulting ISO 8610 timestamp string:
-      '2007-05-23T06:01:13'
-    """
-    if not time_str:
-      return None
-
-    without_timezone = re.sub(' [+-][0-9]{4} ', ' ', time_str)
-    timezone = re.search('[+-][0-9]{4}', time_str).group(0)
-    # convert offset to seconds
-    offset = 3600 * int(timezone[1:3]) + 60 * int(timezone[3:])
-    # negative offset
-    if timezone[0] == '-':
-      offset = -offset
-
-    dt = datetime.datetime.strptime(without_timezone, '%a %b %d %H:%M:%S %Y').replace(tzinfo=OffsetTzinfo(offset))
-    return dt.isoformat()
-
   def user_url(self, username):
     """Returns the Twitter URL for a given user."""
     return f'https://{self.DOMAIN}/{username}'
@@ -1599,7 +1495,7 @@ class Twitter(source.Source):
   def tweet_url(self, tweet):
     """Returns the Twitter URL for a tweet given a tweet object."""
     return self.status_url(tweet.get('user', {}).get('screen_name'),
-                           tweet.get('id_str'))
+                           tweet.get('id'))
 
   @staticmethod
   def _validate_id(id):
