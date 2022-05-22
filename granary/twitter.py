@@ -41,13 +41,20 @@ API_TWEET_FIELDS = ','.join((
   'source',
   'text',
 ))
+API_EXPANSIONS = ','.join((
+  'attachments.media_keys',
+  'author_id',
+  'in_reply_to_user_id',
+  'referenced_tweets.id',
+  'referenced_tweets.id.author_id',
+))
 # XXX TODO: remove
 API_TWEET_PARAMS = ''
 
 API_BASE = 'https://api.twitter.com/2/'
 
 # v2
-API_TWEETS = f'tweets?ids=%s&tweet.fields={API_TWEET_FIELDS}'
+API_TWEETS = f'tweets?ids=%s&tweet.fields={API_TWEET_FIELDS}&expansions={API_EXPANSIONS}'
 
 
 API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
@@ -309,7 +316,9 @@ class Twitter(source.Source):
     activities = []
     if activity_id:
       self._validate_id(activity_id)
-      tweets = [self.urlopen(API_TWEETS % int(activity_id))]
+      resp = self.urlopen(API_TWEETS % int(activity_id))
+      tweets = resp.get('data') or []
+      includes = resp.get('includes') or {}
       total_count = len(tweets)
     else:
       if group_id == source.SELF:
@@ -419,7 +428,7 @@ class Twitter(source.Source):
     if not include_shares:
       tweets = [t for t in tweets if not t.get('retweeted_status')]
 
-    tweet_activities = [self.tweet_to_activity(t) for t in tweets]
+    tweet_activities = [self.tweet_to_activity(t, includes) for t in tweets]
 
     if fetch_replies:
       self.fetch_replies(tweet_activities, min_id=min_id)
