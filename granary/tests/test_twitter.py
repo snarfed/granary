@@ -299,85 +299,79 @@ ACTIVITY_2['object'].update({
 # This is the original tweet and reply chain:
 # 100 (snarfed_org) -- 200 (alice) -- 400 (snarfed_org) -- 500 (alice)
 #                   \_ 300 (bob)
-REPLIES_TO_SNARFED = {'statuses': [{  # Twitter
-      'id_str': '200',
-      'user': {'screen_name': 'alice'},
-      'text': 'reply 200',
-      'in_reply_to_status_id_str': '100',
-      'in_reply_to_screen_name': 'snarfed_org',
-      }, {
-      'id_str': '300',
-      'user': {'screen_name': 'bob'},
-      'text': 'reply 300',
-      'in_reply_to_status_id_str': '100',
-      }, {
-      'id_str': '500',
-      'user': {'screen_name': 'alice'},
-      'text': 'reply 500',
-      'in_reply_to_status_id_str': '400',
-      }]}
-REPLIES_TO_ALICE = {'statuses': [{
-      'id_str': '400',
-      'user': {'screen_name': 'snarfed_org'},
-      'text': 'reply 400',
-      'in_reply_to_status_id_str': '200',
-      }]}
-REPLIES_TO_BOB = {'statuses': []}
-
+REPLIES = [{
+  'id': '200',
+  'author_id': USER_2['id'],
+  'text': 'reply 200',
+  'referenced_tweets': [{'type': 'replied_to', 'id': '100'}],
+  'in_reply_to_user_id': USER['id'],
+}, {
+  'id': '300',
+  'author_id': USER_3['id'],
+  'text': 'reply 300',
+  'referenced_tweets': [{'type': 'replied_to', 'id': '100'}],
+  'in_reply_to_user_id': USER['id'],
+}, {
+  'id': '400',
+  'author_id': USER['id'],
+  'text': 'reply 400',
+  'referenced_tweets': [{'type': 'replied_to', 'id': '200'}],
+  'in_reply_to_user_id': USER_2['id'],
+}, {
+  'id': '500',
+  'author_id': USER_2['id'],
+  'text': 'reply 500',
+  'referenced_tweets': [{'type': 'replied_to', 'id': '400'}],
+  'in_reply_to_user_id': USER['id'],
+}]
+REPLIES_SEARCH = {
+  'data': REPLIES,
+  'includes': {
+    'tweets': REPLIES + [TWEET],
+    'users': [USER, USER_2, USER_3],
+  },
+}
 REPLY_OBJS = [{  # ActivityStreams
-    'objectType': 'note',
-    'id': tag_uri('200'),
-    'author': {
-      'objectType': 'person',
-      'id': 'tag:twitter.com:alice',
-      'username': 'alice',
-      'displayName': 'alice',
-      'url': 'https://twitter.com/alice',
-      },
-    'content': 'reply 200',
-    'url': 'https://twitter.com/alice/status/200',
-    }, {
-    'objectType': 'note',
-    'id': tag_uri('300'),
-    'author': {
-      'objectType': 'person',
-      'id': 'tag:twitter.com:bob',
-      'username': 'bob',
-      'displayName': 'bob',
-      'url': 'https://twitter.com/bob',
-      },
-    'content': 'reply 300',
-    'url': 'https://twitter.com/bob/status/300',
-    }, {
-    'objectType': 'note',
-    'id': tag_uri('400'),
-    'author': {
-      'objectType': 'person',
-      'id': 'tag:twitter.com:snarfed_org',
-      'username': 'snarfed_org',
-      'displayName': 'snarfed_org',
-      'url': 'https://twitter.com/snarfed_org',
-      },
-    'content': 'reply 400',
-    'url': 'https://twitter.com/snarfed_org/status/400',
-    }, {
-    'objectType': 'note',
-    'id': tag_uri('500'),
-    'author': {
-      'objectType': 'person',
-      'id': 'tag:twitter.com:alice',
-      'username': 'alice',
-      'displayName': 'alice',
-      'url': 'https://twitter.com/alice',
-      },
-    'content': 'reply 500',
-    'url': 'https://twitter.com/alice/status/500',
-    }]
+  'objectType': 'note',
+  'id': tag_uri('200'),
+  'author': ACTOR_2,
+  'content': 'reply 200',
+  'url': 'https://twitter.com/alice/status/200',
+  'inReplyTo': [{'id': 'tag:twitter.com:100',
+                 'url': 'https://twitter.com/snarfed_org/status/100'}],
+  'to': [{'alias': '@public', 'objectType': 'group'}],
+}, {
+  'objectType': 'note',
+  'id': tag_uri('300'),
+  'author': ACTOR_3,
+  'content': 'reply 300',
+  'url': 'https://twitter.com/bob/status/300',
+  'inReplyTo': [{'id': 'tag:twitter.com:100',
+                 'url': 'https://twitter.com/snarfed_org/status/100'}],
+}, {
+  'objectType': 'note',
+  'id': tag_uri('400'),
+  'author': ACTOR,
+  'content': 'reply 400',
+  'url': 'https://twitter.com/snarfed_org/status/400',
+  'inReplyTo': [{'id': 'tag:twitter.com:200',
+                 'url': 'https://twitter.com/alice/status/200'}],
+  'to': [{'alias': '@public', 'objectType': 'group'}],
+}, {
+  'objectType': 'note',
+  'id': tag_uri('500'),
+  'author': ACTOR_2,
+  'content': 'reply 500',
+  'url': 'https://twitter.com/alice/status/500',
+  'inReplyTo': [{'id': 'tag:twitter.com:400',
+                 'url': 'https://twitter.com/snarfed_org/status/400'}],
+  'to': [{'alias': '@public', 'objectType': 'group'}],
+}]
 ACTIVITY_WITH_REPLIES = copy.deepcopy(ACTIVITY)  # ActivityStreams
 ACTIVITY_WITH_REPLIES['object']['replies'] = {
   'totalItems': 4,
   'items': REPLY_OBJS,
-  }
+}
 
 RETWEETS = [{  # Twitter v2
   'data': [{
@@ -856,17 +850,17 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([], self.twitter.get_activities(group_id='123'))
 
   def test_get_activities_fetch_replies(self):
-    self.expect_urlopen(TIMELINE, [TWEET])
+    self.expect_urlopen(TIMELINE, TWEET)
 
-    search = API_SEARCH + '&since_id=567'
-    self.expect_urlopen(search % {'q': '%40snarfed_org', 'count': 100},
-                        REPLIES_TO_SNARFED)
-    self.expect_urlopen(search % {'q': '%40alice', 'count': 100}, REPLIES_TO_ALICE)
-    self.expect_urlopen(search % {'q': '%40bob', 'count': 100}, REPLIES_TO_BOB)
+    url = API_SEARCH % {
+      'query': 'conversation_id:100',
+      'count': 100,
+    } + '&since_id=56'
+    self.expect_urlopen(url, REPLIES_SEARCH)
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_REPLIES],
-                          self.twitter.get_activities(fetch_replies=True, min_id='567'))
+                       self.twitter.get_activities(fetch_replies=True, min_id='56'))
 
   def test_get_activities_fetch_mentions(self):
     self.expect_urlopen(TIMELINE, [])

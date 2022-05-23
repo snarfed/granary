@@ -54,8 +54,9 @@ API_TWEET_PARAMS = ''
 API_BASE = 'https://api.twitter.com/2/'
 
 # v2
+API_SEARCH = 'tweets/search/recent?query=%(query)s&max_results=%(count)d&tweet.fields={API_TWEET_FIELDS}&expansions={API_EXPANSIONS}'
 API_TWEETS = f'tweets?ids=%s&tweet.fields={API_TWEET_FIELDS}&expansions={API_EXPANSIONS}'
-
+API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
 
 API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
 API_BLOCKS = 'blocks/list.json?skip_status=true&count=5000&cursor=%s'
@@ -70,12 +71,11 @@ API_POST_MEDIA = 'statuses/update_with_media.json'
 API_POST_RETWEET = 'statuses/retweet/%s.json'
 API_POST_TWEET = 'statuses/update.json'
 API_RETWEETS = 'statuses/retweets.json?id=%s' + API_TWEET_PARAMS
-API_SEARCH = 'search/tweets.json?q=%(q)s&result_type=recent&count=%(count)d' + API_TWEET_PARAMS
-API_TIMELINE = 'statuses/home_timeline.json?count=%d' + API_TWEET_PARAMS
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
 API_MEDIA_STATUS_MAX_DELAY_SECS = 30
 API_MEDIA_STATUS_MAX_POLLS = 20
 API_MEDIA_METADATA = 'https://upload.twitter.com/1.1/media/metadata/create.json'
+API_TIMELINE = f'users/.../tweets?max_results=%s&tweet.fields={API_TWEET_FIELDS}&expansions={API_EXPANSIONS}'
 API_USER = 'users/show.json?screen_name=%s'
 API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
 SCRAPE_LIKES_URL = 'https://api.twitter.com/2/timeline/liked_by.json?tweet_mode=extended&include_user_entities=true&tweet_id=%s&count=80'
@@ -313,6 +313,7 @@ class Twitter(source.Source):
     if count:
       count += start_index
 
+    resps = []
     activities = []
     if activity_id:
       self._validate_id(activity_id)
@@ -341,7 +342,7 @@ class Twitter(source.Source):
           'count': count,
         }
       elif group_id in (source.FRIENDS, source.ALL):
-        url = API_TIMELINE % (count)
+        url = API_TIMELINE % count
       else:
         if util.is_int(group_id):
           # it's a list id
@@ -364,10 +365,9 @@ class Twitter(source.Source):
       try:
         resp = self.urlopen(url, headers=headers, parse_response=False)
         etag = resp.info().get('ETag')
-        tweet_obj = source.load_json(resp.read(), url)
-        if group_id == source.SEARCH:
-          tweet_obj = tweet_obj.get('statuses', [])
-        tweets = tweet_obj[start_index:]
+        resp = source.load_json(resp.read(), url)
+        tweets = (resp.get('data') or [])[start_index:]
+        includes = resp.get('includes') or {}
       except urllib.error.HTTPError as e:
         if e.code == 304:  # Not Modified, from a matching ETag
           tweets = []
@@ -431,7 +431,25 @@ class Twitter(source.Source):
     tweet_activities = [self.tweet_to_activity(t, includes) for t in tweets]
 
     if fetch_replies:
-      self.fetch_replies(tweet_activities, min_id=min_id)
+      for tweet, activity in zip(tweets, tweet_activities):
+        id = tweet['id']
+        if id == tweet['conversation_id']:
+          url = API_SEARCH % {
+            'query': f'conversation_id:{id}',
+            'count': 100,
+          }
+          if min_id is not None:
+            url = util.add_query_params(url, {'since_id': min_id})
+          resp = self.urlopen(url)
+          includes = resp.get('includes') or {}
+          # XXX TODO: prune down to direct replies
+          items = [self.tweet_to_object(t, includes)
+                   for t in resp.get('data', [])
+                   if t['id'] != id]
+          activity['object']['replies'] = {
+            'items': items,
+            'totalItems': len(items),
+          }
 
     if fetch_mentions:
       # fetch mentions *after* replies so that we don't get replies to mentions
@@ -462,67 +480,6 @@ class Twitter(source.Source):
     response = self.make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
     return response
-
-  def fetch_replies(self, activities, min_id=None):
-    """Fetches and injects Twitter replies into a list of activities, in place.
-
-    Includes indirect replies ie reply chains, not just direct replies. Searches
-    for @-mentions, matches them to the original tweets with
-    in_reply_to_status_id_str, and recurses until it's walked the entire tree.
-
-    Args:
-      activities: list of activity dicts
-
-    Returns:
-      same activities list
-    """
-
-    # cache searches for @-mentions for individual users. maps username to dict
-    # mapping tweet id to ActivityStreams reply object dict.
-    mentions = {}
-
-    # find replies
-    for activity in activities:
-      # list of ActivityStreams reply object dict and set of seen activity ids
-      # (tag URIs). seed with the original tweet; we'll filter it out later.
-      replies = [activity]
-      _, id = util.parse_tag_uri(activity['id'])
-      seen_ids = set([id])
-
-      for reply in replies:
-        # get mentions of this tweet's author so we can search them for replies to
-        # this tweet. can't use statuses/mentions_timeline because i'd need to
-        # auth as the user being mentioned.
-        # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
-        #
-        # note that these HTTP requests are synchronous. you can make async
-        # requests by using urlfetch.fetch() directly, but not with urllib2.
-        # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
-        author = reply['actor']['username']
-        if author not in mentions:
-          url = API_SEARCH % {
-            'q': urllib.parse.quote_plus('@' + author),
-            'count': 100,
-          }
-          if min_id is not None:
-            url = util.add_query_params(url, {'since_id': min_id})
-          mentions[author] = self.urlopen(url)['statuses']
-
-        # look for replies. add any we find to the end of replies. this makes us
-        # recursively follow reply chains to their end. (python supports
-        # appending to a sequence while you're iterating over it.)
-        for mention in mentions[author]:
-          id = mention['id_str']
-          if (mention.get('in_reply_to_status_id_str') in seen_ids and
-              id not in seen_ids):
-            replies.append(self.tweet_to_activity(mention))
-            seen_ids.add(id)
-
-      items = [r['object'] for r in replies[1:]]  # filter out seed activity
-      activity['object']['replies'] = {
-        'items': items,
-        'totalItems': len(items),
-      }
 
   def fetch_mentions(self, username, tweets, min_id=None):
     """Fetches a user's @-mentions and returns them as ActivityStreams.
@@ -605,9 +562,8 @@ class Twitter(source.Source):
       activity_author_id: string activity author id. Ignored.
       activity: activity object, optional
     """
-    self._validate_id(comment_id)
-    url = API_STATUS % comment_id
-    return self.tweet_to_activity(self.urlopen(url))
+    self._validate_id(id)
+    return self.tweet_to_activity(self.urlopen(API_TWEETS % comment_id))
 
   def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Returns an ActivityStreams 'share' activity object.
@@ -618,9 +574,8 @@ class Twitter(source.Source):
       share_id: string id of the share object
       activity: activity object, optional
     """
-    self._validate_id(share_id)
-    url = API_STATUS % share_id
-    return self.tweet_to_activity(self.urlopen(url))
+    self._validate_id(id)
+    return self.tweet_to_activity(self.urlopen(API_TWEETS % share_id))
 
   def get_blocklist(self):
     """Returns the current user's block list.
