@@ -297,6 +297,8 @@ Changelog
 * Twitter
   * Trim alt text in line between post preview and creation
   * Correctly trim Twitter alt text
+* Facebook
+  * Scraping: extract post id from `_ft_` query param instead of `story_fbid`, which is now an opaque token that changes regularly. ([facebook-atom#27](https://github.com/snarfed/facebook-atom/issues/27))
 
 ### 4.0 - 2022-03-23
 

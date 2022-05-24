@@ -1202,6 +1202,10 @@ MBASIC_ACTIVITIES = [{
   'actor': obj['author'],
   'object': obj,
 } for obj in MBASIC_OBJS]
+MBASIC_FEED_ACTIVITIES = copy.deepcopy(MBASIC_ACTIVITIES)
+MBASIC_FEED_ACTIVITIES[1]['url'] = \
+  MBASIC_FEED_ACTIVITIES[1]['object']['url'] = \
+    'https://www.facebook.com/story.php?story_fbid=456-story&id=212038'
 
 MBASIC_PHOTO_ACTIVITY = {
   'objectType': 'activity',
@@ -1866,7 +1870,7 @@ class FacebookTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     activities = self.fbscrape.get_activities(user_id='x', group_id=source.SELF)
-    self.assert_equals(MBASIC_ACTIVITIES, activities)
+    self.assert_equals(MBASIC_FEED_ACTIVITIES, activities)
 
   def test_get_activities_scrape_timeline_fetch_replies_likes(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
@@ -3318,7 +3322,7 @@ cc Sam G, Michael M<br />""", preview.description)
     self.mox.ReplayAll()
 
     got, _ = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
-    self.assert_equals(MBASIC_ACTIVITIES, got)
+    self.assert_equals(MBASIC_FEED_ACTIVITIES, got)
 
   def test_scraped_to_activities_no_content(self):
     soup = util.parse_html(MBASIC_HTML_TIMELINE)
@@ -3327,7 +3331,7 @@ cc Sam G, Michael M<br />""", preview.description)
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
 
-    expected = copy.deepcopy(MBASIC_ACTIVITIES)
+    expected = copy.deepcopy(MBASIC_FEED_ACTIVITIES)
     expected[0]['object']['content'] = '<div class="widePic">\n\n</div>'
     got, _ = self.fb.scraped_to_activities(str(soup))
     self.assert_equals(expected, got)

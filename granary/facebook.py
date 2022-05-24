@@ -1853,10 +1853,22 @@ class Facebook(source.Source):
         logger.debug('Skipping "Suggested for you"')
         continue
 
-      url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, permalink['href']))
+      url = urllib.parse.urljoin(self.BASE_URL, permalink['href'])
       query = urllib.parse.urlparse(url).query
       parsed = urllib.parse.parse_qs(query)
-      post_id = parsed['story_fbid'][0]
+
+      # story_fbid stopped being useful in May 2022, it switched to an opaque
+      # token that changes regularly, even for the same post.
+      # https://github.com/snarfed/facebook-atom/issues/27
+      ft = util.get_first(parsed, '_ft_') or ''
+      for elem in ft.split(':'):
+        if elem.startswith('top_level_post_id.') or elem.startswith('mf_objid.'):
+          post_id = elem.split('.')[1]
+          if post_id:
+            break
+      else:
+        post_id = util.get_first(parsed, 'story_fbid')
+
       owner_id = parsed['id'][0]
 
       author = self._m_html_author(post)
@@ -1923,6 +1935,7 @@ class Facebook(source.Source):
           if util.is_int(count_text):
             reactions_count = int(count_text)
 
+      url = self._sanitize_url(url)
       activities.append({
         'objectType': 'activity',
         'verb': 'post',
