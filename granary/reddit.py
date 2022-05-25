@@ -62,7 +62,7 @@ class Reddit(source.Source):
       return path_parts[-2]
 
   @cachedmethod(lambda self: user_cache, lock=lambda self: user_cache_lock,
-                key=lambda user: getattr(user, 'name', None))
+                key=lambda self, user: getattr(user, 'name', None))
   def praw_to_actor(self, praw_user):
     """Converts a PRAW Redditor to an actor.
 
