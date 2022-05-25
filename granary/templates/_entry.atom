@@ -7,7 +7,7 @@
   {% endif %}
 
   {% set url = activity.url or obj.url %}
-  <id>{{ url }}</id>
+  <id>{{ activity.id or obj.id or url }}</id>
   <title>{{ activity.title|safe }}</title>
 
   {% if obj.summary %}

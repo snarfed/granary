@@ -415,7 +415,7 @@ ATOM = """\
 
   <activity:object-type>http://activitystrea.ms/schema/1.0/photo</activity:object-type>
 
-  <id>https://www.instagram.com/p/ABC123/</id>
+  <id>tag:instagram.com:123_456</id>
   <title>this picture -&gt; is #abc @foo #xyz</title>
 
   <content type="xhtml">

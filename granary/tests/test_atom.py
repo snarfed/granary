@@ -19,7 +19,7 @@ INSTAGRAM_ENTRY_BODY = u"""\
 </author>
 
   <activity:object-type>http://activitystrea.ms/schema/1.0/photo</activity:object-type>
-  <id>https://www.instagram.com/p/ABC123/</id>
+  <id>tag:instagram.com:123_456</id>
   <title>this picture -&gt; is #abc @foo #xyz</title>
   <content type="xhtml">
   <div xmlns="http://www.w3.org/1999/xhtml">
@@ -80,14 +80,14 @@ INSTAGRAM_FEED = u"""\
 INSTAGRAM_ACTIVITY = {
   'objectType': 'activity',
   'verb': 'post',
-  'id': 'https://www.instagram.com/p/ABC123/',
+  'id': 'tag:instagram.com:123_456',
   'actor': {
     'displayName': 'Ryan B',
     'objectType': 'person',
     'url': 'https://www.instagram.com/snarfed/',
   },
   'object': {
-    'id': 'https://www.instagram.com/p/ABC123/',
+    'id': 'tag:instagram.com:123_456',
     'objectType': 'photo',
     'title': 'this picture -> is #abc @foo #xyz',
     'content': 'this picture -> is #abc @foo #xyz Le Truc',

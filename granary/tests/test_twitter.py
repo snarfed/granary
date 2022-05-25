@@ -618,7 +618,7 @@ ATOM = """\
 
   <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
 
-  <id>https://twitter.com/snarfed_org/status/100</id>
+  <id>tag:twitter.com:100</id>
   <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67</title>
 
   <content type="xhtml">
