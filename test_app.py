@@ -2,10 +2,12 @@
 """Unit tests for app.py.
 """
 import copy
+from io import BytesIO
 import os.path
 import socket
 import xml.sax.saxutils
 
+from granary.tests import test_instagram
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_loads
 import requests
@@ -741,6 +743,35 @@ not RSS!
     resp = client.head('/url?url=http://my/posts.json&input=as1&output=foo')
     self.assert_equals(400, resp.status_code)
     self.assert_equals('', resp.get_data(as_text=True))
+
+  def test_html_instagram_to_as1_raw_body(self):
+    expected = copy.deepcopy(AS1_RESPONSE)
+    expected['items'] = test_instagram.HTML_ACTIVITIES_FULL_V2
+
+    resp = client.post('/html?site=instagram&output=as1',
+                       data=test_instagram.HTML_FEED_COMPLETE_V2)
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals(expected, resp.json)
+
+  def test_html_instagram_to_as1_form_encoded(self):
+    expected = copy.deepcopy(AS1_RESPONSE)
+    expected['items'] = test_instagram.HTML_ACTIVITIES_FULL_V2
+
+    html_file = BytesIO(test_instagram.HTML_FEED_COMPLETE_V2.encode())
+
+    resp = client.post('/html', data={
+      'site': 'instagram',
+      'input': (html_file, 'file.html'),
+      'output': 'as1',
+    })
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals('application/stream+json', resp.headers['Content-Type'])
+    self.assert_equals(expected, resp.json)
+
+  def test_html_instagram_no_file_input(self):
+    resp = client.post('/html?site=instagram&output=as1')
+    self.assert_equals(400, resp.status_code)
 
   def test_demo(self):
     resp = client.get('/demo?site=sayt&user_id=me&group_id=@groop&activity_id=123')

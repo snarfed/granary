@@ -292,6 +292,34 @@ def url():
                        url=final_url, actor=actor, title=title, hfeed=hfeed)
 
 
+@app.route('/html', methods=('POST',))
+def html():
+  """Converts scraped HTML. Currently only supports Instagram.
+
+  """
+  site = request.values['site']
+  if site != 'instagram':
+    raise BadRequest(f'Invalid site: {site}, expected instagram')
+
+  html = request.get_data(as_text=True)
+  if not html and request.files:
+    file = next(request.files.values())
+    html = file.read().decode(file.mimetype_params.get('charset') or 'utf-8')
+  if not html:
+    raise BadRequest(f'Expected HTML input in raw or multipart request body')
+
+  logger.info(f'Got input: {util.ellipsize(html, words=999, chars=999)}')
+
+  activities, actor = Instagram().scraped_to_activities(html, fetch_extras=False)
+  logger.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
+
+  title = 'Instagram feed'
+  if actor:
+    title += f' for {actor.get("username") or actor.get("displayName")}'
+  return make_response(source.Source.make_activities_base_response(activities),
+                       actor=actor, title=title)
+
+
 def make_response(response, actor=None, url=None, title=None, hfeed=None):
   """Converts ActivityStreams activities and returns a Flask response.
 
@@ -304,12 +332,12 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
     title: string, used in feed output (Atom, JSON Feed, RSS)
     hfeed: dict, parsed mf2 h-feed, if available
   """
-  format = request.args.get('format') or request.args.get('output') or 'json'
+  format = request.values.get('format') or request.values.get('output') or 'json'
   if format not in FORMATS:
     raise BadRequest(f'Invalid format: {format}, expected one of {FORMATS!r}')
 
   headers = {}
-  if 'plaintext' in request.args:
+  if 'plaintext' in request.values:
     # override content type
     headers['Content-Type'] = 'text/plain'
   else:
@@ -336,8 +364,8 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
       return util.trim_nulls(response), headers
 
     elif format == 'atom':
-      hub = request.args.get('hub')
-      reader = request.args.get('reader', 'true').lower()
+      hub = request.values.get('hub')
+      reader = request.values.get('reader', 'true').lower()
       if reader not in ('true', 'false'):
         return abort(400, 'reader param must be either true or false')
       if not actor and hfeed:
