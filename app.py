@@ -296,6 +296,10 @@ def url():
 def html():
   """Converts scraped HTML. Currently only supports Instagram.
 
+  Accepts `POST` requests with silo HTML as input. Currently only supports
+  Instagram. Requires `site=instagram`, `output=...` (any supported output
+  format), and HTML as either raw request body or MIME multipart encoded file in
+  the `input` parameter.
   """
   site = request.values['site']
   if site != 'instagram':
