@@ -302,8 +302,10 @@ Changelog
   * Correctly trim Twitter alt text
 * Facebook
   * Scraping: extract post id from `_ft_` query param instead of `story_fbid`, which is now an opaque token that changes regularly. ([facebook-atom#27](https://github.com/snarfed/facebook-atom/issues/27))
+* Instagram
+  * Add new `Instagram.scraped_json_to_activities` method.
 * REST API
-  * Add new `/html` endpoint that accepts `POST` requests with silo HTML as input. Currently only supports Instagram. Requires `site=instagram`, `output=...` (any supported output format), and HTML as either raw request body or MIME multipart encoded file in the `input` parameter.
+  * Add new `/scraped` endpoint that accepts `POST` requests with silo HTML as input. Currently only supports Instagram. Requires `site=instagram`, `output=...` (any supported output format), and HTML as either raw request body or MIME multipart encoded file in the `input` parameter.
 
 ### 4.0 - 2022-03-23
 

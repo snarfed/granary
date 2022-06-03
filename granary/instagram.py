@@ -52,7 +52,9 @@ HTML_DATA_RE = re.compile(r"""
   window\.(_sharedData\ =|__additionalDataLoaded\('[^']+',)\ *
   (.+?)
   \)?;</script>""", re.VERBOSE)
-# duplicated in bridgy/browser-extension/instagram.js
+
+# duplicated in bridgy/browser-extension/instagram.js and
+# instagram-atom/browser-extension/instagram.js
 HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:96.0) Gecko/20100101 Firefox/96.0',
   'X-IG-App-ID': '936619743392459',  # desktop web
@@ -824,14 +826,53 @@ class Instagram(source.Source):
       logger.warning('JSON script tag not found!')
       return [], None
 
+    data = [util.trim_nulls(json_loads(match[1])) for match in matches]
+    activities, actor = self.scraped_json_to_activities(
+      data, cookie=cookie, count=count, fetch_extras=fetch_extras)
+    if activities:
+      return activities, actor
+
+    # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
+    # no longer has any useful data. Need to do a second header link fetch.
+    soup = util.parse_html(html)
+    link = soup.find('link', href=HTML_PRELOAD_RE)
+    if link:
+      url = urllib.parse.urljoin(HTML_BASE_URL, link['href'])
+      return self.scraped_json_to_activities(
+        self._scrape_json(url, cookie=cookie), cookie=cookie, count=count,
+        fetch_extras=fetch_extras)
+
+    return [], None
+
+  def scraped_json_to_activities(self, input, cookie=None, count=None,
+                                 fetch_extras=False):
+    """Converts scraped Instagram JSON to ActivityStreams activities.
+
+    The input JSON may be from:
+
+    * a user's profile, eg
+      https://i.instagram.com/api/v1/users/web_profile_info/?username=...
+
+    Args:
+      input: dict or sequence of dicts, Instagram JSON object(s)
+      cookie: string, optional sessionid cookie to be used for subsequent HTTP
+        fetches, if necessary.
+      count: integer, number of activities to return, None for all
+      fetch_extras: whether to make extra HTTP fetches to get likes, etc.
+
+    Returns:
+      tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
+    """
     # find media
     medias = []
     feed_v2_items = []
     profile_user = None
     viewer_user = None
 
-    for match in matches:
-      data = util.trim_nulls(json_loads(match[1]))
+    if not isinstance(input, (list, tuple, set)):
+      input = [input]
+
+    for data in input:
       entry_data = data.get('entry_data', {})
 
       # home page ie news feed
@@ -846,13 +887,16 @@ class Instagram(source.Source):
       feed_v2_items.extend(data.get('feed_items', []))
       feed_v2_items.extend(data.get('items', []))
 
-      if 'user' in data:
-        edges = data['user'].get('edge_web_feed_timeline', {}).get('edges', [])
-        medias.extend(e.get('node') for e in edges)
+      user = (data.get('data', {}) or data).get('user', {})
+      edges = user.get('edge_web_feed_timeline', {}).get('edges', [])
+      medias.extend(e.get('node') for e in edges)
 
       # user profiles
-      for page in entry_data.get('ProfilePage', []):
-        profile_user = page.get('graphql', {}).get('user', {})
+      profile_users = [page.get('graphql', {}).get('user', {})
+                       for page in entry_data.get('ProfilePage', [])]
+      if user:
+        profile_users.append(user)
+      for profile_user in profile_users:
         medias.extend(edge['node'] for edge in
           profile_user.get('edge_owner_to_timeline_media', {}).get('edges', [])
           if edge.get('node'))
@@ -865,18 +909,6 @@ class Instagram(source.Source):
         media = page.get('graphql', {}).get('shortcode_media')
         if media:
           medias.append(media)
-
-    if not medias and not feed_v2_items:
-      # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
-      # no longer has any useful data. Need to do a second header link fetch.
-      soup = util.parse_html(html)
-      link = soup.find('link', href=HTML_PRELOAD_RE)
-      if link:
-        url = urllib.parse.urljoin(HTML_BASE_URL, link['href'])
-        data = self._scrape_json(url, cookie=cookie)
-        edges = data.get('data', {}).get('user', {})\
-                    .get('edge_web_feed_timeline', {}).get('edges', [])
-        medias = [e.get('node') for e in edges]
 
     if count:
       medias = medias[:count]

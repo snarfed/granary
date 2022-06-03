@@ -881,18 +881,11 @@ HTML_VIDEO_V2_FULL = {
   'like_count': 9,
 
   'usertags': {
-    'in': [
-      {
-        'user': {
-          # 'pk': 654,
-          'username': 'ap',
-          # 'full_name': 'A P',
-          # 'is_private': False,
-          # 'profile_pic_url': 'https://scontent-sjc3-1.cdninstagram.com/v/t51.2885-19/s150x150/654_33_22_n.jpg?...',
-          # 'profile_pic_id': '2629_654',
-        },
+    'in': [{
+      'user': {
+        'username': 'ap',
       },
-    ],
+    }],
   },
 }
 
@@ -964,6 +957,36 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
 HTML_PROFILE_PRIVATE = copy.deepcopy(HTML_PROFILE)
 HTML_PROFILE_PRIVATE['entry_data']['ProfilePage'][0]['graphql']['user']['is_private'] = True
 
+# eg https://i.instagram.com/api/v1/users/web_profimle_info/?username=snarfed
+# HTTP fetch needs Cookie and X-IG-App-ID headers
+# data is similar to HTML_PRELOAD_DATA
+HTML_PROFILE_JSON = {
+  'data': {
+    'user': {
+      'edge_owner_to_timeline_media': {
+        'count': 159,
+        'edges': [
+          {'node': HTML_PHOTO},
+          {'node': HTML_VIDEO},
+        ],
+      },
+      'id': '420973239',
+      'fbid': '17841401357176577',
+      'username': 'snarfed',
+      'full_name': 'Ryan B',
+      'external_url': 'https://snarfed.org',
+      'biography': 'something or other',
+      'is_private': False,
+      'is_verified': False,
+      'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
+      'profile_pic_url_hd': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_hd.jpg',
+      'followed_by_viewer': False,
+      'follows_viewer': False,
+      'edge_followed_by': {'count': 168},
+      'edge_follow': {'count': 111},
+    },
+  },
+}
 HTML_PHOTO_PAGE = {  # eg https://www.instagram.com/p/ABC123/
   'config': {
     'csrf_token': 'xyz',
@@ -1007,6 +1030,7 @@ HTML_USELESS_FEED = {
   },
 }
 # eg https://www.instagram.com/graphql/query/?query_hash=d6f4...&variables={}
+# data is similar to HTML_PROFILE_JSON
 HTML_PRELOAD_DATA = {
   'data': {
     'user': {
@@ -1022,7 +1046,10 @@ HTML_PRELOAD_DATA = {
       },
       'id': '420973239',
       'username': 'snarfed',
-      'profile_pic_url': 'https://scontent-ort2-1.cdninstagram.com/vp/a14b81a5e52a25f456b0e4253ee2949c/5B2DF84C/t51.2885-19/11373714_959073410822287_2004790583_a.jpg',
+      'full_name': 'Ryan B',
+      'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_a.jpg',
+      'external_url': 'https://snarfed.org',
+      'biography': 'something or other',
     }
   },
   'status': 'ok',
@@ -1849,6 +1876,11 @@ class InstagramTest(testutil.TestCase):
     self.assertEqual(expected, activities[0]['actor'])
     self.assertEqual(expected, activities[0]['object']['author'])
 
+  def test_scraped_json_to_activities_profile(self):
+    activities, actor = self.instagram.scraped_json_to_activities(HTML_PROFILE_JSON)
+    self.assert_equals(HTML_ACTIVITIES, activities)
+    self.assert_equals(HTML_VIEWER_PUBLIC, actor)
+
   def test_scraped_to_activities_photo_no_fetch_extras(self):
     activities, viewer = self.instagram.scraped_to_activities(
       HTML_PHOTO_COMPLETE, fetch_extras=False)
@@ -2053,7 +2085,7 @@ class InstagramTest(testutil.TestCase):
 
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL],
                        activities)
-    self.assertIsNone(viewer)
+    self.assert_equals(HTML_VIEWER, viewer)
 
   def test_scraped_to_activities_preload_fetch_bad_json(self):
     """https://console.cloud.google.com/errors/CP_w8ai-7JLfvAE"""
