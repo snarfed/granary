@@ -1225,7 +1225,7 @@ class Instagram(source.Source):
     obj_id = self.tag_uri(f'{item_pk}_{user_pk}' if user_pk else item_pk)
 
     media_url = self.media_url(item.get('code'))
-    caption = item.get('caption', {})
+    caption = item.get('caption') or {}
 
     # media
     attachments = []
