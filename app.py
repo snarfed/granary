@@ -292,29 +292,49 @@ def url():
                        url=final_url, actor=actor, title=title, hfeed=hfeed)
 
 
-@app.route('/html', methods=('POST',))
-def html():
-  """Converts scraped HTML. Currently only supports Instagram.
+@app.route('/<any(scraped,html):_>', methods=('POST',))
+def scraped(_):
+  """Converts scraped HTML or JSON. Currently only supports Instagram.
 
-  Accepts `POST` requests with silo HTML as input. Currently only supports
-  Instagram. Requires `site=instagram`, `output=...` (any supported output
-  format), and HTML as either raw request body or MIME multipart encoded file in
-  the `input` parameter.
+  Accepts `POST` requests with silo HTML or JSON as input. Requires
+  `site=instagram`, `output=...` (any supported output format), and input in
+  either raw request body or MIME multipart encoded file in the `input`
+  parameter. Requires the request or multipart file's content-type to be either
+  text/html or application/json, respectively.
   """
   site = request.values['site']
   if site != 'instagram':
     raise BadRequest(f'Invalid site: {site}, expected instagram')
 
-  html = request.get_data(as_text=True)
-  if not html and request.files:
-    file = next(request.files.values())
-    html = file.read().decode(file.mimetype_params.get('charset') or 'utf-8')
-  if not html:
-    raise BadRequest(f'Expected HTML input in raw or multipart request body')
+  expected_types = (FORMATS['json'], FORMATS['html'])
+  body = type = None
 
-  logger.info(f'Got input: {util.ellipsize(html, words=999, chars=999)}')
+  # MIME multipart
+  for name, file in request.files.items():
+    type = file.mimetype
+    body = file.read().decode(file.mimetype_params.get('charset') or 'utf-8')
+    logger.debug(f'Examining MIME multipart file {name} {file.filename} {type}')
+    if body and type in expected_types:
+      break
 
-  activities, actor = Instagram().scraped_to_activities(html, fetch_extras=False)
+  if not body or type not in expected_types:
+    # raw request body
+    logger.debug(f'Examining request body, content type {request.content_type}')
+    type = request.content_type
+    if type:
+      type = type.split(';')[0]
+    body = request.get_data(as_text=True)
+
+  if not body or type not in expected_types:
+    raise BadRequest(f'No {FORMATS["json"]} or {FORMATS["html"]} body found in request or MIME multipart file')
+
+  logger.info(f'Got input: {util.ellipsize(body, words=999, chars=999)}')
+
+  if type == FORMATS['json']:
+    activities, actor = Instagram().scraped_json_to_activities(
+      json_loads(body), fetch_extras=False)
+  else:
+    activities, actor = Instagram().scraped_to_activities(body, fetch_extras=False)
   logger.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
 
   title = 'Instagram feed'
