@@ -294,6 +294,8 @@ Changelog
 
 * Atom:
   * Switch to converting AS1 `id` (instead of `url`) to Atom `id`.
+* Reddit:
+  * Implement `get_actor`.
 
 - _Non-breaking changes_
 

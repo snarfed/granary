@@ -267,12 +267,7 @@ class Reddit(source.Source):
     elif search_query:
       submissions = r.subreddit('all').search(search_query, sort='new', limit=count)
     else:
-      # Oddly user.me() returns None when in read only mode
-      # https://praw.readthedocs.io/en/stable/code_overview/reddit/user.html#praw.models.User.me
-      r.read_only = False
-      redditor = r.redditor(user_id) if user_id else r.user.me()
-      r.read_only = True
-      submissions = redditor.submissions.new(limit=count)
+      submissions = self.get_actor(user_id).submissions.new(limit=count)
 
     activities = [self.praw_to_activity(s, 'submission') for s in submissions]
 
@@ -282,13 +277,14 @@ class Reddit(source.Source):
     return self.make_activities_base_response(activities)
 
   def get_actor(self, user_id=None):
-    """PLACEHOLDER. Returns an empty dict.
+    """Fetches a Reddit user and converts them to an AS1 actor.
 
-    Only here because the granary.io API needs this to emit Atom data.
+    Args:
+      user_id: str
 
-    TODO: implement.
+    Returns: dict, AS1 actor, or {} if the user isn't found
     """
-    return {}
+    return self.praw_to_actor(self._redditor(user_id=user_id))
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
                   activity=None):
@@ -306,3 +302,12 @@ class Reddit(source.Source):
   def user_url(self, username):
     """Returns the Reddit URL for a given user."""
     return f'https://{self.DOMAIN}/user/{username}'
+
+  def _redditor(self, user_id=None):
+    """Returns the Redditor for a given user id."""
+    # Oddly user.me() returns None when in read only mode
+    # https://praw.readthedocs.io/en/stable/code_overview/reddit/user.html#praw.models.User.me
+    r = self.get_reddit_api()
+    r.read_only = False
+    return r.redditor(user_id) if user_id else r.user.me()
+    r.read_only = True

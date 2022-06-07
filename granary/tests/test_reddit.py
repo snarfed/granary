@@ -168,10 +168,11 @@ class RedditTest(testutil.TestCase):
     self.reddit = reddit.Reddit('token-here')
     self.api = self.reddit.reddit_api = self.mox.CreateMockAnything(praw.Reddit)
 
-    self.submission_selftext = FakeSubmission(FakeRedditor())
-    self.comment = FakeComment(self.submission_selftext, FakeRedditor())
+    self.redditor = FakeRedditor()
+    self.submission_selftext = FakeSubmission(self.redditor)
+    self.comment = FakeComment(self.submission_selftext, self.redditor)
 
-    self.submission_link = FakeSubmission(FakeRedditor())
+    self.submission_link = FakeSubmission(self.redditor)
     self.submission_link.selftext = ''
     self.submission_link.url = 'https://reddit.com/ezv3f2'
 
@@ -189,19 +190,18 @@ class RedditTest(testutil.TestCase):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(suspended))
 
   def test_praw_to_actor(self):
-    self.assert_equals(ACTOR, self.reddit.praw_to_actor(FakeRedditor()))
+    self.assert_equals(ACTOR, self.reddit.praw_to_actor(self.redditor))
 
   def test_broken_praw_to_actor(self):
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(util.Struct()))
 
   def test_praw_to_actor_no_subreddit(self):
-    redditor = FakeRedditor()
-    redditor.subreddit = None
+    self.redditor.subreddit = None
     expected = copy.deepcopy(ACTOR)
     del expected['description']
     del expected['urls']
     expected['url'] = 'https://reddit.com/user/bonkerfield/'
-    self.assert_equals(expected, self.reddit.praw_to_actor(redditor))
+    self.assert_equals(expected, self.reddit.praw_to_actor(self.redditor))
 
   def test_praw_to_comment(self):
     self.assert_equals(COMMENT_OBJECT,
@@ -274,3 +274,15 @@ class RedditTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     self.assert_equals(COMMENT_OBJECT, self.reddit.get_comment('xyz'))
+
+  def test_get_actor(self):
+    self.api.redditor('schnarfed').AndReturn(self.redditor)
+    self.mox.ReplayAll()
+
+    self.assert_equals(ACTOR, self.reddit.get_actor('schnarfed'))
+
+  def test_get_actor_missing(self):
+    self.api.redditor('schnarfed').AndReturn(self.comment)
+    self.mox.ReplayAll()
+
+    self.assert_equals(MISSING_OBJECT, self.reddit.get_actor('schnarfed'))

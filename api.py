@@ -138,7 +138,7 @@ def api(path):
       response = src.get_activities_response(*args, **get_kwargs())
   except (NotImplementedError, ValueError) as e:
     return abort(400, str(e))
-    # other exceptions are handled by webutil.handlers.handle_exception(),
+    # other exceptions are handled by webutil.flask_util.handle_exception(),
     # which uses interpret_http_exception(), etc.
 
   logger.info(f'Got activities: {json_dumps(response, indent=2)}')
