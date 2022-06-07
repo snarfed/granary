@@ -166,7 +166,7 @@ class RedditTest(testutil.TestCase):
   def setUp(self):
     super(RedditTest, self).setUp()
     self.reddit = reddit.Reddit('token-here')
-    self.api = self.reddit.reddit_api = self.mox.CreateMockAnything(praw.Reddit)
+    self.api = self.reddit.api = self.mox.CreateMockAnything(praw.Reddit)
 
     self.redditor = FakeRedditor()
     self.submission_selftext = FakeSubmission(self.redditor)

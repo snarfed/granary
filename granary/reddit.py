@@ -1,6 +1,8 @@
 # coding=utf-8
 """Reddit source class.
 
+Not thread safe!
+
 Reddit API docs:
 https://github.com/reddit-archive/reddit/wiki/API
 https://www.reddit.com/dev/api
@@ -34,18 +36,14 @@ class Reddit(source.Source):
   OPTIMIZED_COMMENTS = True
 
   def __init__(self, refresh_token):
-    self.refresh_token = refresh_token
-    self.reddit_api = None
-
-  def get_reddit_api(self):
-    if not self.reddit_api:
-      self.reddit_api = praw.Reddit(client_id=reddit.REDDIT_APP_KEY,
-                                    client_secret=reddit.REDDIT_APP_SECRET,
-                                    refresh_token=self.refresh_token,
-                                    user_agent=util.user_agent)
-      self.reddit_api.read_only = True
-
-    return self.reddit_api
+    self.api = praw.Reddit(
+      client_id=reddit.REDDIT_APP_KEY,
+      client_secret=reddit.REDDIT_APP_SECRET,
+      refresh_token=refresh_token,
+      user_agent=util.user_agent,
+      # https://praw.readthedocs.io/en/stable/getting_started/configuration/options.html#basic-configuration-options
+      check_for_updates=False)
+    self.api.read_only = True
 
   @classmethod
   def post_id(self, url):
@@ -228,16 +226,15 @@ class Reddit(source.Source):
     }
     return self.postprocess_activity(activity)
 
-  def _fetch_replies(self, r, activities):
+  def _fetch_replies(self, activities):
     """Fetches and injects comments into a list of activities, in place.
 
     limitations: Only includes top level comments
     Args:
-      r: PRAW API object for querying submissions in activities
       activities: list of activity dicts
     """
     for activity in activities:
-      subm = r.submission(id=util.parse_tag_uri(activity.get('id'))[1])
+      subm = self.api.submission(id=util.parse_tag_uri(activity.get('id'))[1])
 
       # for v0 we will use just the top level comments because threading is hard.
       # feature request: https://github.com/snarfed/bridgy/issues/1014
@@ -260,19 +257,17 @@ class Reddit(source.Source):
 
     Currently only implements activity_id, search_query and fetch_replies.
     """
-    r = self.get_reddit_api()
-
     if activity_id:
-      submissions = [r.submission(id=activity_id)]
+      submissions = [self.api.submission(id=activity_id)]
     elif search_query:
-      submissions = r.subreddit('all').search(search_query, sort='new', limit=count)
+      submissions = self.api.subreddit('all').search(search_query, sort='new', limit=count)
     else:
       submissions = self.get_actor(user_id).submissions.new(limit=count)
 
     activities = [self.praw_to_activity(s, 'submission') for s in submissions]
 
     if fetch_replies:
-      self._fetch_replies(r, activities)
+      self._fetch_replies(activities)
 
     return self.make_activities_base_response(activities)
 
@@ -296,8 +291,7 @@ class Reddit(source.Source):
       activity_author_id: string activity author id. Ignored.
       activity: activity object, Ignored
     """
-    r = self.get_reddit_api()
-    return self.praw_to_object(r.comment(id=comment_id), 'comment')
+    return self.praw_to_object(self.api.comment(id=comment_id), 'comment')
 
   def user_url(self, username):
     """Returns the Reddit URL for a given user."""
@@ -307,7 +301,6 @@ class Reddit(source.Source):
     """Returns the Redditor for a given user id."""
     # Oddly user.me() returns None when in read only mode
     # https://praw.readthedocs.io/en/stable/code_overview/reddit/user.html#praw.models.User.me
-    r = self.get_reddit_api()
-    r.read_only = False
-    return r.redditor(user_id) if user_id else r.user.me()
-    r.read_only = True
+    self.api.read_only = False
+    return self.api.redditor(user_id) if user_id else self.api.user.me()
+    self.api.read_only = True
