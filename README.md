@@ -290,14 +290,17 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 4.1 - unreleased
+### 5.0 - unreleased
 
+_Breaking changes:_
+
+* Drop Python 3.6 support. Python 3.7 is now the minimum required version.
 * Atom:
   * Switch to converting AS1 `id` (instead of `url`) to Atom `id`.
 * Reddit:
   * Implement `get_actor`.
 
-- _Non-breaking changes_
+_Non-breaking changes:_
 
 * Twitter
   * Trim alt text in line between post preview and creation
