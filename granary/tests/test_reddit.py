@@ -4,6 +4,7 @@
 import copy
 
 from mox3 import mox
+from oauth_dropins import reddit as oauth_reddit
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 
@@ -165,6 +166,7 @@ class RedditTest(testutil.TestCase):
 
   def setUp(self):
     super(RedditTest, self).setUp()
+    oauth_reddit.REDDIT_APP_KEY = oauth_reddit.REDDIT_APP_LOCAL = 'foo'
     self.reddit = reddit.Reddit('token-here')
     self.api = self.reddit.api = self.mox.CreateMockAnything(praw.Reddit)
 
