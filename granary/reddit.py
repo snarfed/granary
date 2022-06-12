@@ -11,8 +11,9 @@ https://www.reddit.com/prefs/apps
 PRAW API docs:
 https://praw.readthedocs.io/
 """
-import urllib.parse, urllib.request
+import logging
 import threading
+import urllib.parse
 
 from cachetools import cachedmethod, TTLCache
 from oauth_dropins import reddit
@@ -21,6 +22,8 @@ import praw
 from prawcore.exceptions import NotFound
 
 from . import source
+
+logger = logging.getLogger(__name__)
 
 USER_CACHE_TIME = 5 * 60  # 5 minute expiration, in seconds
 user_cache = TTLCache(1000, USER_CACHE_TIME)
@@ -85,6 +88,7 @@ class Reddit(source.Source):
     try:
       user = reddit.praw_to_user(praw_user)
     except NotFound:
+      logger.debug('User not found', praw_user, repr(praw_user), exception=True)
       return {}
 
     return self.user_to_actor(user)
