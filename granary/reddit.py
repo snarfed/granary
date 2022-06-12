@@ -266,7 +266,7 @@ class Reddit(source.Source):
     elif search_query:
       submissions = self.api.subreddit('all').search(search_query, sort='new', limit=count)
     else:
-      submissions = self.get_actor(user_id).submissions.new(limit=count)
+      submissions = self._redditor(user_id).submissions.new(limit=count)
 
     activities = [self.praw_to_activity(s, 'submission') for s in submissions]
 
