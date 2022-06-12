@@ -306,5 +306,6 @@ class Reddit(source.Source):
     # Oddly user.me() returns None when in read only mode
     # https://praw.readthedocs.io/en/stable/code_overview/reddit/user.html#praw.models.User.me
     self.api.read_only = False
-    return self.api.redditor(user_id) if user_id else self.api.user.me()
+    r = self.api.redditor(user_id) if user_id else self.api.user.me()
     self.api.read_only = True
+    return r
