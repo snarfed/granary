@@ -88,7 +88,7 @@ class Reddit(source.Source):
     try:
       user = reddit.praw_to_user(praw_user)
     except NotFound:
-      logger.debug('User not found', praw_user, repr(praw_user), exc_info=True)
+      logger.debug(f'User not found: {praw_user} {repr(praw_user)}', exc_info=True)
       return {}
 
     return self.user_to_actor(user)
