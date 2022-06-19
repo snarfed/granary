@@ -695,7 +695,7 @@ class Source(object, metaclass=SourceMeta):
   @staticmethod
   def original_post_discovery(
       activity, domains=None, cache=None, include_redirect_sources=True,
-      include_reserved_hosts=True, **kwargs):
+      include_reserved_hosts=True, max_redirect_fetches=None, **kwargs):
     """Discovers original post links.
 
     This is a variation on http://indiewebcamp.com/original-post-discovery . It
@@ -719,6 +719,8 @@ class Source(object, metaclass=SourceMeta):
         TLDs (eg foo.example) and local hosts (eg http://foo.local/,
         http://my-server/)
       cache: deprecated, unused
+      max_redirect_fetches: if specified, only make up to this many HTTP
+        fetches to resolve redirects.
       kwargs: passed to requests.head() when following redirects
 
     Returns:
@@ -740,21 +742,23 @@ class Source(object, metaclass=SourceMeta):
     candidates += [match.expand(r'http://\1/\2') for match in
                    Source._PERMASHORTCITATION_RE.finditer(content)]
 
-    candidates = set(util.dedupe_urls(
+    candidates = util.dedupe_urls(
       util.clean_url(url) for url in candidates
       if url and (url.startswith('http://') or url.startswith('https://')) and
       # heuristic: ellipsized URLs are probably incomplete, so omit them.
-      not url.endswith('...') and not url.endswith('…')))
+      not url.endswith('...') and not url.endswith('…'))
 
     # check for redirect and add their final urls
+    if max_redirect_fetches and len(candidates) > max_redirect_fetches:
+      logger.warning('Found {len(candidates)} original post candidates, only resolving redirects for the first {max_redirect_fetches}')
     redirects = {}  # maps final URL to original URL for redirects
-    for url in candidates:
+    for url in candidates[:max_redirect_fetches]:
       resolved = util.follow_redirects(url, **kwargs)
       if (resolved.url != url and
           resolved.headers.get('content-type', '').startswith('text/html')):
         redirects[resolved.url] = url
 
-    candidates.update(redirects.keys())
+    candidates.extend(redirects.keys())
 
     # use domains to determine which URLs are original post links vs mentions
     originals = set()

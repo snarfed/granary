@@ -247,7 +247,21 @@ class SourceTest(testutil.TestCase):
     # bookmarks should include targetUrl
     check({'targetUrl': 'http://or.ig/'}, ['http://or.ig/'])
 
-  def test_original_post_discovery_follow_redirects(self):
+  def test_original_post_discovery_max_redirect_fetches(self):
+    self.expect_requests_head('http://other/link', redirected_url='http://a'
+                              ).InAnyOrder()
+    self.expect_requests_head('http://sho.rt/post', redirected_url='http://b'
+                              ).InAnyOrder()
+    self.mox.ReplayAll()
+
+    obj = {
+      'content': 'asdf http://other/link qwert',
+      'upstreamDuplicates': ['http://sho.rt/post', 'http://next/post'],
+    }
+    self.check_original_post_discovery(
+      obj, ['http://a/', 'http://b/', 'http://next/post'], max_redirect_fetches=2)
+
+  def test_original_post_discovery_follow_redirects_false(self):
     self.expect_requests_head('http://other/link',
                               redirected_url='http://other/link/redirected'
                              ).MultipleTimes()
