@@ -230,15 +230,22 @@ class Reddit(source.Source):
     }
     return self.postprocess_activity(activity)
 
-  def _fetch_replies(self, activities):
+  def _fetch_replies(self, activities, cache=None):
     """Fetches and injects comments into a list of activities, in place.
 
-    limitations: Only includes top level comments
+    Only includes top level comments!
+
     Args:
       activities: list of activity dicts
+      cache: dict, cache as described in get_activities_response()
     """
     for activity in activities:
-      subm = self.api.submission(id=util.parse_tag_uri(activity.get('id'))[1])
+      id = util.parse_tag_uri(activity.get('id'))[1]
+      subm = self.api.submission(id=id)
+
+      cache_key = f'ARR {id}'
+      if cache and cache.get(cache_key) == subm.num_comments:
+        continue
 
       # for v0 we will use just the top level comments because threading is hard.
       # feature request: https://github.com/snarfed/bridgy/issues/1014
@@ -250,6 +257,8 @@ class Reddit(source.Source):
         'items': items,
         'totalItems': len(items),
       }
+      if cache is not None:
+        cache[cache_key] = subm.num_comments
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=None,
@@ -271,7 +280,7 @@ class Reddit(source.Source):
     activities = [self.praw_to_activity(s, 'submission') for s in submissions]
 
     if fetch_replies:
-      self._fetch_replies(activities)
+      self._fetch_replies(activities, cache=cache)
 
     return self.make_activities_base_response(activities)
 

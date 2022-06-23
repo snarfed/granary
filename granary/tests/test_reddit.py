@@ -284,6 +284,48 @@ class RedditTest(testutil.TestCase):
       [ACTIVITY_WITH_COMMENT],
       self.reddit.get_activities(activity_id='ezv3f2', fetch_replies=True))
 
+  def test_get_activities_cache_comments(self):
+    # get first_activities() call, fetches comments
+    self.submission_selftext.num_comments = 1
+    for _ in range(2):
+      self.api.submission(id='ezv3f2').AndReturn(self.submission_selftext)
+
+    comments = CommentForest(self.submission_selftext, comments=[self.comment])
+    self.submission_selftext.comments = comments
+    self.mox.StubOutWithMock(comments, 'replace_more')
+    comments.replace_more()
+
+    # second call, comment count is unchanged, skips comment fetch
+    for _ in range(2):
+      self.api.submission(id='ezv3f2').AndReturn(self.submission_selftext)
+
+    # third call, comment count is different, skips comment fetch
+    other_sub = FakeSubmission(self.redditor)
+    other_sub.num_comments = 2
+    other_sub.comments = comments
+    for _ in range(2):
+      self.api.submission(id='ezv3f2').AndReturn(other_sub)
+    comments.replace_more()
+
+    # fourth call, comment count is unchanged, skips comment fetch
+    for _ in range(2):
+      self.api.submission(id='ezv3f2').AndReturn(other_sub)
+
+    self.mox.ReplayAll()
+    cache = util.CacheDict()
+    for num_comments in (1, 2):
+      # not cached
+      self.assert_equals(
+        [ACTIVITY_WITH_COMMENT],
+        self.reddit.get_activities(activity_id='ezv3f2', fetch_replies=True, cache=cache))
+      self.assert_equals(num_comments, cache['ARR ezv3f2'])
+
+      # not cached
+      self.assert_equals(
+        [ACTIVITY_WITH_SELFTEXT],
+        self.reddit.get_activities(activity_id='ezv3f2', fetch_replies=True, cache=cache))
+      self.assert_equals(num_comments, cache['ARR ezv3f2'])
+
   def test_get_comment(self):
     self.api.comment(id='xyz').AndReturn(self.comment)
     self.mox.ReplayAll()
