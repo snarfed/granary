@@ -11,8 +11,9 @@ from oauth_dropins.webutil import util
 from granary import reddit
 
 import praw
-import praw.models
+from praw.models import Subreddit, User
 from praw.models.comment_forest import CommentForest
+from praw.models.listing.mixins.redditor import SubListing
 from prawcore.exceptions import NotFound
 
 
@@ -232,14 +233,26 @@ class RedditTest(testutil.TestCase):
       'lhzukq',
       self.reddit.post_id('https://www.reddit.com/r/xyz/comments/lhzukq/abc/'))
 
-  # TODO
-  # def test_get_activities_default_user(self):
-  #   self.api.user.me().submissions.new(limit=None).AndReturn(
-  #     [self.submission_selftext, self.submission_link])
-  #   self.mox.ReplayAll()
+  def test_get_activities_user_id(self):
+    self.api.redditor('plfff').AndReturn(self.redditor)
+    self.redditor.submissions = self.mox.CreateMock(SubListing)
+    self.redditor.submissions.new(limit=None).AndReturn(
+      [self.submission_selftext, self.submission_link])
+    self.mox.ReplayAll()
 
-  #   self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
-  #                      self.reddit.get_activities())
+    self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
+                       self.reddit.get_activities(user_id='plfff'))
+
+  def test_get_activities_default_user(self):
+    self.api.user = self.mox.CreateMock(User)
+    self.api.user.me().AndReturn(self.redditor)
+    self.redditor.submissions = self.mox.CreateMock(SubListing)
+    self.redditor.submissions.new(limit=None).AndReturn(
+      [self.submission_selftext, self.submission_link])
+    self.mox.ReplayAll()
+
+    self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
+                       self.reddit.get_activities())
 
   def test_get_activities_activity_id(self):
     self.api.submission(id='abc').AndReturn(self.submission_selftext)
@@ -249,7 +262,7 @@ class RedditTest(testutil.TestCase):
                        self.reddit.get_activities(activity_id='abc'))
 
   def test_get_activities_search_query(self):
-    subreddit = self.mox.CreateMock(praw.models.Subreddit)
+    subreddit = self.mox.CreateMock(Subreddit)
     self.mox.StubOutWithMock(self.api, 'subreddit')
     self.api.subreddit('all').AndReturn(subreddit)
     subreddit.search('foo bar', sort='new', limit=None).AndReturn(
