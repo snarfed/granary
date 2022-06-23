@@ -1434,7 +1434,7 @@ class InstagramTest(testutil.TestCase):
 
     self.mox.ReplayAll()
 
-    cache = util.CacheDict()
+    cache = {}
     for _ in range(3):
       self.instagram.get_activities(user_id='x', group_id=source.SELF,
                                     fetch_likes=True, fetch_replies=True,

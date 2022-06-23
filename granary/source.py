@@ -280,10 +280,9 @@ class Source(object, metaclass=SourceMeta):
         only be returned if the ETag has changed. Should include enclosing
         double quotes, e.g. '"ABC123"'
       min_id: only return activities with ids greater than this
-      cache: object with get(key), set_multi(dict), and delete_multi(list)
-        methods. In practice, this is App Engine's memcache interface:
-        https://developers.google.com/appengine/docs/python/memcache/functions
-        Used to cache data that's expensive to regenerate, e.g. API calls.
+      cache: dict, optional, used to cache metadata like comment and like counts
+        per activity across calls. Used to skip expensive API calls that haven't
+        changed.
       fetch_replies: boolean, whether to fetch each activity's replies also
       fetch_likes: boolean, whether to fetch each activity's likes also
       include_shares: boolean, whether to include share activities
@@ -694,7 +693,7 @@ class Source(object, metaclass=SourceMeta):
 
   @staticmethod
   def original_post_discovery(
-      activity, domains=None, cache=None, include_redirect_sources=True,
+      activity, domains=None, include_redirect_sources=True,
       include_reserved_hosts=True, max_redirect_fetches=None, **kwargs):
     """Discovers original post links.
 
@@ -718,7 +717,6 @@ class Source(object, metaclass=SourceMeta):
       include_reserved_hosts: boolean, whether to include domains on reserved
         TLDs (eg foo.example) and local hosts (eg http://foo.local/,
         http://my-server/)
-      cache: deprecated, unused
       max_redirect_fetches: if specified, only make up to this many HTTP
         fetches to resolve redirects.
       kwargs: passed to requests.head() when following redirects

@@ -338,13 +338,9 @@ class Twitter(source.Source):
         else:
           raise
 
-    # batch get memcached counts of favorites and retweets for all tweets
-    cached = {}
-    if cache is not None:
-      keys = itertools.product(('ATR', 'ATF'), [t['id_str'] for t in tweets])
-      cached = cache.get_multi(f'{prefix} {id}' for prefix, id in keys)
-    # only update the cache at the end, in case we hit an error before then
-    cache_updates = {}
+    if cache is None:
+      # for convenience, throwaway object just for this method
+      cache = {}
 
     if fetch_shares:
       retweet_calls = 0
@@ -372,7 +368,7 @@ class Twitter(source.Source):
         # returns the original tweets, not the retweets or their authors.
         id = tweet['id_str']
         count = tweet.get('retweet_count')
-        if count and count != cached.get('ATR ' + id):
+        if count and count != cache.get('ATR ' + id):
           url = API_RETWEETS % id
           if min_id is not None:
             url = util.add_query_params(url, {'since_id': min_id})
@@ -391,7 +387,7 @@ class Twitter(source.Source):
               raise
 
           retweet_calls += 1
-          cache_updates['ATR ' + id] = count
+          cache['ATR ' + id] = count
 
     if not include_shares:
       tweets = [t for t in tweets if not t.get('retweeted_status')]
@@ -412,7 +408,7 @@ class Twitter(source.Source):
       for tweet, activity in zip(tweets, tweet_activities):
         id = tweet['id_str']
         count = tweet.get('favorite_count')
-        if self.is_public(activity) and count and count != cached.get('ATF ' + id):
+        if self.is_public(activity) and count and count != cache.get('ATF ' + id):
           try:
             resp = util.requests_get(SCRAPE_LIKES_URL % id,
                                      headers=self.scrape_headers)
@@ -424,13 +420,11 @@ class Twitter(source.Source):
           likes = [self._make_like(tweet, author) for author in
                    resp.json().get('globalObjects', {}).get('users', {}).values()]
           activity['object'].setdefault('tags', []).extend(likes)
-          cache_updates['ATF ' + id] = count
+          cache['ATF ' + id] = count
 
     activities += tweet_activities
     response = self.make_activities_base_response(activities)
     response.update({'total_count': total_count, 'etag': etag})
-    if cache_updates and cache is not None:
-      cache.set_multi(cache_updates)
     return response
 
   def fetch_replies(self, activities, min_id=None):

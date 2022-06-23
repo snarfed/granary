@@ -312,7 +312,7 @@ class RedditTest(testutil.TestCase):
       self.api.submission(id='ezv3f2').AndReturn(other_sub)
 
     self.mox.ReplayAll()
-    cache = util.CacheDict()
+    cache = {}
     for num_comments in (1, 2):
       # not cached
       self.assert_equals(

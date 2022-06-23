@@ -30,6 +30,7 @@ from ..twitter import (
   API_STATUS,
   API_TIMELINE,
   API_USER_TIMELINE,
+  RETWEET_LIMIT,
   SCRAPE_LIKES_URL,
   Twitter,
 )
@@ -997,9 +998,6 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_shares=True))
 
   def test_get_activities_fetch_cache(self):
-    # Test with multiple tweets to cover the bug described in
-    # https://github.com/snarfed/bridgy/issues/22#issuecomment-56329848 :
-    # util.CacheDict.get_multi() didn't originally handle generator args.
     tweets = [copy.deepcopy(TWEET), copy.deepcopy(TWEET)]
     tweets[0]['id_str'] += '_a'
     tweets[1]['id_str'] += '_b'
@@ -1019,7 +1017,7 @@ class TwitterTest(testutil.TestCase):
 
     self.mox.ReplayAll()
     self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
-    cache = util.CacheDict()
+    cache = {}
     for _ in range(4):
       self.twitter.get_activities(fetch_shares=True, fetch_likes=True,
                                   cache=cache)
@@ -1036,7 +1034,7 @@ class TwitterTest(testutil.TestCase):
 
     self.mox.ReplayAll()
     self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
-    cache = util.CacheDict()
+    cache = {}
     self.assert_equals([ACTIVITY_WITH_LIKES],
                        self.twitter.get_activities(fetch_likes=True, cache=cache))
     self.assert_equals(1, cache['ATF 100'])
@@ -1049,7 +1047,7 @@ class TwitterTest(testutil.TestCase):
       RequestException('url', 404, 'msg', {}, None))
     self.mox.ReplayAll()
 
-    cache = util.CacheDict()
+    cache = {}
     self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     self.assert_equals([ACTIVITY],
                        self.twitter.get_activities(fetch_likes=True, cache=cache))
@@ -1079,17 +1077,15 @@ class TwitterTest(testutil.TestCase):
       fetch_likes=True, fetch_shares=True))
 
   def test_retweet_limit(self):
-    tweet = copy.deepcopy(TWEET)
-    tweet['retweet_count'] = 1
-    self.expect_urlopen(TIMELINE, [tweet] * (twitter.RETWEET_LIMIT + 2))
+    tweets = [{**copy.deepcopy(TWEET), 'id_str': str(i), 'retweet_count': 1}
+              for i in range(1, RETWEET_LIMIT + 2)]
+    self.expect_urlopen(TIMELINE, tweets)
 
-    for _ in range(twitter.RETWEET_LIMIT):
-      self.expect_urlopen(API_RETWEETS % 100 + '&since_id=567', RETWEETS)
+    for i in range(1, RETWEET_LIMIT + 1):
+      self.expect_urlopen(API_RETWEETS % i, RETWEETS)
 
     self.mox.ReplayAll()
-    self.assert_equals(([ACTIVITY_WITH_SHARES] * twitter.RETWEET_LIMIT) +
-                          [ACTIVITY, ACTIVITY],
-                          self.twitter.get_activities(fetch_shares=True, min_id='567'))
+    self.twitter.get_activities(fetch_shares=True)
 
   def test_get_activities_request_etag(self):
     self.expect_urlopen(TIMELINE, [], headers={'If-none-match': '"my etag"'})

@@ -150,7 +150,7 @@ class Mastodon(source.Source):
   def embed_post(cls, obj):
     """Returns the HTML string for embedding a toot.
 
-    https://dev.twitter.com/docs/embedded-tweets
+    https://docs.joinmastodon.org/methods/oembed/
 
     Args:
       obj: AS1 dict with at least url, and optionally also content.
@@ -206,13 +206,9 @@ class Mastodon(source.Source):
 
     activities = []
 
-    # batch get memcached counts of likes, boosts, etc
-    cached = {}
-    if cache is not None:
-      keys = itertools.product(('AMRE', 'AMF', 'AMRB'), [s['id'] for s in statuses])
-      cached = cache.get_multi(f'{prefix} {id}' for prefix, id in keys)
-    # only update the cache at the end, in case we hit an error before then
-    cache_updates = {}
+    if cache is None:
+      # for convenience, throwaway object just for this method
+      cache = {}
 
     # fetch extras if necessary
     for status in statuses[start_index:]:
@@ -227,26 +223,26 @@ class Mastodon(source.Source):
 
       obj = activity['object']
       count = status.get('replies_count')
-      if fetch_replies and count and count != cached.get('AMRE ' + id):
+      if fetch_replies and count and count != cache.get('AMRE ' + id):
         context = self._get(API_CONTEXT % id)
         obj['replies'] = {
           'items': [self.status_to_activity(reply)
                     for reply in context.get('descendants', [])]
         }
-        cache_updates['AMRE ' + id] = count
+        cache['AMRE ' + id] = count
 
       tags = obj.setdefault('tags', [])
       count = status.get('favourites_count')
-      if fetch_likes and count and count != cached.get('AMF ' + id):
+      if fetch_likes and count and count != cache.get('AMF ' + id):
         likers = self._get(API_FAVORITED_BY % id)
         tags.extend(self._make_like(status, l) for l in likers)
-        cache_updates['AMF ' + id] = count
+        cache['AMF ' + id] = count
 
       count = status.get('reblogs_count')
-      if fetch_shares and count and count != cached.get('AMRB ' + id):
+      if fetch_shares and count and count != cache.get('AMRB ' + id):
         sharers = self._get(API_REBLOGGED_BY % id)
         tags.extend(self._make_share(status, s) for s in sharers)
-        cache_updates['AMRB ' + id] = count
+        cache['AMRB ' + id] = count
 
     if fetch_mentions:
       # https://docs.joinmastodon.org/methods/notifications/
@@ -257,8 +253,6 @@ class Mastodon(source.Source):
                         if n.get('status') and n.get('type') == 'mention')
 
     resp = self.make_activities_base_response(util.trim_nulls(activities))
-    if cache_updates and cache is not None:
-      cache.set_multi(cache_updates)
     return resp
 
   def get_actor(self, user_id=None):

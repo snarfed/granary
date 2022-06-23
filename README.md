@@ -295,10 +295,13 @@ Changelog
 _Breaking changes:_
 
 * Drop Python 3.6 support. Python 3.7 is now the minimum required version.
+* Twitter, Instagram, Mastodon:
+  * Drop `get_activities` `cache` kwarg's support for App Engine memcache interface. It's now only used as a plain `dict`. `get_activities` will now make many small modifications, so if you pass an object that implements those as API calls, you'll probably want to batch those separately.
 * Atom:
   * Switch to converting AS1 `id` (instead of `url`) to Atom `id`.
 * Reddit:
   * Implement `get_actor`.
+* `Source.original_post_discovery`: remove deprecated `cache` kwarg.
 
 _Non-breaking changes:_
 
@@ -309,6 +312,8 @@ _Non-breaking changes:_
   * Scraping: extract post id from `_ft_` query param instead of `story_fbid`, which is now an opaque token that changes regularly. ([facebook-atom#27](https://github.com/snarfed/facebook-atom/issues/27))
 * Instagram
   * Add new `Instagram.scraped_json_to_activities` method.
+* Reddit
+  * Add `cache` support to `get_activities`.
 * REST API
   * Add new `/scraped` endpoint that accepts `POST` requests with silo HTML as input. Currently only supports Instagram. Requires `site=instagram`, `output=...` (any supported output format), and HTML as either raw request body or MIME multipart encoded file in the `input` parameter.
 * `Source.original_post_discovery`: add new `max_redirect_fetches` keyword arg.

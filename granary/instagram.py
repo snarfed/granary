@@ -340,16 +340,9 @@ class Instagram(source.Source):
                                                    count=count)
 
     if fetch_extras:
-      # batch get cached counts of comments and likes for all activities
-      cached = {}
-      # don't update the cache until the end, in case we hit an error before
-      cache_updates = {}
-      if cache is not None:
-        keys = []
-        for activity in activities:
-          _, id = util.parse_tag_uri(activity['id'])
-          keys.extend(['AIL ' + id, 'AIC ' + id])
-        cached = cache.get_multi(keys)
+      if cache is None:
+        # for convenience, throwaway object just for this method
+        cache = {}
 
       for i, activity in enumerate(activities):
         obj = activity['object']
@@ -359,8 +352,8 @@ class Instagram(source.Source):
         likes_key = f'AIL {id}'
         comments_key = f'AIC {id}'
 
-        if (likes and likes != cached.get(likes_key) or
-            comments and comments != cached.get(comments_key)):
+        if (likes and likes != cache.get(likes_key) or
+            comments and comments != cache.get(comments_key)):
           if not activity_id and not shortcode:
             url = activity['url'].replace(self.BASE_URL, HTML_BASE_URL)
             resp = util.requests_get(url, **get_kwargs)
@@ -371,10 +364,7 @@ class Instagram(source.Source):
             resp.text, cookie=cookie, count=count, fetch_extras=fetch_extras)
           if full_activity:
             activities[i] = full_activity[0]
-            cache_updates.update({likes_key: likes, comments_key: comments})
-
-      if cache_updates and cache is not None:
-        cache.set_multi(cache_updates)
+            cache.update({likes_key: likes, comments_key: comments})
 
     resp = self.make_activities_base_response(activities)
     resp['actor'] = actor

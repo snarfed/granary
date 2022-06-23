@@ -366,7 +366,7 @@ class MastodonTest(testutil.TestCase):
     with_replies['object']['replies'] = {
         'items': [REPLY_ACTIVITY, REPLY_ACTIVITY],
     }
-    cache = util.CacheDict()
+    cache = {}
     self.assert_equals([with_replies], self.mastodon.get_activities(
       fetch_replies=True, cache=cache))
     self.assert_equals(1, cache['AMRE 123'])
@@ -378,7 +378,7 @@ class MastodonTest(testutil.TestCase):
 
     with_likes = copy.deepcopy(ACTIVITY)
     with_likes['object']['tags'].extend([LIKE, LIKE])
-    cache = util.CacheDict()
+    cache = {}
     self.assert_equals([with_likes], self.mastodon.get_activities(
       fetch_likes=True, cache=cache))
     self.assert_equals(2, cache['AMF 123'])
@@ -390,7 +390,7 @@ class MastodonTest(testutil.TestCase):
 
     with_shares = copy.deepcopy(ACTIVITY)
     with_shares['object']['tags'].extend([SHARE, SHARE_BY_REMOTE])
-    cache = util.CacheDict()
+    cache = {}
     self.assert_equals([with_shares], self.mastodon.get_activities(
       fetch_shares=True, cache=cache))
     self.assert_equals(3, cache['AMRB 123'])
@@ -508,7 +508,7 @@ class MastodonTest(testutil.TestCase):
       self.expect_get(API_TIMELINE, params={}, response=statuses)
 
     self.mox.ReplayAll()
-    cache = util.CacheDict()
+    cache = {}
     for _ in range(4):
       self.mastodon.get_activities(fetch_replies=True, fetch_shares=True,
                                    fetch_likes=True, cache=cache)
