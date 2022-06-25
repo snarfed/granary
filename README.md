@@ -310,6 +310,7 @@ _Breaking changes:_
 _Non-breaking changes:_
 
 * Twitter
+  * Add new `twitter_v2` module for Twitter's new [v2 API](https://developer.twitter.com/en/docs/twitter-api/migrate/whats-new)
   * Trim alt text in line between post preview and creation
   * Correctly trim Twitter alt text
 * Facebook

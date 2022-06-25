@@ -70,3 +70,7 @@ source
 twitter
 -------
 .. automodule:: granary.twitter
+
+twitter_v2
+----------
+.. automodule:: granary.twitter_v2
