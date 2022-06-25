@@ -24,10 +24,11 @@ from ..twitter import (
   API_FAVORITES,
   API_LIST_TIMELINE,
   API_LIST_ID_TIMELINE,
+  API_LOOKUP,
   API_RETWEETS,
   API_SEARCH,
+  API_STATUS,
   API_TIMELINE,
-  API_TWEETS,
   API_USER_TIMELINE,
   RETWEET_LIMIT,
   SCRAPE_LIKES_URL,
@@ -40,49 +41,41 @@ def tag_uri(name):
 
 TIMELINE = twitter.API_TIMELINE % 0
 
-USER = {  # Twitter v2
-  'created_at': '2010-05-01T21:42:43.000Z',
+USER = {  # Twitter
+  'created_at': 'Sat May 01 21:42:43 +0000 2010',
   'description': 'my description',
   'location': 'San Francisco',
   'name': 'Ryan Barrett',
   'profile_image_url': 'http://a0.twimg.com/profile_images/866165047/ryan.jpg',
-  'username': 'snarfed_org',
-  'id': '888',
+  'screen_name': 'snarfed_org',
+  'id_str': '888',
   'protected': False,
   'url': 'http://t.co/pUWU4S',
   'entities': {
     'url': {
       'urls': [{
-        'start': 0,
-        'end': 18,
         'url': 'http://t.co/pUWU4S',
         'expanded_url': 'https://snarfed.org/',
-      }],
-    },
+      }]},
     'description': {
       'urls': [{
-        # 'start': 23,
-        # 'end': 30,
         'url': 'http://t.co/123',
         'expanded_url': 'http://link/123',
       }, {
         'url': 'http://t.co/456',
         'expanded_url': 'http://link/456',
-      }],
-    }
+      }]},
   },
-  'verified': False,
 }
 USER_2 = {
   'name': 'Alice Foo',
-  'username': 'alice',
-  'id': '777',
-  'protected': False,
+  'screen_name': 'alice',
+  'id_str': '777',
 }
 USER_3 = {
   'name': 'Bob Bar',
-  'username': 'bob',
-  'id': '666',
+  'screen_name': 'bob',
+  'id_str': '666',
 }
 ACTOR = {  # ActivityStreams
   'objectType': 'person',
@@ -92,7 +85,7 @@ ACTOR = {  # ActivityStreams
   },
   'id': tag_uri('snarfed_org'),
   'numeric_id': '888',
-  'published': '2010-05-01T21:42:43.000Z',
+  'published': '2010-05-01T21:42:43+00:00',
   'url': 'https://twitter.com/snarfed_org',
   'urls': [
     {'value': 'https://twitter.com/snarfed_org'},
@@ -120,96 +113,97 @@ ACTOR_3 = {
   'username': 'bob',
   'url': 'https://twitter.com/bob',
 }
-# Twitter v2
+# Twitter
+# (extended tweet: https://dev.twitter.com/overview/api/upcoming-changes-to-tweets )
 TWEET = {
-  'data': [{
-    'created_at': '2012-02-22T20:26:41.000Z',
-    'id': '100',
-    'lang': 'en',
-    'conversation_id': '100',
-    'text': '@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM http://t.co/X',
-    'source': 'Choqok',
-    'possibly_sensitive': False,
-    'reply_settings': 'everyone',
-    'author_id': '888',
-    'entities': {
-      'hashtags': [{
-        'start': 32,
-        'end': 42,
-        'tag': 'tcdisrupt',
+  'created_at': 'Wed Feb 22 20:26:41 +0000 2012',
+  'id_str': '100',
+  'id': -1,  # we should always use id_str
+  'place': {
+    'full_name': 'Carcassonne, Aude',
+    'id': '31cb9e7ed29dbe52',
+    'name': 'Carcassonne',
+    'url': 'http://api.twitter.com/1.1/geo/id/31cb9e7ed29dbe52.json',
+    },
+  'geo':  {
+    'type': 'Point',
+    'coordinates':  [32.4004416, -98.9852672],
+  },
+  'user': USER,
+  'entities': {
+    'media': [{
+        'id': 'picture1',
+        'media_url_https': 'https://p.twimg.com/picture1',
+        'media_url': 'should ignore',
+        'url': 'http://t.co/picture',
+        'expanded_url': 'http://the/picture1',
+        'display_url': 'http://pic.twitter.com/1',
+        'indices': [83, 102],
+        'type': 'photo',
+        'ext_alt_text': 'the alt text',
+     }, {
+        # duplicated in extended_entities; we should de-dupe
+        'id': 'picture3',
+        'media_url': 'http://p.twimg.com/picture3',
+        'type': 'photo',
       }],
-      'urls': [{
-        'start': 49,
-        'end': 68,
-        'url': 'http://t.co/6J2EgYM',
+    'urls': [{
         'expanded_url': 'http://first/link/',
-        # haven't yet found any docs explaining what unwound_url is, or when it
-        # would differ from expanded_url, if ever
-        'unwound_url': 'http://first/link/',
-        'display_url': 'first',
-        'images': [{
-            'url': 'https://pbs.twimg.com/123',
-            'width': 1200,
-            'height': 630
-        }],
-        'status': 200,
-        'title': 'firsty first!',
-        'description': 'It is first, really',
-      }, {
-        'start': 69,
-        'end': 82,
-        'url': 'http://t.co/X',
+        'url': 'http://t.co/6J2EgYM',
+        'indices': [49, 68],
+        'display_url': 'first'
+        }, {
         'expanded_url': 'http://instagr.am/p/MuW67/',
+        'url': 'http://t.co/X',
+        'indices': [69, 82],
         'display_url': 'instagr.am/p/MuW67'
       }],
-      'mentions': [{
-        'id': '783214',
-        'username': 'Twitter',
-        'start': 0,
-        'end': 8,
-      }, {
-        'id': '334715534',
-        'username': 'seepicturely',
-        'start': 15,
-        'end': 28,
+    'hashtags': [{
+        'text': 'tcdisrupt',
+        'indices': [32, 42]
       }],
-    },
-  }],
-  'includes': {
-    'places': [{
-      'id': '31cb9e7ed29dbe52',
-      'full_name': 'Carcassonne, Aude',
-      'name': 'Carcassonne',
-      'geo':  {
-        'type': 'Feature',
-        'bbox':  [32.4004416, -98.9852672, 32.4005, -98.9853],
+    'user_mentions': [{
+        'name': 'Twitter',
+        'id_str': '783214',
+        'id': -1,  # we should always use id_str
+        'indices': [0, 8],
+        'screen_name': 'foo'
       },
-    }],
-    'users': [USER],
+      {
+        'name': 'Picture.ly',
+        'id_str': '334715534',
+        'id': -1,
+        'indices': [15, 28],
+        'screen_name': 'foo'
+      }],
+  },
+  'extended_entities': {
     'media': [{
-      'media_key': 'picture1',
-      'url': 'https://p.twimg.com/picture1',
-      'preview_image_url': 'http://p.twimg.com/preview',
+      'media_url': 'http://p.twimg.com/picture2',
+      'expanded_url': 'http://the/picture2',
+      'display_url': 'http://pic.twitter.com/2',
       'type': 'photo',
-      'alt_text': 'the alt text',
     }, {
-      'media_key': 'picture2',
-      'url': 'http://p.twimg.com/picture2',
-      'type': 'photo',
+      # duplicated in entities; we should de-dupe
+      'id': 'picture3',
+      'media_url': 'http://p.twimg.com/picture3',
     }],
   },
-}
+  'full_text': '@twitter meets @seepicturely at #tcdisrupt &lt;3 http://t.co/6J2EgYM http://t.co/X http://t.co/picture',
+  'truncated': False,
+  'display_text_range': [0, 82],  # includes @twitter, excludes http://t.co/picture
+  'source': '<a href="http://choqok.gnufolks.org/" rel="nofollow">Choqok</a>',
+  }
+TWEET_2 = copy.deepcopy(TWEET)
+TWEET_2['user']['name'] = 'foo'
 OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
   'content': '@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67',
   'id': tag_uri('100'),
-  'published': '2012-02-22T20:26:41.000Z',
+  'published': '2012-02-22T20:26:41+00:00',
   'url': 'https://twitter.com/snarfed_org/status/100',
-  'image': {
-    'displayName': 'the alt text',
-    'url': 'https://p.twimg.com/picture1',
-  },
+  'image': {'url': 'http://p.twimg.com/picture2'},
   'location': {
     'displayName': 'Carcassonne, Aude',
     'id': tag_uri('31cb9e7ed29dbe52'),
@@ -218,16 +212,16 @@ OBJECT = {  # ActivityStreams
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'tags': [{
     'objectType': 'mention',
-    'id': tag_uri('Twitter'),
-    'url': 'https://twitter.com/Twitter',
+    'id': tag_uri('foo'),
+    'url': 'https://twitter.com/foo',
     'displayName': 'Twitter',
     'startIndex': 0,
     'length': 8,
   }, {
     'objectType': 'mention',
-    'id': tag_uri('seepicturely'),
-    'url': 'https://twitter.com/seepicturely',
-    'displayName': 'seepicturely',
+    'id': tag_uri('foo'),  # same id as above, shouldn't de-dupe
+    'url': 'https://twitter.com/foo',
+    'displayName': 'Picture.ly',
     'startIndex': 15,
     'length': 13,
   }, {
@@ -239,8 +233,6 @@ OBJECT = {  # ActivityStreams
     'objectType': 'article',
     'url': 'http://first/link/',
     'displayName': 'first',
-    'title': 'firsty first!',
-    'content': 'It is first, really',
     'startIndex': 49,
     'length': 5,
   }, {
@@ -252,179 +244,153 @@ OBJECT = {  # ActivityStreams
   }],
   'attachments': [{
     'objectType': 'image',
-    'id': tag_uri('picture1'),
+    'image': {'url': 'http://p.twimg.com/picture2'},
+  }, {
+    'image': {'url': 'http://p.twimg.com/picture3'},
+  }, {
+    'objectType': 'image',
     'image': {
       'url': 'https://p.twimg.com/picture1',
       'displayName': 'the alt text',
     },
     'displayName': 'the alt text',
-  }, {
-    'objectType': 'image',
-    'id': tag_uri('picture2'),
-    'image': {'url': 'http://p.twimg.com/picture2'},
   }],
 }
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
-  'published': '2012-02-22T20:26:41.000Z',
+  'published': '2012-02-22T20:26:41+00:00',
   'id': tag_uri('100'),
   'url': 'https://twitter.com/snarfed_org/status/100',
   'actor': ACTOR,
   'object': OBJECT,
-  'generator': {'displayName': 'Choqok'},
-}
-
-TWEET_2 = copy.deepcopy(TWEET)
-TWEET_2['data'][0].update({
-  'id': '989',
-  'text': 'a second tweet',
-  'entities': None,
-  'author_id': USER_2['id'],
-})
-TWEET_2['includes']['users'][0] = USER_2
+  'generator': {'displayName': 'Choqok', 'url': 'http://choqok.gnufolks.org/'},
+  }
 ACTIVITY_2 = copy.deepcopy(ACTIVITY)
-ACTIVITY_2.update({
-  'id': tag_uri('989'),
-  'url': 'https://twitter.com/alice/status/989',
-  'actor': ACTOR_2,
-})
-ACTIVITY_2['object'].update({
-  'id': tag_uri('989'),
-  'url': 'https://twitter.com/alice/status/989',
-  'content': 'a second tweet',
-  'author': ACTOR_2,
-  'tags': None,
-})
+ACTIVITY_2['actor']['displayName'] = 'foo'
 
 # This is the original tweet and reply chain:
 # 100 (snarfed_org) -- 200 (alice) -- 400 (snarfed_org) -- 500 (alice)
 #                   \_ 300 (bob)
-REPLIES = [{
-  'id': '200',
-  'author_id': USER_2['id'],
-  'text': 'reply 200',
-  'referenced_tweets': [{'type': 'replied_to', 'id': '100'}],
-  'in_reply_to_user_id': USER['id'],
-}, {
-  'id': '300',
-  'author_id': USER_3['id'],
-  'text': 'reply 300',
-  'referenced_tweets': [{'type': 'replied_to', 'id': '100'}],
-  'in_reply_to_user_id': USER['id'],
-}, {
-  'id': '400',
-  'author_id': USER['id'],
-  'text': 'reply 400',
-  'referenced_tweets': [{'type': 'replied_to', 'id': '200'}],
-  'in_reply_to_user_id': USER_2['id'],
-}, {
-  'id': '500',
-  'author_id': USER_2['id'],
-  'text': 'reply 500',
-  'referenced_tweets': [{'type': 'replied_to', 'id': '400'}],
-  'in_reply_to_user_id': USER['id'],
-}]
-REPLIES_SEARCH = {
-  'data': REPLIES,
-  'includes': {
-    'tweets': REPLIES + [TWEET],
-    'users': [USER, USER_2, USER_3],
-  },
-}
+REPLIES_TO_SNARFED = {'statuses': [{  # Twitter
+      'id_str': '200',
+      'user': {'screen_name': 'alice'},
+      'text': 'reply 200',
+      'in_reply_to_status_id_str': '100',
+      'in_reply_to_screen_name': 'snarfed_org',
+      }, {
+      'id_str': '300',
+      'user': {'screen_name': 'bob'},
+      'text': 'reply 300',
+      'in_reply_to_status_id_str': '100',
+      }, {
+      'id_str': '500',
+      'user': {'screen_name': 'alice'},
+      'text': 'reply 500',
+      'in_reply_to_status_id_str': '400',
+      }]}
+REPLIES_TO_ALICE = {'statuses': [{
+      'id_str': '400',
+      'user': {'screen_name': 'snarfed_org'},
+      'text': 'reply 400',
+      'in_reply_to_status_id_str': '200',
+      }]}
+REPLIES_TO_BOB = {'statuses': []}
+
 REPLY_OBJS = [{  # ActivityStreams
-  'objectType': 'note',
-  'id': tag_uri('200'),
-  'author': ACTOR_2,
-  'content': 'reply 200',
-  'url': 'https://twitter.com/alice/status/200',
-  'inReplyTo': [{'id': 'tag:twitter.com:100',
-                 'url': 'https://twitter.com/snarfed_org/status/100'}],
-  'to': [{'alias': '@public', 'objectType': 'group'}],
-}, {
-  'objectType': 'note',
-  'id': tag_uri('300'),
-  'author': ACTOR_3,
-  'content': 'reply 300',
-  'url': 'https://twitter.com/bob/status/300',
-  'inReplyTo': [{'id': 'tag:twitter.com:100',
-                 'url': 'https://twitter.com/snarfed_org/status/100'}],
-}, {
-  'objectType': 'note',
-  'id': tag_uri('400'),
-  'author': ACTOR,
-  'content': 'reply 400',
-  'url': 'https://twitter.com/snarfed_org/status/400',
-  'inReplyTo': [{'id': 'tag:twitter.com:200',
-                 'url': 'https://twitter.com/alice/status/200'}],
-  'to': [{'alias': '@public', 'objectType': 'group'}],
-}, {
-  'objectType': 'note',
-  'id': tag_uri('500'),
-  'author': ACTOR_2,
-  'content': 'reply 500',
-  'url': 'https://twitter.com/alice/status/500',
-  'inReplyTo': [{'id': 'tag:twitter.com:400',
-                 'url': 'https://twitter.com/snarfed_org/status/400'}],
-  'to': [{'alias': '@public', 'objectType': 'group'}],
-}]
+    'objectType': 'note',
+    'id': tag_uri('200'),
+    'author': {
+      'objectType': 'person',
+      'id': 'tag:twitter.com:alice',
+      'username': 'alice',
+      'displayName': 'alice',
+      'url': 'https://twitter.com/alice',
+      },
+    'content': 'reply 200',
+    'url': 'https://twitter.com/alice/status/200',
+    }, {
+    'objectType': 'note',
+    'id': tag_uri('300'),
+    'author': {
+      'objectType': 'person',
+      'id': 'tag:twitter.com:bob',
+      'username': 'bob',
+      'displayName': 'bob',
+      'url': 'https://twitter.com/bob',
+      },
+    'content': 'reply 300',
+    'url': 'https://twitter.com/bob/status/300',
+    }, {
+    'objectType': 'note',
+    'id': tag_uri('400'),
+    'author': {
+      'objectType': 'person',
+      'id': 'tag:twitter.com:snarfed_org',
+      'username': 'snarfed_org',
+      'displayName': 'snarfed_org',
+      'url': 'https://twitter.com/snarfed_org',
+      },
+    'content': 'reply 400',
+    'url': 'https://twitter.com/snarfed_org/status/400',
+    }, {
+    'objectType': 'note',
+    'id': tag_uri('500'),
+    'author': {
+      'objectType': 'person',
+      'id': 'tag:twitter.com:alice',
+      'username': 'alice',
+      'displayName': 'alice',
+      'url': 'https://twitter.com/alice',
+      },
+    'content': 'reply 500',
+    'url': 'https://twitter.com/alice/status/500',
+    }]
 ACTIVITY_WITH_REPLIES = copy.deepcopy(ACTIVITY)  # ActivityStreams
 ACTIVITY_WITH_REPLIES['object']['replies'] = {
   'totalItems': 4,
   'items': REPLY_OBJS,
-}
+  }
 
-RETWEETS = [{  # Twitter v2
-  'data': [{
-    'created_at': '2013-02-24T20:26:41.000Z',
-    'id': '123',
-    'author_id': '888',
-    'referenced_tweets': [{
-      'type': 'retweeted',
-      'id': '333',
-    }],
-  }],
-  'includes': [{
-    'tweets': [{
-      'type': 'retweeted',
-      'id': '333',
-      'author_id': '444',
-    }],
-    'users': [{
-      'id': '888',
+RETWEETS = [{  # Twitter
+    'created_at': 'Wed Feb 24 20:26:41 +0000 2013',
+    'id_str': '123',
+    'id': -1,  # we should always use id_str
+    'user': {
       'name': 'Alice',
       'profile_image_url': 'http://alice/picture',
-      'username': 'alizz',
-    }, {
-      'id': '444', 'username': 'foo',
-    }],
-  }],
-}, {
-  'data': [{
-    'created_at': '2013-02-26T20:26:41.000Z',
-    'id': '456',
-    'author_id': '777',
-    'referenced_tweets': [{
-      'type': 'retweeted',
-      'id': '666',
-      'author_id': '999',
-    }],
-  }],
-  'includes': [{
-    'tweets': [{
-      'id': '666',
-      'text': 'retweeted text',
-    }],
-    'users': [{
-      'id': '777',
-      'username': 'bar',
-    }, {
-      'id': '999',
-      'username': 'bobbb',
+      'screen_name': 'alizz',
+      },
+    'retweeted_status': {
+      'id_str': '333',
+      'id': -1,
+      'user': {'screen_name': 'foo'},
+      },
+  }, {
+    'created_at': 'Wed Feb 26 20:26:41 +0000 2013',
+    'id_str': '456',
+    'id': -1,
+    'user': {
       'name': 'Bob',
       'profile_image_url': 'http://bob/picture',
-    }],
-  }],
-}]
+      'screen_name': 'bobbb',
+      },
+    'retweeted_status': {
+      'id_str': '666',
+      'id': -1,
+      'user': {'screen_name': 'bar'},
+      'text': 'retweeted text',
+      },
+    # we replace the content, so this should be stripped
+    'entities': {
+      'user_mentions': [{
+          'name': 'foo',
+          'id_str': '783214',
+          'indices': [0, 3],
+          'screen_name': 'foo',
+          }],
+      },
+    },
+]
 TWEET_WITH_RETWEETS = copy.deepcopy(TWEET)
 TWEET_WITH_RETWEETS['retweets'] = RETWEETS
 SHARES = [{  # ActivityStreams
@@ -441,7 +407,7 @@ SHARES = [{  # ActivityStreams
     'url': 'https://twitter.com/alizz',
     'image': {'url': 'http://alice/picture'},
   },
-  'published': '2013-02-24T20:26:41.000Z',
+  'published': '2013-02-24T20:26:41+00:00',
 }, {
   'id': tag_uri('456'),
   'url': 'https://twitter.com/bobbb/status/456',
@@ -457,7 +423,7 @@ SHARES = [{  # ActivityStreams
     'url': 'https://twitter.com/bobbb',
     'image': {'url': 'http://bob/picture'},
   },
-  'published': '2013-02-26T20:26:41.000Z',
+  'published': '2013-02-26T20:26:41+00:00',
 }]
 OBJECT_WITH_SHARES = copy.deepcopy(OBJECT)
 OBJECT_WITH_SHARES['tags'] += SHARES
@@ -487,7 +453,7 @@ LIKE_OBJ = {  # ActivityStreams
     'displayName': 'eve',
     'url': 'https://twitter.com/eve',
     },
-  'published': '2013-12-27T17:25:55.000Z',
+  'published': '2013-12-27T17:25:55+00:00',
 }
 LIKES_SCRAPED = {
   'globalObjects': {
@@ -559,23 +525,50 @@ OBJECT_WITH_LIKES['tags'] += LIKE_OBJECTS
 ACTIVITY_WITH_LIKES = copy.deepcopy(ACTIVITY)
 ACTIVITY_WITH_LIKES['object'] = OBJECT_WITH_LIKES
 
-QUOTE_TWEET = copy.deepcopy(TWEET)
-QUOTE_TWEET['data'][0].update({
-  'referenced_tweets': [{
-    'type': 'quoted',
-    'id': TWEET_2['data'][0]['id'],
-  }],
-})
-QUOTE_TWEET['includes']['tweets'] = [TWEET_2['data'][0]]
-QUOTE_TWEET['includes']['users'].append(USER_2)
-QUOTE_ACTIVITY = copy.deepcopy(ACTIVITY)
-QUOTE_ACTIVITY['object']['attachments'].append(ACTIVITY_2['object'])
-
+QUOTE_TWEET = {
+  'id': 2345,
+  'id_str': '2345',
+  'is_quote_status': True,
+  'quoted_status_id_str': TWEET['id_str'],
+  'quoted_status': TWEET,
+  'text': 'I agree with this https://t.co/ww6HD8KroG',
+  'user': {'screen_name': 'kylewmahan'},
+  'entities': {
+    'urls': [{
+      'url': 'https://t.co/ww6HD8KroG',
+      'expanded_url': 'https://twitter.com/snarfed_org/status/100',
+      'display_url': 'twitter.com/schnar…',
+      'indices': [18, 41],
+    }],
+  },
+}
+QUOTE_ACTOR = {
+  'displayName': 'kylewmahan',
+  'id': 'tag:twitter.com:kylewmahan',
+  'objectType': 'person',
+  'url': 'https://twitter.com/kylewmahan',
+  'username': 'kylewmahan'
+}
+QUOTE_ACTIVITY = {
+  'id': 'tag:twitter.com:2345',
+  'url': 'https://twitter.com/kylewmahan/status/2345',
+  'verb': 'post',
+  'actor': QUOTE_ACTOR,
+  'object': {
+    'id': 'tag:twitter.com:2345',
+    'url': 'https://twitter.com/kylewmahan/status/2345',
+    'objectType': 'note',
+    'content': 'I agree with this ',
+    'attachments': [OBJECT],
+    'author': QUOTE_ACTOR,
+  },
+}
 RETWEETED_QUOTE_TWEET = {
-  'id': '6789',
+  'id': 6789,
+  'id_str': '6789',
   'retweeted_status': QUOTE_TWEET,
   'is_quote_status': True,
-  'quoted_status_id_str': TWEET['data'][0]['id'],
+  'quoted_status_id_str': TWEET['id_str'],
   'text': 'RT @kylewmahan: I agree with this ',
   'user': USER,
 }
@@ -586,6 +579,7 @@ QUOTE_SHARE = {
   'actor': ACTOR,
   'object': QUOTE_ACTIVITY['object'],
 }
+
 
 ATOM = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -603,7 +597,7 @@ ATOM = """\
 <subtitle>my description</subtitle>
 
 <logo>http://a0.twimg.com/profile_images/866165047/ryan.jpg</logo>
-<updated>2012-02-22T20:26:41.000Z</updated>
+<updated>2012-02-22T20:26:41+00:00</updated>
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>https://twitter.com/snarfed_org</uri>
@@ -635,6 +629,11 @@ ATOM = """\
 <p>
 <a class="link" href="https://twitter.com/snarfed_org/status/100">
 <img class="u-photo" src="http://p.twimg.com/picture2" alt="" />
+</a>
+</p>
+<p>
+<a class="link" href="https://twitter.com/snarfed_org/status/100">
+<img class="u-photo" src="http://p.twimg.com/picture3" alt="" />
 </a>
 </p>
 <p>
@@ -674,8 +673,8 @@ ATOM = """\
 
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
 
-  <published>2012-02-22T20:26:41.000Z</published>
-  <updated>2012-02-22T20:26:41.000Z</updated>
+  <published>2012-02-22T20:26:41+00:00</published>
+  <updated>2012-02-22T20:26:41+00:00</updated>
 
     <georss:featureName>Carcassonne, Aude</georss:featureName>
 
@@ -749,7 +748,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([], self.twitter.get_activities(start_index=9))
 
   def test_get_activities_activity_id(self):
-    self.expect_urlopen(API_TWEETS % 0, TWEET)
+    self.expect_urlopen(API_STATUS % 0, TWEET)
     self.mox.ReplayAll()
 
     # activity id overrides user, group, app id and ignores startIndex and count
@@ -768,7 +767,7 @@ class TwitterTest(testutil.TestCase):
                       activity_id='123:abc')
 
   def test_get_activities_activity_id_with_space(self):
-    self.expect_urlopen(API_TWEETS % 0, TWEET)
+    self.expect_urlopen(API_STATUS % 0, TWEET)
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY], self.twitter.get_activities(
         user_id='123', group_id='456', app_id='789', activity_id='000 '))
@@ -850,17 +849,17 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([], self.twitter.get_activities(group_id='123'))
 
   def test_get_activities_fetch_replies(self):
-    self.expect_urlopen(TIMELINE, TWEET)
+    self.expect_urlopen(TIMELINE, [TWEET])
 
-    url = API_SEARCH % {
-      'query': 'conversation_id:100',
-      'count': 100,
-    } + '&since_id=56'
-    self.expect_urlopen(url, REPLIES_SEARCH)
+    search = API_SEARCH + '&since_id=567'
+    self.expect_urlopen(search % {'q': '%40snarfed_org', 'count': 100},
+                        REPLIES_TO_SNARFED)
+    self.expect_urlopen(search % {'q': '%40alice', 'count': 100}, REPLIES_TO_ALICE)
+    self.expect_urlopen(search % {'q': '%40bob', 'count': 100}, REPLIES_TO_BOB)
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY_WITH_REPLIES],
-                       self.twitter.get_activities(fetch_replies=True, min_id='56'))
+                          self.twitter.get_activities(fetch_replies=True, min_id='567'))
 
   def test_get_activities_fetch_mentions(self):
     self.expect_urlopen(TIMELINE, [])
@@ -886,7 +885,7 @@ class TwitterTest(testutil.TestCase):
         # retweet of a tweet that mentions me
         {'id_str': '6', 'retweeted_status': {'id_str': '4'}},
       ]})
-    self.expect_urlopen(API_TWEETS % '11,12,13',
+    self.expect_urlopen(API_LOOKUP % '11,12,13',
       [{'id_str': '11', 'user': {'screen_name': 'schnarfed'}},
        {'id_str': '12', 'entities': {'user_mentions': [{'screen_name': 'schnarfed'}]}},
        {'id_str': '13', 'text': 'barrey'},
@@ -1153,7 +1152,7 @@ class TwitterTest(testutil.TestCase):
         group_id=source.SEARCH, search_query='☕ foo'))
 
   def test_get_comment(self):
-    self.expect_urlopen(API_TWEETS % '123', TWEET)
+    self.expect_urlopen(API_STATUS % '123', TWEET)
     self.mox.ReplayAll()
     self.assert_equals(OBJECT, self.twitter.get_comment('123'))
 
@@ -1162,7 +1161,7 @@ class TwitterTest(testutil.TestCase):
     self.assertRaises(ValueError, self.twitter.get_comment, '123:abc')
 
   def test_get_share(self):
-    self.expect_urlopen(API_TWEETS % '123', RETWEETS[0])
+    self.expect_urlopen(API_STATUS % '123', RETWEETS[0])
     self.mox.ReplayAll()
     self.assert_equals(SHARES[0], self.twitter.get_share('user', 'tweet', '123'))
 
@@ -1236,8 +1235,7 @@ class TwitterTest(testutil.TestCase):
     self.assertEqual(['1', '2', '4', '5'], e.exception.partial)
 
   def test_tweet_to_activity_full(self):
-    self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(
-      TWEET['data'][0], TWEET['includes']))
+    self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
 
   def test_tweet_to_activity_minimal(self):
     # just test that we don't crash
@@ -1248,8 +1246,7 @@ class TwitterTest(testutil.TestCase):
     self.twitter.tweet_to_activity({})
 
   def test_quote_tweet_to_activity(self):
-    self.assert_equals(QUOTE_ACTIVITY, self.twitter.tweet_to_activity(
-      QUOTE_TWEET['data'][0], QUOTE_TWEET['includes']))
+    self.assert_equals(QUOTE_ACTIVITY, self.twitter.tweet_to_activity(QUOTE_TWEET))
 
   def test_quote_tweet_to_activity_without_quoted_tweet_url_entity(self):
     quote_tweet = copy.deepcopy(QUOTE_TWEET)
@@ -1359,24 +1356,26 @@ class TwitterTest(testutil.TestCase):
     First discovered in https://twitter.com/schnarfed/status/831552681210556416
     """
     obj = self.twitter.tweet_to_object({
-      'id': '831552681210556416',
-      'text': '💯💯💯 (by @itsmaeril)',
+      'id_str': '831552681210556416',
+      'text': '💯💯💯 (by @itsmaeril) https://t.co/pWrOHzuHkP',
       'entities': {
-        'mentions': [{
-          'username': 'itsmaeril',
-          'start': 8,
-          'end': 18,
+        'user_mentions': [{
+          'screen_name': 'itsmaeril',
+          'indices': [8, 18]
         }],
+        'media': [{
+          'indices': [20, 43],
+          'media_url': 'http://pbs.twimg.com/media/C4pEu77UkAAVy9l.jpg',
+        }]
       },
     })
-    self.assert_equals('💯💯💯 (by @itsmaeril)', obj['content'])
+    self.assert_equals('💯💯💯 (by @itsmaeril) ', obj['content'])
     self.assert_equals(
-      '💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>)',
+      '💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>) ',
       microformats2.render_content(obj).splitlines()[0])
 
   def test_tweet_to_object_full(self):
-    got = self.twitter.tweet_to_object(TWEET['data'][0], TWEET['includes'])
-    self.assert_equals(OBJECT, got)
+    self.assert_equals(OBJECT, self.twitter.tweet_to_object(TWEET))
 
   def test_tweet_to_object_minimal(self):
     # just test that we don't crash
@@ -1387,7 +1386,46 @@ class TwitterTest(testutil.TestCase):
 
   def test_tweet_to_object_with_retweets(self):
     self.assert_equals(OBJECT_WITH_SHARES,
-                       self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
+                          self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
+
+  def test_tweet_to_activity_display_text_range(self):
+    self.assert_equals({
+      'objectType': 'note',
+      # should only have the text inside display_text_range
+      'content': 'i hereby reply',
+      'id': tag_uri('100'),
+      # both tags are outside display_text_range, so they shouldn't have
+      # startIndex or length
+      'tags': [{
+        'objectType': 'mention',
+        'id': tag_uri('OP'),
+        'url': 'https://twitter.com/OP',
+      }, {
+        'objectType': 'article',
+        'url': 'http://full/quoted/tweet',
+      }],
+      'to': [{
+        'objectType': 'mention',
+        'id': tag_uri('OP'),
+        'url': 'https://twitter.com/OP',
+      }],
+    }, self.twitter.tweet_to_object({
+      'id_str': '100',
+      'full_text': '@OP i hereby reply http://quoted/tweet',
+      'truncated': False,
+      'display_text_range': [4, 18],
+      'entities': {
+        'user_mentions': [{
+          'screen_name': 'OP',
+          'indices': [0, 3],
+        }],
+        'urls': [{
+          'expanded_url': 'http://full/quoted/tweet',
+          'url': 'http://quoted/tweet',
+          'indices': [19, 38],
+        }],
+      },
+    }))
 
   def test_tweet_to_object_entity_indices_handle_display_urls(self):
     tweet = {
@@ -1543,31 +1581,21 @@ class TwitterTest(testutil.TestCase):
 
   def test_reply_tweet_to_activity(self):
     tweet = copy.deepcopy(TWEET)
-    tweet['data'][0]['in_reply_to_user_id'] = USER_2['id']
-
-    tweet['data'][0]['referenced_tweets'] = [{
-      'type': 'replied_to',
-      'id': '789',
-    }]
+    tweet.update({
+      'in_reply_to_screen_name': 'other_user',
+      'in_reply_to_status_id': 789,
+    })
     expected = [{
-      'url' : f'https://twitter.com/{USER_2["id"]}/status/789',
+      'url' : 'https://twitter.com/other_user/status/789',
       'id' : tag_uri('789'),
     }]
 
-    def check():
-      activity = self.twitter.tweet_to_activity(tweet['data'][0], tweet['includes'])
-      self.assert_equals({'inReplyTo': expected}, activity['context'])
-      self.assert_equals(expected, activity['object']['inReplyTo'])
-      direct_obj = self.twitter.tweet_to_object(tweet['data'][0], tweet['includes'])
-      self.assert_equals(expected, direct_obj['inReplyTo'])
+    activity = self.twitter.tweet_to_activity(tweet)
+    self.assert_equals({'inReplyTo': expected}, activity['context'])
+    self.assert_equals(expected, activity['object']['inReplyTo'])
 
-    # in reply to user not in includes.users
-    check()
-
-    # now add them
-    tweet['includes']['users'].append(USER_2)
-    expected[0]['url'] = f'https://twitter.com/{USER_2["username"]}/status/789'
-    check()
+    direct_obj = self.twitter.tweet_to_object(tweet)
+    self.assert_equals(expected, direct_obj['inReplyTo'])
 
   def test_tweet_to_activity_on_retweet(self):
     self.assert_equals({
@@ -1612,7 +1640,7 @@ class TwitterTest(testutil.TestCase):
 
   def test_protected_tweet_to_object(self):
     tweet = copy.deepcopy(TWEET)
-    tweet['includes']['users'][0]['protected'] = True
+    tweet['user']['protected'] = True
     obj = copy.deepcopy(OBJECT)
     obj['to'][0]['alias'] = '@private'
     self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
@@ -1675,6 +1703,9 @@ class TwitterTest(testutil.TestCase):
       'objectType': 'video',
       'stream': {'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
       'image': {'url': 'https://pbs.twimg.com/tweet_video_thumb/9182.jpg'},
+    }, {
+      'objectType': 'image',
+      'image': {'url': 'http://p.twimg.com/picture3'},
     }], obj['attachments'])
     self.assert_equals({'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
                           obj['stream'])
@@ -1712,7 +1743,7 @@ class TwitterTest(testutil.TestCase):
       'displayName': 'schnarfed',
       'url': 'https://twitter.com/schnarfed',
     }, self.twitter.user_to_actor({
-      'username': 'schnarfed',
+      'screen_name': 'schnarfed',
     }))
 
   def test_user_to_actor_minimal(self):
