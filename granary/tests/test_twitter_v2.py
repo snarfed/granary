@@ -17,8 +17,8 @@ from requests import RequestException
 
 from .. import microformats2
 from .. import source
-from .. import twitter
-from ..twitter import (
+from .. import twitter_v2
+from ..twitter_v2 import (
   API_BLOCK_IDS,
   API_BLOCKS,
   API_FAVORITES,
@@ -38,7 +38,7 @@ from ..twitter import (
 def tag_uri(name):
   return util.tag_uri('twitter.com', name)
 
-TIMELINE = twitter.API_TIMELINE % 0
+TIMELINE = twitter_v2.API_TIMELINE % 0
 
 USER = {  # Twitter v2
   'created_at': '2010-05-01T21:42:43.000Z',
@@ -696,11 +696,11 @@ class TwitterTest(testutil.TestCase):
     self.maxDiff = None
     twitter_auth.TWITTER_APP_KEY = 'fake'
     twitter_auth.TWITTER_APP_SECRET = 'fake'
-    self.twitter = twitter.Twitter('key', 'secret')
+    self.twitter = twitter_v2.Twitter('key', 'secret')
 
   def expect_urlopen(self, url, response=None, params=None, **kwargs):
     if not url.startswith('http'):
-      url = twitter.API_BASE + url
+      url = twitter_v2.API_BASE + url
     if params:
       url += '?' + urllib.parse.urlencode(params)
       kwargs.setdefault('data', '')
@@ -786,7 +786,7 @@ class TwitterTest(testutil.TestCase):
     self.expect_urlopen(API_USER_TIMELINE % {'count': 0, 'screen_name': ''}, [TWEET])
     self.mox.ReplayAll()
 
-    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
+    self.twitter = twitter_v2.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     got = self.twitter.get_activities(group_id=source.SELF, fetch_likes=True)
     like_obj = copy.copy(LIKE_OBJ)
     del like_obj['published']
@@ -900,7 +900,7 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals([tag_uri('3'), tag_uri('4')], [a['id'] for a in got])
 
   def test_get_activities_quote_tweets(self):
-    twitter.QUOTE_SEARCH_BATCH_SIZE = 5  # reduce the batch size for testing
+    twitter_v2.QUOTE_SEARCH_BATCH_SIZE = 5  # reduce the batch size for testing
     # search for 8 tweets to make sure we split them up into groups of <= 5
     tweets = []
     for id in range(1000, 1008):
@@ -914,13 +914,13 @@ class TwitterTest(testutil.TestCase):
     # search @-mentions returns nothing
     self.expect_urlopen('account/verify_credentials.json',
                         {'screen_name': 'schnarfed'})
-    self.expect_urlopen(twitter.API_SEARCH % {
+    self.expect_urlopen(twitter_v2.API_SEARCH % {
       'q': urllib.parse.quote_plus('@schnarfed'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
 
     # first search returns no results
-    self.expect_urlopen(twitter.API_SEARCH % {
+    self.expect_urlopen(twitter_v2.API_SEARCH % {
       'q': urllib.parse.quote_plus('1000 OR 1001 OR 1002 OR 1003 OR 1004'),
       'count': 100,
     } + '&since_id=567', {'statuses': []})
@@ -930,7 +930,7 @@ class TwitterTest(testutil.TestCase):
     quote_tweet['quoted_status_id_str'] = '1006'
     retweeted_quote_tweet = copy.deepcopy(RETWEETED_QUOTE_TWEET)
     retweeted_quote_tweet['quoted_status_id_str'] = '1006'
-    self.expect_urlopen(twitter.API_SEARCH % {
+    self.expect_urlopen(twitter_v2.API_SEARCH % {
       'q': urllib.parse.quote_plus('1005 OR 1006 OR 1007'),
       'count': 100,
     } + '&since_id=567', {
@@ -1017,7 +1017,7 @@ class TwitterTest(testutil.TestCase):
       self.expect_urlopen(TIMELINE, tweets)
 
     self.mox.ReplayAll()
-    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
+    self.twitter = twitter_v2.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     cache = {}
     for _ in range(4):
       self.twitter.get_activities(fetch_shares=True, fetch_likes=True,
@@ -1034,7 +1034,7 @@ class TwitterTest(testutil.TestCase):
     self.expect_requests_get(SCRAPE_LIKES_URL % 100, LIKES_SCRAPED, headers={'x': 'y'})
 
     self.mox.ReplayAll()
-    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
+    self.twitter = twitter_v2.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     cache = {}
     self.assert_equals([ACTIVITY_WITH_LIKES],
                        self.twitter.get_activities(fetch_likes=True, cache=cache))
@@ -1049,7 +1049,7 @@ class TwitterTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     cache = {}
-    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
+    self.twitter = twitter_v2.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     self.assert_equals([ACTIVITY],
                        self.twitter.get_activities(fetch_likes=True, cache=cache))
     self.assertNotIn('ATF 100', cache)
@@ -1059,7 +1059,7 @@ class TwitterTest(testutil.TestCase):
     # we should only ask the API for retweets when favorites_count > 0
     self.mox.ReplayAll()
 
-    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
+    self.twitter = twitter_v2.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     self.assert_equals([ACTIVITY], self.twitter.get_activities(fetch_likes=True))
 
   def test_get_activities_private_activity_skips_fetch_likes_and_retweets(self):
@@ -1073,7 +1073,7 @@ class TwitterTest(testutil.TestCase):
 
     activity = copy.deepcopy(ACTIVITY)
     activity['object']['to'][0]['alias'] = '@private'
-    self.twitter = twitter.Twitter('key', 'secret', scrape_headers={'x': 'y'})
+    self.twitter = twitter_v2.Twitter('key', 'secret', scrape_headers={'x': 'y'})
     self.assert_equals([activity], self.twitter.get_activities(
       fetch_likes=True, fetch_shares=True))
 
@@ -1114,7 +1114,7 @@ class TwitterTest(testutil.TestCase):
     for exc in (http.client.HTTPException('Deadline exceeded: foo'),
                 socket.timeout('asdf'),
                 urllib.error.HTTPError('url', 501, 'msg', {}, None)):
-      for _ in range(twitter.RETRIES):
+      for _ in range(twitter_v2.RETRIES):
         self.expect_urlopen(TIMELINE).AndRaise(exc)
       self.expect_urlopen(TIMELINE, [])
       self.mox.ReplayAll()
@@ -1130,7 +1130,7 @@ class TwitterTest(testutil.TestCase):
       self.mox.ResetAll()
 
   def test_get_activities_search(self):
-    self.expect_urlopen(twitter.API_SEARCH % {'q': 'indieweb', 'count': 0}, {
+    self.expect_urlopen(twitter_v2.API_SEARCH % {'q': 'indieweb', 'count': 0}, {
       'statuses': [TWEET, TWEET],
       'search_metadata': {
         'max_id': 250126199840518145,
@@ -1146,7 +1146,7 @@ class TwitterTest(testutil.TestCase):
       self.twitter.get_activities(group_id=source.SEARCH, search_query=None)
 
   def test_get_activities_search_with_unicode_char(self):
-    self.expect_urlopen(twitter.API_SEARCH % {'q': '%E2%98%95+foo', 'count': 0},
+    self.expect_urlopen(twitter_v2.API_SEARCH % {'q': '%E2%98%95+foo', 'count': 0},
                         {'statuses': []})
     self.mox.ReplayAll()
     self.assert_equals([], self.twitter.get_activities(
@@ -1736,8 +1736,8 @@ class TwitterTest(testutil.TestCase):
     self.twitter.get_actor('foo')
 
   def test_urlopen_not_json(self):
-    self.expect_urlopen(twitter.API_BASE + 'xyz', 'not json'
-      ).MultipleTimes(twitter.RETRIES + 1)
+    self.expect_urlopen(twitter_v2.API_BASE + 'xyz', 'not json'
+      ).MultipleTimes(twitter_v2.RETRIES + 1)
     self.mox.ReplayAll()
 
     try:
@@ -1805,7 +1805,7 @@ class TwitterTest(testutil.TestCase):
     )
 
     for content in created:
-      self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
+      self.expect_urlopen(twitter_v2.API_POST_TWEET, TWEET,
                           params={'status': content.encode('utf-8')})
     self.mox.ReplayAll()
 
@@ -1839,7 +1839,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 <a href="http://indiewebcamp.com/2014-review#Indie_Term_Re-use">indiewebcamp.com/2014-review#In...</a>
 <a href="https://twitter.com/iainspad">@iainspad</a> <a href="https://twitter.com/sashtown">@sashtown</a> <a href="https://twitter.com/thomatronic">@thomatronic</a> (ttk.me t4_81)"""
 
-    self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={'status': orig})
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, TWEET, params={'status': orig})
     self.mox.ReplayAll()
 
     obj = copy.deepcopy(OBJECT)
@@ -1873,7 +1873,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                'be far away. Those of us that have input fields to send… '
                '<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
 
-    self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, TWEET,
                         params={'status': content.encode('utf-8')})
     self.mox.ReplayAll()
 
@@ -1957,7 +1957,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.twitter.TRUNCATE_TEXT_LENGTH = 20
     self.twitter.TRUNCATE_URL_LENGTH = 5
 
-    self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, TWEET,
                         params={'status': 'too long… http://obj.ca'})
     self.mox.ReplayAll()
 
@@ -1989,7 +1989,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     )]
 
     for _, _, expected, _ in cases:
-      self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
+      self.expect_urlopen(twitter_v2.API_POST_TWEET, TWEET,
                           params={'status': expected.encode('utf-8')})
 
     self.mox.ReplayAll()
@@ -2108,7 +2108,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     result = self.twitter.preview_create(obj, include_link=source.OMIT_LINK)
     self.assertIn('37.83, -122.25', result.content)
 
-    self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params=(
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, TWEET, params=(
       # sorted; order matters.
       ('lat', '37.83'),
       ('long', '-122.25'),
@@ -2136,7 +2136,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       )
 
     for _, _, status, _ in testdata:
-      self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params=(
+      self.expect_urlopen(twitter_v2.API_POST_TWEET, TWEET, params=(
         # sorted; order matters.
         ('auto_populate_reply_metadata', 'true'),
         ('in_reply_to_status_id', 100),
@@ -2173,7 +2173,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.assertEqual('my content', preview.content)
 
     # test create
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/tweet'},
                         params=(
                           # sorted; order matters.
                           ('auto_populate_reply_metadata', 'true'),
@@ -2187,7 +2187,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
   def test_create_reply_to_self_omits_mention(self):
     for _ in range(3):
       self.expect_urlopen(
-        twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
+        twitter_v2.API_POST_TWEET, {'url': 'http://posted/tweet'},
         params=(
           # sorted; order matters.
           ('auto_populate_reply_metadata', 'true'),
@@ -2197,7 +2197,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     self.mox.ReplayAll()
 
     for username, reply_to in ('me', 'me'), ('ME', 'ME'), ('Me', 'mE'):
-      tw = twitter.Twitter('key', 'secret', username=username)
+      tw = twitter_v2.Twitter('key', 'secret', username=username)
       obj = {
         'objectType': 'comment',
         'content': 'my content',
@@ -2215,7 +2215,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                          tw.create(obj).content)
 
   def test_create_favorite(self):
-    self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
+    self.expect_urlopen(twitter_v2.API_POST_FAVORITE, TWEET, params={'id': 100})
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
                            'type': 'like'},
@@ -2231,7 +2231,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     like = copy.deepcopy(LIKE_OBJECTS[0])
     like['object']['url'] = 'https://twitter.com/snarfed_org/status/100/video/1'
 
-    self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
+    self.expect_urlopen(twitter_v2.API_POST_FAVORITE, TWEET, params={'id': 100})
     self.mox.ReplayAll()
     self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
                            'type': 'like'},
@@ -2244,7 +2244,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                   preview.description)
 
   def test_create_retweet(self):
-    self.expect_urlopen(twitter.API_POST_RETWEET % 333, TWEET, params={'id': 333})
+    self.expect_urlopen(twitter_v2.API_POST_RETWEET % 333, TWEET, params={'id': 333})
     self.mox.ReplayAll()
 
     tweet = copy.deepcopy(TWEET)
@@ -2263,7 +2263,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
   def test_create_quote_tweet(self):
     self.expect_urlopen(
-      twitter.API_POST_TWEET, {'url': 'http://posted/tweet'},
+      twitter_v2.API_POST_TWEET, {'url': 'http://posted/tweet'},
       params={
         'status': 'I agree with this https://twitter.com/snarfed_org/status/100',
       })
@@ -2281,7 +2281,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                   preview.description)
 
   def test_create_quote_tweet_strips_quotation(self):
-    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {}, params={
         'status': 'I agree with this https://twitter.com/snarfed_org/status/100',
       })
     self.mox.ReplayAll()
@@ -2293,7 +2293,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
   def test_create_quote_tweet_truncated_content(self):
     self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
-    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {}, params={
         'status':('X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X… https://twitter.com/snarfed_org/status/100').encode('utf-8'),
       })
     self.mox.ReplayAll()
@@ -2304,7 +2304,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
   def test_create_rsvp(self):
     content = "i'm going to a thing"
-    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={'status': content})
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {}, params={'status': content})
     self.mox.ReplayAll()
 
     obj = {
@@ -2333,7 +2333,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
         self.assertIn('Cannot publish type=activity, verb=react', msg)
 
   def test_create_non_twitter_reply(self):
-    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={'status': 'I reply!'})
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {}, params={'status': 'I reply!'})
     self.mox.ReplayAll()
 
     obj = {
@@ -2378,7 +2378,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
   def test_create_bookmark(self):
     content = "i'm bookmarking a thing"
-    self.expect_urlopen(twitter.API_POST_TWEET, {}, params={'status': content})
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {}, params={'status': content})
     self.mox.ReplayAll()
 
     activity = {
@@ -2399,7 +2399,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
   def test_create_with_multiple_photos(self):
     self.twitter.TRUNCATE_TEXT_LENGTH = 140
 
-    image_urls = [f'http://my/picture/{i}' for i in range(twitter.MAX_MEDIA + 1)]
+    image_urls = [f'http://my/picture/{i}' for i in range(twitter_v2.MAX_MEDIA + 1)]
     obj = {
       'objectType': 'note',
       'content': """\
@@ -2421,11 +2421,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     for i, url in enumerate(image_urls[:-1]):
       content = f'picture response {i}'
       self.expect_urlopen(url, content, response_headers={'Content-Length': 3})
-      self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+      self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                                 json_dumps({'media_id_string': str(i)}),
                                 files={'media': content},
                                 headers=mox.IgnoreArg())
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '0,1,2,3'),
@@ -2452,11 +2452,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params=(
                           # sorted; order matters.
                           ('auto_populate_reply_metadata', 'true'),
@@ -2483,11 +2483,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '123'),
@@ -2506,11 +2506,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
     self.expect_urlopen('http://my/picture', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '123'),
@@ -2522,7 +2522,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
   def test_create_with_photo_upload_error(self):
     self.expect_urlopen('http://my/picture', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg(),
                               status_code=400)
@@ -2565,15 +2565,15 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture.png', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    self.expect_requests_post(twitter.API_MEDIA_METADATA,
+    self.expect_requests_post(twitter_v2.API_MEDIA_METADATA,
                               json={'media_id': '123',
                                     'alt_text': {'text': 'some alt text'}},
                               headers=mox.IgnoreArg())
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '123'),
@@ -2586,7 +2586,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
   def test_create_with_photo_too_big(self):
     self.expect_urlopen(
       'http://my/picture.png', '',
-      response_headers={'Content-Length': twitter.MAX_IMAGE_SIZE + 1})
+      response_headers={'Content-Length': twitter_v2.MAX_IMAGE_SIZE + 1})
     self.mox.ReplayAll()
 
     # test create
@@ -2600,11 +2600,11 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
   def test_create_with_photo_with_alt_error(self):
     self.expect_urlopen('http://my/picture.png', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    self.expect_requests_post(twitter.API_MEDIA_METADATA,
+    self.expect_requests_post(twitter_v2.API_MEDIA_METADATA,
                               json={'media_id': '123',
                                     'alt_text': {'text': 'some alt text'}},
                               headers=mox.IgnoreArg(),
@@ -2636,15 +2636,15 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture.png', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    self.expect_requests_post(twitter.API_MEDIA_METADATA,
+    self.expect_requests_post(twitter_v2.API_MEDIA_METADATA,
                               json={'media_id': '123',
                                     'alt_text': {'text': 'Black Cat\'s face framed in a window of a grey hidey hole in his tower, looking a little bit crabby'}},
                               headers=mox.IgnoreArg())
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '123'),
@@ -2672,15 +2672,15 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     # test create
     self.expect_urlopen('http://my/picture.png', 'picture response',
                         response_headers={'Content-Length': 3})
-    self.expect_requests_post(twitter.API_UPLOAD_MEDIA,
+    self.expect_requests_post(twitter_v2.API_UPLOAD_MEDIA,
                               json_dumps({'media_id_string': '123'}),
                               files={'media': 'picture response'},
                               headers=mox.IgnoreArg())
-    self.expect_requests_post(twitter.API_MEDIA_METADATA,
+    self.expect_requests_post(twitter_v2.API_MEDIA_METADATA,
                               json={'media_id': '123',
                                     'alt_text': {'text': '1a871f1abf22f3963bcf65f9bf9084d85c70d23f59d36b21c9776cf4e8e5919150e753e20c39afb353ca0253062794f931468e48c111fdc9549eba886717f8578ba92ef237b762663195ba73ab61339795a7e902e90548813c77cfa9381e459ec0dd04d6122b00e75906cf52363a1f61d6c70df6631020bc102e28c4c9895302fbcc19f4912c5a71334d09c84d279ec9deb1e6b23cb82a5ed7145c9d6320c04dbc2f0a9a0b99a61fd4e807782af4e13567db8759be6e5543c9da3c9ba72ca29266fca72652d29d961939961fb1acd622d...'}},
                               headers=mox.IgnoreArg())
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/picture'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/picture'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '123'),
@@ -2707,7 +2707,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.expect_urlopen('http://my/video', content,
                         response_headers={'Content-Length': len(content)})
 
-    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, {'media_id_string': '9'},
+    self.expect_urlopen(twitter_v2.API_UPLOAD_MEDIA, {'media_id_string': '9'},
                         params={
                           'command': 'INIT',
                           'media_type': 'video/mp4',
@@ -2715,10 +2715,10 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                           'total_bytes': len(content),
                         })
 
-    twitter.UPLOAD_CHUNK_SIZE = 5
+    twitter_v2.UPLOAD_CHUNK_SIZE = 5
     for i, chunk in (0, 'video'), (1, ' resp'), (2, 'onse'):
       self.expect_requests_post(
-        twitter.API_UPLOAD_MEDIA, '',
+        twitter_v2.API_UPLOAD_MEDIA, '',
         data={'command': 'APPEND', 'media_id': '9', 'segment_index': i},
         files={'media': chunk},
         headers=mox.IgnoreArg())
@@ -2731,26 +2731,26 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
         'check_after_secs': 5,
       }
     }
-    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, resp, params={
+    self.expect_urlopen(twitter_v2.API_UPLOAD_MEDIA, resp, params={
       'command': 'FINALIZE',
       'media_id': '9',
     })
     self.mox.StubOutWithMock(twitter, 'sleep_fn')
-    twitter.sleep_fn(5)
+    twitter_v2.sleep_fn(5)
 
     resp['processing_info'] = {
       'state': 'in_progress',
       'check_after_secs': 9999,
     }
-    self.expect_urlopen(twitter.API_UPLOAD_MEDIA + '?command=STATUS&media_id=9', resp)
-    twitter.sleep_fn(twitter.API_MEDIA_STATUS_MAX_DELAY_SECS)
+    self.expect_urlopen(twitter_v2.API_UPLOAD_MEDIA + '?command=STATUS&media_id=9', resp)
+    twitter_v2.sleep_fn(twitter_v2.API_MEDIA_STATUS_MAX_DELAY_SECS)
 
     resp['processing_info'] = {
       'state': 'succeeded',
     }
-    self.expect_urlopen(twitter.API_UPLOAD_MEDIA + '?command=STATUS&media_id=9', resp)
+    self.expect_urlopen(twitter_v2.API_UPLOAD_MEDIA + '?command=STATUS&media_id=9', resp)
 
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/video'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/video'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '9'),
@@ -2784,7 +2784,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
     self.expect_urlopen('http://my/video', content,
                         response_headers={'Content-Length': len(content)})
 
-    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, {'media_id_string': '9'},
+    self.expect_urlopen(twitter_v2.API_UPLOAD_MEDIA, {'media_id_string': '9'},
                         params={
                           'command': 'INIT',
                           'media_type': 'video/mp4',
@@ -2792,15 +2792,15 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
                           'total_bytes': len(content),
                         })
 
-    twitter.UPLOAD_CHUNK_SIZE = 5
+    twitter_v2.UPLOAD_CHUNK_SIZE = 5
     for i, chunk in (0, 'video'), (1, ' resp'), (2, 'onse'):
       self.expect_requests_post(
-        twitter.API_UPLOAD_MEDIA, '',
+        twitter_v2.API_UPLOAD_MEDIA, '',
         data={'command': 'APPEND', 'media_id': '9', 'segment_index': i},
         files={'media': chunk},
         headers=mox.IgnoreArg())
 
-    self.expect_urlopen(twitter.API_UPLOAD_MEDIA, {
+    self.expect_urlopen(twitter_v2.API_UPLOAD_MEDIA, {
       'media_id': 9,
       'media_id_string': '9',
       'size': 11065,
@@ -2809,7 +2809,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       'media_id': '9',
     })
 
-    self.expect_urlopen(twitter.API_POST_TWEET, {'url': 'http://posted/video'},
+    self.expect_urlopen(twitter_v2.API_POST_TWEET, {'url': 'http://posted/video'},
                         params=(
                           # sorted; order matters.
                           ('media_ids', '9'),
@@ -2823,7 +2823,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
   def test_create_with_video_too_big(self):
     self.expect_urlopen(
       'http://my/video', '',
-      response_headers={'Content-Length': twitter.MAX_VIDEO_SIZE + 1})
+      response_headers={'Content-Length': twitter_v2.MAX_VIDEO_SIZE + 1})
     self.mox.ReplayAll()
 
     ret = self.twitter.create({
@@ -2859,7 +2859,7 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
 
   def test_delete(self):
     resp = {'o': 'k'}
-    self.expect_urlopen(twitter.API_DELETE_TWEET, resp, params={'id': '789'})
+    self.expect_urlopen(twitter_v2.API_DELETE_TWEET, resp, params={'id': '789'})
     self.mox.ReplayAll()
     self.assertEqual(resp, self.twitter.delete('789').content)
 
