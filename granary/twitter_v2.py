@@ -36,6 +36,7 @@ API_TWEET_FIELDS = ','.join((
   'geo',
   'id',
   'in_reply_to_user_id',
+  'public_metrics',
   'referenced_tweets',
   'source',
   'text',
@@ -44,18 +45,17 @@ API_EXPANSIONS = ','.join((
   'attachments.media_keys',
   'author_id',
   'in_reply_to_user_id',
+  'public_metrics',
   'referenced_tweets.id',
   'referenced_tweets.id.author_id',
 ))
-# XXX TODO: remove
-API_TWEET_PARAMS = ''
 
 API_BASE = 'https://api.twitter.com/2/'
 
 # v2
 API_SEARCH = 'tweets/search/recent?query=%(query)s&max_results=%(count)d&tweet.fields={API_TWEET_FIELDS}&expansions={API_EXPANSIONS}'
 API_TWEETS = f'tweets?ids=%s&tweet.fields={API_TWEET_FIELDS}&expansions={API_EXPANSIONS}'
-API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
+API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s'
 
 API_BLOCK_IDS = 'blocks/ids.json?count=5000&stringify_ids=true&cursor=%s'
 API_BLOCKS = 'blocks/list.json?skip_status=true&count=5000&cursor=%s'
@@ -63,21 +63,20 @@ API_CURRENT_USER = 'account/verify_credentials.json'
 API_DELETE_TWEET = 'statuses/destroy.json'
 API_DELETE_FAVORITE = 'favorites/destroy.json'
 API_FAVORITES = 'favorites/list.json?screen_name=%s'
-API_LIST_TIMELINE = 'lists/statuses.json?count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s' + API_TWEET_PARAMS
-API_LIST_ID_TIMELINE = 'lists/statuses.json?count=%(count)d&list_id=%(list_id)s' + API_TWEET_PARAMS
+API_LIST_TIMELINE = 'lists/statuses.json?count=%(count)d&slug=%(slug)s&owner_screen_name=%(owner_screen_name)s'
+API_LIST_ID_TIMELINE = 'lists/statuses.json?count=%(count)d&list_id=%(list_id)s'
 API_POST_FAVORITE = 'favorites/create.json'
 API_POST_MEDIA = 'statuses/update_with_media.json'
 API_POST_RETWEET = 'statuses/retweet/%s.json'
 API_POST_TWEET = 'statuses/update.json'
-API_RETWEETS = 'statuses/retweets.json?id=%s' + API_TWEET_PARAMS
+API_RETWEETS = 'statuses/retweets.json?id=%s'
 API_UPLOAD_MEDIA = 'https://upload.twitter.com/1.1/media/upload.json'
 API_MEDIA_STATUS_MAX_DELAY_SECS = 30
 API_MEDIA_STATUS_MAX_POLLS = 20
 API_MEDIA_METADATA = 'https://upload.twitter.com/1.1/media/metadata/create.json'
 API_TIMELINE = f'users/.../tweets?max_results=%s&tweet.fields={API_TWEET_FIELDS}&expansions={API_EXPANSIONS}'
 API_USER = 'users/show.json?screen_name=%s'
-API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
-SCRAPE_LIKES_URL = 'https://api.twitter.com/2/timeline/liked_by.json?tweet_mode=extended&include_user_entities=true&tweet_id=%s&count=80'
+API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s'
 
 TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
 HTTP_RATE_LIMIT_CODES = (429, 503)
@@ -149,24 +148,6 @@ def get_first(obj, key, **kwargs):
         return elem
 
 
-class OffsetTzinfo(datetime.tzinfo):
-  """A simple, DST-unaware tzinfo from given utc offset in seconds.
-  """
-  def __init__(self, utc_offset=0):
-    """Constructor.
-
-    Args:
-      utc_offset: Offset of time zone from UTC in seconds
-    """
-    self._offset = datetime.timedelta(seconds=utc_offset)
-
-  def utcoffset(self, dt):
-    return self._offset
-
-  def dst(self, dt):
-    return datetime.timedelta(0)
-
-
 class Twitter(source.Source):
   """Twitter source class. See file docstring and Source class for details."""
 
@@ -197,24 +178,18 @@ class Twitter(source.Source):
   # TRUNCATE_TEXT_LENGTH = None
   # TRUNCATE_URL_LENGTH = None
 
-  def __init__(self, access_token_key, access_token_secret, username=None,
-               scrape_headers=None):
+  def __init__(self, token_json, username=None):
     """Constructor.
 
     Twitter now requires authentication in v1.1 of their API. You can get an
     OAuth access token by creating an app here: https://dev.twitter.com/apps/new
 
     Args:
-      access_token_key: string, OAuth access token key
-      access_token_secret: string, OAuth access token secret
+      token_json: dict, JSON access token object
       username: string, optional, the current user. Used in e.g. preview/create.
-      scrape_headers: dict, optional, with string HTTP header keys and values to
-        use when scraping likes
     """
-    self.access_token_key = access_token_key
-    self.access_token_secret = access_token_secret
+    self.token_json = token_json
     self.username = username
-    self.scrape_headers = scrape_headers
 
   def get_actor(self, screen_name=None):
     """Returns a user as a JSON ActivityStreams actor dict.
@@ -227,13 +202,13 @@ class Twitter(source.Source):
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
-                              etag=None, min_id=None, cache=None,
+                              min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, include_shares=False,
                               fetch_events=False, fetch_mentions=False,
                               ## XXX TODO: expansions=attachments.media_keys
                               fetch_media=False,
-                              search_query=None, scrape=False, **kwargs):
+                              search_query=None, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -244,17 +219,6 @@ class Twitter(source.Source):
 
     See :meth:`source.Source.get_activities_response()` for details. app_id is
     ignored. min_id is translated to Twitter's since_id.
-
-    The code for handling ETags (and 304 Not Changed responses and setting
-    If-None-Match) is here, but unused right now since Twitter evidently doesn't
-    support ETags. From https://dev.twitter.com/discussions/5800 :
-    "I've confirmed with our team that we're not explicitly supporting this
-    family of features."
-
-    Likes (nee favorites) are scraped from twitter.com, since Twitter's REST
-    API doesn't offer a way to fetch them. You can also get them from the
-    Streaming API, though, and convert them with streaming_event_to_object().
-    https://dev.twitter.com/docs/streaming-apis/messages#Events_event
 
     Shares (ie retweets) are fetched with a separate API call per tweet:
     https://dev.twitter.com/docs/api/1.1/get/statuses/retweets/%3Aid
@@ -284,14 +248,7 @@ class Twitter(source.Source):
     * it's not a reply, OR
     * it's a reply, but not to the current user, AND
       * the tweet it's replying to doesn't @-mention the current user
-
-    Raises:
-      NotImplementedError: if fetch_likes is True but scrape_headers was not
-        provided to the constructor.
     """
-    if fetch_likes and not self.scrape_headers:
-        raise NotImplementedError('fetch_likes requires scrape_headers')
-
     if group_id is None:
       group_id = source.FRIENDS
 
@@ -359,19 +316,8 @@ class Twitter(source.Source):
             'owner_screen_name': user_id,
           }
 
-      headers = {'If-None-Match': etag} if etag else {}
       total_count = None
-      try:
-        resp = self.urlopen(url, headers=headers, parse_response=False)
-        etag = resp.info().get('ETag')
-        resp = source.load_json(resp.read(), url)
-        tweets = (resp.get('data') or [])[start_index:]
-        includes = resp.get('includes') or {}
-      except urllib.error.HTTPError as e:
-        if e.code == 304:  # Not Modified, from a matching ETag
-          tweets = []
-        else:
-          raise
+      tweets = self.api(url)['data']
 
     if cache is None:
       # for convenience, throwaway object just for this method
@@ -463,8 +409,7 @@ class Twitter(source.Source):
         count = tweet.get('favorite_count')
         if self.is_public(activity) and count and count != cache.get('ATF ' + id):
           try:
-            resp = util.requests_get(SCRAPE_LIKES_URL % id,
-                                     headers=self.scrape_headers)
+            resp = util.requests_get(LIKES_URL % id)
             resp.raise_for_status()
           except RequestException as e:
             util.interpret_http_exception(e)  # just log it
@@ -477,7 +422,7 @@ class Twitter(source.Source):
 
     activities += tweet_activities
     response = self.make_activities_base_response(activities)
-    response.update({'total_count': total_count, 'etag': etag})
+    response['total_count'] = total_count
     return response
 
   def fetch_mentions(self, username, tweets, min_id=None):
@@ -1070,16 +1015,14 @@ class Twitter(source.Source):
 <a href="{url}">this tweet</a>:
 {self.embed_post({'url': url})}""")
 
-  def urlopen(self, url, parse_response=True, **kwargs):
-    """Wraps :func:`urllib2.urlopen()` and adds an OAuth signature."""
+  def api(self, url, **kwargs):
+    """Wraps :func:`requests.get()` and adds an OAuth signature."""
     if not url.startswith('http'):
       url = API_BASE + url
 
     def request():
       resp = twitter_auth.signed_urlopen(
         url, self.access_token_key, self.access_token_secret, **kwargs)
-      if not parse_response:
-        return resp
       ret = source.load_json(resp.read(), url)
 
       # https://developer.twitter.com/en/support/twitter-api/error-troubleshooting
@@ -1187,6 +1130,9 @@ class Twitter(source.Source):
     id = data.get('id')
     if not id:
       return {}
+
+    if includes is None:
+      includes = {}
 
     obj = {
       'id': self.tag_uri(id),
@@ -1397,26 +1343,6 @@ class Twitter(source.Source):
       'username': username,
       'description': data.get('description'),
     })
-
-  def streaming_event_to_object(self, event):
-    """Converts a Streaming API event to an object.
-
-    https://dev.twitter.com/docs/streaming-apis/messages#Events_event
-
-    Right now, only converts favorite events to like objects.
-
-    Args:
-      event: dict, a decoded JSON Streaming API event
-
-    Returns:
-      an ActivityStreams object dict
-    """
-    source = event.get('source')
-    tweet = event.get('target_object')
-    if event.get('event') == 'favorite' and source and tweet:
-      obj = self._make_like(tweet, source)
-      obj['published'] = event.get('created_at')
-      return obj
 
   def _make_like(self, tweet, liker):
     """Generates and returns a ActivityStreams like object.
