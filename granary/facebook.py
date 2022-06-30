@@ -89,7 +89,6 @@ MAX_IDS = 50  # for the ids query param
 
 M_HTML_BASE_URL = 'https://mbasic.facebook.com/'
 M_HTML_TIMELINE_URL = '%s?v=timeline'
-M_HTML_POST_URL = 'story.php?story_fbid=%s&id=%s'
 M_HTML_REACTIONS_URL = 'ufi/reaction/profile/browser/?ft_ent_identifier=%s'
 
 # Use a modern browser user agent so that we get modern HTML tags like article
@@ -1804,7 +1803,7 @@ class Facebook(source.Source):
       return resp
 
     if activity_id:
-      resp = get(M_HTML_POST_URL, activity_id, user_id)
+      resp = get(activity_id)
       activities = [self.scraped_to_activity(resp.text, **kwargs)[0]]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
@@ -1815,7 +1814,7 @@ class Facebook(source.Source):
         fbids = [a['fb_id'] for a in activities]
         activities = []
         for id in fbids:
-          resp = get(M_HTML_POST_URL, id, user_id)
+          resp = get(id)
           activities.append(self.scraped_to_activity(resp.text)[0])
 
     if fetch_likes:
@@ -1935,7 +1934,7 @@ class Facebook(source.Source):
           if util.is_int(count_text):
             reactions_count = int(count_text)
 
-      url = self._sanitize_url(url)
+      url = self._sanitize_url(urllib.parse.urljoin(self.BASE_URL, f'/{post_id}'))
       activities.append({
         'objectType': 'activity',
         'verb': 'post',
@@ -2060,7 +2059,7 @@ class Facebook(source.Source):
     ids = {
       'id': self.tag_uri(post_id),
       'fb_id': post_id,
-      'url': f'{self.BASE_URL}story.php?story_fbid={post_id}&id={owner_id}',
+      'url': f'{self.BASE_URL}{post_id}',
     }
     activity.update(ids)
     activity['object'].update(ids)

@@ -1150,7 +1150,7 @@ MBASIC_OBJS = [{
   'objectType': 'note',
   'id': tag_uri('123'),
   'fb_id': '123',
-  'url': 'https://www.facebook.com/story.php?story_fbid=123&id=212038',
+  'url': 'https://www.facebook.com/123',
   'author': MBASIC_ACTOR,
   'content': """<p>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.
                           </p>""",
@@ -1170,7 +1170,7 @@ MBASIC_OBJS = [{
   'objectType': 'note',
   'id': tag_uri('456'),
   'fb_id': '456',
-  'url': 'https://www.facebook.com/story.php?story_fbid=456&id=212038',
+  'url': 'https://www.facebook.com/456',
   'author': MBASIC_ACTOR,
   'content': """<p>Oh hi,
                         <a href="/popularscience?refid=52&amp;_ft_=...&amp;__tn__=%2As-R">Jeeves
@@ -1205,12 +1205,12 @@ MBASIC_ACTIVITIES = [{
 MBASIC_FEED_ACTIVITIES = copy.deepcopy(MBASIC_ACTIVITIES)
 MBASIC_FEED_ACTIVITIES[1]['url'] = \
   MBASIC_FEED_ACTIVITIES[1]['object']['url'] = \
-    'https://www.facebook.com/story.php?story_fbid=456-story&id=212038'
+    'https://www.facebook.com/456'
 
 MBASIC_PHOTO_ACTIVITY = {
   'objectType': 'activity',
   'verb': 'post',
-  'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
+  'url': 'https://www.facebook.com/2017433665248201',
   'id': 'tag:facebook.com:2017433665248201',
   'fb_id': '2017433665248201',
   'actor': {
@@ -1222,7 +1222,7 @@ MBASIC_PHOTO_ACTIVITY = {
     'objectType': 'photo',
     'id': 'tag:facebook.com:2017433665248201',
     'fb_id': '2017433665248201',
-    'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
+    'url': 'https://www.facebook.com/2017433665248201',
     'to': [{'alias': '@public', 'objectType': 'group'}],
     'author': {
       'id': 'tag:facebook.com:100009447618341',
@@ -1250,10 +1250,10 @@ MBASIC_PHOTO_ACTIVITY = {
         'id': 'tag:facebook.com:2017433665248201_2921985358126356',
         'inReplyTo': [{
           'id': 'tag:facebook.com:2017433665248201',
-          'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341',
+          'url': 'https://www.facebook.com/2017433665248201',
         }],
         'objectType': 'comment',
-        'url': 'https://www.facebook.com/story.php?story_fbid=2017433665248201&id=100009447618341&comment_id=2921985358126356'}],
+        'url': 'https://www.facebook.com/2017433665248201?comment_id=2921985358126356'}],
       'totalItems': 1,
     },
   },
@@ -1264,19 +1264,19 @@ def MBASIC_REPLIES(post_id):
     'items': [{
       'objectType': 'comment',
       'id': tag_uri(post_id + '_777'),
-      'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038&comment_id=777',
+      'url': f'https://www.facebook.com/{post_id}?comment_id=777',
       'published': '1999-06-14T00:00:00',
       'content': """<div class="da">What...the...?
                         </div>""",
       'inReplyTo': [{
         'id': tag_uri(post_id),
-        'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038',
+        'url': f'https://www.facebook.com/{post_id}',
       }],
       'author': MBASIC_ALICE,
     }, {
       'objectType': 'comment',
       'id': tag_uri(post_id + '_888'),
-      'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038&comment_id=888',
+      'url': f'https://www.facebook.com/{post_id}?comment_id=888',
       'content': """<div class="da">Wat
                           <span class="dk dl" title="neutral emoticon">
 <img alt="" class="s" height="16" role="presentation" src="https://static.xx.fbcdn.net/images/emoji.php/v9/t6d/1/16/1f610.png" width="16"/>
@@ -1286,7 +1286,7 @@ def MBASIC_REPLIES(post_id):
 </div>""",
       'inReplyTo': [{
         'id': tag_uri(post_id),
-        'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038',
+        'url': f'https://www.facebook.com/{post_id}',
       }],
       'author': MBASIC_BOB,
     }],
@@ -1310,8 +1310,8 @@ def MBASIC_REACTION_TAGS(post_id):
     'objectType': 'activity',
     'verb': 'like',
     'id': tag_uri(f'{post_id}_liked_by_333'),
-    'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038#liked-by-333',
-    'object': {'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038'},
+    'url': f'https://www.facebook.com/{post_id}#liked-by-333',
+    'object': {'url': f'https://www.facebook.com/{post_id}'},
     'author':      {
       'objectType': 'person',
       'id': tag_uri('333'),
@@ -1323,9 +1323,9 @@ def MBASIC_REACTION_TAGS(post_id):
     'objectType': 'activity',
     'verb': 'react',
     'id': tag_uri(f'{post_id}_haha_by_bob'),
-    'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038#haha-by-bob',
+    'url': f'https://www.facebook.com/{post_id}#haha-by-bob',
     'content': '😆',
-    'object': {'url': f'https://www.facebook.com/story.php?story_fbid={post_id}&id=212038'},
+    'object': {'url': f'https://www.facebook.com/{post_id}'},
     'author': MBASIC_BOB,
   }]
 MBASIC_ACTIVITIES_REPLIES_REACTIONS = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES)
@@ -1876,11 +1876,9 @@ class FacebookTest(testutil.TestCase):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.expect_requests_get('212038?v=timeline', MBASIC_HTML_TIMELINE,
                              cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('story.php?story_fbid=123&id=212038',
-                             MBASIC_HTML_POST.replace('456', '123'),
+    self.expect_requests_get('123', MBASIC_HTML_POST.replace('456', '123'),
                              cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('story.php?story_fbid=456&id=212038', MBASIC_HTML_POST,
-                             cookie='c_user=CU; xs=XS')
+    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS')
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=123',
                              MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
@@ -1901,8 +1899,7 @@ class FacebookTest(testutil.TestCase):
 
   def test_get_activities_scrape_post(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('story.php?story_fbid=456&id=212038', MBASIC_HTML_POST,
-                             cookie='c_user=CU; xs=XS')
+    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456')
@@ -1910,8 +1907,7 @@ class FacebookTest(testutil.TestCase):
 
   def test_get_activities_scrape_post_fetch_likes(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('story.php?story_fbid=456&id=212038', MBASIC_HTML_POST,
-                             cookie='c_user=CU; xs=XS')
+    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS')
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
                              MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
@@ -3394,7 +3390,7 @@ cc Sam G, Michael M<br />""", preview.description)
   def test_scraped_to_activity_extra_header_div(self):
     """Extra "Who can see this?" header div on top of post when logged in.
 
-    Based on https://mbasic.facebook.com/story.php?story_fbid=10101880564410695&id=5410052
+    Based on https://mbasic.facebook.com/10101880564410695
     *but when logged in as post author!*
     """
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
@@ -3440,7 +3436,7 @@ cc Sam G, Michael M<br />""", preview.description)
   def test_scraped_to_activity_extra_div_before_footer(self):
     """Blank (effectively) div before footer.
 
-    Based on https://mbasic.facebook.com/story.php?story_fbid=10157876416367085&id=722007084
+    Based on https://mbasic.facebook.com/10157876416367085
     """
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.mox.ReplayAll()
