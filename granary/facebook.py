@@ -1761,7 +1761,7 @@ class Facebook(source.Source):
       5 July at 21:50
 
     Args:
-      tag: BeautifulSoup Tag
+      tag: :class:`bs4.BeautifulSoup` or :class:`bs4.Tag`
     """
     if not tag:
       return None
@@ -1852,23 +1852,24 @@ class Facebook(source.Source):
         logger.debug('Skipping "Suggested for you"')
         continue
 
-      url = urllib.parse.urljoin(self.BASE_URL, permalink['href'])
-      query = urllib.parse.urlparse(url).query
-      parsed = urllib.parse.parse_qs(query)
+      post_id, owner_id = self._extract_scraped_ids(post)
+      if not post_id or not owner_id:
+        url = urllib.parse.urljoin(self.BASE_URL, permalink['href'])
+        query = urllib.parse.urlparse(url).query
+        parsed = urllib.parse.parse_qs(query)
+        # story_fbid stopped being useful in May 2022, it switched to an opaque
+        # token that changes regularly, even for the same post.
+        # https://github.com/snarfed/facebook-atom/issues/27
+        ft = util.get_first(parsed, '_ft_') or ''
+        for elem in ft.split(':'):
+          if elem.startswith('top_level_post_id.') or elem.startswith('mf_objid.'):
+            post_id = elem.split('.')[1]
+            if post_id:
+              break
+        else:
+          post_id = util.get_first(parsed, 'story_fbid')
 
-      # story_fbid stopped being useful in May 2022, it switched to an opaque
-      # token that changes regularly, even for the same post.
-      # https://github.com/snarfed/facebook-atom/issues/27
-      ft = util.get_first(parsed, '_ft_') or ''
-      for elem in ft.split(':'):
-        if elem.startswith('top_level_post_id.') or elem.startswith('mf_objid.'):
-          post_id = elem.split('.')[1]
-          if post_id:
-            break
-      else:
-        post_id = util.get_first(parsed, 'story_fbid')
-
-      owner_id = parsed['id'][0]
+        owner_id = parsed['id'][0]
 
       author = self._m_html_author(post)
       if not author:
@@ -2036,23 +2037,8 @@ class Facebook(source.Source):
             }
           })
 
-    # TODO: unify with scraped_to_activities
-    data_ft_div = soup.find(attrs={
-      'data-ft': re.compile('mf_story_key|top_level_post_id'),
-    })
-    comment_form = soup.find('form', action=re.compile('^/a/comment.php'))
-    if data_ft_div:
-      data_ft = json_loads(html.unescape(data_ft_div['data-ft']))
-      post_id = data_ft.get('mf_story_key') or data_ft.get('top_level_post_id')
-      owner_id = str(data_ft.get('content_owner_id_new')
-                     if 'mf_story_key' in data_ft  # this post is from a user
-                     else data_ft.get('page_id'))  # this post is from a group
-    elif comment_form:
-      query = urllib.parse.urlparse(comment_form['action']).query
-      parsed = urllib.parse.parse_qs(query)
-      post_id = parsed['ft_ent_identifier'][0]
-      owner_id = parsed['av'][0]
-    else:
+    post_id, owner_id = self._extract_scraped_ids(soup)
+    if not post_id or not owner_id:
       return activity, None
 
     # numeric ids
@@ -2095,6 +2081,37 @@ class Facebook(source.Source):
       }
 
     return util.trim_nulls(activity), None
+
+  @staticmethod
+  def _extract_scraped_ids(soup):
+    """Tries to scrape post id and owner id out of parsed HTML.
+
+    Args:
+      soup: :class:`bs4.BeautifulSoup` or :class:`bs4.Tag`
+
+    Returns: (str post id, str owner id) tuple, or (None, None) if not found
+    """
+    post_id = owner_id = None
+
+    post_id_re = re.compile('mf_story_key|top_level_post_id')
+    data_ft_div = (soup if post_id_re.search(soup.get('data-ft', ''))
+                   else soup.find(attrs={'data-ft': post_id_re}))
+    comment_form = soup.find('form', action=re.compile('^/a/comment.php'))
+    if data_ft_div:
+      data_ft = json_loads(html.unescape(data_ft_div['data-ft']))
+      # prefer top_level_post_id, mf_story_key doesn't always work in FB URLs
+      # that we construct, eg https://www.facebook.com/[mf_story_key]
+      post_id = data_ft.get('top_level_post_id') or data_ft.get('mf_story_key')
+      owner_id = str(data_ft.get('content_owner_id_new')
+                     if 'mf_story_key' in data_ft  # this post is from a user
+                     else data_ft.get('page_id'))  # this post is from a group
+    elif comment_form:
+      query = urllib.parse.urlparse(comment_form['action']).query
+      parsed = urllib.parse.parse_qs(query)
+      post_id = parsed['ft_ent_identifier'][0]
+      owner_id = parsed['av'][0]
+
+    return post_id, owner_id
 
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
