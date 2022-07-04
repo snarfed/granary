@@ -353,7 +353,6 @@ NOTIFICATION_ISSUE_REST.update({
 })
 EXPECTED_HEADERS = {
   'Authorization': 'token a-towkin',
-  'Accept': 'application/vnd.github.squirrel-girl-preview+json',
 }
 
 

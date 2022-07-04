@@ -301,9 +301,6 @@ class GitHub(source.Source):
     kwargs['headers'] = kwargs.get('headers') or {}
     kwargs['headers'].update({
       'Authorization': f'token {self.access_token}',
-      # enable the beta Reactions API
-      # https://developer.github.com/v3/reactions/
-      'Accept': 'application/vnd.github.squirrel-girl-preview+json',
     })
 
     if data is None:
