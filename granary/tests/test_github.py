@@ -1143,3 +1143,43 @@ class GitHubTest(testutil.TestCase):
       self.gh._content_for_create({
         'content': 'x <a href="http://foo/bar">http://foo/bar</a> y',
       }))
+
+  def test_create_convert_profile_url_to_mention(self):
+    self.expect_graphql_issue()
+    rendered = self.expect_markdown_render('x @foo y')
+    self.mox.ReplayAll()
+
+    comment = copy.deepcopy(COMMENT_OBJ)
+    comment['content'] = 'x https://github.com/foo y'
+    self.gh.preview_create(comment)
+
+  def test_create_profile_url_in_html_link(self):
+    self.expect_graphql_issue()
+    rendered = self.expect_markdown_render('[text](https://github.com/foo)')
+    self.mox.ReplayAll()
+
+    comment = copy.deepcopy(COMMENT_OBJ)
+    comment['content'] = '<a href="https://github.com/foo">text</a>'
+    self.gh.preview_create(comment)
+
+  def test_create_convert_profile_url_to_mention_unchanged(self):
+    comment = copy.deepcopy(COMMENT_OBJ)
+
+    for input in (
+        'https://github.com.com/foo',
+        'github.com/foo',
+        'https://github.com/foo/bar',
+        'https://github.com/foo?bar=baz',
+        'https://github.com/not@user+name',
+    ):
+      with self.subTest(input):
+        self.tearDown()
+        self.mox.UnsetStubs()
+        self.mox.ResetAll()
+        self.setUp()
+        self.expect_graphql_issue()
+        rendered = self.expect_markdown_render(input)
+
+        self.mox.ReplayAll()
+        comment['content'] = input
+        self.gh.preview_create(comment)

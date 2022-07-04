@@ -224,9 +224,18 @@ class GitHub(source.Source):
   # https://github.com/shinnn/github-username-regex#readme
   # (this slightly overspecifies; it allows multiple consecutive hyphens and
   # leading/trailing hyphens. oh well.)
-  USER_NAME_RE = re.compile(r'^[A-Za-z0-9-]+$')
+  USER_NAME_RE = re.compile(r'[A-Za-z0-9-]+')
+  USER_URL_RE = re.compile(fr"""
+    (?<!]\(|=['"])  # don't match on Markdown links or HTML attributes
+    \b
+    {re.escape(BASE_URL)}
+    ({USER_NAME_RE.pattern})
+    \b
+    (?![/?_+#@.])  # don't match on URLs that continue past username
+  """, re.VERBOSE)
+
   # https://github.com/moby/moby/issues/679#issuecomment-18307522
-  REPO_NAME_RE = re.compile(r'^[A-Za-z0-9_.-]+$')
+  REPO_NAME_RE = re.compile(r'[A-Za-z0-9_.-]+')
   # https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   HTML2TEXT_OPTIONS = {
     'ignore_images': False,
@@ -550,6 +559,11 @@ class GitHub(source.Source):
     content = orig_content = replace_placeholders(html.escape(
       self._content_for_create(obj, ignore_formatting=ignore_formatting),
       quote=False))
+
+    # convert GitHub user profile URLs to @-mentions,
+    # eg https://github.com/snarfed to @snarfed
+    content = self.USER_URL_RE.sub(r'@\1', content)
+
     url = obj.get('url')
     if include_link == source.INCLUDE_LINK and url:
       content += f'\n\n(Originally published at: {url})'

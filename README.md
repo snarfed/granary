@@ -312,6 +312,8 @@ _Non-breaking changes:_
   * Scraping: extract post id and owner id from `data-ft` attribute and `_ft_` query param more often instead of `story_fbid`, which is now an opaque token that changes regularly. ([facebook-atom#27](https://github.com/snarfed/facebook-atom/issues/27))
 * Instagram
   * Add new `Instagram.scraped_json_to_activities` method.
+* GitHub
+  * `create` and `preview`: convert profile URLs to @-mentions, eg `https://github.com/snarfed` to `@snarfed` ([bridgy#1090](https://github.com/snarfed/bridgy/issues/1090)).
 * Reddit
   * Add `cache` support to `get_activities`.
 * REST API
