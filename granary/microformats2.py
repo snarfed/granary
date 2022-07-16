@@ -25,6 +25,7 @@ from oauth_dropins.webutil.util import (
   uniquify,
 )
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
@@ -154,7 +155,7 @@ def _activity_or_object(activity):
 
   Used in :func:`activity_to_json()` and :func:`activities_to_html()`.
   """
-  if activity.get('object') and activity.get('verb') not in source.VERBS_WITH_OBJECT:
+  if activity.get('object') and activity.get('verb') not in as1.VERBS_WITH_OBJECT:
     return activity['object']
 
   return activity
@@ -181,13 +182,13 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   if not obj or not isinstance(obj, dict):
     return {}
 
-  obj_type = source.object_type(obj) or default_object_type
+  obj_type = as1.object_type(obj) or default_object_type
   # if the activity type is a post, then it's really just a conduit
   # for the object. for other verbs, the activity itself is the
   # interesting thing
   if obj_type == 'post':
     primary = obj.get('object', {})
-    obj_type = source.object_type(primary) or default_object_type
+    obj_type = as1.object_type(primary) or default_object_type
   else:
     primary = obj
 
@@ -343,7 +344,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       # received likes and reposts
       ret['properties'][prop] = [
         object_to_json(t, trim_nulls=False, entry_class='h-cite')
-        for t in tags if source.object_type(t) == type]
+        for t in tags if as1.object_type(t) == type]
 
   # bookmarks
   if obj_type == 'bookmark':
@@ -874,7 +875,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   Returns:
     string, rendered HTML
   """
-  obj_type = source.object_type(obj)
+  obj_type = as1.object_type(obj)
   content = obj.get('content') or ''
 
   # extract tags. preserve order but de-dupe, ie don't include a tag more than
@@ -891,7 +892,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
     if 'startIndex' in t and 'length' in t and 'url' in t:
       mentions.append(t)
     else:
-      tags.setdefault(source.object_type(t), []).append(t)
+      tags.setdefault(as1.object_type(t), []).append(t)
 
   # linkify embedded mention tags inside content.
   if mentions:

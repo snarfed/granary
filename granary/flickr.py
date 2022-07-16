@@ -19,6 +19,7 @@ import urllib.parse
 from oauth_dropins.webutil import util
 from oauth_dropins import flickr_auth
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
@@ -121,7 +122,7 @@ class Flickr(source.Source):
       a CreationResult
     """
     # photo, comment, or like
-    type = source.object_type(obj)
+    type = as1.object_type(obj)
     logger.debug(f'publishing object type {type} to Flickr')
     link_text = f"(Originally published at: {obj.get('url')})"
 

@@ -23,6 +23,7 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import RequestException
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
@@ -408,7 +409,7 @@ class Twitter(source.Source):
       for tweet, activity in zip(tweets, tweet_activities):
         id = tweet['id_str']
         count = tweet.get('favorite_count')
-        if self.is_public(activity) and count and count != cache.get('ATF ' + id):
+        if as1.is_public(activity) and count and count != cache.get('ATF ' + id):
           try:
             resp = util.requests_get(SCRAPE_LIKES_URL % id,
                                      headers=self.scrape_headers)

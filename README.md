@@ -301,7 +301,8 @@ _Breaking changes:_
   * Switch to converting AS1 `id` (instead of `url`) to Atom `id`.
 * Reddit:
   * Implement `get_actor`.
-* `Source.original_post_discovery`: remove deprecated `cache` kwarg.
+* Move a number of utility methods from the `Source` class to a new `as1` module: `object_type`, `merge_by_id`, `is_public`, `add_rsvps_to_event`, `get_rsvps_from_event`, `activity_changed`, `append_in_reply_to`, `actor_name`, `original_post_discovery`.
+* `as1.original_post_discovery`: remove deprecated `cache` kwarg.
 
 _Non-breaking changes:_
 

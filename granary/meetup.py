@@ -1,15 +1,17 @@
 # coding=utf-8
 """Meetup.com source class.
 """
-
-from . import source
 import datetime
 import logging
+import re
+import urllib.error, urllib.parse, urllib.request
+
 from oauth_dropins import meetup
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_loads
-import re
-import urllib.error, urllib.parse, urllib.request
+
+from . import as1
+from . import source
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ class Meetup(source.Source):
 
     Returns: string, HTML
     """
-    return f"<span class=\"verb\">RSVP {source.object_type(obj)[5:]}</span> to <a href=\"{source.Source.base_object(cls, obj)['url']}\">this event</a>."
+    return f"<span class=\"verb\">RSVP {as1.object_type(obj)[5:]}</span> to <a href=\"{source.Source.base_object(cls, obj)['url']}\">this event</a>."
 
   def __init__(self, access_token):
     self.access_token = access_token
@@ -59,7 +61,7 @@ class Meetup(source.Source):
   def _create(self, obj, preview=False, include_link=source.OMIT_LINK, ignore_formatting=False):
     if preview not in (False, True):
       return self.return_error('Invalid Preview parameter, must be True or False')
-    verb = source.object_type(obj)
+    verb = as1.object_type(obj)
     response = None
     if verb == 'rsvp-yes':
       response = 'yes'

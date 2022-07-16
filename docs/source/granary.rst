@@ -5,6 +5,10 @@ Reference documentation.
 
 .. contents::
 
+as1
+---
+.. automodule:: granary.as1
+
 as2
 ---
 .. automodule:: granary.as2

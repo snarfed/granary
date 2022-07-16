@@ -19,6 +19,7 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
@@ -1012,7 +1013,7 @@ class Instagram(source.Source):
 
     obj_replies = obj.setdefault('replies', {})
     if replies:
-      source.merge_by_id(obj_replies, 'items', replies)
+      as1.merge_by_id(obj_replies, 'items', replies)
 
     obj_replies['totalItems'] = max(scraped.get('comment_count', 0),
                                     obj_replies.get('totalItems', 0),
@@ -1051,7 +1052,7 @@ class Instagram(source.Source):
       likers.extend(media.get('likers', []))  # v2
       like_tags = util.trim_nulls(
         [self.like_to_object(l, id, media_url) for l in likers])
-      source.merge_by_id(obj, 'tags', like_tags)
+      as1.merge_by_id(obj, 'tags', like_tags)
       return like_tags
 
     return []

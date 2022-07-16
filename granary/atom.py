@@ -12,6 +12,7 @@ import xml.sax.saxutils
 import jinja2
 from oauth_dropins.webutil import util
 
+from . import as1
 from . import microformats2
 from . import source
 
@@ -153,9 +154,9 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     mimetypes=mimetypes,
     rels=rels or {},
     request_url=request_url,
-    title=title or 'User feed for ' + source.Source.actor_name(actor),
+    title=title or 'User feed for ' + as1.actor_name(actor),
     updated=updated,
-    VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
+    VERBS_WITH_OBJECT=as1.VERBS_WITH_OBJECT,
     xml_base=xml_base,
   )
 
@@ -177,7 +178,7 @@ def activity_to_atom(activity, xml_base=None, reader=True):
   return jinja_env.get_template(ENTRY_TEMPLATE).render(
     activity=Defaulter(activity),
     mimetypes=mimetypes,
-    VERBS_WITH_OBJECT=source.VERBS_WITH_OBJECT,
+    VERBS_WITH_OBJECT=as1.VERBS_WITH_OBJECT,
     xml_base=xml_base,
   )
 
@@ -346,7 +347,7 @@ def _prepare_activity(a, reader=True):
     reader: boolean, whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
   """
-  act_type = source.object_type(a)
+  act_type = as1.object_type(a)
   obj = util.get_first(a, 'object', default={})
   primary = obj if (not act_type or act_type == 'post') else a
 

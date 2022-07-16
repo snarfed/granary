@@ -18,6 +18,7 @@ import oauth_dropins.facebook
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
@@ -1412,7 +1413,7 @@ class Facebook(source.Source):
     })
 
     if rsvps:
-      self.add_rsvps_to_event(
+      as1.add_rsvps_to_event(
         obj, [self.rsvp_to_object(r, event=event) for r in rsvps])
 
     # de-dupe the event's RSVPs by (user) id. RSVP_FIELDS is ordered by
@@ -1423,7 +1424,7 @@ class Facebook(source.Source):
       for rsvp in event.get(field, {}).get('data', []):
         rsvp = self.rsvp_to_object(rsvp, type=field, event=event)
         id_to_rsvp[rsvp['id']] = rsvp
-    self.add_rsvps_to_event(obj, id_to_rsvp.values())
+    as1.add_rsvps_to_event(obj, id_to_rsvp.values())
 
     return self.postprocess_object(obj)
 
@@ -2156,7 +2157,7 @@ class Facebook(source.Source):
         tag['content'] = REACTION_CONTENT.get(type.upper())
       tags.append(tag)
 
-    source.merge_by_id(activity['object'], 'tags', tags)
+    as1.merge_by_id(activity['object'], 'tags', tags)
     return tags
 
   def scraped_to_actor(self, scraped):

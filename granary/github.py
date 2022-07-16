@@ -17,6 +17,7 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
@@ -543,7 +544,7 @@ class GitHub(source.Source):
     """
     assert preview in (False, True)
 
-    type = source.object_type(obj)
+    type = as1.object_type(obj)
     if type and type not in ('issue', 'comment', 'activity', 'note', 'article',
                              'like', 'tag'):
       return source.creation_result(
