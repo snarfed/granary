@@ -923,6 +923,8 @@ class Instagram(source.Source):
       media = item.get('media_or_ad') or item
       if media and (not count or len(activities) < count):
         activity = self._feed_v2_item_to_activity(media)
+        if not activity:
+          continue
         self.merge_scraped_comments(media, activity)
         self.merge_scraped_reactions({'data': {'shortcode_media': media}}, activity)
 
@@ -1206,13 +1208,15 @@ class Instagram(source.Source):
       media: dict, item from a feed_v2 JSON
 
     Returns:
-      dict, ActivityStreams activity
+      dict, ActivityStreams activity, or None
     """
     user = item.get('user') or {}
     actor = self._feed_v2_user_to_actor(user)
 
     item_pk = item.get("pk")
     user_pk = user.get("pk")
+    if not item_pk and not user_pk:
+      return None
     obj_id = self.tag_uri(f'{item_pk}_{user_pk}' if user_pk else item_pk)
 
     media_url = self.media_url(item.get('code'))

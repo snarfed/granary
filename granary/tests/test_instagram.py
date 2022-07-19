@@ -1235,6 +1235,23 @@ HTML_MULTI_PHOTO_ACTIVITY['object']['attachments'] = [{
   }],
 }]
 
+HTML_V2_SUGGESTED_USERS = {
+  'suggested_users': {
+    'type': 2,
+    'suggestions': [
+      # ...
+    ],
+    'landing_site_type': 'suggested_user',
+    'title': 'Suggested for You',
+    'view_all_text': 'See All',
+    'landing_site_title': 'Discover People',
+    'cards_size': 'large',
+    'id': '60155560',
+    'tracking_token': '...',
+    # ...
+  },
+}
+
 HTML_ACTIVITIES = [HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY]
 HTML_ACTIVITIES_FULL = [HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL]
 HTML_ACTIVITIES_FULL_LIKES = [HTML_PHOTO_ACTIVITY_LIKES, HTML_VIDEO_ACTIVITY_FULL]
@@ -1880,6 +1897,12 @@ class InstagramTest(testutil.TestCase):
     activities, actor = self.instagram.scraped_json_to_activities(HTML_PROFILE_JSON)
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER_PUBLIC, actor)
+
+  def test_scraped_json_to_activities_suggested_users(self):
+    activities, actor = self.instagram.scraped_json_to_activities(
+      {'feed_items': [HTML_V2_SUGGESTED_USERS]})
+    self.assert_equals([], activities)
+    self.assert_equals(None, actor)
 
   def test_scraped_to_activities_photo_no_fetch_extras(self):
     activities, viewer = self.instagram.scraped_to_activities(
