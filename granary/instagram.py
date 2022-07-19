@@ -875,8 +875,8 @@ class Instagram(source.Source):
                       ('GraphSuggestedUserFeedUnit',))
 
       # feed v2
-      feed_v2_items.extend(data.get('feed_items', []))
-      feed_v2_items.extend(data.get('items', []))
+      feed_v2_items.extend(data.get('feed_items') or [])
+      feed_v2_items.extend(data.get('items') or [])
 
       user = (data.get('data', {}) or data).get('user', {})
       edges = user.get('edge_web_feed_timeline', {}).get('edges', [])
