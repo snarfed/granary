@@ -787,7 +787,7 @@ class Instagram(source.Source):
       }]
 
 
-  def scraped_to_activities(self, html, cookie=None, count=None,
+  def scraped_to_activities(self, input, cookie=None, count=None,
                             fetch_extras=False):
     """Converts scraped Instagram HTML to ActivityStreams activities.
 
@@ -796,9 +796,11 @@ class Instagram(source.Source):
     * a user's feed, eg https://www.instagram.com/ while logged in
     * a user's profile, eg https://www.instagram.com/snarfed/
     * a photo or video, eg https://www.instagram.com/p/BBWCSrfFZAk/
+    * serialized JSON from the API for a feed, profile, or post, eg
+      https://i.instagram.com/api/v1/feed/timeline/
 
     Args:
-      html: unicode string
+      input: unicode string containing either HTML or JSON
       cookie: string, optional sessionid cookie to be used for subsequent HTTP
         fetches, if necessary.
       count: integer, number of activities to return, None for all
@@ -808,9 +810,18 @@ class Instagram(source.Source):
       tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
     """
     cookie = cookie or self.cookie
-    # extract JSON data blob
-    # (can also get just this JSON by adding ?__a=1 to any IG URL.)
-    matches = HTML_DATA_RE.findall(html)
+
+    # sniff JSON input
+    if input and input[0] in ('{', '['):
+      try:
+        input = json_loads(input)
+      except ValueError:
+        return [], None
+      return self.scraped_json_to_activities(
+        input, cookie=cookie, count=count, fetch_extras=fetch_extras)
+
+    # extract JSON data blob from HTML
+    matches = HTML_DATA_RE.findall(input)
     if not matches:
       # Instagram sometimes returns 200 with incomplete HTML. often it stops at
       # the end of one of the <style> tags inside <head>. not sure why.
@@ -825,7 +836,7 @@ class Instagram(source.Source):
 
     # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
     # no longer has any useful data. Need to do a second header link fetch.
-    soup = util.parse_html(html)
+    soup = util.parse_html(input)
     link = soup.find('link', href=HTML_PRELOAD_RE)
     if link:
       url = urllib.parse.urljoin(HTML_BASE_URL, link['href'])

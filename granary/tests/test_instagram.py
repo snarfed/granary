@@ -1898,6 +1898,12 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER_PUBLIC, actor)
 
+  def test_scraped_to_activities_json_input(self):
+    activities, actor = self.instagram.scraped_to_activities(
+      json_dumps(HTML_PROFILE_JSON))
+    self.assert_equals(HTML_ACTIVITIES, activities)
+    self.assert_equals(HTML_VIEWER_PUBLIC, actor)
+
   def test_scraped_json_to_activities_suggested_users(self):
     activities, actor = self.instagram.scraped_json_to_activities(
       {'feed_items': [HTML_V2_SUGGESTED_USERS]})
