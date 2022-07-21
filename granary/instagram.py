@@ -53,6 +53,10 @@ HTML_DATA_RE = re.compile(r"""
   window\.(_sharedData\ =|__additionalDataLoaded\('[^']+',)\ *
   (.+?)
   \)?;</script>""", re.VERBOSE)
+HTML_DEFINES_RE = re.compile(r"""
+  handleWithCustomApplyEach\(ScheduledApplyEach, *
+  (.+?)
+  \);}\);}""", re.VERBOSE)
 
 # duplicated in bridgy/browser-extension/instagram.js and
 # instagram-atom/browser-extension/instagram.js
@@ -786,7 +790,6 @@ class Instagram(source.Source):
         'alias': '@private' if private else '@public',
       }]
 
-
   def scraped_to_activities(self, input, cookie=None, count=None,
                             fetch_extras=False):
     """Converts scraped Instagram HTML to ActivityStreams activities.
@@ -822,20 +825,26 @@ class Instagram(source.Source):
 
     # extract JSON data blob from HTML
     matches = HTML_DATA_RE.findall(input)
-    if not matches:
-      # Instagram sometimes returns 200 with incomplete HTML. often it stops at
-      # the end of one of the <style> tags inside <head>. not sure why.
-      logger.warning('JSON script tag not found!')
-      return [], None
+    if matches:
+      data = [util.trim_nulls(json_loads(match[1])) for match in matches]
+      activities, actor = self.scraped_json_to_activities(
+        data, cookie=cookie, count=count, fetch_extras=fetch_extras)
+      if activities or actor:
+        return activities, actor
 
-    data = [util.trim_nulls(json_loads(match[1])) for match in matches]
-    activities, actor = self.scraped_json_to_activities(
-      data, cookie=cookie, count=count, fetch_extras=fetch_extras)
-    if activities:
-      return activities, actor
+    match = HTML_DEFINES_RE.search(input)
+    if match:
+      data = json_loads(match[1])
+      for define in data.get('define', []):
+        if len(define) >= 3 and define[0] == 'XIGSharedData':
+          xigshared = define[2].get('raw', '{}')
+          activities, actor = self.scraped_json_to_activities(
+            json_loads(xigshared), cookie=cookie, count=count, fetch_extras=fetch_extras)
+          if activities or actor:
+            return activities, actor
 
     # As of 2018-02-15, embedded JSON in logged in https://www.instagram.com/
-    # no longer has any useful data. Need to do a second header link fetch.
+    # sometimes has no useful data. Need to do a second header link fetch.
     soup = util.parse_html(input)
     link = soup.find('link', href=HTML_PRELOAD_RE)
     if link:
@@ -844,6 +853,7 @@ class Instagram(source.Source):
         self._scrape_json(url, cookie=cookie), cookie=cookie, count=count,
         fetch_extras=fetch_extras)
 
+    logger.warning("Couldn't find JSON data in scraped input!")
     return [], None
 
   def scraped_json_to_activities(self, input, cookie=None, count=None,
@@ -1073,11 +1083,12 @@ class Instagram(source.Source):
   @staticmethod
   def _scrape_json(url, cookie=None):
     """Fetches and returns JSON from www.instagram.com."""
-    headers = {}
-    if cookie:
-      if not cookie.startswith('sessionid='):
-        cookie = 'sessionid=' + cookie
-      headers = {'Cookie': cookie, **HEADERS}
+    if not cookie:
+      return {}
+
+    if not cookie.startswith('sessionid='):
+      cookie = 'sessionid=' + cookie
+    headers = {'Cookie': cookie, **HEADERS}
 
     resp = util.requests_get(url, allow_redirects=False, headers=headers)
     resp.raise_for_status()

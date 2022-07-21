@@ -706,7 +706,7 @@ HTML_VIEWER_CONFIG = {
     'username': 'snarfed',
   },
 }
-HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
+HTML_FEED = {  # eg old https://www.instagram.com/ when you're logged in
   'environment_switcher_visible_server_guess': True,
   'config': HTML_VIEWER_CONFIG,
   'display_properties_server_guess': {'pixel_ratio': 2.0, 'viewport_width': 1280},
@@ -733,6 +733,13 @@ HTML_FEED = {  # eg https://www.instagram.com/ when you're logged in
       ],
     },
   }}}]},
+}
+HTML_DEFINES = {  # eg new https://www.instagram.com/ when you're logged in
+  'define': [
+    ["IntlCurrentLocale", [], {"code": "en_US"}, 5954],
+    ["CookieDomain", [], {"domain": "instagram.com"}, 6421],
+    ["XIGSharedData", [], {"raw": json_dumps(HTML_FEED), 'native': '...'}, 6186],
+  ],
 }
 
 # Included with window.__additionalDataLoaded('feed_v2', ...)
@@ -1067,6 +1074,7 @@ HTML_HEADER_TEMPLATE = """
 HTML_HEADER = HTML_HEADER_TEMPLATE % ('', 'window._sharedData = ')
 HTML_HEADER_2 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('feed', ")
 HTML_HEADER_3 = HTML_HEADER_TEMPLATE % ('', "window.__additionalDataLoaded('/p/B3Q5Fa8Ja4D/', ")
+
 HTML_PRELOAD_URL = '/graphql/query/?query_hash=cba321&variables={}'
 HTML_HEADER_PRELOAD = HTML_HEADER_TEMPLATE % (
   f'<link rel="preload" href="{HTML_PRELOAD_URL}" as="fetch" type="application/json" crossorigin />',
@@ -1259,6 +1267,14 @@ HTML_ACTIVITIES_FULL_LIKES = [HTML_PHOTO_ACTIVITY_LIKES, HTML_VIDEO_ACTIVITY_FUL
 HTML_FEED_COMPLETE = HTML_HEADER + json_dumps(HTML_FEED) + HTML_FOOTER
 
 HTML_FEED_COMPLETE_2 = HTML_HEADER_2 + json_dumps(HTML_PRELOAD_DATA['data']) + ')' + HTML_FOOTER
+
+HTML_FEED_COMPLETE_4 = """\
+<!DOCTYPE html><html class="..."><script nonce="..."></script>
+...
+<body>
+...
+<script>requireLazy(["JSScheduler","ServerJS","ScheduledApplyEach"],function(JSScheduler,ServerJS,ScheduledApplyEach){qpl_inl("...","tierOneBeforeScheduler");JSScheduler.runWithPriority(3,function(){qpl_inl("...","tierOneInsideScheduler");(new ServerJS()).handleWithCustomApplyEach(ScheduledApplyEach,\
+""" + json_dumps(HTML_DEFINES) + ');});})' + HTML_FOOTER
 
 HTML_FEED_COMPLETE_V2 = HTML_HEADER + json_dumps(HTML_FEED_V2) + HTML_FOOTER
 HTML_PHOTO_ACTIVITY_V2_FULL = copy.deepcopy(HTML_PHOTO_ACTIVITY_FULL)
@@ -1847,8 +1863,11 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
-    activities, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_2)
+    activities, _ = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_2)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
+
+    _, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_4)
+    self.assert_equals(HTML_VIEWER, viewer)
 
   def test_scraped_to_activities_feed_v2(self):
     activities, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_V2)
@@ -1917,8 +1936,10 @@ class InstagramTest(testutil.TestCase):
     self.assertIsNone(viewer)
 
   def test_scraped_to_activities_photo_fetch_extras(self):
+    self.instagram.cookie = 'kuky'
     self.expect_requests_get(
-      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE, headers={})
+      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
+      headers=mox.IgnoreArg())
     self.mox.ReplayAll()
 
     activities, viewer = self.instagram.scraped_to_activities(
@@ -1940,8 +1961,10 @@ class InstagramTest(testutil.TestCase):
                        self.instagram.scraped_to_activity(html))
 
   def test_scraped_to_activity_photo_fetch_extras(self):
+    self.instagram.cookie = 'kuky'
     self.expect_requests_get(
-      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE, headers={})
+      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
+      headers=mox.IgnoreArg())
     self.mox.ReplayAll()
 
     activity, actor = self.instagram.scraped_to_activity(
@@ -1951,8 +1974,10 @@ class InstagramTest(testutil.TestCase):
 
   def test_scraped_to_activities_photo_edge_media_to_parent_comment(self):
     """https://github.com/snarfed/granary/issues/164"""
+    self.instagram.cookie = 'kuky'
     self.expect_requests_get(
-      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE, headers={})
+      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
+      headers=mox.IgnoreArg())
     self.mox.ReplayAll()
 
     page = copy.deepcopy(HTML_PHOTO_PAGE)
