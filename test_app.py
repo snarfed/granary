@@ -5,6 +5,7 @@ import copy
 from io import BytesIO
 import os.path
 import socket
+from urllib.parse import quote
 import xml.sax.saxutils
 
 from granary.tests import test_instagram
@@ -255,14 +256,19 @@ class AppTest(testutil.TestCase):
     expected['feed_url'] = 'http://localhost' + path
     self.assert_equals(expected, resp.json)
 
-    # TODO: drop?
-  # def test_url_as1_to_jsonfeed_not_list(self):
-  #   self.expect_requests_get('http://my/posts.json', {'foo': 'bar'})
-  #   self.mox.ReplayAll()
+  def test_url_as1_to_jsonfeed_not_list(self):
+    self.expect_requests_get('http://my/posts.json', {'foo': 'bar'})
+    self.mox.ReplayAll()
 
-  #   resp = client.get(
-  #     '/url?url=http://my/posts.json&input=as1&output=jsonfeed')
-  #   self.assert_equals(400, resp.status_code)
+    path = '/url?url=http:%2F%2Fmy%2Fposts.json&input=as1&output=jsonfeed'
+    resp = client.get(path)
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals({
+      'feed_url': f'http://localhost{path}',
+      'items': [{'content_text': ''}],
+      'title': 'JSON Feed',
+      'version': 'https://jsonfeed.org/version/1',
+    }, resp.json)
 
   def test_url_jsonfeed_to_json_mf2(self):
     self.expect_requests_get('http://my/feed.json', JSONFEED)
