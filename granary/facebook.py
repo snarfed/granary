@@ -1849,8 +1849,9 @@ class Facebook(source.Source):
         continue
 
       header = post.find('header')
-      if header and 'Suggested for you' in header.stripped_strings:
-        logger.debug('Skipping "Suggested for you"')
+      if header and ('Suggested for you' in header.stripped_strings or
+                     'is with' in header.stripped_strings):
+        logger.debug(f'Skipping {header.stripped_strings}')
         continue
 
       post_id, owner_id = self._extract_scraped_ids(post)
