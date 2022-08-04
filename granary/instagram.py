@@ -1072,7 +1072,8 @@ class Instagram(source.Source):
       media_url = self.media_url(shortcode) if shortcode else obj.get('url')
       likers = [l.get('node', {}) for l in
                 media.get('edge_liked_by', {}).get('edges', [])]  # v1
-      likers.extend(media.get('likers', []))  # v2
+      likers.extend(media.get('likers', []) +  # v2
+                    media.get('facepile_top_likers', []))
       like_tags = util.trim_nulls(
         [self.like_to_object(l, id, media_url) for l in likers])
       as1.merge_by_id(obj, 'tags', like_tags)
