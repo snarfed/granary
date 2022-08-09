@@ -122,6 +122,7 @@ RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
 app = Flask(__name__, static_folder=None)
 app.template_folder = './granary/templates'
+app.json.compact = False
 app.config.from_pyfile('config.py')
 app.url_map.converters['regex'] = flask_util.RegexConverter
 app.after_request(flask_util.default_modern_headers)
