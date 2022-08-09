@@ -120,7 +120,7 @@ XML_TEMPLATE = """\
 RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 app.template_folder = './granary/templates'
 app.config.from_pyfile('config.py')
 app.url_map.converters['regex'] = flask_util.RegexConverter
