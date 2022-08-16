@@ -6,7 +6,6 @@ from io import BytesIO
 import os.path
 import socket
 from urllib.parse import quote
-import xml.sax.saxutils
 
 from granary.tests import test_instagram
 from oauth_dropins.webutil import testutil, util

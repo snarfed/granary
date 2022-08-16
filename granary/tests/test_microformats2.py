@@ -588,6 +588,17 @@ Shared <a href="#">a post</a> by foo
       'content': None,
     }))
 
+  def test_object_to_json_html_entities(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['foo " bar > > >']
+      },
+    }, microformats2.object_to_json({
+      'objectType': 'activity',
+      'content': 'foo &quot; bar &gt; &#62; &#x3e;',
+    }))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),

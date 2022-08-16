@@ -279,11 +279,11 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # content. emulate e- vs p- microformats2 parsing: e- if there are HTML tags,
   # otherwise p-.
   # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
-  text = xml.sax.saxutils.unescape(primary.get('content') or '')
-  html = render_content(primary, include_location=False,
-                        synthesize_content=synthesize_content)
-  if '<' in html:
-    ret['properties']['content'] = [{'value': text, 'html': html}]
+  text = html.unescape(primary.get('content') or '')
+  rendered = render_content(primary, include_location=False,
+                            synthesize_content=synthesize_content)
+  if '<' in rendered:
+    ret['properties']['content'] = [{'value': text, 'html': rendered}]
   else:
     ret['properties']['content'] = [text]
 
