@@ -1793,10 +1793,10 @@ class Facebook(source.Source):
     if not (self.cookie_c_user and self.cookie_xs):
       raise NotImplementedError('Scraping requires c_user and xs cookies.')
 
-    def get(url, *params):
+    def get(url, *params, allow_redirects=False):
       url = urllib.parse.urljoin(M_HTML_BASE_URL, url % params)
       cookie = f'c_user={self.cookie_c_user}; xs={self.cookie_xs}'
-      resp = util.requests_get(url, allow_redirects=False, headers={
+      resp = util.requests_get(url, allow_redirects=allow_redirects, headers={
         'Cookie': cookie,
         'User-Agent': SCRAPE_USER_AGENT,
       })
@@ -1804,7 +1804,10 @@ class Facebook(source.Source):
       return resp
 
     if activity_id:
-      resp = get(activity_id)
+      # permalinks with classic ids now redirect to URLs with pfbid ids
+      # https://about.fb.com/news/2022/09/deterring-scraping-by-protecting-facebook-identifiers/
+
+      resp = get(activity_id, allow_redirects=True)
       activities = [self.scraped_to_activity(resp.text, **kwargs)[0]]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
@@ -2088,6 +2091,9 @@ class Facebook(source.Source):
   def _extract_scraped_ids(soup):
     """Tries to scrape post id and owner id out of parsed HTML.
 
+    Background on the time-limited pfbid param and why we don't want to use it
+    in permalinks:
+    https://about.fb.com/news/2022/09/deterring-scraping-by-protecting-facebook-identifiers/
     Args:
       soup: :class:`bs4.BeautifulSoup` or :class:`bs4.Tag`
 
@@ -2098,7 +2104,7 @@ class Facebook(source.Source):
     post_id_re = re.compile('mf_story_key|top_level_post_id')
     data_ft_div = (soup if post_id_re.search(soup.get('data-ft', ''))
                    else soup.find(attrs={'data-ft': post_id_re}))
-    comment_form = soup.find('form', action=re.compile('^/a/comment.php'))
+
     if data_ft_div:
       data_ft = json_loads(html.unescape(data_ft_div['data-ft']))
       # prefer top_level_post_id, mf_story_key doesn't always work in FB URLs
@@ -2107,7 +2113,12 @@ class Facebook(source.Source):
       owner_id = str(data_ft.get('content_owner_id_new')
                      if 'mf_story_key' in data_ft  # this post is from a user
                      else data_ft.get('page_id'))  # this post is from a group
-    elif comment_form:
+
+    if post_id and not post_id.startswith('pfbid'):
+      return post_id, owner_id
+
+    comment_form = soup.find('form', action=re.compile('^/a/comment.php'))
+    if comment_form:
       query = urllib.parse.urlparse(comment_form['action']).query
       parsed = urllib.parse.parse_qs(query)
       post_id = parsed['ft_ent_identifier'][0]

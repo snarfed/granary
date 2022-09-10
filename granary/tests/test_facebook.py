@@ -1899,7 +1899,8 @@ class FacebookTest(testutil.TestCase):
 
   def test_get_activities_scrape_post(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS')
+    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS',
+                             allow_redirects=True)
     self.mox.ReplayAll()
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456')
@@ -1907,7 +1908,8 @@ class FacebookTest(testutil.TestCase):
 
   def test_get_activities_scrape_post_fetch_likes(self):
     facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS')
+    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS',
+                             allow_redirects=True)
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
                              MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
