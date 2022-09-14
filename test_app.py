@@ -8,6 +8,7 @@ import socket
 from urllib.parse import quote
 
 from granary.tests import test_instagram
+from mox3 import mox
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -640,12 +641,19 @@ not RSS!
     resp = client.get('/url?url=http://my/posts&input=as1&output=as2')
     self.assert_equals(400, resp.status_code)
 
-  def test_url_bad_url(self):
-    self.expect_requests_get('http://astralandopal.com\\'
-                            ).AndRaise(requests.exceptions.MissingSchema('foo'))
+  def _test_bad_url(self, url, err):
+    self.expect_requests_get(mox.IgnoreArg()).AndRaise(err)
     self.mox.ReplayAll()
-    resp = client.get('/url?url=http://astralandopal.com\\&input=html')
-    self.assert_equals(400, resp.status_code)
+    resp = client.get(f'/url?url={url}&input=html')
+    self.assert_equals(400, resp.status_code, resp.get_data(as_text=True))
+
+  def test_url_bad_url_backslash(self):
+    self._test_bad_url('http://astralandopal.com\\',
+                       requests.exceptions.MissingSchema('foo'))
+
+  def test_url_bad_url_invalid(self):
+    self._test_bad_url("-2093%25'%20UNION%20ALL%20SELECT%2015%2C15%2C15%2C15",
+                       requests.exceptions.InvalidURL('foo'))
 
   def test_url_fetch_fails(self):
     self.expect_requests_get('http://my/posts.html').AndRaise(socket.timeout(''))

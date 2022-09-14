@@ -212,6 +212,8 @@ def url():
 
   try:
     resp = util.requests_get(orig_url, gateway=True)
+  except ValueError as e:
+    raise BadRequest(f'Invalid url: {e}')
   except HTTPException as e:
     # do this manually so that 504s for timeouts get cached
     return flask_util.handle_exception(e)
