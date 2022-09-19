@@ -199,7 +199,7 @@ class Twitter(source.Source):
                               activity_id=None, start_index=0, count=0,
                               etag=None, min_id=None, cache=None,
                               fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, include_shares=False,
+                              fetch_shares=False, include_shares=True,
                               fetch_events=False, fetch_mentions=False,
                               search_query=None, scrape=False, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
