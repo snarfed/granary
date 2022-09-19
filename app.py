@@ -301,9 +301,9 @@ def scraped(_):
 
   Accepts `POST` requests with silo HTML or JSON as input. Requires
   `site=instagram`, `output=...` (any supported output format), and input in
-  either raw request body or MIME multipart encoded file in the `input`
-  parameter. Requires the request or multipart file's content-type to be either
-  text/html or application/json, respectively.
+  either raw request body or MIME multipart encoded file. Requires the request
+  or multipart file 's content-type to be either text/html or application/json,
+  respectively.
   """
   site = request.values['site']
   if site != 'instagram':
