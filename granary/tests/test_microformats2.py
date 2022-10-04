@@ -948,28 +948,3 @@ Shared <a href="#">a post</a> by   <span class="h-card">
         ('5 MB', 5000000),
     ):
       self.assertEqual(expected, microformats2.size_to_bytes(input), input)
-
-  def test_prefix_image_urls(self):
-    IMG = lambda: copy.deepcopy({'image': {'url': 'xyz'}})
-    PRE = lambda: copy.deepcopy({'image': {'url': 'abcxyz'}})
-
-    activity = {
-      'actor': IMG(),
-      'object': {
-        'author': IMG(),
-        'replies': {'items': [IMG(), IMG(), PRE()]},
-        'attachments': [IMG(), {'author': IMG()}],
-        'tags': [IMG(), {'actor': IMG()}],
-      },
-    }
-    microformats2.prefix_image_urls(activity, 'abc')
-
-    self.assert_equals({
-      'actor': PRE(),
-      'object': {
-        'author': PRE(),
-        'replies': {'items': [PRE(), PRE(), PRE()]},
-        'attachments': [PRE(), {'author': PRE()}],
-        'tags': [PRE(), {'actor': PRE()}],
-      },
-    }, activity)

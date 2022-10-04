@@ -389,12 +389,37 @@ class As1Test(testutil.TestCase):
     self.check_original_post_discovery(
       obj, ['http://sho.rt/post'], include_reserved_hosts=False)
 
-  def test_original_post_discovery_exclude__hosts(self):
+  def test_original_post_discovery_exclude_hosts(self):
     obj = {
       'content': 'http://other/link https://x.test/ http://y.local/path',
       'upstreamDuplicates': ['http://localhost', 'http://sho.rt/post'],
     }
     self.check_original_post_discovery(
       obj, ['http://sho.rt/post'], include_reserved_hosts=False)
+
+  def test_prefix_urls(self):
+    for field in 'image', 'stream':
+      with self.subTest(field):
+        BEFORE = lambda: copy.deepcopy({field: {'url': 'xyz'}})
+        AFTER = lambda: copy.deepcopy({field: {'url': 'abcxyz'}})
+        activity = {
+          'actor': BEFORE(),
+          'object': {
+            'author': BEFORE(),
+            'replies': {'items': [BEFORE(), BEFORE(), AFTER()]},
+            'attachments': [BEFORE(), {'author': BEFORE()}],
+            'tags': [BEFORE(), {'actor': BEFORE()}],
+          },
+        }
+        as1.prefix_urls(activity, field, 'abc')
+        self.assert_equals({
+          'actor': AFTER(),
+          'object': {
+            'author': AFTER(),
+            'replies': {'items': [AFTER(), AFTER(), AFTER()]},
+            'attachments': [AFTER(), {'author': AFTER()}],
+            'tags': [AFTER(), {'actor': AFTER()}],
+          },
+        }, activity)
 
     # TODO: missing tests

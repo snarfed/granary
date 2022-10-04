@@ -286,3 +286,38 @@ def original_post_discovery(
 
   logger.info(f'Original post discovery found original posts {originals}, mentions {mentions}')
   return originals, mentions
+
+
+def prefix_urls(activity, field, prefix):
+  """Adds a prefix to all matching URL fields, eg to inject a caching proxy.
+
+  Generally used with the `image` or `stream` fields. For example:
+
+  ```
+  >>> prefix_urls({'actor': {'image': 'http://image'}}, 'image', 'https://proxy/')
+  {'actor': {'image': 'https://proxy/http://image'}}
+  ```
+
+  Skips any URL fields that already start with the prefix. URLs are *not*
+  URL-encoded before adding the prefix. (This is currently used with our
+  caching-proxy Cloudflare worker and https://cloudimage.io/ , neither of which
+  URL-decodes.)
+
+  Args:
+    activity: dict, AS1 activity. Modified in place.
+    prefix: string
+  """
+  a = activity
+  for elem in ([a, a.get('object'), a.get('author'), a.get('actor')] +
+               a.get('replies', {}).get('items', []) +
+               a.get('attachments', []) +
+               a.get('tags', [])):
+    if elem:
+      for obj in util.get_list(elem, field):
+        url = obj.get('url')
+        if url and not url.startswith(prefix):
+          # Note that url isn't URL-encoded here, that's intentional, since
+          # cloudimage.io and the caching-proxy Cloudflare worker don't decode.
+          obj['url'] = prefix + url
+      if elem is not a:
+        prefix_urls(elem, field, prefix)
