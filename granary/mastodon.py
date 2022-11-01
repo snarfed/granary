@@ -144,7 +144,7 @@ class Mastodon(source.Source):
     if fn == util.requests_delete:
       return {}
     else:
-      return json_loads(resp.text)
+      return resp.json()
 
   @classmethod
   def embed_post(cls, obj):
@@ -823,7 +823,7 @@ class Mastodon(source.Source):
     url = API_BLOCKS
     while True:
       resp = self._get(url, return_json=False)
-      ids.extend(util.trim_nulls([rel.get('id') for rel in json_loads(resp.text)]))
+      ids.extend(util.trim_nulls([rel.get('id') for rel in resp.json()]))
       url = resp.links.get('next', {}).get('url')
       if not url:
         break

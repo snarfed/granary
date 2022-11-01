@@ -288,7 +288,7 @@ class GitHub(source.Source):
         'Authorization': f'bearer {self.access_token}',
       })
     resp.raise_for_status()
-    result = json_loads(resp.text)
+    result = resp.json()
 
     errs = result.get('errors')
     if errs:
@@ -319,7 +319,7 @@ class GitHub(source.Source):
       resp = util.requests_post(url, json=data, **kwargs)
     resp.raise_for_status()
 
-    return json_loads(resp.text) if parse_json else resp
+    return resp.json() if parse_json else resp
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -374,7 +374,7 @@ class GitHub(source.Source):
       resp = self.rest(REST_NOTIFICATIONS, parse_json=False,
                        headers={'If-Modified-Since': etag} if etag else None)
       etag = resp.headers.get('Last-Modified')
-      notifs = [] if resp.status_code == 304 else json_loads(resp.text)
+      notifs = [] if resp.status_code == 304 else resp.json()
 
       for notif in notifs:
         id = notif.get('id')

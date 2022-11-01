@@ -1095,7 +1095,7 @@ class Instagram(source.Source):
     resp.raise_for_status()
 
     try:
-      return json_loads(resp.text)
+      return resp.json()
     except ValueError:
       msg = f"Couldn't decode response as JSON:\n{resp.text}"
       logger.error(msg, exc_info=True)
