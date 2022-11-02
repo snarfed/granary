@@ -594,13 +594,6 @@ class Mastodon(source.Source):
           error_plain='No content text found.',
           error_html='No content text found.')
 
-    post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
-    if is_reply and not base_url:
-      return source.creation_result(
-        abort=True,
-        error_plain=f'Could not find a {post_label} to reply to.',
-        error_html=f'Could not find a {post_label} to <a href="http://indiewebcamp.com/reply">reply to</a>. Check that your post has the right <a href="http://indiewebcamp.com/comment">in-reply-to</a> link.')
-
     # truncate and ellipsize content if necessary
     # TODO: don't count domains in remote mentions.
     # https://docs.joinmastodon.org/user/posting/#text
@@ -621,6 +614,8 @@ class Mastodon(source.Source):
     tags_url = urllib.parse.urljoin(self.instance, '/tags')
     preview_content = HASHTAG_RE.sub(r'\1<a href="%s/\2">#\2</a>' % tags_url,
                                      preview_content)
+
+    post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
 
     # switch on activity type
     if type == 'activity' and verb == 'like':
@@ -656,7 +651,7 @@ class Mastodon(source.Source):
           (type == 'activity' and verb == 'post')):  # probably a bookmark
       data = {'status': content}
 
-      if is_reply:
+      if is_reply and base_url:
         preview_description += f"add a <span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
         data['in_reply_to_id'] = base_id
       else:

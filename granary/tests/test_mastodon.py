@@ -695,6 +695,7 @@ class MastodonTest(testutil.TestCase):
       'content': 'foo ☕ bar',
       'inReplyTo': [{'url': url}],
     })
+    self.assert_equals(STATUS, got.content, got)
 
   def test_preview_reply_remote(self):
     url = STATUS_REMOTE['url']
@@ -710,6 +711,18 @@ class MastodonTest(testutil.TestCase):
       f'<span class="verb">reply</span> to <a href="{url}">this toot</a>: ',
       preview.description)
     self.assert_equals('foo ☕ bar', preview.content)
+
+  def test_create_non_mastodon_reply(self):
+    self.expect_get(API_SEARCH, params={'q': 'http://not/mastodon', 'resolve': True},
+                    response={})
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'}, response=STATUS)
+    self.mox.ReplayAll()
+
+    got = self.mastodon.create({
+      'content': 'foo ☕ bar',
+      'inReplyTo': [{'url': 'http://not/mastodon'}],
+    })
+    self.assert_equals(STATUS, got.content, got)
 
   def test_create_favorite(self):
     self.expect_post(API_FAVORITE % '123', STATUS)

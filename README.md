@@ -301,6 +301,9 @@ _Breaking changes:_
   * Switch to converting AS1 `id` (instead of `url`) to Atom `id`.
 * Reddit:
   * Implement `get_actor`.
+* Mastodon
+  * `create`/`preview`: allow non-Mastodon replies, ie activities that include `inReplyTo` URLs even if none of them point to a toot. ([bridgy#1321](https://github.com/snarfed/bridgy/issues/1321))
+
 * microformats2:
   * `object_to_json` and related functions: handle all escaped HTML entities, not just `&amp;` `&lt;` `&gt;`.
   * Unify `microformats2.prefix_image_urls` and `prefix_video_urls` into a new `as1.prefix_urls` function.
