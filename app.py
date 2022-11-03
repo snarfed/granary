@@ -466,11 +466,20 @@ def handle_discovery_errors(fn):
   return wrapped
 
 
+class MastodonStart(mastodon.Start):
+  """OAuth starter class with our app name and URL."""
+  def app_name(self):
+    return 'granary'
+
+  def app_url(self):
+    return 'https://granary.io/'
+
 oauth_routes = []
 for silo, module in OAUTHS.items():
   start = f'/{silo}/start_auth'
   callback = f'/{silo}/oauth_callback'
-  start_fn = handle_discovery_errors(module.Start.as_view(start, callback))
+  start_cls = MastodonStart if silo == 'mastodon' else module.Start
+  start_fn = handle_discovery_errors(start_cls.as_view(start, callback))
   app.add_url_rule(start, view_func=start_fn, methods=['POST'])
   callback_fn = handle_discovery_errors(module.Callback.as_view(callback, '/#logins'))
   app.add_url_rule(callback, view_func=callback_fn)
