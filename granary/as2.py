@@ -87,11 +87,12 @@ def from_as1(obj, type=None, context=CONTEXT):
   if context:
     obj['@context'] = context
 
+  image = from_as1(util.get_first(obj, 'image'), type='Image', context=None)
+
   def all_from_as1(field, type=None):
     return [from_as1(elem, type=type, context=None)
             for elem in util.pop_list(obj, field)]
 
-  images = all_from_as1('image', type='Image')
   inner_objs = all_from_as1('object')
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
@@ -102,7 +103,7 @@ def from_as1(obj, type=None, context=CONTEXT):
     'actor': from_as1(obj.get('actor'), context=None),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
-    'image': images,
+    'image': image,
     'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
                                   for orig in obj.get('inReplyTo', [])]),
     'object': inner_objs,
@@ -112,7 +113,7 @@ def from_as1(obj, type=None, context=CONTEXT):
 
   if obj_type == 'person':
     # TODO: something better. (we don't know aspect ratio though.)
-    obj['icon'] = images
+    obj['icon'] = image
   elif obj_type == 'mention':
     obj['href'] = obj.pop('url', None)
   elif obj_type in ('audio', 'video'):

@@ -303,7 +303,6 @@ _Breaking changes:_
   * Implement `get_actor`.
 * Mastodon
   * `create`/`preview`: allow non-Mastodon replies, ie activities that include `inReplyTo` URLs even if none of them point to a toot. ([bridgy#1321](https://github.com/snarfed/bridgy/issues/1321))
-
 * microformats2:
   * `object_to_json` and related functions: handle all escaped HTML entities, not just `&amp;` `&lt;` `&gt;`.
   * Unify `microformats2.prefix_image_urls` and `prefix_video_urls` into a new `as1.prefix_urls` function.
@@ -312,6 +311,8 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
+* ActivityStreams 2:
+  * Fix spec compliance bug: [`icon` and `image` are singly valued, not multiply valued](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-icon).
 * Twitter
   * Trim alt text in line between post preview and creation
   * Correctly trim Twitter alt text

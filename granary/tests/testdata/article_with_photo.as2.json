@@ -3,8 +3,8 @@
   "type": "Article",
   "name": "article abc",
   "content": "foo bar",
-  "image": [{
+  "image": {
     "type": "Image",
     "url": "http://pic/ture.jpg"
-  }]
+  }
 }
