@@ -13,8 +13,9 @@ import re
 import urllib.parse
 
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import requests
+from requests import HTTPError, RequestException
 
 from . import source
 
@@ -141,10 +142,17 @@ class Mastodon(source.Source):
 
     if not return_json:
       return resp
+
     if fn == util.requests_delete:
       return {}
-    else:
-      return resp.json()
+
+    content_type = resp.headers.get('Content-Type')
+    if content_type != 'application/json':
+      logger.warning(f'Converting {resp.status_code} to 502 due to Content-Type {content_type} instead of application/json')
+      resp.status_code = 502
+      raise HTTPError(response=resp)
+
+    return resp.json()
 
   @classmethod
   def embed_post(cls, obj):
@@ -727,7 +735,7 @@ class Mastodon(source.Source):
         # nope; try mastodon's search API
         try:
           results = self._get(API_SEARCH, params={'q': url, 'resolve': True})
-        except requests.RequestException:
+        except RequestException:
           logger.info(f"{field} URL {url} doesn't look like Mastodon:")
           continue
 

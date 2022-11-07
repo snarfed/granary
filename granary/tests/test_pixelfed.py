@@ -48,7 +48,8 @@ class PixelfedTest(testutil.TestCase):
       test_mastodon.INSTANCE + test_mastodon.API_TIMELINE,
       params={},
       response=[REPLY_STATUS],
-      headers={'Authorization': 'Bearer towkin'})
+      headers={'Authorization': 'Bearer towkin'},
+      content_type='application/json')
     self.mox.ReplayAll()
 
     self.assert_equals([test_mastodon.REPLY_ACTIVITY],

@@ -4,6 +4,7 @@ import copy
 
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from requests import HTTPError
 
 from .. import mastodon
 from .. import source
@@ -324,6 +325,7 @@ class MastodonTest(testutil.TestCase):
     kwargs.setdefault('headers', {}).update({
       'Authorization': 'Bearer towkin',
     })
+    kwargs.setdefault('content_type', 'application/json')
     return fn(INSTANCE + path, response=response, **kwargs)
 
   def test_constructor_look_up_user_id(self):
@@ -512,6 +514,15 @@ class MastodonTest(testutil.TestCase):
     for _ in range(4):
       self.mastodon.get_activities(fetch_replies=True, fetch_shares=True,
                                    fetch_likes=True, cache=cache)
+
+  def test_get_activities_returns_non_json(self):
+    self.expect_get(API_TIMELINE, params={}, response='<html>',
+                    content_type='text/html')
+    self.mox.ReplayAll()
+
+    with self.assertRaises(HTTPError) as e:
+      self.mastodon.get_activities()
+    self.assert_equals(502, e.exception.response.status_code)
 
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)
