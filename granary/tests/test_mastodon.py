@@ -325,7 +325,7 @@ class MastodonTest(testutil.TestCase):
     kwargs.setdefault('headers', {}).update({
       'Authorization': 'Bearer towkin',
     })
-    kwargs.setdefault('content_type', 'application/json')
+    kwargs.setdefault('content_type', 'application/json; charset=utf-8')
     return fn(INSTANCE + path, response=response, **kwargs)
 
   def test_constructor_look_up_user_id(self):

@@ -147,7 +147,7 @@ class Mastodon(source.Source):
       return {}
 
     content_type = resp.headers.get('Content-Type')
-    if content_type != 'application/json':
+    if not content_type or content_type.split(';')[0] != 'application/json':
       logger.warning(f'Converting {resp.status_code} to 502 due to Content-Type {content_type} instead of application/json')
       resp.status_code = 502
       raise HTTPError(response=resp)
