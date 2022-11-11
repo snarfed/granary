@@ -735,16 +735,32 @@ class MastodonTest(testutil.TestCase):
     })
     self.assert_equals(STATUS, got.content, got)
 
-  def test_create_favorite(self):
+  def test_create_favorite_with_like_verb(self):
+    self._test_create_favorite('like')
+
+  def test_create_favorite_with_favorite_verb(self):
+    self._test_create_favorite('favorite')
+
+  def _test_create_favorite(self, verb):
     self.expect_post(API_FAVORITE % '123', STATUS)
     self.mox.ReplayAll()
 
-    got = self.mastodon.create(LIKE).content
+    obj = copy.deepcopy(LIKE)
+    obj['verb'] = verb
+    got = self.mastodon.create(obj).content
     self.assert_equals('like', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123#favorited-by-23507', got['url'])
 
-  def test_preview_favorite(self):
-    preview = self.mastodon.preview_create(LIKE)
+  def test_preview_favorite_with_like_verb(self):
+    self._test_preview_favorite('like')
+
+  def test_preview_favorite_with_favorite_verb(self):
+    self._test_preview_favorite('favorite')
+
+  def _test_preview_favorite(self, verb):
+    obj = copy.deepcopy(LIKE)
+    obj['verb'] = verb
+    preview = self.mastodon.preview_create(obj)
     self.assertIn('<span class="verb">favorite</span> <a href="http://foo.com/@snarfed/123">this toot</a>: ', preview.description)
 
   def test_create_favorite_remote(self):

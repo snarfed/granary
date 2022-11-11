@@ -546,7 +546,7 @@ class GitHub(source.Source):
 
     type = as1.object_type(obj)
     if type and type not in ('issue', 'comment', 'activity', 'note', 'article',
-                             'like', 'tag'):
+                             'like', 'favorite', 'tag'):
       return source.creation_result(
         abort=False, error_plain=f'Cannot publish {type} to GitHub')
 
@@ -652,7 +652,7 @@ class GitHub(source.Source):
           except ValueError as e:
             return source.creation_result(abort=True, error_plain=str(e))
 
-    elif type == 'like':  # star
+    elif type in ('like', 'favorite'):  # star
       if not (len(path) == 2 or (len(path) == 3 and path[2] == 'issues')):
         return source.creation_result(
           abort=True, error_plain='GitHub like requires in-reply-to repo URL.')

@@ -1011,22 +1011,29 @@ class FlickrTest(testutil.TestCase):
     self.assertEqual('123456', reply_content['id'])
     self.assertEqual('https://www.flickr.com/comment/123456', reply_content['url'])
 
-  def test_create_favorite(self):
+  def test_create_favorite_with_like_verb(self):
+    self._test_create_favorite('like')
+
+  def test_create_favorite_with_favorite_verb(self):
+    self._test_create_favorite('favorite')
+
+  def _test_create_favorite(self, verb):
     """Favoriting a photo generates a URL using a fake fragment id
     """
     self.expect_call_api_method(
       'flickr.favorites.add', {'photo_id': '21904325000'},
       json_dumps({'stat': 'ok'}))
-
     self.expect_call_api_method(
       'flickr.people.getLimits', {},
       json_dumps({'person': {'nsid': '39216764@N00'}}))
-
     self.mox.ReplayAll()
+
+    obj = copy.deepcopy(LIKE_OBJ)
+    obj['verb'] = verb
     self.assertEqual({
       'type': 'like',
       'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/#favorited-by-39216764@N00',
-    }, self.flickr.create(LIKE_OBJ).content)
+    }, self.flickr.create(obj).content)
 
   def test_photo_to_activity_uses_path_alias_if_username_has_spaces(self):
     photo = PHOTO_INFO['photo']

@@ -291,7 +291,7 @@ class Flickr(source.Source):
       })
       return source.creation_result(resp)
 
-    if type == 'like':
+    if type in ('like', 'favorite'):
       if not base_id:
         return source.creation_result(
           abort=True,

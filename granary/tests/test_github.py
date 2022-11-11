@@ -316,7 +316,7 @@ ISSUE_OBJ_WITH_REACTIONS.update({
   'tags': ISSUE_OBJ['tags'] + [REACTION_OBJ, REACTION_OBJ],
   'to': [{'objectType': 'group', 'alias': '@private'}],
 })
-STAR_OBJ = {
+LIKE_OBJ = {
   'objectType': 'activity',
   'verb': 'like',
   'object': {'url': 'https://github.com/foo/bar'},
@@ -1004,7 +1004,13 @@ class GitHubTest(testutil.TestCase):
       self.assertIn('Please remove the fragment #bad-456 from your in-reply-to URL.',
                     result.error_plain)
 
-  def test_create_star(self):
+  def test_create_star_with_like_verb(self):
+    self._test_create_star('like')
+
+  def test_create_star_with_favorite_verb(self):
+    self._test_create_star('favorite')
+
+  def _test_create_star(self, verb):
     self.expect_graphql(json={
       'query': github.GRAPHQL_REPO % {
         'owner': 'foo',
@@ -1028,13 +1034,23 @@ class GitHubTest(testutil.TestCase):
     })
     self.mox.ReplayAll()
 
-    result = self.gh.create(STAR_OBJ)
+    obj = copy.deepcopy(LIKE_OBJ)
+    obj['verb'] = verb
+    result = self.gh.create(obj)
     self.assert_equals({
       'url': 'https://github.com/foo/bar/stargazers',
     }, result.content, result)
 
-  def test_preview_star(self):
-    preview = self.gh.preview_create(STAR_OBJ)
+  def test_preview_star_with_like_verb(self):
+    self._test_preview_star('like')
+
+  def test_preview_star_with_favorite_verb(self):
+    self._test_preview_star('favorite')
+
+  def _test_preview_star(self, verb):
+    obj = copy.deepcopy(LIKE_OBJ)
+    obj['verb'] = verb
+    preview = self.gh.preview_create(obj)
     self.assertEqual('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
 
   def test_create_reaction_issue(self):

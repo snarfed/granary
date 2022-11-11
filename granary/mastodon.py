@@ -626,7 +626,7 @@ class Mastodon(source.Source):
     post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
 
     # switch on activity type
-    if type == 'activity' and verb == 'like':
+    if type == 'activity' and verb in ('like', 'favorite'):
       if not base_url:
         return source.creation_result(
           abort=True,

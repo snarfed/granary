@@ -784,17 +784,17 @@ class Twitter(source.Source):
     preview_content = HASHTAG_RE.sub(
       r'\1<a href="https://twitter.com/hashtag/\2">#\2</a>', preview_content)
 
-    if type == 'activity' and verb == 'like':
+    if type == 'activity' and verb in ('like', 'favorite'):
       if not base_url:
         return source.creation_result(
           abort=True,
           error_plain='Could not find a tweet to like.',
-          error_html='Could not find a tweet to <a href="http://indiewebcamp.com/favorite">favorite</a>. '
+          error_html='Could not find a tweet to <a href="http://indiewebcamp.com/like">like</a>. '
           'Check that your post has a like-of link to a Twitter URL or to an original post that publishes a '
           '<a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> link to Twitter.')
 
       if preview:
-        preview_description += f"""<span class="verb">favorite</span>
+        preview_description += f"""<span class="verb">like</span>
 <a href="{base_url}">this tweet</a>:
 {self.embed_post(base_obj)}"""
         return source.creation_result(description=preview_description)

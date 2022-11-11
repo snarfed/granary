@@ -2245,16 +2245,28 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
       self.assert_equals({'url': 'http://posted/tweet', 'type': 'comment'},
                          tw.create(obj).content)
 
-  def test_create_favorite(self):
+  def test_create_preview_favorite_with_like_verb(self):
+    self._test_create_preview_favorite('like')
+
+  def test_create_preview_favorite_with_favorite_verb(self):
+    self._test_create_preview_favorite('favorite')
+
+  def _test_create_preview_favorite(self, verb):
+    obj = copy.deepcopy(LIKE_OBJECTS[0])
+    obj['verb'] = verb
+
     self.expect_urlopen(twitter.API_POST_FAVORITE, TWEET, params={'id': 100})
     self.mox.ReplayAll()
-    self.assert_equals({'url': 'https://twitter.com/snarfed_org/status/100',
-                           'type': 'like'},
-                          self.twitter.create(LIKE_OBJECTS[0]).content)
+
+    resp = self.twitter.create(obj)
+    self.assert_equals({
+      'url': 'https://twitter.com/snarfed_org/status/100',
+      'type': 'like',
+    }, resp.content)
 
     preview = self.twitter.preview_create(LIKE_OBJECTS[0])
     self.assertIn("""\
-<span class="verb">favorite</span>
+<span class="verb">like</span>
 <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
                   preview.description)
 
@@ -2270,7 +2282,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
 
     preview = self.twitter.preview_create(like)
     self.assertIn("""\
-<span class="verb">favorite</span>
+<span class="verb">like</span>
 <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
                   preview.description)
 

@@ -297,11 +297,13 @@ _Breaking changes:_
 * Drop Python 3.6 support. Python 3.7 is now the minimum required version.
 * Twitter, Instagram, Mastodon:
   * Drop `get_activities` `cache` kwarg's support for App Engine memcache interface. It's now only used as a plain `dict`. `get_activities` will now make many small modifications, so if you pass an object that implements those as API calls, you'll probably want to batch those separately.
+* Twitter, Mastodon, Flickr, GitHub:
+  * `create`/`preview`: support the AS1 `favorite` verb as well as `like`. ([bridgy#1345](https://github.com/snarfed/bridgy/issues/1345))
 * Atom:
   * Switch to converting AS1 `id` (instead of `url`) to Atom `id`.
 * Reddit:
   * Implement `get_actor`.
-* Mastodon
+* Mastodon:
   * `create`/`preview`: allow non-Mastodon replies, ie activities that include `inReplyTo` URLs even if none of them point to a toot. ([bridgy#1321](https://github.com/snarfed/bridgy/issues/1321))
   * Raise `requests.HTTPError` with `response.status_code` 502 instead of `JSONDecodeError` on non-JSON responses. This is synthetic, but more helpful for error handling.
 * microformats2:
