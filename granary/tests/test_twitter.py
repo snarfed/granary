@@ -1825,7 +1825,7 @@ class TwitterTest(testutil.TestCase):
       'too long, will be' + dots,
       'url shorten <a href="http://foo.co/bar">foo.co/bar</a>',
       'url <a href="http://foo.co/bar">foo.co/bar</a> ellipsyz' + dots,
-      'long url <a href="http://www.foo.co/bar/baz/baj/biff/boof">foo.co/bar/baz/baj/bi...</a>',
+      'long url <a title="foo.co/bar/baz/baj/biff/boof" href="http://www.foo.co/bar/baz/baj/biff/boof">foo.co/bar/baz/baj/bi...</a>',
       'trailing slash <a href="http://www.foo.co/">foo.co</a>',
       'fragment <a href="http://foo.co/#bar">foo.co/#bar</a>',
       'exactly twenty chars',
@@ -1867,7 +1867,7 @@ indiewebcamp.com/2014-review#Indie_Term_Re-use
     preview = """\
 Despite names,
 ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb</a> <a href="https://twitter.com/indiewebcamp">@indiewebcamp</a>
-<a href="http://indiewebcamp.com/2014-review#Indie_Term_Re-use">indiewebcamp.com/2014-review#In...</a>
+<a title="indiewebcamp.com/2014-review#Indie_Term_Re-use" href="http://indiewebcamp.com/2014-review#Indie_Term_Re-use">indiewebcamp.com/2014-review#In...</a>
 <a href="https://twitter.com/iainspad">@iainspad</a> <a href="https://twitter.com/sashtown">@sashtown</a> <a href="https://twitter.com/thomatronic">@thomatronic</a> (ttk.me t4_81)"""
 
     self.expect_urlopen(twitter.API_POST_TWEET, TWEET, params={'status': orig})
@@ -1902,7 +1902,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
     preview = ('Hey <a href="https://twitter.com/hashtag/indieweb">#indieweb</a>, '
                'the coming storm of webmention Spam may not '
                'be far away. Those of us that have input fields to send… '
-               '<a href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
+               '<a title="ben.thatmustbe.me/note/2015/1/31/1" href="https://ben.thatmustbe.me/note/2015/1/31/1/">ben.thatmustbe.me/note/2015/1/31...</a>')
 
     self.expect_urlopen(twitter.API_POST_TWEET, TWEET,
                         params={'status': content.encode('utf-8')})
@@ -2317,7 +2317,7 @@ ind.ie&indie.vc are NOT <a href="https://twitter.com/hashtag/indieweb">#indieweb
                        created.content, created)
 
     preview = self.twitter.preview_create(QUOTE_ACTIVITY['object'])
-    self.assertEqual('I agree with this <a href="https://twitter.com/snarfed_org/status/100">twitter.com/snarfed_org/st...</a>', preview.content)
+    self.assertEqual('I agree with this <a title="twitter.com/snarfed_org/status/100" href="https://twitter.com/snarfed_org/status/100">twitter.com/snarfed_org/st...</a>', preview.content)
     self.assertIn("""\
 <span class="verb">quote</span>
 <a href="https://twitter.com/snarfed_org/status/100">this tweet</a>:""",
