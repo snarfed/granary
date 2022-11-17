@@ -16,6 +16,7 @@ from . import as1
 from . import microformats2
 from . import source
 
+CONTENT_TYPE = 'application/atom+xml'
 FEED_TEMPLATE = 'user_feed.atom'
 ENTRY_TEMPLATE = 'entry.atom'
 # stolen from django.utils.html

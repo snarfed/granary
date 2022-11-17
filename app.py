@@ -32,6 +32,7 @@ import requests
 from werkzeug.exceptions import BadRequest, HTTPException
 
 from granary import (
+  as1,
   as2,
   atom,
   jsonfeed,
@@ -99,17 +100,17 @@ SCOPE_OVERRIDES = {
 # map granary format name to MIME type. list of official MIME types:
 # https://www.iana.org/assignments/media-types/media-types.xhtml
 FORMATS = {
-  'activitystreams': 'application/stream+json',
-  'as1': 'application/stream+json',
+  'activitystreams': as1.CONTENT_TYPE,
+  'as1': as1.CONTENT_TYPE,
   'as1-xml': 'application/xml',
-  'as2': 'application/activity+json',
-  'atom': 'application/atom+xml',
+  'as2': as2.CONTENT_TYPE,
+  'atom': atom.CONTENT_TYPE,
   'html': 'text/html',
   'json': 'application/json',
   'json-mf2': 'application/mf2+json',
   'jsonfeed': 'application/json',
   'mf2-json': 'application/mf2+json',
-  'rss': 'application/rss+xml',
+  'rss': rss.CONTENT_TYPE,
   'xml': 'application/xml',
 }
 XML_TEMPLATE = """\

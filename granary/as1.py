@@ -8,6 +8,8 @@ from oauth_dropins.webutil import util
 
 logger = logging.getLogger(__name__)
 
+CONTENT_TYPE = 'application/stream+json'
+
 # maps each AS1 RSVP verb to the collection inside an event object that the
 # RSVPing actor would go into.
 RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
