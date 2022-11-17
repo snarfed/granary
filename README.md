@@ -332,7 +332,7 @@ _Non-breaking changes:_
 * as2
   * Add new `is_public` method and `PUBLIC_AUDIENCE` constant.
 * microformats2
-  * Add new `extra` kwarg to `activities_to_html`.
+  * Add new `extra` and `body_class` kwargs to `activities_to_html`.
 * `Source.original_post_discovery`: add new `max_redirect_fetches` keyword arg.
 
 ### 4.0 - 2022-03-23

@@ -610,12 +610,13 @@ def html_to_activities(html, url=None, actor=None, id=None):
   return activities
 
 
-def activities_to_html(activities, extra=''):
+def activities_to_html(activities, extra='', body_class=''):
   """Converts ActivityStreams activities to a microformats2 HTML h-feed.
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
     extra: str, extra HTML to be included inside the body tag, at the top
+    body_class: str, included as the body tag's class attribute
 
   Returns:
     string, the content field in obj with the tags in the tags field
@@ -627,7 +628,7 @@ def activities_to_html(activities, extra=''):
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body>
+<body class="{body_class}">
 {extra}
 {html}
 </body>

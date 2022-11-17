@@ -96,7 +96,7 @@ HTML = """\
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body%(body_class)s>%(extra)s
+<body class="%(body_class)s">%(extra)s
 <article class="h-entry">
   <span class="p-uid"></span>
 
@@ -306,7 +306,7 @@ class AppTest(testutil.TestCase):
 
   def test_url_html_to_atom(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
-      'body_class': ' class="h-feed"',
+      'body_class': 'h-feed',
       'extra': """
 <span>my title</span>
 <div class="p-author h-card">
@@ -330,7 +330,7 @@ class AppTest(testutil.TestCase):
     https://github.com/kylewm/mf2util/issues/14
     """
     self.expect_requests_get('http://my/posts.html', HTML % {
-      'body_class': ' class="h-feed"',
+      'body_class': 'h-feed',
       'extra': """
 <span class="p-name">my title</span>
 <a href="/author" rel="author"></a>,
@@ -369,7 +369,7 @@ class AppTest(testutil.TestCase):
 
   def test_url_html_to_atom_skip_silo_rel_authors(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
-      'body_class': ' class="h-feed"',
+      'body_class': 'h-feed',
       'extra': """
 <span class="p-name">my title</span>
 <a href="https://twitter.com/Author" rel="author"></a>,
@@ -398,7 +398,7 @@ class AppTest(testutil.TestCase):
 """, resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_to_json_mf2(self):
-    html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
+    html = HTML % {'body_class': 'h-feed', 'extra': ''}
     self.expect_requests_get('http://my/posts.html', html)
     self.mox.ReplayAll()
 
@@ -412,7 +412,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals(expected, resp.json)
 
   def test_url_html_to_html(self):
-    html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
+    html = HTML % {'body_class': 'h-feed', 'extra': ''}
     self.expect_requests_get('http://my/posts.html', html)
     self.mox.ReplayAll()
 
@@ -435,7 +435,7 @@ baz baj
 """, resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_meta_charset(self):
-    html = HTML % {'body_class': ' class="h-feed"', 'extra': ''}
+    html = HTML % {'body_class': 'h-feed', 'extra': ''}
     self.expect_requests_get('http://my/posts.html', html, encoding='ISO-8859-1')
     self.mox.ReplayAll()
 

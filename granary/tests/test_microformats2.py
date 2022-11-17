@@ -876,7 +876,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body>
+<body class="">
 <article class="h-entry">
   <span class="p-uid">http://localhost:3000/users/ryan#likes/7</span>
   <span class="p-author h-card">
