@@ -329,6 +329,8 @@ _Non-breaking changes:_
   * Add `cache` support to `get_activities`.
 * REST API
   * Add new `/scraped` endpoint that accepts `POST` requests with silo HTML as input. Currently only supports Instagram. Requires `site=instagram`, `output=...` (any supported output format), and HTML as either raw request body or MIME multipart encoded file in the `input` parameter.
+* as2
+  * Add new `is_public` method and `PUBLIC_AUDIENCE` constant.
 * `Source.original_post_discovery`: add new `max_redirect_fetches` keyword arg.
 
 ### 4.0 - 2022-03-23

@@ -22,6 +22,14 @@ CONNEG_HEADERS = {
 }
 CONTEXT = 'https://www.w3.org/ns/activitystreams'
 
+PUBLIC_AUDIENCE = 'https://www.w3.org/ns/activitystreams#Public'
+# All known Public values, cargo culted from:
+# https://socialhub.activitypub.rocks/t/visibility-to-cc-mapping/284
+PUBLICS = frozenset((
+    PUBLIC_AUDIENCE,
+    'as:Public',
+    'Public',
+))
 
 def _invert(d):
   return {v: k for k, v in d.items()}
@@ -235,3 +243,21 @@ def to_as1(obj, use_type=True):
     obj.setdefault('author', {}).update(to_as1(attrib[0]))
 
   return util.trim_nulls(obj)
+
+
+def is_public(activity):
+  """Returns True if the given AS2 object or activity is public, False otherwise.
+
+  Args:
+    activity: dict, AS2 activity or object
+  """
+  if not isinstance(activity, dict):
+    return False
+
+  audience = util.get_list(activity, 'to') + util.get_list(activity, 'cc')
+  obj = activity.get('object')
+  if isinstance(obj, dict):
+    audience.extend(util.get_list(obj, 'to') + util.get_list(obj, 'cc'))
+
+  return bool(PUBLICS.intersection(audience))
+

@@ -7,6 +7,7 @@ for full testdata tests.
 from oauth_dropins.webutil import testutil
 
 from .. import as2
+from ..as2 import is_public, PUBLICS
 
 
 class ActivityStreams2Test(testutil.TestCase):
@@ -52,3 +53,21 @@ class ActivityStreams2Test(testutil.TestCase):
       'inReplyTo': in_reply_to,
     })
     self.assertEqual([{'url': 'http://x.y/z'}], as1['inReplyTo'])
+
+  def test_is_public(self):
+    publics = list(PUBLICS)
+    for result, input in (
+        (True, {'to': [publics[1]]}),
+        (True, {'cc': [publics[1]]}),
+        (True, {'to': ['foo', publics[0]], 'cc': ['bar', publics[2]]}),
+        (False, {}),
+        (False, {'to': ['foo']}),
+        (False, {'cc': ['bar']}),
+        (False, {'to': ['foo'], 'cc': ['bar']}),
+    ):
+      self.assertEqual(result, is_public(input))
+      self.assertEqual(result, is_public({'object': input}))
+      input['object'] = 'foo'
+      self.assertEqual(result, is_public(input))
+
+    self.assertFalse(is_public('foo'))
