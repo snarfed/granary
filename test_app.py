@@ -669,6 +669,12 @@ not RSS!
     resp = client.get('/url?url=http://my/posts.html&input=html')
     self.assert_equals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
 
+  def test_url_404(self):
+    self.expect_requests_get('http://my/posts.html', 'foo', status_code=404)
+    self.mox.ReplayAll()
+    resp = client.get('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(502, resp.status_code)
+
   @testutil.enable_flask_caching(app, cache)
   def test_cache(self):
     self.expect_requests_get('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
