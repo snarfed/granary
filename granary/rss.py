@@ -168,7 +168,6 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       fg.podcast.itunes_author(name)
     if image:
       fg.podcast.itunes_image(image)
-    fg.podcast.itunes_category(categories)
 
   if latest:
     fg.lastBuildDate(latest)

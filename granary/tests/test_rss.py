@@ -53,6 +53,20 @@ class RssTest(testutil.TestCase):
       }], feed_url='http://this')
       self.assertNotIn(field, got)
 
+  def test_from_activities_hashtag(self):
+    for field in 'published', 'updated':
+      got = rss.from_activities([{
+        'content': 'foo bar',
+        'attachments': [{
+          'objectType': 'audio',
+          'stream': {'url': 'http://a/podcast.mp3'},
+        }],
+        'tags': [{
+          'displayName': '#ahashtag'
+        }],
+      }], feed_url='http://this')
+      self.assertNotIn(field, got)
+
   def test_item_with_two_enclosures(self):
     got = rss.from_activities([{
       'attachments': [{
