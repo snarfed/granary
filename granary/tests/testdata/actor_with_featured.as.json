@@ -1,0 +1,13 @@
+{
+  "url": "http://example.com/martin",
+  "objectType" : "person",
+  "id": "tag:example.com,2011:martin",
+  "image": [{
+    "url": "http://example.com/avatar"
+  }, {
+    "url": "http://example.com/header",
+    "objectType": "featured"
+  }],
+  "displayName": "Martin Smith",
+  "username": "yoozer"
+}

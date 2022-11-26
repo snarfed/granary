@@ -309,7 +309,6 @@ _Breaking changes:_
 * microformats2:
   * `object_to_json` and related functions: handle all escaped HTML entities, not just `&amp;` `&lt;` `&gt;`.
   * Unify `microformats2.prefix_image_urls` and `prefix_video_urls` into a new `as1.prefix_urls` function.
-  * When converting `u-featured` images to AS1, add new non-standard `"objectType": "featured"` field to distinguish them from `u-photo`.
 * RSS:
   * Remove `itunes:category`. It has to be [one of Apple's explicit categories](https://feedgen.kiesow.be/ext/api.ext.podcast.html#feedgen.ext.podcast.PodcastExtension.itunes_category), which we aren't prepared to validate, so don't try.
 * Move a number of utility methods from the `Source` class to a new `as1` module: `object_type`, `merge_by_id`, `is_public`, `add_rsvps_to_event`, `get_rsvps_from_event`, `activity_changed`, `append_in_reply_to`, `actor_name`, `original_post_discovery`.
@@ -334,8 +333,10 @@ _Non-breaking changes:_
   * Add new `/scraped` endpoint that accepts `POST` requests with silo HTML as input. Currently only supports Instagram. Requires `site=instagram`, `output=...` (any supported output format), and HTML as either raw request body or MIME multipart encoded file in the `input` parameter.
 * as2
   * Add new `is_public` method and `PUBLIC_AUDIENCE` constant.
+  * Prefer `"objectType": "featured"` first in the `image` field when converting from AS1, last in the `icon` field. This matches the ActivityPub (Mastodon) convention of using `icon` for profile pictures and `image` for header images.
 * microformats2
   * Add new `extra` and `body_class` kwargs to `activities_to_html`.
+  * When converting `u-featured` images to AS1, add new non-standard `"objectType": "featured"` field to distinguish them from `u-photo`.
 * `Source.original_post_discovery`: add new `max_redirect_fetches` keyword arg.
 
 ### 4.0 - 2022-03-23

@@ -95,8 +95,6 @@ def from_as1(obj, type=None, context=CONTEXT):
   if context:
     obj['@context'] = context
 
-  image = from_as1(util.get_first(obj, 'image'), type='Image', context=None)
-
   def all_from_as1(field, type=None):
     return [from_as1(elem, type=type, context=None)
             for elem in util.pop_list(obj, field)]
@@ -111,7 +109,6 @@ def from_as1(obj, type=None, context=CONTEXT):
     'actor': from_as1(obj.get('actor'), context=None),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
-    'image': image,
     'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
                                   for orig in obj.get('inReplyTo', [])]),
     'object': inner_objs,
@@ -119,10 +116,30 @@ def from_as1(obj, type=None, context=CONTEXT):
     'preferredUsername': obj.pop('username', None),
   })
 
-  if obj_type == 'person':
-    # TODO: something better. (we don't know aspect ratio though.)
-    obj['icon'] = image
-  elif obj_type == 'mention':
+  # images; separate featured (aka header) and non-featured.
+  images = util.get_list(obj, 'image')
+  featured = []
+  non_featured = []
+  if images:
+    for img in images:
+      # objectType featured is non-standard; granary uses it for u-featured
+      # microformats2 images
+      if img.get('objectType') == 'featured':
+        featured.append(img)
+      else:
+        non_featured.append(img)
+
+    # prefer non-featured first for icon, featured for image. ActivityPub/Mastodon
+    # use icon for profile picture, image for header.
+    if obj_type == 'person':
+      obj['icon'] = from_as1((non_featured or featured)[0], type='Image', context=None)
+    obj['image'] = [from_as1(img, type='Image', context=None)
+                    for img in featured + non_featured]
+    if len(obj['image']) == 1:
+      obj['image'] = obj['image'][0]
+
+  # other type-specific fields
+  if obj_type == 'mention':
     obj['href'] = obj.pop('url', None)
   elif obj_type in ('audio', 'video'):
     stream = util.pop_list(obj, 'stream')
@@ -191,8 +208,7 @@ def to_as1(obj, use_type=True):
     return [to_as1(elem) for elem in util.pop_list(obj, field)]
 
   images = []
-  # icon first since e.g. Mastodon uses icon for profile picture,
-  # image for featured photo.
+  # ActivityPub/Mastodon uses icon for profile picture, image for header.
   for as2_img in util.pop_list(obj, 'icon') + util.pop_list(obj, 'image'):
     as1_img = to_as1(as2_img, use_type=False)
     if as1_img not in images:
