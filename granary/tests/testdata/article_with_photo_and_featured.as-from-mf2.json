@@ -2,5 +2,9 @@
   "objectType": "article",
   "displayName": "article abc",
   "content": "foo bar",
-  "image": [{"url": "http://a/png"}, {"url": "http://b/jpg"}, {"url": "http://c/gif"}]
+  "image": [
+    {"url": "http://a/png"},
+    {"url": "http://b/jpg", "objectType": "featured"},
+    {"url": "http://c/gif", "objectType": "featured"}
+  ]
 }

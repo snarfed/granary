@@ -518,8 +518,9 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
 
   # images, including alt text
   photo_urls = set()
+  featured = props.get('featured', [])
   obj['image'] = []
-  for photo in props.get('photo', []) + props.get('featured', []):
+  for photo in props.get('photo', []) + featured:
     url = photo
     alt = None
     if isinstance(photo, dict):
@@ -528,7 +529,11 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       alt = get_first(photo, 'alt')
     if url and url not in photo_urls and is_absolute(url):
       photo_urls.add(url)
-      obj['image'].append({'url': url, 'displayName': alt})
+      obj['image'].append({
+        'url': url,
+        'displayName': alt,
+        'objectType': 'featured' if photo in featured else None,
+      })
 
   # mf2util uses the indieweb/mf2 location algorithm to collect location properties.
   interpreted = mf2util.interpret({'items': [mf2]}, None)

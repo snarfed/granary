@@ -2,5 +2,8 @@
   "objectType": "article",
   "displayName": "article abc",
   "content": "foo bar",
-  "image": [{"url": "http://feat/ured.jpg"}]
+  "image": [{
+    "url": "http://feat/ured.jpg",
+    "objectType": "featured"
+  }]
 }

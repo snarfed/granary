@@ -309,6 +309,7 @@ _Breaking changes:_
 * microformats2:
   * `object_to_json` and related functions: handle all escaped HTML entities, not just `&amp;` `&lt;` `&gt;`.
   * Unify `microformats2.prefix_image_urls` and `prefix_video_urls` into a new `as1.prefix_urls` function.
+  * When converting `u-featured` images to AS1, add new non-standard `"objectType": "featured"` field to distinguish them from `u-photo`.
 * RSS:
   * Remove `itunes:category`. It has to be [one of Apple's explicit categories](https://feedgen.kiesow.be/ext/api.ext.podcast.html#feedgen.ext.podcast.PodcastExtension.itunes_category), which we aren't prepared to validate, so don't try.
 * Move a number of utility methods from the `Source` class to a new `as1` module: `object_type`, `merge_by_id`, `is_public`, `add_rsvps_to_event`, `get_rsvps_from_event`, `activity_changed`, `append_in_reply_to`, `actor_name`, `original_post_discovery`.
