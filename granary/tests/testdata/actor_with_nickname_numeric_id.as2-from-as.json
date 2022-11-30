@@ -1,0 +1,32 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Person",
+  "id": "tag:example.com,2011:martin",
+  "numeric_id": "4321",
+  "urls": [
+    {"value": "http://example.com/martin"},
+    {"value": "https://example.com/4321"}
+  ],
+  "name": "Martin Smith",
+  "preferredUsername": "martin",
+  "attachment": [
+    {
+      "type": "PropertyValue",
+      "name": "Link",
+      "value": "<a href=\"http://example.com/martin\" rel=\"me\">http://example.com/martin</a>"
+    },
+    {
+      "type": "PropertyValue",
+      "name": "Link",
+      "value": "<a href=\"https://example.com/4321\" rel=\"me\">https://example.com/4321</a>"
+    }
+  ],
+  "icon": {
+    "type": "Image",
+    "url": "http://example.com/martin/image"
+  },
+  "image": {
+    "type": "Image",
+    "url": "http://example.com/martin/image"
+  }
+}

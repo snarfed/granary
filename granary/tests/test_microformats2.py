@@ -814,23 +814,6 @@ Shared <a href="#">a post</a> by foo
 </body>
 """, url='http://123')))
 
-  def test_object_urls(self):
-    for expected, actor in (
-        ([], {}),
-        ([], {'displayName': 'foo'}),
-        ([], {'url': None, 'urls': []}),
-        (['http://foo'], {'url': 'http://foo'}),
-        (['http://foo'], {'urls': [{'value': 'http://foo'}]}),
-        (['http://foo', 'https://bar', 'http://baz'], {
-          'url': 'http://foo',
-          'urls': [{'value': 'https://bar'},
-                   {'value': 'http://foo'},
-                   {'value': 'http://baz'},
-          ],
-        }),
-    ):
-      self.assertEqual(expected, microformats2.object_urls(actor))
-
   def test_hcard_to_html_no_properties(self):
     self.assertEqual('', microformats2.hcard_to_html({}))
     self.assertEqual('', microformats2.hcard_to_html({'properties': {}}))

@@ -11,6 +11,8 @@ import logging
 
 from oauth_dropins.webutil import util
 
+from . import as1
+
 logger = logging.getLogger(__name__)
 
 # ActivityPub Content-Type details:
@@ -172,7 +174,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       'type': 'PropertyValue',
       'name': 'Link',
       'value': f'<a href="{url}" rel="me">{url}</a>',
-    } for url in util.get_list(obj, 'url') +  util.get_list(obj, 'urls'))
+    } for url in as1.object_urls(obj))
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:

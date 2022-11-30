@@ -423,3 +423,20 @@ class As1Test(testutil.TestCase):
         }, activity)
 
     # TODO: missing tests
+
+  def test_object_urls(self):
+    for expected, actor in (
+        ([], {}),
+        ([], {'displayName': 'foo'}),
+        ([], {'url': None, 'urls': []}),
+        (['http://foo'], {'url': 'http://foo'}),
+        (['http://foo'], {'urls': [{'value': 'http://foo'}]}),
+        (['http://foo', 'https://bar', 'http://baz'], {
+          'url': 'http://foo',
+          'urls': [{'value': 'https://bar'},
+                   {'value': 'http://foo'},
+                   {'value': 'http://baz'},
+          ],
+        }),
+    ):
+      self.assertEqual(expected, as1.object_urls(actor))

@@ -323,3 +323,12 @@ def prefix_urls(activity, field, prefix):
           obj['url'] = prefix + url
       if elem is not a:
         prefix_urls(elem, field, prefix)
+
+
+def object_urls(obj):
+  """Returns an object's unique URLs, preserving order.
+  """
+  if isinstance(obj, str):
+    return obj
+  return util.uniquify(util.trim_nulls(
+    [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))

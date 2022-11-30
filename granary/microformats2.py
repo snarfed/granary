@@ -245,7 +245,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'name': [name],
       'nickname': [obj.get('username') or ''],
       ('note' if obj_type == 'person' else 'summary'): [summary],
-      'url': (list(object_urls(obj) or object_urls(primary)) +
+      'url': (list(as1.object_urls(obj) or as1.object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
       # photo is special cased below, to handle alt
       'video': dedupe_urls(get_urls(attachments, 'video', 'stream') +
@@ -1129,21 +1129,12 @@ def tags_to_html(tags, classname, visible=True):
       name = tag['displayName']
     # loop through individually instead of using update() so that order is
     # preserved.
-    for url in object_urls(tag):
+    for url in as1.object_urls(tag):
       urls[url, name] = None
 
   return ''.join('\n<a class="%s" %shref="%s">%s</a>' %
                  (classname, '' if name else 'aria-hidden="true" ', url, name)
                  for url, name in sorted(urls.keys()))
-
-
-def object_urls(obj):
-  """Returns an object's unique URLs, preserving order.
-  """
-  if isinstance(obj, str):
-    return obj
-  return uniquify(util.trim_nulls(
-    [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))
 
 
 def author_display_name(hcard):
