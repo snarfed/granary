@@ -9,5 +9,11 @@
     {"type": "Image", "url": "http://example.com/header"},
     {"type": "Image", "url": "http://example.com/avatar"}
   ],
-  "preferredUsername": "yoozer"
+  "preferredUsername": "yoozer",
+  "attachment": [
+    {
+      "type": "PropertyValue",
+      "value": "<a href=\"http://example.com/martin\" rel=\"me\">http://example.com/martin</a>"
+    }
+  ]
 }

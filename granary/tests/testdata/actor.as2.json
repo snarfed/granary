@@ -7,5 +7,11 @@
   "icon": {"type": "Image", "url": "http://example.com/martin/image"},
   "image": {"type": "Image", "url": "http://example.com/martin/image"},
   "preferredUsername": "yoozer",
-  "summary": "this is my bio"
+  "summary": "this is my bio",
+  "attachment": [
+    {
+      "type": "PropertyValue",
+      "value": "<a href=\"http://example.com/martin\" rel=\"me\">http://example.com/martin</a>"
+    }
+  ]
 }

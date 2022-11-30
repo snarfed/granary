@@ -69,7 +69,7 @@ TYPE_TO_VERB = _invert(VERB_TO_TYPE)
 TYPE_TO_VERB['Like'] = 'like'  # disambiguate
 
 
-def from_as1(obj, type=None, context=CONTEXT):
+def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.
 
   Args:
@@ -96,7 +96,7 @@ def from_as1(obj, type=None, context=CONTEXT):
     obj['@context'] = context
 
   def all_from_as1(field, type=None):
-    return [from_as1(elem, type=type, context=None)
+    return [from_as1(elem, type=type, context=None, top_level=False)
             for elem in util.pop_list(obj, field)]
 
   inner_objs = all_from_as1('object')
@@ -106,7 +106,7 @@ def from_as1(obj, type=None, context=CONTEXT):
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
-    'actor': from_as1(obj.get('actor'), context=None),
+    'actor': from_as1(obj.get('actor'), context=None, top_level=False),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
     'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
@@ -132,7 +132,8 @@ def from_as1(obj, type=None, context=CONTEXT):
     # prefer non-featured first for icon, featured for image. ActivityPub/Mastodon
     # use icon for profile picture, image for header.
     if obj_type == 'person':
-      obj['icon'] = from_as1((non_featured or featured)[0], type='Image', context=None)
+      obj['icon'] = from_as1((non_featured or featured)[0], type='Image',
+                             context=None, top_level=False)
     obj['image'] = [from_as1(img, type='Image', context=None)
                     for img in featured + non_featured]
     if len(obj['image']) == 1:
@@ -163,6 +164,14 @@ def from_as1(obj, type=None, context=CONTEXT):
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
+
+  # Mastodon-specific metadata property fields
+  # https://github.com/snarfed/bridgy-fed/issues/323
+  if obj_type == 'person' and top_level:
+    obj['attachment'].extend({
+      'type': 'PropertyValue',
+      'value': f'<a href="{url}" rel="me">{url}</a>',
+    } for url in util.get_list(obj, 'url') +  util.get_list(obj, 'urls'))
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:
@@ -205,7 +214,8 @@ def to_as1(obj, use_type=True):
     return {'url': val} if isinstance(val, str) else to_as1(val)
 
   def all_to_as1(field):
-    return [to_as1(elem) for elem in util.pop_list(obj, field)]
+    return [to_as1(elem) for elem in util.pop_list(obj, field)
+            if not (type == 'Person' and elem.get('type') == 'PropertyValue')]
 
   images = []
   # ActivityPub/Mastodon uses icon for profile picture, image for header.
