@@ -211,8 +211,12 @@ def url():
   if fragment and input != 'html':
       raise BadRequest('URL fragments only supported with input=html.')
 
+  headers = {}
+  if input == 'as2':
+    headers['Accept'] = as2.CONTENT_TYPE
+
   try:
-    resp = util.requests_get(orig_url, gateway=True)
+    resp = util.requests_get(orig_url, headers=headers, gateway=True)
   except ValueError as e:
     raise BadRequest(f'Invalid url: {e}')
   except HTTPException as e:

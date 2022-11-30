@@ -7,6 +7,7 @@ import os.path
 import socket
 from urllib.parse import quote
 
+from granary import as2
 from granary.tests import test_instagram
 from mox3 import mox
 from oauth_dropins.webutil import testutil, util
@@ -226,7 +227,8 @@ class AppTest(testutil.TestCase):
     self.assert_equals(AS2_RESPONSE, resp.json)
 
   def test_url_as2_to_as1(self):
-    self.expect_requests_get('http://my/posts.json', AS2)
+    self.expect_requests_get('http://my/posts.json', AS2,
+                             headers={'Accept': as2.CONTENT_TYPE})
     self.mox.ReplayAll()
 
     resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
@@ -235,7 +237,8 @@ class AppTest(testutil.TestCase):
     self.assert_equals(AS1_RESPONSE, resp.json)
 
   def test_url_as2_response_to_as1(self):
-    self.expect_requests_get('http://my/posts.json', AS2_RESPONSE)
+    self.expect_requests_get('http://my/posts.json', AS2_RESPONSE,
+                             headers={'Accept': as2.CONTENT_TYPE})
     self.mox.ReplayAll()
 
     resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
