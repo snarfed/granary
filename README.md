@@ -1,4 +1,4 @@
-<img src="https://raw.github.com/snarfed/granary/master/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=master)](https://coveralls.io/github/snarfed/granary?branch=master)
+<img src="https://raw.github.com/snarfed/granary/main/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=main)](https://coveralls.io/github/snarfed/granary?branch=master)
 ===
 
 The social web translator. Fetches and converts data between social networks, HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2), [ActivityStreams](http://activitystrea.ms/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
@@ -337,6 +337,7 @@ _Non-breaking changes:_
 * microformats2
   * Add new `extra` and `body_class` kwargs to `activities_to_html`.
   * When converting `u-featured` images to AS1, add new non-standard `"objectType": "featured"` field to distinguish them from `u-photo`.
+  * Convert `p-note` to AS1 `summary`.
 * `Source.original_post_discovery`: add new `max_redirect_fetches` keyword arg.
 
 ### 4.0 - 2022-03-23

@@ -5,6 +5,7 @@
     "name": ["Martin Smith"],
     "url": ["http://example.com/martin"],
     "photo": ["http://example.com/martin/image"],
-    "nickname": ["yoozer"]
+    "nickname": ["yoozer"],
+    "note": ["this is my bio"]
   }
 }

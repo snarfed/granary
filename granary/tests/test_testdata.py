@@ -1,5 +1,6 @@
 """Unit tests for canned data in testdata/.
 """
+import copy
 import glob
 import logging
 import os
@@ -71,7 +72,9 @@ def activity_to_jsonfeed(obj):
 
 def jsonfeed_to_activity(jf):
   activities, actor = jsonfeed.jsonfeed_to_activities(jf)
-  assert actor == ACTOR, (actor, ACTOR)
+  expected_actor = copy.deepcopy(ACTOR)
+  del expected_actor['summary']
+  assert actor == expected_actor, (actor, expected_actor)
   assert len(activities) == 1
   return activities[0]['object']
 

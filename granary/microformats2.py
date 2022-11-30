@@ -195,6 +195,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # TODO: extract snippet
   name = primary.get('displayName', primary.get('title'))
   summary = primary.get('summary')
+  note = primary.get('note')
   author = obj.get('author', obj.get('actor', {}))
 
   in_reply_tos = obj.get('inReplyTo') or []
@@ -243,7 +244,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'numeric-id': [obj.get('numeric_id') or ''],
       'name': [name],
       'nickname': [obj.get('username') or ''],
-      'summary': [summary],
+      ('note' if obj_type == 'person' else 'summary'): [summary],
       'url': (list(object_urls(obj) or object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
       # photo is special cased below, to handle alt
@@ -501,7 +502,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     'endTime': prop.get('end'),
     'displayName': get_text(prop.get('name')),
     'username': prop.get('nickname'),
-    'summary': get_text(prop.get('summary')),
+    'summary': get_text(prop.get('summary') or prop.get('note')),
     'content': get_html(prop.get('content')),
     'url': urls[0] if urls else None,
     'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,

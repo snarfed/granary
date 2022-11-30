@@ -6,5 +6,6 @@
   "name": "Martin Smith",
   "icon": {"type": "Image", "url": "http://example.com/martin/image"},
   "image": {"type": "Image", "url": "http://example.com/martin/image"},
-  "preferredUsername": "yoozer"
+  "preferredUsername": "yoozer",
+  "summary": "this is my bio"
 }
