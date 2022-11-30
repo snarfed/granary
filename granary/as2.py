@@ -170,6 +170,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if obj_type == 'person' and top_level:
     obj['attachment'].extend({
       'type': 'PropertyValue',
+      'name': 'Link',
       'value': f'<a href="{url}" rel="me">{url}</a>',
     } for url in util.get_list(obj, 'url') +  util.get_list(obj, 'urls'))
 

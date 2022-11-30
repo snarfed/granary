@@ -11,6 +11,7 @@
   "attachment": [
     {
       "type": "PropertyValue",
+      "name": "Link",
       "value": "<a href=\"http://example.com/martin\" rel=\"me\">http://example.com/martin</a>"
     }
   ]
