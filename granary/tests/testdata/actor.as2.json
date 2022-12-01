@@ -12,7 +12,7 @@
     {
       "type": "PropertyValue",
       "name": "Link",
-      "value": "<a href=\"http://example.com/martin\" rel=\"me\">http://example.com/martin</a>"
+      "value": "<a rel=\"me\" href=\"http://example.com/martin\">example.com/martin</a>"
     }
   ]
 }

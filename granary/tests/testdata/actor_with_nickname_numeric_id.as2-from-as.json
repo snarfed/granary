@@ -13,12 +13,12 @@
     {
       "type": "PropertyValue",
       "name": "Link",
-      "value": "<a href=\"http://example.com/martin\" rel=\"me\">http://example.com/martin</a>"
+      "value": "<a rel=\"me\" href=\"http://example.com/martin\">example.com/martin</a>"
     },
     {
       "type": "PropertyValue",
       "name": "Link",
-      "value": "<a href=\"https://example.com/4321\" rel=\"me\">https://example.com/4321</a>"
+      "value": "<a rel=\"me\" href=\"https://example.com/4321\">example.com/4321</a>"
     }
   ],
   "icon": {

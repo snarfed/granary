@@ -173,7 +173,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     obj['attachment'].extend({
       'type': 'PropertyValue',
       'name': 'Link',
-      'value': f'<a href="{url}" rel="me">{url}</a>',
+      'value': util.pretty_link(url, attrs={'rel': 'me'}),
     } for url in as1.object_urls(obj))
 
   obj = util.trim_nulls(obj)
