@@ -1,7 +1,8 @@
 {
   "urls": [
     {"value": "http://example.com/martin"},
-    {"value": "https://example.com/4321"}
+    {"value": "https://example.com/4321"},
+    {"value": "acct:martin@example.com"}
   ],
   "objectType" : "person",
   "id": "tag:example.com,2011:martin",

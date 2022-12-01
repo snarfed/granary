@@ -172,7 +172,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       'type': 'PropertyValue',
       'name': 'Link',
       'value': util.pretty_link(url, attrs={'rel': 'me'}),
-    } for url in obj['url'])
+    } for url in obj['url'] if util.is_web(url))
 
   urls = util.get_list(obj, 'url')
   if len(urls) == 1:

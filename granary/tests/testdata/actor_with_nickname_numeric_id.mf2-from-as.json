@@ -7,7 +7,8 @@
     "nickname": ["martin"],
     "url": [
       "http://example.com/martin",
-      "https://example.com/4321"
+      "https://example.com/4321",
+      "acct:martin@example.com"
     ],
     "photo": ["http://example.com/martin/image"]
   }

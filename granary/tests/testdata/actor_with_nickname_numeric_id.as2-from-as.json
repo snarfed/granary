@@ -5,7 +5,8 @@
   "numeric_id": "4321",
   "url": [
     "http://example.com/martin",
-    "https://example.com/4321"
+    "https://example.com/4321",
+    "acct:martin@example.com"
   ],
   "name": "Martin Smith",
   "preferredUsername": "martin",
