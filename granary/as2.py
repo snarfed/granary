@@ -116,7 +116,9 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'object': inner_objs,
     'tag': all_from_as1('tags'),
     'preferredUsername': obj.pop('username', None),
+    'url': as1.object_urls(obj),
   })
+  obj.pop('urls', None)
 
   # images; separate featured (aka header) and non-featured.
   images = util.get_list(obj, 'image')
@@ -143,7 +145,8 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
 
   # other type-specific fields
   if obj_type == 'mention':
-    obj['href'] = obj.pop('url', None)
+    obj['href'] = util.get_first(obj, 'url')
+    obj.pop('url', None)
   elif obj_type in ('audio', 'video'):
     stream = util.pop_list(obj, 'stream')
     if stream:
@@ -162,19 +165,22 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
             datetime.timedelta(seconds=duration))
         except TypeError:
           logger.warning(f'Dropping unexpected duration {duration!r}; expected int, is {duration.__class__}')
-
-  loc = obj.get('location')
-  if loc:
-    obj['location'] = from_as1(loc, type='Place', context=None)
-
-  # Mastodon-specific metadata property fields
-  # https://github.com/snarfed/bridgy-fed/issues/323
-  if obj_type == 'person' and top_level:
+  elif obj_type == 'person' and top_level:
+    # Mastodon-specific metadata property fields
+    # https://github.com/snarfed/bridgy-fed/issues/323
     obj['attachment'].extend({
       'type': 'PropertyValue',
       'name': 'Link',
       'value': util.pretty_link(url, attrs={'rel': 'me'}),
-    } for url in as1.object_urls(obj))
+    } for url in obj['url'])
+
+  urls = util.get_list(obj, 'url')
+  if len(urls) == 1:
+    obj['url'] = urls[0]
+
+  loc = obj.get('location')
+  if loc:
+    obj['location'] = from_as1(loc, type='Place', context=None)
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:

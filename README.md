@@ -311,6 +311,8 @@ _Breaking changes:_
   * Unify `microformats2.prefix_image_urls` and `prefix_video_urls` into a new `as1.prefix_urls` function.
 * RSS:
   * Remove `itunes:category`. It has to be [one of Apple's explicit categories](https://feedgen.kiesow.be/ext/api.ext.podcast.html#feedgen.ext.podcast.PodcastExtension.itunes_category), which we aren't prepared to validate, so don't try.
+* ActivityStreams 2:
+  * Translate both `url` and `urls` from AS1 into multi-valued AS2 `url` field.
 * Move a number of utility methods from the `Source` class to a new `as1` module: `object_type`, `merge_by_id`, `is_public`, `add_rsvps_to_event`, `get_rsvps_from_event`, `activity_changed`, `append_in_reply_to`, `actor_name`, `original_post_discovery`.
 * `as1.original_post_discovery`: remove deprecated `cache` kwarg.
 
@@ -318,6 +320,9 @@ _Non-breaking changes:_
 
 * ActivityStreams 2:
   * Fix spec compliance bug: [`icon` and `image` are singly valued, not multiply valued](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-icon).
+  * Add new `is_public` method and `PUBLIC_AUDIENCE` constant.
+  * Prefer `"objectType": "featured"` first in the `image` field when converting from AS1, last in the `icon` field. This matches the ActivityPub (Mastodon) convention of using `icon` for profile pictures and `image` for header images.
+  * Propagate `url` values into new `PropertyValue` attachments on `Person` objects; these end up in Mastodon's "profile metadata" link fields.
 * Twitter
   * Trim alt text in line between post preview and creation
   * Correctly trim Twitter alt text
@@ -331,14 +336,10 @@ _Non-breaking changes:_
   * Add `cache` support to `get_activities`.
 * REST API
   * Add new `/scraped` endpoint that accepts `POST` requests with silo HTML as input. Currently only supports Instagram. Requires `site=instagram`, `output=...` (any supported output format), and HTML as either raw request body or MIME multipart encoded file in the `input` parameter.
-* as2
-  * Add new `is_public` method and `PUBLIC_AUDIENCE` constant.
-  * Prefer `"objectType": "featured"` first in the `image` field when converting from AS1, last in the `icon` field. This matches the ActivityPub (Mastodon) convention of using `icon` for profile pictures and `image` for header images.
 * microformats2
   * Add new `extra` and `body_class` kwargs to `activities_to_html`.
   * When converting `u-featured` images to AS1, add new non-standard `"objectType": "featured"` field to distinguish them from `u-photo`.
   * Convert `p-note` to AS1 `summary`.
-  * Propagate `url` values into new `PropertyValue` attachments on `Person` objects; these end up in Mastodon's "profile metadata" link fields.
 * `Source.original_post_discovery`: add new `max_redirect_fetches` keyword arg.
 
 ### 4.0 - 2022-03-23
