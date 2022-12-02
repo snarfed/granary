@@ -323,6 +323,7 @@ _Non-breaking changes:_
   * Add new `is_public` method and `PUBLIC_AUDIENCE` constant.
   * Prefer `"objectType": "featured"` first in the `image` field when converting from AS1, last in the `icon` field. This matches the ActivityPub (Mastodon) convention of using `icon` for profile pictures and `image` for header images.
   * Propagate `url` values into new `PropertyValue` attachments on `Person` objects; these end up in Mastodon's "profile metadata" link fields.
+  * `to_as1`: if an attachment's `mediaType` is `image/...`, override `objectType` and set it to `image`.
 * Twitter
   * Trim alt text in line between post preview and creation
   * Correctly trim Twitter alt text

@@ -1,0 +1,10 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Note",
+  "content": "i hereby attach an article",
+  "attachment": [{
+    "type": "Document",
+    "mediaType": "image/jpeg",
+    "url": "http://att/image"
+  }]
+}

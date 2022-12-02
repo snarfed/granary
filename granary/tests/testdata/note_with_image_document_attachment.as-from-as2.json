@@ -1,0 +1,9 @@
+{
+  "objectType": "note",
+  "content": "i hereby attach an article",
+  "attachments": [{
+    "objectType": "image",
+    "mediaType": "image/jpeg",
+    "url": "http://att/image"
+  }]
+}

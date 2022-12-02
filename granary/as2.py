@@ -244,11 +244,17 @@ def to_as1(obj, use_type=True):
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
 
+  # attachments. if mediaType is image/..., override type
+  attachments = all_to_as1('attachment')
+  for att in attachments:
+    if att.get('mediaType', '').split('/')[0] == 'image':
+      att['objectType'] = 'image'
+
   obj.update({
     'displayName': obj.pop('name', None),
     'username': obj.pop('preferredUsername', None),
     'actor': actor,
-    'attachments': all_to_as1('attachment'),
+    'attachments': attachments,
     'image': images,
     'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': url_or_as1(obj.get('location')),
