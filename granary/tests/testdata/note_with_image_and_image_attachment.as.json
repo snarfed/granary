@@ -1,0 +1,12 @@
+{
+  "objectType": "note",
+  "image": {
+    "displayName": "foo bar",
+    "url": "http://an/img"
+  },
+  "attachments": [{
+    "objectType": "image",
+    "mediaType": "image/jpeg",
+    "url": "https://a/jpeg"
+  }]
+}

@@ -1,0 +1,12 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "photo": [
+      "https://a/jpeg",
+      {
+        "value": "http://an/img",
+        "alt": "foo bar"
+      }
+    ]
+  }
+}

@@ -291,12 +291,14 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # photos, including alt text
   photo_urls = set()
   ret['properties']['photo'] = []
-  for image in get_list(attachments, 'image') + [primary]:
-    for url in get_urls(image, 'image'):
-      if url and url not in photo_urls:
-        photo_urls.add(url)
-        name = get_first(image, 'image', {}).get('displayName')
-        ret['properties']['photo'].append({'value': url, 'alt': name} if name else url)
+  for img in get_list(attachments, 'image') + get_list(primary, 'image'):
+    if img.get('image'):
+      img = get_first(img, 'image')
+    url = get_url(img)
+    if url and url not in photo_urls:
+      photo_urls.add(url)
+      name = img.get('displayName')
+      ret['properties']['photo'].append({'value': url, 'alt': name} if name else url)
 
   # hashtags and person tags
   if obj_type == 'tag':

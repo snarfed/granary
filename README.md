@@ -341,6 +341,7 @@ _Non-breaking changes:_
   * Add new `extra` and `body_class` kwargs to `activities_to_html`.
   * When converting `u-featured` images to AS1, add new non-standard `"objectType": "featured"` field to distinguish them from `u-photo`.
   * Convert `p-note` to AS1 `summary`.
+  * Bug fixes for converting `image` attachments to `photo`.
 * `Source.original_post_discovery`: add new `max_redirect_fetches` keyword arg.
 
 ### 4.0 - 2022-03-23
