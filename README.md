@@ -333,6 +333,7 @@ _Non-breaking changes:_
   * Add new `Instagram.scraped_json_to_activities` method.
 * GitHub
   * `create` and `preview`: convert profile URLs to @-mentions, eg `https://github.com/snarfed` to `@snarfed` ([bridgy#1090](https://github.com/snarfed/bridgy/issues/1090)).
+    * `get_activities` with `activity_id` now supports `fetch_replies` and `fetch_likes`.
 * Reddit
   * Add `cache` support to `get_activities`.
 * REST API

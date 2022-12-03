@@ -354,15 +354,17 @@ class GitHub(source.Source):
 
     etag_parsed = email.utils.parsedate(etag)
     since = datetime.datetime(*etag_parsed[:6]) if etag_parsed else None
+    issues = []
     activities = []
 
     if activity_id:
+      # single issue
       parts = tuple(activity_id.split(':'))
       if len(parts) != 3:
         raise ValueError('GitHub activity ids must be of the form USER:REPO:ISSUE_OR_PR')
       try:
-        issue = self.rest(REST_ISSUE % parts)
-        activities = [self.issue_to_object(issue)]
+        issues = [self.rest(REST_ISSUE % parts)]
+        activities = [self.issue_to_object(issues[0])]
       except BaseException as e:
         code, body = util.interpret_http_exception(e)
         if util.is_int(code) and int(code) in HTTP_NON_FATAL_CODES:
@@ -371,6 +373,7 @@ class GitHub(source.Source):
           raise
 
     else:
+      # all issues/PRs, based on notifications
       resp = self.rest(REST_NOTIFICATIONS, parse_json=False,
                        headers={'If-Modified-Since': etag} if etag else None)
       etag = resp.headers.get('Last-Modified')
@@ -406,25 +409,29 @@ class GitHub(source.Source):
             'alias': '@private' if private else '@public',
           }]
 
-        comments_url = issue.get('comments_url')
-        if fetch_replies and comments_url:
-          if since:
-            comments_url += f'?since={since.isoformat()}' + 'Z'
-          comments = self.rest(comments_url)
-          comment_objs = list(util.trim_nulls(
-            self.comment_to_object(c) for c in comments))
-          obj['replies'] = {
-            'items': comment_objs,
-            'totalItems': len(comment_objs),
-          }
-
-        if fetch_likes:
-          issue_url = issue['url'].replace('pulls', 'issues')
-          reactions = self.rest(issue_url + '/reactions')
-          obj.setdefault('tags', []).extend(
-            self.reaction_to_object(r, obj) for r in reactions)
-
+        issues.append(issue)
         activities.append(obj)
+
+    # add comments and reactions, if requested
+    assert len(issues) == len(activities)
+    for issue, obj in zip(issues, activities):
+      comments_url = issue.get('comments_url')
+      if fetch_replies and comments_url:
+        if since:
+          comments_url += f'?since={since.isoformat()}' + 'Z'
+        comments = self.rest(comments_url)
+        comment_objs = list(util.trim_nulls(
+          self.comment_to_object(c) for c in comments))
+        obj['replies'] = {
+          'items': comment_objs,
+          'totalItems': len(comment_objs),
+        }
+
+      if fetch_likes:
+        issue_url = issue['url'].replace('pulls', 'issues')
+        reactions = self.rest(issue_url + '/reactions')
+        obj.setdefault('tags', []).extend(
+          self.reaction_to_object(r, obj) for r in reactions)
 
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag

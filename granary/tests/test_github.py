@@ -497,8 +497,8 @@ class GitHubTest(testutil.TestCase):
     self.expect_rest(REST_NOTIFICATIONS,
                      [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
     self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], PULL_REST)
-    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 444), [])
     self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
+    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 444), [])
     self.expect_rest(REST_REACTIONS % ('foo', 'bar', 333),
                      [REACTION_REST, REACTION_REST])
     self.mox.ReplayAll()
@@ -517,6 +517,19 @@ class GitHubTest(testutil.TestCase):
     self.expect_rest(REST_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
     self.mox.ReplayAll()
     self.assert_equals([ISSUE_OBJ], self.gh.get_activities(activity_id='foo:bar:123'))
+
+  def test_get_activities_activity_id_fetch_replies_likes(self):
+    self.expect_rest(REST_ISSUE % ('foo', 'bar', 333), ISSUE_REST)
+    self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
+    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 333), [REACTION_REST, REACTION_REST])
+    self.mox.ReplayAll()
+
+    expected = copy.deepcopy(ISSUE_OBJ_WITH_REPLIES)
+    expected['tags'].extend([REACTION_OBJ, REACTION_OBJ])
+    del expected['to']
+
+    self.assert_equals([expected], self.gh.get_activities(
+      activity_id='foo:bar:333', fetch_replies=True, fetch_likes=True))
 
   def test_get_activities_etag_and_since(self):
     self.expect_rest(REST_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST],
