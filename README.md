@@ -228,6 +228,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    ```
 1. Install from test.pypi.org.
    ```sh
+   cd /tmp
    python3 -m venv local
    source local/bin/activate.csh
    pip3 uninstall granary # make sure we force Pip to use the uploaded version
@@ -290,7 +291,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 5.0 - unreleased
+### 5.0 - 2022-12-03
 
 _Breaking changes:_
 
