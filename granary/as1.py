@@ -1,5 +1,6 @@
 """Utilities for ActivityStreams 1 objects."""
 import collections
+import copy
 import logging
 from operator import itemgetter
 import re
@@ -157,9 +158,17 @@ def activity_changed(before, after, log=False):
   Returns:
     boolean
   """
-  def changed(b, a, field, label):
+  def changed(b, a, field, label, ignore=None):
     b_val = b.get(field)
     a_val = a.get(field)
+
+    if ignore and isinstance(b_val, dict) and isinstance(a_val, dict):
+      b_val = copy.copy(b_val)
+      a_val = copy.copy(a_val)
+      for field in ignore:
+        b_val.pop(field, None)
+        a_val.pop(field, None)
+
     if b_val != a_val and (a_val or b_val):
       if log:
         logger.debug(f'{label}[{field}] {b_val} => {a_val}')
@@ -167,10 +176,17 @@ def activity_changed(before, after, log=False):
 
   obj_b = before.get('object', {})
   obj_a = after.get('object', {})
-  return any(changed(before, after, field, 'activity') or
-             changed(obj_b, obj_a, field, 'activity[object]')
-             for field in ('objectType', 'verb', 'to', 'content', 'location',
-                           'image', 'inReplyTo'))
+  if any(changed(before, after, field, 'activity') or
+         changed(obj_b, obj_a, field, 'activity[object]')
+         for field in ('objectType', 'verb', 'to', 'content', 'location',
+                       'image')):
+    return True
+
+  if (changed(before, after, 'inReplyTo', 'inReplyTo', ignore=('author',)) or
+      changed(obj_b, obj_a, 'inReplyTo', 'object.inReplyTo', ignore=('author',))):
+    return True
+
+  return False
 
 
 def append_in_reply_to(before, after):

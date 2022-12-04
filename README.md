@@ -291,6 +291,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 6.0 - 2022-12-03
+
+* `as1`:
+  * `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
+
 ### 5.0 - 2022-12-03
 
 _Breaking changes:_

@@ -193,6 +193,15 @@ class As1Test(testutil.TestCase):
       self.assertTrue(as1.activity_changed(before, after, log=True),
                       f'{before}\n{after}')
 
+  def test_activity_changed_in_reply_to_author_name(self):
+    first = copy.copy(COMMENT)
+    first['inReplyTo'][0]['author'] = copy.deepcopy(RESHARER)
+
+    second = copy.copy(COMMENT)
+    second['inReplyTo'][0]['author'] = copy.deepcopy(RESHARER)
+    second['inReplyTo'][0]['author']['displayName'] = 'other'
+    self.assertFalse(as1.activity_changed(first, second, log=True))
+
   def test_append_in_reply_to(self):
     fb_comment_before = copy.deepcopy(COMMENT)
     fb_comment_after_same = copy.deepcopy(fb_comment_before)
