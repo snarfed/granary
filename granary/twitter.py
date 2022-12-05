@@ -80,37 +80,3 @@ class Foo():
     """
     if fetch_likes and not self.scrape_headers:
         raise NotImplementedError('fetch_likes requires scrape_headers')
-
-    if group_id is None:
-      group_id = source.FRIENDS
-
-    if user_id:
-      if user_id.startswith('@'):
-        user_id = user_id[1:]
-      if not USERNAME_RE.match(user_id):
-        raise ValueError(f'Invalid Twitter username: {user_id}')
-
-    # nested function for lazily fetching the user object if we need it
-    user = []
-
-    def _user():
-      if not user:
-        user.append(self.urlopen(API_USER % user_id if user_id else API_CURRENT_USER))
-      return user[0]
-
-    if count:
-      count += start_index
-
-    activities = []
-    if activity_id:
-      self._validate_id(activity_id)
-      tweets = [self.urlopen(API_STATUS % int(activity_id))]
-      total_count = len(tweets)
-    else:
-      if group_id == source.SELF:
-        if user_id in (None, source.ME):
-          user_id = ''
-        url = API_USER_TIMELINE % {
-          'count': count,
-          'screen_name': user_id,
-        }
