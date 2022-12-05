@@ -3,13 +3,7 @@ class Foo():
   def __init__(self):
     self.access_token_key = access_token_key
 
-  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
-                              activity_id=None, start_index=0, count=0,
-                              etag=None, min_id=None, cache=None,
-                              fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, include_shares=True,
-                              fetch_events=False, fetch_mentions=False,
-                              search_query=None, scrape=False, **kwargs):
+  def get_activities_response(self):
     """Fetches posts and converts them to ActivityStreams activities.
 
     XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
@@ -26,44 +20,6 @@ class Foo():
     support ETags. From https://dev.twitter.com/discussions/5800 :
     "I've confirmed with our team that we're not explicitly supporting this
     family of features."
-
-    Likes (nee favorites) are scraped from twitter.com, since Twitter's REST
-    API doesn't offer a way to fetch them. You can also get them from the
-    Streaming API, though, and convert them with streaming_event_to_object().
-    https://dev.twitter.com/docs/streaming-apis/messages#Events_event
-
-    Shares (ie retweets) are fetched with a separate API call per tweet:
-    https://dev.twitter.com/docs/api/1.1/get/statuses/retweets/%3Aid
-
-    However, retweets are only fetched for the first 15 tweets that have them,
-    since that's Twitter's rate limit per 15 minute window. :(
-    https://dev.twitter.com/docs/rate-limiting/1.1/limits
-
-    Quote tweets are fetched by searching for the possibly quoted tweet's ID,
-    using the OR operator to search up to 5 IDs at a time, and then checking
-    the quoted_status_id_str field
-    https://dev.twitter.com/overview/api/tweets#quoted_status_id_str
-
-    Use the group_id @self to retrieve a user_id’s timeline. If user_id is None
-    or @me, it will return tweets for the current API user.
-
-    group_id can be used to specify the slug of a list for which to return tweets.
-    By default the current API user’s lists will be used, but lists owned by other
-    users can be fetched by explicitly passing a username to user_id, e.g. to
-    fetch tweets from the list @exampleuser/example-list you would call
-    get_activities(user_id='exampleuser', group_id='example-list').
-
-    Twitter replies default to including a mention of the user they're replying
-    to, which overloads mentions a bit. When fetch_mentions is True, we determine
-    that a tweet mentions the current user if it @-mentions their username and:
-
-    * it's not a reply, OR
-    * it's a reply, but not to the current user, AND
-      * the tweet it's replying to doesn't @-mention the current user
-
-    Raises:
-      NotImplementedError: if fetch_likes is True but scrape_headers was not
-        provided to the constructor.
     """
     if fetch_likes and not self.scrape_headers:
         raise NotImplementedError('fetch_likes requires scrape_headers')
