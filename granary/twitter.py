@@ -1,20 +1,7 @@
 class Foo():
 
-  def __init__(self, access_token_key, access_token_secret, username=None,
-               scrape_headers=None):
+  def __init__(self):
     self.access_token_key = access_token_key
-    self.access_token_secret = access_token_secret
-    self.username = username
-    self.scrape_headers = scrape_headers
-
-  def get_actor(self, screen_name=None):
-    """Returns a user as a JSON ActivityStreams actor dict.
-
-    Args:
-      screen_name: string username. Defaults to the current user.
-    """
-    url = API_CURRENT_USER if screen_name is None else API_USER % screen_name
-    return self.user_to_actor(self.urlopen(url))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
