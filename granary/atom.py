@@ -387,7 +387,7 @@ def _prepare_activity(a, reader=True):
 
     if type == 'image':
       att['image'] = util.get_first(att, 'image')
-      image_atts.append(att['image'])
+      image_atts.append(att['image'] or att)
       continue
 
     image_urls_seen |= set(util.get_urls(att, 'image'))

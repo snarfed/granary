@@ -291,6 +291,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 6.1 - unreleased
+
+* `atom`
+  * Bug fix for rendering image attachments without `image` field to Atom.
+
 ### 6.0 - 2022-12-03
 
 * `as1`:

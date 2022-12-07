@@ -793,6 +793,20 @@ going to Homebrew Website Club
     self.assertIn('<link rel="enclosure" href="http://pics/1.jpg?x&amp;y"', got)
     self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got, got)
 
+  def test_image_attachment(self):
+    got = atom.activities_to_atom([{
+      'object': {
+        'content': 'foo bar',
+        'attachments': [{
+          'objectType': 'image',
+          'mediaType': 'image/jpeg',
+          'url': 'https://assets/img.jpeg',
+        }],
+      },
+    }], {})
+    self.assertIn('<img class="u-photo" src="https://assets/img.jpeg" alt="" />', got)
+    self.assertIn('<link rel="enclosure" href="https://assets/img.jpeg"', got)
+
   def test_context_in_reply_to(self):
     """context.inReplyTo should be translated to thr:in-reply-to."""
     activity = {
