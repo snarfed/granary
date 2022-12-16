@@ -51,7 +51,10 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
       continue
     author = obj.get('author', {})
     content = microformats2.render_content(
-      obj, include_location=True, render_attachments=True)
+      obj, include_location=True, render_attachments=True,
+      # Readers often obey CSS white-space: pre strictly and don't even line wrap,
+      # so don't use it. https://github.com/snarfed/granary/issues/456
+      white_space_pre=False)
     obj_title = obj.get('title') or obj.get('displayName')
     item = {
       'id': obj.get('id') or obj.get('url'),

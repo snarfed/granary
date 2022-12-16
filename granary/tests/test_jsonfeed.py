@@ -128,3 +128,14 @@ class JsonFeedTest(testutil.TestCase):
     """
     with self.assertRaises(ValueError):
       jsonfeed_to_activities({'items': [{'author': 'Ms. Foo'}]})
+
+  def test_convert_newlines_to_brs(self):
+    """https://github.com/snarfed/granary/issues/456"""
+    got = activities_to_jsonfeed([{
+      'content': 'foo\nbar\nbaz',
+    }])
+    self.assert_equals("""\
+foo<br />
+bar<br />
+baz
+""", got['items'][0]['content_html'])
