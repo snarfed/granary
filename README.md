@@ -268,7 +268,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    twine upload dist/granary-$ver.tar.gz
    ```
 1. [Build the docs on Read the Docs](https://readthedocs.org/projects/granary/builds/): first choose _latest_ in the drop-down, then click _Build Version_.
-1. On the [Versions page](https://readthedocs.org/projects/oauth-dropins/versions/), check that the new version is active, If it's not, activate it in the _Activate a Version_ section.
+1. On the [Versions page](https://readthedocs.org/projects/granary/versions/), check that the new version is active, If it's not, activate it in the _Activate a Version_ section.
 
 
 Related work
