@@ -301,6 +301,7 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
+* Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
 * `atom`
   * Bug fix for rendering image attachments without `image` field to Atom.
 * `jsonfeed`:

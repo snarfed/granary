@@ -1,0 +1,16 @@
+{
+  "$type": "app.bsky.feed.post",
+  "text": "A note. link too",
+  "createdAt": "2012-02-22T20:26:41",
+  "embed": {
+    "images": ["http://example.com/blog-post-123/image"]
+  },
+  "entities": [{
+    "type": "link",
+    "value": "http://my/link",
+    "index": {
+      "start": 8,
+      "end": 12
+    }
+  }]
+}

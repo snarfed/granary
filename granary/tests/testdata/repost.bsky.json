@@ -1,0 +1,5 @@
+{
+  "$type": "app.bsky.feed.repost",
+  "subject": "http://example.com/alice",
+  "createdAt": "2012-02-22T20:26:41"
+}

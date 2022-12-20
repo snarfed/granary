@@ -1,0 +1,6 @@
+{
+  "$type": "app.bsky.actor.profile",
+  "displayName": "Martin Smith",
+  "description": "this is my bio",
+  "avatar": "http://example.com/martin/image"
+}

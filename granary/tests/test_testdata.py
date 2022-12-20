@@ -9,7 +9,7 @@ from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from .. import as2, jsonfeed, microformats2, rss
+from .. import as2, bluesky, jsonfeed, microformats2, rss
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +117,7 @@ mappings = (
   ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, ()),
   ('as.json', ['rss.xml'], rss_from_activities, ()),
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, ()),
+  ('as.json', ['bsky.json'], bluesky.from_as1, ()),
 )
 
 test_funcs = {}
