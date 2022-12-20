@@ -32,7 +32,7 @@ class Microformats2Test(testutil.TestCase):
 
   def test_ignore_h_as(self):
     """https://github.com/snarfed/bridgy/issues/635"""
-    obj = microformats2.json_to_object({'type': ['h-entry']})
+    obj = microformats2.json_to_object({'type': ['h-entry', 'h-as-article']})
     self.assertEqual('note', obj['objectType'])
 
   def test_html_content_and_summary(self):
