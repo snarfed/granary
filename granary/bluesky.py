@@ -15,17 +15,19 @@ def from_as1(obj):
   The objectType field is required.
 
   Args:
-    profile: dict, AS1 object
+    obj: dict, AS1 object or activity
 
   Returns: dict, app.bsky.* object
 
   Raises:
     ValueError
-    if the objectType field is missing or unsupported
+      if the objectType or verb fields are missing or unsupported
   """
   type = obj.get('objectType')
-  if not type:
-    raise ValueError('AS1 object missing objectType field')
+  verb = obj.get('verb')
+  actor = obj.get('actor')
+  if not type and not verb:
+    raise ValueError('AS1 object missing objectType and verb fields')
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type == 'person':
@@ -65,18 +67,25 @@ def from_as1(obj):
       'entities': entities,
     }
 
-  elif type == 'share':
+  elif verb == 'share':
     ret = {
-      '$type': 'app.bsky.',
+      '$type': 'app.bsky.feed.repost',
+      'subject': {
+        'uri': util.get_url(obj, 'object'),
+        'cid': 'TODO',
+      },
+      'createdAt': obj.get('published'),
     }
 
-  elif type == 'follow':
+  elif verb == 'follow':
     ret = {
-      '$type': 'app.bsky.',
+      '$type': 'app.bsky.graph.follow',
+      'subject': actor.get('id') or actor.get('url'),
+      'createdAt': obj.get('published'),
     }
 
   else:
-    raise ValueError(f'AS1 object has unknown objectType: {type}')
+    raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
 
   return util.trim_nulls(ret)
 

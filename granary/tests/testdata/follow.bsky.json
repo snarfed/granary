@@ -1,5 +1,4 @@
 {
   "$type": "app.bsky.graph.follow",
-  "subject": "http://follower",
-  "createdAt": "2012-02-22T20:26:41"
+  "subject": "http://follower"
 }
