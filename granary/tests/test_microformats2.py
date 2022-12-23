@@ -801,6 +801,31 @@ Shared <a href="#">a post</a> by foo
       },
     }, fetch_mf2=True))
 
+  def test_json_to_object_xyz(self):
+    """Post with embedded responses as compound objects.
+
+    https://martymcgui.re/2020/07/15/what-we-talk-about-when-were-talking-about-webmentions/
+    """
+    self.assert_equals({
+      'objectType': 'activity',
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'like': [{
+          'properties': {
+            'url': ['https://foo/bar'],
+          },
+        }, {
+          'properties': {
+            'url': ['https://baz/biff'],
+          },
+        }],
+        'rsvp': [{
+          'properties': {},
+        }],
+      },
+    }))
+
   def test_find_author(self):
     self.assert_equals({
     'displayName': 'my name',

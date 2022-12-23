@@ -395,7 +395,6 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
   mf2 = copy.copy(mf2)
   props = mf2.setdefault('properties', {})
   prop = first_props(props)
-  rsvp = prop.get('rsvp')
 
   # convert author
   mf2_author = prop.get('author')
@@ -438,6 +437,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     mf2_type = mf2util.post_type_discovery(without_photo)
 
   as_type, as_verb = MF2_TO_AS_TYPE_VERB.get(mf2_type, (None, None))
+  rsvp = get_text(prop.get('rsvp'))
   if rsvp:
     as_verb = f'rsvp-{rsvp}'
 
@@ -559,8 +559,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     objects = []
     for target in itertools.chain.from_iterable(
         props.get(field, []) for field in (
-          'follow-of', 'like', 'like-of', 'repost', 'repost-of', 'in-reply-to',
-          'invitee')):
+          'follow-of', 'like-of', 'repost-of', 'in-reply-to', 'invitee')):
       t = json_to_object(target) if isinstance(target, dict) else {'url': target}
       # eliminate duplicates from redundant backcompat properties
       if t not in objects:
