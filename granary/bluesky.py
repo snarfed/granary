@@ -33,8 +33,8 @@ def from_as1(obj, from_url=None):
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type == 'person':
-    # bluesky-social/atproto/lexicons/app/bsky/actor/profile.json
-    # bluesky-social/atproto/lexicons/app/bsky/actor/getProfile.json
+    # atproto/lexicons/app/bsky/actor/profile.json
+    # atproto/lexicons/app/bsky/actor/getProfile.json
 
     # banner is featured image, if available
     banner = None
@@ -51,12 +51,20 @@ def from_as1(obj, from_url=None):
       'avatar': util.get_url(obj, 'image'),
       'banner': banner,
       'did': 'TODO',
+      # this is a DID
+      # atproto/packages/pds/src/api/app/bsky/actor/getProfile.ts#38
+      'creator': 'TODO (a DID)',
       'declaration': {
+        # Content ID, aka content-hash fingerprint. Immutable hash that
+        # identifies a node in a PDS.
+        # https://atproto.com/guides/applications#record-types
+        # https://github.com/multiformats/cid
+        # https://atproto.com/guides/data-repos#data-layout
+        # atproto/lexicons/com/atproto/repo/strongRef.json
         'cid': 'TODO',
         'actorType': 'app.bsky.system.actorUser',
       },
       'handle': util.domain_from_link(from_url),
-      'creator': 'TODO',
       'followersCount': 0,
       'followsCount': 0,
       'membersCount': 0,

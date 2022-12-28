@@ -4,7 +4,7 @@
   "description": "this is my bio",
   "avatar": "http://example.com/martin/image",
 
-  "creator": "TODO",
+  "creator": "TODO (a DID)",
   "declaration": {
     "actorType": "app.bsky.system.actorUser",
     "cid": "TODO"

@@ -4,7 +4,7 @@
   "avatar": "http://example.com/avatar",
   "banner": "http://example.com/header",
 
-  "creator": "TODO",
+  "creator": "TODO (a DID)",
   "declaration": {
     "actorType": "app.bsky.system.actorUser",
     "cid": "TODO"
