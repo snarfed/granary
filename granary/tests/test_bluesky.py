@@ -1,4 +1,7 @@
-"""Unit tests for jsonfeed.py."""
+"""Unit tests for jsonfeed.py.
+
+Most tests are via files in testdata/.
+"""
 from oauth_dropins.webutil import testutil
 
 from ..bluesky import from_as1, to_as1
@@ -56,6 +59,13 @@ from ..bluesky import from_as1, to_as1
 
 
 class TestBluesky(testutil.TestCase):
+
+    def test_from_as1_actor_from_url(self):
+        profile = from_as1({
+            'objectType' : 'person',
+            'displayName': 'Martin Smith',
+        }, from_url='http://www.foo.com')
+        self.assert_equals('foo.com', profile['handle'])
 
     def test_to_as1_missing_objectType(self):
         with self.assertRaises(ValueError):

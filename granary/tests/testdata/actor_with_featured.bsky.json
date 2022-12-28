@@ -1,8 +1,8 @@
 {
   "$type": "app.bsky.actor.profile",
   "displayName": "Martin Smith",
-  "description": "this is my bio",
-  "avatar": "http://example.com/martin/image",
+  "avatar": "http://example.com/avatar",
+  "banner": "http://example.com/header",
 
   "creator": "TODO",
   "declaration": {

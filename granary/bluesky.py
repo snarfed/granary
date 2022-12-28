@@ -9,13 +9,15 @@ import logging
 from oauth_dropins.webutil import util
 
 
-def from_as1(obj):
+def from_as1(obj, from_url=None):
   """Converts an AS1 object to a Bluesky object.
 
   The objectType field is required.
 
   Args:
     obj: dict, AS1 object or activity
+    from_url: str, optional URL the original object was fetched from. Used to
+      populate the handle field.
 
   Returns: dict, app.bsky.* object
 
@@ -31,11 +33,34 @@ def from_as1(obj):
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type == 'person':
+    # bluesky-social/atproto/lexicons/app/bsky/actor/profile.json
+    # bluesky-social/atproto/lexicons/app/bsky/actor/getProfile.json
+
+    # banner is featured image, if available
+    banner = None
+    for img in util.get_list(obj, 'image'):
+      url = img.get('url')
+      if img.get('objectType') == 'featured' and url:
+        banner = url
+        break
+
     ret = {
       '$type': 'app.bsky.actor.profile',
       'displayName': obj.get('displayName'),
       'description': obj.get('summary'),
       'avatar': util.get_url(obj, 'image'),
+      'banner': banner,
+      'did': 'TODO',
+      'declaration': {
+        'cid': 'TODO',
+        'actorType': 'app.bsky.system.actorUser',
+      },
+      'handle': util.domain_from_link(from_url),
+      'creator': 'TODO',
+      'followersCount': 0,
+      'followsCount': 0,
+      'membersCount': 0,
+      'postsCount': 0,
     }
 
   elif type in ('article', 'mention', 'note'):
