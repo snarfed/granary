@@ -669,7 +669,7 @@ class Mastodon(source.Source):
       if num_media > MAX_MEDIA:
         videos = videos[:MAX_MEDIA]
         images = images[:max(MAX_MEDIA - len(videos), 0)]
-        logger.warning(f'Found %d media! Only using the first {MAX_MEDIA}: {videos + images!r}', num_media)
+        logger.warning(f'Found {num_media} media! Only using the first {MAX_MEDIA}: {videos + images!r}')
 
       if preview:
         media_previews = [
