@@ -33,9 +33,6 @@ def from_as1(obj, from_url=None):
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type == 'person':
-    # atproto/lexicons/app/bsky/actor/profile.json
-    # atproto/lexicons/app/bsky/actor/getProfile.json
-
     # banner is featured image, if available
     banner = None
     for img in util.get_list(obj, 'image'):
@@ -72,6 +69,8 @@ def from_as1(obj, from_url=None):
     }
 
   elif type in ('article', 'mention', 'note'):
+    content = obj.get('content')
+
     entities = []
     for tag in util.get_list(obj, 'tags'):
       url = tag.get('url')
@@ -79,25 +78,50 @@ def from_as1(obj, from_url=None):
         try:
           start = int(tag.get('startIndex'))
           end = start + int(tag.get('length'))
-        except ValueError:
-            start = end = None
+          text = content[start:end]
+        except (ValueError, IndexError):
+          text = start = end = None
         entities.append({
           'type': 'link',
           'value': url,
+          'text': text,
           'index': {
             'start': start,
             'end': end,
           },
         })
 
+    images = util.get_urls(obj, 'image')
+
     ret = {
-      '$type': 'app.bsky.feed.post',
-      'text': obj.get('content'),
-      'createdAt': obj.get('published'),
-      'embed': {
-        'images': util.get_urls(obj, 'image'),
+      '$type': 'app.bsky.feed.post#view',
+      'uri': util.get_url(obj),
+      'cid': 'TODO',
+      'record': {
+        'text': content,
+        'createdAt': obj.get('published'),
+        'embed': {
+          'images': images,
+        },
+        'entities': entities,
       },
-      'entities': entities,
+      'embed': {
+        'images': [{
+          'thumb': url,
+          'fullsize': url,
+        } for url in images],
+        'external': [{
+          'uri': entity['value'],
+          'title': entity['text'],
+          'description': '',
+        } for entity in entities],
+      },
+      'replyCount': 0,
+      'repostCount': 0,
+      'upvoteCount': 0,
+      'downvoteCount': 0,
+      'indexedAt': util.now().isoformat(),
+      'viewer': {}
     }
 
   elif verb == 'share':
@@ -120,7 +144,8 @@ def from_as1(obj, from_url=None):
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
 
-  return util.trim_nulls(ret)
+  # don't trim nulls because blank fields may still be required by lexicons
+  return ret
 
 
 def to_as1(obj):

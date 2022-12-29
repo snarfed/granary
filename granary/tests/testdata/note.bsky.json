@@ -1,16 +1,38 @@
 {
-  "$type": "app.bsky.feed.post",
-  "text": "A note. link too",
-  "createdAt": "2012-02-22T20:26:41",
-  "embed": {
-    "images": ["http://example.com/blog-post-123/image"]
+  "$type": "app.bsky.feed.post#view",
+  "uri": "http://example.com/blog-post-123",
+  "cid": "TODO",
+  "record": {
+    "text": "A note. link too",
+    "createdAt": "2012-02-22T20:26:41",
+    "embed": {
+      "images": ["http://example.com/blog-post-123/image"]
+    },
+    "entities": [{
+      "type": "link",
+      "value": "http://my/link",
+      "text": "link",
+      "index": {
+        "start": 8,
+        "end": 12
+      }
+    }]
   },
-  "entities": [{
-    "type": "link",
-    "value": "http://my/link",
-    "index": {
-      "start": 8,
-      "end": 12
-    }
-  }]
+  "embed": {
+    "images": [{
+      "thumb": "http://example.com/blog-post-123/image",
+      "fullsize": "http://example.com/blog-post-123/image"
+    }],
+    "external": [{
+      "uri": "http://my/link",
+      "title": "link",
+      "description": ""
+    }]
+  },
+  "replyCount": 0,
+  "repostCount": 0,
+  "upvoteCount": 0,
+  "downvoteCount": 0,
+  "indexedAt": "2022-01-02T03:04:05+00:00",
+  "viewer": {}
 }
