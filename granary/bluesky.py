@@ -26,14 +26,13 @@ def from_as1(obj, from_url=None):
       if the objectType or verb fields are missing or unsupported
   """
   activity = obj
-  verb = activity.get('verb')
-  if verb == 'post':
-    obj = activity.get('object')
+  verb = activity.get('verb') or 'post'
+  inner_obj = activity.get('object')
+  if inner_obj and verb == 'post':
+    obj = inner_obj
 
-  type = obj.get('objectType')
+  type = obj.get('objectType') or 'note'
   actor = activity.get('actor')
-  if not type and not verb:
-    raise ValueError('AS1 object missing objectType and verb fields')
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type == 'person':
@@ -72,8 +71,24 @@ def from_as1(obj, from_url=None):
       'postsCount': 0,
     }
 
-  elif type in ('article', 'mention', 'note', 'comment'):
-    content = obj.get('content')
+  elif verb == 'share':
+    ret = from_as1(inner_obj)
+    ret['reason'] = {
+      '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
+      'by': actor_to_ref(actor),
+      'indexedAt': util.now().isoformat(),
+    }
+
+  elif verb == 'follow':
+    assert actor
+    ret = {
+      '$type': 'app.bsky.graph.follow',
+      'subject': actor.get('id') or actor.get('url'),
+      'createdAt': obj.get('published', ''),
+    }
+
+  elif verb == 'post' and type in ('article', 'mention', 'note', 'comment'):
+    content = obj.get('content', '')
     images = util.get_urls(obj, 'image')
     author = obj.get('author')
 
@@ -145,27 +160,11 @@ def from_as1(obj, from_url=None):
         },
       }
 
-  elif verb == 'share':
-    ret = from_as1(activity.get('object'))
-    ret['reason'] = {
-      '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
-      'by': actor_to_ref(actor),
-      'indexedAt': util.now().isoformat(),
-    }
-
-  elif verb == 'follow':
-    assert actor
-    ret = {
-      '$type': 'app.bsky.graph.follow',
-      'subject': actor.get('id') or actor.get('url'),
-      'createdAt': obj.get('published', ''),
-    }
-
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
 
   # keep some fields that are required by lexicons
-  return util.trim_nulls(ret, ('createdAt', 'description', 'viewer',))
+  return util.trim_nulls(ret, ignore=('createdAt', 'description', 'text', 'viewer'))
 
 
 def actor_to_ref(actor):
@@ -176,9 +175,10 @@ def actor_to_ref(actor):
 
   Returns: dict, `app.bsky.actor.ref` object
   """
+  actor.setdefault('objectType', 'person')
   return {
     k: v for k, v in from_as1(actor).items()
-      if k in ('did', 'declaration', 'handle', 'displayName', 'avatar')
+      if k in ('avatar', 'declaration', 'did', 'displayName', 'handle')
   }
 
 

@@ -470,11 +470,15 @@ baz baj
 
     resp = client.get('/url?url=http://my/posts.html%23def&input=html&output=as1')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals([{'object': {
-      'objectType': 'note',
-      'content': 'foo',
-      'content_is_html': True,
-    }}], resp.json['items'])
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'content': 'foo',
+        'content_is_html': True,
+      },
+    }], resp.json['items'])
 
   def test_url_html_fragment_not_found(self):
     self.expect_requests_get('http://my/posts.html#xyz', """

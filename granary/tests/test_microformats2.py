@@ -826,6 +826,35 @@ Shared <a href="#">a post</a> by foo
       },
     }))
 
+  def test_json_to_activities(self):
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'content': 'foo',
+        'content_is_html': True,
+      },
+    }, {
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {'url': 'http://orig/post'},
+      'content_is_html': True,
+    }], microformats2.json_to_activities({
+      'items': [{
+        'type': ['h-entry'],
+        'properties': {
+          'content': ['foo'],
+        },
+      }, {
+        'type': ['h-entry'],
+        'properties': {
+          'repost-of': ['http://orig/post'],
+        },
+      }],
+    }))
+
+
   def test_find_author(self):
     self.assert_equals({
     'displayName': 'my name',
@@ -929,12 +958,16 @@ Shared <a href="#">a post</a> by   <span class="h-card">
 <div class="e-content p-name">foo bar<br />baz <br><br> baj</div>
 </article>"""
     activities = microformats2.html_to_activities(html)
-    self.assert_equals([{'object': {
-      'objectType': 'note',
-      'content': 'foo bar<br/>baz <br/><br/> baj',
-      'content_is_html': True,
-      'displayName': 'foo bar\nbaz \n\n baj',
-    }}], activities)
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'content': 'foo bar<br/>baz <br/><br/> baj',
+        'content_is_html': True,
+        'displayName': 'foo bar\nbaz \n\n baj',
+      },
+    }], activities)
 
   def test_html_to_activities_filters_items(self):
     """Check that we omit h-cards inside h-feeds."""

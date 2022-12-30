@@ -307,6 +307,7 @@ _Non-breaking changes:_
 * `jsonfeed`:
   * Switch from `white-space: pre` CSS to converting newlines to `<br>`s because some feed readers follow it strictly and don't even line wrap ([#456](https://github.com/snarfed/granary/issues/456)).
 * `microformats2`:
+  * Add new `json_to_activities` function.
   * `json_to_object`: handle composite `rsvp` property value.
 
 ### 6.0 - 2022-12-03

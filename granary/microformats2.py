@@ -625,7 +625,14 @@ def json_to_activities(parsed, actor=None):
     if 'h-entry' in types or 'h-event' in types or 'h-cite' in types:
       obj = json_to_object(item, actor=actor)
       obj['content_is_html'] = True
-      activities.append({'object': obj})
+      if obj.get('verb') or obj.get('objectType') == 'activity':
+        activities.append(obj)
+      else:
+        activities.append({
+          'objectType': 'activity',
+          'verb': 'post',
+          'object': obj,
+        })
 
   return activities
 
