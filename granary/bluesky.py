@@ -74,6 +74,8 @@ def from_as1(obj, from_url=None):
 
   elif type in ('article', 'mention', 'note', 'comment'):
     content = obj.get('content')
+    images = util.get_urls(obj, 'image')
+    author = obj.get('author')
 
     entities = []
     for tag in util.get_list(obj, 'tags'):
@@ -95,44 +97,44 @@ def from_as1(obj, from_url=None):
           },
         })
 
-    images = util.get_urls(obj, 'image')
-    author = obj.get('author')
-
     ret = {
-      '$type': 'app.bsky.feed.post#view',
-      'uri': util.get_url(obj),
-      'cid': 'TODO',
-      'record': {
-        'text': content,
-        'createdAt': obj.get('published', ''),
-        'embed': {
-          'images': images,
+      '$type': 'app.bsky.feed.feedViewPost',
+      'post': {
+        '$type': 'app.bsky.feed.post#view',
+        'uri': util.get_url(obj),
+        'cid': 'TODO',
+        'record': {
+          'text': content,
+          'createdAt': obj.get('published', ''),
+          'embed': {
+            'images': images,
+          },
+          'entities': entities,
         },
-        'entities': entities,
+        'author': actor_to_ref(author) if author else None,
+        'embed': {
+          'images': [{
+            'thumb': url,
+            'fullsize': url,
+          } for url in images],
+          'external': [{
+            'uri': entity['value'],
+            'title': entity['text'],
+            'description': '',
+          } for entity in entities],
+        },
+        'replyCount': 0,
+        'repostCount': 0,
+        'upvoteCount': 0,
+        'downvoteCount': 0,
+        'indexedAt': util.now().isoformat(),
+        'viewer': {},
       },
-      'author': actor_to_ref(author) if author else None,
-      'embed': {
-        'images': [{
-          'thumb': url,
-          'fullsize': url,
-        } for url in images],
-        'external': [{
-          'uri': entity['value'],
-          'title': entity['text'],
-          'description': '',
-        } for entity in entities],
-      },
-      'replyCount': 0,
-      'repostCount': 0,
-      'upvoteCount': 0,
-      'downvoteCount': 0,
-      'indexedAt': util.now().isoformat(),
-      'viewer': {},
     }
 
     in_reply_to = util.get_url(obj, 'inReplyTo')
     if in_reply_to:
-      ret['record']['reply'] = {
+      ret['post']['record']['reply'] = {
         'root': {
           'uri': in_reply_to,
           'cid': 'TODO',
@@ -144,15 +146,11 @@ def from_as1(obj, from_url=None):
       }
 
   elif verb == 'share':
-    post = from_as1(activity.get('object'))
-    ret = {
-      '$type': 'app.bsky.feed.feedViewPost',
-      'post': post,
-      'reason': {
-        '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
-        'by': actor_to_ref(actor),
-        'indexedAt': util.now().isoformat(),
-      },
+    ret = from_as1(activity.get('object'))
+    ret['reason'] = {
+      '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
+      'by': actor_to_ref(actor),
+      'indexedAt': util.now().isoformat(),
     }
 
   elif verb == 'follow':

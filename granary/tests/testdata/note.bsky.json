@@ -1,47 +1,50 @@
 {
-  "$type": "app.bsky.feed.post#view",
-  "uri": "http://example.com/blog-post-123",
-  "cid": "TODO",
-  "author": {
-    "did": "TODO",
-    "declaration": {
-      "actorType": "app.bsky.system.actorUser",
-      "cid": "TODO"
+  "$type": "app.bsky.feed.feedViewPost",
+  "post": {
+    "$type": "app.bsky.feed.post#view",
+    "uri": "http://example.com/blog-post-123",
+    "cid": "TODO",
+    "author": {
+      "did": "TODO",
+      "declaration": {
+        "actorType": "app.bsky.system.actorUser",
+        "cid": "TODO"
+      },
+      "displayName": "Ryan Barrett",
+      "avatar": "http://example.com/ryan/image"
     },
-    "displayName": "Ryan Barrett",
-    "avatar": "http://example.com/ryan/image"
-  },
-  "record": {
-    "text": "A note. link too",
-    "createdAt": "2012-02-22T20:26:41",
+    "record": {
+      "text": "A note. link too",
+      "createdAt": "2012-02-22T20:26:41",
+      "embed": {
+        "images": ["http://example.com/blog-post-123/image"]
+      },
+      "entities": [{
+        "type": "link",
+        "value": "http://my/link",
+        "text": "link",
+        "index": {
+          "start": 8,
+          "end": 12
+        }
+      }]
+    },
     "embed": {
-      "images": ["http://example.com/blog-post-123/image"]
+      "images": [{
+        "thumb": "http://example.com/blog-post-123/image",
+        "fullsize": "http://example.com/blog-post-123/image"
+      }],
+      "external": [{
+        "uri": "http://my/link",
+        "title": "link",
+        "description": ""
+      }]
     },
-    "entities": [{
-      "type": "link",
-      "value": "http://my/link",
-      "text": "link",
-      "index": {
-        "start": 8,
-        "end": 12
-      }
-    }]
-  },
-  "embed": {
-    "images": [{
-      "thumb": "http://example.com/blog-post-123/image",
-      "fullsize": "http://example.com/blog-post-123/image"
-    }],
-    "external": [{
-      "uri": "http://my/link",
-      "title": "link",
-      "description": ""
-    }]
-  },
-  "replyCount": 0,
-  "repostCount": 0,
-  "upvoteCount": 0,
-  "downvoteCount": 0,
-  "indexedAt": "2022-01-02T03:04:05+00:00",
-  "viewer": {}
+    "replyCount": 0,
+    "repostCount": 0,
+    "upvoteCount": 0,
+    "downvoteCount": 0,
+    "indexedAt": "2022-01-02T03:04:05+00:00",
+    "viewer": {}
+  }
 }
