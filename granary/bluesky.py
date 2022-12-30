@@ -16,8 +16,8 @@ def from_as1(obj, from_url=None):
 
   Args:
     obj: dict, AS1 object or activity
-    from_url: str, optional URL the original object was fetched from. Used to
-      populate the handle field.
+    from_url: str, optional URL the original object was fetched from.
+      Currently unused. TODO: remove?
 
   Returns: dict, app.bsky.* object
 
@@ -25,9 +25,13 @@ def from_as1(obj, from_url=None):
     ValueError
       if the objectType or verb fields are missing or unsupported
   """
+  activity = obj
+  verb = activity.get('verb')
+  if verb == 'post':
+    obj = activity.get('object')
+
   type = obj.get('objectType')
-  verb = obj.get('verb')
-  actor = obj.get('actor')
+  actor = activity.get('actor')
   if not type and not verb:
     raise ValueError('AS1 object missing objectType and verb fields')
 
@@ -61,14 +65,14 @@ def from_as1(obj, from_url=None):
         'cid': 'TODO',
         'actorType': 'app.bsky.system.actorUser',
       },
-      'handle': util.domain_from_link(from_url),
+      'handle': util.domain_from_link(util.get_url(obj)),
       'followersCount': 0,
       'followsCount': 0,
       'membersCount': 0,
       'postsCount': 0,
     }
 
-  elif type in ('article', 'mention', 'note'):
+  elif type in ('article', 'mention', 'note', 'comment'):
     content = obj.get('content')
 
     entities = []
@@ -92,6 +96,7 @@ def from_as1(obj, from_url=None):
         })
 
     images = util.get_urls(obj, 'image')
+    author = obj.get('author')
 
     ret = {
       '$type': 'app.bsky.feed.post#view',
@@ -99,12 +104,13 @@ def from_as1(obj, from_url=None):
       'cid': 'TODO',
       'record': {
         'text': content,
-        'createdAt': obj.get('published'),
+        'createdAt': obj.get('published', ''),
         'embed': {
           'images': images,
         },
         'entities': entities,
       },
+      'author': actor_to_ref(author) if author else None,
       'embed': {
         'images': [{
           'thumb': url,
@@ -121,31 +127,61 @@ def from_as1(obj, from_url=None):
       'upvoteCount': 0,
       'downvoteCount': 0,
       'indexedAt': util.now().isoformat(),
-      'viewer': {}
+      'viewer': {},
     }
 
+    in_reply_to = util.get_url(obj, 'inReplyTo')
+    if in_reply_to:
+      ret['record']['reply'] = {
+        'root': {
+          'uri': in_reply_to,
+          'cid': 'TODO',
+        },
+        'parent': {
+          'uri': in_reply_to,
+          'cid': 'TODO',
+        },
+      }
+
   elif verb == 'share':
+    post = from_as1(activity.get('object'))
     ret = {
-      '$type': 'app.bsky.feed.repost',
-      'subject': {
-        'uri': util.get_url(obj, 'object'),
-        'cid': 'TODO',
+      '$type': 'app.bsky.feed.feedViewPost',
+      'post': post,
+      'reason': {
+        '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
+        'by': actor_to_ref(actor),
+        'indexedAt': util.now().isoformat(),
       },
-      'createdAt': obj.get('published'),
     }
 
   elif verb == 'follow':
+    assert actor
     ret = {
       '$type': 'app.bsky.graph.follow',
       'subject': actor.get('id') or actor.get('url'),
-      'createdAt': obj.get('published'),
+      'createdAt': obj.get('published', ''),
     }
 
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
 
-  # don't trim nulls because blank fields may still be required by lexicons
-  return ret
+  # keep some fields that are required by lexicons
+  return util.trim_nulls(ret, ('createdAt', 'description', 'viewer',))
+
+
+def actor_to_ref(actor):
+  """Converts an AS1 actor to a Bluesky `app.bsky.actor.ref`.
+
+  Args:
+    actor: dict, AS1 actor
+
+  Returns: dict, `app.bsky.actor.ref` object
+  """
+  return {
+    k: v for k, v in from_as1(actor).items()
+      if k in ('did', 'declaration', 'handle', 'displayName', 'avatar')
+  }
 
 
 def to_as1(obj):

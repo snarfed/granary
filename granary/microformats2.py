@@ -602,7 +602,20 @@ def html_to_activities(html, url=None, actor=None, id=None):
   Returns:
     list of ActivityStreams activity dicts
   """
-  parsed = util.parse_mf2(html, url=url, id=id)
+  return json_to_activities(util.parse_mf2(html, url=url, id=id), actor=actor)
+
+
+def json_to_activities(parsed, actor=None):
+  """Converts parsed microformats2 JSON to ActivityStreams activities.
+
+  Args:
+    parsed: dict, parsed JSON microformats2 object
+    actor: optional author AS actor object for all activities. usually comes
+      from a rel="author" link.
+
+  Returns:
+    list of ActivityStreams activity dicts
+  """
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
 

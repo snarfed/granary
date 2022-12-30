@@ -2,6 +2,15 @@
   "$type": "app.bsky.feed.post#view",
   "uri": "http://example.com/blog-post-123",
   "cid": "TODO",
+  "author": {
+    "did": "TODO",
+    "declaration": {
+      "actorType": "app.bsky.system.actorUser",
+      "cid": "TODO"
+    },
+    "displayName": "Ryan Barrett",
+    "avatar": "http://example.com/ryan/image"
+  },
   "record": {
     "text": "A note. link too",
     "createdAt": "2012-02-22T20:26:41",
