@@ -6,8 +6,37 @@ https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 """
 import copy
 import logging
+import urllib.parse
 
 from oauth_dropins.webutil import util
+
+
+def url_to_did_web(url):
+  """Converts a URL to a did:web.
+
+  Examples:
+  * 'https://foo.com' => 'did:web:foo.com'
+  * 'https://foo.com:3000' => 'did:web:foo.com%3A3000'
+  * 'https://bar.com/baz/baj' => 'did:web:bar.com:baz:baj'
+
+  https://w3c-ccg.github.io/did-method-web/#example-creating-the-did
+
+  TODO: require https?
+
+  Args:
+    url: str
+
+  Returns: str
+  """
+  parsed = urllib.parse.urlparse(url)
+  if not parsed.netloc:
+    raise ValueError(f'Invalid URL: {url}')
+
+  did = f'did:web:{urllib.parse.quote(parsed.netloc)}'
+  if parsed.path:
+    did += f'{parsed.path.replace("/", ":")}'
+
+  return did.strip(':')
 
 
 def from_as1(obj, from_url=None):
@@ -45,16 +74,19 @@ def from_as1(obj, from_url=None):
         banner = url
         break
 
+    url = util.get_url(obj)
+    did_web = url_to_did_web(url) if url else ''
+
     ret = {
       '$type': 'app.bsky.actor.profile',
       'displayName': obj.get('displayName'),
       'description': obj.get('summary'),
       'avatar': util.get_url(obj, 'image'),
       'banner': banner,
-      'did': 'TODO',
+      'did': did_web,
       # this is a DID
       # atproto/packages/pds/src/api/app/bsky/actor/getProfile.ts#38
-      'creator': 'TODO (a DID)',
+      'creator': did_web,
       'declaration': {
         '$type': 'app.bsky.system.declRef',
         # Content ID, aka content-hash fingerprint. Immutable hash that
@@ -196,7 +228,13 @@ def from_as1(obj, from_url=None):
     raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
 
   # keep some fields that are required by lexicons
-  return util.trim_nulls(ret, ignore=('createdAt', 'description', 'text', 'viewer'))
+  return util.trim_nulls(ret, ignore=(
+    'createdAt',
+    'description',
+    'did',
+    'text',
+    'viewer',
+  ))
 
 
 def actor_to_ref(actor):

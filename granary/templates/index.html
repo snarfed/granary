@@ -124,6 +124,13 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <input name="input" type="hidden" value="rss" />
 </form></div>
 
+<div class="col-lg-2 col-sm-4 col-xs-6">
+<form method="get" action="#logins">
+  <input type="image" class="shadow" title="Bluesky" id="bluesky"
+         src="/static/bluesky_button.jpg" height="50" />
+  <input name="input" type="hidden" value="bluesky" />
+</form></div>
+
 </div>
 </div>
 
@@ -225,6 +232,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <option value="mf2-json">mf2-json</option>
   <option value="jsonfeed">jsonfeed</option>
   <option value="rss">rss</option>
+  <option value="bluesky">bluesky</option>
 </select>
 
 {% if site != 'github' %}
@@ -291,6 +299,8 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
           value="jsonfeed">jsonfeed</option>
   <option {% if input == "rss" %} selected {% endif %}
           value="rss">rss</option>
+  <option {% if input == "bluesky" %} selected {% endif %}
+          value="bluesky">bluesky</option>
 </select>
 <label>& output = </label>
 <select id="output" name="output">
@@ -302,6 +312,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <option {% if output == "mf2-json" %} selected {% endif %} value="mf2-json">mf2-json</option>
   <option {% if output == "jsonfeed" %} selected {% endif %} value="jsonfeed">jsonfeed</option>
   <option {% if output == "rss" %} selected {% endif %} value="rss">rss</option>
+  <option {% if output == "bluesky" %} selected {% endif %} value="bluesky">bluesky</option>
 </select>
 <label>& url = </label>
 <input id="url" name="url" type="url" required class="form-control"

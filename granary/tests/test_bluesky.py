@@ -11,6 +11,7 @@ from ..bluesky import (
   actor_to_ref,
   from_as1,
   to_as1,
+  url_to_did_web,
 )
 
 ACTOR_AS = {
@@ -21,7 +22,7 @@ ACTOR_AS = {
 }
 ACTOR_REF_BSKY = {
   '$type': 'app.bsky.actor.ref#withInfo',
-  'did': 'TODO',
+  'did': 'did:web:alice.com',
   'declaration': {
     '$type': 'app.bsky.system.declRef',
     'cid': 'TODO',
@@ -140,41 +141,53 @@ REPOST_BSKY['reason'] = {
 
 class TestBluesky(testutil.TestCase):
 
-    def test_from_as1_post(self):
-      self.assert_equals(POST_BSKY, from_as1(POST_AS))
+  def test_url_to_did_web(self):
+    for bad in None, '', 'foo': #, 'http://bar.com':
+      with self.assertRaises(ValueError):
+        url_to_did_web(bad)
 
-    def test_from_as1_reply(self):
-      self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
+    self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com'))
+    self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com/'))
+    self.assertEqual('did:web:foo.com%3A3000',
+                     url_to_did_web('https://foo.com:3000'))
+    self.assertEqual('did:web:bar.com:baz:baj',
+                     url_to_did_web('https://bar.com/baz/baj'))
 
-    def test_from_as1_repost(self):
-      self.assert_equals(REPOST_BSKY, from_as1(REPOST_AS))
+  def test_from_as1_post(self):
+    self.assert_equals(POST_BSKY, from_as1(POST_AS))
 
-    def test_from_as1_object_vs_activity(self):
-      obj = {
-        'objectType': 'note',
-        'content': 'foo',
-      }
-      activity = {
-        'verb': 'post',
-        'object': obj,
-      }
-      self.assert_equals(from_as1(obj), from_as1(activity))
+  def test_from_as1_reply(self):
+    self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
 
-    def test_to_as1_missing_objectType(self):
-        with self.assertRaises(ValueError):
-            to_as1({'foo': 'bar'})
+  def test_from_as1_repost(self):
+    self.assert_equals(REPOST_BSKY, from_as1(REPOST_AS))
 
-    def test_to_as1_unknown_objectType(self):
-        with self.assertRaises(ValueError):
-            to_as1({'objectType': 'poll'})
+  def test_from_as1_object_vs_activity(self):
+    obj = {
+    'objectType': 'note',
+    'content': 'foo',
+    }
+    activity = {
+    'verb': 'post',
+    'object': obj,
+    }
+    self.assert_equals(from_as1(obj), from_as1(activity))
 
-    def test_to_as1_missing_type(self):
-        with self.assertRaises(ValueError):
-            to_as1({'foo': 'bar'})
+  def test_to_as1_missing_objectType(self):
+    with self.assertRaises(ValueError):
+      to_as1({'foo': 'bar'})
 
-    def test_to_as1_unknown_type(self):
-        with self.assertRaises(ValueError):
-            to_as1({'$type': 'app.bsky.foo'})
+  def test_to_as1_unknown_objectType(self):
+    with self.assertRaises(ValueError):
+      to_as1({'objectType': 'poll'})
 
-    def test_actor_to_ref(self):
-      self.assert_equals(ACTOR_REF_BSKY, actor_to_ref(ACTOR_AS))
+  def test_to_as1_missing_type(self):
+    with self.assertRaises(ValueError):
+      to_as1({'foo': 'bar'})
+
+  def test_to_as1_unknown_type(self):
+    with self.assertRaises(ValueError):
+      to_as1({'$type': 'app.bsky.foo'})
+
+  def test_actor_to_ref(self):
+    self.assert_equals(ACTOR_REF_BSKY, actor_to_ref(ACTOR_AS))

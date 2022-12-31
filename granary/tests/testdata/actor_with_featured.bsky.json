@@ -4,13 +4,13 @@
   "handle": "example.com",
   "avatar": "http://example.com/avatar",
   "banner": "http://example.com/header",
-  "creator": "TODO (a DID)",
+  "creator": "did:web:example.com:martin",
   "declaration": {
     "$type": "app.bsky.system.declRef",
     "actorType": "app.bsky.system.actorUser",
     "cid": "TODO"
   },
-  "did": "TODO",
+  "did": "did:web:example.com:martin",
   "followersCount": 0,
   "followsCount": 0,
   "membersCount": 0,

@@ -6,7 +6,7 @@
     "cid": "TODO",
     "author": {
       "$type": "app.bsky.actor.ref#withInfo",
-      "did": "TODO",
+      "did": "did:web:example.com:bob",
       "declaration": {
         "$type": "app.bsky.system.declRef",
         "actorType": "app.bsky.system.actorUser",
@@ -30,7 +30,7 @@
     "$type": "app.bsky.feed.feedViewPost#reasonRepost",
     "by": {
       "$type": "app.bsky.actor.ref#withInfo",
-      "did": "TODO",
+      "did": "did:web:example.com:alice",
       "declaration": {
         "$type": "app.bsky.system.declRef",
         "actorType": "app.bsky.system.actorUser",
