@@ -20,7 +20,11 @@
       "createdAt": "2012-02-22T20:26:41",
       "embed": {
         "$type": "app.bsky.embed.images",
-        "images": ["http://example.com/blog-post-123/image"]
+        "images": [{
+          "$type": "app.bsky.embed.images#image",
+          "image": "TODO binary http://example.com/blog-post-123/image",
+          "alt": "TODO"
+        }]
       },
       "entities": [{
         "type": "link",
@@ -33,15 +37,12 @@
       }]
     },
     "embed": {
-      "$type": "app.bsky.embed.images#presented TODO",
+      "$type": "app.bsky.embed.images#presented",
       "images": [{
+        "$type": "app.bsky.embed.images#presentedImage",
         "thumb": "http://example.com/blog-post-123/image",
-        "fullsize": "http://example.com/blog-post-123/image"
-      }],
-      "external": [{
-        "uri": "http://my/link",
-        "title": "link",
-        "description": ""
+        "fullsize": "http://example.com/blog-post-123/image",
+        "alt": "TODO"
       }]
     },
     "replyCount": 0,

@@ -114,6 +114,45 @@ def from_as1(obj, from_url=None):
           },
         })
 
+    post_embed = record_embed = None
+    if images:
+      post_embed = {
+        '$type': 'app.bsky.embed.images#presented',
+        'images': [{
+          '$type': 'app.bsky.embed.images#presentedImage',
+          'thumb': url,
+          'fullsize': url,
+          'alt': 'TODO',
+        } for url in images[:4]],
+      }
+      record_embed = {
+        '$type': 'app.bsky.embed.images',
+        'images': [{
+          '$type': 'app.bsky.embed.images#image',
+          'image': f'TODO binary {url}',
+          'alt': 'TODO',
+        } for url in images[:4]],
+      }
+    elif entities:
+      post_embed = {
+        '$type': 'app.bsky.embed.external#presented',
+        'external': [{
+          '$type': 'app.bsky.embed.external#presentedExternal',
+          'uri': entity['value'],
+          'title': entity['text'],
+          'description': '',
+        } for entity in entities],
+      }
+      record_embed = {
+        '$type': 'app.bsky.embed.external',
+        'external': [{
+          '$type': 'app.bsky.embed.external',
+          'uri': entity['value'],
+          'title': entity['text'],
+          'description': '',
+        } for entity in entities],
+      }
+
     ret = {
       '$type': 'app.bsky.feed.feedViewPost',
       'post': {
@@ -123,23 +162,11 @@ def from_as1(obj, from_url=None):
         'record': {
           'text': content,
           'createdAt': obj.get('published', ''),
-          'embed': {
-            'images': images,
-          },
+          'embed': record_embed,
           'entities': entities,
         },
         'author': actor_to_ref(author) if author else None,
-        'embed': {
-          'images': [{
-            'thumb': url,
-            'fullsize': url,
-          } for url in images],
-          'external': [{
-            'uri': entity['value'],
-            'title': entity['text'],
-            'description': '',
-          } for entity in entities],
-        },
+        'embed': post_embed,
         'replyCount': 0,
         'repostCount': 0,
         'upvoteCount': 0,
