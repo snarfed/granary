@@ -35,6 +35,7 @@ from granary import (
   as1,
   as2,
   atom,
+  bluesky,
   jsonfeed,
   microformats2,
   rss,
@@ -57,6 +58,7 @@ INPUTS = (
   'as1',
   'as2',
   'atom',
+  # 'bluesky',
   'html',
   'json-mf2',
   'jsonfeed',
@@ -105,6 +107,7 @@ FORMATS = {
   'as1-xml': 'application/xml',
   'as2': as2.CONTENT_TYPE,
   'atom': atom.CONTENT_TYPE,
+  'bluesky': 'application/json',
   'html': 'text/html',
   'json': 'application/json',
   'json-mf2': 'application/mf2+json',
@@ -275,6 +278,8 @@ def url():
         raise BadRequest(f'Could not parse {final_url} as XML: {e}')
       except ValueError as e:
         raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
+    elif input == 'bluesky':
+      activities = [bluesky.to_as1(obj) for obj in body_items]
     elif input == 'html':
       activities = microformats2.html_to_activities(resp, url=final_url,
                                                     id=fragment, actor=actor)
@@ -394,6 +399,9 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
         'sorted': None,
       })
       return util.trim_nulls(response), headers
+
+    elif format == 'bluesky':
+      return {'feed': [bluesky.from_as1(a) for a in activities]}, headers
 
     elif format == 'atom':
       hub = request.values.get('hub')

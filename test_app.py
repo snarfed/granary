@@ -8,7 +8,7 @@ import socket
 from urllib.parse import quote
 
 from granary import as2
-from granary.tests import test_instagram
+from granary.tests import test_bluesky, test_instagram
 from mox3 import mox
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -623,6 +623,23 @@ not RSS!
     self.assertIn('<title>2toPonder</title>', resp.get_data(as_text=True))
     self.assertIn('<logo>https://foo/art.jpg</logo>', resp.get_data(as_text=True))
 
+  def test_url_as1_to_bluesky(self):
+    self.expect_requests_get('http://my/posts', [
+      test_bluesky.POST_AS,
+      test_bluesky.REPLY_AS,
+      test_bluesky.REPOST_AS,
+    ])
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://my/posts&input=as1&output=bluesky')
+    self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
+    self.assert_equals({
+      'feed': [
+        test_bluesky.POST_BSKY,
+        test_bluesky.REPLY_BSKY,
+        test_bluesky.REPOST_BSKY,
+      ],
+    }, resp.json)
 
   def test_url_bad_input(self):
     resp = client.get('/url?url=http://my/posts.json&input=foo')
