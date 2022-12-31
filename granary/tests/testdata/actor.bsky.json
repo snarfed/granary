@@ -6,6 +6,7 @@
   "avatar": "http://example.com/martin/image",
   "creator": "TODO (a DID)",
   "declaration": {
+    "$type": "app.bsky.system.declRef",
     "actorType": "app.bsky.system.actorUser",
     "cid": "TODO"
   },

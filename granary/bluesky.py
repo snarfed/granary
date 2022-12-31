@@ -56,6 +56,7 @@ def from_as1(obj, from_url=None):
       # atproto/packages/pds/src/api/app/bsky/actor/getProfile.ts#38
       'creator': 'TODO (a DID)',
       'declaration': {
+        '$type': 'app.bsky.system.declRef',
         # Content ID, aka content-hash fingerprint. Immutable hash that
         # identifies a node in a PDS.
         # https://atproto.com/guides/applications#record-types
@@ -151,11 +152,14 @@ def from_as1(obj, from_url=None):
     in_reply_to = util.get_url(obj, 'inReplyTo')
     if in_reply_to:
       ret['post']['record']['reply'] = {
+        '$type': 'app.bsky.feed.post#replyRef',
         'root': {
+          '$type': 'com.atproto.repo.strongRef',
           'uri': in_reply_to,
           'cid': 'TODO',
         },
         'parent': {
+          '$type': 'com.atproto.repo.strongRef',
           'uri': in_reply_to,
           'cid': 'TODO',
         },

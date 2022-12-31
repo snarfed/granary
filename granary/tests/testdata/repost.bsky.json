@@ -5,8 +5,10 @@
     "uri": "http://example.com/original/post",
     "cid": "TODO",
     "author": {
+      "$type": "app.bsky.actor.ref#withInfo",
       "did": "TODO",
       "declaration": {
+        "$type": "app.bsky.system.declRef",
         "actorType": "app.bsky.system.actorUser",
         "cid": "TODO"
       },
@@ -27,8 +29,10 @@
   "reason": {
     "$type": "app.bsky.feed.feedViewPost#reasonRepost",
     "by": {
+      "$type": "app.bsky.actor.ref#withInfo",
       "did": "TODO",
       "declaration": {
+        "$type": "app.bsky.system.declRef",
         "actorType": "app.bsky.system.actorUser",
         "cid": "TODO"
       },

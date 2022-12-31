@@ -5,8 +5,10 @@
     "uri": "http://example.com/blog-post-123",
     "cid": "TODO",
     "author": {
+      "$type": "app.bsky.actor.ref#withInfo",
       "did": "TODO",
       "declaration": {
+        "$type": "app.bsky.system.declRef",
         "actorType": "app.bsky.system.actorUser",
         "cid": "TODO"
       },
@@ -17,6 +19,7 @@
       "text": "A note. link too",
       "createdAt": "2012-02-22T20:26:41",
       "embed": {
+        "$type": "app.bsky.embed.images",
         "images": ["http://example.com/blog-post-123/image"]
       },
       "entities": [{
@@ -30,6 +33,7 @@
       }]
     },
     "embed": {
+      "$type": "app.bsky.embed.images#presented TODO",
       "images": [{
         "thumb": "http://example.com/blog-post-123/image",
         "fullsize": "http://example.com/blog-post-123/image"

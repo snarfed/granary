@@ -23,6 +23,7 @@ ACTOR_REF_BSKY = {
   '$type': 'app.bsky.actor.ref#withInfo',
   'did': 'TODO',
   'declaration': {
+    '$type': 'app.bsky.system.declRef',
     'cid': 'TODO',
     'actorType': 'app.bsky.system.actorUser',
   },
@@ -93,11 +94,14 @@ REPLY_BSKY['post'].update({
     'text': 'I hereby reply to this',
     'createdAt': '2008-08-08T03:04:05',
     'reply': {
+      '$type': 'app.bsky.feed.post#replyRef',
       'root': {
+        '$type': 'com.atproto.repo.strongRef',
         'uri': 'http://orig/post',
         'cid': 'TODO',
       },
       'parent': {
+        '$type': 'com.atproto.repo.strongRef',
         'uri': 'http://orig/post',
         'cid': 'TODO',
       },

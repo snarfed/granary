@@ -6,6 +6,7 @@
   "banner": "http://example.com/header",
   "creator": "TODO (a DID)",
   "declaration": {
+    "$type": "app.bsky.system.declRef",
     "actorType": "app.bsky.system.actorUser",
     "cid": "TODO"
   },
