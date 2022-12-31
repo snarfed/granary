@@ -38,13 +38,23 @@ def read_json(filename):
     raise
 
 
-def read(filename):
-  """Reads a file, decoding JSON if possible."""
+def read(filename, ignore_fields=()):
+  """Reads a file, decoding JSON if possible, optionally ignoring some fields."""
   if os.path.splitext(filename)[1] in ('.html', '.xml'):
     with open(filename, encoding='utf-8') as f:
       return f.read()
   else:
-    return read_json(filename)
+    return discard_fields(read_json(filename), ignore_fields)
+
+
+def discard_fields(obj, fields):
+  if isinstance(obj, dict):
+    return {k: discard_fields(v, fields) for k, v in obj.items()
+            if k not in fields}
+  elif isinstance(obj, (tuple, list, set, frozenset)):
+    return [discard_fields(elem, fields) for elem in obj]
+  else:
+    return obj
 
 
 def create_test_function(fn, original, expected):
@@ -62,9 +72,7 @@ def create_test_function(fn, original, expected):
 prevdir = os.getcwd()
 os.chdir(os.path.join(os.path.dirname(__file__), 'testdata/'))
 
-ACTOR = read_json('actor.as.json')
-del ACTOR['id']
-del ACTOR['username']
+ACTOR = read('actor.as.json', ignore_fields=('id', 'username'))
 
 # wrap jsonfeed functions to add/remove actors and wrap/unwrap activities
 def activity_to_jsonfeed(obj):
@@ -94,40 +102,42 @@ def rss_from_activities(activities):
 def rss_to_objects(feed):
   return [a['object'] for a in rss.to_activities(feed)]
 
-# source extension, destination extension, conversion function, exclude prefix.
-# destinations take precedence in the order they appear. only the first (source,
-# dest) pair for a given prefix is tested. this is how eg mf2-from-as.json gets
-# tested even if as.json exists.
+# source extension, destination extension, conversion function, exclude prefix,
+# ignore fields. destinations take precedence in the order they appear. only the
+# first (source, dest) pair for a given prefix is tested. this is how eg
+# mf2-from-as.json gets tested even if as.json exists.
 mappings = (
   ('as.json', ['mf2-from-as.json', 'mf2.json'], microformats2.object_to_json,
   # doesn't handle h-feed yet
-   ('feed_with_audio_video',)),
-  ('as.json', ['mf2-from-as.html', 'mf2.html'], microformats2.object_to_html, ()),
+   ('feed_with_audio_video',), ()),
+  ('as.json', ['mf2-from-as.html', 'mf2.html'], microformats2.object_to_html, (), ()),
   ('mf2.json', ['as-from-mf2.json', 'as.json'], microformats2.json_to_object,
   # doesn't handle h-feed yet
-   ('feed_with_audio_video',)),
+   ('feed_with_audio_video',), ()),
   ('mf2.json', ['mf2-from-json.html', 'mf2.html'], microformats2.json_to_html,
    # we do not format h-media photos properly in html
-   ('note_with_composite_photo',)),
+   ('note_with_composite_photo',), ()),
   # not ready yet
   # ('mf2.html', ['as-from-mf2.json', 'as.json'], html_to_activity, ()),
-  ('as.json', ['feed-from-as.json', 'feed.json'], activity_to_jsonfeed, ()),
-  ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, ()),
-  ('as.json', ['as2-from-as.json', 'as2.json'], as2.from_as1, ()),
-  ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, ()),
-  ('as.json', ['rss.xml'], rss_from_activities, ()),
-  ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, ()),
-  ('as.json', ['bsky.json'], bluesky.from_as1, ()),
+  ('as.json', ['feed-from-as.json', 'feed.json'], activity_to_jsonfeed, (), ()),
+  ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, (), ()),
+  ('as.json', ['as2-from-as.json', 'as2.json'], as2.from_as1, (), ()),
+  ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, (), ()),
+  ('as.json', ['rss.xml'], rss_from_activities, (), ()),
+  ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
+  ('as.json', ['bsky.json'], bluesky.from_as1, (), ()),
+  ('bsky.json', ['as.json'], bluesky.to_as1, (),
+   ('id', 'location', 'username')),
 )
 
 test_funcs = {}
-for src_ext, dst_exts, fn, excludes in mappings:
+for src_ext, dst_exts, fn, exclude_prefixes, ignore_fields in mappings:
   for src, dst in filepairs(src_ext, dst_exts):
-    if any(dst.startswith(exclude) for exclude in excludes):
+    if any(dst.startswith(prefix) for prefix in exclude_prefixes):
       continue
 
-    expected = read(dst)
-    original = read(src)
+    expected = read(dst, ignore_fields)
+    original = read(src, ignore_fields)
     test_name = (
       f'test_{fn.__name__}_{src[:-len(src_ext)]}'
     ).replace('.', '_').replace('-', '_').strip('_')
