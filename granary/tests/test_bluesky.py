@@ -9,6 +9,7 @@ from oauth_dropins.webutil.testutil import NOW, requests_response
 
 from ..bluesky import (
   actor_to_ref,
+  did_web_to_url,
   from_as1,
   to_as1,
   url_to_did_web,
@@ -142,16 +143,24 @@ REPOST_BSKY['reason'] = {
 class TestBluesky(testutil.TestCase):
 
   def test_url_to_did_web(self):
-    for bad in None, '', 'foo': #, 'http://bar.com':
+    for bad in None, '', 'foo', 'did:web:bar.com':
       with self.assertRaises(ValueError):
         url_to_did_web(bad)
 
     self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com'))
     self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com/'))
-    self.assertEqual('did:web:foo.com%3A3000',
-                     url_to_did_web('https://foo.com:3000'))
-    self.assertEqual('did:web:bar.com:baz:baj',
-                     url_to_did_web('https://bar.com/baz/baj'))
+    self.assertEqual('did:web:foo.com%3A3000', url_to_did_web('https://foo.com:3000'))
+    self.assertEqual('did:web:bar.com:baz:baj', url_to_did_web('https://bar.com/baz/baj'))
+
+  def test_did_web_to_url(self):
+    for bad in None, '', 'foo' 'https://bar.com':
+      with self.assertRaises(ValueError):
+        did_web_to_url(bad)
+
+    self.assertEqual('https://foo.com/', did_web_to_url('did:web:foo.com'))
+    self.assertEqual('https://foo.com/', did_web_to_url('did:web:foo.com:'))
+    self.assertEqual('https://foo.com:3000/', did_web_to_url('did:web:foo.com%3A3000'))
+    self.assertEqual('https://bar.com/baz/baj', did_web_to_url('did:web:bar.com:baz:baj'))
 
   def test_from_as1_post(self):
     self.assert_equals(POST_BSKY, from_as1(POST_AS))

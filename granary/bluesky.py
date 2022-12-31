@@ -39,6 +39,36 @@ def url_to_did_web(url):
   return did.strip(':')
 
 
+def did_web_to_url(did):
+  """Converts a did:web to a URL.
+
+  Examples:
+  * 'did:web:foo.com' => 'https://foo.com'
+  * 'did:web:foo.com%3A3000' => 'https://foo.com:3000'
+  * 'did:web:bar.com:baz:baj' => 'https://bar.com/baz/baj'
+
+  https://w3c-ccg.github.io/did-method-web/#read-resolve
+
+  Args:
+    did: str
+
+  Returns: str
+  """
+  if not did or not did.startswith('did:web:'):
+    raise ValueError(f'Invalid did:web: {did}')
+
+  did = did.removeprefix('did:web:')
+  if ':' in did:
+    host, path = did.split(':', 1)
+  else:
+    host = did
+    path = ''
+
+  host = urllib.parse.unquote(host)
+  path = urllib.parse.unquote(path.replace(':', '/'))
+  return f'https://{host}/{path}'
+
+
 def from_as1(obj, from_url=None):
   """Converts an AS1 object to a Bluesky object.
 
@@ -279,7 +309,25 @@ def to_as1(obj):
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type == 'app.bsky.actor.profile':
     return {
+      'objectType': 'person',
+      'displayName': obj.get('displayName'),
+      'description': obj.get('description'),
+      'image': [
+        {'url': obj.get('avatar')},
+        {'url': obj.get('banner'), 'objectType': 'featured'},
+      ],
     }
+  elif type == 'app.bsky.actor.ref#withInfo':
+    ref = to_as1(obj)
+    ref.update({
+      'objectType': 'person',
+      'displayName': obj.get('displayName'),
+      'description': obj.get('description'),
+      'image': [
+        {'url': obj.get('avatar')},
+        {'url': obj.get('banner'), 'objectType': 'featured'},
+      ],
+    })
   elif type == 'app.bsky.feed.post':
     return {
     }
@@ -291,15 +339,3 @@ def to_as1(obj):
     }
 
   raise ValueError(f'Bluesky object has unknown $type: {type}')
-
-
-# class Bluesky(source.Source):
-#   """Bluesky source class. See file docstring and Source class for details."""
-
-#   DOMAIN = 'bsky.app'
-#   BASE_URL = 'https://bsky.app'
-#   NAME = 'Bluesky'
-#   # OPTIMIZED_COMMENTS = None  # TODO
-
-#   def __init__(self):
-#     pass
