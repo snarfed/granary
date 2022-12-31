@@ -4,6 +4,7 @@ https://bsky.app/
 https://atproto.com/lexicons/app-bsky-actor
 https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 """
+import copy
 import logging
 
 from oauth_dropins.webutil import util
@@ -168,19 +169,25 @@ def from_as1(obj, from_url=None):
 
 
 def actor_to_ref(actor):
-  """Converts an AS1 actor to a Bluesky `app.bsky.actor.ref`.
+  """Converts an AS1 actor to a Bluesky `app.bsky.actor.ref#withInfo`.
 
   Args:
     actor: dict, AS1 actor
 
-  Returns: dict, `app.bsky.actor.ref` object
+  Returns: dict, `app.bsky.actor.ref#withInfo` object
   """
+  if not actor:
+    return None
+
+  actor = copy.deepcopy(actor)
   actor.setdefault('objectType', 'person')
-  return {
+
+  ref = {
     k: v for k, v in from_as1(actor).items()
       if k in ('avatar', 'declaration', 'did', 'displayName', 'handle')
   }
-
+  ref['$type'] = 'app.bsky.actor.ref#withInfo'
+  return ref
 
 def to_as1(obj):
   """Converts a Bluesky object to an AS1 object.
