@@ -16,14 +16,14 @@
       "avatar": "http://example.com/ryan/image"
     },
     "record": {
+      "$type": "app.bsky.feed.post",
       "text": "A note. link too",
       "createdAt": "2012-02-22T20:26:41",
       "embed": {
         "$type": "app.bsky.embed.images",
         "images": [{
           "$type": "app.bsky.embed.images#image",
-          "image": "TODO binary http://example.com/blog-post-123/image",
-          "alt": "TODO"
+          "image": "http://example.com/blog-post-123/image"
         }]
       },
       "entities": [{
@@ -41,8 +41,7 @@
       "images": [{
         "$type": "app.bsky.embed.images#presentedImage",
         "thumb": "http://example.com/blog-post-123/image",
-        "fullsize": "http://example.com/blog-post-123/image",
-        "alt": "TODO"
+        "fullsize": "http://example.com/blog-post-123/image"
       }]
     },
     "replyCount": 0,

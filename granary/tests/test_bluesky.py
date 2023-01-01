@@ -58,6 +58,7 @@ POST_BSKY = {
     'uri': 'http://orig/post',
     'cid': 'TODO',
     'record': {
+      '$type': 'app.bsky.feed.post',
       'text': 'My post',
       'createdAt': '2007-07-07T03:04:05',
     },
@@ -93,6 +94,7 @@ REPLY_BSKY = copy.deepcopy(POST_BSKY)
 REPLY_BSKY['post'].update({
   'uri': 'http://a/reply',
   'record': {
+    '$type': 'app.bsky.feed.post',
     'text': 'I hereby reply to this',
     'createdAt': '2008-08-08T03:04:05',
     'reply': {
@@ -130,8 +132,9 @@ REPOST_HTML = """
 """
 REPOST_BSKY = copy.deepcopy(POST_BSKY)
 REPOST_BSKY['post']['record'].update({
-    'text': '',
-    'createdAt': '',
+  '$type': 'app.bsky.feed.post',
+  'text': '',
+  'createdAt': '',
 })
 REPOST_BSKY['reason'] = {
   '$type': 'app.bsky.feed.feedViewPost#reasonRepost',

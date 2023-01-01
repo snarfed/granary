@@ -1,0 +1,19 @@
+{
+  "objectType": "activity",
+  "verb": "share",
+  "object": {
+    "author": {
+      "objectType": "person",
+      "displayName": "Bob",
+      "url": "https://example.com/bob"
+    },
+    "content": "The original post",
+    "url": "http://example.com/original/post",
+    "objectType": "note"
+  },
+  "actor": {
+    "objectType": "person",
+    "displayName": "Alice",
+    "url": "https://example.com/alice"
+  }
+}

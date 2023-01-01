@@ -153,7 +153,6 @@ def from_as1(obj, from_url=None):
 
   elif verb == 'post' and type in ('article', 'mention', 'note', 'comment'):
     content = obj.get('content', '')
-    images = util.get_urls(obj, 'image')
     author = obj.get('author')
 
     entities = []
@@ -177,23 +176,24 @@ def from_as1(obj, from_url=None):
         })
 
     post_embed = record_embed = None
+    images = util.get_list(obj, 'image')
     if images:
       post_embed = {
         '$type': 'app.bsky.embed.images#presented',
         'images': [{
           '$type': 'app.bsky.embed.images#presentedImage',
-          'thumb': url,
-          'fullsize': url,
-          'alt': 'TODO',
-        } for url in images[:4]],
+          'thumb': img.get('url'),
+          'fullsize': img.get('url'),
+          'alt': img.get('displayName'),
+        } for img in images[:4]],
       }
       record_embed = {
         '$type': 'app.bsky.embed.images',
         'images': [{
           '$type': 'app.bsky.embed.images#image',
-          'image': f'TODO binary {url}',
-          'alt': 'TODO',
-        } for url in images[:4]],
+          'image': img.get('url'),
+          'alt': img.get('displayName'),
+        } for img in images[:4]],
       }
     elif entities:
       post_embed = {
@@ -222,6 +222,7 @@ def from_as1(obj, from_url=None):
         'uri': util.get_url(obj),
         'cid': 'TODO',
         'record': {
+          '$type': 'app.bsky.feed.post',
           'text': content,
           'createdAt': obj.get('published', ''),
           'embed': record_embed,
@@ -302,6 +303,9 @@ def to_as1(obj):
     ValueError
     if the $type field is missing or unsupported
   """
+  if not obj:
+    return {}
+
   type = obj.get('$type')
   if not type:
     raise ValueError('Bluesky object missing $type field')
@@ -315,7 +319,7 @@ def to_as1(obj):
 
     did = obj.get('did')
 
-    return {
+    ret = {
       'objectType': 'person',
       'displayName': obj.get('displayName'),
       'summary': obj.get('description'),
@@ -324,13 +328,64 @@ def to_as1(obj):
     }
 
   elif type == 'app.bsky.feed.post':
-    return {
-    }
-  elif type == 'app.bsky.feed.repost':
-    return {
-    }
-  elif type == 'app.bsky.graph.follow':
-    return {
+    tags = []
+    for entity in obj.get('entities', []):
+      if entity.get('type') == 'link':
+        index = entity.get('index')
+        start = index.get('start', 0)
+        end = index.get('end', 0)
+        tags.append({
+          'url': entity.get('value'),
+          'startIndex': start,
+          'length': end - start,
+        })
+
+    in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
+
+    ret = {
+      'objectType': 'comment' if in_reply_to else 'note',
+      'content': obj.get('text', ''),
+      'inReplyTo': [{'url': in_reply_to}],
+      'published': obj.get('createdAt', ''),
+      'tags': tags,
     }
 
-  raise ValueError(f'Bluesky object has unknown $type: {type}')
+  elif type == 'app.bsky.feed.post#view':
+    ret = to_as1(obj.get('record'))
+    ret.update({
+      'url': obj.get('uri'),
+      'author': to_as1(obj.get('author')),
+      'image': to_as1(obj.get('embed')),
+    })
+
+  elif type == 'app.bsky.embed.images#presented':
+    ret = [{
+      'url': img.get('fullsize'),
+      'displayName': img.get('alt'),
+    } for img in obj.get('images', [])]
+
+  elif type == 'app.bsky.feed.feedViewPost':
+    ret = to_as1(obj.get('post'))
+    reason = obj.get('reason')
+    if reason and reason.get('$type') == 'app.bsky.feed.feedViewPost#reasonRepost':
+      ret = {
+        'objectType': 'activity',
+        'verb': 'share',
+        'object': ret,
+        'actor': to_as1(reason.get('by')),
+      }
+
+  elif type == 'app.bsky.graph.follow':
+    ret = {
+      'objectType': 'activity',
+      'verb': 'follow',
+      'actor': {
+        'url': obj.get('subject'),
+      },
+    }
+
+  else:
+    raise ValueError(f'Bluesky object has unknown $type: {type}')
+
+  return util.trim_nulls(ret)
+

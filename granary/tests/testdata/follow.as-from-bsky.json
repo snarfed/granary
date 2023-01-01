@@ -1,0 +1,7 @@
+{
+  "objectType": "activity",
+  "verb": "follow",
+  "actor": {
+    "url": "http://follower"
+  }
+}

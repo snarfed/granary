@@ -16,6 +16,7 @@
       "displayName": "Bob"
     },
     "record": {
+      "$type": "app.bsky.feed.post",
       "text": "The original post",
       "createdAt": ""
     },
