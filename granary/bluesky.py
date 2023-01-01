@@ -307,27 +307,22 @@ def to_as1(obj):
     raise ValueError('Bluesky object missing $type field')
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type == 'app.bsky.actor.profile':
+  if type in ('app.bsky.actor.profile', 'app.bsky.actor.ref#withInfo'):
+    images = [{'url': obj.get('avatar')}]
+    banner = obj.get('banner')
+    if banner:
+      images.append({'url': obj.get('banner'), 'objectType': 'featured'})
+
+    did = obj.get('did')
+
     return {
       'objectType': 'person',
       'displayName': obj.get('displayName'),
-      'description': obj.get('description'),
-      'image': [
-        {'url': obj.get('avatar')},
-        {'url': obj.get('banner'), 'objectType': 'featured'},
-      ],
+      'summary': obj.get('description'),
+      'image': images,
+      'url': did_web_to_url(did) if did else None,
     }
-  elif type == 'app.bsky.actor.ref#withInfo':
-    ref = to_as1(obj)
-    ref.update({
-      'objectType': 'person',
-      'displayName': obj.get('displayName'),
-      'description': obj.get('description'),
-      'image': [
-        {'url': obj.get('avatar')},
-        {'url': obj.get('banner'), 'objectType': 'featured'},
-      ],
-    })
+
   elif type == 'app.bsky.feed.post':
     return {
     }

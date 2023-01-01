@@ -2,7 +2,7 @@
   "@context": "https://www.w3.org/ns/activitystreams",
   "type": "Person",
   "id": "tag:example.com,2011:martin",
-  "url": "http://example.com/martin",
+  "url": "https://example.com/martin",
   "name": "Martin Smith",
   "icon": {"type": "Image", "url": "http://example.com/avatar"},
   "image": [
@@ -14,7 +14,7 @@
     {
       "type": "PropertyValue",
       "name": "Link",
-      "value": "<a rel=\"me\" href=\"http://example.com/martin\">example.com/martin</a>"
+      "value": "<a rel=\"me\" href=\"https://example.com/martin\">example.com/martin</a>"
     }
   ]
 }
