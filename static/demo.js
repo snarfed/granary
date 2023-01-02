@@ -76,7 +76,28 @@ function update_form() {
   }
 }
 
+function maybe_submit() {
+  if (new URL(document.location).searchParams.has('submit')) {
+    if (getParam('input') && getParam('url')) {
+      render_url_request()
+      document.getElementById('url-form').submit()
+      spinner('visible')
+      document.getElementById('logins').scrollIntoView(true)
+    } else if (getParam('auth_entity')) {
+      render_demo_request()
+      document.getElementById('demo-form').submit()
+      spinner('visible')
+      document.getElementById('logins').scrollIntoView(true)
+    }
+  }
+}
+
 function get(id) {
   var elem = document.getElementById(id);
   return elem ? encodeURIComponent(elem.value) : '';
+}
+
+function getParam(name) {
+  params = new URL(document.location).searchParams
+  return params.has(name) ? params.get(name) : null
 }

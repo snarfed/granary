@@ -34,7 +34,12 @@ function onHashChange() {
 }
 window.addEventListener('hashchange', onHashChange);
 document.addEventListener('DOMContentLoaded', onHashChange);
-window.onload = update_form();
+
+function update_and_maybe_submit() {
+  update_form();
+  maybe_submit();
+}
+window.onload = update_and_maybe_submit;
 
 function spinner(visibility) {
   elems = document.getElementsByClassName('spinner');
@@ -316,7 +321,7 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 </select>
 <label>& url = </label>
 <input id="url" name="url" type="url" required class="form-control"
-       placeholder="http://example.com/post.html" size="30" />
+       placeholder="http://example.com/post.html" size="30" value="{{ url }}" />
 
 <input type="hidden" name="plaintext" value="true" />
 <input type="hidden" name="cache" value="false" />
