@@ -8,6 +8,7 @@ import copy
 import logging
 import urllib.parse
 
+from granary.source import Source, OMIT_LINK
 from oauth_dropins.webutil import util
 
 
@@ -152,29 +153,37 @@ def from_as1(obj, from_url=None):
     }
 
   elif verb == 'post' and type in ('article', 'mention', 'note', 'comment'):
-    content = obj.get('content', '')
-    author = obj.get('author')
+    # convert text to HTML and truncate
+    src = Bluesky()
+    text = src._content_for_create(obj)
+    is_html = text != (obj.get('summary') or obj.get('content') or obj.get('name'))
+    text = src.truncate(text, None, OMIT_LINK)
 
+    # text tags
     entities = []
+    content = obj.get('content')
     for tag in util.get_list(obj, 'tags'):
       url = tag.get('url')
       if url:
         try:
           start = int(tag.get('startIndex'))
+          if is_html and start:
+            raise NotImplementedError('HTML content is not supported with index tags')
           end = start + int(tag.get('length'))
-          text = content[start:end]
+          tag_text = content[start:end] if content else None
         except (ValueError, IndexError):
-          text = start = end = None
+          tag_text = start = end = None
         entities.append({
           'type': 'link',
           'value': url,
-          'text': text,
+          'text': tag_text,
           'index': {
             'start': start,
             'end': end,
           },
         })
 
+    # images
     post_embed = record_embed = None
     images = util.get_list(obj, 'image')
     if images:
@@ -208,12 +217,14 @@ def from_as1(obj, from_url=None):
       record_embed = {
         '$type': 'app.bsky.embed.external',
         'external': [{
-          '$type': 'app.bsky.embed.external',
+          '$type': 'app.bsky.embed.external#external',
           'uri': entity['value'],
           'title': entity['text'],
           'description': '',
         } for entity in entities],
       }
+
+    author = obj.get('author')
 
     ret = {
       '$type': 'app.bsky.feed.feedViewPost',
@@ -223,7 +234,7 @@ def from_as1(obj, from_url=None):
         'cid': 'TODO',
         'record': {
           '$type': 'app.bsky.feed.post',
-          'text': content,
+          'text': text,
           'createdAt': obj.get('published', ''),
           'embed': record_embed,
           'entities': entities,
@@ -389,3 +400,11 @@ def to_as1(obj):
 
   return util.trim_nulls(ret)
 
+
+class Bluesky(Source):
+  """Bluesky source class. See file docstring and Source class for details."""
+
+  DOMAIN = 'bsky.app'
+  BASE_URL = 'https://bsky.app'
+  NAME = 'Bluesky'
+  TRUNCATE_TEXT_LENGTH = 256  # TODO: load from feed.post lexicon

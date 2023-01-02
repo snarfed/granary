@@ -821,12 +821,12 @@ class Source(object, metaclass=SourceMeta):
     """Shorten text content to fit within a character limit.
 
     Character limit and URL character length are taken from the
-    TRUNCATE_TEXT_LENGTH and TRUNCATE_URL_LENGTH class constants
+    `TRUNCATE_TEXT_LENGTH` and `TRUNCATE_URL_LENGTH` class constants.
 
     Args:
       content: string
       url: string
-      include_link: string
+      include_link: string: `OMIT_LINK`, `INCLUDE_LINK`, or `INCLUDE_IF_TRUNCATED`
       type: string, optional: 'article', 'note', etc.
       quote_url: string URL, optional. If provided, it will be appended to the
         content, *after* truncating.

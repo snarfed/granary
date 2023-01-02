@@ -58,7 +58,7 @@ INPUTS = (
   'as1',
   'as2',
   'atom',
-  # 'bluesky',
+  'bluesky',
   'html',
   'json-mf2',
   'jsonfeed',
@@ -229,11 +229,13 @@ def url():
   final_url = resp.url
 
   # decode data
-  if input in ('activitystreams', 'as1', 'as2', 'mf2-json', 'json-mf2', 'jsonfeed'):
+  if input in ('activitystreams', 'as1', 'as2', 'bluesky', 'mf2-json',
+               'json-mf2', 'jsonfeed'):
     try:
       body_json = resp.json()
       body_items = (body_json if isinstance(body_json, list)
-                    else body_json.get('items') or [body_json])
+                    else body_json.get('items') or body_json.get('feed')
+                    or [body_json])
     except (TypeError, ValueError):
       raise BadRequest(f'Could not decode {final_url} as JSON')
 

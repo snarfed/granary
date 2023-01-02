@@ -19,7 +19,7 @@ ACTOR_AS = {
   'objectType' : 'person',
   'displayName': 'Alice',
   'image': [{'url': 'https://alice.com/alice.jpg'}],
-  'url': ['http://alice.com/'],
+  'url': 'https://alice.com/',
 }
 ACTOR_REF_BSKY = {
   '$type': 'app.bsky.actor.ref#withInfo',
@@ -70,6 +70,25 @@ POST_BSKY = {
     'viewer': {},
   }
 }
+TAGS = [{
+  'url': 'http://my/link',
+  'startIndex': 8,
+  'length': 4,
+}]
+ENTITIES = [{
+  "type": "link",
+  "value": "http://my/link",
+  "text": "link",
+  "index": {
+    "start": 8,
+    "end": 12,
+  },
+}]
+EMBED_EXTERNAL = {
+  'description': '',
+  'title': 'link',
+  'uri': 'http://my/link',
+}
 
 REPLY_AS = {
   'objectType': 'activity',
@@ -117,9 +136,9 @@ REPOST_AS = {
   'objectType': 'activity',
   'verb': 'share',
   'actor': ACTOR_AS,
-  'published': '2007-07-07T03:04:05',
   'content': 'A compelling post',
   'object': {
+    'objectType': 'note',
     'url': 'http://orig/post',
   },
 }
@@ -168,6 +187,63 @@ class TestBluesky(testutil.TestCase):
   def test_from_as1_post(self):
     self.assert_equals(POST_BSKY, from_as1(POST_AS))
 
+  def test_from_as1_post_html(self):
+    post_as = copy.deepcopy(POST_AS)
+    post_as['object']['content'] = """
+    <p class="h-event">
+      <a class="u-url p-name" href="http://h.w/c">
+        Homebrew Website Club</a>
+      is <em>tonight</em>!
+      <img class="shadow" src="/pour_over_coffee_stand.jpg" /></p>
+    <time class="dt-start">6:30pm PST</time> at
+    <a href="https://wiki.mozilla.org/SF">Mozilla SF</a> and
+    <a href="https://twitter.com/esripdx">Esri Portland</a>.<br />Join us!
+    """
+    self.assert_equals("""\
+Homebrew Website Club is _tonight_!
+
+6:30pm PST at Mozilla SF and Esri Portland.
+Join us!""", from_as1(post_as)['post']['record']['text'])
+
+  def test_from_as1_post_html_with_tag_indices_not_implemented(self):
+    post_as = copy.deepcopy(POST_AS)
+    post_as['object'].update({
+      'content': '<em>some html</em>',
+      'tags': TAGS,
+    })
+
+    with self.assertRaises(NotImplementedError):
+      from_as1(post_as)
+
+  def test_from_as1_post_with_tag_indices(self):
+    post_as = copy.deepcopy(POST_AS)
+    post_as['object'].update({
+      'content': 'A note. link too',
+      'tags': TAGS,
+    })
+
+    post_bsky = copy.deepcopy(POST_BSKY)
+    post_bsky['post']['record'].update({
+      'text': 'A note. link too',
+      'entities': ENTITIES,
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': [{
+          '$type': 'app.bsky.embed.external#external',
+          **EMBED_EXTERNAL,
+        }],
+      },
+    })
+    post_bsky['post']['embed'] = {
+      '$type': 'app.bsky.embed.external#presented',
+      'external': [{
+        '$type': 'app.bsky.embed.external#presentedExternal',
+        **EMBED_EXTERNAL,
+      }],
+    }
+
+    self.assert_equals(post_bsky, from_as1(post_as))
+
   def test_from_as1_reply(self):
     self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
 
@@ -176,14 +252,25 @@ class TestBluesky(testutil.TestCase):
 
   def test_from_as1_object_vs_activity(self):
     obj = {
-    'objectType': 'note',
-    'content': 'foo',
+      'objectType': 'note',
+      'content': 'foo',
     }
     activity = {
-    'verb': 'post',
-    'object': obj,
+      'verb': 'post',
+      'object': obj,
     }
     self.assert_equals(from_as1(obj), from_as1(activity))
+
+  def test_to_as1_post(self):
+    self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
+
+  def test_to_as1_reply(self):
+    self.assert_equals(REPLY_AS['object'], to_as1(REPLY_BSKY))
+
+  def test_to_as1_repost(self):
+    repost_as = copy.deepcopy(REPOST_AS)
+    del repost_as['content']
+    self.assert_equals(repost_as, to_as1(REPOST_BSKY))
 
   def test_to_as1_missing_objectType(self):
     with self.assertRaises(ValueError):
