@@ -163,9 +163,6 @@ REACTION_CONTENT = {
 
 FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
 
-# alias allows unit tests to mock the function
-now_fn = datetime.now
-
 
 class Facebook(source.Source):
   """Facebook source class. See file docstring and Source class for details.
@@ -1770,7 +1767,7 @@ class Facebook(source.Source):
     try:
       # sadly using parse(fuzzy=True) here makes too many mistakes on relative
       # time strings seen on mbasic, eg '22 hrs [ago]', 'Yesterday at 12:34 PM'
-      parsed = dateutil.parser.parse(tag.get_text(strip=True), default=now_fn())
+      parsed = dateutil.parser.parse(tag.get_text(strip=True), default=util.now())
       return parsed.isoformat('T')
     except (ValueError, OverflowError):
       logger.debug(f"Couldn't parse datetime string {tag!r}")

@@ -1361,7 +1361,7 @@ class FacebookTest(testutil.TestCase):
     super(FacebookTest, self).setUp()
     self.fb = Facebook()
     self.fbscrape = Facebook(scrape=True, cookie_c_user='CU', cookie_xs='XS')
-    self.mox.StubOutWithMock(facebook, 'now_fn')
+    util.now = lambda **kwargs: datetime(1999, 1, 1)
 
   def expect_urlopen(self, url, response=None, **kwargs):
     if not url.startswith('http'):
@@ -1617,8 +1617,7 @@ class FacebookTest(testutil.TestCase):
       self.fb.get_activities(activity_id='34')
 
   def test_get_activities_response_not_json(self):
-    super(FacebookTest, self).expect_urlopen(API_BASE + 'me/home?offset=0',
-                                             'not json')
+    super().expect_urlopen(API_BASE + 'me/home?offset=0', 'not json')
     self.mox.ReplayAll()
 
     try:
@@ -1864,7 +1863,6 @@ class FacebookTest(testutil.TestCase):
       self.fb.get_activities(search_query='foo')
 
   def test_get_activities_scrape_timeline(self):
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.expect_requests_get('x?v=timeline', MBASIC_HTML_TIMELINE,
                              cookie='c_user=CU; xs=XS')
     self.mox.ReplayAll()
@@ -1873,7 +1871,6 @@ class FacebookTest(testutil.TestCase):
     self.assert_equals(MBASIC_FEED_ACTIVITIES, activities)
 
   def test_get_activities_scrape_timeline_fetch_replies_likes(self):
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.expect_requests_get('212038?v=timeline', MBASIC_HTML_TIMELINE,
                              cookie='c_user=CU; xs=XS')
     self.expect_requests_get('123', MBASIC_HTML_POST.replace('456', '123'),
@@ -1898,7 +1895,6 @@ class FacebookTest(testutil.TestCase):
     self.assert_equals(expected, activities)
 
   def test_get_activities_scrape_post(self):
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS',
                              allow_redirects=True)
     self.mox.ReplayAll()
@@ -1907,7 +1903,6 @@ class FacebookTest(testutil.TestCase):
     self.assert_equals([MBASIC_ACTIVITY], activities)
 
   def test_get_activities_scrape_post_fetch_likes(self):
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
     self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS',
                              allow_redirects=True)
     self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
@@ -3255,20 +3250,14 @@ cc Sam G, Michael M<br />""", preview.description)
       [{'relative_url': 'abc'}, {'relative_url': 'def'}]))
 
   def test_email_to_object_comment_user_id(self):
-    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
     self.assert_equals(EMAIL_COMMENT_OBJ_USER_ID,
                        self.fb.email_to_object(COMMENT_EMAIL_USER_ID))
 
   def test_email_to_object_comment_username(self):
-    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
     self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME,
                        self.fb.email_to_object(COMMENT_EMAIL_USERNAME))
 
   def test_email_to_object_photo_comment(self):
-    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
     expected = copy.deepcopy(EMAIL_COMMENT_OBJ_USER_ID)
     expected.update({
       'id': tag_uri('123_789'),
@@ -3278,18 +3267,12 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(expected, self.fb.email_to_object(COMMENT_EMAIL_PHOTO))
 
   def test_email_to_object_comment_different_text(self):
-    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     email = COMMENT_EMAIL_USERNAME.replace('commented on your', 'commented on')
     self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_object(email))
 
   def test_email_to_object_comment_different_datetime_format(self):
     """https://console.cloud.google.com/errors/CKORxvuphMyeIw
     """
-    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     email = COMMENT_EMAIL_USERNAME.replace('December 14 at 12:35 PM',
                                            '14 December at 12:35')
     self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_object(email))
@@ -3297,9 +3280,6 @@ cc Sam G, Michael M<br />""", preview.description)
   def test_email_to_object_comment_bad_datetime(self):
     """https://console.cloud.google.com/errors/CKORxvuphMyeIw
     """
-    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     email = COMMENT_EMAIL_USERNAME.replace('December 14 at 12:35 PM',
                                            'asdf 29 qwert')
     expected = copy.deepcopy(EMAIL_COMMENT_OBJ_USERNAME)
@@ -3307,8 +3287,6 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(expected, self.fb.email_to_object(email))
 
   def test_email_to_object_like(self):
-    facebook.now_fn().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
     self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_object(LIKE_EMAIL))
 
   def test_scraped_to_activities(self):
@@ -3316,18 +3294,12 @@ cc Sam G, Michael M<br />""", preview.description)
 
     Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
     """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     got, _ = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
     self.assert_equals(MBASIC_FEED_ACTIVITIES, got)
 
   def test_scraped_to_activities_no_content(self):
     soup = util.parse_html(MBASIC_HTML_TIMELINE)
     soup.find(class_='ea').extract()
-
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
 
     expected = copy.deepcopy(MBASIC_FEED_ACTIVITIES)
     expected[0]['object']['content'] = '<div class="widePic">\n\n</div>'
@@ -3340,9 +3312,6 @@ cc Sam G, Michael M<br />""", preview.description)
     Based on: https://mbasic.facebook.com/profile.php?lst=100009447618341%3A100009447618341%3A1612671708
     (Snoøpy Barrett, while logged in as that account)
     """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     got, _ = self.fb.scraped_to_activities(MBASIC_HTML_PROFILE)
     self.assert_equals(MBASIC_PROFILE_ACTIVITIES, got)
 
@@ -3351,9 +3320,6 @@ cc Sam G, Michael M<br />""", preview.description)
 
     Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
     """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     got, _ = self.fb.scraped_to_activity(MBASIC_HTML_POST)
     self.assert_equals(MBASIC_ACTIVITY, got)
 
@@ -3367,16 +3333,10 @@ cc Sam G, Michael M<br />""", preview.description)
 
     Based on: https://mbasic.facebook.com/photo.php?fbid=2017433665248201&id=100009447618341
     """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     got, _ = self.fb.scraped_to_activity(MBASIC_HTML_PHOTO_POST)
     self.assert_equals(MBASIC_PHOTO_ACTIVITY, got)
 
   def test_scraped_to_activity_no_actor_link(self):
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     soup = util.parse_html(MBASIC_HTML_POST)
     soup.find('header').extract()
 
@@ -3395,9 +3355,6 @@ cc Sam G, Michael M<br />""", preview.description)
     Based on https://mbasic.facebook.com/10101880564410695
     *but when logged in as post author!*
     """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     soup = util.parse_html(MBASIC_HTML_POST)
     soup.find(id='u_0_1').insert_before(util.parse_html("""\
     <div>
@@ -3440,9 +3397,6 @@ cc Sam G, Michael M<br />""", preview.description)
 
     Based on https://mbasic.facebook.com/10157876416367085
     """
-    facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
-
     soup = util.parse_html(MBASIC_HTML_POST)
     soup.footer.insert_before(util.parse_html('<div class="ce"><div></div></div>'))
 
