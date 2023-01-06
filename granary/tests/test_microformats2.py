@@ -779,7 +779,7 @@ Shared <a href="#">a post</a> by foo
     self.expect_requests_get('http://example.com', """
 <div class="h-card">
 <a class="p-name u-url" rel="me" href="/">Ms. ☕ Baz</a>
-<img class="u-photo" src="/my/pic" />
+<img class="u-photo" src="/my/pic" alt="my pic" />
 </div>
 """, response_headers={'content-type': 'text/html; charset=utf-8'})
     self.mox.ReplayAll()
@@ -791,7 +791,10 @@ Shared <a href="#">a post</a> by foo
         'url': 'http://example.com/',
         'objectType': 'person',
         'displayName': 'Ms. ☕ Baz',
-        'image': [{'url': 'http://example.com/my/pic'}],
+        'image': [{
+          'url': 'http://example.com/my/pic',
+          'displayName': 'my pic',
+        }],
       },
     }, microformats2.json_to_object({
       'type': ['h-entry'],
@@ -857,9 +860,10 @@ Shared <a href="#">a post</a> by foo
 
   def test_find_author(self):
     self.assert_equals({
-    'displayName': 'my name',
-    'image': {'url': 'http://pic/ture'},
-  }, microformats2.find_author(mf2py.parse(doc="""\
+      'objectType': 'person',
+      'displayName': 'my name',
+      'image': [{'url': 'http://pic/ture'}],
+      }, microformats2.find_author(mf2py.parse(doc="""\
 <body class="h-entry">
 <div class="p-author h-card">
 <a class="p-name" href="http://li/nk">my name</a>

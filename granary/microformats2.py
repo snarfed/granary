@@ -403,15 +403,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
   else:
     # the author h-card may be on another page. run full authorship algorithm:
     # https://indieweb.org/authorship
-    author = mf2util.find_author({'items': [mf2]}, hentry=mf2,
-                                 fetch_mf2_func=util.fetch_mf2 if fetch_mf2 else None)
-    if author:
-      author = {
-        'objectType': 'person',
-        'url': author.get('url'),
-        'displayName': author.get('name'),
-        'image': [{'url': author.get('photo')}],
-      }
+    author = find_author({'items': [mf2]}, hentry=mf2,
+                         fetch_mf2_func=util.fetch_mf2 if fetch_mf2 else None)
 
   if not author:
     author = actor
@@ -1095,16 +1088,19 @@ def find_author(parsed, **kwargs):
     parsed: dict, parsed mf2 object (ie return value from mf2py.parse())
     kwargs: passed through to mf2util.find_author()
   """
-  author = mf2util.find_author(parsed, 'http://123', **kwargs)
+  author = mf2util.find_author(parsed, **kwargs)
   if author:
     photo = author.get('photo')
-    if isinstance(photo, dict):
-      photo = photo.get('url') or photo.get('value')
-    return {
-      'displayName': author.get('name'),
+    alt = photo.get('alt') if isinstance(photo, dict) else None
+    return util.trim_nulls({
+      'objectType': 'person',
       'url': author.get('url'),
-      'image': {'url': photo},
-    }
+      'displayName': author.get('name'),
+      'image': [{
+        'url': get_text(photo),
+        'displayName': alt,
+      }],
+    })
 
 
 def get_title(mf2):

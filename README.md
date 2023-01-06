@@ -298,6 +298,7 @@ _Breaking changes:_
 
 * `microformats2`:
   * `json_to_object`: drop backward compatibility support for `like` and `repost` properties. [Background discussion.](https://chat.indieweb.org/dev/2022-12-23#t1671833687984200)
+  * `json_to_object`: bug fix when `fetch_mf2` is True, handle when we run the authorship algorithm and fetch an author URL that has a `u-photo` with `alt`.
 
 _Non-breaking changes:_
 
