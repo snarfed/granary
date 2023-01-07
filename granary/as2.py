@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # ActivityPub Content-Type details:
 # https://www.w3.org/TR/activitypub/#retrieving-objects
 CONTENT_TYPE = 'application/activity+json'
-CONTENT_TYPE_LD = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+CONTENT_TYPE_LD = 'application/ld+json;profile="https://www.w3.org/ns/activitystreams"'
 CONNEG_HEADERS = {
     'Accept': f'{CONTENT_TYPE}; q=0.9, {CONTENT_TYPE_LD}; q=0.8',
 }
