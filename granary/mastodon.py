@@ -146,8 +146,11 @@ class Mastodon(source.Source):
     if fn == util.requests_delete:
       return {}
 
-    content_type = resp.headers.get('Content-Type')
-    if not content_type or content_type.split(';')[0] != 'application/json':
+    content_type = resp.headers.get('Content-Type', '').split(';')[0]
+    if content_type == 'text/plain':  # Truth Social returns text/plain;charset=UTF-8
+      resp.headers['Content-Type'] = content_type = 'application/json'
+
+    if content_type != 'application/json':
       logger.warning(f'Converting {resp.status_code} to 502 due to Content-Type {content_type} instead of application/json')
       resp.status_code = 502
       raise HTTPError(response=resp)

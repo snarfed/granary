@@ -524,6 +524,18 @@ class MastodonTest(testutil.TestCase):
       self.mastodon.get_activities()
     self.assert_equals(502, e.exception.response.status_code)
 
+  def test_get_activities_returns_content_type_text(self):
+    """Truth Social does this.
+
+    https://console.cloud.google.com/errors/detail/CMqz0Me7nebCsAE;time=P30D?project=brid-gy
+    """
+    self.expect_get(API_TIMELINE, params={},
+                    response=[STATUS, REPLY_STATUS, MEDIA_STATUS],
+                    content_type='text/plain;charset=UTF-8')
+    self.mox.ReplayAll()
+    self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
+                        self.mastodon.get_activities())
+
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)
     self.mox.ReplayAll()
