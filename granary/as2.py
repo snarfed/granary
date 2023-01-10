@@ -257,8 +257,8 @@ def to_as1(obj, use_type=True):
         raise NotImplementedError('Undo is only supported with Follow object')
       inner_inner_obj = inner_objs.get('object')
       inner_objs = {
-        'id': inner_inner_obj.get('url') if isinstance(inner_inner_obj, dict)
-              else inner_inner_obj,
+        'id': (inner_inner_obj.get('id') or util.get_url(inner_inner_obj, 'url')
+               if isinstance(inner_inner_obj, dict) else inner_inner_obj),
       }
 
   # attachments. if mediaType is image/..., override type

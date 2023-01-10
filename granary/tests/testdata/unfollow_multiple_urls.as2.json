@@ -1,0 +1,18 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Undo",
+  "actor": {
+    "id": "tag:example.com,2001:follower"
+  },
+  "object": {
+    "@context": "https://www.w3.org/ns/activitystreams",
+    "type": "Follow",
+    "actor": "tag:example.com,2001:follower",
+    "object": {
+      "url": [
+        "tag:example.com,2001:followee",
+        "extra-url"
+      ]
+    }
+  }
+}
