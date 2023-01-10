@@ -1,0 +1,15 @@
+{
+  "objectType": "activity",
+  "verb": "undo",
+  "id": "tag:example.com,2001:3579",
+  "url": "http://example.com/undo/repost",
+  "actor": {
+    "id": "tag:example.com,2001:alice"
+  },
+  "object": {
+    "objectType": "activity",
+    "verb": "share",
+    "actor": {"url": "tag:example.com,2001:alice"},
+    "object": {"url": "tag:example.com,2001:2468"}
+  }
+}

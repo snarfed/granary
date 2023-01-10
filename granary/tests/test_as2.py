@@ -33,9 +33,6 @@ class ActivityStreams2Test(testutil.TestCase):
           fn(bad)
 
     with self.assertRaises(ValueError):
-      as2.from_as1('z')
-
-    with self.assertRaises(ValueError):
       # wrongly trying to parse mf2 JSON as AS2
       as2.to_as1({'type': ['h-card']})
 
@@ -53,15 +50,6 @@ class ActivityStreams2Test(testutil.TestCase):
       'inReplyTo': in_reply_to,
     })
     self.assertEqual([{'url': 'http://x.y/z'}], as1['inReplyTo'])
-
-  def test_to_as1_undo_not_follow(self):
-    with self.assertRaises(NotImplementedError):
-      as2.to_as1({
-        'type': 'Undo',
-        'object': {
-          'type': 'Create',
-        },
-      })
 
   def test_is_public(self):
     publics = list(PUBLICS)

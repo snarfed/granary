@@ -1,0 +1,14 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Undo",
+  "id": "tag:example.com,2001:3579",
+  "url": "http://example.com/undo/repost",
+  "actor": {
+    "id": "tag:example.com,2001:alice"
+  },
+  "object": {
+    "type": "Announce",
+    "actor": "tag:example.com,2001:alice",
+    "object": "tag:example.com,2001:2468"
+  }
+}

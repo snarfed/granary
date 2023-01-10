@@ -56,7 +56,9 @@ TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 
 VERB_TO_TYPE = {
   'favorite': 'Like',
-  'stop-following': 'Undo',
+   # not in AS1 spec; undo isn't a real AS1 verb
+   # https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs
+  'undo': 'Undo',
   'follow': 'Follow',
   'invite': 'Invite',
   'like': 'Like',
@@ -84,6 +86,8 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   """
   if not obj:
     return {}
+  elif isinstance(obj, str):
+    return obj
   elif not isinstance(obj, dict):
     raise ValueError(f'Expected dict, got {obj!r}')
 
@@ -106,6 +110,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
     if verb == 'stop-following':
+      type = 'Undo'
       obj_obj = obj.get('object')
       inner_objs = {
         '@context': context,
@@ -252,9 +257,9 @@ def to_as1(obj, use_type=True):
 
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
-    if type == 'Undo':
-      if inner_objs.get('verb') != 'follow':
-        raise NotImplementedError('Undo is only supported with Follow object')
+    # special case Undo Follow
+    if type == 'Undo' and inner_objs.get('verb') == 'follow':
+      obj['verb'] = 'stop-following'
       inner_inner_obj = inner_objs.get('object')
       inner_objs = {
         'id': (inner_inner_obj.get('id') or util.get_url(inner_inner_obj, 'url')
