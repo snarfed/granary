@@ -302,7 +302,9 @@ _Breaking changes:_
 _Non-breaking changes:_
 
 * Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
-* `atom`
+* `as2`:
+  * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
+* `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
 * `jsonfeed`:
   * Switch from `white-space: pre` CSS to converting newlines to `<br>`s because some feed readers follow it strictly and don't even line wrap ([#456](https://github.com/snarfed/granary/issues/456)).

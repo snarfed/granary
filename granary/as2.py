@@ -56,6 +56,7 @@ TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 
 VERB_TO_TYPE = {
   'favorite': 'Like',
+  'stop-following': 'Undo',
   'follow': 'Follow',
   'invite': 'Invite',
   'like': 'Like',
@@ -87,7 +88,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     raise ValueError(f'Expected dict, got {obj!r}')
 
   obj = copy.deepcopy(obj)
-
+  actor = obj.get('actor')
   verb = obj.pop('verb', None)
   obj_type = obj.pop('objectType', None)
   type = (OBJECT_TYPE_TO_TYPE.get(verb or obj_type) or
@@ -104,11 +105,19 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   inner_objs = all_from_as1('object')
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
+    if verb == 'stop-following':
+      obj_obj = obj.get('object')
+      inner_objs = {
+        '@context': context,
+        'type': 'Follow',
+        'actor': actor.get('id') if isinstance(actor, dict) else actor,
+        'object': inner_objs.get('id'),
+      }
 
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
-    'actor': from_as1(obj.get('actor'), context=None, top_level=False),
+    'actor': from_as1(actor, context=None, top_level=False),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
     'inReplyTo': util.trim_nulls([orig.get('id') or orig.get('url')
@@ -243,6 +252,14 @@ def to_as1(obj, use_type=True):
 
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
+    if type == 'Undo':
+      if inner_objs.get('verb') != 'follow':
+        raise NotImplementedError('Undo is only supported with Follow object')
+      inner_inner_obj = inner_objs.get('object')
+      inner_objs = {
+        'id': inner_inner_obj.get('url') if isinstance(inner_inner_obj, dict)
+              else inner_inner_obj,
+      }
 
   # attachments. if mediaType is image/..., override type
   attachments = all_to_as1('attachment')

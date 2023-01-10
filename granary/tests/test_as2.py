@@ -54,6 +54,15 @@ class ActivityStreams2Test(testutil.TestCase):
     })
     self.assertEqual([{'url': 'http://x.y/z'}], as1['inReplyTo'])
 
+  def test_to_as1_undo_not_follow(self):
+    with self.assertRaises(NotImplementedError):
+      as2.to_as1({
+        'type': 'Undo',
+        'object': {
+          'type': 'Create',
+        },
+      })
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (
