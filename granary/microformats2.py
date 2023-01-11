@@ -255,7 +255,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'size': sizes,
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
-      'in-reply-to': util.trim_nulls([o.get('url') for o in in_reply_tos]),
+      'in-reply-to': util.trim_nulls([util.get_url(o) for o in in_reply_tos]),
       'author': [object_to_json(
         author, trim_nulls=False, default_object_type='person')],
       'location': [object_to_json(
@@ -340,7 +340,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       objs = get_list(obj, 'object')
       ret['properties'][prop + '-of'] = [
         # flatten contexts that are just a url
-        o['url'] if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
+        util.get_url(o) if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
         for o in objs]
     else:
