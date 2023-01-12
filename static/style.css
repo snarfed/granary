@@ -6,22 +6,8 @@
   padding-top: 0;
 }
 
-/* center vertically:
- * http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
- */
-/* .login { */
-/*   -webkit-transform-style: preserve-3d; */
-/*   -moz-transform-style: preserve-3d; */
-/*   transform-style: preserve-3d; */
-/* } */
-
 .login div {
   min-height: 80px;
-
-  /* center vertically */
-  /* position: relative; */
-  /* top: 50%; */
-  /* transform: translateY(-50%); */
 }
 
 .form-control, button.btn {
