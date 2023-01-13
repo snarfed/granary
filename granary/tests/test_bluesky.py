@@ -262,31 +262,25 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     self.assert_equals(from_as1(obj), from_as1(activity))
 
   def test_from_as1_actor_handle(self):
-    self.assert_equals('', from_as1({
-      'objectType' : 'person',
-    })['handle'])
+    for expected, fields in (
+        ('', {}),
+        ('fooey', {'username': 'fooey'}),
+        ('fooey@my', {'username': 'fooey', 'url': 'http://my/url', 'id': 'tag:nope'}),
+        ('foo,2001:extra', {'id': 'tag:foo,2001:extra'}),
+        ('url/with/path', {'url': 'http://url/with/path'}),
+        ('foo', {'url': 'http://foo/'}),
+    ):
+      self.assert_equals(expected, from_as1({
+        'objectType' : 'person',
+        **fields,
+      })['handle'])
 
-    self.assert_equals('fooey', from_as1({
+  def test_from_as1_actor_id_not_url(self):
+    """Tests error handling when attempting to generate did:web."""
+    self.assertEqual('', from_as1({
       'objectType' : 'person',
-      'username': 'fooey',
-    })['handle'])
-
-    self.assert_equals('fooey@my', from_as1({
-      'objectType' : 'person',
-      'username': 'fooey',
-      'url': 'http://my/url',
-      'id': 'tag:nope',
-    })['handle'])
-
-    self.assert_equals('url/with/path', from_as1({
-      'objectType' : 'person',
-      'url': 'http://url/with/path',
-    })['handle'])
-
-    self.assert_equals('foo', from_as1({
-      'objectType' : 'person',
-      'url': 'tag://foo/',
-    })['handle'])
+      'id': 'tag:foo.com,2001:bar',
+    })['did'])
 
   def test_to_as1_post(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))

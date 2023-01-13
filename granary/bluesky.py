@@ -105,8 +105,12 @@ def from_as1(obj, from_url=None):
         banner = url
         break
 
-    url = util.get_url(obj)
-    did_web = url_to_did_web(url) if url else ''
+    url = util.get_url(obj) or obj.get('id') or ''
+    try:
+      did_web = url_to_did_web(url)
+    except ValueError as e:
+      logging.info(f"Couldn't generate did:web: {e}")
+      did_web = ''
 
     # handle is username@domain or domain/path, no scheme or query
     username = obj.get('username')
