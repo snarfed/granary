@@ -261,6 +261,33 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     }
     self.assert_equals(from_as1(obj), from_as1(activity))
 
+  def test_from_as1_actor_handle(self):
+    self.assert_equals('', from_as1({
+      'objectType' : 'person',
+    })['handle'])
+
+    self.assert_equals('fooey', from_as1({
+      'objectType' : 'person',
+      'username': 'fooey',
+    })['handle'])
+
+    self.assert_equals('fooey@my', from_as1({
+      'objectType' : 'person',
+      'username': 'fooey',
+      'url': 'http://my/url',
+      'id': 'tag:nope',
+    })['handle'])
+
+    self.assert_equals('url/with/path', from_as1({
+      'objectType' : 'person',
+      'url': 'http://url/with/path',
+    })['handle'])
+
+    self.assert_equals('foo', from_as1({
+      'objectType' : 'person',
+      'url': 'tag://foo/',
+    })['handle'])
+
   def test_to_as1_post(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
 

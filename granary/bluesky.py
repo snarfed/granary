@@ -108,6 +108,21 @@ def from_as1(obj, from_url=None):
     url = util.get_url(obj)
     did_web = url_to_did_web(url) if url else ''
 
+    # handle is username@domain or domain/path, no scheme or query
+    username = obj.get('username')
+    parsed = urllib.parse.urlparse(url)
+    domain = parsed.netloc
+    if username:
+      handle = username
+      if domain:
+        handle += f'@{domain}'
+    elif url:
+      handle = domain
+      if parsed.path not in ('', '/'):
+        handle += parsed.path
+    else:
+      handle = ''
+
     ret = {
       '$type': 'app.bsky.actor.profile',
       'displayName': obj.get('displayName'),
@@ -129,7 +144,9 @@ def from_as1(obj, from_url=None):
         'cid': 'TODO',
         'actorType': 'app.bsky.system.actorUser',
       },
-      'handle': util.domain_from_link(util.get_url(obj)),
+      # TODO: should be more specific than domain, many users will be on shared
+      # domains
+      'handle': handle,
       'followersCount': 0,
       'followsCount': 0,
       'membersCount': 0,
@@ -274,6 +291,7 @@ def from_as1(obj, from_url=None):
     'createdAt',
     'description',
     'did',
+    'handle',
     'text',
     'viewer',
   ))
@@ -295,10 +313,11 @@ def actor_to_ref(actor):
 
   ref = {
     k: v for k, v in from_as1(actor).items()
-      if k in ('avatar', 'declaration', 'did', 'displayName', 'handle')
+      if k in ('avatar', 'declaration', 'did', 'displayName', 'handle', 'indexedAt')
   }
   ref['$type'] = 'app.bsky.actor.ref#withInfo'
   return ref
+
 
 def to_as1(obj):
   """Converts a Bluesky object to an AS1 object.

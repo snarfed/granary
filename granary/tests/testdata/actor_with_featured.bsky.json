@@ -1,7 +1,7 @@
 {
   "$type": "app.bsky.actor.profile",
   "displayName": "Martin Smith",
-  "handle": "example.com",
+  "handle": "yoozer@example.com",
   "avatar": "http://example.com/avatar",
   "banner": "http://example.com/header",
   "creator": "did:web:example.com:martin",

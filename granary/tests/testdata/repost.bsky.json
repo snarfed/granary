@@ -12,7 +12,7 @@
         "actorType": "app.bsky.system.actorUser",
         "cid": "TODO"
       },
-      "handle": "example.com",
+      "handle": "example.com/bob",
       "displayName": "Bob"
     },
     "record": {
@@ -37,7 +37,7 @@
         "actorType": "app.bsky.system.actorUser",
         "cid": "TODO"
       },
-      "handle": "example.com",
+      "handle": "example.com/alice",
       "displayName": "Alice"
     },
     "indexedAt": "2022-01-02T03:04:05+00:00"
