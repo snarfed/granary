@@ -47,6 +47,7 @@ OBJECT_TYPE_TO_TYPE = {
   # not in AS1 spec; needed to identify mentions in eg Bridgy Fed
   'mention': 'Mention',
   'note': 'Note',
+  'organization': 'Organization',
   'person': 'Person',
   'place': 'Place',
   'video': 'Video',

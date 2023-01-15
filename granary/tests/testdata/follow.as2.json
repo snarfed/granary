@@ -4,5 +4,8 @@
   "id": "tag:example.com,2001:98765",
   "url": "http://example.com/this/follow",
   "object": "http://followee",
-  "actor": "http://follower"
+  "actor": {
+    "type": "Person",
+    "url": "http://follower"
+  }
 }

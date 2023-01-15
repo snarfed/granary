@@ -5,6 +5,7 @@
   "url": "http://example.com/this/follow",
   "object": {"url": "http://followee"},
   "actor": {
+    "objectType": "person",
     "url": "http://follower"
   }
 }

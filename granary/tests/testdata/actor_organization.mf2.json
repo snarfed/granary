@@ -1,0 +1,7 @@
+{
+  "type": ["h-card"],
+  "properties": {
+    "name": ["Foo Foundation"],
+    "org": ["Foo Foundation"]
+  }
+}

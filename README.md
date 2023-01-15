@@ -302,8 +302,11 @@ _Breaking changes:_
 _Non-breaking changes:_
 
 * Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
+* `as1`:
+  * Add the `organization` object type.
 * `as2`:
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
+  * Add the `Organization` object type.
 * `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
 * `jsonfeed`:
@@ -312,6 +315,7 @@ _Non-breaking changes:_
   * Add compatibility support for [Truth Social](https://truthsocial.com/).
 * `microformats2`:
   * Add new `json_to_activities` function.
+  * Support the `h-card` `org` property.
   * `json_to_object`: handle composite `rsvp` property value.
   * `json_to_object`: bug fix when `fetch_mf2` is True, handle when we run the authorship algorithm and fetch an author URL that has a `u-photo` with `alt`.
 

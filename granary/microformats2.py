@@ -63,6 +63,7 @@ HCARD = string.Template("""\
 LINK = string.Template('  <a class="u-$cls" href="$url"></a>')
 AS_TO_MF2_TYPE = {
   'event': ['h-event'],
+  'organization': ['h-card'],
   'person': ['h-card'],
   'place': ['h-card', 'p-location'],
 }
@@ -75,6 +76,7 @@ MF2_TO_AS_TYPE_VERB = {
   'like': ('activity', 'like'),
   'location': ('place', None),
   'note': ('note', None),
+  'org': ('organization', None),
   'person': ('person', None),
   'reply': ('comment', None),
   'repost': ('activity', 'share'),
@@ -243,6 +245,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'uid': [obj.get('id') or ''],
       'numeric-id': [obj.get('numeric_id') or ''],
       'name': [name],
+      'org': [name] if obj_type == 'organization' else None,
       'nickname': [obj.get('username') or ''],
       ('note' if obj_type == 'person' else 'summary'): [summary],
       'url': (list(as1.object_urls(obj) or as1.object_urls(primary)) +
