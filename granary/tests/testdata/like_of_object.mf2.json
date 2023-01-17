@@ -1,0 +1,21 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "url": ["http://example.com/this/like"],
+    "content": ["unused"],
+    "like-of": [{
+      "type": ["h-cite"],
+      "properties": {
+        "name": ["Orig post"],
+        "url": ["https://mastodon.technology/@snarfed/100119606571241751"],
+        "summary": ["Interesting unintended consequence of federation: when you post a link, >1k mastodon nodes all fetch it at the same time to render a link preview, which results in a small DDoS."],
+        "author": [{
+          "type": ["h-card"],
+          "properties": {
+            "name": ["Ryan Barrett"]
+          }
+        }]
+      }
+    }]
+  }
+}
