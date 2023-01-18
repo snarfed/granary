@@ -626,11 +626,11 @@ class FlickrTest(testutil.TestCase):
     self.expect_call_api_method(
       'flickr.photos.getContactsPhotos', {
         'extras': flickr.Flickr.API_EXTRAS,
-        'per_page': 50,
+        'per_page': 12,
       }, json_dumps(CONTACTS_PHOTOS))
 
     self.mox.ReplayAll()
-    self.assert_equals(CONTACTS_PHOTOS_ACTIVITIES, self.flickr.get_activities())
+    self.assert_equals(CONTACTS_PHOTOS_ACTIVITIES, self.flickr.get_activities(count=12))
 
   def test_get_activities_specific(self):
     self.expect_call_api_method(

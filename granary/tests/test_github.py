@@ -509,9 +509,9 @@ class GitHubTest(testutil.TestCase):
                        self.gh.get_activities(fetch_likes=True))
 
   def test_get_activities_self_empty(self):
-    self.expect_rest(REST_NOTIFICATIONS, [])
+    self.expect_rest(f'{REST_NOTIFICATIONS}&per_page=12', [])
     self.mox.ReplayAll()
-    self.assert_equals([], self.gh.get_activities())
+    self.assert_equals([], self.gh.get_activities(count=12))
 
   def test_get_activities_activity_id(self):
     self.expect_rest(REST_ISSUE % ('foo', 'bar', 123), ISSUE_REST)

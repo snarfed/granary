@@ -334,7 +334,7 @@ class GitHub(source.Source):
 
     *Not comprehensive!* Uses the notifications API (v3 REST).
 
-    Also note that start_index and count are not currently supported.
+    Also note that start_index is not currently supported.
 
     https://developer.github.com/v3/activity/notifications/
     https://developer.github.com/v3/issues/
@@ -374,7 +374,10 @@ class GitHub(source.Source):
 
     else:
       # all issues/PRs, based on notifications
-      resp = self.rest(REST_NOTIFICATIONS, parse_json=False,
+      url = REST_NOTIFICATIONS
+      if count:
+        url += f'&per_page={count}'
+      resp = self.rest(url, parse_json=False,
                        headers={'If-Modified-Since': etag} if etag else None)
       etag = resp.headers.get('Last-Modified')
       notifs = [] if resp.status_code == 304 else resp.json()

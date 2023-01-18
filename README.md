@@ -294,11 +294,6 @@ Changelog
 ---
 ### 6.1 - unreleased
 
-_Breaking changes:_
-
-* `microformats2`:
-  * `json_to_object`: drop backward compatibility support for `like` and `repost` properties. [Background discussion.](https://chat.indieweb.org/dev/2022-12-23#t1671833687984200)
-
 _Non-breaking changes:_
 
 * Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
@@ -314,10 +309,15 @@ _Non-breaking changes:_
 * `mastodon`:
   * Add compatibility support for [Truth Social](https://truthsocial.com/).
 * `microformats2`:
+  * `json_to_object`: drop backward compatibility support for `like` and `repost` properties. [Background discussion.](https://chat.indieweb.org/dev/2022-12-23#t1671833687984200)
   * Add new `json_to_activities` function.
   * Support the `h-card` `org` property.
   * `json_to_object`: handle composite `rsvp` property value.
   * `json_to_object`: bug fix when `fetch_mf2` is True, handle when we run the authorship algorithm and fetch an author URL that has a `u-photo` with `alt`.
+* `flickr`:
+  * `get_activities`: add support for the `count` kwarg.
+* `github`:
+  * `get_activities`: add support for the `count` kwarg.
 
 ### 6.0 - 2022-12-03
 

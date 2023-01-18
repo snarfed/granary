@@ -398,7 +398,7 @@ class Flickr(source.Source):
       method = 'flickr.photos.getInfo'
     else:
       params['extras'] = self.API_EXTRAS
-      params['per_page'] = 50
+      params['per_page'] = count
       if group_id == source.SELF:
         params['user_id'] = user_id
         method = 'flickr.people.getPhotos'
