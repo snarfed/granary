@@ -302,6 +302,7 @@ _Non-breaking changes:_
 * `as2`:
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
   * Add the `Organization` object type.
+  * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
 * `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
 * `jsonfeed`:

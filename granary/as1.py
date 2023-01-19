@@ -346,5 +346,9 @@ def object_urls(obj):
   """
   if isinstance(obj, str):
     return obj
+
+  def value(obj):
+    return obj.get('value') if isinstance(obj, dict) else obj
+
   return util.uniquify(util.trim_nulls(
-    [obj.get('url')] + [u.get('value') for u in obj.get('urls', [])]))
+    [value(obj.get('url'))] + [value(u) for u in obj.get('urls', [])]))

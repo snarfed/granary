@@ -36,6 +36,21 @@ class ActivityStreams2Test(testutil.TestCase):
       # wrongly trying to parse mf2 JSON as AS2
       as2.to_as1({'type': ['h-card']})
 
+  def test_from_as1_misc(self):
+    as2.from_as1({
+      "objectType": "activity",
+      "verb": "follow",
+      "actor": {
+        "objectType": "person",
+        "image": [{
+          "url": {
+            "value": "https://www.jvt.me/img/profile.jpg",
+            "alt": "Jamie Tanna's profile image"
+          }
+        }],
+      },
+    })
+
   def test_to_as1_in_reply_to_string(self):
     self._test_to_as1_in_reply_to('http://x.y/z')
 

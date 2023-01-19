@@ -447,5 +447,11 @@ class As1Test(testutil.TestCase):
                    {'value': 'http://baz'},
           ],
         }),
+        (['https://www.jvt.me/img/profile.jpg'], {
+          'url': {
+            'value': 'https://www.jvt.me/img/profile.jpg',
+            'alt': "Jamie Tanna's profile image",
+          },
+        })
     ):
       self.assertEqual(expected, as1.object_urls(actor))
