@@ -376,11 +376,15 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   return ret
 
 
-def json_to_object(mf2, actor=None, fetch_mf2=False):
+def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   """Converts a single microformats2 JSON item to an ActivityStreams object.
 
   Supports h-entry, h-event, h-card, and other single item times. Does *not* yet
   support h-feed.
+
+  If `rel_urls` is provided, the returned `url` and `urls` fields will be
+  objects that may include `displayName` fields with the text or `title` from
+  the original HTML links.
 
   Args:
     mf2: dict, decoded JSON microformats2 object
@@ -388,6 +392,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
       link. if mf2 has its own author, that will override this.
     fetch_mf2: boolean, whether to fetch additional pages via HTTP if necessary,
       e.g. to determine authorship: https://indieweb.org/authorship
+    rel_urls: dict, optional `rel-urls` field from parsed mf2
 
   Returns:
     dict, ActivityStreams object
@@ -447,7 +452,16 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     """Filter out relative and invalid URLs (mf2py gives absolute urls)."""
     return urllib.parse.urlparse(url).netloc
 
-  urls = props.get('url') and get_string_urls(props.get('url'))
+  # urls, with displayName if available in rel_urls
+  urls = []
+  url_props = props.get('url')
+  if url_props:
+    for u in get_string_urls(url_props):
+      rel = rel_urls.get(u, {}) if rel_urls else {}
+      urls.append({
+        'value': u,
+        'displayName': (rel.get('text') or rel.get('title') or '').strip(),
+      })
 
   # quotations: https://indieweb.org/quotation#How_to_markup
   attachments = [
@@ -502,8 +516,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False):
     'username': prop.get('nickname'),
     'summary': get_text(prop.get('summary') or prop.get('note')),
     'content': get_html(prop.get('content')),
-    'url': urls[0] if urls else None,
-    'urls': [{'value': u} for u in urls] if urls and len(urls) > 1 else None,
+    'url': urls[0]['value'] if urls else None,
+    'urls': urls if len(urls) > 1 else None,
     # image is special cased below, to handle alt
     'stream': [stream],
     'location': json_to_object(prop.get('location')),

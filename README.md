@@ -311,6 +311,7 @@ _Non-breaking changes:_
   * Add compatibility support for [Truth Social](https://truthsocial.com/).
 * `microformats2`:
   * `json_to_object`: drop backward compatibility support for `like` and `repost` properties. [Background discussion.](https://chat.indieweb.org/dev/2022-12-23#t1671833687984200)
+  * `json_to_object`: add new `rel_urls` kwarg to allow attaching `displayName`s to `urls` based on HTML text or `title` attribute ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
   * Add new `json_to_activities` function.
   * Support the `h-card` `org` property.
   * `json_to_object`: handle composite `rsvp` property value.

@@ -804,7 +804,7 @@ Shared <a href="#">a post</a> by foo
       },
     }, fetch_mf2=True))
 
-  def test_json_to_object_xyz(self):
+  def test_json_to_object_embedded_responses(self):
     """Post with embedded responses as compound objects.
 
     https://martymcgui.re/2020/07/15/what-we-talk-about-when-were-talking-about-webmentions/
@@ -826,6 +826,47 @@ Shared <a href="#">a post</a> by foo
         'rsvp': [{
           'properties': {},
         }],
+      },
+    }))
+
+  def test_json_to_object_rel_urls_actor_urls_text_title(self):
+    """https://github.com/snarfed/bridgy-fed/issues/331"""
+    self.assert_equals({
+      'objectType': 'person',
+      'url': 'http://one',
+      'urls': [{
+        'value': 'http://one',
+      }, {
+        'value': 'http://two',
+        'displayName': 'two title',
+      }, {
+        'value': 'http://three',
+      }, {
+        'value': 'http://four',
+        'displayName': 'four text',
+      }],
+    }, microformats2.json_to_object({
+      'type': ['h-card'],
+      'properties': {
+        'url': [
+          'http://one',
+          'http://two',
+          'http://three',
+          'http://four',
+        ],
+      },
+    }, rel_urls={
+      'http://one': {
+        'rels': ['me'],
+      },
+      'http://two': {
+        'title': 'two title ',
+        'rels': ['other'],
+      },
+      'http://four': {
+        'title': 'four title ',
+        'text': ' four text',
+        'rels': ['me'],
       },
     }))
 
@@ -856,7 +897,6 @@ Shared <a href="#">a post</a> by foo
         },
       }],
     }))
-
 
   def test_find_author(self):
     self.assert_equals({
