@@ -303,6 +303,7 @@ _Non-breaking changes:_
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
   * Add the `Organization` object type.
   * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
+  * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
 * `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
 * `jsonfeed`:

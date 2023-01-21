@@ -133,7 +133,6 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'preferredUsername': obj.pop('username', None),
     'url': as1.object_urls(obj),
   })
-  obj.pop('urls', None)
 
   # images; separate featured (aka header) and non-featured.
   images = util.get_list(obj, 'image')
@@ -162,6 +161,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if obj_type == 'mention':
     obj['href'] = util.get_first(obj, 'url')
     obj.pop('url', None)
+
   elif obj_type in ('audio', 'video'):
     stream = util.pop_list(obj, 'stream')
     if stream:
@@ -180,15 +180,25 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
             datetime.timedelta(seconds=duration))
         except TypeError:
           logger.warning(f'Dropping unexpected duration {duration!r}; expected int, is {duration.__class__}')
+
   elif obj_type == 'person' and top_level:
     # Mastodon-specific metadata property fields
     # https://github.com/snarfed/bridgy-fed/issues/323
-    obj['attachment'].extend({
-      'type': 'PropertyValue',
-      'name': 'Link',
-      'value': util.pretty_link(url, attrs={'rel': 'me'}),
-    } for url in obj['url'] if util.is_web(url))
+    links = {}
+    for url in util.get_list(obj, 'url') + util.get_list(obj, 'urls'):
+      name = None
+      if isinstance(url, dict):
+        name = url.get('displayName')
+        url = url.get('value')
+      if util.is_web(url):
+        links[url] = {
+          'type': 'PropertyValue',
+          'name': name or 'Link',
+          'value': util.pretty_link(url, attrs={'rel': 'me'}),
+        }
+    obj['attachment'].extend(links.values())
 
+  obj.pop('urls', None)
   urls = util.get_list(obj, 'url')
   if len(urls) == 1:
     obj['url'] = urls[0]
