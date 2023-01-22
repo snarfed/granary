@@ -517,7 +517,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     'summary': get_text(prop.get('summary') or prop.get('note')),
     'content': get_html(prop.get('content')),
     'url': urls[0]['value'] if urls else None,
-    'urls': urls if len(urls) > 1 else None,
+    'urls': urls if len(urls) > 1 or rel_urls else None,
     # image is special cased below, to handle alt
     'stream': [stream],
     'location': json_to_object(prop.get('location')),

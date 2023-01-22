@@ -861,12 +861,31 @@ Shared <a href="#">a post</a> by foo
       },
       'http://two': {
         'title': 'two title ',
-        'rels': ['other'],
       },
       'http://four': {
         'title': 'four title ',
         'text': ' four text',
+      },
+    }))
+
+  def test_json_to_object_rel_urls_actor_urls_text_title_one_url(self):
+    """https://github.com/snarfed/bridgy-fed/issues/331"""
+    self.assert_equals({
+      'objectType': 'person',
+      'url': 'http://one',
+      'urls': [{
+        'value': 'http://one',
+        'displayName': 'one text',
+      }],
+    }, microformats2.json_to_object({
+      'type': ['h-card'],
+      'properties': {
+        'url': ['http://one'],
+      },
+    }, rel_urls={
+      'http://one': {
         'rels': ['me'],
+        'text': ' one text\n ',
       },
     }))
 
