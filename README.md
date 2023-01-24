@@ -26,6 +26,7 @@ Granary is a library and REST API that fetches and converts between a wide varie
 * HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2)
 * [Atom](https://tools.ietf.org/html/rfc4287), [RSS 2.0](http://www.rssboard.org/rss-specification), [JSON Feed](https://jsonfeed.org/)
 * Plain XML
+* [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/)
 
 [Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API [chaff](https://en.wikipedia.org/wiki/Chaff) and expose the sweet social data foodstuff inside in standard formats and protocols!
 

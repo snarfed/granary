@@ -17,6 +17,10 @@ atom
 ----
 .. automodule:: granary.atom
 
+bluesky
+-------
+.. automodule:: granary.bluesky
+
 facebook
 --------
 .. automodule:: granary.facebook

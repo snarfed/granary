@@ -14,6 +14,8 @@ wide variety of data sources and formats:
    2.0 <http://www.rssboard.org/rss-specification>`__, `JSON
    Feed <https://jsonfeed.org/>`__
 -  Plain XML
+-  `Bluesky <https://blueskyweb.org/>`__/`AT
+   Protocol <https://atproto.com/>`__
 
 `Free <https://en.wikipedia.org/wiki/Threshing>`__ yourself from silo
 API `chaff <https://en.wikipedia.org/wiki/Chaff>`__ and expose the sweet
@@ -225,13 +227,14 @@ be familiar with the whole project by the end.
 Development
 -----------
 
-Pull requests are welcome! Feel free to `ping
-me <http://snarfed.org/about>`__ with any questions.
+Pull requests are welcome! Feel free to `ping me in
+#indieweb-dev <https://indieweb.org/discuss>`__ with any questions.
 
-First, fork and clone this repo. Then, you’ll need the `Google Cloud
-SDK <https://cloud.google.com/sdk/>`__ with the
-``gcloud-appengine-python`` and ``gcloud-appengine-python-extras``
-`components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
+First, fork and clone this repo. Then, install the `Google Cloud
+SDK <https://cloud.google.com/sdk/>`__ and run
+``gcloud components install beta cloud-datastore-emulator`` to install
+the `datastore
+emulator <https://cloud.google.com/datastore/docs/tools/datastore-emulator>`__.
 Once you have them, set up your environment by running these commands in
 the repo root directory:
 
@@ -241,13 +244,14 @@ the repo root directory:
    python3 -m venv local
    source local/bin/activate
    pip install -r requirements.txt
+   # needed to serve static files locally
    ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
 
 Now, run the tests to check that everything is set up ok:
 
 .. code:: shell
 
-   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+   gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
    python3 -m unittest discover
 
 Finally, run the web app locally with
@@ -302,7 +306,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     .. code:: sh
 
        source local/bin/activate.csh
-       CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+       CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 < /dev/null >& /dev/null &
        sleep 5
        python3 -m unittest discover
        kill %1
@@ -336,6 +340,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
 
     .. code:: sh
 
+       cd /tmp
        python3 -m venv local
        source local/bin/activate.csh
        pip3 uninstall granary # make sure we force Pip to use the uploaded version
@@ -396,9 +401,9 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     choose *latest* in the drop-down, then click *Build Version*.
 
 13. On the `Versions
-    page <https://readthedocs.org/projects/oauth-dropins/versions/>`__,
-    check that the new version is active, If it’s not, activate it in
-    the *Activate a Version* section.
+    page <https://readthedocs.org/projects/granary/versions/>`__, check
+    that the new version is active, If it’s not, activate it in the
+    *Activate a Version* section.
 
 Related work
 ------------
@@ -458,6 +463,79 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+6.1 - unreleased
+~~~~~~~~~~~~~~~~
+
+*Non-breaking changes:*
+
+-  Add new ``bluesky`` module for
+   `Bluesky <https://blueskyweb.org/>`__/`AT
+   Protocol <https://atproto.com/>`__.
+-  ``as1``:
+
+   -  Add the ``organization`` object type.
+
+-  ``as2``:
+
+   -  Support converting between AS1 ``stop-following`` and AS2 ``Undo``
+      ``Follow``.
+   -  Add the ``Organization`` object type.
+   -  ``from_as1``: bug fix for image objects with ``url`` and ``value``
+      fields (for alt text).
+   -  ``from_as1``: convert ``urls.displayName`` to ``attachment.name``
+      (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
+
+-  ``atom``:
+
+   -  Bug fix for rendering image attachments without ``image`` field to
+      Atom.
+
+-  ``jsonfeed``:
+
+   -  Switch from ``white-space: pre`` CSS to converting newlines to
+      ``<br>``\ s because some feed readers follow it strictly and don’t
+      even line wrap
+      (`#456 <https://github.com/snarfed/granary/issues/456>`__).
+
+-  ``mastodon``:
+
+   -  Add compatibility support for `Truth
+      Social <https://truthsocial.com/>`__.
+
+-  ``microformats2``:
+
+   -  ``json_to_object``: drop backward compatibility support for
+      ``like`` and ``repost`` properties. `Background
+      discussion. <https://chat.indieweb.org/dev/2022-12-23#t1671833687984200>`__
+   -  ``json_to_object``: add new ``rel_urls`` kwarg to allow attaching
+      ``displayName``\ s to ``urls`` based on HTML text or ``title``
+      attribute
+      (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
+   -  Add new ``json_to_activities`` function.
+   -  Support the ``h-card`` ``org`` property.
+   -  ``json_to_object``: handle composite ``rsvp`` property value.
+   -  ``json_to_object``: bug fix when ``fetch_mf2`` is True, handle
+      when we run the authorship algorithm and fetch an author URL that
+      has a ``u-photo`` with ``alt``.
+
+-  ``flickr``:
+
+   -  ``get_activities``: add support for the ``count`` kwarg.
+
+-  ``github``:
+
+   -  ``get_activities``: add support for the ``count`` kwarg.
+
+6.0 - 2022-12-03
+~~~~~~~~~~~~~~~~
+
+-  ``as1``:
+
+   -  ``activity_changed``: ignore ``inReplyTo.author``
+      (`snarfed/bridgy#1338 <https://github.com/snarfed/bridgy/issues/1338>`__)
+
+.. _section-1:
 
 5.0 - 2022-12-03
 ~~~~~~~~~~~~~~~~
@@ -592,7 +670,7 @@ Changelog
 -  ``Source.original_post_discovery``: add new ``max_redirect_fetches``
    keyword arg.
 
-.. _section-1:
+.. _section-2:
 
 4.0 - 2022-03-23
 ~~~~~~~~~~~~~~~~
@@ -638,7 +716,7 @@ Changelog
 
    -  Handle malformed ``items.author`` element.
 
-.. _section-2:
+.. _section-3:
 
 3.2 - 2021-09-15
 ~~~~~~~~~~~~~~~~
@@ -696,7 +774,7 @@ Changelog
 -  REST API: ported web framework from webapp2 to Flask. No user-visible
    behavior change expected.
 
-.. _section-3:
+.. _section-4:
 
 3.1 - 2021-04-03
 ~~~~~~~~~~~~~~~~
@@ -801,7 +879,7 @@ Changelog
    -  ``from_as1()``: convert ``username`` to ``preferredUsername``.
    -  ``from_as1()``: bug fix, make ``context`` kwarg actually work.
 
-.. _section-4:
+.. _section-5:
 
 3.0 - 2020-04-08
 ~~~~~~~~~~~~~~~~
@@ -880,7 +958,7 @@ Non-breaking changes:
    caching now.
 -  Added Meetup.com support for publishing RSVPs.
 
-.. _section-5:
+.. _section-6:
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
@@ -929,7 +1007,7 @@ Non-breaking changes:
       supports one enclosure per item, so we now only include the first,
       and log a warning if the activity has more.)
 
-.. _section-6:
+.. _section-7:
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
@@ -979,7 +1057,7 @@ Non-breaking changes:
 
    -  Default title to ellipsized content.
 
-.. _section-7:
+.. _section-8:
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
@@ -988,7 +1066,7 @@ Non-breaking changes:
 March <https://developers.google.com/+/api-shutdown>`__. Notably, this
 removes the ``googleplus`` module.
 
-.. _section-8:
+.. _section-9:
 
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
@@ -1039,7 +1117,7 @@ removes the ``googleplus`` module.
 -  ``/url``: Return HTTP 400 when fetching the user’s URL results in an
    infinite redirect.
 
-.. _section-9:
+.. _section-10:
 
 1.14 - 2018-11-12
 ~~~~~~~~~~~~~~~~~
@@ -1066,7 +1144,7 @@ Encode ``&``\ s in author URL and email address too. (Thanks
 `sebsued <https://twitter.com/sebsued>`__!) \* AS2: \* Add ``Follow``
 support.
 
-.. _section-10:
+.. _section-11:
 
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
@@ -1127,7 +1205,7 @@ support.
    -  Support ``alt`` attribute in ``<img>`` tags
       (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
-.. _section-11:
+.. _section-12:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
@@ -1162,7 +1240,7 @@ impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. _section-12:
+.. _section-13:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -1235,7 +1313,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Omit title from items if it’s the same as the content. (Often
       caused by microformats2’s implied ``p-name`` logic.)
 
-.. _section-13:
+.. _section-14:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -1277,7 +1355,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. _section-14:
+.. _section-15:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -1305,7 +1383,7 @@ still bugs. Please file issues if you notice anything broken!
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. _section-15:
+.. _section-16:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -1385,7 +1463,7 @@ still bugs. Please file issues if you notice anything broken!
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. _section-16:
+.. _section-17:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -1433,7 +1511,7 @@ still bugs. Please file issues if you notice anything broken!
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. _section-17:
+.. _section-18:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -1467,7 +1545,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. _section-18:
+.. _section-19:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -1505,14 +1583,14 @@ still bugs. Please file issues if you notice anything broken!
    -  Switch creating comments and reactions from GraphQL to REST API
       (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
-.. _section-19:
+.. _section-20:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. _section-20:
+.. _section-21:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -1546,7 +1624,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. _section-21:
+.. _section-22:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -1554,7 +1632,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. _section-22:
+.. _section-23:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -1597,7 +1675,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. _section-23:
+.. _section-24:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -1653,7 +1731,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. _section-24:
+.. _section-25:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -1676,7 +1754,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. _section-25:
+.. _section-26:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -1684,7 +1762,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. _section-26:
+.. _section-27:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~
