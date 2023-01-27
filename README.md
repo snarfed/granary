@@ -293,13 +293,14 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 6.1 - unreleased
+### 5.1 - unreleased
 
 _Non-breaking changes:_
 
 * Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
 * `as1`:
   * Add the `organization` object type.
+  * `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
 * `as2`:
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
   * Add the `Organization` object type.
@@ -307,6 +308,7 @@ _Non-breaking changes:_
   * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
 * `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
+  * Bug fix for `published` and `updated` in entries with objects, eg likes, reposts, RSVPs, bookmarks. Thanks [@gregorlove](https://gregorlove.com/)! ([#480](https://github.com/snarfed/granary/issues/480))
 * `jsonfeed`:
   * Switch from `white-space: pre` CSS to converting newlines to `<br>`s because some feed readers follow it strictly and don't even line wrap ([#456](https://github.com/snarfed/granary/issues/456)).
 * `mastodon`:
@@ -322,11 +324,6 @@ _Non-breaking changes:_
   * `get_activities`: add support for the `count` kwarg.
 * `github`:
   * `get_activities`: add support for the `count` kwarg.
-
-### 6.0 - 2022-12-03
-
-* `as1`:
-  * `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
 
 ### 5.0 - 2022-12-03
 

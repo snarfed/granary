@@ -165,11 +165,15 @@ class AtomTest(testutil.TestCase):
       self.assert_multiline_in("""\
 <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
 <activity:object>foo</activity:object>
+<published>2012-02-22</published>
+<updated>2013-10-25</updated>
 """, atom.activity_to_atom({
         'url': 'like-url',
         'objectType': 'activity',
         'verb': 'like',
         'object': obj,
+        'published': '2012-02-22',
+        'updated': '2013-10-25',
       }), ignore_blanks=True)
 
   def test_activity_to_atom_author_without_properties(self):

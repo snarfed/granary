@@ -63,8 +63,9 @@
   {% if activity.verb in VERBS_WITH_OBJECT and (obj.url or obj.id) %}
     <activity:object>{{ obj.url or obj.id }}</activity:object>
   {% endif %}
-  <published>{{ obj.published }}</published>
-  <updated>{{ obj.updated or obj.published }}</updated>
+  {% set base = activity if activity.verb in VERBS_WITH_OBJECT else obj %}
+  <published>{{ base.published }}</published>
+  <updated>{{ base.updated or base.published }}</updated>
   {% for orig in obj.inReplyTo or activity.context.inReplyTo %}
     <thr:in-reply-to ref="{{ orig.id }}" href="{{ orig.url }}" type="text/html" />
   {% endfor %}
