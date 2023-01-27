@@ -63,7 +63,7 @@
   {% if activity.verb in VERBS_WITH_OBJECT and (obj.url or obj.id) %}
     <activity:object>{{ obj.url or obj.id }}</activity:object>
   {% endif %}
-  {% set base = activity if activity.verb in VERBS_WITH_OBJECT else obj %}
+  {% set base = activity if (activity.verb in VERBS_WITH_OBJECT or obj.objectType == 'bookmark') else obj %}
   <published>{{ base.published }}</published>
   <updated>{{ base.updated or base.published }}</updated>
   {% for orig in obj.inReplyTo or activity.context.inReplyTo %}

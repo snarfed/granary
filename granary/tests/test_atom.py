@@ -176,6 +176,28 @@ class AtomTest(testutil.TestCase):
         'updated': '2013-10-25',
       }), ignore_blanks=True)
 
+  def test_activity_to_atom_bookmark(self):
+    got = atom.activity_to_atom({
+      'url': 'bookmark-url',
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'bookmark',
+        'targetUrl': 'http://orig',
+      },
+      'published': '2012-02-22',
+      'updated': '2013-10-25',
+    })
+    self.assert_multiline_in("""\
+<activity:object-type>http://activitystrea.ms/schema/1.0/bookmark</activity:object-type>
+""", got, ignore_blanks=True)
+    self.assert_multiline_in("""\
+<activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
+<published>2012-02-22</published>
+<updated>2013-10-25</updated>
+<link rel="self" type="application/atom+xml" href="bookmark-url" />
+""", got, ignore_blanks=True)
+
   def test_activity_to_atom_author_without_properties(self):
     """https://console.cloud.google.com/errors/CMPawqSghuDquwE"""
     self.assertIn('<title>foo</title>', atom.activity_to_atom({
