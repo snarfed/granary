@@ -91,8 +91,7 @@ class Defaulter(collections.defaultdict):
   https://docs.djangoproject.com/en/1.8/ref/templates/language/#variables
   """
   def __init__(self, init={}):
-    super(Defaulter, self).__init__(
-      Defaulter, {k: self.__defaulter(v) for k, v in init.items()})
+    super().__init__(Defaulter, {k: self.__defaulter(v) for k, v in init.items()})
 
   @classmethod
   def __defaulter(cls, obj):
@@ -104,13 +103,13 @@ class Defaulter(collections.defaultdict):
       return obj
 
   def __unicode__(self):
-    return super(Defaulter, self).__unicode__() if self else ''
+    return super().__unicode__() if self else ''
 
   __str__ = __unicode__
   __eq__ = collections.defaultdict.__eq__
 
   def __hash__(self):
-    return super(Defaulter, self).__hash__() if self else None.__hash__()
+    return super().__hash__() if self else None.__hash__()
 
 
 def activities_to_atom(activities, actor, title=None, request_url=None,
@@ -349,7 +348,7 @@ def _prepare_activity(a, reader=True):
       Currently just includes location if True, not otherwise.
   """
   act_type = as1.object_type(a)
-  obj = util.get_first(a, 'object', default={})
+  obj = util.get_first(a, 'object', default=a)
   primary = obj if (not act_type or act_type == 'post') else a
 
   # Render content as HTML; escape &s

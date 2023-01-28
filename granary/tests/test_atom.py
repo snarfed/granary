@@ -449,6 +449,13 @@ quoted text
         ):
       self.assert_multiline_in(expected, out)
 
+  def test_empty_object_and_content(self):
+    out = atom.activities_to_atom([{
+      'object': None,
+      'content': 'fooey barry',
+    }], None)
+    self.assert_multiline_in('fooey barry', out)
+
   def test_attachments(self):
     got = atom.activities_to_atom([{'object': {'attachments': [
       {'objectType': 'note', 'url': 'http://p', 'content': 'note content'},

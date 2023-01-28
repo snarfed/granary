@@ -309,6 +309,7 @@ _Non-breaking changes:_
 * `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
   * Bug fix for `published` and `updated` in entries with objects, eg likes, reposts, RSVPs, bookmarks. Thanks [@gregorlove](https://gregorlove.com/)! ([#480](https://github.com/snarfed/granary/issues/480))
+  * Bug fix for content `activity/ies_to_atom` when `object` is present and empty.
 * `jsonfeed`:
   * Switch from `white-space: pre` CSS to converting newlines to `<br>`s because some feed readers follow it strictly and don't even line wrap ([#456](https://github.com/snarfed/granary/issues/456)).
 * `mastodon`:

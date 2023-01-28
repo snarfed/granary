@@ -1,4 +1,4 @@
-{% set obj = activity.object if activity.object is mapping else activity.object[0] %}
+{% set obj = (activity.object if activity.object is mapping else activity.object[0]) if activity.object else activity %}
 {% set actor = activity.actor or obj.author %}
 {% include "author.atom" %}
 
