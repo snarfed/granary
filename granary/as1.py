@@ -267,7 +267,7 @@ def original_post_discovery(
 
   # check for redirect and add their final urls
   if max_redirect_fetches and len(candidates) > max_redirect_fetches:
-    logger.warning('Found {len(candidates)} original post candidates, only resolving redirects for the first {max_redirect_fetches}')
+    logger.warning(f'Found {len(candidates)} original post candidates, only resolving redirects for the first {max_redirect_fetches}')
   redirects = {}  # maps final URL to original URL for redirects
   for url in candidates[:max_redirect_fetches]:
     resolved = util.follow_redirects(url, **kwargs)

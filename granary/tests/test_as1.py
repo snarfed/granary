@@ -7,6 +7,25 @@ from oauth_dropins.webutil import testutil
 
 from .. import as1
 
+ACTOR = {
+  'id': 'tag:fake.com:444',
+  'displayName': 'Bob',
+  'url': 'https://plus.google.com/bob',
+  'image': {'url': 'https://bob/picture'},
+}
+NOTE = {
+  'objectType': 'note',
+  'id': 'tag:fake.com:my-note',
+  'url': 'http://fake.com/my-note',
+  'content': 'my note',
+  'published': '2012-02-22T20:26:41',
+}
+MENTION = copy.deepcopy(NOTE)
+MENTION['tags'] = [{
+  'objectType': 'mention',
+  'url': 'https://alice',
+  'displayName': 'Alice',
+}]
 LIKES = [{
   'verb': 'like',
   'author': {'id': 'tag:fake.com:person', 'numeric_id': '5'},
@@ -37,14 +56,32 @@ ACTIVITY = {
 }
 COMMENT = {
   'objectType': 'comment',
-  'content': 'foo bar',
-  'id': 'tag:fake.com:547822715231468_6796480',
+  'content': 'A ☕ reply',
+  'id': 'tag:fake.com:123456',
   'published': '2012-12-05T00:58:26+00:00',
-  'url': 'https://www.facebook.com/547822715231468?comment_id=6796480',
+  'url': 'https://fake.com/123456',
   'inReplyTo': [{
-    'id': 'tag:fake.com:547822715231468',
-    'url': 'https://www.facebook.com/547822715231468',
+    'id': 'tag:fake.com:123',
+    'url': 'https://fake.com/123',
   }],
+}
+POST = {
+  'objectType': 'activity',
+  'verb': 'post',
+  'id': 'tag:fake.com:123#post',
+  'object': COMMENT,
+}
+UPDATE = {
+  'objectType': 'activity',
+  'verb': 'update',
+  'id': 'tag:fake.com:123456#update',
+  'object': COMMENT,
+}
+DELETE_OF_ID = {
+  'objectType': 'activity',
+  'verb': 'delete',
+  'id': 'tag:fake.com:123456#delete',
+  'object': COMMENT['id'],
 }
 EVENT = {
   'id': 'tag:fake.com:246',
@@ -103,13 +140,17 @@ LIKE = {
     'image': {'url': 'https://alice/picture'},
   },
 }
-RESHARER = {
-  'kind': 'plus#person',
-  'id': 'tag:fake.com:444',
-  'displayName': 'Bob',
-  'url': 'https://plus.google.com/bob',
-  'image': {'url': 'https://bob/picture'},
+FOLLOW = {
+  'id': 'tag:fake.com:333',
+  'objectType': 'activity',
+  'verb': 'follow',
+  'actor': ACTOR['id'],
+  'object': 'https://www.realize.be/',
 }
+FOLLOW_WITH_ACTOR = copy.deepcopy(FOLLOW)
+FOLLOW_WITH_ACTOR['actor'] = ACTOR
+FOLLOW_WITH_OBJECT = copy.deepcopy(FOLLOW)
+FOLLOW_WITH_OBJECT['object'] = ACTOR
 
 
 class As1Test(testutil.TestCase):
@@ -163,7 +204,7 @@ class As1Test(testutil.TestCase):
 
     gp_like = LIKE
     gp_like_edited = copy.deepcopy(gp_like)
-    gp_like_edited['author'] = RESHARER
+    gp_like_edited['author'] = ACTOR
 
     for before, after in (({}, {}),
                           ({'x': 1}, {'y': 2}),
@@ -195,10 +236,10 @@ class As1Test(testutil.TestCase):
 
   def test_activity_changed_in_reply_to_author_name(self):
     first = copy.copy(COMMENT)
-    first['inReplyTo'][0]['author'] = copy.deepcopy(RESHARER)
+    first['inReplyTo'][0]['author'] = copy.deepcopy(ACTOR)
 
     second = copy.copy(COMMENT)
-    second['inReplyTo'][0]['author'] = copy.deepcopy(RESHARER)
+    second['inReplyTo'][0]['author'] = copy.deepcopy(ACTOR)
     second['inReplyTo'][0]['author']['displayName'] = 'other'
     self.assertFalse(as1.activity_changed(first, second, log=True))
 
