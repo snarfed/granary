@@ -885,40 +885,41 @@ class Instagram(source.Source):
       input = [input]
 
     for data in input:
-      entry_data = data.get('entry_data', {})
+      entry_data = data.get('entry_data') or {}
 
       # home page ie news feed
-      for page in entry_data.get('FeedPage', []):
-        edges = page.get('graphql', {}).get('user', {})\
-                    .get('edge_web_feed_timeline', {}).get('edges', [])
+      for page in (entry_data.get('FeedPage') or []):
+        edges = (((page.get('graphql') or {}).get('user') or {})\
+                    .get('edge_web_feed_timeline') or {}).get('edges') or []
         medias.extend(e.get('node') for e in edges
-                      if e.get('node', {}).get('__typename') not in
+                      if (e.get('node') or {}).get('__typename') not in
                       ('GraphSuggestedUserFeedUnit',))
 
       # feed v2
       feed_v2_items.extend(data.get('feed_items') or [])
       feed_v2_items.extend(data.get('items') or [])
 
-      user = (data.get('data', {}) or data).get('user', {})
-      edges = user.get('edge_web_feed_timeline', {}).get('edges', [])
+      user = (data.get('data') or data).get('user') or {}
+      edges = (user.get('edge_web_feed_timeline') or {}).get('edges') or []
       medias.extend(e.get('node') for e in edges)
 
       # user profiles
-      profile_users = [page.get('graphql', {}).get('user', {})
+      profile_users = [((page.get('graphql') or {}).get('user') or {})
                        for page in entry_data.get('ProfilePage', [])]
       if user:
         profile_users.append(user)
       for profile_user in profile_users:
         medias.extend(edge['node'] for edge in
-          profile_user.get('edge_owner_to_timeline_media', {}).get('edges', [])
-          if edge.get('node'))
+                      ((profile_user.get('edge_owner_to_timeline_media') or {})
+                       .get('edges') or [])
+                      if edge.get('node'))
 
       if not viewer_user:
-        viewer_user = data.get('config', {}).get('viewer')
+        viewer_user = (data.get('config') or {}).get('viewer')
 
       # individual photo/video permalinks
-      for page in [data] + entry_data.get('PostPage', []):
-        media = page.get('graphql', {}).get('shortcode_media')
+      for page in [data] + (entry_data.get('PostPage') or []):
+        media = (page.get('graphql') or {}).get('shortcode_media')
         if media:
           medias.append(media)
 
