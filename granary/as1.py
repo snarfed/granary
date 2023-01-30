@@ -47,6 +47,24 @@ def object_type(obj):
   return type if type and type != 'activity' else obj.get('verb')
 
 
+def get_ids(obj, field):
+  """Extracts and returns a given field's values as ids.
+
+  Returns string values as is. For dict values, returns their inner `id` or
+  `url` field value, in that order of precedence.
+  """
+  ids = set()
+  for elem in util.get_list(obj, field):
+    if elem and isinstance(elem, str):
+      ids.add(elem)
+    elif isinstance(elem, dict):
+      id = elem.get('id') or elem.get('url')
+      if id:
+        ids.add(id)
+
+  return list(ids)
+
+
 def merge_by_id(obj, field, new):
   """Merges new items by id into a field in an existing AS1 object.
 

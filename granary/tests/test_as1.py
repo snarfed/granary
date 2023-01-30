@@ -496,3 +496,24 @@ class As1Test(testutil.TestCase):
         })
     ):
       self.assertEqual(expected, as1.object_urls(actor))
+
+  def test_get_ids(self):
+    for expected, obj in (
+        ([], {}),
+        ([], {'y': 'a'}),
+        ([], {'x': ''}),
+        ([], {'x': {}}),
+        ([], {'x': {'foo': 'bar'}}),
+        ([], {'x': [{}, '']}),
+        (['b'], {'x': 'b'}),
+        (['b'], {'y': 'a', 'x': 'b'}),
+        (['b'], {'x': ['', 'b']}),
+        (['b'], {'x': {'id': 'b'}}),
+        (['b'], {'x': {'url': 'b'}}),
+        (['b'], {'x': {'id': 'b', 'url': 'c'}}),
+        (['b'], {'x': [{}, 'b']}),
+        (['b'], {'x': [{'id': 'b'}, '']}),
+        (['b', 'd'], {'x': ['b', 'd']}),
+        (['b', 'd'], {'x': [{'id': 'b'}, {'url': 'd'}]}),
+    ):
+        self.assertEqual(expected, sorted(as1.get_ids(obj, 'x')), obj)
