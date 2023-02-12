@@ -28,6 +28,18 @@ VERBS_WITH_OBJECT = {
   'share',
 } | set(RSVP_VERB_TO_COLLECTION.keys())
 
+# objectTypes that can be actors. technically this is based on AS2 semantics,
+# since it's unspecified in AS1.
+# https://www.w3.org/TR/activitystreams-core/#actors
+# https://activitystrea.ms/specs/json/1.0/#activity
+ACTOR_TYPES = {
+  'application',
+  'group',
+  'organization',
+  'person',
+  'service',
+}
+
 # used in original_post_discovery
 _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 

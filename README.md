@@ -299,7 +299,7 @@ _Non-breaking changes:_
 
 * Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
 * `as1`:
-  * Add the `organization` object type.
+  * Add the `organization` object type and `ACTOR_TYPES` constant ([based on AS2](https://www.w3.org/TR/activitystreams-core/#actors)).
   * Add new `get_ids` function.
   * `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
 * `as2`:
