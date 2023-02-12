@@ -70,6 +70,7 @@ VERB_TO_TYPE = {
   'share': 'Announce',
   'tag': 'Add',
   'update': 'Update',
+  'delete': 'Delete',
 }
 TYPE_TO_VERB = _invert(VERB_TO_TYPE)
 TYPE_TO_VERB['Like'] = 'like'  # disambiguate
