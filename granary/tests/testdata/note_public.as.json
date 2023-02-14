@@ -1,0 +1,8 @@
+{
+  "objectType": "note",
+  "content": "some stuff",
+  "to": [{
+    "objectType": "group",
+    "alias": "@public"
+  }]
+}

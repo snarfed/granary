@@ -27,6 +27,7 @@ CONTEXT = 'https://www.w3.org/ns/activitystreams'
 PUBLIC_AUDIENCE = 'https://www.w3.org/ns/activitystreams#Public'
 # All known Public values, cargo culted from:
 # https://socialhub.activitypub.rocks/t/visibility-to-cc-mapping/284
+# https://docs.joinmastodon.org/spec/activitypub/#properties-used
 PUBLICS = frozenset((
     PUBLIC_AUDIENCE,
     'as:Public',
@@ -204,9 +205,17 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if len(urls) == 1:
     obj['url'] = urls[0]
 
+    # location
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
+
+  # audience, public or unlisted or neither
+  to_aliases = [to.get('alias') for to in util.pop_list(obj, 'to')]
+  if '@public' in to_aliases:
+    obj['to'] =[PUBLIC_AUDIENCE]
+  elif '@unlisted' in to_aliases:
+    obj['cc'] =[PUBLIC_AUDIENCE]
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:
@@ -284,6 +293,10 @@ def to_as1(obj, use_type=True):
     if att.get('mediaType', '').split('/')[0] == 'image':
       att['objectType'] = 'image'
 
+  # audience, public or unlisted or neither
+  to = util.pop_list(obj, 'to')
+  cc = util.pop_list(obj, 'cc')
+
   obj.update({
     'displayName': obj.pop('name', None),
     'username': obj.pop('preferredUsername', None),
@@ -294,6 +307,9 @@ def to_as1(obj, use_type=True):
     'location': url_or_as1(obj.get('location')),
     'object': inner_objs,
     'tags': all_to_as1('tag'),
+    'to': [{'objectType': 'group', 'alias': '@unlisted'}] if PUBLICS.intersection(cc)
+          else [{'objectType': 'group', 'alias': '@public'}] if PUBLICS.intersection(to)
+          else None,
   })
 
   # media
@@ -321,7 +337,9 @@ def to_as1(obj, use_type=True):
 
 
 def is_public(activity):
-  """Returns True if the given AS2 object or activity is public, False otherwise.
+  """Returns True if the given AS2 object or activity is public or unlisted.
+
+  https://docs.joinmastodon.org/spec/activitypub/#properties-used
 
   Args:
     activity: dict, AS2 activity or object
@@ -335,4 +353,3 @@ def is_public(activity):
     audience.extend(util.get_list(obj, 'to') + util.get_list(obj, 'cc'))
 
   return bool(PUBLICS.intersection(audience))
-

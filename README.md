@@ -18,7 +18,7 @@ The social web translator. Fetches and converts data between social networks, HT
 About
 ---
 
-Granary is a library and REST API that fetches and converts between a wide variety of data sources and formats:
+Granary is a library and REST API that fetches and converts between a wide variety of social data sources and formats:
 
 * Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native APIs
 * Instagram and Facebook scraped HTML
@@ -133,26 +133,14 @@ See the [example above](#using) for a quick start guide.
 
 Clone or download this repo into a directory named `granary` (note the underscore instead of dash). Each source works the same way. Import the module for the source you want to use, then instantiate its class by passing the HTTP handler object. The handler should have a `request` attribute for the current HTTP request.
 
-The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [individual method docstrings](https://github.com/snarfed/granary/blob/master/source.py) for details. All return values are Python dicts of decoded ActivityStreams 1 JSON.
+The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [full reference docs](https://granary.readthedocs.io/en/stable/source/granary.html#module-granary.source) for details. All return values are Python dicts of decoded ActivityStreams 1 JSON.
 
 The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams 1 objects as nicely formatted HTML.
 
 
 Troubleshooting/FAQ
 ---
-Check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). It's pretty comprehensive and applies to this project too. For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
-
-```
-bash: ./bin/easy_install: ...bad interpreter: No such file or directory
-
-ImportError: cannot import name certs
-
-ImportError: cannot import name tweepy
-
-File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
-  raise TweepError(e)
-TweepError: must be _socket.socket, not socket
-```
+Check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). It's pretty comprehensive and applies to this project too.
 
 
 Future work
@@ -305,6 +293,7 @@ _Non-breaking changes:_
 * `as2`:
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
   * Add the `Organization` and `Delete` object types.
+  * Convert `to`/`cc` to/from AS1 `to` for public and unlisted.
   * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
   * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
 * `atom`:
