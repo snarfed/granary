@@ -19,19 +19,6 @@
   <itunes:explicit>no</itunes:explicit>
 
   <item>
-    <title>i'm ready to perform</title>
-    <link>http://vidjo/post</link>
-    <description><![CDATA[
-    <p><video class="u-video" src="http://a/vidjo.mov" controls="controls" poster="">Your browser does not support the video tag. <a href="http://a/vidjo.mov">Click here to view directly. </a></video>
-    </p>]]></description>
-    <author>-</author>
-    <guid isPermaLink="true">http://vidjo/post</guid>
-    <enclosure url="http://a/vidjo.mov" length="8880000" type="video/quicktime"/>
-    <pubDate>Tue, 04 Dec 2012 00:00:00 +0000</pubDate>
-    <itunes:duration>428</itunes:duration>
-  </item>
-
-  <item>
     <title>i'm ready to speak</title>
     <link>http://podcast/post</link>
     <description><![CDATA[<p>some HTML</p>
@@ -43,6 +30,19 @@
     <enclosure url="http://a/podcast.mp3" length="7770000" type="audio/mpeg"/>
     <pubDate>Wed, 05 Dec 2012 00:58:26 +0700</pubDate>
     <itunes:duration>328</itunes:duration>
+  </item>
+
+  <item>
+    <title>i'm ready to perform</title>
+    <link>http://vidjo/post</link>
+    <description><![CDATA[
+    <p><video class="u-video" src="http://a/vidjo.mov" controls="controls" poster="">Your browser does not support the video tag. <a href="http://a/vidjo.mov">Click here to view directly. </a></video>
+    </p>]]></description>
+    <author>-</author>
+    <guid isPermaLink="true">http://vidjo/post</guid>
+    <enclosure url="http://a/vidjo.mov" length="8880000" type="video/quicktime"/>
+    <pubDate>Tue, 04 Dec 2012 00:00:00 +0000</pubDate>
+    <itunes:duration>428</itunes:duration>
   </item>
 
 </channel>

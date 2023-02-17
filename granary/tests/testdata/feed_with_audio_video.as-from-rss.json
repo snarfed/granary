@@ -1,26 +1,4 @@
 [{
-  "id": "http://vidjo/post",
-  "url": "http://vidjo/post",
-  "objectType": "article",
-  "displayName": "i'm ready to perform",
-  "content": "<p><video class=\"u-video\" controls=\"controls\" poster=\"\" src=\"http://a/vidjo.mov\">Your browser does not support the video tag. <a href=\"http://a/vidjo.mov\">Click here to view directly. </a></video>\n    </p>",
-  "published": "2012-12-04T00:00:00+00:00",
-  "attachments": [{
-    "stream": {
-      "url": "http://a/vidjo.mov",
-      "duration": 428,
-      "size": 8880000
-    },
-    "objectType": "video"
-  }],
-  "stream": [{
-    "url": "http://a/vidjo.mov",
-    "duration": 428,
-    "size": 8880000
-  }],
-  "author": {"displayName": "-"}
-},
-{
   "id": "http://podcast/post",
   "url": "http://podcast/post",
   "objectType": "article",
@@ -42,6 +20,28 @@
     "url": "http://a/podcast.mp3",
     "duration": 328,
     "size": 7770000
+  }],
+  "author": {"displayName": "-"}
+},
+{
+  "id": "http://vidjo/post",
+  "url": "http://vidjo/post",
+  "objectType": "article",
+  "displayName": "i'm ready to perform",
+  "content": "<p><video class=\"u-video\" controls=\"controls\" poster=\"\" src=\"http://a/vidjo.mov\">Your browser does not support the video tag. <a href=\"http://a/vidjo.mov\">Click here to view directly. </a></video>\n    </p>",
+  "published": "2012-12-04T00:00:00+00:00",
+  "attachments": [{
+    "stream": {
+      "url": "http://a/vidjo.mov",
+      "duration": 428,
+      "size": 8880000
+    },
+    "objectType": "video"
+  }],
+  "stream": [{
+    "url": "http://a/vidjo.mov",
+    "duration": 428,
+    "size": 8880000
   }],
   "author": {"displayName": "-"}
 }]
