@@ -1,6 +1,7 @@
 """Convert between ActivityStreams and RSS 2.0.
 
 RSS 2.0 spec: http://www.rssboard.org/rss-specification
+Feedgen docs: https://feedgen.kiesow.be/
 
 Apple iTunes Podcasts feed requirements:
 https://help.apple.com/itc/podcasts_connect/#/itc1723472cb
@@ -85,7 +86,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     if obj.get('objectType') == 'person':
       continue
 
-    item = fg.add_entry()
+    item = fg.add_entry(order='append')
     url = obj.get('url')
     id = obj.get('id') or url
     item.id(id)

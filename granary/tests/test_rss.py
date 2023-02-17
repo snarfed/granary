@@ -115,3 +115,10 @@ class RssTest(testutil.TestCase):
         },
       }], feed_url='http://this')
     self.assert_multiline_in('<author>- (Mrs. Baz)</author>', got)
+
+  def test_order(self):
+    got = rss.from_activities([
+      {'content': 'first'},
+      {'content': 'second'},
+    ], feed_url='http://this')
+    self.assertLess(got.find('<title>first</title>'), got.find('<title>second</title>'))

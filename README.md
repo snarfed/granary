@@ -300,6 +300,10 @@ _Non-breaking changes:_
   * Bug fix for rendering image attachments without `image` field to Atom.
   * Bug fix for `published` and `updated` in entries with objects, eg likes, reposts, RSVPs, bookmarks. Thanks [@gregorlove](https://gregorlove.com/)! ([#480](https://github.com/snarfed/granary/issues/480))
   * Bug fix for content `activity/ies_to_atom` when `object` is present and empty.
+* `flickr`:
+  * `get_activities`: add support for the `count` kwarg.
+* `github`:
+  * `get_activities`: add support for the `count` kwarg.
 * `jsonfeed`:
   * Switch from `white-space: pre` CSS to converting newlines to `<br>`s because some feed readers follow it strictly and don't even line wrap ([#456](https://github.com/snarfed/granary/issues/456)).
 * `mastodon`:
@@ -311,10 +315,8 @@ _Non-breaking changes:_
   * Support the `h-card` `org` property.
   * `json_to_object`: handle composite `rsvp` property value.
   * `json_to_object`: bug fix when `fetch_mf2` is True, handle when we run the authorship algorithm and fetch an author URL that has a `u-photo` with `alt`.
-* `flickr`:
-  * `get_activities`: add support for the `count` kwarg.
-* `github`:
-  * `get_activities`: add support for the `count` kwarg.
+* `rss`:
+  * `from_activities`: fix item ordering to match input activities.
 
 ### 5.0 - 2022-12-03
 
