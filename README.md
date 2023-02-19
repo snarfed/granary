@@ -296,6 +296,7 @@ _Non-breaking changes:_
   * Convert `to`/`cc` to/from AS1 `to` for public and unlisted.
   * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
   * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
+  * `from_as1`: preserve `inReplyTo` object values as objects.
 * `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
   * Bug fix for `published` and `updated` in entries with objects, eg likes, reposts, RSVPs, bookmarks. Thanks [@gregorlove](https://gregorlove.com/)! ([#480](https://github.com/snarfed/granary/issues/480))
