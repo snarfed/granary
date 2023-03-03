@@ -275,7 +275,7 @@ def to_as1(obj, use_type=True):
 
   # inner objects
   inner_objs = all_to_as1('object')
-  actor = to_as1(obj.get('actor', {}))
+  actor = to_as1(as1.get_object(obj, 'actor'))
 
   if type == 'Create':
     for inner_obj in inner_objs:
@@ -305,7 +305,7 @@ def to_as1(obj, use_type=True):
   obj.update({
     'displayName': obj.pop('name', None),
     'username': obj.pop('preferredUsername', None),
-    'actor': actor,
+    'actor': actor['id'] if actor.keys() == set(['id']) else actor,
     'attachments': attachments,
     'image': as1_images,
     'inReplyTo': [to_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],

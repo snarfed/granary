@@ -1,9 +1,7 @@
 {
   "objectType": "activity",
   "verb": "stop-following",
-  "actor": {
-    "id": "tag:example.com,2001:follower"
-  },
+  "actor": "tag:example.com,2001:follower",
   "object": {
     "id": "tag:example.com,2001:followee"
   }
