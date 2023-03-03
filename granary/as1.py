@@ -59,7 +59,7 @@ def object_type(obj):
   return type if type and type != 'activity' else obj.get('verb')
 
 
-def get_object(obj, field):
+def get_object(obj, field='object'):
   """Extracts and returns a field value as an object.
 
   If the field value is a string, returns an object with it as the id, eg
@@ -75,6 +75,24 @@ def get_object(obj, field):
     return {}
   val = util.get_first(obj, field, {}) or {}
   return {'id': val} if isinstance(val, str) else val
+
+
+def get_objects(obj, field='object'):
+  """Extracts and returns a field value as an object.
+
+  If the field value is a string, returns an object with it as the id, eg
+  {'id': val}. If the field value is a list, returns the first element.
+
+  Args:
+    obj: decoded JSON ActivityStreams object
+    field: str
+
+  Returns: dict
+  """
+  if not obj:
+    return []
+  return [{'id': val} if isinstance(val, str) else val
+          for val in util.get_list(obj, field)]
 
 
 def get_ids(obj, field):
@@ -128,7 +146,7 @@ def is_public(obj):
   bridgy/util.prune_activity()). If the default here ever changes, be sure to
   update Bridgy's code.
   """
-  to = obj.get('to') or obj.get('object', {}).get('to') or []
+  to = obj.get('to') or get_object(obj).get('to') or []
   aliases = util.trim_nulls([t.get('alias') for t in to])
   object_types = util.trim_nulls([t.get('objectType') for t in to])
   return (True if '@public' in aliases or '@unlisted' in aliases
@@ -226,8 +244,8 @@ def activity_changed(before, after, log=False):
         logger.debug(f'{label}[{field}] {b_val} => {a_val}')
       return True
 
-  obj_b = before.get('object', {})
-  obj_a = after.get('object', {})
+  obj_b = get_object(before)
+  obj_a = get_object(after)
   if any(changed(before, after, field, 'activity') or
          changed(obj_b, obj_a, field, 'activity[object]')
          for field in ('objectType', 'verb', 'to', 'content', 'location',
@@ -247,8 +265,8 @@ def append_in_reply_to(before, after):
   Args:
     before, after: dicts, ActivityStreams activities or objects
   """
-  obj_b = before.get('object', before)
-  obj_a = after.get('object', after)
+  obj_b = get_object(before) or before
+  obj_a = get_object(after) or after
 
   if obj_b and obj_a:
     reply_b = util.get_list(obj_b, 'inReplyTo')
@@ -295,7 +313,7 @@ def original_post_discovery(
   Returns:
     ([string original post URLs], [string mention URLs]) tuple
   """
-  obj = activity.get('object') or activity
+  obj = get_object(activity) or activity
   content = obj.get('content', '').strip()
 
   # find all candidate URLs

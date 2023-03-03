@@ -1,4 +1,4 @@
-{% set obj = as1.get_object(activity, 'object') or activity %}
+{% set obj = as1.get_object(activity) or activity %}
 {% set actor = activity.actor or as1.get_object(obj, 'author') %}
 {% include "author.atom" %}
 

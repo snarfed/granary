@@ -114,7 +114,6 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     inner_objs = inner_objs[0]
     if verb == 'stop-following':
       type = 'Undo'
-      obj_obj = obj.get('object')
       inner_objs = {
         '@context': context,
         'type': 'Follow',
@@ -286,7 +285,7 @@ def to_as1(obj, use_type=True):
     # special case Undo Follow
     if type == 'Undo' and inner_objs.get('verb') == 'follow':
       obj['verb'] = 'stop-following'
-      inner_inner_obj = inner_objs.get('object')
+      inner_inner_obj = as1.get_object(inner_objs)
       inner_objs = {
         'id': (inner_inner_obj.get('id') or util.get_url(inner_inner_obj, 'url')
                if isinstance(inner_inner_obj, dict) else inner_inner_obj),
@@ -355,8 +354,7 @@ def is_public(activity):
     return False
 
   audience = util.get_list(activity, 'to') + util.get_list(activity, 'cc')
-  obj = activity.get('object')
-  if isinstance(obj, dict):
-    audience.extend(util.get_list(obj, 'to') + util.get_list(obj, 'cc'))
+  obj = as1.get_object(activity)
+  audience.extend(util.get_list(obj, 'to') + util.get_list(obj, 'cc'))
 
   return bool(PUBLICS.intersection(audience))

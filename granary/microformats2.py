@@ -189,7 +189,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # for the object. for other verbs, the activity itself is the
   # interesting thing
   if obj_type == 'post':
-    primary = obj.get('object', {})
+    primary = as1.get_object(obj, 'object')
     obj_type = as1.object_type(primary) or default_object_type
   else:
     primary = obj
@@ -307,7 +307,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   if obj_type == 'tag':
     ret['properties']['tag-of'] = util.get_urls(obj, 'target')
 
-  inner_obj = as1.get_object(obj, 'object')
+  inner_obj = as1.get_object(obj)
   tags = obj.get('tags', []) or inner_obj.get('tags', [])
   if not tags and obj_type == 'tag':
     tags = util.get_list(obj, 'object')
@@ -341,11 +341,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       # single object, but it's useful to let it be a list, e.g. when a like has
       # multiple targets, e.g. a like of a post with original post URLs in it,
       # which brid.gy does.
-      objs = get_list(obj, 'object')
+      objs = as1.get_objects(obj)
       ret['properties'][prop + '-of'] = [
         # flatten contexts that are just a url
-        util.get_url(o) if (isinstance(o, str) or
-                            ('url' in o and set(o.keys()) <= set(['url', 'objectType'])))
+        (o.get('url') or o.get('id')) if o.keys() <= set(['id', 'url', 'objectType'])
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
         for o in objs]
     else:
@@ -998,19 +997,13 @@ def render_content(obj, include_location=True, synthesize_content=True,
         'content' in obj):
       continue
 
-    targets = get_list(obj, 'object')
-    if not targets:
-      continue
-
-    for target in targets:
-      if isinstance(target, str):
-        target = {'url': target}
-      target_url = (target if isinstance(target, str) else target.get('url')) or '#'
+    for target in as1.get_objects(obj):
+      target_url = target.get('url') or target.get('id') or '#'
 
       # sometimes likes don't have enough content to render anything
       # interesting
-      if target_url and set(target) <= set(['url', 'objectType']):
-        content += f"<a href=\"{target.get('url')}\">{verb.lower()} this.</a>"
+      if target.keys() <= set(['id', 'url', 'objectType']):
+        content += f"<a href=\"{target_url}\">{verb.lower()} this.</a>"
 
       else:
         author = target.get('author') or target.get('actor') or {}
@@ -1032,8 +1025,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
   if render_attachments and obj.get('verb') == 'share':
     atts = [att for att in itertools.chain.from_iterable(
-              o.get('attachments', []) for o in util.get_list(obj, 'object')
-              if isinstance(o, dict))
+              o.get('attachments', []) for o in as1.get_objects(obj))
             if att.get('objectType') not in ('note', 'article')]
     content += _render_attachments(atts, obj)
 

@@ -141,7 +141,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   for a in activities:
     _prepare_activity(a, reader=reader)
 
-  updated = (as1.get_object(activities[0], 'object').get('published', '')
+  updated = (as1.get_object(activities[0]).get('published', '')
              if activities else '')
 
   if actor is None:
@@ -350,7 +350,7 @@ def _prepare_activity(a, reader=True):
       Currently just includes location if True, not otherwise.
   """
   act_type = as1.object_type(a)
-  obj = as1.get_object(a, 'object') or a
+  obj = as1.get_object(a) or a
   primary = obj if (not act_type or act_type == 'post') else a
 
   # Render content as HTML; escape &s
