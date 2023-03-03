@@ -22,7 +22,7 @@ import feedparser
 import mf2util
 from oauth_dropins.webutil import util
 
-from . import microformats2
+from . import as1, microformats2
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +82,11 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   latest = None
   feed_has_enclosure = False
   for activity in activities:
-    obj = activity.get('object') or activity
-    if obj.get('objectType') == 'person':
+    obj = activity
+    if activity.get('verb') in ('create', 'post'):
+      obj = as1.get_object(activity, 'object')
+
+    if activity.get('objectType') == 'person':
       continue
 
     item = fg.add_entry(order='append')

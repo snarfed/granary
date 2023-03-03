@@ -67,6 +67,16 @@ class RssTest(testutil.TestCase):
       }], feed_url='http://this')
       self.assertNotIn(field, got)
 
+  def test_from_activities_share_string_object(self):
+    got = rss.from_activities([{
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': 'https://fireburn.ru/posts/1617172734',
+      'content': 'foo bar',
+    }], feed_url='http://this')
+    # TODO: finish implementing reposts in rss
+    self.assertIn('foo bar', got)
+
   def test_item_with_two_enclosures(self):
     got = rss.from_activities([{
       'attachments': [{

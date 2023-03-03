@@ -1032,7 +1032,8 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
   if render_attachments and obj.get('verb') == 'share':
     atts = [att for att in itertools.chain.from_iterable(
-              o.get('attachments', []) for o in util.get_list(obj, 'object'))
+              o.get('attachments', []) for o in util.get_list(obj, 'object')
+              if isinstance(o, dict))
             if att.get('objectType') not in ('note', 'article')]
     content += _render_attachments(atts, obj)
 
