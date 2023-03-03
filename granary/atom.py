@@ -141,7 +141,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   for a in activities:
     _prepare_activity(a, reader=reader)
 
-  updated = (util.get_first(activities[0], 'object', default={}).get('published', '')
+  updated = (as1.get_object(activities[0], 'object').get('published', '')
              if activities else '')
 
   if actor is None:
