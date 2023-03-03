@@ -1,5 +1,5 @@
-{% set obj = (activity.object if activity.object is mapping else activity.object[0]) if activity.object else activity %}
-{% set actor = activity.actor or obj.author %}
+{% set obj = as1.get_object(activity, 'object') or activity %}
+{% set actor = activity.actor or as1.get_object(obj, 'author') %}
 {% include "author.atom" %}
 
   {% if obj.objectType %}
@@ -69,7 +69,7 @@
   {% for orig in obj.inReplyTo or activity.context.inReplyTo %}
     <thr:in-reply-to ref="{{ orig.id }}" href="{{ orig.url }}" type="text/html" />
   {% endfor %}
-  {% set location = obj.location %}
+  {% set location = obj.location or {} %}
   {% if location.latitude and location.longitude %}
     <georss:point>{{ location.latitude|round(9) }} {{ location.longitude|round(9) }}</georss:point>
   {% endif %}

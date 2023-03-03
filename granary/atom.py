@@ -158,6 +158,7 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
     updated=updated,
     VERBS_WITH_OBJECT=as1.VERBS_WITH_OBJECT,
     xml_base=xml_base,
+    as1=as1,
   )
 
 
@@ -180,6 +181,7 @@ def activity_to_atom(activity, xml_base=None, reader=True):
     mimetypes=mimetypes,
     VERBS_WITH_OBJECT=as1.VERBS_WITH_OBJECT,
     xml_base=xml_base,
+    as1=as1,
   )
 
 
@@ -348,7 +350,7 @@ def _prepare_activity(a, reader=True):
       Currently just includes location if True, not otherwise.
   """
   act_type = as1.object_type(a)
-  obj = util.get_first(a, 'object', default=a)
+  obj = as1.get_object(a, 'object') or a
   primary = obj if (not act_type or act_type == 'post') else a
 
   # Render content as HTML; escape &s
@@ -376,7 +378,8 @@ def _prepare_activity(a, reader=True):
 
   # normalize actors
   for elem in a, obj:
-    _prepare_actor(elem.get('actor'))
+    elem['actor'] = as1.get_object(elem, 'actor')
+    _prepare_actor(elem['actor'])
 
   # normalize attachments, render attached notes/articles
   attachments = a.get('attachments') or obj.get('attachments') or []

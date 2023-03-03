@@ -973,3 +973,13 @@ bar
 </div>
 </content>
 """, atom.activities_to_atom([activity], {}), ignore_blanks=True)
+
+  def test_bare_string_object(self):
+    self.assert_multiline_in("""\
+<activity:verb>http://activitystrea.ms/schema/1.0/rsvp-yes</activity:verb>
+<activity:object>https://2020.indieweb.org/east</activity:object>
+""", atom.activity_to_atom({
+      'objectType': 'activity',
+      'verb': 'rsvp-yes',
+      'object': 'https://2020.indieweb.org/east',
+    }, {}), ignore_blanks=True)
