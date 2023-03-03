@@ -59,8 +59,30 @@ def object_type(obj):
   return type if type and type != 'activity' else obj.get('verb')
 
 
+def get_object(obj, field):
+  """Extracts and returns a field value as an object.
+
+  If the field value is a string, returns an object with it as the id, eg
+  {'id': val}. If the field value is a list, returns the first element.
+
+  Args:
+    obj: decoded JSON ActivityStreams object
+    field: str
+
+  Returns: dict
+  """
+  if not obj:
+    return {}
+  val = util.get_first(obj, field, {}) or {}
+  return {'id': val} if isinstance(val, str) else val
+
+
 def get_ids(obj, field):
   """Extracts and returns a given field's values as ids.
+
+  Args:
+    obj: decoded JSON ActivityStreams object
+    field: str
 
   Returns string values as is. For dict values, returns their inner `id` or
   `url` field value, in that order of precedence.

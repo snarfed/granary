@@ -281,15 +281,22 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 5.1 - unreleased
+### 6.0 - unreleased
+
+_Breaking changes:_
+
+* `as2`:
+  * Interpret bare string `object`, `inReplyTo`, etc values as ids, onvert them to bare strings or `id` instead of `url`.
+* `microformats2`:
+  * Convert simple string `in-reply-to`, `repost-of`, `like-of` etc values to AS1 bare strings or `id`s instead of `url`s.
 
 _Non-breaking changes:_
 
 * Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
 * `as1`:
   * Add the `organization` object type and `ACTOR_TYPES` constant ([based on AS2](https://www.w3.org/TR/activitystreams-core/#actors)).
-  * Add new `get_ids` function.
-  * `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
+  * Add new `get_ids` and `get_object` functions.
+* `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
 * `as2`:
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
   * Add the `Organization` and `Delete` object types.

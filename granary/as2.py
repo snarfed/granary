@@ -235,7 +235,7 @@ def to_as1(obj, use_type=True):
   if not obj:
     return {}
   elif isinstance(obj, str):
-    return {'url': obj}
+    return obj
   elif not isinstance(obj, dict):
     raise ValueError(f'Expected dict, got {obj!r}')
 
@@ -252,9 +252,6 @@ def to_as1(obj, use_type=True):
       obj['objectType'] = 'comment'
     elif obj['verb'] and not obj['objectType']:
       obj['objectType'] = 'activity'
-
-  def url_or_as1(val):
-    return {'url': val} if isinstance(val, str) else to_as1(val)
 
   def all_to_as1(field):
     return [to_as1(elem) for elem in util.pop_list(obj, field)
@@ -311,8 +308,8 @@ def to_as1(obj, use_type=True):
     'actor': actor,
     'attachments': attachments,
     'image': as1_images,
-    'inReplyTo': [url_or_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
-    'location': url_or_as1(obj.get('location')),
+    'inReplyTo': [to_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
+    'location': to_as1(obj.get('location')),
     'object': inner_objs,
     'tags': all_to_as1('tag'),
     'to': [{'objectType': 'group', 'alias': '@unlisted'}] if PUBLICS.intersection(cc)
@@ -339,7 +336,9 @@ def to_as1(obj, use_type=True):
   if attrib:
     if len(attrib) > 1:
       logger.warning(f'ActivityStreams 1 only supports single author; dropping extra attributedTo values: {attrib[1:]}')
-    obj.setdefault('author', {}).update(to_as1(attrib[0]))
+    attrib_as1 = to_as1(attrib[0])
+    obj.setdefault('author', {}).update(attrib_as1 if isinstance(attrib_as1, dict)
+                                        else {'id': attrib_as1})
 
   return util.trim_nulls(obj)
 

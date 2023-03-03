@@ -307,7 +307,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   if obj_type == 'tag':
     ret['properties']['tag-of'] = util.get_urls(obj, 'target')
 
-  tags = obj.get('tags', []) or get_first(obj, 'object', {}).get('tags', [])
+  inner_obj = as1.get_object(obj, 'object')
+  tags = obj.get('tags', []) or inner_obj.get('tags', [])
   if not tags and obj_type == 'tag':
     tags = util.get_list(obj, 'object')
   ret['properties']['category'] = []
@@ -324,7 +325,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   if is_rsvp:
     ret['properties']['rsvp'] = [obj_type[len('rsvp-'):]]
   elif obj_type == 'invite':
-    invitee = object_to_json(obj.get('object'), trim_nulls=False,
+    invitee = object_to_json(inner_obj, trim_nulls=False,
                              default_object_type='person')
     ret['properties']['invitee'] = [invitee]
 
@@ -343,7 +344,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       objs = get_list(obj, 'object')
       ret['properties'][prop + '-of'] = [
         # flatten contexts that are just a url
-        util.get_url(o) if 'url' in o and set(o.keys()) <= set(['url', 'objectType'])
+        util.get_url(o) if (isinstance(o, str) or
+                            ('url' in o and set(o.keys()) <= set(['url', 'objectType'])))
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
         for o in objs]
     else:
@@ -570,7 +572,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     for target in itertools.chain.from_iterable(
         props.get(field, []) for field in (
           'follow-of', 'like-of', 'repost-of', 'in-reply-to', 'invitee')):
-      t = json_to_object(target) if isinstance(target, dict) else {'url': target}
+      t = json_to_object(target) if isinstance(target, dict) else target
       # eliminate duplicates from redundant backcompat properties
       if t not in objects:
         objects.append(t)
@@ -591,7 +593,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
 
   else:
     obj.update({
-      'inReplyTo': [{'url': url} for url in in_reply_tos],
+      'inReplyTo': in_reply_tos,
       'author': author,
     })
 
@@ -1001,21 +1003,25 @@ def render_content(obj, include_location=True, synthesize_content=True,
       continue
 
     for target in targets:
+      if isinstance(target, str):
+        target = {'url': target}
+      target_url = (target if isinstance(target, str) else target.get('url')) or '#'
+
       # sometimes likes don't have enough content to render anything
       # interesting
-      if 'url' in target and set(target) <= set(['url', 'objectType']):
+      if target_url and set(target) <= set(['url', 'objectType']):
         content += f"<a href=\"{target.get('url')}\">{verb.lower()} this.</a>"
 
       else:
-        author = target.get('author', target.get('actor', {}))
+        author = target.get('author') or target.get('actor') or {}
         # special case for twitter RT's
         if obj_type == 'share' and 'url' in obj and re.search(
             r'^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
-          content += f"RT <a href=\"{target.get('url', '#')}\">@{author.get('username')}</a> "
+          content += f"RT <a href=\"{target_url}\">@{author.get('username')}</a> "
         else:
           # image looks bad in the simplified rendering
           author = {k: v for k, v in author.items() if k != 'image'}
-          content += f"{verb} <a href=\"{target.get('url', '#')}\">{target.get('displayName', target.get('title', 'a post'))}</a> by {hcard_to_html(object_to_json(author, default_object_type='person'))}"
+          content += f"{verb} <a href=\"{target_url}\">{target.get('displayName', target.get('title', 'a post'))}</a> by {hcard_to_html(object_to_json(author, default_object_type='person'))}"
         content += render_content(target, include_location=include_location,
                                   synthesize_content=synthesize_content,
                                   white_space_pre=white_space_pre)

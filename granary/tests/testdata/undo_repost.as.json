@@ -9,7 +9,7 @@
   "object": {
     "objectType": "activity",
     "verb": "share",
-    "actor": {"url": "tag:example.com,2001:alice"},
-    "object": {"url": "tag:example.com,2001:2468"}
+    "actor": "tag:example.com,2001:alice",
+    "object": "tag:example.com,2001:2468"
   }
 }

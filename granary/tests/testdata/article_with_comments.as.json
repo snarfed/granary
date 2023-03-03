@@ -13,15 +13,14 @@
         "objectType": "person"
       },
       "content": "I concur.",
-      "inReplyTo": [{"id": "tag:example.com,2013:212038"},
-                    {"url": "http://example.com/article-abc"}]
+      "inReplyTo": ["http://example.com/article-abc"]
     }, {
       "objectType": "comment",
       "url": "http://example.com/comment/2",
-      "title": "second comment name",
+      "displayName": "second comment name",
       "content": "And I, as well, in addition. Too.",
-      "inReplyTo": [{"url": "http://example.com/article-def"},
-                    {"url": "http://example.com/article-ghi"}]
+      "inReplyTo": ["http://example.com/article-def",
+                    "http://example.com/article-ghi"]
     }]
   }
 }

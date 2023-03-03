@@ -64,7 +64,7 @@ class ActivityStreams2Test(testutil.TestCase):
       'content': 'foo bar baz',
       'inReplyTo': in_reply_to,
     })
-    self.assertEqual([{'url': 'http://x.y/z'}], as1['inReplyTo'])
+    self.assertEqual(['http://x.y/z'], as1['inReplyTo'])
 
   def test_is_public(self):
     publics = list(PUBLICS)

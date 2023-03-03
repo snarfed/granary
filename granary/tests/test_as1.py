@@ -516,4 +516,20 @@ class As1Test(testutil.TestCase):
         (['b', 'd'], {'x': ['b', 'd']}),
         (['b', 'd'], {'x': [{'id': 'b'}, {'url': 'd'}]}),
     ):
+      with self.subTest(obj=obj):
         self.assertEqual(expected, sorted(as1.get_ids(obj, 'x')), obj)
+
+  def test_get_object(self):
+    for expected, obj in (
+        ({}, None),
+        ({}, {}),
+        ({}, []),
+        ({}, {'f': None}),
+        ({}, {'f': {}}),
+        ({'id': 'x'}, {'f': 'x'}),
+        ({'y': 'z'}, {'f': {'y': 'z'}}),
+        ({'id': 'x'}, {'f': ['x']}),
+        ({'y': 'z'}, {'f': [{'y': 'z'}]}),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, as1.get_object(obj, 'f'))

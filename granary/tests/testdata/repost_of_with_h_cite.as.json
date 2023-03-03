@@ -3,7 +3,7 @@
   "verb": "share",
   "content": "This is the main content.",
   "object": [
-    {"url": "http://example.com/bare-repost"},
+    "http://example.com/bare-repost",
     {
       "displayName": "Author",
       "content": "Repost inside h-cite",

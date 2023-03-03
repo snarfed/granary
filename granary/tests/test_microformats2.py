@@ -901,7 +901,7 @@ Shared <a href="#">a post</a> by foo
     }, {
       'objectType': 'activity',
       'verb': 'share',
-      'object': {'url': 'http://orig/post'},
+      'object': 'http://orig/post',
       'content_is_html': True,
     }], microformats2.json_to_activities({
       'items': [{

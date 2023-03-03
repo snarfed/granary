@@ -3,7 +3,7 @@
   "verb": "follow",
   "id": "tag:example.com,2001:98765",
   "url": "http://example.com/this/follow",
-  "object": {"url": "http://followee"},
+  "object": "http://followee",
   "actor": {
     "objectType": "person",
     "url": "http://follower"
