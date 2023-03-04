@@ -1,0 +1,42 @@
+{
+   "id": "https://oslo.town/users/matt/statuses/108244351334928989",
+   "objectType": "question",
+   "content": "foo?",
+   "closed": "2022-05-04T21:22:04Z",
+   "endTime": "2022-05-04T21:22:04Z",
+   "votersCount": 44,
+   "options": [
+      {
+         "displayName": "ð",
+         "replies": {
+            "totalItems": 10,
+            "objectType": "collection"
+         },
+         "objectType": "note"
+      },
+      {
+         "displayName": "ð",
+         "replies": {
+            "totalItems": 27,
+            "objectType": "collection"
+         },
+         "objectType": "note"
+      },
+      {
+         "displayName": "ð",
+         "replies": {
+            "totalItems": 10,
+            "objectType": "collection"
+         },
+         "objectType": "note"
+      },
+      {
+         "displayName": "ð",
+         "replies": {
+            "totalItems": 4,
+            "objectType": "collection"
+         },
+         "objectType": "note"
+      }
+   ]
+}

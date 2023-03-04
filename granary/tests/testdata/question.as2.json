@@ -1,0 +1,34 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://mastodon.social/users/Dyani/statuses/109960958872631870",
+  "type": "Question",
+  "content": "foo?",
+  "endTime": "2023-03-04T19:17:56Z",
+  "votersCount": 24,
+  "oneOf": [
+    {
+      "name": "I â¤ï¸ polls",
+      "replies": {
+        "totalItems": 17,
+        "type": "Collection"
+      },
+      "type": "Note"
+    },
+    {
+      "name": "I am indifferent",
+      "replies": {
+        "totalItems": 6,
+        "type": "Collection"
+      },
+      "type": "Note"
+    },
+    {
+      "name": "Polls annoy me",
+      "replies": {
+        "totalItems": 1,
+        "type": "Collection"
+      },
+      "type": "Note"
+    }
+  ]
+}

@@ -43,7 +43,8 @@ OBJECT_TYPE_TO_TYPE = {
   'collection': 'Collection',
   'comment': 'Note',
   'event': 'Event',
-  'hashtag': 'Tag',  # not in AS2 spec; needed for correct round trip conversion
+  # not in AS2 spec; needed for correct round trip conversion
+  'hashtag': 'Tag',
   'image': 'Image',
   # not in AS1 spec; needed to identify mentions in eg Bridgy Fed
   'mention': 'Mention',
@@ -51,16 +52,15 @@ OBJECT_TYPE_TO_TYPE = {
   'organization': 'Organization',
   'person': 'Person',
   'place': 'Place',
+  'question': 'Question',
   'video': 'Video',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 
 VERB_TO_TYPE = {
+  'delete': 'Delete',
   'favorite': 'Like',
-   # not in AS1 spec; undo isn't a real AS1 verb
-   # https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs
-  'undo': 'Undo',
   'follow': 'Follow',
   'invite': 'Invite',
   'like': 'Like',
@@ -70,8 +70,10 @@ VERB_TO_TYPE = {
   'rsvp-yes': 'Accept',
   'share': 'Announce',
   'tag': 'Add',
+   # not in AS1 spec; undo isn't a real AS1 verb
+   # https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs
+  'undo': 'Undo',
   'update': 'Update',
-  'delete': 'Delete',
 }
 TYPE_TO_VERB = _invert(VERB_TO_TYPE)
 TYPE_TO_VERB['Like'] = 'like'  # disambiguate
@@ -121,6 +123,8 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
         'object': inner_objs.get('id'),
       }
 
+  replies = obj.get('replies', {})
+
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
@@ -132,7 +136,17 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'tag': all_from_as1('tags'),
     'preferredUsername': obj.pop('username', None),
     'url': as1.object_urls(obj),
+    'replies': from_as1(replies, context=None),
   })
+
+  # question (poll) responses
+  # HACK: infer single vs multiple choice from whether
+  # votersCount matches the sum of votes for each option. not ideal!
+  voters = obj.get('votersCount')
+  votes = sum(opt.get('replies', {}).get('totalItems', 0)
+              for opt in util.get_list(obj, 'options'))
+  vote_field = 'oneOf' if voters == votes else 'anyOf'
+  obj[vote_field] = all_from_as1('options')
 
   # images; separate featured (aka header) and non-featured.
   images = util.get_list(obj, 'image')
@@ -314,6 +328,9 @@ def to_as1(obj, use_type=True):
     'to': [{'objectType': 'group', 'alias': '@unlisted'}] if PUBLICS.intersection(cc)
           else [{'objectType': 'group', 'alias': '@public'}] if PUBLICS.intersection(to)
           else None,
+    # question (poll) responses
+    'options': all_to_as1('anyOf') + all_to_as1('oneOf'),
+    'replies': to_as1(obj.get('replies')),
   })
 
   # media

@@ -299,7 +299,7 @@ _Non-breaking changes:_
 * `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
 * `as2`:
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
-  * Add the `Organization` and `Delete` object types.
+  * Add support for the `Question` (ie poll), `Organization`, and `Delete` object types.
   * Convert `to`/`cc` to/from AS1 `to` for public and unlisted.
   * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
   * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
