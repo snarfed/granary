@@ -873,6 +873,9 @@ def hcard_to_html(hcard, parent_props=None):
 
   # extract first value from multiply valued properties
   props = hcard.get('properties', {})
+  if props.keys() == set(['uid']):
+    props['url'] = props.get('uid')
+
   prop = first_props(props)
   if not prop:
     return ''
@@ -1195,8 +1198,10 @@ def maybe_linked_name(props):
   if name is not None:
     html = maybe_linked(name, url, linked_classname='p-name u-url',
                         unlinked_classname='p-name')
+  elif url:
+    html = util.pretty_link(url, attrs={'class': 'u-url'})
   else:
-    html = maybe_linked(url or '', url, linked_classname='u-url')
+    html = ''
 
   extra_urls = props.get('url', [])[1:]
   if extra_urls:

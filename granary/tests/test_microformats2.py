@@ -935,6 +935,18 @@ Shared <a href="#">a post</a> by foo
     self.assertEqual('', microformats2.hcard_to_html({}))
     self.assertEqual('', microformats2.hcard_to_html({'properties': {}}))
 
+  def test_hcard_to_html_only_id(self):
+    self.assert_multiline_equals("""\
+<span class="">
+  <data class="p-uid" value="https://foo/bar"></data>
+  <a class="u-url" href="https://foo/bar">foo/bar</a>
+</span>
+""", microformats2.hcard_to_html({
+  'properties': {
+    'uid': ['https://foo/bar'],
+  },
+}), ignore_blanks=True)
+
   def test_share_activity_to_json_html(self):
     """Should translate the full activity, not just the object."""
     share = {
@@ -980,7 +992,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
 <article class="h-entry">
   <span class="p-uid">http://localhost:3000/users/ryan#likes/7</span>
   <span class="p-author h-card">
-    <a class="u-url" href="http://localhost:3000/users/ryan">http://localhost:3000/users/ryan</a>
+    <a class="u-url" href="http://localhost:3000/users/ryan">localhost:3000/users/ryan</a>
   </span>
   <div class="e-content p-name">
   <a href="http://localhost/2017-10-01_mastodon-dev-6">likes this.</a>

@@ -103,7 +103,7 @@ HTML = """\
 
   <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
 
-  <a class="u-url" href="https://perma/link">https://perma/link</a>
+  <a class="u-url" href="https://perma/link">perma/link</a>
   <div class="e-content p-name">
 foo ☕ bar
 </div>

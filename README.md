@@ -321,6 +321,7 @@ _Non-breaking changes:_
   * `json_to_object`: drop backward compatibility support for `like` and `repost` properties. [Background discussion.](https://chat.indieweb.org/dev/2022-12-23#t1671833687984200)
   * `json_to_object`: add new `rel_urls` kwarg to allow attaching `displayName`s to `urls` based on HTML text or `title` attribute ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
   * Add new `json_to_activities` function.
+  * `hcard_to_html`/`maybe_linked_name`: when `name` is missing, use pretty URL as visible text.
   * Support the `h-card` `org` property.
   * `json_to_object`: handle composite `rsvp` property value.
   * `json_to_object`: bug fix when `fetch_mf2` is True, handle when we run the authorship algorithm and fetch an author URL that has a `u-photo` with `alt`.
