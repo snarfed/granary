@@ -7,7 +7,7 @@ import mimetypes
 import mf2util
 from oauth_dropins.webutil import util
 
-from . import microformats2
+from . import as1, microformats2
 
 # allowed ActivityStreams objectTypes for attachments
 ATTACHMENT_TYPES = {'image', 'audio', 'video'}
@@ -46,7 +46,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
 
   items = []
   for activity in activities:
-    obj = activity.get('object') or activity
+    obj = as1.get_object(activity) or activity
     if obj.get('objectType') == 'person':
       continue
     author = obj.get('author', {})

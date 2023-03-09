@@ -89,6 +89,17 @@ class JsonFeedTest(testutil.TestCase):
       with self.assertRaises(TypeError):
         activities_to_jsonfeed(bad)
 
+  def test_activities_to_jsonfeed_string_object_actor(self):
+    self.assert_equals([{
+      'id': 'http://example.com/original/post',
+      'content_text': '',
+    }], activities_to_jsonfeed([{
+      "objectType": "activity",
+      "verb": "like",
+      "object": "http://example.com/original/post",
+      "actor": "http://example.com/author-456"
+    }])['items'])
+
   def test_jsonfeed_to_activities_attachment_extra_list(self):
     """Originally seen in:
     https://console.cloud.google.com/errors/CPyvpeH077rvIg
