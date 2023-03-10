@@ -137,6 +137,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'preferredUsername': obj.pop('username', None),
     'url': as1.object_urls(obj),
     'replies': from_as1(replies, context=None),
+    'mediaType': obj.pop('mimeType', None),
   })
 
   # question (poll) responses
@@ -266,6 +267,16 @@ def to_as1(obj, use_type=True):
     elif obj['verb'] and not obj['objectType']:
       obj['objectType'] = 'activity'
 
+  # attachments. if mediaType is image/... or video/..., override type. Eg
+  # Mastodon video attachments have type Document (!)
+  media_type = obj.pop('mediaType', None)
+  if media_type:
+    media_type_prefix = media_type.split('/')[0]
+    if media_type_prefix in ('audio', 'image', 'video'):
+      type = media_type_prefix.capitalize()
+      obj['objectType'] = media_type_prefix
+      obj['mimeType'] = media_type
+
   def all_to_as1(field):
     return [to_as1(elem) for elem in util.pop_list(obj, field)
             if not (type == 'Person' and elem.get('type') == 'PropertyValue')]
@@ -305,12 +316,6 @@ def to_as1(obj, use_type=True):
                if isinstance(inner_inner_obj, dict) else inner_inner_obj),
       }
 
-  # attachments. if mediaType is image/..., override type
-  attachments = all_to_as1('attachment')
-  for att in attachments:
-    if att.get('mediaType', '').split('/')[0] == 'image':
-      att['objectType'] = 'image'
-
   # audience, public or unlisted or neither
   to = util.pop_list(obj, 'to')
   cc = util.pop_list(obj, 'cc')
@@ -319,7 +324,7 @@ def to_as1(obj, use_type=True):
     'displayName': obj.pop('name', None),
     'username': obj.pop('preferredUsername', None),
     'actor': actor['id'] if actor.keys() == set(['id']) else actor,
-    'attachments': attachments,
+    'attachments': all_to_as1('attachment'),
     'image': as1_images,
     'inReplyTo': [to_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': to_as1(obj.get('location')),
@@ -334,7 +339,7 @@ def to_as1(obj, use_type=True):
   })
 
   # media
-  if type in ('Audio', 'Video'):
+  if type in ('Audio', 'Video'):  # this may have been set above
     duration = util.parse_iso8601_duration(obj.pop('duration', None))
     if duration:
       duration = duration.total_seconds()

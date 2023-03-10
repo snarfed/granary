@@ -1,0 +1,17 @@
+{
+  "id": "https://masto.foo/users/alice/statuses/123",
+  "objectType": "note",
+  "published": "2023-03-09T14:55:03Z",
+  "url": "https://masto.foo/@alice/123",
+  "content": "foo",
+  "attachments": [{
+    "objectType": "video",
+    "mimeType": "video/mp4",
+    "stream": {
+      "url": "https://mstdn.r7e3.c15.e2-4.dev/media_attachments/vid.mp4"
+    },
+    "blurhash": "UHIhT~?c_4xu%M",
+    "width": 1080,
+    "height": 1920
+  }]
+}

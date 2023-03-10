@@ -301,6 +301,7 @@ _Non-breaking changes:_
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
   * Add support for the `Question` (ie poll), `Organization`, and `Delete` object types.
   * Convert `to`/`cc` to/from AS1 `to` for public and unlisted.
+  * Handle `type: Document` video attachments like Mastodon emits.
   * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
   * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
   * `from_as1`: preserve `inReplyTo` object values as objects.

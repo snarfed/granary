@@ -3,7 +3,7 @@
   "content": "i hereby attach an article",
   "attachments": [{
     "objectType": "image",
-    "mediaType": "image/jpeg",
+    "mimeType": "image/jpeg",
     "url": "http://att/image"
   }]
 }
