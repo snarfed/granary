@@ -1,0 +1,12 @@
+{
+  "id": "tag:abc:accept",
+  "objectType": "activity",
+  "verb": "accept",
+  "actor": "http://alice",
+  "object": {
+    "objectType": "activity",
+    "verb": "follow",
+    "actor": "https://bob",
+    "object": "http://alice"
+  }
+}

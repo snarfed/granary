@@ -59,6 +59,7 @@ TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 
 VERB_TO_TYPE = {
+  'accept': 'Accept',
   'delete': 'Delete',
   'favorite': 'Like',
   'follow': 'Follow',
@@ -66,17 +67,23 @@ VERB_TO_TYPE = {
   'like': 'Like',
   'post': 'Create',
   'rsvp-maybe': 'TentativeAccept',
+  'reject': 'Reject',
   'rsvp-no': 'Reject',
   'rsvp-yes': 'Accept',
   'share': 'Announce',
   'tag': 'Add',
-   # not in AS1 spec; undo isn't a real AS1 verb
-   # https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs
+  # not in AS1 spec; undo isn't a real AS1 verb
+  # https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs
   'undo': 'Undo',
   'update': 'Update',
 }
 TYPE_TO_VERB = _invert(VERB_TO_TYPE)
-TYPE_TO_VERB['Like'] = 'like'  # disambiguate
+# disambiguate
+TYPE_TO_VERB.update({
+  'Accept': 'accept',
+  'Like': 'like',
+  'Reject': 'reject',
+})
 
 
 def from_as1(obj, type=None, context=CONTEXT, top_level=True):
@@ -256,15 +263,22 @@ def to_as1(obj, use_type=True):
   obj = copy.deepcopy(obj)
   obj.pop('@context', None)
 
+  # type to objectType + verb
   type = obj.pop('type', None)
   if use_type:
     if type and not isinstance(type, str):
       raise ValueError(f'Expected type to be string, got {type!r}')
     obj['objectType'] = TYPE_TO_OBJECT_TYPE.get(type)
     obj['verb'] = TYPE_TO_VERB.get(type)
+    inner_obj = as1.get_object(obj)
     if obj.get('inReplyTo') and obj['objectType'] in ('note', 'article'):
       obj['objectType'] = 'comment'
-    elif obj['verb'] and not obj['objectType']:
+    elif inner_obj.get('type') == 'Event':
+      if type == 'Accept':
+        obj['verb'] = 'rsvp-yes'
+      elif type == 'Reject':
+        obj['verb'] = 'rsvp-no'
+    if obj['verb'] and not obj['objectType']:
       obj['objectType'] = 'activity'
 
   # attachments. if mediaType is image/... or video/..., override type. Eg

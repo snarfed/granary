@@ -208,8 +208,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
   if (is_rsvp or obj_type == 'react') and obj.get('object'):
-    objs = obj['object']
-    in_reply_tos.extend(objs if isinstance(objs, list) else [objs])
+    in_reply_tos.extend(util.get_list(obj, 'object'))
 
   # maps objectType to list of objects
   attachments = defaultdict(list)
@@ -258,7 +257,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'size': sizes,
       'published': [obj.get('published', primary.get('published', ''))],
       'updated': [obj.get('updated', primary.get('updated', ''))],
-      'in-reply-to': util.trim_nulls([util.get_url(o) for o in in_reply_tos]),
+      'in-reply-to': util.trim_nulls([util.get_url(o) or o.get('id')
+                                      for o in in_reply_tos]),
       'author': [object_to_json(
         author, trim_nulls=False, default_object_type='person')],
       'location': [object_to_json(
@@ -572,6 +572,10 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
         props.get(field, []) for field in (
           'follow-of', 'like-of', 'repost-of', 'in-reply-to', 'invitee')):
       t = json_to_object(target) if isinstance(target, dict) else target
+      if rsvp:
+        if isinstance(t, str):
+          t = {'id': t}
+        t['objectType'] = 'event'
       # eliminate duplicates from redundant backcompat properties
       if t not in objects:
         objects.append(t)

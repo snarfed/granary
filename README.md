@@ -299,6 +299,7 @@ _Non-breaking changes:_
 * `activity_changed`: ignore `inReplyTo.author` ([snarfed/bridgy#1338](https://github.com/snarfed/bridgy/issues/1338))
 * `as2`:
   * Support converting between AS1 `stop-following` and AS2 `Undo` `Follow`.
+  * Support AS2 `Accept` and `Reject` for follows as well as event RSVPs.
   * Add support for the `Question` (ie poll), `Organization`, and `Delete` object types.
   * Convert `to`/`cc` to/from AS1 `to` for public and unlisted.
   * Handle `type: Document` video attachments like Mastodon emits.
