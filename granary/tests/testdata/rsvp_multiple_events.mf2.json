@@ -1,0 +1,8 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "url": ["http://example.com/this/rsvp"],
+    "in-reply-to": ["http://example.com/event", "http://other.event"],
+    "rsvp": ["yes"]
+  }
+}

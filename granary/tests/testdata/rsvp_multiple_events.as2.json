@@ -1,0 +1,12 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Accept",
+  "url": "http://example.com/this/rsvp",
+  "object": [{
+    "id": "http://example.com/event",
+    "type": "Event"
+  }, {
+    "id": "http://other.event",
+    "type": "Event"
+  }]
+}
