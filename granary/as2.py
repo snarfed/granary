@@ -1,6 +1,8 @@
-"""Convert between ActivityStreams 1 and 2.
+"""Convert between ActivityStreams 1 and 2, including ActivityPub.
 
 AS2: http://www.w3.org/TR/activitystreams-core/
+     https://www.w3.org/TR/activitypub/
+     https://activitypub.rocks/
 
 AS1: http://activitystrea.ms/specs/json/1.0/
      http://activitystrea.ms/specs/json/schema/activity-schema.html

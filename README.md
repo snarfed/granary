@@ -1,7 +1,7 @@
 <img src="https://raw.github.com/snarfed/granary/main/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=main)](https://coveralls.io/github/snarfed/granary?branch=master)
 ===
 
-The social web translator. Fetches and converts data between social networks, HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2), [ActivityStreams](http://activitystrea.ms/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
+The social web translator. Fetches and converts data between social networks, HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2), [ActivityStreams](http://activitystrea.ms/)/[ActivityPub](https://activitypub.rocks/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
 
 * [About](#about)
 * [Using](#using)
@@ -22,7 +22,7 @@ Granary is a library and REST API that fetches and converts between a wide varie
 
 * Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native APIs
 * Instagram and Facebook scraped HTML
-* [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0 (JSON)
+* [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0 JSON, including [ActivityPub](https://activitypub.rocks/)
 * HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2)
 * [Atom](https://tools.ietf.org/html/rfc4287), [RSS 2.0](http://www.rssboard.org/rss-specification), [JSON Feed](https://jsonfeed.org/)
 * Plain XML
@@ -121,7 +121,7 @@ By default, responses are cached and reused for 10m without re-fetching the sour
 
 Include the `shares=false` query parameter to omit shares, eg Twitter retweets, from the results.
 
-To use the REST API in an existing ActivityStreams client, you'll need to hard-code exceptions for the domains you want to use e.g. `facebook.com`, and redirect HTTP requests to the corresponding [endpoint above](#about).
+To use the REST API in an existing ActivityStreams/ActivityPub client, you'll need to hard-code exceptions for the domains you want to use e.g. `facebook.com`, and redirect HTTP requests to the corresponding [endpoint above](#about).
 
 Facebook and Instagram are disabled in the REST API entirely, sadly.
 
@@ -188,8 +188,6 @@ gcloud -q beta app deploy --no-cache granary-demo *.yaml
 ```
 
 The docs are built with [Sphinx](http://sphinx-doc.org/), including [apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html), [autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and [napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration is in [`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py) To build them, first install Sphinx with `pip install sphinx`. (You may want to do this outside your virtualenv; if so, you'll need to reconfigure it to see system packages with `virtualenv --system-site-packages local`.) Then, run [`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
-
-[This ActivityStreams validator](http://activitystreamstester.appspot.com/) is useful for manual testing.
 
 
 Release instructions
