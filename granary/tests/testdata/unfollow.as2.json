@@ -8,6 +8,7 @@
     "@context": "https://www.w3.org/ns/activitystreams",
     "type": "Follow",
     "actor": "tag:example.com,2001:follower",
-    "object": "tag:example.com,2001:followee"
+    "object": "tag:example.com,2001:followee",
+    "to": ["https://www.w3.org/ns/activitystreams#Public"]
   }
 }
