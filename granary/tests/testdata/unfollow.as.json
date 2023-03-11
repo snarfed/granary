@@ -5,10 +5,6 @@
   "url": "http://example.com/this/unfollow",
   "actor": "tag:example.com,2001:follower",
   "object": {
-    "objectType": "activity",
-    "verb": "follow",
-    "actor": "tag:example.com,2001:follower",
-    "object": "tag:example.com,2001:followee",
-    "to": [{"alias": "@public", "objectType": "group"}]
+    "id": "tag:example.com,2001:followee"
   }
 }

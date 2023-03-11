@@ -129,7 +129,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
         '@context': context,
         'type': 'Follow',
         'actor': actor.get('id') if isinstance(actor, dict) else actor,
-        **inner_objs,
+        'object': inner_objs.get('id'),
       }
 
   replies = obj.get('replies', {})
@@ -326,6 +326,11 @@ def to_as1(obj, use_type=True):
     # special case Undo Follow
     if type == 'Undo' and inner_objs.get('verb') == 'follow':
       obj['verb'] = 'stop-following'
+      inner_inner_obj = as1.get_object(inner_objs)
+      inner_objs = {
+        'id': (inner_inner_obj.get('id') or util.get_url(inner_inner_obj, 'url')
+               if isinstance(inner_inner_obj, dict) else inner_inner_obj),
+      }
 
   # audience, public or unlisted or neither
   to = util.pop_list(obj, 'to')

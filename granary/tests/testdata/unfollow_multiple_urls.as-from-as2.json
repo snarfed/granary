@@ -3,11 +3,6 @@
   "verb": "stop-following",
   "actor": "tag:example.com,2001:follower",
   "object": {
-    "objectType": "activity",
-    "verb": "follow",
-    "actor": "tag:example.com,2001:follower",
-    "object": {
-      "url": ["tag:example.com,2001:followee", "extra-url"]
-    }
+    "id": "tag:example.com,2001:followee"
   }
 }
