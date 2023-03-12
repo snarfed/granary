@@ -303,7 +303,7 @@ _Non-breaking changes:_
   * Handle `type: Document` video attachments like Mastodon emits.
   * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
   * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
-  * `from_as1`: preserve `inReplyTo` object values as objects.
+  * `from_as1`: preserve `inReplyTo` object values as objects, inline single-element lists down down to just single element.
   * `to_as1`: use `objectType: featured` for first image in `image` field.
   * Preserve `to` and `cc` values when converting both directions.
 * `atom`:

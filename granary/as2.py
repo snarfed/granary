@@ -143,13 +143,17 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   elif '@unlisted' in to_aliases and PUBLIC_AUDIENCE not in cc:
     cc.append(PUBLIC_AUDIENCE)
 
+  in_reply_to = util.trim_nulls(all_from_as1('inReplyTo'))
+  if len(in_reply_to) == 1:
+    in_reply_to = in_reply_to[0]
+
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
     'actor': from_as1(actor, context=None, top_level=False),
     'attachment': all_from_as1('attachments'),
     'attributedTo': all_from_as1('author', type='Person'),
-    'inReplyTo': util.trim_nulls(all_from_as1('inReplyTo')),
+    'inReplyTo': in_reply_to,
     'object': inner_objs,
     'tag': all_from_as1('tags'),
     'preferredUsername': obj.pop('username', None),
