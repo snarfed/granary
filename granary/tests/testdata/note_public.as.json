@@ -2,7 +2,16 @@
   "objectType": "note",
   "content": "some stuff",
   "to": [{
+    "id": "https://www.w3.org/ns/activitystreams#Public"
+  }, {
+    "id": "other"
+  }, {
     "objectType": "group",
     "alias": "@public"
+  }],
+  "cc": [{
+    "id": "one"
+  }, {
+    "id": "two"
   }]
 }

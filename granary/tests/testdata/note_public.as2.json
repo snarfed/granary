@@ -2,5 +2,12 @@
   "@context": "https://www.w3.org/ns/activitystreams",
   "type": "Note",
   "content": "some stuff",
-  "to": ["https://www.w3.org/ns/activitystreams#Public"]
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public",
+    "other"
+  ],
+  "cc": [
+    "one",
+    "two"
+  ]
 }

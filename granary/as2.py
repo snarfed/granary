@@ -134,6 +134,15 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
 
   replies = obj.get('replies', {})
 
+  # to/cc audience, all ids, special caste public/unlisted
+  to = sorted(as1.get_ids(obj, 'to'))
+  cc = sorted(as1.get_ids(obj, 'cc'))
+  to_aliases = [to.get('alias') for to in util.pop_list(obj, 'to')]
+  if '@public' in to_aliases and PUBLIC_AUDIENCE not in to:
+    to.append(PUBLIC_AUDIENCE)
+  elif '@unlisted' in to_aliases and PUBLIC_AUDIENCE not in cc:
+    cc.append(PUBLIC_AUDIENCE)
+
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
@@ -147,6 +156,8 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'url': as1.object_urls(obj),
     'replies': from_as1(replies, context=None),
     'mediaType': obj.pop('mimeType', None),
+    'to': to,
+    'cc': cc,
   })
 
   # question (poll) responses
@@ -227,17 +238,10 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if len(urls) == 1:
     obj['url'] = urls[0]
 
-    # location
+  # location
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
-
-  # audience, public or unlisted or neither
-  to_aliases = [to.get('alias') for to in util.pop_list(obj, 'to')]
-  if '@public' in to_aliases:
-    obj['to'] =[PUBLIC_AUDIENCE]
-  elif '@unlisted' in to_aliases:
-    obj['cc'] =[PUBLIC_AUDIENCE]
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:
@@ -333,8 +337,14 @@ def to_as1(obj, use_type=True):
       }
 
   # audience, public or unlisted or neither
-  to = util.pop_list(obj, 'to')
-  cc = util.pop_list(obj, 'cc')
+  to = sorted(util.get_list(obj, 'to'))
+  cc = sorted(util.get_list(obj, 'cc'))
+  as1_to = [{'id': val} for val in to]
+  as1_cc = [{'id': val} for val in cc]
+  if PUBLICS.intersection(to):
+    as1_to.append({'objectType': 'group', 'alias': '@public'})
+  elif PUBLICS.intersection(cc):
+    as1_to.append({'objectType': 'group', 'alias': '@unlisted'})
 
   obj.update({
     'displayName': obj.pop('name', None),
@@ -346,9 +356,8 @@ def to_as1(obj, use_type=True):
     'location': to_as1(obj.get('location')),
     'object': inner_objs,
     'tags': all_to_as1('tag'),
-    'to': [{'objectType': 'group', 'alias': '@unlisted'}] if PUBLICS.intersection(cc)
-          else [{'objectType': 'group', 'alias': '@public'}] if PUBLICS.intersection(to)
-          else None,
+    'to': as1_to,
+    'cc': as1_cc,
     # question (poll) responses
     'options': all_to_as1('anyOf') + all_to_as1('oneOf'),
     'replies': to_as1(obj.get('replies')),
