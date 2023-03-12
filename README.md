@@ -318,6 +318,7 @@ _Non-breaking changes:_
   * Switch from `white-space: pre` CSS to converting newlines to `<br>`s because some feed readers follow it strictly and don't even line wrap ([#456](https://github.com/snarfed/granary/issues/456)).
 * `mastodon`:
   * Add compatibility support for [Truth Social](https://truthsocial.com/).
+  * Handle truncated JSON API responses.
 * `microformats2`:
   * `json_to_object`: drop backward compatibility support for `like` and `repost` properties. [Background discussion.](https://chat.indieweb.org/dev/2022-12-23#t1671833687984200)
   * `json_to_object`: add new `rel_urls` kwarg to allow attaching `displayName`s to `urls` based on HTML text or `title` attribute ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).

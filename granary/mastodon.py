@@ -15,7 +15,7 @@ import urllib.parse
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
-from requests import HTTPError, RequestException
+from requests import HTTPError, JSONDecodeError, RequestException
 
 from . import source
 
@@ -146,16 +146,16 @@ class Mastodon(source.Source):
     if fn == util.requests_delete:
       return {}
 
-    content_type = resp.headers.get('Content-Type', '').split(';')[0]
-    if content_type == 'text/plain':  # Truth Social returns text/plain;charset=UTF-8
-      resp.headers['Content-Type'] = content_type = 'application/json'
+    content_type = resp.headers.get('Content-Type', '')
+    if content_type.split(';')[0] != 'application/json':
+      # Truth Social returns text/plain;charset=UTF-8
+      logging.warning(f'Content-Type {content_type} is not application/json!')
 
-    if content_type != 'application/json':
-      logger.warning(f'Converting {resp.status_code} to 502 due to Content-Type {content_type} instead of application/json')
+    try:
+      return resp.json()
+    except JSONDecodeError as e:
       resp.status_code = 502
-      raise HTTPError(response=resp)
-
-    return resp.json()
+      raise HTTPError(e, response=resp)
 
   @classmethod
   def embed_post(cls, obj):

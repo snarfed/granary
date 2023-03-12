@@ -524,6 +524,16 @@ class MastodonTest(testutil.TestCase):
       self.mastodon.get_activities()
     self.assert_equals(502, e.exception.response.status_code)
 
+  def test_get_activities_json_truncated(self):
+    self.expect_get(API_TIMELINE, params={}, response='{"foo": "bar", "oops',
+                    content_type='application/json')
+    self.mox.ReplayAll()
+
+    with self.assertRaises(HTTPError) as e:
+      self.mastodon.get_activities()
+    self.assert_equals(502, e.exception.response.status_code)
+    self.assertIn('Unterminated string', str(e.exception))
+
   def test_get_activities_returns_content_type_text(self):
     """Truth Social does this.
 
