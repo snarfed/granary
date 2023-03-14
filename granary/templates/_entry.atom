@@ -25,14 +25,10 @@
   </div>
 {% endif %}
 
-{% for type, list in obj.to|groupby('objectType') %}
-  {% if type == 'person' %}
-    {% for to in list %}
-      {% if loop.first %}<p>In reply to{% endif %}
-      <a class="h-card p-name u-url" href="{{ to.url }}">{{ to.displayName }}</a>
-      {%- if loop.last %}:</p>{% else %}, {% endif -%}
-    {% endfor %}
-  {% endif %}
+{% for to in obj.to|selectattr('objectType', 'eq', 'person') %}
+  {% if loop.first %}<p>In reply to{% endif %}
+    <a class="h-card p-name u-url" href="{{ to.url }}">{{ to.displayName }}</a>
+  {%- if loop.last %}:</p>{% else %}, {% endif -%}
 {% endfor %}
 
 {{ obj.rendered_content|safe }}

@@ -518,6 +518,11 @@ quoted tweet with photo
           'id': 'B',
           'url': 'https://twitter.com/B',
           'displayName': 'bee',
+        }, {
+          'id': 'https://www.w3.org/ns/activitystreams#Public'
+        }, {
+          'objectType': 'group',
+          'alias': '@public',
         }],
       },
     }], None)

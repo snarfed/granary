@@ -310,6 +310,7 @@ _Non-breaking changes:_
   * Bug fix for rendering image attachments without `image` field to Atom.
   * Bug fix for `published` and `updated` in entries with objects, eg likes, reposts, RSVPs, bookmarks. Thanks [@gregorlove](https://gregorlove.com/)! ([#480](https://github.com/snarfed/granary/issues/480))
   * Bug fix for content `activity/ies_to_atom` when `object` is present and empty.
+  * Bug fix for objects with elements without `objectType` in the `to` field.
 * `flickr`:
   * `get_activities`: add support for the `count` kwarg.
 * `github`:
