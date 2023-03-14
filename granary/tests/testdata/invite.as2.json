@@ -10,6 +10,11 @@
   "object": {
     "type": "Person",
     "name": "Alice",
-    "url": "http://example.com/alice"
+    "url": "http://example.com/alice",
+    "attachment": [{
+      "type": "PropertyValue",
+      "name": "Link",
+      "value": "<a rel=\"me\" href=\"http://example.com/alice\">example.com/alice</a>"
+    }]
   }
 }

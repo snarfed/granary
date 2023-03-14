@@ -1,0 +1,15 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Update",
+  "object": {
+    "type": "Person",
+    "url": "https://example.com/martin",
+    "attachment": [
+      {
+        "type": "PropertyValue",
+        "name": "Link",
+        "value": "<a rel=\"me\" href=\"https://example.com/martin\">example.com/martin</a>"
+      }
+    ]
+  }
+}

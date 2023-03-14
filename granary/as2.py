@@ -116,11 +116,11 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if context:
     obj['@context'] = context
 
-  def all_from_as1(field, type=None):
-    return [from_as1(elem, type=type, context=None, top_level=False)
+  def all_from_as1(field, type=None, top_level=False):
+    return [from_as1(elem, type=type, context=None, top_level=top_level)
             for elem in util.pop_list(obj, field)]
 
-  inner_objs = all_from_as1('object')
+  inner_objs = all_from_as1('object', top_level=True)
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
     if verb == 'stop-following':

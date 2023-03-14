@@ -1,0 +1,8 @@
+{
+  "objectType": "activity",
+  "verb": "update",
+  "object": {
+    "url": "https://example.com/martin",
+    "objectType" : "person"
+  }
+}
