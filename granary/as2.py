@@ -325,7 +325,7 @@ def to_as1(obj, use_type=True):
   inner_objs = all_to_as1('object')
   actor = to_as1(as1.get_object(obj, 'actor'))
 
-  if type == 'Create':
+  if type in ('Create', 'Update'):
     for inner_obj in inner_objs:
       inner_obj.setdefault('author', {}).update(actor)
 
