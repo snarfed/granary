@@ -1,0 +1,18 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Person",
+  "id": "tag:example.com,2011:martin",
+  "url": [
+    "https://example.com/martin",
+    "http://other/link"
+  ],
+  "attachment": [{
+    "type": "PropertyValue",
+    "name": "super cool",
+    "value": "<a rel=\"me\" href=\"https://example.com/martin\">example.com/martin</a>"
+  }, {
+    "type": "PropertyValue",
+    "name": "Link",
+    "value": "<a rel=\"me\" href=\"http://other/link\">other/link</a>"
+  }]
+}

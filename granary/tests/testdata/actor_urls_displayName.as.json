@@ -1,9 +1,15 @@
 {
   "objectType" : "person",
   "id": "tag:example.com,2011:martin",
-  "url": "https://example.com/martin",
-  "urls": [{
+  "url": {
     "value": "https://example.com/martin",
-    "displayName": "foo martin bar"
-  }]
+    "displayName": "super cool"
+  },
+  "urls": [
+    {
+      "value": "https://example.com/martin",
+      "displayName": "super cool"
+    },
+    "http://other/link"
+  ]
 }

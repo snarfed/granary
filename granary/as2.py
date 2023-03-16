@@ -120,7 +120,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     return [from_as1(elem, type=type, context=None, top_level=top_level)
             for elem in util.pop_list(obj, field)]
 
-  inner_objs = all_from_as1('object', top_level=True)
+  inner_objs = all_from_as1('object', top_level=top_level)
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
     if verb == 'stop-following':
@@ -147,17 +147,41 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if len(in_reply_to) == 1:
     in_reply_to = in_reply_to[0]
 
+  attachments = all_from_as1('attachments')
+
+  # Mastodon profile metadata fields
+  # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
+  # https://github.com/snarfed/bridgy-fed/issues/323
+  if obj_type == 'person' and top_level:
+    links = {}
+    for link in as1.get_objects(obj, 'url') + as1.get_objects(obj, 'urls'):
+      url = link.get('value') or link.get('id')
+      name = link.get('displayName')
+      if util.is_web(url):
+        links[url] = {
+          'type': 'PropertyValue',
+          'name': name or 'Link',
+          'value': util.pretty_link(url, attrs={'rel': 'me'}),
+        }
+    attachments.extend(links.values())
+
+  # urls
+  urls = as1.object_urls(obj)
+  if len(urls) == 1:
+    urls = urls[0]
+
   obj.update({
     'type': type,
     'name': obj.pop('displayName', None),
     'actor': from_as1(actor, context=None, top_level=False),
-    'attachment': all_from_as1('attachments'),
+    'attachment': attachments,
     'attributedTo': all_from_as1('author', type='Person'),
     'inReplyTo': in_reply_to,
     'object': inner_objs,
     'tag': all_from_as1('tags'),
     'preferredUsername': obj.pop('username', None),
-    'url': as1.object_urls(obj),
+    'url': urls,
+    'urls': None,
     'replies': from_as1(replies, context=None),
     'mediaType': obj.pop('mimeType', None),
     'to': to,
@@ -220,28 +244,6 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
         except TypeError:
           logger.warning(f'Dropping unexpected duration {duration!r}; expected int, is {duration.__class__}')
 
-  elif obj_type == 'person' and top_level:
-    # Mastodon-specific metadata property fields
-    # https://github.com/snarfed/bridgy-fed/issues/323
-    links = {}
-    for url in util.get_list(obj, 'url') + util.get_list(obj, 'urls'):
-      name = None
-      if isinstance(url, dict):
-        name = url.get('displayName')
-        url = url.get('value')
-      if util.is_web(url):
-        links[url] = {
-          'type': 'PropertyValue',
-          'name': name or 'Link',
-          'value': util.pretty_link(url, attrs={'rel': 'me'}),
-        }
-    obj['attachment'].extend(links.values())
-
-  obj.pop('urls', None)
-  urls = util.get_list(obj, 'url')
-  if len(urls) == 1:
-    obj['url'] = urls[0]
-
   # location
   loc = obj.get('location')
   if loc:
@@ -263,6 +265,10 @@ def to_as1(obj, use_type=True):
 
   Returns: dict, AS1 activity or object
   """
+  def all_to_as1(field):
+    return [to_as1(elem) for elem in util.pop_list(obj, field)
+            if not (type == 'Person' and elem.get('type') == 'PropertyValue')]
+
   if not obj:
     return {}
   elif isinstance(obj, str):
@@ -291,19 +297,37 @@ def to_as1(obj, use_type=True):
     if obj['verb'] and not obj['objectType']:
       obj['objectType'] = 'activity'
 
-  # attachments. if mediaType is image/... or video/..., override type. Eg
+  # attachments: media, with mediaType image/... or video/..., override type. Eg
   # Mastodon video attachments have type Document (!)
+  # https://docs.joinmastodon.org/spec/activitypub/#properties-used
   media_type = obj.pop('mediaType', None)
   if media_type:
     media_type_prefix = media_type.split('/')[0]
     if media_type_prefix in ('audio', 'image', 'video'):
       type = media_type_prefix.capitalize()
-      obj['objectType'] = media_type_prefix
-      obj['mimeType'] = media_type
+      obj.update({
+        'objectType': media_type_prefix,
+        'mimeType': media_type,
+      })
 
-  def all_to_as1(field):
-    return [to_as1(elem) for elem in util.pop_list(obj, field)
-            if not (type == 'Person' and elem.get('type') == 'PropertyValue')]
+  # attachments: Mastodon profile metadata fields, with type PropertyValue.
+  # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
+  #
+  # populate into corresponding URL in url/urls fields. have to do this one one
+  # level up, in the parent's object, because its data goes into the parent's
+  # url/urls fields
+  names = {}
+  for att in util.get_list(obj, 'attachment'):
+    name = att.get('name')
+    value = att.get('value')
+    if att.get('type') == 'PropertyValue' and value and name and name != 'Link':
+      a = util.parse_html(value).find('a')
+      if a and a.get('href'):
+        names[a['href']] = name
+
+  urls = [{'displayName': names[url], 'value': url} if url in names
+          else url
+          for url in util.get_list(obj, 'url')]
 
   # ActivityPub/Mastodon uses icon for profile picture, image for header.
   as1_images = []
@@ -327,7 +351,8 @@ def to_as1(obj, use_type=True):
 
   if type in ('Create', 'Update'):
     for inner_obj in inner_objs:
-      inner_obj.setdefault('author', {}).update(actor)
+      if inner_obj.get('objectType') not in as1.ACTOR_TYPES:
+        inner_obj.setdefault('author', {}).update(actor)
 
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
@@ -365,6 +390,8 @@ def to_as1(obj, use_type=True):
     # question (poll) responses
     'options': all_to_as1('anyOf') + all_to_as1('oneOf'),
     'replies': to_as1(obj.get('replies')),
+    'url': urls[0] if urls else None,
+    'urls': urls if len(urls) > 1 else None,
   })
 
   # media

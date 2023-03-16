@@ -1,8 +1,12 @@
 {
   "objectType": "activity",
   "verb": "update",
+  "actor": "https://example.com/martin",
   "object": {
-    "url": "https://example.com/martin",
-    "objectType" : "person"
+    "objectType" : "person",
+    "url": {
+      "value": "https://example.com/martin",
+      "displayName": "super cool"
+    }
   }
 }

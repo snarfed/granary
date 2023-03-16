@@ -306,6 +306,7 @@ _Non-breaking changes:_
   * `from_as1`: preserve `inReplyTo` object values as objects, inline single-element lists down down to just single element.
   * `to_as1`: use `objectType: featured` for first image in `image` field.
   * `to_as1`: populate `actor` into `object.author` for `Update`s as well as `Create`s.
+  * `to_as1`: convert Mastodon profile metadata `PropertyValue` attachments to `url` composite objects with `displayName`.
   * Preserve `to` and `cc` values when converting both directions.
 * `atom`:
   * Bug fix for rendering image attachments without `image` field to Atom.
