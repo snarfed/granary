@@ -1,0 +1,8 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Note",
+  "image": [
+    "https://example.com/pic1.jpg",
+    "https://example.com/pic2.jpg"
+  ]
+}

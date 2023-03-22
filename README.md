@@ -284,7 +284,7 @@ Changelog
 _Breaking changes:_
 
 * `as2`:
-  * Interpret bare string `object`, `inReplyTo`, etc values as ids, onvert them to bare strings or `id` instead of `url`.
+  * Interpret bare string `object`, `inReplyTo`, etc values as ids, convert them to bare strings or `id` instead of `url`.
 * `microformats2`:
   * Convert simple string `in-reply-to`, `repost-of`, `like-of` etc values to AS1 bare strings or `id`s instead of `url`s.
 
@@ -302,6 +302,7 @@ _Non-breaking changes:_
   * Convert `to`/`cc` to/from AS1 `to` for public and unlisted.
   * Handle `type: Document` video attachments like Mastodon emits.
   * `from_as1`: bug fix for image objects with `url` and `value` fields (for alt text).
+  * `from_as1`: bug fix, handle bare string URL `image` values.
   * `from_as1`: convert `urls.displayName` to `attachment.name` ([bridgy-fed#331](https://github.com/snarfed/bridgy-fed/issues/331)).
   * `from_as1`: preserve `inReplyTo` object values as objects, inline single-element lists down down to just single element.
   * `to_as1`: use `objectType: featured` for first image in `image` field.

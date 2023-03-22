@@ -205,7 +205,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     for img in images:
       # objectType featured is non-standard; granary uses it for u-featured
       # microformats2 images
-      if img.get('objectType') == 'featured':
+      if isinstance(img, dict) and img.get('objectType') == 'featured':
         featured.append(img)
       else:
         non_featured.append(img)
