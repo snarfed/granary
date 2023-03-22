@@ -279,7 +279,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 6.0 - unreleased
+### 6.0 - 2023-03-22
 
 _Breaking changes:_
 
@@ -290,7 +290,7 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
-* Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/).
+* Add new `bluesky` module for [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/)!
 * `as1`:
   * Add the `organization` object type and `ACTOR_TYPES` constant ([based on AS2](https://www.w3.org/TR/activitystreams-core/#actors)).
   * Add new `get_ids`, `get_object`, and `get_objects` functions.

@@ -2,12 +2,13 @@ granary
 -------
 
 Granary is a library and REST API that fetches and converts between a
-wide variety of data sources and formats:
+wide variety of social data sources and formats:
 
 -  Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native
    APIs
 -  Instagram and Facebook scraped HTML
--  `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0 (JSON)
+-  `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0 JSON,
+   including `ActivityPub <https://activitypub.rocks/>`__
 -  HTML and JSON with
    `microformats2 <http://microformats.org/wiki/microformats2>`__
 -  `Atom <https://tools.ietf.org/html/rfc4287>`__, `RSS
@@ -161,8 +162,8 @@ request.
 Include the ``shares=false`` query parameter to omit shares, eg Twitter
 retweets, from the results.
 
-To use the REST API in an existing ActivityStreams client, you’ll need
-to hard-code exceptions for the domains you want to use
+To use the REST API in an existing ActivityStreams/ActivityPub client,
+you’ll need to hard-code exceptions for the domains you want to use
 e.g. ``facebook.com``, and redirect HTTP requests to the corresponding
 `endpoint above <#about>`__.
 
@@ -180,9 +181,8 @@ passing the HTTP handler object. The handler should have a ``request``
 attribute for the current HTTP request.
 
 The useful methods are ``get_activities()`` and ``get_actor()``, which
-returns the current authenticated user (if any). See the `individual
-method
-docstrings <https://github.com/snarfed/granary/blob/master/source.py>`__
+returns the current authenticated user (if any). See the `full reference
+docs <https://granary.readthedocs.io/en/stable/source/granary.html#module-granary.source>`__
 for details. All return values are Python dicts of decoded
 ActivityStreams 1 JSON.
 
@@ -194,21 +194,7 @@ Troubleshooting/FAQ
 
 Check out the `oauth-dropins Troubleshooting/FAQ
 section <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__.
-It’s pretty comprehensive and applies to this project too. For
-searchability, here are a handful of error messages that `have solutions
-there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
-
-::
-
-   bash: ./bin/easy_install: ...bad interpreter: No such file or directory
-
-   ImportError: cannot import name certs
-
-   ImportError: cannot import name tweepy
-
-   File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
-     raise TweepError(e)
-   TweepError: must be _socket.socket, not socket
+It’s pretty comprehensive and applies to this project too.
 
 Future work
 -----------
@@ -289,10 +275,6 @@ may want to do this outside your virtualenv; if so, you’ll need to
 reconfigure it to see system packages with
 ``virtualenv --system-site-packages local``.) Then, run
 `docs/build.sh <https://github.com/snarfed/granary/blob/master/docs/build.sh>`__.
-
-`This ActivityStreams
-validator <http://activitystreamstester.appspot.com/>`__ is useful for
-manual testing.
 
 Release instructions
 --------------------
@@ -464,32 +446,81 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-6.1 - unreleased
+6.0 - 2023-03-22
 ~~~~~~~~~~~~~~~~
+
+*Breaking changes:*
+
+-  ``as2``:
+
+   -  Interpret bare string ``object``, ``inReplyTo``, etc values as
+      ids, convert them to bare strings or ``id`` instead of ``url``.
+
+-  ``microformats2``:
+
+   -  Convert simple string ``in-reply-to``, ``repost-of``, ``like-of``
+      etc values to AS1 bare strings or ``id``\ s instead of ``url``\ s.
 
 *Non-breaking changes:*
 
 -  Add new ``bluesky`` module for
    `Bluesky <https://blueskyweb.org/>`__/`AT
-   Protocol <https://atproto.com/>`__.
+   Protocol <https://atproto.com/>`__!
 -  ``as1``:
 
-   -  Add the ``organization`` object type.
+   -  Add the ``organization`` object type and ``ACTOR_TYPES`` constant
+      (`based on
+      AS2 <https://www.w3.org/TR/activitystreams-core/#actors>`__).
+   -  Add new ``get_ids``, ``get_object``, and ``get_objects``
+      functions.
 
+-  ``activity_changed``: ignore ``inReplyTo.author``
+   (`snarfed/bridgy#1338 <https://github.com/snarfed/bridgy/issues/1338>`__)
 -  ``as2``:
 
    -  Support converting between AS1 ``stop-following`` and AS2 ``Undo``
       ``Follow``.
-   -  Add the ``Organization`` object type.
+   -  Support AS2 ``Accept`` and ``Reject`` for follows as well as event
+      RSVPs.
+   -  Add support for the ``Question`` (ie poll), ``Organization``, and
+      ``Delete`` object types.
+   -  Convert ``to``/``cc`` to/from AS1 ``to`` for public and unlisted.
+   -  Handle ``type: Document`` video attachments like Mastodon emits.
    -  ``from_as1``: bug fix for image objects with ``url`` and ``value``
       fields (for alt text).
+   -  ``from_as1``: bug fix, handle bare string URL ``image`` values.
    -  ``from_as1``: convert ``urls.displayName`` to ``attachment.name``
       (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
+   -  ``from_as1``: preserve ``inReplyTo`` object values as objects,
+      inline single-element lists down down to just single element.
+   -  ``to_as1``: use ``objectType: featured`` for first image in
+      ``image`` field.
+   -  ``to_as1``: populate ``actor`` into ``object.author`` for
+      ``Update``\ s as well as ``Create``\ s.
+   -  ``to_as1``: convert Mastodon profile metadata ``PropertyValue``
+      attachments to ``url`` composite objects with ``displayName``.
+   -  Preserve ``to`` and ``cc`` values when converting both directions.
 
 -  ``atom``:
 
    -  Bug fix for rendering image attachments without ``image`` field to
       Atom.
+   -  Bug fix for ``published`` and ``updated`` in entries with objects,
+      eg likes, reposts, RSVPs, bookmarks. Thanks
+      `@gregorlove <https://gregorlove.com/>`__!
+      (`#480 <https://github.com/snarfed/granary/issues/480>`__)
+   -  Bug fix for content ``activity/ies_to_atom`` when ``object`` is
+      present and empty.
+   -  Bug fix for objects with elements without ``objectType`` in the
+      ``to`` field.
+
+-  ``flickr``:
+
+   -  ``get_activities``: add support for the ``count`` kwarg.
+
+-  ``github``:
+
+   -  ``get_activities``: add support for the ``count`` kwarg.
 
 -  ``jsonfeed``:
 
@@ -502,6 +533,7 @@ Changelog
 
    -  Add compatibility support for `Truth
       Social <https://truthsocial.com/>`__.
+   -  Handle truncated JSON API responses.
 
 -  ``microformats2``:
 
@@ -513,27 +545,17 @@ Changelog
       attribute
       (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
    -  Add new ``json_to_activities`` function.
+   -  ``hcard_to_html``/``maybe_linked_name``: when ``name`` is missing,
+      use pretty URL as visible text.
    -  Support the ``h-card`` ``org`` property.
    -  ``json_to_object``: handle composite ``rsvp`` property value.
    -  ``json_to_object``: bug fix when ``fetch_mf2`` is True, handle
       when we run the authorship algorithm and fetch an author URL that
       has a ``u-photo`` with ``alt``.
 
--  ``flickr``:
+-  ``rss``:
 
-   -  ``get_activities``: add support for the ``count`` kwarg.
-
--  ``github``:
-
-   -  ``get_activities``: add support for the ``count`` kwarg.
-
-6.0 - 2022-12-03
-~~~~~~~~~~~~~~~~
-
--  ``as1``:
-
-   -  ``activity_changed``: ignore ``inReplyTo.author``
-      (`snarfed/bridgy#1338 <https://github.com/snarfed/bridgy/issues/1338>`__)
+   -  ``from_activities``: fix item ordering to match input activities.
 
 .. _section-1:
 
