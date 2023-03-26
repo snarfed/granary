@@ -1,6 +1,6 @@
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
- <uri>{{ actor.url }}</uri>
+ <uri>{{ as1.get_url(actor) }}</uri>
  {% if actor.displayName %}
  <name>{{ actor.displayName }}</name>
  {% endif %}

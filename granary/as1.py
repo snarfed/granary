@@ -95,6 +95,17 @@ def get_objects(obj, field='object'):
           for val in util.get_list(obj, field)]
 
 
+def get_url(obj):
+  """Returns the url field's first text value, or None.
+
+  Somewhat duplicates :func:`microformats2.get_text`.
+  """
+  url = util.get_first(obj, 'url')
+  if isinstance(url, dict):
+    url = url.get('value')
+  return url.strip() if url else ''
+
+
 def get_ids(obj, field):
   """Extracts and returns a given field's values as ids.
 

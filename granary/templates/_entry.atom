@@ -6,7 +6,7 @@
     <activity:object-type>http://activitystrea.ms/schema/1.0/{{ obj.objectType }}</activity:object-type>
   {% endif %}
 
-  {% set url = activity.url or obj.url %}
+  {% set url = as1.get_url(activity) or as1.get_url(obj) %}
   <id>{{ activity.id or obj.id or url }}</id>
   <title>{{ activity.title|safe }}</title>
 
@@ -20,7 +20,7 @@
   <div>
   <p>{{ activity.annotation }}</p>
   <img src="{{ obj.actor.image.url }}" />
-  <a href="{{ obj.actor.url }}">{{ obj.actor.displayName }}</a>
+  <a href="{{ as1.get_url(obj.actor) }}">{{ obj.actor.displayName }}</a>
   originally shared this post:
   </div>
 {% endif %}
@@ -43,11 +43,12 @@
   <link rel="alternate" type="text/html" href="{{ url }}" />
   <link rel="ostatus:conversation" href="{{ url }}" />
   {% for tag in obj.tags %}
-    {% if tag.url and tag.verb not in ('like', 'react', 'share') %}
-      <link rel="ostatus:attention" href="{{ tag.url }}" />
-      <link rel="mentioned" href="{{ tag.url }}" />
+    {% set url = as1.get_url(tag) %}
+    {% if url and tag.verb not in ('like', 'react', 'share') %}
+      <link rel="ostatus:attention" href="{{ url }}" />
+      <link rel="mentioned" href="{{ url }}" />
       {% if tag.displayName and not tag.startIndex %}
-        <a href="{{ tag.url }}">{{ tag.displayName }}</a>
+        <a href="{{ url }}">{{ tag.displayName }}</a>
       {% endif %}
     {% endif %}
   {% endfor %}

@@ -915,6 +915,10 @@ going to Homebrew Website Club
     self.assertEqual(empty, d['g']['3'][2]['9'])
     self.assertEqual(empty, d['g']['3'][2]['7'][0]['9'])
 
+    # just check that we don't crash
+    # https://console.cloud.google.com/errors/detail/CJjqo87j4IjM8AE;time=P30D?project=bridgy-federated
+    str(atom.Defaulter(atom.Defaulter({'x': 'y'})))
+
   def test_multiple_objects_uses_first(self):
     activity = {
       'objectType': 'activity',
@@ -993,3 +997,14 @@ bar
                              ignore_blanks=True)
     self.assert_multiline_in(expected, atom.activities_to_atom([activity], {}),
                              ignore_blanks=True)
+
+  def test_actor_url_with_displayName(self):
+    # https://console.cloud.google.com/errors/detail/CJjqo87j4IjM8AE;time=P30D?project=bridgy-federated
+    self.assertNotIn('Defaulter', atom.activity_to_atom({
+      'actor': {
+        'url': {
+          'displayName': 'Twitter',
+          'value': 'https://vis.social/@codingchaos'
+        },
+      },
+    }))

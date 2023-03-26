@@ -279,6 +279,13 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+### 6.1 - unreleased
+
+_Non-breaking changes:_
+
+* `atom`:
+  * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
+
 ### 6.0 - 2023-03-22
 
 _Breaking changes:_

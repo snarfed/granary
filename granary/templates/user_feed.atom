@@ -19,8 +19,9 @@
 {% include "author.atom" %}
 
 <link rel="alternate" href="{{ host_url }}" type="text/html" />
-{% if actor.url and actor.url != host_url %}
-<link rel="alternate" href="{{ actor.url }}" type="text/html" />
+{% set actor_url = as1.get_url(actor) %}
+{% if actor_url and actor_url != host_url %}
+<link rel="alternate" href="{{ actor_url }}" type="text/html" />
 {% endif %}
 {% if actor.image.url %}
 <link rel="avatar" href="{{ actor.image.url }}" />

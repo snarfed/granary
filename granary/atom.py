@@ -102,10 +102,9 @@ class Defaulter(collections.defaultdict):
     else:
       return obj
 
-  def __unicode__(self):
-    return super().__unicode__() if self else ''
+  def __str__(self):
+    return str(super()) if self else ''
 
-  __str__ = __unicode__
   __eq__ = collections.defaultdict.__eq__
 
   def __hash__(self):
