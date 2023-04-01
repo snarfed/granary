@@ -5,7 +5,7 @@
     "category": [{
       "type": ["h-card"],
       "properties": {
-        "url": ["https://alice"],
+        "url": ["https://alice/"],
         "name": ["Alice"]
       }
     }]

@@ -88,6 +88,12 @@ TYPE_TO_VERB.update({
 })
 
 
+def get_urls(obj, key='url'):
+  """Returns link['href'] if dict, otherwise link, for each link in obj[key]."""
+  return util.dedupe_urls(link.get('href') if isinstance(link, dict) else link
+                          for link in util.get_list(obj, key))
+
+
 def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.
 
@@ -325,9 +331,22 @@ def to_as1(obj, use_type=True):
       if a and a.get('href'):
         names[a['href']] = name
 
-  urls = [{'displayName': names[url], 'value': url} if url in names
-          else url
-          for url in util.get_list(obj, 'url')]
+  urls = [{'displayName': names[url], 'value': url} if url in names else url
+          for url in get_urls(obj)]
+
+  # media links. more for them is populated below!
+  if type in ('Audio', 'Video'):
+    for link in util.get_list(obj, 'url'):
+      if isinstance(link, dict):
+        for tag in util.get_list(link, 'tag'):
+          media_type = tag.get('mediaType', '')
+          href = tag.get('href')
+          if media_type.split('/')[0] == type.lower():
+            obj['stream'] = {
+              'mimeType': media_type,
+              'url': href,
+            }
+            break
 
   # ActivityPub/Mastodon uses icon for profile picture, image for header.
   as1_images = []
@@ -399,12 +418,15 @@ def to_as1(obj, use_type=True):
     duration = util.parse_iso8601_duration(obj.pop('duration', None))
     if duration:
       duration = duration.total_seconds()
-    obj['stream'] = {
-      'url': obj.pop('url', None),
+
+    obj.setdefault('stream', {
       # file size in bytes. nonstandard, not in AS1 proper
       'size': obj.pop('size', None),
       'duration': duration or None,
-    }
+    })
+    obj['stream'].setdefault('url', obj.pop('url', None))
+
+  # mention
   elif type == 'Mention':
     obj['url'] = obj.pop('href', None)
 

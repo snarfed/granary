@@ -1,0 +1,38 @@
+{
+  "type" : "Video",
+  "mediaType" : "text/markdown",
+  "id" : "https://spectra.video/videos/watch/1484abab-d649-45d0-8c50-d761382ac4e7",
+  "attributedTo" : [{
+    "id" : "https://spectra.video/video-channels/trashpandapunk",
+    "type" : "Group"
+  }],
+  "url" : [{
+    "href" : "https://spectra.video/videos/watch/1484abab-d649-45d0-8c50-d761382ac4e7",
+    "mediaType" : "text/html",
+    "type" : "Link"
+  }, {
+   "href" : "https://spectra-prod.us-east-1.linodeobjects.com/streaming-playlists/hls/1484abab-d649-45d0-8c50-d761382ac4e7/c795d898-520c-43b8-9601-89e45b1059da-master.m3u8",
+   "mediaType" : "application/x-mpegURL",
+   "tag" : [{
+     "type" : "Infohash",
+     "name" : "51a48b8ccc6b75fec4ab465270f0d51756cc94a3"
+    }, {
+     "type" : "Link",
+     "mediaType" : "application/json",
+     "name" : "sha256",
+     "href" : "https://spectra-prod.us-east-1.linodeobjects.com/streaming-playlists/hls/1484abab-d649-45d0-8c50-d761382ac4e7/1e62bab8-15d6-46b8-b1f4-5f5898099393-segments-sha256.json"
+    }, {
+     "type" : "Link",
+     "mediaType" : "video/mp4",
+     "href" : "https://spectra-prod.us-east-1.linodeobjects.com/streaming-playlists/hls/1484abab-d649-45d0-8c50-d761382ac4e7/290ff400-eb58-4fcb-8ea4-e5df06313f34-720-fragmented.mp4",
+     "fps" : 30,
+     "height" : 720,
+     "size" : 14682664
+    }, {
+     "type" : "Link",
+     "mediaType" : "application/x-bittorrent",
+     "href" : "https://spectra.video/lazy-static/torrents/6c6e828e-7416-4dbc-a0f6-84ed7645d541-720-hls.torrent",
+     "height" : 720
+    }]
+  }]
+}

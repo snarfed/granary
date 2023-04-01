@@ -283,6 +283,9 @@ Changelog
 
 _Non-breaking changes:_
 
+* `as2`:
+  * `to_as1`: Improve `Video` handling: support `Link` objects in `url`, extract stream URLs and types from link `tag`s.
+  * Add new `get_urls` function.
 * `atom`:
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
 

@@ -7,7 +7,7 @@
     "author": [{
       "type": ["h-card"],
       "properties": {
-        "url": ["http://follower"]
+        "url": ["http://follower/"]
       }
     }]
   }

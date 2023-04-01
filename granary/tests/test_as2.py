@@ -83,3 +83,13 @@ class ActivityStreams2Test(testutil.TestCase):
       self.assertEqual(result, is_public(input))
 
     self.assertFalse(is_public('foo'))
+
+  def test_get_urls(self):
+    for val, expected in (
+        (None, []),
+        ({}, []),
+        ([None, 'asdf', {'href': 'qwert'}, {'foo': 'bar'}, 'qwert', {}],
+         ['asdf', 'qwert']),
+    ):
+      self.assertEqual(expected, as2.get_urls({'url': val}))
+

@@ -6,7 +6,7 @@
     "id": "tag:example.com,2011:note-123",
     "tag": [{
       "type": "Person",
-      "url": "https://alice",
+      "url": "https://alice/",
       "name": "Alice"
     }]
   }

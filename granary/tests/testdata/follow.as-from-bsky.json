@@ -2,6 +2,6 @@
   "objectType": "activity",
   "verb": "follow",
   "actor": {
-    "url": "http://follower"
+    "url": "http://follower/"
   }
 }

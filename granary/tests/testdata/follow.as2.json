@@ -6,6 +6,6 @@
   "object": "http://followee",
   "actor": {
     "type": "Person",
-    "url": "http://follower"
+    "url": "http://follower/"
   }
 }
