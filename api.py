@@ -143,6 +143,18 @@ def api(path):
 
   logger.info(f'Got activities: {json_dumps(response, indent=2)}')
 
+  if site == 'twitter':
+    response.setdefault('items', []).insert(0, {
+      'object': {
+        'id': 'https://snarfed.org/2023-03-03_so-long-bridgy-for-twitter',
+        'url': 'https://snarfed.org/2023-03-03_so-long-bridgy-for-twitter',
+        'displayName': 'twitter-atom will shut down within a month',
+        'content': """\
+Well, it’s come to this. <a href="https://twitterisgoinggreat.com/">Twitter is burning</a>, <a href="https://www.reuters.com/technology/twitter-makes-first-interest-payment-musk-buyout-debt-bloomberg-news-2023-01-30/">a billionaire owes money</a>, so <a href="https://twittercommunity.com/t/announcing-new-access-tiers-for-the-twitter-api/188728">an API will soon get lobotomized</a>. Assuming that actually happens, <a href="https://snarfed.org/2023-04-03_so-long-twitter-api-and-thanks-for-all-the-fish">this feed will die by April 29</a>. Sorry for the bad news. So long, and thanks for all the fish!
+""",
+      },
+    })
+
   # fetch actor if necessary
   actor = response.get('actor')
   if not actor and request.args.get('format') == 'atom':
