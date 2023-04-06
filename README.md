@@ -288,6 +288,8 @@ _Non-breaking changes:_
   * Add new `get_urls` function.
 * `atom`:
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
+* `mastodon`:
+  * `status_to_object`: add/fix alt text handling for images.
 
 ### 6.0 - 2023-03-22
 

@@ -186,7 +186,7 @@ MEDIA_STATUS['media_attachments'] = [{
   'id': '222',
   'type': 'image',
   'url': 'http://foo.com/image.jpg',
-  'description': None,
+  'description': 'a fun image',
   'meta': {
      'small': {
         'height': 202,
@@ -232,11 +232,18 @@ MEDIA_STATUS['media_attachments'] = [{
 }]
 MEDIA_OBJECT = copy.deepcopy(OBJECT)  # ActivityStreams
 MEDIA_OBJECT.update({
-  'image': {'url': 'http://foo.com/image.jpg'},
+  'image': {
+    'url': 'http://foo.com/image.jpg',
+    'displayName': 'a fun image',
+  },
   'attachments': [{
     'objectType': 'image',
     'id': tag_uri(222),
-    'image': {'url': 'http://foo.com/image.jpg'},
+    'displayName': 'a fun image',
+    'image': {
+      'url': 'http://foo.com/image.jpg',
+      'displayName': 'a fun image',
+    },
   }, {
     'objectType': 'video',
     'id': tag_uri(444),
@@ -844,7 +851,7 @@ class MastodonTest(testutil.TestCase):
   def test_preview_with_media(self):
     preview = self.mastodon.preview_create(MEDIA_OBJECT)
     self.assertEqual('<span class="verb">toot</span>:', preview.description)
-    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="" />',
+    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="a fun image" />',
                      preview.content)
 
   def test_preview_create_override_truncate_text_length(self):
@@ -872,7 +879,9 @@ class MastodonTest(testutil.TestCase):
     }, response=STATUS)
     self.mox.ReplayAll()
 
-    result = self.mastodon.create(MEDIA_OBJECT)
+    obj = copy.deepcopy(MEDIA_OBJECT)
+    del obj['image']['displayName']
+    result = self.mastodon.create(obj)
     self.assert_equals(STATUS, result.content, result)
 
   def test_create_with_too_many_media(self):

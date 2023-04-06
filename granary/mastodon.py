@@ -356,14 +356,18 @@ class Mastodon(source.Source):
     # media! into attachments.
     for media in status.get('media_attachments', []):
       type = media.get('type')
+      desc = media.get('description')
       att = {
         'id': self.tag_uri(media.get('id')),
         'objectType': MEDIA_TYPES.get(type),
-        'displayName': media.get('description'),
+        'displayName': desc,
       }
       url = media.get('url')
       if type == 'image':
-        att['image'] = {'url': url}
+        att['image'] = {
+          'url': url,
+          'displayName': desc,
+        }
       elif type in ('gifv', 'video'):
         att.update({
           'stream': {'url': url},
