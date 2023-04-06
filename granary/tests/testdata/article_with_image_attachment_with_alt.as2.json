@@ -1,0 +1,12 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Article",
+  "name": "article abc",
+  "content": "foo bar",
+  "attachment": [{
+    "type" : "Image",
+    "mediaType" : "image/png",
+    "name" : "my alt text",
+    "url": "http://pic/ture.jpg"
+  }]
+}

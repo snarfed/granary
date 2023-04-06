@@ -1,0 +1,11 @@
+{
+  "objectType": "article",
+  "displayName": "article abc",
+  "content": "foo bar",
+  "attachments": [{
+    "objectType": "image",
+    "mimeType": "image/png",
+    "url": "http://pic/ture.jpg",
+    "displayName": "my alt text"
+  }]
+}
