@@ -1,7 +1,7 @@
 {
   "$type": "app.bsky.feed.feedViewPost",
   "post": {
-    "$type": "app.bsky.feed.post#view",
+    "$type": "app.bsky.feed.defs#postView",
     "uri": "http://example.com/comment/547822715231468_6796480",
     "cid": "TODO",
     "record": {
@@ -26,7 +26,6 @@
     "repostCount": 0,
     "upvoteCount": 0,
     "downvoteCount": 0,
-    "indexedAt": "2022-01-02T03:04:05+00:00",
-    "viewer": {}
+    "indexedAt": "2022-01-02T03:04:05+00:00"
   }
 }

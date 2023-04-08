@@ -1,17 +1,12 @@
 {
   "$type": "app.bsky.feed.feedViewPost",
   "post": {
-    "$type": "app.bsky.feed.post#view",
+    "$type": "app.bsky.feed.defs#postView",
     "uri": "http://example.com/blog-post-123",
     "cid": "TODO",
     "author": {
-      "$type": "app.bsky.actor.ref#withInfo",
+      "$type": "app.bsky.actor.defs#profileViewBasic",
       "did": "",
-      "declaration": {
-        "$type": "app.bsky.system.declRef",
-        "actorType": "app.bsky.system.actorUser",
-        "cid": "TODO"
-      },
       "displayName": "Ryan Barrett",
       "handle": "example.com,2001:ryan",
       "avatar": "http://example.com/ryan/image"
@@ -49,7 +44,6 @@
     "repostCount": 0,
     "upvoteCount": 0,
     "downvoteCount": 0,
-    "indexedAt": "2022-01-02T03:04:05+00:00",
-    "viewer": {}
+    "indexedAt": "2022-01-02T03:04:05+00:00"
   }
 }

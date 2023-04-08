@@ -8,7 +8,6 @@ from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.testutil import NOW, requests_response
 
 from ..bluesky import (
-  actor_to_ref,
   did_web_to_url,
   from_as1,
   to_as1,
@@ -21,14 +20,9 @@ ACTOR_AS = {
   'image': [{'url': 'https://alice.com/alice.jpg'}],
   'url': 'https://alice.com/',
 }
-ACTOR_REF_BSKY = {
-  '$type': 'app.bsky.actor.ref#withInfo',
+ACTOR_PROFILE_VIEW_BSKY = {
+  '$type': 'app.bsky.actor.defs#profileView',
   'did': 'did:web:alice.com',
-  'declaration': {
-    '$type': 'app.bsky.system.declRef',
-    'cid': 'TODO',
-    'actorType': 'app.bsky.system.actorUser',
-  },
   'handle': 'alice.com',
   'displayName': 'Alice',
   'avatar': 'https://alice.com/alice.jpg',
@@ -54,7 +48,7 @@ POST_HTML = """
 POST_BSKY = {
   '$type': 'app.bsky.feed.feedViewPost',
   'post': {
-    '$type': 'app.bsky.feed.post#view',
+    '$type': 'app.bsky.feed.defs#postView',
     'uri': 'http://orig/post',
     'cid': 'TODO',
     'record': {
@@ -67,9 +61,16 @@ POST_BSKY = {
     'upvoteCount': 0,
     'downvoteCount': 0,
     'indexedAt': '2022-01-02T03:04:05+00:00',
-    'viewer': {},
   }
 }
+POST_AUTHOR_AS = copy.deepcopy(POST_AS)
+POST_AUTHOR_AS['object']['author'] = ACTOR_AS
+POST_AUTHOR_BSKY = copy.deepcopy(POST_BSKY)
+POST_AUTHOR_BSKY['post']['author'] = {
+  **ACTOR_PROFILE_VIEW_BSKY,
+  '$type': 'app.bsky.actor.defs#profileViewBasic',
+}
+
 TAGS = [{
   'url': 'http://my/link',
   'startIndex': 8,
@@ -157,7 +158,7 @@ REPOST_BSKY['post']['record'].update({
 })
 REPOST_BSKY['reason'] = {
   '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
-  'by': ACTOR_REF_BSKY,
+  'by': ACTOR_PROFILE_VIEW_BSKY,
   'indexedAt': NOW.isoformat(),
 }
 
@@ -186,6 +187,9 @@ class TestBluesky(testutil.TestCase):
 
   def test_from_as1_post(self):
     self.assert_equals(POST_BSKY, from_as1(POST_AS))
+
+  def test_from_as1_post_with_author(self):
+    self.assert_equals(POST_AUTHOR_BSKY, from_as1(POST_AUTHOR_AS))
 
   def test_from_as1_post_html(self):
     post_as = copy.deepcopy(POST_AS)
@@ -261,6 +265,9 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     }
     self.assert_equals(from_as1(obj), from_as1(activity))
 
+  def test_from_as1_actor(self):
+    self.assert_equals(ACTOR_PROFILE_VIEW_BSKY, from_as1(ACTOR_AS))
+
   def test_from_as1_actor_handle(self):
     for expected, fields in (
         ('', {}),
@@ -285,6 +292,9 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
   def test_to_as1_post(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
 
+  def test_to_as1_post_with_author(self):
+    self.assert_equals(POST_AUTHOR_AS['object'], to_as1(POST_AUTHOR_BSKY))
+
   def test_to_as1_reply(self):
     self.assert_equals(REPLY_AS['object'], to_as1(REPLY_BSKY))
 
@@ -308,6 +318,3 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
   def test_to_as1_unknown_type(self):
     with self.assertRaises(ValueError):
       to_as1({'$type': 'app.bsky.foo'})
-
-  def test_actor_to_ref(self):
-    self.assert_equals(ACTOR_REF_BSKY, actor_to_ref(ACTOR_AS))

@@ -1,18 +1,8 @@
 {
-  "$type": "app.bsky.actor.profile",
+  "$type": "app.bsky.actor.defs#profileView",
   "displayName": "Martin Smith",
   "handle": "yoozer@example.com",
   "avatar": "http://example.com/avatar",
   "banner": "http://example.com/header",
-  "creator": "did:web:example.com:martin",
-  "declaration": {
-    "$type": "app.bsky.system.declRef",
-    "actorType": "app.bsky.system.actorUser",
-    "cid": "TODO"
-  },
-  "did": "did:web:example.com:martin",
-  "followersCount": 0,
-  "followsCount": 0,
-  "membersCount": 0,
-  "postsCount": 0
+  "did": "did:web:example.com:martin"
 }

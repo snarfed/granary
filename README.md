@@ -288,6 +288,7 @@ _Non-breaking changes:_
   * Add new `get_urls` function.
 * `atom`:
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
+* `bluesky`: update for [`app.bsky` lexicons refactor](https://github.com/bluesky-social/atproto/commit/7f008c05a09c6dcf42dcac2819210138af42835c).
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.
 

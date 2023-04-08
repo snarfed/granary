@@ -8,6 +8,7 @@ import copy
 import logging
 import urllib.parse
 
+from granary import as1
 from granary.source import Source, OMIT_LINK
 from oauth_dropins.webutil import util
 
@@ -128,7 +129,7 @@ def from_as1(obj, from_url=None):
       handle = ''
 
     ret = {
-      '$type': 'app.bsky.actor.profile',
+      '$type': 'app.bsky.actor.defs#profileView',
       'displayName': obj.get('displayName'),
       'description': obj.get('summary'),
       'avatar': util.get_url(obj, 'image'),
@@ -136,32 +137,16 @@ def from_as1(obj, from_url=None):
       'did': did_web,
       # this is a DID
       # atproto/packages/pds/src/api/app/bsky/actor/getProfile.ts#38
-      'creator': did_web,
-      'declaration': {
-        '$type': 'app.bsky.system.declRef',
-        # Content ID, aka content-hash fingerprint. Immutable hash that
-        # identifies a node in a PDS.
-        # https://atproto.com/guides/applications#record-types
-        # https://github.com/multiformats/cid
-        # https://atproto.com/guides/data-repos#data-layout
-        # atproto/lexicons/com/atproto/repo/strongRef.json
-        'cid': 'TODO',
-        'actorType': 'app.bsky.system.actorUser',
-      },
       # TODO: should be more specific than domain, many users will be on shared
       # domains
       'handle': handle,
-      'followersCount': 0,
-      'followsCount': 0,
-      'membersCount': 0,
-      'postsCount': 0,
     }
 
   elif verb == 'share':
     ret = from_as1(inner_obj)
     ret['reason'] = {
       '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
-      'by': actor_to_ref(actor),
+      'by': from_as1(actor),
       'indexedAt': util.now().isoformat(),
     }
 
@@ -181,6 +166,7 @@ def from_as1(obj, from_url=None):
     text = src.truncate(text, None, OMIT_LINK)
 
     # text tags
+    # TODO: migrate to facets
     entities = []
     content = obj.get('content')
     for tag in util.get_list(obj, 'tags'):
@@ -245,12 +231,11 @@ def from_as1(obj, from_url=None):
         } for entity in entities],
       }
 
-    author = obj.get('author')
-
+    author = as1.get_object(obj, 'author')
     ret = {
       '$type': 'app.bsky.feed.feedViewPost',
       'post': {
-        '$type': 'app.bsky.feed.post#view',
+        '$type': 'app.bsky.feed.defs#postView',
         'uri': util.get_url(obj),
         'cid': 'TODO',
         'record': {
@@ -260,14 +245,16 @@ def from_as1(obj, from_url=None):
           'embed': record_embed,
           'entities': entities,
         },
-        'author': actor_to_ref(author) if author else None,
+        'author': {
+          **from_as1(author),
+          '$type': 'app.bsky.actor.defs#profileViewBasic',
+        } if author else None,
         'embed': post_embed,
         'replyCount': 0,
         'repostCount': 0,
         'upvoteCount': 0,
         'downvoteCount': 0,
         'indexedAt': util.now().isoformat(),
-        'viewer': {},
       },
     }
 
@@ -301,28 +288,6 @@ def from_as1(obj, from_url=None):
   ))
 
 
-def actor_to_ref(actor):
-  """Converts an AS1 actor to a Bluesky `app.bsky.actor.ref#withInfo`.
-
-  Args:
-    actor: dict, AS1 actor
-
-  Returns: dict, `app.bsky.actor.ref#withInfo` object
-  """
-  if not actor:
-    return None
-
-  actor = copy.deepcopy(actor)
-  actor.setdefault('objectType', 'person')
-
-  ref = {
-    k: v for k, v in from_as1(actor).items()
-      if k in ('avatar', 'declaration', 'did', 'displayName', 'handle', 'indexedAt')
-  }
-  ref['$type'] = 'app.bsky.actor.ref#withInfo'
-  return ref
-
-
 def to_as1(obj):
   """Converts a Bluesky object to an AS1 object.
 
@@ -345,7 +310,7 @@ def to_as1(obj):
     raise ValueError('Bluesky object missing $type field')
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type in ('app.bsky.actor.profile', 'app.bsky.actor.ref#withInfo'):
+  if type in ('app.bsky.actor.defs#profileView', 'app.bsky.actor.defs#profileViewBasic'):
     images = [{'url': obj.get('avatar')}]
     banner = obj.get('banner')
     if banner:
@@ -384,7 +349,7 @@ def to_as1(obj):
       'tags': tags,
     }
 
-  elif type == 'app.bsky.feed.post#view':
+  elif type == 'app.bsky.feed.defs#postView':
     ret = to_as1(obj.get('record'))
     ret.update({
       'url': obj.get('uri'),
