@@ -90,6 +90,25 @@ EMBED_EXTERNAL = {
   'title': 'link',
   'uri': 'http://my/link',
 }
+POST_BSKY_EMBED = copy.deepcopy(POST_BSKY)
+POST_BSKY_EMBED['post']['record'].update({
+  'text': 'A note. link too',
+  'entities': ENTITIES,
+  'embed': {
+    '$type': 'app.bsky.embed.external',
+    'external': [{
+      '$type': 'app.bsky.embed.external#external',
+      **EMBED_EXTERNAL,
+    }],
+  },
+})
+POST_BSKY_EMBED['post']['embed'] = {
+  '$type': 'app.bsky.embed.external#presented',
+  'external': [{
+    '$type': 'app.bsky.embed.external#presentedExternal',
+    **EMBED_EXTERNAL,
+  }],
+}
 
 REPLY_AS = {
   'objectType': 'activity',
@@ -219,34 +238,30 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     with self.assertRaises(NotImplementedError):
       from_as1(post_as)
 
+  def test_from_as1_post_without_tag_indices(self):
+    post_as = copy.deepcopy(POST_AS)
+    post_as['object'].update({
+      'content': 'A note. link too',
+      'tags': [{
+        'url': 'http://my/link',
+      }],
+    })
+
+    expected = copy.deepcopy(POST_BSKY_EMBED)
+    del expected['post']['embed']['external'][0]['title']
+    del expected['post']['record']['embed']['external'][0]['title']
+    del expected['post']['record']['entities'][0]['index']
+    expected['post']['record']['entities'][0]['text'] = None
+
+    self.assertEqual(expected, from_as1(post_as))
+
   def test_from_as1_post_with_tag_indices(self):
     post_as = copy.deepcopy(POST_AS)
     post_as['object'].update({
       'content': 'A note. link too',
       'tags': TAGS,
     })
-
-    post_bsky = copy.deepcopy(POST_BSKY)
-    post_bsky['post']['record'].update({
-      'text': 'A note. link too',
-      'entities': ENTITIES,
-      'embed': {
-        '$type': 'app.bsky.embed.external',
-        'external': [{
-          '$type': 'app.bsky.embed.external#external',
-          **EMBED_EXTERNAL,
-        }],
-      },
-    })
-    post_bsky['post']['embed'] = {
-      '$type': 'app.bsky.embed.external#presented',
-      'external': [{
-        '$type': 'app.bsky.embed.external#presentedExternal',
-        **EMBED_EXTERNAL,
-      }],
-    }
-
-    self.assert_equals(post_bsky, from_as1(post_as))
+    self.assert_equals(POST_BSKY_EMBED, from_as1(post_as))
 
   def test_from_as1_reply(self):
     self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))

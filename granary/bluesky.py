@@ -178,7 +178,7 @@ def from_as1(obj, from_url=None):
             raise NotImplementedError('HTML content is not supported with index tags')
           end = start + int(tag.get('length'))
           tag_text = content[start:end] if content else None
-        except (ValueError, IndexError):
+        except (ValueError, IndexError, TypeError):
           tag_text = start = end = None
         entities.append({
           'type': 'link',
