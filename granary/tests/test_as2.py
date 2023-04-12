@@ -93,3 +93,35 @@ class ActivityStreams2Test(testutil.TestCase):
     ):
       self.assertEqual(expected, as2.get_urls({'url': val}))
 
+  def test_lat_lon_float(self):
+    '''Pixelfed returns them as strings, even though the spec says floats.'''
+    self.assertEqual({
+      'objectType': 'note',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'California',
+        'longitude': -76.507450,
+        'latitude': 38.3004,
+      },
+    }, as2.to_as1({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'location': {
+        'type': 'Place',
+        'name': 'California',
+        'longitude': '-76.507450',
+        'latitude': '38.300400',
+      },
+    }))
+
+  def test_lat_lon_not_float(self):
+    with self.assertRaises(ValueError):
+      as2.to_as1({
+        '@context': 'https://www.w3.org/ns/activitystreams',
+        'type': 'Note',
+        'location': {
+          'type': 'Place',
+          'longitude': 'xyz',
+          'latitude': 'abc',
+        },
+      })

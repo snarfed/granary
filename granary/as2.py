@@ -413,6 +413,14 @@ def to_as1(obj, use_type=True):
     'urls': urls if len(urls) > 1 else None,
   })
 
+  # enforce that lat/lon are float. (Pixelfed currently returns them as strings)
+  for field in 'latitude', 'longitude':
+    val = obj.get(field)
+    if val:
+      if not util.is_float(val):
+        raise ValueError(f'Expected float for {field} in {obj.get("id")}; got {val}')
+      obj[field] = float(val)
+
   # media
   if type in ('Audio', 'Video'):  # this may have been set above
     duration = util.parse_iso8601_duration(obj.pop('duration', None))
