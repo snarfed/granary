@@ -2,6 +2,7 @@
   "objectType": "article",
   "displayName": "article abc",
   "content": "foo bar",
+  "image": ["http://pic/ture.jpg"],
   "attachments": [{
     "objectType": "image",
     "mimeType": "image/png",

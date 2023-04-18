@@ -113,6 +113,14 @@ The original post]]></description>
     self.assertNotIn(
       '<enclosure url="http://a/vidjo.mov" length="0" type="video/quicktime"/>', got)
 
+  def test_render_html_image(self):
+    got = rss.from_activities([{
+      'objectType': 'note',
+      'image': ['http://pic/ture.jpeg'],
+    }], feed_url='http://this')
+    self.assert_multiline_in(
+      '<img class="u-photo" src="http://pic/ture.jpeg" alt="" />', got)
+
   def test_hfeed_photo(self):
     got = rss.from_activities([], feed_url='http://this', hfeed={
       'type': ['h-feed'],

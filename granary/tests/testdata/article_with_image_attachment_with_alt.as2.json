@@ -3,6 +3,7 @@
   "type": "Article",
   "name": "article abc",
   "content": "foo bar",
+  "image": "http://pic/ture.jpg",
   "attachment": [{
     "type" : "Image",
     "mediaType" : "image/png",

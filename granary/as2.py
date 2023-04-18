@@ -323,7 +323,8 @@ def to_as1(obj, use_type=True):
   # level up, in the parent's object, because its data goes into the parent's
   # url/urls fields
   names = {}
-  for att in util.get_list(obj, 'attachment'):
+  attachments = util.get_list(obj, 'attachment')
+  for att in attachments:
     name = att.get('name')
     value = att.get('value')
     if att.get('type') == 'PropertyValue' and value and name and name != 'Link':
@@ -357,7 +358,10 @@ def to_as1(obj, use_type=True):
   if type == 'Person' and images:
     images[0]['objectType'] = 'featured'
 
-  for as2_img in icons + images:
+  img_atts = [util.get_url(a) for a in attachments
+              if a.get('type') == 'Image'
+              or a.get('mediaType', '').startswith('image/')]
+  for as2_img in icons + images + img_atts:
     as1_img = to_as1(as2_img, use_type=False)
     url = util.get_url(as1_img)
     if url not in image_urls:

@@ -1,6 +1,7 @@
 {
   "objectType": "note",
   "content": "i hereby attach an article",
+  "image": ["http://att/image"],
   "attachments": [{
     "objectType": "image",
     "mimeType": "image/jpeg",

@@ -66,6 +66,26 @@ class ActivityStreams2Test(testutil.TestCase):
     })
     self.assertEqual(['http://x.y/z'], as1['inReplyTo'])
 
+  def test_to_as1_image_attachment(self):
+    """This is what Mastodon images look like."""
+    self.assertEqual({
+      'objectType': 'note',
+      'image': ['http://pic/ture.jpg'],
+      'attachments': [{
+        'objectType': 'image',
+        'mimeType': 'image/jpeg',
+        'url': 'http://pic/ture.jpg',
+      }]
+    }, as2.to_as1({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'attachment' : [{
+        'type' : 'Document',
+        'mediaType' : 'image/jpeg',
+        'url' : 'http://pic/ture.jpg',
+      }],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (
