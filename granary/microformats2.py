@@ -294,10 +294,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   # photos, including alt text
   photo_urls = set()
   ret['properties']['photo'] = []
-  for img in get_list(attachments, 'image') + get_list(primary, 'image'):
+  for img in as1.get_objects(attachments, 'image') + as1.get_objects(primary, 'image'):
     if img.get('image'):
       img = get_first(img, 'image')
-    url = get_url(img)
+    url = get_url(img) or img.get('id')
     if url and url not in photo_urls:
       photo_urls.add(url)
       name = img.get('displayName')

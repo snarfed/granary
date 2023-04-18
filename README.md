@@ -296,6 +296,9 @@ _Non-breaking changes:_
   * `from_as1`: handle link tags without start/end indices.
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.
+* `microformats2`:
+  * `object_to_json`:
+    * Bug fix, handle bare string URL `image` values.
 
 ### 6.0 - 2023-03-22
 
