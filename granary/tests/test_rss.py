@@ -67,15 +67,36 @@ class RssTest(testutil.TestCase):
       }], feed_url='http://this')
       self.assertNotIn(field, got)
 
-  def test_from_activities_share_string_object(self):
+  def test_from_activities_share_string_object_with_content(self):
     got = rss.from_activities([{
       'objectType': 'activity',
       'verb': 'share',
       'object': 'https://fireburn.ru/posts/1617172734',
       'content': 'foo bar',
     }], feed_url='http://this')
-    # TODO: finish implementing reposts in rss
     self.assertIn('foo bar', got)
+
+  def test_from_activities_share_string_object(self):
+    got = rss.from_activities([{
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'author': {
+          'objectType': 'person',
+          'displayName': 'Bob',
+          'url': 'http://example.com/bob',
+        },
+        'content': 'The original post',
+        'url': 'http://example.com/original/post',
+        'objectType': 'article',
+      },
+    }], feed_url='http://this')
+    self.assert_multiline_in("""
+<description><![CDATA[Shared <a href="http://example.com/original/post">a post</a> by   <span class="h-card">
+<a class="p-name u-url" href="http://example.com/bob">Bob</a>
+</span>
+The original post]]></description>
+""", got, ignore_blanks=True)
 
   def test_item_with_two_enclosures(self):
     got = rss.from_activities([{
