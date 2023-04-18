@@ -358,7 +358,7 @@ def to_as1(obj, use_type=True):
   if type == 'Person' and images:
     images[0]['objectType'] = 'featured'
 
-  img_atts = [util.get_url(a) for a in attachments
+  img_atts = [a for a in attachments
               if a.get('type') == 'Image'
               or a.get('mediaType', '').startswith('image/')]
   for as2_img in icons + images + img_atts:

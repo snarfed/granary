@@ -70,7 +70,11 @@ class ActivityStreams2Test(testutil.TestCase):
     """This is what Mastodon images look like."""
     self.assertEqual({
       'objectType': 'note',
-      'image': ['http://pic/ture.jpg'],
+      'image': [{
+        'objectType': 'image',
+        'mimeType': 'image/jpeg',
+        'url': 'http://pic/ture.jpg',
+      }],
       'attachments': [{
         'objectType': 'image',
         'mimeType': 'image/jpeg',
