@@ -86,7 +86,8 @@ TYPE_TO_VERB.update({
   'Like': 'like',
   'Reject': 'reject',
 })
-
+TYPES_WITH_OBJECT = {VERB_TO_TYPE[v] for v in as1.VERBS_WITH_OBJECT
+                     if v in VERB_TO_TYPE}
 
 def get_urls(obj, key='url'):
   """Returns link['href'] if dict, otherwise link, for each link in obj[key]."""
