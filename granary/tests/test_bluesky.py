@@ -26,6 +26,7 @@ ACTOR_PROFILE_VIEW_BSKY = {
   'handle': 'alice.com',
   'displayName': 'Alice',
   'avatar': 'https://alice.com/alice.jpg',
+  'description': None,
 }
 
 POST_AS = {
