@@ -295,6 +295,7 @@ _Non-breaking changes:_
 * `bluesky`:
   * update for [`app.bsky` lexicons refactor](https://github.com/bluesky-social/atproto/commit/7f008c05a09c6dcf42dcac2819210138af42835c).
   * `from_as1`: handle link tags without start/end indices.
+  * Add `as1_to_profile`.
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.
 * `microformats2`:

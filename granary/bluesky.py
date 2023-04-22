@@ -288,6 +288,29 @@ def from_as1(obj, from_url=None):
   ))
 
 
+def as1_to_profile(actor):
+  """Converts an AS1 actor to a Bluesky `app.bsky.actor.profile`.
+
+  Args:
+    actor: dict, AS1 actor
+
+  Raises:
+    ValueError: if `actor['objectType']` is not in :attr:`as1.ACTOR_TYPES`
+  """
+  type = actor.get('objectType')
+  if type not in as1.ACTOR_TYPES:
+    raise ValueError(f'Expected actor type, got {type}')
+
+  profile = from_as1(actor)
+  assert profile['$type'] == 'app.bsky.actor.defs#profileView'
+  profile['$type'] = 'app.bsky.actor.profile'
+
+  for field in 'did', 'handle', 'indexedAt', 'labels', 'viewer':
+    profile.pop(field, None)
+
+  return profile
+
+
 def to_as1(obj):
   """Converts a Bluesky object to an AS1 object.
 

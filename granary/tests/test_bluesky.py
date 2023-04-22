@@ -8,6 +8,7 @@ from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.testutil import NOW, requests_response
 
 from ..bluesky import (
+  as1_to_profile,
   did_web_to_url,
   from_as1,
   to_as1,
@@ -27,6 +28,11 @@ ACTOR_PROFILE_VIEW_BSKY = {
   'displayName': 'Alice',
   'avatar': 'https://alice.com/alice.jpg',
   'description': None,
+}
+ACTOR_PROFILE_BSKY = {
+  '$type': 'app.bsky.actor.profile',
+  'displayName': 'Alice',
+  'avatar': 'https://alice.com/alice.jpg',
 }
 
 POST_AS = {
@@ -304,6 +310,13 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'objectType' : 'person',
       'id': 'tag:foo.com,2001:bar',
     })['did'])
+
+  def test_as1_to_profile(self):
+    self.assert_equals(ACTOR_PROFILE_BSKY, as1_to_profile(ACTOR_AS))
+
+  def test_as1_to_profile_not_actor(self):
+    with self.assertRaises(ValueError):
+      as1_to_profile(POST_AS)
 
   def test_to_as1_post(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
