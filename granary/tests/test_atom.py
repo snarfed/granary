@@ -951,6 +951,9 @@ going to Homebrew Website Club
         'attachments': [{
           'objectType': 'image',
           'image': [{'url': 'http://att'}],
+        }, {
+          'objectType': 'image',
+          'image': ['http://att/2'],
         }],
       },
     }

@@ -388,7 +388,7 @@ def _prepare_activity(a, reader=True):
 
     if type == 'image':
       att['image'] = util.get_first(att, 'image')
-      image_atts.append(att['image'] or att)
+      image_atts.append(as1.get_object(att, 'image') or att)
       continue
 
     image_urls_seen |= set(util.get_urls(att, 'image'))
@@ -404,10 +404,10 @@ def _prepare_activity(a, reader=True):
       children.append(html)
 
   # render image(s) that we haven't already seen
-  for image in image_atts + util.get_list(obj, 'image'):
+  for image in image_atts + as1.get_objects(obj, 'image'):
     if not image:
       continue
-    url = image.get('url')
+    url = image.get('url') or image.get('id')
     parsed = urllib.parse.urlparse(url)
     rest = urllib.parse.urlunparse(('', '') + parsed[2:])
     img_src_re = re.compile(r"""src *= *['"] *((https?:)?//%s)?%s *['"]""" %

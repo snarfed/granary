@@ -301,6 +301,9 @@ _Non-breaking changes:_
 * `microformats2`:
   * `object_to_json`:
     * Bug fix, handle bare string URL `image` values.
+* `atom`:
+  * `activities_to_atom` etc:
+    * Bug fix, handle bare string URL `image` values.
 
 ### 6.0 - 2023-03-22
 
