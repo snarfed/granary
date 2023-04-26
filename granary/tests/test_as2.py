@@ -37,6 +37,7 @@ class ActivityStreams2Test(testutil.TestCase):
       as2.to_as1({'type': ['h-card']})
 
   def test_from_as1_misc(self):
+    # TODO: actually check something here
     as2.from_as1({
       "objectType": "activity",
       "verb": "follow",

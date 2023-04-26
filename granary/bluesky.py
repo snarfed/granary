@@ -94,7 +94,7 @@ def from_as1(obj, from_url=None):
     obj = inner_obj
 
   type = obj.get('objectType') or 'note'
-  actor = activity.get('actor')
+  actor = as1.get_object(activity, 'actor')
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type == 'person':

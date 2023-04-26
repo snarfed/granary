@@ -129,7 +129,6 @@ class Microformats2Test(testutil.TestCase):
       'type': ['h-entry'],
       'properties': {
         'content': ['@hey great post'],
-        # 'in-reply-to': ['http://reply/target'],
       },
     }, microformats2.object_to_json({
       'verb': 'post',
@@ -148,6 +147,22 @@ class Microformats2Test(testutil.TestCase):
       'url': 'http://2',
       'urls': [{'value': 'http://4'},
                {'value': 'http://6'}],
+    }))
+
+  def test_object_to_json_bare_string_image(self):
+    """https://console.cloud.google.com/errors/detail/CKfZrvmnyZ2R-QE;time=P30D?project=bridgy-federated
+    """
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'photo': ['https://the/pic'],
+      },
+    }, microformats2.object_to_json({
+      'objectType': 'comment',
+      'attachments': [{
+        'objectType': 'image',
+        'image': 'https://the/pic'
+      }],
     }))
 
   def test_object_to_html_note_with_in_reply_to(self):
