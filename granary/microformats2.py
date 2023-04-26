@@ -1068,8 +1068,12 @@ def _render_attachments(attachments, obj):
 
   for att in attachments:
     name = att.get('displayName') or ''
-    stream = get_first(att, 'stream', {}).get('url') or ''
-    image = get_first(att, 'image', {}).get('url') or ''
+    stream_obj = as1.get_object(att, 'stream')
+    stream = stream_obj.get('id') or stream_obj.get('url') or ''
+
+    image_obj = as1.get_object(att, 'image')
+    image = image_obj.get('id') or image_obj.get('url') or ''
+
     open_a_tag = False
     content += '\n<p>'
 

@@ -166,7 +166,7 @@ class Microformats2Test(testutil.TestCase):
     }))
 
   def test_object_to_html_note_with_in_reply_to(self):
-    expected = """\
+    self.assert_multiline_equals("""\
 <article class="h-entry">
 <span class="p-uid"></span>
 <div class="e-content p-name">
@@ -174,8 +174,7 @@ class Microformats2Test(testutil.TestCase):
 </div>
 <a class="u-in-reply-to" href="http://reply/target"></a>
 </article>
-"""
-    result = microformats2.object_to_html({
+""", microformats2.object_to_html({
       'verb': 'post',
       'context': {
         'inReplyTo': [{
@@ -185,9 +184,7 @@ class Microformats2Test(testutil.TestCase):
       'object': {
         'content': '@hey great post',
       }
-    })
-    self.assertEqual(re.sub('\n\s*', '\n', expected),
-                      re.sub('\n\s*', '\n', result))
+    }), ignore_blanks=True)
 
   def test_render_content_link_with_image(self):
     obj = {
@@ -200,12 +197,12 @@ class Microformats2Test(testutil.TestCase):
       }]
     }
 
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <a class="tag" href="http://link">name</a>
 """, microformats2.render_content(obj, render_attachments=False))
 
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <p>
 <a class="link" href="http://link">
@@ -225,7 +222,7 @@ foo
 
     self.assert_equals('foo', microformats2.render_content(obj))
 
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <p>
 <img class="u-photo" src="http://1" alt="" />
@@ -235,7 +232,7 @@ foo
 </p>""", microformats2.render_content(obj, render_attachments=True))
 
   def test_render_content_render_image(self):
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <p>
 <a class="link" href="http://obj">
@@ -249,7 +246,7 @@ foo
     }, render_image=True))
 
   def test_render_content_render_image_dedupes_render_attachments(self):
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <p>
 <a class="link" href="http://obj">
@@ -279,8 +276,19 @@ foo
       ],
     }, render_attachments=True, render_image=True))
 
+  def test_render_content_attachment_image_list(self):
+    self.assert_multiline_equals("""
+<p>
+<img class="u-photo" src="https://the/pic" alt="" />
+</p>
+""", microformats2.render_content({
+      'attachments': [{
+        'image': ['https://the/pic']
+      }],
+    }, render_attachments=True, render_image=True))
+
   def test_render_content_newlines_default_white_space_pre(self):
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 <div style="white-space: pre">foo
 bar
 <a href="http://baz">baz</a></div>
@@ -290,7 +298,7 @@ bar
 }))
 
   def test_render_content_convert_newlines_to_brs(self):
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo<br />
 bar<br />
 <a href="http://baz">baz</a>
@@ -300,7 +308,7 @@ bar<br />
 }, white_space_pre=False))
 
   def test_render_content_omits_tags_without_urls(self):
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <a class="tag" aria-hidden="true" href="http://baj"></a>
 <a class="tag" href="http://baz">baz</a>
@@ -360,7 +368,7 @@ foo
 
     self.assert_equals('foo', microformats2.render_content(obj))
 
-    self.assert_equals("""\
+    self.assert_multiline_equals("""\
 foo
 <p><video class="u-video" src="http://vid/eo" controls="controls" poster="http://im/age">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly. <img src="http://im/age" /></a></video>
 </p>
@@ -445,7 +453,7 @@ Shared <a href="#">a post</a> by foo
 </p>""", content, ignore_blanks=True)
 
   def test_mention_and_hashtag(self):
-    self.assert_equals("""
+    self.assert_multiline_equals("""
 <a class="p-category" href="http://c">c</a>
 <a class="u-mention" aria-hidden="true" href="http://m"></a>""",
                        microformats2.render_content({
