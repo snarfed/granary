@@ -89,7 +89,7 @@ def from_as1(obj, from_url=None):
   """
   activity = obj
   verb = activity.get('verb') or 'post'
-  inner_obj = activity.get('object')
+  inner_obj = as1.get_object(activity)
   if inner_obj and verb == 'post':
     obj = inner_obj
 

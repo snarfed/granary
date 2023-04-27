@@ -33,6 +33,7 @@ ACTOR_PROFILE_BSKY = {
   '$type': 'app.bsky.actor.profile',
   'displayName': 'Alice',
   'avatar': 'https://alice.com/alice.jpg',
+  'description': None,
 }
 
 POST_AS = {
