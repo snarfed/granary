@@ -147,7 +147,7 @@ ATOM_CONTENT = """\
 <link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="http://my/site" type="text/html" />
 <link rel="avatar" href="http://my/picture" />
-<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
@@ -250,7 +250,7 @@ class AppTest(testutil.TestCase):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
 
-    path = '/url?url=http:%2F%2Fmy%2Fposts.json&input=as1&output=jsonfeed'
+    path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = client.get(path)
     self.assert_equals(200, resp.status_code)
     self.assert_equals('application/json', resp.headers['Content-Type'])
@@ -263,7 +263,7 @@ class AppTest(testutil.TestCase):
     self.expect_requests_get('http://my/posts.json', {'foo': 'bar'})
     self.mox.ReplayAll()
 
-    path = '/url?url=http:%2F%2Fmy%2Fposts.json&input=as1&output=jsonfeed'
+    path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = client.get(path)
     self.assert_equals(200, resp.status_code)
     self.assert_equals({
@@ -359,7 +359,7 @@ class AppTest(testutil.TestCase):
 <link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="http://my/author" type="text/html" />
 <link rel="avatar" href="http://someone/picture" />
-<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
@@ -390,7 +390,7 @@ class AppTest(testutil.TestCase):
 
 <link rel="alternate" href="http://my/posts.html" type="text/html" />
 <link rel="alternate" href="https://twitter.com/Author" type="text/html" />
-<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
+<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom" type="application/atom+xml" />
 
 <entry>
 
@@ -729,12 +729,12 @@ not RSS!
     self.assert_multiline_in('<link rel="hub" href="http://a/hub" />',
                              resp.get_data(as_text=True))
     self.assert_multiline_in(
-      '<link rel="self" href="http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&amp;input=html&amp;output=atom&amp;hub=http:%2F%2Fa%2Fhub"',
+      '<link rel="self" href="http://localhost/url?url=http://my/posts.html&amp;input=html&amp;output=atom&amp;hub=http://a/hub"',
       resp.get_data(as_text=True))
 
     self.assertCountEqual((
       '<http://a/hub>; rel="hub"',
-      '<http://localhost/url?url=http:%2F%2Fmy%2Fposts.html&input=html&output=atom&hub=http:%2F%2Fa%2Fhub>; rel="self"',
+      '<http://localhost/url?url=http://my/posts.html&input=html&output=atom&hub=http://a/hub>; rel="self"',
     ), resp.headers.getlist('Link'))
 
   def test_encode_urls_in_link_headers(self):
@@ -745,7 +745,7 @@ not RSS!
     resp = client.get(url)
     self.assertCountEqual(
       ('<http://a/%E2%98%95>; rel="hub"',
-       '<http://localhost/url?url=http:%2F%2Fmy%2Fas1&input=as1&output=atom&hub=http:%2F%2Fa%2F%E2%98%95>; rel="self"'),
+       '<http://localhost/url?url=http://my/as1&input=as1&output=atom&hub=http://a/%E2%98%95>; rel="self"'),
       resp.headers.getlist('Link'))
 
   def test_bad_mf2_json_input_400s(self):
