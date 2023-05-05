@@ -1,5 +1,5 @@
 {
-  "$type": "app.bsky.feed.feedViewPost",
+  "$type": "app.bsky.feed.defs#feedViewPost",
   "post": {
     "$type": "app.bsky.feed.defs#postView",
     "uri": "http://example.com/blog-post-123",

@@ -1,5 +1,5 @@
 {
-  "$type": "app.bsky.feed.feedViewPost",
+  "$type": "app.bsky.feed.defs#feedViewPost",
   "post": {
     "$type": "app.bsky.feed.defs#postView",
     "uri": "http://example.com/original/post",
@@ -22,7 +22,7 @@
     "indexedAt": "2022-01-02T03:04:05+00:00"
   },
   "reason": {
-    "$type": "app.bsky.feed.feedViewPost#reasonRepost",
+    "$type": "app.bsky.feed.defs#reasonRepost",
     "by": {
       "$type": "app.bsky.actor.defs#profileView",
       "did": "did:web:example.com:alice",

@@ -145,7 +145,7 @@ def from_as1(obj, from_url=None):
   elif verb == 'share':
     ret = from_as1(inner_obj)
     ret['reason'] = {
-      '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
+      '$type': 'app.bsky.feed.defs#reasonRepost',
       'by': from_as1(actor),
       'indexedAt': util.now().isoformat(),
     }
@@ -233,7 +233,7 @@ def from_as1(obj, from_url=None):
 
     author = as1.get_object(obj, 'author')
     ret = {
-      '$type': 'app.bsky.feed.feedViewPost',
+      '$type': 'app.bsky.feed.defs#feedViewPost',
       'post': {
         '$type': 'app.bsky.feed.defs#postView',
         'uri': util.get_url(obj),
@@ -311,24 +311,24 @@ def as1_to_profile(actor):
   return profile
 
 
-def to_as1(obj):
+def to_as1(obj, type=None):
   """Converts a Bluesky object to an AS1 object.
 
   The $type field is required.
 
   Args:
     profile: dict, app.bsky.* object
+    type: str, optional $type to parse with, only used if obj['$type'] is unset
 
   Returns: dict, AS1 object
 
   Raises:
-    ValueError
-    if the $type field is missing or unsupported
+    ValueError if the $type field is missing or unsupported
   """
   if not obj:
     return {}
 
-  type = obj.get('$type')
+  type = obj.get('$type') or type
   if not type:
     raise ValueError('Bluesky object missing $type field')
 
@@ -346,7 +346,7 @@ def to_as1(obj):
       'displayName': obj.get('displayName'),
       'summary': obj.get('description'),
       'image': images,
-      'url': did_web_to_url(did) if did else None,
+      'url': did_web_to_url(did) if did and did.startswith('did:web:') else None,
     }
 
   elif type == 'app.bsky.feed.post':
@@ -376,8 +376,8 @@ def to_as1(obj):
     ret = to_as1(obj.get('record'))
     ret.update({
       'url': obj.get('uri'),
-      'author': to_as1(obj.get('author')),
-      'image': to_as1(obj.get('embed')),
+      'author': to_as1(obj.get('author'), type='app.bsky.actor.defs#profileViewBasic'),
+      'image': to_as1(obj.get('embed'), type='app.bsky.embed.images#view'),
     })
 
   elif type == 'app.bsky.embed.images#presented':
@@ -386,15 +386,15 @@ def to_as1(obj):
       'displayName': img.get('alt'),
     } for img in obj.get('images', [])]
 
-  elif type == 'app.bsky.feed.feedViewPost':
-    ret = to_as1(obj.get('post'))
+  elif type == 'app.bsky.feed.defs#feedViewPost':
+    ret = to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')
     reason = obj.get('reason')
-    if reason and reason.get('$type') == 'app.bsky.feed.feedViewPost#reasonRepost':
+    if reason and reason.get('$type') == 'app.bsky.feed.defs#reasonRepost':
       ret = {
         'objectType': 'activity',
         'verb': 'share',
         'object': ret,
-        'actor': to_as1(reason.get('by')),
+        'actor': to_as1(reason.get('by'), type='app.bsky.actor.defs#profileViewBasic'),
       }
 
   elif type == 'app.bsky.graph.follow':

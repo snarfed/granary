@@ -54,7 +54,7 @@ POST_HTML = """
 </article>
 """
 POST_BSKY = {
-  '$type': 'app.bsky.feed.feedViewPost',
+  '$type': 'app.bsky.feed.defs#feedViewPost',
   'post': {
     '$type': 'app.bsky.feed.defs#postView',
     'uri': 'http://orig/post',
@@ -184,7 +184,7 @@ REPOST_BSKY['post']['record'].update({
   'createdAt': '',
 })
 REPOST_BSKY['reason'] = {
-  '$type': 'app.bsky.feed.feedViewPost#reasonRepost',
+  '$type': 'app.bsky.feed.defs#reasonRepost',
   'by': ACTOR_PROFILE_VIEW_BSKY,
   'indexedAt': NOW.isoformat(),
 }
@@ -324,6 +324,13 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
 
   def test_to_as1_post_with_author(self):
     self.assert_equals(POST_AUTHOR_AS['object'], to_as1(POST_AUTHOR_BSKY))
+
+  def test_to_as1_post_type_kwarg(self):
+    post_bsky = copy.deepcopy(POST_AUTHOR_BSKY)
+    type = post_bsky.pop('$type')
+    del post_bsky['post']['$type']
+    del post_bsky['post']['author']['$type']
+    self.assert_equals(POST_AUTHOR_AS['object'], to_as1(post_bsky, type=type))
 
   def test_to_as1_reply(self):
     self.assert_equals(REPLY_AS['object'], to_as1(REPLY_BSKY))
