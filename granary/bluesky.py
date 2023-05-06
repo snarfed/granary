@@ -427,17 +427,49 @@ def to_as1(obj, type=None):
 
 
 class Bluesky(Source):
-  """Bluesky source class. See file docstring and Source class for details."""
+  """Bluesky source class. See file docstring and Source class for details.
+
+  Attributes:
+    handle: str
+    did: str
+    access_token: str
+  """
 
   DOMAIN = 'bsky.app'
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 256  # TODO: load from feed.post lexicon
 
-  def __init__(self, access_token):
-    self.access_token = access_token
+  def __init__(self, handle, access_token=None, app_password=None):
+    """Constructor.
+
+    Either access_token or app_password may be provided, optionally, but not both.
+
+    Args:
+      handle: str username, eg 'snarfed.bsky.social' or 'snarfed.org'
+      access_token: str, optional
+      app_password: str, optional
+    """
+    assert not (access_token and app_password)
+
     _maybe_load_lexicons()
     self.client = Client('https://bsky.social', LEXICONS)
+
+    if app_password:
+      resp = self.client.com.atproto.server.createSession({
+        'identifier': handle,
+        'password': app_password,
+      })
+      self.handle = resp['handle']
+      self.did = resp['did']
+      self.access_token = resp['accessJwt']
+      assert self.access_token
+      self.client = Client('https://bsky.social', LEXICONS, headers={
+        'Authorization': f'Bearer {self.access_token}',
+      })
+    else:
+      self.handle = handle
+      self.access_token = access_token
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -454,10 +486,11 @@ class Bluesky(Source):
     params = {}
     if count is not None:
       params['limit'] = count
-    assert start_index is None
+    assert start_index in (None, 0)
 
     resp = self.client.app.bsky.feed.getTimeline({}, **params)
     # TODO: inReplyTo
     return self.make_activities_base_response(
-      util.trim_nulls(to_as1(post.get('post'))) for post in resp.get('feed', [])
+      util.trim_nulls(to_as1(post.get('post'), type='app.bsky.feed.defs#postView'))
+      for post in resp.get('feed', [])
     )

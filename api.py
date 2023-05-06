@@ -105,11 +105,12 @@ def api(path):
       access_token=request.values['access_token'],
       user_id=request.values['user_id'])
   elif site == 'reddit':
-    src = reddit.Reddit(refresh_token=request.values['refresh_token']) # the refresh_roken should be returned but is not appearing
+    # the refresh_token should be returned but is not appearing
+    src = reddit.Reddit(refresh_token=request.values['refresh_token'])
   elif site == 'bluesky':
     src = bluesky.Bluesky(
-      access_token=request.values['access_token'],
-      user_id=request.values['user_id'])
+      handle=request.values['user_id'],
+      app_password=request.values['app_password'])
   else:
     src_cls = source.sources.get(site)
     if not src_cls:
@@ -142,6 +143,7 @@ def api(path):
     else:
       response = src.get_activities_response(*args, **get_kwargs())
   except (NotImplementedError, ValueError) as e:
+    logger.exception('oof')
     return abort(400, str(e))
     # other exceptions are handled by webutil.flask_util.handle_exception(),
     # which uses interpret_http_exception(), etc.

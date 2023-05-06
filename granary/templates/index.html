@@ -98,6 +98,13 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 
 <div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get" action="#logins">
+  <input type="image" class="shadow" title="Bluesky" id="bluesky"
+         src="/static/bluesky_button.jpg" height="50" />
+  <input name="site" type="hidden" value="bluesky" />
+</form></div>
+
+<div class="col-lg-2 col-sm-4 col-xs-6">
+<form method="get" action="#logins">
   <input type="image" class="shadow" title="ActivityStreams"
          src="/static/activitystreams_logotype_2x.png" height="50" />
   <input name="input" type="hidden" value="activitystreams" />
@@ -137,13 +144,6 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <input type="image" class="shadow" title="RSS" id="rss"
          src="/static/rss_button.png" height="50" />
   <input name="input" type="hidden" value="rss" />
-</form></div>
-
-<div class="col-lg-2 col-sm-4 col-xs-6">
-<form method="get" action="#logins">
-  <input type="image" class="shadow" title="Bluesky" id="bluesky"
-         src="/static/bluesky_button.jpg" height="50" />
-  <input name="input" type="hidden" value="bluesky" />
 </form></div>
 
 </div>
@@ -272,6 +272,11 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
   <label for="refresh_token">&amp; refresh_token =</label>
   <input id="refresh_token" name="refresh_token" type="text" size="10"
          class="form-control" value="{{ refresh_token }}" />
+{% endif %}
+{% if site == 'bluesky' %}
+  <label for="app_password">&amp; app_password =</label>
+  <input id="app_password" name="app_password" type="text" size="10"
+         class="form-control" value="{{ app_password }}" />
 {% endif %}
 
 

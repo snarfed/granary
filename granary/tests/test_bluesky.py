@@ -359,6 +359,30 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     with self.assertRaises(ValueError):
       to_as1({'$type': 'app.bsky.foo'})
 
+  def test_constructor_both_access_token_and_app_password_error(self):
+    with self.assertRaises(AssertionError):
+      Bluesky('handull', access_token='towkin', app_password='pazzwurd')
+
+  @patch('requests.post')
+  def test_constructor_app_password(self, mock_post):
+    mock_post.return_value = requests_response({
+      'handle': 'real.han.dull',
+      'did': 'did:plc:me',
+      'accessJwt': 'towkin',
+    })
+
+    bs = Bluesky('handull', app_password='pazzwurd')
+    self.assertEqual('real.han.dull', bs.handle)
+    self.assertEqual('did:plc:me', bs.did)
+    self.assertEqual('towkin', bs.access_token)
+
+    mock_post.assert_called_once_with(
+        'https://bsky.social/xrpc/com.atproto.server.createSession',
+        params='',
+        json={'identifier': 'handull', 'password': 'pazzwurd'},
+        headers={'Content-Type': 'application/json'},
+    )
+
   @patch('requests.get')
   def test_get_activities(self, mock_get):
     mock_get.return_value = requests_response({
@@ -366,7 +390,7 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'feed': [POST_AUTHOR_BSKY],
     })
 
-    bs = Bluesky('towkin')
+    bs = Bluesky('handull', access_token='towkin')
     self.assertEqual([POST_AUTHOR_AS['object']], bs.get_activities())
 
     mock_get.assert_called_once_with(
@@ -375,4 +399,3 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
         json=None,
         headers={'Content-Type': 'application/json'},
     )
-
