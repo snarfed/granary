@@ -276,6 +276,7 @@ class Source(object, metaclass=SourceMeta):
 
     See :meth:`get_activities()` for args and kwargs.
     """
+    activities = list(activities)
     return {
       'startIndex': kwargs.get('start_index', 0),
       'itemsPerPage': len(activities),

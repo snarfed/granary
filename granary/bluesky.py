@@ -5,12 +5,26 @@ https://atproto.com/lexicons/app-bsky-actor
 https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 """
 import copy
+import json
 import logging
+from pathlib import Path
 import urllib.parse
 
 from granary import as1
 from granary.source import Source, OMIT_LINK
+from lexrpc import Client
 from oauth_dropins.webutil import util
+
+
+# list of dict JSON app.bsky.* lexicons. _load_lexicons lazy loads them from the
+# lexicons/ dir.
+LEXICONS = []
+
+def _maybe_load_lexicons():
+  if not LEXICONS:
+    for filename in (Path(__file__).parent / 'lexicons').glob('**/*.json'):
+      with open(filename) as f:
+        LEXICONS.append(json.load(f))
 
 
 def url_to_did_web(url):
@@ -160,7 +174,7 @@ def from_as1(obj, from_url=None):
 
   elif verb == 'post' and type in ('article', 'mention', 'note', 'comment'):
     # convert text to HTML and truncate
-    src = Bluesky()
+    src = Bluesky('unused')
     text = src._content_for_create(obj)
     is_html = text != (obj.get('summary') or obj.get('content') or obj.get('name'))
     text = src.truncate(text, None, OMIT_LINK)
@@ -419,3 +433,31 @@ class Bluesky(Source):
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 256  # TODO: load from feed.post lexicon
+
+  def __init__(self, access_token):
+    self.access_token = access_token
+    _maybe_load_lexicons()
+    self.client = Client('https://bsky.social', LEXICONS)
+
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, fetch_replies=False,
+                              fetch_likes=False, fetch_shares=False,
+                              include_shares=True, fetch_events=False,
+                              fetch_mentions=False, search_query=None,
+                              start_index=None, count=None, cache=None, **kwargs):
+    """Fetches posts and converts them to AS1 activities.
+
+    See :meth:`Source.get_activities_response` for details.
+    """
+    assert not start_index
+
+    params = {}
+    if count is not None:
+      params['limit'] = count
+    assert start_index is None
+
+    resp = self.client.app.bsky.feed.getTimeline({}, **params)
+    # TODO: inReplyTo
+    return self.make_activities_base_response(
+      util.trim_nulls(to_as1(post.get('post'))) for post in resp.get('feed', [])
+    )

@@ -3,12 +3,15 @@
 Most tests are via files in testdata/.
 """
 import copy
+from unittest.mock import patch
 
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.testutil import NOW, requests_response
+import requests
 
 from ..bluesky import (
   as1_to_profile,
+  Bluesky,
   did_web_to_url,
   from_as1,
   to_as1,
@@ -190,7 +193,7 @@ REPOST_BSKY['reason'] = {
 }
 
 
-class TestBluesky(testutil.TestCase):
+class BlueskyTest(testutil.TestCase):
 
   def test_url_to_did_web(self):
     for bad in None, '', 'foo', 'did:web:bar.com':
@@ -355,3 +358,21 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
   def test_to_as1_unknown_type(self):
     with self.assertRaises(ValueError):
       to_as1({'$type': 'app.bsky.foo'})
+
+  @patch('requests.get')
+  def test_get_activities(self, mock_get):
+    mock_get.return_value = requests_response({
+      'cursor': 'timestamp::cid',
+      'feed': [POST_AUTHOR_BSKY],
+    })
+
+    bs = Bluesky('towkin')
+    self.assertEqual([POST_AUTHOR_AS['object']], bs.get_activities())
+
+    mock_get.assert_called_once_with(
+        'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
+        params='',
+        json=None,
+        headers={'Content-Type': 'application/json'},
+    )
+

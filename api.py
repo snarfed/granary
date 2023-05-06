@@ -34,6 +34,7 @@ from werkzeug.exceptions import BadRequest
 
 import app
 from granary import (
+  bluesky,
   facebook,
   flickr,
   github,
@@ -105,6 +106,10 @@ def api(path):
       user_id=request.values['user_id'])
   elif site == 'reddit':
     src = reddit.Reddit(refresh_token=request.values['refresh_token']) # the refresh_roken should be returned but is not appearing
+  elif site == 'bluesky':
+    src = bluesky.Bluesky(
+      access_token=request.values['access_token'],
+      user_id=request.values['user_id'])
   else:
     src_cls = source.sources.get(site)
     if not src_cls:
