@@ -4,7 +4,7 @@
 
 var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
                        'access_token_key', 'access_token_secret',
-                       'user_id', 'instance'];
+                       'user_id', 'instance', 'app_password'];
 
 function render_demo_request() {
   var site = get('site');
