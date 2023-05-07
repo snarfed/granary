@@ -17,6 +17,7 @@ from ..bluesky import (
   to_as1,
   url_to_did_web,
 )
+from ..source import FRIENDS
 
 ACTOR_AS = {
   'objectType' : 'person',
@@ -209,8 +210,18 @@ REPOST_BSKY['reason'] = {
   'indexedAt': NOW.isoformat(),
 }
 
+THREAD_AS = copy.deepcopy(POST_AS)
+THREAD_AS['object']['replies'] = [REPLY_AS['object']]
+THREAD_BSKY = {
+  '$type' : 'app.bsky.feed.defs#threadViewPost',
+  'post' : POST_AUTHOR_BSKY['post'],
+  'replies': [REPLY_BSKY['post']],
+}
 
 class BlueskyTest(testutil.TestCase):
+
+  def setUp(self):
+    self.bs = Bluesky('handull', access_token='towkin')
 
   def test_url_to_did_web(self):
     for bad in None, '', 'foo', 'did:web:bar.com':
@@ -386,6 +397,10 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     with self.assertRaises(AssertionError):
       Bluesky('handull', access_token='towkin', app_password='pazzwurd')
 
+  def test_constructor_access_token(self):
+    bs = Bluesky('handull', access_token='towkin')
+    self.assertEqual('towkin', bs.access_token)
+
   @patch('requests.post')
   def test_constructor_app_password(self, mock_post):
     mock_post.return_value = requests_response({
@@ -407,14 +422,14 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     )
 
   @patch('requests.get')
-  def test_get_activities(self, mock_get):
+  def test_get_activities_friends(self, mock_get):
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
       'feed': [POST_AUTHOR_BSKY],
     })
 
-    bs = Bluesky('handull', access_token='towkin')
-    self.assertEqual([POST_AUTHOR_AS['object']], bs.get_activities())
+    self.assertEqual([POST_AUTHOR_AS['object']],
+                     self.bs.get_activities(group_id=FRIENDS))
 
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
@@ -422,3 +437,36 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
         json=None,
         headers={'Content-Type': 'application/json'},
     )
+
+  @patch('requests.get')
+  def test_get_activities_activity_id(self, mock_get):
+    mock_get.return_value = requests_response({
+      '$type' : 'app.bsky.feed.defs#threadViewPost',
+      'thread': THREAD_BSKY,
+      'replies': [REPLY_BSKY],
+    })
+
+    self.assertEqual([POST_AUTHOR_AS['object']],
+                     self.bs.get_activities(activity_id='at://id'))
+    mock_get.assert_called_once_with(
+        'https://bsky.social/xrpc/app.bsky.feed.getPostThread',
+        params='uri=at%3A%2F%2Fid&depth=1',
+        json=None,
+        headers={'Content-Type': 'application/json'},
+    )
+
+  def test_get_activities_bad_activity_id(self):
+    with self.assertRaises(ValueError):
+      self.bs.get_activities(activity_id='not_at_uri')
+
+  def test_get_activities_self_user_id(self):
+    pass
+
+  def test_get_activities_self_default_user(self):
+    pass
+
+  def test_get_activities_self_user_id(self):
+    pass
+
+  def test_get_activities_self_default_user(self):
+    pass

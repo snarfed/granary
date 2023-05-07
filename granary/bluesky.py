@@ -11,7 +11,7 @@ from pathlib import Path
 import urllib.parse
 
 from granary import as1
-from granary.source import Source, OMIT_LINK
+from granary.source import FRIENDS, Source, OMIT_LINK
 from lexrpc import Client
 from oauth_dropins.webutil import util
 
@@ -500,20 +500,32 @@ class Bluesky(Source):
                               start_index=None, count=None, cache=None, **kwargs):
     """Fetches posts and converts them to AS1 activities.
 
-    See :meth:`Source.get_activities_response` for details.
+    See :meth:`Source.get_activities_response` for more information.
+
+    Bluesky-specific details:
+
+    Args:
+      * activity_id: str, an at:// URI
     """
     assert not start_index
 
-    params = {}
-    if count is not None:
-      params['limit'] = count
-    assert start_index in (None, 0)
+    if activity_id:
+      if not activity_id.startswith('at://'):
+        raise ValueError(f'Expected activity_id to be at:// URI; got {activity_id}')
+      resp = self.client.app.bsky.feed.getPostThread({}, uri=activity_id, depth=1)
+      posts = [resp.get('thread', {})]
 
-    resp = self.client.app.bsky.feed.getTimeline({}, **params)
+    elif group_id == FRIENDS:
+      params = {}
+      if count is not None:
+        params['limit'] = count
+      resp = self.client.app.bsky.feed.getTimeline({}, **params)
+      posts = resp.get('feed', [])
+
     # TODO: inReplyTo
     ret = self.make_activities_base_response(
       util.trim_nulls(to_as1(post.get('post'), type='app.bsky.feed.defs#postView'))
-      for post in resp.get('feed', [])
+      for post in posts
     )
     ret['actor'] = {
       'id': self.did,
