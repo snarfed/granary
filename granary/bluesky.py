@@ -477,6 +477,19 @@ class Bluesky(Source):
     else:
       self.handle = handle
       self.access_token = access_token
+      self.did = None
+
+  @classmethod
+  def user_url(cls, handle):
+    """Returns the profile URL for a given handle.
+
+    Args:
+      handle: str
+
+    Returns:
+      str, profile URL
+    """
+    return f'{cls.BASE_URL}/profile/{handle.lstrip("@")}'
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -497,7 +510,13 @@ class Bluesky(Source):
 
     resp = self.client.app.bsky.feed.getTimeline({}, **params)
     # TODO: inReplyTo
-    return self.make_activities_base_response(
+    ret = self.make_activities_base_response(
       util.trim_nulls(to_as1(post.get('post'), type='app.bsky.feed.defs#postView'))
       for post in resp.get('feed', [])
     )
+    ret['actor'] = {
+      'id': self.did,
+      'displayName': self.handle,
+      'url': self.user_url(self.handle),
+    }
+    return ret
