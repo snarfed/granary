@@ -27,6 +27,7 @@ http://atomenabled.org/developers/syndication/
 import logging
 import urllib.parse
 
+from cachetools import cached, LRUCache
 from flask import abort, request
 from oauth_dropins.webutil import flask_util, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -57,6 +58,12 @@ ITEMS_PER_PAGE_DEFAULT = 10
 # /twitter/@me/@self/@all/...
 PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
+
+
+# cache access tokens in Bluesky instances
+@cached(LRUCache(1000))
+def bluesky_instance(**kwargs):
+  return bluesky.Bluesky(**kwargs)
 
 
 @app.app.route('/<path:path>', methods=('GET', 'HEAD'))
@@ -108,7 +115,7 @@ def api(path):
     # the refresh_token should be returned but is not appearing
     src = reddit.Reddit(refresh_token=request.values['refresh_token'])
   elif site == 'bluesky':
-    src = bluesky.Bluesky(
+    src = bluesky_instance(
       handle=request.values['user_id'],
       app_password=request.values['app_password'])
   else:
