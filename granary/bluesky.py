@@ -209,27 +209,28 @@ def from_as1(obj, from_url=None):
     images = util.get_list(obj, 'image')
     if images:
       post_embed = {
-        '$type': 'app.bsky.embed.images#presented',
+        '$type': 'app.bsky.embed.images#view',
         'images': [{
-          '$type': 'app.bsky.embed.images#presentedImage',
+          '$type': 'app.bsky.embed.images#viewImage',
           'thumb': img.get('url'),
           'fullsize': img.get('url'),
           'alt': img.get('displayName'),
         } for img in images[:4]],
       }
-      record_embed = {
-        '$type': 'app.bsky.embed.images',
-        'images': [{
-          '$type': 'app.bsky.embed.images#image',
-          'image': img.get('url'),
-          'alt': img.get('displayName'),
-        } for img in images[:4]],
-      }
+      # TODO: is there any reasonable way for us to generate blobs?
+      # record_embed = {
+      #   '$type': 'app.bsky.embed.images',
+      #   'images': [{
+      #     '$type': 'app.bsky.embed.images#image',
+      #     'image': TODO: this is a blob
+      #     'alt': img.get('displayName'),
+      #   } for img in images[:4]],
+      # }
     elif entities:
       post_embed = {
-        '$type': 'app.bsky.embed.external#presented',
+        '$type': 'app.bsky.embed.external#view',
         'external': [{
-          '$type': 'app.bsky.embed.external#presentedExternal',
+          '$type': 'app.bsky.embed.external#viewExternal',
           'uri': entity['value'],
           'title': entity['text'],
           'description': '',
@@ -394,7 +395,7 @@ def to_as1(obj, type=None):
       'image': to_as1(obj.get('embed'), type='app.bsky.embed.images#view'),
     })
 
-  elif type == 'app.bsky.embed.images#presented':
+  elif type == 'app.bsky.embed.images#view':
     ret = [{
       'url': img.get('fullsize'),
       'displayName': img.get('alt'),

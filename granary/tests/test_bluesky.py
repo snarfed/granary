@@ -114,12 +114,29 @@ POST_BSKY_EMBED['post']['record'].update({
   },
 })
 POST_BSKY_EMBED['post']['embed'] = {
-  '$type': 'app.bsky.embed.external#presented',
+  '$type': 'app.bsky.embed.external#view',
   'external': [{
-    '$type': 'app.bsky.embed.external#presentedExternal',
+    '$type': 'app.bsky.embed.external#viewExternal',
     **EMBED_EXTERNAL,
   }],
 }
+
+POST_AS_IMAGES = copy.deepcopy(POST_AS)
+POST_AS_IMAGES['object']['image'] = [{
+  'url': 'http://my/pic',
+  'displayName': 'my alt text',
+}]
+EMBED_IMAGES = {
+  '$type': 'app.bsky.embed.images#view',
+  'images': [{
+    '$type': 'app.bsky.embed.images#viewImage',
+    'alt': 'my alt text',
+    'fullsize': 'http://my/pic',
+    'thumb': 'http://my/pic',
+  }],
+}
+POST_BSKY_IMAGES = copy.deepcopy(POST_BSKY)
+POST_BSKY_IMAGES['post']['embed'] = EMBED_IMAGES
 
 REPLY_AS = {
   'objectType': 'activity',
@@ -266,6 +283,9 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
 
     self.assertEqual(expected, from_as1(post_as))
 
+  def test_from_as1_post_with_image(self):
+    self.assert_equals(POST_BSKY_IMAGES, from_as1(POST_AS_IMAGES))
+
   def test_from_as1_post_with_tag_indices(self):
     post_as = copy.deepcopy(POST_AS)
     post_as['object'].update({
@@ -334,6 +354,9 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     del post_bsky['post']['$type']
     del post_bsky['post']['author']['$type']
     self.assert_equals(POST_AUTHOR_AS['object'], to_as1(post_bsky, type=type))
+
+  def test_to_as1_post_with_image(self):
+    self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_BSKY_IMAGES))
 
   def test_to_as1_reply(self):
     self.assert_equals(REPLY_AS['object'], to_as1(REPLY_BSKY))

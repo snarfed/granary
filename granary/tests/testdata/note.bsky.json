@@ -15,13 +15,6 @@
       "$type": "app.bsky.feed.post",
       "text": "too cool to summarize",
       "createdAt": "2012-02-22T20:26:41",
-      "embed": {
-        "$type": "app.bsky.embed.images",
-        "images": [{
-          "$type": "app.bsky.embed.images#image",
-          "image": "http://example.com/blog-post-123/image"
-        }]
-      },
       "entities": [{
         "type": "link",
         "value": "http://my/link",
@@ -33,9 +26,9 @@
       }]
     },
     "embed": {
-      "$type": "app.bsky.embed.images#presented",
+      "$type": "app.bsky.embed.images#view",
       "images": [{
-        "$type": "app.bsky.embed.images#presentedImage",
+        "$type": "app.bsky.embed.images#viewImage",
         "thumb": "http://example.com/blog-post-123/image",
         "fullsize": "http://example.com/blog-post-123/image"
       }]
