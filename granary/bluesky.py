@@ -392,8 +392,14 @@ def to_as1(obj, type=None):
     ret.update({
       'url': obj.get('uri'),
       'author': to_as1(obj.get('author'), type='app.bsky.actor.defs#profileViewBasic'),
-      'image': to_as1(obj.get('embed'), type='app.bsky.embed.images#view'),
     })
+
+    embed = obj.get('embed') or {}
+    embed_type = embed.get('$type')
+    if embed_type == 'app.bsky.embed.images#view':
+      ret['image'] = to_as1(embed)
+    elif embed_type == 'app.bsky.embed.external#view':
+      ret['tags'] = to_as1(embed)['external']
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
