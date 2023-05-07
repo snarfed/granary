@@ -193,7 +193,9 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
        {% else %}{% if site in ('mastodon', 'pixelfed') %}
          value="{{ entity.user_id() }}" placeholder="user id" size="19" required
        {% else %}
-         placeholder="username (optional)" size="19"
+         placeholder="username
+                      {% if site == 'bluesky' %} (required)
+                      {% else %} (optional) {% endif %}" size="19"
        {% endif %}
        {% endif %} />
 <label> / </label>
