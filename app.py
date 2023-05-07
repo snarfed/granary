@@ -52,6 +52,7 @@ from granary.twitter import Twitter
 from granary.reddit import Reddit
 
 logger = logging.getLogger(__name__)
+# logging.getLogger('lexrpc').setLevel(logging.INFO)
 
 INPUTS = (
   'activitystreams',

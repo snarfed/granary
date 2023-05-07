@@ -461,10 +461,10 @@ class Bluesky(Source):
     assert not (access_token and app_password)
 
     _maybe_load_lexicons()
-    self.client = Client('https://bsky.social', LEXICONS)
 
     if app_password:
-      resp = self.client.com.atproto.server.createSession({
+      client = Client('https://bsky.social', LEXICONS)
+      resp = client.com.atproto.server.createSession({
         'identifier': handle,
         'password': app_password,
       })
@@ -472,13 +472,17 @@ class Bluesky(Source):
       self.did = resp['did']
       self.access_token = resp['accessJwt']
       assert self.access_token
-      self.client = Client('https://bsky.social', LEXICONS, headers={
-        'Authorization': f'Bearer {self.access_token}',
-      })
     else:
       self.handle = handle
       self.access_token = access_token
       self.did = did
+
+    headers = None
+    if self.access_token:
+      headers = {
+        'Authorization': f'Bearer {self.access_token}',
+      }
+    self.client = Client('https://bsky.social', LEXICONS, headers=headers)
 
   @classmethod
   def user_url(cls, handle):
@@ -508,6 +512,8 @@ class Bluesky(Source):
       * activity_id: str, an at:// URI
     """
     assert not start_index
+
+    posts = None
 
     if activity_id:
       if not activity_id.startswith('at://'):

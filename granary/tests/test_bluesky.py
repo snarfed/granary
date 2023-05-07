@@ -435,7 +435,10 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
         params='',
         json=None,
-        headers={'Content-Type': 'application/json'},
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+        },
     )
 
   @patch('requests.get')
@@ -452,7 +455,10 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
         'https://bsky.social/xrpc/app.bsky.feed.getPostThread',
         params='uri=at%3A%2F%2Fid&depth=1',
         json=None,
-        headers={'Content-Type': 'application/json'},
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+        },
     )
 
   def test_get_activities_bad_activity_id(self):

@@ -78,9 +78,13 @@ def api(path):
   if not path:
     args = []
   else:
-    args = urllib.parse.unquote(path).strip('/').split('/')
+    path = urllib.parse.unquote(path).strip('/')
+    # allow / chars in activity_id for bluesky because its activity ids are
+    # at:// URIs
+    maxsplit = MAX_PATH_LEN - 1 if path.startswith('bluesky') else -1
+    args = path.split('/', maxsplit=maxsplit)
     if len(args) > MAX_PATH_LEN:
-      return f'Expected max {MAX_PATH_LEN} path elements; found {len(args) + 1}', 404
+      return f'Expected max {MAX_PATH_LEN} path elements; found {len(args)}', 404
 
   # make source instance
   site = args.pop(0)
@@ -117,7 +121,9 @@ def api(path):
   elif site == 'bluesky':
     src = bluesky_instance(
       handle=request.values['user_id'],
-      app_password=request.values['app_password'])
+      app_password=request.values.get('app_password'),
+      access_token=request.values.get('access_token'),
+    )
   else:
     src_cls = source.sources.get(site)
     if not src_cls:
