@@ -442,10 +442,10 @@ class Bluesky(Source):
     access_token: str
   """
 
-  DOMAIN = 'bsky.app'
-  BASE_URL = 'https://bsky.app'
+  DOMAIN = 'staging.bsky.app'
+  BASE_URL = 'https://staging.bsky.app'
   NAME = 'Bluesky'
-  TRUNCATE_TEXT_LENGTH = 256  # TODO: load from feed.post lexicon
+  TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
 
   def __init__(self, handle, access_token=None, app_password=None):
     """Constructor.
