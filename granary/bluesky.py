@@ -447,13 +447,14 @@ class Bluesky(Source):
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
 
-  def __init__(self, handle, access_token=None, app_password=None):
+  def __init__(self, handle, did=None, access_token=None, app_password=None):
     """Constructor.
 
     Either access_token or app_password may be provided, optionally, but not both.
 
     Args:
       handle: str username, eg 'snarfed.bsky.social' or 'snarfed.org'
+      did: str, did:plc or did:web, optional
       access_token: str, optional
       app_password: str, optional
     """
@@ -477,7 +478,7 @@ class Bluesky(Source):
     else:
       self.handle = handle
       self.access_token = access_token
-      self.did = None
+      self.did = did
 
   @classmethod
   def user_url(cls, handle):
