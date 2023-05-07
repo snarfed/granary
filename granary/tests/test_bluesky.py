@@ -17,7 +17,7 @@ from ..bluesky import (
   to_as1,
   url_to_did_web,
 )
-from ..source import FRIENDS
+from ..source import ALL, FRIENDS, ME, SELF
 
 ACTOR_AS = {
   'objectType' : 'person',
@@ -465,14 +465,25 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     with self.assertRaises(ValueError):
       self.bs.get_activities(activity_id='not_at_uri')
 
-  def test_get_activities_self_user_id(self):
-    pass
+  @patch('requests.get')
+  def test_get_activities_self_user_id(self, mock_get):
+    mock_get.return_value = requests_response({
+      'cursor': 'timestamp::cid',
+      'feed': [POST_AUTHOR_BSKY],
+    })
 
-  def test_get_activities_self_default_user(self):
-    pass
+    self.assertEqual([POST_AUTHOR_AS['object']],
+                     self.bs.get_activities(group_id=SELF, user_id='alice.com'))
+    mock_get.assert_called_once_with(
+        'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed',
+        params='actor=alice.com',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+        },
+    )
 
-  def test_get_activities_self_user_id(self):
-    pass
-
-  def test_get_activities_self_default_user(self):
+  @patch('requests.get')
+  def test_get_activities_self_default_user(self, mock_get):
     pass

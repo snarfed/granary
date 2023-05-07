@@ -399,13 +399,25 @@ def to_as1(obj, type=None):
     if embed_type == 'app.bsky.embed.images#view':
       ret['image'] = to_as1(embed)
     elif embed_type == 'app.bsky.embed.external#view':
-      ret['tags'] = to_as1(embed)['external']
+      ret['tags'] = to_as1(embed)
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
       'url': img.get('fullsize'),
       'displayName': img.get('alt'),
     } for img in obj.get('images', [])]
+
+  elif type == 'app.bsky.embed.external#view':
+    ret = to_as1(obj.get('external'), type='app.bsky.embed.external#viewExternal')
+
+  elif type == 'app.bsky.embed.external#viewExternal':
+    ret = {
+      'type': 'link',
+      'url': obj.get('uri'),
+      'displayName': obj.get('title'),
+      'content': obj.get('description'),
+      'image': obj.get('thumb'),
+    }
 
   elif type == 'app.bsky.feed.defs#feedViewPost':
     ret = to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')
@@ -526,6 +538,13 @@ class Bluesky(Source):
       if count is not None:
         params['limit'] = count
       resp = self.client.app.bsky.feed.getTimeline({}, **params)
+      posts = resp.get('feed', [])
+
+    else:  # eg group_id SELF
+      handle = user_id or self.handle or self.did
+      if not handle:
+        raise ValueError('user_id is required')
+      resp = self.client.app.bsky.feed.getAuthorFeed({}, actor=handle)
       posts = resp.get('feed', [])
 
     # TODO: inReplyTo
