@@ -2,13 +2,14 @@
   "objectType": "activity",
   "verb": "share",
   "object": {
+    "id": "at://did:plc:r72exhka/app.bsky.feed.post/3juzc2tw2dm2h",
+    "url": "https://staging.bsky.app/profile/example.com/post/3juzc2tw2dm2h",
     "author": {
       "objectType": "person",
       "displayName": "Bob",
       "url": "https://example.com/bob"
     },
     "content": "The original post",
-    "url": "http://example.com/original/post",
     "objectType": "note"
   },
   "actor": {

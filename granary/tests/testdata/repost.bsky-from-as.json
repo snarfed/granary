@@ -2,12 +2,12 @@
   "$type": "app.bsky.feed.defs#feedViewPost",
   "post": {
     "$type": "app.bsky.feed.defs#postView",
-    "uri": "at://did:plc:r72exhka/app.bsky.feed.post/3juzc2tw2dm2h",
+    "uri": "",
     "cid": "TODO",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",
       "did": "did:web:example.com:bob",
-      "handle": "example.com",
+      "handle": "example.com/bob",
       "displayName": "Bob"
     },
     "record": {

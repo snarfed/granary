@@ -1,9 +1,10 @@
 {
   "objectType": "note",
   "content": "too cool to summarize",
-  "published": "2012-02-22T20:26:41",
-  "url": "http://example.com/blog-post-123",
+  "id": "at://did:plc:asdf/app.bsky.feed.post/3jv3wdw2hkt25",
+  "url": "https://staging.bsky.app/profile/example.com/post/3jv3wdw2hkt25",
   "image": [{"url": "http://example.com/blog-post-123/image"}],
+  "published": "2012-02-22T20:26:41",
   "author": {
     "objectType": "person",
     "displayName": "Ryan Barrett",

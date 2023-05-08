@@ -2,7 +2,7 @@
   "$type": "app.bsky.feed.defs#feedViewPost",
   "post": {
     "$type": "app.bsky.feed.defs#postView",
-    "uri": "at://did:plc:asdf/app.bsky.feed.post/tid",
+    "uri": "tag:example.com,2001:547822715231468_6796480",
     "cid": "TODO",
     "record": {
       "$type": "app.bsky.feed.post",
@@ -12,12 +12,12 @@
         "$type": "app.bsky.feed.post#replyRef",
         "root": {
           "$type": "com.atproto.repo.strongRef",
-          "uri": "at://did:plc:123/app.bsky.feed.post/root-tid",
+          "uri": "",
           "cid": "TODO"
         },
         "parent": {
           "$type": "com.atproto.repo.strongRef",
-          "uri": "at://did:plc:123/app.bsky.feed.post/parent-tid",
+          "uri": "tag:example.com,2017:original/post",
           "cid": "TODO"
         }
       }

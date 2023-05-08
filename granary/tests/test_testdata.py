@@ -57,14 +57,17 @@ def discard_fields(obj, fields):
     return obj
 
 
-def create_test_function(fn, original, expected):
-  """Create a simple test function that asserts fn(original) == expected."""
+def create_test_function(fn, original, expected, **kwargs):
+  """Create a simple test function that asserts fn(original) == expected.
+
+  kwargs are passed to assert_equals (but not assert_multiline_equals).
+  """
   def test(self):
     got = fn(original)
     if isinstance(got, str) and isinstance(expected, str):
       return self.assert_multiline_equals(expected, got, ignore_blanks=True)
     else:
-      return self.assert_equals(expected, got, in_order=True)
+      return self.assert_equals(expected, got, in_order=True, **kwargs)
   return test
 
 
@@ -125,8 +128,8 @@ mappings = (
   ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, (), ()),
   ('as.json', ['rss.xml'], rss_from_activities, (), ()),
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
-  ('as.json', ['bsky.json'], bluesky.from_as1, (), ()),
-  ('bsky.json', ['as.json'], bluesky.to_as1, (),
+  ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky.from_as1, (), ()),
+  ('bsky.json', ['as-from-bsky.json', 'as.json'], bluesky.to_as1, (),
    ('id', 'location', 'updated', 'username')),
   ('bsky.json', ['as-from-bsky.json'], bluesky.to_as1, (), ()),
 )
@@ -143,7 +146,8 @@ for src_ext, dst_exts, fn, exclude_prefixes, ignore_fields in mappings:
       f'test_{fn.__module__.split(".")[-1]}_{fn.__name__}_{src[:-len(src_ext)]}'
     ).replace('.', '_').replace('-', '_').strip('_')
     # assert test_name not in test_funcs, test_name
-    test_funcs[test_name] = create_test_function(fn, original, expected)
+    ignore = ['uri'] if fn == bluesky.from_as1 else ()
+    test_funcs[test_name] = create_test_function(fn, original, expected, ignore=[])
 
 os.chdir(prevdir)
 

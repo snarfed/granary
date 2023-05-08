@@ -85,6 +85,28 @@ def did_web_to_url(did):
   return f'https://{host}/{path}'
 
 
+def at_uri_to_web_url(uri, handle=None):
+  """Converts an at:// URI to a https://staging.bsky.app URL.
+
+  Args:
+    uri: str, at:// URI
+    handle: str, optional user handle. If not provided, defaults to the DID in uri.
+
+  Returns:
+    str, https://staging.bsky.app URL
+  """
+  if not uri:
+    return None
+
+  if not uri.startswith('at://'):
+    raise ValueError(f'Expected at:// URI, got {uri}')
+
+  parsed = urllib.parse.urlparse(uri)
+  did = parsed.netloc
+  collection, tid = parsed.path.strip('/').split('/')
+  return Bluesky.post_url(handle or did, tid)
+
+
 def from_as1(obj, from_url=None):
   """Converts an AS1 object to a Bluesky object.
 
@@ -251,7 +273,7 @@ def from_as1(obj, from_url=None):
       '$type': 'app.bsky.feed.defs#feedViewPost',
       'post': {
         '$type': 'app.bsky.feed.defs#postView',
-        'uri': util.get_url(obj),
+        'uri': obj.get('id') or '',
         'cid': 'TODO',
         'record': {
           '$type': 'app.bsky.feed.post',
@@ -273,18 +295,18 @@ def from_as1(obj, from_url=None):
       },
     }
 
-    in_reply_to = util.get_url(obj, 'inReplyTo')
+    in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
       ret['post']['record']['reply'] = {
         '$type': 'app.bsky.feed.post#replyRef',
         'root': {
           '$type': 'com.atproto.repo.strongRef',
-          'uri': in_reply_to,
+          'uri': '',  # TODO?
           'cid': 'TODO',
         },
         'parent': {
           '$type': 'com.atproto.repo.strongRef',
-          'uri': in_reply_to,
+          'uri': in_reply_to.get('id') or in_reply_to.get('url'),
           'cid': 'TODO',
         },
       }
@@ -298,7 +320,9 @@ def from_as1(obj, from_url=None):
     'description',
     'did',
     'handle',
+    'root',
     'text',
+    'uri',
     'viewer',
   ))
 
@@ -382,16 +406,22 @@ def to_as1(obj, type=None):
     ret = {
       'objectType': 'comment' if in_reply_to else 'note',
       'content': obj.get('text', ''),
-      'inReplyTo': [{'url': in_reply_to}],
+      'inReplyTo': [{
+        'id': in_reply_to,
+        'url': at_uri_to_web_url(in_reply_to),
+      }],
       'published': obj.get('createdAt', ''),
       'tags': tags,
     }
 
   elif type == 'app.bsky.feed.defs#postView':
     ret = to_as1(obj.get('record'))
+    author = obj.get('author') or {}
+    uri = obj.get('uri')
     ret.update({
-      'url': obj.get('uri'),
-      'author': to_as1(obj.get('author'), type='app.bsky.actor.defs#profileViewBasic'),
+      'id': uri,
+      'url': at_uri_to_web_url(uri, handle=author.get('handle')),
+      'author': to_as1(author, type='app.bsky.actor.defs#profileViewBasic'),
     })
 
     embed = obj.get('embed') or {}
@@ -508,6 +538,19 @@ class Bluesky(Source):
     """
     return f'{cls.BASE_URL}/profile/{handle.lstrip("@")}'
 
+  @classmethod
+  def post_url(cls, handle, tid):
+    """Returns the post URL for a given handle and tid.
+
+    Args:
+      handle: str
+      tid: str
+
+    Returns:
+      str, profile URL
+    """
+    return f'{cls.user_url(handle)}/post/{tid}'
+
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
                               fetch_likes=False, fetch_shares=False,
@@ -525,6 +568,10 @@ class Bluesky(Source):
     """
     assert not start_index
 
+    params = {}
+    if count is not None:
+      params['limit'] = count
+
     posts = None
 
     if activity_id:
@@ -533,10 +580,7 @@ class Bluesky(Source):
       resp = self.client.app.bsky.feed.getPostThread({}, uri=activity_id, depth=1)
       posts = [resp.get('thread', {})]
 
-    elif group_id == FRIENDS:
-      params = {}
-      if count is not None:
-        params['limit'] = count
+    elif group_id in (None, FRIENDS):
       resp = self.client.app.bsky.feed.getTimeline({}, **params)
       posts = resp.get('feed', [])
 
@@ -544,7 +588,7 @@ class Bluesky(Source):
       handle = user_id or self.handle or self.did
       if not handle:
         raise ValueError('user_id is required')
-      resp = self.client.app.bsky.feed.getAuthorFeed({}, actor=handle)
+      resp = self.client.app.bsky.feed.getAuthorFeed({}, actor=handle, **params)
       posts = resp.get('feed', [])
 
     # TODO: inReplyTo

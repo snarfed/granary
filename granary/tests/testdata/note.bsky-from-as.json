@@ -2,13 +2,13 @@
   "$type": "app.bsky.feed.defs#feedViewPost",
   "post": {
     "$type": "app.bsky.feed.defs#postView",
-    "uri": "at://did:plc:asdf/app.bsky.feed.post/3jv3wdw2hkt25",
+    "uri": "tag:example.com,2011:blog-post-123",
     "cid": "TODO",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",
-      "did": "did:plc:asdf",
+      "did": "",
       "displayName": "Ryan Barrett",
-      "handle": "example.com",
+      "handle": "example.com,2001:ryan",
       "avatar": "http://example.com/ryan/image"
     },
     "record": {

@@ -5,12 +5,13 @@ Most tests are via files in testdata/.
 import copy
 from unittest.mock import patch
 
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
 import requests
 
 from ..bluesky import (
   as1_to_profile,
+  at_uri_to_web_url,
   Bluesky,
   did_web_to_url,
   from_as1,
@@ -45,9 +46,10 @@ POST_AS = {
   'verb': 'post',
   'object': {
     'objectType': 'note',
+    'id': 'at://did/collection/tid',
+    'url': 'https://staging.bsky.app/profile/did/post/tid',
     'published': '2007-07-07T03:04:05',
     'content': 'My post',
-    'url': 'http://orig/post',
   }
 }
 POST_HTML = """
@@ -61,7 +63,7 @@ POST_BSKY = {
   '$type': 'app.bsky.feed.defs#feedViewPost',
   'post': {
     '$type': 'app.bsky.feed.defs#postView',
-    'uri': 'http://orig/post',
+    'uri': 'at://did/collection/tid',
     'cid': 'TODO',
     'record': {
       '$type': 'app.bsky.feed.post',
@@ -76,7 +78,10 @@ POST_BSKY = {
   }
 }
 POST_AUTHOR_AS = copy.deepcopy(POST_AS)
-POST_AUTHOR_AS['object']['author'] = ACTOR_AS
+POST_AUTHOR_AS['object'].update({
+  'author': ACTOR_AS,
+  'url': 'https://staging.bsky.app/profile/alice.com/post/tid',
+})
 POST_AUTHOR_BSKY = copy.deepcopy(POST_BSKY)
 POST_AUTHOR_BSKY['post']['author'] = {
   **ACTOR_PROFILE_VIEW_BSKY,
@@ -146,8 +151,12 @@ REPLY_AS = {
     'objectType': 'comment',
     'published': '2008-08-08T03:04:05',
     'content': 'I hereby reply to this',
-    'url': 'http://a/reply',
-    'inReplyTo': [{'url': 'http://orig/post'}],
+    'id': 'at://did/collection/tid',
+    'url': 'https://staging.bsky.app/profile/did/post/tid',
+    'inReplyTo': [{
+      'id': 'at://did/collection/parent-tid',
+      'url': 'https://staging.bsky.app/profile/did/post/parent-tid',
+    }],
   },
 }
 REPLY_HTML = """
@@ -160,7 +169,7 @@ REPLY_HTML = """
 """
 REPLY_BSKY = copy.deepcopy(POST_BSKY)
 REPLY_BSKY['post'].update({
-  'uri': 'http://a/reply',
+  'uri': 'at://did/collection/tid',
   'record': {
     '$type': 'app.bsky.feed.post',
     'text': 'I hereby reply to this',
@@ -169,12 +178,12 @@ REPLY_BSKY['post'].update({
       '$type': 'app.bsky.feed.post#replyRef',
       'root': {
         '$type': 'com.atproto.repo.strongRef',
-        'uri': 'http://orig/post',
+        'uri': '',
         'cid': 'TODO',
       },
       'parent': {
         '$type': 'com.atproto.repo.strongRef',
-        'uri': 'http://orig/post',
+        'uri': 'at://did/collection/parent-tid',
         'cid': 'TODO',
       },
     },
@@ -188,7 +197,8 @@ REPOST_AS = {
   'content': 'A compelling post',
   'object': {
     'objectType': 'note',
-    'url': 'http://orig/post',
+    'id': 'at://did/collection/tid',
+    'url': 'https://staging.bsky.app/profile/did/post/tid',
   },
 }
 REPOST_HTML = """
@@ -222,6 +232,11 @@ class BlueskyTest(testutil.TestCase):
 
   def setUp(self):
     self.bs = Bluesky('handull', access_token='towkin')
+    util.now = lambda **kwargs: testutil.NOW
+
+  def assert_equals(self, expected, actual, ignore=(), **kwargs):
+    ignore = list(ignore) + ['uri']
+    return super().assert_equals(expected, actual, ignore=ignore, **kwargs)
 
   def test_url_to_did_web(self):
     for bad in None, '', 'foo', 'did:web:bar.com':
@@ -243,8 +258,33 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual('https://foo.com:3000/', did_web_to_url('did:web:foo.com%3A3000'))
     self.assertEqual('https://bar.com/baz/baj', did_web_to_url('did:web:bar.com:baz:baj'))
 
+  def test_user_url(self):
+    self.assertEqual('https://staging.bsky.app/profile/snarfed.org',
+                     Bluesky.user_url('snarfed.org'))
+
+    self.assertEqual('https://staging.bsky.app/profile/snarfed.org',
+                     Bluesky.user_url('@snarfed.org'))
+
+  def test_post_url(self):
+    self.assertEqual('https://staging.bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
+                     Bluesky.post_url('snarfed.org', '3jv3wdw2hkt25'))
+
+  def test_at_uri_to_web_url(self):
+    self.assertEqual(None, at_uri_to_web_url(''))
+
+    at_uri = 'at://did:plc:asdf/app.bsky.feed.post/3jv3wdw2hkt25'
+    self.assertEqual(
+      'https://staging.bsky.app/profile/did:plc:asdf/post/3jv3wdw2hkt25',
+      at_uri_to_web_url(at_uri))
+    self.assertEqual(
+      'https://staging.bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
+      at_uri_to_web_url(at_uri, handle='snarfed.org'))
+
+    with self.assertRaises(ValueError):
+      at_uri_to_web_url('http://not/at/uri')
+
   def test_from_as1_post(self):
-    self.assert_equals(POST_BSKY, from_as1(POST_AS))
+    self.assert_equals(POST_BSKY, from_as1(POST_AS), ignore=['uri'])
 
   def test_from_as1_post_with_author(self):
     self.assert_equals(POST_AUTHOR_BSKY, from_as1(POST_AUTHOR_AS))
@@ -292,7 +332,7 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     del expected['post']['record']['entities'][0]['index']
     expected['post']['record']['entities'][0]['text'] = None
 
-    self.assertEqual(expected, from_as1(post_as))
+    self.assert_equals(expected, from_as1(post_as))
 
   def test_from_as1_post_with_image(self):
     self.assert_equals(POST_BSKY_IMAGES, from_as1(POST_AS_IMAGES))
@@ -428,8 +468,8 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'feed': [POST_AUTHOR_BSKY],
     })
 
-    self.assertEqual([POST_AUTHOR_AS['object']],
-                     self.bs.get_activities(group_id=FRIENDS))
+    self.assert_equals([POST_AUTHOR_AS['object']],
+                       self.bs.get_activities(group_id=FRIENDS))
 
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
@@ -449,8 +489,8 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'replies': [REPLY_BSKY],
     })
 
-    self.assertEqual([POST_AUTHOR_AS['object']],
-                     self.bs.get_activities(activity_id='at://id'))
+    self.assert_equals([POST_AUTHOR_AS['object']],
+                       self.bs.get_activities(activity_id='at://id'))
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getPostThread',
         params='uri=at%3A%2F%2Fid&depth=1',
@@ -472,8 +512,8 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'feed': [POST_AUTHOR_BSKY],
     })
 
-    self.assertEqual([POST_AUTHOR_AS['object']],
-                     self.bs.get_activities(group_id=SELF, user_id='alice.com'))
+    self.assert_equals([POST_AUTHOR_AS['object']],
+                       self.bs.get_activities(group_id=SELF, user_id='alice.com'))
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed',
         params='actor=alice.com',
@@ -483,7 +523,3 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
           'Content-Type': 'application/json',
         },
     )
-
-  @patch('requests.get')
-  def test_get_activities_self_default_user(self, mock_get):
-    pass
