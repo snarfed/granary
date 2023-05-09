@@ -429,7 +429,7 @@ def to_as1(obj, type=None):
     if embed_type == 'app.bsky.embed.images#view':
       ret['image'] = to_as1(embed)
     elif embed_type == 'app.bsky.embed.external#view':
-      ret['tags'] = to_as1(embed)
+      ret['tags'] = [to_as1(embed)]
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
