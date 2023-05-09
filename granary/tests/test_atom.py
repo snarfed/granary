@@ -49,7 +49,7 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <updated>2012-09-22T05:25:42+00:00</updated>
   <georss:point>37.3 -122.5</georss:point>
   <georss:featureName>Le Truc</georss:featureName>
-  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
+  <link rel="self" href="https://www.instagram.com/p/ABC123/" />
 <link rel="enclosure" href="http://attach/image/big" type="" />"""
 INSTAGRAM_ENTRY = u"""\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -195,7 +195,7 @@ class AtomTest(testutil.TestCase):
 <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
 <published>2012-02-22</published>
 <updated>2013-10-25</updated>
-<link rel="self" type="application/atom+xml" href="bookmark-url" />
+<link rel="self" href="bookmark-url" />
 """, got, ignore_blanks=True)
 
   def test_activity_to_atom_author_without_properties(self):
@@ -444,7 +444,7 @@ quoted text
 
     for expected in (
         '<link rel="alternate" type="text/html" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
-        '<link rel="self" type="application/atom+xml" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
+        '<link rel="self" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
         '<uri>http://voxpelli.com/</uri>',
         ):
       self.assert_multiline_in(expected, out)
@@ -614,7 +614,7 @@ my content
   <published></published>
   <updated></updated>
 
-  <link rel="self" type="application/atom+xml" href="http://my/post" />
+  <link rel="self" href="http://my/post" />
 
 </entry>
 

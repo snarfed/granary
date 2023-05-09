@@ -306,6 +306,7 @@ _Non-breaking changes:_
 * `atom`:
   * `activities_to_atom` etc:
     * Bug fix, handle bare string URL `image` values.
+    * Bug fix, remove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
 
 ### 6.0 - 2023-03-22
 

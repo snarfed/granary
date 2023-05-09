@@ -177,7 +177,7 @@ foo ☕ bar
   <published>2012-03-04T18:20:37+00:00</published>
   <updated>2012-03-04T18:20:37+00:00</updated>
 
-  <link rel="self" type="application/atom+xml" href="https://perma/link" />
+  <link rel="self" href="https://perma/link" />
 
 </entry>
 """

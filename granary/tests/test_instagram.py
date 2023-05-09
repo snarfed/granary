@@ -457,7 +457,7 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 
   <georss:featureName>Le Truc</georss:featureName>
 
-  <link rel="self" type="application/atom+xml" href="https://www.instagram.com/p/ABC123/" />
+  <link rel="self" href="https://www.instagram.com/p/ABC123/" />
   <link rel="enclosure" href="http://attach/image/big" type="" />
 
 </entry>
