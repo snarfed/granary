@@ -82,6 +82,8 @@ POST_AUTHOR_AS['object'].update({
   'author': ACTOR_AS,
   'url': 'https://staging.bsky.app/profile/alice.com/post/tid',
 })
+POST_AUTHOR_PROFILE_AS = copy.deepcopy(POST_AUTHOR_AS)
+POST_AUTHOR_PROFILE_AS['object']['author']['url'] = 'https://staging.bsky.app/profile/alice.com'
 POST_AUTHOR_BSKY = copy.deepcopy(POST_BSKY)
 POST_AUTHOR_BSKY['post']['author'] = {
   **ACTOR_PROFILE_VIEW_BSKY,
@@ -345,12 +347,6 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     })
     self.assert_equals(POST_BSKY_EMBED, from_as1(post_as))
 
-  def test_from_as1_reply(self):
-    self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
-
-  def test_from_as1_repost(self):
-    self.assert_equals(REPOST_BSKY, from_as1(REPOST_AS))
-
   def test_from_as1_object_vs_activity(self):
     obj = {
       'objectType': 'note',
@@ -361,9 +357,6 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'object': obj,
     }
     self.assert_equals(from_as1(obj), from_as1(activity))
-
-  def test_from_as1_actor(self):
-    self.assert_equals(ACTOR_PROFILE_VIEW_BSKY, from_as1(ACTOR_AS))
 
   def test_from_as1_actor_handle(self):
     for expected, fields in (
@@ -397,25 +390,17 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
     self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
 
   def test_to_as1_post_with_author(self):
-    self.assert_equals(POST_AUTHOR_AS['object'], to_as1(POST_AUTHOR_BSKY))
+    self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_AUTHOR_BSKY))
 
   def test_to_as1_post_type_kwarg(self):
     post_bsky = copy.deepcopy(POST_AUTHOR_BSKY)
     type = post_bsky.pop('$type')
     del post_bsky['post']['$type']
     del post_bsky['post']['author']['$type']
-    self.assert_equals(POST_AUTHOR_AS['object'], to_as1(post_bsky, type=type))
+    self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(post_bsky, type=type))
 
   def test_to_as1_post_with_image(self):
     self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_BSKY_IMAGES))
-
-  def test_to_as1_reply(self):
-    self.assert_equals(REPLY_AS['object'], to_as1(REPLY_BSKY))
-
-  def test_to_as1_repost(self):
-    repost_as = copy.deepcopy(REPOST_AS)
-    del repost_as['content']
-    self.assert_equals(repost_as, to_as1(REPOST_BSKY))
 
   def test_to_as1_missing_objectType(self):
     with self.assertRaises(ValueError):
@@ -468,7 +453,7 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'feed': [POST_AUTHOR_BSKY],
     })
 
-    self.assert_equals([POST_AUTHOR_AS['object']],
+    self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
                        self.bs.get_activities(group_id=FRIENDS))
 
     mock_get.assert_called_once_with(
@@ -489,7 +474,7 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'replies': [REPLY_BSKY],
     })
 
-    self.assert_equals([POST_AUTHOR_AS['object']],
+    self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
                        self.bs.get_activities(activity_id='at://id'))
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getPostThread',
@@ -512,7 +497,7 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
       'feed': [POST_AUTHOR_BSKY],
     })
 
-    self.assert_equals([POST_AUTHOR_AS['object']],
+    self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
                        self.bs.get_activities(group_id=SELF, user_id='alice.com'))
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed',

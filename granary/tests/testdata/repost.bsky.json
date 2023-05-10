@@ -26,7 +26,7 @@
     "by": {
       "$type": "app.bsky.actor.defs#profileView",
       "did": "did:web:example.com:alice",
-      "handle": "example.com/alice",
+      "handle": "alice.example.com",
       "displayName": "Alice"
     },
     "indexedAt": "2022-01-02T03:04:05+00:00"

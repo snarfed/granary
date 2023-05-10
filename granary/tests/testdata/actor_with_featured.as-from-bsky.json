@@ -1,0 +1,11 @@
+{
+  "objectType" : "person",
+  "url": "https://staging.bsky.app/profile/yoozer@example.com",
+  "displayName": "Martin Smith",
+  "image": [{
+    "url": "http://example.com/avatar"
+  }, {
+    "url": "http://example.com/header",
+    "objectType": "featured"
+  }]
+}

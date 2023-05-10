@@ -6,15 +6,15 @@
     "url": "https://staging.bsky.app/profile/example.com/post/3juzc2tw2dm2h",
     "author": {
       "objectType": "person",
-      "displayName": "Bob",
-      "url": "https://example.com/bob"
+      "url": "https://staging.bsky.app/profile/example.com",
+      "displayName": "Bob"
     },
     "content": "The original post",
     "objectType": "note"
   },
   "actor": {
     "objectType": "person",
-    "displayName": "Alice",
-    "url": "https://example.com/alice"
+    "url": "https://staging.bsky.app/profile/alice.example.com",
+    "displayName": "Alice"
   }
 }

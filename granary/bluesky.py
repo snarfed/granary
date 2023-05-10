@@ -378,14 +378,17 @@ def to_as1(obj, type=None):
     if banner:
       images.append({'url': obj.get('banner'), 'objectType': 'featured'})
 
+    handle = obj.get('handle')
     did = obj.get('did')
 
     ret = {
       'objectType': 'person',
+      'url': (Bluesky.user_url(handle) if handle
+              else did_web_to_url(did) if did and did.startswith('did:web:')
+              else None),
       'displayName': obj.get('displayName'),
       'summary': obj.get('description'),
       'image': images,
-      'url': did_web_to_url(did) if did and did.startswith('did:web:') else None,
     }
 
   elif type == 'app.bsky.feed.post':

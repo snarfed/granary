@@ -1,0 +1,9 @@
+{
+  "objectType" : "person",
+  "url": "https://staging.bsky.app/profile/yoozer@example.com",
+  "image": [{
+    "url": "http://example.com/martin/image"
+  }],
+  "displayName": "Martin Smith",
+  "summary": "this is my bio"
+}
