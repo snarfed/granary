@@ -195,30 +195,30 @@ REPLY_BSKY['post'].update({
 REPOST_AS = {
   'objectType': 'activity',
   'verb': 'share',
-  'actor': ACTOR_AS,
-  'content': 'A compelling post',
-  'object': {
-    'objectType': 'note',
-    'id': 'at://did/collection/tid',
-    'url': 'https://staging.bsky.app/profile/did/post/tid',
+  'actor': {
+    'objectType' : 'person',
+    'displayName': 'Bob',
+    'url': 'https://staging.bsky.app/profile/bob.com',
   },
+  # 'content': 'A compelling post',
+  'object': POST_AUTHOR_PROFILE_AS['object'],
 }
-REPOST_HTML = """
-<article class="h-entry">
-  <main class="e-content">A compelling post</main>
-  <a class="u-repost-of" href="http://orig/post"></a>
-  <time class="dt-published" datetime="2007-07-07T03:04:05"></time>
-</article>
-"""
-REPOST_BSKY = copy.deepcopy(POST_BSKY)
-REPOST_BSKY['post']['record'].update({
-  '$type': 'app.bsky.feed.post',
-  'text': '',
-  'createdAt': '',
-})
+# REPOST_HTML = """
+# <article class="h-entry">
+#   <main class="e-content">A compelling post</main>
+#   <a class="u-repost-of" href="http://orig/post"></a>
+#   <time class="dt-published" datetime="2007-07-07T03:04:05"></time>
+# </article>
+# """
+REPOST_BSKY = copy.deepcopy(POST_AUTHOR_BSKY)
 REPOST_BSKY['reason'] = {
   '$type': 'app.bsky.feed.defs#reasonRepost',
-  'by': ACTOR_PROFILE_VIEW_BSKY,
+  'by': {
+    '$type': 'app.bsky.actor.defs#profileViewBasic',
+    'did': 'did:web:bob.com',
+    'handle': 'bob.com',
+    'displayName': 'Bob',
+  },
   'indexedAt': NOW.isoformat(),
 }
 
@@ -450,11 +450,13 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
   def test_get_activities_friends(self, mock_get):
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
-      'feed': [POST_AUTHOR_BSKY],
+      'feed': [POST_AUTHOR_BSKY, REPOST_BSKY],
     })
 
-    self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
-                       self.bs.get_activities(group_id=FRIENDS))
+    self.assert_equals([
+      POST_AUTHOR_PROFILE_AS['object'],
+      REPOST_AS,
+    ], self.bs.get_activities(group_id=FRIENDS))
 
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',

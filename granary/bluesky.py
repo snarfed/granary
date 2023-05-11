@@ -472,6 +472,9 @@ def to_as1(obj, type=None):
       },
     }
 
+  elif type == 'app.bsky.feed.defs#threadViewPost':
+    return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')
+
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')
 
@@ -596,7 +599,7 @@ class Bluesky(Source):
 
     # TODO: inReplyTo
     ret = self.make_activities_base_response(
-      util.trim_nulls(to_as1(post.get('post'), type='app.bsky.feed.defs#postView'))
+      util.trim_nulls(to_as1(post, type='app.bsky.feed.defs#feedViewPost'))
       for post in posts
     )
     ret['actor'] = {

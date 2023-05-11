@@ -627,7 +627,6 @@ not RSS!
     self.expect_requests_get('http://my/posts', [
       test_bluesky.POST_AS,
       test_bluesky.REPLY_AS,
-      test_bluesky.REPOST_AS,
     ])
     self.mox.ReplayAll()
 
@@ -637,7 +636,6 @@ not RSS!
       'feed': [
         test_bluesky.POST_BSKY,
         test_bluesky.REPLY_BSKY,
-        test_bluesky.REPOST_BSKY,
       ],
     }, resp.json)
 
