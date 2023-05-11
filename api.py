@@ -156,7 +156,6 @@ def api(path):
     else:
       response = src.get_activities_response(*args, **get_kwargs())
   except (NotImplementedError, ValueError) as e:
-    logger.exception('oof')
     return abort(400, str(e))
     # other exceptions are handled by webutil.flask_util.handle_exception(),
     # which uses interpret_http_exception(), etc.
