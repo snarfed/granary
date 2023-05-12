@@ -1,0 +1,47 @@
+{
+  "$type": "app.bsky.feed.defs#feedViewPost",
+  "post": {
+    "$type": "app.bsky.feed.defs#postView",
+    "uri": "at://did/collection/quote-post-tid",
+    "cid": "TODO",
+    "record": {
+      "$type": "app.bsky.feed.post",
+      "text": "I hereby quote",
+      "createdAt": "2007-07-07T03:04:05",
+      "embed": {
+        "$type": "app.bsky.embed.record",
+        "record": {
+          "cid": "TODO",
+          "uri": "at://did/collection/orig-post-tid"
+        }
+      }
+    },
+    "indexedAt": "2022-01-02T03:04:05+00:00",
+    "author": {
+       "avatar": "https://cdn.bsky.social/imgproxy/bob/r72exhka@jpeg",
+       "did": "did:plc:r72exhka",
+       "displayName": "Bob",
+       "handle": "bob.bsky.social"
+    },
+    "embed": {
+      "$type": "app.bsky.embed.record#view",
+      "record": {
+        "$type": "app.bsky.embed.record#viewRecord",
+        "cid": "TODO",
+        "indexedAt": "2023-05-11T19:59:13.174Z",
+        "uri": "at://did/collection/orig-post-tid",
+        "value": {
+          "$type": "app.bsky.feed.post",
+          "createdAt": "2023-05-11T19:59:12Z",
+          "text": "An original post"
+        },
+        "author": {
+          "avatar": "https://cdn.bsky.social/imgproxy/alice/pv7fudn@jpeg",
+          "did": "did:plc:pv7fudn",
+          "displayName": "Alice",
+          "handle": "alice.example.com"
+        }
+      }
+    }
+  }
+}

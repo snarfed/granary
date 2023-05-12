@@ -130,7 +130,7 @@ mappings = (
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
   ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky.from_as1, (), ()),
   ('bsky.json', ['as-from-bsky.json', 'as.json'], bluesky.to_as1, (),
-   ('id', 'location', 'updated', 'username')),
+   ('location', 'updated', 'username')),
   ('bsky.json', ['as-from-bsky.json'], bluesky.to_as1, (), ()),
 )
 

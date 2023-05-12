@@ -417,8 +417,8 @@ def to_as1(obj, type=None):
       'tags': tags,
     }
 
-  elif type == 'app.bsky.feed.defs#postView':
-    ret = to_as1(obj.get('record'))
+  elif type in ('app.bsky.feed.defs#postView', 'app.bsky.embed.record#viewRecord'):
+    ret = to_as1(obj.get('record') or obj.get('value'))
     author = obj.get('author') or {}
     uri = obj.get('uri')
     ret.update({
@@ -433,6 +433,8 @@ def to_as1(obj, type=None):
       ret['image'] = to_as1(embed)
     elif embed_type == 'app.bsky.embed.external#view':
       ret['tags'] = [to_as1(embed)]
+    elif embed_type == 'app.bsky.embed.record#view':
+      ret['attachments'] = [to_as1(embed)]
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
@@ -451,6 +453,13 @@ def to_as1(obj, type=None):
       'content': obj.get('description'),
       'image': obj.get('thumb'),
     }
+
+  elif type == 'app.bsky.embed.record#view':
+    record = obj.get('record')
+    return to_as1(record) if record else None
+
+  elif type == 'app.bsky.embed.record#viewNotFound':
+    return None
 
   elif type == 'app.bsky.feed.defs#feedViewPost':
     ret = to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')

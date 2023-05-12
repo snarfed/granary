@@ -1,4 +1,4 @@
-"""Unit tests for jsonfeed.py.
+"""Unit tests for bluesky.py.
 
 Most tests are via files in testdata/.
 """
@@ -128,7 +128,6 @@ POST_BSKY_EMBED['post']['embed'] = {
     **EMBED_EXTERNAL,
   }],
 }
-
 POST_AS_IMAGES = copy.deepcopy(POST_AS)
 POST_AS_IMAGES['object']['image'] = [{
   'url': 'http://my/pic',
