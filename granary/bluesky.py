@@ -268,6 +268,33 @@ def from_as1(obj, from_url=None):
         } for entity in entities],
       }
 
+    # attachments
+    for att in util.get_list(obj, 'attachments'):
+      id = att.get('id')
+      url = att.get('url')
+      if (id and id.startswith('at://')) or (url and url.startswith(Bluesky.BASE_URL)):
+        post_embed_record = from_as1(att).get('post')
+        post_embed_record['value'] = post_embed_record.pop('record', None)
+        post_embed = {
+          '$type': 'app.bsky.embed.record#view',
+          'record': {
+            **post_embed_record,
+            '$type': 'app.bsky.embed.record#viewRecord',
+            # override these so that trim_nulls below will remove them
+            'downvoteCount': None,
+            'replyCount': None,
+            'repostCount': None,
+            'upvoteCount': None,
+          },
+        }
+        record_embed = {
+          '$type': 'app.bsky.embed.record',
+          'record': {
+            'cid': 'TODO',
+            'uri': id,
+          }
+        }
+
     author = as1.get_object(obj, 'author')
     ret = {
       '$type': 'app.bsky.feed.defs#feedViewPost',

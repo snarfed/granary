@@ -18,6 +18,7 @@
     },
     "indexedAt": "2022-01-02T03:04:05+00:00",
     "author": {
+      "$type": "app.bsky.actor.defs#profileViewBasic",
        "avatar": "https://cdn.bsky.social/imgproxy/bob/r72exhka@jpeg",
        "did": "did:plc:r72exhka",
        "displayName": "Bob",
@@ -28,7 +29,7 @@
       "record": {
         "$type": "app.bsky.embed.record#viewRecord",
         "cid": "TODO",
-        "indexedAt": "2023-05-11T19:59:13.174Z",
+        "indexedAt": "2022-01-02T03:04:05+00:00",
         "uri": "at://did/collection/orig-post-tid",
         "value": {
           "$type": "app.bsky.feed.post",
@@ -36,12 +37,17 @@
           "text": "An original post"
         },
         "author": {
+          "$type": "app.bsky.actor.defs#profileViewBasic",
           "avatar": "https://cdn.bsky.social/imgproxy/alice/pv7fudn@jpeg",
           "did": "did:plc:pv7fudn",
           "displayName": "Alice",
           "handle": "alice.example.com"
         }
       }
-    }
+    },
+    "downvoteCount": 0,
+    "replyCount": 0,
+    "repostCount": 0,
+    "upvoteCount": 0
   }
 }
