@@ -308,7 +308,16 @@ class BlueskyTest(testutil.TestCase):
     post_as['object']['tags'] = [{
       'url': 'http://my/link',
     }]
-    self.assert_equals(POST_BSKY, from_as1(post_as))
+
+    expected = copy.deepcopy(POST_BSKY)
+    expected['post']['record']['facets'] = [{
+      '$type': 'app.bsky.richtext.facet',
+      'features': [{
+        '$type': 'app.bsky.richtext.facet#link',
+        'uri': 'http://my/link',
+      }],
+    }]
+    self.assert_equals(expected, from_as1(post_as))
 
   def test_from_as1_post_with_image(self):
     self.assert_equals(POST_BSKY_IMAGES, from_as1(POST_AS_IMAGES))

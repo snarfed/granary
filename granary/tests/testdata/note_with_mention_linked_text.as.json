@@ -1,0 +1,12 @@
+{
+  "objectType": "note",
+  "id": "tag:example.com,2011:note-123",
+  "content": "hi @alice!",
+  "tags": [{
+    "objectType": "mention",
+    "url": "https://staging.bsky.app/profile/did:plc:789",
+    "displayName": "@alice",
+    "startIndex": 3,
+    "length": 6
+  }]
+}

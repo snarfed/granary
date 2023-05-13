@@ -203,31 +203,43 @@ def from_as1(obj, from_url=None):
 
     facets = []
     if text == content:
-      # convert iondex-based to facets
+      # convert index-based to facets
       for tag in util.get_list(obj, 'tags'):
-        url = tag.get('url')
-        if url:
-          try:
-            start = int(tag.get('startIndex'))
-            if start and obj.get('content_is_html'):
-              raise NotImplementedError('HTML content is not supported with index tags')
-            end = start + int(tag.get('length'))
-          except (ValueError, IndexError, TypeError):
-            continue
+        facet = {
+          '$type': 'app.bsky.richtext.facet',
+        }
 
-          facets.append({
-            '$type': 'app.bsky.richtext.facet',
-            'features': [{
-              '$type': 'app.bsky.richtext.facet#link',
-              'uri': url,
-            }],
-            'index': {
-              # convert indices from Unicode chars (code points) to UTF-8 encoded bytes
-              # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
-              'byteStart': len(content[:start].encode()),
-              'byteEnd': len(content[:end].encode()),
-            },
-          })
+        url = tag.get('url')
+        type = tag.get('objectType')
+        if type == 'mention':
+          facet['features'] = [{
+            '$type': 'app.bsky.richtext.facet#mention',
+            'did': (url.removeprefix('https://staging.bsky.app/profile/')
+                    if url.startswith('https://staging.bsky.app/profile/did:')
+                    else ''),
+          }]
+        elif type in ('link', 'article', 'note') or url:
+          facet['features'] = [{
+            '$type': 'app.bsky.richtext.facet#link',
+            'uri': url,
+          }]
+
+        try:
+          start = int(tag['startIndex'])
+          if start and obj.get('content_is_html'):
+            raise NotImplementedError('HTML content is not supported with index tags')
+          end = start + int(tag['length'])
+
+          facet['index'] = {
+            # convert indices from Unicode chars (code points) to UTF-8 encoded bytes
+            # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
+            'byteStart': len(content[:start].encode()),
+            'byteEnd': len(content[:end].encode()),
+          }
+        except (KeyError, ValueError, IndexError, TypeError):
+          pass
+
+        facets.append(facet)
 
     # images
     post_embed = record_embed = None
@@ -407,11 +419,19 @@ def to_as1(obj, type=None):
     # convert facets to tags
     tags = []
     for facet in obj.get('facets', []):
-      tag = {'objectType': 'article'}
+      tag = {}
 
       for feat in facet.get('features', []):
         if feat.get('$type') == 'app.bsky.richtext.facet#link':
-          tag['url'] = feat.get('uri')
+          tag.update({
+            'objectType': 'article',
+            'url': feat.get('uri'),
+          })
+        elif feat.get('$type') == 'app.bsky.richtext.facet#mention':
+          tag.update({
+            'objectType': 'mention',
+            'url': Bluesky.user_url(feat.get('did')),
+          })
 
       index = facet.get('index', {})
       # convert indices from UTF-8 encoded bytes to Unicode chars (code points)
