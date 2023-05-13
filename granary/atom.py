@@ -392,7 +392,7 @@ def _prepare_activity(a, reader=True):
       continue
 
     image_urls_seen |= set(util.get_urls(att, 'image'))
-    if type in ('note', 'article'):
+    if type in ('note', 'article', 'comment'):
       html = microformats2.render_content(
         att, include_location=reader, render_attachments=True,
         white_space_pre=False)

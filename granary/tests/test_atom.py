@@ -479,6 +479,7 @@ quoted text
          'image': [{'url': 'http://quote/tweet/pic'}],
        }],
       },
+      {'objectType': 'note', 'content': 'a comment'},
     ]}}], None)
     self.assert_multiline_in("""
 <p>
@@ -498,6 +499,10 @@ quoted tweet with photo
 <p>
 <img class="u-photo" src="http://quote/tweet/pic" alt="" />
 </p>
+</blockquote>
+
+<blockquote>
+a comment
 </blockquote>
 """, got)
 

@@ -310,6 +310,7 @@ _Non-breaking changes:_
   * `activities_to_atom` etc:
     * Bug fix, handle bare string URL `image` values.
     * Bug fix, remove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
+    * Render `objectType: comment` attachments.
 
 ### 6.0 - 2023-03-22
 
