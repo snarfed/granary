@@ -197,34 +197,37 @@ def from_as1(obj, from_url=None):
   elif verb == 'post' and type in ('article', 'mention', 'note', 'comment'):
     # convert text to HTML and truncate
     src = Bluesky('unused')
-    text = src._content_for_create(obj)
-    is_html = text != (obj.get('summary') or obj.get('content') or obj.get('name'))
+    content = obj.get('content')
+    text = obj.get('summary') or content or obj.get('name')
     text = src.truncate(text, None, OMIT_LINK)
 
-    # text tags
-    # TODO: migrate to facets
-    entities = []
-    content = obj.get('content')
-    for tag in util.get_list(obj, 'tags'):
-      url = tag.get('url')
-      if url:
-        try:
-          start = int(tag.get('startIndex'))
-          if is_html and start:
-            raise NotImplementedError('HTML content is not supported with index tags')
-          end = start + int(tag.get('length'))
-          tag_text = content[start:end] if content else None
-        except (ValueError, IndexError, TypeError):
-          tag_text = start = end = None
-        entities.append({
-          'type': 'link',
-          'value': url,
-          'text': tag_text,
-          'index': {
-            'start': start,
-            'end': end,
-          },
-        })
+    facets = []
+    if text == content:
+      # convert iondex-based to facets
+      for tag in util.get_list(obj, 'tags'):
+        url = tag.get('url')
+        if url:
+          try:
+            start = int(tag.get('startIndex'))
+            if start and obj.get('content_is_html'):
+              raise NotImplementedError('HTML content is not supported with index tags')
+            end = start + int(tag.get('length'))
+          except (ValueError, IndexError, TypeError):
+            continue
+
+          facets.append({
+            '$type': 'app.bsky.richtext.facet',
+            'features': [{
+              '$type': 'app.bsky.richtext.facet#link',
+              'uri': url,
+            }],
+            'index': {
+              # convert Unicode chars (code points) to UTF-8 encoded bytes
+              # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
+              'byteStart': len(content[:start].encode()),
+              'byteEnd': len(content[:end].encode()),
+            },
+          })
 
     # images
     post_embed = record_embed = None
@@ -248,25 +251,6 @@ def from_as1(obj, from_url=None):
       #     'alt': img.get('displayName'),
       #   } for img in images[:4]],
       # }
-    elif entities:
-      post_embed = {
-        '$type': 'app.bsky.embed.external#view',
-        'external': [{
-          '$type': 'app.bsky.embed.external#viewExternal',
-          'uri': entity['value'],
-          'title': entity['text'],
-          'description': '',
-        } for entity in entities],
-      }
-      record_embed = {
-        '$type': 'app.bsky.embed.external',
-        'external': [{
-          '$type': 'app.bsky.embed.external#external',
-          'uri': entity['value'],
-          'title': entity['text'],
-          'description': '',
-        } for entity in entities],
-      }
 
     # attachments
     for att in util.get_list(obj, 'attachments'):
@@ -305,7 +289,7 @@ def from_as1(obj, from_url=None):
           'text': text,
           'createdAt': obj.get('published', ''),
           'embed': record_embed,
-          'entities': entities,
+          'facets': facets,
         },
         'author': {
           **from_as1(author),

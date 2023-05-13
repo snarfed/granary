@@ -1,12 +1,12 @@
 {
   "objectType": "note",
   "id": "tag:example.com,2011:note-123",
-  "content": "hello foo",
+  "content": "hello 👩‍👩‍👦‍👦✋🏽 foo",
   "tags": [{
     "objectType": "article",
     "displayName": "foo",
-    "startIndex": 6,
-    "length": 9,
+    "startIndex": 16,
+    "length": 3,
     "url": "http:/xyz/foo"
   }]
 }

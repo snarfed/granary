@@ -292,28 +292,11 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_post_with_author(self):
     self.assert_equals(POST_AUTHOR_BSKY, from_as1(POST_AUTHOR_AS))
 
-  def test_from_as1_post_html(self):
-    post_as = copy.deepcopy(POST_AS)
-    post_as['object']['content'] = """
-    <p class="h-event">
-      <a class="u-url p-name" href="http://h.w/c">
-        Homebrew Website Club</a>
-      is <em>tonight</em>!
-      <img class="shadow" src="/pour_over_coffee_stand.jpg" /></p>
-    <time class="dt-start">6:30pm PST</time> at
-    <a href="https://wiki.mozilla.org/SF">Mozilla SF</a> and
-    <a href="https://twitter.com/esripdx">Esri Portland</a>.<br />Join us!
-    """
-    self.assert_equals("""\
-Homebrew Website Club is _tonight_!
-
-6:30pm PST at Mozilla SF and Esri Portland.
-Join us!""", from_as1(post_as)['post']['record']['text'])
-
   def test_from_as1_post_html_with_tag_indices_not_implemented(self):
     post_as = copy.deepcopy(POST_AS)
     post_as['object'].update({
       'content': '<em>some html</em>',
+      'content_is_html': True,
       'tags': TAGS,
     })
 
@@ -322,31 +305,13 @@ Join us!""", from_as1(post_as)['post']['record']['text'])
 
   def test_from_as1_post_without_tag_indices(self):
     post_as = copy.deepcopy(POST_AS)
-    post_as['object'].update({
-      'content': 'A note. link too',
-      'tags': [{
-        'url': 'http://my/link',
-      }],
-    })
-
-    expected = copy.deepcopy(POST_BSKY_EMBED)
-    del expected['post']['embed']['external'][0]['title']
-    del expected['post']['record']['embed']['external'][0]['title']
-    del expected['post']['record']['entities'][0]['index']
-    expected['post']['record']['entities'][0]['text'] = None
-
-    self.assert_equals(expected, from_as1(post_as))
+    post_as['object']['tags'] = [{
+      'url': 'http://my/link',
+    }]
+    self.assert_equals(POST_BSKY, from_as1(post_as))
 
   def test_from_as1_post_with_image(self):
     self.assert_equals(POST_BSKY_IMAGES, from_as1(POST_AS_IMAGES))
-
-  def test_from_as1_post_with_tag_indices(self):
-    post_as = copy.deepcopy(POST_AS)
-    post_as['object'].update({
-      'content': 'A note. link too',
-      'tags': TAGS,
-    })
-    self.assert_equals(POST_BSKY_EMBED, from_as1(post_as))
 
   def test_from_as1_object_vs_activity(self):
     obj = {
