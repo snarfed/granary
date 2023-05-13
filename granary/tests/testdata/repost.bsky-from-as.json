@@ -2,7 +2,7 @@
   "$type": "app.bsky.feed.defs#feedViewPost",
   "post": {
     "$type": "app.bsky.feed.defs#postView",
-    "uri": "",
+    "uri": "http://example.com/original/post",
     "cid": "TODO",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",

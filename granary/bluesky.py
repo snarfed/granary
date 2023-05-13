@@ -270,9 +270,7 @@ def from_as1(obj, from_url=None):
 
     # attachments
     for att in util.get_list(obj, 'attachments'):
-      id = att.get('id')
-      url = att.get('url')
-      if (id and id.startswith('at://')) or (url and url.startswith(Bluesky.BASE_URL)):
+      if att.get('objectType') in ('note', 'article'):
         post_embed_record = from_as1(att).get('post')
         post_embed_record['value'] = post_embed_record.pop('record', None)
         post_embed = {
@@ -291,7 +289,7 @@ def from_as1(obj, from_url=None):
           '$type': 'app.bsky.embed.record',
           'record': {
             'cid': 'TODO',
-            'uri': id,
+            'uri': att.get('id') or att.get('url'),
           }
         }
 
@@ -300,7 +298,7 @@ def from_as1(obj, from_url=None):
       '$type': 'app.bsky.feed.defs#feedViewPost',
       'post': {
         '$type': 'app.bsky.feed.defs#postView',
-        'uri': obj.get('id') or '',
+        'uri': obj.get('id') or obj.get('url') or '',
         'cid': 'TODO',
         'record': {
           '$type': 'app.bsky.feed.post',
