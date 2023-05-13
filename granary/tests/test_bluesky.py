@@ -22,6 +22,7 @@ from ..source import ALL, FRIENDS, ME, SELF
 
 ACTOR_AS = {
   'objectType' : 'person',
+  'id': 'did:web:alice.com',
   'displayName': 'Alice',
   'image': [{'url': 'https://alice.com/alice.jpg'}],
   'url': 'https://alice.com/',
@@ -196,6 +197,7 @@ REPOST_AS = {
   'verb': 'share',
   'actor': {
     'objectType' : 'person',
+    'id': 'did:web:bob.com',
     'displayName': 'Bob',
     'url': 'https://staging.bsky.app/profile/bob.com',
   },

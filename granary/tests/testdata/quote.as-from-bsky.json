@@ -6,6 +6,7 @@
   "published": "2007-07-07T03:04:05",
   "author": {
     "objectType": "person",
+    "id": "did:plc:r72exhka",
     "url": "https://staging.bsky.app/profile/bob.bsky.social",
     "displayName": "Bob",
     "image": [{"url": "https://cdn.bsky.social/imgproxy/bob/r72exhka@jpeg"}]
@@ -18,6 +19,7 @@
     "published": "2023-05-11T19:59:12Z",
     "author": {
       "objectType": "person",
+      "id": "did:plc:pv7fudn",
       "url": "https://staging.bsky.app/profile/alice.example.com",
       "displayName": "Alice",
       "image": [{"url": "https://cdn.bsky.social/imgproxy/alice/pv7fudn@jpeg"}]

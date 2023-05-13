@@ -299,6 +299,7 @@ _Non-breaking changes:_
   * `from_as1`: handle link tags without start/end indices.
   * `to_as1`: add new `type` kwarg.
   * `to_as1`: generate staging.bsky.app profile and post URLs.
+  * `to_as1`: propagate profile `did` into actor `id`.
   * Add `as1_to_profile`.
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.

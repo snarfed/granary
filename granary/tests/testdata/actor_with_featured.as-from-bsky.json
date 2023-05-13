@@ -1,5 +1,6 @@
 {
   "objectType" : "person",
+  "id": "did:web:example.com:martin",
   "url": "https://staging.bsky.app/profile/yoozer@example.com",
   "displayName": "Martin Smith",
   "image": [{

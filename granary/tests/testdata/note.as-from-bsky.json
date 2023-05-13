@@ -7,6 +7,7 @@
   "published": "2012-02-22T20:26:41",
   "author": {
     "objectType": "person",
+    "id": "did:plc:asdf",
     "url": "https://staging.bsky.app/profile/example.com",
     "displayName": "Ryan Barrett",
     "image": [{"url": "http://example.com/ryan/image"}]

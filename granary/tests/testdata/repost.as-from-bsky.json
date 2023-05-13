@@ -6,6 +6,7 @@
     "url": "https://staging.bsky.app/profile/example.com/post/3juzc2tw2dm2h",
     "author": {
       "objectType": "person",
+      "id": "did:web:example.com:bob",
       "url": "https://staging.bsky.app/profile/example.com",
       "displayName": "Bob"
     },
@@ -14,6 +15,7 @@
   },
   "actor": {
     "objectType": "person",
+    "id": "did:web:example.com:alice",
     "url": "https://staging.bsky.app/profile/alice.example.com",
     "displayName": "Alice"
   }

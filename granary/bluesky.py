@@ -410,6 +410,7 @@ def to_as1(obj, type=None):
 
     ret = {
       'objectType': 'person',
+      'id': did,
       'url': (Bluesky.user_url(handle) if handle
               else did_web_to_url(did) if did and did.startswith('did:web:')
               else None),
