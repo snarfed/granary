@@ -13,6 +13,8 @@
     "image": [{"url": "http://example.com/ryan/image"}]
   },
   "tags": [{
+    "objectType": "article",
+    "displayName": " to ",
     "url": "http://my/link",
     "startIndex": 8,
     "length": 4

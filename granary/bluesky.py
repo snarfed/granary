@@ -222,7 +222,7 @@ def from_as1(obj, from_url=None):
               'uri': url,
             }],
             'index': {
-              # convert Unicode chars (code points) to UTF-8 encoded bytes
+              # convert indices from Unicode chars (code points) to UTF-8 encoded bytes
               # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
               'byteStart': len(content[:start].encode()),
               'byteEnd': len(content[:end].encode()),
@@ -402,23 +402,36 @@ def to_as1(obj, type=None):
     }
 
   elif type == 'app.bsky.feed.post':
+    text = obj.get('text', '')
+
+    # convert facets to tags
     tags = []
-    for entity in obj.get('entities', []):
-      if entity.get('type') == 'link':
-        index = entity.get('index')
-        start = index.get('start', 0)
-        end = index.get('end', 0)
-        tags.append({
-          'url': entity.get('value'),
-          'startIndex': start,
-          'length': end - start,
-        })
+    for facet in obj.get('facets', []):
+      tag = {'objectType': 'article'}
+
+      for feat in facet.get('features', []):
+        if feat.get('$type') == 'app.bsky.richtext.facet#link':
+          tag['url'] = feat.get('uri')
+
+      index = facet.get('index', {})
+      # convert indices from UTF-8 encoded bytes to Unicode chars (code points)
+      # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
+      byteStart = index.get('byteStart')
+      if byteStart is not None:
+        tag['startIndex'] = len(text.encode()[:byteStart].decode())
+      byteEnd = index.get('byteEnd')
+      facet_text = text.encode()[byteStart:byteEnd].decode()
+      if byteStart is not None:
+        tag['length'] = len(facet_text)
+
+      tag['displayName'] = facet_text
+      tags.append(tag)
 
     in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
 
     ret = {
       'objectType': 'comment' if in_reply_to else 'note',
-      'content': obj.get('text', ''),
+      'content': text,
       'inReplyTo': [{
         'id': in_reply_to,
         'url': at_uri_to_web_url(in_reply_to),
@@ -433,7 +446,8 @@ def to_as1(obj, type=None):
     uri = obj.get('uri')
     ret.update({
       'id': uri,
-      'url': at_uri_to_web_url(uri, handle=author.get('handle')),
+      'url': (at_uri_to_web_url(uri, handle=author.get('handle'))
+              if uri.startswith('at://') else None),
       'author': to_as1(author, type='app.bsky.actor.defs#profileViewBasic'),
     })
 

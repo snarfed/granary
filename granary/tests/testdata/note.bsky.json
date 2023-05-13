@@ -15,13 +15,15 @@
       "$type": "app.bsky.feed.post",
       "text": "too cool to summarize",
       "createdAt": "2012-02-22T20:26:41",
-      "entities": [{
-        "type": "link",
-        "value": "http://my/link",
-        "text": "link",
+      "facets": [{
+        "$type": "app.bsky.richtext.facet",
+        "features": [{
+          "$type": "app.bsky.richtext.facet#link",
+          "uri": "http://my/link"
+        }],
         "index": {
-          "start": 8,
-          "end": 12
+          "byteStart": 8,
+          "byteEnd": 12
         }
       }]
     },

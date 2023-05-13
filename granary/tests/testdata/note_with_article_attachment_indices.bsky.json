@@ -12,7 +12,7 @@
         "$type": "app.bsky.richtext.facet",
         "features": [{
           "$type": "app.bsky.richtext.facet#link",
-          "uri": "http:/xyz/foo"
+          "uri": "http://xyz/foo"
         }],
         "index": {
           "byteStart": 39,
