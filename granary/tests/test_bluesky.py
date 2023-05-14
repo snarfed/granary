@@ -50,12 +50,12 @@ POST_AS = {
     'id': 'at://did/collection/tid',
     'url': 'https://staging.bsky.app/profile/did/post/tid',
     'published': '2007-07-07T03:04:05',
-    'content': 'My post',
+    'content': 'My original post',
   }
 }
 POST_HTML = """
 <article class="h-entry">
-  <main class="e-content">My post</main>
+  <main class="e-content">My original post</main>
   <a class="u-url" href="http://orig/post"></a>
   <time class="dt-published" datetime="2007-07-07T03:04:05"></time>
 </article>
@@ -68,7 +68,7 @@ POST_BSKY = {
     'cid': 'TODO',
     'record': {
       '$type': 'app.bsky.feed.post',
-      'text': 'My post',
+      'text': 'My original post',
       'createdAt': '2007-07-07T03:04:05',
     },
     'replyCount': 0,
@@ -91,43 +91,48 @@ POST_AUTHOR_BSKY['post']['author'] = {
   '$type': 'app.bsky.actor.defs#profileViewBasic',
 }
 
-TAGS = [{
-  'url': 'http://my/link',
-  'startIndex': 8,
-  'length': 4,
-}]
-ENTITIES = [{
-  "type": "link",
-  "value": "http://my/link",
-  "text": "link",
-  "index": {
-    "start": 8,
-    "end": 12,
+FACETS = [{
+  '$type': 'app.bsky.richtext.facet',
+  'features': [{
+    '$type': 'app.bsky.richtext.facet#link',
+    'uri': 'http://my/link',
+  }],
+  'index' : {
+    'byteStart' : 3,
+    'byteEnd' : 11,
   },
 }]
+FACET_TAG = {
+  'objectType': 'article',
+  'url': 'http://my/link',
+  'displayName': 'original',
+  'startIndex': 3,
+  'length': 8,
+}
 EMBED_EXTERNAL = {
   'description': '',
-  'title': 'link',
+  'title': 'a link',
   'uri': 'http://my/link',
 }
+EMBED_EXTERNAL_TAG = {
+  'type': 'link',
+  'url': 'http://my/link',
+  'displayName': 'a link',
+}
 POST_BSKY_EMBED = copy.deepcopy(POST_BSKY)
-POST_BSKY_EMBED['post']['record'].update({
-  'text': 'A note. link too',
-  'entities': ENTITIES,
-  'embed': {
-    '$type': 'app.bsky.embed.external',
-    'external': [{
-      '$type': 'app.bsky.embed.external#external',
-      **EMBED_EXTERNAL,
-    }],
-  },
-})
-POST_BSKY_EMBED['post']['embed'] = {
-  '$type': 'app.bsky.embed.external#view',
+POST_BSKY_EMBED['post']['record']['embed'] = {
+  '$type': 'app.bsky.embed.external',
   'external': [{
-    '$type': 'app.bsky.embed.external#viewExternal',
+    '$type': 'app.bsky.embed.external#external',
     **EMBED_EXTERNAL,
   }],
+}
+POST_BSKY_EMBED['post']['embed'] = {
+  '$type': 'app.bsky.embed.external#view',
+  'external': {
+    '$type': 'app.bsky.embed.external#viewExternal',
+    **EMBED_EXTERNAL,
+  },
 }
 POST_AS_IMAGES = copy.deepcopy(POST_AS)
 POST_AS_IMAGES['object']['image'] = [{
@@ -297,7 +302,7 @@ class BlueskyTest(testutil.TestCase):
     post_as['object'].update({
       'content': '<em>some html</em>',
       'content_is_html': True,
-      'tags': TAGS,
+      'tags': [FACET_TAG],
     })
 
     with self.assertRaises(NotImplementedError):
@@ -310,13 +315,8 @@ class BlueskyTest(testutil.TestCase):
     }]
 
     expected = copy.deepcopy(POST_BSKY)
-    expected['post']['record']['facets'] = [{
-      '$type': 'app.bsky.richtext.facet',
-      'features': [{
-        '$type': 'app.bsky.richtext.facet#link',
-        'uri': 'http://my/link',
-      }],
-    }]
+    expected['post']['record']['facets'] = copy.deepcopy(FACETS)
+    del expected['post']['record']['facets'][0]['index']
     self.assert_equals(expected, from_as1(post_as))
 
   def test_from_as1_post_with_image(self):
@@ -392,6 +392,16 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_unknown_type(self):
     with self.assertRaises(ValueError):
       to_as1({'$type': 'app.bsky.foo'})
+
+  def test_to_as1_facet_link_and_embed(self):
+    bsky = copy.deepcopy(POST_BSKY_EMBED)
+    bsky['post']['record']['facets'] = FACETS
+
+    expected = {
+      **POST_AS['object'],
+      'tags': [FACET_TAG, EMBED_EXTERNAL_TAG],
+    }
+    self.assert_equals(expected, to_as1(bsky))
 
   def test_constructor_both_access_token_and_app_password_error(self):
     with self.assertRaises(AssertionError):

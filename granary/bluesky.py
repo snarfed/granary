@@ -436,15 +436,14 @@ def to_as1(obj, type=None):
       index = facet.get('index', {})
       # convert indices from UTF-8 encoded bytes to Unicode chars (code points)
       # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
-      byteStart = index.get('byteStart')
-      if byteStart is not None:
-        tag['startIndex'] = len(text.encode()[:byteStart].decode())
-      byteEnd = index.get('byteEnd')
-      facet_text = text.encode()[byteStart:byteEnd].decode()
-      if byteStart is not None:
-        tag['length'] = len(facet_text)
+      byte_start = index.get('byteStart')
+      if byte_start is not None:
+        tag['startIndex'] = len(text.encode()[:byte_start].decode())
+      byte_end = index.get('byteEnd')
+      if byte_end is not None:
+        tag['displayName'] = text.encode()[byte_start:byte_end].decode()
+        tag['length'] = len(tag['displayName'])
 
-      tag['displayName'] = facet_text
       tags.append(tag)
 
     in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
@@ -476,9 +475,9 @@ def to_as1(obj, type=None):
     if embed_type == 'app.bsky.embed.images#view':
       ret['image'] = to_as1(embed)
     elif embed_type == 'app.bsky.embed.external#view':
-      ret['tags'] = [to_as1(embed)]
+      ret.setdefault('tags', []).append(to_as1(embed))
     elif embed_type == 'app.bsky.embed.record#view':
-      ret['attachments'] = [to_as1(embed)]
+      ret.setdefault('attachments', []).append(to_as1(embed))
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
