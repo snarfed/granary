@@ -21,7 +21,8 @@
       "images": [{
         "$type": "app.bsky.embed.images#viewImage",
         "thumb": "http://example.com/blog-post-123/image",
-        "fullsize": "http://example.com/blog-post-123/image"
+        "fullsize": "http://example.com/blog-post-123/image",
+        "alt": ""
       }]
     },
     "replyCount": 0,

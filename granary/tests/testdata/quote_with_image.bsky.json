@@ -1,0 +1,48 @@
+{
+  "$type": "app.bsky.feed.defs#feedViewPost",
+  "post": {
+    "$type": "app.bsky.feed.defs#postView",
+    "uri": "at://did/collection/quote-post-tid",
+    "cid": "TODO",
+    "record": {
+      "$type": "app.bsky.feed.post",
+      "text": "I hereby quote",
+      "createdAt": "2007-07-07T03:04:05",
+      "embed": {
+        "$type": "app.bsky.embed.record",
+        "record": {
+          "cid": "TODO",
+          "uri": "at://did/collection/orig-post-tid"
+        }
+      }
+    },
+    "indexedAt": "2022-01-02T03:04:05+00:00",
+    "embed": {
+      "$type": "app.bsky.embed.record#view",
+      "record": {
+        "$type": "app.bsky.embed.record#viewRecord",
+        "uri": "at://did/collection/orig-post-tid",
+        "cid": "TODO",
+        "embed": {
+          "$type": "app.bsky.embed.images#view",
+          "images": [{
+            "$type": "app.bsky.embed.images#viewImage",
+            "alt": "",
+            "fullsize": "https://cdn.bsky.social/imgproxy/foo/pv7fudn@jpeg",
+            "thumb": "https://cdn.bsky.social/imgproxy/foo/pv7fudn@jpeg"
+          }]
+        },
+        "indexedAt": "2022-01-02T03:04:05+00:00",
+        "value": {
+          "$type": "app.bsky.feed.post",
+          "createdAt": "2023-05-11T19:59:12Z",
+          "text": "An original post"
+        }
+      }
+    },
+    "replyCount": 0,
+    "repostCount": 0,
+    "upvoteCount": 0,
+    "downvoteCount": 0
+  }
+}

@@ -251,7 +251,7 @@ def from_as1(obj, from_url=None):
           '$type': 'app.bsky.embed.images#viewImage',
           'thumb': img.get('url'),
           'fullsize': img.get('url'),
-          'alt': img.get('displayName'),
+          'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }
       # TODO: is there any reasonable way for us to generate blobs?
@@ -337,6 +337,7 @@ def from_as1(obj, from_url=None):
 
   # keep some fields that are required by lexicons
   return util.trim_nulls(ret, ignore=(
+    'alt',
     'createdAt',
     'description',
     'did',
@@ -470,14 +471,14 @@ def to_as1(obj, type=None):
       'author': to_as1(author, type='app.bsky.actor.defs#profileViewBasic'),
     })
 
-    embed = obj.get('embed') or {}
-    embed_type = embed.get('$type')
-    if embed_type == 'app.bsky.embed.images#view':
-      ret['image'] = to_as1(embed)
-    elif embed_type == 'app.bsky.embed.external#view':
-      ret.setdefault('tags', []).append(to_as1(embed))
-    elif embed_type == 'app.bsky.embed.record#view':
-      ret.setdefault('attachments', []).append(to_as1(embed))
+    for embed in util.get_list(obj, 'embeds') + util.get_list(obj, 'embed'):
+      embed_type = embed.get('$type')
+      if embed_type == 'app.bsky.embed.images#view':
+        ret.setdefault('image', []).extend(to_as1(embed))
+      elif embed_type == 'app.bsky.embed.external#view':
+        ret.setdefault('tags', []).append(to_as1(embed))
+      elif embed_type == 'app.bsky.embed.record#view':
+        ret.setdefault('attachments', []).append(to_as1(embed))
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
