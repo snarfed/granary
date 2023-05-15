@@ -296,6 +296,7 @@ _Non-breaking changes:_
   * Implement `Bluesky` API class, including `get_activities`.
   * Update for [`app.bsky` lexicons refactor](https://github.com/bluesky-social/atproto/commit/7f008c05a09c6dcf42dcac2819210138af42835c).
   * Convert reposts, quotes, inline links, and mentions, both directions. Includes Bluesky facet (rich text) support.
+  * Handle quote posts with attached images, both directions.
   * `from_as1`: handle link tags without start/end indices.
   * `to_as1`: add new `type` kwarg.
   * `to_as1`: generate staging.bsky.app profile and post URLs.

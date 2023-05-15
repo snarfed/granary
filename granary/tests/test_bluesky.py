@@ -139,7 +139,8 @@ POST_AS_IMAGES['object']['image'] = [{
   'url': 'http://my/pic',
   'displayName': 'my alt text',
 }]
-EMBED_IMAGES = {
+POST_BSKY_IMAGES = copy.deepcopy(POST_BSKY)
+POST_BSKY_IMAGES['post']['embed'] = {
   '$type': 'app.bsky.embed.images#view',
   'images': [{
     '$type': 'app.bsky.embed.images#viewImage',
@@ -148,8 +149,14 @@ EMBED_IMAGES = {
     'thumb': 'http://my/pic',
   }],
 }
-POST_BSKY_IMAGES = copy.deepcopy(POST_BSKY)
-POST_BSKY_IMAGES['post']['embed'] = EMBED_IMAGES
+POST_BSKY_IMAGES['post']['record']['embed'] = {
+  '$type': 'app.bsky.embed.images',
+  'images': [{
+    '$type': 'app.bsky.embed.images#image',
+    'alt': 'my alt text',
+    'image': 'TODO',
+  }],
+}
 
 REPLY_AS = {
   'objectType': 'activity',

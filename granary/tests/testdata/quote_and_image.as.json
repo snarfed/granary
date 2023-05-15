@@ -1,0 +1,11 @@
+{
+  "objectType": "note",
+  "content": "I hereby quote",
+  "attachments": [{
+    "objectType": "note",
+    "content": "An original post"
+  }],
+  "image": [{
+    "url": "http://pic"
+  }]
+}

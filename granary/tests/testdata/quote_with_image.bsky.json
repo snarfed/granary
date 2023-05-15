@@ -36,7 +36,15 @@
         "value": {
           "$type": "app.bsky.feed.post",
           "createdAt": "2023-05-11T19:59:12Z",
-          "text": "An original post"
+          "text": "An original post",
+          "embed": {
+            "$type": "app.bsky.embed.images",
+            "images": [{
+              "$type": "app.bsky.embed.images#image",
+              "alt": "",
+              "image": "TODO"
+            }]
+          }
         }
       }
     },

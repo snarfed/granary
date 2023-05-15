@@ -242,10 +242,10 @@ def from_as1(obj, from_url=None):
         facets.append(facet)
 
     # images
-    post_embed = record_embed = None
+    images_embed = post_embed = post_record_embed = images_record_embed = None
     images = util.get_list(obj, 'image')
     if images:
-      post_embed = {
+      images_embed = {
         '$type': 'app.bsky.embed.images#view',
         'images': [{
           '$type': 'app.bsky.embed.images#viewImage',
@@ -254,15 +254,14 @@ def from_as1(obj, from_url=None):
           'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }
-      # TODO: is there any reasonable way for us to generate blobs?
-      # record_embed = {
-      #   '$type': 'app.bsky.embed.images',
-      #   'images': [{
-      #     '$type': 'app.bsky.embed.images#image',
-      #     'image': TODO: this is a blob
-      #     'alt': img.get('displayName'),
-      #   } for img in images[:4]],
-      # }
+      images_record_embed = {
+        '$type': 'app.bsky.embed.images',
+        'images': [{
+          '$type': 'app.bsky.embed.images#image',
+          'image': 'TODO',  # this is a $type: blob
+          'alt': img.get('displayName') or '',
+        } for img in images[:4]],
+      }
 
     # attachments
     for att in util.get_list(obj, 'attachments'):
@@ -281,13 +280,29 @@ def from_as1(obj, from_url=None):
             'upvoteCount': None,
           },
         }
-        record_embed = {
+        post_record_embed = {
           '$type': 'app.bsky.embed.record',
           'record': {
             'cid': 'TODO',
             'uri': att.get('id') or att.get('url'),
           }
         }
+
+    if images_embed and post_embed:
+      embed = {
+        '$type': 'app.bsky.embed.recordWithMedia#view',
+        'record': post_embed,
+        'media': images_embed,
+      }
+      record_embed = {
+        '$type': 'app.bsky.embed.recordWithMedia',
+        'record': post_record_embed,
+        'media' : images_record_embed,
+      }
+
+    else:
+      embed = images_embed or post_embed
+      record_embed = images_record_embed or post_record_embed
 
     author = as1.get_object(obj, 'author')
     ret = {
@@ -307,7 +322,7 @@ def from_as1(obj, from_url=None):
           **from_as1(author),
           '$type': 'app.bsky.actor.defs#profileViewBasic',
         } if author else None,
-        'embed': post_embed,
+        'embed': embed,
         'replyCount': 0,
         'repostCount': 0,
         'upvoteCount': 0,
@@ -479,6 +494,10 @@ def to_as1(obj, type=None):
         ret.setdefault('tags', []).append(to_as1(embed))
       elif embed_type == 'app.bsky.embed.record#view':
         ret.setdefault('attachments', []).append(to_as1(embed))
+      elif embed_type == 'app.bsky.embed.recordWithMedia#view':
+        ret.setdefault('image', []).extend(to_as1(embed.get('media')))
+        ret.setdefault('attachments', []).append(to_as1(
+          embed.get('record', {}).get('record')))
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
