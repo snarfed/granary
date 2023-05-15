@@ -214,8 +214,8 @@ def from_as1(obj, from_url=None):
         if type == 'mention':
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#mention',
-            'did': (url.removeprefix('https://staging.bsky.app/profile/')
-                    if url.startswith('https://staging.bsky.app/profile/did:')
+            'did': (url.removeprefix(f'{Bluesky.BASE_URL}/profile/')
+                    if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
                     else ''),
           }]
         elif type in ('link', 'article', 'note') or url:
