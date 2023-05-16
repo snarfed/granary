@@ -114,18 +114,22 @@ EMBED_EXTERNAL = {
   'title': 'a link',
   'uri': 'http://my/link',
 }
-EMBED_EXTERNAL_TAG = {
-  'type': 'link',
+EMBED_EXTERNAL_ATTACHMENT = {
+  'objectType': 'link',
   'url': 'http://my/link',
   'displayName': 'a link',
+}
+POST_AS_EMBED = {
+  **POST_AS['object'],
+  'attachments': [EMBED_EXTERNAL_ATTACHMENT],
 }
 POST_BSKY_EMBED = copy.deepcopy(POST_BSKY)
 POST_BSKY_EMBED['post']['record']['embed'] = {
   '$type': 'app.bsky.embed.external',
-  'external': [{
+  'external': {
     '$type': 'app.bsky.embed.external#external',
     **EMBED_EXTERNAL,
-  }],
+  },
 }
 POST_BSKY_EMBED['post']['embed'] = {
   '$type': 'app.bsky.embed.external#view',
@@ -361,6 +365,18 @@ class BlueskyTest(testutil.TestCase):
       'id': 'tag:foo.com,2001:bar',
     })['did'])
 
+  def test_from_as1_embed(self):
+    self.assert_equals(POST_BSKY_EMBED, from_as1(POST_AS_EMBED))
+
+  def test_from_as1_facet_link_and_embed(self):
+    expected = copy.deepcopy(POST_BSKY_EMBED)
+    expected['post']['record']['facets'] = FACETS
+
+    self.assert_equals(expected, from_as1({
+      **POST_AS_EMBED,
+      'tags': [FACET_TAG],
+    }))
+
   def test_as1_to_profile(self):
     self.assert_equals(ACTOR_PROFILE_BSKY, as1_to_profile(ACTOR_AS))
 
@@ -400,13 +416,16 @@ class BlueskyTest(testutil.TestCase):
     with self.assertRaises(ValueError):
       to_as1({'$type': 'app.bsky.foo'})
 
+  def test_to_as1_embed(self):
+    self.assert_equals(POST_AS_EMBED, to_as1(POST_BSKY_EMBED))
+
   def test_to_as1_facet_link_and_embed(self):
     bsky = copy.deepcopy(POST_BSKY_EMBED)
     bsky['post']['record']['facets'] = FACETS
 
     expected = {
-      **POST_AS['object'],
-      'tags': [FACET_TAG, EMBED_EXTERNAL_TAG],
+      **POST_AS_EMBED,
+      'tags': [FACET_TAG],
     }
     self.assert_equals(expected, to_as1(bsky))
 

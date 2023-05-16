@@ -228,7 +228,8 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 <span id="activity_id_span">
   <label for="activity_id"> / </label>
   <input id="activity_id" name="activity_id" type="text" class="form-control"
-         placeholder="activity id (optional)" size="12" />
+         placeholder="activity id (optional)"
+         size="{% if site == 'bluesky' %} 32 {% else %} 12{% endif %}"" />
 </span>
 
 ?

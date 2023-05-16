@@ -194,11 +194,11 @@ def from_as1(obj, from_url=None):
       'createdAt': obj.get('published', ''),
     }
 
-  elif verb == 'post' and type in ('article', 'mention', 'note', 'comment'):
+  elif verb == 'post' and type in ('article', 'comment', 'link', 'mention', 'note'):
     # convert text to HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
-    text = obj.get('summary') or content or obj.get('name')
+    text = obj.get('summary') or content or obj.get('name') or ''
     text = src.truncate(text, None, OMIT_LINK)
 
     facets = []
@@ -218,7 +218,7 @@ def from_as1(obj, from_url=None):
                     if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
                     else ''),
           }]
-        elif type in ('link', 'article', 'note') or url:
+        elif type in ('article', 'link', 'note') or url:
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#link',
             'uri': url,
@@ -263,16 +263,23 @@ def from_as1(obj, from_url=None):
         } for img in images[:4]],
       }
 
-    # attachments
+    # article/note attachments
     for att in util.get_list(obj, 'attachments'):
-      if att.get('objectType') in ('note', 'article'):
+      if not att.get('objectType') in ('article', 'link', 'note'):
+        continue
+
+      id = att.get('id') or ''
+      url = att.get('url') or ''
+      if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
+          url.startswith('at://') or url.startswith(Bluesky.BASE_URL)):
+        # quoted Bluesky post
         post_embed_record = from_as1(att).get('post')
         post_embed_record['value'] = post_embed_record.pop('record', None)
         post_embed = {
-          '$type': 'app.bsky.embed.record#view',
+          '$type': f'app.bsky.embed.record#view',
           'record': {
             **post_embed_record,
-            '$type': 'app.bsky.embed.record#viewRecord',
+            '$type': f'app.bsky.embed.record#viewRecord',
             # override these so that trim_nulls below will remove them
             'downvoteCount': None,
             'replyCount': None,
@@ -281,12 +288,33 @@ def from_as1(obj, from_url=None):
           },
         }
         post_record_embed = {
-          '$type': 'app.bsky.embed.record',
+          '$type': f'app.bsky.embed.record',
           'record': {
             'cid': 'TODO',
-            'uri': att.get('id') or att.get('url'),
+            'uri': id or url,
           }
         }
+
+      else:
+        # external link
+        post_record_embed = {
+          '$type': f'app.bsky.embed.external',
+          'external': {
+            '$type': f'app.bsky.embed.external#external',
+            'uri': url or id,
+            'title': att.get('displayName'),
+            'description': att.get('summary') or att.get('content') or '',
+          }
+        }
+        post_embed = {
+          '$type': f'app.bsky.embed.external#view',
+          'external': {
+            **post_record_embed['external'],
+            '$type': f'app.bsky.embed.external#viewExternal',
+            'thumb': util.get_first(att, 'image'),
+          },
+        }
+
 
     if images_embed and post_embed:
       embed = {
@@ -486,13 +514,13 @@ def to_as1(obj, type=None):
       'author': to_as1(author, type='app.bsky.actor.defs#profileViewBasic'),
     })
 
+    # convert embeds to attachments
     for embed in util.get_list(obj, 'embeds') + util.get_list(obj, 'embed'):
       embed_type = embed.get('$type')
       if embed_type == 'app.bsky.embed.images#view':
         ret.setdefault('image', []).extend(to_as1(embed))
-      elif embed_type == 'app.bsky.embed.external#view':
-        ret.setdefault('tags', []).append(to_as1(embed))
-      elif embed_type == 'app.bsky.embed.record#view':
+      elif embed_type in ('app.bsky.embed.external#view',
+                          'app.bsky.embed.record#view'):
         ret.setdefault('attachments', []).append(to_as1(embed))
       elif embed_type == 'app.bsky.embed.recordWithMedia#view':
         ret.setdefault('image', []).extend(to_as1(embed.get('media')))
@@ -510,7 +538,7 @@ def to_as1(obj, type=None):
 
   elif type == 'app.bsky.embed.external#viewExternal':
     ret = {
-      'type': 'link',
+      'objectType': 'link',
       'url': obj.get('uri'),
       'displayName': obj.get('title'),
       'content': obj.get('description'),
