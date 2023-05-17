@@ -1,0 +1,63 @@
+{
+  "$type": "app.bsky.feed.defs#feedViewPost",
+  "post": {
+    "$type": "app.bsky.feed.defs#postView",
+    "uri": "",
+    "cid": "TODO",
+    "record": {
+      "$type": "app.bsky.feed.post",
+      "text": "I hereby quote",
+      "createdAt": "",
+      "embed": {
+        "$type": "app.bsky.embed.recordWithMedia",
+        "record" : {
+          "$type" : "app.bsky.embed.record",
+          "record": {
+            "cid": "TODO",
+            "uri": "at://did/collection/orig-post-tid"
+          }
+        },
+        "media": {
+          "$type": "app.bsky.embed.external",
+          "external": {
+            "$type": "app.bsky.embed.external#external",
+            "uri" : "https://youtu.be/6rgStv12dwA",
+            "title" : "Baby Bash - Suga Suga ft. Frankie J",
+            "description" : "Music video by Baby Bash performing Suga Suga"
+          }
+        }
+      }
+    },
+    "indexedAt": "2022-01-02T03:04:05+00:00",
+    "embed": {
+      "$type": "app.bsky.embed.recordWithMedia#view",
+      "record": {
+        "$type": "app.bsky.embed.record#view",
+        "record": {
+          "$type": "app.bsky.embed.record#viewRecord",
+          "uri": "at://did/collection/orig-post-tid",
+          "cid": "TODO",
+          "indexedAt": "2022-01-02T03:04:05+00:00",
+          "value": {
+            "$type": "app.bsky.feed.post",
+            "text": "An original post",
+            "createdAt": ""
+          }
+        }
+      },
+      "media": {
+        "$type": "app.bsky.embed.external#view",
+        "external": {
+          "$type": "app.bsky.embed.external#viewExternal",
+          "uri" : "https://youtu.be/6rgStv12dwA",
+          "title" : "Baby Bash - Suga Suga ft. Frankie J",
+          "description" : "Music video by Baby Bash performing Suga Suga"
+        }
+      }
+    },
+    "replyCount": 0,
+    "repostCount": 0,
+    "upvoteCount": 0,
+    "downvoteCount": 0
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "objectType": "note",
+  "content": "I hereby quote",
+  "attachments": [{
+    "objectType": "note",
+    "id": "at://did/collection/orig-post-tid",
+    "url": "https://staging.bsky.app/profile/did/post/orig-post-tid",
+    "content": "An original post"
+  }, {
+    "objectType": "link",
+    "url" : "https://youtu.be/6rgStv12dwA",
+    "displayName" : "Baby Bash - Suga Suga ft. Frankie J",
+    "summary" : "Music video by Baby Bash performing Suga Suga"
+  }]
+}

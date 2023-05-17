@@ -517,15 +517,25 @@ def to_as1(obj, type=None):
     # convert embeds to attachments
     for embed in util.get_list(obj, 'embeds') + util.get_list(obj, 'embed'):
       embed_type = embed.get('$type')
+
       if embed_type == 'app.bsky.embed.images#view':
         ret.setdefault('image', []).extend(to_as1(embed))
+
       elif embed_type in ('app.bsky.embed.external#view',
                           'app.bsky.embed.record#view'):
         ret.setdefault('attachments', []).append(to_as1(embed))
+
       elif embed_type == 'app.bsky.embed.recordWithMedia#view':
-        ret.setdefault('image', []).extend(to_as1(embed.get('media')))
         ret.setdefault('attachments', []).append(to_as1(
           embed.get('record', {}).get('record')))
+        media = embed.get('media')
+        media_type = media.get('$type')
+        if media_type == 'app.bsky.embed.external#view':
+          ret.setdefault('attachments', []).append(to_as1(media))
+        elif media_type == 'app.bsky.embed.images#view':
+          ret.setdefault('image', []).extend(to_as1(media))
+        else:
+          assert False, f'Unknown embed media type: {media_type}'
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
@@ -541,7 +551,7 @@ def to_as1(obj, type=None):
       'objectType': 'link',
       'url': obj.get('uri'),
       'displayName': obj.get('title'),
-      'content': obj.get('description'),
+      'summary': obj.get('description'),
       'image': obj.get('thumb'),
     }
 
