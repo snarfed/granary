@@ -242,8 +242,9 @@ def from_as1(obj, from_url=None):
         facets.append(facet)
 
     # images
-    images_embed = post_embed = post_record_embed = images_record_embed = None
+    images_embed = images_record_embed = None
     images = util.get_list(obj, 'image')
+
     if images:
       images_embed = {
         '$type': 'app.bsky.embed.images#view',
@@ -264,6 +265,8 @@ def from_as1(obj, from_url=None):
       }
 
     # article/note attachments
+    record_embed = record_record_embed = external_embed = external_record_embed = None
+
     for att in util.get_list(obj, 'attachments'):
       if not att.get('objectType') in ('article', 'link', 'note'):
         continue
@@ -273,12 +276,12 @@ def from_as1(obj, from_url=None):
       if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
           url.startswith('at://') or url.startswith(Bluesky.BASE_URL)):
         # quoted Bluesky post
-        post_embed_record = from_as1(att).get('post')
-        post_embed_record['value'] = post_embed_record.pop('record', None)
-        post_embed = {
+        embed = from_as1(att).get('post')
+        embed['value'] = embed.pop('record', None)
+        record_embed = {
           '$type': f'app.bsky.embed.record#view',
           'record': {
-            **post_embed_record,
+            **embed,
             '$type': f'app.bsky.embed.record#viewRecord',
             # override these so that trim_nulls below will remove them
             'downvoteCount': None,
@@ -287,17 +290,16 @@ def from_as1(obj, from_url=None):
             'upvoteCount': None,
           },
         }
-        post_record_embed = {
+        record_record_embed = {
           '$type': f'app.bsky.embed.record',
           'record': {
             'cid': 'TODO',
             'uri': id or url,
           }
         }
-
       else:
         # external link
-        post_record_embed = {
+        external_record_embed = {
           '$type': f'app.bsky.embed.external',
           'external': {
             '$type': f'app.bsky.embed.external#external',
@@ -306,62 +308,35 @@ def from_as1(obj, from_url=None):
             'description': att.get('summary') or att.get('content') or '',
           }
         }
-        post_embed = {
+        external_embed = {
           '$type': f'app.bsky.embed.external#view',
           'external': {
-            **post_record_embed['external'],
+            **external_record_embed['external'],
             '$type': f'app.bsky.embed.external#viewExternal',
             'thumb': util.get_first(att, 'image'),
           },
         }
 
-
-    if images_embed and post_embed:
+    if record_embed and (images_embed or external_embed):
       embed = {
         '$type': 'app.bsky.embed.recordWithMedia#view',
-        'record': post_embed,
-        'media': images_embed,
+        'record': record_embed,
+        'media': images_embed or external_embed,
       }
       record_embed = {
         '$type': 'app.bsky.embed.recordWithMedia',
-        'record': post_record_embed,
-        'media' : images_record_embed,
+        'record': record_record_embed,
+        'media' : images_record_embed or external_record_embed,
       }
-
     else:
-      embed = images_embed or post_embed
-      record_embed = images_record_embed or post_record_embed
+      embed = record_embed or images_embed or external_embed
+      record_embed = record_record_embed or images_record_embed or external_record_embed
 
-    author = as1.get_object(obj, 'author')
-    ret = {
-      '$type': 'app.bsky.feed.defs#feedViewPost',
-      'post': {
-        '$type': 'app.bsky.feed.defs#postView',
-        'uri': obj.get('id') or obj.get('url') or '',
-        'cid': 'TODO',
-        'record': {
-          '$type': 'app.bsky.feed.post',
-          'text': text,
-          'createdAt': obj.get('published', ''),
-          'embed': record_embed,
-          'facets': facets,
-        },
-        'author': {
-          **from_as1(author),
-          '$type': 'app.bsky.actor.defs#profileViewBasic',
-        } if author else None,
-        'embed': embed,
-        'replyCount': 0,
-        'repostCount': 0,
-        'upvoteCount': 0,
-        'downvoteCount': 0,
-        'indexedAt': util.now().isoformat(),
-      },
-    }
-
+    # in reply to
+    reply = None
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
-      ret['post']['record']['reply'] = {
+      reply = {
         '$type': 'app.bsky.feed.post#replyRef',
         'root': {
           '$type': 'com.atproto.repo.strongRef',
@@ -374,6 +349,38 @@ def from_as1(obj, from_url=None):
           'cid': 'TODO',
         },
       }
+
+    # author
+    author = as1.get_object(obj, 'author')
+    if author:
+      author = {
+        **from_as1(author),
+        '$type': 'app.bsky.actor.defs#profileViewBasic',
+      }
+
+    ret = {
+      '$type': 'app.bsky.feed.defs#feedViewPost',
+      'post': {
+        '$type': 'app.bsky.feed.defs#postView',
+        'uri': obj.get('id') or obj.get('url') or '',
+        'cid': 'TODO',
+        'record': {
+          '$type': 'app.bsky.feed.post',
+          'text': text,
+          'createdAt': obj.get('published', ''),
+          'embed': record_embed,
+          'facets': facets,
+          'reply': reply
+        },
+        'author': author,
+        'embed': embed,
+        'replyCount': 0,
+        'repostCount': 0,
+        'upvoteCount': 0,
+        'downvoteCount': 0,
+        'indexedAt': util.now().isoformat(),
+      },
+    }
 
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
