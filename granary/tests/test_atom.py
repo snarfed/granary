@@ -834,7 +834,7 @@ going to Homebrew Website Club
     got = atom.activities_to_atom([activity], {})
     self.assertEqual(1, got.count('<img class="u-photo" src="http://pics/1.jpg?x&amp;y" alt="" />'), got)
     self.assertIn('<link rel="enclosure" href="http://pics/1.jpg?x&amp;y"', got)
-    self.assertNotIn('<img class="u-photo" src="http://pics/2.jpg" alt="" />', got, got)
+    self.assertNotIn('<link rel="enclosure" href="http://pics/2.jpg"', got, got)
 
   def test_image_attachment(self):
     got = atom.activities_to_atom([{

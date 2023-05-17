@@ -391,11 +391,14 @@ def _prepare_activity(a, reader=True):
       image_atts.append(as1.get_object(att, 'image') or att)
       continue
 
-    image_urls_seen |= set(util.get_urls(att, 'image'))
     if type in ('note', 'article', 'comment'):
+      # only render this attachment's images if at least one is new
+      images = set(util.get_urls(att, 'image'))
+      render_image = bool(images - image_urls_seen)
+      image_urls_seen |= images
       html = microformats2.render_content(
         att, include_location=reader, render_attachments=True,
-        white_space_pre=False)
+        render_image=render_image, white_space_pre=False)
       author = att.get('author')
       if author:
         name = microformats2.maybe_linked_name(
