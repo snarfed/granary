@@ -1,13 +1,13 @@
 {
   "objectType": "note",
   "id": "at://did/collection/quote-post-tid",
-  "url": "https://staging.bsky.app/profile/did/post/quote-post-tid",
+  "url": "https://bsky.app/profile/did/post/quote-post-tid",
   "content": "I hereby quote",
   "published": "2007-07-07T03:04:05",
   "attachments": [{
     "objectType": "note",
     "id": "at://did/collection/orig-post-tid",
-    "url": "https://staging.bsky.app/profile/did/post/orig-post-tid",
+    "url": "https://bsky.app/profile/did/post/orig-post-tid",
     "content": "An original post",
     "published": "2023-05-11T19:59:12Z",
     "image": [{

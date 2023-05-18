@@ -1,26 +1,26 @@
 {
   "objectType": "note",
   "id": "at://did/collection/quote-post-tid",
-  "url": "https://staging.bsky.app/profile/bob.bsky.social/post/quote-post-tid",
+  "url": "https://bsky.app/profile/bob.bsky.social/post/quote-post-tid",
   "content": "I hereby quote",
   "published": "2007-07-07T03:04:05",
   "author": {
     "objectType": "person",
     "id": "did:plc:r72exhka",
-    "url": "https://staging.bsky.app/profile/bob.bsky.social",
+    "url": "https://bsky.app/profile/bob.bsky.social",
     "displayName": "Bob",
     "image": [{"url": "https://cdn.bsky.social/imgproxy/bob/r72exhka@jpeg"}]
   },
   "attachments": [{
     "objectType": "note",
     "id": "at://did/collection/orig-post-tid",
-    "url": "https://staging.bsky.app/profile/alice.example.com/post/orig-post-tid",
+    "url": "https://bsky.app/profile/alice.example.com/post/orig-post-tid",
     "content": "An original post",
     "published": "2023-05-11T19:59:12Z",
     "author": {
       "objectType": "person",
       "id": "did:plc:pv7fudn",
-      "url": "https://staging.bsky.app/profile/alice.example.com",
+      "url": "https://bsky.app/profile/alice.example.com",
       "displayName": "Alice",
       "image": [{"url": "https://cdn.bsky.social/imgproxy/alice/pv7fudn@jpeg"}]
     }

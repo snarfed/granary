@@ -48,7 +48,7 @@ POST_AS = {
   'object': {
     'objectType': 'note',
     'id': 'at://did/collection/tid',
-    'url': 'https://staging.bsky.app/profile/did/post/tid',
+    'url': 'https://bsky.app/profile/did/post/tid',
     'published': '2007-07-07T03:04:05',
     'content': 'My original post',
   }
@@ -81,10 +81,10 @@ POST_BSKY = {
 POST_AUTHOR_AS = copy.deepcopy(POST_AS)
 POST_AUTHOR_AS['object'].update({
   'author': ACTOR_AS,
-  'url': 'https://staging.bsky.app/profile/alice.com/post/tid',
+  'url': 'https://bsky.app/profile/alice.com/post/tid',
 })
 POST_AUTHOR_PROFILE_AS = copy.deepcopy(POST_AUTHOR_AS)
-POST_AUTHOR_PROFILE_AS['object']['author']['url'] = 'https://staging.bsky.app/profile/alice.com'
+POST_AUTHOR_PROFILE_AS['object']['author']['url'] = 'https://bsky.app/profile/alice.com'
 POST_AUTHOR_BSKY = copy.deepcopy(POST_BSKY)
 POST_AUTHOR_BSKY['post']['author'] = {
   **ACTOR_PROFILE_VIEW_BSKY,
@@ -170,10 +170,10 @@ REPLY_AS = {
     'published': '2008-08-08T03:04:05',
     'content': 'I hereby reply to this',
     'id': 'at://did/collection/tid',
-    'url': 'https://staging.bsky.app/profile/did/post/tid',
+    'url': 'https://bsky.app/profile/did/post/tid',
     'inReplyTo': [{
       'id': 'at://did/collection/parent-tid',
-      'url': 'https://staging.bsky.app/profile/did/post/parent-tid',
+      'url': 'https://bsky.app/profile/did/post/parent-tid',
     }],
   },
 }
@@ -215,7 +215,7 @@ REPOST_AS = {
     'objectType' : 'person',
     'id': 'did:web:bob.com',
     'displayName': 'Bob',
-    'url': 'https://staging.bsky.app/profile/bob.com',
+    'url': 'https://bsky.app/profile/bob.com',
   },
   # 'content': 'A compelling post',
   'object': POST_AUTHOR_PROFILE_AS['object'],
@@ -278,14 +278,14 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual('https://bar.com/baz/baj', did_web_to_url('did:web:bar.com:baz:baj'))
 
   def test_user_url(self):
-    self.assertEqual('https://staging.bsky.app/profile/snarfed.org',
+    self.assertEqual('https://bsky.app/profile/snarfed.org',
                      Bluesky.user_url('snarfed.org'))
 
-    self.assertEqual('https://staging.bsky.app/profile/snarfed.org',
+    self.assertEqual('https://bsky.app/profile/snarfed.org',
                      Bluesky.user_url('@snarfed.org'))
 
   def test_post_url(self):
-    self.assertEqual('https://staging.bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
+    self.assertEqual('https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
                      Bluesky.post_url('snarfed.org', '3jv3wdw2hkt25'))
 
   def test_at_uri_to_web_url(self):
@@ -293,10 +293,10 @@ class BlueskyTest(testutil.TestCase):
 
     at_uri = 'at://did:plc:asdf/app.bsky.feed.post/3jv3wdw2hkt25'
     self.assertEqual(
-      'https://staging.bsky.app/profile/did:plc:asdf/post/3jv3wdw2hkt25',
+      'https://bsky.app/profile/did:plc:asdf/post/3jv3wdw2hkt25',
       at_uri_to_web_url(at_uri))
     self.assertEqual(
-      'https://staging.bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
+      'https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
       at_uri_to_web_url(at_uri, handle='snarfed.org'))
 
     with self.assertRaises(ValueError):

@@ -86,14 +86,14 @@ def did_web_to_url(did):
 
 
 def at_uri_to_web_url(uri, handle=None):
-  """Converts an at:// URI to a https://staging.bsky.app URL.
+  """Converts an at:// URI to a https://bsky.app URL.
 
   Args:
     uri: str, at:// URI
     handle: str, optional user handle. If not provided, defaults to the DID in uri.
 
   Returns:
-    str, https://staging.bsky.app URL
+    str, https://bsky.app URL
   """
   if not uri:
     return None
@@ -607,8 +607,8 @@ class Bluesky(Source):
     access_token: str
   """
 
-  DOMAIN = 'staging.bsky.app'
-  BASE_URL = 'https://staging.bsky.app'
+  DOMAIN = 'bsky.app'
+  BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
 
