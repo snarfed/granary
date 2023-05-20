@@ -161,7 +161,7 @@ class ApiTest(testutil.TestCase):
   def test_as1_xml_format(self):
     resp = self.get_response('/fake/?format=as1-xml')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('application/xml', resp.headers['Content-Type'])
+    self.assertEqual('application/xml; charset=utf-8', resp.headers['Content-Type'])
     self.assert_multiline_equals("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
@@ -180,7 +180,7 @@ class ApiTest(testutil.TestCase):
   def test_xml_format(self):
     resp = self.get_response('/fake/?format=xml')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('application/xml', resp.headers['Content-Type'])
+    self.assertEqual('application/xml; charset=utf-8', resp.headers['Content-Type'])
 
   def test_as2_format(self):
     resp = self.get_response('/fake/?format=as2')
@@ -198,7 +198,8 @@ class ApiTest(testutil.TestCase):
         # include access_token param to check that it gets stripped
         resp = self.get_response('/fake/?format=atom&access_token=foo&a=b&cache=false')
         self.assertEqual(200, resp.status_code)
-        self.assertEqual('application/atom+xml', resp.headers['Content-Type'])
+        self.assertEqual('application/atom+xml; charset=utf-8',
+                         resp.headers['Content-Type'])
         self.assert_multiline_equals(
           test_module.ATOM % {
             'request_url': 'http://localhost/fake/?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
@@ -210,12 +211,12 @@ class ApiTest(testutil.TestCase):
   def test_html_format(self):
     resp = self.get_response('/fake/?format=html')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('text/html', resp.headers['Content-Type'])
+    self.assertEqual('text/html; charset=utf-8', resp.headers['Content-Type'])
 
   def test_rss_format(self):
     resp = self.get_response('/fake/?format=rss')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('application/rss+xml', resp.headers['Content-Type'])
+    self.assertEqual('application/rss+xml; charset=utf-8', resp.headers['Content-Type'])
 
   def test_unknown_format(self):
     resp = self.get_response('/fake/?format=bad')
@@ -289,7 +290,7 @@ class ApiTest(testutil.TestCase):
   def test_http_head(self):
     resp = self.get_response('/fake/?format=html', method='HEAD')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('text/html', resp.headers['Content-Type'])
+    self.assertEqual('text/html; charset=utf-8', resp.headers['Content-Type'])
     self.assertEqual('', resp.get_data(as_text=True))
 
   def test_unknown_site(self):

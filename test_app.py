@@ -421,7 +421,7 @@ class AppTest(testutil.TestCase):
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('text/html', resp.headers['Content-Type'])
+    self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
 <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
@@ -444,7 +444,7 @@ baz baj
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('text/html', resp.headers['Content-Type'])
+    self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
 <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>

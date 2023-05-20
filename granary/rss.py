@@ -26,7 +26,7 @@ from . import as1, microformats2
 
 logger = logging.getLogger(__name__)
 
-CONTENT_TYPE = 'application/rss+xml'
+CONTENT_TYPE = 'application/rss+xml; charset=utf-8'
 # allowed ActivityStreams objectTypes for media enclosures
 ENCLOSURE_TYPES = {'audio', 'video'}
 

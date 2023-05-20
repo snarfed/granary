@@ -105,17 +105,17 @@ SCOPE_OVERRIDES = {
 FORMATS = {
   'activitystreams': as1.CONTENT_TYPE,
   'as1': as1.CONTENT_TYPE,
-  'as1-xml': 'application/xml',
+  'as1-xml': 'application/xml; charset=utf-8',
   'as2': as2.CONTENT_TYPE,
   'atom': atom.CONTENT_TYPE,
   'bluesky': 'application/json',
-  'html': 'text/html',
+  'html': 'text/html; charset=utf-8',
   'json': 'application/json',
   'json-mf2': 'application/mf2+json',
   'jsonfeed': 'application/json',
   'mf2-json': 'application/mf2+json',
   'rss': rss.CONTENT_TYPE,
-  'xml': 'application/xml',
+  'xml': 'application/xml; charset=utf-8',
 }
 XML_TEMPLATE = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -322,12 +322,12 @@ def scraped(_):
   if site != 'instagram':
     raise BadRequest(f'Invalid site: {site}, expected instagram')
 
-  expected_types = (FORMATS['json'], FORMATS['html'])
+  expected_types = (FORMATS['json'].split(';')[0], FORMATS['html'].split(';')[0])
   body = type = None
 
   # MIME multipart
   for name, file in request.files.items():
-    type = file.mimetype
+    type = file.mimetype.split(';')[0]
     body = file.read().decode(file.mimetype_params.get('charset') or 'utf-8')
     logger.debug(f'Examining MIME multipart file {name} {file.filename} {type}')
     if body and type in expected_types:
