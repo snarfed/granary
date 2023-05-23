@@ -242,15 +242,15 @@ Want social feeds in your feed reader? Use <a href="https://twitter-atom.appspot
 
 <label for="format">format =</label>
 <select id="format" name="format">
-  <option value="as2">as2</option>
-  <option value="as1">as1</option>
-  <option value="as1-xml">as1-xml</option>
-  <option value="atom">atom</option>
-  <option value="html">html</option>
-  <option value="mf2-json">mf2-json</option>
-  <option value="jsonfeed">jsonfeed</option>
-  <option value="rss">rss</option>
-  <option value="bluesky">bluesky</option>
+  <option value="as2" {% if output == 'as2' %} selected {% endif %}>as2</option>
+  <option value="as1" {% if output == 'as1' %} selected {% endif %}>as1</option>
+  <option value="as1-xml" {% if output == 'as1-xml' %} selected {% endif %}>as1-xml</option>
+  <option value="atom" {% if output == 'atom' %} selected {% endif %}>atom</option>
+  <option value="html" {% if output == 'html' %} selected {% endif %}>html</option>
+  <option value="mf2-json" {% if output == 'mf2-json' %} selected {% endif %}>mf2-json</option>
+  <option value="jsonfeed" {% if output == 'jsonfeed' %} selected {% endif %}>jsonfeed</option>
+  <option value="rss" {% if output == 'rss' %} selected {% endif %}>rss</option>
+  <option value="bluesky" {% if output == 'bluesky' %} selected {% endif %}>bluesky</option>
 </select>
 
 {% if site != 'github' %}

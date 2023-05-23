@@ -147,6 +147,7 @@ cache = Cache(app)
 def front_page():
   """Renders and serves the front page."""
   vars = dict(request.args)
+  vars.setdefault('output', vars.get('format'))
 
   key = vars.get('auth_entity')
   if key:
