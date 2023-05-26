@@ -429,6 +429,26 @@ class BlueskyTest(testutil.TestCase):
     }
     self.assert_equals(expected, to_as1(bsky))
 
+  def test_to_as1_feed_generator_view_noop(self):
+    self.assert_equals({}, to_as1({
+      '$type': 'app.bsky.feed.defs#generatorView',
+      'uri': 'http://foo',
+      'cid': 'cid',
+      'did': 'did',
+      'creator': {
+        '$type': 'app.bsky.actor.defs#profileView',
+      },
+      'displayName': 'my-feed',
+      'description': 'a custom feed',
+      'descriptionFacets': [],
+      'avatar': 'http://foo.jpg',
+      'likeCount': 0,
+      'viewer': {
+        '$type': 'app.bsky.feed.defs#generatorViewerState',
+      },
+      'indexedAt': '',
+    }))
+
   def test_constructor_both_access_token_and_app_password_error(self):
     with self.assertRaises(AssertionError):
       Bluesky('handull', access_token='towkin', app_password='pazzwurd')

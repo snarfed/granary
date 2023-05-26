@@ -592,6 +592,11 @@ def to_as1(obj, type=None):
   elif type == 'app.bsky.feed.defs#threadViewPost':
     return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')
 
+  elif type in ('app.bsky.feed.defs#generatorView',
+                'app.bsky.feed.defs#generatorViewerState'):
+    # TODO: these are for custom feeds
+    return {}
+
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')
 
