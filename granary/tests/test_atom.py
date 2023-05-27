@@ -459,6 +459,7 @@ quoted text
   def test_attachments(self):
     got = atom.activities_to_atom([{'object': {'attachments': [
       {'objectType': 'note', 'url': 'http://p', 'content': 'note content'},
+      {'objectType': 'service', 'url': 'http://p', 'displayName': 'service name'},
       {'objectType': 'x', 'url': 'http://x'},
       {'objectType': 'image',
        'image': [{'url': 'http://pic'}, {'url': 'ignore'}],
@@ -483,11 +484,23 @@ quoted text
     ]}}], None)
     self.assert_multiline_in("""
 <p>
+<a class="link" href="http://p">
+<span class="name">service name</span>
+</a>
+</p>
+<p>
+<a class="link" href="http://x">
+</a>
+</p>
+<p>
 <img class="u-photo" src="http://pic" alt="" />
 </p>
 
 <blockquote>
 note content
+</blockquote>
+
+<blockquote>
 </blockquote>
 
 <blockquote>
@@ -504,7 +517,7 @@ quoted tweet with photo
 <blockquote>
 a comment
 </blockquote>
-""", got)
+""", got, ignore_blanks=True)
 
   def test_to_people(self):
     got = atom.activities_to_atom([{

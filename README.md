@@ -293,6 +293,7 @@ _Non-breaking changes:_
 * `atom`:
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.
+  * Render `objectType: service` attachments, eg Bluesky custom feeds.
 * `bluesky`:
   * Implement `Bluesky` API class, including `get_activities`.
   * Update for [`app.bsky` lexicons refactor](https://github.com/bluesky-social/atproto/commit/7f008c05a09c6dcf42dcac2819210138af42835c).
@@ -309,6 +310,7 @@ _Non-breaking changes:_
 * `microformats2`:
   * `object_to_json`:
     * Bug fix, handle bare string URL `image` values.
+  * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.
 * `atom`:
   * `activities_to_atom` etc:
     * Bug fix, handle bare string URL `image` values.

@@ -512,6 +512,7 @@ Shared <a href="#">a post</a> by foo
       {'objectType': 'note', 'url': 'http://p', 'displayName': 'p'},
       {'objectType': 'x', 'url': 'http://x'},
       {'objectType': 'article', 'url': 'http://a'},
+      {'objectType': 'service', 'displayName': 'srv'},
     ]}
 
     self.assert_equals([{
@@ -520,6 +521,9 @@ Shared <a href="#">a post</a> by foo
     }, {
       'type': ['h-cite'],
       'properties': {'url': ['http://a']},
+    }, {
+      'type': ['h-app'],
+      'properties': {'name': ['srv']},
     }], microformats2.object_to_json(obj)['children'])
 
     html = microformats2.object_to_html(obj)

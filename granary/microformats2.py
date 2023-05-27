@@ -67,6 +67,16 @@ AS_TO_MF2_TYPE = {
   'person': ['h-card'],
   'place': ['h-card', 'p-location'],
 }
+# silly hack: i haven't found anywhere in AS1 or AS2 to indicate that
+# something is being "quoted," like in a quote tweet, so i cheat and use
+# extra knowledge here that quoted tweets are converted to note
+# attachments, but URLs in the tweet text are converted to article tags.
+AS_ATTACHMENT_TO_MF2_TYPE = {
+  'article': ['h-cite'],
+  'comment': ['u-quotation-of', 'h-cite'],
+  'note': ['u-quotation-of', 'h-cite'],
+  'service': ['h-app'],  # eg a Bluesky custom feed
+}
 MF2_TO_AS_TYPE_VERB = {
   'article': ('article', None),
   'bookmark': ('activity', 'post'),
@@ -235,6 +245,14 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   size = stream.get('size')
   sizes = [str(size)] if size else []
 
+  # attachments to children
+  children = []
+  for att_type, atts in attachments.items():
+    mf2_types = AS_ATTACHMENT_TO_MF2_TYPE.get(att_type)
+    if mf2_types:
+      children.extend(object_to_json(a, trim_nulls=False, entry_class=mf2_types)
+                      for a in atts if 'startIndex' not in a)
+
   # construct mf2!
   ret = {
     'type': (AS_TO_MF2_TYPE.get(obj_type) or
@@ -269,15 +287,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'start': [primary.get('startTime')],
       'end': [primary.get('endTime')],
     },
-    'children': (
-      # silly hack: i haven't found anywhere in AS1 or AS2 to indicate that
-      # something is being "quoted," like in a quote tweet, so i cheat and use
-      # extra knowledge here that quoted tweets are converted to note
-      # attachments, but URLs in the tweet text are converted to article tags.
-      [object_to_json(a, trim_nulls=False, entry_class=['u-quotation-of', 'h-cite'])
-       for a in attachments['note'] if 'startIndex' not in a] +
-      [object_to_json(a, trim_nulls=False, entry_class=['h-cite'])
-       for a in attachments['article'] if 'startIndex' not in a])
+    'children': children,
   }
 
   # content. emulate e- vs p- microformats2 parsing: e- if there are HTML tags,
@@ -990,7 +1000,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   if render_attachments:
     atts = [a for a in obj.get('attachments', [])
-            if a.get('objectType') not in ('note', 'article')
+            if a.get('objectType') not in ('note', 'article', 'comment')
             and get_url(a, 'image') not in rendered_urls]
     content += _render_attachments(atts + tags.pop('article', []), obj)
 
@@ -1031,7 +1041,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   if render_attachments and obj.get('verb') == 'share':
     atts = [att for att in itertools.chain.from_iterable(
               o.get('attachments', []) for o in as1.get_objects(obj))
-            if att.get('objectType') not in ('note', 'article')]
+            if att.get('objectType') not in ('note', 'article', 'comment')]
     content += _render_attachments(atts, obj)
 
   # location

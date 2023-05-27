@@ -391,7 +391,7 @@ def _prepare_activity(a, reader=True):
       image_atts.append(as1.get_object(att, 'image') or att)
       continue
 
-    if type in ('note', 'article', 'comment'):
+    if type in ('note', 'article', 'comment', 'service'):
       # only render this attachment's images if at least one is new
       images = set(util.get_urls(att, 'image'))
       render_image = bool(images - image_urls_seen)
