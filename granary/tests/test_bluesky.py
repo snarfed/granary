@@ -47,7 +47,7 @@ POST_AS = {
   'verb': 'post',
   'object': {
     'objectType': 'note',
-    'id': 'at://did/collection/tid',
+    'id': 'at://did/app.bsky.feed.post/tid',
     'url': 'https://bsky.app/profile/did/post/tid',
     'published': '2007-07-07T03:04:05',
     'content': 'My original post',
@@ -64,7 +64,7 @@ POST_BSKY = {
   '$type': 'app.bsky.feed.defs#feedViewPost',
   'post': {
     '$type': 'app.bsky.feed.defs#postView',
-    'uri': 'at://did/collection/tid',
+    'uri': 'at://did/app.bsky.feed.post/tid',
     'cid': 'TODO',
     'record': {
       '$type': 'app.bsky.feed.post',
@@ -169,10 +169,10 @@ REPLY_AS = {
     'objectType': 'comment',
     'published': '2008-08-08T03:04:05',
     'content': 'I hereby reply to this',
-    'id': 'at://did/collection/tid',
+    'id': 'at://did/app.bsky.feed.post/tid',
     'url': 'https://bsky.app/profile/did/post/tid',
     'inReplyTo': [{
-      'id': 'at://did/collection/parent-tid',
+      'id': 'at://did/app.bsky.feed.post/parent-tid',
       'url': 'https://bsky.app/profile/did/post/parent-tid',
     }],
   },
@@ -187,7 +187,7 @@ REPLY_HTML = """
 """
 REPLY_BSKY = copy.deepcopy(POST_BSKY)
 REPLY_BSKY['post'].update({
-  'uri': 'at://did/collection/tid',
+  'uri': 'at://did/app.bsky.feed.post/tid',
   'record': {
     '$type': 'app.bsky.feed.post',
     'text': 'I hereby reply to this',
@@ -201,7 +201,7 @@ REPLY_BSKY['post'].update({
       },
       'parent': {
         '$type': 'com.atproto.repo.strongRef',
-        'uri': 'at://did/collection/parent-tid',
+        'uri': 'at://did/app.bsky.feed.post/parent-tid',
         'cid': 'TODO',
       },
     },
@@ -428,26 +428,6 @@ class BlueskyTest(testutil.TestCase):
       'tags': [FACET_TAG],
     }
     self.assert_equals(expected, to_as1(bsky))
-
-  def test_to_as1_feed_generator_view_noop(self):
-    self.assert_equals({}, to_as1({
-      '$type': 'app.bsky.feed.defs#generatorView',
-      'uri': 'http://foo',
-      'cid': 'cid',
-      'did': 'did',
-      'creator': {
-        '$type': 'app.bsky.actor.defs#profileView',
-      },
-      'displayName': 'my-feed',
-      'description': 'a custom feed',
-      'descriptionFacets': [],
-      'avatar': 'http://foo.jpg',
-      'likeCount': 0,
-      'viewer': {
-        '$type': 'app.bsky.feed.defs#generatorViewerState',
-      },
-      'indexedAt': '',
-    }))
 
   def test_constructor_both_access_token_and_app_password_error(self):
     with self.assertRaises(AssertionError):

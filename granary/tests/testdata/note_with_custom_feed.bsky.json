@@ -1,0 +1,37 @@
+{
+   "$type": "app.bsky.feed.defs#threadViewPost",
+   "post": {
+      "cid": "bafyreie53",
+      "uri": "at://did:plc:z72i7hd/app.bsky.feed.post/3jwofvxkaxk2z",
+      "record": {
+         "$type": "app.bsky.feed.post",
+         "text": "Add the mutuals custom feed here",
+         "createdAt": "2023-05-27T01:42:36.501Z",
+         "embed": {
+            "$type": "app.bsky.embed.record",
+            "record": {
+               "cid": "bafyreidko",
+               "uri": "at://did:plc:z72i7hd/app.bsky.feed.generator/mutuals"
+            }
+         }
+      },
+      "embed": {
+         "$type": "app.bsky.embed.record#view",
+         "record": {
+            "$type": "app.bsky.feed.defs#generatorView",
+            "avatar": "https://cdn.bsky.social/mutuals.jpeg",
+            "cid": "bafyreidko",
+            "creator": {
+               "avatar": "https://cdn.bsky.social/bob.jpeg",
+               "did": "did:plc:z72i7hd",
+               "displayName": "Bob",
+               "handle": "bob.bsky.social"
+            },
+            "description": "See posts from your mutual follows",
+            "did": "did:plc:5fllqkujj6kqp5izd5jg7gox",
+            "displayName": "Mutuals",
+            "uri": "at://did:plc:z72i7hd/app.bsky.feed.generator/mutuals"
+         }
+      }
+   }
+}

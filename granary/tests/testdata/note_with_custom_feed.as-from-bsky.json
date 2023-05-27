@@ -1,0 +1,22 @@
+{
+  "objectType": "note",
+  "id": "at://did:plc:z72i7hd/app.bsky.feed.post/3jwofvxkaxk2z",
+  "url": "https://bsky.app/profile/did:plc:z72i7hd/post/3jwofvxkaxk2z",
+  "published": "2023-05-27T01:42:36.501Z",
+  "content": "Add the mutuals custom feed here",
+  "attachments": [{
+    "objectType": "service",
+    "displayName": "Feed: Mutuals",
+    "id": "at://did:plc:z72i7hd/app.bsky.feed.generator/mutuals",
+    "url": "https://bsky.app/profile/did:plc:z72i7hd/feed/mutuals",
+    "summary": "See posts from your mutual follows",
+    "image": "https://cdn.bsky.social/mutuals.jpeg",
+    "author": {
+      "objectType": "person",
+      "id": "did:plc:z72i7hd",
+      "url": "https://bsky.app/profile/bob.bsky.social",
+      "displayName": "Bob",
+      "image": [{"url": "https://cdn.bsky.social/bob.jpeg"}]
+    }
+  }]
+}

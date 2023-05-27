@@ -26,6 +26,18 @@ def _maybe_load_lexicons():
       with open(filename) as f:
         LEXICONS.append(json.load(f))
 
+# Maps AT Protocol NSID collections to path elements in bsky.app URLs.
+# Used in at_uri_to_web_url.
+#
+# eg for mapping a URI like:
+#   at://did:plc:z72i7hd/app.bsky.feed.generator/mutuals
+# to a frontend URL like:
+#   https://bsky.app/profile/did:plc:z72i7hdynmk6r22z27h6tvur/feed/mutuals
+COLLECTIONS = {
+  'app.bsky.feed.post': 'post',
+  'app.bsky.feed.generator': 'feed',
+}
+
 
 def url_to_did_web(url):
   """Converts a URL to a did:web.
@@ -104,7 +116,12 @@ def at_uri_to_web_url(uri, handle=None):
   parsed = urllib.parse.urlparse(uri)
   did = parsed.netloc
   collection, tid = parsed.path.strip('/').split('/')
-  return Bluesky.post_url(handle or did, tid)
+
+  type = COLLECTIONS.get(collection)
+  if not type:
+    return None
+
+  return f'{Bluesky.user_url(handle or did)}/{type}/{tid}'
 
 
 def from_as1(obj, from_url=None):
@@ -592,10 +609,17 @@ def to_as1(obj, type=None):
   elif type == 'app.bsky.feed.defs#threadViewPost':
     return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')
 
-  elif type in ('app.bsky.feed.defs#generatorView',
-                'app.bsky.feed.defs#generatorViewerState'):
-    # TODO: these are for custom feeds
-    return {}
+  elif type == 'app.bsky.feed.defs#generatorView':
+    uri = obj.get('uri')
+    ret = {
+      'objectType': 'service',
+      'id': uri,
+      'url': at_uri_to_web_url(uri),
+      'displayName': f'Feed: {obj.get("displayName")}',
+      'summary': obj.get('description'),
+      'image': obj.get('avatar'),
+      'author': to_as1(obj.get('creator'), type='app.bsky.actor.defs#profileView'),
+    }
 
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')

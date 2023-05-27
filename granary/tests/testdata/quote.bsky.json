@@ -2,7 +2,7 @@
   "$type": "app.bsky.feed.defs#feedViewPost",
   "post": {
     "$type": "app.bsky.feed.defs#postView",
-    "uri": "at://did/collection/quote-post-tid",
+    "uri": "at://did/app.bsky.feed.post/quote-post-tid",
     "cid": "TODO",
     "record": {
       "$type": "app.bsky.feed.post",
@@ -12,7 +12,7 @@
         "$type": "app.bsky.embed.record",
         "record": {
           "cid": "TODO",
-          "uri": "at://did/collection/orig-post-tid"
+          "uri": "at://did/app.bsky.feed.post/orig-post-tid"
         }
       }
     },
@@ -30,7 +30,7 @@
         "$type": "app.bsky.embed.record#viewRecord",
         "cid": "TODO",
         "indexedAt": "2022-01-02T03:04:05+00:00",
-        "uri": "at://did/collection/orig-post-tid",
+        "uri": "at://did/app.bsky.feed.post/orig-post-tid",
         "value": {
           "$type": "app.bsky.feed.post",
           "createdAt": "2023-05-11T19:59:12Z",
