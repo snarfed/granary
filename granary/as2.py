@@ -10,6 +10,8 @@ AS1: http://activitystrea.ms/specs/json/1.0/
 import copy
 import datetime
 import logging
+import re
+import urllib.parse
 
 from oauth_dropins.webutil import util
 
@@ -473,3 +475,36 @@ def is_public(activity):
   audience.extend(util.get_list(obj, 'to') + util.get_list(obj, 'cc'))
 
   return bool(PUBLICS.intersection(audience))
+
+
+def address(actor):
+  """Returns an actor's fediverse handle aka WebFinger address aka @-@.
+
+  There's no standard for this, it's just a heuristic that uses
+  preferredUsername and id or url if available, otherwise detecting and
+  transforming common user profile URLs.
+
+  Args:
+    actor: dict AS2 JSON actor or str actor id
+
+  Returns:
+    str, handle, eg '@user@example.com', or None
+  """
+  if not actor:
+    return None
+
+  if isinstance(actor, dict):
+    host = (urllib.parse.urlparse(actor.get('id')).netloc
+            or urllib.parse.urlparse(util.get_url(actor)).netloc)
+    username = actor.get('preferredUsername')
+    if username and host:
+      return f'@{username}@{host}'
+
+  urls = ([actor.get('id'), util.get_url(actor)] if isinstance(actor, dict)
+          else [actor])
+
+  for url in urls:
+    if url:
+      match = re.match(r'^https?://(.+)/(users/|profile/|@)(.+)$', url)
+      if match:
+        return match.expand(r'@\3@\1')

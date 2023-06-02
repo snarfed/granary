@@ -150,3 +150,23 @@ class ActivityStreams2Test(testutil.TestCase):
           'latitude': 'abc',
         },
       })
+
+  def test_address(self):
+    for actor in [
+        'http://a.b/@me',
+        'http://a.b/users/me',
+        'http://a.b/profile/me',
+        {'id': 'http://a.b/@me'},
+        {'id': 'http://a.b/users/me'},
+        {'id': 'http://a.b/profile/me'},
+        {'preferredUsername': 'me', 'id': 'https://a.b/c'},
+        {'preferredUsername': 'me', 'url': 'https://a.b/c'},
+        {'preferredUsername': 'me', 'id': 'https://a.b/c', 'url': 'https://d.e/f'},
+        {'preferredUsername': 'me', 'id': 'tag:c.d:e', 'url': 'https://a.b/c'},
+    ]:
+      with self.subTest(actor=actor):
+        self.assertEqual('@me@a.b', as2.address(actor))
+
+    for bad in None, {}, '', {'a': 'b'}, {'preferredUsername': 'me'}:
+      with self.subTest(actor=bad):
+        self.assertIsNone(as2.address(bad))

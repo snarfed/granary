@@ -289,7 +289,7 @@ _Non-breaking changes:_
     * Coerce non-float `latitude` and `longitude` to float, raise `ValueError` on failure.
     * Put image attachments into `image` as well as `attachments` ([bridgy-fed#429](https://github.com/snarfed/bridgy-fed/issues/429)).
   * Add new `TYPES_WITH_OBJECT` constant.
-  * Add new `get_urls` function.
+  * Add new `get_urls`, `address` functions.
   * Improve `Content-Type` compatibility with `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`.
 * `atom`:
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
