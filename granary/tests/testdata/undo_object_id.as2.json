@@ -1,0 +1,7 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Undo",
+  "id": "https://example.com/3579",
+  "actor": "https://example.com,2001/alice",
+  "object": "https://example.com,2001:2468"
+}

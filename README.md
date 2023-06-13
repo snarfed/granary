@@ -291,6 +291,7 @@ _Non-breaking changes:_
   * Add new `TYPES_WITH_OBJECT` constant.
   * Add new `get_urls`, `address` functions.
   * Improve `Content-Type` compatibility with `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`.
+  * Bug fix for `Undo` activities with bare string id `object`s.
 * `atom`:
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.

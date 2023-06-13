@@ -385,7 +385,8 @@ def to_as1(obj, use_type=True):
   if len(inner_objs) == 1:
     inner_objs = inner_objs[0]
     # special case Undo Follow
-    if type == 'Undo' and inner_objs.get('verb') == 'follow':
+    if (type == 'Undo' and isinstance(inner_objs, dict)
+        and inner_objs.get('verb') == 'follow'):
       obj['verb'] = 'stop-following'
       inner_inner_obj = as1.get_object(inner_objs)
       inner_objs = {

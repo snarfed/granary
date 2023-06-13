@@ -1,0 +1,7 @@
+{
+  "objectType": "activity",
+  "verb": "undo",
+  "id": "https://example.com/3579",
+  "actor": "https://example.com,2001/alice",
+  "object": "https://example.com,2001:2468"
+}
