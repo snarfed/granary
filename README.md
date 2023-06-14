@@ -281,6 +281,10 @@ Changelog
 ---
 ### 6.1 - unreleased
 
+_REST API breaking changes:_
+
+[Twitter is dead](https://snarfed.org/2023-04-03_so-long-twitter-api-and-thanks-for-all-the-fish), at least in the REST API.
+
 _Non-breaking changes:_
 
 * `as2`:

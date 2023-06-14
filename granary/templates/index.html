@@ -75,7 +75,6 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 <br id="logins" />
 <div class="login">
 <div class="row">
-{{ twitter_html|safe }}
 {{ flickr_html|safe }}
 {{ github_html|safe }}
 {{ mastodon_html|safe }}
@@ -196,12 +195,8 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
   {% endif %}
   <option value="@self">@self</option>
   <option value="@friends">@friends</option>
-  {% if site in ('mastodon', 'pixelfed', 'reddit', 'twitter') %}
+  {% if site in ('mastodon', 'pixelfed', 'reddit') %}
     <option value="@search">@search</option>
-  {% endif %}
-  {% if site == 'twitter' %}
-    <option value="@list">@list</option>
-    <option value="@blocks">@blocks</option>
   {% endif %}
 </select>
 
@@ -358,6 +353,13 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 <p class="lead">
 The <a href="https://granary.readthedocs.io/">library</a> also includes:
 </p>
+
+<div class="col-lg-2 col-sm-4 col-xs-6">
+  <a href="https://granary.readthedocs.io/en/latest/source/granary.html#module-granary.twitter">
+    <img class="shadow" src="/oauth_dropins_static/twitter_2x.png" height="50" />
+  </a>
+</form>
+</div>
 
 <div class="row">
 <div class="col-lg-2 col-sm-4 col-xs-6">
