@@ -50,17 +50,6 @@ function spinner(visibility) {
 }
 </script>
 
-{% with messages = get_flashed_messages() %}
-<div id="messages">
-  <p class="message shadow"><a href="https://twitterisgoinggreat.com/">Twitter is burning</a>, and <a href="https://snarfed.org/2023-04-03_so-long-twitter-api-and-thanks-for-all-the-fish">they'll kill granary's Twitter access any day now</a>. 😢 So long, and thanks for all the fish!</p>
-{% if messages %}
-  {% for message in messages %}
-    <p class="message shadow">{{ message|safe }}</p>
-  {% endfor %}
-{% endif %}
-</div>
-{% endwith %}
-
 <main class="tp-main">
 <div class="container">
 
