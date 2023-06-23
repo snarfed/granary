@@ -296,6 +296,7 @@ _Non-breaking changes:_
   * Add new `get_urls`, `address` functions.
   * Improve `Content-Type` compatibility with `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`.
   * Bug fix for `Undo` activities with bare string id `object`s.
+  * Revise HTML in `PropertyValue` attachments on actors to include full URL in anchro text to be compatible with Mastodon's profile link verification.
 * `atom`:
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.

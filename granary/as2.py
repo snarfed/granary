@@ -163,16 +163,24 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   # Mastodon profile metadata fields
   # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
   # https://github.com/snarfed/bridgy-fed/issues/323
+  #
+  # Note that the *anchor text* in the HTML in value, not just the href, must
+  # contain the full URL! Mastodon requires that for profile link verification,
+  # so that the visible URL people see matches the actual link.
+  # https://github.com/snarfed/bridgy-fed/issues/560
   if obj_type == 'person' and top_level:
     links = {}
     for link in as1.get_objects(obj, 'url') + as1.get_objects(obj, 'urls'):
       url = link.get('value') or link.get('id')
       name = link.get('displayName')
       if util.is_web(url):
+        scheme = 'https://' if url.startswith('https://') else 'http://'
+        slash = '/' if url.endswith('/') else ''
+        visible = url.removeprefix(scheme).removesuffix(slash)
         links[url] = {
           'type': 'PropertyValue',
           'name': name or 'Link',
-          'value': util.pretty_link(url, attrs={'rel': 'me'}),
+          'value': f'<a rel="me" href="{url}"><span class="invisible">{scheme}</span>{visible}<span class="invisible">{slash}</span></a>',
         }
     attachments.extend(links.values())
 

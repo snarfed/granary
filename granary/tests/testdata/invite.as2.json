@@ -14,7 +14,7 @@
     "attachment": [{
       "type": "PropertyValue",
       "name": "Link",
-      "value": "<a rel=\"me\" href=\"http://example.com/alice\">example.com/alice</a>"
+      "value": "<a rel=\"me\" href=\"http://example.com/alice\"><span class=\"invisible\">http://</span>example.com/alice<span class=\"invisible\"></span></a>"
     }]
   }
 }
