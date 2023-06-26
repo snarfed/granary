@@ -131,7 +131,7 @@ Using the library
 
 See the [example above](#using) for a quick start guide.
 
-Clone or download this repo into a directory named `granary` (note the underscore instead of dash). Each source works the same way. Import the module for the source you want to use, then instantiate its class by passing the HTTP handler object. The handler should have a `request` attribute for the current HTTP request.
+Clone or download this repo into a directory named `granary`. Each source works the same way. Import the module for the source you want to use, then instantiate its class by passing the HTTP handler object. The handler should have a `request` attribute for the current HTTP request.
 
 The useful methods are `get_activities()` and `get_actor()`, which returns the current authenticated user (if any). See the [full reference docs](https://granary.readthedocs.io/en/stable/source/granary.html#module-granary.source) for details. All return values are Python dicts of decoded ActivityStreams 1 JSON.
 
