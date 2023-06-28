@@ -24,7 +24,6 @@ VERBS_WITH_OBJECT = {
   'follow',
   'like',
   'react',
-  'repost',
   'share',
 } | set(RSVP_VERB_TO_COLLECTION.keys())
 
