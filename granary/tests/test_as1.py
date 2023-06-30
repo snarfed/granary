@@ -550,3 +550,22 @@ class As1Test(testutil.TestCase):
     ):
       with self.subTest(obj=obj):
         self.assertEqual(expected, as1.get_objects(obj, 'f'))
+
+  def test_get_owner(self):
+    with self.assertRaises(ValueError):
+      as1.get_owner('x')
+
+    for expected, obj in (
+        (None, None),
+        (None, {}),
+        (None, {'x': 'y'}),
+        ('a', {'author': 'a'}),
+        ('a', {'actor': 'a'}),
+        ('a', {'author': 'a', 'actor': 'b'}),
+        ('a', {'author': {'id': 'a'}}),
+        ('a', {'id': 'a', 'objectType': 'organization'}),
+        (None, {'x': 'y', 'objectType': 'organization'}),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, as1.get_owner(obj))
+

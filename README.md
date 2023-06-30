@@ -288,6 +288,7 @@ _REST API breaking changes:_
 _Non-breaking changes:_
 
 * `as1`:
+  * Add `get_owner`.
   * Remove `repost` from `VERBS_WITH_OBJECT`, [it's not an AS1 verb](https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs).
 * `as2`:
   * `to_as1`:

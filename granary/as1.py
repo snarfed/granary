@@ -94,6 +94,31 @@ def get_objects(obj, field='object'):
           for val in util.get_list(obj, field)]
 
 
+def get_owner(obj):
+  """Returns an object's author or actor.
+
+  Prefers author, then actor. If the value is an object, returns its id,
+  if available. If neither field exists, but obj.objectType is in ACTOR_TYPES,
+  returns its own id, if available.
+
+  Args:
+    obj: decoded JSON ActivityStreams object
+
+  Returns: str
+  """
+  if not obj:
+    return None
+  elif not isinstance(obj, dict):
+    raise ValueError(f'{obj} is not a dict')
+
+  ids = get_ids(obj, 'author') or get_ids(obj, 'actor')
+  if not ids and obj.get('objectType') in ACTOR_TYPES:
+    ids = util.get_list(obj, 'id')
+
+  if ids:
+    return ids[0]
+
+
 def get_url(obj):
   """Returns the url field's first text value, or None.
 
