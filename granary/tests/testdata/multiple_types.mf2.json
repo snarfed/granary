@@ -1,0 +1,12 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "content": ["Note, like, and bookmark. Bookmark takes precedence."],
+    "like-of": ["http://example.com/that"],
+    "bookmark-of": [{
+      "type": ["h-cite"],
+      "value": "http://example.com/this",
+      "properties": {}
+    }]
+  }
+}

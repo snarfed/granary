@@ -318,6 +318,8 @@ _Non-breaking changes:_
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.
 * `microformats2`:
+  * `json_to_object`:
+    * Improve handling of items with multiple types by using [post type discovery](https://indiewebcamp.com/post-type-discovery) more aggressively.
   * `object_to_json`:
     * Bug fix, handle bare string URL `image` values.
   * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.

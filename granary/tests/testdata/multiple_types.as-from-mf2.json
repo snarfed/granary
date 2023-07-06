@@ -1,0 +1,9 @@
+{
+  "objectType": "activity",
+  "verb": "post",
+  "content": "Note, like, and bookmark. Bookmark takes precedence.",
+  "object": {
+    "objectType": "bookmark",
+    "targetUrl": "http://example.com/this"
+  }
+}

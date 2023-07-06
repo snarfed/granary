@@ -557,7 +557,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
         'objectType': 'featured' if photo in featured else None,
       })
 
-  # mf2util uses the indieweb/mf2 location algorithm to collect location properties.
+  # mf2util uses the indieweb/mf2 location algorithm to collect locations
   interpreted = mf2util.interpret({'items': [mf2]}, None)
   if interpreted:
     loc = interpreted.get('location')
@@ -574,33 +574,41 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
           logger.debug(
             'Could not convert latitude/longitude (%s, %s) to decimal', lat, lng)
 
+  objects = []
   if as_type == 'activity':
     objects = []
-    for target in itertools.chain.from_iterable(
-        props.get(field, []) for field in (
-          'follow-of', 'like-of', 'repost-of', 'in-reply-to', 'invitee')):
-      t = json_to_object(target) if isinstance(target, dict) else target
+    field = ('invitee' if mf2_type == 'invite'
+             else 'in-reply-to' if mf2_type == 'rsvp'
+             else f'{mf2_type}-of' if mf2_type in ('bookmark', 'follow', 'like',
+                                                   'repost', 'tag')
+             else None)
+    for target in util.get_list(props, field):
+      t = json_to_object(target)
+      if t.keys() <= set(['objectType']):
+        t = get_text(target)
       if rsvp:
-        if isinstance(t, str):
-          t = {'id': t}
-        t['objectType'] = 'event'
+        t = {'objectType': 'event', 'id': t}
+      elif mf2_type == 'bookmark':
+        t = {'objectType': 'bookmark', 'targetUrl': util.get_url(t) or t}
+
+
       # eliminate duplicates from redundant backcompat properties
       if t not in objects:
         objects.append(t)
-
-    objects.extend({'objectType': 'bookmark', 'targetUrl': url}
-                   for url in get_string_urls(props.get('bookmark-of', [])))
 
     obj.update({
       'object': objects[0] if len(objects) == 1 else objects,
       'actor': author,
     })
+
+    # tags need target field
+    # https://activitystrea.ms/specs/json/schema/activity-schema.html#context
+    # https://activitystrea.ms/specs/json/1.0/#introduction
     if as_verb == 'tag':
-      obj['target'] = {'url': prop['tag-of']}
-      if obj.get('object'):
-        raise NotImplementedError(
-          'Combined in-reply-to and tag-of is not yet supported.')
-      obj['object'] = obj.pop('tags')
+      obj.update({
+        'target': {'url': util.get_first(obj, 'object')},
+        'object': obj.pop('tags'),
+      })
 
   else:
     obj.update({

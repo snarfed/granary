@@ -1036,17 +1036,6 @@ Shared <a href="#">a post</a> by   <span class="h-card">
   'actor': {'url': 'http://localhost:3000/users/ryan'},
 }]), ignore_blanks=True)
 
-  def test_combined_reply_and_tag_of_error(self):
-    """https://github.com/snarfed/bridgy/issues/832"""
-    with self.assertRaises(NotImplementedError):
-      microformats2.json_to_object({
-        'type': ['h-entry'],
-        'properties': {
-          'tag-of': [{'value': 'https://a/post'}],
-          'in-reply-to': [{'value': 'https://another/post'}],
-        }
-      })
-
   def test_html_to_activities_brs_to_newlines(self):
     """Mostly tests that mf2py converts <br>s to \ns.
 
