@@ -587,7 +587,11 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       if t.keys() <= set(['objectType']):
         t = get_text(target)
       if rsvp:
-        t = {'objectType': 'event', 'id': t}
+        if isinstance(t, str):
+          t = {'id': t}
+        elif not t.get('id'):
+          t['id'] = t.get('url')
+        t['objectType'] = 'event'
       elif mf2_type == 'bookmark':
         t = {'objectType': 'bookmark', 'targetUrl': util.get_url(t) or t}
 

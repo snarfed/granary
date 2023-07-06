@@ -1,0 +1,14 @@
+{
+  "objectType": "activity",
+  "verb": "rsvp-yes",
+  "url": "http://example.com/this/rsvp",
+  "object": [{
+    "id": "http://example.com/event",
+    "url": "http://example.com/event",
+    "objectType": "event"
+  }, {
+    "id": "http://other.event",
+    "url": "http://other.event",
+    "objectType": "event"
+  }]
+}

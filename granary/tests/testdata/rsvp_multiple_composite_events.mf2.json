@@ -1,0 +1,23 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "url": ["http://example.com/this/rsvp"],
+    "in-reply-to": [
+      {
+        "type": ["h-cite"],
+        "properties": {
+          "url": ["http://example.com/event"]
+        },
+        "value": "http://example.com/event"
+      },
+      {
+        "type": ["h-cite"],
+        "properties": {
+          "url": ["http://other.event"]
+        },
+        "value": "http://other.event"
+      }
+    ],
+    "rsvp": ["yes"]
+  }
+}
