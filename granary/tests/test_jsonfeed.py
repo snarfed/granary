@@ -8,81 +8,81 @@ from ..jsonfeed import activities_to_jsonfeed, jsonfeed_to_activities
 class JsonFeedTest(testutil.TestCase):
 
   def test_activities_to_jsonfeed_empty(self):
-      self.assert_equals({
-        'version': 'https://jsonfeed.org/version/1',
-        'title': 'JSON Feed',
-      }, activities_to_jsonfeed([], {}))
+    self.assert_equals({
+      'version': 'https://jsonfeed.org/version/1',
+      'title': 'JSON Feed',
+    }, activities_to_jsonfeed([], {}))
 
   def test_activities_to_jsonfeed_extra_fields(self):
-      self.assert_equals({
-        'version': 'https://jsonfeed.org/version/1',
-        'title': 'a something',
-        'feed_url': 'http://a/feed',
-        'home_page_url': 'http://a/home',
-      }, activities_to_jsonfeed(
-        [], {}, title='a something', feed_url='http://a/feed',
-        home_page_url='http://a/home'))
+    self.assert_equals({
+      'version': 'https://jsonfeed.org/version/1',
+      'title': 'a something',
+      'feed_url': 'http://a/feed',
+      'home_page_url': 'http://a/home',
+    }, activities_to_jsonfeed(
+      [], {}, title='a something', feed_url='http://a/feed',
+      home_page_url='http://a/home'))
 
   def test_activities_to_jsonfeed_skip_people(self):
-      self.assert_equals({
-        'version': 'https://jsonfeed.org/version/1',
-        'title': 'JSON Feed',
-      }, activities_to_jsonfeed([{
-        'objectType': 'person',
-        'displayName': 'somebody',
-      }], {}))
+    self.assert_equals({
+      'version': 'https://jsonfeed.org/version/1',
+      'title': 'JSON Feed',
+    }, activities_to_jsonfeed([{
+      'objectType': 'person',
+      'displayName': 'somebody',
+    }], {}))
 
   def test_activities_to_jsonfeed_no_content(self):
-      self.assert_equals({
-        'version': 'https://jsonfeed.org/version/1',
-        'title': 'JSON Feed',
-        'items': [{
-          'image': 'http://no/content',
-          'content_text': '',
-        }],
-      }, activities_to_jsonfeed([{
-        'image': [{'url': 'http://no/content'}],
-      }], {}))
+    self.assert_equals({
+      'version': 'https://jsonfeed.org/version/1',
+      'title': 'JSON Feed',
+      'items': [{
+        'image': 'http://no/content',
+        'content_text': '',
+      }],
+    }, activities_to_jsonfeed([{
+      'image': [{'url': 'http://no/content'}],
+    }], {}))
 
   def test_activities_to_jsonfeed_name_is_not_title(self):
-      self.assert_equals([{
-        'content_html': 'a microblog post',
-      }], activities_to_jsonfeed([{
-          'content': 'a microblog post',
-          'displayName': 'a microblog post',
-      }], {})['items'])
+    self.assert_equals([{
+      'content_html': 'a microblog post',
+    }], activities_to_jsonfeed([{
+      'content': 'a microblog post',
+      'displayName': 'a microblog post',
+    }], {})['items'])
 
   def test_activities_to_jsonfeed_image_attachment(self):
-      self.assert_equals([{
-        'content_html': '\n<p>\n<img class="u-photo" src="http://pict/ure.jpg" alt="" />\n</p>',
-        'attachments': [{
-          'url': 'http://pict/ure.jpg',
-          'mime_type': 'image/jpeg',
-        }],
-      }], activities_to_jsonfeed([{
-        'attachments': [{'image': {'url': 'http://pict/ure.jpg'}}],
-      }], {})['items'])
+    self.assert_equals([{
+      'content_html': '\n<p>\n<img class="u-photo" src="http://pict/ure.jpg" alt="" />\n</p>',
+      'attachments': [{
+        'url': 'http://pict/ure.jpg',
+        'mime_type': 'image/jpeg',
+      }],
+    }], activities_to_jsonfeed([{
+      'attachments': [{'image': {'url': 'http://pict/ure.jpg'}}],
+    }], {})['items'])
 
   def test_activities_to_jsonfeed_ignore_other_attachment_types(self):
-      self.assert_equals([{
-        'content_html': '\n<p>\n<a class="link" href="http://some/one">\n</a>\n</p>'
-      }], activities_to_jsonfeed([{
-        'attachments': [{
-          'url': 'http://quoted/tweet',
-          'objectType': 'note',
-        }, {
-          'url': 'http://some/one',
-          'objectType': 'person',
-        }],
-      }], {})['items'])
+    self.assert_equals([{
+      'content_html': '\n<p>\n<a class="link" href="http://some/one">\n</a>\n</p>'
+    }], activities_to_jsonfeed([{
+      'attachments': [{
+        'url': 'http://quoted/tweet',
+        'objectType': 'note',
+      }, {
+        'url': 'http://some/one',
+        'objectType': 'person',
+      }],
+    }], {})['items'])
 
   def test_activities_to_jsonfeed_attachment_without_url(self):
-      self.assert_equals([{'content_text': ''}], activities_to_jsonfeed([{
-        'attachments': [{
-          'content': 'foo',
-          'objectType': 'note',
-        }],
-      }], {})['items'])
+    self.assert_equals([{'content_text': ''}], activities_to_jsonfeed([{
+      'attachments': [{
+        'content': 'foo',
+        'objectType': 'note',
+      }],
+    }], {})['items'])
 
   def test_activities_to_jsonfeed_image_not_dict(self):
     """
@@ -107,10 +107,10 @@ class JsonFeedTest(testutil.TestCase):
       'id': 'http://example.com/original/post',
       'content_text': '',
     }], activities_to_jsonfeed([{
-      "objectType": "activity",
-      "verb": "like",
-      "object": "http://example.com/original/post",
-      "actor": "http://example.com/author-456"
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': 'http://example.com/original/post',
+      'actor': 'http://example.com/author-456'
     }])['items'])
 
   def test_jsonfeed_to_activities_attachment_extra_list(self):
