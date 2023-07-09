@@ -84,6 +84,19 @@ class JsonFeedTest(testutil.TestCase):
         }],
       }], {})['items'])
 
+  def test_activities_to_jsonfeed_image_not_dict(self):
+    """
+    https://console.cloud.google.com/errors/detail/CMnZ6r6AlaXUSg;time=P30D?project=granary-demo
+    """
+    self.assert_equals([{'content_html': """
+<p>
+<img class="u-photo" src="https://att/image" alt="" />
+</p>"""}], activities_to_jsonfeed([{
+      'attachments': [{
+        'image': 'https://att/image',
+      }],
+    }], {})['items'])
+
   def test_activities_to_jsonfeed_not_list(self):
     for bad in None, 3, 'asdf', {'not': 'a list'}:
       with self.assertRaises(TypeError):

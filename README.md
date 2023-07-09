@@ -301,6 +301,10 @@ _Non-breaking changes:_
   * Bug fix for `Undo` activities with bare string id `object`s.
   * Revise HTML in `PropertyValue` attachments on actors to include full URL in anchro text to be compatible with Mastodon's profile link verification.
 * `atom`:
+  * `activities_to_atom` etc:
+    * Bug fix, handle bare string URL `image` values.
+    * Bug fix, remove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
+    * Render `objectType: comment` attachments.
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.
   * Render `objectType: service` attachments, eg Bluesky custom feeds.
@@ -315,6 +319,8 @@ _Non-breaking changes:_
   * `to_as1`: propagate profile `did` into actor `id`.
   * `to_as1`: add unimplemented stub for custom feeds, eg `app.bsky.feed.defs#generatorView`.
   * Add `as1_to_profile`.
+* `jsonfeed`:
+  * `activities_to_jsonfeed` bug fix, handle bare string values for `image` and `stream`.
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.
 * `microformats2`:
@@ -323,11 +329,6 @@ _Non-breaking changes:_
   * `object_to_json`:
     * Bug fix, handle bare string URL `image` values.
   * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.
-* `atom`:
-  * `activities_to_atom` etc:
-    * Bug fix, handle bare string URL `image` values.
-    * Bug fix, remove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
-    * Render `objectType: comment` attachments.
 
 ### 6.0 - 2023-03-22
 
