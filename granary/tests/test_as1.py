@@ -569,3 +569,52 @@ class As1Test(testutil.TestCase):
       with self.subTest(obj=obj):
         self.assertEqual(expected, as1.get_owner(obj))
 
+  def test_targets(self):
+    for expected, obj in [
+        ([], None),
+        ([], {}),
+        ([], {'id': 'a'}),
+        ([], {'object': 'a'}),
+        ([], {'object': {'id': 'a'}}),
+        ([], {'objectType': 'note', 'id': 'a'}),
+        ([], {'verb': 'create', 'id': 'a', 'object': 'b'}),
+        ([], {'verb': 'create', 'id': 'a', 'object': {'id': 'b'}}),
+        ([], {'verb': 'update', 'id': 'a', 'object': 'b'}),
+        ([], {'verb': 'delete', 'id': 'a', 'object': 'b'}),
+        (['x'], {'verb': 'like', 'id': 'a', 'object': 'x'}),
+        (['x'], {'verb': 'react', 'id': 'a', 'object': 'x'}),
+        (['x'], {'verb': 'react', 'id': 'a', 'object': {'id': 'x'}}),
+        (['x'], {'verb': 'react', 'id': 'a', 'object': {'url': 'x'}}),
+        (['x'], {'id': 'a', 'inReplyTo': 'x'}),
+        (['x'], {'id': 'a', 'inReplyTo': {'id': 'x'}}),
+        (['x'], {'id': 'a', 'inReplyTo': {'url': 'x'}}),
+        (['x'], {
+          'verb': 'create',
+          'id': 'a',
+          'object': {'id': 'b', 'inReplyTo': 'x'},
+        }),
+        (['x'], {
+          'verb': 'update',
+          'id': 'a',
+          'object': {'id': 'b', 'inReplyTo': 'x'},
+        }),
+        (['x'], {
+          'verb': 'delete',
+          'id': 'a',
+          'object': {'id': 'b', 'inReplyTo': 'x'},
+        }),
+        (['x'], {
+          'verb': 'share',
+          'id': 'a',
+          'object': 'x',
+        }),
+        (['y', 'x'], {
+          'verb': 'share',
+          'id': 'a',
+          'object': {'id': 'y', 'inReplyTo': 'x'},
+        }),
+        (['x', 'y'], {'tags': ['x', 'y']}),
+        (['x', 'y'], {'tags': [{'id': 'x'}, {'url': 'y'}]}),
+    ]:
+      with self.subTest(expected=expected, obj=obj):
+        self.assertCountEqual(expected, as1.targets(obj))

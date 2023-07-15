@@ -457,3 +457,45 @@ def object_urls(obj):
 
   return util.uniquify(util.trim_nulls(
     [value(obj.get('url'))] + [value(u) for u in obj.get('urls', [])]))
+
+
+def targets(obj):
+  """Collects an AS1 activity or object's targets.
+
+  This is all ids/URLs that are direct "targets" of the activity, eg:
+  * the post it's replying to
+  * the post it's sharing
+  * the post it's reacting to
+  * the actor or other object it's tagging
+  * the actor or other object it's tagging
+  * the event it's inviting someone to
+  * the event it's RSVPing to
+  * the link or object it's bookmarking
+
+  etc...
+
+  Args:
+    obj: dict, AS1 object or activity
+
+  Returns: sequence of string ids/URLs
+  """
+  if not obj:
+    return []
+
+  targets = []
+
+  for o in [obj] + get_objects(obj):
+    targets.extend(get_ids(o, 'inReplyTo') +
+                   get_ids(o, 'tags') +
+                   util.get_urls(o, 'tags'))
+
+    verb = o.get('verb')
+    if verb in VERBS_WITH_OBJECT:
+      # prefer id or url, if available
+      # https://github.com/snarfed/bridgy-fed/issues/307
+      o_targets = get_ids(o, 'object') or util.get_urls(o, 'object')
+      targets.extend(o_targets)
+      if not o_targets:
+        logger.warning(f'{verb} missing target id/URL')
+
+  return util.dedupe_urls(targets)
