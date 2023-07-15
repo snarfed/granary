@@ -77,16 +77,16 @@ def get_object(obj, field='object'):
 
 
 def get_objects(obj, field='object'):
-  """Extracts and returns a field value as an object.
+  """Extracts and returns a field's values as objects.
 
-  If the field value is a string, returns an object with it as the id, eg
-  {'id': val}. If the field value is a list, returns the first element.
+  If a field value is a string, generates an object with it as the id, eg
+  {'id': val}.
 
   Args:
     obj: decoded JSON ActivityStreams object
     field: str
 
-  Returns: dict
+  Returns: sequence of dict
   """
   if not obj:
     return []
