@@ -773,7 +773,7 @@ class Bluesky(Source):
       'displayName': user.get('displayName'),
       'image': {'url': user.get('avatar')},
       'id': user.get('did'),
-      'numeric_id': user.get('id'),
+      'numeric_id': user.get('did'),
       'url': self.user_url(user.get('handle')),
       'username': username,
       'description': user.get('description'),
