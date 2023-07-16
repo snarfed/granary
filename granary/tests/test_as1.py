@@ -563,6 +563,7 @@ class As1Test(testutil.TestCase):
         ('a', {'actor': 'a'}),
         ('a', {'author': 'a', 'actor': 'b'}),
         ('a', {'author': {'id': 'a'}}),
+        ('a', {'author': {'url': 'a'}}),
         ('a', {'id': 'a', 'objectType': 'organization'}),
         (None, {'x': 'y', 'objectType': 'organization'}),
         (None, {'verb': 'post', 'object': {}}),
