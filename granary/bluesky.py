@@ -754,3 +754,27 @@ class Bluesky(Source):
       'url': self.user_url(self.handle),
     }
     return ret
+
+  def user_to_actor(self, user):
+    """Converts a dict user to an actor.
+
+    Args:
+      user: JSON user
+
+    Returns:
+      an ActivityStreams actor dict, ready to be JSON-encoded
+    """
+    username = user.get('handle')
+    if not username:
+      return {}
+
+    return util.trim_nulls({
+      'objectType': 'person',
+      'displayName': user.get('displayName'),
+      'image': {'url': user.get('avatar')},
+      'id': user.get('did'),
+      'numeric_id': user.get('id'),
+      'url': self.user_url(user.get('handle')),
+      'username': username,
+      'description': user.get('description'),
+    })
