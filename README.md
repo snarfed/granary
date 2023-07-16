@@ -289,7 +289,7 @@ _Non-breaking changes:_
 
 * `as1`:
   * Add `get_owner`, `targets`.
-  * Remove `repost` from `VERBS_WITH_OBJECT`, [it's not an AS1 verb](https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs).
+  * Add `accept`, `reject`, `stop-following` to `VERBS_WITH_OBJECT` and remove `repost`, [it's not an AS1 verb](https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs).
 * `as2`:
   * `to_as1`:
     * Improve `Video` handling: support `Link` objects in `url`, extract stream URLs and types from link `tag`s.

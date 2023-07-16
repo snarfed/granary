@@ -21,10 +21,13 @@ RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
   ('invite', 'invited'),
 ))
 VERBS_WITH_OBJECT = {
+  'accept',
   'follow',
   'like',
   'react',
+  'reject',
   'share',
+  'stop-following',
 } | set(RSVP_VERB_TO_COLLECTION.keys())
 
 # objectTypes that can be actors. technically this is based on AS2 semantics,
