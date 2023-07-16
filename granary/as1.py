@@ -97,9 +97,12 @@ def get_objects(obj, field='object'):
 def get_owner(obj):
   """Returns an object's author or actor.
 
-  Prefers author, then actor. If the value is an object, returns its id,
-  if available. If neither field exists, but obj.objectType is in ACTOR_TYPES,
-  returns its own id, if available.
+  Prefers author, then actor. If that's an object, returns its id, if available.
+  If neither field exists, but obj.objectType is in ACTOR_TYPES, returns its own
+  id, if available.
+
+  For posts, updates, and deletes, falls back to the inner object's owner if the
+  outer activity has no actor.
 
   Args:
     obj: decoded JSON ActivityStreams object
@@ -114,6 +117,9 @@ def get_owner(obj):
   ids = get_ids(obj, 'author') or get_ids(obj, 'actor')
   if not ids and obj.get('objectType') in ACTOR_TYPES:
     ids = util.get_list(obj, 'id')
+
+  if not ids and obj.get('verb') in ('post', 'update', 'delete'):
+    ids = get_owner(get_object(obj))
 
   if ids:
     return ids[0]

@@ -565,6 +565,10 @@ class As1Test(testutil.TestCase):
         ('a', {'author': {'id': 'a'}}),
         ('a', {'id': 'a', 'objectType': 'organization'}),
         (None, {'x': 'y', 'objectType': 'organization'}),
+        (None, {'verb': 'post', 'object': {}}),
+        ('a', {'verb': 'post', 'object': {'author': 'a'}}),
+        ('a', {'verb': 'update', 'object': {'actor': 'a'}}),
+        ('a', {'verb': 'delete', 'object': {'author': {'id': 'a'}}}),
     ):
       with self.subTest(obj=obj):
         self.assertEqual(expected, as1.get_owner(obj))
