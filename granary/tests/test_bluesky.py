@@ -521,3 +521,6 @@ class BlueskyTest(testutil.TestCase):
           'Content-Type': 'application/json',
         },
     )
+
+  def test_user_to_actor(self):
+    self.assert_equals(ACTOR_AS, self.bs.user_to_actor(ACTOR_PROFILE_BSKY))
