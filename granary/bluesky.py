@@ -461,7 +461,10 @@ def to_as1(obj, type=None):
     raise ValueError('Bluesky object missing $type field')
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type in ('app.bsky.actor.defs#profileView', 'app.bsky.actor.defs#profileViewBasic'):
+  if type in (
+          'app.bsky.actor.defs#profileView',
+          'app.bsky.actor.defs#profileViewBasic',
+          'app.bsky.actor.defs#profileViewDetailed'):
     images = [{'url': obj.get('avatar')}]
     banner = obj.get('banner')
     if banner:
@@ -759,22 +762,9 @@ class Bluesky(Source):
     """Converts a dict user to an actor.
 
     Args:
-      user: JSON user
+      user: Bluesky user app.bsky.actor.defs#profileViewDetailed
 
     Returns:
       an ActivityStreams actor dict, ready to be JSON-encoded
     """
-    username = user.get('handle')
-    if not username:
-      return {}
-
-    return util.trim_nulls({
-      'objectType': 'person',
-      'displayName': user.get('displayName'),
-      'image': {'url': user.get('avatar')},
-      'id': user.get('did'),
-      'numeric_id': user.get('did'),
-      'url': self.user_url(user.get('handle')),
-      'username': username,
-      'description': user.get('description'),
-    })
+    return to_as1(user)
