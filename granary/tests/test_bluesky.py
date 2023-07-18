@@ -419,6 +419,12 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_embed(self):
     self.assert_equals(POST_AS_EMBED, to_as1(POST_BSKY_EMBED))
 
+  def test_to_as1_embed(self):
+    self.assertIsNone(to_as1({
+      '$type': 'app.bsky.embed.record#viewBlocked',
+      'uri': 'unused',
+    }))
+
   def test_to_as1_facet_link_and_embed(self):
     bsky = copy.deepcopy(POST_BSKY_EMBED)
     bsky['post']['record']['facets'] = FACETS

@@ -461,7 +461,8 @@ def to_as1(obj, type=None):
     raise ValueError('Bluesky object missing $type field')
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type in ('app.bsky.actor.defs#profileView', 'app.bsky.actor.defs#profileViewBasic'):
+  if type in ('app.bsky.actor.defs#profileView',
+              'app.bsky.actor.defs#profileViewBasic'):
     images = [{'url': obj.get('avatar')}]
     banner = obj.get('banner')
     if banner:
@@ -584,6 +585,10 @@ def to_as1(obj, type=None):
     return to_as1(record) if record else None
 
   elif type == 'app.bsky.embed.record#viewNotFound':
+    return None
+
+  elif type in ('app.bsky.embed.record#viewNotFound',
+                'app.bsky.embed.record#viewBlocked'):
     return None
 
   elif type == 'app.bsky.feed.defs#feedViewPost':
