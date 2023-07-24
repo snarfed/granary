@@ -44,14 +44,19 @@ def from_as1(obj):
   ret = {}
 
   if type in as1.ACTOR_TYPES:
+    nip05 = obj.get('username', '')
+    if '@' not in nip05:
+      nip05 = f'_@{nip05}'
     ret = {
       'kind': 0,
       'content': json_dumps({
         'name': obj.get('displayName'),
         'about': obj.get('description'),
         'picture': util.get_url(obj, 'image'),
+        'nip05': nip05,
       }),
     }
+
   elif type in ('article', 'note'):
     published = obj.get('published')
     created_at = int(util.parse_iso8601(published).timestamp()) if published else None
@@ -85,7 +90,9 @@ def to_as1(event):
       'displayName': content.get('name'),
       'description': content.get('about'),
       'image': content.get('picture'),
+      'username': content.get('nip05', '').removeprefix('_@'),
     }
+
   elif kind == 1:  # note
     created_at = event.get('created_at')
     published = datetime.fromtimestamp(created_at).isoformat() if created_at else None

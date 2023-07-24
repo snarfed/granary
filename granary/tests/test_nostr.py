@@ -1,4 +1,5 @@
 """Unit tests for nostr.py."""
+from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import testutil
 
 from ..nostr import from_as1, id_for, to_as1
@@ -24,9 +25,15 @@ class NostrTest(testutil.TestCase):
       'displayName': 'Alice',
       'description': 'It me',
       'image': 'http://alice/pic',
-    }, to_as1({
+      'username': 'alice.com',
+   }, to_as1({
       'kind': 0,
-      'content': '{"name": "Alice", "about": "It me", "picture": "http://alice/pic"}',
+      'content': json_dumps({
+        'name': 'Alice',
+        'about': 'It me',
+        'picture': 'http://alice/pic',
+        'nip05': '_@alice.com',
+      }),
     }))
 
   def test_to_as1_note(self):
@@ -43,12 +50,18 @@ class NostrTest(testutil.TestCase):
   def test_from_as1_profile(self):
     self.assertEqual({
       'kind': 0,
-      'content': '{"name":"Alice","about":"It me","picture":"http://alice/pic"}',
+      'content': json_dumps({
+        'name': 'Alice',
+        'about': 'It me',
+        'picture': 'http://alice/pic',
+        'nip05': '_@alice.com',
+      }),
     }, from_as1({
       'objectType': 'person',
       'displayName': 'Alice',
       'description': 'It me',
       'image': 'http://alice/pic',
+      'username': 'alice.com',
     }))
 
   def test_from_as1_note(self):

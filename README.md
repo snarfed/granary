@@ -287,6 +287,7 @@ _REST API breaking changes:_
 
 _Non-breaking changes:_
 
+* Add new `nostr` module!
 * `as1`:
   * Add `get_owner`, `targets`.
   * Add `accept`, `reject`, `stop-following` to `VERBS_WITH_OBJECT` and remove `repost`, [it's not an AS1 verb](https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs).
