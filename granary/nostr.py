@@ -1,9 +1,12 @@
 """Nostr.
 
 NIPS implemented:
-* 01 (base protocol, events, profile metadata)
-* 05 (domain identifiers)
-* 27 (text notes)
+* 01: base protocol, events, profile metadata
+* 05: domain identifiers
+* 27: text notes
+* 18: reposts, including 10 for e/p tags
+* 19: bech32-encoded ids
+* 21: nostr: URI scheme
 """
 from datetime import datetime
 from hashlib import sha256
@@ -16,6 +19,16 @@ from . import as1
 
 logger = logging.getLogger(__name__)
 
+# NIP-19
+BECH32_PREFIXES = (
+  'naddr',
+  'nevent',
+  'note',
+  'nprofile',
+  'npub',
+  'nrelay',
+  'nsec',
+)
 
 def id_for(event):
   """Generates an id for a Nostr event.
@@ -38,6 +51,26 @@ def id_for(event):
   ]).encode()).hexdigest()
 
 
+def id_from_as1(id):
+  """Converts a Nostr bech32 id to a hex sha256 hash id.
+
+  May optionally have nostr: URI prefix and/or bech32 plain or TLV prefix.
+
+  Based on NIP-19 and NIP-21.
+  """
+  if not id:
+    return id
+
+  if id.startswith('nostr:'):
+    id = id.removeprefix('nostr:')
+
+  for prefix in BECH32_PREFIXES:
+    id = id.removeprefix(prefix)
+
+  # TODO: bech32-decode
+  return id
+
+
 def from_as1(obj):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
@@ -47,32 +80,54 @@ def from_as1(obj):
   Returns: dict, JSON Nostr event
   """
   type = as1.object_type(obj)
-  ret = {}
+  event = {
+    'id': id_from_as1(obj.get('id')),
+    'pubkey': id_from_as1(as1.get_owner(obj)),
+  }
 
+  # types
   if type in as1.ACTOR_TYPES:
     nip05 = obj.get('username', '')
     if '@' not in nip05:
       nip05 = f'_@{nip05}'
-    ret = {
+    event = {
       'kind': 0,
+      'pubkey': event['id'],
       'content': json_dumps({
         'name': obj.get('displayName'),
         'about': obj.get('description'),
         'picture': util.get_url(obj, 'image'),
         'nip05': nip05,
-      }),
+      }, sort_keys=True),
     }
 
   elif type in ('article', 'note'):
-    published = obj.get('published')
-    created_at = int(util.parse_iso8601(published).timestamp()) if published else None
-    ret = {
+    event.update({
       'kind': 1,
       'content': obj.get('content') or obj.get('summary') or obj.get('displayName'),
-      'created_at': created_at,
-    }
+    })
 
-  return util.trim_nulls(ret)
+  elif type == 'share':
+    event.update({
+      'kind': 6,
+      'tags': [],
+    })
+
+    inner_obj = obj.get('object')
+    if inner_obj and isinstance(inner_obj, dict):
+      orig_event = from_as1(inner_obj)
+      event['content'] = json_dumps(orig_event, sort_keys=True)
+      event['tags'] = [
+        ['e', orig_event.get('id'), 'TODO relay', 'mention'],
+        ['p', orig_event.get('pubkey')],
+      ]
+
+  # common fields
+  published = obj.get('published')
+  if published:
+    event['created_at'] = int(util.parse_iso8601(published).timestamp())
+
+  return util.trim_nulls(event)
 
 
 def to_as1(event):
@@ -86,13 +141,15 @@ def to_as1(event):
   if not event:
     return {}
 
-  ret = {}
+  obj = {}
   kind = event['kind']
+  id = event.get('id')
 
   if kind == 0:  # profile
     content = json_loads(event.get('content')) or {}
-    ret = {
+    obj = {
       'objectType': 'person',
+      'id': f'nostr:npub{event["pubkey"]}',
       'displayName': content.get('name'),
       'description': content.get('about'),
       'image': content.get('picture'),
@@ -100,12 +157,30 @@ def to_as1(event):
     }
 
   elif kind == 1:  # note
-    created_at = event.get('created_at')
-    published = datetime.fromtimestamp(created_at).isoformat() if created_at else None
-    ret = {
+    obj = {
       'objectType': 'note',
+      'id': f'nostr:note{id}',
+      'author': {'id': f'nostr:npub{event["pubkey"]}'},
       'content': event.get('content'),
-      'published': published,
     }
 
-  return util.trim_nulls(ret)
+  elif kind in (6, 16):  # repost
+    obj = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'id': f'nostr:nevent{id}',
+    }
+    for tag in event.get('tags', []):
+      if tag[0] == 'e' and tag[-1] == 'mention':
+        # TODO: bech32-encode id
+        obj['object'] = f'nostr:note{tag[1]}'
+    content = event.get('content') or ''
+    if content.startswith('{'):
+      obj['object'] = to_as1(json_loads(content))
+
+  # common fields
+  created_at = event.get('created_at')
+  if created_at:
+    obj['published'] = datetime.fromtimestamp(created_at).isoformat()
+
+  return util.trim_nulls(obj)
