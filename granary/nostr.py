@@ -1,5 +1,6 @@
 """Nostr."""
 from datetime import datetime
+from hashlib import sha256
 import logging
 
 from oauth_dropins.webutil import util
@@ -8,6 +9,27 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from . import as1
 
 logger = logging.getLogger(__name__)
+
+
+def id_for(event):
+  """Generates an id for a Nostr event.
+
+  Args:
+    event: dict, JSON Nostr event
+
+  Returns: str, 32-character hex-encoded sha256 hash of the event, serialized
+    according to NIP-01
+  """
+  event.setdefault('tags', [])
+  assert event.keys() == set(('content', 'created_at', 'kind', 'pubkey', 'tags'))
+  return sha256(json_dumps([
+    0,
+    event['pubkey'],
+    event['created_at'],
+    event['kind'],
+    event['tags'],
+    event['content'],
+  ]).encode()).hexdigest()
 
 
 def from_as1(obj):
