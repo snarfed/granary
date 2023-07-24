@@ -60,7 +60,9 @@ ACTOR_PROFILE_BSKY = {
 
 POST_AS = {
   'objectType': 'activity',
+  'id': 'at://did/app.bsky.feed.post/tid',
   'verb': 'post',
+  'actor': ACTOR_AS,
   'object': {
     'objectType': 'note',
     'id': 'at://did/app.bsky.feed.post/tid',
@@ -789,7 +791,7 @@ class BlueskyTest(testutil.TestCase):
       'replies': [REPLY_BSKY],
     })
 
-    self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
+    self.assert_equals([POST_AUTHOR_PROFILE_AS],
                        self.bs.get_activities(activity_id='at://id'))
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fid&depth=1',
@@ -812,7 +814,7 @@ class BlueskyTest(testutil.TestCase):
       'feed': [POST_AUTHOR_BSKY],
     })
 
-    self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
+    self.assert_equals([POST_AUTHOR_PROFILE_AS],
                        self.bs.get_activities(group_id=SELF, user_id='alice.com'))
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=alice.com',
