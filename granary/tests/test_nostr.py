@@ -5,7 +5,7 @@ from oauth_dropins.webutil import testutil
 from ..nostr import from_as1, id_for, to_as1
 
 NOW_TS = int(testutil.NOW.timestamp())
-
+NOW_ISO = testutil.NOW.replace(tzinfo=None).isoformat()
 
 class NostrTest(testutil.TestCase):
 
@@ -19,14 +19,15 @@ class NostrTest(testutil.TestCase):
         'content': 'My plain text',
     }))
 
-  def test_to_as1_profile(self):
-    self.assertEqual({
+  def test_to_from_as1_profile(self):
+    person = {
       'objectType': 'person',
       'displayName': 'Alice',
       'description': 'It me',
       'image': 'http://alice/pic',
       'username': 'alice.com',
-   }, to_as1({
+    }
+    event = {
       'kind': 0,
       'content': json_dumps({
         'name': 'Alice',
@@ -34,43 +35,20 @@ class NostrTest(testutil.TestCase):
         'picture': 'http://alice/pic',
         'nip05': '_@alice.com',
       }),
-    }))
+    }
+    self.assertEqual(person, to_as1(event))
+    self.assertEqual(event, from_as1(person))
 
-  def test_to_as1_note(self):
-    self.assertEqual({
+  def test_to_from_as1_note(self):
+    note = {
       'objectType': 'note',
       'content': 'Something to say',
-      'published': testutil.NOW.replace(tzinfo=None).isoformat(),
-    }, to_as1({
+      'published': NOW_ISO,
+    }
+    event = {
       'kind': 1,
       'content': 'Something to say',
       'created_at': NOW_TS,
-    }))
-
-  def test_from_as1_profile(self):
-    self.assertEqual({
-      'kind': 0,
-      'content': json_dumps({
-        'name': 'Alice',
-        'about': 'It me',
-        'picture': 'http://alice/pic',
-        'nip05': '_@alice.com',
-      }),
-    }, from_as1({
-      'objectType': 'person',
-      'displayName': 'Alice',
-      'description': 'It me',
-      'image': 'http://alice/pic',
-      'username': 'alice.com',
-    }))
-
-  def test_from_as1_note(self):
-    self.assertEqual({
-      'kind': 1,
-      'content': 'Something to say',
-      'created_at': NOW_TS,
-    }, from_as1({
-      'objectType': 'note',
-      'content': 'Something to say',
-      'published': testutil.NOW.isoformat(),
-    }))
+    }
+    self.assertEqual(note, to_as1(event))
+    self.assertEqual(event, from_as1(note))

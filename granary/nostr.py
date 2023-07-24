@@ -1,4 +1,10 @@
-"""Nostr."""
+"""Nostr.
+
+NIPS implemented:
+* 01 (base protocol, events, profile metadata)
+* 05 (domain identifiers)
+* 27 (text notes)
+"""
 from datetime import datetime
 from hashlib import sha256
 import logging
