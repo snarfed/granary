@@ -64,6 +64,29 @@ class NostrTest(testutil.TestCase):
     self.assertEqual(note, to_as1(event))
     self.assertEqual(event, from_as1(note))
 
+  def test_to_from_as1_reply(self):
+    reply = {
+      'objectType': 'note',
+      'id': 'nostr:noteabc123',
+      'author': {'id': 'nostr:npub987fed'},
+      'published': NOW_ISO,
+      'content': 'I hereby reply',
+      'inReplyTo': 'nostr:notedef456',
+    }
+    event = {
+      'kind': 1,
+      'id': 'abc123',
+      'pubkey': '987fed',
+      'content': 'I hereby reply',
+      'tags': [
+        ['e', 'def456', 'TODO relay', 'reply'],
+      ],
+      'created_at': NOW_TS,
+    }
+
+    self.assertEqual(reply, to_as1(event))
+    self.assertEqual(event, from_as1(reply))
+
   def test_to_from_as1_repost(self):
     repost = {
       'objectType': 'activity',

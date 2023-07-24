@@ -3,10 +3,11 @@
 NIPS implemented:
 * 01: base protocol, events, profile metadata
 * 05: domain identifiers
-* 27: text notes
+* 10: replies, mentions
 * 18: reposts, including 10 for e/p tags
 * 19: bech32-encoded ids
 * 21: nostr: URI scheme
+* 27: text notes
 """
 from datetime import datetime
 from hashlib import sha256
@@ -107,6 +108,15 @@ def from_as1(obj):
       'content': obj.get('content') or obj.get('summary') or obj.get('displayName'),
     })
 
+    in_reply_to = as1.get_object(obj, 'inReplyTo')
+    if in_reply_to:
+      event['tags'] = [
+        ['e', id_from_as1(in_reply_to.get('id')), 'TODO relay', 'reply'],
+      ]
+      author = as1.get_object(in_reply_to, 'author').get('id')
+      if author:
+        event['tags'].append(['p', id_from_as1(orig_event.get('pubkey'))])
+
   elif type == 'share':
     event.update({
       'kind': 6,
@@ -163,6 +173,10 @@ def to_as1(event):
       'author': {'id': f'nostr:npub{event["pubkey"]}'},
       'content': event.get('content'),
     }
+    for tag in event.get('tags', []):
+      if tag[0] == 'e' and tag[-1] == 'reply':
+        # TODO: bech32-encode id
+        obj['inReplyTo'] = f'nostr:note{tag[1]}'
 
   elif kind in (6, 16):  # repost
     obj = {
