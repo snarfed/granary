@@ -135,11 +135,11 @@ def from_as1(obj):
         ['p', orig_event.get('pubkey')],
       ]
 
-  elif type == 'like':
+  elif type in ('like', 'dislike'):
     liked = as1.get_object(obj).get('id')
     event.update({
       'kind': 7,
-      'content': '+',
+      'content': '+' if type == 'like' else '-',
       'tags': [['e', id_from_as1(liked)]],
     })
 
@@ -205,9 +205,12 @@ def to_as1(event):
       obj['object'] = to_as1(json_loads(content))
 
   elif kind == 7:  # like/reaction
+    content = event.get('content')
     obj.update({
       'objectType': 'activity',
-      'verb': 'like',
+      'verb': 'like' if content == '+'
+              else 'dislike' if content == '-'
+              else None,
     })
     for tag in event.get('tags', []):
       if tag[0] == 'e':
