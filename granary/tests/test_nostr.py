@@ -164,3 +164,23 @@ class NostrTest(testutil.TestCase):
 
     self.assertEqual(like, to_as1(event))
     self.assertEqual(event, from_as1(like))
+
+  def test_to_from_as1_reaction(self):
+    react = {
+      'objectType': 'activity',
+      'verb': 'react',
+      'id': 'nostr:neventabc123',
+      'content': '😀',
+      'published': NOW_ISO,
+      'object': 'nostr:neventdef456',
+    }
+    event = {
+      'kind': 7,
+      'id': 'abc123',
+      'content': '😀',
+      'tags': [['e', 'def456']],
+      'created_at': NOW_TS,
+    }
+
+    self.assertEqual(react, to_as1(event))
+    self.assertEqual(event, from_as1(react))

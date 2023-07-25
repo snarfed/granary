@@ -135,11 +135,13 @@ def from_as1(obj):
         ['p', orig_event.get('pubkey')],
       ]
 
-  elif type in ('like', 'dislike'):
+  elif type in ('like', 'dislike', 'react'):
     liked = as1.get_object(obj).get('id')
     event.update({
       'kind': 7,
-      'content': '+' if type == 'like' else '-',
+      'content': '+' if type == 'like'
+                 else '-' if type == 'dislike'
+                 else obj.get('content'),
       'tags': [['e', id_from_as1(liked)]],
     })
 
@@ -205,13 +207,19 @@ def to_as1(event):
       obj['object'] = to_as1(json_loads(content))
 
   elif kind == 7:  # like/reaction
-    content = event.get('content')
     obj.update({
       'objectType': 'activity',
-      'verb': 'like' if content == '+'
-              else 'dislike' if content == '-'
-              else None,
     })
+
+    content = event.get('content')
+    if content == '+':
+      obj['verb'] = 'like'
+    elif content == '-':
+      obj['verb'] = 'dislike'
+    else:
+      obj['verb'] = 'react'
+      obj['content'] = content
+
     for tag in event.get('tags', []):
       if tag[0] == 'e':
         # TODO: bech32-encode id
