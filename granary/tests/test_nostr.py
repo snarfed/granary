@@ -126,3 +126,22 @@ class NostrTest(testutil.TestCase):
       **repost,
       'object': 'nostr:notedef456',
     }, to_as1(event))
+
+  def test_to_from_as1_like(self):
+    like = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'id': 'nostr:neventabc123',
+      'published': NOW_ISO,
+      'object': 'nostr:neventdef456',
+    }
+    event = {
+      'kind': 7,
+      'id': 'abc123',
+      'content': '+',
+      'tags': [['e', 'def456']],
+      'created_at': NOW_TS,
+    }
+
+    self.assertEqual(like, to_as1(event))
+    self.assertEqual(event, from_as1(like))

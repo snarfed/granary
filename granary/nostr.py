@@ -1,12 +1,14 @@
 """Nostr.
 
 NIPS implemented:
+
 * 01: base protocol, events, profile metadata
 * 05: domain identifiers
 * 10: replies, mentions
 * 18: reposts, including 10 for e/p tags
 * 19: bech32-encoded ids
 * 21: nostr: URI scheme
+* 25: likes, emoji reactions
 * 27: text notes
 """
 from datetime import datetime
@@ -37,7 +39,8 @@ def id_for(event):
   Args:
     event: dict, JSON Nostr event
 
-  Returns: str, 32-character hex-encoded sha256 hash of the event, serialized
+  Returns:
+    str, 32-character hex-encoded sha256 hash of the event, serialized
     according to NIP-01
   """
   event.setdefault('tags', [])
@@ -123,14 +126,22 @@ def from_as1(obj):
       'tags': [],
     })
 
-    inner_obj = obj.get('object')
-    if inner_obj and isinstance(inner_obj, dict):
+    inner_obj = as1.get_object(obj)
+    if inner_obj:
       orig_event = from_as1(inner_obj)
       event['content'] = json_dumps(orig_event, sort_keys=True)
       event['tags'] = [
         ['e', orig_event.get('id'), 'TODO relay', 'mention'],
         ['p', orig_event.get('pubkey')],
       ]
+
+  elif type == 'like':
+    liked = as1.get_object(obj).get('id')
+    event.update({
+      'kind': 7,
+      'content': '+',
+      'tags': [['e', id_from_as1(liked)]],
+    })
 
   # common fields
   published = obj.get('published')
@@ -151,39 +162,40 @@ def to_as1(event):
   if not event:
     return {}
 
-  obj = {}
   kind = event['kind']
   id = event.get('id')
+  obj = {
+      'id': f'nostr:nevent{id}',
+  }
 
   if kind == 0:  # profile
     content = json_loads(event.get('content')) or {}
-    obj = {
+    obj.update({
       'objectType': 'person',
       'id': f'nostr:npub{event["pubkey"]}',
       'displayName': content.get('name'),
       'description': content.get('about'),
       'image': content.get('picture'),
       'username': content.get('nip05', '').removeprefix('_@'),
-    }
+    })
 
   elif kind == 1:  # note
-    obj = {
+    obj.update({
       'objectType': 'note',
       'id': f'nostr:note{id}',
       'author': {'id': f'nostr:npub{event["pubkey"]}'},
       'content': event.get('content'),
-    }
+    })
     for tag in event.get('tags', []):
       if tag[0] == 'e' and tag[-1] == 'reply':
         # TODO: bech32-encode id
         obj['inReplyTo'] = f'nostr:note{tag[1]}'
 
   elif kind in (6, 16):  # repost
-    obj = {
+    obj.update({
       'objectType': 'activity',
       'verb': 'share',
-      'id': f'nostr:nevent{id}',
-    }
+    })
     for tag in event.get('tags', []):
       if tag[0] == 'e' and tag[-1] == 'mention':
         # TODO: bech32-encode id
@@ -191,6 +203,16 @@ def to_as1(event):
     content = event.get('content') or ''
     if content.startswith('{'):
       obj['object'] = to_as1(json_loads(content))
+
+  elif kind == 7:  # like/reaction
+    obj.update({
+      'objectType': 'activity',
+      'verb': 'like',
+    })
+    for tag in event.get('tags', []):
+      if tag[0] == 'e':
+        # TODO: bech32-encode id
+        obj['object'] = f'nostr:nevent{tag[1]}'
 
   # common fields
   created_at = event.get('created_at')

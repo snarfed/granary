@@ -54,6 +54,10 @@ microformats2
 -------------
 .. automodule:: granary.microformats2
 
+nostr
+-----
+.. automodule:: granary.nostr
+
 pixelfed
 --------
 .. automodule:: granary.pixelfed

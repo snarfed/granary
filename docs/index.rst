@@ -174,11 +174,11 @@ Using the library
 
 See the `example above <#using>`__ for a quick start guide.
 
-Clone or download this repo into a directory named ``granary`` (note the
-underscore instead of dash). Each source works the same way. Import the
-module for the source you want to use, then instantiate its class by
-passing the HTTP handler object. The handler should have a ``request``
-attribute for the current HTTP request.
+Clone or download this repo into a directory named ``granary``. Each
+source works the same way. Import the module for the source you want to
+use, then instantiate its class by passing the HTTP handler object. The
+handler should have a ``request`` attribute for the current HTTP
+request.
 
 The useful methods are ``get_activities()`` and ``get_actor()``, which
 returns the current authenticated user (if any). See the `full reference
@@ -445,6 +445,102 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+6.1 - unreleased
+~~~~~~~~~~~~~~~~
+
+*REST API breaking changes:*
+
+`Twitter is
+dead <https://snarfed.org/2023-04-03_so-long-twitter-api-and-thanks-for-all-the-fish>`__,
+at least in the REST API.
+
+*Non-breaking changes:*
+
+-  Add new ``nostr`` module!
+-  ``as1``:
+
+   -  Add ``get_owner``, ``targets``.
+   -  Add ``accept``, ``reject``, ``stop-following`` to
+      ``VERBS_WITH_OBJECT`` and remove ``repost``, `it’s not an AS1
+      verb <https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs>`__.
+
+-  ``as2``:
+
+   -  ``to_as1``:
+
+      -  Improve ``Video`` handling: support ``Link`` objects in
+         ``url``, extract stream URLs and types from link ``tag``\ s.
+      -  Coerce non-float ``latitude`` and ``longitude`` to float, raise
+         ``ValueError`` on failure.
+      -  Put image attachments into ``image`` as well as ``attachments``
+         (`bridgy-fed#429 <https://github.com/snarfed/bridgy-fed/issues/429>`__).
+
+   -  Add new ``TYPES_WITH_OBJECT`` constant.
+   -  Add new ``get_urls``, ``address`` functions.
+   -  Improve ``Content-Type`` compatibility with
+      ``application/ld+json; profile="https://www.w3.org/ns/activitystreams"``.
+   -  Bug fix for ``Undo`` activities with bare string id ``object``\ s.
+   -  Revise HTML in ``PropertyValue`` attachments on actors to include
+      full URL in anchro text to be compatible with Mastodon’s profile
+      link verification.
+
+-  ``atom``:
+
+   -  ``activities_to_atom`` etc:
+
+      -  Bug fix, handle bare string URL ``image`` values.
+      -  Bug fix, remove incorrect ``type="application/atom+xml"`` from
+         ``rel="self"`` ``link`` in ``entry``.
+      -  Render ``objectType: comment`` attachments.
+
+   -  Bug fixes in ``activity_to_atom``/``activities_to_atom`` for
+      dict-valued ``url`` fields.
+   -  Render images in article/note attachments.
+   -  Render ``objectType: service`` attachments, eg Bluesky custom
+      feeds.
+
+-  ``bluesky``:
+
+   -  Implement ``Bluesky`` API class, including ``get_activities``.
+   -  Update for `app.bsky`` lexicons
+      refactor <https://github.com/bluesky-social/atproto/commit/7f008c05a09c6dcf42dcac2819210138af42835c>`__.
+   -  Convert reposts, quotes, inline links, attached links, and
+      mentions, both directions. Includes Bluesky facet (rich text)
+      support.
+   -  Handle quote posts with attached images, both directions.
+   -  ``from_as1``: handle link tags without start/end indices.
+   -  ``to_as1``: add new ``type`` kwarg.
+   -  ``to_as1``: generate staging.bsky.app profile and post URLs.
+   -  ``to_as1``: propagate profile ``did`` into actor ``id``.
+   -  ``to_as1``: add unimplemented stub for custom feeds, eg
+      ``app.bsky.feed.defs#generatorView``.
+   -  Add ``as1_to_profile``.
+
+-  ``jsonfeed``:
+
+   -  ``activities_to_jsonfeed`` bug fix, handle bare string values for
+      ``image`` and ``stream``.
+
+-  ``mastodon``:
+
+   -  ``status_to_object``: add/fix alt text handling for images.
+
+-  ``microformats2``:
+
+   -  ``json_to_object``:
+
+      -  Improve handling of items with multiple types by using `post
+         type
+         discovery <https://indiewebcamp.com/post-type-discovery>`__
+         more aggressively.
+
+   -  ``object_to_json``:
+
+      -  Bug fix, handle bare string URL ``image`` values.
+
+   -  Include ``objectType: service`` attachments, eg Bluesky custom
+      feeds, in JSON and HTML output.
 
 6.0 - 2023-03-22
 ~~~~~~~~~~~~~~~~
