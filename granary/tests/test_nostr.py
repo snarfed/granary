@@ -32,6 +32,12 @@ class NostrTest(testutil.TestCase):
       'description': 'It me',
       'image': 'http://alice/pic',
       'username': 'alice.com',
+      'urls': [
+        'https://github.com/semisol',
+        'https://twitter.com/semisol_public',
+        'https://bitcoinhackers.org/@semisol',
+        'https://t.me/1087295469',
+      ],
     }
     event = {
       'kind': 0,
@@ -42,9 +48,18 @@ class NostrTest(testutil.TestCase):
         'picture': 'http://alice/pic',
         'nip05': '_@alice.com',
       }, sort_keys=True),
+      'tags': [
+        ['i', 'github:semisol', '-'],
+        ['i', 'twitter:semisol_public', '-'],
+        ['i', 'mastodon:bitcoinhackers.org/@semisol', '-'],
+        ['i', 'telegram:1087295469', '-'],
+      ],
     }
-    self.assertEqual(person, to_as1(event))
-    self.assertEqual(event, from_as1(person))
+    self.assert_equals(person, to_as1(event))
+
+    # we don't try to detect which URLs might be Mastodon
+    del event['tags'][2]
+    self.assert_equals(event, from_as1(person))
 
   def test_to_from_as1_note(self):
     note = {

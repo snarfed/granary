@@ -10,6 +10,7 @@ NIPS implemented:
 * 21: nostr: URI scheme
 * 25: likes, emoji reactions
 * 27: text notes
+* 39: external identities
 """
 from datetime import datetime
 from hashlib import sha256
@@ -32,6 +33,16 @@ BECH32_PREFIXES = (
   'nrelay',
   'nsec',
 )
+
+# NIP-39
+# https://github.com/nostr-protocol/nips/blob/master/39.md#claim-types
+# maps NIP-39 platform to base URL
+PLATFORMS = {
+  'github': 'https://github.com/',
+  'telegram': 'https://t.me/',
+  'twitter': 'https://twitter.com/',
+  'mastodon': 'https://',
+}
 
 def id_for(event):
   """Generates an id for a Nostr event.
@@ -103,7 +114,14 @@ def from_as1(obj):
         'picture': util.get_url(obj, 'image'),
         'nip05': nip05,
       }, sort_keys=True),
+      'tags': [],
     }
+    for url in as1.object_urls(obj):
+      for platform, base_url in PLATFORMS.items():
+        # we don't known which URLs might be Mastodon, so don't try to guess
+          if platform != 'mastodon' and url.startswith(base_url):
+            event['tags'].append(
+              ['i', f'{platform}:{url.removeprefix(base_url)}', '-'])
 
   elif type in ('article', 'note'):
     event.update({
@@ -166,6 +184,7 @@ def to_as1(event):
 
   kind = event['kind']
   id = event.get('id')
+  tags = event.get('tags', [])
   obj = {
       'id': f'nostr:nevent{id}',
   }
@@ -179,7 +198,14 @@ def to_as1(event):
       'description': content.get('about'),
       'image': content.get('picture'),
       'username': content.get('nip05', '').removeprefix('_@'),
+      'urls': [],
     })
+    for tag in tags:
+      if tag[0] == 'i':
+        platform, identity = tag[1].split(':')
+        base_url = PLATFORMS.get(platform)
+        if base_url:
+          obj['urls'].append(base_url + identity)
 
   elif kind == 1:  # note
     obj.update({
@@ -188,7 +214,7 @@ def to_as1(event):
       'author': {'id': f'nostr:npub{event["pubkey"]}'},
       'content': event.get('content'),
     })
-    for tag in event.get('tags', []):
+    for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'reply':
         # TODO: bech32-encode id
         obj['inReplyTo'] = f'nostr:note{tag[1]}'
@@ -198,7 +224,7 @@ def to_as1(event):
       'objectType': 'activity',
       'verb': 'share',
     })
-    for tag in event.get('tags', []):
+    for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'mention':
         # TODO: bech32-encode id
         obj['object'] = f'nostr:note{tag[1]}'
@@ -220,7 +246,7 @@ def to_as1(event):
       obj['verb'] = 'react'
       obj['content'] = content
 
-    for tag in event.get('tags', []):
+    for tag in tags:
       if tag[0] == 'e':
         # TODO: bech32-encode id
         obj['object'] = f'nostr:nevent{tag[1]}'
