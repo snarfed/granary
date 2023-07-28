@@ -155,6 +155,13 @@ The original post]]></description>
       }], feed_url='http://this')
     self.assert_multiline_in('<author>- (Mrs. Baz)</author>', got)
 
+  def test_author_string_id(self):
+    got = rss.from_activities([{
+        'content': 'foo bar',
+        'author': 'tag:bob',
+      }], feed_url='http://this')
+    self.assert_multiline_in('<author>- (tag:bob)</author>', got)
+
   def test_order(self):
     got = rss.from_activities([
       {'content': 'first'},

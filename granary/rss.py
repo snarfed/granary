@@ -117,10 +117,11 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       t.get('objectType') not in ('article', 'person', 'mention')]
     item.category(categories)
 
-    author = obj.get('author', {})
+    author = as1.get_object(obj, 'author')
     author = {
-      'name': author.get('displayName') or author.get('username'),
-      'uri': author.get('url'),
+      'name': (author.get('displayName') or author.get('username')
+               or author.get('url') or author.get('id')),
+      'uri': author.get('url') or author.get('id'),
       'email': author.get('email') or '-',
     }
     item.author(author)

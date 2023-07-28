@@ -331,6 +331,8 @@ _Non-breaking changes:_
   * `object_to_json`:
     * Bug fix, handle bare string URL `image` values.
   * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.
+* `rss`:
+  * `from_activities`: handle bare string id `author`.
 
 ### 6.0 - 2023-03-22
 
