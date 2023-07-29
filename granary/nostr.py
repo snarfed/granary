@@ -4,6 +4,7 @@ NIPS implemented:
 
 * 01: base protocol, events, profile metadata
 * 05: domain identifiers
+* 09: deletes
 * 10: replies, mentions
 * 12: articles
 * 18: reposts, including 10 for e/p tags
@@ -99,6 +100,7 @@ def from_as1(obj):
   event = {
     'id': id_from_as1(obj.get('id')),
     'pubkey': id_from_as1(as1.get_owner(obj)),
+    'content': obj.get('content') or obj.get('summary') or obj.get('displayName'),
     'tags': [],
   }
 
@@ -131,9 +133,8 @@ def from_as1(obj):
   elif type in ('article', 'note'):
     event.update({
       'kind': 1 if type == 'note' else 30023,
-      # TODO: convert HTML to Markdown
-      'content': obj.get('content') or obj.get('summary') or obj.get('displayName'),
     })
+    # TODO: convert HTML to Markdown
 
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
@@ -175,6 +176,12 @@ def from_as1(obj):
       'tags': [['e', id_from_as1(liked)]],
     })
 
+  elif type == 'delete':
+    event.update({
+      'kind': 5,
+      'tags': [['e', id_from_as1(as1.get_object(obj).get('id'))]],
+    })
+
   return util.trim_nulls(event)
 
 
@@ -192,12 +199,13 @@ def to_as1(event):
   kind = event['kind']
   id = event.get('id')
   tags = event.get('tags', [])
+  content = event.get('content')
   obj = {
-      'id': f'nostr:nevent{id}',
+    'id': f'nostr:nevent{id}',
   }
 
   if kind == 0:  # profile
-    content = json_loads(event.get('content')) or {}
+    content = json_loads(content) or {}
     obj.update({
       'objectType': 'person',
       'id': f'nostr:npub{event["pubkey"]}',
@@ -238,8 +246,7 @@ def to_as1(event):
       if tag[0] == 'e' and tag[-1] == 'mention':
         # TODO: bech32-encode id
         obj['object'] = f'nostr:note{tag[1]}'
-    content = event.get('content') or ''
-    if content.startswith('{'):
+    if content and content.startswith('{'):
       obj['object'] = to_as1(json_loads(content))
 
   elif kind == 7:  # like/reaction
@@ -247,7 +254,6 @@ def to_as1(event):
       'objectType': 'activity',
     })
 
-    content = event.get('content')
     if content == '+':
       obj['verb'] = 'like'
     elif content == '-':
@@ -260,6 +266,22 @@ def to_as1(event):
       if tag[0] == 'e':
         # TODO: bech32-encode id
         obj['object'] = f'nostr:nevent{tag[1]}'
+
+  elif kind == 5:  # delete
+    obj.update({
+      'objectType': 'activity',
+      'verb': 'delete',
+      'object': [],
+      'content': content,
+    })
+
+    for tag in tags:
+      # TODO: support NIP-33 'a' tags
+      if tag[0] == 'e':
+        obj['object'].append(f'nostr:nevent{tag[1]}')
+
+    if len(obj['object']) == 1:
+      obj['object'] = obj['object'][0]
 
   # common fields
   created_at = event.get('created_at')

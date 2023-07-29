@@ -226,3 +226,23 @@ class NostrTest(testutil.TestCase):
 
     self.assertEqual(react, to_as1(event))
     self.assertEqual(event, from_as1(react))
+
+  def test_to_from_as1_delete(self):
+    delete = {
+      'objectType': 'activity',
+      'verb': 'delete',
+      'id': 'nostr:neventabc123',
+      'published': NOW_ISO,
+      'object': 'nostr:neventdef456',
+      'content': 'a note about the delete',
+    }
+    event = {
+      'kind': 5,
+      'id': 'abc123',
+      'content': 'a note about the delete',
+      'tags': [['e', 'def456']],
+      'created_at': NOW_TS,
+    }
+
+    self.assertEqual(delete, to_as1(event))
+    self.assertEqual(event, from_as1(delete))
