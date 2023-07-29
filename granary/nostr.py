@@ -6,14 +6,28 @@ NIPS implemented:
 * 05: domain identifiers
 * 09: deletes
 * 10: replies, mentions
-* 12: articles
 * 14: subject tag in notes
 * 18: reposts, including 10 for e/p tags
 * 19: bech32-encoded ids
 * 21: nostr: URI scheme
+* 23: articles
 * 25: likes, emoji reactions
 * 27: text notes
 * 39: external identities
+
+TODO:
+
+* 01: relay protocol, both client and server?
+* 02: followings
+* 05: DNS verification?
+* 11: relay info (like nodeinfo)
+* 12: tags, hashtags, locations
+* 16, 33: ephemeral/replaceable events
+* 19: bech-32 encoded ids (finish)
+* 27: user mentions, note/event mentions
+* 32: tag activities
+* 46: "Nostr Connect," signing proxy that holds user's keys
+* 65: user relays. what would this be in AS1? anything?
 """
 from datetime import datetime
 from hashlib import sha256
