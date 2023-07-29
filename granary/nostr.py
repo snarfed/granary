@@ -5,6 +5,7 @@ NIPS implemented:
 * 01: base protocol, events, profile metadata
 * 05: domain identifiers
 * 10: replies, mentions
+* 12: articles
 * 18: reposts, including 10 for e/p tags
 * 19: bech32-encoded ids
 * 21: nostr: URI scheme
@@ -98,14 +99,19 @@ def from_as1(obj):
   event = {
     'id': id_from_as1(obj.get('id')),
     'pubkey': id_from_as1(as1.get_owner(obj)),
+    'tags': [],
   }
+
+  published = obj.get('published')
+  if published:
+    event['created_at'] = int(util.parse_iso8601(published).timestamp())
 
   # types
   if type in as1.ACTOR_TYPES:
     nip05 = obj.get('username', '')
     if '@' not in nip05:
       nip05 = f'_@{nip05}'
-    event = {
+    event.update({
       'kind': 0,
       'pubkey': event['id'],
       'content': json_dumps({
@@ -114,8 +120,7 @@ def from_as1(obj):
         'picture': util.get_url(obj, 'image'),
         'nip05': nip05,
       }, sort_keys=True),
-      'tags': [],
-    }
+    })
     for url in as1.object_urls(obj):
       for platform, base_url in PLATFORMS.items():
         # we don't known which URLs might be Mastodon, so don't try to guess
@@ -125,23 +130,30 @@ def from_as1(obj):
 
   elif type in ('article', 'note'):
     event.update({
-      'kind': 1,
+      'kind': 1 if type == 'note' else 30023,
+      # TODO: convert HTML to Markdown
       'content': obj.get('content') or obj.get('summary') or obj.get('displayName'),
     })
 
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
-      event['tags'] = [
-        ['e', id_from_as1(in_reply_to.get('id')), 'TODO relay', 'reply'],
-      ]
+      id = id_from_as1(in_reply_to.get('id'))
+      event['tags'].append(['e', id, 'TODO relay', 'reply'])
       author = as1.get_object(in_reply_to, 'author').get('id')
       if author:
         event['tags'].append(['p', id_from_as1(orig_event.get('pubkey'))])
 
+    if type == 'article' and published:
+      event['tags'].append(['published_at', str(event['created_at'])])
+
+    for field in 'title', 'summary':
+      val = obj.get(field)
+      if val:
+        event['tags'].append([field, val])
+
   elif type == 'share':
     event.update({
       'kind': 6,
-      'tags': [],
     })
 
     inner_obj = as1.get_object(obj)
@@ -162,11 +174,6 @@ def from_as1(obj):
                  else obj.get('content'),
       'tags': [['e', id_from_as1(liked)]],
     })
-
-  # common fields
-  published = obj.get('published')
-  if published:
-    event['created_at'] = int(util.parse_iso8601(published).timestamp())
 
   return util.trim_nulls(event)
 
@@ -207,17 +214,20 @@ def to_as1(event):
         if base_url:
           obj['urls'].append(base_url + identity)
 
-  elif kind == 1:  # note
+  elif kind in (1, 30023):  # note, article
     obj.update({
-      'objectType': 'note',
+      'objectType': 'note' if kind == 1 else 'article',
       'id': f'nostr:note{id}',
       'author': {'id': f'nostr:npub{event["pubkey"]}'},
+      # TODO: render Markdown to HTML
       'content': event.get('content'),
     })
     for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'reply':
         # TODO: bech32-encode id
         obj['inReplyTo'] = f'nostr:note{tag[1]}'
+      elif tag[0] in ('title', 'summary'):
+        obj[tag[0]] = tag[1]
 
   elif kind in (6, 16):  # repost
     obj.update({

@@ -41,6 +41,7 @@ class NostrTest(testutil.TestCase):
     }
     event = {
       'kind': 0,
+      'id': '987fed',
       'pubkey': '987fed',
       'content': json_dumps({
         'name': 'Alice',
@@ -75,6 +76,32 @@ class NostrTest(testutil.TestCase):
       'pubkey': '987fed',
       'content': 'Something to say',
       'created_at': NOW_TS,
+    }
+    self.assertEqual(note, to_as1(event))
+    self.assertEqual(event, from_as1(note))
+
+  def test_to_from_as1_article(self):
+    note = {
+      'objectType': 'article',
+      'id': 'nostr:noteabc123',
+      'author': {'id': 'nostr:npub987fed'},
+      'title': 'a thing',
+      'summary': 'about the thing',
+      'content': 'Something to say',
+      'published': NOW_ISO,
+    }
+    event = {
+      'kind': 30023,
+      'id': 'abc123',
+      'pubkey': '987fed',
+      'content': 'Something to say',
+      'created_at': NOW_TS,
+      'tags': [
+        # TODO: NIP-33 'd' tag for slug
+        ['published_at', str(NOW_TS)],
+        ['title', 'a thing'],
+        ['summary', 'about the thing'],
+      ],
     }
     self.assertEqual(note, to_as1(event))
     self.assertEqual(event, from_as1(note))
