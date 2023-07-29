@@ -80,6 +80,25 @@ class NostrTest(testutil.TestCase):
     self.assertEqual(note, to_as1(event))
     self.assertEqual(event, from_as1(note))
 
+  def test_to_from_as1_note_subject_tag(self):
+    note = {
+      'objectType': 'note',
+      'id': 'nostr:noteabc123',
+      'content': 'Something to say',
+      'title': 'my thing',
+    }
+    event = {
+      'kind': 1,
+      'id': 'abc123',
+      'content': 'Something to say',
+      'tags': [
+        ['title', 'my thing'],
+        ['subject', 'my thing'],
+      ],
+    }
+    self.assertEqual(note, to_as1(event))
+    self.assertEqual(event, from_as1(note))
+
   def test_to_from_as1_article(self):
     note = {
       'objectType': 'article',
@@ -100,6 +119,7 @@ class NostrTest(testutil.TestCase):
         # TODO: NIP-33 'd' tag for slug
         ['published_at', str(NOW_TS)],
         ['title', 'a thing'],
+        ['subject', 'a thing'],
         ['summary', 'about the thing'],
       ],
     }

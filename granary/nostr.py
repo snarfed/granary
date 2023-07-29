@@ -7,6 +7,7 @@ NIPS implemented:
 * 09: deletes
 * 10: replies, mentions
 * 12: articles
+* 14: subject tag in notes
 * 18: reposts, including 10 for e/p tags
 * 19: bech32-encoded ids
 * 21: nostr: URI scheme
@@ -147,10 +148,14 @@ def from_as1(obj):
     if type == 'article' and published:
       event['tags'].append(['published_at', str(event['created_at'])])
 
-    for field in 'title', 'summary':
-      val = obj.get(field)
-      if val:
-        event['tags'].append([field, val])
+    if title := obj.get('title'):
+      event['tags'].extend([
+        ['title', title],
+        ['subject', title],  # NIP-14 subject tag
+      ])
+
+    if summary := obj.get('summary'):
+      event['tags'].append(['summary', summary])
 
   elif type == 'share':
     event.update({
@@ -226,16 +231,22 @@ def to_as1(event):
     obj.update({
       'objectType': 'note' if kind == 1 else 'article',
       'id': f'nostr:note{id}',
-      'author': {'id': f'nostr:npub{event["pubkey"]}'},
       # TODO: render Markdown to HTML
       'content': event.get('content'),
     })
+
+    pubkey = event.get('pubkey')
+    if pubkey:
+      obj['author'] = {'id': f'nostr:npub{pubkey}'}
+
     for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'reply':
         # TODO: bech32-encode id
         obj['inReplyTo'] = f'nostr:note{tag[1]}'
       elif tag[0] in ('title', 'summary'):
         obj[tag[0]] = tag[1]
+      elif tag[0] == 'subject':  # NIP-14 subject tag
+        obj.setdefault('title', tag[1])
 
   elif kind in (6, 16):  # repost
     obj.update({
