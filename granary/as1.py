@@ -465,7 +465,7 @@ def object_urls(obj):
     return obj.get('value') if isinstance(obj, dict) else obj
 
   return util.uniquify(util.trim_nulls(
-    [value(obj.get('url'))] + [value(u) for u in obj.get('urls', [])]))
+    value(u) for u in util.get_list(obj, 'url') + util.get_list(obj, 'urls')))
 
 
 def targets(obj):

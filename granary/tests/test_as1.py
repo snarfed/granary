@@ -493,7 +493,12 @@ class As1Test(testutil.TestCase):
             'value': 'https://www.jvt.me/img/profile.jpg',
             'alt': "Jamie Tanna's profile image",
           },
-        })
+        }),
+        # url field is list, invalid AS1, but we can be forgiving
+        (['http://one', 'http://two', 'http://three'], {
+          'url': ['http://one', 'http://two'],
+          'urls': ['http://three'],
+        }),
     ):
       self.assertEqual(expected, as1.object_urls(actor))
 
