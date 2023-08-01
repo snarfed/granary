@@ -1,15 +1,13 @@
 {
   "lexicon": 1,
-  "id": "app.bsky.feed.getAuthorFeed",
+  "id": "app.bsky.graph.getListMutes",
   "defs": {
     "main": {
       "type": "query",
-      "description": "A view of an actor's feed.",
+      "description": "Which lists is the requester's account muting?",
       "parameters": {
         "type": "params",
-        "required": ["actor"],
         "properties": {
-          "actor": {"type": "string", "format": "at-identifier"},
           "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50},
           "cursor": {"type": "string"}
         }
@@ -18,20 +16,16 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["feed"],
+          "required": ["lists"],
           "properties": {
             "cursor": {"type": "string"},
-            "feed": {
+            "lists": {
               "type": "array",
-              "items": {"type": "ref", "ref": "app.bsky.feed.defs#feedViewPost"}
+              "items": {"type": "ref", "ref": "app.bsky.graph.defs#listView"}
             }
           }
         }
-      },
-      "errors": [
-        {"name": "BlockedActor"},
-        {"name": "BlockedByActor"}
-      ]
+      }
     }
   }
 }

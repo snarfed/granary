@@ -1,10 +1,10 @@
 {
   "lexicon": 1,
-  "id": "app.bsky.feed.getAuthorFeed",
+  "id": "app.bsky.graph.getLists",
   "defs": {
     "main": {
       "type": "query",
-      "description": "A view of an actor's feed.",
+      "description": "Fetch a list of lists that belong to an actor",
       "parameters": {
         "type": "params",
         "required": ["actor"],
@@ -18,20 +18,16 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["feed"],
+          "required": ["lists"],
           "properties": {
             "cursor": {"type": "string"},
-            "feed": {
+            "lists": {
               "type": "array",
-              "items": {"type": "ref", "ref": "app.bsky.feed.defs#feedViewPost"}
+              "items": {"type": "ref", "ref": "app.bsky.graph.defs#listView"}
             }
           }
         }
-      },
-      "errors": [
-        {"name": "BlockedActor"},
-        {"name": "BlockedByActor"}
-      ]
+      }
     }
   }
 }

@@ -1,10 +1,10 @@
 {
   "lexicon": 1,
-  "id": "app.bsky.feed.getAuthorFeed",
+  "id": "app.bsky.feed.getActorFeeds",
   "defs": {
     "main": {
       "type": "query",
-      "description": "A view of an actor's feed.",
+      "description": "Retrieve a list of feeds created by a given actor",
       "parameters": {
         "type": "params",
         "required": ["actor"],
@@ -18,20 +18,16 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["feed"],
+          "required": ["feeds"],
           "properties": {
             "cursor": {"type": "string"},
-            "feed": {
+            "feeds": {
               "type": "array",
-              "items": {"type": "ref", "ref": "app.bsky.feed.defs#feedViewPost"}
+              "items": {"type": "ref", "ref": "app.bsky.feed.defs#generatorView"}
             }
           }
         }
-      },
-      "errors": [
-        {"name": "BlockedActor"},
-        {"name": "BlockedByActor"}
-      ]
+      }
     }
   }
 }

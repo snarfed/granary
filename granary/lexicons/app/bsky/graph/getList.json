@@ -1,15 +1,15 @@
 {
   "lexicon": 1,
-  "id": "app.bsky.feed.getAuthorFeed",
+  "id": "app.bsky.graph.getList",
   "defs": {
     "main": {
       "type": "query",
-      "description": "A view of an actor's feed.",
+      "description": "Fetch a list of actors",
       "parameters": {
         "type": "params",
-        "required": ["actor"],
+        "required": ["list"],
         "properties": {
-          "actor": {"type": "string", "format": "at-identifier"},
+          "list": {"type": "string", "format": "at-uri"},
           "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50},
           "cursor": {"type": "string"}
         }
@@ -18,20 +18,17 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["feed"],
+          "required": ["list", "items"],
           "properties": {
             "cursor": {"type": "string"},
-            "feed": {
+            "list": {"type": "ref", "ref": "app.bsky.graph.defs#listView"},
+            "items": {
               "type": "array",
-              "items": {"type": "ref", "ref": "app.bsky.feed.defs#feedViewPost"}
+              "items": {"type": "ref", "ref": "app.bsky.graph.defs#listItemView"}
             }
           }
         }
-      },
-      "errors": [
-        {"name": "BlockedActor"},
-        {"name": "BlockedByActor"}
-      ]
+      }
     }
   }
 }
