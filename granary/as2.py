@@ -353,7 +353,7 @@ def to_as1(obj, use_type=True):
     for link in util.get_list(obj, 'url'):
       if isinstance(link, dict):
         for tag in util.get_list(link, 'tag'):
-          media_type = tag.get('mediaType', '')
+          media_type = tag.get('mediaType') or ''
           href = tag.get('href')
           if media_type.split('/')[0] == type.lower():
             obj['stream'] = {
@@ -373,7 +373,7 @@ def to_as1(obj, use_type=True):
 
   img_atts = [a for a in attachments
               if a.get('type') == 'Image'
-              or a.get('mediaType', '').startswith('image/')]
+              or (a.get('mediaType') or '').startswith('image/')]
   for as2_img in icons + images + img_atts:
     as1_img = to_as1(as2_img, use_type=False)
     url = util.get_url(as1_img)

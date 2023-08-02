@@ -84,10 +84,26 @@ class ActivityStreams2Test(testutil.TestCase):
     }, as2.to_as1({
       '@context': 'https://www.w3.org/ns/activitystreams',
       'type': 'Note',
-      'attachment' : [{
-        'type' : 'Document',
-        'mediaType' : 'image/jpeg',
-        'url' : 'http://pic/ture.jpg',
+      'attachment': [{
+        'type': 'Document',
+        'mediaType': 'image/jpeg',
+        'url': 'http://pic/ture.jpg',
+      }],
+    }))
+
+  def test_to_as1_image_attachment_mediatype_null(self):
+    """This is what Mastodon images look like."""
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': [{
+        'url': 'http://pic/ture.jpg',
+      }]
+    }, as2.to_as1({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'attachment': [{
+        'mediaType': None,
+        'url': 'http://pic/ture.jpg',
       }],
     }))
 
