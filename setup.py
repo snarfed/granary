@@ -37,6 +37,7 @@ setup(name='granary',
       keywords='social facebook flickr github instagram twitter activitystreams html microformats2 meetup mf2 atom rss jsonfeed',
       install_requires=[
           'beautifulsoup4>=4.8',
+          'bech32',
           'brevity>=0.2.17',
           'feedgen>=0.9',
           'feedparser',

@@ -23,7 +23,6 @@ TODO:
 * 11: relay info (like nodeinfo)
 * 12: tags, hashtags, locations
 * 16, 33: ephemeral/replaceable events
-* 19: bech-32 encoded ids (finish)
 * 27: user mentions, note/event mentions
 * 32: tag activities
 * 46: "Nostr Connect," signing proxy that holds user's keys
@@ -33,6 +32,7 @@ from datetime import datetime
 from hashlib import sha256
 import logging
 
+import bech32
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -83,24 +83,41 @@ def id_for(event):
   ]).encode()).hexdigest()
 
 
-def id_from_as1(id):
-  """Converts a Nostr bech32 id to a hex sha256 hash id.
-
-  May optionally have nostr: URI prefix and/or bech32 plain or TLV prefix.
+def uri_to_id(uri):
+  """Converts a nostr: URI with bech32-encoded id to a hex sha256 hash id.
 
   Based on NIP-19 and NIP-21.
+
+  Args:
+    uri: str
+
+  Returns:
+    str
+  """
+  if not uri:
+    return uri
+
+  prefix, data = bech32.bech32_decode(uri.removeprefix('nostr:'))
+  return bytes(bech32.convertbits(data, 5, 8, pad=False)).hex()
+
+
+def id_to_uri(prefix, id):
+  """Converts a hex sha256 hash id to a nostr: URI with bech32-encoded id.
+
+  Based on NIP-19 and NIP-21.
+
+  Args:
+    prefix: str
+    id: str
+
+  Returns:
+    str
   """
   if not id:
     return id
 
-  if id.startswith('nostr:'):
-    id = id.removeprefix('nostr:')
-
-  for prefix in BECH32_PREFIXES:
-    id = id.removeprefix(prefix)
-
-  # TODO: bech32-decode
-  return id
+  data = bech32.convertbits(bytes.fromhex(id), 8, 5)
+  return 'nostr:' + bech32.bech32_encode(prefix, data)
 
 
 def from_as1(obj):
@@ -113,8 +130,8 @@ def from_as1(obj):
   """
   type = as1.object_type(obj)
   event = {
-    'id': id_from_as1(obj.get('id')),
-    'pubkey': id_from_as1(as1.get_owner(obj)),
+    'id': uri_to_id(obj.get('id')),
+    'pubkey': uri_to_id(as1.get_owner(obj)),
     'content': obj.get('content') or obj.get('summary') or obj.get('displayName'),
     'tags': [],
   }
@@ -153,11 +170,11 @@ def from_as1(obj):
 
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
-      id = id_from_as1(in_reply_to.get('id'))
+      id = uri_to_id(in_reply_to.get('id'))
       event['tags'].append(['e', id, 'TODO relay', 'reply'])
       author = as1.get_object(in_reply_to, 'author').get('id')
       if author:
-        event['tags'].append(['p', id_from_as1(orig_event.get('pubkey'))])
+        event['tags'].append(['p', uri_to_id(orig_event.get('pubkey'))])
 
     if type == 'article' and published:
       event['tags'].append(['published_at', str(event['created_at'])])
@@ -192,13 +209,13 @@ def from_as1(obj):
       'content': '+' if type == 'like'
                  else '-' if type == 'dislike'
                  else obj.get('content'),
-      'tags': [['e', id_from_as1(liked)]],
+      'tags': [['e', uri_to_id(liked)]],
     })
 
   elif type == 'delete':
     event.update({
       'kind': 5,
-      'tags': [['e', id_from_as1(as1.get_object(obj).get('id'))]],
+      'tags': [['e', uri_to_id(as1.get_object(obj).get('id'))]],
     })
 
   return util.trim_nulls(event)
@@ -220,14 +237,14 @@ def to_as1(event):
   tags = event.get('tags', [])
   content = event.get('content')
   obj = {
-    'id': f'nostr:nevent{id}',
+    'id': id_to_uri('nevent', id)
   }
 
   if kind == 0:  # profile
     content = json_loads(content) or {}
     obj.update({
       'objectType': 'person',
-      'id': f'nostr:npub{event["pubkey"]}',
+      'id': id_to_uri('npub', event['pubkey']),
       'displayName': content.get('name'),
       'description': content.get('about'),
       'image': content.get('picture'),
@@ -244,19 +261,18 @@ def to_as1(event):
   elif kind in (1, 30023):  # note, article
     obj.update({
       'objectType': 'note' if kind == 1 else 'article',
-      'id': f'nostr:note{id}',
+      'id': id_to_uri('note', id),
       # TODO: render Markdown to HTML
       'content': event.get('content'),
     })
 
     pubkey = event.get('pubkey')
     if pubkey:
-      obj['author'] = {'id': f'nostr:npub{pubkey}'}
+      obj['author'] = {'id': id_to_uri('npub', pubkey)}
 
     for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'reply':
-        # TODO: bech32-encode id
-        obj['inReplyTo'] = f'nostr:note{tag[1]}'
+        obj['inReplyTo'] = id_to_uri('nevent', tag[1])
       elif tag[0] in ('title', 'summary'):
         obj[tag[0]] = tag[1]
       elif tag[0] == 'subject':  # NIP-14 subject tag
@@ -269,8 +285,7 @@ def to_as1(event):
     })
     for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'mention':
-        # TODO: bech32-encode id
-        obj['object'] = f'nostr:note{tag[1]}'
+        obj['object'] = id_to_uri('note', tag[1])
     if content and content.startswith('{'):
       obj['object'] = to_as1(json_loads(content))
 
@@ -289,8 +304,7 @@ def to_as1(event):
 
     for tag in tags:
       if tag[0] == 'e':
-        # TODO: bech32-encode id
-        obj['object'] = f'nostr:nevent{tag[1]}'
+        obj['object'] = id_to_uri('nevent', tag[1])
 
   elif kind == 5:  # delete
     obj.update({
@@ -303,7 +317,7 @@ def to_as1(event):
     for tag in tags:
       # TODO: support NIP-33 'a' tags
       if tag[0] == 'e':
-        obj['object'].append(f'nostr:nevent{tag[1]}')
+        obj['object'].append(id_to_uri('nevent', tag[1]))
 
     if len(obj['object']) == 1:
       obj['object'] = obj['object'][0]
