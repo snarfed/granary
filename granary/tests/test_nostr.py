@@ -85,6 +85,7 @@ class NostrTest(testutil.TestCase):
       'pubkey': '98fe',
       'content': 'Something to say',
       'created_at': NOW_TS,
+      'tags': [],
     }
     self.assertEqual(note, to_as1(event))
     self.assertEqual(event, from_as1(note))
@@ -181,6 +182,7 @@ class NostrTest(testutil.TestCase):
         'pubkey': '98fe',
         'content': 'The orig post',
         'created_at': THEN_TS,
+        'tags': [],
       }, sort_keys=True),
       'tags': [
         ['e', '34cd', 'TODO relay', 'mention'],
@@ -275,3 +277,29 @@ class NostrTest(testutil.TestCase):
 
     self.assertEqual(delete, to_as1(event))
     self.assertEqual(event, from_as1(delete))
+
+  def test_to_from_as1_followings(self):
+    follow = {
+      'objectType': 'activity',
+      'verb': 'follow',
+      'id': 'nostr:nevent1z24spd6d40',
+      'published': NOW_ISO,
+      'object': [
+        'nostr:npub1xnxsce33j3',
+        {'id': 'nostr:npub1nrlqrdny0w', 'displayName': 'bob'},
+      ],
+      'content': 'not important',
+    }
+    event = {
+      'kind': 3,
+      'id': '12ab',
+      'content': 'not important',
+      'tags': [
+        ['p', '34cd', 'TODO relay', ''],
+        ['p', '98fe', 'TODO relay', 'bob'],
+      ],
+      'created_at': NOW_TS,
+    }
+
+    self.assertEqual(follow, to_as1(event))
+    self.assertEqual(event, from_as1(follow))

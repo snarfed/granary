@@ -3,6 +3,7 @@
 NIPS implemented:
 
 * 01: base protocol, events, profile metadata
+* 02: contacts/followings
 * 05: domain identifiers
 * 09: deletes
 * 10: replies, mentions
@@ -18,7 +19,6 @@ NIPS implemented:
 TODO:
 
 * 01: relay protocol, both client and server?
-* 02: followings
 * 05: DNS verification?
 * 11: relay info (like nodeinfo)
 * 12: tags, hashtags, locations
@@ -218,7 +218,17 @@ def from_as1(obj):
       'tags': [['e', uri_to_id(as1.get_object(obj).get('id'))]],
     })
 
-  return util.trim_nulls(event)
+  elif type == 'follow':
+    event.update({
+      'kind': 3,
+      'tags': [
+        ['p', uri_to_id(o['id']), 'TODO relay', o.get('displayName') or '']
+        for o in as1.get_objects(obj)
+        if o.get('id')
+      ],
+    })
+
+  return util.trim_nulls(event, ignore=['tags'])
 
 
 def to_as1(event):
@@ -319,12 +329,26 @@ def to_as1(event):
       if tag[0] == 'e':
         obj['object'].append(id_to_uri('nevent', tag[1]))
 
-    if len(obj['object']) == 1:
-      obj['object'] = obj['object'][0]
+  elif kind == 3:  # follow
+    obj.update({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': [],
+      'content': content,
+    })
+
+    for tag in tags:
+      if tag[0] == 'p':
+        name = tag[3] if len(tag) >= 4 else None
+        id = id_to_uri('npub', tag[1])
+        obj['object'].append({'id': id, 'displayName': name} if name else id)
 
   # common fields
   created_at = event.get('created_at')
   if created_at:
     obj['published'] = datetime.fromtimestamp(created_at).isoformat()
+
+  if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
+    obj['object'] = obj['object'][0]
 
   return util.trim_nulls(obj)
