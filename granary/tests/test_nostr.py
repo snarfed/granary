@@ -122,7 +122,7 @@ class NostrTest(testutil.TestCase):
       }, {
         'objectType': 'hashtag',
         'displayName': 'bar',
-      }]
+      }],
     }
     event = {
       'kind': 1,
@@ -133,6 +133,30 @@ class NostrTest(testutil.TestCase):
       'tags': [
         ['t', 'foo'],
         ['t', 'bar'],
+      ],
+    }
+    self.assertEqual(note, to_as1(event))
+    self.assertEqual(event, from_as1(note))
+
+  def test_to_from_as1_note_with_location(self):
+    note = {
+      'objectType': 'note',
+      'id': 'nostr:note1z24swknlsf',
+      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'content': 'Something to say',
+      'published': NOW_ISO,
+      'location': {
+        'displayName': 'my house',
+      },
+    }
+    event = {
+      'kind': 1,
+      'id': '12ab',
+      'pubkey': '98fe',
+      'content': 'Something to say',
+      'created_at': NOW_TS,
+      'tags': [
+        ['location', 'my house'],
       ],
     }
     self.assertEqual(note, to_as1(event))

@@ -7,7 +7,7 @@ NIPS implemented:
 * 05: domain identifiers
 * 09: deletes
 * 10: replies, mentions
-* 12: hashtags
+* 12: hashtags, locations
 * 14: subject tag in notes
 * 18: reposts, including 10 for e/p tags
 * 19: bech32-encoded ids
@@ -22,7 +22,7 @@ TODO:
 * 01: relay protocol, both client and server?
 * 05: DNS verification?
 * 11: relay info (like nodeinfo)
-* 12: tag queries, locations
+* 12: tag queries
 * 16, 33: ephemeral/replaceable events
 * 27: user mentions, note/event mentions
 * 32: tag activities
@@ -194,6 +194,9 @@ def from_as1(obj):
       if name and tag.get('objectType') == 'hashtag':
         event['tags'].append(['t', name])
 
+    if location := as1.get_object(obj, 'location').get('displayName'):
+      event['tags'].append(['location', location])
+
   elif type == 'share':
     event.update({
       'kind': 6,
@@ -298,6 +301,8 @@ def to_as1(event):
         obj[type] = tag[1]
       elif type == 'subject':  # NIP-14 subject tag
         obj.setdefault('title', tag[1])
+      elif type == 'location':
+        obj['location'] = {'displayName': tag[1]}
 
   elif kind in (6, 16):  # repost
     obj.update({
