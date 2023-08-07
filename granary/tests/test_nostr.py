@@ -109,6 +109,35 @@ class NostrTest(testutil.TestCase):
     self.assertEqual(note, to_as1(event))
     self.assertEqual(event, from_as1(note))
 
+  def test_to_from_as1_note_with_hashtag(self):
+    note = {
+      'objectType': 'note',
+      'id': 'nostr:note1z24swknlsf',
+      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'content': 'Something to say',
+      'published': NOW_ISO,
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'foo',
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'bar',
+      }]
+    }
+    event = {
+      'kind': 1,
+      'id': '12ab',
+      'pubkey': '98fe',
+      'content': 'Something to say',
+      'created_at': NOW_TS,
+      'tags': [
+        ['t', 'foo'],
+        ['t', 'bar'],
+      ],
+    }
+    self.assertEqual(note, to_as1(event))
+    self.assertEqual(event, from_as1(note))
+
   def test_to_from_as1_article(self):
     note = {
       'objectType': 'article',
