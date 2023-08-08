@@ -50,6 +50,7 @@ setup(name='granary',
           'praw>=7.3.0',
           'python-dateutil>=2.8',
           'requests>=2.22',
+          'websockets>=11.0',
       ],
       tests_require=['mox3>=0.28'],
 )

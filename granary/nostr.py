@@ -19,12 +19,13 @@ NIPS implemented:
 
 TODO:
 
-* 01: relay protocol, both client and server?
 * 05: DNS verification?
 * 11: relay info (like nodeinfo)
 * 12: tag queries
 * 16, 33: ephemeral/replaceable events
 * 27: user mentions, note/event mentions
+*     the difficulty is that the Nostr tags don't include human-readable
+*     text. clients are supposed to get that from their local database.
 * 32: tag activities
 * 46: "Nostr Connect," signing proxy that holds user's keys
 * 65: user relays. what would this be in AS1? anything?
@@ -32,12 +33,15 @@ TODO:
 from datetime import datetime
 from hashlib import sha256
 import logging
+import secrets
 
 import bech32
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from websockets.sync.client import connect
 
 from . import as1
+from .source import FRIENDS, Source
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +86,16 @@ def id_for(event):
     event['tags'],
     event['content'],
   ]).encode()).hexdigest()
+
+
+def is_bech32(id):
+  if not id:
+    return False
+
+  id = id.removeprefix('nostr:')
+  for prefix in BECH32_PREFIXES:
+    if id.startswith(prefix):
+      return True
 
 
 def uri_to_id(uri):
@@ -368,3 +382,75 @@ def to_as1(event):
     obj['object'] = obj['object'][0]
 
   return util.trim_nulls(obj)
+
+
+class Nostr(Source):
+  """Nostr source class. See file docstring and Source class for details.
+
+  Attributes:
+    relays: sequence of str, relay hostnames
+  """
+
+  DOMAIN = None
+  BASE_URL = None
+  NAME = 'Nostr'
+
+  def __init__(self, relays):
+    """Constructor."""
+    assert relays
+    self.relays = relays
+
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, fetch_replies=False,
+                              fetch_likes=False, fetch_shares=False,
+                              include_shares=True, fetch_events=False,
+                              fetch_mentions=False, search_query=None,
+                              start_index=None, count=None, cache=None, **kwargs):
+    """Fetches events and converts them to AS1 activities.
+
+    See :meth:`Source.get_activities_response` for more information.
+
+    Nostr-specific details:
+
+    Args:
+      * activity_id: str, an event id
+    """
+    assert not start_index
+
+    filter = {
+      'limit': 10,
+    }
+
+    if activity_id:
+      if is_bech32(activity_id):
+        activity_id = uri_to_id(activity_id)
+      filter['ids'] = [activity_id]
+
+    if user_id:
+      if is_bech32(user_id):
+        user_id = uri_to_id(user_id)
+      filter['authors'] = [user_id]
+
+    # if group_id in (None, FRIENDS):
+    #   assert False
+
+    # if group_id is SELF:
+    #   assert False
+
+    events = []
+    logger.info(f'Connecting to {self.relays[0]}')
+    with connect(self.relays[0]) as websocket:
+        subscription = secrets.token_urlsafe(16)
+        req = ['REQ', subscription, filter]
+        logger.info(f'Sending: {json_dumps(req)}')
+        websocket.send(json_dumps(req))
+        while msg := websocket.recv():
+          logger.info(f'Received: {msg}')
+          resp = json_loads(msg)
+          if resp[:2] == ['EOSE', subscription]:
+            break
+          elif resp[:2] == ['EVENT', subscription]:
+            events.append(resp[2])
+
+    return self.make_activities_base_response(
+      util.trim_nulls(to_as1(event)) for event in events)
