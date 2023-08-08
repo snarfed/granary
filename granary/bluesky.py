@@ -10,11 +10,13 @@ import logging
 from pathlib import Path
 import urllib.parse
 
-from granary import as1
-from granary.source import FRIENDS, Source, OMIT_LINK
 from lexrpc import Client
 from oauth_dropins.webutil import util
 
+from . import as1
+from .source import FRIENDS, Source, OMIT_LINK
+
+logger = logging.getLogger(__name__)
 
 # list of dict JSON app.bsky.* lexicons. _load_lexicons lazy loads them from the
 # lexicons/ dir.
@@ -163,7 +165,7 @@ def from_as1(obj, from_url=None):
     try:
       did_web = url_to_did_web(url)
     except ValueError as e:
-      logging.info(f"Couldn't generate did:web: {e}")
+      logger.info(f"Couldn't generate did:web: {e}")
       did_web = ''
 
     # handle is username@domain or domain/path, no scheme or query
