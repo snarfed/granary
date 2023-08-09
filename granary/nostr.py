@@ -419,9 +419,7 @@ class Nostr(Source):
     """
     assert not start_index
 
-    filter = {
-      'limit': 10,
-    }
+    filter = {}
 
     if activity_id:
       if is_bech32(activity_id):
@@ -435,6 +433,9 @@ class Nostr(Source):
 
     if search_query:
       filter['search'] = search_query
+
+    if count:
+      filter['limit'] = count
 
     events = []
     logger.info(f'Connecting to {self.relays[0]}')

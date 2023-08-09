@@ -436,7 +436,6 @@ class GetActivitiesTest(testutil.TestCase):
     self.assertEqual('ws://relay', FakeConnection.relay)
     self.assertEqual([['REQ', 'towkin', {
       'ids': ['ab12'],
-      'limit': 10,
     }]], FakeConnection.sent)
     self.assertEqual([['not', 'reached']], FakeConnection.to_receive)
 
@@ -452,10 +451,10 @@ class GetActivitiesTest(testutil.TestCase):
 
     FakeConnection.to_receive = [['EVENT', 'towkin', e] for e in events]
 
-    self.assert_equals(notes, self.nostr.get_activities(user_id='ab12'))
+    self.assert_equals(notes, self.nostr.get_activities(user_id='ab12', count=3))
     self.assertEqual([['REQ', 'towkin', {
       'authors': ['ab12'],
-      'limit': 10,
+      'limit': 3,
     }]], FakeConnection.sent)
     self.assertEqual([], FakeConnection.to_receive)
 
@@ -465,5 +464,4 @@ class GetActivitiesTest(testutil.TestCase):
     self.assert_equals([NOTE_AS1], self.nostr.get_activities(search_query='surch'))
     self.assertEqual([['REQ', 'towkin', {
       'search': 'surch',
-      'limit': 10,
     }]], FakeConnection.sent)
