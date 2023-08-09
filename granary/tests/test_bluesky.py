@@ -458,7 +458,6 @@ class BlueskyTest(testutil.TestCase):
 
     mock_post.assert_called_once_with(
         'https://bsky.social/xrpc/com.atproto.server.createSession',
-        params='',
         json={'identifier': 'handull', 'password': 'pazzwurd'},
         headers={'Content-Type': 'application/json'},
     )
@@ -477,7 +476,6 @@ class BlueskyTest(testutil.TestCase):
 
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
-        params='',
         json=None,
         headers={
           'Authorization': 'Bearer towkin',
@@ -496,8 +494,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
                        self.bs.get_activities(activity_id='at://id'))
     mock_get.assert_called_once_with(
-        'https://bsky.social/xrpc/app.bsky.feed.getPostThread',
-        params='uri=at%3A%2F%2Fid&depth=1',
+        'https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fid&depth=1',
         json=None,
         headers={
           'Authorization': 'Bearer towkin',
@@ -519,8 +516,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals([POST_AUTHOR_PROFILE_AS['object']],
                        self.bs.get_activities(group_id=SELF, user_id='alice.com'))
     mock_get.assert_called_once_with(
-        'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed',
-        params='actor=alice.com',
+        'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=alice.com',
         json=None,
         headers={
           'Authorization': 'Bearer towkin',
