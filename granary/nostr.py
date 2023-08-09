@@ -16,6 +16,7 @@ NIPS implemented:
 * 25: likes, emoji reactions
 * 27: text notes
 * 39: external identities
+* 50: search
 
 TODO:
 
@@ -38,6 +39,7 @@ import secrets
 import bech32
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
 from . import as1
@@ -431,11 +433,8 @@ class Nostr(Source):
         user_id = uri_to_id(user_id)
       filter['authors'] = [user_id]
 
-    # if group_id in (None, FRIENDS):
-    #   assert False
-
-    # if group_id is SELF:
-    #   assert False
+    if search_query:
+      filter['search'] = search_query
 
     events = []
     logger.info(f'Connecting to {self.relays[0]}')
@@ -444,7 +443,14 @@ class Nostr(Source):
         req = ['REQ', subscription, filter]
         logger.info(f'Sending: {json_dumps(req)}')
         websocket.send(json_dumps(req))
-        while msg := websocket.recv():
+
+        while True:
+          try:
+            msg = websocket.recv()
+          except ConnectionClosed as cc:
+            logger.info(cc)
+            break
+
           logger.info(f'Received: {msg}')
           resp = json_loads(msg)
           if resp[:2] == ['EOSE', subscription]:

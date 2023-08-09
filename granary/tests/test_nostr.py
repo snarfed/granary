@@ -5,6 +5,7 @@ import secrets
 
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import testutil
+from websockets.exceptions import ConnectionClosed
 
 from .. import nostr
 from ..nostr import from_as1, id_for, id_to_uri, is_bech32, to_as1, uri_to_id
@@ -44,6 +45,9 @@ class FakeConnection:
 
   @classmethod
   def recv(cls):
+    if not cls.to_receive:
+      raise ConnectionClosed(None, None)
+
     return json_dumps(cls.to_receive.pop(0))
 
 
@@ -424,6 +428,7 @@ class GetActivitiesTest(testutil.TestCase):
     FakeConnection.to_receive = [
       ['EVENT', 'towkin', NOTE_NOSTR],
       ['EOSE', 'towkin'],
+      ['not', 'reached']
     ]
 
     self.assert_equals([NOTE_AS1], self.nostr.get_activities(activity_id='ab12'))
@@ -433,7 +438,7 @@ class GetActivitiesTest(testutil.TestCase):
       'ids': ['ab12'],
       'limit': 10,
     }]], FakeConnection.sent)
-    self.assertEqual([], FakeConnection.to_receive)
+    self.assertEqual([['not', 'reached']], FakeConnection.to_receive)
 
   def test_user_id(self):
     events = [{
@@ -445,14 +450,20 @@ class GetActivitiesTest(testutil.TestCase):
       'content': f"It's {i}",
     } for i in range(3)]
 
-    FakeConnection.to_receive = [
-      ['EVENT', 'towkin', event] for event in events
-    ] + [
-      ['EOSE', 'towkin'],
-    ]
+    FakeConnection.to_receive = [['EVENT', 'towkin', e] for e in events]
 
     self.assert_equals(notes, self.nostr.get_activities(user_id='ab12'))
     self.assertEqual([['REQ', 'towkin', {
       'authors': ['ab12'],
+      'limit': 10,
+    }]], FakeConnection.sent)
+    self.assertEqual([], FakeConnection.to_receive)
+
+  def test_search(self):
+    FakeConnection.to_receive = [['EVENT', 'towkin', NOTE_NOSTR]]
+
+    self.assert_equals([NOTE_AS1], self.nostr.get_activities(search_query='surch'))
+    self.assertEqual([['REQ', 'towkin', {
+      'search': 'surch',
       'limit': 10,
     }]], FakeConnection.sent)
