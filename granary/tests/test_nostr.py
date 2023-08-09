@@ -36,7 +36,7 @@ class FakeConnection:
   """Fake of :class:`websockets.sync.client.ClientConnection`."""
   relay = None
   sent = []
-  receive = []
+  to_receive = []
 
   @classmethod
   def send(cls, msg):
@@ -44,7 +44,7 @@ class FakeConnection:
 
   @classmethod
   def recv(cls):
-    return json_dumps(cls.receive.pop())
+    return json_dumps(cls.to_receive.pop(0))
 
 
 @contextmanager
@@ -55,15 +55,6 @@ def fake_connect(uri):
 
 
 class NostrTest(testutil.TestCase):
-
-  def setUp(self):
-    super().setUp()
-
-    FakeConnection.relay = None
-    FakeConnection.sent = []
-    FakeConnection.receive = []
-
-    nostr.connect = fake_connect
 
   def test_id_for(self):
     self.assertEqual(
@@ -411,11 +402,40 @@ class NostrTest(testutil.TestCase):
     self.assertEqual(follow, to_as1(event))
     self.assertEqual(event, from_as1(follow))
 
-  def test_get_activities_user_id(self):
+
+class GetActivitiesTest(testutil.TestCase):
+
+  def setUp(self):
+    super().setUp()
+
     self.mox.StubOutWithMock(secrets, 'token_urlsafe')
     secrets.token_urlsafe(16).AndReturn('towkin')
     self.mox.ReplayAll()
 
+    FakeConnection.relay = None
+    FakeConnection.sent = []
+    FakeConnection.to_receive = []
+
+    nostr.connect = fake_connect
+
+    self.nostr = nostr.Nostr(['ws://relay'])
+
+  def test_activity_id(self):
+    FakeConnection.to_receive = [
+      ['EVENT', 'towkin', NOTE_NOSTR],
+      ['EOSE', 'towkin'],
+    ]
+
+    self.assert_equals([NOTE_AS1], self.nostr.get_activities(activity_id='ab12'))
+
+    self.assertEqual('ws://relay', FakeConnection.relay)
+    self.assertEqual([['REQ', 'towkin', {
+      'ids': ['ab12'],
+      'limit': 10,
+    }]], FakeConnection.sent)
+    self.assertEqual([], FakeConnection.to_receive)
+
+  def test_user_id(self):
     events = [{
       **NOTE_NOSTR,
       'content': f"It's {i}",
@@ -425,18 +445,14 @@ class NostrTest(testutil.TestCase):
       'content': f"It's {i}",
     } for i in range(3)]
 
-    FakeConnection.receive = [
-      ['EOSE', 'towkin'],
-    ] + [
+    FakeConnection.to_receive = [
       ['EVENT', 'towkin', event] for event in events
+    ] + [
+      ['EOSE', 'towkin'],
     ]
 
-    n = nostr.Nostr(['ws://relay'])
-    self.assert_equals(notes, n.get_activities(user_id='ab12'))
-
-    self.assertEqual('ws://relay', FakeConnection.relay)
+    self.assert_equals(notes, self.nostr.get_activities(user_id='ab12'))
     self.assertEqual([['REQ', 'towkin', {
       'authors': ['ab12'],
       'limit': 10,
     }]], FakeConnection.sent)
-    self.assertEqual([], FakeConnection.receive)
