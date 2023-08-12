@@ -41,6 +41,7 @@ from granary import (
   github,
   instagram,
   mastodon,
+  nostr,
   pixelfed,
   meetup,
   reddit,
@@ -102,6 +103,11 @@ def api(path):
       instance=request.values['instance'],
       access_token=request.values['access_token'],
       user_id=request.values['user_id'])
+  elif site == 'nostr':
+    relay = request.values['relay']
+    if not relay.startswith('ws://') and  not relay.startswith('wss://'):
+      relay = 'wss://' + relay
+    src = nostr.Nostr([relay])
   elif site == 'meetup':
     src = meetup.Meetup(
       access_token_key=request.values['access_token_key'],

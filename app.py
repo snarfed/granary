@@ -38,6 +38,7 @@ from granary import (
   bluesky,
   jsonfeed,
   microformats2,
+  nostr,
   rss,
   source,
 )
@@ -45,6 +46,7 @@ from granary.facebook import Facebook
 from granary.flickr import Flickr
 from granary.github import GitHub
 from granary.mastodon import Mastodon
+from granary.nostr import Nostr
 from granary.meetup import Meetup
 from granary.pixelfed import Pixelfed
 from granary.instagram import Instagram
@@ -64,6 +66,7 @@ INPUTS = (
   'json-mf2',
   'jsonfeed',
   'mf2-json',
+  'nostr',
   'rss',
 )
 SILOS = [
@@ -114,6 +117,7 @@ FORMATS = {
   'json-mf2': 'application/mf2+json',
   'jsonfeed': 'application/json',
   'mf2-json': 'application/mf2+json',
+  'nostr': 'application/json',
   'rss': rss.CONTENT_TYPE,
   'xml': 'application/xml; charset=utf-8',
 }
@@ -460,6 +464,11 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
         ), headers
       except TypeError as e:
         raise BadRequest(f'Unsupported input data: {e}')
+
+    elif format == 'nostr':
+      return {
+        'items': [nostr.from_as1(a) for a in activities],
+      }, headers
 
   except ValueError as e:
     logger.warning('converting to output format failed', exc_info=True)

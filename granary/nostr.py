@@ -20,7 +20,7 @@ NIPS implemented:
 
 TODO:
 
-* 05: DNS verification?
+* 05: DNS verification
 * 11: relay info (like nodeinfo)
 * 12: tag queries
 * 16, 33: ephemeral/replaceable events
@@ -111,7 +111,7 @@ def uri_to_id(uri):
   Returns:
     str
   """
-  if not uri:
+  if not uri or not is_bech32(uri):
     return uri
 
   prefix, data = bech32.bech32_decode(uri.removeprefix('nostr:'))
@@ -411,10 +411,11 @@ class Nostr(Source):
     """Fetches events and converts them to AS1 activities.
 
     See :meth:`Source.get_activities_response` for more information.
-
-    Nostr-specific details:
     """
     assert not start_index
+    assert not cache
+    assert not fetch_mentions
+    assert not fetch_events
 
     # build query filter
     filter = {
@@ -466,9 +467,6 @@ class Nostr(Source):
             activity = activities.get(uri_to_id(as1.get_object(obj).get('id')))
             if activity:
               activity.setdefault('tags', []).append(obj)
-
-      if fetch_mentions:
-        pass
 
     return self.make_activities_base_response(util.trim_nulls(activities.values()))
 

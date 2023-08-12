@@ -18,6 +18,19 @@ THEN_ISO = (testutil.NOW - timedelta(seconds=1)).replace(tzinfo=None).isoformat(
 ID = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
 URI = 'nostr:npub180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsyjh6w6'
 
+NOTE_NOSTR = {
+  'kind': 1,
+  'id': '12ab',
+  'pubkey': '98fe',
+  'content': 'Something to say',
+}
+NOTE_AS1 = {
+  'objectType': 'note',
+  'id': 'nostr:note1z24swknlsf',
+  'author': {'id': 'nostr:npub1nrlqrdny0w'},
+  'content': 'Something to say',
+}
+
 
 class FakeConnection:
   """Fake of :class:`websockets.sync.client.ClientConnection`."""
@@ -65,6 +78,7 @@ class NostrTest(testutil.TestCase):
 
   def test_uri_to_id(self):
     self.assertEqual(ID, uri_to_id(URI))
+    self.assertEqual('http://not/nostr', uri_to_id('http://not/nostr'))
 
   def test_is_bech32(self):
     self.assertTrue(is_bech32('nostr:npubabc'))
@@ -398,19 +412,6 @@ class NostrTest(testutil.TestCase):
 
 
 class GetActivitiesTest(testutil.TestCase):
-  NOTE_NOSTR = {
-    'kind': 1,
-    'id': '12ab',
-    'pubkey': '98fe',
-    'content': 'Something to say',
-  }
-  NOTE_AS1 = {
-    'objectType': 'note',
-    'id': 'nostr:note1z24swknlsf',
-    'author': {'id': 'nostr:npub1nrlqrdny0w'},
-    'content': 'Something to say',
-  }
-
   last_token = None
 
   def setUp(self):
@@ -433,12 +434,12 @@ class GetActivitiesTest(testutil.TestCase):
 
   def test_activity_id(self):
     FakeConnection.to_receive = [
-      ['EVENT', 'towkin 1', self.NOTE_NOSTR],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
       ['EOSE', 'towkin 1'],
       ['not', 'reached']
     ]
 
-    self.assert_equals([self.NOTE_AS1],
+    self.assert_equals([NOTE_AS1],
                        self.nostr.get_activities(activity_id='ab12'))
 
     self.assertEqual('ws://relay', FakeConnection.relay)
@@ -450,12 +451,12 @@ class GetActivitiesTest(testutil.TestCase):
 
   def test_user_id(self):
     events = [{
-      **self.NOTE_NOSTR,
+      **NOTE_NOSTR,
       'id': str(i) * 4,
       'content': f"It's {i}",
     } for i in range(3)]
     notes = [{
-      **self.NOTE_AS1,
+      **NOTE_AS1,
       'id': id_to_uri('note', str(i) * 4),
       'content': f"It's {i}",
     } for i in range(3)]
@@ -470,9 +471,9 @@ class GetActivitiesTest(testutil.TestCase):
     self.assertEqual([], FakeConnection.to_receive)
 
   def test_search(self):
-    FakeConnection.to_receive = [['EVENT', 'towkin 1', self.NOTE_NOSTR]]
+    FakeConnection.to_receive = [['EVENT', 'towkin 1', NOTE_NOSTR]]
 
-    self.assert_equals([self.NOTE_AS1],
+    self.assert_equals([NOTE_AS1],
                        self.nostr.get_activities(search_query='surch'))
     self.assertEqual([
       ['REQ', 'towkin 1', {'search': 'surch', 'limit': 20}],
@@ -495,8 +496,8 @@ class GetActivitiesTest(testutil.TestCase):
       'inReplyTo': 'nostr:nevent1z24spd6d40',
     }
     FakeConnection.to_receive = [
-      ['EVENT', 'towkin 1', self.NOTE_NOSTR],
-      ['EVENT', 'towkin 1', {**self.NOTE_NOSTR, 'id': '98fe'}],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+      ['EVENT', 'towkin 1', {**NOTE_NOSTR, 'id': '98fe'}],
       ['EOSE', 'towkin 1'],
       ['EVENT', 'towkin 2', reply_nostr],
       ['EVENT', 'towkin 2', reply_nostr],
@@ -504,8 +505,8 @@ class GetActivitiesTest(testutil.TestCase):
     ]
 
     self.assert_equals([
-      {**self.NOTE_AS1, 'replies': {'totalItems': 2, 'items': [reply_as1] * 2}},
-      {**self.NOTE_AS1, 'id': 'nostr:note1nrlq0mz6g2'},
+      {**NOTE_AS1, 'replies': {'totalItems': 2, 'items': [reply_as1] * 2}},
+      {**NOTE_AS1, 'id': 'nostr:note1nrlq0mz6g2'},
     ], self.nostr.get_activities(user_id='98fe', fetch_replies=True))
 
     self.assertEqual('ws://relay', FakeConnection.relay)
@@ -531,7 +532,7 @@ class GetActivitiesTest(testutil.TestCase):
     }
 
     FakeConnection.to_receive = [
-      ['EVENT', 'towkin 1', self.NOTE_NOSTR],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
       ['EOSE', 'towkin 1'],
       ['EVENT', 'towkin 2', repost_nostr],
       ['EVENT', 'towkin 2', repost_nostr],
@@ -539,7 +540,7 @@ class GetActivitiesTest(testutil.TestCase):
     ]
 
     self.assert_equals([
-      {**self.NOTE_AS1, 'tags': [repost_as1, repost_as1]},
+      {**NOTE_AS1, 'tags': [repost_as1, repost_as1]},
     ], self.nostr.get_activities(user_id='98fe', fetch_shares=True))
 
     self.assertEqual('ws://relay', FakeConnection.relay)
