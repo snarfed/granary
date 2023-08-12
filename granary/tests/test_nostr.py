@@ -410,32 +410,6 @@ class GetActivitiesTest(testutil.TestCase):
     'author': {'id': 'nostr:npub1nrlqrdny0w'},
     'content': 'Something to say',
   }
-  REPLY_NOSTR = {
-    'kind': 1,
-    'id': '34cd',
-    'pubkey': '98fe',
-    'content': 'I hereby reply',
-    'tags': [['e', '12ab', 'TODO relay', 'reply']],
-  }
-  REPLY_AS1 = {
-    'objectType': 'note',
-    'id': 'nostr:note1xnxs50q044',
-    'author': {'id': 'nostr:npub1nrlqrdny0w'},
-    'content': 'I hereby reply',
-    'inReplyTo': 'nostr:nevent1z24spd6d40',
-  }
-  REPOST_NOSTR = {
-    'kind': 6,
-    'id': '34cd',
-    'pubkey': '98fe',
-    'tags': [['e', '12ab', 'TODO relay', 'mention']],
-  }
-  REPOST_AS1 = {
-    'objectType': 'activity',
-    'verb': 'share',
-    'id': 'nostr:nevent1xnxsm5fasn',
-    'object': 'nostr:note1z24swknlsf',
-  }
 
   last_token = None
 
@@ -506,17 +480,31 @@ class GetActivitiesTest(testutil.TestCase):
     ], FakeConnection.sent)
 
   def test_fetch_replies(self):
+    reply_nostr = {
+      'kind': 1,
+      'id': '34cd',
+      'pubkey': '98fe',
+      'content': 'I hereby reply',
+      'tags': [['e', '12ab', 'TODO relay', 'reply']],
+    }
+    reply_as1 = {
+      'objectType': 'note',
+      'id': 'nostr:note1xnxs50q044',
+      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'content': 'I hereby reply',
+      'inReplyTo': 'nostr:nevent1z24spd6d40',
+    }
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', self.NOTE_NOSTR],
       ['EVENT', 'towkin 1', {**self.NOTE_NOSTR, 'id': '98fe'}],
       ['EOSE', 'towkin 1'],
-      ['EVENT', 'towkin 2', self.REPLY_NOSTR],
-      ['EVENT', 'towkin 2', self.REPLY_NOSTR],
+      ['EVENT', 'towkin 2', reply_nostr],
+      ['EVENT', 'towkin 2', reply_nostr],
       ['EOSE', 'towkin 2'],
     ]
 
     self.assert_equals([
-      {**self.NOTE_AS1, 'replies': {'totalItems': 2, 'items': [self.REPLY_AS1] * 2}},
+      {**self.NOTE_AS1, 'replies': {'totalItems': 2, 'items': [reply_as1] * 2}},
       {**self.NOTE_AS1, 'id': 'nostr:note1nrlq0mz6g2'},
     ], self.nostr.get_activities(user_id='98fe', fetch_replies=True))
 
@@ -529,16 +517,29 @@ class GetActivitiesTest(testutil.TestCase):
     ], FakeConnection.sent)
 
   def test_fetch_shares(self):
+    repost_nostr = {
+      'kind': 6,
+      'id': '34cd',
+      'pubkey': '98fe',
+      'tags': [['e', '12ab', 'TODO relay', 'mention']],
+    }
+    repost_as1 = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'id': 'nostr:nevent1xnxsm5fasn',
+      'object': 'nostr:note1z24swknlsf',
+    }
+
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', self.NOTE_NOSTR],
       ['EOSE', 'towkin 1'],
-      ['EVENT', 'towkin 2', self.REPOST_NOSTR],
-      ['EVENT', 'towkin 2', self.REPOST_NOSTR],
+      ['EVENT', 'towkin 2', repost_nostr],
+      ['EVENT', 'towkin 2', repost_nostr],
       ['EOSE', 'towkin 2'],
     ]
 
     self.assert_equals([
-      {**self.NOTE_AS1, 'tags': [self.REPOST_AS1, self.REPOST_AS1]},
+      {**self.NOTE_AS1, 'tags': [repost_as1, repost_as1]},
     ], self.nostr.get_activities(user_id='98fe', fetch_shares=True))
 
     self.assertEqual('ws://relay', FakeConnection.relay)
