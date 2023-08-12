@@ -416,6 +416,7 @@ class Nostr(Source):
     """
     assert not start_index
 
+    # build query filter
     filter = {
       'limit': count or 20,
     }
@@ -436,26 +437,45 @@ class Nostr(Source):
     events = []
     logger.info(f'Connecting to {self.relays[0]}')
 
+    # query for activities
     with connect(self.relays[0],
                  open_timeout=HTTP_TIMEOUT,
                  close_timeout=HTTP_TIMEOUT,
                  ) as websocket:
       events = self.query(websocket, filter)
-      if fetch_replies:
-        pass
+      event_ids = [e['id'] for e in events]
+      # maps raw Nostr id to activity
+      activities = {uri_to_id(a['id']): a
+                    for a in [to_as1(e) for e in events]}
+      assert len(activities) == len(events)
+
+      # query for replies/shares
+      if event_ids and (fetch_replies or fetch_shares):
+        for event in self.query(websocket, {'#e': event_ids}):
+          obj = to_as1(event)
+          if in_reply_to := obj.get('inReplyTo'):
+            activity = activities.get(uri_to_id(in_reply_to))
+            if activity:
+              replies = activity.setdefault('replies', {
+                'items': [],
+                'totalItems': 0,
+              })
+              replies['items'].append(obj)
+              replies['totalItems'] += 1
+
       if fetch_shares:
         pass
+
       if fetch_mentions:
         pass
 
-    return self.make_activities_base_response(
-      util.trim_nulls(to_as1(event)) for event in events)
+    return self.make_activities_base_response(util.trim_nulls(activities.values()))
 
   def query(self, websocket, filter):
     """Runs a Nostr REQ query on an open websocket.
 
     Sends the query, collects the responses, and closes the REQ subscription.
-    Requires the 'limit` field to be set in the filter.
+    If `limit` is not set on the filter, defaults it to 20
 
     Args:
       websocket: :class:`websockets.ClientConnection`
@@ -468,8 +488,7 @@ class Nostr(Source):
     Raises:
       AssertionError if the filter 'limit' field is not set.
     """
-    limit = filter.get('limit')
-    assert limit, 'limit must be set in the filter'
+    limit = filter.setdefault('limit', 20)
 
     subscription = secrets.token_urlsafe(16)
     req = ['REQ', subscription, filter]
@@ -486,9 +505,15 @@ class Nostr(Source):
 
       logger.debug(f'Received: {msg}')
       resp = json_loads(msg)
-      if resp[:2] == ['EVENT', subscription]:
+      if resp[0] == 'NOTICE':
+        logger.info(str(resp))
+      elif resp[:2] == ['EVENT', subscription]:
         events.append(resp[2])
       elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
         break
+
+    close = ['CLOSE', subscription]
+    logger.debug(f'Sending: {json_dumps(close)}')
+    websocket.send(json_dumps(close))
 
     return events

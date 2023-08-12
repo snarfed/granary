@@ -19,20 +19,6 @@ ID = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
 URI = 'nostr:npub180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsyjh6w6'
 
 
-NOTE_NOSTR = {
-  'kind': 1,
-  'id': '12ab',
-  'pubkey': '98fe',
-  'content': 'Something to say',
-}
-NOTE_AS1 = {
-  'objectType': 'note',
-  'id': 'nostr:note1z24swknlsf',
-  'author': {'id': 'nostr:npub1nrlqrdny0w'},
-  'content': 'Something to say',
-}
-
-
 class FakeConnection:
   """Fake of :class:`websockets.sync.client.ClientConnection`."""
   relay = None
@@ -412,13 +398,40 @@ class NostrTest(testutil.TestCase):
 
 
 class GetActivitiesTest(testutil.TestCase):
+  NOTE_NOSTR = {
+    'kind': 1,
+    'id': '12ab',
+    'pubkey': '98fe',
+    'content': 'Something to say',
+  }
+  NOTE_AS1 = {
+    'objectType': 'note',
+    'id': 'nostr:note1z24swknlsf',
+    'author': {'id': 'nostr:npub1nrlqrdny0w'},
+    'content': 'Something to say',
+  }
+  REPLY_NOSTR = {
+    'kind': 1,
+    'id': '34cd',
+    'pubkey': '98fe',
+    'content': 'I hereby reply',
+    'tags': [['e', '12ab', 'TODO relay', 'reply']],
+  }
+  REPLY_AS1 = {
+    'objectType': 'note',
+    'id': 'nostr:note1xnxs50q044',
+    'author': {'id': 'nostr:npub1nrlqrdny0w'},
+    'content': 'I hereby reply',
+    'inReplyTo': 'nostr:nevent1z24spd6d40',
+  }
+
+  last_token = None
 
   def setUp(self):
     super().setUp()
 
-    self.mox.StubOutWithMock(secrets, 'token_urlsafe')
-    secrets.token_urlsafe(16).AndReturn('towkin')
-    self.mox.ReplayAll()
+    self.last_token = 0
+    self.mox.stubs.Set(secrets, 'token_urlsafe', self.token)
 
     FakeConnection.relay = None
     FakeConnection.sent = []
@@ -428,48 +441,77 @@ class GetActivitiesTest(testutil.TestCase):
 
     self.nostr = nostr.Nostr(['ws://relay'])
 
+  def token(self, length):
+    self.last_token += 1
+    return f'towkin {self.last_token}'
+
   def test_activity_id(self):
     FakeConnection.to_receive = [
-      ['EVENT', 'towkin', NOTE_NOSTR],
-      ['EOSE', 'towkin'],
+      ['EVENT', 'towkin 1', self.NOTE_NOSTR],
+      ['EOSE', 'towkin 1'],
       ['not', 'reached']
     ]
 
-    self.assert_equals([NOTE_AS1], self.nostr.get_activities(activity_id='ab12'))
+    self.assert_equals([self.NOTE_AS1],
+                       self.nostr.get_activities(activity_id='ab12'))
 
     self.assertEqual('ws://relay', FakeConnection.relay)
-    self.assertEqual([['REQ', 'towkin', {
-      'ids': ['ab12'],
-      'limit': 20,
-    }]], FakeConnection.sent)
+    self.assertEqual([
+      ['REQ', 'towkin 1', {'ids': ['ab12'], 'limit': 20}],
+      ['CLOSE', 'towkin 1'],
+    ], FakeConnection.sent)
     self.assertEqual([['not', 'reached']], FakeConnection.to_receive)
 
   def test_user_id(self):
     events = [{
-      **NOTE_NOSTR,
+      **self.NOTE_NOSTR,
+      'id': str(i) * 4,
       'content': f"It's {i}",
     } for i in range(3)]
     notes = [{
-      **NOTE_AS1,
+      **self.NOTE_AS1,
+      'id': id_to_uri('note', str(i) * 4),
       'content': f"It's {i}",
     } for i in range(3)]
 
-    FakeConnection.to_receive = [['EVENT', 'towkin', e] for e in events]
+    FakeConnection.to_receive = [['EVENT', 'towkin 1', e] for e in events]
 
     self.assert_equals(notes, self.nostr.get_activities(user_id='ab12', count=3))
-    self.assertEqual([['REQ', 'towkin', {
-      'authors': ['ab12'],
-      'limit': 3,
-    }]], FakeConnection.sent)
+    self.assertEqual([
+      ['REQ', 'towkin 1', {'authors': ['ab12'], 'limit': 3}],
+      ['CLOSE', 'towkin 1'],
+    ], FakeConnection.sent)
     self.assertEqual([], FakeConnection.to_receive)
 
   def test_search(self):
-    FakeConnection.to_receive = [['EVENT', 'towkin', NOTE_NOSTR]]
+    FakeConnection.to_receive = [['EVENT', 'towkin 1', self.NOTE_NOSTR]]
 
-    self.assert_equals([NOTE_AS1], self.nostr.get_activities(search_query='surch'))
-    self.assertEqual([['REQ', 'towkin', {
-      'search': 'surch',
-      'limit': 20,
-    }]], FakeConnection.sent)
+    self.assert_equals([self.NOTE_AS1],
+                       self.nostr.get_activities(search_query='surch'))
+    self.assertEqual([
+      ['REQ', 'towkin 1', {'search': 'surch', 'limit': 20}],
+      ['CLOSE', 'towkin 1'],
+    ], FakeConnection.sent)
 
-  # def test_fetch_replies(self):
+  def test_fetch_replies(self):
+    FakeConnection.to_receive = [
+      ['EVENT', 'towkin 1', self.NOTE_NOSTR],
+      ['EVENT', 'towkin 1', {**self.NOTE_NOSTR, 'id': '98fe'}],
+      ['EOSE', 'towkin 1'],
+      ['EVENT', 'towkin 2', self.REPLY_NOSTR],
+      ['EVENT', 'towkin 2', self.REPLY_NOSTR],
+      ['EOSE', 'towkin 2'],
+    ]
+
+    self.assert_equals([
+      {**self.NOTE_AS1, 'replies': {'totalItems': 2, 'items': [self.REPLY_AS1] * 2}},
+      {**self.NOTE_AS1, 'id': 'nostr:note1nrlq0mz6g2'},
+    ], self.nostr.get_activities(user_id='98fe', fetch_replies=True))
+
+    self.assertEqual('ws://relay', FakeConnection.relay)
+    self.assertEqual([
+      ['REQ', 'towkin 1', {'authors': ['98fe'], 'limit': 20}],
+      ['CLOSE', 'towkin 1'],
+      ['REQ', 'towkin 2', {'#e': ['12ab', '98fe'], 'limit': 20}],
+      ['CLOSE', 'towkin 2'],
+    ], FakeConnection.sent)
