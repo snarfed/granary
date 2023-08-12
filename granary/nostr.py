@@ -146,6 +146,7 @@ def from_as1(obj):
   Returns: dict, JSON Nostr event
   """
   type = as1.object_type(obj)
+  inner_obj = as1.get_object(obj)
   event = {
     'id': uri_to_id(obj.get('id')),
     'pubkey': uri_to_id(as1.get_owner(obj)),
@@ -178,6 +179,9 @@ def from_as1(obj):
           if platform != 'mastodon' and url.startswith(base_url):
             event['tags'].append(
               ['i', f'{platform}:{url.removeprefix(base_url)}', '-'])
+
+  elif type in ('post', 'update'):
+    return from_as1(inner_obj)
 
   elif type in ('article', 'note'):
     event.update({
@@ -218,7 +222,6 @@ def from_as1(obj):
       'kind': 6,
     })
 
-    inner_obj = as1.get_object(obj)
     if inner_obj:
       orig_event = from_as1(inner_obj)
       event['content'] = json_dumps(orig_event, sort_keys=True)
@@ -228,7 +231,7 @@ def from_as1(obj):
       ]
 
   elif type in ('like', 'dislike', 'react'):
-    liked = as1.get_object(obj).get('id')
+    liked = inner_obj.get('id')
     event.update({
       'kind': 7,
       'content': '+' if type == 'like'
@@ -252,6 +255,9 @@ def from_as1(obj):
         if o.get('id')
       ],
     })
+
+  else:
+    raise NotImplementedError(f'Unsupported activity/object type: {type}')
 
   return util.trim_nulls(event, ignore=['tags'])
 

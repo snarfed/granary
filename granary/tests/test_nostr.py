@@ -23,6 +23,7 @@ NOTE_NOSTR = {
   'id': '12ab',
   'pubkey': '98fe',
   'content': 'Something to say',
+  'tags': [],
 }
 NOTE_AS1 = {
   'objectType': 'note',
@@ -142,6 +143,28 @@ class NostrTest(testutil.TestCase):
     }
     self.assertEqual(note, to_as1(event))
     self.assertEqual(event, from_as1(note))
+
+  def test_from_as1_post_activity(self):
+    self.assertEqual(NOTE_NOSTR, from_as1({
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': NOTE_AS1,
+    }))
+
+  def test_from_as1_update_activity(self):
+    self.assertEqual(NOTE_NOSTR, from_as1({
+      'objectType': 'activity',
+      'verb': 'update',
+      'object': NOTE_AS1,
+    }))
+
+  def test_from_as1_reject_activity_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      from_as1({
+        'objectType': 'activity',
+        'verb': 'reject',
+        'object': NOTE_AS1,
+      })
 
   def test_to_from_as1_note_subject_tag(self):
     note = {
