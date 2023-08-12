@@ -38,7 +38,7 @@ import secrets
 
 import bech32
 from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
@@ -413,13 +413,12 @@ class Nostr(Source):
     See :meth:`Source.get_activities_response` for more information.
 
     Nostr-specific details:
-
-    Args:
-      * activity_id: str, an event id
     """
     assert not start_index
 
-    filter = {}
+    filter = {
+      'limit': count or 20,
+    }
 
     if activity_id:
       if is_bech32(activity_id):
@@ -434,30 +433,62 @@ class Nostr(Source):
     if search_query:
       filter['search'] = search_query
 
-    if count:
-      filter['limit'] = count
-
     events = []
     logger.info(f'Connecting to {self.relays[0]}')
-    with connect(self.relays[0]) as websocket:
-        subscription = secrets.token_urlsafe(16)
-        req = ['REQ', subscription, filter]
-        logger.info(f'Sending: {json_dumps(req)}')
-        websocket.send(json_dumps(req))
 
-        while True:
-          try:
-            msg = websocket.recv()
-          except ConnectionClosed as cc:
-            logger.info(cc)
-            break
-
-          logger.info(f'Received: {msg}')
-          resp = json_loads(msg)
-          if resp[:2] == ['EOSE', subscription]:
-            break
-          elif resp[:2] == ['EVENT', subscription]:
-            events.append(resp[2])
+    with connect(self.relays[0],
+                 open_timeout=HTTP_TIMEOUT,
+                 close_timeout=HTTP_TIMEOUT,
+                 ) as websocket:
+      events = self.query(websocket, filter)
+      if fetch_replies:
+        pass
+      if fetch_shares:
+        pass
+      if fetch_mentions:
+        pass
 
     return self.make_activities_base_response(
       util.trim_nulls(to_as1(event)) for event in events)
+
+  def query(self, websocket, filter):
+    """Runs a Nostr REQ query on an open websocket.
+
+    Sends the query, collects the responses, and closes the REQ subscription.
+    Requires the 'limit` field to be set in the filter.
+
+    Args:
+      websocket: :class:`websockets.ClientConnection`
+      filter: dict NIP-01 REQ filter
+      limit: integer
+
+    Returns:
+      list of dict Nostr events
+
+    Raises:
+      AssertionError if the filter 'limit' field is not set.
+    """
+    limit = filter.get('limit')
+    assert limit, 'limit must be set in the filter'
+
+    subscription = secrets.token_urlsafe(16)
+    req = ['REQ', subscription, filter]
+    logger.debug(f'Sending: {json_dumps(req)}')
+    websocket.send(json_dumps(req))
+
+    events = []
+    while True:
+      try:
+        msg = websocket.recv(timeout=HTTP_TIMEOUT)
+      except ConnectionClosed as cc:
+        logger.debug(cc)
+        break
+
+      logger.debug(f'Received: {msg}')
+      resp = json_loads(msg)
+      if resp[:2] == ['EVENT', subscription]:
+        events.append(resp[2])
+      elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
+        break
+
+    return events

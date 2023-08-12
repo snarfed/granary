@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 import secrets
 
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 from oauth_dropins.webutil import testutil
 from websockets.exceptions import ConnectionClosed
 
@@ -44,7 +44,9 @@ class FakeConnection:
     cls.sent.append(json_loads(msg))
 
   @classmethod
-  def recv(cls):
+  def recv(cls, timeout=None):
+    assert timeout == HTTP_TIMEOUT
+
     if not cls.to_receive:
       raise ConnectionClosed(None, None)
 
@@ -52,8 +54,10 @@ class FakeConnection:
 
 
 @contextmanager
-def fake_connect(uri):
+def fake_connect(uri, open_timeout=None, close_timeout=None):
   """Fake of :func:`websockets.sync.client.connect`."""
+  assert open_timeout == HTTP_TIMEOUT
+  assert close_timeout == HTTP_TIMEOUT
   FakeConnection.relay = uri
   yield FakeConnection
 
@@ -436,6 +440,7 @@ class GetActivitiesTest(testutil.TestCase):
     self.assertEqual('ws://relay', FakeConnection.relay)
     self.assertEqual([['REQ', 'towkin', {
       'ids': ['ab12'],
+      'limit': 20,
     }]], FakeConnection.sent)
     self.assertEqual([['not', 'reached']], FakeConnection.to_receive)
 
@@ -464,4 +469,7 @@ class GetActivitiesTest(testutil.TestCase):
     self.assert_equals([NOTE_AS1], self.nostr.get_activities(search_query='surch'))
     self.assertEqual([['REQ', 'towkin', {
       'search': 'surch',
+      'limit': 20,
     }]], FakeConnection.sent)
+
+  # def test_fetch_replies(self):
