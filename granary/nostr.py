@@ -462,9 +462,10 @@ class Nostr(Source):
               })
               replies['items'].append(obj)
               replies['totalItems'] += 1
-
-      if fetch_shares:
-        pass
+          elif obj.get('verb') == 'share':
+            activity = activities.get(uri_to_id(as1.get_object(obj).get('id')))
+            if activity:
+              activity.setdefault('tags', []).append(obj)
 
       if fetch_mentions:
         pass
