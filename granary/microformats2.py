@@ -13,6 +13,7 @@ import string
 import re
 import xml.sax.saxutils
 
+import dateutil.parser
 import humanfriendly
 import mf2util
 from oauth_dropins.webutil import util
@@ -149,6 +150,25 @@ def get_text(val):
   return val.strip() if val else ''
 
 
+def maybe_normalize_iso8601(val):
+  """Tries to normalize a string datetime value to ISO-8601.
+
+  Args:
+    val: str
+
+  Returns:
+    str, normalized ISO-8601 if val can be parsed, otherwise val unchanged
+  """
+  if not val:
+    return val
+
+  try:
+    return dateutil.parser.parse(val).isoformat()
+  except ValueError as e:
+    logger.debug(e)
+    return val
+
+
 def activity_to_json(activity, **kwargs):
   """Converts an ActivityStreams activity to microformats2 JSON.
 
@@ -273,8 +293,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'audio': get_urls(attachments, 'audio', 'stream'),
       'duration': [duration],
       'size': sizes,
-      'published': [obj.get('published', primary.get('published', ''))],
-      'updated': [obj.get('updated', primary.get('updated', ''))],
+      'published': [maybe_normalize_iso8601(
+        obj.get('published') or primary.get('published'))],
+      'updated': [maybe_normalize_iso8601(
+        obj.get('updated') or primary.get('updated'))],
       'in-reply-to': util.trim_nulls([util.get_url(o) or o.get('id')
                                       for o in in_reply_tos]),
       'author': [object_to_json(
@@ -517,8 +539,8 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     'id': prop.get('uid'),
     'objectType': as_type,
     'verb': as_verb,
-    'published': prop.get('published', ''),
-    'updated': prop.get('updated', ''),
+    'published': maybe_normalize_iso8601(prop.get('published')),
+    'updated': maybe_normalize_iso8601(prop.get('updated')),
     'startTime': prop.get('start'),
     'endTime': prop.get('end'),
     'displayName': get_text(prop.get('name')),

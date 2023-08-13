@@ -330,8 +330,10 @@ _Non-breaking changes:_
 * `microformats2`:
   * `json_to_object`:
     * Improve handling of items with multiple types by using [post type discovery](https://indiewebcamp.com/post-type-discovery) more aggressively.
+    * Normalize ISO-8601 format of `published` and `updated` timestamps.
   * `object_to_json`:
     * Bug fix, handle bare string URL `image` values.
+    * Normalize ISO-8601 format of `published` and `updated` timestamps.
   * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.
 * `rss`:
   * `from_activities`: handle bare string id `author`.

@@ -1080,3 +1080,34 @@ Shared <a href="#">a post</a> by   <span class="h-card">
         ('5 MB', 5000000),
     ):
       self.assertEqual(expected, microformats2.size_to_bytes(input), input)
+
+  def test_normalize_timestamps(self):
+    bad = ['2023-01-01', '2023-08-11 15:32-0700']
+    good = ['2023-01-01T00:00:00', '2023-08-11T15:32:00-07:00']
+
+    for input, expected in zip(bad, good):
+      self.assertEqual(expected, microformats2.maybe_normalize_iso8601(input))
+
+    self.assert_equals({
+      'objectType': 'note',
+      'published': good[0],
+      'updated': good[1],
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'published': [bad[0]],
+        'updated': [bad[1]],
+      },
+    }))
+
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'published': [good[0]],
+        'updated': [good[1]],
+      },
+    }, microformats2.object_to_json({
+      'objectType': 'note',
+      'published': bad[0],
+      'updated': bad[1],
+    }))
