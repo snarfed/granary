@@ -470,7 +470,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
         'items': [nostr.from_as1(a) for a in activities],
       }, headers
 
-  except ValueError as e:
+  except (ValueError, NotImplementedError) as e:
     logger.warning('converting to output format failed', exc_info=True)
     return abort(400, f'Could not convert to {format}: {str(e)}')
 
