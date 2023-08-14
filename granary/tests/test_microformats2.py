@@ -1111,3 +1111,20 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       'published': bad[0],
       'updated': bad[1],
     }))
+
+  def test_normalize_timestamp_composite_objecct(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'published': '2020-02-21T12:00:00',
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'published': [{
+          'type': ['h-entry'],
+          'properties': {
+            'name': ['21'],
+          },
+          'value': '2020-02-21 12:00:00',
+        }],
+      },
+    }))

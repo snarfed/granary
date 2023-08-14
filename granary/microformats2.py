@@ -162,6 +162,7 @@ def maybe_normalize_iso8601(val):
   if not val:
     return val
 
+  val = get_text(val)
   try:
     return dateutil.parser.parse(val).isoformat()
   except ValueError as e:
