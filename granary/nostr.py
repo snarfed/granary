@@ -512,6 +512,9 @@ class Nostr(Source):
       resp = json_loads(msg)
       if resp[0] == 'NOTICE':
         logger.info(str(resp))
+      elif resp[:3] == ['OK', subscription, False]:
+        logger.info(str(resp))
+        return events
       elif resp[:2] == ['EVENT', subscription]:
         events.append(resp[2])
       elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:

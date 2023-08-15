@@ -573,3 +573,12 @@ class GetActivitiesTest(testutil.TestCase):
       ['REQ', 'towkin 2', {'#e': ['12ab'], 'limit': 20}],
       ['CLOSE', 'towkin 2'],
     ], FakeConnection.sent)
+
+  def test_ok_false_closes_query(self):
+    FakeConnection.to_receive = [
+      ['OK', 'towkin 1', False],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+    ]
+
+    self.assert_equals([], self.nostr.get_activities())
+    self.assertEqual([['EVENT', 'towkin 1', NOTE_NOSTR]], FakeConnection.to_receive)
