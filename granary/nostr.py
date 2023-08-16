@@ -43,7 +43,7 @@ from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
 from . import as1
-from .source import FRIENDS, Source
+from .source import creation_result, FRIENDS, INCLUDE_LINK, OMIT_LINK, Source
 
 logger = logging.getLogger(__name__)
 
@@ -505,15 +505,12 @@ class Nostr(Source):
       try:
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
       except ConnectionClosed as cc:
-        logger.debug(cc)
+        logger.warning(cc)
         break
 
       logger.debug(f'Received: {msg}')
       resp = json_loads(msg)
-      if resp[0] == 'NOTICE':
-        logger.info(str(resp))
-      elif resp[:3] == ['OK', subscription, False]:
-        logger.info(str(resp))
+      if resp[:3] == ['OK', subscription, False]:
         return events
       elif resp[:2] == ['EVENT', subscription]:
         events.append(resp[2])
@@ -525,3 +522,44 @@ class Nostr(Source):
     websocket.send(json_dumps(close))
 
     return events
+
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+    """Creates a new object: a post, comment, like, repost, etc.
+
+    See :meth:`Source.create` docstring for details.
+    """
+    type = as1.object_type(obj)
+    url = obj.get('url')
+    is_reply = type == 'comment' or obj.get('inReplyTo')
+    base_obj = self.base_object(obj)
+    base_url = base_obj.get('url')
+    prefer_content = type == 'note' or (base_url and is_reply)
+
+    event = from_as1(obj)
+
+    content = self._content_for_create(
+      obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
+    if content:
+      if include_link == INCLUDE_LINK and url:
+        content += '\n' + url
+      event['content'] = content
+
+    with connect(self.relays[0],
+                 open_timeout=HTTP_TIMEOUT,
+                 close_timeout=HTTP_TIMEOUT,
+                 ) as websocket:
+      create = ['EVENT', event]
+      logger.debug(f'Sending: {json_dumps(create)}')
+      websocket.send(json_dumps(create))
+      try:
+        msg = websocket.recv(timeout=HTTP_TIMEOUT)
+      except ConnectionClosed as cc:
+        logger.warning(cc)
+        return
+
+    logger.debug(f'Received: {msg}')
+    resp = json_loads(msg)
+    if resp[:3] == ['OK', event['id'], True]:
+      return creation_result(event)
+
+    return creation_result(error_plain=resp[-1], abort=True)

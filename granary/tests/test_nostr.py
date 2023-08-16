@@ -582,3 +582,21 @@ class GetActivitiesTest(testutil.TestCase):
 
     self.assert_equals([], self.nostr.get_activities())
     self.assertEqual([['EVENT', 'towkin 1', NOTE_NOSTR]], FakeConnection.to_receive)
+
+  def test_create_note(self):
+    FakeConnection.to_receive = [
+      ['OK', NOTE_NOSTR['id'], True],
+    ]
+
+    result = self.nostr.create(NOTE_AS1)
+    self.assert_equals(NOTE_NOSTR, result.content)
+    self.assertEqual([['EVENT', NOTE_NOSTR]], FakeConnection.sent)
+
+  def test_create_note_ok_false(self):
+    FakeConnection.to_receive = [
+      ['OK', NOTE_NOSTR['id'], False, 'foo bar'],
+    ]
+
+    result = self.nostr.create(NOTE_AS1)
+    self.assertEqual('foo bar', result.error_plain)
+    self.assertTrue(result.abort)
