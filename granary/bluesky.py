@@ -7,6 +7,7 @@ https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 import copy
 import json
 import logging
+import re
 from pathlib import Path
 import urllib.parse
 
@@ -21,6 +22,14 @@ logger = logging.getLogger(__name__)
 # list of dict JSON app.bsky.* lexicons. _load_lexicons lazy loads them from the
 # lexicons/ dir.
 LEXICONS = []
+
+# via https://atproto.com/specs/handle
+HANDLE_REGEX = (
+  r'([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+'
+  r'[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$'
+)
+HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
+DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 
 def _maybe_load_lexicons():
   if not LEXICONS:
@@ -44,14 +53,15 @@ COLLECTIONS = {
 def url_to_did_web(url):
   """Converts a URL to a did:web.
 
+  In AT Proto, only hostname-based web DIDs are supported.
+  Paths are not supported, and will be discarded.
+
   Examples:
   * 'https://foo.com' => 'did:web:foo.com'
-  * 'https://foo.com:3000' => 'did:web:foo.com%3A3000'
-  * 'https://bar.com/baz/baj' => 'did:web:bar.com:baz:baj'
+  * 'https://foo.com:3000' => 'did:web:foo.com'
+  * 'https://foo.bar.com/baz/baj' => 'did:web:foo.bar.com'
 
-  https://w3c-ccg.github.io/did-method-web/#example-creating-the-did
-
-  TODO: require https?
+  https://atproto.com/specs/did
 
   Args:
     url: str
@@ -59,44 +69,37 @@ def url_to_did_web(url):
   Returns: str
   """
   parsed = urllib.parse.urlparse(url)
-  if not parsed.netloc:
+  if not parsed.hostname:
     raise ValueError(f'Invalid URL: {url}')
 
-  did = f'did:web:{urllib.parse.quote(parsed.netloc)}'
-  if parsed.path:
-    did += f'{parsed.path.replace("/", ":")}'
-
-  return did.strip(':')
+  return f'did:web:{parsed.hostname}'
 
 
 def did_web_to_url(did):
   """Converts a did:web to a URL.
 
+  In AT Proto, only hostname-based web DIDs are supported.
+  Paths are not supported, and will throw an invalid error.
+
   Examples:
   * 'did:web:foo.com' => 'https://foo.com'
-  * 'did:web:foo.com%3A3000' => 'https://foo.com:3000'
-  * 'did:web:bar.com:baz:baj' => 'https://bar.com/baz/baj'
+  * 'did:web:foo.com%3A3000' => INVALID
+  * 'did:web:bar.com:baz:baj' => INVALID
 
-  https://w3c-ccg.github.io/did-method-web/#read-resolve
+  https://atproto.com/specs/did
 
   Args:
     did: str
 
   Returns: str
   """
-  if not did or not did.startswith('did:web:'):
+  if not did or not DID_WEB_PATTERN.search(did):
     raise ValueError(f'Invalid did:web: {did}')
 
-  did = did.removeprefix('did:web:')
-  if ':' in did:
-    host, path = did.split(':', 1)
-  else:
-    host = did
-    path = ''
+  host = did.removeprefix('did:web:')
 
   host = urllib.parse.unquote(host)
-  path = urllib.parse.unquote(path.replace(':', '/'))
-  return f'https://{host}/{path}'
+  return f'https://{host}/'
 
 
 def at_uri_to_web_url(uri, handle=None):
@@ -161,25 +164,28 @@ def from_as1(obj, from_url=None):
         banner = url
         break
 
-    url = util.get_url(obj) or obj.get('id') or ''
+    url = util.get_url(obj)
+    id = obj.get('id')
+    if not url and id:
+      url = ''
+      parsed = util.parse_tag_uri(id)
+      if parsed:
+        url = f'http://{parsed[0]}'
     try:
       did_web = url_to_did_web(url)
     except ValueError as e:
       logger.info(f"Couldn't generate did:web: {e}")
       did_web = ''
 
-    # handle is username@domain or domain/path, no scheme or query
+    # handles must be hostnames
+    # https://atproto.com/specs/handle
     username = obj.get('username')
     parsed = urllib.parse.urlparse(url)
     domain = parsed.netloc
-    if username:
+    if username and HANDLE_PATTERN.search(username):
       handle = username
-      if domain:
-        handle += f'@{domain}'
     elif url:
       handle = domain
-      if parsed.path not in ('', '/'):
-        handle += parsed.path
     else:
       handle = ''
 

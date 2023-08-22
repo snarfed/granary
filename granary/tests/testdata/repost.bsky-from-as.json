@@ -6,8 +6,8 @@
     "cid": "TODO",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",
-      "did": "did:web:example.com:bob",
-      "handle": "example.com/bob",
+      "did": "did:web:example.com",
+      "handle": "example.com",
       "displayName": "Bob"
     },
     "record": {
@@ -25,8 +25,8 @@
     "$type": "app.bsky.feed.defs#reasonRepost",
     "by": {
       "$type": "app.bsky.actor.defs#profileView",
-      "did": "did:web:example.com:alice",
-      "handle": "example.com/alice",
+      "did": "did:web:example.com",
+      "handle": "example.com",
       "displayName": "Alice"
     },
     "indexedAt": "2022-01-02T03:04:05+00:00"

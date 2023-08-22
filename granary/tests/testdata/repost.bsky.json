@@ -6,7 +6,7 @@
     "cid": "TODO",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",
-      "did": "did:web:example.com:bob",
+      "did": "did:web:example.com",
       "handle": "example.com",
       "displayName": "Bob"
     },
@@ -25,7 +25,7 @@
     "$type": "app.bsky.feed.defs#reasonRepost",
     "by": {
       "$type": "app.bsky.actor.defs#profileView",
-      "did": "did:web:example.com:alice",
+      "did": "did:web:alice.example.com",
       "handle": "alice.example.com",
       "displayName": "Alice"
     },

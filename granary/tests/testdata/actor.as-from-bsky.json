@@ -1,7 +1,7 @@
 {
   "objectType" : "person",
-  "id": "did:web:example.com:martin",
-  "url": "https://bsky.app/profile/yoozer@example.com",
+  "id": "did:web:example.com",
+  "url": "https://bsky.app/profile/example.com",
   "image": [{
     "url": "http://example.com/martin/image"
   }],

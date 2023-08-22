@@ -1,8 +1,8 @@
 {
   "$type": "app.bsky.actor.defs#profileView",
   "displayName": "Martin Smith",
-  "handle": "yoozer@example.com",
+  "handle": "example.com",
   "avatar": "http://example.com/avatar",
   "banner": "http://example.com/header",
-  "did": "did:web:example.com:martin"
+  "did": "did:web:example.com"
 }
