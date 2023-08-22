@@ -264,18 +264,16 @@ class BlueskyTest(testutil.TestCase):
 
     self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com'))
     self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com/'))
-    self.assertEqual('did:web:foo.com%3A3000', url_to_did_web('https://foo.com:3000'))
-    self.assertEqual('did:web:bar.com:baz:baj', url_to_did_web('https://bar.com/baz/baj'))
+    self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com:3000'))
+    self.assertEqual('did:web:foo.bar.com', url_to_did_web('https://foo.bar.com/baz/baj'))
 
   def test_did_web_to_url(self):
-    for bad in None, '', 'foo' 'https://bar.com':
+    for bad in None, '', 'foo' 'https://bar.com', 'did:web:foo.com:path':
       with self.assertRaises(ValueError):
         did_web_to_url(bad)
 
     self.assertEqual('https://foo.com/', did_web_to_url('did:web:foo.com'))
-    self.assertEqual('https://foo.com/', did_web_to_url('did:web:foo.com:'))
-    self.assertEqual('https://foo.com:3000/', did_web_to_url('did:web:foo.com%3A3000'))
-    self.assertEqual('https://bar.com/baz/baj', did_web_to_url('did:web:bar.com:baz:baj'))
+    self.assertEqual('https://foo.bar.com/', did_web_to_url('did:web:foo.bar.com'))
 
   def test_user_url(self):
     self.assertEqual('https://bsky.app/profile/snarfed.org',
@@ -347,11 +345,10 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_actor_handle(self):
     for expected, fields in (
         ('', {}),
-        ('fooey', {'username': 'fooey'}),
-        ('fooey@my', {'username': 'fooey', 'url': 'http://my/url', 'id': 'tag:nope'}),
-        ('foo,2001:extra', {'id': 'tag:foo,2001:extra'}),
-        ('url/with/path', {'url': 'http://url/with/path'}),
-        ('foo', {'url': 'http://foo/'}),
+        ('fooey.bsky.social', {'username': 'fooey.bsky.social'}),
+        ('fooey.com', {'username': 'fooey.com', 'url': 'http://my/url', 'id': 'tag:nope'}),
+        ('foo.com', {'url': 'http://foo.com'}),
+        ('foo.com', {'url': 'http://foo.com/path'}),
     ):
       self.assert_equals(expected, from_as1({
         'objectType' : 'person',
@@ -360,7 +357,7 @@ class BlueskyTest(testutil.TestCase):
 
   def test_from_as1_actor_id_not_url(self):
     """Tests error handling when attempting to generate did:web."""
-    self.assertEqual('', from_as1({
+    self.assertEqual('did:web:foo.com', from_as1({
       'objectType' : 'person',
       'id': 'tag:foo.com,2001:bar',
     })['did'])

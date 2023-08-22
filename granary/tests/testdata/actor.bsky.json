@@ -2,7 +2,7 @@
   "$type": "app.bsky.actor.defs#profileView",
   "displayName": "Martin Smith",
   "description": "this is my bio",
-  "handle": "yoozer@example.com",
+  "handle": "example.com",
   "avatar": "http://example.com/martin/image",
-  "did": "did:web:example.com:martin"
+  "did": "did:web:example.com"
 }

@@ -6,9 +6,9 @@
     "cid": "TODO",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",
-      "did": "",
+      "did": "did:web:example.com",
       "displayName": "Ryan Barrett",
-      "handle": "example.com,2001:ryan",
+      "handle": "example.com",
       "avatar": "http://example.com/ryan/image"
     },
     "record": {
