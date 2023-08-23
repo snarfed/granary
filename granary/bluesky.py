@@ -93,7 +93,7 @@ def did_web_to_url(did):
 
   Returns: str
   """
-  if not did or not DID_WEB_PATTERN.search(did):
+  if not did or not DID_WEB_PATTERN.match(did):
     raise ValueError(f'Invalid did:web: {did}')
 
   host = did.removeprefix('did:web:')
@@ -182,7 +182,7 @@ def from_as1(obj, from_url=None):
     username = obj.get('username')
     parsed = urllib.parse.urlparse(url)
     domain = parsed.netloc
-    if username and HANDLE_PATTERN.search(username):
+    if username and HANDLE_PATTERN.match(username):
       handle = username
     elif url:
       handle = domain
