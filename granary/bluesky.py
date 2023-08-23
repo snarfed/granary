@@ -167,7 +167,6 @@ def from_as1(obj, from_url=None):
     url = util.get_url(obj)
     id = obj.get('id')
     if not url and id:
-      url = ''
       parsed = util.parse_tag_uri(id)
       if parsed:
         url = f'http://{parsed[0]}'
