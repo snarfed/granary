@@ -169,7 +169,7 @@ def from_as1(obj, from_url=None):
     if not url and id:
       parsed = util.parse_tag_uri(id)
       if parsed:
-        url = f'http://{parsed[0]}'
+        url = f'https://{parsed[0]}'
     try:
       did_web = url_to_did_web(url)
     except ValueError as e:
