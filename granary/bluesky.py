@@ -71,6 +71,10 @@ def url_to_did_web(url):
   parsed = urllib.parse.urlparse(url)
   if not parsed.hostname:
     raise ValueError(f'Invalid URL: {url}')
+  if parsed.netloc != parsed.hostname:
+    logger.warning(f"URL {url} contained a port, which will not be included in the DID.")
+  if parsed.path and parsed.path != "/":
+    logger.warning(f"URL {url} contained a path,  which will not be included in the DID.")
 
   return f'did:web:{parsed.hostname}'
 
