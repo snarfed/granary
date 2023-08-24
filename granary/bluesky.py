@@ -199,7 +199,7 @@ def from_as1(obj, from_url=None):
       'description': obj.get('summary'),
       'avatar': util.get_url(obj, 'image'),
       'banner': banner,
-      'did': did_web,
+      'did': id if id and id.startswith('did:') else did_web,
       # this is a DID
       # atproto/packages/pds/src/api/app/bsky/actor/getProfile.ts#38
       # TODO: should be more specific than domain, many users will be on shared
