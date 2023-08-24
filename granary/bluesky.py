@@ -173,6 +173,7 @@ def from_as1(obj, from_url=None):
     if not url and id:
       parsed = util.parse_tag_uri(id)
       if parsed:
+        # This is only really formatted as a URL to keep url_to_did_web happy.
         url = f'https://{parsed[0]}'
     try:
       did_web = url_to_did_web(url)
