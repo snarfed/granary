@@ -600,3 +600,30 @@ class GetActivitiesTest(testutil.TestCase):
     result = self.nostr.create(NOTE_AS1)
     self.assertEqual('foo bar', result.error_plain)
     self.assertTrue(result.abort)
+
+  def test_get_actor_npub(self):
+    profile = {
+      'kind': 0,
+      'id': '12ab',
+      'pubkey': '12ab',
+      'content': json_dumps({
+        'name': 'Alice',
+        'nip05': '_@alice.com',
+      }, sort_keys=True),
+    }
+    person = {
+      'objectType': 'person',
+      'id': 'nostr:npub1z24szqzphd',
+      'displayName': 'Alice',
+      'username': 'alice.com',
+    }
+    FakeConnection.to_receive = [
+      ['EVENT', 'towkin 1', profile],
+      ['EOSE', 'towkin 1'],
+    ]
+
+    self.assert_equals(person, self.nostr.get_actor(user_id='nostr:npub1z24szqzphd'))
+    self.assertEqual([
+      ['REQ', 'towkin 1', {'authors': ['12ab'], 'kinds': [0], 'limit': 20}],
+      ['CLOSE', 'towkin 1'],
+    ], FakeConnection.sent)

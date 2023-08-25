@@ -408,6 +408,34 @@ class Nostr(Source):
     assert relays
     self.relays = relays
 
+  def get_actor(self, user_id=None):
+    """Fetches and returns a Nostr user profile.
+
+    Args:
+      user_id: str, NIP-21 'nostr:npub...'
+
+    Returns:
+      dict, AS1 actor object
+    """
+    if not user_id or not user_id.removeprefix('nostr:').startswith('npub'):
+      raise ValueError(f'Expected nostr:npub..., got {user_id}')
+
+    id = uri_to_id(user_id)
+
+    # query for activities
+    with connect(self.relays[0],
+                 open_timeout=HTTP_TIMEOUT,
+                 close_timeout=HTTP_TIMEOUT,
+                 ) as websocket:
+      events = self.query(websocket, {
+        'authors': [id],
+        'kinds': [0],
+      })
+
+    if events:
+      # will we ever get multiple here? if so, assume the last is the most recent?
+      return to_as1(events[-1])
+
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
                               fetch_likes=False, fetch_shares=False,
