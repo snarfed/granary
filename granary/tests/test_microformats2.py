@@ -626,6 +626,15 @@ Shared <a href="#">a post</a> by foo
       'content': 'foo &quot; bar &gt; &#62; &#x3e;',
     }))
 
+  def test_object_to_json_string_id_replies_shares(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+    }, microformats2.object_to_json({
+      'objectType': 'note',
+      'replies': 'http://foo',
+      'shares': 'http://bar',
+    }))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),

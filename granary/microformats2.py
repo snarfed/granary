@@ -302,11 +302,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
                                       for o in in_reply_tos]),
       'author': [object_to_json(
         author, trim_nulls=False, default_object_type='person')],
-      'location': [object_to_json(
-        primary.get('location', {}), trim_nulls=False,
-        default_object_type='place')],
+      'location': [object_to_json(as1.get_object(primary, 'location'),
+                                  trim_nulls=False, default_object_type='place')],
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
-                  for c in obj.get('replies', {}).get('items', [])],
+                  for c in as1.get_object(obj, 'replies').get('items', [])],
       'start': [primary.get('startTime')],
       'end': [primary.get('endTime')],
     },
