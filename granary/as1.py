@@ -129,14 +129,12 @@ def get_owner(obj):
 
 
 def get_url(obj):
-  """Returns the url field's first text value, or None.
+  """Returns the url field's first text value, or ''.
 
   Somewhat duplicates :func:`microformats2.get_text`.
   """
-  url = util.get_first(obj, 'url')
-  if isinstance(url, dict):
-    url = url.get('value')
-  return url.strip() if url else ''
+  urls = object_urls(obj)
+  return urls[0] if urls else ''
 
 
 def get_ids(obj, field):
@@ -462,7 +460,8 @@ def object_urls(obj):
     return obj
 
   def value(obj):
-    return obj.get('value') if isinstance(obj, dict) else obj
+    got = obj.get('value') if isinstance(obj, dict) else obj
+    return got.strip() if got else None
 
   return util.uniquify(util.trim_nulls(
     value(u) for u in util.get_list(obj, 'url') + util.get_list(obj, 'urls')))
