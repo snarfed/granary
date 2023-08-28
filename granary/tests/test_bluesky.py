@@ -362,6 +362,20 @@ class BlueskyTest(testutil.TestCase):
       'id': 'tag:foo.com,2001:bar',
     })['did'])
 
+  def test_from_as1_composite_url(self):
+    self.assertEqual({
+      '$type': 'app.bsky.actor.defs#profileView',
+      'did': 'did:web:rodentdisco.co.uk',
+      'handle': 'rodentdisco.co.uk',
+      'description': None,
+    }, from_as1({
+      'objectType' : 'person',
+      'url': {
+        "displayName": "my web site",
+        "value": "https://rodentdisco.co.uk/author/dan/"
+      },
+    }))
+
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, from_as1(POST_AS_EMBED))
 

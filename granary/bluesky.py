@@ -168,7 +168,7 @@ def from_as1(obj, from_url=None):
         banner = url
         break
 
-    url = util.get_url(obj)
+    url = as1.get_url(obj)
     id = obj.get('id')
     if not url and id:
       parsed = util.parse_tag_uri(id)
