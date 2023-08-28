@@ -1,5 +1,9 @@
 """Nostr.
 
+* https://nostr.com/
+* https://github.com/nostr-protocol/nostr
+* https://github.com/nostr-protocol/nips
+
 NIPS implemented:
 
 * 01: base protocol, events, profile metadata
@@ -310,7 +314,7 @@ def to_as1(event):
 
     pubkey = event.get('pubkey')
     if pubkey:
-      obj['author'] = {'id': id_to_uri('npub', pubkey)}
+      obj['author'] = id_to_uri('npub', pubkey)
 
     for tag in tags:
       type = tag[0]
@@ -388,6 +392,9 @@ def to_as1(event):
 
   if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
     obj['object'] = obj['object'][0]
+
+  if obj.get('objectType') == 'activity':
+    obj['actor'] = id_to_uri('npub', event.get('pubkey'))
 
   return util.trim_nulls(obj)
 

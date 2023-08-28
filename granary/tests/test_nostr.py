@@ -28,7 +28,7 @@ NOTE_NOSTR = {
 NOTE_AS1 = {
   'objectType': 'note',
   'id': 'nostr:note1z24swknlsf',
-  'author': {'id': 'nostr:npub1nrlqrdny0w'},
+  'author': 'nostr:npub1nrlqrdny0w',
   'content': 'Something to say',
 }
 
@@ -129,7 +129,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'Something to say',
       'published': NOW_ISO,
     }
@@ -189,7 +189,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'Something to say',
       'published': NOW_ISO,
       'tags': [{
@@ -218,7 +218,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'Something to say',
       'published': NOW_ISO,
       'location': {
@@ -242,7 +242,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'article',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'title': 'a thing',
       'summary': 'about the thing',
       'content': 'Something to say',
@@ -269,7 +269,7 @@ class NostrTest(testutil.TestCase):
     reply = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'published': NOW_ISO,
       'content': 'I hereby reply',
       'inReplyTo': 'nostr:nevent1xnxsm5fasn',
@@ -297,7 +297,7 @@ class NostrTest(testutil.TestCase):
       'object': {
         'objectType': 'note',
         'id': 'nostr:note1xnxs50q044',
-        'author': {'id': 'nostr:npub1nrlqrdny0w'},
+        'author': 'nostr:npub1nrlqrdny0w',
         'content': 'The orig post',
         'published': THEN_ISO,
       },
@@ -412,6 +412,7 @@ class NostrTest(testutil.TestCase):
       'objectType': 'activity',
       'verb': 'follow',
       'id': 'nostr:nevent1z24spd6d40',
+      'actor': 'nostr:npub1nrlqrdny0w',
       'published': NOW_ISO,
       'object': [
         'nostr:npub1xnxsce33j3',
@@ -422,6 +423,7 @@ class NostrTest(testutil.TestCase):
     event = {
       'kind': 3,
       'id': '12ab',
+      'pubkey': '98fe',
       'content': 'not important',
       'tags': [
         ['p', '34cd', 'TODO relay', ''],
@@ -514,7 +516,7 @@ class GetActivitiesTest(testutil.TestCase):
     reply_as1 = {
       'objectType': 'note',
       'id': 'nostr:note1xnxs50q044',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'I hereby reply',
       'inReplyTo': 'nostr:nevent1z24spd6d40',
     }
@@ -549,6 +551,7 @@ class GetActivitiesTest(testutil.TestCase):
     }
     repost_as1 = {
       'objectType': 'activity',
+      'actor': 'nostr:npub1nrlqrdny0w',
       'verb': 'share',
       'id': 'nostr:nevent1xnxsm5fasn',
       'object': 'nostr:note1z24swknlsf',
