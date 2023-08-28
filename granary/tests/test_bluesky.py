@@ -396,6 +396,14 @@ class BlueskyTest(testutil.TestCase):
         'object': 'at://did:plc:foo/com.atproto.actor.profile/123',
       })
 
+  def test_from_as1_follow_no_object(self):
+    with self.assertRaises(ValueError):
+      from_as1({
+        'objectType' : 'activity',
+        'verb': 'follow',
+        'actor': 'at://did:plc:foo/com.atproto.actor.profile/123',
+      })
+
   def test_as1_to_profile(self):
     self.assert_equals(ACTOR_PROFILE_BSKY, as1_to_profile(ACTOR_AS))
 

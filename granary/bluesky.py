@@ -216,8 +216,8 @@ def from_as1(obj, from_url=None):
     }
 
   elif verb == 'follow':
-    if not actor:
-      raise ValueError('follow activity requires actor')
+    if not actor or not inner_obj:
+      raise ValueError('follow activity requires actor and object')
     ret = {
       '$type': 'app.bsky.graph.follow',
       'subject': actor.get('id') or actor.get('url'),
