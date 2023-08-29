@@ -324,7 +324,9 @@ _Non-breaking changes:_
   * `to_as1`: add unimplemented stub for custom feeds, eg `app.bsky.feed.defs#generatorView`.
   * Add `as1_to_profile`.
 * `jsonfeed`:
-  * `activities_to_jsonfeed` bug fix, handle bare string values for `image` and `stream`.
+  * `activities_to_jsonfeed`:
+    * Bug fix, handle bare string values for `image` and `stream`.
+    * Bug fix: handle non-object `author`.
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.
 * `microformats2`:

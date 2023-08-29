@@ -49,7 +49,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     obj = as1.get_object(activity) or activity
     if obj.get('objectType') == 'person':
       continue
-    author = obj.get('author', {})
+    author = as1.get_object(obj, 'author')
     content = microformats2.render_content(
       obj, include_location=True, render_attachments=True,
       # Readers often obey CSS white-space: pre strictly and don't even line wrap,
