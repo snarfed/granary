@@ -1008,22 +1008,14 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
     <link rel="ostatus:attention" href="https://www.facebook.com/234" />
     <link rel="mentioned" href="https://www.facebook.com/234" />
 
-    <a href="https://www.facebook.com/234">Friend 1</a>
-
     <link rel="ostatus:attention" href="https://www.facebook.com/345" />
     <link rel="mentioned" href="https://www.facebook.com/345" />
 
-    <a href="https://www.facebook.com/345">Friend 2</a>
-
     <link rel="ostatus:attention" href="https://www.facebook.com/345" />
     <link rel="mentioned" href="https://www.facebook.com/345" />
-
-    <a href="https://www.facebook.com/345">Friend 2</a>
 
     <link rel="ostatus:attention" href="https://www.facebook.com/456" />
     <link rel="mentioned" href="https://www.facebook.com/456" />
-
-    <a href="https://www.facebook.com/456">Friend 3</a>
 
     <link rel="ostatus:attention" href="https://www.facebook.com/789" />
     <link rel="mentioned" href="https://www.facebook.com/789" />

@@ -45,9 +45,6 @@
     {% if url and tag.verb not in ('like', 'react', 'share') %}
       <link rel="ostatus:attention" href="{{ url }}" />
       <link rel="mentioned" href="{{ url }}" />
-      {% if tag.displayName and not tag.startIndex %}
-        <a href="{{ url }}">{{ tag.displayName }}</a>
-      {% endif %}
     {% endif %}
   {% endfor %}
   {% if activity.verb %}

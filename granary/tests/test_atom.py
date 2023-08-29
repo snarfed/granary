@@ -38,7 +38,6 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
     <link rel="ostatus:attention" href="https://www.instagram.com/snarfed/" />
     <link rel="mentioned" href="https://www.instagram.com/snarfed/" />
-    <a href="https://www.instagram.com/snarfed/">Ryan B</a>
   <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
   <link rel="mentioned" href="https://www.instagram.com/foo/" />
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>

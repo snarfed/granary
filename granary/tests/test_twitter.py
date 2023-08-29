@@ -655,8 +655,6 @@ ATOM = """\
     <link rel="ostatus:attention" href="https://twitter.com/foo" />
     <link rel="mentioned" href="https://twitter.com/foo" />
 
-    <a href="https://twitter.com/foo">Twitter</a>
-
     <link rel="ostatus:attention" href="https://twitter.com/foo" />
     <link rel="mentioned" href="https://twitter.com/foo" />
 

@@ -308,8 +308,9 @@ _Non-breaking changes:_
   * `activities_to_atom` etc:
     * Switch `content` from XHTML to HTML inside CDATA to support non-XHTML input content ([bridgy-fed#624](https://github.com/snarfed/bridgy-fed/issues/624).
     * Bug fix, handle bare string URL `image` values.
-    * Bug fix, remove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
+    * Bug fix, emove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
     * Render `objectType: comment` attachments.
+    * Remove invalid `<a>` element for tags.
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.
   * Render `objectType: service` attachments, eg Bluesky custom feeds.
