@@ -162,13 +162,11 @@ ATOM_CONTENT = """\
   <id>https://perma/link</id>
   <title>foo ☕ bar</title>
 
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 
 foo ☕ bar
 
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="https://perma/link" />
   <link rel="ostatus:conversation" href="https://perma/link" />

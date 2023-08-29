@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for atom.py."""
 import copy
 
@@ -21,8 +20,7 @@ INSTAGRAM_ENTRY_BODY = u"""\
   <activity:object-type>http://activitystrea.ms/schema/1.0/photo</activity:object-type>
   <id>tag:instagram.com:123_456</id>
   <title>this picture -&gt; is #abc @foo #xyz</title>
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz
 <p>
 <a class="link" href="https://www.instagram.com/p/ABC123/">
@@ -34,8 +32,7 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a>
 </span>
 </p>
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="https://www.instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
@@ -90,7 +87,7 @@ INSTAGRAM_ACTIVITY = {
     'id': 'tag:instagram.com:123_456',
     'objectType': 'photo',
     'title': 'this picture -> is #abc @foo #xyz',
-    'content': 'this picture -> is #abc @foo #xyz Le Truc',
+    'content': 'this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz <p> <a class="link" href="https://www.instagram.com/p/ABC123/"> <img class="u-photo" src="http://attach/image/big" alt="" /> </a> </p> <p> <span class="p-location h-card"> <data class="p-uid" value="tag:instagram.com:520640"></data> <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a> </span> </p>',
     'published': '2012-09-22T05:25:42+00:00',
     'updated': '2012-09-22T05:25:42+00:00',
     'location': {
@@ -612,8 +609,7 @@ y
 z
 </title>
 
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 
 my content
 <pre>
@@ -622,8 +618,7 @@ my content
  z
 </pre>
 
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="http://my/post" />
   <link rel="ostatus:conversation" href="http://my/post" />
@@ -951,11 +946,9 @@ going to Homebrew Website Club
       }]
     }
     self.assert_multiline_in("""
-<content type="xhtml">
-<div xmlns="http://www.w3.org/1999/xhtml">
+<content type="html"><![CDATA[
 <a href="https://jonathanprozzi.net/indieweb/homebrew-website-club-baltimore-wednesday-june-27-2018/">shared this.</a>
-</div>
-</content>
+]]></content>
 """, atom.activities_to_atom([activity], {}), ignore_blanks=True)
 
   def test_image_lists(self):
@@ -997,11 +990,9 @@ going to Homebrew Website Club
 
     self.assert_multiline_in("""\
 <summary>foo &amp;</summary>
-<content type="xhtml">
-<div xmlns="http://www.w3.org/1999/xhtml">
+<content type="html"><![CDATA[
 bar
-</div>
-</content>
+]]></content>
 """, atom.activities_to_atom([activity], {}), ignore_blanks=True)
 
   def test_bare_string_object(self):

@@ -306,6 +306,7 @@ _Non-breaking changes:_
   * Revise HTML in `PropertyValue` attachments on actors to include full URL in anchro text to be compatible with Mastodon's profile link verification.
 * `atom`:
   * `activities_to_atom` etc:
+    * Switch `content` from XHTML to HTML inside CDATA to support non-XHTML input content ([bridgy-fed#624](https://github.com/snarfed/bridgy-fed/issues/624).
     * Bug fix, handle bare string URL `image` values.
     * Bug fix, remove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
     * Render `objectType: comment` attachments.

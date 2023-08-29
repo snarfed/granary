@@ -622,8 +622,7 @@ ATOM = """\
   <id>tag:twitter.com:100</id>
   <title>@twitter meets @seepicturely at #tcdisrupt &lt;3 first instagr.am/p/MuW67</title>
 
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 
 <a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a>
 <p>
@@ -648,8 +647,7 @@ ATOM = """\
 </span>
 </p>
 
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="https://twitter.com/snarfed_org/status/100" />
   <link rel="ostatus:conversation" href="https://twitter.com/snarfed_org/status/100" />

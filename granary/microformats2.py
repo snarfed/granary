@@ -952,9 +952,6 @@ def render_content(obj, include_location=True, synthesize_content=True,
   attachments are converted to mf2 children in object_to_json and then rendered
   in json_to_html.)
 
-  Note that the returned HTML is included in Atom as well as HTML documents,
-  so it *must* be HTML4 / XHTML, not HTML5! All tags must be closed, etc.
-
   Args:
     obj: decoded JSON ActivityStreams object
     include_location: boolean, whether to render location, if provided
@@ -1101,9 +1098,6 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
 def _render_attachments(attachments, obj):
   """Renders ActivityStreams attachments (or tags etc) as HTML.
-
-  Note that the returned HTML is included in Atom as well as HTML documents,
-  so it *must* be HTML4 / XHTML, not HTML5! All tags must be closed, etc.
 
   Args:
     attachments: sequence of decoded JSON ActivityStreams objects
