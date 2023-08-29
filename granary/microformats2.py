@@ -137,7 +137,9 @@ def get_html(val):
   Returns:
     string or None
   """
-  if isinstance(val, dict) and val.get('html'):
+  if val is None:
+    return None
+  elif isinstance(val, dict) and val.get('html'):
     return val['html'].strip()
 
   return html.escape(get_text(val), quote=False)
@@ -789,7 +791,9 @@ def json_to_html(obj, parent_props=None):
       props['name'] = [{'yes': 'is attending.',
                         'no': 'is not attending.',
                         'maybe': 'might attend.'}.get(rsvp)]
-    props['name'][0] = f"<data class=\"p-rsvp\" value=\"{rsvp}\">{props['name'][0]}</data>"
+    props['name'][0] = {
+      'html': f"<data class=\"p-rsvp\" value=\"{rsvp}\">{props['name'][0]}</data>",
+    }
 
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
@@ -1242,7 +1246,7 @@ def maybe_linked_name(props):
     string HTML
   """
   prop = first_props(props)
-  name = prop.get('name')
+  name = get_html(prop.get('name'))
   url = prop.get('url')
 
   if name is not None:

@@ -331,7 +331,7 @@ _Non-breaking changes:_
   * `status_to_object`: add/fix alt text handling for images.
 * `microformats2`:
   * `json_to_html`:
-    * HTML-escape tag names. Fixes [GHSA-4w4f-g49g-3f7j](https://github.com/snarfed/bridgy/security/advisories/GHSA-4w4f-g49g-3f7j); thank you [@janboddez](https://github.com/janboddez)!
+    * HTML-escape tag and quote attachment names. Fixes [GHSA-4w4f-g49g-3f7j](https://github.com/snarfed/bridgy/security/advisories/GHSA-4w4f-g49g-3f7j); thank you [@janboddez](https://github.com/janboddez)!
   * `json_to_object`:
     * Improve handling of items with multiple types by using [post type discovery](https://indiewebcamp.com/post-type-discovery) more aggressively.
     * Normalize ISO-8601 format of `published` and `updated` timestamps.

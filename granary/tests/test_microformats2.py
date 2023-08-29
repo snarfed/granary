@@ -666,6 +666,14 @@ Shared <a href="#">a post</a> by foo
         'displayName': '<bar>',
       }], 'tag'))
 
+  def test_maybe_linked_name_escapes_html(self):
+    self.assert_equals(
+      '<a class="p-name u-url" href="http://foo">&lt;bar&gt;</a>',
+      microformats2.maybe_linked_name({
+        'url': ['http://foo'],
+        'name': ['<bar>'],
+      }))
+
   def test_json_to_object_with_location_hcard(self):
     obj = microformats2.json_to_object({
       'type': ['h-entry'],
