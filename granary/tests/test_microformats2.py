@@ -658,6 +658,14 @@ Shared <a href="#">a post</a> by foo
     # just check that we don't crash
     microformats2.json_to_html({'x': 'y'})
 
+  def test_tags_to_html_escapes_html(self):
+    self.assert_equals(
+      '\n<a class="tag" href="http://foo">&lt;bar&gt;</a>',
+      microformats2.tags_to_html([{
+        'url': 'http://foo',
+        'displayName': '<bar>',
+      }], 'tag'))
+
   def test_json_to_object_with_location_hcard(self):
     obj = microformats2.json_to_object({
       'type': ['h-entry'],

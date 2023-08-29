@@ -1212,7 +1212,7 @@ def tags_to_html(tags, classname, visible=True):
   for tag in tags:
     name = ''
     if visible and tag.get('displayName'):
-      name = tag['displayName']
+      name = get_html(tag['displayName'])
     # loop through individually instead of using update() so that order is
     # preserved.
     for url in as1.object_urls(tag):
