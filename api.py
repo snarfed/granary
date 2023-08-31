@@ -90,7 +90,7 @@ def api(path):
   # make source instance
   site = args.pop(0)
   if site in ('facebook', 'instagram', 'twitter'):
-    return f'Sorry, {site.capitalize()} is not available in the REST API. Try the library instead!', 400
+    return f'Sorry, {site.capitalize()} is not available in the REST API. Try the library instead!', 404
   elif site == 'flickr':
     src = flickr.Flickr(
       access_token_key=request.values['access_token_key'],

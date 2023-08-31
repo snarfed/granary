@@ -224,7 +224,7 @@ class ApiTest(testutil.TestCase):
 
   def test_instagram_blocked(self):
     resp = client.get('/instagram/@me/@friends/@app/?interactive=true')
-    self.assert_equals(400, resp.status_code)
+    self.assert_equals(404, resp.status_code)
 
   def test_bad_start_index(self):
     resp = client.get('/fake/?startIndex=foo')
