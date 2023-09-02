@@ -340,7 +340,8 @@ def to_as1(obj, use_type=True):
   for att in attachments:
     name = att.get('name')
     value = att.get('value')
-    if att.get('type') == 'PropertyValue' and value and name and name != 'Link':
+    if (att.get('type') == 'PropertyValue' and name and name != 'Link'
+        and value and isinstance(value, str)):
       a = util.parse_html(value).find('a')
       if a and a.get('href'):
         names[a['href']] = name

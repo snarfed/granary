@@ -298,6 +298,7 @@ _Non-breaking changes:_
     * Improve `Video` handling: support `Link` objects in `url`, extract stream URLs and types from link `tag`s.
     * Coerce non-float `latitude` and `longitude` to float, raise `ValueError` on failure.
     * Put image attachments into `image` as well as `attachments` ([bridgy-fed#429](https://github.com/snarfed/bridgy-fed/issues/429)).
+    * Handle Hubzilla's composite object attachment `value`s.
     * Bug fix for null `mediaType` in `attachment` and `tags`.
   * Add new `TYPES_WITH_OBJECT` constant.
   * Add new `get_urls`, `address` functions.

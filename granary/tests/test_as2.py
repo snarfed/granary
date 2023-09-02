@@ -107,6 +107,41 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_attachment_composite_value(self):
+    """Hubzilla includes attachments like these."""
+    value = {
+      'guid': '35d25147-cd86-48cb-b3f2-f687310363bd',
+      'parent_guid': 'fbeaa30f-c402-4d58-91c0-e4bce187f1ed',
+      'text': 'markdown here',
+      'author': 'kostikov@zotum.net',
+      'created_at': '2023-09-02T19:55:14Z',
+      'author_signature': '...',
+      'parent_author_signature': '...',
+    }
+
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': [{
+        'displayName': 'zot.diaspora.fields',
+        'value': {
+          'guid': '35d25147-cd86-48cb-b3f2-f687310363bd',
+          'parent_guid': 'fbeaa30f-c402-4d58-91c0-e4bce187f1ed',
+          'text': 'markdown here',
+          'author': 'kostikov@zotum.net',
+          'created_at': '2023-09-02T19:55:14Z',
+          'author_signature': '...',
+          'parent_author_signature': '...',
+        },
+      }]
+    }, as2.to_as1({
+      'type': 'Note',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'zot.diaspora.fields',
+        'value': value,
+      }],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (
