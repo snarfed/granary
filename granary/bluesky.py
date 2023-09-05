@@ -19,10 +19,6 @@ from .source import FRIENDS, Source, OMIT_LINK
 
 logger = logging.getLogger(__name__)
 
-# list of dict JSON app.bsky.* lexicons. _load_lexicons lazy loads them from the
-# lexicons/ dir.
-LEXICONS = []
-
 # via https://atproto.com/specs/handle
 HANDLE_REGEX = (
   r'([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+'
@@ -30,12 +26,6 @@ HANDLE_REGEX = (
 )
 HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
 DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
-
-def _maybe_load_lexicons():
-  if not LEXICONS:
-    for filename in (Path(__file__).parent / 'lexicons').glob('**/*.json'):
-      with open(filename) as f:
-        LEXICONS.append(json.load(f))
 
 # Maps AT Protocol NSID collections to path elements in bsky.app URLs.
 # Used in at_uri_to_web_url.
@@ -672,10 +662,8 @@ class Bluesky(Source):
     """
     assert not (access_token and app_password)
 
-    _maybe_load_lexicons()
-
     if app_password:
-      client = Client('https://bsky.social', LEXICONS)
+      client = Client('https://bsky.social')
       resp = client.com.atproto.server.createSession({
         'identifier': handle,
         'password': app_password,
@@ -694,7 +682,7 @@ class Bluesky(Source):
       headers = {
         'Authorization': f'Bearer {self.access_token}',
       }
-    self.client = Client('https://bsky.social', LEXICONS, headers=headers)
+    self.client = Client('https://bsky.social', headers=headers)
 
   @classmethod
   def user_url(cls, handle):
