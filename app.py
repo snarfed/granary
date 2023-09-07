@@ -146,6 +146,8 @@ app.wsgi_app = flask_util.ndb_context_middleware(
 
 cache = Cache(app)
 
+util.set_user_agent('granary (https://granary.io/)')
+
 
 @app.route('/')
 def front_page():
