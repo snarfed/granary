@@ -17,6 +17,7 @@ from ..bluesky import (
   from_as1,
   to_as1,
   url_to_did_web,
+  web_url_to_at_uri,
 )
 from ..source import ALL, FRIENDS, ME, SELF
 
@@ -299,6 +300,22 @@ class BlueskyTest(testutil.TestCase):
 
     with self.assertRaises(ValueError):
       at_uri_to_web_url('http://not/at/uri')
+
+  def test_web_url_to_at_uri(self):
+    for url, expected in (
+        ('', None),
+        ('https://bsky.app/profile/foo.com', 'at://foo.com'),
+        ('https://bsky.app/profile/did:plc:foo', 'at://did:plc:foo'),
+        ('https://bsky.app/profile/did:plc:foo/post/3jv3wdw2hkt25',
+         'at://did:plc:foo/app.bsky.feed.post/3jv3wdw2hkt25'),
+        ('https://bsky.app/profile/bsky.app/feed/mutuals',
+         'at://bsky.app/app.bsky.feed.generator/mutuals'),
+    ):
+      self.assertEqual(expected, web_url_to_at_uri(url))
+
+    for url in ('at://foo', 'http://not/bsky.app', 'https://bsky.app/x'):
+      with self.assertRaises(ValueError):
+        web_url_to_at_uri(url)
 
   def test_from_as1_post(self):
     self.assert_equals(POST_BSKY, from_as1(POST_AS), ignore=['uri'])

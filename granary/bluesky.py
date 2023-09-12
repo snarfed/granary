@@ -34,10 +34,20 @@ DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 #   at://did:plc:z72i7hd/app.bsky.feed.generator/mutuals
 # to a frontend URL like:
 #   https://bsky.app/profile/did:plc:z72i7hdynmk6r22z27h6tvur/feed/mutuals
-COLLECTIONS = {
+COLLECTION_TO_BSKY_APP_TYPE = {
   'app.bsky.feed.post': 'post',
   'app.bsky.feed.generator': 'feed',
 }
+BSKY_APP_TYPE_TO_COLLECTION = {
+  name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
+}
+
+BSKY_APP_URL_RE = re.compile(r"""
+  ^https://(staging\.)?bsky\.app
+  /profile/(?P<id>[^/]+)
+  (/(?P<type>post|feed)
+   /(?P<tid>[^?]+))?$
+  """, re.VERBOSE)
 
 
 def url_to_did_web(url):
@@ -99,12 +109,17 @@ def did_web_to_url(did):
 def at_uri_to_web_url(uri, handle=None):
   """Converts an at:// URI to a https://bsky.app URL.
 
+  https://atproto.com/specs/at-uri-scheme
+
   Args:
-    uri: str, at:// URI
+    uri: str, `at://` URI
     handle: str, optional user handle. If not provided, defaults to the DID in uri.
 
   Returns:
-    str, https://bsky.app URL
+    str, https://bsky.app URL, or None
+
+  Raises:
+    ValueError, if uri is not a string or doesn't start with `at://`
   """
   if not uri:
     return None
@@ -116,11 +131,52 @@ def at_uri_to_web_url(uri, handle=None):
   did = parsed.netloc
   collection, tid = parsed.path.strip('/').split('/')
 
-  type = COLLECTIONS.get(collection)
+  type = COLLECTION_TO_BSKY_APP_TYPE.get(collection)
   if not type:
     return None
 
   return f'{Bluesky.user_url(handle or did)}/{type}/{tid}'
+
+
+def web_url_to_at_uri(url, handle=None):
+  """Converts a https://bsky.app URL to an at:// URI.
+
+  https://atproto.com/specs/at-uri-scheme
+
+  Currently supports profile, post, and feed URLs with DIDs and handles, eg:
+
+  * https://bsky.app/profile/did:plc:123abc
+  * https://bsky.app/profile/vito.fyi/post/3jt7sst7vok2u
+  * https://bsky.app/profile/bsky.app/feed/mutuals
+
+  Args:
+    url: str, bsky.app URL
+
+  Returns:
+    str, `at://` URI, or None
+
+  Raises:
+    ValueError, if url is not a string or can't be parsed as a `bsky.app`
+      profile or post URL
+
+  """
+  if not url:
+    return None
+
+  match = BSKY_APP_URL_RE.match(url)
+  if not match:
+    raise ValueError(f"{url} doesn't look like a bsky.app profile or post URL")
+
+  id = match.group('id')
+  assert id
+  type = match.group('type')
+  tid = match.group('tid')
+
+  if type:
+    assert tid
+    return f'at://{id}/{BSKY_APP_TYPE_TO_COLLECTION[type]}/{tid}'
+  else:
+    return f'at://{id}'
 
 
 def from_as1(obj, from_url=None):

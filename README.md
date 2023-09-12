@@ -320,6 +320,7 @@ _Non-breaking changes:_
   * Drop bundled `app.bsky`/`com.atproto` lexicons, use lexrpc's instead.
   * Convert reposts, quotes, inline links, attached links, and mentions, both directions. Includes Bluesky facet (rich text) support.
   * Handle quote posts with attached images, both directions.
+  * Add new `web_url_to_at_uri` function.
   * `from_as1`: handle link tags without start/end indices.
   * `to_as1`: add new `type` kwarg.
   * `to_as1`: generate staging.bsky.app profile and post URLs.
