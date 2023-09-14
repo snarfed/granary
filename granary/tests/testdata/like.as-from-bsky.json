@@ -1,0 +1,5 @@
+{
+  "objectType": "activity",
+  "verb": "like",
+  "object": "http://example.com/original/post"
+}

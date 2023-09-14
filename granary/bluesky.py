@@ -261,6 +261,16 @@ def from_as1(obj, from_url=None):
       'indexedAt': util.now().isoformat(),
     }
 
+  elif verb == 'like':
+    ret = {
+      '$type': 'app.bsky.feed.like',
+      'subject': {
+        'uri': inner_obj.get('id'),
+        'cid': 'TODO',
+      },
+      'createdAt': obj.get('published', ''),
+    }
+
   elif verb == 'follow':
     if not actor or not inner_obj:
       raise ValueError('follow activity requires actor and object')
@@ -660,6 +670,13 @@ def to_as1(obj, type=None):
         'object': ret,
         'actor': to_as1(reason.get('by'), type='app.bsky.actor.defs#profileViewBasic'),
       }
+
+  elif type == 'app.bsky.feed.like':
+    ret = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': obj.get('subject', {}).get('uri'),
+    }
 
   elif type == 'app.bsky.graph.follow':
     ret = {
