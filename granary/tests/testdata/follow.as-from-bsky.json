@@ -1,7 +1,5 @@
 {
   "objectType": "activity",
   "verb": "follow",
-  "actor": {
-    "url": "http://follower/"
-  }
+  "object": "http://followee"
 }

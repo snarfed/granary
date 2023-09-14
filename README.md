@@ -322,11 +322,13 @@ _Non-breaking changes:_
   * Handle quote posts with attached images, both directions.
   * Add new `web_url_to_at_uri` function.
   * `from_as1`: handle link tags without start/end indices.
-  * `to_as1`: add new `type` kwarg.
-  * `to_as1`: generate staging.bsky.app profile and post URLs.
-  * `to_as1`: propagate profile `did` into actor `id`.
-  * `to_as1`: add unimplemented stub for custom feeds, eg `app.bsky.feed.defs#generatorView`.
+  * `to_as1`:
+    * Add new `type` kwarg.
+    * Generate staging.bsky.app profile and post URLs.
+    * Propagate profile `did` into actor `id`.
+    * Add unimplemented stub for custom feeds, eg `app.bsky.feed.defs#generatorView`.
   * Add `as1_to_profile`.
+  * Bug fix for converting follows, both directions: `subject` in `app.bsky.graph.follow` is followee, not follower. ([That field is badly named!](https://discord.com/channels/1097580399187738645/1097580399187738648/1151933384738746478))
 * `jsonfeed`:
   * `activities_to_jsonfeed`:
     * Bug fix, handle bare string values for `image` and `stream`.

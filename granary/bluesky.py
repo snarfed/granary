@@ -266,7 +266,7 @@ def from_as1(obj, from_url=None):
       raise ValueError('follow activity requires actor and object')
     ret = {
       '$type': 'app.bsky.graph.follow',
-      'subject': actor.get('id') or actor.get('url'),
+      'subject': inner_obj.get('id'),
       'createdAt': obj.get('published', ''),
     }
 
@@ -665,9 +665,7 @@ def to_as1(obj, type=None):
     ret = {
       'objectType': 'activity',
       'verb': 'follow',
-      'actor': {
-        'url': obj.get('subject'),
-      },
+      'object': obj.get('subject'),
     }
 
   elif type == 'app.bsky.feed.defs#threadViewPost':
