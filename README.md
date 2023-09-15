@@ -280,7 +280,9 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 6.1 - unreleased
+### 6.1 - 2023-09-16
+
+Highlights: Nostr, Bluesky `get_activities`, lots of improvements in `as2` and `microformats2`, and more!
 
 _REST API breaking changes:_
 
