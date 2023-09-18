@@ -24,6 +24,7 @@ instagram_sessionid_cookie
 linkedin_client_*
 meetup_client_*
 reddit_app_*
+service_account_creds.json
 twitter_app_*
 twitter_scrape_headers*
 TAGS
