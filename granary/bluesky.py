@@ -57,6 +57,7 @@ def url_to_did_web(url):
   Paths are not supported, and will be discarded.
 
   Examples:
+
   * 'https://foo.com' => 'did:web:foo.com'
   * 'https://foo.com:3000' => 'did:web:foo.com'
   * 'https://foo.bar.com/baz/baj' => 'did:web:foo.bar.com'
@@ -86,6 +87,7 @@ def did_web_to_url(did):
   Paths are not supported, and will throw an invalid error.
 
   Examples:
+
   * 'did:web:foo.com' => 'https://foo.com'
   * 'did:web:foo.com%3A3000' => INVALID
   * 'did:web:bar.com:baz:baj' => INVALID

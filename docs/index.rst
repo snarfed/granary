@@ -448,7 +448,7 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-6.1 - 2023-09-15
+6.1 - 2023-09-16
 ~~~~~~~~~~~~~~~~
 
 Highlights: Nostr, Bluesky ``get_activities``, lots of improvements in

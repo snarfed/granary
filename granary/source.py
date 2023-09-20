@@ -254,6 +254,7 @@ class Source(object, metaclass=SourceMeta):
         http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
 
       It has these keys:
+
       * items: list of activity dicts
       * startIndex: int or None
       * itemsPerPage: int

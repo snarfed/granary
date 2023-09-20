@@ -471,10 +471,10 @@ def targets(obj):
   """Collects an AS1 activity or object's targets.
 
   This is all ids/URLs that are direct "targets" of the activity, eg:
+
   * the post it's replying to
   * the post it's sharing
   * the post it's reacting to
-  * the actor or other object it's tagging
   * the actor or other object it's tagging
   * the event it's inviting someone to
   * the event it's RSVPing to
@@ -483,9 +483,10 @@ def targets(obj):
   etc...
 
   Args:
-    obj: dict, AS1 object or activity
+    obj (dict): AS1 object or activity
 
-  Returns: sequence of string ids/URLs
+  Returns:
+    sequence of string ids/URLs
   """
   if not obj:
     return []
