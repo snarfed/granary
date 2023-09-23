@@ -1,8 +1,8 @@
 """Bluesky source class.
 
-https://bsky.app/
-https://atproto.com/lexicons/app-bsky-actor
-https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
+* https://bsky.app/
+* https://atproto.com/lexicons/app-bsky-actor
+* https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 """
 import copy
 import json
@@ -89,16 +89,17 @@ def did_web_to_url(did):
 
   Examples:
 
-  * 'did:web:foo.com' => 'https://foo.com'
-  * 'did:web:foo.com%3A3000' => INVALID
-  * 'did:web:bar.com:baz:baj' => INVALID
+  * ``did:web:foo.com`` => ``https://foo.com``
+  * ``did:web:foo.com%3A3000`` => INVALID
+  * ``did:web:bar.com:baz:baj`` => INVALID
 
   https://atproto.com/specs/did
 
   Args:
-    did: str
+    did (str)
 
-  Returns: str
+  Returns:
+    str
   """
   if not did or not DID_WEB_PATTERN.match(did):
     raise ValueError(f'Invalid did:web: {did}')
@@ -115,14 +116,15 @@ def at_uri_to_web_url(uri, handle=None):
   https://atproto.com/specs/at-uri-scheme
 
   Args:
-    uri: str, `at://` URI
-    handle: str, optional user handle. If not provided, defaults to the DID in uri.
+    uri (str): ``at://`` URI
+    handle: (str): optional user handle. If not provided, defaults to the DID in
+      uri.
 
   Returns:
-    str, https://bsky.app URL, or None
+    str: https://bsky.app URL, or None
 
   Raises:
-    ValueError, if uri is not a string or doesn't start with `at://`
+    ValueError: if uri is not a string or doesn't start with ``at://``
   """
   if not uri:
     return None
@@ -142,7 +144,7 @@ def at_uri_to_web_url(uri, handle=None):
 
 
 def web_url_to_at_uri(url, handle=None):
-  """Converts a https://bsky.app URL to an at:// URI.
+  """Converts a https://bsky.app URL to an ``at://`` URI.
 
   https://atproto.com/specs/at-uri-scheme
 
@@ -153,13 +155,13 @@ def web_url_to_at_uri(url, handle=None):
   * https://bsky.app/profile/bsky.app/feed/mutuals
 
   Args:
-    url: str, bsky.app URL
+    url (str): bsky.app URL
 
   Returns:
-    str, `at://` URI, or None
+    str: ``at://`` URI, or None
 
   Raises:
-    ValueError, if url is not a string or can't be parsed as a `bsky.app`
+    ValueError: if url is not a string or can't be parsed as a ``bsky.app``
       profile or post URL
 
   """
@@ -185,18 +187,19 @@ def web_url_to_at_uri(url, handle=None):
 def from_as1(obj, from_url=None):
   """Converts an AS1 object to a Bluesky object.
 
-  The objectType field is required.
+  The ``objectType`` field is required.
 
   Args:
-    obj: dict, AS1 object or activity
-    from_url: str, optional URL the original object was fetched from.
+    obj (dict)? AS1 object or activity
+    from_url (str): optional URL the original object was fetched from.
       Currently unused. TODO: remove?
 
-  Returns: dict, app.bsky.* object
+  Returns:
+    dict: ``app.bsky.*`` object
 
   Raises:
-    ValueError
-      if the objectType or verb fields are missing or unsupported
+    ValueError: if the ``objectType`` or ``verb`` fields are missing or
+      unsupported
   """
   activity = obj
   verb = activity.get('verb') or 'post'
@@ -489,13 +492,13 @@ def from_as1(obj, from_url=None):
 
 
 def as1_to_profile(actor):
-  """Converts an AS1 actor to a Bluesky `app.bsky.actor.profile`.
+  """Converts an AS1 actor to a Bluesky ``app.bsky.actor.profile``.
 
   Args:
-    actor: dict, AS1 actor
+    actor (dict): AS1 actor
 
   Raises:
-    ValueError: if `actor['objectType']` is not in :attr:`as1.ACTOR_TYPES`
+    ValueError: if ``actor['objectType']`` is not in :const:``as1.ACTOR_TYPES``
   """
   type = actor.get('objectType')
   if type not in as1.ACTOR_TYPES:
@@ -514,16 +517,16 @@ def as1_to_profile(actor):
 def to_as1(obj, type=None):
   """Converts a Bluesky object to an AS1 object.
 
-  The $type field is required.
-
   Args:
-    profile: dict, app.bsky.* object
-    type: str, optional $type to parse with, only used if obj['$type'] is unset
+    obj (dict): ``app.bsky.*`` object
+    type (str): optional ``$type`` to parse with, only used if ``obj['$type']``
+      is unset
 
-  Returns: dict, AS1 object
+  Returns:
+    dict: AS1 object
 
   Raises:
-    ValueError if the $type field is missing or unsupported
+    ValueError: if the ``$type`` field is missing or unsupported
   """
   if not obj:
     return {}
@@ -710,12 +713,13 @@ def to_as1(obj, type=None):
 
 
 class Bluesky(Source):
-  """Bluesky source class. See file docstring and Source class for details.
+  """Bluesky source class. See file docstring and :class:`Source` class for
+  details.
 
   Attributes:
-    handle: str
-    did: str
-    access_token: str
+    handle (str)
+    did (str)
+    access_token (str)
   """
 
   DOMAIN = 'bsky.app'
@@ -729,10 +733,10 @@ class Bluesky(Source):
     Either access_token or app_password may be provided, optionally, but not both.
 
     Args:
-      handle: str username, eg 'snarfed.bsky.social' or 'snarfed.org'
-      did: str, did:plc or did:web, optional
-      access_token: str, optional
-      app_password: str, optional
+      handle (str): username, eg ``snarfed.bsky.social`` or ``snarfed.org``
+      did (str): did:plc or did:web, optional
+      access_token (str): optional
+      app_password (str): optional
     """
     assert not (access_token and app_password)
 
@@ -763,10 +767,10 @@ class Bluesky(Source):
     """Returns the profile URL for a given handle.
 
     Args:
-      handle: str
+      handle (str)
 
     Returns:
-      str, profile URL
+      str: profile URL
     """
     return f'{cls.BASE_URL}/profile/{handle.lstrip("@")}'
 
@@ -775,11 +779,11 @@ class Bluesky(Source):
     """Returns the post URL for a given handle and tid.
 
     Args:
-      handle: str
-      tid: str
+      handle (str)
+      tid (str)
 
     Returns:
-      str, profile URL
+      str: profile URL
     """
     return f'{cls.user_url(handle)}/post/{tid}'
 
@@ -796,7 +800,7 @@ class Bluesky(Source):
     Bluesky-specific details:
 
     Args:
-      * activity_id: str, an at:// URI
+      activity_id (str): an ``at://`` URI
     """
     assert not start_index
 
