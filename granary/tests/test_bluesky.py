@@ -428,6 +428,13 @@ class BlueskyTest(testutil.TestCase):
     with self.assertRaises(ValueError):
       as1_to_profile(POST_AS)
 
+  def test_to_as1_profile(self):
+    self.assert_equals({
+      'objectType' : 'person',
+      'displayName': 'Alice',
+      'image': [{'url': 'https://alice.com/alice.jpg'}],
+    }, to_as1(ACTOR_PROFILE_BSKY))
+
   def test_to_as1_post(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
 

@@ -358,6 +358,8 @@ _Breaking changes:_
 
 * `as2`:
   * Interpret bare string `object`, `inReplyTo`, etc values as ids, convert them to bare strings or `id` instead of `url`.
+* `bluesky`:
+  * `to_as1`: add support for `app.bsky.actor.profile`.
 * `microformats2`:
   * Convert simple string `in-reply-to`, `repost-of`, `like-of` etc values to AS1 bare strings or `id`s instead of `url`s.
 
