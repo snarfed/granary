@@ -280,6 +280,14 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
+
+### 6.2 - unreleased
+
+* `bluesky`:
+  * `to_as1`: convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
+  * Add new `blob_to_url` function.
+
+
 ### 6.1 - 2023-09-16
 
 Highlights: Nostr, Bluesky `get_activities`, lots of improvements in `as2` and `microformats2`, and more!
@@ -358,8 +366,6 @@ _Breaking changes:_
 
 * `as2`:
   * Interpret bare string `object`, `inReplyTo`, etc values as ids, convert them to bare strings or `id` instead of `url`.
-* `bluesky`:
-  * `to_as1`: add support for `app.bsky.actor.profile`.
 * `microformats2`:
   * Convert simple string `in-reply-to`, `repost-of`, `like-of` etc values to AS1 bare strings or `id`s instead of `url`s.
 

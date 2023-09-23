@@ -508,19 +508,24 @@ def as1_to_profile(actor):
   assert profile['$type'] == 'app.bsky.actor.defs#profileView'
   profile['$type'] = 'app.bsky.actor.profile'
 
-  for field in 'did', 'handle', 'indexedAt', 'labels', 'viewer':
+  for field in ('avatar', 'banner', 'did', 'handle', 'indexedAt', 'labels',
+                'viewer'):
     profile.pop(field, None)
 
   return profile
 
 
-def to_as1(obj, type=None):
+def to_as1(obj, type=None, repo_did=None, pds='https://bsky.social/'):
   """Converts a Bluesky object to an AS1 object.
 
   Args:
     obj (dict): ``app.bsky.*`` object
     type (str): optional ``$type`` to parse with, only used if ``obj['$type']``
       is unset
+    repo_did (str): optional DID of the repo this object is from. Required to
+      generate image URLs.
+    pds (str): base URL of the PDS that currently serves this object's repo.
+      Required to generate image URLs. Defaults to ``https://bsky.social/``.
 
   Returns:
     dict: AS1 object
@@ -545,7 +550,7 @@ def to_as1(obj, type=None):
       images.append({'url': obj.get('banner'), 'objectType': 'featured'})
 
     handle = obj.get('handle')
-    did = obj.get('did')
+    did = obj.get('did') or repo_did
 
     ret = {
       'objectType': 'person',
@@ -557,6 +562,15 @@ def to_as1(obj, type=None):
       'summary': obj.get('description'),
       'image': images,
     }
+
+    # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
+    if type == 'app.bsky.actor.profile':
+      repo_did = repo_did or did
+      if repo_did and pds:
+        for img in ret['image']:
+          img['url'] = blob_to_url(blob=img['url'], repo_did=repo_did, pds=pds)
+      else:
+        ret['image'] = []
 
   elif type == 'app.bsky.feed.post':
     text = obj.get('text', '')
@@ -711,6 +725,32 @@ def to_as1(obj, type=None):
     raise ValueError(f'Bluesky object has unknown $type: {type}')
 
   return util.trim_nulls(ret)
+
+
+def blob_to_url(*, blob, repo_did, pds='https://bsky.social'):
+  """Generates a URL for a blob.
+
+  Supports both new and old style blobs:
+  https://atproto.com/specs/data-model#blob-type
+
+  Args:
+    blob (dict)
+    repo_did (str): DID of the repo that owns this blob
+    pds (str): base URL of the PDS that serves this repo. Defaults to
+      `https://bsky.social``
+
+  Returns:
+    str: URL for this blob, or None if ``blob`` is empty or has no CID
+  """
+  if not blob:
+    return None
+
+  assert repo_did and pds
+
+  cid = blob.get('ref', {}).get('$link') or blob.get('cid')
+  if cid:
+    path = f'/xrpc/com.atproto.sync.getBlob?did={repo_did}&cid={cid}'
+    return urllib.parse.urljoin(pds, path)
 
 
 class Bluesky(Source):

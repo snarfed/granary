@@ -12,6 +12,7 @@ import requests
 from ..bluesky import (
   as1_to_profile,
   at_uri_to_web_url,
+  blob_to_url,
   Bluesky,
   did_web_to_url,
   from_as1,
@@ -36,10 +37,23 @@ ACTOR_PROFILE_VIEW_BSKY = {
   'avatar': 'https://alice.com/alice.jpg',
   'description': None,
 }
+NEW_BLOB = {  # new blob format: https://atproto.com/specs/data-model#blob-type
+  '$type': 'blob',
+  'ref': {'$link': 'bafkreim'},
+  'mimeType': 'image/jpeg',
+  'size': 154296,
+}
+NEW_BLOB_URL = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'
+OLD_BLOB = {  # old blob format: https://atproto.com/specs/data-model#blob-type
+  'cid': 'bafyjrot',
+  'mimeType': 'image/jpeg',
+}
+OLD_BLOB_URL = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafyjrot'
 ACTOR_PROFILE_BSKY = {
   '$type': 'app.bsky.actor.profile',
   'displayName': 'Alice',
-  'avatar': 'https://alice.com/alice.jpg',
+  'avatar': NEW_BLOB,
+  'banner': OLD_BLOB,
   'description': None,
 }
 
@@ -422,7 +436,11 @@ class BlueskyTest(testutil.TestCase):
       })
 
   def test_as1_to_profile(self):
-    self.assert_equals(ACTOR_PROFILE_BSKY, as1_to_profile(ACTOR_AS))
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'description': None,
+      'displayName': 'Alice',
+    }, as1_to_profile(ACTOR_AS))
 
   def test_as1_to_profile_not_actor(self):
     with self.assertRaises(ValueError):
@@ -430,10 +448,27 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_profile(self):
     self.assert_equals({
-      'objectType' : 'person',
+      'objectType': 'person',
+      'id': 'did:plc:foo',
       'displayName': 'Alice',
-      'image': [{'url': 'https://alice.com/alice.jpg'}],
-    }, to_as1(ACTOR_PROFILE_BSKY))
+      'image': [{
+        'url': NEW_BLOB_URL,
+      }, {
+        'objectType': 'featured',
+        'url': OLD_BLOB_URL,
+      }],
+    }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo'))
+
+  def test_to_as1_profile_no_repo_did_or_pds(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'displayName': 'Alice',
+    }, to_as1(ACTOR_PROFILE_BSKY, repo_did=None, pds='http://foo'))
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'did:plc:foo',
+      'displayName': 'Alice',
+    }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', pds=None))
 
   def test_to_as1_post(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
@@ -485,6 +520,13 @@ class BlueskyTest(testutil.TestCase):
       'tags': [FACET_TAG],
     }
     self.assert_equals(expected, to_as1(bsky))
+
+  def test_blob_to_url(self):
+    self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
+    self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB,
+                                               repo_did='did:plc:foo'))
+    self.assertEqual(OLD_BLOB_URL, blob_to_url(blob=OLD_BLOB,
+                                               repo_did='did:plc:foo'))
 
   def test_constructor_both_access_token_and_app_password_error(self):
     with self.assertRaises(AssertionError):
