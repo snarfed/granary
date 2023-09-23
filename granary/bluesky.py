@@ -51,23 +51,24 @@ BSKY_APP_URL_RE = re.compile(r"""
 
 
 def url_to_did_web(url):
-  """Converts a URL to a did:web.
+  """Converts a URL to a ``did:web``.
 
   In AT Proto, only hostname-based web DIDs are supported.
   Paths are not supported, and will be discarded.
 
-  Examples:
-
-  * 'https://foo.com' => 'did:web:foo.com'
-  * 'https://foo.com:3000' => 'did:web:foo.com'
-  * 'https://foo.bar.com/baz/baj' => 'did:web:foo.bar.com'
-
   https://atproto.com/specs/did
 
-  Args:
-    url: str
+  Examples:
 
-  Returns: str
+  * ``https://foo.com`` => ``did:web:foo.com``
+  * ``https://foo.com:3000`` => ``did:web:foo.com``
+  * ``https://foo.bar.com/baz/baj`` => ``did:web:foo.bar.com``
+
+  Args:
+    url (str)
+
+  Returns:
+    str
   """
   parsed = urllib.parse.urlparse(url)
   if not parsed.hostname:

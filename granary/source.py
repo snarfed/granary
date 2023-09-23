@@ -4,9 +4,9 @@
 Based on the OpenSocial ActivityStreams REST API:
 http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
 
-Uses the 'to' field of the Audience Targeting extension to indicate an
-activity's privacy settings. It's set to a group with alias @public or @private,
-or unset if unknown.
+Uses the ``to`` field of the Audience Targeting extension to indicate an
+activity's privacy settings. It's set to a group with alias ``@public`` or
+``@private``, or unset if unknown.
 http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
 import collections
@@ -46,7 +46,25 @@ sources = {}
 
 CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
+"""Result of creating a new object in a silo.
 
+  :meth:`create()` and :meth:`preview_create()` use this to provide a detailed
+  description of publishing failures. If ``abort`` is False, we should continue
+  looking for an entry to publish; if True, we should immediately inform the
+  user. ``error_plain`` text is sent in response to failed publish webmentions;
+  ``error_html`` will be displayed to the user when publishing interactively.
+
+  Attributes:
+    content (str or dict): str HTML snippet for :meth:`preview_create()`, dict for
+      :meth:`create()`
+    description (str): HTML snippet describing the publish action, e.g.
+      ``@-reply`` or ``RSVP yes to this event``. The verb itself is surrounded by a
+      ``<span class="verb">`` to allow styling. May also include ``<a>`` link(s) and
+      embedded silo post(s).
+    abort (bool)
+    error_plain (str)
+    error_html (str)
+"""
 
 class RateLimited(BaseException):
   """Raised when an API rate limits us, and we may have a partial result.
@@ -63,9 +81,9 @@ def html_to_text(html, baseurl='', **kwargs):
   """Converts string html to string text with html2text.
 
   Args:
-    baseurl: str, base URL to use when resolving relative URLs. Passed through
-      to HTML2Text().
-    **kwargs: html2text options
+    baseurl (str): base URL to use when resolving relative URLs. Passed through
+      to ``HTML2Text()``.
+    kwargs: html2text options:
       https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   """
   if html:
@@ -103,29 +121,7 @@ def load_json(body, url):
 
 def creation_result(content=None, description=None, abort=False,
                     error_plain=None, error_html=None):
-  """Create a new :class:`CreationResult`.
-
-  :meth:`create()` and :meth:`preview_create()` use this to provide a detailed
-  description of publishing failures. If abort is False, we should continue
-  looking for an entry to publish; if True, we should immediately inform the
-  user. error_plain text is sent in response to failed publish webmentions;
-  error_html will be displayed to the user when publishing interactively.
-
-  Args:
-
-    content: a string HTML snippet for :meth:`preview_create()` or a dict for
-      :meth:`create()`
-    description: string HTML snippet describing the publish action, e.g.
-      '@-reply' or 'RSVP yes to this event'. The verb itself is surrounded by a
-      <span class="verb"> to allow styling. May also include <a> link(s) and
-      embedded silo post(s).
-    abort: a boolean
-    error_plain: a string
-    error_html: a string
-
-  Return:
-    a :class:`CreationResult`
-  """
+  """Creates a new :class:`CreationResult`."""
   return CreationResult(content, description, abort, error_plain, error_html)
 
 
@@ -145,26 +141,26 @@ class Source(object, metaclass=SourceMeta):
   Concrete subclasses must override the class constants below and implement
   :meth:`get_activities()`.
 
-  Class constants:
-
-  * DOMAIN: string, the source's domain
-  * BASE_URL: optional, the source's base url
-  * NAME: string, the source's human-readable name
-  * FRONT_PAGE_TEMPLATE: string, the front page child template filename
-  * AUTH_URL: string, the url for the "Authenticate" front page link
-  * EMBED_POST: string, the HTML for embedding a post. Should have a %(url)s
-    placeholder for the post URL and (optionally) a %(content)s placeholder
-    for the post content.
-  * POST_ID_RE: regexp, optional, matches valid post ids. Used in post_id().
-  * HTML2TEXT_OPTIONS: dict mapping string html2text option names to values
-    https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
-  * TRUNCATE_TEXT_LENGTH: integer, optional. Character limit to truncate to.
+  Attributes:
+    DOMAIN (str): the source's domain
+    BASE_URL (str): optional, the source's base url
+    NAME (str): the source's human-readable name
+    FRONT_PAGE_TEMPLATE (str): the front page child template filename
+    AUTH_URL (str): the url for the "Authenticate" front page link
+    EMBED_POST (str): the HTML for embedding a post. Should have a ``%(url)s``
+      placeholder for the post URL and optionally a ``%(content)s`` placeholder
+      for the post content.
+    POST_ID_RE (str): regexp, optional, matches valid post ids. Used in
+      :meth:`post_id`.
+    HTML2TEXT_OPTIONS (dict): maps str html2text option names to values.
+      https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
+    TRUNCATE_TEXT_LENGTH (int): optional character limit to truncate to.
         Defaults to Twitter's limit, 280 characters as of 2019-10-12.
-  * TRUNCATE_URL_LENGTH: integer, optional. Number of characters that URLs count
+    TRUNCATE_URL_LENGTH (int): optional number of characters that URLs count
         for. Defaults to Twitter's, 23 as of 2019-10-12.
-  * OPTIMIZED_COMMENTS: boolean, whether :meth:`get_comment()` is optimized and
-    only fetches the requested comment. If False, :meth:`get_comment()` fetches
-    many or all of the post's comments to find the requested one.
+    OPTIMIZED_COMMENTS (bool): whether :meth:`get_comment()` is optimized and
+      only fetches the requested comment. If False, :meth:`get_comment()` fetches
+      many or all of the post's comments to find the requested one.
   """
   POST_ID_RE = None
   HTML2TEXT_OPTIONS = {}
@@ -179,9 +175,11 @@ class Source(object, metaclass=SourceMeta):
   def get_actor(self, user_id=None):
     """Fetches and returns a user.
 
-    Args: user_id: string, defaults to current user
+    Args:
+      user_id: str, defaults to current user
 
-    Returns: dict, ActivityStreams actor object
+    Returns:
+      dict: ActivityStreams actor object
     """
     raise NotImplementedError()
 
@@ -191,7 +189,7 @@ class Source(object, metaclass=SourceMeta):
     See get_activities_response() for args and kwargs.
 
     Returns:
-      list, ActivityStreams activity dicts
+      list: ActivityStreams activity dicts
     """
     return self.get_activities_response(*args, **kwargs)['items']
 
@@ -222,38 +220,39 @@ class Source(object, metaclass=SourceMeta):
     True.
 
     Args:
-      user_id: string, defaults to the currently authenticated user
-      group_id: string, one of '@self', '@all', '@friends', '@search'. defaults
+      user_id (str): defaults to the currently authenticated user
+      group_id (str): one of '@self', '@all', '@friends', '@search'. defaults
         to '@friends'
-      app_id: string
-      activity_id: string
-      start_index: int >= 0
-      count: int >= 0
-      etag: string, optional ETag to send with the API request. Results will
+      app_id (str):
+      activity_id (str):
+      start_index (int): >= 0
+      count (int): >= 0
+      etag (str): optional ETag to send with the API request. Results will
         only be returned if the ETag has changed. Should include enclosing
         double quotes, e.g. '"ABC123"'
-      min_id: only return activities with ids greater than this
-      cache: dict, optional, used to cache metadata like comment and like counts
+      min_id (only): return activities with ids greater than this
+      cache (dict): optional, used to cache metadata like comment and like counts
         per activity across calls. Used to skip expensive API calls that haven't
         changed.
-      fetch_replies: boolean, whether to fetch each activity's replies also
-      fetch_likes: boolean, whether to fetch each activity's likes also
-      include_shares: boolean, whether to include share activities
-      fetch_shares: boolean, whether to fetch each activity's shares also
-      fetch_events: boolean, whether to fetch the user's events also
-      fetch_mentions: boolean, whether to fetch posts that mention the user
-      search_query: string, an optional search query, only for use with
+      fetch_replies (bool): whether to fetch each activity's replies also
+      fetch_likes (bool): whether to fetch each activity's likes also
+      include_shares (bool): whether to include share activities
+      fetch_shares (bool): whether to fetch each activity's shares also
+      fetch_events (bool): whether to fetch the user's events also
+      fetch_mentions (bool): whether to fetch posts that mention the user
+      search_query (str): an optional search query, only for use with
         @search group_id
-      scrape: boolean, whether to scrape activities from HTML (etc) instead of
+      scrape (bool): whether to scrape activities from HTML (etc) instead of
         using an API. Not supported by all sources.
-      kwargs: some sources accept extra kwargs. See their docs for details.
+      kwargs: some subclasses accept extra kwargs. See their docs for details.
 
     Returns:
-      dict: response values based on OpenSocial ActivityStreams REST API.
-        http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
-        http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
+      dict: Response values based on OpenSocial ActivityStreams REST API.
 
-      It has these keys:
+      * http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Social-API-Server.xml#ActivityStreams-Service
+      * http://opensocial-resources.googlecode.com/svn/spec/2.0.1/Core-Data.xml
+
+      The returned dict has at least these keys:
 
       * items: list of activity dicts
       * startIndex: int or None
@@ -262,7 +261,7 @@ class Source(object, metaclass=SourceMeta):
       * filtered: False
       * sorted: False
       * updatedSince: False
-      * etag: string etag returned by the API's initial call to get activities
+      * etag: str etag returned by the API's initial call to get activities
 
     Raises:
       :class:`ValueError`: if any argument is invalid for this source
@@ -300,10 +299,10 @@ class Source(object, metaclass=SourceMeta):
     sources with APIs that are restricted or have difficult approval processes.
 
     Args:
-      scraped: str, scraped data from a feed of posts
-      count: integer, number of activities to return, None for all
+      scraped (str): scraped data from a feed of posts
+      count (int): number of activities to return, None for all
       fetch_extras: whether to make extra HTTP fetches to get likes, etc.
-      cookie: string, optional cookie to be used for subsequent HTTP
+      cookie (str): optional cookie to be used for subsequent HTTP
         fetches, if necessary.
 
     Returns:
@@ -318,7 +317,7 @@ class Source(object, metaclass=SourceMeta):
     sources with APIs that are restricted or have difficult approval processes.
 
     Args:
-      scraped: str, scraped data from a single post permalink
+      scraped (str): scraped data from a single post permalink
 
     Returns:
       tuple: (AS activity or None, AS logged in actor (ie viewer))
@@ -328,25 +327,26 @@ class Source(object, metaclass=SourceMeta):
   def scraped_to_actor(self, scraped):
     """Converts HTML from a profile page to an AS1 actor.
 
-    Args:
-      html: string, HTML from a profile page
+    Args
+      html (str): HTML from a profile page
 
-    Returns: dict, AS1 actor
+    Returns:
+      dict: AS1 actor
     """
     raise NotImplementedError()
 
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 
-    New likes and emoji reactions are added to the activity in 'tags'.
-    Existing likes and emoji reactions in 'tags' are ignored.
+    New likes and emoji reactions are added to the activity in ``tags``.
+    Existing likes and emoji reactions in ``tags`` are ignored.
 
     Args:
-      scraped: str, HTML or JSON with likes and/or emoji reactions
-      activity: dict, AS activity to merge these reactions into
+      scraped (str): HTML or JSON with likes and/or emoji reactions
+      activity (dict): AS activity to merge these reactions into
 
     Returns:
-      list of dict AS like/react tag objects converted from scraped
+      list of dict: AS like/react tag objects converted from scraped
     """
     raise NotImplementedError()
 
@@ -358,17 +358,18 @@ class Source(object, metaclass=SourceMeta):
     the authenticated user.
 
     Args:
-      obj: ActivityStreams object. At minimum, must have the content field.
+      obj (dict): ActivityStreams object. At minimum, must have the content field.
         objectType is strongly recommended.
-      include_link: string. 'include', 'omit', or 'if truncated'; whether to
-        include a link to the object (if it has one) in the content.
-      ignore_formatting: whether to use content text as is, instead of
+      include_link (str): :const:`INCLUDE_LINK`, :const:`OMIT_LINK`, or
+        :const:`INCLUDE_IF_TRUNCATED`; whether to include a link to the object
+        (if it has one) in the content.
+      ignore_formatting (bool): whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
-      CreationResult: contents will be a dict. The dict may be None or empty. If
-        the newly created object has an id or permalink, they'll be provided in
-        the values for 'id' and 'url'.
+      :class:`CreationResult`: The result. `content` will be a dict or ``None``.
+      If the newly created object has an id or permalink, they'll be provided in
+      the values for ``id`` and ``url``.
     """
     raise NotImplementedError()
 
@@ -383,15 +384,16 @@ class Source(object, metaclass=SourceMeta):
     the authenticated user.
 
     Args:
-      obj: ActivityStreams object. At minimum, must have the content field.
-        objectType is strongly recommended.
-      include_link: string. Whether to include a link to the object
+      obj (dict): ActivityStreams object. At minimum, must have the ``content``
+        field. ``objectType`` is strongly recommended.
+      include_link (str): :const:`INCLUDE_LINK`, :const:`OMIT_LINK`, or
+        :const:`INCLUDE_IF_TRUNCATED`; whether to include a link to the object
         (if it has one) in the content.
-      ignore_formatting: whether to use content text as is, instead of
+      ignore_formatting (bool): whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
-      CreationResult: contents will be a unicode string HTML snippet (or None)
+      :class:`CreationResult`: The result. `content` will be a dict or ``None``.
     """
     raise NotImplementedError()
 
@@ -401,10 +403,10 @@ class Source(object, metaclass=SourceMeta):
     Generally only supports posts that were authored by the authenticating user.
 
     Args:
-      id: silo object id
+      id (str): silo object id
 
     Returns:
-      CreationResult
+      :class:`CreationResult`
     """
     raise NotImplementedError()
 
@@ -412,10 +414,10 @@ class Source(object, metaclass=SourceMeta):
     """Previews deleting a post.
 
     Args:
-      id: silo object id
+      id (str): silo object id
 
     Returns:
-      CreationResult
+      :class:`CreationResult`
     """
     raise NotImplementedError()
 
@@ -423,10 +425,10 @@ class Source(object, metaclass=SourceMeta):
     """Fetches and returns an event.
 
     Args:
-      id: string, site-specific event id
+      id (str): site-specific event id
 
     Returns:
-      dict: decoded ActivityStreams activity, or None
+      dict: decoded ActivityStreams activity, or ``None``
     """
     raise NotImplementedError()
 
@@ -437,13 +439,15 @@ class Source(object, metaclass=SourceMeta):
     Subclasses should override this.
 
     Args:
-      comment_id: string comment id
-      activity_id: string activity id, optional
-      activity_author_id: string activity author id, optional. Needed for some
+      comment_id (str): comment id
+      activity_id (str): activity id, optional
+      activity_author_id (str): activity author id, optional. Needed for some
         sources (e.g. Facebook) to construct the comment permalink.
-      activity: activity object, optional. May avoid an API call if provided.
+      activity (dict): activity object, optional. May avoid an API call if
+        provided.
 
-    Returns: dict, ActivityStreams comment object
+    Returns:
+      dict: ActivityStreams comment object
 
     Raises:
       :class:`ValueError`: if any argument is invalid for this source
@@ -458,12 +462,14 @@ class Source(object, metaclass=SourceMeta):
     they can optimize the process.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      like_user_id: string id of the user who liked the activity
-      activity: activity object, optional. May avoid an API call if provided.
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      like_user_id (str): id of the user who liked the activity
+      activity (dict): activity object, optional. May avoid an API call if
+        provided.
 
-    Returns: dict, ActivityStreams 'like' activity object
+    Returns:
+      dict: ActivityStreams like activity
     """
     if not activity:
       activity = self._get_activity(activity_user_id, activity_id, fetch_likes=True)
@@ -471,35 +477,39 @@ class Source(object, metaclass=SourceMeta):
 
   def get_reaction(self, activity_user_id, activity_id, reaction_user_id,
                    reaction_id, activity=None):
-    """Fetches and returns a 'reaction'.
+    """Fetches and returns a reaction.
 
     Default implementation that fetches the activity and its reactions, then
     searches for this specific reaction. Subclasses should override this if they
     can optimize the process.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      reaction_user_id: string id of the user who reacted
-      reaction_id: string id of the reaction
-      activity: activity object, optional. May avoid an API call if provided.
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      reaction_user_id (str): id of the user who reacted
+      reaction_id (str): id of the reaction
+      activity (dict): activity object, optional. May avoid an API call if
+        provided.
 
-    Returns: dict, ActivityStreams 'reaction' activity object
+    Returns:
+      dict: ActivityStreams reaction activity
     """
     if not activity:
       activity = self._get_activity(activity_user_id, activity_id, fetch_likes=True)
     return self._get_tag(activity, 'react', reaction_user_id, reaction_id)
 
   def get_share(self, activity_user_id, activity_id, share_id, activity=None):
-    """Fetches and returns a 'share'.
+    """Fetches and returns a share.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      share_id: string id of the share object or the user who shared it
-      activity: activity object, optional. May avoid an API call if provided.
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      share_id (str): id of the share object or the user who shared it
+      activity (dict): activity object, optional. May avoid an API call if
+        provided.
 
-    Returns: dict, an ActivityStreams 'share' activity object
+    Returns:
+      dict: an ActivityStreams share activity
     """
     if not activity:
       activity = self._get_activity(activity_user_id, activity_id, fetch_shares=True)
@@ -509,10 +519,10 @@ class Source(object, metaclass=SourceMeta):
     """Fetches and returns an RSVP.
 
     Args:
-      activity_user_id: string id of the user who posted the event. unused.
-      event_id: string event id
-      user_id: string user id
-      event: AS event activity (optional)
+      activity_user_id (str): id of the user who posted the event. unused.
+      event_id (str): event id
+      user_id (str): user id
+      event (dict): AS event activity, optional
 
     Returns: dict, an ActivityStreams RSVP activity object
     """
@@ -534,7 +544,7 @@ class Source(object, metaclass=SourceMeta):
     "blocking" vary from silo to silo.
 
     Returns:
-      sequence of actor objects
+      sequence of dict: actor objects
     """
     raise NotImplementedError()
 
@@ -542,20 +552,19 @@ class Source(object, metaclass=SourceMeta):
     """Returns the current user's block list as a list of silo-specific user ids.
 
     Returns:
-      sequence of user ids, not globally unique across other sources. May be
-        integers or strings.
+      sequence of int or str: user ids, not globally unique across other sources
     """
     raise NotImplementedError()
 
   def user_to_actor(self, user):
     """Converts a user to an actor.
 
-    The returned object will have at least a 'url' field. If the user has
-    multiple URLs, there will also be a 'urls' list field whose elements are
-    dicts with 'value': URL.
+    The returned object will have at least a ``url`` field. If the user has
+    multiple URLs, there will also be a ``urls`` list field whose elements are
+    dicts with ``value`` URL.
 
     Args:
-      user: dict, a decoded JSON silo user object
+      user (dict): a decoded JSON silo user object
 
     Returns:
       dict: ActivityStreams actor, ready to be JSON-encoded
@@ -587,10 +596,10 @@ class Source(object, metaclass=SourceMeta):
   def postprocess_activity(activity):
     """Does source-independent post-processing of an activity, in place.
 
-    Right now just populates the title field.
+    Right now just populates the ``title`` field.
 
     Args:
-      activity: activity dict
+      activity (dict)
     """
     activity = util.trim_nulls(activity)
     # maps object type to human-readable name to use in title
@@ -629,10 +638,10 @@ class Source(object, metaclass=SourceMeta):
   def postprocess_object(obj):
     """Does source-independent post-processing of an object, in place.
 
-    Populates location.position based on latitude and longitude.
+    Populates ``location.position`` based on latitude and longitude.
 
     Args:
-      object: object dict
+      object (dict)
     """
     loc = obj.get('location')
     if loc:
@@ -649,9 +658,10 @@ class Source(object, metaclass=SourceMeta):
     """Returns the HTML string for embedding a post object.
 
     Args:
-      obj: AS1 dict with at least url, and optionally also content.
+      obj (dict): AS1 object with at least ``url``, optionally also ``content``.
 
-    Returns: string, HTML
+    Returns:
+      str: HTML
     """
     obj = copy.copy(obj)
     for field in 'url', 'content':
@@ -689,11 +699,11 @@ class Source(object, metaclass=SourceMeta):
     Subclasses may override this.
 
     Args:
-      obj: ActivityStreams object
+      obj (dict): ActivityStreams object
 
     Returns:
-      dict, minimal ActivityStreams object. Usually has at least id; may
-      also have url, author, etc.
+      dict: minimal ActivityStreams object. Usually has at least ``id``; may
+      also have ``url``, ``author``, etc.
     """
     # look at in-reply-tos first, then objects (for likes and reposts).
     # technically, the ActivityStreams 'object' field is always supposed to be
@@ -736,7 +746,7 @@ class Source(object, metaclass=SourceMeta):
     """Guesses the id of the object in the given URL.
 
     Returns:
-      string, or None
+      str or None
     """
     return urllib.parse.urlparse(url).path.rstrip('/').rsplit('/', 1)[-1] or None
 
@@ -745,7 +755,7 @@ class Source(object, metaclass=SourceMeta):
     """Guesses the post id of the given URL.
 
     Returns:
-      string, or None
+      str or None
     """
     id = cls.base_id(url)
     if id and (not cls.POST_ID_RE or cls.POST_ID_RE.match(id)):
@@ -755,23 +765,25 @@ class Source(object, metaclass=SourceMeta):
                           strip_first_video_tag=False, strip_quotations=False):
     """Returns content text for :meth:`create()` and :meth:`preview_create()`.
 
-    Returns summary if available, then content, then displayName.
+    Returns ``summary`` if available, then ``content``, then ``displayName``.
 
-    If using content, renders the HTML content to text using html2text so
+    If using ``content``, renders the HTML content to text using html2text so
     that whitespace is formatted like in the browser.
 
     Args:
-      obj: dict, ActivityStreams object
-      ignore_formatting: boolean, whether to use content text as is, instead of
+      obj (dict): ActivityStreams object
+      ignore_formatting (bool): whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
-      prefer_name: boolean, whether to prefer displayName to content
-      strip_first_video_tag: if true, removes the first <video> tag. useful when
-        it will be uploaded and attached to the post natively in the silo.
-      strip_quotations: if true, removes .u-quotation-of tags. useful when
-        creating quote tweets.
+      prefer_name (bool): whether to prefer ``displayName`` to ``content``
+
+      strip_first_video_tag (bool): if true, removes the first ``<video>`` tag.
+        useful when it will be uploaded and attached to the post natively in the
+        silo.
+      strip_quotations (bool): if true, removes ``u-quotation-of`` tags. useful
+        when creating quote tweets.
 
     Returns:
-      string, possibly empty
+      str: possibly empty
     """
     summary = obj.get('summary', '').strip()
     name = obj.get('displayName', '').strip()
@@ -823,17 +835,19 @@ class Source(object, metaclass=SourceMeta):
     """Shorten text content to fit within a character limit.
 
     Character limit and URL character length are taken from the
-    `TRUNCATE_TEXT_LENGTH` and `TRUNCATE_URL_LENGTH` class constants.
+    ``TRUNCATE_TEXT_LENGTH`` and ``TRUNCATE_URL_LENGTH`` class constants.
 
     Args:
-      content: string
-      url: string
-      include_link: string: `OMIT_LINK`, `INCLUDE_LINK`, or `INCLUDE_IF_TRUNCATED`
-      type: string, optional: 'article', 'note', etc.
-      quote_url: string URL, optional. If provided, it will be appended to the
+      content (str)
+      url (str)
+      include_link (str): ``OMIT_LINK``, ``INCLUDE_LINK``, or
+        ``INCLUDE_IF_TRUNCATED``
+      type (str): optional: ``article``, ``note``, etc.
+      quote_url (str): URL, optional. If provided, it will be appended to the
         content, *after* truncating.
 
-    Return: string, the possibly shortened and ellipsized text
+    Return:
+      str: the possibly shortened and ellipsized text
     """
     kwargs = {}
 
