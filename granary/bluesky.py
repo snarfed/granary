@@ -741,8 +741,10 @@ class Bluesky(Source):
     """
     assert not (access_token and app_password)
 
+    headers = {'User-Agent': util.user_agent}
+
     if app_password:
-      client = Client('https://bsky.social')
+      client = Client('https://bsky.social', headers=headers)
       resp = client.com.atproto.server.createSession({
         'identifier': handle,
         'password': app_password,
@@ -756,11 +758,9 @@ class Bluesky(Source):
       self.access_token = access_token
       self.did = did
 
-    headers = None
     if self.access_token:
-      headers = {
-        'Authorization': f'Bearer {self.access_token}',
-      }
+      headers['Authorization'] = f'Bearer {self.access_token}'
+
     self.client = Client('https://bsky.social', headers=headers)
 
   @classmethod

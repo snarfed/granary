@@ -510,7 +510,10 @@ class BlueskyTest(testutil.TestCase):
     mock_post.assert_called_once_with(
         'https://bsky.social/xrpc/com.atproto.server.createSession',
         json={'identifier': 'handull', 'password': 'pazzwurd'},
-        headers={'Content-Type': 'application/json'},
+        headers={
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
     )
 
   @patch('requests.get')
@@ -531,6 +534,7 @@ class BlueskyTest(testutil.TestCase):
         headers={
           'Authorization': 'Bearer towkin',
           'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
         },
     )
 
@@ -550,6 +554,7 @@ class BlueskyTest(testutil.TestCase):
         headers={
           'Authorization': 'Bearer towkin',
           'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
         },
     )
 
@@ -572,5 +577,6 @@ class BlueskyTest(testutil.TestCase):
         headers={
           'Authorization': 'Bearer towkin',
           'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
         },
     )
