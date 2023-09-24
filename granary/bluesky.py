@@ -736,6 +736,15 @@ def blob_to_url(*, blob, repo_did, pds='https://bsky.social'):
   Supports both new and old style blobs:
   https://atproto.com/specs/data-model#blob-type
 
+  The resulting URL is a ``com.atproto.sync.getBlob`` XRPC call to the PDS.
+
+  For blobs on the official bsky.social PDS, we could consider using their CDN
+  instead: ``https://av-cdn.bsky.app/img/avatar/plain/[DID]/[CID]@jpeg``
+
+  They also run a resizing image proxy on ``cdn.bsky.social`` with URLs like
+  ``https://cdn.bsky.social/imgproxy/[SIG]/rs:fit:2000:2000:1:0/plain/[CID]@jpeg``,
+  not sure how to generate signatures for it yet.
+
   Args:
     blob (dict)
     repo_did (str): DID of the repo that owns this blob
