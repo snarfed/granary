@@ -501,7 +501,7 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_embed(self):
     self.assert_equals(POST_AS_EMBED, to_as1(POST_BSKY_EMBED))
 
-  def test_to_as1_embed(self):
+  def test_to_as1_embed_block(self):
     self.assertIsNone(to_as1({
       '$type': 'app.bsky.embed.record#viewBlocked',
       'uri': 'unused',
