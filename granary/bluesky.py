@@ -515,7 +515,8 @@ def as1_to_profile(actor):
   return profile
 
 
-def to_as1(obj, type=None, repo_did=None, pds='https://bsky.social/'):
+def to_as1(obj, type=None, repo_did=None, repo_handle=None,
+           pds='https://bsky.social/'):
   """Converts a Bluesky object to an AS1 object.
 
   Args:
@@ -524,6 +525,7 @@ def to_as1(obj, type=None, repo_did=None, pds='https://bsky.social/'):
       is unset
     repo_did (str): optional DID of the repo this object is from. Required to
       generate image URLs.
+    repo_handle (str): optional handle of the user whose repo this object is from
     pds (str): base URL of the PDS that currently serves this object's repo.
       Required to generate image URLs. Defaults to ``https://bsky.social/``.
 
@@ -559,6 +561,7 @@ def to_as1(obj, type=None, repo_did=None, pds='https://bsky.social/'):
               else did_web_to_url(did) if did and did.startswith('did:web:')
               else None),
       'displayName': obj.get('displayName'),
+      'username': obj.get('handle') or repo_handle,
       'summary': obj.get('description'),
       'image': images,
     }

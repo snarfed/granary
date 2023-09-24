@@ -285,6 +285,7 @@ Changelog
 
 * `bluesky`:
   * `to_as1`: convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
+  * `to_as1`: translate `handle` to `username`, add new `repo_handle` kwarg.
   * Add new `blob_to_url` function.
 
 

@@ -9,6 +9,7 @@
     "id": "did:plc:r72exhka",
     "url": "https://bsky.app/profile/bob.bsky.social",
     "displayName": "Bob",
+    "username": "bob.bsky.social",
     "image": [{"url": "https://cdn.bsky.social/imgproxy/bob/r72exhka@jpeg"}]
   },
   "attachments": [{
@@ -22,6 +23,7 @@
       "id": "did:plc:pv7fudn",
       "url": "https://bsky.app/profile/alice.example.com",
       "displayName": "Alice",
+      "username": "alice.example.com",
       "image": [{"url": "https://cdn.bsky.social/imgproxy/alice/pv7fudn@jpeg"}]
     }
   }]

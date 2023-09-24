@@ -129,8 +129,7 @@ mappings = (
   ('as.json', ['rss.xml'], rss_from_activities, (), ()),
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
   ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky.from_as1, (), ()),
-  ('bsky.json', ['as-from-bsky.json', 'as.json'], bluesky.to_as1, (),
-   ('location', 'updated', 'username')),
+  ('bsky.json', ['as.json'], bluesky.to_as1, (), ('location', 'updated')),
   ('bsky.json', ['as-from-bsky.json'], bluesky.to_as1, (), ()),
 )
 
@@ -146,7 +145,6 @@ for src_ext, dst_exts, fn, exclude_prefixes, ignore_fields in mappings:
       f'test_{fn.__module__.split(".")[-1]}_{fn.__name__}_{src[:-len(src_ext)]}'
     ).replace('.', '_').replace('-', '_').strip('_')
     # assert test_name not in test_funcs, test_name
-    ignore = ['uri'] if fn == bluesky.from_as1 else ()
     test_funcs[test_name] = create_test_function(fn, original, expected, ignore=[])
 
 os.chdir(prevdir)

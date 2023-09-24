@@ -3,6 +3,7 @@
   "id": "did:web:example.com",
   "url": "https://bsky.app/profile/example.com",
   "displayName": "Martin Smith",
+  "username": "example.com",
   "image": [{
     "url": "http://example.com/avatar"
   }, {

@@ -99,7 +99,10 @@ POST_AUTHOR_AS['object'].update({
   'url': 'https://bsky.app/profile/alice.com/post/tid',
 })
 POST_AUTHOR_PROFILE_AS = copy.deepcopy(POST_AUTHOR_AS)
-POST_AUTHOR_PROFILE_AS['object']['author']['url'] = 'https://bsky.app/profile/alice.com'
+POST_AUTHOR_PROFILE_AS['object']['author'].update({
+  'username': 'alice.com',
+  'url': 'https://bsky.app/profile/alice.com',
+})
 POST_AUTHOR_BSKY = copy.deepcopy(POST_BSKY)
 POST_AUTHOR_BSKY['post']['author'] = {
   **ACTOR_PROFILE_VIEW_BSKY,
@@ -232,16 +235,8 @@ REPOST_AS = {
     'displayName': 'Bob',
     'url': 'https://bsky.app/profile/bob.com',
   },
-  # 'content': 'A compelling post',
   'object': POST_AUTHOR_PROFILE_AS['object'],
 }
-# REPOST_HTML = """
-# <article class="h-entry">
-#   <main class="e-content">A compelling post</main>
-#   <a class="u-repost-of" href="http://orig/post"></a>
-#   <time class="dt-published" datetime="2007-07-07T03:04:05"></time>
-# </article>
-# """
 REPOST_BSKY = copy.deepcopy(POST_AUTHOR_BSKY)
 REPOST_BSKY['reason'] = {
   '$type': 'app.bsky.feed.defs#reasonRepost',
@@ -451,15 +446,16 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'person',
       'id': 'did:plc:foo',
       'displayName': 'Alice',
+      'username': 'han.dull',
       'image': [{
         'url': NEW_BLOB_URL,
       }, {
         'objectType': 'featured',
         'url': OLD_BLOB_URL,
       }],
-    }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo'))
+    }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', repo_handle='han.dull'))
 
-  def test_to_as1_profile_no_repo_did_or_pds(self):
+  def test_to_as1_profile_no_repo_did_handle_or_pds(self):
     self.assert_equals({
       'objectType': 'person',
       'displayName': 'Alice',
@@ -565,10 +561,10 @@ class BlueskyTest(testutil.TestCase):
       'feed': [POST_AUTHOR_BSKY, REPOST_BSKY],
     })
 
-    self.assert_equals([
-      POST_AUTHOR_PROFILE_AS['object'],
-      REPOST_AS,
-    ], self.bs.get_activities(group_id=FRIENDS))
+    expected_repost = copy.deepcopy(REPOST_AS)
+    expected_repost['actor']['username'] = 'bob.com'
+    self.assert_equals([POST_AUTHOR_PROFILE_AS['object'], expected_repost],
+                       self.bs.get_activities(group_id=FRIENDS))
 
     mock_get.assert_called_once_with(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',

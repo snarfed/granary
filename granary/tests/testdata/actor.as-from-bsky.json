@@ -6,5 +6,6 @@
     "url": "http://example.com/martin/image"
   }],
   "displayName": "Martin Smith",
+  "username": "example.com",
   "summary": "this is my bio"
 }
