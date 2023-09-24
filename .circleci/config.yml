@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            pip install -U pip
+            pip install -U pip flake8
             pip -V
             # make sure we install this at head, below
             pip uninstall -y oauth-dropins
@@ -42,6 +42,11 @@ jobs:
             # PYTHONPATH= python3 ./instagram_live_test.py --debug
             python3 -m coverage html -d /tmp/coverage_html
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then python3 -m coveralls || true; fi
+
+            # check for unintentionally overridden test methods
+            # https://flake8.pycqa.org/en/latest/user/error-codes.html#error-codes
+            # https://flake8.pycqa.org/en/latest/user/options.html#cmdoption-flake8-select
+            flake8 --select=F811 granary/tests/test_*.py
 
       # # TODO: this is continuous deploy. find a way to get all of the API keys
       # # into circle - env var? - then re-enable this.
