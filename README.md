@@ -287,6 +287,8 @@ Changelog
   * `to_as1`: convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
   * `to_as1`: translate `handle` to `username`, add new `repo_handle` kwarg.
   * Add new `blob_to_url` function.
+* `facebook`:
+  * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
 
 
 ### 6.1 - 2023-09-16
