@@ -1,4 +1,4 @@
-<img src="https://raw.github.com/snarfed/granary/main/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=main)](https://coveralls.io/github/snarfed/granary?branch=master)
+<img src="https://raw.github.com/snarfed/granary/main/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg)](https://coveralls.io/github/snarfed/granary)
 ===
 
 The social web translator. Fetches and converts data between social networks, HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2), [ActivityStreams](http://activitystrea.ms/)/[ActivityPub](https://activitypub.rocks/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
