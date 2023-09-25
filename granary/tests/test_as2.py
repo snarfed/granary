@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for as2.py.
 
 Most of the tests are in testdata/. This is just a few things that are too small

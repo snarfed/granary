@@ -44,7 +44,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     hfeed: dict, parsed mf2 h-feed, if available
 
   Returns:
-    unicode string with RSS 2.0 XML
+    str with RSS 2.0 XML
   """
   try:
     iter(activities)
@@ -184,7 +184,7 @@ def to_activities(rss):
   """Converts an RSS feed to ActivityStreams 1 activities.
 
   Args:
-    rss: unicode string, RSS document with top-level <rss> element
+    rss: str, RSS document with top-level <rss> element
 
   Returns:
     list of ActivityStreams activity dicts

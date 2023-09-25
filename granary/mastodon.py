@@ -1,4 +1,3 @@
-# coding=utf-8
 """Mastodon source class.
 
 Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
@@ -71,7 +70,7 @@ class Mastodon(source.Source):
 
   Attributes:
     instance: string, base URL of Mastodon instance, eg https://mastodon.social/
-    user_id: integer, optional, current user's id (not username!) on this instance
+    user_id: int, optional, current user's id (not username!) on this instance
     access_token: string, optional, OAuth access token
   """
   DOMAIN = 'N/A'
@@ -95,7 +94,7 @@ class Mastodon(source.Source):
 
     Args:
       instance: string, base URL of Mastodon instance, eg https://mastodon.social/
-      user_id: string or integer, optional, current user's id (not username!) on
+      user_id: string or int, optional, current user's id (not username!) on
         this instance
       access_token: string, optional OAuth access token
       truncate_text_length: int, optional character limit for toots, overrides
@@ -529,7 +528,7 @@ class Mastodon(source.Source):
     Args:
       obj: ActivityStreams object
       include_link: string
-      ignore_formatting: boolean
+      ignore_formatting: bool
 
     Returns: CreationResult whose content will be a dict with 'id', 'url', and
       'type' keys (all optional) for the newly created object (or None)
@@ -546,9 +545,9 @@ class Mastodon(source.Source):
     Args:
       obj: ActivityStreams object
       include_link: string
-      ignore_formatting: boolean
+      ignore_formatting: bool
 
-    Returns: CreationResult whose content will be a unicode string HTML
+    Returns: CreationResult whose content will be a str HTML
       snippet (or None)
     """
     return self._create(obj, preview=True, include_link=include_link,
@@ -564,9 +563,9 @@ class Mastodon(source.Source):
 
     Args:
       obj: ActivityStreams object
-      preview: boolean
+      preview: bool
       include_link: string
-      ignore_formatting: boolean
+      ignore_formatting: bool
 
     Returns: CreationResult. If preview is True, the content will be a unicode
       string HTML snippet. If False, it will be a dict with 'id' and 'url' keys
@@ -714,7 +713,7 @@ class Mastodon(source.Source):
     If the object is a reply, boost, or favorite of a Mastodon post - on any
     instance - this returns that post object. The id in the returned object is
     the id of that remote post *on the local instance*. (As a Mastodon style id,
-    ie an integer in a string, *not* a tag URI.)
+    ie an int in a string, *not* a tag URI.)
 
     Uses Mastodon's search API on the local instance to determine whether a URL
     is a Mastodon post, and if it is, to find or generate an id for it on the
@@ -821,13 +820,13 @@ class Mastodon(source.Source):
       description=f'<span class="verb">delete</span> <a href="{self.status_url(id)}">this toot</a>.')
 
   def get_blocklist_ids(self):
-    """Returns the current user's block list as a list of integer account ids.
+    """Returns the current user's block list as a list of int account ids.
 
     May make multiple API calls to fully fetch large block lists.
     https://docs.joinmastodon.org/methods/accounts/blocks/
 
     Returns:
-      sequence of integer Mastodon account ids on the current instance
+      sequence of int Mastodon account ids on the current instance
     """
     ids = []
     url = API_BLOCKS

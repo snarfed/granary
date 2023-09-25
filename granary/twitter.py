@@ -1,4 +1,3 @@
-# coding=utf-8
 """Twitter source class.
 
 Uses the v1.1 REST API: https://developer.twitter.com/en/docs/api-reference-index
@@ -651,7 +650,7 @@ class Twitter(source.Source):
     Args:
       obj: ActivityStreams object
       include_link: string
-      ignore_formatting: boolean
+      ignore_formatting: bool
 
     Returns:
       a CreationResult whose content will be a dict with 'id', 'url',
@@ -669,10 +668,10 @@ class Twitter(source.Source):
     Args:
       obj: ActivityStreams object
       include_link: string
-      ignore_formatting: boolean
+      ignore_formatting: bool
 
     Returns:
-      a CreationResult whose content will be a unicode string HTML
+      a CreationResult whose content will be a str HTML
       snippet (or None)
     """
     return self._create(obj, preview=True, include_link=include_link,
@@ -688,14 +687,14 @@ class Twitter(source.Source):
 
     Args:
       obj: ActivityStreams object
-      preview: boolean
+      preview: bool
       include_link: string
-      ignore_formatting: boolean
+      ignore_formatting: bool
 
     Returns:
       a CreationResult
 
-      If preview is True, the content will be a unicode string HTML
+      If preview is True, the content will be a str HTML
       snippet. If False, it will be a dict with 'id' and 'url' keys
       for the newly created Twitter object.
     """
@@ -1034,7 +1033,7 @@ class Twitter(source.Source):
       types: sequence of allowed string MIME types
       label: string, human-readable description of the allowed MIME types, to be
         used in an error message
-      max_size: integer, maximum allowed size, in bytes
+      max_size: int, maximum allowed size, in bytes
 
     Returns:
       None if the url's type and size are valid, :class:`CreationResult`
@@ -1191,7 +1190,7 @@ class Twitter(source.Source):
     """
     obj = {}
 
-    # always prefer id_str over id to avoid any chance of integer overflow.
+    # always prefer id_str over id to avoid any chance of int overflow.
     # usually shouldn't matter in Python, but still.
     id = tweet.get('id_str')
     if not id:
@@ -1604,4 +1603,4 @@ class Twitter(source.Source):
   @staticmethod
   def _validate_id(id):
       if not util.is_int(id):
-        raise ValueError(f'Twitter ids must be integers; got {id}')
+        raise ValueError(f'Twitter ids must be ints; got {id}')

@@ -520,7 +520,7 @@ class Nostr(Source):
     Args:
       websocket: :class:`websockets.ClientConnection`
       filter: dict NIP-01 REQ filter
-      limit: integer
+      limit: int
 
     Returns:
       list of dict Nostr events

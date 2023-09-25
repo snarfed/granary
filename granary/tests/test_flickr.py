@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for flickr.py
-"""
+"""Unit tests for flickr.py"""
 import copy
 from mox3 import mox
 import socket

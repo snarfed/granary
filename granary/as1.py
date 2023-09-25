@@ -359,7 +359,6 @@ def original_post_discovery(
 
   Returns:
     (list of str, list of str): original post URLs, mentions tuple
-
   """
   obj = get_object(activity) or activity
   content = obj.get('content', '').strip()
@@ -489,7 +488,7 @@ def targets(obj):
     obj (dict): AS1 object or activity
 
   Returns:
-    sequence of str ids/URLs
+    list of str: targets
   """
   if not obj:
     return []

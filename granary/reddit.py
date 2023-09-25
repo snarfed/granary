@@ -1,4 +1,3 @@
-# coding=utf-8
 """Reddit source class.
 
 Not thread safe!

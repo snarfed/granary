@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for api.py.
-"""
+"""Unit tests for api.py."""
 import copy
 import socket
 

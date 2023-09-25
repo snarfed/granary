@@ -202,7 +202,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 
   Args:
     obj: dict, a decoded JSON ActivityStreams object
-    trim_nulls: boolean, whether to remove elements with null or empty values
+    trim_nulls: bool, whether to remove elements with null or empty values
     entry_class: string or sequence, the mf2 class(es) that entries should be
       given (e.g. 'h-cite' when parsing a reference to a foreign entry).
       defaults to 'h-entry'
@@ -425,7 +425,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     mf2: dict, decoded JSON microformats2 object
     actor: optional author AS actor object. usually comes from a rel="author"
       link. if mf2 has its own author, that will override this.
-    fetch_mf2: boolean, whether to fetch additional pages via HTTP if necessary,
+    fetch_mf2: bool, whether to fetch additional pages via HTTP if necessary,
       e.g. to determine authorship: https://indieweb.org/authorship
     rel_urls: dict, optional `rel-urls` field from parsed mf2
 
@@ -505,7 +505,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   # audio and video
   #
   # the duration mf2 property is still emerging. examples in the wild use both
-  # integer seconds and ISO 8601 durations.
+  # int seconds and ISO 8601 durations.
   # https://indieweb.org/duration
   # https://en.wikipedia.org/wiki/ISO_8601#Durations
   duration = prop.get('duration') or prop.get('length')
@@ -527,7 +527,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       'objectType': type,
       'stream': {
         'url': url,
-        # integer seconds: http://activitystrea.ms/specs/json/1.0/#media-link
+        # int seconds: http://activitystrea.ms/specs/json/1.0/#media-link
         'duration': duration,
         # file size in bytes. nonstandard, not in AS1 or AS2
         'size': bytes,
@@ -651,7 +651,7 @@ def html_to_activities(html, url=None, actor=None, id=None):
   """Converts a microformats2 HTML h-feed to ActivityStreams activities.
 
   Args:
-    html: unicode string HTML or :class:`requests.Response`
+    html: str HTML or :class:`requests.Response`
     url: optional string URL that HTML came from
     actor: optional author AS actor object for all activities. usually comes
       from a rel="author" link.
@@ -954,13 +954,13 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
   Args:
     obj: decoded JSON ActivityStreams object
-    include_location: boolean, whether to render location, if provided
-    synthesize_content: boolean, whether to generate synthetic content if the
+    include_location: bool, whether to render location, if provided
+    synthesize_content: bool, whether to generate synthetic content if the
       object doesn't have its own, e.g. 'likes this.' or 'shared this.'
-    render_attachments: boolean, whether to render attachments, eg links,
+    render_attachments: bool, whether to render attachments, eg links,
       images, audio, and video
-    render_image: boolean, whether to render the object's image(s)
-    white_space_pre: boolean, whether to wrap in CSS white-space: pre. If False,
+    render_image: bool, whether to render the object's image(s)
+    white_space_pre: bool, whether to wrap in CSS white-space: pre. If False,
       newlines will be converted to <br> tags instead. Background:
       https://indiewebcamp.com/note#Indieweb_whitespace_thinking
 
@@ -1204,7 +1204,7 @@ def tags_to_html(tags, classname, visible=True):
   Args:
     tags: decoded JSON ActivityStreams objects.
     classname: class for span to enclose tags in
-    visible: boolean, whether to visibly include displayName
+    visible: bool, whether to visibly include displayName
   """
   urls = {}  # stores (url, displayName) tuples
   for tag in tags:
@@ -1342,13 +1342,13 @@ def maybe_datetime(str, classname):
 
 
 def size_to_bytes(size):
-  """Converts a string file size to an integer number of bytes.
+  """Converts a string file size to an int number of bytes.
 
   Args:
-    size: string, may be either integer bytes or human-readable approximation,
+    size: string, may be either int bytes or human-readable approximation,
           eg 7MB or 1.23 kb
 
-  Returns: integer, bytes, or None if size can't be parsed
+  Returns: int, bytes, or None if size can't be parsed
   """
   if util.is_int(size):
     return int(size)

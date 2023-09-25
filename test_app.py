@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for app.py.
-"""
+"""Unit tests for app.py."""
 import copy
 from io import BytesIO
 import os.path

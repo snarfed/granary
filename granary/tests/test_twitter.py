@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for twitter.py.
-"""
+"""Unit tests for twitter.py."""
 from collections import OrderedDict
 import copy
 import http.client

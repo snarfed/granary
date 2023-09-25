@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for facebook.py.
-"""
+"""Unit tests for facebook.py."""
 import copy
 from datetime import datetime
 import os
@@ -1438,7 +1436,7 @@ class FacebookTest(testutil.TestCase):
     self.assertNotIn('tags', got[0]['object'])
     self.assertNotIn('tags', got[0])
 
-  def test_get_activities_fetch_shares_returns_boolean(self):
+  def test_get_activities_fetch_shares_returns_bool(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
     self.expect_urlopen(API_SHARES % '1_2', {'1_2': False})
     self.mox.ReplayAll()

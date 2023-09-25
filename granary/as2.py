@@ -1,11 +1,12 @@
 """Convert between ActivityStreams 1 and 2, including ActivityPub.
 
-AS2: http://www.w3.org/TR/activitystreams-core/
-     https://www.w3.org/TR/activitypub/
-     https://activitypub.rocks/
-
-AS1: http://activitystrea.ms/specs/json/1.0/
-     http://activitystrea.ms/specs/json/schema/activity-schema.html
+* AS2:
+   * http://www.w3.org/TR/activitystreams-core/
+   * https://www.w3.org/TR/activitypub/
+   * https://activitypub.rocks/
+* AS1:
+   * http://activitystrea.ms/specs/json/1.0/
+   * http://activitystrea.ms/specs/json/schema/activity-schema.html
 """
 import copy
 import datetime
@@ -94,7 +95,7 @@ TYPES_WITH_OBJECT = {VERB_TO_TYPE[v] for v in as1.VERBS_WITH_OBJECT
                      if v in VERB_TO_TYPE}
 
 def get_urls(obj, key='url'):
-  """Returns link['href'] if dict, otherwise link, for each link in obj[key]."""
+  """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
   return util.dedupe_urls(link.get('href') if isinstance(link, dict) else link
                           for link in util.get_list(obj, key))
 
@@ -103,11 +104,12 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.
 
   Args:
-    obj: dict, AS1 activity or object
-    type: string, default type if type inference can't determine a type.
-    context: string, included as @context
+    obj (dict): AS1 activity or object
+    type (str): default type if type inference can't determine a type.
+    context (str): included as ``@context``
 
-  Returns: dict, AS2 activity or object
+  Returns:
+    dict: AS2 activity or object
   """
   if not obj:
     return {}
@@ -279,10 +281,11 @@ def to_as1(obj, use_type=True):
   """Converts an ActivityStreams 2 activity or object to ActivityStreams 1.
 
   Args:
-    obj: dict, AS2 activity or object
-    use_type: boolean, whether to include objectType and verb
+    obj (dict): AS2 activity or object
+    use_type (bool): whether to include ``objectType`` and ``verb``
 
-  Returns: dict, AS1 activity or object
+  Returns:
+    dict: AS1 activity or object
   """
   def all_to_as1(field):
     return [to_as1(elem) for elem in util.pop_list(obj, field)
@@ -475,7 +478,7 @@ def is_public(activity):
   https://docs.joinmastodon.org/spec/activitypub/#properties-used
 
   Args:
-    activity: dict, AS2 activity or object
+    activity (dict): AS2 activity or object
   """
   if not isinstance(activity, dict):
     return False
@@ -491,14 +494,14 @@ def address(actor):
   """Returns an actor's fediverse handle aka WebFinger address aka @-@.
 
   There's no standard for this, it's just a heuristic that uses
-  preferredUsername and id or url if available, otherwise detecting and
-  transforming common user profile URLs.
+  ``preferredUsername`` and ``id`` or ``url`` if available,
+  otherwise detects and transforms common user profile URLs.
 
   Args:
-    actor: dict AS2 JSON actor or str actor id
+    actor (dict): AS2 JSON actor or str actor id
 
   Returns:
-    str, handle, eg '@user@example.com', or None
+    str: handle, eg ``@user@example.com``, or None
   """
   if not actor:
     return None

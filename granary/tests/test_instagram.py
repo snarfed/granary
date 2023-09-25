@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for instagram.py.
-"""
+"""Unit tests for instagram.py."""
 import copy
 import datetime
 import logging

@@ -1,4 +1,3 @@
-# coding=utf-8
 """Facebook source class. Supports both Graph API and scraping HTML.
 
 https://developers.facebook.com/docs/graph-api/using-graph-api/
@@ -165,15 +164,15 @@ FacebookId = collections.namedtuple('FacebookId', ['user', 'post', 'comment'])
 
 
 class Facebook(source.Source):
-  """Facebook source class. See file docstring and Source class for details.
+  """Facebook source class. See file docstring and :class:`Source` for details.
 
   Attributes:
-    access_token: string, optional, OAuth access token
-    user_id: string, optional, current user's id (either global or app-scoped)
-    scrape: boolean, whether to scrape mbasic.facebook.com's HTML (True) or use
+    access_token (str): optional, OAuth access token
+    user_id (str): optional, current user's id (either global or app-scoped)
+    scrape (bool,): whether to scrape mbasic.facebook.com's HTML (True) or use
       the API (False)
-    cookie_c_user: string, optional c_user cookie to use when scraping
-    cookie_xs: string, optional xs cookie to use when scraping
+    cookie_c_user (str): optional c_user cookie to use when scraping
+    cookie_xs (str): optional xs cookie to use when scraping
   """
   DOMAIN = 'facebook.com'
   BASE_URL = 'https://www.facebook.com/'
@@ -202,15 +201,15 @@ class Facebook(source.Source):
     will be necessary for some people and contact details, based on their
     privacy settings.
 
-    If scrape is True, cookie_c_user and cookie_xs must be provided.
+    If ``scrape`` is True, ``cookie_c_user`` and ``cookie_xs`` must be provided.
 
     Args:
-      access_token: string, optional OAuth access token
-      user_id: string, optional, current user's id (either global or app-scoped)
-      scrape: boolean, whether to scrape mbasic.facebook.com's HTML (True) or
+      access_token (str): optional OAuth access token
+      user_id (str): optional, current user's id (either global or app-scoped)
+      scrape (bool): whether to scrape ``mbasic.facebook.com``'s HTML (True) or
         use the API (False)
-      cookie_c_user: string, optional c_user cookie to use when scraping
-      cookie_xs: string, optional xs cookie to use when scraping
+      cookie_c_user (str): optional ``c_user`` cookie to use when scraping
+      cookie_xs (str): optional ``xs`` cookie to use when scraping
     """
     if scrape:
       assert cookie_c_user and cookie_xs
@@ -230,7 +229,7 @@ class Facebook(source.Source):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Args:
-      user_id: string id or username. Defaults to 'me', ie the current user.
+      user_id (str): id or username. Defaults to ``me``, ie the current user.
     """
     if user_id is None:
       user_id = 'me'
@@ -245,11 +244,11 @@ class Facebook(source.Source):
                               fetch_news=False, event_owner_id=None, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
-    See method docstring in source.py for details.
+    See :meth:`Source.get_activities_response` for details.
 
     Likes, *top-level* replies (ie comments), and reactions are always included.
-    They come from the 'comments', 'likes', and 'reactions' fields in the Graph
-    API's Post object:
+    They come from the ``comments``, ``likes``, and ``reactions`` fields in the
+    Graph API's Post object:
     https://developers.facebook.com/docs/reference/api/post/
 
     Threaded comments, ie comments in reply to other top-level comments, require
@@ -259,14 +258,18 @@ class Facebook(source.Source):
     searching for them.
     https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
 
-    Additional args:
-      fetch_news: boolean, whether to also fetch and include Open Graph news
-        stories (/USER/news.publishes). Requires the user_actions.news
+    Most parameters are documented in :meth:`Source.get_activities_response`.
+    Additional parameters are documented here.
+
+    Args:
+      fetch_news (bool): whether to also fetch and include Open Graph news
+        stories (``/USER/news.publishes``). Requires the ``user_actions.news``
         permission. Background in https://github.com/snarfed/bridgy/issues/479
-      event_owner_id: string. if provided, only events owned by this user id
-        will be returned. avoids (but doesn't entirely prevent) processing big
-        non-indieweb events with tons of attendees that put us over app engine's
+      event_owner_id (str): if provided, only events owned by this user id
+        will be returned. Avoids (but doesn't entirely prevent) processing big
+        non-indieweb events with tons of attendees that put us over App Engine's
         instance memory limit. https://github.com/snarfed/bridgy/issues/77
+
     """
     if search_query:
       raise NotImplementedError()
@@ -382,19 +385,19 @@ class Facebook(source.Source):
     privacy field, so we get that from the corresponding post or album, if
     possible.
 
-    https://github.com/snarfed/bridgy/issues/562
-    http://stackoverflow.com/questions/12785120
+    * https://github.com/snarfed/bridgy/issues/562
+    * http://stackoverflow.com/questions/12785120
 
-    Populates a custom 'object_for_ids' field in the FB photo objects. This is
-    later copied into a custom 'fb_object_for_ids' field in their corresponding
-    AS objects.
+    Populates a custom ``object_for_ids`` field in the FB photo objects. This is
+    later copied into a custom ``fb_object_for_ids`` field in their
+    corresponding AS objects.
 
     Args:
-      posts: list of Facebook post object dicts
-      user_id: string Facebook user id
-
+      posts (list of dict): Facebook post objects
+      user_id (str): Facebook user id
+ 
     Returns:
-      new list of post and photo object dicts
+      list of dict: new post and photo objects
     """
     assert user_id
 
@@ -430,22 +433,22 @@ class Facebook(source.Source):
             list(posts_by_obj_id.values()) + photos)
 
   def _split_id_requests(self, api_call, ids):
-    """Splits an API call into multiple to stay under the MAX_IDS limit per call.
+    """Splits an API call into multiple to stay under the ``MAX_IDS`` limit per call.
 
     https://developers.facebook.com/docs/graph-api/using-graph-api#multiidlookup
 
     Args:
-      api_call: string with %s placeholder for ids query param
-      ids: sequence of string ids
+      api_call (str): with ``%s` placeholder for ``ids`` query param
+      ids (sequence of str): ids
 
     Returns:
-      merged list of objects from the responses' 'data' fields
+      list of dict: merged objects from the responses' ``data`` fields
     """
     results = {}
     for i in range(0, len(ids), MAX_IDS):
       resp = self.urlopen(api_call % ','.join(ids[i:i + MAX_IDS]))
       for id, objs in resp.items():
-        # objs is usually a dict but sometimes a boolean. (oh FB, never change!)
+        # objs is usually a dict but sometimes a bool. (oh FB, never change!)
         results.setdefault(id, []).extend(self._as(dict, objs).get('data', []))
 
     return results
@@ -453,16 +456,17 @@ class Facebook(source.Source):
   def _get_events(self, owner_id=None):
     """Fetches the current user's events.
 
-    https://developers.facebook.com/docs/graph-api/reference/user/events/
-    https://developers.facebook.com/docs/graph-api/reference/event#edges
+    * https://developers.facebook.com/docs/graph-api/reference/user/events/
+    * https://developers.facebook.com/docs/graph-api/reference/event#edges
 
-    TODO: also fetch and use API_USER_EVENTS_DECLINED, API_USER_EVENTS_NOT_REPLIED
+    TODO: also fetch and use ``API_USER_EVENTS_DECLINED``,
+    ``API_USER_EVENTS_NOT_REPLIED``.
 
     Args:
-      owner_id: string. if provided, only returns events owned by this user
+      owner_id (str): if provided, only returns events owned by this user
 
     Returns:
-      list of ActivityStreams event objects
+      list of dict: ActivityStreams event objects
     """
     events = self.urlopen(API_USER_EVENTS, _as=list)
     return [self.event_to_activity(event) for event in events
@@ -472,12 +476,12 @@ class Facebook(source.Source):
     """Returns a Facebook event post.
 
     Args:
-      id: string, site-specific event id
-      owner_id: string
+      id (str): site-specific event id
+      owner_id (str)
 
     Returns:
-      dict, decoded ActivityStreams activity, or None if the event is not
-      found or is owned by a different user than owner_id (if provided)
+      dict: ActivityStreams activity, or None if the event is not found or is
+      owned by a different user than ``owner_id`` (if provided)
     """
     event = None
     with util.ignore_http_4xx_error():
@@ -500,10 +504,13 @@ class Facebook(source.Source):
     """Returns an ActivityStreams comment object.
 
     Args:
-      comment_id: string comment id
-      activity_id: string activity id, optional
-      activity_author_id: string activity author id, optional
-      activity: activity object (optional)
+      comment_id (str): comment id
+      activity_id (str): activity id, optional
+      activity_author_id (str): activity author id, optional
+      activity (dict): activity object (optional)
+
+    Returns:
+      dict:
     """
     try:
       resp = self.urlopen(API_COMMENT % comment_id)
@@ -520,10 +527,13 @@ class Facebook(source.Source):
     """Returns an ActivityStreams share activity object.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      share_id: string id of the share object
-      activity: activity object (optional)
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      share_id (str): id of the share object
+      activity (dict): activity object, optional
+
+    Returns:
+      dict
     """
     orig_id = f'{activity_user_id}_{activity_id}'
 
@@ -550,10 +560,10 @@ class Facebook(source.Source):
     """Fetches and returns a user's photo albums.
 
     Args:
-      user_id: string id or username. Defaults to 'me', ie the current user.
+      user_id (str): id or username. Defaults to ``me``, ie the current user.
 
     Returns:
-      sequence of ActivityStream album object dicts
+      sequence of dict: ActivityStream album objects
     """
     url = API_ALBUMS % (user_id or 'me')
     return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
@@ -563,12 +573,15 @@ class Facebook(source.Source):
     """Fetches and returns a reaction.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      reaction_user_id: string id of the user who reacted
-      reaction_id: string id of the reaction. one of:
-        'love', 'wow', 'haha', 'sad', 'angry', 'thankful', 'pride', 'care
-      activity: activity object (optional)
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      reaction_user_id (str): id of the user who reacted
+      reaction_id (str): id of the reaction. one of: ``love``, ``wow``,
+        ``haha``, ``sad``, ``angry``, ``thankful``, ``pride``, ``care``
+      activity (dict): activity object (optional)
+
+    Returns:
+      dict
     """
     if '_' not in reaction_id:  # handle just name of reaction type
       reaction_id = f'{activity_id}_{reaction_id}_by_{reaction_user_id}'
@@ -580,13 +593,13 @@ class Facebook(source.Source):
     """Creates a new post, comment, like, or RSVP.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult whose contents will be a dict with 'id' and
-      'url' keys for the newly created Facebook object (or None)
+      CreationResult or None: contents will be a dict with ``id`` and
+      ``url`` keys for the newly created Facebook object
     """
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -596,13 +609,12 @@ class Facebook(source.Source):
     """Previews creating a new post, comment, like, or RSVP.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult whose contents will be a unicode string HTML snippet
-      or None
+      CreationResult or None: contents will be an HTML snippet
     """
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -611,23 +623,21 @@ class Facebook(source.Source):
               ignore_formatting=False):
     """Creates a new post, comment, like, or RSVP.
 
-    https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
-    https://developers.facebook.com/docs/graph-api/reference/object/comments#publish
-    https://developers.facebook.com/docs/graph-api/reference/object/likes#publish
-    https://developers.facebook.com/docs/graph-api/reference/event#attending
+    * https://developers.facebook.com/docs/graph-api/reference/user/feed#publish
+    * https://developers.facebook.com/docs/graph-api/reference/object/comments#publish
+    * https://developers.facebook.com/docs/graph-api/reference/object/likes#publish
+    * https://developers.facebook.com/docs/graph-api/reference/event#attending
 
     Args:
-      obj: ActivityStreams object
-      preview: boolean
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      preview (bool)
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult
-
-      If preview is True, the contents will be a unicode string HTML
-      snippet. If False, it will be a dict with 'id' and 'url' keys
-      for the newly created Facebook object.
+      CreationResult: if ``preview`` is True, the contents will be a HTML
+      snippet. If False, it will be a dict with ``id`` and ``url`` keys for the
+      newly created Facebook object.
     """
     # TODO: validation, error handling
     assert preview in (False, True)
@@ -827,11 +837,12 @@ class Facebook(source.Source):
     """Extracts and prepares person tags for Facebook users.
 
     Args:
-      obj: ActivityStreams object
+      obj (dict): ActivityStreams object
 
     Returns:
-      sequence of ActivityStreams tag objects with url, id, and optional
-      displayName fields. The id field is a raw Facebook user id.
+      sequence of dict: ActivityStreams tag objects with ``url``, ``id``, and
+      optional ``displayName`` fields. The ``id`` field is a raw Facebook user
+      id.
     """
     people = {}  # maps id to tag
 
@@ -854,14 +865,15 @@ class Facebook(source.Source):
     https://developers.facebook.com/docs/games/notifications/#impl
 
     Args:
-      user_id: string, username or user ID
-      text: string, shown to the user in the notification
-      link: relative string URL, the user is redirected here when they click on
+      user_id (str): username or user ID
+      text (str): shown to the user in the notification
+      link (str): relative URL, the user is redirected here when they click on
         the notification. Note that only the path and query parameters are used!
         they're combined with the domain in your Facebook app's Game App URL:
         https://developers.facebook.com/docs/games/services/appnotifications#parameters
 
-    Raises: urllib2.HTPPError
+    Raises:
+      urllib3.HTPPError
     """
     logger.debug(f'Sending Facebook notification: {text!r}, {link}')
     params = {
@@ -879,7 +891,7 @@ class Facebook(source.Source):
     """Returns a short Facebook URL for a post.
 
     Args:
-      post: Facebook JSON post
+      post (dict): Facebook post
     """
     fb_id = post.get('id')
     if not fb_id:
@@ -896,8 +908,8 @@ class Facebook(source.Source):
     """Returns a short Facebook URL for a comment.
 
     Args:
-      post_id: Facebook post id
-      comment_id: Facebook comment id
+      post_id (str): Facebook post id
+      comment_id (str): Facebook comment id
     """
     if post_author_id:
       post_id = post_author_id + '/posts/' + post_id
@@ -908,7 +920,7 @@ class Facebook(source.Source):
     """Guesses the id of the object in the given URL.
 
     Returns:
-      string, or None
+      str or None
     """
     params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
     event_id = params.get('event_time_id')
@@ -924,14 +936,15 @@ class Facebook(source.Source):
     parsing Facebook URLs. Whee.
 
     Args:
-      obj: ActivityStreams object
-      verb: string, optional
-      resolve_numeric_id: if True, tries harder to populate the numeric_id field
-        by making an additional API call to look up the object if necessary.
+      obj (dict): ActivityStreams object
+      verb (str): optional
+      resolve_numeric_id (bool): if True, tries harder to populate the
+        numeric_id field by making an additional API call to look up the object
+        if necessary.
 
     Returns:
-      dict, minimal ActivityStreams object. Usually has at least id,
-      numeric_id, and url fields; may also have author.
+      dict: minimal ActivityStreams object. Usually has at least ``id``,
+      ``numeric_id``, and ``url`` fields; may also have ``author``.
     """
     base_obj = super(Facebook, self).base_object(obj)
 
@@ -1022,10 +1035,10 @@ class Facebook(source.Source):
     """Converts a post to an activity.
 
     Args:
-      post: dict, a decoded JSON post
+      post (dict): a decoded JSON post
 
     Returns:
-      an ActivityStreams activity dict, ready to be JSON-encoded
+      dict: ActivityStreams activity
     """
     obj = self.post_to_object(post, type='post')
     if not obj:
@@ -1056,14 +1069,14 @@ class Facebook(source.Source):
   def post_to_object(self, post, type=None):
     """Converts a post to an object.
 
-    TODO: handle the sharedposts field
+    TODO: handle the ``sharedposts`` field
 
     Args:
-      post: dict, a decoded JSON post
-      type: string object type: None, 'post', or 'comment'
+      post (dict): a decoded JSON post
+      type (str): object type: None, ``post``, or ``comment``
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     assert type in (None, 'post', 'comment')
 
@@ -1252,14 +1265,14 @@ class Facebook(source.Source):
     """Converts a comment to an object.
 
     Args:
-      comment: dict, a decoded JSON comment
-      post_id: optional string Facebook post id. Only used if the comment id
+      comment (dict): a decoded JSON comment
+      post_id (str): optional Facebook post id. Only used if the comment id
         doesn't have an embedded post id.
-      post_author_id: optional string Facebook post author id. Only used if the
+      post_author_id (str): optional Facebook post author id. Only used if the
         comment id doesn't have an embedded post author id.
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     obj = self.post_to_object(comment, type='comment')
     if not obj:
@@ -1311,13 +1324,13 @@ class Facebook(source.Source):
     return self.tag_uri(f'{post_id}_{comment_id}')
 
   def share_to_object(self, share):
-    """Converts a share (from /OBJECT/sharedposts) to an object.
+    """Converts a share (from ``/OBJECT/sharedposts``) to an object.
 
     Args:
-      share: dict, a decoded JSON share
+      share (dict): JSON share
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     obj = self.post_to_object(share)
     if not obj:
@@ -1340,10 +1353,10 @@ class Facebook(source.Source):
     """Converts a user or page to an actor.
 
     Args:
-      user: dict, a decoded JSON Facebook user or page
+      user (dict): Facebook user or page object
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     if not user:
       return {}
@@ -1394,11 +1407,11 @@ class Facebook(source.Source):
     """Converts an event to an object.
 
     Args:
-      event: dict, a decoded JSON Facebook event
-      rsvps: sequence, optional Facebook RSVPs
+      event (dict): Facebook event object
+      rsvps (sequence of dict): optional Facebook RSVPs
 
     Returns:
-      an ActivityStreams object dict
+      dict: ActivityStreams object
     """
     obj = self.post_to_object(event)
     obj.update({
@@ -1429,11 +1442,11 @@ class Facebook(source.Source):
     """Converts a event to an activity.
 
     Args:
-      event: dict, a decoded JSON Facebook event
-      rsvps: list of JSON Facebook RSVPs
+      event (dict): Facebook event object
+      rsvps (list of dict): Facebook RSVP objects
 
     Returns:
-      an ActivityStreams activity dict
+      dict: ActivityStreams activity
     """
     obj = self.event_to_object(event, rsvps=rsvps)
     return {'object': obj,
@@ -1444,15 +1457,16 @@ class Facebook(source.Source):
   def rsvp_to_object(self, rsvp, type=None, event=None):
     """Converts an RSVP to an object.
 
-    The 'id' field will ony be filled in if event['id'] is provided.
+    The ``id`` field will ony be filled in if ``event['id']`` is provided.
 
     Args:
-      rsvp: dict, a decoded JSON Facebook RSVP
-      type: optional Facebook RSVP type, one of RSVP_FIELDS
-      event: Facebook event object. May contain only a single 'id' element.
+      rsvp (dict): Facebook RSVP object
+      type (str): optional Facebook RSVP type, one of ``RSVP_FIELDS``
+      event (dict): Facebook event object. May contain only a single ``id`
+        element.
 
     Returns:
-      an ActivityStreams object dict
+      dict: ActivityStreams object
     """
     verb = RSVP_VERBS.get(type or rsvp.get('rsvp_status'))
     obj = {
@@ -1482,10 +1496,10 @@ class Facebook(source.Source):
     """Converts a photo album to an object.
 
     Args:
-      album: dict, a decoded JSON Facebook album
+      album (dict): Facebook album object
 
     Returns:
-      an ActivityStreams object dict
+      dict: ActivityStreams object
     """
     if not album:
       return {}
@@ -1505,20 +1519,20 @@ class Facebook(source.Source):
     })
 
   def privacy_to_to(self, obj, type=None):
-    """Converts a Facebook `privacy` field to an ActivityStreams `to` field.
+    """Converts a Facebook ``privacy`` field to an ActivityStreams ``to`` field.
 
-    privacy is sometimes an object:
+    ``privacy`` is sometimes an object:
     https://developers.facebook.com/docs/graph-api/reference/post#fields
 
     ...and other times a string:
     https://developers.facebook.com/docs/graph-api/reference/album/#readfields
 
     Args:
-      obj: dict, Facebook object (post, album, comment, etc)
+      obj (dict): Facebook object (post, album, comment, etc)
+      type (str): object type: None, ``post``, or ``comment``
 
     Returns:
-      dict: ActivityStreams `to` object, or None if unknown
-      type: string object type: None, 'post', or 'comment'
+      dict: ActivityStreams ``to`` object, or None if unknown
     """
     privacy = obj.get('privacy')
     if isinstance(privacy, dict):
@@ -1544,10 +1558,11 @@ class Facebook(source.Source):
   def email_to_object(self, html):
     """Converts a Facebook HTML notification email to an AS1 object.
 
-    Returns: dict, AS1 object, or None if email html couldn't be parsed
-
     Arguments:
-      html: string
+      html: str
+
+    Returns:
+      dict: ActivityStreams object, or None if ``html`` couldn't be parsed
     """
     soup = util.parse_html(html)
     type = None
@@ -1627,15 +1642,16 @@ class Facebook(source.Source):
 
   @staticmethod
   def _find_all_text(soup, regexp):
-    """BeautifulSoup utility that searches for text and returns a Tag.
+    """BeautifulSoup utility to search for text and returns a :class:bs4.`Tag`.
 
-    I'd rather just use soup.find(string=...), but it returns a NavigableString
-    instead of a Tag, and I need a Tag so I can look at the elements inside it.
+    I'd rather just use ``soup.find(string=...)`, but it returns a
+    :class:bs4.`NavigableString` instead of a :class:bs4.`Tag`, and I need a
+    :class:bs4.`Tag` so I can look at the elements inside it.
     https://www.crummy.com/software/BeautifulSoup/bs4/doc/#the-string-argument
 
     Args:
-      soup: BeautifulSoup
-      regexp: string, must match target's text after stripping whitespace
+      soup (BeautifulSoup)
+      regexp (str): must match target's text after stripping whitespace
     """
     regexp = re.compile(regexp)
     return soup.find_all(lambda tag: any(regexp.match(c.string.strip())
@@ -1648,20 +1664,20 @@ class Facebook(source.Source):
     Specifically, removes the parts that only let the receiving user use it, and
     removes some personally identifying parts.
 
-    Example profile:
-    https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image
-    https://www.facebook.com/n/?snarfed.org&amp;lloc=actor_profile&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
-    https://mbasic.facebook.com/story.php?story_fbid=10104372282388114&id=27301982&refid=17&_ft_=mf_story_key.123%3Atop_level_post_id.456%3Atl_objid.789%3Acontent_owner_id_new.012%3Athrowback_story_fbid.345%3Astory_location.4%3Astory_attachment_style.share%3Athid.678&__tn__=%2AW-R
+    Example profile URLs:
+    * ``https://www.facebook.com/nd/?snarfed.org&amp;aref=123&amp;medium=email&amp;mid=1a2b3c&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com&amp;lloc=image``
+    * ``https://www.facebook.com/n/?snarfed.org&amp;lloc=actor_profile&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com``
+    * ``https://mbasic.facebook.com/story.php?story_fbid=10104372282388114&id=27301982&refid=17&_ft_=mf_story_key.123%3Atop_level_post_id.456%3Atl_objid.789%3Acontent_owner_id_new.012%3Athrowback_story_fbid.345%3Astory_location.4%3Astory_attachment_style.share%3Athid.678&__tn__=%2AW-R``
 
-    Example posts:
-    https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
-    https://www.facebook.com/n/?permalink.php&amp;story_fbid=123&amp;id=456&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.2.34567890.ABCxyz&amp;n_m=recipient%40example.com
-    https://www.facebook.com/n/?photo.php&amp;fbid=123&amp;set=a.456&amp;type=3&amp;comment_id=789&amp;force_theater=true&amp;aref=123&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com
+    Example post URLs:
+    * ``https://www.facebook.com/nd/?permalink.php&amp;story_fbid=123&amp;id=456&amp;comment_id=789&amp;aref=012&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com``
+    * ``https://www.facebook.com/n/?permalink.php&amp;story_fbid=123&amp;id=456&amp;aref=789&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.2.34567890.ABCxyz&amp;n_m=recipient%40example.com``
+    * ``https://www.facebook.com/n/?photo.php&amp;fbid=123&amp;set=a.456&amp;type=3&amp;comment_id=789&amp;force_theater=true&amp;aref=123&amp;medium=email&amp;mid=a1b2c3&amp;bcode=2.34567890.ABCxyz&amp;n_m=recipient%40example.com``
 
     Args:
-      url: string
+      url (str)
 
-    Returns: string, sanitized URL
+    Returns (str): sanitized URL
     """
     if util.domain_from_link(url) != cls.DOMAIN and not url.startswith(M_HTML_BASE_URL):
       return url
@@ -1687,11 +1703,11 @@ class Facebook(source.Source):
     """Tries to parse a datetime string scraped from HTML (web or email).
 
     Examples seen in the wild:
-      December 14 at 12:35 PM
-      5 July at 21:50
+    * ``December 14 at 12:35 PM``
+    * ``5 July at 21:50``
 
     Args:
-      tag: :class:`bs4.BeautifulSoup` or :class:`bs4.Tag`
+      tag: bs4.BeautifulSoup or bs4.Tag
     """
     if not tag:
       return None
@@ -1709,14 +1725,14 @@ class Facebook(source.Source):
     """Scrapes a user's timeline or a post and converts it to activities.
 
     Args:
-      user_id: string
-      activity_id: string
-      fetch_replies: boolean
-      fetch_likes: boolean
-      kwargs: passed through to scraped_to_activit[y/ies]
+      user_id (str)
+      activity_id (str)
+      fetch_replies (bool)
+      fetch_likes (bool)
+      kwargs: passed through to ``scraped_to_activity``
 
     Returns:
-      dict activities API response
+      dict: activities API response
     """
     user_id = user_id or self.user_id or ''
     if not (self.cookie_c_user and self.cookie_xs):
@@ -1760,14 +1776,15 @@ class Facebook(source.Source):
     return self.make_activities_base_response(activities)
 
   def scraped_to_activities(self, scraped, log_html=False, **kwargs):
-    """Converts HTML from an mbasic.facebook.com timeline to AS1 activities.
+    """Converts HTML from an ``mbasic.facebook.com`` timeline to AS1 activities.
 
     Args:
-      scraped: str, HTML
-      log_html: boolean
+      scraped (str): HTML
+      log_html (bool)
       kwargs: unused
 
-    Returns: tuple: ([AS activities], AS logged in actor (ie viewer))
+    Returns:
+      tuple: ([AS activities], AS logged in actor (ie viewer))
     """
     soup = util.parse_html(scraped)
     if log_html:
@@ -1895,14 +1912,15 @@ class Facebook(source.Source):
     return util.trim_nulls(activities), None
 
   def scraped_to_activity(self, scraped, log_html=False, **kwargs):
-    """Converts HTML from an mbasic.facebook.com post page to an AS1 activity.
+    """Converts HTML from an ``mbasic.facebook.com`` post page to an AS1 activity.
 
     Args:
-      scraped: str, HTML from an mbasic.facebook.com post permalink
-      log_html: boolean
+      scraped (str): HTML from an mbasic.facebook.com post permalink
+      log_html (bool)
       kwargs: unused
 
-    Returns: tuple: (dict AS activity or None, AS logged in actor (ie viewer))
+    Returns:
+      tuple: (dict AS activity or None, AS logged in actor (ie viewer))
     """
     soup = util.parse_html(scraped)
     if log_html:
@@ -2020,13 +2038,14 @@ class Facebook(source.Source):
   def _extract_scraped_ids(soup):
     """Tries to scrape post id and owner id out of parsed HTML.
 
-    Background on the time-limited pfbid param and why we don't want to use it
-    in permalinks:
+    Background on the time-limited ``pfbid`` param and why we don't want to use
+    it in permalinks:
     https://about.fb.com/news/2022/09/deterring-scraping-by-protecting-facebook-identifiers/
     Args:
-      soup: :class:`bs4.BeautifulSoup` or :class:`bs4.Tag`
+      soup (bs4.BeautifulSoup or bs4.Tag)
 
-    Returns: (str post id, str owner id) tuple, or (None, None) if not found
+    Returns:
+      (str or None, str or None) tuple: (post id, owner id)
     """
     post_id = owner_id = None
 
@@ -2058,15 +2077,16 @@ class Facebook(source.Source):
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 
-    New likes and emoji reactions are added to the activity in 'tags'.
-    Existing likes and emoji reactions in 'tags' are ignored.
+    New likes and emoji reactions are added to the activity in ``tags``.
+    Existing likes and emoji reactions in ``tags`` are ignored.
 
     Args:
-      scraped: str, HTML from an mbasic.facebook.com/ufi/reaction/profile/browser/ page
-      activity: dict, AS activity to merge these reactions into
+      scraped (str): HTML from an
+        ``mbasic.facebook.com/ufi/reaction/profile/browser/`` page
+      activity (dict): AS activity to merge these reactions into
 
     Returns:
-      list of dict AS like/react tag objects converted from scraped
+      list of dict: AS like/react tag objects converted from scraped
     """
     soup = util.parse_html(scraped)
 
@@ -2102,12 +2122,13 @@ class Facebook(source.Source):
     return tags
 
   def scraped_to_actor(self, scraped):
-    """Converts HTML from an mbasic.facebook.com profile about page to an AS1 actor.
+    """Converts HTML from a profile about page to an AS1 actor.
 
     Args:
-      scraped: str, HTML from an mbasic.facebook.com post permalink
+      scraped (str): HTML from an ``mbasic.facebook.com`` post permalink
 
-    Returns: dict, AS1 actor
+    Returns:
+      dict: AS1 actor
     """
     soup = util.parse_html(scraped)
     root = soup.find(id='root')
@@ -2171,9 +2192,10 @@ class Facebook(source.Source):
     """Extract and process content.
 
     Args:
-      tag: BeautifulSoup Tag
+      tag (bs4.Tag)
 
-    Returns: string
+    Returns:
+      str
     """
     # TODO: distinguish between text elements with actual whitespace
     # before/after and without. this adds space to all of them, including
@@ -2215,9 +2237,10 @@ class Facebook(source.Source):
     """Extracts link attachments from a post.
 
     Args:
-      tag: BeautifulSoup a or img tag
+      tag (bs4.Tag): ``a`` or ``img`` tag
 
-    Returns: list of AS1 attachment objects
+    Returns:
+      list of dict: AS1 attachment objects
     """
     atts = []
     for link in tag.find_all('a', href=re.compile(r'^https://lm\.facebook\.com/l\.php')):
@@ -2242,13 +2265,14 @@ class Facebook(source.Source):
 
     Currently supported:
 
-    https://lm.facebook.com/l.php?u=...  (links)
-    https://external-sjc3-1.xx.fbcdn.net/safe_image.php?url=...  (images)
+    * ``https://lm.facebook.com/l.php?u=...`` (links)
+    * ``https://external-sjc3-1.xx.fbcdn.net/safe_image.php?url=...`` (images)
 
     Args:
-      tag: BeautifulSoup a or img tag
+      tag (bs4.Tag): ``a`` or ``img`` tag
 
-    Returns: string URL, or None
+    Returns:
+      str or None: URL
     """
     if tag:
       query = urllib.parse.parse_qs(
@@ -2258,14 +2282,14 @@ class Facebook(source.Source):
         return util.remove_query_param(url[0], 'fbclid')[0]
 
   def _m_html_author(self, soup, tag='strong'):
-    """
-    Finds an author link in mbasic.facebook.com HTML and converts it to AS1.
+    """Finds an author link in ``mbasic.facebook.com`` HTML and converts it to AS1.
 
     Args:
-      soup: BeautifulSoup
-      tag: optional, HTML tag surrounding <a>
+      soup (bs4.BeautifulSoup)
+      tag (str): optional, HTML tag surrounding ``<a>``
 
-    Returns: dict AS1 actor
+    Returns:
+      dict: AS1 actor
     """
     if not soup:
       return {}
@@ -2284,13 +2308,13 @@ class Facebook(source.Source):
     return actor
 
   def _profile_url_to_actor(self, url):
-    """
-    Converts a profile URL to an AS1 actor.
+    """Converts a profile URL to an AS1 actor.
 
     Args:
-      url: str
+      url (str)
 
-    Returns: dict AS1 actor, or {} if the profile URL can't be parsed
+    Returns:
+      dict: AS1 actor, or ``{}`` if the profile URL can't be parsed
     """
     parsed = urllib.parse.urlparse(url)
     path = parsed.path.strip('/')
@@ -2322,14 +2346,14 @@ class Facebook(source.Source):
 
   @staticmethod
   def _div(tag, *args):
-    """Returns a descendant div via a given path of divs.
+    """Returns a descendant ``div`` via a given path of ``div``s.
 
     Args:
-      *args: div indexes to navigate down. eg [1, 0, 2] means the second div
-        child of tag, then that div's first div child, then that div's third
-        div child.
-
-    Returns: Tag, or None if the given path doesn't exist
+      *args: ``div`` indexes to navigate down. eg ``[1, 0, 2]`` means the second
+        ``div`` child of tag, then that ``div``'s first ``div`` child, then that
+        ``div``'s third ``div`` child.
+    Returns:
+      bs4.Tag: ...or None if the given path doesn't exist
     """
     assert args
 
@@ -2342,12 +2366,14 @@ class Facebook(source.Source):
 
   @staticmethod
   def _div_text(tag, *args):
-    """Returns the text inside a div returned by _get_div().
+    """Returns the text inside a ``div``.
 
     Args:
-      *args: see _div()
+      tag (bs4.Tag)
+      *args: see :meth:`_div`
 
-    Returns: str, or None if the given path doesn't exist
+    Returns:
+      str: or None if the given path doesn't exist
     """
     div = Facebook._div(tag, *args)
     return div.get_text(' ', strip=True) if div else None
@@ -2358,20 +2384,20 @@ class Facebook(source.Source):
 
     Facebook ids come in different formats:
 
-    * Simple number, usually a user or post: 12
-    * Two numbers with underscore, usually POST_COMMENT or USER_POST: 12_34
-    * Three numbers with underscores, USER_POST_COMMENT: 12_34_56
-    * Three numbers with colons, USER:POST:SHARD: 12:34:63
+    * Simple number, usually a user or post: ``12``
+    * Two numbers with underscore, usually ``POST_COMMENT`` or ``USER_POST``: ``12_34``
+    * Three numbers with underscores, ``USER_POST_COMMENT``: ``12_34_56``
+    * Three numbers with colons, ``USER:POST:SHARD``: ``12:34:63``
       (We're guessing that the third part is a shard in some FB internal system.
       In our experience so far, it's always either 63 or the app-scoped user id
       for 63.)
-    * Two numbers with colon, POST:SHARD: 12:34
+    * Two numbers with colon, ``POST:SHARD``: ``12:34``
       (We've seen 0 as shard in this format.)
-    * Four numbers with colons/underscore, USER:POST:SHARD_COMMENT: 12:34:63_56
-    * Five numbers with colons/underscore, USER:EVENT:UNKNOWN:UNKNOWN_UNKNOWN
+    * Four numbers with colons/underscore, ``USER:POST:SHARD_COMMENT``: ``12:34:63_56``
+    * Five numbers with colons/underscore, ``USER:EVENT:UNKNOWN:UNKNOWN_UNKNOWN``
       Not currently supported! Examples:
-      111599105530674:998145346924699:10102446236688861:10207188792305341_998153510257216
-      111599105530674:195181727490727:10102446236688861:10205257726909910_195198790822354
+         * ``111599105530674:998145346924699:10102446236688861:10207188792305341_998153510257216``
+         * ``111599105530674:195181727490727:10102446236688861:10205257726909910_195198790822354``
 
     Background:
 
@@ -2379,11 +2405,11 @@ class Facebook(source.Source):
     * https://developers.facebook.com/bugs/786903278061433/
 
     Args:
-      id: string or integer
-      is_comment: boolean
+      id (str): or int
+      is_comment (bool)
 
     Returns:
-      FacebookId: Some or all fields may be None.
+      :class:`FacebookId`: Some or all fields may be None.
     """
     assert is_comment in (True, False), is_comment
 
@@ -2443,17 +2469,17 @@ class Facebook(source.Source):
     (and ids) for them, one for the post and one for each photo.
 
     This is the same logic that we do for canonicalizing photo objects in
-    get_activities() above.
+    :meth:`get_activities` above.
 
     If activity is not provided, fetches the post from Facebook.
 
     Args:
-      user_id: string Facebook user id who posted the post
-      post_id: string Facebook post id
-      activity: optional AS activity representation of Facebook post
+      user_id (str): Facebook user id who posted the post
+      post_id (str): Facebook post id
+      activity (dict): optional AS activity representation of Facebook post
 
     Returns:
-      string: Facebook object id or None
+      str: Facebook object id or None
     """
     assert user_id, user_id
     assert post_id, post_id
@@ -2479,11 +2505,11 @@ class Facebook(source.Source):
     """Wraps :func:`urllib2.urlopen()` and passes through the access token.
 
     Args:
-      _as: if not None, parses the response as JSON and passes it through _as()
-           with this type. if None, returns the response object.
+      _as (type): if not None, parses the response as JSON and passes it through
+        :meth:`_as` with this type. if None, returns the response object.
 
     Returns:
-      decoded JSON object or urlopen response object
+      dict: decoded JSON response
     """
     if not url.startswith('http'):
       url = API_BASE + url
@@ -2505,14 +2531,15 @@ class Facebook(source.Source):
   def _as(type, resp):
     """Converts an API response to a specific type.
 
-    If resp isn't the right type, an empty instance of type is returned.
+    If ``resp`` isn't the right type, an empty instance of ``type`` is returned.
 
-    If type is list, the response is expected to be a dict with the returned
-    list in the 'data' field. If the response is a list, it's returned as is.
+    If ``type`` is ``list``, the response is expected to be a ``dict`` with the
+    returned list in the ``data`` field. If the response is a list, it's
+    returned as is.
 
     Args:
-      type: list or dict
-      resp: parsed JSON object
+      type (list or dict)
+      resp (dict): parsed JSON object
     """
     assert type in (list, dict)
 
@@ -2537,11 +2564,11 @@ class Facebook(source.Source):
     https://developers.facebook.com/docs/graph-api/making-multiple-requests
 
     Args:
-      urls: sequence of string relative API URLs, e.g. ('me', 'me/accounts')
+      urls (sequence of str): relative API URLs, eg [``me``, ``me/accounts``]
 
     Returns:
-      sequence of responses, either decoded JSON objects (when possible)
-      or raw string bodies
+      sequence of dict: responses, either decoded JSON objects (when possible)
+      or raw str bodies
     """
     resps = self.urlopen_batch_full([{'relative_url': url} for url in urls])
 
@@ -2558,14 +2585,14 @@ class Facebook(source.Source):
   def urlopen_batch_full(self, requests):
     """Sends a batch of multiple API calls using Facebook's batch API.
 
-    Similar to urlopen_batch(), but the requests arg and return value are dicts
-    with headers, HTTP status code, etc. Only raises :class:`urllib2.HTTPError`
+    Similar to :meth:`urlopen_batch`, but the requests arg and return value are
+    dicts with headers, HTTP status code, etc. Raises :class:`urllib2.HTTPError`
     if the outer batch request itself returns an HTTP error.
 
     https://developers.facebook.com/docs/graph-api/making-multiple-requests
 
     Args:
-      requests: sequence of dict requests in Facebook's batch format, except
+      requests (sequence of dict): requests in Facebook's batch format, except
         that headers is a single dict, not a list of dicts, e.g.::
 
           [{'relative_url': 'me/feed',
@@ -2575,8 +2602,8 @@ class Facebook(source.Source):
           ]
 
     Returns:
-      sequence of dict responses in Facebook's batch format, except that body is
-      JSON-decoded if possible, and headers is a single dict, not a list of
+      (sequence of dict): responses in Facebook's batch format, except that body
+      is JSON-decoded if possible, and headers is a single dict, not a list of
       dicts, e.g.::
 
           [{'code': 200,

@@ -1,10 +1,12 @@
 """Instagram source class.
 
 Instagram's API doesn't tell you if a user has marked their account private or
-not, so the Audience Targeting 'to' field is currently always set to @public.
-http://help.instagram.com/448523408565555
-https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
-https://groups.google.com/forum/#!searchin/instagram-api-developers/private
+not, so the Audience Targeting ``to`` field is currently always set to
+``@public``.
+
+* http://help.instagram.com/448523408565555
+* https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw
+* https://groups.google.com/forum/#!searchin/instagram-api-developers/private
 """
 import datetime
 import itertools
@@ -107,12 +109,12 @@ class Instagram(source.Source):
     privacy settings.
 
     Args:
-      access_token: string, optional OAuth access token
-      allow_comment_creation: boolean, optionally disable comment creation,
+      access_token (str): optional OAuth access token
+      allow_comment_creation (bool): optionally disable comment creation,
         useful if the app is not approved to create comments.
-      scrape: boolean, whether to scrape instagram.com's HTML (True) or use
+      scrape (bool): whether to scrape instagram.com's HTML (True) or use
         the API (False)
-      cookie: string, optional sessionid cookie to use when scraping.
+      cookie (str): optional sessionid cookie to use when scraping.
     """
     self.access_token = access_token
     self.allow_comment_creation = allow_comment_creation
@@ -142,9 +144,11 @@ class Instagram(source.Source):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Args:
-      user_id: string id or username. Defaults to 'self', ie the current user.
-      kwargs: if scraping, passed through to get_activities_response(). Raises
-        AssertionError if provided and not scraping.
+      user_id (str): id or username. Defaults to ``self``, ie the current user.
+      kwargs: if scraping, passed through to :meth:get_activities_response``.
+
+    Raises:
+      AssertionError: if kwargs is provided but we're not scraping
     """
     if user_id is None:
       if self.scrape:
@@ -170,14 +174,15 @@ class Instagram(source.Source):
                               **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
-    See method docstring in source.py for details. app_id is ignored.
-    Supports min_id, but not ETag, since Instagram doesn't support it.
+    See :meth:`Source.get_activities_response` for details. ``app_id`` is
+    ignored. Supports ``min_id``, but not ``ETag``, since Instagram doesn't
+    support it.
 
-    http://instagram.com/developer/endpoints/users/#get_users_feed
-    http://instagram.com/developer/endpoints/users/#get_users_media_recent
+    * http://instagram.com/developer/endpoints/users/#get_users_feed
+    * http://instagram.com/developer/endpoints/users/#get_users_media_recent
 
-    Likes are always included, regardless of the fetch_likes kwarg. They come
-    bundled in the 'likes' field of the API Media object:
+    Likes are always included, regardless of the ``fetch_likes`` kwarg. They
+    come bundled in the ``likes`` field of the API Media object:
     http://instagram.com/developer/endpoints/media/#
 
     Mentions are never fetched or included because the API doesn't support
@@ -187,22 +192,21 @@ class Instagram(source.Source):
     Shares are never fetched or included since there is no share feature.
 
     Instagram only supports search over hashtags, so if search_query is set, it
-    must begin with #.
+    must begin with ``#``.
 
-    May populate a custom 'ig_like_count' property in media objects. (Currently
-    only when scraping.)
+    May populate a custom ``ig_like_count`` property in media objects.
+    (Currently only when scraping.)
 
     Args:
-      scrape: if True, scrapes HTML from instagram.com instead of using the API.
-        Populates the user's actor object in the 'actor' response field.
+      scrape (bool): if True, scrapes HTML from instagram.com instead of using the API.
+        Populates the user's actor object in the ``actor`` response field.
         Useful for apps that haven't yet been approved in the new permissions
-        approval process. Currently only supports group_id=SELF. Also supports
+        approval process. Currently only supports ``group_id=SELF``. Also supports
         passing a shortcode as activity_id as well as the internal API id.
         http://developers.instagram.com/post/133424514006/instagram-platform-update
-      cookie: string, only used if scrape=True
-      ignore_rate_limit: boolean, for scraping, always make an HTTP request,
+      cookie (str): only used if ``scrape=True``
+      ignore_rate_limit (bool): for scraping, always make an HTTP request,
         even if we've been rate limited recently
-      **: see :meth:`Source.get_activities_response`
     """
     if group_id is None:
       group_id = source.FRIENDS
@@ -301,15 +305,15 @@ class Instagram(source.Source):
     """Scrapes a user's profile or feed and converts the media to activities.
 
     Args:
-      user_id: string
-      activity_id: string, e.g. '1020355224898358984_654594'
-      count: integer, number of activities to fetch and return, None for all
-      fetch_extras: boolean
-      cookie: string
-      shortcode: string, e.g. '4pB6vEx87I'
+      user_id (str)
+      activity_id (str): e.g. ``1020355224898358984_654594``
+      count (int): number of activities to fetch and return, None for all
+      fetch_extras (bool)
+      cookie (str)
+      shortcode (str): e.g. ``4pB6vEx87I``
 
     Returns:
-      dict activities API response
+      dict: activities API response
     """
     cookie = cookie or self.cookie
     assert user_id or activity_id or shortcode or cookie
@@ -380,10 +384,10 @@ class Instagram(source.Source):
     """Returns an ActivityStreams comment object.
 
     Args:
-      comment_id: string comment id
-      activity_id: string activity id, optional
-      activity_author_id: string activity author id. Ignored.
-      activity: activity object, optional. Avoids fetching the activity.
+      comment_id (str): comment id
+      activity_id (str): activity id, optional
+      activity_author_id (str): activity author id. Ignored.
+      activity (dict): activity object, optional. Avoids fetching the activity.
     """
     if not activity:
       activity = self._get_activity(None, activity_id)
@@ -403,13 +407,13 @@ class Instagram(source.Source):
     """Creates a new comment or like.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult. if successful, content will have and 'id' and
-             'url' keys for the newly created Instagram object
+      CreationResult: if successful, content will have and ``id`` and ``url``
+        keys for the newly created Instagram object
     """
     return self._create(obj, include_link=include_link, preview=False,
                         ignore_formatting=ignore_formatting)
@@ -419,13 +423,13 @@ class Instagram(source.Source):
     """Preview a new comment or like.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (Dcit): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult. if successful, content and description
-             will describe the new instagram object.
+      CreationResult: if successful, content and description will describe the
+        new Instagram object.
     """
     return self._create(obj, include_link=include_link, preview=True,
                         ignore_formatting=ignore_formatting)
@@ -434,24 +438,24 @@ class Instagram(source.Source):
               ignore_formatting=False):
     """Creates a new comment or like.
 
-    The OAuth access token must have been created with scope=comments+likes (or
-    just one, respectively).
+    The OAuth access token must have been created with ``scope=comments+likes``
+    (or just one, respectively).
     http://instagram.com/developer/authentication/#scope
 
     To comment, you need to apply for access:
     https://docs.google.com/spreadsheet/viewform?formkey=dFNydmNsUUlEUGdySWFWbGpQczdmWnc6MQ
 
-    http://instagram.com/developer/endpoints/comments/#post_media_comments
-    http://instagram.com/developer/endpoints/likes/#post_likes
+    * http://instagram.com/developer/endpoints/comments/#post_media_comments
+    * http://instagram.com/developer/endpoints/likes/#post_likes
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      preview: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      preview (bool)
 
     Returns:
-      a CreationResult. if successful, content will have and 'id' and
-             'url' keys for the newly created Instagram object
+      CreationResult: if successful, content will have and ``id`` and ``url``
+        keys for the newly created Instagram object
     """
     # TODO: validation, error handling
     type = obj.get('objectType')
@@ -530,10 +534,10 @@ class Instagram(source.Source):
     http://instagram.com/developer/endpoints/media/#get_media
 
     Args:
-      media: JSON object retrieved from the Instagram API
+      media (dict): JSON object retrieved from the Instagram API
 
     Returns:
-      an ActivityStreams activity dict, ready to be JSON-encoded
+      dict: ActivityStreams activity
     """
     # Instagram timestamps are evidently all PST.
     # http://stackoverflow.com/questions/10320607
@@ -553,10 +557,10 @@ class Instagram(source.Source):
     """Converts a media to an object.
 
     Args:
-      media: JSON object retrieved from the Instagram API
+      media (dict): JSON object retrieved from the Instagram API
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     id = media.get('id')
     user = media.get('user', {})
@@ -658,12 +662,12 @@ class Instagram(source.Source):
     """Converts a comment to an object.
 
     Args:
-      comment: JSON object retrieved from the Instagram API
-      media_id: string
-      media_url: string
+      comment (dict): JSON object retrieved from the Instagram API
+      media_id (str)
+      media_url (str)
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     content = comment.get('text') or ''
     return self.postprocess_object({
@@ -683,12 +687,12 @@ class Instagram(source.Source):
     """Converts a like to an object.
 
     Args:
-      liker: JSON object from the Instagram API, the user who does the liking
-      media_id: string
-      media_url: string
+      liker (dict): JSON object from the Instagram API, user who does the liking
+      media_id (str)
+      media_url (str)
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     id = liker.get('id')  # v1
     pk = liker.get('pk')  # v2
@@ -706,10 +710,10 @@ class Instagram(source.Source):
     """Converts a user to an actor.
 
     Args:
-      user: JSON object from the Instagram API
+      user (dict): JSON object from the Instagram API
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     if not user:
       return {}
@@ -782,7 +786,7 @@ class Instagram(source.Source):
 
   @staticmethod
   def _is_private_to_to(obj, default_public=False):
-    """Generates an AS 'to' field from an Instagram 'is_private' field."""
+    """Generates an AS ``to`` field from an Instagram ``is_private`` field."""
     private = obj.get('is_private')
     if private is not None or default_public:
       return [{
@@ -803,14 +807,14 @@ class Instagram(source.Source):
       https://i.instagram.com/api/v1/feed/timeline/
 
     Args:
-      input: unicode string containing either HTML or JSON
-      cookie: string, optional sessionid cookie to be used for subsequent HTTP
+      input (str): containing either HTML or JSON
+      cookie (str): optional ``sessionid`` cookie to be used for subsequent HTTP
         fetches, if necessary.
-      count: integer, number of activities to return, None for all
-      fetch_extras: whether to make extra HTTP fetches to get likes, etc.
+      count (int): number of activities to return, None for all
+      fetch_extras (bool): whether to make extra HTTP fetches to get likes, etc.
 
     Returns:
-      tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
+      tuple: ([ActivityStreams activities], ActivityStreams viewer actor)
     """
     cookie = cookie or self.cookie
 
@@ -860,17 +864,15 @@ class Instagram(source.Source):
                                  fetch_extras=False):
     """Converts scraped Instagram JSON to ActivityStreams activities.
 
-    The input JSON may be from:
-
-    * a user's profile, eg
+    The input JSON may be from a user's profile, eg
       https://i.instagram.com/api/v1/users/web_profile_info/?username=...
 
     Args:
-      input: dict or sequence of dicts, Instagram JSON object(s)
-      cookie: string, optional sessionid cookie to be used for subsequent HTTP
+      input (dict or sequence of dicts): Instagram JSON object(s)
+      cookie (str): optional ``sessionid`` cookie to be used for subsequent HTTP
         fetches, if necessary.
-      count: integer, number of activities to return, None for all
-      fetch_extras: whether to make extra HTTP fetches to get likes, etc.
+      count (int): number of activities to return, None for all
+      fetch_extras (bool): whether to make extra HTTP fetches to get likes, etc.
 
     Returns:
       tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
@@ -976,7 +978,7 @@ class Instagram(source.Source):
     """Converts HTML from photo/video permalink page to an AS1 activity.
 
     Args:
-      html: string, HTML from a photo/video page on instagram.com
+      html (str): HTML from a photo/video page on instagram.com
       kwargs: passed through to scraped_to_activities
 
     Returns:
@@ -989,9 +991,10 @@ class Instagram(source.Source):
     """Extracts and returns the logged in actor from any Instagram HTML.
 
     Args:
-      html: unicode string
+      html (str)
 
-    Returns: dict, AS1 actor
+    Returns:
+      dict: AS1 actor
     """
     return self.scraped_to_activities(html, **kwargs)[1]
 
@@ -999,11 +1002,11 @@ class Instagram(source.Source):
     """Converts and merges scraped comments (replies) into an activity.
 
     Args:
-      scraped: str or sequence, scraped JSON comments
-      activity: dict, AS activity to merge these comments into
+      scraped (str or sequence): scraped JSON comments
+      activity (dict): AS activity to merge these comments into
 
     Returns:
-      list of dict AS comment objects converted from scraped
+      list of dict: AS comment objects converted from scraped
 
     Raises:
       ValueError: if scraped is not valid JSON
@@ -1047,17 +1050,17 @@ class Instagram(source.Source):
   def merge_scraped_reactions(self, scraped, activity):
     """Converts and merges scraped likes and reactions into an activity.
 
-    New likes and emoji reactions are added to the activity in 'tags'.
-    Existing likes and emoji reactions in 'tags' are ignored.
+    New likes and emoji reactions are added to the activity in ``tags``.
+    Existing likes and emoji reactions in ``tags`` are ignored.
 
     Supports both legacy and v2 Instagram JSON.
 
     Args:
-      scraped: str or dict, scraped JSON likes
-      activity: dict, AS activity to merge these reactions into
+      scraped (str or dict): scraped JSON likes
+      activity (dict): AS activity to merge these reactions into
 
     Returns:
-      list of dict AS like tag objects converted from scraped
+      list of dict: AS like tag objects converted from scraped
 
     Raises:
       ValueError: if scraped is not valid JSON
@@ -1108,12 +1111,13 @@ class Instagram(source.Source):
     """Converts Instagram HTML JSON media node to ActivityStreams activity.
 
     Args:
-      media: dict, subset of Instagram HTML JSON representing a single photo
+      media (dict): subset of Instagram HTML JSON representing a single photo
         or video
-      user: top-level user object from Instagram HTML JSON, e.g. on a profile page
+      user (dict): top-level user object from Instagram HTML JSON, e.g. on a
+        profile page
 
     Returns:
-      dict, ActivityStreams activity
+      dict: ActivityStreams activity
     """
     # preprocess to make its field names match the API's
     owner = media.get('owner', {})

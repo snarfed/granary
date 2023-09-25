@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Meetup.com source class.
-"""
+"""Meetup.com source class."""
 import datetime
 import logging
 import re

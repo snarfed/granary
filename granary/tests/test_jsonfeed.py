@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for jsonfeed.py."""
 from oauth_dropins.webutil import testutil
 

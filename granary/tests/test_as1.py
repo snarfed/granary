@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for as1.py."""
 import copy
 import re

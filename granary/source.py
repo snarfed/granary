@@ -1,4 +1,3 @@
-# coding=utf-8
 """Source base class.
 
 Based on the OpenSocial ActivityStreams REST API:
