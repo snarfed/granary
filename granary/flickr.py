@@ -5,9 +5,9 @@ Uses Flickr's REST API https://www.flickr.com/services/api/
 TODO: Fetching feeds with comments and/or favorites is very request
 intensive right now. It would be ideal to find a way to batch
 requests, make requests asynchronously, or make better calls to the
-API itself. Maybe use flickr.activity.userPhotos
+API itself. Maybe use ``flickr.activity.userPhotos``
 (https://www.flickr.com/services/api/flickr.activity.userPhotos.html)
-when group_id=SELF.
+when `group_id=SELF``.
 """
 import copy
 import logging

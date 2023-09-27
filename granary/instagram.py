@@ -875,7 +875,7 @@ class Instagram(source.Source):
       fetch_extras (bool): whether to make extra HTTP fetches to get likes, etc.
 
     Returns:
-      tuple, ([ActivityStreams activities], ActivityStreams viewer actor)
+      tuple: ([ActivityStreams activities], ActivityStreams viewer actor)
     """
     # find media
     medias = []
@@ -1229,14 +1229,15 @@ class Instagram(source.Source):
     """Converts Instagram HTML JSON feed_v2 item to ActivityStreams activity.
 
     Note that this ignores comments and likes! See
-    :meth:`Instagram.merge_scraped_comments`, :meth:`Instagram.merge_scraped_reactions`,
-    and the end of :meth:`Instagram.scraped_to_activities` for those.
+    :meth:`Instagram.merge_scraped_comments`,
+    :meth:`Instagram.merge_scraped_reactions`, and the end of
+    :meth:`Instagram.scraped_to_activities` for those.
 
     Args:
-      media: dict, item from a feed_v2 JSON
+      media (dict): item from a ``feed_v2`` JSON
 
     Returns:
-      dict, ActivityStreams activity, or None
+      dict: ActivityStreams activity or None
     """
     user = item.get('user') or {}
     actor = self._feed_v2_user_to_actor(user)
@@ -1333,10 +1334,10 @@ class Instagram(source.Source):
     """Converts an Instagram HTML JSON user to an API actor.
 
     Args:
-      media: dict, HTML JSON user
+      media (dict): HTML JSON user
 
     Returns:
-      dict, API user object
+      dict: API user object
     """
     if not user:
       return None

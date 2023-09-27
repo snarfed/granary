@@ -1,7 +1,8 @@
 """Mastodon source class.
 
 Mastodon is an ActivityPub implementation, but it also has a REST + OAuth 2 API
-independent of AP. API docs: https://docs.joinmastodon.org/api/
+independent of AP. This class handles that API. API docs:
+https://docs.joinmastodon.org/api/
 
 May also be used for services with Mastodon-compatible APIs, eg Pleroma:
 https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_responses/
@@ -69,9 +70,9 @@ class Mastodon(source.Source):
   """Mastodon source class. See file docstring and Source class for details.
 
   Attributes:
-    instance: string, base URL of Mastodon instance, eg https://mastodon.social/
-    user_id: int, optional, current user's id (not username!) on this instance
-    access_token: string, optional, OAuth access token
+    instance (str): base URL of Mastodon instance, eg ``https://mastodon.social/``
+    user_id (int): optional, current user's id (not username!) on this instance
+    access_token (str): optional, OAuth access token
   """
   DOMAIN = 'N/A'
   BASE_URL = 'N/A'
@@ -90,14 +91,14 @@ class Mastodon(source.Source):
                truncate_text_length=None):
     """Constructor.
 
-    If user_id is not provided, it will be fetched via the API.
+    If ``user_id`` is not provided, it will be fetched via the API.
 
     Args:
-      instance: string, base URL of Mastodon instance, eg https://mastodon.social/
-      user_id: string or int, optional, current user's id (not username!) on
+      instance (str): base URL of Mastodon instance, eg https://mastodon.social/
+      user_id: (str or int): optional, current user's id (not username!) on
         this instance
-      access_token: string, optional OAuth access token
-      truncate_text_length: int, optional character limit for toots, overrides
+      access_token (str): optional OAuth access token
+      truncate_text_length (int): optional character limit for toots, overrides
         the default of 500
     """
     assert instance
@@ -158,14 +159,15 @@ class Mastodon(source.Source):
 
   @classmethod
   def embed_post(cls, obj):
-    """Returns the HTML string for embedding a toot.
+    """Returns the HTML for embedding a toot.
 
     https://docs.joinmastodon.org/methods/oembed/
 
     Args:
-      obj: AS1 dict with at least url, and optionally also content.
+      obj (dict): AS1 object with at least url, and optionally also content.
 
-    Returns: string, HTML
+    Returns:
+      str: HTML
     """
     return f"""
   <script src="{urllib.parse.urljoin(obj['url'], '/embed.js')}" async="async"></script>
@@ -268,9 +270,11 @@ class Mastodon(source.Source):
   def get_actor(self, user_id=None):
     """Fetches and returns an account.
 
-    Args: user_id: string, defaults to current account
+    Args:
+      user_id (str): defaults to current account
 
-    Returns: dict, ActivityStreams actor object
+    Returns:
+      dict: ActivityStreams actor object
     """
     if user_id is None:
       user_id = self.user_id
@@ -280,13 +284,14 @@ class Mastodon(source.Source):
     """Fetches and returns a comment.
 
     Args:
-      comment_id: string status id
-      **kwargs: unused
+      comment_id (str): status id
+      kwargs: unused
 
-    Returns: dict, ActivityStreams object
+    Returns:
+      dict: ActivityStreams object
 
     Raises:
-      :class:`ValueError`: if comment_id is invalid
+      ValueError: if comment_id is invalid
     """
     return self.status_to_object(self._get(API_STATUS % comment_id))
 
@@ -294,10 +299,10 @@ class Mastodon(source.Source):
     """Converts a status to an activity.
 
     Args:
-      status: dict, a decoded JSON status
+      status (dict): a decoded JSON status
 
     Returns:
-      an ActivityStreams activity dict, ready to be JSON-encoded
+      dict: ActivityStreams activity
     """
     obj = self.status_to_object(status)
     activity = {
@@ -331,10 +336,10 @@ class Mastodon(source.Source):
     """Converts a status to an object.
 
     Args:
-      status: dict, a decoded JSON status
+      status (dict): a decoded JSON status
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     id = status.get('id')
     if not id:
@@ -445,9 +450,10 @@ class Mastodon(source.Source):
     """Converts a Mastodon account to an AS1 actor.
 
     Args:
-      account: dict, Mastodon account
+      account (dict): Mastodon account
 
-    Returns: dict, AS1 actor
+    Returns:
+      dict: AS1 actor
     """
     domain = self.DOMAIN
     username = account.get('username')
@@ -501,11 +507,12 @@ class Mastodon(source.Source):
     """Generates and returns a ActivityStreams like object.
 
     Args:
-      status: dict, Mastodon status
-      account: dict, Mastodon account
-      verb: string, 'like' or 'share'
+      status (dict): Mastodon status
+      account (dict): Mastodon account
+      verb (str): ``like`` or ``share``
 
-    Returns: dict, AS1 like activity
+    Returns:
+      dict: AS1 like activity
     """
     assert verb in ('like', 'share')
     label = 'favorited' if verb == 'like' else 'reblogged'
@@ -527,11 +534,12 @@ class Mastodon(source.Source):
 
     Args:
       obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: bool
+      include_link (str)
+      ignore_formatting (bool)
 
-    Returns: CreationResult whose content will be a dict with 'id', 'url', and
-      'type' keys (all optional) for the newly created object (or None)
+    Returns:
+      CreationResult: whose content will be a dict with ``id``, ``url``, and
+      ``type`` keys (all optional) for the newly created object (or None)
     """
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -544,11 +552,11 @@ class Mastodon(source.Source):
 
     Args:
       obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: bool
+      include_link (str)
+      ignore_formatting (bool)
 
-    Returns: CreationResult whose content will be a str HTML
-      snippet (or None)
+    Returns:
+      CreationResult: content will be a str HTML snippet or None
     """
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -564,12 +572,13 @@ class Mastodon(source.Source):
     Args:
       obj: ActivityStreams object
       preview: bool
-      include_link: string
+      include_link: str
       ignore_formatting: bool
 
-    Returns: CreationResult. If preview is True, the content will be a unicode
-      string HTML snippet. If False, it will be a dict with 'id' and 'url' keys
-      for the newly created object.
+    Returns:
+      CreationResult. If preview is True, the content will be an HTML snippet.
+      If False, it will be a dict with ``id`` and ``url`` keys for the newly
+      created object.
     """
     assert preview in (False, True)
     type = obj.get('objectType')
@@ -708,7 +717,7 @@ class Mastodon(source.Source):
     return source.creation_result(resp)
 
   def base_object(self, obj):
-    """Returns the 'base' Mastodon object that an object operates on.
+    """Returns the "base" Mastodon object that an object operates on.
 
     If the object is a reply, boost, or favorite of a Mastodon post - on any
     instance - this returns that post object. The id in the returned object is
@@ -722,11 +731,11 @@ class Mastodon(source.Source):
     Discovered via https://mastodon.social/@jkreeftmeijer/101245063526942536
 
     Args:
-      obj: ActivityStreams object
+      obj (dict): ActivityStreams object
 
     Returns:
-      dict, minimal ActivityStreams object. Usually has at least id; may
-      also have url, author, etc.
+      dict: minimal ActivityStreams object. Usually has at least ``id``; may
+      also have ``url``, ``author``, etc.
     """
     for field in ('inReplyTo', 'object', 'target'):
       for base in util.get_list(obj, field):
@@ -761,14 +770,15 @@ class Mastodon(source.Source):
   def upload_media(self, media):
     """Uploads one or more images or videos from web URLs.
 
-    https://docs.joinmastodon.org/methods/statuses/media/
-    https://docs.joinmastodon.org/user/posting/#attachments
+    * https://docs.joinmastodon.org/methods/statuses/media/
+    * https://docs.joinmastodon.org/user/posting/#attachments
 
     Args:
-      media: sequence of AS image or stream objects, eg:
-        [{'url': 'http://picture', 'displayName': 'a thing'}, ...]
+      media (sequence of dict): AS image or stream objects, eg:
+        ``[{'url': 'http://picture', 'displayName': 'a thing'}, ...]``
 
-    Returns: list of string media ids for uploaded files
+    Returns:
+      list of str: media ids for uploaded files
     """
     uploaded = set()  # URLs uploaded so far; for de-duping
     ids = []
@@ -799,9 +809,10 @@ class Mastodon(source.Source):
     """Deletes a toot. The authenticated user must have authored it.
 
     Args:
-      id: int or string, toot id (on local instance) to delete
+      id (int or str): toot id (on local instance) to delete
 
-    Returns: CreationResult, content is dict with url and id fields
+    Returns:
+      CreationResult: content is dict with ``url`` and ``id`` fields
     """
     self._delete(API_STATUS % id)
     return source.creation_result({'url': self.status_url(id)})
@@ -810,9 +821,10 @@ class Mastodon(source.Source):
     """Previews deleting a toot.
 
     Args:
-      id: int or string, toot id (on local instance) to delete
+      id (int or str): toot id (on local instance) to delete
 
-    Returns: CreationResult
+    Returns:
+      CreationResult
     """
     # can't embed right now because embeds require standalone URL, eg
     # http://foo.com/@user/123, and we don't have the username here.
@@ -826,7 +838,7 @@ class Mastodon(source.Source):
     https://docs.joinmastodon.org/methods/accounts/blocks/
 
     Returns:
-      sequence of int Mastodon account ids on the current instance
+      sequence of int: Mastodon account ids on the current instance
     """
     ids = []
     url = API_BLOCKS

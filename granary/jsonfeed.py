@@ -18,14 +18,15 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
   """Converts ActivityStreams activities to a JSON feed.
 
   Args:
-    activities: sequence of ActivityStreams activity dicts
-    actor: ActivityStreams actor dict, the author of the feed
-    title: string, the feed title
-    home_page_url: string, the home page URL
-    feed_url: the URL of the JSON Feed, if any. Included in the feed_url field.
+    activities (sequence of dict): ActivityStreams activities
+    actor (dict): ActivityStreams actor, the author of the feed
+    title (str): the feed title
+    home_page_url (str): the home page URL
+    feed_url (str): the URL of the JSON Feed, if any. Included in the
+      ``feed_url`` field.
 
   Returns:
-    dict, JSON Feed data, ready to be JSON-encoded
+    dict: JSON Feed data
   """
   try:
     iter(activities)
@@ -33,7 +34,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     raise TypeError('activities must be iterable')
 
   if isinstance(activities, (dict, str)):
-    raise TypeError('activities may not be a dict or string')
+    raise TypeError('activities may not be a dict or str')
 
   def image_url(obj):
     return util.get_first(obj, 'image', {}).get('url')
@@ -106,14 +107,14 @@ def jsonfeed_to_activities(jsonfeed):
   """Converts a JSON feed to ActivityStreams activities and actor.
 
   Args:
-    jsonfeed: dict, JSON Feed data
+    jsonfeed (dict): JSON Feed data
 
   Returns:
-    (activities, actor) tuple, where activities and actor are both
+    tuple: ``(activities, actor)``, where activities and actor are both
     ActivityStreams object dicts
 
   Raises:
-    ValueError, if jsonfeed isn't a valid JSON Feed dict
+    ValueError: if jsonfeed isn't a valid JSON Feed dict
   """
   if not hasattr(jsonfeed, 'get'):
     raise ValueError(f'Expected dict (or compatible), got {jsonfeed.__class__.__name__}')
