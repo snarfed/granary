@@ -49,6 +49,9 @@ BSKY_APP_URL_RE = re.compile(r"""
    /(?P<tid>[^?]+))?$
   """, re.VERBOSE)
 
+DEFAULT_PDS = 'https://bsky.social/'
+DEFAULT_APPVIEW = 'https://api.bsky.app'
+
 
 def url_to_did_web(url):
   """Converts a URL to a ``did:web``.
@@ -516,7 +519,7 @@ def as1_to_profile(actor):
 
 
 def to_as1(obj, type=None, repo_did=None, repo_handle=None,
-           pds='https://bsky.social/'):
+           pds=DEFAULT_PDS):
   """Converts a Bluesky object to an AS1 object.
 
   Args:
@@ -730,7 +733,7 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None,
   return util.trim_nulls(ret)
 
 
-def blob_to_url(*, blob, repo_did, pds='https://bsky.social'):
+def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
   """Generates a URL for a blob.
 
   Supports both new and old style blobs:
@@ -796,7 +799,7 @@ class Bluesky(Source):
     headers = {'User-Agent': util.user_agent}
 
     if app_password:
-      client = Client('https://bsky.social', headers=headers)
+      client = Client(DEFAULT_PDS, headers=headers)
       resp = client.com.atproto.server.createSession({
         'identifier': handle,
         'password': app_password,
@@ -811,9 +814,12 @@ class Bluesky(Source):
       self.did = did
 
     if self.access_token:
-      headers['Authorization'] = f'Bearer {self.access_token}'
-
-    self.client = Client('https://bsky.social', headers=headers)
+      self.client = Client(DEFAULT_PDS, headers={
+        **headers,
+        'Authorization': f'Bearer {self.access_token}',
+      })
+    else:
+      self.client = Client(DEFAULT_APPVIEW, headers=headers)
 
   @classmethod
   def user_url(cls, handle):
