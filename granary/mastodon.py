@@ -824,7 +824,7 @@ class Mastodon(source.Source):
       id (int or str): toot id (on local instance) to delete
 
     Returns:
-      CreationResult
+      CreationResult:
     """
     # can't embed right now because embeds require standalone URL, eg
     # http://foo.com/@user/123, and we don't have the username here.

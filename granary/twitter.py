@@ -936,21 +936,22 @@ class Twitter(source.Source):
     return ids
 
   def upload_video(self, url):
-    """Uploads a video from web URLs using the chunked upload process.
+    """Uploads a video from a web URL using the chunked upload process.
 
     Chunked upload consists of multiple API calls:
 
     * ``command=INIT``, which allocates the media id
     * ``command=APPEND`` for each 5MB block, up to 15MB total
     * ``command=FINALIZE``
+    * ``command=STATUS`` to wait until Twitter finishes processing the video
 
     https://developer.twitter.com/en/docs/media/upload-media/uploading-media/chunked-media-upload
 
     Args:
-      url (str): URL of images
+      url (str): URL of video
 
     Returns:
-      str, or :class:`CreationResult` on error: media id
+      str, or CreationResult on error: media id
     """
     video_resp = util.urlopen(url)
     error = self._check_media(url, video_resp, VIDEO_MIME_TYPES, 'MP4 videos',

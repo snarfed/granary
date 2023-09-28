@@ -79,7 +79,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'granary'
-copyright = '2012-2022, Ryan Barrett'
+copyright = '2012-2023, Ryan Barrett'
 author = 'Ryan Barrett'
 
 # The version info for the project you're documenting, acts as replacement for

@@ -178,7 +178,7 @@ def activity_to_json(activity, **kwargs):
 
   Args:
     activity (dict): a decoded JSON ActivityStreams activity
-    kwargs: passed to :fun:`object_to_json`
+    kwargs: passed to :func:`object_to_json`
 
   Returns:
     dict: decoded microformats2 JSON

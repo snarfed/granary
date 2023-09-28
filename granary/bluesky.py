@@ -114,7 +114,7 @@ def did_web_to_url(did):
 
 
 def at_uri_to_web_url(uri, handle=None):
-  """Converts an at:// URI to a https://bsky.app URL.
+  """Converts an ``at://`` URI to a ``https://bsky.app`` URL.
 
   https://atproto.com/specs/at-uri-scheme
 
@@ -124,7 +124,7 @@ def at_uri_to_web_url(uri, handle=None):
       uri.
 
   Returns:
-    str: https://bsky.app URL, or None
+    str: ``https://bsky.app`` URL, or None
 
   Raises:
     ValueError: if uri is not a string or doesn't start with ``at://``
@@ -147,18 +147,18 @@ def at_uri_to_web_url(uri, handle=None):
 
 
 def web_url_to_at_uri(url, handle=None):
-  """Converts a https://bsky.app URL to an ``at://`` URI.
+  """Converts a ``https://bsky.app`` URL to an ``at://`` URI.
 
   https://atproto.com/specs/at-uri-scheme
 
   Currently supports profile, post, and feed URLs with DIDs and handles, eg:
 
-  * https://bsky.app/profile/did:plc:123abc
-  * https://bsky.app/profile/vito.fyi/post/3jt7sst7vok2u
-  * https://bsky.app/profile/bsky.app/feed/mutuals
+  * ``https://bsky.app/profile/did:plc:123abc``
+  * ``https://bsky.app/profile/vito.fyi/post/3jt7sst7vok2u``
+  * ``https://bsky.app/profile/bsky.app/feed/mutuals``
 
   Args:
-    url (str): bsky.app URL
+    url (str): ``bsky.app`` URL
 
   Returns:
     str: ``at://`` URI, or None
@@ -741,7 +741,7 @@ def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
 
   The resulting URL is a ``com.atproto.sync.getBlob`` XRPC call to the PDS.
 
-  For blobs on the official bsky.social PDS, we could consider using their CDN
+  For blobs on the official ``bsky.social`` PDS, we could consider using their CDN
   instead: ``https://av-cdn.bsky.app/img/avatar/plain/[DID]/[CID]@jpeg``
 
   They also run a resizing image proxy on ``cdn.bsky.social`` with URLs like
@@ -752,7 +752,7 @@ def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
     blob (dict)
     repo_did (str): DID of the repo that owns this blob
     pds (str): base URL of the PDS that serves this repo. Defaults to
-      `https://bsky.social``
+      :const:`DEFAULT_PDS`
 
   Returns:
     str: URL for this blob, or None if ``blob`` is empty or has no CID

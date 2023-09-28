@@ -2409,7 +2409,7 @@ class Facebook(source.Source):
       is_comment (bool)
 
     Returns:
-      :class:`FacebookId`: Some or all fields may be None.
+      FacebookId: Some or all fields may be None.
     """
     assert is_comment in (True, False), is_comment
 
