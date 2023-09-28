@@ -190,17 +190,17 @@ class ApiTest(testutil.TestCase):
       with self.subTest(test_module):
         self.reset()
         self.mox.StubOutWithMock(FakeSource, 'get_actor')
-        FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
+        FakeSource.get_actor('456').AndReturn(test_module.ACTOR)
         self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
         # include access_token param to check that it gets stripped
-        resp = self.get_response('/fake/?format=atom&access_token=foo&a=b&cache=false')
+        resp = self.get_response('/fake/456/?format=atom&access_token=foo&a=b&cache=false', '456')
         self.assertEqual(200, resp.status_code)
         self.assertEqual('application/atom+xml; charset=utf-8',
                          resp.headers['Content-Type'])
         self.assert_multiline_equals(
           test_module.ATOM % {
-            'request_url': 'http://localhost/fake/?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
+            'request_url': 'http://localhost/fake/456/?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
             'host_url': 'http://fa.ke/',
             'base_url': 'http://fa.ke/',
           },
