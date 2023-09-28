@@ -533,7 +533,7 @@ class Facebook(source.Source):
       activity (dict): activity object, optional
 
     Returns:
-      dict
+      dict:
     """
     orig_id = f'{activity_user_id}_{activity_id}'
 
@@ -581,7 +581,7 @@ class Facebook(source.Source):
       activity (dict): activity object (optional)
 
     Returns:
-      dict
+      dict:
     """
     if '_' not in reaction_id:  # handle just name of reaction type
       reaction_id = f'{activity_id}_{reaction_id}_by_{reaction_user_id}'
@@ -920,7 +920,7 @@ class Facebook(source.Source):
     """Guesses the id of the object in the given URL.
 
     Returns:
-      str or None
+      str or None:
     """
     params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
     event_id = params.get('event_time_id')
@@ -2195,7 +2195,7 @@ class Facebook(source.Source):
       tag (bs4.Tag)
 
     Returns:
-      str
+      str:
     """
     # TODO: distinguish between text elements with actual whitespace
     # before/after and without. this adds space to all of them, including
@@ -2602,7 +2602,7 @@ class Facebook(source.Source):
           ]
 
     Returns:
-      (sequence of dict): responses in Facebook's batch format, except that body
+      sequence of dict: responses in Facebook's batch format, except that body
       is JSON-decoded if possible, and headers is a single dict, not a list of
       dicts, e.g.::
 

@@ -266,7 +266,7 @@ class GitHub(source.Source):
       url (str):
 
     Returns:
-      str or None
+      str or None:
     """
     parts = urllib.parse.urlparse(url).path.strip('/').split('/')
     if len(parts) == 4 and util.is_int(parts[3]):
@@ -752,7 +752,7 @@ class GitHub(source.Source):
       repo (str)
 
     Returns:
-      set of str
+      set of str:
     """
     resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
 

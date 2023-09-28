@@ -3,9 +3,10 @@
 Not thread safe!
 
 Reddit API docs:
-https://github.com/reddit-archive/reddit/wiki/API
-https://www.reddit.com/dev/api
-https://www.reddit.com/prefs/apps
+
+* https://github.com/reddit-archive/reddit/wiki/API
+* https://www.reddit.com/dev/api
+* https://www.reddit.com/prefs/apps
 
 PRAW API docs:
 https://praw.readthedocs.io/
@@ -30,7 +31,7 @@ user_cache_lock = threading.RLock()
 
 
 class Reddit(source.Source):
-  """Reddit source class. See file docstring and Source class for details."""
+  """Reddit source class. See file docstring and :class:`source.Source` for details."""
 
   DOMAIN = 'reddit.com'
   BASE_URL = 'https://reddit.com'
@@ -52,10 +53,10 @@ class Reddit(source.Source):
     """Guesses the post id of the given URL.
 
     Args:
-      url: string
+      url (str)
 
     Returns:
-      string, or None
+      str or None:
     """
     path_parts = urllib.parse.urlparse(url).path.rstrip('/').split('/')
     if len(path_parts) >= 2:
@@ -75,14 +76,15 @@ class Reddit(source.Source):
     https://github.com/snarfed/bridgy/issues/1021
 
     Ideally this would be part of PRAW, but they seem uninterested:
-    https://github.com/praw-dev/praw/issues/131
-    https://github.com/praw-dev/praw/issues/1140
+
+    * https://github.com/praw-dev/praw/issues/131
+    * https://github.com/praw-dev/praw/issues/1140
 
     Args:
-      user: PRAW Redditor object
+      user (praw.models.Redditor)
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     try:
       user = reddit.praw_to_user(praw_user)
@@ -96,10 +98,10 @@ class Reddit(source.Source):
     """Converts a dict user to an actor.
 
     Args:
-      user: JSON user
+      user (dict): Reddit user
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     username = user.get('name')
     if not username:
@@ -142,11 +144,11 @@ class Reddit(source.Source):
     Note that this will make external API calls to lazily load some attributes.
 
     Args:
-      thing: a PRAW object, Submission or Comment
-      type: string to denote whether to get submission or comment content
+      thing (praw.models.Submission or praw.models.Comment)
+      type (str): either ``submission`` or ``comment``, which content to get
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
       """
     id = getattr(thing, 'id', None)
     if not id:
@@ -206,15 +208,15 @@ class Reddit(source.Source):
 
     Note that this will make external API calls to lazily load some attributes.
 
-    https://praw.readthedocs.io/en/latest/code_overview/models/submission.html
-    https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
+    * https://praw.readthedocs.io/en/latest/code_overview/models/submission.html
+    * https://praw.readthedocs.io/en/latest/code_overview/models/comment.html
 
     Args:
-      thing: a PRAW object, Submission or Comment
-      type: string to denote whether to get submission or comment content
+      thing (praw.models.Submission or praw.models.Comment)
+      type (str): whether to get submission or comment content
 
     Returns:
-      an ActivityStreams activity dict, ready to be JSON-encoded
+      dict: ActivityStreams activity
     """
     obj = self.praw_to_object(thing, type)
     if not obj:
@@ -235,8 +237,8 @@ class Reddit(source.Source):
     Only includes top level comments!
 
     Args:
-      activities: list of activity dicts
-      cache: dict, cache as described in get_activities_response()
+      activities (list of dict)
+      cache (dict): cache as described in :meth:`Source.get_activities_response`
     """
     for activity in activities:
       id = util.parse_tag_uri(activity.get('id'))[1]
@@ -267,7 +269,8 @@ class Reddit(source.Source):
                               fetch_mentions=False, search_query=None, **kwargs):
     """Fetches submissions and ActivityStreams activities.
 
-    Currently only implements activity_id, search_query and fetch_replies.
+    Currently only implements ``activity_id``, ``search_query`` and
+    ``fetch_replies``.
     """
     if activity_id:
       submissions = [self.api.submission(id=activity_id)]
@@ -287,9 +290,10 @@ class Reddit(source.Source):
     """Fetches a Reddit user and converts them to an AS1 actor.
 
     Args:
-      user_id: str
+      user_id (str)
 
-    Returns: dict, AS1 actor, or {} if the user isn't found
+    Returns
+      dict: AS1 actor, or ``{}`` if the user isn't found
     """
     return self.praw_to_actor(self._redditor(user_id=user_id))
 
@@ -298,10 +302,13 @@ class Reddit(source.Source):
     """Returns an ActivityStreams comment object.
 
     Args:
-      comment_id: string comment id
-      activity_id: string activity id, Ignored
-      activity_author_id: string activity author id. Ignored.
-      activity: activity object, Ignored
+      comment_id (str): comment id
+      activity_id (str): activity id; ignored!
+      activity_author_id (str): activity author id; ignored!
+      activity (dict): activity object; ignored!
+
+    Returns:
+      dict: ActivityStreams object
     """
     return self.praw_to_object(self.api.comment(id=comment_id), 'comment')
 

@@ -52,7 +52,7 @@ def _text(elem, field=None):
     field (str)
 
   Returns:
-    str or None
+    str or None:
   """
   if field:
     if ':' not in field:
@@ -78,7 +78,7 @@ def _as1_value(elem, field):
     field (str)
 
   Returns:
-    str or None
+    str or None:
   """
   type = _text(elem, f'activity:{field}')
   if type:

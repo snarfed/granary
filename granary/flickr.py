@@ -366,7 +366,7 @@ class Flickr(source.Source):
       id (int or str): photo id to delete
 
     Returns:
-      ``CreationResult``
+      CreationResult:
     """
     return source.creation_result(
       description=f'<span class="verb">delete</span> <a href="{self.photo_url(self.user_id(), id)}">this photo</a>.')
@@ -732,7 +732,7 @@ class Flickr(source.Source):
     https://www.flickr.com/services/api/flickr.people.getLimits.html
 
     Returns:
-      str
+      str:
     """
     if not self._user_id:
       resp = self.call_api_method('flickr.people.getLimits')
@@ -748,7 +748,7 @@ class Flickr(source.Source):
     https://www.flickr.com/services/api/flickr.people.getInfo.html
 
     Returns:
-      str
+      str:
     """
     if not self._path_alias:
       resp = self.call_api_method('flickr.people.getInfo', {
@@ -764,7 +764,7 @@ class Flickr(source.Source):
       user_id (str): user's alphanumeric ``nsid`` or path alias
 
     Returns:
-      str, a profile URL
+      str: a profile URL
     """
     return user_id and f'https://www.flickr.com/people/{user_id}/'
 

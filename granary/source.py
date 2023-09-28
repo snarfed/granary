@@ -47,15 +47,15 @@ CreationResult = collections.namedtuple('CreationResult', [
   'content', 'description', 'abort', 'error_plain', 'error_html'])
 """Result of creating a new object in a silo.
 
-  :meth:`create()` and :meth:`preview_create()` use this to provide a detailed
+  :meth:`create` and :meth:`preview_create` use this to provide a detailed
   description of publishing failures. If ``abort`` is False, we should continue
   looking for an entry to publish; if True, we should immediately inform the
   user. ``error_plain`` text is sent in response to failed publish webmentions;
   ``error_html`` will be displayed to the user when publishing interactively.
 
   Attributes:
-    content (str or dict): str HTML snippet for :meth:`preview_create()`, dict for
-      :meth:`create()`
+    content (str or dict): str HTML snippet for :meth:`preview_create`, dict for
+      :meth:`create`
     description (str): HTML snippet describing the publish action, e.g.
       ``@-reply`` or ``RSVP yes to this event``. The verb itself is surrounded by a
       ``<span class="verb">`` to allow styling. May also include ``<a>`` link(s) and
@@ -81,7 +81,7 @@ def html_to_text(html, baseurl='', **kwargs):
 
   Args:
     baseurl (str): base URL to use when resolving relative URLs. Passed through
-      to ``HTML2Text()``.
+      to ``HTML2Text``.
     kwargs: html2text options:
       https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   """
@@ -138,7 +138,7 @@ class Source(object, metaclass=SourceMeta):
   """Abstract base class for a source (e.g. Facebook, Twitter).
 
   Concrete subclasses must override the class constants below and implement
-  :meth:`get_activities()`.
+  :meth:`get_activities`.
 
   Attributes:
     DOMAIN (str): the source's domain
@@ -157,8 +157,8 @@ class Source(object, metaclass=SourceMeta):
         Defaults to Twitter's limit, 280 characters as of 2019-10-12.
     TRUNCATE_URL_LENGTH (int): optional number of characters that URLs count
         for. Defaults to Twitter's, 23 as of 2019-10-12.
-    OPTIMIZED_COMMENTS (bool): whether :meth:`get_comment()` is optimized and
-      only fetches the requested comment. If False, :meth:`get_comment()` fetches
+    OPTIMIZED_COMMENTS (bool): whether :meth:`get_comment` is optimized and
+      only fetches the requested comment. If False, :meth:`get_comment` fetches
       many or all of the post's comments to find the requested one.
   """
   POST_ID_RE = None
@@ -178,17 +178,17 @@ class Source(object, metaclass=SourceMeta):
       user_id: str, defaults to current user
 
     Returns:
-      dict: ActivityStreams actor object
+      dict: ActivityStreams actor
     """
     raise NotImplementedError()
 
   def get_activities(self, *args, **kwargs):
     """Fetches and returns a list of activities.
 
-    See get_activities_response() for args and kwargs.
+    See :meth:`get_activities_response` for args and kwargs.
 
     Returns:
-      list: ActivityStreams activity dicts
+      list of dict: ActivityStreams activities
     """
     return self.get_activities_response(*args, **kwargs)['items']
 
@@ -200,7 +200,7 @@ class Source(object, metaclass=SourceMeta):
       search_query=None, scrape=False, **kwargs):
     """Fetches and returns ActivityStreams activities and response details.
 
-    Subclasses should override this. See :meth:`get_activities()` for an
+    Subclasses should override this. See :meth:`get_activities` for an
     alternative that just returns the list of activities.
 
     If user_id is provided, only that user's activity(s) are included.
@@ -213,22 +213,22 @@ class Source(object, metaclass=SourceMeta):
     group id is string id of group or @self, @friends, @all, @search:
     http://opensocial-resources.googlecode.com/svn/spec/2.0/Social-Data.xml#Group-ID
 
-    The fetch_* kwargs all default to False because they often require extra API
-    round trips. Some sources return replies, likes, and shares in the same
+    The ``fetch_*`` kwargs all default to False because they often require extra
+    API round trips. Some sources return replies, likes, and shares in the same
     initial call, so they may be included even if you don't set their kwarg to
     True.
 
     Args:
       user_id (str): defaults to the currently authenticated user
-      group_id (str): one of '@self', '@all', '@friends', '@search'. defaults
-        to '@friends'
+      group_id (str): one of ``@self``, ``@all``, ``@friends``, ``@search``. defaults
+        to ``@friends``
       app_id (str):
       activity_id (str):
       start_index (int): >= 0
       count (int): >= 0
       etag (str): optional ETag to send with the API request. Results will
         only be returned if the ETag has changed. Should include enclosing
-        double quotes, e.g. '"ABC123"'
+        double quotes, e.g. ``"ABC123"``
       min_id (only): return activities with ids greater than this
       cache (dict): optional, used to cache metadata like comment and like counts
         per activity across calls. Used to skip expensive API calls that haven't
@@ -253,27 +253,27 @@ class Source(object, metaclass=SourceMeta):
 
       The returned dict has at least these keys:
 
-      * items: list of activity dicts
-      * startIndex: int or None
-      * itemsPerPage: int
-      * totalResults: int or None (e.g. if it can 't be calculated efficiently)
-      * filtered: False
-      * sorted: False
-      * updatedSince: False
-      * etag: str etag returned by the API's initial call to get activities
+      * ``items`` (list of dict): activities
+      * ``startIndex`` (int or None)
+      * ``itemsPerPage`` (int)
+      * ``totalResults`` (int or None, eg if it can't be calculated efficiently)
+      * ``filtered``: False
+      * ``sorted``: False
+      * ``updatedSince``: False
+      * ``etag`` (str): ETag returned by the API's initial call to get activities
 
     Raises:
-      :class:`ValueError`: if any argument is invalid for this source
-      :class:`NotImplementedError`: if the source doesn't support the requested
-        operation, e.g. Facebook doesn't support search.
+      ValueError: if any argument is invalid for this source
+      NotImplementedError: if the source doesn't support the requested
+        operation, eg Facebook doesn't support search.
     """
     raise NotImplementedError()
 
   @classmethod
   def make_activities_base_response(cls, activities, *args, **kwargs):
-    """Generates a base response dict for :meth:`get_activities_response()`.
+    """Generates a base response dict for :meth:`get_activities_response`.
 
-    See :meth:`get_activities()` for args and kwargs.
+    See :meth:`get_activities` for args and kwargs.
     """
     activities = list(activities)
     return {
@@ -305,7 +305,7 @@ class Source(object, metaclass=SourceMeta):
         fetches, if necessary.
 
     Returns:
-      tuple: ([AS activities], AS logged in actor (ie viewer))
+      (list of dict, dict) tuple: ([AS activities], AS logged in actor (ie viewer))
     """
     raise NotImplementedError()
 
@@ -319,7 +319,7 @@ class Source(object, metaclass=SourceMeta):
       scraped (str): scraped data from a single post permalink
 
     Returns:
-      tuple: (AS activity or None, AS logged in actor (ie viewer))
+      (dict, dict) tuple: : (AS activity or None, AS logged in actor (ie viewer))
     """
     raise NotImplementedError()
 
@@ -366,16 +366,16 @@ class Source(object, metaclass=SourceMeta):
         converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
-      :class:`CreationResult`: The result. `content` will be a dict or ``None``.
-      If the newly created object has an id or permalink, they'll be provided in
-      the values for ``id`` and ``url``.
+      CreationResult: The result. ``content`` will be a dict or None. If the
+      newly created object has an id or permalink, they'll be provided in the
+      values for ``id`` and ``url``.
     """
     raise NotImplementedError()
 
   def preview_create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Previews creating a new object: a post, comment, like, share, or RSVP.
 
-    Returns HTML that previews what :meth:`create()` with the same object will
+    Returns HTML that previews what :meth:`create` with the same object will
     do.
 
     Subclasses should override this. Different sites will support different
@@ -392,7 +392,7 @@ class Source(object, metaclass=SourceMeta):
         converting its HTML to plain text styling (newlines, etc.)
 
     Returns:
-      :class:`CreationResult`: The result. `content` will be a dict or ``None``.
+      CreationResult: The result. `content` will be a dict or ``None``.
     """
     raise NotImplementedError()
 
@@ -405,7 +405,7 @@ class Source(object, metaclass=SourceMeta):
       id (str): silo object id
 
     Returns:
-      :class:`CreationResult`
+      CreationResult:
     """
     raise NotImplementedError()
 
@@ -416,7 +416,7 @@ class Source(object, metaclass=SourceMeta):
       id (str): silo object id
 
     Returns:
-      :class:`CreationResult`
+      CreationResult:
     """
     raise NotImplementedError()
 
@@ -427,7 +427,7 @@ class Source(object, metaclass=SourceMeta):
       id (str): site-specific event id
 
     Returns:
-      dict: decoded ActivityStreams activity, or ``None``
+      dict: decoded ActivityStreams activity, or None
     """
     raise NotImplementedError()
 
@@ -449,7 +449,7 @@ class Source(object, metaclass=SourceMeta):
       dict: ActivityStreams comment object
 
     Raises:
-      :class:`ValueError`: if any argument is invalid for this source
+      ValueError: if any argument is invalid for this source
     """
     raise NotImplementedError()
 
@@ -540,7 +540,7 @@ class Source(object, metaclass=SourceMeta):
     """Fetches and returns the current user's block list.
 
     ...ie the users that the current user is blocking. The exact semantics of
-    "blocking" vary from silo to silo.
+    blocking vary from silo to silo.
 
     Returns:
       sequence of dict: actor objects
@@ -566,7 +566,7 @@ class Source(object, metaclass=SourceMeta):
       user (dict): a decoded JSON silo user object
 
     Returns:
-      dict: ActivityStreams actor, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     raise NotImplementedError()
 
@@ -689,7 +689,7 @@ class Source(object, metaclass=SourceMeta):
     return util.tag_uri(self.DOMAIN, name)
 
   def base_object(self, obj):
-    """Returns the 'base' silo object that an object operates on.
+    """Returns the ``base`` silo object that an object operates on.
 
     For example, if the object is a comment, this returns the post that it's a
     comment on. If it's an RSVP, this returns the event. The id in the returned
@@ -762,7 +762,7 @@ class Source(object, metaclass=SourceMeta):
 
   def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False,
                           strip_first_video_tag=False, strip_quotations=False):
-    """Returns content text for :meth:`create()` and :meth:`preview_create()`.
+    """Returns content text for :meth:`create` and :meth:`preview_create`.
 
     Returns ``summary`` if available, then ``content``, then ``displayName``.
 
@@ -833,8 +833,8 @@ class Source(object, metaclass=SourceMeta):
   def truncate(self, content, url, include_link, type=None, quote_url=None):
     """Shorten text content to fit within a character limit.
 
-    Character limit and URL character length are taken from the
-    ``TRUNCATE_TEXT_LENGTH`` and ``TRUNCATE_URL_LENGTH`` class constants.
+    Character limit and URL character length are taken from
+    :const:`TRUNCATE_TEXT_LENGTH` and :const:`TRUNCATE_URL_LENGTH`.
 
     Args:
       content (str)

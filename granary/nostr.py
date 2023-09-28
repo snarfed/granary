@@ -76,10 +76,10 @@ def id_for(event):
   """Generates an id for a Nostr event.
 
   Args:
-    event: dict, JSON Nostr event
+    event (dict): Nostr event
 
   Returns:
-    str, 32-character hex-encoded sha256 hash of the event, serialized
+    str: 32-character hex-encoded sha256 hash of the event, serialized
     according to NIP-01
   """
   event.setdefault('tags', [])
@@ -110,10 +110,10 @@ def uri_to_id(uri):
   Based on NIP-19 and NIP-21.
 
   Args:
-    uri: str
+    uri (str)
 
   Returns:
-    str
+    str:
   """
   if not uri or not is_bech32(uri):
     return uri
@@ -128,11 +128,11 @@ def id_to_uri(prefix, id):
   Based on NIP-19 and NIP-21.
 
   Args:
-    prefix: str
-    id: str
+    prefix (str)
+    id (str)
 
   Returns:
-    str
+    str:
   """
   if not id:
     return id
@@ -145,9 +145,10 @@ def from_as1(obj):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
   Args:
-    obj: dict, AS1 activity or object
+    obj (dict): AS1 activity or object
 
-  Returns: dict, JSON Nostr event
+  Returns:
+    dict: Nostr event
   """
   type = as1.object_type(obj)
   inner_obj = as1.get_object(obj)
@@ -270,9 +271,10 @@ def to_as1(event):
   """Converts a Nostr event to an ActivityStreams 2 activity or object.
 
   Args:
-    event: dict, JSON Nostr event
+    event (dict):  Nostr event
 
-  Returns: dict, AS1 activity or object
+  Returns:
+    dict: AS1 activity or object
   """
   if not event:
     return {}
@@ -400,10 +402,10 @@ def to_as1(event):
 
 
 class Nostr(Source):
-  """Nostr source class. See file docstring and Source class for details.
+  """Nostr source class. See file docstring and :class:`Source` for details.
 
   Attributes:
-    relays: sequence of str, relay hostnames
+    relays (sequence of str): relay hostnames
   """
 
   DOMAIN = None
@@ -419,10 +421,10 @@ class Nostr(Source):
     """Fetches and returns a Nostr user profile.
 
     Args:
-      user_id: str, NIP-21 'nostr:npub...'
+      user_id (str):  NIP-21 ``nostr:npub...``
 
     Returns:
-      dict, AS1 actor object
+      dict: AS1 actor object
     """
     if not user_id or not user_id.removeprefix('nostr:').startswith('npub'):
       raise ValueError(f'Expected nostr:npub..., got {user_id}')
@@ -512,21 +514,21 @@ class Nostr(Source):
     return self.make_activities_base_response(util.trim_nulls(activities.values()))
 
   def query(self, websocket, filter):
-    """Runs a Nostr REQ query on an open websocket.
+    """Runs a Nostr ``REQ`` query on an open websocket.
 
-    Sends the query, collects the responses, and closes the REQ subscription.
-    If `limit` is not set on the filter, defaults it to 20
+    Sends the query, collects the responses, and closes the ``REQ`` subscription.
+    If ``limit`` is not set on the filter, it defaults to 20.
 
     Args:
-      websocket: :class:`websockets.ClientConnection`
-      filter: dict NIP-01 REQ filter
-      limit: int
+      websocket (websockets.sync.client.ClientConnection)
+      filter (dict):  NIP-01 ``REQ`` filter
+      limit (int)
 
     Returns:
-      list of dict Nostr events
+      list of dict: Nostr events
 
     Raises:
-      AssertionError if the filter 'limit' field is not set.
+      AssertionError: if the filter ``limit`` field is not set.
     """
     limit = filter.setdefault('limit', 20)
 

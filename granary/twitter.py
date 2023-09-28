@@ -2,9 +2,10 @@
 
 Uses the v1.1 REST API: https://developer.twitter.com/en/docs/api-reference-index
 
-The Audience Targeting 'to' field is set to @public or @private based on whether
-the tweet author's 'protected' field is true or false.
+The Audience Targeting ``to`` field is set to ``@public`` or ``@private`` based
+on whether the tweet author's ``protected`` field is true or false.
 https://dev.twitter.com/docs/platform-objects/users
+
 """
 import collections
 import datetime
@@ -137,7 +138,7 @@ class OffsetTzinfo(datetime.tzinfo):
 
 
 class Twitter(source.Source):
-  """Twitter source class. See file docstring and Source class for details."""
+  """Twitter source class. See file docstring and :class:`Source` for details."""
 
   DOMAIN = 'twitter.com'
   BASE_URL = 'https://twitter.com/'
@@ -174,10 +175,10 @@ class Twitter(source.Source):
     OAuth access token by creating an app here: https://dev.twitter.com/apps/new
 
     Args:
-      access_token_key: string, OAuth access token key
-      access_token_secret: string, OAuth access token secret
-      username: string, optional, the current user. Used in e.g. preview/create.
-      scrape_headers: dict, optional, with string HTTP header keys and values to
+      access_token_key (str): OAuth access token key
+      access_token_secret (str): OAuth access token secret
+      username (str): optional, the current user. Used in e.g. preview/create.
+      scrape_headers (dict): optional, with string HTTP header keys and values to
         use when scraping likes
     """
     self.access_token_key = access_token_key
@@ -189,7 +190,7 @@ class Twitter(source.Source):
     """Returns a user as a JSON ActivityStreams actor dict.
 
     Args:
-      screen_name: string username. Defaults to the current user.
+      screen_name (str): username. Defaults to the current user.
     """
     url = API_CURRENT_USER if screen_name is None else API_USER % screen_name
     return self.user_to_actor(self.urlopen(url))
@@ -203,24 +204,18 @@ class Twitter(source.Source):
                               search_query=None, scrape=False, **kwargs):
     """Fetches posts and converts them to ActivityStreams activities.
 
-    XXX HACK: this is currently hacked for bridgy to NOT pass min_id to the
-    request for fetching activity tweets themselves, but to pass it to all of
-    the requests for filling in replies, retweets, etc. That's because we want
-    to find new replies and retweets of older initial tweets.
-    TODO: find a better way.
-
-    See :meth:`source.Source.get_activities_response()` for details. app_id is
-    ignored. min_id is translated to Twitter's since_id.
+    See :meth:`source.Source.get_activities_response` for details. ``app_id``
+    is ignored. ``min_id`` is translated to Twitter's ``since_id``.
 
     The code for handling ETags (and 304 Not Changed responses and setting
-    If-None-Match) is here, but unused right now since Twitter evidently doesn't
-    support ETags. From https://dev.twitter.com/discussions/5800 :
-    "I've confirmed with our team that we're not explicitly supporting this
-    family of features."
+    ``If-None-Match``) is here, but unused right now since Twitter evidently
+    doesn't support ETags. From https://dev.twitter.com/discussions/5800 : "I've
+    confirmed with our team that we're not explicitly supporting this family of
+    features."
 
-    Likes (nee favorites) are scraped from twitter.com, since Twitter's REST
-    API doesn't offer a way to fetch them. You can also get them from the
-    Streaming API, though, and convert them with streaming_event_to_object().
+    Likes (nee favorites) are scraped from twitter.com, since Twitter's REST API
+    doesn't offer a way to fetch them. You can also get them from the Streaming
+    API, though, and convert them with :meth:`streaming_event_to_object`.
     https://dev.twitter.com/docs/streaming-apis/messages#Events_event
 
     Shares (ie retweets) are fetched with a separate API call per tweet:
@@ -232,17 +227,17 @@ class Twitter(source.Source):
 
     Quote tweets are fetched by searching for the possibly quoted tweet's ID,
     using the OR operator to search up to 5 IDs at a time, and then checking
-    the quoted_status_id_str field
+    the ``quoted_status_id_str`` field:
     https://dev.twitter.com/overview/api/tweets#quoted_status_id_str
 
-    Use the group_id @self to retrieve a user_id’s timeline. If user_id is None
-    or @me, it will return tweets for the current API user.
+    Use the group_id @self to retrieve a user_id’s timeline. If ``user_id`` is
+    None or ``@me``, it will return tweets for the current API user.
 
     group_id can be used to specify the slug of a list for which to return tweets.
     By default the current API user’s lists will be used, but lists owned by other
-    users can be fetched by explicitly passing a username to user_id, e.g. to
-    fetch tweets from the list @exampleuser/example-list you would call
-    get_activities(user_id='exampleuser', group_id='example-list').
+    users can be fetched by explicitly passing a username to ``user_id``, e.g. to
+    fetch tweets from the list ``@exampleuser/example-list`` you would call
+    ``get_activities(user_id='exampleuser', group_id='example-list')``.
 
     Twitter replies default to including a mention of the user they're replying
     to, which overloads mentions a bit. When fetch_mentions is True, we determine
@@ -250,11 +245,18 @@ class Twitter(source.Source):
 
     * it's not a reply, OR
     * it's a reply, but not to the current user, AND
-      * the tweet it's replying to doesn't @-mention the current user
+    * the tweet it's replying to doesn't @-mention the current user
 
     Raises:
-      NotImplementedError: if fetch_likes is True but scrape_headers was not
+      NotImplementedError: if ``fetch_likes`` is True but ``scrape_headers`` was not
         provided to the constructor.
+
+    XXX HACK: this is currently hacked for Bridgy to NOT pass ``min_id`` to the
+    request for fetching activity tweets themselves, but to pass it to all of
+    the requests for filling in replies, retweets, etc. That's because we want
+    to find new replies and retweets of older initial tweets.
+    TODO: find a better way.
+
     """
     if fetch_likes and not self.scrape_headers:
         raise NotImplementedError('fetch_likes requires scrape_headers')
@@ -432,13 +434,14 @@ class Twitter(source.Source):
 
     Includes indirect replies ie reply chains, not just direct replies. Searches
     for @-mentions, matches them to the original tweets with
-    in_reply_to_status_id_str, and recurses until it's walked the entire tree.
+    ``in_reply_to_status_id_str``, and recurses until it's walked the entire
+    tree.
 
     Args:
-      activities: list of activity dicts
+      activities (list of dict)
 
     Returns:
-      same activities list
+      list of dict: same activities
     """
 
     # cache searches for @-mentions for individual users. maps username to dict
@@ -492,15 +495,15 @@ class Twitter(source.Source):
     """Fetches a user's @-mentions and returns them as ActivityStreams.
 
     Tries to only include explicit mentions, not mentions automatically created
-    by @-replying. See the :meth:`get_activities()` docstring for details.
+    by @-replying. See :meth:`get_activities_response` for details.
 
     Args:
-      username: string
-      tweets: list of Twitter API objects. used to find quote tweets quoting them.
-      min_id: only return activities with ids greater than this
+      username (str)
+      tweets (list): of Twitter API objects. used to find quote tweets quoting them.
+      min_id (str): only return activities with ids greater than this
 
     Returns:
-      list of activity dicts
+      list of dict: activities
     """
     # get @-name mentions
     url = API_SEARCH % {
@@ -564,10 +567,10 @@ class Twitter(source.Source):
     """Returns an ActivityStreams comment object.
 
     Args:
-      comment_id: string comment id
-      activity_id: string activity id, optional
-      activity_author_id: string activity author id. Ignored.
-      activity: activity object, optional
+      comment_id (str): comment id
+      activity_id (str): activity id, optional
+      activity_author_id (str): activity author id; ignored
+      activity (dict): original object, optional
     """
     self._validate_id(comment_id)
     url = API_STATUS % comment_id
@@ -577,10 +580,10 @@ class Twitter(source.Source):
     """Returns an ActivityStreams 'share' activity object.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      share_id: string id of the share object
-      activity: activity object, optional
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      share_id (str): id of the share object
+      activity (dict): original object, optional
     """
     self._validate_id(share_id)
     url = API_STATUS % share_id
@@ -598,12 +601,11 @@ class Twitter(source.Source):
     at once. :(
 
     Returns:
-      sequence of actor objects
+      list of dict: actors
 
     Raises:
-      :class:`source.RateLimited` if we hit the rate limit. The partial
-      attribute will have the list of user ids we fetched before hitting the
-      limit.
+      source.RateLimited: if we hit the rate limit. The partial attribute will
+      have the list of user ids we fetched before hitting the limit.
     """
     return self._get_blocklist_fn(API_BLOCKS,
         lambda resp: (self.user_to_actor(user) for user in resp.get('users', [])))
@@ -614,17 +616,16 @@ class Twitter(source.Source):
     May make multiple API calls, using cursors, to fully fetch large blocklists.
     https://dev.twitter.com/overview/api/cursoring
 
-    Subject to the same rate limiting as get_blocklist(), but each API call
-    returns ~4k ids, so realistically this can actually fetch blocklists of up
-    to 75k users at once. Beware though, many Twitter users have even more!
+    Subject to the same rate limiting as :meth:`get_blocklist`, but each API
+    call returns ~4k ids, so realistically this can actually fetch blocklists of
+    up to 75k users at once. Beware though, many Twitter users have even more!
 
     Returns:
-      sequence of string Twitter user ids
+      sequence of str: Twitter user ids
 
     Raises:
-      :class:`source.RateLimited` if we hit the rate limit. The partial
-      attribute will have the list of user ids we fetched before hitting the
-      limit.
+      source.RateLimited: if we hit the rate limit. The partial attribute will
+      have the list of user ids we fetched before hitting the limit.
     """
     return self._get_blocklist_fn(API_BLOCK_IDS, lambda resp: resp.get('ids', []))
 
@@ -648,15 +649,13 @@ class Twitter(source.Source):
     """Creates a tweet, reply tweet, retweet, or favorite.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: bool
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting(bool):
 
     Returns:
-      a CreationResult whose content will be a dict with 'id', 'url',
-      and 'type' keys (all optional) for the newly created Twitter
-      object (or None)
-
+      CreationResult: content will be a dict with ``id``, ``url``, and ``type``
+      keys (all optional) for the newly created Twitter object (or None)
     """
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -667,12 +666,11 @@ class Twitter(source.Source):
 
     Args:
       obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: bool
+      include_link (str):
+      ignore_formatting (bool):
 
     Returns:
-      a CreationResult whose content will be a str HTML
-      snippet (or None)
+      CreationResult or None: content will be an HTML snippet
     """
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -681,22 +679,20 @@ class Twitter(source.Source):
               ignore_formatting=False):
     """Creates or previews creating a tweet, reply tweet, retweet, or favorite.
 
-    https://dev.twitter.com/docs/api/1.1/post/statuses/update
-    https://dev.twitter.com/docs/api/1.1/post/statuses/retweet/:id
-    https://dev.twitter.com/docs/api/1.1/post/favorites/create
+    * https://dev.twitter.com/docs/api/1.1/post/statuses/update
+    * https://dev.twitter.com/docs/api/1.1/post/statuses/retweet/:id
+    * https://dev.twitter.com/docs/api/1.1/post/favorites/create
 
     Args:
-      obj: ActivityStreams object
-      preview: bool
-      include_link: string
-      ignore_formatting: bool
+      obj (dict): ActivityStreams object
+      preview (bool)
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult
-
-      If preview is True, the content will be a str HTML
-      snippet. If False, it will be a dict with 'id' and 'url' keys
-      for the newly created Twitter object.
+      CreationResult: If ``preview`` is True, ``content`` will be an HTML
+      snippet. If False, it will be a dict with ``id`` and ``url`` keys for the
+      newly created Twitter object.
     """
     assert preview in (False, True)
     type = obj.get('objectType')
@@ -896,11 +892,12 @@ class Twitter(source.Source):
     https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices
 
     Args:
-      images: sequence of AS image objects, eg:
-        [{'url': 'http://picture', 'displayName': 'a thing'}, ...]
+      images (sequence of dict): AS image objects, eg::
+
+          [{'url': 'http://picture', 'displayName': 'a thing'}, ...]
 
     Returns:
-      list of string media ids or :class:`CreationResult` on error
+      list of str, or CreationResult on error: media ids
     """
     ids = []
     for image in images:
@@ -943,17 +940,17 @@ class Twitter(source.Source):
 
     Chunked upload consists of multiple API calls:
 
-    * command=INIT, which allocates the media id
-    * command=APPEND for each 5MB block, up to 15MB total
-    * command=FINALIZE
+    * ``command=INIT``, which allocates the media id
+    * ``command=APPEND`` for each 5MB block, up to 15MB total
+    * ``command=FINALIZE``
 
     https://developer.twitter.com/en/docs/media/upload-media/uploading-media/chunked-media-upload
 
     Args:
-      url: string URL of images
+      url (str): URL of images
 
     Returns:
-      string media id or :class:`CreationResult` on error
+      str, or :class:`CreationResult` on error: media id
     """
     video_resp = util.urlopen(url)
     error = self._check_media(url, video_resp, VIDEO_MIME_TYPES, 'MP4 videos',
@@ -1028,16 +1025,16 @@ class Twitter(source.Source):
     """Checks that an image or video is an allowed type and size.
 
     Args:
-      url: string
-      resp: urlopen result object
-      types: sequence of allowed string MIME types
-      label: string, human-readable description of the allowed MIME types, to be
+      url (str):
+      resp (urllib.response.addinfourl): :func:`urllib.request.urlopen`` response
+      types (sequence of str): allowed str MIME types
+      label (str): human-readable description of the allowed MIME types, to be
         used in an error message
-      max_size: int, maximum allowed size, in bytes
+      max_size (int): maximum allowed size, in bytes
 
     Returns:
-      None if the url's type and size are valid, :class:`CreationResult`
-      with abort=True otherwise
+      None or CreationResult: None if the url's type and size are valid,
+      :class:`CreationResult` with ``abort=True`` otherwise
     """
     type = resp.headers.get('Content-Type')
     if not type:
@@ -1060,9 +1057,10 @@ class Twitter(source.Source):
     """Deletes a tweet. The authenticated user must have authored it.
 
     Args:
-      id: int or string, tweet id to delete
+      id (int or str): tweet id to delete
 
-    Returns: CreationResult, content is Twitter API response dict
+    Returns:
+      CreationResult: content is Twitter API response dict
     """
     resp = self.urlopen(API_DELETE_TWEET, data=urllib.parse.urlencode({'id': id}))
     return source.creation_result(resp)
@@ -1071,9 +1069,10 @@ class Twitter(source.Source):
     """Previews deleting a tweet.
 
     Args:
-      id: int or string, tweet id to delete
+      id (int or str): tweet id to delete
 
-    Returns: CreationResult
+    Returns:
+      CreationResult:
     """
     url = self.status_url(self.username or '_', id)
     return source.creation_result(description=f"""<span class="verb">delete</span>
@@ -1081,7 +1080,7 @@ class Twitter(source.Source):
 {self.embed_post({'url': url})}""")
 
   def urlopen(self, url, parse_response=True, **kwargs):
-    """Wraps :func:`urllib2.urlopen()` and adds an OAuth signature."""
+    """Wraps :func:`urllib.request.urlopen` and adds an OAuth signature."""
     if not url.startswith('http'):
       url = API_BASE + url
 
@@ -1111,18 +1110,19 @@ class Twitter(source.Source):
     return request()
 
   def base_object(self, obj):
-    """Returns the 'base' silo object that an object operates on.
+    """Returns the "base" silo object that an object operates on.
 
-    Includes special handling for Twitter photo and video URLs, e.g.
-    https://twitter.com/nelson/status/447465082327298048/photo/1
-    https://twitter.com/nelson/status/447465082327298048/video/1
+    Includes special handling for Twitter photo and video URLs, eg:
+
+    * ``https://twitter.com/nelson/status/447465082327298048/photo/1``
+    * ``https://twitter.com/nelson/status/447465082327298048/video/1``
 
     Args:
-      obj: ActivityStreams object
+      obj (dict): ActivityStreams object
 
     Returns:
-      dict, minimal ActivityStreams object. Usually has at least id and
-      url fields; may also have author.
+      dict: minimal ActivityStreams object. Usually has at least ``id`` and
+      ``url`` fields; may also have author.
     """
     base_obj = super(Twitter, self).base_object(obj)
     url = base_obj.get('url')
@@ -1146,10 +1146,10 @@ class Twitter(source.Source):
     """Converts a tweet to an activity.
 
     Args:
-      tweet: dict, a decoded JSON tweet
+      tweet (dict): a decoded JSON tweet
 
     Returns:
-      an ActivityStreams activity dict, ready to be JSON-encoded
+      dict: ActivityStreams activity
     """
     obj = self.tweet_to_object(tweet)
     activity = {
@@ -1183,7 +1183,7 @@ class Twitter(source.Source):
     """Converts a tweet to an object.
 
     Args:
-      tweet: dict, a decoded JSON tweet
+      tweet (dict): a decoded JSON tweet
 
     Returns:
       an ActivityStreams object dict, ready to be JSON-encoded
@@ -1384,14 +1384,15 @@ class Twitter(source.Source):
 
   @staticmethod
   def _get_entities(tweet):
-    """Merges and returns a tweet's entities and extended_entities.
+    """Merges and returns a tweet's ``entities`` and ``extended_entities``.
 
-    Most entities are in the entities field - urls, hashtags, user_mentions,
-    symbols, etc. Media are special though: extended_entities is always
-    preferred. It has videos, animated gifs, and multiple photos. entities only
-    has one photo at most, either the first or a thumbnail from the video, and
-    its type is always 'photo' even for videos and animated gifs. (The id and
-    id_str will be the same.) So ignore it unless extended_entities is missing.
+    Most entities are in the ``entities`` field - urls, hashtags, user_mentions,
+    symbols, etc. Media are special though: ``extended_entities`` is always
+    preferred. It has videos, animated gifs, and multiple photos. ``entities``
+    only has one photo at most, either the first or a thumbnail from the video,
+    and its type is always ``photo`` even for videos and animated gifs. (The
+    ``id`` and ``id_str`` will be the same.) So ignore it unless
+    ``extended_entities`` is missing.
 
     https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
     """
@@ -1418,12 +1419,12 @@ class Twitter(source.Source):
   def _video_url(self, media):
     """Returns the best video URL from a media object.
 
-    Prefers MIME types that start with video/, then falls back to others.
+    Prefers MIME types that start with ``video/``, then falls back to others.
 
     https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/extended-entities-object
 
-    Twitter videos in extended entities currently often have both .m3u8 (HLS)
-    and .mp4 variants. Twitter threatened to drop the MP4s in Aug 2016, but
+    Twitter videos in extended entities currently often have both ``.m3u8`` (HLS)
+    and ``.mp4`` variants. Twitter threatened to drop the MP4s in Aug 2016, but
     they're still there as of Dec 2017.
 
     https://twittercommunity.com/t/retiring-mp4-video-output-support-on-august-1st-2016/66045
@@ -1431,9 +1432,10 @@ class Twitter(source.Source):
     https://twittercommunity.com/t/mp4-still-appears-despite-of-retiring-announcment/78894
 
     Args:
-      media: dict, Twitter media object
+      media (dict): Twitter media object
 
-    Returns: string URL
+    Returns:
+      str: URL
     """
     variants = media.get('video_info', {}).get('variants')
     if not variants:
@@ -1455,10 +1457,10 @@ class Twitter(source.Source):
     """Converts a user to an actor.
 
     Args:
-      user: dict, a decoded JSON Twitter user
+      user (dict): a decoded JSON Twitter user
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     username = user.get('screen_name')
     if not username:
@@ -1494,10 +1496,10 @@ class Twitter(source.Source):
     """Converts a retweet to a share activity object.
 
     Args:
-      retweet: dict, a decoded JSON tweet
+      retweet (dict): a decoded JSON tweet
 
     Returns:
-      an ActivityStreams object dict
+      dict: ActivityStreams object
     """
     orig = retweet.get('retweeted_status')
     if not orig:
@@ -1522,10 +1524,10 @@ class Twitter(source.Source):
     Right now, only converts favorite events to like objects.
 
     Args:
-      event: dict, a decoded JSON Streaming API event
+      event (dict): a decoded JSON Streaming API event
 
     Returns:
-      an ActivityStreams object dict
+      dict: ActivityStreams object
     """
     source = event.get('source')
     tweet = event.get('target_object')
@@ -1538,11 +1540,11 @@ class Twitter(source.Source):
     """Generates and returns a ActivityStreams like object.
 
     Args:
-      tweet: Twitter tweet dict
-      liker: Twitter user dict
+      tweet (dict): Twitter tweet
+      liker (dict): Twitter user
 
     Returns:
-      ActivityStreams object dict
+      dict: ActivityStreams object
     """
     # TODO: unify with Mastodon._make_like()
     tweet_id = tweet.get('id_str')
@@ -1568,10 +1570,10 @@ class Twitter(source.Source):
     """Converts a timestamp string from RFC 2822 format to ISO 8601.
 
     Example RFC 2822 timestamp string generated by Twitter:
-      'Wed May 23 06:01:13 +0000 2007'
+      ``Wed May 23 06:01:13 +0000 2007``
 
     Resulting ISO 8610 timestamp string:
-      '2007-05-23T06:01:13'
+      ``2007-05-23T06:01:13``
     """
     if not time_str:
       return None

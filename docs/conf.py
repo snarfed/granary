@@ -336,10 +336,12 @@ texinfo_documents = [
 intersphinx_mapping = {
   'flask': ('https://flask.palletsprojects.com/en/latest', None),
   'flask_caching': ('https://flask-caching.readthedocs.io/en/latest', None),
-  'oauth_dropins': ('https://oauth-dropins.readthedocs.io/en/latest', None),
+  'oauth_dropins': ('https://oauth-dropins.readthedocs.io/en/stable', None),
+  'praw': ('https://praw.readthedocs.io/en/stable', None),
   'python': ('https://docs.python.org/3/', None),
-  'requests': ('https://requests.readthedocs.io/en/stable/', None),
-  'urllib3': ('https://urllib3.readthedocs.io/en/latest', None),
-  'webob': ('https://webob.readthedocs.io/en/latest', None),
-  'werkzeug': ('https://werkzeug.palletsprojects.com/en/latest/', None),
+  'requests': ('https://requests.readthedocs.io/en/stable', None),
+  'urllib3': ('https://urllib3.readthedocs.io/en/stable', None),
+  'webob': ('https://webob.readthedocs.io/en/stable', None),
+  'websockets': ('https://websockets.readthedocs.io/en/stable', None),
+  'werkzeug': ('https://werkzeug.palletsprojects.com/en/latest', None),
 }

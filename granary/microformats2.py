@@ -1212,7 +1212,7 @@ def tags_to_html(tags, classname, visible=True):
     visible (bool): whether to visibly include ``displayName``
 
   Returns:
-    str
+    str:
   """
   urls = {}  # stores (url, displayName) tuples
   for tag in tags:
@@ -1275,7 +1275,7 @@ def img(src, alt=''):
     alt (str): ``alt`` attribute value, or None
 
   Returns:
-    str
+    str:
   """
   if isinstance(src, dict):
     assert not alt
@@ -1292,7 +1292,7 @@ def vid(src, poster=''):
     poster (str): optional URL of the poster or preview image
 
   Returns:
-    str
+    str:
   """
   poster_img = f'<img src="{poster}" />' if poster else ''
 
@@ -1308,7 +1308,7 @@ def aud(src):
     src (str): URL of the audio
 
   Returns:
-    str
+    str:
   """
   return f'<audio class="u-audio" src="{src}" controls="controls">Your browser does not support the audio tag. <a href="{src}">Click here to listen directly.</a></audio>'
 
@@ -1323,7 +1323,7 @@ def maybe_linked(text, url=None, linked_classname=None, unlinked_classname=None)
     unlinked_classname (str): optional ``class`` attribute to use if not ``url``
 
   Returns:
-    str
+    str:
   """
   if url:
     classname = f' class="{linked_classname}"' if linked_classname else ''
@@ -1341,7 +1341,7 @@ def maybe_datetime(dt, classname):
     classname (str): class name
 
   Returns:
-    str
+    str:
   """
   if dt:
     return f'<time class="{classname}" datetime="{dt}">{dt}</time>'

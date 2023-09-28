@@ -71,7 +71,7 @@ def url_to_did_web(url):
     url (str)
 
   Returns:
-    str
+    str:
   """
   parsed = urllib.parse.urlparse(url)
   if not parsed.hostname:
@@ -102,7 +102,7 @@ def did_web_to_url(did):
     did (str)
 
   Returns:
-    str
+    str:
   """
   if not did or not DID_WEB_PATTERN.match(did):
     raise ValueError(f'Invalid did:web: {did}')
