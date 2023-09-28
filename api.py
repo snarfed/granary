@@ -168,7 +168,12 @@ def api(path):
   actor = response.get('actor')
   if not actor and request.args.get('format') == 'atom':
     # atom needs actor
-    actor = src.get_actor(user_id) if src else {}
+    if not user_id:
+      flask_util.error('atom output requires user id')
+    try:
+      actor = src.get_actor(user_id) if src else {}
+    except ValueError as e:
+      flask_util.error(f"Couldn't fetch {user_id}: {e}", exc_info=True)
     logger.info(f'Got actor: {json_dumps(actor, indent=2)}')
 
   return app.make_response(response, actor=actor, url=src.BASE_URL)

@@ -206,6 +206,17 @@ class ApiTest(testutil.TestCase):
           },
           resp.get_data(as_text=True), ignore_blanks=True)
 
+  def test_atom_format_no_user_id(self):
+    resp = self.get_response('/fake/?format=atom')
+    self.assertEqual(400, resp.status_code)
+
+  def test_atom_format_cant_fetch_actor(self):
+    self.mox.StubOutWithMock(FakeSource, 'get_actor')
+    FakeSource.get_actor('456').AndRaise(ValueError('foo'))
+
+    resp = self.get_response('/fake/456/?format=atom', '456')
+    self.assertEqual(400, resp.status_code)
+
   def test_html_format(self):
     resp = self.get_response('/fake/?format=html')
     self.assertEqual(200, resp.status_code)
