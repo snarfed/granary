@@ -23,7 +23,7 @@ from ..bluesky import (
 from ..source import ALL, FRIENDS, ME, SELF
 
 ACTOR_AS = {
-  'objectType' : 'person',
+  'objectType': 'person',
   'id': 'did:web:alice.com',
   'displayName': 'Alice',
   'image': [{'url': 'https://alice.com/alice.jpg'}],
@@ -115,9 +115,9 @@ FACETS = [{
     '$type': 'app.bsky.richtext.facet#link',
     'uri': 'http://my/link',
   }],
-  'index' : {
-    'byteStart' : 3,
-    'byteEnd' : 11,
+  'index': {
+    'byteStart': 3,
+    'byteEnd': 11,
   },
 }]
 FACET_TAG = {
@@ -230,7 +230,7 @@ REPOST_AS = {
   'objectType': 'activity',
   'verb': 'share',
   'actor': {
-    'objectType' : 'person',
+    'objectType': 'person',
     'id': 'did:web:bob.com',
     'displayName': 'Bob',
     'url': 'https://bsky.app/profile/bob.com',
@@ -252,8 +252,8 @@ REPOST_BSKY['reason'] = {
 THREAD_AS = copy.deepcopy(POST_AS)
 THREAD_AS['object']['replies'] = [REPLY_AS['object']]
 THREAD_BSKY = {
-  '$type' : 'app.bsky.feed.defs#threadViewPost',
-  'post' : POST_AUTHOR_BSKY['post'],
+  '$type': 'app.bsky.feed.defs#threadViewPost',
+  'post': POST_AUTHOR_BSKY['post'],
   'replies': [REPLY_BSKY['post']],
 }
 
@@ -377,14 +377,14 @@ class BlueskyTest(testutil.TestCase):
         ('foo.com', {'url': 'http://foo.com/path'}),
     ):
       self.assert_equals(expected, from_as1({
-        'objectType' : 'person',
+        'objectType': 'person',
         **fields,
       })['handle'])
 
   def test_from_as1_actor_id_not_url(self):
     """Tests error handling when attempting to generate did:web."""
     self.assertEqual('did:web:foo.com', from_as1({
-      'objectType' : 'person',
+      'objectType': 'person',
       'id': 'tag:foo.com,2001:bar',
     })['did'])
 
@@ -395,7 +395,7 @@ class BlueskyTest(testutil.TestCase):
       'handle': 'rodentdisco.co.uk',
       'description': None,
     }, from_as1({
-      'objectType' : 'person',
+      'objectType': 'person',
       'url': {
         "displayName": "my web site",
         "value": "https://rodentdisco.co.uk/author/dan/"
@@ -417,7 +417,7 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_follow_no_actor(self):
     with self.assertRaises(ValueError):
       from_as1({
-        'objectType' : 'activity',
+        'objectType': 'activity',
         'verb': 'follow',
         'object': 'at://did:plc:foo/com.atproto.actor.profile/123',
       })
@@ -425,7 +425,7 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_follow_no_object(self):
     with self.assertRaises(ValueError):
       from_as1({
-        'objectType' : 'activity',
+        'objectType': 'activity',
         'verb': 'follow',
         'actor': 'at://did:plc:foo/com.atproto.actor.profile/123',
       })
@@ -579,7 +579,7 @@ class BlueskyTest(testutil.TestCase):
   @patch('requests.get')
   def test_get_activities_activity_id(self, mock_get):
     mock_get.return_value = requests_response({
-      '$type' : 'app.bsky.feed.defs#threadViewPost',
+      '$type': 'app.bsky.feed.defs#threadViewPost',
       'thread': THREAD_BSKY,
       'replies': [REPLY_BSKY],
     })
