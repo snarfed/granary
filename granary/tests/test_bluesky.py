@@ -621,9 +621,13 @@ class BlueskyTest(testutil.TestCase):
       to_as1({'$type': 'app.bsky.foo'})
 
   def test_to_as1_embed(self):
-    self.assert_equals(POST_AS_EMBED, to_as1(POST_BSKY_EMBED))
+    self.assert_equals(trim_nulls({
+      **POST_AS_EMBED,
+      'id': None,
+      'url': None,
+    }), to_as1(POST_BSKY_EMBED))
 
-  def test_to_as1_embed(self):
+  def test_to_as1_embed_post_view(self):
     self.assert_equals(POST_AS_EMBED, to_as1(POST_VIEW_BSKY_EMBED))
 
   def test_to_as1_embed_block(self):
