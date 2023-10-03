@@ -217,12 +217,11 @@ def from_as1(obj, out_type=None):
       unsupported
   """
   activity = obj
-  verb = activity.get('verb') or 'post'
   inner_obj = as1.get_object(activity)
-  if inner_obj and verb == 'post':
+  if inner_obj and activity.get('verb') == 'post':
     obj = inner_obj
 
-  type = obj.get('objectType') or 'note'
+  type = as1.object_type(obj)
   actor = as1.get_object(activity, 'actor')
 
   if out_type:
@@ -291,7 +290,7 @@ def from_as1(obj, out_type=None):
     #   'banner': banner,
     # }
 
-  elif verb == 'share':
+  elif type == 'share':
     ret = from_as1(inner_obj)
     ret['reason'] = {
       '$type': 'app.bsky.feed.defs#reasonRepost',
@@ -299,7 +298,7 @@ def from_as1(obj, out_type=None):
       'indexedAt': util.now().isoformat(),
     }
 
-  elif verb == 'like':
+  elif type == 'like':
     ret = {
       '$type': 'app.bsky.feed.like',
       'subject': {
@@ -309,7 +308,7 @@ def from_as1(obj, out_type=None):
       'createdAt': obj.get('published', ''),
     }
 
-  elif verb == 'follow':
+  elif type == 'follow':
     if not actor or not inner_obj:
       raise ValueError('follow activity requires actor and object')
     ret = {
@@ -318,7 +317,7 @@ def from_as1(obj, out_type=None):
       'createdAt': obj.get('published', ''),
     }
 
-  elif verb == 'post' and type in ('article', 'comment', 'link', 'mention', 'note'):
+  elif type in ('article', 'comment', 'link', 'mention', 'note'):
     # convert text to HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
@@ -504,7 +503,7 @@ def from_as1(obj, out_type=None):
     }
 
   else:
-    raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
+    raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
 
   # keep some fields that are required by lexicons
   return util.trim_nulls(ret, ignore=(
