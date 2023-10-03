@@ -42,6 +42,16 @@ BSKY_APP_TYPE_TO_COLLECTION = {
   name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
 }
 
+# maps AS1 objectType to desired output Bluesky lexicon type.
+# used in from_as1
+FROM_AS1_TYPES = {
+  'person': ('app.bsky.actor.profile',
+             'app.bsky.actor.defs#profileView',
+             'app.bsky.actor.defs#profileViewBasic',
+             'app.bsky.actor.defs#profileViewDetailed',
+             ),
+}
+
 BSKY_APP_URL_RE = re.compile(r"""
   ^https://(staging\.)?bsky\.app
   /profile/(?P<id>[^/]+)
@@ -187,15 +197,17 @@ def web_url_to_at_uri(url, handle=None):
     return f'at://{id}'
 
 
-def from_as1(obj, from_url=None):
+def from_as1(obj, out_type=None):
   """Converts an AS1 object to a Bluesky object.
 
   The ``objectType`` field is required.
 
+  TODO: add type kwarg to let us choose which $type to generate? or just always
+  generate record types?
+
   Args:
-    obj (dict)? AS1 object or activity
-    from_url (str): optional URL the original object was fetched from.
-      Currently unused. TODO: remove?
+    obj (dict): AS1 object or activity
+    out_type (str): desired output lexicon ``$type``
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -213,15 +225,20 @@ def from_as1(obj, from_url=None):
   type = obj.get('objectType') or 'note'
   actor = as1.get_object(activity, 'actor')
 
+  if out_type:
+    assert out_type in FROM_AS1_TYPES[type]
+
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type == 'person':
-    # banner is featured image, if available
-    banner = None
-    for img in util.get_list(obj, 'image'):
-      url = img.get('url')
-      if img.get('objectType') == 'featured' and url:
-        banner = url
-        break
+  if type in as1.ACTOR_TYPES:
+    if not out_type:
+      out_type = 'app.bsky.actor.profile'
+
+    ret = {
+      'displayName': obj.get('displayName'),
+      'description': obj.get('summary'),
+    }
+    if out_type == 'app.bsky.actor.profile':
+      return {**ret, '$type': out_type}
 
     url = as1.get_url(obj)
     id = obj.get('id')
@@ -248,25 +265,37 @@ def from_as1(obj, from_url=None):
     else:
       handle = ''
 
-    ret = {
-      '$type': 'app.bsky.actor.defs#profileView',
-      'displayName': obj.get('displayName'),
-      'description': obj.get('summary'),
-      'avatar': util.get_url(obj, 'image'),
-      'banner': banner,
+    ret.update({
+      # TODO: more specific than domain, many users will be on shared domains
       'did': id if id and id.startswith('did:') else did_web,
-      # this is a DID
-      # atproto/packages/pds/src/api/app/bsky/actor/getProfile.ts#38
-      # TODO: should be more specific than domain, many users will be on shared
-      # domains
       'handle': handle,
-    }
+    })
+    # WARNING: this includes description, which isn't technically in this
+    # #profileViewBasic. hopefully clients should just ignore it!
+    # https://atproto.com/specs/lexicon#authority-and-control
+    return {**ret, '$type': out_type}
+
+    # TODO
+    # # banner is featured image, if available
+    # banner = None
+    # for img in util.get_list(obj, 'image'):
+    #   url = img.get('url')
+    #   if img.get('objectType') == 'featured' and url:
+    #     banner = url
+    #     break
+    #
+    # return {
+    #   **ret,
+    #   '$type': out_type,
+    #   'avatar': util.get_url(obj, 'image'),
+    #   'banner': banner,
+    # }
 
   elif verb == 'share':
     ret = from_as1(inner_obj)
     ret['reason'] = {
       '$type': 'app.bsky.feed.defs#reasonRepost',
-      'by': from_as1(actor),
+      'by': from_as1(actor, out_type='app.bsky.actor.defs#profileViewBasic'),
       'indexedAt': util.now().isoformat(),
     }
 
@@ -448,10 +477,7 @@ def from_as1(obj, from_url=None):
     # author
     author = as1.get_object(obj, 'author')
     if author:
-      author = {
-        **from_as1(author),
-        '$type': 'app.bsky.actor.defs#profileViewBasic',
-      }
+      author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic')
 
     ret = {
       '$type': 'app.bsky.feed.defs#feedViewPost',
@@ -494,32 +520,7 @@ def from_as1(obj, from_url=None):
   ))
 
 
-def as1_to_profile(actor):
-  """Converts an AS1 actor to a Bluesky ``app.bsky.actor.profile``.
-
-  Args:
-    actor (dict): AS1 actor
-
-  Raises:
-    ValueError: if ``actor['objectType']`` is not in :const:``as1.ACTOR_TYPES``
-  """
-  type = actor.get('objectType')
-  if type not in as1.ACTOR_TYPES:
-    raise ValueError(f'Expected actor type, got {type}')
-
-  profile = from_as1(actor)
-  assert profile['$type'] == 'app.bsky.actor.defs#profileView'
-  profile['$type'] = 'app.bsky.actor.profile'
-
-  for field in ('avatar', 'banner', 'did', 'handle', 'indexedAt', 'labels',
-                'viewer'):
-    profile.pop(field, None)
-
-  return profile
-
-
-def to_as1(obj, type=None, repo_did=None, repo_handle=None,
-           pds=DEFAULT_PDS):
+def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
   """Converts a Bluesky object to an AS1 object.
 
   Args:

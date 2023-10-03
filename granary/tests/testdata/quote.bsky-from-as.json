@@ -19,7 +19,6 @@
     "indexedAt": "2022-01-02T03:04:05+00:00",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",
-       "avatar": "https://bob.jpg",
        "did": "did:web:bob.bsky.social",
        "displayName": "Bob",
        "handle": "bob.bsky.social"
@@ -38,7 +37,6 @@
         },
         "author": {
           "$type": "app.bsky.actor.defs#profileViewBasic",
-          "avatar": "https://alice.jpg",
           "did": "did:web:alice.example.com",
           "displayName": "Alice",
           "handle": "alice.example.com"

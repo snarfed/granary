@@ -1,9 +1,11 @@
 {
   "objectType" : "person",
-  "id": "did:web:example.com",
-  "url": "https://bsky.app/profile/example.com",
+  "id": "did:plc:foo",
   "image": [{
-    "url": "http://example.com/martin/image"
+    "url": "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=avatar-cid"
+  }, {
+    "objectType": "featured",
+    "url": "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=banner-cid"
   }],
   "displayName": "Martin Smith",
   "username": "example.com",

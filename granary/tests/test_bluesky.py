@@ -10,7 +10,6 @@ from oauth_dropins.webutil.testutil import NOW, requests_response
 import requests
 
 from ..bluesky import (
-  as1_to_profile,
   at_uri_to_web_url,
   blob_to_url,
   Bluesky,
@@ -28,6 +27,7 @@ ACTOR_AS = {
   'displayName': 'Alice',
   'image': [{'url': 'https://alice.com/alice.jpg'}],
   'url': 'https://alice.com/',
+  'summary': 'hi there',
 }
 ACTOR_PROFILE_VIEW_BSKY = {
   '$type': 'app.bsky.actor.defs#profileView',
@@ -35,7 +35,7 @@ ACTOR_PROFILE_VIEW_BSKY = {
   'handle': 'alice.com',
   'displayName': 'Alice',
   'avatar': 'https://alice.com/alice.jpg',
-  'description': None,
+  'description': 'hi there',
 }
 NEW_BLOB = {  # new blob format: https://atproto.com/specs/data-model#blob-type
   '$type': 'blob',
@@ -54,7 +54,7 @@ ACTOR_PROFILE_BSKY = {
   'displayName': 'Alice',
   'avatar': NEW_BLOB,
   'banner': OLD_BLOB,
-  'description': None,
+  'description': 'hi there',
 }
 
 POST_AS = {
@@ -330,7 +330,9 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(POST_BSKY, from_as1(POST_AS), ignore=['uri'])
 
   def test_from_as1_post_with_author(self):
-    self.assert_equals(POST_AUTHOR_BSKY, from_as1(POST_AUTHOR_AS))
+    expected = copy.deepcopy(POST_AUTHOR_BSKY)
+    del expected['post']['author']['avatar']
+    self.assert_equals(expected, from_as1(POST_AUTHOR_AS))
 
   def test_from_as1_post_html_with_tag_indices_not_implemented(self):
     post_as = copy.deepcopy(POST_AS)
@@ -368,6 +370,28 @@ class BlueskyTest(testutil.TestCase):
     }
     self.assert_equals(from_as1(obj), from_as1(activity))
 
+  def test_from_as1_actor(self):
+    expected = {
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+    }
+    self.assert_equals(expected, from_as1(ACTOR_AS))
+    self.assert_equals(expected, from_as1(ACTOR_AS, out_type='app.bsky.actor.profile'))
+
+  def test_from_as1_actor_profileView(self):
+    for type in ('app.bsky.actor.defs#profileView',
+                 'app.bsky.actor.defs#profileViewBasic',
+                 'app.bsky.actor.defs#profileViewDetailed',
+                 ):
+      self.assert_equals({
+        '$type': type,
+        'did': 'did:web:alice.com',
+        'handle': 'alice.com',
+        'displayName': 'Alice',
+        'description': 'hi there',
+      }, from_as1(ACTOR_AS, out_type=type))
+
   def test_from_as1_actor_handle(self):
     for expected, fields in (
         ('', {}),
@@ -379,20 +403,21 @@ class BlueskyTest(testutil.TestCase):
       self.assert_equals(expected, from_as1({
         'objectType': 'person',
         **fields,
-      })['handle'])
+      }, out_type='app.bsky.actor.defs#profileView')['handle'])
 
   def test_from_as1_actor_id_not_url(self):
     """Tests error handling when attempting to generate did:web."""
     self.assertEqual('did:web:foo.com', from_as1({
       'objectType': 'person',
       'id': 'tag:foo.com,2001:bar',
-    })['did'])
+    }, out_type='app.bsky.actor.defs#profileView')['did'])
 
   def test_from_as1_composite_url(self):
     self.assertEqual({
       '$type': 'app.bsky.actor.defs#profileView',
       'did': 'did:web:rodentdisco.co.uk',
       'handle': 'rodentdisco.co.uk',
+      'displayName': None,
       'description': None,
     }, from_as1({
       'objectType': 'person',
@@ -400,7 +425,7 @@ class BlueskyTest(testutil.TestCase):
         "displayName": "my web site",
         "value": "https://rodentdisco.co.uk/author/dan/"
       },
-    }))
+    }, out_type='app.bsky.actor.defs#profileView'))
 
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, from_as1(POST_AS_EMBED))
@@ -430,23 +455,13 @@ class BlueskyTest(testutil.TestCase):
         'actor': 'at://did:plc:foo/com.atproto.actor.profile/123',
       })
 
-  def test_as1_to_profile(self):
-    self.assert_equals({
-      '$type': 'app.bsky.actor.profile',
-      'description': None,
-      'displayName': 'Alice',
-    }, as1_to_profile(ACTOR_AS))
-
-  def test_as1_to_profile_not_actor(self):
-    with self.assertRaises(ValueError):
-      as1_to_profile(POST_AS)
-
   def test_to_as1_profile(self):
     self.assert_equals({
       'objectType': 'person',
       'id': 'did:plc:foo',
       'displayName': 'Alice',
       'username': 'han.dull',
+      'summary': 'hi there',
       'image': [{
         'url': NEW_BLOB_URL,
       }, {
@@ -459,11 +474,13 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'objectType': 'person',
       'displayName': 'Alice',
+      'summary': 'hi there',
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did=None, pds='http://foo'))
     self.assert_equals({
       'objectType': 'person',
       'id': 'did:plc:foo',
       'displayName': 'Alice',
+      'summary': 'hi there',
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', pds=None))
 
   def test_to_as1_post(self):

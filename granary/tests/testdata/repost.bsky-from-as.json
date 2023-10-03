@@ -24,7 +24,7 @@
   "reason": {
     "$type": "app.bsky.feed.defs#reasonRepost",
     "by": {
-      "$type": "app.bsky.actor.defs#profileView",
+      "$type": "app.bsky.actor.defs#profileViewBasic",
       "did": "did:web:example.com",
       "handle": "example.com",
       "displayName": "Alice"

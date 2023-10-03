@@ -8,8 +8,7 @@
       "$type": "app.bsky.actor.defs#profileViewBasic",
       "did": "did:plc:asdf",
       "displayName": "Ryan Barrett",
-      "handle": "example.com",
-      "avatar": "http://example.com/ryan/image"
+      "handle": "example.com"
     },
     "record": {
       "$type": "app.bsky.feed.post",
