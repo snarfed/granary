@@ -284,6 +284,7 @@ Changelog
 ### 6.2 - unreleased
 
 * `bluesky`:
+  * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
   * `to_as1`: convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
   * `to_as1`: translate `handle` to `username`, add new `repo_handle` kwarg.
   * Add new `blob_to_url` function.

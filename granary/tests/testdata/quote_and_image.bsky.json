@@ -22,7 +22,7 @@
           "images": [{
             "$type": "app.bsky.embed.images#image",
             "alt": "",
-            "image": "TODO"
+            "image": {"blob": "TODO"}
           }]
         }
       }

@@ -1,34 +1,8 @@
 {
-  "$type": "app.bsky.feed.defs#feedViewPost",
-  "post": {
-    "$type": "app.bsky.feed.defs#postView",
-    "uri": "http://example.com/original/post",
-    "cid": "TODO",
-    "author": {
-      "$type": "app.bsky.actor.defs#profileViewBasic",
-      "did": "did:web:example.com",
-      "handle": "example.com",
-      "displayName": "Bob"
-    },
-    "record": {
-      "$type": "app.bsky.feed.post",
-      "text": "The original post",
-      "createdAt": ""
-    },
-    "replyCount": 0,
-    "repostCount": 0,
-    "upvoteCount": 0,
-    "downvoteCount": 0,
-    "indexedAt": "2022-01-02T03:04:05+00:00"
+  "$type": "app.bsky.feed.repost",
+  "subject": {
+    "uri": null,
+    "cid": "TODO"
   },
-  "reason": {
-    "$type": "app.bsky.feed.defs#reasonRepost",
-    "by": {
-      "$type": "app.bsky.actor.defs#profileViewBasic",
-      "did": "did:web:example.com",
-      "handle": "example.com",
-      "displayName": "Alice"
-    },
-    "indexedAt": "2022-01-02T03:04:05+00:00"
-  }
+  "createdAt": "2012-12-05T00:58:26+00:00"
 }

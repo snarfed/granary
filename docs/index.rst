@@ -453,12 +453,21 @@ Changelog
 
 -  ``bluesky``:
 
+   -  Fully support both ``record`` and ``object`` types in ``from_as1``
+      and ``to_as1``. Use ``to_as1``\ ’s ``type`` kwarg and
+      ``from_as1``\ ’s ``out_type`` kwarg to disambiguate.
    -  ``to_as1``: convert blobs, `both new and old
       style <https://atproto.com/specs/data-model#blob-type>`__, to PDS
       ``getBlob`` URLs.
    -  ``to_as1``: translate ``handle`` to ``username``, add new
       ``repo_handle`` kwarg.
    -  Add new ``blob_to_url`` function.
+   -  ``from_as1``: add ``out_type`` kwarg to specify desired output
+      type, eg ``app.bsky.actor.profile`` vs
+      ``app.bsky.actor.defs#profileViewBasic`` vs
+      ``app.bsky.actor.defs#profileView``.
+   -  Delete ``as1_to_profile``, switch ``from_as1`` to return
+      ``$type: app.bsky.actor.profile``.
 
 -  ``facebook``:
 

@@ -24,7 +24,7 @@ RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
   ('rsvp-interested', 'interested'),
   ('invite', 'invited'),
 ))
-VERBS_WITH_OBJECT = {
+VERBS_WITH_OBJECT = frozenset((
   'accept',
   'follow',
   'like',
@@ -32,19 +32,28 @@ VERBS_WITH_OBJECT = {
   'reject',
   'share',
   'stop-following',
-} | set(RSVP_VERB_TO_COLLECTION.keys())
+)) | set(RSVP_VERB_TO_COLLECTION.keys())
 
 # objectTypes that can be actors. technically this is based on AS2 semantics,
 # since it's unspecified in AS1.
 # https://www.w3.org/TR/activitystreams-core/#actors
 # https://activitystrea.ms/specs/json/1.0/#activity
-ACTOR_TYPES = {
+ACTOR_TYPES = frozenset((
   'application',
   'group',
   'organization',
   'person',
   'service',
-}
+))
+
+# this isn't well defined 🤷
+POST_TYPES = frozenset((
+  'article',
+  'comment',
+  'link',
+  'mention',
+  'note',
+))
 
 # used in original_post_discovery
 _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')

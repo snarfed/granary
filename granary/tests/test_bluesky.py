@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
+from oauth_dropins.webutil.util import trim_nulls
 import requests
 
 from ..bluesky import (
@@ -68,31 +69,32 @@ POST_AS = {
     'content': 'My original post',
   }
 }
-POST_HTML = """
-<article class="h-entry">
-  <main class="e-content">My original post</main>
-  <a class="u-url" href="http://orig/post"></a>
-  <time class="dt-published" datetime="2007-07-07T03:04:05"></time>
-</article>
-"""
 POST_BSKY = {
-  '$type': 'app.bsky.feed.defs#feedViewPost',
-  'post': {
-    '$type': 'app.bsky.feed.defs#postView',
-    'uri': 'at://did/app.bsky.feed.post/tid',
-    'cid': 'TODO',
-    'record': {
-      '$type': 'app.bsky.feed.post',
-      'text': 'My original post',
-      'createdAt': '2007-07-07T03:04:05',
-    },
-    'replyCount': 0,
-    'repostCount': 0,
-    'upvoteCount': 0,
-    'downvoteCount': 0,
-    'indexedAt': '2022-01-02T03:04:05+00:00',
-  }
+  '$type': 'app.bsky.feed.post',
+  'text': 'My original post',
+  'createdAt': '2007-07-07T03:04:05',
 }
+POST_VIEW_BSKY = {
+  '$type': 'app.bsky.feed.defs#postView',
+  'uri': 'at://did/app.bsky.feed.post/tid',
+  'cid': 'TODO',
+  'record': {
+    '$type': 'app.bsky.feed.post',
+    'text': 'My original post',
+    'createdAt': '2007-07-07T03:04:05',
+  },
+  'author': {
+    '$type': 'app.bsky.actor.defs#profileViewBasic',
+    'did': '',
+    'handle': '',
+  },
+  'replyCount': 0,
+  'repostCount': 0,
+  'upvoteCount': 0,
+  'downvoteCount': 0,
+  'indexedAt': '2022-01-02T03:04:05+00:00',
+}
+
 POST_AUTHOR_AS = copy.deepcopy(POST_AS)
 POST_AUTHOR_AS['object'].update({
   'author': ACTOR_AS,
@@ -103,10 +105,14 @@ POST_AUTHOR_PROFILE_AS['object']['author'].update({
   'username': 'alice.com',
   'url': 'https://bsky.app/profile/alice.com',
 })
-POST_AUTHOR_BSKY = copy.deepcopy(POST_BSKY)
-POST_AUTHOR_BSKY['post']['author'] = {
+POST_AUTHOR_BSKY = copy.deepcopy(POST_VIEW_BSKY)
+POST_AUTHOR_BSKY['author'] = {
   **ACTOR_PROFILE_VIEW_BSKY,
   '$type': 'app.bsky.actor.defs#profileViewBasic',
+}
+POST_FEED_VIEW_BSKY = {
+  '$type': 'app.bsky.feed.defs#feedViewPost',
+  'post': POST_AUTHOR_BSKY,
 }
 
 FACETS = [{
@@ -142,14 +148,17 @@ POST_AS_EMBED = {
   'attachments': [EMBED_EXTERNAL_ATTACHMENT],
 }
 POST_BSKY_EMBED = copy.deepcopy(POST_BSKY)
-POST_BSKY_EMBED['post']['record']['embed'] = {
+POST_BSKY_EMBED['embed'] = {
   '$type': 'app.bsky.embed.external',
   'external': {
     '$type': 'app.bsky.embed.external#external',
     **EMBED_EXTERNAL,
   },
 }
-POST_BSKY_EMBED['post']['embed'] = {
+
+POST_VIEW_BSKY_EMBED = copy.deepcopy(POST_VIEW_BSKY)
+POST_VIEW_BSKY_EMBED['record']['embed'] = POST_BSKY_EMBED['embed']
+POST_VIEW_BSKY_EMBED['embed'] = {
   '$type': 'app.bsky.embed.external#view',
   'external': {
     '$type': 'app.bsky.embed.external#viewExternal',
@@ -158,25 +167,30 @@ POST_BSKY_EMBED['post']['embed'] = {
 }
 POST_AS_IMAGES = copy.deepcopy(POST_AS)
 POST_AS_IMAGES['object']['image'] = [{
-  'url': 'http://my/pic',
+  'url': NEW_BLOB_URL,
   'displayName': 'my alt text',
 }]
-POST_BSKY_IMAGES = copy.deepcopy(POST_BSKY)
-POST_BSKY_IMAGES['post']['embed'] = {
-  '$type': 'app.bsky.embed.images#view',
-  'images': [{
-    '$type': 'app.bsky.embed.images#viewImage',
-    'alt': 'my alt text',
-    'fullsize': 'http://my/pic',
-    'thumb': 'http://my/pic',
-  }],
-}
-POST_BSKY_IMAGES['post']['record']['embed'] = {
+
+EMBED_IMAGES = {
   '$type': 'app.bsky.embed.images',
   'images': [{
     '$type': 'app.bsky.embed.images#image',
     'alt': 'my alt text',
-    'image': 'TODO',
+    'image': NEW_BLOB,
+  }],
+}
+POST_BSKY_IMAGES = copy.deepcopy(POST_BSKY)
+POST_BSKY_IMAGES['embed'] = EMBED_IMAGES
+
+POST_VIEW_BSKY_IMAGES = copy.deepcopy(POST_VIEW_BSKY)
+POST_VIEW_BSKY_IMAGES['record']['embed'] = EMBED_IMAGES
+POST_VIEW_BSKY_IMAGES['embed'] = {
+  '$type': 'app.bsky.embed.images#view',
+  'images': [{
+    '$type': 'app.bsky.embed.images#viewImage',
+    'alt': 'my alt text',
+    'fullsize': NEW_BLOB_URL,
+    'thumb': NEW_BLOB_URL,
   }],
 }
 
@@ -195,35 +209,28 @@ REPLY_AS = {
     }],
   },
 }
-REPLY_HTML = """
-<article class="h-entry">
-  <main class="e-content">I hereby reply to this</a></main>
-  <a class="u-in-reply-to" href="http://orig/post"></a>
-  <a class="u-url" href="http://a/reply"></a>
-  <time class="dt-published" datetime="2008-08-08T03:04:05"></time>
-</article>
-"""
-REPLY_BSKY = copy.deepcopy(POST_BSKY)
-REPLY_BSKY['post'].update({
-  'uri': 'at://did/app.bsky.feed.post/tid',
-  'record': {
-    '$type': 'app.bsky.feed.post',
-    'text': 'I hereby reply to this',
-    'createdAt': '2008-08-08T03:04:05',
-    'reply': {
-      '$type': 'app.bsky.feed.post#replyRef',
-      'root': {
-        '$type': 'com.atproto.repo.strongRef',
-        'uri': '',
-        'cid': 'TODO',
-      },
-      'parent': {
-        '$type': 'com.atproto.repo.strongRef',
-        'uri': 'at://did/app.bsky.feed.post/parent-tid',
-        'cid': 'TODO',
-      },
+REPLY_BSKY = {
+  '$type': 'app.bsky.feed.post',
+  'text': 'I hereby reply to this',
+  'createdAt': '2008-08-08T03:04:05',
+  'reply': {
+    '$type': 'app.bsky.feed.post#replyRef',
+    'root': {
+      '$type': 'com.atproto.repo.strongRef',
+      'uri': '',
+      'cid': 'TODO',
+    },
+    'parent': {
+      '$type': 'com.atproto.repo.strongRef',
+      'uri': 'at://did/app.bsky.feed.post/parent-tid',
+      'cid': 'TODO',
     },
   },
+}
+REPLY_POST_VIEW_BSKY = copy.deepcopy(POST_VIEW_BSKY)
+REPLY_POST_VIEW_BSKY.update({
+  'uri': 'at://did/app.bsky.feed.post/tid',
+  'record': REPLY_BSKY,
 })
 
 REPOST_AS = {
@@ -237,8 +244,15 @@ REPOST_AS = {
   },
   'object': POST_AUTHOR_PROFILE_AS['object'],
 }
-REPOST_BSKY = copy.deepcopy(POST_AUTHOR_BSKY)
-REPOST_BSKY['reason'] = {
+REPOST_BSKY = {
+  '$type': 'app.bsky.feed.repost',
+  'subject': {
+    'uri': 'at://did/app.bsky.feed.post/tid',
+    'cid': 'TODO',
+  },
+  'createdAt': '',
+}
+REPOST_BSKY_REASON = {
   '$type': 'app.bsky.feed.defs#reasonRepost',
   'by': {
     '$type': 'app.bsky.actor.defs#profileViewBasic',
@@ -248,13 +262,18 @@ REPOST_BSKY['reason'] = {
   },
   'indexedAt': NOW.isoformat(),
 }
+REPOST_BSKY_FEED_VIEW_POST = {
+  '$type': 'app.bsky.feed.defs#feedViewPost',
+  'post': POST_AUTHOR_BSKY,
+  'reason': REPOST_BSKY_REASON,
+}
 
 THREAD_AS = copy.deepcopy(POST_AS)
 THREAD_AS['object']['replies'] = [REPLY_AS['object']]
 THREAD_BSKY = {
   '$type': 'app.bsky.feed.defs#threadViewPost',
-  'post': POST_AUTHOR_BSKY['post'],
-  'replies': [REPLY_BSKY['post']],
+  'post': POST_AUTHOR_BSKY,
+  'replies': [REPLY_BSKY],
 }
 
 class BlueskyTest(testutil.TestCase):
@@ -326,13 +345,28 @@ class BlueskyTest(testutil.TestCase):
       with self.assertRaises(ValueError):
         web_url_to_at_uri(url)
 
+  def test_from_as1_unsupported_out_type(self):
+    with self.assertRaises(ValueError):
+      from_as1({'objectType': 'image'}, out_type='foo')  # no matching objectType
+
+    with self.assertRaises(ValueError):
+      from_as1({'objectType': 'person'}, out_type='foo')  # mismatched out_type
+
   def test_from_as1_post(self):
     self.assert_equals(POST_BSKY, from_as1(POST_AS), ignore=['uri'])
 
+  def test_from_as1_post_out_type_postView(self):
+    got = from_as1(POST_AS, out_type='app.bsky.feed.defs#postView')
+    self.assert_equals(POST_VIEW_BSKY, got, ignore=['uri'])
+
+  def test_from_as1_post_out_type_feedViewPost(self):
+    got = from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#feedViewPost')
+    self.assert_equals(POST_FEED_VIEW_BSKY, got, ignore=['uri'])
+
   def test_from_as1_post_with_author(self):
     expected = copy.deepcopy(POST_AUTHOR_BSKY)
-    del expected['post']['author']['avatar']
-    self.assert_equals(expected, from_as1(POST_AUTHOR_AS))
+    got = from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#postView')
+    self.assert_equals(expected, got)
 
   def test_from_as1_post_html_with_tag_indices_not_implemented(self):
     post_as = copy.deepcopy(POST_AS)
@@ -351,13 +385,24 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my/link',
     }]
 
-    expected = copy.deepcopy(POST_BSKY)
-    expected['post']['record']['facets'] = copy.deepcopy(FACETS)
-    del expected['post']['record']['facets'][0]['index']
+    expected = {
+      **POST_BSKY,
+      'facets': copy.deepcopy(FACETS)
+    }
+    del expected['facets'][0]['index']
+
     self.assert_equals(expected, from_as1(post_as))
 
   def test_from_as1_post_with_image(self):
-    self.assert_equals(POST_BSKY_IMAGES, from_as1(POST_AS_IMAGES))
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    del expected['embed']['images'][0]['image']
+    self.assert_equals(expected, from_as1(POST_AS_IMAGES))
+
+  def test_from_as1_post_view_with_image(self):
+    expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
+    del expected['record']['embed']['images'][0]['image']
+    got = from_as1(POST_AS_IMAGES, out_type='app.bsky.feed.defs#postView')
+    self.assert_equals(expected, got)
 
   def test_from_as1_object_vs_activity(self):
     obj = {
@@ -385,11 +430,8 @@ class BlueskyTest(testutil.TestCase):
                  'app.bsky.actor.defs#profileViewDetailed',
                  ):
       self.assert_equals({
+        **ACTOR_PROFILE_VIEW_BSKY,
         '$type': type,
-        'did': 'did:web:alice.com',
-        'handle': 'alice.com',
-        'displayName': 'Alice',
-        'description': 'hi there',
       }, from_as1(ACTOR_AS, out_type=type))
 
   def test_from_as1_actor_handle(self):
@@ -417,8 +459,6 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.actor.defs#profileView',
       'did': 'did:web:rodentdisco.co.uk',
       'handle': 'rodentdisco.co.uk',
-      'displayName': None,
-      'description': None,
     }, from_as1({
       'objectType': 'person',
       'url': {
@@ -430,14 +470,38 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, from_as1(POST_AS_EMBED))
 
+  def test_from_as1_embed_out_type_postView(self):
+    got = from_as1(POST_AS_EMBED, out_type='app.bsky.feed.defs#postView')
+    self.assert_equals(POST_VIEW_BSKY_EMBED, got)
+
   def test_from_as1_facet_link_and_embed(self):
     expected = copy.deepcopy(POST_BSKY_EMBED)
-    expected['post']['record']['facets'] = FACETS
+    expected['facets'] = FACETS
 
     self.assert_equals(expected, from_as1({
       **POST_AS_EMBED,
       'tags': [FACET_TAG],
     }))
+
+  def test_from_as1_repost(self):
+    self.assert_equals(REPOST_BSKY, from_as1(REPOST_AS))
+
+  def test_from_as1_repost_reasonRepost(self):
+    got = from_as1(REPOST_AS, out_type='app.bsky.feed.defs#reasonRepost')
+    self.assert_equals(REPOST_BSKY_REASON, got)
+
+  def test_from_as1_repost_feedViewPost(self):
+    got = from_as1(REPOST_AS, out_type='app.bsky.feed.defs#feedViewPost')
+    self.assert_equals(REPOST_BSKY_FEED_VIEW_POST, got)
+
+  def test_from_as1_reply(self):
+    self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
+    self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS['object']))
+
+  def test_from_as1_reply_postView(self):
+    for input in REPLY_AS, REPLY_AS['object']:
+      got = from_as1(input, out_type='app.bsky.feed.defs#postView')
+      self.assert_equals(REPLY_POST_VIEW_BSKY, got)
 
   def test_from_as1_follow_no_actor(self):
     with self.assertRaises(ValueError):
@@ -459,8 +523,8 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'objectType': 'person',
       'id': 'did:plc:foo',
-      'displayName': 'Alice',
       'username': 'han.dull',
+      'displayName': 'Alice',
       'summary': 'hi there',
       'image': [{
         'url': NEW_BLOB_URL,
@@ -469,6 +533,13 @@ class BlueskyTest(testutil.TestCase):
         'url': OLD_BLOB_URL,
       }],
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', repo_handle='han.dull'))
+
+  def test_to_as1_profile_view(self):
+    self.assert_equals({
+      **ACTOR_AS,
+      'username': 'alice.com',
+      'url': 'https://bsky.app/profile/alice.com',
+      }, to_as1(ACTOR_PROFILE_VIEW_BSKY))
 
   def test_to_as1_profile_no_repo_did_handle_or_pds(self):
     self.assert_equals({
@@ -484,7 +555,17 @@ class BlueskyTest(testutil.TestCase):
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', pds=None))
 
   def test_to_as1_post(self):
-    self.assert_equals(POST_AS['object'], to_as1(POST_BSKY))
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'My original post',
+      'published': '2007-07-07T03:04:05',
+    }, to_as1(POST_BSKY))
+
+  def test_to_as1_post_view(self):
+    self.assert_equals(POST_AS['object'], to_as1(POST_VIEW_BSKY))
+
+  def test_from_as1_feed_view_post(self):
+    self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
 
   def test_to_as1_post_with_author(self):
     self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_AUTHOR_BSKY))
@@ -492,12 +573,36 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_post_type_kwarg(self):
     post_bsky = copy.deepcopy(POST_AUTHOR_BSKY)
     type = post_bsky.pop('$type')
-    del post_bsky['post']['$type']
-    del post_bsky['post']['author']['$type']
+    del post_bsky['author']['$type']
     self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(post_bsky, type=type))
 
+  def test_to_as1_post_with_image_no_repo_did(self):
+    self.assert_equals(trim_nulls({
+      **POST_AS_IMAGES['object'],
+      'id': None,
+      'image': None,
+      'url': None,
+    }), to_as1(POST_BSKY_IMAGES))
+
   def test_to_as1_post_with_image(self):
-    self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_BSKY_IMAGES))
+    self.assert_equals(trim_nulls({
+      **POST_AS_IMAGES['object'],
+      'id': None,
+      'url': None,
+    }), to_as1(POST_BSKY_IMAGES, repo_did='did:plc:foo'))
+
+  def test_to_as1_post_view_with_image(self):
+    self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_VIEW_BSKY_IMAGES))
+
+  def test_to_as1_reply(self):
+    self.assert_equals(trim_nulls({
+      **REPLY_AS['object'],
+      'id': None,
+      'url': None,
+    }), to_as1(REPLY_BSKY))
+
+  def test_to_as1_reply_postView(self):
+    self.assert_equals(REPLY_AS['object'], to_as1(REPLY_POST_VIEW_BSKY))
 
   def test_to_as1_missing_objectType(self):
     with self.assertRaises(ValueError):
@@ -518,6 +623,9 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_embed(self):
     self.assert_equals(POST_AS_EMBED, to_as1(POST_BSKY_EMBED))
 
+  def test_to_as1_embed(self):
+    self.assert_equals(POST_AS_EMBED, to_as1(POST_VIEW_BSKY_EMBED))
+
   def test_to_as1_embed_block(self):
     self.assertIsNone(to_as1({
       '$type': 'app.bsky.embed.record#viewBlocked',
@@ -526,13 +634,14 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_facet_link_and_embed(self):
     bsky = copy.deepcopy(POST_BSKY_EMBED)
-    bsky['post']['record']['facets'] = FACETS
+    bsky['facets'] = FACETS
 
-    expected = {
+    self.assert_equals(trim_nulls({
       **POST_AS_EMBED,
+      'id': None,
+      'url': None,
       'tags': [FACET_TAG],
-    }
-    self.assert_equals(expected, to_as1(bsky))
+    }), to_as1(bsky))
 
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
@@ -575,7 +684,7 @@ class BlueskyTest(testutil.TestCase):
   def test_get_activities_friends(self, mock_get):
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
-      'feed': [POST_AUTHOR_BSKY, REPOST_BSKY],
+      'feed': [POST_FEED_VIEW_BSKY, REPOST_BSKY_FEED_VIEW_POST],
     })
 
     expected_repost = copy.deepcopy(REPOST_AS)
