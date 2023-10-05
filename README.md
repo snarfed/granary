@@ -290,6 +290,7 @@ Changelog
   * Add new `blob_to_url` function.
   * `from_as1`: add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
   * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
+  * Convert HTML `summary` and `content` to plain text.
 * `facebook`:
   * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
 

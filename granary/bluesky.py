@@ -16,7 +16,7 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
 
 from . import as1
-from .source import FRIENDS, Source, OMIT_LINK
+from .source import FRIENDS, html_to_text, Source, OMIT_LINK
 
 logger = logging.getLogger(__name__)
 
@@ -250,7 +250,7 @@ def from_as1(obj, out_type=None):
   if type in as1.ACTOR_TYPES:
     ret = {
       'displayName': obj.get('displayName'),
-      'description': obj.get('summary'),
+      'description': html_to_text(obj.get('summary')),
     }
     if not out_type or out_type == 'app.bsky.actor.profile':
       return trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
@@ -351,7 +351,7 @@ def from_as1(obj, out_type=None):
     src = Bluesky('unused')
     content = obj.get('content')
     text = obj.get('summary') or content or obj.get('name') or ''
-    text = src.truncate(text, None, OMIT_LINK)
+    text = src.truncate(html_to_text(text), None, OMIT_LINK)
 
     facets = []
     if text == content:

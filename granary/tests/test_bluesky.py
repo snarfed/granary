@@ -368,16 +368,21 @@ class BlueskyTest(testutil.TestCase):
     got = from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(expected, got)
 
-  def test_from_as1_post_html_with_tag_indices_not_implemented(self):
+  def test_from_as1_post_html_skips_tag_indices(self):
     post_as = copy.deepcopy(POST_AS)
     post_as['object'].update({
       'content': '<em>some html</em>',
       'content_is_html': True,
-      'tags': [FACET_TAG],
+      # not set because content is HTML
+      # 'tags': [FACET_TAG],
     })
 
-    with self.assertRaises(NotImplementedError):
-      from_as1(post_as)
+    # with self.assertRaises(NotImplementedError):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '_some html_',
+      'createdAt': '2007-07-07T03:04:05',
+    },from_as1(post_as))
 
   def test_from_as1_post_without_tag_indices(self):
     post_as = copy.deepcopy(POST_AS)
@@ -403,6 +408,16 @@ class BlueskyTest(testutil.TestCase):
     del expected['record']['embed']['images'][0]['image']
     got = from_as1(POST_AS_IMAGES, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(expected, got)
+
+  def test_from_as1_post_content_html(self):
+    self.assertEqual({
+      '$type': 'app.bsky.feed.post',
+      'text': 'Some\n_HTML_',
+      'createdAt': '',
+    }, from_as1({
+      'objectType': 'note',
+      'content': '<p>Some <br> <em>HTML</em></p>',
+    }))
 
   def test_from_as1_object_vs_activity(self):
     obj = {
@@ -453,6 +468,15 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'person',
       'id': 'tag:foo.com,2001:bar',
     }, out_type='app.bsky.actor.defs#profileView')['did'])
+
+  def test_from_as1_actor_description_html(self):
+    self.assertEqual({
+      '$type': 'app.bsky.actor.profile',
+      'description': 'Some\n_HTML_',
+    }, from_as1({
+      'objectType': 'person',
+      'summary': '<p>Some <br> <em>HTML</em></p>',
+    }))
 
   def test_from_as1_composite_url(self):
     self.assertEqual({
