@@ -209,7 +209,7 @@ def web_url_to_at_uri(url, handle=None):
     return f'at://{id}'
 
 
-def from_as1(obj, out_type=None):
+def from_as1(obj, out_type=None, blobs=None):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -221,6 +221,9 @@ def from_as1(obj, out_type=None):
   Args:
     obj (dict): AS1 object or activity
     out_type (str): desired output lexicon ``$type``
+    blobs (dict): optional mapping from str URL to ``blob`` dict to use in the
+      returned object. If not provided, or if this doesn't have an ``image`` or
+      similar URL in the input object, its output blob will be omitted.
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -228,6 +231,7 @@ def from_as1(obj, out_type=None):
   Raises:
     ValueError: if the ``objectType`` or ``verb`` fields are missing or
       unsupported
+
   """
   activity = obj
   inner_obj = as1.get_object(activity)
@@ -237,6 +241,8 @@ def from_as1(obj, out_type=None):
 
   type = as1.object_type(obj)
   actor = as1.get_object(activity, 'actor')
+  if blobs is None:
+    blobs = {}
 
   # validate out_type
   if out_type:
@@ -248,9 +254,20 @@ def from_as1(obj, out_type=None):
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type in as1.ACTOR_TYPES:
+    # avatar and banner. banner is featured image, if available
+    avatar = util.get_url(obj, 'image')
+    banner = None
+    for img in util.get_list(obj, 'image'):
+      url = img.get('url')
+      if img.get('objectType') == 'featured' and url:
+        banner = url
+        break
+
     ret = {
       'displayName': obj.get('displayName'),
       'description': html_to_text(obj.get('summary')),
+      'avatar': blobs.get(avatar),
+      'banner': blobs.get(banner),
     }
     if not out_type or out_type == 'app.bsky.actor.profile':
       return trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
@@ -283,20 +300,12 @@ def from_as1(obj, out_type=None):
               else domain if domain
               else '')
 
-    # banner is featured image, if available
-    banner = None
-    for img in util.get_list(obj, 'image'):
-      url = img.get('url')
-      if img.get('objectType') == 'featured' and url:
-        banner = url
-        break
-
     ret.update({
       '$type': out_type,
       # TODO: more specific than domain, many users will be on shared domains
       'did': id if id and id.startswith('did:') else did_web,
       'handle': handle,
-      'avatar': util.get_url(obj, 'image'),
+      'avatar': avatar,
       'banner': banner,
     })
     # WARNING: this includes description, which isn't technically in this
@@ -411,7 +420,7 @@ def from_as1(obj, out_type=None):
         '$type': 'app.bsky.embed.images',
         'images': [{
           '$type': 'app.bsky.embed.images#image',
-          'image': {},  # TODO: this is a blob
+          'image': blobs.get(util.get_url(img)) or {},
           'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }

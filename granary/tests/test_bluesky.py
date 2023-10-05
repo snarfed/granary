@@ -276,6 +276,14 @@ THREAD_BSKY = {
   'replies': [REPLY_BSKY],
 }
 
+BLOB = {
+  '$type': 'blob',
+  'ref': 'a CID',
+  'mimeType': 'foo/bar',
+  'size': 13,
+}
+
+
 class BlueskyTest(testutil.TestCase):
 
   def setUp(self):
@@ -403,6 +411,11 @@ class BlueskyTest(testutil.TestCase):
     del expected['embed']['images'][0]['image']
     self.assert_equals(expected, from_as1(POST_AS_IMAGES))
 
+  def test_from_as1_post_with_image_blobs(self):
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    expected['embed']['images'][0]['image'] = BLOB
+    self.assert_equals(expected, from_as1(POST_AS_IMAGES, blobs={NEW_BLOB_URL: BLOB}))
+
   def test_from_as1_post_view_with_image(self):
     expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
     del expected['record']['embed']['images'][0]['image']
@@ -438,6 +451,14 @@ class BlueskyTest(testutil.TestCase):
     }
     self.assert_equals(expected, from_as1(ACTOR_AS))
     self.assert_equals(expected, from_as1(ACTOR_AS, out_type='app.bsky.actor.profile'))
+
+  def test_from_as1_actor_blobs(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': BLOB,
+    }, from_as1(ACTOR_AS, blobs={'https://alice.com/alice.jpg': BLOB}))
 
   def test_from_as1_actor_profileView(self):
     for type in ('app.bsky.actor.defs#profileView',

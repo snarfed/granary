@@ -289,6 +289,7 @@ Changelog
   * `to_as1`: translate `handle` to `username`, add new `repo_handle` kwarg.
   * Add new `blob_to_url` function.
   * `from_as1`: add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
+  * `from_as1`: add `blobs` kwarg to provide blob objects to use for image URLs.
   * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
   * Convert HTML `summary` and `content` to plain text.
 * `facebook`:
