@@ -220,3 +220,21 @@ class ActivityStreams2Test(testutil.TestCase):
     for bad in None, {}, '', {'a': 'b'}, {'preferredUsername': 'me'}:
       with self.subTest(actor=bad):
         self.assertIsNone(as2.address(bad))
+
+  def test_featured_image_overrides_media_type(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'https://mastodon.xyz/users/alice',
+      'image': [{
+        'url': 'https://banner/',
+        'objectType': 'featured',
+        'mimeType': 'image/jpeg',
+       }],
+    }, as2.to_as1({
+      'type': 'Person',
+      'id': 'https://mastodon.xyz/users/alice',
+      'image': {
+        'mediaType': 'image/jpeg',
+        'url': 'https://banner'
+      }
+    }))

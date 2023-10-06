@@ -327,10 +327,10 @@ def to_as1(obj, use_type=True):
     media_type_prefix = media_type.split('/')[0]
     if media_type_prefix in ('audio', 'image', 'video'):
       type = media_type_prefix.capitalize()
-      obj.update({
-        'objectType': media_type_prefix,
-        'mimeType': media_type,
-      })
+      obj['mimeType'] = media_type
+      # don't override featured objectType for banner
+      if obj.get('objectType') != 'featured':
+        obj['objectType'] = media_type_prefix
 
   # attachments: Mastodon profile metadata fields, with type PropertyValue.
   # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
