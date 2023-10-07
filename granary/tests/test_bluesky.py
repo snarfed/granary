@@ -106,6 +106,10 @@ POST_AUTHOR_PROFILE_AS['object']['author'].update({
   'username': 'alice.com',
   'url': 'https://bsky.app/profile/alice.com',
 })
+POST_AUTHOR_PROFILE_AS['actor'].update({
+  'username': 'alice.com',
+  'url': 'https://bsky.app/profile/alice.com',
+})
 POST_AUTHOR_BSKY = copy.deepcopy(POST_VIEW_BSKY)
 POST_AUTHOR_BSKY['author'] = {
   **ACTOR_PROFILE_VIEW_BSKY,
@@ -770,7 +774,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected_repost = copy.deepcopy(REPOST_AS)
     expected_repost['actor']['username'] = 'bob.com'
-    self.assert_equals([POST_AUTHOR_PROFILE_AS['object'], expected_repost],
+    self.assert_equals([POST_AUTHOR_PROFILE_AS, expected_repost],
                        self.bs.get_activities(group_id=FRIENDS))
 
     mock_get.assert_called_once_with(
