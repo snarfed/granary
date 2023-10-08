@@ -545,7 +545,7 @@ class Nostr(Source):
         logger.warning(cc)
         break
 
-      logger.debug(f'Received: {msg}')
+      logger.debug(f'Received: {msg[:500]}')
       resp = json_loads(msg)
       if resp[:3] == ['OK', subscription, False]:
         return events
