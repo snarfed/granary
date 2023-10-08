@@ -319,6 +319,13 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual('https://bsky.app/profile/snarfed.org',
                      Bluesky.user_url('@snarfed.org'))
 
+  def test_user_to_actor(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'summary': 'hi there',
+    }, Bluesky.user_to_actor(ACTOR_PROFILE_BSKY))
+
   def test_post_url(self):
     self.assertEqual('https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
                      Bluesky.post_url('snarfed.org', '3jv3wdw2hkt25'))

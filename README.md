@@ -294,6 +294,7 @@ Changelog
   * `from_as1`: add `blobs` kwarg to provide blob objects to use for image URLs.
   * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
   * Convert HTML `summary` and `content` to plain text.
+  * Implement `Bluesky.user_to_actor`.
 * `facebook`:
   * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
 

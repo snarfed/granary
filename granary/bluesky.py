@@ -922,6 +922,19 @@ class Bluesky(Source):
     return f'{cls.BASE_URL}/profile/{handle.lstrip("@")}'
 
   @classmethod
+  def user_to_actor(cls, user, **kwargs):
+    """Converts a user to an actor.
+
+    Args:
+      user (dict): an ``app.bsky.actor.profile`` record
+      kwargs: passed through to :func:`to_as1`
+
+    Returns:
+      dict: ActivityStreams actor
+    """
+    return to_as1(user, **kwargs)
+
+  @classmethod
   def post_url(cls, handle, tid):
     """Returns the post URL for a given handle and tid.
 
