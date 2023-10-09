@@ -303,6 +303,37 @@ class AppTest(testutil.TestCase):
       'extra': '',
     }, resp.get_data(as_text=True), ignore_blanks=True)
 
+  def test_url_html_to_as1(self):
+    html = HTML % {'body_class': 'h-feed', 'extra': ''}
+    self.expect_requests_get('http://my/posts.html', html)
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals('application/json', resp.headers['Content-Type'])
+
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'displayName': 'foo ☕ bar',
+        'content': 'foo ☕ bar',
+        'content_is_html': True,
+        'published': '2012-03-04T18:20:37+00:00',
+        'url': 'https://perma/link',
+      }
+    }, {
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'displayName': 'baz baj',
+        'content': 'baz baj',
+        'content_is_html': True,
+      },
+    }], resp.json['items'])
+
   def test_url_html_to_atom(self):
     self.expect_requests_get('http://my/posts.html', HTML % {
       'body_class': 'h-feed',
