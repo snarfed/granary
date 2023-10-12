@@ -284,7 +284,8 @@ Changelog
 ### 6.2 - unreleased
 
 * `as2`:
-  `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
+  * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
+  * `from_as1`: convert HTML links in content with `@user@instance` text to `Mention` tags.
 * `bluesky`:
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
   * `to_as1`: convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.

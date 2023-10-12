@@ -51,6 +51,21 @@ class ActivityStreams2Test(testutil.TestCase):
       },
     })
 
+  def test_from_as1_fediverse_mention(self):
+    self.assert_equals({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'content': 'hi <a href="http://foo">@foo@bar</a>',
+      'tag': [{
+        'type': 'Mention',
+        'href': 'http://foo',
+        'name': '@foo@bar',
+      }],
+    }, as2.from_as1({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@foo@bar</a>',
+    }))
+
   def test_to_as1_in_reply_to_string(self):
     self._test_to_as1_in_reply_to('http://x.y/z')
 
