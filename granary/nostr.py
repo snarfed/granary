@@ -398,7 +398,7 @@ def to_as1(event):
   if obj.get('objectType') == 'activity':
     obj['actor'] = id_to_uri('npub', event.get('pubkey'))
 
-  return util.trim_nulls(obj)
+  return util.trim_nulls(Source.postprocess_object(obj))
 
 
 class Nostr(Source):

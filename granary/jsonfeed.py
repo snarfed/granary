@@ -8,6 +8,7 @@ import mf2util
 from oauth_dropins.webutil import util
 
 from . import as1, microformats2
+from .source import Source
 
 # allowed ActivityStreams objectTypes for attachments
 ATTACHMENT_TYPES = {'image', 'audio', 'video'}
@@ -147,7 +148,7 @@ def jsonfeed_to_activities(jsonfeed):
     author = item.get('author', {})
     if not isinstance(author, dict):
       raise ValueError(f'Expected author to be dict; got {author!r}')
-    activities.append({'object': {
+    activities.append(Source.postprocess_activity({'object': {
       'objectType': 'article' if item.get('title') else 'note',
       'title': item.get('title'),
       'summary': item.get('summary'),
@@ -162,6 +163,6 @@ def jsonfeed_to_activities(jsonfeed):
         'image': [{'url': author.get('avatar')}]
       },
       'attachments': [attachment(a) for a in item.get('attachments', [])],
-    }})
+    }}))
 
   return (util.trim_nulls(activities), util.trim_nulls(actor))
