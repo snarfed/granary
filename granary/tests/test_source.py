@@ -356,7 +356,7 @@ Watching  \t waves
     self.assert_equals({
       'objectType': 'note',
       'content': 'hi <a href="http://foo">@foo@bar</a>',
-      'tag': [{
+      'tags': [{
         'objectType': 'mention',
         'url': 'http://foo',
         'displayName': '@foo@bar',

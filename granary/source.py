@@ -665,7 +665,7 @@ class Source(object, metaclass=SourceMeta):
       href = a.get('href')
       text = a.get_text('').strip()
       if href and FEDIVERSE_HANDLE.match(text):
-        obj.setdefault('tag', []).append({
+        obj.setdefault('tags', []).append({
           'objectType': 'mention',
           'url': href,
           'displayName': text,
