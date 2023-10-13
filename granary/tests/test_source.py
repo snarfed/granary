@@ -351,3 +351,18 @@ Watching  \t waves
     orig = expected = 'trailing slash http://www.foo.co/'
     result = truncate(orig, 'http://www.foo.co/', OMIT_LINK)
     self.assertEqual(expected, result)
+
+  def test_postprocess_object_fediverse_link_to_mention(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@foo@bar</a>',
+      'tag': [{
+        'objectType': 'mention',
+        'url': 'http://foo',
+        'displayName': '@foo@bar',
+      }],
+    }, Source.postprocess_object({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@foo@bar</a>',
+    }))
+

@@ -95,9 +95,6 @@ TYPE_TO_VERB.update({
 TYPES_WITH_OBJECT = {VERB_TO_TYPE[v] for v in as1.VERBS_WITH_OBJECT
                      if v in VERB_TO_TYPE}
 
-# WebFinger-style @-@ identifier
-FEDIVERSE_HANDLE = re.compile('^@[^@ ]+@[a-z0-9-.]+$')
-
 
 def get_urls(obj, key='url'):
   """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
@@ -274,19 +271,6 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
-
-  # extract fediverse @-mentions by looking for links with @user@instance text
-  # https://github.com/snarfed/bridgy-fed/issues/493
-  content = obj.get('content') or ''
-  for a in util.parse_html(content).find_all('a'):
-    href = a.get('href')
-    text = a.get_text('').strip()
-    if href and FEDIVERSE_HANDLE.match(text):
-      obj['tag'].append({
-        'type': 'Mention',
-        'href': href,
-        'name': text,
-      })
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:

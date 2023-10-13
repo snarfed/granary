@@ -40,6 +40,9 @@ INCLUDE_LINK = 'include'
 INCLUDE_IF_TRUNCATED = 'if truncated'
 HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')
 
+# WebFinger-style @-@ identifier
+FEDIVERSE_HANDLE = re.compile('^@[^@ ]+@[a-z0-9-.]+$')
+
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -637,10 +640,15 @@ class Source(object, metaclass=SourceMeta):
   def postprocess_object(obj):
     """Does source-independent post-processing of an object, in place.
 
-    Populates ``location.position`` based on latitude and longitude.
+    * Populates ``location.position`` based on latitude and longitude.
+    * Convert HTML links in content to fediverse handles (``@user@instance``) to
+      ``mention`` tags.
 
     Args:
-      object (dict)
+      obj (dict)
+
+    Returns:
+      dict: ``obj``, modified in place
     """
     loc = obj.get('location')
     if loc:
@@ -649,6 +657,19 @@ class Source(object, metaclass=SourceMeta):
       if lat and lon and not loc.get('position'):
         # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
         loc['position'] = '%0+10.6f%0+11.6f/' % (lat, lon)
+
+    # fediverse @-mentions to mention tags
+    # https://github.com/snarfed/bridgy-fed/issues/493
+    content = obj.get('content') or ''
+    for a in util.parse_html(content).find_all('a'):
+      href = a.get('href')
+      text = a.get_text('').strip()
+      if href and FEDIVERSE_HANDLE.match(text):
+        obj.setdefault('tag', []).append({
+          'objectType': 'mention',
+          'url': href,
+          'displayName': text,
+        })
 
     return util.trim_nulls(obj)
 
