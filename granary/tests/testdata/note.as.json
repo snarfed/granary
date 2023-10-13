@@ -19,7 +19,8 @@
     "id": "31cb9e7ed29dbe52",
     "url": "https://maps.google.com/maps?q=32.4004416,-98.9852672",
     "latitude": 50.820641,
-    "longitude": -0.149522
+    "longitude": -0.149522,
+    "position": "+50.820641-000.149522/"
   },
   "tags": [{
     "url": "http://my/link",

@@ -17,6 +17,7 @@ import urllib.parse
 from oauth_dropins.webutil import util
 
 from . import as1
+from .source import Source
 
 logger = logging.getLogger(__name__)
 
@@ -486,7 +487,7 @@ def to_as1(obj, use_type=True):
     obj.setdefault('author', {}).update(attrib_as1 if isinstance(attrib_as1, dict)
                                         else {'id': attrib_as1})
 
-  return util.trim_nulls(obj)
+  return util.trim_nulls(Source.postprocess_object(obj))
 
 
 def is_public(activity):
