@@ -404,7 +404,7 @@ def from_as1(obj, out_type=None, blobs=None):
 
     # images
     images_embed = images_record_embed = None
-    images = util.get_list(obj, 'image')
+    images = as1.get_objects(obj, 'image')
 
     if images:
       images_embed = {

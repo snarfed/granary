@@ -571,6 +571,23 @@ class BlueskyTest(testutil.TestCase):
         'actor': 'at://did:plc:foo/com.atproto.actor.profile/123',
       })
 
+  def test_from_as1_image_string_id(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '',
+      'embed': {
+        '$type': 'app.bsky.embed.images',
+        'images': [{
+          '$type': 'app.bsky.embed.images#image',
+          'alt': '',
+        }],
+      }
+    }, from_as1({
+      'objectType': 'note',
+      'image': ['http://foo'],
+    }))
+
   def test_to_as1_profile(self):
     self.assert_equals({
       'objectType': 'person',
