@@ -9,6 +9,7 @@ from .. import facebook
 from .. import instagram
 from .. import source
 from ..source import (
+  html_to_text,
   INCLUDE_IF_TRUNCATED,
   INCLUDE_LINK,
   OMIT_LINK,
@@ -366,3 +367,7 @@ Watching  \t waves
       'content': 'hi <a href="http://foo">@foo@bar</a>',
     }))
 
+
+  def test_html_to_text_empty(self):
+    self.assertEqual('', html_to_text(None))
+    self.assertEqual('', html_to_text(''))

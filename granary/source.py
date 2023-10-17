@@ -88,27 +88,29 @@ def html_to_text(html, baseurl='', **kwargs):
     kwargs: html2text options:
       https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
   """
-  if html:
-    h = html2text.HTML2Text(baseurl=baseurl)
-    h.unicode_snob = True
-    h.body_width = 0  # don't wrap lines
-    h.ignore_links = True
-    h.ignore_images = True
-    for key, val in kwargs.items():
-      setattr(h, key, val)
+  if not html:
+    return ''
 
-    # hacky monkey patch fix for html2text escaping sequences that are
-    # significant in markdown syntax. the X\\Y replacement depends on knowledge
-    # of html2text's internals, specifically that it replaces RE_MD_*_MATCHER
-    # with \1\\\2. :(:(:(
-    html2text.config.RE_MD_DOT_MATCHER = \
-      html2text.config.RE_MD_PLUS_MATCHER = \
-      html2text.config.RE_MD_DASH_MATCHER = \
-        re.compile(r'(X)\\(Y)')
+  h = html2text.HTML2Text(baseurl=baseurl)
+  h.unicode_snob = True
+  h.body_width = 0  # don't wrap lines
+  h.ignore_links = True
+  h.ignore_images = True
+  for key, val in kwargs.items():
+    setattr(h, key, val)
 
-    return '\n'.join(
-      # strip trailing whitespace that html2text adds to ends of some lines
-      line.rstrip() for line in unescape(h.handle(html)).splitlines())
+  # hacky monkey patch fix for html2text escaping sequences that are
+  # significant in markdown syntax. the X\\Y replacement depends on knowledge
+  # of html2text's internals, specifically that it replaces RE_MD_*_MATCHER
+  # with \1\\\2. :(:(:(
+  html2text.config.RE_MD_DOT_MATCHER = \
+    html2text.config.RE_MD_PLUS_MATCHER = \
+    html2text.config.RE_MD_DASH_MATCHER = \
+      re.compile(r'(X)\\(Y)')
+
+  return '\n'.join(
+    # strip trailing whitespace that html2text adds to ends of some lines
+    line.rstrip() for line in unescape(h.handle(html)).splitlines())
 
 
 def load_json(body, url):
