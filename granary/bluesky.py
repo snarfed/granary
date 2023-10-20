@@ -794,6 +794,13 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
       'object': obj.get('subject'),
     }
 
+  elif type == 'app.bsky.feed.repost':
+      return {
+        'objectType': 'share',
+        'object': obj.get('subject', {}).get('uri'),
+        'published': obj.get('createdAt'),
+      }
+
   elif type == 'app.bsky.feed.defs#threadViewPost':
     return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
 

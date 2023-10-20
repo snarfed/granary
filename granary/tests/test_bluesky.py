@@ -673,6 +673,13 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_reply_postView(self):
     self.assert_equals(REPLY_AS['object'], to_as1(REPLY_POST_VIEW_BSKY))
 
+  def test_to_as1_repost(self):
+    self.assert_equals({
+      'object': 'at://did/app.bsky.feed.post/tid',
+      'objectType': 'share',
+      'published': '',
+    }, to_as1(REPOST_BSKY))
+
   def test_to_as1_missing_objectType(self):
     with self.assertRaises(ValueError):
       to_as1({'foo': 'bar'})
