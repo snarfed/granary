@@ -581,6 +581,7 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
 
   kwargs = {'repo_did': repo_did, 'repo_handle': repo_handle, 'pds': pds}
 
+  # TODO: once we're on Python 3.10, switch this to a match statement!
   if type in ('app.bsky.actor.profile',
               'app.bsky.actor.defs#profileView',
               'app.bsky.actor.defs#profileViewBasic',
