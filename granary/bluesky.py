@@ -1043,17 +1043,6 @@ class Bluesky(Source):
     resp = self.make_activities_base_response(util.trim_nulls(activities))
     return resp
 
-  def user_to_actor(self, user):
-    """Converts a dict user to an actor.
-
-    Args:
-      user: Bluesky user app.bsky.actor.defs#profileViewDetailed
-
-    Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
-    """
-    return to_as1(user)
-
   def get_comment(self, comment_id, **kwargs):
     """Fetches and returns a comment.
 
