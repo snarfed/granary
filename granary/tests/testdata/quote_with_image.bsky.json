@@ -50,7 +50,6 @@
     },
     "replyCount": 0,
     "repostCount": 0,
-    "upvoteCount": 0,
-    "downvoteCount": 0
+    "likeCount": 0
   }
 }

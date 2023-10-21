@@ -445,10 +445,9 @@ def from_as1(obj, out_type=None, blobs=None):
             **embed,
             '$type': f'app.bsky.embed.record#viewRecord',
             # override these so that trim_nulls below will remove them
-            'downvoteCount': None,
+            'likeCount': None,
             'replyCount': None,
             'repostCount': None,
-            'upvoteCount': None,
           },
         }
         record_record_embed = {
@@ -537,8 +536,7 @@ def from_as1(obj, out_type=None, blobs=None):
       'embed': embed,
       'replyCount': 0,
       'repostCount': 0,
-      'upvoteCount': 0,
-      'downvoteCount': 0,
+      'likeCount': 0,
       'indexedAt': util.now().isoformat(),
     }, ignore=('author', 'createdAt', 'cid', 'description', 'indexedAt',
                'record', 'text', 'title', 'uri'))

@@ -90,8 +90,7 @@ POST_VIEW_BSKY = {
   },
   'replyCount': 0,
   'repostCount': 0,
-  'upvoteCount': 0,
-  'downvoteCount': 0,
+  'likeCount': 0,
   'indexedAt': '2022-01-02T03:04:05+00:00',
 }
 
