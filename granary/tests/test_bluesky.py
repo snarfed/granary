@@ -292,6 +292,29 @@ BLOB = {
   'size': 13,
 }
 
+POST_FEED_VIEW_WITH_LIKES_BSKY = copy.deepcopy(POST_FEED_VIEW_BSKY)
+POST_FEED_VIEW_WITH_LIKES_BSKY['post']['likeCount'] = 1
+
+LIKE_BSKY = {
+  'indexedAt': NOW.isoformat(),
+  'createdAt': '2008-08-08T03:04:05',
+  'actor': ACTOR_PROFILE_VIEW_BSKY
+}
+
+POST_AUTHOR_PROFILE_WITH_LIKES_AS = copy.deepcopy(POST_AUTHOR_PROFILE_AS)
+POST_AUTHOR_PROFILE_WITH_LIKES_AS['object']['tags'] = [{
+  'author': copy.deepcopy(ACTOR_AS),
+  'id': 'tag:bsky.app:at://did/app.bsky.feed.post/tid_liked_by_did:web:alice.com',
+  'objectType': 'activity',
+  'verb': 'like',
+  'url': 'https://bsky.app/profile/alice.com/post/tid',
+  'object': {'url': 'https://bsky.app/profile/alice.com/post/tid'}
+}]
+POST_AUTHOR_PROFILE_WITH_LIKES_AS['object']['tags'][0]['author'].update({
+  'id': 'tag:bsky.app:did:web:alice.com',
+  'username': 'alice.com',
+  'url': 'https://bsky.app/profile/alice.com'
+})
 
 class BlueskyTest(testutil.TestCase):
 
@@ -833,6 +856,44 @@ class BlueskyTest(testutil.TestCase):
           'User-Agent': util.user_agent,
         },
     )
+
+  @patch('requests.get')
+  def test_get_activities_with_likes(self, mock_get):
+    mock_get.side_effect = [
+      requests_response({
+        'cursor': 'timestamp::cid',
+        'feed': [POST_FEED_VIEW_WITH_LIKES_BSKY],
+      }),
+      requests_response({
+        'cursor': 'timestamp::cid',
+        'uri': 'at://did/app.bsky.feed.post/tid',
+        'likes': [LIKE_BSKY]
+      })
+    ]
+
+    self.assert_equals(
+      [POST_AUTHOR_PROFILE_WITH_LIKES_AS],
+      self.bs.get_activities(fetch_likes=True)
+    )
+    mock_get.assert_any_call(
+        'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
+    )
+    mock_get.assert_any_call(
+        'https://bsky.social/xrpc/app.bsky.feed.getLikes?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
+    )
+
 
   @patch('requests.get')
   def test_get_comment(self, mock_get):
