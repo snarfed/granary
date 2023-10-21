@@ -1056,7 +1056,7 @@ class Bluesky(Source):
     Raises:
       :class:`ValueError`: if comment_id is invalid
     """
-    post_thread = self.client.app.bsky.feed.getPostThread({}, uri=comment_id)
+    post_thread = self.client.app.bsky.feed.getPostThread({}, uri=comment_id, depth=1)
     obj = to_as1(post_thread.get('thread'), 'app.bsky.feed.defs#threadViewPost')
     return obj
 
