@@ -58,6 +58,10 @@ ACTOR_PROFILE_BSKY = {
   'description': 'hi there',
 }
 
+POST_OBJ_AS = {
+
+}
+
 POST_AS = {
   'objectType': 'activity',
   'id': 'at://did/app.bsky.feed.post/tid',
@@ -829,3 +833,24 @@ class BlueskyTest(testutil.TestCase):
           'User-Agent': util.user_agent,
         },
     )
+
+  @patch('requests.get')
+  def test_get_comment(self, mock_get):
+    mock_get.return_value = requests_response({
+      '$type': 'app.bsky.feed.defs#threadViewPost',
+      'thread': THREAD_BSKY,
+      'replies': [REPLY_BSKY],
+    })
+
+    self.assert_equals(POST_AUTHOR_PROFILE_AS['object'],
+                       self.bs.get_comment(comment_id='at://id'))
+    mock_get.assert_called_once_with(
+        'https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fid&depth=1',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
+    )
+
