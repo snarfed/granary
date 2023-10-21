@@ -253,6 +253,12 @@ REPOST_AS = {
   },
   'object': POST_AUTHOR_PROFILE_AS['object'],
 }
+REPOST_PROFILE_AS = copy.deepcopy(REPOST_AS)
+REPOST_PROFILE_AS['actor'].update({
+  'username': 'bob.com',
+  'url': 'https://bsky.app/profile/bob.com',
+})
+
 REPOST_BSKY = {
   '$type': 'app.bsky.feed.repost',
   'subject': {
@@ -946,6 +952,18 @@ class BlueskyTest(testutil.TestCase):
           'Content-Type': 'application/json',
           'User-Agent': util.user_agent,
         },
+    )
+
+  @patch('requests.get')
+  def test_get_activities_include_shares(self, mock_get):
+    mock_get.return_value = requests_response({
+      'cursor': 'timestamp::cid',
+      'feed': [POST_FEED_VIEW_BSKY, REPOST_BSKY_FEED_VIEW_POST],
+    })
+
+    self.assert_equals(
+      [POST_AUTHOR_PROFILE_AS, REPOST_PROFILE_AS],
+      self.bs.get_activities(include_shares=True)
     )
 
 
