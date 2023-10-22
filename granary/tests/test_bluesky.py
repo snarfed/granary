@@ -286,7 +286,14 @@ REPOST_BSKY_FEED_VIEW_POST = {
 THREAD_AS = copy.deepcopy(POST_AS)
 THREAD_REPLY_AS = copy.deepcopy(REPLY_AS['object'])
 THREAD_REPLY_AS['id'] = 'tag:bsky.app:at://did/app.bsky.feed.post/tid'
-THREAD_AS['object']['replies'] = {'items': [THREAD_REPLY_AS]}
+THREAD_REPLY2_AS = copy.deepcopy(REPLY_AS['object'])
+THREAD_REPLY2_AS['id'] = 'tag:bsky.app:at://did/app.bsky.feed.post/tid2'
+THREAD_REPLY2_AS['url'] = 'https://bsky.app/profile/did/post/tid2'
+THREAD_REPLY2_AS['inReplyTo'] = [{
+  'id': 'at://did/app.bsky.feed.post/tid',
+  'url': 'https://bsky.app/profile/did/post/tid'
+}]
+THREAD_AS['object']['replies'] = {'items': [THREAD_REPLY_AS, THREAD_REPLY2_AS]}
 THREAD_AS['object']['author'] = ACTOR_AS
 THREAD_AS['object']['author'].update({
   'username': 'alice.com',
@@ -298,17 +305,29 @@ THREAD_AS['actor'].update({
   'url': 'https://bsky.app/profile/alice.com',
 })
 
-THREAD_REPLY_BSKY = {
-  '$type': 'app.bsky.feed.defs#threadViewPost',
-  'post': copy.deepcopy(REPLY_POST_VIEW_BSKY),
-  'replies': [],
-}
-
 THREAD_BSKY = {
   '$type': 'app.bsky.feed.defs#threadViewPost',
   'post': POST_AUTHOR_BSKY,
-  'replies': [THREAD_REPLY_BSKY],
+  'replies': [{
+    '$type': 'app.bsky.feed.defs#threadViewPost',
+    'post': copy.deepcopy(REPLY_POST_VIEW_BSKY),
+    'replies': [{
+      '$type': 'app.bsky.feed.defs#threadViewPost',
+      'post': copy.deepcopy(REPLY_POST_VIEW_BSKY),
+      'replies': [],
+    }],
+  }],
 }
+THREAD_BSKY['replies'][0]['replies'][0]['post'].update({
+  'uri': 'at://did/app.bsky.feed.post/tid2'
+})
+THREAD_BSKY['replies'][0]['replies'][0]['post']['record']['reply'].update({
+  'parent': {
+    '$type': 'com.atproto.repo.strongRef',
+    'uri': 'at://did/app.bsky.feed.post/tid',
+    'cid': 'TODO'
+  }
+})
 
 BLOB = {
   '$type': 'blob',
