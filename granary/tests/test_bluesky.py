@@ -284,11 +284,30 @@ REPOST_BSKY_FEED_VIEW_POST = {
 }
 
 THREAD_AS = copy.deepcopy(POST_AS)
-THREAD_AS['object']['replies'] = [REPLY_AS['object']]
+THREAD_REPLY_AS = copy.deepcopy(REPLY_AS['object'])
+THREAD_REPLY_AS['id'] = 'tag:bsky.app:at://did/app.bsky.feed.post/tid'
+THREAD_AS['object']['replies'] = {'items': [THREAD_REPLY_AS]}
+THREAD_AS['object']['author'] = ACTOR_AS
+THREAD_AS['object']['author'].update({
+  'username': 'alice.com',
+  'url': 'https://bsky.app/profile/alice.com',
+})
+THREAD_AS['object']['url'] = 'https://bsky.app/profile/alice.com/post/tid'
+THREAD_AS['actor'].update({
+  'username': 'alice.com',
+  'url': 'https://bsky.app/profile/alice.com',
+})
+
+THREAD_REPLY_BSKY = {
+  '$type': 'app.bsky.feed.defs#threadViewPost',
+  'post': copy.deepcopy(REPLY_POST_VIEW_BSKY),
+  'replies': [],
+}
+
 THREAD_BSKY = {
   '$type': 'app.bsky.feed.defs#threadViewPost',
   'post': POST_AUTHOR_BSKY,
-  'replies': [REPLY_BSKY],
+  'replies': [THREAD_REPLY_BSKY],
 }
 
 BLOB = {
@@ -302,6 +321,8 @@ POST_FEED_VIEW_WITH_LIKES_BSKY = copy.deepcopy(POST_FEED_VIEW_BSKY)
 POST_FEED_VIEW_WITH_LIKES_BSKY['post']['likeCount'] = 1
 POST_FEED_VIEW_WITH_REPOSTS_BSKY = copy.deepcopy(POST_FEED_VIEW_BSKY)
 POST_FEED_VIEW_WITH_REPOSTS_BSKY['post']['repostCount'] = 1
+POST_FEED_VIEW_WITH_REPLIES_BSKY = copy.deepcopy(POST_FEED_VIEW_BSKY)
+POST_FEED_VIEW_WITH_REPLIES_BSKY['post']['replyCount'] = 1
 
 LIKE_BSKY = {
   'indexedAt': NOW.isoformat(),
@@ -840,9 +861,7 @@ class BlueskyTest(testutil.TestCase):
   @patch('requests.get')
   def test_get_activities_activity_id(self, mock_get):
     mock_get.return_value = requests_response({
-      '$type': 'app.bsky.feed.defs#threadViewPost',
       'thread': THREAD_BSKY,
-      'replies': [REPLY_BSKY],
     })
 
     self.assert_equals([POST_AUTHOR_PROFILE_AS],
@@ -966,6 +985,38 @@ class BlueskyTest(testutil.TestCase):
       self.bs.get_activities(include_shares=True)
     )
 
+  @patch('requests.get')
+  def test_get_activities_with_replies(self, mock_get):
+    mock_get.side_effect = [
+      requests_response({
+        'cursor': 'timestamp::cid',
+        'feed': [POST_FEED_VIEW_WITH_REPLIES_BSKY],
+      }),
+      requests_response({
+        'thread': THREAD_BSKY,
+      })
+    ]
+
+    self.assert_equals([THREAD_AS],
+                       self.bs.get_activities(fetch_replies=True))
+    mock_get.assert_any_call(
+        'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
+    )
+    mock_get.assert_any_call(
+        'https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
+    )
 
   @patch('requests.get')
   def test_get_comment(self, mock_get):
