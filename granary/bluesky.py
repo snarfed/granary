@@ -1077,7 +1077,6 @@ class Bluesky(Source):
       'actor': obj.get('author'),
       'object': obj,
       'objectType': 'activity',
-      'context': {'inReplyTo': obj.get('inReplyTo')},
     }
 
   def _make_like(self, post, actor):
