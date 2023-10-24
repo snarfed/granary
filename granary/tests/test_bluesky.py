@@ -744,11 +744,12 @@ class BlueskyTest(testutil.TestCase):
       'url': None,
     }), to_as1(POST_BSKY_IMAGES))
 
-  def test_to_as1_post_with_image(self):
+  def test_to_as1_post_with_image_repo_did(self):
     self.assert_equals(trim_nulls({
       **POST_AS_IMAGES['object'],
       'id': None,
       'url': None,
+      'author': 'did:plc:foo',
     }), to_as1(POST_BSKY_IMAGES, repo_did='did:plc:foo'))
 
   def test_to_as1_post_view_with_image(self):

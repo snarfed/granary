@@ -1,6 +1,7 @@
 {
   "objectType": "note",
   "content": "hello 👩‍👩‍👦‍👦✋🏽 foo",
+  "author": "did:plc:foo",
   "tags": [{
     "objectType": "article",
     "displayName": "foo",

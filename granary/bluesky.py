@@ -660,6 +660,7 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
       }],
       'published': obj.get('createdAt', ''),
       'tags': tags,
+      'author': repo_did,
     }
 
     # embeds
@@ -783,6 +784,7 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
       'objectType': 'activity',
       'verb': 'like',
       'object': obj.get('subject', {}).get('uri'),
+      'actor': repo_did,
     }
 
   elif type == 'app.bsky.graph.follow':
@@ -790,6 +792,7 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
       'objectType': 'activity',
       'verb': 'follow',
       'object': obj.get('subject'),
+      'actor': repo_did,
     }
 
   elif type == 'app.bsky.feed.repost':
@@ -797,6 +800,7 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
         'objectType': 'activity',
         'verb': 'share',
         'object': obj.get('subject', {}).get('uri'),
+        'actor': repo_did,
         'published': obj.get('createdAt'),
       }
 

@@ -1,6 +1,7 @@
 {
   "objectType": "note",
   "content": "hi @alice!",
+  "author": "did:plc:foo",
   "tags": [{
     "objectType": "mention",
     "url": "https://bsky.app/profile/did:plc:789",
