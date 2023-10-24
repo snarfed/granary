@@ -80,13 +80,17 @@ class RateLimited(BaseException):
 
 
 def html_to_text(html, baseurl='', **kwargs):
-  """Converts string html to string text with html2text.
+  """Converts HTML to plain text with html2text.
 
   Args:
+    html (str): input HTML content
     baseurl (str): base URL to use when resolving relative URLs. Passed through
       to ``HTML2Text``.
     kwargs: html2text options:
       https://github.com/Alir3z4/html2text/blob/master/docs/usage.md#available-options
+
+  Returns:
+    str: converted plain text
   """
   if not html:
     return ''
