@@ -297,6 +297,7 @@ Changelog
     * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
     * Add `blobs` kwarg to provide blob objects to use for image URLs.
     * Bug fix: handle bare string URLs in `image` field.
+    * Strip trailing slash from home page URLs in order to remove visible `/` from rel-me verified links on Mastodon etc.
   * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
   * Convert HTML `summary` and `content` to plain text.
   * Implement `Bluesky.user_to_actor`.

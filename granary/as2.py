@@ -178,13 +178,15 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       url = link.get('value') or link.get('id')
       name = link.get('displayName')
       if util.is_web(url):
-        scheme = 'https://' if url.startswith('https://') else 'http://'
-        slash = '/' if url.endswith('/') else ''
-        visible = url.removeprefix(scheme).removesuffix(slash)
+        parsed = urllib.parse.urlparse(url)
+        if parsed.path == '/':
+          url = url.removesuffix('/')
+        scheme = f'{parsed.scheme}://'
+        visible = url.removeprefix(scheme)
         links[url] = {
           'type': 'PropertyValue',
           'name': name or 'Link',
-          'value': f'<a rel="me" href="{url}"><span class="invisible">{scheme}</span>{visible}<span class="invisible">{slash}</span></a>',
+          'value': f'<a rel="me" href="{url}"><span class="invisible">{scheme}</span>{visible}</a>',
         }
     attachments.extend(links.values())
 

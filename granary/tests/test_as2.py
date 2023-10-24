@@ -35,22 +35,6 @@ class ActivityStreams2Test(testutil.TestCase):
       # wrongly trying to parse mf2 JSON as AS2
       as2.to_as1({'type': ['h-card']})
 
-  def test_from_as1_misc(self):
-    # TODO: actually check something here
-    as2.from_as1({
-      "objectType": "activity",
-      "verb": "follow",
-      "actor": {
-        "objectType": "person",
-        "image": [{
-          "url": {
-            "value": "https://www.jvt.me/img/profile.jpg",
-            "alt": "Jamie Tanna's profile image"
-          }
-        }],
-      },
-    })
-
   def test_to_as1_in_reply_to_string(self):
     self._test_to_as1_in_reply_to('http://x.y/z')
 
@@ -222,7 +206,7 @@ class ActivityStreams2Test(testutil.TestCase):
       with self.subTest(actor=bad):
         self.assertIsNone(as2.address(bad))
 
-  def test_featured_image_overrides_media_type(self):
+  def test_person_featured_image_overrides_media_type(self):
     self.assert_equals({
       'objectType': 'person',
       'id': 'https://mastodon.xyz/users/alice',
@@ -238,4 +222,21 @@ class ActivityStreams2Test(testutil.TestCase):
         'mediaType': 'image/jpeg',
         'url': 'https://banner'
       }
+    }))
+
+  def test_person_propertyvalue_attachment_strips_home_page_slash(self):
+    self.assert_equals({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Person',
+      'id': 'tag:example.com,2011:martin',
+      'url': 'https://example.com/',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Link',
+        'value': '<a rel="me" href="https://example.com"><span class="invisible">https://</span>example.com</a>',
+      }],
+    }, as2.from_as1({
+      'objectType' : 'person',
+      'id': 'tag:example.com,2011:martin',
+      'url': 'https://example.com/',
     }))
