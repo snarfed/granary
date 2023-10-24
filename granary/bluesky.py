@@ -42,7 +42,7 @@ BSKY_APP_TYPE_TO_COLLECTION = {
   name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
 }
 
-# maps AS1 objectTypes to possible output Bluesky lexicon types.
+# maps AS1 objectType/verb to possible output Bluesky lexicon types.
 # used in from_as1
 FROM_AS1_TYPES = {
   as1.ACTOR_TYPES: (
@@ -794,7 +794,8 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
 
   elif type == 'app.bsky.feed.repost':
       return {
-        'objectType': 'share',
+        'objectType': 'activity',
+        'verb': 'share',
         'object': obj.get('subject', {}).get('uri'),
         'published': obj.get('createdAt'),
       }

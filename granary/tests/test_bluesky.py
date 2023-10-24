@@ -767,7 +767,8 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_repost(self):
     self.assert_equals({
       'object': 'at://did/app.bsky.feed.post/tid',
-      'objectType': 'share',
+      'objectType': 'activity',
+      'verb': 'share',
       'published': '',
     }, to_as1(REPOST_BSKY))
 
