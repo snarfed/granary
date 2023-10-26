@@ -178,8 +178,13 @@ def web_url_to_at_uri(url, handle=None, did=None):
   * ``https://bsky.app/profile/vito.fyi/post/3jt7sst7vok2u``
   * ``https://bsky.app/profile/bsky.app/feed/mutuals``
 
+  If both ``handle`` and ``did`` are provided, and ``handle`` matches the URL,
+  the handle in the resulting URI will be replaced with ``did``.
+
   Args:
     url (str): ``bsky.app`` URL
+    handle (str): Bluesky handle, or None
+    did (str): Valid DID, or None
 
   Returns:
     str: ``at://`` URI, or None
