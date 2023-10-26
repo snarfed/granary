@@ -167,7 +167,7 @@ def at_uri_to_web_url(uri, handle=None):
   return f'{Bluesky.user_url(handle or did)}/{type}/{tid}'
 
 
-def web_url_to_at_uri(url, handle=None):
+def web_url_to_at_uri(url, handle=None, did=None):
   """Converts a ``https://bsky.app`` URL to an ``at://`` URI.
 
   https://atproto.com/specs/at-uri-scheme
@@ -200,6 +200,10 @@ def web_url_to_at_uri(url, handle=None):
   assert id
   type = match.group('type')
   tid = match.group('tid')
+
+  # If a did has been provided explicitly, replace the existing handle with it.
+  if did and HANDLE_PATTERN.match(id):
+    id = did
 
   if type:
     assert tid
