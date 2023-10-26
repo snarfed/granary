@@ -449,7 +449,22 @@ class BlueskyTest(testutil.TestCase):
 
       self.assertEqual(
         'at://did:plc:foo',
+        web_url_to_at_uri('https://bsky.app/profile/foo.com', handle='foo.com', did='did:plc:foo')
+      )
+
+      self.assertEqual(
+        'at://foo.com',
         web_url_to_at_uri('https://bsky.app/profile/foo.com', did='did:plc:foo')
+      )
+
+      self.assertEqual(
+        'at://foo.com',
+        web_url_to_at_uri('https://bsky.app/profile/foo.com', handle='foo.com')
+      )
+
+      self.assertEqual(
+        'at://foo.com',
+        web_url_to_at_uri('https://bsky.app/profile/foo.com', handle='alice.com', did='did:plc:foo')
       )
 
     for url in ('at://foo', 'http://not/bsky.app', 'https://bsky.app/x'):

@@ -201,8 +201,9 @@ def web_url_to_at_uri(url, handle=None, did=None):
   type = match.group('type')
   tid = match.group('tid')
 
-  # If a did has been provided explicitly, replace the existing handle with it.
-  if did and HANDLE_PATTERN.match(id):
+  # If a did and handle have been provided explicitly,
+  # replace the existing handle with the did.
+  if did and handle and id == handle:
     id = did
 
   if type:
