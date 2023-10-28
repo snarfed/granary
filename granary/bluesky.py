@@ -883,7 +883,7 @@ class Bluesky(Source):
   Attributes:
     handle (str)
     did (str)
-    access_token (str)
+    client (lexrpc.Client)
   """
 
   DOMAIN = 'bsky.app'
@@ -891,42 +891,36 @@ class Bluesky(Source):
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
 
-  def __init__(self, handle, did=None, access_token=None, app_password=None):
+  def __init__(self, handle, did=None, access_token=None, refresh_token=None,
+               app_password=None, session_callback=None):
     """Constructor.
-
-    Either access_token or app_password may be provided, optionally, but not both.
 
     Args:
       handle (str): username, eg ``snarfed.bsky.social`` or ``snarfed.org``
       did (str): did:plc or did:web, optional
       access_token (str): optional
+      refresh_token (str): optional
       app_password (str): optional
+      session_callback (callable, dict => None): passed to :class:`lexrpc.Client`
+        constructor, called when a new session is created or refreshed
     """
-    assert not (access_token and app_password)
+    self.handle = handle
+    self.did = did
 
     headers = {'User-Agent': util.user_agent}
+    self.client = Client(access_token=access_token, refresh_token=refresh_token,
+                         headers=headers, session_callback=session_callback)
 
-    if app_password:
-      client = Client(DEFAULT_PDS, headers=headers)
-      resp = client.com.atproto.server.createSession({
+    if app_password and not access_token:
+      resp = self.client.com.atproto.server.createSession({
         'identifier': handle,
         'password': app_password,
       })
       self.handle = resp['handle']
       self.did = resp['did']
-      self.access_token = resp['accessJwt']
-      assert self.access_token
-    else:
-      self.handle = handle
-      self.access_token = access_token
-      self.did = did
 
-    if self.access_token:
-      self.client = Client(DEFAULT_PDS, headers={
-        **headers,
-        'Authorization': f'Bearer {self.access_token}',
-      })
-    else:
+    if not self.client.session:
+      # no auth; use AppView instead of PDS
       self.client = Client(DEFAULT_APPVIEW, headers=headers)
 
   @classmethod

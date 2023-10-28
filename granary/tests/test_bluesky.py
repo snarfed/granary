@@ -843,26 +843,27 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual(OLD_BLOB_URL, blob_to_url(blob=OLD_BLOB,
                                                repo_did='did:plc:foo'))
 
-  def test_constructor_both_access_token_and_app_password_error(self):
-    with self.assertRaises(AssertionError):
-      Bluesky('handull', access_token='towkin', app_password='pazzwurd')
-
   def test_constructor_access_token(self):
     bs = Bluesky('handull', access_token='towkin')
-    self.assertEqual('towkin', bs.access_token)
+    self.assertEqual({
+      'accessJwt': 'towkin',
+      'refreshJwt': None,
+    }, bs.client.session)
 
   @patch('requests.post')
   def test_constructor_app_password(self, mock_post):
-    mock_post.return_value = requests_response({
+    session = {
       'handle': 'real.han.dull',
       'did': 'did:plc:me',
       'accessJwt': 'towkin',
-    })
+      'refreshJwt': 'reephrush',
+    }
+    mock_post.return_value = requests_response(session)
 
     bs = Bluesky('handull', app_password='pazzwurd')
     self.assertEqual('real.han.dull', bs.handle)
     self.assertEqual('did:plc:me', bs.did)
-    self.assertEqual('towkin', bs.access_token)
+    self.assertEqual(session, bs.client.session)
 
     mock_post.assert_called_once_with(
         'https://bsky.social/xrpc/com.atproto.server.createSession',
