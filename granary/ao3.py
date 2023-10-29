@@ -12,6 +12,10 @@ class ArchiveOfOurOwn(source.Source):
     URL_BASE = 'https://archiveofourown.org'
     NAME = 'ArchiveOfOurOwn'
 
+    def get_ao3_absolute_url(self, element):
+        element["href"] = self.URL_BASE + element["href"]
+        return element
+
     def get_stories_from_single_page(self, html):
         activities_works = []
 
@@ -42,6 +46,10 @@ class ArchiveOfOurOwn(source.Source):
             work_url = f'https://archiveofourown.org/works/{work_id}'
             if chapter_id:
                 work_url += f'/chapters/{chapter_id}'
+
+            for link in work.find_all('a'):
+                if not link['href'].startswith('http'):
+                    link.replaceWith(self.get_ao3_absolute_url(link))
 
             work_object = {
                 'id': work_and_chapter_id,
