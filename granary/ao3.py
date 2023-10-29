@@ -16,9 +16,12 @@ class ArchiveOfOurOwn(source.Source):
         activities_works = []
 
         soup = BeautifulSoup(html, features='lxml')
-        works_elements = soup.find_all('li', class_='work')
+        works_elements = soup.find_all(
+            lambda tag: tag.name == 'li'
+                        and tag.get('class')
+                        and len([tag_class for tag_class in tag.get('class') if tag_class.startswith('work')])
+        )
         for work in works_elements:
-
             work_id = work.get('id').split('_')[1]
             chapter_id = 0
             chapters_element_link = work.find('dd', class_='chapters').find('a')
@@ -65,3 +68,4 @@ class ArchiveOfOurOwn(source.Source):
 
     def url_to_activities(self, url=None):
         return self.get_stories(url)
+
