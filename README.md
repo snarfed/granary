@@ -1,4 +1,4 @@
-<img src="https://raw.github.com/snarfed/granary/main/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg?branch=main)](https://coveralls.io/github/snarfed/granary?branch=master)
+<img src="https://raw.github.com/snarfed/granary/main/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg)](https://coveralls.io/github/snarfed/granary)
 ===
 
 The social web translator. Fetches and converts data between social networks, HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2), [ActivityStreams](http://activitystrea.ms/)/[ActivityPub](https://activitypub.rocks/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
@@ -280,7 +280,36 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 
 Changelog
 ---
-### 6.1 - unreleased
+
+### 6.2 - unreleased
+
+* `as2`:
+  * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
+* `bluesky`:
+  * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
+  * `to_as1`:
+    * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
+    * Translate `handle` to `username`, add new `repo_handle` kwarg.
+    * Add support for `app.bsky.feed.repost`.
+    * Add `actor`/`author` based on `repo_did`.
+  * Add new `blob_to_url` function.
+  * `from_as1`:
+    * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
+    * Add `blobs` kwarg to provide blob objects to use for image URLs.
+    * Bug fix: handle bare string URLs in `image` field.
+    * Strip trailing slash from home page URLs in order to remove visible `/` from rel-me verified links on Mastodon etc.
+  * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
+  * Convert HTML `summary` and `content` to plain text.
+  * Implement `Bluesky.user_to_actor`.
+* `facebook`:
+  * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
+* `Source`:
+  * `postprocess_object`: convert HTML links in content to fediverse handles (`@user@instance`) to `mention` tags.
+
+
+### 6.1 - 2023-09-16
+
+Highlights: Nostr, Bluesky `get_activities`, lots of improvements in `as2` and `microformats2`, and more!
 
 _REST API breaking changes:_
 
@@ -298,6 +327,7 @@ _Non-breaking changes:_
     * Improve `Video` handling: support `Link` objects in `url`, extract stream URLs and types from link `tag`s.
     * Coerce non-float `latitude` and `longitude` to float, raise `ValueError` on failure.
     * Put image attachments into `image` as well as `attachments` ([bridgy-fed#429](https://github.com/snarfed/bridgy-fed/issues/429)).
+    * Handle Hubzilla's composite object attachment `value`s.
     * Bug fix for null `mediaType` in `attachment` and `tags`.
   * Add new `TYPES_WITH_OBJECT` constant.
   * Add new `get_urls`, `address` functions.
@@ -306,34 +336,45 @@ _Non-breaking changes:_
   * Revise HTML in `PropertyValue` attachments on actors to include full URL in anchro text to be compatible with Mastodon's profile link verification.
 * `atom`:
   * `activities_to_atom` etc:
+    * Switch `content` from XHTML to HTML inside CDATA to support non-XHTML input content ([bridgy-fed#624](https://github.com/snarfed/bridgy-fed/issues/624).
     * Bug fix, handle bare string URL `image` values.
-    * Bug fix, remove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
+    * Bug fix, emove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
     * Render `objectType: comment` attachments.
+    * Remove invalid `<a>` element for tags.
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.
   * Render `objectType: service` attachments, eg Bluesky custom feeds.
 * `bluesky`:
   * Implement `Bluesky` API class, including `get_activities`.
-  * Update for [`app.bsky` lexicons refactor](https://github.com/bluesky-social/atproto/commit/7f008c05a09c6dcf42dcac2819210138af42835c).
+  * Drop bundled `app.bsky`/`com.atproto` lexicons, use lexrpc's instead.
   * Convert reposts, quotes, inline links, attached links, and mentions, both directions. Includes Bluesky facet (rich text) support.
   * Handle quote posts with attached images, both directions.
+  * Handle likes, both directions.
+  * Add new `web_url_to_at_uri` function.
   * `from_as1`: handle link tags without start/end indices.
-  * `to_as1`: add new `type` kwarg.
-  * `to_as1`: generate staging.bsky.app profile and post URLs.
-  * `to_as1`: propagate profile `did` into actor `id`.
-  * `to_as1`: add unimplemented stub for custom feeds, eg `app.bsky.feed.defs#generatorView`.
+  * `to_as1`:
+    * Add new `type` kwarg.
+    * Generate staging.bsky.app profile and post URLs.
+    * Propagate profile `did` into actor `id`.
+    * Add unimplemented stub for custom feeds, eg `app.bsky.feed.defs#generatorView`.
   * Add `as1_to_profile`.
+  * Bug fix for converting follows, both directions: `subject` in `app.bsky.graph.follow` is followee, not follower. ([That field is badly named!](https://discord.com/channels/1097580399187738645/1097580399187738648/1151933384738746478))
 * `jsonfeed`:
-  * `activities_to_jsonfeed` bug fix, handle bare string values for `image` and `stream`.
+  * `activities_to_jsonfeed`:
+    * Bug fix, handle bare string values for `image` and `stream`.
+    * Bug fix: handle non-object `author`.
 * `mastodon`:
   * `status_to_object`: add/fix alt text handling for images.
 * `microformats2`:
+  * `json_to_html`:
+    * HTML-escape tag and quote attachment names. Fixes [GHSA-4w4f-g49g-3f7j](https://github.com/snarfed/bridgy/security/advisories/GHSA-4w4f-g49g-3f7j); thank you [@janboddez](https://github.com/janboddez)!
   * `json_to_object`:
     * Improve handling of items with multiple types by using [post type discovery](https://indiewebcamp.com/post-type-discovery) more aggressively.
     * Normalize ISO-8601 format of `published` and `updated` timestamps.
   * `object_to_json`:
     * Bug fix, handle bare string URL `image` values.
     * Normalize ISO-8601 format of `published` and `updated` timestamps.
+    * Handle bare string ids for `replies ` and `shares` (usually from AS2.)
   * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.
 * `rss`:
   * `from_activities`: handle bare string id `author`.

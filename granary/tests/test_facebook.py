@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for facebook.py.
-"""
+"""Unit tests for facebook.py."""
 import copy
 from datetime import datetime
 import os
@@ -985,8 +983,7 @@ ATOM = """\
   <id>tag:facebook.com:10100176064482163</id>
   <title>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block...</title>
 
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 
 Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 <a href="https://www.facebook.com/283938455011303">Super Happy Block Party Hackathon</a>, &gt;\o/&lt; <a href="https://www.facebook.com/789">Daniel M</a>.
 <p>
@@ -1001,8 +998,7 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
 
 </span>
 </p>
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="https://www.facebook.com/212038/posts/10100176064482163" />
   <link rel="ostatus:conversation" href="https://www.facebook.com/212038/posts/10100176064482163" />
@@ -1010,22 +1006,14 @@ Checking another side project off my list. portablecontacts-unofficial is live! 
     <link rel="ostatus:attention" href="https://www.facebook.com/234" />
     <link rel="mentioned" href="https://www.facebook.com/234" />
 
-    <a href="https://www.facebook.com/234">Friend 1</a>
-
     <link rel="ostatus:attention" href="https://www.facebook.com/345" />
     <link rel="mentioned" href="https://www.facebook.com/345" />
 
-    <a href="https://www.facebook.com/345">Friend 2</a>
-
     <link rel="ostatus:attention" href="https://www.facebook.com/345" />
     <link rel="mentioned" href="https://www.facebook.com/345" />
-
-    <a href="https://www.facebook.com/345">Friend 2</a>
 
     <link rel="ostatus:attention" href="https://www.facebook.com/456" />
     <link rel="mentioned" href="https://www.facebook.com/456" />
-
-    <a href="https://www.facebook.com/456">Friend 3</a>
 
     <link rel="ostatus:attention" href="https://www.facebook.com/789" />
     <link rel="mentioned" href="https://www.facebook.com/789" />
@@ -1448,7 +1436,7 @@ class FacebookTest(testutil.TestCase):
     self.assertNotIn('tags', got[0]['object'])
     self.assertNotIn('tags', got[0])
 
-  def test_get_activities_fetch_shares_returns_boolean(self):
+  def test_get_activities_fetch_shares_returns_bool(self):
     self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
     self.expect_urlopen(API_SHARES % '1_2', {'1_2': False})
     self.mox.ReplayAll()

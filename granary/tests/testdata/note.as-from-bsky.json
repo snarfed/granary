@@ -10,7 +10,7 @@
     "id": "did:plc:asdf",
     "url": "https://bsky.app/profile/example.com",
     "displayName": "Ryan Barrett",
-    "image": [{"url": "http://example.com/ryan/image"}]
+    "username": "example.com"
   },
   "tags": [{
     "objectType": "article",

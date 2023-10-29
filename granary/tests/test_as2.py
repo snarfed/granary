@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for as2.py.
 
 Most of the tests are in testdata/. This is just a few things that are too small
@@ -35,22 +34,6 @@ class ActivityStreams2Test(testutil.TestCase):
     with self.assertRaises(ValueError):
       # wrongly trying to parse mf2 JSON as AS2
       as2.to_as1({'type': ['h-card']})
-
-  def test_from_as1_misc(self):
-    # TODO: actually check something here
-    as2.from_as1({
-      "objectType": "activity",
-      "verb": "follow",
-      "actor": {
-        "objectType": "person",
-        "image": [{
-          "url": {
-            "value": "https://www.jvt.me/img/profile.jpg",
-            "alt": "Jamie Tanna's profile image"
-          }
-        }],
-      },
-    })
 
   def test_to_as1_in_reply_to_string(self):
     self._test_to_as1_in_reply_to('http://x.y/z')
@@ -107,6 +90,41 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_attachment_composite_value(self):
+    """Hubzilla includes attachments like these."""
+    value = {
+      'guid': '35d25147-cd86-48cb-b3f2-f687310363bd',
+      'parent_guid': 'fbeaa30f-c402-4d58-91c0-e4bce187f1ed',
+      'text': 'markdown here',
+      'author': 'kostikov@zotum.net',
+      'created_at': '2023-09-02T19:55:14Z',
+      'author_signature': '...',
+      'parent_author_signature': '...',
+    }
+
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': [{
+        'displayName': 'zot.diaspora.fields',
+        'value': {
+          'guid': '35d25147-cd86-48cb-b3f2-f687310363bd',
+          'parent_guid': 'fbeaa30f-c402-4d58-91c0-e4bce187f1ed',
+          'text': 'markdown here',
+          'author': 'kostikov@zotum.net',
+          'created_at': '2023-09-02T19:55:14Z',
+          'author_signature': '...',
+          'parent_author_signature': '...',
+        },
+      }]
+    }, as2.to_as1({
+      'type': 'Note',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'zot.diaspora.fields',
+        'value': value,
+      }],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (
@@ -143,6 +161,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'displayName': 'California',
         'longitude': -76.507450,
         'latitude': 38.3004,
+        'position': '+38.300400-076.507450/',
       },
     }, as2.to_as1({
       '@context': 'https://www.w3.org/ns/activitystreams',
@@ -186,3 +205,38 @@ class ActivityStreams2Test(testutil.TestCase):
     for bad in None, {}, '', {'a': 'b'}, {'preferredUsername': 'me'}:
       with self.subTest(actor=bad):
         self.assertIsNone(as2.address(bad))
+
+  def test_person_featured_image_overrides_media_type(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'https://mastodon.xyz/users/alice',
+      'image': [{
+        'url': 'https://banner/',
+        'objectType': 'featured',
+        'mimeType': 'image/jpeg',
+       }],
+    }, as2.to_as1({
+      'type': 'Person',
+      'id': 'https://mastodon.xyz/users/alice',
+      'image': {
+        'mediaType': 'image/jpeg',
+        'url': 'https://banner'
+      }
+    }))
+
+  def test_person_propertyvalue_attachment_strips_home_page_slash(self):
+    self.assert_equals({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Person',
+      'id': 'tag:example.com,2011:martin',
+      'url': 'https://example.com/',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Link',
+        'value': '<a rel="me" href="https://example.com"><span class="invisible">https://</span>example.com</a>',
+      }],
+    }, as2.from_as1({
+      'objectType' : 'person',
+      'id': 'tag:example.com,2011:martin',
+      'url': 'https://example.com/',
+    }))

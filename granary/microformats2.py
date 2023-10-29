@@ -1,6 +1,7 @@
 """Convert ActivityStreams to microformats2 HTML and JSON.
 
 Microformats2 specs: http://microformats.org/wiki/microformats2
+
 ActivityStreams 1 specs: http://activitystrea.ms/specs/
 """
 from collections import defaultdict
@@ -101,15 +102,15 @@ ISO_6709_RE = re.compile(r'^([-+][0-9.]+)([-+][0-9.]+).*/$')
 def get_string_urls(objs):
   """Extracts string URLs from a list of either string URLs or mf2 dicts.
 
-  Many mf2 properties can contain either string URLs or full mf2 objects, e.g.
-  h-cites. in-reply-to is the most commonly used example:
+  Many mf2 properties can contain either string URLs or full mf2 objects, eg
+  ``h-cite``. ``in-reply-to`` is the most commonly used example:
   http://indiewebcamp.com/in-reply-to#How_to_consume_in-reply-to
 
   Args:
-    objs: sequence of either string URLs or embedded mf2 objects
+    objs (sequence of str or dict): URLs or embedded mf2 objects
 
   Returns:
-    list of string URLs
+    list of str: URLs
   """
   if not objs:
     return []
@@ -131,20 +132,22 @@ def get_html(val):
   """Returns a string value that may have HTML markup.
 
   Args:
-    value: mf2 property value, either string or
-     {'html': '<p>str</p>', 'value': 'str'} dict
+    value (str or dict): mf2 property value, either str or
+     ``{'html': '<p>str</p>', 'value': 'str'}``
 
   Returns:
-    string or None
+    str or None:
   """
-  if isinstance(val, dict) and val.get('html'):
+  if val is None:
+    return None
+  elif isinstance(val, dict) and val.get('html'):
     return val['html'].strip()
 
   return html.escape(get_text(val), quote=False)
 
 
 def get_text(val):
-  """Returns a plain text string value. See get_html."""
+  """Returns a plain text string value. See :func:`get_html`."""
   if isinstance(val, dict):
     val = val.get('value')
   return val.strip() if val else ''
@@ -154,10 +157,10 @@ def maybe_normalize_iso8601(val):
   """Tries to normalize a string datetime value to ISO-8601.
 
   Args:
-    val: str
+    val (str)
 
   Returns:
-    str, normalized ISO-8601 if val can be parsed, otherwise val unchanged
+    str: normalized ISO-8601 if val can be parsed, otherwise val unchanged
   """
   if not val:
     return val
@@ -174,17 +177,17 @@ def activity_to_json(activity, **kwargs):
   """Converts an ActivityStreams activity to microformats2 JSON.
 
   Args:
-    activity: dict, a decoded JSON ActivityStreams activity
-    kwargs: passed to object_to_json
+    activity (dict): a decoded JSON ActivityStreams activity
+    kwargs: passed to :func:`object_to_json`
 
   Returns:
-    dict, decoded microformats2 JSON
+    dict: decoded microformats2 JSON
   """
   return object_to_json(_activity_or_object(activity), **kwargs)
 
 
 def _activity_or_object(activity):
-  """Returns the base item we care about, activity or activity['object'].
+  """Returns the base item we care about, ``activity`` or ``activity['object']``.
 
   Used in :func:`activity_to_json()` and :func:`activities_to_html()`.
   """
@@ -199,18 +202,18 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   """Converts an ActivityStreams object to microformats2 JSON.
 
   Args:
-    obj: dict, a decoded JSON ActivityStreams object
-    trim_nulls: boolean, whether to remove elements with null or empty values
-    entry_class: string or sequence, the mf2 class(es) that entries should be
-      given (e.g. 'h-cite' when parsing a reference to a foreign entry).
-      defaults to 'h-entry'
-    default_object_type: string, the ActivityStreams objectType to use if one
+    obj (dict): a decoded JSON ActivityStreams object
+    trim_nulls (bool): whether to remove elements with null or empty values
+    entry_class (str or sequence of str), the mf2 class(es) that entries should be
+      given, eg ``h-cite`` when parsing a reference to a foreign entry.
+      defaults to `h-entry``
+    default_object_type (str): the ActivityStreams ``objectType`` to use if one
       is not present. defaults to None
-    synthesize_content: whether to generate synthetic content if the object
-      doesn't have its own, e.g. 'likes this.' or 'shared this.'
+    synthesize_content (bool): whether to generate synthetic content if the object
+      doesn't have its own, eg ``likes this`` or ``shared this``
 
   Returns:
-    dict, decoded microformats2 JSON
+    dict: decoded microformats2 JSON
   """
   if not obj or not isinstance(obj, dict):
     return {}
@@ -302,11 +305,10 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
                                       for o in in_reply_tos]),
       'author': [object_to_json(
         author, trim_nulls=False, default_object_type='person')],
-      'location': [object_to_json(
-        primary.get('location', {}), trim_nulls=False,
-        default_object_type='place')],
+      'location': [object_to_json(as1.get_object(primary, 'location'),
+                                  trim_nulls=False, default_object_type='place')],
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
-                  for c in obj.get('replies', {}).get('items', [])],
+                  for c in as1.get_object(obj, 'replies').get('items', [])],
       'start': [primary.get('startTime')],
       'end': [primary.get('endTime')],
     },
@@ -371,8 +373,8 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   ):
     if obj_type == type:
       # The ActivityStreams spec says the object property should always be a
-      # single object, but it's useful to let it be a list, e.g. when a like has
-      # multiple targets, e.g. a like of a post with original post URLs in it,
+      # single object, but it's useful to let it be a list, eg when a like has
+      # multiple targets, eg a like of a post with original post URLs in it,
       # which brid.gy does.
       objs = as1.get_objects(obj)
       ret['properties'][prop + '-of'] = [
@@ -413,23 +415,23 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
 def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   """Converts a single microformats2 JSON item to an ActivityStreams object.
 
-  Supports h-entry, h-event, h-card, and other single item times. Does *not* yet
-  support h-feed.
+  Supports ``h-entry``, ``h-event``, ``h-card``, and other single item times.
+  Does *not* yet support ``h-feed``.
 
-  If `rel_urls` is provided, the returned `url` and `urls` fields will be
-  objects that may include `displayName` fields with the text or `title` from
-  the original HTML links.
+  If ``rel_urls`` is provided, the returned ``url`` and ``urls`` fields will be
+  objects that may include ``displayName`` fields with the text or ``title``
+  from the original HTML links.
 
   Args:
-    mf2: dict, decoded JSON microformats2 object
-    actor: optional author AS actor object. usually comes from a rel="author"
-      link. if mf2 has its own author, that will override this.
-    fetch_mf2: boolean, whether to fetch additional pages via HTTP if necessary,
-      e.g. to determine authorship: https://indieweb.org/authorship
-    rel_urls: dict, optional `rel-urls` field from parsed mf2
+    mf2 (dict): decoded JSON microformats2 object
+    actor (dict): optional author AS actor object. usually comes from a
+      ``rel="author"`` link. if ``mf2`` has its own author, that overrides this
+    fetch_mf2 (bool): whether to fetch additional pages via HTTP if necessary,
+      eg to determine authorship: https://indieweb.org/authorship
+    rel_urls (dict): optional `rel-urls` field from parsed mf2
 
   Returns:
-    dict, ActivityStreams object
+    dict: ActivityStreams object
   """
   if not mf2 or not isinstance(mf2, dict):
     return {}
@@ -504,7 +506,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   # audio and video
   #
   # the duration mf2 property is still emerging. examples in the wild use both
-  # integer seconds and ISO 8601 durations.
+  # int seconds and ISO 8601 durations.
   # https://indieweb.org/duration
   # https://en.wikipedia.org/wiki/ISO_8601#Durations
   duration = prop.get('duration') or prop.get('length')
@@ -526,7 +528,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       'objectType': type,
       'stream': {
         'url': url,
-        # integer seconds: http://activitystrea.ms/specs/json/1.0/#media-link
+        # int seconds: http://activitystrea.ms/specs/json/1.0/#media-link
         'duration': duration,
         # file size in bytes. nonstandard, not in AS1 or AS2
         'size': bytes,
@@ -647,18 +649,18 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
 
 
 def html_to_activities(html, url=None, actor=None, id=None):
-  """Converts a microformats2 HTML h-feed to ActivityStreams activities.
+  """Converts a microformats2 HTML ``h-feed`` to ActivityStreams activities.
 
   Args:
-    html: unicode string HTML or :class:`requests.Response`
-    url: optional string URL that HTML came from
-    actor: optional author AS actor object for all activities. usually comes
-      from a rel="author" link.
-    id: string, optional id of specific element to extract and parse. defaults
+    html (str): HTML or :class:`requests.Response`
+    url (str): optional URL that HTML came from
+    actor (dict): optional author AS actor object for all activities. usually comes
+      from a ``rel="author"`` link.
+    id (str): optional id of specific element to extract and parse. defaults
       to the whole page.
 
   Returns:
-    list of ActivityStreams activity dicts
+    list of dict: ActivityStreams activities
   """
   return json_to_activities(util.parse_mf2(html, url=url, id=id), actor=actor)
 
@@ -667,12 +669,12 @@ def json_to_activities(parsed, actor=None):
   """Converts parsed microformats2 JSON to ActivityStreams activities.
 
   Args:
-    parsed: dict, parsed JSON microformats2 object
-    actor: optional author AS actor object for all activities. usually comes
-      from a rel="author" link.
+    parsed (dict): parsed JSON microformats2 object
+    actor (dict): optional author AS actor object for all activities. usually
+      comes from a ``rel="author"`` link.
 
   Returns:
-    list of ActivityStreams activity dicts
+    list of dict: ActivityStreams activities
   """
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
   items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
@@ -696,17 +698,17 @@ def json_to_activities(parsed, actor=None):
 
 
 def activities_to_html(activities, extra='', body_class=''):
-  """Converts ActivityStreams activities to a microformats2 HTML h-feed.
+  """Converts ActivityStreams activities to a microformats2 HTML ``h-feed``.
 
   Args:
-    obj: dict, a decoded JSON ActivityStreams object
-    extra: str, extra HTML to be included inside the body tag, at the top
-    body_class: str, included as the body tag's class attribute
+    obj (dict): a decoded JSON ActivityStreams object
+    extra (str): extra HTML to be included inside the body tag, at the top
+    body_class (str): included as the body tag's class attribute
 
   Returns:
-    string, the content field in obj with the tags in the tags field
-    converted to links if they have startIndex and length, otherwise added to
-    the end.
+    str: the content field in ``obj`` with the tags in the ``tags`` field
+    converted to links if they have ``startIndex`` and ``length``, otherwise
+    added to the end.
   """
   html = '\n'.join(object_to_html(_activity_or_object(a)) for a in activities)
   return f"""\
@@ -732,16 +734,16 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
   * adds a "via SOURCE" postscript
 
   Args:
-    obj: dict, a decoded JSON ActivityStreams object
-    parent_props: list of strings, the properties of the parent object where
-      this object is embedded, e.g. ['u-repost-of']
-    synthesize_content: whether to generate synthetic content if the object
-      doesn't have its own, e.g. 'likes this.' or 'shared this.'
+    obj (dict): a decoded JSON ActivityStreams object
+    parent_props (list of str): the properties of the parent object where
+      this object is embedded, eg ``['u-repost-of']``
+    synthesize_content (bool): whether to generate synthetic content if the object
+      doesn't have its own, eg ``likes this`` or ``shared this``
 
   Returns:
-    string, the content field in obj with the tags in the tags field
-    converted to links if they have startIndex and length, otherwise added to
-    the end.
+    str: the content field in ``obj`` with tags in the ``tags`` field converted
+    to links if they have ``startIndex`` and ``length``, otherwise added to the
+    end.
   """
   return json_to_html(object_to_json(obj, synthesize_content=synthesize_content),
                       parent_props=parent_props)
@@ -750,15 +752,15 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
 def json_to_html(obj, parent_props=None):
   """Converts a microformats2 JSON object to microformats2 HTML.
 
-  See object_to_html for details.
+  See :func:`object_to_html` for details.
 
   Args:
-    obj: dict, a decoded microformats2 JSON object
-    parent_props: list of strings, the properties of the parent object where
-      this object is embedded, e.g. 'u-repost-of'
+    obj (dict): a decoded microformats2 JSON object
+    parent_props (list): of str, the properties of the parent object where
+      this object is embedded, eg ``u-repost-of``
 
   Returns:
-    string HTML
+    str: HTML
   """
 
   if not obj:
@@ -790,7 +792,9 @@ def json_to_html(obj, parent_props=None):
       props['name'] = [{'yes': 'is attending.',
                         'no': 'is not attending.',
                         'maybe': 'might attend.'}.get(rsvp)]
-    props['name'][0] = f"<data class=\"p-rsvp\" value=\"{rsvp}\">{props['name'][0]}</data>"
+    props['name'][0] = {
+      'html': f"<data class=\"p-rsvp\" value=\"{rsvp}\">{props['name'][0]}</data>",
+    }
 
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
@@ -906,12 +910,12 @@ def hcard_to_html(hcard, parent_props=None):
   """Renders an h-card as HTML.
 
   Args:
-    hcard: dict, decoded JSON h-card
-    parent_props: list of strings, the properties of the parent object where
-      this object is embedded, e.g. ['p-author']
+    hcard (dict): decoded JSON ``h-card``
+    parent_props (list): of str, the properties of the parent object where
+      this object is embedded, eg ``['p-author']``
 
   Returns:
-    string, rendered HTML
+    str, rendered HTML
   """
   if not hcard:
     return ''
@@ -947,25 +951,22 @@ def render_content(obj, include_location=True, synthesize_content=True,
 
   Includes tags, mentions, and non-note/article attachments. (Note/article
   attachments are converted to mf2 children in object_to_json and then rendered
-  in json_to_html.)
-
-  Note that the returned HTML is included in Atom as well as HTML documents,
-  so it *must* be HTML4 / XHTML, not HTML5! All tags must be closed, etc.
+  in :func:`json_to_html`.)
 
   Args:
-    obj: decoded JSON ActivityStreams object
-    include_location: boolean, whether to render location, if provided
-    synthesize_content: boolean, whether to generate synthetic content if the
-      object doesn't have its own, e.g. 'likes this.' or 'shared this.'
-    render_attachments: boolean, whether to render attachments, eg links,
+    obj (dict): decoded JSON ActivityStreams object
+    include_location (bool): whether to render location, if provided
+    synthesize_content (bool): whether to generate synthetic content if the
+      object doesn't have its own, eg ``likes this`` or ``shared this``
+    render_attachments (bool): whether to render attachments, eg links,
       images, audio, and video
-    render_image: boolean, whether to render the object's image(s)
-    white_space_pre: boolean, whether to wrap in CSS white-space: pre. If False,
-      newlines will be converted to <br> tags instead. Background:
+    render_image (bool): whether to render the object's image(s)
+    white_space_pre (bool): whether to wrap in CSS ``white-space: pre``. If False,
+      newlines will be converted to ``<br>`` tags instead. Background:
       https://indiewebcamp.com/note#Indieweb_whitespace_thinking
 
   Returns:
-    string, rendered HTML
+    str: rendered HTML
   """
   obj_type = as1.object_type(obj)
   content = obj.get('content') or ''
@@ -1031,7 +1032,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   if obj_type == 'bookmark' and targetUrl:
     content += f"\nBookmark: {util.pretty_link(targetUrl, attrs={'class': 'u-bookmark-of'})}"
 
-  # attachments, e.g. links (aka articles)
+  # attachments, eg links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
   if render_attachments:
     atts = [a for a in obj.get('attachments', [])
@@ -1099,15 +1100,12 @@ def render_content(obj, include_location=True, synthesize_content=True,
 def _render_attachments(attachments, obj):
   """Renders ActivityStreams attachments (or tags etc) as HTML.
 
-  Note that the returned HTML is included in Atom as well as HTML documents,
-  so it *must* be HTML4 / XHTML, not HTML5! All tags must be closed, etc.
-
   Args:
-    attachments: sequence of decoded JSON ActivityStreams objects
-    obj: top-level decoded JSON ActivityStreams object
+    attachments (sequence of dict): decoded JSON ActivityStreams objects
+    obj (dict): top-level decoded JSON ActivityStreams object
 
   Returns:
-    string, rendered HTML
+    str: rendered HTML
   """
   content = ''
 
@@ -1152,11 +1150,14 @@ def _render_attachments(attachments, obj):
 
 
 def find_author(parsed, **kwargs):
-  """Returns the author of a page as a ActivityStreams actor dict.
+  """Returns the author of a page as a ActivityStreams actor.
 
   Args:
-    parsed: dict, parsed mf2 object (ie return value from mf2py.parse())
-    kwargs: passed through to mf2util.find_author()
+    parsed (dict): parsed mf2 object (ie return value from :func:`mf2py.parse`)
+    kwargs: passed through to :func:`mf2util.find_author`
+
+  Returns:
+    dict: ActivityStreams actor
   """
   author = mf2util.find_author(parsed, **kwargs)
   if author:
@@ -1174,12 +1175,13 @@ def find_author(parsed, **kwargs):
 
 
 def get_title(mf2):
-  """Returns an mf2 object's title, ie its name.
+  """Returns an mf2 object's title, ie its ``name``.
 
   Args:
-    mf2: dict, parsed mf2 object (ie return value from mf2py.parse())
+    mf2 (dict): parsed mf2 object (ie return value from :func:`mf2py.parse`)
 
-  Returns: string title, possibly ellipsized
+  Returns:
+    str: title, possibly ellipsized
   """
   lines = mf2util.interpret_feed(mf2, '').get('name', '').splitlines()
   if lines:
@@ -1192,11 +1194,11 @@ def first_props(props):
   """Converts a multiply-valued dict to singly valued.
 
   Args:
-    props: dict of properties, where each value is a sequence
+    props (dict): properties, where each value is a sequence
 
   Returns:
-    corresponding dict with just the first value of each sequence, or ''
-    if the sequence is empty
+    dict: corresponding dict with just the first value of each sequence, or
+    ``''`` if the sequence is empty
   """
   return {k: get_first(props, k, '') for k in props} if props else {}
 
@@ -1205,15 +1207,18 @@ def tags_to_html(tags, classname, visible=True):
   """Returns an HTML string with links to the given tag objects.
 
   Args:
-    tags: decoded JSON ActivityStreams objects.
-    classname: class for span to enclose tags in
-    visible: boolean, whether to visibly include displayName
+    tags (sequence of dict): decoded JSON ActivityStreams objects
+    classname (str): class for span to enclose tags in
+    visible (bool): whether to visibly include ``displayName``
+
+  Returns:
+    str:
   """
   urls = {}  # stores (url, displayName) tuples
   for tag in tags:
     name = ''
     if visible and tag.get('displayName'):
-      name = tag['displayName']
+      name = get_html(tag['displayName'])
     # loop through individually instead of using update() so that order is
     # preserved.
     for url in as1.object_urls(tag):
@@ -1225,7 +1230,7 @@ def tags_to_html(tags, classname, visible=True):
 
 
 def author_display_name(hcard):
-  """Returns a human-readable string display name for an h-card object."""
+  """Returns a human-readable string display name for an ``h-card`` object."""
   name = None
   if hcard:
     prop = first_props(hcard.get('properties'))
@@ -1234,16 +1239,16 @@ def author_display_name(hcard):
 
 
 def maybe_linked_name(props):
-  """Returns the HTML for a p-name with an optional u-url inside.
+  """Returns the HTML for a ``p-name`` with an optional ``u-url`` inside.
 
   Args:
-    props: *multiply-valued* properties dict
+    props (dict): multiply-valued properties
 
   Returns:
-    string HTML
+    str: HTML
   """
   prop = first_props(props)
-  name = prop.get('name')
+  name = get_html(prop.get('name'))
   url = prop.get('url')
 
   if name is not None:
@@ -1263,14 +1268,14 @@ def maybe_linked_name(props):
 
 
 def img(src, alt=''):
-  """Returns an <img> string with the given src, class, and alt.
+  """Returns an ``<img>`` str with the given ``src``, ``class``, and ``alt``.
 
   Args:
-    src: string url or dict with value and (optionally) alt
-    alt: string, alt attribute value, or None
+    src (str): URL or dict with value and (optionally) ``alt``
+    alt (str): ``alt`` attribute value, or None
 
   Returns:
-    string
+    str:
   """
   if isinstance(src, dict):
     assert not alt
@@ -1280,14 +1285,14 @@ def img(src, alt=''):
 
 
 def vid(src, poster=''):
-  """Returns an <video> string with the given src and class
+  """Returns an ``<video>`` str with the given ``src`` and ``poster``.
 
   Args:
-    src: string, url of the video
-    poster: sring, optional. url of the poster or preview image
+    src (str): URL of the video
+    poster (str): optional URL of the poster or preview image
 
   Returns:
-    string
+    str:
   """
   poster_img = f'<img src="{poster}" />' if poster else ''
 
@@ -1297,28 +1302,28 @@ def vid(src, poster=''):
 
 
 def aud(src):
-  """Returns an <audio> string with the given src and class
+  """Returns an ``<audio>`` str with the given ``src``.
 
   Args:
-    src: string, url of the audio
+    src (str): URL of the audio
 
   Returns:
-    string
+    str:
   """
   return f'<audio class="u-audio" src="{src}" controls="controls">Your browser does not support the audio tag. <a href="{src}">Click here to listen directly.</a></audio>'
 
 
-def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
-  """Wraps text in an <a href=...> iff a non-empty url is provided.
+def maybe_linked(text, url=None, linked_classname=None, unlinked_classname=None):
+  """Wraps text in an ``<a href=...>`` iff a non-empty url is provided.
 
   Args:
-    text: string
-    url: string or None
-    linked_classname: string, optional class attribute to use if url
-    unlinked_classname: string, optional class attribute to use if not url
+    text (str)
+    url (str): optional
+    linked_classname (str): optional ``class`` attribute to use if ``url``
+    unlinked_classname (str): optional ``class`` attribute to use if not ``url``
 
   Returns:
-    string
+    str:
   """
   if url:
     classname = f' class="{linked_classname}"' if linked_classname else ''
@@ -1328,18 +1333,18 @@ def maybe_linked(text, url, linked_classname=None, unlinked_classname=None):
   return text
 
 
-def maybe_datetime(str, classname):
-  """Returns a <time datetime=...> elem if str is non-empty.
+def maybe_datetime(dt, classname):
+  """Returns a ``<time datetime=...>`` elem if ``dt`` is non-empty.
 
   Args:
-    str: string RFC339 datetime or None
-    classname: string class name
+    dt (str): RFC339 datetime or None
+    classname (str): class name
 
   Returns:
-    string
+    str:
   """
-  if str:
-    return f'<time class="{classname}" datetime="{str}">{str}</time>'
+  if dt:
+    return f'<time class="{classname}" datetime="{dt}">{dt}</time>'
   else:
     return ''
 
@@ -1348,10 +1353,11 @@ def size_to_bytes(size):
   """Converts a string file size to an integer number of bytes.
 
   Args:
-    size: string, may be either integer bytes or human-readable approximation,
-          eg 7MB or 1.23 kb
+    size (str): may be either int bytes or human-readable approximation,
+          eg ``7MB`` or ``1.23 kb``
 
-  Returns: integer, bytes, or None if size can't be parsed
+  Returns:
+    int, bytes or None if size can't be parsed
   """
   if util.is_int(size):
     return int(size)

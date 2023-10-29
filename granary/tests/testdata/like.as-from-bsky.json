@@ -1,0 +1,6 @@
+{
+  "objectType": "activity",
+  "verb": "like",
+  "object": "http://example.com/original/post",
+  "actor": "did:plc:foo"
+}

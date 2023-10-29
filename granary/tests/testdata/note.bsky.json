@@ -8,8 +8,7 @@
       "$type": "app.bsky.actor.defs#profileViewBasic",
       "did": "did:plc:asdf",
       "displayName": "Ryan Barrett",
-      "handle": "example.com",
-      "avatar": "http://example.com/ryan/image"
+      "handle": "example.com"
     },
     "record": {
       "$type": "app.bsky.feed.post",
@@ -37,8 +36,7 @@
     },
     "replyCount": 0,
     "repostCount": 0,
-    "upvoteCount": 0,
-    "downvoteCount": 0,
+    "likeCount": 0,
     "indexedAt": "2022-01-02T03:04:05+00:00"
   }
 }

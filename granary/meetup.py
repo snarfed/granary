@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Meetup.com source class.
-"""
+"""Meetup.com source class."""
 import datetime
 import logging
 import re
@@ -33,10 +31,10 @@ class Meetup(source.Source):
     """Returns the HTML string for embedding an RSVP from Meetup.com.
 
     Args:
-      obj:
-      obj: AS1 dict with at least url, and optionally also content.
+      obj (dict): AS1 object with at least url, and optionally also content.
 
-    Returns: string, HTML
+    Returns:
+      str: HTML
     """
     return f"<span class=\"verb\">RSVP {as1.object_type(obj)[5:]}</span> to <a href=\"{source.Source.base_object(cls, obj)['url']}\">this event</a>."
 
@@ -125,10 +123,10 @@ class Meetup(source.Source):
     """Converts a user to an actor.
 
     Args:
-    user: dict, a decoded JSON Meetup user
+      user (dict): a decoded JSON Meetup user
 
     Returns:
-    an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     user_id = user.get('id')
     user_id_str = str(user_id)

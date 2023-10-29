@@ -6,6 +6,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    allow:
+      - dependency-type: "all"
 
   # ideally we'd exclude the docs/ dir with something like this, but they don't
   # currently allow multiple sections with the same package-ecosystem.

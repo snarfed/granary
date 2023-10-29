@@ -8,6 +8,7 @@ import mf2util
 from oauth_dropins.webutil import util
 
 from . import as1, microformats2
+from .source import Source
 
 # allowed ActivityStreams objectTypes for attachments
 ATTACHMENT_TYPES = {'image', 'audio', 'video'}
@@ -18,14 +19,15 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
   """Converts ActivityStreams activities to a JSON feed.
 
   Args:
-    activities: sequence of ActivityStreams activity dicts
-    actor: ActivityStreams actor dict, the author of the feed
-    title: string, the feed title
-    home_page_url: string, the home page URL
-    feed_url: the URL of the JSON Feed, if any. Included in the feed_url field.
+    activities (sequence of dict): ActivityStreams activities
+    actor (dict): ActivityStreams actor, the author of the feed
+    title (str): the feed title
+    home_page_url (str): the home page URL
+    feed_url (str): the URL of the JSON Feed, if any. Included in the
+      ``feed_url`` field.
 
   Returns:
-    dict, JSON Feed data, ready to be JSON-encoded
+    dict: JSON Feed data
   """
   try:
     iter(activities)
@@ -33,7 +35,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     raise TypeError('activities must be iterable')
 
   if isinstance(activities, (dict, str)):
-    raise TypeError('activities may not be a dict or string')
+    raise TypeError('activities may not be a dict or str')
 
   def image_url(obj):
     return util.get_first(obj, 'image', {}).get('url')
@@ -49,7 +51,7 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     obj = as1.get_object(activity) or activity
     if obj.get('objectType') == 'person':
       continue
-    author = obj.get('author', {})
+    author = as1.get_object(obj, 'author')
     content = microformats2.render_content(
       obj, include_location=True, render_attachments=True,
       # Readers often obey CSS white-space: pre strictly and don't even line wrap,
@@ -106,14 +108,14 @@ def jsonfeed_to_activities(jsonfeed):
   """Converts a JSON feed to ActivityStreams activities and actor.
 
   Args:
-    jsonfeed: dict, JSON Feed data
+    jsonfeed (dict): JSON Feed data
 
   Returns:
-    (activities, actor) tuple, where activities and actor are both
+    tuple: ``(activities, actor)``, where activities and actor are both
     ActivityStreams object dicts
 
   Raises:
-    ValueError, if jsonfeed isn't a valid JSON Feed dict
+    ValueError: if jsonfeed isn't a valid JSON Feed dict
   """
   if not hasattr(jsonfeed, 'get'):
     raise ValueError(f'Expected dict (or compatible), got {jsonfeed.__class__.__name__}')
@@ -146,7 +148,7 @@ def jsonfeed_to_activities(jsonfeed):
     author = item.get('author', {})
     if not isinstance(author, dict):
       raise ValueError(f'Expected author to be dict; got {author!r}')
-    activities.append({'object': {
+    activities.append(Source.postprocess_activity({'object': {
       'objectType': 'article' if item.get('title') else 'note',
       'title': item.get('title'),
       'summary': item.get('summary'),
@@ -161,6 +163,6 @@ def jsonfeed_to_activities(jsonfeed):
         'image': [{'url': author.get('avatar')}]
       },
       'attachments': [attachment(a) for a in item.get('attachments', [])],
-    }})
+    }}))
 
   return (util.trim_nulls(activities), util.trim_nulls(actor))

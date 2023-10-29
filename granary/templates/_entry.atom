@@ -14,8 +14,7 @@
     <summary>{{ obj.summary }}</summary>
   {% endif %}
 
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 {% if obj.actor %}
   <div>
   <p>{{ activity.annotation }}</p>
@@ -37,8 +36,7 @@
 {{ child|safe }}
 </blockquote>
 {% endfor %}
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="{{ url }}" />
   <link rel="ostatus:conversation" href="{{ url }}" />
@@ -47,9 +45,6 @@
     {% if url and tag.verb not in ('like', 'react', 'share') %}
       <link rel="ostatus:attention" href="{{ url }}" />
       <link rel="mentioned" href="{{ url }}" />
-      {% if tag.displayName and not tag.startIndex %}
-        <a href="{{ url }}">{{ tag.displayName }}</a>
-      {% endif %}
     {% endif %}
   {% endfor %}
   {% if activity.verb %}

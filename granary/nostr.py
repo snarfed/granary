@@ -1,5 +1,9 @@
 """Nostr.
 
+* https://nostr.com/
+* https://github.com/nostr-protocol/nostr
+* https://github.com/nostr-protocol/nips
+
 NIPS implemented:
 
 * 01: base protocol, events, profile metadata
@@ -43,7 +47,7 @@ from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
 from . import as1
-from .source import FRIENDS, Source
+from .source import creation_result, FRIENDS, INCLUDE_LINK, OMIT_LINK, Source
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +76,10 @@ def id_for(event):
   """Generates an id for a Nostr event.
 
   Args:
-    event: dict, JSON Nostr event
+    event (dict): Nostr event
 
   Returns:
-    str, 32-character hex-encoded sha256 hash of the event, serialized
+    str: 32-character hex-encoded sha256 hash of the event, serialized
     according to NIP-01
   """
   event.setdefault('tags', [])
@@ -106,10 +110,10 @@ def uri_to_id(uri):
   Based on NIP-19 and NIP-21.
 
   Args:
-    uri: str
+    uri (str)
 
   Returns:
-    str
+    str:
   """
   if not uri or not is_bech32(uri):
     return uri
@@ -124,11 +128,11 @@ def id_to_uri(prefix, id):
   Based on NIP-19 and NIP-21.
 
   Args:
-    prefix: str
-    id: str
+    prefix (str)
+    id (str)
 
   Returns:
-    str
+    str:
   """
   if not id:
     return id
@@ -141,9 +145,10 @@ def from_as1(obj):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
   Args:
-    obj: dict, AS1 activity or object
+    obj (dict): AS1 activity or object
 
-  Returns: dict, JSON Nostr event
+  Returns:
+    dict: Nostr event
   """
   type = as1.object_type(obj)
   inner_obj = as1.get_object(obj)
@@ -266,9 +271,10 @@ def to_as1(event):
   """Converts a Nostr event to an ActivityStreams 2 activity or object.
 
   Args:
-    event: dict, JSON Nostr event
+    event (dict):  Nostr event
 
-  Returns: dict, AS1 activity or object
+  Returns:
+    dict: AS1 activity or object
   """
   if not event:
     return {}
@@ -310,7 +316,7 @@ def to_as1(event):
 
     pubkey = event.get('pubkey')
     if pubkey:
-      obj['author'] = {'id': id_to_uri('npub', pubkey)}
+      obj['author'] = id_to_uri('npub', pubkey)
 
     for tag in tags:
       type = tag[0]
@@ -389,14 +395,17 @@ def to_as1(event):
   if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
     obj['object'] = obj['object'][0]
 
-  return util.trim_nulls(obj)
+  if obj.get('objectType') == 'activity':
+    obj['actor'] = id_to_uri('npub', event.get('pubkey'))
+
+  return util.trim_nulls(Source.postprocess_object(obj))
 
 
 class Nostr(Source):
-  """Nostr source class. See file docstring and Source class for details.
+  """Nostr source class. See file docstring and :class:`Source` for details.
 
   Attributes:
-    relays: sequence of str, relay hostnames
+    relays (sequence of str): relay hostnames
   """
 
   DOMAIN = None
@@ -407,6 +416,34 @@ class Nostr(Source):
     """Constructor."""
     assert relays
     self.relays = relays
+
+  def get_actor(self, user_id=None):
+    """Fetches and returns a Nostr user profile.
+
+    Args:
+      user_id (str):  NIP-21 ``nostr:npub...``
+
+    Returns:
+      dict: AS1 actor object
+    """
+    if not user_id or not user_id.removeprefix('nostr:').startswith('npub'):
+      raise ValueError(f'Expected nostr:npub..., got {user_id}')
+
+    id = uri_to_id(user_id)
+
+    # query for activities
+    with connect(self.relays[0],
+                 open_timeout=HTTP_TIMEOUT,
+                 close_timeout=HTTP_TIMEOUT,
+                 ) as websocket:
+      events = self.query(websocket, {
+        'authors': [id],
+        'kinds': [0],
+      })
+
+    if events:
+      # will we ever get multiple here? if so, assume the last is the most recent?
+      return to_as1(events[-1])
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -477,21 +514,21 @@ class Nostr(Source):
     return self.make_activities_base_response(util.trim_nulls(activities.values()))
 
   def query(self, websocket, filter):
-    """Runs a Nostr REQ query on an open websocket.
+    """Runs a Nostr ``REQ`` query on an open websocket.
 
-    Sends the query, collects the responses, and closes the REQ subscription.
-    If `limit` is not set on the filter, defaults it to 20
+    Sends the query, collects the responses, and closes the ``REQ`` subscription.
+    If ``limit`` is not set on the filter, it defaults to 20.
 
     Args:
-      websocket: :class:`websockets.ClientConnection`
-      filter: dict NIP-01 REQ filter
-      limit: integer
+      websocket (websockets.sync.client.ClientConnection)
+      filter (dict):  NIP-01 ``REQ`` filter
+      limit (int)
 
     Returns:
-      list of dict Nostr events
+      list of dict: Nostr events
 
     Raises:
-      AssertionError if the filter 'limit' field is not set.
+      AssertionError: if the filter ``limit`` field is not set.
     """
     limit = filter.setdefault('limit', 20)
 
@@ -505,13 +542,13 @@ class Nostr(Source):
       try:
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
       except ConnectionClosed as cc:
-        logger.debug(cc)
+        logger.warning(cc)
         break
 
-      logger.debug(f'Received: {msg}')
+      logger.debug(f'Received: {msg[:500]}')
       resp = json_loads(msg)
-      if resp[0] == 'NOTICE':
-        logger.info(str(resp))
+      if resp[:3] == ['OK', subscription, False]:
+        return events
       elif resp[:2] == ['EVENT', subscription]:
         events.append(resp[2])
       elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
@@ -522,3 +559,44 @@ class Nostr(Source):
     websocket.send(json_dumps(close))
 
     return events
+
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+    """Creates a new object: a post, comment, like, repost, etc.
+
+    See :meth:`Source.create` docstring for details.
+    """
+    type = as1.object_type(obj)
+    url = obj.get('url')
+    is_reply = type == 'comment' or obj.get('inReplyTo')
+    base_obj = self.base_object(obj)
+    base_url = base_obj.get('url')
+    prefer_content = type == 'note' or (base_url and is_reply)
+
+    event = from_as1(obj)
+
+    content = self._content_for_create(
+      obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
+    if content:
+      if include_link == INCLUDE_LINK and url:
+        content += '\n' + url
+      event['content'] = content
+
+    with connect(self.relays[0],
+                 open_timeout=HTTP_TIMEOUT,
+                 close_timeout=HTTP_TIMEOUT,
+                 ) as websocket:
+      create = ['EVENT', event]
+      logger.debug(f'Sending: {json_dumps(create)}')
+      websocket.send(json_dumps(create))
+      try:
+        msg = websocket.recv(timeout=HTTP_TIMEOUT)
+      except ConnectionClosed as cc:
+        logger.warning(cc)
+        return
+
+    logger.debug(f'Received: {msg}')
+    resp = json_loads(msg)
+    if resp[:3] == ['OK', event['id'], True]:
+      return creation_result(event)
+
+    return creation_result(error_plain=resp[-1], abort=True)

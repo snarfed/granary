@@ -1,4 +1,3 @@
-# coding=utf-8
 """Pixelfed source class, heavily based on Mastodon.
 
 Pixelfed's API is a clone of Mastodon's.

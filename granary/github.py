@@ -1,10 +1,10 @@
-# coding=utf-8
 """GitHub source class. Uses the v4 GraphQL API and the v3 REST API.
 
 API docs:
-https://developer.github.com/v4/
-https://developer.github.com/v3/
-https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
+
+* https://developer.github.com/v4/
+* https://developer.github.com/v3/
+* https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/#web-application-flow
 """
 import datetime
 import email.utils
@@ -212,10 +212,10 @@ def replace_placeholders(text):
 
 
 class GitHub(source.Source):
-  """GitHub source class. See file docstring and Source class for details.
+  """GitHub source class. See file docstring and :class:`Source` for details.
 
   Attributes:
-    access_token: string, optional, OAuth access token
+    access_token (str): optional, OAuth access token
   """
   DOMAIN = 'github.com'
   BASE_URL = 'https://github.com/'
@@ -251,7 +251,7 @@ class GitHub(source.Source):
     """Constructor.
 
     Args:
-      access_token: string, optional OAuth access token
+      access_token (str): optional OAuth access token
     """
     self.access_token = access_token
 
@@ -260,13 +260,13 @@ class GitHub(source.Source):
 
   @classmethod
   def base_id(cls, url):
-    """Extracts and returns a USERNAME:REPO:ID id for an issue or PR.
+    """Extracts and returns a ``USERNAME:REPO:ID`` id for an issue or PR.
 
     Args:
-      url: string
+      url (str):
 
     Returns:
-      string, or None
+      str or None:
     """
     parts = urllib.parse.urlparse(url).path.strip('/').split('/')
     if len(parts) == 4 and util.is_int(parts[3]):
@@ -276,9 +276,10 @@ class GitHub(source.Source):
     """Makes a v4 GraphQL API call.
 
     Args:
-      graphql: string GraphQL operation
+      graphql (str): GraphQL operation
 
-    Returns: dict, parsed JSON response
+    Returns:
+      dict: parsed JSON response
     """
     escaped = {k: (email.utils.quote(v) if isinstance(v, str) else v)
                for k, v in kwargs.items()}
@@ -303,10 +304,13 @@ class GitHub(source.Source):
     Uses HTTP POST if data is provided, otherwise GET.
 
     Args:
-      data: dict, JSON payload for POST requests
-      json: boolean, whether to parse the response body as JSON and return it as a dict. If False, returns a :class:`requests.Response` instead.
+      data (dict): JSON payload for POST requests
+      json (bool): whether to parse the response body as JSON and return it as a
+        dict. If False, returns a :class:`requests.Response` instead.
 
-    Returns: dict decoded from JSON response if json=True, otherwise :class:`requests.Response`
+    Returns:
+      dict: decoded from JSON response if ``json=True``, otherwise
+        :class:`requests.Response`
     """
     kwargs['headers'] = kwargs.get('headers') or {}
     kwargs['headers'].update({
@@ -336,18 +340,18 @@ class GitHub(source.Source):
 
     Also note that start_index is not currently supported.
 
-    https://developer.github.com/v3/activity/notifications/
-    https://developer.github.com/v3/issues/
-    https://developer.github.com/v3/issues/comments/
+    * https://developer.github.com/v3/activity/notifications/
+    * https://developer.github.com/v3/issues/
+    * https://developer.github.com/v3/issues/comments/
 
-    fetch_likes determines whether emoji reactions are fetched:
+    ``fetch_likes`` determines whether emoji reactions are fetched:
     https://help.github.com/articles/about-conversations-on-github#reacting-to-ideas-in-comments
 
-    The notifications API call supports Last-Modified/If-Modified-Since headers
-    and 304 Not Changed responses. If provided, etag should be an RFC2822
-    timestamp, usually the exact value returned in a Last-Modified header. It
-    will also be passed to the comments API endpoint as the since= value
-    (converted to ISO 8601).
+    The notifications API call supports ``Last-Modified``/``If-Modified-Since``
+    headers and ``304 Not Changed`` responses. If provided, ``etag`` should be
+    an RFC2822 timestamp, usually the exact value returned in a
+    ``Last-Modified`` header. It will also be passed to the comments API
+    endpoint as the ``since=`` value (converted to ISO8601).
     """
     if fetch_shares or fetch_events or fetch_mentions or search_query:
       raise NotImplementedError()
@@ -441,11 +445,13 @@ class GitHub(source.Source):
     return response
 
   def get_actor(self, user_id=None):
-    """Fetches nd returns a user.
+    """Fetches and returns a user.
 
-    Args: user_id: string, defaults to current user
+    Args:
+      user_id (str): defaults to current user
 
-    Returns: dict, ActivityStreams actor object
+    Returns:
+      dict: ActivityStreams actor object
     """
     if user_id:
       user = self.graphql(GRAPHQL_USER, {'login': user_id})['user']
@@ -458,10 +464,11 @@ class GitHub(source.Source):
     """Fetches and returns a comment.
 
     Args:
-      comment_id: string comment id (either REST or GraphQL), of the form
-        REPO-OWNER_REPO-NAME_ID, e.g. snarfed:bridgy:456789
+      comment_id (str): comment id (either REST or GraphQL), of the form
+        ``REPO-OWNER:REPO-NAME:ID``, e.g. ``snarfed:bridgy:456789``
 
-    Returns: dict, an ActivityStreams comment object
+    Returns:
+      dict: an ActivityStreams comment object
     """
     parts = comment_id.split(':')
     if len(parts) != 3:
@@ -479,15 +486,16 @@ class GitHub(source.Source):
   def render_markdown(self, markdown, owner, repo):
     """Uses the GitHub API to render GitHub-flavored Markdown to HTML.
 
-    https://developer.github.com/v3/markdown/
-    https://github.github.com/gfm/
+    * https://developer.github.com/v3/markdown/
+    * https://github.github.com/gfm/
 
     Args:
-      markdown: unicode string, input
-      owner and repo: strings, the repo to render in, for context. affects git
+      markdown (str): input
+      owner and repo (strs): the repo to render in, for context. affects git
         hashes #XXX for issues/PRs.
 
-    Returns: unicode string, rendered HTML
+    Returns:
+      str: rendered HTML
     """
     return self.rest(REST_MARKDOWN, {
       'text': markdown,
@@ -499,13 +507,13 @@ class GitHub(source.Source):
     """Creates a new issue or comment.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult whose contents will be a dict with 'id' and
-      'url' keys for the newly created GitHub object (or None)
+      CreationResult or None: contents will be a dict with ``id`` and
+      ``url`` keys for the newly created GitHub object
     """
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -515,13 +523,12 @@ class GitHub(source.Source):
     """Previews creating an issue or comment.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult whose contents will be a unicode string HTML snippet
-      or None
+      CreationResult or None: ``contents`` will be a str HTML snippet
     """
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -534,23 +541,21 @@ class GitHub(source.Source):
     the repo, tags that match existing labels are converted to those labels and
     included.
 
-    https://developer.github.com/v4/guides/forming-calls/#about-mutations
-    https://developer.github.com/v4/mutation/addcomment/
-    https://developer.github.com/v4/mutation/addreaction/
-    https://developer.github.com/v3/issues/#create-an-issue
+    * https://developer.github.com/v4/guides/forming-calls/#about-mutations
+    * https://developer.github.com/v4/mutation/addcomment/
+    * https://developer.github.com/v4/mutation/addreaction/
+    * https://developer.github.com/v3/issues/#create-an-issue
 
     Args:
-      obj: ActivityStreams object
-      preview: boolean
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      preview (bool)
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult
-
-      If preview is True, the contents will be a unicode string HTML
-      snippet. If False, it will be a dict with 'id' and 'url' keys
-      for the newly created GitHub object.
+      CreationResult: If preview is True, the contents will be a str HTML
+      snippet. If False, it will be a dict with ``id`` and ``url`` keys for the
+      newly created GitHub object.
     """
     assert preview in (False, True)
 
@@ -743,10 +748,11 @@ class GitHub(source.Source):
     """Fetches and returns a repo's labels.
 
     Args:
-      owner: string, GitHub username or org that owns the repo
-      repo: string
+      owner (str): GitHub username or org that owns the repo
+      repo (str)
 
-    Returns: set of strings
+    Returns:
+      set of str:
     """
     resp = self.graphql(GRAPHQL_REPO_LABELS, locals())
 
@@ -761,16 +767,16 @@ class GitHub(source.Source):
 
     Handles both v4 GraphQL and v3 REST API issue and PR objects.
 
-    https://developer.github.com/v4/object/issue/
-    https://developer.github.com/v4/object/pullrequest/
-    https://developer.github.com/v3/issues/
-    https://developer.github.com/v3/pulls/
+    * https://developer.github.com/v4/object/issue/
+    * https://developer.github.com/v4/object/pullrequest/
+    * https://developer.github.com/v3/issues/
+    * https://developer.github.com/v3/pulls/
 
     Args:
-      issue: dict, decoded JSON GitHub issue or PR
+      issue (dict): GitHub issue or PR
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     obj = self._to_object(issue, repo_id=True)
     if not obj:
@@ -801,14 +807,14 @@ class GitHub(source.Source):
 
     Handles both v4 GraphQL and v3 REST API issue objects.
 
-    https://developer.github.com/v4/object/issue/
-    https://developer.github.com/v3/issues/
+    * https://developer.github.com/v4/object/issue/
+    * https://developer.github.com/v3/issues/
 
     Args:
-      comment: dict, decoded JSON GitHub issue
+      comment (dict): GitHub issue
 
     Returns:
-      an ActivityStreams comment dict, ready to be JSON-encoded
+      dict: ActivityStreams comment
     """
     obj = self._to_object(comment, repo_id=True)
     if not obj:
@@ -829,11 +835,11 @@ class GitHub(source.Source):
     https://developer.github.com/v3/reactions/
 
     Args:
-      reaction: dict, decoded v3 JSON GitHub reaction
-      target: dict, ActivityStreams object of reaction
+      reaction (dict): v3 GitHub reaction
+      target (dict): ActivityStreams object of reaction
 
     Returns:
-      an ActivityStreams reaction dict, ready to be JSON-encoded
+      dict: ActivityStreams reaction
     """
     obj = self._to_object(reaction)
     if not obj:
@@ -860,14 +866,14 @@ class GitHub(source.Source):
 
     Handles both v4 GraphQL and v3 REST API user objects.
 
-    https://developer.github.com/v4/object/user/
-    https://developer.github.com/v3/users/
+    * https://developer.github.com/v4/object/user/
+    * https://developer.github.com/v3/users/
 
     Args:
-      user: dict, decoded JSON GitHub user
+      user (dict): GitHub user
 
     Returns:
-      an ActivityStreams actor dict, ready to be JSON-encoded
+      dict: ActivityStreams actor
     """
     actor = self._to_object(user)
     if not actor:
@@ -908,11 +914,11 @@ class GitHub(source.Source):
     """Starts to convert a GraphQL or REST API object to ActivityStreams.
 
     Args:
-      input: dict, decoded JSON GraphQL or REST object
-      repo_id: boolean, whether to inject repo owner and name into id
+      input (dict): GraphQL or REST object
+      repo_id (bool): whether to inject repo owner and name into id
 
     Returns:
-      an ActivityStreams object dict, ready to be JSON-encoded
+      dict: ActivityStreams object
     """
     if not input:
       return {}

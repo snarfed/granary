@@ -1,0 +1,24 @@
+{
+  "$type": "app.bsky.feed.post",
+  "text": "I hereby quote",
+  "createdAt": "",
+  "embed": {
+    "$type": "app.bsky.embed.recordWithMedia",
+    "record" : {
+      "$type" : "app.bsky.embed.record",
+      "record": {
+        "cid": "TODO",
+        "uri": "at://did/app.bsky.feed.post/orig-post-tid"
+      }
+    },
+    "media": {
+      "$type": "app.bsky.embed.external",
+      "external": {
+        "$type": "app.bsky.embed.external#external",
+        "uri" : "https://youtu.be/6rgStv12dwA",
+        "title" : "Baby Bash - Suga Suga ft. Frankie J",
+        "description" : "Music video by Baby Bash performing Suga Suga"
+      }
+    }
+  }
+}

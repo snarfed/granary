@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for app.py.
-"""
+"""Unit tests for app.py."""
 import copy
 from io import BytesIO
 import os.path
@@ -162,13 +160,11 @@ ATOM_CONTENT = """\
   <id>https://perma/link</id>
   <title>foo ☕ bar</title>
 
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 
 foo ☕ bar
 
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="https://perma/link" />
   <link rel="ostatus:conversation" href="https://perma/link" />
@@ -306,6 +302,37 @@ class AppTest(testutil.TestCase):
       'body_class': '',
       'extra': '',
     }, resp.get_data(as_text=True), ignore_blanks=True)
+
+  def test_url_html_to_as1(self):
+    html = HTML % {'body_class': 'h-feed', 'extra': ''}
+    self.expect_requests_get('http://my/posts.html', html)
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://my/posts.html&input=html')
+    self.assert_equals(200, resp.status_code)
+    self.assert_equals('application/json', resp.headers['Content-Type'])
+
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'displayName': 'foo ☕ bar',
+        'content': 'foo ☕ bar',
+        'content_is_html': True,
+        'published': '2012-03-04T18:20:37+00:00',
+        'url': 'https://perma/link',
+      }
+    }, {
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'displayName': 'baz baj',
+        'content': 'baz baj',
+        'content_is_html': True,
+      },
+    }], resp.json['items'])
 
   def test_url_html_to_atom(self):
     self.expect_requests_get('http://my/posts.html', HTML % {

@@ -22,7 +22,7 @@
           "images": [{
             "$type": "app.bsky.embed.images#image",
             "alt": "",
-            "image": "TODO"
+            "image": {"blob": "TODO"}
           }]
         }
       }
@@ -56,7 +56,6 @@
     },
     "replyCount": 0,
     "repostCount": 0,
-    "upvoteCount": 0,
-    "downvoteCount": 0
+    "likeCount": 0
   }
 }

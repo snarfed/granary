@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for api.py.
-"""
+"""Unit tests for api.py."""
 import copy
 import socket
 
@@ -192,21 +190,32 @@ class ApiTest(testutil.TestCase):
       with self.subTest(test_module):
         self.reset()
         self.mox.StubOutWithMock(FakeSource, 'get_actor')
-        FakeSource.get_actor(None).AndReturn(test_module.ACTOR)
+        FakeSource.get_actor('456').AndReturn(test_module.ACTOR)
         self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
         # include access_token param to check that it gets stripped
-        resp = self.get_response('/fake/?format=atom&access_token=foo&a=b&cache=false')
+        resp = self.get_response('/fake/456/?format=atom&access_token=foo&a=b&cache=false', '456')
         self.assertEqual(200, resp.status_code)
         self.assertEqual('application/atom+xml; charset=utf-8',
                          resp.headers['Content-Type'])
         self.assert_multiline_equals(
           test_module.ATOM % {
-            'request_url': 'http://localhost/fake/?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
+            'request_url': 'http://localhost/fake/456/?format=atom&amp;access_token=foo&amp;a=b&amp;cache=false',
             'host_url': 'http://fa.ke/',
             'base_url': 'http://fa.ke/',
           },
           resp.get_data(as_text=True), ignore_blanks=True)
+
+  def test_atom_format_no_user_id(self):
+    resp = self.get_response('/fake/?format=atom')
+    self.assertEqual(400, resp.status_code)
+
+  def test_atom_format_cant_fetch_actor(self):
+    self.mox.StubOutWithMock(FakeSource, 'get_actor')
+    FakeSource.get_actor('456').AndRaise(ValueError('foo'))
+
+    resp = self.get_response('/fake/456/?format=atom', '456')
+    self.assertEqual(400, resp.status_code)
 
   def test_html_format(self):
     resp = self.get_response('/fake/?format=html')
@@ -224,7 +233,7 @@ class ApiTest(testutil.TestCase):
 
   def test_instagram_blocked(self):
     resp = client.get('/instagram/@me/@friends/@app/?interactive=true')
-    self.assert_equals(400, resp.status_code)
+    self.assert_equals(404, resp.status_code)
 
   def test_bad_start_index(self):
     resp = client.get('/fake/?startIndex=foo')

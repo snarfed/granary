@@ -6,17 +6,19 @@
     "url": "https://bsky.app/profile/example.com/post/3juzc2tw2dm2h",
     "author": {
       "objectType": "person",
-      "id": "did:web:example.com:bob",
+      "id": "did:web:example.com",
       "url": "https://bsky.app/profile/example.com",
-      "displayName": "Bob"
+      "displayName": "Bob",
+      "username": "example.com"
     },
     "content": "The original post",
     "objectType": "note"
   },
   "actor": {
     "objectType": "person",
-    "id": "did:web:example.com:alice",
+    "id": "did:web:alice.example.com",
     "url": "https://bsky.app/profile/alice.example.com",
-    "displayName": "Alice"
+    "displayName": "Alice",
+    "username": "alice.example.com"
   }
 }

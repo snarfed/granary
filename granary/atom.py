@@ -44,15 +44,15 @@ def _tag(elem):
 def _text(elem, field=None):
   """Returns the text in an element or child element if it exists.
 
-  For example, if field is 'name' and elem contains <name>Ryan</name>, returns
-  'Ryan'.
+  For example, if field is ``name`` and elem contains ``<name>Ryan</name>``,
+  returns ``Ryan``.
 
   Args:
-    elem: ElementTree.Element
-    field: string
+    elem (ElementTree.Element)
+    field (str)
 
-  Returns: string or None
-
+  Returns:
+    str or None:
   """
   if field:
     if ':' not in field:
@@ -69,15 +69,16 @@ def _text(elem, field=None):
 def _as1_value(elem, field):
   """Returns an AS1 namespaced schema value if it exists.
 
-  For example, returns 'like' for field 'verb' if elem contains:
+  For example, returns ``like`` for field ``verb`` if elem contains::
 
-    <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
+      <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
 
   Args:
-    elem: ElementTree.Element
-    field: string
+    elem (ElementTree.Element)
+    field (str)
 
-  Returns: string or None
+  Returns:
+    str or None:
   """
   type = _text(elem, f'activity:{field}')
   if type:
@@ -88,6 +89,7 @@ class Defaulter(collections.defaultdict):
   """Emulates Django template behavior that returns a special default value that
   can continue to be referenced when an attribute or item lookup fails. Helps
   avoid conditionals in the template itself.
+
   https://docs.djangoproject.com/en/1.8/ref/templates/language/#variables
   """
   def __init__(self, init={}):
@@ -116,19 +118,22 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   """Converts ActivityStreams 1 activities to an Atom feed.
 
   Args:
-    activities: list of ActivityStreams activity dicts
-    actor: ActivityStreams actor dict, the author of the feed
-    title: string, the feed <title> element. Defaults to 'User feed for [NAME]'
-    request_url: the URL of this Atom feed, if any. Used in a link rel="self".
-    host_url: the home URL for this Atom feed, if any. Used in the top-level
-      feed <id> element.
-    xml_base: the base URL, if any. Used in the top-level xml:base attribute.
-    rels: rel links to include. dict mapping string rel value to string URL.
-    reader: boolean, whether the output will be rendered in a feed reader.
+    activities (list of dict): ActivityStreams activities
+    actor (dict): ActivityStreams actor, the author of the feed
+    title (str): the feed <title> element. Defaults to ``User feed for [NAME]``
+    request_url (str): URL of this Atom feed, if any. Used in a link rel="self".
+    host_url (str): home URL for this Atom feed, if any. Used in the top-level
+      feed ``<id>`` element.
+    xml_base (str): base URL, if any. Used in the top-level ``xml:base``
+      attribute.
+
+    rels (dict): rel links to include. Keys are string ``rel``s, values are
+      string URLs.
+    reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
 
   Returns:
-    unicode string with Atom XML
+    str: Atom XML
   """
   # Strip query params from URLs so that we don't include access tokens, etc
   host_url = (_remove_query_params(host_url) if host_url
@@ -167,12 +172,13 @@ def activity_to_atom(activity, xml_base=None, reader=True):
   Kwargs are passed through to :func:`activities_to_atom`.
 
   Args:
-    xml_base: the base URL, if any. Used in the top-level xml:base attribute.
-    reader: boolean, whether the output will be rendered in a feed reader.
+    xml_base (str): the base URL, if any. Used in the top-level ``xml:base``
+      attribute.
+    reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
 
   Returns:
-    unicode string with Atom XML
+    str: Atom XML
   """
   _prepare_activity(activity, reader=reader)
   return jinja_env.get_template(ENTRY_TEMPLATE).render(
@@ -188,10 +194,10 @@ def atom_to_activities(atom):
   """Converts an Atom feed to ActivityStreams 1 activities.
 
   Args:
-    atom: unicode string, Atom document with top-level <feed> element
+    atom (str): Atom document with top-level ``<feed>`` element
 
   Returns:
-    list of ActivityStreams activity dicts
+    list of dict: ActivityStreams activities
   """
   assert isinstance(atom, str)
   parser = ElementTree.XMLParser(encoding='UTF-8')
@@ -205,10 +211,10 @@ def atom_to_activity(atom):
   """Converts an Atom entry to an ActivityStreams 1 activity.
 
   Args:
-    atom: unicode string, Atom document with top-level <entry> element
+    atom (str): Atom document with top-level ``<entry>`` element
 
   Returns:
-    dict, ActivityStreams activity
+    dict: ActivityStreams activity
   """
   assert isinstance(atom, str)
   parser = ElementTree.XMLParser(encoding='UTF-8')
@@ -222,10 +228,10 @@ def _atom_to_activity(entry):
   """Converts an internal Atom entry element to an ActivityStreams 1 activity.
 
   Args:
-    entry: ElementTree <entry> element
+    entry (ElementTree.Element)
 
   Returns:
-    dict, ActivityStreams activity
+    dict: ActivityStreams activity
   """
   # default object data from entry. override with data inside activity:object.
   obj_elem = entry.find('activity:object', NAMESPACES)
@@ -265,10 +271,10 @@ def _atom_to_object(elem):
   """Converts an Atom entry to an ActivityStreams 1 object.
 
   Args:
-    elem: ElementTree.Element
+    elem (ElementTree.Element)
 
   Returns:
-    dict, ActivityStreams object
+    dict: ActivityStreams object
   """
   uri = _text(elem, 'uri') or _text(elem)
   return {
@@ -289,15 +295,15 @@ def _atom_to_object(elem):
 
 
 def _author_to_actor(elem):
-  """Converts an Atom <author> element to an ActivityStreams 1 actor.
+  """Converts an Atom ``<author>`` element to an ActivityStreams 1 actor.
 
-   Looks for <author> *inside* elem.
+   Looks for ``<author>`` *inside* elem.
 
   Args:
-    elem: ElementTree.Element
+    elem (ElementTree.Element)
 
   Returns:
-    dict, ActivityStreams actor object
+    dict: ActivityStreams actor object
   """
   author = elem.find('atom:author', NAMESPACES)
   if author is not None:
@@ -314,14 +320,15 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
   """Converts microformats2 HTML to an Atom feed.
 
   Args:
-    html: unicode string
-    url: string URL html came from, optional
-    fetch_author: boolean, whether to make HTTP request to fetch rel-author link
-    reader: boolean, whether the output will be rendered in a feed reader.
+    html (str)
+    url (str): URL html came from, optional
+    fetch_author (bool): whether to make HTTP request to fetch ``rel-author``
+      link
+    reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
 
   Returns:
-    unicode string with Atom XML
+    str: Atom XML
   """
   if fetch_author:
     assert url, 'fetch_author=True requires url!'
@@ -341,11 +348,11 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
 def _prepare_activity(a, reader=True):
   """Preprocesses an activity to prepare it to be rendered as Atom.
 
-  Modifies a in place.
+  Modifies ``a`` in place.
 
   Args:
-    a: ActivityStreams 1 activity dict
-    reader: boolean, whether the output will be rendered in a feed reader.
+    a (dict): ActivityStreams 1 activity
+    reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
   """
   act_type = as1.object_type(a)
@@ -441,7 +448,7 @@ def _prepare_actor(actor):
   Modifies actor in place.
 
   Args:
-    actor: ActivityStreams 1 actor dict
+    actor (dict): ActivityStreams 1 actor
   """
   if actor:
     actor['image'] = util.get_first(actor, 'image')

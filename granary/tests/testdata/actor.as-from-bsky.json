@@ -1,10 +1,13 @@
 {
   "objectType" : "person",
-  "id": "did:web:example.com:martin",
-  "url": "https://bsky.app/profile/yoozer@example.com",
+  "id": "did:plc:foo",
   "image": [{
-    "url": "http://example.com/martin/image"
+    "url": "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=avatar-cid"
+  }, {
+    "objectType": "featured",
+    "url": "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=banner-cid"
   }],
   "displayName": "Martin Smith",
+  "username": "example.com",
   "summary": "this is my bio"
 }

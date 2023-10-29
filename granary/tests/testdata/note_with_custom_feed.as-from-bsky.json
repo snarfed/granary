@@ -16,6 +16,7 @@
       "id": "did:plc:z72i7hd",
       "url": "https://bsky.app/profile/bob.bsky.social",
       "displayName": "Bob",
+      "username": "bob.bsky.social",
       "image": [{"url": "https://cdn.bsky.social/bob.jpeg"}]
     }
   }]

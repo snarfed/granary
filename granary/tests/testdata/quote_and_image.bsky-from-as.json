@@ -1,0 +1,22 @@
+{
+  "$type": "app.bsky.feed.post",
+  "text": "I hereby quote",
+  "createdAt": "",
+  "embed": {
+    "$type": "app.bsky.embed.recordWithMedia",
+    "record" : {
+      "$type" : "app.bsky.embed.record",
+      "record": {
+        "cid": "TODO",
+        "uri": "at://did/app.bsky.feed.post/orig-post-tid"
+      }
+    },
+    "media": {
+      "$type": "app.bsky.embed.images",
+      "images": [{
+        "$type": "app.bsky.embed.images#image",
+        "alt": ""
+      }]
+    }
+  }
+}

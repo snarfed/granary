@@ -1,4 +1,3 @@
-# coding=utf-8
 """Flickr source class.
 
 Uses Flickr's REST API https://www.flickr.com/services/api/
@@ -6,9 +5,9 @@ Uses Flickr's REST API https://www.flickr.com/services/api/
 TODO: Fetching feeds with comments and/or favorites is very request
 intensive right now. It would be ideal to find a way to batch
 requests, make requests asynchronously, or make better calls to the
-API itself. Maybe use flickr.activity.userPhotos
+API itself. Maybe use ``flickr.activity.userPhotos``
 (https://www.flickr.com/services/api/flickr.activity.userPhotos.html)
-when group_id=SELF.
+when `group_id=SELF``.
 """
 import copy
 import logging
@@ -41,15 +40,15 @@ class Flickr(source.Source):
                user_id=None, path_alias=None):
     """Constructor.
 
-    If they are not provided, user_id and path_alias will be looked up via the
-    API on first use.
+    If they are not provided, ``user_id`` and ``path_alias`` will be looked up
+    via the API on first use.
 
     Args:
-      access_token_key: string, OAuth access token key
-      access_token_secret: string, OAuth access token secret
-      user_id: string, the logged in user's Flickr nsid. (optional)
-      path_alias: string, the logged in user's path_alias, replaces user_id in
-        canonical profile and photo urls (optional)
+      access_token_key (str): OAuth access token key
+      access_token_secret (str): OAuth access token secret
+      user_id (str): the logged in user's Flickr ``nsid``. (optional)
+      path_alias (str): the logged in user's ``path_alias``, replaces
+        ``user_id`` in canonical profile and photo urls (optional)
     """
     self.access_token_key = access_token_key
     self.access_token_secret = access_token_secret
@@ -73,15 +72,13 @@ class Flickr(source.Source):
     """Creates a photo, comment, or favorite.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult whose content will be a dict with 'id', 'url',
-      and 'type' keys (all optional) for the newly created Flickr
-      object (or None)
-
+      CreationResult or None: ``content`` will be a dict with ``id``, ``url``,
+      and ``type`` keys (all optional) for the newly created Flickr object
     """
     return self._create(obj, preview=False, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -91,14 +88,14 @@ class Flickr(source.Source):
     """Preview creation of a photo, comment, or favorite.
 
     Args:
-      obj: ActivityStreams object
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
 
     Returns:
-      a CreationResult whose description will be an HTML summary of
+      CreationResult or None: whose description will be an HTML summary of
       what publishing will do, and whose content will be an HTML preview
-      of the result (or None)
+      of the result
     """
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
@@ -107,19 +104,19 @@ class Flickr(source.Source):
               ignore_formatting=False):
     """Creates or previews creating for the previous two methods.
 
-    https://www.flickr.com/services/api/upload.api.html
-    https://www.flickr.com/services/api/flickr.photos.comments.addComment.html
-    https://www.flickr.com/services/api/flickr.favorites.add.html
-    https://www.flickr.com/services/api/flickr.photos.people.add.html
+    * https://www.flickr.com/services/api/upload.api.html
+    * https://www.flickr.com/services/api/flickr.photos.comments.addComment.html
+    * https://www.flickr.com/services/api/flickr.favorites.add.html
+    * https://www.flickr.com/services/api/flickr.photos.people.add.html
 
     Args:
-      obj: ActivityStreams object
-      preview: boolean
-      include_link: string
-      ignore_formatting: boolean
+      obj (dict): ActivityStreams object
+      preview (bool)
+      include_link (str)
+      ignore_formatting (bool)
 
     Return:
-      a CreationResult
+      ``CreationResult``
     """
     # photo, comment, or like
     type = as1.object_type(obj)
@@ -327,10 +324,10 @@ class Flickr(source.Source):
     to find the NSID for a particular URL.
 
     Args:
-      obj: ActivityStreams object that may contain person targets
+      obj (dict): ActivityStreams object that may contain person targets
 
     Returns:
-      a sequence of ActivityStream person objects augmented with 'id' equal to
+      list of dict: ActivityStream person objects augmented with ``id`` equal to
       the Flickr user's NSID
     """
     people = {}  # maps id to tag
@@ -350,9 +347,10 @@ class Flickr(source.Source):
     """Deletes a photo. The authenticated user must have created it.
 
     Args:
-      id: int or string, photo id to delete
+      id (int or str): photo id to delete
 
-    Returns: CreationResult, content is Flickr API response dict
+    Returns:
+      CreationResult: ``content`` is Flickr API response dict
     """
     # delete API call has no response
     self.call_api_method('flickr.photos.delete', {'photo_id': id})
@@ -365,9 +363,10 @@ class Flickr(source.Source):
     """Previews deleting a photo.
 
     Args:
-      id: int or string, photo id to delete
+      id (int or str): photo id to delete
 
-    Returns: CreationResult
+    Returns:
+      CreationResult:
     """
     return source.creation_result(
       description=f'<span class="verb">delete</span> <a href="{self.photo_url(self.user_id(), id)}">this photo</a>.')
@@ -380,7 +379,7 @@ class Flickr(source.Source):
                               fetch_mentions=False, search_query=None, **kwargs):
     """Fetches Flickr photos and converts them to ActivityStreams activities.
 
-    See method docstring in source.py for details.
+    See :meth:`Source.get_activities_response` for details.
 
     Mentions are not fetched or included because they don't exist in Flickr.
     https://github.com/snarfed/bridgy/issues/523#issuecomment-155523875
@@ -450,15 +449,15 @@ class Flickr(source.Source):
     return util.trim_nulls(result)
 
   def get_actor(self, user_id=None):
-    """Get an ActivityStreams object of type 'person' given a Flickr user's nsid.
-    If no user_id is provided, this method will make another API request to
+    """Get an ActivityStreams object of type ``person`` given a user's nsid.
+    If no ``user_id`` is provided, this method will make another API request to
     find out the currently logged in user's id.
 
     Args:
-      user_id: string, optional
+      user_id (str): optional
 
     Returns:
-      dict, an ActivityStreams object
+      dict: an ActivityStreams object
     """
     resp = self.call_api_method('flickr.people.getInfo', {
       'user_id': user_id or self.user_id(),
@@ -466,8 +465,7 @@ class Flickr(source.Source):
     return self.user_to_actor(resp)
 
   def user_to_actor(self, resp):
-    """Convert a Flickr user dict into an ActivityStreams actor.
-    """
+    """Convert a Flickr user dict into an ActivityStreams actor."""
     person = resp.get('person', {})
     username = person.get('username', {}).get('_content')
     obj = util.trim_nulls({
@@ -510,10 +508,11 @@ class Flickr(source.Source):
     """Returns an ActivityStreams comment object.
 
     Args:
-      comment_id: string comment id
-      activity_id: string activity id, optional
-      activity_author_id: string activity author id, ignored
-      activity: activity object, optional. Avoids fetching the activity.
+      comment_id (str) comment id
+      activity_id (str) activity id, optional
+      activity_author_id (str) activity author id, ignored
+      activity (dict): activity object, optional. Avoids fetching the activity
+        if provided.
     """
     if activity:
       # TODO: unify with instagram, maybe in source.get_comment()
@@ -535,15 +534,16 @@ class Flickr(source.Source):
         return self.comment_to_object(comment, activity_id)
 
   def photo_to_activity(self, photo):
-    """Convert a Flickr photo to an ActivityStreams object. Takes either
-    data in the expanded form returned by flickr.photos.getInfo or the
-    abbreviated form returned by flickr.people.getPhotos.
+    """Convert a Flickr photo to an ActivityStreams object.
+
+    Takes either data in the expanded form returned by ``flickr.photos.getInfo``
+    or the abbreviated form returned by ``flickr.people.getPhotos``.
 
     Args:
-      photo: dict response from Flickr
+      photo (dict): response from Flickr
 
     Returns:
-      dict, an ActivityStreams object
+      dict: ActivityStreams object
     """
     owner = photo.get('owner')
     if isinstance(owner, dict):
@@ -648,15 +648,15 @@ class Flickr(source.Source):
     return activity
 
   def like_to_object(self, person, photo_activity):
-    """Convert a Flickr favorite into an ActivityStreams like tag.
+    """Convert a Flickr favorite into an ActivityStreams ``like`` tag.
 
     Args:
-      person: dict, the person object from Flickr
-      photo_activity: dict, the ActivityStreams object representing
+      person (dict): the person object from Flickr
+      photo_activity (dict): the ActivityStreams object representing
         the photo this like belongs to
 
     Returns:
-      dict, an ActivityStreams object
+      dict: ActivityStreams object
     """
     return {
       'author': {
@@ -681,14 +681,14 @@ class Flickr(source.Source):
     }
 
   def comment_to_object(self, comment, photo_id):
-    """Convert a Flickr comment json object to an ActivityStreams comment.
+    """Convert a Flickr comment JSON object to an ActivityStreams comment.
 
     Args:
-      comment: dict, the comment object from Flickr
-      photo_id: string, the Flickr ID of the photo that this comment belongs to
+      comment (dict): the comment object from Flickr
+      photo_id (str): the Flickr ID of the photo that this comment belongs to
 
     Returns:
-      dict, an ActivityStreams object
+      dict: ActivityStreams object
     """
     obj = {
       'objectType': 'comment',
@@ -715,23 +715,24 @@ class Flickr(source.Source):
     return obj
 
   def get_user_image(self, farm, server, author):
-    """Convert fields from a typical Flickr response into the buddy icon
-    URL.
+    """Convert fields from a typical Flickr response into the buddy icon URL.
 
-    ref: https://www.flickr.com/services/api/misc.buddyicons.html
+    https://www.flickr.com/services/api/misc.buddyicons.html
     """
     if server == 0:
       return 'https://www.flickr.com/images/buddyicon.gif'
     return f'https://farm{farm}.staticflickr.com/{server}/buddyicons/{author}.jpg'
 
   def user_id(self):
-    """Get the nsid of the currently authorized user. The first time this
-    is called, it will invoke the flickr.people.getLimits api method.
+    """Get the nsid of the currently authorized user.
+
+    The first time this is called, it will invoke the
+    ``flickr.people.getLimits`` API method.
 
     https://www.flickr.com/services/api/flickr.people.getLimits.html
 
-    Return:
-      a string
+    Returns:
+      str:
     """
     if not self._user_id:
       resp = self.call_api_method('flickr.people.getLimits')
@@ -739,13 +740,15 @@ class Flickr(source.Source):
     return self._user_id
 
   def path_alias(self):
-    """Get the path_alias of the currently authorized user. The first time this
-    is called, it will invoke the flickr.people.getInfo api method.
+    """Get the path_alias of the currently authorized user.
+
+    The first time this is called, it will invoke the ``flickr.people.getInfo``
+    API method.
 
     https://www.flickr.com/services/api/flickr.people.getInfo.html
 
-    Return:
-      a string
+    Returns:
+      str:
     """
     if not self._path_alias:
       resp = self.call_api_method('flickr.people.getInfo', {
@@ -755,31 +758,33 @@ class Flickr(source.Source):
     return self._path_alias
 
   def user_url(self, user_id):
-    """Convert a user's path_alias to their Flickr profile page URL.
+    """Convert a user's ``path_alias`` to their Flickr profile page URL.
 
     Args:
-      user_id (string): user's alphanumeric nsid or path alias
+      user_id (str): user's alphanumeric ``nsid`` or path alias
 
     Returns:
-      string, a profile URL
+      str: a profile URL
     """
     return user_id and f'https://www.flickr.com/people/{user_id}/'
 
   def photo_url(self, user_id, photo_id):
-    """Construct a url for a photo given user id and the photo id
+    """Construct a url for a photo.
+
     Args:
-      user_id (string): alphanumeric user ID or path alias
-      photo_id (string): numeric photo ID
+      user_id (str): alphanumeric user ID or path alias
+      photo_id (str): numeric photo ID
 
     Returns:
-      string, the photo URL
+      str: photo URL
     """
     return f'https://www.flickr.com/photos/{user_id}/{photo_id}/'
 
   @classmethod
   def base_id(cls, url):
-    """Used when publishing comments or favorites. Flickr photo ID is the
-    3rd path component rather than the first.
+    """Used when publishing comments or favorites.
+
+    Flickr photo ID is the 3rd path component rather than the first.
     """
     parts = urllib.parse.urlparse(url).path.split('/')
     if len(parts) >= 4 and parts[1] == 'photos':

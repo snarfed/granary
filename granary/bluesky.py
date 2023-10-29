@@ -1,32 +1,31 @@
 """Bluesky source class.
 
-https://bsky.app/
-https://atproto.com/lexicons/app-bsky-actor
-https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
+* https://bsky.app/
+* https://atproto.com/lexicons/app-bsky-actor
+* https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 """
-import copy
 import json
 import logging
+import re
 from pathlib import Path
 import urllib.parse
 
 from lexrpc import Client
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import trim_nulls
 
 from . import as1
-from .source import FRIENDS, Source, OMIT_LINK
+from .source import FRIENDS, html_to_text, Source, OMIT_LINK
 
 logger = logging.getLogger(__name__)
 
-# list of dict JSON app.bsky.* lexicons. _load_lexicons lazy loads them from the
-# lexicons/ dir.
-LEXICONS = []
-
-def _maybe_load_lexicons():
-  if not LEXICONS:
-    for filename in (Path(__file__).parent / 'lexicons').glob('**/*.json'):
-      with open(filename) as f:
-        LEXICONS.append(json.load(f))
+# via https://atproto.com/specs/handle
+HANDLE_REGEX = (
+  r'([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+'
+  r'[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$'
+)
+HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
+DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 
 # Maps AT Protocol NSID collections to path elements in bsky.app URLs.
 # Used in at_uri_to_web_url.
@@ -35,79 +34,121 @@ def _maybe_load_lexicons():
 #   at://did:plc:z72i7hd/app.bsky.feed.generator/mutuals
 # to a frontend URL like:
 #   https://bsky.app/profile/did:plc:z72i7hdynmk6r22z27h6tvur/feed/mutuals
-COLLECTIONS = {
+COLLECTION_TO_BSKY_APP_TYPE = {
   'app.bsky.feed.post': 'post',
   'app.bsky.feed.generator': 'feed',
 }
+BSKY_APP_TYPE_TO_COLLECTION = {
+  name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
+}
+
+# maps AS1 objectType/verb to possible output Bluesky lexicon types.
+# used in from_as1
+FROM_AS1_TYPES = {
+  as1.ACTOR_TYPES: (
+    'app.bsky.actor.profile',
+    'app.bsky.actor.defs#profileView',
+    'app.bsky.actor.defs#profileViewBasic',
+    'app.bsky.actor.defs#profileViewDetailed',
+  ),
+  as1.POST_TYPES: (
+    'app.bsky.feed.post',
+    'app.bsky.feed.defs#feedViewPost',
+    'app.bsky.feed.defs#postView',
+  ),
+  'share': (
+    'app.bsky.feed.repost',
+    'app.bsky.feed.defs#feedViewPost',
+    'app.bsky.feed.defs#reasonRepost',
+  ),
+}
+
+BSKY_APP_URL_RE = re.compile(r"""
+  ^https://(staging\.)?bsky\.app
+  /profile/(?P<id>[^/]+)
+  (/(?P<type>post|feed)
+   /(?P<tid>[^?]+))?$
+  """, re.VERBOSE)
+
+DEFAULT_PDS = 'https://bsky.social/'
+DEFAULT_APPVIEW = 'https://api.bsky.app'
 
 
 def url_to_did_web(url):
-  """Converts a URL to a did:web.
+  """Converts a URL to a ``did:web``.
+
+  In AT Proto, only hostname-based web DIDs are supported.
+  Paths are not supported, and will be discarded.
+
+  https://atproto.com/specs/did
 
   Examples:
-  * 'https://foo.com' => 'did:web:foo.com'
-  * 'https://foo.com:3000' => 'did:web:foo.com%3A3000'
-  * 'https://bar.com/baz/baj' => 'did:web:bar.com:baz:baj'
 
-  https://w3c-ccg.github.io/did-method-web/#example-creating-the-did
-
-  TODO: require https?
+  * ``https://foo.com`` => ``did:web:foo.com``
+  * ``https://foo.com:3000`` => ``did:web:foo.com``
+  * ``https://foo.bar.com/baz/baj`` => ``did:web:foo.bar.com``
 
   Args:
-    url: str
+    url (str)
 
-  Returns: str
+  Returns:
+    str:
   """
   parsed = urllib.parse.urlparse(url)
-  if not parsed.netloc:
+  if not parsed.hostname:
     raise ValueError(f'Invalid URL: {url}')
+  if parsed.netloc != parsed.hostname:
+    logger.warning(f"URL {url} contained a port, which will not be included in the DID.")
+  if parsed.path and parsed.path != "/":
+    logger.warning(f"URL {url} contained a path,  which will not be included in the DID.")
 
-  did = f'did:web:{urllib.parse.quote(parsed.netloc)}'
-  if parsed.path:
-    did += f'{parsed.path.replace("/", ":")}'
-
-  return did.strip(':')
+  return f'did:web:{parsed.hostname}'
 
 
 def did_web_to_url(did):
   """Converts a did:web to a URL.
 
-  Examples:
-  * 'did:web:foo.com' => 'https://foo.com'
-  * 'did:web:foo.com%3A3000' => 'https://foo.com:3000'
-  * 'did:web:bar.com:baz:baj' => 'https://bar.com/baz/baj'
+  In AT Proto, only hostname-based web DIDs are supported.
+  Paths are not supported, and will throw an invalid error.
 
-  https://w3c-ccg.github.io/did-method-web/#read-resolve
+  Examples:
+
+  * ``did:web:foo.com`` => ``https://foo.com``
+  * ``did:web:foo.com%3A3000`` => INVALID
+  * ``did:web:bar.com:baz:baj`` => INVALID
+
+  https://atproto.com/specs/did
 
   Args:
-    did: str
+    did (str)
 
-  Returns: str
+  Returns:
+    str:
   """
-  if not did or not did.startswith('did:web:'):
+  if not did or not DID_WEB_PATTERN.match(did):
     raise ValueError(f'Invalid did:web: {did}')
 
-  did = did.removeprefix('did:web:')
-  if ':' in did:
-    host, path = did.split(':', 1)
-  else:
-    host = did
-    path = ''
+  host = did.removeprefix('did:web:')
 
   host = urllib.parse.unquote(host)
-  path = urllib.parse.unquote(path.replace(':', '/'))
-  return f'https://{host}/{path}'
+  return f'https://{host}/'
 
 
 def at_uri_to_web_url(uri, handle=None):
-  """Converts an at:// URI to a https://bsky.app URL.
+  """Converts an ``at://`` URI to a ``https://bsky.app`` URL.
+
+  https://atproto.com/specs/at-uri-scheme
 
   Args:
-    uri: str, at:// URI
-    handle: str, optional user handle. If not provided, defaults to the DID in uri.
+    uri (str): ``at://`` URI
+    handle: (str): optional user handle. If not provided, defaults to the DID in
+      uri.
 
   Returns:
-    str, https://bsky.app URL
+    str: ``https://bsky.app`` URL, or None
+
+  Raises:
+    ValueError: if uri is not a string or doesn't start with ``at://``
   """
   if not uri:
     return None
@@ -119,41 +160,111 @@ def at_uri_to_web_url(uri, handle=None):
   did = parsed.netloc
   collection, tid = parsed.path.strip('/').split('/')
 
-  type = COLLECTIONS.get(collection)
+  type = COLLECTION_TO_BSKY_APP_TYPE.get(collection)
   if not type:
     return None
 
   return f'{Bluesky.user_url(handle or did)}/{type}/{tid}'
 
 
-def from_as1(obj, from_url=None):
-  """Converts an AS1 object to a Bluesky object.
+def web_url_to_at_uri(url, handle=None, did=None):
+  """Converts a ``https://bsky.app`` URL to an ``at://`` URI.
 
-  The objectType field is required.
+  https://atproto.com/specs/at-uri-scheme
+
+  Currently supports profile, post, and feed URLs with DIDs and handles, eg:
+
+  * ``https://bsky.app/profile/did:plc:123abc``
+  * ``https://bsky.app/profile/vito.fyi/post/3jt7sst7vok2u``
+  * ``https://bsky.app/profile/bsky.app/feed/mutuals``
+
+  If both ``handle`` and ``did`` are provided, and ``handle`` matches the URL,
+  the handle in the resulting URI will be replaced with ``did``.
 
   Args:
-    obj: dict, AS1 object or activity
-    from_url: str, optional URL the original object was fetched from.
-      Currently unused. TODO: remove?
+    url (str): ``bsky.app`` URL
+    handle (str): Bluesky handle, or None
+    did (str): Valid DID, or None
 
-  Returns: dict, app.bsky.* object
+  Returns:
+    str: ``at://`` URI, or None
 
   Raises:
-    ValueError
-      if the objectType or verb fields are missing or unsupported
+    ValueError: if url is not a string or can't be parsed as a ``bsky.app``
+      profile or post URL
+
+  """
+  if not url:
+    return None
+
+  match = BSKY_APP_URL_RE.match(url)
+  if not match:
+    raise ValueError(f"{url} doesn't look like a bsky.app profile or post URL")
+
+  id = match.group('id')
+  assert id
+  type = match.group('type')
+  tid = match.group('tid')
+
+  # If a did and handle have been provided explicitly,
+  # replace the existing handle with the did.
+  if did and handle and id == handle:
+    id = did
+
+  if type:
+    assert tid
+    return f'at://{id}/{BSKY_APP_TYPE_TO_COLLECTION[type]}/{tid}'
+  else:
+    return f'at://{id}'
+
+
+def from_as1(obj, out_type=None, blobs=None):
+  """Converts an AS1 object to a Bluesky object.
+
+  Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
+  ``app.bsky.feed.post``. Use ``out_type`` to convert to a different type, eg
+  ``app.bsky.actor.defs#profileViewBasic`` or ``app.bsky.feed.defs#feedViewPost``.
+
+  The ``objectType`` field is required.
+
+  Args:
+    obj (dict): AS1 object or activity
+    out_type (str): desired output lexicon ``$type``
+    blobs (dict): optional mapping from str URL to ``blob`` dict to use in the
+      returned object. If not provided, or if this doesn't have an ``image`` or
+      similar URL in the input object, its output blob will be omitted.
+
+  Returns:
+    dict: ``app.bsky.*`` object
+
+  Raises:
+    ValueError: if the ``objectType`` or ``verb`` fields are missing or
+      unsupported
+
   """
   activity = obj
-  verb = activity.get('verb') or 'post'
   inner_obj = as1.get_object(activity)
+  verb = activity.get('verb') or 'post'
   if inner_obj and verb == 'post':
     obj = inner_obj
 
-  type = obj.get('objectType') or 'note'
+  type = as1.object_type(obj)
   actor = as1.get_object(activity, 'actor')
+  if blobs is None:
+    blobs = {}
+
+  # validate out_type
+  if out_type:
+    for in_types, out_types in FROM_AS1_TYPES.items():
+      if type in in_types and out_type in out_types:
+        break
+    else:
+      raise ValueError(f"{type} {verb} doesn't support out_type {out_type}")
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type == 'person':
-    # banner is featured image, if available
+  if type in as1.ACTOR_TYPES:
+    # avatar and banner. banner is featured image, if available
+    avatar = util.get_url(obj, 'image')
     banner = None
     for img in util.get_list(obj, 'image'):
       url = img.get('url')
@@ -161,64 +272,104 @@ def from_as1(obj, from_url=None):
         banner = url
         break
 
-    url = util.get_url(obj) or obj.get('id') or ''
-    try:
-      did_web = url_to_did_web(url)
-    except ValueError as e:
-      logger.info(f"Couldn't generate did:web: {e}")
-      did_web = ''
+    ret = {
+      'displayName': obj.get('displayName'),
+      'description': html_to_text(obj.get('summary')),
+      'avatar': blobs.get(avatar),
+      'banner': blobs.get(banner),
+    }
+    if not out_type or out_type == 'app.bsky.actor.profile':
+      return trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
 
-    # handle is username@domain or domain/path, no scheme or query
+    url = as1.get_url(obj)
+    id = obj.get('id')
+    if not url and id:
+      parsed = util.parse_tag_uri(id)
+      if parsed:
+        # This is only really formatted as a URL to keep url_to_did_web happy.
+        url = f'https://{parsed[0]}'
+
+    did_web = ''
+    if id and id.startswith('did:web:'):
+      did_web = id
+    else:
+      try:
+        did_web = url_to_did_web(url)
+      except ValueError as e:
+        logger.info(f"Couldn't generate did:web: {e}")
+
+    # handles must be hostnames
+    # https://atproto.com/specs/handle
     username = obj.get('username')
     parsed = urllib.parse.urlparse(url)
     domain = parsed.netloc
-    if username:
-      handle = username
-      if domain:
-        handle += f'@{domain}'
-    elif url:
-      handle = domain
-      if parsed.path not in ('', '/'):
-        handle += parsed.path
-    else:
-      handle = ''
+    did_web_bare = did_web.removeprefix('did:web:')
+    handle = (username if username and HANDLE_PATTERN.match(username)
+              else did_web_bare if ':' not in did_web_bare
+              else domain if domain
+              else '')
 
-    ret = {
-      '$type': 'app.bsky.actor.defs#profileView',
-      'displayName': obj.get('displayName'),
-      'description': obj.get('summary'),
-      'avatar': util.get_url(obj, 'image'),
-      'banner': banner,
-      'did': did_web,
-      # this is a DID
-      # atproto/packages/pds/src/api/app/bsky/actor/getProfile.ts#38
-      # TODO: should be more specific than domain, many users will be on shared
-      # domains
+    ret.update({
+      '$type': out_type,
+      # TODO: more specific than domain, many users will be on shared domains
+      'did': id if id and id.startswith('did:') else did_web,
       'handle': handle,
-    }
+      'avatar': avatar,
+      'banner': banner,
+    })
+    # WARNING: this includes description, which isn't technically in this
+    # #profileViewBasic. hopefully clients should just ignore it!
+    # https://atproto.com/specs/lexicon#authority-and-control
+    return trim_nulls(ret, ignore=('did', 'handle'))
 
-  elif verb == 'share':
-    ret = from_as1(inner_obj)
-    ret['reason'] = {
-      '$type': 'app.bsky.feed.defs#reasonRepost',
-      'by': from_as1(actor),
-      'indexedAt': util.now().isoformat(),
-    }
+  elif type == 'share':
+    if not out_type or out_type == 'app.bsky.feed.repost':
+      return {
+        '$type': 'app.bsky.feed.repost',
+        'subject': {
+          'uri': inner_obj.get('id'),
+          'cid': 'TODO',
+        },
+        'createdAt': obj.get('published', ''),
+      }
+    elif out_type == 'app.bsky.feed.defs#reasonRepost':
+      return {
+        '$type': 'app.bsky.feed.defs#reasonRepost',
+        'by': from_as1(actor, out_type='app.bsky.actor.defs#profileViewBasic'),
+        'indexedAt': util.now().isoformat(),
+      }
+    elif out_type == 'app.bsky.feed.defs#feedViewPost':
+      return {
+        '$type': 'app.bsky.feed.defs#feedViewPost',
+        'post': from_as1(inner_obj, out_type='app.bsky.feed.defs#postView'),
+        'reason': from_as1(obj, out_type='app.bsky.feed.defs#reasonRepost'),
+      }
 
-  elif verb == 'follow':
-    assert actor
-    ret = {
-      '$type': 'app.bsky.graph.follow',
-      'subject': actor.get('id') or actor.get('url'),
+  elif type == 'like':
+    return {
+      '$type': 'app.bsky.feed.like',
+      'subject': {
+        'uri': inner_obj.get('id'),
+        'cid': 'TODO',
+      },
       'createdAt': obj.get('published', ''),
     }
 
-  elif verb == 'post' and type in ('article', 'comment', 'link', 'mention', 'note'):
+  elif type == 'follow':
+    if not actor or not inner_obj:
+      raise ValueError('follow activity requires actor and object')
+    return {
+      '$type': 'app.bsky.graph.follow',
+      'subject': inner_obj.get('id'),  # DID
+      'createdAt': obj.get('published', ''),
+    }
+
+  elif verb == 'post' and type in as1.POST_TYPES:
     # convert text to HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
     text = obj.get('summary') or content or obj.get('name') or ''
-    text = src.truncate(text, None, OMIT_LINK)
+    text = src.truncate(html_to_text(text), None, OMIT_LINK)
 
     facets = []
     if text == content:
@@ -262,7 +413,7 @@ def from_as1(obj, from_url=None):
 
     # images
     images_embed = images_record_embed = None
-    images = util.get_list(obj, 'image')
+    images = as1.get_objects(obj, 'image')
 
     if images:
       images_embed = {
@@ -278,7 +429,7 @@ def from_as1(obj, from_url=None):
         '$type': 'app.bsky.embed.images',
         'images': [{
           '$type': 'app.bsky.embed.images#image',
-          'image': 'TODO',  # this is a $type: blob
+          'image': blobs.get(util.get_url(img)) or {},
           'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }
@@ -295,7 +446,7 @@ def from_as1(obj, from_url=None):
       if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
           url.startswith('at://') or url.startswith(Bluesky.BASE_URL)):
         # quoted Bluesky post
-        embed = from_as1(att).get('post')
+        embed = from_as1(att).get('post') or {}
         embed['value'] = embed.pop('record', None)
         record_embed = {
           '$type': f'app.bsky.embed.record#view',
@@ -303,10 +454,9 @@ def from_as1(obj, from_url=None):
             **embed,
             '$type': f'app.bsky.embed.record#viewRecord',
             # override these so that trim_nulls below will remove them
-            'downvoteCount': None,
+            'likeCount': None,
             'replyCount': None,
             'repostCount': None,
-            'upvoteCount': None,
           },
         }
         record_record_embed = {
@@ -369,91 +519,68 @@ def from_as1(obj, from_url=None):
         },
       }
 
+    ret = trim_nulls({
+      '$type': 'app.bsky.feed.post',
+      'text': text,
+      'createdAt': obj.get('published', ''),
+      'embed': record_embed,
+      'facets': facets,
+      'reply': reply,
+    }, ignore=('alt', 'createdAt', 'cid', 'description', 'text', 'title', 'uri'))
+
+    if not out_type or out_type == 'app.bsky.feed.post':
+      return ret
+
     # author
     author = as1.get_object(obj, 'author')
-    if author:
-      author = {
-        **from_as1(author),
-        '$type': 'app.bsky.actor.defs#profileViewBasic',
+    author.setdefault('objectType', 'person')
+    author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic')
+
+    ret = trim_nulls({
+      '$type': 'app.bsky.feed.defs#postView',
+      'uri': obj.get('id') or obj.get('url') or '',
+      'cid': 'TODO',
+      'record': ret,
+      'author': author,
+      'embed': embed,
+      'replyCount': 0,
+      'repostCount': 0,
+      'likeCount': 0,
+      'indexedAt': util.now().isoformat(),
+    }, ignore=('author', 'createdAt', 'cid', 'description', 'indexedAt',
+               'record', 'text', 'title', 'uri'))
+
+    if out_type == 'app.bsky.feed.defs#postView':
+      return ret
+    elif out_type == 'app.bsky.feed.defs#feedViewPost':
+      return {
+        '$type': out_type,
+        'post': ret,
       }
 
-    ret = {
-      '$type': 'app.bsky.feed.defs#feedViewPost',
-      'post': {
-        '$type': 'app.bsky.feed.defs#postView',
-        'uri': obj.get('id') or obj.get('url') or '',
-        'cid': 'TODO',
-        'record': {
-          '$type': 'app.bsky.feed.post',
-          'text': text,
-          'createdAt': obj.get('published', ''),
-          'embed': record_embed,
-          'facets': facets,
-          'reply': reply
-        },
-        'author': author,
-        'embed': embed,
-        'replyCount': 0,
-        'repostCount': 0,
-        'upvoteCount': 0,
-        'downvoteCount': 0,
-        'indexedAt': util.now().isoformat(),
-      },
-    }
+    assert False, "shouldn't happen"
 
-  else:
-    raise ValueError(f'AS1 object has unknown objectType {type} or verb {verb}')
-
-  # keep some fields that are required by lexicons
-  return util.trim_nulls(ret, ignore=(
-    'alt',
-    'createdAt',
-    'description',
-    'did',
-    'handle',
-    'root',
-    'text',
-    'uri',
-    'viewer',
-  ))
+  raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
 
 
-def as1_to_profile(actor):
-  """Converts an AS1 actor to a Bluesky `app.bsky.actor.profile`.
-
-  Args:
-    actor: dict, AS1 actor
-
-  Raises:
-    ValueError: if `actor['objectType']` is not in :attr:`as1.ACTOR_TYPES`
-  """
-  type = actor.get('objectType')
-  if type not in as1.ACTOR_TYPES:
-    raise ValueError(f'Expected actor type, got {type}')
-
-  profile = from_as1(actor)
-  assert profile['$type'] == 'app.bsky.actor.defs#profileView'
-  profile['$type'] = 'app.bsky.actor.profile'
-
-  for field in 'did', 'handle', 'indexedAt', 'labels', 'viewer':
-    profile.pop(field, None)
-
-  return profile
-
-
-def to_as1(obj, type=None):
+def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
   """Converts a Bluesky object to an AS1 object.
 
-  The $type field is required.
-
   Args:
-    profile: dict, app.bsky.* object
-    type: str, optional $type to parse with, only used if obj['$type'] is unset
+    obj (dict): ``app.bsky.*`` object
+    type (str): optional ``$type`` to parse with, only used if ``obj['$type']``
+      is unset
+    repo_did (str): optional DID of the repo this object is from. Required to
+      generate image URLs.
+    repo_handle (str): optional handle of the user whose repo this object is from
+    pds (str): base URL of the PDS that currently serves this object's repo.
+      Required to generate image URLs. Defaults to ``https://bsky.social/``.
 
-  Returns: dict, AS1 object
+  Returns:
+    dict: AS1 object
 
   Raises:
-    ValueError if the $type field is missing or unsupported
+    ValueError: if the ``$type`` field is missing or unsupported
   """
   if not obj:
     return {}
@@ -462,16 +589,21 @@ def to_as1(obj, type=None):
   if not type:
     raise ValueError('Bluesky object missing $type field')
 
+  kwargs = {'repo_did': repo_did, 'repo_handle': repo_handle, 'pds': pds}
+
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type in ('app.bsky.actor.defs#profileView',
-              'app.bsky.actor.defs#profileViewBasic'):
+  if type in ('app.bsky.actor.profile',
+              'app.bsky.actor.defs#profileView',
+              'app.bsky.actor.defs#profileViewBasic',
+              'app.bsky.actor.defs#profileViewDetailed',
+              ):
     images = [{'url': obj.get('avatar')}]
     banner = obj.get('banner')
     if banner:
       images.append({'url': obj.get('banner'), 'objectType': 'featured'})
 
     handle = obj.get('handle')
-    did = obj.get('did')
+    did = obj.get('did') or repo_did
 
     ret = {
       'objectType': 'person',
@@ -480,9 +612,19 @@ def to_as1(obj, type=None):
               else did_web_to_url(did) if did and did.startswith('did:web:')
               else None),
       'displayName': obj.get('displayName'),
+      'username': obj.get('handle') or repo_handle,
       'summary': obj.get('description'),
       'image': images,
     }
+
+    # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
+    if type == 'app.bsky.actor.profile':
+      repo_did = repo_did or did
+      if repo_did and pds:
+        for img in ret['image']:
+          img['url'] = blob_to_url(blob=img['url'], repo_did=repo_did, pds=pds)
+      else:
+        ret['image'] = []
 
   elif type == 'app.bsky.feed.post':
     text = obj.get('text', '')
@@ -528,17 +670,39 @@ def to_as1(obj, type=None):
       }],
       'published': obj.get('createdAt', ''),
       'tags': tags,
+      'author': repo_did,
     }
 
+    # embeds
+    embed = obj.get('embed') or {}
+    embed_type = embed.get('$type')
+    if embed_type == 'app.bsky.embed.images':
+      ret['image'] = to_as1(embed, **kwargs)
+    elif embed_type in ('app.bsky.embed.external', 'app.bsky.embed.record'):
+      ret['attachments'] = [to_as1(embed, **kwargs)]
+    elif embed_type == 'app.bsky.embed.recordWithMedia':
+      # TODO
+      # ret['attachments'] = [to_as1(embed.get('record', {}).get('record'),
+      #                              type='com.atproto.repo.strongRef', **kwargs)]
+      ret['attachments'] = []
+      media = embed.get('media')
+      media_type = media.get('$type')
+      if media_type == 'app.bsky.embed.external':
+        ret['attachments'].append(to_as1(media, **kwargs))
+      elif media_type == 'app.bsky.embed.images':
+        ret['image'] = to_as1(media, **kwargs)
+      else:
+        assert False, f'Unknown embed media type: {media_type}'
+
   elif type in ('app.bsky.feed.defs#postView', 'app.bsky.embed.record#viewRecord'):
-    ret = to_as1(obj.get('record') or obj.get('value'))
+    ret = to_as1(obj.get('record') or obj.get('value'), **kwargs)
     author = obj.get('author') or {}
     uri = obj.get('uri')
     ret.update({
       'id': uri,
       'url': (at_uri_to_web_url(uri, handle=author.get('handle'))
               if uri.startswith('at://') else None),
-      'author': to_as1(author, type='app.bsky.actor.defs#profileViewBasic'),
+      'author': to_as1(author, type='app.bsky.actor.defs#profileViewBasic', **kwargs),
     })
 
     # convert embeds to attachments
@@ -546,23 +710,34 @@ def to_as1(obj, type=None):
       embed_type = embed.get('$type')
 
       if embed_type == 'app.bsky.embed.images#view':
-        ret.setdefault('image', []).extend(to_as1(embed))
+        ret.setdefault('image', []).extend(to_as1(embed, **kwargs))
 
       elif embed_type in ('app.bsky.embed.external#view',
                           'app.bsky.embed.record#view'):
-        ret.setdefault('attachments', []).append(to_as1(embed))
+        ret['attachments'] = [to_as1(embed, **kwargs)]
 
       elif embed_type == 'app.bsky.embed.recordWithMedia#view':
-        ret.setdefault('attachments', []).append(to_as1(
-          embed.get('record', {}).get('record')))
+        ret['attachments'] = [to_as1(embed.get('record', {}).get('record'), **kwargs)]
         media = embed.get('media')
         media_type = media.get('$type')
         if media_type == 'app.bsky.embed.external#view':
-          ret.setdefault('attachments', []).append(to_as1(media))
+          ret.setdefault('attachments', []).append(to_as1(media, **kwargs))
         elif media_type == 'app.bsky.embed.images#view':
-          ret.setdefault('image', []).extend(to_as1(media))
+          ret.setdefault('image', []).extend(to_as1(media, **kwargs))
         else:
           assert False, f'Unknown embed media type: {media_type}'
+
+  elif type == 'app.bsky.embed.images':
+    if repo_did and pds:
+      ret = []
+      for img in obj.get('images', []):
+        image = img.get('image')
+        if image:
+          url = blob_to_url(blob=image, repo_did=repo_did, pds=pds)
+          ret.append({'url': url, 'displayName': img['alt']}
+                     if img.get('alt') else url)
+    else:
+      ret = []
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
@@ -570,10 +745,12 @@ def to_as1(obj, type=None):
       'displayName': img.get('alt'),
     } for img in obj.get('images', [])]
 
-  elif type == 'app.bsky.embed.external#view':
-    ret = to_as1(obj.get('external'), type='app.bsky.embed.external#viewExternal')
+  elif type in ('app.bsky.embed.external', 'app.bsky.embed.external#view'):
+    ret = to_as1(obj.get('external'), type='app.bsky.embed.external#viewExternal',
+                 **kwargs)
 
-  elif type == 'app.bsky.embed.external#viewExternal':
+  elif type in ('app.bsky.embed.external#external',
+                'app.bsky.embed.external#viewExternal'):
     ret = {
       'objectType': 'link',
       'url': obj.get('uri'),
@@ -582,9 +759,15 @@ def to_as1(obj, type=None):
       'image': obj.get('thumb'),
     }
 
+  elif type == 'app.bsky.embed.record':
+    return None
+    # TODO
+    # return (to_as1(record, **kwargs, type='com.atproto.repo.strongRef')
+    #         if record else None)
+
   elif type == 'app.bsky.embed.record#view':
     record = obj.get('record')
-    return to_as1(record) if record else None
+    return to_as1(record, **kwargs) if record else None
 
   elif type == 'app.bsky.embed.record#viewNotFound':
     return None
@@ -594,27 +777,45 @@ def to_as1(obj, type=None):
     return None
 
   elif type == 'app.bsky.feed.defs#feedViewPost':
-    ret = to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')
+    ret = to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
     reason = obj.get('reason')
     if reason and reason.get('$type') == 'app.bsky.feed.defs#reasonRepost':
       ret = {
+        'id': obj.get('post', {}).get('viewer', {}).get('repost'),
         'objectType': 'activity',
         'verb': 'share',
         'object': ret,
-        'actor': to_as1(reason.get('by'), type='app.bsky.actor.defs#profileViewBasic'),
+        'actor': to_as1(reason.get('by'),
+                        type='app.bsky.actor.defs#profileViewBasic', **kwargs),
       }
+
+  elif type == 'app.bsky.feed.like':
+    ret = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': obj.get('subject', {}).get('uri'),
+      'actor': repo_did,
+    }
 
   elif type == 'app.bsky.graph.follow':
     ret = {
       'objectType': 'activity',
       'verb': 'follow',
-      'actor': {
-        'url': obj.get('subject'),
-      },
+      'object': obj.get('subject'),
+      'actor': repo_did,
     }
 
+  elif type == 'app.bsky.feed.repost':
+      return {
+        'objectType': 'activity',
+        'verb': 'share',
+        'object': obj.get('subject', {}).get('uri'),
+        'actor': repo_did,
+        'published': obj.get('createdAt'),
+      }
+
   elif type == 'app.bsky.feed.defs#threadViewPost':
-    return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView')
+    return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
 
   elif type == 'app.bsky.feed.defs#generatorView':
     uri = obj.get('uri')
@@ -625,22 +826,64 @@ def to_as1(obj, type=None):
       'displayName': f'Feed: {obj.get("displayName")}',
       'summary': obj.get('description'),
       'image': obj.get('avatar'),
-      'author': to_as1(obj.get('creator'), type='app.bsky.actor.defs#profileView'),
+      'author': to_as1(obj.get('creator'), type='app.bsky.actor.defs#profileView',
+                       **kwargs),
     }
 
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')
 
-  return util.trim_nulls(ret)
+  ret = trim_nulls(ret)
+  # ugly hack
+  if isinstance(ret, dict) and ret.get('author') == {'objectType': 'person'}:
+    del ret['author']
+
+  return ret
+
+
+def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
+  """Generates a URL for a blob.
+
+  Supports both new and old style blobs:
+  https://atproto.com/specs/data-model#blob-type
+
+  The resulting URL is a ``com.atproto.sync.getBlob`` XRPC call to the PDS.
+
+  For blobs on the official ``bsky.social`` PDS, we could consider using their CDN
+  instead: ``https://av-cdn.bsky.app/img/avatar/plain/[DID]/[CID]@jpeg``
+
+  They also run a resizing image proxy on ``cdn.bsky.social`` with URLs like
+  ``https://cdn.bsky.social/imgproxy/[SIG]/rs:fit:2000:2000:1:0/plain/[CID]@jpeg``,
+  not sure how to generate signatures for it yet.
+
+  Args:
+    blob (dict)
+    repo_did (str): DID of the repo that owns this blob
+    pds (str): base URL of the PDS that serves this repo. Defaults to
+      :const:`DEFAULT_PDS`
+
+  Returns:
+    str: URL for this blob, or None if ``blob`` is empty or has no CID
+  """
+  if not blob:
+    return None
+
+  assert repo_did and pds
+
+  cid = blob.get('ref', {}).get('$link') or blob.get('cid')
+  if cid:
+    path = f'/xrpc/com.atproto.sync.getBlob?did={repo_did}&cid={cid}'
+    return urllib.parse.urljoin(pds, path)
 
 
 class Bluesky(Source):
-  """Bluesky source class. See file docstring and Source class for details.
+  """Bluesky source class. See file docstring and :class:`Source` class for
+  details.
 
   Attributes:
-    handle: str
-    did: str
-    access_token: str
+    handle (str)
+    did (str)
+    client (lexrpc.Client)
   """
 
   DOMAIN = 'bsky.app'
@@ -648,65 +891,73 @@ class Bluesky(Source):
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
 
-  def __init__(self, handle, did=None, access_token=None, app_password=None):
+  def __init__(self, handle, did=None, access_token=None, refresh_token=None,
+               app_password=None, session_callback=None):
     """Constructor.
 
-    Either access_token or app_password may be provided, optionally, but not both.
-
     Args:
-      handle: str username, eg 'snarfed.bsky.social' or 'snarfed.org'
-      did: str, did:plc or did:web, optional
-      access_token: str, optional
-      app_password: str, optional
+      handle (str): username, eg ``snarfed.bsky.social`` or ``snarfed.org``
+      did (str): did:plc or did:web, optional
+      access_token (str): optional
+      refresh_token (str): optional
+      app_password (str): optional
+      session_callback (callable, dict => None): passed to :class:`lexrpc.Client`
+        constructor, called when a new session is created or refreshed
     """
-    assert not (access_token and app_password)
+    self.handle = handle
+    self.did = did
 
-    _maybe_load_lexicons()
+    headers = {'User-Agent': util.user_agent}
+    self.client = Client(access_token=access_token, refresh_token=refresh_token,
+                         headers=headers, session_callback=session_callback)
 
-    if app_password:
-      client = Client('https://bsky.social', LEXICONS)
-      resp = client.com.atproto.server.createSession({
+    if app_password and not access_token:
+      resp = self.client.com.atproto.server.createSession({
         'identifier': handle,
         'password': app_password,
       })
       self.handle = resp['handle']
       self.did = resp['did']
-      self.access_token = resp['accessJwt']
-      assert self.access_token
-    else:
-      self.handle = handle
-      self.access_token = access_token
-      self.did = did
 
-    headers = None
-    if self.access_token:
-      headers = {
-        'Authorization': f'Bearer {self.access_token}',
-      }
-    self.client = Client('https://bsky.social', LEXICONS, headers=headers)
+    if not self.client.session:
+      # no auth; use AppView instead of PDS
+      self.client = Client(DEFAULT_APPVIEW, headers=headers)
 
   @classmethod
   def user_url(cls, handle):
     """Returns the profile URL for a given handle.
 
     Args:
-      handle: str
+      handle (str)
 
     Returns:
-      str, profile URL
+      str: profile URL
     """
     return f'{cls.BASE_URL}/profile/{handle.lstrip("@")}'
+
+  @classmethod
+  def user_to_actor(cls, user, **kwargs):
+    """Converts a user to an actor.
+
+    Args:
+      user (dict): an ``app.bsky.actor.profile`` record
+      kwargs: passed through to :func:`to_as1`
+
+    Returns:
+      dict: ActivityStreams actor
+    """
+    return to_as1(user, **kwargs)
 
   @classmethod
   def post_url(cls, handle, tid):
     """Returns the post URL for a given handle and tid.
 
     Args:
-      handle: str
-      tid: str
+      handle (str)
+      tid (str)
 
     Returns:
-      str, profile URL
+      str: profile URL
     """
     return f'{cls.user_url(handle)}/post/{tid}'
 
@@ -723,7 +974,7 @@ class Bluesky(Source):
     Bluesky-specific details:
 
     Args:
-      * activity_id: str, an at:// URI
+      activity_id (str): an ``at://`` URI
     """
     assert not start_index
 
@@ -732,7 +983,7 @@ class Bluesky(Source):
       params['limit'] = count
 
     posts = None
-
+    handle = self.handle
     if activity_id:
       if not activity_id.startswith('at://'):
         raise ValueError(f'Expected activity_id to be at:// URI; got {activity_id}')
@@ -750,14 +1001,154 @@ class Bluesky(Source):
       resp = self.client.app.bsky.feed.getAuthorFeed({}, actor=handle, **params)
       posts = resp.get('feed', [])
 
-    # TODO: inReplyTo
-    ret = self.make_activities_base_response(
-      util.trim_nulls(to_as1(post, type='app.bsky.feed.defs#feedViewPost'))
-      for post in posts
-    )
-    ret['actor'] = {
-      'id': self.did,
-      'displayName': self.handle,
-      'url': self.user_url(self.handle),
+    if cache is None:
+      # for convenience, throwaway object just for this method
+      cache = {}
+
+    activities = []
+
+    for post in posts:
+      reason = post.get('reason')
+      is_repost = reason and reason.get('$type') == 'app.bsky.feed.defs#reasonRepost'
+      if is_repost and not include_shares:
+        continue
+
+      activity = self.postprocess_activity(self._post_to_activity(post))
+      activities.append(activity)
+      obj = activity['object']
+      id = obj.get('id')
+      tags = obj.setdefault('tags', [])
+
+      if is_repost:
+        # If it's a repost we're not interested in responses to it.
+        continue
+      bs_post = post.get('post')
+      if bs_post and id:
+        # Likes
+        like_count = bs_post.get('likeCount')
+        if fetch_likes and like_count and like_count != cache.get('ABL ' + id):
+          likers = self.client.app.bsky.feed.getLikes({}, uri=bs_post.get('uri'))
+          tags.extend(self._make_like(bs_post, l.get('actor')) for l in likers.get('likes'))
+          cache['ABL ' + id] = count
+
+        # Reposts
+        repost_count = bs_post.get('repostCount')
+        if fetch_shares and repost_count and repost_count != cache.get('ABRP ' + id):
+          reposters = self.client.app.bsky.feed.getRepostedBy({}, uri=bs_post.get('uri'))
+          tags.extend(self._make_share(bs_post, r) for r in reposters.get('repostedBy'))
+          cache['ABRP ' + id] = count
+
+        # Replies
+        reply_count = bs_post.get('replyCount')
+        if fetch_replies and reply_count and reply_count != cache.get('ABR ' + id):
+          replies = self._get_replies(bs_post.get('uri'))
+          replies = [to_as1(reply, 'app.bsky.feed.defs#threadViewPost') for reply in replies]
+          for r in replies:
+            r['id'] = self.tag_uri(r['id'])
+          obj['replies'] = {
+            'items': replies,
+          }
+          cache['ABR ' + id] = count
+
+    resp = self.make_activities_base_response(util.trim_nulls(activities))
+    return resp
+
+  def get_comment(self, comment_id, **kwargs):
+    """Fetches and returns a comment.
+
+    Args:
+      comment_id: string status id
+      **kwargs: unused
+
+    Returns: dict, ActivityStreams object
+
+    Raises:
+      :class:`ValueError`: if comment_id is invalid
+    """
+    post_thread = self.client.app.bsky.feed.getPostThread({}, uri=comment_id, depth=1)
+    obj = to_as1(post_thread.get('thread'), 'app.bsky.feed.defs#threadViewPost')
+    return obj
+
+  def _post_to_activity(self, post):
+    """Converts a post to an activity.
+
+    Args:
+      post: Bluesky post app.bluesky.feed.defs#feedViewPost
+
+    Returns: AS1 activity
+    """
+    obj = to_as1(post, type='app.bsky.feed.defs#feedViewPost')
+    if obj.get('objectType') == 'activity':
+      return obj
+    return {
+      'id': obj.get('id'),
+      'verb': 'post',
+      'actor': obj.get('author'),
+      'object': obj,
+      'objectType': 'activity',
     }
+
+  def _make_like(self, post, actor):
+    return self._make_like_or_share(post, actor, 'like')
+
+  def _make_share(self, post, actor):
+    return self._make_like_or_share(post, actor, 'share')
+
+  def _make_like_or_share(self, post, actor, verb):
+    """Generates and returns a ActivityStreams like object.
+
+    Args:
+      post: dict, Bluesky app.bsky.feed.defs#feedViewPost
+      actor: dict, Bluesky app.bsky.actor.defs#profileView
+      verb: string, 'like' or 'share'
+
+    Returns: dict, AS1 like activity
+    """
+    assert verb in ('like', 'share')
+    label = 'liked' if verb == 'like' else 'reposted'
+    url = at_uri_to_web_url(post.get('uri'), post.get('author').get('handle'))
+    actor_id = actor.get('did')
+    author = to_as1(actor, 'app.bsky.actor.defs#profileView')
+    author['id'] = self.tag_uri(author['id'])
+    return {
+      'id': self.tag_uri(f"{post.get('uri')}_{label}_by_{actor_id}"),
+      'url': url,
+      'objectType': 'activity',
+      'verb': verb,
+      'object': {'url': url},
+      'author': author,
+    }
+
+  def _get_replies(self, uri):
+    """
+    Gets the replies to a specific post and returns them
+    in ascending order of creation. Does not include the original post.
+
+    Args:
+      uri: string, post uri
+
+    Returns: list, Bluesky app.bsky.feed.defs#threadViewPost
+    """
+    ret = []
+    resp = self.client.app.bsky.feed.getPostThread({}, uri=uri)
+    thread = resp.get('thread')
+    if thread:
+      ret = self._recurse_replies(thread)
+    return sorted(ret, key = lambda thread: thread.get('post', {}).get('record', {}).get('createdAt'))
+
+  # TODO this ought to take a depth limit.
+  def _recurse_replies(self, thread):
+    """
+    Recurses through a Bluesky app.bsky.feed.defs#threadViewPost
+    and returns its replies as a list.
+
+    Args:
+      thread: dict, Bluesky app.bsky.feed.defs#threadViewPost
+
+    Returns: list, Bluesky app.bsky.feed.defs#threadViewPost
+    """
+    ret = []
+    for r in thread.get('replies', []):
+        ret += [r]
+        ret += self._recurse_replies(r)
     return ret

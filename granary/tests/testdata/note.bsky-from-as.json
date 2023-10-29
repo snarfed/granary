@@ -1,42 +1,12 @@
 {
-  "$type": "app.bsky.feed.defs#feedViewPost",
-  "post": {
-    "$type": "app.bsky.feed.defs#postView",
-    "uri": "tag:example.com,2011:blog-post-123",
-    "cid": "TODO",
-    "author": {
-      "$type": "app.bsky.actor.defs#profileViewBasic",
-      "did": "",
-      "displayName": "Ryan Barrett",
-      "handle": "example.com,2001:ryan",
-      "avatar": "http://example.com/ryan/image"
-    },
-    "record": {
-      "$type": "app.bsky.feed.post",
-      "text": "too cool to summarize",
-      "createdAt": "2012-02-22T20:26:41",
-      "embed": {
-        "$type": "app.bsky.embed.images",
-        "images": [{
-          "$type": "app.bsky.embed.images#image",
-          "alt": "",
-          "image": "TODO"
-        }]
-      }
-    },
-    "embed": {
-      "$type": "app.bsky.embed.images#view",
-      "images": [{
-        "$type": "app.bsky.embed.images#viewImage",
-        "thumb": "http://example.com/blog-post-123/image",
-        "fullsize": "http://example.com/blog-post-123/image",
-        "alt": ""
-      }]
-    },
-    "replyCount": 0,
-    "repostCount": 0,
-    "upvoteCount": 0,
-    "downvoteCount": 0,
-    "indexedAt": "2022-01-02T03:04:05+00:00"
+  "$type": "app.bsky.feed.post",
+  "text": "too cool to summarize",
+  "createdAt": "2012-02-22T20:26:41",
+  "embed": {
+    "$type": "app.bsky.embed.images",
+    "images": [{
+      "$type": "app.bsky.embed.images#image",
+      "alt": ""
+    }]
   }
 }

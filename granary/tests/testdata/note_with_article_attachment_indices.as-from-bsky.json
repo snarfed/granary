@@ -1,0 +1,12 @@
+{
+  "objectType": "note",
+  "content": "hello 👩‍👩‍👦‍👦✋🏽 foo",
+  "author": "did:plc:foo",
+  "tags": [{
+    "objectType": "article",
+    "displayName": "foo",
+    "startIndex": 16,
+    "length": 3,
+    "url": "http://xyz/foo"
+  }]
+}

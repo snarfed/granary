@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for reddit.py.
-"""
+"""Unit tests for reddit.py."""
 import copy
 
 from mox3 import mox

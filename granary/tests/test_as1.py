@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for as1.py."""
 import copy
 import re
@@ -625,6 +624,8 @@ class As1Test(testutil.TestCase):
         }),
         (['x', 'y'], {'tags': ['x', 'y']}),
         (['x', 'y'], {'tags': [{'id': 'x'}, {'url': 'y'}]}),
+        (['x', 'y'], {'tags': [{'id': 'x'}, {'url': 'y'}]}),
+        (['x'], {'tags': [{'url': 'x', 'objectType': 'mention'}]}),
     ]:
       with self.subTest(expected=expected, obj=obj):
         self.assertCountEqual(expected, as1.targets(obj))

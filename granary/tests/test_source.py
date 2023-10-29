@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for source.py.
-"""
+"""Unit tests for source.py."""
 import copy
 import re
 
@@ -11,6 +9,7 @@ from .. import facebook
 from .. import instagram
 from .. import source
 from ..source import (
+  html_to_text,
   INCLUDE_IF_TRUNCATED,
   INCLUDE_LINK,
   OMIT_LINK,
@@ -353,3 +352,22 @@ Watching  \t waves
     orig = expected = 'trailing slash http://www.foo.co/'
     result = truncate(orig, 'http://www.foo.co/', OMIT_LINK)
     self.assertEqual(expected, result)
+
+  def test_postprocess_object_fediverse_link_to_mention(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@foo@bar</a>',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://foo',
+        'displayName': '@foo@bar',
+      }],
+    }, Source.postprocess_object({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@foo@bar</a>',
+    }))
+
+
+  def test_html_to_text_empty(self):
+    self.assertEqual('', html_to_text(None))
+    self.assertEqual('', html_to_text(''))

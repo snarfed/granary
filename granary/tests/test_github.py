@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for github.py.
-"""
+"""Unit tests for github.py."""
 import copy
 from unittest import skip
 

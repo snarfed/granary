@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for instagram.py.
-"""
+"""Unit tests for instagram.py."""
 import copy
 import datetime
 import logging
@@ -418,8 +416,7 @@ ATOM = """\
   <id>tag:instagram.com:123_456</id>
   <title>this picture -&gt; is #abc @foo #xyz</title>
 
-  <content type="xhtml">
-  <div xmlns="http://www.w3.org/1999/xhtml">
+  <content type="html"><![CDATA[
 
 this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz
 <p>
@@ -434,16 +431,13 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 </span>
 </p>
 
-  </div>
-  </content>
+  ]]></content>
 
   <link rel="alternate" type="text/html" href="https://www.instagram.com/p/ABC123/" />
   <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
 
     <link rel="ostatus:attention" href="https://www.instagram.com/snarfed/" />
     <link rel="mentioned" href="https://www.instagram.com/snarfed/" />
-
-    <a href="https://www.instagram.com/snarfed/">Ryan B</a>
 
   <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
   <link rel="mentioned" href="https://www.instagram.com/foo/" />

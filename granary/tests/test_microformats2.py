@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for microformats2.py.
 
 Most of the tests are in testdata/. This is just a few things that are too small
@@ -626,6 +625,15 @@ Shared <a href="#">a post</a> by foo
       'content': 'foo &quot; bar &gt; &#62; &#x3e;',
     }))
 
+  def test_object_to_json_string_id_replies_shares(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+    }, microformats2.object_to_json({
+      'objectType': 'note',
+      'replies': 'http://foo',
+      'shares': 'http://bar',
+    }))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),
@@ -648,6 +656,22 @@ Shared <a href="#">a post</a> by foo
   def test_json_to_html_no_properties_or_type(self):
     # just check that we don't crash
     microformats2.json_to_html({'x': 'y'})
+
+  def test_tags_to_html_escapes_html(self):
+    self.assert_equals(
+      '\n<a class="tag" href="http://foo">&lt;bar&gt;</a>',
+      microformats2.tags_to_html([{
+        'url': 'http://foo',
+        'displayName': '<bar>',
+      }], 'tag'))
+
+  def test_maybe_linked_name_escapes_html(self):
+    self.assert_equals(
+      '<a class="p-name u-url" href="http://foo">&lt;bar&gt;</a>',
+      microformats2.maybe_linked_name({
+        'url': ['http://foo'],
+        'name': ['<bar>'],
+      }))
 
   def test_json_to_object_with_location_hcard(self):
     obj = microformats2.json_to_object({

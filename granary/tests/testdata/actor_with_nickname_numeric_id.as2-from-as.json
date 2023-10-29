@@ -14,12 +14,12 @@
     {
       "type": "PropertyValue",
       "name": "Link",
-      "value": "<a rel=\"me\" href=\"http://example.com/martin\"><span class=\"invisible\">http://</span>example.com/martin<span class=\"invisible\"></span></a>"
+      "value": "<a rel=\"me\" href=\"http://example.com/martin\"><span class=\"invisible\">http://</span>example.com/martin</a>"
     },
     {
       "type": "PropertyValue",
       "name": "Link",
-      "value": "<a rel=\"me\" href=\"https://example.com/4321\"><span class=\"invisible\">https://</span>example.com/4321<span class=\"invisible\"></span></a>"
+      "value": "<a rel=\"me\" href=\"https://example.com/4321\"><span class=\"invisible\">https://</span>example.com/4321</a>"
     }
   ],
   "icon": {

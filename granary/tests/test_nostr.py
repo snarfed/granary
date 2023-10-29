@@ -28,7 +28,7 @@ NOTE_NOSTR = {
 NOTE_AS1 = {
   'objectType': 'note',
   'id': 'nostr:note1z24swknlsf',
-  'author': {'id': 'nostr:npub1nrlqrdny0w'},
+  'author': 'nostr:npub1nrlqrdny0w',
   'content': 'Something to say',
 }
 
@@ -129,7 +129,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'Something to say',
       'published': NOW_ISO,
     }
@@ -189,7 +189,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'Something to say',
       'published': NOW_ISO,
       'tags': [{
@@ -218,7 +218,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'Something to say',
       'published': NOW_ISO,
       'location': {
@@ -242,7 +242,7 @@ class NostrTest(testutil.TestCase):
     note = {
       'objectType': 'article',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'title': 'a thing',
       'summary': 'about the thing',
       'content': 'Something to say',
@@ -269,7 +269,7 @@ class NostrTest(testutil.TestCase):
     reply = {
       'objectType': 'note',
       'id': 'nostr:note1z24swknlsf',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'published': NOW_ISO,
       'content': 'I hereby reply',
       'inReplyTo': 'nostr:nevent1xnxsm5fasn',
@@ -297,7 +297,7 @@ class NostrTest(testutil.TestCase):
       'object': {
         'objectType': 'note',
         'id': 'nostr:note1xnxs50q044',
-        'author': {'id': 'nostr:npub1nrlqrdny0w'},
+        'author': 'nostr:npub1nrlqrdny0w',
         'content': 'The orig post',
         'published': THEN_ISO,
       },
@@ -412,6 +412,7 @@ class NostrTest(testutil.TestCase):
       'objectType': 'activity',
       'verb': 'follow',
       'id': 'nostr:nevent1z24spd6d40',
+      'actor': 'nostr:npub1nrlqrdny0w',
       'published': NOW_ISO,
       'object': [
         'nostr:npub1xnxsce33j3',
@@ -422,6 +423,7 @@ class NostrTest(testutil.TestCase):
     event = {
       'kind': 3,
       'id': '12ab',
+      'pubkey': '98fe',
       'content': 'not important',
       'tags': [
         ['p', '34cd', 'TODO relay', ''],
@@ -514,7 +516,7 @@ class GetActivitiesTest(testutil.TestCase):
     reply_as1 = {
       'objectType': 'note',
       'id': 'nostr:note1xnxs50q044',
-      'author': {'id': 'nostr:npub1nrlqrdny0w'},
+      'author': 'nostr:npub1nrlqrdny0w',
       'content': 'I hereby reply',
       'inReplyTo': 'nostr:nevent1z24spd6d40',
     }
@@ -549,6 +551,7 @@ class GetActivitiesTest(testutil.TestCase):
     }
     repost_as1 = {
       'objectType': 'activity',
+      'actor': 'nostr:npub1nrlqrdny0w',
       'verb': 'share',
       'id': 'nostr:nevent1xnxsm5fasn',
       'object': 'nostr:note1z24swknlsf',
@@ -572,4 +575,58 @@ class GetActivitiesTest(testutil.TestCase):
       ['CLOSE', 'towkin 1'],
       ['REQ', 'towkin 2', {'#e': ['12ab'], 'limit': 20}],
       ['CLOSE', 'towkin 2'],
+    ], FakeConnection.sent)
+
+  def test_ok_false_closes_query(self):
+    FakeConnection.to_receive = [
+      ['OK', 'towkin 1', False],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+    ]
+
+    self.assert_equals([], self.nostr.get_activities())
+    self.assertEqual([['EVENT', 'towkin 1', NOTE_NOSTR]], FakeConnection.to_receive)
+
+  def test_create_note(self):
+    FakeConnection.to_receive = [
+      ['OK', NOTE_NOSTR['id'], True],
+    ]
+
+    result = self.nostr.create(NOTE_AS1)
+    self.assert_equals(NOTE_NOSTR, result.content)
+    self.assertEqual([['EVENT', NOTE_NOSTR]], FakeConnection.sent)
+
+  def test_create_note_ok_false(self):
+    FakeConnection.to_receive = [
+      ['OK', NOTE_NOSTR['id'], False, 'foo bar'],
+    ]
+
+    result = self.nostr.create(NOTE_AS1)
+    self.assertEqual('foo bar', result.error_plain)
+    self.assertTrue(result.abort)
+
+  def test_get_actor_npub(self):
+    profile = {
+      'kind': 0,
+      'id': '12ab',
+      'pubkey': '12ab',
+      'content': json_dumps({
+        'name': 'Alice',
+        'nip05': '_@alice.com',
+      }, sort_keys=True),
+    }
+    person = {
+      'objectType': 'person',
+      'id': 'nostr:npub1z24szqzphd',
+      'displayName': 'Alice',
+      'username': 'alice.com',
+    }
+    FakeConnection.to_receive = [
+      ['EVENT', 'towkin 1', profile],
+      ['EOSE', 'towkin 1'],
+    ]
+
+    self.assert_equals(person, self.nostr.get_actor(user_id='nostr:npub1z24szqzphd'))
+    self.assertEqual([
+      ['REQ', 'towkin 1', {'authors': ['12ab'], 'kinds': [0], 'limit': 20}],
+      ['CLOSE', 'towkin 1'],
     ], FakeConnection.sent)

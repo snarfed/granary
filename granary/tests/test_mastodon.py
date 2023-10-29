@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for mastodon.py."""
 import copy
 
@@ -42,7 +41,7 @@ ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'note': 'my note',
   'fields': [{
     'name': 'foo',
-    'value': '<a href="https://snarfed.org" rel="me nofollow noopener" target="_blank"><span class="invisible">https://</span><span class="">snarfed.org</span><span class="invisible"></span></a>',
+    'value': '<a href="https://snarfed.org" rel="me nofollow noopener" target="_blank"><span class="invisible">https://</span><span class="">snarfed.org</span></a>',
     'verified_at': '2019-04-03T17:32:24.467+00:00',
   }],
 }

@@ -68,6 +68,7 @@ def create_test_function(fn, original, expected, **kwargs):
       return self.assert_multiline_equals(expected, got, ignore_blanks=True)
     else:
       return self.assert_equals(expected, got, in_order=True, **kwargs)
+
   return test
 
 
@@ -105,6 +106,9 @@ def rss_from_activities(activities):
 def rss_to_objects(feed):
   return [a['object'] for a in rss.to_activities(feed)]
 
+def bluesky_to_as1(record):
+  return bluesky.to_as1(record, repo_did='did:plc:foo', repo_handle='example.com')
+
 # source extension, destination extension, conversion function, exclude prefix,
 # ignore fields. destinations take precedence in the order they appear. only the
 # first (source, dest) pair for a given prefix is tested. this is how eg
@@ -128,10 +132,10 @@ mappings = (
   ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, (), ()),
   ('as.json', ['rss.xml'], rss_from_activities, (), ()),
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
-  ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky.from_as1, (), ()),
-  ('bsky.json', ['as-from-bsky.json', 'as.json'], bluesky.to_as1, (),
-   ('location', 'updated', 'username')),
-  ('bsky.json', ['as-from-bsky.json'], bluesky.to_as1, (), ()),
+  ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky.from_as1, (),
+   ('avatar', 'banner')),
+  ('bsky.json', ['as.json'], bluesky_to_as1, (), ('location', 'updated')),
+  ('bsky.json', ['as-from-bsky.json'], bluesky_to_as1, (), ()),
 )
 
 test_funcs = {}
@@ -146,7 +150,6 @@ for src_ext, dst_exts, fn, exclude_prefixes, ignore_fields in mappings:
       f'test_{fn.__module__.split(".")[-1]}_{fn.__name__}_{src[:-len(src_ext)]}'
     ).replace('.', '_').replace('-', '_').strip('_')
     # assert test_name not in test_funcs, test_name
-    ignore = ['uri'] if fn == bluesky.from_as1 else ()
     test_funcs[test_name] = create_test_function(fn, original, expected, ignore=[])
 
 os.chdir(prevdir)

@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for jsonfeed.py."""
 from oauth_dropins.webutil import testutil
 
@@ -145,13 +144,25 @@ class JsonFeedTest(testutil.TestCase):
         'iconUrl': 'http://blogs.adobe.com/adobemarketingcloudjapan/files/2017/07/1046x616_Voice-Assistants-Are-Poised-To-Be-The-Next-Tech-Disruptor-Static-1024x603.jpg'
       }])
 
-  def test_author_not_dict(self):
+  def test_jsonfeed_to_activities_author_not_dict(self):
     """Based on output from https://rss2json.com/
 
     https://console.cloud.google.com/errors/detail/COO65cat_4niTQ?project=granary-demo
     """
     with self.assertRaises(ValueError):
       jsonfeed_to_activities({'items': [{'author': 'Ms. Foo'}]})
+
+  def test_activities_to_jsonfeed_author_not_dict(self):
+    """https://console.cloud.google.com/errors/detail/CN-yh-3M7crdLA;time=P30D?project=granary-demo"""
+    self.assertEqual({
+      'version': 'https://jsonfeed.org/version/1',
+      'title': 'JSON Feed',
+      'items': [{
+        'content_text': '',
+      }],
+    }, activities_to_jsonfeed([{
+      'author': 'http://foo',
+    }]))
 
   def test_convert_newlines_to_brs(self):
     """https://github.com/snarfed/granary/issues/456"""
