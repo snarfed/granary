@@ -303,6 +303,8 @@ Changelog
   * Implement `Bluesky.user_to_actor`, `Bluesky.get_actor`.
 * `facebook`:
   * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
+* `mastodon`:
+  * `get_activities` bug fix: use query params for `/api/v1/notifications` API call, not JSON body.
 * `Source`:
   * `postprocess_object`: convert HTML links in content to fediverse handles (`@user@instance`) to `mention` tags.
 

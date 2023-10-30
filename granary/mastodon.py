@@ -258,7 +258,7 @@ class Mastodon(source.Source):
 
     if fetch_mentions:
       # https://docs.joinmastodon.org/methods/notifications/
-      notifs = self._get(API_NOTIFICATIONS, json={
+      notifs = self._get(API_NOTIFICATIONS, params={
         'exclude_types': ['follow', 'favourite', 'reblog'],
       })
       activities.extend(self.status_to_activity(n['status']) for n in notifs

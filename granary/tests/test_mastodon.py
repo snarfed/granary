@@ -411,7 +411,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_get_activities_fetch_mentions(self):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS])
-    self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], json={
+    self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], params={
       'exclude_types': ['follow', 'favourite', 'reblog'],
     })
     self.mox.ReplayAll()
@@ -424,7 +424,7 @@ class MastodonTest(testutil.TestCase):
 
     notif = copy.deepcopy(MENTION_NOTIFICATION)
     notif['status'] = None
-    self.expect_get(API_NOTIFICATIONS, [notif], json={
+    self.expect_get(API_NOTIFICATIONS, [notif], params={
       'exclude_types': ['follow', 'favourite', 'reblog'],
     })
     self.mox.ReplayAll()
