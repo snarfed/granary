@@ -184,7 +184,7 @@ class Source(object, metaclass=SourceMeta):
     """Fetches and returns a user.
 
     Args:
-      user_id: str, defaults to current user
+      user_id (str): defaults to current user
 
     Returns:
       dict: ActivityStreams actor

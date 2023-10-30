@@ -1057,6 +1057,42 @@ class BlueskyTest(testutil.TestCase):
     )
 
   @patch('requests.get')
+  def test_get_actor(self, mock_get):
+    mock_get.return_value = requests_response({
+      **ACTOR_PROFILE_VIEW_BSKY,
+      '$type': 'app.bsky.actor.defs#profileViewDetailed',
+    })
+
+    self.assert_equals(ACTOR_AS, self.bs.get_actor(user_id='me.com'))
+    mock_get.assert_called_once_with(
+        'https://bsky.social/xrpc/app.bsky.actor.getProfile?actor=me.com',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
+    )
+
+  @patch('requests.get')
+  def test_get_actor_default(self, mock_get):
+    mock_get.return_value = requests_response({
+      **ACTOR_PROFILE_VIEW_BSKY,
+      '$type': 'app.bsky.actor.defs#profileViewDetailed',
+    })
+
+    self.assert_equals(ACTOR_AS, self.bs.get_actor())
+    mock_get.assert_called_once_with(
+        'https://bsky.social/xrpc/app.bsky.actor.getProfile?actor=handull',
+        json=None,
+        headers={
+          'Authorization': 'Bearer towkin',
+          'Content-Type': 'application/json',
+          'User-Agent': util.user_agent,
+        },
+    )
+
+  @patch('requests.get')
   def test_get_comment(self, mock_get):
     mock_get.return_value = requests_response({
       'thread': THREAD_BSKY,
@@ -1073,4 +1109,3 @@ class BlueskyTest(testutil.TestCase):
           'User-Agent': util.user_agent,
         },
     )
-

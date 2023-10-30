@@ -1053,6 +1053,20 @@ class Bluesky(Source):
     resp = self.make_activities_base_response(util.trim_nulls(activities))
     return resp
 
+  def get_actor(self, user_id=None):
+    """Fetches and returns a user.
+
+    Args:
+      user_id (str): either handle or DID; defaults to current user
+
+    Returns:
+      dict: ActivityStreams actor
+    """
+    if user_id is None:
+      user_id = self.handle
+    profile = self.client.app.bsky.actor.getProfile({}, actor=user_id)
+    return to_as1(profile, type='app.bsky.actor.defs#profileViewDetailed')
+
   def get_comment(self, comment_id, **kwargs):
     """Fetches and returns a comment.
 
