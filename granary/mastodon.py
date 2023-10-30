@@ -258,8 +258,10 @@ class Mastodon(source.Source):
 
     if fetch_mentions:
       # https://docs.joinmastodon.org/methods/notifications/
+      # use array notation for the query parameter for compatibility w/Pleroma
+      # https://docs-develop.pleroma.social/backend/development/API/differences_in_mastoapi_responses/#get-apiv1notifications
       notifs = self._get(API_NOTIFICATIONS, params={
-        'exclude_types': ['follow', 'favourite', 'reblog'],
+        'exclude_types[]': ['follow', 'favourite', 'reblog'],
       })
       activities.extend(self.status_to_activity(n['status']) for n in notifs
                         if n.get('status') and n.get('type') == 'mention')
