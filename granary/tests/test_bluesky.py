@@ -432,6 +432,14 @@ class BlueskyTest(testutil.TestCase):
       'https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
       at_uri_to_web_url(at_uri, handle='snarfed.org'))
 
+    at_uri_profile = 'at://did:plc:asdf'
+    self.assertEqual(
+      'https://bsky.app/profile/did:plc:asdf',
+      at_uri_to_web_url(at_uri_profile))
+    self.assertEqual(
+      'https://bsky.app/profile/snarfed.org',
+      at_uri_to_web_url(at_uri_profile, handle='snarfed.org'))
+
     with self.assertRaises(ValueError):
       at_uri_to_web_url('http://not/at/uri')
 
