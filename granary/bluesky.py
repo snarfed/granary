@@ -158,6 +158,10 @@ def at_uri_to_web_url(uri, handle=None):
 
   parsed = urllib.parse.urlparse(uri)
   did = parsed.netloc
+
+  if not parsed.path:
+    return f'{Bluesky.user_url(handle or did)}'
+
   collection, tid = parsed.path.strip('/').split('/')
 
   type = COLLECTION_TO_BSKY_APP_TYPE.get(collection)
