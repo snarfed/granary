@@ -134,14 +134,16 @@ def get_owner(obj):
     raise ValueError(f'{obj} is not a dict')
 
   ids = get_ids(obj, 'author') or get_ids(obj, 'actor')
-  if not ids and obj.get('objectType') in ACTOR_TYPES:
-    ids = util.get_list(obj, 'id')
-
-  if not ids and obj.get('verb') in ('post', 'update', 'delete'):
-    ids = get_owner(get_object(obj))
-
   if ids:
     return ids[0]
+
+  if obj.get('objectType') in ACTOR_TYPES:
+    ids = util.get_list(obj, 'id')
+    if ids:
+      return ids[0]
+
+  if obj.get('verb') in ('post', 'update', 'delete'):
+    return get_owner(get_object(obj))
 
 
 def get_url(obj):
