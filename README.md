@@ -309,6 +309,8 @@ Changelog
   * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
 * `mastodon`:
   * `get_activities` bug fix: use query params for `/api/v1/notifications` API call, not JSON body.
+* `microformats2`:
+  * `object_to_json` bug fix: handle singular `inReplyTo`.
 * `Source`:
   * `postprocess_object`: convert HTML links in content to fediverse handles (`@user@instance`) to `mention` tags.
 

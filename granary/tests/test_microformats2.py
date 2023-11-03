@@ -101,7 +101,7 @@ class Microformats2Test(testutil.TestCase):
        }
      }))
 
-  def test_object_to_json_note_with_in_reply_to(self):
+  def test_object_to_json_note_with_context_in_reply_to(self):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {
@@ -118,6 +118,30 @@ class Microformats2Test(testutil.TestCase):
           'url': 'http://reply/target',
         }],
       }}))
+
+  def test_object_to_json_note_with_in_reply_to_array_composite(self):
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['@hey great post'],
+        'in-reply-to': ['http://reply/target'],
+      },
+    }, microformats2.object_to_json({
+      'content': '@hey great post',
+      'inReplyTo': [{'url': 'http://reply/target'}],
+    }))
+
+  def test_object_to_json_note_with_in_reply_to_single_id(self):
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['@hey great post'],
+        'in-reply-to': ['http://reply/target'],
+      },
+    }, microformats2.object_to_json({
+      'content': '@hey great post',
+      'inReplyTo': 'http://reply/target',
+    }))
 
   def test_object_to_json_context_string(self):
     """Can happen for objects converted from AS2.
