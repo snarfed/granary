@@ -545,6 +545,27 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_tag_did_mention(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo',
+      'createdAt': '',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          'did': 'did:plc:foo',
+        }],
+      }],
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'foo',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'did:plc:foo',
+      }],
+    }))
+
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['embed']['images'][0]['image']

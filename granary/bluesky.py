@@ -392,8 +392,9 @@ def from_as1(obj, out_type=None, blobs=None):
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#mention',
             # TODO: support bsky.app URLs with handles by resolving them?
-            'did': (url.removeprefix(f'{Bluesky.BASE_URL}/profile/')
-                    if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
+            'did': (url if url.startswith('did:')
+                    else url.removeprefix(f'{Bluesky.BASE_URL}/profile/')
+                      if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
                     else ''),
           }]
         else:
