@@ -245,7 +245,7 @@ def to_activities(rss):
 
     activities.append(Source.postprocess_activity({
       'objectType': 'activity',
-      'verb': 'create',
+      'verb': 'post',
       'id': id,
       'url': uri,
       'actor': author,
