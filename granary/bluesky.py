@@ -383,16 +383,20 @@ def from_as1(obj, out_type=None, blobs=None):
           '$type': 'app.bsky.richtext.facet',
         }
 
-        url = tag.get('url')
         type = tag.get('objectType')
+        url = tag.get('url')
+        if not url:
+          continue
+
         if type == 'mention':
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#mention',
+            # TODO: support bsky.app URLs with handles by resolving them?
             'did': (url.removeprefix(f'{Bluesky.BASE_URL}/profile/')
                     if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
                     else ''),
           }]
-        elif type in ('article', 'link', 'note') or url:
+        else:
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#link',
             'uri': url,

@@ -532,6 +532,19 @@ class BlueskyTest(testutil.TestCase):
 
     self.assert_equals(expected, from_as1(post_as))
 
+  def test_from_as1_tag_without_url(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo',
+      'createdAt': '',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'foo',
+      'tags': [{
+        'objectType': 'mention',
+      }],
+    }))
+
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['embed']['images'][0]['image']
