@@ -993,9 +993,10 @@ class BlueskyTest(testutil.TestCase):
       })
     ]
 
+    cache = {}
     self.assert_equals(
       [POST_AUTHOR_PROFILE_WITH_LIKES_AS],
-      self.bs.get_activities(fetch_likes=True)
+      self.bs.get_activities(fetch_likes=True, cache=cache)
     )
     mock_get.assert_any_call(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
@@ -1015,6 +1016,7 @@ class BlueskyTest(testutil.TestCase):
           'User-Agent': util.user_agent,
         },
     )
+    self.assert_equals(1, cache.get('ABL at://did/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
   def test_get_activities_with_reposts(self, mock_get):
@@ -1030,9 +1032,10 @@ class BlueskyTest(testutil.TestCase):
       })
     ]
 
+    cache = {}
     self.assert_equals(
       [POST_AUTHOR_PROFILE_WITH_REPOSTS_AS],
-      self.bs.get_activities(fetch_shares=True)
+      self.bs.get_activities(fetch_shares=True, cache=cache)
     )
     mock_get.assert_any_call(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
@@ -1052,6 +1055,7 @@ class BlueskyTest(testutil.TestCase):
           'User-Agent': util.user_agent,
         },
     )
+    self.assert_equals(1, cache.get('ABRP at://did/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
   def test_get_activities_include_shares(self, mock_get):
@@ -1077,8 +1081,9 @@ class BlueskyTest(testutil.TestCase):
       })
     ]
 
+    cache = {}
     self.assert_equals([THREAD_AS],
-                       self.bs.get_activities(fetch_replies=True))
+                       self.bs.get_activities(fetch_replies=True, cache=cache))
     mock_get.assert_any_call(
         'https://bsky.social/xrpc/app.bsky.feed.getTimeline',
         json=None,
@@ -1097,6 +1102,7 @@ class BlueskyTest(testutil.TestCase):
           'User-Agent': util.user_agent,
         },
     )
+    self.assert_equals(1, cache.get('ABR at://did/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
   def test_get_actor(self, mock_get):
