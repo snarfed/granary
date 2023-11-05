@@ -1038,14 +1038,14 @@ class Bluesky(Source):
         if fetch_likes and like_count and like_count != cache.get('ABL ' + id):
           likers = self.client.app.bsky.feed.getLikes({}, uri=bs_post.get('uri'))
           tags.extend(self._make_like(bs_post, l.get('actor')) for l in likers.get('likes'))
-          cache['ABL ' + id] = count
+          cache['ABL ' + id] = like_count
 
         # Reposts
         repost_count = bs_post.get('repostCount')
         if fetch_shares and repost_count and repost_count != cache.get('ABRP ' + id):
           reposters = self.client.app.bsky.feed.getRepostedBy({}, uri=bs_post.get('uri'))
           tags.extend(self._make_share(bs_post, r) for r in reposters.get('repostedBy'))
-          cache['ABRP ' + id] = count
+          cache['ABRP ' + id] = repost_count
 
         # Replies
         reply_count = bs_post.get('replyCount')
@@ -1057,7 +1057,7 @@ class Bluesky(Source):
           obj['replies'] = {
             'items': replies,
           }
-          cache['ABR ' + id] = count
+          cache['ABR ' + id] = reply_count
 
     resp = self.make_activities_base_response(util.trim_nulls(activities))
     return resp
