@@ -208,9 +208,7 @@ def web_url_to_at_uri(url, handle=None, did=None):
     str: ``at://`` URI, or None
 
   Raises:
-    ValueError: if url is not a string or can't be parsed as a ``bsky.app``
-      profile or post URL
-
+    ValueError: if ``url`` can't be parsed as a ``bsky.app`` profile or post URL
   """
   if not url:
     return None
@@ -913,7 +911,7 @@ class Bluesky(Source):
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
-  POST_ID_RE = re.compile(r'at:// ^[A-Za-z0-9-]+:[A-Za-z0-9_.-]+:[0-9]+$')
+  POST_ID_RE = AT_URI_PATTERN
 
   def __init__(self, handle, did=None, access_token=None, refresh_token=None,
                app_password=None, session_callback=None):
@@ -984,6 +982,26 @@ class Bluesky(Source):
       str: profile URL
     """
     return f'{cls.user_url(handle)}/post/{tid}'
+
+  @classmethod
+  def post_id(cls, url):
+    """Returns the `at://` URI for the given URL if it's for a post.
+
+    Returns:
+      str or None
+    """
+    if not url:
+      return None
+
+    if not AT_URI_PATTERN.match(url):
+      try:
+        url = web_url_to_at_uri(url)
+      except ValueError:
+        return None
+
+    if len(url.removeprefix('at://').split('/')) == 3:
+      # only return at:// URIs for posts, not profiles
+      return url
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,

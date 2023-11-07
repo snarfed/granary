@@ -1190,3 +1190,17 @@ class BlueskyTest(testutil.TestCase):
           'User-Agent': util.user_agent,
         },
     )
+
+  def test_post_id(self):
+    for input, expected in [
+        (None, None),
+        ('', None),
+        ('abc', None),
+        ('http://foo', None),
+        ('https://bsky.app/profile/foo', None),
+        ('at://did:plc:foo', None),
+        ('at://did/post/tid', 'at://did/post/tid'),
+        ('https://bsky.app/profile/did/post/tid', 'at://did/app.bsky.feed.post/tid'),
+    ]:
+      with self.subTest(input=input):
+        self.assertEqual(expected, self.bs.post_id(input))

@@ -289,6 +289,7 @@ Changelog
   * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
 * `bluesky`:
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
+  * Implement `Bluesky.post_id`.
   * `to_as1`:
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
     * Translate `handle` to `username`, add new `repo_handle` kwarg.
