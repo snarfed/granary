@@ -27,6 +27,20 @@ HANDLE_REGEX = (
 HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
 DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 
+# at:// URI regexp. Right now
+# https://atproto.com/specs/at-uri-scheme#full-at-uri-syntax
+# https://atproto.com/specs/record-key#record-key-syntax
+# also see arroba.util.parse_at_uri
+_CHARS = 'a-zA-Z0-9-.'
+# TODO: add query and fragment? they're currently unused in the protocol
+# https://atproto.com/specs/at-uri-scheme#structure
+AT_URI_PATTERN = re.compile(rf"""
+    ^at://
+     ([{_CHARS}:]+)            # authority
+      (?:/([{_CHARS}_~]+)  # collection
+       (?:/([{_CHARS}]+))?)?  # rkey
+    $""", re.VERBOSE)
+
 # Maps AT Protocol NSID collections to path elements in bsky.app URLs.
 # Used in at_uri_to_web_url.
 #
@@ -899,6 +913,7 @@ class Bluesky(Source):
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
+  POST_ID_RE = re.compile(r'at:// ^[A-Za-z0-9-]+:[A-Za-z0-9_.-]+:[0-9]+$')
 
   def __init__(self, handle, did=None, access_token=None, refresh_token=None,
                app_password=None, session_callback=None):

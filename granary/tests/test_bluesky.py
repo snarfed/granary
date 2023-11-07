@@ -11,6 +11,7 @@ from oauth_dropins.webutil.util import trim_nulls
 import requests
 
 from ..bluesky import (
+  AT_URI_PATTERN,
   at_uri_to_web_url,
   blob_to_url,
   Bluesky,
@@ -384,6 +385,38 @@ class BlueskyTest(testutil.TestCase):
   def assert_equals(self, expected, actual, ignore=(), **kwargs):
     ignore = list(ignore) + ['uri']
     return super().assert_equals(expected, actual, ignore=ignore, **kwargs)
+
+  def test_at_uri_pattern(self):
+    for input, expected in [
+        ('', False),
+        ('foo', False),
+        ('http://bar', False),
+        ('at://', False),
+        ('at:////', False),
+        ('at://x/y/z', True),
+        ('at://x / y/z', False),
+        (' at://x/y/z ', False),
+        ('at://did:plc:foo/a.b/123', True),
+    ]:
+      with self.subTest(input=input):
+        self.assertEqual(expected, AT_URI_PATTERN.match(input) is not None)
+
+    at_uri = 'at://did:plc:asdf/app.bsky.feed.post/3jv3wdw2hkt25'
+    self.assertEqual(
+      'https://bsky.app/profile/did:plc:asdf/post/3jv3wdw2hkt25',
+      at_uri_to_web_url(at_uri))
+    self.assertEqual(
+      'https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
+      at_uri_to_web_url(at_uri, handle='snarfed.org'))
+
+    at_uri_profile = 'at://did:plc:asdf'
+    self.assertEqual(
+      'https://bsky.app/profile/did:plc:asdf',
+      at_uri_to_web_url(at_uri_profile))
+    self.assertEqual(
+      'https://bsky.app/profile/snarfed.org',
+      at_uri_to_web_url(at_uri_profile, handle='snarfed.org'))
+
 
   def test_url_to_did_web(self):
     for bad in None, '', 'foo', 'did:web:bar.com':
