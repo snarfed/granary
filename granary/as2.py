@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 CONTENT_TYPE = 'application/activity+json'
 CONTENT_TYPE_LD = 'application/ld+json'
 CONTENT_TYPES = (CONTENT_TYPE, CONTENT_TYPE_LD)
-CONTENT_TYPE_LD_PROFILE = 'application/ld+json;profile="https://www.w3.org/ns/activitystreams"'
+CONTENT_TYPE_LD_PROFILE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
 CONNEG_HEADERS = {
     'Accept': f'{CONTENT_TYPE}; q=0.9, {CONTENT_TYPE_LD_PROFILE}; q=0.8',
 }
