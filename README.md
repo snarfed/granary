@@ -39,7 +39,7 @@ Here's how to get started:
 * REST API and demo app at [granary.io](https://granary.io/).
 * [Source code on GitHub.](https://github.com/snarfed/granary/)
 
-License: This project is placed in the public domain.
+License: This project is placed in the public domain. You may also use it under the [CC0 License](https://creativecommons.org/publicdomain/zero/1.0/).
 
 
 Using
