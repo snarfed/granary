@@ -913,6 +913,9 @@ class Bluesky(Source):
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
   POST_ID_RE = AT_URI_PATTERN
 
+  _client = None
+  _app_password = None
+
   def __init__(self, handle, did=None, access_token=None, refresh_token=None,
                app_password=None, session_callback=None):
     """Constructor.
@@ -928,22 +931,24 @@ class Bluesky(Source):
     """
     self.handle = handle
     self.did = did
+    self._app_password = app_password
 
     headers = {'User-Agent': util.user_agent}
-    self.client = Client(access_token=access_token, refresh_token=refresh_token,
-                         headers=headers, session_callback=session_callback)
+    self._client = Client(access_token=access_token, refresh_token=refresh_token,
+                          headers=headers, session_callback=session_callback)
 
-    if app_password and not access_token:
-      resp = self.client.com.atproto.server.createSession({
-        'identifier': handle,
-        'password': app_password,
+  @property
+  def client(self):
+    if not self._client.session and self._app_password:
+      # log in
+      resp = self._client.com.atproto.server.createSession({
+        'identifier': self.handle,
+        'password': self._app_password,
       })
       self.handle = resp['handle']
       self.did = resp['did']
 
-    if not self.client.session:
-      # no auth; use AppView instead of PDS
-      self.client = Client(DEFAULT_APPVIEW, headers=headers)
+    return self._client
 
   @classmethod
   def user_url(cls, handle):

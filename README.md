@@ -290,12 +290,16 @@ Changelog
 * `bluesky`:
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
   * Implement `Bluesky.post_id`.
+  * Add new `blob_to_url` function.
+  * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
+  * Convert HTML `summary` and `content` to plain text.
+  * Implement `Bluesky.user_to_actor`, `Bluesky.get_actor`.
+  * Don't log in (fetch an access token) eagerly in the constructor; wait until the client makes a call.
   * `to_as1`:
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
     * Translate `handle` to `username`, add new `repo_handle` kwarg.
     * Add support for `app.bsky.feed.repost`.
     * Add `actor`/`author` based on `repo_did`.
-  * Add new `blob_to_url` function.
   * `from_as1`:
     * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
     * Add `blobs` kwarg to provide blob objects to use for image URLs.
@@ -303,9 +307,6 @@ Changelog
     * Bug fix: handle bare string URLs in `image` field.
     * Bug fix: handle tags without `url` field.
     * Strip trailing slash from home page URLs in order to remove visible `/` from rel-me verified links on Mastodon etc.
-  * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
-  * Convert HTML `summary` and `content` to plain text.
-  * Implement `Bluesky.user_to_actor`, `Bluesky.get_actor`.
 * `facebook`:
   * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
 * `mastodon`:

@@ -936,6 +936,7 @@ class BlueskyTest(testutil.TestCase):
     mock_post.return_value = requests_response(session)
 
     bs = Bluesky('handull', app_password='pazzwurd')
+    bs.client  # trigger login
     self.assertEqual('real.han.dull', bs.handle)
     self.assertEqual('did:plc:me', bs.did)
     self.assertEqual(session, bs.client.session)
