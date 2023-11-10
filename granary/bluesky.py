@@ -971,7 +971,7 @@ class Bluesky(Source):
     if not self._client.session and self._app_password:
       # log in
       resp = self._client.com.atproto.server.createSession({
-        'identifier': self.handle,
+        'identifier': self.did or self.handle,
         'password': self._app_password,
       })
       self.handle = resp['handle']
@@ -1071,10 +1071,10 @@ class Bluesky(Source):
       posts = resp.get('feed', [])
 
     else:  # eg group_id SELF
-      handle = user_id or self.handle or self.did
-      if not handle:
+      actor = user_id or self.did or self.handle
+      if not actor:
         raise ValueError('user_id is required')
-      resp = self.client.app.bsky.feed.getAuthorFeed({}, actor=handle, **params)
+      resp = self.client.app.bsky.feed.getAuthorFeed({}, actor=actor, **params)
       posts = resp.get('feed', [])
 
     if cache is None:
@@ -1139,7 +1139,7 @@ class Bluesky(Source):
       dict: ActivityStreams actor
     """
     if user_id is None:
-      user_id = self.handle
+      user_id = self.did or self.handle
     profile = self.client.app.bsky.actor.getProfile({}, actor=user_id)
     return to_as1(profile, type='app.bsky.actor.defs#profileViewDetailed')
 

@@ -1035,6 +1035,17 @@ class BlueskyTest(testutil.TestCase):
         'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=alice.com')
 
   @patch('requests.get')
+  def test_get_activities_prefers_did(self, mock_get):
+    mock_get.return_value = requests_response({
+      'feed': [],
+    })
+
+    self.bs.did = 'did:alice'
+    self.assert_equals([], self.bs.get_activities(group_id=SELF))
+    self.assert_call(mock_get,
+        'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aalice')
+
+  @patch('requests.get')
   def test_get_activities_with_likes(self, mock_get):
     mock_get.side_effect = [
       requests_response({

@@ -295,6 +295,7 @@ Changelog
   * Convert HTML `summary` and `content` to plain text.
   * Implement `Bluesky.user_to_actor`, `Bluesky.get_actor`.
   * Don't log in (fetch an access token) eagerly in the constructor; wait until the client makes a call.
+  * Prefer DID to handle in API calls that accept either.
   * `to_as1`:
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
     * Add new `uri` kwarg.
