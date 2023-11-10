@@ -297,6 +297,7 @@ Changelog
   * Don't log in (fetch an access token) eagerly in the constructor; wait until the client makes a call.
   * `to_as1`:
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
+    * Add new `uri` kwarg.
     * Translate `handle` to `username`, add new `repo_handle` kwarg.
     * Add support for `app.bsky.feed.repost`.
     * Add `actor`/`author` based on `repo_did`.

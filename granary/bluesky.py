@@ -584,13 +584,16 @@ def from_as1(obj, out_type=None, blobs=None):
   raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
 
 
-def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
+def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
+           pds=DEFAULT_PDS):
   """Converts a Bluesky object to an AS1 object.
 
   Args:
     obj (dict): ``app.bsky.*`` object
     type (str): optional ``$type`` to parse with, only used if ``obj['$type']``
       is unset
+    uri (str): optional ``at://`` URI of this object. Used to populate the
+      ``id`` and ``url`` fields for some object types, eg posts.
     repo_did (str): optional DID of the repo this object is from. Required to
       generate image URLs.
     repo_handle (str): optional handle of the user whose repo this object is from
@@ -610,6 +613,14 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
   if not type:
     raise ValueError('Bluesky object missing $type field')
 
+  uri_authority = None
+  if uri:
+    if not uri.startswith('at://'):
+      raise ValueError('Expected at:// uri, got {uri}')
+    if parsed := AT_URI_PATTERN.match(uri):
+      uri_authority = parsed.group(1)
+
+  # for nested to_as1 calls, if necessary
   kwargs = {'repo_did': repo_did, 'repo_handle': repo_handle, 'pds': pds}
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
@@ -684,6 +695,8 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
 
     ret = {
       'objectType': 'comment' if in_reply_to else 'note',
+      'id': uri,
+      'url': at_uri_to_web_url(uri),
       'content': text,
       'inReplyTo': [{
         'id': in_reply_to,
@@ -801,39 +814,55 @@ def to_as1(obj, type=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
     ret = to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
     reason = obj.get('reason')
     if reason and reason.get('$type') == 'app.bsky.feed.defs#reasonRepost':
+      uri = obj.get('post', {}).get('viewer', {}).get('repost')
       ret = {
-        'id': obj.get('post', {}).get('viewer', {}).get('repost'),
         'objectType': 'activity',
         'verb': 'share',
+        'id': uri,
+        'url': at_uri_to_web_url(uri),
         'object': ret,
         'actor': to_as1(reason.get('by'),
                         type='app.bsky.actor.defs#profileViewBasic', **kwargs),
       }
 
   elif type == 'app.bsky.feed.like':
+    subject = obj.get('subject', {}).get('uri')
     ret = {
       'objectType': 'activity',
       'verb': 'like',
-      'object': obj.get('subject', {}).get('uri'),
+      'id': uri,
+      'object': subject,
       'actor': repo_did,
     }
+    if subject and uri_authority:
+      if web_url := at_uri_to_web_url(subject):
+        # synthetic fragment
+        ret['url'] = f'{web_url}#liked-by-{uri_authority}'
 
   elif type == 'app.bsky.graph.follow':
     ret = {
       'objectType': 'activity',
       'verb': 'follow',
+      'id': uri,
+      'url': at_uri_to_web_url(uri),
       'object': obj.get('subject'),
       'actor': repo_did,
     }
 
   elif type == 'app.bsky.feed.repost':
-      return {
-        'objectType': 'activity',
-        'verb': 'share',
-        'object': obj.get('subject', {}).get('uri'),
-        'actor': repo_did,
-        'published': obj.get('createdAt'),
-      }
+    subject = obj.get('subject', {}).get('uri')
+    ret = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'id': uri,
+      'object': subject,
+      'actor': repo_did,
+      'published': obj.get('createdAt'),
+    }
+    if subject and uri_authority:
+      if web_url := at_uri_to_web_url(subject):
+        # synthetic fragment
+        ret['url'] = f'{web_url}#reposted-by-{uri_authority}'
 
   elif type == 'app.bsky.feed.defs#threadViewPost':
     return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)

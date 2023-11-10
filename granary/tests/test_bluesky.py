@@ -341,9 +341,19 @@ POST_FEED_VIEW_WITH_REPLIES_BSKY = copy.deepcopy(POST_FEED_VIEW_BSKY)
 POST_FEED_VIEW_WITH_REPLIES_BSKY['post']['replyCount'] = 1
 
 LIKE_BSKY = {
+  '$type': 'app.bsky.feed.like',
+  'subject': {
+    'uri': 'at://did/app.bsky.feed.post/tid',
+    'cid': 'TODO',
+  },
+  'createdAt': '2008-08-08T03:04:05',
+}
+
+GET_LIKES_LIKE_BSKY = {
+  '$type': 'app.bsky.feed.getLikes#like',
   'indexedAt': NOW.isoformat(),
   'createdAt': '2008-08-08T03:04:05',
-  'actor': ACTOR_PROFILE_VIEW_BSKY
+  'actor': ACTOR_PROFILE_VIEW_BSKY,
 }
 
 POST_AUTHOR_PROFILE_WITH_LIKES_AS = copy.deepcopy(POST_AUTHOR_PROFILE_AS)
@@ -816,6 +826,15 @@ class BlueskyTest(testutil.TestCase):
       'published': '2007-07-07T03:04:05',
     }, to_as1(POST_BSKY))
 
+  def test_to_as1_post_uri(self):
+    self.assert_equals({
+      'id': 'at://alice.com/app.bsky.feed.post/123',
+      'url': 'https://bsky.app/profile/alice.com/post/123',
+      'objectType': 'note',
+      'content': 'My original post',
+      'published': '2007-07-07T03:04:05',
+    }, to_as1(POST_BSKY, uri='at://alice.com/app.bsky.feed.post/123'))
+
   def test_to_as1_post_view(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_VIEW_BSKY))
 
@@ -865,8 +884,25 @@ class BlueskyTest(testutil.TestCase):
       'object': 'at://did/app.bsky.feed.post/tid',
       'objectType': 'activity',
       'verb': 'share',
-      'published': '',
     }, to_as1(REPOST_BSKY))
+
+  def test_to_as1_repost_uri(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'share',
+      'id': 'at://alice.com/app.bsky.feed.repost/123',
+      'url': 'https://bsky.app/profile/did/post/tid#reposted-by-alice.com',
+      'object': 'at://did/app.bsky.feed.post/tid',
+    }, to_as1(REPOST_BSKY, uri='at://alice.com/app.bsky.feed.repost/123'))
+
+  def test_to_as1_like_uri(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'like',
+      'id': 'at://alice.com/app.bsky.feed.like/123',
+      'url': 'https://bsky.app/profile/did/post/tid#liked-by-alice.com',
+      'object': 'at://did/app.bsky.feed.post/tid',
+    }, to_as1(LIKE_BSKY, uri='at://alice.com/app.bsky.feed.like/123'))
 
   def test_to_as1_missing_objectType(self):
     with self.assertRaises(ValueError):
@@ -1023,7 +1059,7 @@ class BlueskyTest(testutil.TestCase):
       requests_response({
         'cursor': 'timestamp::cid',
         'uri': 'at://did/app.bsky.feed.post/tid',
-        'likes': [LIKE_BSKY]
+        'likes': [GET_LIKES_LIKE_BSKY]
       })
     ]
 
