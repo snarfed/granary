@@ -362,7 +362,7 @@ POST_AUTHOR_PROFILE_WITH_LIKES_AS['object']['tags'] = [{
   'id': 'tag:bsky.app:at://did/app.bsky.feed.post/tid_liked_by_did:web:alice.com',
   'objectType': 'activity',
   'verb': 'like',
-  'url': 'https://bsky.app/profile/alice.com/post/tid',
+  'url': 'https://bsky.app/profile/alice.com/post/tid#liked_by_did:web:alice.com',
   'object': {'url': 'https://bsky.app/profile/alice.com/post/tid'}
 }]
 POST_AUTHOR_PROFILE_WITH_LIKES_AS['object']['tags'][0]['author'].update({
@@ -377,7 +377,7 @@ POST_AUTHOR_PROFILE_WITH_REPOSTS_AS['object']['tags'] = [{
   'id': 'tag:bsky.app:at://did/app.bsky.feed.post/tid_reposted_by_did:web:alice.com',
   'objectType': 'activity',
   'verb': 'share',
-  'url': 'https://bsky.app/profile/alice.com/post/tid',
+  'url': 'https://bsky.app/profile/alice.com/post/tid#reposted_by_did:web:alice.com',
   'object': {'url': 'https://bsky.app/profile/alice.com/post/tid'}
 }]
 POST_AUTHOR_PROFILE_WITH_REPOSTS_AS['object']['tags'][0]['author'].update({
@@ -891,7 +891,7 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'activity',
       'verb': 'share',
       'id': 'at://alice.com/app.bsky.feed.repost/123',
-      'url': 'https://bsky.app/profile/did/post/tid#reposted-by-alice.com',
+      'url': 'https://bsky.app/profile/did/post/tid#reposted_by_alice.com',
       'object': 'at://did/app.bsky.feed.post/tid',
     }, to_as1(REPOST_BSKY, uri='at://alice.com/app.bsky.feed.repost/123'))
 
@@ -900,7 +900,7 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'activity',
       'verb': 'like',
       'id': 'at://alice.com/app.bsky.feed.like/123',
-      'url': 'https://bsky.app/profile/did/post/tid#liked-by-alice.com',
+      'url': 'https://bsky.app/profile/did/post/tid#liked_by_alice.com',
       'object': 'at://did/app.bsky.feed.post/tid',
     }, to_as1(LIKE_BSKY, uri='at://alice.com/app.bsky.feed.like/123'))
 

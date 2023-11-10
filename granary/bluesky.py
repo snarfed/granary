@@ -837,7 +837,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if subject and uri_authority:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
-        ret['url'] = f'{web_url}#liked-by-{uri_authority}'
+        ret['url'] = f'{web_url}#liked_by_{uri_authority}'
 
   elif type == 'app.bsky.graph.follow':
     ret = {
@@ -862,7 +862,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if subject and uri_authority:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
-        ret['url'] = f'{web_url}#reposted-by-{uri_authority}'
+        ret['url'] = f'{web_url}#reposted_by_{uri_authority}'
 
   elif type == 'app.bsky.feed.defs#threadViewPost':
     return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
@@ -1200,9 +1200,10 @@ class Bluesky(Source):
     actor_id = actor.get('did')
     author = to_as1(actor, 'app.bsky.actor.defs#profileView')
     author['id'] = self.tag_uri(author['id'])
+    suffix = f'{label}_by_{actor_id}'
     return {
-      'id': self.tag_uri(f"{post.get('uri')}_{label}_by_{actor_id}"),
-      'url': url,
+      'id': self.tag_uri(f'{post.get("uri")}_{suffix}'),
+      'url': f'{url}#{suffix}',
       'objectType': 'activity',
       'verb': verb,
       'object': {'url': url},
