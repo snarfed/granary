@@ -51,6 +51,7 @@ AT_URI_PATTERN = re.compile(rf"""
 COLLECTION_TO_BSKY_APP_TYPE = {
   'app.bsky.feed.post': 'post',
   'app.bsky.feed.generator': 'feed',
+  'app.bsky.graph.list': 'lists',
 }
 BSKY_APP_TYPE_TO_COLLECTION = {
   name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
