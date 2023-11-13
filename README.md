@@ -301,7 +301,7 @@ Changelog
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
     * Add new `uri` kwarg.
     * Translate `handle` to `username`, add new `repo_handle` kwarg.
-    * Add support for `app.bsky.feed.repost`.
+    * Add support for `app.bsky.feed.repost`, `app.bsky.graph.defs#listView`.
     * Add `actor`/`author` based on `repo_did`.
   * `from_as1`:
     * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.

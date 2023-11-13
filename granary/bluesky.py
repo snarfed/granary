@@ -868,13 +868,15 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   elif type == 'app.bsky.feed.defs#threadViewPost':
     return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
 
-  elif type == 'app.bsky.feed.defs#generatorView':
+  elif type in ('app.bsky.feed.defs#generatorView',
+                'app.bsky.graph.defs#listView'):
     uri = obj.get('uri')
     ret = {
       'objectType': 'service',
       'id': uri,
       'url': at_uri_to_web_url(uri),
-      'displayName': f'Feed: {obj.get("displayName")}',
+      'displayName': (obj.get('displayName')  # generator
+                      or obj.get('name')),    # list
       'summary': obj.get('description'),
       'image': obj.get('avatar'),
       'author': to_as1(obj.get('creator'), type='app.bsky.actor.defs#profileView',

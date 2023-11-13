@@ -898,6 +898,38 @@ class BlueskyTest(testutil.TestCase):
       'object': 'at://did/app.bsky.feed.post/tid',
     }, to_as1(LIKE_BSKY, uri='at://alice.com/app.bsky.feed.like/123'))
 
+  def test_to_as1_listView(self):
+    self.assert_equals({
+      'objectType': 'service',
+      'displayName': 'Mai Lyst',
+      'id': 'at://did:alice/app.bsky.graph.list/987',
+      'url': 'https://bsky.app/profile/did:alice/lists/987',
+      'summary': 'a lyst',
+      'image': 'https://cdn.bsky.app/lyst@jpeg',
+      'author': {
+        'objectType': 'person',
+        'id': 'did:alice',
+        'url': 'https://bsky.app/profile/alice.com',
+        'username': 'alice.com',
+        'image': [{'url': 'https://cdn.bsky.app/alice@jpeg'}]
+      }
+    }, to_as1({
+      '$type': 'app.bsky.graph.defs#listView',
+      'avatar': 'https://cdn.bsky.app/lyst@jpeg',
+      'cid': 'TODO',
+      'creator': {
+        'avatar': 'https://cdn.bsky.app/alice@jpeg',
+        'did': 'did:alice',
+        'name': 'Alice',
+        'handle': 'alice.com',
+      },
+      'description': 'a lyst',
+      'indexedAt': '2023-11-06T21:08:33.376Z',
+      'name': 'Mai Lyst',
+      'purpose': 'app.bsky.graph.defs#curatelist',
+      'uri': 'at://did:alice/app.bsky.graph.list/987',
+    }))
+
   def test_to_as1_missing_objectType(self):
     with self.assertRaises(ValueError):
       to_as1({'foo': 'bar'})
