@@ -285,6 +285,7 @@ Changelog
 
 * `as1`:
   * `get_owner` bug fix for `post`, `update`, `delete` activities.
+  * `activity_changed`: ignore `inReplyTo`.
 * `as2`:
   * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
 * `bluesky`:

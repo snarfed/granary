@@ -275,26 +275,23 @@ def activity_changed(before, after, log=False):
   """Returns whether two activities or objects differ meaningfully.
 
   Only compares a few fields: ``objectType``, ``verb``, ``content``,
-  ``location``, and ``image``. Notably does *not* compare ``author``,
-  ``published``, or ``updated``.
+  ``location``, and ``image``. Notably does *not* compare ``inReplyTo``,
+  ``author``, ``published``, or ``updated``.
 
   Args:
-    before: dict, ActivityStreams activity or object
-    after: dict, ActivityStreams activity or object
+    before (dict): ActivityStreams activity or object
+    after (dict): ActivityStreams activity or object
 
   Returns:
     bool:
   """
-  def changed(b, a, field, label, ignore=None):
+  def changed(b, a, field, label):
     b_val = b.get(field)
     a_val = a.get(field)
 
-    if ignore and isinstance(b_val, dict) and isinstance(a_val, dict):
+    if isinstance(b_val, dict) and isinstance(a_val, dict):
       b_val = copy.copy(b_val)
       a_val = copy.copy(a_val)
-      for field in ignore:
-        b_val.pop(field, None)
-        a_val.pop(field, None)
 
     if b_val != a_val and (a_val or b_val):
       if log:
@@ -305,12 +302,7 @@ def activity_changed(before, after, log=False):
   obj_a = get_object(after)
   if any(changed(before, after, field, 'activity') or
          changed(obj_b, obj_a, field, 'activity[object]')
-         for field in ('objectType', 'verb', 'to', 'content', 'location',
-                       'image')):
-    return True
-
-  if (changed(before, after, 'inReplyTo', 'inReplyTo', ignore=('author',)) or
-      changed(obj_b, obj_a, 'inReplyTo', 'object.inReplyTo', ignore=('author',))):
+         for field in ('objectType', 'verb', 'to', 'content', 'location', 'image')):
     return True
 
   return False
