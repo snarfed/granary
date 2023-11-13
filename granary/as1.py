@@ -174,7 +174,7 @@ def get_ids(obj, field):
       if id:
         ids.add(id)
 
-  return list(ids)
+  return sorted(ids)
 
 
 def merge_by_id(obj, field, new):
