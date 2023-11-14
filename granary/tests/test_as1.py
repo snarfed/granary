@@ -201,12 +201,6 @@ class As1Test(testutil.TestCase):
     fb_comment_edited = copy.deepcopy(fb_comment)
     fb_comment_edited['published'] = '2016-01-02T00:58:26+00:00'
 
-    fb_comment_edited_inReplyTo = copy.deepcopy(fb_comment_edited)
-    fb_comment_edited_inReplyTo['inReplyTo'].append({
-      'id': 'tag:fake.com:000000000000000',
-      'url': 'https://www.facebook.com/000000000000000',
-    })
-
     gp_like = LIKE
     gp_like_edited = copy.deepcopy(gp_like)
     gp_like_edited['author'] = ACTOR
@@ -216,22 +210,37 @@ class As1Test(testutil.TestCase):
                           ({'to': None}, {'to': ''}),
                           (fb_post, fb_post_edited),
                           (fb_comment, fb_comment_edited),
-                          (fb_comment_edited, fb_comment_edited_inReplyTo),
                           (gp_like, gp_like_edited)):
       self.assertFalse(as1.activity_changed(before, after, log=True),
                        f'{before}\n{after}')
 
+    fb_comment_edited_inReplyTo = copy.deepcopy(fb_comment_edited)
+    fb_comment_edited_inReplyTo['inReplyTo'].append({
+      'id': 'tag:fake.com:000000000000000',
+      'url': 'https://www.facebook.com/000000000000000',
+    })
     fb_comment_edited['content'] = 'new content'
     gp_like_edited['to'] = [{'objectType':'group', 'alias':'@private'}]
+
     fb_invite = INVITE
     self.assertEqual('invite', fb_invite['verb'])
     fb_rsvp = RSVP_YES
 
     for before, after in ((fb_comment, fb_comment_edited),
+                          (fb_comment, fb_comment_edited_inReplyTo),
                           (gp_like, gp_like_edited),
                           (fb_invite, fb_rsvp)):
       self.assertTrue(as1.activity_changed(before, after, log=True),
                       f'{before}\n{after}')
+
+  def test_activity_changed_in_reply_to_author_name(self):
+    first = copy.copy(COMMENT)
+    first['inReplyTo'][0]['author'] = copy.deepcopy(ACTOR)
+
+    second = copy.copy(COMMENT)
+    second['inReplyTo'][0]['author'] = copy.deepcopy(ACTOR)
+    second['inReplyTo'][0]['author']['displayName'] = 'other'
+    self.assertFalse(as1.activity_changed(first, second, log=True))
 
   def test_append_in_reply_to(self):
     fb_comment_before = copy.deepcopy(COMMENT)
