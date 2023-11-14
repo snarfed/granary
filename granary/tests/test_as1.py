@@ -233,6 +233,9 @@ class As1Test(testutil.TestCase):
       self.assertTrue(as1.activity_changed(before, after, log=True),
                       f'{before}\n{after}')
 
+    self.assertFalse(as1.activity_changed(
+      fb_comment, fb_comment_edited_inReplyTo, inReplyTo=False, log=True))
+
   def test_activity_changed_in_reply_to_author_name(self):
     first = copy.copy(COMMENT)
     first['inReplyTo'][0]['author'] = copy.deepcopy(ACTOR)

@@ -271,7 +271,7 @@ def get_rsvps_from_event(event):
   return rsvps
 
 
-def activity_changed(before, after, log=False):
+def activity_changed(before, after, inReplyTo=True, log=False):
   """Returns whether two activities or objects differ meaningfully.
 
   Only compares a few fields: ``objectType``, ``verb``, ``content``,
@@ -279,8 +279,10 @@ def activity_changed(before, after, log=False):
   ``published``, or ``updated``.
 
   Args:
-    before: dict, ActivityStreams activity or object
-    after: dict, ActivityStreams activity or object
+    before (dict): ActivityStreams activity or object
+    after (dict): ActivityStreams activity or object
+    inReplyTo (bool): whether to return True if ``inReplyTo`` has changed
+    log (bool): whether to log each changed field
 
   Returns:
     bool:
@@ -309,8 +311,9 @@ def activity_changed(before, after, log=False):
                        'image')):
     return True
 
-  if (changed(before, after, 'inReplyTo', 'inReplyTo', ignore=('author',)) or
-      changed(obj_b, obj_a, 'inReplyTo', 'object.inReplyTo', ignore=('author',))):
+  if (inReplyTo and
+      (changed(before, after, 'inReplyTo', 'inReplyTo', ignore=('author',)) or
+       changed(obj_b, obj_a, 'inReplyTo', 'object.inReplyTo', ignore=('author',)))):
     return True
 
   return False
