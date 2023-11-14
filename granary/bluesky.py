@@ -49,12 +49,27 @@ AT_URI_PATTERN = re.compile(rf"""
 # to a frontend URL like:
 #   https://bsky.app/profile/did:plc:z72i7hdynmk6r22z27h6tvur/feed/mutuals
 COLLECTION_TO_BSKY_APP_TYPE = {
-  'app.bsky.feed.post': 'post',
   'app.bsky.feed.generator': 'feed',
+  'app.bsky.feed.post': 'post',
   'app.bsky.graph.list': 'lists',
 }
 BSKY_APP_TYPE_TO_COLLECTION = {
   name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
+}
+
+# Maps AS1 objectType or verb to AT Protocol NSID collection.
+# from atproto/packages/api/src/client/index.ts
+AS1_TO_COLLECTION = {
+  'person': 'app.bsky.actor.profile',
+  'like': 'app.bsky.feed.like',
+  'service': 'app.bsky.feed.generator',
+  'note': 'app.bsky.feed.post',
+  'share': 'app.bsky.feed.repost',
+  # None: 'app.bsky.graph.block',
+  'follow': 'app.bsky.graph.follow',
+  'service': 'app.bsky.graph.list',
+  # None: 'app.bsky.graph.listblock',
+  # None: 'app.bsky.graph.listitem',
 }
 
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
