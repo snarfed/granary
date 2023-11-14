@@ -745,14 +745,6 @@ class BlueskyTest(testutil.TestCase):
       got = from_as1(input, out_type='app.bsky.feed.defs#postView')
       self.assert_equals(REPLY_POST_VIEW_BSKY, got)
 
-  def test_from_as1_follow_no_actor(self):
-    with self.assertRaises(ValueError):
-      from_as1({
-        'objectType': 'activity',
-        'verb': 'follow',
-        'object': 'at://did:plc:foo/com.atproto.actor.profile/123',
-      })
-
   def test_from_as1_follow_no_object(self):
     with self.assertRaises(ValueError):
       from_as1({

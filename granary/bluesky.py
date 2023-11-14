@@ -373,7 +373,7 @@ def from_as1(obj, out_type=None, blobs=None):
     }
 
   elif type == 'follow':
-    if not actor or not inner_obj:
+    if not inner_obj:
       raise ValueError('follow activity requires actor and object')
     return {
       '$type': 'app.bsky.graph.follow',
