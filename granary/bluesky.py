@@ -362,7 +362,7 @@ def from_as1(obj, out_type=None, blobs=None):
           'uri': inner_obj.get('id'),
           'cid': 'TODO',
         },
-        'createdAt': obj.get('published', ''),
+        'createdAt': obj.get('published') or util.now().isoformat(),
       }
     elif out_type == 'app.bsky.feed.defs#reasonRepost':
       return {
@@ -384,7 +384,7 @@ def from_as1(obj, out_type=None, blobs=None):
         'uri': inner_obj.get('id'),
         'cid': 'TODO',
       },
-      'createdAt': obj.get('published', ''),
+      'createdAt': obj.get('published') or util.now().isoformat(),
     }
 
   elif type == 'follow':
@@ -393,7 +393,7 @@ def from_as1(obj, out_type=None, blobs=None):
     return {
       '$type': 'app.bsky.graph.follow',
       'subject': inner_obj.get('id'),  # DID
-      'createdAt': obj.get('published', ''),
+      'createdAt': obj.get('published') or util.now().isoformat(),
     }
 
   elif verb == 'post' and type in as1.POST_TYPES:
@@ -559,7 +559,7 @@ def from_as1(obj, out_type=None, blobs=None):
     ret = trim_nulls({
       '$type': 'app.bsky.feed.post',
       'text': text,
-      'createdAt': obj.get('published', ''),
+      'createdAt': obj.get('published') or util.now().isoformat(),
       'embed': record_embed,
       'facets': facets,
       'reply': reply,

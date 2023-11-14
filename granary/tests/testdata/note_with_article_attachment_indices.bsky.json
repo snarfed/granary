@@ -1,7 +1,7 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "hello 👩‍👩‍👦‍👦✋🏽 foo",
-  "createdAt": "",
+  "createdAt": "2022-01-02T03:04:05+00:00",
   "facets": [{
     "$type": "app.bsky.richtext.facet",
     "features": [{

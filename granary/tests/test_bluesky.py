@@ -262,7 +262,7 @@ REPOST_BSKY = {
     'uri': 'at://did/app.bsky.feed.post/tid',
     'cid': 'TODO',
   },
-  'createdAt': '',
+  'createdAt': '2022-01-02T03:04:05+00:00',
 }
 REPOST_BSKY_REASON = {
   '$type': 'app.bsky.feed.defs#reasonRepost',
@@ -573,7 +573,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'foo',
-      'createdAt': '',
+      'createdAt': '2022-01-02T03:04:05+00:00',
     }, from_as1({
       'objectType': 'note',
       'content': 'foo',
@@ -586,7 +586,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'foo',
-      'createdAt': '',
+      'createdAt': '2022-01-02T03:04:05+00:00',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -623,7 +623,7 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual({
       '$type': 'app.bsky.feed.post',
       'text': 'Some\n_HTML_',
-      'createdAt': '',
+      'createdAt': '2022-01-02T03:04:05+00:00',
     }, from_as1({
       'objectType': 'note',
       'content': '<p>Some <br> <em>HTML</em></p>',
@@ -757,7 +757,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': '',
-      'createdAt': '',
+      'createdAt': '2022-01-02T03:04:05+00:00',
       'embed': {
         '$type': 'app.bsky.embed.images',
         'images': [{
@@ -867,9 +867,10 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_repost(self):
     self.assert_equals({
-      'object': 'at://did/app.bsky.feed.post/tid',
       'objectType': 'activity',
       'verb': 'share',
+      'object': 'at://did/app.bsky.feed.post/tid',
+      'published': '2022-01-02T03:04:05+00:00',
     }, to_as1(REPOST_BSKY))
 
   def test_to_as1_repost_uri(self):
@@ -879,6 +880,7 @@ class BlueskyTest(testutil.TestCase):
       'id': 'at://alice.com/app.bsky.feed.repost/123',
       'url': 'https://bsky.app/profile/did/post/tid#reposted_by_alice.com',
       'object': 'at://did/app.bsky.feed.post/tid',
+      'published': '2022-01-02T03:04:05+00:00',
     }, to_as1(REPOST_BSKY, uri='at://alice.com/app.bsky.feed.repost/123'))
 
   def test_to_as1_like_uri(self):
