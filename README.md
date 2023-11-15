@@ -308,6 +308,7 @@ Changelog
     * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
     * Add `blobs` kwarg to provide blob objects to use for image URLs.
     * Handle mention tags pointing to bare DIDs.
+    * Use `parent` as `root` in replies. (Technically wrong in cases where the parent isn't the root, but we don't actually know the root. 🤷)
     * Bug fix: handle bare string URLs in `image` field.
     * Bug fix: handle tags without `url` field.
     * Strip trailing slash from home page URLs in order to remove visible `/` from rel-me verified links on Mastodon etc.

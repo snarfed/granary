@@ -542,18 +542,17 @@ def from_as1(obj, out_type=None, blobs=None):
     reply = None
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
+      parent = {
+        '$type': 'com.atproto.repo.strongRef',
+        'uri': in_reply_to.get('id') or in_reply_to.get('url'),
+        'cid': 'TODO',
+      }
       reply = {
         '$type': 'app.bsky.feed.post#replyRef',
-        'root': {
-          '$type': 'com.atproto.repo.strongRef',
-          'uri': '',  # TODO?
-          'cid': 'TODO',
-        },
-        'parent': {
-          '$type': 'com.atproto.repo.strongRef',
-          'uri': in_reply_to.get('id') or in_reply_to.get('url'),
-          'cid': 'TODO',
-        },
+        # we don't know what the actual root is, so just use parent. callers can
+        # look it up and override if they really need it.
+        'root': parent,
+        'parent': parent,
       }
 
     ret = trim_nulls({

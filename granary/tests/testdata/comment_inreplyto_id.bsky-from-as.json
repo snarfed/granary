@@ -6,7 +6,7 @@
     "$type": "app.bsky.feed.post#replyRef",
     "root": {
       "$type": "com.atproto.repo.strongRef",
-      "uri": "",
+      "uri": "tag:example.com,2017:original/post",
       "cid": "TODO"
     },
     "parent": {

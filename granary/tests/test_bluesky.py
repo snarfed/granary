@@ -223,7 +223,7 @@ REPLY_BSKY = {
     '$type': 'app.bsky.feed.post#replyRef',
     'root': {
       '$type': 'com.atproto.repo.strongRef',
-      'uri': '',
+      'uri': 'at://did/app.bsky.feed.post/parent-tid',
       'cid': 'TODO',
     },
     'parent': {
