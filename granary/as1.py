@@ -379,7 +379,7 @@ def original_post_discovery(
 
   # find all candidate URLs
   tags = [t.get('url') for t in obj.get('attachments', []) + obj.get('tags', [])
-          if t.get('objectType') in ('article', 'mention', 'note', None)]
+          if t.get('objectType') in ('article', 'link', 'mention', 'note', None)]
   candidates = (tags + util.extract_links(content) +
                 obj.get('upstreamDuplicates', []) +
                 util.get_list(obj, 'targetUrl'))
