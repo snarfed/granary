@@ -7,7 +7,7 @@
     "author": {
       "objectType": "person",
       "id": "did:web:example.com",
-      "url": "https://bsky.app/profile/example.com",
+      "url": ["https://example.com/", "https://bsky.app/profile/example.com"],
       "displayName": "Bob",
       "username": "example.com"
     },
@@ -17,7 +17,7 @@
   "actor": {
     "objectType": "person",
     "id": "did:web:alice.example.com",
-    "url": "https://bsky.app/profile/alice.example.com",
+    "url": ["https://alice.example.com/", "https://bsky.app/profile/alice.example.com"],
     "displayName": "Alice",
     "username": "alice.example.com"
   }

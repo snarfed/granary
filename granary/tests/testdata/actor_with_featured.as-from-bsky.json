@@ -2,5 +2,6 @@
   "objectType" : "person",
   "id": "did:plc:foo",
   "displayName": "Martin Smith",
-  "username": "example.com"
+  "username": "example.com",
+  "url": ["https://example.com/", "https://bsky.app/profile/example.com"]
 }

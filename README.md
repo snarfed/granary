@@ -304,6 +304,7 @@ Changelog
     * Translate `handle` to `username`, add new `repo_handle` kwarg.
     * Add support for `app.bsky.feed.repost`, `app.bsky.graph.defs#listView`.
     * Add `actor`/`author` based on `repo_did`.
+    * Improve `url` field: include custom handles, only use `repo_did/handle` for `app.bsky.actor.profile`.
   * `from_as1`:
     * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
     * Add `blobs` kwarg to provide blob objects to use for image URLs.

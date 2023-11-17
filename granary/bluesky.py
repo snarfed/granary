@@ -85,7 +85,8 @@ BSKY_APP_URL_RE = re.compile(r"""
    /(?P<tid>[^?]+))?$
   """, re.VERBOSE)
 
-DEFAULT_PDS = 'https://bsky.social/'
+DEFAULT_PDS_DOMAIN = 'bsky.social'
+DEFAULT_PDS = f'https://{DEFAULT_PDS_DOMAIN}/'
 DEFAULT_APPVIEW = 'https://api.bsky.app'
 
 
@@ -635,14 +636,25 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       images.append({'url': obj.get('banner'), 'objectType': 'featured'})
 
     handle = obj.get('handle')
-    did = obj.get('did') or repo_did
+    did = obj.get('did')
+    if type == 'app.bsky.actor.profile':
+      if not handle:
+        handle = repo_handle
+      if not did:
+        did = repo_did
+
+    urls = []
+    if handle:
+      if not util.domain_or_parent_in(handle, [DEFAULT_PDS_DOMAIN]):
+        urls.append(f'https://{handle}/')
+      urls.append(Bluesky.user_url(handle))
+    elif did and did.startswith('did:web:'):
+      urls.extend([did_web_to_url(did), Bluesky.user_url(did)])
 
     ret = {
       'objectType': 'person',
       'id': did,
-      'url': (Bluesky.user_url(handle) if handle
-              else did_web_to_url(did) if did and did.startswith('did:web:')
-              else None),
+      'url': urls,
       'displayName': obj.get('displayName'),
       'username': obj.get('handle') or repo_handle,
       'summary': obj.get('description'),

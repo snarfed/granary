@@ -8,7 +8,7 @@
   "author": {
     "objectType": "person",
     "id": "did:plc:asdf",
-    "url": "https://bsky.app/profile/example.com",
+    "url": ["https://example.com/", "https://bsky.app/profile/example.com"],
     "displayName": "Ryan Barrett",
     "username": "example.com"
   },
