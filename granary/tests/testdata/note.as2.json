@@ -11,13 +11,13 @@
     "type": "Image",
     "url": "http://example.com/blog-post-123/image"
   },
-  "attributedTo": [{
+  "attributedTo": {
     "type": "Person",
     "id": "tag:example.com,2001:ryan",
     "name": "Ryan Barrett",
     "icon": {"type": "Image", "url": "http://example.com/ryan/image"},
     "image": {"type": "Image", "url": "http://example.com/ryan/image"}
-  }],
+  },
   "location": {
     "type": "Place",
     "id": "31cb9e7ed29dbe52",

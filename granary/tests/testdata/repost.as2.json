@@ -6,11 +6,11 @@
   "url": "http://example.com/this/repost",
   "object": {
     "type": "Article",
-    "attributedTo": [{
+    "attributedTo": {
       "type": "Person",
       "name": "Bob",
       "url": "http://example.com/bob"
-    }],
+    },
     "content": "The original post",
     "url": "http://example.com/original/post"
   },

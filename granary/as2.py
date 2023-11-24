@@ -131,21 +131,20 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if context:
     obj['@context'] = context
 
-  def all_from_as1(field, type=None, top_level=False):
-    return [from_as1(elem, type=type, context=None, top_level=top_level)
-            for elem in util.pop_list(obj, field)]
+  def all_from_as1(field, type=None, top_level=False, compact=False):
+    got = [from_as1(elem, type=type, context=None, top_level=top_level)
+           for elem in util.pop_list(obj, field)]
+    return got[0] if compact and len(got) == 1 else got
 
-  inner_objs = all_from_as1('object', top_level=top_level)
-  if len(inner_objs) == 1:
-    inner_objs = inner_objs[0]
-    if verb == 'stop-following':
-      type = 'Undo'
-      inner_objs = {
-        '@context': context,
-        'type': 'Follow',
-        'actor': actor.get('id') if isinstance(actor, dict) else actor,
-        'object': inner_objs.get('id'),
-      }
+  inner_objs = all_from_as1('object', top_level=top_level, compact=True)
+  if verb == 'stop-following':
+    type = 'Undo'
+    inner_objs = {
+      '@context': context,
+      'type': 'Follow',
+      'actor': actor.get('id') if isinstance(actor, dict) else actor,
+      'object': inner_objs.get('id'),
+    }
 
   replies = obj.get('replies', {})
 
@@ -158,9 +157,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   elif '@unlisted' in to_aliases and PUBLIC_AUDIENCE not in cc:
     cc.append(PUBLIC_AUDIENCE)
 
-  in_reply_to = util.trim_nulls(all_from_as1('inReplyTo'))
-  if len(in_reply_to) == 1:
-    in_reply_to = in_reply_to[0]
+  in_reply_to = util.trim_nulls(all_from_as1('inReplyTo', compact=True))
 
   attachments = all_from_as1('attachments')
 
@@ -200,7 +197,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'name': obj.pop('displayName', None),
     'actor': from_as1(actor, context=None, top_level=False),
     'attachment': attachments,
-    'attributedTo': all_from_as1('author', type='Person'),
+    'attributedTo': all_from_as1('author', type='Person', compact=True),
     'inReplyTo': in_reply_to,
     'object': inner_objs,
     'tag': all_from_as1('tags'),

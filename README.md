@@ -313,6 +313,7 @@ Changelog
     * Bug fix: handle bare string URLs in `image` field.
     * Bug fix: handle tags without `url` field.
     * Strip trailing slash from home page URLs in order to remove visible `/` from rel-me verified links on Mastodon etc.
+    * Convert `attributedTo` to singular if it has only one element.
 * `facebook`:
   * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
 * `mastodon`:
