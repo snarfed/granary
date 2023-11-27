@@ -10,12 +10,14 @@ import re
 from pathlib import Path
 import urllib.parse
 
+import requests
+
 from lexrpc import Client
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
 
 from . import as1
-from .source import FRIENDS, html_to_text, Source, OMIT_LINK
+from .source import FRIENDS, html_to_text, Source, OMIT_LINK, creation_result
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,8 @@ COLLECTION_TO_BSKY_APP_TYPE = {
 BSKY_APP_TYPE_TO_COLLECTION = {
   name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
 }
+
+MAX_IMAGES = 4
 
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
 # used in from_as1
@@ -448,6 +452,7 @@ def from_as1(obj, out_type=None, blobs=None):
           'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }
+      breakpoint()
       images_record_embed = {
         '$type': 'app.bsky.embed.images',
         'images': [{
@@ -954,7 +959,14 @@ class Bluesky(Source):
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
+  TRUNCATE_URL_LENGTH = 33
   POST_ID_RE = AT_URI_PATTERN
+  TYPE_LABELS = {
+    'post': 'post',
+    'comment': 'reply',
+    'repost': 'repost',
+    'like': 'like',
+  }
 
   _client = None
   _app_password = None
@@ -1257,3 +1269,210 @@ class Bluesky(Source):
         ret += [r]
         ret += self._recurse_replies(r)
     return ret
+
+  # Publishing
+
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+    """Creates a post, reply, repost, or like.
+
+    Args:
+      obj: ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
+
+    Returns:
+      CreationResult: whose content will be a dict with ``id``, ``url``, and
+      ``type`` keys (all optional) for the newly created object (or None)
+    """
+    return self._create(obj, preview=False, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
+
+  def preview_create(self, obj, include_link=OMIT_LINK,
+                     ignore_formatting=False):
+    """Preview creating a post, reply, repost, or like.
+
+    Args:
+      obj: ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
+
+    Returns:
+      CreationResult: content will be a str HTML snippet or None
+    """
+    return self._create(obj, preview=True, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
+
+  def _create(self, obj, preview=None, include_link=OMIT_LINK,
+              ignore_formatting=False):
+    assert preview in (False, True)
+    type = obj.get('objectType')
+    verb = obj.get('verb')
+
+    base_obj = self.base_object(obj)
+    base_id = base_obj.get('id')
+    base_url = base_obj.get('url')
+
+    is_reply = type == 'comment' or obj.get('inReplyTo')
+    is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
+    atts = obj.get('attachments', [])
+    images = util.dedupe_urls(util.get_list(obj, 'image') +
+                              [a for a in atts if a.get('objectType') == 'image'])
+    videos = util.dedupe_urls([obj] + [a for a in atts if a.get('objectType') == 'video'],
+                              key='stream')
+    has_media = (images or videos) and (type in ('note', 'article') or is_reply)
+
+    # prefer displayName over content for articles
+    #
+    # TODO: handle activities as well as objects? ie pull out ['object'] here if
+    # necessary?
+    prefer_content = type == 'note' #or (base_url and is_reply)
+    preview_description = ''
+    content = self._content_for_create(
+      obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
+
+    if not content:
+      if type == 'activity' and not is_rsvp:
+        content = verb
+      elif has_media:
+        content = ''
+      else:
+        return creation_result(
+          abort=False,  # keep looking for things to publish,
+          error_plain='No content text found.',
+          error_html='No content text found.')
+
+    # truncate and ellipsize content if necessary
+    content = self.truncate(content, obj.get('url'), include_link, type)
+
+    # TODO linkify mentions and hashtags
+    preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
+
+    post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
+
+    if type == 'activity' and verb in ('like', 'favorite'):
+      if not base_url:
+        return creation_result(
+          abort=True,
+          error_plain=f"Could not find a {post_label} to {self.TYPE_LABELS['like']}.",
+          error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/like\">{self.TYPE_LABELS['like']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/like\">u-like-of link</a>.")
+
+      if preview:
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+        return creation_result(description=preview_description)
+    #else:
+    #    resp = self._post(API_FAVORITE % base_id)
+     #   resp['url'] += f'#favorited-by-{self.user_id}'
+      #  resp['type'] = 'like'
+
+    elif type == 'activity' and verb == 'share':
+      if not base_url:
+        return creation_result(
+          abort=True,
+          error_plain=f"Could not find a {post_label} to {self.TYPE_LABELS['repost']}.",
+          error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/repost\">{self.TYPE_LABELS['repost']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/repost\">repost-of</a> link.")
+
+      if preview:
+          preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+          return creation_result(description=preview_description)
+      #else:
+      #  resp = self._post(API_REBLOG % base_id)
+      #  resp['type'] = 'repost'
+
+    elif (type in ('note', 'article') or is_reply or is_rsvp or
+          (type == 'activity' and verb == 'post')):  # probably a bookmark
+      data = {'status': content}
+      if is_reply and base_url:
+        preview_description += f"add a <span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+        data['in_reply_to_id'] = base_id
+      else:
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
+
+      if len(videos):
+        logger.warning(f'Found {len(videos)} videos, but Bluesky doesn\'t support video yet.')
+      num_images = len(images)
+      if num_images > MAX_IMAGES:
+        images = images[:MAX_IMAGES]
+        logger.warning(f'Found {num_images} images! Only using the first {MAX_IMAGES}: {images!r}')
+
+      if preview:
+        media_previews = [
+          f"<img src=\"{util.get_url(img)}\" alt=\"{img.get('displayName') or ''}\" />"
+          for img in images
+        ]
+        if media_previews:
+          preview_content += '<br /><br />' + ' &nbsp; '.join(media_previews)
+
+        return creation_result(content=preview_content,
+                                      description=preview_description)
+
+      else:
+        blobs = self.upload_media(images)
+        post_at = from_as1(obj, 'app.bsky.feed.post', blobs=blobs)
+        breakpoint()
+        result = self.client.com.atproto.repo.createRecord({
+          'repo': self.did,
+          'collection': 'app.bsky.feed.post',
+          'record': post_at
+        })
+        return creation_result({
+          'id': result['uri'],
+          'url': at_uri_to_web_url(result['uri'], handle=self.handle),
+        })
+
+    return creation_result(
+      abort=False,
+      error_plain=f'Cannot publish type={type}, verb={verb} to Bluesky',
+      error_html=f'Cannot publish type={type}, verb={verb} to Bluesky')
+
+
+  def base_object(self, obj):
+    """Returns the "base" Bluesky object that an object operates on.
+
+    If the object is a reply, boost, or favorite of a Bluesky post, this returns
+    that post object. The id in the returned object is the AT protocol URI,
+    while the URL is the bsky.app web URL.
+
+    Args:
+      obj (dict): ActivityStreams object
+
+    Returns:
+      dict: minimal ActivityStreams object. Usually has at least ``id``; may
+      also have ``url``, ``author``, etc.
+    """
+    for field in ('inReplyTo', 'object', 'target'):
+      for base in util.get_list(obj, field):
+        url = util.get_url(base)
+        if not url:
+          return {}
+        if url.startswith('https://bsky.app/'):
+          return {
+            'id': web_url_to_at_uri(url),
+            'url': url,
+          }
+        if url.startswith('at://'):
+          return {
+            'id': url,
+            'url': at_uri_to_web_url(url),
+          }
+    return {}
+
+  def upload_media(self, media):
+    blobs = {}
+
+    for obj in media:
+      url = util.get_url(obj, key='stream') or util.get_url(obj)
+      if not url or url in blobs:
+        continue
+
+      with util.requests_get(url, stream=True) as fetch:
+        fetch.raise_for_status()
+        upload = self.client.com.atproto.repo.uploadBlob(
+          input=fetch.raw,
+          headers={
+            'Content-Type': fetch.headers['Content-Type'],
+          }
+        )
+
+      blobs[url] = upload['blob']
+
+    return blobs
