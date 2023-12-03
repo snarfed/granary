@@ -1019,3 +1019,17 @@ bar
         },
       },
     }))
+
+  def test_atom_to_activity_author_username(self):
+    self.assert_multiline_in("""\
+<author>
+<activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+<uri></uri>
+<name>alice</name>
+</author>
+""", atom.activity_to_atom({
+      'author': {
+        'username': 'alice',
+      },
+      'content': 'foo bar',
+    }), ignore_blanks=True)

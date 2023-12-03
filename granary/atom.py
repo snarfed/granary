@@ -384,8 +384,9 @@ def _prepare_activity(a, reader=True):
 
   # normalize actors
   for elem in a, obj:
-    elem['actor'] = as1.get_object(elem, 'actor')
-    _prepare_actor(elem['actor'])
+    for field in 'actor', 'author':
+      elem[field] = as1.get_object(elem, field)
+      _prepare_actor(elem[field])
 
   # normalize attachments, render attached notes/articles
   attachments = a.get('attachments') or obj.get('attachments') or []
@@ -450,8 +451,11 @@ def _prepare_actor(actor):
   Args:
     actor (dict): ActivityStreams 1 actor
   """
-  if actor:
-    actor['image'] = util.get_first(actor, 'image')
+  if not actor:
+    return
+
+  actor['image'] = util.get_first(actor, 'image')
+  actor.setdefault('displayName', actor.get('username'))
 
 
 def _remove_query_params(url):
