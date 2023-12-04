@@ -201,10 +201,13 @@ def atom_to_activities(atom):
   """
   assert isinstance(atom, str)
   parser = ElementTree.XMLParser(encoding='UTF-8')
-  feed = ElementTree.XML(atom.encode('utf-8'), parser=parser)
-  if _tag(feed) != 'feed':
-    raise ValueError(f'Expected root feed tag; got {feed.tag}')
-  return [_atom_to_activity(elem) for elem in feed if _tag(elem) == 'entry']
+  top = ElementTree.XML(atom.encode('utf-8'), parser=parser)
+  if _tag(top) == 'feed':
+    return [_atom_to_activity(elem) for elem in top if _tag(elem) == 'entry']
+  elif _tag(top) == 'entry':
+    return [_atom_to_activity(top)]
+
+  raise ValueError(f'Expected root feed or entry tag; got {top.tag}')
 
 
 def atom_to_activity(atom):
@@ -216,12 +219,9 @@ def atom_to_activity(atom):
   Returns:
     dict: ActivityStreams activity
   """
-  assert isinstance(atom, str)
-  parser = ElementTree.XMLParser(encoding='UTF-8')
-  entry = ElementTree.XML(atom.encode('utf-8'), parser=parser)
-  if _tag(entry) != 'entry':
-    raise ValueError(f'Expected root entry tag; got {entry.tag}')
-  return _atom_to_activity(entry)
+  got = atom_to_activities(atom)
+  if got:
+    return got[0]
 
 
 def _atom_to_activity(entry):

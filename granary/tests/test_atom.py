@@ -136,6 +136,10 @@ class AtomTest(testutil.TestCase):
     self.assert_equals([INSTAGRAM_ACTIVITY],
                        atom.atom_to_activities(INSTAGRAM_FEED))
 
+  def test_atom_entry_to_activities(self):
+    self.assert_equals([INSTAGRAM_ACTIVITY],
+                       atom.atom_to_activities(INSTAGRAM_ENTRY))
+
   def test_atom_to_activity_like(self):
     for atom_obj, as_obj in (
         ('foo', {'id': 'foo', 'url': 'foo'}),

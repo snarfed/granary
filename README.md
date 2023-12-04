@@ -290,6 +290,7 @@ Changelog
   * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
 * `atom`:
   * `activity_to_atom`: default actor/author name to username.
+  * `atom_to_activities`: support top-level `entry` element as well as `feed`.
 * `bluesky`:
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
   * Implement `Bluesky.post_id`.
