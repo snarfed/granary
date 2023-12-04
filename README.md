@@ -289,6 +289,7 @@ Changelog
 * `as2`:
   * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
 * `atom`:
+  * Add new `extract_entries` function.
   * `activity_to_atom`: default actor/author name to username.
   * `atom_to_activities`: support top-level `entry` element as well as `feed`.
 * `bluesky`:

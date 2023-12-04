@@ -462,3 +462,28 @@ def _remove_query_params(url):
   parsed = list(urllib.parse.urlparse(url))
   parsed[4] = ''
   return urllib.parse.urlunparse(parsed)
+
+
+def extract_entries(atom):
+  """Extracts ``<entry>`` elements into their own separate XML documents.
+
+  Args:
+    atom (str): Atom document with top-level ``<feed>`` or ``<entry>`` element
+
+  Returns:
+    list of str: Atom documents with top-level ``<entry>`` element for each entry
+  """
+  assert isinstance(atom, str)
+  ElementTree.register_namespace('', 'http://www.w3.org/2005/Atom')
+  parser = ElementTree.XMLParser(encoding='UTF-8')
+  top = ElementTree.XML(atom.encode('utf-8'), parser=parser)
+
+  if _tag(top) == 'feed':
+    entries = [elem for elem in top if _tag(elem) == 'entry']
+  elif _tag(top) == 'entry':
+    entries = [top]
+  else:
+    raise ValueError(f'Expected root feed or entry tag; got {top.tag}')
+
+  header = '<?xml version="1.0" encoding="UTF-8"?>\n'
+  return [header + ElementTree.tostring(e, encoding='unicode') for e in entries]

@@ -1037,3 +1037,25 @@ bar
       },
       'content': 'foo bar',
     }), ignore_blanks=True)
+
+  def test_split_entries_feed_multiple(self):
+    entry_atom = f"""\
+<entry xmlns="http://www.w3.org/2005/Atom">
+{INSTAGRAM_ENTRY_BODY}
+</entry>
+"""
+    got = atom.extract_entries(f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
+      xmlns:ostatus="http://ostatus.org/schema/1.0"
+      xmlns:thr="http://purl.org/syndication/thread/1.0"
+      >
+<entry>{INSTAGRAM_ENTRY_BODY}</entry>
+<entry>{INSTAGRAM_ENTRY_BODY}</entry>
+</feed>
+""")
+    self.assertEqual(2, len(got))
+    self.assertEqual(got[0], got[1])
