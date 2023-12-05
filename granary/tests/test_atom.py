@@ -1049,12 +1049,7 @@ bar
       'content': 'foo bar',
     }), ignore_blanks=True)
 
-  def test_split_entries_feed_multiple(self):
-    entry_atom = f"""\
-<entry xmlns="http://www.w3.org/2005/Atom">
-{INSTAGRAM_ENTRY_BODY}
-</entry>
-"""
+  def test_extract_entries_feed_multiple(self):
     got = atom.extract_entries(f"""\
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US"
@@ -1062,7 +1057,6 @@ bar
       xmlns:activity="http://activitystrea.ms/spec/1.0/"
       xmlns:georss="http://www.georss.org/georss"
       xmlns:ostatus="http://ostatus.org/schema/1.0"
-      xmlns:thr="http://purl.org/syndication/thread/1.0"
       >
 <entry>{INSTAGRAM_ENTRY_BODY}</entry>
 <entry>{INSTAGRAM_ENTRY_BODY}</entry>
@@ -1070,3 +1064,40 @@ bar
 """)
     self.assertEqual(2, len(got))
     self.assertEqual(got[0], got[1])
+
+  def test_extract_entries_feed_single_entry(self):
+    got = atom.extract_entries(f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
+      xmlns:ostatus="http://ostatus.org/schema/1.0"
+      >
+<entry>{INSTAGRAM_ENTRY_BODY}</entry>
+</feed>
+""")
+    self.assertEqual(1, len(got))
+
+  def test_extract_entries_feed_empty(self):
+    got = atom.extract_entries(f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US" xmlns="http://www.w3.org/2005/Atom">
+</feed>
+""")
+    self.assertEqual([], got)
+
+  def test_extract_entries_entry(self):
+    got = atom.extract_entries(f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xml:lang="en-US"
+      xmlns="http://www.w3.org/2005/Atom"
+      xmlns:activity="http://activitystrea.ms/spec/1.0/"
+      xmlns:georss="http://www.georss.org/georss"
+      xmlns:ostatus="http://ostatus.org/schema/1.0"
+      >
+{INSTAGRAM_ENTRY_BODY}
+</entry>
+""")
+    self.assertEqual(1, len(got))
+
