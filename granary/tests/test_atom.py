@@ -274,6 +274,43 @@ class AtomTest(testutil.TestCase):
 </entry>
 """))
 
+  def test_atom_to_activity_use_feed_author_id_url(self):
+    expected_author = {
+      'id': 'id:ryan',
+      'url': 'http://ryan',
+      'displayName': 'Ryan B',
+    }
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'id': 'http://post',
+      'url': 'http://post',
+      'actor': expected_author,
+      'object': {
+        'objectType': 'note',
+        'id': 'http://post',
+        'url': 'http://post',
+        'author': expected_author,
+        'url': 'http://post',
+        'content': 'foo',
+      },
+    }], atom.atom_to_activities(f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-US" xmlns="http://www.w3.org/2005/Atom">
+<author>
+  <id>id:ryan</id>
+  <uri>http://ryan</uri>
+</author>
+<entry>
+  <uri>http://post</uri>
+  <content>foo</content>
+  <author>
+    <name>Ryan B</name>
+  </author>
+</entry>
+</feed>
+"""))
+
   def test_title(self):
     self.assert_multiline_in(
       '\n<title>my title</title>',

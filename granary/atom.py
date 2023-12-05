@@ -203,7 +203,9 @@ def atom_to_activities(atom):
   parser = ElementTree.XMLParser(encoding='UTF-8')
   top = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(top) == 'feed':
-    return [_atom_to_activity(elem) for elem in top if _tag(elem) == 'entry']
+    author = _author_to_actor(top)
+    return [_atom_to_activity(elem, feed_author=author)
+            for elem in top if _tag(elem) == 'entry']
   elif _tag(top) == 'entry':
     return [_atom_to_activity(top)]
 
@@ -224,18 +226,20 @@ def atom_to_activity(atom):
     return got[0]
 
 
-def _atom_to_activity(entry):
+def _atom_to_activity(entry, feed_author=None):
   """Converts an internal Atom entry element to an ActivityStreams 1 activity.
 
   Args:
     entry (ElementTree.Element)
+    feed_author (dict): optional, AS1 representation of feed author
 
   Returns:
     dict: ActivityStreams activity
   """
   # default object data from entry. override with data inside activity:object.
   obj_elem = entry.find('activity:object', NAMESPACES)
-  obj = _atom_to_object(obj_elem if obj_elem is not None else entry)
+  obj = _atom_to_object(obj_elem if obj_elem is not None else entry,
+                        feed_author=feed_author)
 
   content = entry.find('atom:content', NAMESPACES)
   if content is not None:
@@ -260,18 +264,19 @@ def _atom_to_activity(entry):
     'id': _text(entry, 'id') or (obj['id'] if obj_elem is None else None),
     'url': _text(entry, 'uri') or (obj['url'] if obj_elem is None else None),
     'object': obj,
-    'actor': _author_to_actor(entry),
+    'actor': _author_to_actor(entry, feed_author=feed_author),
     'inReplyTo': obj.get('inReplyTo'),
   }
 
   return source.Source.postprocess_activity(a)
 
 
-def _atom_to_object(elem):
+def _atom_to_object(elem, feed_author=None):
   """Converts an Atom entry to an ActivityStreams 1 object.
 
   Args:
     elem (ElementTree.Element)
+    feed_author (dict): optional, AS1 representation of feed author
 
   Returns:
     dict: ActivityStreams object
@@ -281,7 +286,7 @@ def _atom_to_object(elem):
   return {
     'objectType': _as1_value(elem, 'object-type') or 'article' if title else 'note',
     'id': _text(elem, 'id') or uri,
-    'author': _author_to_actor(elem),
+    'author': _author_to_actor(elem, feed_author=feed_author),
     'url': uri,
     'title': title,
     'published': _text(elem, 'published'),
@@ -296,20 +301,23 @@ def _atom_to_object(elem):
   }
 
 
-def _author_to_actor(elem):
+def _author_to_actor(elem, feed_author=None):
   """Converts an Atom ``<author>`` element to an ActivityStreams 1 actor.
 
    Looks for ``<author>`` *inside* elem.
 
   Args:
     elem (ElementTree.Element)
+    feed_author (dict): optional, AS1 representation of feed author
 
   Returns:
     dict: ActivityStreams actor object
   """
+  actor = {}
+
   author = elem.find('atom:author', NAMESPACES)
   if author is not None:
-      return {
+      actor = {
         'objectType': _as1_value(author, 'object-type'),
         'id': _text(author, 'id'),
         'url': _text(author, 'uri'),
@@ -317,6 +325,13 @@ def _author_to_actor(elem):
         'email': _text(author, 'email'),
       }
 
+  if feed_author:
+    for field in 'id', 'url':
+      # can't setdefault because actor has None values for id and url
+      if not actor.get(field):
+        actor[field] = feed_author.get(field)
+
+  return actor
 
 def html_to_atom(html, url=None, fetch_author=False, reader=True):
   """Converts microformats2 HTML to an Atom feed.
