@@ -546,6 +546,11 @@ baz baj
         'object': {
           'id': 'https://perma/link',
           'objectType': 'note',
+          'author': {
+            'objectType': 'person',
+            'displayName': 'My Name',
+            'url': 'http://my/site',
+          },
           'title': 'foo ☕ bar',
           'content': 'foo ☕ bar',
           'published': '2012-03-04T18:20:37+00:00',

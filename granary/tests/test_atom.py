@@ -85,6 +85,11 @@ INSTAGRAM_ACTIVITY = {
   'object': {
     'id': 'tag:instagram.com:123_456',
     'objectType': 'photo',
+    'author': {
+      'displayName': 'Ryan B',
+      'objectType': 'person',
+      'url': 'https://www.instagram.com/snarfed/',
+    },
     'title': 'this picture -> is #abc @foo #xyz',
     'content': 'this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz <p> <a class="link" href="https://www.instagram.com/p/ABC123/"> <img class="u-photo" src="http://attach/image/big" alt="" /> </a> </p> <p> <span class="p-location h-card"> <data class="p-uid" value="tag:instagram.com:520640"></data> <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a> </span> </p>',
     'published': '2012-09-22T05:25:42+00:00',
@@ -142,9 +147,9 @@ class AtomTest(testutil.TestCase):
 
   def test_atom_to_activity_like(self):
     for atom_obj, as_obj in (
-        ('foo', {'id': 'foo', 'url': 'foo'}),
-        ('<id>foo</id>', {'id': 'foo'}),
-        ('<uri>foo</uri>', {'id': 'foo', 'url': 'foo'}),
+        ('foo', {'objectType': 'note', 'id': 'foo', 'url': 'foo'}),
+        ('<id>foo</id>', {'objectType': 'note', 'id': 'foo'}),
+        ('<uri>foo</uri>', {'objectType': 'note', 'id': 'foo', 'url': 'foo'}),
       ):
       self.assert_equals({
         'url': 'like-url',
@@ -214,10 +219,12 @@ class AtomTest(testutil.TestCase):
   def test_atom_to_activity_reply(self):
     expected = {
       'objectType': 'activity',
+      'verb': 'post',
       'id': 'reply-url',
       'url': 'reply-url',
       'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       'object': {
+        'objectType': 'note',
         'id': 'reply-url',
         'url': 'reply-url',
         'content': 'I hereby ☕ reply.',
@@ -237,8 +244,10 @@ class AtomTest(testutil.TestCase):
   def test_atom_to_activity_in_reply_to_text(self):
     expected = {
       'objectType': 'activity',
+      'verb': 'post',
       'inReplyTo': [{'id': 'my-inreplyto', 'url': 'my-inreplyto'}],
       'object': {
+        'objectType': 'note',
         'inReplyTo': [{'id': 'my-inreplyto', 'url': 'my-inreplyto'}],
       },
     }
@@ -253,7 +262,9 @@ class AtomTest(testutil.TestCase):
     """Unicode smart quote in the <title> element."""
     self.assert_equals({
       'objectType': 'activity',
+      'verb': 'post',
       'object': {
+        'objectType': 'article',
         'title': 'How quill’s editor looks',
       },
     }, atom.atom_to_activity(u"""\

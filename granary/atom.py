@@ -256,7 +256,7 @@ def _atom_to_activity(entry):
 
   a = {
     'objectType': 'activity',
-    'verb': _as1_value(entry, 'verb'),
+    'verb': _as1_value(entry, 'verb') or 'post',
     'id': _text(entry, 'id') or (obj['id'] if obj_elem is None else None),
     'url': _text(entry, 'uri') or (obj['url'] if obj_elem is None else None),
     'object': obj,
@@ -277,11 +277,13 @@ def _atom_to_object(elem):
     dict: ActivityStreams object
   """
   uri = _text(elem, 'uri') or _text(elem)
+  title = _text(elem, 'title')
   return {
-    'objectType': _as1_value(elem, 'object-type'),
+    'objectType': _as1_value(elem, 'object-type') or 'article' if title else 'note',
     'id': _text(elem, 'id') or uri,
+    'author': _author_to_actor(elem),
     'url': uri,
-    'title': _text(elem, 'title'),
+    'title': title,
     'published': _text(elem, 'published'),
     'updated': _text(elem, 'updated'),
     'inReplyTo': [{
@@ -473,7 +475,7 @@ def extract_entries(atom):
   Returns:
     list of str: Atom documents with top-level ``<entry>`` element for each entry
   """
-  assert isinstance(atom, str)
+  assert isinstance(atom, str), atom.__class__
   ElementTree.register_namespace('', 'http://www.w3.org/2005/Atom')
   parser = ElementTree.XMLParser(encoding='UTF-8')
   top = ElementTree.XML(atom.encode('utf-8'), parser=parser)
