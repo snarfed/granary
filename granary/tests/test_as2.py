@@ -260,3 +260,19 @@ class ActivityStreams2Test(testutil.TestCase):
       'id': 'tag:example.com,2011:martin',
       'url': 'https://example.com/',
     }))
+
+  def test_to_as1_stop_following_object_id(self):
+    self.assertEqual({
+      'objectType': 'activity',
+      'verb': 'stop-following',
+      'actor': 'alice',
+      'object': 'bob',
+    }, as2.to_as1({
+      'type': 'Undo',
+      'actor': 'alice',
+      'object': {
+        'type': 'Follow',
+        'actor': 'alice',
+        'object': 'bob',
+      },
+    }))

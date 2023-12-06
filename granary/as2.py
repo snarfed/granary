@@ -404,10 +404,8 @@ def to_as1(obj, use_type=True):
         and inner_objs.get('verb') == 'follow'):
       obj['verb'] = 'stop-following'
       inner_inner_obj = as1.get_object(inner_objs)
-      inner_objs = {
-        'id': (inner_inner_obj.get('id') or util.get_url(inner_inner_obj, 'url')
-               if isinstance(inner_inner_obj, dict) else inner_inner_obj),
-      }
+      inner_objs = (inner_inner_obj.get('id') or util.get_url(inner_inner_obj, 'url')
+                    if isinstance(inner_inner_obj, dict) else inner_inner_obj)
 
   # audience, public or unlisted or neither
   to = sorted(util.get_list(obj, 'to'))
