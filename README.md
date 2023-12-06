@@ -288,6 +288,7 @@ Changelog
   * `activity_changed`: add new `inReplyTo` kwarg.
 * `as2`:
   * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
+  * `from_as1`: bug fix, handle `stop-following` with string `object` id.
 * `atom`:
   * Add new `extract_entries` function.
   * `activity_to_atom`: default actor/author name to username.

@@ -143,7 +143,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       '@context': context,
       'type': 'Follow',
       'actor': actor.get('id') if isinstance(actor, dict) else actor,
-      'object': inner_objs.get('id'),
+      'object': inner_objs.get('id') if isinstance(inner_objs, dict) else inner_objs,
     }
 
   replies = obj.get('replies', {})

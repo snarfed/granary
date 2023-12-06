@@ -25,6 +25,26 @@ class ActivityStreams2Test(testutil.TestCase):
       '@context': 'bar',
     }, as2.from_as1({'id': 'foo'}, context='bar'))
 
+  def test_from_as1_stop_following_object_str(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Undo',
+      'id': 'unfollow',
+      'actor': 'alice',
+      'object': {
+        '@context': 'https://www.w3.org/ns/activitystreams',
+        'type': 'Follow',
+        'actor': 'alice',
+        'object': 'bob',
+      },
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'stop-following',
+      'id': 'unfollow',
+      'actor': 'alice',
+      'object': 'bob',
+    }))
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
