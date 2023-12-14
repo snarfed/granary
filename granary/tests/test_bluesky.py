@@ -397,7 +397,7 @@ class BlueskyTest(testutil.TestCase):
     return super().assert_equals(expected, actual, ignore=ignore, **kwargs)
 
   def assert_call(self, mock, url, json=None):
-    mock.assert_any_call(url, json=json, headers={
+    mock.assert_any_call(url, data=None, json=json, headers={
       'Authorization': 'Bearer towkin',
       'Content-Type': 'application/json',
       'User-Agent': util.user_agent,
@@ -1006,12 +1006,13 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual(session, bs.client.session)
 
     mock_post.assert_called_once_with(
-        'https://bsky.social/xrpc/com.atproto.server.createSession',
-        json={'identifier': 'handull', 'password': 'pazzwurd'},
-        headers={
-          'Content-Type': 'application/json',
-          'User-Agent': util.user_agent,
-        },
+      'https://bsky.social/xrpc/com.atproto.server.createSession',
+      json={'identifier': 'handull', 'password': 'pazzwurd'},
+      data=None,
+      headers={
+        'Content-Type': 'application/json',
+        'User-Agent': util.user_agent,
+      },
     )
 
   @patch('requests.get')
