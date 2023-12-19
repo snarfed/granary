@@ -684,6 +684,14 @@ not RSS!
     }
     self.assert_equals({'items': [expected]}, resp.json)
 
+  def test_url_nostr_to_as1(self):
+    self.expect_requests_get('http://nostr/posts', test_nostr.NOTE_NOSTR)
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://nostr/posts&input=nostr&output=as1')
+    self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
+    self.assert_equals([test_nostr.NOTE_AS1], resp.json['items'])
+
   def test_url_bad_input(self):
     resp = client.get('/url?url=http://my/posts.json&input=foo')
     self.assert_equals(400, resp.status_code)

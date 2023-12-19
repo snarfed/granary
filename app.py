@@ -238,7 +238,7 @@ def url():
 
   # decode data
   if input in ('activitystreams', 'as1', 'as2', 'bluesky', 'mf2-json',
-               'json-mf2', 'jsonfeed'):
+               'json-mf2', 'jsonfeed', 'nostr'):
     try:
       body_json = resp.json()
       body_items = (body_json if isinstance(body_json, list)
@@ -293,11 +293,13 @@ def url():
     elif input == 'html':
       activities = microformats2.html_to_activities(resp, url=final_url,
                                                     id=fragment, actor=actor)
-    elif input in ('mf2-json', 'json-mf2'):
+    elif input in ('json-mf2', 'mf2-json'):
       activities = [microformats2.json_to_object(item, actor=actor)
                     for item in mf2.get('items', [])]
     elif input == 'jsonfeed':
       activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
+    elif input == 'nostr':
+      activities = [nostr.to_as1(body_json)]
     elif input == 'rss':
       try:
         activities = rss.to_activities(resp.text)
@@ -305,7 +307,9 @@ def url():
         raise BadRequest(f'Could not parse {final_url} as XML: {e}')
       except ValueError as e:
         raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
-  except ValueError as e:
+    else:
+      assert False, f'Please file this as a bug! input {input} not implemented'
+  except (ValueError, KeyError) as e:
     logger.warning('parsing input failed', exc_info=True)
     return abort(400, f'Could not parse {final_url} as {input}: {str(e)}')
 
@@ -471,6 +475,9 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
       return {
         'items': [nostr.from_as1(a) for a in activities],
       }, headers
+
+    else:
+      assert False, f'Please file this as a bug! format {format} not implemented'
 
   except (ValueError, NotImplementedError) as e:
     logger.warning('converting to output format failed', exc_info=True)
