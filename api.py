@@ -30,6 +30,7 @@ import urllib.parse
 from cachetools import cached, LRUCache
 from flask import abort, request
 from oauth_dropins.webutil import flask_util, util
+from oauth_dropins.webutil.flask_util import error, get_required_param
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
@@ -93,36 +94,36 @@ def api(path):
     return f'Sorry, {site.capitalize()} is not available in the REST API. Try the library instead!', 404
   elif site == 'flickr':
     src = flickr.Flickr(
-      access_token_key=request.values['access_token_key'],
-      access_token_secret=request.values['access_token_secret'])
+      access_token_key=get_required_param('access_token_key'),
+      access_token_secret=get_required_param('access_token_secret'))
   elif site == 'github':
     src = github.GitHub(
-      access_token=request.values['access_token'])
+      access_token=get_required_param('access_token'))
   elif site == 'mastodon':
     src = mastodon.Mastodon(
-      instance=request.values['instance'],
-      access_token=request.values['access_token'],
-      user_id=request.values['user_id'])
+      instance=get_required_param('instance'),
+      access_token=get_required_param('access_token'),
+      user_id=get_required_param('user_id'))
   elif site == 'nostr':
-    relay = request.values['relay']
+    relay = get_required_param('relay')
     if not relay.startswith('ws://') and  not relay.startswith('wss://'):
       relay = 'wss://' + relay
     src = nostr.Nostr([relay])
   elif site == 'meetup':
     src = meetup.Meetup(
-      access_token_key=request.values['access_token_key'],
-      access_token_secret=request.values['access_token_secret'])
+      access_token_key=get_required_param('access_token_key'),
+      access_token_secret=get_required_param('access_token_secret'))
   elif site == 'pixelfed':
     src = pixelfed.Pixelfed(
-      instance=request.values['instance'],
-      access_token=request.values['access_token'],
-      user_id=request.values['user_id'])
+      instance=get_required_param('instance'),
+      access_token=get_required_param('access_token'),
+      user_id=get_required_param('user_id'))
   elif site == 'reddit':
     # the refresh_token should be returned but is not appearing
-    src = reddit.Reddit(refresh_token=request.values['refresh_token'])
+    src = reddit.Reddit(refresh_token=get_required_param('refresh_token'))
   elif site == 'bluesky':
     src = bluesky_instance(
-      handle=request.values['user_id'],
+      handle=get_required_param('user_id'),
       app_password=request.values.get('app_password'),
       access_token=request.values.get('access_token'),
     )
@@ -169,11 +170,11 @@ def api(path):
   if not actor and request.args.get('format') == 'atom':
     # atom needs actor
     if not user_id:
-      flask_util.error('atom output requires user id')
+      error('atom output requires user id')
     try:
       actor = src.get_actor(user_id) if src else {}
     except ValueError as e:
-      flask_util.error(f"Couldn't fetch {user_id}: {e}", exc_info=True)
+      error(f"Couldn't fetch {user_id}: {e}", exc_info=True)
     logger.info(f'Got actor: {json_dumps(actor, indent=2)}')
 
   return app.make_response(response, actor=actor, url=src.BASE_URL)
