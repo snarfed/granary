@@ -241,7 +241,14 @@ def to_activities(rss):
     if not author:
       author = actor
 
+    object_type = 'note'
+    content = entry.get('content', [{}])[0].get('value') or entry.get('description')
     title = entry.get('title')
+    if content and title:
+      if content.startswith(title.removesuffix('…').removesuffix('...')):
+        title = None
+      else:
+        object_type = 'article'
 
     activities.append(Source.postprocess_activity({
       'objectType': 'activity',
@@ -250,11 +257,11 @@ def to_activities(rss):
       'url': uri,
       'actor': author,
       'object': {
-        'objectType': 'article' if title else 'note',
+        'objectType': object_type,
         'id': id or uri,
         'url': uri,
         'displayName': title,
-        'content': entry.get('content', [{}])[0].get('value') or entry.get('description'),
+        'content': content,
         'published': iso_datetime('published'),
         'updated': iso_datetime('updated'),
         'author': author,

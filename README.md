@@ -328,7 +328,8 @@ Changelog
 * `microformats2`:
   * `object_to_json` bug fix: handle singular `inReplyTo`.
 * `rss`:
-  * `to_activities`: use `objectType: note` if title isn't set.
+  * `to_activities`:
+    * Use `objectType: note` if `title` isn't set or is a prefix (possibly ellipsized) of `content`/`description`.
 * `Source`:
   * `postprocess_object`: convert HTML links in content to fediverse handles (`@user@instance`) to `mention` tags.
 

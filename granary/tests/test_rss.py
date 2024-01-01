@@ -177,3 +177,56 @@ The original post]]></description>
     ], feed_url='http://this')
     self.assertLess(got.find('<description><![CDATA[first]]></description>'),
                     got.find('<description><![CDATA[second]]></description>'))
+
+  def test_to_activities_title_object_type_article(self):
+    self.assert_equals({
+      'objectType': 'article',
+      'content': 'some text',
+      'displayName': 'my title',
+    }, rss.to_activities(
+"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0">
+<channel>
+  <item>
+    <title>my title</title>
+    <description>some text</description>
+  </item>
+</channel>
+</rss>
+""")[0]['object'])
+
+  def test_to_activities_title_is_description_object_type_note(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'lorem ipsum foosum barsum',
+    }, rss.to_activities(
+"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0">
+<channel>
+  <item>
+    <title>lorem ipsum foosum barsum</title>
+    <description>lorem ipsum foosum barsum</description>
+  </item>
+</channel>
+</rss>
+""")[0]['object'])
+
+  def test_to_activities_title_is_ellipsized_description_object_type_note(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'lorem ipsum foosum barsum',
+    }, rss.to_activities(
+"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0">
+<channel>
+  <item>
+    <title>lorem ips…</title>
+    <description>lorem ipsum foosum barsum</description>
+  </item>
+</channel>
+</rss>
+""")[0]['object'])
+
