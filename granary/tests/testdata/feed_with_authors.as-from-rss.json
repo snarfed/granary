@@ -1,5 +1,5 @@
 [{
-  "objectType": "article",
+  "objectType": "note",
   "content": "foo",
   "author": {
     "displayName": "Stuff",
@@ -10,7 +10,7 @@
     }]
   }
 }, {
-  "objectType": "article",
+  "objectType": "note",
   "content": "bar",
   "author": {
     "displayName": "Ms Alice",

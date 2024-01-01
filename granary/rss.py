@@ -100,18 +100,16 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     item.guid(url, permalink=True)
 
     # title (required)
-    title = (obj.get('title') or obj.get('displayName') or
-             util.ellipsize(obj.get('content', '-')))
-    # strip HTML tags
-    title = util.parse_html(title).get_text('').strip()
-    item.title(title)
+    title = obj.get('title') or obj.get('displayName')
+    if title:
+      # strip HTML tags
+      item.title(util.parse_html(title).get_text('').strip())
 
     content = microformats2.render_content(
       obj, include_location=True, render_attachments=True, render_image=True)
     if not content:
-      content = obj.get('summary')
-    if content:
-      item.content(content, type='CDATA')
+      content = obj.get('summary') or ''
+    item.content(content, type='CDATA')
 
     categories = [
       {'term': t['displayName']} for t in obj.get('tags', [])
@@ -243,6 +241,8 @@ def to_activities(rss):
     if not author:
       author = actor
 
+    title = entry.get('title')
+
     activities.append(Source.postprocess_activity({
       'objectType': 'activity',
       'verb': 'post',
@@ -250,10 +250,10 @@ def to_activities(rss):
       'url': uri,
       'actor': author,
       'object': {
-        'objectType': 'article',
+        'objectType': 'article' if title else 'note',
         'id': id or uri,
         'url': uri,
-        'displayName': entry.get('title'),
+        'displayName': title,
         'content': entry.get('content', [{}])[0].get('value') or entry.get('description'),
         'published': iso_datetime('published'),
         'updated': iso_datetime('updated'),

@@ -134,10 +134,19 @@ The original post]]></description>
   <link>http://this</link>
 </image>""", got)
 
+  def test_content_html(self):
+    got = rss.from_activities([{
+        'objectType': 'note',
+        'content': '<x>A</x> <y> <z>B C</z>',
+      }], feed_url='http://this')
+    self.assert_multiline_in("""\
+<description><![CDATA[<x>A</x> <y> <z>B C</z>]]></description>
+""", got)
+
   def test_title_html(self):
     got = rss.from_activities([{
         'objectType': 'article',
-        'content': '<x>A</x> <y> <z>B C</z>',
+        'displayName': '<x>A</x> <y> <z>B C</z>',
       }], feed_url='http://this')
     self.assert_multiline_in("""\
 <item>
@@ -166,4 +175,5 @@ The original post]]></description>
       {'content': 'first'},
       {'content': 'second'},
     ], feed_url='http://this')
-    self.assertLess(got.find('<title>first</title>'), got.find('<title>second</title>'))
+    self.assertLess(got.find('<description><![CDATA[first]]></description>'),
+                    got.find('<description><![CDATA[second]]></description>'))

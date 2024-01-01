@@ -327,6 +327,8 @@ Changelog
   * `get_activities` bug fix: use query params for `/api/v1/notifications` API call, not JSON body.
 * `microformats2`:
   * `object_to_json` bug fix: handle singular `inReplyTo`.
+* `rss`:
+  * `to_activities`: use `objectType: note` if title isn't set.
 * `Source`:
   * `postprocess_object`: convert HTML links in content to fediverse handles (`@user@instance`) to `mention` tags.
 
