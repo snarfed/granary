@@ -10,7 +10,7 @@ from . import test_facebook
 from . import test_instagram
 from . import test_twitter
 
-INSTAGRAM_ENTRY_BODY = u"""\
+INSTAGRAM_ENTRY_BODY = """\
 <author>
  <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
  <uri>https://www.instagram.com/snarfed/</uri>
@@ -47,7 +47,7 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <georss:featureName>Le Truc</georss:featureName>
   <link rel="self" href="https://www.instagram.com/p/ABC123/" />
 <link rel="enclosure" href="http://attach/image/big" type="" />"""
-INSTAGRAM_ENTRY = u"""\
+INSTAGRAM_ENTRY = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xml:lang="en-US"
        xmlns="http://www.w3.org/2005/Atom"
@@ -59,7 +59,7 @@ INSTAGRAM_ENTRY = u"""\
 """ + INSTAGRAM_ENTRY_BODY + """
 </entry>
 """
-INSTAGRAM_FEED = u"""\
+INSTAGRAM_FEED = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US"
        xmlns="http://www.w3.org/2005/Atom"
@@ -77,14 +77,16 @@ INSTAGRAM_ACTIVITY = {
   'objectType': 'activity',
   'verb': 'post',
   'id': 'tag:instagram.com:123_456',
+  'url': 'https://www.instagram.com/p/ABC123/',
   'actor': {
     'displayName': 'Ryan B',
     'objectType': 'person',
     'url': 'https://www.instagram.com/snarfed/',
   },
   'object': {
-    'id': 'tag:instagram.com:123_456',
     'objectType': 'photo',
+    'id': 'tag:instagram.com:123_456',
+    'url': 'https://www.instagram.com/p/ABC123/',
     'author': {
       'displayName': 'Ryan B',
       'objectType': 'person',
@@ -159,9 +161,9 @@ class AtomTest(testutil.TestCase):
       }, atom.atom_to_activity(f"""<?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/">
-<uri>like-url</uri>
-<activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
-<activity:object>{atom_obj}</activity:object>
+  <uri>like-url</uri>
+  <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
+  <activity:object>{atom_obj}</activity:object>
 </entry>
 """))
 
@@ -231,13 +233,13 @@ class AtomTest(testutil.TestCase):
         'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       },
     }
-    self.assert_equals(expected, atom.atom_to_activity(u"""\
+    self.assert_equals(expected, atom.atom_to_activity("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:thr="http://purl.org/syndication/thread/1.0">
-<uri>reply-url</uri>
-<thr:in-reply-to ref="foo-id" href="foo-url" />
-<content>I hereby ☕ reply.</content>
+  <uri>reply-url</uri>
+  <thr:in-reply-to ref="foo-id" href="foo-url" />
+  <content>I hereby ☕ reply.</content>
 </entry>
 """))
 
@@ -251,10 +253,10 @@ class AtomTest(testutil.TestCase):
         'inReplyTo': [{'id': 'my-inreplyto', 'url': 'my-inreplyto'}],
       },
     }
-    self.assert_equals(expected, atom.atom_to_activity(u"""\
+    self.assert_equals(expected, atom.atom_to_activity("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns:thr="http://purl.org/syndication/thread/1.0">
-<thr:in-reply-to>my-inreplyto</thr:in-reply-to>
+  <thr:in-reply-to>my-inreplyto</thr:in-reply-to>
 </entry>
 """))
 
@@ -267,12 +269,45 @@ class AtomTest(testutil.TestCase):
         'objectType': 'article',
         'title': 'How quill’s editor looks',
       },
-    }, atom.atom_to_activity(u"""\
+    }, atom.atom_to_activity("""\
 <?xml version='1.0' encoding='UTF-8'?>
 <entry xmlns='http://www.w3.org/2005/Atom'>
-<title>How quill’s editor looks</title>
+  <title>How quill’s editor looks</title>
 </entry>
 """))
+
+  def test_atom_to_object_uri(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'http://post',
+      'url': 'http://post',
+    }, atom.atom_to_activity("""\
+<entry xmlns="http://www.w3.org/2005/Atom">
+  <uri>http://post</uri>
+</entry>
+""")['object'])
+
+  def test_atom_to_object_link_self(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'http://post',
+      'url': 'http://post',
+    }, atom.atom_to_activity("""\
+<entry xmlns="http://www.w3.org/2005/Atom">
+  <link rel="self" href="http://post" />
+</entry>
+""")['object'])
+
+  def test_atom_to_object_link_alternate(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'http://post',
+      'url': 'http://post',
+    }, atom.atom_to_activity("""\
+<entry xmlns="http://www.w3.org/2005/Atom">
+  <link rel="alternate" type="text/html" href="http://post" />
+</entry>
+""")['object'])
 
   def test_atom_to_activity_use_feed_author_id_url(self):
     expected_author = {
@@ -716,7 +751,7 @@ my content
       # fetch_author requires url
       atom.html_to_atom('', fetch_author=True)
 
-    html = u"""\
+    html = """\
 <body class="h-card vcard">
 <img class="photo u-photo" src="photo.jpg" alt=""/>
 <a class="u-url u-uid" rel="author" href="/author"></a>
@@ -737,7 +772,7 @@ going to Homebrew Website Club
     self.mox.ReplayAll()
 
     got = atom.html_to_atom(html, 'https://my.site/', fetch_author=True)
-    self.assert_multiline_in(u"""\
+    self.assert_multiline_in("""\
 <author>
 <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
 <uri>https://my.site/author</uri>

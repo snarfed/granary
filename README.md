@@ -293,7 +293,7 @@ Changelog
   * Add new `extract_entries` function.
   * `activity_to_atom`: default actor/author name to username.
   * `atom_to_activities`: support top-level `entry` element as well as `feed`.
-  * `atom_to_activity/ies`: add `object.author`, default `objectType` to `article`/`note` and `verb` to `post`.
+  * `atom_to_activity/ies`: add `object.author`, default `objectType` to `article`/`note` and `verb` to `post`, convert `link rel=self`/`alternate` to `url`.
   * If `entry.author` doesn't have id or url, default them to feed author's.
 * `bluesky`:
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.

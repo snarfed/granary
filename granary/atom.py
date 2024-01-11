@@ -281,7 +281,13 @@ def _atom_to_object(elem, feed_author=None):
   Returns:
     dict: ActivityStreams object
   """
-  uri = _text(elem, 'uri') or _text(elem)
+  self_links = [link for link in elem.iterfind('atom:link', NAMESPACES)
+                if link.get('rel') in ('self', 'alternate')
+                and link.get('type', '').split(';')[0] in ('text/html', '')]
+  uri = (_text(elem, 'uri')
+         or (self_links[0].get('href') if self_links else None)
+         or _text(elem))
+
   title = _text(elem, 'title')
   return {
     'objectType': _as1_value(elem, 'object-type') or 'article' if title else 'note',

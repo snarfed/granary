@@ -536,6 +536,7 @@ baz baj
     self.assert_equals({
       'items': [{
         'id': 'https://perma/link',
+        'url': 'https://perma/link',
         'objectType': 'activity',
         'verb': 'post',
         'actor': {
@@ -545,6 +546,7 @@ baz baj
         },
         'object': {
           'id': 'https://perma/link',
+          'url': 'https://perma/link',
           'objectType': 'note',
           'author': {
             'objectType': 'person',
