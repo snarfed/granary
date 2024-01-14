@@ -420,9 +420,14 @@ def to_as1(obj, use_type=True):
   elif PUBLICS.intersection(cc):
     as1_to.append({'objectType': 'group', 'alias': '@unlisted'})
 
+  preferred_username = obj.pop('preferredUsername', None)
+  displayName = obj.pop('name', None) or preferred_username
+  if not displayName and obj.get('objectType') in as1.ACTOR_TYPES:
+    displayName = address(obj)
+
   obj.update({
-    'displayName': obj.pop('name', None),
-    'username': obj.pop('preferredUsername', None),
+    'displayName': displayName,
+    'username': preferred_username,
     'actor': actor['id'] if actor.keys() == set(['id']) else actor,
     'attachments': all_to_as1('attachment'),
     'image': as1_images,

@@ -230,6 +230,7 @@ class ActivityStreams2Test(testutil.TestCase):
     self.assert_equals({
       'objectType': 'person',
       'id': 'https://mastodon.xyz/users/alice',
+      'displayName': '@alice@mastodon.xyz',
       'image': [{
         'url': 'https://banner/',
         'objectType': 'featured',
@@ -275,4 +276,24 @@ class ActivityStreams2Test(testutil.TestCase):
         'actor': 'alice',
         'object': 'bob',
       },
+    }))
+
+  def test_to_as1_preferred_username(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': 'alice',
+      'username': 'alice',
+    }, as2.to_as1({
+      'type': 'Person',
+      'preferredUsername': 'alice',
+    }))
+
+  def test_to_as1_address(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'id': 'http://a.b/@me',
+      'displayName': '@me@a.b',
+    }, as2.to_as1({
+      'type': 'Person',
+      'id': 'http://a.b/@me',
     }))
