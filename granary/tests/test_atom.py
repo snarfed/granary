@@ -83,6 +83,7 @@ INSTAGRAM_ACTIVITY = {
     'objectType': 'person',
     'url': 'https://www.instagram.com/snarfed/',
   },
+  'title': 'this picture -> is #abc @foo #xyz',
   'object': {
     'objectType': 'photo',
     'id': 'tag:instagram.com:123_456',
@@ -92,7 +93,7 @@ INSTAGRAM_ACTIVITY = {
       'objectType': 'person',
       'url': 'https://www.instagram.com/snarfed/',
     },
-    'title': 'this picture -> is #abc @foo #xyz',
+    'displayName': 'this picture -> is #abc @foo #xyz',
     'content': 'this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz <p> <a class="link" href="https://www.instagram.com/p/ABC123/"> <img class="u-photo" src="http://attach/image/big" alt="" /> </a> </p> <p> <span class="p-location h-card"> <data class="p-uid" value="tag:instagram.com:520640"></data> <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a> </span> </p>',
     'published': '2012-09-22T05:25:42+00:00',
     'updated': '2012-09-22T05:25:42+00:00',
@@ -209,7 +210,7 @@ class AtomTest(testutil.TestCase):
     """https://console.cloud.google.com/errors/CMPawqSghuDquwE"""
     self.assertIn('<title>foo</title>', atom.activity_to_atom({
       'object': {
-        'title': 'foo',
+        'displayName': 'foo',
         'attachments': [{
           'objectType': 'article',
           'author': {
@@ -265,9 +266,10 @@ class AtomTest(testutil.TestCase):
     self.assert_equals({
       'objectType': 'activity',
       'verb': 'post',
+      'title': 'How quill’s editor looks',
       'object': {
         'objectType': 'article',
-        'title': 'How quill’s editor looks',
+        'displayName': 'How quill’s editor looks',
       },
     }, atom.atom_to_activity("""\
 <?xml version='1.0' encoding='UTF-8'?>

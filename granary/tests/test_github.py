@@ -146,7 +146,7 @@ ISSUE_OBJ = {  # ActivityStreams
   'id': tag_uri('foo:bar:333'),
   'url': 'https://github.com/foo/bar/issues/333',
   'author': ACTOR,
-  'title': 'an issue title',
+  'displayName': 'an issue title',
   'content': 'foo bar\nbaz',
   'published': '2018-01-30T19:11:03+00:00',
   'updated': '2018-02-01T19:11:03+00:00',
@@ -233,7 +233,7 @@ PULL_OBJ = {  # ActivityStreams
   'id': tag_uri('foo:bar:444'),
   'url': 'https://github.com/foo/bar/pull/444',
   'author': ACTOR,
-  'title': 'a PR to merge',
+  'displayName': 'a PR to merge',
   'content': 'a PR message',
   'published': '2018-02-08T10:24:32+00:00',
   'updated': '2018-02-09T21:14:43+00:00',
@@ -783,7 +783,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.gh.create({
-      'title': 'an issue title',
+      'displayName': 'an issue title',
       'content': """
 <a href="http://foo/">bar</a>
 <img src="https://baz/" />
@@ -808,7 +808,7 @@ class GitHubTest(testutil.TestCase):
 
     result = self.gh.create({
       'url': 'http://site/post/xyz',
-      'title': 'an issue title',
+      'displayName': 'an issue title',
       'content': """
 <a href="foo">foo</a>
 <img src="/bar/baz" />
@@ -831,7 +831,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.gh.create({
-      'title': 'an issue title',
+      'displayName': 'an issue title',
       'content': content,
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
     })
@@ -851,7 +851,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.gh.create({
-      'title': 'an issue title',
+      'displayName': 'an issue title',
       'content': content,
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
     })
@@ -870,7 +870,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.gh.create({
-      'title': 'an issue title',
+      'displayName': 'an issue title',
       'content': content,
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
     })
@@ -930,7 +930,7 @@ class GitHubTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.gh.create({
-      'title': 'an issue title',
+      'displayName': 'an issue title',
       'content': 'xyz',
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
     })

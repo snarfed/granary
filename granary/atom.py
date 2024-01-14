@@ -294,7 +294,7 @@ def _atom_to_object(elem, feed_author=None):
     'id': _text(elem, 'id') or uri,
     'author': _author_to_actor(elem, feed_author=feed_author),
     'url': uri,
-    'title': title,
+    'displayName': title,
     'published': _text(elem, 'published'),
     'updated': _text(elem, 'updated'),
     'inReplyTo': [{

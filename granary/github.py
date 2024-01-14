@@ -938,7 +938,7 @@ class GitHub(source.Source):
       'id': self.tag_uri(id),
       'url': url,
       'author': self.user_to_actor(input.get('author') or input.get('user')),
-      'title': input.get('title'),
+      'displayName': input.get('title'),
       'content': (input.get('body') or '').replace('\r\n', '\n'),
       'published': util.maybe_iso8601_to_rfc3339(input.get('createdAt') or
                                                  input.get('created_at')),

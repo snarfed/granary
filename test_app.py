@@ -544,6 +544,7 @@ baz baj
           'displayName': 'My Name',
           'url': 'http://my/site',
         },
+        'title': 'foo ☕ bar',
         'object': {
           'id': 'https://perma/link',
           'url': 'https://perma/link',
@@ -553,7 +554,7 @@ baz baj
             'displayName': 'My Name',
             'url': 'http://my/site',
           },
-          'title': 'foo ☕ bar',
+          'displayName': 'foo ☕ bar',
           'content': 'foo ☕ bar',
           'published': '2012-03-04T18:20:37+00:00',
           'updated': '2012-03-04T18:20:37+00:00',
