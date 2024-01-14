@@ -192,9 +192,12 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if len(urls) == 1:
     urls = urls[0]
 
+  display_name = obj.pop('displayName', None)
+  title = obj.pop('title', None)
+
   obj.update({
     'type': type,
-    'name': obj.pop('displayName', None),
+    'name': display_name or title,
     'actor': from_as1(actor, context=None, top_level=False),
     'attachment': attachments,
     'attributedTo': all_from_as1('author', type='Person', compact=True),
