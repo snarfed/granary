@@ -151,8 +151,16 @@ def get_url(obj):
 
   Somewhat duplicates :func:`microformats2.get_text`.
   """
+  if not obj:
+    return ''
+
   urls = object_urls(obj)
-  return urls[0] if urls else ''
+  if not urls:
+    return ''
+
+  return (urls[0] if isinstance(urls, (list, tuple))
+          else urls if isinstance(urls, str)
+          else '')
 
 
 def get_ids(obj, field):

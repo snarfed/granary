@@ -632,3 +632,15 @@ class As1Test(testutil.TestCase):
     ]:
       with self.subTest(expected=expected, obj=obj):
         self.assertCountEqual(expected, as1.targets(obj))
+
+  def test_get_url(self):
+    for obj, expected in (
+        (None, ''),
+        ('', ''),
+        ('foo', 'foo'),
+        ({'url': 'foo'}, 'foo'),
+        ({'url': ['foo', 'bar']}, 'foo'),
+        ({'url': {'value': 'foo'}}, 'foo'),
+    ):
+      with self.subTest(expected=expected, obj=obj):
+        self.assertEqual(expected, as1.get_url(obj))
