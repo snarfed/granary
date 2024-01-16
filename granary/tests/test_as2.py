@@ -45,6 +45,48 @@ class ActivityStreams2Test(testutil.TestCase):
       'object': 'bob',
     }))
 
+  def test_from_as1_icon_prefers_mastodon_allowed_type(self):
+    self.assertEqual({
+      'type': 'Image',
+      'mediaType': 'image/jpeg',
+      'url': '/pic',
+    }, as2.from_as1({
+      'objectType': 'person',
+      'image': [
+        '/pic.ico',
+        {
+          'objectType': 'image',
+          'mimeType': 'image/jpeg',
+          'url': '/pic',
+        },
+        '/pic.bmp',
+      ],
+    })['icon'])
+
+  def test_from_as1_icon_prefers_mastodon_allowed_extension(self):
+    self.assertEqual('/pic.jpg', as2.from_as1({
+      'objectType': 'person',
+      'image': [
+        '/pic.ico',
+        '/pic.jpg',
+        '/pic.bmp',
+      ],
+    })['icon'])
+
+
+  def test_from_as1_icon_prefers_mastodon_allowed_object(self):
+    self.assertEqual({
+      'type': 'Image',
+      'url': '/pic.jpg',
+    }, as2.from_as1({
+      'objectType': 'person',
+      'image': [
+        '/pic.ico',
+        {'url': '/pic.jpg'},
+        '/pic.bmp',
+      ],
+    })['icon'])
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
@@ -245,7 +287,7 @@ class ActivityStreams2Test(testutil.TestCase):
       }
     }))
 
-  def test_person_propertyvalue_attachment_strips_home_page_slash(self):
+  def test_from_as1_person_propertyvalue_attachment_strips_home_page_slash(self):
     self.assert_equals({
       '@context': 'https://www.w3.org/ns/activitystreams',
       'type': 'Person',

@@ -11,8 +11,9 @@
 import copy
 import datetime
 import logging
+from os.path import splitext
 import re
-import urllib.parse
+from urllib.parse import urlparse
 
 from oauth_dropins.webutil import util
 
@@ -95,6 +96,10 @@ TYPE_TO_VERB.update({
 TYPES_WITH_OBJECT = {VERB_TO_TYPE[v] for v in as1.VERBS_WITH_OBJECT
                      if v in VERB_TO_TYPE}
 
+# https://github.com/mastodon/mastodon/blob/b4c332104a8b3748f619de250f77c0acc8e80628/app/models/concerns/account/avatar.rb#L6
+MASTODON_ALLOWED_IMAGE_EXTS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+MASTODON_ALLOWED_IMAGE_TYPES = ('image/jpeg', 'image/png', 'image/gif', 'image/webp')
+
 
 def get_urls(obj, key='url'):
   """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
@@ -175,7 +180,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       url = link.get('value') or link.get('id')
       name = link.get('displayName')
       if util.is_web(url):
-        parsed = urllib.parse.urlparse(url)
+        parsed = urlparse(url)
         if parsed.path == '/':
           url = url.removesuffix('/')
         scheme = f'{parsed.scheme}://'
@@ -222,23 +227,35 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   vote_field = 'oneOf' if voters == votes else 'anyOf'
   obj[vote_field] = all_from_as1('options')
 
-  # images; separate featured (aka header) and non-featured.
+  # images. separate featured (aka header) and non-featured, prioritize types
+  # that Mastodon allowlists
   images = util.get_list(obj, 'image')
-  featured = []
-  non_featured = []
   if images:
+    featured = []
+    non_featured = []
+    icon = None
+
     for img in images:
       # objectType featured is non-standard; granary uses it for u-featured
       # microformats2 images
       if isinstance(img, dict) and img.get('objectType') == 'featured':
         featured.append(img)
-      else:
-        non_featured.append(img)
+        continue
+
+      non_featured.append(img)
+
+      if not icon:
+        img_url = img if isinstance(img, str) else img.get('url')
+        ext = splitext(urlparse(img_url).path)[1]
+        if ((isinstance(img, dict)
+             and img.get('mimeType') in MASTODON_ALLOWED_IMAGE_TYPES)
+            or ext in MASTODON_ALLOWED_IMAGE_EXTS):
+          icon = img
 
     # prefer non-featured first for icon, featured for image. ActivityPub/Mastodon
     # use icon for profile picture, image for header.
     if obj_type == 'person':
-      obj['icon'] = from_as1((non_featured or featured)[0], type='Image',
+      obj['icon'] = from_as1(icon or (non_featured + featured)[0], type='Image',
                              context=None, top_level=False)
     obj['image'] = [from_as1(img, type='Image', context=None)
                     for img in featured + non_featured]
@@ -516,8 +533,8 @@ def address(actor):
     return None
 
   if isinstance(actor, dict):
-    host = (urllib.parse.urlparse(actor.get('id')).netloc
-            or urllib.parse.urlparse(util.get_url(actor)).netloc)
+    host = (urlparse(actor.get('id')).netloc
+            or urlparse(util.get_url(actor)).netloc)
     username = actor.get('preferredUsername')
     if username and host:
       return f'@{username}@{host}'

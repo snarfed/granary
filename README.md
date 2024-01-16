@@ -288,7 +288,9 @@ Changelog
   * `activity_changed`: add new `inReplyTo` kwarg.
 * `as2`:
   * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
-  * `from_as1`: bug fix, handle `stop-following` with string `object` id.
+  * `from_as1`:
+    * For `icon` field, prefer image types that are [allowed by Mastodon](https://github.com/mastodon/mastodon/blob/b4c332104a8b3748f619de250f77c0acc8e80628/app/models/concerns/account/avatar.rb#L6).
+    * Bug fix, handle `stop-following` with string `object` id.
 * `atom`:
   * Add new `extract_entries` function.
   * `activity_to_atom`: default actor/author name to username.
