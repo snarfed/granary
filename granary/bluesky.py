@@ -645,9 +645,9 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
     urls = []
     if handle:
+      urls.append(Bluesky.user_url(handle))
       if not util.domain_or_parent_in(handle, [DEFAULT_PDS_DOMAIN]):
         urls.append(f'https://{handle}/')
-      urls.append(Bluesky.user_url(handle))
     elif did and did.startswith('did:web:'):
       urls.extend([did_web_to_url(did), Bluesky.user_url(did)])
 

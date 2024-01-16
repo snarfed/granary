@@ -21,7 +21,7 @@
     "author": {
       "objectType": "person",
       "id": "did:plc:pv7fudn",
-      "url": ["https://alice.example.com/", "https://bsky.app/profile/alice.example.com"],
+      "url": ["https://bsky.app/profile/alice.example.com", "https://alice.example.com/"],
       "displayName": "Alice",
       "username": "alice.example.com",
       "image": [{"url": "https://cdn.bsky.social/imgproxy/alice/pv7fudn@jpeg"}]

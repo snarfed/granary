@@ -105,11 +105,11 @@ POST_AUTHOR_AS['object'].update({
 POST_AUTHOR_PROFILE_AS = copy.deepcopy(POST_AUTHOR_AS)
 POST_AUTHOR_PROFILE_AS['object']['author'].update({
   'username': 'alice.com',
-  'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+  'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
 })
 POST_AUTHOR_PROFILE_AS['actor'].update({
   'username': 'alice.com',
-  'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+  'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
 })
 POST_AUTHOR_BSKY = copy.deepcopy(POST_VIEW_BSKY)
 POST_AUTHOR_BSKY['author'] = {
@@ -246,14 +246,14 @@ REPOST_AS = {
     'objectType': 'person',
     'id': 'did:web:bob.com',
     'displayName': 'Bob',
-    'url': ['https://bob.com/', 'https://bsky.app/profile/bob.com'],
+    'url': ['https://bsky.app/profile/bob.com', 'https://bob.com/'],
   },
   'object': POST_AUTHOR_PROFILE_AS['object'],
 }
 REPOST_PROFILE_AS = copy.deepcopy(REPOST_AS)
 REPOST_PROFILE_AS['actor'].update({
   'username': 'bob.com',
-  'url': ['https://bob.com/', 'https://bsky.app/profile/bob.com'],
+  'url': ['https://bsky.app/profile/bob.com', 'https://bob.com/'],
 })
 
 REPOST_BSKY = {
@@ -294,12 +294,12 @@ THREAD_AS['object']['replies'] = {'items': [THREAD_REPLY_AS, THREAD_REPLY2_AS]}
 THREAD_AS['object']['author'] = ACTOR_AS
 THREAD_AS['object']['author'].update({
   'username': 'alice.com',
-  'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+  'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
 })
 THREAD_AS['object']['url'] = 'https://bsky.app/profile/alice.com/post/tid'
 THREAD_AS['actor'].update({
   'username': 'alice.com',
-  'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+  'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
 })
 
 THREAD_BSKY = {
@@ -368,7 +368,7 @@ POST_AUTHOR_PROFILE_WITH_LIKES_AS['object']['tags'] = [{
 POST_AUTHOR_PROFILE_WITH_LIKES_AS['object']['tags'][0]['author'].update({
   'id': 'tag:bsky.app:did:web:alice.com',
   'username': 'alice.com',
-  'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+  'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
 })
 
 POST_AUTHOR_PROFILE_WITH_REPOSTS_AS = copy.deepcopy(POST_AUTHOR_PROFILE_AS)
@@ -383,7 +383,7 @@ POST_AUTHOR_PROFILE_WITH_REPOSTS_AS['object']['tags'] = [{
 POST_AUTHOR_PROFILE_WITH_REPOSTS_AS['object']['tags'][0]['author'].update({
   'id': 'tag:bsky.app:did:web:alice.com',
   'username': 'alice.com',
-  'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+  'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
 })
 
 class BlueskyTest(testutil.TestCase):
@@ -394,7 +394,8 @@ class BlueskyTest(testutil.TestCase):
 
   def assert_equals(self, expected, actual, ignore=(), **kwargs):
     ignore = list(ignore) + ['uri']
-    return super().assert_equals(expected, actual, ignore=ignore, **kwargs)
+    return super().assert_equals(expected, actual, ignore=ignore, in_order=True,
+                                 **kwargs)
 
   def assert_call(self, mock, url, json=None):
     mock.assert_any_call(url, data=None, json=json, headers={
@@ -783,7 +784,7 @@ class BlueskyTest(testutil.TestCase):
         'objectType': 'featured',
         'url': OLD_BLOB_URL,
       }],
-      'url': ['https://han.dull/', 'https://bsky.app/profile/han.dull'],
+      'url': ['https://bsky.app/profile/han.dull', 'https://han.dull/'],
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', repo_handle='han.dull'))
 
   def test_to_as1_profile_bsky_social_handle_is_not_url(self):
@@ -797,7 +798,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       **ACTOR_AS,
       'username': 'alice.com',
-      'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+      'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
       }, to_as1(ACTOR_PROFILE_VIEW_BSKY))
 
   def test_to_as1_profile_no_repo_did_handle_or_pds(self):
@@ -911,7 +912,7 @@ class BlueskyTest(testutil.TestCase):
       'author': {
         'objectType': 'person',
         'id': 'did:alice',
-        'url': ['https://alice.com/', 'https://bsky.app/profile/alice.com'],
+        'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
         'username': 'alice.com',
         'image': [{'url': 'https://cdn.bsky.app/alice@jpeg'}]
       }
