@@ -14,7 +14,7 @@ from oauth_dropins.webutil import util
 
 from . import as1
 from . import microformats2
-from . import source
+from .source import Source
 
 CONTENT_TYPE = 'application/atom+xml; charset=utf-8'
 FEED_TEMPLATE = 'user_feed.atom'
@@ -268,7 +268,7 @@ def _atom_to_activity(entry, feed_author=None):
     'inReplyTo': obj.get('inReplyTo'),
   }
 
-  return source.Source.postprocess_activity(a)
+  return Source.postprocess_activity(a, webfinger_mentions=True)
 
 
 def _atom_to_object(elem, feed_author=None):

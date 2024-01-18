@@ -40,9 +40,6 @@ INCLUDE_LINK = 'include'
 INCLUDE_IF_TRUNCATED = 'if truncated'
 HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')
 
-# WebFinger-style @-@ identifier
-FEDIVERSE_HANDLE = re.compile('^@[^@ ]+@[a-z0-9-.]+$')
-
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -601,13 +598,14 @@ class Source(object, metaclass=SourceMeta):
         return tag
 
   @staticmethod
-  def postprocess_activity(activity):
+  def postprocess_activity(activity, webfinger_mentions=False):
     """Does source-independent post-processing of an activity, in place.
 
     Right now just populates the ``title`` field.
 
     Args:
       activity (dict)
+      webfinger_mentions (boolean): whether to detect fediverse @-mentions
     """
     activity = util.trim_nulls(activity)
     # maps object type to human-readable name to use in title
@@ -627,7 +625,8 @@ class Source(object, metaclass=SourceMeta):
     obj = activity.get('object')
 
     if obj:
-      activity['object'] = Source.postprocess_object(obj)
+      activity['object'] = Source.postprocess_object(
+        obj, webfinger_mentions=webfinger_mentions)
       if not activity.get('title'):
         verb = DISPLAY_VERBS.get(activity.get('verb'))
         obj_name = obj.get('displayName')
@@ -643,15 +642,17 @@ class Source(object, metaclass=SourceMeta):
     return util.trim_nulls(activity)
 
   @staticmethod
-  def postprocess_object(obj):
+  def postprocess_object(obj, webfinger_mentions=False):
     """Does source-independent post-processing of an object, in place.
 
     * Populates ``location.position`` based on latitude and longitude.
-    * Convert HTML links in content to fediverse handles (``@user@instance``) to
-      ``mention`` tags.
+    * Optionally interprets HTML links in content with text starting with ``@``,
+      eg ``@user`` or ``@user@instance``, as fediverse/WebFinger @-mentions
+      and adds ``mention`` tags for them.
 
     Args:
       obj (dict)
+      webfinger_mentions (boolean): whether to detect fediverse @-mentions
 
     Returns:
       dict: ``obj``, modified in place
@@ -664,18 +665,19 @@ class Source(object, metaclass=SourceMeta):
         # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
         loc['position'] = '%0+10.6f%0+11.6f/' % (lat, lon)
 
-    # fediverse @-mentions to mention tags
-    # https://github.com/snarfed/bridgy-fed/issues/493
-    content = obj.get('content') or ''
-    for a in util.parse_html(content).find_all('a'):
-      href = a.get('href')
-      text = a.get_text('').strip()
-      if href and FEDIVERSE_HANDLE.match(text):
-        obj.setdefault('tags', []).append({
-          'objectType': 'mention',
-          'url': href,
-          'displayName': text,
-        })
+    if webfinger_mentions:
+      # fediverse webfinger @-mentions to mention tags
+      # https://github.com/snarfed/bridgy-fed/issues/493
+      content = obj.get('content') or ''
+      for a in util.parse_html(content).find_all('a'):
+        href = a.get('href')
+        text = a.get_text('').strip()
+        if href and text.startswith('@'):
+          obj.setdefault('tags', []).append({
+            'objectType': 'mention',
+            'url': href,
+            'displayName': text,
+          })
 
     return util.trim_nulls(obj)
 

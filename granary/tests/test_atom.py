@@ -97,6 +97,11 @@ INSTAGRAM_ACTIVITY = {
     'content': 'this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz <p> <a class="link" href="https://www.instagram.com/p/ABC123/"> <img class="u-photo" src="http://attach/image/big" alt="" /> </a> </p> <p> <span class="p-location h-card"> <data class="p-uid" value="tag:instagram.com:520640"></data> <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a> </span> </p>',
     'published': '2012-09-22T05:25:42+00:00',
     'updated': '2012-09-22T05:25:42+00:00',
+    'tags': [{
+      'objectType': 'mention',
+      'url': 'https://www.instagram.com/foo/',
+      'displayName': '@foo',
+    }],
     'location': {
       'displayName': 'Le Truc',
       'latitude': 37.3,

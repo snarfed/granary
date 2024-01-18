@@ -341,7 +341,7 @@ Changelog
   * `to_activities`:
     * Use `objectType: note` if `title` isn't set or is a prefix (possibly ellipsized) of `content`/`description`.
 * `Source`:
-  * `postprocess_object`: convert HTML links in content to fediverse handles (`@user@instance`) to `mention` tags.
+  * `postprocess_object`: convert HTML links in content to fediverse handles (eg `@user` and `@user@instance`) to `mention` tags.
 
 
 ### 6.1 - 2023-09-16
