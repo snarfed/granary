@@ -377,6 +377,9 @@ def _prepare_activity(a, reader=True):
     a (dict): ActivityStreams 1 activity
     reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
+
+  Returns:
+    ``None``
   """
   act_type = as1.object_type(a)
   obj = as1.get_object(a) or a
@@ -390,16 +393,14 @@ def _prepare_activity(a, reader=True):
     # https://forum.newsblur.com/t/android-cant-read-line-pre-formatted-lines/6116
     white_space_pre=False))
 
-  # Make sure every activity has the title field, since Atom <entry> requires
-  # the title element.
-  if not a.get('title'):
-    a['title'] = util.ellipsize(_encode_ampersands(
-      a.get('displayName') or a.get('content') or obj.get('title') or
-      obj.get('displayName') or obj.get('content') or 'Untitled'))
-
-  # strip HTML tags. the Atom spec says title is plain text:
+  # Make sure every activity has displayName, since Atom <entry> requires the
+  # title element. and strip HTML tags, the Atom spec says title is plain text:
   # http://atomenabled.org/developers/syndication/#requiredEntryElements
-  a['title'] = xml.sax.saxutils.escape(util.parse_html(a['title']).get_text(''))
+  display_name = (a.get('displayName') or a.get('content') or obj.get('title')
+                  or obj.get('displayName') or obj.get('content') or 'Untitled')
+  a['displayName'] = util.ellipsize(xml.sax.saxutils.escape(
+    util.parse_html(display_name).get_text('')))
+
 
   children = []
   image_urls_seen = set()

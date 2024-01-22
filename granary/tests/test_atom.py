@@ -361,10 +361,17 @@ class AtomTest(testutil.TestCase):
 
   def test_strip_html_tags_from_titles(self):
     activity = copy.deepcopy(test_facebook.ACTIVITY)
-    activity['displayName'] = '<p>foo &amp; <a href="http://bar">bar</a></p>'
+    activity['content'] = '<p>foo &amp; <a href="http://bar">bar</a></p>'
     self.assert_multiline_in(
       '<title>foo &amp; bar</title>\n',
-      atom.activities_to_atom([activity], test_facebook.ACTOR))
+      atom.activities_to_atom([activity], {}))
+
+    # ellipsize in the middle of an HTML tag. (ellipsize defaults to 14 words)
+    del activity['displayName']
+    activity['content'] = '<p>I’ve been looking over Mike Hoerger’s <a href="https://www.pmc19.com/data/index.php">Pandemic Mitigation Collaborative - Data Tracker</a> which estimates and projects...</p>'
+    self.assert_multiline_in(
+      '<title>I’ve been looking over Mike Hoerger’s Pandemic Mitigation Collaborative - Data Tracker which estimates...</title>\n',
+      atom.activities_to_atom([activity], {}))
 
   def test_render_content_as_html(self):
     self.assert_multiline_in(

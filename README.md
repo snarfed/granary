@@ -378,6 +378,7 @@ _Non-breaking changes:_
     * Bug fix, emove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
     * Render `objectType: comment` attachments.
     * Remove invalid `<a>` element for tags.
+    * Bug fix: avoid encoded `<` and `>` characters in `title` ([#629](https://github.com/snarfed/granary/issues/629)).
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.
   * Render `objectType: service` attachments, eg Bluesky custom feeds.
