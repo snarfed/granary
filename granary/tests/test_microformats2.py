@@ -511,7 +511,7 @@ Shared <a href="#">a post</a> by foo
        }],
     }))
 
-  def test_render_content_bare_string_actor(self):
+  def test_render_author_bare_string_actor(self):
     self.assert_multiline_equals("""
 Shared <a href="nostr:note1sa9...">a post</a> by   <span class="h-card">
 <data class="p-uid" value="nostr:npub16cn..."></data>
