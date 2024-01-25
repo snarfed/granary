@@ -511,6 +511,25 @@ Shared <a href="#">a post</a> by foo
        }],
     }))
 
+  def test_render_content_bare_string_actor(self):
+    self.assert_multiline_equals("""
+Shared <a href="nostr:note1sa9...">a post</a> by   <span class="h-card">
+<data class="p-uid" value="nostr:npub16cn..."></data>
+<a title="nostr:npub16cn..." class="u-url" href="nostr:npub16cn...">nostr:npub16cn....</a>
+</span>
+foo bar
+""", microformats2.render_content({
+      'id': 'nostr:nevent18dg...',
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'id': 'nostr:note1sa9...',
+        'objectType': 'note',
+        'content': 'foo bar',
+        'author': 'nostr:npub16cn...',
+      },
+    }), ignore_blanks=True)
+
   def test_dont_stop_at_unknown_tag_type(self):
     obj = {'tags': [
       {'objectType': 'x', 'url': 'http://x'},

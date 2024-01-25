@@ -1057,7 +1057,8 @@ def render_content(obj, include_location=True, synthesize_content=True,
         content += f"<a href=\"{target_url}\">{verb.lower()} this.</a>"
 
       else:
-        author = target.get('author') or target.get('actor') or {}
+        author = (as1.get_object(target, 'author')
+                  or as1.get_object(target, 'actor'))
         # special case for twitter RT's
         if obj_type == 'share' and 'url' in obj and re.search(
             r'^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):

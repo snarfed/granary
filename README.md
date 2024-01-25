@@ -413,6 +413,8 @@ _Non-breaking changes:_
     * Bug fix, handle bare string URL `image` values.
     * Normalize ISO-8601 format of `published` and `updated` timestamps.
     * Handle bare string ids for `replies ` and `shares` (usually from AS2.)
+  * `render_content`:
+    * Bug fix for bare string `author` and `actor` values.
   * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.
 * `rss`:
   * `from_activities`: handle bare string id `author`.
