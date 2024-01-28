@@ -469,7 +469,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
     else:
       assert False, f'Please file this as a bug! format {format} not implemented'
 
-  except (ValueError, NotImplementedError) as e:
+  except (AttributeError, KeyError, NotImplementedError, ValueError) as e:
     logger.warning('converting to output format failed', exc_info=True)
     return abort(400, f'Could not convert to {format}: {str(e)}')
 
