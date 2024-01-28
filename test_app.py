@@ -574,7 +574,7 @@ baz baj
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_code)
-    self.assertIn('Could not parse http://feed as XML: ',
+    self.assertIn('Could not parse http://feed as atom: ',
                   resp.get_data(as_text=True))
 
   def test_url_atom_to_as1_not_atom(self):
@@ -587,7 +587,7 @@ not atom!
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_code)
-    self.assertIn('Could not parse http://feed as Atom: ',
+    self.assertIn('Could not parse http://feed as atom: ',
                   resp.get_data(as_text=True))
 
   def test_url_rss_to_as1(self):

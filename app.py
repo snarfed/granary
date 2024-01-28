@@ -282,12 +282,7 @@ def url():
     elif input == 'as2':
       activities = [as2.to_as1(obj) for obj in body_items]
     elif input == 'atom':
-      try:
-        activities = atom.atom_to_activities(resp.text)
-      except ElementTree.ParseError as e:
-        raise BadRequest(f'Could not parse {final_url} as XML: {e}')
-      except ValueError as e:
-        raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
+      activities = atom.atom_to_activities(resp.text)
     elif input == 'bluesky':
       activities = [bluesky.to_as1(obj) for obj in body_items]
     elif input == 'html':
@@ -301,15 +296,10 @@ def url():
     elif input == 'nostr':
       activities = [nostr.to_as1(body_json)]
     elif input == 'rss':
-      try:
-        activities = rss.to_activities(resp.text)
-      except ElementTree.ParseError as e:
-        raise BadRequest(f'Could not parse {final_url} as XML: {e}')
-      except ValueError as e:
-        raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
+      activities = rss.to_activities(resp.text)
     else:
       assert False, f'Please file this as a bug! input {input} not implemented'
-  except (ValueError, KeyError) as e:
+  except (AttributeError, ElementTree.ParseError, KeyError, ValueError) as e:
     logger.warning('parsing input failed', exc_info=True)
     return abort(400, f'Could not parse {final_url} as {input}: {str(e)}')
 
