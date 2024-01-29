@@ -38,8 +38,8 @@ _CHARS = 'a-zA-Z0-9-.'
 # https://atproto.com/specs/at-uri-scheme#structure
 AT_URI_PATTERN = re.compile(rf"""
     ^at://
-     ([{_CHARS}:]+)            # authority
-      (?:/([{_CHARS}_~]+)  # collection
+     ([{_CHARS}:]+)           # authority
+      (?:/([{_CHARS}_~]+)     # collection
        (?:/([{_CHARS}]+))?)?  # rkey
     $""", re.VERBOSE)
 
@@ -1359,10 +1359,21 @@ class Bluesky(Source):
       if preview:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
         return creation_result(description=preview_description)
-    #else:
-    #    resp = self._post(API_LIKE % base_id)
-     #   resp['url'] += f'#liked-by-{self.user_id}'
-      #  resp['type'] = 'like'
+      else:
+        like_atp = from_as1(obj)
+        result = self.client.com.atproto.repo.createRecord({
+          'repo': self.did,
+          'collection': like_atp['$type'],
+          'record': like_atp,
+        })
+        return creation_result({
+          'id': result['uri'],
+          'url': at_uri_to_web_url(result['uri'], handle=self.handle),
+        })
+
+        resp = self._post(API_LIKE % base_id)
+        resp['url'] += f'#liked-by-{self.user_id}'
+        resp['type'] = 'like'
 
     elif type == 'activity' and verb == 'share':
       if not base_url:
@@ -1409,11 +1420,11 @@ class Bluesky(Source):
 
       else:
         blobs = self.upload_media(images)
-        post_at = from_as1(obj, 'app.bsky.feed.post', blobs=blobs)
+        post_atp = from_as1(obj, blobs=blobs)
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
-          'collection': 'app.bsky.feed.post',
-          'record': post_at
+          'collection': post_atp['$type'],
+          'record': post_atp,
         })
         return creation_result({
           'id': result['uri'],
