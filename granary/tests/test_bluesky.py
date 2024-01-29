@@ -1229,56 +1229,36 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.post')
   def test_create_reply(self, mock_post):
-    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
-    mock_post.return_value = requests_response({'uri': at_uri})
+    for in_reply_to in ['at://did/app.bsky.feed.post/parent-tid',
+                        'https://bsky.app/profile/did/post/parent-tid']:
+      with self.subTest(in_reply_to=in_reply_to):
+        at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+        mock_post.return_value = requests_response({'uri': at_uri})
 
-    self.assert_equals({
-      'id': at_uri,
-      'url': 'https://bsky.app/profile/handull/post/abc123',
-    }, self.bs.create(REPLY_AS['object']).content)
+        self.assert_equals({
+          'id': at_uri,
+          'url': 'https://bsky.app/profile/handull/post/abc123',
+        }, self.bs.create({
+          **REPLY_AS['object'],
+          'inReplyTo': in_reply_to,
+        }).content)
 
-    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
-      'repo': 'did:dyd',
-      'collection': 'app.bsky.feed.post',
-      'record': REPLY_BSKY,
-    })
+        self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+          'repo': 'did:dyd',
+          'collection': 'app.bsky.feed.post',
+          'record': REPLY_BSKY,
+        })
 
   def test_preview_reply(self):
-    preview = self.bs.preview_create(REPLY_AS['object'])
-    self.assertIn('<span class="verb">reply</span> to <a href="https://bsky.app/profile/did/post/parent-tid">this post</a>:', preview.description)
-    self.assert_equals('I hereby reply to this', preview.content)
-
-  @patch('requests.post')
-  def test_create_reply_remote(self, mock_post):
-    url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar',
-      'in_reply_to_id': STATUS_REMOTE['id'],
-    }, response=POST)
-    self.mox.ReplayAll()
-
-    got = self.bs.create({
-      'content': 'foo ☕ bar',
-      'inReplyTo': [{'url': url}],
-    })
-    self.assert_equals(POST, got.content, got)
-
-  def test_preview_reply_remote(self):
-    url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.mox.ReplayAll()
-
-    preview = self.bs.preview_create({
-      'content': 'foo ☕ bar',
-      'inReplyTo': [{'url': url}],
-    })
-    self.assertIn(
-      f'<span class="verb">reply</span> to <a href="{url}">this post</a>: ',
-      preview.description)
-    self.assert_equals('foo ☕ bar', preview.content)
+    for in_reply_to in ['at://did/app.bsky.feed.post/parent-tid',
+                        'https://bsky.app/profile/did/post/parent-tid']:
+      with self.subTest(in_reply_to=in_reply_to):
+        preview = self.bs.preview_create({
+          **REPLY_AS['object'],
+          'inReplyTo': in_reply_to,
+        })
+        self.assertIn('<span class="verb">reply</span> to <a href="https://bsky.app/profile/did/post/parent-tid">this post</a>:', preview.description)
+        self.assert_equals('I hereby reply to this', preview.content)
 
   @patch('requests.post')
   def test_create_non_atproto_reply(self, mock_post):

@@ -1309,7 +1309,6 @@ class Bluesky(Source):
     assert verb != 'post', 'For post activities, use bare AS1 object, not activity'
 
     base_obj = self.base_object(obj)
-    util.d(base_obj)
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 
