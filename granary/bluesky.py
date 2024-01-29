@@ -273,6 +273,9 @@ def from_as1(obj, out_type=None, blobs=None):
     obj = inner_obj
 
   type = as1.object_type(obj)
+  if not type:
+    raise ValueError(f"Missing objectType or verb")
+
   actor = as1.get_object(activity, 'actor')
   if blobs is None:
     blobs = {}
