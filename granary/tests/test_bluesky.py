@@ -1219,7 +1219,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'id': at_uri,
       'url': 'https://bsky.app/profile/handull/post/abc123',
-    }, self.bs.create(POST_AS).content)
+    }, self.bs.create(POST_AS['object']).content)
 
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': 'did:dyd',
@@ -1235,7 +1235,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'id': at_uri,
       'url': 'https://bsky.app/profile/handull/post/abc123',
-    }, self.bs.create(REPLY_AS).content)
+    }, self.bs.create(REPLY_AS['object']).content)
 
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': 'did:dyd',
@@ -1244,9 +1244,9 @@ class BlueskyTest(testutil.TestCase):
     })
 
   def test_preview_reply(self):
-    preview = self.bs.preview_create(REPLY_AS)
-    self.assertIn('<span class="verb">reply</span> to <a href="http://foo.com/web/statuses/456">this post</a>: ', preview.description)
-    self.assert_equals('foo ☕ bar', preview.content)
+    preview = self.bs.preview_create(REPLY_AS['object'])
+    self.assertIn('<span class="verb">reply</span> to <a href="https://bsky.app/profile/did/post/parent-tid">this post</a>:', preview.description)
+    self.assert_equals('I hereby reply to this', preview.content)
 
   @patch('requests.post')
   def test_create_reply_remote(self, mock_post):

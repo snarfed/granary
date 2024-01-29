@@ -1306,13 +1306,14 @@ class Bluesky(Source):
     assert self.did
     type = obj.get('objectType')
     verb = obj.get('verb')
+    assert verb != 'post', 'For post activities, use bare AS1 object, not activity'
 
     base_obj = self.base_object(obj)
+    util.d(base_obj)
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 
-    is_reply = (type == 'comment' or obj.get('inReplyTo')
-                or (verb == 'post' and as1.get_object(obj).get('inReplyTo')))
+    is_reply = type == 'comment' or obj.get('inReplyTo')
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
                               [a for a in atts if a.get('objectType') == 'image'])
@@ -1354,7 +1355,7 @@ class Bluesky(Source):
           error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/like\">{self.TYPE_LABELS['like']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/like\">u-like-of link</a>.")
 
       if preview:
-        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
         return creation_result(description=preview_description)
     #else:
     #    resp = self._post(API_LIKE % base_id)
@@ -1379,7 +1380,7 @@ class Bluesky(Source):
           (type == 'activity' and verb == 'post')):  # probably a bookmark
       data = {'status': content}
       if is_reply and base_url:
-        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
         data['in_reply_to_id'] = base_id
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
