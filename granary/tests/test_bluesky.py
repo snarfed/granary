@@ -1213,36 +1213,43 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.post')
   def test_create_post(self, mock_post):
-    mock_post.return_value = requests_response({
-      'uri': 'at://did:me/app.bsky.feed.post/abc123',
-    })
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    mock_post.return_value = requests_response({'uri': at_uri})
 
     self.assert_equals({
-      'id': 'at://did:me/app.bsky.feed.post/abc123',
+      'id': at_uri,
       'url': 'https://bsky.app/profile/handull/post/abc123',
     }, self.bs.create(POST_AS).content)
+
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': 'did:dyd',
       'collection': 'app.bsky.feed.post',
       'record': POST_BSKY,
     })
 
-  def test_create_reply(self):
-    self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar',
-      'in_reply_to_id': '456',
-    }, response=POST)
-    self.mox.ReplayAll()
+  @patch('requests.post')
+  def test_create_reply(self, mock_post):
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    mock_post.return_value = requests_response({'uri': at_uri})
 
-    result = self.bs.create(REPLY_OBJECT)
-    self.assert_equals(POST, result.content, result)
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(REPLY_AS).content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': 'did:dyd',
+      'collection': 'app.bsky.feed.post',
+      'record': REPLY_BSKY,
+    })
 
   def test_preview_reply(self):
     preview = self.bs.preview_create(REPLY_OBJECT)
     self.assertIn('<span class="verb">reply</span> to <a href="http://foo.com/web/statuses/456">this post</a>: ', preview.description)
     self.assert_equals('foo ☕ bar', preview.content)
 
-  def test_create_reply_remote(self):
+  @patch('requests.post')
+  def test_create_reply_remote(self, mock_post):
     url = STATUS_REMOTE['url']
     self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
                     response={'statuses': [STATUS_REMOTE]})
@@ -1273,7 +1280,8 @@ class BlueskyTest(testutil.TestCase):
       preview.description)
     self.assert_equals('foo ☕ bar', preview.content)
 
-  def test_create_non_atproto_reply(self):
+  @patch('requests.post')
+  def test_create_non_atproto_reply(self, mock_post):
     self.expect_get(API_SEARCH, params={'q': 'http://not/atproto', 'resolve': True},
                     response={})
     self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'}, response=POST)
@@ -1285,19 +1293,12 @@ class BlueskyTest(testutil.TestCase):
     })
     self.assert_equals(POST, got.content, got)
 
-  def test_create_like_with_like_verb(self):
-    self._test_create_like('like')
-
-  def test_create_like_with_like_verb(self):
-    self._test_create_like('like')
-
-  def _test_create_like(self, verb):
+  @patch('requests.post')
+  def test_create_like(self):
     self.expect_post(API_LIKE % '123', POST)
     self.mox.ReplayAll()
 
-    obj = copy.deepcopy(LIKE)
-    obj['verb'] = verb
-    got = self.bs.create(obj).content
+    got = self.bs.create(LIKE).content
     self.assert_equals('like', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123#liked-by-23507', got['url'])
 
@@ -1306,7 +1307,8 @@ class BlueskyTest(testutil.TestCase):
     preview = self.bs.preview_create(obj)
     self.assertIn('<span class="verb">like</span> <a href="http://foo.com/@snarfed/123">this post</a>: ', preview.description)
 
-  def test_create_like_remote(self):
+  @patch('requests.post')
+  def test_create_like_remote(self, mock_post):
     url = STATUS_REMOTE['url']
     self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
                     response={'statuses': [STATUS_REMOTE]})
@@ -1328,7 +1330,8 @@ class BlueskyTest(testutil.TestCase):
       f'<span class="verb">like</span> <a href="{url}">this post</a>: ',
       preview.description)
 
-  def test_create_repost(self):
+  @patch('requests.post')
+  def test_create_repost(self, mock_post):
     self.expect_post(API_REPOST % '123', POST)
     self.mox.ReplayAll()
 
@@ -1340,7 +1343,8 @@ class BlueskyTest(testutil.TestCase):
     preview = self.bs.preview_create(SHARE_ACTIVITY)
     self.assertIn('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this post</a>: ', preview.description)
 
-  def test_create_repost_remote(self):
+  @patch('requests.post')
+  def test_create_repost_remote(self, mock_post):
     url = STATUS_REMOTE['url']
     self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
                     response={'statuses': [STATUS_REMOTE]})
@@ -1380,7 +1384,8 @@ class BlueskyTest(testutil.TestCase):
     result = bs.create(OBJECT)
     self.assert_equals(POST, result.content, result)
 
-  def test_create_with_media(self):
+  @patch('requests.post')
+  def test_create_with_media(self, mock_post):
     self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
     self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 1'}, data={})
     self.expect_post(API_STATUSES, json={
@@ -1394,7 +1399,8 @@ class BlueskyTest(testutil.TestCase):
     result = self.bs.create(obj)
     self.assert_equals(POST, result.content, result)
 
-  def test_create_with_too_many_media(self):
+  @patch('requests.post')
+  def test_create_with_too_many_media(self, mock_post):
     image_urls = [f'http://my/picture/{i}' for i in range(MAX_IMAGES + 1)]
     obj = {
       'objectType': 'note',
