@@ -1318,39 +1318,23 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.post')
   def test_create_repost(self, mock_post):
-    self.expect_post(API_REPOST % '123', POST)
-    self.mox.ReplayAll()
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    mock_post.return_value = requests_response({'uri': at_uri})
 
-    got = self.bs.create(SHARE_ACTIVITY).content
-    self.assert_equals('repost', got['type'])
-    self.assert_equals('http://foo.com/@snarfed/123', got['url'])
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(REPOST_AS).content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.repost',
+      'record': REPOST_BSKY,
+    })
 
   def test_preview_repost(self):
-    preview = self.bs.preview_create(SHARE_ACTIVITY)
-    self.assertIn('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this post</a>: ', preview.description)
-
-  @patch('requests.post')
-  def test_create_repost_remote(self, mock_post):
-    url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.expect_post(API_REPOST % '999', POST)
-    self.mox.ReplayAll()
-
-    got = self.bs.create(SHARE_REMOTE).content
-    self.assert_equals('repost', got['type'])
-    self.assert_equals('http://foo.com/@snarfed/123', got['url'])
-
-  def test_preview_repost_remote(self):
-    url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.mox.ReplayAll()
-
-    preview = self.bs.preview_create(SHARE_REMOTE)
-    self.assertIn(
-      f'<span class="verb">boost</span> <a href="{url}">this post</a>: ',
-      preview.description)
+    preview = self.bs.preview_create(REPOST_AS)
+    self.assertIn('<span class="verb">repost</span> <a href="https://bsky.app/profile/alice.com/post/tid">this post</a>:', preview.description)
 
   def test_preview_with_media(self):
     preview = self.bs.preview_create(MEDIA_OBJECT)

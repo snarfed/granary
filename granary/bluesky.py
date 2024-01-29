@@ -1371,10 +1371,6 @@ class Bluesky(Source):
           'url': at_uri_to_web_url(result['uri'], handle=self.handle),
         })
 
-        resp = self._post(API_LIKE % base_id)
-        resp['url'] += f'#liked-by-{self.user_id}'
-        resp['type'] = 'like'
-
     elif type == 'activity' and verb == 'share':
       if not base_url:
         return creation_result(
@@ -1383,11 +1379,19 @@ class Bluesky(Source):
           error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/repost\">{self.TYPE_LABELS['repost']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/repost\">repost-of</a> link.")
 
       if preview:
-          preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+          preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
           return creation_result(description=preview_description)
-      #else:
-      #  resp = self._post(API_REPOST % base_id)
-      #  resp['type'] = 'repost'
+      else:
+        repost_atp = from_as1(obj)
+        result = self.client.com.atproto.repo.createRecord({
+          'repo': self.did,
+          'collection': repost_atp['$type'],
+          'record': repost_atp,
+        })
+        return creation_result({
+          'id': result['uri'],
+          'url': at_uri_to_web_url(result['uri'], handle=self.handle),
+        })
 
     elif (type in ('note', 'article') or is_reply or
           (type == 'activity' and verb == 'post')):  # probably a bookmark
