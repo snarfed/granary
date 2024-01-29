@@ -677,7 +677,7 @@ class Mastodon(source.Source):
       data = {'status': content}
 
       if is_reply and base_url:
-        preview_description += f"add a <span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
         data['in_reply_to_id'] = base_id
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
