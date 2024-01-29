@@ -519,6 +519,15 @@ class BlueskyTest(testutil.TestCase):
       with self.assertRaises(ValueError):
         web_url_to_at_uri(url)
 
+  def test_from_as1_missing_objectType_or_verb(self):
+    for obj in [
+        {'content': 'foo'},
+        {'objectType': 'activity', 'content': 'foo'},
+    ]:
+      with self.subTest(obj=obj):
+        with self.assertRaises(ValueError):
+          from_as1(obj)
+
   def test_from_as1_unsupported_out_type(self):
     with self.assertRaises(ValueError):
       from_as1({'objectType': 'image'}, out_type='foo')  # no matching objectType
