@@ -3,11 +3,12 @@
 Most tests are via files in testdata/.
 """
 import copy
-from unittest.mock import patch
+from io import BytesIO
+from unittest.mock import ANY, patch
 
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
-from oauth_dropins.webutil.util import trim_nulls
+from oauth_dropins.webutil.util import HTTP_TIMEOUT, trim_nulls
 import requests
 
 from ..bluesky import (
@@ -1336,12 +1337,6 @@ class BlueskyTest(testutil.TestCase):
     preview = self.bs.preview_create(REPOST_AS)
     self.assertIn('<span class="verb">repost</span> <a href="https://bsky.app/profile/alice.com/post/tid">this post</a>:', preview.description)
 
-  def test_preview_with_media(self):
-    preview = self.bs.preview_create(MEDIA_OBJECT)
-    self.assertEqual('<span class="verb">post</span>:', preview.description)
-    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="a fun image" />',
-                     preview.content)
-
   def test_preview_create_override_truncate_text_length(self):
     bs = Bluesky(INSTANCE, access_token='towkin',
                  user_id=ACCOUNT['id'], truncate_text_length=8)
@@ -1354,20 +1349,49 @@ class BlueskyTest(testutil.TestCase):
     result = bs.create(OBJECT)
     self.assert_equals(POST, result.content, result)
 
-  @patch('requests.post')
-  def test_create_with_media(self, mock_post):
-    self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
-    self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 1'}, data={})
-    self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar',
-      'media_ids': ['a', 'b'],
-    }, response=POST)
-    self.mox.ReplayAll()
+  def test_preview_with_media(self):
+    preview = self.bs.preview_create(POST_AS_IMAGES['object'])
+    self.assertEqual('<span class="verb">post</span>:', preview.description)
+    self.assertEqual('My original post<br /><br /><img src="https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim" alt="my alt text" />',
+                     preview.content)
 
-    obj = copy.deepcopy(MEDIA_OBJECT)
-    del obj['image']['displayName']
-    result = self.bs.create(obj)
-    self.assert_equals(POST, result.content, result)
+  @patch('requests.post')
+  @patch('requests.get')
+  def test_create_with_media(self, mock_get, mock_post):
+    mock_get.return_value = requests_response(
+      'pic data', headers={'Content-Type': 'my/pic'})
+
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    mock_post.side_effect = [
+      requests_response({'blob': NEW_BLOB}),
+      requests_response({'uri': at_uri}),
+    ]
+
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(POST_AS_IMAGES['object']).content)
+
+    mock_get.assert_called_with(NEW_BLOB_URL, stream=True, timeout=HTTP_TIMEOUT,
+                                headers={'User-Agent': util.user_agent})
+    mock_post.assert_any_call(
+      'https://bsky.social/xrpc/com.atproto.repo.uploadBlob',
+      json=None,
+      data=ANY,
+      headers={
+        'Authorization': 'Bearer towkin',
+        'Content-Type': 'my/pic',
+        'User-Agent': util.user_agent,
+      })
+    # lexrpc.Client passes a BytesIO as data. sadly requests reads from that
+    # buffer and then closes it, so we can't check its contents.
+    # self.assertEqual(b'pic data', repr(mock_post.call_args_list[0][1]['data']))
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': POST_BSKY_IMAGES,
+    })
 
   @patch('requests.post')
   def test_create_with_too_many_media(self, mock_post):
