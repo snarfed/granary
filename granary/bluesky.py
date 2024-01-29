@@ -59,6 +59,8 @@ BSKY_APP_TYPE_TO_COLLECTION = {
   name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
 }
 
+# TODO: load from app.bsky.embed.images lexicon
+# https://github.com/snarfed/atproto/blob/c0489626327e1ac9c08961ad9ce828793d0d1d43/lexicons/app/bsky/embed/images.json#L13
 MAX_IMAGES = 4
 
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
@@ -452,7 +454,6 @@ def from_as1(obj, out_type=None, blobs=None):
           'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }
-      breakpoint()
       images_record_embed = {
         '$type': 'app.bsky.embed.images',
         'images': [{
@@ -958,8 +959,7 @@ class Bluesky(Source):
   DOMAIN = 'bsky.app'
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
-  TRUNCATE_TEXT_LENGTH = 300  # TODO: load from feed.post lexicon
-  TRUNCATE_URL_LENGTH = 33
+  TRUNCATE_TEXT_LENGTH = 300  # TODO: load from app.bsky.feed.post lexicon
   POST_ID_RE = AT_URI_PATTERN
   TYPE_LABELS = {
     'post': 'post',
@@ -1066,9 +1066,9 @@ class Bluesky(Source):
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
                               fetch_likes=False, fetch_shares=False,
-                              include_shares=True, fetch_events=False,
-                              fetch_mentions=False, search_query=None,
-                              start_index=None, count=None, cache=None, **kwargs):
+                              include_shares=True, fetch_mentions=False,
+                              search_query=None, start_index=None, count=None,
+                              cache=None, **kwargs):
     """Fetches posts and converts them to AS1 activities.
 
     See :meth:`Source.get_activities_response` for more information.
@@ -1270,8 +1270,6 @@ class Bluesky(Source):
         ret += self._recurse_replies(r)
     return ret
 
-  # Publishing
-
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Creates a post, reply, repost, or like.
 
@@ -1313,13 +1311,10 @@ class Bluesky(Source):
     base_url = base_obj.get('url')
 
     is_reply = type == 'comment' or obj.get('inReplyTo')
-    is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
                               [a for a in atts if a.get('objectType') == 'image'])
-    videos = util.dedupe_urls([obj] + [a for a in atts if a.get('objectType') == 'video'],
-                              key='stream')
-    has_media = (images or videos) and (type in ('note', 'article') or is_reply)
+    has_media = images and (type in ('note', 'article') or is_reply)
 
     # prefer displayName over content for articles
     #
@@ -1331,7 +1326,7 @@ class Bluesky(Source):
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
 
     if not content:
-      if type == 'activity' and not is_rsvp:
+      if type == 'activity':
         content = verb
       elif has_media:
         content = ''
@@ -1349,7 +1344,7 @@ class Bluesky(Source):
 
     post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
 
-    if type == 'activity' and verb in ('like', 'favorite'):
+    if type == 'activity' and verb == 'like':
       if not base_url:
         return creation_result(
           abort=True,
@@ -1360,8 +1355,8 @@ class Bluesky(Source):
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
         return creation_result(description=preview_description)
     #else:
-    #    resp = self._post(API_FAVORITE % base_id)
-     #   resp['url'] += f'#favorited-by-{self.user_id}'
+    #    resp = self._post(API_LIKE % base_id)
+     #   resp['url'] += f'#liked-by-{self.user_id}'
       #  resp['type'] = 'like'
 
     elif type == 'activity' and verb == 'share':
@@ -1375,10 +1370,10 @@ class Bluesky(Source):
           preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
           return creation_result(description=preview_description)
       #else:
-      #  resp = self._post(API_REBLOG % base_id)
+      #  resp = self._post(API_REPOST % base_id)
       #  resp['type'] = 'repost'
 
-    elif (type in ('note', 'article') or is_reply or is_rsvp or
+    elif (type in ('note', 'article') or is_reply or
           (type == 'activity' and verb == 'post')):  # probably a bookmark
       data = {'status': content}
       if is_reply and base_url:
@@ -1387,12 +1382,14 @@ class Bluesky(Source):
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
 
-      if len(videos):
+      videos = util.dedupe_urls(
+        [obj] + [a for a in atts if a.get('objectType') == 'video'], key='stream')
+      if videos:
         logger.warning(f'Found {len(videos)} videos, but Bluesky doesn\'t support video yet.')
-      num_images = len(images)
-      if num_images > MAX_IMAGES:
+
+      if len(images) > MAX_IMAGES:
         images = images[:MAX_IMAGES]
-        logger.warning(f'Found {num_images} images! Only using the first {MAX_IMAGES}: {images!r}')
+        logger.warning(f'Found {len(images)} images! Only using the first {MAX_IMAGES}: {images!r}')
 
       if preview:
         media_previews = [
@@ -1428,7 +1425,7 @@ class Bluesky(Source):
   def base_object(self, obj):
     """Returns the "base" Bluesky object that an object operates on.
 
-    If the object is a reply, boost, or favorite of a Bluesky post, this returns
+    If the object is a reply, repost, or like of a Bluesky post, this returns
     that post object. The id in the returned object is the AT protocol URI,
     while the URL is the bsky.app web URL.
 
@@ -1468,9 +1465,7 @@ class Bluesky(Source):
         fetch.raise_for_status()
         upload = self.client.com.atproto.repo.uploadBlob(
           input=fetch.raw,
-          headers={
-            'Content-Type': fetch.headers['Content-Type'],
-          }
+          headers={'Content-Type': fetch.headers['Content-Type']}
         )
 
       blobs[url] = upload['blob']
