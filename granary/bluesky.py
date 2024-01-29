@@ -1311,7 +1311,8 @@ class Bluesky(Source):
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 
-    is_reply = type == 'comment' or obj.get('inReplyTo')
+    is_reply = (type == 'comment' or obj.get('inReplyTo')
+                or (verb == 'post' and as1.get_object(obj).get('inReplyTo')))
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
                               [a for a in atts if a.get('objectType') == 'image'])
@@ -1321,7 +1322,7 @@ class Bluesky(Source):
     #
     # TODO: handle activities as well as objects? ie pull out ['object'] here if
     # necessary?
-    prefer_content = type == 'note' #or (base_url and is_reply)
+    prefer_content = type == 'note' or (base_url and is_reply)
     preview_description = ''
     content = self._content_for_create(
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
@@ -1378,7 +1379,7 @@ class Bluesky(Source):
           (type == 'activity' and verb == 'post')):  # probably a bookmark
       data = {'status': content}
       if is_reply and base_url:
-        preview_description += f"add a <span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
         data['in_reply_to_id'] = base_id
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"

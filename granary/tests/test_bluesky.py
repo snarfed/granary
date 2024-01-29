@@ -1244,7 +1244,7 @@ class BlueskyTest(testutil.TestCase):
     })
 
   def test_preview_reply(self):
-    preview = self.bs.preview_create(REPLY_OBJECT)
+    preview = self.bs.preview_create(REPLY_AS)
     self.assertIn('<span class="verb">reply</span> to <a href="http://foo.com/web/statuses/456">this post</a>: ', preview.description)
     self.assert_equals('foo ☕ bar', preview.content)
 
