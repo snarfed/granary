@@ -17,6 +17,7 @@ from ..bluesky import (
   Bluesky,
   did_web_to_url,
   from_as1,
+  MAX_IMAGES,
   to_as1,
   url_to_did_web,
   web_url_to_at_uri,
@@ -1194,3 +1195,249 @@ class BlueskyTest(testutil.TestCase):
     ]:
       with self.subTest(input=input):
         self.assertEqual(expected, self.bs.post_id(input))
+
+  def test_preview_post(self):
+    self.bs.TRUNCATE_TEXT_LENGTH = 20
+
+    for content, expected in (
+        ('foo ☕ bar', 'foo ☕ bar'),
+        ('too long, will be ellipsized', 'too long, will be…'),
+        ('<p>foo ☕ <a>bar</a></p>', 'foo ☕ bar'),
+        # TODO
+        # ('#Asdf ☕ bar', '<a href="http://foo.com/tags/Asdf">#Asdf</a> ☕ bar'),
+        # @-mention
+        # ('foo ☕ @alice.com', 'foo ☕ <a href="http://bsky.app/profile/alice.com">@alice.com</a>'),
+        # ('link asdf.com', 'link <a href="http://asdf.com">asdf.com</a>'),
+      ):
+      with self.subTest(content=content, expected=expected):
+        obj = copy.deepcopy(POST_AS['object'])
+        obj['content'] = content
+        got = self.bs.preview_create(obj)
+        self.assertEqual('<span class="verb">post</span>:', got.description)
+        self.assertEqual(expected, got.content)
+
+  def test_create_post(self):
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'},
+                     response=POST)
+    self.mox.ReplayAll()
+
+    result = self.bs.create(OBJECT)
+
+    self.assert_equals(POST, result.content, result)
+    self.assertIsNone(result.error_plain)
+    self.assertIsNone(result.error_html)
+
+  def test_create_reply(self):
+    self.expect_post(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'in_reply_to_id': '456',
+    }, response=POST)
+    self.mox.ReplayAll()
+
+    result = self.bs.create(REPLY_OBJECT)
+    self.assert_equals(POST, result.content, result)
+
+  def test_preview_reply(self):
+    preview = self.bs.preview_create(REPLY_OBJECT)
+    self.assertIn('<span class="verb">reply</span> to <a href="http://foo.com/web/statuses/456">this post</a>: ', preview.description)
+    self.assert_equals('foo ☕ bar', preview.content)
+
+  def test_create_reply_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.expect_post(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'in_reply_to_id': STATUS_REMOTE['id'],
+    }, response=POST)
+    self.mox.ReplayAll()
+
+    got = self.bs.create({
+      'content': 'foo ☕ bar',
+      'inReplyTo': [{'url': url}],
+    })
+    self.assert_equals(POST, got.content, got)
+
+  def test_preview_reply_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.mox.ReplayAll()
+
+    preview = self.bs.preview_create({
+      'content': 'foo ☕ bar',
+      'inReplyTo': [{'url': url}],
+    })
+    self.assertIn(
+      f'<span class="verb">reply</span> to <a href="{url}">this post</a>: ',
+      preview.description)
+    self.assert_equals('foo ☕ bar', preview.content)
+
+  def test_create_non_atproto_reply(self):
+    self.expect_get(API_SEARCH, params={'q': 'http://not/atproto', 'resolve': True},
+                    response={})
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'}, response=POST)
+    self.mox.ReplayAll()
+
+    got = self.bs.create({
+      'content': 'foo ☕ bar',
+      'inReplyTo': [{'url': 'http://not/atproto'}],
+    })
+    self.assert_equals(POST, got.content, got)
+
+  def test_create_like_with_like_verb(self):
+    self._test_create_like('like')
+
+  def test_create_like_with_like_verb(self):
+    self._test_create_like('like')
+
+  def _test_create_like(self, verb):
+    self.expect_post(API_LIKE % '123', POST)
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(LIKE)
+    obj['verb'] = verb
+    got = self.bs.create(obj).content
+    self.assert_equals('like', got['type'])
+    self.assert_equals('http://foo.com/@snarfed/123#liked-by-23507', got['url'])
+
+  def test_preview_like(self):
+    obj = copy.deepcopy(LIKE)
+    preview = self.bs.preview_create(obj)
+    self.assertIn('<span class="verb">like</span> <a href="http://foo.com/@snarfed/123">this post</a>: ', preview.description)
+
+  def test_create_like_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.expect_post(API_LIKE % '999', STATUS_REMOTE)
+    self.mox.ReplayAll()
+
+    got = self.bs.create(LIKE_REMOTE).content
+    self.assert_equals('like', got['type'])
+    self.assert_equals(url + '#liked-by-23507', got['url'])
+
+  def test_preview_like_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.mox.ReplayAll()
+
+    preview = self.bs.preview_create(LIKE_REMOTE)
+    self.assertIn(
+      f'<span class="verb">like</span> <a href="{url}">this post</a>: ',
+      preview.description)
+
+  def test_create_repost(self):
+    self.expect_post(API_REPOST % '123', POST)
+    self.mox.ReplayAll()
+
+    got = self.bs.create(SHARE_ACTIVITY).content
+    self.assert_equals('repost', got['type'])
+    self.assert_equals('http://foo.com/@snarfed/123', got['url'])
+
+  def test_preview_repost(self):
+    preview = self.bs.preview_create(SHARE_ACTIVITY)
+    self.assertIn('<span class="verb">boost</span> <a href="http://foo.com/@snarfed/123">this post</a>: ', preview.description)
+
+  def test_create_repost_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.expect_post(API_REPOST % '999', POST)
+    self.mox.ReplayAll()
+
+    got = self.bs.create(SHARE_REMOTE).content
+    self.assert_equals('repost', got['type'])
+    self.assert_equals('http://foo.com/@snarfed/123', got['url'])
+
+  def test_preview_repost_remote(self):
+    url = STATUS_REMOTE['url']
+    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
+                    response={'statuses': [STATUS_REMOTE]})
+    self.mox.ReplayAll()
+
+    preview = self.bs.preview_create(SHARE_REMOTE)
+    self.assertIn(
+      f'<span class="verb">boost</span> <a href="{url}">this post</a>: ',
+      preview.description)
+
+  def test_preview_with_media(self):
+    preview = self.bs.preview_create(MEDIA_OBJECT)
+    self.assertEqual('<span class="verb">post</span>:', preview.description)
+    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="a fun image" />',
+                     preview.content)
+
+  def test_preview_create_override_truncate_text_length(self):
+    bs = Bluesky(INSTANCE, access_token='towkin',
+                 user_id=ACCOUNT['id'], truncate_text_length=8)
+    got = m.preview_create(OBJECT)
+    self.assertEqual('foo ☕…', got.content)
+
+    self.expect_post(API_STATUSES, json={'status': 'foo ☕…'}, response=POST)
+    self.mox.ReplayAll()
+
+    result = bs.create(OBJECT)
+    self.assert_equals(POST, result.content, result)
+
+  def test_create_with_media(self):
+    self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
+    self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 1'}, data={})
+    self.expect_post(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'media_ids': ['a', 'b'],
+    }, response=POST)
+    self.mox.ReplayAll()
+
+    obj = copy.deepcopy(MEDIA_OBJECT)
+    del obj['image']['displayName']
+    result = self.bs.create(obj)
+    self.assert_equals(POST, result.content, result)
+
+  def test_create_with_too_many_media(self):
+    image_urls = [f'http://my/picture/{i}' for i in range(MAX_IMAGES + 1)]
+    obj = {
+      'objectType': 'note',
+      'image': [{'url': url} for url in image_urls],
+      # duplicate images to check that they're de-duped
+      'attachments': [{'objectType': 'image', 'url': url} for url in image_urls],
+    }
+
+    # test preview
+    preview = self.bs.preview_create(obj)
+    self.assertEqual('<span class="verb">post</span>:', preview.description)
+    self.assertEqual("""\
+<br /><br />\
+&nbsp; <img src="http://my/picture/0" alt="" /> \
+&nbsp; <img src="http://my/picture/1" alt="" /> \
+&nbsp; <img src="http://my/picture/2" alt="" />""",
+                     preview.content)
+
+    # test create
+    for i, url in enumerate(image_urls[:-1]):
+      self.expect_requests_get(f'http://my/picture/{i}', 'pic')
+      self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'}, data={})
+
+    self.expect_post(API_STATUSES, json={
+      'status': '',
+      'media_ids': ['0', '1', '2', '3'],
+    }, response=POST)
+    self.mox.ReplayAll()
+    result = self.bs.create(obj)
+    self.assert_equals(POST, result.content, result)
+
+  def test_delete(self):
+    self.expect_delete(API_STATUS % '456')
+    self.mox.ReplayAll()
+
+    result = self.bs.delete(456)
+    self.assert_equals({'url': 'http://foo.com/web/statuses/456'},
+                       result.content, result)
+    self.assertIsNone(result.error_plain)
+    self.assertIsNone(result.error_html)
+
+  def test_preview_delete(self):
+    got = self.bs.preview_delete('456')
+    self.assertIn('<span class="verb">delete</span> <a href="http://foo.com/web/statuses/456">this post</a>.', got.description)
+    self.assertIsNone(got.error_plain)
+    self.assertIsNone(got.error_html)
