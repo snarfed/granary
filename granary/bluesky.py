@@ -1303,6 +1303,7 @@ class Bluesky(Source):
   def _create(self, obj, preview=None, include_link=OMIT_LINK,
               ignore_formatting=False):
     assert preview in (False, True)
+    assert self.did
     type = obj.get('objectType')
     verb = obj.get('verb')
 
@@ -1400,12 +1401,11 @@ class Bluesky(Source):
           preview_content += '<br /><br />' + ' &nbsp; '.join(media_previews)
 
         return creation_result(content=preview_content,
-                                      description=preview_description)
+                               description=preview_description)
 
       else:
         blobs = self.upload_media(images)
         post_at = from_as1(obj, 'app.bsky.feed.post', blobs=blobs)
-        breakpoint()
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
           'collection': 'app.bsky.feed.post',
