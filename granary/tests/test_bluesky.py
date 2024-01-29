@@ -1269,18 +1269,32 @@ class BlueskyTest(testutil.TestCase):
         self.assertIn('<span class="verb">reply</span> to <a href="https://bsky.app/profile/did/post/parent-tid">this post</a>:', preview.description)
         self.assert_equals('I hereby reply to this', preview.content)
 
-  @patch('requests.post')
-  def test_create_non_atproto_reply(self, mock_post):
-    self.expect_get(API_SEARCH, params={'q': 'http://not/atproto', 'resolve': True},
-                    response={})
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'}, response=POST)
-    self.mox.ReplayAll()
+  # TODO: requires detecting and discarding non-atproto inReplyTo in from_as1
+  # @patch('requests.post')
+  # def test_create_non_atproto_reply(self, mock_post):
+  #   at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+  #   mock_post.return_value = requests_response({'uri': at_uri})
 
-    got = self.bs.create({
-      'content': 'foo ☕ bar',
-      'inReplyTo': [{'url': 'http://not/atproto'}],
-    })
-    self.assert_equals(POST, got.content, got)
+  #   self.assert_equals({
+  #     'id': at_uri,
+  #     'url': 'https://bsky.app/profile/handull/post/abc123',
+  #   }, self.bs.create({
+  #     'objectType': 'note',
+  #     'content': 'I hereby reply to this',
+  #     'inReplyTo': 'https://twitter.com/ugh',
+  #   }).content)
+
+  #   self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+  #     'repo': 'did:dyd',
+  #     'collection': 'app.bsky.feed.post',
+  #     'record': POST_BSKY,
+  #   })
+
+  #   got = self.bs.create({
+  #     'content': 'foo ☕ bar',
+  #     'inReplyTo': [{'url': 'http://not/atproto'}],
+  #   })
+  #   self.assert_equals(POST, got.content, got)
 
   @patch('requests.post')
   def test_create_like(self):
