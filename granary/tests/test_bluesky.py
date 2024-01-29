@@ -390,7 +390,7 @@ POST_AUTHOR_PROFILE_WITH_REPOSTS_AS['object']['tags'][0]['author'].update({
 class BlueskyTest(testutil.TestCase):
 
   def setUp(self):
-    self.bs = Bluesky('handull', access_token='towkin')
+    self.bs = Bluesky(handle='handull', did='did:dyd', access_token='towkin')
     util.now = lambda **kwargs: testutil.NOW
 
   def assert_equals(self, expected, actual, ignore=(), **kwargs):
@@ -398,12 +398,13 @@ class BlueskyTest(testutil.TestCase):
     return super().assert_equals(expected, actual, ignore=ignore, in_order=True,
                                  **kwargs)
 
-  def assert_call(self, mock, url, json=None):
-    mock.assert_any_call(url, data=None, json=json, headers={
-      'Authorization': 'Bearer towkin',
-      'Content-Type': 'application/json',
-      'User-Agent': util.user_agent,
-    })
+  def assert_call(self, mock, method, json=None):
+    mock.assert_any_call(f'https://bsky.social/xrpc/{method}', data=None,
+                         json=json, headers={
+                           'Authorization': 'Bearer towkin',
+                           'Content-Type': 'application/json',
+                           'User-Agent': util.user_agent,
+                         })
 
   def test_at_uri_pattern(self):
     for input, expected in [
@@ -1029,7 +1030,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals([POST_AUTHOR_PROFILE_AS, expected_repost],
                        self.bs.get_activities(group_id=FRIENDS))
 
-    self.assert_call(mock_get, 'https://bsky.social/xrpc/app.bsky.feed.getTimeline')
+    self.assert_call(mock_get, 'app.bsky.feed.getTimeline')
 
   @patch('requests.get')
   def test_get_activities_activity_id(self, mock_get):
@@ -1039,8 +1040,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assert_equals([POST_AUTHOR_PROFILE_AS],
                        self.bs.get_activities(activity_id='at://id'))
-    self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fid&depth=1')
+    self.assert_call(mock_get, 'app.bsky.feed.getPostThread?uri=at%3A%2F%2Fid&depth=1')
 
   def test_get_activities_bad_activity_id(self):
     with self.assertRaises(ValueError):
@@ -1055,8 +1055,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assert_equals([POST_AUTHOR_PROFILE_AS],
                        self.bs.get_activities(group_id=SELF, user_id='alice.com'))
-    self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=alice.com')
+    self.assert_call(mock_get, 'app.bsky.feed.getAuthorFeed?actor=alice.com')
 
   @patch('requests.get')
   def test_get_activities_prefers_did(self, mock_get):
@@ -1066,8 +1065,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.bs.did = 'did:alice'
     self.assert_equals([], self.bs.get_activities(group_id=SELF))
-    self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aalice')
+    self.assert_call(mock_get, 'app.bsky.feed.getAuthorFeed?actor=did%3Aalice')
 
   @patch('requests.get')
   def test_get_activities_with_likes(self, mock_get):
@@ -1088,9 +1086,9 @@ class BlueskyTest(testutil.TestCase):
       [POST_AUTHOR_PROFILE_WITH_LIKES_AS],
       self.bs.get_activities(fetch_likes=True, cache=cache)
     )
-    self.assert_call(mock_get, 'https://bsky.social/xrpc/app.bsky.feed.getTimeline')
+    self.assert_call(mock_get, 'app.bsky.feed.getTimeline')
     self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.feed.getLikes?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid')
+        'app.bsky.feed.getLikes?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid')
     self.assert_equals(1, cache.get('ABL at://did/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
@@ -1112,9 +1110,9 @@ class BlueskyTest(testutil.TestCase):
       [POST_AUTHOR_PROFILE_WITH_REPOSTS_AS],
       self.bs.get_activities(fetch_shares=True, cache=cache)
     )
-    self.assert_call(mock_get, 'https://bsky.social/xrpc/app.bsky.feed.getTimeline')
+    self.assert_call(mock_get, 'app.bsky.feed.getTimeline')
     self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.feed.getRepostedBy?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid')
+        'app.bsky.feed.getRepostedBy?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid')
     self.assert_equals(1, cache.get('ABRP at://did/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
@@ -1144,9 +1142,9 @@ class BlueskyTest(testutil.TestCase):
     cache = {}
     self.assert_equals([THREAD_AS],
                        self.bs.get_activities(fetch_replies=True, cache=cache))
-    self.assert_call(mock_get,'https://bsky.social/xrpc/app.bsky.feed.getTimeline')
+    self.assert_call(mock_get,'app.bsky.feed.getTimeline')
     self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid')
+        'app.bsky.feed.getPostThread?uri=at%3A%2F%2Fdid%2Fapp.bsky.feed.post%2Ftid')
     self.assert_equals(1, cache.get('ABR at://did/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
@@ -1157,8 +1155,7 @@ class BlueskyTest(testutil.TestCase):
     })
 
     self.assert_equals(ACTOR_AS, self.bs.get_actor(user_id='me.com'))
-    self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.actor.getProfile?actor=me.com')
+    self.assert_call(mock_get, 'app.bsky.actor.getProfile?actor=me.com')
 
   @patch('requests.get')
   def test_get_actor_default(self, mock_get):
@@ -1168,8 +1165,7 @@ class BlueskyTest(testutil.TestCase):
     })
 
     self.assert_equals(ACTOR_AS, self.bs.get_actor())
-    self.assert_call(mock_get,
-        'https://bsky.social/xrpc/app.bsky.actor.getProfile?actor=handull')
+    self.assert_call(mock_get, 'app.bsky.actor.getProfile?actor=handull')
 
   @patch('requests.get')
   def test_get_comment(self, mock_get):
@@ -1179,8 +1175,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assert_equals(POST_AUTHOR_PROFILE_AS['object'],
                        self.bs.get_comment(comment_id='at://id'))
-    self.assert_call(mock_get,
-      'https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fid&depth=1')
+    self.assert_call(mock_get, 'app.bsky.feed.getPostThread?uri=at%3A%2F%2Fid&depth=1')
 
   def test_post_id(self):
     for input, expected in [
@@ -1216,16 +1211,21 @@ class BlueskyTest(testutil.TestCase):
         self.assertEqual('<span class="verb">post</span>:', got.description)
         self.assertEqual(expected, got.content)
 
-  def test_create_post(self):
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'},
-                     response=POST)
-    self.mox.ReplayAll()
+  @patch('requests.post')
+  def test_create_post(self, mock_post):
+    mock_post.return_value = requests_response({
+      'uri': 'at://did:me/app.bsky.feed.post/abc123',
+    })
 
-    result = self.bs.create(OBJECT)
-
-    self.assert_equals(POST, result.content, result)
-    self.assertIsNone(result.error_plain)
-    self.assertIsNone(result.error_html)
+    self.assert_equals({
+      'id': 'at://did:me/app.bsky.feed.post/abc123',
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(POST_AS).content)
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': 'did:dyd',
+      'collection': 'app.bsky.feed.post',
+      'record': POST_BSKY,
+    })
 
   def test_create_reply(self):
     self.expect_post(API_STATUSES, json={
