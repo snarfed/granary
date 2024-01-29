@@ -341,15 +341,21 @@ POST_FEED_VIEW_WITH_REPOSTS_BSKY['post']['repostCount'] = 1
 POST_FEED_VIEW_WITH_REPLIES_BSKY = copy.deepcopy(POST_FEED_VIEW_BSKY)
 POST_FEED_VIEW_WITH_REPLIES_BSKY['post']['replyCount'] = 1
 
+LIKE_AS = {
+  'objectType': 'activity',
+  'verb': 'like',
+  'id': 'at://alice.com/app.bsky.feed.like/123',
+  'url': 'https://bsky.app/profile/did/post/tid#liked_by_alice.com',
+  'object': 'at://did/app.bsky.feed.post/tid',
+}
 LIKE_BSKY = {
   '$type': 'app.bsky.feed.like',
   'subject': {
     'uri': 'at://did/app.bsky.feed.post/tid',
     'cid': 'TODO',
   },
-  'createdAt': '2008-08-08T03:04:05',
+  'createdAt': '2022-01-02T03:04:05+00:00',
 }
-
 GET_LIKES_LIKE_BSKY = {
   '$type': 'app.bsky.feed.getLikes#like',
   'indexedAt': NOW.isoformat(),
@@ -904,13 +910,7 @@ class BlueskyTest(testutil.TestCase):
     }, to_as1(REPOST_BSKY, uri='at://alice.com/app.bsky.feed.repost/123'))
 
   def test_to_as1_like_uri(self):
-    self.assert_equals({
-      'objectType': 'activity',
-      'verb': 'like',
-      'id': 'at://alice.com/app.bsky.feed.like/123',
-      'url': 'https://bsky.app/profile/did/post/tid#liked_by_alice.com',
-      'object': 'at://did/app.bsky.feed.post/tid',
-    }, to_as1(LIKE_BSKY, uri='at://alice.com/app.bsky.feed.like/123'))
+    self.assert_equals(LIKE_AS, to_as1(LIKE_BSKY, uri='at://alice.com/app.bsky.feed.like/123'))
 
   def test_to_as1_listView(self):
     self.assert_equals({
@@ -1174,7 +1174,7 @@ class BlueskyTest(testutil.TestCase):
     })
 
     self.assert_equals(ACTOR_AS, self.bs.get_actor())
-    self.assert_call(mock_get, 'app.bsky.actor.getProfile?actor=handull')
+    self.assert_call(mock_get, 'app.bsky.actor.getProfile?actor=did%3Adyd')
 
   @patch('requests.get')
   def test_get_comment(self, mock_get):
@@ -1231,7 +1231,7 @@ class BlueskyTest(testutil.TestCase):
     }, self.bs.create(POST_AS['object']).content)
 
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
-      'repo': 'did:dyd',
+      'repo': self.bs.did,
       'collection': 'app.bsky.feed.post',
       'record': POST_BSKY,
     })
@@ -1253,7 +1253,7 @@ class BlueskyTest(testutil.TestCase):
         }).content)
 
         self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
-          'repo': 'did:dyd',
+          'repo': self.bs.did,
           'collection': 'app.bsky.feed.post',
           'record': REPLY_BSKY,
         })
@@ -1285,7 +1285,7 @@ class BlueskyTest(testutil.TestCase):
   #   }).content)
 
   #   self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
-  #     'repo': 'did:dyd',
+  #     'repo': self.bs.did,
   #     'collection': 'app.bsky.feed.post',
   #     'record': POST_BSKY,
   #   })
@@ -1297,41 +1297,24 @@ class BlueskyTest(testutil.TestCase):
   #   self.assert_equals(POST, got.content, got)
 
   @patch('requests.post')
-  def test_create_like(self):
-    self.expect_post(API_LIKE % '123', POST)
-    self.mox.ReplayAll()
+  def test_create_like(self, mock_post):
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    mock_post.return_value = requests_response({'uri': at_uri})
 
-    got = self.bs.create(LIKE).content
-    self.assert_equals('like', got['type'])
-    self.assert_equals('http://foo.com/@snarfed/123#liked-by-23507', got['url'])
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(LIKE_AS).content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.like',
+      'record': LIKE_BSKY,
+    })
 
   def test_preview_like(self):
-    obj = copy.deepcopy(LIKE)
-    preview = self.bs.preview_create(obj)
-    self.assertIn('<span class="verb">like</span> <a href="http://foo.com/@snarfed/123">this post</a>: ', preview.description)
-
-  @patch('requests.post')
-  def test_create_like_remote(self, mock_post):
-    url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.expect_post(API_LIKE % '999', STATUS_REMOTE)
-    self.mox.ReplayAll()
-
-    got = self.bs.create(LIKE_REMOTE).content
-    self.assert_equals('like', got['type'])
-    self.assert_equals(url + '#liked-by-23507', got['url'])
-
-  def test_preview_like_remote(self):
-    url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.mox.ReplayAll()
-
-    preview = self.bs.preview_create(LIKE_REMOTE)
-    self.assertIn(
-      f'<span class="verb">like</span> <a href="{url}">this post</a>: ',
-      preview.description)
+    preview = self.bs.preview_create(LIKE_AS)
+    self.assertIn('<span class="verb">like</span> <a href="https://bsky.app/profile/did/post/tid">this post</a>:', preview.description)
 
   @patch('requests.post')
   def test_create_repost(self, mock_post):
