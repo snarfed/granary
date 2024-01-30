@@ -1440,6 +1440,41 @@ class Bluesky(Source):
       error_plain=f'Cannot publish type={type}, verb={verb} to Bluesky',
       error_html=f'Cannot publish type={type}, verb={verb} to Bluesky')
 
+  def delete(self, at_uri):
+    """Deletes a record.
+
+    Args:
+      at_uri (str): at:// URI of record delete
+
+    Returns:
+      CreationResult: content is dict with ``url`` and ``id`` fields
+    """
+    match = AT_URI_PATTERN.match(at_uri)
+    if not match:
+      raise ValueError(f'Expected at:// URI, got {at_uri}')
+
+    authority, collection, rkey = match.groups()
+    self.client.com.atproto.repo.deleteRecord({
+      'repo': authority,
+      'collection': collection,
+      'rkey': rkey,
+    })
+    return creation_result({
+      'id': at_uri,
+      'url': at_uri_to_web_url(at_uri),
+    })
+
+  def preview_delete(self, at_uri):
+    """Previews deleting a record.
+
+    Args:
+      at_uri (str): at:// URI of record delete
+
+    Returns:
+      CreationResult:
+    """
+    url = at_uri_to_web_url(at_uri)
+    return creation_result(description=f'<span class="verb">delete</span> <a href="{url}">this</a>.')
 
   def base_object(self, obj):
     """Returns the "base" Bluesky object that an object operates on.
