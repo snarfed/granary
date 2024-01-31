@@ -38,9 +38,9 @@ _CHARS = 'a-zA-Z0-9-.'
 # https://atproto.com/specs/at-uri-scheme#structure
 AT_URI_PATTERN = re.compile(rf"""
     ^at://
-     ([{_CHARS}:]+)           # authority
-      (?:/([{_CHARS}_~]+)     # collection
-       (?:/([{_CHARS}]+))?)?  # rkey
+     (?P<repo>[{_CHARS}:]+)
+      (?:/(?P<collection>[{_CHARS}_~]+)
+       (?:/(?P<rkey>[{_CHARS}]+))?)?
     $""", re.VERBOSE)
 
 # Maps AT Protocol NSID collections to path elements in bsky.app URLs.
@@ -284,6 +284,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     blobs (dict): optional mapping from str URL to ``blob`` dict to use in the
       returned object. If not provided, or if this doesn't have an ``image`` or
       similar URL in the input object, its output blob will be omitted.
+    client (Bluesky): optional; if provided, this will be used to make API calls
+      to PDSes to fetch and populate CIDs for records referenced by replies,
+      likes, reposts, etc.
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -378,11 +381,18 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
   elif type == 'share':
     if not out_type or out_type == 'app.bsky.feed.repost':
+      reposted_uri = obj_to_at_uri(inner_obj)
+      cid = 'TODO'
+      match = AT_URI_PATTERN.match(reposted_uri)
+      if client and match:
+        record = client._client.com.atproto.repo.getRecord(match.groupdict())
+        cid = record.get('cid')
+
       return {
         '$type': 'app.bsky.feed.repost',
         'subject': {
-          'uri': inner_obj.get('id'),
-          'cid': 'TODO',
+          'uri': reposted_uri,
+          'cid': cid,
         },
         'createdAt': obj.get('published') or util.now().isoformat(),
       }
@@ -564,12 +574,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     reply = None
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
-      uri = in_reply_to.get('id') or in_reply_to.get('url')
-      if util.is_web(uri):
-        uri = web_url_to_at_uri(uri)
       parent = {
         '$type': 'com.atproto.repo.strongRef',
-        'uri': uri,
+        'uri': obj_to_at_uri(in_reply_to),
         'cid': 'TODO',
       }
       reply = {

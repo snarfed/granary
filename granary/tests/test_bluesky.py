@@ -563,6 +563,9 @@ class BlueskyTest(testutil.TestCase):
     got = from_as1(POST_AS, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(POST_VIEW_BSKY, got)
 
+  def test_from_as1_post_feed_view(self):
+    self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
+
   def test_from_as1_post_out_type_feedViewPost(self):
     got = from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#feedViewPost')
     self.assert_equals(POST_FEED_VIEW_BSKY, got)
@@ -769,6 +772,32 @@ class BlueskyTest(testutil.TestCase):
     got = from_as1(REPOST_AS, out_type='app.bsky.feed.defs#feedViewPost')
     self.assert_equals(REPOST_BSKY_FEED_VIEW_POST, got)
 
+  def test_from_as1_repost_convert_bsky_app_url(self):
+    repost_as = copy.deepcopy(REPOST_AS)
+    del repost_as['object']['id']
+
+    repost_bsky = copy.deepcopy(REPOST_BSKY)
+    repost_bsky['subject']['uri'] = 'at://alice.com/app.bsky.feed.post/tid'
+    self.assert_equals(repost_bsky, from_as1(repost_as))
+
+  @patch('requests.get')
+  def test_from_as1_repost_client(self, mock_get):
+    mock_get.return_value = requests_response({
+      'uri': 'https://bsky.app/profile/did/post/tid',
+      'cid': 'my-syd',
+      'value': {},
+    })
+
+    expected = copy.deepcopy(REPOST_BSKY)
+    expected['subject']['cid'] = 'my-syd'
+    self.assert_equals(expected, from_as1(REPOST_AS, client=self.bs))
+
+    self.assert_call(mock_get, 'com.atproto.repo.getRecord', json={
+      'repo': 'did',
+      'collection': 'app.bsky.feed.post',
+      'rkey': 'tid',
+    })
+
   def test_from_as1_reply(self):
     self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
     self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS['object']))
@@ -778,7 +807,7 @@ class BlueskyTest(testutil.TestCase):
       got = from_as1(input, out_type='app.bsky.feed.defs#postView')
       self.assert_equals(REPLY_POST_VIEW_BSKY, got)
 
-  def test_from_as1_reply_inReplyTo_bsky_app_url(self):
+  def test_from_as1_reply_convert_bsky_app_url(self):
     reply_as = copy.deepcopy(REPLY_AS)
     reply_as['object']['inReplyTo'] = 'https://bsky.app/profile/did/post/parent-tid'
     self.assert_equals(REPLY_BSKY, from_as1(reply_as))
@@ -869,9 +898,6 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_post_view(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_VIEW_BSKY))
-
-  def test_from_as1_feed_view_post(self):
-    self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
 
   def test_to_as1_post_with_author(self):
     self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_AUTHOR_BSKY))
