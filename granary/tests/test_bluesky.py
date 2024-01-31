@@ -19,6 +19,7 @@ from ..bluesky import (
   did_web_to_url,
   from_as1,
   MAX_IMAGES,
+  obj_to_at_uri,
   to_as1,
   url_to_did_web,
   web_url_to_at_uri,
@@ -523,6 +524,21 @@ class BlueskyTest(testutil.TestCase):
     for url in ('at://foo', 'http://not/bsky.app', 'https://bsky.app/x'):
       with self.assertRaises(ValueError):
         web_url_to_at_uri(url)
+
+  def test_obj_to_at_uri(self):
+    for obj, expected in (
+        ('', ''),
+        ('at://foo.com', 'at://foo.com'),
+        ('https://bsky.app/profile/foo.com', 'at://foo.com'),
+        ('baz biff', 'baz biff'),
+        ({}, ''),
+        ({'id': 'foo'}, 'foo'),
+        ({'id': 'at://foo.com'}, 'at://foo.com'),
+        ({'url': 'https://bsky.app/profile/foo.com'}, 'at://foo.com'),
+        ({'url': ['at://foo.com', 'xyz']}, 'at://foo.com'),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, obj_to_at_uri(obj))
 
   def test_from_as1_missing_objectType_or_verb(self):
     for obj in [

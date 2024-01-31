@@ -242,7 +242,34 @@ def web_url_to_at_uri(url, handle=None, did=None):
     return f'at://{id}'
 
 
-def from_as1(obj, out_type=None, blobs=None):
+def obj_to_at_uri(obj):
+  """Extracts an ``at://`` URI from an AS1 object, if possible.
+
+  Converts bsky.app URLs as needed.
+
+  Args:
+    obj (dict): AS1 object or activity
+
+  Returns:
+    str: ``at://`` URI, hopefully
+  """
+  uri = obj
+  if isinstance(obj, dict):
+    uri = uri.get('id') or as1.get_url(obj)
+
+  if util.is_web(uri):
+    try:
+      return web_url_to_at_uri(uri)
+    except ValueError:
+      pass
+
+  if not uri or not isinstance(uri, str) or not uri.startswith('at://'):
+    logger.warning(f'{uri} is not an at:// URI!')
+
+  return uri
+
+
+def from_as1(obj, out_type=None, blobs=None, client=None):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or

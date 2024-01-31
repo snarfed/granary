@@ -311,6 +311,7 @@ Changelog
   * Don't log in (fetch an access token) eagerly in the constructor; wait until the client makes a call.
   * Prefer DID to handle in API calls that accept either.
   * `at_uri_to_web_url`: support lists.
+  * Add `obj_to_at_uri`.
   * `to_as1`:
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
     * Add new `uri` kwarg.
