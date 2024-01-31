@@ -242,31 +242,37 @@ def web_url_to_at_uri(url, handle=None, did=None):
     return f'at://{id}'
 
 
-def obj_to_at_uri(obj):
-  """Extracts an ``at://`` URI from an AS1 object, if possible.
+def from_as1_to_strong_ref(obj, client=None):
+  """Converts an AS1 object to an ATProto ``com.atproto.repo.strongRef``.
 
-  Converts bsky.app URLs as needed.
+  Uses AS1 ``id`` or ``url`, converting from bsky.app URL to ``at://`` URI if
+  needed.
 
   Args:
     obj (dict): AS1 object or activity
+    client (Bluesky): optional; if provided, this will be used to make API calls
+      to PDSes to fetch and populate the ``cid`` field.
 
   Returns:
-    str: ``at://`` URI, hopefully
+    dict: ATProto ``com.atproto.repo.strongRef`` record
   """
-  uri = obj
-  if isinstance(obj, dict):
-    uri = uri.get('id') or as1.get_url(obj)
+  at_uri = Bluesky.post_id(obj.get('id') or as1.get_url(obj))
+  if not at_uri:
+    return {
+      'uri': at_uri,
+      'cid': '',
+    }
 
-  if util.is_web(uri):
-    try:
-      return web_url_to_at_uri(uri)
-    except ValueError:
-      pass
+  cid = ''
+  match = AT_URI_PATTERN.match(at_uri)
+  if match and client:
+    record = client._client.com.atproto.repo.getRecord(**match.groupdict())
+    cid = record.get('cid')
 
-  if not uri or not isinstance(uri, str) or not uri.startswith('at://'):
-    logger.warning(f'{uri} is not an at:// URI!')
-
-  return uri
+  return {
+    'uri': at_uri,
+    'cid': cid,
+  }
 
 
 def from_as1(obj, out_type=None, blobs=None, client=None):
@@ -995,7 +1001,6 @@ class Bluesky(Source):
     did (str)
     client (lexrpc.Client)
   """
-
   DOMAIN = 'bsky.app'
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'

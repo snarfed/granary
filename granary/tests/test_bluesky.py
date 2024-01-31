@@ -18,8 +18,8 @@ from ..bluesky import (
   Bluesky,
   did_web_to_url,
   from_as1,
+  from_as1_to_strong_ref,
   MAX_IMAGES,
-  obj_to_at_uri,
   to_as1,
   url_to_did_web,
   web_url_to_at_uri,
@@ -525,20 +525,37 @@ class BlueskyTest(testutil.TestCase):
       with self.assertRaises(ValueError):
         web_url_to_at_uri(url)
 
-  def test_obj_to_at_uri(self):
-    for obj, expected in (
-        ('', ''),
-        ('at://foo.com', 'at://foo.com'),
-        ('https://bsky.app/profile/foo.com', 'at://foo.com'),
-        ('baz biff', 'baz biff'),
-        ({}, ''),
-        ({'id': 'foo'}, 'foo'),
-        ({'id': 'at://foo.com'}, 'at://foo.com'),
-        ({'url': 'https://bsky.app/profile/foo.com'}, 'at://foo.com'),
-        ({'url': ['at://foo.com', 'xyz']}, 'at://foo.com'),
+  def test_from_as1_to_strong_ref(self):
+    for obj, at_uri in (
+        ('', None),
+        ('at://foo/bar/baz', 'at://foo/bar/baz'),
+        ('https://bsky.app/profile/foo/post/bar', 'at://foo/app.bsky.feed.post/bar'),
+        ('baz biff', None),
+        ({}, None),
+        ({'id': 'foo'}, None),
+        ({'id': 'at://foo/bar/baz'}, 'at://foo/bar/baz'),
+        ({'url': 'https://bsky.app/profile/foo/post/bar'},
+         'at://foo/app.bsky.feed.post/bar'),
+        ({'url': ['at://foo/bar/baz', 'xyz']}, 'at://foo/bar/baz'),
     ):
       with self.subTest(obj=obj):
-        self.assertEqual(expected, obj_to_at_uri(obj))
+        self.assertEqual({'uri': at_uri, 'cid': ''}, from_as1_to_strong_ref(obj))
+
+  @patch('requests.get')
+  def test_from_as1_to_strong_ref_client(self, mock_get):
+    mock_get.return_value = requests_response({
+      'uri': 'unused',
+      'cid': 'my-syd',
+      'value': {},
+    })
+
+    self.assertEqual({
+      'uri': 'at://foo/app.bsky.feed.post/bar',
+      'cid': 'my-syd',
+    }, from_as1_to_strong_ref({'url': 'https://bsky.app/profile/foo/post/bar'},
+                              client=self.bs))
+
+    self.assert_call(mock_get, 'com.atproto.repo.getRecord?repo=foo&collection=app.bsky.feed.post&rkey=bar')
 
   def test_from_as1_missing_objectType_or_verb(self):
     for obj in [
