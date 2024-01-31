@@ -400,10 +400,8 @@ class BlueskyTest(testutil.TestCase):
     self.bs = Bluesky(handle='handull', did='did:dyd', access_token='towkin')
     util.now = lambda **kwargs: testutil.NOW
 
-  def assert_equals(self, expected, actual, ignore=(), **kwargs):
-    ignore = list(ignore) + ['uri']
-    return super().assert_equals(expected, actual, ignore=ignore, in_order=True,
-                                 **kwargs)
+  def assert_equals(self, expected, actual, **kwargs):
+    return super().assert_equals(expected, actual, in_order=True, **kwargs)
 
   def assert_call(self, mock, method, json=None):
     mock.assert_any_call(f'https://bsky.social/xrpc/{method}', data=None,
@@ -543,15 +541,15 @@ class BlueskyTest(testutil.TestCase):
       from_as1({'objectType': 'person'}, out_type='foo')  # mismatched out_type
 
   def test_from_as1_post(self):
-    self.assert_equals(POST_BSKY, from_as1(POST_AS), ignore=['uri'])
+    self.assert_equals(POST_BSKY, from_as1(POST_AS))
 
   def test_from_as1_post_out_type_postView(self):
     got = from_as1(POST_AS, out_type='app.bsky.feed.defs#postView')
-    self.assert_equals(POST_VIEW_BSKY, got, ignore=['uri'])
+    self.assert_equals(POST_VIEW_BSKY, got)
 
   def test_from_as1_post_out_type_feedViewPost(self):
     got = from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#feedViewPost')
-    self.assert_equals(POST_FEED_VIEW_BSKY, got, ignore=['uri'])
+    self.assert_equals(POST_FEED_VIEW_BSKY, got)
 
   def test_from_as1_post_with_author(self):
     expected = copy.deepcopy(POST_AUTHOR_BSKY)
@@ -763,6 +761,11 @@ class BlueskyTest(testutil.TestCase):
     for input in REPLY_AS, REPLY_AS['object']:
       got = from_as1(input, out_type='app.bsky.feed.defs#postView')
       self.assert_equals(REPLY_POST_VIEW_BSKY, got)
+
+  def test_from_as1_reply_inReplyTo_bsky_app_url(self):
+    reply_as = copy.deepcopy(REPLY_AS)
+    reply_as['object']['inReplyTo'] = 'https://bsky.app/profile/did/post/parent-tid'
+    self.assert_equals(REPLY_BSKY, from_as1(reply_as))
 
   def test_from_as1_follow_no_object(self):
     with self.assertRaises(ValueError):

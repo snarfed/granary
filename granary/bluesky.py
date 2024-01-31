@@ -537,9 +537,12 @@ def from_as1(obj, out_type=None, blobs=None):
     reply = None
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
+      uri = in_reply_to.get('id') or in_reply_to.get('url')
+      if util.is_web(uri):
+        uri = web_url_to_at_uri(uri)
       parent = {
         '$type': 'com.atproto.repo.strongRef',
-        'uri': in_reply_to.get('id') or in_reply_to.get('url'),
+        'uri': uri,
         'cid': 'TODO',
       }
       reply = {
