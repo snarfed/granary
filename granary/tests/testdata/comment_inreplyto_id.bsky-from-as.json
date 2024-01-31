@@ -5,14 +5,12 @@
   "reply": {
     "$type": "app.bsky.feed.post#replyRef",
     "root": {
-      "$type": "com.atproto.repo.strongRef",
-      "uri": "tag:example.com,2017:original/post",
-      "cid": "TODO"
+      "uri": "",
+      "cid": ""
     },
     "parent": {
-      "$type": "com.atproto.repo.strongRef",
-      "uri": "tag:example.com,2017:original/post",
-      "cid": "TODO"
+      "uri": "",
+      "cid": ""
     }
   }
 }

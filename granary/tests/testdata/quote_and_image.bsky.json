@@ -3,7 +3,7 @@
   "post": {
     "$type": "app.bsky.feed.defs#postView",
     "uri": "",
-    "cid": "TODO",
+    "cid": "",
     "record": {
       "$type": "app.bsky.feed.post",
       "text": "I hereby quote",
@@ -13,7 +13,7 @@
         "record" : {
           "$type" : "app.bsky.embed.record",
           "record": {
-            "cid": "TODO",
+            "cid": "",
             "uri": "at://did/app.bsky.feed.post/orig-post-tid"
           }
         },
@@ -35,7 +35,7 @@
         "record": {
           "$type": "app.bsky.embed.record#viewRecord",
           "uri": "at://did/app.bsky.feed.post/orig-post-tid",
-          "cid": "TODO",
+          "cid": "",
           "indexedAt": "2022-01-02T03:04:05+00:00",
           "value": {
             "$type": "app.bsky.feed.post",

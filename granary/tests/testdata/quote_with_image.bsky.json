@@ -3,7 +3,7 @@
   "post": {
     "$type": "app.bsky.feed.defs#postView",
     "uri": "at://did/app.bsky.feed.post/quote-post-tid",
-    "cid": "TODO",
+    "cid": "",
     "record": {
       "$type": "app.bsky.feed.post",
       "text": "I hereby quote",
@@ -11,7 +11,7 @@
       "embed": {
         "$type": "app.bsky.embed.record",
         "record": {
-          "cid": "TODO",
+          "cid": "",
           "uri": "at://did/app.bsky.feed.post/orig-post-tid"
         }
       }
@@ -22,7 +22,7 @@
       "record": {
         "$type": "app.bsky.embed.record#viewRecord",
         "uri": "at://did/app.bsky.feed.post/orig-post-tid",
-        "cid": "TODO",
+        "cid": "",
         "embed": {
           "$type": "app.bsky.embed.images#view",
           "images": [{

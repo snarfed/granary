@@ -3,7 +3,7 @@
   "post": {
     "$type": "app.bsky.feed.defs#postView",
     "uri": "at://did:plc:asdf/app.bsky.feed.post/3jv3wdw2hkt25",
-    "cid": "TODO",
+    "cid": "",
     "author": {
       "$type": "app.bsky.actor.defs#profileViewBasic",
       "did": "did:plc:asdf",

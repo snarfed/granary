@@ -256,10 +256,11 @@ def from_as1_to_strong_ref(obj, client=None):
   Returns:
     dict: ATProto ``com.atproto.repo.strongRef`` record
   """
-  at_uri = Bluesky.post_id(obj.get('id') or as1.get_url(obj))
+  at_uri = Bluesky.post_id((obj.get('id') or as1.get_url(obj))
+                           if isinstance(obj, dict) else obj)
   if not at_uri:
     return {
-      'uri': at_uri,
+      'uri': '',
       'cid': '',
     }
 
@@ -387,19 +388,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
   elif type == 'share':
     if not out_type or out_type == 'app.bsky.feed.repost':
-      reposted_uri = obj_to_at_uri(inner_obj)
-      cid = 'TODO'
-      match = AT_URI_PATTERN.match(reposted_uri)
-      if client and match:
-        record = client._client.com.atproto.repo.getRecord(match.groupdict())
-        cid = record.get('cid')
-
       return {
         '$type': 'app.bsky.feed.repost',
-        'subject': {
-          'uri': reposted_uri,
-          'cid': cid,
-        },
+        'subject': from_as1_to_strong_ref(inner_obj, client=client),
         'createdAt': obj.get('published') or util.now().isoformat(),
       }
     elif out_type == 'app.bsky.feed.defs#reasonRepost':
@@ -418,10 +409,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
   elif type == 'like':
     return {
       '$type': 'app.bsky.feed.like',
-      'subject': {
-        'uri': inner_obj.get('id'),
-        'cid': 'TODO',
-      },
+      'subject': from_as1_to_strong_ref(inner_obj, client=client),
       'createdAt': obj.get('published') or util.now().isoformat(),
     }
 
@@ -536,10 +524,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         }
         record_record_embed = {
           '$type': f'app.bsky.embed.record',
-          'record': {
-            'cid': 'TODO',
-            'uri': id or url,
-          }
+          'record': from_as1_to_strong_ref(att, client=client),
         }
       else:
         # external link
@@ -580,17 +565,14 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     reply = None
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
-      parent = {
-        '$type': 'com.atproto.repo.strongRef',
-        'uri': obj_to_at_uri(in_reply_to),
-        'cid': 'TODO',
-      }
+      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client)
       reply = {
         '$type': 'app.bsky.feed.post#replyRef',
         # we don't know what the actual root is, so just use parent. callers can
         # look it up and override if they really need it.
-        'root': parent,
-        'parent': parent,
+        # TODO: fix now that we're fetching parent with client
+        'root': parent_ref,
+        'parent': parent_ref,
       }
 
     ret = trim_nulls({
@@ -613,7 +595,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     ret = trim_nulls({
       '$type': 'app.bsky.feed.defs#postView',
       'uri': obj.get('id') or obj.get('url') or '',
-      'cid': 'TODO',
+      'cid': '',
       'record': ret,
       'author': author,
       'embed': embed,
@@ -1402,7 +1384,7 @@ class Bluesky(Source):
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
         return creation_result(description=preview_description)
       else:
-        like_atp = from_as1(obj)
+        like_atp = from_as1(obj, client=self)
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
           'collection': like_atp['$type'],
@@ -1424,7 +1406,7 @@ class Bluesky(Source):
           preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
           return creation_result(description=preview_description)
       else:
-        repost_atp = from_as1(obj)
+        repost_atp = from_as1(obj, client=self)
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
           'collection': repost_atp['$type'],
@@ -1466,7 +1448,7 @@ class Bluesky(Source):
 
       else:
         blobs = self.upload_media(images)
-        post_atp = from_as1(obj, blobs=blobs)
+        post_atp = from_as1(obj, blobs=blobs, client=self)
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
           'collection': post_atp['$type'],

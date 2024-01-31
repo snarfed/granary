@@ -5,8 +5,8 @@
   "embed": {
     "$type": "app.bsky.embed.record",
     "record": {
-      "cid": "TODO",
-      "uri": "https://bsky.app/orig/post"
+      "cid": "",
+      "uri": ""
     }
   }
 }
