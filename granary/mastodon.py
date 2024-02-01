@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 API_ACCOUNT = '/api/v1/accounts/%s'
 API_ACCOUNT_STATUSES = '/api/v1/accounts/%s/statuses'
-API_BLOCKS = '/api/v1/blocks?limit=1000'
+API_BLOCKS = '/api/v1/blocks?limit=100'
 API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
