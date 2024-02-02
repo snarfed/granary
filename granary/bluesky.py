@@ -1457,6 +1457,7 @@ class Bluesky(Source):
       else:
         blobs = self.upload_media(images)
         post_atp = from_as1(obj, blobs=blobs, client=self)
+        post_atp['text'] = content
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
           'collection': post_atp['$type'],

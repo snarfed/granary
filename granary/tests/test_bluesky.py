@@ -24,7 +24,7 @@ from ..bluesky import (
   url_to_did_web,
   web_url_to_at_uri,
 )
-from ..source import ALL, FRIENDS, ME, SELF
+from ..source import ALL, FRIENDS, INCLUDE_LINK, ME, SELF
 
 ACTOR_AS = {
   'objectType': 'person',
@@ -1337,15 +1337,19 @@ class BlueskyTest(testutil.TestCase):
     at_uri = 'at://did:me/app.bsky.feed.post/abc123'
     mock_post.return_value = requests_response({'uri': at_uri})
 
+    post_as = copy.deepcopy(POST_AS['object'])
+    post_as['url'] = 'http://orig'
     self.assert_equals({
       'id': at_uri,
       'url': 'https://bsky.app/profile/handull/post/abc123',
-    }, self.bs.create(POST_AS['object']).content)
+    }, self.bs.create(post_as, include_link=INCLUDE_LINK).content)
 
+    post_bsky = copy.deepcopy(POST_BSKY)
+    post_bsky['text'] += ' (http://orig)'
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
       'collection': 'app.bsky.feed.post',
-      'record': POST_BSKY,
+      'record': post_bsky,
     })
 
   @patch('requests.post')
