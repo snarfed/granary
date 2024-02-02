@@ -1422,7 +1422,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assert_equals({
       'id': at_uri,
-      'url': 'https://bsky.app/profile/handull/post/abc123',
+      'url': 'https://bsky.app/profile/did:alice/post/tid/liked-by',
     }, self.bs.create(LIKE_AS).content)
 
     like_bsky = copy.deepcopy(LIKE_BSKY)
@@ -1435,7 +1435,7 @@ class BlueskyTest(testutil.TestCase):
 
   def test_preview_like(self):
     preview = self.bs.preview_create(LIKE_AS)
-    self.assertIn('<span class="verb">like</span> <a href="https://bsky.app/profile/did:alice/post/tid">this post</a>:', preview.description)
+    self.assertIn('<span class="verb">like</span> <a href="https://bsky.app/profile/did:alice/post/tid">this post</a>.', preview.description)
 
   @patch('requests.post')
   @patch('requests.get')
@@ -1446,7 +1446,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assert_equals({
       'id': at_uri,
-      'url': 'https://bsky.app/profile/handull/post/abc123',
+      'url': 'https://bsky.app/profile/did:alice/post/tid/reposted-by',
     }, self.bs.create(REPOST_AS).content)
 
     repost_bsky = copy.deepcopy(REPOST_BSKY)
@@ -1459,7 +1459,7 @@ class BlueskyTest(testutil.TestCase):
 
   def test_preview_repost(self):
     preview = self.bs.preview_create(REPOST_AS)
-    self.assertIn('<span class="verb">repost</span> <a href="https://bsky.app/profile/alice.com/post/tid">this post</a>:', preview.description)
+    self.assertIn('<span class="verb">repost</span> <a href="https://bsky.app/profile/alice.com/post/tid">this post</a>.', preview.description)
 
   def test_preview_with_media(self):
     preview = self.bs.preview_create(POST_AS_IMAGES['object'])

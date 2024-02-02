@@ -1389,7 +1389,7 @@ class Bluesky(Source):
           error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/like\">{self.TYPE_LABELS['like']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/like\">u-like-of link</a>.")
 
       if preview:
-        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
         return creation_result(description=preview_description)
       else:
         like_atp = from_as1(obj, client=self)
@@ -1400,7 +1400,7 @@ class Bluesky(Source):
         })
         return creation_result({
           'id': result['uri'],
-          'url': at_uri_to_web_url(result['uri'], handle=self.handle),
+          'url': at_uri_to_web_url(like_atp['subject']['uri']) + '/liked-by'
         })
 
     elif type == 'activity' and verb == 'share':
@@ -1411,7 +1411,7 @@ class Bluesky(Source):
           error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/repost\">{self.TYPE_LABELS['repost']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/repost\">repost-of</a> link.")
 
       if preview:
-          preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
+          preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
           return creation_result(description=preview_description)
       else:
         repost_atp = from_as1(obj, client=self)
@@ -1422,7 +1422,7 @@ class Bluesky(Source):
         })
         return creation_result({
           'id': result['uri'],
-          'url': at_uri_to_web_url(result['uri'], handle=self.handle),
+          'url': at_uri_to_web_url(repost_atp['subject']['uri']) + '/reposted-by'
         })
 
     elif (type in ('note', 'article') or is_reply or
