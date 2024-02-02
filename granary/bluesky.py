@@ -1286,7 +1286,7 @@ class Bluesky(Source):
     thread = resp.get('thread')
     if thread:
       ret = self._recurse_replies(thread)
-    return sorted(ret, key = lambda thread: thread.get('post', {}).get('record', {}).get('createdAt'))
+    return sorted(ret, key = lambda thread: thread.get('post', {}).get('record', {}).get('createdAt') or '')
 
   # TODO this ought to take a depth limit.
   def _recurse_replies(self, thread):
