@@ -284,6 +284,38 @@ def from_as1_to_strong_ref(obj, client=None):
   }
 
 
+def base_object(obj):
+  """Returns the "base" Bluesky object that an object operates on.
+
+  If the object is a reply, repost, or like of a Bluesky post, this returns
+  that post object. The id in the returned object is the AT protocol URI,
+  while the URL is the bsky.app web URL.
+
+  Args:
+    obj (dict): ActivityStreams object
+
+  Returns:
+    dict: minimal ActivityStreams object. Usually has at least ``id``; may
+    also have ``url``, ``author``, etc.
+  """
+  for field in ('inReplyTo', 'object', 'target'):
+    for base in util.get_list(obj, field):
+      url = util.get_url(base)
+      if not url:
+        return {}
+      if url.startswith('https://bsky.app/'):
+        return {
+          'id': web_url_to_at_uri(url),
+          'url': url,
+        }
+      if url.startswith('at://'):
+        return {
+          'id': url,
+          'url': at_uri_to_web_url(url),
+        }
+  return {}
+
+
 def from_as1(obj, out_type=None, blobs=None, client=None):
   """Converts an AS1 object to a Bluesky object.
 
@@ -571,7 +603,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
     # in reply to
     reply = None
-    in_reply_to = as1.get_object(obj, 'inReplyTo')
+    in_reply_to = base_object(obj)
     if in_reply_to:
       parent_ref = from_as1_to_strong_ref(in_reply_to, client=client)
       reply = {
@@ -1510,35 +1542,7 @@ class Bluesky(Source):
     return creation_result(description=f'<span class="verb">delete</span> <a href="{url}">this</a>.')
 
   def base_object(self, obj):
-    """Returns the "base" Bluesky object that an object operates on.
-
-    If the object is a reply, repost, or like of a Bluesky post, this returns
-    that post object. The id in the returned object is the AT protocol URI,
-    while the URL is the bsky.app web URL.
-
-    Args:
-      obj (dict): ActivityStreams object
-
-    Returns:
-      dict: minimal ActivityStreams object. Usually has at least ``id``; may
-      also have ``url``, ``author``, etc.
-    """
-    for field in ('inReplyTo', 'object', 'target'):
-      for base in util.get_list(obj, field):
-        url = util.get_url(base)
-        if not url:
-          return {}
-        if url.startswith('https://bsky.app/'):
-          return {
-            'id': web_url_to_at_uri(url),
-            'url': url,
-          }
-        if url.startswith('at://'):
-          return {
-            'id': url,
-            'url': at_uri_to_web_url(url),
-          }
-    return {}
+    return base_object(obj)
 
   def upload_media(self, media):
     blobs = {}
