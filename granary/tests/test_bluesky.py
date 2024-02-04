@@ -240,6 +240,16 @@ REPLY_POST_VIEW_BSKY.update({
   'record': REPLY_BSKY,
 })
 
+# Replies to non-Bluesky posts, but which are syndicated to Bluesky.
+# The object will have several inReplyTo URLs - Granary should pick the
+# correct one.
+REPLY_TO_WEBSITE_AS = copy.deepcopy(REPLY_AS)
+REPLY_TO_WEBSITE_AS['object']['inReplyTo'] = [
+  {'url': 'http://example.com/post'},
+  {'url': 'https://mastodon.social/@alice/post'},
+  {'url': 'https://bsky.app/profile/did:alice/post/parent-tid'},
+]
+
 REPOST_AS = {
   'objectType': 'activity',
   'verb': 'share',
@@ -834,6 +844,13 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_reply(self):
     self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
     self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS['object']))
+
+  def test_from_as1_reply_to_website(self):
+    self.assert_equals(REPLY_BSKY, from_as1(REPLY_TO_WEBSITE_AS))
+    self.assert_equals(REPLY_BSKY, from_as1(REPLY_TO_WEBSITE_AS['object']))
+    reply_to_website_at_uri = copy.deepcopy(REPLY_TO_WEBSITE_AS)
+    reply_to_website_at_uri['object']['inReplyTo'][2]['url'] = 'at://did:alice/app.bsky.feed.post/parent-tid'
+    self.assert_equals(REPLY_BSKY, from_as1(reply_to_website_at_uri))
 
   def test_from_as1_reply_postView(self):
     for input in REPLY_AS, REPLY_AS['object']:
