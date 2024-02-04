@@ -341,6 +341,8 @@ Changelog
   * `get_activities` bug fix: use query params for `/api/v1/notifications` API call, not JSON body.
 * `microformats2`:
   * `object_to_json` bug fix: handle singular `inReplyTo`.
+* `nostr:`
+  * `get_*`: return partial results when the websocket connection is closed prematurely.
 * `rss`:
   * `to_activities`:
     * Use `objectType: note` if `title` isn't set or is a prefix (possibly ellipsized) of `content`/`description`.

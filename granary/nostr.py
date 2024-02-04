@@ -43,7 +43,7 @@ import secrets
 import bech32
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
-from websockets.exceptions import ConnectionClosed
+from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect
 
 from . import as1
@@ -541,9 +541,9 @@ class Nostr(Source):
     while True:
       try:
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
-      except ConnectionClosed as cc:
-        logger.warning(cc)
-        break
+      except ConnectionClosedOK as err:
+        logger.warning(err)
+        return events
 
       logger.debug(f'Received: {msg[:500]}')
       resp = json_loads(msg)
