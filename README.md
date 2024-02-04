@@ -347,6 +347,7 @@ Changelog
 * `rss`:
   * `to_activities`:
     * Use `objectType: note` if `title` isn't set or is a prefix (possibly ellipsized) of `content`/`description`.
+    * Add support for images in `media:content` tags ([#674](https://github.com/snarfed/granary/issues/674)).
 * `Source`:
   * `postprocess_object`: convert HTML links in content to fediverse handles (eg `@user` and `@user@instance`) to `mention` tags.
 

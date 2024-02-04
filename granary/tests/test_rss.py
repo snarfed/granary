@@ -230,3 +230,31 @@ The original post]]></description>
 </rss>
 """)[0]['object'])
 
+  def test_to_activities_media_content_image(self):
+    """Based on Mastodon's RSS. https://github.com/snarfed/granary/issues/674"""
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo bar',
+      'image': [{
+        'url': 'https://files.mastodon.social/abc.png',
+        'mimeType': 'image/png',
+        'length': 97310,
+        'displayName': 'some alt text',
+      }, {
+        'url': 'https://files.mastodon.social/def.jpg',
+      }],
+    }, rss.to_activities(
+"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0" xmlns:webfeeds="http://webfeeds.org/rss/1.0" xmlns:media="http://search.yahoo.com/mrss/">
+<channel>
+  <item>
+    <description>foo bar</description>
+    <media:content url="https://files.mastodon.social/abc.png" type="image/png" fileSize="97310" medium="image">
+      <media:description type="plain">some alt text</media:description>
+    </media:content>
+    <media:content url="https://files.mastodon.social/def.jpg" />
+    </item>
+</channel>
+</rss>
+""")[0]['object'])

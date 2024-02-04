@@ -16,6 +16,7 @@ Notably:
 """
 from datetime import datetime, time, timezone
 import logging
+from itertools import zip_longest
 import mimetypes
 
 import dateutil.parser
@@ -242,13 +243,28 @@ def to_activities(rss):
       author = actor
 
     object_type = 'note'
-    content = entry.get('content', [{}])[0].get('value') or entry.get('description')
+    content = (entry.get('summary')
+               or entry.get('content', [{}])[0].get('value')
+               or entry.get('description'))
     title = entry.get('title')
     if content and title:
       if content.startswith(title.removesuffix('…').removesuffix('...')):
         title = None
       else:
         object_type = 'article'
+
+    images = []
+    for media, alt in zip_longest(util.get_list(entry, 'media_content'),
+                                  util.get_list(entry, 'content'),
+                                  fillvalue={}):
+      if url := media.get('url'):
+        filesize = media.get('filesize')
+        images.append({
+          'url': url,
+          'mimeType': media.get('type'),
+          'length': int(filesize) if util.is_int(filesize) else None,
+          'displayName': alt.get('value'),
+        })
 
     activities.append(Source.postprocess_activity({
       'objectType': 'activity',
@@ -265,6 +281,7 @@ def to_activities(rss):
         'published': iso_datetime('published'),
         'updated': iso_datetime('updated'),
         'author': author,
+        'image': images,
         'tags': [{'displayName': tag.get('term') for tag in entry.get('tags', [])}],
         'attachments': attachments,
         'stream': [a['stream'] for a in attachments],
