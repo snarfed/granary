@@ -300,6 +300,7 @@ Changelog
     * default `objectType` to `article`/`note` and `verb` to `post`
     * convert `link rel=self`/`alternate` to `url`
     * use `displayName` in objects instead of `title`
+    * Interpret entry `link` without `rel` as self link.
   * If `entry.author` doesn't have id or url, default them to feed author's.
 * `bluesky`:
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.

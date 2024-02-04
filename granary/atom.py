@@ -282,7 +282,7 @@ def _atom_to_object(elem, feed_author=None):
     dict: ActivityStreams object
   """
   self_links = [link for link in elem.iterfind('atom:link', NAMESPACES)
-                if link.get('rel') in ('self', 'alternate')
+                if link.get('rel') in ('self', 'alternate', None)
                 and link.get('type', '').split(';')[0] in ('text/html', '')]
   uri = (_text(elem, 'uri')
          or (self_links[0].get('href') if self_links else None)
@@ -400,7 +400,6 @@ def _prepare_activity(a, reader=True):
                   or obj.get('displayName') or obj.get('content') or 'Untitled')
   a['displayName'] = util.ellipsize(xml.sax.saxutils.escape(
     util.parse_html(display_name).get_text('')))
-
 
   children = []
   image_urls_seen = set()

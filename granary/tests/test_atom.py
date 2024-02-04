@@ -305,6 +305,18 @@ class AtomTest(testutil.TestCase):
 </entry>
 """)['object'])
 
+  def test_atom_to_object_link_no_rel(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'hatenablog://entry/6801883189071989588',
+      'url': 'https://foobar.hatenablog.com/entry/2024/01/05',
+    }, atom.atom_to_activity("""\
+<entry xmlns="http://www.w3.org/2005/Atom" xml:lang="ja">
+  <link href="https://foobar.hatenablog.com/entry/2024/01/05"/>
+  <id>hatenablog://entry/6801883189071989588</id>
+</entry>
+""")['object'])
+
   def test_atom_to_object_link_alternate(self):
     self.assert_equals({
       'objectType': 'note',
