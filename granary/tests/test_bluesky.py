@@ -1099,6 +1099,34 @@ class BlueskyTest(testutil.TestCase):
       'tags': [FACET_TAG],
     }), to_as1(bsky))
 
+  def test_to_as1_facet_bad_index_inside_unicode_code_point(self):
+    # byteStart points into the middle of a Unicode code point
+    # https://bsky.app/profile/did:plc:2ythpj4pwwpka2ljkabouubm/post/3kkfszbaiic2g
+    # https://discord.com/channels/1097580399187738645/1097580399187738648/1203118842516082848
+    self.assert_equals({
+      'objectType': 'note',
+      'published': '2007-07-07T03:04:05',
+      'content': 'TIL: DNDEBUGはおいそれと外せない（問題が起こるので外そうとしていたけど思い直している）',
+      'tags': [{
+        'objectType': 'article',
+        'url': 'https://seclists.org/bugtraq/2018/Dec/46',
+      }],
+    }, to_as1({
+       '$type' : 'app.bsky.feed.post',
+       'text' : 'TIL: DNDEBUGはおいそれと外せない（問題が起こるので外そうとしていたけど思い直している）',
+       'createdAt' : '2007-07-07T03:04:05',
+       'facets' : [{
+         'features' : [{
+           '$type' : 'app.bsky.richtext.facet#link',
+           'uri' : 'https://seclists.org/bugtraq/2018/Dec/46',
+         }],
+         'index' : {
+           'byteEnd' : 90,
+           'byteStart' : 50,
+         },
+       }],
+    }))
+
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
     self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB,

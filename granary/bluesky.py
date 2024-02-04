@@ -736,12 +736,16 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       # convert indices from UTF-8 encoded bytes to Unicode chars (code points)
       # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
       byte_start = index.get('byteStart')
-      if byte_start is not None:
-        tag['startIndex'] = len(text.encode()[:byte_start].decode())
       byte_end = index.get('byteEnd')
-      if byte_end is not None:
-        tag['displayName'] = text.encode()[byte_start:byte_end].decode()
-        tag['length'] = len(tag['displayName'])
+
+      try:
+        if byte_start is not None:
+          tag['startIndex'] = len(text.encode()[:byte_start].decode())
+        if byte_end is not None:
+          tag['displayName'] = text.encode()[byte_start:byte_end].decode()
+          tag['length'] = len(tag['displayName'])
+      except UnicodeDecodeError as e:
+        logger.warning(f"Couldn't apply facet {facet} to unicode text: {text}")
 
       tags.append(tag)
 
