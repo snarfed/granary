@@ -598,14 +598,15 @@ class Source(object, metaclass=SourceMeta):
         return tag
 
   @staticmethod
-  def postprocess_activity(activity, webfinger_mentions=False):
+  def postprocess_activity(activity, mentions=False):
     """Does source-independent post-processing of an activity, in place.
 
     Right now just populates the ``title`` field.
 
     Args:
       activity (dict)
-      webfinger_mentions (boolean): whether to detect fediverse @-mentions
+      mentions (boolean): whether to detect @-mention links and convert them to
+        mention tags
     """
     activity = util.trim_nulls(activity)
     # maps object type to human-readable name to use in title
@@ -625,8 +626,7 @@ class Source(object, metaclass=SourceMeta):
     obj = activity.get('object')
 
     if obj:
-      activity['object'] = Source.postprocess_object(
-        obj, webfinger_mentions=webfinger_mentions)
+      activity['object'] = Source.postprocess_object(obj, mentions=mentions)
       if not activity.get('title'):
         verb = DISPLAY_VERBS.get(activity.get('verb'))
         obj_name = obj.get('displayName')
@@ -642,17 +642,18 @@ class Source(object, metaclass=SourceMeta):
     return util.trim_nulls(activity)
 
   @staticmethod
-  def postprocess_object(obj, webfinger_mentions=False):
+  def postprocess_object(obj, mentions=False):
     """Does source-independent post-processing of an object, in place.
 
     * Populates ``location.position`` based on latitude and longitude.
     * Optionally interprets HTML links in content with text starting with ``@``,
-      eg ``@user`` or ``@user@instance``, as fediverse/WebFinger @-mentions
+      eg ``@user`` or ``@user.com`` or ``@user@instance.com``, as @-mentions
       and adds ``mention`` tags for them.
 
     Args:
       obj (dict)
-      webfinger_mentions (boolean): whether to detect fediverse @-mentions
+      mentions (boolean): whether to detect @-mention links and convert them to
+        mention tags
 
     Returns:
       dict: ``obj``, modified in place
@@ -665,8 +666,8 @@ class Source(object, metaclass=SourceMeta):
         # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
         loc['position'] = '%0+10.6f%0+11.6f/' % (lat, lon)
 
-    if webfinger_mentions:
-      # fediverse webfinger @-mentions to mention tags
+    if mentions:
+      # @-mentions to mention tags
       # https://github.com/snarfed/bridgy-fed/issues/493
       content = obj.get('content') or ''
       for a in util.parse_html(content).find_all('a'):

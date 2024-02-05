@@ -349,7 +349,7 @@ Changelog
     * Use `objectType: note` if `title` isn't set or is a prefix (possibly ellipsized) of `content`/`description`.
     * Add support for images in `media:content` tags ([#674](https://github.com/snarfed/granary/issues/674)).
 * `Source`:
-  * `postprocess_object`: convert HTML links in content to fediverse handles (eg `@user` and `@user@instance`) to `mention` tags.
+  * `postprocess_activity/object`: add `mentions` kwarg to convert @-mentions in HTML links to `mention` tags.
 
 
 ### 6.1 - 2023-09-16

@@ -268,7 +268,7 @@ def _atom_to_activity(entry, feed_author=None):
     'inReplyTo': obj.get('inReplyTo'),
   }
 
-  return Source.postprocess_activity(a, webfinger_mentions=True)
+  return Source.postprocess_activity(a, mentions=True)
 
 
 def _atom_to_object(elem, feed_author=None):

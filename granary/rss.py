@@ -286,6 +286,6 @@ def to_activities(rss):
         'attachments': attachments,
         'stream': [a['stream'] for a in attachments],
       },
-    }, webfinger_mentions=True))
+    }, mentions=True))
 
   return util.trim_nulls(activities)
