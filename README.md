@@ -317,7 +317,7 @@ Changelog
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
     * Add new `uri` kwarg.
     * Translate `handle` to `username`, add new `repo_handle` kwarg.
-    * Add support for `app.bsky.feed.repost`, `app.bsky.graph.defs#listView`.
+    * Add support for `app.bsky.feed.repost`, `app.bsky.graph.defs#listView`, `app.bsky.feed.defs#blockedPost`.
     * Add `actor`/`author` based on `repo_did`.
     * Improve `url` field: include custom handles, only use `repo_did/handle` for `app.bsky.actor.profile`.
     * Handle bad facet indices that point inside Unicode code points ([example](https://bsky.app/profile/did:plc:2ythpj4pwwpka2ljkabouubm/post/3kkfszbaiic2g); [discussion](https://discord.com/channels/1097580399187738645/1097580399187738648/1203118842516082848)).

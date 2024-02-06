@@ -1144,6 +1144,22 @@ class BlueskyTest(testutil.TestCase):
        }],
     }))
 
+  def test_to_as1_blockedPost(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'at://did:alice/app.bsky.feed.post/123',
+      'url': 'https://bsky.app/profile/did:alice/post/123',
+      'author': 'did:alice',
+      'blocked': True,
+    }, to_as1({
+      '$type' : 'app.bsky.feed.defs#blockedPost',
+      'uri': 'at://did:alice/app.bsky.feed.post/123',
+      'blocked': True,
+      'blockedAuthor': {
+        'did': 'did:alice',
+      },
+    }))
+
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
     self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB,

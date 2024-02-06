@@ -972,6 +972,17 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                        **kwargs),
     }
 
+  elif type == 'app.bsky.feed.defs#blockedPost':
+    uri = obj.get('uri') or uri
+    return {
+      'objectType': 'note',
+      'id': uri,
+      'url': at_uri_to_web_url(uri),
+      'blocked': True,
+      'author': obj.get('blockedAuthor', {}).get('did'),
+    }
+    return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
+
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')
 
