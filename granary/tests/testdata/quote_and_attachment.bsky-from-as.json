@@ -1,7 +1,7 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "I hereby quote",
-  "createdAt": "2022-01-02T03:04:05+00:00",
+  "createdAt": "2022-01-02T03:04:05.000Z",
   "embed": {
     "$type": "app.bsky.embed.recordWithMedia",
     "record" : {

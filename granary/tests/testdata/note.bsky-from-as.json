@@ -1,7 +1,7 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "too cool to summarize",
-  "createdAt": "2012-02-22T20:26:41",
+  "createdAt": "2012-02-22T20:26:41.000Z",
   "embed": {
     "$type": "app.bsky.embed.images",
     "images": [{

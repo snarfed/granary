@@ -71,14 +71,14 @@ POST_AS = {
     'objectType': 'note',
     'id': 'at://did:alice/app.bsky.feed.post/tid',
     'url': 'https://bsky.app/profile/did:alice/post/tid',
-    'published': '2007-07-07T03:04:05',
+    'published': '2007-07-07T03:04:05.000Z',
     'content': 'My original post',
   }
 }
 POST_BSKY = {
   '$type': 'app.bsky.feed.post',
   'text': 'My original post',
-  'createdAt': '2007-07-07T03:04:05',
+  'createdAt': '2007-07-07T03:04:05.000Z',
 }
 POST_VIEW_BSKY = {
   '$type': 'app.bsky.feed.defs#postView',
@@ -87,7 +87,7 @@ POST_VIEW_BSKY = {
   'record': {
     '$type': 'app.bsky.feed.post',
     'text': 'My original post',
-    'createdAt': '2007-07-07T03:04:05',
+    'createdAt': '2007-07-07T03:04:05.000Z',
   },
   'author': {
     '$type': 'app.bsky.actor.defs#profileViewBasic',
@@ -97,7 +97,7 @@ POST_VIEW_BSKY = {
   'replyCount': 0,
   'repostCount': 0,
   'likeCount': 0,
-  'indexedAt': '2022-01-02T03:04:05+00:00',
+  'indexedAt': '2022-01-02T03:04:05.000Z',
 }
 
 POST_AUTHOR_AS = copy.deepcopy(POST_AS)
@@ -208,7 +208,7 @@ REPLY_AS = {
   'verb': 'post',
   'object': {
     'objectType': 'comment',
-    'published': '2008-08-08T03:04:05',
+    'published': '2008-08-08T03:04:05.000Z',
     'content': 'I hereby reply to this',
     'id': 'at://did/app.bsky.feed.post/tid',
     'url': 'https://bsky.app/profile/did/post/tid',
@@ -221,7 +221,7 @@ REPLY_AS = {
 REPLY_BSKY = {
   '$type': 'app.bsky.feed.post',
   'text': 'I hereby reply to this',
-  'createdAt': '2008-08-08T03:04:05',
+  'createdAt': '2008-08-08T03:04:05.000Z',
   'reply': {
     '$type': 'app.bsky.feed.post#replyRef',
     'root': {
@@ -273,7 +273,7 @@ REPOST_BSKY = {
     'uri': 'at://did:alice/app.bsky.feed.post/tid',
     'cid': '',
   },
-  'createdAt': '2022-01-02T03:04:05+00:00',
+  'createdAt': '2022-01-02T03:04:05.000Z',
 }
 REPOST_BSKY_REASON = {
   '$type': 'app.bsky.feed.defs#reasonRepost',
@@ -283,7 +283,7 @@ REPOST_BSKY_REASON = {
     'handle': 'bob.com',
     'displayName': 'Bob',
   },
-  'indexedAt': NOW.isoformat(),
+  'indexedAt': '2022-01-02T03:04:05.000Z',
 }
 REPOST_BSKY_FEED_VIEW_POST = {
   '$type': 'app.bsky.feed.defs#feedViewPost',
@@ -364,12 +364,12 @@ LIKE_BSKY = {
     'uri': 'at://did:alice/app.bsky.feed.post/tid',
     'cid': '',
   },
-  'createdAt': '2022-01-02T03:04:05+00:00',
+  'createdAt': '2022-01-02T03:04:05.000Z',
 }
 GET_LIKES_LIKE_BSKY = {
   '$type': 'app.bsky.feed.getLikes#like',
-  'indexedAt': NOW.isoformat(),
-  'createdAt': '2008-08-08T03:04:05',
+  'indexedAt': '2022-01-02T03:04:05.000Z',
+  'createdAt': '2008-08-08T03:04:05.000Z',
   'actor': ACTOR_PROFILE_VIEW_BSKY,
 }
 
@@ -633,7 +633,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': '_some html_',
-      'createdAt': '2007-07-07T03:04:05',
+      'createdAt': '2007-07-07T03:04:05.000Z',
     },from_as1(post_as))
 
   def test_from_as1_post_without_tag_indices(self):
@@ -654,7 +654,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'foo',
-      'createdAt': '2022-01-02T03:04:05+00:00',
+      'createdAt': '2022-01-02T03:04:05.000Z',
     }, from_as1({
       'objectType': 'note',
       'content': 'foo',
@@ -667,7 +667,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'foo',
-      'createdAt': '2022-01-02T03:04:05+00:00',
+      'createdAt': '2022-01-02T03:04:05.000Z',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -704,7 +704,7 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual({
       '$type': 'app.bsky.feed.post',
       'text': 'Some\n_HTML_',
-      'createdAt': '2022-01-02T03:04:05+00:00',
+      'createdAt': '2022-01-02T03:04:05.000Z',
     }, from_as1({
       'objectType': 'note',
       'content': '<p>Some <br> <em>HTML</em></p>',
@@ -907,7 +907,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': '',
-      'createdAt': '2022-01-02T03:04:05+00:00',
+      'createdAt': '2022-01-02T03:04:05.000Z',
       'embed': {
         '$type': 'app.bsky.embed.images',
         'images': [{
@@ -918,6 +918,36 @@ class BlueskyTest(testutil.TestCase):
     }, from_as1({
       'objectType': 'note',
       'image': ['http://foo'],
+    }))
+
+  def test_from_as1_rewrite_published_to_createdAt(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T02:01:09.650Z',
+    }, from_as1({
+      'objectType': 'note',
+      'published': '  2022-01-02 00:01:09.65-02:00 ',
+    }))
+
+  def test_from_as1_rewrite_published_no_timezone(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T00:01:09.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'published': '2022-01-02 00:01:09 ',
+    }))
+
+  def test_from_as1_bad_published(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'published': 'foo bar',
     }))
 
   def test_to_as1_profile(self):
@@ -967,7 +997,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'objectType': 'note',
       'content': 'My original post',
-      'published': '2007-07-07T03:04:05',
+      'published': '2007-07-07T03:04:05.000Z',
     }, to_as1(POST_BSKY))
 
   def test_to_as1_post_uri(self):
@@ -976,7 +1006,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'https://bsky.app/profile/alice.com/post/123',
       'objectType': 'note',
       'content': 'My original post',
-      'published': '2007-07-07T03:04:05',
+      'published': '2007-07-07T03:04:05.000Z',
     }, to_as1(POST_BSKY, uri='at://alice.com/app.bsky.feed.post/123'))
 
   def test_to_as1_post_view(self):
@@ -1025,7 +1055,7 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'activity',
       'verb': 'share',
       'object': 'at://did:alice/app.bsky.feed.post/tid',
-      'published': '2022-01-02T03:04:05+00:00',
+      'published': '2022-01-02T03:04:05.000Z',
     }, to_as1(REPOST_BSKY))
 
   def test_to_as1_repost_uri(self):
@@ -1035,7 +1065,7 @@ class BlueskyTest(testutil.TestCase):
       'id': 'at://alice.com/app.bsky.feed.repost/123',
       'url': 'https://bsky.app/profile/did:alice/post/tid#reposted_by_alice.com',
       'object': 'at://did:alice/app.bsky.feed.post/tid',
-      'published': '2022-01-02T03:04:05+00:00',
+      'published': '2022-01-02T03:04:05.000Z',
     }, to_as1(REPOST_BSKY, uri='at://alice.com/app.bsky.feed.repost/123'))
 
   def test_to_as1_like_uri(self):

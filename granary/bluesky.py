@@ -4,6 +4,7 @@
 * https://atproto.com/lexicons/app-bsky-actor
 * https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 """
+from datetime import datetime, timezone
 import json
 import logging
 import re
@@ -284,6 +285,37 @@ def from_as1_to_strong_ref(obj, client=None):
   }
 
 
+def from_as1_datetime(val):
+  """Converts an AS1 RFC 3339 datetime string to ATProto ISO 8601.
+
+  Bluesky requires full date and time with time zone, recommends UTC with
+  Z suffix, fractional seconds.
+
+  https://atproto.com/specs/lexicon#datetime
+
+  Returns now (ie the current time) if the input datetime can't be parsed.
+
+  Args:
+    val (str): RFC 3339 datetime
+
+  Returns:
+    str: ATProto compatible ISO 8601 datetime
+  """
+  try:
+    # dt = datetime.fromisoformat(val.strip())
+    dt = util.parse_iso8601(val.strip())
+  except (AttributeError, TypeError, ValueError):
+    logging.debug(f"Couldn't parse {val} as ISO 8601; defaulting to current time")
+    dt = util.now()
+
+  if dt.tzinfo:
+    dt = util.as_utc(dt)
+  # else it's naive, assume it's UTC
+
+  assert dt.utcoffset() is None, dt.utcoffset()
+  return dt.isoformat(sep='T', timespec='milliseconds') + 'Z'
+
+
 def base_object(obj):
   """Returns the "base" Bluesky object that an object operates on.
 
@@ -431,13 +463,13 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       return {
         '$type': 'app.bsky.feed.repost',
         'subject': from_as1_to_strong_ref(inner_obj, client=client),
-        'createdAt': obj.get('published') or util.now().isoformat(),
+        'createdAt': from_as1_datetime(obj.get('published')),
       }
     elif out_type == 'app.bsky.feed.defs#reasonRepost':
       return {
         '$type': 'app.bsky.feed.defs#reasonRepost',
         'by': from_as1(actor, out_type='app.bsky.actor.defs#profileViewBasic'),
-        'indexedAt': util.now().isoformat(),
+        'indexedAt': from_as1_datetime(None),
       }
     elif out_type == 'app.bsky.feed.defs#feedViewPost':
       return {
@@ -450,7 +482,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     return {
       '$type': 'app.bsky.feed.like',
       'subject': from_as1_to_strong_ref(inner_obj, client=client),
-      'createdAt': obj.get('published') or util.now().isoformat(),
+      'createdAt': from_as1_datetime(obj.get('published')),
     }
 
   elif type == 'follow':
@@ -459,7 +491,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     return {
       '$type': 'app.bsky.graph.follow',
       'subject': inner_obj.get('id'),  # DID
-      'createdAt': obj.get('published') or util.now().isoformat(),
+      'createdAt': from_as1_datetime(obj.get('published')),
     }
 
   elif verb == 'post' and type in as1.POST_TYPES:
@@ -618,7 +650,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     ret = trim_nulls({
       '$type': 'app.bsky.feed.post',
       'text': text,
-      'createdAt': obj.get('published') or util.now().isoformat(),
+      'createdAt': from_as1_datetime(obj.get('published')),
       'embed': record_embed,
       'facets': facets,
       'reply': reply,
@@ -642,7 +674,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       'replyCount': 0,
       'repostCount': 0,
       'likeCount': 0,
-      'indexedAt': util.now().isoformat(),
+      'indexedAt': from_as1_datetime(None),
     }, ignore=('author', 'createdAt', 'cid', 'description', 'indexedAt',
                'record', 'text', 'title', 'uri'))
 
