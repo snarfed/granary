@@ -136,6 +136,17 @@ class NostrTest(testutil.TestCase):
     del event['tags'][2]
     self.assert_equals(event, from_as1(person))
 
+  def test_to_as1_profile_bad_nip05(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'nostr:npub1z24szqzphd',
+    }, to_as1({
+      'kind': 0,
+      'id': '12ab',
+      'pubkey': '12ab',
+      'content': '{"nip05": {}}',
+    }))
+
   def test_to_from_as1_note(self):
     note = {
       'objectType': 'note',

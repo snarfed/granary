@@ -289,13 +289,16 @@ def to_as1(event):
 
   if kind == 0:  # profile
     content = json_loads(content) or {}
+    nip05_domain = (content['nip05'].removeprefix('_@')
+                    if isinstance(content.get('nip05'), str)
+                    else '')
     obj.update({
       'objectType': 'person',
       'id': id_to_uri('npub', event['pubkey']),
       'displayName': content.get('name'),
       'description': content.get('about'),
       'image': content.get('picture'),
-      'username': content.get('nip05', '').removeprefix('_@'),
+      'username': nip05_domain,
       'urls': [],
     })
     for tag in tags:

@@ -345,6 +345,7 @@ Changelog
   * `object_to_json` bug fix: handle singular `inReplyTo`.
 * `nostr:`
   * `get_*`: return partial results when the websocket connection is closed prematurely.
+  * `to_as1`: handle invalid NIP05 values (eg `{}`)
 * `rss`:
   * `to_activities`:
     * Use `objectType: note` if `title` isn't set or is a prefix (possibly ellipsized) of `content`/`description`.
