@@ -552,6 +552,37 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                         self.mastodon.get_activities())
 
+  def test_get_activities_200_error(self):
+    """Sharkey returns errors as HTTP 200 with `error` field in JSON body.
+
+    Example:
+      {
+        "error": {
+          "message": "Authentication failed. Please ensure your token is correct.",
+          "code": "AUTHENTICATION_FAILED",
+          "id": "b0a7f5f8-dc2f-4171-b91f-de88ad238e14",
+          "kind": "client"
+        }
+      }
+    """
+    self.expect_get(API_TIMELINE, params={}, status_code=200, response={
+        'error': {
+          'message': 'Authentication failed. Please ensure your token is correct.',
+          'code': 'AUTHENTICATION_FAILED',
+          'id': 'b0a7f5f8-dc2f-4171-b91f-de88ad238e14',
+          'kind': 'client',
+        }
+    })
+    self.mox.ReplayAll()
+
+    with self.assertRaises(HTTPError) as e:
+      self.mastodon.get_activities()
+    self.assert_equals(401, e.exception.response.status_code)
+    self.assertIn('AUTHENTICATION_FAILED', str(e.exception))
+
+    with self.assertRaises(ValueError):
+      self.mastodon.get_activities(group_id=source.SEARCH, search_query=None)
+
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)
     self.mox.ReplayAll()

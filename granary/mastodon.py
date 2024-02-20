@@ -152,10 +152,17 @@ class Mastodon(source.Source):
       logging.warning(f'Content-Type {content_type} is not application/json!')
 
     try:
-      return resp.json()
+      body = resp.json()
     except JSONDecodeError as e:
       resp.status_code = 502
       raise HTTPError(e, response=resp)
+
+    if isinstance(body, dict) and body.get('error'):
+      code = body['error'].get('code') or ''
+      resp.status_code = 401 if code == 'AUTHENTICATION_FAILED' else 400
+      raise HTTPError(None, str(body['error']), response=resp)
+
+    return body
 
   @classmethod
   def embed_post(cls, obj):

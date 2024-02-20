@@ -341,6 +341,7 @@ Changelog
   * When converting data to AS1, use `displayName` in objects instead of `title`.
 * `mastodon`:
   * `get_activities` bug fix: use query params for `/api/v1/notifications` API call, not JSON body.
+  * Convert HTTP 200 responses with `error` JSON field (eg from Sharkey) to 400/401 exceptions.
 * `microformats2`:
   * `object_to_json` bug fix: handle singular `inReplyTo`.
 * `nostr:`
