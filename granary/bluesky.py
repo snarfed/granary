@@ -1453,7 +1453,26 @@ class Bluesky(Source):
           error_html='No content text found.')
 
     # truncate and ellipsize content if necessary
-    content = self.truncate(content, obj.get('url'), include_link, type)
+    url = obj.get('url')
+    content = self.truncate(content, url, include_link, type)
+
+    # facet for link to original post, if any
+    url_facets = []
+    if url:
+      url_index = content.rfind(url)
+      if url_index != -1:
+        byte_start = len(content[:url_index].encode())
+        url_facets = [{
+          '$type': 'app.bsky.richtext.facet',
+          'features': [{
+            '$type': 'app.bsky.richtext.facet#link',
+            'uri': url,
+          }],
+          'index': {
+            'byteStart': byte_start,
+            'byteEnd': byte_start + len(url.encode()),
+          },
+        }]
 
     # TODO linkify mentions and hashtags
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -1536,7 +1555,10 @@ class Bluesky(Source):
       else:
         blobs = self.upload_media(images)
         post_atp = from_as1(obj, blobs=blobs, client=self)
-        post_atp['text'] = content
+        post_atp.update({
+          'text': content,
+          'facets': url_facets,
+        })
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
           'collection': post_atp['$type'],

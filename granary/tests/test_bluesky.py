@@ -1437,6 +1437,17 @@ class BlueskyTest(testutil.TestCase):
 
     post_bsky = copy.deepcopy(POST_BSKY)
     post_bsky['text'] += ' (http://orig)'
+    post_bsky['facets'] = [{
+      '$type': 'app.bsky.richtext.facet',
+      'features': [{
+        '$type': 'app.bsky.richtext.facet#link',
+        'uri': 'http://orig',
+      }],
+      'index': {
+        'byteStart': 18,
+        'byteEnd': 29,
+      },
+    }]
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
       'collection': 'app.bsky.feed.post',
@@ -1464,6 +1475,7 @@ class BlueskyTest(testutil.TestCase):
         reply_bsky = copy.deepcopy(REPLY_BSKY)
         reply_bsky['reply']['root']['cid'] = \
           reply_bsky['reply']['parent']['cid'] = 'my-syd'
+        reply_bsky['facets'] = []
         self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
           'repo': self.bs.did,
           'collection': 'app.bsky.feed.post',
@@ -1597,7 +1609,10 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
       'collection': 'app.bsky.feed.post',
-      'record': POST_BSKY_IMAGES,
+      'record': {
+        **POST_BSKY_IMAGES,
+        'facets': [],
+      },
     })
 
 #   @patch('requests.post')

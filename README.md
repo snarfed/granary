@@ -303,6 +303,7 @@ Changelog
     * Interpret entry `link` without `rel` as self link.
   * If `entry.author` doesn't have id or url, default them to feed author's.
 * `bluesky`:
+  * Implement `create` and `preview`.
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
   * Implement `Bluesky.post_id`.
   * Add new `blob_to_url` function.
