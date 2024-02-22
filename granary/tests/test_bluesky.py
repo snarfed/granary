@@ -20,6 +20,7 @@ from ..bluesky import (
   from_as1,
   from_as1_to_strong_ref,
   MAX_IMAGES,
+  NO_AUTHENTICATED_LABEL,
   to_as1,
   url_to_did_web,
   web_url_to_at_uri,
@@ -992,6 +993,26 @@ class BlueskyTest(testutil.TestCase):
       'displayName': 'Alice',
       'summary': 'hi there',
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', pds=None))
+
+  def test_to_as1_no_authenticated_label_to_unlisted(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'summary': 'hi there',
+      'to': [{
+        'objectType': 'group',
+        'alias': '@unlisted',
+      }],
+    }, to_as1({
+      **ACTOR_PROFILE_BSKY,
+      'labels' : [{
+        'cts' : '1970-01-01T00:00:00.000Z',
+        'neg' : False,
+        'src' : 'did:...',
+        'uri' : 'at://did:.../app.bsky.actor.profile/self',
+        'val' : NO_AUTHENTICATED_LABEL,
+      }],
+    }))
 
   def test_to_as1_post(self):
     self.assert_equals({

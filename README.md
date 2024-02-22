@@ -322,6 +322,7 @@ Changelog
     * Add `actor`/`author` based on `repo_did`.
     * Improve `url` field: include custom handles, only use `repo_did/handle` for `app.bsky.actor.profile`.
     * Handle bad facet indices that point inside Unicode code points ([example](https://bsky.app/profile/did:plc:2ythpj4pwwpka2ljkabouubm/post/3kkfszbaiic2g); [discussion](https://discord.com/channels/1097580399187738645/1097580399187738648/1203118842516082848)).
+    * Convert [`!no-unauthenticated` label](https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors) on profiles to [AS1 `@unlisted` audience target](https://activitystrea.ms/specs/json/targeting/1.0/) ([bridgy-fed#828](https://github.com/snarfed/bridgy-fed/issues/828)).
   * `from_as1`:
     * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
     * Add `blobs` kwarg to provide blob objects to use for image URLs.

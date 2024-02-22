@@ -96,6 +96,11 @@ DEFAULT_PDS_DOMAIN = 'bsky.social'
 DEFAULT_PDS = f'https://{DEFAULT_PDS_DOMAIN}/'
 DEFAULT_APPVIEW = 'https://api.bsky.app'
 
+# label on profiles set to only show them to logged in users
+# https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
+# https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors
+NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
+
 
 def url_to_did_web(url):
   """Converts a URL to a ``did:web``.
@@ -775,6 +780,16 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
           img['url'] = blob_to_url(blob=img['url'], repo_did=repo_did, pds=pds)
       else:
         ret['image'] = []
+
+    # convert public view opt-out to unlisted AS1 audience targeting
+    # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
+    # https://activitystrea.ms/specs/json/targeting/1.0/
+    for label in obj.get('labels', []):
+      if label.get('val') == NO_AUTHENTICATED_LABEL and not label.get('neg'):
+        ret['to'] = [{
+          'objectType': 'group',
+          'alias': '@unlisted',
+        }]
 
   elif type == 'app.bsky.feed.post':
     text = obj.get('text', '')
