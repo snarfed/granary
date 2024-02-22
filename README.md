@@ -286,6 +286,7 @@ Changelog
 * `as1`:
   * `get_owner` bug fix for `post`, `update`, `delete` activities.
   * `activity_changed`: add new `inReplyTo` kwarg.
+  * `is_public`: add new `unlisted` kwarg.
 * `as2`:
   * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
   * `from_as1`:

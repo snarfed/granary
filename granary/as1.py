@@ -200,7 +200,7 @@ def merge_by_id(obj, field, new):
   obj[field] = sorted(merged.values(), key=itemgetter('id'))
 
 
-def is_public(obj):
+def is_public(obj, unlisted=True):
   """Returns True if the object is public, False if private, None if unknown.
 
   ...according to the Audience Targeting extension:
@@ -213,11 +213,15 @@ def is_public(obj):
   that and prunes the to field from stored activities in Response objects (in
   ``bridgy/util.prune_activity``). If the default here ever changes, be sure to
   update Bridgy's code.
+
+  Args:
+    unlisted (bool): whether `@unlisted` counts as public or not
   """
   to = obj.get('to') or get_object(obj).get('to') or []
   aliases = util.trim_nulls([t.get('alias') for t in to])
   object_types = util.trim_nulls([t.get('objectType') for t in to])
-  return (True if '@public' in aliases or '@unlisted' in aliases
+  return (True if ('@public' in aliases
+                   or ('@unlisted' in aliases and unlisted))
           else None if 'unknown' in object_types
           else False if aliases
           else True)

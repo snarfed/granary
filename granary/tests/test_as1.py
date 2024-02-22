@@ -179,6 +179,11 @@ class As1Test(testutil.TestCase):
       self.assertTrue(as1.is_public(obj), repr(obj))
       self.assertTrue(as1.is_public({'object': obj}), repr(obj))
 
+    self.assertFalse(as1.is_public({
+      'to': [{'objectType': 'group', 'alias': '@unlisted'}],
+    }, unlisted=False))
+
+
     for obj in ({'to': [{'objectType': 'group', 'alias': '@private'}]},
                 {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
                 {'to': [{'alias': 'xyz'}]},
