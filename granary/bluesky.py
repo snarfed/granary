@@ -68,6 +68,7 @@ MAX_IMAGES = 4
 
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
 # used in from_as1
+POST_TYPES = tuple(as1.POST_TYPES) + ('bookmark',)
 FROM_AS1_TYPES = {
   as1.ACTOR_TYPES: (
     'app.bsky.actor.profile',
@@ -75,7 +76,7 @@ FROM_AS1_TYPES = {
     'app.bsky.actor.defs#profileViewBasic',
     'app.bsky.actor.defs#profileViewDetailed',
   ),
-  as1.POST_TYPES: (
+  POST_TYPES: (
     'app.bsky.feed.post',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
@@ -501,7 +502,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       'createdAt': from_as1_datetime(obj.get('published')),
     }
 
-  elif verb == 'post' and type in as1.POST_TYPES:
+  elif verb == 'post' and type in POST_TYPES:
     # convert text to HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
@@ -1437,7 +1438,6 @@ class Bluesky(Source):
     assert self.did
     type = obj.get('objectType')
     verb = obj.get('verb')
-    assert verb != 'post', 'For post activities, use bare AS1 object, not activity'
 
     base_obj = self.base_object(obj)
     base_id = base_obj.get('id')
@@ -1542,6 +1542,8 @@ class Bluesky(Source):
 
     elif (type in ('note', 'article') or is_reply or
           (type == 'activity' and verb == 'post')):  # probably a bookmark
+      # TODO: add bookmarked URL and facet
+      # tricky because we only want to do that if it's not truncated away
       data = {'status': content}
       if is_reply and base_url:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"

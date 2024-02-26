@@ -1671,6 +1671,48 @@ class BlueskyTest(testutil.TestCase):
 #     self.assert_equals(POST, result.content, result)
 
   @patch('requests.post')
+  def test_create_bookmark(self, mock_post):
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    mock_post.return_value = requests_response({'uri': at_uri})
+
+    activity = {
+      'objectType': 'activity',
+      'verb': 'post',
+      'content': 'foo ☕ bar',
+      'object': {
+        'objectType': 'bookmark',
+        'targetUrl': 'https://example.com/foo',
+      }
+    }
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(activity).content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': {
+        '$type': 'app.bsky.feed.post',
+        'text': 'foo ☕ bar',  # TODO \n\nhttps://example.com/foo',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+        'facets': [],
+      },
+      # TODO
+      # 'facets': [{
+      #   '$type': 'app.bsky.richtext.facet',
+      #   'features': [{
+      #     '$type': 'app.bsky.richtext.facet#link',
+      #     'uri': 'https://example.com/foo',
+      #   }],
+      #   'index': {
+      #     'byteStart': 13,
+      #     'byteEnd': 36,
+      #   },
+      # }],
+    })
+
+  @patch('requests.post')
   def test_delete(self, mock_post):
     mock_post.return_value = requests_response({})
 

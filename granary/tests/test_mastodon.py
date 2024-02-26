@@ -672,12 +672,12 @@ class MastodonTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.mastodon.create({
-      "objectType": "activity",
-      "verb": "post",
-      "content": 'foo ☕ bar',
-      "object": {
-        "objectType": "bookmark",
-        "targetUrl": "https://example.com/foo"
+      'objectType': 'activity',
+      'verb': 'post',
+      'content': 'foo ☕ bar',
+      'object': {
+        'objectType': 'bookmark',
+        'targetUrl': 'https://example.com/foo',
       }
     })
 
