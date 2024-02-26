@@ -375,7 +375,7 @@ class Mastodon(source.Source):
         'objectType': MEDIA_TYPES.get(type),
         'displayName': desc,
       }
-      url = media.get('url')
+      url = media.get('remote_url') or media.get('url')
       if type == 'image':
         att['image'] = {
           'url': url,

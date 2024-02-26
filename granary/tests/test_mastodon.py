@@ -203,8 +203,9 @@ MEDIA_STATUS['media_attachments'] = [{
 }, {
   'id': '444',
   'type': 'gifv',
-  'url': 'http://foo.com/video.mp4',
+  'url': 'http://use/remote/url/instead',
   'preview_url': 'http://foo.com/poster.png',
+  'remote_url': 'http://foo.com/video.mp4',
   'description': 'a fun video',
   'meta': {
      'width': 640,

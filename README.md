@@ -346,6 +346,7 @@ Changelog
 * `mastodon`:
   * `get_activities` bug fix: use query params for `/api/v1/notifications` API call, not JSON body.
   * Convert HTTP 200 responses with `error` JSON field (eg from Sharkey) to 400/401 exceptions.
+  * Prefer `media_attachments.remote_url` when available since it may be more long-lived than `url` for remote statuses ([bridgy#1675](https://github.com/snarfed/bridgy/issues/1675)).
 * `microformats2`:
   * `object_to_json` bug fix: handle singular `inReplyTo`.
 * `nostr:`
