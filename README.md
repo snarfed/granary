@@ -315,6 +315,7 @@ Changelog
   * Prefer DID to handle in API calls that accept either.
   * `at_uri_to_web_url`: support lists.
   * Add `from_as1_to_strong_ref`.
+  * Allow `:`s in record keys ([atproto#2224](https://github.com/bluesky-social/atproto/discussions/2224)).
   * `to_as1`:
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
     * Add new `uri` kwarg.

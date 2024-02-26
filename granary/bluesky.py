@@ -14,6 +14,7 @@ import urllib.parse
 import requests
 
 from lexrpc import Client
+from lexrpc.base import NSID_RE
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
 
@@ -30,17 +31,18 @@ HANDLE_REGEX = (
 HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
 DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 
-# at:// URI regexp. Right now
+# at:// URI regexp
 # https://atproto.com/specs/at-uri-scheme#full-at-uri-syntax
 # https://atproto.com/specs/record-key#record-key-syntax
+# https://atproto.com/specs/nsid
 # also see arroba.util.parse_at_uri
-_CHARS = 'a-zA-Z0-9-.'
+_CHARS = 'a-zA-Z0-9-.:'
 # TODO: add query and fragment? they're currently unused in the protocol
 # https://atproto.com/specs/at-uri-scheme#structure
 AT_URI_PATTERN = re.compile(rf"""
     ^at://
-     (?P<repo>[{_CHARS}:]+)
-      (?:/(?P<collection>[{_CHARS}_~]+)
+     (?P<repo>[{_CHARS}]+)
+      (?:/(?P<collection>[a-zA-Z0-9-.]+)
        (?:/(?P<rkey>[{_CHARS}]+))?)?
     $""", re.VERBOSE)
 
