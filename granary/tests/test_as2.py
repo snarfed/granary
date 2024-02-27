@@ -205,6 +205,8 @@ class ActivityStreams2Test(testutil.TestCase):
 
     self.assertFalse(is_public('foo'))
 
+    self.assertFalse(is_public({'cc': [publics[1]]}, unlisted=False))
+
   def test_get_urls(self):
     for val, expected in (
         (None, []),

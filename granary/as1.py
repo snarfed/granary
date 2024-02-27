@@ -215,6 +215,7 @@ def is_public(obj, unlisted=True):
   update Bridgy's code.
 
   Args:
+    obj (dict): AS2 activity or object
     unlisted (bool): whether `@unlisted` counts as public or not
   """
   to = obj.get('to') or get_object(obj).get('to') or []

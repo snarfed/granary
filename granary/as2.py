@@ -499,20 +499,25 @@ def to_as1(obj, use_type=True):
   return util.trim_nulls(Source.postprocess_object(obj))
 
 
-def is_public(activity):
+def is_public(activity, unlisted=True):
   """Returns True if the given AS2 object or activity is public or unlisted.
 
   https://docs.joinmastodon.org/spec/activitypub/#properties-used
 
   Args:
     activity (dict): AS2 activity or object
+    unlisted (bool): whether unlisted, ie public in cc instead of to counts as
+      public or not
   """
   if not isinstance(activity, dict):
     return False
 
-  audience = util.get_list(activity, 'to') + util.get_list(activity, 'cc')
+  audience = util.get_list(activity, 'to')
   obj = as1.get_object(activity)
-  audience.extend(util.get_list(obj, 'to') + util.get_list(obj, 'cc'))
+  audience.extend(util.get_list(obj, 'to'))
+
+  if unlisted:
+    audience.extend(util.get_list(obj, 'cc') + util.get_list(activity, 'cc'))
 
   return bool(PUBLICS.intersection(audience))
 
