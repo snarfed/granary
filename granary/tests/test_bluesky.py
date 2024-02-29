@@ -1005,13 +1005,16 @@ class BlueskyTest(testutil.TestCase):
       }],
     }, to_as1({
       **ACTOR_PROFILE_BSKY,
-      'labels' : [{
-        'cts' : '1970-01-01T00:00:00.000Z',
-        'neg' : False,
-        'src' : 'did:...',
-        'uri' : 'at://did:.../app.bsky.actor.profile/self',
-        'val' : NO_AUTHENTICATED_LABEL,
-      }],
+      'labels' : {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{
+          'cts' : '1970-01-01T00:00:00.000Z',
+          'neg' : False,
+          'src' : 'did:...',
+          'uri' : 'at://did:.../app.bsky.actor.profile/self',
+          'val' : NO_AUTHENTICATED_LABEL,
+        }],
+      },
     }))
 
   def test_to_as1_post(self):
