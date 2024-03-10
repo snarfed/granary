@@ -994,7 +994,7 @@ class BlueskyTest(testutil.TestCase):
       'summary': 'hi there',
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', pds=None))
 
-  def test_to_as1_no_authenticated_label_to_unlisted(self):
+  def test_to_as1_profile_no_authenticated_label_to_unlisted(self):
     self.assert_equals({
       'objectType': 'person',
       'displayName': 'Alice',
@@ -1016,6 +1016,18 @@ class BlueskyTest(testutil.TestCase):
         }],
       },
     }))
+
+  def test_to_as1_profileView_no_authenticated_label_to_unlisted(self):
+    got = to_as1({
+      **ACTOR_PROFILE_VIEW_BSKY,
+      'labels': [{
+        'val': NO_AUTHENTICATED_LABEL,
+      }],
+    })
+    self.assert_equals([{
+      'objectType': 'group',
+      'alias': '@unlisted',
+    }], got['to'])
 
   def test_to_as1_post(self):
     self.assert_equals({

@@ -787,7 +787,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     # convert public view opt-out to unlisted AS1 audience targeting
     # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
     # https://activitystrea.ms/specs/json/targeting/1.0/
-    for label in obj.get('labels', {}).get('values', []):
+    labels = (obj.get('labels', {}).get('values', [])
+                if type == 'app.bsky.actor.profile'
+              else obj.get('labels', []))
+    for label in labels:
       if label.get('val') == NO_AUTHENTICATED_LABEL and not label.get('neg'):
         ret['to'] = [{
           'objectType': 'group',
