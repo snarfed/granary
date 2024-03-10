@@ -1179,7 +1179,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       'updated': bad[1],
     }))
 
-  def test_normalize_timestamp_composite_objecct(self):
+  def test_normalize_timestamp_composite_object(self):
     self.assert_equals({
       'objectType': 'note',
       'published': '2020-02-21T12:00:00',
@@ -1193,5 +1193,17 @@ Shared <a href="#">a post</a> by   <span class="h-card">
           },
           'value': '2020-02-21 12:00:00',
         }],
+      },
+    }))
+
+  def test_bad_location(self):
+    self.assert_equals({
+      'objectType': 'note',
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'location': [
+          ['h-geo'],
+        ],
       },
     }))

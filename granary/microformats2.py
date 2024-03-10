@@ -583,7 +583,12 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       })
 
   # mf2util uses the indieweb/mf2 location algorithm to collect locations
-  interpreted = mf2util.interpret({'items': [mf2]}, None)
+  interpreted = None
+  try:
+    interpreted = mf2util.interpret({'items': [mf2]}, None)
+  except (AttributeError, ValueError) as e:
+    logging.warning('mf2util.interpret failed')
+
   if interpreted:
     loc = interpreted.get('location')
     if loc:

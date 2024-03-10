@@ -350,6 +350,7 @@ Changelog
   * Prefer `media_attachments.remote_url` when available since it may be more long-lived than `url` for remote statuses ([bridgy#1675](https://github.com/snarfed/bridgy/issues/1675)).
 * `microformats2`:
   * `object_to_json` bug fix: handle singular `inReplyTo`.
+  * `json_to_object` bug fix: handle list-valued `location`.
 * `nostr:`
   * `get_*`: return partial results when the websocket connection is closed prematurely.
   * `to_as1`: handle invalid NIP05 values (eg `{}`)
