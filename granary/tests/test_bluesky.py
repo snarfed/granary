@@ -501,8 +501,10 @@ class BlueskyTest(testutil.TestCase):
   def test_web_url_to_at_uri(self):
     for url, expected in (
         ('', None),
-        ('https://bsky.app/profile/foo.com', 'at://foo.com'),
-        ('https://bsky.app/profile/did:plc:foo', 'at://did:plc:foo'),
+        ('https://bsky.app/profile/foo.com',
+         'at://foo.com/app.bsky.actor.profile/self'),
+        ('https://bsky.app/profile/did:plc:foo',
+         'at://did:plc:foo/app.bsky.actor.profile/self'),
         ('https://bsky.app/profile/did:plc:foo/post/3jv3wdw2hkt25',
          'at://did:plc:foo/app.bsky.feed.post/3jv3wdw2hkt25'),
         ('https://bsky.app/profile/bsky.app/feed/mutuals',
@@ -511,24 +513,24 @@ class BlueskyTest(testutil.TestCase):
       self.assertEqual(expected, web_url_to_at_uri(url))
 
       self.assertEqual(
-        'at://did:plc:foo',
-        web_url_to_at_uri('https://bsky.app/profile/foo.com', handle='foo.com', did='did:plc:foo')
-      )
+        'at://did:plc:foo/app.bsky.actor.profile/self',
+        web_url_to_at_uri('https://bsky.app/profile/foo.com', handle='foo.com',
+                          did='did:plc:foo'))
 
       self.assertEqual(
-        'at://foo.com',
+        'at://foo.com/app.bsky.actor.profile/self',
         web_url_to_at_uri('https://bsky.app/profile/foo.com', did='did:plc:foo')
       )
 
       self.assertEqual(
-        'at://foo.com',
+        'at://foo.com/app.bsky.actor.profile/self',
         web_url_to_at_uri('https://bsky.app/profile/foo.com', handle='foo.com')
       )
 
       self.assertEqual(
-        'at://foo.com',
-        web_url_to_at_uri('https://bsky.app/profile/foo.com', handle='alice.com', did='did:plc:foo')
-      )
+        'at://foo.com/app.bsky.actor.profile/self',
+        web_url_to_at_uri('https://bsky.app/profile/foo.com',
+                          handle='alice.com', did='did:plc:foo'))
 
     for url in ('at://foo', 'http://not/bsky.app', 'https://bsky.app/x'):
       with self.assertRaises(ValueError):

@@ -236,19 +236,22 @@ def web_url_to_at_uri(url, handle=None, did=None):
 
   id = match.group('id')
   assert id
-  type = match.group('type')
-  tid = match.group('tid')
-
   # If a did and handle have been provided explicitly,
   # replace the existing handle with the did.
   if did and handle and id == handle:
     id = did
 
+  rkey = match.group('tid')
+
+  type = match.group('type')
   if type:
-    assert tid
-    return f'at://{id}/{BSKY_APP_TYPE_TO_COLLECTION[type]}/{tid}'
+    collection = BSKY_APP_TYPE_TO_COLLECTION[type]
+    assert rkey
   else:
-    return f'at://{id}'
+    collection = 'app.bsky.actor.profile'
+    rkey = 'self'
+
+  return f'at://{id}/{collection}/{rkey}'
 
 
 def from_as1_to_strong_ref(obj, client=None):
@@ -1182,6 +1185,8 @@ class Bluesky(Source):
   def post_id(cls, url):
     """Returns the `at://` URI for the given URL if it's for a post.
 
+    Also see ``arroba.util.parse_at_uri``.
+
     Returns:
       str or None
     """
@@ -1194,8 +1199,9 @@ class Bluesky(Source):
       except ValueError:
         return None
 
-    if len(url.removeprefix('at://').split('/')) == 3:
-      # only return at:// URIs for posts, not profiles
+    if (len(url.removeprefix('at://').split('/')) == 3
+        # only return at:// URIs for posts, not profiles
+        and not url.endswith('/app.bsky.actor.profile/self')):
       return url
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
