@@ -281,7 +281,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 6.2 - 2023-03-15
+### 6.2 - 2024-03-15
 
 * `as1`:
   * `get_owner` bug fix for `post`, `update`, `delete` activities.

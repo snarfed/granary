@@ -450,7 +450,7 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-6.2 - 2023-03-15
+6.2 - 2024-03-15
 ~~~~~~~~~~~~~~~~
 
 -  ``as1``:
