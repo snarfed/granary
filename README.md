@@ -281,6 +281,12 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 6.3 - 2024-03-15
+
+* `bluesky`:
+  * `to_as1`:
+    * Support `app.bsky.feed.defs#notFoundPost` records.
+
 ### 6.2 - 2024-03-15
 
 * `as1`:
@@ -361,7 +367,6 @@ Changelog
     * Add support for images in `media:content` tags ([#674](https://github.com/snarfed/granary/issues/674)).
 * `Source`:
   * `postprocess_activity/object`: add `mentions` kwarg to convert @-mentions in HTML links to `mention` tags.
-
 
 ### 6.1 - 2023-09-16
 

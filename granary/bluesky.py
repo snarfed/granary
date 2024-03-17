@@ -719,7 +719,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       Required to generate image URLs. Defaults to ``https://bsky.social/``.
 
   Returns:
-    dict: AS1 object
+    dict: AS1 object, or None if the record doesn't correspond to an AS1 object,
+        eg "not found" records
 
   Raises:
     ValueError: if the ``$type`` field is missing or unsupported
@@ -949,11 +950,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     record = obj.get('record')
     return to_as1(record, **kwargs) if record else None
 
-  elif type == 'app.bsky.embed.record#viewNotFound':
-    return None
-
   elif type in ('app.bsky.embed.record#viewNotFound',
-                'app.bsky.embed.record#viewBlocked'):
+                'app.bsky.embed.record#viewBlocked',
+                'app.bsky.feed.defs#notFoundPost',
+                ):
     return None
 
   elif type == 'app.bsky.feed.defs#feedViewPost':
