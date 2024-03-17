@@ -1285,7 +1285,8 @@ class Bluesky(Source):
         reply_count = bs_post.get('replyCount')
         if fetch_replies and reply_count and reply_count != cache.get('ABR ' + id):
           replies = self._get_replies(bs_post.get('uri'))
-          replies = [to_as1(reply, 'app.bsky.feed.defs#threadViewPost') for reply in replies]
+          replies = trim_nulls([to_as1(reply, 'app.bsky.feed.defs#threadViewPost')
+                                for reply in replies])
           for r in replies:
             r['id'] = self.tag_uri(r['id'])
           obj['replies'] = {
@@ -1407,8 +1408,8 @@ class Bluesky(Source):
     """
     ret = []
     for r in thread.get('replies', []):
-        ret += [r]
-        ret += self._recurse_replies(r)
+      ret += [r]
+      ret += self._recurse_replies(r)
     return ret
 
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):

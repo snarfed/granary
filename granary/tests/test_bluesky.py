@@ -1398,6 +1398,44 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(1, cache.get('ABR at://did:alice/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
+  def test_get_activities_replies_not_found_blocked(self, mock_get):
+    mock_get.side_effect = [
+      requests_response({
+        # 'cursor': 'timestamp::cid',
+        'feed': [POST_FEED_VIEW_WITH_REPLIES_BSKY],
+      }),
+      requests_response({
+        'thread': {
+          **THREAD_BSKY,
+          'replies': [{
+            '$type': 'app.bsky.feed.defs#notFoundPost',
+            'uri': 'at://did:bob/app.bsky.feed.post/reply',
+            'notFound': True,
+          }, {
+            '$type': 'app.bsky.feed.defs#blockedPost',
+            'uri': 'at://did:eve/app.bsky.feed.post/reply',
+            'blocked': True,
+            'author': {
+              '$type': 'app.bsky.feed.defs#blockedAuthor',
+              'did': 'did:eve',
+            },
+          }],
+        },
+      }),
+    ]
+
+    expected = copy.deepcopy(THREAD_AS)
+    expected['object']['replies'] = {
+      'items': [{
+        'objectType': 'note',
+        'id': 'tag:bsky.app:at://did:eve/app.bsky.feed.post/reply',
+        'url': 'https://bsky.app/profile/did:eve/post/reply',
+        'blocked': True,
+      }],
+    }
+    self.assert_equals([expected], self.bs.get_activities(fetch_replies=True))
+
+  @patch('requests.get')
   def test_get_actor(self, mock_get):
     mock_get.return_value = requests_response({
       **ACTOR_PROFILE_VIEW_BSKY,
