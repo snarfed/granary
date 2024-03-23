@@ -58,6 +58,8 @@ POST_TYPES = frozenset((
 # used in original_post_discovery
 _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
+HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
+
 
 def object_type(obj):
   """Returns the object type, or the verb if it's an activity object.

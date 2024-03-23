@@ -281,7 +281,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 6.3 - 2024-03-15
+### 6.3 - unreleased
 
 * `bluesky`:
   * `to_as1`:

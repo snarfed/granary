@@ -17,6 +17,7 @@ from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError, JSONDecodeError, RequestException
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
@@ -60,10 +61,6 @@ MAX_MEDIA = 4
 USERNAME_RE = re.compile(r'[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?', re.IGNORECASE)
 MENTION_RE  = re.compile(r'(?<![\/\w])@((' + USERNAME_RE.pattern +
                          r')(?:@[a-z0-9\.\-]+[a-z0-9]+)?)', re.IGNORECASE)
-
-# copied from twitter.py. if we need anything better, we could copy Mastodon's:
-# https://github.com/tootsuite/mastodon/blob/915f3712ae7ae44c0cbe50c9694c25e3ee87a540/app/models/tag.rb#L28-L30
-HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
 
 class Mastodon(source.Source):
@@ -644,8 +641,10 @@ class Mastodon(source.Source):
     # linkify (defaults to twitter's behavior)
     preview_content = util.linkify(preview_content, pretty=True, skip_bare_cc_tlds=True)
     tags_url = urllib.parse.urljoin(self.instance, '/tags')
-    preview_content = HASHTAG_RE.sub(r'\1<a href="%s/\2">#\2</a>' % tags_url,
-                                     preview_content)
+    # if we ever need to revise this hashtag regexp, we could use Mastodon's:
+    # https://github.com/tootsuite/mastodon/blob/915f3712ae7ae44c0cbe50c9694c25e3ee87a540/app/models/tag.rb#L28-L30
+    preview_content = as1.HASHTAG_RE.sub(r'\1<a href="%s/\2">#\2</a>' % tags_url,
+                                         preview_content)
 
     post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
 

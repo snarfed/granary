@@ -110,11 +110,6 @@ USERNAME = r'\w{1,15}'
 USERNAME_RE = re.compile(USERNAME + '$')
 MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(' + USERNAME + r')\b', re.UNICODE)
 
-# hashtag requirements and limits:
-# https://support.twitter.com/articles/370610
-# http://stackoverflow.com/questions/8451846
-HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
-
 # alias allows unit tests to mock this function
 sleep_fn = time.sleep
 
@@ -776,7 +771,10 @@ class Twitter(source.Source):
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
     preview_content = MENTION_RE.sub(
       r'\1<a href="https://twitter.com/\2">@\2</a>', preview_content)
-    preview_content = HASHTAG_RE.sub(
+    # Twitter hashtag details:
+    # https://support.twitter.com/articles/370610
+    # http://stackoverflow.com/questions/8451846
+    preview_content = as1.HASHTAG_RE.sub(
       r'\1<a href="https://twitter.com/hashtag/\2">#\2</a>', preview_content)
 
     if type == 'activity' and verb in ('like', 'favorite'):
