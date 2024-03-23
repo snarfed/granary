@@ -516,16 +516,20 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     if text == content:
       # convert index-based to facets
       for tag in util.get_list(obj, 'tags'):
+        type = tag.get('objectType')
+        url = tag.get('url')
+        if not url and type != 'hashtag':
+          continue
+
         facet = {
           '$type': 'app.bsky.richtext.facet',
         }
-
-        type = tag.get('objectType')
-        url = tag.get('url')
-        if not url:
-          continue
-
-        if type == 'mention':
+        if type == 'hashtag':
+          facet['features'] = [{
+            '$type': 'app.bsky.richtext.facet#tag',
+            'tag': tag.get('displayName'),
+          }]
+        elif type == 'mention':
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#mention',
             # TODO: support bsky.app URLs with handles by resolving them?

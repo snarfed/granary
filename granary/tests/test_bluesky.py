@@ -704,6 +704,15 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_tag_did_mention(self):
+    self.assert_equals({
+      **POST_BSKY,
+      'facets': FACETS_HASHTAG,
+    }, from_as1({
+      **POST_AS['object'],
+      'tags': [TAG_HASHTAG],
+    }))
+
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['embed']['images'][0]['image']
