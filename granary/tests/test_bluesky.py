@@ -125,7 +125,7 @@ POST_FEED_VIEW_BSKY = {
   'post': POST_AUTHOR_BSKY,
 }
 
-FACETS_LINK = [{
+FACET_LINK = {
   '$type': 'app.bsky.richtext.facet',
   'features': [{
     '$type': 'app.bsky.richtext.facet#link',
@@ -135,7 +135,7 @@ FACETS_LINK = [{
     'byteStart': 3,
     'byteEnd': 11,
   },
-}]
+}
 TAG_LINK = {
   'objectType': 'article',
   'url': 'http://my/link',
@@ -143,7 +143,7 @@ TAG_LINK = {
   'startIndex': 3,
   'length': 8,
 }
-FACETS_HASHTAG = [{
+FACET_HASHTAG = {
   '$type': 'app.bsky.richtext.facet',
   'features': [{
     '$type': 'app.bsky.richtext.facet#tag',
@@ -153,12 +153,27 @@ FACETS_HASHTAG = [{
     'byteStart': 4,
     'byteEnd': 14,
   },
-}]
+}
 TAG_HASHTAG = {
   'objectType': 'hashtag',
   'displayName': 'hache-tagg',
   'startIndex': 4,
   'length': 10,
+}
+FACET_MENTION = {
+  '$type': 'app.bsky.richtext.facet',
+  'features': [{
+    '$type': 'app.bsky.richtext.facet#mention',
+    'did': 'did:plc:foo',
+  }],
+}
+TAG_MENTION_DID = {
+  'objectType': 'mention',
+  'url': 'did:plc:foo',
+}
+TAG_MENTION_URL = {
+  'objectType': 'mention',
+  'url': 'https://bsky.app/profile/did:plc:foo',
 }
 EMBED_EXTERNAL = {
   'description': '',
@@ -664,50 +679,40 @@ class BlueskyTest(testutil.TestCase):
 
     expected = {
       **POST_BSKY,
-      'facets': copy.deepcopy(FACETS_LINK)
+      'facets': [copy.deepcopy(FACET_LINK)]
     }
     del expected['facets'][0]['index']
 
     self.assert_equals(expected, from_as1(post_as))
 
   def test_from_as1_tag_without_url(self):
-    self.assert_equals({
-      '$type': 'app.bsky.feed.post',
-      'text': 'foo',
-      'createdAt': '2022-01-02T03:04:05.000Z',
-    }, from_as1({
-      'objectType': 'note',
-      'content': 'foo',
-      'tags': [{
-        'objectType': 'mention',
-      }],
+    self.assert_equals(POST_BSKY, from_as1({
+      **POST_AS,
+      'tags': [{'objectType': 'mention'}],
     }))
 
-  def test_from_as1_tag_did_mention(self):
-    self.assert_equals({
-      '$type': 'app.bsky.feed.post',
-      'text': 'foo',
-      'createdAt': '2022-01-02T03:04:05.000Z',
-      'facets': [{
-        '$type': 'app.bsky.richtext.facet',
-        'features': [{
-          '$type': 'app.bsky.richtext.facet#mention',
-          'did': 'did:plc:foo',
-        }],
-      }],
-    }, from_as1({
-      'objectType': 'note',
-      'content': 'foo',
-      'tags': [{
-        'objectType': 'mention',
-        'url': 'did:plc:foo',
-      }],
-    }))
-
-  def test_from_as1_tag_did_mention(self):
+  def test_from_as1_tag_mention_did(self):
     self.assert_equals({
       **POST_BSKY,
-      'facets': FACETS_HASHTAG,
+      'facets': [FACET_MENTION],
+    }, from_as1({
+      **POST_AS['object'],
+      'tags': [TAG_MENTION_DID],
+    }))
+
+  def test_from_as1_tag_mention_url(self):
+    self.assert_equals({
+      **POST_BSKY,
+      'facets': [FACET_MENTION],
+    }, from_as1({
+      **POST_AS['object'],
+      'tags': [TAG_MENTION_URL],
+    }))
+
+  def test_from_as1_tag_hashtag(self):
+    self.assert_equals({
+      **POST_BSKY,
+      'facets': [FACET_HASHTAG],
     }, from_as1({
       **POST_AS['object'],
       'tags': [TAG_HASHTAG],
@@ -827,10 +832,10 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(POST_VIEW_BSKY_EMBED, got)
 
   def test_from_as1_facet_link_and_embed(self):
-    expected = copy.deepcopy(POST_BSKY_EMBED)
-    expected['facets'] = FACETS_LINK
-
-    self.assert_equals(expected, from_as1({
+    self.assert_equals({
+      **POST_BSKY_EMBED,
+      'facets': [FACET_LINK],
+    }, from_as1({
       **POST_AS_EMBED,
       'tags': [TAG_LINK],
     }))
@@ -1200,15 +1205,16 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_to_as1_facet_link_and_embed(self):
-    bsky = copy.deepcopy(POST_BSKY_EMBED)
-    bsky['facets'] = FACETS_LINK
 
     self.assert_equals(trim_nulls({
       **POST_AS_EMBED,
       'id': None,
       'url': None,
       'tags': [TAG_LINK],
-    }), to_as1(bsky))
+    }), to_as1(    {
+      **POST_BSKY_EMBED,
+      'facets': [FACET_LINK],
+    }))
 
   def test_to_as1_facet_hashtag(self):
     self.assert_equals(trim_nulls({
@@ -1218,7 +1224,18 @@ class BlueskyTest(testutil.TestCase):
       'tags': [TAG_HASHTAG],
     }), to_as1({
       **POST_BSKY,
-      'facets': FACETS_HASHTAG,
+      'facets': [FACET_HASHTAG],
+    }))
+
+  def test_to_as1_facet_mention(self):
+    self.assert_equals(trim_nulls({
+      **POST_AS['object'],
+      'id': None,
+      'url': None,
+      'tags': [TAG_MENTION_URL],
+    }), to_as1({
+      **POST_BSKY,
+      'facets': [FACET_MENTION],
     }))
 
   def test_to_as1_facet_bad_index_inside_unicode_code_point(self):
