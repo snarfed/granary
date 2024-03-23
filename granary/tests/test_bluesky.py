@@ -125,7 +125,7 @@ POST_FEED_VIEW_BSKY = {
   'post': POST_AUTHOR_BSKY,
 }
 
-FACETS = [{
+FACETS_LINK = [{
   '$type': 'app.bsky.richtext.facet',
   'features': [{
     '$type': 'app.bsky.richtext.facet#link',
@@ -136,12 +136,29 @@ FACETS = [{
     'byteEnd': 11,
   },
 }]
-FACET_TAG = {
+TAG_LINK = {
   'objectType': 'article',
   'url': 'http://my/link',
   'displayName': 'original',
   'startIndex': 3,
   'length': 8,
+}
+FACETS_HASHTAG = [{
+  '$type': 'app.bsky.richtext.facet',
+  'features': [{
+    '$type': 'app.bsky.richtext.facet#tag',
+    'tag': 'hache-tagg',
+  }],
+  'index': {
+    'byteStart': 4,
+    'byteEnd': 14,
+  },
+}]
+TAG_HASHTAG = {
+  'objectType': 'hashtag',
+  'displayName': 'hache-tagg',
+  'startIndex': 4,
+  'length': 10,
 }
 EMBED_EXTERNAL = {
   'description': '',
@@ -629,7 +646,7 @@ class BlueskyTest(testutil.TestCase):
       'content': '<em>some html</em>',
       'content_is_html': True,
       # not set because content is HTML
-      # 'tags': [FACET_TAG],
+      # 'tags': [TAG_LINK],
     })
 
     # with self.assertRaises(NotImplementedError):
@@ -647,7 +664,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected = {
       **POST_BSKY,
-      'facets': copy.deepcopy(FACETS)
+      'facets': copy.deepcopy(FACETS_LINK)
     }
     del expected['facets'][0]['index']
 
@@ -802,11 +819,11 @@ class BlueskyTest(testutil.TestCase):
 
   def test_from_as1_facet_link_and_embed(self):
     expected = copy.deepcopy(POST_BSKY_EMBED)
-    expected['facets'] = FACETS
+    expected['facets'] = FACETS_LINK
 
     self.assert_equals(expected, from_as1({
       **POST_AS_EMBED,
-      'tags': [FACET_TAG],
+      'tags': [TAG_LINK],
     }))
 
   def test_from_as1_repost(self):
@@ -1175,14 +1192,25 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_facet_link_and_embed(self):
     bsky = copy.deepcopy(POST_BSKY_EMBED)
-    bsky['facets'] = FACETS
+    bsky['facets'] = FACETS_LINK
 
     self.assert_equals(trim_nulls({
       **POST_AS_EMBED,
       'id': None,
       'url': None,
-      'tags': [FACET_TAG],
+      'tags': [TAG_LINK],
     }), to_as1(bsky))
+
+  def test_to_as1_facet_hashtag(self):
+    self.assert_equals(trim_nulls({
+      **POST_AS['object'],
+      'id': None,
+      'url': None,
+      'tags': [TAG_HASHTAG],
+    }), to_as1({
+      **POST_BSKY,
+      'facets': FACETS_HASHTAG,
+    }))
 
   def test_to_as1_facet_bad_index_inside_unicode_code_point(self):
     # byteStart points into the middle of a Unicode code point

@@ -286,6 +286,7 @@ Changelog
 * `bluesky`:
   * `to_as1`:
     * Support `app.bsky.feed.defs#notFoundPost` records.
+    * Add hashtag facet support.
 
 ### 6.2 - 2024-03-15
 

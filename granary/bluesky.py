@@ -820,6 +820,11 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
             'objectType': 'mention',
             'url': Bluesky.user_url(feat.get('did')),
           })
+        elif feat.get('$type') == 'app.bsky.richtext.facet#tag':
+          tag.update({
+            'objectType': 'hashtag',
+            'displayName': feat.get('tag')
+          })
 
       index = facet.get('index', {})
       # convert indices from UTF-8 encoded bytes to Unicode chars (code points)
@@ -831,7 +836,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         if byte_start is not None:
           tag['startIndex'] = len(text.encode()[:byte_start].decode())
         if byte_end is not None:
-          tag['displayName'] = text.encode()[byte_start:byte_end].decode()
+          tag.setdefault('displayName', text.encode()[byte_start:byte_end].decode())
           tag['length'] = len(tag['displayName'])
       except UnicodeDecodeError as e:
         logger.warning(f"Couldn't apply facet {facet} to unicode text: {text}")
