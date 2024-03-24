@@ -143,22 +143,32 @@ TAG_LINK = {
   'startIndex': 3,
   'length': 8,
 }
-FACET_HASHTAG = {
-  '$type': 'app.bsky.richtext.facet',
-  'features': [{
-    '$type': 'app.bsky.richtext.facet#tag',
-    'tag': 'hache-tagg',
+POST_BSKY_FACET_HASHTAG = {
+  '$type': 'app.bsky.feed.post',
+  'text': 'foo #hache-☕ bar',
+  'createdAt': '2007-07-07T03:04:05.000Z',
+  'facets': [{
+    '$type': 'app.bsky.richtext.facet',
+    'features': [{
+      '$type': 'app.bsky.richtext.facet#tag',
+      'tag': 'hache-☕',
+    }],
+    'index': {
+      'byteStart': 5,
+      'byteEnd': 14,
+    },
   }],
-  'index': {
-    'byteStart': 4,
-    'byteEnd': 14,
-  },
 }
-TAG_HASHTAG = {
-  'objectType': 'hashtag',
-  'displayName': 'hache-tagg',
-  'startIndex': 4,
-  'length': 10,
+NOTE_AS_TAG_HASHTAG = {
+  'objectType': 'note',
+  'published': '2007-07-07T03:04:05.000Z',
+  'content': 'foo #hache-☕ bar',
+  'tags': [{
+    'objectType': 'hashtag',
+    'displayName': 'hache-☕',
+    'startIndex': 5,
+    'length': 7,
+  }],
 }
 FACET_MENTION = {
   '$type': 'app.bsky.richtext.facet',
@@ -710,13 +720,14 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_from_as1_tag_hashtag(self):
-    self.assert_equals({
-      **POST_BSKY,
-      'facets': [FACET_HASHTAG],
-    }, from_as1({
-      **POST_AS['object'],
-      'tags': [TAG_HASHTAG],
-    }))
+    self.assert_equals(POST_BSKY_FACET_HASHTAG, from_as1(NOTE_AS_TAG_HASHTAG))
+
+  def test_from_as1_tag_hashtag_guess_index(self):
+    note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
+    del note['tags'][0]['startIndex']
+    del note['tags'][0]['length']
+
+    self.assert_equals(POST_BSKY_FACET_HASHTAG, from_as1(note))
 
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
@@ -1217,15 +1228,7 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_to_as1_facet_hashtag(self):
-    self.assert_equals(trim_nulls({
-      **POST_AS['object'],
-      'id': None,
-      'url': None,
-      'tags': [TAG_HASHTAG],
-    }), to_as1({
-      **POST_BSKY,
-      'facets': [FACET_HASHTAG],
-    }))
+    self.assert_equals(NOTE_AS_TAG_HASHTAG, to_as1(POST_BSKY_FACET_HASHTAG))
 
   def test_to_as1_facet_mention(self):
     self.assert_equals(trim_nulls({

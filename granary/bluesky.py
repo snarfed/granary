@@ -514,7 +514,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
     facets = []
     if text == content:
-      # convert index-based to facets
+      # convert index-based tags to facets
       for tag in util.get_list(obj, 'tags'):
         type = tag.get('objectType')
         url = tag.get('url')
@@ -524,11 +524,39 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         facet = {
           '$type': 'app.bsky.richtext.facet',
         }
+        try:
+          start = int(tag['startIndex'])
+          if start and obj.get('content_is_html'):
+            raise NotImplementedError('HTML content is not supported with index tags')
+          end = start + int(tag['length'])
+
+          facet['index'] = {
+            # convert indices from Unicode chars to UTF-8 encoded bytes
+            # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
+            'byteStart': len(content[:start].encode()),
+            'byteEnd': len(content[:end].encode()),
+          }
+        except (KeyError, ValueError, IndexError, TypeError):
+          pass
+
         if type == 'hashtag':
-          facet['features'] = [{
-            '$type': 'app.bsky.richtext.facet#tag',
-            'tag': tag.get('displayName'),
-          }]
+          if name := tag.get('displayName'):
+            facet['features'] = [{
+              '$type': 'app.bsky.richtext.facet#tag',
+              'tag': name,
+            }]
+            if 'index' not in facet:
+              # find (first) location
+              # can't use \b for word boundaries here because that only includes
+              # alphanumerics, and Bluesky hashtags can include emoji
+              match = re.search(fr'[\s^](#{name})[\s$]', content)
+              if match:
+                start_bytes = len(content[:match.start(1)].encode())
+                facet['index'] = {
+                  'byteStart': start_bytes + 1,
+                  'byteEnd': start_bytes + 1 + len(name.encode()),
+                }
+
         elif type == 'mention':
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#mention',
@@ -543,21 +571,6 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
             '$type': 'app.bsky.richtext.facet#link',
             'uri': url,
           }]
-
-        try:
-          start = int(tag['startIndex'])
-          if start and obj.get('content_is_html'):
-            raise NotImplementedError('HTML content is not supported with index tags')
-          end = start + int(tag['length'])
-
-          facet['index'] = {
-            # convert indices from Unicode chars (code points) to UTF-8 encoded bytes
-            # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
-            'byteStart': len(content[:start].encode()),
-            'byteEnd': len(content[:end].encode()),
-          }
-        except (KeyError, ValueError, IndexError, TypeError):
-          pass
 
         facets.append(facet)
 
