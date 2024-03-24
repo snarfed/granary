@@ -413,6 +413,14 @@ class AtomTest(testutil.TestCase):
       atom.activities_to_atom([activity], test_instagram.ACTOR,
                               title='my title'))
 
+  def test_render_image_without_url(self):
+    activity = copy.deepcopy(test_instagram.ACTIVITY)
+    activity['object']['attachments'].append(
+      {'objectType': 'image', 'image': {'href': 'http://image/2'}})
+
+    # just check that we don't crash
+    atom.activities_to_atom([activity], test_instagram.ACTOR)
+
   def test_render_share(self):
     activity = {
       'verb': 'share',

@@ -442,12 +442,14 @@ def _prepare_activity(a, reader=True):
     if not image:
       continue
     url = image.get('url') or image.get('id')
+    if not url:
+      continue
     parsed = urllib.parse.urlparse(url)
     rest = urllib.parse.urlunparse(('', '') + parsed[2:])
     img_src_re = re.compile(r"""src *= *['"] *((https?:)?//%s)?%s *['"]""" %
                             (re.escape(parsed.netloc),
                              _encode_ampersands(re.escape(rest))))
-    if (url and url not in image_urls_seen and
+    if (url not in image_urls_seen and
         not img_src_re.search(obj['rendered_content'])):
       children.append(microformats2.img(url))
       image_urls_seen.add(url)

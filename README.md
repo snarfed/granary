@@ -283,6 +283,8 @@ Changelog
 
 ### 6.3 - unreleased
 
+* `atom`:
+  * `activities_to_atom`: handle image attachments without `url` field.
 * `bluesky`:
   * `to_as1`:
     * Support `app.bsky.feed.defs#notFoundPost` records.
