@@ -291,6 +291,7 @@ Changelog
     * Add hashtag facet support.
   * `from_as1`:
     * Add hashtag support.
+    * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
   * Add `value` boolean kwarg to `from_as1_to_strong_ref`.
 
 ### 6.2 - 2024-03-15

@@ -938,6 +938,40 @@ class BlueskyTest(testutil.TestCase):
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aalice&collection=app.bsky.feed.post&rkey=parent-tid')
 
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:alice/app.bsky.feed.post/parent-tid',
+    'cid': 'my-parent-syd',
+    'value': {
+      **POST_BSKY,
+      'reply': {
+        '$type': 'app.bsky.feed.post#replyRef',
+        'root': {
+          'uri': 'at://did:bob/app.bsky.feed.post/root-tid',
+          'cid': 'my-root-syd',
+        },
+      },
+    },
+  }))
+  def test_from_as1_reply_client_root(self, mock_get):
+    self.assert_equals({
+      **REPLY_BSKY,
+      'reply': {
+        '$type': 'app.bsky.feed.post#replyRef',
+        'parent': {
+          'uri': 'at://did:alice/app.bsky.feed.post/parent-tid',
+          'cid': 'my-parent-syd',
+        },
+        'root': {
+          'uri': 'at://did:bob/app.bsky.feed.post/root-tid',
+          'cid': 'my-root-syd',
+        },
+      },
+    }, from_as1(REPLY_AS['object'], client=self.bs))
+
+    self.assert_call(mock_get,
+                     'com.atproto.repo.getRecord'
+                     '?repo=did%3Aalice&collection=app.bsky.feed.post&rkey=parent-tid')
+
   @patch('requests.get')
   def test_from_as1_like_client(self, mock_get):
     mock_get.return_value = requests_response({

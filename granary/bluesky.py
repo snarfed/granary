@@ -264,7 +264,8 @@ def from_as1_to_strong_ref(obj, client=None, value=False):
     obj (dict): AS1 object or activity
     client (Bluesky): optional; if provided, this will be used to make API calls
       to PDSes to fetch and populate the ``cid`` field and resolve handle to DID.
-    value (bool): whether to include the record's ``value`` field
+    value (bool): whether to include the record's ``value`` field in the
+      returned object
 
   Returns:
     dict: ATProto ``com.atproto.repo.strongRef`` record
@@ -662,13 +663,12 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     reply = None
     in_reply_to = base_object(obj)
     if in_reply_to:
-      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client)
+      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client, value=True)
+      root_ref = (parent_ref.pop('value', {}).get('reply', {}).get('root')
+                  or parent_ref)
       reply = {
         '$type': 'app.bsky.feed.post#replyRef',
-        # we don't know what the actual root is, so just use parent. callers can
-        # look it up and override if they really need it.
-        # TODO: fix now that we're fetching parent with client
-        'root': parent_ref,
+        'root': root_ref,
         'parent': parent_ref,
       }
 
