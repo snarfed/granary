@@ -254,7 +254,7 @@ def web_url_to_at_uri(url, handle=None, did=None):
   return f'at://{id}/{collection}/{rkey}'
 
 
-def from_as1_to_strong_ref(obj, client=None):
+def from_as1_to_strong_ref(obj, client=None, value=False):
   """Converts an AS1 object to an ATProto ``com.atproto.repo.strongRef``.
 
   Uses AS1 ``id`` or ``url`, converting from bsky.app URL to ``at://`` URI if
@@ -264,36 +264,33 @@ def from_as1_to_strong_ref(obj, client=None):
     obj (dict): AS1 object or activity
     client (Bluesky): optional; if provided, this will be used to make API calls
       to PDSes to fetch and populate the ``cid`` field and resolve handle to DID.
+    value (bool): whether to include the record's ``value`` field
 
   Returns:
     dict: ATProto ``com.atproto.repo.strongRef`` record
   """
   at_uri = Bluesky.post_id((obj.get('id') or as1.get_url(obj))
-                           if isinstance(obj, dict) else obj)
-  if not at_uri:
+                           if isinstance(obj, dict) else obj
+                           ) or ''
+  match = AT_URI_PATTERN.match(at_uri)
+  if not match or not client:
     return {
-      'uri': '',
+      'uri': at_uri,
       'cid': '',
     }
 
-  cid = ''
-  match = AT_URI_PATTERN.match(at_uri)
-  if match and client:
-    repo, collection, rkey = match.groups()
-    if not repo.startswith('did:'):
-      handle = repo
-      repo = client._client.com.atproto.identity.resolveHandle(handle=handle)['did']
-      # only replace first instance of handle in case it's also in collection or rkey
-      at_uri = at_uri.replace(handle, repo, 1)
+  repo, collection, rkey = match.groups()
+  if not repo.startswith('did:'):
+    handle = repo
+    repo = client._client.com.atproto.identity.resolveHandle(handle=handle)['did']
+    # only replace first instance of handle in case it's also in collection or rkey
+    at_uri = at_uri.replace(handle, repo, 1)
 
-    record = client._client.com.atproto.repo.getRecord(
-      repo=repo, collection=collection, rkey=rkey)
-    cid = record.get('cid')
-
-  return {
-    'uri': at_uri,
-    'cid': cid,
-  }
+  record = client._client.com.atproto.repo.getRecord(
+    repo=repo, collection=collection, rkey=rkey)
+  if not value:
+    record.pop('value', None)
+  return record
 
 
 def from_as1_datetime(val):

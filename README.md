@@ -291,6 +291,7 @@ Changelog
     * Add hashtag facet support.
   * `from_as1`:
     * Add hashtag support.
+  * Add `value` boolean kwarg to `from_as1_to_strong_ref`.
 
 ### 6.2 - 2024-03-15
 
