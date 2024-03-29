@@ -819,6 +819,20 @@ foo bar
       },
     ], obj.get('tags'))
 
+  def test_json_to_object_category_strips_hash(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'foo',
+      }],
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'category': ['#foo'],
+      },
+    }))
+
   def test_json_to_object_text_newlines(self):
     """Text newlines should not be converted to <br>s."""
     self.assert_equals({

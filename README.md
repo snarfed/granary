@@ -293,6 +293,9 @@ Changelog
     * Add hashtag support.
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
   * Add `value` boolean kwarg to `from_as1_to_strong_ref`.
+* `microformats2`:
+  * `json_to_object`:
+    * Strip leading `#` prefix (if present) from hashtag `u-category`s.
 
 ### 6.2 - 2024-03-15
 

@@ -556,7 +556,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     'stream': [stream],
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
-    'tags': [{'objectType': 'hashtag', 'displayName': cat}
+    'tags': [{'objectType': 'hashtag', 'displayName': cat.removeprefix('#')}
              if isinstance(cat, str)
              else json_to_object(cat)
              for cat in props.get('category', [])],
