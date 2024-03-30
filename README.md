@@ -296,6 +296,7 @@ Changelog
 * `microformats2`:
   * `json_to_object`:
     * Strip leading `#` prefix (if present) from hashtag `u-category`s.
+    * Bug fix for when `name` property is an object, eg an `h-card`.
 
 ### 6.2 - 2024-03-15
 

@@ -1221,3 +1221,37 @@ Shared <a href="#">a post</a> by   <span class="h-card">
         ],
       },
     }))
+
+  def test_get_title(self):
+    self.assert_equals('my title', microformats2.get_title({
+      'items': [{
+        'type': ['h-feed'],
+        'properties': {
+          'name': ['my title'],
+        },
+      }],
+    }))
+
+  def test_get_title_no_name(self):
+    self.assert_equals('', microformats2.get_title({
+      'items': [{
+        'type': ['h-feed'],
+        'properties': {},
+      }],
+    }))
+
+  def test_get_title_name_is_hcard(self):
+    self.assert_equals('name value', microformats2.get_title({
+      'items': [{
+        'type': ['h-feed'],
+        'properties': {
+          'name': [{
+            "type": ["h-card"],
+            "properties": {
+              "name": ["inner name"]
+            },
+            "value": "name value",
+          }],
+        },
+      }],
+    }))

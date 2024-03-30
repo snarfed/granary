@@ -1189,7 +1189,7 @@ def get_title(mf2):
   Returns:
     str: title, possibly ellipsized
   """
-  lines = mf2util.interpret_feed(mf2, '').get('name', '').splitlines()
+  lines = get_text(mf2util.interpret_feed(mf2, '').get('name')).splitlines()
   if lines:
     return util.ellipsize(lines[0])
 
