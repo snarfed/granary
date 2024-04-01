@@ -543,15 +543,16 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
             'tag': name,
           }]
           if 'index' not in facet:
-            # find (first) location
+            # guess this is first location of hashtag in text. note that #
+            # character is included.
+            #
             # can't use \b for word boundaries here because that only includes
             # alphanumerics, and Bluesky hashtags can include emoji
             match = re.search(fr'[\s^](#{name})[\s$]', text)
             if match:
-              start_bytes = len(content[:match.start(1)].encode())
               facet['index'] = {
-                'byteStart': start_bytes + 1,
-                'byteEnd': start_bytes + 1 + len(name.encode()),
+                'byteStart': len(content[:match.start(1)].encode()),
+                'byteEnd': len(content[:match.end(1)].encode()),
               }
 
       elif type == 'mention':
