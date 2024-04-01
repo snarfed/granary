@@ -749,7 +749,20 @@ class BlueskyTest(testutil.TestCase):
     del note['tags'][0]['startIndex']
     del note['tags'][0]['length']
 
-    self.assert_equals(POST_BSKY_FACET_HASHTAG, from_as1(note))
+  def test_from_as1_drop_tag_with_start_past_content_length(self):
+    note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
+    note['tags'][0]['startIndex'] = len(note['content']) + 2
+
+    expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
+    del expected['facets']
+    self.assert_equals(expected, from_as1(note))
+
+  def test_from_as1_trim_tag_with_end_past_content_length(self):
+    note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
+    expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
+    note['tags'][0]['length'] = 50
+    expected['facets'][0]['index']['byteEnd'] = 18
+    self.assert_equals(expected, from_as1(note))
 
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)

@@ -569,6 +569,14 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
           'uri': url,
         }]
 
+      # skip or trim this facet if it's off the end of content that got truncated
+      index = facet.get('index', {})
+      text_len = len(text.encode())
+      if index.get('byteStart', 0) >= text_len:
+        continue
+      if index.get('byteEnd', 0) > text_len:
+        index['byteEnd'] = text_len
+
       facets.append(facet)
 
     # images
