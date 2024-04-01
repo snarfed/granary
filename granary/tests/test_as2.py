@@ -187,6 +187,21 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_person_url_in_propertyvalue_attachment(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@giflian@techhub.social',
+      'url': {'displayName': 'Twitter', 'value': 'https://techhub.social/@giflian'},
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://techhub.social/@giflian',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Twitter',
+        'value': '<span class="h-card"><a href="https://techhub.social/@giflian" class="u-url mention">@<span>giflian</span></a></span>',
+      }],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (
