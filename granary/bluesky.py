@@ -504,73 +504,72 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     }
 
   elif verb == 'post' and type in POST_TYPES:
-    # convert text to HTML and truncate
+    # convert text from HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
     text = obj.get('summary') or content or obj.get('name') or ''
     text = src.truncate(html_to_text(text), None, OMIT_LINK)
 
     facets = []
-    if text == content:
-      # convert index-based tags to facets
-      for tag in util.get_list(obj, 'tags'):
-        type = tag.get('objectType')
-        url = tag.get('url')
-        if not url and type != 'hashtag':
-          continue
+    # convert index-based tags to facets
+    for tag in util.get_list(obj, 'tags'):
+      type = tag.get('objectType')
+      url = tag.get('url')
+      if not url and type != 'hashtag':
+        continue
 
-        facet = {
-          '$type': 'app.bsky.richtext.facet',
+      facet = {
+        '$type': 'app.bsky.richtext.facet',
+      }
+      try:
+        start = int(tag['startIndex'])
+        if start and obj.get('content_is_html'):
+          raise NotImplementedError('HTML content is not supported with index tags')
+        end = start + int(tag['length'])
+
+        facet['index'] = {
+          # convert indices from Unicode chars to UTF-8 encoded bytes
+          # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
+          'byteStart': len(content[:start].encode()),
+          'byteEnd': len(content[:end].encode()),
         }
-        try:
-          start = int(tag['startIndex'])
-          if start and obj.get('content_is_html'):
-            raise NotImplementedError('HTML content is not supported with index tags')
-          end = start + int(tag['length'])
+      except (KeyError, ValueError, IndexError, TypeError):
+        pass
 
-          facet['index'] = {
-            # convert indices from Unicode chars to UTF-8 encoded bytes
-            # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
-            'byteStart': len(content[:start].encode()),
-            'byteEnd': len(content[:end].encode()),
-          }
-        except (KeyError, ValueError, IndexError, TypeError):
-          pass
-
-        if type == 'hashtag':
-          if name := tag.get('displayName'):
-            facet['features'] = [{
-              '$type': 'app.bsky.richtext.facet#tag',
-              'tag': name,
-            }]
-            if 'index' not in facet:
-              # find (first) location
-              # can't use \b for word boundaries here because that only includes
-              # alphanumerics, and Bluesky hashtags can include emoji
-              match = re.search(fr'[\s^](#{name})[\s$]', content)
-              if match:
-                start_bytes = len(content[:match.start(1)].encode())
-                facet['index'] = {
-                  'byteStart': start_bytes + 1,
-                  'byteEnd': start_bytes + 1 + len(name.encode()),
-                }
-
-        elif type == 'mention':
+      if type == 'hashtag':
+        if name := tag.get('displayName'):
           facet['features'] = [{
-            '$type': 'app.bsky.richtext.facet#mention',
-            # TODO: support bsky.app URLs with handles by resolving them?
-            'did': (url if url.startswith('did:')
-                    else url.removeprefix(f'{Bluesky.BASE_URL}/profile/')
-                      if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
-                    else ''),
+            '$type': 'app.bsky.richtext.facet#tag',
+            'tag': name,
           }]
-        else:
-          facet['features'] = [{
-            '$type': 'app.bsky.richtext.facet#link',
-            'uri': url,
-          }]
+          if 'index' not in facet:
+            # find (first) location
+            # can't use \b for word boundaries here because that only includes
+            # alphanumerics, and Bluesky hashtags can include emoji
+            match = re.search(fr'[\s^](#{name})[\s$]', text)
+            if match:
+              start_bytes = len(content[:match.start(1)].encode())
+              facet['index'] = {
+                'byteStart': start_bytes + 1,
+                'byteEnd': start_bytes + 1 + len(name.encode()),
+              }
 
-        facets.append(facet)
+      elif type == 'mention':
+        facet['features'] = [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          # TODO: support bsky.app URLs with handles by resolving them?
+          'did': (url if url.startswith('did:')
+                  else url.removeprefix(f'{Bluesky.BASE_URL}/profile/')
+                    if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
+                  else ''),
+        }]
+      else:
+        facet['features'] = [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': url,
+        }]
+
+      facets.append(facet)
 
     # images
     images_embed = images_record_embed = None
@@ -1502,24 +1501,6 @@ class Bluesky(Source):
     url = obj.get('url')
     content = self.truncate(content, url, include_link, type)
 
-    # facet for link to original post, if any
-    url_facets = []
-    if url:
-      url_index = content.rfind(url)
-      if url_index != -1:
-        byte_start = len(content[:url_index].encode())
-        url_facets = [{
-          '$type': 'app.bsky.richtext.facet',
-          'features': [{
-            '$type': 'app.bsky.richtext.facet#link',
-            'uri': url,
-          }],
-          'index': {
-            'byteStart': byte_start,
-            'byteEnd': byte_start + len(url.encode()),
-          },
-        }]
-
     # TODO linkify mentions and hashtags
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
 
@@ -1603,10 +1584,25 @@ class Bluesky(Source):
       else:
         blobs = self.upload_media(images)
         post_atp = from_as1(obj, blobs=blobs, client=self)
-        post_atp.update({
-          'text': content,
-          'facets': url_facets,
-        })
+        post_atp['text'] = content
+
+        # facet for link to original post, if any
+        if url:
+          url_index = content.rfind(url)
+          if url_index != -1:
+            byte_start = len(content[:url_index].encode())
+            post_atp.setdefault('facets', []).append({
+              '$type': 'app.bsky.richtext.facet',
+              'features': [{
+                '$type': 'app.bsky.richtext.facet#link',
+                'uri': url,
+              }],
+              'index': {
+                'byteStart': byte_start,
+                'byteEnd': byte_start + len(url.encode()),
+              },
+            })
+
         result = self.client.com.atproto.repo.createRecord({
           'repo': self.did,
           'collection': post_atp['$type'],

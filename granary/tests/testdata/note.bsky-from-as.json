@@ -8,5 +8,16 @@
       "$type": "app.bsky.embed.images#image",
       "alt": ""
     }]
-  }
+  },
+  "facets": [{
+    "$type": "app.bsky.richtext.facet",
+    "features": [{
+      "$type": "app.bsky.richtext.facet#link",
+      "uri": "http://my/link"
+    }],
+    "index": {
+      "byteEnd": 12,
+      "byteStart": 8
+    }
+  }]
 }

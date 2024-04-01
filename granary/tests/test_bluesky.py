@@ -743,6 +743,14 @@ class BlueskyTest(testutil.TestCase):
 
     self.assert_equals(POST_BSKY_FACET_HASHTAG, from_as1(note))
 
+  def test_from_as1_tag_hashtag_html_content_guess_index(self):
+    note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
+    note['content'] = '<p>foo <a class="p-category">#hache-☕</a> bar</p>'
+    del note['tags'][0]['startIndex']
+    del note['tags'][0]['length']
+
+    self.assert_equals(POST_BSKY_FACET_HASHTAG, from_as1(note))
+
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['embed']['images'][0]['image']
@@ -1264,7 +1272,6 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_to_as1_facet_link_and_embed(self):
-
     self.assert_equals(trim_nulls({
       **POST_AS_EMBED,
       'id': None,
@@ -1660,7 +1667,6 @@ class BlueskyTest(testutil.TestCase):
         reply_bsky = copy.deepcopy(REPLY_BSKY)
         reply_bsky['reply']['root']['cid'] = \
           reply_bsky['reply']['parent']['cid'] = 'my-syd'
-        reply_bsky['facets'] = []
         self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
           'repo': self.bs.did,
           'collection': 'app.bsky.feed.post',
@@ -1799,10 +1805,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
       'collection': 'app.bsky.feed.post',
-      'record': {
-        **POST_BSKY_IMAGES,
-        'facets': [],
-      },
+      'record': POST_BSKY_IMAGES,
     })
 
 #   @patch('requests.post')
@@ -1865,7 +1868,6 @@ class BlueskyTest(testutil.TestCase):
         '$type': 'app.bsky.feed.post',
         'text': 'foo ☕ bar',  # TODO \n\nhttps://example.com/foo',
         'createdAt': '2022-01-02T03:04:05.000Z',
-        'facets': [],
       },
       # TODO
       # 'facets': [{
