@@ -185,6 +185,31 @@ TAG_MENTION_URL = {
   'objectType': 'mention',
   'url': 'https://bsky.app/profile/did:plc:foo',
 }
+NOTE_AS_TAG_MENTION ={
+  'objectType': 'note',
+  'content': 'foo @you.com bar',
+  'tags': [{
+    'objectType': 'mention',
+    'url': 'did:plc:foo',
+    'displayName': 'you.com',
+  }]
+}
+POST_BSKY_FACET_MENTION = {
+  '$type': 'app.bsky.feed.post',
+  'text': 'foo @you.com bar',
+  'createdAt': '2022-01-02T03:04:05.000Z',
+  'facets': [{
+    '$type': 'app.bsky.richtext.facet',
+    'features': [{
+      '$type': 'app.bsky.richtext.facet#mention',
+      'did': 'did:plc:foo',
+    }],
+    'index': {
+      'byteStart': 4,
+      'byteEnd': 12,
+    },
+  }],
+}
 EMBED_EXTERNAL = {
   'description': '',
   'title': 'a link',
@@ -750,6 +775,15 @@ class BlueskyTest(testutil.TestCase):
     note['content'] = '<p>foo <a class="p-category">#hache-☕</a> bar</p>'
     del note['tags'][0]['startIndex']
     del note['tags'][0]['length']
+
+  def test_from_as1_tag_mention_guess_index(self):
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION))
+
+  def test_from_as1_tag_mention_html_content_guess_index(self):
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
+      **NOTE_AS_TAG_MENTION,
+      'content': '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>',
+    }))
 
   def test_from_as1_drop_tag_with_start_past_content_length(self):
     note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)

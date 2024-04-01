@@ -290,7 +290,7 @@ Changelog
     * Support `app.bsky.feed.defs#notFoundPost` records.
     * Add hashtag facet support.
   * `from_as1`:
-    * Add hashtag support.
+    * Add hashtag and mention support.
     * Guess missing indices in facets based on content text.
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
   * Add `value` boolean kwarg to `from_as1_to_strong_ref`.

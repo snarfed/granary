@@ -536,25 +536,12 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       except (KeyError, ValueError, IndexError, TypeError):
         pass
 
+      name = tag.get('displayName')
       if type == 'hashtag':
-        if name := tag.get('displayName'):
-          facet['features'] = [{
-            '$type': 'app.bsky.richtext.facet#tag',
-            'tag': name,
-          }]
-          if 'index' not in facet:
-            # guess this is first location of hashtag in text. note that #
-            # character is included.
-            #
-            # can't use \b for word boundaries here because that only includes
-            # alphanumerics, and Bluesky hashtags can include emoji
-            match = re.search(fr'[\s^](#{name})[\s$]', text)
-            if match:
-              facet['index'] = {
-                'byteStart': len(content[:match.start(1)].encode()),
-                'byteEnd': len(content[:match.end(1)].encode()),
-              }
-
+        facet['features'] = [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': name,
+        }]
       elif type == 'mention':
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#mention',
@@ -570,13 +557,27 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
           'uri': url,
         }]
 
+      if 'index' not in facet:
+        # use displayName to guess index at first location found in text. note
+        # that #/@ character for mentions is included in index end.
+        #
+        # can't use \b for word boundaries here because that only includes
+        # alphanumerics, and Bluesky hashtags can include emoji
+        prefix = '#' if type == 'hashtag' else '@' if type == 'mention' else ''
+        match = re.search(fr'[\s^]({prefix}{name})[\s$]', text)
+        if match:
+          facet['index'] = {
+            'byteStart': len(content[:match.start(1)].encode()),
+            'byteEnd': len(content[:match.end(1)].encode()),
+          }
+
       # skip or trim this facet if it's off the end of content that got truncated
-      index = facet.get('index', {})
-      text_len = len(text.encode())
-      if index.get('byteStart', 0) >= text_len:
-        continue
-      if index.get('byteEnd', 0) > text_len:
-        index['byteEnd'] = text_len
+      if index := facet.get('index'):
+        text_len = len(text.encode())
+        if index.get('byteStart', 0) >= text_len:
+          continue
+        if index.get('byteEnd', 0) > text_len:
+          index['byteEnd'] = text_len
 
       facets.append(facet)
 
