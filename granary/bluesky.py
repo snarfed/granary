@@ -536,7 +536,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       except (KeyError, ValueError, IndexError, TypeError):
         pass
 
-      name = tag.get('displayName')
+      name = tag.get('displayName', '').strip().lstrip('@#')
       if type == 'hashtag':
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#tag',

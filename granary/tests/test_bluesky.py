@@ -785,6 +785,12 @@ class BlueskyTest(testutil.TestCase):
       'content': '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>',
     }))
 
+  def test_from_as1_tag_mention_at_char_html_content_guess_index(self):
+    note = copy.deepcopy(NOTE_AS_TAG_MENTION)
+    note['content'] = '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>'
+    note['tags'][0]['displayName'] = '@you.com'
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(note))
+
   def test_from_as1_drop_tag_with_start_past_content_length(self):
     note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
     note['tags'][0]['startIndex'] = len(note['content']) + 2
