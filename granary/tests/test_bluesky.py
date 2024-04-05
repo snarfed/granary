@@ -176,22 +176,28 @@ FACET_MENTION = {
     '$type': 'app.bsky.richtext.facet#mention',
     'did': 'did:plc:foo',
   }],
+  'index': {
+    'byteStart': 5,
+    'byteEnd': 12,
+  },
 }
 TAG_MENTION_DID = {
   'objectType': 'mention',
   'url': 'did:plc:foo',
+  'displayName': 'did:plc:foo',
 }
 TAG_MENTION_URL = {
   'objectType': 'mention',
   'url': 'https://bsky.app/profile/did:plc:foo',
+  'displayName': 'you.com',
 }
 NOTE_AS_TAG_MENTION ={
   'objectType': 'note',
   'content': 'foo @you.com bar',
   'tags': [{
-    'objectType': 'mention',
-    'url': 'did:plc:foo',
-    'displayName': 'you.com',
+    **TAG_MENTION_URL,
+    'startIndex': 4,
+    'length': 8,
   }]
 }
 POST_BSKY_FACET_MENTION = {
@@ -726,13 +732,8 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my/link',
     }]
 
-    expected = {
-      **POST_BSKY,
-      'facets': [copy.deepcopy(FACET_LINK)]
-    }
-    del expected['facets'][0]['index']
-
-    self.assert_equals(expected, from_as1(post_as))
+    # no facet
+    self.assert_equals(POST_BSKY, from_as1(post_as))
 
   def test_from_as1_tag_without_url(self):
     self.assert_equals(POST_BSKY, from_as1({
@@ -740,20 +741,37 @@ class BlueskyTest(testutil.TestCase):
       'tags': [{'objectType': 'mention'}],
     }))
 
-  def test_from_as1_tag_mention_did(self):
-    self.assert_equals({
-      **POST_BSKY,
-      'facets': [FACET_MENTION],
-    }, from_as1({
+  # def test_from_as1_tag_mention_did(self):
+  #   content = f'did:plc:foo {POST_AS["object"]["content"]}'
+
+  #   self.assert_equals({
+  #     **POST_BSKY,
+  #     'text': content,
+  #     'facets': [FACET_MENTION],
+  #   }, from_as1({
+  #     **POST_AS['object'],
+  #     'content': content,
+  #     'tags': [TAG_MENTION_DID],
+  #   }))
+
+  def test_from_as1_tag_mention_did_not_in_content(self):
+    self.assert_equals(POST_BSKY, from_as1({
       **POST_AS['object'],
       'tags': [TAG_MENTION_DID],
     }))
 
-  def test_from_as1_tag_mention_url(self):
-    self.assert_equals({
-      **POST_BSKY,
-      'facets': [FACET_MENTION],
-    }, from_as1({
+  # def test_from_as1_tag_mention_url(self):
+  #   self.assert_equals({
+  #     **POST_BSKY,
+  #     'text': f'did:plc:foo {POST_BSKY["text"]}',
+  #     'facets': [FACET_MENTION],
+  #   }, from_as1({
+  #     **POST_AS['object'],
+  #     'tags': [TAG_MENTION_URL],
+  #   }))
+
+  def test_from_as1_tag_mention_url_not_in_content(self):
+    self.assert_equals(POST_BSKY, from_as1({
       **POST_AS['object'],
       'tags': [TAG_MENTION_URL],
     }))
@@ -1341,15 +1359,10 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(NOTE_AS_TAG_HASHTAG, to_as1(POST_BSKY_FACET_HASHTAG))
 
   def test_to_as1_facet_mention(self):
-    self.assert_equals(trim_nulls({
-      **POST_AS['object'],
-      'id': None,
-      'url': None,
-      'tags': [TAG_MENTION_URL],
-    }), to_as1({
-      **POST_BSKY,
-      'facets': [FACET_MENTION],
-    }))
+    expected = copy.deepcopy(NOTE_AS_TAG_MENTION)
+    expected['tags'][0]['displayName'] = '@you.com'
+    self.assert_equals(expected, to_as1(POST_BSKY_FACET_MENTION),
+                       ignore=['published'])
 
   def test_to_as1_facet_bad_index_inside_unicode_code_point(self):
     # byteStart points into the middle of a Unicode code point

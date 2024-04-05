@@ -291,7 +291,7 @@ Changelog
     * Add hashtag facet support.
   * `from_as1`:
     * Add hashtag and mention support.
-    * Guess missing indices in facets based on content text.
+    * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
   * Add `value` boolean kwarg to `from_as1_to_strong_ref`.
 * `microformats2`:
