@@ -184,14 +184,14 @@ FACET_MENTION = {
 TAG_MENTION_DID = {
   'objectType': 'mention',
   'url': 'did:plc:foo',
-  'displayName': 'did:plc:foo',
+  'displayName': 'you.com',
 }
 TAG_MENTION_URL = {
   'objectType': 'mention',
   'url': 'https://bsky.app/profile/did:plc:foo',
   'displayName': 'you.com',
 }
-NOTE_AS_TAG_MENTION ={
+NOTE_AS_TAG_MENTION_URL = {
   'objectType': 'note',
   'content': 'foo @you.com bar',
   'tags': [{
@@ -200,6 +200,8 @@ NOTE_AS_TAG_MENTION ={
     'length': 8,
   }]
 }
+NOTE_AS_TAG_MENTION_DID = copy.deepcopy(NOTE_AS_TAG_MENTION_URL)
+NOTE_AS_TAG_MENTION_DID['tags'][0].update(TAG_MENTION_DID)
 POST_BSKY_FACET_MENTION = {
   '$type': 'app.bsky.feed.post',
   'text': 'foo @you.com bar',
@@ -741,18 +743,8 @@ class BlueskyTest(testutil.TestCase):
       'tags': [{'objectType': 'mention'}],
     }))
 
-  # def test_from_as1_tag_mention_did(self):
-  #   content = f'did:plc:foo {POST_AS["object"]["content"]}'
-
-  #   self.assert_equals({
-  #     **POST_BSKY,
-  #     'text': content,
-  #     'facets': [FACET_MENTION],
-  #   }, from_as1({
-  #     **POST_AS['object'],
-  #     'content': content,
-  #     'tags': [TAG_MENTION_DID],
-  #   }))
+  def test_from_as1_tag_mention_did(self):
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION_DID))
 
   def test_from_as1_tag_mention_did_not_in_content(self):
     self.assert_equals(POST_BSKY, from_as1({
@@ -760,15 +752,8 @@ class BlueskyTest(testutil.TestCase):
       'tags': [TAG_MENTION_DID],
     }))
 
-  # def test_from_as1_tag_mention_url(self):
-  #   self.assert_equals({
-  #     **POST_BSKY,
-  #     'text': f'did:plc:foo {POST_BSKY["text"]}',
-  #     'facets': [FACET_MENTION],
-  #   }, from_as1({
-  #     **POST_AS['object'],
-  #     'tags': [TAG_MENTION_URL],
-  #   }))
+  def test_from_as1_tag_mention_url(self):
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION_URL))
 
   def test_from_as1_tag_mention_url_not_in_content(self):
     self.assert_equals(POST_BSKY, from_as1({
@@ -795,16 +780,16 @@ class BlueskyTest(testutil.TestCase):
     del note['tags'][0]['length']
 
   def test_from_as1_tag_mention_guess_index(self):
-    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION))
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION_URL))
 
   def test_from_as1_tag_mention_html_content_guess_index(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
-      **NOTE_AS_TAG_MENTION,
+      **NOTE_AS_TAG_MENTION_URL,
       'content': '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>',
     }))
 
   def test_from_as1_tag_mention_at_char_html_content_guess_index(self):
-    note = copy.deepcopy(NOTE_AS_TAG_MENTION)
+    note = copy.deepcopy(NOTE_AS_TAG_MENTION_URL)
     note['content'] = '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>'
     note['tags'][0]['displayName'] = '@you.com'
     self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(note))
@@ -1359,7 +1344,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(NOTE_AS_TAG_HASHTAG, to_as1(POST_BSKY_FACET_HASHTAG))
 
   def test_to_as1_facet_mention(self):
-    expected = copy.deepcopy(NOTE_AS_TAG_MENTION)
+    expected = copy.deepcopy(NOTE_AS_TAG_MENTION_URL)
     expected['tags'][0]['displayName'] = '@you.com'
     self.assert_equals(expected, to_as1(POST_BSKY_FACET_MENTION),
                        ignore=['published'])
