@@ -761,6 +761,14 @@ class BlueskyTest(testutil.TestCase):
       'tags': [TAG_MENTION_URL],
     }))
 
+  # resolveHandle
+  @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
+  def test_from_as1_tag_mention_url_html_link(self, _):
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
+      **POST_AS['object'],
+      'content': 'foo <a href="https://bsky.app/profile/you.com">@you.com</a> bar'
+    }, client=self.bs), ignore=['createdAt'])
+
   def test_from_as1_tag_hashtag(self):
     self.assert_equals(POST_BSKY_FACET_HASHTAG, from_as1(NOTE_AS_TAG_HASHTAG))
 
@@ -1934,6 +1942,41 @@ class BlueskyTest(testutil.TestCase):
       #     'byteEnd': 36,
       #   },
       # }],
+    })
+
+  @patch('requests.post')
+  @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
+  def test_create_mention(self, _, mock_post):
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    mock_post.return_value = requests_response({'uri': at_uri})
+
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create({
+      'objectType': 'note',
+      'content': 'foo <a href="https://bsky.app/profile/you.com">@you.com</a> bar',
+    }).content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': {
+        '$type': 'app.bsky.feed.post',
+        'text': 'foo @you.com bar',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+        'facets': [{
+          '$type': 'app.bsky.richtext.facet',
+          'features': [{
+            '$type': 'app.bsky.richtext.facet#mention',
+            'did': 'did:plc:foo',
+          }],
+          'index': {
+            'byteStart': 4,
+            'byteEnd': 12,
+          },
+        }],
+      },
     })
 
   @patch('requests.post')

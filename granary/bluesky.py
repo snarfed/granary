@@ -4,6 +4,7 @@
 * https://atproto.com/lexicons/app-bsky-actor
 * https://github.com/bluesky-social/atproto/tree/main/lexicons/app/bsky
 """
+import copy
 from datetime import datetime, timezone
 import json
 import logging
@@ -257,8 +258,7 @@ def web_url_to_at_uri(url, handle=None, did=None):
 def from_as1_to_strong_ref(obj, client=None, value=False):
   """Converts an AS1 object to an ATProto ``com.atproto.repo.strongRef``.
 
-  Uses AS1 ``id`` or ``url`, converting from bsky.app URL to ``at://`` URI if
-  needed.
+  Uses AS1 ``id`` or ``url`, which should be an ``at://`` URI.
 
   Args:
     obj (dict): AS1 object or activity
@@ -406,6 +406,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     else:
       raise ValueError(f"{type} {verb} doesn't support out_type {out_type}")
 
+  # extract @-mention links in HTML text
+  obj = copy.deepcopy(obj)
+  Source.postprocess_object(obj, mentions=True)
+
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type in as1.ACTOR_TYPES:
     # avatar and banner. banner is featured image, if available
@@ -542,15 +546,26 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
           '$type': 'app.bsky.richtext.facet#tag',
           'tag': name,
         }]
+
       elif type == 'mention':
+        # extract and if necessary resolve DID
+        if url.startswith('did:'):
+          did = url
+        else:
+          if match := AT_URI_PATTERN.match(url):
+            did = match.group('repo')
+          elif match := BSKY_APP_URL_RE.match(url):
+            did = match.group('id')
+          if not did.startswith('did:') and client:
+            did = client._client.com.atproto.identity.resolveHandle(handle=did)['did']
+
+        if not did:
+          continue
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#mention',
-          # TODO: support bsky.app URLs with handles by resolving them?
-          'did': (url if url.startswith('did:')
-                  else url.removeprefix(f'{Bluesky.BASE_URL}/profile/')
-                    if url.startswith(f'{Bluesky.BASE_URL}/profile/did:')
-                  else ''),
+          'did': did,
         }]
+
       else:
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#link',
@@ -581,7 +596,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       if index.get('byteEnd', 0) > text_len:
         index['byteEnd'] = text_len
 
-      facets.append(facet)
+      if facet not in facets:
+        facets.append(facet)
 
     # images
     images_embed = images_record_embed = None
