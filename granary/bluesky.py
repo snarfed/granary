@@ -262,8 +262,9 @@ def from_as1_to_strong_ref(obj, client=None, value=False):
 
   Args:
     obj (dict): AS1 object or activity
-    client (Bluesky): optional; if provided, this will be used to make API calls
-      to PDSes to fetch and populate the ``cid`` field and resolve handle to DID.
+    client (lexrpc.Client): optional; if provided, this will be used to make API
+      calls to PDSes to fetch and populate the ``cid`` field and resolve handle
+      to DID.
     value (bool): whether to include the record's ``value`` field in the
       returned object
 
@@ -283,11 +284,11 @@ def from_as1_to_strong_ref(obj, client=None, value=False):
   repo, collection, rkey = match.groups()
   if not repo.startswith('did:'):
     handle = repo
-    repo = client._client.com.atproto.identity.resolveHandle(handle=handle)['did']
+    repo = client.com.atproto.identity.resolveHandle(handle=handle)['did']
     # only replace first instance of handle in case it's also in collection or rkey
     at_uri = at_uri.replace(handle, repo, 1)
 
-  record = client._client.com.atproto.repo.getRecord(
+  record = client.com.atproto.repo.getRecord(
     repo=repo, collection=collection, rkey=rkey)
   if not value:
     record.pop('value', None)
@@ -372,9 +373,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     blobs (dict): optional mapping from str URL to ``blob`` dict to use in the
       returned object. If not provided, or if this doesn't have an ``image`` or
       similar URL in the input object, its output blob will be omitted.
-    client (Bluesky): optional; if provided, this will be used to make API calls
-      to PDSes to fetch and populate CIDs for records referenced by replies,
-      likes, reposts, etc.
+    client (Bluesky or lexrpc.Client): optional; if provided, this will be used
+      to make API calls to PDSes to fetch and populate CIDs for records
+      referenced by replies, likes, reposts, etc.
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -382,8 +383,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
   Raises:
     ValueError: if the ``objectType`` or ``verb`` fields are missing or
       unsupported
-
   """
+  if isinstance(client, Bluesky):
+    client = client._client
+
   activity = obj
   inner_obj = as1.get_object(activity)
   verb = activity.get('verb') or 'post'
@@ -557,7 +560,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
           elif match := BSKY_APP_URL_RE.match(url):
             did = match.group('id')
           if not did.startswith('did:') and client:
-            did = client._client.com.atproto.identity.resolveHandle(handle=did)['did']
+            did = client.com.atproto.identity.resolveHandle(handle=did)['did']
 
         if not did:
           continue

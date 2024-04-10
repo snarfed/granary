@@ -293,7 +293,10 @@ Changelog
     * Add hashtag and mention support.
     * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
-  * Add `value` boolean kwarg to `from_as1_to_strong_ref`.
+    * Support `lexrpc.Client` as well as `Bluesky` for `client` kwarg.
+  * `from_as1_to_strong_ref`:
+    * Add `value` boolean kwarg.
+    * Change `client` kwarg from `Bluesky` to `lexrpc.Client`.
 * `microformats2`:
   * `json_to_object`:
     * Strip leading `#` prefix (if present) from hashtag `u-category`s.

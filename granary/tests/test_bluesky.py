@@ -637,7 +637,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assertEqual(ref, from_as1_to_strong_ref({
       'url': 'https://bsky.app/profile/did:foo/post/bar',
-    }, client=self.bs, value=False))
+    }, client=self.bs._client, value=False))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -654,7 +654,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assertEqual(record, from_as1_to_strong_ref({
       'url': 'https://bsky.app/profile/did:foo/post/bar',
-    }, client=self.bs, value=True))
+    }, client=self.bs._client, value=True))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -670,7 +670,7 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual({'cid': 'my-syd'},
                      from_as1_to_strong_ref(
                        {'url': 'https://bsky.app/profile/foo/post/bar'},
-                       client=self.bs))
+                       client=self.bs._client))
 
     self.assert_call(mock_get, 'com.atproto.identity.resolveHandle?handle=foo')
     self.assert_call(mock_get,
@@ -968,7 +968,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(REPOST_BSKY)
     expected['subject']['cid'] = 'my-syd'
-    self.assert_equals(expected, from_as1(REPOST_AS, client=self.bs))
+    self.assert_equals(expected, from_as1(REPOST_AS, client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -1006,7 +1006,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(REPLY_BSKY)
     expected['reply']['root']['cid'] = expected['reply']['parent']['cid'] = 'my-syd'
-    self.assert_equals(expected, from_as1(REPLY_AS['object'], client=self.bs))
+    self.assert_equals(expected, from_as1(REPLY_AS['object'], client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -1040,7 +1040,7 @@ class BlueskyTest(testutil.TestCase):
           'cid': 'my-root-syd',
         },
       },
-    }, from_as1(REPLY_AS['object'], client=self.bs))
+    }, from_as1(REPLY_AS['object'], client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -1056,7 +1056,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(LIKE_BSKY)
     expected['subject']['cid'] = 'my-syd'
-    self.assert_equals(expected, from_as1(LIKE_AS, client=self.bs))
+    self.assert_equals(expected, from_as1(LIKE_AS, client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
