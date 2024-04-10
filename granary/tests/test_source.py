@@ -358,16 +358,32 @@ Watching  \t waves
       'objectType': 'note',
       'content': 'hi <a href="http://foo">@bar</a>',
     }
-    self.assert_equals(obj, Source.postprocess_object(obj))
-    self.assert_equals({
+    obj_with_tag = {  # because postprocess_object modifies obj
       **obj,
       'tags': [{
         'objectType': 'mention',
         'url': 'http://foo',
         'displayName': '@bar',
       }],
-    }, Source.postprocess_object(obj, mentions=True))
+    }
 
+    self.assert_equals(obj, Source.postprocess_object(obj))
+    self.assert_equals(obj_with_tag, Source.postprocess_object(obj, mentions=True))
+
+  def test_postprocess_object_mention_existing_tag(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@bar</a>',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://other/link',
+        'displayName': '@bar',
+      }],
+    }
+    expected = copy.deepcopy(obj)  # because postprocess_object modifies obj
+
+    self.assert_equals(expected, Source.postprocess_object(obj))
+    self.assert_equals(expected, Source.postprocess_object(obj, mentions=True))
 
   def test_html_to_text_empty(self):
     self.assertEqual('', html_to_text(None))

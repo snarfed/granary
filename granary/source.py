@@ -670,10 +670,14 @@ class Source(object, metaclass=SourceMeta):
       # @-mentions to mention tags
       # https://github.com/snarfed/bridgy-fed/issues/493
       content = obj.get('content') or ''
+      existing_tags_with_urls = util.trim_nulls({
+        t.get('displayName') for t in obj.setdefault('tags', []) if t.get('url')
+      })
+
       for a in util.parse_html(content).find_all('a'):
         href = a.get('href')
         text = a.get_text('').strip()
-        if href and text.startswith('@'):
+        if href and text.startswith('@') and text not in existing_tags_with_urls:
           obj.setdefault('tags', []).append({
             'objectType': 'mention',
             'url': href,
