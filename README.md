@@ -301,6 +301,8 @@ Changelog
   * `json_to_object`:
     * Strip leading `#` prefix (if present) from hashtag `u-category`s.
     * Bug fix for when `name` property is an object, eg an `h-card`.
+  * `object_to_json`:
+    * Convert both `id` and `url` inside `inReplyTo` to `in-reply-to.`
 * `source`:
   * `Source.postprocess`: when extracting @-mentions, defer to existing tag if it has the same `displayName` and has `url`.
 

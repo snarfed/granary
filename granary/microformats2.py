@@ -234,15 +234,18 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   note = primary.get('note')
   author = obj.get('author', obj.get('actor', {}))
 
-  in_reply_tos = util.get_list(obj, 'inReplyTo')
+  in_reply_tos = as1.get_objects(obj, 'inReplyTo')
   if not in_reply_tos:
     context = obj.get('context')
     if context and isinstance(context, dict):
-      in_reply_tos = util.get_list(context, 'inReplyTo')
+      in_reply_tos = as1.get_objects(context, 'inReplyTo')
 
   is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
-  if (is_rsvp or obj_type == 'react') and obj.get('object'):
-    in_reply_tos.extend(util.get_list(obj, 'object'))
+  if is_rsvp or obj_type == 'react':
+    in_reply_tos.extend(as1.get_objects(obj))
+
+  in_reply_tos = list(util.trim_nulls(itertools.chain.from_iterable(
+    [o.get('id'), o.get('url')] for o in in_reply_tos)))
 
   # maps objectType to list of objects
   attachments = defaultdict(list)
@@ -301,8 +304,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
         obj.get('published') or primary.get('published'))],
       'updated': [maybe_normalize_iso8601(
         obj.get('updated') or primary.get('updated'))],
-      'in-reply-to': util.trim_nulls([util.get_url(o) or o.get('id')
-                                      for o in in_reply_tos]),
+      'in-reply-to': in_reply_tos,
       'author': [object_to_json(
         author, trim_nulls=False, default_object_type='person')],
       'location': [object_to_json(as1.get_object(primary, 'location'),

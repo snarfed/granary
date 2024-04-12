@@ -143,6 +143,21 @@ class Microformats2Test(testutil.TestCase):
       'inReplyTo': 'http://reply/target',
     }))
 
+  def test_object_to_json_note_with_in_reply_to_id_and_url(self):
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['@hey great post'],
+        'in-reply-to': ['http://reply/id', 'http://reply/url'],
+      },
+    }, microformats2.object_to_json({
+      'content': '@hey great post',
+      'inReplyTo': {
+        'id': 'http://reply/id',
+        'url': 'http://reply/url',
+      },
+    }))
+
   def test_object_to_json_context_string(self):
     """Can happen for objects converted from AS2.
 
