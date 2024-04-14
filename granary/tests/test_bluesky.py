@@ -1242,6 +1242,9 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_post_view_with_image(self):
     self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_VIEW_BSKY_IMAGES))
 
+  def test_to_as1_feedViewPost(self):
+    self.assert_equals(POST_AUTHOR_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
+
   def test_to_as1_reply(self):
     self.assert_equals(trim_nulls({
       **REPLY_AS['object'],
@@ -1330,6 +1333,21 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_embed_post_view(self):
     self.assert_equals(POST_AS_EMBED, to_as1(POST_VIEW_BSKY_EMBED))
+
+  def test_to_as1_embed_with_blobs(self):
+    post_bsky = copy.deepcopy(POST_BSKY_EMBED)
+    post_bsky['embed']['external']['thumb'] = NEW_BLOB
+
+    post_as = copy.deepcopy(POST_AS_EMBED)
+    post_as.update({
+      'author': 'did:plc:foo',
+      'id': None,
+      'url': None,
+    })
+    post_as['attachments'][0]['image'] = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'
+
+    self.assert_equals(
+      post_as, to_as1(post_bsky, repo_did='did:plc:foo', repo_handle='han.dull'))
 
   def test_to_as1_embed_block(self):
     self.assertIsNone(to_as1({

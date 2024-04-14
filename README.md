@@ -289,6 +289,7 @@ Changelog
   * `to_as1`:
     * Support `app.bsky.feed.defs#notFoundPost` records.
     * Add hashtag facet support.
+    * Convert blobs in embeds to `getBlob` image URLs.
   * `from_as1`:
     * Add hashtag and mention support.
     * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.

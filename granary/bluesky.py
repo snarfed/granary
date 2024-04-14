@@ -986,7 +986,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'url': obj.get('uri'),
       'displayName': obj.get('title'),
       'summary': obj.get('description'),
-      'image': obj.get('thumb'),
+      'image': blob_to_url(blob=obj.get('thumb'), repo_did=repo_did, pds=pds),
     }
 
   elif type == 'app.bsky.embed.record':
