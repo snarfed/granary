@@ -311,12 +311,13 @@ def from_as1_datetime(val):
   Returns:
     str: ATProto compatible ISO 8601 datetime
   """
-  try:
-    # dt = datetime.fromisoformat(val.strip())
-    dt = util.parse_iso8601(val.strip())
-  except (AttributeError, TypeError, ValueError):
-    logging.debug(f"Couldn't parse {val} as ISO 8601; defaulting to current time")
-    dt = util.now()
+  dt = util.now()
+
+  if val:
+    try:
+      dt = util.parse_iso8601(val.strip())
+    except (AttributeError, TypeError, ValueError):
+      logging.debug(f"Couldn't parse {val} as ISO 8601; defaulting to current time")
 
   if dt.tzinfo:
     dt = util.as_utc(dt)
