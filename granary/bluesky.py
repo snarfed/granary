@@ -929,6 +929,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     ret = to_as1(obj.get('record') or obj.get('value'), **kwargs)
     author = obj.get('author') or {}
     uri = obj.get('uri')
+    kwargs['repo_did'] = obj.get('author', {}).get('did') or repo_did
     ret.update({
       'id': uri,
       'url': (at_uri_to_web_url(uri, handle=author.get('handle'))
@@ -1008,10 +1009,12 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     return None
 
   elif type == 'app.bsky.feed.defs#feedViewPost':
-    ret = to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
+    ret = to_as1(obj['post'], type='app.bsky.feed.defs#postView', **kwargs)
     reason = obj.get('reason')
     if reason and reason.get('$type') == 'app.bsky.feed.defs#reasonRepost':
-      uri = obj.get('post', {}).get('viewer', {}).get('repost')
+      post = obj.get('post', {})
+      uri = post.get('viewer', {}).get('repost')
+      kwargs['repo_did'] = post.get('author', {}).get('did') or repo_did
       ret = {
         'objectType': 'activity',
         'verb': 'share',
@@ -1062,7 +1065,9 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         ret['url'] = f'{web_url}#reposted_by_{uri_authority}'
 
   elif type == 'app.bsky.feed.defs#threadViewPost':
-    return to_as1(obj.get('post'), type='app.bsky.feed.defs#postView', **kwargs)
+    post = obj.get('post', {})
+    kwargs['repo_did'] = post.get('author', {}).get('did') or repo_did
+    return to_as1(post, type='app.bsky.feed.defs#postView', **kwargs)
 
   elif type in ('app.bsky.feed.defs#generatorView',
                 'app.bsky.graph.defs#listView'):
@@ -1335,9 +1340,8 @@ class Bluesky(Source):
         # Replies
         reply_count = bs_post.get('replyCount')
         if fetch_replies and reply_count and reply_count != cache.get('ABR ' + id):
-          replies = self._get_replies(bs_post.get('uri'))
-          replies = trim_nulls([to_as1(reply, 'app.bsky.feed.defs#threadViewPost')
-                                for reply in replies])
+          replies = trim_nulls([to_as1(r) for r in
+                                self._get_replies(bs_post.get('uri'))])
           for r in replies:
             r['id'] = self.tag_uri(r['id'])
           obj['replies'] = {
@@ -1357,10 +1361,19 @@ class Bluesky(Source):
     Returns:
       dict: ActivityStreams actor
     """
-    if user_id is None:
-      user_id = self.did or self.handle
-    profile = self.client.app.bsky.actor.getProfile({}, actor=user_id)
-    return to_as1(profile, type='app.bsky.actor.defs#profileViewDetailed')
+    did = handle = None
+    if user_id:
+      if user_id.startswith('did:'):
+        did = user_id
+      else:
+        handle = user_id
+    else:
+      did = self.did
+      handle = self.handle
+
+    profile = self.client.app.bsky.actor.getProfile({}, actor=did or handle)
+    return to_as1(profile, type='app.bsky.actor.defs#profileViewDetailed',
+                  repo_did=did, repo_handle=handle)
 
   def get_comment(self, comment_id, **kwargs):
     """Fetches and returns a comment.
@@ -1375,7 +1388,7 @@ class Bluesky(Source):
       :class:`ValueError`: if comment_id is invalid
     """
     post_thread = self.client.app.bsky.feed.getPostThread({}, uri=comment_id, depth=1)
-    obj = to_as1(post_thread.get('thread'), 'app.bsky.feed.defs#threadViewPost')
+    obj = to_as1(post_thread.get('thread'))
     return obj
 
   def _post_to_activity(self, post):
