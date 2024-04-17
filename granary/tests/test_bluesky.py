@@ -1334,18 +1334,36 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_embed_post_view(self):
     self.assert_equals(POST_AS_EMBED, to_as1(POST_VIEW_BSKY_EMBED))
 
+  def test_to_as1_embed_post_view_thumb_blob(self):
+    post_bsky = copy.deepcopy(POST_BSKY_EMBED)
+    post_bsky['embed']['external']['thumb'] = NEW_BLOB
+
+    # without repo_did/repo_handle
+    self.assert_equals(POST_AS_EMBED, to_as1(POST_VIEW_BSKY_EMBED))
+
+    # with repo_did/repo_handle
+    post_as = copy.deepcopy(POST_AS_EMBED)
+    del post_as['id']
+    del post_as['url']
+    post_as['author'] = 'did:plc:foo'
+    post_as['attachments'][0]['image'] = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'
+    self.assert_equals(
+      post_as, to_as1(post_bsky, repo_did='did:plc:foo', repo_handle='han.dull'))
+
   def test_to_as1_embed_with_blobs(self):
     post_bsky = copy.deepcopy(POST_BSKY_EMBED)
     post_bsky['embed']['external']['thumb'] = NEW_BLOB
 
     post_as = copy.deepcopy(POST_AS_EMBED)
-    post_as.update({
-      'author': 'did:plc:foo',
-      'id': None,
-      'url': None,
-    })
-    post_as['attachments'][0]['image'] = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'
+    del post_as['id']
+    del post_as['url']
 
+    # without repo_did/repo_handle
+    self.assert_equals(post_as, to_as1(post_bsky))
+
+    # with repo_did/repo_handle
+    post_as['author'] = 'did:plc:foo'
+    post_as['attachments'][0]['image'] = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'
     self.assert_equals(
       post_as, to_as1(post_bsky, repo_did='did:plc:foo', repo_handle='han.dull'))
 
