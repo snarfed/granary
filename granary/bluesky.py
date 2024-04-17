@@ -989,8 +989,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'displayName': obj.get('title'),
       'summary': obj.get('description'),
     }
-    if repo_did and pds:
-      ret['image'] = blob_to_url(blob=obj.get('thumb'), repo_did=repo_did, pds=pds)
+
+    thumb = obj.get('thumb')
+    if type == 'app.bsky.embed.external#external':
+      if repo_did and pds:
+        ret['image'] = blob_to_url(blob=thumb, repo_did=repo_did, pds=pds)
+    else:
+        ret['image'] = thumb
 
   elif type == 'app.bsky.embed.record':
     return None
