@@ -222,11 +222,11 @@ Pull requests are welcome! Feel free to `ping me in
 
 First, fork and clone this repo. Then, install the `Google Cloud
 SDK <https://cloud.google.com/sdk/>`__ and run
-``gcloud components install beta cloud-datastore-emulator`` to install
-the `datastore
-emulator <https://cloud.google.com/datastore/docs/tools/datastore-emulator>`__.
-Once you have them, set up your environment by running these commands in
-the repo root directory:
+``gcloud components install cloud-firestore-emulator`` to install the
+`Firestore
+emulator <https://cloud.google.com/firestore/docs/emulator>`__. Once you
+have them, set up your environment by running these commands in the repo
+root directory:
 
 .. code:: shell
 
@@ -241,7 +241,7 @@ Now, run the tests to check that everything is set up ok:
 
 .. code:: shell
 
-   gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
+   gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
    python3 -m unittest discover
 
 Finally, run the web app locally with
@@ -292,7 +292,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     .. code:: sh
 
        source local/bin/activate.csh
-       CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 < /dev/null >& /dev/null &
+       CLOUDSDK_CORE_PROJECT=granary-demo gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
        sleep 5
        python3 -m unittest discover
        kill %1
@@ -449,6 +449,57 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+6.3 - unreleased
+~~~~~~~~~~~~~~~~
+
+-  ``atom``:
+
+   -  ``activities_to_atom``: handle image attachments without ``url``
+      field.
+
+-  ``bluesky``:
+
+   -  ``to_as1``:
+
+      -  Support ``app.bsky.feed.defs#notFoundPost`` records.
+      -  Add hashtag facet support.
+      -  Convert blobs in embeds to ``getBlob`` image URLs.
+
+   -  ``from_as1``:
+
+      -  Add hashtag and mention support.
+      -  Guess missing indices in facets based on content text.
+         Otherwise, if we still don’t know a facet’s indices, discard
+         it.
+      -  Populate ``reply.root`` properly in reply posts
+         (`snarfed/bridgy#1696 <https://github.com/snarfed/bridgy/issues/1696>`__).
+      -  Support ``lexrpc.Client`` as well as ``Bluesky`` for ``client``
+         kwarg.
+
+   -  ``from_as1_to_strong_ref``:
+
+      -  Add ``value`` boolean kwarg.
+      -  Change ``client`` kwarg from ``Bluesky`` to ``lexrpc.Client``.
+
+-  ``microformats2``:
+
+   -  ``json_to_object``:
+
+      -  Strip leading ``#`` prefix (if present) from hashtag
+         ``u-category``\ s.
+      -  Bug fix for when ``name`` property is an object, eg an
+         ``h-card``.
+
+   -  ``object_to_json``:
+
+      -  Convert both ``id`` and ``url`` inside ``inReplyTo`` to
+         ``in-reply-to.``
+
+-  ``source``:
+
+   -  ``Source.postprocess``: when extracting @-mentions, defer to
+      existing tag if it has the same ``displayName`` and has ``url``.
 
 6.2 - 2024-03-15
 ~~~~~~~~~~~~~~~~

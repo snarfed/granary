@@ -154,7 +154,7 @@ Development
 ---
 Pull requests are welcome! Feel free to [ping me in #indieweb-dev](https://indieweb.org/discuss) with any questions.
 
-First, fork and clone this repo. Then, install the [Google Cloud SDK](https://cloud.google.com/sdk/) and run `gcloud components install beta cloud-datastore-emulator` to install the [datastore emulator](https://cloud.google.com/datastore/docs/tools/datastore-emulator). Once you have them, set up your environment by running these commands in the repo root directory:
+First, fork and clone this repo. Then, install the [Google Cloud SDK](https://cloud.google.com/sdk/) and run `gcloud components install cloud-firestore-emulator` to install the [Firestore emulator](https://cloud.google.com/firestore/docs/emulator). Once you have them, set up your environment by running these commands in the repo root directory:
 
 ```shell
 gcloud config set project granary-demo
@@ -168,7 +168,7 @@ ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
 Now, run the tests to check that everything is set up ok:
 
 ```shell
-gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
+gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
 python3 -m unittest discover
 ```
 
@@ -198,7 +198,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Run the unit tests.
    ```sh
    source local/bin/activate.csh
-   CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 < /dev/null >& /dev/null &
+   CLOUDSDK_CORE_PROJECT=granary-demo gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
    sleep 5
    python3 -m unittest discover
    kill %1
