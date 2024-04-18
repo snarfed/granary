@@ -87,6 +87,19 @@ class ActivityStreams2Test(testutil.TestCase):
       ],
     })['icon'])
 
+  def test_from_as1_block(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+    }))
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
@@ -355,4 +368,16 @@ class ActivityStreams2Test(testutil.TestCase):
     }, as2.to_as1({
       'type': 'Person',
       'id': 'http://a.b/@me',
+    }))
+
+  def test_to_as1_block(self):
+    self.assertEqual({
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+    }, as2.to_as1({
+      'type': 'Block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
     }))

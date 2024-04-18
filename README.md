@@ -283,6 +283,8 @@ Changelog
 
 ### 6.3 - unreleased
 
+* `as2`:
+  * Add `Block` support.
 * `atom`:
   * `activities_to_atom`: handle image attachments without `url` field.
 * `bluesky`:

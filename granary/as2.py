@@ -70,6 +70,7 @@ TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 
 VERB_TO_TYPE = {
   'accept': 'Accept',
+  'block': 'Block',
   'delete': 'Delete',
   'favorite': 'Like',
   'follow': 'Follow',
