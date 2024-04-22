@@ -802,6 +802,20 @@ class BlueskyTest(testutil.TestCase):
     note['tags'][0]['displayName'] = '@you.com'
     self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(note))
 
+  def test_from_as1_tag_mention_not_bluesky(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo bar',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://something/else',
+      }],
+    }))
+
   def test_from_as1_drop_tag_with_start_past_content_length(self):
     note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
     note['tags'][0]['startIndex'] = len(note['content']) + 2

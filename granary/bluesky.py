@@ -553,6 +553,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
       elif type == 'mention':
         # extract and if necessary resolve DID
+        did = None
         if url.startswith('did:'):
           did = url
         else:
@@ -560,7 +561,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
             did = match.group('repo')
           elif match := BSKY_APP_URL_RE.match(url):
             did = match.group('id')
-          if not did.startswith('did:') and client:
+          if did and client and not did.startswith('did:'):
             did = client.com.atproto.identity.resolveHandle(handle=did)['did']
 
         if not did:
