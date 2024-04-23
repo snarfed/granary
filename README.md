@@ -308,6 +308,8 @@ Changelog
     * Bug fix for when `name` property is an object, eg an `h-card`.
   * `object_to_json`:
     * Convert both `id` and `url` inside `inReplyTo` to `in-reply-to.`
+* `nostr`:
+  * Handle connection closing while sending initial query.
 * `source`:
   * `Source.postprocess`: when extracting @-mentions, defer to existing tag if it has the same `displayName` and has `url`.
 

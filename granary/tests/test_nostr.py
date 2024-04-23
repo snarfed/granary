@@ -38,14 +38,20 @@ logger = logging.getLogger(__name__)
 
 class FakeConnection:
   """Fake of :class:`websockets.sync.client.ClientConnection`."""
-  relay = None
-  sent = []
-  to_receive = []
-  closed = False
-  recv_err = None
+
+  @classmethod
+  def reset(cls):
+    cls.relay = None
+    cls.sent = []
+    cls.to_receive = []
+    cls.closed = False
+    cls.recv_err = cls.send_err = None
 
   @classmethod
   def send(cls, msg):
+    if cls.send_err:
+      raise cls.send_err
+
     assert not cls.closed
     cls.sent.append(json_loads(msg))
     logger.info(msg)
@@ -74,6 +80,10 @@ def fake_connect(uri, open_timeout=None, close_timeout=None):
 
 
 class NostrTest(testutil.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    FakeConnection.reset()
 
   def test_id_for(self):
     self.assertEqual(
@@ -467,9 +477,7 @@ class GetActivitiesTest(testutil.TestCase):
     self.last_token = 0
     self.mox.stubs.Set(secrets, 'token_urlsafe', self.token)
 
-    FakeConnection.relay = None
-    FakeConnection.sent = []
-    FakeConnection.to_receive = []
+    FakeConnection.reset()
 
     nostr.connect = fake_connect
 
@@ -655,7 +663,16 @@ class GetActivitiesTest(testutil.TestCase):
       ['CLOSE', 'towkin 1'],
     ], FakeConnection.sent)
 
-  def test_query_connection_closed_ok_immediate(self):
+  def test_query_connection_closed_ok_send_immediate(self):
+    FakeConnection.send_err = ConnectionClosedOK(None, None)
+
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      self.assertEqual([], self.nostr.query(ws, {}))
+
+  def test_query_connection_closed_ok_recv_immediate(self):
     FakeConnection.recv_err = ConnectionClosedOK(None, None)
 
     with fake_connect('wss://my-relay',
@@ -664,7 +681,7 @@ class GetActivitiesTest(testutil.TestCase):
                       ) as ws:
       self.assertEqual([], self.nostr.query(ws, {}))
 
-  def test_query_connection_closed_ok_partial_results(self):
+  def test_query_connection_closed_ok_recv_partial_results(self):
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', NOTE_NOSTR],
       ['EVENT', 'towkin 1', NOTE_NOSTR],
@@ -677,7 +694,7 @@ class GetActivitiesTest(testutil.TestCase):
                       ) as ws:
       self.assertEqual([NOTE_NOSTR, NOTE_NOSTR], self.nostr.query(ws, {}))
 
-  def test_query_connection_closed_error_raises(self):
+  def test_query_connection_closed_error_recv_raises(self):
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', NOTE_NOSTR],
     ]
