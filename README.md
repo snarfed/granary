@@ -283,6 +283,8 @@ Changelog
 
 ### 6.3 - unreleased
 
+* `as1`:
+  * `activity_changed`: add `summary` field.
 * `as2`:
   * Add `Block` support.
 * `atom`:
