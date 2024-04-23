@@ -289,9 +289,9 @@ def get_rsvps_from_event(event):
 def activity_changed(before, after, inReplyTo=True, log=False):
   """Returns whether two activities or objects differ meaningfully.
 
-  Only compares a few fields: ``objectType``, ``verb``, ``content``,
-  ``summary``, ``location``, and ``image``. Notably does *not* compare
-  ``author``, ``published``, or ``updated``.
+  Only compares a few fields: ``objectType``, ``verb``, ``displayName`,
+  ``content``, ``summary``, ``location``, and ``image``. Notably does *not*
+  compare ``author``, ``published``, or ``updated``.
 
   Args:
     before (dict): ActivityStreams activity or object
@@ -322,8 +322,8 @@ def activity_changed(before, after, inReplyTo=True, log=False):
   obj_a = get_object(after)
   if any(changed(before, after, field, 'activity') or
          changed(obj_b, obj_a, field, 'activity[object]')
-         for field in ('objectType', 'verb', 'to', 'content', 'summary',
-                       'location', 'image')):
+         for field in ('objectType', 'verb', 'to', 'displayName', 'content',
+                       'summary', 'location', 'image')):
     return True
 
   if (inReplyTo and

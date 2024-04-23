@@ -284,7 +284,7 @@ Changelog
 ### 6.3 - unreleased
 
 * `as1`:
-  * `activity_changed`: add `summary` field.
+  * `activity_changed`: add `displayName`, `summary` fields.
 * `as2`:
   * Add `Block` support.
 * `atom`:
