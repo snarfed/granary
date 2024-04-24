@@ -48,6 +48,7 @@ def _invert(d):
   return {v: k for k, v in d.items()}
 
 OBJECT_TYPE_TO_TYPE = {
+  'application': 'Application',
   'article': 'Article',
   'audio': 'Audio',
   'collection': 'Collection',
