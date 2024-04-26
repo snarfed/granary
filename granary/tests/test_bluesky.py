@@ -1131,6 +1131,18 @@ class BlueskyTest(testutil.TestCase):
       'published': 'foo bar',
     }))
 
+  def test_from_as1_block(self):
+    self.assert_equals({
+      '$type': 'app.bsky.graph.block',
+      'subject': 'https://bsky.app/profile/did:eve',
+      'createdAt': '2022-01-02T03:04:05.000Z'
+    }, from_as1({
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'http://alice',
+      'object': 'https://bsky.app/profile/did:eve',
+    }))
+
   def test_to_as1_profile(self):
     self.assert_equals({
       'objectType': 'person',
@@ -1428,6 +1440,17 @@ class BlueskyTest(testutil.TestCase):
            'byteStart' : 50,
          },
        }],
+    }))
+
+  def test_from_as1_block(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'block',
+      'object': 'https://bsky.app/profile/did:eve',
+    }, to_as1({
+      '$type': 'app.bsky.graph.block',
+      'subject': 'https://bsky.app/profile/did:eve',
+      'createdAt': '2022-01-02T03:04:05.000Z'
     }))
 
   def test_to_as1_blockedPost(self):

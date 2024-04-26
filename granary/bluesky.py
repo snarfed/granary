@@ -82,10 +82,16 @@ FROM_AS1_TYPES = {
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
   ),
-  'share': (
+  ('share',): (
     'app.bsky.feed.repost',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#reasonRepost',
+  ),
+  ('follow',): (
+    'app.bsky.graph.follow',
+  ),
+  ('block',): (
+    'app.bsky.graph.block',
   ),
 }
 
@@ -502,11 +508,11 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       'createdAt': from_as1_datetime(obj.get('published')),
     }
 
-  elif type == 'follow':
+  elif type in ('follow', 'block'):
     if not inner_obj:
       raise ValueError('follow activity requires actor and object')
     return {
-      '$type': 'app.bsky.graph.follow',
+      '$type': f'app.bsky.graph.{type}',
       'subject': inner_obj.get('id'),  # DID
       'createdAt': from_as1_datetime(obj.get('published')),
     }
@@ -1045,10 +1051,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         # synthetic fragment
         ret['url'] = f'{web_url}#liked_by_{uri_authority}'
 
-  elif type == 'app.bsky.graph.follow':
+  elif type in ('app.bsky.graph.follow', 'app.bsky.graph.block'):
     ret = {
       'objectType': 'activity',
-      'verb': 'follow',
+      'verb': type.split('.')[-1],
       'id': uri,
       'url': at_uri_to_web_url(uri),
       'object': obj.get('subject'),

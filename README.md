@@ -292,11 +292,12 @@ Changelog
   * `activities_to_atom`: handle image attachments without `url` field.
 * `bluesky`:
   * `to_as1`:
+    * Support `app.bsky.graph.block` records.
     * Support `app.bsky.feed.defs#notFoundPost` records.
     * Add hashtag facet support.
     * Convert blobs in embeds to `getBlob` image URLs.
   * `from_as1`:
-    * Add hashtag and mention support.
+    * Add hashtag, mention, and block support.
     * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
     * Support `lexrpc.Client` as well as `Bluesky` for `client` kwarg.
