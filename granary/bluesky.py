@@ -524,7 +524,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     if not inner_obj:
       raise ValueError('flag activity requires object')
     return {
-      '$type': f'com.atproto.moderation.createReport#input',
+      '$type': 'com.atproto.moderation.createReport#input',
       'subject': from_as1_to_strong_ref(inner_obj, client=client),
       # https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/defs.json#
       'reasonType': 'com.atproto.moderation.defs#reasonOther',
