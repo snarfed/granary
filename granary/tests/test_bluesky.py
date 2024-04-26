@@ -1442,7 +1442,7 @@ class BlueskyTest(testutil.TestCase):
        }],
     }))
 
-  def test_from_as1_block(self):
+  def test_to_as1_block(self):
     self.assert_equals({
       'objectType': 'activity',
       'verb': 'block',
