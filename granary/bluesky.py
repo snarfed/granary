@@ -15,7 +15,7 @@ import urllib.parse
 import requests
 
 from lexrpc import Client
-from lexrpc.base import NSID_RE
+from lexrpc.base import Base, NSID_RE
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
 
@@ -113,6 +113,8 @@ DEFAULT_APPVIEW = 'https://api.bsky.app'
 # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
 # https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors
 NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
+
+LEXRPC_BASE = Base(truncate=True)
 
 
 def url_to_did_web(url):
@@ -377,6 +379,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
   The ``objectType`` field is required.
 
+  If a string value in an output Bluesky object is longer than its
+  ``maxGraphemes`` or ``maxLength`` in its lexicon, it's truncated with an ``…``
+  ellipsis character at the end in order to fit.
+
   Args:
     obj (dict): AS1 object or activity
     out_type (str): desired output lexicon ``$type``
@@ -423,6 +429,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
   obj = copy.deepcopy(obj)
   Source.postprocess_object(obj, mentions=True)
 
+  ret = None
+
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type in as1.ACTOR_TYPES:
     # avatar and banner. banner is featured image, if available
@@ -441,7 +449,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       'banner': blobs.get(banner),
     }
     if not out_type or out_type == 'app.bsky.actor.profile':
-      return trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
+      ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
+      return LEXRPC_BASE._maybe_validate('app.bsky.actor.profile', 'record', ret)
 
     url = as1.get_url(obj)
     id = obj.get('id')
@@ -482,30 +491,30 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     # WARNING: this includes description, which isn't technically in this
     # #profileViewBasic. hopefully clients should just ignore it!
     # https://atproto.com/specs/lexicon#authority-and-control
-    return trim_nulls(ret, ignore=('did', 'handle'))
+    ret = trim_nulls(ret, ignore=('did', 'handle'))
 
   elif type == 'share':
     if not out_type or out_type == 'app.bsky.feed.repost':
-      return {
+      ret = {
         '$type': 'app.bsky.feed.repost',
         'subject': from_as1_to_strong_ref(inner_obj, client=client),
         'createdAt': from_as1_datetime(obj.get('published')),
       }
     elif out_type == 'app.bsky.feed.defs#reasonRepost':
-      return {
+      ret = {
         '$type': 'app.bsky.feed.defs#reasonRepost',
         'by': from_as1(actor, out_type='app.bsky.actor.defs#profileViewBasic'),
         'indexedAt': from_as1_datetime(None),
       }
     elif out_type == 'app.bsky.feed.defs#feedViewPost':
-      return {
+      ret = {
         '$type': 'app.bsky.feed.defs#feedViewPost',
         'post': from_as1(inner_obj, out_type='app.bsky.feed.defs#postView'),
         'reason': from_as1(obj, out_type='app.bsky.feed.defs#reasonRepost'),
       }
 
   elif type == 'like':
-    return {
+    ret = {
       '$type': 'app.bsky.feed.like',
       'subject': from_as1_to_strong_ref(inner_obj, client=client),
       'createdAt': from_as1_datetime(obj.get('published')),
@@ -514,7 +523,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
   elif type in ('follow', 'block'):
     if not inner_obj:
       raise ValueError('follow activity requires actor and object')
-    return {
+    ret = {
       '$type': f'app.bsky.graph.{type}',
       'subject': inner_obj.get('id'),  # DID
       'createdAt': from_as1_datetime(obj.get('published')),
@@ -523,7 +532,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
   elif type == 'flag':
     if not inner_obj:
       raise ValueError('flag activity requires object')
-    return {
+    ret = {
       '$type': 'com.atproto.moderation.createReport#input',
       'subject': {
         '$type': 'com.atproto.repo.strongRef',
@@ -738,7 +747,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     }, ignore=('alt', 'createdAt', 'cid', 'description', 'text', 'title', 'uri'))
 
     if not out_type or out_type == 'app.bsky.feed.post':
-      return ret
+      return LEXRPC_BASE._maybe_validate('app.bsky.feed.post', 'record', ret)
 
     # author
     author = as1.get_object(obj, 'author')
@@ -760,16 +769,28 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
                'record', 'text', 'title', 'uri'))
 
     if out_type == 'app.bsky.feed.defs#postView':
-      return ret
+      pass
     elif out_type == 'app.bsky.feed.defs#feedViewPost':
-      return {
+      ret = {
         '$type': out_type,
         'post': ret,
       }
+    else:
+      assert False, "shouldn't happen"
 
-    assert False, "shouldn't happen"
+  else:
+    raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
 
-  raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
+  nsid = ret.get('$type')
+  type = 'record'
+  if nsid == 'com.atproto.moderation.createReport#input':
+    nsid = 'com.atproto.moderation.createReport'
+    type = 'input'
+
+  if nsid:
+    return LEXRPC_BASE._maybe_validate(nsid, type, ret)
+
+  return ret
 
 
 def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,

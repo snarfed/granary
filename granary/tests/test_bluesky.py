@@ -1173,6 +1173,20 @@ class BlueskyTest(testutil.TestCase):
       'to': 'did:bob',
     }, client=self.bs._client))
 
+  def test_maybe_validate_truncate(self):
+    short = 'x' * 63
+    long = 'x' * 65
+
+    for input, expected in (
+      (short, short),
+      (long, short + '…'),
+      # ('🇨🇾🇬🇭 bytes', '🇨🇾…'),  # TODO
+    ):
+      self.assertEqual(expected, from_as1({
+        'objectType': 'person',
+        'displayName': input,
+      })['displayName'])
+
   def test_to_as1_profile(self):
     self.assert_equals({
       'objectType': 'person',
