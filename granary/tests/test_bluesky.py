@@ -1155,6 +1155,7 @@ class BlueskyTest(testutil.TestCase):
       'reasonType': 'com.atproto.moderation.defs#reasonOther',
       'reason': 'Please take a look at this user and their posts',
       'subject': {
+        '$type': 'com.atproto.repo.strongRef',
         'uri': 'at://did:alice/app.bsky.feed.post/tid',
         'cid': 'my-syd',
       },

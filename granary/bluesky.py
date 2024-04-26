@@ -525,7 +525,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       raise ValueError('flag activity requires object')
     return {
       '$type': 'com.atproto.moderation.createReport#input',
-      'subject': from_as1_to_strong_ref(inner_obj, client=client),
+      'subject': {
+        '$type': 'com.atproto.repo.strongRef',
+        **from_as1_to_strong_ref(inner_obj, client=client),
+      },
       # https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/defs.json#
       'reasonType': 'com.atproto.moderation.defs#reasonOther',
       # https://github.com/bluesky-social/atproto/blob/651d4c2a3447525c68d3bf1b8492bdafb0a88c66/lexicons/com/atproto/moderation/createReport.json#L21
