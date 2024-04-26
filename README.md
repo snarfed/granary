@@ -286,8 +286,7 @@ Changelog
 * `as1`:
   * `activity_changed`: add `displayName`, `summary` fields.
 * `as2`:
-  * Add `Application` support.
-  * Add `Block` support.
+  * Add support for the `Application`, `Block`, and `Flag` types.
 * `atom`:
   * `activities_to_atom`: handle image attachments without `url` field.
 * `bluesky`:

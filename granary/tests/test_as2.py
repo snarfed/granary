@@ -100,6 +100,33 @@ class ActivityStreams2Test(testutil.TestCase):
       'object': 'http://bob',
     }))
 
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  def test_from_as1_flag(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      # note that this is the user being reported
+      'to': ['http://bob'],
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      'to': 'http://bob',
+    }))
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
@@ -380,4 +407,31 @@ class ActivityStreams2Test(testutil.TestCase):
       'type': 'Block',
       'actor': 'http://alice',
       'object': 'http://bob',
+    }))
+
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  def test_to_as1_flag(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      'to': ['http://bob'],
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      # note that this is the user being reported
+      'to': 'http://bob',
     }))

@@ -54,6 +54,9 @@ OBJECT_TYPE_TO_TYPE = {
   'collection': 'Collection',
   'comment': 'Note',
   'event': 'Event',
+  # not in AS1 spec
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  'flag': 'Flag',
   # not in AS2 spec; needed for correct round trip conversion
   'hashtag': 'Tag',
   'image': 'Image',
@@ -159,7 +162,8 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   # to/cc audience, all ids, special caste public/unlisted
   to = sorted(as1.get_ids(obj, 'to'))
   cc = sorted(as1.get_ids(obj, 'cc'))
-  to_aliases = [to.get('alias') for to in util.pop_list(obj, 'to')]
+  to_aliases = [to.get('alias') for to in util.pop_list(obj, 'to')
+                if isinstance(to, dict)]
   if '@public' in to_aliases and PUBLIC_AUDIENCE not in to:
     to.append(PUBLIC_AUDIENCE)
   elif '@unlisted' in to_aliases and PUBLIC_AUDIENCE not in cc:
