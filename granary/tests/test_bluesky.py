@@ -1143,6 +1143,35 @@ class BlueskyTest(testutil.TestCase):
       'object': 'https://bsky.app/profile/did:eve',
     }))
 
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:alice/app.bsky.feed.post/tid',
+    'cid': 'my-syd',
+    'value': {},
+  }))
+  def test_from_as1_flag(self, _):
+    self.assert_equals({
+      '$type': 'com.atproto.moderation.createReport#input',
+      'reasonType': 'com.atproto.moderation.defs#reasonOther',
+      'reason': 'Please take a look at this user and their posts',
+      'subject': {
+        'uri': 'at://did:alice/app.bsky.feed.post/tid',
+        'cid': 'my-syd',
+      },
+    }, from_as1({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'https://bsky.app/profile/did:alice/post/tid',
+        'http://other/ post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      # note that this is the user being reported
+      'to': 'did:bob',
+    }, client=self.bs._client))
+
   def test_to_as1_profile(self):
     self.assert_equals({
       'objectType': 'person',
@@ -1486,6 +1515,25 @@ class BlueskyTest(testutil.TestCase):
       '$type' : 'com.atproto.admin.defs#repoRef',
       'did': 'did:alice',
     }))
+
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  def test_to_as1_createReport(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'actor': 'did:bob',
+      'object': 'at://did:alice/app.bsky.feed.post/123',
+      'content': 'Other: Please take a look at this user and their posts',
+    }, to_as1({
+      '$type': 'com.atproto.moderation.createReport#input',
+      'reasonType': 'com.atproto.moderation.defs#reasonOther',
+      'reason': 'Please take a look at this user and their posts',
+      'subject': {
+        '$type': 'com.atproto.repo.strongRef',
+        'uri': 'at://did:alice/app.bsky.feed.post/123',
+        'cid': 'syd',
+      },
+    }, repo_did='did:bob'))
 
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))

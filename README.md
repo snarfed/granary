@@ -292,14 +292,15 @@ Changelog
 * `bluesky`:
   * `to_as1`:
     * Add support for:
-      * `app.bsky.graph.block`
       * `app.bsky.feed.defs#notFoundPost`
+      * `app.bsky.graph.block`
       * `com.atproto.admin.defs#repoRef`
+      * `com.atproto.moderation.createReport#input`
       * `com.atproto.repo.strongRef`
     * Add hashtag facet support.
     * Convert blobs in embeds to `getBlob` image URLs.
   * `from_as1`:
-    * Add hashtag, mention, and block support.
+    * Add hashtag, mention, block, and flag support.
     * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
     * Support `lexrpc.Client` as well as `Bluesky` for `client` kwarg.

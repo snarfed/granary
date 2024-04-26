@@ -82,16 +82,19 @@ FROM_AS1_TYPES = {
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
   ),
-  ('share',): (
-    'app.bsky.feed.repost',
-    'app.bsky.feed.defs#feedViewPost',
-    'app.bsky.feed.defs#reasonRepost',
+  ('block',): (
+    'app.bsky.graph.block',
+  ),
+  ('flag',): (
+    'com.atproto.moderation.createReport#input',
   ),
   ('follow',): (
     'app.bsky.graph.follow',
   ),
-  ('block',): (
-    'app.bsky.graph.block',
+  ('share',): (
+    'app.bsky.feed.repost',
+    'app.bsky.feed.defs#feedViewPost',
+    'app.bsky.feed.defs#reasonRepost',
   ),
 }
 
@@ -515,6 +518,18 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       '$type': f'app.bsky.graph.{type}',
       'subject': inner_obj.get('id'),  # DID
       'createdAt': from_as1_datetime(obj.get('published')),
+    }
+
+  elif type == 'flag':
+    if not inner_obj:
+      raise ValueError('flag activity requires object')
+    return {
+      '$type': f'com.atproto.moderation.createReport#input',
+      'subject': from_as1_to_strong_ref(inner_obj, client=client),
+      # https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/defs.json#
+      'reasonType': 'com.atproto.moderation.defs#reasonOther',
+      # https://github.com/bluesky-social/atproto/blob/651d4c2a3447525c68d3bf1b8492bdafb0a88c66/lexicons/com/atproto/moderation/createReport.json#L21
+      'reason': (obj.get('content') or obj.get('summary') or '')[:2000],
     }
 
   elif verb == 'post' and type in POST_TYPES:
@@ -1037,6 +1052,29 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                         type='app.bsky.actor.defs#profileViewBasic', **kwargs),
       }
 
+  elif type in ('app.bsky.graph.follow', 'app.bsky.graph.block'):
+    ret = {
+      'objectType': 'activity',
+      'verb': type.split('.')[-1],
+      'id': uri,
+      'url': at_uri_to_web_url(uri),
+      'object': obj.get('subject'),
+      'actor': repo_did,
+    }
+
+  elif type == 'com.atproto.moderation.createReport#input':
+    content = obj['reasonType'].removeprefix('com.atproto.moderation.defs#reason')
+    if reason := obj['reason']:
+      content += f': {reason}'
+
+    ret = {
+      'objectType': 'activity',
+      'verb': 'flag',
+      'actor': repo_did,
+      'object': to_as1(obj['subject']),
+      'content': content,
+    }
+
   elif type == 'app.bsky.feed.like':
     subject = obj.get('subject', {}).get('uri')
     ret = {
@@ -1050,16 +1088,6 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
         ret['url'] = f'{web_url}#liked_by_{uri_authority}'
-
-  elif type in ('app.bsky.graph.follow', 'app.bsky.graph.block'):
-    ret = {
-      'objectType': 'activity',
-      'verb': type.split('.')[-1],
-      'id': uri,
-      'url': at_uri_to_web_url(uri),
-      'object': obj.get('subject'),
-      'actor': repo_did,
-    }
 
   elif type == 'app.bsky.feed.repost':
     subject = obj.get('subject', {}).get('uri')
