@@ -291,8 +291,11 @@ Changelog
   * `activities_to_atom`: handle image attachments without `url` field.
 * `bluesky`:
   * `to_as1`:
-    * Support `app.bsky.graph.block` records.
-    * Support `app.bsky.feed.defs#notFoundPost` records.
+    * Add support for:
+      * `app.bsky.graph.block`
+      * `app.bsky.feed.defs#notFoundPost`
+      * `com.atproto.admin.defs#repoRef`
+      * `com.atproto.repo.strongRef`
     * Add hashtag facet support.
     * Convert blobs in embeds to `getBlob` image URLs.
   * `from_as1`:

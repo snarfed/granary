@@ -1469,6 +1469,24 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:alice/app.bsky.feed.post/tid',
+    'cid': 'my-syd',
+    'value': {},
+  }))
+  def test_to_as1_repo_strongRef(self, _):
+    self.assert_equals('at://did:alice/app.bsky.feed.post/123', to_as1({
+      '$type' : 'com.atproto.repo.strongRef',
+      'uri': 'at://did:alice/app.bsky.feed.post/123',
+      'cid': 'my-syd',
+    }))
+
+  def test_to_as1_repoRef(self):
+    self.assert_equals('did:alice', to_as1({
+      '$type' : 'com.atproto.admin.defs#repoRef',
+      'did': 'did:alice',
+    }))
+
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
     self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB,
