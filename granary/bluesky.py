@@ -110,6 +110,7 @@ DEFAULT_PDS = f'https://{DEFAULT_PDS_DOMAIN}/'
 DEFAULT_APPVIEW = 'https://api.bsky.app'
 
 # label on profiles set to only show them to logged in users
+# https://bsky.app/profile/safety.bsky.app/post/3khhw7s3rtx2s
 # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
 # https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors
 NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
