@@ -310,6 +310,7 @@ Changelog
     * Add `value` boolean kwarg.
     * Change `client` kwarg from `Bluesky` to `lexrpc.Client`.
 * `microformats2`:
+  * Generalize actor logic across all actor types, not just `person`.
   * `json_to_object`:
     * Strip leading `#` prefix (if present) from hashtag `u-category`s.
     * Bug fix for when `name` property is an object, eg an `h-card`.

@@ -64,10 +64,13 @@ HCARD = string.Template("""\
 """)
 LINK = string.Template('  <a class="u-$cls" href="$url"></a>')
 AS_TO_MF2_TYPE = {
+  'application': ['h-card'],
   'event': ['h-event'],
+  'group': ['h-card'],
   'organization': ['h-card'],
   'person': ['h-card'],
   'place': ['h-card', 'p-location'],
+  'service': ['h-card'],
 }
 # silly hack: i haven't found anywhere in AS1 or AS2 to indicate that
 # something is being "quoted," like in a quote tweet, so i cheat and use
@@ -291,7 +294,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'name': [name],
       'org': [name] if obj_type == 'organization' else None,
       'nickname': [obj.get('username') or ''],
-      ('note' if obj_type == 'person' else 'summary'): [summary],
+      ('note' if obj_type in as1.ACTOR_TYPES else 'summary'): [summary],
       'url': (list(as1.object_urls(obj) or as1.object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
       # photo is special cased below, to handle alt
@@ -350,7 +353,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     tags = util.get_list(obj, 'object')
   ret['properties']['category'] = []
   for tag in tags:
-    if tag.get('objectType') == 'person':
+    if tag.get('objectType') in as1.ACTOR_TYPES:
       ret['properties']['category'].append(
         object_to_json(tag, entry_class='u-category h-card'))
     elif tag.get('objectType') == 'hashtag' or obj_type == 'tag':
@@ -1094,7 +1097,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
     content += f"\n<p>{hcard_to_html(object_to_json(loc, default_object_type='place'), parent_props=['p-location'])}</p>"
 
   # these are rendered manually in json_to_html()
-  for type in 'like', 'share', 'react', 'person':
+  for type in set(('like', 'share', 'react')) | as1.ACTOR_TYPES:
     tags.pop(type, None)
 
   # render the rest
@@ -1169,6 +1172,8 @@ def find_author(parsed, **kwargs):
   """
   author = mf2util.find_author(parsed, **kwargs)
   if author:
+    # sadly can't use json_to_object here because mf2util.find_author returns
+    # its own data format
     photo = author.get('photo')
     alt = photo.get('alt') if isinstance(photo, dict) else None
     return util.trim_nulls({
