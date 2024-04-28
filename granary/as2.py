@@ -58,6 +58,7 @@ OBJECT_TYPE_TO_TYPE = {
   # not in AS1 spec
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
   'flag': 'Flag',
+  'group': 'Group',
   # not in AS2 spec; needed for correct round trip conversion
   'hashtag': 'Tag',
   'image': 'Image',
@@ -68,6 +69,7 @@ OBJECT_TYPE_TO_TYPE = {
   'person': 'Person',
   'place': 'Place',
   'question': 'Question',
+  'service': 'Service',
   'video': 'Video',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
