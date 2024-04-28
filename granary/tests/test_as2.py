@@ -87,6 +87,12 @@ class ActivityStreams2Test(testutil.TestCase):
       ],
     })['icon'])
 
+  def test_from_as1_icon_non_person(self):
+    self.assertEqual('/pic.jpg', as2.from_as1({
+      'objectType': 'application',
+      'image': '/pic.jpg',
+    })['icon'])
+
   def test_from_as1_block(self):
     self.assertEqual({
       '@context': 'https://www.w3.org/ns/activitystreams',

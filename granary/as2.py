@@ -47,6 +47,7 @@ PUBLICS = frozenset((
 def _invert(d):
   return {v: k for k, v in d.items()}
 
+# https://www.w3.org/TR/activitystreams-core/#actors
 OBJECT_TYPE_TO_TYPE = {
   'application': 'Application',
   'article': 'Article',
@@ -71,6 +72,8 @@ OBJECT_TYPE_TO_TYPE = {
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
+ACTOR_TYPES = {as2_type for as1_type, as2_type in OBJECT_TYPE_TO_TYPE.items()
+               if as1_type in as1.ACTOR_TYPES}
 
 VERB_TO_TYPE = {
   'accept': 'Accept',
@@ -181,7 +184,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   # contain the full URL! Mastodon requires that for profile link verification,
   # so that the visible URL people see matches the actual link.
   # https://github.com/snarfed/bridgy-fed/issues/560
-  if obj_type == 'person' and top_level:
+  if obj_type in as1.ACTOR_TYPES and top_level:
     links = {}
     for link in as1.get_objects(obj, 'url') + as1.get_objects(obj, 'urls'):
       url = link.get('value') or link.get('id')
@@ -261,7 +264,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
 
     # prefer non-featured first for icon, featured for image. ActivityPub/Mastodon
     # use icon for profile picture, image for header.
-    if obj_type == 'person':
+    if obj_type in as1.ACTOR_TYPES:
       obj['icon'] = from_as1(icon or (non_featured + featured)[0], type='Image',
                              context=None, top_level=False)
     obj['image'] = [from_as1(img, type='Image', context=None)
@@ -317,7 +320,7 @@ def to_as1(obj, use_type=True):
   """
   def all_to_as1(field):
     return [to_as1(elem) for elem in util.pop_list(obj, field)
-            if not (type == 'Person' and elem.get('type') == 'PropertyValue')]
+            if not (type in ACTOR_TYPES and elem.get('type') == 'PropertyValue')]
 
   if not obj:
     return {}
@@ -400,7 +403,7 @@ def to_as1(obj, use_type=True):
   icons = util.pop_list(obj, 'icon')
   images = util.pop_list(obj, 'image')
   # by convention, first element in AS2 images field is banner/header
-  if type == 'Person' and images:
+  if type in ACTOR_TYPES and images:
     images[0]['objectType'] = 'featured'
 
   img_atts = [a for a in attachments
