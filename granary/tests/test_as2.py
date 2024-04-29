@@ -133,7 +133,7 @@ class ActivityStreams2Test(testutil.TestCase):
       'to': 'http://bob',
     }))
 
-  def test_to_as1_link_attachment(self):
+  def test_from_as1_link_attachment(self):
     self.assertEqual({
       '@context': 'https://www.w3.org/ns/activitystreams',
       'type': 'Note',
