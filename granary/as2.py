@@ -62,6 +62,7 @@ OBJECT_TYPE_TO_TYPE = {
   # not in AS2 spec; needed for correct round trip conversion
   'hashtag': 'Tag',
   'image': 'Image',
+  'link': 'Link',
   # not in AS1 spec; needed to identify mentions in eg Bridgy Fed
   'mention': 'Mention',
   'note': 'Note',

@@ -286,7 +286,7 @@ Changelog
 * `as1`:
   * `activity_changed`: add `displayName`, `summary` fields.
 * `as2`:
-  * Add support for the `Application`, `Block`, and `Flag` types.
+  * Add support for the `Application`, `Block`, `Flag`, and `Link` types.
   * Generalize actor logic in `to/from_as1` across all actor types, not just `Person`.
 * `atom`:
   * `activities_to_atom`: handle image attachments without `url` field.

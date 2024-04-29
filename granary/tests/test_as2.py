@@ -133,6 +133,22 @@ class ActivityStreams2Test(testutil.TestCase):
       'to': 'http://bob',
     }))
 
+  def test_to_as1_link_attachment(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'attachment': [{
+        'type': 'Link',
+        'url': 'http://a/link',
+      }],
+    }, as2.from_as1({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+      }]
+    }))
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
@@ -245,6 +261,21 @@ class ActivityStreams2Test(testutil.TestCase):
         'type': 'PropertyValue',
         'name': 'Twitter',
         'value': '<span class="h-card"><a href="https://techhub.social/@giflian" class="u-url mention">@<span>giflian</span></a></span>',
+      }],
+    }))
+
+  def test_to_as1_link_attachment(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+      }]
+    }, as2.to_as1({
+      'type': 'Note',
+      'attachment': [{
+        'type': 'Link',
+        'url': 'http://a/link',
       }],
     }))
 
