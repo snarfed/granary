@@ -2018,39 +2018,54 @@ class BlueskyTest(testutil.TestCase):
       'record': POST_BSKY_IMAGES,
     })
 
-#   @patch('requests.post')
-#   def test_create_with_too_many_media(self, mock_post):
-#     image_urls = [f'http://my/picture/{i}' for i in range(MAX_IMAGES + 1)]
-#     obj = {
-#       'objectType': 'note',
-#       'image': [{'url': url} for url in image_urls],
-#       # duplicate images to check that they're de-duped
-#       'attachments': [{'objectType': 'image', 'url': url} for url in image_urls],
-#     }
+  @patch('requests.post')
+  def test_preview_with_too_many_media(self, mock_post):
+    image_urls = [f'http://my/picture/{i}' for i in range(MAX_IMAGES + 1)]
+    obj = {
+      'objectType': 'note',
+      'image': [{'url': url} for url in image_urls],
+      # duplicate images to check that they're de-duped
+      'attachments': [{'objectType': 'image', 'url': url} for url in image_urls],
+    }
 
-#     # test preview
-#     preview = self.bs.preview_create(obj)
-#     self.assertEqual('<span class="verb">post</span>:', preview.description)
-#     self.assertEqual("""\
-# <br /><br />\
-# &nbsp; <img src="http://my/picture/0" alt="" /> \
-# &nbsp; <img src="http://my/picture/1" alt="" /> \
-# &nbsp; <img src="http://my/picture/2" alt="" />""",
-# &nbsp; <img src="http://my/picture/3" alt="" />""",
-#                      preview.content)
+    preview = self.bs.preview_create(obj)
+    self.assertEqual('<span class="verb">post</span>:', preview.description)
+    self.assertEqual("""\
+<br /><br />\
+<img src="http://my/picture/0" alt="" /> \
+&nbsp; <img src="http://my/picture/1" alt="" /> \
+&nbsp; <img src="http://my/picture/2" alt="" /> \
+&nbsp; <img src="http://my/picture/3" alt="" />""",
+                     preview.content)
 
-#     # test create
-#     for i, url in enumerate(image_urls[:-1]):
-#       self.expect_requests_get(f'http://my/picture/{i}', 'pic')
-#       self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'}, data={})
+  # TODO
+  # @patch('requests.post')
+  # def test_create_with_too_many_media(self, mock_post):
+  #   at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+  #   mock_post.side_effect = [
+  #     requests_response({'blob': NEW_BLOB}),
+  #     requests_response({'uri': at_uri}),
+  #   ]
 
-#     self.expect_post(API_STATUSES, json={
-#       'status': '',
-#       'media_ids': ['0', '1', '2', '3'],
-#     }, response=POST)
-#     self.mox.ReplayAll()
-#     result = self.bs.create(obj)
-#     self.assert_equals(POST, result.content, result)
+  #   image_urls = [f'http://my/picture/{i}' for i in range(MAX_IMAGES + 1)]
+  #   obj = {
+  #     'objectType': 'note',
+  #     'image': [{'url': url} for url in image_urls],
+  #     # duplicate images to check that they're de-duped
+  #     'attachments': [{'objectType': 'image', 'url': url} for url in image_urls],
+  #   }
+
+  #   for i, url in enumerate(image_urls[:-1]):
+  #     self.expect_requests_get(f'http://my/picture/{i}', 'pic')
+  #     self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'}, data={})
+
+  #   self.expect_post(API_STATUSES, json={
+  #     'status': '',
+  #     'media_ids': ['0', '1', '2', '3'],
+  #   }, response=POST)
+  #   self.mox.ReplayAll()
+  #   result = self.bs.create(obj)
+  #   self.assert_equals(POST, result.content, result)
 
   @patch('requests.post')
   def test_create_bookmark(self, mock_post):
