@@ -4,7 +4,7 @@ Most tests are via files in testdata/.
 """
 import copy
 from io import BytesIO
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, call, patch
 
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
@@ -2066,6 +2066,70 @@ class BlueskyTest(testutil.TestCase):
   #   self.mox.ReplayAll()
   #   result = self.bs.create(obj)
   #   self.assert_equals(POST, result.content, result)
+
+  @patch('requests.post')
+  @patch('requests.get')
+  def test_create_with_media_with_token_refresh(self, mock_get, mock_post):
+    mock_get.return_value = requests_response(
+      b'pic data', headers={'Content-Type': 'my/pic'})
+
+    at_uri = 'at://did:me/app.bsky.feed.post/abc123'
+    post_resps = [
+      requests_response(status=400, body={  # fails auth
+        'error': 'ExpiredToken',
+        'message': 'Token has expired'
+      }),
+      requests_response({  # refreshSession
+        'accessJwt': 'new-towkin',
+        'refreshJwt': 'reephrush',
+        'handle': 'handull',
+        'did': 'dyd',
+      }),
+      requests_response({'blob': NEW_BLOB}),
+      requests_response({'uri': at_uri}),
+    ]
+
+    cur = -1
+    def check_posts(url, data=None, **kwargs):
+      nonlocal cur
+      cur += 1
+      if url.endswith('.uploadBlob'):
+        self.assertEqual(b'pic data', data.getvalue())
+      return post_resps[cur]
+
+    mock_post.side_effect = check_posts
+
+    bs = Bluesky(handle='handull', did='did:dyd', access_token='towkin',
+                      refresh_token='reephrush')
+    got = bs.create(POST_AS_IMAGES['object'])
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, got.content)
+
+    mock_get.assert_called_with(NEW_BLOB_URL, stream=True, timeout=HTTP_TIMEOUT,
+                                headers={'User-Agent': util.user_agent})
+
+    mock_post.assert_has_calls([
+      call('https://bsky.social/xrpc/com.atproto.repo.uploadBlob',
+           json=None, data=ANY, headers={
+             'Authorization': 'Bearer towkin',
+             'Content-Type': 'my/pic',
+             'User-Agent': util.user_agent,
+           }),
+      call('https://bsky.social/xrpc/com.atproto.server.refreshSession',
+           json=None, data=None, headers={
+             'Authorization': 'Bearer reephrush',
+             'Content-Type': 'application/json',
+             'User-Agent': util.user_agent,
+           }),
+      call('https://bsky.social/xrpc/com.atproto.repo.uploadBlob',
+           json=None, data=ANY, headers={
+             'Authorization': 'Bearer new-towkin',
+             'Content-Type': 'my/pic',
+             'User-Agent': util.user_agent,
+           }),
+    ], any_order=True)
 
   @patch('requests.post')
   def test_create_bookmark(self, mock_post):
