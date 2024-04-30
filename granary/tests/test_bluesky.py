@@ -2094,7 +2094,7 @@ class BlueskyTest(testutil.TestCase):
       nonlocal cur
       cur += 1
       if url.endswith('.uploadBlob'):
-        self.assertEqual(b'pic data', data.getvalue())
+        self.assertEqual(b'pic data', data.read())
       return post_resps[cur]
 
     mock_post.side_effect = check_posts
