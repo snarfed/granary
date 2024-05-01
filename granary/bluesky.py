@@ -555,7 +555,11 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     facets = []
     # convert index-based tags to facets
     for tag in util.get_list(obj, 'tags'):
+      name = tag.get('displayName', '').strip().lstrip('@#')
       type = tag.get('objectType')
+      if name and not type:
+        type = 'hashtag'
+
       url = tag.get('url')
       if not url and type != 'hashtag':
         continue
@@ -578,7 +582,6 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       except (KeyError, ValueError, IndexError, TypeError):
         pass
 
-      name = tag.get('displayName', '').strip().lstrip('@#')
       if type == 'hashtag':
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#tag',

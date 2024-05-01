@@ -776,6 +776,7 @@ class BlueskyTest(testutil.TestCase):
     note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
     del note['tags'][0]['startIndex']
     del note['tags'][0]['length']
+    del note['tags'][0]['objectType']
 
     expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
     expected['facets'][0]['index']['byteStart'] = 4
