@@ -1551,6 +1551,32 @@ class BlueskyTest(testutil.TestCase):
       },
     }, repo_did='did:bob'))
 
+  def test_to_as1_feed_generator(self):
+    self.assert_equals({
+      'objectType': 'service',
+      'id': 'did:web:skyfeed.me',
+      'displayName': 'skyfeeeed',
+      'summary': 'its-a skyfeed a-me',
+      'image': [{
+        'url': 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:bob&cid=bafkreim',
+      }],
+      'published': '2024-01-09T00:22:39.703Z',
+      'url': [
+        'https://skyfeed.me/',
+        # TODO: this is wrong, feed generators have non-profile URLs in
+        # arbitrary repos, this should be
+        # https://bsky.app/profile/did:plc:q6kan4oxddhgwnk4yjwvviao/feed/aaamsu44py5vg
+        'https://bsky.app/profile/did:web:skyfeed.me',
+      ],
+    }, to_as1({
+      '$type': 'app.bsky.feed.generator',
+      'did': 'did:web:skyfeed.me',
+      'displayName': 'skyfeeeed',
+      'description': 'its-a skyfeed a-me',
+      'avatar': NEW_BLOB,
+      'createdAt': '2024-01-09T00:22:39.703Z',
+    }, repo_did='did:bob'))
+
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
     self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB,

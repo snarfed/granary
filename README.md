@@ -294,6 +294,7 @@ Changelog
   * `to_as1`:
     * Add support for:
       * `app.bsky.feed.defs#notFoundPost`
+      * `app.bsky.feed.generator`
       * `app.bsky.graph.block`
       * `com.atproto.admin.defs#repoRef`
       * `com.atproto.moderation.createReport#input`
