@@ -285,6 +285,7 @@ Changelog
 
 * `as1`:
   * `activity_changed`: add `displayName`, `summary` fields.
+  * `is_public`: return `False` if the object/activity contains `to` that's empty or has only unknown aliases.
 * `as2`:
   * Add support for the `Application`, `Block`, `Flag`, and `Link` types.
   * Generalize actor logic in `to/from_as1` across all actor types, not just `Person`.

@@ -220,14 +220,21 @@ def is_public(obj, unlisted=True):
     obj (dict): AS2 activity or object
     unlisted (bool): whether `@unlisted` counts as public or not
   """
-  to = obj.get('to') or get_object(obj).get('to') or []
+  inner_obj = get_object(obj)
+  to = get_objects(obj, 'to') or get_objects(inner_obj, 'to') or []
   aliases = util.trim_nulls([t.get('alias') for t in to])
   object_types = util.trim_nulls([t.get('objectType') for t in to])
-  return (True if ('@public' in aliases
-                   or ('@unlisted' in aliases and unlisted))
-          else None if 'unknown' in object_types
-          else False if aliases
-          else True)
+  if '@public' in aliases or ('@unlisted' in aliases and unlisted):
+    return True
+  elif 'unknown' in object_types:
+    return None
+  elif aliases:
+    return False
+  elif 'to' in obj or 'to' in inner_obj:
+    # it does at least have some audience that doesn't include public
+    return False
+
+  return True
 
 
 def add_rsvps_to_event(event, rsvps):
