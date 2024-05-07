@@ -155,6 +155,8 @@ FOLLOW_WITH_OBJECT['object'] = ACTOR
 class As1Test(testutil.TestCase):
 
   def test_is_public(self):
+    self.assertIsNone(as1.is_public(None))
+
     for obj in (
         {'to': [{'objectType': 'unknown'}]},
         {'to': [{'objectType': 'unknown'},
