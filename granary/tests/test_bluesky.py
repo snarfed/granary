@@ -479,6 +479,19 @@ POST_AUTHOR_PROFILE_WITH_REPOSTS_AS['object']['tags'][0]['author'].update({
   'url': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
 })
 
+FOLLOW_AS = {
+  'objectType': 'activity',
+  'verb': 'follow',
+  'actor': 'did:alice',
+  'object': 'did:bob',
+}
+FOLLOW_BSKY = {
+  '$type': 'app.bsky.graph.follow',
+  'subject': 'did:bob',
+  'createdAt': '2022-01-02T03:04:05.000Z'
+}
+
+
 class BlueskyTest(testutil.TestCase):
 
   def setUp(self):
@@ -1077,6 +1090,9 @@ class BlueskyTest(testutil.TestCase):
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aalice&collection=app.bsky.feed.post&rkey=tid')
 
+  def test_from_as1_follow(self):
+    self.assertEqual(FOLLOW_BSKY, from_as1(FOLLOW_AS))
+
   def test_from_as1_follow_no_object(self):
     with self.assertRaises(ValueError):
       from_as1({
@@ -1486,6 +1502,9 @@ class BlueskyTest(testutil.TestCase):
          },
        }],
     }))
+
+  def test_to_as1_follow(self):
+    self.assertEqual(FOLLOW_AS, to_as1(FOLLOW_BSKY, repo_did='did:alice'))
 
   def test_to_as1_block(self):
     self.assert_equals({
