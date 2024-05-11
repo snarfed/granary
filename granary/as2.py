@@ -407,6 +407,8 @@ def to_as1(obj, use_type=True):
   images = util.pop_list(obj, 'image')
   # by convention, first element in AS2 images field is banner/header
   if type in ACTOR_TYPES and images:
+    if isinstance(images[0], str):
+      images[0] = {'url': images[0]}
     images[0]['objectType'] = 'featured'
 
   img_atts = [a for a in attachments
