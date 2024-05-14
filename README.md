@@ -305,7 +305,7 @@ Changelog
   * `from_as1`:
     * Add hashtag, mention, block, and flag support. Interpret `tags` with missing `objectType` as hashtags.
     * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.
-    * If an output string value is longer than its ``maxGraphemes`` or ``maxLength`` in its lexicon, it's truncated with an ``…`` ellipsis character at the end in order to fit.
+    * If an output string value is longer than its ``maxGraphemes`` or ``maxLength`` in its lexicon, truncate it with an ``…`` ellipsis character at the end in order to fit. If this happens to post text, include a link embed pointing to the original post.
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
     * Support `lexrpc.Client` as well as `Bluesky` for `client` kwarg.
   * `from_as1_to_strong_ref`:

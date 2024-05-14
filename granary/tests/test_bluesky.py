@@ -750,6 +750,27 @@ class BlueskyTest(testutil.TestCase):
     # no facet
     self.assert_equals(POST_BSKY, from_as1(post_as))
 
+  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 12)
+  def test_from_as1_post_truncate_adds_link_embed(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'more than…',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'description': '',
+          'title': 'Original post on my.inst',
+          'uri': 'http://my.inst/post',
+        },
+      },
+    }, from_as1({
+      'objectType': 'note',
+      'url': 'http://my.inst/post',
+      'content': 'more than ten chars long',
+    }))
+
   def test_from_as1_tag_without_url(self):
     self.assert_equals(POST_BSKY, from_as1({
       **POST_AS,

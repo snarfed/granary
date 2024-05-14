@@ -549,8 +549,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     # convert text from HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
-    text = obj.get('summary') or content or obj.get('name') or ''
-    text = src.truncate(html_to_text(text), None, OMIT_LINK)
+    full_text = html_to_text(obj.get('summary') or content or obj.get('name') or '')
+    text = src.truncate(full_text, None, OMIT_LINK)
+    truncated = text != full_text
 
     facets = []
     # convert index-based tags to facets
@@ -667,7 +668,17 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     # article/note attachments
     record_embed = record_record_embed = external_embed = external_record_embed = None
 
-    for att in util.get_list(obj, 'attachments'):
+    attachments = util.get_list(obj, 'attachments')
+    if truncated:
+      if url := as1.get_url(obj):
+        # override attachments, use one link to original post instead
+        attachments = [{
+          'objectType': 'link',
+          'url': url,
+          'displayName': f'Original post on {util.domain_from_link(url)}',
+        }]
+
+    for att in attachments:
       if not att.get('objectType') in ('article', 'link', 'note'):
         continue
 
