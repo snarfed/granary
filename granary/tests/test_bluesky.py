@@ -891,6 +891,17 @@ class BlueskyTest(testutil.TestCase):
       'content': 'foo <a href="http://post">ba]r</a> baz',
     }))
 
+  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 12)
+  def test_from_as1_html_omit_link_facet_after_truncation(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo bar…',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'foo bar <a href="http://post">baaaaaaaz</a>',
+    }))
+
   def test_from_as1_link_mention_hashtag(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

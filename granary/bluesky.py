@@ -656,6 +656,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       # skip or trim this facet if it's off the end of content that got truncated
       index = facet.get('index')
       text_len = len(text.encode())
+      if truncated:
+        text_len -= len('…'.encode())
       if index.get('byteStart', 0) >= text_len:
         continue
       if index.get('byteEnd', 0) > text_len:
