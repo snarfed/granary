@@ -870,6 +870,72 @@ class BlueskyTest(testutil.TestCase):
     expected['facets'][0]['index']['byteEnd'] = 18
     self.assert_equals(expected, from_as1(note))
 
+  def test_from_as1_html_link(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo ba]r baz',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://post',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 8,
+        },
+      }],
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'foo <a href="http://post">ba]r</a> baz',
+    }))
+
+  def test_from_as1_link_mention_hashtag(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo #hache-☕ bar foo @you.com baz',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': 'hache-☕',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 14,
+        },
+      }, {
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          'did': 'you.com',
+        }],
+        'index': {
+          'byteStart': 23,
+          'byteEnd': 31,
+        },
+      }, {
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://post',
+        }],
+        'index': {
+          'byteStart': 15,
+          'byteEnd': 18,
+        },
+      }],
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'foo <a href="...">#hache-☕</a> <a href="http://post">bar</a> foo <a href="https://bsky.app/profile/you.com">@you.com</a> baz',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'hache-☕',
+      }],
+    }))
+
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['embed']['images'][0]['image']

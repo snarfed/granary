@@ -669,6 +669,8 @@ class Source(object, metaclass=SourceMeta):
     if mentions:
       # @-mentions to mention tags
       # https://github.com/snarfed/bridgy-fed/issues/493
+      # TODO: unify into new textContent field
+      # https://github.com/snarfed/granary/issues/729
       content = obj.get('content') or ''
       existing_tags_with_urls = util.trim_nulls({
         t.get('displayName') for t in obj.setdefault('tags', []) if t.get('url')

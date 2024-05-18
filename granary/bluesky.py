@@ -117,6 +117,10 @@ NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
 
 LEXRPC_BASE = Base(truncate=True)
 
+# TODO: html2text doesn't escape ]s in link text, which breaks this, eg
+# <a href="http://post">ba](r</a> turns into [ba](r](http://post)
+MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>.*?)\)')
+
 
 def url_to_did_web(url):
   """Converts a URL to a ``did:web``.
@@ -549,13 +553,31 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     # convert text from HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
-    full_text = html_to_text(obj.get('summary') or content or obj.get('name') or '')
+    full_text = html_to_text(obj.get('summary') or content or obj.get('name') or '',
+                             ignore_links=False, inline_links=True)
+
+    # extract links and convert to plain text
+    # TODO: unify into as1 or source
+    # https://github.com/snarfed/granary/issues/729
+    link_tags = []
+    while link := MARKDOWN_LINK_RE.search(full_text):
+      start, end = link.span()
+      if not link['text'].startswith(('@', '#')):
+        link_tags.append({
+          'objectType': 'link',
+          'displayName': link['text'],
+          'url': link['url'],
+          'startIndex': start,
+          'length': len(link['text']),
+        })
+      full_text = full_text[:start] + link['text'] + full_text[end:]
+
     text = src.truncate(full_text, None, OMIT_LINK)
     truncated = text != full_text
 
-    facets = []
     # convert index-based tags to facets
-    for tag in util.get_list(obj, 'tags'):
+    facets = []
+    for tag in util.get_list(obj, 'tags') + link_tags:
       name = tag.get('displayName', '').strip().lstrip('@#')
       type = tag.get('objectType')
       if name and not type:
@@ -577,8 +599,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         facet['index'] = {
           # convert indices from Unicode chars to UTF-8 encoded bytes
           # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
-          'byteStart': len(content[:start].encode()),
-          'byteEnd': len(content[:end].encode()),
+          'byteStart': len(full_text[:start].encode()),
+          'byteEnd': len(full_text[:end].encode()),
         }
       except (KeyError, ValueError, IndexError, TypeError):
         pass
@@ -625,8 +647,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         match = re.search(fr'[\s^]({prefix}{name})[\s$]', text)
         if match:
           facet['index'] = {
-            'byteStart': len(text[:match.start(1)].encode()),
-            'byteEnd': len(text[:match.end(1)].encode()),
+            'byteStart': len(full_text[:match.start(1)].encode()),
+            'byteEnd': len(full_text[:match.end(1)].encode()),
           }
         else:
           continue
