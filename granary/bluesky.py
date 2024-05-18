@@ -625,8 +625,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         match = re.search(fr'[\s^]({prefix}{name})[\s$]', text)
         if match:
           facet['index'] = {
-            'byteStart': len(content[:match.start(1)].encode()),
-            'byteEnd': len(content[:match.end(1)].encode()),
+            'byteStart': len(text[:match.start(1)].encode()),
+            'byteEnd': len(text[:match.end(1)].encode()),
           }
         else:
           continue

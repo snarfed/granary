@@ -822,6 +822,10 @@ class BlueskyTest(testutil.TestCase):
     del note['tags'][0]['startIndex']
     del note['tags'][0]['length']
 
+    expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
+    expected['facets'][0]['index']['byteStart'] = 4
+    self.assert_equals(expected, from_as1(note))
+
   def test_from_as1_tag_mention_guess_index(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION_URL))
 
