@@ -1428,6 +1428,20 @@ class BlueskyTest(testutil.TestCase):
       'author': 'did:plc:foo',
     }), to_as1(POST_BSKY_IMAGES, repo_did='did:plc:foo'))
 
+  def test_to_as1_post_with_image_blank_alt_text(self):
+    record = copy.deepcopy(POST_BSKY_IMAGES)
+    record['embed']['images'][0]['alt'] = ''
+
+    expected = {
+      **POST_AS_IMAGES['object'],
+      'author': 'did:plc:foo',
+      'id': None,
+      'url': None,
+      'image': ['https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'],
+    }
+
+    self.assert_equals(trim_nulls(expected), to_as1(record, repo_did='did:plc:foo'))
+
   def test_to_as1_post_view_with_image(self):
     self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_VIEW_BSKY_IMAGES))
 
