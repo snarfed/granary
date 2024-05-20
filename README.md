@@ -289,6 +289,7 @@ Changelog
 * `as2`:
   * Add support for the `Application`, `Block`, `Flag`, and `Link` types.
   * Generalize actor logic in `to/from_as1` across all actor types, not just `Person`.
+  * Add new `link_tags` function.
 * `atom`:
   * `activities_to_atom`: handle image attachments without `url` field.
 * `bluesky`:

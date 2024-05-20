@@ -998,6 +998,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
       tags.setdefault(as1.object_type(t), []).append(t)
 
   # linkify embedded mention tags inside content.
+  # TODO: duplicated in :func:`as2.link_tags`. unify?
   if mentions:
     mentions.sort(key=lambda t: t['startIndex'])
     last_end = 0

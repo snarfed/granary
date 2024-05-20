@@ -472,3 +472,35 @@ class ActivityStreams2Test(testutil.TestCase):
       # note that this is the user being reported
       'to': 'http://bob',
     }))
+
+  def test_link_tags(self):
+    # no indices, shouuld be a noop
+    obj = {
+      'content': 'foo\nbar\nbaz',
+      'tag': [
+        {'href': 'http://bar'},
+        {'href': 'http://baz'},
+      ],
+    }
+    as2.link_tags(obj)
+    self.assert_equals('foo\nbar\nbaz', obj['content'])
+
+    # with indices, should link and then remove indices
+    obj['tag'] = [
+      {'href': 'http://bar', 'startIndex': 4, 'length': 3},
+      {'href': 'http://baz', 'startIndex': 8, 'length': 3},
+    ]
+
+    as2.link_tags(obj)
+    self.assert_equals({
+      'content': """\
+foo
+<a href="http://bar">bar</a>
+<a href="http://baz">baz</a>
+""",
+      'content_is_html': True,
+      'tag': [
+        {'href': 'http://bar'},
+        {'href': 'http://baz'},
+      ],
+    }, obj)

@@ -567,3 +567,43 @@ def address(actor):
       match = re.match(r'^https?://(.+)/(users/|profile/|@)(.+)$', url)
       if match:
         return match.expand(r'@\3@\1')
+
+
+def link_tags(obj):
+  """Adds HTML links to ``content`` for tags with ``startIndex`` and ``length``.
+
+  ``content`` is modified in place. If ``content_is_html`` is ``true``, does
+  nothing. Otherwise, sets it to ``true`` if at least one link is added. Tags
+  without ``startIndex``/``length`` are ignored.
+
+  TODO: duplicated in :func:`microformats2.render_content`. unify?
+
+  Args:
+    obj (dict): AS2 JSON object
+  """
+  content = obj.get('content')
+  if not content or obj.get('content_is_html'):
+    return
+
+  # extract indexed tags, preserving order
+  tags = [tag for tag in obj.get('tag', [])
+          if 'startIndex' in tag and 'length' in tag and 'href' in tag]
+  tags.sort(key=lambda t: t['startIndex'])
+
+  # linkify embedded mention tags inside content.
+  last_end = 0
+  orig = content
+  linked = ''
+  for tag in tags:
+    start = tag['startIndex']
+    if start < last_end:
+      logger.warning(f'tag indices overlap! skipping {tag["href"]}')
+      continue
+    end = start + tag['length']
+    linked = f"{linked}{orig[last_end:start]}<a href=\"{tag['href']}\">{orig[start:end]}</a>"
+    last_end = end
+    obj['content_is_html'] = True
+    del tag['startIndex']
+    del tag['length']
+
+  obj['content'] = linked + orig[last_end:]
