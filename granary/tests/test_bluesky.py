@@ -154,7 +154,7 @@ POST_BSKY_FACET_HASHTAG = {
       'tag': 'hache-☕',
     }],
     'index': {
-      'byteStart': 5,
+      'byteStart': 4,
       'byteEnd': 14,
     },
   }],
@@ -166,8 +166,8 @@ NOTE_AS_TAG_HASHTAG = {
   'tags': [{
     'objectType': 'hashtag',
     'displayName': 'hache-☕',
-    'startIndex': 5,
-    'length': 7,
+    'startIndex': 4,
+    'length': 8,
   }],
 }
 FACET_MENTION = {

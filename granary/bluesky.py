@@ -971,9 +971,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       try:
         if byte_start is not None:
           tag['startIndex'] = len(text.encode()[:byte_start].decode())
-        if byte_end is not None:
-          tag.setdefault('displayName', text.encode()[byte_start:byte_end].decode())
-          tag['length'] = len(tag['displayName'])
+          if byte_end is not None:
+            name = text.encode()[byte_start:byte_end].decode()
+            tag.setdefault('displayName', name)
+            tag['length'] = len(name)
       except UnicodeDecodeError as e:
         logger.warning(f"Couldn't apply facet {facet} to unicode text: {text}")
 
