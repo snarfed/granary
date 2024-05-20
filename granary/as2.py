@@ -587,7 +587,8 @@ def link_tags(obj):
 
   # extract indexed tags, preserving order
   tags = [tag for tag in obj.get('tag', [])
-          if 'startIndex' in tag and 'length' in tag and 'href' in tag]
+          if 'startIndex' in tag and 'length' in tag and
+          ('href' in tag or 'url' in tag)]
   tags.sort(key=lambda t: t['startIndex'])
 
   # linkify embedded mention tags inside content.
@@ -595,12 +596,13 @@ def link_tags(obj):
   orig = content
   linked = ''
   for tag in tags:
+    url = tag.get('href') or tag.get('url')
     start = tag['startIndex']
     if start < last_end:
-      logger.warning(f'tag indices overlap! skipping {tag["href"]}')
+      logger.warning(f'tag indices overlap! skipping {url}')
       continue
     end = start + tag['length']
-    linked = f"{linked}{orig[last_end:start]}<a href=\"{tag['href']}\">{orig[start:end]}</a>"
+    linked = f"{linked}{orig[last_end:start]}<a href=\"{url}\">{orig[start:end]}</a>"
     last_end = end
     obj['content_is_html'] = True
     del tag['startIndex']

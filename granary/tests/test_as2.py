@@ -479,7 +479,7 @@ class ActivityStreams2Test(testutil.TestCase):
       'content': 'foo\nbar\nbaz',
       'tag': [
         {'href': 'http://bar'},
-        {'href': 'http://baz'},
+        {'url': 'http://baz'},
       ],
     }
     as2.link_tags(obj)
@@ -488,7 +488,7 @@ class ActivityStreams2Test(testutil.TestCase):
     # with indices, should link and then remove indices
     obj['tag'] = [
       {'href': 'http://bar', 'startIndex': 4, 'length': 3},
-      {'href': 'http://baz', 'startIndex': 8, 'length': 3},
+      {'url': 'http://baz', 'startIndex': 8, 'length': 3},
     ]
 
     as2.link_tags(obj)
@@ -501,6 +501,6 @@ foo
       'content_is_html': True,
       'tag': [
         {'href': 'http://bar'},
-        {'href': 'http://baz'},
+        {'url': 'http://baz'},
       ],
     }, obj)
