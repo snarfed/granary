@@ -1216,8 +1216,7 @@ class Twitter(source.Source):
     entities = self._get_entities(base_tweet)
 
     # text content
-    text = util.WideUnicode(
-      base_tweet.get('full_text') or base_tweet.get('text') or '')
+    text = base_tweet.get('full_text') or base_tweet.get('text') or ''
     text_start, text_end = (base_tweet.get('display_text_range')
                             or (0, len(text)))
 
@@ -1331,7 +1330,7 @@ class Twitter(source.Source):
                      and tag.get('indices')[1] <= text_start)
 
     # replace entities with display URLs, convert start/end indices to start/length
-    content = util.WideUnicode(rt_prefix + text[text_start:text_end])
+    content = rt_prefix + text[text_start:text_end]
     offset = len(rt_prefix) - text_start
     for t in obj['tags']:
       start, end = t.pop('indices', None) or (0, 0)
@@ -1342,7 +1341,7 @@ class Twitter(source.Source):
         if t['objectType'] in ('article', 'image'):
           tag_text = t.get('displayName', t.get('url'))
           if tag_text is not None:
-            content = util.WideUnicode(content[:start] + tag_text + content[end:])
+            content = content[:start] + tag_text + content[end:]
             offset += len(tag_text) - length
             length = len(tag_text)
         t.update({'startIndex': start, 'length': length})

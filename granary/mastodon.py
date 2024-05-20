@@ -431,7 +431,7 @@ class Mastodon(source.Source):
       reblog_account = reblog.get('account')
       content = f"Boosted <a href=\"{reblog_account.get('url')}\">@{reblog_account.get('username')}</a>: " + content
 
-    obj['content'] = util.WideUnicode(content)
+    obj['content'] = content
 
     # inReplyTo
     reply_to_id = status.get('in_reply_to_id')
