@@ -553,8 +553,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     # convert text from HTML and truncate
     src = Bluesky('unused')
     content = obj.get('content')
-    full_text = html_to_text(obj.get('summary') or content or obj.get('name') or '',
-                             ignore_links=False, inline_links=True)
+    text = obj.get('summary') or content or obj.get('displayName') or ''
+    full_text = html_to_text(text, ignore_links=False, inline_links=True)
 
     # extract links and convert to plain text
     # TODO: unify into as1 or source
@@ -637,7 +637,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
           'uri': url,
         }]
 
-      if 'index' not in facet:
+      if name and 'index' not in facet:
         # use displayName to guess index at first location found in text. note
         # that #/@ character for mentions is included in index end.
         #
@@ -645,16 +645,21 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         # alphanumerics, and Bluesky hashtags can include emoji
         prefix = '#' if type == 'hashtag' else '@' if type == 'mention' else ''
         match = re.search(fr'[\s^]({prefix}{name})[\s$]', text)
+        if not match and type == 'mention' and '@' in name:
+          # try without @[server] suffix
+          username = name.split('@')[0]
+          match = re.search(fr'[\s^]({prefix}{username})[\s$]', text)
+
         if match:
           facet['index'] = {
             'byteStart': len(full_text[:match.start(1)].encode()),
             'byteEnd': len(full_text[:match.end(1)].encode()),
           }
-        else:
-          continue
 
       # skip or trim this facet if it's off the end of content that got truncated
       index = facet.get('index')
+      if not index:
+        continue
       text_len = len(text.encode())
       if truncated:
         text_len -= len('…'.encode())

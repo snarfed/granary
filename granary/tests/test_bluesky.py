@@ -827,12 +827,36 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(expected, from_as1(note))
 
   def test_from_as1_tag_mention_guess_index(self):
-    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION_URL))
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
+      'objectType': 'note',
+      'content': 'foo @you.com bar',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'https://bsky.app/profile/did:plc:foo',
+        'displayName': 'you.com',
+      }],
+    }))
 
   def test_from_as1_tag_mention_html_content_guess_index(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
-      **NOTE_AS_TAG_MENTION_URL,
+      'objectType': 'note',
       'content': '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'https://bsky.app/profile/did:plc:foo',
+        'displayName': 'you.com',
+      }],
+    }))
+
+  def test_from_as1_tag_mention_display_name_server_html_content_guess_index(self):
+    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
+      'objectType': 'note',
+      'content': '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'https://bsky.app/profile/did:plc:foo',
+        'displayName': '@you.com@server.foo',
+      }],
     }))
 
   def test_from_as1_tag_mention_at_char_html_content_guess_index(self):
