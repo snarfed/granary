@@ -303,6 +303,7 @@ Changelog
       * `com.atproto.repo.strongRef`
     * Add hashtag facet support.
     * Convert blobs in embeds to `getBlob` image URLs.
+    * `app.bsky.actor.profile`: add HTML links for URLs in `summary` ([snarfed/bridgy-fed#1065](https://github.com/snarfed/bridgy-fed/issues/1065)).
   * `from_as1`:
     * Add hashtag, mention, block, and flag support. Interpret `tags` with missing `objectType` as hashtags.
     * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.

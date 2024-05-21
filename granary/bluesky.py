@@ -915,7 +915,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'url': urls,
       'displayName': obj.get('displayName'),
       'username': obj.get('handle') or repo_handle,
-      'summary': obj.get('description'),
+      'summary': util.linkify(obj.get('description') or '', pretty=True),
       'image': images,
       'published': obj.get('createdAt'),
     }

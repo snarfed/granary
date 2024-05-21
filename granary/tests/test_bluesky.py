@@ -1346,6 +1346,15 @@ class BlueskyTest(testutil.TestCase):
       'url': ['https://bsky.app/profile/han.dull', 'https://han.dull/'],
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', repo_handle='han.dull'))
 
+  def test_to_as1_profile_links_in_bio(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'summary': 'one <a href="http://li.nk/foo">li.nk/foo</a> two <a href="http://li.nk">li.nk</a> three <a href="https://www.li.nk/">li.nk</a>',
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'description': 'one http://li.nk/foo two li.nk three https://www.li.nk/',
+    }))
+
   def test_to_as1_profile_bsky_social_handle_is_not_url(self):
     self.assert_equals({
       'objectType': 'person',
