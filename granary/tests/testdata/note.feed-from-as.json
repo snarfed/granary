@@ -1,12 +1,12 @@
 {
-  "version": "https://jsonfeed.org/version/1",
+  "version": "https://jsonfeed.org/version/1.1",
   "title": "Martin Smith",
   "home_page_url": "https://example.com/martin",
-  "author": {
+  "authors": [{
     "name": "Martin Smith",
     "url": "https://example.com/martin",
     "avatar": "http://example.com/martin/image"
-  },
+  }],
   "items": [{
     "id": "tag:example.com,2011:blog-post-123",
     "url": "http://example.com/blog-post-123",
@@ -15,9 +15,9 @@
     "content_html": "A note. <a href=\"http://my/link\">link</a> too\n<p>  <span class=\"p-location h-card\">\n    <data class=\"p-uid\" value=\"31cb9e7ed29dbe52\"></data>\n    <a class=\"p-name u-url\" href=\"https://maps.google.com/maps?q=32.4004416,-98.9852672\">Carcassonne, Aude</a>\n    \n    \n  </span>\n</p>",
     "date_published": "2012-02-22T20:26:41",
     "date_modified": "2013-10-25T10:31:30+00:00",
-    "author": {
+    "authors": [{
       "name": "Ryan Barrett",
       "avatar": "http://example.com/ryan/image"
-    }
+    }]
   }]
 }

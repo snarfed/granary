@@ -1,6 +1,6 @@
 """Convert between ActivityStreams and JSON Feed.
 
-JSON Feed spec: https://jsonfeed.org/version/1
+JSON Feed spec: https://jsonfeed.org/version/1.1
 """
 import mimetypes
 
@@ -67,11 +67,11 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
       'content_html': content,
       'date_published': obj.get('published'),
       'date_modified': obj.get('updated'),
-      'author': {
+      'authors': [{
         'name': actor_name(author),
         'url': author.get('url'),
         'avatar': image_url(author),
-      },
+      }],
       'attachments': [],
     }
 
@@ -91,15 +91,15 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
     items.append(item)
 
   return util.trim_nulls({
-    'version': 'https://jsonfeed.org/version/1',
+    'version': 'https://jsonfeed.org/version/1.1',
     'title': title or actor_name(actor) or 'JSON Feed',
     'feed_url': feed_url,
     'home_page_url': home_page_url or actor.get('url'),
-    'author': {
+    'authors': [{
       'name': actor_name(actor),
       'url': actor.get('url'),
       'avatar': image_url(actor),
-    },
+    }],
     'items': items,
   }, ignore='content_text')
 
@@ -120,12 +120,12 @@ def jsonfeed_to_activities(jsonfeed):
   if not hasattr(jsonfeed, 'get'):
     raise ValueError(f'Expected dict (or compatible), got {jsonfeed.__class__.__name__}')
 
-  author = jsonfeed.get('author', {})
+  feed_author = util.get_first(jsonfeed, 'authors', default={})
   actor = {
     'objectType': 'person',
-    'url': author.get('url'),
-    'image': [{'url': author.get('avatar')}],
-    'displayName': author.get('name'),
+    'url': feed_author.get('url'),
+    'image': [{'url': feed_author.get('avatar')}],
+    'displayName': feed_author.get('name'),
   }
 
   def attachment(jf):
@@ -145,14 +145,15 @@ def jsonfeed_to_activities(jsonfeed):
 
   activities = []
   for item in jsonfeed.get('items', []):
-    author = item.get('author', {})
+    author = util.get_first(item, 'authors') or feed_author
     if not isinstance(author, dict):
       raise ValueError(f'Expected author to be dict; got {author!r}')
-    activities.append(Source.postprocess_activity({'object': {
+    activities.append(Source.postprocess_activity({
       'objectType': 'article' if item.get('title') else 'note',
       'title': item.get('title'),
       'summary': item.get('summary'),
-      'content': util.get_first(item, 'content_html') or util.get_first(item, 'content_text'),
+      'content': (util.get_first(item, 'content_html')
+                  or util.get_first(item, 'content_text')),
       'id': str(item.get('id') or ''),
       'published': item.get('date_published'),
       'updated': item.get('date_modified'),
@@ -160,9 +161,10 @@ def jsonfeed_to_activities(jsonfeed):
       'image': [{'url': item.get('image')}],
       'author': {
         'displayName': author.get('name'),
-        'image': [{'url': author.get('avatar')}]
+        'image': author.get('avatar'),
+        'url': author.get('url'),
       },
       'attachments': [attachment(a) for a in item.get('attachments', [])],
-    }}))
+    }))
 
   return (util.trim_nulls(activities), util.trim_nulls(actor))

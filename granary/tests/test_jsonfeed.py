@@ -8,13 +8,13 @@ class JsonFeedTest(testutil.TestCase):
 
   def test_activities_to_jsonfeed_empty(self):
     self.assert_equals({
-      'version': 'https://jsonfeed.org/version/1',
+      'version': 'https://jsonfeed.org/version/1.1',
       'title': 'JSON Feed',
     }, activities_to_jsonfeed([], {}))
 
   def test_activities_to_jsonfeed_extra_fields(self):
     self.assert_equals({
-      'version': 'https://jsonfeed.org/version/1',
+      'version': 'https://jsonfeed.org/version/1.1',
       'title': 'a something',
       'feed_url': 'http://a/feed',
       'home_page_url': 'http://a/home',
@@ -24,7 +24,7 @@ class JsonFeedTest(testutil.TestCase):
 
   def test_activities_to_jsonfeed_skip_people(self):
     self.assert_equals({
-      'version': 'https://jsonfeed.org/version/1',
+      'version': 'https://jsonfeed.org/version/1.1',
       'title': 'JSON Feed',
     }, activities_to_jsonfeed([{
       'objectType': 'person',
@@ -33,7 +33,7 @@ class JsonFeedTest(testutil.TestCase):
 
   def test_activities_to_jsonfeed_no_content(self):
     self.assert_equals({
-      'version': 'https://jsonfeed.org/version/1',
+      'version': 'https://jsonfeed.org/version/1.1',
       'title': 'JSON Feed',
       'items': [{
         'image': 'http://no/content',
@@ -112,6 +112,41 @@ class JsonFeedTest(testutil.TestCase):
       'actor': 'http://example.com/author-456'
     }])['items'])
 
+  def test_activities_to_jsonfeed_note_article(self):
+    activities, _ = jsonfeed_to_activities({
+      'version': 'https://jsonfeed.org/version/1.1',
+      'title': 'JSON Feed',
+      'items': [{
+        'content_text': 'foo bar',
+        'authors': [{
+          'name': 'Alice',
+          'url': 'http://it/me',
+          'avatar': 'http://my/pic.jpg',
+        }],
+      }, {
+        'id': 'http://my/article',
+        'title': 'a thing I wrote',
+        'content_html': 'its <em>gud</em>',
+        'url': 'http://read/this',
+      }],
+    })
+
+    self.assert_equals([{
+      'objectType': 'note',
+      'content': 'foo bar',
+      'author': {
+        'displayName': 'Alice',
+        'url': 'http://it/me',
+        'image': 'http://my/pic.jpg',
+      },
+    }, {
+      'objectType': 'article',
+      'id': 'http://my/article',
+      'title': 'a thing I wrote',
+      'content': 'its <em>gud</em>',
+      'url': 'http://read/this',
+    }], activities)
+
   def test_jsonfeed_to_activities_attachment_extra_list(self):
     """Originally seen in:
     https://console.cloud.google.com/errors/CPyvpeH077rvIg
@@ -124,7 +159,7 @@ class JsonFeedTest(testutil.TestCase):
         }]
       })
 
-  def test_not_jsonfeed(self):
+  def test_jsonfeed_to_activities_not_jsonfeed(self):
     """Based on this JSON, which isn't JSON Feed:
 
     http://blogs.adobe.com/adobemarketingcloudjapan/feed-json-adobemarketingcloudjapan/
@@ -150,12 +185,12 @@ class JsonFeedTest(testutil.TestCase):
     https://console.cloud.google.com/errors/detail/COO65cat_4niTQ?project=granary-demo
     """
     with self.assertRaises(ValueError):
-      jsonfeed_to_activities({'items': [{'author': 'Ms. Foo'}]})
+      jsonfeed_to_activities({'items': [{'authors': ['Ms. Foo']}]})
 
   def test_activities_to_jsonfeed_author_not_dict(self):
     """https://console.cloud.google.com/errors/detail/CN-yh-3M7crdLA;time=P30D?project=granary-demo"""
     self.assertEqual({
-      'version': 'https://jsonfeed.org/version/1',
+      'version': 'https://jsonfeed.org/version/1.1',
       'title': 'JSON Feed',
       'items': [{
         'content_text': '',

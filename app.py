@@ -115,7 +115,7 @@ FORMATS = {
   'html': 'text/html; charset=utf-8',
   'json': 'application/json',
   'json-mf2': 'application/mf2+json',
-  'jsonfeed': 'application/json',
+  'jsonfeed': 'application/feed+json',
   'mf2-json': 'application/mf2+json',
   'nostr': 'application/json',
   'rss': rss.CONTENT_TYPE,

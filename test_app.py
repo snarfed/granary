@@ -79,7 +79,7 @@ MF2 = {'items': [{
 }]}
 
 JSONFEED = {
-  'version': 'https://jsonfeed.org/version/1',
+  'version': 'https://jsonfeed.org/version/1.1',
   'title': 'JSON Feed',
   'items': [{
     'url': 'https://perma/link',
@@ -249,7 +249,7 @@ class AppTest(testutil.TestCase):
     path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = client.get(path)
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/json', resp.headers['Content-Type'])
+    self.assert_equals('application/feed+json', resp.headers['Content-Type'])
 
     expected = copy.deepcopy(JSONFEED)
     expected['feed_url'] = 'http://localhost' + path
@@ -266,7 +266,7 @@ class AppTest(testutil.TestCase):
       'feed_url': f'http://localhost{path}',
       'items': [{'content_text': ''}],
       'title': 'JSON Feed',
-      'version': 'https://jsonfeed.org/version/1',
+      'version': 'https://jsonfeed.org/version/1.1',
     }, resp.json)
 
   def test_url_jsonfeed_to_json_mf2(self):

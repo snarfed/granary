@@ -281,7 +281,14 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 6.3 - unreleased
+### 7.0 - unreleased
+
+_Breaking changes:_
+
+* `jsonfeed`:
+  * `jsonfeed_to_activities`: return AS1 objects, not activities.
+
+_Non-breaking changes:_
 
 * `as1`:
   * `activity_changed`: add `displayName`, `summary` fields.

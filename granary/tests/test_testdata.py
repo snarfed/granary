@@ -88,7 +88,7 @@ def jsonfeed_to_activity(jf):
   del expected_actor['summary']
   assert actor == expected_actor, (actor, expected_actor)
   assert len(activities) == 1
-  return activities[0]['object']
+  return activities[0]
 
 def html_to_activity(html):
   return microformats2.html_to_activities(html)[0]['object']

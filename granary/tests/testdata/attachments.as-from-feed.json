@@ -3,5 +3,10 @@
   "attachments": [
     {"objectType": "audio", "stream": {"url": "bar.mp3"}},
     {"title": "bazzz", "url": "baz"}
-  ]
+  ],
+  "author": {
+    "displayName": "Martin Smith",
+    "image": "http://example.com/martin/image",
+    "url": "https://example.com/martin"
+  }
 }

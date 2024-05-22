@@ -7,8 +7,8 @@
   "updated": "2013-10-25T10:31:30+00:00",
   "url": "http://example.com/blog-post-123",
   "image": [{"url": "http://example.com/blog-post-123/image"}],
-  "author": {
+  "authors": [{
     "displayName": "Ryan Barrett",
     "image": [{"url": "http://example.com/ryan/image"}]
-  }
+  }]
 }
