@@ -87,8 +87,10 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   feed_has_enclosure = False
   for activity in activities:
     obj = activity
-    if activity.get('verb') in ('create', 'post'):
-      obj = as1.get_object(activity)
+
+    inner_obj = as1.get_object(activity)
+    if inner_obj and activity.get('verb', 'post') in ('create', 'post'):
+      obj = inner_obj
 
     if activity.get('objectType') == 'person':
       continue

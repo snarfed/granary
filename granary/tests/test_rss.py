@@ -97,6 +97,40 @@ class RssTest(testutil.TestCase):
 The original post]]></description>
 """, got, ignore_blanks=True)
 
+  def test_from_activities_missing_objectType_verb(self):
+    self.assert_multiline_in("""
+<item>
+<description><![CDATA[foo bar]]></description>
+<author>- (Alice)</author>
+</item>
+
+<item>
+<title>a thing I wrote</title>
+<link>http://read/this</link>
+<description><![CDATA[its gud]]></description>
+<author>-</author>
+<guid isPermaLink="true">http://read/this</guid>
+</item>
+""", rss.from_activities([{
+    'object': {
+      'objectType': 'note',
+      'content': 'foo bar',
+      'author': {
+        'displayName': 'Alice',
+        'url': 'http://it/me',
+        'image': 'http://my/pic.jpg',
+      },
+    },
+  }, {
+    'object': {
+      'objectType': 'article',
+      'id': 'http://my/article',
+      'title': 'a thing I wrote',
+      'summary': 'its gud',
+      'url': 'http://read/this',
+    },
+  }], feed_url='http://this'), ignore_blanks=True)
+
   def test_item_with_two_enclosures(self):
     got = rss.from_activities([{
       'attachments': [{
