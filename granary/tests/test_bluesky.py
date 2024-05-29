@@ -1722,19 +1722,18 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_feed_generator(self):
     self.assert_equals({
       'objectType': 'service',
-      'id': 'did:web:skyfeed.me',
+      'id': 'at://did:foo/app.bsky.feed.generator/123',
+      'author': 'did:author',
+      'generator': 'did:web:skyfeed.me',
       'displayName': 'skyfeeeed',
       'summary': 'its-a skyfeed a-me',
       'image': [{
-        'url': 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:bob&cid=bafkreim',
+        'url': 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:author&cid=bafkreim',
       }],
       'published': '2024-01-09T00:22:39.703Z',
       'url': [
+        'https://bsky.app/profile/did:foo/feed/123',
         'https://skyfeed.me/',
-        # TODO: this is wrong, feed generators have non-profile URLs in
-        # arbitrary repos, this should be
-        # https://bsky.app/profile/did:plc:q6kan4oxddhgwnk4yjwvviao/feed/aaamsu44py5vg
-        'https://bsky.app/profile/did:web:skyfeed.me',
       ],
     }, to_as1({
       '$type': 'app.bsky.feed.generator',
@@ -1743,7 +1742,21 @@ class BlueskyTest(testutil.TestCase):
       'description': 'its-a skyfeed a-me',
       'avatar': NEW_BLOB,
       'createdAt': '2024-01-09T00:22:39.703Z',
-    }, repo_did='did:bob'))
+    }, uri='at://did:foo/app.bsky.feed.generator/123', repo_did='did:author'))
+
+  def test_to_as1_feed_generator_no_uri_repo_did(self):
+    self.assert_equals({
+      'objectType': 'service',
+      'generator': 'did:web:skyfeed.me',
+      'displayName': 'skyfeeeed',
+      'published': '2024-01-09T00:22:39.703Z',
+      'url': ['https://skyfeed.me/'],
+    }, to_as1({
+      '$type': 'app.bsky.feed.generator',
+      'did': 'did:web:skyfeed.me',
+      'displayName': 'skyfeeeed',
+      'createdAt': '2024-01-09T00:22:39.703Z',
+    }))
 
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))

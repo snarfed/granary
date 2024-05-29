@@ -867,12 +867,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   if not type:
     raise ValueError('Bluesky object missing $type field')
 
-  uri_authority = None
+  uri_repo = uri_bsky_url = None
   if uri:
+    uri_bsky_url = at_uri_to_web_url(uri)
     if not uri.startswith('at://'):
       raise ValueError('Expected at:// uri, got {uri}')
     if parsed := AT_URI_PATTERN.match(uri):
-      uri_authority = parsed.group(1)
+      uri_repo = parsed.group(1)
 
   # for nested to_as1 calls, if necessary
   kwargs = {'repo_did': repo_did, 'repo_handle': repo_handle, 'pds': pds}
@@ -902,23 +903,33 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       urls.append(Bluesky.user_url(handle))
       if not util.domain_or_parent_in(handle, [DEFAULT_PDS_DOMAIN]):
         urls.append(f'https://{handle}/')
-    elif did and did.startswith('did:web:'):
-      urls.extend([did_web_to_url(did), Bluesky.user_url(did)])
-    # TODO: feed generators have different URLs, they're in arbitrary repos.
-    # example:
-    # https://bsky.app/profile/did:plc:q6kan4oxddhgwnk4yjwvviao/feed/aaamsu44py5vg
-    # at://did:plc:q6kan4oxddhgwnk4yjwvviao/app.bsky.feed.generator/aaamsu44py5vg
 
-    ret = {
-      'objectType': 'service' if type == 'app.bsky.feed.generator' else 'person',
-      'id': did,
-      'url': urls,
+    if did and did.startswith('did:web:'):
+      urls.append(did_web_to_url(did))
+
+    if type == 'app.bsky.feed.generator':
+      if uri_bsky_url:
+        urls.insert(0, uri_bsky_url)
+      ret = {
+        'objectType': 'service',
+        'id': uri,
+        'author': repo_did,
+        'generator': did,
+      }
+    else:
+      ret = {
+        'objectType': 'person',
+        'id': did,
+        'username': obj.get('handle') or repo_handle,
+      }
+
+    ret.update({
+      'url': util.dedupe_urls(urls),
       'displayName': obj.get('displayName'),
-      'username': obj.get('handle') or repo_handle,
       'summary': util.linkify(obj.get('description') or '', pretty=True),
       'image': images,
       'published': obj.get('createdAt'),
-    }
+    })
 
     # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
     if type in ('app.bsky.actor.profile', 'app.bsky.feed.generator'):
@@ -1159,10 +1170,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'object': subject,
       'actor': repo_did,
     }
-    if subject and uri_authority:
+    if subject and uri_repo:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
-        ret['url'] = f'{web_url}#liked_by_{uri_authority}'
+        ret['url'] = f'{web_url}#liked_by_{uri_repo}'
 
   elif type == 'app.bsky.feed.repost':
     subject = obj.get('subject', {}).get('uri')
@@ -1174,10 +1185,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'actor': repo_did,
       'published': obj.get('createdAt'),
     }
-    if subject and uri_authority:
+    if subject and uri_repo:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
-        ret['url'] = f'{web_url}#reposted_by_{uri_authority}'
+        ret['url'] = f'{web_url}#reposted_by_{uri_repo}'
 
   elif type == 'app.bsky.feed.defs#threadViewPost':
     post = obj.get('post', {})
