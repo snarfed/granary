@@ -863,7 +863,35 @@ class BlueskyTest(testutil.TestCase):
     note = copy.deepcopy(NOTE_AS_TAG_MENTION_URL)
     note['content'] = '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>'
     note['tags'][0]['displayName'] = '@you.com'
+    del note['tags'][0]['startIndex']
+    del note['tags'][0]['length']
     self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(note))
+
+  def test_from_as1_tag_mention_at_beginning(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': '@shreyanjain.net hello there',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          'did': 'did:plc:foo',
+        }],
+        'index': {
+          'byteStart': 0,
+          'byteEnd': 16,
+        },
+      }],
+    }, from_as1({
+      'objectType' : 'note',
+      'content' : '<p><span class=\'h-card\' translate=\'no\'><a href=\'https://bsky.brid.gy/r/https://bsky.app/profile/shreyanjain.net\' class=\'u-url mention\'>@<span>shreyanjain.net</span></a></span> hello there</p>',
+      'tags' : [{
+        'objectType': 'mention',
+        'displayName': '@shreyanjain.net@bsky.brid.gy',
+        'url': 'did:plc:foo',
+      }],
+    }))
 
   def test_from_as1_tag_mention_not_bluesky(self):
     self.assert_equals({

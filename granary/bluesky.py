@@ -644,16 +644,18 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         # can't use \b for word boundaries here because that only includes
         # alphanumerics, and Bluesky hashtags can include emoji
         prefix = '#' if type == 'hashtag' else '@' if type == 'mention' else ''
-        match = re.search(fr'[\s^]({prefix}{name})[\s$]', text)
+        # can't use \b at beginning/end because # and @ and emoji aren't
+        # word-constituent chars
+        match = re.search(fr'(^|\s)({prefix}{name})($|\s)', text)
         if not match and type == 'mention' and '@' in name:
           # try without @[server] suffix
           username = name.split('@')[0]
-          match = re.search(fr'[\s^]({prefix}{username})[\s$]', text)
+          match = re.search(fr'(^|\s)({prefix}{username})($|\s)', text)
 
         if match:
           facet['index'] = {
-            'byteStart': len(full_text[:match.start(1)].encode()),
-            'byteEnd': len(full_text[:match.end(1)].encode()),
+            'byteStart': len(full_text[:match.start(2)].encode()),
+            'byteEnd': len(full_text[:match.end(2)].encode()),
           }
 
       # skip or trim this facet if it's off the end of content that got truncated
@@ -926,6 +928,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     ret.update({
       'url': util.dedupe_urls(urls),
       'displayName': obj.get('displayName'),
+      # TODO: for app.bsky.feed.generator, use descriptionFacets
       'summary': util.linkify(obj.get('description') or '', pretty=True),
       'image': images,
       'published': obj.get('createdAt'),
