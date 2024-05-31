@@ -125,7 +125,7 @@ XML_TEMPLATE = """\
 <response>%s</response>
 """
 
-CACHE_CONTROL = {'Cache-Control': 'public, max-age: 600'}
+CACHE_CONTROL = {'Cache-Control': 'public, max-age=600'}
 
 
 app = Flask(__name__, static_folder=None)
