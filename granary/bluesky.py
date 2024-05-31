@@ -989,9 +989,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
       try:
         if byte_start is not None:
-          tag['startIndex'] = len(text.encode()[:byte_start].decode())
+          text_encoded = text.encode()
+          tag['startIndex'] = len(text_encoded[:byte_start].decode())
           if byte_end is not None:
-            name = text.encode()[byte_start:byte_end].decode()
+            name = text_encoded[byte_start:byte_end].decode()
             tag.setdefault('displayName', name)
             tag['length'] = len(name)
       except UnicodeDecodeError as e:
