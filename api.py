@@ -69,7 +69,7 @@ def bluesky_instance(**kwargs):
 
 
 @app.app.route('/<path:path>', methods=('GET', 'HEAD'))
-@flask_util.cached(app.cache, app.RESPONSE_CACHE_TIME)
+@flask_util.headers(app.CACHE_CONTROL)
 def api(path):
   """Handles an API GET.
 

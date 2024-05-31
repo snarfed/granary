@@ -12,7 +12,7 @@ from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-from app import app, cache
+from app import app
 
 client = app.test_client()
 
@@ -186,10 +186,6 @@ RSS_ACTIVITIES = json_loads(util.read(os.path.join(
 
 
 class AppTest(testutil.TestCase):
-
-  def setUp(self):
-    super(AppTest, self).setUp()
-    cache.clear()
 
   def expect_requests_get(self, *args, **kwargs):
     return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
@@ -752,21 +748,6 @@ not RSS!
     self.mox.ReplayAll()
     resp = client.get('/url?url=http://my/posts.html&input=html')
     self.assert_equals(502, resp.status_code)
-
-  @testutil.enable_flask_caching(app, cache)
-  def test_cache(self):
-    self.expect_requests_get('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
-    self.mox.ReplayAll()
-
-    # first fetch populates the cache
-    url = '/url?url=http://my/posts.html&input=html'
-    first = client.get(url)
-    self.assert_equals(200, first.status_code)
-
-    # second fetch should use the cache instead of fetching from the silo
-    second = client.get(url)
-    self.assert_equals(200, first.status_code)
-    self.assert_equals(first.get_data(), second.get_data())
 
   def test_hub(self):
     self.expect_requests_get('http://my/posts.html', HTML % {

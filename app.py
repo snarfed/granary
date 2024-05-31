@@ -8,7 +8,6 @@ import urllib.parse
 from xml.etree import ElementTree
 
 from flask import abort, Flask, redirect, render_template, request
-from flask_caching import Cache
 import flask_gae_static
 from google.cloud import ndb
 import mf2util
@@ -126,7 +125,7 @@ XML_TEMPLATE = """\
 <response>%s</response>
 """
 
-RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
+CACHE_CONTROL = {'Cache-Control': 'public, max-age: 600'}
 
 
 app = Flask(__name__, static_folder=None)
@@ -143,8 +142,6 @@ if appengine_info.DEBUG or appengine_info.LOCAL_SERVER:
 
 app.wsgi_app = flask_util.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
-
-cache = Cache(app)
 
 util.set_user_agent('granary (https://granary.io/)')
 
@@ -202,12 +199,11 @@ def demo():
 
 
 @app.route('/url', methods=('GET', 'HEAD'))
-@flask_util.cached(cache, RESPONSE_CACHE_TIME, http_5xx=True)
+@flask_util.headers(CACHE_CONTROL)
 def url():
   """Handles URL requests from the interactive demo form on the front page.
 
-  Responses are cached for 10m. You can skip the cache by including a cache=false
-  query param. Background: https://github.com/snarfed/bridgy/issues/665
+  Responses are cached for 10m.
   """
   input = request.values['input']
   if input not in INPUTS:

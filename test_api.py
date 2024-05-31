@@ -11,7 +11,7 @@ from granary.tests import test_instagram
 from granary.tests import test_twitter
 
 import api
-from app import app, cache
+from app import app
 
 client = app.test_client()
 
@@ -33,7 +33,6 @@ class ApiTest(testutil.TestCase):
     super(ApiTest, self).setUp()
     app.testing = True
     self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    cache.clear()
 
   def reset(self):
     self.mox.UnsetStubs()
@@ -255,34 +254,6 @@ class ApiTest(testutil.TestCase):
 
   def test_count_greater_than_items_per_page(self):
     self.check_request('/?count=999', count=api.ITEMS_PER_PAGE_MAX)
-
-  @testutil.enable_flask_caching(app, cache)
-  def test_cache(self):
-    FakeSource.get_activities_response(
-      '123', None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT,
-    ).AndReturn({'items': ['x']})
-    FakeSource.get_activities_response(
-      '123', None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT,
-    ).AndReturn({'items': ['a']})
-    self.mox.ReplayAll()
-
-    # first fetches populate the cache. make sure query params are included in
-    # cache key.
-    first_x = client.get('/fake/123/@all/?x=y')
-    first_a = client.get('/fake/123/@all/?a=b')
-
-    # second fetches should use the cache instead of fetching from the silo
-    second_x = client.get('/fake/123/@all/?x=y')
-    self.assert_equals({'items': ['x']}, second_x.json)
-
-    second_a = client.get('/fake/123/@all/?a=b')
-    self.assert_equals({'items': ['a']}, second_a.json)
-
-  def test_cache_false_query_param(self):
-    first = self.get_response('/fake/123/@all/?cache=false', '123', None)
-    self.reset()
-    second = self.get_response('/fake/123/@all/?cache=false', '123', None)
-    self.assert_equals(first.get_data(), second.get_data())
 
   def test_shares_false_query_param(self):
     # just test that the query param gets translated to the include_shares kwarg
