@@ -8,8 +8,9 @@ import copy
 from datetime import datetime, timezone
 import json
 import logging
-import re
 from pathlib import Path
+import re
+import string
 import urllib.parse
 
 import requests
@@ -646,7 +647,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         prefix = '#' if type == 'hashtag' else '@' if type == 'mention' else ''
         # can't use \b at beginning/end because # and @ and emoji aren't
         # word-constituent chars
-        match = re.search(fr'(^|\s)({prefix}{name})($|\s)', text)
+        bound = fr'[\s{string.punctuation.replace("-", "")}]'
+        match = re.search(fr'(^|{bound})({prefix}{name})($|{bound})', text,
+                          flags=re.IGNORECASE)
         if not match and type == 'mention' and '@' in name:
           # try without @[server] suffix
           username = name.split('@')[0]

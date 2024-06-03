@@ -826,6 +826,50 @@ class BlueskyTest(testutil.TestCase):
     expected['facets'][0]['index']['byteStart'] = 4
     self.assert_equals(expected, from_as1(note))
 
+  def test_from_as1_tag_hashtag_guess_index_case_insensitive(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'You can ignore this #TuneTuesday post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': 'tunetuesday',
+        }],
+        'index': {
+          'byteStart': 20,
+          'byteEnd': 32,
+        },
+      }],
+    }, from_as1({
+      'objectType': 'note',
+      'content': '<p>You can ignore this <a href="https://darkfriend.social/tags/TuneTuesday" class="mention hashtag" rel="tag">#<span>TuneTuesday</span></a> post</p>',
+      'tags': [{'displayName': '#tunetuesday'}],
+    }))
+
+  def test_from_as1_tag_hashtag_guess_index_punctuation(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'Another .#tunetuesday! post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': 'tunetuesday',
+        }],
+        'index': {
+          'byteStart': 9,
+          'byteEnd': 21,
+        },
+      }],
+    }, from_as1({
+      'objectType': 'note',
+      'content': '<p>Another .<a href="https://darkfriend.social/tags/tunetuesday" class="mention hashtag" rel="tag">#<span>tunetuesday</span></a>! post</p>',
+      'tags': [{'displayName': '#tunetuesday'}],
+    }))
+
   def test_from_as1_tag_mention_guess_index(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
       'objectType': 'note',
@@ -885,7 +929,7 @@ class BlueskyTest(testutil.TestCase):
       }],
     }, from_as1({
       'objectType' : 'note',
-      'content' : '<p><span class=\'h-card\' translate=\'no\'><a href=\'https://bsky.brid.gy/r/https://bsky.app/profile/shreyanjain.net\' class=\'u-url mention\'>@<span>shreyanjain.net</span></a></span> hello there</p>',
+      'content' : '<p><span class="h-card" translate="no"><a href="https://bsky.brid.gy/r/https://bsky.app/profile/shreyanjain.net" class="u-url mention">@<span>shreyanjain.net</span></a></span> hello there</p>',
       'tags' : [{
         'objectType': 'mention',
         'displayName': '@shreyanjain.net@bsky.brid.gy',
