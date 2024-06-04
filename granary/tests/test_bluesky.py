@@ -1388,6 +1388,24 @@ class BlueskyTest(testutil.TestCase):
       'to': 'did:bob',
     }, client=self.bs._client))
 
+  def test_from_as1_collection(self):
+    self.assert_equals({
+      '$type': 'app.bsky.graph.list',
+      'name': 'My stuff',
+      'description': 'its gud',
+      'purpose': 'app.bsky.graph.defs#curatelist',
+      'avatar': BLOB,
+      'createdAt': '2001-02-03T04:05:06.000Z',
+    }, from_as1({
+      'objectType': 'collection',
+      'id': 'http://list/id',
+      'displayName': 'My stuff',
+      'summary': 'its gud',
+      'totalItems': 3,
+      'image': 'https://pic',
+      'published': '2001-02-03T04:05:06',
+    }, blobs={'https://pic': BLOB}))
+
   def test_maybe_validate_truncate(self):
     short = 'x' * 63
     long = 'x' * 65
@@ -1829,6 +1847,24 @@ class BlueskyTest(testutil.TestCase):
       'displayName': 'skyfeeeed',
       'createdAt': '2024-01-09T00:22:39.703Z',
     }))
+
+  def test_to_as1_list(self):
+    self.assert_equals({
+      'objectType': 'collection',
+      'id': 'at://did:foo/app.bsky.graph.list/123',
+      'url': 'https://bsky.app/profile/did:foo/lists/123',
+      'displayName': 'My stuff',
+      'summary': 'its gud',
+      'image': NEW_BLOB_URL,
+      'published': '2001-02-03T04:05:06.000Z',
+    }, to_as1({
+      '$type': 'app.bsky.graph.list',
+      'name': 'My stuff',
+      'description': 'its gud',
+      'purpose': 'app.bsky.graph.defs#curatelist',
+      'avatar': NEW_BLOB,
+      'createdAt': '2001-02-03T04:05:06.000Z',
+    }, uri='at://did:foo/app.bsky.graph.list/123', repo_did='did:plc:foo'))
 
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
