@@ -1406,6 +1406,20 @@ class BlueskyTest(testutil.TestCase):
       'published': '2001-02-03T04:05:06',
     }, blobs={'https://pic': BLOB}))
 
+  def test_from_as1_add_to_collection(self):
+    self.assert_equals({
+      '$type': 'app.bsky.graph.listitem',
+      'subject': 'did:bob',
+      'list': 'at://did:alice/app.bsky.graph.list/tid',
+      'createdAt': '2022-01-02T03:04:05.000Z'
+    }, from_as1({
+      'objectType': 'activity',
+      'verb': 'add',
+      'actor': 'did:alice',
+      'object': 'did:bob',
+      'target': 'at://did:alice/app.bsky.graph.list/tid',
+    }))
+
   def test_maybe_validate_truncate(self):
     short = 'x' * 63
     long = 'x' * 65
@@ -1865,6 +1879,22 @@ class BlueskyTest(testutil.TestCase):
       'avatar': NEW_BLOB,
       'createdAt': '2001-02-03T04:05:06.000Z',
     }, uri='at://did:foo/app.bsky.graph.list/123', repo_did='did:plc:foo'))
+
+  def test_to_as1_listitem(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'add',
+      'id': 'at://did:foo/app.bsky.graph.listitem/123',
+      'actor': 'did:alice',
+      'object': 'did:bob',
+      'target': 'at://did:alice/app.bsky.graph.list/tid',
+      'published': '2001-02-03T04:05:06.000Z',
+    }, to_as1({
+      '$type': 'app.bsky.graph.listitem',
+      'subject': 'did:bob',
+      'list': 'at://did:alice/app.bsky.graph.list/tid',
+      'createdAt': '2001-02-03T04:05:06.000Z',
+    }, uri='at://did:foo/app.bsky.graph.listitem/123', repo_did='did:alice'))
 
   def test_blob_to_url(self):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))

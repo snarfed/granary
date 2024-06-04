@@ -837,6 +837,14 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         'createdAt': from_as1_datetime(obj.get('published')),
       }
 
+  elif verb == 'add':
+      ret = {
+        '$type': 'app.bsky.graph.listitem',
+        'subject': inner_obj.get('id'),
+        'list': activity.get('target'),
+        'createdAt': from_as1_datetime(obj.get('published')),
+      }
+
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
 
@@ -1254,6 +1262,17 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       }
       if repo_did and pds:
         ret['image'] = blob_to_url(blob=obj.get('avatar'), repo_did=repo_did, pds=pds)
+
+  elif type == 'app.bsky.graph.listitem':
+      ret = {
+        'objectType': 'activity',
+        'verb': 'add',
+        'id': uri,
+        'actor': repo_did,
+        'object': obj.get('subject'),
+        'target': obj.get('list'),
+        'published': obj.get('createdAt'),
+      }
 
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')

@@ -306,6 +306,7 @@ _Non-breaking changes:_
       * `app.bsky.feed.generator`
       * `app.bsky.graph.block`
       * `app.bsky.graph.list`
+      * `app.bsky.graph.listitem`
       * `com.atproto.admin.defs#repoRef`
       * `com.atproto.moderation.createReport#input`
       * `com.atproto.repo.strongRef`
