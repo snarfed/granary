@@ -1542,7 +1542,7 @@ class BlueskyTest(testutil.TestCase):
       'author': 'did:plc:foo',
       'id': None,
       'url': None,
-      'image': ['https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'],
+      'image': [NEW_BLOB_URL],
     }
 
     self.assert_equals(trim_nulls(expected), to_as1(record, repo_did='did:plc:foo'))
@@ -1666,7 +1666,7 @@ class BlueskyTest(testutil.TestCase):
 
     # with repo_did/repo_handle
     post_as['author'] = 'did:plc:foo'
-    post_as['attachments'][0]['image'] = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'
+    post_as['attachments'][0]['image'] = NEW_BLOB_URL
     self.assert_equals(
       post_as, to_as1(post_bsky, repo_did='did:plc:foo', repo_handle='han.dull'))
 
@@ -1795,12 +1795,12 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'objectType': 'service',
       'id': 'at://did:foo/app.bsky.feed.generator/123',
-      'author': 'did:author',
+      'author': 'did:plc:foo',
       'generator': 'did:web:skyfeed.me',
       'displayName': 'skyfeeeed',
       'summary': 'its-a skyfeed a-me',
       'image': [{
-        'url': 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:author&cid=bafkreim',
+        'url': NEW_BLOB_URL,
       }],
       'published': '2024-01-09T00:22:39.703Z',
       'url': [
@@ -1814,7 +1814,7 @@ class BlueskyTest(testutil.TestCase):
       'description': 'its-a skyfeed a-me',
       'avatar': NEW_BLOB,
       'createdAt': '2024-01-09T00:22:39.703Z',
-    }, uri='at://did:foo/app.bsky.feed.generator/123', repo_did='did:author'))
+    }, uri='at://did:foo/app.bsky.feed.generator/123', repo_did='did:plc:foo'))
 
   def test_to_as1_feed_generator_no_uri_repo_did(self):
     self.assert_equals({
@@ -2257,8 +2257,9 @@ class BlueskyTest(testutil.TestCase):
   def test_preview_with_media(self):
     preview = self.bs.preview_create(POST_AS_IMAGES['object'])
     self.assertEqual('<span class="verb">post</span>:', preview.description)
-    self.assertEqual('My original post<br /><br /><img src="https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim" alt="my alt text" />',
-                     preview.content)
+    self.assertEqual(
+      f'My original post<br /><br /><img src="{NEW_BLOB_URL}" alt="my alt text" />',
+      preview.content)
 
   @patch('requests.post')
   @patch('requests.get')
