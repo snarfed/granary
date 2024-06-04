@@ -80,6 +80,7 @@ ACTOR_TYPES = {as2_type for as1_type, as2_type in OBJECT_TYPE_TO_TYPE.items()
 
 VERB_TO_TYPE = {
   'accept': 'Accept',
+  'add': 'Add',
   'block': 'Block',
   'delete': 'Delete',
   'favorite': 'Like',
@@ -102,6 +103,7 @@ TYPE_TO_VERB = _invert(VERB_TO_TYPE)
 # disambiguate
 TYPE_TO_VERB.update({
   'Accept': 'accept',
+  'Add': 'add',
   'Like': 'like',
   'Reject': 'reject',
 })
