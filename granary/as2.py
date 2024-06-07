@@ -67,6 +67,7 @@ OBJECT_TYPE_TO_TYPE = {
   'mention': 'Mention',
   'note': 'Note',
   'organization': 'Organization',
+  'page': 'Page',
   'person': 'Person',
   'place': 'Place',
   'question': 'Question',
