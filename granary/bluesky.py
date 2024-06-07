@@ -450,7 +450,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
     ret = {
       'displayName': obj.get('displayName'),
-      'description': html_to_text(obj.get('summary')),
+      # WARNING: keep this in sync with Bridgy Fed's ATProto.add_source_links!
+      'description': html_to_text(obj.get('summary'), ignore_links=True),
       'avatar': blobs.get(avatar),
       'banner': blobs.get(banner),
     }
@@ -555,7 +556,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     src = Bluesky('unused')
     content = obj.get('content')
     text = obj.get('summary') or content or obj.get('displayName') or ''
-    full_text = html_to_text(text, ignore_links=False, inline_links=True)
+    full_text = html_to_text(text, ignore_links=False)
 
     # extract links and convert to plain text
     # TODO: unify into as1 or source
