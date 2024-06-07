@@ -1509,6 +1509,15 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_to_as1_profile_newlines_to_brs(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'summary': 'one<br>two<br><br>three',
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'description': 'one\ntwo\n\nthree',
+    }))
+
   def test_to_as1_profileView_no_authenticated_label_to_unlisted(self):
     got = to_as1({
       **ACTOR_PROFILE_VIEW_BSKY,
@@ -1581,6 +1590,15 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_post_view_with_image(self):
     self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_VIEW_BSKY_IMAGES))
+
+  def test_to_as1_post_newlines_to_brs(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'one<br>two<br><br>three',
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'one\ntwo\n\nthree',
+    }))
 
   def test_to_as1_feedViewPost(self):
     self.assert_equals(POST_AUTHOR_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
