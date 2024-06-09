@@ -947,14 +947,11 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         'username': obj.get('handle') or repo_handle,
       }
 
-    summary = util.linkify((obj.get('description') or '').replace('\n', '<br>'),
-                           pretty=True)
-
     ret.update({
       'url': util.dedupe_urls(urls),
       'displayName': obj.get('displayName'),
       # TODO: for app.bsky.feed.generator, use descriptionFacets
-      'summary': summary,
+      'summary': util.linkify(obj.get('description') or '', pretty=True),
       'image': images,
       'published': obj.get('createdAt'),
     })
@@ -1026,12 +1023,12 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       tags.append(tag)
 
     in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
-    content = text.replace('\n', '<br>')
+
     ret = {
       'objectType': 'comment' if in_reply_to else 'note',
       'id': uri,
       'url': at_uri_to_web_url(uri),
-      'content': content,
+      'content': text,
       'inReplyTo': [{
         'id': in_reply_to,
         'url': at_uri_to_web_url(in_reply_to),
