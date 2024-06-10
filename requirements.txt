@@ -8,6 +8,7 @@
 #
 # Use this to bust that cache: gcloud -q beta app deploy --no-cache ...
 
+git+https://github.com/kylewm/brevity.git#egg=brevity
 git+https://github.com/snarfed/lexrpc.git#egg=lexrpc
 git+https://github.com/snarfed/mox3.git#egg=mox3
 git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
@@ -23,7 +24,6 @@ bases==0.3.0
 beautifulsoup4==4.12.3
 bech32==1.2.0
 blinker==1.8.2
-brevity==0.2.17
 cachetools==5.1.0
 certifi==2024.2.2
 charset-normalizer==3.3.2
