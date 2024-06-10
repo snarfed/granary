@@ -734,12 +734,11 @@ class BlueskyTest(testutil.TestCase):
       # 'tags': [TAG_LINK],
     })
 
-    # with self.assertRaises(NotImplementedError):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': '_some html_',
       'createdAt': '2007-07-07T03:04:05.000Z',
-    },from_as1(post_as))
+    }, from_as1(post_as))
 
   def test_from_as1_post_without_tag_indices(self):
     post_as = copy.deepcopy(POST_AS)
@@ -750,11 +749,11 @@ class BlueskyTest(testutil.TestCase):
     # no facet
     self.assert_equals(POST_BSKY, from_as1(post_as))
 
-  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 12)
+  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 15)
   def test_from_as1_post_truncate_adds_link_embed(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
-      'text': 'more than…',
+      'text': 'more than […]',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'embed': {
         '$type': 'app.bsky.embed.external',
@@ -769,6 +768,36 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'note',
       'url': 'http://my.inst/post',
       'content': 'more than ten chars long',
+    }))
+
+  def test_from_as1_post_preserve_whitespace_plain_text(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'hello\n  there\n\nok',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'hello\n  there\n\nok',
+    }))
+
+  def test_from_as1_post_content_html(self):
+    self.assertEqual({
+      '$type': 'app.bsky.feed.post',
+      'text': 'Some\n_HTML_\n\nok?',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': '<p>Some <br> <em>HTML</em></p>  ok?',
+    }))
+
+  def test_from_as1_post_preserve_whitespace_html(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'hello\n\n  there\n\nok',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': '<p>hello</p>  there<br><br>ok',
     }))
 
   def test_from_as1_tag_without_url(self):
@@ -992,7 +1021,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
-      'text': 'foo bar…',
+      'text': 'foo bar […]',
     }, from_as1({
       'objectType': 'note',
       'content': 'foo bar <a href="http://post">baaaaaaaz</a>',
@@ -1059,16 +1088,6 @@ class BlueskyTest(testutil.TestCase):
     got = from_as1(POST_AS_IMAGES, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(expected, got)
 
-  def test_from_as1_post_content_html(self):
-    self.assertEqual({
-      '$type': 'app.bsky.feed.post',
-      'text': 'Some\n_HTML_',
-      'createdAt': '2022-01-02T03:04:05.000Z',
-    }, from_as1({
-      'objectType': 'note',
-      'content': '<p>Some <br> <em>HTML</em></p>',
-    }))
-
   def test_from_as1_object_vs_activity(self):
     obj = {
       'objectType': 'note',
@@ -1130,10 +1149,10 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_actor_description_html(self):
     self.assertEqual({
       '$type': 'app.bsky.actor.profile',
-      'description': 'Some\n_HTML_',
+      'description': 'Some\n_HTML_\n\nok?',
     }, from_as1({
       'objectType': 'person',
-      'summary': '<p>Some <br> <em>HTML</em></p>',
+      'summary': '<p>Some <br> <em>HTML</em></p>  ok?',
     }))
 
   def test_from_as1_composite_url(self):
@@ -2152,7 +2171,7 @@ class BlueskyTest(testutil.TestCase):
 
     for content, expected in (
         ('foo ☕ bar', 'foo ☕ bar'),
-        ('too long, will be ellipsized', 'too long, will be…'),
+        ('too long, will be ellipsized', 'too long, will […]'),
         ('<p>foo ☕ <a>bar</a></p>', 'foo ☕ bar'),
         # TODO
         # ('#Asdf ☕ bar', '<a href="http://foo.com/tags/Asdf">#Asdf</a> ☕ bar'),

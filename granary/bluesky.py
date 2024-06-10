@@ -13,15 +13,24 @@ import re
 import string
 import urllib.parse
 
-import requests
 
+from bs4 import BeautifulSoup
 from lexrpc import Client
 from lexrpc.base import Base, NSID_RE
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
+import requests
 
 from . import as1
-from .source import FRIENDS, html_to_text, Source, OMIT_LINK, creation_result
+from .source import (
+  creation_result,
+  FRIENDS,
+  HTML_ENTITY_RE,
+  html_to_text,
+  INCLUDE_LINK,
+  OMIT_LINK,
+  Source,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +130,8 @@ LEXRPC_BASE = Base(truncate=True)
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
 # <a href="http://post">ba](r</a> turns into [ba](r](http://post)
 MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>.*?)\)')
+
+ELLIPSIS = ' […]'
 
 
 def url_to_did_web(url):
@@ -553,28 +564,46 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
   elif verb == 'post' and type in POST_TYPES:
     # convert text from HTML and truncate
-    src = Bluesky('unused')
-    content = obj.get('content')
-    text = obj.get('summary') or content or obj.get('displayName') or ''
-    full_text = html_to_text(text, ignore_links=False)
-
-    # extract links and convert to plain text
-    # TODO: unify into as1 or source
-    # https://github.com/snarfed/granary/issues/729
     link_tags = []
-    while link := MARKDOWN_LINK_RE.search(full_text):
-      start, end = link.span()
-      if not link['text'].startswith(('@', '#')):
-        link_tags.append({
-          'objectType': 'link',
-          'displayName': link['text'],
-          'url': link['url'],
-          'startIndex': start,
-          'length': len(link['text']),
-        })
-      full_text = full_text[:start] + link['text'] + full_text[end:]
+    if content := obj.get('content'):
+      # convert HTML tags _only if_ content has any, not otherwise so that we
+      # preserve whitespace
+      #
+      # sniff whether content is HTML or plain text. use html.parser instead of
+      # the default html5lib since html.parser is stricter and expects actual
+      # HTML tags.
+      # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
+      is_html = (obj.get('content_is_html')
+                 or bool(BeautifulSoup(content, 'html.parser').find())
+                 or HTML_ENTITY_RE.search(content))
+      if is_html:
+        content = html_to_text(content, ignore_links=False)
 
-    text = src.truncate(full_text, None, OMIT_LINK)
+        # extract links and convert to plain text
+        # TODO: unify into as1 or source
+        # https://github.com/snarfed/granary/issues/729
+        while link := MARKDOWN_LINK_RE.search(content):
+          start, end = link.span()
+          if not link['text'].startswith(('@', '#')):
+            link_tags.append({
+              'objectType': 'link',
+              'displayName': link['text'],
+              'url': link['url'],
+              'startIndex': start,
+              'length': len(link['text']),
+            })
+          content = content[:start] + link['text'] + content[end:]
+
+    text = obj.get('summary') or content or obj.get('displayName') or ''
+    # TODO: switch to this, below, for content notices/warnings
+    # https://github.com/snarfed/bridgy-fed/issues/1001
+    # if type == 'article' and obj.get('summary'):
+    #   text = obj['summary']
+    # else:
+    #   text = obj.get('displayName') or ''
+
+    full_text = text
+    text = Bluesky('unused').truncate(text, None)
     truncated = text != full_text
 
     # convert index-based tags to facets
@@ -668,7 +697,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         continue
       text_len = len(text.encode())
       if truncated:
-        text_len -= len('…'.encode())
+        text_len -= len(ELLIPSIS.encode())
       if index.get('byteStart', 0) >= text_len:
         continue
       if index.get('byteEnd', 0) > text_len:
@@ -1333,7 +1362,7 @@ class Bluesky(Source):
   DOMAIN = 'bsky.app'
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
-  TRUNCATE_TEXT_LENGTH = 300  # TODO: load from app.bsky.feed.post lexicon
+  TRUNCATE_TEXT_LENGTH = LEXRPC_BASE.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
   POST_ID_RE = AT_URI_PATTERN
   TYPE_LABELS = {
     'post': 'post',
@@ -1686,8 +1715,7 @@ class Bluesky(Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview=None, include_link=OMIT_LINK,
-              ignore_formatting=False):
+  def _create(self, obj, preview=None, include_link=OMIT_LINK, ignore_formatting=False):
     assert preview in (False, True)
     assert self.did
     type = obj.get('objectType')
@@ -1725,7 +1753,7 @@ class Bluesky(Source):
 
     # truncate and ellipsize content if necessary
     url = obj.get('url')
-    content = self.truncate(content, url, include_link, type)
+    content = self.truncate(content, url, include_link=include_link, type=type)
 
     # TODO linkify mentions and hashtags
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
@@ -1901,3 +1929,14 @@ class Bluesky(Source):
       blobs[url] = upload['blob']
 
     return blobs
+
+  def truncate(self, *args, **kwargs):
+    """Thin wrapper around :meth:`Source.truncate` that sets default kwargs."""
+    kwargs = {
+      'include_link': INCLUDE_LINK,
+      'target_length': self.TRUNCATE_TEXT_LENGTH,
+      'link_length': None,
+      'ellipsis': ' […]',
+      **kwargs,
+    }
+    return super().truncate(*args, **kwargs)

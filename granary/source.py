@@ -866,7 +866,8 @@ class Source(object, metaclass=SourceMeta):
                        (content or name)
                        ) or ''
 
-  def truncate(self, content, url, include_link, type=None, quote_url=None):
+  def truncate(self, content, url, include_link, type=None, quote_url=None,
+               **kwargs):
     """Shorten text content to fit within a character limit.
 
     Character limit and URL character length are taken from
@@ -880,30 +881,29 @@ class Source(object, metaclass=SourceMeta):
       type (str): optional: ``article``, ``note``, etc.
       quote_url (str): URL, optional. If provided, it will be appended to the
         content, *after* truncating.
+      **kwargs: passed through to brevity.shorten
 
     Return:
       str: the possibly shortened and ellipsized text
     """
-    kwargs = {}
-
     if quote_url:
-      kwargs['target_length'] = (
+      kwargs.setdefault('target_length',
         (self.TRUNCATE_TEXT_LENGTH or brevity.WEIGHTS['maxWeightedTweetLength']) -
         (self.TRUNCATE_URL_LENGTH or brevity.WEIGHTS['transformedURLLength']) - 1)
     elif self.TRUNCATE_TEXT_LENGTH is not None:
-      kwargs['target_length'] = self.TRUNCATE_TEXT_LENGTH
+      kwargs.setdefault('target_length', self.TRUNCATE_TEXT_LENGTH)
 
     if self.TRUNCATE_URL_LENGTH is not None:
-      kwargs['link_length'] = self.TRUNCATE_URL_LENGTH
+      kwargs.setdefault('link_length', self.TRUNCATE_URL_LENGTH)
 
     if include_link != OMIT_LINK:
-      kwargs['permalink'] = url  # only include when text is truncated
+      kwargs.setdefault('permalink', url)  # only include when text is truncated
 
     if include_link == INCLUDE_LINK:
-      kwargs['permashortlink'] = url  # always include
+      kwargs.setdefault('permashortlink', url)  # always include
 
     if type == 'article':
-      kwargs['format'] = brevity.FORMAT_ARTICLE
+      kwargs.setdefault('format', brevity.FORMAT_ARTICLE)
 
     truncated = brevity.shorten(content, **kwargs)
 
