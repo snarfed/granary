@@ -459,10 +459,16 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         banner = url
         break
 
+    summary = obj.get('summary') or ''
+    is_html = (bool(BeautifulSoup(summary, 'html.parser').find())
+               or HTML_ENTITY_RE.search(summary))
+    if is_html:
+      summary = html_to_text(summary, ignore_links=True)
+
     ret = {
       'displayName': obj.get('displayName'),
       # WARNING: keep this in sync with Bridgy Fed's ATProto.add_source_links!
-      'description': html_to_text(obj.get('summary'), ignore_links=True),
+      'description': summary,
       'avatar': blobs.get(avatar),
       'banner': blobs.get(banner),
     }

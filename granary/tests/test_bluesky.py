@@ -1155,6 +1155,15 @@ class BlueskyTest(testutil.TestCase):
       'summary': '<p>Some <br> <em>HTML</em></p>  ok?',
     }))
 
+  def test_from_as1_actor_description_plain_text(self):
+    self.assertEqual({
+      '$type': 'app.bsky.actor.profile',
+      'description': 'Some\n  plain  text\n\nok?',
+    }, from_as1({
+      'objectType': 'person',
+      'summary': 'Some\n  plain  text\n\nok?',
+    }))
+
   def test_from_as1_composite_url(self):
     self.assertEqual({
       '$type': 'app.bsky.actor.defs#profileView',
