@@ -735,17 +735,20 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         } for img in images[:4]],
       }
 
-    # article/note attachments
+    # attachments. embeds for articles/notes, original post link embed if
+    # content is truncated or object has a video, since Bluesky doesn't support
+    # those yet
     record_embed = record_record_embed = external_embed = external_record_embed = None
 
     attachments = util.get_list(obj, 'attachments')
-    if truncated:
+    has_video = any(a.get('objectType') == 'video' for a in attachments)
+    if truncated or has_video:
       if url := as1.get_url(obj):
         # override attachments, use one link to original post instead
         attachments = [{
           'objectType': 'link',
           'url': url,
-          'displayName': f'Original post on {util.domain_from_link(url)}',
+          'displayName': f'{"[Video] " if has_video else ""}Original post on {util.domain_from_link(url)}',
         }]
 
     for att in attachments:
