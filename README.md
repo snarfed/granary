@@ -319,6 +319,7 @@ _Non-breaking changes:_
     * Extract HTML links (<a> tags) from HTML content and convert to link facets ([snarfed/bridgy-fed#976](https://github.com/snarfed/bridgy-fed/issues/976)).
     * If an output string value is longer than its ``maxGraphemes`` or ``maxLength`` in its lexicon, truncate it with an ``…`` ellipsis character at the end in order to fit. If this happens to post text, include a link embed pointing to the original post.
     * If the object has a video, include an external embed pointing to the original post and mark it as `[Video]` ([snarfed/bridgy-fed#1078](https://github.com/snarfed/bridgy-fed/issues/1078)).
+    * If the object has images, add the original post link to the end of the text, since Bluesky doesn't support both image and external embeds in the same post ([bluesky-social/atproto#2575](https://github.com/bluesky-social/atproto/discussions/2575), [snarfed/bridgy-fed#1106](https://github.com/snarfed/bridgy-fed/issues/1106)).
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
     * Support `lexrpc.Client` as well as `Bluesky` for `client` kwarg.
   * `from_as1_to_strong_ref`:

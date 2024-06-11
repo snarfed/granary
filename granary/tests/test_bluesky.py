@@ -770,6 +770,53 @@ class BlueskyTest(testutil.TestCase):
       'content': 'more than ten chars long',
     }))
 
+  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 45)
+  def test_from_as1_post_with_images_truncated_puts_original_post_link_in_text(self):
+    self.assert_equals({
+      **POST_BSKY_IMAGES,
+      'text': 'hello hello […] \n\n[Original post on my.inst]',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://my.inst/post',
+        }],
+        'index': {
+          'byteStart': 18,
+          'byteEnd': 46,
+        },
+      }],
+    }, from_as1({
+      **POST_AS_IMAGES['object'],
+      'content': 'hello hello hello hello hello hello hello hello hello',
+      'url': 'http://my.inst/post',
+    }, blobs={NEW_BLOB_URL: NEW_BLOB}))
+
+  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 51)
+  def test_from_as1_post_with_images_video_truncated_original_post_link_in_text(self):
+    self.assert_equals({
+      **POST_BSKY_IMAGES,
+      'text': 'My […] \n\n[Video] [Original post on my.inst]',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://my.inst/post',
+        }],
+        'index': {
+          'byteStart': 9,
+          'byteEnd': 45,
+        },
+      }],
+    }, from_as1({
+      **POST_AS_IMAGES['object'],
+      'url': 'http://my.inst/post',
+      'attachments': [{
+        'objectType': 'video',
+        'stream': {'url': 'https://a/cool/vid'},
+      }],
+    }, blobs={NEW_BLOB_URL: NEW_BLOB}))
+
   def test_from_as1_post_preserve_whitespace_plain_text(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

@@ -28,6 +28,7 @@ from .source import (
   HTML_ENTITY_RE,
   html_to_text,
   INCLUDE_LINK,
+  INCLUDE_IF_TRUNCATED,
   OMIT_LINK,
   Source,
 )
@@ -569,6 +570,54 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     }
 
   elif verb == 'post' and type in POST_TYPES:
+    # images => embeds
+    images_embed = images_record_embed = None
+    if images := as1.get_objects(obj, 'image'):
+      images_embed = {
+        '$type': 'app.bsky.embed.images#view',
+        'images': [{
+          '$type': 'app.bsky.embed.images#viewImage',
+          'thumb': img.get('url'),
+          'fullsize': img.get('url'),
+          'alt': img.get('displayName') or '',
+        } for img in images[:4]],
+      }
+      images_record_embed = {
+        '$type': 'app.bsky.embed.images',
+        'images': [{
+          '$type': 'app.bsky.embed.images#image',
+          'image': blobs.get(util.get_url(img)) or {},
+          'alt': img.get('displayName') or '',
+        } for img in images[:4]],
+      }
+
+    # Bluesky doesn't currently handle videos. if the post has a video, add a
+    # [Video] label to the original post link.
+    #
+    # by default, original post link goes into an external embed. Bluesky can't
+    # do both images and an external embed in the same post though,
+    # https://github.com/bluesky-social/atproto/discussions/2575 , so if the
+    # post has images, put the original post link at the end of the text
+    # instead, after truncating.
+    attachments = util.get_list(obj, 'attachments')
+    has_video = any(a.get('objectType') == 'video' for a in attachments)
+    original_post_embed_name = original_post_text_suffix = None
+    include_link = None
+    if url := as1.get_url(obj):
+      snippet = f'Original post on {util.domain_from_link(url)}'
+      original_post_embed_name = snippet
+      original_post_text_suffix = f'[{snippet}]'
+      if has_video:
+        original_post_embed_name = '[Video] ' + original_post_embed_name
+        original_post_text_suffix = '[Video] ' + original_post_text_suffix
+
+      original_post_text_suffix = '\n\n' + original_post_text_suffix
+
+      if images:
+        include_link = INCLUDE_LINK if has_video else INCLUDE_IF_TRUNCATED
+      else:
+        include_link = OMIT_LINK  # it'll go in the external embed, not text
+
     # convert text from HTML and truncate
     link_tags = []
     if content := obj.get('content'):
@@ -608,20 +657,37 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     # else:
     #   text = obj.get('displayName') or ''
 
+    # truncate. if we're including a text suffix, ie original post link and
+    # maybe [Video] label, link that with a facet
     full_text = text
-    text = Bluesky('unused').truncate(text, None)
+    text = Bluesky('unused').truncate(
+      text, original_post_text_suffix, include_link=include_link, punctuation=('', ''))
     truncated = text != full_text
 
-    # convert index-based tags to facets
     facets = []
+    if (truncated and original_post_text_suffix
+        and text.endswith(original_post_text_suffix)):
+      facets.append({
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': url,
+        }],
+        'index': {
+          'byteStart': len(text.removesuffix(original_post_text_suffix).encode()),
+          'byteEnd': len(text.encode()),
+        }
+      })
+
+    # convert index-based tags to facets
     for tag in util.get_list(obj, 'tags') + link_tags:
       name = tag.get('displayName', '').strip().lstrip('@#')
       type = tag.get('objectType')
       if name and not type:
         type = 'hashtag'
 
-      url = tag.get('url')
-      if not url and type != 'hashtag':
+      tag_url = tag.get('url')
+      if not tag_url and type != 'hashtag':
         continue
 
       facet = {
@@ -651,12 +717,12 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       elif type == 'mention':
         # extract and if necessary resolve DID
         did = None
-        if url.startswith('did:'):
-          did = url
+        if tag_url.startswith('did:'):
+          did = tag_url
         else:
-          if match := AT_URI_PATTERN.match(url):
+          if match := AT_URI_PATTERN.match(tag_url):
             did = match.group('repo')
-          elif match := BSKY_APP_URL_RE.match(url):
+          elif match := BSKY_APP_URL_RE.match(tag_url):
             did = match.group('id')
           if did and client and not did.startswith('did:'):
             did = client.com.atproto.identity.resolveHandle(handle=did)['did']
@@ -671,7 +737,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       else:
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#link',
-          'uri': url,
+          'uri': tag_url,
         }]
 
       if name and 'index' not in facet:
@@ -712,53 +778,26 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       if facet not in facets:
         facets.append(facet)
 
-    # images
-    images_embed = images_record_embed = None
-    images = as1.get_objects(obj, 'image')
-
-    if images:
-      images_embed = {
-        '$type': 'app.bsky.embed.images#view',
-        'images': [{
-          '$type': 'app.bsky.embed.images#viewImage',
-          'thumb': img.get('url'),
-          'fullsize': img.get('url'),
-          'alt': img.get('displayName') or '',
-        } for img in images[:4]],
-      }
-      images_record_embed = {
-        '$type': 'app.bsky.embed.images',
-        'images': [{
-          '$type': 'app.bsky.embed.images#image',
-          'image': blobs.get(util.get_url(img)) or {},
-          'alt': img.get('displayName') or '',
-        } for img in images[:4]],
-      }
-
-    # attachments. embeds for articles/notes, original post link embed if
-    # content is truncated or object has a video, since Bluesky doesn't support
-    # those yet
+    # attachments => embeds for articles/notes
     record_embed = record_record_embed = external_embed = external_record_embed = None
 
-    attachments = util.get_list(obj, 'attachments')
-    has_video = any(a.get('objectType') == 'video' for a in attachments)
-    if truncated or has_video:
-      if url := as1.get_url(obj):
-        # override attachments, use one link to original post instead
-        attachments = [{
-          'objectType': 'link',
-          'url': url,
-          'displayName': f'{"[Video] " if has_video else ""}Original post on {util.domain_from_link(url)}',
-        }]
+    if (truncated or has_video) and url:
+      # override attachments with link to original post. (if there are images,
+      # we added a link in the text instead, and this won't get used.)
+      attachments = [{
+        'objectType': 'link',
+        'url': url,
+        'displayName': original_post_embed_name,
+      }]
 
     for att in attachments:
       if not att.get('objectType') in ('article', 'link', 'note'):
         continue
 
       id = att.get('id') or ''
-      url = att.get('url') or ''
+      att_url = att.get('url') or ''
       if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
-          url.startswith('at://') or url.startswith(Bluesky.BASE_URL)):
+          att_url.startswith('at://') or att_url.startswith(Bluesky.BASE_URL)):
         # quoted Bluesky post
         embed = from_as1(att).get('post') or {}
         embed['value'] = embed.pop('record', None)
@@ -783,7 +822,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
           '$type': f'app.bsky.embed.external',
           'external': {
             '$type': f'app.bsky.embed.external#external',
-            'uri': url or id,
+            'uri': att_url or id,
             'title': att.get('displayName'),
             'description': att.get('summary') or att.get('content') or '',
           }
@@ -844,7 +883,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
     ret = trim_nulls({
       '$type': 'app.bsky.feed.defs#postView',
-      'uri': obj.get('id') or obj.get('url') or '',
+      'uri': obj.get('id') or url or '',
       'cid': '',
       'record': ret,
       'author': author,
