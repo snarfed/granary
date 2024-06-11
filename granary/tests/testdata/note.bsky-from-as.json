@@ -1,6 +1,6 @@
 {
   "$type": "app.bsky.feed.post",
-  "text": "too cool to summarize",
+  "text": "[too cool to summarize]\n\nA note. link too",
   "createdAt": "2012-02-22T20:26:41.000Z",
   "embed": {
     "$type": "app.bsky.embed.images",
@@ -16,8 +16,8 @@
       "uri": "http://my/link"
     }],
     "index": {
-      "byteEnd": 12,
-      "byteStart": 8
+      "byteEnd": 37,
+      "byteStart": 33
     }
   }]
 }

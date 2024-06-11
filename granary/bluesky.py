@@ -620,7 +620,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
     # convert text from HTML and truncate
     link_tags = []
-    if content := obj.get('content'):
+    if content := obj.get('content', ''):
       # convert HTML tags _only if_ content has any, not otherwise so that we
       # preserve whitespace
       #
@@ -649,19 +649,27 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
             })
           content = content[:start] + link['text'] + content[end:]
 
-    text = obj.get('summary') or content or obj.get('displayName') or ''
-    # TODO: switch to this, below, for content notices/warnings
+    tags = util.get_list(obj, 'tags')
+
+    # handle summary. for articles, use instead of content. for notes, assume
+    # it's a fediverse-style content warnings, add above content.
     # https://github.com/snarfed/bridgy-fed/issues/1001
-    # if type == 'article' and obj.get('summary'):
-    #   text = obj['summary']
-    # else:
-    #   text = obj.get('displayName') or ''
+    full_text = content
+    index_offset = 0
+    if summary := obj.get('summary'):
+      if type == 'article':
+        full_text = summary
+        tags = []  # tags are presumably in content, not summary
+      else:
+        prefix = f'[{summary}]\n\n'
+        full_text = prefix + full_text
+        index_offset = len(prefix)
 
     # truncate. if we're including a text suffix, ie original post link and
     # maybe [Video] label, link that with a facet
-    full_text = text
     text = Bluesky('unused').truncate(
-      text, original_post_text_suffix, include_link=include_link, punctuation=('', ''))
+      full_text, original_post_text_suffix, include_link=include_link,
+      punctuation=('', ''))
     truncated = text != full_text
 
     facets = []
@@ -680,7 +688,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       })
 
     # convert index-based tags to facets
-    for tag in util.get_list(obj, 'tags') + link_tags:
+    for tag in tags + link_tags:
       name = tag.get('displayName', '').strip().lstrip('@#')
       type = tag.get('objectType')
       if name and not type:
@@ -694,7 +702,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         '$type': 'app.bsky.richtext.facet',
       }
       try:
-        start = int(tag['startIndex'])
+        start = int(tag['startIndex']) + index_offset
         if start and obj.get('content_is_html'):
           raise NotImplementedError('HTML content is not supported with index tags')
         end = start + int(tag['length'])
