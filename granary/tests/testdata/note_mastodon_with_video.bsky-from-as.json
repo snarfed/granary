@@ -1,8 +1,8 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "foo",
-  "originalText": "foo",
-  "originalUrl": "https://masto.foo/@alice/123",
+  "fooOriginalText": "foo",
+  "fooOriginalUrl": "https://masto.foo/@alice/123",
   "createdAt": "2023-03-09T14:55:03.000Z",
   "embed": {
     "$type": "app.bsky.embed.external",

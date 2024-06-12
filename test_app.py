@@ -668,7 +668,7 @@ not RSS!
         test_bluesky.POST_BSKY,
         test_bluesky.REPLY_BSKY,
       ],
-    }, resp.json)
+    }, resp.json, ignore=['fooOriginalUrl', 'fooOriginalText'])
 
   def test_url_as1_to_nostr(self):
     self.expect_requests_get('http://my/posts', [test_nostr.NOTE_AS1])

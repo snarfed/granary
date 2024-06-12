@@ -2,8 +2,8 @@
   "$type": "app.bsky.actor.profile",
   "displayName": "Martin Smith",
   "description": "this is my bio",
-  "originalDescription": "this is my bio",
-  "originalUrl": "https://example.com/martin",
+  "fooOriginalDescription": "this is my bio",
+  "fooOriginalUrl": "https://example.com/martin",
   "avatar": {
     "$type": "blob",
     "ref": {"$link": "avatar-cid"},

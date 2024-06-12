@@ -42,8 +42,8 @@ ACTOR_PROFILE_VIEW_BSKY = {
   'displayName': 'Alice',
   'avatar': 'https://alice.com/alice.jpg',
   'description': 'hi there',
-  'originalDescription': 'hi there',
-  'originalUrl': 'https://alice.com/',
+  'fooOriginalDescription': 'hi there',
+  'fooOriginalUrl': 'https://alice.com/',
 }
 NEW_BLOB = {  # new blob format: https://atproto.com/specs/data-model#blob-type
   '$type': 'blob',
@@ -63,8 +63,8 @@ ACTOR_PROFILE_BSKY = {
   'avatar': NEW_BLOB,
   'banner': OLD_BLOB,
   'description': 'hi there',
-  'originalDescription': 'hi there',
-  'originalUrl': 'https://alice.com/',
+  'fooOriginalDescription': 'hi there',
+  'fooOriginalUrl': 'https://alice.com/',
 }
 
 POST_AS = {
@@ -83,8 +83,8 @@ POST_AS = {
 POST_BSKY = {
   '$type': 'app.bsky.feed.post',
   'text': 'My original post',
-  'originalText': 'My original post',
-  'originalUrl': 'https://bsky.app/profile/did:alice/post/tid',
+  'fooOriginalText': 'My original post',
+  'fooOriginalUrl': 'https://bsky.app/profile/did:alice/post/tid',
   'createdAt': '2007-07-07T03:04:05.000Z',
 }
 POST_VIEW_BSKY = {
@@ -94,8 +94,8 @@ POST_VIEW_BSKY = {
   'record': {
     '$type': 'app.bsky.feed.post',
     'text': 'My original post',
-    'originalText': 'My original post',
-    'originalUrl': 'https://bsky.app/profile/alice.com/post/tid',
+    'fooOriginalText': 'My original post',
+    'fooOriginalUrl': 'https://bsky.app/profile/alice.com/post/tid',
     'createdAt': '2007-07-07T03:04:05.000Z',
   },
   'author': {
@@ -154,7 +154,7 @@ TAG_LINK = {
 POST_BSKY_FACET_HASHTAG = {
   '$type': 'app.bsky.feed.post',
   'text': 'foo #hache-☕ bar',
-  'originalText': 'foo #hache-☕ bar',
+  'fooOriginalText': 'foo #hache-☕ bar',
   'createdAt': '2007-07-07T03:04:05.000Z',
   'facets': [{
     '$type': 'app.bsky.richtext.facet',
@@ -214,7 +214,7 @@ NOTE_AS_TAG_MENTION_DID['tags'][0].update(TAG_MENTION_DID)
 POST_BSKY_FACET_MENTION = {
   '$type': 'app.bsky.feed.post',
   'text': 'foo @you.com bar',
-  'originalText': 'foo @you.com bar',
+  'fooOriginalText': 'foo @you.com bar',
   'createdAt': '2022-01-02T03:04:05.000Z',
   'facets': [{
     '$type': 'app.bsky.richtext.facet',
@@ -256,7 +256,7 @@ POST_BSKY_EMBED = {
 POST_VIEW_BSKY_EMBED = copy.deepcopy(POST_VIEW_BSKY)
 POST_VIEW_BSKY_EMBED['record'].update({
   'embed': POST_BSKY_EMBED['embed'],
-  'originalUrl': 'https://bsky.app/profile/did:alice/post/tid',
+  'fooOriginalUrl': 'https://bsky.app/profile/did:alice/post/tid',
 })
 POST_VIEW_BSKY_EMBED['embed'] = {
   '$type': 'app.bsky.embed.external#view',
@@ -312,8 +312,8 @@ REPLY_AS = {
 REPLY_BSKY = {
   '$type': 'app.bsky.feed.post',
   'text': 'I hereby reply to this',
-  'originalText': 'I hereby reply to this',
-  'originalUrl': 'https://bsky.app/profile/did/post/tid',
+  'fooOriginalText': 'I hereby reply to this',
+  'fooOriginalUrl': 'https://bsky.app/profile/did/post/tid',
   'createdAt': '2008-08-08T03:04:05.000Z',
   'reply': {
     '$type': 'app.bsky.feed.post#replyRef',
@@ -375,7 +375,7 @@ REPOST_BSKY_REASON = {
     'did': 'did:web:bob.com',
     'handle': 'bob.com',
     'displayName': 'Bob',
-    'originalUrl': 'https://bsky.app/profile/bob.com',
+    'fooOriginalUrl': 'https://bsky.app/profile/bob.com',
   },
   'indexedAt': '2022-01-02T03:04:05.000Z',
 }
@@ -384,7 +384,7 @@ REPOST_BSKY_FEED_VIEW_POST = {
   'post': copy.deepcopy(POST_AUTHOR_BSKY),
   'reason': REPOST_BSKY_REASON,
 }
-REPOST_BSKY_FEED_VIEW_POST['post']['author']['originalUrl'] = \
+REPOST_BSKY_FEED_VIEW_POST['post']['author']['fooOriginalUrl'] = \
   'https://bsky.app/profile/alice.com'
 
 THREAD_REPLY_AS = copy.deepcopy(REPLY_AS['object'])
@@ -529,6 +529,10 @@ class BlueskyTest(testutil.TestCase):
                            'Content-Type': 'application/json',
                            'User-Agent': util.user_agent,
                          })
+
+  @staticmethod
+  def from_as1(obj, **kwargs):
+    return from_as1(obj, original_fields_prefix='foo', **kwargs)
 
   def test_at_uri_pattern(self):
     for input, expected in [
@@ -718,34 +722,34 @@ class BlueskyTest(testutil.TestCase):
     ]:
       with self.subTest(obj=obj):
         with self.assertRaises(ValueError):
-          from_as1(obj)
+          self.from_as1(obj)
 
   def test_from_as1_unsupported_out_type(self):
     with self.assertRaises(ValueError):
-      from_as1({'objectType': 'image'}, out_type='foo')  # no matching objectType
+      self.from_as1({'objectType': 'image'}, out_type='foo')  # no matching objectType
 
     with self.assertRaises(ValueError):
-      from_as1({'objectType': 'person'}, out_type='foo')  # mismatched out_type
+      self.from_as1({'objectType': 'person'}, out_type='foo')  # mismatched out_type
 
   def test_from_as1_post(self):
-    self.assert_equals(POST_BSKY, from_as1(POST_AS))
+    self.assert_equals(POST_BSKY, self.from_as1(POST_AS))
 
   def test_from_as1_post_out_type_postView(self):
     expected = copy.deepcopy(POST_VIEW_BSKY)
-    got = from_as1(POST_AS, out_type='app.bsky.feed.defs#postView')
-    expected['record']['originalUrl'] = 'https://bsky.app/profile/did:alice/post/tid'
+    got = self.from_as1(POST_AS, out_type='app.bsky.feed.defs#postView')
+    expected['record']['fooOriginalUrl'] = 'https://bsky.app/profile/did:alice/post/tid'
     self.assert_equals(expected, got)
 
   def test_from_as1_post_feed_view(self):
     self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
 
   def test_from_as1_post_out_type_feedViewPost(self):
-    got = from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#feedViewPost')
+    got = self.from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#feedViewPost')
     self.assert_equals(POST_FEED_VIEW_BSKY, got)
 
   def test_from_as1_post_with_author(self):
     expected = copy.deepcopy(POST_AUTHOR_BSKY)
-    got = from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#postView')
+    got = self.from_as1(POST_AUTHOR_AS, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(expected, got)
 
   def test_from_as1_post_html_skips_tag_indices(self):
@@ -760,10 +764,10 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': '_some html_',
-      'originalText': '<em>some html</em>',
-      'originalUrl': 'https://bsky.app/profile/did:alice/post/tid',
+      'fooOriginalText': '<em>some html</em>',
+      'fooOriginalUrl': 'https://bsky.app/profile/did:alice/post/tid',
       'createdAt': '2007-07-07T03:04:05.000Z',
-    }, from_as1(post_as))
+    }, self.from_as1(post_as))
 
   def test_from_as1_post_without_tag_indices(self):
     post_as = copy.deepcopy(POST_AS)
@@ -772,15 +776,15 @@ class BlueskyTest(testutil.TestCase):
     }]
 
     # no facet
-    self.assert_equals(POST_BSKY, from_as1(post_as))
+    self.assert_equals(POST_BSKY, self.from_as1(post_as))
 
   @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 15)
   def test_from_as1_post_truncate_adds_link_embed(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'more than […]',
-      'originalText': 'more than ten chars long',
-      'originalUrl': 'http://my.inst/post',
+      'fooOriginalText': 'more than ten chars long',
+      'fooOriginalUrl': 'http://my.inst/post',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'embed': {
         '$type': 'app.bsky.embed.external',
@@ -791,7 +795,7 @@ class BlueskyTest(testutil.TestCase):
           'uri': 'http://my.inst/post',
         },
       },
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'url': 'http://my.inst/post',
       'content': 'more than ten chars long',
@@ -803,8 +807,8 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       **POST_BSKY_IMAGES,
       'text': 'hello hello […] \n\n[Original post on my.inst]',
-      'originalText': content,
-      'originalUrl': 'http://my.inst/post',
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'http://my.inst/post',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -816,7 +820,7 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 46,
         },
       }],
-    }, from_as1({
+    }, self.from_as1({
       **POST_AS_IMAGES['object'],
       'content': content,
       'url': 'http://my.inst/post',
@@ -827,7 +831,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       **POST_BSKY_IMAGES,
       'text': 'My […] \n\n[Video] [Original post on my.inst]',
-      'originalUrl': 'http://my.inst/post',
+      'fooOriginalUrl': 'http://my.inst/post',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -839,7 +843,7 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 45,
         },
       }],
-    }, from_as1({
+    }, self.from_as1({
       **POST_AS_IMAGES['object'],
       'url': 'http://my.inst/post',
       'attachments': [{
@@ -852,9 +856,9 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'hello\n  there\n\nok',
-      'originalText': 'hello\n  there\n\nok',
+      'fooOriginalText': 'hello\n  there\n\nok',
       'createdAt': '2022-01-02T03:04:05.000Z',
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'content': 'hello\n  there\n\nok',
     }))
@@ -863,9 +867,9 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual({
       '$type': 'app.bsky.feed.post',
       'text': 'Some\n_HTML_\n\nok?',
-      'originalText': '<p>Some <br> <em>HTML</em></p>  ok?',
+      'fooOriginalText': '<p>Some <br> <em>HTML</em></p>  ok?',
       'createdAt': '2022-01-02T03:04:05.000Z',
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'content': '<p>Some <br> <em>HTML</em></p>  ok?',
     }))
@@ -874,33 +878,33 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'hello\n\n  there\n\nok',
-      'originalText': '<p>hello</p>  there<br><br>ok',
+      'fooOriginalText': '<p>hello</p>  there<br><br>ok',
       'createdAt': '2022-01-02T03:04:05.000Z',
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'content': '<p>hello</p>  there<br><br>ok',
     }))
 
   def test_from_as1_tag_without_url(self):
-    self.assert_equals(POST_BSKY, from_as1({
+    self.assert_equals(POST_BSKY, self.from_as1({
       **POST_AS,
       'tags': [{'objectType': 'mention'}],
     }))
 
   def test_from_as1_tag_mention_did(self):
-    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION_DID))
+    self.assert_equals(POST_BSKY_FACET_MENTION, self.from_as1(NOTE_AS_TAG_MENTION_DID))
 
   def test_from_as1_tag_mention_did_not_in_content(self):
-    self.assert_equals(POST_BSKY, from_as1({
+    self.assert_equals(POST_BSKY, self.from_as1({
       **POST_AS['object'],
       'tags': [TAG_MENTION_DID],
     }))
 
   def test_from_as1_tag_mention_url(self):
-    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1(NOTE_AS_TAG_MENTION_URL))
+    self.assert_equals(POST_BSKY_FACET_MENTION, self.from_as1(NOTE_AS_TAG_MENTION_URL))
 
   def test_from_as1_tag_mention_url_not_in_content(self):
-    self.assert_equals(POST_BSKY, from_as1({
+    self.assert_equals(POST_BSKY, self.from_as1({
       **POST_AS['object'],
       'tags': [TAG_MENTION_URL],
     }))
@@ -911,15 +915,15 @@ class BlueskyTest(testutil.TestCase):
     content = 'foo <a href="https://bsky.app/profile/you.com">@you.com</a> bar'
     self.assert_equals({
       **POST_BSKY_FACET_MENTION,
-      'originalText': content,
-      'originalUrl': 'https://bsky.app/profile/did:alice/post/tid',
-    }, from_as1({
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'https://bsky.app/profile/did:alice/post/tid',
+    }, self.from_as1({
       **POST_AS['object'],
       'content': content,
     }, client=self.bs), ignore=['createdAt'])
 
   def test_from_as1_tag_hashtag(self):
-    self.assert_equals(POST_BSKY_FACET_HASHTAG, from_as1(NOTE_AS_TAG_HASHTAG))
+    self.assert_equals(POST_BSKY_FACET_HASHTAG, self.from_as1(NOTE_AS_TAG_HASHTAG))
 
   def test_from_as1_tag_hashtag_guess_index(self):
     note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
@@ -929,7 +933,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
     expected['facets'][0]['index']['byteStart'] = 4
-    self.assert_equals(expected, from_as1(note))
+    self.assert_equals(expected, self.from_as1(note))
 
   def test_from_as1_tag_hashtag_html_content_guess_index(self):
     content = '<p>foo <a class="p-category">#hache-☕</a> bar</p>'
@@ -940,9 +944,9 @@ class BlueskyTest(testutil.TestCase):
     del note['tags'][0]['length']
 
     expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
-    expected['originalText'] = content
+    expected['fooOriginalText'] = content
     expected['facets'][0]['index']['byteStart'] = 4
-    self.assert_equals(expected, from_as1(note))
+    self.assert_equals(expected, self.from_as1(note))
 
   def test_from_as1_tag_hashtag_guess_index_case_insensitive(self):
     content = '<p>You can ignore this <a href="https://darkfriend.social/tags/TuneTuesday" class="mention hashtag" rel="tag">#<span>TuneTuesday</span></a> post</p>'
@@ -950,7 +954,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'You can ignore this #TuneTuesday post',
-      'originalText': content,
+      'fooOriginalText': content,
       'createdAt': '2022-01-02T03:04:05.000Z',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
@@ -963,7 +967,7 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 32,
         },
       }],
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'content': content,
       'tags': [{'displayName': '#tunetuesday'}],
@@ -975,7 +979,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': 'Another .#tunetuesday! post',
-      'originalText': content,
+      'fooOriginalText': content,
       'createdAt': '2022-01-02T03:04:05.000Z',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
@@ -988,14 +992,14 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 21,
         },
       }],
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'content': content,
       'tags': [{'displayName': '#tunetuesday'}],
     }))
 
   def test_from_as1_tag_mention_guess_index(self):
-    self.assert_equals(POST_BSKY_FACET_MENTION, from_as1({
+    self.assert_equals(POST_BSKY_FACET_MENTION, self.from_as1({
       'objectType': 'note',
       'content': 'foo @you.com bar',
       'tags': [{
@@ -1009,8 +1013,8 @@ class BlueskyTest(testutil.TestCase):
     content = '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>'
     self.assert_equals({
       **POST_BSKY_FACET_MENTION,
-      'originalText': content,
-    }, from_as1({
+      'fooOriginalText': content,
+    }, self.from_as1({
       'objectType': 'note',
       'content': content,
       'tags': [{
@@ -1024,8 +1028,8 @@ class BlueskyTest(testutil.TestCase):
     content = '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>'
     self.assert_equals({
       **POST_BSKY_FACET_MENTION,
-      'originalText': content,
-    }, from_as1({
+      'fooOriginalText': content,
+    }, self.from_as1({
       'objectType': 'note',
       'content': content,
       'tags': [{
@@ -1045,8 +1049,8 @@ class BlueskyTest(testutil.TestCase):
     del note['tags'][0]['length']
     self.assert_equals({
       **POST_BSKY_FACET_MENTION,
-      'originalText': '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>',
-    }, from_as1(note))
+      'fooOriginalText': '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>',
+    }, self.from_as1(note))
 
   def test_from_as1_tag_mention_at_beginning(self):
     content = '<p><span class="h-card" translate="no"><a href="https://bsky.brid.gy/r/https://bsky.app/profile/shreyanjain.net" class="u-url mention">@<span>shreyanjain.net</span></a></span> hello there</p>'
@@ -1055,7 +1059,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'text': '@shreyanjain.net hello there',
-      'originalText': content,
+      'fooOriginalText': content,
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -1067,7 +1071,7 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 16,
         },
       }],
-    }, from_as1({
+    }, self.from_as1({
       'objectType' : 'note',
       'content' : content,
       'tags' : [{
@@ -1082,8 +1086,8 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'text': 'foo bar',
-      'originalText': 'foo bar',
-    }, from_as1({
+      'fooOriginalText': 'foo bar',
+    }, self.from_as1({
       'objectType': 'note',
       'content': 'foo bar',
       'tags': [{
@@ -1098,14 +1102,14 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
     del expected['facets']
-    self.assert_equals(expected, from_as1(note))
+    self.assert_equals(expected, self.from_as1(note))
 
   def test_from_as1_trim_tag_with_end_past_content_length(self):
     note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
     expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
     note['tags'][0]['length'] = 50
     expected['facets'][0]['index']['byteEnd'] = 18
-    self.assert_equals(expected, from_as1(note))
+    self.assert_equals(expected, self.from_as1(note))
 
   def test_from_as1_html_link(self):
     content = 'foo <a href="http://post">ba]r</a> baz'
@@ -1113,7 +1117,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'text': 'foo ba]r baz',
-      'originalText': content,
+      'fooOriginalText': content,
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -1125,7 +1129,7 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 8,
         },
       }],
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'content': content,
     }))
@@ -1137,8 +1141,8 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'text': 'foo bar […]',
-      'originalText': content,
-    }, from_as1({
+      'fooOriginalText': content,
+    }, self.from_as1({
       'objectType': 'note',
       'content': content,
     }))
@@ -1150,7 +1154,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'text': 'foo #hache-☕ bar foo @you.com baz',
-      'originalText': content,
+      'fooOriginalText': content,
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -1182,7 +1186,7 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 18,
         },
       }],
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'content': content,
       'tags': [{
@@ -1194,18 +1198,18 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['embed']['images'][0]['image']
-    self.assert_equals(expected, from_as1(POST_AS_IMAGES))
+    self.assert_equals(expected, self.from_as1(POST_AS_IMAGES))
 
   def test_from_as1_post_with_image_blobs(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     expected['embed']['images'][0]['image'] = BLOB
-    self.assert_equals(expected, from_as1(POST_AS_IMAGES, blobs={NEW_BLOB_URL: BLOB}))
+    self.assert_equals(expected, self.from_as1(POST_AS_IMAGES, blobs={NEW_BLOB_URL: BLOB}))
 
   def test_from_as1_post_view_with_image(self):
     expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
     del expected['record']['embed']['images'][0]['image']
-    expected['record']['originalUrl'] = 'https://bsky.app/profile/did:alice/post/tid'
-    got = from_as1(POST_AS_IMAGES, out_type='app.bsky.feed.defs#postView')
+    expected['record']['fooOriginalUrl'] = 'https://bsky.app/profile/did:alice/post/tid'
+    got = self.from_as1(POST_AS_IMAGES, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(expected, got)
 
   def test_from_as1_object_vs_activity(self):
@@ -1217,28 +1221,28 @@ class BlueskyTest(testutil.TestCase):
       'verb': 'post',
       'object': obj,
     }
-    self.assert_equals(from_as1(obj), from_as1(activity))
+    self.assert_equals(self.from_as1(obj), self.from_as1(activity))
 
   def test_from_as1_actor(self):
     expected = {
       '$type': 'app.bsky.actor.profile',
       'displayName': 'Alice',
       'description': 'hi there',
-      'originalDescription': 'hi there',
-      'originalUrl': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
     }
-    self.assert_equals(expected, from_as1(ACTOR_AS))
-    self.assert_equals(expected, from_as1(ACTOR_AS, out_type='app.bsky.actor.profile'))
+    self.assert_equals(expected, self.from_as1(ACTOR_AS))
+    self.assert_equals(expected, self.from_as1(ACTOR_AS, out_type='app.bsky.actor.profile'))
 
   def test_from_as1_actor_blobs(self):
     self.assert_equals({
       '$type': 'app.bsky.actor.profile',
       'displayName': 'Alice',
       'description': 'hi there',
-      'originalDescription': 'hi there',
-      'originalUrl': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
       'avatar': BLOB,
-    }, from_as1(ACTOR_AS, blobs={'https://alice.com/alice.jpg': BLOB}))
+    }, self.from_as1(ACTOR_AS, blobs={'https://alice.com/alice.jpg': BLOB}))
 
   def test_from_as1_actor_profileView(self):
     for type in ('app.bsky.actor.defs#profileView',
@@ -1248,7 +1252,7 @@ class BlueskyTest(testutil.TestCase):
       self.assert_equals({
         **ACTOR_PROFILE_VIEW_BSKY,
         '$type': type,
-      }, from_as1(ACTOR_AS, out_type=type))
+      }, self.from_as1(ACTOR_AS, out_type=type))
 
   def test_from_as1_actor_handle(self):
     for expected, fields in (
@@ -1258,14 +1262,14 @@ class BlueskyTest(testutil.TestCase):
         ('foo.com', {'url': 'http://foo.com'}),
         ('foo.com', {'url': 'http://foo.com/path'}),
     ):
-      self.assert_equals(expected, from_as1({
+      self.assert_equals(expected, self.from_as1({
         'objectType': 'person',
         **fields,
       }, out_type='app.bsky.actor.defs#profileView')['handle'])
 
   def test_from_as1_actor_id_not_url(self):
     """Tests error handling when attempting to generate did:web."""
-    self.assertEqual('did:web:foo.com', from_as1({
+    self.assertEqual('did:web:foo.com', self.from_as1({
       'objectType': 'person',
       'id': 'tag:foo.com,2001:bar',
     }, out_type='app.bsky.actor.defs#profileView')['did'])
@@ -1275,8 +1279,8 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual({
       '$type': 'app.bsky.actor.profile',
       'description': 'Some\n_HTML_\n\nok?',
-      'originalDescription': summary,
-    }, from_as1({
+      'fooOriginalDescription': summary,
+    }, self.from_as1({
       'objectType': 'person',
       'summary': summary,
     }))
@@ -1285,8 +1289,8 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual({
       '$type': 'app.bsky.actor.profile',
       'description': 'Some\n  plain  text\n\nok?',
-      'originalDescription': 'Some\n  plain  text\n\nok?',
-    }, from_as1({
+      'fooOriginalDescription': 'Some\n  plain  text\n\nok?',
+    }, self.from_as1({
       'objectType': 'person',
       'summary': 'Some\n  plain  text\n\nok?',
     }))
@@ -1296,8 +1300,8 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.actor.defs#profileView',
       'did': 'did:web:rodentdisco.co.uk',
       'handle': 'rodentdisco.co.uk',
-      'originalUrl': 'https://rodentdisco.co.uk/author/dan/',
-    }, from_as1({
+      'fooOriginalUrl': 'https://rodentdisco.co.uk/author/dan/',
+    }, self.from_as1({
       'objectType': 'person',
       'url': {
         "displayName": "my web site",
@@ -1306,30 +1310,30 @@ class BlueskyTest(testutil.TestCase):
     }, out_type='app.bsky.actor.defs#profileView'))
 
   def test_from_as1_embed(self):
-    self.assert_equals(POST_BSKY_EMBED, from_as1(POST_AS_EMBED))
+    self.assert_equals(POST_BSKY_EMBED, self.from_as1(POST_AS_EMBED))
 
   def test_from_as1_embed_out_type_postView(self):
-    got = from_as1(POST_AS_EMBED, out_type='app.bsky.feed.defs#postView')
+    got = self.from_as1(POST_AS_EMBED, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(POST_VIEW_BSKY_EMBED, got)
 
   def test_from_as1_facet_link_and_embed(self):
     self.assert_equals({
       **POST_BSKY_EMBED,
       'facets': [FACET_LINK],
-    }, from_as1({
+    }, self.from_as1({
       **POST_AS_EMBED,
       'tags': [TAG_LINK],
     }))
 
   def test_from_as1_repost(self):
-    self.assert_equals(REPOST_BSKY, from_as1(REPOST_AS))
+    self.assert_equals(REPOST_BSKY, self.from_as1(REPOST_AS))
 
   def test_from_as1_repost_reasonRepost(self):
-    got = from_as1(REPOST_AS, out_type='app.bsky.feed.defs#reasonRepost')
+    got = self.from_as1(REPOST_AS, out_type='app.bsky.feed.defs#reasonRepost')
     self.assert_equals(REPOST_BSKY_REASON, got)
 
   def test_from_as1_repost_feedViewPost(self):
-    got = from_as1(REPOST_AS, out_type='app.bsky.feed.defs#feedViewPost')
+    got = self.from_as1(REPOST_AS, out_type='app.bsky.feed.defs#feedViewPost')
     self.assert_equals(REPOST_BSKY_FEED_VIEW_POST, got)
 
   def test_from_as1_repost_convert_bsky_app_url(self):
@@ -1338,7 +1342,7 @@ class BlueskyTest(testutil.TestCase):
 
     repost_bsky = copy.deepcopy(REPOST_BSKY)
     repost_bsky['subject']['uri'] = 'at://alice.com/app.bsky.feed.post/tid'
-    self.assert_equals(repost_bsky, from_as1(repost_as))
+    self.assert_equals(repost_bsky, self.from_as1(repost_as))
 
   @patch('requests.get')
   def test_from_as1_repost_client(self, mock_get):
@@ -1350,33 +1354,33 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(REPOST_BSKY)
     expected['subject']['cid'] = 'my-syd'
-    self.assert_equals(expected, from_as1(REPOST_AS, client=self.bs._client))
+    self.assert_equals(expected, self.from_as1(REPOST_AS, client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aalice&collection=app.bsky.feed.post&rkey=tid')
 
   def test_from_as1_reply(self):
-    self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS))
-    self.assert_equals(REPLY_BSKY, from_as1(REPLY_AS['object']))
+    self.assert_equals(REPLY_BSKY, self.from_as1(REPLY_AS))
+    self.assert_equals(REPLY_BSKY, self.from_as1(REPLY_AS['object']))
 
   def test_from_as1_reply_to_website(self):
-    self.assert_equals(REPLY_BSKY, from_as1(REPLY_TO_WEBSITE_AS))
-    self.assert_equals(REPLY_BSKY, from_as1(REPLY_TO_WEBSITE_AS['object']))
+    self.assert_equals(REPLY_BSKY, self.from_as1(REPLY_TO_WEBSITE_AS))
+    self.assert_equals(REPLY_BSKY, self.from_as1(REPLY_TO_WEBSITE_AS['object']))
     reply_to_website_at_uri = copy.deepcopy(REPLY_TO_WEBSITE_AS)
     reply_to_website_at_uri['object']['inReplyTo'][2]['url'] = 'at://did:alice/app.bsky.feed.post/parent-tid'
-    self.assert_equals(REPLY_BSKY, from_as1(reply_to_website_at_uri))
+    self.assert_equals(REPLY_BSKY, self.from_as1(reply_to_website_at_uri))
 
   def test_from_as1_reply_postView(self):
     for input in REPLY_AS, REPLY_AS['object']:
-      got = from_as1(input, out_type='app.bsky.feed.defs#postView')
+      got = self.from_as1(input, out_type='app.bsky.feed.defs#postView')
       self.assert_equals(REPLY_POST_VIEW_BSKY, got)
 
   def test_from_as1_reply_convert_bsky_app_url(self):
     reply_as = copy.deepcopy(REPLY_AS)
     reply_as['object']['inReplyTo'] = \
       'https://bsky.app/profile/did:alice/post/parent-tid'
-    self.assert_equals(REPLY_BSKY, from_as1(reply_as))
+    self.assert_equals(REPLY_BSKY, self.from_as1(reply_as))
 
   @patch('requests.get')
   def test_from_as1_reply_client(self, mock_get):
@@ -1388,7 +1392,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(REPLY_BSKY)
     expected['reply']['root']['cid'] = expected['reply']['parent']['cid'] = 'my-syd'
-    self.assert_equals(expected, from_as1(REPLY_AS['object'], client=self.bs._client))
+    self.assert_equals(expected, self.from_as1(REPLY_AS['object'], client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -1422,7 +1426,7 @@ class BlueskyTest(testutil.TestCase):
           'cid': 'my-root-syd',
         },
       },
-    }, from_as1(REPLY_AS['object'], client=self.bs._client))
+    }, self.from_as1(REPLY_AS['object'], client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -1438,18 +1442,18 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(LIKE_BSKY)
     expected['subject']['cid'] = 'my-syd'
-    self.assert_equals(expected, from_as1(LIKE_AS, client=self.bs._client))
+    self.assert_equals(expected, self.from_as1(LIKE_AS, client=self.bs._client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aalice&collection=app.bsky.feed.post&rkey=tid')
 
   def test_from_as1_follow(self):
-    self.assertEqual(FOLLOW_BSKY, from_as1(FOLLOW_AS))
+    self.assertEqual(FOLLOW_BSKY, self.from_as1(FOLLOW_AS))
 
   def test_from_as1_follow_no_object(self):
     with self.assertRaises(ValueError):
-      from_as1({
+      self.from_as1({
         'objectType': 'activity',
         'verb': 'follow',
         'actor': 'at://did:plc:foo/com.atproto.actor.profile/123',
@@ -1467,7 +1471,7 @@ class BlueskyTest(testutil.TestCase):
           'alt': '',
         }],
       }
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'image': ['http://foo'],
     }))
@@ -1477,7 +1481,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'text': '',
       'createdAt': '2022-01-02T02:01:09.650Z',
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'published': '  2022-01-02 00:01:09.65-02:00 ',
     }))
@@ -1487,7 +1491,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'text': '',
       'createdAt': '2022-01-02T00:01:09.000Z',
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'published': '2022-01-02 00:01:09 ',
     }))
@@ -1497,7 +1501,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'text': '',
       'createdAt': '2022-01-02T03:04:05.000Z',
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'note',
       'published': 'foo bar',
     }))
@@ -1507,7 +1511,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.graph.block',
       'subject': 'https://bsky.app/profile/did:eve',
       'createdAt': '2022-01-02T03:04:05.000Z'
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'activity',
       'verb': 'block',
       'actor': 'http://alice',
@@ -1530,7 +1534,7 @@ class BlueskyTest(testutil.TestCase):
         'uri': 'at://did:alice/app.bsky.feed.post/tid',
         'cid': 'my-syd',
       },
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'activity',
       'verb': 'flag',
       'id': 'http://flag',
@@ -1552,7 +1556,7 @@ class BlueskyTest(testutil.TestCase):
       'purpose': 'app.bsky.graph.defs#curatelist',
       'avatar': BLOB,
       'createdAt': '2001-02-03T04:05:06.000Z',
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'collection',
       'id': 'http://list/id',
       'displayName': 'My stuff',
@@ -1568,7 +1572,7 @@ class BlueskyTest(testutil.TestCase):
       'subject': 'did:bob',
       'list': 'at://did:alice/app.bsky.graph.list/tid',
       'createdAt': '2022-01-02T03:04:05.000Z'
-    }, from_as1({
+    }, self.from_as1({
       'objectType': 'activity',
       'verb': 'add',
       'actor': 'did:alice',
@@ -1585,7 +1589,7 @@ class BlueskyTest(testutil.TestCase):
       (long, short + '…'),
       # ('🇨🇾🇬🇭 bytes', '🇨🇾…'),  # TODO
     ):
-      self.assertEqual(expected, from_as1({
+      self.assertEqual(expected, self.from_as1({
         'objectType': 'person',
         'displayName': input,
       })['displayName'])
@@ -2366,8 +2370,9 @@ class BlueskyTest(testutil.TestCase):
           'byteEnd': 29,
         },
       }],
-      'originalUrl': 'http://orig',
     }
+    del post_bsky['fooOriginalText']
+    del post_bsky['fooOriginalUrl']
 
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
@@ -2400,6 +2405,8 @@ class BlueskyTest(testutil.TestCase):
         reply_bsky = copy.deepcopy(REPLY_BSKY)
         reply_bsky['reply']['root']['cid'] = \
           reply_bsky['reply']['parent']['cid'] = 'my-syd'
+        del reply_bsky['fooOriginalText']
+        del reply_bsky['fooOriginalUrl']
         self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
           'repo': self.bs.did,
           'collection': 'app.bsky.feed.post',
@@ -2536,10 +2543,13 @@ class BlueskyTest(testutil.TestCase):
     # buffer and then closes it, so we can't check its contents.
     # self.assertEqual(b'pic data', repr(mock_post.call_args_list[0][1]['data']))
 
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
       'collection': 'app.bsky.feed.post',
-      'record': POST_BSKY_IMAGES,
+      'record': expected,
     })
 
   @patch('requests.post')
@@ -2653,7 +2663,6 @@ class BlueskyTest(testutil.TestCase):
       'record': {
         '$type': 'app.bsky.feed.post',
         'text': 'foo @you.com bar',
-        'originalText': content,
         'createdAt': '2022-01-02T03:04:05.000Z',
         'facets': [{
           '$type': 'app.bsky.richtext.facet',

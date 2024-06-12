@@ -388,7 +388,7 @@ def base_object(obj):
   return {}
 
 
-def from_as1(obj, out_type=None, blobs=None, client=None):
+def from_as1(obj, out_type=None, blobs=None, client=None, original_fields_prefix=None):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -410,6 +410,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     client (Bluesky or lexrpc.Client): optional; if provided, this will be used
       to make API calls to PDSes to fetch and populate CIDs for records
       referenced by replies, likes, reposts, etc.
+    original_fields_prefix (str): optional; if provided, stores original object URLs, post text, and actor profiles (ie before truncation) in custom fields with this prefix in output records. For example, if this is `foo`, an actor's complete `summary` field will be stored in the custom `fooOriginalDescription` field, and their (first) `url` will be stored in the custom `fooOriginalUrl` field.
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -449,6 +450,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
   ret = None
 
+  # for nested from_as1 calls, if necessary
+  kwargs = {'original_fields_prefix': original_fields_prefix}
+
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type in as1.ACTOR_TYPES:
     # avatar and banner. banner is featured image, if available
@@ -479,9 +483,13 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       'description': summary,
       'avatar': blobs.get(avatar),
       'banner': blobs.get(banner),
-      'originalDescription': orig_summary,
-      'originalUrl': url or id,
     }
+    if original_fields_prefix:
+      ret.update({
+        f'{original_fields_prefix}OriginalDescription': orig_summary,
+        f'{original_fields_prefix}OriginalUrl': url or id,
+      })
+
     if not out_type or out_type == 'app.bsky.actor.profile':
       ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
       return LEXRPC_BASE._maybe_validate('app.bsky.actor.profile', 'record', ret)
@@ -529,14 +537,14 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     elif out_type == 'app.bsky.feed.defs#reasonRepost':
       ret = {
         '$type': 'app.bsky.feed.defs#reasonRepost',
-        'by': from_as1(actor, out_type='app.bsky.actor.defs#profileViewBasic'),
+        'by': from_as1(actor, out_type='app.bsky.actor.defs#profileViewBasic', **kwargs),
         'indexedAt': from_as1_datetime(None),
       }
     elif out_type == 'app.bsky.feed.defs#feedViewPost':
       ret = {
         '$type': 'app.bsky.feed.defs#feedViewPost',
-        'post': from_as1(inner_obj, out_type='app.bsky.feed.defs#postView'),
-        'reason': from_as1(obj, out_type='app.bsky.feed.defs#reasonRepost'),
+        'post': from_as1(inner_obj, out_type='app.bsky.feed.defs#postView', **kwargs),
+        'reason': from_as1(obj, out_type='app.bsky.feed.defs#reasonRepost', **kwargs),
       }
 
   elif type == 'like':
@@ -809,7 +817,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
           att_url.startswith('at://') or att_url.startswith(Bluesky.BASE_URL)):
         # quoted Bluesky post
-        embed = from_as1(att).get('post') or {}
+        embed = from_as1(att, **kwargs).get('post') or {}
         embed['value'] = embed.pop('record', None)
         record_embed = {
           '$type': f'app.bsky.embed.record#view',
@@ -874,16 +882,21 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         'parent': parent_ref,
       }
 
-    ret = trim_nulls({
+    ret = {
       '$type': 'app.bsky.feed.post',
       'text': text,
       'createdAt': from_as1_datetime(obj.get('published')),
       'embed': record_embed,
       'facets': facets,
       'reply': reply,
-      'originalText': orig_content,
-      'originalUrl': url,
-    }, ignore=('alt', 'createdAt', 'cid', 'description', 'text', 'title', 'uri'))
+    }
+    if original_fields_prefix:
+      ret.update({
+        f'{original_fields_prefix}OriginalText': orig_content,
+        f'{original_fields_prefix}OriginalUrl': url,
+    })
+    ret = trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
+                                  'text', 'title', 'uri'))
 
     if not out_type or out_type == 'app.bsky.feed.post':
       return LEXRPC_BASE._maybe_validate('app.bsky.feed.post', 'record', ret)
@@ -891,7 +904,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
     # author
     author = as1.get_object(obj, 'author')
     author.setdefault('objectType', 'person')
-    author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic')
+    author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic', **kwargs)
 
     ret = trim_nulls({
       '$type': 'app.bsky.feed.defs#postView',

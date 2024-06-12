@@ -1,8 +1,8 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "I hereby quote",
-  "originalText": "I hereby quote",
-  "originalUrl": "https://bsky.app/profile/did/post/quote-post-tid",
+  "fooOriginalText": "I hereby quote",
+  "fooOriginalUrl": "https://bsky.app/profile/did/post/quote-post-tid",
   "createdAt": "2007-07-07T03:04:05.000Z",
   "embed": {
     "$type": "app.bsky.embed.record",

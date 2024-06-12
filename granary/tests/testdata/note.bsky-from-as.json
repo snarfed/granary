@@ -1,8 +1,8 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "[too cool to summarize]\n\nA note. link too",
-  "originalText": "A note. link too",
-  "originalUrl": "http://example.com/blog-post-123",
+  "fooOriginalText": "A note. link too",
+  "fooOriginalUrl": "http://example.com/blog-post-123",
   "createdAt": "2012-02-22T20:26:41.000Z",
   "embed": {
     "$type": "app.bsky.embed.images",

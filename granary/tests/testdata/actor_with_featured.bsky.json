@@ -1,5 +1,5 @@
 {
   "$type": "app.bsky.actor.profile",
   "displayName": "Martin Smith",
-  "originalUrl": "https://example.com/martin"
+  "fooOriginalUrl": "https://example.com/martin"
 }
