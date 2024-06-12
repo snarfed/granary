@@ -460,30 +460,31 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
         banner = url
         break
 
-    summary = obj.get('summary') or ''
+    summary = orig_summary = obj.get('summary') or ''
     is_html = (bool(BeautifulSoup(summary, 'html.parser').find())
                or HTML_ENTITY_RE.search(summary))
     if is_html:
       summary = html_to_text(summary, ignore_links=True)
-
-    ret = {
-      'displayName': obj.get('displayName'),
-      # WARNING: keep this in sync with Bridgy Fed's ATProto.add_source_links!
-      'description': summary,
-      'avatar': blobs.get(avatar),
-      'banner': blobs.get(banner),
-    }
-    if not out_type or out_type == 'app.bsky.actor.profile':
-      ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
-      return LEXRPC_BASE._maybe_validate('app.bsky.actor.profile', 'record', ret)
 
     url = as1.get_url(obj)
     id = obj.get('id')
     if not url and id:
       parsed = util.parse_tag_uri(id)
       if parsed:
-        # This is only really formatted as a URL to keep url_to_did_web happy.
+        # This is only really formatted as a URL to keep url_to_did_web below happy
         url = f'https://{parsed[0]}'
+
+    ret = {
+      'displayName': obj.get('displayName'),
+      'description': summary,
+      'avatar': blobs.get(avatar),
+      'banner': blobs.get(banner),
+      'originalDescription': orig_summary,
+      'originalUrl': url or id,
+    }
+    if not out_type or out_type == 'app.bsky.actor.profile':
+      ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
+      return LEXRPC_BASE._maybe_validate('app.bsky.actor.profile', 'record', ret)
 
     did_web = ''
     if id and id.startswith('did:web:'):
@@ -620,7 +621,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
 
     # convert text from HTML and truncate
     link_tags = []
-    if content := obj.get('content', ''):
+    content = orig_content = obj.get('content', '')
+    if content:
       # convert HTML tags _only if_ content has any, not otherwise so that we
       # preserve whitespace
       #
@@ -879,6 +881,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None):
       'embed': record_embed,
       'facets': facets,
       'reply': reply,
+      'originalText': orig_content,
+      'originalUrl': url,
     }, ignore=('alt', 'createdAt', 'cid', 'description', 'text', 'title', 'uri'))
 
     if not out_type or out_type == 'app.bsky.feed.post':

@@ -322,6 +322,7 @@ _Non-breaking changes:_
     * If the object has images, add the original post link to the end of the text, since Bluesky doesn't support both image and external embeds in the same post ([bluesky-social/atproto#2575](https://github.com/bluesky-social/atproto/discussions/2575), [snarfed/bridgy-fed#1106](https://github.com/snarfed/bridgy-fed/issues/1106)).
     * If a `note` has `summary` - often used for content warnings in the fediverse - add it to `content` as a prefix instead of overriding `content` ([snarfed/bridgy-fed#1001](https://github.com/snarfed/bridgy-fed/issues/1001)).
     * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
+    * Add new custom (off-Lexicon) `originalDescription` and `originalUrl` fields to `app.bsky.actor.profile` and `originalText` and `originalUrl` to `app.bsky.actor.profile` ([snarfed/bridgy-fed#1092](https://github.com/snarfed/bridgy-fed/issues/1092)).
     * Support `lexrpc.Client` as well as `Bluesky` for `client` kwarg.
   * `from_as1_to_strong_ref`:
     * Add `value` boolean kwarg.

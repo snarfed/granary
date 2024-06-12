@@ -1,6 +1,7 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "hi @alice!",
+  "originalText": "hi @alice!",
   "createdAt": "2022-01-02T03:04:05.000Z",
   "facets": [{
     "$type": "app.bsky.richtext.facet",
