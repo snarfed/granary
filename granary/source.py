@@ -810,7 +810,6 @@ class Source(object, metaclass=SourceMeta):
       ignore_formatting (bool): whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
       prefer_name (bool): whether to prefer ``displayName`` to ``content``
-
       strip_first_video_tag (bool): if true, removes the first ``<video>`` tag.
         useful when it will be uploaded and attached to the post natively in the
         silo.

@@ -679,7 +679,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None, original_fields_prefix
     # maybe [Video] label, link that with a facet
     text = Bluesky('unused').truncate(
       full_text, original_post_text_suffix, include_link=include_link,
-      punctuation=('', ''))
+      punctuation=('', ''), type=type)
     truncated = text != full_text
     if truncated:
       text_byte_end = len(text.split(ELLIPSIS, maxsplit=1)[0].encode())
@@ -1436,7 +1436,7 @@ class Bluesky(Source):
   DOMAIN = 'bsky.app'
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
-  TRUNCATE_TEXT_LENGTH = LEXRPC_BASE.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
+  TRUNCATE_TEXT_LENGTH = None  # different for post text vs profile description
   POST_ID_RE = AT_URI_PATTERN
   TYPE_LABELS = {
     'post': 'post',
@@ -1827,10 +1827,6 @@ class Bluesky(Source):
 
     # truncate and ellipsize content if necessary
     url = obj.get('url')
-    content = self.truncate(content, url, include_link=include_link, type=type)
-
-    # TODO linkify mentions and hashtags
-    preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
 
     post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
 
@@ -1878,10 +1874,13 @@ class Bluesky(Source):
           'url': at_uri_to_web_url(repost_atp['subject']['uri']) + '/reposted-by'
         })
 
-    elif (type in ('note', 'article') or is_reply or
+    elif (type in as1.POST_TYPES or is_reply or
           (type == 'activity' and verb == 'post')):  # probably a bookmark
       # TODO: add bookmarked URL and facet
       # tricky because we only want to do that if it's not truncated away
+      content = self.truncate(content, url, include_link=include_link, type='note')
+      # TODO linkify mentions and hashtags
+      preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
       data = {'status': content}
       if is_reply and base_url:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
@@ -2004,11 +2003,18 @@ class Bluesky(Source):
 
     return blobs
 
-  def truncate(self, *args, **kwargs):
+  def truncate(self, *args, type=None, **kwargs):
     """Thin wrapper around :meth:`Source.truncate` that sets default kwargs."""
+    if type in as1.ACTOR_TYPES:
+      length = LEXRPC_BASE.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
+    elif type in POST_TYPES:
+      length = LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text']['maxGraphemes']
+    else:
+      assert False, f'unexpected type {type}'
+
     kwargs = {
       'include_link': INCLUDE_LINK,
-      'target_length': self.TRUNCATE_TEXT_LENGTH,
+      'target_length': length,
       'link_length': None,
       'ellipsis': ' […]',
       **kwargs,

@@ -19,6 +19,7 @@ from ..bluesky import (
   did_web_to_url,
   from_as1,
   from_as1_to_strong_ref,
+  LEXRPC_BASE,
   MAX_IMAGES,
   NO_AUTHENTICATED_LABEL,
   to_as1,
@@ -778,7 +779,8 @@ class BlueskyTest(testutil.TestCase):
     # no facet
     self.assert_equals(POST_BSKY, self.from_as1(post_as))
 
-  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 15)
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=15)
   def test_from_as1_post_truncate_adds_link_embed(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
@@ -801,7 +803,18 @@ class BlueskyTest(testutil.TestCase):
       'content': 'more than ten chars long',
     }))
 
-  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 45)
+  def test_from_as1_post_truncate_full_length(self):
+    # check that we use the app.bsky.feed.post limit, not app.bsky.actor.profile's
+    # https://github.com/snarfed/bridgy-fed/issues/1128
+    content = 'Das #BSW spricht den ganzen Tag von Frieden und Diplomatie. Beide Seiten anhören angeblich. Aber wenn das Opfer des illegalen Angriffskriegs was zu sagen hat, dann verlasssen sie aus Protest den Saal? Deutlicher kann man nicht machen, dass man möchte, dass der Angreifer gewinnt.'
+    self.assert_equals(content, self.from_as1({
+      'objectType': 'note',
+      'url': 'http://my.inst/post',
+      'content': content,
+    })['text'])
+
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=45)
   def test_from_as1_post_with_images_truncated_puts_original_post_link_in_text(self):
     content = 'hello hello hello hello hello hello hello hello hello'
     self.assert_equals({
@@ -826,7 +839,8 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 51)
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=51)
   def test_from_as1_post_with_images_video_truncated_original_post_link_in_text(self):
     self.assert_equals({
       **POST_BSKY_IMAGES,
@@ -852,7 +866,8 @@ class BlueskyTest(testutil.TestCase):
       }],
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 40)
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=40)
   def test_from_as1_post_with_images_removes_facets_beyond_truncation(self):
     content = 'hello <a href="http://foo">link</a> goodbye goodbye goodbye goodbye'
     self.assert_equals({
@@ -877,7 +892,8 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 40)
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=40)
   def test_from_as1_post_with_images_truncates_facet_that_overlaps_truncation(self):
     content = '<a href="http://foo">hello link text</a> goodbye goodbye goodbye goodbye'
     self.assert_equals({
@@ -1194,7 +1210,8 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
-  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 12)
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=12)
   def test_from_as1_html_omit_link_facet_after_truncation(self):
     content = 'foo bar <a href="http://post">baaaaaaaz</a>'
     self.assert_equals({
@@ -2382,9 +2399,9 @@ class BlueskyTest(testutil.TestCase):
       with self.subTest(input=input):
         self.assertEqual(expected, self.bs.post_id(input))
 
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=20)
   def test_preview_post(self):
-    self.bs.TRUNCATE_TEXT_LENGTH = 20
-
     for content, expected in (
         ('foo ☕ bar', 'foo ☕ bar'),
         ('too long, will be ellipsized', 'too long, will […]'),
