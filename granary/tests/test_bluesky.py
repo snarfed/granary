@@ -852,6 +852,66 @@ class BlueskyTest(testutil.TestCase):
       }],
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
+  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 40)
+  def test_from_as1_post_with_images_removes_facets_beyond_truncation(self):
+    content = 'hello <a href="http://foo">link</a> goodbye goodbye goodbye goodbye'
+    self.assert_equals({
+      **POST_BSKY_IMAGES,
+      'text': 'hello […] \n\n[Original post on my.inst]',
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'http://my.inst/post',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://my.inst/post',
+        }],
+        'index': {
+          'byteStart': 12,
+          'byteEnd': 40,
+        },
+      }],
+    }, self.from_as1({
+      **POST_AS_IMAGES['object'],
+      'content': content,
+      'url': 'http://my.inst/post',
+    }, blobs={NEW_BLOB_URL: NEW_BLOB}))
+
+  @patch.object(Bluesky, 'TRUNCATE_TEXT_LENGTH', 40)
+  def test_from_as1_post_with_images_truncates_facet_that_overlaps_truncation(self):
+    content = '<a href="http://foo">hello link text</a> goodbye goodbye goodbye goodbye'
+    self.assert_equals({
+      **POST_BSKY_IMAGES,
+      'text': 'hello […] \n\n[Original post on my.inst]',
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'http://my.inst/post',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://my.inst/post',
+        }],
+        'index': {
+          'byteStart': 12,
+          'byteEnd': 40,
+        },
+      }, {
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://foo',
+        }],
+        'index': {
+          'byteStart': 0,
+          'byteEnd': 5,
+        },
+      }],
+    }, self.from_as1({
+      **POST_AS_IMAGES['object'],
+      'content': content,
+      'url': 'http://my.inst/post',
+    }, blobs={NEW_BLOB_URL: NEW_BLOB}))
+
   def test_from_as1_post_preserve_whitespace_plain_text(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

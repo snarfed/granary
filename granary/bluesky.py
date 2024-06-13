@@ -681,6 +681,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None, original_fields_prefix
       full_text, original_post_text_suffix, include_link=include_link,
       punctuation=('', ''))
     truncated = text != full_text
+    if truncated:
+      text_byte_end = len(text.split(ELLIPSIS, maxsplit=1)[0].encode())
+    else:
+      text_byte_end = len(text.encode())
 
     facets = []
     if (truncated and original_post_text_suffix
@@ -697,7 +701,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None, original_fields_prefix
         }
       })
 
-    # convert index-based tags to facets
+    # convert tags to facets
     for tag in tags + link_tags:
       name = tag.get('displayName', '').strip().lstrip('@#')
       type = tag.get('objectType')
@@ -785,13 +789,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None, original_fields_prefix
       index = facet.get('index')
       if not index:
         continue
-      text_len = len(text.encode())
-      if truncated:
-        text_len -= len(ELLIPSIS.encode())
-      if index.get('byteStart', 0) >= text_len:
+      if index.get('byteStart', 0) >= text_byte_end:
         continue
-      if index.get('byteEnd', 0) > text_len:
-        index['byteEnd'] = text_len
+      if index.get('byteEnd', 0) > text_byte_end:
+        index['byteEnd'] = text_byte_end
 
       if facet not in facets:
         facets.append(facet)
