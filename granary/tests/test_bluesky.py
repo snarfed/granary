@@ -2007,10 +2007,10 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'objectType': 'activity',
       'verb': 'block',
-      'object': 'https://bsky.app/profile/did:eve',
+      'object': 'did:eve',
     }, to_as1({
       '$type': 'app.bsky.graph.block',
-      'subject': 'https://bsky.app/profile/did:eve',
+      'subject': 'did:eve',
       'createdAt': '2022-01-02T03:04:05.000Z'
     }))
 
