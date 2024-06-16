@@ -33,6 +33,7 @@ CONNEG_HEADERS = {
     'Accept': f'{CONTENT_TYPE}, {CONTENT_TYPE_LD_PROFILE}',
 }
 CONTEXT = 'https://www.w3.org/ns/activitystreams'
+MISSKEY_QUOTE_CONTEXT = {"_misskey_quote": "https://misskey-hub.net/ns#_misskey_quote"}
 
 PUBLIC_AUDIENCE = 'https://www.w3.org/ns/activitystreams#Public'
 # All known Public values, cargo culted from:
@@ -180,9 +181,35 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
 
   in_reply_to = util.trim_nulls(all_from_as1('inReplyTo', compact=True))
 
-  attachments = all_from_as1('attachments')
+  # tags and attachments. extract quoted posts from attachments
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/e232/fep-e232.md
+  tags = all_from_as1('tags')
+  atts = util.pop_list(obj, 'attachments')
+  attachments = []
+  quotes = []
+  for att in atts:
+    if att.get('objectType') == 'note' and att.get('url'):
+      quote = from_as1(att, context=None, top_level=False)
+      quote.update({
+        'type': 'Link',
+        'mediaType': CONTENT_TYPE_LD_PROFILE,
+        'href': quote.pop('url', None)
+      })
+      quotes.append(quote)
+    else:
+      attachments.append(from_as1(att, context=None, top_level=False))
 
-  # Mastodon profile metadata fields
+  tags.extend(quotes)
+
+  if quotes:
+    href = quotes[0].get('href')
+    # https://misskey-hub.net/ns#_misskey_quote
+    obj['_misskey_quote'] = href
+    obj['@context'] = util.get_list(obj, '@context') + [MISSKEY_QUOTE_CONTEXT]
+    # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
+    obj['quoteUrl'] = href
+
+  # Mastodon profile metadata fields into attachments
   # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
   # https://github.com/snarfed/bridgy-fed/issues/323
   #
@@ -224,7 +251,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'attributedTo': all_from_as1('author', type='Person', compact=True),
     'inReplyTo': in_reply_to,
     'object': inner_objs,
-    'tag': all_from_as1('tags'),
+    'tag': tags,
     'preferredUsername': obj.pop('username', None),
     'url': urls,
     'urls': None,
@@ -460,16 +487,47 @@ def to_as1(obj, use_type=True):
   if not displayName and obj.get('objectType') in as1.ACTOR_TYPES:
     displayName = address(obj)
 
+  # extract quoted posts from tags
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/e232/fep-e232.md
+  attachments = all_to_as1('attachment')
+  tags_as1 = []
+  quote_urls = []
+  for tag in util.pop_list(obj, 'tag'):
+    if (tag.get('type') == 'Link'  # TODO: Link subtypes?
+        and tag.get('mediaType') in (CONTENT_TYPE_LD_PROFILE, CONTENT_TYPE)
+        and tag.get('href')):
+      quote = to_as1(tag)
+      url = quote.pop('href')
+      quote_urls.append(url)
+      quote.update({
+        'objectType': 'note',
+        'url': url,
+      })
+      attachments.append(quote)
+    else:
+      tags_as1.append(to_as1(tag))
+
+  # check quote post fields on the top level object
+  # https://misskey-hub.net/ns#_misskey_quote
+  # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
+  for quote_field in '_misskey_quote', 'quoteUrl':
+    if quote_url := obj.pop(quote_field, None):
+      if quote_url not in quote_urls:
+        attachments.append({
+          'objectType': 'note',
+          'url': quote_url,
+        })
+
   obj.update({
     'displayName': displayName,
     'username': preferred_username,
     'actor': actor['id'] if actor.keys() == set(['id']) else actor,
-    'attachments': all_to_as1('attachment'),
+    'attachments': attachments,
     'image': as1_images,
     'inReplyTo': [to_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': to_as1(obj.get('location')),
     'object': inner_objs,
-    'tags': all_to_as1('tag'),
+    'tags': tags_as1,
     'to': as1_to,
     'cc': as1_cc,
     # question (poll) responses

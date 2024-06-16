@@ -2,7 +2,7 @@
   "$type": "app.bsky.feed.post",
   "text": "I hereby quote",
   "fooOriginalText": "I hereby quote",
-  "fooOriginalUrl": "https://quote",
+  "fooOriginalUrl": "https://quote/",
   "createdAt": "2007-07-07T03:04:05.000Z",
   "embed": {
     "$type": "app.bsky.embed.record",

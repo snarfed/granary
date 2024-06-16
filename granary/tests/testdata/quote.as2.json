@@ -4,15 +4,15 @@
     {"_misskey_quote": "https://misskey-hub.net/ns#_misskey_quote"}
   ],
   "type": "Note",
-  "url": "https://quote",
+  "url": "https://quote/",
   "content": "I hereby quote",
   "published": "2007-07-07T03:04:05",
   "attributedTo": {
     "type": "Person",
-    "url": "https://bob.bsky.social",
+    "url": "https://bob.bsky.social/",
     "name": "Bob",
-    "icon": {"type": "Image", "url": "https://bob.jpg"},
-    "image": {"type": "Image", "url": "https://bob.jpg"}
+    "icon": {"type": "Image", "url": "https://bob/jpg"},
+    "image": {"type": "Image", "url": "https://bob/jpg"}
   },
   "tag": [{
     "type": "Link",
@@ -22,10 +22,10 @@
     "published": "2023-05-11T19:59:12Z",
     "attributedTo": {
       "type": "Person",
-      "url": "https://alice.example.com",
+      "url": "https://alice.example.com/",
       "name": "Alice",
-      "icon": {"type": "Image", "url": "https://alice.jpg"},
-      "image": {"type": "Image", "url": "https://alice.jpg"}
+      "icon": {"type": "Image", "url": "https://alice/jpg"},
+      "image": {"type": "Image", "url": "https://alice/jpg"}
     }
   }],
   "quoteUrl": "https://bsky.app/orig/post",
