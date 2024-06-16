@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 from oauth_dropins.webutil import util
 
 from . import as1
-from .source import Source
+from .source import html_to_text, Source
 
 logger = logging.getLogger(__name__)
 
@@ -203,11 +203,19 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
 
   if quotes:
     href = quotes[0].get('href')
-    # https://misskey-hub.net/ns#_misskey_quote
-    obj['_misskey_quote'] = href
-    obj['@context'] = util.get_list(obj, '@context') + [MISSKEY_QUOTE_CONTEXT]
-    # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
-    obj['quoteUrl'] = href
+    obj.update({
+      '@context': util.get_list(obj, '@context') + [MISSKEY_QUOTE_CONTEXT],
+      # https://misskey-hub.net/ns#_misskey_quote
+      '_misskey_quote': href,
+      # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
+      'quoteUrl': href,
+    })
+    content = obj.setdefault('content', '')
+    if not re.search(fr'\sRE: <?{href}>?\s?$', html_to_text(content)):
+      if content:
+        obj['content'] += '<br><br>'
+      obj['content'] += f'RE: <a href="{href}">{href}</a>'
+      quotes[0]['name'] = f'RE: {href}'
 
   # Mastodon profile metadata fields into attachments
   # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
@@ -502,8 +510,21 @@ def to_as1(obj, use_type=True):
       quote.update({
         'objectType': 'note',
         'url': url,
+        'displayName': None,
       })
       attachments.append(quote)
+
+      # remove RE: ... text suffix if it's there
+      #
+      # TODO: do full HTML parsing of content, look for innerText that matches
+      # name, and update those links' targets. that's technically FEP-e232's
+      # intent, but way too complicated for right now.
+      # https://socialhub.activitypub.rocks/t/fep-e232-object-links/2722/29
+      obj.setdefault('content', '')
+      obj['content'] = re.sub(
+        fr'(\s|(<br>)+)?RE: (<a href="{url}">)?<?{url}>?(</a>)?\s?$', '',
+        obj['content'])
+
     else:
       tags_as1.append(to_as1(tag))
 
