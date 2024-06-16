@@ -228,19 +228,15 @@ def is_public(obj, unlisted=True):
   aliases = util.trim_nulls([t.get('alias') for t in to])
   object_types = util.trim_nulls([t.get('objectType') for t in to])
 
-  try:
-    if '@public' in aliases or ('@unlisted' in aliases and unlisted):
-      return True
-    elif 'unknown' in object_types:
-      return None
-    elif aliases:
-      return False
-    elif 'to' in obj or 'to' in inner_obj:
-      # it does at least have some audience that doesn't include public
-      return False
-  except BaseException as e:
-    util.d(obj)
-    raise
+  if '@public' in aliases or ('@unlisted' in aliases and unlisted):
+    return True
+  elif 'unknown' in object_types:
+    return None
+  elif aliases:
+    return False
+  elif 'to' in obj or 'to' in inner_obj:
+    # it does at least have some audience that doesn't include public
+    return False
 
   return True
 
