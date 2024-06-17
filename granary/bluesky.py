@@ -1149,10 +1149,9 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     elif embed_type in ('app.bsky.embed.external', 'app.bsky.embed.record'):
       ret['attachments'] = [to_as1(embed, **kwargs)]
     elif embed_type == 'app.bsky.embed.recordWithMedia':
-      # TODO
-      # ret['attachments'] = [to_as1(embed.get('record', {}).get('record'),
-      #                              type='com.atproto.repo.strongRef', **kwargs)]
-      ret['attachments'] = []
+      ret['attachments'] = [to_as1(embed, **kwargs)]
+      # TODO: stop reaching inside and do this in the to_as1 call instead?
+      # need to make it return both the quote post attachment and the image.
       media = embed.get('media')
       media_type = media.get('$type')
       if media_type == 'app.bsky.embed.external':
@@ -1235,14 +1234,21 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         ret['image'] = thumb
 
   elif type == 'app.bsky.embed.record':
-    return None
-    # TODO
-    # return (to_as1(record, **kwargs, type='com.atproto.repo.strongRef')
-    #         if record else None)
+    at_uri = to_as1(obj.get('record'), type='com.atproto.repo.strongRef', **kwargs)
+    if not at_uri:
+      return None
+    ret = {
+      'objectType': 'note',
+      'id': at_uri,
+      'url': at_uri_to_web_url(at_uri),
+    }
+
+  elif type == 'app.bsky.embed.recordWithMedia':
+    ret = to_as1(obj.get('record'), type='app.bsky.embed.record', **kwargs)
+    # TODO: move media handling here from app.bsky.feed.post embed block above
 
   elif type == 'app.bsky.embed.record#view':
-    record = obj.get('record')
-    return to_as1(record, **kwargs) if record else None
+    return to_as1(obj.get('record'), type='app.bsky.embed.record', **kwargs)
 
   elif type in ('app.bsky.embed.record#viewNotFound',
                 'app.bsky.embed.record#viewBlocked',

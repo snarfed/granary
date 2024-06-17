@@ -302,6 +302,8 @@ _Non-breaking changes:_
 * `bluesky`:
   * `to_as1`:
     * Add support for:
+      * `app.bsky.embed.record`
+      * `app.bsky.embed.recordWithMedia`
       * `app.bsky.feed.defs#notFoundPost`
       * `app.bsky.feed.generator`
       * `app.bsky.graph.block`

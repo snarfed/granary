@@ -1944,6 +1944,61 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(
       post_as, to_as1(post_bsky, repo_did='did:plc:foo', repo_handle='han.dull'))
 
+  def test_to_as1_embed_record(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'something to say',
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'at://did:alice/app.bsky.feed.post/tid',
+        'url': 'https://bsky.app/profile/did:alice/post/tid',
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'something to say',
+      'embed': {
+        '$type': 'app.bsky.embed.record',
+        'record': {
+          'uri': 'at://did:alice/app.bsky.feed.post/tid',
+          'cid': 'my-syd',
+        },
+      },
+    }))
+
+  def test_to_as1_embed_record_with_media(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'something to say',
+      'author': 'did:plc:foo',
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'at://did:alice/app.bsky.feed.post/tid',
+        'url': 'https://bsky.app/profile/did:alice/post/tid',
+      }],
+      'image': [NEW_BLOB_URL],
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'something to say',
+      'embed': {
+        '$type': 'app.bsky.embed.recordWithMedia',
+        'record': {
+          '$type': 'app.bsky.embed.record',
+          'record': {
+            'uri': 'at://did:alice/app.bsky.feed.post/tid',
+            'cid': 'my-syd',
+          },
+        },
+        'media': {
+          '$type': 'app.bsky.embed.images',
+          'images': [{
+            '$type': 'app.bsky.embed.images#image',
+            'alt': '',
+            'image': NEW_BLOB,
+          }]
+        }
+      },
+    }, repo_did='did:plc:foo'))
+
   def test_to_as1_embed_block(self):
     self.assertIsNone(to_as1({
       '$type': 'app.bsky.embed.record#viewBlocked',
