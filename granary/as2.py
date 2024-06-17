@@ -188,13 +188,16 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   attachments = []
   quotes = []
   for att in atts:
-    if att.get('objectType') == 'note' and att.get('url'):
+    href = att.get('id') or att.get('url')
+    if att.get('objectType') == 'note' and href:
       quote = from_as1(att, context=None, top_level=False)
       quote.update({
         'type': 'Link',
         'mediaType': CONTENT_TYPE_LD_PROFILE,
-        'href': quote.pop('url', None)
+        'href': href,
       })
+      quote.pop('id', None)
+      quote.pop('url', None)
       quotes.append(quote)
     else:
       attachments.append(from_as1(att, context=None, top_level=False))
@@ -509,7 +512,7 @@ def to_as1(obj, use_type=True):
       quote_urls.append(url)
       quote.update({
         'objectType': 'note',
-        'url': url,
+        'id': url,
         'displayName': None,
       })
       attachments.append(quote)

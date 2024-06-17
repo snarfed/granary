@@ -11,7 +11,7 @@
   },
   "attachments": [{
     "objectType": "note",
-    "url": "https://bsky.app/orig/post",
+    "id": "https://bsky.app/orig/post",
     "content": "An original post",
     "published": "2023-05-11T19:59:12Z",
     "author": {
