@@ -116,6 +116,9 @@ TYPES_WITH_OBJECT = {VERB_TO_TYPE[v] for v in as1.VERBS_WITH_OBJECT
 MASTODON_ALLOWED_IMAGE_EXTS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
 MASTODON_ALLOWED_IMAGE_TYPES = ('image/jpeg', 'image/png', 'image/gif', 'image/webp')
 
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/e232/fep-e232.md#user-content-examples
+QUOTE_RE_SUFFIX = re.compile(r'\s+RE: <?[^\s]+>?\s?$')
+
 
 def get_urls(obj, key='url'):
   """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
@@ -214,7 +217,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       'quoteUrl': href,
     })
     content = obj.setdefault('content', '')
-    if not re.search(fr'\sRE: <?{href}>?\s?$', html_to_text(content)):
+    if not QUOTE_RE_SUFFIX.search(html_to_text(content)):
       if content:
         obj['content'] += '<br><br>'
       obj['content'] += f'RE: <a href="{href}">{href}</a>'
@@ -525,7 +528,7 @@ def to_as1(obj, use_type=True):
       # https://socialhub.activitypub.rocks/t/fep-e232-object-links/2722/29
       obj.setdefault('content', '')
       obj['content'] = re.sub(
-        fr'(\s|(<br>)+)?RE: (<a href="{url}">)?<?{url}>?(</a>)?\s?$', '',
+        fr'(\s|(<br>)+)?RE: (</span>)?(<a href="{url}">)?<?{url}>?(</a>)?\s?$', '',
         obj['content'])
 
     else:
@@ -541,6 +544,7 @@ def to_as1(obj, use_type=True):
           'objectType': 'note',
           'url': quote_url,
         })
+        quote_urls.append(quote_url)
 
   obj.update({
     'displayName': displayName,

@@ -1657,6 +1657,53 @@ class BlueskyTest(testutil.TestCase):
       'target': 'at://did:alice/app.bsky.graph.list/tid',
     }))
 
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:alice/app.bsky.feed.post/tid',
+    'cid': 'my-syd',
+    'value': {},
+  }))
+  def test_from_as1_quote_post_with_image(self, mock_get):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'late morning ...',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.recordWithMedia',
+        'record': {
+          '$type': 'app.bsky.embed.record',
+          'record': {
+            'uri': 'at://did:alice/app.bsky.feed.post/tid',
+            'cid': 'my-syd',
+          },
+        },
+        'media': {
+          '$type': 'app.bsky.embed.images',
+          'images': [{
+            '$type': 'app.bsky.embed.images#image',
+            'alt': '',
+            'image': NEW_BLOB,
+          }],
+        },
+      },
+    }, self.from_as1({
+      'objectType': 'note',
+      'id': 'https://orig/post',
+      'content': '<p>late morning ...<br><br>RE: </span><a href=\"https://makai.chaotic.ninja/notes/9stkybisvk\">https://makai.chaotic.ninja/notes/9stkybisvk</a></p>',
+      'attachments': [{
+        'objectType': 'note',
+        'url': 'https://bsky.app/profile/did:x/post/yz',
+      }],
+      'image': [{
+        'objectType': 'image',
+        'url': NEW_BLOB_URL,
+      }],
+    }, client=self.bs._client, blobs={NEW_BLOB_URL: NEW_BLOB}),
+    ignore=['fooOriginalText'])
+
+    self.assert_call(
+      mock_get,
+      'com.atproto.repo.getRecord?repo=did%3Ax&collection=app.bsky.feed.post&rkey=yz')
+
   def test_maybe_validate_truncate(self):
     short = 'x' * 63
     long = 'x' * 65

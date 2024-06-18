@@ -22,6 +22,7 @@ from oauth_dropins.webutil.util import trim_nulls
 import requests
 
 from . import as1
+from .as2 import QUOTE_RE_SUFFIX
 from .source import (
   creation_result,
   FRIENDS,
@@ -835,6 +836,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None, original_fields_prefix
           '$type': f'app.bsky.embed.record',
           'record': from_as1_to_strong_ref(att, client=client),
         }
+        text = QUOTE_RE_SUFFIX.sub('', text)
       else:
         # external link
         external_record_embed = {
