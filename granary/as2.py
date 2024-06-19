@@ -190,8 +190,11 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   atts = util.pop_list(obj, 'attachments')
   attachments = []
   quotes = []
+  quote_url = None
   for att in atts:
-    href = att.get('id') or att.get('url')
+    id = att.get('id')
+    url = att.get('url')
+    href = id or url
     if att.get('objectType') == 'note' and href:
       quote = from_as1(att, context=None, top_level=False)
       quote.update({
@@ -199,29 +202,33 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
         'mediaType': CONTENT_TYPE_LD_PROFILE,
         'href': href,
       })
+
+      if not quotes:
+        # first quote, add it to top level object
+        obj.update({
+          '@context': util.get_list(obj, '@context') + [MISSKEY_QUOTE_CONTEXT],
+          # https://misskey-hub.net/ns#_misskey_quote
+          '_misskey_quote': href,
+          # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
+          'quoteUrl': href,
+        })
+        content = obj.setdefault('content', '')
+        if not QUOTE_RE_SUFFIX.search(html_to_text(content)):
+          if content:
+            obj['content'] += '<br><br>'
+          url = url or id
+          obj['content'] += f'RE: <a href="{url}">{url}</a>'
+          quote['name'] = f'RE: {url}'
+
       quote.pop('id', None)
       quote.pop('url', None)
       quotes.append(quote)
-    else:
+
+    else:  # not a quote
       attachments.append(from_as1(att, context=None, top_level=False))
 
   tags.extend(quotes)
 
-  if quotes:
-    href = quotes[0].get('href')
-    obj.update({
-      '@context': util.get_list(obj, '@context') + [MISSKEY_QUOTE_CONTEXT],
-      # https://misskey-hub.net/ns#_misskey_quote
-      '_misskey_quote': href,
-      # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
-      'quoteUrl': href,
-    })
-    content = obj.setdefault('content', '')
-    if not QUOTE_RE_SUFFIX.search(html_to_text(content)):
-      if content:
-        obj['content'] += '<br><br>'
-      obj['content'] += f'RE: <a href="{href}">{href}</a>'
-      quotes[0]['name'] = f'RE: {href}'
 
   # Mastodon profile metadata fields into attachments
   # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue

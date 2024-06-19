@@ -149,6 +149,28 @@ class ActivityStreams2Test(testutil.TestCase):
       }]
     }))
 
+  def test_from_as1_quote_post_separate_id_and_url(self):
+    # https://github.com/snarfed/bridgy-fed/issues/461#issuecomment-2176620836
+    self.assert_equals({
+      'type': 'Note',
+      'content': 'RE: <a href="http://the/url">http://the/url</a>',
+      'tag': [{
+        'type': 'Link',
+        'mediaType': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        'href': 'http://the/id',
+        'name': 'RE: http://the/url',
+      }],
+      'quoteUrl': 'http://the/id',
+      '_misskey_quote': 'http://the/id'
+    }, as2.from_as1({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'http://the/id',
+        'url': 'http://the/url',
+      }]
+    }), ignore=['@context'])
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
