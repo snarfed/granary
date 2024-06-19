@@ -389,7 +389,8 @@ def base_object(obj):
   return {}
 
 
-def from_as1(obj, out_type=None, blobs=None, client=None, original_fields_prefix=None):
+def from_as1(obj, out_type=None, blobs=None, client=None,
+             original_fields_prefix=None):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
