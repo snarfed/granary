@@ -478,7 +478,8 @@ def to_as1(obj, use_type=True):
 
   if type in ('Create', 'Update'):
     for inner_obj in inner_objs:
-      if inner_obj.get('objectType') not in as1.ACTOR_TYPES:
+      if (isinstance(inner_obj, dict)
+          and inner_obj.get('objectType') not in as1.ACTOR_TYPES):
         author = inner_obj.setdefault('author', {})
         if isinstance(author, dict):
           author.update(actor)

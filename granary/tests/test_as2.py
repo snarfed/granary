@@ -495,6 +495,18 @@ class ActivityStreams2Test(testutil.TestCase):
       'to': 'http://bob',
     }))
 
+  def test_to_as1_update_string_object(self):
+    self.assertEqual({
+      'objectType': 'activity',
+      'verb': 'update',
+      'actor': 'http://alice',
+      'object': 'http://foo',
+    }, as2.to_as1({
+      'type': 'Update',
+      'actor': 'http://alice',
+      'object': 'http://foo',
+    }))
+
   def test_link_tags(self):
     # no indices, shouuld be a noop
     obj = {
