@@ -273,6 +273,9 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
     'inReplyTo': in_reply_to,
     'object': inner_objs,
     'tag': tags,
+    # note that preferredUsername comes from ActivityPub, not AS2
+    # https://www.w3.org/TR/activitypub/#actor-objects
+    # ...and username isn't officially in AS1
     'preferredUsername': obj.pop('username', None),
     'url': urls,
     'urls': None,
@@ -504,6 +507,8 @@ def to_as1(obj, use_type=True):
   elif PUBLICS.intersection(cc):
     as1_to.append({'objectType': 'group', 'alias': '@unlisted'})
 
+  # note that preferredUsername is in ActivityPub, not AS2
+  # https://www.w3.org/TR/activitypub/#actor-objects
   preferred_username = obj.pop('preferredUsername', None)
   displayName = obj.pop('name', None) or preferred_username
   if not displayName and obj.get('objectType') in as1.ACTOR_TYPES:
@@ -556,6 +561,7 @@ def to_as1(obj, use_type=True):
 
   obj.update({
     'displayName': displayName,
+    # username isn't officially in AS1
     'username': preferred_username,
     'actor': actor['id'] if actor.keys() == set(['id']) else actor,
     'attachments': attachments,
