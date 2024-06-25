@@ -315,6 +315,7 @@ _Non-breaking changes:_
     * Add hashtag facet support.
     * Convert blobs in embeds to `getBlob` image URLs.
     * `app.bsky.actor.profile`: add HTML links for URLs in `summary` ([snarfed/bridgy-fed#1065](https://github.com/snarfed/bridgy-fed/issues/1065)).
+    * Escape HTML characters (`<`, `>`, `&`) in `app.bsky.actor.profile` `description` field.
     * Bug fix for `create`/`update` activities with bare string `object`.
   * `from_as1`:
     * Add hashtag, mention, block, and flag support. Interpret `tags` with missing `objectType` as hashtags.

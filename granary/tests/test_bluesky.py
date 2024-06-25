@@ -4,6 +4,7 @@ Most tests are via files in testdata/.
 """
 import copy
 from io import BytesIO
+from unittest import skip
 from unittest.mock import ANY, patch
 
 from oauth_dropins.webutil import testutil, util
@@ -1743,6 +1744,15 @@ class BlueskyTest(testutil.TestCase):
       'description': 'one http://li.nk/foo two li.nk three https://www.li.nk/',
     }))
 
+  def test_to_as1_profile_escape_html_chars(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'summary': 'one &lt;two&gt; &lt;thr&amp;ee&gt;',
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'description': 'one <two> <thr&ee>',
+    }))
+
   def test_to_as1_profile_bsky_social_handle_is_not_url(self):
     self.assert_equals({
       'objectType': 'person',
@@ -1820,6 +1830,16 @@ class BlueskyTest(testutil.TestCase):
       'content': 'My original post',
       'published': '2007-07-07T03:04:05.000Z',
     }, to_as1(POST_BSKY, uri='at://alice.com/app.bsky.feed.post/123'))
+
+  @skip
+  def test_to_as1_post_escape_html_chars(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'summary': 'one &lt;two&gt; &lt;thr&amp;ee&gt;',
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'one <two> <thr&ee>',
+    }))
 
   def test_to_as1_post_view(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_VIEW_BSKY))

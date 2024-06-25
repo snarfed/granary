@@ -6,6 +6,7 @@
 """
 import copy
 from datetime import datetime, timezone
+import html
 import json
 import logging
 from pathlib import Path
@@ -1053,11 +1054,12 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         'username': obj.get('handle') or repo_handle,
       }
 
+    desc = html.escape(obj.get('description') or '')
     ret.update({
       'url': util.dedupe_urls(urls),
       'displayName': obj.get('displayName'),
       # TODO: for app.bsky.feed.generator, use descriptionFacets
-      'summary': util.linkify(obj.get('description') or '', pretty=True),
+      'summary': util.linkify(desc, pretty=True),
       'image': images,
       'published': obj.get('createdAt'),
     })
@@ -1085,7 +1087,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         }]
 
   elif type == 'app.bsky.feed.post':
+    # TODO: escape HTML chars. difficult because we have to shuffle over facet
+    # indices to match.
     text = obj.get('text', '')
+    text_encoded = text.encode()
 
     # convert facets to tags
     tags = []
@@ -1117,7 +1122,6 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
       try:
         if byte_start is not None:
-          text_encoded = text.encode()
           tag['startIndex'] = len(text_encoded[:byte_start].decode())
           if byte_end is not None:
             name = text_encoded[byte_start:byte_end].decode()
