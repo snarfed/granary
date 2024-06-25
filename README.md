@@ -200,7 +200,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    source local/bin/activate.csh
    CLOUDSDK_CORE_PROJECT=granary-demo gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
    sleep 5
-   python3 -m unittest discover
+   python -m unittest discover
    kill %1
    deactivate
    ```
@@ -210,7 +210,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
    ```sh
-   python3 setup.py clean build sdist
+   python setup.py clean build sdist
    setenv ver X.Y
    source local/bin/activate.csh
    twine upload -r pypitest dist/granary-$ver.tar.gz
@@ -218,18 +218,18 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Install from test.pypi.org.
    ```sh
    cd /tmp
-   python3 -m venv local
+   python -m venv local
    source local/bin/activate.csh
-   pip3 uninstall granary # make sure we force Pip to use the uploaded version
-   pip3 install --upgrade pip
-   pip3 install mf2py==1.1.2
-   pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
+   pip uninstall granary # make sure we force Pip to use the uploaded version
+   pip install --upgrade pip
+   pip install mf2py==1.1.2
+   pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
    deactivate
    ```
 1. Smoke test that the code trivially loads and runs.
    ```sh
    source local/bin/activate.csh
-   python3
+   python
    # run test code below
    deactivate
    ```
@@ -281,7 +281,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 7.0 - unreleased
+### 7.0 - 2024-06-24
 
 _Breaking changes:_
 

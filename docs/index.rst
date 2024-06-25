@@ -450,8 +450,30 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-6.3 - unreleased
+7.0 - 2024-06-24
 ~~~~~~~~~~~~~~~~
+
+*Breaking changes:*
+
+-  ``jsonfeed``:
+
+   -  ``jsonfeed_to_activities``: return AS1 objects, not activities.
+
+*Non-breaking changes:*
+
+-  ``as1``:
+
+   -  ``activity_changed``: add ``displayName``, ``summary`` fields.
+   -  ``is_public``: return ``False`` if the object/activity contains
+      ``to`` that’s empty or has only unknown aliases.
+
+-  ``as2``:
+
+   -  Add support for the ``Application``, ``Block``, ``Flag``, and
+      ``Link`` types.
+   -  Generalize actor logic in ``to/from_as1`` across all actor types,
+      not just ``Person``.
+   -  Add new ``link_tags`` function.
 
 -  ``atom``:
 
@@ -462,18 +484,64 @@ Changelog
 
    -  ``to_as1``:
 
-      -  Support ``app.bsky.feed.defs#notFoundPost`` records.
+      -  Add support for:
+
+         -  ``app.bsky.embed.record``
+         -  ``app.bsky.embed.recordWithMedia``
+         -  ``app.bsky.feed.defs#notFoundPost``
+         -  ``app.bsky.feed.generator``
+         -  ``app.bsky.graph.block``
+         -  ``app.bsky.graph.list``
+         -  ``app.bsky.graph.listitem``
+         -  ``com.atproto.admin.defs#repoRef``
+         -  ``com.atproto.moderation.createReport#input``
+         -  ``com.atproto.repo.strongRef``
+
       -  Add hashtag facet support.
       -  Convert blobs in embeds to ``getBlob`` image URLs.
+      -  ``app.bsky.actor.profile``: add HTML links for URLs in
+         ``summary``
+         (`snarfed/bridgy-fed#1065 <https://github.com/snarfed/bridgy-fed/issues/1065>`__).
+      -  Escape HTML characters (``<``, ``>``, ``&``) in
+         ``app.bsky.actor.profile`` ``description`` field.
+      -  Bug fix for ``create``/``update`` activities with bare string
+         ``object``.
 
    -  ``from_as1``:
 
-      -  Add hashtag and mention support.
+      -  Add hashtag, mention, block, and flag support. Interpret
+         ``tags`` with missing ``objectType`` as hashtags.
       -  Guess missing indices in facets based on content text.
          Otherwise, if we still don’t know a facet’s indices, discard
          it.
+      -  Extract HTML links ( tags) from HTML content and convert to
+         link facets
+         (`snarfed/bridgy-fed#976 <https://github.com/snarfed/bridgy-fed/issues/976>`__).
+      -  If an output string value is longer than its ``maxGraphemes``
+         or ``maxLength`` in its lexicon, truncate it with an ``…``
+         ellipsis character at the end in order to fit. If this happens
+         to post text, include a link embed pointing to the original
+         post.
+      -  If the object has a video, include an external embed pointing
+         to the original post and mark it as ``[Video]``
+         (`snarfed/bridgy-fed#1078 <https://github.com/snarfed/bridgy-fed/issues/1078>`__).
+      -  If the object has images, add the original post link to the end
+         of the text, since Bluesky doesn’t support both image and
+         external embeds in the same post
+         (`bluesky-social/atproto#2575 <https://github.com/bluesky-social/atproto/discussions/2575>`__,
+         `snarfed/bridgy-fed#1106 <https://github.com/snarfed/bridgy-fed/issues/1106>`__).
+      -  If a ``note`` has ``summary`` - often used for content warnings
+         in the fediverse - add it to ``content`` as a prefix instead of
+         overriding ``content``
+         (`snarfed/bridgy-fed#1001 <https://github.com/snarfed/bridgy-fed/issues/1001>`__).
       -  Populate ``reply.root`` properly in reply posts
          (`snarfed/bridgy#1696 <https://github.com/snarfed/bridgy/issues/1696>`__).
+      -  Add new ``original_fields_prefix`` kwarg to store original data
+         in custom (off-Lexicon) ``*OriginalDescription`` and
+         ``*OriginalUrl`` fields in ``app.bsky.actor.profile`` and
+         ``*OriginalText`` and ``*OriginalUrl`` fields in
+         ``app.bsky.feed.post``
+         (`snarfed/bridgy-fed#1092 <https://github.com/snarfed/bridgy-fed/issues/1092>`__).
       -  Support ``lexrpc.Client`` as well as ``Bluesky`` for ``client``
          kwarg.
 
@@ -484,6 +552,8 @@ Changelog
 
 -  ``microformats2``:
 
+   -  Generalize actor logic across all actor types, not just
+      ``person``.
    -  ``json_to_object``:
 
       -  Strip leading ``#`` prefix (if present) from hashtag
@@ -496,10 +566,16 @@ Changelog
       -  Convert both ``id`` and ``url`` inside ``inReplyTo`` to
          ``in-reply-to.``
 
+-  ``nostr``:
+
+   -  Handle connection closing while sending initial query.
+
 -  ``source``:
 
    -  ``Source.postprocess``: when extracting @-mentions, defer to
       existing tag if it has the same ``displayName`` and has ``url``.
+
+.. _section-1:
 
 6.2 - 2024-03-15
 ~~~~~~~~~~~~~~~~
@@ -661,7 +737,7 @@ Changelog
    -  ``postprocess_activity/object``: add ``mentions`` kwarg to convert
       @-mentions in HTML links to ``mention`` tags.
 
-.. _section-1:
+.. _section-2:
 
 6.1 - 2023-09-16
 ~~~~~~~~~~~~~~~~
@@ -803,7 +879,7 @@ at least in the REST API.
 
    -  ``from_activities``: handle bare string id ``author``.
 
-.. _section-2:
+.. _section-3:
 
 6.0 - 2023-03-22
 ~~~~~~~~~~~~~~~~
@@ -916,7 +992,7 @@ at least in the REST API.
 
    -  ``from_activities``: fix item ordering to match input activities.
 
-.. _section-3:
+.. _section-4:
 
 5.0 - 2022-12-03
 ~~~~~~~~~~~~~~~~
@@ -1051,7 +1127,7 @@ at least in the REST API.
 -  ``Source.original_post_discovery``: add new ``max_redirect_fetches``
    keyword arg.
 
-.. _section-4:
+.. _section-5:
 
 4.0 - 2022-03-23
 ~~~~~~~~~~~~~~~~
@@ -1097,7 +1173,7 @@ at least in the REST API.
 
    -  Handle malformed ``items.author`` element.
 
-.. _section-5:
+.. _section-6:
 
 3.2 - 2021-09-15
 ~~~~~~~~~~~~~~~~
@@ -1155,7 +1231,7 @@ at least in the REST API.
 -  REST API: ported web framework from webapp2 to Flask. No user-visible
    behavior change expected.
 
-.. _section-6:
+.. _section-7:
 
 3.1 - 2021-04-03
 ~~~~~~~~~~~~~~~~
@@ -1260,7 +1336,7 @@ at least in the REST API.
    -  ``from_as1()``: convert ``username`` to ``preferredUsername``.
    -  ``from_as1()``: bug fix, make ``context`` kwarg actually work.
 
-.. _section-7:
+.. _section-8:
 
 3.0 - 2020-04-08
 ~~~~~~~~~~~~~~~~
@@ -1339,7 +1415,7 @@ Non-breaking changes:
    caching now.
 -  Added Meetup.com support for publishing RSVPs.
 
-.. _section-8:
+.. _section-9:
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
@@ -1388,7 +1464,7 @@ Non-breaking changes:
       supports one enclosure per item, so we now only include the first,
       and log a warning if the activity has more.)
 
-.. _section-9:
+.. _section-10:
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
@@ -1438,7 +1514,7 @@ Non-breaking changes:
 
    -  Default title to ellipsized content.
 
-.. _section-10:
+.. _section-11:
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
@@ -1447,7 +1523,7 @@ Non-breaking changes:
 March <https://developers.google.com/+/api-shutdown>`__. Notably, this
 removes the ``googleplus`` module.
 
-.. _section-11:
+.. _section-12:
 
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
@@ -1498,7 +1574,7 @@ removes the ``googleplus`` module.
 -  ``/url``: Return HTTP 400 when fetching the user’s URL results in an
    infinite redirect.
 
-.. _section-12:
+.. _section-13:
 
 1.14 - 2018-11-12
 ~~~~~~~~~~~~~~~~~
@@ -1525,7 +1601,7 @@ Encode ``&``\ s in author URL and email address too. (Thanks
 `sebsued <https://twitter.com/sebsued>`__!) \* AS2: \* Add ``Follow``
 support.
 
-.. _section-13:
+.. _section-14:
 
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
@@ -1586,7 +1662,7 @@ support.
    -  Support ``alt`` attribute in ``<img>`` tags
       (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
-.. _section-14:
+.. _section-15:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
@@ -1621,7 +1697,7 @@ impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. _section-15:
+.. _section-16:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -1694,7 +1770,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Omit title from items if it’s the same as the content. (Often
       caused by microformats2’s implied ``p-name`` logic.)
 
-.. _section-16:
+.. _section-17:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -1736,7 +1812,7 @@ still bugs. Please file issues if you notice anything broken!
    -  Fix bug that omitted title in some cases
       (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. _section-17:
+.. _section-18:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -1764,7 +1840,7 @@ still bugs. Please file issues if you notice anything broken!
       ``json``, ``json-mf2``, and ``xml`` are still accepted, but
       deprecated.
 
-.. _section-18:
+.. _section-19:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -1844,7 +1920,7 @@ still bugs. Please file issues if you notice anything broken!
    `bug <https://github.com/kylewm/brevity/issues/5>`__
    `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. _section-19:
+.. _section-20:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -1892,7 +1968,7 @@ still bugs. Please file issues if you notice anything broken!
    on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
    is the default on Mac OS X, Windows, and older \*nix.
 
-.. _section-20:
+.. _section-21:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -1926,7 +2002,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Error handling: return HTTP 502 for non-JSON API responses, 504 for
    connection failures.
 
-.. _section-21:
+.. _section-22:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -1964,14 +2040,14 @@ still bugs. Please file issues if you notice anything broken!
    -  Switch creating comments and reactions from GraphQL to REST API
       (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
-.. _section-22:
+.. _section-23:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 -  Bump oauth-dropins requirement to 1.4.
 
-.. _section-23:
+.. _section-24:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -2005,7 +2081,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
    App Engine.
 
-.. _section-24:
+.. _section-25:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -2013,7 +2089,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
    dependency to >=1.3.
 
-.. _section-25:
+.. _section-26:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -2056,7 +2132,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up Coveralls.
 
-.. _section-26:
+.. _section-27:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -2112,7 +2188,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Misc bug fixes.
 -  Set up CircleCI.
 
-.. _section-27:
+.. _section-28:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -2135,7 +2211,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Improve original post discovery algorithm.
 -  New logo.
 
-.. _section-28:
+.. _section-29:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -2143,7 +2219,7 @@ still bugs. Please file issues if you notice anything broken!
 -  Bug fix for atom template rendering.
 -  Facebook, Instagram: support access_token parameter.
 
-.. _section-29:
+.. _section-30:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~
