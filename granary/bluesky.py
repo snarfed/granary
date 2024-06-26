@@ -615,7 +615,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     has_video = any(a.get('objectType') == 'video' for a in attachments)
     original_post_embed_name = original_post_text_suffix = None
     include_link = None
-    if url := as1.get_url(obj):
+    url = as1.get_url(obj) or obj.get('id')
+    if url:
       snippet = f'Original post on {util.domain_from_link(url)}'
       original_post_embed_name = snippet
       original_post_text_suffix = f'[{snippet}]'

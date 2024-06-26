@@ -281,6 +281,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 7.1 - unreleased
+
+* `bluesky`:
+  * `from_as`: when truncating and adding a link to the original post, use `id` if `url` is not available ([snarfed/bridgy-fed#1155](https://github.com/snarfed/bridgy-fed/issues/1155)).
+
 ### 7.0 - 2024-06-24
 
 _Breaking changes:_

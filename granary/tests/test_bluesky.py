@@ -929,6 +929,30 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
+  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=15)
+  def test_from_as1_post_truncate_fallback_to_id_if_no_url(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'more than […]',
+      'fooOriginalText': 'more than ten chars long',
+      'fooOriginalUrl': 'http://my.inst/post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'description': '',
+          'title': 'Original post on my.inst',
+          'uri': 'http://my.inst/post',
+        },
+      },
+    }, self.from_as1({
+      'objectType': 'note',
+      'id': 'http://my.inst/post',
+      'content': 'more than ten chars long',
+    }))
+
   def test_from_as1_post_preserve_whitespace_plain_text(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
@@ -1686,6 +1710,7 @@ class BlueskyTest(testutil.TestCase):
           }],
         },
       },
+      'fooOriginalUrl': 'https://orig/post',
     }, self.from_as1({
       'objectType': 'note',
       'id': 'https://orig/post',

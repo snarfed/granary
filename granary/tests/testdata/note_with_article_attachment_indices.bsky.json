@@ -2,6 +2,7 @@
   "$type": "app.bsky.feed.post",
   "text": "hello 👩‍👩‍👦‍👦✋🏽 foo",
   "fooOriginalText": "hello 👩\u200d👩\u200d👦\u200d👦✋🏽 foo",
+  "fooOriginalUrl": "tag:example.com,2011:note-123",
   "createdAt": "2022-01-02T03:04:05.000Z",
   "facets": [{
     "$type": "app.bsky.richtext.facet",
