@@ -104,6 +104,9 @@ FROM_AS1_TYPES = {
   ('follow',): (
     'app.bsky.graph.follow',
   ),
+  ('like',): (
+    'app.bsky.feed.like',
+  ),
   ('share',): (
     'app.bsky.feed.repost',
     'app.bsky.feed.defs#feedViewPost',
