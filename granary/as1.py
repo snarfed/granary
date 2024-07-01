@@ -26,6 +26,7 @@ RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
 ))
 VERBS_WITH_OBJECT = frozenset((
   'accept',
+  'block',
   'follow',
   'like',
   'react',
@@ -33,6 +34,11 @@ VERBS_WITH_OBJECT = frozenset((
   'share',
   'stop-following',
 )) | set(RSVP_VERB_TO_COLLECTION.keys())
+CRUD_VERBS = frozenset((
+  'delete',
+  'post',
+  'update',
+))
 
 # objectTypes that can be actors. technically this is based on AS2 semantics,
 # since it's unspecified in AS1.
