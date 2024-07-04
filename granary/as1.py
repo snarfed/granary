@@ -38,6 +38,9 @@ CRUD_VERBS = frozenset((
   'delete',
   'post',
   'update',
+  # not in AS1 spec, undo isn't a real AS1 verb, but we map it to AS2 Undo
+  # https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs
+  'undo',
 ))
 
 # objectTypes that can be actors. technically this is based on AS2 semantics,

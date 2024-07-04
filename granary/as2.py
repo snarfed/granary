@@ -111,6 +111,7 @@ TYPE_TO_VERB.update({
 })
 TYPES_WITH_OBJECT = {VERB_TO_TYPE[v] for v in as1.VERBS_WITH_OBJECT
                      if v in VERB_TO_TYPE}
+CRUD_VERBS = {VERB_TO_TYPE[v] for v in as1.CRUD_VERBS}
 
 # https://github.com/mastodon/mastodon/blob/b4c332104a8b3748f619de250f77c0acc8e80628/app/models/concerns/account/avatar.rb#L6
 MASTODON_ALLOWED_IMAGE_EXTS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
