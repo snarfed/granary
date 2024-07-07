@@ -33,6 +33,7 @@ VERBS_WITH_OBJECT = frozenset((
   'reject',
   'share',
   'stop-following',
+  'undo',
 )) | set(RSVP_VERB_TO_COLLECTION.keys())
 CRUD_VERBS = frozenset((
   'delete',
