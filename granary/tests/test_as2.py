@@ -171,6 +171,21 @@ class ActivityStreams2Test(testutil.TestCase):
       }]
     }), ignore=['@context'])
 
+  def test_preserve_contentMap(self):
+    as2_note = {
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'content': 'foo',
+      'contentMap': {'es': 'fooey', 'fr': 'fooeh'},
+    }
+    as1_note = {
+      'objectType': 'note',
+      'content': 'foo',
+      'contentMap': {'es': 'fooey', 'fr': 'fooeh'},
+    }
+    self.assertEqual(as2_note, as2.from_as1(as1_note))
+    self.assertEqual(as1_note, as2.to_as1(as2_note))
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
