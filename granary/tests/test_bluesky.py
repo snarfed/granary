@@ -1427,6 +1427,35 @@ class BlueskyTest(testutil.TestCase):
       'tags': [TAG_LINK],
     }))
 
+  def test_from_as1_post_langs(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'My original post',
+      'langs': ['en'],
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'My original post',
+      'contentMap': {
+        'en': 'My original post',
+        'fr': "Mon message d'origine",
+      },
+    }))
+
+  def test_from_as1_post_langs_none_match_content(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'My original post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'My original post',
+      'contentMap': {
+        'es': 'Mi mensaje original',
+        'fr': "Mon message d'origine",
+      },
+    }))
+
   def test_from_as1_repost(self):
     self.assert_equals(REPOST_BSKY, self.from_as1(REPOST_AS))
 
@@ -1864,6 +1893,20 @@ class BlueskyTest(testutil.TestCase):
     }, to_as1({
       '$type': 'app.bsky.feed.post',
       'text': 'one <two> <thr&ee>',
+    }))
+
+  def test_to_as1_post_langs(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'My original post',
+      'contentMap': {
+        'en': 'My original post',
+        'fr': 'My original post',
+      },
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'My original post',
+      'langs': ['en', 'fr'],
     }))
 
   def test_to_as1_post_view(self):

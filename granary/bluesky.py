@@ -891,6 +891,11 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         'parent': parent_ref,
       }
 
+    # languages
+    # (we steal contentMap from AS2, it's not officially part of AS1)
+    langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
+             if lang_content == orig_content]
+
     ret = {
       '$type': 'app.bsky.feed.post',
       'text': text,
@@ -898,6 +903,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       'embed': record_embed,
       'facets': facets,
       'reply': reply,
+      'langs': langs,
     }
     if original_fields_prefix:
       ret.update({
@@ -1150,6 +1156,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'published': obj.get('createdAt', ''),
       'tags': tags,
       'author': repo_did,
+      # we steal this from AS2, it's not officially part of AS1
+      'contentMap': {lang: text for lang in obj.get('langs', [])}
     }
 
     # embeds
