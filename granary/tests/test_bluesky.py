@@ -1563,6 +1563,14 @@ class BlueskyTest(testutil.TestCase):
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aalice&collection=app.bsky.feed.post&rkey=parent-tid')
 
+  def test_from_as1_reply_not_bluesky_atproto(self):
+    with self.assertRaises(ValueError):
+      self.from_as1({
+        'objectType': 'comment',
+        'id': 'https://social.atiusamy.com/notes/9vdetlseu2g408ox',
+        'inReplyTo': ['https://social.atiusamy.com/notes/9vder4g1u2g408ov'],
+      })
+
   @patch('requests.get')
   def test_from_as1_like_client(self, mock_get):
     mock_get.return_value = requests_response({

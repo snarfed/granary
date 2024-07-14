@@ -376,20 +376,24 @@ def base_object(obj):
     also have ``url``, ``author``, etc.
   """
   for field in ('inReplyTo', 'object', 'target'):
-    for base in util.get_list(obj, field):
-      url = util.get_url(base)
-      if not url:
-        return {}
-      if url.startswith('https://bsky.app/'):
-        return {
-          'id': web_url_to_at_uri(url),
-          'url': url,
-        }
-      if url.startswith('at://'):
-        return {
-          'id': url,
-          'url': at_uri_to_web_url(url),
-        }
+    if bases := util.get_list(obj, field):
+      for base in bases:
+        url = util.get_url(base)
+        if not url:
+          return {}
+        elif url.startswith('https://bsky.app/'):
+          return {
+            'id': web_url_to_at_uri(url),
+            'url': url,
+          }
+        elif url.startswith('at://'):
+          return {
+            'id': url,
+            'url': at_uri_to_web_url(url),
+          }
+      else:  # closes for loop
+        raise ValueError(f"{field} {url} doesn't look like Bluesky/ATProto")
+
   return {}
 
 
@@ -422,8 +426,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     dict: ``app.bsky.*`` object
 
   Raises:
-    ValueError: if the ``objectType`` or ``verb`` fields are missing or
-      unsupported
+    ValueError: if the object can't be converted, eg if the ``objectType`` or
+      ``verb`` fields are missing or unsupported
   """
   if isinstance(client, Bluesky):
     client = client._client

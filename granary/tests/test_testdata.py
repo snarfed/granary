@@ -135,8 +135,8 @@ mappings = (
   ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, (), ()),
   ('as.json', ['rss.xml'], rss_from_activities, (), ()),
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
-  ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky_from_as1, (),
-   ('avatar', 'banner')),
+  ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky_from_as1,
+   ('comment_inreplyto_id',), ('avatar', 'banner')),
   ('bsky.json', ['as.json'], bluesky_to_as1, (), ('location', 'updated')),
   ('bsky.json', ['as-from-bsky.json'], bluesky_to_as1, (), ()),
 )
