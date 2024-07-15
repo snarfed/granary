@@ -131,6 +131,9 @@ DEFAULT_APPVIEW = 'https://api.bsky.app'
 # https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors
 NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
 
+# https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
+SENSITIVE_LABELS = ('porn', 'sexual', 'nudity', 'nsfl', 'gore')
+
 LEXRPC_BASE = Base(truncate=True)
 
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
@@ -900,6 +903,17 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
              if lang_content == orig_content]
 
+    # convert AS1 sensitive to "nudity" label
+    # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
+    # https://swicg.github.io/miscellany/#sensitive
+
+    labels = None
+    if obj.get('sensitive'):
+      labels = {
+        '$type' : 'com.atproto.label.defs#selfLabels',
+        'values' : [{'val' : 'nudity'}],
+      }
+
     ret = {
       '$type': 'app.bsky.feed.post',
       'text': text,
@@ -908,6 +922,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       'facets': facets,
       'reply': reply,
       'langs': langs,
+      'labels': labels,
     }
     if original_fields_prefix:
       ret.update({
@@ -1183,6 +1198,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         ret['image'] = to_as1(media, **kwargs)
       else:
         assert False, f'Unknown embed media type: {media_type}'
+
+    # convert many labels to AS1 sensitive
+    # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
+    # https://swicg.github.io/miscellany/#sensitive
+    for label in obj.get('labels', {}).get('values', []):
+      if label.get('val') in SENSITIVE_LABELS and not label.get('neg'):
+        ret['sensitive'] = True
 
   elif type in ('app.bsky.feed.defs#postView', 'app.bsky.embed.record#viewRecord'):
     ret = to_as1(obj.get('record') or obj.get('value'), **kwargs)

@@ -1767,6 +1767,20 @@ class BlueskyTest(testutil.TestCase):
       mock_get,
       'com.atproto.repo.getRecord?repo=did%3Ax&collection=app.bsky.feed.post&rkey=yz')
 
+  def test_from_as1_sensitive(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'labels': {
+         '$type': 'com.atproto.label.defs#selfLabels',
+         'values': [{'val' : 'nudity'}],
+      },
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType' : 'note',
+      'sensitive': True,
+    }))
+
   def test_maybe_validate_truncate(self):
     short = 'x' * 63
     long = 'x' * 65
@@ -2344,6 +2358,18 @@ class BlueskyTest(testutil.TestCase):
                                                repo_did='did:plc:foo'))
     self.assertEqual(OLD_BLOB_URL, blob_to_url(blob=OLD_BLOB,
                                                repo_did='did:plc:foo'))
+
+  def test_to_as1_sensitive(self):
+    self.assert_equals({
+      'objectType' : 'note',
+      'sensitive': True,
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'labels' : {
+         '$type' : 'com.atproto.label.defs#selfLabels',
+         'values' : [{'val' : 'sexual'}],
+      },
+    }))
 
   def test_constructor_access_token(self):
     bs = Bluesky('handull', access_token='towkin')
