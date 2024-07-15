@@ -435,6 +435,19 @@ class ActivityStreams2Test(testutil.TestCase):
       'url': 'https://example.com/',
     }))
 
+  def test_from_as1_sensitive(self):
+    self.assert_equals({
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',
+        {'sensitive': 'as:sensitive'},
+      ],
+      'type' : 'Note',
+      'sensitive': True,
+    }, as2.from_as1({
+      'objectType' : 'note',
+      'sensitive': True,
+    }))
+
   def test_to_as1_stop_following_object_id(self):
     self.assertEqual({
       'objectType': 'activity',
@@ -520,6 +533,19 @@ class ActivityStreams2Test(testutil.TestCase):
       'type': 'Update',
       'actor': 'http://alice',
       'object': 'http://foo',
+    }))
+
+  def test_to_as1_sensitive(self):
+    self.assert_equals({
+      'objectType' : 'note',
+      'sensitive': True,
+    }, as2.to_as1({
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',
+        {'sensitive': 'as:sensitive'},
+      ],
+      'type' : 'Note',
+      'sensitive': True,
     }))
 
   def test_link_tags(self):

@@ -33,7 +33,9 @@ CONNEG_HEADERS = {
     'Accept': f'{CONTENT_TYPE}, {CONTENT_TYPE_LD_PROFILE}',
 }
 CONTEXT = 'https://www.w3.org/ns/activitystreams'
-MISSKEY_QUOTE_CONTEXT = {"_misskey_quote": "https://misskey-hub.net/ns#_misskey_quote"}
+MISSKEY_QUOTE_CONTEXT = {'_misskey_quote': 'https://misskey-hub.net/ns#_misskey_quote'}
+# https://swicg.github.io/miscellany/#sensitive
+SENSITIVE_CONTEXT = {'sensitive': 'as:sensitive'}
 
 PUBLIC_AUDIENCE = 'https://www.w3.org/ns/activitystreams#Public'
 # All known Public values, cargo culted from:
@@ -358,6 +360,11 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
+
+  # sensitive
+  # https://swicg.github.io/miscellany/#sensitive
+  if 'sensitive' in obj:
+    obj['@context'] = util.get_list(obj, '@context') + [SENSITIVE_CONTEXT]
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:

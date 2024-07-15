@@ -283,6 +283,8 @@ Changelog
 
 ### 7.1 - unreleased
 
+* `as2`:
+  * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive) support.
 * `bluesky`:
   * Translate Bluesky `app.bsky.feed.post#langs` to/from AS1 `contentMap` (which isn't officially part of AS1; we steal it from AS2).
   * `from_as1`:
