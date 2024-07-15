@@ -287,7 +287,7 @@ Changelog
   * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive) support.
 * `bluesky`:
   * Translate Bluesky `app.bsky.feed.post#langs` to/from AS1 `contentMap` (which isn't officially part of AS1; we steal it from AS2).
-  * Translate AS2 `sensitive` on posts to Bluesky `nudity` self label, and many Bluesky self labels back to `sensitive`.
+  * Translate AS2 `sensitive` on posts to Bluesky `graphic-media` self label, and many Bluesky self labels back to `sensitive`.
   * `from_as1`:
     * When truncating and adding a link to the original post, use `id` if `url` is not available ([snarfed/bridgy-fed#1155](https://github.com/snarfed/bridgy-fed/issues/1155)).
     * If the input object has `inReplyTo` or `object` or `target` with no recognizable ATProto or Bluesky object, raise `ValueError`.

@@ -132,7 +132,10 @@ DEFAULT_APPVIEW = 'https://api.bsky.app'
 NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
 
 # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
-SENSITIVE_LABELS = ('porn', 'sexual', 'nudity', 'nsfl', 'gore')
+# Bluesky => AS1
+SENSITIVE_LABELS = ('porn', 'sexual', 'nudity', 'nsfl', 'gore', 'graphic-media')
+# AS1 => Bluesky
+SENSITIVE_LABEL = 'graphic-media'
 
 LEXRPC_BASE = Base(truncate=True)
 
@@ -911,7 +914,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     if obj.get('sensitive'):
       labels = {
         '$type' : 'com.atproto.label.defs#selfLabels',
-        'values' : [{'val' : 'nudity'}],
+        'values' : [{'val' : SENSITIVE_LABEL}],
       }
 
     ret = {

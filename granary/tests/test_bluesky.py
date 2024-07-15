@@ -1773,7 +1773,7 @@ class BlueskyTest(testutil.TestCase):
       'text': '',
       'labels': {
          '$type': 'com.atproto.label.defs#selfLabels',
-         'values': [{'val' : 'nudity'}],
+         'values': [{'val' : 'graphic-media'}],
       },
       'createdAt': '2022-01-02T03:04:05.000Z',
     }, self.from_as1({
