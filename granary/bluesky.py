@@ -133,7 +133,18 @@ NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
 
 # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
 # Bluesky => AS1
-SENSITIVE_LABELS = ('porn', 'sexual', 'nudity', 'nsfl', 'gore', 'graphic-media')
+# Text copied from:
+# https://github.com/bluesky-social/social-app/blob/3627a249ffb32e4c0f84597f8f9adf228ee90a8f/src/lib/moderation/useGlobalLabelStrings.ts
+# https://github.com/bluesky-social/social-app/blob/3627a249ffb32e4c0f84597f8f9adf228ee90a8f/bskyembed/src/labels.ts
+SENSITIVE_LABELS = {
+  'porn': 'Adult content',
+  'sexual': 'Sexually suggestive',
+  'nudity': 'Non-sexual nudity',
+  'graphic-media': 'Explicit or potentially disturbing media',
+  # deprecated
+  'nsfl': 'Explicit or potentially disturbing media',
+  'gore': 'Explicit or potentially disturbing media',
+}
 # AS1 => Bluesky
 SENSITIVE_LABEL = 'graphic-media'
 
@@ -1166,11 +1177,23 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
     in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
 
+    # convert self labels to AS1 sensitive and content warning in summary
+    # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
+    # https://swicg.github.io/miscellany/#sensitive
+    content_warnings = []
+    sensitive = None
+    for label in obj.get('labels', {}).get('values', []):
+      label_text = SENSITIVE_LABELS.get(label.get('val'))
+      if label_text and not label.get('neg'):
+        sensitive = True
+        content_warnings.append(label_text)
+
     ret = {
       'objectType': 'comment' if in_reply_to else 'note',
       'id': uri,
       'url': at_uri_to_web_url(uri),
       'content': text,
+      'summary': '<br>'.join(content_warnings),
       'inReplyTo': [{
         'id': in_reply_to,
         'url': at_uri_to_web_url(in_reply_to),
@@ -1179,7 +1202,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'tags': tags,
       'author': repo_did,
       # we steal this from AS2, it's not officially part of AS1
-      'contentMap': {lang: text for lang in obj.get('langs', [])}
+      'contentMap': {lang: text for lang in obj.get('langs', [])},
+      'sensitive': sensitive,
     }
 
     # embeds
@@ -1201,13 +1225,6 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         ret['image'] = to_as1(media, **kwargs)
       else:
         assert False, f'Unknown embed media type: {media_type}'
-
-    # convert many labels to AS1 sensitive
-    # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
-    # https://swicg.github.io/miscellany/#sensitive
-    for label in obj.get('labels', {}).get('values', []):
-      if label.get('val') in SENSITIVE_LABELS and not label.get('neg'):
-        ret['sensitive'] = True
 
   elif type in ('app.bsky.feed.defs#postView', 'app.bsky.embed.record#viewRecord'):
     ret = to_as1(obj.get('record') or obj.get('value'), **kwargs)

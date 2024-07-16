@@ -2359,15 +2359,19 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual(OLD_BLOB_URL, blob_to_url(blob=OLD_BLOB,
                                                repo_did='did:plc:foo'))
 
-  def test_to_as1_sensitive(self):
+  def test_to_as1_sensitive_content_warning(self):
     self.assert_equals({
       'objectType' : 'note',
       'sensitive': True,
+      'summary': f'Sexually suggestive<br>Adult content',
     }, to_as1({
       '$type': 'app.bsky.feed.post',
       'labels' : {
          '$type' : 'com.atproto.label.defs#selfLabels',
-         'values' : [{'val' : 'sexual'}],
+         'values' : [
+           {'val' : 'sexual'},
+           {'val' : 'porn'},
+         ],
       },
     }))
 
