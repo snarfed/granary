@@ -1072,6 +1072,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       if not did:
         did = repo_did
 
+    # urls: bsky.app profile, did:web domain, bsky.app feed generator, links in bio
     urls = []
     if handle:
       urls.append(Bluesky.user_url(handle))
@@ -1080,6 +1081,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
     if did and did.startswith('did:web:'):
       urls.append(did_web_to_url(did))
+
+    urls.extend(util.extract_links(obj.get('description', '')))
 
     if type == 'app.bsky.feed.generator':
       if uri_bsky_url:
@@ -1097,9 +1100,11 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         'username': obj.get('handle') or repo_handle,
       }
 
+    urls = util.dedupe_urls(urls)
     desc = html.escape(obj.get('description') or '')
     ret.update({
-      'url': util.dedupe_urls(urls),
+      'url': urls[0] if urls else None,
+      'urls': urls if len(urls) > 1 else None,
       'displayName': obj.get('displayName'),
       # TODO: for app.bsky.feed.generator, use descriptionFacets
       'summary': util.linkify(desc, pretty=True),

@@ -10,5 +10,6 @@
   "displayName": "Martin Smith",
   "username": "example.com",
   "summary": "this is my bio",
-  "url": ["https://bsky.app/profile/example.com", "https://example.com/"]
+  "url": "https://bsky.app/profile/example.com",
+  "urls": ["https://bsky.app/profile/example.com", "https://example.com/"]
 }

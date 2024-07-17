@@ -7,7 +7,8 @@
     "author": {
       "objectType": "person",
       "id": "did:web:example.com",
-      "url": ["https://bsky.app/profile/example.com", "https://example.com/"],
+      "url": "https://bsky.app/profile/example.com",
+      "urls": ["https://bsky.app/profile/example.com", "https://example.com/"],
       "displayName": "Bob",
       "username": "example.com"
     },
@@ -17,7 +18,8 @@
   "actor": {
     "objectType": "person",
     "id": "did:web:alice.example.com",
-    "url": ["https://bsky.app/profile/alice.example.com", "https://alice.example.com/"],
+    "url": "https://bsky.app/profile/alice.example.com",
+    "urls": ["https://bsky.app/profile/alice.example.com", "https://alice.example.com/"],
     "displayName": "Alice",
     "username": "alice.example.com"
   }
