@@ -167,7 +167,7 @@ class AtomTest(testutil.TestCase):
       }, atom.atom_to_activity(f"""<?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/">
-  <uri>like-url</uri>
+  <link>like-url</link>
   <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
   <activity:object>{atom_obj}</activity:object>
 </entry>

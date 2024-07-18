@@ -262,7 +262,7 @@ def _atom_to_activity(entry, feed_author=None):
     'objectType': 'activity',
     'verb': _as1_value(entry, 'verb') or 'post',
     'id': _text(entry, 'id') or (obj['id'] if obj_elem is None else None),
-    'url': _text(entry, 'uri') or (obj['url'] if obj_elem is None else None),
+    'url': _text(entry, 'link') or (obj['url'] if obj_elem is None else None),
     'object': obj,
     'actor': _author_to_actor(entry, feed_author=feed_author),
     'inReplyTo': obj.get('inReplyTo'),
