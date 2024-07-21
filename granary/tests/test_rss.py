@@ -131,7 +131,7 @@ The original post]]></description>
     },
   }], feed_url='http://this'), ignore_blanks=True)
 
-  def test_item_with_two_enclosures(self):
+  def test_from_activities_item_with_two_enclosures(self):
     got = rss.from_activities([{
       'attachments': [{
         'objectType': 'audio',
@@ -145,6 +145,16 @@ The original post]]></description>
       '<enclosure url="http://a/podcast.mp3" length="0" type="audio/mpeg"/>', got)
     self.assertNotIn(
       '<enclosure url="http://a/vidjo.mov" length="0" type="video/quicktime"/>', got)
+
+  def test_from_activities_item_with_image_enclosure(self):
+    got = rss.from_activities([{
+      'objectType': 'note',
+      'image': [{
+        'url': 'http://pic.png',
+        'mimeType': 'image/png',
+      }],
+    }], feed_url='http://this')
+    self.assert_multiline_in('<enclosure url="http://pic.png" length="0" type="image/png"/>', got)
 
   def test_render_html_image(self):
     got = rss.from_activities([{
@@ -289,6 +299,25 @@ The original post]]></description>
     </media:content>
     <media:content url="https://files.mastodon.social/def.jpg" />
     </item>
+</channel>
+</rss>
+""")[0]['object'])
+
+  def test_to_activities_image_enclosure(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'image': [{
+        'url': 'http://pic',
+        'mimeType': 'image/jpeg',
+      }],
+    }, rss.to_activities(
+"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0">
+<channel>
+  <item>
+    <enclosure url="http://pic" type="image/jpeg" />
+  </item>
 </channel>
 </rss>
 """)[0]['object'])

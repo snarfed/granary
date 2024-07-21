@@ -296,6 +296,8 @@ Changelog
   * `to_as1`:
     * Extract links from `app.bsky.actor.profile#description` into `url`/`urls` fields
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
+* `rss`:
+  * Support image enclosures, both directions.
 
 ### 7.0 - 2024-06-24
 
