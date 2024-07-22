@@ -415,7 +415,7 @@ def base_object(obj):
 
 
 def from_as1(obj, out_type=None, blobs=None, client=None,
-             original_fields_prefix=None):
+             original_fields_prefix=None, as_embed=False):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -438,6 +438,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       to make API calls to PDSes to fetch and populate CIDs for records
       referenced by replies, likes, reposts, etc.
     original_fields_prefix (str): optional; if provided, stores original object URLs, post text, and actor profiles (ie before truncation) in custom fields with this prefix in output records. For example, if this is `foo`, an actor's complete `summary` field will be stored in the custom `fooOriginalDescription` field, and their (first) `url` will be stored in the custom `fooOriginalUrl` field.
+    as_embed (bool): whether to render the post as an external embed (ie link
+      preview) instead of a native post. This happens automatically if
+      ``objectType`` is ``article``
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -696,7 +699,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     full_text = content
     index_offset = 0
     if summary := obj.get('summary'):
-      if type == 'article':
+      if type == 'article' or as_embed:
         full_text = summary
         tags = []  # tags are presumably in content, not summary
       else:
@@ -934,7 +937,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       'labels': labels,
     }
 
-    if type == 'article':
+    if as_embed or type == 'article':
       # render articles with just an external link embed, no text
       ret.update({
         'text': '',
