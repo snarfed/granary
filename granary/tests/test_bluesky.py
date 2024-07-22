@@ -1464,6 +1464,51 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_article_to_embed(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://my/article',
+          'title': 'My big article',
+          'description': 'some long long long text',
+        },
+      },
+    }, from_as1({
+      'objectType': 'article',
+      'url': 'http://my/article',
+      'displayName': 'My big article',
+      'content': 'some long long long text',
+      'image': 'http://my/pic',
+    }))
+
+  def test_from_as1_article_to_embed_with_image_blobs(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://my/article',
+          'title': 'My big article',
+          'description': 'some long long long text',
+          'thumb': BLOB,
+        },
+      },
+    }, from_as1({
+      'objectType': 'article',
+      'url': 'http://my/article',
+      'displayName': 'My big article',
+      'content': 'some long long long text',
+      'image': NEW_BLOB_URL,
+    }, blobs={NEW_BLOB_URL: BLOB}))
+
   def test_from_as1_repost(self):
     self.assert_equals(REPOST_BSKY, self.from_as1(REPOST_AS))
 

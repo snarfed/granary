@@ -609,12 +609,13 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     # images => embeds
     images_embed = images_record_embed = None
     if images := as1.get_objects(obj, 'image'):
+      url = lambda img: img.get('url') or img.get('id')
       images_embed = {
         '$type': 'app.bsky.embed.images#view',
         'images': [{
           '$type': 'app.bsky.embed.images#viewImage',
-          'thumb': img.get('url'),
-          'fullsize': img.get('url'),
+          'thumb': url(img),
+          'fullsize': url(img),
           'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }
@@ -622,7 +623,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         '$type': 'app.bsky.embed.images',
         'images': [{
           '$type': 'app.bsky.embed.images#image',
-          'image': blobs.get(util.get_url(img)) or {},
+          'image': blobs.get(url(img)),
           'alt': img.get('displayName') or '',
         } for img in images[:4]],
       }
@@ -732,12 +733,12 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     # convert tags to facets
     for tag in tags + link_tags:
       name = tag.get('displayName', '').strip().lstrip('@#')
-      type = tag.get('objectType')
-      if name and not type:
-        type = 'hashtag'
+      tag_type = tag.get('objectType')
+      if name and not tag_type:
+        tag_type = 'hashtag'
 
       tag_url = tag.get('url')
-      if not tag_url and type != 'hashtag':
+      if not tag_url and tag_type != 'hashtag':
         continue
 
       facet = {
@@ -758,13 +759,13 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       except (KeyError, ValueError, IndexError, TypeError):
         pass
 
-      if type == 'hashtag':
+      if tag_type == 'hashtag':
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#tag',
           'tag': name,
         }]
 
-      elif type == 'mention':
+      elif tag_type == 'mention':
         # extract and if necessary resolve DID
         did = None
         if tag_url.startswith('did:'):
@@ -796,13 +797,15 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         #
         # can't use \b for word boundaries here because that only includes
         # alphanumerics, and Bluesky hashtags can include emoji
-        prefix = '#' if type == 'hashtag' else '@' if type == 'mention' else ''
+        prefix = ('#' if tag_type == 'hashtag'
+                  else '@' if tag_type == 'mention'
+                  else '')
         # can't use \b at beginning/end because # and @ and emoji aren't
         # word-constituent chars
         bound = fr'[\s{string.punctuation.replace("-", "")}]'
         match = re.search(fr'(^|{bound})({prefix}{name})($|{bound})', text,
                           flags=re.IGNORECASE)
-        if not match and type == 'mention' and '@' in name:
+        if not match and tag_type == 'mention' and '@' in name:
           # try without @[server] suffix
           username = name.split('@')[0]
           match = re.search(fr'(^|\s)({prefix}{username})($|\s)', text)
@@ -866,15 +869,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         text = QUOTE_RE_SUFFIX.sub('', text)
       else:
         # external link
-        external_record_embed = {
-          '$type': f'app.bsky.embed.external',
-          'external': {
-            '$type': f'app.bsky.embed.external#external',
-            'uri': att_url or id,
-            'title': att.get('displayName'),
-            'description': att.get('summary') or att.get('content') or '',
-          }
-        }
+        external_record_embed = _to_external_embed(att)
         external_embed = {
           '$type': f'app.bsky.embed.external#view',
           'external': {
@@ -938,11 +933,23 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       'langs': langs,
       'labels': labels,
     }
+
+    if type == 'article':
+      # render articles with just an external link embed, no text
+      ret.update({
+        'text': '',
+        'facets': None,
+        'embed': _to_external_embed(obj, description=full_text),
+      })
+      if images_record_embed:
+        ret['embed']['external']['thumb'] = images_record_embed['images'][0]['image']
+
     if original_fields_prefix:
       ret.update({
         f'{original_fields_prefix}OriginalText': orig_content,
         f'{original_fields_prefix}OriginalUrl': url,
     })
+
     ret = trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
                                   'text', 'title', 'uri'))
 
@@ -1009,6 +1016,29 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     return LEXRPC_BASE._maybe_validate(nsid, type, ret)
 
   return ret
+
+
+def _to_external_embed(obj, description=None):
+  """Converts an AS1 object to a Bluesky ``app.bsky.embed.external#external``.
+
+  Args:
+    obj (dict): AS1 object
+    content (str): if provided, overrides ``summary`` and ``content` in ``obj`
+
+  Returns:
+    dict: Bluesky ``app.bsky.embed.external#external`` record
+  """
+  url = obj.get('url') or obj.get('id')
+  assert url
+  return {
+    '$type': f'app.bsky.embed.external',
+    'external': {
+      '$type': f'app.bsky.embed.external#external',
+      'uri': url,
+      'title': obj.get('displayName'),
+      'description': description or obj.get('summary') or obj.get('content') or '',
+    }
+  }
 
 
 def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
