@@ -1307,7 +1307,7 @@ class BlueskyTest(testutil.TestCase):
 
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
-    del expected['embed']['images'][0]['image']
+    del expected['embed']
     self.assert_equals(expected, self.from_as1(POST_AS_IMAGES))
 
   def test_from_as1_post_with_image_blobs(self):
@@ -1315,9 +1315,29 @@ class BlueskyTest(testutil.TestCase):
     expected['embed']['images'][0]['image'] = BLOB
     self.assert_equals(expected, self.from_as1(POST_AS_IMAGES, blobs={NEW_BLOB_URL: BLOB}))
 
+  def test_from_as1_post_with_image_subset_of_blobs(self):
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    expected['embed']['images'][0]['image'] = BLOB
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.images',
+        'images': [{
+          '$type': 'app.bsky.embed.images#image',
+          'alt': '',
+          'image': NEW_BLOB,
+        }],
+      },
+    }, self.from_as1({
+      'objectType': 'note',
+      'image': ['http://pic/1', NEW_BLOB_URL],
+    }, blobs={NEW_BLOB_URL: NEW_BLOB}))
+
   def test_from_as1_post_view_with_image(self):
     expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
-    del expected['record']['embed']['images'][0]['image']
+    del expected['record']['embed']
     expected['record']['fooOriginalUrl'] = 'https://bsky.app/profile/did:alice/post/tid'
     got = self.from_as1(POST_AS_IMAGES, out_type='app.bsky.feed.defs#postView')
     self.assert_equals(expected, got)
@@ -1676,13 +1696,6 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'text': '',
       'createdAt': '2022-01-02T03:04:05.000Z',
-      'embed': {
-        '$type': 'app.bsky.embed.images',
-        'images': [{
-          '$type': 'app.bsky.embed.images#image',
-          'alt': '',
-        }],
-      }
     }, self.from_as1({
       'objectType': 'note',
       'image': ['http://foo'],

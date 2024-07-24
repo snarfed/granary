@@ -612,24 +612,30 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     # images => embeds
     images_embed = images_record_embed = None
     if images := as1.get_objects(obj, 'image'):
-      url = lambda img: img.get('url') or img.get('id')
       images_embed = {
         '$type': 'app.bsky.embed.images#view',
-        'images': [{
+        'images': [],
+      }
+      for img in images[:4]:
+        url = img.get('url') or img.get('id')
+        alt = img.get('displayName') or ''
+        images_embed['images'].append({
           '$type': 'app.bsky.embed.images#viewImage',
-          'thumb': url(img),
-          'fullsize': url(img),
-          'alt': img.get('displayName') or '',
-        } for img in images[:4]],
-      }
-      images_record_embed = {
-        '$type': 'app.bsky.embed.images',
-        'images': [{
-          '$type': 'app.bsky.embed.images#image',
-          'image': blobs.get(url(img)),
-          'alt': img.get('displayName') or '',
-        } for img in images[:4]],
-      }
+          'thumb': url,
+          'fullsize': url,
+          'alt': alt,
+        })
+        if blob := blobs.get(url):
+          if not images_record_embed:
+            images_record_embed = {
+              '$type': 'app.bsky.embed.images',
+              'images': [],
+            }
+          images_record_embed['images'].append({
+            '$type': 'app.bsky.embed.images#image',
+            'image': blob,
+            'alt': alt,
+          })
 
     # Bluesky doesn't currently handle videos. if the post has a video, add a
     # [Video] label to the original post link.
@@ -888,13 +894,16 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         'record': record_embed,
         'media': images_embed or external_embed,
       }
+    else:
+      embed = record_embed or images_embed or external_embed
+
+    if record_record_embed and (images_record_embed or external_record_embed):
       record_embed = {
         '$type': 'app.bsky.embed.recordWithMedia',
         'record': record_record_embed,
         'media' : images_record_embed or external_record_embed,
       }
     else:
-      embed = record_embed or images_embed or external_embed
       record_embed = record_record_embed or images_record_embed or external_record_embed
 
     # in reply to

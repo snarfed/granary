@@ -295,6 +295,7 @@ Changelog
     * Add new `as_embed` boolean kwarg to do the same thing for any object.
     * When truncating and adding a link to the original post, use `id` if `url` is not available ([snarfed/bridgy-fed#1155](https://github.com/snarfed/bridgy-fed/issues/1155)).
     * If the input object has `inReplyTo` or `object` or `target` with no recognizable ATProto or Bluesky object, raise `ValueError`.
+    * Omit images that aren't in `blobs`.
   * `to_as1`:
     * Extract links from `app.bsky.actor.profile#description` into `url`/`urls` fields
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
