@@ -163,7 +163,8 @@ def api(path):
     # other exceptions are handled by webutil.flask_util.handle_exception(),
     # which uses interpret_http_exception(), etc.
 
-  logger.info(f'Got activities: {json_dumps(response, indent=2)}')
+  logger.info(f'Got {len(response.get("items", []))} activities')
+  logger.debug(f'  activities: {json_dumps(response, indent=2)}')
 
   # fetch actor if necessary
   actor = response.get('actor')
@@ -175,7 +176,7 @@ def api(path):
       actor = src.get_actor(user_id) if src else {}
     except ValueError as e:
       error(f"Couldn't fetch {user_id}: {e}", exc_info=True)
-    logger.info(f'Got actor: {json_dumps(actor, indent=2)}')
+    logger.debug(f'Got actor: {json_dumps(actor, indent=2)}')
 
   return app.make_response(response, actor=actor, url=src.BASE_URL)
 

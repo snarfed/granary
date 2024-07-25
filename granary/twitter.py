@@ -915,7 +915,7 @@ class Twitter(source.Source):
                                 files={'media': image_resp},
                                 headers=headers)
       resp.raise_for_status()
-      logger.info(f'Got: {resp.text}')
+      logger.debug(f'Got: {resp.text}')
       media_id = source.load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string']
       ids.append(media_id)
 
@@ -929,7 +929,7 @@ class Twitter(source.Source):
           json={'media_id': media_id, 'alt_text': {'text': alt}},
           headers=headers)
         resp.raise_for_status()
-        logger.info(f'Got: {resp.text}')
+        logger.debug(f'Got: {resp.text}')
 
     return ids
 

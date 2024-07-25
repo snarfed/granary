@@ -53,7 +53,6 @@ from granary.twitter import Twitter
 from granary.reddit import Reddit
 
 logger = logging.getLogger(__name__)
-# logging.getLogger('lexrpc').setLevel(logging.INFO)
 
 INPUTS = (
   'activitystreams',
@@ -259,7 +258,7 @@ def url():
   title = None
   hfeed = None
   if mf2:
-    logger.info(f'Got mf2: {json_dumps(mf2, indent=2)}')
+    logger.debug(f'Got mf2: {json_dumps(mf2, indent=2)}')
     def fetch_mf2_func(url):
       if util.domain_or_parent_in(urllib.parse.urlparse(url).netloc, SILO_DOMAINS):
         return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
@@ -299,7 +298,8 @@ def url():
     logger.warning('parsing input failed', exc_info=True)
     return abort(400, f'Could not parse {final_url} as {input}: {str(e)}')
 
-  logger.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
+  logger.info(f'Converted {len(activities)} activities to AS1')
+  logger.debug(f'  activities: {json_dumps(activities, indent=2)}')
 
   return make_response(source.Source.make_activities_base_response(activities),
                        url=final_url, actor=actor, title=title, hfeed=hfeed)
@@ -348,7 +348,8 @@ def scraped(_):
       json_loads(body), fetch_extras=False)
   else:
     activities, actor = Instagram().scraped_to_activities(body, fetch_extras=False)
-  logger.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
+  logger.info(f'Converted {len(activities)} activities to AS1')
+  logger.debug(f'Converted to AS1: {json_dumps(activities, indent=2)}')
 
   title = 'Instagram feed'
   if actor:
