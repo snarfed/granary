@@ -537,7 +537,6 @@ class Nostr(Source):
 
     subscription = secrets.token_urlsafe(16)
     req = ['REQ', subscription, filter]
-    logger.debug(f'Sending: {json_dumps(req)}')
 
     try:
       websocket.send(json_dumps(req))
@@ -553,7 +552,6 @@ class Nostr(Source):
         logger.warning(err)
         return events
 
-      logger.debug(f'Received: {msg[:500]}')
       resp = json_loads(msg)
       if resp[:3] == ['OK', subscription, False]:
         return events
@@ -563,7 +561,6 @@ class Nostr(Source):
         break
 
     close = ['CLOSE', subscription]
-    logger.debug(f'Sending: {json_dumps(close)}')
 
     try:
       websocket.send(json_dumps(close))
@@ -598,7 +595,6 @@ class Nostr(Source):
                  close_timeout=HTTP_TIMEOUT,
                  ) as websocket:
       create = ['EVENT', event]
-      logger.debug(f'Sending: {json_dumps(create)}')
       try:
         websocket.send(json_dumps(create))
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
@@ -606,7 +602,6 @@ class Nostr(Source):
         logger.warning(cc)
         return
 
-    logger.debug(f'Received: {msg}')
     resp = json_loads(msg)
     if resp[:3] == ['OK', event['id'], True]:
       return creation_result(event)
