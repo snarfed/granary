@@ -1837,7 +1837,7 @@ class BlueskyTest(testutil.TestCase):
     }, self.from_as1({
       'objectType': 'note',
       'id': 'https://orig/post',
-      'content': '<p>late morning ...<br><br>RE: </span><a href=\"https://makai.chaotic.ninja/notes/9stkybisvk\">https://makai.chaotic.ninja/notes/9stkybisvk</a></p>',
+      'content': '<p>late morning ...<br><br>RE: </span><a href="https://makai.chaotic.ninja/notes/9stkybisvk">https://makai.chaotic.ninja/notes/9stkybisvk</a></p>',
       'attachments': [{
         'objectType': 'note',
         'url': 'https://bsky.app/profile/did:x/post/yz',
@@ -1848,6 +1848,37 @@ class BlueskyTest(testutil.TestCase):
       }],
     }, client=self.bs._client, blobs={NEW_BLOB_URL: NEW_BLOB}),
     ignore=['fooOriginalText'])
+
+    self.assert_call(
+      mock_get,
+      'com.atproto.repo.getRecord?repo=did%3Ax&collection=app.bsky.feed.post&rkey=yz')
+
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:x/app.bsky.feed.post/yz',
+    'cid': 'my-syd',
+    'value': {},
+  }))
+  def test_from_as1_quote_post_too_long(self, mock_get):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'Okay, The summertide event started off pretty boring for me. I think it gets better as time goes on. I especially like the screentime of Wanderer/Scara (Why I wanted to play in the first place-). Overall I think its pretty good, though a bit slow',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.record',
+        'record': {
+          'uri': 'at://did:x/app.bsky.feed.post/yz',
+          'cid': 'my-syd',
+        },
+      },
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'Okay, The summertide event started off pretty boring for me. I think it gets better as time goes on. I especially like the screentime of Wanderer/Scara (Why I wanted to play in the first place-). Overall I think its pretty good, though a bit slow<br><br>RE: <a href="https://social.atiusamy.com/notes/1234567890123456">https://social.atiusamy.com/notes/1234567890123456</a>',
+      'attachments': [{
+        'objectType': 'note',
+        'url': 'https://social.atiusamy.com/notes/1234567890123456',
+        'id': 'at://did:x/app.bsky.feed.post/yz',
+      }],
+    }, client=self.bs._client), ignore=['fooOriginalText', 'fooOriginalUrl'])
 
     self.assert_call(
       mock_get,

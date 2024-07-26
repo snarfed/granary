@@ -713,7 +713,49 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         full_text = prefix + full_text
         index_offset = len(prefix)
 
-    # truncate. if we're including a text suffix, ie original post link and
+    # attachments, including quoted posts
+    record_embed = record_record_embed = external_embed = external_record_embed = None
+
+    for att in attachments:
+      if not att.get('objectType') in ('article', 'link', 'note'):
+        continue
+
+      id = att.get('id') or ''
+      att_url = att.get('url') or ''
+      if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
+          att_url.startswith('at://') or att_url.startswith(Bluesky.BASE_URL)):
+        # quoted Bluesky post
+        embed = from_as1(att, **kwargs).get('post') or {}
+        embed['value'] = embed.pop('record', None)
+        record_embed = {
+          '$type': f'app.bsky.embed.record#view',
+          'record': {
+            **embed,
+            '$type': f'app.bsky.embed.record#viewRecord',
+            # override these so that trim_nulls below will remove them
+            'likeCount': None,
+            'replyCount': None,
+            'repostCount': None,
+          },
+        }
+        record_record_embed = {
+          '$type': f'app.bsky.embed.record',
+          'record': from_as1_to_strong_ref(att, client=client),
+        }
+        full_text = QUOTE_RE_SUFFIX.sub('', full_text)
+      else:
+        # external link
+        external_record_embed = _to_external_embed(att)
+        external_embed = {
+          '$type': f'app.bsky.embed.external#view',
+          'external': {
+            **external_record_embed['external'],
+            '$type': f'app.bsky.embed.external#viewExternal',
+            'thumb': util.get_first(att, 'image'),
+          },
+        }
+
+    # truncate text. if we're including a suffix, ie original post link and
     # maybe [Video] label, link that with a facet
     text = Bluesky('unused').truncate(
       full_text, original_post_text_suffix, include_link=include_link,
@@ -838,56 +880,28 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         facets.append(facet)
 
     # attachments => embeds for articles/notes
-    record_embed = record_record_embed = external_embed = external_record_embed = None
-
     if (truncated or has_video) and url:
       # override attachments with link to original post. (if there are images,
       # we added a link in the text instead, and this won't get used.)
-      attachments = [{
-        'objectType': 'link',
-        'url': url,
-        'displayName': original_post_embed_name,
-      }]
+      external_record_embed = {
+        '$type': f'app.bsky.embed.external',
+        'external': {
+          '$type': f'app.bsky.embed.external#external',
+          'uri': url,
+          'title': original_post_embed_name,
+          'description': '',
+        },
+      }
+      external_embed = {
+        '$type': f'app.bsky.embed.external#view',
+        'external': {
+          **external_record_embed['external'],
+          '$type': f'app.bsky.embed.external#viewExternal',
+          'thumb': (images[0].get('url') or images[0].get('id')) if images else None,
+        },
+      }
 
-    for att in attachments:
-      if not att.get('objectType') in ('article', 'link', 'note'):
-        continue
-
-      id = att.get('id') or ''
-      att_url = att.get('url') or ''
-      if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
-          att_url.startswith('at://') or att_url.startswith(Bluesky.BASE_URL)):
-        # quoted Bluesky post
-        embed = from_as1(att, **kwargs).get('post') or {}
-        embed['value'] = embed.pop('record', None)
-        record_embed = {
-          '$type': f'app.bsky.embed.record#view',
-          'record': {
-            **embed,
-            '$type': f'app.bsky.embed.record#viewRecord',
-            # override these so that trim_nulls below will remove them
-            'likeCount': None,
-            'replyCount': None,
-            'repostCount': None,
-          },
-        }
-        record_record_embed = {
-          '$type': f'app.bsky.embed.record',
-          'record': from_as1_to_strong_ref(att, client=client),
-        }
-        text = QUOTE_RE_SUFFIX.sub('', text)
-      else:
-        # external link
-        external_record_embed = _to_external_embed(att)
-        external_embed = {
-          '$type': f'app.bsky.embed.external#view',
-          'external': {
-            **external_record_embed['external'],
-            '$type': f'app.bsky.embed.external#viewExternal',
-            'thumb': util.get_first(att, 'image'),
-          },
-        }
-
+    # populate embeds
     if record_embed and (images_embed or external_embed):
       embed = {
         '$type': 'app.bsky.embed.recordWithMedia#view',
