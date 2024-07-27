@@ -25,6 +25,167 @@ class ActivityStreams2Test(testutil.TestCase):
       '@context': 'bar',
     }, as2.from_as1({'id': 'foo'}, context='bar'))
 
+  def test_from_as1_stop_following_object_str(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Undo',
+      'id': 'unfollow',
+      'actor': 'alice',
+      'object': {
+        '@context': 'https://www.w3.org/ns/activitystreams',
+        'type': 'Follow',
+        'actor': 'alice',
+        'object': 'bob',
+      },
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'stop-following',
+      'id': 'unfollow',
+      'actor': 'alice',
+      'object': 'bob',
+    }))
+
+  def test_from_as1_icon_prefers_mastodon_allowed_type(self):
+    self.assertEqual({
+      'type': 'Image',
+      'mediaType': 'image/jpeg',
+      'url': '/pic',
+    }, as2.from_as1({
+      'objectType': 'person',
+      'image': [
+        '/pic.ico',
+        {
+          'objectType': 'image',
+          'mimeType': 'image/jpeg',
+          'url': '/pic',
+        },
+        '/pic.bmp',
+      ],
+    })['icon'])
+
+  def test_from_as1_icon_prefers_mastodon_allowed_extension(self):
+    self.assertEqual('/pic.jpg', as2.from_as1({
+      'objectType': 'person',
+      'image': [
+        '/pic.ico',
+        '/pic.jpg',
+        '/pic.bmp',
+      ],
+    })['icon'])
+
+
+  def test_from_as1_icon_prefers_mastodon_allowed_object(self):
+    self.assertEqual({
+      'type': 'Image',
+      'url': '/pic.jpg',
+    }, as2.from_as1({
+      'objectType': 'person',
+      'image': [
+        '/pic.ico',
+        {'url': '/pic.jpg'},
+        '/pic.bmp',
+      ],
+    })['icon'])
+
+  def test_from_as1_icon_non_person(self):
+    self.assertEqual('/pic.jpg', as2.from_as1({
+      'objectType': 'application',
+      'image': '/pic.jpg',
+    })['icon'])
+
+  def test_from_as1_block(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+    }))
+
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  def test_from_as1_flag(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      # note that this is the user being reported
+      'to': ['http://bob'],
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      'to': 'http://bob',
+    }))
+
+  def test_from_as1_link_attachment(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'attachment': [{
+        'type': 'Link',
+        'url': 'http://a/link',
+      }],
+    }, as2.from_as1({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+      }]
+    }))
+
+  def test_from_as1_quote_post_separate_id_and_url(self):
+    # https://github.com/snarfed/bridgy-fed/issues/461#issuecomment-2176620836
+    self.assert_equals({
+      'type': 'Note',
+      'content': 'RE: <a href="http://the/url">http://the/url</a>',
+      'tag': [{
+        'type': 'Link',
+        'mediaType': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        'href': 'http://the/id',
+        'name': 'RE: http://the/url',
+      }],
+      'quoteUrl': 'http://the/id',
+      '_misskey_quote': 'http://the/id'
+    }, as2.from_as1({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'http://the/id',
+        'url': 'http://the/url',
+      }]
+    }), ignore=['@context'])
+
+  def test_preserve_contentMap(self):
+    as2_note = {
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'content': 'foo',
+      'contentMap': {'es': 'fooey', 'fr': 'fooeh'},
+    }
+    as1_note = {
+      'objectType': 'note',
+      'content': 'foo',
+      'contentMap': {'es': 'fooey', 'fr': 'fooeh'},
+    }
+    self.assertEqual(as2_note, as2.from_as1(as1_note))
+    self.assertEqual(as1_note, as2.to_as1(as2_note))
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:
@@ -125,6 +286,36 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_person_url_in_propertyvalue_attachment(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@giflian@techhub.social',
+      'url': {'displayName': 'Twitter', 'value': 'https://techhub.social/@giflian'},
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://techhub.social/@giflian',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Twitter',
+        'value': '<span class="h-card"><a href="https://techhub.social/@giflian" class="u-url mention">@<span>giflian</span></a></span>',
+      }],
+    }))
+
+  def test_to_as1_link_attachment(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+      }]
+    }, as2.to_as1({
+      'type': 'Note',
+      'attachment': [{
+        'type': 'Link',
+        'url': 'http://a/link',
+      }],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (
@@ -142,6 +333,8 @@ class ActivityStreams2Test(testutil.TestCase):
       self.assertEqual(result, is_public(input))
 
     self.assertFalse(is_public('foo'))
+
+    self.assertFalse(is_public({'cc': [publics[1]]}, unlisted=False))
 
   def test_get_urls(self):
     for val, expected in (
@@ -210,6 +403,7 @@ class ActivityStreams2Test(testutil.TestCase):
     self.assert_equals({
       'objectType': 'person',
       'id': 'https://mastodon.xyz/users/alice',
+      'displayName': '@alice@mastodon.xyz',
       'image': [{
         'url': 'https://banner/',
         'objectType': 'featured',
@@ -224,7 +418,7 @@ class ActivityStreams2Test(testutil.TestCase):
       }
     }))
 
-  def test_person_propertyvalue_attachment_strips_home_page_slash(self):
+  def test_from_as1_person_propertyvalue_attachment_strips_home_page_slash(self):
     self.assert_equals({
       '@context': 'https://www.w3.org/ns/activitystreams',
       'type': 'Person',
@@ -240,3 +434,148 @@ class ActivityStreams2Test(testutil.TestCase):
       'id': 'tag:example.com,2011:martin',
       'url': 'https://example.com/',
     }))
+
+  def test_from_as1_sensitive(self):
+    self.assert_equals({
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',
+        {'sensitive': 'as:sensitive'},
+      ],
+      'type' : 'Note',
+      'sensitive': True,
+    }, as2.from_as1({
+      'objectType' : 'note',
+      'sensitive': True,
+    }))
+
+  def test_to_as1_stop_following_object_id(self):
+    self.assertEqual({
+      'objectType': 'activity',
+      'verb': 'stop-following',
+      'actor': 'alice',
+      'object': 'bob',
+    }, as2.to_as1({
+      'type': 'Undo',
+      'actor': 'alice',
+      'object': {
+        'type': 'Follow',
+        'actor': 'alice',
+        'object': 'bob',
+      },
+    }))
+
+  def test_to_as1_preferred_username(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': 'alice',
+      'username': 'alice',
+    }, as2.to_as1({
+      'type': 'Person',
+      'preferredUsername': 'alice',
+    }))
+
+  def test_to_as1_address(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'id': 'http://a.b/@me',
+      'displayName': '@me@a.b',
+    }, as2.to_as1({
+      'type': 'Person',
+      'id': 'http://a.b/@me',
+    }))
+
+  def test_to_as1_block(self):
+    self.assertEqual({
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+    }, as2.to_as1({
+      'type': 'Block',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+    }))
+
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  def test_to_as1_flag(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      'to': ['http://bob'],
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      # note that this is the user being reported
+      'to': 'http://bob',
+    }))
+
+  def test_to_as1_update_string_object(self):
+    self.assertEqual({
+      'objectType': 'activity',
+      'verb': 'update',
+      'actor': 'http://alice',
+      'object': 'http://foo',
+    }, as2.to_as1({
+      'type': 'Update',
+      'actor': 'http://alice',
+      'object': 'http://foo',
+    }))
+
+  def test_to_as1_sensitive(self):
+    self.assert_equals({
+      'objectType' : 'note',
+      'sensitive': True,
+    }, as2.to_as1({
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',
+        {'sensitive': 'as:sensitive'},
+      ],
+      'type' : 'Note',
+      'sensitive': True,
+    }))
+
+  def test_link_tags(self):
+    # no indices, shouuld be a noop
+    obj = {
+      'content': 'foo\nbar\nbaz',
+      'tag': [
+        {'href': 'http://bar'},
+        {'url': 'http://baz'},
+      ],
+    }
+    as2.link_tags(obj)
+    self.assert_equals('foo\nbar\nbaz', obj['content'])
+
+    # with indices, should link and then remove indices
+    obj['tag'] = [
+      {'href': 'http://bar', 'startIndex': 4, 'length': 3},
+      {'url': 'http://baz', 'startIndex': 8, 'length': 3},
+    ]
+
+    as2.link_tags(obj)
+    self.assert_equals({
+      'content': """\
+foo
+<a href="http://bar">bar</a>
+<a href="http://baz">baz</a>
+""",
+      'content_is_html': True,
+      'tag': [
+        {'href': 'http://bar'},
+        {'url': 'http://baz'},
+      ],
+    }, obj)

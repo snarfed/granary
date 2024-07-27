@@ -155,41 +155,56 @@ FOLLOW_WITH_OBJECT['object'] = ACTOR
 class As1Test(testutil.TestCase):
 
   def test_is_public(self):
-    for obj in ({'to': [{'objectType': 'unknown'}]},
-                {'to': [{'objectType': 'unknown'},
-                        {'objectType': 'unknown'}]},
-                {'to': [{'alias': 'xyz'},
-                        {'objectType': 'unknown'}]},
-               ):
-      self.assertIsNone(as1.is_public(obj), repr(obj))
-      self.assertIsNone(as1.is_public({'object': obj}), repr(obj))
+    self.assertIsNone(as1.is_public(None))
 
-    for obj in ({},
-                {'privacy': 'xyz'},
-                {'to': []},
-                {'to': [{}]},
-                {'to': [{'objectType': 'group'}]},
-                {'to': [{'objectType': 'group', 'alias': '@unlisted'}]},
-                {'to': [{'objectType': 'group', 'alias': '@public'}]},
-                {'to': [{'objectType': 'group', 'alias': '@private'},
-                        {'objectType': 'group', 'alias': '@public'}]},
-                {'to': [{'alias': '@public'},
-                        {'alias': '@private'}]},
-               ):
-      self.assertTrue(as1.is_public(obj), repr(obj))
-      self.assertTrue(as1.is_public({'object': obj}), repr(obj))
+    for obj in (
+        {'to': [{'objectType': 'unknown'}]},
+        {'to': [{'objectType': 'unknown'},
+                {'objectType': 'unknown'}]},
+        {'to': [{'alias': 'xyz'},
+                {'objectType': 'unknown'}]},
+    ):
+      with self.subTest(obj=obj):
+        self.assertIsNone(as1.is_public(obj))
+        self.assertIsNone(as1.is_public({'object': obj}))
 
-    for obj in ({'to': [{'objectType': 'group', 'alias': '@private'}]},
-                {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
-                {'to': [{'alias': 'xyz'}]},
-                {'to': [{'alias': 'xyz'},
-                        {'alias': '@private'}]},
-                {'to': [{'objectType': 'group'},
-                        {'alias': 'xyz'},
-                        {'alias': '@private'}]},
-               ):
-      self.assertFalse(as1.is_public(obj), repr(obj))
-      self.assertFalse(as1.is_public({'object': obj}), repr(obj))
+    for obj in (
+        {},
+        {'privacy': 'xyz'},
+        {'to': [{'objectType': 'group', 'alias': '@unlisted'}]},
+        {'to': [{'objectType': 'group', 'alias': '@public'}]},
+        {'to': [{'objectType': 'group', 'alias': '@private'},
+                {'objectType': 'group', 'alias': '@public'}]},
+        {'to': [{'alias': '@public'},
+                {'alias': '@private'}]},
+    ):
+      with self.subTest(obj=obj):
+        self.assertTrue(as1.is_public(obj))
+        self.assertTrue(as1.is_public({'object': obj}))
+
+
+    self.assertFalse(as1.is_public({
+      'to': [{'objectType': 'group', 'alias': '@unlisted'}],
+    }, unlisted=False))
+
+
+    for obj in (
+        {'to': []},
+        {'to': [{}]},
+        {'to': ['someone']},
+        {'to': [{'objectType': 'group'}]},
+        {'to': [{'objectType': 'group', 'alias': '@private'}]},
+        {'to': [{'objectType': 'group', 'alias': 'xyz'}]},
+        {'to': [{'alias': 'xyz'}]},
+        {'to': [{'alias': 'xyz'},
+                {'alias': '@private'}]},
+        {'to': [{'objectType': 'group'},
+                {'alias': 'xyz'},
+                {'alias': '@private'}]},
+    ):
+      with self.subTest(obj=obj):
+        self.assertFalse(as1.is_public(obj))
+        self.assertFalse(as1.is_public({'object': obj}))
 
   def test_activity_changed(self):
     fb_post = copy.deepcopy(ACTIVITY)
@@ -232,6 +247,9 @@ class As1Test(testutil.TestCase):
                           (fb_invite, fb_rsvp)):
       self.assertTrue(as1.activity_changed(before, after, log=True),
                       f'{before}\n{after}')
+
+    self.assertFalse(as1.activity_changed(
+      fb_comment, fb_comment_edited_inReplyTo, inReplyTo=False, log=True))
 
   def test_activity_changed_in_reply_to_author_name(self):
     first = copy.copy(COMMENT)
@@ -573,7 +591,7 @@ class As1Test(testutil.TestCase):
         (None, {'verb': 'post', 'object': {}}),
         ('a', {'verb': 'post', 'object': {'author': 'a'}}),
         ('a', {'verb': 'update', 'object': {'actor': 'a'}}),
-        ('a', {'verb': 'delete', 'object': {'author': {'id': 'a'}}}),
+        ('abc', {'verb': 'delete', 'object': {'author': {'id': 'abc'}}}),
     ):
       with self.subTest(obj=obj):
         self.assertEqual(expected, as1.get_owner(obj))
@@ -629,3 +647,15 @@ class As1Test(testutil.TestCase):
     ]:
       with self.subTest(expected=expected, obj=obj):
         self.assertCountEqual(expected, as1.targets(obj))
+
+  def test_get_url(self):
+    for obj, expected in (
+        (None, ''),
+        ('', ''),
+        ('foo', 'foo'),
+        ({'url': 'foo'}, 'foo'),
+        ({'url': ['foo', 'bar']}, 'foo'),
+        ({'url': {'value': 'foo'}}, 'foo'),
+    ):
+      with self.subTest(expected=expected, obj=obj):
+        self.assertEqual(expected, as1.get_url(obj))

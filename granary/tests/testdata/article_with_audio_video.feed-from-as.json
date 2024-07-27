@@ -1,12 +1,12 @@
 {
-  "version": "https://jsonfeed.org/version/1",
+  "version": "https://jsonfeed.org/version/1.1",
   "title": "Martin Smith",
   "home_page_url": "https://example.com/martin",
-  "author": {
+  "authors": [{
     "name": "Martin Smith",
     "url": "https://example.com/martin",
     "avatar": "http://example.com/martin/image"
-  },
+  }],
   "items": [{
     "title": "i'm ready to speak",
     "content_html": "something\n<p><audio class=\"u-audio\" src=\"http://a/podcast.mp3\" controls=\"controls\">Your browser does not support the audio tag. <a href=\"http://a/podcast.mp3\">Click here to listen directly.</a></audio>\n</p>\n<p><video class=\"u-video\" src=\"http://a/vidjo.mov\" controls=\"controls\" poster=\"\">Your browser does not support the video tag. <a href=\"http://a/vidjo.mov\">Click here to view directly. </a></video>\n</p>",

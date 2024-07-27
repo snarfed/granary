@@ -1,12 +1,18 @@
 {
   "$type": "app.bsky.feed.post",
-  "text": "too cool to summarize",
-  "createdAt": "2012-02-22T20:26:41",
-  "embed": {
-    "$type": "app.bsky.embed.images",
-    "images": [{
-      "$type": "app.bsky.embed.images#image",
-      "alt": ""
-    }]
-  }
+  "text": "[too cool to summarize]\n\nA note. link too",
+  "fooOriginalText": "A note. link too",
+  "fooOriginalUrl": "http://example.com/blog-post-123",
+  "createdAt": "2012-02-22T20:26:41.000Z",
+  "facets": [{
+    "$type": "app.bsky.richtext.facet",
+    "features": [{
+      "$type": "app.bsky.richtext.facet#link",
+      "uri": "http://my/link"
+    }],
+    "index": {
+      "byteEnd": 37,
+      "byteStart": 33
+    }
+  }]
 }

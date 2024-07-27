@@ -43,7 +43,7 @@ import secrets
 import bech32
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
-from websockets.exceptions import ConnectionClosed
+from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect
 
 from . import as1
@@ -289,13 +289,16 @@ def to_as1(event):
 
   if kind == 0:  # profile
     content = json_loads(content) or {}
+    nip05_domain = (content['nip05'].removeprefix('_@')
+                    if isinstance(content.get('nip05'), str)
+                    else '')
     obj.update({
       'objectType': 'person',
       'id': id_to_uri('npub', event['pubkey']),
       'displayName': content.get('name'),
       'description': content.get('about'),
       'image': content.get('picture'),
-      'username': content.get('nip05', '').removeprefix('_@'),
+      'username': nip05_domain,
       'urls': [],
     })
     for tag in tags:
@@ -534,18 +537,21 @@ class Nostr(Source):
 
     subscription = secrets.token_urlsafe(16)
     req = ['REQ', subscription, filter]
-    logger.debug(f'Sending: {json_dumps(req)}')
-    websocket.send(json_dumps(req))
+
+    try:
+      websocket.send(json_dumps(req))
+    except ConnectionClosedOK as err:
+      logger.warning(err)
+      return []
 
     events = []
     while True:
       try:
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
-      except ConnectionClosed as cc:
-        logger.warning(cc)
-        break
+      except ConnectionClosedOK as err:
+        logger.warning(err)
+        return events
 
-      logger.debug(f'Received: {msg[:500]}')
       resp = json_loads(msg)
       if resp[:3] == ['OK', subscription, False]:
         return events
@@ -555,8 +561,11 @@ class Nostr(Source):
         break
 
     close = ['CLOSE', subscription]
-    logger.debug(f'Sending: {json_dumps(close)}')
-    websocket.send(json_dumps(close))
+
+    try:
+      websocket.send(json_dumps(close))
+    except ConnectionClosedOK as err:
+      logger.warning(err)
 
     return events
 
@@ -586,15 +595,13 @@ class Nostr(Source):
                  close_timeout=HTTP_TIMEOUT,
                  ) as websocket:
       create = ['EVENT', event]
-      logger.debug(f'Sending: {json_dumps(create)}')
-      websocket.send(json_dumps(create))
       try:
+        websocket.send(json_dumps(create))
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
-      except ConnectionClosed as cc:
+      except ConnectionClosedOK as cc:
         logger.warning(cc)
         return
 
-    logger.debug(f'Received: {msg}')
     resp = json_loads(msg)
     if resp[:3] == ['OK', event['id'], True]:
       return creation_result(event)

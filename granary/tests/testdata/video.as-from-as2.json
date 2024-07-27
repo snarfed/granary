@@ -1,7 +1,10 @@
 {
   "objectType": "video",
   "id": "https://spectra.video/videos/watch/1484abab-d649-45d0-8c50-d761382ac4e7",
-  "author": {"id": "https://spectra.video/video-channels/trashpandapunk"},
+  "author": {
+    "id": "https://spectra.video/video-channels/trashpandapunk",
+    "objectType": "group"
+  },
   "urls": [
     "https://spectra.video/videos/watch/1484abab-d649-45d0-8c50-d761382ac4e7",
     "https://spectra-prod.us-east-1.linodeobjects.com/streaming-playlists/hls/1484abab-d649-45d0-8c50-d761382ac4e7/c795d898-520c-43b8-9601-89e45b1059da-master.m3u8"

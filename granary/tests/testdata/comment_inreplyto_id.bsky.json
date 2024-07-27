@@ -3,7 +3,7 @@
   "post": {
     "$type": "app.bsky.feed.defs#postView",
     "uri": "at://did:plc:asdf/app.bsky.feed.post/tid",
-    "cid": "TODO",
+    "cid": "",
     "record": {
       "$type": "app.bsky.feed.post",
       "text": "foo bar baz",
@@ -11,14 +11,12 @@
       "reply": {
         "$type": "app.bsky.feed.post#replyRef",
         "root": {
-          "$type": "com.atproto.repo.strongRef",
           "uri": "at://did:plc:123/app.bsky.feed.post/root-tid",
-          "cid": "TODO"
+          "cid": ""
         },
         "parent": {
-          "$type": "com.atproto.repo.strongRef",
           "uri": "at://did:plc:123/app.bsky.feed.post/parent-tid",
-          "cid": "TODO"
+          "cid": ""
         }
       }
     },

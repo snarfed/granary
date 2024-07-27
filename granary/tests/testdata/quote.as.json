@@ -1,24 +1,24 @@
 {
   "objectType": "note",
-  "url": "https://quote",
+  "url": "https://quote/",
   "content": "I hereby quote",
   "published": "2007-07-07T03:04:05",
   "author": {
     "objectType": "person",
-    "url": "https://bob.bsky.social",
+    "url": "https://bob.bsky.social/",
     "displayName": "Bob",
-    "image": [{"url": "https://bob.jpg"}]
+    "image": [{"url": "https://bob/jpg"}]
   },
   "attachments": [{
     "objectType": "note",
-    "url": "https://bsky.app/orig/post",
+    "id": "https://bsky.app/orig/post",
     "content": "An original post",
     "published": "2023-05-11T19:59:12Z",
     "author": {
       "objectType": "person",
-      "url": "https://alice.example.com",
+      "url": "https://alice.example.com/",
       "displayName": "Alice",
-      "image": [{"url": "https://alice.jpg"}]
+      "image": [{"url": "https://alice/jpg"}]
     }
   }]
 }

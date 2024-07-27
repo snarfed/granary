@@ -14,7 +14,7 @@ from oauth_dropins.webutil import util
 
 from . import as1
 from . import microformats2
-from . import source
+from .source import Source
 
 CONTENT_TYPE = 'application/atom+xml; charset=utf-8'
 FEED_TEMPLATE = 'user_feed.atom'
@@ -201,10 +201,15 @@ def atom_to_activities(atom):
   """
   assert isinstance(atom, str)
   parser = ElementTree.XMLParser(encoding='UTF-8')
-  feed = ElementTree.XML(atom.encode('utf-8'), parser=parser)
-  if _tag(feed) != 'feed':
-    raise ValueError(f'Expected root feed tag; got {feed.tag}')
-  return [_atom_to_activity(elem) for elem in feed if _tag(elem) == 'entry']
+  top = ElementTree.XML(atom.encode('utf-8'), parser=parser)
+  if _tag(top) == 'feed':
+    author = _author_to_actor(top)
+    return [_atom_to_activity(elem, feed_author=author)
+            for elem in top if _tag(elem) == 'entry']
+  elif _tag(top) == 'entry':
+    return [_atom_to_activity(top)]
+
+  raise ValueError(f'Expected root feed or entry tag; got {top.tag}')
 
 
 def atom_to_activity(atom):
@@ -216,26 +221,25 @@ def atom_to_activity(atom):
   Returns:
     dict: ActivityStreams activity
   """
-  assert isinstance(atom, str)
-  parser = ElementTree.XMLParser(encoding='UTF-8')
-  entry = ElementTree.XML(atom.encode('utf-8'), parser=parser)
-  if _tag(entry) != 'entry':
-    raise ValueError(f'Expected root entry tag; got {entry.tag}')
-  return _atom_to_activity(entry)
+  got = atom_to_activities(atom)
+  if got:
+    return got[0]
 
 
-def _atom_to_activity(entry):
+def _atom_to_activity(entry, feed_author=None):
   """Converts an internal Atom entry element to an ActivityStreams 1 activity.
 
   Args:
     entry (ElementTree.Element)
+    feed_author (dict): optional, AS1 representation of feed author
 
   Returns:
     dict: ActivityStreams activity
   """
   # default object data from entry. override with data inside activity:object.
   obj_elem = entry.find('activity:object', NAMESPACES)
-  obj = _atom_to_object(obj_elem if obj_elem is not None else entry)
+  obj = _atom_to_object(obj_elem if obj_elem is not None else entry,
+                        feed_author=feed_author)
 
   content = entry.find('atom:content', NAMESPACES)
   if content is not None:
@@ -256,32 +260,41 @@ def _atom_to_activity(entry):
 
   a = {
     'objectType': 'activity',
-    'verb': _as1_value(entry, 'verb'),
+    'verb': _as1_value(entry, 'verb') or 'post',
     'id': _text(entry, 'id') or (obj['id'] if obj_elem is None else None),
-    'url': _text(entry, 'uri') or (obj['url'] if obj_elem is None else None),
+    'url': _text(entry, 'link') or (obj['url'] if obj_elem is None else None),
     'object': obj,
-    'actor': _author_to_actor(entry),
+    'actor': _author_to_actor(entry, feed_author=feed_author),
     'inReplyTo': obj.get('inReplyTo'),
   }
 
-  return source.Source.postprocess_activity(a)
+  return Source.postprocess_activity(a, mentions=True)
 
 
-def _atom_to_object(elem):
+def _atom_to_object(elem, feed_author=None):
   """Converts an Atom entry to an ActivityStreams 1 object.
 
   Args:
     elem (ElementTree.Element)
+    feed_author (dict): optional, AS1 representation of feed author
 
   Returns:
     dict: ActivityStreams object
   """
-  uri = _text(elem, 'uri') or _text(elem)
+  self_links = [link for link in elem.iterfind('atom:link', NAMESPACES)
+                if link.get('rel') in ('self', 'alternate', None)
+                and link.get('type', '').split(';')[0] in ('text/html', '')]
+  uri = (_text(elem, 'uri')
+         or (self_links[0].get('href') if self_links else None)
+         or _text(elem))
+
+  title = _text(elem, 'title')
   return {
-    'objectType': _as1_value(elem, 'object-type'),
+    'objectType': _as1_value(elem, 'object-type') or 'article' if title else 'note',
     'id': _text(elem, 'id') or uri,
+    'author': _author_to_actor(elem, feed_author=feed_author),
     'url': uri,
-    'title': _text(elem, 'title'),
+    'displayName': title,
     'published': _text(elem, 'published'),
     'updated': _text(elem, 'updated'),
     'inReplyTo': [{
@@ -294,20 +307,23 @@ def _atom_to_object(elem):
   }
 
 
-def _author_to_actor(elem):
+def _author_to_actor(elem, feed_author=None):
   """Converts an Atom ``<author>`` element to an ActivityStreams 1 actor.
 
    Looks for ``<author>`` *inside* elem.
 
   Args:
     elem (ElementTree.Element)
+    feed_author (dict): optional, AS1 representation of feed author
 
   Returns:
     dict: ActivityStreams actor object
   """
+  actor = {}
+
   author = elem.find('atom:author', NAMESPACES)
   if author is not None:
-      return {
+      actor = {
         'objectType': _as1_value(author, 'object-type'),
         'id': _text(author, 'id'),
         'url': _text(author, 'uri'),
@@ -315,6 +331,13 @@ def _author_to_actor(elem):
         'email': _text(author, 'email'),
       }
 
+  if feed_author:
+    for field in 'id', 'url':
+      # can't setdefault because actor has None values for id and url
+      if not actor.get(field):
+        actor[field] = feed_author.get(field)
+
+  return actor
 
 def html_to_atom(html, url=None, fetch_author=False, reader=True):
   """Converts microformats2 HTML to an Atom feed.
@@ -354,6 +377,9 @@ def _prepare_activity(a, reader=True):
     a (dict): ActivityStreams 1 activity
     reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
+
+  Returns:
+    ``None``
   """
   act_type = as1.object_type(a)
   obj = as1.get_object(a) or a
@@ -367,16 +393,13 @@ def _prepare_activity(a, reader=True):
     # https://forum.newsblur.com/t/android-cant-read-line-pre-formatted-lines/6116
     white_space_pre=False))
 
-  # Make sure every activity has the title field, since Atom <entry> requires
-  # the title element.
-  if not a.get('title'):
-    a['title'] = util.ellipsize(_encode_ampersands(
-      a.get('displayName') or a.get('content') or obj.get('title') or
-      obj.get('displayName') or obj.get('content') or 'Untitled'))
-
-  # strip HTML tags. the Atom spec says title is plain text:
+  # Make sure every activity has displayName, since Atom <entry> requires the
+  # title element. and strip HTML tags, the Atom spec says title is plain text:
   # http://atomenabled.org/developers/syndication/#requiredEntryElements
-  a['title'] = xml.sax.saxutils.escape(util.parse_html(a['title']).get_text(''))
+  display_name = (a.get('displayName') or a.get('content') or obj.get('title')
+                  or obj.get('displayName') or obj.get('content') or 'Untitled')
+  a['displayName'] = util.ellipsize(xml.sax.saxutils.escape(
+    util.parse_html(display_name).get_text('')))
 
   children = []
   image_urls_seen = set()
@@ -384,8 +407,9 @@ def _prepare_activity(a, reader=True):
 
   # normalize actors
   for elem in a, obj:
-    elem['actor'] = as1.get_object(elem, 'actor')
-    _prepare_actor(elem['actor'])
+    for field in 'actor', 'author':
+      elem[field] = as1.get_object(elem, field)
+      _prepare_actor(elem[field])
 
   # normalize attachments, render attached notes/articles
   attachments = a.get('attachments') or obj.get('attachments') or []
@@ -418,12 +442,14 @@ def _prepare_activity(a, reader=True):
     if not image:
       continue
     url = image.get('url') or image.get('id')
+    if not url:
+      continue
     parsed = urllib.parse.urlparse(url)
     rest = urllib.parse.urlunparse(('', '') + parsed[2:])
     img_src_re = re.compile(r"""src *= *['"] *((https?:)?//%s)?%s *['"]""" %
                             (re.escape(parsed.netloc),
                              _encode_ampersands(re.escape(rest))))
-    if (url and url not in image_urls_seen and
+    if (url not in image_urls_seen and
         not img_src_re.search(obj['rendered_content'])):
       children.append(microformats2.img(url))
       image_urls_seen.add(url)
@@ -450,11 +476,39 @@ def _prepare_actor(actor):
   Args:
     actor (dict): ActivityStreams 1 actor
   """
-  if actor:
-    actor['image'] = util.get_first(actor, 'image')
+  if not actor:
+    return
+
+  actor['image'] = util.get_first(actor, 'image')
+  actor.setdefault('displayName', actor.get('username'))
 
 
 def _remove_query_params(url):
   parsed = list(urllib.parse.urlparse(url))
   parsed[4] = ''
   return urllib.parse.urlunparse(parsed)
+
+
+def extract_entries(atom):
+  """Extracts ``<entry>`` elements into their own separate XML documents.
+
+  Args:
+    atom (str): Atom document with top-level ``<feed>`` or ``<entry>`` element
+
+  Returns:
+    list of str: Atom documents with top-level ``<entry>`` element for each entry
+  """
+  assert isinstance(atom, str), atom.__class__
+  ElementTree.register_namespace('', 'http://www.w3.org/2005/Atom')
+  parser = ElementTree.XMLParser(encoding='UTF-8')
+  top = ElementTree.XML(atom.encode('utf-8'), parser=parser)
+
+  if _tag(top) == 'feed':
+    entries = [elem for elem in top if _tag(elem) == 'entry']
+  elif _tag(top) == 'entry':
+    entries = [top]
+  else:
+    raise ValueError(f'Expected root feed or entry tag; got {top.tag}')
+
+  header = '<?xml version="1.0" encoding="UTF-8"?>\n'
+  return [header + ElementTree.tostring(e, encoding='unicode') for e in entries]

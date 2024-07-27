@@ -203,8 +203,9 @@ MEDIA_STATUS['media_attachments'] = [{
 }, {
   'id': '444',
   'type': 'gifv',
-  'url': 'http://foo.com/video.mp4',
+  'url': 'http://use/remote/url/instead',
   'preview_url': 'http://foo.com/poster.png',
+  'remote_url': 'http://foo.com/video.mp4',
   'description': 'a fun video',
   'meta': {
      'width': 640,
@@ -411,8 +412,8 @@ class MastodonTest(testutil.TestCase):
 
   def test_get_activities_fetch_mentions(self):
     self.expect_get(API_TIMELINE, params={}, response=[STATUS])
-    self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], json={
-      'exclude_types': ['follow', 'favourite', 'reblog'],
+    self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], params={
+      'exclude_types[]': ['follow', 'favourite', 'reblog'],
     })
     self.mox.ReplayAll()
     self.assert_equals([ACTIVITY, MEDIA_ACTIVITY],
@@ -424,8 +425,8 @@ class MastodonTest(testutil.TestCase):
 
     notif = copy.deepcopy(MENTION_NOTIFICATION)
     notif['status'] = None
-    self.expect_get(API_NOTIFICATIONS, [notif], json={
-      'exclude_types': ['follow', 'favourite', 'reblog'],
+    self.expect_get(API_NOTIFICATIONS, [notif], params={
+      'exclude_types[]': ['follow', 'favourite', 'reblog'],
     })
     self.mox.ReplayAll()
     self.assert_equals([], self.mastodon.get_activities(fetch_mentions=True))
@@ -552,6 +553,37 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                         self.mastodon.get_activities())
 
+  def test_get_activities_200_error(self):
+    """Sharkey returns errors as HTTP 200 with `error` field in JSON body.
+
+    Example:
+      {
+        "error": {
+          "message": "Authentication failed. Please ensure your token is correct.",
+          "code": "AUTHENTICATION_FAILED",
+          "id": "b0a7f5f8-dc2f-4171-b91f-de88ad238e14",
+          "kind": "client"
+        }
+      }
+    """
+    self.expect_get(API_TIMELINE, params={}, status_code=200, response={
+        'error': {
+          'message': 'Authentication failed. Please ensure your token is correct.',
+          'code': 'AUTHENTICATION_FAILED',
+          'id': 'b0a7f5f8-dc2f-4171-b91f-de88ad238e14',
+          'kind': 'client',
+        }
+    })
+    self.mox.ReplayAll()
+
+    with self.assertRaises(HTTPError) as e:
+      self.mastodon.get_activities()
+    self.assert_equals(401, e.exception.response.status_code)
+    self.assertIn('AUTHENTICATION_FAILED', str(e.exception))
+
+    with self.assertRaises(ValueError):
+      self.mastodon.get_activities(group_id=source.SEARCH, search_query=None)
+
   def test_get_actor(self):
     self.expect_get(API_ACCOUNT % 1, ACCOUNT)
     self.mox.ReplayAll()
@@ -641,12 +673,12 @@ class MastodonTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     result = self.mastodon.create({
-      "objectType": "activity",
-      "verb": "post",
-      "content": 'foo ☕ bar',
-      "object": {
-        "objectType": "bookmark",
-        "targetUrl": "https://example.com/foo"
+      'objectType': 'activity',
+      'verb': 'post',
+      'content': 'foo ☕ bar',
+      'object': {
+        'objectType': 'bookmark',
+        'targetUrl': 'https://example.com/foo',
       }
     })
 

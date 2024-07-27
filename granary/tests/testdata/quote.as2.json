@@ -1,0 +1,34 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    {"_misskey_quote": "https://misskey-hub.net/ns#_misskey_quote"}
+  ],
+  "type": "Note",
+  "url": "https://quote/",
+  "content": "I hereby quote<br><br>RE: <a href=\"https://bsky.app/orig/post\">https://bsky.app/orig/post</a>",
+  "published": "2007-07-07T03:04:05",
+  "attributedTo": {
+    "type": "Person",
+    "url": "https://bob.bsky.social/",
+    "name": "Bob",
+    "icon": {"type": "Image", "url": "https://bob/jpg"},
+    "image": {"type": "Image", "url": "https://bob/jpg"}
+  },
+  "tag": [{
+    "type": "Link",
+    "mediaType": "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+    "href": "https://bsky.app/orig/post",
+    "name": "RE: https://bsky.app/orig/post",
+    "content": "An original post",
+    "published": "2023-05-11T19:59:12Z",
+    "attributedTo": {
+      "type": "Person",
+      "url": "https://alice.example.com/",
+      "name": "Alice",
+      "icon": {"type": "Image", "url": "https://alice/jpg"},
+      "image": {"type": "Image", "url": "https://alice/jpg"}
+    }
+  }],
+  "quoteUrl": "https://bsky.app/orig/post",
+  "_misskey_quote": "https://bsky.app/orig/post"
+}

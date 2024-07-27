@@ -1,12 +1,12 @@
 {
-  "version": "https://jsonfeed.org/version/1",
+  "version": "https://jsonfeed.org/version/1.1",
   "title": "Martin Smith",
   "home_page_url": "https://example.com/martin",
-  "author": {
+  "authors": [{
     "name": "Martin Smith",
     "url": "https://example.com/martin",
     "avatar": "http://example.com/martin/image"
-  },
+  }],
   "items": [{
     "content_html": "\n<p>\n</p>",
     "attachments": [{

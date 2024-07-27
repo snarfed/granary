@@ -88,7 +88,7 @@ def jsonfeed_to_activity(jf):
   del expected_actor['summary']
   assert actor == expected_actor, (actor, expected_actor)
   assert len(activities) == 1
-  return activities[0]['object']
+  return activities[0]
 
 def html_to_activity(html):
   return microformats2.html_to_activities(html)[0]['object']
@@ -108,6 +108,9 @@ def rss_to_objects(feed):
 
 def bluesky_to_as1(record):
   return bluesky.to_as1(record, repo_did='did:plc:foo', repo_handle='example.com')
+
+def bluesky_from_as1(record):
+  return bluesky.from_as1(record, original_fields_prefix='foo')
 
 # source extension, destination extension, conversion function, exclude prefix,
 # ignore fields. destinations take precedence in the order they appear. only the
@@ -132,8 +135,8 @@ mappings = (
   ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, (), ()),
   ('as.json', ['rss.xml'], rss_from_activities, (), ()),
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
-  ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky.from_as1, (),
-   ('avatar', 'banner')),
+  ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky_from_as1,
+   ('comment_inreplyto_id',), ('avatar', 'banner')),
   ('bsky.json', ['as.json'], bluesky_to_as1, (), ('location', 'updated')),
   ('bsky.json', ['as-from-bsky.json'], bluesky_to_as1, (), ()),
 )

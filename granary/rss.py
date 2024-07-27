@@ -16,6 +16,7 @@ Notably:
 """
 from datetime import datetime, time, timezone
 import logging
+from itertools import zip_longest
 import mimetypes
 
 import dateutil.parser
@@ -30,8 +31,6 @@ from .source import Source
 logger = logging.getLogger(__name__)
 
 CONTENT_TYPE = 'application/rss+xml; charset=utf-8'
-# allowed ActivityStreams objectTypes for media enclosures
-ENCLOSURE_TYPES = {'audio', 'video'}
 
 
 def from_activities(activities, actor=None, title=None, feed_url=None,
@@ -83,11 +82,13 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   fg.title(title or util.ellipsize(desc))  # required
 
   latest = None
-  feed_has_enclosure = False
+  feed_has_stream_enclosure = False
   for activity in activities:
     obj = activity
-    if activity.get('verb') in ('create', 'post'):
-      obj = as1.get_object(activity)
+
+    inner_obj = as1.get_object(activity)
+    if inner_obj and activity.get('verb', 'post') in ('create', 'post'):
+      obj = inner_obj
 
     if activity.get('objectType') == 'person':
       continue
@@ -100,18 +101,16 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
     item.guid(url, permalink=True)
 
     # title (required)
-    title = (obj.get('title') or obj.get('displayName') or
-             util.ellipsize(obj.get('content', '-')))
-    # strip HTML tags
-    title = util.parse_html(title).get_text('').strip()
-    item.title(title)
+    title = obj.get('title') or obj.get('displayName')
+    if title:
+      # strip HTML tags
+      item.title(util.parse_html(title).get_text('').strip())
 
     content = microformats2.render_content(
       obj, include_location=True, render_attachments=True, render_image=True)
     if not content:
-      content = obj.get('summary')
-    if content:
-      item.content(content, type='CDATA')
+      content = obj.get('summary') or ''
+    item.content(content, type='CDATA')
 
     categories = [
       {'term': t['displayName']} for t in obj.get('tags', [])
@@ -143,28 +142,34 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
       except ValueError:  # bad datetime string
         pass
 
-    item_has_enclosure = False
-    for att in obj.get('attachments', []):
+    item_has_stream_enclosure = False
+    for att in as1.get_objects(obj, 'attachments'):
       stream = util.get_first(att, 'stream') or att
       if not stream:
         continue
 
       url = stream.get('url') or ''
       mime = mimetypes.guess_type(url)[0] or ''
-      if (att.get('objectType') in ENCLOSURE_TYPES or
-          mime and mime.split('/')[0] in ENCLOSURE_TYPES):
-        if item_has_enclosure:
+      if (att.get('objectType') in ('audio', 'video') or
+          mime and mime.split('/')[0] in ('audio', 'video')):
+        if item_has_stream_enclosure:
           logger.info(f'Warning: item {id} already has an RSS enclosure, skipping additional enclosure {url}')
           continue
 
-        item_has_enclosure = feed_has_enclosure = True
+        item_has_stream_enclosure = feed_has_stream_enclosure = True
         item.enclosure(url=url, type=mime, length=str(stream.get('size', '')))
         item.load_extension('podcast')
         duration = stream.get('duration')
         if duration:
           item.podcast.itunes_duration(duration)
 
-  if feed_has_enclosure:
+    for img in as1.get_objects(obj, 'image'):
+      if url := img.get('url'):
+        mime = obj.get('mimeType') or mimetypes.guess_type(url)[0] or ''
+        length = obj.get('length', 0)
+        item.enclosure(url, type=mime, length=length)
+
+  if feed_has_stream_enclosure:
     fg.load_extension('podcast')
     fg.podcast.itunes_author(actor.get('displayName') or actor.get('username'))
     if summary:
@@ -218,21 +223,28 @@ def to_activities(rss):
   for entry in parsed.get('entries', []):
     id = entry.get('id')
     uri = entry.get('uri') or entry.get('link')
-
     attachments = []
+    images = []
+
     for e in entry.get('enclosures', []):
       url = e.get('href')
       if url:
         mime = e.get('type') or mimetypes.guess_type(url)[0] or ''
         type = mime.split('/')[0]
-        attachments.append({
-          'stream': {
+        if type in ('audio', 'video'):
+          attachments.append({
+            'stream': {
+              'url': url,
+              'size': as_int(e.get('length')),
+              'duration': as_int(entry.get('itunes_duration')),
+            },
+            'objectType': type,
+          })
+        elif type == 'image':
+          images.append({
             'url': url,
-            'size': as_int(e.get('length')),
-            'duration': as_int(entry.get('itunes_duration')),
-          },
-          'objectType': type if type in ENCLOSURE_TYPES else None,
-        })
+            'mimeType': mime,
+          })
 
     detail = entry.get('author_detail', {})
     author = util.trim_nulls({
@@ -243,25 +255,49 @@ def to_activities(rss):
     if not author:
       author = actor
 
+    object_type = 'note'
+    content = (entry.get('summary')
+               or entry.get('content', [{}])[0].get('value')
+               or entry.get('description'))
+    title = entry.get('title')
+    if content and title:
+      if content.startswith(title.removesuffix('…').removesuffix('...')):
+        title = None
+      else:
+        object_type = 'article'
+
+    for media, alt in zip_longest(util.get_list(entry, 'media_content'),
+                                  util.get_list(entry, 'content'),
+                                  fillvalue={}):
+      if url := media.get('url'):
+        filesize = media.get('filesize')
+        images.append({
+          'url': url,
+          'mimeType': media.get('type'),
+          'length': int(filesize) if util.is_int(filesize) else None,
+          'displayName': alt.get('value'),
+        })
+
     activities.append(Source.postprocess_activity({
       'objectType': 'activity',
-      'verb': 'create',
+      'verb': 'post',
       'id': id,
       'url': uri,
       'actor': author,
       'object': {
-        'objectType': 'article',
+        'objectType': object_type,
         'id': id or uri,
         'url': uri,
-        'displayName': entry.get('title'),
-        'content': entry.get('content', [{}])[0].get('value') or entry.get('description'),
+        'displayName': title,
+        'content': content,
         'published': iso_datetime('published'),
         'updated': iso_datetime('updated'),
         'author': author,
+        'image': images,
         'tags': [{'displayName': tag.get('term') for tag in entry.get('tags', [])}],
         'attachments': attachments,
         'stream': [a['stream'] for a in attachments],
       },
-    }))
+    }, mentions=True))
 
   return util.trim_nulls(activities)

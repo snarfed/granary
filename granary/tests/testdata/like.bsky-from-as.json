@@ -1,5 +1,5 @@
 {
-  "$type": "app.bsky.feed.repost",
+  "$type": "app.bsky.feed.like",
   "subject": {
     "uri": "",
     "cid": ""

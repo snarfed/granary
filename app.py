@@ -8,7 +8,6 @@ import urllib.parse
 from xml.etree import ElementTree
 
 from flask import abort, Flask, redirect, render_template, request
-from flask_caching import Cache
 import flask_gae_static
 from google.cloud import ndb
 import mf2util
@@ -54,7 +53,6 @@ from granary.twitter import Twitter
 from granary.reddit import Reddit
 
 logger = logging.getLogger(__name__)
-# logging.getLogger('lexrpc').setLevel(logging.INFO)
 
 INPUTS = (
   'activitystreams',
@@ -115,7 +113,7 @@ FORMATS = {
   'html': 'text/html; charset=utf-8',
   'json': 'application/json',
   'json-mf2': 'application/mf2+json',
-  'jsonfeed': 'application/json',
+  'jsonfeed': 'application/feed+json',
   'mf2-json': 'application/mf2+json',
   'nostr': 'application/json',
   'rss': rss.CONTENT_TYPE,
@@ -126,7 +124,7 @@ XML_TEMPLATE = """\
 <response>%s</response>
 """
 
-RESPONSE_CACHE_TIME = datetime.timedelta(minutes=10)
+CACHE_CONTROL = {'Cache-Control': 'public, max-age=600'}
 
 
 app = Flask(__name__, static_folder=None)
@@ -143,8 +141,6 @@ if appengine_info.DEBUG or appengine_info.LOCAL_SERVER:
 
 app.wsgi_app = flask_util.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
-
-cache = Cache(app)
 
 util.set_user_agent('granary (https://granary.io/)')
 
@@ -202,12 +198,11 @@ def demo():
 
 
 @app.route('/url', methods=('GET', 'HEAD'))
-@flask_util.cached(cache, RESPONSE_CACHE_TIME, http_5xx=True)
+@flask_util.headers(CACHE_CONTROL)
 def url():
   """Handles URL requests from the interactive demo form on the front page.
 
-  Responses are cached for 10m. You can skip the cache by including a cache=false
-  query param. Background: https://github.com/snarfed/bridgy/issues/665
+  Responses are cached for 10m.
   """
   input = request.values['input']
   if input not in INPUTS:
@@ -238,7 +233,7 @@ def url():
 
   # decode data
   if input in ('activitystreams', 'as1', 'as2', 'bluesky', 'mf2-json',
-               'json-mf2', 'jsonfeed'):
+               'json-mf2', 'jsonfeed', 'nostr'):
     try:
       body_json = resp.json()
       body_items = (body_json if isinstance(body_json, list)
@@ -263,7 +258,7 @@ def url():
   title = None
   hfeed = None
   if mf2:
-    logger.info(f'Got mf2: {json_dumps(mf2, indent=2)}')
+    logger.debug(f'Got mf2: {json_dumps(mf2, indent=2)}')
     def fetch_mf2_func(url):
       if util.domain_or_parent_in(urllib.parse.urlparse(url).netloc, SILO_DOMAINS):
         return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
@@ -282,34 +277,29 @@ def url():
     elif input == 'as2':
       activities = [as2.to_as1(obj) for obj in body_items]
     elif input == 'atom':
-      try:
-        activities = atom.atom_to_activities(resp.text)
-      except ElementTree.ParseError as e:
-        raise BadRequest(f'Could not parse {final_url} as XML: {e}')
-      except ValueError as e:
-        raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
+      activities = atom.atom_to_activities(resp.text)
     elif input == 'bluesky':
       activities = [bluesky.to_as1(obj) for obj in body_items]
     elif input == 'html':
       activities = microformats2.html_to_activities(resp, url=final_url,
                                                     id=fragment, actor=actor)
-    elif input in ('mf2-json', 'json-mf2'):
+    elif input in ('json-mf2', 'mf2-json'):
       activities = [microformats2.json_to_object(item, actor=actor)
                     for item in mf2.get('items', [])]
     elif input == 'jsonfeed':
       activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
+    elif input == 'nostr':
+      activities = [nostr.to_as1(body_json)]
     elif input == 'rss':
-      try:
-        activities = rss.to_activities(resp.text)
-      except ElementTree.ParseError as e:
-        raise BadRequest(f'Could not parse {final_url} as XML: {e}')
-      except ValueError as e:
-        raise BadRequest(f'Could not parse {final_url} as Atom: {e}')
-  except ValueError as e:
+      activities = rss.to_activities(resp.text)
+    else:
+      assert False, f'Please file this as a bug! input {input} not implemented'
+  except (AttributeError, ElementTree.ParseError, KeyError, ValueError) as e:
     logger.warning('parsing input failed', exc_info=True)
     return abort(400, f'Could not parse {final_url} as {input}: {str(e)}')
 
-  logger.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
+  logger.info(f'Converted {len(activities)} activities to AS1')
+  logger.debug(f'  activities: {json_dumps(activities, indent=2)}')
 
   return make_response(source.Source.make_activities_base_response(activities),
                        url=final_url, actor=actor, title=title, hfeed=hfeed)
@@ -358,7 +348,8 @@ def scraped(_):
       json_loads(body), fetch_extras=False)
   else:
     activities, actor = Instagram().scraped_to_activities(body, fetch_extras=False)
-  logger.info(f'Converted to AS1: {json_dumps(activities, indent=2)}')
+  logger.info(f'Converted {len(activities)} activities to AS1')
+  logger.debug(f'Converted to AS1: {json_dumps(activities, indent=2)}')
 
   title = 'Instagram feed'
   if actor:
@@ -472,7 +463,10 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
         'items': [nostr.from_as1(a) for a in activities],
       }, headers
 
-  except (ValueError, NotImplementedError) as e:
+    else:
+      assert False, f'Please file this as a bug! format {format} not implemented'
+
+  except (AttributeError, KeyError, NotImplementedError, ValueError) as e:
     logger.warning('converting to output format failed', exc_info=True)
     return abort(400, f'Could not convert to {format}: {str(e)}')
 

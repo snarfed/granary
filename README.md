@@ -39,7 +39,7 @@ Here's how to get started:
 * REST API and demo app at [granary.io](https://granary.io/).
 * [Source code on GitHub.](https://github.com/snarfed/granary/)
 
-License: This project is placed in the public domain.
+License: This project is placed in the public domain. You may also use it under the [CC0 License](https://creativecommons.org/publicdomain/zero/1.0/).
 
 
 Using
@@ -154,7 +154,7 @@ Development
 ---
 Pull requests are welcome! Feel free to [ping me in #indieweb-dev](https://indieweb.org/discuss) with any questions.
 
-First, fork and clone this repo. Then, install the [Google Cloud SDK](https://cloud.google.com/sdk/) and run `gcloud components install beta cloud-datastore-emulator` to install the [datastore emulator](https://cloud.google.com/datastore/docs/tools/datastore-emulator). Once you have them, set up your environment by running these commands in the repo root directory:
+First, fork and clone this repo. Then, install the [Google Cloud SDK](https://cloud.google.com/sdk/) and run `gcloud components install cloud-firestore-emulator` to install the [Firestore emulator](https://cloud.google.com/firestore/docs/emulator). Once you have them, set up your environment by running these commands in the repo root directory:
 
 ```shell
 gcloud config set project granary-demo
@@ -168,7 +168,7 @@ ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
 Now, run the tests to check that everything is set up ok:
 
 ```shell
-gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
+gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
 python3 -m unittest discover
 ```
 
@@ -198,9 +198,9 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Run the unit tests.
    ```sh
    source local/bin/activate.csh
-   CLOUDSDK_CORE_PROJECT=granary-demo gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 < /dev/null >& /dev/null &
+   CLOUDSDK_CORE_PROJECT=granary-demo gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
    sleep 5
-   python3 -m unittest discover
+   python -m unittest discover
    kill %1
    deactivate
    ```
@@ -210,7 +210,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
    ```sh
-   python3 setup.py clean build sdist
+   python setup.py clean build sdist
    setenv ver X.Y
    source local/bin/activate.csh
    twine upload -r pypitest dist/granary-$ver.tar.gz
@@ -218,18 +218,18 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. Install from test.pypi.org.
    ```sh
    cd /tmp
-   python3 -m venv local
+   python -m venv local
    source local/bin/activate.csh
-   pip3 uninstall granary # make sure we force Pip to use the uploaded version
-   pip3 install --upgrade pip
-   pip3 install mf2py==1.1.2
-   pip3 install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
+   pip uninstall granary # make sure we force Pip to use the uploaded version
+   pip install --upgrade pip
+   pip install mf2py==1.1.2
+   pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
    deactivate
    ```
 1. Smoke test that the code trivially loads and runs.
    ```sh
    source local/bin/activate.csh
-   python3
+   python
    # run test code below
    deactivate
    ```
@@ -281,31 +281,169 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 6.2 - unreleased
+### 7.1 - unreleased
 
 * `as2`:
-  * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
+  * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive) support.
+* `atom`:
+  * `atom_to_activity/ies`: Get URL from `link` for activities as well as objects. ([Thanks @imax9000!](https://github.com/snarfed/granary/issues/752))
 * `bluesky`:
+  * Translate Bluesky `app.bsky.feed.post#langs` to/from AS1 `contentMap` (which isn't officially part of AS1; we steal it from AS2).
+  * Translate AS2 `sensitive` on posts to Bluesky `graphic-media` self label, and many Bluesky self labels back to `sensitive` with content warning(s) in `summary`.
+  * `from_as1`:
+    * Convert `article`s to external embeds with no post text.
+    * Add new `as_embed` boolean kwarg to do the same thing for any object.
+    * When truncating and adding a link to the original post, use `id` if `url` is not available ([snarfed/bridgy-fed#1155](https://github.com/snarfed/bridgy-fed/issues/1155)).
+    * If the input object has `inReplyTo` or `object` or `target` with no recognizable ATProto or Bluesky object, raise `ValueError`.
+    * Omit images that aren't in `blobs`.
+  * `to_as1`:
+    * Extract links from `app.bsky.actor.profile#description` into `url`/`urls` fields
+    * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
+* `rss`:
+  * Support image enclosures, both directions.
+
+### 7.0 - 2024-06-24
+
+_Breaking changes:_
+
+* `jsonfeed`:
+  * `jsonfeed_to_activities`: return AS1 objects, not activities.
+
+_Non-breaking changes:_
+
+* `as1`:
+  * `activity_changed`: add `displayName`, `summary` fields.
+  * `is_public`: return `False` if the object/activity contains `to` that's empty or has only unknown aliases.
+* `as2`:
+  * Add support for the `Application`, `Block`, `Flag`, and `Link` types.
+  * Generalize actor logic in `to/from_as1` across all actor types, not just `Person`.
+  * Add new `link_tags` function.
+* `atom`:
+  * `activities_to_atom`: handle image attachments without `url` field.
+* `bluesky`:
+  * `to_as1`:
+    * Add support for:
+      * `app.bsky.embed.record`
+      * `app.bsky.embed.recordWithMedia`
+      * `app.bsky.feed.defs#notFoundPost`
+      * `app.bsky.feed.generator`
+      * `app.bsky.graph.block`
+      * `app.bsky.graph.list`
+      * `app.bsky.graph.listitem`
+      * `com.atproto.admin.defs#repoRef`
+      * `com.atproto.moderation.createReport#input`
+      * `com.atproto.repo.strongRef`
+    * Add hashtag facet support.
+    * Convert blobs in embeds to `getBlob` image URLs.
+    * `app.bsky.actor.profile`: add HTML links for URLs in `summary` ([snarfed/bridgy-fed#1065](https://github.com/snarfed/bridgy-fed/issues/1065)).
+    * Escape HTML characters (`<`, `>`, `&`) in `app.bsky.actor.profile` `description` field.
+    * Bug fix for `create`/`update` activities with bare string `object`.
+  * `from_as1`:
+    * Add hashtag, mention, block, and flag support. Interpret `tags` with missing `objectType` as hashtags.
+    * Guess missing indices in facets based on content text. Otherwise, if we still don't know a facet's indices, discard it.
+    * Extract HTML links (<a> tags) from HTML content and convert to link facets ([snarfed/bridgy-fed#976](https://github.com/snarfed/bridgy-fed/issues/976)).
+    * If an output string value is longer than its ``maxGraphemes`` or ``maxLength`` in its lexicon, truncate it with an ``…`` ellipsis character at the end in order to fit. If this happens to post text, include a link embed pointing to the original post.
+    * If the object has a video, include an external embed pointing to the original post and mark it as `[Video]` ([snarfed/bridgy-fed#1078](https://github.com/snarfed/bridgy-fed/issues/1078)).
+    * If the object has images, add the original post link to the end of the text, since Bluesky doesn't support both image and external embeds in the same post ([bluesky-social/atproto#2575](https://github.com/bluesky-social/atproto/discussions/2575), [snarfed/bridgy-fed#1106](https://github.com/snarfed/bridgy-fed/issues/1106)).
+    * If a `note` has `summary` - often used for content warnings in the fediverse - add it to `content` as a prefix instead of overriding `content` ([snarfed/bridgy-fed#1001](https://github.com/snarfed/bridgy-fed/issues/1001)).
+    * Populate `reply.root` properly in reply posts ([snarfed/bridgy#1696](https://github.com/snarfed/bridgy/issues/1696)).
+    * Add new `original_fields_prefix` kwarg to store original data in custom (off-Lexicon) `*OriginalDescription` and `*OriginalUrl` fields in `app.bsky.actor.profile` and `*OriginalText` and `*OriginalUrl` fields in `app.bsky.feed.post` ([snarfed/bridgy-fed#1092](https://github.com/snarfed/bridgy-fed/issues/1092)).
+    * Support `lexrpc.Client` as well as `Bluesky` for `client` kwarg.
+  * `from_as1_to_strong_ref`:
+    * Add `value` boolean kwarg.
+    * Change `client` kwarg from `Bluesky` to `lexrpc.Client`.
+* `microformats2`:
+  * Generalize actor logic across all actor types, not just `person`.
+  * `json_to_object`:
+    * Strip leading `#` prefix (if present) from hashtag `u-category`s.
+    * Bug fix for when `name` property is an object, eg an `h-card`.
+  * `object_to_json`:
+    * Convert both `id` and `url` inside `inReplyTo` to `in-reply-to.`
+* `nostr`:
+  * Handle connection closing while sending initial query.
+* `source`:
+  * `Source.postprocess`: when extracting @-mentions, defer to existing tag if it has the same `displayName` and has `url`.
+
+### 6.2 - 2024-03-15
+
+* `as1`:
+  * `get_owner` bug fix for `post`, `update`, `delete` activities.
+  * `activity_changed`: add new `inReplyTo` kwarg.
+  * `is_public`: add new `unlisted` kwarg.
+* `as2`:
+  * `to_as1`: bug fix, preserve `objectType: featured` for banner/header images even when `mediaType` is also set.
+  * `is_public`: add new `unlisted` kwarg.
+  * `from_as1`:
+    * For `icon` field, prefer image types that are [allowed by Mastodon](https://github.com/mastodon/mastodon/blob/b4c332104a8b3748f619de250f77c0acc8e80628/app/models/concerns/account/avatar.rb#L6).
+    * Bug fix, handle `stop-following` with string `object` id.
+* `atom`:
+  * Add new `extract_entries` function.
+  * `activity_to_atom`: default actor/author name to username.
+  * `atom_to_activities`: support top-level `entry` element as well as `feed`.
+  * `atom_to_*`:
+    * add `object.author`
+    * default `objectType` to `article`/`note` and `verb` to `post`
+    * convert `link rel=self`/`alternate` to `url`
+    * use `displayName` in objects instead of `title`
+    * Interpret entry `link` without `rel` as self link.
+  * If `entry.author` doesn't have id or url, default them to feed author's.
+* `bluesky`:
+  * Implement `create` and `preview`.
   * Fully support both `record` and `object` types in `from_as1` and `to_as1`. Use `to_as1`'s `type` kwarg and `from_as1`'s `out_type` kwarg to disambiguate.
+  * Implement `Bluesky.post_id`.
+  * Add new `blob_to_url` function.
+  * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
+  * Convert HTML `summary` and `content` to plain text.
+  * Implement `Bluesky.user_to_actor`, `Bluesky.get_actor`.
+  * Don't log in (fetch an access token) eagerly in the constructor; wait until the client makes a call.
+  * Prefer DID to handle in API calls that accept either.
+  * `at_uri_to_web_url`: support lists.
+  * `web_url_to_at_uri`: convert profile URLs like `https://bsky.app/profile/snarfed.org` to profile record URIs (`at://snarfed.org/app.bsky.actor.profile/self`) instead of repo URIs (`at://snarfed.org`).
+  * Add `from_as1_to_strong_ref`.
+  * Allow `:`s in record keys ([atproto#2224](https://github.com/bluesky-social/atproto/discussions/2224)).
   * `to_as1`:
     * Convert blobs, [both new and old style](https://atproto.com/specs/data-model#blob-type), to PDS `getBlob` URLs.
+    * Add new `uri` kwarg.
     * Translate `handle` to `username`, add new `repo_handle` kwarg.
-    * Add support for `app.bsky.feed.repost`.
+    * Add support for `app.bsky.feed.repost`, `app.bsky.graph.defs#listView`, `app.bsky.feed.defs#blockedPost`.
     * Add `actor`/`author` based on `repo_did`.
-  * Add new `blob_to_url` function.
+    * Improve `url` field: include custom handles, only use `repo_did/handle` for `app.bsky.actor.profile`.
+    * Handle bad facet indices that point inside Unicode code points ([example](https://bsky.app/profile/did:plc:2ythpj4pwwpka2ljkabouubm/post/3kkfszbaiic2g); [discussion](https://discord.com/channels/1097580399187738645/1097580399187738648/1203118842516082848)).
+    * Convert [`!no-unauthenticated` label](https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors) on profiles to [AS1 `@unlisted` audience target](https://activitystrea.ms/specs/json/targeting/1.0/) ([bridgy-fed#828](https://github.com/snarfed/bridgy-fed/issues/828)).
   * `from_as1`:
     * Add `out_type` kwarg to specify desired output type, eg `app.bsky.actor.profile` vs `app.bsky.actor.defs#profileViewBasic` vs `app.bsky.actor.defs#profileView`.
     * Add `blobs` kwarg to provide blob objects to use for image URLs.
+    * Add `client` kwarg to fetch and populate CIDs.
+    * Handle mention tags pointing to bare DIDs.
+    * Use `parent` as `root` in replies. (Technically wrong in cases where the parent isn't the root, but we don't actually know the root. 🤷)
     * Bug fix: handle bare string URLs in `image` field.
+    * Bug fix: handle tags without `url` field.
     * Strip trailing slash from home page URLs in order to remove visible `/` from rel-me verified links on Mastodon etc.
-  * Delete `as1_to_profile`, switch `from_as1` to return `$type: app.bsky.actor.profile`.
-  * Convert HTML `summary` and `content` to plain text.
-  * Implement `Bluesky.user_to_actor`.
+    * Convert `attributedTo` to singular if it has only one element.
+    * If `name` isn't set, fall back to `preferredUsername` or infer Webfinger handle from `id` or `url`.
+    * Prioritize bsky.app profile URL before handle URL in `url` field ([bridgy#1640](https://github.com/snarfed/bridgy/issues/1640)).
+    * Convert `bsky.app` `inReplyTo` URLs to `at://` URIs.
+    * Tighten up `datetime` conversion to match the [ATProto recommended format](https://atproto.com/specs/lexicon#datetime).
 * `facebook`:
   * Remove `Facebook.fql_stream_to_post`. [Facebook turned down FQL in 2016.](https://en.wikipedia.org/wiki/Facebook_Query_Language#History)
+* `github`:
+  * When converting data to AS1, use `displayName` in objects instead of `title`.
+* `mastodon`:
+  * `get_activities` bug fix: use query params for `/api/v1/notifications` API call, not JSON body.
+  * Convert HTTP 200 responses with `error` JSON field (eg from Sharkey) to 400/401 exceptions.
+  * Prefer `media_attachments.remote_url` when available since it may be more long-lived than `url` for remote statuses ([bridgy#1675](https://github.com/snarfed/bridgy/issues/1675)).
+* `microformats2`:
+  * `object_to_json` bug fix: handle singular `inReplyTo`.
+  * `json_to_object` bug fix: handle list-valued `location`.
+* `nostr:`
+  * `get_*`: return partial results when the websocket connection is closed prematurely.
+  * `to_as1`: handle invalid NIP05 values (eg `{}`)
+* `rss`:
+  * `to_activities`:
+    * Use `objectType: note` if `title` isn't set or is a prefix (possibly ellipsized) of `content`/`description`.
+    * Add support for images in `media:content` tags ([#674](https://github.com/snarfed/granary/issues/674)).
 * `Source`:
-  * `postprocess_object`: convert HTML links in content to fediverse handles (`@user@instance`) to `mention` tags.
-
+  * `postprocess_activity/object`: add `mentions` kwarg to convert @-mentions in HTML links to `mention` tags.
 
 ### 6.1 - 2023-09-16
 
@@ -341,6 +479,7 @@ _Non-breaking changes:_
     * Bug fix, emove incorrect `type="application/atom+xml"` from `rel="self"` `link` in `entry`.
     * Render `objectType: comment` attachments.
     * Remove invalid `<a>` element for tags.
+    * Bug fix: avoid encoded `<` and `>` characters in `title` ([#629](https://github.com/snarfed/granary/issues/629)).
   * Bug fixes in `activity_to_atom`/`activities_to_atom` for dict-valued `url` fields.
   * Render images in article/note attachments.
   * Render `objectType: service` attachments, eg Bluesky custom feeds.
@@ -375,6 +514,8 @@ _Non-breaking changes:_
     * Bug fix, handle bare string URL `image` values.
     * Normalize ISO-8601 format of `published` and `updated` timestamps.
     * Handle bare string ids for `replies ` and `shares` (usually from AS2.)
+  * `render_content`:
+    * Bug fix for bare string `author` and `actor` values.
   * Include `objectType: service` attachments, eg Bluesky custom feeds, in JSON and HTML output.
 * `rss`:
   * `from_activities`: handle bare string id `author`.

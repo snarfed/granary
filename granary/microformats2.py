@@ -28,7 +28,7 @@ from oauth_dropins.webutil.util import (
 )
 
 from . import as1
-from . import source
+from .source import Source
 
 logger = logging.getLogger(__name__)
 
@@ -64,10 +64,13 @@ HCARD = string.Template("""\
 """)
 LINK = string.Template('  <a class="u-$cls" href="$url"></a>')
 AS_TO_MF2_TYPE = {
+  'application': ['h-card'],
   'event': ['h-event'],
+  'group': ['h-card'],
   'organization': ['h-card'],
   'person': ['h-card'],
   'place': ['h-card', 'p-location'],
+  'service': ['h-card'],
 }
 # silly hack: i haven't found anywhere in AS1 or AS2 to indicate that
 # something is being "quoted," like in a quote tweet, so i cheat and use
@@ -234,15 +237,18 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   note = primary.get('note')
   author = obj.get('author', obj.get('actor', {}))
 
-  in_reply_tos = obj.get('inReplyTo') or []
+  in_reply_tos = as1.get_objects(obj, 'inReplyTo')
   if not in_reply_tos:
     context = obj.get('context')
     if context and isinstance(context, dict):
-      in_reply_tos = context.get('inReplyTo') or []
+      in_reply_tos = as1.get_objects(context, 'inReplyTo')
 
   is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
-  if (is_rsvp or obj_type == 'react') and obj.get('object'):
-    in_reply_tos.extend(util.get_list(obj, 'object'))
+  if is_rsvp or obj_type == 'react':
+    in_reply_tos.extend(as1.get_objects(obj))
+
+  in_reply_tos = list(util.trim_nulls(itertools.chain.from_iterable(
+    [o.get('id'), o.get('url')] for o in in_reply_tos)))
 
   # maps objectType to list of objects
   attachments = defaultdict(list)
@@ -288,7 +294,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
       'name': [name],
       'org': [name] if obj_type == 'organization' else None,
       'nickname': [obj.get('username') or ''],
-      ('note' if obj_type == 'person' else 'summary'): [summary],
+      ('note' if obj_type in as1.ACTOR_TYPES else 'summary'): [summary],
       'url': (list(as1.object_urls(obj) or as1.object_urls(primary)) +
               obj.get('upstreamDuplicates', [])),
       # photo is special cased below, to handle alt
@@ -301,8 +307,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
         obj.get('published') or primary.get('published'))],
       'updated': [maybe_normalize_iso8601(
         obj.get('updated') or primary.get('updated'))],
-      'in-reply-to': util.trim_nulls([util.get_url(o) or o.get('id')
-                                      for o in in_reply_tos]),
+      'in-reply-to': in_reply_tos,
       'author': [object_to_json(
         author, trim_nulls=False, default_object_type='person')],
       'location': [object_to_json(as1.get_object(primary, 'location'),
@@ -348,7 +353,7 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
     tags = util.get_list(obj, 'object')
   ret['properties']['category'] = []
   for tag in tags:
-    if tag.get('objectType') == 'person':
+    if tag.get('objectType') in as1.ACTOR_TYPES:
       ret['properties']['category'].append(
         object_to_json(tag, entry_class='u-category h-card'))
     elif tag.get('objectType') == 'hashtag' or obj_type == 'tag':
@@ -556,7 +561,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     'stream': [stream],
     'location': json_to_object(prop.get('location')),
     'replies': {'items': [json_to_object(c) for c in props.get('comment', [])]},
-    'tags': [{'objectType': 'hashtag', 'displayName': cat}
+    'tags': [{'objectType': 'hashtag', 'displayName': cat.removeprefix('#')}
              if isinstance(cat, str)
              else json_to_object(cat)
              for cat in props.get('category', [])],
@@ -583,7 +588,12 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       })
 
   # mf2util uses the indieweb/mf2 location algorithm to collect locations
-  interpreted = mf2util.interpret({'items': [mf2]}, None)
+  interpreted = None
+  try:
+    interpreted = mf2util.interpret({'items': [mf2]}, None)
+  except (AttributeError, ValueError) as e:
+    logging.warning('mf2util.interpret failed')
+
   if interpreted:
     loc = interpreted.get('location')
     if loc:
@@ -645,7 +655,7 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       'author': author,
     })
 
-  return source.Source.postprocess_object(obj)
+  return Source.postprocess_object(obj, mentions=True)
 
 
 def html_to_activities(html, url=None, actor=None, id=None):
@@ -988,15 +998,16 @@ def render_content(obj, include_location=True, synthesize_content=True,
       tags.setdefault(as1.object_type(t), []).append(t)
 
   # linkify embedded mention tags inside content.
+  # TODO: duplicated in :func:`as2.link_tags`. unify?
   if mentions:
     mentions.sort(key=lambda t: t['startIndex'])
     last_end = 0
-    orig = util.WideUnicode(content)
-    content = util.WideUnicode('')
+    orig = content
+    content = ''
     for tag in mentions:
       start = tag['startIndex']
       end = start + tag['length']
-      content = util.WideUnicode(f"{content}{orig[last_end:start]}<a href=\"{tag['url']}\">{orig[start:end]}</a>")
+      content = f"{content}{orig[last_end:start]}<a href=\"{tag['url']}\">{orig[start:end]}</a>"
       last_end = end
 
     content += orig[last_end:]
@@ -1057,7 +1068,8 @@ def render_content(obj, include_location=True, synthesize_content=True,
         content += f"<a href=\"{target_url}\">{verb.lower()} this.</a>"
 
       else:
-        author = target.get('author') or target.get('actor') or {}
+        author = (as1.get_object(target, 'author')
+                  or as1.get_object(target, 'actor'))
         # special case for twitter RT's
         if obj_type == 'share' and 'url' in obj and re.search(
             r'^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
@@ -1086,7 +1098,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
     content += f"\n<p>{hcard_to_html(object_to_json(loc, default_object_type='place'), parent_props=['p-location'])}</p>"
 
   # these are rendered manually in json_to_html()
-  for type in 'like', 'share', 'react', 'person':
+  for type in set(('like', 'share', 'react')) | as1.ACTOR_TYPES:
     tags.pop(type, None)
 
   # render the rest
@@ -1161,6 +1173,8 @@ def find_author(parsed, **kwargs):
   """
   author = mf2util.find_author(parsed, **kwargs)
   if author:
+    # sadly can't use json_to_object here because mf2util.find_author returns
+    # its own data format
     photo = author.get('photo')
     alt = photo.get('alt') if isinstance(photo, dict) else None
     return util.trim_nulls({
@@ -1183,7 +1197,7 @@ def get_title(mf2):
   Returns:
     str: title, possibly ellipsized
   """
-  lines = mf2util.interpret_feed(mf2, '').get('name', '').splitlines()
+  lines = get_text(mf2util.interpret_feed(mf2, '').get('name')).splitlines()
   if lines:
     return util.ellipsize(lines[0])
 

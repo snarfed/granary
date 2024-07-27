@@ -12,7 +12,7 @@ from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-from app import app, cache
+from app import app
 
 client = app.test_client()
 
@@ -79,7 +79,7 @@ MF2 = {'items': [{
 }]}
 
 JSONFEED = {
-  'version': 'https://jsonfeed.org/version/1',
+  'version': 'https://jsonfeed.org/version/1.1',
   'title': 'JSON Feed',
   'items': [{
     'url': 'https://perma/link',
@@ -187,10 +187,6 @@ RSS_ACTIVITIES = json_loads(util.read(os.path.join(
 
 class AppTest(testutil.TestCase):
 
-  def setUp(self):
-    super(AppTest, self).setUp()
-    cache.clear()
-
   def expect_requests_get(self, *args, **kwargs):
     return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
 
@@ -249,7 +245,7 @@ class AppTest(testutil.TestCase):
     path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = client.get(path)
     self.assert_equals(200, resp.status_code)
-    self.assert_equals('application/json', resp.headers['Content-Type'])
+    self.assert_equals('application/feed+json', resp.headers['Content-Type'])
 
     expected = copy.deepcopy(JSONFEED)
     expected['feed_url'] = 'http://localhost' + path
@@ -266,7 +262,7 @@ class AppTest(testutil.TestCase):
       'feed_url': f'http://localhost{path}',
       'items': [{'content_text': ''}],
       'title': 'JSON Feed',
-      'version': 'https://jsonfeed.org/version/1',
+      'version': 'https://jsonfeed.org/version/1.1',
     }, resp.json)
 
   def test_url_jsonfeed_to_json_mf2(self):
@@ -536,6 +532,7 @@ baz baj
     self.assert_equals({
       'items': [{
         'id': 'https://perma/link',
+        'url': 'https://perma/link',
         'objectType': 'activity',
         'verb': 'post',
         'actor': {
@@ -543,10 +540,17 @@ baz baj
           'displayName': 'My Name',
           'url': 'http://my/site',
         },
+        'title': 'foo ☕ bar',
         'object': {
           'id': 'https://perma/link',
+          'url': 'https://perma/link',
           'objectType': 'note',
-          'title': 'foo ☕ bar',
+          'author': {
+            'objectType': 'person',
+            'displayName': 'My Name',
+            'url': 'http://my/site',
+          },
+          'displayName': 'foo ☕ bar',
           'content': 'foo ☕ bar',
           'published': '2012-03-04T18:20:37+00:00',
           'updated': '2012-03-04T18:20:37+00:00',
@@ -566,7 +570,7 @@ baz baj
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_code)
-    self.assertIn('Could not parse http://feed as XML: ',
+    self.assertIn('Could not parse http://feed as atom: ',
                   resp.get_data(as_text=True))
 
   def test_url_atom_to_as1_not_atom(self):
@@ -579,7 +583,7 @@ not atom!
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_code)
-    self.assertIn('Could not parse http://feed as Atom: ',
+    self.assertIn('Could not parse http://feed as atom: ',
                   resp.get_data(as_text=True))
 
   def test_url_rss_to_as1(self):
@@ -664,7 +668,7 @@ not RSS!
         test_bluesky.POST_BSKY,
         test_bluesky.REPLY_BSKY,
       ],
-    }, resp.json)
+    }, resp.json, ignore=['fooOriginalUrl', 'fooOriginalText'])
 
   def test_url_as1_to_nostr(self):
     self.expect_requests_get('http://my/posts', [test_nostr.NOTE_AS1])
@@ -678,6 +682,14 @@ not RSS!
       'tags': [],
     }
     self.assert_equals({'items': [expected]}, resp.json)
+
+  def test_url_nostr_to_as1(self):
+    self.expect_requests_get('http://nostr/posts', test_nostr.NOTE_NOSTR)
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://nostr/posts&input=nostr&output=as1')
+    self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
+    self.assert_equals([test_nostr.NOTE_AS1], resp.json['items'])
 
   def test_url_bad_input(self):
     resp = client.get('/url?url=http://my/posts.json&input=foo')
@@ -736,21 +748,6 @@ not RSS!
     self.mox.ReplayAll()
     resp = client.get('/url?url=http://my/posts.html&input=html')
     self.assert_equals(502, resp.status_code)
-
-  @testutil.enable_flask_caching(app, cache)
-  def test_cache(self):
-    self.expect_requests_get('http://my/posts.html', HTML % {'body_class': '', 'extra': ''})
-    self.mox.ReplayAll()
-
-    # first fetch populates the cache
-    url = '/url?url=http://my/posts.html&input=html'
-    first = client.get(url)
-    self.assert_equals(200, first.status_code)
-
-    # second fetch should use the cache instead of fetching from the silo
-    second = client.get(url)
-    self.assert_equals(200, first.status_code)
-    self.assert_equals(first.get_data(), second.get_data())
 
   def test_hub(self):
     self.expect_requests_get('http://my/posts.html', HTML % {

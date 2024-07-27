@@ -40,9 +40,6 @@ INCLUDE_LINK = 'include'
 INCLUDE_IF_TRUNCATED = 'if truncated'
 HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')
 
-# WebFinger-style @-@ identifier
-FEDIVERSE_HANDLE = re.compile('^@[^@ ]+@[a-z0-9-.]+$')
-
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -184,7 +181,7 @@ class Source(object, metaclass=SourceMeta):
     """Fetches and returns a user.
 
     Args:
-      user_id: str, defaults to current user
+      user_id (str): defaults to current user
 
     Returns:
       dict: ActivityStreams actor
@@ -601,13 +598,15 @@ class Source(object, metaclass=SourceMeta):
         return tag
 
   @staticmethod
-  def postprocess_activity(activity):
+  def postprocess_activity(activity, mentions=False):
     """Does source-independent post-processing of an activity, in place.
 
     Right now just populates the ``title`` field.
 
     Args:
       activity (dict)
+      mentions (boolean): whether to detect @-mention links and convert them to
+        mention tags
     """
     activity = util.trim_nulls(activity)
     # maps object type to human-readable name to use in title
@@ -627,7 +626,7 @@ class Source(object, metaclass=SourceMeta):
     obj = activity.get('object')
 
     if obj:
-      activity['object'] = Source.postprocess_object(obj)
+      activity['object'] = Source.postprocess_object(obj, mentions=mentions)
       if not activity.get('title'):
         verb = DISPLAY_VERBS.get(activity.get('verb'))
         obj_name = obj.get('displayName')
@@ -643,15 +642,18 @@ class Source(object, metaclass=SourceMeta):
     return util.trim_nulls(activity)
 
   @staticmethod
-  def postprocess_object(obj):
+  def postprocess_object(obj, mentions=False):
     """Does source-independent post-processing of an object, in place.
 
     * Populates ``location.position`` based on latitude and longitude.
-    * Convert HTML links in content to fediverse handles (``@user@instance``) to
-      ``mention`` tags.
+    * Optionally interprets HTML links in content with text starting with ``@``,
+      eg ``@user`` or ``@user.com`` or ``@user@instance.com``, as @-mentions
+      and adds ``mention`` tags for them.
 
     Args:
       obj (dict)
+      mentions (boolean): whether to detect @-mention links and convert them to
+        mention tags
 
     Returns:
       dict: ``obj``, modified in place
@@ -664,18 +666,25 @@ class Source(object, metaclass=SourceMeta):
         # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
         loc['position'] = '%0+10.6f%0+11.6f/' % (lat, lon)
 
-    # fediverse @-mentions to mention tags
-    # https://github.com/snarfed/bridgy-fed/issues/493
-    content = obj.get('content') or ''
-    for a in util.parse_html(content).find_all('a'):
-      href = a.get('href')
-      text = a.get_text('').strip()
-      if href and FEDIVERSE_HANDLE.match(text):
-        obj.setdefault('tags', []).append({
-          'objectType': 'mention',
-          'url': href,
-          'displayName': text,
-        })
+    if mentions:
+      # @-mentions to mention tags
+      # https://github.com/snarfed/bridgy-fed/issues/493
+      # TODO: unify into new textContent field
+      # https://github.com/snarfed/granary/issues/729
+      content = obj.get('content') or ''
+      existing_tags_with_urls = util.trim_nulls({
+        t.get('displayName') for t in obj.setdefault('tags', []) if t.get('url')
+      })
+
+      for a in util.parse_html(content).find_all('a'):
+        href = a.get('href')
+        text = a.get_text('').strip()
+        if href and text.startswith('@') and text not in existing_tags_with_urls:
+          obj.setdefault('tags', []).append({
+            'objectType': 'mention',
+            'url': href,
+            'displayName': text,
+          })
 
     return util.trim_nulls(obj)
 
@@ -801,7 +810,6 @@ class Source(object, metaclass=SourceMeta):
       ignore_formatting (bool): whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
       prefer_name (bool): whether to prefer ``displayName`` to ``content``
-
       strip_first_video_tag (bool): if true, removes the first ``<video>`` tag.
         useful when it will be uploaded and attached to the post natively in the
         silo.
@@ -857,7 +865,8 @@ class Source(object, metaclass=SourceMeta):
                        (content or name)
                        ) or ''
 
-  def truncate(self, content, url, include_link, type=None, quote_url=None):
+  def truncate(self, content, url, include_link, type=None, quote_url=None,
+               **kwargs):
     """Shorten text content to fit within a character limit.
 
     Character limit and URL character length are taken from
@@ -871,30 +880,29 @@ class Source(object, metaclass=SourceMeta):
       type (str): optional: ``article``, ``note``, etc.
       quote_url (str): URL, optional. If provided, it will be appended to the
         content, *after* truncating.
+      **kwargs: passed through to brevity.shorten
 
     Return:
       str: the possibly shortened and ellipsized text
     """
-    kwargs = {}
-
     if quote_url:
-      kwargs['target_length'] = (
+      kwargs.setdefault('target_length',
         (self.TRUNCATE_TEXT_LENGTH or brevity.WEIGHTS['maxWeightedTweetLength']) -
         (self.TRUNCATE_URL_LENGTH or brevity.WEIGHTS['transformedURLLength']) - 1)
     elif self.TRUNCATE_TEXT_LENGTH is not None:
-      kwargs['target_length'] = self.TRUNCATE_TEXT_LENGTH
+      kwargs.setdefault('target_length', self.TRUNCATE_TEXT_LENGTH)
 
     if self.TRUNCATE_URL_LENGTH is not None:
-      kwargs['link_length'] = self.TRUNCATE_URL_LENGTH
+      kwargs.setdefault('link_length', self.TRUNCATE_URL_LENGTH)
 
     if include_link != OMIT_LINK:
-      kwargs['permalink'] = url  # only include when text is truncated
+      kwargs.setdefault('permalink', url)  # only include when text is truncated
 
     if include_link == INCLUDE_LINK:
-      kwargs['permashortlink'] = url  # always include
+      kwargs.setdefault('permashortlink', url)  # always include
 
     if type == 'article':
-      kwargs['format'] = brevity.FORMAT_ARTICLE
+      kwargs.setdefault('format', brevity.FORMAT_ARTICLE)
 
     truncated = brevity.shorten(content, **kwargs)
 

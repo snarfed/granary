@@ -26,13 +26,23 @@ RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
 ))
 VERBS_WITH_OBJECT = frozenset((
   'accept',
+  'block',
   'follow',
   'like',
   'react',
   'reject',
   'share',
   'stop-following',
+  'undo',
 )) | set(RSVP_VERB_TO_COLLECTION.keys())
+CRUD_VERBS = frozenset((
+  'delete',
+  'post',
+  'update',
+  # not in AS1 spec, undo isn't a real AS1 verb, but we map it to AS2 Undo
+  # https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs
+  'undo',
+))
 
 # objectTypes that can be actors. technically this is based on AS2 semantics,
 # since it's unspecified in AS1.
@@ -57,6 +67,8 @@ POST_TYPES = frozenset((
 
 # used in original_post_discovery
 _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
+
+HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
 
 def object_type(obj):
@@ -134,14 +146,16 @@ def get_owner(obj):
     raise ValueError(f'{obj} is not a dict')
 
   ids = get_ids(obj, 'author') or get_ids(obj, 'actor')
-  if not ids and obj.get('objectType') in ACTOR_TYPES:
-    ids = util.get_list(obj, 'id')
-
-  if not ids and obj.get('verb') in ('post', 'update', 'delete'):
-    ids = get_owner(get_object(obj))
-
   if ids:
     return ids[0]
+
+  if obj.get('objectType') in ACTOR_TYPES:
+    ids = util.get_list(obj, 'id')
+    if ids:
+      return ids[0]
+
+  if obj.get('verb') in ('post', 'update', 'delete'):
+    return get_owner(get_object(obj))
 
 
 def get_url(obj):
@@ -149,8 +163,16 @@ def get_url(obj):
 
   Somewhat duplicates :func:`microformats2.get_text`.
   """
+  if not obj:
+    return ''
+
   urls = object_urls(obj)
-  return urls[0] if urls else ''
+  if not urls:
+    return ''
+
+  return (urls[0] if isinstance(urls, (list, tuple))
+          else urls if isinstance(urls, str)
+          else '')
 
 
 def get_ids(obj, field):
@@ -172,7 +194,7 @@ def get_ids(obj, field):
       if id:
         ids.add(id)
 
-  return list(ids)
+  return sorted(ids)
 
 
 def merge_by_id(obj, field, new):
@@ -190,7 +212,7 @@ def merge_by_id(obj, field, new):
   obj[field] = sorted(merged.values(), key=itemgetter('id'))
 
 
-def is_public(obj):
+def is_public(obj, unlisted=True):
   """Returns True if the object is public, False if private, None if unknown.
 
   ...according to the Audience Targeting extension:
@@ -203,14 +225,30 @@ def is_public(obj):
   that and prunes the to field from stored activities in Response objects (in
   ``bridgy/util.prune_activity``). If the default here ever changes, be sure to
   update Bridgy's code.
+
+  Args:
+    obj (dict): AS2 activity or object
+    unlisted (bool): whether `@unlisted` counts as public or not
   """
-  to = obj.get('to') or get_object(obj).get('to') or []
+  if obj is None:
+    return None
+
+  inner_obj = get_object(obj)
+  to = get_objects(obj, 'to') or get_objects(inner_obj, 'to') or []
   aliases = util.trim_nulls([t.get('alias') for t in to])
   object_types = util.trim_nulls([t.get('objectType') for t in to])
-  return (True if '@public' in aliases or '@unlisted' in aliases
-          else None if 'unknown' in object_types
-          else False if aliases
-          else True)
+
+  if '@public' in aliases or ('@unlisted' in aliases and unlisted):
+    return True
+  elif 'unknown' in object_types:
+    return None
+  elif aliases:
+    return False
+  elif 'to' in obj or 'to' in inner_obj:
+    # it does at least have some audience that doesn't include public
+    return False
+
+  return True
 
 
 def add_rsvps_to_event(event, rsvps):
@@ -269,16 +307,18 @@ def get_rsvps_from_event(event):
   return rsvps
 
 
-def activity_changed(before, after, log=False):
+def activity_changed(before, after, inReplyTo=True, log=False):
   """Returns whether two activities or objects differ meaningfully.
 
-  Only compares a few fields: ``objectType``, ``verb``, ``content``,
-  ``location``, and ``image``. Notably does *not* compare ``author``,
-  ``published``, or ``updated``.
+  Only compares a few fields: ``objectType``, ``verb``, ``displayName`,
+  ``content``, ``summary``, ``location``, and ``image``. Notably does *not*
+  compare ``author``, ``published``, or ``updated``.
 
   Args:
-    before: dict, ActivityStreams activity or object
-    after: dict, ActivityStreams activity or object
+    before (dict): ActivityStreams activity or object
+    after (dict): ActivityStreams activity or object
+    inReplyTo (bool): whether to return True if ``inReplyTo`` has changed
+    log (bool): whether to log each changed field
 
   Returns:
     bool:
@@ -303,12 +343,13 @@ def activity_changed(before, after, log=False):
   obj_a = get_object(after)
   if any(changed(before, after, field, 'activity') or
          changed(obj_b, obj_a, field, 'activity[object]')
-         for field in ('objectType', 'verb', 'to', 'content', 'location',
-                       'image')):
+         for field in ('objectType', 'verb', 'to', 'displayName', 'content',
+                       'summary', 'location', 'image')):
     return True
 
-  if (changed(before, after, 'inReplyTo', 'inReplyTo', ignore=('author',)) or
-      changed(obj_b, obj_a, 'inReplyTo', 'object.inReplyTo', ignore=('author',))):
+  if (inReplyTo and
+      (changed(before, after, 'inReplyTo', 'inReplyTo', ignore=('author',)) or
+       changed(obj_b, obj_a, 'inReplyTo', 'object.inReplyTo', ignore=('author',)))):
     return True
 
   return False
@@ -374,7 +415,7 @@ def original_post_discovery(
 
   # find all candidate URLs
   tags = [t.get('url') for t in obj.get('attachments', []) + obj.get('tags', [])
-          if t.get('objectType') in ('article', 'mention', 'note', None)]
+          if t.get('objectType') in ('article', 'link', 'mention', 'note', None)]
   candidates = (tags + util.extract_links(content) +
                 obj.get('upstreamDuplicates', []) +
                 util.get_list(obj, 'targetUrl'))

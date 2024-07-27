@@ -6,7 +6,7 @@
   "content": "Add the mutuals custom feed here",
   "attachments": [{
     "objectType": "service",
-    "displayName": "Feed: Mutuals",
+    "displayName": "Mutuals",
     "id": "at://did:plc:z72i7hd/app.bsky.feed.generator/mutuals",
     "url": "https://bsky.app/profile/did:plc:z72i7hd/feed/mutuals",
     "summary": "See posts from your mutual follows",

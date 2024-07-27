@@ -101,7 +101,7 @@ class Microformats2Test(testutil.TestCase):
        }
      }))
 
-  def test_object_to_json_note_with_in_reply_to(self):
+  def test_object_to_json_note_with_context_in_reply_to(self):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {
@@ -118,6 +118,45 @@ class Microformats2Test(testutil.TestCase):
           'url': 'http://reply/target',
         }],
       }}))
+
+  def test_object_to_json_note_with_in_reply_to_array_composite(self):
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['@hey great post'],
+        'in-reply-to': ['http://reply/target'],
+      },
+    }, microformats2.object_to_json({
+      'content': '@hey great post',
+      'inReplyTo': [{'url': 'http://reply/target'}],
+    }))
+
+  def test_object_to_json_note_with_in_reply_to_single_id(self):
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['@hey great post'],
+        'in-reply-to': ['http://reply/target'],
+      },
+    }, microformats2.object_to_json({
+      'content': '@hey great post',
+      'inReplyTo': 'http://reply/target',
+    }))
+
+  def test_object_to_json_note_with_in_reply_to_id_and_url(self):
+    self.assertEqual({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['@hey great post'],
+        'in-reply-to': ['http://reply/id', 'http://reply/url'],
+      },
+    }, microformats2.object_to_json({
+      'content': '@hey great post',
+      'inReplyTo': {
+        'id': 'http://reply/id',
+        'url': 'http://reply/url',
+      },
+    }))
 
   def test_object_to_json_context_string(self):
     """Can happen for objects converted from AS2.
@@ -487,6 +526,25 @@ Shared <a href="#">a post</a> by foo
        }],
     }))
 
+  def test_render_author_bare_string_actor(self):
+    self.assert_multiline_equals("""
+Shared <a href="nostr:note1sa9...">a post</a> by   <span class="h-card">
+<data class="p-uid" value="nostr:npub16cn..."></data>
+<a title="nostr:npub16cn..." class="u-url" href="nostr:npub16cn...">nostr:npub16cn....</a>
+</span>
+foo bar
+""", microformats2.render_content({
+      'id': 'nostr:nevent18dg...',
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'id': 'nostr:note1sa9...',
+        'objectType': 'note',
+        'content': 'foo bar',
+        'author': 'nostr:npub16cn...',
+      },
+    }), ignore_blanks=True)
+
   def test_dont_stop_at_unknown_tag_type(self):
     obj = {'tags': [
       {'objectType': 'x', 'url': 'http://x'},
@@ -775,6 +833,20 @@ Shared <a href="#">a post</a> by foo
         'displayName': 'indieweb',
       },
     ], obj.get('tags'))
+
+  def test_json_to_object_category_strips_hash(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'foo',
+      }],
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'category': ['#foo'],
+      },
+    }))
 
   def test_json_to_object_text_newlines(self):
     """Text newlines should not be converted to <br>s."""
@@ -1136,7 +1208,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       'updated': bad[1],
     }))
 
-  def test_normalize_timestamp_composite_objecct(self):
+  def test_normalize_timestamp_composite_object(self):
     self.assert_equals({
       'objectType': 'note',
       'published': '2020-02-21T12:00:00',
@@ -1151,4 +1223,50 @@ Shared <a href="#">a post</a> by   <span class="h-card">
           'value': '2020-02-21 12:00:00',
         }],
       },
+    }))
+
+  def test_bad_location(self):
+    self.assert_equals({
+      'objectType': 'note',
+    }, microformats2.json_to_object({
+      'type': ['h-entry'],
+      'properties': {
+        'location': [
+          ['h-geo'],
+        ],
+      },
+    }))
+
+  def test_get_title(self):
+    self.assert_equals('my title', microformats2.get_title({
+      'items': [{
+        'type': ['h-feed'],
+        'properties': {
+          'name': ['my title'],
+        },
+      }],
+    }))
+
+  def test_get_title_no_name(self):
+    self.assert_equals('', microformats2.get_title({
+      'items': [{
+        'type': ['h-feed'],
+        'properties': {},
+      }],
+    }))
+
+  def test_get_title_name_is_hcard(self):
+    self.assert_equals('name value', microformats2.get_title({
+      'items': [{
+        'type': ['h-feed'],
+        'properties': {
+          'name': [{
+            "type": ["h-card"],
+            "properties": {
+              "name": ["inner name"]
+            },
+            "value": "name value",
+          }],
+        },
+      }],
     }))

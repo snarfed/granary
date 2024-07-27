@@ -1,11 +1,13 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "I hereby quote",
-  "createdAt": "2007-07-07T03:04:05",
+  "fooOriginalText": "I hereby quote",
+  "fooOriginalUrl": "https://bsky.app/profile/did/post/quote-post-tid",
+  "createdAt": "2007-07-07T03:04:05.000Z",
   "embed": {
     "$type": "app.bsky.embed.record",
     "record": {
-      "cid": "TODO",
+      "cid": "",
       "uri": "at://did/app.bsky.feed.post/orig-post-tid"
     }
   }

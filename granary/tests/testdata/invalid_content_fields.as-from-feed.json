@@ -1,5 +1,10 @@
 {
   "objectType": "note",
   "id": "tag:example.com:123",
-  "content": "foo"
+  "content": "foo",
+  "author": {
+    "displayName": "Martin Smith",
+    "image": "http://example.com/martin/image",
+    "url": "https://example.com/martin"
+  }
 }

@@ -1,11 +1,12 @@
 """Unit tests for nostr.py."""
 from contextlib import contextmanager
 from datetime import timedelta
+import logging
 import secrets
 
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 from oauth_dropins.webutil import testutil
-from websockets.exceptions import ConnectionClosed
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 from .. import nostr
 from ..nostr import from_as1, id_for, id_to_uri, is_bech32, to_as1, uri_to_id
@@ -32,25 +33,41 @@ NOTE_AS1 = {
   'content': 'Something to say',
 }
 
+logger = logging.getLogger(__name__)
+
 
 class FakeConnection:
   """Fake of :class:`websockets.sync.client.ClientConnection`."""
-  relay = None
-  sent = []
-  to_receive = []
+
+  @classmethod
+  def reset(cls):
+    cls.relay = None
+    cls.sent = []
+    cls.to_receive = []
+    cls.closed = False
+    cls.recv_err = cls.send_err = None
 
   @classmethod
   def send(cls, msg):
+    if cls.send_err:
+      raise cls.send_err
+
+    assert not cls.closed
     cls.sent.append(json_loads(msg))
+    logger.info(msg)
 
   @classmethod
   def recv(cls, timeout=None):
     assert timeout == HTTP_TIMEOUT
 
     if not cls.to_receive:
-      raise ConnectionClosed(None, None)
+      closed = True
+      assert cls.recv_err
+      raise cls.recv_err
 
-    return json_dumps(cls.to_receive.pop(0))
+    msg = cls.to_receive.pop(0)
+    logger.info(msg)
+    return json_dumps(msg)
 
 
 @contextmanager
@@ -63,6 +80,10 @@ def fake_connect(uri, open_timeout=None, close_timeout=None):
 
 
 class NostrTest(testutil.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    FakeConnection.reset()
 
   def test_id_for(self):
     self.assertEqual(
@@ -124,6 +145,17 @@ class NostrTest(testutil.TestCase):
     # we don't try to detect which URLs might be Mastodon
     del event['tags'][2]
     self.assert_equals(event, from_as1(person))
+
+  def test_to_as1_profile_bad_nip05(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'nostr:npub1z24szqzphd',
+    }, to_as1({
+      'kind': 0,
+      'id': '12ab',
+      'pubkey': '12ab',
+      'content': '{"nip05": {}}',
+    }))
 
   def test_to_from_as1_note(self):
     note = {
@@ -445,9 +477,7 @@ class GetActivitiesTest(testutil.TestCase):
     self.last_token = 0
     self.mox.stubs.Set(secrets, 'token_urlsafe', self.token)
 
-    FakeConnection.relay = None
-    FakeConnection.sent = []
-    FakeConnection.to_receive = []
+    FakeConnection.reset()
 
     nostr.connect = fake_connect
 
@@ -486,7 +516,8 @@ class GetActivitiesTest(testutil.TestCase):
       'content': f"It's {i}",
     } for i in range(3)]
 
-    FakeConnection.to_receive = [['EVENT', 'towkin 1', e] for e in events]
+    FakeConnection.to_receive = \
+      [['EVENT', 'towkin 1', e] for e in events] + [['EOSE', 'towkin 1']]
 
     self.assert_equals(notes, self.nostr.get_activities(user_id='ab12', count=3))
     self.assertEqual([
@@ -496,7 +527,8 @@ class GetActivitiesTest(testutil.TestCase):
     self.assertEqual([], FakeConnection.to_receive)
 
   def test_search(self):
-    FakeConnection.to_receive = [['EVENT', 'towkin 1', NOTE_NOSTR]]
+    FakeConnection.to_receive = \
+      [['EVENT', 'towkin 1', NOTE_NOSTR]] + [['EOSE', 'towkin 1']]
 
     self.assert_equals([NOTE_AS1],
                        self.nostr.get_activities(search_query='surch'))
@@ -630,3 +662,47 @@ class GetActivitiesTest(testutil.TestCase):
       ['REQ', 'towkin 1', {'authors': ['12ab'], 'kinds': [0], 'limit': 20}],
       ['CLOSE', 'towkin 1'],
     ], FakeConnection.sent)
+
+  def test_query_connection_closed_ok_send_immediate(self):
+    FakeConnection.send_err = ConnectionClosedOK(None, None)
+
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      self.assertEqual([], self.nostr.query(ws, {}))
+
+  def test_query_connection_closed_ok_recv_immediate(self):
+    FakeConnection.recv_err = ConnectionClosedOK(None, None)
+
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      self.assertEqual([], self.nostr.query(ws, {}))
+
+  def test_query_connection_closed_ok_recv_partial_results(self):
+    FakeConnection.to_receive = [
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+    ]
+    FakeConnection.recv_err = ConnectionClosedOK(None, None)
+
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      self.assertEqual([NOTE_NOSTR, NOTE_NOSTR], self.nostr.query(ws, {}))
+
+  def test_query_connection_closed_error_recv_raises(self):
+    FakeConnection.to_receive = [
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+    ]
+    FakeConnection.recv_err = ConnectionClosedError(None, None)
+
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      with self.assertRaises(ConnectionClosedError):
+        self.nostr.query(ws, {})

@@ -17,13 +17,14 @@ from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError, JSONDecodeError, RequestException
 
+from . import as1
 from . import source
 
 logger = logging.getLogger(__name__)
 
 API_ACCOUNT = '/api/v1/accounts/%s'
 API_ACCOUNT_STATUSES = '/api/v1/accounts/%s/statuses'
-API_BLOCKS = '/api/v1/blocks?limit=1000'
+API_BLOCKS = '/api/v1/blocks?limit=100'
 API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
@@ -60,10 +61,6 @@ MAX_MEDIA = 4
 USERNAME_RE = re.compile(r'[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?', re.IGNORECASE)
 MENTION_RE  = re.compile(r'(?<![\/\w])@((' + USERNAME_RE.pattern +
                          r')(?:@[a-z0-9\.\-]+[a-z0-9]+)?)', re.IGNORECASE)
-
-# copied from twitter.py. if we need anything better, we could copy Mastodon's:
-# https://github.com/tootsuite/mastodon/blob/915f3712ae7ae44c0cbe50c9694c25e3ee87a540/app/models/tag.rb#L28-L30
-HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
 
 class Mastodon(source.Source):
@@ -152,10 +149,17 @@ class Mastodon(source.Source):
       logging.warning(f'Content-Type {content_type} is not application/json!')
 
     try:
-      return resp.json()
+      body = resp.json()
     except JSONDecodeError as e:
       resp.status_code = 502
       raise HTTPError(e, response=resp)
+
+    if isinstance(body, dict) and body.get('error'):
+      code = body['error'].get('code') or ''
+      resp.status_code = 401 if code == 'AUTHENTICATION_FAILED' else 400
+      raise HTTPError(None, str(body['error']), response=resp)
+
+    return body
 
   @classmethod
   def embed_post(cls, obj):
@@ -258,8 +262,10 @@ class Mastodon(source.Source):
 
     if fetch_mentions:
       # https://docs.joinmastodon.org/methods/notifications/
-      notifs = self._get(API_NOTIFICATIONS, json={
-        'exclude_types': ['follow', 'favourite', 'reblog'],
+      # use array notation for the query parameter for compatibility w/Pleroma
+      # https://docs-develop.pleroma.social/backend/development/API/differences_in_mastoapi_responses/#get-apiv1notifications
+      notifs = self._get(API_NOTIFICATIONS, params={
+        'exclude_types[]': ['follow', 'favourite', 'reblog'],
       })
       activities.extend(self.status_to_activity(n['status']) for n in notifs
                         if n.get('status') and n.get('type') == 'mention')
@@ -366,7 +372,7 @@ class Mastodon(source.Source):
         'objectType': MEDIA_TYPES.get(type),
         'displayName': desc,
       }
-      url = media.get('url')
+      url = media.get('remote_url') or media.get('url')
       if type == 'image':
         att['image'] = {
           'url': url,
@@ -425,7 +431,7 @@ class Mastodon(source.Source):
       reblog_account = reblog.get('account')
       content = f"Boosted <a href=\"{reblog_account.get('url')}\">@{reblog_account.get('username')}</a>: " + content
 
-    obj['content'] = util.WideUnicode(content)
+    obj['content'] = content
 
     # inReplyTo
     reply_to_id = status.get('in_reply_to_id')
@@ -635,8 +641,10 @@ class Mastodon(source.Source):
     # linkify (defaults to twitter's behavior)
     preview_content = util.linkify(preview_content, pretty=True, skip_bare_cc_tlds=True)
     tags_url = urllib.parse.urljoin(self.instance, '/tags')
-    preview_content = HASHTAG_RE.sub(r'\1<a href="%s/\2">#\2</a>' % tags_url,
-                                     preview_content)
+    # if we ever need to revise this hashtag regexp, we could use Mastodon's:
+    # https://github.com/tootsuite/mastodon/blob/915f3712ae7ae44c0cbe50c9694c25e3ee87a540/app/models/tag.rb#L28-L30
+    preview_content = as1.HASHTAG_RE.sub(r'\1<a href="%s/\2">#\2</a>' % tags_url,
+                                         preview_content)
 
     post_label = f"{self.NAME} {self.TYPE_LABELS['post']}"
 
@@ -675,7 +683,7 @@ class Mastodon(source.Source):
       data = {'status': content}
 
       if is_reply and base_url:
-        preview_description += f"add a <span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
+        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>: {self.embed_post(base_obj)}"
         data['in_reply_to_id'] = base_id
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"

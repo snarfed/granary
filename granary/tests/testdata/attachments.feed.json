@@ -1,5 +1,5 @@
 {
-  "version": "https://jsonfeed.org/version/1",
+  "version": "https://jsonfeed.org/version/1.1",
   "title": "JSON Feed",
   "items": [{
     "attachments": [
@@ -7,9 +7,9 @@
       {"url": "baz", "title": "bazzz"}
     ]
   }],
-  "author": {
+  "authors": [{
     "name": "Martin Smith",
     "url": "https://example.com/martin",
     "avatar": "http://example.com/martin/image"
-  }
+  }]
 }

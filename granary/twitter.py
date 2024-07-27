@@ -110,11 +110,6 @@ USERNAME = r'\w{1,15}'
 USERNAME_RE = re.compile(USERNAME + '$')
 MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(' + USERNAME + r')\b', re.UNICODE)
 
-# hashtag requirements and limits:
-# https://support.twitter.com/articles/370610
-# http://stackoverflow.com/questions/8451846
-HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
-
 # alias allows unit tests to mock this function
 sleep_fn = time.sleep
 
@@ -776,7 +771,10 @@ class Twitter(source.Source):
     preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
     preview_content = MENTION_RE.sub(
       r'\1<a href="https://twitter.com/\2">@\2</a>', preview_content)
-    preview_content = HASHTAG_RE.sub(
+    # Twitter hashtag details:
+    # https://support.twitter.com/articles/370610
+    # http://stackoverflow.com/questions/8451846
+    preview_content = as1.HASHTAG_RE.sub(
       r'\1<a href="https://twitter.com/hashtag/\2">#\2</a>', preview_content)
 
     if type == 'activity' and verb in ('like', 'favorite'):
@@ -917,7 +915,7 @@ class Twitter(source.Source):
                                 files={'media': image_resp},
                                 headers=headers)
       resp.raise_for_status()
-      logger.info(f'Got: {resp.text}')
+      logger.debug(f'Got: {resp.text}')
       media_id = source.load_json(resp.text, API_UPLOAD_MEDIA)['media_id_string']
       ids.append(media_id)
 
@@ -931,7 +929,7 @@ class Twitter(source.Source):
           json={'media_id': media_id, 'alt_text': {'text': alt}},
           headers=headers)
         resp.raise_for_status()
-        logger.info(f'Got: {resp.text}')
+        logger.debug(f'Got: {resp.text}')
 
     return ids
 
@@ -1218,8 +1216,7 @@ class Twitter(source.Source):
     entities = self._get_entities(base_tweet)
 
     # text content
-    text = util.WideUnicode(
-      base_tweet.get('full_text') or base_tweet.get('text') or '')
+    text = base_tweet.get('full_text') or base_tweet.get('text') or ''
     text_start, text_end = (base_tweet.get('display_text_range')
                             or (0, len(text)))
 
@@ -1333,7 +1330,7 @@ class Twitter(source.Source):
                      and tag.get('indices')[1] <= text_start)
 
     # replace entities with display URLs, convert start/end indices to start/length
-    content = util.WideUnicode(rt_prefix + text[text_start:text_end])
+    content = rt_prefix + text[text_start:text_end]
     offset = len(rt_prefix) - text_start
     for t in obj['tags']:
       start, end = t.pop('indices', None) or (0, 0)
@@ -1344,7 +1341,7 @@ class Twitter(source.Source):
         if t['objectType'] in ('article', 'image'):
           tag_text = t.get('displayName', t.get('url'))
           if tag_text is not None:
-            content = util.WideUnicode(content[:start] + tag_text + content[end:])
+            content = content[:start] + tag_text + content[end:]
             offset += len(tag_text) - length
             length = len(tag_text)
         t.update({'startIndex': start, 'length': length})

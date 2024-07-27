@@ -1,9 +1,14 @@
 User-agent: *
+Disallow: /bluesky/
 Disallow: /demo
 Disallow: /facebook/
 Disallow: /flickr/
+Disallow: /github/
 Disallow: /google+/
 Disallow: /instagram/
+Disallow: /mastodon/
+Disallow: /nostr/
+Disallow: /pixelfed/
 Disallow: /twitter/
 Disallow: /url
 Disallow: /*?*

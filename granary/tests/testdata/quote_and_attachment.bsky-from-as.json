@@ -1,13 +1,14 @@
 {
   "$type": "app.bsky.feed.post",
   "text": "I hereby quote",
-  "createdAt": "",
+  "fooOriginalText": "I hereby quote",
+  "createdAt": "2022-01-02T03:04:05.000Z",
   "embed": {
     "$type": "app.bsky.embed.recordWithMedia",
     "record" : {
       "$type" : "app.bsky.embed.record",
       "record": {
-        "cid": "TODO",
+        "cid": "",
         "uri": "at://did/app.bsky.feed.post/orig-post-tid"
       }
     },

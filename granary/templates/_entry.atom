@@ -8,7 +8,7 @@
 
   {% set url = as1.get_url(activity) or as1.get_url(obj) %}
   <id>{{ activity.id or obj.id or url }}</id>
-  <title>{{ activity.title|safe }}</title>
+  <title>{{ activity.displayName|safe }}</title>
 
   {% if obj.summary %}
     <summary>{{ obj.summary }}</summary>
