@@ -1728,6 +1728,9 @@ class Bluesky(Source):
         continue
 
       activity = self.postprocess_activity(self._post_to_activity(post))
+      if not activity:
+        continue
+
       activities.append(activity)
       obj = activity['object']
       id = obj.get('id')
@@ -1809,12 +1812,19 @@ class Bluesky(Source):
   def _post_to_activity(self, post):
     """Converts a post to an activity.
 
+    Returns ``{}`` if ``post`` has an unknown or unsupported type.
+
     Args:
       post: Bluesky post app.bluesky.feed.defs#feedViewPost
 
     Returns: AS1 activity
     """
-    obj = to_as1(post, type='app.bsky.feed.defs#feedViewPost')
+    try:
+      obj = to_as1(post, type='app.bsky.feed.defs#feedViewPost')
+    except ValueError as e:
+      logger.warning(e)
+      return {}
+
     if obj.get('objectType') == 'activity':
       return obj
     return {

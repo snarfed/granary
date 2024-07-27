@@ -2700,6 +2700,18 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals([expected], self.bs.get_activities(fetch_replies=True))
 
   @patch('requests.get')
+  def test_get_activities_skip_unknown_type(self, mock_get):
+    mock_get.side_effect = [
+      requests_response({
+        'cursor': 'timestamp::cid',
+        'feed': [{
+          '$type': 'app.bsky.graph.defs#starterPackViewBasic',
+        }],
+      }),
+    ]
+    self.assert_equals([], self.bs.get_activities())
+
+  @patch('requests.get')
   def test_get_actor(self, mock_get):
     mock_get.return_value = requests_response({
       **ACTOR_PROFILE_VIEW_BSKY,
