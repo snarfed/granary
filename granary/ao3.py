@@ -70,10 +70,13 @@ class ArchiveOfOurOwn(source.Source):
 
         return activities_works
 
-    def get_stories(self, url):
-        stories_response = requests.get(url, headers={'User-Agent': USER_AGENT})
+    def get_stories(self, url=None, cookies=None):
+        headers = {'User-Agent': USER_AGENT}
+        if cookies:
+            headers["Cookie"] = cookies
+        stories_response = requests.get(url, headers=headers)
         return self.get_stories_from_single_page(stories_response.text)
 
-    def url_to_activities(self, url=None):
-        return self.get_stories(url)
+    def url_to_activities(self, url=None, cookies=None):
+        return self.get_stories(url, cookies)
 
