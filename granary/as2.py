@@ -58,9 +58,6 @@ OBJECT_TYPE_TO_TYPE = {
   'collection': 'Collection',
   'comment': 'Note',
   'event': 'Event',
-  # not in AS1 spec
-  # https://docs.joinmastodon.org/spec/activitypub/#Flag
-  'flag': 'Flag',
   'group': 'Group',
   # not in AS2 spec; needed for correct round trip conversion
   'hashtag': 'Tag',
@@ -88,6 +85,9 @@ VERB_TO_TYPE = {
   'block': 'Block',
   'delete': 'Delete',
   'favorite': 'Like',
+  # not in AS1 spec
+  # https://docs.joinmastodon.org/spec/activitypub/#Flag
+  'flag': 'Flag',
   'follow': 'Follow',
   'invite': 'Invite',
   'like': 'Like',

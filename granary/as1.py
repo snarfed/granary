@@ -27,6 +27,7 @@ RSVP_VERB_TO_COLLECTION = collections.OrderedDict((  # in priority order
 VERBS_WITH_OBJECT = frozenset((
   'accept',
   'block',
+  'flag',
   'follow',
   'like',
   'react',
