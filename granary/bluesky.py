@@ -1195,7 +1195,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
           'alias': '@unlisted',
         }]
 
-  elif type == 'app.bsky.feed.post':
+  elif type in ('app.bsky.feed.post', 'chat.bsky.convo.defs#messageInput'):
     # TODO: escape HTML chars. difficult because we have to shuffle over facet
     # indices to match.
     text = obj.get('text', '')
@@ -1271,6 +1271,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'contentMap': {lang: text for lang in obj.get('langs', [])},
       'sensitive': sensitive,
     }
+
+    # TODO: to field for chats
 
     # embeds
     embed = obj.get('embed') or {}

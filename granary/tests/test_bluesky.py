@@ -1898,7 +1898,7 @@ class BlueskyTest(testutil.TestCase):
       'sensitive': True,
     }))
 
-  def test_from_as1_dm(self):
+  def test_chat_from_as1_dm(self):
     self.assert_equals({
       '$type': 'chat.bsky.convo.defs#messageInput',
       'text': 'hello world',
@@ -2510,6 +2510,15 @@ class BlueskyTest(testutil.TestCase):
            {'val' : 'porn'},
          ],
       },
+    }))
+
+  def test_chat_to_as1_dm(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'hello world',
+    }, to_as1({
+      '$type': 'chat.bsky.convo.defs#messageInput',
+      'text': 'hello world',
     }))
 
   def test_constructor_access_token(self):
