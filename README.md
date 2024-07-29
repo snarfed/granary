@@ -283,6 +283,8 @@ Changelog
 
 ### 7.1 - unreleased
 
+* `as1`:
+  * Add new `is_dm` function.
 * `as2`:
   * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive) support.
 * `atom`:

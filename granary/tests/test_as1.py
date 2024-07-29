@@ -206,6 +206,40 @@ class As1Test(testutil.TestCase):
         self.assertFalse(as1.is_public(obj))
         self.assertFalse(as1.is_public({'object': obj}))
 
+  def test_is_dm(self):
+    actor = {
+      'id': 'https://alice',
+      'followers': 'http://the/followers',
+      'following': 'http://the/following',
+    }
+
+    for obj in (
+        None,
+        {},
+        {'to': [{'objectType': 'unknown'}]},
+        {'to': [{'objectType': 'unknown'}, {'objectType': 'unknown'}]},
+        {'to': [{'alias': '@public'}]},
+        {'to': [{'alias': '@unlisted'}]},
+    ):
+      with self.subTest(obj=obj):
+        self.assertFalse(as1.is_dm(obj))
+        self.assertFalse(as1.is_dm(obj, actor=actor))
+
+    for obj in (
+        {'to': 'http://the/followers'},
+        {'to': ['http://the/followers']},
+        {'to': ['http://the/following']},
+        {'to': [{'id': 'http://the/followers'}]},
+    ):
+      with self.subTest(obj=obj):
+        self.assertTrue(as1.is_dm(obj))
+        self.assertFalse(as1.is_dm(obj, actor=actor))
+
+    self.assertTrue(as1.is_dm({'to': ['http://bob']}, actor))
+    self.assertTrue(as1.is_dm({'to': ['did:bob']}, actor))
+    # self DM is still DM I guess
+    self.assertTrue(as1.is_dm({'to': ['http://alice']}, actor))
+
   def test_activity_changed(self):
     fb_post = copy.deepcopy(ACTIVITY)
     fb_post['object']['updated'] = '2016-01-02T00:00:00+00:00'

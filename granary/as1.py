@@ -228,8 +228,11 @@ def is_public(obj, unlisted=True):
   update Bridgy's code.
 
   Args:
-    obj (dict): AS2 activity or object
+    obj (dict): AS1 activity or object
     unlisted (bool): whether `@unlisted` counts as public or not
+
+  Returns:
+    bool:
   """
   if obj is None:
     return None
@@ -250,6 +253,34 @@ def is_public(obj, unlisted=True):
     return False
 
   return True
+
+
+def is_dm(obj, actor=None):
+  """Returns True if the object is a DM, ie addressed to a single recipient.
+
+  ...according to the Audience Targeting extension:
+  http://activitystrea.ms/specs/json/targeting/1.0/
+
+  Args:
+    obj (dict): AS1 activity or object
+    actor (dict): optional AS1 actor who sent this object. Its followers
+      collection is used to identify followers-only posts.
+
+  Returns:
+    bool:
+  """
+  if not obj:
+    return False
+
+  inner_obj = get_object(obj)
+  to = get_ids(obj, 'to') + get_ids(inner_obj, 'to')
+  follow_collections = ([actor.get('followers'), actor.get('following')]
+                        if actor else [])
+
+  return (len(to) == 1
+          and ':' in to[0]
+          and not to[0].startswith('as:')
+          and to[0] not in follow_collections)
 
 
 def add_rsvps_to_event(event, rsvps):
