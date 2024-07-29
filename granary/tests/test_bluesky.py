@@ -1898,6 +1898,19 @@ class BlueskyTest(testutil.TestCase):
       'sensitive': True,
     }))
 
+  def test_from_as1_dm(self):
+    self.assert_equals({
+      '$type': 'chat.bsky.convo.defs#messageInput',
+      'text': 'hello world',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'fooOriginalText': 'hello world',
+    }, self.from_as1({
+      'objectType': 'note',
+      'actor': 'did:alice',
+      'to': ['did:bob'],
+      'content': 'hello world',
+    }))
+
   def test_maybe_validate_truncate(self):
     short = 'x' * 63
     long = 'x' * 65

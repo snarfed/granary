@@ -979,6 +979,11 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     ret = trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
                                   'text', 'title', 'uri'))
 
+    # DM
+    if as1.is_dm(obj, actor=actor):
+      # TODO: Bluesky DMs have a longer char limit, handle that in truncate() above
+      ret['$type'] = 'chat.bsky.convo.defs#messageInput'
+
     if not out_type or out_type == 'app.bsky.feed.post':
       return LEXRPC_BASE._maybe_validate('app.bsky.feed.post', 'record', ret)
 
