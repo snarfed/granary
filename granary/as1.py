@@ -273,14 +273,26 @@ def is_dm(obj, actor=None):
     return False
 
   inner_obj = get_object(obj)
-  to = get_ids(obj, 'to') + get_ids(inner_obj, 'to')
-  follow_collections = ([actor.get('followers'), actor.get('following')]
-                        if actor else [])
+  tos = set(get_ids(obj, 'to') + get_ids(inner_obj, 'to'))
+  ccs = set(get_ids(obj, 'cc') + get_ids(inner_obj, 'cc'))
+  if not (len(tos) == 1 and len(ccs) == 0):
+    return False
 
-  return (len(to) == 1
-          and ':' in to[0]
-          and not to[0].startswith('as:')
-          and to[0] not in follow_collections)
+  follow_collections = []
+  for a in (actor, get_object(obj, 'actor'), get_object(obj, 'author'),
+            get_object(inner_obj, 'author')):
+    if a:
+      follow_collections.extend([a.get('followers'), a.get('following')])
+
+  to = tos.pop()
+  return (':' in to
+          and not to.startswith('as:')
+          and to not in follow_collections
+          # non-standared heuristic for Mastodon and similar followers/following
+          # collections if we don't have actor
+          and not to.endswith('/followers')
+          and not to.endswith('/following')
+          )
 
 
 def add_rsvps_to_event(event, rsvps):

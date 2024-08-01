@@ -209,8 +209,8 @@ class As1Test(testutil.TestCase):
   def test_is_dm(self):
     actor = {
       'id': 'https://alice',
-      'followers': 'http://the/followers',
-      'following': 'http://the/following',
+      'followers': 'http://the/follow/ers',
+      'following': 'http://the/follow/ing',
     }
 
     for obj in (
@@ -220,11 +220,28 @@ class As1Test(testutil.TestCase):
         {'to': [{'objectType': 'unknown'}, {'objectType': 'unknown'}]},
         {'to': [{'alias': '@public'}]},
         {'to': [{'alias': '@unlisted'}]},
+        {'to': ['did:eve'],
+         'cc': ['did:bob']},
+        {'to': ['did:eve'],
+         'object': {'to': ['did:bob']}},
     ):
       with self.subTest(obj=obj):
         self.assertFalse(as1.is_dm(obj))
         self.assertFalse(as1.is_dm(obj, actor=actor))
 
+    for obj in (
+        {'to': 'http://the/follow/ers'},
+        {'to': ['http://the/follow/ers']},
+        {'to': ['http://the/follow/ing']},
+        {'to': [{'id': 'http://the/follow/ers'}]},
+    ):
+      with self.subTest(obj=obj):
+        self.assertTrue(as1.is_dm(obj))
+        self.assertFalse(as1.is_dm(obj, actor=actor))
+        self.assertFalse(as1.is_dm({**obj, 'actor': actor}))
+        self.assertFalse(as1.is_dm({**obj, 'object': {'author': actor}}))
+
+    # /followers, /following heuristic
     for obj in (
         {'to': 'http://the/followers'},
         {'to': ['http://the/followers']},
@@ -232,11 +249,18 @@ class As1Test(testutil.TestCase):
         {'to': [{'id': 'http://the/followers'}]},
     ):
       with self.subTest(obj=obj):
-        self.assertTrue(as1.is_dm(obj))
+        self.assertFalse(as1.is_dm(obj))
         self.assertFalse(as1.is_dm(obj, actor=actor))
+        self.assertFalse(as1.is_dm({**obj, 'actor': actor}))
+        self.assertFalse(as1.is_dm({**obj, 'object': {'author': actor}}))
 
     self.assertTrue(as1.is_dm({'to': ['http://bob']}, actor))
     self.assertTrue(as1.is_dm({'to': ['did:bob']}, actor))
+    self.assertTrue(as1.is_dm({
+      'object': {'to': ['did:bob']},
+      'to': ['did:bob'],
+    }))
+
     # self DM is still DM I guess
     self.assertTrue(as1.is_dm({'to': ['http://alice']}, actor))
 
