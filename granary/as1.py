@@ -272,19 +272,23 @@ def is_dm(obj, actor=None):
   if not obj:
     return False
 
-  inner_obj = get_object(obj)
-  tos = set(get_ids(obj, 'to') + get_ids(inner_obj, 'to'))
-  ccs = set(get_ids(obj, 'cc') + get_ids(inner_obj, 'cc'))
+  if object_type(obj) in CRUD_VERBS:
+    obj = get_object(obj)
+
+  tos = util.get_list(obj, 'to')
+  ccs = util.get_list(obj, 'cc')
   if not (len(tos) == 1 and len(ccs) == 0):
     return False
 
   follow_collections = []
-  for a in (actor, get_object(obj, 'actor'), get_object(obj, 'author'),
-            get_object(inner_obj, 'author')):
+  for a in actor, get_object(obj, 'author'):
     if a:
       follow_collections.extend([a.get('followers'), a.get('following')])
 
   to = tos.pop()
+  if isinstance(to, dict):
+    to = to.get('id') or ''
+
   return (':' in to
           and not to.startswith('as:')
           and to not in follow_collections

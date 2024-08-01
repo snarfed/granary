@@ -222,13 +222,14 @@ class As1Test(testutil.TestCase):
         {'to': [{'alias': '@unlisted'}]},
         {'to': ['did:eve'],
          'cc': ['did:bob']},
-        {'to': ['did:eve'],
-         'object': {'to': ['did:bob']}},
+        {'to': [{'id': 'https://www.w3.org/ns/activitystreams#Public'},
+                {'objectType': 'group', 'alias': '@public'}]},
     ):
       with self.subTest(obj=obj):
         self.assertFalse(as1.is_dm(obj))
         self.assertFalse(as1.is_dm(obj, actor=actor))
 
+    # followers/ing collections
     for obj in (
         {'to': 'http://the/follow/ers'},
         {'to': ['http://the/follow/ers']},
@@ -238,8 +239,12 @@ class As1Test(testutil.TestCase):
       with self.subTest(obj=obj):
         self.assertTrue(as1.is_dm(obj))
         self.assertFalse(as1.is_dm(obj, actor=actor))
-        self.assertFalse(as1.is_dm({**obj, 'actor': actor}))
-        self.assertFalse(as1.is_dm({**obj, 'object': {'author': actor}}))
+        self.assertFalse(as1.is_dm({**obj, 'author': actor}))
+        self.assertFalse(as1.is_dm({
+          'objectType': 'activity',
+          'verb': 'create',
+          'object': {**obj, 'author': actor},
+        }))
 
     # /followers, /following heuristic
     for obj in (
@@ -251,8 +256,7 @@ class As1Test(testutil.TestCase):
       with self.subTest(obj=obj):
         self.assertFalse(as1.is_dm(obj))
         self.assertFalse(as1.is_dm(obj, actor=actor))
-        self.assertFalse(as1.is_dm({**obj, 'actor': actor}))
-        self.assertFalse(as1.is_dm({**obj, 'object': {'author': actor}}))
+        self.assertFalse(as1.is_dm({**obj, 'author': actor}))
 
     self.assertTrue(as1.is_dm({'to': ['http://bob']}, actor))
     self.assertTrue(as1.is_dm({'to': ['did:bob']}, actor))
