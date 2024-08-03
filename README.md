@@ -287,6 +287,7 @@ Changelog
   * Add new `is_dm` function.
 * `as2`:
   * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive) support.
+  * Add new `is_server_actor` function ([FEP-d556](https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md), [discussion](https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861)).
 * `atom`:
   * `atom_to_activity/ies`: Get URL from `link` for activities as well as objects. ([Thanks @imax9000!](https://github.com/snarfed/granary/issues/752))
 * `bluesky`:

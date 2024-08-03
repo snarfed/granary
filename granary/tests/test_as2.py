@@ -579,3 +579,17 @@ foo
         {'url': 'http://baz'},
       ],
     }, obj)
+
+  def test_is_server_actor(self):
+    self.assertFalse(as2.is_server_actor({}))
+
+    for expected, id in (
+        (True, 'http://a/'),
+        (True, 'http://a/actor'),
+        (True, 'http://a/internal/fetch'),
+        (False, None),
+        (False, ''),
+        (False, '/me'),
+        (False, '/users/me'),
+    ):
+      self.assertEqual(expected, as2.is_server_actor({'id': id}))

@@ -122,6 +122,17 @@ MASTODON_ALLOWED_IMAGE_TYPES = ('image/jpeg', 'image/png', 'image/gif', 'image/w
 # https://codeberg.org/fediverse/fep/src/branch/main/fep/e232/fep-e232.md#user-content-examples
 QUOTE_RE_SUFFIX = re.compile(r'\s+RE: <?[^\s]+>?\s?$')
 
+# https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861/3
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md
+SERVER_ACTOR_PREFIXES = (
+  '/',
+  '/accounts/peertube',
+  '/actor',
+  '/i/actor',
+  '/internal/fetch',
+  '/wp-json/activitypub/1.0/application',
+)
+
 
 def get_urls(obj, key='url'):
   """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
@@ -720,3 +731,30 @@ def link_tags(obj):
     del tag['length']
 
   obj['content'] = linked + orig[last_end:]
+
+
+def is_server_actor(actor):
+  """Returns True if this is the instance's server actor, False otherwise.
+
+  Server actors are non-user actors used for fetching remote objects, sending
+  ``Flag`` activities, etc. Background:
+  * https://seb.jambor.dev/posts/understanding-activitypub-part-4-threads/#the-instance-actor
+  * https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md
+
+  Right now, this just uses a well-known set of paths as a heuristic.
+
+  TODO: actually do a WebFinger lookup of the root path, eg
+  ``webfinger?resource=https://example.com/``, and use FEP-d556 to determine the
+  server actor.
+
+  Args:
+    actor (dict): AS2 actor
+
+  Returns:
+    bool:
+  """
+  id = actor.get('id')
+  if not id:
+    return False
+
+  return urlparse(id).path in SERVER_ACTOR_PREFIXES
