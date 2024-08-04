@@ -663,6 +663,8 @@ class BlueskyTest(testutil.TestCase):
     for obj, at_uri in (
         ('', ''),
         ('at://foo/bar/baz', 'at://foo/bar/baz'),
+        ('at://did:foo/app.bsky.actor.profile/self',
+         'at://did:foo/app.bsky.actor.profile/self'),
         ('https://bsky.app/profile/foo/post/bar', 'at://foo/app.bsky.feed.post/bar'),
         ('baz biff', ''),
         ({}, ''),

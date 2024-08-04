@@ -322,10 +322,13 @@ def from_as1_to_strong_ref(obj, client=None, value=False):
   Returns:
     dict: ATProto ``com.atproto.repo.strongRef`` record
   """
-  at_uri = Bluesky.post_id((obj.get('id') or as1.get_url(obj))
-                           if isinstance(obj, dict) else obj
-                           ) or ''
-  match = AT_URI_PATTERN.match(at_uri)
+  id = (obj.get('id') or as1.get_url(obj)) if isinstance(obj, dict) else obj
+  if match := AT_URI_PATTERN.match(id):
+    at_uri = id
+  else:
+    at_uri = Bluesky.post_id(id) or ''
+    match = AT_URI_PATTERN.match(at_uri)
+
   if not match or not client:
     return {
       'uri': at_uri,
