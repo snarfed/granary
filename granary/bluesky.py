@@ -597,20 +597,26 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     }
 
   elif type == 'flag':
-    # use the first object that we can get an ATProto URI and CID for
+    # use the first object that we can get an ATProto DID or URI/CID for
+    post_ref = repo_ref = None
     for inner in as1.get_objects(activity):
-      ref = from_as1_to_strong_ref(inner, client=client)
-      if ref.get('cid') or not client:
-        break
-    else:
-      raise ValueError('flag activity requires object')
+      if inner.get('id', '').startswith('did:'):
+        repo_ref = {
+          '$type': 'com.atproto.admin.defs#repoRef',
+          'did': inner['id'],
+        }
+      elif not post_ref or not post_ref.get('cid'):
+        post_ref = {
+          '$type': 'com.atproto.repo.strongRef',
+          **from_as1_to_strong_ref(inner, client=client),
+        }
+
+    if not (post_ref and post_ref.get('cid')) and not repo_ref:
+      raise ValueError('flag activity requires at:// or did: object')
 
     ret = {
       '$type': 'com.atproto.moderation.createReport#input',
-      'subject': {
-        '$type': 'com.atproto.repo.strongRef',
-        **ref,
-      },
+      'subject': post_ref or repo_ref,
       # https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/defs.json#
       'reasonType': 'com.atproto.moderation.defs#reasonOther',
       # https://github.com/bluesky-social/atproto/blob/651d4c2a3447525c68d3bf1b8492bdafb0a88c66/lexicons/com/atproto/moderation/createReport.json#L21
@@ -1427,7 +1433,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
   elif type == 'com.atproto.moderation.createReport#input':
     content = obj['reasonType'].removeprefix('com.atproto.moderation.defs#reason')
-    if reason := obj['reason']:
+    if reason := obj.get('reason'):
       content += f': {reason}'
 
     ret = {

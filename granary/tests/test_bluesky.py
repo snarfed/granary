@@ -1758,7 +1758,8 @@ class BlueskyTest(testutil.TestCase):
         ['http://other/post',
          'https://bsky.app/profile/did:alice/post/tid'],
         # Mastodon sends Flags with both author and post when you report a post,
-        # or report an author starting from one of their posts
+        # or report an author starting from one of their posts. prefer post if
+        # available.
         ['did:alice',
          'at://did:alice/app.bsky.feed.post/tid'],
     ):
@@ -1782,6 +1783,21 @@ class BlueskyTest(testutil.TestCase):
           # note that this is the user being reported
           'to': 'did:bob',
         }, client=self.bs._client))
+
+    # DID (repo) object
+    self.assert_equals({
+      '$type': 'com.atproto.moderation.createReport#input',
+      'reasonType': 'com.atproto.moderation.defs#reasonOther',
+      'reason': '',
+      'subject': {
+        '$type': 'com.atproto.admin.defs#repoRef',
+        'did': 'did:alice',
+      },
+    }, self.from_as1({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'object': 'did:alice',
+    }, client=self.bs._client))
 
     # no object
     with self.assertRaises(ValueError):
@@ -2415,7 +2431,7 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
-  def test_to_as1_createReport(self):
+  def test_to_as1_createReport_post(self):
     self.assert_equals({
       'objectType': 'activity',
       'verb': 'flag',
@@ -2432,6 +2448,20 @@ class BlueskyTest(testutil.TestCase):
         'cid': 'syd',
       },
     }, repo_did='did:bob'))
+
+  def test_to_as1_createReport_repo(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'flag',
+      'object': 'did:alice',
+    }, to_as1({
+      '$type': 'com.atproto.moderation.createReport#input',
+      'subject': {
+        '$type': 'com.atproto.admin.defs#repoRef',
+        'did': 'did:alice',
+      },
+      'reasonType': '',
+    }))
 
   def test_to_as1_feed_generator(self):
     self.assert_equals({
