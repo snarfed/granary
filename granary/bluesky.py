@@ -597,13 +597,19 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     }
 
   elif type == 'flag':
-    if not inner_obj:
+    # use the first object that we can get an ATProto URI and CID for
+    for inner in as1.get_objects(activity):
+      ref = from_as1_to_strong_ref(inner, client=client)
+      if ref.get('cid') or not client:
+        break
+    else:
       raise ValueError('flag activity requires object')
+
     ret = {
       '$type': 'com.atproto.moderation.createReport#input',
       'subject': {
         '$type': 'com.atproto.repo.strongRef',
-        **from_as1_to_strong_ref(inner_obj, client=client),
+        **ref,
       },
       # https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/defs.json#
       'reasonType': 'com.atproto.moderation.defs#reasonOther',
@@ -1040,13 +1046,13 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
 
-  nsid = ret.get('$type')
-  type = 'record'
-  if nsid == 'com.atproto.moderation.createReport#input':
-    nsid = 'com.atproto.moderation.createReport'
-    type = 'input'
-
-  if nsid:
+  if nsid := ret.get('$type'):
+    method = nsid.removesuffix('#input')
+    if method == nsid:
+      type = 'record'
+    else:
+      nsid = method
+      type = 'input'
     return LEXRPC_BASE._maybe_validate(nsid, type, ret)
 
   return ret

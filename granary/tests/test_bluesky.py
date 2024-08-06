@@ -1752,28 +1752,44 @@ class BlueskyTest(testutil.TestCase):
     'value': {},
   }))
   def test_from_as1_flag(self, _):
-    self.assert_equals({
-      '$type': 'com.atproto.moderation.createReport#input',
-      'reasonType': 'com.atproto.moderation.defs#reasonOther',
-      'reason': 'Please take a look at this user and their posts',
-      'subject': {
-        '$type': 'com.atproto.repo.strongRef',
-        'uri': 'at://did:alice/app.bsky.feed.post/tid',
-        'cid': 'my-syd',
-      },
-    }, self.from_as1({
-      'objectType': 'activity',
-      'verb': 'flag',
-      'id': 'http://flag',
-      'actor': 'http://alice',
-      'object': [
-        'https://bsky.app/profile/did:alice/post/tid',
-        'http://other/ post',
-      ],
-      'content': 'Please take a look at this user and their posts',
-      # note that this is the user being reported
-      'to': 'did:bob',
-    }, client=self.bs._client))
+    for objs in (
+        ['https://bsky.app/profile/did:alice/post/tid',
+         'http://other/post'],
+        ['http://other/post',
+         'https://bsky.app/profile/did:alice/post/tid'],
+        # Mastodon sends Flags with both author and post when you report a post,
+        # or report an author starting from one of their posts
+        ['did:alice',
+         'at://did:alice/app.bsky.feed.post/tid'],
+    ):
+      with self.subTest(objs=objs):
+        self.assert_equals({
+          '$type': 'com.atproto.moderation.createReport#input',
+          'reasonType': 'com.atproto.moderation.defs#reasonOther',
+          'reason': 'Please take a look at this user and their posts',
+          'subject': {
+            '$type': 'com.atproto.repo.strongRef',
+            'uri': 'at://did:alice/app.bsky.feed.post/tid',
+            'cid': 'my-syd',
+          },
+        }, self.from_as1({
+          'objectType': 'activity',
+          'verb': 'flag',
+          'id': 'http://flag',
+          'actor': 'http://alice',
+          'object': objs,
+          'content': 'Please take a look at this user and their posts',
+          # note that this is the user being reported
+          'to': 'did:bob',
+        }, client=self.bs._client))
+
+    # no object
+    with self.assertRaises(ValueError):
+      self.from_as1({
+        'objectType': 'activity',
+        'verb': 'flag',
+        'actor': 'http://alice',
+      })
 
   def test_from_as1_collection(self):
     self.assert_equals({
