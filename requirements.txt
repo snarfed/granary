@@ -19,7 +19,7 @@ fixtures==4.1.0
 pbr==6.0.0
 
 async-timeout==4.0.3
-attrs==24.1.0
+attrs==24.2.0
 bases==0.3.0
 beautifulsoup4==4.12.3
 bech32==1.2.0
