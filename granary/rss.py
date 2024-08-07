@@ -165,7 +165,7 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
 
     for img in as1.get_objects(obj, 'image'):
       if url := img.get('url'):
-        mime = obj.get('mimeType') or mimetypes.guess_type(url)[0] or ''
+        mime = img.get('mimeType') or mimetypes.guess_type(url)[0] or ''
         length = obj.get('length', 0)
         item.enclosure(url, type=mime, length=length)
 
