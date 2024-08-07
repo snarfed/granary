@@ -2009,7 +2009,16 @@ class BlueskyTest(testutil.TestCase):
       'username': 'alice.com',
       'url': 'https://bsky.app/profile/alice.com',
       'urls': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
-      }, to_as1(ACTOR_PROFILE_VIEW_BSKY))
+    }, to_as1(ACTOR_PROFILE_VIEW_BSKY))
+
+  def test_to_as1_profile_view_email_address_in_description(self):
+    self.assert_equals({
+      **ACTOR_AS,
+      'summary': 'ᵖᵒᵉᵗʳʸ • ᵃʳᵗ ♡︎ －\n📩 hi＠gmail.com ',
+    }, to_as1({
+      **ACTOR_PROFILE_VIEW_BSKY,
+        'description': 'ᵖᵒᵉᵗʳʸ • ᵃʳᵗ ♡︎ －\n📩 hi＠gmail.com ',
+    }), ignore=('url', 'urls', 'username'))
 
   def test_to_as1_profile_no_repo_did_handle_or_pds(self):
     self.assert_equals({
