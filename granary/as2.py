@@ -533,15 +533,19 @@ def to_as1(obj, use_type=True):
   if not displayName and obj.get('objectType') in as1.ACTOR_TYPES:
     displayName = address(obj)
 
-  # extract quoted posts from tags
-  # https://codeberg.org/fediverse/fep/src/branch/main/fep/e232/fep-e232.md
+  # attachments, tags
   attachments = all_to_as1('attachment')
   tags_as1 = []
   quote_urls = []
   for tag in util.pop_list(obj, 'tag'):
-    if (tag.get('type') == 'Link'  # TODO: Link subtypes?
-        and tag.get('mediaType') in (CONTENT_TYPE_LD_PROFILE, CONTENT_TYPE)
-        and tag.get('href')):
+    if isinstance(tag, str):
+      tags_as1.append(tag)
+
+    elif (tag.get('type') == 'Link'  # TODO: Link subtypes?
+          and tag.get('mediaType') in (CONTENT_TYPE_LD_PROFILE, CONTENT_TYPE)
+          and tag.get('href')):
+      # quoted post
+      # https://codeberg.org/fediverse/fep/src/branch/main/fep/e232/fep-e232.md
       quote = to_as1(tag)
       url = quote.pop('href')
       quote_urls.append(url)
@@ -562,9 +566,15 @@ def to_as1(obj, use_type=True):
       obj['content'] = re.sub(
         fr'(\s|(<br>)+)?RE: (</span>)?(<a href="{url}">)?<?{url}>?(</a>)?\s?$', '',
         obj['content'])
+      continue
 
     else:
-      tags_as1.append(to_as1(tag))
+      # other tag
+      tags_as1.append(to_as1({
+        'url': tag.pop('href', None),
+        'name': tag.pop('tag', None),  # rare
+        **tag,
+      }))
 
   # check quote post fields on the top level object
   # https://misskey-hub.net/ns#_misskey_quote
@@ -618,10 +628,6 @@ def to_as1(obj, use_type=True):
       'duration': duration or None,
     })
     obj['stream'].setdefault('url', obj.pop('url', None))
-
-  # mention
-  elif type == 'Mention':
-    obj['url'] = obj.pop('href', None)
 
   # object author
   attrib = util.pop_list(obj, 'attributedTo')

@@ -548,6 +548,22 @@ class ActivityStreams2Test(testutil.TestCase):
       'sensitive': True,
     }))
 
+  def test_to_as1_hashtag_tag(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'tags': [{
+        'url': 'https://bin.pol.social/tag/Blogi',
+        'displayName': '#Blogi',
+      }],
+    }, as2.to_as1({
+      'type': 'Note',
+      'tag': [{
+        'type': 'Hashtag',
+        'href': 'https://bin.pol.social/tag/Blogi',
+        'tag': '#Blogi',
+      }],
+    }))
+
   def test_link_tags(self):
     # no indices, shouuld be a noop
     obj = {

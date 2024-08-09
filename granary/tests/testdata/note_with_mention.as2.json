@@ -4,7 +4,7 @@
   "id": "tag:example.com,2011:note-123",
   "tag": [{
     "type": "Mention",
-    "href": "https://alice",
+    "href": "https://alice/",
     "name": "Alice"
   }]
 }
