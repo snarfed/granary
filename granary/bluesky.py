@@ -1959,7 +1959,13 @@ class Bluesky(Source):
     type = obj.get('objectType')
     verb = obj.get('verb')
 
-    base_obj = self.base_object(obj)
+    try:
+      base_obj = self.base_object(obj)
+    except ValueError as e:
+      e_str = str(e)
+      return creation_result(abort=True, error_plain=e_str,
+                             error_html=util.linkify(e_str, pretty=True))
+
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
 

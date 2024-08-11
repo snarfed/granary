@@ -2935,6 +2935,14 @@ class BlueskyTest(testutil.TestCase):
           'record': reply_bsky,
         })
 
+  def test_create_reply_to_non_bluesky_error(self):
+    resp = self.bs.create({
+      **REPLY_AS['object'],
+      'inReplyTo': 'https://snarfed.org/post',
+    })
+    self.assertTrue(resp.abort)
+    self.assertEqual("inReplyTo https://snarfed.org/post doesn't look like Bluesky/ATProto", resp.error_plain)
+
   def test_preview_reply(self):
     for in_reply_to in ['at://did:alice/app.bsky.feed.post/parent-tid',
                         'https://bsky.app/profile/did:alice/post/parent-tid']:
