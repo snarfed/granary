@@ -284,7 +284,7 @@ Changelog
 ### 7.1 - unreleased
 
 * `as1`:
-  * Add new `recipient_if_dm` function.
+  * Add new `is_dm` and `recipient_if_dm` functions.
 * `as2`:
   * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive) support.
   * Add new `is_server_actor` function ([FEP-d556](https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md), [discussion](https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861)).

@@ -307,6 +307,14 @@ def recipient_if_dm(obj, actor=None):
     return to
 
 
+def is_dm(obj, actor=None):
+  """Returns True if the object is a DM, ie addressed to a single recipient.
+
+  See :func:`recipient_if_dm` for details.
+  """
+  return bool(recipient_if_dm(obj, actor=actor))
+
+
 def add_rsvps_to_event(event, rsvps):
   """Adds RSVP objects to an event's attending fields, in place.
 

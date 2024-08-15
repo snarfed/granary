@@ -234,6 +234,8 @@ class As1Test(testutil.TestCase):
       with self.subTest(obj=obj):
         self.assertIsNone(as1.recipient_if_dm(obj))
         self.assertIsNone(as1.recipient_if_dm(obj, actor=actor))
+        self.assertFalse(as1.is_dm(obj))
+        self.assertFalse(as1.is_dm(obj, actor=actor))
 
     # followers/ing collections
     for obj in (
@@ -266,6 +268,7 @@ class As1Test(testutil.TestCase):
         self.assertIsNone(as1.recipient_if_dm({**obj, 'author': actor}))
 
     self.assertEqual('http://bob', as1.recipient_if_dm({'to': ['http://bob']}, actor))
+    self.assertTrue('http://bob', as1.is_dm({'to': ['http://bob']}, actor))
     self.assertEqual('did:bob', as1.recipient_if_dm({'to': ['did:bob']}, actor))
     self.assertEqual('did:bob', as1.recipient_if_dm({
       'object': {'to': ['did:bob']},
