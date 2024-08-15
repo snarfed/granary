@@ -206,7 +206,7 @@ class As1Test(testutil.TestCase):
         self.assertFalse(as1.is_public(obj))
         self.assertFalse(as1.is_public({'object': obj}))
 
-  def test_is_dm(self):
+  def test_recipient_if_dm(self):
     actor = {
       'id': 'https://alice',
       'followers': 'http://the/follow/ers',
@@ -222,25 +222,32 @@ class As1Test(testutil.TestCase):
         {'to': [{'alias': '@unlisted'}]},
         {'to': ['did:eve'],
          'cc': ['did:bob']},
+        {'to': ['did:eve'],
+         'bcc': ['did:bob']},
+        {'to': ['did:eve'],
+         'bto': ['did:bob']},
         {'to': [{'id': 'https://www.w3.org/ns/activitystreams#Public'},
                 {'objectType': 'group', 'alias': '@public'}]},
+        # not a note
+        {'objectType': 'person', 'to': 'http://recip'},
     ):
       with self.subTest(obj=obj):
-        self.assertFalse(as1.is_dm(obj))
-        self.assertFalse(as1.is_dm(obj, actor=actor))
+        self.assertIsNone(as1.recipient_if_dm(obj))
+        self.assertIsNone(as1.recipient_if_dm(obj, actor=actor))
 
     # followers/ing collections
     for obj in (
         {'to': 'http://the/follow/ers'},
+        {'to': 'http://the/follow/ers', 'objectType': 'note'},
         {'to': ['http://the/follow/ers']},
         {'to': ['http://the/follow/ing']},
         {'to': [{'id': 'http://the/follow/ers'}]},
     ):
       with self.subTest(obj=obj):
-        self.assertTrue(as1.is_dm(obj))
-        self.assertFalse(as1.is_dm(obj, actor=actor))
-        self.assertFalse(as1.is_dm({**obj, 'author': actor}))
-        self.assertFalse(as1.is_dm({
+        self.assertTrue(as1.recipient_if_dm(obj))
+        self.assertIsNone(as1.recipient_if_dm(obj, actor=actor))
+        self.assertIsNone(as1.recipient_if_dm({**obj, 'author': actor}))
+        self.assertIsNone(as1.recipient_if_dm({
           'objectType': 'activity',
           'verb': 'create',
           'object': {**obj, 'author': actor},
@@ -254,19 +261,20 @@ class As1Test(testutil.TestCase):
         {'to': [{'id': 'http://the/followers'}]},
     ):
       with self.subTest(obj=obj):
-        self.assertFalse(as1.is_dm(obj))
-        self.assertFalse(as1.is_dm(obj, actor=actor))
-        self.assertFalse(as1.is_dm({**obj, 'author': actor}))
+        self.assertIsNone(as1.recipient_if_dm(obj))
+        self.assertIsNone(as1.recipient_if_dm(obj, actor=actor))
+        self.assertIsNone(as1.recipient_if_dm({**obj, 'author': actor}))
 
-    self.assertTrue(as1.is_dm({'to': ['http://bob']}, actor))
-    self.assertTrue(as1.is_dm({'to': ['did:bob']}, actor))
-    self.assertTrue(as1.is_dm({
+    self.assertEqual('http://bob', as1.recipient_if_dm({'to': ['http://bob']}, actor))
+    self.assertEqual('did:bob', as1.recipient_if_dm({'to': ['did:bob']}, actor))
+    self.assertEqual('did:bob', as1.recipient_if_dm({
       'object': {'to': ['did:bob']},
       'to': ['did:bob'],
     }))
 
     # self DM is still DM I guess
-    self.assertTrue(as1.is_dm({'to': ['http://alice']}, actor))
+    self.assertEqual('http://alice',
+                     as1.recipient_if_dm({'to': ['http://alice']}, actor))
 
   def test_activity_changed(self):
     fb_post = copy.deepcopy(ACTIVITY)

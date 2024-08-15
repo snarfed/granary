@@ -995,7 +995,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
                                   'text', 'title', 'uri'))
 
     # DM
-    if as1.is_dm(obj, actor=actor):
+    if as1.recipient_if_dm(obj, actor=actor):
       # TODO: Bluesky DMs have a longer char limit, handle that in truncate() above
       ret['$type'] = 'chat.bsky.convo.defs#messageInput'
 

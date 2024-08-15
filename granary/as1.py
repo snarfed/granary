@@ -255,10 +255,15 @@ def is_public(obj, unlisted=True):
   return True
 
 
-def is_dm(obj, actor=None):
-  """Returns True if the object is a DM, ie addressed to a single recipient.
+def recipient_if_dm(obj, actor=None):
+  """If ``obj`` is a DM, returns the recipient actor's id.
 
-  ...according to the Audience Targeting extension:
+  DMs are ``note``s addressed to a single recipient, ie ``to`` has one value and
+  ``cc``, ``bcc``, and ``bto`` have none.
+
+  If ``obj`` isn't a DM, returns None.
+
+  Those fields are based on the Audience Targeting extension:
   http://activitystrea.ms/specs/json/targeting/1.0/
 
   Args:
@@ -269,16 +274,18 @@ def is_dm(obj, actor=None):
   Returns:
     bool:
   """
-  if not obj:
-    return False
+  if not obj or object_type(obj) not in (None, 'note'):
+    return None
 
   if object_type(obj) in CRUD_VERBS:
     obj = get_object(obj)
 
   tos = util.get_list(obj, 'to')
-  ccs = util.get_list(obj, 'cc')
-  if not (len(tos) == 1 and len(ccs) == 0):
-    return False
+  others = (util.get_list(obj, 'cc')
+            + util.get_list(obj, 'bto')
+            + util.get_list(obj, 'bcc'))
+  if not (len(tos) == 1 and len(others) == 0):
+    return None
 
   follow_collections = []
   for a in actor, get_object(obj, 'author'):
@@ -289,14 +296,15 @@ def is_dm(obj, actor=None):
   if isinstance(to, dict):
     to = to.get('id') or ''
 
-  return (':' in to
-          and not to.startswith('as:')
-          and to not in follow_collections
-          # non-standared heuristic for Mastodon and similar followers/following
-          # collections if we don't have actor
-          and not to.endswith('/followers')
-          and not to.endswith('/following')
-          )
+  if (':' in to
+      and not to.startswith('as:')
+      and to not in follow_collections
+      # non-standared heuristic for Mastodon and similar followers/following
+      # collections if we don't have actor
+      and not to.endswith('/followers')
+      and not to.endswith('/following')
+      ):
+    return to
 
 
 def add_rsvps_to_event(event, rsvps):
