@@ -274,11 +274,14 @@ def recipient_if_dm(obj, actor=None):
   Returns:
     bool:
   """
-  if not obj or object_type(obj) not in (None, 'note'):
+  if not obj:
     return None
 
   if object_type(obj) in CRUD_VERBS:
     obj = get_object(obj)
+
+  if not obj or object_type(obj) not in (None, 'note'):
+    return None
 
   tos = util.get_list(obj, 'to')
   others = (util.get_list(obj, 'cc')

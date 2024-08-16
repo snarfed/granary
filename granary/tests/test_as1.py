@@ -251,7 +251,7 @@ class As1Test(testutil.TestCase):
         self.assertIsNone(as1.recipient_if_dm({**obj, 'author': actor}))
         self.assertIsNone(as1.recipient_if_dm({
           'objectType': 'activity',
-          'verb': 'create',
+          'verb': 'post',
           'object': {**obj, 'author': actor},
         }))
 
@@ -273,6 +273,11 @@ class As1Test(testutil.TestCase):
     self.assertEqual('did:bob', as1.recipient_if_dm({
       'object': {'to': ['did:bob']},
       'to': ['did:bob'],
+    }))
+    self.assertEqual('did:bob', as1.recipient_if_dm({
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {'to': ['did:bob']},
     }))
 
     # self DM is still DM I guess
