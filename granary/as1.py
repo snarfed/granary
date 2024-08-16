@@ -274,7 +274,7 @@ def recipient_if_dm(obj, actor=None):
   Returns:
     bool:
   """
-  if not obj:
+  if not obj or is_public(obj):
     return None
 
   if object_type(obj) in CRUD_VERBS:
@@ -299,13 +299,17 @@ def recipient_if_dm(obj, actor=None):
   if isinstance(to, dict):
     to = to.get('id') or ''
 
-  if (':' in to
-      and not to.startswith('as:')
+  to_lower = to.lower()
+  if (to
+      # https://activitystrea.ms/specs/json/targeting/1.0/
+      and to_lower not in ('public', 'unlisted', 'private')
+      and not to.startswith('@')  # AS1 audience targeting alias, eg @public, @unlisted
+      and not to_lower.startswith('as:')
       and to not in follow_collections
       # non-standared heuristic for Mastodon and similar followers/following
       # collections if we don't have actor
-      and not to.endswith('/followers')
-      and not to.endswith('/following')
+      and not to_lower.endswith('/followers')
+      and not to_lower.endswith('/following')
       ):
     return to
 
