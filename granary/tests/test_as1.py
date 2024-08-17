@@ -228,6 +228,8 @@ class As1Test(testutil.TestCase):
          'bto': ['did:bob']},
         {'to': [{'id': 'https://www.w3.org/ns/activitystreams#Public'},
                 {'objectType': 'group', 'alias': '@public'}]},
+        {'to': [{'id': 'https://www.w3.org/ns/activitystreams#Public'}]},
+        {'to': 'https://www.w3.org/ns/activitystreams#Public'},
         # not a note
         {'objectType': 'person', 'to': 'http://recip'},
     ):

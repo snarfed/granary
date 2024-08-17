@@ -303,8 +303,12 @@ def recipient_if_dm(obj, actor=None):
   if (to
       # https://activitystrea.ms/specs/json/targeting/1.0/
       and to_lower not in ('public', 'unlisted', 'private')
+      and not to_lower.startswith('https://www.w3.org/')
+      and not to_lower.startswith('https://w3.org/')
       and not to.startswith('@')  # AS1 audience targeting alias, eg @public, @unlisted
       and not to_lower.startswith('as:')
+      # as2 public constant is https://www.w3.org/ns/activitystreams#Public
+      and not to_lower.endswith('#Public')
       and to not in follow_collections
       # non-standared heuristic for Mastodon and similar followers/following
       # collections if we don't have actor
