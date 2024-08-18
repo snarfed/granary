@@ -277,7 +277,7 @@ def recipient_if_dm(obj, actor=None):
   if not obj or is_public(obj):
     return None
 
-  if object_type(obj) in CRUD_VERBS:
+  if object_type(obj) == 'post':
     obj = get_object(obj)
 
   if not obj or object_type(obj) not in (None, 'note'):

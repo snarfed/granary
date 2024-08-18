@@ -232,7 +232,18 @@ class As1Test(testutil.TestCase):
         {'to': 'https://www.w3.org/ns/activitystreams#Public'},
         # not a note
         {'objectType': 'person', 'to': 'http://recip'},
-    ):
+        # not creates
+        {
+          'objectType': 'activity',
+          'verb': 'update',
+          'object': {'to': ['http://bob']},
+        },
+        {
+          'objectType': 'activity',
+          'verb': 'delete',
+          'object': {'to': ['http://bob']},
+        },
+        ):
       with self.subTest(obj=obj):
         self.assertIsNone(as1.recipient_if_dm(obj))
         self.assertIsNone(as1.recipient_if_dm(obj, actor=actor))
@@ -271,6 +282,17 @@ class As1Test(testutil.TestCase):
 
     self.assertEqual('http://bob', as1.recipient_if_dm({'to': ['http://bob']}, actor))
     self.assertTrue('http://bob', as1.is_dm({'to': ['http://bob']}, actor))
+
+    create = {
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'to': ['http://bob'],
+      },
+    }
+    self.assertEqual('http://bob', as1.recipient_if_dm(create, actor))
+    self.assertTrue('http://bob', as1.is_dm(create, actor))
+
     self.assertEqual('bob', as1.recipient_if_dm({'to': ['bob']}, actor))
     self.assertEqual('did:bob', as1.recipient_if_dm({'to': ['did:bob']}, actor))
     self.assertEqual('did:bob', as1.recipient_if_dm({
