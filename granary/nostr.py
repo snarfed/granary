@@ -529,9 +529,6 @@ class Nostr(Source):
 
     Returns:
       list of dict: Nostr events
-
-    Raises:
-      AssertionError: if the filter ``limit`` field is not set.
     """
     limit = filter.setdefault('limit', 20)
 
