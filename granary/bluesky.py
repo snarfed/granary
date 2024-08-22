@@ -1780,8 +1780,16 @@ class Bluesky(Source):
         # Replies
         reply_count = bs_post.get('replyCount')
         if fetch_replies and reply_count and reply_count != cache.get('ABR ' + id):
-          replies = trim_nulls([to_as1(r) for r in
-                                self._get_replies(bs_post.get('uri'))])
+          replies = []
+          for r in self._get_replies(bs_post.get('uri')):
+            try:
+              reply = to_as1(r)
+            except ValueError as e:
+              logger.warning(f'skipping a reply: {e}')
+              continue
+            if reply:
+              replies.append(reply)
+
           for r in replies:
             r['id'] = self.tag_uri(r['id'])
           obj['replies'] = {
@@ -1906,7 +1914,7 @@ class Bluesky(Source):
       ret = self._recurse_replies(thread)
     return sorted(ret, key = lambda thread: thread.get('post', {}).get('record', {}).get('createdAt') or '')
 
-  # TODO this ought to take a depth limit.
+  # TODO this ought to take a depth limit. hellthread, anyone?
   def _recurse_replies(self, thread):
     """
     Recurses through a Bluesky app.bsky.feed.defs#threadViewPost

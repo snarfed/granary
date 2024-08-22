@@ -2741,6 +2741,43 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(1, cache.get('ABR at://did:alice/app.bsky.feed.post/tid'))
 
   @patch('requests.get')
+  def test_get_activities_replies_starter_pack_view_basic(self, mock_get):
+    mock_get.side_effect = [
+      requests_response({
+        'cursor': 'timestamp::cid',
+        'feed': [POST_FEED_VIEW_WITH_REPLIES_BSKY],
+      }),
+      requests_response({
+        'thread': {
+          'replies': [{
+            '$type': 'app.bsky.feed.defs#threadViewPost',
+            'post': {
+              'uri': 'at://did/app.bsky.feed.post/tid',
+              'embed': {
+                '$type': 'app.bsky.embed.record#view',
+                'record': {
+                  '$type': 'app.bsky.graph.defs#starterPackViewBasic',
+                },
+              },
+            },
+          }],
+        },
+      }),
+    ]
+
+    cache = {}
+    got = self.bs.get_activities(fetch_replies=True, cache=cache)
+
+    expected = copy.deepcopy(THREAD_AS)
+    del expected['object']['replies']
+    self.assert_equals([expected], got)
+
+    self.assert_call(mock_get,'app.bsky.feed.getTimeline')
+    self.assert_call(mock_get,
+        'app.bsky.feed.getPostThread?uri=at%3A%2F%2Fdid%3Aalice%2Fapp.bsky.feed.post%2Ftid')
+    self.assert_equals(1, cache.get('ABR at://did:alice/app.bsky.feed.post/tid'))
+
+  @patch('requests.get')
   def test_get_activities_replies_not_found_blocked(self, mock_get):
     mock_get.side_effect = [
       requests_response({
