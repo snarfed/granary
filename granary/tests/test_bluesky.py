@@ -1966,6 +1966,19 @@ class BlueskyTest(testutil.TestCase):
       'content': 'hello world',
     }))
 
+  def test_chat_from_as1_dm_long(self):
+    long = 'X' * LEXRPC_BASE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
+    self.assert_equals({
+      '$type': 'chat.bsky.convo.defs#messageInput',
+      'text': long,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'actor': 'did:alice',
+      'to': ['did:bob'],
+      'content': long,
+    }))
+
   def test_maybe_validate_truncate(self):
     short = 'x' * 63
     long = 'x' * 65

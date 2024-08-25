@@ -772,9 +772,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
 
     # truncate text. if we're including a suffix, ie original post link and
     # maybe [Video] label, link that with a facet
+    is_dm = as1.is_dm(obj, actor=actor)
     text = Bluesky('unused').truncate(
       full_text, original_post_text_suffix, include_link=include_link,
-      punctuation=('', ''), type=type)
+      punctuation=('', ''), type='dm' if is_dm else type)
     truncated = text != full_text
     if truncated:
       text_byte_end = len(text.split(ELLIPSIS, maxsplit=1)[0].encode())
@@ -965,7 +966,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       }
 
     ret = {
-      '$type': 'app.bsky.feed.post',
+      '$type': 'chat.bsky.convo.defs#messageInput' if is_dm else 'app.bsky.feed.post',
       'text': text,
       'createdAt': from_as1_datetime(obj.get('published')),
       'embed': record_embed,
@@ -994,42 +995,32 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     ret = trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
                                   'text', 'title', 'uri'))
 
-    # DM
-    if as1.recipient_if_dm(obj, actor=actor):
-      # TODO: Bluesky DMs have a longer char limit, handle that in truncate() above
-      ret['$type'] = 'chat.bsky.convo.defs#messageInput'
+    if out_type in ('app.bsky.feed.defs#feedViewPost',
+                    'app.bsky.feed.defs#postView'):
+        # author
+        author = as1.get_object(obj, 'author')
+        author.setdefault('objectType', 'person')
+        author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic', **kwargs)
 
-    if not out_type or out_type == 'app.bsky.feed.post':
-      return LEXRPC_BASE._maybe_validate('app.bsky.feed.post', 'record', ret)
+        ret = trim_nulls({
+          '$type': 'app.bsky.feed.defs#postView',
+          'uri': obj.get('id') or url or '',
+          'cid': '',
+          'record': ret,
+          'author': author,
+          'embed': embed,
+          'replyCount': 0,
+          'repostCount': 0,
+          'likeCount': 0,
+          'indexedAt': from_as1_datetime(None),
+        }, ignore=('author', 'createdAt', 'cid', 'description', 'indexedAt',
+                   'record', 'text', 'title', 'uri'))
 
-    # author
-    author = as1.get_object(obj, 'author')
-    author.setdefault('objectType', 'person')
-    author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic', **kwargs)
-
-    ret = trim_nulls({
-      '$type': 'app.bsky.feed.defs#postView',
-      'uri': obj.get('id') or url or '',
-      'cid': '',
-      'record': ret,
-      'author': author,
-      'embed': embed,
-      'replyCount': 0,
-      'repostCount': 0,
-      'likeCount': 0,
-      'indexedAt': from_as1_datetime(None),
-    }, ignore=('author', 'createdAt', 'cid', 'description', 'indexedAt',
-               'record', 'text', 'title', 'uri'))
-
-    if out_type == 'app.bsky.feed.defs#postView':
-      pass
-    elif out_type == 'app.bsky.feed.defs#feedViewPost':
+    if out_type == 'app.bsky.feed.defs#feedViewPost':
       ret = {
         '$type': out_type,
         'post': ret,
       }
-    else:
-      assert False, "shouldn't happen"
 
   elif type == 'collection':
       ret = {
@@ -2183,7 +2174,9 @@ class Bluesky(Source):
 
   def truncate(self, *args, type=None, **kwargs):
     """Thin wrapper around :meth:`Source.truncate` that sets default kwargs."""
-    if type in as1.ACTOR_TYPES:
+    if type == 'dm':
+      length = LEXRPC_BASE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
+    elif type in as1.ACTOR_TYPES:
       length = LEXRPC_BASE.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
     elif type in POST_TYPES:
       length = LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text']['maxGraphemes']

@@ -877,7 +877,8 @@ class Source(object, metaclass=SourceMeta):
       url (str)
       include_link (str): ``OMIT_LINK``, ``INCLUDE_LINK``, or
         ``INCLUDE_IF_TRUNCATED``
-      type (str): optional: ``article``, ``note``, etc.
+      type (str): optional: ``article``, ``note``,
+        etc. Also accepts custom type ``dm``.
       quote_url (str): URL, optional. If provided, it will be appended to the
         content, *after* truncating.
       **kwargs: passed through to brevity.shorten
