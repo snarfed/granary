@@ -152,7 +152,7 @@ LEXRPC_BASE = Base(truncate=True)
 
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
 # <a href="http://post">ba](r</a> turns into [ba](r](http://post)
-MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>.*?)\)')
+MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ )]*)( ".*")?\)')
 
 ELLIPSIS = ' […]'
 

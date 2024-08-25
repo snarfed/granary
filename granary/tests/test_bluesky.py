@@ -1457,6 +1457,27 @@ class BlueskyTest(testutil.TestCase):
       'tags': [TAG_LINK],
     }))
 
+  def test_from_as1_facet_link_with_title(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo baz',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'facets': [{
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://li/nk',
+        }],
+        '$type': 'app.bsky.richtext.facet',
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 7,
+        },
+      }],
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'foo <a href="http://li/nk" title="bar">baz</a>',
+    }))
+
   def test_from_as1_post_langs(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
