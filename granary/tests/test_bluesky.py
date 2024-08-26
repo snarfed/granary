@@ -555,6 +555,11 @@ class BlueskyTest(testutil.TestCase):
         ('at://x / y/z', False),
         (' at://x/y/z ', False),
         ('at://did:plc:foo/a.b/123', True),
+        # TODO: allow this? eg at://did:bob/chat.bsky.convo.defs#messageView/xyz
+        # I don't think these actually happen in the wild yet. would need to
+        # revise at_uri_to_web_url to handle it.
+        # https://atproto.com/specs/nsid#nsid-syntax-variations
+        ('at://did:plc:foo/a.b#c/123', False),
     ]:
       with self.subTest(input=input):
         self.assertEqual(expected, AT_URI_PATTERN.match(input) is not None)
