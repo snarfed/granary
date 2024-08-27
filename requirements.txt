@@ -16,7 +16,7 @@ git+https://github.com/dvska/gdata-python3.git#egg=gdata
 
 # required for mox3, not prod
 fixtures==4.1.0
-pbr==6.0.0
+pbr==6.1.0
 
 async-timeout==4.0.3
 attrs==24.2.0
