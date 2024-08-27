@@ -2621,7 +2621,7 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
-  def test_chat_to_as1_dm(self):
+  def test_chat_to_as1_messageInput(self):
     self.assert_equals({
       'objectType': 'note',
       'content': 'hello world',
@@ -2629,6 +2629,38 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'chat.bsky.convo.defs#messageInput',
       'text': 'hello world',
     }))
+
+  def test_chat_to_as1_messageView(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'at://did:alice/chat.bsky.convo.defs.messageView/xyz',
+      'author': 'did:alice',
+      'content': 'hello world',
+      'published': '2001-02-03T04:05:06.000Z',
+    }, to_as1({
+      '$type': 'chat.bsky.convo.defs#messageView',
+      'rev': '5',
+      'id': 'xyz',
+      'text': 'hello world',
+      'sender': {'did': 'did:alice'},
+      'sentAt': '2001-02-03T04:05:06.000Z',
+    }))
+
+  def test_chat_to_as1_messageView_repo_did(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'at://did:alice/chat.bsky.convo.defs.messageView/xyz',
+      'author': 'did:alice',
+      'content': 'hello world',
+      'to': ['did:bob'],
+      'published': '2001-02-03T04:05:06.000Z',
+    }, to_as1({
+      '$type': 'chat.bsky.convo.defs#messageView',
+      'id': 'xyz',
+      'text': 'hello world',
+      'sender': {'did': 'did:alice'},
+      'sentAt': '2001-02-03T04:05:06.000Z',
+    }, repo_did='did:bob'))
 
   def test_constructor_access_token(self):
     bs = Bluesky('handull', access_token='towkin')

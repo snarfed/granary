@@ -1201,7 +1201,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
           'alias': '@unlisted',
         }]
 
-  elif type in ('app.bsky.feed.post', 'chat.bsky.convo.defs#messageInput'):
+  elif type in ('app.bsky.feed.post',
+                'chat.bsky.convo.defs#messageInput',
+                'chat.bsky.convo.defs#messageView',
+                ):
     # TODO: escape HTML chars. difficult because we have to shuffle over facet
     # indices to match.
     text = obj.get('text', '')
@@ -1278,7 +1281,16 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'sensitive': sensitive,
     }
 
-    # TODO: to field for chats
+    if type == 'chat.bsky.convo.defs#messageView':
+      author = obj['sender']['did']
+      if not ret['id']:
+        ret['id'] = f'at://{author}/chat.bsky.convo.defs.messageView/{obj["id"]}'
+      if repo_did:
+        ret['to'] = [repo_did]
+      ret.update({
+        'author': author,
+        'published': obj.get('sentAt'),
+      })
 
     # embeds
     embed = obj.get('embed') or {}
