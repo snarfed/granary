@@ -870,7 +870,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         # can't use \b at beginning/end because # and @ and emoji aren't
         # word-constituent chars
         bound = fr'[\s{string.punctuation.replace("-", "")}]'
-        match = re.search(fr'(^|{bound})({prefix}{name})($|{bound})', text,
+        match = re.search(fr'(^|{bound})({prefix}{re.escape(name)})($|{bound})', text,
                           flags=re.IGNORECASE)
         if not match and tag_type == 'mention' and '@' in name:
           # try without @[server] suffix

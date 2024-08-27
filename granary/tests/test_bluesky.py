@@ -1312,6 +1312,19 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_hashtag_special_chars(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': '',
+    }, from_as1({
+      'objectType': 'note',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'a**b(',
+      }],
+    }))
+
   def test_from_as1_post_with_image(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['embed']

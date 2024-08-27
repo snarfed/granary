@@ -309,6 +309,7 @@ Changelog
   * `to_as1`:
     * Extract links from `app.bsky.actor.profile#description` into `url`/`urls` fields
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
+    * Bug fix: handle hashtags with regexp special characters.
   * `Bluesky.get_activities`: skip unknown record types instead of raising `ValueError`.
 * `rss`:
   * Support image enclosures, both directions.
