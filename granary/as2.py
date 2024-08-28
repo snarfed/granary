@@ -243,7 +243,6 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
 
   tags.extend(quotes)
 
-
   # Mastodon profile metadata fields into attachments
   # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
   # https://github.com/snarfed/bridgy-fed/issues/323
@@ -268,6 +267,15 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
           'name': name or 'Link',
           'value': f'<a rel="me" href="{url}"><span class="invisible">{scheme}</span>{visible}</a>',
         }
+
+        pv_context = {
+          'schema': 'http://schema.org#',
+          'PropertyValue': 'schema:PropertyValue'
+        }
+        context = util.get_list(obj, '@context')
+        if context and pv_context not in context:
+          obj['@context'] = context + [pv_context]
+
     attachments.extend(links.values())
 
   # urls

@@ -420,7 +420,13 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_person_propertyvalue_attachment_strips_home_page_slash(self):
     self.assert_equals({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',
+        {
+          'schema': 'http://schema.org#',
+          'PropertyValue': 'schema:PropertyValue'
+        },
+      ],
       'type': 'Person',
       'id': 'tag:example.com,2011:martin',
       'url': 'https://example.com/',
