@@ -1285,11 +1285,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       author = obj['sender']['did']
       if not ret['id']:
         ret['id'] = f'at://{author}/chat.bsky.convo.defs.messageView/{obj["id"]}'
-      if repo_did:
-        ret['to'] = [repo_did]
       ret.update({
         'author': author,
         'published': obj.get('sentAt'),
+        'to': ['?'],  # show that it's a DM even though we don't know the recipient
       })
 
     # embeds
