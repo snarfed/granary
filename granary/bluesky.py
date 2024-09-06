@@ -1574,7 +1574,11 @@ def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
 
   assert repo_did and pds
 
-  cid = blob.get('ref', {}).get('$link') or blob.get('cid')
+  if ref := blob.get('ref'):
+    cid = ref if isinstance(ref, str) else ref.get('$link')
+  else:
+    cid = blob.get('cid')
+
   if cid:
     path = f'/xrpc/com.atproto.sync.getBlob?did={repo_did}&cid={cid}'
     return urllib.parse.urljoin(pds, path)

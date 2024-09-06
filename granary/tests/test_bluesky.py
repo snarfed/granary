@@ -2602,6 +2602,11 @@ class BlueskyTest(testutil.TestCase):
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
     self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB,
                                                repo_did='did:plc:foo'))
+    # non-DAG-JSON, string base32-encoded CID in ref field
+    self.assertEqual(NEW_BLOB_URL, blob_to_url(blob={
+      **NEW_BLOB,
+      'ref': NEW_BLOB['ref']['$link'],
+    }, repo_did='did:plc:foo'))
     self.assertEqual(OLD_BLOB_URL, blob_to_url(blob=OLD_BLOB,
                                                repo_did='did:plc:foo'))
 
