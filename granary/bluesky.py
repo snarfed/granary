@@ -18,6 +18,7 @@ import urllib.parse
 from bs4 import BeautifulSoup
 from lexrpc import Client
 from lexrpc.base import Base, NSID_RE
+from multiformats import CID
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
 import requests
@@ -1551,6 +1552,9 @@ def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
   Supports both new and old style blobs:
   https://atproto.com/specs/data-model#blob-type
 
+  Supports ``ref`` values as raw bytes, base-32 encoded strings, and
+  DAG-JSON mappings with inner ``$link`` values.
+
   The resulting URL is a ``com.atproto.sync.getBlob`` XRPC call to the PDS.
 
   For blobs on the official ``bsky.social`` PDS, we could consider using their CDN
@@ -1575,7 +1579,9 @@ def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
   assert repo_did and pds
 
   if ref := blob.get('ref'):
-    cid = ref if isinstance(ref, str) else ref.get('$link')
+    cid = (ref if isinstance(ref, str)
+           else CID.decode(ref).encode('base32') if isinstance(ref, bytes)
+           else ref.get('$link'))
   else:
     cid = blob.get('cid')
 

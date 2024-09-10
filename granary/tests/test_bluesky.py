@@ -7,6 +7,7 @@ from io import BytesIO
 from unittest import skip
 from unittest.mock import ANY, patch
 
+from multiformats import CID
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, trim_nulls
@@ -49,11 +50,11 @@ ACTOR_PROFILE_VIEW_BSKY = {
 }
 NEW_BLOB = {  # new blob format: https://atproto.com/specs/data-model#blob-type
   '$type': 'blob',
-  'ref': {'$link': 'bafkreim'},
+  'ref': {'$link': 'bafkreicqpqncshdd27sgztqgzocd3zhhqnnsv6slvzhs5uz6f57cq6lmtq'},
   'mimeType': 'image/jpeg',
   'size': 154296,
 }
-NEW_BLOB_URL = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreim'
+NEW_BLOB_URL = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreicqpqncshdd27sgztqgzocd3zhhqnnsv6slvzhs5uz6f57cq6lmtq'
 OLD_BLOB = {  # old blob format: https://atproto.com/specs/data-model#blob-type
   'cid': 'bafyjrot',
   'mimeType': 'image/jpeg',
@@ -2599,16 +2600,22 @@ class BlueskyTest(testutil.TestCase):
     }, uri='at://did:foo/app.bsky.graph.listitem/123', repo_did='did:alice'))
 
   def test_blob_to_url(self):
+    # atproto dialect DAG-JSON
     self.assertIsNone(blob_to_url(blob={'foo': 'bar'}, repo_did='x', pds='y'))
-    self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB,
-                                               repo_did='did:plc:foo'))
-    # non-DAG-JSON, string base32-encoded CID in ref field
+    self.assertEqual(NEW_BLOB_URL, blob_to_url(blob=NEW_BLOB, repo_did='did:plc:foo'))
+
+    # string base32-encoded CID in ref field
+    cid_str = NEW_BLOB['ref']['$link']
     self.assertEqual(NEW_BLOB_URL, blob_to_url(blob={
       **NEW_BLOB,
-      'ref': NEW_BLOB['ref']['$link'],
+      'ref': cid_str,
     }, repo_did='did:plc:foo'))
-    self.assertEqual(OLD_BLOB_URL, blob_to_url(blob=OLD_BLOB,
-                                               repo_did='did:plc:foo'))
+
+    # raw bytes CID in ref field
+    self.assertEqual(NEW_BLOB_URL, blob_to_url(blob={
+      **NEW_BLOB,
+      'ref': bytes(CID.decode(cid_str)),
+    }, repo_did='did:plc:foo'))
 
   def test_to_as1_sensitive_content_warning(self):
     self.assert_equals({
