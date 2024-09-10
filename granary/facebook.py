@@ -2157,7 +2157,7 @@ class Facebook(source.Source):
     # web sites
     websites = []
     for label in root.find_all('a', href=re.compile(
-        '^/editprofile.php\?type=contact&edit=website')):
+        r'^/editprofile.php\?type=contact&edit=website')):
       websites.append(label.find_parent('td').find_next_sibling('td')
                       .get_text(' ', strip=True))
 
@@ -2380,7 +2380,7 @@ class Facebook(source.Source):
 
   @staticmethod
   def parse_id(id, is_comment=False):
-    """Parses a Facebook post or comment id.
+    r"""Parses a Facebook post or comment id.
 
     Facebook ids come in different formats:
 
