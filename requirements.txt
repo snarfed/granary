@@ -38,7 +38,6 @@ Flask==3.0.3
 Flask-Caching==2.3.0
 flask-gae-static==1.0
 flask-sock==0.7.0
-gdata==4.0.1
 google-api-core==2.17.1
 google-auth==2.15.0
 google-cloud-appengine-logging==1.4.5
