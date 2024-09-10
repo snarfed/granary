@@ -131,7 +131,7 @@ class Meetup(source.Source):
     user_id = user.get('id')
     user_id_str = str(user_id)
     published_s = round(user.get('joined') / 1000)
-    published_dt = datetime.datetime.utcfromtimestamp(published_s)
+    published_dt = datetime.datetime.fromtimestamp(published_s, tz=datetime.timezone.utc)
     photo = user.get('photo', {}).get('photo_link', 'https://secure.meetupstatic.com/img/noPhoto_80.png')
     return util.trim_nulls({
         'objectType': 'person',

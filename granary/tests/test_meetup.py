@@ -62,7 +62,7 @@ ACTOR = {
         # numeric_id is our own custom field that always has the source's numeric
         # user id, if available.
         'numeric_id': 189380737,
-        'published': '2015-07-02T08:18:21',
+        'published': '2015-07-02T08:18:21+00:00',
         'url': 'https://www.meetup.com/members/189380737/',
         'urls': None,
         'location': {'displayName': 'United Kingdom'},
@@ -312,7 +312,7 @@ class MeetupTest(testutil.TestCase):
                 # numeric_id is our own custom field that always has the source's numeric
                 # user id, if available.
                 'numeric_id': 189380737,
-                'published': '2015-07-02T08:18:21',
+                'published': '2015-07-02T08:18:21+00:00',
                 'url': 'https://www.meetup.com/members/189380737/',
                 'urls': None,
                 'location': {'displayName': 'United Kingdom'},
