@@ -435,9 +435,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
   Args:
     obj (dict): AS1 object or activity
     out_type (str): desired output lexicon ``$type``
-    blobs (dict): optional mapping from str URL to ``blob`` dict to use in the
-      returned object. If not provided, or if this doesn't have an ``image`` or
-      similar URL in the input object, its output blob will be omitted.
+    blobs (dict): optional mapping from str URL to ``$type: blob`` dict (with
+      ``ref``, ``mimeType``, and ``size``) to use in the returned object. If not
+      provided, or if this doesn't have an ``image`` or similar URL in the input
+      object, its output blob will be omitted.
     client (Bluesky or lexrpc.Client): optional; if provided, this will be used
       to make API calls to PDSes to fetch and populate CIDs for records
       referenced by replies, likes, reposts, etc.
@@ -653,33 +654,42 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
             'alt': alt,
           })
 
-    # Bluesky doesn't currently handle videos. if the post has a video, add a
-    # [Video] label to the original post link.
-    #
-    # by default, original post link goes into an external embed. Bluesky can't
-    # do both images and an external embed in the same post though,
-    # https://github.com/bluesky-social/atproto/discussions/2575 , so if the
-    # post has images, put the original post link at the end of the text
-    # instead, after truncating.
+    # first video => embed
     attachments = util.get_list(obj, 'attachments')
-    has_video = any(a.get('objectType') == 'video' for a in attachments)
+    video = video_embed = video_record_embed = None
+    for att in attachments:
+      url = util.get_url(att, 'stream')
+      blob = blobs.get(url)
+      if url and blob and as1.object_type(att) == 'video':
+        video = url
+        alt = att.get('displayName') or ''
+        video_embed = {
+          '$type': 'app.bsky.embed.video#view',
+          'cid': blob_cid(blob),
+          'playlist': '?',
+          'alt': alt,
+        }
+        video_record_embed = {
+          '$type': 'app.bsky.embed.video',
+          'video': blob,
+          'alt': alt,
+        }
+        break
+
+    # by default, original post link goes into an external embed. Bluesky can't
+    # do either images or video along with an external embed in the same post
+    # though, https://github.com/bluesky-social/atproto/discussions/2575 , so if
+    # the post has those, put the original post link at the end of the text
+    # instead, after truncating.
     original_post_embed_name = original_post_text_suffix = None
     include_link = None
     url = as1.get_url(obj) or obj.get('id')
     if url:
       snippet = f'Original post on {util.domain_from_link(url)}'
       original_post_embed_name = snippet
-      original_post_text_suffix = f'[{snippet}]'
-      if has_video:
-        original_post_embed_name = '[Video] ' + original_post_embed_name
-        original_post_text_suffix = '[Video] ' + original_post_text_suffix
-
-      original_post_text_suffix = '\n\n' + original_post_text_suffix
-
-      if images:
-        include_link = INCLUDE_LINK if has_video else INCLUDE_IF_TRUNCATED
-      else:
-        include_link = OMIT_LINK  # it'll go in the external embed, not text
+      original_post_text_suffix = f'\n\n[{snippet}]'
+      include_link = (INCLUDE_IF_TRUNCATED if images or video
+                      else OMIT_LINK)  # link will be in the external embed, not text
 
     # convert text from HTML and truncate
     link_tags = []
@@ -771,8 +781,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
           },
         }
 
-    # truncate text. if we're including a suffix, ie original post link and
-    # maybe [Video] label, link that with a facet
+    # truncate text. if we're including a suffix, ie original post link, link
+    # that with a facet
     is_dm = as1.is_dm(obj, actor=actor)
     text = Bluesky('unused').truncate(
       full_text, original_post_text_suffix, include_link=include_link,
@@ -897,7 +907,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         facets.append(facet)
 
     # attachments => embeds for articles/notes
-    if (truncated or has_video) and url:
+    if truncated and url:
       # override attachments with link to original post. (if there are images,
       # we added a link in the text instead, and this won't get used.)
       external_record_embed = {
@@ -919,23 +929,25 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       }
 
     # populate embeds
-    if record_embed and (images_embed or external_embed):
+    media_embed = video_embed or images_embed or external_embed
+    if record_embed and ():
       embed = {
         '$type': 'app.bsky.embed.recordWithMedia#view',
         'record': record_embed,
-        'media': images_embed or external_embed,
+        'media': media_embed
       }
     else:
-      embed = record_embed or images_embed or external_embed
+      embed = record_embed or media_embed
 
-    if record_record_embed and (images_record_embed or external_record_embed):
+    media_record_embed = video_record_embed or images_record_embed or external_record_embed
+    if record_record_embed and media_record_embed:
       record_embed = {
         '$type': 'app.bsky.embed.recordWithMedia',
         'record': record_record_embed,
-        'media' : images_record_embed or external_record_embed,
+        'media' : media_record_embed
       }
     else:
-      record_embed = record_record_embed or images_record_embed or external_record_embed
+      record_embed = record_record_embed or media_record_embed
 
     # in reply to
     reply = None
@@ -1297,7 +1309,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     embed_type = embed.get('$type')
     if embed_type == 'app.bsky.embed.images':
       ret['image'] = to_as1(embed, **kwargs)
-    elif embed_type in ('app.bsky.embed.external', 'app.bsky.embed.record'):
+    elif embed_type in ('app.bsky.embed.external',
+                        'app.bsky.embed.record',
+                        'app.bsky.embed.video',
+                        ):
       ret['attachments'] = [to_as1(embed, **kwargs)]
     elif embed_type == 'app.bsky.embed.recordWithMedia':
       ret['attachments'] = [to_as1(embed, **kwargs)]
@@ -1305,7 +1320,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       # need to make it return both the quote post attachment and the image.
       media = embed.get('media')
       media_type = media.get('$type')
-      if media_type == 'app.bsky.embed.external':
+      if media_type in ('app.bsky.embed.external', 'app.bsky.embed.video'):
         ret['attachments'].append(to_as1(media, **kwargs))
       elif media_type == 'app.bsky.embed.images':
         ret['image'] = to_as1(media, **kwargs)
@@ -1332,14 +1347,16 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         ret.setdefault('image', []).extend(to_as1(embed, **kwargs))
 
       elif embed_type in ('app.bsky.embed.external#view',
-                          'app.bsky.embed.record#view'):
+                          'app.bsky.embed.record#view',
+                          'app.bsky.embed.video#view',
+                          ):
         ret['attachments'] = [to_as1(embed, **kwargs)]
 
       elif embed_type == 'app.bsky.embed.recordWithMedia#view':
         ret['attachments'] = [to_as1(embed.get('record', {}).get('record'), **kwargs)]
         media = embed.get('media')
         media_type = media.get('$type')
-        if media_type == 'app.bsky.embed.external#view':
+        if media_type in ('app.bsky.embed.external#view', 'app.bsky.embed.video#view'):
           ret.setdefault('attachments', []).append(to_as1(media, **kwargs))
         elif media_type == 'app.bsky.embed.images#view':
           ret.setdefault('image', []).extend(to_as1(media, **kwargs))
@@ -1347,22 +1364,43 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
           assert False, f'Unknown embed media type: {media_type}'
 
   elif type == 'app.bsky.embed.images':
+    ret = []
     if repo_did and pds:
-      ret = []
       for img in obj.get('images', []):
         image = img.get('image')
         if image:
           url = blob_to_url(blob=image, repo_did=repo_did, pds=pds)
           ret.append({'url': url, 'displayName': img['alt']}
                      if img.get('alt') else url)
-    else:
-      ret = []
+
+  elif type == 'app.bsky.embed.video':
+    ret = {}
+    if repo_did and pds:
+      if vid := obj['video']:
+        url = blob_to_url(blob=vid, repo_did=repo_did, pds=pds)
+        ret = {
+          'objectType': 'video',
+          'stream': {
+            'url': url,
+            'mimeType': vid.get('mimeType'),
+          },
+          'displayName': obj['alt'],
+        }
 
   elif type == 'app.bsky.embed.images#view':
     ret = [{
       'url': img.get('fullsize'),
       'displayName': img.get('alt'),
     } for img in obj.get('images', [])]
+
+  elif type == 'app.bsky.embed.video#view':
+    ret = {}
+    if repo_did and pds:
+      ret = {
+        'objectType': 'video',
+        'stream': {'url': blob_to_url(blob=obj, repo_did=repo_did, pds=pds)},
+        'displayName': obj.get('alt'),
+      }
 
   elif type in ('app.bsky.embed.external', 'app.bsky.embed.external#view'):
     ret = to_as1(obj.get('external'), type='app.bsky.embed.external#viewExternal',
@@ -1565,7 +1603,7 @@ def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
   not sure how to generate signatures for it yet.
 
   Args:
-    blob (dict)
+    blob (dict): https://atproto.com/specs/data-model#blob-type
     repo_did (str): DID of the repo that owns this blob
     pds (str): base URL of the PDS that serves this repo. Defaults to
       :const:`DEFAULT_PDS`
@@ -1578,16 +1616,34 @@ def blob_to_url(*, blob, repo_did, pds=DEFAULT_PDS):
 
   assert repo_did and pds
 
-  if ref := blob.get('ref'):
-    cid = (ref if isinstance(ref, str)
-           else CID.decode(ref).encode('base32') if isinstance(ref, bytes)
-           else ref.get('$link'))
-  else:
-    cid = blob.get('cid')
-
-  if cid:
+  if cid := blob_cid(blob):
     path = f'/xrpc/com.atproto.sync.getBlob?did={repo_did}&cid={cid}'
     return urllib.parse.urljoin(pds, path)
+
+
+def blob_cid(blob):
+  """Returns a blob's base32-encoded CID.
+
+  Supports both new and old style blobs:
+  https://atproto.com/specs/data-model#blob-type
+
+  Supports ``ref`` values as raw bytes, base-32 encoded strings, and
+  DAG-JSON mappings with inner ``$link`` values.
+
+  Args:
+    blob (dict): https://atproto.com/specs/data-model#blob-type
+
+  Returns:
+    str: this blob's CID, base32-encoded
+  """
+  assert blob
+
+  if ref := blob.get('ref'):
+    return (ref if isinstance(ref, str)
+            else CID.decode(ref).encode('base32') if isinstance(ref, bytes)
+            else ref.get('$link'))
+  else:
+    return blob.get('cid')
 
 
 class Bluesky(Source):
@@ -2077,11 +2133,6 @@ class Bluesky(Source):
         data['in_reply_to_id'] = base_id
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
-
-      videos = util.dedupe_urls(
-        [obj] + [a for a in atts if a.get('objectType') == 'video'], key='stream')
-      if videos:
-        logger.warning(f'Found {len(videos)} videos, but Bluesky doesn\'t support video yet.')
 
       if len(images) > MAX_IMAGES:
         images = images[:MAX_IMAGES]

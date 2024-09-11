@@ -16,6 +16,7 @@ import requests
 from ..bluesky import (
   AT_URI_PATTERN,
   at_uri_to_web_url,
+  blob_cid,
   blob_to_url,
   Bluesky,
   did_web_to_url,
@@ -297,6 +298,38 @@ POST_VIEW_BSKY_IMAGES['embed'] = {
     'fullsize': NEW_BLOB_URL,
     'thumb': NEW_BLOB_URL,
   }],
+}
+
+POST_AS_VIDEO = copy.deepcopy(POST_AS)
+POST_AS_VIDEO['object']['attachments'] = [{
+  'objectType': 'video',
+  'displayName': 'my alt text',
+  'stream': {
+    'url': NEW_BLOB_URL,
+    'mimeType': 'video/mp4',
+    # 'duration': 123,
+    # 'size': 4567,
+  }
+}]
+
+EMBED_VIDEO = {
+  '$type': 'app.bsky.embed.video',
+  'video': {
+    **NEW_BLOB,
+    'mimeType': 'video/mp4',
+  },
+  'alt': 'my alt text',
+}
+POST_BSKY_VIDEO = copy.deepcopy(POST_BSKY)
+POST_BSKY_VIDEO['embed'] = EMBED_VIDEO
+
+POST_VIEW_BSKY_VIDEO = copy.deepcopy(POST_VIEW_BSKY)
+POST_VIEW_BSKY_VIDEO['record']['embed'] = EMBED_VIDEO
+POST_VIEW_BSKY_VIDEO['embed'] = {
+  '$type': 'app.bsky.embed.video#view',
+  'cid': NEW_BLOB['ref']['$link'],
+  'playlist': '?',
+  'alt': 'my alt text',
 }
 
 REPLY_AS = {
@@ -859,9 +892,12 @@ class BlueskyTest(testutil.TestCase):
   @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=51)
   def test_from_as1_post_with_images_video_truncated_original_post_link_in_text(self):
+    content = 'lots of text adding up to longer than fifty one characters ok ok'
+    blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
     self.assert_equals({
-      **POST_BSKY_IMAGES,
-      'text': 'My […] \n\n[Video] [Original post on my.inst]',
+      **POST_BSKY_VIDEO,
+      'text': 'lots of text […] \n\n[Original post on my.inst]',
+      'fooOriginalText': content,
       'fooOriginalUrl': 'http://my.inst/post',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
@@ -870,18 +906,16 @@ class BlueskyTest(testutil.TestCase):
           'uri': 'http://my.inst/post',
         }],
         'index': {
-          'byteStart': 9,
-          'byteEnd': 45,
+          'byteStart': 19,
+          'byteEnd': 47,
         },
       }],
     }, self.from_as1({
       **POST_AS_IMAGES['object'],
+      **POST_AS_VIDEO['object'],
+      'content': content,
       'url': 'http://my.inst/post',
-      'attachments': [{
-        'objectType': 'video',
-        'stream': {'url': 'https://a/cool/vid'},
-      }],
-    }, blobs={NEW_BLOB_URL: NEW_BLOB}))
+    }, blobs=blobs))
 
   @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=40)
@@ -1356,11 +1390,29 @@ class BlueskyTest(testutil.TestCase):
       'image': ['http://pic/1', NEW_BLOB_URL],
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
+  def test_from_as1_post_with_video(self):
+    expected = copy.deepcopy(POST_BSKY_VIDEO)
+    del expected['embed']
+    self.assert_equals(expected, self.from_as1(POST_AS_VIDEO))
+
+  def test_from_as1_post_with_video_blobs(self):
+    expected = copy.deepcopy(POST_BSKY_VIDEO)
+    blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
+    self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs))
+
   def test_from_as1_post_view_with_image(self):
     expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
     del expected['record']['embed']
     expected['record']['fooOriginalUrl'] = 'https://bsky.app/profile/did:alice/post/tid'
     got = self.from_as1(POST_AS_IMAGES, out_type='app.bsky.feed.defs#postView')
+    self.assert_equals(expected, got)
+
+  def test_from_as1_post_view_with_video(self):
+    expected = copy.deepcopy(POST_VIEW_BSKY_VIDEO)
+    expected['record']['fooOriginalUrl'] = 'https://bsky.app/profile/did:alice/post/tid'
+    blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
+    got = self.from_as1(POST_AS_VIDEO, out_type='app.bsky.feed.defs#postView',
+                        blobs=blobs)
     self.assert_equals(expected, got)
 
   def test_from_as1_object_vs_activity(self):
@@ -2206,6 +2258,27 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_post_view_with_image(self):
     self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_VIEW_BSKY_IMAGES))
 
+  def test_to_as1_post_with_video(self):
+    self.assert_equals(trim_nulls({
+      **POST_AS_VIDEO['object'],
+      'author': 'did:plc:foo',
+      'id': None,
+      'url': None,
+    }), to_as1(POST_BSKY_VIDEO, repo_did='did:plc:foo'))
+
+  def test_to_as1_post_with_video_no_repo_did(self):
+    self.assert_equals(trim_nulls({
+      **POST_AS_VIDEO['object'],
+      'attachments': None,
+      'id': None,
+      'url': None,
+    }), to_as1(POST_BSKY_VIDEO))
+
+  def test_to_as1_post_view_with_video(self):
+    expected = copy.deepcopy(POST_AS_VIDEO['object'])
+    del expected['attachments'][0]['stream']['mimeType']
+    self.assert_equals(expected, to_as1(POST_VIEW_BSKY_VIDEO, repo_did='did:plc:foo'))
+
   def test_to_as1_feedViewPost(self):
     expected = copy.deepcopy(POST_AUTHOR_AS['object'])
     expected['author'].update({
@@ -2616,6 +2689,12 @@ class BlueskyTest(testutil.TestCase):
       **NEW_BLOB,
       'ref': bytes(CID.decode(cid_str)),
     }, repo_did='did:plc:foo'))
+
+  def test_blob_cid(self):
+    cid = NEW_BLOB['ref']['$link']
+    self.assertEqual(cid, blob_cid(NEW_BLOB))
+    self.assertEqual(cid, blob_cid({**NEW_BLOB, 'ref': cid}))
+    self.assertEqual(cid, blob_cid({**NEW_BLOB, 'ref': bytes(CID.decode(cid))}))
 
   def test_to_as1_sensitive_content_warning(self):
     self.assert_equals({
