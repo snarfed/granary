@@ -475,10 +475,8 @@ def to_as1(obj, use_type=True):
           media_type = tag.get('mediaType') or ''
           href = tag.get('href')
           if media_type.split('/')[0] == type.lower():
-            obj['stream'] = {
-              'mimeType': media_type,
-              'url': href,
-            }
+            obj['stream'] = {'url': href}
+            obj['mimeType'] = media_type
             break
 
   # ActivityPub/Mastodon uses icon for profile picture, image for header.

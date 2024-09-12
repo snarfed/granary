@@ -10,7 +10,7 @@
     "https://spectra-prod.us-east-1.linodeobjects.com/streaming-playlists/hls/1484abab-d649-45d0-8c50-d761382ac4e7/c795d898-520c-43b8-9601-89e45b1059da-master.m3u8"
   ],
   "stream": {
-    "url": "https://spectra-prod.us-east-1.linodeobjects.com/streaming-playlists/hls/1484abab-d649-45d0-8c50-d761382ac4e7/290ff400-eb58-4fcb-8ea4-e5df06313f34-720-fragmented.mp4",
-    "mimeType": "video/mp4"
-  }
+    "url": "https://spectra-prod.us-east-1.linodeobjects.com/streaming-playlists/hls/1484abab-d649-45d0-8c50-d761382ac4e7/290ff400-eb58-4fcb-8ea4-e5df06313f34-720-fragmented.mp4"
+  },
+  "mimeType": "video/mp4"
 }
