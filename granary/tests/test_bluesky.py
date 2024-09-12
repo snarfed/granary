@@ -1400,6 +1400,15 @@ class BlueskyTest(testutil.TestCase):
     blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs))
 
+  def test_from_as1_post_with_video_blobs_cid_instance(self):
+    expected = copy.deepcopy(POST_BSKY_VIDEO)
+    blobs = {NEW_BLOB_URL: {
+      **NEW_BLOB,
+      # 'ref': 
+      # 'mimeType': 'video/mp4',
+    }}
+    self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs))
+
   def test_from_as1_post_view_with_image(self):
     expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
     del expected['record']['embed']
@@ -2690,10 +2699,17 @@ class BlueskyTest(testutil.TestCase):
       'ref': bytes(CID.decode(cid_str)),
     }, repo_did='did:plc:foo'))
 
+    # CID instance
+    self.assertEqual(NEW_BLOB_URL, blob_to_url(blob={
+      **NEW_BLOB,
+      'ref': CID.decode(cid_str),
+    }, repo_did='did:plc:foo'))
+
   def test_blob_cid(self):
     cid = NEW_BLOB['ref']['$link']
     self.assertEqual(cid, blob_cid(NEW_BLOB))
     self.assertEqual(cid, blob_cid({**NEW_BLOB, 'ref': cid}))
+    self.assertEqual(cid, blob_cid({**NEW_BLOB, 'ref': CID.decode(cid)}))
     self.assertEqual(cid, blob_cid({**NEW_BLOB, 'ref': bytes(CID.decode(cid))}))
 
   def test_to_as1_sensitive_content_warning(self):

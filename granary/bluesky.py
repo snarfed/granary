@@ -1641,6 +1641,7 @@ def blob_cid(blob):
   if ref := blob.get('ref'):
     return (ref if isinstance(ref, str)
             else CID.decode(ref).encode('base32') if isinstance(ref, bytes)
+            else ref.encode('base32') if isinstance(ref, CID)
             else ref.get('$link'))
   else:
     return blob.get('cid')
