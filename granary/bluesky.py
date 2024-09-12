@@ -1384,7 +1384,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
             'url': url,
             'mimeType': vid.get('mimeType'),
           },
-          'displayName': obj['alt'],
+          'displayName': obj.get('alt'),
         }
 
   elif type == 'app.bsky.embed.images#view':
