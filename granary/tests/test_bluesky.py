@@ -1401,11 +1401,13 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs))
 
   def test_from_as1_post_with_video_blobs_cid_instance(self):
+    cid = CID.decode(NEW_BLOB['ref']['$link'])
     expected = copy.deepcopy(POST_BSKY_VIDEO)
+    expected['embed']['video']['ref'] = cid
     blobs = {NEW_BLOB_URL: {
       **NEW_BLOB,
-      # 'ref': 
-      # 'mimeType': 'video/mp4',
+      'ref': cid,
+      'mimeType': 'video/mp4',
     }}
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs))
 
