@@ -309,6 +309,33 @@ class As1Test(testutil.TestCase):
     self.assertEqual('http://alice',
                      as1.recipient_if_dm({'to': ['http://alice']}, actor))
 
+  def test_is_audience(self):
+    for val in (
+        None,
+        '',
+        {},
+        'unknown',
+        'did:user',
+        'user.com',
+        'http://user.com/',
+        'http://mas.to/@user',
+    ):
+      with self.subTest(val=val):
+        self.assertFalse(as1.is_audience(val))
+
+    for val in (
+        'Public',
+        'as:Public',
+        '@public',
+        '@unlisted',
+        '@private',
+        'https://www.w3.org/ns/activitystreams#Public',
+        'https://www.w3.org/ns/xyz',
+        'http://mas.to/@user/followers',
+    ):
+      with self.subTest(val=val):
+        self.assertTrue(as1.is_audience(val))
+
   def test_activity_changed(self):
     fb_post = copy.deepcopy(ACTIVITY)
     fb_post['object']['updated'] = '2016-01-02T00:00:00+00:00'

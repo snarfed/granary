@@ -300,21 +300,7 @@ def recipient_if_dm(obj, actor=None):
     to = to.get('id') or ''
 
   to_lower = to.lower()
-  if (to
-      # https://activitystrea.ms/specs/json/targeting/1.0/
-      and to_lower not in ('public', 'unlisted', 'private')
-      and not to_lower.startswith('https://www.w3.org/')
-      and not to_lower.startswith('https://w3.org/')
-      and not to.startswith('@')  # AS1 audience targeting alias, eg @public, @unlisted
-      and not to_lower.startswith('as:')
-      # as2 public constant is https://www.w3.org/ns/activitystreams#Public
-      and not to_lower.endswith('#Public')
-      and to not in follow_collections
-      # non-standared heuristic for Mastodon and similar followers/following
-      # collections if we don't have actor
-      and not to_lower.endswith('/followers')
-      and not to_lower.endswith('/following')
-      ):
+  if to and not is_audience(to) and to not in follow_collections:
     return to
 
 
@@ -324,6 +310,32 @@ def is_dm(obj, actor=None):
   See :func:`recipient_if_dm` for details.
   """
   return bool(recipient_if_dm(obj, actor=actor))
+
+
+def is_audience(val):
+  """Returns True if val is a "special" AS1 or AS2 audience, eg "public."
+
+
+  See the AS1 Audience Targeting extension and AS2 spec:
+  * http://activitystrea.ms/specs/json/targeting/1.0/
+  * https://www.w3.org/TR/activitystreams-vocabulary/#dfn-audience
+  """
+  if not val or not isinstance(val, str):
+    return False
+
+  val = val.lower()
+  return (# https://activitystrea.ms/specs/json/targeting/1.0/
+          val in ('public', 'unlisted', 'private')
+          or val.startswith('https://www.w3.org/')
+          or val.startswith('https://w3.org/')
+          or val.startswith('@')  # AS1 audience targeting alias, eg @public, @unlisted
+          or val.startswith('as:')
+          # as2 public constant is https://www.w3.org/ns/activitystreams#Public
+          or val.endswith('#public')
+          # non-standared heuristic for Mastodon and similar followers/following
+          # collections
+          or val.endswith('/followers')
+          or val.endswith('/following'))
 
 
 def add_rsvps_to_event(event, rsvps):
