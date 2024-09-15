@@ -132,9 +132,11 @@ DEFAULT_APPVIEW = 'https://api.bsky.app'
 # https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors
 NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
 
-# https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
-# Bluesky => AS1
-# Text copied from:
+# Bluesky => AS1 labels
+#
+# https://docs.bsky.app/docs/advanced-guides/moderation#global-label-values
+# https://public.api.bsky.app/xrpc/app.bsky.labeler.getServices?dids=did%3Aplc%3Aar7c4by46qjdydhdevvrndac&detailed=true
+# https://github.com/bluesky-social/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
 # https://github.com/bluesky-social/social-app/blob/3627a249ffb32e4c0f84597f8f9adf228ee90a8f/src/lib/moderation/useGlobalLabelStrings.ts
 # https://github.com/bluesky-social/social-app/blob/3627a249ffb32e4c0f84597f8f9adf228ee90a8f/bskyembed/src/labels.ts
 SENSITIVE_LABELS = {
