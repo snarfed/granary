@@ -471,14 +471,14 @@ HTML_PHOTO_FULL = {
     'id': '345924646',
     'has_public_page': True
   },
-  'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfp1\/t51.2885-15\/e35\/12545499_1662965520652470_1466520818_n.jpg',
+  'display_src': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfp1/t51.2885-15/e35/12545499_1662965520652470_1466520818_n.jpg',
   'is_video': False,
   'owner': {
     'is_private': False,
     'id': '456',
     'has_blocked_viewer': False,
     'full_name': 'Jerry C',
-    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+    'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
     'blocked_by_viewer': False,
     'followed_by_viewer': True,
     'requested_by_viewer': False,
@@ -520,14 +520,14 @@ HTML_PHOTO_LIKES_RESPONSE = {
         'edges': [{
           'node': {
             'id': '8',
-            'profile_pic_url': 'http:\/\/alice\/picture',
+            'profile_pic_url': 'http://alice/picture',
             'username': 'alizz',
             'full_name': 'Alice',
           },
         }, {
           'node': {
             'id': '9',
-            'profile_pic_url': 'http:\/\/bob\/picture',
+            'profile_pic_url': 'http://bob/picture',
             'username': 'bobbb',
             'full_name': 'Bob',
             'website': 'http://bob.com/',
@@ -561,15 +561,15 @@ HTML_VIDEO_FULL = {
   '__typename': 'GraphVideo',
   'code': 'XYZ789',
   'location': None,
-  'display_src': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xpf1\/t51.2885-15\/s750x750\/sh0.08\/e35\/12424348_567037233461060_1986731502_n.jpg',
+  'display_src': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xpf1/t51.2885-15/s750x750/sh0.08/e35/12424348_567037233461060_1986731502_n.jpg',
   'is_video': True,
-  'video_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xtp1\/t50.2886-16\/12604073_746855092124622_46574942_n.mp4',
+  'video_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xtp1/t50.2886-16/12604073_746855092124622_46574942_n.mp4',
   'dimensions': {'height': 640, 'width': 640},
   'owner': {
     'is_private': True,
     'id': '456',
     'full_name': 'Jerry C',
-    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-frc\/t51.2885-19\/10903606_836522793073208_584898992_a.jpg',
+    'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-frc/t51.2885-19/10903606_836522793073208_584898992_a.jpg',
     'username': 'jc',
   },
   'edge_media_to_caption': {'edges': [{'node': {
@@ -583,7 +583,7 @@ HTML_VIDEO_FULL = {
     'edges': [{'node': {
       'owner': {
         'id': '232927278',
-        'profile_pic_url': 'http:\/\/picture\/commenter',
+        'profile_pic_url': 'http://picture/commenter',
         'username': 'averygood',
         'full_name': '小正',
       },
@@ -599,7 +599,7 @@ HTML_VIDEO_FULL = {
             'created_at': 1594392712,
             'owner': {
               'id': '420973239',
-              'profile_pic_url': 'http:\/\/picture\/commenter/2',
+              'profile_pic_url': 'http://picture/commenter/2',
               'username': 'someone',
             },
           }
@@ -691,11 +691,11 @@ HTML_SUGGESTED_USERS = {
 HTML_VIEWER_CONFIG = {
   'csrf_token': '...',
   'viewer': {
-    'external_url': 'https:\/\/snarfed.org',
+    'external_url': 'https://snarfed.org',
     'biography': 'something or other',
     'id': '420973239',
     'full_name': 'Ryan B',
-    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
+    'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_a.jpg',
     'has_profile_pic': True,
     'username': 'snarfed',
   },
@@ -707,7 +707,7 @@ HTML_FEED = {  # eg old https://www.instagram.com/ when you're logged in
   'qe': {'su': {'g': 'control', 'p': {'enabled': 'false'}}},
   'hostname': 'www.instagram.com',
   'platform': 'web',
-  'static_root': '\/\/instagramstatic-a.akamaihd.net\/bluebar\/cf5f70d',
+  'static_root': '//instagramstatic-a.akamaihd.net/bluebar/cf5f70d',
   'gatekeepers': {'sfbf': True, 'addpp': True, 'rhp': True, 'cpp': True},
   'language_code': 'en',
   'country_code': 'US',
@@ -922,7 +922,7 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
   },
   '...': '...',  # many of the same top-level fields as in HTML_FEED
   'entry_data': {'ProfilePage': [{'graphql': {'user': {
-    'external_url': 'http:\/\/snarfed.org',
+    'external_url': 'http://snarfed.org',
     'is_private': False,
     'has_blocked_viewer': False,
     'is_verified': False,
@@ -943,7 +943,7 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
     'full_name': 'Ryan B',
     'biography': 'something or other',
     'id': '420973239',
-    'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
+    'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_a.jpg',
     'follows_viewer': False,
     'followed_by_viewer': False,
     'has_requested_viewer': False,
@@ -952,7 +952,7 @@ HTML_PROFILE = {  # eg https://www.instagram.com/snarfed
     'requested_by_viewer': False,
     'follows': {'count': 295},
     'username': 'snarfed',
-    'external_url': 'https:\/\/snarfed.org',
+    'external_url': 'https://snarfed.org',
   }}}]},
 }
 HTML_PROFILE_PRIVATE = copy.deepcopy(HTML_PROFILE)
@@ -979,8 +979,8 @@ HTML_PROFILE_JSON = {
       'biography': 'something or other',
       'is_private': False,
       'is_verified': False,
-      'profile_pic_url': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_a.jpg',
-      'profile_pic_url_hd': 'https:\/\/scontent-sjc2-1.cdninstagram.com\/hphotos-xfa1\/t51.2885-19\/11373714_959073410822287_2004790583_hd.jpg',
+      'profile_pic_url': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_a.jpg',
+      'profile_pic_url_hd': 'https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_hd.jpg',
       'followed_by_viewer': False,
       'follows_viewer': False,
       'edge_followed_by': {'count': 168},
