@@ -523,8 +523,8 @@ def to_as1(obj, use_type=True):
                     if isinstance(inner_inner_obj, dict) else inner_inner_obj)
 
   # audience, public or unlisted or neither
-  to = sorted(util.get_list(obj, 'to'))
-  cc = sorted(util.get_list(obj, 'cc'))
+  to = sorted(as1.get_ids(obj, 'to'))
+  cc = sorted(as1.get_ids(obj, 'cc'))
   as1_to = [{'id': val} for val in to]
   as1_cc = [{'id': val} for val in cc]
   if PUBLICS.intersection(to):
