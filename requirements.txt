@@ -95,7 +95,7 @@ ujson==5.10.0
 update-checker==0.18.0
 urllib3==2.2.3
 webencodings==0.5.1
-websockets==13.0.1
+websockets==13.1
 websocket-client==1.8.0
 Werkzeug==3.0.4
 wsproto==1.2.0
