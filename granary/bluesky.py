@@ -54,11 +54,12 @@ DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 _CHARS = 'a-zA-Z0-9-.:'
 # TODO: add query and fragment? they're currently unused in the protocol
 # https://atproto.com/specs/at-uri-scheme#structure
+# NOTE: duplicated in lexrpc.base!
 AT_URI_PATTERN = re.compile(rf"""
     ^at://
      (?P<repo>[{_CHARS}]+)
       (?:/(?P<collection>[a-zA-Z0-9-.]+)
-       (?:/(?P<rkey>[{_CHARS}]+))?)?
+       (?:/(?P<rkey>[{_CHARS}~_]+))?)?
     $""", re.VERBOSE)
 
 # Maps AT Protocol NSID collections to path elements in bsky.app URLs.
