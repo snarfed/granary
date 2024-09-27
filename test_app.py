@@ -666,7 +666,7 @@ not RSS!
     self.assert_equals({
       'feed': [
         test_bluesky.POST_BSKY,
-        test_bluesky.REPLY_BSKY,
+        test_bluesky.REPLY_BSKY_NO_CIDS,
       ],
     }, resp.json, ignore=['fooOriginalUrl', 'fooOriginalText'])
 

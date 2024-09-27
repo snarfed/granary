@@ -152,7 +152,8 @@ SENSITIVE_LABELS = {
 # AS1 => Bluesky
 SENSITIVE_LABEL = 'graphic-media'
 
-LEXRPC_BASE = Base(truncate=True)
+# TODO: bring back validate? or remove?
+LEXRPC_BASE = Base(truncate=True, validate=False)
 
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
 # <a href="http://post">ba](r</a> turns into [ba](r](http://post)
@@ -530,7 +531,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
 
     if not out_type or out_type == 'app.bsky.actor.profile':
       ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
-      return LEXRPC_BASE._maybe_validate('app.bsky.actor.profile', 'record', ret)
+      return LEXRPC_BASE.validate('app.bsky.actor.profile', 'record', ret)
 
     did_web = ''
     if id and id.startswith('did:web:'):
@@ -1066,7 +1067,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     else:
       nsid = method
       type = 'input'
-    return LEXRPC_BASE._maybe_validate(nsid, type, ret)
+    return LEXRPC_BASE.validate(nsid, type, ret)
 
   return ret
 
@@ -1693,7 +1694,9 @@ class Bluesky(Source):
 
     headers = {'User-Agent': util.user_agent}
     self._client = Client(access_token=access_token, refresh_token=refresh_token,
-                          headers=headers, session_callback=session_callback)
+                          headers=headers, session_callback=session_callback,
+                          # TODO: bring back validate? or remove?
+                          validate=False)
 
   @property
   def client(self):
