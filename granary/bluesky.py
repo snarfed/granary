@@ -153,7 +153,7 @@ SENSITIVE_LABELS = {
 SENSITIVE_LABEL = 'graphic-media'
 
 # TODO: bring back validate? or remove?
-LEXRPC_BASE = Base(truncate=True, validate=False)
+LEXRPC_TRUNCATE = Base(truncate=True, validate=False)
 
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
 # <a href="http://post">ba](r</a> turns into [ba](r](http://post)
@@ -531,7 +531,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
 
     if not out_type or out_type == 'app.bsky.actor.profile':
       ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
-      return LEXRPC_BASE.validate('app.bsky.actor.profile', 'record', ret)
+      return LEXRPC_TRUNCATE.validate('app.bsky.actor.profile', 'record', ret)
 
     did_web = ''
     if id and id.startswith('did:web:'):
@@ -1067,7 +1067,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     else:
       nsid = method
       type = 'input'
-    return LEXRPC_BASE.validate(nsid, type, ret)
+    return LEXRPC_TRUNCATE.validate(nsid, type, ret)
 
   return ret
 
@@ -1695,8 +1695,7 @@ class Bluesky(Source):
     headers = {'User-Agent': util.user_agent}
     self._client = Client(access_token=access_token, refresh_token=refresh_token,
                           headers=headers, session_callback=session_callback,
-                          # TODO: bring back validate? or remove?
-                          validate=False)
+                          validate=True)
 
   @property
   def client(self):
@@ -2254,11 +2253,11 @@ class Bluesky(Source):
   def truncate(self, *args, type=None, **kwargs):
     """Thin wrapper around :meth:`Source.truncate` that sets default kwargs."""
     if type == 'dm':
-      length = LEXRPC_BASE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
+      length = LEXRPC_TRUNCATE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
     elif type in as1.ACTOR_TYPES:
-      length = LEXRPC_BASE.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
+      length = LEXRPC_TRUNCATE.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
     elif type in POST_TYPES:
-      length = LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text']['maxGraphemes']
+      length = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text']['maxGraphemes']
     else:
       assert False, f'unexpected type {type}'
 

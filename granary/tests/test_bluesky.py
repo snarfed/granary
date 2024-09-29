@@ -22,7 +22,7 @@ from ..bluesky import (
   did_web_to_url,
   from_as1,
   from_as1_to_strong_ref,
-  LEXRPC_BASE,
+  LEXRPC_TRUNCATE,
   MAX_IMAGES,
   NO_AUTHENTICATED_LABEL,
   to_as1,
@@ -476,7 +476,7 @@ THREAD_BSKY['replies'][0]['replies'][0]['post']['record']['reply'].update({
   'parent': {
     '$type': 'com.atproto.repo.strongRef',
     'uri': 'at://did:al:ice/app.bsky.feed.post/tid',
-    'cid': 'sydddddd'
+    'cid': 'sydddddd',
   }
 })
 
@@ -855,7 +855,7 @@ class BlueskyTest(testutil.TestCase):
     # no facet
     self.assert_equals(POST_BSKY, self.from_as1(post_as))
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=15)
   def test_from_as1_post_truncate_adds_link_embed(self):
     self.assert_equals({
@@ -889,7 +889,7 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     })['text'])
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=45)
   def test_from_as1_post_with_images_truncated_puts_original_post_link_in_text(self):
     content = 'hello hello hello hello hello hello hello hello hello'
@@ -915,7 +915,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=51)
   def test_from_as1_post_with_images_video_truncated_original_post_link_in_text(self):
     content = 'lots of text adding up to longer than fifty one characters ok ok'
@@ -943,7 +943,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs=blobs))
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=40)
   def test_from_as1_post_with_images_removes_facets_beyond_truncation(self):
     content = 'hello <a href="http://foo">link</a> goodbye goodbye goodbye goodbye'
@@ -969,7 +969,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=40)
   def test_from_as1_post_with_images_truncates_facet_that_overlaps_truncation(self):
     content = '<a href="http://foo">hello link text</a> goodbye goodbye goodbye goodbye'
@@ -1005,7 +1005,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=15)
   def test_from_as1_post_truncate_fallback_to_id_if_no_url(self):
     self.assert_equals({
@@ -1311,7 +1311,7 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=12)
   def test_from_as1_html_omit_link_facet_after_truncation(self):
     content = 'foo bar <a href="http://post">baaaaaaaz</a>'
@@ -2079,7 +2079,7 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_chat_from_as1_dm_long(self):
-    long = 'X' * LEXRPC_BASE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
+    long = 'X' * LEXRPC_TRUNCATE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
     self.assert_equals({
       '$type': 'chat.bsky.convo.defs#messageInput',
       'text': long,
@@ -2821,6 +2821,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_friends(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
       'feed': [POST_FEED_VIEW_BSKY, REPOST_BSKY_FEED_VIEW_POST],
@@ -2835,6 +2836,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_activity_id(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       'thread': THREAD_BSKY,
     })
@@ -2849,6 +2851,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_self_user_id(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
       'feed': [{'post': POST_AUTHOR_BSKY}],
@@ -2860,6 +2863,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_prefers_did(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       'feed': [],
     })
@@ -2870,6 +2874,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_with_likes(self, mock_get):
+    self.bs._client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -2894,6 +2899,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_with_reposts(self, mock_get):
+    self.bs._client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -2918,6 +2924,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_include_shares(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
       'feed': [POST_FEED_VIEW_BSKY, REPOST_BSKY_FEED_VIEW_POST],
@@ -2930,6 +2937,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_with_replies(self, mock_get):
+    self.bs._client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -2950,6 +2958,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_replies_starter_pack_view_basic(self, mock_get):
+    self.bs._client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -2990,6 +2999,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_replies_not_found_blocked(self, mock_get):
+    self.bs._client._validate = False
     mock_get.side_effect = [
       requests_response({
         # 'cursor': 'timestamp::cid',
@@ -3028,6 +3038,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_activities_skip_unknown_type(self, mock_get):
+    self.bs._client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -3041,6 +3052,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_actor(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       **ACTOR_PROFILE_VIEW_BSKY,
       '$type': 'app.bsky.actor.defs#profileViewDetailed',
@@ -3056,6 +3068,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_actor_default(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       **ACTOR_PROFILE_VIEW_BSKY,
       '$type': 'app.bsky.actor.defs#profileViewDetailed',
@@ -3071,6 +3084,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.get')
   def test_get_comment(self, mock_get):
+    self.bs._client._validate = False
     mock_get.return_value = requests_response({
       'thread': THREAD_BSKY,
     })
@@ -3094,8 +3108,9 @@ class BlueskyTest(testutil.TestCase):
       with self.subTest(input=input):
         self.assertEqual(expected, self.bs.post_id(input))
 
-  @patch.dict(LEXRPC_BASE.defs['app.bsky.feed.post']['record']['properties']['text'],
-              maxGraphemes=20)
+  @patch.dict(
+    LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+    maxGraphemes=20)
   def test_preview_post(self):
     for content, expected in (
         ('foo ☕ bar', 'foo ☕ bar'),
