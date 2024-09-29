@@ -1680,6 +1680,26 @@ class BlueskyTest(testutil.TestCase):
       'displayName': 'My big article',
     }, as_embed=True))
 
+  def test_from_as1_note_as_embed_no_display_name_blank_title(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://my/article',
+          'title': '',
+          'description': 'My big article',
+        },
+      },
+    }, from_as1({
+      'objectType': 'note',
+      'url': 'http://my/article',
+      'content': 'My big article',
+    }, as_embed=True))
+
   def test_from_as1_repost(self):
     self.assert_equals(REPOST_BSKY_NO_CIDS, self.from_as1(REPOST_AS))
 
