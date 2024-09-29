@@ -1766,6 +1766,10 @@ class BlueskyTest(testutil.TestCase):
       **POST_BSKY,
       'reply': {
         '$type': 'app.bsky.feed.post#replyRef',
+        'parent': {
+          'uri': 'at://did:bo:b/app.bsky.feed.post/root-tid',
+          'cid': 'my+root+syd',
+        },
         'root': {
           'uri': 'at://did:bo:b/app.bsky.feed.post/root-tid',
           'cid': 'my+root+syd',
