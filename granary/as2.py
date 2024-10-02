@@ -78,6 +78,8 @@ TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 ACTOR_TYPES = {as2_type for as1_type, as2_type in OBJECT_TYPE_TO_TYPE.items()
                if as1_type in as1.ACTOR_TYPES}
+# https://www.w3.org/TR/activitystreams-vocabulary/#object-types
+URL_TYPES = ['Article', 'Audio', 'Image', 'Mention', 'Video']
 
 VERB_TO_TYPE = {
   'accept': 'Accept',
@@ -154,7 +156,10 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if not obj:
     return {}
   elif isinstance(obj, str):
-    return obj
+    if type in URL_TYPES:
+      obj = {'type': type, 'url': obj}
+    else:
+      return obj
   elif not isinstance(obj, dict):
     raise ValueError(f'Expected dict, got {obj!r}')
 

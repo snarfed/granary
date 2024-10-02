@@ -64,7 +64,10 @@ class ActivityStreams2Test(testutil.TestCase):
     })['icon'])
 
   def test_from_as1_icon_prefers_mastodon_allowed_extension(self):
-    self.assertEqual('/pic.jpg', as2.from_as1({
+    self.assertEqual({
+      'type': 'Image',
+      'url': '/pic.jpg',
+    }, as2.from_as1({
       'objectType': 'person',
       'image': [
         '/pic.ico',
@@ -88,7 +91,10 @@ class ActivityStreams2Test(testutil.TestCase):
     })['icon'])
 
   def test_from_as1_icon_non_person(self):
-    self.assertEqual('/pic.jpg', as2.from_as1({
+    self.assertEqual({
+      'type': 'Image',
+      'url': '/pic.jpg',
+    }, as2.from_as1({
       'objectType': 'application',
       'image': '/pic.jpg',
     })['icon'])
@@ -131,6 +137,19 @@ class ActivityStreams2Test(testutil.TestCase):
       ],
       'content': 'Please take a look at this user and their posts',
       'to': 'http://bob',
+    }))
+
+  def test_from_as1_image(self):
+    self.assertEqual({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Note',
+      'image': {
+        'type': 'Image',
+        'url': 'http://pic/ture.jpg',
+      },
+    }, as2.from_as1({
+      'objectType': 'note',
+      'image': 'http://pic/ture.jpg',
     }))
 
   def test_from_as1_link_attachment(self):

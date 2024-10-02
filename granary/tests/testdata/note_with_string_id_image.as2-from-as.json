@@ -1,0 +1,11 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Note",
+  "image": [{
+    "type": "Image",
+    "url": "https://example.com/pic1.jpg"
+  }, {
+    "type": "Image",
+    "url": "https://example.com/pic2.jpg"
+  }]
+}
