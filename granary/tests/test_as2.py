@@ -505,17 +505,6 @@ class ActivityStreams2Test(testutil.TestCase):
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
   def test_to_as1_flag(self):
     self.assertEqual({
-      '@context': 'https://www.w3.org/ns/activitystreams',
-      'type': 'Flag',
-      'id': 'http://flag',
-      'actor': 'http://alice',
-      'object': [
-        'http://bob',
-        'http://post',
-      ],
-      'content': 'Please take a look at this user and their posts',
-      'to': ['http://bob'],
-    }, as2.from_as1({
       'objectType': 'activity',
       'verb': 'flag',
       'id': 'http://flag',
@@ -526,7 +515,18 @@ class ActivityStreams2Test(testutil.TestCase):
       ],
       'content': 'Please take a look at this user and their posts',
       # note that this is the user being reported
-      'to': 'http://bob',
+      'to': [{'id': 'http://bob'}],
+    }, as2.to_as1({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'type': 'Flag',
+      'id': 'http://flag',
+      'actor': 'http://alice',
+      'object': [
+        'http://bob',
+        'http://post',
+      ],
+      'content': 'Please take a look at this user and their posts',
+      'to': ['http://bob'],
     }))
 
   def test_to_as1_update_string_object(self):
