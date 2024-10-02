@@ -157,7 +157,7 @@ LEXRPC_TRUNCATE = Base(truncate=True, validate=False)
 
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
 # <a href="http://post">ba](r</a> turns into [ba](r](http://post)
-MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ )]*)( ".*")?\)')
+MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ )]*)( "[^"]*")?\)')
 
 ELLIPSIS = ' […]'
 
@@ -717,7 +717,9 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         # https://github.com/snarfed/granary/issues/729
         while link := MARKDOWN_LINK_RE.search(content):
           start, end = link.span()
-          if not link['text'].startswith(('@', '#')):
+          # our regexp isn't perfect, so skip links that we can't extract a
+          # clean URL from
+          if util.is_web(link['url']) and not link['text'].startswith(('@', '#')):
             link_tags.append({
               'objectType': 'link',
               'displayName': link['text'],

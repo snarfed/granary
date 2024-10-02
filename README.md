@@ -309,6 +309,7 @@ Changelog
     * Omit images that aren't in `blobs`.
     * Bug fix for quote posts with text content that's longer than Bluesky's limit ([snarfed/bridgy-fed#1197](https://github.com/snarfed/bridgy-fed/issues/1197)).
     * When a `flag` has multiple objects, use the first one that's an ATProto record.
+    * Handle URLs more carefully, don't add link facets with invalid `uri`s.
     * Bug fix: handle HTML links with `title` in `content` correctly.
   * `to_as1`:
     * Extract links from `app.bsky.actor.profile#description` into `url`/`urls` fields

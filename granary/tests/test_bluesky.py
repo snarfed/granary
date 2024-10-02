@@ -1311,6 +1311,20 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
+  def test_from_as1_html_markdown_link(self):
+    # too complicated for our markdown link regexp, should give up and skip it
+    content = 'foo [http://bar](<a href="http://post">baz</a>) biff'
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      # not great, but tolerable
+      'text': 'foo http://bar) biff',
+      'fooOriginalText': content,
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': content,
+    }))
+
   @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=12)
   def test_from_as1_html_omit_link_facet_after_truncation(self):
