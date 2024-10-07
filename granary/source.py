@@ -96,6 +96,7 @@ def html_to_text(html, baseurl='', **kwargs):
   h.unicode_snob = True
   h.body_width = 0  # don't wrap lines
   h.ignore_links = True
+  h.use_automatic_links = False
   h.ignore_images = True
   for key, val in kwargs.items():
     setattr(h, key, val)

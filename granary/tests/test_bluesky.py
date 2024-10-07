@@ -1311,6 +1311,29 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
+  def test_from_as1_html_link_with_url_as_text(self):
+    content = 'foo <a href="http://post">http://post</a> baz'
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo http://post baz',
+      'fooOriginalText': content,
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://post',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 15,
+        },
+      }],
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': content,
+    }))
+
   def test_from_as1_html_markdown_link(self):
     # too complicated for our markdown link regexp, should give up and skip it
     content = 'foo [http://bar](<a href="http://post">baz</a>) biff'
