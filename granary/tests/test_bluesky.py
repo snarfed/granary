@@ -1348,6 +1348,29 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
+  def test_from_as1_html_link_url_with_parens(self):
+    content = 'spooky <a href="http://foo/bar+(Main+Title).mp3">http://foo/bar+(Main+Title).mp3</a>'
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'spooky http://foo/bar+(Main+Title).mp3',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://foo/bar+(Main+Title).mp3',
+        }],
+        'index': {
+          'byteStart': 7,
+          'byteEnd': 38,
+        },
+      }],
+      'fooOriginalText': content,
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': content,
+    }))
+
   @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=12)
   def test_from_as1_html_omit_link_facet_after_truncation(self):

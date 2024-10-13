@@ -157,7 +157,7 @@ LEXRPC_TRUNCATE = Base(truncate=True, validate=False)
 
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
 # <a href="http://post">ba](r</a> turns into [ba](r](http://post)
-MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ )]*)( "[^"]*")?\)')
+MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ ]*?)( "[^"]*?")?(?<!\\)\)')
 
 ELLIPSIS = ' […]'
 
@@ -723,7 +723,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
             link_tags.append({
               'objectType': 'link',
               'displayName': link['text'],
-              'url': link['url'],
+              'url': link['url'].replace(r'\(', '(').replace(r'\)', ')'),
               'startIndex': start,
               'length': len(link['text']),
             })

@@ -290,7 +290,7 @@ Changelog
   * Add new `is_server_actor` function ([FEP-d556](https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md), [discussion](https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861)).
   * `from_as1`:
     * Always convert images to objects with `type: Image`, never to bare string URLs ([bridgy-fed#/1000](https://github.com/snarfed/bridgy-fed/issues/1000)).
-    * Bug fix for converting links to facets when the link text is the link URL.
+    * Bug fixes for converting links to facets when the link text is the link URL.
   * `to_as1`:
     * Handle other types of tags better, eg non-standard `Hashtag` and inner `tag` field for name.
     * Bug fix for videos, `mimeType` goes in outer object, not in `stream`.
