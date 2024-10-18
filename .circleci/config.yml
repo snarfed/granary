@@ -37,6 +37,7 @@ jobs:
           name: Run tests
           no_output_timeout: 30m
           command: |
+            source local/bin/activate
             python3 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/tests/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
             # disabled for now, fails much of the time due to IG blocking us
             # PYTHONPATH= python3 ./instagram_live_test.py --debug
