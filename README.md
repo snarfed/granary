@@ -314,6 +314,7 @@ Changelog
     * When a `flag` has multiple objects, use the first one that's an ATProto record.
     * Handle URLs more carefully, don't add link facets with invalid `uri`s.
     * Bug fix: handle HTML links with `title` in `content` correctly.
+    * Bug fix: handle attachments with no `id` or `url`.
   * `to_as1`:
     * Extract links from `app.bsky.actor.profile#description` into `url`/`urls` fields
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.

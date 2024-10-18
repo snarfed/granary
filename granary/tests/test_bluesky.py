@@ -1720,6 +1720,21 @@ class BlueskyTest(testutil.TestCase):
       'image': NEW_BLOB_URL,
     }, blobs={NEW_BLOB_URL: BLOB}))
 
+  def test_from_as1_attachment_without_url_isnt_embed(self):
+    self.assertEqual({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo bar',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'article',
+      'displayName': 'An article',
+      'content': 'foo bar',
+      'attachments': [{
+        'objectType': 'note',
+        'content': 'a citation? or footnote? ...'
+      }],
+    }))
+
   def test_from_as1_note_display_name_as_embed(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

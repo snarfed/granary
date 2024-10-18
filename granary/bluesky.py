@@ -749,12 +749,13 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     record_embed = record_record_embed = external_embed = external_record_embed = None
 
     for att in attachments:
-      if not att.get('objectType') in ('article', 'link', 'note'):
+      att_id = att.get('id') or ''
+      att_url = as1.get_url(att) or ''
+      if not (att.get('objectType') in ('article', 'link', 'note')
+              and (att_url or att_id)):
         continue
 
-      id = att.get('id') or ''
-      att_url = att.get('url') or ''
-      if (id.startswith('at://') or id.startswith(Bluesky.BASE_URL) or
+      if (att_id.startswith('at://') or att_id.startswith(Bluesky.BASE_URL) or
           att_url.startswith('at://') or att_url.startswith(Bluesky.BASE_URL)):
         # quoted Bluesky post
         embed = from_as1(att, **kwargs).get('post') or {}
@@ -995,7 +996,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       'labels': labels,
     }
 
-    if as_embed or type == 'article':
+    if as_embed or (type == 'article' and url):
       # render articles with just an external link embed, no text
       ret.update({
         'text': '',
