@@ -26,8 +26,8 @@ jobs:
             apt-get -y install virtualenv
             virtualenv local
             source local/bin/activate
-            pip -V
             pip install -U pip flake8
+            pip -V
             # make sure we install this at head, below
             pip uninstall -y oauth-dropins
             pip install -U -r requirements.txt
@@ -47,7 +47,7 @@ jobs:
             # check for unintentionally overridden test methods
             # https://flake8.pycqa.org/en/latest/user/error-codes.html#error-codes
             # https://flake8.pycqa.org/en/latest/user/options.html#cmdoption-flake8-select
-            flake8 --select=F811 granary/tests/test_*.py
+            python3 -m flake8 --select=F811 granary/tests/test_*.py
 
       # # TODO: this is continuous deploy. find a way to get all of the API keys
       # # into circle - env var? - then re-enable this.
