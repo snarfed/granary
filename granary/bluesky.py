@@ -977,6 +977,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     # convert AS1 sensitive to "nudity" label
     # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
     # https://swicg.github.io/miscellany/#sensitive
+    # https://docs.joinmastodon.org/user/posting/#cw
 
     labels = None
     if obj.get('sensitive'):

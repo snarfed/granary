@@ -4,6 +4,7 @@
   "attachments": [{
     "objectType": "article",
     "content": "this is being attached",
+    "displayName": "an att",
     "url": "http://att/post"
   }]
 }

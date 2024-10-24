@@ -50,7 +50,7 @@ PUBLICS = frozenset((
 def _invert(d):
   return {v: k for k, v in d.items()}
 
-# https://www.w3.org/TR/activitystreams-core/#actors
+# https://www.w3.org/TR/activitystreams-vocabulary/#object-types
 OBJECT_TYPE_TO_TYPE = {
   'application': 'Application',
   'article': 'Article',

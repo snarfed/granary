@@ -7,6 +7,7 @@
     "type": ["h-cite"],
     "properties": {
       "content": ["this is being attached"],
+      "name": ["an att"],
       "url": ["http://att/post"]
     }
   }]

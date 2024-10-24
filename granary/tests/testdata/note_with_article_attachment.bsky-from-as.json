@@ -1,0 +1,15 @@
+{
+  "$type": "app.bsky.feed.post",
+  "text": "i hereby attach an article",
+  "fooOriginalText": "i hereby attach an article",
+  "createdAt": "2022-01-02T03:04:05.000Z",
+  "embed": {
+    "$type": "app.bsky.embed.external",
+    "external": {
+      "$type": "app.bsky.embed.external#external",
+      "description": "this is being attached",
+      "title": "an att",
+      "uri": "http://att/post"
+    }
+  }
+}
