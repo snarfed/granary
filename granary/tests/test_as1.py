@@ -290,6 +290,10 @@ class As1Test(testutil.TestCase):
     self.assertEqual('http://bob', as1.recipient_if_dm(reply, actor))
     self.assertTrue('http://bob', as1.is_dm(reply, actor))
 
+    reply['objectType'] = 'comment'
+    self.assertEqual('http://bob', as1.recipient_if_dm(reply, actor))
+    self.assertTrue('http://bob', as1.is_dm(reply, actor))
+
     create = {
       'objectType': 'activity',
       'verb': 'post',

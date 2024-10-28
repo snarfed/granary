@@ -280,7 +280,7 @@ def recipient_if_dm(obj, actor=None):
   if object_type(obj) == 'post':
     obj = get_object(obj)
 
-  if not obj or object_type(obj) not in (None, 'note'):
+  if not obj or object_type(obj) not in (None, 'note', 'comment'):
     return None
 
   tos = util.get_list(obj, 'to')
