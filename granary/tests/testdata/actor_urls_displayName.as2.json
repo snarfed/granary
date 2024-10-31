@@ -2,6 +2,9 @@
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     {
+      "discoverable": "http://joinmastodon.org/ns#discoverable",
+      "indexable": "http://joinmastodon.org/ns#indexable"
+    }, {
       "schema": "http://schema.org#",
       "PropertyValue": "schema:PropertyValue"
     }
@@ -12,6 +15,8 @@
     "https://example.com/martin",
     "http://other/link"
   ],
+  "discoverable": true,
+  "indexable": true,
   "attachment": [{
     "type": "PropertyValue",
     "name": "super cool",

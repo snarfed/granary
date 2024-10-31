@@ -22,17 +22,17 @@ class ActivityStreams2Test(testutil.TestCase):
   def test_from_as1_context(self):
     self.assertEqual({
       'id': 'foo',
-      '@context': 'bar',
+      '@context': ['bar'],
     }, as2.from_as1({'id': 'foo'}, context='bar'))
 
   def test_from_as1_stop_following_object_str(self):
     self.assertEqual({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Undo',
       'id': 'unfollow',
       'actor': 'alice',
       'object': {
-        '@context': 'https://www.w3.org/ns/activitystreams',
+        '@context': ['https://www.w3.org/ns/activitystreams'],
         'type': 'Follow',
         'actor': 'alice',
         'object': 'bob',
@@ -101,7 +101,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_block(self):
     self.assertEqual({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Block',
       'actor': 'http://alice',
       'object': 'http://bob',
@@ -115,7 +115,7 @@ class ActivityStreams2Test(testutil.TestCase):
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
   def test_from_as1_flag(self):
     self.assertEqual({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Flag',
       'id': 'http://flag',
       'actor': 'http://alice',
@@ -141,7 +141,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_image(self):
     self.assertEqual({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Note',
       'image': {
         'type': 'Image',
@@ -154,7 +154,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_link_attachment(self):
     self.assertEqual({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Note',
       'attachment': [{
         'type': 'Link',
@@ -192,7 +192,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_preserve_contentMap(self):
     as2_note = {
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Note',
       'content': 'foo',
       'contentMap': {'es': 'fooey', 'fr': 'fooeh'},
@@ -223,7 +223,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def _test_to_as1_in_reply_to(self, in_reply_to):
     as1 = as2.to_as1({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Note',
       'content': 'foo bar baz',
       'inReplyTo': in_reply_to,
@@ -245,7 +245,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'url': 'http://pic/ture.jpg',
       }]
     }, as2.to_as1({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Note',
       'attachment': [{
         'type': 'Document',
@@ -262,7 +262,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'url': 'http://pic/ture.jpg',
       }]
     }, as2.to_as1({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Note',
       'attachment': [{
         'mediaType': None,
@@ -376,7 +376,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'position': '+38.300400-076.507450/',
       },
     }, as2.to_as1({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Note',
       'location': {
         'type': 'Place',
@@ -389,7 +389,7 @@ class ActivityStreams2Test(testutil.TestCase):
   def test_lat_lon_not_float(self):
     with self.assertRaises(ValueError):
       as2.to_as1({
-        '@context': 'https://www.w3.org/ns/activitystreams',
+        '@context': ['https://www.w3.org/ns/activitystreams'],
         'type': 'Note',
         'location': {
           'type': 'Place',
@@ -444,11 +444,16 @@ class ActivityStreams2Test(testutil.TestCase):
         {
           'schema': 'http://schema.org#',
           'PropertyValue': 'schema:PropertyValue'
+        }, {
+          'discoverable': 'http://joinmastodon.org/ns#discoverable',
+          'indexable': 'http://joinmastodon.org/ns#indexable',
         },
       ],
       'type': 'Person',
       'id': 'tag:example.com,2011:martin',
       'url': 'https://example.com/',
+      'discoverable': True,
+      'indexable': True,
       'attachment': [{
         'type': 'PropertyValue',
         'name': 'Link',
@@ -536,7 +541,7 @@ class ActivityStreams2Test(testutil.TestCase):
       # note that this is the user being reported
       'to': [{'id': 'http://bob'}],
     }, as2.to_as1({
-      '@context': 'https://www.w3.org/ns/activitystreams',
+      '@context': ['https://www.w3.org/ns/activitystreams'],
       'type': 'Flag',
       'id': 'http://flag',
       'actor': 'http://alice',

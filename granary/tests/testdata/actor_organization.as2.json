@@ -1,5 +1,13 @@
 {
-  "@context": "https://www.w3.org/ns/activitystreams",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "discoverable": "http://joinmastodon.org/ns#discoverable",
+      "indexable": "http://joinmastodon.org/ns#indexable"
+    }
+  ],
   "type" : "Organization",
-  "name": "Foo Foundation"
+  "name": "Foo Foundation",
+  "discoverable": true,
+  "indexable": true
 }

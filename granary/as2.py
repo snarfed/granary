@@ -36,6 +36,16 @@ CONTEXT = 'https://www.w3.org/ns/activitystreams'
 MISSKEY_QUOTE_CONTEXT = {'_misskey_quote': 'https://misskey-hub.net/ns#_misskey_quote'}
 # https://swicg.github.io/miscellany/#sensitive
 SENSITIVE_CONTEXT = {'sensitive': 'as:sensitive'}
+PROPERTY_VALUE_CONTEXT = {
+  'schema': 'http://schema.org#',
+  'PropertyValue': 'schema:PropertyValue'
+}
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level
+# https://docs.joinmastodon.org/spec/activitypub/#discoverable
+DISCOVERABLE_INDEXABLE_CONTEXT = {
+  'discoverable': 'http://joinmastodon.org/ns#discoverable',
+  'indexable': 'http://joinmastodon.org/ns#indexable',
+}
 
 PUBLIC_AUDIENCE = 'https://www.w3.org/ns/activitystreams#Public'
 # All known Public values, cargo culted from:
@@ -171,8 +181,12 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
           VERB_TO_TYPE.get(verb or obj_type) or
           type)
 
+  obj['@context'] = []
   if context:
-    obj['@context'] = context
+    if not isinstance(context, (tuple, set, list)):
+      context = [context]
+    for elem in context:
+      util.add(obj['@context'], elem)
 
   def all_from_as1(field, type=None, top_level=False, compact=False):
     got = [from_as1(elem, type=type, context=None, top_level=top_level)
@@ -225,12 +239,12 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       if not quotes:
         # first quote, add it to top level object
         obj.update({
-          '@context': util.get_list(obj, '@context') + [MISSKEY_QUOTE_CONTEXT],
           # https://misskey-hub.net/ns#_misskey_quote
           '_misskey_quote': href,
           # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
           'quoteUrl': href,
         })
+        util.add(obj['@context'], MISSKEY_QUOTE_CONTEXT)
         content = obj.setdefault('content', '')
         if not QUOTE_RE_SUFFIX.search(html_to_text(content)):
           if content:
@@ -248,15 +262,22 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
 
   tags.extend(quotes)
 
-  # Mastodon profile metadata fields into attachments
-  # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
-  # https://github.com/snarfed/bridgy-fed/issues/323
-  #
-  # Note that the *anchor text* in the HTML in value, not just the href, must
-  # contain the full URL! Mastodon requires that for profile link verification,
-  # so that the visible URL people see matches the actual link.
-  # https://github.com/snarfed/bridgy-fed/issues/560
   if obj_type in as1.ACTOR_TYPES and top_level:
+    # default discoverable and indexable on for actors
+    # https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level
+    # https://docs.joinmastodon.org/spec/activitypub/#discoverable
+    obj.setdefault('discoverable', True)
+    obj.setdefault('indexable', True)
+    util.add(obj['@context'], DISCOVERABLE_INDEXABLE_CONTEXT)
+
+    # Mastodon profile metadata fields into attachments
+    # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
+    # https://github.com/snarfed/bridgy-fed/issues/323
+    #
+    # Note that the *anchor text* in the HTML in value, not just the href, must
+    # contain the full URL! Mastodon requires that for profile link verification,
+    # so that the visible URL people see matches the actual link.
+    # https://github.com/snarfed/bridgy-fed/issues/560
     links = {}
     for link in as1.get_objects(obj, 'url') + as1.get_objects(obj, 'urls'):
       url = link.get('value') or link.get('id')
@@ -272,16 +293,10 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
           'name': name or 'Link',
           'value': f'<a rel="me" href="{url}"><span class="invisible">{scheme}</span>{visible}</a>',
         }
-
-        pv_context = {
-          'schema': 'http://schema.org#',
-          'PropertyValue': 'schema:PropertyValue'
-        }
-        context = util.get_list(obj, '@context')
-        if context and pv_context not in context:
-          obj['@context'] = context + [pv_context]
+        util.add(obj['@context'], PROPERTY_VALUE_CONTEXT)
 
     attachments.extend(links.values())
+
 
   # urls
   urls = as1.object_urls(obj)
@@ -388,7 +403,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   # sensitive
   # https://swicg.github.io/miscellany/#sensitive
   if 'sensitive' in obj:
-    obj['@context'] = util.get_list(obj, '@context') + [SENSITIVE_CONTEXT]
+    util.add(obj['@context'], SENSITIVE_CONTEXT)
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:
@@ -419,7 +434,8 @@ def to_as1(obj, use_type=True):
     raise ValueError(f'Expected dict, got {obj!r}')
 
   obj = copy.deepcopy(obj)
-  obj.pop('@context', None)
+  for field in '@context', 'discoverable', 'indexable':
+    obj.pop(field, None)
 
   # type to objectType + verb
   type = obj.pop('type', None)

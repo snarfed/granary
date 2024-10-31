@@ -1,5 +1,5 @@
 {
-  "@context": "https://www.w3.org/ns/activitystreams",
+  "@context": ["https://www.w3.org/ns/activitystreams"],
   "type": "Note",
   "id": "tag:example.com,2011:blog-post-123",
   "summary": "too cool to summarize",

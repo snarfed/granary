@@ -1,5 +1,5 @@
 {
-  "@context": "https://www.w3.org/ns/activitystreams",
+  "@context": ["https://www.w3.org/ns/activitystreams"],
   "type": "Invite",
   "url": "http://example.com/this/invite",
   "actor": {
@@ -8,9 +8,20 @@
     "url": "http://example.com/host"
   },
   "object": {
+    "@context": [
+      {
+        "discoverable": "http://joinmastodon.org/ns#discoverable",
+        "indexable": "http://joinmastodon.org/ns#indexable"
+      }, {
+        "schema": "http://schema.org#",
+        "PropertyValue": "schema:PropertyValue"
+      }
+    ],
     "type": "Person",
     "name": "Alice",
     "url": "http://example.com/alice",
+    "discoverable": true,
+    "indexable": true,
     "attachment": [{
       "type": "PropertyValue",
       "name": "Link",

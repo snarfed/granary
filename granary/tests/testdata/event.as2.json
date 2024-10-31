@@ -1,5 +1,5 @@
 {
-  "@context": "https://www.w3.org/ns/activitystreams",
+  "@context": ["https://www.w3.org/ns/activitystreams"],
   "type": "Event",
   "id": "tag:example.com,2011:event-xyz",
   "url": "http://example.com/event-xyz",

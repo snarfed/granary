@@ -2,6 +2,9 @@
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     {
+      "discoverable": "http://joinmastodon.org/ns#discoverable",
+      "indexable": "http://joinmastodon.org/ns#indexable"
+    }, {
       "schema": "http://schema.org#",
       "PropertyValue": "schema:PropertyValue"
     }
@@ -16,6 +19,8 @@
   ],
   "name": "Martin Smith",
   "preferredUsername": "martin",
+  "discoverable": true,
+  "indexable": true,
   "attachment": [
     {
       "type": "PropertyValue",

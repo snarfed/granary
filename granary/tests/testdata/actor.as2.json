@@ -2,6 +2,9 @@
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     {
+      "discoverable": "http://joinmastodon.org/ns#discoverable",
+      "indexable": "http://joinmastodon.org/ns#indexable"
+    }, {
       "schema": "http://schema.org#",
       "PropertyValue": "schema:PropertyValue"
     }
@@ -14,6 +17,8 @@
   "image": {"type": "Image", "url": "http://example.com/martin/image"},
   "preferredUsername": "yoozer",
   "summary": "this is my bio",
+  "discoverable": true,
+  "indexable": true,
   "attachment": [
     {
       "type": "PropertyValue",

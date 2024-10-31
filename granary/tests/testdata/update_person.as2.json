@@ -1,10 +1,21 @@
 {
-  "@context": "https://www.w3.org/ns/activitystreams",
+  "@context": ["https://www.w3.org/ns/activitystreams"],
   "type": "Update",
   "actor": "https://example.com/martin",
   "object": {
+    "@context": [
+      {
+        "discoverable": "http://joinmastodon.org/ns#discoverable",
+        "indexable": "http://joinmastodon.org/ns#indexable"
+      }, {
+        "schema": "http://schema.org#",
+        "PropertyValue": "schema:PropertyValue"
+      }
+    ],
     "type": "Person",
     "url": "https://example.com/martin",
+    "discoverable": true,
+    "indexable": true,
     "attachment": [
       {
         "type": "PropertyValue",
