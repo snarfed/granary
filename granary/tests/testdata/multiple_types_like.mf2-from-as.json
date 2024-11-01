@@ -1,0 +1,9 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "like-of": ["http://orig/post"],
+    "content": [{
+      "html": "<a href=\"http://orig/post\">likes this.</a>"
+    }]
+  }
+}

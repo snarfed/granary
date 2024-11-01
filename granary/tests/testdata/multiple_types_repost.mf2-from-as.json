@@ -1,0 +1,9 @@
+{
+  "type": ["h-entry"],
+  "properties": {
+    "repost-of": ["http://orig/post"],
+    "content": [{
+      "html": "<a href=\"http://orig/post\">shared this.</a>"
+    }]
+  }
+}

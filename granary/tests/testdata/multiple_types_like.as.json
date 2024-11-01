@@ -1,0 +1,6 @@
+{
+  "objectType": "activity",
+  "verb": "like",
+  "inReplyTo": "http://ignore/this",
+  "object": "http://orig/post"
+}

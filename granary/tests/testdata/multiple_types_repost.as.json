@@ -1,0 +1,6 @@
+{
+  "objectType": "activity",
+  "verb": "share",
+  "inReplyTo": "http://ignore/this",
+  "object": "http://orig/post"
+}

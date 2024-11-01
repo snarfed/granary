@@ -387,6 +387,12 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
         (o.get('url') or o.get('id')) if o.keys() <= set(['id', 'url', 'objectType'])
         else object_to_json(o, trim_nulls=False, entry_class='h-cite')
         for o in objs]
+
+      # remove properties that aren't appropriate for this type and may confuse
+      # mf2 consumers
+      # https://github.com/snarfed/bridgy-fed/issues/941
+      ret['properties']['in-reply-to'] = None
+
     else:
       # received likes and reposts
       ret['properties'][prop] = [
