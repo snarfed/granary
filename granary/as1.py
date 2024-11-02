@@ -198,6 +198,18 @@ def get_ids(obj, field):
   return sorted(ids)
 
 
+def get_id(obj, field):
+  """Extracts and returns a given field's id value.
+
+  Args:
+    obj (dict): decoded JSON ActivityStreams object
+    field (str)
+
+  Returns a string value as is. For dict values, returns its inner ``id``.
+  """
+  return get_object(obj, field).get('id')
+
+
 def merge_by_id(obj, field, new):
   """Merges new items by id into a field in an existing AS1 object, in place.
 

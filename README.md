@@ -284,7 +284,7 @@ Changelog
 ### 7.1 - unreleased
 
 * `as1`:
-  * Add new `is_dm`, `recipient_if_dm`, and `is_audience` functions.
+  * Add new `is_dm`, `recipient_if_dm`, `get_id`, and `is_audience` functions.
 * `as2`:
   * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive), [`indexable`](https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level), and [`discoverable`](https://docs.joinmastodon.org/spec/activitypub/#discoverable) support.
   * Add new `is_server_actor` function ([FEP-d556](https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md), [discussion](https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861)).
