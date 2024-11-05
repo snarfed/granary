@@ -1718,34 +1718,34 @@ class TwitterTest(testutil.TestCase):
       }
     self.assertEqual(None, self.twitter.streaming_event_to_object(follow))
 
-  def test_user_to_actor_full(self):
-    self.assert_equals(ACTOR, self.twitter.user_to_actor(USER))
+  def test_to_as1_actor_full(self):
+    self.assert_equals(ACTOR, self.twitter.to_as1_actor(USER))
 
-  def test_user_to_actor_url_fallback(self):
+  def test_to_as1_actor_url_fallback(self):
     user = copy.deepcopy(USER)
     del user['entities']
     actor = copy.deepcopy(ACTOR)
     del actor['urls']
     actor['url'] = 'https://twitter.com/snarfed_org'
-    self.assert_equals(actor, self.twitter.user_to_actor(user))
+    self.assert_equals(actor, self.twitter.to_as1_actor(user))
 
-  def test_user_to_actor_displayName_fallback(self):
+  def test_to_as1_actor_displayName_fallback(self):
     self.assert_equals({
       'objectType': 'person',
       'id': tag_uri('schnarfed'),
       'username': 'schnarfed',
       'displayName': 'schnarfed',
       'url': 'https://twitter.com/schnarfed',
-    }, self.twitter.user_to_actor({
+    }, self.twitter.to_as1_actor({
       'screen_name': 'schnarfed',
     }))
 
-  def test_user_to_actor_minimal(self):
+  def test_to_as1_actor_minimal(self):
     # just test that we don't crash
-    self.twitter.user_to_actor({'screen_name': 'snarfed_org'})
+    self.twitter.to_as1_actor({'screen_name': 'snarfed_org'})
 
-  def test_user_to_actor_empty(self):
-    self.assert_equals({}, self.twitter.user_to_actor({}))
+  def test_to_as1_actor_empty(self):
+    self.assert_equals({}, self.twitter.to_as1_actor({}))
 
   def test_oauth(self):
     def check_headers(headers):

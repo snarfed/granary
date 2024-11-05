@@ -233,7 +233,7 @@ class Facebook(source.Source):
     """
     if user_id is None:
       user_id = 'me'
-    return self.user_to_actor(self.urlopen(user_id))
+    return self.to_as1_actor(self.urlopen(user_id))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -958,7 +958,7 @@ class Facebook(source.Source):
       if util.is_int(base_id):
         base_obj['numeric_id'] = base_id
       elif resolve_numeric_id:
-        base_obj = self.user_to_actor(self.urlopen(base_id))
+        base_obj = self.to_as1_actor(self.urlopen(base_id))
 
     try:
       parsed = urllib.parse.urlparse(url)
@@ -981,11 +981,11 @@ class Facebook(source.Source):
         if not base_id:
           base_id = base_obj['id'] = path_parts[0]
         # this is a gross hack - adding the FB username field to an AS object
-        # and then re-running user_to_actor - but it's an easy/reusable way to
+        # and then re-running to_as1_actor - but it's an easy/reusable way to
         # populate image, displayName, etc.
         if not base_obj.get('username') and not util.is_int(base_id):
           base_obj['username'] = base_id
-        base_obj.update({k: v for k, v in self.user_to_actor(base_obj).items()
+        base_obj.update({k: v for k, v in self.to_as1_actor(base_obj).items()
                          if k not in base_obj})
 
       elif len(path_parts) >= 3 and path_parts[1] == 'posts':
@@ -1106,7 +1106,7 @@ class Facebook(source.Source):
         display_name = obj.get('title')
 
     object_type = OBJECT_TYPES.get(status_type) or OBJECT_TYPES.get(post_type)
-    author = self.user_to_actor(post.get('from'))
+    author = self.to_as1_actor(post.get('from'))
     link = post.get('link', '')
     gift = link.startswith('/gifts/')
 
@@ -1170,7 +1170,7 @@ class Facebook(source.Source):
       'objectType': 'activity',
       'verb': 'like',
       'object': {'url': url},
-      'author': self.user_to_actor(like),
+      'author': self.to_as1_actor(like),
     }) for like in self._as(list, post.get('likes', {}))]
 
     for reaction in self._as(list, post.get('reactions', {})):
@@ -1186,7 +1186,7 @@ class Facebook(source.Source):
           'verb': 'react',
           'content': content,
           'object': {'url': url},
-          'author': self.user_to_actor(reaction),
+          'author': self.to_as1_actor(reaction),
         }))
 
     # Escape HTML characters: <, >, &. Have to do it manually, instead of
@@ -1349,7 +1349,7 @@ class Facebook(source.Source):
 
     return self.postprocess_object(obj)
 
-  def user_to_actor(self, user):
+  def to_as1_actor(self, user):
     """Converts a user or page to an actor.
 
     Args:
@@ -1403,6 +1403,9 @@ class Facebook(source.Source):
 
     return util.trim_nulls(actor)
 
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
+
   def event_to_object(self, event, rsvps=None):
     """Converts an event to an object.
 
@@ -1417,7 +1420,7 @@ class Facebook(source.Source):
     obj.update({
       'displayName': event.get('name'),
       'objectType': 'event',
-      'author': self.user_to_actor(event.get('owner')),
+      'author': self.to_as1_actor(event.get('owner')),
       'startTime': event.get('start_time'),
       'endTime': event.get('end_time'),
     })
@@ -1474,14 +1477,14 @@ class Facebook(source.Source):
       'verb': verb,
     }
     if verb == 'invite':
-      invitee = self.user_to_actor(rsvp)
+      invitee = self.to_as1_actor(rsvp)
       invitee['objectType'] = 'person'
       obj.update({
         'object': invitee,
-        'actor': self.user_to_actor(event.get('owner')) if event else None,
+        'actor': self.to_as1_actor(event.get('owner')) if event else None,
       })
     else:
-      obj['actor'] = self.user_to_actor(rsvp)
+      obj['actor'] = self.to_as1_actor(rsvp)
 
     if event:
       user_id = rsvp.get('id')
@@ -1510,7 +1513,7 @@ class Facebook(source.Source):
       'fb_id': id,
       'url': album.get('link'),
       'objectType': 'collection',
-      'author': self.user_to_actor(album.get('from')),
+      'author': self.to_as1_actor(album.get('from')),
       'displayName': album.get('name'),
       'totalItems': album.get('count'),
       'to': self.privacy_to_to(album),

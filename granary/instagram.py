@@ -156,7 +156,7 @@ class Instagram(source.Source):
       user_id = 'self'
 
     if not self.scrape:
-      return self.user_to_actor(util.trim_nulls(
+      return self.to_as1_actor(util.trim_nulls(
         self.urlopen(API_USER_URL % user_id) or {}))
 
     resp = self.get_activities_response(
@@ -572,7 +572,7 @@ class Instagram(source.Source):
       # propagated into the Media object.)
       'objectType': OBJECT_TYPES.get(media.get('type', 'image'), 'photo'),
       'published': util.maybe_timestamp_to_rfc3339(media.get('created_time')),
-      'author': self.user_to_actor(user),
+      'author': self.to_as1_actor(user),
       'content': content,
       'url': media.get('link'),
       'to': self._is_private_to_to(user, default_public=True),
@@ -606,7 +606,7 @@ class Instagram(source.Source):
         'displayName': tag,
         # TODO: url
       } for tag in media.get('tags', [])] +
-      [self.user_to_actor(u.get('user'))
+      [self.to_as1_actor(u.get('user'))
        for u in media.get('users_in_photo', [])] +
       [self.like_to_object(u, id, media.get('link'))
        for u in media.get('likes', {}).get('data', [])] +
@@ -678,7 +678,7 @@ class Instagram(source.Source):
       # TODO: add PST time zone
       'published': util.maybe_timestamp_to_rfc3339(comment.get('created_time')),
       'content': content,
-      'author': self.user_to_actor(comment.get('from')),
+      'author': self.to_as1_actor(comment.get('from')),
       'to': [{'objectType': 'group', 'alias': '@public'}],
       'tags': self._mention_tags_from_content(content),
     })
@@ -703,10 +703,10 @@ class Instagram(source.Source):
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': media_url},
-        'author': self.user_to_actor(liker) if id else self._feed_v2_user_to_actor(liker),
+        'author': self.to_as1_actor(liker) if id else self._feed_v2_to_as1_actor(liker),
     })
 
-  def user_to_actor(self, user):
+  def to_as1_actor(self, user):
     """Converts a user to an actor.
 
     Args:
@@ -743,6 +743,9 @@ class Instagram(source.Source):
     })
 
     return util.trim_nulls(actor)
+
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
 
   def base_object(self, obj):
     """Extends the default base_object() to avoid using shortcodes as object ids.
@@ -969,7 +972,7 @@ class Instagram(source.Source):
         activities.append(util.trim_nulls(activity))
 
     user = self._json_user_to_user(viewer_user or profile_user)
-    actor = self.user_to_actor(user) if user else None
+    actor = self.to_as1_actor(user) if user else None
     return activities, actor
 
   html_to_activities = scraped_to_activities
@@ -1026,7 +1029,7 @@ class Instagram(source.Source):
         'objectType': 'comment',
         'id': cmt_id,
         'url': f"{url}#comment-{cmt.get('pk')}" if url else None,
-        'author': self._feed_v2_user_to_actor(cmt.get('user')),
+        'author': self._feed_v2_to_as1_actor(cmt.get('user')),
         'content': content,
         'published': util.maybe_timestamp_to_rfc3339(cmt.get('created_at')),
         'inReplyTo': [{'id': obj_id}],
@@ -1210,7 +1213,7 @@ class Instagram(source.Source):
     self.postprocess_object(obj)
     return super(Instagram, self).postprocess_activity(activity)
 
-  def _feed_v2_user_to_actor(self, user):
+  def _feed_v2_to_as1_actor(self, user):
     if not user:
       return {}
 
@@ -1240,7 +1243,7 @@ class Instagram(source.Source):
       dict: ActivityStreams activity or None
     """
     user = item.get('user') or {}
-    actor = self._feed_v2_user_to_actor(user)
+    actor = self._feed_v2_to_as1_actor(user)
 
     item_pk = item.get("pk")
     user_pk = user.get("pk")
@@ -1299,7 +1302,7 @@ class Instagram(source.Source):
 
     # person tags and mentions
     obj['tags'] = list(util.trim_nulls(
-      self._feed_v2_user_to_actor(tag.get('user')) for tag in
+      self._feed_v2_to_as1_actor(tag.get('user')) for tag in
       itertools.chain(*item.get('usertags', {}).values())))
     obj['tags'].extend(self._mention_tags_from_content(content))
 

@@ -458,7 +458,7 @@ class GitHub(source.Source):
     else:
       user = self.graphql(GRAPHQL_VIEWER, {})['viewer']
 
-    return self.user_to_actor(user)
+    return self.to_as1_actor(user)
 
   def get_comment(self, comment_id, **kwargs):
     """Fetches and returns a comment.
@@ -856,7 +856,7 @@ class GitHub(source.Source):
 
     content = REACTIONS_REST_CHARS.get(reaction.get('content'))
     enum = (REACTIONS_GRAPHQL.get(content) or '').lower()
-    author = self.user_to_actor(reaction.get('user'))
+    author = self.to_as1_actor(reaction.get('user'))
     username = author.get('username')
 
     obj.update({

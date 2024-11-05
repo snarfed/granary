@@ -284,7 +284,7 @@ class Mastodon(source.Source):
     """
     if user_id is None:
       user_id = self.user_id
-    return self.user_to_actor(self._get(API_ACCOUNT % user_id))
+    return self.to_as1_actor(self._get(API_ACCOUNT % user_id))
 
   def get_comment(self, comment_id, **kwargs):
     """Fetches and returns a comment.
@@ -356,7 +356,7 @@ class Mastodon(source.Source):
       'id': self.tag_uri(id),
       'url': status.get('url'),
       'published': status.get('created_at'),
-      'author': self.user_to_actor(status.get('account') or {}),
+      'author': self.to_as1_actor(status.get('account') or {}),
       'attachments': [],
     }
 
@@ -452,7 +452,7 @@ class Mastodon(source.Source):
 
     return self.postprocess_object(obj)
 
-  def user_to_actor(self, account):
+  def to_as1_actor(self, account):
     """Converts a Mastodon account to an AS1 actor.
 
     Args:
@@ -503,6 +503,9 @@ class Mastodon(source.Source):
       'description': account.get('note'),
     })
 
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
+
   def _make_like(self, status, account):
     return self._make_like_or_share(status, account, 'like')
 
@@ -530,7 +533,7 @@ class Mastodon(source.Source):
       'objectType': 'activity',
       'verb': verb,
       'object': {'url': url},
-      'author': self.user_to_actor(account),
+      'author': self.to_as1_actor(account),
     }
 
   def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):

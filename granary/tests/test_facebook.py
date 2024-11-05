@@ -192,7 +192,7 @@ POST = {  # Facebook
       ]},
   'story': 'Ryan Barrett added a new photo.',
   'picture': 'https://fbcdn-photos-a.akamaihd.net/abc_xyz_s.jpg',
-  'message': 'Checking another side project off my list. portablecontacts-unofficial is live! &3 Super Happy Block Party Hackathon, >\o/< Daniel M.',
+  'message': r'Checking another side project off my list. portablecontacts-unofficial is live! &3 Super Happy Block Party Hackathon, >\o/< Daniel M.',
   'message_tags': {
     '84': [{
         'id': '283938455011303',
@@ -518,7 +518,7 @@ POST_OBJ = {  # ActivityStreams
     'image': {'url': 'https://graph.facebook.com/v4.0/212038/picture?type=large'},
     'url': 'https://www.facebook.com/212038',
     },
-  'content': 'Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.',
+  'content': r'Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.',
   'id': tag_uri('10100176064482163'),
   'fb_id': '212038_10100176064482163',
   'published': '2012-03-04T18:20:37+00:00',
@@ -942,8 +942,7 @@ ALBUM_OBJ = {  # ActivityStreams
   'updated': '2015-11-19T02:34:16+00:00',
 }
 
-ATOM = """\
-<?xml version="1.0" encoding="UTF-8"?>
+ATOM = r"""<?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US"
       xmlns="http://www.w3.org/2005/Atom"
       xmlns:activity="http://activitystrea.ms/spec/1.0/"
@@ -1140,7 +1139,7 @@ MBASIC_OBJS = [{
   'fb_id': '123',
   'url': 'https://www.facebook.com/123',
   'author': MBASIC_ACTOR,
-  'content': """<p>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.
+  'content': r"""<p>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.
                           </p>""",
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'published': '1999-12-22T20:41:00',
@@ -1321,7 +1320,7 @@ for a in MBASIC_ACTIVITIES_REPLIES_REACTIONS:
   a['object']['tags'] = MBASIC_REACTION_TAGS(a['fb_id'])
 
 MBASIC_PROFILE_ACTIVITIES = copy.deepcopy(MBASIC_ACTIVITIES)
-MBASIC_PROFILE_ACTIVITIES[0]['object']['content'] = """<span>
+MBASIC_PROFILE_ACTIVITIES[0]['object']['content'] = r"""<span>
 <p>
 </p><div>Checking another side project off my list. portablecontacts-unofficial is live! &amp;3 Super Happy Block Party Hackathon, &gt;\o/&lt; Daniel M.
 </div>
@@ -2240,38 +2239,38 @@ class FacebookTest(testutil.TestCase):
     del share_obj['object']['displayName']
     self.assert_equals(share_obj, self.fb.share_to_object(share))
 
-  def test_user_to_actor_full(self):
-    self.assert_equals(ACTOR, self.fb.user_to_actor(USER))
+  def test_to_as1_actor_full(self):
+    self.assert_equals(ACTOR, self.fb.to_as1_actor(USER))
 
-  def test_user_to_actor_page(self):
-    self.assert_equals(PAGE_ACTOR, self.fb.user_to_actor(PAGE))
+  def test_to_as1_actor_page(self):
+    self.assert_equals(PAGE_ACTOR, self.fb.to_as1_actor(PAGE))
 
-  def test_user_to_actor_url_fallback(self):
+  def test_to_as1_actor_url_fallback(self):
     user = copy.deepcopy(USER)
     actor = copy.deepcopy(ACTOR)
     del user['website']
     del actor['urls']
     user['about'] = actor['description'] = actor['summary'] = 'no links'
     actor['url'] = user['link']
-    self.assert_equals(actor, self.fb.user_to_actor(user))
+    self.assert_equals(actor, self.fb.to_as1_actor(user))
 
     del user['link']
     actor['url'] = 'https://www.facebook.com/snarfed.org'
-    self.assert_equals(actor, self.fb.user_to_actor(user))
+    self.assert_equals(actor, self.fb.to_as1_actor(user))
 
-  def test_user_to_actor_displayName_fallback(self):
+  def test_to_as1_actor_displayName_fallback(self):
     self.assert_equals({
       'objectType': 'person',
       'id': tag_uri('snarfed.org'),
       'username': 'snarfed.org',
       'displayName': 'snarfed.org',
       'url': 'https://www.facebook.com/snarfed.org',
-    }, self.fb.user_to_actor({
+    }, self.fb.to_as1_actor({
       'username': 'snarfed.org',
     }))
 
-  def test_user_to_actor_multiple_urls(self):
-    actor = self.fb.user_to_actor({
+  def test_to_as1_actor_multiple_urls(self):
+    actor = self.fb.to_as1_actor({
       'id': '123',
       'website': """
 x
@@ -2288,7 +2287,7 @@ http://b http://c""",
       {'value': 'http://c'},
     ], actor['urls'])
 
-    actor = self.fb.user_to_actor({
+    actor = self.fb.to_as1_actor({
       'id': '123',
       'link': 'http://b http://c	http://a',
       })
@@ -2297,14 +2296,14 @@ http://b http://c""",
       [{'value': 'http://b'}, {'value': 'http://c'}, {'value': 'http://a'}],
       actor['urls'])
 
-  def test_user_to_actor_minimal(self):
-    actor = self.fb.user_to_actor({'id': '212038'})
+  def test_to_as1_actor_minimal(self):
+    actor = self.fb.to_as1_actor({'id': '212038'})
     self.assert_equals(tag_uri('212038'), actor['id'])
     self.assert_equals('https://graph.facebook.com/v4.0/212038/picture?type=large',
                        actor['image']['url'])
 
-  def test_user_to_actor_empty(self):
-    self.assert_equals({}, self.fb.user_to_actor({}))
+  def test_to_as1_actor_empty(self):
+    self.assert_equals({}, self.fb.to_as1_actor({}))
 
   def test_event_to_object_empty(self):
     self.assert_equals({'objectType': 'event'}, self.fb.event_to_object({}))

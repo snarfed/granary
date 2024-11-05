@@ -599,15 +599,15 @@ class MastodonTest(testutil.TestCase):
     self.mox.ReplayAll()
     self.assert_equals(OBJECT, self.mastodon.get_comment(1))
 
-  def test_user_to_actor(self):
-    self.assert_equals(ACTOR, self.mastodon.user_to_actor(ACCOUNT))
+  def test_to_as1_actor(self):
+    self.assert_equals(ACTOR, self.mastodon.to_as1_actor(ACCOUNT))
 
-  def test_user_to_actor_remote(self):
-    self.assert_equals(ACTOR_REMOTE, self.mastodon.user_to_actor(ACCOUNT_REMOTE))
+  def test_to_as1_actor_remote(self):
+    self.assert_equals(ACTOR_REMOTE, self.mastodon.to_as1_actor(ACCOUNT_REMOTE))
 
-  def test_user_to_actor_username_acct_conflict(self):
+  def test_to_as1_actor_username_acct_conflict(self):
     with self.assertRaises(ValueError):
-      self.mastodon.user_to_actor({
+      self.mastodon.to_as1_actor({
         'username': 'alice',
         'acct': 'eve@xyz',
       })

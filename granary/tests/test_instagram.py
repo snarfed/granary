@@ -1692,10 +1692,10 @@ class InstagramTest(testutil.TestCase):
       self.assert_equals(obj, self.instagram.comment_to_object(
           cmt, '123_456', 'https://www.instagram.com/p/ABC123/'))
 
-  def test_user_to_actor(self):
-    self.assert_equals(ACTOR, self.instagram.user_to_actor(USER))
+  def test_to_as1_actor(self):
+    self.assert_equals(ACTOR, self.instagram.to_as1_actor(USER))
 
-  def test_user_to_actor_url_fallback(self):
+  def test_to_as1_actor_url_fallback(self):
     user = copy.deepcopy(USER)
     del user['website']
     del user['bio']
@@ -1703,26 +1703,26 @@ class InstagramTest(testutil.TestCase):
     actor['url'] = 'https://www.instagram.com/snarfed/'
     del actor['urls']
     del actor['description']
-    self.assert_equals(actor, self.instagram.user_to_actor(user))
+    self.assert_equals(actor, self.instagram.to_as1_actor(user))
 
-  def test_user_to_actor_displayName_fallback(self):
+  def test_to_as1_actor_displayName_fallback(self):
     self.assert_equals({
       'objectType': 'person',
       'id': tag_uri('420973239'),
       'username': 'snarfed',
       'displayName': 'snarfed',
       'url': 'https://www.instagram.com/snarfed/',
-    }, self.instagram.user_to_actor({
+    }, self.instagram.to_as1_actor({
       'id': '420973239',
       'username': 'snarfed',
     }))
 
-  def test_user_to_actor_minimal(self):
+  def test_to_as1_actor_minimal(self):
     self.assert_equals({
       'id': tag_uri('420973239'),
       'username': None,
       'objectType': 'person',
-    }, self.instagram.user_to_actor({'id': '420973239'}))
+    }, self.instagram.to_as1_actor({'id': '420973239'}))
 
     self.assert_equals({
       'id': tag_uri('snarfed'),
@@ -1730,7 +1730,7 @@ class InstagramTest(testutil.TestCase):
       'displayName': 'snarfed',
       'objectType': 'person',
       'url': 'https://www.instagram.com/snarfed/',
-    }, self.instagram.user_to_actor({'username': 'snarfed'}))
+    }, self.instagram.to_as1_actor({'username': 'snarfed'}))
 
   def test_preview_like(self):
     # like obj doesn't have a url prior to publishing

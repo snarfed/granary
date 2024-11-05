@@ -92,9 +92,9 @@ class Reddit(source.Source):
       logger.debug(f'User not found: {praw_user} {repr(praw_user)}', exc_info=True)
       return {}
 
-    return self.user_to_actor(user)
+    return self.to_as1_actor(user)
 
-  def user_to_actor(self, user):
+  def to_as1_actor(self, user):
     """Converts a dict user to an actor.
 
     Args:
@@ -135,6 +135,9 @@ class Reddit(source.Source):
       'username': username,
       'description': description,
     })
+
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
 
   def praw_to_object(self, thing, type):
     """Converts a PRAW object to an AS1 object.

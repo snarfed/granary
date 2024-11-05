@@ -1727,7 +1727,7 @@ class Bluesky(Source):
     return f'{cls.BASE_URL}/profile/{handle.lstrip("@")}'
 
   @classmethod
-  def user_to_actor(cls, user, **kwargs):
+  def to_as1_actor(cls, user, **kwargs):
     """Converts a user to an actor.
 
     Args:
@@ -1738,6 +1738,9 @@ class Bluesky(Source):
       dict: ActivityStreams actor
     """
     return to_as1(user, **kwargs)
+
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
 
   @classmethod
   def post_url(cls, handle, tid):

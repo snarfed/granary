@@ -188,7 +188,7 @@ class Twitter(source.Source):
       screen_name (str): username. Defaults to the current user.
     """
     url = API_CURRENT_USER if screen_name is None else API_USER % screen_name
-    return self.user_to_actor(self.urlopen(url))
+    return self.to_as1_actor(self.urlopen(url))
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, start_index=0, count=0,
@@ -603,7 +603,7 @@ class Twitter(source.Source):
       have the list of user ids we fetched before hitting the limit.
     """
     return self._get_blocklist_fn(API_BLOCKS,
-        lambda resp: (self.user_to_actor(user) for user in resp.get('users', [])))
+        lambda resp: (self.to_as1_actor(user) for user in resp.get('users', [])))
 
   def get_blocklist_ids(self):
     """Returns the current user's block list as a list of Twitter user ids.
@@ -1223,7 +1223,7 @@ class Twitter(source.Source):
     # author
     user = tweet.get('user')
     if user:
-      obj['author'] = self.user_to_actor(user)
+      obj['author'] = self.to_as1_actor(user)
       username = obj['author'].get('username')
       if username:
         obj['url'] = self.status_url(username, id)
@@ -1451,7 +1451,7 @@ class Twitter(source.Source):
 
     return best_url or variants[0].get('url')
 
-  def user_to_actor(self, user):
+  def to_as1_actor(self, user):
     """Converts a user to an actor.
 
     Args:
@@ -1489,6 +1489,9 @@ class Twitter(source.Source):
       'username': username,
       'description': user.get('description'),
     })
+
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
 
   def retweet_to_object(self, retweet):
     """Converts a retweet to a share activity object.
@@ -1560,7 +1563,7 @@ class Twitter(source.Source):
         'objectType': 'activity',
         'verb': 'like',
         'object': {'url': obj_url},
-        'author': self.user_to_actor(liker),
+        'author': self.to_as1_actor(liker),
     })
 
   @staticmethod

@@ -182,11 +182,11 @@ class RedditTest(testutil.TestCase):
   def test_user_url(self):
     self.assert_equals('https://reddit.com/user/foo', self.reddit.user_url('foo'))
 
-  def test_missing_user_to_actor(self):
+  def test_missing_to_as1_actor(self):
     self.assert_equals(MISSING_OBJECT,
                        self.reddit.praw_to_actor(FakeMissingRedditor()))
 
-  def test_suspended_user_to_actor(self):
+  def test_suspended_to_as1_actor(self):
     suspended = util.Struct(name='mr_suspended', is_suspended=True)
     self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(suspended))
 

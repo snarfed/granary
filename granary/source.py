@@ -562,7 +562,7 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  def user_to_actor(self, user):
+  def to_as1_actor(self, user):
     """Converts a user to an actor.
 
     The returned object will have at least a ``url`` field. If the user has
@@ -576,6 +576,9 @@ class Source(object, metaclass=SourceMeta):
       dict: ActivityStreams actor
     """
     raise NotImplementedError()
+
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
 
   def _get_activity(self, user_id, activity_id, **kwargs):
     activities = self.get_activities(user_id=user_id, activity_id=activity_id,
