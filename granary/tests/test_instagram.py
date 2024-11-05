@@ -1672,8 +1672,8 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals(LIKE_OBJS[0],
                        ig.get_like('456', '1208909509631101904_942513', '8'))
 
-  def test_media_to_activity(self):
-    self.assert_equals(ACTIVITY, self.instagram.media_to_activity(MEDIA))
+  def test_media_to_as1(self):
+    self.assert_equals(ACTIVITY, self.instagram.media_to_as1(MEDIA))
 
   def test_media_to_object(self):
     obj = self.instagram.media_to_object(MEDIA)
@@ -1687,9 +1687,9 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals(MEDIA_OBJ_WITH_LIKES,
                        self.instagram.media_to_object(MEDIA_WITH_LIKES))
 
-  def test_comment_to_object(self):
+  def test_comment_to_as1(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
-      self.assert_equals(obj, self.instagram.comment_to_object(
+      self.assert_equals(obj, self.instagram.comment_to_as1(
           cmt, '123_456', 'https://www.instagram.com/p/ABC123/'))
 
   def test_to_as1_actor(self):
@@ -1852,44 +1852,44 @@ class InstagramTest(testutil.TestCase):
         'object': {'url': 'https://www.instagram.com/p/zHA5BLo1Mo/'},
       }))
 
-  def test_scraped_to_activities_feed(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE)
+  def test_scraped_to_as1_feed(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_FEED_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
-    activities, _ = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_2)
+    activities, _ = self.instagram.scraped_to_as1(HTML_FEED_COMPLETE_2)
     self.assert_equals(HTML_ACTIVITIES_FULL, activities)
 
-    _, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_4)
+    _, viewer = self.instagram.scraped_to_as1(HTML_FEED_COMPLETE_4)
     self.assert_equals(HTML_VIEWER, viewer)
 
-  def test_scraped_to_activities_feed_v2(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_FEED_COMPLETE_V2)
+  def test_scraped_to_as1_feed_v2(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_FEED_COMPLETE_V2)
     self.assert_equals(HTML_ACTIVITIES_FULL_V2, activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_profile(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_PROFILE_COMPLETE)
+  def test_scraped_to_as1_profile(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_PROFILE_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER_PUBLIC, viewer)
 
-  def test_scraped_to_activities_profile_private(self):
-    _, actor = self.instagram.scraped_to_activities(HTML_PROFILE_PRIVATE_COMPLETE)
+  def test_scraped_to_as1_profile_private(self):
+    _, actor = self.instagram.scraped_to_as1(HTML_PROFILE_PRIVATE_COMPLETE)
     self.assert_equals([{'objectType':'group', 'alias':'@private'}], actor['to'])
 
-  def test_scraped_to_activities_profile_fill_in_owner(self):
+  def test_scraped_to_as1_profile_fill_in_owner(self):
     profile = copy.deepcopy(HTML_PROFILE)
     user = profile['entry_data']['ProfilePage'][0]['graphql']['user']
     user['edge_owner_to_timeline_media']['edges'][0]['node']['owner'] = {
       'id': user['id'],
     }
 
-    activities, _ = self.instagram.scraped_to_activities(
+    activities, _ = self.instagram.scraped_to_as1(
       HTML_HEADER + json_dumps(profile) + HTML_FOOTER)
     self.assertEqual(HTML_VIEWER_PUBLIC, activities[0]['actor'])
     self.assertEqual(HTML_VIEWER_PUBLIC, activities[0]['object']['author'])
 
-  def test_scraped_to_activities_profile_wrong_id_dont_fill_in_owner(self):
+  def test_scraped_to_as1_profile_wrong_id_dont_fill_in_owner(self):
     profile = copy.deepcopy(HTML_PROFILE)
     user = profile['entry_data']['ProfilePage'][0]['graphql']['user']
     other_id = user['id'] + '999'
@@ -1897,7 +1897,7 @@ class InstagramTest(testutil.TestCase):
       'id': other_id,
     }
 
-    activities, _ = self.instagram.scraped_to_activities(
+    activities, _ = self.instagram.scraped_to_as1(
       HTML_HEADER + json_dumps(profile) + HTML_FOOTER)
     expected = {
       'id': tag_uri(other_id),
@@ -1906,37 +1906,37 @@ class InstagramTest(testutil.TestCase):
     self.assertEqual(expected, activities[0]['actor'])
     self.assertEqual(expected, activities[0]['object']['author'])
 
-  def test_scraped_json_to_activities_profile(self):
-    activities, actor = self.instagram.scraped_json_to_activities(HTML_PROFILE_JSON)
+  def test_scraped_json_to_as1_profile(self):
+    activities, actor = self.instagram.scraped_json_to_as1(HTML_PROFILE_JSON)
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER_PUBLIC, actor)
 
-  def test_scraped_to_activities_json_input(self):
-    activities, actor = self.instagram.scraped_to_activities(
+  def test_scraped_to_as1_json_input(self):
+    activities, actor = self.instagram.scraped_to_as1(
       json_dumps(HTML_PROFILE_JSON))
     self.assert_equals(HTML_ACTIVITIES, activities)
     self.assert_equals(HTML_VIEWER_PUBLIC, actor)
 
-  def test_scraped_json_to_activities_suggested_users(self):
-    activities, actor = self.instagram.scraped_json_to_activities(
+  def test_scraped_json_to_as1_suggested_users(self):
+    activities, actor = self.instagram.scraped_json_to_as1(
       {'feed_items': [HTML_V2_SUGGESTED_USERS]})
     self.assert_equals([], activities)
     self.assert_equals(None, actor)
 
-  def test_scraped_to_activities_photo_no_fetch_extras(self):
-    activities, viewer = self.instagram.scraped_to_activities(
+  def test_scraped_to_as1_photo_no_fetch_extras(self):
+    activities, viewer = self.instagram.scraped_to_as1(
       HTML_PHOTO_COMPLETE, fetch_extras=False)
     self.assert_equals([HTML_PHOTO_ACTIVITY], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_photo_fetch_extras(self):
+  def test_scraped_to_as1_photo_fetch_extras(self):
     self.instagram.cookie = 'kuky'
     self.expect_requests_get(
       instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
       headers=mox.IgnoreArg())
     self.mox.ReplayAll()
 
-    activities, viewer = self.instagram.scraped_to_activities(
+    activities, viewer = self.instagram.scraped_to_as1(
       HTML_PHOTO_COMPLETE, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
     self.assertIsNone(viewer)
@@ -1966,7 +1966,7 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
     self.assertIsNone(actor)
 
-  def test_scraped_to_activities_photo_edge_media_to_parent_comment(self):
+  def test_scraped_to_as1_photo_edge_media_to_parent_comment(self):
     """https://github.com/snarfed/granary/issues/164"""
     self.instagram.cookie = 'kuky'
     self.expect_requests_get(
@@ -1977,21 +1977,21 @@ class InstagramTest(testutil.TestCase):
     page = copy.deepcopy(HTML_PHOTO_PAGE)
     media = page['entry_data']['PostPage'][0]['graphql']['shortcode_media']
     media['edge_media_to_parent_comment'] = media.pop('edge_media_to_comment')
-    activities, _ = self.instagram.scraped_to_activities(
+    activities, _ = self.instagram.scraped_to_as1(
       HTML_HEADER + json_dumps(page) + HTML_FOOTER, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
 
-  def test_scraped_to_activities_video(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_VIDEO_COMPLETE)
+  def test_scraped_to_as1_video(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_VIDEO_COMPLETE)
     self.assert_equals([HTML_VIDEO_ACTIVITY_FULL], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_multi_photo(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_MULTI_PHOTO_COMPLETE)
+  def test_scraped_to_as1_multi_photo(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_MULTI_PHOTO_COMPLETE)
     self.assert_equals([HTML_MULTI_PHOTO_ACTIVITY], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_multi_photo_omit_auto_alt_text(self):
+  def test_scraped_to_as1_multi_photo_omit_auto_alt_text(self):
     multi = copy.deepcopy(HTML_MULTI_PHOTO_PAGE)
     multi['entry_data']['PostPage'][0]['graphql']['shortcode_media']\
         ['edge_sidecar_to_children']['edges'][1]['node']['accessibility_caption'] = \
@@ -2001,17 +2001,17 @@ class InstagramTest(testutil.TestCase):
     expected = copy.deepcopy(HTML_MULTI_PHOTO_ACTIVITY)
     del expected['object']['attachments'][1]['image'][0]['displayName']
 
-    activities, _ = self.instagram.scraped_to_activities(html)
+    activities, _ = self.instagram.scraped_to_as1(html)
     self.assert_equals([expected], activities)
 
-  def test_scraped_to_activities_photo_v2(self):
+  def test_scraped_to_as1_photo_v2(self):
     html = HTML_HEADER_3 + json_dumps({'items': [HTML_PHOTO_V2_FULL]}) + HTML_FOOTER
-    activities, viewer = self.instagram.scraped_to_activities(html)
+    activities, viewer = self.instagram.scraped_to_as1(html)
     self.assert_equals([HTML_PHOTO_ACTIVITY_V2_FULL], activities)
 
-  def test_scraped_to_activities_photo_v2_likes(self):
+  def test_scraped_to_as1_photo_v2_likes(self):
     html = HTML_HEADER_3 + json_dumps({'items': [HTML_PHOTO_V2_LIKES]}) + HTML_FOOTER
-    activities, viewer = self.instagram.scraped_to_activities(html)
+    activities, viewer = self.instagram.scraped_to_as1(html)
 
     expected = copy.deepcopy(HTML_PHOTO_ACTIVITY_V2_LIKES)
     # v2 likes don't have user website field
@@ -2019,31 +2019,31 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals([expected], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_video_v2(self):
+  def test_scraped_to_as1_video_v2(self):
     html = HTML_HEADER_3 + json_dumps({'items': [HTML_VIDEO_V2_FULL]}) + HTML_FOOTER
-    activities, viewer = self.instagram.scraped_to_activities(html)
+    activities, viewer = self.instagram.scraped_to_as1(html)
     self.assert_equals([HTML_VIDEO_ACTIVITY_V2_FULL], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_video_v2_no_fetch_extras(self):
+  def test_scraped_to_as1_video_v2_no_fetch_extras(self):
     html = HTML_HEADER_3 + json_dumps({'items': [HTML_VIDEO_V2]}) + HTML_FOOTER
-    activities, viewer = self.instagram.scraped_to_activities(html, fetch_extras=False)
+    activities, viewer = self.instagram.scraped_to_as1(html, fetch_extras=False)
 
     expected = copy.deepcopy(HTML_VIDEO_ACTIVITY)
     expected['object']['replies']['totalItems'] = 2
     self.assert_equals([expected], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_photos_v2_fetch_extras(self):
+  def test_scraped_to_as1_photos_v2_fetch_extras(self):
     self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
                              HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
     self.mox.ReplayAll()
     ig = Instagram(scrape=True, cookie='kuky')
     html = HTML_HEADER_2 + json_dumps({'items': [HTML_PHOTO_V2_FULL]}) + HTML_FOOTER
-    activities, _ = ig.scraped_to_activities(html, fetch_extras=True)
+    activities, _ = ig.scraped_to_as1(html, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_V2_LIKES], activities)
 
-  def test_scraped_to_activities_video_v2_fetch_comments(self):
+  def test_scraped_to_as1_video_v2_fetch_comments(self):
     self.expect_requests_get(instagram.HTML_COMMENTS_URL % '789',
                              HTML_VIDEO_V2_COMMENTS_RESPONSE, cookie='kuky')
     self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789',
@@ -2054,14 +2054,14 @@ class InstagramTest(testutil.TestCase):
     video_empty_comments['comments'] = []
     ig = Instagram(scrape=True, cookie='kuky')
     html = HTML_HEADER_2 + json_dumps({'items': [video_empty_comments]}) + HTML_FOOTER
-    activities, _ = ig.scraped_to_activities(html, fetch_extras=True)
+    activities, _ = ig.scraped_to_as1(html, fetch_extras=True)
     self.assert_equals([HTML_VIDEO_ACTIVITY_V2_FULL], activities)
 
-  def test_scraped_to_activities_photo_v2_no_user(self):
+  def test_scraped_to_as1_photo_v2_no_user(self):
     photo = copy.deepcopy(HTML_PHOTO_V2_FULL)
     del photo['user']
     html = HTML_HEADER_3 + json_dumps({'items': [photo]}) + HTML_FOOTER
-    activities, viewer = self.instagram.scraped_to_activities(html)
+    activities, viewer = self.instagram.scraped_to_as1(html)
 
     activity = copy.deepcopy(HTML_PHOTO_ACTIVITY_V2_FULL)
     activity['object']['id'] = activity['id'] = 'tag:instagram.com:123'
@@ -2071,11 +2071,11 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals([activity], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_missing_profile_picture_external_url(self):
+  def test_scraped_to_as1_missing_profile_picture_external_url(self):
     data = copy.deepcopy(HTML_FEED)
     data['config']['viewer']['profile_pic_url'] = None
     data['config']['viewer']['external_url'] = None
-    _, viewer = self.instagram.scraped_to_activities(
+    _, viewer = self.instagram.scraped_to_as1(
       HTML_HEADER + json_dumps(data) + HTML_FOOTER)
 
     expected = copy.deepcopy(HTML_VIEWER)
@@ -2083,11 +2083,11 @@ class InstagramTest(testutil.TestCase):
     del expected['image']
     self.assert_equals(expected, viewer)
 
-  def test_scraped_to_activities_missing_video_url(self):
+  def test_scraped_to_as1_missing_video_url(self):
     data = copy.deepcopy(HTML_FEED)
     del data['entry_data']['FeedPage'][0]['graphql']['user']\
             ['edge_web_feed_timeline']['edges'][1]['node']['video_url']
-    activities, _ = self.instagram.scraped_to_activities(
+    activities, _ = self.instagram.scraped_to_as1(
       HTML_HEADER + json_dumps(data) + HTML_FOOTER)
 
     expected = copy.deepcopy(HTML_ACTIVITIES_FULL)
@@ -2095,18 +2095,18 @@ class InstagramTest(testutil.TestCase):
     del expected[1]['object']['attachments'][0]['stream'][0]['url']
     self.assert_equals(expected, activities)
 
-  def test_scraped_to_activities_missing_header(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_PHOTO_MISSING_HEADER)
+  def test_scraped_to_as1_missing_header(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_PHOTO_MISSING_HEADER)
     self.assert_equals([], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_missing_footer(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_PHOTO_MISSING_FOOTER)
+  def test_scraped_to_as1_missing_footer(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_PHOTO_MISSING_FOOTER)
     self.assert_equals([], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_trims_nulls(self):
-    activities, viewer = self.instagram.scraped_to_activities(HTML_HEADER + json_dumps({
+  def test_scraped_to_as1_trims_nulls(self):
+    activities, viewer = self.instagram.scraped_to_as1(HTML_HEADER + json_dumps({
       'entry_data': {
         'FeedPage': [{
           'feed': {
@@ -2122,20 +2122,20 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals([], activities)
     self.assertIsNone(viewer)
 
-  def test_scraped_to_activities_preload_fetch(self):
+  def test_scraped_to_as1_preload_fetch(self):
     """https://github.com/snarfed/granary/issues/140"""
     url = urllib.parse.urljoin(HTML_BASE_URL, HTML_PRELOAD_URL)
     self.expect_requests_get(url, HTML_PRELOAD_DATA, cookie='kuky')
     self.mox.ReplayAll()
 
     html = HTML_HEADER_PRELOAD + json_dumps(HTML_USELESS_FEED) + HTML_FOOTER
-    activities, viewer = self.instagram.scraped_to_activities(html, cookie='kuky')
+    activities, viewer = self.instagram.scraped_to_as1(html, cookie='kuky')
 
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL, HTML_VIDEO_ACTIVITY_FULL],
                        activities)
     self.assert_equals(HTML_VIEWER, viewer)
 
-  def test_scraped_to_activities_preload_fetch_bad_json(self):
+  def test_scraped_to_as1_preload_fetch_bad_json(self):
     """https://console.cloud.google.com/errors/CP_w8ai-7JLfvAE"""
     url = urllib.parse.urljoin(HTML_BASE_URL, HTML_PRELOAD_URL)
     self.expect_requests_get(url, '{bad: ["json', cookie='kuky')
@@ -2143,7 +2143,7 @@ class InstagramTest(testutil.TestCase):
 
     html = HTML_HEADER_PRELOAD + json_dumps(HTML_USELESS_FEED) + HTML_FOOTER
     with self.assertRaises(requests.HTTPError) as cm:
-      self.instagram.scraped_to_activities(html, cookie='kuky')
+      self.instagram.scraped_to_as1(html, cookie='kuky')
 
     self.assertEqual(504, cm.exception.response.status_code)
 
@@ -2163,10 +2163,10 @@ class InstagramTest(testutil.TestCase):
     self.assert_equals(LIKE_OBJS, got)
     self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
 
-  def test_scraped_to_actor(self):
+  def test_scraped_to_as1_actor(self):
     self.assert_equals(HTML_VIEWER_PUBLIC,
-                       self.instagram.scraped_to_actor(HTML_PROFILE_COMPLETE))
-    self.assertIsNone(self.instagram.scraped_to_actor(HTML_VIDEO_COMPLETE))
+                       self.instagram.scraped_to_as1_actor(HTML_PROFILE_COMPLETE))
+    self.assertIsNone(self.instagram.scraped_to_as1_actor(HTML_VIDEO_COMPLETE))
 
   def test_id_to_shortcode(self):
     for shortcode, id in (

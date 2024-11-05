@@ -280,7 +280,7 @@ class Instagram(source.Source):
           util.add_query_params(API_USER_LIKES_URL % user_id, kwargs))
         if liked:
           user = self.urlopen(API_USER_URL % user_id)
-          activities += [self.like_to_object(user, l['id'], l['link'])
+          activities += [self.like_to_as1(user, l['id'], l['link'])
                          for l in liked]
 
     except urllib.error.HTTPError as e:
@@ -489,7 +489,7 @@ class Instagram(source.Source):
       # response will be empty even on success, see
       # http://instagram.com/developer/endpoints/comments/#post_media_comments.
       # TODO where can we get the comment id?
-      obj = self.comment_to_object({}, base_id, None)
+      obj = self.comment_to_as1({}, base_id, None)
       return source.creation_result(obj)
 
     elif type == 'activity' and verb == 'like':
@@ -521,14 +521,14 @@ class Instagram(source.Source):
       # oauth-dropins auth_entities should have the user_json.
       me = self.urlopen(API_USER_URL % 'self')
       return source.creation_result(
-        self.like_to_object(me, base_id, base_url))
+        self.like_to_as1(me, base_id, base_url))
 
     return source.creation_result(
       abort=True,
       error_plain='Cannot publish this post on Instagram. Instagram does not support posting photos or videos from 3rd party applications.',
       error_html='Cannot publish this post on Instagram. Instagram <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">does not support</a> posting photos or videos from 3rd party applications.')
 
-  def media_to_activity(self, media):
+  def media_to_as1(self, media):
     """Converts a media to an activity.
 
     http://instagram.com/developer/endpoints/media/#get_media
@@ -553,8 +553,13 @@ class Instagram(source.Source):
 
     return self.postprocess_activity(activity)
 
+  media_to_activity = media_to_as1
+  """Deprecated! Use :meth:`media_to_as1` instead."""
+
   def media_to_object(self, media):
     """Converts a media to an object.
+
+    Deprecated! Use :meth:`media_to_as1` instead.
 
     Args:
       media (dict): JSON object retrieved from the Instagram API
@@ -596,7 +601,7 @@ class Instagram(source.Source):
       # Activity Streams" extension spec:
       # http://activitystrea.ms/specs/json/replies/1.0/
       'replies': {
-        'items': [self.comment_to_object(c, id, media.get('link'))
+        'items': [self.comment_to_as1(c, id, media.get('link'))
                   for c in media.get('comments', {}).get('data', [])],
         'totalItems': media.get('comments', {}).get('count'),
       },
@@ -608,7 +613,7 @@ class Instagram(source.Source):
       } for tag in media.get('tags', [])] +
       [self.to_as1_actor(u.get('user'))
        for u in media.get('users_in_photo', [])] +
-      [self.like_to_object(u, id, media.get('link'))
+      [self.like_to_as1(u, id, media.get('link'))
        for u in media.get('likes', {}).get('data', [])] +
       self._mention_tags_from_content(content)
     }
@@ -658,7 +663,7 @@ class Instagram(source.Source):
       'length': mention.end() - mention.start(),
     } for mention in MENTION_RE.finditer(content)]
 
-  def comment_to_object(self, comment, media_id, media_url):
+  def comment_to_as1(self, comment, media_id, media_url):
     """Converts a comment to an object.
 
     Args:
@@ -683,7 +688,10 @@ class Instagram(source.Source):
       'tags': self._mention_tags_from_content(content),
     })
 
-  def like_to_object(self, liker, media_id, media_url):
+  comment_to_object = comment_to_as1
+  """Deprecated! Use :meth:`comment_to_as1` instead."""
+
+  def like_to_as1(self, liker, media_id, media_url):
     """Converts a like to an object.
 
     Args:
@@ -705,6 +713,9 @@ class Instagram(source.Source):
         'object': {'url': media_url},
         'author': self.to_as1_actor(liker) if id else self._feed_v2_to_as1_actor(liker),
     })
+
+  like_to_object = like_to_as1
+  """Deprecated! Use :meth:`like_to_as1` instead."""
 
   def to_as1_actor(self, user):
     """Converts a user to an actor.
@@ -797,8 +808,7 @@ class Instagram(source.Source):
         'alias': '@private' if private else '@public',
       }]
 
-  def scraped_to_activities(self, input, cookie=None, count=None,
-                            fetch_extras=False):
+  def scraped_to_as1(self, input, cookie=None, count=None, fetch_extras=False):
     """Converts scraped Instagram HTML to ActivityStreams activities.
 
     The input HTML may be from:
@@ -863,8 +873,13 @@ class Instagram(source.Source):
     logger.warning("Couldn't find JSON data in scraped input!")
     return [], None
 
-  def scraped_json_to_activities(self, input, cookie=None, count=None,
-                                 fetch_extras=False):
+  html_to_activities = scraped_to_as1
+  """Deprecated! Use :meth:`scraped_to_as1` instead."""
+
+  scraped_to_activities = scraped_to_as1
+  """Deprecated! Use :meth:`scraped_to_as1` instead."""
+
+  def scraped_json_to_as1(self, input, cookie=None, count=None, fetch_extras=False):
     """Converts scraped Instagram JSON to ActivityStreams activities.
 
     The input JSON may be from a user's profile, eg
@@ -975,10 +990,13 @@ class Instagram(source.Source):
     actor = self.to_as1_actor(user) if user else None
     return activities, actor
 
-  html_to_activities = scraped_to_activities
+  scraped_json_to_activities = scraped_json_to_as1
+  """Deprecated! Use :meth:`scraped_json_to_as1` instead."""
 
   def scraped_to_activity(self, html, **kwargs):
     """Converts HTML from photo/video permalink page to an AS1 activity.
+
+    Deprecated! Use :meth:`scraped_to_as1` instead.
 
     Args:
       html (str): HTML from a photo/video page on instagram.com
@@ -987,10 +1005,10 @@ class Instagram(source.Source):
     Returns:
       tuple: (AS activity or None, AS logged in actor (ie viewer))
     """
-    activities, actor = self.scraped_to_activities(html, **kwargs)
+    activities, actor = self.scraped_to_as1(html, **kwargs)
     return (activities[0] if activities else None), actor
 
-  def scraped_to_actor(self, html, **kwargs):
+  def scraped_to_as1_actor(self, html, **kwargs):
     """Extracts and returns the logged in actor from any Instagram HTML.
 
     Args:
@@ -1000,6 +1018,9 @@ class Instagram(source.Source):
       dict: AS1 actor
     """
     return self.scraped_to_activities(html, **kwargs)[1]
+
+  scraped_to_actor = scraped_to_as1_actor
+  """Deprecated! Use :meth:`scraped_to_as1_actor` instead."""
 
   def merge_scraped_comments(self, scraped, activity):
     """Converts and merges scraped comments (replies) into an activity.
@@ -1082,7 +1103,7 @@ class Instagram(source.Source):
       likers.extend(media.get('likers', []) +  # v2
                     media.get('facepile_top_likers', []))
       like_tags = util.trim_nulls(
-        [self.like_to_object(l, id, media_url) for l in likers])
+        [self.like_to_as1(l, id, media_url) for l in likers])
       as1.merge_by_id(obj, 'tags', like_tags)
       return like_tags
 
@@ -1195,7 +1216,7 @@ class Instagram(source.Source):
         }},
       })
 
-    activity = self.media_to_activity(util.trim_nulls(media))
+    activity = self.media_to_as1(util.trim_nulls(media))
     obj = activity['object']
     obj['ig_like_count'] = media['likes'].get('count', 0)
 
