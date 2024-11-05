@@ -119,7 +119,7 @@ class Meetup(source.Source):
   def return_error(self, msg):
     return source.creation_result(abort=True, error_plain=msg, error_html=msg)
 
-  def user_to_actor(self, user):
+  def to_as1_actor(self, user):
     """Converts a user to an actor.
 
     Args:
@@ -148,6 +148,9 @@ class Meetup(source.Source):
         'username': user_id_str,
         'description': None,
     })
+
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :func:`to_as1_actor` instead."""
 
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""

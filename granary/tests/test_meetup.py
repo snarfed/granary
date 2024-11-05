@@ -285,10 +285,10 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('Missing the post\'s url', result.error_plain)
         self.assertIn('Missing the post\'s url', result.error_html)
 
-    def test_user_to_actor(self):
-        self.assert_equals(ACTOR, self.meetup.user_to_actor(USER_JSON))
+    def test_to_as1_actor(self):
+        self.assert_equals(ACTOR, self.meetup.to_as1_actor(USER_JSON))
 
-    def test_user_to_actor_with_no_photo(self):
+    def test_to_as1_actor_with_no_photo(self):
         user_json = {
                 "id": 189380737,
                 "name": "Jamie Tanna",
@@ -320,7 +320,7 @@ class MeetupTest(testutil.TestCase):
                 'description': None,
                 }
 
-        self.assert_equals(actor, self.meetup.user_to_actor(user_json))
+        self.assert_equals(actor, self.meetup.to_as1_actor(user_json))
 
     def test_user_url(self):
         self.assert_equals('https://www.meetup.com/members/1234/', self.meetup.user_url(1234))
