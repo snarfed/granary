@@ -176,19 +176,6 @@ def maybe_normalize_iso8601(val):
     return val
 
 
-def activity_to_json(activity, **kwargs):
-  """Converts an ActivityStreams activity to microformats2 JSON.
-
-  Args:
-    activity (dict): a decoded JSON ActivityStreams activity
-    kwargs: passed to :func:`object_to_json`
-
-  Returns:
-    dict: decoded microformats2 JSON
-  """
-  return object_to_json(_activity_or_object(activity), **kwargs)
-
-
 def _activity_or_object(activity):
   """Returns the base item we care about, ``activity`` or ``activity['object']``.
 
@@ -200,12 +187,12 @@ def _activity_or_object(activity):
   return activity
 
 
-def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
-                   default_object_type=None, synthesize_content=True):
+def from_as1(obj, trim_nulls=True, entry_class='h-entry',
+             default_object_type=None, synthesize_content=True):
   """Converts an ActivityStreams object to microformats2 JSON.
 
   Args:
-    obj (dict): a decoded JSON ActivityStreams object
+    obj (dict): a decoded JSON ActivityStreams object or activity
     trim_nulls (bool): whether to remove elements with null or empty values
     entry_class (str or sequence of str), the mf2 class(es) that entries should be
       given, eg ``h-cite`` when parsing a reference to a foreign entry.
@@ -423,7 +410,26 @@ def object_to_json(obj, trim_nulls=True, entry_class='h-entry',
   return ret
 
 
-def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
+object_to_json = from_as1
+"""Deprecated! Use :meth:`from_as1` instead."""
+
+
+def activity_to_json(activity, **kwargs):
+  """Converts an ActivityStreams activity to microformats2 JSON.
+
+  Deprecated! Use :func:`from_as1` instead.
+
+  Args:
+    activity (dict): a decoded JSON ActivityStreams activity
+    kwargs: passed to :func:`object_to_json`
+
+  Returns:
+    dict: decoded microformats2 JSON
+  """
+  return object_to_json(_activity_or_object(activity), **kwargs)
+
+
+def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   """Converts a single microformats2 JSON item to an ActivityStreams object.
 
   Supports ``h-entry``, ``h-event``, ``h-card``, and other single item times.
@@ -664,7 +670,11 @@ def json_to_object(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   return Source.postprocess_object(obj, mentions=True)
 
 
-def html_to_activities(html, url=None, actor=None, id=None):
+json_to_object = to_as1
+"""Deprecated! Use :meth:`to_as1` instead."""
+
+
+def html_hfeed_to_as1(html, url=None, actor=None, id=None):
   """Converts a microformats2 HTML ``h-feed`` to ActivityStreams activities.
 
   Args:
@@ -678,14 +688,18 @@ def html_to_activities(html, url=None, actor=None, id=None):
   Returns:
     list of dict: ActivityStreams activities
   """
-  return json_to_activities(util.parse_mf2(html, url=url, id=id), actor=actor)
+  return hfeed_to_as1(util.parse_mf2(html, url=url, id=id), actor=actor)
 
 
-def json_to_activities(parsed, actor=None):
-  """Converts parsed microformats2 JSON to ActivityStreams activities.
+html_to_activities = html_hfeed_to_as1
+"""Deprecated! Use :func:`html_hfeed_to_as1` instead."""
+
+
+def hfeed_to_as1(parsed, actor=None):
+  """Converts a parsed microformats2 JSON ``h-feed`` to ActivityStreams activities.
 
   Args:
-    parsed (dict): parsed JSON microformats2 object
+    parsed (dict): parsed JSON microformats2 document
     actor (dict): optional author AS actor object for all activities. usually
       comes from a ``rel="author"`` link.
 
@@ -711,6 +725,10 @@ def json_to_activities(parsed, actor=None):
         })
 
   return activities
+
+
+json_to_activities = hfeed_to_as1
+"""Deprecated! Use :func:`hfeed_to_as1` instead."""
 
 
 def activities_to_html(activities, extra='', body_class=''):

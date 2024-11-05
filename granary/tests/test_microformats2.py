@@ -16,7 +16,7 @@ class Microformats2Test(testutil.TestCase):
 
   def test_post_type_discovery(self):
     for prop, verb in ('like-of', 'like'), ('repost-of', 'share'):
-      obj = microformats2.json_to_object(
+      obj = microformats2.to_as1(
         {'type': ['h-entry'],
           'properties': {prop: ['http://foo/bar']}})
       self.assertEqual('activity', obj['objectType'])
@@ -24,14 +24,14 @@ class Microformats2Test(testutil.TestCase):
 
   def test_verb_require_of_suffix(self):
     for prop in 'like', 'repost':
-      obj = microformats2.json_to_object(
+      obj = microformats2.to_as1(
         {'type': ['h-entry'],
          'properties': {prop: ['http://foo/bar']}})
       self.assertNotIn('verb', obj)
 
   def test_ignore_h_as(self):
     """https://github.com/snarfed/bridgy/issues/635"""
-    obj = microformats2.json_to_object({'type': ['h-entry', 'h-as-article']})
+    obj = microformats2.to_as1({'type': ['h-entry', 'h-as-article']})
     self.assertEqual('note', obj['objectType'])
 
   def test_html_content_and_summary(self):
@@ -41,7 +41,7 @@ class Microformats2Test(testutil.TestCase):
         ('my val', 'my val', {'value': 'my val'}),
         ('my str', 'my str', 'my str'),
         (None, None, {})):
-      obj = microformats2.json_to_object({'properties': {'content': [value],
+      obj = microformats2.to_as1({'properties': {'content': [value],
                                                          'summary': [value]}})
       self.assertEqual(expected_content, obj.get('content'))
       self.assertEqual(expected_summary, obj.get('summary'))
@@ -52,14 +52,14 @@ class Microformats2Test(testutil.TestCase):
     """
     mf2 = {'properties':
            {'photo': ['the caption', 'http://example.com/image.jpg']}}
-    obj = microformats2.json_to_object(mf2)
+    obj = microformats2.to_as1(mf2)
     self.assertEqual([{'url': 'http://example.com/image.jpg'}], obj['image'])
 
   def test_photo_property_has_no_url(self):
     """handle the case where the photo property is *only* text, not a url"""
     mf2 = {'properties':
            {'photo': ['the caption', 'alternate text']}}
-    obj = microformats2.json_to_object(mf2)
+    obj = microformats2.to_as1(mf2)
     self.assertFalse(obj.get('image'))
 
   def test_video_stream(self):
@@ -68,7 +68,7 @@ class Microformats2Test(testutil.TestCase):
     """
     mf2 = {'properties':
            {'video': ['http://example.com/video.mp4']}}
-    obj = microformats2.json_to_object(mf2)
+    obj = microformats2.to_as1(mf2)
     self.assertEqual([{'url': 'http://example.com/video.mp4'}], obj['stream'])
 
   def test_nested_compound_url_object(self):
@@ -83,17 +83,17 @@ class Microformats2Test(testutil.TestCase):
                },
              }],
            }}
-    obj = microformats2.json_to_object(mf2)
+    obj = microformats2.to_as1(mf2)
     self.assertEqual('http://nested', obj['object']['url'])
 
-  def test_object_to_json_unescapes_html_entities(self):
+  def test_from_as1_unescapes_html_entities(self):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {'content': [{
         'html': 'Entity &lt; <a href="http://my/link">link too</a>',
         'value': 'Entity < link too',
       }]},
-     }, microformats2.object_to_json({
+     }, microformats2.from_as1({
        'verb': 'post',
        'object': {
         'content': 'Entity &lt; link too',
@@ -101,14 +101,14 @@ class Microformats2Test(testutil.TestCase):
        }
      }))
 
-  def test_object_to_json_note_with_context_in_reply_to(self):
+  def test_from_as1_note_with_context_in_reply_to(self):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {
         'content': ['@hey great post'],
         'in-reply-to': ['http://reply/target'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'verb': 'post',
       'object': {
         'content': '@hey great post',
@@ -119,38 +119,38 @@ class Microformats2Test(testutil.TestCase):
         }],
       }}))
 
-  def test_object_to_json_note_with_in_reply_to_array_composite(self):
+  def test_from_as1_note_with_in_reply_to_array_composite(self):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {
         'content': ['@hey great post'],
         'in-reply-to': ['http://reply/target'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'content': '@hey great post',
       'inReplyTo': [{'url': 'http://reply/target'}],
     }))
 
-  def test_object_to_json_note_with_in_reply_to_single_id(self):
+  def test_from_as1_note_with_in_reply_to_single_id(self):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {
         'content': ['@hey great post'],
         'in-reply-to': ['http://reply/target'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'content': '@hey great post',
       'inReplyTo': 'http://reply/target',
     }))
 
-  def test_object_to_json_note_with_in_reply_to_id_and_url(self):
+  def test_from_as1_note_with_in_reply_to_id_and_url(self):
     self.assertEqual({
       'type': ['h-entry'],
       'properties': {
         'content': ['@hey great post'],
         'in-reply-to': ['http://reply/id', 'http://reply/url'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'content': '@hey great post',
       'inReplyTo': {
         'id': 'http://reply/id',
@@ -158,7 +158,7 @@ class Microformats2Test(testutil.TestCase):
       },
     }))
 
-  def test_object_to_json_context_string(self):
+  def test_from_as1_context_string(self):
     """Can happen for objects converted from AS2.
 
     e.g. https://console.cloud.google.com/errors/CLWDpPG37eirUw
@@ -168,26 +168,26 @@ class Microformats2Test(testutil.TestCase):
       'properties': {
         'content': ['@hey great post'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'verb': 'post',
       'object': {'content': '@hey great post'},
       'context': 'http://foo/bar',
       }))
 
-  def test_object_to_json_preserves_url_order(self):
+  def test_from_as1_preserves_url_order(self):
     self.assertEqual({
       'type': ['h-card'],
       'properties': {
         'url': ['http://2', 'http://4', 'http://6'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'person',
       'url': 'http://2',
       'urls': [{'value': 'http://4'},
                {'value': 'http://6'}],
     }))
 
-  def test_object_to_json_bare_string_image(self):
+  def test_from_as1_bare_string_image(self):
     """https://console.cloud.google.com/errors/detail/CKfZrvmnyZ2R-QE;time=P30D?project=bridgy-federated
     """
     self.assertEqual({
@@ -195,7 +195,7 @@ class Microformats2Test(testutil.TestCase):
       'properties': {
         'photo': ['https://the/pic'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'comment',
       'attachments': [{
         'objectType': 'image',
@@ -511,7 +511,7 @@ Shared <a href="#">a post</a> by foo
                  'urls': [{'value': 'https://2'}]},
                 {'urls': [{'value': 'http://1'}, {'value': 'https://2'}]}):
       self.assert_equals(expected_urls,
-                         microformats2.object_to_json(tag)['properties']['url'],
+                         microformats2.from_as1(tag)['properties']['url'],
                          tag)
       self.assert_equals(expected_html,
                          microformats2.render_content({'tags': [tag]}),
@@ -562,7 +562,7 @@ foo bar
         }],
         'content': [{'html': '\n<a class="tag" aria-hidden="true" href="http://x"></a>'}],
       },
-    }, microformats2.object_to_json(obj))
+    }, microformats2.from_as1(obj))
 
   def test_attachments_to_children(self):
     obj = {'attachments': [
@@ -581,7 +581,7 @@ foo bar
     }, {
       'type': ['h-app'],
       'properties': {'name': ['srv']},
-    }], microformats2.object_to_json(obj)['children'])
+    }], microformats2.from_as1(obj)['children'])
 
     html = microformats2.object_to_html(obj)
     self.assert_multiline_in("""\
@@ -606,28 +606,28 @@ foo bar
 </article>
 """, html)
 
-  def test_object_to_json_reaction(self):
+  def test_from_as1_reaction(self):
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
         'content': ['✁'],
         'in-reply-to': ['https://orig/post'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'activity',
       'verb': 'react',
       'content': '✁',
       'object': {'url': 'https://orig/post'},
     }))
 
-  def test_object_to_json_multiple_object_urls(self):
+  def test_from_as1_multiple_object_urls(self):
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
         'content': ['✁'],
         'in-reply-to': ['https://orig/post/1', 'https://orig/post/2'],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'activity',
       'verb': 'react',
       'content': '✁',
@@ -637,7 +637,7 @@ foo bar
       ],
     }))
 
-  def test_object_to_json_not_dict(self):
+  def test_from_as1_not_dict(self):
     """This can happen if we get a dict instead of a list, e.g. with AS 2.0.
 
     Found via AS2 on http://evanminto.com/indieweb/activity-stream.php, e.g.:
@@ -656,37 +656,37 @@ foo bar
       },
     ...
     """
-    self.assert_equals({}, microformats2.object_to_json('foo bar'))
+    self.assert_equals({}, microformats2.from_as1('foo bar'))
 
-  def test_object_to_json_content_null(self):
+  def test_from_as1_content_null(self):
     """https://console.cloud.google.com/errors/CNzPuIvvlbbd3QE"""
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
         'uid': ['tag:fake.com:10157']
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'activity',
       'verb': 'react',
       'id': 'tag:fake.com:10157',
       'content': None,
     }))
 
-  def test_object_to_json_html_entities(self):
+  def test_from_as1_html_entities(self):
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
         'content': ['foo " bar > > >']
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'activity',
       'content': 'foo &quot; bar &gt; &#62; &#x3e;',
     }))
 
-  def test_object_to_json_string_id_replies_shares(self):
+  def test_from_as1_string_id_replies_shares(self):
     self.assert_equals({
       'type': ['h-entry'],
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'note',
       'replies': 'http://foo',
       'shares': 'http://bar',
@@ -731,8 +731,8 @@ foo bar
         'name': ['<bar>'],
       }))
 
-  def test_json_to_object_with_location_hcard(self):
-    obj = microformats2.json_to_object({
+  def test_to_as1_with_location_hcard(self):
+    obj = microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'location': [{
@@ -757,8 +757,8 @@ foo bar
       'url': 'https://kylewm.com/venues/timeless-coffee-roasters-oakland-california',
     }, obj['location'])
 
-  def test_json_to_object_with_location_geo(self):
-    self._test_json_to_object_with_location({
+  def test_to_as1_with_location_geo(self):
+    self._test_to_as1_with_location({
       'location': [{
         'type': ['h-geo'],
         'properties': {
@@ -768,8 +768,8 @@ foo bar
       }],
     })
 
-  def test_json_to_object_with_geo(self):
-    self._test_json_to_object_with_location({
+  def test_to_as1_with_geo(self):
+    self._test_to_as1_with_location({
       'geo': [{
         'properties': {
           'latitude': ['50.820641'],
@@ -778,19 +778,19 @@ foo bar
       }]
     })
 
-  def test_json_to_object_with_geo_url(self):
-    self._test_json_to_object_with_location({
+  def test_to_as1_with_geo_url(self):
+    self._test_to_as1_with_location({
       'geo': ['geo:50.820641,-0.149522;foo=bar'],
     })
 
-  def test_json_to_object_with_lat_lon_top_level(self):
-    self._test_json_to_object_with_location({
+  def test_to_as1_with_lat_lon_top_level(self):
+    self._test_to_as1_with_location({
       'latitude': ['50.820641'],
       'longitude': ['-0.149522'],
     })
 
-  def _test_json_to_object_with_location(self, props):
-    obj = microformats2.json_to_object({
+  def _test_to_as1_with_location(self, props):
+    obj = microformats2.to_as1({
       'type': ['h-entry'],
       'properties': props,
     })
@@ -801,8 +801,8 @@ foo bar
       'objectType': 'place',
     }, obj.get('location'))
 
-  def test_json_to_object_with_categories(self):
-    obj = microformats2.json_to_object({
+  def test_to_as1_with_categories(self):
+    obj = microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'category': [
@@ -834,39 +834,39 @@ foo bar
       },
     ], obj.get('tags'))
 
-  def test_json_to_object_category_strips_hash(self):
+  def test_to_as1_category_strips_hash(self):
     self.assertEqual({
       'objectType': 'note',
       'tags': [{
         'objectType': 'hashtag',
         'displayName': 'foo',
       }],
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'category': ['#foo'],
       },
     }))
 
-  def test_json_to_object_text_newlines(self):
+  def test_to_as1_text_newlines(self):
     """Text newlines should not be converted to <br>s."""
     self.assert_equals({
       'objectType': 'note',
       'content': 'asdf\nqwer',
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'properties': {'content': [{'value': 'asdf\nqwer'}]},
     }))
 
-  def test_json_to_object_keeps_html_newlines(self):
+  def test_to_as1_keeps_html_newlines(self):
     """HTML newlines should be preserved."""
     self.assert_equals({
       'objectType': 'note',
       'content': 'asdf\nqwer',
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'properties': {'content': [{'html': 'asdf\nqwer', 'value': ''}]},
     }))
 
-  def test_json_to_object_simple_url_author(self):
+  def test_to_as1_simple_url_author(self):
     """Simple URL-only authors should be handled ok."""
     self.assert_equals({
       'objectType': 'note',
@@ -875,14 +875,14 @@ foo bar
         'url': 'http://example.com',
         'objectType': 'person',
       },
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'properties': {
         'content': ['foo'],
         'author': ['http://example.com'],
       },
     }))
 
-  def test_json_to_object_simple_name_author(self):
+  def test_to_as1_simple_name_author(self):
     """Simple name-only authors should be handled ok."""
     self.assert_equals({
       'objectType': 'note',
@@ -891,14 +891,14 @@ foo bar
         'displayName': 'My Name',
         'objectType': 'person',
       },
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'properties': {
         'content': ['foo'],
         'author': ['My Name'],
       },
     }))
 
-  def test_json_to_object_authorship_fetch_mf2_func(self):
+  def test_to_as1_authorship_fetch_mf2_func(self):
     self.expect_requests_get('http://example.com', """
 <div class="h-card">
 <a class="p-name u-url" rel="me" href="/">Ms. ☕ Baz</a>
@@ -919,7 +919,7 @@ foo bar
           'displayName': 'my pic',
         }],
       },
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'content': ['foo'],
@@ -927,14 +927,14 @@ foo bar
       },
     }, fetch_mf2=True))
 
-  def test_json_to_object_embedded_responses(self):
+  def test_to_as1_embedded_responses(self):
     """Post with embedded responses as compound objects.
 
     https://martymcgui.re/2020/07/15/what-we-talk-about-when-were-talking-about-webmentions/
     """
     self.assert_equals({
       'objectType': 'activity',
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'like': [{
@@ -952,7 +952,7 @@ foo bar
       },
     }))
 
-  def test_json_to_object_rel_urls_actor_urls_text_title(self):
+  def test_to_as1_rel_urls_actor_urls_text_title(self):
     """https://github.com/snarfed/bridgy-fed/issues/331"""
     self.assert_equals({
       'objectType': 'person',
@@ -968,7 +968,7 @@ foo bar
         'value': 'http://four',
         'displayName': 'four text',
       }],
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-card'],
       'properties': {
         'url': [
@@ -991,7 +991,7 @@ foo bar
       },
     }))
 
-  def test_json_to_object_rel_urls_actor_urls_text_title_one_url(self):
+  def test_to_as1_rel_urls_actor_urls_text_title_one_url(self):
     """https://github.com/snarfed/bridgy-fed/issues/331"""
     self.assert_equals({
       'objectType': 'person',
@@ -1000,7 +1000,7 @@ foo bar
         'value': 'http://one',
         'displayName': 'one text',
       }],
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-card'],
       'properties': {
         'url': ['http://one'],
@@ -1012,7 +1012,7 @@ foo bar
       },
     }))
 
-  def test_json_to_activities(self):
+  def test_hfeed_to_as1(self):
     self.assert_equals([{
       'objectType': 'activity',
       'verb': 'post',
@@ -1026,7 +1026,7 @@ foo bar
       'verb': 'share',
       'object': 'http://orig/post',
       'content_is_html': True,
-    }], microformats2.json_to_activities({
+    }], microformats2.hfeed_to_as1({
       'items': [{
         'type': ['h-entry'],
         'properties': {
@@ -1132,7 +1132,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
   'actor': {'url': 'http://localhost:3000/users/ryan'},
 }]), ignore_blanks=True)
 
-  def test_html_to_activities_brs_to_newlines(self):
+  def test_html_hfeed_to_as1_brs_to_newlines(self):
     """Mostly tests that mf2py converts <br>s to \ns.
 
     Background:
@@ -1144,7 +1144,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
 <article class="h-entry">
 <div class="e-content p-name">foo bar<br />baz <br><br> baj</div>
 </article>"""
-    activities = microformats2.html_to_activities(html)
+    activities = microformats2.html_hfeed_to_as1(html)
     self.assert_equals([{
       'objectType': 'activity',
       'verb': 'post',
@@ -1156,9 +1156,9 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       },
     }], activities)
 
-  def test_html_to_activities_filters_items(self):
+  def test_html_hfeed_to_as1_filters_items(self):
     """Check that we omit h-cards inside h-feeds."""
-    self.assert_equals([], microformats2.html_to_activities("""\
+    self.assert_equals([], microformats2.html_hfeed_to_as1("""\
 <div class="h-feed">
   <article class="h-card">
     <a href="http://foo">bar</a>
@@ -1188,7 +1188,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
       'objectType': 'note',
       'published': good[0],
       'updated': good[1],
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'published': [bad[0]],
@@ -1202,7 +1202,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
         'published': [good[0]],
         'updated': [good[1]],
       },
-    }, microformats2.object_to_json({
+    }, microformats2.from_as1({
       'objectType': 'note',
       'published': bad[0],
       'updated': bad[1],
@@ -1212,7 +1212,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
     self.assert_equals({
       'objectType': 'note',
       'published': '2020-02-21T12:00:00',
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'published': [{
@@ -1228,7 +1228,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
   def test_bad_location(self):
     self.assert_equals({
       'objectType': 'note',
-    }, microformats2.json_to_object({
+    }, microformats2.to_as1({
       'type': ['h-entry'],
       'properties': {
         'location': [
