@@ -615,27 +615,27 @@ class MastodonTest(testutil.TestCase):
   def test_make_like(self):
     self.assert_equals(LIKE, self.mastodon._make_like(STATUS, ACCOUNT))
 
-  def test_status_to_object(self):
-    self.assert_equals(OBJECT, self.mastodon.status_to_object(STATUS))
+  def test_status_to_as1_object(self):
+    self.assert_equals(OBJECT, self.mastodon.status_to_as1_object(STATUS))
 
-  def test_status_to_object_custom_emoji(self):
+  def test_status_to_as1_object_custom_emoji(self):
     self.assert_equals(OBJECT_WITH_EMOJI,
-                       self.mastodon.status_to_object(STATUS_WITH_EMOJI))
+                       self.mastodon.status_to_as1_object(STATUS_WITH_EMOJI))
 
-  def test_status_to_activity(self):
-    self.assert_equals(ACTIVITY, self.mastodon.status_to_activity(STATUS))
+  def test_status_to_as1_activity(self):
+    self.assert_equals(ACTIVITY, self.mastodon.status_to_as1_activity(STATUS))
 
-  def test_reply_status_to_object(self):
-    self.assert_equals(REPLY_OBJECT, self.mastodon.status_to_object(REPLY_STATUS))
+  def test_reply_status_to_as1_object(self):
+    self.assert_equals(REPLY_OBJECT, self.mastodon.status_to_as1_object(REPLY_STATUS))
 
-  def test_reply_status_to_activity(self):
-    self.assert_equals(REPLY_ACTIVITY, self.mastodon.status_to_activity(REPLY_STATUS))
+  def test_reply_status_to_as1_activity(self):
+    self.assert_equals(REPLY_ACTIVITY, self.mastodon.status_to_as1_activity(REPLY_STATUS))
 
-  def test_reblog_status_to_activity(self):
-    self.assert_equals(SHARE_ACTIVITY, self.mastodon.status_to_activity(REBLOG_STATUS))
+  def test_reblog_status_to_as1_activity(self):
+    self.assert_equals(SHARE_ACTIVITY, self.mastodon.status_to_as1_activity(REBLOG_STATUS))
 
   def test_status_with_media_to_object(self):
-    self.assert_equals(MEDIA_OBJECT, self.mastodon.status_to_object(MEDIA_STATUS))
+    self.assert_equals(MEDIA_OBJECT, self.mastodon.status_to_as1_object(MEDIA_STATUS))
 
   def test_preview_status(self):
     self.mastodon.TRUNCATE_TEXT_LENGTH = 20

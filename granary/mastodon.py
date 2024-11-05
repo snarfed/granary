@@ -230,7 +230,7 @@ class Mastodon(source.Source):
     for status in statuses[start_index:]:
       if not include_shares and status.get('reblog'):
         continue
-      activity = self.postprocess_activity(self.status_to_activity(status))
+      activity = self.postprocess_activity(self.status_to_as1_activity(status))
       activities.append(activity)
 
       id = status.get('id')
@@ -242,7 +242,7 @@ class Mastodon(source.Source):
       if fetch_replies and count and count != cache.get('AMRE ' + id):
         context = self._get(API_CONTEXT % id)
         obj['replies'] = {
-          'items': [self.status_to_activity(reply)
+          'items': [self.status_to_as1_activity(reply)
                     for reply in context.get('descendants', [])]
         }
         cache['AMRE ' + id] = count
@@ -267,7 +267,7 @@ class Mastodon(source.Source):
       notifs = self._get(API_NOTIFICATIONS, params={
         'exclude_types[]': ['follow', 'favourite', 'reblog'],
       })
-      activities.extend(self.status_to_activity(n['status']) for n in notifs
+      activities.extend(self.status_to_as1_activity(n['status']) for n in notifs
                         if n.get('status') and n.get('type') == 'mention')
 
     resp = self.make_activities_base_response(util.trim_nulls(activities))
@@ -301,7 +301,7 @@ class Mastodon(source.Source):
     """
     return self.status_to_object(self._get(API_STATUS % comment_id))
 
-  def status_to_activity(self, status):
+  def status_to_as1_activity(self, status):
     """Converts a status to an activity.
 
     Args:
@@ -338,7 +338,10 @@ class Mastodon(source.Source):
 
     return self.postprocess_activity(activity)
 
-  def status_to_object(self, status):
+  status_to_activity = status_to_as1_activity
+  """Deprecated! Use :func:`status_to_as1_activity` instead."""
+
+  def status_to_as1_object(self, status):
     """Converts a status to an object.
 
     Args:
@@ -451,6 +454,9 @@ class Mastodon(source.Source):
       }]
 
     return self.postprocess_object(obj)
+
+  status_to_object = status_to_as1_object
+  """Deprecated! Use :func:`status_to_as1_object` instead."""
 
   def to_as1_actor(self, account):
     """Converts a Mastodon account to an AS1 actor.
