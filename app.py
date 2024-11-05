@@ -268,7 +268,7 @@ def url():
       actor = microformats2.find_author(mf2, fetch_mf2_func=fetch_mf2_func)
       title = microformats2.get_title(mf2)
       hfeed = mf2util.find_first_entry(mf2, ['h-feed'])
-    except (KeyError, ValueError) as e:
+    except (KeyError, ValueError, TypeError) as e:
       raise BadRequest(f'Could not parse {final_url} as {input}: {e}')
 
   try:
