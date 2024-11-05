@@ -64,7 +64,7 @@ class Reddit(source.Source):
 
   @cachedmethod(lambda self: user_cache, lock=lambda self: user_cache_lock,
                 key=lambda self, user: getattr(user, 'name', None))
-  def praw_to_actor(self, praw_user):
+  def praw_to_as1_actor(self, praw_user):
     """Converts a PRAW Redditor to an actor.
 
     Makes external calls to fetch data from the Reddit API.
@@ -93,6 +93,9 @@ class Reddit(source.Source):
       return {}
 
     return self.to_as1_actor(user)
+
+  praw_to_actor = praw_to_as1_actor
+  """Deprecated! Use :meth:`praw_to_as1_actor` instead."""
 
   def to_as1_actor(self, user):
     """Converts a dict user to an actor.
@@ -139,7 +142,7 @@ class Reddit(source.Source):
   user_to_actor = to_as1_actor
   """Deprecated! Use :meth:`to_as1_actor` instead."""
 
-  def praw_to_object(self, thing, type):
+  def to_as1_object(self, thing, type):
     """Converts a PRAW object to an AS1 object.
 
     Currently only returns public content.
@@ -170,7 +173,7 @@ class Reddit(source.Source):
 
     user = getattr(thing, 'author', None)
     if user:
-      obj['author'] = self.praw_to_actor(user)
+      obj['author'] = self.praw_to_as1_actor(user)
 
     if type == 'submission':
       content = getattr(thing, 'selftext', None)
@@ -206,7 +209,10 @@ class Reddit(source.Source):
 
     return self.postprocess_object(obj)
 
-  def praw_to_activity(self, thing, type):
+  praw_to_object = to_as1_object
+  """Deprecated! Use :meth:`to_as1_object` instead."""
+
+  def to_as1_activity(self, thing, type):
     """Converts a PRAW submission or comment to an activity.
 
     Note that this will make external API calls to lazily load some attributes.
@@ -233,6 +239,9 @@ class Reddit(source.Source):
       'object': obj,
     }
     return self.postprocess_activity(activity)
+
+  praw_to_activity = to_as1_activity
+  """Deprecated! Use :meth:`to_as1_activity` instead."""
 
   def _fetch_replies(self, activities, cache=None):
     """Fetches and injects comments into a list of activities, in place.
@@ -298,7 +307,7 @@ class Reddit(source.Source):
     Returns
       dict: AS1 actor, or ``{}`` if the user isn't found
     """
-    return self.praw_to_actor(self._redditor(user_id=user_id))
+    return self.praw_to_as1_actor(self._redditor(user_id=user_id))
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
                   activity=None):

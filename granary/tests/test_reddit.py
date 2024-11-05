@@ -184,47 +184,47 @@ class RedditTest(testutil.TestCase):
 
   def test_missing_to_as1_actor(self):
     self.assert_equals(MISSING_OBJECT,
-                       self.reddit.praw_to_actor(FakeMissingRedditor()))
+                       self.reddit.praw_to_as1_actor(FakeMissingRedditor()))
 
   def test_suspended_to_as1_actor(self):
     suspended = util.Struct(name='mr_suspended', is_suspended=True)
-    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(suspended))
+    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_as1_actor(suspended))
 
-  def test_praw_to_actor(self):
-    self.assert_equals(ACTOR, self.reddit.praw_to_actor(self.redditor))
+  def test_praw_to_as1_actor(self):
+    self.assert_equals(ACTOR, self.reddit.praw_to_as1_actor(self.redditor))
 
-  def test_broken_praw_to_actor(self):
-    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_actor(util.Struct()))
+  def test_broken_praw_to_as1_actor(self):
+    self.assert_equals(MISSING_OBJECT, self.reddit.praw_to_as1_actor(util.Struct()))
 
-  def test_praw_to_actor_no_subreddit(self):
+  def test_praw_to_as1_actor_no_subreddit(self):
     self.redditor.subreddit = None
     expected = copy.deepcopy(ACTOR)
     del expected['description']
     del expected['urls']
     expected['url'] = 'https://reddit.com/user/bonkerfield/'
-    self.assert_equals(expected, self.reddit.praw_to_actor(self.redditor))
+    self.assert_equals(expected, self.reddit.praw_to_as1_actor(self.redditor))
 
   def test_praw_to_comment(self):
     self.assert_equals(COMMENT_OBJECT,
-                       self.reddit.praw_to_object(self.comment, 'comment'))
+                       self.reddit.to_as1_object(self.comment, 'comment'))
 
   def test_broken_praw_to_comment(self):
     self.assert_equals(MISSING_OBJECT,
-                       self.reddit.praw_to_object(util.Struct(), 'comment'))
+                       self.reddit.to_as1_object(util.Struct(), 'comment'))
 
   def test_submission_to_activity_with_link(self):
     self.assert_equals(
       ACTIVITY_WITH_LINK,
-      self.reddit.praw_to_activity(self.submission_link, type='submission'))
+      self.reddit.to_as1_activity(self.submission_link, type='submission'))
 
   def test_submission_to_activity_with_selftext(self):
     self.assert_equals(
       ACTIVITY_WITH_SELFTEXT,
-      self.reddit.praw_to_activity(self.submission_selftext, type='submission'))
+      self.reddit.to_as1_activity(self.submission_selftext, type='submission'))
 
   def test_broken_submission_to_object(self):
     self.assert_equals(MISSING_OBJECT,
-                       self.reddit.praw_to_activity(util.Struct(), type='submission'))
+                       self.reddit.to_as1_activity(util.Struct(), type='submission'))
 
   def test_post_id(self):
     self.assert_equals(
