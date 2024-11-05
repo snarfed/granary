@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 CONTENT_TYPE = 'application/rss+xml; charset=utf-8'
 
 
-def from_activities(activities, actor=None, title=None, feed_url=None,
-                    home_page_url=None, hfeed=None):
+def from_as1(activities, actor=None, title=None, feed_url=None,
+             home_page_url=None, hfeed=None):
   """Converts ActivityStreams activities to an RSS 2.0 feed.
 
   Args:
@@ -188,7 +188,11 @@ def from_activities(activities, actor=None, title=None, feed_url=None,
   return fg.rss_str(pretty=True).decode('utf-8')
 
 
-def to_activities(rss):
+from_activities = from_as1
+"""Deprecated! Use :meth:`from_as1` instead."""
+
+
+def to_as1(rss):
   """Converts an RSS feed to ActivityStreams 1 activities.
 
   Args:
@@ -301,3 +305,7 @@ def to_activities(rss):
     }, mentions=True))
 
   return util.trim_nulls(activities)
+
+
+to_activities = to_as1
+"""Deprecated! Use :meth:`to_as1` instead."""

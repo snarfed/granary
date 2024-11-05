@@ -6,14 +6,14 @@ from .. import rss
 
 class RssTest(testutil.TestCase):
 
-  def test_from_activities_bad_published_datetime(self):
+  def test_from_as1_bad_published_datetime(self):
     self.assert_multiline_in("""
 <item>
   <title>my post</title>
   <link>http://perma/link</link>
   <description><![CDATA[something
 """,
-      rss.from_activities([{
+      rss.from_as1([{
         'url': 'http://perma/link',
         'objectType': 'article',
         'displayName': 'my post',
@@ -22,8 +22,8 @@ class RssTest(testutil.TestCase):
       }], feed_url='http://this'),
       ignore_blanks=True)
 
-  def test_from_activities_unknown_mime_type(self):
-    got = rss.from_activities([{
+  def test_from_as1_unknown_mime_type(self):
+    got = rss.from_as1([{
       'url': 'http://perma/link',
       'objectType': 'article',
       'displayName': 'my post',
@@ -44,17 +44,17 @@ class RssTest(testutil.TestCase):
 <enclosure url="http://a/podcast.foo" length="0" type=""/>
 </item>""", got, ignore_blanks=True)
 
-  def test_from_activities_published_updated_bad_type(self):
+  def test_from_as1_published_updated_bad_type(self):
     for field in 'published', 'updated':
-      got = rss.from_activities([{
+      got = rss.from_as1([{
         field: {'a': 3},
         'content': 'foo bar',
       }], feed_url='http://this')
       self.assertNotIn(field, got)
 
-  def test_from_activities_hashtag(self):
+  def test_from_as1_hashtag(self):
     for field in 'published', 'updated':
-      got = rss.from_activities([{
+      got = rss.from_as1([{
         'content': 'foo bar',
         'attachments': [{
           'objectType': 'audio',
@@ -66,8 +66,8 @@ class RssTest(testutil.TestCase):
       }], feed_url='http://this')
       self.assertNotIn(field, got)
 
-  def test_from_activities_share_string_object_with_content(self):
-    got = rss.from_activities([{
+  def test_from_as1_share_string_object_with_content(self):
+    got = rss.from_as1([{
       'objectType': 'activity',
       'verb': 'share',
       'object': 'https://fireburn.ru/posts/1617172734',
@@ -75,8 +75,8 @@ class RssTest(testutil.TestCase):
     }], feed_url='http://this')
     self.assertIn('foo bar', got)
 
-  def test_from_activities_share_string_object(self):
-    got = rss.from_activities([{
+  def test_from_as1_share_string_object(self):
+    got = rss.from_as1([{
       'objectType': 'activity',
       'verb': 'share',
       'object': {
@@ -97,7 +97,7 @@ class RssTest(testutil.TestCase):
 The original post]]></description>
 """, got, ignore_blanks=True)
 
-  def test_from_activities_missing_objectType_verb(self):
+  def test_from_as1_missing_objectType_verb(self):
     self.assert_multiline_in("""
 <item>
 <description><![CDATA[foo bar]]></description>
@@ -111,7 +111,7 @@ The original post]]></description>
 <author>-</author>
 <guid isPermaLink="true">http://read/this</guid>
 </item>
-""", rss.from_activities([{
+""", rss.from_as1([{
     'object': {
       'objectType': 'note',
       'content': 'foo bar',
@@ -131,8 +131,8 @@ The original post]]></description>
     },
   }], feed_url='http://this'), ignore_blanks=True)
 
-  def test_from_activities_item_with_two_enclosures(self):
-    got = rss.from_activities([{
+  def test_from_as1_item_with_two_enclosures(self):
+    got = rss.from_as1([{
       'attachments': [{
         'objectType': 'audio',
         'stream': {'url': 'http://a/podcast.mp3'},
@@ -146,8 +146,8 @@ The original post]]></description>
     self.assertNotIn(
       '<enclosure url="http://a/vidjo.mov" length="0" type="video/quicktime"/>', got)
 
-  def test_from_activities_item_with_image_enclosure(self):
-    got = rss.from_activities([{
+  def test_from_as1_item_with_image_enclosure(self):
+    got = rss.from_as1([{
       'objectType': 'note',
       'image': [{
         'url': 'http://pic.png',
@@ -157,7 +157,7 @@ The original post]]></description>
     self.assert_multiline_in('<enclosure url="http://pic.png" length="0" type="image/png"/>', got)
 
   def test_render_html_image(self):
-    got = rss.from_activities([{
+    got = rss.from_as1([{
       'objectType': 'note',
       'image': ['http://pic/ture.jpeg'],
     }], feed_url='http://this')
@@ -165,7 +165,7 @@ The original post]]></description>
       '<img class="u-photo" src="http://pic/ture.jpeg" alt="" />', got)
 
   def test_hfeed_photo(self):
-    got = rss.from_activities([], feed_url='http://this', hfeed={
+    got = rss.from_as1([], feed_url='http://this', hfeed={
       'type': ['h-feed'],
       'properties': {
         'name': ['2toPonder'],
@@ -179,7 +179,7 @@ The original post]]></description>
 </image>""", got)
 
   def test_content_html(self):
-    got = rss.from_activities([{
+    got = rss.from_as1([{
         'objectType': 'note',
         'content': '<x>A</x> <y> <z>B C</z>',
       }], feed_url='http://this')
@@ -188,7 +188,7 @@ The original post]]></description>
 """, got)
 
   def test_title_html(self):
-    got = rss.from_activities([{
+    got = rss.from_as1([{
         'objectType': 'article',
         'displayName': '<x>A</x> <y> <z>B C</z>',
       }], feed_url='http://this')
@@ -198,7 +198,7 @@ The original post]]></description>
 """, got)
 
   def test_author(self):
-    got = rss.from_activities([{
+    got = rss.from_as1([{
         'content': 'foo bar',
         'author': {
           'objectType':'person',
@@ -208,26 +208,26 @@ The original post]]></description>
     self.assert_multiline_in('<author>- (Mrs. Baz)</author>', got)
 
   def test_author_string_id(self):
-    got = rss.from_activities([{
+    got = rss.from_as1([{
         'content': 'foo bar',
         'author': 'tag:bob',
       }], feed_url='http://this')
     self.assert_multiline_in('<author>- (tag:bob)</author>', got)
 
   def test_order(self):
-    got = rss.from_activities([
+    got = rss.from_as1([
       {'content': 'first'},
       {'content': 'second'},
     ], feed_url='http://this')
     self.assertLess(got.find('<description><![CDATA[first]]></description>'),
                     got.find('<description><![CDATA[second]]></description>'))
 
-  def test_to_activities_title_object_type_article(self):
+  def test_to_as1_title_object_type_article(self):
     self.assert_equals({
       'objectType': 'article',
       'content': 'some text',
       'displayName': 'my title',
-    }, rss.to_activities(
+    }, rss.to_as1(
 """\
 <?xml version='1.0' encoding='UTF-8'?>
 <rss version="2.0">
@@ -240,11 +240,11 @@ The original post]]></description>
 </rss>
 """)[0]['object'])
 
-  def test_to_activities_title_is_description_object_type_note(self):
+  def test_to_as1_title_is_description_object_type_note(self):
     self.assert_equals({
       'objectType': 'note',
       'content': 'lorem ipsum foosum barsum',
-    }, rss.to_activities(
+    }, rss.to_as1(
 """\
 <?xml version='1.0' encoding='UTF-8'?>
 <rss version="2.0">
@@ -257,11 +257,11 @@ The original post]]></description>
 </rss>
 """)[0]['object'])
 
-  def test_to_activities_title_is_ellipsized_description_object_type_note(self):
+  def test_to_as1_title_is_ellipsized_description_object_type_note(self):
     self.assert_equals({
       'objectType': 'note',
       'content': 'lorem ipsum foosum barsum',
-    }, rss.to_activities(
+    }, rss.to_as1(
 """\
 <?xml version='1.0' encoding='UTF-8'?>
 <rss version="2.0">
@@ -274,7 +274,7 @@ The original post]]></description>
 </rss>
 """)[0]['object'])
 
-  def test_to_activities_media_content_image(self):
+  def test_to_as1_media_content_image(self):
     """Based on Mastodon's RSS. https://github.com/snarfed/granary/issues/674"""
     self.assert_equals({
       'objectType': 'note',
@@ -287,7 +287,7 @@ The original post]]></description>
       }, {
         'url': 'https://files.mastodon.social/def.jpg',
       }],
-    }, rss.to_activities(
+    }, rss.to_as1(
 """\
 <?xml version='1.0' encoding='UTF-8'?>
 <rss version="2.0" xmlns:webfeeds="http://webfeeds.org/rss/1.0" xmlns:media="http://search.yahoo.com/mrss/">
@@ -303,14 +303,14 @@ The original post]]></description>
 </rss>
 """)[0]['object'])
 
-  def test_to_activities_image_enclosure(self):
+  def test_to_as1_image_enclosure(self):
     self.assert_equals({
       'objectType': 'note',
       'image': [{
         'url': 'http://pic',
         'mimeType': 'image/jpeg',
       }],
-    }, rss.to_activities(
+    }, rss.to_as1(
 """\
 <?xml version='1.0' encoding='UTF-8'?>
 <rss version="2.0">
