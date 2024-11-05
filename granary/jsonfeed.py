@@ -14,8 +14,7 @@ from .source import Source
 ATTACHMENT_TYPES = {'image', 'audio', 'video'}
 
 
-def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
-                           home_page_url=None):
+def from_as1(activities, actor=None, title=None, feed_url=None, home_page_url=None):
   """Converts ActivityStreams activities to a JSON feed.
 
   Args:
@@ -104,7 +103,11 @@ def activities_to_jsonfeed(activities, actor=None, title=None, feed_url=None,
   }, ignore='content_text')
 
 
-def jsonfeed_to_activities(jsonfeed):
+activities_to_jsonfeed = from_as1
+"""Deprecated! Use :meth:`from_as1` instead."""
+
+
+def to_as1(jsonfeed):
   """Converts a JSON feed to ActivityStreams activities and actor.
 
   Args:
@@ -168,3 +171,7 @@ def jsonfeed_to_activities(jsonfeed):
     }))
 
   return (util.trim_nulls(activities), util.trim_nulls(actor))
+
+
+jsonfeed_to_activities = to_as1
+"""Deprecated! Use :meth:`to_as1` instead."""
