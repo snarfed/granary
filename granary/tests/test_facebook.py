@@ -1708,7 +1708,7 @@ class FacebookTest(testutil.TestCase):
 
   def test_get_activities_self_includes_shared_story(self):
     post = {'id': '1', 'status_type': 'shared_story'}
-    activity = self.fb.post_to_activity(post)
+    activity = self.fb.post_to_as1_activity(post)
 
     self.expect_urlopen(API_ME_POSTS, {'data': [post]})
     self.expect_urlopen(API_ME_PHOTOS, {})
@@ -2071,40 +2071,40 @@ class FacebookTest(testutil.TestCase):
     self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
       '123', '10100176064482163', '100006', 'sad', activity=ACTIVITY))
 
-  def test_post_to_activity_full(self):
-    self.assert_equals(ACTIVITY, self.fb.post_to_activity(POST))
+  def test_post_to_as1_activity_full(self):
+    self.assert_equals(ACTIVITY, self.fb.post_to_as1_activity(POST))
 
-  def test_post_to_activity_minimal(self):
+  def test_post_to_as1_activity_minimal(self):
     # just test that we don't crash
-    self.fb.post_to_activity({'id': '123_456', 'message': 'asdf'})
+    self.fb.post_to_as1_activity({'id': '123_456', 'message': 'asdf'})
 
-  def test_post_to_activity_empty(self):
+  def test_post_to_as1_activity_empty(self):
     # just test that we don't crash
-    self.fb.post_to_activity({})
+    self.fb.post_to_as1_activity({})
 
-  def test_post_to_activity_unknown_id_format(self):
+  def test_post_to_as1_activity_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
-    self.assert_equals({}, self.fb.post_to_activity({'id': '123^456'}))
+    self.assert_equals({}, self.fb.post_to_as1_activity({'id': '123^456'}))
 
-  def test_post_to_object_full(self):
-    self.assert_equals(POST_OBJ, self.fb.post_to_object(POST))
+  def test_post_to_as1_full(self):
+    self.assert_equals(POST_OBJ, self.fb.post_to_as1(POST))
 
-  def test_post_to_object_minimal(self):
+  def test_post_to_as1_minimal(self):
     # just test that we don't crash
-    self.fb.post_to_object({'id': '123_456', 'message': 'asdf'})
+    self.fb.post_to_as1({'id': '123_456', 'message': 'asdf'})
 
-  def test_post_to_object_empty(self):
-    self.assert_equals({}, self.fb.post_to_object({}))
+  def test_post_to_as1_empty(self):
+    self.assert_equals({}, self.fb.post_to_as1({}))
 
-  def test_post_to_object_expands_relative_links(self):
+  def test_post_to_as1_expands_relative_links(self):
     post = copy.copy(POST)
     post['link'] = '/relative/123'
 
     post_obj = copy.deepcopy(POST_OBJ)
     post_obj['attachments'][0]['url'] = 'https://www.facebook.com/relative/123'
-    self.assert_equals(post_obj, self.fb.post_to_object(post))
+    self.assert_equals(post_obj, self.fb.post_to_as1(post))
 
-  def test_post_to_object_colon_id(self):
+  def test_post_to_as1_colon_id(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
     id = '12:34:56'
     self.assert_equals({
@@ -2113,55 +2113,55 @@ class FacebookTest(testutil.TestCase):
       'fb_id': id,
       'content': 'asdf',
       'url': 'https://www.facebook.com/12/posts/34',
-    }, self.fb.post_to_object({
+    }, self.fb.post_to_as1({
       'id': id,
       'message': 'asdf',
     }))
 
-  def test_post_to_object_unknown_id_format(self):
+  def test_post_to_as1_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
-    self.assert_equals({}, self.fb.post_to_object({'id': '123^456'}))
+    self.assert_equals({}, self.fb.post_to_as1({'id': '123^456'}))
 
-  def test_post_to_object_with_comment_unknown_id_format(self):
+  def test_post_to_as1_with_comment_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
     post = copy.deepcopy(POST)
     post['comments']['data'].append({'id': '123 456^789'})
-    self.assert_equals(POST_OBJ, self.fb.post_to_object(post))
+    self.assert_equals(POST_OBJ, self.fb.post_to_as1(post))
 
-  def test_post_to_object_message_tags_list(self):
+  def test_post_to_as1_message_tags_list(self):
     post = copy.copy(POST)
     tags = list(post['message_tags'].values())
     post['message_tags'] = tags[0] + tags[1]  # both lists
-    self.assert_equals(POST_OBJ, self.fb.post_to_object(post))
+    self.assert_equals(POST_OBJ, self.fb.post_to_as1(post))
 
-  def test_post_to_object_with_only_count_of_likes(self):
+  def test_post_to_as1_with_only_count_of_likes(self):
     post = copy.copy(POST)
     post['likes'] = 5  # count instead of actual like objects
     obj = copy.copy(POST_OBJ)
     obj['tags'] = [t for t in obj['tags'] if t.get('verb') != 'like']
-    self.assert_equals(obj, self.fb.post_to_object(post))
+    self.assert_equals(obj, self.fb.post_to_as1(post))
 
-  def test_post_to_object_photo_post(self):
-    self.assert_equals(PHOTO_POST_OBJ, self.fb.post_to_object(PHOTO_POST))
+  def test_post_to_as1_photo_post(self):
+    self.assert_equals(PHOTO_POST_OBJ, self.fb.post_to_as1(PHOTO_POST))
 
-  def test_comment_to_object_full(self):
+  def test_comment_to_as1_full(self):
     for cmt, obj in zip(COMMENTS, COMMENT_OBJS):
-      self.assert_equals(obj, self.fb.comment_to_object(cmt))
+      self.assert_equals(obj, self.fb.comment_to_as1(cmt))
 
-  def test_comment_to_object_minimal(self):
+  def test_comment_to_as1_minimal(self):
     # just test that we don't crash
-    self.fb.comment_to_object({'id': '123_456_789', 'message': 'asdf'})
+    self.fb.comment_to_as1({'id': '123_456_789', 'message': 'asdf'})
 
-  def test_comment_to_object_empty(self):
-    self.assert_equals({}, self.fb.comment_to_object({}))
+  def test_comment_to_as1_empty(self):
+    self.assert_equals({}, self.fb.comment_to_as1({}))
 
-  def test_comment_to_object_post_author_id(self):
-    obj = self.fb.comment_to_object(COMMENTS[0], post_author_id='my-author')
+  def test_comment_to_as1_post_author_id(self):
+    obj = self.fb.comment_to_as1(COMMENTS[0], post_author_id='my-author')
     self.assert_equals(
       'https://www.facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
 
-  def test_comment_to_object_colon_id(self):
+  def test_comment_to_as1_colon_id(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
     id = '12:34:56_78'
     self.assert_equals({
@@ -2174,16 +2174,16 @@ class FacebookTest(testutil.TestCase):
         'id': tag_uri('34'),
         'url': 'https://www.facebook.com/12/posts/34',
       }],
-    }, self.fb.comment_to_object({
+    }, self.fb.comment_to_as1({
       'id': id,
       'message': 'asdf',
     }))
 
-  def test_comment_to_object_unknown_id_format(self):
+  def test_comment_to_as1_unknown_id_format(self):
     """See https://github.com/snarfed/bridgy/issues/305"""
-    self.assert_equals({}, self.fb.comment_to_object({'id': '123 456^789'}))
+    self.assert_equals({}, self.fb.comment_to_as1({'id': '123 456^789'}))
 
-  def test_comment_to_object_with_parent_comment(self):
+  def test_comment_to_as1_with_parent_comment(self):
     """See https://github.com/snarfed/bridgy/issues/435"""
     self.assert_equals({
       'objectType': 'comment',
@@ -2197,7 +2197,7 @@ class FacebookTest(testutil.TestCase):
         {'id': tag_uri('34_56'),
          'url': 'https://www.facebook.com/34?comment_id=56'},
       ],
-    }, self.fb.comment_to_object({
+    }, self.fb.comment_to_as1({
       'id': '34_78',
       'message': "now you're giving me all sorts of ideas!",
       'parent': {
@@ -2208,19 +2208,19 @@ class FacebookTest(testutil.TestCase):
 
   def test_comment_with_photo_to_object(self):
     self.assert_equals(COMMENT_WITH_PHOTO_OBJ,
-                       self.fb.comment_to_object(COMMENT_WITH_PHOTO))
+                       self.fb.comment_to_as1(COMMENT_WITH_PHOTO))
 
-  def test_share_to_object_empty(self):
-    self.assert_equals({}, self.fb.share_to_object({}))
+  def test_share_to_as1_empty(self):
+    self.assert_equals({}, self.fb.share_to_as1({}))
 
-  def test_share_to_object_minimal(self):
+  def test_share_to_as1_minimal(self):
     # just test that we don't crash
-    self.fb.share_to_object({'id': '123_456_789', 'message': 'asdf'})
+    self.fb.share_to_as1({'id': '123_456_789', 'message': 'asdf'})
 
-  def test_share_to_object_full(self):
-    self.assert_equals(SHARE_OBJ, self.fb.share_to_object(SHARE))
+  def test_share_to_as1_full(self):
+    self.assert_equals(SHARE_OBJ, self.fb.share_to_as1(SHARE))
 
-  def test_share_to_object_no_message(self):
+  def test_share_to_as1_no_message(self):
     share = copy.deepcopy(SHARE)
     del share['message']
 
@@ -2229,7 +2229,7 @@ class FacebookTest(testutil.TestCase):
       'content': share['description'],
       'displayName': share['description'],
     })
-    self.assert_equals(share_obj, self.fb.share_to_object(share))
+    self.assert_equals(share_obj, self.fb.share_to_as1(share))
 
     del share['description']
     del share['name']
@@ -2237,7 +2237,7 @@ class FacebookTest(testutil.TestCase):
     del share_obj['displayName']
     del share_obj['object']['content']
     del share_obj['object']['displayName']
-    self.assert_equals(share_obj, self.fb.share_to_object(share))
+    self.assert_equals(share_obj, self.fb.share_to_as1(share))
 
   def test_to_as1_actor_full(self):
     self.assert_equals(ACTOR, self.fb.to_as1_actor(USER))
@@ -2305,17 +2305,17 @@ http://b http://c""",
   def test_to_as1_actor_empty(self):
     self.assert_equals({}, self.fb.to_as1_actor({}))
 
-  def test_event_to_object_empty(self):
-    self.assert_equals({'objectType': 'event'}, self.fb.event_to_object({}))
+  def test_event_to_as1_object_empty(self):
+    self.assert_equals({'objectType': 'event'}, self.fb.event_to_as1_object({}))
 
-  def test_event_to_object(self):
-    self.assert_equals(EVENT_OBJ, self.fb.event_to_object(EVENT))
+  def test_event_to_as1_object(self):
+    self.assert_equals(EVENT_OBJ, self.fb.event_to_as1_object(EVENT))
 
-  def test_multi_event_to_object(self):
+  def test_multi_event_to_as1_object(self):
     # TODO: actually implement multi-instance events
-    self.assert_equals(MULTI_EVENT_OBJ, self.fb.event_to_object(MULTI_EVENT))
+    self.assert_equals(MULTI_EVENT_OBJ, self.fb.event_to_as1_object(MULTI_EVENT))
 
-  def test_event_to_object_with_rsvps(self):
+  def test_event_to_as1_object_with_rsvps(self):
     obj = copy.deepcopy(EVENT_OBJ)
     obj['notAttending'].append({
       'objectType': 'person',
@@ -2334,21 +2334,21 @@ http://b http://c""",
       'image': {'url': 'https://graph.facebook.com/v4.0/678/picture?type=large'},
     })
 
-    self.assert_equals(obj, self.fb.event_to_object(EVENT, rsvps=[
+    self.assert_equals(obj, self.fb.event_to_as1_object(EVENT, rsvps=[
       {'name': 'Bob', 'rsvp_status': 'declined', 'id': '345'},
       {'name': 'Eve', 'rsvp_status': 'maybe', 'id': '678'},
     ]))
 
-  def test_event_to_activity(self):
-    self.assert_equals(EVENT_ACTIVITY, self.fb.event_to_activity(EVENT))
+  def test_event_to_as1_activity(self):
+    self.assert_equals(EVENT_ACTIVITY, self.fb.event_to_as1_activity(EVENT))
 
-  def test_rsvp_to_object(self):
+  def test_rsvp_to_as1(self):
     for rsvp, obj in RSVPS_TO_OBJS:
       if rsvp == RSVP_INTERESTED:
         continue
 
       # with event
-      self.assert_equals(obj, self.fb.rsvp_to_object(rsvp, event=EVENT))
+      self.assert_equals(obj, self.fb.rsvp_to_as1(rsvp, event=EVENT))
 
       # without event
       obj = copy.deepcopy(obj)
@@ -2356,10 +2356,10 @@ http://b http://c""",
       del obj['url']
       if rsvp == RSVP_NOREPLY:
         del obj['actor']
-      self.assert_equals(obj, self.fb.rsvp_to_object(rsvp))
+      self.assert_equals(obj, self.fb.rsvp_to_as1(rsvp))
 
-  def test_rsvp_to_object_with_type(self):
-    obj = self.fb.rsvp_to_object(RSVP_INTERESTED, type='interested', event=EVENT)
+  def test_rsvp_to_as1_with_type(self):
+    obj = self.fb.rsvp_to_as1(RSVP_INTERESTED, type='interested', event=EVENT)
     self.assert_equals(RSVP_INTERESTED_OBJ, obj)
 
   def test_picture_without_message(self):
@@ -2369,7 +2369,7 @@ http://b http://c""",
       'fb_id': '445566',
       'url': 'https://www.facebook.com/445566',
       'image': {'url': 'http://its/a/picture'},
-    }, self.fb.post_to_object({  # Facebook
+    }, self.fb.post_to_as1({  # Facebook
       'id': '445566',
       'picture': 'http://its/a/picture',
       'source': 'https://from/a/source',
@@ -2400,7 +2400,7 @@ http://b http://c""",
             }
           }
         }
-    self.assert_equals(activity, self.fb.post_to_activity(post))
+    self.assert_equals(activity, self.fb.post_to_as1_activity(post))
 
     activity.update({
         'title': 'Ryan Barrett likes a photo on Instagram.',
@@ -2413,7 +2413,7 @@ http://b http://c""",
         'from': USER,
         'application': {'name': 'Instagram', 'id': '12402457428'},
         })
-    self.assert_equals(activity, self.fb.post_to_activity(post))
+    self.assert_equals(activity, self.fb.post_to_as1_activity(post))
 
   def test_story_as_content(self):
     self.assert_equals({
@@ -2422,7 +2422,7 @@ http://b http://c""",
         'url': 'https://www.facebook.com/101007473698067',
         'objectType': 'note',
         'content': 'Once upon a time.',
-      }, self.fb.post_to_object({
+      }, self.fb.post_to_as1({
         'id': '101007473698067',
         'story': 'Once upon a time.',
         }))
@@ -2434,7 +2434,7 @@ http://b http://c""",
         'url': 'https://www.facebook.com/101007473698067',
         'objectType': 'note',
         'content': 'Once upon a time.',
-      }, self.fb.post_to_object({
+      }, self.fb.post_to_as1({
         'id': '101007473698067',
         'name': 'Once upon a time.',
         }))
@@ -2454,7 +2454,7 @@ http://b http://c""",
           'url': 'https://www.facebook.com/212038/posts/10100747',
           'objectType': 'product',
           },
-      }, self.fb.post_to_activity({
+      }, self.fb.post_to_as1_activity({
         'id': '10100747',
         'from': USER,
         'link': '/gifts/12345',
@@ -2487,7 +2487,7 @@ http://b http://c""",
           'displayName': "The Rifle's Spiral",
           },
       }
-    self.assert_equals(activity, self.fb.post_to_activity(post))
+    self.assert_equals(activity, self.fb.post_to_as1_activity(post))
 
     activity.update({
         'title': "Unknown listened to The Rifle's Spiral on Rdio.",
@@ -2503,13 +2503,13 @@ http://b http://c""",
 
   def test_facebook_note(self):
     """https://github.com/snarfed/bridgy/issues/480"""
-    self.assert_equals(FB_NOTE_ACTIVITY, self.fb.post_to_activity(FB_NOTE))
+    self.assert_equals(FB_NOTE_ACTIVITY, self.fb.post_to_as1_activity(FB_NOTE))
     self.assert_equals(FB_NOTE_ACTIVITY,
-                       self.fb.post_to_activity(FB_CREATED_NOTE))
+                       self.fb.post_to_as1_activity(FB_CREATED_NOTE))
 
   def test_link_type(self):
     """https://github.com/snarfed/bridgy/issues/502#issuecomment-160480559"""
-    self.assert_equals(FB_LINK_ACTIVITY, self.fb.post_to_activity(FB_LINK))
+    self.assert_equals(FB_LINK_ACTIVITY, self.fb.post_to_as1_activity(FB_LINK))
 
   def test_privacy_to_to(self):
     """https://github.com/snarfed/bridgy/issues/559#issuecomment-159642227
@@ -2564,15 +2564,15 @@ http://b http://c""",
     self.assert_equals(public, fb.privacy_to_to(from_other, type='comment'))
     self.assert_equals(public, fb.privacy_to_to(from_other))
 
-  def test_album_to_object_empty(self):
-    self.assert_equals({}, self.fb.album_to_object({}))
+  def test_album_to_as1_empty(self):
+    self.assert_equals({}, self.fb.album_to_as1({}))
 
-  def test_album_to_object_minimal(self):
+  def test_album_to_as1_minimal(self):
     # just test that we don't crash
-    self.fb.album_to_object({'id': '123_456_789', 'name': 'asdf'})
+    self.fb.album_to_as1({'id': '123_456_789', 'name': 'asdf'})
 
-  def test_album_to_object_full(self):
-    self.assert_equals(ALBUM_OBJ, self.fb.album_to_object(ALBUM))
+  def test_album_to_as1_full(self):
+    self.assert_equals(ALBUM_OBJ, self.fb.album_to_as1(ALBUM))
 
   def test_create_post(self):
     self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'},
@@ -3168,7 +3168,7 @@ cc Sam G, Michael M<br />""", preview.description)
         'startIndex': 13,
         'length': 10,
       }],
-    }, self.fb.post_to_object({
+    }, self.fb.post_to_as1({
       'id': '12345',
       'message': 'me 💯💯💯 & @itsmaeril',
       'message_tags': {
@@ -3236,94 +3236,94 @@ cc Sam G, Michael M<br />""", preview.description)
     self.assert_equals(resps, self.fb.urlopen_batch_full(
       [{'relative_url': 'abc'}, {'relative_url': 'def'}]))
 
-  def test_email_to_object_comment_user_id(self):
+  def test_email_to_as1_comment_user_id(self):
     self.assert_equals(EMAIL_COMMENT_OBJ_USER_ID,
-                       self.fb.email_to_object(COMMENT_EMAIL_USER_ID))
+                       self.fb.email_to_as1(COMMENT_EMAIL_USER_ID))
 
-  def test_email_to_object_comment_username(self):
+  def test_email_to_as1_comment_username(self):
     self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME,
-                       self.fb.email_to_object(COMMENT_EMAIL_USERNAME))
+                       self.fb.email_to_as1(COMMENT_EMAIL_USERNAME))
 
-  def test_email_to_object_photo_comment(self):
+  def test_email_to_as1_photo_comment(self):
     expected = copy.deepcopy(EMAIL_COMMENT_OBJ_USER_ID)
     expected.update({
       'id': tag_uri('123_789'),
       'url': 'https://www.facebook.com/photo.php?fbid=123&comment_id=789',
       'inReplyTo': [{'url': 'https://www.facebook.com/photo.php?fbid=123'}],
     })
-    self.assert_equals(expected, self.fb.email_to_object(COMMENT_EMAIL_PHOTO))
+    self.assert_equals(expected, self.fb.email_to_as1(COMMENT_EMAIL_PHOTO))
 
-  def test_email_to_object_comment_different_text(self):
+  def test_email_to_as1_comment_different_text(self):
     email = COMMENT_EMAIL_USERNAME.replace('commented on your', 'commented on')
-    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_object(email))
+    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_as1(email))
 
-  def test_email_to_object_comment_different_datetime_format(self):
+  def test_email_to_as1_comment_different_datetime_format(self):
     """https://console.cloud.google.com/errors/CKORxvuphMyeIw
     """
     email = COMMENT_EMAIL_USERNAME.replace('December 14 at 12:35 PM',
                                            '14 December at 12:35')
-    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_object(email))
+    self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fb.email_to_as1(email))
 
-  def test_email_to_object_comment_bad_datetime(self):
+  def test_email_to_as1_comment_bad_datetime(self):
     """https://console.cloud.google.com/errors/CKORxvuphMyeIw
     """
     email = COMMENT_EMAIL_USERNAME.replace('December 14 at 12:35 PM',
                                            'asdf 29 qwert')
     expected = copy.deepcopy(EMAIL_COMMENT_OBJ_USERNAME)
     del expected['published']
-    self.assert_equals(expected, self.fb.email_to_object(email))
+    self.assert_equals(expected, self.fb.email_to_as1(email))
 
-  def test_email_to_object_like(self):
-    self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_object(LIKE_EMAIL))
+  def test_email_to_as1_like(self):
+    self.assert_equals(EMAIL_LIKE_OBJ, self.fb.email_to_as1(LIKE_EMAIL))
 
-  def test_scraped_to_activities(self):
+  def test_scraped_to_as1_activities(self):
     """mbasic.facebook.com HTML timeline.
 
     Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
     """
-    got, _ = self.fb.scraped_to_activities(MBASIC_HTML_TIMELINE)
+    got, _ = self.fb.scraped_to_as1_activities(MBASIC_HTML_TIMELINE)
     self.assert_equals(MBASIC_FEED_ACTIVITIES, got)
 
-  def test_scraped_to_activities_no_content(self):
+  def test_scraped_to_as1_activities_no_content(self):
     soup = util.parse_html(MBASIC_HTML_TIMELINE)
     soup.find(class_='ea').extract()
 
     expected = copy.deepcopy(MBASIC_FEED_ACTIVITIES)
     expected[0]['object']['content'] = '<div class="widePic">\n\n</div>'
-    got, _ = self.fb.scraped_to_activities(str(soup))
+    got, _ = self.fb.scraped_to_as1_activities(str(soup))
     self.assert_equals(expected, got)
 
-  def test_scraped_to_activities_profile(self):
+  def test_scraped_to_as1_activities_profile(self):
     """mbasic.facebook.com HTML profile.
 
     Based on: https://mbasic.facebook.com/profile.php?lst=100009447618341%3A100009447618341%3A1612671708
     (Snoøpy Barrett, while logged in as that account)
     """
-    got, _ = self.fb.scraped_to_activities(MBASIC_HTML_PROFILE)
+    got, _ = self.fb.scraped_to_as1_activities(MBASIC_HTML_PROFILE)
     self.assert_equals(MBASIC_PROFILE_ACTIVITIES, got)
 
-  def test_scraped_to_activity(self):
+  def test_scraped_to_as1_activity(self):
     """mbasic.facebook.com HTML post.
 
     Based on: https://mbasic.facebook.com/snarfed.org?v=timeline
     """
-    got, _ = self.fb.scraped_to_activity(MBASIC_HTML_POST)
+    got, _ = self.fb.scraped_to_as1_activity(MBASIC_HTML_POST)
     self.assert_equals(MBASIC_ACTIVITY, got)
 
-  def test_scraped_to_activity_empty(self):
-    self.assertEqual((None, None), self.fb.scraped_to_activity("""\
+  def test_scraped_to_as1_activity_empty(self):
+    self.assertEqual((None, None), self.fb.scraped_to_as1_activity("""\
 <!DOCTYPE html>
 <html><body></body></html>"""))
 
-  def test_scraped_to_activity_photo(self):
+  def test_scraped_to_as1_activity_photo(self):
     """mbasic.facebook.com HTML photo post.
 
     Based on: https://mbasic.facebook.com/photo.php?fbid=2017433665248201&id=100009447618341
     """
-    got, _ = self.fb.scraped_to_activity(MBASIC_HTML_PHOTO_POST)
+    got, _ = self.fb.scraped_to_as1_activity(MBASIC_HTML_PHOTO_POST)
     self.assert_equals(MBASIC_PHOTO_ACTIVITY, got)
 
-  def test_scraped_to_activity_no_actor_link(self):
+  def test_scraped_to_as1_activity_no_actor_link(self):
     soup = util.parse_html(MBASIC_HTML_POST)
     soup.find('header').extract()
 
@@ -3333,10 +3333,10 @@ cc Sam G, Michael M<br />""", preview.description)
       'url': 'https://www.facebook.com/212038',
     }
 
-    got, _ = self.fb.scraped_to_activity(str(soup))
+    got, _ = self.fb.scraped_to_as1_activity(str(soup))
     self.assert_equals(expected, got)
 
-  def test_scraped_to_activity_extra_header_div(self):
+  def test_scraped_to_as1_activity_extra_header_div(self):
     """Extra "Who can see this?" header div on top of post when logged in.
 
     Based on https://mbasic.facebook.com/10101880564410695
@@ -3376,10 +3376,10 @@ cc Sam G, Michael M<br />""", preview.description)
     </div>
     """))
 
-    got, _ = self.fb.scraped_to_activity(str(soup))
+    got, _ = self.fb.scraped_to_as1_activity(str(soup))
     self.assert_equals(MBASIC_ACTIVITY, got)
 
-  def test_scraped_to_activity_extra_div_before_footer(self):
+  def test_scraped_to_as1_activity_extra_div_before_footer(self):
     """Blank (effectively) div before footer.
 
     Based on https://mbasic.facebook.com/10157876416367085
@@ -3387,7 +3387,7 @@ cc Sam G, Michael M<br />""", preview.description)
     soup = util.parse_html(MBASIC_HTML_POST)
     soup.footer.insert_before(util.parse_html('<div class="ce"><div></div></div>'))
 
-    got, _ = self.fb.scraped_to_activity(str(soup))
+    got, _ = self.fb.scraped_to_as1_activity(str(soup))
     self.assert_equals(MBASIC_ACTIVITY, got)
 
   def test_merge_scraped_reactions(self):
@@ -3408,29 +3408,29 @@ cc Sam G, Michael M<br />""", preview.description)
 """, activity))
     self.assertEqual({}, activity['object']['replies'])
 
-  def test_scraped_to_actor(self):
+  def test_scraped_to_as1_actor(self):
     """mbasic.facebook.com HTML profile about page.
 
     Based on: https://mbasic.facebook.com/snarfed.org
     """
     self.assert_equals(MBASIC_ABOUT_ACTOR,
-                       self.fb.scraped_to_actor(MBASIC_HTML_ABOUT))
+                       self.fb.scraped_to_as1_actor(MBASIC_HTML_ABOUT))
 
-  def test_scraped_to_actor_no_summary(self):
+  def test_scraped_to_as1_actor_no_summary(self):
     soup = util.parse_html(MBASIC_HTML_ABOUT)
     summary = soup.find('div', class_='cq cr')
     summary.extract()
 
     expected = copy.deepcopy(MBASIC_ABOUT_ACTOR)
     del expected['summary']
-    self.assert_equals(expected, self.fb.scraped_to_actor(str(soup)))
+    self.assert_equals(expected, self.fb.scraped_to_as1_actor(str(soup)))
 
-  def test_scraped_to_actor_bad(self):
+  def test_scraped_to_as1_actor_bad(self):
     """mbasic.facebook.com HTML profile about page.
 
     Based on: https://mbasic.facebook.com/snarfed.org
     """
-    self.assertIsNone(self.fb.scraped_to_actor('<html><body></body></html>'))
+    self.assertIsNone(self.fb.scraped_to_as1_actor('<html><body></body></html>'))
 
   def test_m_html_author_no_profile_url(self):
     soup = util.parse_html(MBASIC_HTML_POST)

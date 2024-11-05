@@ -137,7 +137,7 @@ RSVP_VERBS = {
   'not_replied': 'invite',
   'noreply': 'invite',
   # 'interested' RSVPs actually have rsvp_status='unsure', so this is only used
-  # for rsvp_to_object(type='invited').
+  # for rsvp_to_as1(type='invited').
   'interested': 'rsvp-interested',
 }
 # Maps AS verb to API endpoint for publishing RSVP.
@@ -333,7 +333,7 @@ class Facebook(source.Source):
     fetch_comments_ids = []
     fetch_shares_ids = []
     for post in posts:
-      activity = self.post_to_activity(post)
+      activity = self.post_to_as1_activity(post)
       activities.append(activity)
       id = post.get('id')
       if id:
@@ -357,7 +357,7 @@ class Facebook(source.Source):
           activity = id_to_activity.get(id)
           if activity:
             activity['object'].setdefault('tags', []).extend(
-              [self.share_to_object(share) for share in shares])
+              [self.share_to_as1(share) for share in shares])
 
     if fetch_replies and fetch_comments_ids:
       # some comments requests 400, not sure why.
@@ -371,7 +371,7 @@ class Facebook(source.Source):
             existing_ids = {reply['fb_id'] for reply in replies}
             for comment in comments:
               if comment['id'] not in existing_ids:
-                replies.append(self.comment_to_object(comment))
+                replies.append(self.comment_to_as1(comment))
 
     response = self.make_activities_base_response(util.trim_nulls(activities))
     response['etag'] = etag
@@ -469,7 +469,7 @@ class Facebook(source.Source):
       list of dict: ActivityStreams event objects
     """
     events = self.urlopen(API_USER_EVENTS, _as=list)
-    return [self.event_to_activity(event) for event in events
+    return [self.event_to_as1_activity(event) for event in events
             if not owner_id or owner_id == event.get('owner', {}).get('id')]
 
   def get_event(self, event_id, owner_id=None):
@@ -497,7 +497,7 @@ class Facebook(source.Source):
       logger.info(f'Ignoring event {label} owned by user id {event_owner_id} instead of {owner_id}')
       return None
 
-    return self.event_to_activity(event)
+    return self.event_to_as1_activity(event)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
                   activity=None):
@@ -521,7 +521,7 @@ class Facebook(source.Source):
       else:
         raise
 
-    return self.comment_to_object(resp, post_author_id=activity_author_id)
+    return self.comment_to_as1(resp, post_author_id=activity_author_id)
 
   def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Returns an ActivityStreams share activity object.
@@ -554,7 +554,7 @@ class Facebook(source.Source):
       user_id, obj_id = id.split('_', 1)  # strip user id prefix
       if share_id == id == share_id or share_id == obj_id:
         with util.ignore_http_4xx_error():
-          return self.share_to_object(self.urlopen(API_OBJECT % (user_id, obj_id)))
+          return self.share_to_as1(self.urlopen(API_OBJECT % (user_id, obj_id)))
 
   def get_albums(self, user_id=None):
     """Fetches and returns a user's photo albums.
@@ -566,7 +566,7 @@ class Facebook(source.Source):
       sequence of dict: ActivityStream album objects
     """
     url = API_ALBUMS % (user_id or 'me')
-    return [self.album_to_object(a) for a in self.urlopen(url, _as=list)]
+    return [self.album_to_as1(a) for a in self.urlopen(url, _as=list)]
 
   def get_reaction(self, activity_user_id, activity_id, reaction_user_id,
                    reaction_id, activity=None):
@@ -728,7 +728,7 @@ class Facebook(source.Source):
       if preview:
         desc = '<span class="verb">like</span> '
         if base_type == 'comment':
-          comment = self.comment_to_object(self.urlopen(base_id))
+          comment = self.comment_to_as1(self.urlopen(base_id))
           author = comment.get('author', '')
           if author:
             author = self.embed_actor(author) + ':\n'
@@ -1031,8 +1031,8 @@ class Facebook(source.Source):
 
     return base_obj
 
-  def post_to_activity(self, post):
-    """Converts a post to an activity.
+  def post_to_as1_activity(self, post):
+    """Converts a post to an AS1 activity.
 
     Args:
       post (dict): a decoded JSON post
@@ -1040,7 +1040,7 @@ class Facebook(source.Source):
     Returns:
       dict: ActivityStreams activity
     """
-    obj = self.post_to_object(post, type='post')
+    obj = self.post_to_as1(post, type='post')
     if not obj:
       return {}
 
@@ -1066,8 +1066,11 @@ class Facebook(source.Source):
       }
     return self.postprocess_activity(activity)
 
-  def post_to_object(self, post, type=None):
-    """Converts a post to an object.
+  post_to_activity = post_to_as1_activity
+  """Deprecated! Use :meth:`post_to_as1_activity` instead."""
+
+  def post_to_as1(self, post, type=None):
+    """Converts a post to an AS1 object.
 
     TODO: handle the ``sharedposts`` field
 
@@ -1252,7 +1255,7 @@ class Facebook(source.Source):
     # http://activitystrea.ms/specs/json/replies/1.0/
     comments = post.get('comments', {}).get('data')
     if comments:
-      items = util.trim_nulls([self.comment_to_object(c, post_id=post['id'])
+      items = util.trim_nulls([self.comment_to_as1(c, post_id=post['id'])
                                for c in comments])
       obj['replies'] = {
         'items': items,
@@ -1261,8 +1264,11 @@ class Facebook(source.Source):
 
     return self.postprocess_object(obj)
 
-  def comment_to_object(self, comment, post_id=None, post_author_id=None):
-    """Converts a comment to an object.
+  post_to_object = post_to_as1
+  """Deprecated! Use :meth:`post_to_as1` instead."""
+
+  def comment_to_as1(self, comment, post_id=None, post_author_id=None):
+    """Converts a comment to an AS1 object.
 
     Args:
       comment (dict): a decoded JSON comment
@@ -1274,7 +1280,7 @@ class Facebook(source.Source):
     Returns:
       dict: ActivityStreams object
     """
-    obj = self.post_to_object(comment, type='comment')
+    obj = self.post_to_as1(comment, type='comment')
     if not obj:
       return obj
 
@@ -1320,11 +1326,14 @@ class Facebook(source.Source):
 
     return self.postprocess_object(obj)
 
+  comment_to_object = comment_to_as1
+  """Deprecated! Use :meth:`comment_to_as1` instead."""
+
   def _comment_id(self, post_id, comment_id):
     return self.tag_uri(f'{post_id}_{comment_id}')
 
-  def share_to_object(self, share):
-    """Converts a share (from ``/OBJECT/sharedposts``) to an object.
+  def share_to_as1(self, share):
+    """Converts a share (from ``/OBJECT/sharedposts``) to an AS1 object.
 
     Args:
       share (dict): JSON share
@@ -1332,7 +1341,7 @@ class Facebook(source.Source):
     Returns:
       dict: ActivityStreams object
     """
-    obj = self.post_to_object(share)
+    obj = self.post_to_as1(share)
     if not obj:
       return obj
 
@@ -1348,6 +1357,9 @@ class Facebook(source.Source):
       obj['displayName'] = content
 
     return self.postprocess_object(obj)
+
+  share_to_object = share_to_as1
+  """Deprecated! Use :meth:`share_to_as1` instead."""
 
   def to_as1_actor(self, user):
     """Converts a user or page to an actor.
@@ -1406,8 +1418,8 @@ class Facebook(source.Source):
   user_to_actor = to_as1_actor
   """Deprecated! Use :meth:`to_as1_actor` instead."""
 
-  def event_to_object(self, event, rsvps=None):
-    """Converts an event to an object.
+  def event_to_as1_object(self, event, rsvps=None):
+    """Converts an event to an AS1 object.
 
     Args:
       event (dict): Facebook event object
@@ -1416,7 +1428,7 @@ class Facebook(source.Source):
     Returns:
       dict: ActivityStreams object
     """
-    obj = self.post_to_object(event)
+    obj = self.post_to_as1(event)
     obj.update({
       'displayName': event.get('name'),
       'objectType': 'event',
@@ -1441,8 +1453,11 @@ class Facebook(source.Source):
 
     return self.postprocess_object(obj)
 
-  def event_to_activity(self, event, rsvps=None):
-    """Converts a event to an activity.
+  event_to_object = event_to_as1_object
+  """Deprecated! Use :meth:`event_to_as1_object` instead."""
+
+  def event_to_as1_activity(self, event, rsvps=None):
+    """Converts a event to an AS1 activity.
 
     Args:
       event (dict): Facebook event object
@@ -1451,14 +1466,17 @@ class Facebook(source.Source):
     Returns:
       dict: ActivityStreams activity
     """
-    obj = self.event_to_object(event, rsvps=rsvps)
+    obj = self.event_to_as1_object(event, rsvps=rsvps)
     return {'object': obj,
             'id': obj.get('id'),
             'url': obj.get('url'),
             }
 
-  def rsvp_to_object(self, rsvp, type=None, event=None):
-    """Converts an RSVP to an object.
+  event_to_activity = event_to_as1_activity
+  """Deprecated! Use :meth:`event_to_as1_activity` instead."""
+
+  def rsvp_to_as1(self, rsvp, type=None, event=None):
+    """Converts an RSVP to an AS1 object.
 
     The ``id`` field will ony be filled in if ``event['id']`` is provided.
 
@@ -1495,7 +1513,10 @@ class Facebook(source.Source):
 
     return self.postprocess_object(obj)
 
-  def album_to_object(self, album):
+  rsvp_to_object = rsvp_to_as1
+  """Deprecated! Use :meth:`rsvp_to_as1` instead."""
+
+  def album_to_as1(self, album):
     """Converts a photo album to an object.
 
     Args:
@@ -1520,6 +1541,9 @@ class Facebook(source.Source):
       'published': util.maybe_iso8601_to_rfc3339(album.get('created_time')),
       'updated': util.maybe_iso8601_to_rfc3339(album.get('updated_time')),
     })
+
+  album_to_object = album_to_as1
+  """Deprecated! Use :meth:`album_to_as1` instead."""
 
   def privacy_to_to(self, obj, type=None):
     """Converts a Facebook ``privacy`` field to an ActivityStreams ``to`` field.
@@ -1558,7 +1582,7 @@ class Facebook(source.Source):
       public = privacy.lower() in ('', 'everyone', 'open')
       return [{'objectType': 'group', 'alias': '@public' if public else '@private'}]
 
-  def email_to_object(self, html):
+  def email_to_as1(self, html):
     """Converts a Facebook HTML notification email to an AS1 object.
 
     Arguments:
@@ -1642,6 +1666,9 @@ class Facebook(source.Source):
       })
 
     return util.trim_nulls(obj)
+
+  email_to_object = email_to_as1
+  """Deprecated! Use :meth:`email_to_as1` instead."""
 
   @staticmethod
   def _find_all_text(soup, regexp):
@@ -1732,7 +1759,7 @@ class Facebook(source.Source):
       activity_id (str)
       fetch_replies (bool)
       fetch_likes (bool)
-      kwargs: passed through to ``scraped_to_activity``
+      kwargs: passed through to ``scraped_to_as1_activity``
 
     Returns:
       dict: activities API response
@@ -1756,10 +1783,10 @@ class Facebook(source.Source):
       # https://about.fb.com/news/2022/09/deterring-scraping-by-protecting-facebook-identifiers/
 
       resp = get(activity_id, allow_redirects=True)
-      activities = [self.scraped_to_activity(resp.text, **kwargs)[0]]
+      activities = [self.scraped_to_as1_activity(resp.text, **kwargs)[0]]
     else:
       resp = get(M_HTML_TIMELINE_URL, user_id)
-      activities, _ = self.scraped_to_activities(resp.text, **kwargs)
+      activities, _ = self.scraped_to_as1_activities(resp.text, **kwargs)
       if fetch_replies:
         # fetch and convert individual post permalinks
         # TODO: cache?
@@ -1767,7 +1794,7 @@ class Facebook(source.Source):
         activities = []
         for id in fbids:
           resp = get(id)
-          activities.append(self.scraped_to_activity(resp.text)[0])
+          activities.append(self.scraped_to_as1_activity(resp.text)[0])
 
     if fetch_likes:
       # fetch and convert likes
@@ -1778,7 +1805,7 @@ class Facebook(source.Source):
 
     return self.make_activities_base_response(activities)
 
-  def scraped_to_activities(self, scraped, log_html=False, **kwargs):
+  def scraped_to_as1_activities(self, scraped, log_html=False, **kwargs):
     """Converts HTML from an ``mbasic.facebook.com`` timeline to AS1 activities.
 
     Args:
@@ -1914,7 +1941,10 @@ class Facebook(source.Source):
 
     return util.trim_nulls(activities), None
 
-  def scraped_to_activity(self, scraped, log_html=False, **kwargs):
+  scraped_to_activities = scraped_to_as1_activities
+  """Deprecated! Use :meth:`scraped_to_as1_activities` instead."""
+
+  def scraped_to_as1_activity(self, scraped, log_html=False, **kwargs):
     """Converts HTML from an ``mbasic.facebook.com`` post page to an AS1 activity.
 
     Args:
@@ -2037,6 +2067,9 @@ class Facebook(source.Source):
 
     return util.trim_nulls(activity), None
 
+  scraped_to_activity = scraped_to_as1_activity
+  """Deprecated! Use :meth:`scraped_to_as1_activity` instead."""
+
   @staticmethod
   def _extract_scraped_ids(soup):
     """Tries to scrape post id and owner id out of parsed HTML.
@@ -2124,7 +2157,7 @@ class Facebook(source.Source):
     as1.merge_by_id(activity['object'], 'tags', tags)
     return tags
 
-  def scraped_to_actor(self, scraped):
+  def scraped_to_as1_actor(self, scraped):
     """Converts HTML from a profile about page to an AS1 actor.
 
     Args:
@@ -2190,6 +2223,9 @@ class Facebook(source.Source):
 
     return util.trim_nulls(actor)
 
+  scraped_to_actor = scraped_to_as1_actor
+  """Deprecated! Use :meth:`scraped_to_as1_actor` instead."""
+
   @classmethod
   def _scraped_content(cls, tag):
     """Extract and process content.
@@ -2203,7 +2239,7 @@ class Facebook(source.Source):
     # TODO: distinguish between text elements with actual whitespace
     # before/after and without. this adds space to all of them, including
     # before punctuation, so you end up with eg 'Oh hi, Jeeves .'
-    # (also apply any fix to scraped_to_activity().)
+    # (also apply any fix to scraped_to_as1_activity().)
     try:
       content = cls._div(tag, 0, 0)
     except IndexError:
