@@ -438,18 +438,18 @@ class GitHubTest(testutil.TestCase):
     ):
       self.assertEqual(expected, self.gh.base_id(url))
 
-  def test_user_to_actor_graphql(self):
-    self.assert_equals(ACTOR, self.gh.user_to_actor(USER_GRAPHQL))
+  def test_to_as1_actor_graphql(self):
+    self.assert_equals(ACTOR, self.gh.to_as1_actor(USER_GRAPHQL))
 
-  def test_user_to_actor_rest(self):
-    self.assert_equals(ACTOR, self.gh.user_to_actor(USER_REST))
+  def test_to_as1_actor_rest(self):
+    self.assert_equals(ACTOR, self.gh.to_as1_actor(USER_REST))
 
-  def test_user_to_actor_minimal(self):
-    actor = self.gh.user_to_actor({'id': '123'})
+  def test_to_as1_actor_minimal(self):
+    actor = self.gh.to_as1_actor({'id': '123'})
     self.assert_equals(tag_uri('123'), actor['id'])
 
-  def test_user_to_actor_empty(self):
-    self.assert_equals({}, self.gh.user_to_actor({}))
+  def test_to_as1_actor_empty(self):
+    self.assert_equals({}, self.gh.to_as1_actor({}))
 
   def test_get_actor(self):
     self.expect_graphql(json={'query': github.GRAPHQL_USER % {'login': 'foo'}},
@@ -615,30 +615,30 @@ class GitHubTest(testutil.TestCase):
     with self.assertRaises(NotImplementedError):
       self.gh.get_activities(fetch_shares='foo')
 
-  def test_issue_to_object_graphql(self):
+  def test_issue_to_as1_graphql(self):
     obj = copy.deepcopy(ISSUE_OBJ)
     del obj['tags']
-    self.assert_equals(obj, self.gh.issue_to_object(ISSUE_GRAPHQL))
+    self.assert_equals(obj, self.gh.issue_to_as1(ISSUE_GRAPHQL))
 
-  def test_issue_to_object_rest(self):
-    self.assert_equals(ISSUE_OBJ, self.gh.issue_to_object(ISSUE_REST))
+  def test_issue_to_as1_rest(self):
+    self.assert_equals(ISSUE_OBJ, self.gh.issue_to_as1(ISSUE_REST))
 
-  def test_issue_to_object_pull_rest(self):
-    self.assert_equals(PULL_OBJ, self.gh.issue_to_object(PULL_REST))
+  def test_issue_to_as1_pull_rest(self):
+    self.assert_equals(PULL_OBJ, self.gh.issue_to_as1(PULL_REST))
 
-  def test_issue_to_object_rest_body_none(self):
+  def test_issue_to_as1_rest_body_none(self):
     issue = copy.deepcopy(ISSUE_REST)
     issue['body'] = None
     obj = copy.deepcopy(ISSUE_OBJ)
     del obj['content']
-    self.assert_equals(obj, self.gh.issue_to_object(issue))
+    self.assert_equals(obj, self.gh.issue_to_as1(issue))
 
-  def test_issue_to_object_minimal(self):
+  def test_issue_to_as1_minimal(self):
     # just test that we don't crash
-    self.gh.issue_to_object({'id': '123', 'body': 'asdf'})
+    self.gh.issue_to_as1({'id': '123', 'body': 'asdf'})
 
-  def test_issue_to_object_empty(self):
-    self.assert_equals({}, self.gh.issue_to_object({}))
+  def test_issue_to_as1_empty(self):
+    self.assert_equals({}, self.gh.issue_to_as1({}))
 
   def test_get_comment_rest(self):
     self.expect_rest(REST_COMMENT % ('foo', 'bar', 'issues', 123), COMMENT_REST)
@@ -659,24 +659,24 @@ class GitHubTest(testutil.TestCase):
       with self.assertRaises(ValueError):
         self.assert_equals([], self.gh.get_comment(bad))
 
-  def test_comment_to_object_graphql(self):
+  def test_comment_to_as1_graphql(self):
     obj = copy.deepcopy(COMMENT_OBJ)
     obj['id'] = tag_uri('foo:bar:' + COMMENT_GRAPHQL['id'])
-    self.assert_equals(obj, self.gh.comment_to_object(COMMENT_GRAPHQL))
+    self.assert_equals(obj, self.gh.comment_to_as1(COMMENT_GRAPHQL))
 
-  def test_comment_to_object_rest(self):
-    self.assert_equals(COMMENT_OBJ, self.gh.comment_to_object(COMMENT_REST))
+  def test_comment_to_as1_rest(self):
+    self.assert_equals(COMMENT_OBJ, self.gh.comment_to_as1(COMMENT_REST))
 
-  def test_comment_to_object_minimal(self):
+  def test_comment_to_as1_minimal(self):
     # just test that we don't crash
-    self.gh.comment_to_object({'id': '123', 'message': 'asdf'})
+    self.gh.comment_to_as1({'id': '123', 'message': 'asdf'})
 
-  def test_comment_to_object_empty(self):
-    self.assert_equals({}, self.gh.comment_to_object({}))
+  def test_comment_to_as1_empty(self):
+    self.assert_equals({}, self.gh.comment_to_as1({}))
 
-  def test_reaction_to_object_rest(self):
+  def test_reaction_to_as1_rest(self):
     self.assert_equals(REACTION_OBJ,
-                       self.gh.reaction_to_object(REACTION_REST, ISSUE_OBJ))
+                       self.gh.reaction_to_as1(REACTION_REST, ISSUE_OBJ))
 
   def test_create_comment(self):
     self.expect_requests_post(

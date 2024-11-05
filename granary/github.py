@@ -762,7 +762,7 @@ class GitHub(source.Source):
 
     return {node['name'] for node in repo['labels']['nodes']}
 
-  def issue_to_object(self, issue):
+  def issue_to_as1(self, issue):
     """Converts a GitHub issue or pull request to ActivityStreams.
 
     Handles both v4 GraphQL and v3 REST API issue and PR objects.
@@ -778,7 +778,7 @@ class GitHub(source.Source):
     Returns:
       dict: ActivityStreams object
     """
-    obj = self._to_object(issue, repo_id=True)
+    obj = self._to_as1(issue, repo_id=True)
     if not obj:
       return obj
 
@@ -800,9 +800,15 @@ class GitHub(source.Source):
     })
     return self.postprocess_object(obj)
 
-  pr_to_object = issue_to_object
+  issue_to_object = issue_to_as1
+  """Deprecated! Use :meth:`issue_to_as1` instead."""
 
-  def comment_to_object(self, comment):
+  pr_to_as1 = issue_to_as1
+
+  pr_to_object = pr_to_as1
+  """Deprecated! Use :meth:`pr_to_as1` instead."""
+
+  def comment_to_as1(self, comment):
     """Converts a GitHub comment to ActivityStreams.
 
     Handles both v4 GraphQL and v3 REST API issue objects.
@@ -816,7 +822,7 @@ class GitHub(source.Source):
     Returns:
       dict: ActivityStreams comment
     """
-    obj = self._to_object(comment, repo_id=True)
+    obj = self._to_as1(comment, repo_id=True)
     if not obj:
       return obj
 
@@ -827,7 +833,10 @@ class GitHub(source.Source):
     })
     return self.postprocess_object(obj)
 
-  def reaction_to_object(self, reaction, target):
+  comment_to_object = comment_to_as1
+  """Deprecated! Use :meth:`comment_to_as1` instead."""
+
+  def reaction_to_as1(self, reaction, target):
     """Converts a GitHub emoji reaction to ActivityStreams.
 
     Handles v3 REST API reaction objects.
@@ -841,7 +850,7 @@ class GitHub(source.Source):
     Returns:
       dict: ActivityStreams reaction
     """
-    obj = self._to_object(reaction)
+    obj = self._to_as1(reaction)
     if not obj:
       return obj
 
@@ -861,7 +870,10 @@ class GitHub(source.Source):
     })
     return self.postprocess_object(obj)
 
-  def user_to_actor(self, user):
+  reaction_to_object = reaction_to_as1
+  """Deprecated! Use :meth:`reaction_to_as1` instead."""
+
+  def to_as1_actor(self, user):
     """Converts a GitHub user to an ActivityStreams actor.
 
     Handles both v4 GraphQL and v3 REST API user objects.
@@ -875,7 +887,7 @@ class GitHub(source.Source):
     Returns:
       dict: ActivityStreams actor
     """
-    actor = self._to_object(user)
+    actor = self._to_as1(user)
     if not actor:
       return actor
 
@@ -910,7 +922,10 @@ class GitHub(source.Source):
 
     return self.postprocess_object(actor)
 
-  def _to_object(self, input, repo_id=False):
+  user_to_actor = to_as1_actor
+  """Deprecated! Use :meth:`to_as1_actor` instead."""
+
+  def _to_as1(self, input, repo_id=False):
     """Starts to convert a GraphQL or REST API object to ActivityStreams.
 
     Args:
@@ -937,7 +952,7 @@ class GitHub(source.Source):
     return {
       'id': self.tag_uri(id),
       'url': url,
-      'author': self.user_to_actor(input.get('author') or input.get('user')),
+      'author': self.to_as1_actor(input.get('author') or input.get('user')),
       'displayName': input.get('title'),
       'content': (input.get('body') or '').replace('\r\n', '\n'),
       'published': util.maybe_iso8601_to_rfc3339(input.get('createdAt') or
