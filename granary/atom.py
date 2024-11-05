@@ -113,20 +113,19 @@ class Defaulter(collections.defaultdict):
     return super().__hash__() if self else None.__hash__()
 
 
-def activities_to_atom(activities, actor, title=None, request_url=None,
-                       host_url=None, xml_base=None, rels=None, reader=True):
-  """Converts ActivityStreams 1 activities to an Atom feed.
+def from_as1(input, actor=None, title=None, request_url=None, host_url=None,
+             xml_base=None, rels=None, reader=True):
+  """Converts an ActivityStreams 1 activity or activities to an Atom feed.
 
   Args:
-    activities (list of dict): ActivityStreams activities
-    actor (dict): ActivityStreams actor, the author of the feed
+    input (dict or list of dict): ActivityStreams activity or activities
+    actor (dict): ActivityStreams actor, the author of the feed.
     title (str): the feed <title> element. Defaults to ``User feed for [NAME]``
     request_url (str): URL of this Atom feed, if any. Used in a link rel="self".
     host_url (str): home URL for this Atom feed, if any. Used in the top-level
       feed ``<id>`` element.
     xml_base (str): base URL, if any. Used in the top-level ``xml:base``
       attribute.
-
     rels (dict): rel links to include. Keys are string ``rel``s, values are
       string URLs.
     reader (bool): whether the output will be rendered in a feed reader.
@@ -135,26 +134,36 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   Returns:
     str: Atom XML
   """
+
+  single = False
+  if isinstance(input, dict):
+    input = [input]
+    single = True
+
   # Strip query params from URLs so that we don't include access tokens, etc
   host_url = (_remove_query_params(host_url) if host_url
               else 'https://github.com/snarfed/granary')
   if request_url is None:
     request_url = host_url
 
+  if not actor:
+      actor = {}
   _prepare_actor(actor)
-  for a in activities:
+
+  for a in input:
     _prepare_activity(a, reader=reader)
 
-  updated = (as1.get_object(activities[0]).get('published', '')
-             if activities else '')
+  updated = (as1.get_object(input[0]).get('published', '')
+             if input else '')
 
   if actor is None:
     actor = {}
 
-  return jinja_env.get_template(FEED_TEMPLATE).render(
-    actor=Defaulter(actor),
+  return jinja_env.get_template(ENTRY_TEMPLATE if single else FEED_TEMPLATE).render(
+    actor=Defaulter(actor or {}),
+    activity=Defaulter(input[0] if single else {}),  # for ENTRY_TEMPLATE
+    items=[Defaulter(a) for a in input],  # for FEED_TEMPLATE
     host_url=host_url,
-    items=[Defaulter(a) for a in activities],
     mimetypes=mimetypes,
     rels=rels or {},
     request_url=request_url,
@@ -166,35 +175,18 @@ def activities_to_atom(activities, actor, title=None, request_url=None,
   )
 
 
-def activity_to_atom(activity, xml_base=None, reader=True):
-  """Converts a single ActivityStreams 1 activity to an Atom entry.
+activities_to_atom = from_as1
+"""Deprecated! Use :meth:`from_as1` instead."""
 
-  Kwargs are passed through to :func:`activities_to_atom`.
-
-  Args:
-    xml_base (str): the base URL, if any. Used in the top-level ``xml:base``
-      attribute.
-    reader (bool): whether the output will be rendered in a feed reader.
-      Currently just includes location if True, not otherwise.
-
-  Returns:
-    str: Atom XML
-  """
-  _prepare_activity(activity, reader=reader)
-  return jinja_env.get_template(ENTRY_TEMPLATE).render(
-    activity=Defaulter(activity),
-    mimetypes=mimetypes,
-    VERBS_WITH_OBJECT=as1.VERBS_WITH_OBJECT,
-    xml_base=xml_base,
-    as1=as1,
-  )
+activity_to_atom = from_as1
+"""Deprecated! Use :meth:`from_as1` instead."""
 
 
-def atom_to_activities(atom):
-  """Converts an Atom feed to ActivityStreams 1 activities.
+def to_as1(atom):
+  """Converts an Atom feed or entry to ActivityStreams 1 activities.
 
   Args:
-    atom (str): Atom document with top-level ``<feed>`` element
+    atom (str): Atom document with top-level ``<feed>`` or ``<entry>`` element
 
   Returns:
     list of dict: ActivityStreams activities
@@ -203,17 +195,23 @@ def atom_to_activities(atom):
   parser = ElementTree.XMLParser(encoding='UTF-8')
   top = ElementTree.XML(atom.encode('utf-8'), parser=parser)
   if _tag(top) == 'feed':
-    author = _author_to_actor(top)
-    return [_atom_to_activity(elem, feed_author=author)
+    author = _to_as1_actor(top)
+    return [_to_as1(elem, feed_author=author)
             for elem in top if _tag(elem) == 'entry']
   elif _tag(top) == 'entry':
-    return [_atom_to_activity(top)]
+    return [_to_as1(top)]
 
   raise ValueError(f'Expected root feed or entry tag; got {top.tag}')
 
 
+atom_to_activities = to_as1
+"""Deprecated! Use :meth:`to_as1` instead."""
+
+
 def atom_to_activity(atom):
   """Converts an Atom entry to an ActivityStreams 1 activity.
+
+  Deprecated! Use :meth:`to_as1` instead.
 
   Args:
     atom (str): Atom document with top-level ``<entry>`` element
@@ -221,12 +219,12 @@ def atom_to_activity(atom):
   Returns:
     dict: ActivityStreams activity
   """
-  got = atom_to_activities(atom)
+  got = to_as1(atom)
   if got:
     return got[0]
 
 
-def _atom_to_activity(entry, feed_author=None):
+def _to_as1(entry, feed_author=None):
   """Converts an internal Atom entry element to an ActivityStreams 1 activity.
 
   Args:
@@ -238,8 +236,8 @@ def _atom_to_activity(entry, feed_author=None):
   """
   # default object data from entry. override with data inside activity:object.
   obj_elem = entry.find('activity:object', NAMESPACES)
-  obj = _atom_to_object(obj_elem if obj_elem is not None else entry,
-                        feed_author=feed_author)
+  obj = _to_as1_object(obj_elem if obj_elem is not None else entry,
+                       feed_author=feed_author)
 
   content = entry.find('atom:content', NAMESPACES)
   if content is not None:
@@ -264,14 +262,14 @@ def _atom_to_activity(entry, feed_author=None):
     'id': _text(entry, 'id') or (obj['id'] if obj_elem is None else None),
     'url': _text(entry, 'link') or (obj['url'] if obj_elem is None else None),
     'object': obj,
-    'actor': _author_to_actor(entry, feed_author=feed_author),
+    'actor': _to_as1_actor(entry, feed_author=feed_author),
     'inReplyTo': obj.get('inReplyTo'),
   }
 
   return Source.postprocess_activity(a, mentions=True)
 
 
-def _atom_to_object(elem, feed_author=None):
+def _to_as1_object(elem, feed_author=None):
   """Converts an Atom entry to an ActivityStreams 1 object.
 
   Args:
@@ -292,7 +290,7 @@ def _atom_to_object(elem, feed_author=None):
   return {
     'objectType': _as1_value(elem, 'object-type') or 'article' if title else 'note',
     'id': _text(elem, 'id') or uri,
-    'author': _author_to_actor(elem, feed_author=feed_author),
+    'author': _to_as1_actor(elem, feed_author=feed_author),
     'url': uri,
     'displayName': title,
     'published': _text(elem, 'published'),
@@ -307,7 +305,7 @@ def _atom_to_object(elem, feed_author=None):
   }
 
 
-def _author_to_actor(elem, feed_author=None):
+def _to_as1_actor(elem, feed_author=None):
   """Converts an Atom ``<author>`` element to an ActivityStreams 1 actor.
 
    Looks for ``<author>`` *inside* elem.
@@ -339,7 +337,7 @@ def _author_to_actor(elem, feed_author=None):
 
   return actor
 
-def html_to_atom(html, url=None, fetch_author=False, reader=True):
+def from_html(html, url=None, fetch_author=False, reader=True):
   """Converts microformats2 HTML to an Atom feed.
 
   Args:
@@ -359,13 +357,17 @@ def html_to_atom(html, url=None, fetch_author=False, reader=True):
   parsed = util.parse_mf2(html, url=url)
   actor = microformats2.find_author(parsed, fetch_mf2_func=util.fetch_mf2)
 
-  return activities_to_atom(
+  return from_as1(
     microformats2.html_to_activities(html, url, actor),
     actor,
     title=microformats2.get_title(parsed),
     xml_base=util.base_url(url),
     host_url=url,
     reader=reader)
+
+
+html_to_atom = from_html
+"""Deprecated! Use :meth:`from_html` instead."""
 
 
 def _prepare_activity(a, reader=True):
@@ -512,3 +514,4 @@ def extract_entries(atom):
 
   header = '<?xml version="1.0" encoding="UTF-8"?>\n'
   return [header + ElementTree.tostring(e, encoding='unicode') for e in entries]
+

@@ -114,7 +114,7 @@ INSTAGRAM_ACTIVITY = {
 
 class AtomTest(testutil.TestCase):
 
-  def test_activities_to_atom(self):
+  def test_from_as1(self):
     for test_module in test_facebook, test_instagram, test_twitter:
       with self.subTest(test_module):
         request_url = 'http://request/url?access_token=foo'
@@ -126,7 +126,7 @@ class AtomTest(testutil.TestCase):
             'host_url': host_url,
             'base_url': base_url,
           },
-          atom.activities_to_atom(
+          atom.from_as1(
             [copy.deepcopy(test_module.ACTIVITY)],
             test_module.ACTOR,
             request_url=request_url,
@@ -135,36 +135,33 @@ class AtomTest(testutil.TestCase):
           ),
           ignore_blanks=True)
 
-  def test_activity_to_atom(self):
+  def test_from_as1_entry(self):
     self.assert_multiline_equals(
       INSTAGRAM_ENTRY,
-      atom.activity_to_atom(copy.deepcopy(test_instagram.ACTIVITY)),
+      atom.from_as1(copy.deepcopy(test_instagram.ACTIVITY)),
       ignore_blanks=True)
 
   def test_atom_to_activity(self):
-    self.assert_equals(INSTAGRAM_ACTIVITY,
-                       atom.atom_to_activity(INSTAGRAM_ENTRY))
+    self.assert_equals(INSTAGRAM_ACTIVITY, atom.atom_to_activity(INSTAGRAM_ENTRY))
 
-  def test_atom_feed_to_activities(self):
-    self.assert_equals([INSTAGRAM_ACTIVITY],
-                       atom.atom_to_activities(INSTAGRAM_FEED))
+  def test_to_as1_feed(self):
+    self.assert_equals([INSTAGRAM_ACTIVITY], atom.to_as1(INSTAGRAM_FEED))
 
-  def test_atom_entry_to_activities(self):
-    self.assert_equals([INSTAGRAM_ACTIVITY],
-                       atom.atom_to_activities(INSTAGRAM_ENTRY))
+  def test_to_as1_entry(self):
+    self.assert_equals([INSTAGRAM_ACTIVITY], atom.to_as1(INSTAGRAM_ENTRY))
 
-  def test_atom_to_activity_like(self):
+  def test_to_as1_like(self):
     for atom_obj, as_obj in (
         ('foo', {'objectType': 'note', 'id': 'foo', 'url': 'foo'}),
         ('<id>foo</id>', {'objectType': 'note', 'id': 'foo'}),
         ('<uri>foo</uri>', {'objectType': 'note', 'id': 'foo', 'url': 'foo'}),
       ):
-      self.assert_equals({
+      self.assert_equals([{
         'url': 'like-url',
         'objectType': 'activity',
         'verb': 'like',
         'object': as_obj,
-      }, atom.atom_to_activity(f"""<?xml version="1.0" encoding="UTF-8"?>
+      }], atom.to_as1(f"""<?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:activity="http://activitystrea.ms/spec/1.0/">
   <link>like-url</link>
@@ -173,14 +170,14 @@ class AtomTest(testutil.TestCase):
 </entry>
 """))
 
-  def test_activity_to_atom_like(self):
+  def test_from_as1_like(self):
     for obj in {'id': 'foo', 'url': 'foo'}, {'id': 'foo'}, {'url': 'foo'}:
       self.assert_multiline_in("""\
 <activity:verb>http://activitystrea.ms/schema/1.0/like</activity:verb>
 <activity:object>foo</activity:object>
 <published>2012-02-22</published>
 <updated>2013-10-25</updated>
-""", atom.activity_to_atom({
+""", atom.from_as1({
         'url': 'like-url',
         'objectType': 'activity',
         'verb': 'like',
@@ -189,8 +186,8 @@ class AtomTest(testutil.TestCase):
         'updated': '2013-10-25',
       }), ignore_blanks=True)
 
-  def test_activity_to_atom_bookmark(self):
-    got = atom.activity_to_atom({
+  def test_from_as1_bookmark(self):
+    got = atom.from_as1({
       'url': 'bookmark-url',
       'objectType': 'activity',
       'verb': 'post',
@@ -211,9 +208,9 @@ class AtomTest(testutil.TestCase):
 <link rel="self" href="bookmark-url" />
 """, got, ignore_blanks=True)
 
-  def test_activity_to_atom_author_without_properties(self):
+  def test_from_as1_author_without_properties(self):
     """https://console.cloud.google.com/errors/CMPawqSghuDquwE"""
-    self.assertIn('<title>foo</title>', atom.activity_to_atom({
+    self.assertIn('<title>foo</title>', atom.from_as1({
       'object': {
         'displayName': 'foo',
         'attachments': [{
@@ -224,7 +221,7 @@ class AtomTest(testutil.TestCase):
         }],
       }}))
 
-  def test_atom_to_activity_reply(self):
+  def test_to_as1_reply(self):
     expected = {
       'objectType': 'activity',
       'verb': 'post',
@@ -239,7 +236,7 @@ class AtomTest(testutil.TestCase):
         'inReplyTo': [{'id': 'foo-id', 'url': 'foo-url'}],
       },
     }
-    self.assert_equals(expected, atom.atom_to_activity("""\
+    self.assert_equals([expected], atom.to_as1("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:thr="http://purl.org/syndication/thread/1.0">
@@ -249,7 +246,7 @@ class AtomTest(testutil.TestCase):
 </entry>
 """))
 
-  def test_atom_to_activity_in_reply_to_text(self):
+  def test_to_as1_in_reply_to_text(self):
     expected = {
       'objectType': 'activity',
       'verb': 'post',
@@ -259,16 +256,16 @@ class AtomTest(testutil.TestCase):
         'inReplyTo': [{'id': 'my-inreplyto', 'url': 'my-inreplyto'}],
       },
     }
-    self.assert_equals(expected, atom.atom_to_activity("""\
+    self.assert_equals([expected], atom.to_as1("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry xmlns:thr="http://purl.org/syndication/thread/1.0">
   <thr:in-reply-to>my-inreplyto</thr:in-reply-to>
 </entry>
 """))
 
-  def test_atom_to_activity_unicode_title(self):
+  def test_to_as1_unicode_title(self):
     """Unicode smart quote in the <title> element."""
-    self.assert_equals({
+    self.assert_equals([{
       'objectType': 'activity',
       'verb': 'post',
       'title': 'How quill’s editor looks',
@@ -276,7 +273,7 @@ class AtomTest(testutil.TestCase):
         'objectType': 'article',
         'displayName': 'How quill’s editor looks',
       },
-    }, atom.atom_to_activity("""\
+    }], atom.to_as1("""\
 <?xml version='1.0' encoding='UTF-8'?>
 <entry xmlns='http://www.w3.org/2005/Atom'>
   <title>How quill’s editor looks</title>
@@ -288,47 +285,47 @@ class AtomTest(testutil.TestCase):
       'objectType': 'note',
       'id': 'http://post',
       'url': 'http://post',
-    }, atom.atom_to_activity("""\
+    }, atom.to_as1("""\
 <entry xmlns="http://www.w3.org/2005/Atom">
   <uri>http://post</uri>
 </entry>
-""")['object'])
+""")[0]['object'])
 
   def test_atom_to_object_link_self(self):
     self.assert_equals({
       'objectType': 'note',
       'id': 'http://post',
       'url': 'http://post',
-    }, atom.atom_to_activity("""\
+    }, atom.to_as1("""\
 <entry xmlns="http://www.w3.org/2005/Atom">
   <link rel="self" href="http://post" />
 </entry>
-""")['object'])
+""")[0]['object'])
 
   def test_atom_to_object_link_no_rel(self):
     self.assert_equals({
       'objectType': 'note',
       'id': 'hatenablog://entry/6801883189071989588',
       'url': 'https://foobar.hatenablog.com/entry/2024/01/05',
-    }, atom.atom_to_activity("""\
+    }, atom.to_as1("""\
 <entry xmlns="http://www.w3.org/2005/Atom" xml:lang="ja">
   <link href="https://foobar.hatenablog.com/entry/2024/01/05"/>
   <id>hatenablog://entry/6801883189071989588</id>
 </entry>
-""")['object'])
+""")[0]['object'])
 
   def test_atom_to_object_link_alternate(self):
     self.assert_equals({
       'objectType': 'note',
       'id': 'http://post',
       'url': 'http://post',
-    }, atom.atom_to_activity("""\
+    }, atom.to_as1("""\
 <entry xmlns="http://www.w3.org/2005/Atom">
   <link rel="alternate" type="text/html" href="http://post" />
 </entry>
-""")['object'])
+""")[0]['object'])
 
-  def test_atom_to_activity_use_feed_author_id_url(self):
+  def test_to_as1_use_feed_author_id_url(self):
     expected_author = {
       'id': 'id:ryan',
       'url': 'http://ryan',
@@ -348,7 +345,7 @@ class AtomTest(testutil.TestCase):
         'url': 'http://post',
         'content': 'foo',
       },
-    }], atom.atom_to_activities(f"""\
+    }], atom.to_as1(f"""\
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US" xmlns="http://www.w3.org/2005/Atom">
 <author>
@@ -368,28 +365,28 @@ class AtomTest(testutil.TestCase):
   def test_title(self):
     self.assert_multiline_in(
       '\n<title>my title</title>',
-      atom.activities_to_atom([copy.deepcopy(test_facebook.ACTIVITY)],
-                              test_facebook.ACTOR, title='my title'))
+      atom.from_as1([copy.deepcopy(test_facebook.ACTIVITY)],
+                    test_facebook.ACTOR, title='my title'))
 
   def test_strip_html_tags_from_titles(self):
     activity = copy.deepcopy(test_facebook.ACTIVITY)
     activity['content'] = '<p>foo &amp; <a href="http://bar">bar</a></p>'
     self.assert_multiline_in(
       '<title>foo &amp; bar</title>\n',
-      atom.activities_to_atom([activity], {}))
+      atom.from_as1([activity], {}))
 
     # ellipsize in the middle of an HTML tag. (ellipsize defaults to 14 words)
     del activity['displayName']
     activity['content'] = '<p>I’ve been looking over Mike Hoerger’s <a href="https://www.pmc19.com/data/index.php">Pandemic Mitigation Collaborative - Data Tracker</a> which estimates and projects...</p>'
     self.assert_multiline_in(
       '<title>I’ve been looking over Mike Hoerger’s Pandemic Mitigation Collaborative - Data Tracker which estimates...</title>\n',
-      atom.activities_to_atom([activity], {}))
+      atom.from_as1([activity], {}))
 
   def test_render_content_as_html(self):
     self.assert_multiline_in(
       '<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> ',
-      atom.activities_to_atom([copy.deepcopy(test_twitter.ACTIVITY)],
-                              test_twitter.ACTOR, title='my title'))
+      atom.from_as1([copy.deepcopy(test_twitter.ACTIVITY)], test_twitter.ACTOR,
+                    title='my title'))
 
   def test_render_with_images(self):
     """Attached images are rendered inline as HTML."""
@@ -397,7 +394,7 @@ class AtomTest(testutil.TestCase):
     activity['object']['attachments'].append(
       {'objectType': 'image', 'image': {'url': 'http://image/2'}})
 
-    got = atom.activities_to_atom([activity],test_instagram.ACTOR, title='')
+    got = atom.from_as1([activity],test_instagram.ACTOR, title='')
     self.assert_multiline_in(
       '<img class="u-photo" src="http://attach/image/big"', got)
     self.assert_multiline_in(
@@ -410,8 +407,7 @@ class AtomTest(testutil.TestCase):
     del activity['object']['content']
     self.assert_multiline_in(
       '<img class="u-photo" src="http://attach/image/big"',
-      atom.activities_to_atom([activity], test_instagram.ACTOR,
-                              title='my title'))
+      atom.from_as1([activity], test_instagram.ACTOR, title='my title'))
 
   def test_render_image_without_url(self):
     activity = copy.deepcopy(test_instagram.ACTIVITY)
@@ -419,7 +415,7 @@ class AtomTest(testutil.TestCase):
       {'objectType': 'image', 'image': {'href': 'http://image/2'}})
 
     # just check that we don't crash
-    atom.activities_to_atom([activity], test_instagram.ACTOR)
+    atom.from_as1([activity], test_instagram.ACTOR)
 
   def test_render_share(self):
     activity = {
@@ -431,7 +427,7 @@ class AtomTest(testutil.TestCase):
       },
     }
 
-    out = atom.activities_to_atom([activity], {})
+    out = atom.from_as1([activity], {})
     self.assert_multiline_in("""
 <title>sharer's comment</title>
 """, out)
@@ -449,7 +445,7 @@ sharer's comment
       },
     }
 
-    out = atom.activities_to_atom([activity], {})
+    out = atom.from_as1([activity], {})
     self.assert_multiline_in("""
 Shared <a href="#">a post</a> by   <span class="h-card">
 
@@ -475,7 +471,7 @@ original object
       },
     }
 
-    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    out = atom.from_as1([activity], test_twitter.ACTOR, title='my title')
     self.assertIn('RT @quoter: comment', out)
     self.assert_multiline_in("""\
 <blockquote>
@@ -489,7 +485,7 @@ quoted text
   def test_render_event_omits_object_type_verb(self):
     activity = {'object': {'content': 'X <y> http://z?w a&b c&amp;d e&gt;f'}}
 
-    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    out = atom.from_as1([activity], test_twitter.ACTOR, title='my title')
     self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
 
@@ -505,7 +501,7 @@ quoted text
       },
     }
 
-    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    out = atom.from_as1([activity], test_twitter.ACTOR, title='my title')
     self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
     self.assertNotIn('and&bob', out)
@@ -519,13 +515,13 @@ quoted text
       }],
     }}
 
-    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    out = atom.from_as1([activity], test_twitter.ACTOR, title='my title')
     self.assert_multiline_in('X <y> http://z?w a&amp;b c&amp;d e&gt;f', out)
     self.assertNotIn('a&b', out)
 
   def test_render_missing_object_type_and_verb(self):
     activity = {'object': {'content': 'foo'}}
-    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    out = atom.from_as1([activity], test_twitter.ACTOR, title='my title')
     self.assertNotIn('>http://activitystrea.ms/schema/1.0/<', out)
 
   def test_updated_defaults_to_published(self):
@@ -535,7 +531,7 @@ quoted text
       {'object': {'published': '2015-12-27 17:25:55'}},
     ]
 
-    out = atom.activities_to_atom(activities, test_twitter.ACTOR, title='my title')
+    out = atom.from_as1(activities, test_twitter.ACTOR, title='my title')
     self.assert_multiline_in('<updated>2013-12-27T17:25:55+02:00</updated>', out)
     self.assert_multiline_in('<updated>2014-12-27T17:25:55-08:00</updated>', out)
     self.assert_multiline_in('<updated>2015-12-27T17:25:55Z</updated>', out)
@@ -544,12 +540,12 @@ quoted text
     url = 'http://foo/bar?baz&baj'
     activity = {'url': url, 'object': {}}
 
-    out = atom.activities_to_atom([activity], test_twitter.ACTOR, title='my title')
+    out = atom.from_as1([activity], test_twitter.ACTOR, title='my title')
     self.assert_multiline_in('<id>http://foo/bar?baz&amp;baj</id>', out)
     self.assertNotIn(url, out)
 
   def test_object_only(self):
-    out = atom.activities_to_atom([{'object': {
+    out = atom.from_as1([{'object': {
       'displayName': 'Den oberoende sociala webben 2015',
       'id': 'http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/',
       'author': {
@@ -567,14 +563,14 @@ quoted text
       self.assert_multiline_in(expected, out)
 
   def test_empty_object_and_content(self):
-    out = atom.activities_to_atom([{
+    out = atom.from_as1([{
       'object': None,
       'content': 'fooey barry',
     }], None)
     self.assert_multiline_in('fooey barry', out)
 
   def test_attachments(self):
-    got = atom.activities_to_atom([{'object': {'attachments': [
+    got = atom.from_as1([{'object': {'attachments': [
       {'objectType': 'note', 'url': 'http://p', 'content': 'note content'},
       {'objectType': 'service', 'url': 'http://p', 'displayName': 'service name'},
       {'objectType': 'x', 'url': 'http://x'},
@@ -637,7 +633,7 @@ a comment
 """, got, ignore_blanks=True)
 
   def test_to_people(self):
-    got = atom.activities_to_atom([{
+    got = atom.from_as1([{
       'object': {
         'objectType': 'note',
         'content': 'an extended tweet reply',
@@ -669,7 +665,7 @@ a comment
 """, got)
 
   def test_rels(self):
-    got = atom.activities_to_atom([], {}, rels={'foo': 'bar', 'baz': 'baj'})
+    got = atom.from_as1([], {}, rels={'foo': 'bar', 'baz': 'baj'})
     self.assert_multiline_in('<link rel="foo" href="bar" />', got)
     self.assert_multiline_in('<link rel="baz" href="baj" />', got)
 
@@ -683,7 +679,7 @@ a comment
       xmlns:ostatus="http://ostatus.org/schema/1.0"
       xmlns:thr="http://purl.org/syndication/thread/1.0"
       xml:base="http://my.xml/base">
-""", atom.activities_to_atom([], {}, xml_base='http://my.xml/base'))
+""", atom.from_as1([], {}, xml_base='http://my.xml/base'))
 
   def test_html_to_atom(self):
     self.assert_multiline_equals("""\
@@ -842,7 +838,7 @@ going to Homebrew Website Club
     ignore_blanks=True)
 
   def test_media_tags_and_enclosures(self):
-    got = atom.activities_to_atom([{
+    got = atom.from_as1([{
       'object': {
         'content': 'foo bar',
         'attachments': [{
@@ -885,9 +881,9 @@ going to Homebrew Website Club
     location = '<a class="p-name u-url" href="http://my/place">My place</a>'
 
     self.assert_multiline_in(
-      location, atom.activities_to_atom([activity], {}, reader=True))
+      location, atom.from_as1([activity], {}, reader=True))
     self.assertNotIn(
-      location, atom.activities_to_atom([activity], {}, reader=False))
+      location, atom.from_as1([activity], {}, reader=False))
 
   def test_image_outside_content(self):
     """image field (from e.g. mf2 u-photo) should be rendered in content.
@@ -912,7 +908,7 @@ going to Homebrew Website Club
 <blockquote>
 <img class="u-photo" src="http://pics/2.jpg" alt="" />
 </blockquote>
-""", atom.activities_to_atom([activity], {}))
+""", atom.from_as1([activity], {}))
 
   def test_image_duplicated_in_content(self):
     """If an image is already in the content, don't render a duplicate.
@@ -929,7 +925,7 @@ going to Homebrew Website Club
       },
     }
 
-    got = atom.activities_to_atom([activity], {})
+    got = atom.from_as1([activity], {})
     self.assertNotIn('<img class="u-photo" src="http://pics/1.jpg?foo" alt="" />', got)
     self.assert_multiline_in("""\
 <blockquote>
@@ -959,13 +955,13 @@ going to Homebrew Website Club
       },
     }
 
-    got = atom.activities_to_atom([activity], {})
+    got = atom.from_as1([activity], {})
     self.assertEqual(1, got.count('<img class="u-photo" src="http://pics/1.jpg?x&amp;y" alt="" />'), got)
     self.assertIn('<link rel="enclosure" href="http://pics/1.jpg?x&amp;y"', got)
     self.assertNotIn('<link rel="enclosure" href="http://pics/2.jpg"', got, got)
 
   def test_image_attachment(self):
-    got = atom.activities_to_atom([{
+    got = atom.from_as1([{
       'object': {
         'content': 'foo bar',
         'attachments': [{
@@ -990,7 +986,7 @@ going to Homebrew Website Club
 
     self.assert_multiline_in(
       '<thr:in-reply-to ref="the:orig" href="http://orig" type="text/html" />',
-      atom.activities_to_atom([activity], {}))
+      atom.from_as1([activity], {}))
 
   def test_object_in_reply_to(self):
     """inReplyTo should be translated to thr:in-reply-to."""
@@ -1004,7 +1000,7 @@ going to Homebrew Website Club
 
     self.assert_multiline_in(
       '<thr:in-reply-to ref="the:orig" href="http://orig" type="text/html" />',
-      atom.activities_to_atom([activity], {}))
+      atom.from_as1([activity], {}))
 
   def test_author_email(self):
     """inReplyTo should be translated to thr:in-reply-to."""
@@ -1023,7 +1019,7 @@ going to Homebrew Website Club
 <name>Mrs. Foo</name>
 <email>mrs@foo.com</email>
 </author>
-""", atom.activities_to_atom([activity], {}), ignore_blanks=True)
+""", atom.from_as1([activity], {}), ignore_blanks=True)
 
   def test_defaulter(self):
     empty = atom.Defaulter()
@@ -1069,7 +1065,7 @@ going to Homebrew Website Club
 <content type="html"><![CDATA[
 <a href="https://jonathanprozzi.net/indieweb/homebrew-website-club-baltimore-wednesday-june-27-2018/">shared this.</a>
 ]]></content>
-""", atom.activities_to_atom([activity], {}), ignore_blanks=True)
+""", atom.from_as1([activity], {}), ignore_blanks=True)
 
   def test_image_lists(self):
     activity = {
@@ -1090,7 +1086,7 @@ going to Homebrew Website Club
     }
 
     def check():
-      got = atom.activity_to_atom(copy.deepcopy(activity), {})
+      got = atom.from_as1(copy.deepcopy(activity), {})
       self.assert_multiline_in('<img src="http://pic" />', got)
       self.assert_multiline_in('<link rel="enclosure" href="http://att"', got)
 
@@ -1113,7 +1109,7 @@ going to Homebrew Website Club
 <content type="html"><![CDATA[
 bar
 ]]></content>
-""", atom.activities_to_atom([activity], {}), ignore_blanks=True)
+""", atom.from_as1([activity], {}), ignore_blanks=True)
 
   def test_bare_string_object(self):
     activity = {
@@ -1125,14 +1121,14 @@ bar
 <activity:verb>http://activitystrea.ms/schema/1.0/rsvp-yes</activity:verb>
 <activity:object>https://2020.indieweb.org/east</activity:object>
 """
-    self.assert_multiline_in(expected, atom.activity_to_atom(activity, {}),
+    self.assert_multiline_in(expected, atom.from_as1(activity, {}),
                              ignore_blanks=True)
-    self.assert_multiline_in(expected, atom.activities_to_atom([activity], {}),
+    self.assert_multiline_in(expected, atom.from_as1([activity], {}),
                              ignore_blanks=True)
 
   def test_actor_url_with_displayName(self):
     # https://console.cloud.google.com/errors/detail/CJjqo87j4IjM8AE;time=P30D?project=bridgy-federated
-    self.assertNotIn('Defaulter', atom.activity_to_atom({
+    self.assertNotIn('Defaulter', atom.from_as1({
       'actor': {
         'url': {
           'displayName': 'Twitter',
@@ -1141,14 +1137,14 @@ bar
       },
     }))
 
-  def test_atom_to_activity_author_username(self):
+  def test_to_as1_author_username(self):
     self.assert_multiline_in("""\
 <author>
 <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
 <uri></uri>
 <name>alice</name>
 </author>
-""", atom.activity_to_atom({
+""", atom.from_as1({
       'author': {
         'username': 'alice',
       },
