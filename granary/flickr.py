@@ -428,7 +428,7 @@ class Flickr(source.Source):
           'photo_id': photo.get('id'),
         })
         replies = [
-            self.to_as1_comment(comment, photo.get('id'))
+            self.comment_to_as1(comment, photo.get('id'))
             for comment in comments_resp.get('comments', {}).get('comment', [])
         ]
         activity['object']['replies'] = {
@@ -442,7 +442,7 @@ class Flickr(source.Source):
         })
         for person in faves_resp.get('photo', {}).get('person', []):
           activity['object'].setdefault('tags', []).append(
-            self.to_as1_like(person, activity))
+            self.like_to_as1(person, activity))
 
       result['items'].append(activity)
 
@@ -534,7 +534,7 @@ class Flickr(source.Source):
       if (comment.get('id') == comment_id or
           comment.get('id').split('-')[-1] == comment_id):
         logger.debug(f'found comment matching {comment_id}')
-        return self.to_as1_comment(comment, activity_id)
+        return self.comment_to_as1(comment, activity_id)
 
   def photo_to_activity(self, photo):
     """Convert a Flickr photo to an ActivityStreams object.
@@ -650,7 +650,7 @@ class Flickr(source.Source):
     self.postprocess_activity(activity)
     return activity
 
-  def to_as1_like(self, person, photo_activity):
+  def like_to_as1(self, person, photo_activity):
     """Convert a Flickr favorite into an ActivityStreams ``like`` tag.
 
     Args:
@@ -683,10 +683,10 @@ class Flickr(source.Source):
       'verb': 'like',
     }
 
-  like_to_object = to_as1_like
-  """Deprecated! Use :meth:`to_as1_like` instead."""
+  like_to_object = like_to_as1
+  """Deprecated! Use :meth:`like_to_as1` instead."""
 
-  def to_as1_comment(self, comment, photo_id):
+  def comment_to_as1(self, comment, photo_id):
     """Convert a Flickr comment JSON object to an ActivityStreams comment.
 
     Args:
@@ -720,8 +720,8 @@ class Flickr(source.Source):
     self.postprocess_object(obj)
     return obj
 
-  comment_to_object = to_as1_comment
-  """Deprecated! Use :meth:`to_as1_comment` instead."""
+  comment_to_object = comment_to_as1
+  """Deprecated! Use :meth:`comment_to_as1` instead."""
 
   def get_user_image(self, farm, server, author):
     """Convert fields from a typical Flickr response into the buddy icon URL.

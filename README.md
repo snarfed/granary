@@ -283,6 +283,8 @@ Changelog
 
 ### 7.1 - unreleased
 
+Standardize function and method names in all modules to `to_as1`, `from_as`, etc. Old method names are now deprecated but won't be removed until at least v8.0, if not later.
+
 * `as1`:
   * Add new `is_dm`, `recipient_if_dm`, `get_id`, and `is_audience` functions.
 * `as2`:
