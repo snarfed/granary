@@ -752,12 +752,16 @@ def link_tags(obj):
   linked = ''
   for tag in tags:
     url = tag.get('href') or tag.get('url')
+    # Mastodon seems to need class="mention" to convert a mention link to point
+    # to the local instance's view of the remote actor profile
+    # https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758
+    cls = 'class="mention" ' if tag.get('type') == 'Mention' else ''
     start = tag['startIndex']
     if start < last_end:
       logger.warning(f'tag indices overlap! skipping {url}')
       continue
     end = start + tag['length']
-    linked = f"{linked}{orig[last_end:start]}<a href=\"{url}\">{orig[start:end]}</a>"
+    linked = f"{linked}{orig[last_end:start]}<a {cls}href=\"{url}\">{orig[start:end]}</a>"
     last_end = end
     obj['content_is_html'] = True
     del tag['startIndex']

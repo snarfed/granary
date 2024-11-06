@@ -297,6 +297,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * Handle other types of tags better, eg non-standard `Hashtag` and inner `tag` field for name.
     * Bug fix for videos, `mimeType` goes in outer object, not in `stream`.
     * Bug fix for `to`/`cc` with mixed dict and string elements.
+  * `link_tags`: add `class="mention"` for `Mention` tags ([bridgy-fed/#887](https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758)).
 * `atom`:
   * `atom_to_activity/ies`: Get URL from `link` for activities as well as objects. ([Thanks @imax9000!](https://github.com/snarfed/granary/issues/752))
 * `bluesky`:

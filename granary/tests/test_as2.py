@@ -3,6 +3,7 @@
 Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
+import copy
 from oauth_dropins.webutil import testutil
 
 from .. import as2
@@ -600,11 +601,11 @@ class ActivityStreams2Test(testutil.TestCase):
     self.assert_equals('foo\nbar\nbaz', obj['content'])
 
     # with indices, should link and then remove indices
-    obj['tag'] = [
+    tags_with_indices = [
       {'href': 'http://bar', 'startIndex': 4, 'length': 3},
       {'url': 'http://baz', 'startIndex': 8, 'length': 3},
     ]
-
+    obj['tag'] = copy.deepcopy(tags_with_indices)
     as2.link_tags(obj)
     self.assert_equals({
       'content': """\
@@ -618,6 +619,29 @@ foo
         {'url': 'http://baz'},
       ],
     }, obj)
+
+    # Mention tag should include class="mention"
+    obj = {
+      'content': 'foo\nbar\nbaz',
+      'tag': [
+        {'href': 'http://bar', 'startIndex': 4, 'length': 3, 'type': 'Mention'},
+        {'url': 'http://baz', 'startIndex': 8, 'length': 3},
+      ],
+    }
+    as2.link_tags(obj)
+    self.assert_equals({
+      'content': """\
+foo
+<a class="mention" href="http://bar">bar</a>
+<a href="http://baz">baz</a>
+""",
+      'content_is_html': True,
+      'tag': [
+        {'href': 'http://bar', 'type': 'Mention'},
+        {'url': 'http://baz'},
+      ],
+    }, obj)
+
 
   def test_is_server_actor(self):
     self.assertFalse(as2.is_server_actor({}))
