@@ -1228,30 +1228,30 @@ class TwitterTest(testutil.TestCase):
 
     self.assertEqual(['1', '2', '4', '5'], e.exception.partial)
 
-  def test_tweet_to_activity_full(self):
-    self.assert_equals(ACTIVITY, self.twitter.tweet_to_activity(TWEET))
+  def test_tweet_to_as1_activity_full(self):
+    self.assert_equals(ACTIVITY, self.twitter.tweet_to_as1_activity(TWEET))
 
-  def test_tweet_to_activity_minimal(self):
+  def test_tweet_to_as1_activity_minimal(self):
     # just test that we don't crash
-    self.twitter.tweet_to_activity({'id': 123, 'text': 'asdf'})
+    self.twitter.tweet_to_as1_activity({'id': 123, 'text': 'asdf'})
 
-  def test_tweet_to_activity_empty(self):
+  def test_tweet_to_as1_activity_empty(self):
     # just test that we don't crash
-    self.twitter.tweet_to_activity({})
+    self.twitter.tweet_to_as1_activity({})
 
-  def test_quote_tweet_to_activity(self):
-    self.assert_equals(QUOTE_ACTIVITY, self.twitter.tweet_to_activity(QUOTE_TWEET))
+  def test_quote_tweet_to_as1_activity(self):
+    self.assert_equals(QUOTE_ACTIVITY, self.twitter.tweet_to_as1_activity(QUOTE_TWEET))
 
-  def test_quote_tweet_to_activity_without_quoted_tweet_url_entity(self):
+  def test_quote_tweet_to_as1_activity_without_quoted_tweet_url_entity(self):
     quote_tweet = copy.deepcopy(QUOTE_TWEET)
     quote_tweet['entities']['urls'][0]['expanded_url'] = 'http://foo/bar'
 
     self.assert_equals('I agree with this twitter.com/schnar…',
-                       self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
+                       self.twitter.tweet_to_as1_activity(quote_tweet)['object']['content'])
 
     del quote_tweet['entities']
     self.assert_equals('I agree with this https://t.co/ww6HD8KroG',
-                       self.twitter.tweet_to_activity(quote_tweet)['object']['content'])
+                       self.twitter.tweet_to_as1_activity(quote_tweet)['object']['content'])
 
   def test_remove_quote_tweet_link(self):
     """https://twitter.com/orbuch/status/1386432051751030788"""
@@ -1271,7 +1271,7 @@ class TwitterTest(testutil.TestCase):
           'username': 'drvolts',
         },
       }],
-    }, self.twitter.tweet_to_object({
+    }, self.twitter.tweet_to_as1_object({
       'id_str' : '1386432051751030788',
       'full_text' : 'https://t.co/kp2kgqV7Yx',
       'entities' : {
@@ -1307,7 +1307,7 @@ class TwitterTest(testutil.TestCase):
         'id': 'tag:twitter.com:1382705862263853066',
         'content': 'Kasparov in simul play in the 1980s.',
       }],
-    } , self.twitter.tweet_to_object({
+    } , self.twitter.tweet_to_as1_object({
       'id_str' : '1382912988835848199',
       'full_text' : "Kid isn't quite to chess yet, but working on the simul puzzles... https://t.co/gXs8YWcWOM https://t.co/7BfZyXQn4q",
       'display_text_range' : [0, 89],
@@ -1340,7 +1340,7 @@ class TwitterTest(testutil.TestCase):
       },
     }))
 
-  def test_tweet_to_object_unicode_high_code_points(self):
+  def test_tweet_to_as1_object_unicode_high_code_points(self):
     """Test Unicode high code point chars.
 
     The first three unicode chars in the text are the '100' emoji, which is a
@@ -1349,7 +1349,7 @@ class TwitterTest(testutil.TestCase):
 
     First discovered in https://twitter.com/schnarfed/status/831552681210556416
     """
-    obj = self.twitter.tweet_to_object({
+    obj = self.twitter.tweet_to_as1_object({
       'id_str': '831552681210556416',
       'text': '💯💯💯 (by @itsmaeril) https://t.co/pWrOHzuHkP',
       'entities': {
@@ -1368,21 +1368,21 @@ class TwitterTest(testutil.TestCase):
       '💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>) ',
       microformats2.render_content(obj).splitlines()[0])
 
-  def test_tweet_to_object_full(self):
-    self.assert_equals(OBJECT, self.twitter.tweet_to_object(TWEET))
+  def test_tweet_to_as1_object_full(self):
+    self.assert_equals(OBJECT, self.twitter.tweet_to_as1_object(TWEET))
 
-  def test_tweet_to_object_minimal(self):
+  def test_tweet_to_as1_object_minimal(self):
     # just test that we don't crash
-    self.twitter.tweet_to_object({'id': 123, 'text': 'asdf'})
+    self.twitter.tweet_to_as1_object({'id': 123, 'text': 'asdf'})
 
-  def test_tweet_to_object_empty(self):
-    self.assert_equals({}, self.twitter.tweet_to_object({}))
+  def test_tweet_to_as1_object_empty(self):
+    self.assert_equals({}, self.twitter.tweet_to_as1_object({}))
 
-  def test_tweet_to_object_with_retweets(self):
+  def test_tweet_to_as1_object_with_retweets(self):
     self.assert_equals(OBJECT_WITH_SHARES,
-                          self.twitter.tweet_to_object(TWEET_WITH_RETWEETS))
+                          self.twitter.tweet_to_as1_object(TWEET_WITH_RETWEETS))
 
-  def test_tweet_to_activity_display_text_range(self):
+  def test_tweet_to_as1_activity_display_text_range(self):
     self.assert_equals({
       'objectType': 'note',
       # should only have the text inside display_text_range
@@ -1403,7 +1403,7 @@ class TwitterTest(testutil.TestCase):
         'id': tag_uri('OP'),
         'url': 'https://twitter.com/OP',
       }],
-    }, self.twitter.tweet_to_object({
+    }, self.twitter.tweet_to_as1_object({
       'id_str': '100',
       'full_text': '@OP i hereby reply http://quoted/tweet',
       'truncated': False,
@@ -1421,7 +1421,7 @@ class TwitterTest(testutil.TestCase):
       },
     }))
 
-  def test_tweet_to_object_entity_indices_handle_display_urls(self):
+  def test_tweet_to_as1_object_entity_indices_handle_display_urls(self):
     tweet = {
       'id_str': '123',
       'full_text': '@schnarfed Hey Ryan, You might find this semi-related and interesting: https://t.co/AFGvnvG72L Heard about it from @danshipper this week.',
@@ -1441,7 +1441,7 @@ class TwitterTest(testutil.TestCase):
       },
     }
 
-    obj = self.twitter.tweet_to_object(tweet)
+    obj = self.twitter.tweet_to_as1_object(tweet)
     for tag in obj['tags']:
       if tag['displayName'] == 'Dan Shipper':
         self.assertEqual(91, tag['startIndex'])
@@ -1453,7 +1453,7 @@ class TwitterTest(testutil.TestCase):
     self.assertEqual('Hey Ryan, You might find this semi-related and interesting: <a href="https://www.onename.io/">onename.io</a> Heard about it from <a href="https://twitter.com/danshipper">@danshipper</a> this week.',
                       microformats2.render_content(obj))
 
-  def test_tweet_to_object_multiple_entities_for_same_url(self):
+  def test_tweet_to_as1_object_multiple_entities_for_same_url(self):
     self.assertEqual({
       'content': 'a-link a-link',
       'id': 'tag:twitter.com:123',
@@ -1470,7 +1470,7 @@ class TwitterTest(testutil.TestCase):
         'displayName': 'a-link',
         'startIndex': 7,
         'length': 6,
-      }]}, self.twitter.tweet_to_object({
+      }]}, self.twitter.tweet_to_as1_object({
         'id_str': '123',
         'full_text': 'http://t.co/1 http://t.co/1',
         'entities': {
@@ -1488,7 +1488,7 @@ class TwitterTest(testutil.TestCase):
         },
       }))
 
-  def test_tweet_to_object_retweet_with_entities(self):
+  def test_tweet_to_as1_object_retweet_with_entities(self):
     """Retweets with entities should use the entities in the retweet object."""
     tweet = {
       'id_str': '123',
@@ -1519,7 +1519,7 @@ class TwitterTest(testutil.TestCase):
         }
       }
 
-    obj = self.twitter.tweet_to_object(tweet)
+    obj = self.twitter.tweet_to_as1_object(tweet)
     self.assert_equals([{
       'objectType': 'mention',
       'id': tag_uri('danshipper'),
@@ -1538,12 +1538,12 @@ class TwitterTest(testutil.TestCase):
     self.assert_equals('RT <a href="https://twitter.com/orig">@orig</a>: a <a href="https://twitter.com/danshipper">@danshipper</a> <a href="https://www.onename.io/">onename.io</a> ok',
                        microformats2.render_content(obj))
 
-  def test_tweet_to_object_multiple_pictures_only_one_picture_link(self):
+  def test_tweet_to_as1_object_multiple_pictures_only_one_picture_link(self):
     self.assert_equals({
       'id': tag_uri('726480459488587776'),
       'objectType': 'note',
       'content': '☑ Harley Davidson Museum® ☑ Schlitz .... ☑ Milwaukee ',
-    }, self.twitter.tweet_to_object({
+    }, self.twitter.tweet_to_as1_object({
       'id_str': '726480459488587776',
       'text': '☑ Harley Davidson Museum® ☑ Schlitz .... ☑ Milwaukee https://t.co/6Ta5P8A2cs',
       'extended_entities': {
@@ -1557,7 +1557,7 @@ class TwitterTest(testutil.TestCase):
       },
     }))
 
-  def test_tweet_to_object_preserve_whitespace(self):
+  def test_tweet_to_as1_object_preserve_whitespace(self):
     text = r"""\
   ( •_•)                           (•_• ) 
   ( ง )ง                           ୧( ୧ )
@@ -1571,9 +1571,9 @@ class TwitterTest(testutil.TestCase):
       'id': tag_uri('1'),
       'content': text,
     }
-    self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
+    self.assert_equals(obj, self.twitter.tweet_to_as1_object(tweet))
 
-  def test_reply_tweet_to_activity(self):
+  def test_reply_tweet_to_as1_activity(self):
     tweet = copy.deepcopy(TWEET)
     tweet.update({
       'in_reply_to_screen_name': 'other_user',
@@ -1584,14 +1584,14 @@ class TwitterTest(testutil.TestCase):
       'id' : tag_uri('789'),
     }]
 
-    activity = self.twitter.tweet_to_activity(tweet)
+    activity = self.twitter.tweet_to_as1_activity(tweet)
     self.assert_equals({'inReplyTo': expected}, activity['context'])
     self.assert_equals(expected, activity['object']['inReplyTo'])
 
-    direct_obj = self.twitter.tweet_to_object(tweet)
+    direct_obj = self.twitter.tweet_to_as1_object(tweet)
     self.assert_equals(expected, direct_obj['inReplyTo'])
 
-  def test_tweet_to_activity_on_retweet(self):
+  def test_tweet_to_as1_activity_on_retweet(self):
     self.assert_equals({
         'verb': 'share',
         'url': 'https://twitter.com/rt_author/status/444',
@@ -1617,7 +1617,7 @@ class TwitterTest(testutil.TestCase):
           'url': 'https://twitter.com/orig_author/status/333',
           }
         },
-      self.twitter.tweet_to_activity({
+      self.twitter.tweet_to_as1_activity({
         'id_str': '444',
         'text': 'truncated',
         'user': {'id': 888, 'screen_name': 'rt_author'},
@@ -1628,25 +1628,25 @@ class TwitterTest(testutil.TestCase):
           },
         }))
 
-  def test_tweet_to_activity_retweet_of_quote_tweet(self):
+  def test_tweet_to_as1_activity_retweet_of_quote_tweet(self):
     self.assert_equals(QUOTE_SHARE,
-                          self.twitter.tweet_to_activity(RETWEETED_QUOTE_TWEET))
+                       self.twitter.tweet_to_as1_activity(RETWEETED_QUOTE_TWEET))
 
-  def test_protected_tweet_to_object(self):
+  def test_protected_tweet_to_as1_object(self):
     tweet = copy.deepcopy(TWEET)
     tweet['user']['protected'] = True
     obj = copy.deepcopy(OBJECT)
     obj['to'][0]['alias'] = '@private'
-    self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
+    self.assert_equals(obj, self.twitter.tweet_to_as1_object(tweet))
 
-  def test_retweet_to_object(self):
+  def test_retweet_to_as1(self):
     for retweet, share in zip(RETWEETS, SHARES):
-      self.assert_equals(share, self.twitter.retweet_to_object(retweet))
+      self.assert_equals(share, self.twitter.retweet_to_as1(retweet))
 
     # not a retweet
-    self.assertEqual(None, self.twitter.retweet_to_object(TWEET))
+    self.assertEqual(None, self.twitter.retweet_to_as1(TWEET))
 
-  def test_video_tweet_to_object(self):
+  def test_video_tweet_to_as1_object(self):
     tweet = copy.deepcopy(TWEET)
     media = tweet['entities']['media'][0]
 
@@ -1692,7 +1692,7 @@ class TwitterTest(testutil.TestCase):
       }],
     }
 
-    obj = self.twitter.tweet_to_object(tweet)
+    obj = self.twitter.tweet_to_as1_object(tweet)
     self.assert_equals([{
       'objectType': 'video',
       'stream': {'url': 'https://video.twimg.com/tweet_video/9182.mp4'},
@@ -2886,13 +2886,13 @@ the caption. extra long so we can check that it accounts for the pic-twitter-com
       for msg in ret.error_plain, ret.error_html:
         self.assertIn('Twitter only supports MP4 videos', msg)
 
-  def test_tweet_to_object_archive_date_format(self):
+  def test_tweet_to_as1_object_archive_date_format(self):
     """Twitter archive created_at values are in a form of ISO 8601."""
     tweet = copy.deepcopy(TWEET)
     tweet['created_at'] = '2012-02-22 20:26:41 +0000'
     obj = copy.deepcopy(OBJECT)
     obj['published'] = '2012-02-22 20:26:41 +0000'
-    self.assert_equals(obj, self.twitter.tweet_to_object(tweet))
+    self.assert_equals(obj, self.twitter.tweet_to_as1_object(tweet))
 
   def test_delete(self):
     resp = {'o': 'k'}

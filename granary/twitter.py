@@ -569,7 +569,7 @@ class Twitter(source.Source):
     """
     self._validate_id(comment_id)
     url = API_STATUS % comment_id
-    return self.tweet_to_object(self.urlopen(url))
+    return self.tweet_to_as1_object(self.urlopen(url))
 
   def get_share(self, activity_user_id, activity_id, share_id, activity=None):
     """Returns an ActivityStreams 'share' activity object.
@@ -582,7 +582,7 @@ class Twitter(source.Source):
     """
     self._validate_id(share_id)
     url = API_STATUS % share_id
-    return self.retweet_to_object(self.urlopen(url))
+    return self.retweet_to_as1(self.urlopen(url))
 
   def get_blocklist(self):
     """Returns the current user's block list.
@@ -1141,8 +1141,8 @@ class Twitter(source.Source):
 
     return base_obj
 
-  def tweet_to_activity(self, tweet):
-    """Converts a tweet to an activity.
+  def tweet_to_as1_activity(self, tweet):
+    """Converts a tweet to an AS1 activity.
 
     Args:
       tweet (dict): a decoded JSON tweet
@@ -1150,7 +1150,7 @@ class Twitter(source.Source):
     Returns:
       dict: ActivityStreams activity
     """
-    obj = self.tweet_to_object(tweet)
+    obj = self.tweet_to_as1_object(tweet)
     activity = {
       'verb': 'post',
       'published': obj.get('published'),
@@ -1163,7 +1163,7 @@ class Twitter(source.Source):
     retweeted = tweet.get('retweeted_status')
     if retweeted:
       activity['verb'] = 'share'
-      activity['object'] = self.tweet_to_object(retweeted)
+      activity['object'] = self.tweet_to_as1_object(retweeted)
 
     in_reply_to = obj.get('inReplyTo')
     if in_reply_to:
@@ -1178,8 +1178,11 @@ class Twitter(source.Source):
 
     return self.postprocess_activity(activity)
 
-  def tweet_to_object(self, tweet):
-    """Converts a tweet to an object.
+  tweet_to_activity = tweet_to_as1_activity
+  """Deprecated! Use :meth:`tweet_to_as1_activity` instead."""
+
+  def tweet_to_as1_object(self, tweet):
+    """Converts a tweet to an AS1 object.
 
     Args:
       tweet (dict): a decoded JSON tweet
@@ -1264,7 +1267,7 @@ class Twitter(source.Source):
     quoted = tweet.get('quoted_status')
     quoted_url = None
     if quoted:
-      quoted_obj = self.tweet_to_object(quoted)
+      quoted_obj = self.tweet_to_as1_object(quoted)
       obj.setdefault('attachments', []).append(quoted_obj)
       quoted_url = (quoted_obj.get('url') or
                     tweet.get('quoted_status_permalink', {}).get('expanded'))
@@ -1348,7 +1351,7 @@ class Twitter(source.Source):
 
     obj.update({
       'tags': [t for t in obj['tags'] if t['objectType'] != 'image'] +
-              [self.retweet_to_object(r) for r in tweet.get('retweets', [])],
+              [self.retweet_to_as1(r) for r in tweet.get('retweets', [])],
       'content': content,
     })
 
@@ -1379,6 +1382,9 @@ class Twitter(source.Source):
       }]
 
     return self.postprocess_object(obj)
+
+  tweet_to_object = tweet_to_as1_object
+  """Deprecated! Use :meth:`tweet_to_as1_object` instead."""
 
   @staticmethod
   def _get_entities(tweet):
@@ -1493,8 +1499,8 @@ class Twitter(source.Source):
   user_to_actor = to_as1_actor
   """Deprecated! Use :meth:`to_as1_actor` instead."""
 
-  def retweet_to_object(self, retweet):
-    """Converts a retweet to a share activity object.
+  def retweet_to_as1(self, retweet):
+    """Converts a retweet to an AS1 share activity.
 
     Args:
       retweet (dict): a decoded JSON tweet
@@ -1506,7 +1512,7 @@ class Twitter(source.Source):
     if not orig:
       return None
 
-    share = self.tweet_to_object(retweet)
+    share = self.tweet_to_as1_object(retweet)
     share.update({
         'objectType': 'activity',
         'verb': 'share',
@@ -1516,6 +1522,9 @@ class Twitter(source.Source):
       # the existing tags apply to the original tweet's text, which we replaced
       del share['tags']
     return self.postprocess_object(share)
+
+  retweet_to_object = retweet_to_as1
+  """Deprecated! Use :meth:`retweet_to_as1` instead."""
 
   def streaming_event_to_object(self, event):
     """Converts a Streaming API event to an object.
