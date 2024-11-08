@@ -23,7 +23,7 @@ attrs==24.2.0
 bases==0.3.0
 beautifulsoup4==4.12.3
 bech32==1.2.0
-blinker==1.8.2
+blinker==1.9.0
 cachetools==5.1.0
 certifi==2024.8.30
 charset-normalizer==3.4.0
