@@ -28,6 +28,7 @@ TODO:
 * 11: relay info (like nodeinfo)
 * 12: tag queries
 * 16, 33: ephemeral/replaceable events
+* 17: DMs
 * 27: user mentions, note/event mentions
 *     the difficulty is that the Nostr tags don't include human-readable
 *     text. clients are supposed to get that from their local database.
