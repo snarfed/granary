@@ -385,6 +385,30 @@ Watching  \t waves
     self.assert_equals(expected, Source.postprocess_object(obj))
     self.assert_equals(expected, Source.postprocess_object(obj, mentions=True))
 
+  def test_postprocess_object_location(self):
+    obj = {
+      'location': {
+        'latitude': -1.23,
+        'longitude': 4.56,
+      },
+    }
+    obj_with_pos = {  # because postprocess_object modifies obj
+      'location': {
+        'latitude': -1.23,
+        'longitude': 4.56,
+        'position': '-1.230000+4.560000/',
+      },
+    }
+
+    self.assert_equals(obj_with_pos, Source.postprocess_object(obj_with_pos))
+    self.assert_equals(obj_with_pos, Source.postprocess_object(obj))
+
+  def test_postprocess_object_location_not_dict(self):
+    obj = {
+      'location': 'asdf',
+    }
+    self.assert_equals(obj, Source.postprocess_object(obj))
+
   def test_html_to_text_empty(self):
     self.assertEqual('', html_to_text(None))
     self.assertEqual('', html_to_text(''))

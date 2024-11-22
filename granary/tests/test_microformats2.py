@@ -752,7 +752,7 @@ foo bar
       'objectType': 'place',
       'latitude': 50.820641,
       'longitude': -0.149522,
-      'position': '+50.820641-000.149522/',
+      'position': '+50.820641-0.149522/',
       'displayName': 'Timeless Coffee Roasters',
       'url': 'https://kylewm.com/venues/timeless-coffee-roasters-oakland-california',
     }, obj['location'])
@@ -797,7 +797,7 @@ foo bar
     self.assertEqual({
       'latitude': 50.820641,
       'longitude': -0.149522,
-      'position': '+50.820641-000.149522/',
+      'position': '+50.820641-0.149522/',
       'objectType': 'place',
     }, obj.get('location'))
 

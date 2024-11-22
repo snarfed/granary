@@ -374,7 +374,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'displayName': 'California',
         'longitude': -76.507450,
         'latitude': 38.3004,
-        'position': '+38.300400-076.507450/',
+        'position': '+38.300400-76.507450/',
       },
     }, as2.to_as1({
       '@context': ['https://www.w3.org/ns/activitystreams'],

@@ -647,7 +647,7 @@ class Source(object, metaclass=SourceMeta):
 
   @staticmethod
   def postprocess_object(obj, mentions=False):
-    """Does source-independent post-processing of an object, in place.
+    """Does source-independent post-processing of an AS1 object, in place.
 
     * Populates ``location.position`` based on latitude and longitude.
     * Optionally interprets HTML links in content with text starting with ``@``,
@@ -655,7 +655,7 @@ class Source(object, metaclass=SourceMeta):
       and adds ``mention`` tags for them.
 
     Args:
-      obj (dict)
+      obj (dict): AS1 object
       mentions (boolean): whether to detect @-mention links and convert them to
         mention tags
 
@@ -663,12 +663,16 @@ class Source(object, metaclass=SourceMeta):
       dict: ``obj``, modified in place
     """
     loc = obj.get('location')
-    if loc:
+    if loc and isinstance(loc, dict) and 'position' not in loc:
       lat = loc.get('latitude')
       lon = loc.get('longitude')
-      if lat and lon and not loc.get('position'):
-        # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
-        loc['position'] = '%0+10.6f%0+11.6f/' % (lat, lon)
+      if lat is not None and lon is not None:
+        try:
+          # ISO 6709 location string. details: http://en.wikipedia.org/wiki/ISO_6709
+          loc['position'] = '%0+2f%0+2f/' % (float(lat), float(lon))
+        except ValueError:
+          # couldn't convert lat or lon to float
+          pass
 
     if mentions:
       # @-mentions to mention tags
