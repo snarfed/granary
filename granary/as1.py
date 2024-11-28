@@ -36,6 +36,11 @@ VERBS_WITH_OBJECT = frozenset((
   'stop-following',
   'undo',
 )) | set(RSVP_VERB_TO_COLLECTION.keys())
+VERBS_WITH_ACTOR_OBJECT = frozenset((
+  'block',
+  'follow',
+  'stop-following',
+))
 CRUD_VERBS = frozenset((
   'delete',
   'post',
