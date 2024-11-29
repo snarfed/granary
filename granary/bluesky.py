@@ -18,6 +18,7 @@ import urllib.parse
 from bs4 import BeautifulSoup
 from lexrpc import Client
 from lexrpc.base import Base, NSID_RE
+import mf2util
 from multiformats import CID
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
@@ -25,6 +26,7 @@ import requests
 
 from . import as1
 from .as2 import QUOTE_RE_SUFFIX
+from . import microformats2
 from .source import (
   creation_result,
   FRIENDS,
@@ -423,7 +425,7 @@ def base_object(obj):
 
 
 def from_as1(obj, out_type=None, blobs=None, client=None,
-             original_fields_prefix=None, as_embed=False):
+             original_fields_prefix=None, as_embed=False, first_link_embed=False):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -450,6 +452,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
     as_embed (bool): whether to render the post as an external embed (ie link
       preview) instead of a native post. This happens automatically if
       ``objectType`` is ``article``
+    first_embed (bool): whether to fetch the first link in the post, if it has one,
+      and try to generate an external embed from it
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -1006,6 +1010,16 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       })
       if images_record_embed:
         ret['embed']['external']['thumb'] = images_record_embed['images'][0]['image']
+
+    elif first_link_embed and link_tags:
+      if link_url := link_tags[0]['url']:
+        try:
+          if link_mf2 := util.fetch_mf2(link_url, metaformats=True):
+            entry = mf2util.find_first_entry(link_mf2, ['h-entry', 'h-card'])
+            ret['embed'] = _to_external_embed(microformats2.to_as1(entry))
+        except (AssertionError, ValueError, requests.RequestException) as e:
+          logger.info(f"Couldn't generate preview embed for {link_url}: {e}")
+          util.interpret_http_exception(e)
 
     if original_fields_prefix:
       ret.update({

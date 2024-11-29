@@ -1735,6 +1735,57 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  @patch('requests.get', return_value=requests_response(f"""\
+<html>
+<head>
+  <title>A poast</title>
+  <meta property="og:image" content="{NEW_BLOB_URL}" />
+  <meta property="og:description" content="Descrypshun" />
+</head>
+</html>""", url='http://foo/bar'))
+  def test_from_as1_first_link_to_embed(self, mock_get):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'hi foo baz',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://foo/bar',
+          'title': 'A poast',
+          'description': 'Descrypshun',
+        },
+      },
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo/bar">foo</a> <a href="http://baz">baz</a>'
+    }, first_link_embed=True, blobs={NEW_BLOB_URL: NEW_BLOB}),
+    ignore=['facets'])
+
+  def test_from_as1_first_link_to_embed_no_link(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'fooey',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'fooey',
+    }, first_link_embed=True))
+
+  @patch('requests.get', return_value=requests_response(status=404,
+                                                        url='http://foo/bar'))
+  def test_from_as1_first_link_to_embed_fetch_fails(self, mock_get):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'hi foo',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo/bar">foo</a>'
+    }, first_link_embed=True),
+    ignore=['facets'])
+
   def test_from_as1_note_display_name_as_embed(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
