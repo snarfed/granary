@@ -745,7 +745,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         full_text = prefix + full_text
         index_offset = len(prefix)
 
-    # attachments, including quoted posts
+    # attachments to embed(s), including quoted posts
     record_embed = record_record_embed = external_embed = external_record_embed = None
 
     for att in attachments:
@@ -778,7 +778,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         full_text = QUOTE_RE_SUFFIX.sub('', full_text)
       else:
         # external link
-        external_record_embed = _to_external_embed(att)
+        external_record_embed = _to_external_embed(att, blobs=blobs)
         external_embed = {
           '$type': f'app.bsky.embed.external#view',
           'external': {
@@ -913,10 +913,10 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       if facet not in facets:
         facets.append(facet)
 
-    # attachments => embeds for articles/notes
+    # if we truncated this post's text, override external embed with link to
+    # original post. (if there are images, we added a link in the text instead,
+    # and this won't get used.)
     if truncated and url:
-      # override attachments with link to original post. (if there are images,
-      # we added a link in the text instead, and this won't get used.)
       external_record_embed = {
         '$type': f'app.bsky.embed.external',
         'external': {
@@ -1002,7 +1002,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       ret.update({
         'text': '',
         'facets': None,
-        'embed': _to_external_embed(obj, description=full_text),
+        'embed': _to_external_embed(obj, description=full_text, blobs=blobs),
       })
       if images_record_embed:
         ret['embed']['external']['thumb'] = images_record_embed['images'][0]['image']
@@ -1076,18 +1076,27 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
   return ret
 
 
-def _to_external_embed(obj, description=None):
+def _to_external_embed(obj, description=None, blobs=None):
   """Converts an AS1 object to a Bluesky ``app.bsky.embed.external#external``.
 
   Args:
     obj (dict): AS1 object
-    content (str): if provided, overrides ``summary`` and ``content` in ``obj`
+    description (str): if provided, overrides ``summary`` and ``content` in ``obj`
 
   Returns:
     dict: Bluesky ``app.bsky.embed.external#external`` record
   """
   url = obj.get('url') or obj.get('id')
   assert url
+
+  thumb = None
+  if blobs:
+    for img in as1.get_objects(obj, 'image'):
+      if img_url := img.get('url') or img.get('id'):
+        if blob := blobs.get(img_url):
+          thumb = blob
+          break
+
   return {
     '$type': f'app.bsky.embed.external',
     'external': {
@@ -1095,6 +1104,7 @@ def _to_external_embed(obj, description=None):
       'uri': url,
       'title': obj.get('displayName') or '',  # required
       'description': description or obj.get('summary') or obj.get('content') or '',
+      'thumb': thumb,
     }
   }
 

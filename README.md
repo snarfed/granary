@@ -316,6 +316,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * Bug fix for quote posts with text content that's longer than Bluesky's limit ([snarfed/bridgy-fed#1197](https://github.com/snarfed/bridgy-fed/issues/1197)).
     * When a `flag` has multiple objects, use the first one that's an ATProto record.
     * Handle URLs more carefully, don't add link facets with invalid `uri`s.
+    * Populate `blobs` into external embed `thumb`s.
     * Bug fix: handle HTML links with `title` in `content` correctly.
     * Bug fix: handle attachments with no `id` or `url`.
   * `to_as1`:
@@ -326,11 +327,10 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `Bluesky.get_activities`: skip unknown record types instead of raising `ValueError`.
 * `microformats2`:
   * `object_to_json`: Improve handling of items with multiple types by removing `inReplyTo` from likes, shares, etc ([snarfed/bridgy-fed#941](https://github.com/snarfed/bridgy-fed/issues/941)).
-  * `source`:
-    * `Source.postprocess_object`: add new `first_link_to_attachment` boolean kwarg to fetch and generate a preview `attachment` for the first link in the HTML `content`, if any.
-
 * `rss`:
   * Support image enclosures, both directions.
+* `source`:
+  * `Source.postprocess_object`: add new `first_link_to_attachment` boolean kwarg to fetch and generate a preview `attachment` for the first link in the HTML `content`, if any.
 
 ### 7.0 - 2024-06-24
 

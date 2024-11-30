@@ -1735,6 +1735,32 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_attachment_to_external_embed_thumb_blob(self):
+    self.assertEqual({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://my/link',
+          'title': 'A link',
+          'description': 'foo bar',
+          'thumb': BLOB,
+        },
+      },
+    }, from_as1({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://my/link',
+        'displayName': 'A link',
+        'summary': 'foo bar',
+        'image': 'http://pic',
+      }],
+    }, blobs={'http://pic': BLOB}))
+
   def test_from_as1_note_display_name_as_embed(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
