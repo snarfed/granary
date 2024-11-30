@@ -1184,7 +1184,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if did and did.startswith('did:web:'):
       urls.append(did_web_to_url(did))
 
-    urls.extend(util.extract_links(obj.get('description', '')))
+    for field in 'description', 'summary':
+      urls.extend(util.extract_links(obj.get(field, '')))
 
     if type == 'app.bsky.feed.generator':
       if uri_bsky_url:

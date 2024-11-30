@@ -2277,10 +2277,11 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'person',
       'summary': 'one <a href="http://li.nk/foo">li.nk/foo</a> two <a href="http://li.nk">li.nk</a> three <a href="https://www.li.nk/">li.nk</a>',
       'url': 'http://li.nk/foo',
-      'urls': ['http://li.nk/foo', 'https://www.li.nk/'],
+      'urls': ['http://li.nk/foo', 'https://www.li.nk/', 'http://four.li.nk/'],
     }, to_as1({
       '$type': 'app.bsky.actor.profile',
       'description': 'one http://li.nk/foo two li.nk three https://www.li.nk/',
+      'summary': 'four http://four.li.nk',
     }))
 
   def test_to_as1_profile_escape_html_chars(self):

@@ -320,7 +320,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * Bug fix: handle HTML links with `title` in `content` correctly.
     * Bug fix: handle attachments with no `id` or `url`.
   * `to_as1`:
-    * Extract links from `app.bsky.actor.profile#description` into `url`/`urls` fields
+    * Extract links from `app.bsky.actor.profile#description` and `#summary` into `url`/`urls` fields.
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
     * Bug fix: handle hashtags with regexp special characters.
     * Support string and bytes CIDs in blob `ref`s as well as `CID` instances.
