@@ -2275,13 +2275,12 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_profile_links_in_bio(self):
     self.assert_equals({
       'objectType': 'person',
-      'summary': 'one <a href="http://li.nk/foo">li.nk/foo</a> two <a href="http://li.nk">li.nk</a> three <a href="https://www.li.nk/">li.nk</a>',
+      'summary': 'one <a href="http://li.nk/foo">li.nk/foo</a> two <a href="http://x.li.nk">x.li.nk</a> three <a href="https://www.li.nk/">li.nk</a>',
       'url': 'http://li.nk/foo',
-      'urls': ['http://li.nk/foo', 'https://www.li.nk/', 'http://four.li.nk/'],
+      'urls': ['http://li.nk/foo', 'http://x.li.nk/', 'https://www.li.nk/'],
     }, to_as1({
       '$type': 'app.bsky.actor.profile',
-      'description': 'one http://li.nk/foo two li.nk three https://www.li.nk/',
-      'summary': 'four http://four.li.nk',
+      'description': 'one http://li.nk/foo two x.li.nk three https://www.li.nk/',
     }))
 
   def test_to_as1_profile_escape_html_chars(self):

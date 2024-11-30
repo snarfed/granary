@@ -1184,8 +1184,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if did and did.startswith('did:web:'):
       urls.append(did_web_to_url(did))
 
-    for field in 'description', 'summary':
-      urls.extend(util.extract_links(obj.get(field, '')))
+    summary = util.linkify(html.escape(obj.get('description') or ''), pretty=True)
+    urls.extend(util.extract_links(summary))
 
     if type == 'app.bsky.feed.generator':
       if uri_bsky_url:
@@ -1204,13 +1204,12 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       }
 
     urls = util.dedupe_urls(urls)
-    desc = html.escape(obj.get('description') or '')
     ret.update({
       'url': urls[0] if urls else None,
       'urls': urls if len(urls) > 1 else None,
       'displayName': obj.get('displayName'),
       # TODO: for app.bsky.feed.generator, use descriptionFacets
-      'summary': util.linkify(desc, pretty=True),
+      'summary': summary,
       'image': images,
       'published': obj.get('createdAt'),
     })
