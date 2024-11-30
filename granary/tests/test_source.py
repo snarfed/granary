@@ -1,6 +1,7 @@
 """Unit tests for source.py."""
 import copy
 import re
+from unittest.mock import patch
 
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil import util
@@ -408,6 +409,53 @@ Watching  \t waves
       'location': 'asdf',
     }
     self.assert_equals(obj, Source.postprocess_object(obj))
+
+  @patch('requests.get', return_value=testutil.requests_response("""\
+<html>
+<head>
+  <title>A poast</title>
+  <meta property="og:image" content="http://pic" />
+  <meta property="og:title" content="Titull" />
+  <meta property="og:description" content="Descrypshun" />
+</head>
+</html>""", url='http://foo/bar'))
+  def test_postprocess_object_first_link_to_attachment(self, mock_get):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo/bar">foo</a> <a href="http://baz">baz</a>',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://foo/bar',
+        'displayName': 'Titull',
+        'summary': 'Descrypshun',
+        'image': [{'url': 'http://pic'}],
+      }],
+    }, Source.postprocess_object({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo/bar">foo</a> <a href="http://baz">baz</a>'
+    }, first_link_to_attachment=True),
+    ignore=['facets'])
+
+  def test_postprocess_object_first_link_to_attachment_no_link(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'fooey',
+    }, Source.postprocess_object({
+      'objectType': 'note',
+      'content': 'fooey',
+    }, first_link_to_attachment=True))
+
+  @patch('requests.get', return_value=testutil.requests_response(
+    status=404, url='http://foo/bar'))
+  def test_postprocess_object_first_link_to_attachment_fetch_fails(self, mock_get):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo/bar">foo</a>'
+    }, Source.postprocess_object({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo/bar">foo</a>'
+    }, first_link_to_attachment=True),
+    ignore=['facets'])
 
   def test_html_to_text_empty(self):
     self.assertEqual('', html_to_text(None))

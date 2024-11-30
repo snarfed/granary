@@ -310,7 +310,6 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `from_as1`:
     * Convert `article`s to external embeds with no post text.
     * Add new `as_embed` boolean kwarg to do the same thing for any object.
-    * Add new `first_link_embed` boolean kwarg to fetch and generate an external embed for the first link in the HTML `content`, if any.
     * When truncating and adding a link to the original post, use `id` if `url` is not available ([snarfed/bridgy-fed#1155](https://github.com/snarfed/bridgy-fed/issues/1155)).
     * If the input object has `inReplyTo` or `object` or `target` with no recognizable ATProto or Bluesky object, raise `ValueError`.
     * Omit images that aren't in `blobs`.
@@ -327,6 +326,8 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `Bluesky.get_activities`: skip unknown record types instead of raising `ValueError`.
 * `microformats2`:
   * `object_to_json`: Improve handling of items with multiple types by removing `inReplyTo` from likes, shares, etc ([snarfed/bridgy-fed#941](https://github.com/snarfed/bridgy-fed/issues/941)).
+  * `source`:
+    * `Source.postprocess_object`: add new `first_link_to_attachment` boolean kwarg to fetch and generate a preview `attachment` for the first link in the HTML `content`, if any.
 
 * `rss`:
   * Support image enclosures, both directions.

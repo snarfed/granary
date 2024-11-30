@@ -18,10 +18,12 @@ import urllib.parse
 import brevity
 from bs4 import BeautifulSoup
 import html2text
+import mf2util
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from requests import RequestException
 
-from . import as1
+from . import as1, microformats2
 
 logger = logging.getLogger(__name__)
 
@@ -602,15 +604,15 @@ class Source(object, metaclass=SourceMeta):
         return tag
 
   @staticmethod
-  def postprocess_activity(activity, mentions=False):
-    """Does source-independent post-processing of an activity, in place.
+  def postprocess_activity(activity, **kwargs):
+    """Does source-independent post-processing of an AS1 activity, in place.
 
-    Right now just populates the ``title`` field.
+    * populates ``title``
+    * calls :meth:`postprocess_object``
 
     Args:
-      activity (dict)
-      mentions (boolean): whether to detect @-mention links and convert them to
-        mention tags
+      activity (dict): AS1 activity
+      **kwargs: passed through to :meth:`postprocess_object``
     """
     activity = util.trim_nulls(activity)
     # maps object type to human-readable name to use in title
@@ -627,10 +629,11 @@ class Source(object, metaclass=SourceMeta):
     }
 
     actor_name = as1.actor_name(activity.get('actor'))
-    obj = activity.get('object')
-
-    if obj:
-      activity['object'] = Source.postprocess_object(obj, mentions=mentions)
+    # TODO: always call postprocess_object? ie:
+    #   ...or activity if activity.get('objectType') == 'activity'?
+    # maybe right, but would need to update lots of unit tests
+    if obj := as1.get_object(activity):
+      activity['object'] = Source.postprocess_object(obj, **kwargs)
       if not activity.get('title'):
         verb = DISPLAY_VERBS.get(activity.get('verb'))
         obj_name = obj.get('displayName')
@@ -646,18 +649,23 @@ class Source(object, metaclass=SourceMeta):
     return util.trim_nulls(activity)
 
   @staticmethod
-  def postprocess_object(obj, mentions=False):
+  def postprocess_object(obj, mentions=False, first_link_to_attachment=False):
     """Does source-independent post-processing of an AS1 object, in place.
 
     * Populates ``location.position`` based on latitude and longitude.
     * Optionally interprets HTML links in content with text starting with ``@``,
       eg ``@user`` or ``@user.com`` or ``@user@instance.com``, as @-mentions
       and adds ``mention`` tags for them.
+    * Optionally fetches the first HTML link in content and generates an
+      ``attachment`` for it
 
     Args:
       obj (dict): AS1 object
       mentions (boolean): whether to detect @-mention links and convert them to
         mention tags
+      first_link_to_attachment (boolean): whether to generate an ``attachment``
+        for the first HTML link in ``content``, if any. Will make external HTTP
+        requests!
 
     Returns:
       dict: ``obj``, modified in place
@@ -674,17 +682,18 @@ class Source(object, metaclass=SourceMeta):
           # couldn't convert lat or lon to float
           pass
 
+    links = util.parse_html(obj.get('content') or '').find_all('a')
+
     if mentions:
       # @-mentions to mention tags
       # https://github.com/snarfed/bridgy-fed/issues/493
       # TODO: unify into new textContent field
       # https://github.com/snarfed/granary/issues/729
-      content = obj.get('content') or ''
       existing_tags_with_urls = util.trim_nulls({
         t.get('displayName') for t in obj.setdefault('tags', []) if t.get('url')
       })
 
-      for a in util.parse_html(content).find_all('a'):
+      for a in links:
         href = a.get('href')
         text = a.get_text('').strip()
         if href and text.startswith('@') and text not in existing_tags_with_urls:
@@ -693,6 +702,19 @@ class Source(object, metaclass=SourceMeta):
             'url': href,
             'displayName': text,
           })
+
+    if (first_link_to_attachment and links and links[0].get('href')
+        and not obj.get('attachments')):
+      try:
+        if mf2 := util.fetch_mf2(links[0]['href'], metaformats=True):
+          entry = mf2util.find_first_entry(mf2, ['h-entry', 'h-card'])
+          obj['attachments'] = [{
+            **microformats2.to_as1(entry),
+            'objectType': 'link',
+          }]
+      except (AssertionError, ValueError, RequestException) as e:
+        logger.info(f"Couldn't generate preview embed for {links[0]['href']}: {e}")
+        util.interpret_http_exception(e)
 
     return util.trim_nulls(obj)
 

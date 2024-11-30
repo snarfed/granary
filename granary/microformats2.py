@@ -28,7 +28,7 @@ from oauth_dropins.webutil.util import (
 )
 
 from . import as1
-from .source import Source
+from . import source
 
 logger = logging.getLogger(__name__)
 
@@ -667,7 +667,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       'author': author,
     })
 
-  return Source.postprocess_object(obj, mentions=True)
+  return source.Source.postprocess_object(obj, mentions=True)
 
 
 json_to_object = to_as1
