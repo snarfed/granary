@@ -16,3 +16,8 @@ updates:
   #   directory: "/docs"
   #   # disable since we don't build docs in CI
   #   open-pull-requests-limit: 0
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
