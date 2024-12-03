@@ -778,7 +778,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
         full_text = QUOTE_RE_SUFFIX.sub('', full_text)
       else:
         # external link
-        external_record_embed = _to_external_embed(att, blobs=blobs)
+        external_record_embed = to_external_embed(att, blobs=blobs)
         external_embed = {
           '$type': f'app.bsky.embed.external#view',
           'external': {
@@ -1002,7 +1002,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       ret.update({
         'text': '',
         'facets': None,
-        'embed': _to_external_embed(obj, description=full_text, blobs=blobs),
+        'embed': to_external_embed(obj, description=full_text, blobs=blobs),
       })
       if images_record_embed:
         ret['embed']['external']['thumb'] = images_record_embed['images'][0]['image']
@@ -1076,7 +1076,7 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
   return ret
 
 
-def _to_external_embed(obj, description=None, blobs=None):
+def to_external_embed(obj, description=None, blobs=None):
   """Converts an AS1 object to a Bluesky ``app.bsky.embed.external#external``.
 
   Args:
@@ -1089,25 +1089,24 @@ def _to_external_embed(obj, description=None, blobs=None):
   url = obj.get('url') or obj.get('id')
   assert url
 
-  thumb = None
-  if blobs:
-    for img in as1.get_objects(obj, 'image'):
-      if img_url := img.get('url') or img.get('id'):
-        if blob := blobs.get(img_url):
-          thumb = blob
-          break
-
-  return {
+  ret = {
     '$type': f'app.bsky.embed.external',
     'external': {
       '$type': f'app.bsky.embed.external#external',
       'uri': url,
       'title': obj.get('displayName') or '',  # required
       'description': description or obj.get('summary') or obj.get('content') or '',
-      'thumb': thumb,
     }
   }
 
+  if blobs:
+    for img in as1.get_objects(obj, 'image'):
+      if img_url := img.get('url') or img.get('id'):
+        if blob := blobs.get(img_url):
+          ret['external']['thumb'] = blob
+          break
+
+  return ret
 
 def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
            pds=DEFAULT_PDS):

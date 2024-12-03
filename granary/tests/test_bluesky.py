@@ -26,6 +26,7 @@ from ..bluesky import (
   MAX_IMAGES,
   NO_AUTHENTICATED_LABEL,
   to_as1,
+  to_external_embed,
   url_to_did_web,
   web_url_to_at_uri,
 )
@@ -1760,6 +1761,39 @@ class BlueskyTest(testutil.TestCase):
         'image': 'http://pic',
       }],
     }, blobs={'http://pic': BLOB}))
+
+  def test_to_external_embed(self):
+    self.assertEqual({
+      '$type': 'app.bsky.embed.external',
+      'external': {
+        '$type': 'app.bsky.embed.external#external',
+        'uri': 'http://my/link',
+        'title': 'A link',
+        'description': 'foo bar',
+        'thumb': BLOB,
+      },
+    }, to_external_embed({
+      'objectType': 'link',
+      'url': 'http://my/link',
+      'displayName': 'A link',
+      'summary': 'foo bar',
+      'image': 'http://pic',
+    }, blobs={'http://pic': BLOB}))
+
+  def test_to_external_embed_no_title_description_blob(self):
+    self.assertEqual({
+      '$type': 'app.bsky.embed.external',
+      'external': {
+        '$type': 'app.bsky.embed.external#external',
+        'uri': 'http://my/link',
+        'title': '',
+        'description': '',
+      },
+    }, to_external_embed({
+      'objectType': 'link',
+      'url': 'http://my/link',
+      'image': 'http://pic',
+    }))
 
   def test_from_as1_note_display_name_as_embed(self):
     self.assert_equals({
