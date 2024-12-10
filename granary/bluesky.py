@@ -22,6 +22,8 @@ from multiformats import CID
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
 import requests
+from PIL import Image
+from io import BytesIO
 
 from . import as1
 from .as2 import QUOTE_RE_SUFFIX
@@ -422,7 +424,7 @@ def base_object(obj):
   return {}
 
 
-def from_as1(obj, out_type=None, blobs=None, client=None,
+def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
              original_fields_prefix=None, as_embed=False):
   """Converts an AS1 object to a Bluesky object.
 
@@ -443,6 +445,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
       ``ref``, ``mimeType``, and ``size``) to use in the returned object. If not
       provided, or if this doesn't have an ``image`` or similar URL in the input
       object, its output blob will be omitted.
+    aspects (dict): optional mapping from str URL to int (width,height) tuple.
+        Used to provide aspect ratio in image embeds.
     client (Bluesky or lexrpc.Client): optional; if provided, this will be used
       to make API calls to PDSes to fetch and populate CIDs for records
       referenced by replies, likes, reposts, etc.
@@ -474,6 +478,8 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
   actor = as1.get_object(activity, 'actor')
   if blobs is None:
     blobs = {}
+  if aspects is None:
+    aspects = {}
 
   # validate out_type
   if out_type:
@@ -652,11 +658,17 @@ def from_as1(obj, out_type=None, blobs=None, client=None,
               '$type': 'app.bsky.embed.images',
               'images': [],
             }
-          images_record_embed['images'].append({
+          image_record = {
             '$type': 'app.bsky.embed.images#image',
             'image': blob,
             'alt': alt,
-          })
+          }
+          if aspect := aspects.get(url):
+            image_record['aspectRatio'] = {
+              'width': aspect[0],
+              'height': aspect[1]
+            }
+          images_record_embed['images'].append(image_record)
 
     # first video => embed
     attachments = util.get_list(obj, 'attachments')
@@ -2172,8 +2184,8 @@ class Bluesky(Source):
                                description=preview_description)
 
       else:
-        blobs = self.upload_media(images)
-        post_atp = from_as1(obj, blobs=blobs, client=self)
+        blobs, aspects = self.upload_images(images)
+        post_atp = from_as1(obj, blobs=blobs, aspects=aspects, client=self)
         post_atp['text'] = content
 
         # facet for link to original post, if any
@@ -2247,24 +2259,30 @@ class Bluesky(Source):
   def base_object(self, obj):
     return base_object(obj)
 
-  def upload_media(self, media):
+  def upload_images(self, images):
     blobs = {}
+    aspects = {}
 
-    for obj in media:
+    for obj in images:
       url = util.get_url(obj, key='stream') or util.get_url(obj)
       if not url or url in blobs:
         continue
 
       with util.requests_get(url, stream=True) as fetch:
         fetch.raise_for_status()
+        # 1,000,000 bytes is the upper limit for a single image on Bluesky
+        image_data = BytesIO(util.FileLimiter(fetch.raw, 1_000_000).read())
+        image = Image.open(image_data)
+        aspects[url] = image.size
+        image_data.seek(0)
         upload = self.client.com.atproto.repo.uploadBlob(
-          input=fetch.raw,
+          input=image_data,
           headers={'Content-Type': fetch.headers['Content-Type']}
         )
 
       blobs[url] = upload['blob']
 
-    return blobs
+    return blobs, aspects
 
   def truncate(self, *args, type=None, **kwargs):
     """Thin wrapper around :meth:`Source.truncate` that sets default kwargs."""
