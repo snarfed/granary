@@ -317,6 +317,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * When a `flag` has multiple objects, use the first one that's an ATProto record.
     * Handle URLs more carefully, don't add link facets with invalid `uri`s.
     * Populate `blobs` into external embed `thumb`s.
+    * Parse image blobs and add `aspectRatio` to image record.
     * Bug fix: handle HTML links with `title` in `content` correctly.
     * Bug fix: handle attachments with no `id` or `url`.
   * `to_as1`:
