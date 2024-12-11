@@ -2273,7 +2273,7 @@ class Bluesky(Source):
       with util.requests_get(url, stream=True) as fetch:
         fetch.raise_for_status()
         data = BytesIO(util.FileLimiter(fetch.raw, MAX_MEDIA_SIZE_BYTES).read())
-        content_type = fetch.headers['Content-Type']
+        content_type = fetch.headers.get('Content-Type', '')
         if content_type.startswith("image/"):
           with Image.open(data) as image:
             aspects[url] = image.size
