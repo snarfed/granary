@@ -48,6 +48,8 @@ HANDLE_REGEX = (
 HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
 DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 
+MAX_IMAGE_SIZE_BYTES = 5_000_000
+
 # at:// URI regexp
 # https://atproto.com/specs/at-uri-scheme#full-at-uri-syntax
 # https://atproto.com/specs/record-key#record-key-syntax
@@ -2270,8 +2272,7 @@ class Bluesky(Source):
 
       with util.requests_get(url, stream=True) as fetch:
         fetch.raise_for_status()
-        max_image_size = LEXRPC_TRUNCATE.defs['app.bsky.embed.images#image']['properties']['image']['maxSize']
-        image_data = BytesIO(util.FileLimiter(fetch.raw, max_image_size).read())
+        image_data = BytesIO(util.FileLimiter(fetch.raw, MAX_IMAGE_SIZE_BYTES).read())
         image = Image.open(image_data)
         aspects[url] = image.size
         image_data.seek(0)
