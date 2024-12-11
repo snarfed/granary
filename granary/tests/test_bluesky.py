@@ -3,6 +3,7 @@
 Most tests are via files in testdata/.
 """
 import copy
+import os
 from io import BytesIO
 from unittest import skip
 from unittest.mock import ANY, patch
@@ -3481,8 +3482,10 @@ class BlueskyTest(testutil.TestCase):
   @patch('requests.post')
   @patch('requests.get')
   def test_create_with_media(self, mock_get, mock_post):
-    mock_get.return_value = requests_response(
-      'pic data', headers={'Content-Type': 'my/pic'})
+    image_path = os.path.join(os.path.dirname(__file__), 'testdata/image.jpg')
+    with open(image_path, 'rb') as f:
+        mock_get.return_value = requests_response(
+          f.read(), headers={'Content-Type': 'image/jpeg'})
 
     at_uri = 'at://did:plc:me/app.bsky.feed.post/abc123'
     mock_post.side_effect = [
@@ -3503,7 +3506,7 @@ class BlueskyTest(testutil.TestCase):
       data=ANY,
       headers={
         'Authorization': 'Bearer towkin',
-        'Content-Type': 'my/pic',
+        'Content-Type': 'image/jpeg',
         'User-Agent': util.user_agent,
       })
     # lexrpc.Client passes a BytesIO as data. sadly requests reads from that
@@ -3513,6 +3516,10 @@ class BlueskyTest(testutil.TestCase):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     del expected['fooOriginalText']
     del expected['fooOriginalUrl']
+    expected['embed']['images'][0]['aspectRatio'] = {
+      'width': 500,
+      'height': 500
+    }
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
       'collection': 'app.bsky.feed.post',
