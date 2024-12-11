@@ -2270,8 +2270,8 @@ class Bluesky(Source):
 
       with util.requests_get(url, stream=True) as fetch:
         fetch.raise_for_status()
-        # 1,000,000 bytes is the upper limit for a single image on Bluesky
-        image_data = BytesIO(util.FileLimiter(fetch.raw, 1_000_000).read())
+        max_image_size = LEXRPC_TRUNCATE.defs['app.bsky.embed.images#image']['properties']['image']['maxSize']
+        image_data = BytesIO(util.FileLimiter(fetch.raw, max_image_size).read())
         image = Image.open(image_data)
         aspects[url] = image.size
         image_data.seek(0)

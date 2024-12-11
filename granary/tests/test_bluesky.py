@@ -3517,8 +3517,8 @@ class BlueskyTest(testutil.TestCase):
     del expected['fooOriginalText']
     del expected['fooOriginalUrl']
     expected['embed']['images'][0]['aspectRatio'] = {
-      'width': 500,
-      'height': 500
+      'width': 480,
+      'height': 640
     }
     self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
       'repo': self.bs.did,
