@@ -3527,6 +3527,47 @@ class BlueskyTest(testutil.TestCase):
     })
 
   @patch('requests.post')
+  @patch('requests.get')
+  def test_create_with_non_image_media(self, mock_get, mock_post):
+    mock_get.return_value = requests_response(
+      b'something', headers={'Content-Type': 'video/mpeg'})
+
+    at_uri = 'at://did:plc:me/app.bsky.feed.post/abc123'
+    mock_post.side_effect = [
+      requests_response({'blob': NEW_BLOB}),
+      requests_response({'uri': at_uri, 'cid': 'sydddddd'}),
+    ]
+
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(POST_AS_IMAGES['object']).content)
+
+    mock_get.assert_called_with(NEW_BLOB_URL, stream=True, timeout=HTTP_TIMEOUT,
+                                headers={'User-Agent': util.user_agent})
+    mock_post.assert_any_call(
+      'https://bsky.social/xrpc/com.atproto.repo.uploadBlob',
+      json=None,
+      data=ANY,
+      headers={
+        'Authorization': 'Bearer towkin',
+        'Content-Type': 'video/mpeg',
+        'User-Agent': util.user_agent,
+      })
+    # lexrpc.Client passes a BytesIO as data. sadly requests reads from that
+    # buffer and then closes it, so we can't check its contents.
+    # self.assertEqual(b'pic data', repr(mock_post.call_args_list[0][1]['data']))
+
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': expected,
+    })
+
+  @patch('requests.post')
   def test_preview_with_too_many_media(self, mock_post):
     image_urls = [f'http://my/picture/{i}' for i in range(MAX_IMAGES + 1)]
     obj = {

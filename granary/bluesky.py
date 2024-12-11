@@ -48,7 +48,7 @@ HANDLE_REGEX = (
 HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
 DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
 
-MAX_IMAGE_SIZE_BYTES = 5_000_000
+MAX_MEDIA_SIZE_BYTES = 5_000_000
 
 # at:// URI regexp
 # https://atproto.com/specs/at-uri-scheme#full-at-uri-syntax
@@ -2186,7 +2186,7 @@ class Bluesky(Source):
                                description=preview_description)
 
       else:
-        blobs, aspects = self.upload_images(images)
+        blobs, aspects = self.upload_media(images)
         post_atp = from_as1(obj, blobs=blobs, aspects=aspects, client=self)
         post_atp['text'] = content
 
@@ -2261,24 +2261,26 @@ class Bluesky(Source):
   def base_object(self, obj):
     return base_object(obj)
 
-  def upload_images(self, images):
+  def upload_media(self, media):
     blobs = {}
     aspects = {}
 
-    for obj in images:
+    for obj in media:
       url = util.get_url(obj, key='stream') or util.get_url(obj)
       if not url or url in blobs:
         continue
 
       with util.requests_get(url, stream=True) as fetch:
         fetch.raise_for_status()
-        image_data = BytesIO(util.FileLimiter(fetch.raw, MAX_IMAGE_SIZE_BYTES).read())
-        image = Image.open(image_data)
-        aspects[url] = image.size
-        image_data.seek(0)
+        data = BytesIO(util.FileLimiter(fetch.raw, MAX_MEDIA_SIZE_BYTES).read())
+        content_type = fetch.headers['Content-Type']
+        if content_type.startswith("image/"):
+          with Image.open(data) as image:
+            aspects[url] = image.size
+          data.seek(0)
         upload = self.client.com.atproto.repo.uploadBlob(
-          input=image_data,
-          headers={'Content-Type': fetch.headers['Content-Type']}
+          input=data,
+          headers={'Content-Type': content_type}
         )
 
       blobs[url] = upload['blob']
