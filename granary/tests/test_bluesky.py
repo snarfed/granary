@@ -1663,6 +1663,19 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_post_bad_lang(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'My original post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'note',
+      'content': 'My original post',
+      'contentMap': {
+        'unknown': 'My original post',
+      },
+    }))
+
   def test_from_as1_post_langs_none_match_content(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

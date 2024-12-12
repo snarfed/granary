@@ -17,7 +17,7 @@ import urllib.parse
 
 from bs4 import BeautifulSoup
 from lexrpc import Client
-from lexrpc.base import Base, NSID_RE
+from lexrpc.base import Base, LANG_RE, NSID_RE
 from multiformats import CID
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
@@ -955,7 +955,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       embed = {
         '$type': 'app.bsky.embed.recordWithMedia#view',
         'record': record_embed,
-        'media': media_embed
+        'media': media_embed,
       }
     else:
       embed = record_embed or media_embed
@@ -986,7 +986,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # languages
     # (we steal contentMap from AS2, it's not officially part of AS1)
     langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
-             if lang_content == orig_content]
+             if LANG_RE.match(lang)
+             and lang_content == orig_content]
 
     # convert AS1 sensitive to "nudity" label
     # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
