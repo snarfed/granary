@@ -325,6 +325,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
     * Bug fix: handle hashtags with regexp special characters.
     * Support string and bytes CIDs in blob `ref`s as well as `CID` instances.
+    * Link hashtags to bsky.app hashtag search pages ([bridgy-fed#1634](https://github.com/snarfed/bridgy-fed/issues/1634)).
   * `Bluesky.get_activities`: skip unknown record types instead of raising `ValueError`.
 * `microformats2`:
   * `object_to_json`: Improve handling of items with multiple types by removing `inReplyTo` from likes, shares, etc ([snarfed/bridgy-fed#941](https://github.com/snarfed/bridgy-fed/issues/941)).

@@ -159,7 +159,7 @@ class ActivityStreams2Test(testutil.TestCase):
       'type': 'Note',
       'attachment': [{
         'type': 'Link',
-        'url': 'http://a/link',
+        'href': 'http://a/link',
       }],
     }, as2.from_as1({
       'objectType': 'note',
@@ -478,6 +478,32 @@ class ActivityStreams2Test(testutil.TestCase):
       'objectType' : 'note',
       'sensitive': True,
     }))
+
+  def test_from_as1_link_type_href(self):
+    self.assert_equals({
+      'type': 'Tag',
+      'href': 'http://foo/bar',
+    }, as2.from_as1({
+      'objectType': 'hashtag',
+      'url': 'http://foo/bar',
+    }), ignore=['@context'])
+
+  def test_from_as1_tag_url_to_href(self):
+    self.assert_equals({
+      'type' : 'Note',
+      'tag': [{
+        'type': 'Tag',
+        'name': 'hache',
+        'href': 'https://bsky.app/search?q=%23hache',
+      }],
+    }, as2.from_as1({
+      'objectType' : 'note',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'hache',
+        'url': 'https://bsky.app/search?q=%23hache',
+      }],
+    }), ignore=['@context'])
 
   def test_to_as1_stop_following_object_id(self):
     self.assertEqual({

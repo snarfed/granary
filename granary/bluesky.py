@@ -1272,9 +1272,11 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
             'url': Bluesky.user_url(feat.get('did')),
           })
         elif feat.get('$type') == 'app.bsky.richtext.facet#tag':
+          name = feat.get('tag')
           tag.update({
             'objectType': 'hashtag',
-            'displayName': feat.get('tag')
+            'displayName': name,
+            'url': f'https://bsky.app/search?q=%23{urllib.parse.quote(name)}',
           })
 
       index = facet.get('index', {})

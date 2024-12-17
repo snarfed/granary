@@ -89,7 +89,8 @@ TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 ACTOR_TYPES = {as2_type for as1_type, as2_type in OBJECT_TYPE_TO_TYPE.items()
                if as1_type in as1.ACTOR_TYPES}
 # https://www.w3.org/TR/activitystreams-vocabulary/#object-types
-URL_TYPES = ['Article', 'Audio', 'Image', 'Mention', 'Video']
+URL_AS2_TYPES = ['Article', 'Audio', 'Image', 'Mention', 'Video']
+LINK_AS1_TYPES = ['hashtag', 'link', 'mention']
 
 VERB_TO_TYPE = {
   'accept': 'Accept',
@@ -166,7 +167,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   if not obj:
     return {}
   elif isinstance(obj, str):
-    if type in URL_TYPES:
+    if type in URL_AS2_TYPES:
       obj = {'type': type, 'url': obj}
     else:
       return obj
@@ -372,7 +373,7 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
       obj['image'] = obj['image'][0]
 
   # other type-specific fields
-  if obj_type == 'mention':
+  if obj_type in LINK_AS1_TYPES:
     obj['href'] = util.get_first(obj, 'url')
     obj.pop('url', None)
 

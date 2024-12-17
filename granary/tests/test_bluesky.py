@@ -185,6 +185,7 @@ NOTE_AS_TAG_HASHTAG = {
     'displayName': 'hache-☕',
     'startIndex': 4,
     'length': 8,
+    'url': 'https://bsky.app/search?q=%23hache-%E2%98%95',
   }],
 }
 FACET_MENTION = {
