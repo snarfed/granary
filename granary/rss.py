@@ -119,14 +119,15 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
       t.get('objectType') not in ('article', 'person', 'mention')]
     item.category(categories)
 
-    author = as1.get_object(obj, 'author')
-    author = {
-      'name': (author.get('displayName') or author.get('username')
-               or author.get('url') or author.get('id')),
-      'uri': author.get('url') or author.get('id'),
-      'email': author.get('email') or '-',
+    as1_author = as1.get_object(obj, 'author')
+    rss_author = {
+      'name': (as1_author.get('displayName') or as1_author.get('username')
+               or as1_author.get('url') or as1_author.get('id')),
+      'uri': as1_author.get('url') or as1_author.get('id'),
     }
-    item.author(author)
+    if 'email' in as1_author:
+      rss_author['email'] = as1_author['email']
+    item.author(rss_author)
 
     published = obj.get('published') or obj.get('updated')
     if published and isinstance(published, str):
@@ -176,7 +177,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
       fg.podcast.itunes_summary(summary)
     fg.podcast.itunes_explicit('no')
     fg.podcast.itunes_block(False)
-    name = author.get('name')
+    name = rss_author.get('name')
     if name:
       fg.podcast.itunes_author(name)
     if image:
