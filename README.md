@@ -281,7 +281,14 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 7.1 - unreleased
+### 8.0 - unreleased
+
+_Breaking changes:_
+
+* `as2`:
+  * `from_as1`: In `Link` objects (including `Tag`s and `Mention`s), convert `url` to `href`. Before this, we left it as `url`, which was incorrect AS2.
+
+_Non-breaking changes:_
 
 Standardize function and method names in all modules to `to_as1`, `from_as`, etc. Old method names are now deprecated but won't be removed until at least v8.0, if not later.
 
