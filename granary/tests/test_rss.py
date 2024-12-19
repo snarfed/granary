@@ -101,14 +101,13 @@ The original post]]></description>
     self.assert_multiline_in("""
 <item>
 <description><![CDATA[foo bar]]></description>
-<author>- (Alice)</author>
+<author>alice@example.com (Alice)</author>
 </item>
 
 <item>
 <title>a thing I wrote</title>
 <link>http://read/this</link>
 <description><![CDATA[its gud]]></description>
-<author>-</author>
 <guid isPermaLink="true">http://read/this</guid>
 </item>
 """, rss.from_as1([{
@@ -119,6 +118,7 @@ The original post]]></description>
         'displayName': 'Alice',
         'url': 'http://it/me',
         'image': 'http://my/pic.jpg',
+        'email': 'alice@example.com',
       },
     },
   }, {
@@ -203,16 +203,18 @@ The original post]]></description>
         'author': {
           'objectType':'person',
           'displayName':'Mrs. Baz',
+          'email': 'baz@example.com',
         },
       }], feed_url='http://this')
-    self.assert_multiline_in('<author>- (Mrs. Baz)</author>', got)
+    self.assert_multiline_in('<author>baz@example.com (Mrs. Baz)</author>', got)
 
   def test_author_string_id(self):
     got = rss.from_as1([{
         'content': 'foo bar',
         'author': 'tag:bob',
+        'email': 'bob@example.com',
       }], feed_url='http://this')
-    self.assert_multiline_in('<author>- (tag:bob)</author>', got)
+    self.assert_multiline_in('<author>bob@example.com (tag:bob)</author>', got)
 
   def test_order(self):
     got = rss.from_as1([
