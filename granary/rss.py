@@ -125,7 +125,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
                or as1_author.get('url') or as1_author.get('id')),
       'uri': as1_author.get('url') or as1_author.get('id'),
     }
-    if 'email' in as1_author:
+    if as1_author.get('email'):
       rss_author['email'] = as1_author['email']
     item.author(rss_author)
 
