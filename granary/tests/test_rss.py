@@ -211,10 +211,10 @@ The original post]]></description>
   def test_author_string_id(self):
     got = rss.from_as1([{
         'content': 'foo bar',
-        'author': 'tag:bob',
+        'author': 'tag:bob',  # should be ignored for RSS
         'email': 'bob@example.com',
       }], feed_url='http://this')
-    self.assert_multiline_in('<author>bob@example.com (tag:bob)</author>', got)
+    self.assertNotRegex(got, r'<author>.*</author>')
 
   def test_order(self):
     got = rss.from_as1([
