@@ -21,7 +21,14 @@
     "duration": 328,
     "size": 7770000
   }],
-  "author": {"displayName": "-"}
+  "author": {
+    "displayName": "Stuff",
+    "image": [{
+      "url": "http://example.com/martin/image"
+    }],
+    "summary": "some stuff by meee",
+    "url": "http://site/"
+  }
 },
 {
   "id": "http://vidjo/post",
@@ -43,5 +50,12 @@
     "duration": 428,
     "size": 8880000
   }],
-  "author": {"displayName": "-"}
+  "author": {
+    "displayName": "Stuff",
+    "image": [{
+      "url": "http://example.com/martin/image"
+    }],
+    "summary": "some stuff by meee",
+    "url": "http://site/"
+  }
 }]
