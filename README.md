@@ -331,6 +331,8 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `object_to_json`: Improve handling of items with multiple types by removing `inReplyTo` from likes, shares, etc ([snarfed/bridgy-fed#941](https://github.com/snarfed/bridgy-fed/issues/941)).
 * `rss`:
   * Support image enclosures, both directions.
+  * `from_as1`:
+    * Bug fix: remove use of default `author` value `'-'` since RSS spec requires author values to include valid email addresses.
 * `source`:
   * `Source.postprocess_object`: add new `first_link_to_attachment` boolean kwarg to fetch and generate a preview `attachment` for the first link in the HTML `content`, if any.
 
