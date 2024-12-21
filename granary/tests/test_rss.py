@@ -212,7 +212,6 @@ The original post]]></description>
     got = rss.from_as1([{
         'content': 'foo bar',
         'author': 'tag:bob',  # should be ignored for RSS
-        'email': 'bob@example.com',
       }], feed_url='http://this')
     self.assertNotRegex(got, r'<author>.*</author>')
 
