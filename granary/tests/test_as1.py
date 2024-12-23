@@ -7,6 +7,7 @@ from oauth_dropins.webutil import testutil
 from .. import as1
 
 ACTOR = {
+  'objectType': 'person',
   'id': 'tag:fake.com:444',
   'displayName': 'Bob',
   'url': 'https://plus.google.com/bob',
