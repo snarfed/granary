@@ -15,7 +15,7 @@ git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 git+https://github.com/dvska/gdata-python3.git#egg=gdata
 
 # required for mox3, not prod
-fixtures==4.1.0
+fixtures==4.2.2
 pbr==6.1.0
 
 async-timeout==5.0.1
