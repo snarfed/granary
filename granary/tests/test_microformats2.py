@@ -1012,6 +1012,18 @@ foo bar
       },
     }))
 
+  def test_to_as1_bad_timestamps(self):
+    for bad in ('*', '1735561920000', 'foo'):
+      self.assert_equals({
+        'objectType': 'note',
+        'published': bad,
+      }, microformats2.to_as1({
+        'type': ['h-entry'],
+        'properties': {
+          'published': [bad],
+        },
+      }))
+
   def test_hfeed_to_as1(self):
     self.assert_equals([{
       'objectType': 'activity',

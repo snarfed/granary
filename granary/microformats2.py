@@ -171,7 +171,7 @@ def maybe_normalize_iso8601(val):
   val = get_text(val)
   try:
     return dateutil.parser.parse(val).isoformat()
-  except ValueError as e:
+  except (OverflowError, ValueError) as e:
     logger.debug(e)
     return val
 

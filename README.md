@@ -336,6 +336,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `Bluesky.get_activities`: skip unknown record types instead of raising `ValueError`.
 * `microformats2`:
   * `object_to_json`: Improve handling of items with multiple types by removing `inReplyTo` from likes, shares, etc ([snarfed/bridgy-fed#941](https://github.com/snarfed/bridgy-fed/issues/941)).
+  * `to_as1`: don't crash on integer UNIX timestamps in `published` and `updated`.
 * `rss`:
   * Support image enclosures, both directions.
   * `from_as1`:
