@@ -4,21 +4,20 @@ granary
 Granary is a library and REST API that fetches and converts between a
 wide variety of social data sources and formats:
 
--  Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native
-   APIs
--  Instagram and Facebook scraped HTML
--  `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0 JSON,
-   including `ActivityPub <https://activitypub.rocks/>`__
--  HTML and JSON with
-   `microformats2 <http://microformats.org/wiki/microformats2>`__
--  `Atom <https://tools.ietf.org/html/rfc4287>`__, `RSS
-   2.0 <http://www.rssboard.org/rss-specification>`__, `JSON
-   Feed <https://jsonfeed.org/>`__
--  Plain XML
--  `Bluesky <https://blueskyweb.org/>`__/`AT
-   Protocol <https://atproto.com/>`__
--  `Nostr <https://nostr.com/>`__, with many
-   `NIPs <https://nostr.com/the-protocol/nips>`__
+- Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native APIs
+- Instagram and Facebook scraped HTML
+- `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0 JSON,
+  including `ActivityPub <https://activitypub.rocks/>`__
+- HTML and JSON with
+  `microformats2 <http://microformats.org/wiki/microformats2>`__
+- `Atom <https://tools.ietf.org/html/rfc4287>`__, `RSS
+  2.0 <http://www.rssboard.org/rss-specification>`__, `JSON
+  Feed <https://jsonfeed.org/>`__
+- Plain XML
+- `Bluesky <https://blueskyweb.org/>`__/`AT
+  Protocol <https://atproto.com/>`__
+- `Nostr <https://nostr.com/>`__, with many
+  `NIPs <https://nostr.com/the-protocol/nips>`__
 
 `Free <https://en.wikipedia.org/wiki/Threshing>`__ yourself from silo
 API `chaff <https://en.wikipedia.org/wiki/Chaff>`__ and expose the sweet
@@ -26,14 +25,14 @@ social data foodstuff inside in standard formats and protocols!
 
 Here’s how to get started:
 
--  Granary is `available on
-   PyPi. <https://pypi.python.org/pypi/granary/>`__ Install with
-   ``pip install granary``.
--  `Getting started docs. <#using>`__
--  `Reference
-   docs. <https://granary.readthedocs.io/en/latest/source/granary.html>`__
--  REST API and demo app at `granary.io <https://granary.io/>`__.
--  `Source code on GitHub. <https://github.com/snarfed/granary/>`__
+- Granary is `available on
+  PyPi. <https://pypi.python.org/pypi/granary/>`__ Install with
+  ``pip install granary``.
+- `Getting started docs. <#using>`__
+- `Reference
+  docs. <https://granary.readthedocs.io/en/latest/source/granary.html>`__
+- REST API and demo app at `granary.io <https://granary.io/>`__.
+- `Source code on GitHub. <https://github.com/snarfed/granary/>`__
 
 License: This project is placed in the public domain. You may also use
 it under the `CC0
@@ -450,398 +449,417 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-7.1 - unreleased
+8.0 - unreleased
 ~~~~~~~~~~~~~~~~
+
+*Breaking changes:*
+
+- ``as2``:
+
+  - ``from_as1``: In ``Link`` objects (including ``Tag``\ s and
+    ``Mention``\ s), convert ``url`` to ``href``. Before this, we left
+    it as ``url``, which was incorrect AS2.
+
+*Non-breaking changes:*
 
 Standardize function and method names in all modules to ``to_as1``,
 ``from_as``, etc. Old method names are now deprecated but won’t be
-removed until at least v8.0, if not later.
+removed until at least v9.0, if not later.
 
--  ``as1``:
+- ``as1``:
 
-   -  Add new ``is_dm``, ``recipient_if_dm``, ``get_id``, and
-      ``is_audience`` functions.
+  - Add new ``is_dm``, ``recipient_if_dm``, ``get_id``, and
+    ``is_audience`` functions.
 
--  ``as2``:
+- ``as2``:
 
-   -  Add
-      `sensitive <https://swicg.github.io/miscellany/#sensitive>`__,
-      `indexable <https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level>`__,
-      and
-      `discoverable <https://docs.joinmastodon.org/spec/activitypub/#discoverable>`__
-      support.
-   -  Add new ``is_server_actor`` function
-      (`FEP-d556 <https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md>`__,
-      `discussion <https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861>`__).
-   -  ``from_as1``:
+  - Add
+    `sensitive <https://swicg.github.io/miscellany/#sensitive>`__,
+    `indexable <https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level>`__,
+    and
+    `discoverable <https://docs.joinmastodon.org/spec/activitypub/#discoverable>`__
+    support.
+  - Add new ``is_server_actor`` function
+    (`FEP-d556 <https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md>`__,
+    `discussion <https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861>`__).
+  - ``from_as1``:
 
-      -  Always convert images to objects with ``type: Image``, never to
-         bare string URLs
-         (`bridgy-fed#/1000 <https://github.com/snarfed/bridgy-fed/issues/1000>`__).
-      -  Bug fixes for converting links to facets when the link text is
-         the link URL.
+    - Always convert images to objects with ``type: Image``, never to
+      bare string URLs
+      (`bridgy-fed#/1000 <https://github.com/snarfed/bridgy-fed/issues/1000>`__).
+    - Bug fixes for converting links to facets when the link text is the
+      link URL.
 
-   -  ``to_as1``:
+  - ``to_as1``:
 
-      -  Handle other types of tags better, eg non-standard ``Hashtag``
-         and inner ``tag`` field for name.
-      -  Bug fix for videos, ``mimeType`` goes in outer object, not in
-         ``stream``.
-      -  Bug fix for ``to``/``cc`` with mixed dict and string elements.
+    - Handle other types of tags better, eg non-standard ``Hashtag`` and
+      inner ``tag`` field for name.
+    - Bug fix for videos, ``mimeType`` goes in outer object, not in
+      ``stream``.
+    - Bug fix for ``to``/``cc`` with mixed dict and string elements.
 
--  ``atom``:
+  - ``link_tags``: add ``class="mention"`` for ``Mention`` tags
+    (`bridgy-fed/#887 <https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758>`__).
 
-   -  ``atom_to_activity/ies``: Get URL from ``link`` for activities as
-      well as objects. (`Thanks
-      @imax9000! <https://github.com/snarfed/granary/issues/752>`__)
+- ``atom``:
 
--  ``bluesky``:
+  - ``atom_to_activity/ies``: Get URL from ``link`` for activities as
+    well as objects. (`Thanks
+    @imax9000! <https://github.com/snarfed/granary/issues/752>`__)
 
-   -  Translate Bluesky ``app.bsky.feed.post#langs`` to/from AS1
-      ``contentMap`` (which isn’t officially part of AS1; we steal it
-      from AS2).
-   -  Translate AS2 ``sensitive`` on posts to Bluesky ``graphic-media``
-      self label, and many Bluesky self labels back to ``sensitive``
-      with content warning(s) in ``summary``.
-   -  Translate AS1/2 DMs to/from Bluesky chats.
-   -  Translate video embeds in posts.
-   -  ``create``/``previewCreate``:
+- ``bluesky``:
 
-      -  If ``inReplyTo`` isn’t a Bluesky URL or AT URI, return
-         ``CreationResult`` instead of raising ``ValueError``.
+  - Translate Bluesky ``app.bsky.feed.post#langs`` to/from AS1
+    ``contentMap`` (which isn’t officially part of AS1; we steal it from
+    AS2).
+  - Translate AS2 ``sensitive`` on posts to Bluesky ``graphic-media``
+    self label, and many Bluesky self labels back to ``sensitive`` with
+    content warning(s) in ``summary``.
+  - Translate AS1/2 DMs to/from Bluesky chats.
+  - Translate video embeds in posts.
+  - ``create``/``previewCreate``:
 
-   -  ``from_as1``:
+    - If ``inReplyTo`` isn’t a Bluesky URL or AT URI, return
+      ``CreationResult`` instead of raising ``ValueError``.
 
-      -  Convert ``article``\ s to external embeds with no post text.
-      -  Add new ``as_embed`` boolean kwarg to do the same thing for any
-         object.
-      -  When truncating and adding a link to the original post, use
-         ``id`` if ``url`` is not available
-         (`snarfed/bridgy-fed#1155 <https://github.com/snarfed/bridgy-fed/issues/1155>`__).
-      -  If the input object has ``inReplyTo`` or ``object`` or
-         ``target`` with no recognizable ATProto or Bluesky object,
-         raise ``ValueError``.
-      -  Omit images that aren’t in ``blobs``.
-      -  Bug fix for quote posts with text content that’s longer than
-         Bluesky’s limit
-         (`snarfed/bridgy-fed#1197 <https://github.com/snarfed/bridgy-fed/issues/1197>`__).
-      -  When a ``flag`` has multiple objects, use the first one that’s
-         an ATProto record.
-      -  Handle URLs more carefully, don’t add link facets with invalid
-         ``uri``\ s.
-      -  Bug fix: handle HTML links with ``title`` in ``content``
-         correctly.
-      -  Bug fix: handle attachments with no ``id`` or ``url``.
+  - ``from_as1``:
 
-   -  ``to_as1``:
+    - Convert ``article``\ s to external embeds with no post text.
+    - Add new ``as_embed`` boolean kwarg to do the same thing for any
+      object.
+    - When truncating and adding a link to the original post, use ``id``
+      if ``url`` is not available
+      (`snarfed/bridgy-fed#1155 <https://github.com/snarfed/bridgy-fed/issues/1155>`__).
+    - If the input object has ``inReplyTo`` or ``object`` or ``target``
+      with no recognizable ATProto or Bluesky object, raise
+      ``ValueError``.
+    - Omit images that aren’t in ``blobs``.
+    - Bug fix for quote posts with text content that’s longer than
+      Bluesky’s limit
+      (`snarfed/bridgy-fed#1197 <https://github.com/snarfed/bridgy-fed/issues/1197>`__).
+    - When a ``flag`` has multiple objects, use the first one that’s an
+      ATProto record.
+    - Handle URLs more carefully, don’t add link facets with invalid
+      ``uri``\ s.
+    - Populate ``blobs`` into external embed ``thumb``\ s.
+    - Parse image blobs and add ``aspectRatio`` to image record.
+    - Bug fix: handle HTML links with ``title`` in ``content``
+      correctly.
+    - Bug fix: handle attachments with no ``id`` or ``url``.
 
-      -  Extract links from ``app.bsky.actor.profile#description`` into
-         ``url``/``urls`` fields
-      -  Bug fix: first URL (singular) goes in ``url``, list of URLs
-         goes in ``urls``.
-      -  Bug fix: handle hashtags with regexp special characters.
-      -  Support string and bytes CIDs in blob ``ref``\ s as well as
-         ``CID`` instances.
+  - ``to_as1``:
 
-   -  ``Bluesky.get_activities``: skip unknown record types instead of
-      raising ``ValueError``.
+    - Extract links from ``app.bsky.actor.profile#description`` and
+      ``#summary`` into ``url``/``urls`` fields.
+    - Bug fix: first URL (singular) goes in ``url``, list of URLs goes
+      in ``urls``.
+    - Bug fix: handle hashtags with regexp special characters.
+    - Support string and bytes CIDs in blob ``ref``\ s as well as
+      ``CID`` instances.
+    - Link hashtags to bsky.app hashtag search pages
+      (`bridgy-fed#1634 <https://github.com/snarfed/bridgy-fed/issues/1634>`__).
 
--  ``microformats2``:
+  - ``Bluesky.get_activities``: skip unknown record types instead of
+    raising ``ValueError``.
 
-   -  ``object_to_json``: Improve handling of items with multiple types
-      by removing ``inReplyTo`` from likes, shares, etc
-      (`snarfed/bridgy-fed#941 <https://github.com/snarfed/bridgy-fed/issues/941>`__).
+- ``microformats2``:
 
--  ``rss``:
+  - ``object_to_json``: Improve handling of items with multiple types by
+    removing ``inReplyTo`` from likes, shares, etc
+    (`snarfed/bridgy-fed#941 <https://github.com/snarfed/bridgy-fed/issues/941>`__).
+  - ``to_as1``: don’t crash on integer UNIX timestamps in ``published``
+    and ``updated``.
 
-   -  Support image enclosures, both directions.
+- ``rss``:
+
+  - Support image enclosures, both directions.
+  - ``from_as1``:
+
+    - Bug fix: remove use of default ``author`` value ``'-'`` since RSS
+      spec requires author values to include valid email addresses.
+
+- ``source``:
+
+  - ``Source.postprocess_object``: add new ``first_link_to_attachment``
+    boolean kwarg to fetch and generate a preview ``attachment`` for the
+    first link in the HTML ``content``, if any.
 
 7.0 - 2024-06-24
 ~~~~~~~~~~~~~~~~
 
 *Breaking changes:*
 
--  ``jsonfeed``:
+- ``jsonfeed``:
 
-   -  ``jsonfeed_to_activities``: return AS1 objects, not activities.
+  - ``jsonfeed_to_activities``: return AS1 objects, not activities.
 
 *Non-breaking changes:*
 
--  ``as1``:
+- ``as1``:
 
-   -  ``activity_changed``: add ``displayName``, ``summary`` fields.
-   -  ``is_public``: return ``False`` if the object/activity contains
-      ``to`` that’s empty or has only unknown aliases.
+  - ``activity_changed``: add ``displayName``, ``summary`` fields.
+  - ``is_public``: return ``False`` if the object/activity contains
+    ``to`` that’s empty or has only unknown aliases.
 
--  ``as2``:
+- ``as2``:
 
-   -  Add support for the ``Application``, ``Block``, ``Flag``, and
-      ``Link`` types.
-   -  Generalize actor logic in ``to/from_as1`` across all actor types,
-      not just ``Person``.
-   -  Add new ``link_tags`` function.
+  - Add support for the ``Application``, ``Block``, ``Flag``, and
+    ``Link`` types.
+  - Generalize actor logic in ``to/from_as1`` across all actor types,
+    not just ``Person``.
+  - Add new ``link_tags`` function.
 
--  ``atom``:
+- ``atom``:
 
-   -  ``activities_to_atom``: handle image attachments without ``url``
-      field.
+  - ``activities_to_atom``: handle image attachments without ``url``
+    field.
 
--  ``bluesky``:
+- ``bluesky``:
 
-   -  ``to_as1``:
+  - ``to_as1``:
 
-      -  Add support for:
+    - Add support for:
 
-         -  ``app.bsky.embed.record``
-         -  ``app.bsky.embed.recordWithMedia``
-         -  ``app.bsky.feed.defs#notFoundPost``
-         -  ``app.bsky.feed.generator``
-         -  ``app.bsky.graph.block``
-         -  ``app.bsky.graph.list``
-         -  ``app.bsky.graph.listitem``
-         -  ``com.atproto.admin.defs#repoRef``
-         -  ``com.atproto.moderation.createReport#input``
-         -  ``com.atproto.repo.strongRef``
+      - ``app.bsky.embed.record``
+      - ``app.bsky.embed.recordWithMedia``
+      - ``app.bsky.feed.defs#notFoundPost``
+      - ``app.bsky.feed.generator``
+      - ``app.bsky.graph.block``
+      - ``app.bsky.graph.list``
+      - ``app.bsky.graph.listitem``
+      - ``com.atproto.admin.defs#repoRef``
+      - ``com.atproto.moderation.createReport#input``
+      - ``com.atproto.repo.strongRef``
 
-      -  Add hashtag facet support.
-      -  Convert blobs in embeds to ``getBlob`` image URLs.
-      -  ``app.bsky.actor.profile``: add HTML links for URLs in
-         ``summary``
-         (`snarfed/bridgy-fed#1065 <https://github.com/snarfed/bridgy-fed/issues/1065>`__).
-      -  Escape HTML characters (``<``, ``>``, ``&``) in
-         ``app.bsky.actor.profile`` ``description`` field.
-      -  Bug fix for ``create``/``update`` activities with bare string
-         ``object``.
+    - Add hashtag facet support.
+    - Convert blobs in embeds to ``getBlob`` image URLs.
+    - ``app.bsky.actor.profile``: add HTML links for URLs in ``summary``
+      (`snarfed/bridgy-fed#1065 <https://github.com/snarfed/bridgy-fed/issues/1065>`__).
+    - Escape HTML characters (``<``, ``>``, ``&``) in
+      ``app.bsky.actor.profile`` ``description`` field.
+    - Bug fix for ``create``/``update`` activities with bare string
+      ``object``.
 
-   -  ``from_as1``:
+  - ``from_as1``:
 
-      -  Add hashtag, mention, block, and flag support. Interpret
-         ``tags`` with missing ``objectType`` as hashtags.
-      -  Guess missing indices in facets based on content text.
-         Otherwise, if we still don’t know a facet’s indices, discard
-         it.
-      -  Extract HTML links ( tags) from HTML content and convert to
-         link facets
-         (`snarfed/bridgy-fed#976 <https://github.com/snarfed/bridgy-fed/issues/976>`__).
-      -  If an output string value is longer than its ``maxGraphemes``
-         or ``maxLength`` in its lexicon, truncate it with an ``…``
-         ellipsis character at the end in order to fit. If this happens
-         to post text, include a link embed pointing to the original
-         post.
-      -  If the object has a video, include an external embed pointing
-         to the original post and mark it as ``[Video]``
-         (`snarfed/bridgy-fed#1078 <https://github.com/snarfed/bridgy-fed/issues/1078>`__).
-      -  If the object has images, add the original post link to the end
-         of the text, since Bluesky doesn’t support both image and
-         external embeds in the same post
-         (`bluesky-social/atproto#2575 <https://github.com/bluesky-social/atproto/discussions/2575>`__,
-         `snarfed/bridgy-fed#1106 <https://github.com/snarfed/bridgy-fed/issues/1106>`__).
-      -  If a ``note`` has ``summary`` - often used for content warnings
-         in the fediverse - add it to ``content`` as a prefix instead of
-         overriding ``content``
-         (`snarfed/bridgy-fed#1001 <https://github.com/snarfed/bridgy-fed/issues/1001>`__).
-      -  Populate ``reply.root`` properly in reply posts
-         (`snarfed/bridgy#1696 <https://github.com/snarfed/bridgy/issues/1696>`__).
-      -  Add new ``original_fields_prefix`` kwarg to store original data
-         in custom (off-Lexicon) ``*OriginalDescription`` and
-         ``*OriginalUrl`` fields in ``app.bsky.actor.profile`` and
-         ``*OriginalText`` and ``*OriginalUrl`` fields in
-         ``app.bsky.feed.post``
-         (`snarfed/bridgy-fed#1092 <https://github.com/snarfed/bridgy-fed/issues/1092>`__).
-      -  Support ``lexrpc.Client`` as well as ``Bluesky`` for ``client``
-         kwarg.
+    - Add hashtag, mention, block, and flag support. Interpret ``tags``
+      with missing ``objectType`` as hashtags.
+    - Guess missing indices in facets based on content text. Otherwise,
+      if we still don’t know a facet’s indices, discard it.
+    - Extract HTML links ( tags) from HTML content and convert to link
+      facets
+      (`snarfed/bridgy-fed#976 <https://github.com/snarfed/bridgy-fed/issues/976>`__).
+    - If an output string value is longer than its ``maxGraphemes`` or
+      ``maxLength`` in its lexicon, truncate it with an ``…`` ellipsis
+      character at the end in order to fit. If this happens to post
+      text, include a link embed pointing to the original post.
+    - If the object has a video, include an external embed pointing to
+      the original post and mark it as ``[Video]``
+      (`snarfed/bridgy-fed#1078 <https://github.com/snarfed/bridgy-fed/issues/1078>`__).
+    - If the object has images, add the original post link to the end of
+      the text, since Bluesky doesn’t support both image and external
+      embeds in the same post
+      (`bluesky-social/atproto#2575 <https://github.com/bluesky-social/atproto/discussions/2575>`__,
+      `snarfed/bridgy-fed#1106 <https://github.com/snarfed/bridgy-fed/issues/1106>`__).
+    - If a ``note`` has ``summary`` - often used for content warnings in
+      the fediverse - add it to ``content`` as a prefix instead of
+      overriding ``content``
+      (`snarfed/bridgy-fed#1001 <https://github.com/snarfed/bridgy-fed/issues/1001>`__).
+    - Populate ``reply.root`` properly in reply posts
+      (`snarfed/bridgy#1696 <https://github.com/snarfed/bridgy/issues/1696>`__).
+    - Add new ``original_fields_prefix`` kwarg to store original data in
+      custom (off-Lexicon) ``*OriginalDescription`` and ``*OriginalUrl``
+      fields in ``app.bsky.actor.profile`` and ``*OriginalText`` and
+      ``*OriginalUrl`` fields in ``app.bsky.feed.post``
+      (`snarfed/bridgy-fed#1092 <https://github.com/snarfed/bridgy-fed/issues/1092>`__).
+    - Support ``lexrpc.Client`` as well as ``Bluesky`` for ``client``
+      kwarg.
 
-   -  ``from_as1_to_strong_ref``:
+  - ``from_as1_to_strong_ref``:
 
-      -  Add ``value`` boolean kwarg.
-      -  Change ``client`` kwarg from ``Bluesky`` to ``lexrpc.Client``.
+    - Add ``value`` boolean kwarg.
+    - Change ``client`` kwarg from ``Bluesky`` to ``lexrpc.Client``.
 
--  ``microformats2``:
+- ``microformats2``:
 
-   -  Generalize actor logic across all actor types, not just
-      ``person``.
-   -  ``json_to_object``:
+  - Generalize actor logic across all actor types, not just ``person``.
+  - ``json_to_object``:
 
-      -  Strip leading ``#`` prefix (if present) from hashtag
-         ``u-category``\ s.
-      -  Bug fix for when ``name`` property is an object, eg an
-         ``h-card``.
+    - Strip leading ``#`` prefix (if present) from hashtag
+      ``u-category``\ s.
+    - Bug fix for when ``name`` property is an object, eg an ``h-card``.
 
-   -  ``object_to_json``:
+  - ``object_to_json``:
 
-      -  Convert both ``id`` and ``url`` inside ``inReplyTo`` to
-         ``in-reply-to.``
+    - Convert both ``id`` and ``url`` inside ``inReplyTo`` to
+      ``in-reply-to.``
 
--  ``nostr``:
+- ``nostr``:
 
-   -  Handle connection closing while sending initial query.
+  - Handle connection closing while sending initial query.
 
--  ``source``:
+- ``source``:
 
-   -  ``Source.postprocess``: when extracting @-mentions, defer to
-      existing tag if it has the same ``displayName`` and has ``url``.
+  - ``Source.postprocess``: when extracting @-mentions, defer to
+    existing tag if it has the same ``displayName`` and has ``url``.
 
 .. _section-1:
 
 6.2 - 2024-03-15
 ~~~~~~~~~~~~~~~~
 
--  ``as1``:
+- ``as1``:
 
-   -  ``get_owner`` bug fix for ``post``, ``update``, ``delete``
-      activities.
-   -  ``activity_changed``: add new ``inReplyTo`` kwarg.
-   -  ``is_public``: add new ``unlisted`` kwarg.
+  - ``get_owner`` bug fix for ``post``, ``update``, ``delete``
+    activities.
+  - ``activity_changed``: add new ``inReplyTo`` kwarg.
+  - ``is_public``: add new ``unlisted`` kwarg.
 
--  ``as2``:
+- ``as2``:
 
-   -  ``to_as1``: bug fix, preserve ``objectType: featured`` for
-      banner/header images even when ``mediaType`` is also set.
-   -  ``is_public``: add new ``unlisted`` kwarg.
-   -  ``from_as1``:
+  - ``to_as1``: bug fix, preserve ``objectType: featured`` for
+    banner/header images even when ``mediaType`` is also set.
+  - ``is_public``: add new ``unlisted`` kwarg.
+  - ``from_as1``:
 
-      -  For ``icon`` field, prefer image types that are `allowed by
-         Mastodon <https://github.com/mastodon/mastodon/blob/b4c332104a8b3748f619de250f77c0acc8e80628/app/models/concerns/account/avatar.rb#L6>`__.
-      -  Bug fix, handle ``stop-following`` with string ``object`` id.
+    - For ``icon`` field, prefer image types that are `allowed by
+      Mastodon <https://github.com/mastodon/mastodon/blob/b4c332104a8b3748f619de250f77c0acc8e80628/app/models/concerns/account/avatar.rb#L6>`__.
+    - Bug fix, handle ``stop-following`` with string ``object`` id.
 
--  ``atom``:
+- ``atom``:
 
-   -  Add new ``extract_entries`` function.
-   -  ``activity_to_atom``: default actor/author name to username.
-   -  ``atom_to_activities``: support top-level ``entry`` element as
-      well as ``feed``.
-   -  ``atom_to_*``:
+  - Add new ``extract_entries`` function.
+  - ``activity_to_atom``: default actor/author name to username.
+  - ``atom_to_activities``: support top-level ``entry`` element as well
+    as ``feed``.
+  - ``atom_to_*``:
 
-      -  add ``object.author``
-      -  default ``objectType`` to ``article``/``note`` and ``verb`` to
-         ``post``
-      -  convert ``link rel=self``/``alternate`` to ``url``
-      -  use ``displayName`` in objects instead of ``title``
-      -  Interpret entry ``link`` without ``rel`` as self link.
+    - add ``object.author``
+    - default ``objectType`` to ``article``/``note`` and ``verb`` to
+      ``post``
+    - convert ``link rel=self``/``alternate`` to ``url``
+    - use ``displayName`` in objects instead of ``title``
+    - Interpret entry ``link`` without ``rel`` as self link.
 
-   -  If ``entry.author`` doesn’t have id or url, default them to feed
-      author’s.
+  - If ``entry.author`` doesn’t have id or url, default them to feed
+    author’s.
 
--  ``bluesky``:
+- ``bluesky``:
 
-   -  Implement ``create`` and ``preview``.
-   -  Fully support both ``record`` and ``object`` types in ``from_as1``
-      and ``to_as1``. Use ``to_as1``\ ’s ``type`` kwarg and
-      ``from_as1``\ ’s ``out_type`` kwarg to disambiguate.
-   -  Implement ``Bluesky.post_id``.
-   -  Add new ``blob_to_url`` function.
-   -  Delete ``as1_to_profile``, switch ``from_as1`` to return
-      ``$type: app.bsky.actor.profile``.
-   -  Convert HTML ``summary`` and ``content`` to plain text.
-   -  Implement ``Bluesky.user_to_actor``, ``Bluesky.get_actor``.
-   -  Don’t log in (fetch an access token) eagerly in the constructor;
-      wait until the client makes a call.
-   -  Prefer DID to handle in API calls that accept either.
-   -  ``at_uri_to_web_url``: support lists.
-   -  ``web_url_to_at_uri``: convert profile URLs like
-      ``https://bsky.app/profile/snarfed.org`` to profile record URIs
-      (``at://snarfed.org/app.bsky.actor.profile/self``) instead of repo
-      URIs (``at://snarfed.org``).
-   -  Add ``from_as1_to_strong_ref``.
-   -  Allow ``:``\ s in record keys
-      (`atproto#2224 <https://github.com/bluesky-social/atproto/discussions/2224>`__).
-   -  ``to_as1``:
+  - Implement ``create`` and ``preview``.
+  - Fully support both ``record`` and ``object`` types in ``from_as1``
+    and ``to_as1``. Use ``to_as1``\ ’s ``type`` kwarg and
+    ``from_as1``\ ’s ``out_type`` kwarg to disambiguate.
+  - Implement ``Bluesky.post_id``.
+  - Add new ``blob_to_url`` function.
+  - Delete ``as1_to_profile``, switch ``from_as1`` to return
+    ``$type: app.bsky.actor.profile``.
+  - Convert HTML ``summary`` and ``content`` to plain text.
+  - Implement ``Bluesky.user_to_actor``, ``Bluesky.get_actor``.
+  - Don’t log in (fetch an access token) eagerly in the constructor;
+    wait until the client makes a call.
+  - Prefer DID to handle in API calls that accept either.
+  - ``at_uri_to_web_url``: support lists.
+  - ``web_url_to_at_uri``: convert profile URLs like
+    ``https://bsky.app/profile/snarfed.org`` to profile record URIs
+    (``at://snarfed.org/app.bsky.actor.profile/self``) instead of repo
+    URIs (``at://snarfed.org``).
+  - Add ``from_as1_to_strong_ref``.
+  - Allow ``:``\ s in record keys
+    (`atproto#2224 <https://github.com/bluesky-social/atproto/discussions/2224>`__).
+  - ``to_as1``:
 
-      -  Convert blobs, `both new and old
-         style <https://atproto.com/specs/data-model#blob-type>`__, to
-         PDS ``getBlob`` URLs.
-      -  Add new ``uri`` kwarg.
-      -  Translate ``handle`` to ``username``, add new ``repo_handle``
-         kwarg.
-      -  Add support for ``app.bsky.feed.repost``,
-         ``app.bsky.graph.defs#listView``,
-         ``app.bsky.feed.defs#blockedPost``.
-      -  Add ``actor``/``author`` based on ``repo_did``.
-      -  Improve ``url`` field: include custom handles, only use
-         ``repo_did/handle`` for ``app.bsky.actor.profile``.
-      -  Handle bad facet indices that point inside Unicode code points
-         (`example <https://bsky.app/profile/did:plc:2ythpj4pwwpka2ljkabouubm/post/3kkfszbaiic2g>`__;
-         `discussion <https://discord.com/channels/1097580399187738645/1097580399187738648/1203118842516082848>`__).
-      -  Convert `!no-unauthenticated``
-         label <https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors>`__
-         on profiles to `AS1 ``@unlisted`` audience
-         target <https://activitystrea.ms/specs/json/targeting/1.0/>`__
-         (`bridgy-fed#828 <https://github.com/snarfed/bridgy-fed/issues/828>`__).
+    - Convert blobs, `both new and old
+      style <https://atproto.com/specs/data-model#blob-type>`__, to PDS
+      ``getBlob`` URLs.
+    - Add new ``uri`` kwarg.
+    - Translate ``handle`` to ``username``, add new ``repo_handle``
+      kwarg.
+    - Add support for ``app.bsky.feed.repost``,
+      ``app.bsky.graph.defs#listView``,
+      ``app.bsky.feed.defs#blockedPost``.
+    - Add ``actor``/``author`` based on ``repo_did``.
+    - Improve ``url`` field: include custom handles, only use
+      ``repo_did/handle`` for ``app.bsky.actor.profile``.
+    - Handle bad facet indices that point inside Unicode code points
+      (`example <https://bsky.app/profile/did:plc:2ythpj4pwwpka2ljkabouubm/post/3kkfszbaiic2g>`__;
+      `discussion <https://discord.com/channels/1097580399187738645/1097580399187738648/1203118842516082848>`__).
+    - Convert `!no-unauthenticated``
+      label <https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors>`__
+      on profiles to `AS1 ``@unlisted`` audience
+      target <https://activitystrea.ms/specs/json/targeting/1.0/>`__
+      (`bridgy-fed#828 <https://github.com/snarfed/bridgy-fed/issues/828>`__).
 
-   -  ``from_as1``:
+  - ``from_as1``:
 
-      -  Add ``out_type`` kwarg to specify desired output type, eg
-         ``app.bsky.actor.profile`` vs
-         ``app.bsky.actor.defs#profileViewBasic`` vs
-         ``app.bsky.actor.defs#profileView``.
-      -  Add ``blobs`` kwarg to provide blob objects to use for image
-         URLs.
-      -  Add ``client`` kwarg to fetch and populate CIDs.
-      -  Handle mention tags pointing to bare DIDs.
-      -  Use ``parent`` as ``root`` in replies. (Technically wrong in
-         cases where the parent isn’t the root, but we don’t actually
-         know the root. 🤷)
-      -  Bug fix: handle bare string URLs in ``image`` field.
-      -  Bug fix: handle tags without ``url`` field.
-      -  Strip trailing slash from home page URLs in order to remove
-         visible ``/`` from rel-me verified links on Mastodon etc.
-      -  Convert ``attributedTo`` to singular if it has only one
-         element.
-      -  If ``name`` isn’t set, fall back to ``preferredUsername`` or
-         infer Webfinger handle from ``id`` or ``url``.
-      -  Prioritize bsky.app profile URL before handle URL in ``url``
-         field
-         (`bridgy#1640 <https://github.com/snarfed/bridgy/issues/1640>`__).
-      -  Convert ``bsky.app`` ``inReplyTo`` URLs to ``at://`` URIs.
-      -  Tighten up ``datetime`` conversion to match the `ATProto
-         recommended
-         format <https://atproto.com/specs/lexicon#datetime>`__.
+    - Add ``out_type`` kwarg to specify desired output type, eg
+      ``app.bsky.actor.profile`` vs
+      ``app.bsky.actor.defs#profileViewBasic`` vs
+      ``app.bsky.actor.defs#profileView``.
+    - Add ``blobs`` kwarg to provide blob objects to use for image URLs.
+    - Add ``client`` kwarg to fetch and populate CIDs.
+    - Handle mention tags pointing to bare DIDs.
+    - Use ``parent`` as ``root`` in replies. (Technically wrong in cases
+      where the parent isn’t the root, but we don’t actually know the
+      root. 🤷)
+    - Bug fix: handle bare string URLs in ``image`` field.
+    - Bug fix: handle tags without ``url`` field.
+    - Strip trailing slash from home page URLs in order to remove
+      visible ``/`` from rel-me verified links on Mastodon etc.
+    - Convert ``attributedTo`` to singular if it has only one element.
+    - If ``name`` isn’t set, fall back to ``preferredUsername`` or infer
+      Webfinger handle from ``id`` or ``url``.
+    - Prioritize bsky.app profile URL before handle URL in ``url`` field
+      (`bridgy#1640 <https://github.com/snarfed/bridgy/issues/1640>`__).
+    - Convert ``bsky.app`` ``inReplyTo`` URLs to ``at://`` URIs.
+    - Tighten up ``datetime`` conversion to match the `ATProto
+      recommended
+      format <https://atproto.com/specs/lexicon#datetime>`__.
 
--  ``facebook``:
+- ``facebook``:
 
-   -  Remove ``Facebook.fql_stream_to_post``. `Facebook turned down FQL
-      in
-      2016. <https://en.wikipedia.org/wiki/Facebook_Query_Language#History>`__
+  - Remove ``Facebook.fql_stream_to_post``. `Facebook turned down FQL in
+    2016. <https://en.wikipedia.org/wiki/Facebook_Query_Language#History>`__
 
--  ``github``:
+- ``github``:
 
-   -  When converting data to AS1, use ``displayName`` in objects
-      instead of ``title``.
+  - When converting data to AS1, use ``displayName`` in objects instead
+    of ``title``.
 
--  ``mastodon``:
+- ``mastodon``:
 
-   -  ``get_activities`` bug fix: use query params for
-      ``/api/v1/notifications`` API call, not JSON body.
-   -  Convert HTTP 200 responses with ``error`` JSON field (eg from
-      Sharkey) to 400/401 exceptions.
-   -  Prefer ``media_attachments.remote_url`` when available since it
-      may be more long-lived than ``url`` for remote statuses
-      (`bridgy#1675 <https://github.com/snarfed/bridgy/issues/1675>`__).
+  - ``get_activities`` bug fix: use query params for
+    ``/api/v1/notifications`` API call, not JSON body.
+  - Convert HTTP 200 responses with ``error`` JSON field (eg from
+    Sharkey) to 400/401 exceptions.
+  - Prefer ``media_attachments.remote_url`` when available since it may
+    be more long-lived than ``url`` for remote statuses
+    (`bridgy#1675 <https://github.com/snarfed/bridgy/issues/1675>`__).
 
--  ``microformats2``:
+- ``microformats2``:
 
-   -  ``object_to_json`` bug fix: handle singular ``inReplyTo``.
-   -  ``json_to_object`` bug fix: handle list-valued ``location``.
+  - ``object_to_json`` bug fix: handle singular ``inReplyTo``.
+  - ``json_to_object`` bug fix: handle list-valued ``location``.
 
--  ``nostr:``
+- ``nostr:``
 
-   -  ``get_*``: return partial results when the websocket connection is
-      closed prematurely.
-   -  ``to_as1``: handle invalid NIP05 values (eg ``{}``)
+  - ``get_*``: return partial results when the websocket connection is
+    closed prematurely.
+  - ``to_as1``: handle invalid NIP05 values (eg ``{}``)
 
--  ``rss``:
+- ``rss``:
 
-   -  ``to_activities``:
+  - ``to_activities``:
 
-      -  Use ``objectType: note`` if ``title`` isn’t set or is a prefix
-         (possibly ellipsized) of ``content``/``description``.
-      -  Add support for images in ``media:content`` tags
-         (`#674 <https://github.com/snarfed/granary/issues/674>`__).
+    - Use ``objectType: note`` if ``title`` isn’t set or is a prefix
+      (possibly ellipsized) of ``content``/``description``.
+    - Add support for images in ``media:content`` tags
+      (`#674 <https://github.com/snarfed/granary/issues/674>`__).
 
--  ``Source``:
+- ``Source``:
 
-   -  ``postprocess_activity/object``: add ``mentions`` kwarg to convert
-      @-mentions in HTML links to ``mention`` tags.
+  - ``postprocess_activity/object``: add ``mentions`` kwarg to convert
+    @-mentions in HTML links to ``mention`` tags.
 
 .. _section-2:
 
@@ -859,131 +877,127 @@ at least in the REST API.
 
 *Non-breaking changes:*
 
--  Add new ``nostr`` module!
--  ``as1``:
+- Add new ``nostr`` module!
+- ``as1``:
 
-   -  Add ``get_owner``, ``targets``.
-   -  Add ``accept``, ``reject``, ``stop-following`` to
-      ``VERBS_WITH_OBJECT`` and remove ``repost``, `it’s not an AS1
-      verb <https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs>`__.
-   -  Handle ``url`` field list values (even though it’s invalid AS1).
+  - Add ``get_owner``, ``targets``.
+  - Add ``accept``, ``reject``, ``stop-following`` to
+    ``VERBS_WITH_OBJECT`` and remove ``repost``, `it’s not an AS1
+    verb <https://activitystrea.ms/specs/json/schema/activity-schema.html#verbs>`__.
+  - Handle ``url`` field list values (even though it’s invalid AS1).
 
--  ``as2``:
+- ``as2``:
 
-   -  ``to_as1``:
+  - ``to_as1``:
 
-      -  Improve ``Video`` handling: support ``Link`` objects in
-         ``url``, extract stream URLs and types from link ``tag``\ s.
-      -  Coerce non-float ``latitude`` and ``longitude`` to float, raise
-         ``ValueError`` on failure.
-      -  Put image attachments into ``image`` as well as ``attachments``
-         (`bridgy-fed#429 <https://github.com/snarfed/bridgy-fed/issues/429>`__).
-      -  Handle Hubzilla’s composite object attachment ``value``\ s.
-      -  Bug fix for null ``mediaType`` in ``attachment`` and ``tags``.
+    - Improve ``Video`` handling: support ``Link`` objects in ``url``,
+      extract stream URLs and types from link ``tag``\ s.
+    - Coerce non-float ``latitude`` and ``longitude`` to float, raise
+      ``ValueError`` on failure.
+    - Put image attachments into ``image`` as well as ``attachments``
+      (`bridgy-fed#429 <https://github.com/snarfed/bridgy-fed/issues/429>`__).
+    - Handle Hubzilla’s composite object attachment ``value``\ s.
+    - Bug fix for null ``mediaType`` in ``attachment`` and ``tags``.
 
-   -  Add new ``TYPES_WITH_OBJECT`` constant.
-   -  Add new ``get_urls``, ``address`` functions.
-   -  Improve ``Content-Type`` compatibility with
-      ``application/ld+json; profile="https://www.w3.org/ns/activitystreams"``.
-   -  Bug fix for ``Undo`` activities with bare string id ``object``\ s.
-   -  Revise HTML in ``PropertyValue`` attachments on actors to include
-      full URL in anchro text to be compatible with Mastodon’s profile
-      link verification.
+  - Add new ``TYPES_WITH_OBJECT`` constant.
+  - Add new ``get_urls``, ``address`` functions.
+  - Improve ``Content-Type`` compatibility with
+    ``application/ld+json; profile="https://www.w3.org/ns/activitystreams"``.
+  - Bug fix for ``Undo`` activities with bare string id ``object``\ s.
+  - Revise HTML in ``PropertyValue`` attachments on actors to include
+    full URL in anchro text to be compatible with Mastodon’s profile
+    link verification.
 
--  ``atom``:
+- ``atom``:
 
-   -  ``activities_to_atom`` etc:
+  - ``activities_to_atom`` etc:
 
-      -  Switch ``content`` from XHTML to HTML inside CDATA to support
-         non-XHTML input content
-         (`bridgy-fed#624 <https://github.com/snarfed/bridgy-fed/issues/624>`__.
-      -  Bug fix, handle bare string URL ``image`` values.
-      -  Bug fix, emove incorrect ``type="application/atom+xml"`` from
-         ``rel="self"`` ``link`` in ``entry``.
-      -  Render ``objectType: comment`` attachments.
-      -  Remove invalid ``<a>`` element for tags.
-      -  Bug fix: avoid encoded ``<`` and ``>`` characters in ``title``
-         (`#629 <https://github.com/snarfed/granary/issues/629>`__).
+    - Switch ``content`` from XHTML to HTML inside CDATA to support
+      non-XHTML input content
+      (`bridgy-fed#624 <https://github.com/snarfed/bridgy-fed/issues/624>`__.
+    - Bug fix, handle bare string URL ``image`` values.
+    - Bug fix, emove incorrect ``type="application/atom+xml"`` from
+      ``rel="self"`` ``link`` in ``entry``.
+    - Render ``objectType: comment`` attachments.
+    - Remove invalid ``<a>`` element for tags.
+    - Bug fix: avoid encoded ``<`` and ``>`` characters in ``title``
+      (`#629 <https://github.com/snarfed/granary/issues/629>`__).
 
-   -  Bug fixes in ``activity_to_atom``/``activities_to_atom`` for
-      dict-valued ``url`` fields.
-   -  Render images in article/note attachments.
-   -  Render ``objectType: service`` attachments, eg Bluesky custom
-      feeds.
+  - Bug fixes in ``activity_to_atom``/``activities_to_atom`` for
+    dict-valued ``url`` fields.
+  - Render images in article/note attachments.
+  - Render ``objectType: service`` attachments, eg Bluesky custom feeds.
 
--  ``bluesky``:
+- ``bluesky``:
 
-   -  Implement ``Bluesky`` API class, including ``get_activities``.
-   -  Drop bundled ``app.bsky``/``com.atproto`` lexicons, use lexrpc’s
-      instead.
-   -  Convert reposts, quotes, inline links, attached links, and
-      mentions, both directions. Includes Bluesky facet (rich text)
-      support.
-   -  Handle quote posts with attached images, both directions.
-   -  Handle likes, both directions.
-   -  Add new ``web_url_to_at_uri`` function.
-   -  ``from_as1``: handle link tags without start/end indices.
-   -  ``to_as1``:
+  - Implement ``Bluesky`` API class, including ``get_activities``.
+  - Drop bundled ``app.bsky``/``com.atproto`` lexicons, use lexrpc’s
+    instead.
+  - Convert reposts, quotes, inline links, attached links, and mentions,
+    both directions. Includes Bluesky facet (rich text) support.
+  - Handle quote posts with attached images, both directions.
+  - Handle likes, both directions.
+  - Add new ``web_url_to_at_uri`` function.
+  - ``from_as1``: handle link tags without start/end indices.
+  - ``to_as1``:
 
-      -  Add new ``type`` kwarg.
-      -  Generate staging.bsky.app profile and post URLs.
-      -  Propagate profile ``did`` into actor ``id``.
-      -  Add unimplemented stub for custom feeds, eg
-         ``app.bsky.feed.defs#generatorView``.
+    - Add new ``type`` kwarg.
+    - Generate staging.bsky.app profile and post URLs.
+    - Propagate profile ``did`` into actor ``id``.
+    - Add unimplemented stub for custom feeds, eg
+      ``app.bsky.feed.defs#generatorView``.
 
-   -  Add ``as1_to_profile``.
-   -  Bug fix for converting follows, both directions: ``subject`` in
-      ``app.bsky.graph.follow`` is followee, not follower. (`That field
-      is badly
-      named! <https://discord.com/channels/1097580399187738645/1097580399187738648/1151933384738746478>`__)
+  - Add ``as1_to_profile``.
+  - Bug fix for converting follows, both directions: ``subject`` in
+    ``app.bsky.graph.follow`` is followee, not follower. (`That field is
+    badly
+    named! <https://discord.com/channels/1097580399187738645/1097580399187738648/1151933384738746478>`__)
 
--  ``jsonfeed``:
+- ``jsonfeed``:
 
-   -  ``activities_to_jsonfeed``:
+  - ``activities_to_jsonfeed``:
 
-      -  Bug fix, handle bare string values for ``image`` and
-         ``stream``.
-      -  Bug fix: handle non-object ``author``.
+    - Bug fix, handle bare string values for ``image`` and ``stream``.
+    - Bug fix: handle non-object ``author``.
 
--  ``mastodon``:
+- ``mastodon``:
 
-   -  ``status_to_object``: add/fix alt text handling for images.
+  - ``status_to_object``: add/fix alt text handling for images.
 
--  ``microformats2``:
+- ``microformats2``:
 
-   -  ``json_to_html``:
+  - ``json_to_html``:
 
-      -  HTML-escape tag and quote attachment names. Fixes
-         `GHSA-4w4f-g49g-3f7j <https://github.com/snarfed/bridgy/security/advisories/GHSA-4w4f-g49g-3f7j>`__;
-         thank you `@janboddez <https://github.com/janboddez>`__!
+    - HTML-escape tag and quote attachment names. Fixes
+      `GHSA-4w4f-g49g-3f7j <https://github.com/snarfed/bridgy/security/advisories/GHSA-4w4f-g49g-3f7j>`__;
+      thank you `@janboddez <https://github.com/janboddez>`__!
 
-   -  ``json_to_object``:
+  - ``json_to_object``:
 
-      -  Improve handling of items with multiple types by using `post
-         type
-         discovery <https://indiewebcamp.com/post-type-discovery>`__
-         more aggressively.
-      -  Normalize ISO-8601 format of ``published`` and ``updated``
-         timestamps.
+    - Improve handling of items with multiple types by using `post type
+      discovery <https://indiewebcamp.com/post-type-discovery>`__ more
+      aggressively.
+    - Normalize ISO-8601 format of ``published`` and ``updated``
+      timestamps.
 
-   -  ``object_to_json``:
+  - ``object_to_json``:
 
-      -  Bug fix, handle bare string URL ``image`` values.
-      -  Normalize ISO-8601 format of ``published`` and ``updated``
-         timestamps.
-      -  Handle bare string ids for ``replies`` and ``shares`` (usually
-         from AS2.)
+    - Bug fix, handle bare string URL ``image`` values.
+    - Normalize ISO-8601 format of ``published`` and ``updated``
+      timestamps.
+    - Handle bare string ids for ``replies`` and ``shares`` (usually
+      from AS2.)
 
-   -  ``render_content``:
+  - ``render_content``:
 
-      -  Bug fix for bare string ``author`` and ``actor`` values.
+    - Bug fix for bare string ``author`` and ``actor`` values.
 
-   -  Include ``objectType: service`` attachments, eg Bluesky custom
-      feeds, in JSON and HTML output.
+  - Include ``objectType: service`` attachments, eg Bluesky custom
+    feeds, in JSON and HTML output.
 
--  ``rss``:
+- ``rss``:
 
-   -  ``from_activities``: handle bare string id ``author``.
+  - ``from_activities``: handle bare string id ``author``.
 
 .. _section-3:
 
@@ -992,111 +1006,110 @@ at least in the REST API.
 
 *Breaking changes:*
 
--  ``as2``:
+- ``as2``:
 
-   -  Interpret bare string ``object``, ``inReplyTo``, etc values as
-      ids, convert them to bare strings or ``id`` instead of ``url``.
+  - Interpret bare string ``object``, ``inReplyTo``, etc values as ids,
+    convert them to bare strings or ``id`` instead of ``url``.
 
--  ``microformats2``:
+- ``microformats2``:
 
-   -  Convert simple string ``in-reply-to``, ``repost-of``, ``like-of``
-      etc values to AS1 bare strings or ``id``\ s instead of ``url``\ s.
+  - Convert simple string ``in-reply-to``, ``repost-of``, ``like-of``
+    etc values to AS1 bare strings or ``id``\ s instead of ``url``\ s.
 
 *Non-breaking changes:*
 
--  Add new ``bluesky`` module for
-   `Bluesky <https://blueskyweb.org/>`__/`AT
-   Protocol <https://atproto.com/>`__!
--  ``as1``:
+- Add new ``bluesky`` module for
+  `Bluesky <https://blueskyweb.org/>`__/`AT
+  Protocol <https://atproto.com/>`__!
+- ``as1``:
 
-   -  Add the ``organization`` object type and ``ACTOR_TYPES`` constant
-      (`based on
-      AS2 <https://www.w3.org/TR/activitystreams-core/#actors>`__).
-   -  Add new ``get_ids``, ``get_object``, and ``get_objects``
-      functions.
+  - Add the ``organization`` object type and ``ACTOR_TYPES`` constant
+    (`based on
+    AS2 <https://www.w3.org/TR/activitystreams-core/#actors>`__).
+  - Add new ``get_ids``, ``get_object``, and ``get_objects`` functions.
 
--  ``activity_changed``: ignore ``inReplyTo.author``
-   (`snarfed/bridgy#1338 <https://github.com/snarfed/bridgy/issues/1338>`__)
--  ``as2``:
+- ``activity_changed``: ignore ``inReplyTo.author``
+  (`snarfed/bridgy#1338 <https://github.com/snarfed/bridgy/issues/1338>`__)
+- ``as2``:
 
-   -  Support converting between AS1 ``stop-following`` and AS2 ``Undo``
-      ``Follow``.
-   -  Support AS2 ``Accept`` and ``Reject`` for follows as well as event
-      RSVPs.
-   -  Add support for the ``Question`` (ie poll), ``Organization``, and
-      ``Delete`` object types.
-   -  Convert ``to``/``cc`` to/from AS1 ``to`` for public and unlisted.
-   -  Handle ``type: Document`` video attachments like Mastodon emits.
-   -  ``from_as1``: bug fix for image objects with ``url`` and ``value``
-      fields (for alt text).
-   -  ``from_as1``: bug fix, handle bare string URL ``image`` values.
-   -  ``from_as1``: convert ``urls.displayName`` to ``attachment.name``
-      (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
-   -  ``from_as1``: preserve ``inReplyTo`` object values as objects,
-      inline single-element lists down down to just single element.
-   -  ``to_as1``: use ``objectType: featured`` for first image in
-      ``image`` field.
-   -  ``to_as1``: populate ``actor`` into ``object.author`` for
-      ``Update``\ s as well as ``Create``\ s.
-   -  ``to_as1``: convert Mastodon profile metadata ``PropertyValue``
-      attachments to ``url`` composite objects with ``displayName``.
-   -  Preserve ``to`` and ``cc`` values when converting both directions.
+  - Support converting between AS1 ``stop-following`` and AS2 ``Undo``
+    ``Follow``.
+  - Support AS2 ``Accept`` and ``Reject`` for follows as well as event
+    RSVPs.
+  - Add support for the ``Question`` (ie poll), ``Organization``, and
+    ``Delete`` object types.
+  - Convert ``to``/``cc`` to/from AS1 ``to`` for public and unlisted.
+  - Handle ``type: Document`` video attachments like Mastodon emits.
+  - ``from_as1``: bug fix for image objects with ``url`` and ``value``
+    fields (for alt text).
+  - ``from_as1``: bug fix, handle bare string URL ``image`` values.
+  - ``from_as1``: convert ``urls.displayName`` to ``attachment.name``
+    (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
+  - ``from_as1``: preserve ``inReplyTo`` object values as objects,
+    inline single-element lists down down to just single element.
+  - ``to_as1``: use ``objectType: featured`` for first image in
+    ``image`` field.
+  - ``to_as1``: populate ``actor`` into ``object.author`` for
+    ``Update``\ s as well as ``Create``\ s.
+  - ``to_as1``: convert Mastodon profile metadata ``PropertyValue``
+    attachments to ``url`` composite objects with ``displayName``.
+  - Preserve ``to`` and ``cc`` values when converting both directions.
 
--  ``atom``:
+- ``atom``:
 
-   -  Bug fix for rendering image attachments without ``image`` field to
-      Atom.
-   -  Bug fix for ``published`` and ``updated`` in entries with objects,
-      eg likes, reposts, RSVPs, bookmarks. Thanks
-      `@gregorlove <https://gregorlove.com/>`__!
-      (`#480 <https://github.com/snarfed/granary/issues/480>`__)
-   -  Bug fix for content ``activity/ies_to_atom`` when ``object`` is
-      present and empty.
-   -  Bug fix for objects with elements without ``objectType`` in the
-      ``to`` field.
+  - Bug fix for rendering image attachments without ``image`` field to
+    Atom.
+  - Bug fix for ``published`` and ``updated`` in entries with objects,
+    eg likes, reposts, RSVPs, bookmarks. Thanks
+    `@gregorlove <https://gregorlove.com/>`__!
+    (`#480 <https://github.com/snarfed/granary/issues/480>`__)
+  - Bug fix for content ``activity/ies_to_atom`` when ``object`` is
+    present and empty.
+  - Bug fix for objects with elements without ``objectType`` in the
+    ``to`` field.
 
--  ``flickr``:
+- ``flickr``:
 
-   -  ``get_activities``: add support for the ``count`` kwarg.
+  - ``get_activities``: add support for the ``count`` kwarg.
 
--  ``github``:
+- ``github``:
 
-   -  ``get_activities``: add support for the ``count`` kwarg.
+  - ``get_activities``: add support for the ``count`` kwarg.
 
--  ``jsonfeed``:
+- ``jsonfeed``:
 
-   -  Switch from ``white-space: pre`` CSS to converting newlines to
-      ``<br>``\ s because some feed readers follow it strictly and don’t
-      even line wrap
-      (`#456 <https://github.com/snarfed/granary/issues/456>`__).
+  - Switch from ``white-space: pre`` CSS to converting newlines to
+    ``<br>``\ s because some feed readers follow it strictly and don’t
+    even line wrap
+    (`#456 <https://github.com/snarfed/granary/issues/456>`__).
 
--  ``mastodon``:
+- ``mastodon``:
 
-   -  Add compatibility support for `Truth
-      Social <https://truthsocial.com/>`__.
-   -  Handle truncated JSON API responses.
+  - Add compatibility support for `Truth
+    Social <https://truthsocial.com/>`__.
+  - Handle truncated JSON API responses.
 
--  ``microformats2``:
+- ``microformats2``:
 
-   -  ``json_to_object``: drop backward compatibility support for
-      ``like`` and ``repost`` properties. `Background
-      discussion. <https://chat.indieweb.org/dev/2022-12-23#t1671833687984200>`__
-   -  ``json_to_object``: add new ``rel_urls`` kwarg to allow attaching
-      ``displayName``\ s to ``urls`` based on HTML text or ``title``
-      attribute
-      (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
-   -  Add new ``json_to_activities`` function.
-   -  ``hcard_to_html``/``maybe_linked_name``: when ``name`` is missing,
-      use pretty URL as visible text.
-   -  Support the ``h-card`` ``org`` property.
-   -  ``json_to_object``: handle composite ``rsvp`` property value.
-   -  ``json_to_object``: bug fix when ``fetch_mf2`` is True, handle
-      when we run the authorship algorithm and fetch an author URL that
-      has a ``u-photo`` with ``alt``.
+  - ``json_to_object``: drop backward compatibility support for ``like``
+    and ``repost`` properties. `Background
+    discussion. <https://chat.indieweb.org/dev/2022-12-23#t1671833687984200>`__
+  - ``json_to_object``: add new ``rel_urls`` kwarg to allow attaching
+    ``displayName``\ s to ``urls`` based on HTML text or ``title``
+    attribute
+    (`bridgy-fed#331 <https://github.com/snarfed/bridgy-fed/issues/331>`__).
+  - Add new ``json_to_activities`` function.
+  - ``hcard_to_html``/``maybe_linked_name``: when ``name`` is missing,
+    use pretty URL as visible text.
+  - Support the ``h-card`` ``org`` property.
+  - ``json_to_object``: handle composite ``rsvp`` property value.
+  - ``json_to_object``: bug fix when ``fetch_mf2`` is True, handle when
+    we run the authorship algorithm and fetch an author URL that has a
+    ``u-photo`` with ``alt``.
 
--  ``rss``:
+- ``rss``:
 
-   -  ``from_activities``: fix item ordering to match input activities.
+  - ``from_activities``: fix item ordering to match input activities.
 
 .. _section-4:
 
@@ -1105,133 +1118,132 @@ at least in the REST API.
 
 *Breaking changes:*
 
--  Drop Python 3.6 support. Python 3.7 is now the minimum required
-   version.
--  Twitter, Instagram, Mastodon:
+- Drop Python 3.6 support. Python 3.7 is now the minimum required
+  version.
+- Twitter, Instagram, Mastodon:
 
-   -  Drop ``get_activities`` ``cache`` kwarg’s support for App Engine
-      memcache interface. It’s now only used as a plain ``dict``.
-      ``get_activities`` will now make many small modifications, so if
-      you pass an object that implements those as API calls, you’ll
-      probably want to batch those separately.
+  - Drop ``get_activities`` ``cache`` kwarg’s support for App Engine
+    memcache interface. It’s now only used as a plain ``dict``.
+    ``get_activities`` will now make many small modifications, so if you
+    pass an object that implements those as API calls, you’ll probably
+    want to batch those separately.
 
--  Twitter, Mastodon, Flickr, GitHub:
+- Twitter, Mastodon, Flickr, GitHub:
 
-   -  ``create``/``preview``: support the AS1 ``favorite`` verb as well
-      as ``like``.
-      (`bridgy#1345 <https://github.com/snarfed/bridgy/issues/1345>`__)
+  - ``create``/``preview``: support the AS1 ``favorite`` verb as well as
+    ``like``.
+    (`bridgy#1345 <https://github.com/snarfed/bridgy/issues/1345>`__)
 
--  Atom:
+- Atom:
 
-   -  Switch to converting AS1 ``id`` (instead of ``url``) to Atom
-      ``id``.
+  - Switch to converting AS1 ``id`` (instead of ``url``) to Atom ``id``.
 
--  Reddit:
+- Reddit:
 
-   -  Implement ``get_actor``.
+  - Implement ``get_actor``.
 
--  Mastodon:
+- Mastodon:
 
-   -  ``create``/``preview``: allow non-Mastodon replies, ie activities
-      that include ``inReplyTo`` URLs even if none of them point to a
-      toot.
-      (`bridgy#1321 <https://github.com/snarfed/bridgy/issues/1321>`__)
-   -  Raise ``requests.HTTPError`` with ``response.status_code`` 502
-      instead of ``JSONDecodeError`` on non-JSON responses. This is
-      synthetic, but more helpful for error handling.
+  - ``create``/``preview``: allow non-Mastodon replies, ie activities
+    that include ``inReplyTo`` URLs even if none of them point to a
+    toot.
+    (`bridgy#1321 <https://github.com/snarfed/bridgy/issues/1321>`__)
+  - Raise ``requests.HTTPError`` with ``response.status_code`` 502
+    instead of ``JSONDecodeError`` on non-JSON responses. This is
+    synthetic, but more helpful for error handling.
 
--  microformats2:
+- microformats2:
 
-   -  ``object_to_json`` and related functions: handle all escaped HTML
-      entities, not just ``&amp;`` ``&lt;`` ``&gt;``.
-   -  Unify ``microformats2.prefix_image_urls`` and
-      ``prefix_video_urls`` into a new ``as1.prefix_urls`` function.
+  - ``object_to_json`` and related functions: handle all escaped HTML
+    entities, not just ``&amp;`` ``&lt;`` ``&gt;``.
+  - Unify ``microformats2.prefix_image_urls`` and ``prefix_video_urls``
+    into a new ``as1.prefix_urls`` function.
 
--  RSS:
+- RSS:
 
-   -  Remove ``itunes:category``. It has to be `one of Apple’s explicit
-      categories <https://feedgen.kiesow.be/ext/api.ext.podcast.html#feedgen.ext.podcast.PodcastExtension.itunes_category>`__,
-      which we aren’t prepared to validate, so don’t try.
+  - Remove ``itunes:category``. It has to be `one of Apple’s explicit
+    categories <https://feedgen.kiesow.be/ext/api.ext.podcast.html#feedgen.ext.podcast.PodcastExtension.itunes_category>`__,
+    which we aren’t prepared to validate, so don’t try.
 
--  ActivityStreams 2:
+- ActivityStreams 2:
 
-   -  Translate both ``url`` and ``urls`` from AS1 into multi-valued AS2
-      ``url`` field.
+  - Translate both ``url`` and ``urls`` from AS1 into multi-valued AS2
+    ``url`` field.
 
--  Move a number of utility methods from the ``Source`` class to a new
-   ``as1`` module: ``object_type``, ``merge_by_id``, ``is_public``,
-   ``add_rsvps_to_event``, ``get_rsvps_from_event``,
-   ``activity_changed``, ``append_in_reply_to``, ``actor_name``,
-   ``original_post_discovery``.
--  ``as1.original_post_discovery``: remove deprecated ``cache`` kwarg.
+- Move a number of utility methods from the ``Source`` class to a new
+  ``as1`` module: ``object_type``, ``merge_by_id``, ``is_public``,
+  ``add_rsvps_to_event``, ``get_rsvps_from_event``,
+  ``activity_changed``, ``append_in_reply_to``, ``actor_name``,
+  ``original_post_discovery``.
+- ``as1.original_post_discovery``: remove deprecated ``cache`` kwarg.
 
 *Non-breaking changes:*
 
--  ActivityStreams 2:
+- ActivityStreams 2:
 
-   -  Fix spec compliance bug: `icon`` and ``image`` are singly
-      valued, not multiply
-      valued <https://www.w3.org/TR/activitystreams-vocabulary/#dfn-icon>`__.
-   -  Add new ``is_public`` method and ``PUBLIC_AUDIENCE`` constant.
-   -  Prefer ``"objectType": "featured"`` first in the ``image`` field
-      when converting from AS1, last in the ``icon`` field. This matches
-      the ActivityPub (Mastodon) convention of using ``icon`` for
-      profile pictures and ``image`` for header images.
-   -  Propagate ``url`` values into new ``PropertyValue`` attachments on
-      ``Person`` objects; these end up in Mastodon’s “profile metadata”
-      link fields.
-   -  ``to_as1``: if an attachment’s ``mediaType`` is ``image/...``,
-      override ``objectType`` and set it to ``image``.
+  - Fix spec compliance bug: `icon`` and ``image`` are singly valued,
+    not multiply
+    valued <https://www.w3.org/TR/activitystreams-vocabulary/#dfn-icon>`__.
+  - Add new ``is_public`` method and ``PUBLIC_AUDIENCE`` constant.
+  - Prefer ``"objectType": "featured"`` first in the ``image`` field
+    when converting from AS1, last in the ``icon`` field. This matches
+    the ActivityPub (Mastodon) convention of using ``icon`` for profile
+    pictures and ``image`` for header images.
+  - Propagate ``url`` values into new ``PropertyValue`` attachments on
+    ``Person`` objects; these end up in Mastodon’s “profile metadata”
+    link fields.
+  - ``to_as1``: if an attachment’s ``mediaType`` is ``image/...``,
+    override ``objectType`` and set it to ``image``.
 
--  Twitter
+- Twitter
 
-   -  Trim alt text in line between post preview and creation
-   -  Correctly trim Twitter alt text
+  - Trim alt text in line between post preview and creation
+  - Correctly trim Twitter alt text
 
--  Facebook
+- Facebook
 
-   -  Scraping: extract post id and owner id from ``data-ft`` attribute
-      and ``_ft_`` query param more often instead of ``story_fbid``,
-      which is now an opaque token that changes regularly.
-      (`facebook-atom#27 <https://github.com/snarfed/facebook-atom/issues/27>`__)
+  - Scraping: extract post id and owner id from ``data-ft`` attribute
+    and ``_ft_`` query param more often instead of ``story_fbid``, which
+    is now an opaque token that changes regularly.
+    (`facebook-atom#27 <https://github.com/snarfed/facebook-atom/issues/27>`__)
 
--  Instagram
+- Instagram
 
-   -  Add new ``Instagram.scraped_json_to_activities`` method.
+  - Add new ``Instagram.scraped_json_to_activities`` method.
 
--  GitHub
+- GitHub
 
-   -  ``create`` and ``preview``: convert profile URLs to @-mentions, eg
-      ``https://github.com/snarfed`` to ``@snarfed``
-      (`bridgy#1090 <https://github.com/snarfed/bridgy/issues/1090>`__).
+  - ``create`` and ``preview``: convert profile URLs to @-mentions, eg
+    ``https://github.com/snarfed`` to ``@snarfed``
+    (`bridgy#1090 <https://github.com/snarfed/bridgy/issues/1090>`__).
 
-      -  ``get_activities`` with ``activity_id`` now supports
-         ``fetch_replies`` and ``fetch_likes``.
+    - ``get_activities`` with ``activity_id`` now supports
+      ``fetch_replies`` and ``fetch_likes``.
 
--  Reddit
+- Reddit
 
-   -  Add ``cache`` support to ``get_activities``.
+  - Add ``cache`` support to ``get_activities``.
 
--  REST API
+- REST API
 
-   -  Add new ``/scraped`` endpoint that accepts ``POST`` requests with
-      silo HTML as input. Currently only supports Instagram. Requires
-      ``site=instagram``, ``output=...`` (any supported output format),
-      and HTML as either raw request body or MIME multipart encoded file
-      in the ``input`` parameter.
+  - Add new ``/scraped`` endpoint that accepts ``POST`` requests with
+    silo HTML as input. Currently only supports Instagram. Requires
+    ``site=instagram``, ``output=...`` (any supported output format),
+    and HTML as either raw request body or MIME multipart encoded file
+    in the ``input`` parameter.
 
--  microformats2
+- microformats2
 
-   -  Add new ``extra`` and ``body_class`` kwargs to
-      ``activities_to_html``.
-   -  When converting ``u-featured`` images to AS1, add new non-standard
-      ``"objectType": "featured"`` field to distinguish them from
-      ``u-photo``.
-   -  Convert ``p-note`` to AS1 ``summary``.
-   -  Bug fixes for converting ``image`` attachments to ``photo``.
+  - Add new ``extra`` and ``body_class`` kwargs to
+    ``activities_to_html``.
+  - When converting ``u-featured`` images to AS1, add new non-standard
+    ``"objectType": "featured"`` field to distinguish them from
+    ``u-photo``.
+  - Convert ``p-note`` to AS1 ``summary``.
+  - Bug fixes for converting ``image`` attachments to ``photo``.
 
--  ``Source.original_post_discovery``: add new ``max_redirect_fetches``
-   keyword arg.
+- ``Source.original_post_discovery``: add new ``max_redirect_fetches``
+  keyword arg.
 
 .. _section-5:
 
@@ -1240,207 +1252,206 @@ at least in the REST API.
 
 *Breaking changes:*
 
--  Drop Python 3.5 support. Python 3.6 is now the minimum required
-   version.
+- Drop Python 3.5 support. Python 3.6 is now the minimum required
+  version.
 
 *Non-breaking changes:*
 
--  RSS:
+- RSS:
 
-   -  Add support for RSS input via new ``rss.to_activities`` function.
+  - Add support for RSS input via new ``rss.to_activities`` function.
 
--  Add new ``include_shares`` kwarg to ``get_activities``, implemented
-   for Twitter and Mastodon. Defaults to ``True``. If ``False``, shares
-   (retweets in Twitter, boosts in Mastodon) will be discarded and not
-   returned. Also add a corresponding ``shares`` query param to the REST
-   API.
--  Instagram (scraping):
+- Add new ``include_shares`` kwarg to ``get_activities``, implemented
+  for Twitter and Mastodon. Defaults to ``True``. If ``False``, shares
+  (retweets in Twitter, boosts in Mastodon) will be discarded and not
+  returned. Also add a corresponding ``shares`` query param to the REST
+  API.
+- Instagram (scraping):
 
-   -  Handle media items with no ``user`` object, add new fetch for
-      comments.
-   -  Add ``Instagram.merge_scraped_comments()``.
+  - Handle media items with no ``user`` object, add new fetch for
+    comments.
+  - Add ``Instagram.merge_scraped_comments()``.
 
--  ActivityStreams 2:
+- ActivityStreams 2:
 
-   -  Handle error when ``type`` isn’t a string.
+  - Handle error when ``type`` isn’t a string.
 
--  Reddit:
+- Reddit:
 
-   -  Implement ``get_activities()`` to fetch posts by the current user
-      or a user specified with ``user_id``.
+  - Implement ``get_activities()`` to fetch posts by the current user or
+    a user specified with ``user_id``.
 
--  Facebook scraping:
+- Facebook scraping:
 
-   -  Skip “Suggested for you” posts.
-   -  Add ``log_html`` kwarg to ``get_activities``; defaults to False.
-   -  Miscellaneous bug fixes.
+  - Skip “Suggested for you” posts.
+  - Add ``log_html`` kwarg to ``get_activities``; defaults to False.
+  - Miscellaneous bug fixes.
 
--  JSONFeed:
+- JSONFeed:
 
-   -  Handle malformed ``items.author`` element.
+  - Handle malformed ``items.author`` element.
 
 .. _section-6:
 
 3.2 - 2021-09-15
 ~~~~~~~~~~~~~~~~
 
--  ``Source.original_post_discovery``: add new
-   ``include_reserved_hosts`` kwarg, defaults to ``True``.
--  Instagram:
+- ``Source.original_post_discovery``: add new ``include_reserved_hosts``
+  kwarg, defaults to ``True``.
+- Instagram:
 
-   -  Update scraping to handle new ``feed_v2`` JSON format.
+  - Update scraping to handle new ``feed_v2`` JSON format.
 
--  Facebook:
+- Facebook:
 
-   -  Scraping: handle pictures, videos, link attachments, and text
-      links in timeline/news feed posts.
+  - Scraping: handle pictures, videos, link attachments, and text links
+    in timeline/news feed posts.
 
--  Mastodon:
+- Mastodon:
 
-   -  Bug fix for ``get_activities()`` with ``fetch_mentions=True``:
-      handle notifications with ``status: null``. Maybe happens when a
-      status is deleted?
-   -  ``create``/``preview_create``: support bookmarks. (Nothing special
-      happens with them; their ``content`` is posted as a normal toot.)
+  - Bug fix for ``get_activities()`` with ``fetch_mentions=True``:
+    handle notifications with ``status: null``. Maybe happens when a
+    status is deleted?
+  - ``create``/``preview_create``: support bookmarks. (Nothing special
+    happens with them; their ``content`` is posted as a normal toot.)
 
--  microformats2:
+- microformats2:
 
-   -  Stop rendering ``image.displayName`` as visible text in HTML,
-      since it’s already in the ``<img>``\ ’s ``alt`` attribute.
-   -  Add
-      `bookmark-of <https://indieweb.org/bookmark#How_to_markup>`__
-      support.
-   -  Add ``prefix_image_urls()`` function.
-   -  Handle null ``content`` in AS1/2 objects.
-   -  ``json_to_object`` bug fix for composite ``bookmark-of``
-      properties.
+  - Stop rendering ``image.displayName`` as visible text in HTML, since
+    it’s already in the ``<img>``\ ’s ``alt`` attribute.
+  - Add
+    `bookmark-of <https://indieweb.org/bookmark#How_to_markup>`__
+    support.
+  - Add ``prefix_image_urls()`` function.
+  - Handle null ``content`` in AS1/2 objects.
+  - ``json_to_object`` bug fix for composite ``bookmark-of`` properties.
 
--  Twitter:
+- Twitter:
 
-   -  ``create``/``preview``: `support large
-      videos <https://twittercommunity.com/t/large-file-can-not-be-finalized-synchronously/82929/3>`__
-      via async upload. We now pass ``media_category=tweet_video`` to
-      the chunked upload ``INIT`` stage, and then make blocking
-      ``STATUS`` calls until the video is finished processing.
-      (`bridgy#1043 <https://github.com/snarfed/bridgy/issues/1043>`__)
-   -  ``create``/``preview``: allow bookmarks.
-      (`bridgy#1045 <https://github.com/snarfed/bridgy/issues/1045>`__)
-   -  ``create``/``preview``: allow non-Twitter replies, ie activities
-      that include ``inReplyTo`` URLs even if none of them point to a
-      tweet.
-      (`bridgy#1063 <https://github.com/snarfed/bridgy/issues/1063>`__)
-   -  ``get_activities``: support list ids as well as slugs.
-   -  Bug fixes for removing t.co links to quoted tweets.
-   -  Bug fix for multiple instances of the same link in tweet text.
-   -  ``get_activities()``: raise ``ValueError`` on invalid ``user_id``.
+  - ``create``/``preview``: `support large
+    videos <https://twittercommunity.com/t/large-file-can-not-be-finalized-synchronously/82929/3>`__
+    via async upload. We now pass ``media_category=tweet_video`` to the
+    chunked upload ``INIT`` stage, and then make blocking ``STATUS``
+    calls until the video is finished processing.
+    (`bridgy#1043 <https://github.com/snarfed/bridgy/issues/1043>`__)
+  - ``create``/``preview``: allow bookmarks.
+    (`bridgy#1045 <https://github.com/snarfed/bridgy/issues/1045>`__)
+  - ``create``/``preview``: allow non-Twitter replies, ie activities
+    that include ``inReplyTo`` URLs even if none of them point to a
+    tweet.
+    (`bridgy#1063 <https://github.com/snarfed/bridgy/issues/1063>`__)
+  - ``get_activities``: support list ids as well as slugs.
+  - Bug fixes for removing t.co links to quoted tweets.
+  - Bug fix for multiple instances of the same link in tweet text.
+  - ``get_activities()``: raise ``ValueError`` on invalid ``user_id``.
 
--  REST API: ported web framework from webapp2 to Flask. No user-visible
-   behavior change expected.
+- REST API: ported web framework from webapp2 to Flask. No user-visible
+  behavior change expected.
 
 .. _section-7:
 
 3.1 - 2021-04-03
 ~~~~~~~~~~~~~~~~
 
--  Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the
-   minimum required version.
--  Add `Pixelfed <https://pixelfed.org/>`__! Heavily based on Mastodon.
--  Standardize Instagram’s and Facebook’s scraping into new common
-   ``scraped_to_activities()``, ``scraped_to_activity()``, and
-   ``merge_scraped_reactions()`` methods.
--  Atom:
+- Add Python 3.8 support, drop 3.3 and 3.4. Python 3.5 is now the
+  minimum required version.
+- Add `Pixelfed <https://pixelfed.org/>`__! Heavily based on Mastodon.
+- Standardize Instagram’s and Facebook’s scraping into new common
+  ``scraped_to_activities()``, ``scraped_to_activity()``, and
+  ``merge_scraped_reactions()`` methods.
+- Atom:
 
-   -  Add the ``summary`` element
-      (`#157 <https://github.com/snarfed/granary/issues/157>`__).
+  - Add the ``summary`` element
+    (`#157 <https://github.com/snarfed/granary/issues/157>`__).
 
--  REST API:
+- REST API:
 
-   -  Bug fix: URL-encode Unicode characters in ``Link`` HTTP headers
-      (eg ``rel=self``, ``rel=header``).
+  - Bug fix: URL-encode Unicode characters in ``Link`` HTTP headers (eg
+    ``rel=self``, ``rel=header``).
 
--  Facebook:
+- Facebook:
 
-   -  Scraping now uses
-      `mbasic.facebook.com <https://mbasic.facebook.com/>`__ instead of
-      `m.facebook.com <https://m.facebook.com/>`__.
+  - Scraping now uses
+    `mbasic.facebook.com <https://mbasic.facebook.com/>`__ instead of
+    `m.facebook.com <https://m.facebook.com/>`__.
 
--  Flickr:
+- Flickr:
 
-   -  Add support for adding tags to existing photos
-      (`bridgy#857 <https://github.com/snarfed/bridgy/issues/857>`__).
-   -  ``get_comment()``: skip fetching comments from API if ``activity``
-      kwarg is provided and contains the requested comment.
+  - Add support for adding tags to existing photos
+    (`bridgy#857 <https://github.com/snarfed/bridgy/issues/857>`__).
+  - ``get_comment()``: skip fetching comments from API if ``activity``
+    kwarg is provided and contains the requested comment.
 
--  GitHub:
+- GitHub:
 
-   -  Handle `HTTP 451 Unavailable for Legal
-      Reasons <https://en.wikipedia.org/wiki/HTTP_451>`__ responses (`eg
-      for DMCA
-      takedowns <https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/>`__)
-      gracefully.
-   -  Add create/preview support for reactions on pull review request
-      comments (ie URLs with ``#discussion_r...`` fragments).
+  - Handle `HTTP 451 Unavailable for Legal
+    Reasons <https://en.wikipedia.org/wiki/HTTP_451>`__ responses (`eg
+    for DMCA
+    takedowns <https://developer.github.com/changes/2016-03-17-the-451-status-code-is-now-supported/>`__)
+    gracefully.
+  - Add create/preview support for reactions on pull review request
+    comments (ie URLs with ``#discussion_r...`` fragments).
 
--  HTML/microformats2:
+- HTML/microformats2:
 
-   -  Add ``aria-hidden="true"`` to empty links
-      (`bridgy#947 <https://github.com/snarfed/bridgy/issues/947>`__).
-   -  Bug fix: escape ``&``, ``<``, and ``>`` characters in bare mf2
-      ``content`` properties
-      (`aaronpk/XRay#102 <https://github.com/aaronpk/XRay/issues/102>`__).
-   -  ``json_to_object()``: convert ``nickname`` to ``username``.
+  - Add ``aria-hidden="true"`` to empty links
+    (`bridgy#947 <https://github.com/snarfed/bridgy/issues/947>`__).
+  - Bug fix: escape ``&``, ``<``, and ``>`` characters in bare mf2
+    ``content`` properties
+    (`aaronpk/XRay#102 <https://github.com/aaronpk/XRay/issues/102>`__).
+  - ``json_to_object()``: convert ``nickname`` to ``username``.
 
--  JSON Feed:
+- JSON Feed:
 
-   -  Gracefully handle when ``content_html`` and ``content_text`` are
-      `incorrectly <https://jsonfeed.org/version/1#items>`__ lists
-      instead of strings.
+  - Gracefully handle when ``content_html`` and ``content_text`` are
+    `incorrectly <https://jsonfeed.org/version/1#items>`__ lists instead
+    of strings.
 
--  Instagram:
+- Instagram:
 
-   -  Include threaded (ie nested) comments in scraping
-      (`bridgy#958 <https://github.com/snarfed/bridgy/issues/958>`__).
+  - Include threaded (ie nested) comments in scraping
+    (`bridgy#958 <https://github.com/snarfed/bridgy/issues/958>`__).
 
--  Mastodon:
+- Mastodon:
 
-   -  Bug fix for alt text with image attachments
-      (`bridgy#975 <https://github.com/snarfed/bridgy/issues/975>`__).
-   -  Omit empty ``limit`` param `for compatibility with
-      Pleroma <https://git.pleroma.social/pleroma/pleroma/-/issues/2198>`__
-      (`bridgy#977 <https://github.com/snarfed/bridgy/issues/977>`__).
+  - Bug fix for alt text with image attachments
+    (`bridgy#975 <https://github.com/snarfed/bridgy/issues/975>`__).
+  - Omit empty ``limit`` param `for compatibility with
+    Pleroma <https://git.pleroma.social/pleroma/pleroma/-/issues/2198>`__
+    (`bridgy#977 <https://github.com/snarfed/bridgy/issues/977>`__).
 
--  Meetup:
+- Meetup:
 
-   -  ``create()``: handle API errors and return the error message in
-      the ``CreationResult``
-      (`bridgy#921 <https://github.com/snarfed/bridgy/issues/921>`__).
+  - ``create()``: handle API errors and return the error message in the
+    ``CreationResult``
+    (`bridgy#921 <https://github.com/snarfed/bridgy/issues/921>`__).
 
--  Twitter:
+- Twitter:
 
-   -  Bug fix: URL-encode list names in API calls.
-   -  Bug fix: propagate alt text into AS1 ``photo.displayName`` so that
-      it gets all the way into microformats2 JSON and HTML
-      (`#183 <https://github.com/snarfed/granary/issues/183>`__).
+  - Bug fix: URL-encode list names in API calls.
+  - Bug fix: propagate alt text into AS1 ``photo.displayName`` so that
+    it gets all the way into microformats2 JSON and HTML
+    (`#183 <https://github.com/snarfed/granary/issues/183>`__).
 
--  Reddit:
+- Reddit:
 
-   -  Implement ``post_id()``.
-   -  Cache user data fetched from the API for 5m to avoid repeating
-      user profile API requests
-      (`bridgy#1021 <https://github.com/snarfed/bridgy/issues/1021>`__).
-      when fetching multiple comments or posts from the same author
-   -  Bug fix: use ‘displayName’ instead of ‘name’ in AS1 objects for
-      submissions.
-   -  Bug fix: use tag URIs for activity ids.
+  - Implement ``post_id()``.
+  - Cache user data fetched from the API for 5m to avoid repeating user
+    profile API requests
+    (`bridgy#1021 <https://github.com/snarfed/bridgy/issues/1021>`__).
+    when fetching multiple comments or posts from the same author
+  - Bug fix: use ‘displayName’ instead of ‘name’ in AS1 objects for
+    submissions.
+  - Bug fix: use tag URIs for activity ids.
 
--  ActivityStreams 2:
+- ActivityStreams 2:
 
-   -  ``to_as1()``: for ``Create`` activities, include the activity
-      actor’s data in the object’s author
-      (`snarfed/bridgy-fed#75 <https://github.com/snarfed/bridgy-fed/issues/75>`__).
-   -  ``to_as1()``: convert ``preferredUsername`` to ``username``.
-   -  ``from_as1()``: convert ``username`` to ``preferredUsername``.
-   -  ``from_as1()``: bug fix, make ``context`` kwarg actually work.
+  - ``to_as1()``: for ``Create`` activities, include the activity
+    actor’s data in the object’s author
+    (`snarfed/bridgy-fed#75 <https://github.com/snarfed/bridgy-fed/issues/75>`__).
+  - ``to_as1()``: convert ``preferredUsername`` to ``username``.
+  - ``from_as1()``: convert ``username`` to ``preferredUsername``.
+  - ``from_as1()``: bug fix, make ``context`` kwarg actually work.
 
 .. _section-8:
 
@@ -1449,176 +1460,175 @@ at least in the REST API.
 
 *Breaking changes:*
 
--  *Python 2 is no longer supported!* Including the `App Engine Standard
-   Python 2
-   runtime <https://cloud.google.com/appengine/docs/standard/python/>`__.
-   On the plus side, the `Python 3
-   runtime <https://cloud.google.com/appengine/docs/standard/python3/>`__
-   is now supported! See this `list of
-   differences <https://cloud.google.com/appengine/docs/standard/python3/python-differences>`__
-   for more details.
+- *Python 2 is no longer supported!* Including the `App Engine Standard
+  Python 2
+  runtime <https://cloud.google.com/appengine/docs/standard/python/>`__.
+  On the plus side, the `Python 3
+  runtime <https://cloud.google.com/appengine/docs/standard/python3/>`__
+  is now supported! See this `list of
+  differences <https://cloud.google.com/appengine/docs/standard/python3/python-differences>`__
+  for more details.
 
 Non-breaking changes:
 
--  Migrate demo app and API to the App Engine Standard Python 3 runtime.
--  Instagram:
+- Migrate demo app and API to the App Engine Standard Python 3 runtime.
+- Instagram:
 
-   -  Scraping: fetch 50 likes instead of 24.
-      (`snarfed/bridgy#898 <https://github.com/snarfed/bridgy/issues/898>`__)
-   -  Scraping bug fix for ``get_actor()`` with ``user_id``.
+  - Scraping: fetch 50 likes instead of 24.
+    (`snarfed/bridgy#898 <https://github.com/snarfed/bridgy/issues/898>`__)
+  - Scraping bug fix for ``get_actor()`` with ``user_id``.
 
--  Twitter:
+- Twitter:
 
-   -  Add `image alt
-      text <https://blog.twitter.com/developer/en_us/a/2016/alt-text-support-for-twitter-cards-and-the-rest-api.html>`__
-      support to ``get_activites()`` etc
-      (`#183 <https://github.com/snarfed/granary/issues/183>`__).
+  - Add `image alt
+    text <https://blog.twitter.com/developer/en_us/a/2016/alt-text-support-for-twitter-cards-and-the-rest-api.html>`__
+    support to ``get_activites()`` etc
+    (`#183 <https://github.com/snarfed/granary/issues/183>`__).
 
--  RSS:
+- RSS:
 
-   -  Add ``itunes:image``, ``itunes:author``, and ``itunes:category``.
-   -  Strip HTML from ``title`` element
-      (`#177 <https://github.com/snarfed/granary/issues/177>`__).
-      `Background. <https://validator.w3.org/feed/docs/warning/ContainsHTML.html>`__
-   -  Always include author in items
-      (`#177 <https://github.com/snarfed/granary/issues/177>`__).
-   -  Bug fix: extract feed image from ``hfeed`` correctly.
-   -  Bug fix: don’t crash on ``article`` or ``mention`` tags in items
-      with enclosures.
+  - Add ``itunes:image``, ``itunes:author``, and ``itunes:category``.
+  - Strip HTML from ``title`` element
+    (`#177 <https://github.com/snarfed/granary/issues/177>`__).
+    `Background. <https://validator.w3.org/feed/docs/warning/ContainsHTML.html>`__
+  - Always include author in items
+    (`#177 <https://github.com/snarfed/granary/issues/177>`__).
+  - Bug fix: extract feed image from ``hfeed`` correctly.
+  - Bug fix: don’t crash on ``article`` or ``mention`` tags in items
+    with enclosures.
 
--  Atom:
+- Atom:
 
-   -  Bug fix: extract feed image from ``hfeed`` correctly.
+  - Bug fix: extract feed image from ``hfeed`` correctly.
 
--  REST API:
+- REST API:
 
-   -  Add HTTP ``HEAD`` support.
-   -  Add support for URL fragments with ``input=html``. If a fragment
-      is provided, only that specific element is extracted and
-      converted.
-      (`#185 <https://github.com/snarfed/granary/issues/185>`__)
+  - Add HTTP ``HEAD`` support.
+  - Add support for URL fragments with ``input=html``. If a fragment is
+    provided, only that specific element is extracted and converted.
+    (`#185 <https://github.com/snarfed/granary/issues/185>`__)
 
--  GitHub:
+- GitHub:
 
-   -  Publish: preserve ``<code>`` tags instead of converting them to
-      \`s so that GitHub renders HTML entities like ``&gt;`` inside them
-      instead of leaving them escaped.
-      `Background. <https://chat.indieweb.org/dev/2019-12-24#t1577174464779200>`__
+  - Publish: preserve ``<code>`` tags instead of converting them to \`s
+    so that GitHub renders HTML entities like ``&gt;`` inside them
+    instead of leaving them escaped.
+    `Background. <https://chat.indieweb.org/dev/2019-12-24#t1577174464779200>`__
 
--  JSON Feed:
+- JSON Feed:
 
-   -  Handle malformed attachments better.
+  - Handle malformed attachments better.
 
--  microformats2:
+- microformats2:
 
-   -  Don’t crash on string ``context`` fields.
-   -  ``html_to_activities()``: limit to ``h-entry``, ``h-event``, and
-      ``h-cite`` items
-      (`#192 <https://github.com/snarfed/granary/issues/192>`__).
+  - Don’t crash on string ``context`` fields.
+  - ``html_to_activities()``: limit to ``h-entry``, ``h-event``, and
+    ``h-cite`` items
+    (`#192 <https://github.com/snarfed/granary/issues/192>`__).
 
--  The ``cache`` kwarg to ``Source.original_post_discovery()`` now has
-   no effect. ``webutil.util.follow_redirects()`` has its own built in
-   caching now.
--  Added Meetup.com support for publishing RSVPs.
+- The ``cache`` kwarg to ``Source.original_post_discovery()`` now has no
+  effect. ``webutil.util.follow_redirects()`` has its own built in
+  caching now.
+- Added Meetup.com support for publishing RSVPs.
 
 .. _section-9:
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
 
--  Add Mastodon support!
--  Add Python 3.7 support, and improve overall Python 3 compatibility.
--  Update a number of dependencies.
--  Switch from Python’s built in ``json`` module to
-   `ujson <https://github.com/esnme/ultrajson/>`__ to speed up JSON
-   parsing and encoding.
--  Add ``duration`` and ``size`` support to ActivityStreams 1 and 2,
-   RSS, and microformats2 HTML and JSON. `microformats2 support is still
-   emerging for both <https://indieweb.org/podcast#Brainstorming>`__.
-   Both integer seconds and `ISO 8601 string
-   durations <https://en.wikipedia.org/wiki/ISO_8601#Durations>`__ are
-   supported for ``duration``. Integer bytes is used for ``size``
-   everywhere. microformats2 HTML also includes human-readable strings,
-   eg ``5.1 MB``.
-   (`#169 <https://github.com/snarfed/granary/issues/169>`__)
--  Twitter:
+- Add Mastodon support!
+- Add Python 3.7 support, and improve overall Python 3 compatibility.
+- Update a number of dependencies.
+- Switch from Python’s built in ``json`` module to
+  `ujson <https://github.com/esnme/ultrajson/>`__ to speed up JSON
+  parsing and encoding.
+- Add ``duration`` and ``size`` support to ActivityStreams 1 and 2, RSS,
+  and microformats2 HTML and JSON. `microformats2 support is still
+  emerging for both <https://indieweb.org/podcast#Brainstorming>`__.
+  Both integer seconds and `ISO 8601 string
+  durations <https://en.wikipedia.org/wiki/ISO_8601#Durations>`__ are
+  supported for ``duration``. Integer bytes is used for ``size``
+  everywhere. microformats2 HTML also includes human-readable strings,
+  eg ``5.1 MB``.
+  (`#169 <https://github.com/snarfed/granary/issues/169>`__)
+- Twitter:
 
-   -  ``[preview]_create()``: detect attempts to upload `images over
-      5MB <https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices#image-specs>`__
-      and return an error.
+  - ``[preview]_create()``: detect attempts to upload `images over
+    5MB <https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices#image-specs>`__
+    and return an error.
 
--  Facebook:
+- Facebook:
 
-   -  Add ``get_activities(scrape=True)`` for scraping HTML from
-      `m.facebook.com <https://m.facebook.com/>`__. Requires ``c_user``
-      and ``xs`` cookies from a logged in session
-      (`snarfed/bridgy#886 <https://github.com/snarfed/bridgy/issues/886>`__).
-   -  `Upgrade Graph API version from 2.10 to
-      4.0. <https://developers.facebook.com/docs/graph-api/changelog>`__
+  - Add ``get_activities(scrape=True)`` for scraping HTML from
+    `m.facebook.com <https://m.facebook.com/>`__. Requires ``c_user``
+    and ``xs`` cookies from a logged in session
+    (`snarfed/bridgy#886 <https://github.com/snarfed/bridgy/issues/886>`__).
+  - `Upgrade Graph API version from 2.10 to
+    4.0. <https://developers.facebook.com/docs/graph-api/changelog>`__
 
--  Atom:
+- Atom:
 
-   -  Bug fix for de-duping images in attachments.
+  - Bug fix for de-duping images in attachments.
 
--  RSS:
+- RSS:
 
-   -  Wrap all ``<description>`` element contents in ``CDATA`` sections.
-   -  Render images in ``<description>`` with HTML ``<img>`` tags
-      (`#175 <https://github.com/snarfed/granary/issues/175>`__).
-   -  ``from_activities()`` bug fix: don’t crash when converting
-      multiple attachments to enclosures in a single item. (RSS only
-      supports one enclosure per item, so we now only include the first,
-      and log a warning if the activity has more.)
+  - Wrap all ``<description>`` element contents in ``CDATA`` sections.
+  - Render images in ``<description>`` with HTML ``<img>`` tags
+    (`#175 <https://github.com/snarfed/granary/issues/175>`__).
+  - ``from_activities()`` bug fix: don’t crash when converting multiple
+    attachments to enclosures in a single item. (RSS only supports one
+    enclosure per item, so we now only include the first, and log a
+    warning if the activity has more.)
 
 .. _section-10:
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
 
--  Convert AS2 ``Mention`` tags to AS1 ``objectType`` ``mention``
-   (non-standard) and vice versa
-   (`snarfed/bridgy-fed#46 <https://github.com/snarfed/bridgy-fed/issues/46>`__).
--  Twitter:
+- Convert AS2 ``Mention`` tags to AS1 ``objectType`` ``mention``
+  (non-standard) and vice versa
+  (`snarfed/bridgy-fed#46 <https://github.com/snarfed/bridgy-fed/issues/46>`__).
+- Twitter:
 
-   -  Bug fix for large block list fetches that get rate limited after a
-      few successful requests.
-   -  Handle HTTP 403 + error code 200 when fetching retweets for a
-      protected or otherwise unavailable tweet
-      (`bridgy#688 <https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329>`__).
-   -  Demote @-mentions from
-      `person-tags <https://indieweb.org/person-tag>`__ to
-      `mentions <https://indieweb.org/mention>`__. Specifically, this
-      means they’ll no longer get rendered with ``u-category`` mf2.
+  - Bug fix for large block list fetches that get rate limited after a
+    few successful requests.
+  - Handle HTTP 403 + error code 200 when fetching retweets for a
+    protected or otherwise unavailable tweet
+    (`bridgy#688 <https://github.com/snarfed/bridgy/issues/688#issuecomment-520600329>`__).
+  - Demote @-mentions from
+    `person-tags <https://indieweb.org/person-tag>`__ to
+    `mentions <https://indieweb.org/mention>`__. Specifically, this
+    means they’ll no longer get rendered with ``u-category`` mf2.
 
--  Instagram:
+- Instagram:
 
-   -  Disabled in the REST API entirely due to Instagram’s aggressive
-      rate limiting and blocking
-      (`bridgy#655 <https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427>`__).
-   -  Update scraping to handle replies in new
-      ``edge_media_to_parent_comment`` field
-      (`#164 <https://github.com/snarfed/granary/issues/164>`__).
-   -  Use cookie for all scraping HTTP requests, not just for likes.
+  - Disabled in the REST API entirely due to Instagram’s aggressive rate
+    limiting and blocking
+    (`bridgy#655 <https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427>`__).
+  - Update scraping to handle replies in new
+    ``edge_media_to_parent_comment`` field
+    (`#164 <https://github.com/snarfed/granary/issues/164>`__).
+  - Use cookie for all scraping HTTP requests, not just for likes.
 
--  microformats2:
+- microformats2:
 
-   -  Revise whitespace handling; use ``white-space: pre`` CSS in HTML
-      output.
+  - Revise whitespace handling; use ``white-space: pre`` CSS in HTML
+    output.
 
--  Facebook:
+- Facebook:
 
-   -  Bug fix: don’t interpret ``photo.php`` as username in post URLs.
+  - Bug fix: don’t interpret ``photo.php`` as username in post URLs.
 
--  Atom:
+- Atom:
 
-   -  Switch from ``white-space: pre`` CSS back to converting newlines
-      to ``<br>``\ s because some feed readers (`eg
-      NewsBlur <https://forum.newsblur.com/t/android-cant-read-line-pre-formatted-lines/6116>`__)
-      follow it too strictly and don’t even line wrap.
+  - Switch from ``white-space: pre`` CSS back to converting newlines to
+    ``<br>``\ s because some feed readers (`eg
+    NewsBlur <https://forum.newsblur.com/t/android-cant-read-line-pre-formatted-lines/6116>`__)
+    follow it too strictly and don’t even line wrap.
 
--  RSS:
+- RSS:
 
-   -  Default title to ellipsized content.
+  - Default title to ellipsized content.
 
 .. _section-11:
 
@@ -1634,51 +1644,51 @@ removes the ``googleplus`` module.
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
 
--  Add RSS 2.0 output!
-   (`#124 <https://github.com/snarfed/granary/issues/124>`__)
--  All silos:
+- Add RSS 2.0 output!
+  (`#124 <https://github.com/snarfed/granary/issues/124>`__)
+- All silos:
 
-   -  Switch users’ primary URLs from web site to silo profile
-      (`#158 <https://github.com/snarfed/granary/issues/158>`__).
+  - Switch users’ primary URLs from web site to silo profile
+    (`#158 <https://github.com/snarfed/granary/issues/158>`__).
 
--  GitHub:
+- GitHub:
 
-   -  Don’t enclose bare URLs in ``<``/``>``
-      (`snarfed/bridgy#850 <https://github.com/snarfed/bridgy/issues/850>`__).
+  - Don’t enclose bare URLs in ``<``/``>``
+    (`snarfed/bridgy#850 <https://github.com/snarfed/bridgy/issues/850>`__).
 
--  Atom:
+- Atom:
 
-   -  Bug fix for actors and attachments with multiple image URLs.
-   -  Bug fix for attachment author objects with no properties.
+  - Bug fix for actors and attachments with multiple image URLs.
+  - Bug fix for attachment author objects with no properties.
 
--  Google+:
+- Google+:
 
-   -  Drop from web UI and REST API since `consumer Google+ is shutting
-      down
-      entirely <https://blog.google/technology/safety-security/expediting-changes-google-plus/>`__
-      (`more <https://github.com/snarfed/bridgy/issues/846>`__).
-   -  Switch from deprecated global API endpoint to G+ endpoint.
-      Background in
-      `snarfed/bridgy#846 <https://github.com/snarfed/bridgy/issues/846>`__,
-      `Google blog
-      post <https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html>`__
-      `and
-      docs <https://developers.google.com/api-client-library/python/guide/batch>`__.
+  - Drop from web UI and REST API since `consumer Google+ is shutting
+    down
+    entirely <https://blog.google/technology/safety-security/expediting-changes-google-plus/>`__
+    (`more <https://github.com/snarfed/bridgy/issues/846>`__).
+  - Switch from deprecated global API endpoint to G+ endpoint.
+    Background in
+    `snarfed/bridgy#846 <https://github.com/snarfed/bridgy/issues/846>`__,
+    `Google blog
+    post <https://developers.googleblog.com/2018/03/discontinuing-support-for-json-rpc-and.html>`__
+    `and
+    docs <https://developers.google.com/api-client-library/python/guide/batch>`__.
 
--  Instagram:
+- Instagram:
 
-   -  Fix individual photo/video link urls for multi-photo/video posts.
-   -  Handle `user-provided alt
-      text <https://instagram-press.com/blog/2018/11/28/creating-a-more-accessible-instagram/>`__
-      (`#159 <https://github.com/snarfed/granary/issues/159>`__).
+  - Fix individual photo/video link urls for multi-photo/video posts.
+  - Handle `user-provided alt
+    text <https://instagram-press.com/blog/2018/11/28/creating-a-more-accessible-instagram/>`__
+    (`#159 <https://github.com/snarfed/granary/issues/159>`__).
 
--  Twitter:
+- Twitter:
 
-   -  Update max video upload size from 5MB to 512MB
-      (`#162 <https://github.com/snarfed/granary/issues/162>`__).
+  - Update max video upload size from 5MB to 512MB
+    (`#162 <https://github.com/snarfed/granary/issues/162>`__).
 
--  ``/url``: Return HTTP 400 when fetching the user’s URL results in an
-   infinite redirect.
+- ``/url``: Return HTTP 400 when fetching the user’s URL results in an
+  infinite redirect.
 
 .. _section-13:
 
@@ -1712,91 +1722,90 @@ support.
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
 
--  Twitter:
+- Twitter:
 
-   -  Support ISO 8601 formatted created_at timestamps, which the
-      `archive download
-      uses <https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive>`__,
-      as well as RFC 2822 from the API.
-   -  ``create()`` and ``preview_create()``: support RSVPs. Tweet them
-      as normal tweets with the RSVP content.
-      (`snarfed/bridgy#818 <https://github.com/snarfed/bridgy/issues/818>`__)
-   -  ``create()`` and ``preview_create()``: support alt text for
-      images, via AS1 ``displayName``.
-      (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
+  - Support ISO 8601 formatted created_at timestamps, which the `archive
+    download
+    uses <https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive>`__,
+    as well as RFC 2822 from the API.
+  - ``create()`` and ``preview_create()``: support RSVPs. Tweet them as
+    normal tweets with the RSVP content.
+    (`snarfed/bridgy#818 <https://github.com/snarfed/bridgy/issues/818>`__)
+  - ``create()`` and ``preview_create()``: support alt text for images,
+    via AS1 ``displayName``.
+    (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
--  Instagram:
+- Instagram:
 
-   -  Add global rate limiting lock for scraping. If a scraping HTTP
-      request gets a 429 or 503 response, we refuse to make more
-      requests for 5m, and instead short circuit and return the same
-      error. This can be overridden with a new ``ignore_rate_limit``
-      kwarg to ``get_activities()``.
+  - Add global rate limiting lock for scraping. If a scraping HTTP
+    request gets a 429 or 503 response, we refuse to make more requests
+    for 5m, and instead short circuit and return the same error. This
+    can be overridden with a new ``ignore_rate_limit`` kwarg to
+    ``get_activities()``.
 
--  GitHub:
+- GitHub:
 
-   -  Add ``tag`` support to ``create``/``preview_create`` to add
-      label(s) to existing issues
-      (`snarfed/bridgy#811 <https://github.com/snarfed/bridgy/issues/811>`__).
-   -  Escape HTML characters (``<``, ``>``, and ``&``) in content in
-      ``create()`` and ``preview_create()``
-      (`snarfed/bridgy#810 <https://github.com/snarfed/bridgy/issues/810>`__).
-   -  ``get_activities()`` and ``get_comment()`` now return
-      ``ValueError`` instead of ``AssertionError`` on malformed
-      ``activity_id`` and ``comment_id`` args, respectively.
-   -  ``get_activities()`` bug fix for issues/PRs with no body text.
-   -  Switch from GraphQL to REST API for creating comments and
-      reactions, since GraphQL hits authorization errors on many org
-      repos.
-      (`snarfed/bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__)
-   -  Improve GraphQL support for comments and users.
+  - Add ``tag`` support to ``create``/``preview_create`` to add label(s)
+    to existing issues
+    (`snarfed/bridgy#811 <https://github.com/snarfed/bridgy/issues/811>`__).
+  - Escape HTML characters (``<``, ``>``, and ``&``) in content in
+    ``create()`` and ``preview_create()``
+    (`snarfed/bridgy#810 <https://github.com/snarfed/bridgy/issues/810>`__).
+  - ``get_activities()`` and ``get_comment()`` now return ``ValueError``
+    instead of ``AssertionError`` on malformed ``activity_id`` and
+    ``comment_id`` args, respectively.
+  - ``get_activities()`` bug fix for issues/PRs with no body text.
+  - Switch from GraphQL to REST API for creating comments and reactions,
+    since GraphQL hits authorization errors on many org repos.
+    (`snarfed/bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__)
+  - Improve GraphQL support for comments and users.
 
--  Atom:
+- Atom:
 
-   -  Shorten and ellipsize feed title when necessary
-      (`#144 <https://github.com/snarfed/granary/issues/144>`__).
+  - Shorten and ellipsize feed title when necessary
+    (`#144 <https://github.com/snarfed/granary/issues/144>`__).
 
--  microformats2:
+- microformats2:
 
-   -  Upgrade mf2py to improve a few things like `implied p-name
-      detection <http://microformats.org/wiki/microformats2-implied-properties>`__
-      and whitespace handling
-      (`#142 <https://github.com/snarfed/granary/issues/142>`__, fixes
-      `#145 <https://github.com/snarfed/granary/issues/145>`__,
-      `snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__,
-      `snarfed/bridgy#828 <https://github.com/snarfed/bridgy/issues/828>`__).
-   -  Support ``alt`` attribute in ``<img>`` tags
-      (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
+  - Upgrade mf2py to improve a few things like `implied p-name
+    detection <http://microformats.org/wiki/microformats2-implied-properties>`__
+    and whitespace handling
+    (`#142 <https://github.com/snarfed/granary/issues/142>`__, fixes
+    `#145 <https://github.com/snarfed/granary/issues/145>`__,
+    `snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__,
+    `snarfed/bridgy#828 <https://github.com/snarfed/bridgy/issues/828>`__).
+  - Support ``alt`` attribute in ``<img>`` tags
+    (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
 .. _section-15:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
 
--  Add Python 3 support! Granary now requires either Python 2.7+ or
-   Python 3.3+.
--  Instagram:
+- Add Python 3 support! Granary now requires either Python 2.7+ or
+  Python 3.3+.
+- Instagram:
 
-   -  Fix scraping profile pages.
+  - Fix scraping profile pages.
 
--  Twitter:
+- Twitter:
 
-   -  Update character counting to handle Twitter change that now
-      auto-links *all* ccTLDs.
-      `Background. <https://github.com/kylewm/brevity/issues/8>`__
+  - Update character counting to handle Twitter change that now
+    auto-links *all* ccTLDs.
+    `Background. <https://github.com/kylewm/brevity/issues/8>`__
 
--  GitHub:
+- GitHub:
 
-   -  Bug fix for ``get_activities()`` with deleted issues and repos.
+  - Bug fix for ``get_activities()`` with deleted issues and repos.
 
--  microformats2:
+- microformats2:
 
-   -  ``object_to_json()``: convert tags to simple strings in the
-      ``category`` property, not full nested objects like ``h-card``\ s
-      (`#141 <https://github.com/snarfed/granary/issues/141>`__).
-   -  Special case GitHub issues that are in-reply-to a repo or its
-      ``/issues`` URL to be objectType ``issue``.
-   -  Render simple string categories in HTML output.
+  - ``object_to_json()``: convert tags to simple strings in the
+    ``category`` property, not full nested objects like ``h-card``\ s
+    (`#141 <https://github.com/snarfed/granary/issues/141>`__).
+  - Special case GitHub issues that are in-reply-to a repo or its
+    ``/issues`` URL to be objectType ``issue``.
+  - Render simple string categories in HTML output.
 
 This release is intentionally small and limited in scope to contain any
 impact of the Python 3 migration. It *should* be a noop for existing
@@ -1808,526 +1817,518 @@ still bugs. Please file issues if you notice anything broken!
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
 
--  Add GitHub!
+- Add GitHub!
 
-   -  ``get_activities()`` supports issues and pull requests, including
-      comments and reactions. It’s currently based on notifications, so
-      it’s best effort, not comprehensive, and only includes recently
-      active issues/PRs.
-   -  ``create()`` and ``preview_create()`` support issues, comments,
-      `stars <https://help.github.com/articles/about-stars>`__, and
-      `reactions <https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments>`__.
+  - ``get_activities()`` supports issues and pull requests, including
+    comments and reactions. It’s currently based on notifications, so
+    it’s best effort, not comprehensive, and only includes recently
+    active issues/PRs.
+  - ``create()`` and ``preview_create()`` support issues, comments,
+    `stars <https://help.github.com/articles/about-stars>`__, and
+    `reactions <https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments>`__.
 
--  Twitter:
+- Twitter:
 
-   -  Prefer MP4 and other video/… content types to HLS (.m3u8) etc.
-      `Background. <https://twittercommunity.com/t/retiring-mp4-video-output/66093>`__
-   -  Prefer HTTPS URLs for media images.
-   -  ``get_activities()``: Support @-prefixed usernames in ``user_id``.
+  - Prefer MP4 and other video/… content types to HLS (.m3u8) etc.
+    `Background. <https://twittercommunity.com/t/retiring-mp4-video-output/66093>`__
+  - Prefer HTTPS URLs for media images.
+  - ``get_activities()``: Support @-prefixed usernames in ``user_id``.
 
--  Facebook:
+- Facebook:
 
-   -  Support new `recurring aka multi-instance
-      events <https://stackoverflow.com/questions/45131646/decoding-recurring-events-from-facebook-open-graph-api>`__.
-      ``create()`` and ``preview_create()`` now only support RSVPs to
-      individual instances of multi-instance events, to match the
-      Facebook API itself.
-   -  Try harder to find original (full) sized photo URLs, specifically
-      ``_o.jpg`` files instead of ``_s.jpg``.
-   -  ``create()`` bug fix for photo and image URLs with unicode
-      characters.
-   -  Fixed bug where ``get_activities(user_id=...)`` included the
-      authenticated user’s own recent photos, albums, and news
-      publishes.
+  - Support new `recurring aka multi-instance
+    events <https://stackoverflow.com/questions/45131646/decoding-recurring-events-from-facebook-open-graph-api>`__.
+    ``create()`` and ``preview_create()`` now only support RSVPs to
+    individual instances of multi-instance events, to match the Facebook
+    API itself.
+  - Try harder to find original (full) sized photo URLs, specifically
+    ``_o.jpg`` files instead of ``_s.jpg``.
+  - ``create()`` bug fix for photo and image URLs with unicode
+    characters.
+  - Fixed bug where ``get_activities(user_id=...)`` included the
+    authenticated user’s own recent photos, albums, and news publishes.
 
--  Instagram:
+- Instagram:
 
-   -  Extract more user (``author``) data from scraped profile pages.
-   -  Fix home page feed scraping.
+  - Extract more user (``author``) data from scraped profile pages.
+  - Fix home page feed scraping.
 
--  microformats2, Atom:
+- microformats2, Atom:
 
-   -  Add enclosures for image attachments.
-   -  Bug fixes for rendering image, video, and audio attachments inside
-      shares and attachments. De-dupe images.
+  - Add enclosures for image attachments.
+  - Bug fixes for rendering image, video, and audio attachments inside
+    shares and attachments. De-dupe images.
 
--  microformats2:
+- microformats2:
 
-   -  Handle simple string-only author properties.
-   -  Add ``fetch_mf2`` kwarg to ``json_to_object()`` for fetching
-      additional pages over HTTP to determine authorship.
-   -  Generate explicit blank ``p-name`` in HTML to prevent old flawed
-      `implied p-name
-      handling <http://microformats.org/wiki/microformats2-implied-properties>`__
-      (`#131 <https://github.com/snarfed/granary/issues/131>`__).
-   -  Fix ``share`` verb handling in ``activity_to_json()`` and
-      ``activities_to_html()``
-      (`#134 <https://github.com/snarfed/granary/issues/134>`__).
-   -  Remember which content contains HTML, preserve newlines in it, and
-      don’t translate those newlines to ``<br>``\ s
-      (`#130 <https://github.com/snarfed/granary/issues/130>`__).
+  - Handle simple string-only author properties.
+  - Add ``fetch_mf2`` kwarg to ``json_to_object()`` for fetching
+    additional pages over HTTP to determine authorship.
+  - Generate explicit blank ``p-name`` in HTML to prevent old flawed
+    `implied p-name
+    handling <http://microformats.org/wiki/microformats2-implied-properties>`__
+    (`#131 <https://github.com/snarfed/granary/issues/131>`__).
+  - Fix ``share`` verb handling in ``activity_to_json()`` and
+    ``activities_to_html()``
+    (`#134 <https://github.com/snarfed/granary/issues/134>`__).
+  - Remember which content contains HTML, preserve newlines in it, and
+    don’t translate those newlines to ``<br>``\ s
+    (`#130 <https://github.com/snarfed/granary/issues/130>`__).
 
--  Atom:
+- Atom:
 
-   -  Fix timezone bugs in ``updated`` and ``published``.
+  - Fix timezone bugs in ``updated`` and ``published``.
 
--  JSON Feed:
+- JSON Feed:
 
-   -  Omit title from items if it’s the same as the content. (Often
-      caused by microformats2’s implied ``p-name`` logic.)
+  - Omit title from items if it’s the same as the content. (Often caused
+    by microformats2’s implied ``p-name`` logic.)
 
 .. _section-17:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
 
--  Moved web site and REST API to `granary.io <https://granary.io/>`__!
-   `granary-demo.appspot.com <https://granary-demo.appspot.com/>`__ now
-   301 redirects.
--  Twitter:
+- Moved web site and REST API to `granary.io <https://granary.io/>`__!
+  `granary-demo.appspot.com <https://granary-demo.appspot.com/>`__ now
+  301 redirects.
+- Twitter:
 
-   -  Update the publish character limit to 280.
-      `Background. <https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425>`__
-   -  Fix a `bug in preview_create that auto-linked @-mentions inside
-      URLs <https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800>`__,
-      e.g. Medium posts.
-   -  Support videos and animated GIFs in ``get_activities()`` etc.
+  - Update the publish character limit to 280.
+    `Background. <https://twittercommunity.com/t/updating-the-character-limit-and-the-twitter-text-library/96425>`__
+  - Fix a `bug in preview_create that auto-linked @-mentions inside
+    URLs <https://github.com/snarfed/bridgy/issues/527#issuecomment-346302800>`__,
+    e.g. Medium posts.
+  - Support videos and animated GIFs in ``get_activities()`` etc.
 
--  Instagram:
+- Instagram:
 
-   -  Add cookie query param to REST API to allow scraping that logged
-      in user’s feed.
+  - Add cookie query param to REST API to allow scraping that logged in
+    user’s feed.
 
--  HTML (including Atom content):
+- HTML (including Atom content):
 
-   -  Render image, video, and audio attachments more often and
-      consistently.
-   -  Include microformats2 ``u-photo``, ``u-video``, and ``u-audio``
-      classes more often and consistently.
+  - Render image, video, and audio attachments more often and
+    consistently.
+  - Include microformats2 ``u-photo``, ``u-video``, and ``u-audio``
+    classes more often and consistently.
 
--  Atom:
+- Atom:
 
-   -  Add ``atom_to_activities()`` for converting full feed documents.
-   -  Add to REST API and web UI.
-   -  Include source URL in ``rel=alternate`` link as well as
-      actor/author URL
-      (`#151 <https://github.com/snarfed/granary/issues/151>`__).
+  - Add ``atom_to_activities()`` for converting full feed documents.
+  - Add to REST API and web UI.
+  - Include source URL in ``rel=alternate`` link as well as actor/author
+    URL (`#151 <https://github.com/snarfed/granary/issues/151>`__).
 
--  JSON Feed:
+- JSON Feed:
 
-   -  Fix bug that omitted title in some cases
-      (`#122 <https://github.com/snarfed/granary/issues/122>`__).
+  - Fix bug that omitted title in some cases
+    (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
 .. _section-18:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
 
--  Add `ActivityStreams
-   2.0 <http://www.w3.org/TR/activitystreams-core/>`__! New ``as2``
-   module includes ``to_as1()`` and ``from_as1()`` functions. Currently
-   supported: articles, notes, replies, likes, reposts, events, RSVPs,
-   tags, attachments.
--  Atom:
+- Add `ActivityStreams
+  2.0 <http://www.w3.org/TR/activitystreams-core/>`__! New ``as2``
+  module includes ``to_as1()`` and ``from_as1()`` functions. Currently
+  supported: articles, notes, replies, likes, reposts, events, RSVPs,
+  tags, attachments.
+- Atom:
 
-   -  Add new ``atom_to_activity()`` function for converting Atom to
-      AS1.
-   -  Add email field to author, if provided.
+  - Add new ``atom_to_activity()`` function for converting Atom to AS1.
+  - Add email field to author, if provided.
 
--  JSON Feed:
+- JSON Feed:
 
-   -  Raise ValueError on bad (non-dict) input.
+  - Raise ValueError on bad (non-dict) input.
 
--  REST API:
+- REST API:
 
-   -  Add ``as2`` value for ``format`` and ``input``. Revise existing
-      ActivityStreams and microformats2 value names to ``as1``,
-      ``as1-xml``, and ``mf2-json``. Old values ``activitystreams``,
-      ``json``, ``json-mf2``, and ``xml`` are still accepted, but
-      deprecated.
+  - Add ``as2`` value for ``format`` and ``input``. Revise existing
+    ActivityStreams and microformats2 value names to ``as1``,
+    ``as1-xml``, and ``mf2-json``. Old values ``activitystreams``,
+    ``json``, ``json-mf2``, and ``xml`` are still accepted, but
+    deprecated.
 
 .. _section-19:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
 
--  Add `JSON Feed <https://jsonfeed.org/>`__ support to both library and
-   REST API.
--  Twitter:
+- Add `JSON Feed <https://jsonfeed.org/>`__ support to both library and
+  REST API.
+- Twitter:
 
-   -  Add ``get_blocklist()``.
-   -  Bug fix for creating replies, favorites, or retweets of video
-      URLs, e.g. https://twitter.com/name/status/123/video/1 .
-   -  Bug fix for parsing favorites HTML to handle a small change on
-      Twitter’s side.
-   -  ``post_id()`` now validates ids more strictly before returning
-      them.
+  - Add ``get_blocklist()``.
+  - Bug fix for creating replies, favorites, or retweets of video URLs,
+    e.g. https://twitter.com/name/status/123/video/1 .
+  - Bug fix for parsing favorites HTML to handle a small change on
+    Twitter’s side.
+  - ``post_id()`` now validates ids more strictly before returning them.
 
--  Facebook:
+- Facebook:
 
-   -  Improve heuristic for determining privacy of wall posts from other
-      users.
-   -  Support GIFs in comments (attachment types
-      ``animated_image_autoplay`` and ``animated_image_share``).
-   -  Upgrade Graph API from
-      `v2.6 <https://developers.facebook.com/docs/apps/changelog#v2_6>`__
-      to
-      `v2.10 <https://developers.facebook.com/docs/apps/changelog#v2_10>`__.
+  - Improve heuristic for determining privacy of wall posts from other
+    users.
+  - Support GIFs in comments (attachment types
+    ``animated_image_autoplay`` and ``animated_image_share``).
+  - Upgrade Graph API from
+    `v2.6 <https://developers.facebook.com/docs/apps/changelog#v2_6>`__
+    to
+    `v2.10 <https://developers.facebook.com/docs/apps/changelog#v2_10>`__.
 
--  Instagram:
+- Instagram:
 
-   -  Update scraping to handle new home page (ie news feed) JSON
-      schema, which changed sometime around 2017-02-27. (Profile pages
-      and individual photo/video permalinks still haven’t changed yet.)
+  - Update scraping to handle new home page (ie news feed) JSON schema,
+    which changed sometime around 2017-02-27. (Profile pages and
+    individual photo/video permalinks still haven’t changed yet.)
 
--  microformats2:
+- microformats2:
 
-   -  Add `u-featured <https://indieweb.org/featured>`__ to
-      ActivityStreams ``image``.
-   -  Improve ``h-event`` support.
-   -  Minor whitespace change (added
+  - Add `u-featured <https://indieweb.org/featured>`__ to
+    ActivityStreams ``image``.
+  - Improve ``h-event`` support.
+  - Minor whitespace change (added
 
-      .. raw:: html
+    .. raw:: html
 
-         <p>
+       <p>
 
-      ) when rendering locations as HTML.
-   -  ``post_id()`` now validates ids more strictly before returning
-      them.
-   -  Fix bugs in converting latitude and longitude between
-      ActivityStreams and mf2.
+    ) when rendering locations as HTML.
+  - ``post_id()`` now validates ids more strictly before returning them.
+  - Fix bugs in converting latitude and longitude between
+    ActivityStreams and mf2.
 
--  Google+:
+- Google+:
 
-   -  Update HTML scraping to handle changed serialized JSON data
-      format.
+  - Update HTML scraping to handle changed serialized JSON data format.
 
--  Atom:
+- Atom:
 
-   -  Add new ``activity_to_atom()`` function that renders a single
-      top-level ``<entry>`` instead of ``<feed>``.
-   -  Add new ``reader`` query param for toggling rendering decisions
-      that are specific to feed readers. Right now, just affects
-      location: it’s rendered in the content when ``reader=true`` (the
-      default), omitted when ``reader=false``.
-   -  Include author name when rendering attached articles and notes
-      (e.g. quote tweets).
-   -  Only include AS ``activity:object-type`` and ``activity:verb``
-      elements when they have values.
-   -  Render AS image and mf2 u-photo if they’re not already in content.
-   -  Render ``thr:in-reply-to`` from ``object.inReplyTo`` as well as
-      ``activity.context.inReplyTo``.
+  - Add new ``activity_to_atom()`` function that renders a single
+    top-level ``<entry>`` instead of ``<feed>``.
+  - Add new ``reader`` query param for toggling rendering decisions that
+    are specific to feed readers. Right now, just affects location: it’s
+    rendered in the content when ``reader=true`` (the default), omitted
+    when ``reader=false``.
+  - Include author name when rendering attached articles and notes
+    (e.g. quote tweets).
+  - Only include AS ``activity:object-type`` and ``activity:verb``
+    elements when they have values.
+  - Render AS image and mf2 u-photo if they’re not already in content.
+  - Render ``thr:in-reply-to`` from ``object.inReplyTo`` as well as
+    ``activity.context.inReplyTo``.
 
--  REST API:
+- REST API:
 
-   -  Fix bugs in html => json-mf2 and html => html conversions.
+  - Fix bugs in html => json-mf2 and html => html conversions.
 
--  Upgrade brevity to 0.2.14 for a couple
-   `bug <https://github.com/kylewm/brevity/issues/5>`__
-   `fixes <https://github.com/kylewm/brevity/issues/6>`__.
+- Upgrade brevity to 0.2.14 for a couple
+  `bug <https://github.com/kylewm/brevity/issues/5>`__
+  `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
 .. _section-20:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
 
--  microformats2:
+- microformats2:
 
-   -  Interpret h-cite and
-      `u-quotation-of <https://indieweb.org/quotation#How_to_markup>`__
-      (experimental) as attachments, e.g. for quote tweets.
-   -  Convert `audio <http://indieweb.org/audio>`__ and
-      `video <http://indieweb.org/video>`__ properties to AS
-      attachments.
+  - Interpret h-cite and
+    `u-quotation-of <https://indieweb.org/quotation#How_to_markup>`__
+    (experimental) as attachments, e.g. for quote tweets.
+  - Convert `audio <http://indieweb.org/audio>`__ and
+    `video <http://indieweb.org/video>`__ properties to AS attachments.
 
--  Twitter:
+- Twitter:
 
-   -  Linkify @-mentions and hashtags in ``preview_create()``.
-   -  Support creating quote tweets from attachments with Twitter URLs.
-   -  When converting quote tweets to AS, strip quoted tweet URL from
-      end of text.
-   -  Raise ValueError when ``get_activities()`` is passed
-      ``group_id='@search'`` but not ``search_query``.
+  - Linkify @-mentions and hashtags in ``preview_create()``.
+  - Support creating quote tweets from attachments with Twitter URLs.
+  - When converting quote tweets to AS, strip quoted tweet URL from end
+    of text.
+  - Raise ValueError when ``get_activities()`` is passed
+    ``group_id='@search'`` but not ``search_query``.
 
--  Instagram:
+- Instagram:
 
-   -  Improve HTML scraping error handling.
-   -  Support `multi-photo/video
-      posts <https://www.instagram.com/p/BQ0mDB2gV_O/>`__.
+  - Improve HTML scraping error handling.
+  - Support `multi-photo/video
+    posts <https://www.instagram.com/p/BQ0mDB2gV_O/>`__.
 
--  Facebook:
+- Facebook:
 
-   -  Disable creating “interested” RSVPs, since Facebook’s API doesn’t
-      allow it.
+  - Disable creating “interested” RSVPs, since Facebook’s API doesn’t
+    allow it.
 
--  Atom:
+- Atom:
 
-   -  Support `media
-      enclosures <http://atomenabled.org/developers/syndication/#link>`__
-      for audio and video attachments.
+  - Support `media
+    enclosures <http://atomenabled.org/developers/syndication/#link>`__
+    for audio and video attachments.
 
--  Source.get_activities(): start raising ValueError on bad argument
-   values, notably invalid Facebook and Twitter ids and Instagram search
-   queries.
--  Fix rendering and linkifying content with Unicode high code points
-   (ie above the 16-bit Basic Multilingual Plane), including some emoji,
-   on “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which
-   is the default on Mac OS X, Windows, and older \*nix.
+- Source.get_activities(): start raising ValueError on bad argument
+  values, notably invalid Facebook and Twitter ids and Instagram search
+  queries.
+- Fix rendering and linkifying content with Unicode high code points (ie
+  above the 16-bit Basic Multilingual Plane), including some emoji, on
+  “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which is
+  the default on Mac OS X, Windows, and older \*nix.
 
 .. _section-21:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
 
--  Twitter:
+- Twitter:
 
-   -  Handle new “extended” tweets with hidden reply-to @-mentions and
-      trailing URLs for media, quote tweets, etc. Background:
-      https://dev.twitter.com/overview/api/upcoming-changes-to-tweets
-   -  Bug fix: ensure like.author.displayName is a plain unicode string
-      so that it can be pickled normally, e.g. by App Engine’s memcache.
-   -  Bug fix: handle names with emoji correctly in
-      favorites_html_to_likes().
-   -  Bug fix: handle search queries with unicode characters.
+  - Handle new “extended” tweets with hidden reply-to @-mentions and
+    trailing URLs for media, quote tweets, etc. Background:
+    https://dev.twitter.com/overview/api/upcoming-changes-to-tweets
+  - Bug fix: ensure like.author.displayName is a plain unicode string so
+    that it can be pickled normally, e.g. by App Engine’s memcache.
+  - Bug fix: handle names with emoji correctly in
+    favorites_html_to_likes().
+  - Bug fix: handle search queries with unicode characters.
 
--  Atom:
+- Atom:
 
-   -  Render full original quoted tweet in retweets of quote tweets.
+  - Render full original quoted tweet in retweets of quote tweets.
 
--  microformats2 HTML:
+- microformats2 HTML:
 
-   -  Optionally follow and fetch rel=“author” links.
-   -  Improve mapping between microformats2 and ActivityStreams ‘photo’
-      types. (mf2 ‘photo’ type is a note or article *with* a photo, but
-      AS ‘photo’ type *is* a photo. So, map mf2 photos to underlying
-      type without photo.)
-   -  Support location properties beyond h-card, e.g. h-adr, h-geo,
-      u-geo, and even when properties like latitude and longitude appear
-      at the top level.
+  - Optionally follow and fetch rel=“author” links.
+  - Improve mapping between microformats2 and ActivityStreams ‘photo’
+    types. (mf2 ‘photo’ type is a note or article *with* a photo, but AS
+    ‘photo’ type *is* a photo. So, map mf2 photos to underlying type
+    without photo.)
+  - Support location properties beyond h-card, e.g. h-adr, h-geo, u-geo,
+    and even when properties like latitude and longitude appear at the
+    top level.
 
--  Error handling: return HTTP 502 for non-JSON API responses, 504 for
-   connection failures.
+- Error handling: return HTTP 502 for non-JSON API responses, 504 for
+  connection failures.
 
 .. _section-22:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
 
--  REST API:
+- REST API:
 
-   -  Support tag URI for user id, app id, and activity id.
+  - Support tag URI for user id, app id, and activity id.
 
--  Twitter:
+- Twitter:
 
-   -  Better error message when uploading a photo with an unsupported
-      type.
-   -  Only include original quote tweets, not retweets of them.
-   -  Skip fetching retweets for protected accounts since the API call
-      always 403s.
+  - Better error message when uploading a photo with an unsupported
+    type.
+  - Only include original quote tweets, not retweets of them.
+  - Skip fetching retweets for protected accounts since the API call
+    always 403s.
 
--  Flickr:
+- Flickr:
 
-   -  Better username detection. Flickr’s API is very inconsistent about
-      username vs real name vs path alias. This specifically detects
-      when a user name is probably actually a real name because it has a
-      space.
-   -  Uploading: detect and handle App Engine’s 10MB HTTP request limit.
-   -  Bug fix in create: handle unicode characters in photo/video
-      description, hashtags, and comment text.
+  - Better username detection. Flickr’s API is very inconsistent about
+    username vs real name vs path alias. This specifically detects when
+    a user name is probably actually a real name because it has a space.
+  - Uploading: detect and handle App Engine’s 10MB HTTP request limit.
+  - Bug fix in create: handle unicode characters in photo/video
+    description, hashtags, and comment text.
 
--  Atom:
+- Atom:
 
-   -  Bug fix: escape &s in attachments’ text (e.g. quote tweets).
-   -  Bug fix: handle multiply valued ‘object’ fields in ActivityStreams
-      1 activities.
+  - Bug fix: escape &s in attachments’ text (e.g. quote tweets).
+  - Bug fix: handle multiply valued ‘object’ fields in ActivityStreams 1
+    activities.
 
--  GitHub:
+- GitHub:
 
-   -  Switch creating comments and reactions from GraphQL to REST API
-      (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
+  - Switch creating comments and reactions from GraphQL to REST API
+    (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
 .. _section-23:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
--  Bump oauth-dropins requirement to 1.4.
+- Bump oauth-dropins requirement to 1.4.
 
 .. _section-24:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
--  REST API:
+- REST API:
 
-   -  Cache silo requests for 5m by default, 60m for Instagram because
-      they aggressively blocking scraping. You can skip the cache with
-      the new cache=false query param.
+  - Cache silo requests for 5m by default, 60m for Instagram because
+    they aggressively blocking scraping. You can skip the cache with the
+    new cache=false query param.
 
--  Facebook:
+- Facebook:
 
-   -  Upgrade from API v2.2 to v2.6.
-      https://developers.facebook.com/docs/apps/changelog
-   -  Add reaction support.
-   -  De-dupe event RSVPs by user.
+  - Upgrade from API v2.2 to v2.6.
+    https://developers.facebook.com/docs/apps/changelog
+  - Add reaction support.
+  - De-dupe event RSVPs by user.
 
--  Twitter:
+- Twitter:
 
-   -  Switch create() to use brevity for counting characters.
-      https://github.com/kylewm/brevity
-   -  Fix bug in create() that occasionally incorrectly escaped ., +,
-      and - characters.
-   -  Fix text rendering bug when there are multipl photos/videos.
-   -  When replying to yourself, don’t add a self @-mention.
+  - Switch create() to use brevity for counting characters.
+    https://github.com/kylewm/brevity
+  - Fix bug in create() that occasionally incorrectly escaped ., +, and
+    - characters.
+  - Fix text rendering bug when there are multipl photos/videos.
+  - When replying to yourself, don’t add a self @-mention.
 
--  Instagram:
+- Instagram:
 
-   -  Fix bugs in scraping.
+  - Fix bugs in scraping.
 
--  Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
-   App Engine.
+- Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
+  App Engine.
 
 .. _section-25:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
 
--  Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
-   dependency to >=1.3.
+- Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
+  dependency to >=1.3.
 
 .. _section-26:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
 
--  Support posting videos! Currently in Facebook, Flickr, and Twitter.
--  Instagram:
+- Support posting videos! Currently in Facebook, Flickr, and Twitter.
+- Instagram:
 
-   -  Add support for scraping, since they’re `locking down their API
-      and requiring manual
-      approval <http://developers.instagram.com/post/133424514006/instagram-platform-update>`__.
-   -  Linkify @-mentions in photo captions.
+  - Add support for scraping, since they’re `locking down their API and
+    requiring manual
+    approval <http://developers.instagram.com/post/133424514006/instagram-platform-update>`__.
+  - Linkify @-mentions in photo captions.
 
--  Facebook:
+- Facebook:
 
-   -  Fetch `Open Graph
-      stories <https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/>`__
-      aka ``news.publish`` actions.
-   -  Many bug fixes for photo posts: better privacy detection, fix bug
-      that attached comments to wrong posts.
+  - Fetch `Open Graph
+    stories <https://developers.facebook.com/docs/reference/opengraph/action-type/news.publishes/>`__
+    aka ``news.publish`` actions.
+  - Many bug fixes for photo posts: better privacy detection, fix bug
+    that attached comments to wrong posts.
 
--  Twitter:
+- Twitter:
 
-   -  Handle all photos/videos attached to a tweet, not just the first.
-   -  Stop fetching replies to @-mentions.
+  - Handle all photos/videos attached to a tweet, not just the first.
+  - Stop fetching replies to @-mentions.
 
--  Atom:
+- Atom:
 
-   -  Render attachments.
-   -  Add ``xml:base``.
+  - Render attachments.
+  - Add ``xml:base``.
 
--  microformats2:
+- microformats2:
 
-   -  Load and convert h-card.
-   -  Implement full post type discovery algorithm, using mf2util.
-      https://indiewebcamp.com/post-type-discovery
-   -  Drop support for h-as-\* classes, both incoming and outgoing.
-      They’re deprecated in favor of post type discovery.
-   -  Drop old deprecated ``u-like`` and ``u-repost`` properties.
+  - Load and convert h-card.
+  - Implement full post type discovery algorithm, using mf2util.
+    https://indiewebcamp.com/post-type-discovery
+  - Drop support for h-as-\* classes, both incoming and outgoing.
+    They’re deprecated in favor of post type discovery.
+  - Drop old deprecated ``u-like`` and ``u-repost`` properties.
 
--  Misc bug fixes.
--  Set up Coveralls.
+- Misc bug fixes.
+- Set up Coveralls.
 
 .. _section-27:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
 
--  Improve original post discovery algorithm. (`bridgy
-   #51 <https://github.com/snarfed/bridgy/issues/51>`__)
--  Flickr tweaks. (`bridgy
-   #466 <https://github.com/snarfed/bridgy/issues/466>`__)
--  Add mf2, activitystreams, atom, and search to interactive UI.
-   (`#31 <https://github.com/snarfed/granary/issues/31>`__,
-   `#29 <https://github.com/snarfed/granary/issues/29>`__)
--  Improved post type discovery (using mf2util).
--  Extract user web site links from all fields in profile
-   (e.g. description/bio).
--  Add fabricated fragments to comment/like permalinks
-   (e.g. #liked-by-user123) so that object urls are always unique
-   (multiple silos).
--  Improve formatting/whitespace support in create/preview (multiple
-   silos).
--  Google+:
+- Improve original post discovery algorithm. (`bridgy
+  #51 <https://github.com/snarfed/bridgy/issues/51>`__)
+- Flickr tweaks. (`bridgy
+  #466 <https://github.com/snarfed/bridgy/issues/466>`__)
+- Add mf2, activitystreams, atom, and search to interactive UI.
+  (`#31 <https://github.com/snarfed/granary/issues/31>`__,
+  `#29 <https://github.com/snarfed/granary/issues/29>`__)
+- Improved post type discovery (using mf2util).
+- Extract user web site links from all fields in profile
+  (e.g. description/bio).
+- Add fabricated fragments to comment/like permalinks
+  (e.g. #liked-by-user123) so that object urls are always unique
+  (multiple silos).
+- Improve formatting/whitespace support in create/preview (multiple
+  silos).
+- Google+:
 
-   -  Add search.
+  - Add search.
 
--  Facebook:
+- Facebook:
 
-   -  Fetch more things in get_activities: photos, events, RSVPs.
-   -  Support person tags in create/preview.
-   -  Prevent facebook from automatically consolidating photo posts by
-      uploading photos to “Timeline Photos” album.
-   -  Include title in create/preview.
-   -  Improve object id parsing/resolving.
-   -  Improve tag handling.
-   -  Bug fix for fetching nested comments.
-   -  Misc improvements, API error/flakiness handling.
+  - Fetch more things in get_activities: photos, events, RSVPs.
+  - Support person tags in create/preview.
+  - Prevent facebook from automatically consolidating photo posts by
+    uploading photos to “Timeline Photos” album.
+  - Include title in create/preview.
+  - Improve object id parsing/resolving.
+  - Improve tag handling.
+  - Bug fix for fetching nested comments.
+  - Misc improvements, API error/flakiness handling.
 
--  Flickr:
+- Flickr:
 
-   -  Create/preview support for photos, comments, favorites, tags,
-      person tags, location.
+  - Create/preview support for photos, comments, favorites, tags, person
+    tags, location.
 
--  Twitter:
+- Twitter:
 
-   -  Create/preview support for location, multiple photos.
-   -  Fetch quote tweets.
-   -  Fetching user mentions improvements, bug fixes.
-   -  Fix embeds.
-   -  Misc AS conversion improvements.
+  - Create/preview support for location, multiple photos.
+  - Fetch quote tweets.
+  - Fetching user mentions improvements, bug fixes.
+  - Fix embeds.
+  - Misc AS conversion improvements.
 
--  microformats2:
+- microformats2:
 
-   -  Improve like and repost rendering.
+  - Improve like and repost rendering.
 
--  Misc bug fixes.
--  Set up CircleCI.
+- Misc bug fixes.
+- Set up CircleCI.
 
 .. _section-28:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
 
--  Add Flickr.
--  Facebook:
+- Add Flickr.
+- Facebook:
 
-   -  Fetch multiple id formats, e.g. with and without USERID\_ prefix.
-   -  Support threaded comments.
-   -  Switch from /posts API endpoint to /feed.
+  - Fetch multiple id formats, e.g. with and without USERID\_ prefix.
+  - Support threaded comments.
+  - Switch from /posts API endpoint to /feed.
 
--  Google+:
+- Google+:
 
-   -  Support converting plus.google.com HTML to ActivityStreams.
+  - Support converting plus.google.com HTML to ActivityStreams.
 
--  Instagram:
+- Instagram:
 
-   -  Support location.
+  - Support location.
 
--  Improve original post discovery algorithm.
--  New logo.
+- Improve original post discovery algorithm.
+- New logo.
 
 .. _section-29:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
 
--  Bug fix for atom template rendering.
--  Facebook, Instagram: support access_token parameter.
+- Bug fix for atom template rendering.
+- Facebook, Instagram: support access_token parameter.
 
 .. _section-30:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~
 
--  Initial PyPi release.
+- Initial PyPi release.

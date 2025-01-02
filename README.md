@@ -281,7 +281,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 8.0 - unreleased
+### 8.0 - 2025-01-01
 
 _Breaking changes:_
 
@@ -290,7 +290,7 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
-Standardize function and method names in all modules to `to_as1`, `from_as`, etc. Old method names are now deprecated but won't be removed until at least v8.0, if not later.
+Standardize function and method names in all modules to `to_as1`, `from_as`, etc. Old method names are now deprecated but won't be removed until at least v9.0, if not later.
 
 * `as1`:
   * Add new `is_dm`, `recipient_if_dm`, `get_id`, and `is_audience` functions.
