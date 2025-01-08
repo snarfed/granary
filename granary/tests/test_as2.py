@@ -614,7 +614,7 @@ class ActivityStreams2Test(testutil.TestCase):
       'cc': [{'id': 'baz'}, 'as:Public'],
     }))
 
-  def test_link_tags(self):
+  def test_link_tags_no_indices(self):
     # no indices, shouuld be a noop
     obj = {
       'content': 'foo\nbar\nbaz',
@@ -626,12 +626,15 @@ class ActivityStreams2Test(testutil.TestCase):
     as2.link_tags(obj)
     self.assert_equals('foo\nbar\nbaz', obj['content'])
 
+  def test_link_tags_indices(self):
     # with indices, should link and then remove indices
-    tags_with_indices = [
-      {'href': 'http://bar', 'startIndex': 4, 'length': 3},
-      {'url': 'http://baz', 'startIndex': 8, 'length': 3},
-    ]
-    obj['tag'] = copy.deepcopy(tags_with_indices)
+    obj = {
+      'content': 'foo\nbar\nbaz',
+      'tag': [
+        {'href': 'http://bar', 'startIndex': 4, 'length': 3},
+        {'url': 'http://baz', 'startIndex': 8, 'length': 3},
+      ],
+    }
     as2.link_tags(obj)
     self.assert_equals({
       'content': """\
@@ -646,6 +649,7 @@ foo
       ],
     }, obj)
 
+  def test_link_tags_mention(self):
     # Mention tag should include class="mention"
     obj = {
       'content': 'foo\nbar\nbaz',
@@ -668,6 +672,18 @@ foo
       ],
     }, obj)
 
+  def test_link_tags_hashtag(self):
+    # Tag (hashtag) tag should include class="hashtag"
+    obj = {
+      'content': 'foo #bar baz',
+      'tag': [{'href': 'http://bar', 'startIndex': 4, 'length': 4, 'type': 'Tag'}],
+    }
+    as2.link_tags(obj)
+    self.assert_equals({
+      'content': 'foo <a class="hashtag" href="http://bar">#bar</a> baz',
+      'content_is_html': True,
+      'tag': [{'href': 'http://bar', 'type': 'Tag'}],
+    }, obj)
 
   def test_is_server_actor(self):
     self.assertFalse(as2.is_server_actor({}))

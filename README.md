@@ -281,6 +281,12 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 8.1 - unreleased
+
+* `as2`:
+  * `link_tags`: add `class="hashtag"` for hashtag (`Tag`) tags ([bridgy-fed/#1634](https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871)).
+
+
 ### 8.0 - 2025-01-01
 
 _Breaking changes:_

@@ -753,10 +753,14 @@ def link_tags(obj):
   linked = ''
   for tag in tags:
     url = tag.get('href') or tag.get('url')
-    # Mastodon seems to need class="mention" to convert a mention link to point
-    # to the local instance's view of the remote actor profile
+    # Mastodon web UI seems to need class="mention" to convert a mention link to
+    # point to the local instance's view of the remote actor profile, and mobile
+    # apps (and others?) need class="hashtag" to do it for hashtags
     # https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758
-    cls = 'class="mention" ' if tag.get('type') == 'Mention' else ''
+    # https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871
+    cls = ('class="mention" ' if tag.get('type') == 'Mention'
+           else 'class="hashtag" ' if tag.get('type') == 'Tag'
+           else '')
     start = tag['startIndex']
     if start < last_end:
       logger.warning(f'tag indices overlap! skipping {url}')
