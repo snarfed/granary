@@ -284,6 +284,7 @@ Changelog
 ### 8.1 - unreleased
 
 * `as2`:
+  * `to_as1`: support integer seconds `duration`, which is non-standard but sent by some AP implementations, [eg Funkwhale](https://dev.funkwhale.audio/funkwhale/funkwhale/-/issues/1566).
   * `link_tags`: add `class="hashtag"` for hashtag (`Tag`) tags ([bridgy-fed/#1634](https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871)).
 
 

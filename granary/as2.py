@@ -646,9 +646,16 @@ def to_as1(obj, use_type=True):
 
   # media
   if type in ('Audio', 'Video'):  # this may have been set above
-    duration = util.parse_iso8601_duration(obj.pop('duration', None))
-    if duration:
-      duration = duration.total_seconds()
+    duration_val = obj.pop('duration', None)
+    duration = None
+    try:
+      if duration_dt := util.parse_iso8601_duration(duration_val):
+        duration = duration_dt.total_seconds()
+    except (TypeError, ValueError):
+      # some AP implementations incorrectly use integer seconds for duration,
+      # eg Funkwhale: https://dev.funkwhale.audio/funkwhale/funkwhale/-/issues/1566
+      if util.is_int(duration_val):
+        duration = int(duration_val)
 
     obj.setdefault('stream', {
       # file size in bytes. nonstandard, not in AS1 proper

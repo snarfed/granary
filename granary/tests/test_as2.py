@@ -614,8 +614,38 @@ class ActivityStreams2Test(testutil.TestCase):
       'cc': [{'id': 'baz'}, 'as:Public'],
     }))
 
+  def test_to_as1_audio_duration_iso_8601(self):
+    self.assert_equals({
+      'objectType': 'audio',
+      'id': 'https://open.audio/federation/789',
+      'stream': {
+        'url': 'https://open.audio/api/v1/listen/789',
+        'duration': 123,
+      },
+    }, as2.to_as1({
+      'type': 'Audio',
+      'id': 'https://open.audio/federation/789',
+      'url': 'https://open.audio/api/v1/listen/789',
+      'duration': 'P0DT123S',
+     }))
+
+  def test_to_as1_audio_duration_integer_seconds(self):
+    self.assert_equals({
+      'objectType': 'audio',
+      'id': 'https://open.audio/federation/123',
+      'stream': {
+        'url': 'https://open.audio/api/v1/listen/123',
+        'duration': 3305,
+      },
+    }, as2.to_as1({
+      'type': 'Audio',
+      'id': 'https://open.audio/federation/123',
+      'url': 'https://open.audio/api/v1/listen/123',
+      'duration': 3305,
+     }))
+
   def test_link_tags_no_indices(self):
-    # no indices, shouuld be a noop
+    # no indices, should be a noop
     obj = {
       'content': 'foo\nbar\nbaz',
       'tag': [
